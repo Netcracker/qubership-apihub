@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs/promises'
-import { loadConfig, loadFile, loadFileAsString } from '../utils'
+import { loadConfig, loadFile } from '../utils'
+import { registryFs, loadFileFromRegistry, loadFileAsStringFromRegistry, loadConfigFromRegistry, registryPath } from './fs'
 import {
   ApiOperation,
   BuildConfig,
@@ -299,7 +299,7 @@ export class LocalRegistry implements IRegistry {
   }
 
   private async findFileNameBySlug(directory: string, slug: string): Promise<string> {
-    const files = await fs.readdir(directory)
+    const files = await registryFs.readdir(directory)
     const fileName = files.find(file => getDocumentTitle(file).toLowerCase() === slug.toLowerCase())
     if (!fileName) {
       throw new Error(`File for slug ${slug} was not found in ${directory}`)
@@ -313,8 +313,9 @@ export class LocalRegistry implements IRegistry {
     slug: string,
   ): Promise<File | null> {
     const documentsPath = `${packageId}/${version}/documents`
-    const fileName = await this.findFileNameBySlug(path.join(process.cwd(), VERSIONS_PATH, documentsPath), slug)
-    return loadFile(VERSIONS_PATH, documentsPath, fileName)
+    const directory = registryPath(VERSIONS_PATH, documentsPath)
+    const fileName = await this.findFileNameBySlug(directory, slug)
+    return loadFileFromRegistry(VERSIONS_PATH, documentsPath, fileName)
   }
 
   private filterOperationIdsByGroup(filterByOperationGroup: string): (id: string) => boolean {
@@ -513,11 +514,11 @@ export class LocalRegistry implements IRegistry {
 
     const basePath = `${VERSIONS_PATH}/${config.packageId}/${config.version}`
     try {
-      await fs.rm(basePath, { recursive: true })
+      await registryFs.rm(basePath, { recursive: true })
     } catch (e) {
       // do nothing
     }
-    await fs.mkdir(basePath, { recursive: true })
+    await registryFs.mkdir(basePath, { recursive: true })
 
     await saveInfo(config, basePath)
 
@@ -561,7 +562,7 @@ export class LocalRegistry implements IRegistry {
 
     const basePath = `${VERSIONS_PATH}/${loadedConfig.packageId}/${versionConfig.version}`
 
-    await fs.writeFile(
+    await registryFs.writeFile(
       `${basePath}/${PACKAGE.OPERATIONS_FILE_NAME}`,
       getOperationsFileContent(operations, true),
     )
@@ -593,7 +594,7 @@ export class LocalRegistry implements IRegistry {
   }
 
   private async loadVersion(packageId: string, versionKey: string, compositeKey: string): Promise<PackageVersionCache | undefined> {
-    const versionConfig = await loadConfig(
+    const versionConfig = await loadConfigFromRegistry(
       VERSIONS_PATH,
       `${packageId}/${versionKey}`,
       PACKAGE.INFO_FILE_NAME,
@@ -610,7 +611,7 @@ export class LocalRegistry implements IRegistry {
       return
     }
 
-    const operationsFile = await loadFileAsString(
+    const operationsFile = await loadFileAsStringFromRegistry(
       VERSIONS_PATH,
       `${packageId}/${versionKey}`,
       PACKAGE.OPERATIONS_FILE_NAME,
@@ -623,7 +624,7 @@ export class LocalRegistry implements IRegistry {
         continue
       }
 
-      const data = await loadFileAsString(
+      const data = await loadFileAsStringFromRegistry(
         VERSIONS_PATH,
         `${packageId}/${versionKey}/${PACKAGE.OPERATIONS_DIR_NAME}`,
         `${operation.operationId}.json`,
@@ -637,14 +638,14 @@ export class LocalRegistry implements IRegistry {
       )
     }
 
-    const documentsFile = await loadFileAsString(
+    const documentsFile = await loadFileAsStringFromRegistry(
       VERSIONS_PATH,
       `${packageId}/${versionKey}`,
       PACKAGE.DOCUMENTS_FILE_NAME,
     )
     const { documents } = documentsFile ? JSON.parse(documentsFile) : null as VersionDocuments | null ?? { documents: [] }
     for (const document of documents) {
-      const data = await loadFileAsString(
+      const data = await loadFileAsStringFromRegistry(
         VERSIONS_PATH,
         `${packageId}/${versionKey}/${PACKAGE.DOCUMENTS_DIR_NAME}`,
         document.filename,
@@ -661,7 +662,7 @@ export class LocalRegistry implements IRegistry {
       }
     }
 
-    const comparisonsFile = await loadFileAsString(
+    const comparisonsFile = await loadFileAsStringFromRegistry(
       VERSIONS_PATH,
       `${packageId}/${versionKey}`,
       PACKAGE.COMPARISONS_FILE_NAME,
@@ -674,7 +675,7 @@ export class LocalRegistry implements IRegistry {
       versionCache.comparisons.push(...comparisons as VersionsComparison[])
     }
 
-    const notificationsFile = await loadFileAsString(
+    const notificationsFile = await loadFileAsStringFromRegistry(
       VERSIONS_PATH,
       `${packageId}/${versionKey}`,
       PACKAGE.NOTIFICATIONS_FILE_NAME,

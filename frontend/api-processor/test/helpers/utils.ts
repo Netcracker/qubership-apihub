@@ -37,10 +37,20 @@ import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
 import YAML from 'js-yaml'
 import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
 
+/**
+ * Read a file as string from the real filesystem (source/input files).
+ * Use this to read original project files before the build.
+ * For reading build result files from registry, use {@link loadFileAsStringFromRegistry} from `./registry/fs` instead.
+ */
 export const loadFileAsString = async (filePath: string, folder: string, fileName: string): Promise<string | null> => {
   return (await loadFile(filePath, folder, fileName))?.text() ?? null
 }
 
+/**
+ * Read a file from the real filesystem (source/input files).
+ * Use this to read original project files before the build.
+ * For reading build result files from registry, use {@link loadFileFromRegistry} from `./registry/fs` instead.
+ */
 export const loadFile = async (filePath: string, folder: string, fileName: string): Promise<File | null> => {
   try {
     const filepath = path.join(process.cwd(), filePath, folder, fileName)
@@ -59,6 +69,11 @@ export interface PackageInfo {
   packageName: string
 }
 
+/**
+ * Read a JSON config from the real filesystem (source/input configs).
+ * Use this to read original project configs before the build.
+ * For reading build result configs from registry, use {@link loadConfigFromRegistry} from `./registry/fs` instead.
+ */
 export const loadConfig = async (filePath: string, folder: string, filename?: string): Promise<BuildConfig & PackageInfo | null> => {
   try {
     const filepath = path.join(process.cwd(), filePath, folder, filename ?? 'config.json')

@@ -1,4 +1,4 @@
-import { loadFileAsString, LocalRegistry, VERSIONS_PATH } from './helpers'
+import { LocalRegistry, VERSIONS_PATH, loadFileAsStringFromRegistry } from './helpers'
 import { PACKAGE } from '../src'
 
 const GROUP_NAME = 'manualGroup'
@@ -16,7 +16,7 @@ describe('Hash test', () => {
       const pkg = LocalRegistry.openPackage(packagePath, groupToOnePathOperationIdsMap)
       await pkg.publish(pkg.packageId, { packageId: pkg.packageId })
 
-      const operationFile = await loadFileAsString(
+      const operationFile = await loadFileAsStringFromRegistry(
         VERSIONS_PATH,
         `${pkg.packageId}/v1`,
         `${PACKAGE.OPERATIONS_FILE_NAME}`,

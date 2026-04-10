@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import fs from 'fs/promises'
+import { registryFs } from './fs'
 
 import {
   ApiOperation,
@@ -38,7 +38,7 @@ export async function saveComparisonsArray(
   comparisons: VersionsComparisonDto[],
   basePath: string,
 ): Promise<void> {
-  await fs.writeFile(
+  await registryFs.writeFile(
     `${basePath}/${PACKAGE.COMPARISONS_FILE_NAME}`,
     JSON.stringify({ comparisons }, undefined, 2),
   )
@@ -48,13 +48,13 @@ export async function saveVersionInternalDocuments(
   documents: Map<string, VersionDocument>,
   basePath: string,
 ): Promise<void> {
-  await fs.mkdir(`${basePath}/${PACKAGE.VERSION_INTERNAL_DOCUMENTS_DIR_NAME}`)
+  await registryFs.mkdir(`${basePath}/${PACKAGE.VERSION_INTERNAL_DOCUMENTS_DIR_NAME}`, { recursive: true })
   for (const document of documents.values()) {
     const {publish, versionInternalDocument } = document as VersionDocument
     if(!versionInternalDocument) { continue }
     const {serializedVersionDocument, versionDocumentId: versionInternalDocumentId} = versionInternalDocument
     if (!publish || !versionInternalDocumentId || !serializedVersionDocument) { continue }
-    await fs.writeFile(
+    await registryFs.writeFile(
       `${basePath}/${PACKAGE.VERSION_INTERNAL_DOCUMENTS_DIR_NAME}/${versionInternalDocumentId}.${FILE_FORMAT_JSON}`,
       serializedVersionDocument,
     )
@@ -68,10 +68,10 @@ export async function saveComparisonInternalDocuments(
   if (!comparisons.length) {
     return
   }
-  await fs.mkdir(`${basePath}/${PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME}`)
+  await registryFs.mkdir(`${basePath}/${PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME}`, { recursive: true })
   for (const document of comparisons) {
     const {comparisonDocumentId: comparisonInternalDocumentId, serializedComparisonDocument} = document
-    await fs.writeFile(
+    await registryFs.writeFile(
       `${basePath}/${PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME}/${comparisonInternalDocumentId}.${FILE_FORMAT_JSON}`,
       serializedComparisonDocument,
     )
@@ -82,9 +82,9 @@ export async function saveEachComparison(
   comparisons: VersionsComparisonDto[],
   basePath: string,
 ): Promise<void> {
-  await fs.mkdir(`${basePath}/${PACKAGE.COMPARISONS_DIR_NAME}`)
+  await registryFs.mkdir(`${basePath}/${PACKAGE.COMPARISONS_DIR_NAME}`, { recursive: true })
   for (const comparison of comparisons.values()) {
-    comparison.comparisonFileId && await fs.writeFile(
+    comparison.comparisonFileId && await registryFs.writeFile(
       `${basePath}/${PACKAGE.COMPARISONS_DIR_NAME}/${comparison.comparisonFileId}.${FILE_FORMAT_JSON}`,
       JSON.stringify({ operations: comparison.data }, undefined, 2),
     )
@@ -95,7 +95,7 @@ export async function saveNotifications(
   notifications: NotificationMessage[],
   basePath: string,
 ): Promise<void> {
-  await fs.writeFile(
+  await registryFs.writeFile(
     `${basePath}/${PACKAGE.NOTIFICATIONS_FILE_NAME}`,
     JSON.stringify({ notifications }, undefined, 2),
   )
@@ -105,7 +105,7 @@ export async function saveOperationsArray(
   operations: Map<string, ApiOperation>,
   basePath: string,
 ): Promise<void> {
-  await fs.writeFile(
+  await registryFs.writeFile(
     `${basePath}/${PACKAGE.OPERATIONS_FILE_NAME}`,
     getOperationsFileContent(operations),
   )
@@ -115,10 +115,10 @@ export async function saveEachOperation(
   operations: Map<string, ApiOperation>,
   basePath: string,
 ): Promise<void> {
-  await fs.mkdir(`${basePath}/${PACKAGE.OPERATIONS_DIR_NAME}`)
+  await registryFs.mkdir(`${basePath}/${PACKAGE.OPERATIONS_DIR_NAME}`, { recursive: true })
   for (const operation of operations.values()) {
     if (!operation.data) { continue }
-    await fs.writeFile(
+    await registryFs.writeFile(
       `${basePath}/${PACKAGE.OPERATIONS_DIR_NAME}/${operation.operationId}.json`,
       JSON.stringify(operation.data, undefined, 2),
     )
@@ -133,8 +133,8 @@ export async function saveSearchTextFiles(
     if (!operation.searchText || !operation.search.searchTextFilePath) { continue }
     const filePath = `${basePath}/${operation.search.searchTextFilePath}`
     const dir = filePath.substring(0, filePath.lastIndexOf('/'))
-    await fs.mkdir(dir, { recursive: true })
-    await fs.writeFile(filePath, operation.searchText)
+    await registryFs.mkdir(dir, { recursive: true })
+    await registryFs.writeFile(filePath, operation.searchText)
   }
 }
 
@@ -142,7 +142,7 @@ export async function saveInfo(
   config: BuildConfig,
   basePath: string,
 ): Promise<void> {
-  await fs.writeFile(
+  await registryFs.writeFile(
     `${basePath}/${PACKAGE.INFO_FILE_NAME}`,
     JSON.stringify(config, undefined, 2),
     {},
@@ -153,7 +153,7 @@ export async function saveDocumentsArray(
   documents: Map<string, VersionDocument>,
   basePath: string,
 ): Promise<void> {
-  await fs.writeFile(
+  await registryFs.writeFile(
     `${basePath}/${PACKAGE.DOCUMENTS_FILE_NAME}`,
     getDocumentsFileContent(documents),
   )
@@ -179,7 +179,7 @@ export async function saveVersionInternalDocumentsArray(
   if (!result.documents.length) {
     return
   }
-  await fs.writeFile(
+  await registryFs.writeFile(
     `${basePath}/${PACKAGE.VERSION_INTERNAL_FILE_NAME}`,
     JSON.stringify(result, undefined, 2),
   )
@@ -204,7 +204,7 @@ export async function saveComparisonInternalDocumentsArray(
   if (!result.documents.length) {
     return
   }
-  await fs.writeFile(
+  await registryFs.writeFile(
     `${basePath}/${PACKAGE.COMPARISON_INTERNAL_FILE_NAME}`,
     JSON.stringify(result, undefined, 2),
   )
@@ -268,7 +268,7 @@ export async function saveEachDocument(
   basePath: string,
   ctx: BuilderContext,
 ): Promise<void> {
-  await fs.mkdir(`${basePath}/${PACKAGE.DOCUMENTS_DIR_NAME}`)
+  await registryFs.mkdir(`${basePath}/${PACKAGE.DOCUMENTS_DIR_NAME}`, { recursive: true })
   for (const document of documents.values()) {
     // skip components
     if (!document.publish) { continue }
@@ -277,10 +277,10 @@ export async function saveEachDocument(
     const fileContent = getDocumentFileContent(document, ctx)
 
     if (fileContent instanceof Blob) {
-      await fs.writeFile(filePath, Buffer.from(await fileContent.arrayBuffer()))
+      await registryFs.writeFile(filePath, Buffer.from(await fileContent.arrayBuffer()))
       continue
     }
-    await fs.writeFile(filePath, fileContent)
+    await registryFs.writeFile(filePath, fileContent)
   }
 }
 
