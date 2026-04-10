@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: APIHUB system administrators API – External
   description: |
-    External API contract for system administrators.
+    External API contract for system administrators. This API covers technical administration operations such as package transitions, role management, administrator management, and selected operational actions. All endpoints require authenticated access and are intended for trusted administrative users.
   contact:
     name: Netcracker Opensource Group
     email: opensourcegroup@netcracker.com
@@ -12,14 +12,14 @@ info:
   version: "2026.1"
   x-nc-api-audience: BWC
 externalDocs:
-  description: Find out more about package
+  description: Find out more about this project and repository documentation
   url: https://github.com/Netcracker/qubership-apihub
 servers:
   - url: https://{apihub}.qubership.org
-    description: APIHUB server
+    description: Primary APIHUB server endpoint (use the apihub variable to select production, development, or staging).
     variables:
       apihub:
-        description: Name of the APIHUB server.
+        description: APIHUB subdomain/environment selector (apihub=production, dev.apihub=development, staging.apihub=staging).
         enum:
           - apihub
           - dev.apihub
@@ -46,10 +46,10 @@ paths:
       tags:
         - Transition
       summary: Move package
-      description: Change package id, i.e. rename it or change parent. Async operation, result is returned by id.
+      description: Change a package ID (rename or move to another parent package). This is an asynchronous operation: the response returns an operation ID, and clients must query /api/v2/admin/transition/move/{id} to track status and completion.
       operationId: movePackage
       requestBody:
-        description: Package coordinates
+        description: Parameters of the source package ID and destination package ID used for the move operation.
         content:
           application/json:
             schema:
@@ -57,13 +57,13 @@ paths:
               properties:
                 from:
                   type: string
-                  description: package id that needs to be moved
+                  description: Source package ID to move. The package must exist and be accessible to the caller.
                 to:
                   type: string
-                  description: destination package id
+                  description: Destination package ID after the move. The value must be unique and valid for package naming rules.
                 overwriteHistory:
                   type: boolean
-                  description: Enable force move for already used 'old' package id(which now redirects to some new one). In this case existing transition record will be lost and there would be no more redirect.
+                  description: If true, force move even when the source package ID is already redirected to another package. The previous transition record is removed and that redirect is no longer available.
             examples: {}
         required: true
 
@@ -124,11 +124,11 @@ paths:
         - Transition
       summary: Get move status
       description: |
-        Get status of the move operation by id.
+        Retrieve the status of an asynchronous move operation by operation ID, including progress, timestamps, and resulting package identifiers.
       operationId: getMoveStatus
       parameters:
         - name: id
-          description: Move operation id
+          description: ID of the move operation returned by the move request (string identifier).
           in: path
           required: true
           schema:
@@ -176,7 +176,7 @@ paths:
         - Transition
       summary: List completed transition activities
       description: |
-        List completed transition activities
+        List completed transition activities. Supports offset/limit pagination for recent completed operations.
       operationId: listActivities
       parameters:
         - name: offset
@@ -235,7 +235,7 @@ paths:
         - Transition
       summary: List transitions
       description: |
-        List full transition mapping
+        Retrieve the full mapping of historical package ID transitions (oldPackageId to newPackageId).
       operationId: listPackageTransitions
       responses:
         "200":
@@ -343,7 +343,7 @@ paths:
       - name: roleId
         in: path
         required: true
-        description: Role identifier.
+        description: Unique role identifier (slug). Lowercase letters, digits, and hyphens are expected; value is immutable for an existing role.
         schema:
           type: string
           pattern: "^[a-z0-9-]"
@@ -353,14 +353,14 @@ paths:
         - Roles
       summary: Update role
       description: |
-        Change role parameters.
+        Update role parameters.
 
-        If the parameter is not transmitted in the request, its value remains unchanged.
+        If a parameter is not provided in the request, its value remains unchanged.
 
-        Read only roles can't be updated.
+        Read-only roles cannot be updated.
       operationId: patchRolesId
       requestBody:
-        description: Role update parameters.
+        description: Role update payload. Omitted fields are left unchanged; provided permissions replace the current permission list.
         content:
           application/json:
             schema:
@@ -418,11 +418,11 @@ paths:
         - Roles
       summary: Delete role
       description: |
-        Delete a role with its permissions.
+        Permanently delete a role and its permission assignment.
 
-        When the role is deleted, all users with that role shall be removed from packages.
+        When a role is deleted, users that had this role are removed from package membership lists where it was assigned.
 
-        Roles with **readOnly:true** flag can't be deleted.
+        Roles with **readOnly:true** cannot be deleted.
       operationId: deleteRolesId
       responses:
         "204":
@@ -461,17 +461,17 @@ paths:
         - Roles
       summary: Update the roles order
       description: |
-        Update the roles order.
+        Replace the global role display/order configuration with the submitted ordered list.
 
-        The list of roles will be replaced, all existing roles are required in request (return an error otherwise).
+        The request must contain each existing role exactly once; missing or duplicate role IDs cause a 400 error. The change is applied atomically.
       operationId: postRolesChangeOrder
       requestBody:
-        description: Roles list
+        description: Ordered list of role IDs representing the complete desired role order.
         content:
           application/json:
             schema:
               type: object
-              description: List of roles.
+              description: Payload containing the complete ordered role list. Order is significant and all existing roles must be present exactly once.
               required:
                 - roles
               properties:
@@ -514,7 +514,7 @@ paths:
       tags:
         - Roles
       summary: Get list of system administrators
-      description: Get list of system administrators.
+      description: Retrieve all users currently configured as system administrators.
       operationId: getAdmins
       responses:
         "200":
@@ -567,7 +567,7 @@ paths:
                 - userId
               properties:
                 userId:
-                  description: Login of the user.
+                  description: User login (username), for example user1221.
                   type: string
                   example: user1221
       responses:
@@ -617,7 +617,7 @@ paths:
       operationId: deleteAdminsId
       parameters:
         - name: userId
-          description: Login of the user.
+          description: User login (username), for example user1221.
           in: path
           required: true
           schema:
@@ -660,13 +660,13 @@ paths:
         - Admin
       summary: Get build result archive
       description: |
-        Download build result archive by build ID.
+        Download the build result archive for a completed build. The response body is a binary stream (application/octet-stream) containing build artifacts.
       operationId: getBuildResult
       parameters:
         - name: buildId
           in: path
           required: true
-          description: Build ID
+          description: Build identifier string returned by build operations (internal build ID).
           schema:
             type: string
       responses:
@@ -716,7 +716,7 @@ paths:
         - name: buildId
           in: path
           required: true
-          description: Build ID
+          description: Build identifier string returned by build operations (internal build ID).
           schema:
             type: string
       responses:
@@ -760,7 +760,7 @@ paths:
         - Admin
       summary: Start operations migration
       description: |
-        Start operations migration process.
+        Start an asynchronous operations migration job. Use the returned migration ID to check status, reports, and diagnostics endpoints.
       operationId: startOpsMigration
       requestBody:
         required: true
@@ -773,19 +773,19 @@ paths:
                   type: array
                   items:
                     type: string
-                  description: List of package IDs to migrate
+                  description: Optional list of package IDs to migrate. If omitted, migration scope is determined by server-side defaults.
                 versions:
                   type: array
                   items:
                     type: string
-                  description: List of versions to migrate
+                  description: Optional list of versions to migrate (for example, 1.0.0 or 1.0.0@2). If omitted, all eligible versions are processed.
                 rebuildChangelogOnly:
                   type: boolean
-                  description: Rebuild changelog only
+                  description: If true, only changelog data is rebuilt; no full operations migration is performed.
                   default: false
                 skipValidation:
                   type: boolean
-                  description: Skip validation
+                  description: If true, pre-migration validation checks are skipped. Use with caution because invalid data may propagate to reports.
                   default: false
       responses:
         "201":
@@ -837,13 +837,13 @@ paths:
         - Admin
       summary: Get migration status
       description: |
-        Get migration report by migration ID.
+        Retrieve migration status and report data for a migration job identified by migrationId.
       operationId: getMigrationReport
       parameters:
         - name: migrationId
           in: path
           required: true
-          description: Migration ID
+          description: Migration job identifier returned by the start migration operation.
           schema:
             type: string
       responses:
@@ -881,31 +881,31 @@ paths:
         - Admin
       summary: Get suspicious builds
       description: |
-        Get suspicious builds for migration.
+        Retrieve suspicious build records detected during the specified migration. Use query parameters to filter and paginate the result set.
       operationId: getSuspiciousBuilds
       parameters:
         - name: migrationId
           in: path
           required: true
-          description: Migration ID
+          description: Migration job identifier returned by the start migration operation.
           schema:
             type: string
         - name: changedField
           in: query
           required: false
-          description: Changed field filter
+          description: Optional filter by changed field name; returns only suspicious records where this field changed.
           schema:
             type: string
         - name: limit
           in: query
           required: false
-          description: Limit
+          description: Maximum number of items returned per page.
           schema:
             type: integer
         - name: page
           in: query
           required: false
-          description: Page number
+          description: Page number for paginated results (1-based).
           schema:
             type: integer
       responses:
@@ -938,25 +938,25 @@ paths:
         - Admin
       summary: Get migration performance report
       description: |
-        Get migration performance report.
+        Retrieve performance metrics for the specified migration, including stage-level timings and counters.
       operationId: getMigrationPerfReport
       parameters:
         - name: migrationId
           in: path
           required: true
-          description: Migration ID
+          description: Migration job identifier returned by the start migration operation.
           schema:
             type: string
         - name: includeHourPackageData
           in: query
           required: false
-          description: Include hour package data
+          description: If true, include per-hour package-level performance breakdowns (larger payload).
           schema:
             type: boolean
         - name: stageFilter
           in: query
           required: false
-          description: Stage filter
+          description: Optional stage name filter to return metrics only for matching migration stages.
           schema:
             type: string
       responses:
@@ -988,7 +988,7 @@ paths:
         - Admin
       summary: Cancel running migrations
       description: |
-        Cancel all running migrations.
+        Cancel currently running migration jobs. This operation is idempotent and safely returns success when no migration is running.
       operationId: cancelRunningMigrations
       responses:
         "200":
@@ -1015,26 +1015,26 @@ paths:
 components:
   schemas:
     ErrorResponse:
-      description: An error description
+      description: Standard error response returned for failed requests. Includes HTTP status, internal error code, human-readable message, optional message parameters, and optional debug details (non-production only).
       type: object
       properties:
         status:
-          description: HTTP Status Code
+          description: HTTP status code as an integer; expected to match the actual HTTP response status.
           type: number
         code:
           description: Internal string error code. Mandatory in response.
           type: string
         message:
-          description: The attribute contains an error message.
+          description: Human-readable error message describing what went wrong; intended for diagnostics and safe client display.
           type: string
         params:
           type: object
-          description: Message parameters
+          description: Optional key/value parameters used to format or contextualize the error message (for example, identifiers or field names).
           example:
             id: 12345
             type: string
         debug:
-          description: The attribute contains debug details (e.g. stack-trace). Presented in the error response only on Dev/Test environments if corresponding logging level is enabled.
+          description: Optional debug details (for example, stack traces). Returned only in development/test environments when verbose logging is enabled; do not rely on this field in production because it may contain sensitive data.
           type: string
       required:
         - status
@@ -1045,48 +1045,48 @@ components:
       properties:
         id:
           type: string
-          description: Move operation id
+          description: ID of the move operation returned by the move request (string identifier).
         trType:
           type: string
           description: Transition type
         fromId:
           type: string
-          description: Source package id
+          description: Source package ID before transition.
         toId:
           type: string
-          description: Destination package id
+          description: Destination package ID after transition.
         status:
           type: string
-          description: Operation status
+          description: Current operation status (for example: pending, running, completed, failed).
         startedBy:
           type: string
           description: User who started the operation
         startedAt:
           type: string
-          description: Time when the operation was started
+          description: Timestamp when the operation started (ISO 8601, UTC).
         finishedAt:
           type: string
-          description: Time when the operation was finished
+          description: Timestamp when the operation finished (ISO 8601, UTC).
         progressPercent:
           type: integer
           format: int32
-          description: Percent of complete. Values 0-100
+          description: Percentage complete (0-100, inclusive).
         affectedObjects:
           type: integer
           format: int32
-          description: Number of affected rows in DB
+          description: Number of affected rows in the database.
         completedSerialNumber:
           type: integer
           format: int32
-          description: Serial number of completed transition
+          description: Serial number of the completed transition record (internal monotonic identifier).
     User:
-      description: APIHUB user
+      description: Represents an APIHUB user returned by administration endpoints.
       type: object
       required:
         - id
       properties:
         id:
-          description: Login of the user
+          description: Unique user login (username) used to authenticate the user.
           type: string
           example: user1221
         name:
@@ -1099,11 +1099,11 @@ components:
           format: email
           example: "name.surname@qubership.org"
         avatarUrl:
-          description: Avatar of the user
+          description: URL of the user avatar image.
           type: string
           format: URL
     RoleCreate:
-      description: Role with set of permissions for creation.
+      description: Payload for creating a role, including the role name and the permissions to assign.
       type: object
       title: Role
       required:
@@ -1122,7 +1122,7 @@ components:
             $ref: "#/components/schemas/Permission"
           example: ["read", "create_and_update_package", "delete_package"]
     Role:
-      description: Role details.
+      description: Represents a role with its identifier, display name, and assigned permissions.
       type: object
       title: Role
       required:
@@ -1139,7 +1139,7 @@ components:
           description: Role name.
           example: Editor
     Permission:
-      description: Permission
+      description: Permission identifier that grants a specific capability when assigned to a role.
       type: string
       enum:
         - read
@@ -1159,7 +1159,7 @@ components:
         code: "APIHUB-COMMON-4001"
         message: "Incorrect input parameters"
     InternalServerError:
-      description: Default internal server error
+      description: Example: default internal server error response
       value:
         status: 500
         code: "APIHUB-8000"
@@ -1168,7 +1168,7 @@ components:
   securitySchemes:
     BearerAuth:
       type: http
-      description: Bearer token authentication. Default secutity scheme for API usage.
+      description: Bearer token authentication (JWT). Default security scheme for API usage. Provide Authorization: Bearer <token>.
       scheme: bearer
       bearerFormat: JWT
     CookieAuth:
@@ -1178,12 +1178,12 @@ components:
       description: Authentication via the `apihub-access-token` cookie.
     api-key:
       type: apiKey
-      description: Api-key authentication.
+      description: API key authentication. Send the key in the api-key header.
       name: api-key
       in: header
     PersonalAccessToken:
       type: apiKey
-      description: Authentication by personal access token.
+      description: Personal access token authentication. Send the token in the X-Personal-Access-Token header; use for user-issued/script access.
       name: X-Personal-Access-Token
       in: header
     RefreshTokenAuth:
