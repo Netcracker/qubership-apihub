@@ -51,6 +51,7 @@ import {
   enrichAsyncApiWithInlineRefs,
   extractProtocol,
   getAsyncMessageId,
+  getOrCreateFilteredChannel,
   isMessageObject,
   resolveAsyncApiOperationIdsFromRefs,
 } from './async.utils'
@@ -243,6 +244,9 @@ export const createOperationSpec = (
   const requestedIdsSet = new Set(operationIds)
 
   const selectedOperations: Record<string, AsyncAPIV3.OperationObject> = {}
+  // Maps source channel → filtered copy with only requested messages.
+  const filteredChannels = new Map<AsyncAPIV3.ChannelObject, AsyncAPIV3.ChannelObject>()
+
   for (const [asyncOperationId, operationData] of Object.entries(operations)) {
     if (!isObject(operationData)) {
       continue
@@ -257,6 +261,7 @@ export const createOperationSpec = (
     if (!action || !channel) {
       continue
     }
+    const channelObj = channel as AsyncAPIV3.ChannelObject
 
     for (const message of messages) {
       if (!isMessageObject(message)) {
@@ -275,13 +280,31 @@ export const createOperationSpec = (
       )
 
       if (requestedIdsSet.has(calculatedId)) {
-        selectedOperations[asyncOperationId] = operationObject
-        break
+        const selectedOperation = selectedOperations[asyncOperationId]
+        // Always update the shared filtered channel — both branches need the message registered
+        const filteredChannel = getOrCreateFilteredChannel(filteredChannels, channelObj, messageId)
+        if (selectedOperation) {
+          (selectedOperation.messages as AsyncAPIV3.MessageObject[]).push(message)
+        } else {
+          selectedOperations[asyncOperationId] = { ...operationObject, messages: [message], channel: filteredChannel }
+        }
       }
     }
   }
 
-  return createBaseAsyncApiSpec(normalizedDocument, selectedOperations)
+  // Build root channels record from filtered channels, keyed by their original name
+  let channels: Record<string, AsyncAPIV3.ChannelObject> | undefined
+  if (filteredChannels.size > 0 && normalizedDocument.channels) {
+    channels = {}
+    for (const [channelName, channelObj] of Object.entries(normalizedDocument.channels)) {
+      const filteredChannel = filteredChannels.get(channelObj as AsyncAPIV3.ChannelObject)
+      if (filteredChannel) {
+        channels[channelName] = filteredChannel
+      }
+    }
+  }
+
+  return createBaseAsyncApiSpec(normalizedDocument, selectedOperations, channels)
 }
 
 /**

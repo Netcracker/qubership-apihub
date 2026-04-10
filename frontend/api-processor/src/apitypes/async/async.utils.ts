@@ -44,7 +44,7 @@ import {
   INLINE_REFS_FLAG,
 } from '../../consts'
 import { WithAggregatedDiffs, WithDiffMetaRecord } from '../../types'
-import { Diff, DiffAction, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import { Diff, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 
 // Re-export shared utilities
 export { dump, getCustomTags, resolveApiAudience } from '../../utils/apihubSpecificationExtensions'
@@ -131,6 +131,26 @@ export const getAsyncChannelId = (channel: AsyncAPIV3.ChannelObject): string => 
   return getAsyncObjectId(channel)
 }
 
+/**
+ * Returns a filtered copy of the channel, creating one if it doesn't exist yet.
+ * All operations that share the same source channel will get the same filtered instance,
+ * accumulating only the messages that are actually requested.
+ */
+export const getOrCreateFilteredChannel = (
+  channelCache: Map<AsyncAPIV3.ChannelObject, AsyncAPIV3.ChannelObject>,
+  sourceChannel: AsyncAPIV3.ChannelObject,
+  messageId: string,
+): AsyncAPIV3.ChannelObject => {
+  let filteredChannel = channelCache.get(sourceChannel)
+  if (!filteredChannel) {
+    filteredChannel = { ...sourceChannel, messages: { [messageId]: sourceChannel.messages![messageId] } }
+    channelCache.set(sourceChannel, filteredChannel)
+  } else {
+    filteredChannel.messages![messageId] = sourceChannel.messages![messageId]
+  }
+  return filteredChannel
+}
+
 export const checkHasAsyncApiOperations = (
   document: AsyncAPIV3.AsyncAPIObject,
 ): Record<string, AsyncAPIV3.OperationObject> => {
@@ -143,14 +163,20 @@ export const checkHasAsyncApiOperations = (
   return operations as Record<string, AsyncAPIV3.OperationObject>
 }
 
+/**
+ * Creates the base AsyncAPI operation spec containing only the essential
+ * contract elements: version, info, operations, and channels.
+ */
 export const createBaseAsyncApiSpec = (
   document: AsyncAPIV3.AsyncAPIObject,
   operations: Record<string, AsyncAPIV3.OperationObject>,
+  channels?: AsyncAPIV3.ChannelsObject,
 ): TYPE.AsyncOperationData => ({
   asyncapi: document.asyncapi || '3.0.0',
   info: document.info,
   ...takeIfDefined({ id: document.id }),
   ...takeIfDefined({ defaultContentType: document.defaultContentType }),
+  ...takeIfDefined({ channels }),
   operations,
 })
 
