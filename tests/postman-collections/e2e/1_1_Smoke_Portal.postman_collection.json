@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "1_1_Smoke_Portal",
-        "_postman_id": "92013e29-1ffd-46d6-8762-bfdc49dec03c",
+        "_postman_id": "6e360dff-bc01-44c8-9014-7112fdad939c",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "item": [
@@ -2986,7 +2986,7 @@
                                             "    data.events.forEach((event, index) => {\r",
                                             "        pm.expect(event).to.have.property(\"principal\");\r",
                                             "        const id = event.principal.id;\r",
-                                            "        pm.expect([\"x_apihub\", \"x_APIHUB\"]).to.include(id, `Wrong id for event #${index + 1}`);\r",
+                                            "        pm.expect([\"x_apihub\", \"x_APIHUB\"]).to.include(id, `Неправильний id у event №${index + 1}`);\r",
                                             "    });\r",
                                             "});\r",
                                             ""
@@ -16035,10 +16035,22 @@
                                     "\r",
                                     "var data = pm.response.json();\r",
                                     "\r",
-                                    "pm.test(\"All default premissions exist\", function(){\r",
-                                    "    for (var i = 0; i<data.permissions.length; i++) {\r",
-                                    "        pm.expect(data.permissions[i].permission).to.be.oneOf(['read','create_and_update_package','delete_package','manage_draft_version','manage_release_version','manage_archived_version','user_access_management','access_token_management','document_shareability_management'])\r",
-                                    "    }\r",
+                                    "pm.test(\"All default permissions exist\", function(){\r",
+                                    "    const expectedPermissions = [\r",
+                                    "        'read',\r",
+                                    "        'create_and_update_package',\r",
+                                    "        'delete_package',\r",
+                                    "        'manage_draft_version',\r",
+                                    "        'manage_release_version',\r",
+                                    "        'manage_archived_version',\r",
+                                    "        'user_access_management',\r",
+                                    "        'access_token_management',\r",
+                                    "        'document_shareability_management' // Додано сюди\r",
+                                    "    ];\r",
+                                    "\r",
+                                    "    data.permissions.forEach(function(item) {\r",
+                                    "        pm.expect(item.permission).to.be.oneOf(expectedPermissions);\r",
+                                    "    });\r",
                                     "});"
                                 ]
                             }
