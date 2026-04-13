@@ -46,7 +46,7 @@ paths:
       tags:
         - Transition
       summary: Move package
-      description: Change a package ID (rename or move to another parent package). This is an asynchronous operation: the response returns an operation ID, and clients must query /api/v2/admin/transition/move/{id} to track status and completion.
+      description: "Change a package ID (rename or move to another parent package). This is an asynchronous operation: the response returns an operation ID, and clients must query /api/v2/admin/transition/move/{id} to track status and completion."
       operationId: movePackage
       requestBody:
         description: Parameters of the source package ID and destination package ID used for the move operation.
@@ -1057,7 +1057,7 @@ components:
           description: Destination package ID after transition.
         status:
           type: string
-          description: Current operation status (for example: pending, running, completed, failed).
+          description: "Current operation status (for example: pending, running, completed, failed)."
         startedBy:
           type: string
           description: User who started the operation
@@ -1159,7 +1159,7 @@ components:
         code: "APIHUB-COMMON-4001"
         message: "Incorrect input parameters"
     InternalServerError:
-      description: Example: default internal server error response
+      description: "Example: default internal server error response"
       value:
         status: 500
         code: "APIHUB-8000"
@@ -1168,7 +1168,7 @@ components:
   securitySchemes:
     BearerAuth:
       type: http
-      description: Bearer token authentication (JWT). Default security scheme for API usage. Provide Authorization: Bearer <token>.
+      description: "Bearer token authentication (JWT). Default security scheme for API usage. Provide Authorization: Bearer <token>."
       scheme: bearer
       bearerFormat: JWT
     CookieAuth:

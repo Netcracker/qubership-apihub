@@ -12078,7 +12078,7 @@ components:
         code: "APIHUB-4101"
         message: "Authentication required"
     InternalServerError:
-      description: Example: default internal server error response
+      description: "Example: default internal server error response"
       value:
         status: 500
         code: "APIHUB-8000"
@@ -12087,7 +12087,7 @@ components:
   securitySchemes:
     BearerAuth:
       type: http
-      description: Bearer token authentication (JWT). Default security scheme for API usage. Provide Authorization: Bearer <token>.
+      description: "Bearer token authentication (JWT). Default security scheme for API usage. Provide Authorization: Bearer <token>."
       scheme: bearer
       bearerFormat: JWT
     CookieAuth:
