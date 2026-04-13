@@ -17,7 +17,7 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { HttpService } from '@nestjs/axios'
-import { catchError, lastValueFrom, map, ObservableInput, of, retry, throwError, timer } from 'rxjs'
+import { catchError, defer, lastValueFrom, map, ObservableInput, of, retry, throwError, timer } from 'rxjs'
 import FormData from 'form-data'
 import { BuildStatus } from '../builder/builder.constants'
 import { getResponseError } from '../../utils/errors'
@@ -80,27 +80,28 @@ export class RegistryService implements OnModuleInit {
   }
 
   public async postBuildStatus(packageId: string, publishId: string, builderId: string, status: BuildStatus, data?: any, exportFileName?: string): Promise<void> {
-    const formData = new FormData()
-    formData.append('status', toBackendBuildStatus(status))
-    // todo: uncomment the code below after the backend starts to support asynchronous publishing
-    // formData.append('status', toBackendBuildStatus(status, true))
-    formData.append('builderId', builderId)
-    if (status === BuildStatus.ERROR) {
-      const errorMessage = getResponseError(data?.response?.data) ?? `${data}`
-      const debugMessage = data?.response?.data?.debug ?? ''
-      formData.append('errors', debugMessage ? `${errorMessage} (debug: ${debugMessage})` : errorMessage)
-      this.logger.error(`[POST Build Status] Sending error ${errorMessage}`)
-    } else if (status === BuildStatus.COMPLETE) {
-      formData.append('data', data, exportFileName ?? 'package.zip')
-      this.logger.log(`[POST Build Status] Sending completed`)
-    }
-
     const encodedPackageKey = encodeURIComponent(packageId)
     const publishStatusUrl = `${this.baseUrl}/api/v3/packages/${encodedPackageKey}/publish/${publishId}/status`
     // const publishStatusUrl = `${this.baseUrl}/api/v3/packages/${encodedPackageKey}/publish/${publishId}/status/async`
-    return lastValueFrom(this.httpService
-      .post(publishStatusUrl, formData, { headers: { ...formData.getHeaders(), ...this.headers } })
-      .pipe(
+
+    return lastValueFrom(
+      defer(() => {
+        const formData = new FormData()
+        formData.append('status', toBackendBuildStatus(status))
+        // todo: uncomment the code below after the backend starts to support asynchronous publishing
+        // formData.append('status', toBackendBuildStatus(status, true))
+        formData.append('builderId', builderId)
+        if (status === BuildStatus.ERROR) {
+          const errorMessage = getResponseError(data?.response?.data) ?? `${data}`
+          const debugMessage = data?.response?.data?.debug ?? ''
+          formData.append('errors', debugMessage ? `${errorMessage} (debug: ${debugMessage})` : errorMessage)
+          this.logger.error(`[POST Build Status] Sending error ${errorMessage}`)
+        } else if (status === BuildStatus.COMPLETE) {
+          formData.append('data', data, exportFileName ?? 'package.zip')
+          this.logger.log(`[POST Build Status] Sending completed`)
+        }
+        return this.httpService.post(publishStatusUrl, formData, { headers: { ...formData.getHeaders(), ...this.headers } })
+      }).pipe(
         retry({ delay: this.requestRetryHandler('[postBuildStatus]') }),
         map((response) => response.data),
       ),
