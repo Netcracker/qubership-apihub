@@ -36,7 +36,6 @@ import {
   DocumentsCompareData,
   OperationChanges,
   ResolvedVersionDocument,
-  WithAggregatedDiffs,
   WithDiffMetaRecord,
 } from '../../types'
 import {
@@ -49,11 +48,10 @@ import {
 import { createAsyncApiCompatibilityScopeFunction } from '../../components/compare/async.bwc.validation'
 import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
 import {
-  collectChannelMessageDefinitionDiffs,
-  collectExclusiveOtherMessageDiffs,
-  extractAsyncApiVersionDiff,
-  extractIdDiff,
+  extractAggregatedDiffs,
   extractInfoDiffs,
+  extractOwnDiffs,
+  extractOwnPropertyDiff,
   getAsyncMessageId,
 } from './async.utils'
 
@@ -113,12 +111,12 @@ export const compareDocuments: DocumentsCompare = async (
   const operationChanges: OperationChanges[] = []
 
   // Precompute root-level diffs once (shared across all operations)
-  const asyncApiVersionDiffs = extractAsyncApiVersionDiff(merged)
+  const asyncApiVersionDiffs = extractOwnPropertyDiff(merged, 'asyncapi')
   const infoDiffs = extractInfoDiffs(merged)
-  const idDiffs = extractIdDiff(merged)
+  const idDiffs = extractOwnPropertyDiff(merged, 'id')
   // Note: defaultContentType changes are handled by normalization inside apiDiff.
   // Messages without explicit contentType inherit from defaultContentType during normalization,
-  // so changes to defaultContentType automatically appear in allOperationDiffs for affected messages.
+  // so changes to defaultContentType automatically appear in the message's aggregated diffs.
 
   // Iterate through operations in merged document
   const { operations: asyncOperations } = merged
@@ -155,13 +153,28 @@ export const compareDocuments: DocumentsCompare = async (
 
         let operationDiffs: Diff[] = []
         if (operationPotentiallyChanged) {
-          const allOperationDiffs = (operationObject as WithAggregatedDiffs<AsyncAPIV3.OperationObject>)[DIFFS_AGGREGATED_META_KEY] ?? []
-
-          const otherMessageDiffs = collectExclusiveOtherMessageDiffs(messages, messageIndex)
-          const channelMessageDiffs = collectChannelMessageDefinitionDiffs(operationChannel as AsyncAPIV3.ChannelObject)
-
+          const channel = operationObject.channel as AsyncAPIV3.ChannelObject
+          // Aggregated — subtree is exclusive to this apihub operation.
+          // Own — subtree has siblings belonging to other apihub operations,
+          // so rollup would leak their diffs.
           operationDiffs = [
-            ...([...allOperationDiffs].filter(diff => !otherMessageDiffs.has(diff) && !channelMessageDiffs.has(diff))),
+            ...extractAggregatedDiffs(message),              // leaf of this apihub operation
+            ...extractOwnDiffs(operationObject),             // siblings: messages[]
+            ...extractOwnDiffs(channel),                     // siblings: channel.messages (shared channels)
+            ...extractAggregatedDiffs(channel.servers),
+            ...extractAggregatedDiffs(operationObject.tags),
+            // exclusive-to-operation subtrees:
+            ...extractAggregatedDiffs(operationObject.security),
+            ...extractAggregatedDiffs(operationObject.externalDocs),
+            ...extractAggregatedDiffs(operationObject.bindings),
+            ...extractAggregatedDiffs(operationObject.reply),
+            // traits are merged into operation's own properties by normalization,
+            // so trait diffs surface via extractOwnDiffs(operationObject) above.
+            // channel subtrees (shared uniformly across operations on the channel):
+            ...extractAggregatedDiffs(channel.parameters),
+            ...extractAggregatedDiffs(channel.externalDocs),
+            ...extractAggregatedDiffs(channel.bindings),
+            ...extractAggregatedDiffs(channel.tags),
             ...asyncApiVersionDiffs,
             ...infoDiffs,
             ...idDiffs,

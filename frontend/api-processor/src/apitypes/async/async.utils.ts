@@ -298,86 +298,34 @@ export const resolveAsyncApiOperationIdsFromRefs = (
 }
 
 /**
- * Aggregated diffs on the operation level include diffs from ALL messages.
- * Since each apihub operation maps to a specific operation + message pair,
- * diffs from sibling messages must be excluded to prevent them from leaking
- * into unrelated apihub operations.
- *
- * Collects two kinds of diffs that belong exclusively to other messages:
- * 1. Aggregated content diffs from each sibling message object
- * 2. Array-level diffs for adding/removing sibling messages from the messages list
- *
- * Diffs shared between the current message and sibling messages (e.g. from a shared
- * component schema) are NOT included, so they won't be incorrectly filtered out.
+ * Aggregated diffs rolled up into the given object's subtree.
+ * Returns empty array if the object is nullish or carries no aggregated diffs.
  */
-export function collectExclusiveOtherMessageDiffs(messages: AsyncAPIV3.MessageObject[], currentMessageIndex: number): Set<Diff> {
-  const currentMessageDiffsArr = (messages[currentMessageIndex] as WithAggregatedDiffs<AsyncAPIV3.MessageObject>)[DIFFS_AGGREGATED_META_KEY]
-  const currentMessageDiffs = new Set(currentMessageDiffsArr ?? [])
-
-  const otherDiffs = new Set<Diff>()
-  for (const [messageIndex, message] of messages.entries()) {
-    if (messageIndex === currentMessageIndex) continue
-    const messageDiffs = (message as WithAggregatedDiffs<AsyncAPIV3.MessageObject>)[DIFFS_AGGREGATED_META_KEY]
-    if (messageDiffs) {
-      for (const messageDiff of messageDiffs) {
-        if (!currentMessageDiffs.has(messageDiff)) {
-          otherDiffs.add(messageDiff)
-        }
-      }
-    }
-  }
-  const messagesArrayMeta = (messages as WithDiffMetaRecord<AsyncAPIV3.MessageObject[]>)[DIFF_META_KEY]
-  if (messagesArrayMeta) {
-    for (const key in messagesArrayMeta) {
-      if (Number(key) !== currentMessageIndex) {
-        otherDiffs.add(messagesArrayMeta[key])
-      }
-    }
-  }
-  return otherDiffs
+export function extractAggregatedDiffs(obj: unknown): Diff[] {
+  return (obj as WithAggregatedDiffs<object> | undefined)?.[DIFFS_AGGREGATED_META_KEY] ?? []
 }
 
 /**
- * Collects diffs for adding/removing message definitions in channel.messages.
- * These are channel-level definition changes that should not propagate to operations,
- * because what matters is whether the operation's own messages array references a message,
- * not whether the channel defines it.
+ * Point diffs on the object's direct properties (not inside nested subtrees).
+ * For an operation: action, title, summary, etc.
+ * For a channel: address, title, description, etc.
  */
-export function collectChannelMessageDefinitionDiffs(operationChannel: AsyncAPIV3.ChannelObject): Set<Diff> {
-  const channelMessages = (operationChannel as Record<string, unknown>).messages
-  if (!isObject(channelMessages)) {
-    return new Set()
-  }
-  const diffs = new Set<Diff>()
-  const messagesMeta = (channelMessages as WithDiffMetaRecord<object>)[DIFF_META_KEY]
-  if (messagesMeta) {
-    for (const key in messagesMeta) {
-      diffs.add(messagesMeta[key])
-    }
-  }
-  return diffs
+export function extractOwnDiffs(obj: object): Diff[] {
+  const meta = (obj as unknown as WithDiffMetaRecord<object>)[DIFF_META_KEY]
+  return meta ? Object.values(meta) : []
 }
 
-export function extractAsyncApiVersionDiff(doc: AsyncAPIV3.AsyncAPIObject): Diff[] {
-  const diff = (doc as WithDiffMetaRecord<AsyncAPIV3.AsyncAPIObject>)[DIFF_META_KEY]?.asyncapi
+/**
+ * Point diff on a single named property of the object (if present).
+ */
+export function extractOwnPropertyDiff(obj: object, property: string): Diff[] {
+  const diff = (obj as unknown as WithDiffMetaRecord<object>)[DIFF_META_KEY]?.[property]
   return diff ? [diff] : []
 }
 
 export function extractInfoDiffs(doc: AsyncAPIV3.AsyncAPIObject): Diff[] {
-  const addOrRemoveInfoDiff = (doc as WithDiffMetaRecord<AsyncAPIV3.AsyncAPIObject>)[DIFF_META_KEY]?.info
-  const infoInternalDiffs = (doc.info as WithAggregatedDiffs<AsyncAPIV3.InfoObject>)?.[DIFFS_AGGREGATED_META_KEY] ?? []
   return [
-    ...(addOrRemoveInfoDiff ? [addOrRemoveInfoDiff] : []),
-    ...infoInternalDiffs,
+    ...extractOwnPropertyDiff(doc, 'info'),
+    ...extractAggregatedDiffs(doc.info),
   ]
-}
-
-export function extractIdDiff(doc: AsyncAPIV3.AsyncAPIObject): Diff[] {
-  const diff = (doc as WithDiffMetaRecord<AsyncAPIV3.AsyncAPIObject>)[DIFF_META_KEY]?.id
-  return diff ? [diff] : []
-}
-
-export function extractDefaultContentTypeDiff(doc: AsyncAPIV3.AsyncAPIObject): Diff[] {
-  const diff = (doc as WithDiffMetaRecord<AsyncAPIV3.AsyncAPIObject>)[DIFF_META_KEY]?.defaultContentType
-  return diff ? [diff] : []
 }
