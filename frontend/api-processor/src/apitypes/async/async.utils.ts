@@ -26,6 +26,7 @@ import {
   takeIfDefined,
 } from '../../utils'
 import type * as TYPE from './async.types'
+import { AsyncOperationData } from './async.types'
 import {
   ASYNCAPI_PROPERTY_CHANNELS,
   ASYNCAPI_PROPERTY_COMPONENTS,
@@ -45,6 +46,8 @@ import {
 } from '../../consts'
 import { WithAggregatedDiffs, WithDiffMetaRecord } from '../../types'
 import { Diff, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+
+import { getCustomTags } from '../../utils/apihubSpecificationExtensions'
 
 // Re-export shared utilities
 export { dump, getCustomTags, resolveApiAudience } from '../../utils/apihubSpecificationExtensions'
@@ -151,8 +154,29 @@ export const getOrCreateFilteredChannel = (
   return filteredChannel
 }
 
-export const checkHasAsyncApiOperations = (
-  document: AsyncAPIV3.AsyncAPIObject,
+/**
+ * Builds the root `channels` record for a cropped spec by picking only the
+ * source channels that have a filtered counterpart, keyed by their original name.
+ */
+export const buildFilteredChannelsRecord = (
+  sourceChannels: AsyncAPIV3.ChannelsObject | undefined,
+  filteredChannels: Map<AsyncAPIV3.ChannelObject, AsyncAPIV3.ChannelObject>,
+): Record<string, AsyncAPIV3.ChannelObject> | undefined => {
+  if (filteredChannels.size === 0 || !sourceChannels) {
+    return undefined
+  }
+  const channels: Record<string, AsyncAPIV3.ChannelObject> = {}
+  for (const [channelName, channelObj] of Object.entries(sourceChannels)) {
+    const filteredChannel = filteredChannels.get(channelObj as AsyncAPIV3.ChannelObject)
+    if (filteredChannel) {
+      channels[channelName] = filteredChannel
+    }
+  }
+  return channels
+}
+
+export const getAsyncApiOperations = (
+  document: AsyncAPIV3.AsyncAPIObject | TYPE.AsyncOperationData,
 ): Record<string, AsyncAPIV3.OperationObject> => {
   const operations = document?.operations
   if (!operations) {
@@ -166,26 +190,52 @@ export const checkHasAsyncApiOperations = (
 /**
  * Creates the base AsyncAPI operation spec containing only the essential
  * contract elements: version, info, operations, and channels.
+ *
+ * Root-level specification extensions (`x-*`) from the source document are
+ * carried over as-is (via {@link getCustomTags}).
+ *
+ * `defaultContentType` is NOT copied from the document automatically — callers
+ * must decide whether to include it (see {@link getRequiredDefaultContentType}).
  */
 export const createBaseAsyncApiSpec = (
   document: AsyncAPIV3.AsyncAPIObject,
   operations: Record<string, AsyncAPIV3.OperationObject>,
   channels?: AsyncAPIV3.ChannelsObject,
+  defaultContentType?: string,
 ): TYPE.AsyncOperationData => ({
   asyncapi: document.asyncapi || '3.0.0',
   info: document.info,
   ...takeIfDefined({ id: document.id }),
-  ...takeIfDefined({ defaultContentType: document.defaultContentType }),
+  ...takeIfDefined({ defaultContentType }),
   ...takeIfDefined({ channels }),
   operations,
+  ...getCustomTags(document),
 })
 
-export const enrichAsyncApiWithInlineRefs = (
-  resultSpec: TYPE.AsyncOperationData,
+/**
+ * Computes the effective root `defaultContentType` for a composed operation spec.
+ *
+ * Rule: include the source document's `defaultContentType` only when
+ * at least one of the selected messages does not specify its own `contentType`.
+ * If every selected message already carries an explicit `contentType`, the root
+ * value would be redundant and is omitted.
+ */
+export const getRequiredDefaultContentType = (
   document: AsyncAPIV3.AsyncAPIObject,
-  refsDocument: AsyncAPIV3.AsyncAPIObject,
+  selectedMessages: AsyncAPIV3.MessageObject[],
+): string | undefined => {
+  const rootDefault = document.defaultContentType
+  if (!rootDefault) { return undefined }
+  const anyMessageLacksContentType = selectedMessages.some(message => !message.contentType)
+  return anyMessageLacksContentType ? rootDefault : undefined
+}
+
+export const enrichAsyncApiDocumentWithRefs = (
+  resultSpec: AsyncOperationData,
+  document: AsyncAPIV3.AsyncAPIObject,
+  refsSource: AsyncOperationData,
 ): void => {
-  const inlineRefs = getInlineRefsFomDocument(refsDocument)
+  const inlineRefs = getInlineRefsFomDocument(refsSource)
 
   const componentNameMatcher = grepValue('componentName')
   const matchPatterns = [
@@ -215,44 +265,71 @@ export const enrichAsyncApiWithInlineRefs = (
   })
 }
 
+/**
+ * Builds a cropped AsyncAPI spec from the original (non-normalized) source
+ * document, keeping only the operations and messages that match the provided
+ * refs.
+ *
+ * For each matched operation, source messages are filtered to those whose
+ * `$ref` appears in the matched set. The corresponding resolved messages from
+ * `refsDocument` are used to determine whether root `defaultContentType`
+ * should be preserved (via {@link getRequiredDefaultContentType}).
+ *
+ * @param sourceDocument Original AsyncAPI document (non-normalized).
+ * @param matchedMessageRefsByOperation Map of asyncOperationId → set of
+ *   matched message `$ref` strings (produced by {@link matchMessageRefsByOperations}).
+ * @param refsDocument Normalized document carrying resolved (non-ref) messages
+ *   aligned positionally with `sourceDocument` messages.
+ */
 export const buildAsyncApiSpecFromDocument = (
   sourceDocument: AsyncAPIV3.AsyncAPIObject,
-  resolved: Map<string, Set<string>>,
+  matchedMessageRefsByOperation: Map<string, Set<string>>,
+  refsDocument: TYPE.AsyncOperationData,
 ): TYPE.AsyncOperationData => {
-  const operations = checkHasAsyncApiOperations(sourceDocument)
+  const sourceOperations = getAsyncApiOperations(sourceDocument)
+  const refsOperations = getAsyncApiOperations(refsDocument)
 
   const selectedOperations: Record<string, AsyncAPIV3.OperationObject> = {}
-  for (const [asyncOperationId, matchedRefs] of resolved.entries()) {
-    const sourceOperation = operations[asyncOperationId]
+  // Resolved messages are collected to decide whether root defaultContentType is needed
+  const resolvedMessages: AsyncAPIV3.MessageObject[] = []
 
+  for (const [asyncOperationId, matchedRefs] of matchedMessageRefsByOperation.entries()) {
+    const sourceOperation = sourceOperations[asyncOperationId]
     if (!sourceOperation || isReferenceObject(sourceOperation)) {
       continue
     }
 
     const sourceMessages = sourceOperation.messages || []
-    const filteredMessages = sourceMessages.filter(
-      message => isReferenceObject(message) && matchedRefs.has(message.$ref),
-    )
+    const refsMessages = (refsOperations[asyncOperationId]?.messages as AsyncAPIV3.MessageObject[] | undefined) ?? []
+    const filteredMessages: (AsyncAPIV3.MessageObject | AsyncAPIV3.ReferenceObject)[] = []
 
-    if (filteredMessages.length === 0) {
-      continue
-    }
+    sourceMessages.forEach((message, index) => {
+      if (isReferenceObject(message) && matchedRefs.has(message.$ref)) {
+        filteredMessages.push(message)
+        const resolvedMessage = refsMessages[index]
+        if (resolvedMessage) { resolvedMessages.push(resolvedMessage) }
+      }
+    })
 
-    selectedOperations[asyncOperationId] = {
-      ...sourceOperation,
-      messages: filteredMessages,
+    if (filteredMessages.length > 0) {
+      selectedOperations[asyncOperationId] = {
+        ...sourceOperation,
+        messages: filteredMessages,
+      }
     }
   }
 
-  return createBaseAsyncApiSpec(sourceDocument, selectedOperations)
+  const defaultContentType = getRequiredDefaultContentType(sourceDocument, resolvedMessages)
+
+  return createBaseAsyncApiSpec(sourceDocument, selectedOperations, undefined, defaultContentType)
 }
 
-export const resolveAsyncApiOperationIdsFromRefs = (
+export const matchMessageRefsByOperations = (
   refOperations: Record<string, AsyncAPIV3.OperationObject>,
   requestedOperationIds: string[],
 ): Map<string, Set<string>> => {
   const requestedIdsSet = new Set(requestedOperationIds)
-  const resolved = new Map<string, Set<string>>()
+  const matchedMessageRefsByOperation = new Map<string, Set<string>>()
 
   for (const [asyncOperationId, operationData] of Object.entries(refOperations)) {
     if (!isObject(operationData)) {
@@ -284,17 +361,17 @@ export const resolveAsyncApiOperationIdsFromRefs = (
         continue
       }
 
-      let messageRefsForOperation = resolved.get(asyncOperationId)
+      let messageRefsForOperation = matchedMessageRefsByOperation.get(asyncOperationId)
       if (!messageRefsForOperation) {
         messageRefsForOperation = new Set()
-        resolved.set(asyncOperationId, messageRefsForOperation)
+        matchedMessageRefsByOperation.set(asyncOperationId, messageRefsForOperation)
       }
 
       messageRefsForOperation.add(lastInlineRef)
     }
   }
 
-  return resolved
+  return matchedMessageRefsByOperation
 }
 
 /**
@@ -329,3 +406,9 @@ export function extractInfoDiffs(doc: AsyncAPIV3.AsyncAPIObject): Diff[] {
     ...extractAggregatedDiffs(doc.info),
   ]
 }
+
+export function extractIdDiff(doc: AsyncAPIV3.AsyncAPIObject): Diff[] {
+  const diff = (doc as WithDiffMetaRecord<AsyncAPIV3.AsyncAPIObject>)[DIFF_META_KEY]?.id
+  return diff ? [diff] : []
+}
+
