@@ -80,7 +80,7 @@ export const requiredItemClassifyRule: ClassifyRule = [
   nonBreaking,
   ({ after }) => (!isString(after.value) || isExist(strictResolveValueFromContext(after, PARENT_JUMP, PARENT_JUMP, 'properties', after.value, 'default')) ? nonBreaking : breaking),
   nonBreaking,
-  breaking,
+  risky,
   breaking,
 ]
 

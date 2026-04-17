@@ -674,7 +674,7 @@ export function runGeneralSchemaTests(
           expect.objectContaining({
             action: DiffAction.remove,
             beforeDeclarationPaths: [[...commonPath, 'required', 0]],
-            type: expectedType(nonBreaking, breaking),
+            type: expectedType(nonBreaking, risky),
           }),
         ], skipScopesRoot))
       })
@@ -685,7 +685,7 @@ export function runGeneralSchemaTests(
           expect.objectContaining({
             action: DiffAction.remove,
             beforeDeclarationPaths: [[...commonPath, 'required', 0]],
-            type: expectedType(nonBreaking, breaking),
+            type: expectedType(nonBreaking, risky),
           }),
           expect.objectContaining({
             action: DiffAction.add,
