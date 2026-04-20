@@ -8015,6 +8015,125 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  "/api/v2/packages/{packageId}/versions/{version}/export/shareability-report":
+    parameters:
+      - $ref: "#/components/parameters/packageId"
+      - $ref: "#/components/parameters/version"
+    get:
+      tags:
+        - Export
+      summary: Generate shareability report
+      description: |
+        Generate a shareability status xlsx report for all documents in a group, including all sub-groups and packages.
+        Rows are sorted by package name, document name, slug. Requires read permission on the group.
+      operationId: generateShareabilityReport
+      responses:
+        "200":
+          description: Success
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+                description: xlsx file to download
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                description: xlsx file name
+                example: 'attachment; filename="shareability_report_group.id_2024.1_20240101120000.xlsx"'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/shareability/bulk-update":
+    post:
+      tags:
+        - Documents
+      summary: Bulk update document shareability
+      description: |
+        Upload a shareability report xlsx file to bulk-update shareability statuses for all documents with changed values.
+        `document_shareability_management` is required for all packages listed in the report.
+      operationId: bulkUpdateDocumentShareability
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+              description: Shareability report xlsx file
+      responses:
+        "204":
+          description: Shareability statuses updated successfully
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
   "/api/v1/packages/{packageId}/versions/{version}/version-internal-documents":
     parameters:
       - $ref: "#/components/parameters/packageId"

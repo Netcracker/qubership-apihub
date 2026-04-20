@@ -245,7 +245,7 @@ func main() {
 	portalService := service.NewPortalService(basePath, publishedService, publishedRepository)
 
 	operationGroupService := service.NewOperationGroupService(operationRepository, publishedRepository, exportRepository, packageVersionEnrichmentService, activityTrackingService)
-	versionService := service.NewVersionService(favoritesRepository, publishedRepository, publishedService, operationRepository, exportRepository, operationService, activityTrackingService, systemInfoService, packageVersionEnrichmentService, portalService, versionCleanupRepository, operationGroupService, monitoringService)
+	versionService := service.NewVersionService(favoritesRepository, publishedRepository, publishedService, operationRepository, exportRepository, operationService, activityTrackingService, systemInfoService, packageVersionEnrichmentService, portalService, versionCleanupRepository, operationGroupService, monitoringService, roleService)
 	packageService := service.NewPackageService(favoritesRepository, publishedRepository, versionService, roleService, activityTrackingService, monitoringService, operationGroupService, usersRepository, ptHandler, systemInfoService)
 
 	logsService := service.NewLogsService()
@@ -304,7 +304,7 @@ func main() {
 	exportController := controller.NewExportController(publishedService, portalService, roleService, excelService, versionService, monitoringService, exportService, packageService)
 
 	packageController := controller.NewPackageController(packageService, publishedService, portalService, roleService, monitoringService, ptHandler)
-	versionController := controller.NewVersionController(versionService, roleService, monitoringService, ptHandler, roleService.IsSysadm)
+	versionController := controller.NewVersionController(versionService, roleService, monitoringService, ptHandler, roleService.IsSysadm, excelService, systemInfoService.GetShareabilityReportSizeLimitMB())
 	roleController := controller.NewRoleController(roleService)
 	samlAuthController := controller.NewSamlAuthController(userService, systemInfoService, idpManager) //deprecated
 	authController := controller.NewAuthController(systemInfoService, idpManager)
@@ -492,6 +492,7 @@ func main() {
 	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/export/changes", security.Secure(exportController.GenerateApiChangesExcelReportV3)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/export/operations", security.Secure(exportController.GenerateOperationsExcelReport)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/export/operations/deprecated", security.Secure(exportController.GenerateDeprecatedOperationsExcelReport)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/export/shareability-report", security.Secure(exportController.GenerateShareabilityReport)).Methods(http.MethodGet)
 
 	r.Path("/metrics").Handler(promhttp.Handler())
 	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/build/groups/{groupName}/buildType/{buildType}", security.Secure(transformationController.TransformDocuments_deprecated_2)).Methods(http.MethodPost)             //deprecated
@@ -523,6 +524,8 @@ func main() {
 	r.HandleFunc("/api/v1/version-internal-documents/{hash}", security.Secure(internalDocsController.GetVersionInternalDocumentData)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/comparison-internal-documents", security.Secure(internalDocsController.GetComparisonInternalDocuments)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/comparison-internal-documents/{hash}", security.Secure(internalDocsController.GetComparisonInternalDocumentData)).Methods(http.MethodGet)
+
+	r.HandleFunc("/api/v1/shareability/bulk-update", security.Secure(versionController.BulkUpdateDocumentShareability)).Methods(http.MethodPost)
 
 	//debug + cleanup
 	if !systemInfoService.GetSystemInfo().ProductionMode {

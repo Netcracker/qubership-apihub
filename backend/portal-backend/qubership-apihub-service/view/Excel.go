@@ -30,3 +30,22 @@ const OperationProtocolColumnName = "Protocol"
 const AsyncAPIActionColumnName = "Action"
 const AsyncOperationIdColumnName = "Async Operation ID"
 const MessageIdColumnName = "Message ID"
+
+const ShareabilityReportSheetName = "Shareability Report"
+const ShareabilityReportColPackageName = "Package Name"
+const ShareabilityReportColDocumentName = "Document Name"
+const ShareabilityReportColShareability = "Shareability"
+const ShareabilityReportColPackageId = "Package Id"
+const ShareabilityReportColPackageVersion = "Package Version"
+const ShareabilityReportColSlug = "Slug"
+
+type ShareabilityReportRow struct {
+	PackageName    string
+	DocumentName   string
+	Shareability   string
+	PackageId      string
+	PackageVersion string
+	Slug           string
+	//set by the parser, unused by the writer; used for better error handling
+	XlsxRowNumber int
+}

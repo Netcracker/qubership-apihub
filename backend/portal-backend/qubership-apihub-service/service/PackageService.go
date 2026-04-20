@@ -29,6 +29,7 @@ type PackageService interface {
 	GetPackageStatus(id string) (*view.Status, error)
 	GetPackageName(id string) (string, error)
 	PackageExists(packageId string) (bool, error)
+	GetGroupDescendantPackages(groupId string) ([]entity.PackageEntity, error)
 	GetAvailableVersionPublishStatuses_deprecated(ctx context.SecurityContext, packageId string) (*view.Statuses_deprecated, error)
 	RecalculateOperationGroups(ctx context.SecurityContext, packageId string) error
 	CalculateOperationGroups(packageId string, groupingPrefix string) (*view.CalculatedOperationGroups, error)
@@ -720,6 +721,30 @@ func (p packageServiceImpl) GetPackageName(id string) (string, error) {
 		Params:  map[string]interface{}{"id": id},
 	}
 
+}
+
+func (p packageServiceImpl) GetGroupDescendantPackages(groupId string) ([]entity.PackageEntity, error) {
+	groupEnt, err := p.publishedRepo.GetPackage(groupId)
+	if err != nil {
+		return nil, err
+	}
+	if groupEnt == nil {
+		return nil, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.PackageNotFound,
+			Message: exception.PackageNotFoundMsg,
+			Params:  map[string]interface{}{"packageId": groupId},
+		}
+	}
+	if groupEnt.Kind != entity.KIND_GROUP {
+		return nil, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidPackageKind,
+			Message: exception.InvalidPackageKindMsg,
+			Params:  map[string]interface{}{"kind": groupEnt.Kind, "allowedKind": entity.KIND_GROUP},
+		}
+	}
+	return p.publishedRepo.GetDescendantPackages(groupId)
 }
 
 func (p packageServiceImpl) GetPackageStatus(id string) (*view.Status, error) {

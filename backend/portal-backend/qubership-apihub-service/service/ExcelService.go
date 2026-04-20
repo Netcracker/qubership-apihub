@@ -2,10 +2,15 @@ package service
 
 import (
 	"fmt"
+	"io"
+	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	log "github.com/sirupsen/logrus"
@@ -19,6 +24,8 @@ type ExcelService interface {
 	ExportApiChanges(packageId, version, apiType string, severities []string, req view.ExportApiChangesRequestView) (*excelize.File, string, error)
 	ExportOperations(packageId, version, apiType string, req view.ExportOperationRequestView) (*excelize.File, string, error)
 	ExportBusinessMetrics(businessMetrics []view.BusinessMetric) (*excelize.File, string, error)
+	BuildShareabilityReport(groupId, versionName string) (*excelize.File, string, error)
+	ParseShareabilityReport(in io.Reader) ([]view.ShareabilityReportRow, error)
 }
 
 func NewExcelService(publishedRepo repository.PublishedRepository, versionService VersionService, operationService OperationService, packageService PackageService) ExcelService {
@@ -2073,6 +2080,298 @@ func (b *businessMetricsReport) createResultSheet(businessMetrics []view.Busines
 	err = setCellsValues(b.workbook, sheetName, cells)
 	if err != nil {
 		return fmt.Errorf("failed to set cell values: %v", err.Error())
+	}
+	return nil
+}
+
+func (e excelServiceImpl) BuildShareabilityReport(groupId, versionName string) (*excelize.File, string, error) {
+	if err := ValidateVersionName(versionName); err != nil {
+		return nil, "", err
+	}
+
+	packages, err := e.packageService.GetGroupDescendantPackages(groupId)
+	if err != nil {
+		return nil, "", err
+	}
+
+	rows, err := e.collectShareabilityRows(packages, versionName)
+	if err != nil {
+		return nil, "", err
+	}
+	sortShareabilityRows(rows)
+
+	report := &shareabilityReport{workbook: excelize.NewFile(), rows: rows}
+	if err := report.build(); err != nil {
+		if cerr := report.workbook.Close(); cerr != nil {
+			log.Errorf("Failed to close shareability report workbook on error: %v", cerr.Error())
+		}
+		return nil, "", err
+	}
+
+	filename := fmt.Sprintf("shareability_report_%s_%s_%v.xlsx",
+		groupId, versionName, time.Now().Format("2006-01-02-15-04-05"))
+	return report.workbook, filename, nil
+}
+
+func (e excelServiceImpl) collectShareabilityRows(packages []entity.PackageEntity, versionName string) ([]view.ShareabilityReportRow, error) {
+	rows := make([]view.ShareabilityReportRow, 0)
+	for _, pkg := range packages {
+		docs, found, err := e.versionService.GetVersionDocumentsMetadata(pkg.Id, versionName)
+		if err != nil {
+			return nil, err
+		}
+		if !found {
+			continue
+		}
+		for _, doc := range docs {
+			rows = append(rows, view.ShareabilityReportRow{
+				PackageName:    pkg.Name,
+				DocumentName:   buildDocumentDisplayName(doc),
+				Shareability:   doc.Shareability,
+				PackageId:      pkg.Id,
+				PackageVersion: versionName,
+				Slug:           doc.Slug,
+			})
+		}
+	}
+	return rows, nil
+}
+
+func sortShareabilityRows(rows []view.ShareabilityReportRow) {
+	sort.SliceStable(rows, func(i, j int) bool {
+		ri, rj := rows[i], rows[j]
+		if c := strings.Compare(strings.ToLower(ri.PackageName), strings.ToLower(rj.PackageName)); c != 0 {
+			return c < 0
+		}
+		if c := strings.Compare(strings.ToLower(ri.DocumentName), strings.ToLower(rj.DocumentName)); c != 0 {
+			return c < 0
+		}
+		return strings.Compare(strings.ToLower(ri.Slug), strings.ToLower(rj.Slug)) < 0
+	})
+}
+
+func (e excelServiceImpl) ParseShareabilityReport(in io.Reader) ([]view.ShareabilityReportRow, error) {
+	workbook, err := excelize.OpenReader(in)
+	if err != nil {
+		if strings.Contains(err.Error(), "http: request body too large") {
+			return nil, &exception.CustomError{
+				Status:  http.StatusRequestEntityTooLarge,
+				Code:    exception.TemplateSizeExceeded,
+				Message: exception.TemplateSizeExceededMsg,
+				Params:  map[string]interface{}{"size": "10 MB"},
+			}
+		}
+		return nil, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidShareabilityReportStructure,
+			Message: exception.InvalidShareabilityReportStructureMsg,
+			Params:  map[string]interface{}{"details": "failed to open xlsx: " + err.Error()},
+		}
+	}
+	defer workbook.Close()
+
+	sheetName := view.ShareabilityReportSheetName
+	if idx, err := workbook.GetSheetIndex(sheetName); err != nil || idx < 0 {
+		return nil, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidShareabilityReportStructure,
+			Message: exception.InvalidShareabilityReportStructureMsg,
+			Params:  map[string]interface{}{"details": fmt.Sprintf("missing required sheet '%s'", sheetName)},
+		}
+	}
+
+	allRows, err := workbook.GetRows(sheetName)
+	if err != nil {
+		return nil, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidShareabilityReportStructure,
+			Message: exception.InvalidShareabilityReportStructureMsg,
+			Params:  map[string]interface{}{"details": "failed to read sheet rows: " + err.Error()},
+		}
+	}
+
+	if len(allRows) == 0 {
+		return nil, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidShareabilityReportStructure,
+			Message: exception.InvalidShareabilityReportStructureMsg,
+			Params:  map[string]interface{}{"details": "sheet is empty, header row is missing"},
+		}
+	}
+
+	expectedHeaders := []string{
+		view.ShareabilityReportColPackageName,
+		view.ShareabilityReportColDocumentName,
+		view.ShareabilityReportColShareability,
+		view.ShareabilityReportColPackageId,
+		view.ShareabilityReportColPackageVersion,
+		view.ShareabilityReportColSlug,
+	}
+	header := allRows[0]
+	if len(header) != len(expectedHeaders) {
+		return nil, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidShareabilityReportStructure,
+			Message: exception.InvalidShareabilityReportStructureMsg,
+			Params:  map[string]interface{}{"details": fmt.Sprintf("header row has %d columns, expected %d", len(header), len(expectedHeaders))},
+		}
+	}
+	for i, want := range expectedHeaders {
+		if strings.TrimSpace(header[i]) != want {
+			return nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidShareabilityReportStructure,
+				Message: exception.InvalidShareabilityReportStructureMsg,
+				Params:  map[string]interface{}{"details": fmt.Sprintf("column %d header is '%s', expected '%s'", i+1, header[i], want)},
+			}
+		}
+	}
+
+	rows := make([]view.ShareabilityReportRow, 0, len(allRows)-1)
+	for idx := 1; idx < len(allRows); idx++ {
+		raw := allRows[idx]
+		xlsxRow := idx + 1
+
+		cells := make([]string, len(expectedHeaders))
+		for i := 0; i < len(expectedHeaders) && i < len(raw); i++ {
+			cells[i] = strings.TrimSpace(raw[i])
+		}
+
+		allEmpty := true
+		for _, c := range cells {
+			if c != "" {
+				allEmpty = false
+				break
+			}
+		}
+		if allEmpty {
+			continue
+		}
+
+		row := view.ShareabilityReportRow{
+			PackageName:    cells[0],
+			DocumentName:   cells[1],
+			Shareability:   cells[2],
+			PackageId:      cells[3],
+			PackageVersion: cells[4],
+			Slug:           cells[5],
+			XlsxRowNumber:  xlsxRow,
+		}
+		if row.Shareability == "" || row.PackageId == "" || row.PackageVersion == "" || row.Slug == "" {
+			return nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidShareabilityReportRow,
+				Message: exception.InvalidShareabilityReportRowMsg,
+				Params: map[string]interface{}{
+					"row":     xlsxRow,
+					"details": "required cells (Shareability, Package Id, Package Version, Slug) must be non-empty",
+				},
+			}
+		}
+		rows = append(rows, row)
+	}
+
+	return rows, nil
+}
+
+func buildDocumentDisplayName(doc entity.PublishedContentEntity) string {
+	name := doc.Title
+	if doc.Metadata.GetVersion() != "" {
+		name += " " + doc.Metadata.GetVersion()
+	}
+	return name
+}
+
+type shareabilityReport struct {
+	workbook *excelize.File
+	rows     []view.ShareabilityReportRow
+}
+
+func (r *shareabilityReport) build() error {
+	if err := r.createReportSheet(); err != nil {
+		return err
+	}
+	if err := r.workbook.DeleteSheet("Sheet1"); err != nil {
+		return fmt.Errorf("failed to delete default Sheet1: %v", err.Error())
+	}
+	return nil
+}
+
+func (r *shareabilityReport) createReportSheet() error {
+	sheetName := view.ShareabilityReportSheetName
+	if _, err := r.workbook.NewSheet(sheetName); err != nil {
+		return fmt.Errorf("failed to create shareability report sheet: %v", err)
+	}
+
+	headerStyle := getHeaderStyle(r.workbook)
+	evenCellStyle := getEvenCellStyle(r.workbook)
+	oddCellStyle := getOddCellStyle(r.workbook)
+
+	cells := map[string]interface{}{
+		"A1": view.ShareabilityReportColPackageName,
+		"B1": view.ShareabilityReportColDocumentName,
+		"C1": view.ShareabilityReportColShareability,
+		"D1": view.ShareabilityReportColPackageId,
+		"E1": view.ShareabilityReportColPackageVersion,
+		"F1": view.ShareabilityReportColSlug,
+	}
+	if err := r.workbook.SetCellStyle(sheetName, "A1", "F1", headerStyle); err != nil {
+		return err
+	}
+	r.workbook.SetColWidth(sheetName, "A", "A", 30)
+	r.workbook.SetColWidth(sheetName, "B", "B", 60)
+	r.workbook.SetColWidth(sheetName, "C", "C", 16)
+	r.workbook.SetColWidth(sheetName, "D", "D", 40)
+	r.workbook.SetColWidth(sheetName, "E", "E", 20)
+	r.workbook.SetColWidth(sheetName, "F", "F", 30)
+	if err := r.workbook.SetPanes(sheetName, &excelize.Panes{Freeze: true, Split: false, YSplit: 1, TopLeftCell: "A2", ActivePane: "bottomLeft"}); err != nil {
+		return err
+	}
+
+	rowIndex := 2
+	for _, row := range r.rows {
+		cells[fmt.Sprintf("A%d", rowIndex)] = row.PackageName
+		cells[fmt.Sprintf("B%d", rowIndex)] = row.DocumentName
+		cells[fmt.Sprintf("C%d", rowIndex)] = row.Shareability
+		cells[fmt.Sprintf("D%d", rowIndex)] = row.PackageId
+		cells[fmt.Sprintf("E%d", rowIndex)] = row.PackageVersion
+		cells[fmt.Sprintf("F%d", rowIndex)] = row.Slug
+		style := oddCellStyle
+		if rowIndex%2 == 0 {
+			style = evenCellStyle
+		}
+		if err := r.workbook.SetCellStyle(sheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("F%d", rowIndex), style); err != nil {
+			return err
+		}
+		rowIndex++
+	}
+
+	if err := setCellsValues(r.workbook, sheetName, cells); err != nil {
+		return fmt.Errorf("failed to set cell values: %v", err.Error())
+	}
+
+	lastDataRow := rowIndex - 1
+	if lastDataRow >= 2 {
+		dv := excelize.NewDataValidation(true)
+		dv.SetSqref(fmt.Sprintf("C2:C%d", lastDataRow))
+		allowed := view.AllowedShareabilityValues()
+		if err := dv.SetDropList(allowed); err != nil {
+			return fmt.Errorf("failed to configure shareability dropdown: %v", err.Error())
+		}
+		dv.SetError(excelize.DataValidationErrorStyleStop,
+			"Invalid shareability value",
+			fmt.Sprintf("Allowed values: %s", strings.Join(allowed, ", ")))
+		if err := r.workbook.AddDataValidation(sheetName, dv); err != nil {
+			return fmt.Errorf("failed to add shareability data validation: %v", err.Error())
+		}
+	}
+
+	filterRange := "A1:F1"
+	if lastDataRow >= 2 {
+		filterRange = fmt.Sprintf("A1:F%d", lastDataRow)
+	}
+	if err := r.workbook.AutoFilter(sheetName, filterRange, []excelize.AutoFilterOptions{}); err != nil {
+		return fmt.Errorf("failed to set auto filter on shareability report: %v", err.Error())
 	}
 	return nil
 }

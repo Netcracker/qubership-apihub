@@ -56,6 +56,8 @@ type VersionService interface {
 	GetCSVDashboardPublishStatus(publishId string) (*view.CSVDashboardPublishStatusResponse, error)
 	GetCSVDashboardPublishReport(publishId string) ([]byte, error)
 	UpdateDocumentShareability(ctx context.SecurityContext, packageId string, versionName string, slug string, shareability string) error
+	BulkUpdateDocumentShareability(ctx context.SecurityContext, rows []view.ShareabilityReportRow) error
+	GetVersionDocumentsMetadata(packageId string, versionName string) (docs []entity.PublishedContentEntity, found bool, err error)
 }
 
 func NewVersionService(favoritesRepo repository.FavoritesRepository,
@@ -70,7 +72,8 @@ func NewVersionService(favoritesRepo repository.FavoritesRepository,
 	portalService PortalService,
 	versionCleanupRepository repository.VersionCleanupRepository,
 	operationGroupService OperationGroupService,
-	monitoringService MonitoringService) VersionService {
+	monitoringService MonitoringService,
+	roleService RoleService) VersionService {
 	return &versionServiceImpl{
 		favoritesRepo:                   favoritesRepo,
 		publishedRepo:                   publishedRepo,
@@ -85,6 +88,7 @@ func NewVersionService(favoritesRepo repository.FavoritesRepository,
 		versionCleanupRepository:        versionCleanupRepository,
 		operationGroupService:           operationGroupService,
 		monitoringService:               monitoringService,
+		roleService:                     roleService,
 	}
 }
 
@@ -103,6 +107,7 @@ type versionServiceImpl struct {
 	buildService                    BuildService
 	operationGroupService           OperationGroupService
 	monitoringService               MonitoringService
+	roleService                     RoleService
 }
 
 func (v *versionServiceImpl) SetBuildService(buildService BuildService) {
@@ -2153,6 +2158,21 @@ func getCSVSeparator(record string) *rune {
 	return nil
 }
 
+func (v versionServiceImpl) GetVersionDocumentsMetadata(packageId string, versionName string) ([]entity.PublishedContentEntity, bool, error) {
+	versionEnt, err := v.publishedRepo.GetVersion(packageId, versionName)
+	if err != nil {
+		return nil, false, err
+	}
+	if versionEnt == nil {
+		return nil, false, nil
+	}
+	docs, err := v.publishedRepo.GetRevisionContent(packageId, versionEnt.Version, versionEnt.Revision)
+	if err != nil {
+		return nil, false, err
+	}
+	return docs, true, nil
+}
+
 func (v versionServiceImpl) UpdateDocumentShareability(ctx context.SecurityContext, packageId string, versionName string, slug string, shareability string) error {
 	versionEnt, err := v.publishedRepo.GetVersion(packageId, versionName)
 	if err != nil {
@@ -2188,11 +2208,7 @@ func (v versionServiceImpl) UpdateDocumentShareability(ctx context.SecurityConte
 	dataMap := map[string]interface{}{}
 	dataMap["version"] = versionEnt.Version
 	dataMap["revision"] = versionEnt.Revision
-	documentDisplayName := document.Title
-	if document.Metadata.GetVersion() != "" {
-		documentDisplayName += " " + document.Metadata.GetVersion()
-	}
-	dataMap["documentDisplayName"] = documentDisplayName
+	dataMap["documentDisplayName"] = buildDocumentDisplayName(*document)
 	dataMap["shareabilityStatus"] = shareability
 
 	v.atService.TrackEvent(view.ActivityTrackingEvent{
@@ -2202,5 +2218,156 @@ func (v versionServiceImpl) UpdateDocumentShareability(ctx context.SecurityConte
 		Date:      time.Now(),
 		UserId:    ctx.GetUserId(),
 	})
+	return nil
+}
+
+func (v versionServiceImpl) BulkUpdateDocumentShareability(ctx context.SecurityContext, rows []view.ShareabilityReportRow) error {
+	if len(rows) == 0 {
+		return nil
+	}
+
+	type documentKey struct {
+		packageId string
+		version   string
+		slug      string
+	}
+	type packageVersionKey struct {
+		packageId string
+		version   string
+	}
+
+	uniqueDocumentRows := make(map[documentKey]int, len(rows))
+	permissionByPackage := make(map[string]bool)
+	docsByPackageVersion := make(map[packageVersionKey]map[string]*entity.PublishedContentEntity)
+	diff := make([]*entity.PublishedContentEntity, 0, len(rows))
+
+	for _, r := range rows {
+		if !view.ValidateShareability(r.Shareability) {
+			return &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidShareabilityReportRow,
+				Message: exception.InvalidShareabilityReportRowMsg,
+				Params: map[string]interface{}{
+					"row":     r.XlsxRowNumber,
+					"details": fmt.Sprintf("invalid shareability status '%s'", r.Shareability),
+				},
+			}
+		}
+		if err := ValidateVersionName(r.PackageVersion); err != nil {
+			if ce, ok := err.(*exception.CustomError); ok {
+				return &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidShareabilityReportRow,
+					Message: exception.InvalidShareabilityReportRowMsg,
+					Params: map[string]interface{}{
+						"row":     r.XlsxRowNumber,
+						"details": ce.Error(),
+					},
+				}
+			}
+			return err
+		}
+
+		docKey := documentKey{r.PackageId, r.PackageVersion, r.Slug}
+		if firstRow, exists := uniqueDocumentRows[docKey]; exists {
+			return &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.ShareabilityReportDuplicateRow,
+				Message: exception.ShareabilityReportDuplicateRowMsg,
+				Params: map[string]interface{}{
+					"firstRow":  firstRow,
+					"secondRow": r.XlsxRowNumber,
+					"packageId": r.PackageId,
+					"version":   r.PackageVersion,
+					"slug":      r.Slug,
+				},
+			}
+		}
+		uniqueDocumentRows[docKey] = r.XlsxRowNumber
+
+		if _, checked := permissionByPackage[r.PackageId]; !checked {
+			allowed, err := v.roleService.HasRequiredPermissions(ctx, r.PackageId, view.DocumentShareabilityManagementPermission)
+			if err != nil {
+				return err
+			}
+			if !allowed {
+				return &exception.CustomError{
+					Status:  http.StatusForbidden,
+					Code:    exception.InsufficientPrivileges,
+					Message: exception.InsufficientPrivilegesMsg,
+				}
+			}
+			permissionByPackage[r.PackageId] = allowed
+		}
+
+		pkgVerKey := packageVersionKey{r.PackageId, r.PackageVersion}
+		versionDocs, cached := docsByPackageVersion[pkgVerKey]
+		if !cached {
+			docs, found, err := v.GetVersionDocumentsMetadata(r.PackageId, r.PackageVersion)
+			if err != nil {
+				return err
+			}
+			if !found {
+				return &exception.CustomError{
+					Status:  http.StatusNotFound,
+					Code:    exception.ShareabilityReportVersionNotFound,
+					Message: exception.ShareabilityReportVersionNotFoundMsg,
+					Params: map[string]interface{}{
+						"row":       r.XlsxRowNumber,
+						"packageId": r.PackageId,
+						"version":   r.PackageVersion,
+					},
+				}
+			}
+			versionDocs = make(map[string]*entity.PublishedContentEntity, len(docs))
+			for i := range docs {
+				versionDocs[docs[i].Slug] = &docs[i]
+			}
+			docsByPackageVersion[pkgVerKey] = versionDocs
+		}
+
+		doc, exists := versionDocs[r.Slug]
+		if !exists {
+			return &exception.CustomError{
+				Status:  http.StatusNotFound,
+				Code:    exception.ShareabilityReportDocumentNotFound,
+				Message: exception.ShareabilityReportDocumentNotFoundMsg,
+				Params: map[string]interface{}{
+					"row":       r.XlsxRowNumber,
+					"packageId": r.PackageId,
+					"version":   r.PackageVersion,
+					"slug":      r.Slug,
+				},
+			}
+		}
+		if doc.Shareability == r.Shareability {
+			continue
+		}
+		doc.Shareability = r.Shareability
+		diff = append(diff, doc)
+	}
+
+	if len(diff) == 0 {
+		return nil
+	}
+
+	if err := v.publishedRepo.BulkUpdateDocumentShareability(diff); err != nil {
+		return err
+	}
+
+	for _, doc := range diff {
+		v.atService.TrackEvent(view.ActivityTrackingEvent{
+			Type: view.ATETUpdateDocumentShareability,
+			Data: map[string]interface{}{
+				"version":             doc.Version,
+				"revision":            doc.Revision,
+				"documentDisplayName": buildDocumentDisplayName(*doc),
+				"shareabilityStatus":  doc.Shareability,
+			},
+			PackageId: doc.PackageId,
+			Date:      time.Now(),
+			UserId:    ctx.GetUserId(),
+		})
+	}
 	return nil
 }

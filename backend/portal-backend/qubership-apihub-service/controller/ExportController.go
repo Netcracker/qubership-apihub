@@ -27,6 +27,7 @@ type ExportController interface {
 	GenerateApiChangesExcelReport(w http.ResponseWriter, r *http.Request) //deprecated
 	GenerateOperationsExcelReport(w http.ResponseWriter, r *http.Request)
 	GenerateDeprecatedOperationsExcelReport(w http.ResponseWriter, r *http.Request)
+	GenerateShareabilityReport(w http.ResponseWriter, r *http.Request)
 	ExportOperationGroupAsOpenAPIDocuments_deprecated_2(w http.ResponseWriter, r *http.Request) //deprecated
 
 	StartAsyncExport(w http.ResponseWriter, r *http.Request)
@@ -1222,4 +1223,50 @@ func (e exportControllerImpl) GetAsyncExportStatus(w http.ResponseWriter, r *htt
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%v", result.FileName))
 	w.WriteHeader(http.StatusOK)
 	w.Write(result.Data)
+}
+
+func (e exportControllerImpl) GenerateShareabilityReport(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Create(r)
+	groupId := getStringParam(r, "packageId")
+	sufficientPrivileges, err := e.roleService.HasRequiredPermissions(ctx, groupId, view.ReadPermission)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	version, err := getUnescapedStringParam(r, "version")
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "version"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	report, filename, err := e.excelService.BuildShareabilityReport(groupId, version)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to build shareability report", err)
+		return
+	}
+	defer func() {
+		if cerr := report.Close(); cerr != nil {
+			log.Errorf("Failed to close shareability report workbook: %v", cerr.Error())
+		}
+	}()
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+	w.Header().Set("Content-Transfer-Encoding", "binary")
+	w.Header().Set("Expires", "0")
+	report.Write(w)
 }

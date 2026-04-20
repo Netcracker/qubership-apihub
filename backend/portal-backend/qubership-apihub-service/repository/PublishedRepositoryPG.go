@@ -2606,6 +2606,25 @@ func (p publishedRepositoryImpl) GetAllChildPackageIdsIncludingParent(parentId s
 	return result, nil
 }
 
+func (p publishedRepositoryImpl) GetDescendantPackages(parentId string) ([]entity.PackageEntity, error) {
+	var result []entity.PackageEntity
+
+	query := `with recursive children as (
+	select id from package_group where id=?
+		UNION ALL
+		select g.id from package_group g inner join children on children.id = g.parent_id)
+	select * from package_group
+	where id in (select id from children)
+	  and id != ?
+	  and kind = ?
+	  and deleted_at is null`
+	_, err := p.cp.GetConnection().Query(&result, query, parentId, parentId, entity.KIND_PACKAGE)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
 func (p publishedRepositoryImpl) updateExcludeFromSearchForAllChildPackages(tx *pg.Tx, parentId string, excludeFromSearch bool) error {
 	var ents []entity.PackageIdEntity
 	query := `update package_group set exclude_from_search = ? where id like ? || '.%' and exclude_from_search != ?`
@@ -4629,4 +4648,19 @@ func (p publishedRepositoryImpl) UpdateDocumentShareabilityBySlug(packageId stri
 		Where("slug = ?", slug).
 		Update()
 	return err
+}
+
+func (p publishedRepositoryImpl) BulkUpdateDocumentShareability(entities []*entity.PublishedContentEntity) error {
+	if len(entities) == 0 {
+		return nil
+	}
+	return p.cp.GetConnection().RunInTransaction(context.Background(), func(tx *pg.Tx) error {
+		for _, e := range entities {
+			_, err := tx.Model(e).Column("shareability_status").WherePK().Update()
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }

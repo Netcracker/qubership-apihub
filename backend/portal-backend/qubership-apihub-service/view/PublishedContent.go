@@ -117,6 +117,14 @@ func ValidateShareability(value string) bool {
 	}
 }
 
+func AllowedShareabilityValues() []string {
+	return []string{
+		ShareabilityShareable,
+		ShareabilityNonShareable,
+		ShareabilityUnknown,
+	}
+}
+
 type UpdateDocumentShareabilityReq struct {
 	ShareabilityStatus string `json:"status" validate:"required"`
 }
