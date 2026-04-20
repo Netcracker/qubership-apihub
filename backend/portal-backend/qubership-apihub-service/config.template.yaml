@@ -103,6 +103,8 @@ technicalParameters:
   listenAddress: ':8080'
   # Optional; Directory containing API specifications for exposure; If not set, defaults to basePath + "/api"; Example: ./docs/api
   apiSpecDirectory: ''
+  # Optional; Maximum wait time in minutes for lock release during migration restart; If not set, default value: 30; Example: 60
+  migrationLockMaxWaitMinutes: 30
 
 # Section with various parameters related to APIHUB business logic
 businessParameters:

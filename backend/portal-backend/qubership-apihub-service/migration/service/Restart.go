@@ -22,7 +22,7 @@ func (d *dbMigrationServiceImpl) restartMigrations() error {
 
 		err := tx.Model(&ents).
 			Where("status in (?)", pg.In([]string{mView.MigrationStatusRunning, mView.MigrationStatusCancelling})).
-			Where("updated_at < (now() - interval '? seconds')", 120).
+			Where("coalesce(updated_at, started_at) < (now() - interval '? seconds')", 120).
 			Where("instance_id!=?", d.instanceId).
 			Order("started_at").
 			For("UPDATE skip locked").

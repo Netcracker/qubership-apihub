@@ -5,6 +5,7 @@ import (
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 
+	"github.com/go-pg/pg/v10/orm"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -22,7 +23,9 @@ func (d OpsMigration) StageCleanupBefore() error {
 		log.Infof("ops migration %s: cleaned %d rows from transformed_content_data", d.ent.Id, deleted)
 
 		if d.systemInfoService.IsMinioStorageActive() {
-			ids, err := d.buildCleanupRepository.GetRemoveMigrationBuildIds(d.migrationCtx)
+			ids, err := withDBRetry(d, func() ([]string, error) {
+				return d.buildCleanupRepository.GetRemoveMigrationBuildIds(d.migrationCtx)
+			})
 			if err != nil {
 				return err
 			}
@@ -33,14 +36,18 @@ func (d OpsMigration) StageCleanupBefore() error {
 				if err != nil {
 					return err
 				}
-				deleted, err := d.buildCleanupRepository.RemoveMigrationBuildSourceData(d.migrationCtx, ids)
+				deleted, err := withDBRetry(d, func() (int, error) {
+					return d.buildCleanupRepository.RemoveMigrationBuildSourceData(d.migrationCtx, ids)
+				})
 				if err != nil {
 					return err
 				}
 				log.Infof("ops migration %s: Cleanup before full migration cleaned up %d entries", d.ent.Id, deleted)
 			}
 		} else {
-			deleted, err := d.buildCleanupRepository.RemoveMigrationBuildData(d.migrationCtx)
+			deleted, err := withDBRetry(d, func() (int, error) {
+				return d.buildCleanupRepository.RemoveMigrationBuildData(d.migrationCtx)
+			})
 			if err != nil {
 				return err
 			}
@@ -59,19 +66,27 @@ func (d OpsMigration) StageCleanupBefore() error {
 
 func (d OpsMigration) StageCleanupAfter() error {
 	// delete temporary tables after migration end
-	_, err := d.cp.GetConnection().Exec(fmt.Sprintf(`drop table migration."version_comparison_%s";`, d.ent.Id))
+	_, err := withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().Exec(fmt.Sprintf(`drop table if exists migration."version_comparison_%s";`, d.ent.Id))
+	})
 	if err != nil {
 		log.Errorf("failed to cleanup migration tables: %v", err.Error())
 	}
-	_, err = d.cp.GetConnection().Exec(fmt.Sprintf(`drop table migration."operation_comparison_%s";`, d.ent.Id))
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().Exec(fmt.Sprintf(`drop table if exists migration."operation_comparison_%s";`, d.ent.Id))
+	})
 	if err != nil {
 		log.Errorf("failed to cleanup migration tables: %v", err.Error())
 	}
-	_, err = d.cp.GetConnection().Exec(fmt.Sprintf(`drop table migration."expired_ts_operation_data_%s";`, d.ent.Id))
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().Exec(fmt.Sprintf(`drop table if exists migration."expired_ts_operation_data_%s";`, d.ent.Id))
+	})
 	if err != nil {
 		log.Errorf("ops migration %s: failed to cleanup migration tables: %v", d.ent.Id, err.Error())
 	}
-	_, err = d.cp.GetConnection().Exec(fmt.Sprintf(`drop table migration."fts_operation_search_text_tmp_%s";`, d.ent.Id))
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().Exec(fmt.Sprintf(`drop table if exists migration."fts_operation_search_text_tmp_%s";`, d.ent.Id))
+	})
 	if err != nil {
 		log.Errorf("ops migration %s: failed to cleanup migration tables: %v", d.ent.Id, err.Error())
 	}
@@ -87,11 +102,13 @@ func (d OpsMigration) runVacuumForAllTables() error {
 	}
 
 	var rels []relation
-	_, err := d.cp.GetConnection().Query(&rels, `select schemaname, relname
-			from pg_stat_all_tables where schemaname = 'public' and relname not like 'pg_%'
-			                          and ((last_analyze is null and last_autoanalyze is null)
-			        or last_analyze < (current_date - interval '1 day')
-			        or last_autoanalyze < (current_date - interval '1 day'));`)
+	_, err := withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().Query(&rels, `select schemaname, relname
+				from pg_stat_all_tables where schemaname = 'public' and relname not like 'pg_%'
+				                          and ((last_analyze is null and last_autoanalyze is null)
+				        or last_analyze < (current_date - interval '1 day')
+				        or last_autoanalyze < (current_date - interval '1 day'));`)
+	})
 	if err != nil {
 		return err
 	}
@@ -100,7 +117,9 @@ func (d OpsMigration) runVacuumForAllTables() error {
 		vacuumQueries = append(vacuumQueries, fmt.Sprintf("VACUUM FULL ANALYZE %s.\"%s\";", rel.Schema, rel.Name))
 	}
 	for _, query := range vacuumQueries {
-		_, err = d.cp.GetConnection().Exec(query)
+		_, err = withDBRetry(d, func() (orm.Result, error) {
+			return d.cp.GetConnection().Exec(query)
+		})
 		if err != nil {
 			return err
 		}
@@ -117,7 +136,9 @@ func (d OpsMigration) resetStatStatements() {
 }
 
 func (d OpsMigration) cleanupTransformedContentData() (int, error) {
-	result, err := d.cp.GetConnection().Exec(`DELETE FROM transformed_content_data`)
+	result, err := withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().Exec(`DELETE FROM transformed_content_data`)
+	})
 	if err != nil {
 		return 0, err
 	}
