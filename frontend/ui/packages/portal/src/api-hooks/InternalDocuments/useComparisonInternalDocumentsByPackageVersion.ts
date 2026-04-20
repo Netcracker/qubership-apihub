@@ -53,6 +53,7 @@ export function useComparisonInternalDocumentsByPackageVersion(
         ? getComparisonInternalDocumentsByPackageVersion(options)
         : Promise.resolve([])
     ),
+    retry: true,
     enabled: enabled,
   })
 
@@ -64,11 +65,11 @@ export function useComparisonInternalDocumentsByPackageVersion(
 }
 
 function getComparisonInternalDocumentsByPackageVersion({
-    currentPackageId,
-    currentVersionId,
-    previousPackageId,
-    previousVersionId,
-    refPackageId,
+  currentPackageId,
+  currentVersionId,
+  previousPackageId,
+  previousVersionId,
+  refPackageId,
 }: Options): Promise<InternalDocuments> {
   const endpointPattern = '/packages/:packageId/versions/:versionId/comparison-internal-documents'
   const queryParams = optionalSearchParams({
@@ -86,6 +87,6 @@ function getComparisonInternalDocumentsByPackageVersion({
   return requestJson<InternalDocuments>(
     `${endpoint}?${queryParams}`,
     { method: 'GET' },
-    { basePath: API_V1 },
+    { basePath: API_V1, ignoreNotFound: true },
   )
 }

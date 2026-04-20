@@ -34,7 +34,9 @@ import {
   Placeholder,
   PLACEHOLDER_MESSAGE_NO_INTERNAL_DOCUMENT,
 } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import { SEARCH_RAINY_DAY_PLACEHOLDER_VARIANT } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder/Placeholder'
+import {
+  SEARCH_RAINY_DAY_PLACEHOLDER_VARIANT,
+} from '@netcracker/qubership-apihub-ui-shared/components/Placeholder/Placeholder'
 import { RawSpecDiffView } from '@netcracker/qubership-apihub-ui-shared/components/RawSpecDiffView'
 import { RawSpecView } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/RawSpecView'
 import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
@@ -51,7 +53,11 @@ import type { FileViewMode } from '@netcracker/qubership-apihub-ui-shared/entiti
 import { FILE_FORMAT_VIEW, YAML_FILE_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/file-format-view'
 import { DEFAULT_VIEW_MODE_MAP_BY_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
 import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { DEFAULT_API_TYPE, isAsyncApiOperation, isGraphQlOperation } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import {
+  DEFAULT_API_TYPE,
+  isAsyncApiOperation,
+  isGraphQlOperation,
+} from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
 import {
   useSeverityFiltersSearchParam,
@@ -185,7 +191,7 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
         }
         return undefined
       },
-      [changedOperation],
+      [changedOperation, originOperation],
     )
     const [documentWithOriginOriginOperation] = usePublishedDocumentRaw({
       packageKey: originPackageKey,
