@@ -64,9 +64,11 @@ export function useNormalizedOperation(options: Options): QueryResultWithNoInter
         let foundPath
         const currentOperationNormalizedId = calculateNormalizedRestOperationId(firstServerBasePath === '/' ? firstServerBasePath : '', operationPath, operationMethod)
         for (const path of Object.keys(paths)) {
+          const pathObject = paths[path]
           const operationNormalizedId = calculateNormalizedRestOperationId(firstServerBasePath, path, operationMethod)
-          const matched = currentOperationNormalizedId === operationNormalizedId
-          if (matched) {
+          const matchedById = currentOperationNormalizedId === operationNormalizedId
+          const matchedByMethod = !!pathObject?.[operationMethod]
+          if (matchedById && matchedByMethod) {
             foundPath = path
             break
           }
