@@ -282,7 +282,7 @@ func main() {
 	tokenRevocationService := service.NewTokenRevocationService(olricProvider, systemInfoService.GetRefreshTokenDurationSec())
 	systemStatsService := service.NewSystemStatsService(systemStatsRepository)
 
-	mcpService := service.NewMCPService(systemInfoService, operationService, packageService, versionService)
+	mcpService := service.NewMCPService(systemInfoService, operationService, packageService, versionService, monitoringService)
 	chatService := service.NewChatService(systemInfoService, mcpService)
 
 	idpManager, err := providers.NewIDPManager(systemInfoService.GetAuthConfig(), systemInfoService.GetAllowedHosts(), systemInfoService.IsProductionMode(), userService)
@@ -326,7 +326,7 @@ func main() {
 	systemStatsController := controller.NewSystemStatsController(systemStatsService, roleService)
 	internalDocsController := controller.NewInternalDocumentController(publishedService, roleService)
 	mcpController := controller.NewMCPController(mcpService)
-	chatController := controller.NewChatController(chatService)
+	chatController := controller.NewChatController(chatService, monitoringService)
 	buildController := controller.NewBuildController(buildResultService, buildService, roleService.IsSysadm)
 	adminPublishedController := controller.NewAdminPublishedController(publishedService, roleService.IsSysadm, systemInfoService.GetPublishArchiveSizeLimitMB())
 
