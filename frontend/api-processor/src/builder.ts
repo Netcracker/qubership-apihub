@@ -77,7 +77,6 @@ import { validateConfig } from './validators'
 import { BuildStrategy, ChangelogStrategy, DocumentGroupStrategy, PrefixGroupsChangelogStrategy } from './strategies'
 import { BuilderStrategyContext } from './builder-strategy'
 import { MergedDocumentGroupStrategy } from './strategies/merged-document-group.strategy'
-import { asyncDebugPerformance } from './utils/logs'
 import { ExportVersionStrategy } from './strategies/export-version.strategy'
 import { ExportRestDocumentStrategy } from './strategies/export-rest-document.strategy'
 import { ExportRestOperationsGroupStrategy } from './strategies/export-rest-operations-group.strategy'
@@ -287,9 +286,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
       builderStrategyContext.setStrategy(new ExportGraphQlOperationsGroupStrategy())
     }
 
-    await asyncDebugPerformance('[Builder]', async (debugCtx) => {
-      this.setBuildResult(await builderStrategyContext.executeStrategy(debugCtx))
-    }, undefined, [buildType, this.config.packageId, this.config.version])
+    this.setBuildResult(await builderStrategyContext.executeStrategy())
 
     return this.buildResult
   }

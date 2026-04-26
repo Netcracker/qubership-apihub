@@ -66,7 +66,7 @@ describe('AsyncAPI 3.0 Deprecated tests', () => {
 
     test('should deprecated message has OperationDeprecated symbol with true', async () => {
       const [deprecatedItem] = deprecatedItems
-      const operationDeprecatedSymbol  = (deprecatedItem as unknown as Record<symbol, boolean>)[isOperationDeprecated]
+      const operationDeprecatedSymbol = (deprecatedItem as unknown as Record<symbol, boolean>)[isOperationDeprecated]
       expect(operationDeprecatedSymbol).toBeTruthy()
     })
   })
@@ -77,6 +77,26 @@ describe('AsyncAPI 3.0 Deprecated tests', () => {
 
     const [operation] = operations
     expect(operation.deprecated).toBe(true)
+  })
+
+  describe('Shared channel with different deprecation per message', () => {
+    test('should only report deprecated items for the operation that uses the deprecated message', async () => {
+      const result = await buildPackageWithDefaultConfig('asyncapi/deprecated/shared-channel-different-deprecation')
+      const operations = Array.from(result.operations.entries())
+
+      // operation1 uses UserSignedUp (deprecated: false on email) — should have NO deprecated items
+      const operation1Entry = operations.find(([key]) => key.includes('operation1'))
+      expect(operation1Entry).toBeDefined()
+      const operation1DeprecatedItems = operation1Entry![1].deprecatedItems ?? []
+
+      // operation2 uses UserQuit (deprecated: true on email) — should have deprecated items
+      const operation2Entry = operations.find(([key]) => key.includes('operation2'))
+      expect(operation2Entry).toBeDefined()
+      const operation2DeprecatedItems = operation2Entry![1].deprecatedItems ?? []
+
+      expect(operation1DeprecatedItems.length).toBe(0)
+      expect(operation2DeprecatedItems.length).toBe(1)
+    })
   })
 
   test('should report deprecated schemas (flag "deprecated" in payload schema)', async () => {

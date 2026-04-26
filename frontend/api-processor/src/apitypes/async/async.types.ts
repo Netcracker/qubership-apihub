@@ -52,11 +52,15 @@ export interface AsyncDocumentInfo {
  */
 export interface AsyncOperationData {
   asyncapi: string
+  id?: string
   info: AsyncAPIV3.InfoObject
+  defaultContentType?: string
+  servers?: AsyncAPIV3.ServersObject
   channels?: AsyncAPIV3.ChannelsObject
   operations?: AsyncAPIV3.OperationsObject
   components?: AsyncAPIV3.ComponentsObject
-  servers?: AsyncAPIV3.ServersObject
+  // Root-level specification extensions (`x-*`) from the source AsyncAPI document
+  // are copied onto the spec but are not statically typed here.
 }
 
 export type VersionAsyncDocument = VersionDocument<AsyncAPIV3.AsyncAPIObject>

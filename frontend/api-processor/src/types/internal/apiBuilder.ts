@@ -41,7 +41,6 @@ import { TEXT_API_TYPE, UNKNOWN_API_TYPE } from '../../apitypes'
 import { SourceFile, TextFile } from './internal'
 import { ApiOperation } from './operation'
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
-import { DebugPerformanceContext } from '../../utils/logs'
 import { ResolvedPackage } from '../external/package'
 import { FILE_FORMAT_JSON, FILE_FORMAT_YAML, GRAPHQL_API_TYPE, REST_API_TYPE, ASYNCAPI_API_TYPE } from '../../consts'
 import { OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier'
@@ -111,7 +110,7 @@ export type NormalizedOperationId = string
 
 export type FileParser = (fileId: string, data: Blob) => Promise<SourceFile | undefined>
 export type DocumentBuilder<T> = (parsedFile: TextFile, file: BuildConfigFile, ctx: BuilderContext<T>) => Promise<VersionDocument<T>>
-export type OperationsBuilder<T, M = any> = (document: VersionDocument<T>, ctx: BuilderContext<T>, debugCtx?: DebugPerformanceContext) => Promise<ApiOperation<M>[]>
+export type OperationsBuilder<T, M = any> = (document: VersionDocument<T>, ctx: BuilderContext<T>) => Promise<ApiOperation<M>[]>
 export type DocumentDumper<T> = (document: ZippableDocument<T>, format?: typeof FILE_FORMAT_YAML | typeof FILE_FORMAT_JSON) => Blob
 export type OperationDataCompare<T> = (current: T, previous: T, ctx: CompareOperationsPairContext) => Promise<Diff[]>
 export type DocumentsCompareData = {

@@ -50,7 +50,6 @@ import {
   resolveOrigins,
 } from '@netcracker/qubership-apihub-api-unifier'
 import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
-import { DebugPerformanceContext, syncDebugPerformance } from '../../utils/logs'
 import { calculateHash, ObjectHashCache } from '../../utils/hashes'
 
 export const buildGraphQLOperation = (
@@ -64,33 +63,29 @@ export const buildGraphQLOperation = (
   notifications: NotificationMessage[],
   config: BuildConfig,
   normalizedSpecFragmentsHashCache: ObjectHashCache,
-  debugCtx?: DebugPerformanceContext,
 ): VersionGraphQLOperation => {
   const { apiKind: documentApiKind, slug: documentSlug, versionInternalDocument } = document
   const singleOperationEffectiveSpec: GraphApiSchema = createOperationSpec(effectiveDocument, refsOnlyDocument, [operationId])
 
-  const deprecatedItems: DeprecateItem[] = syncDebugPerformance('[DeprecatedItems]', () => {
-    const foundedDeprecatedItems = calculateDeprecatedItems(singleOperationEffectiveSpec, ORIGINS_SYMBOL)
-    const result: DeprecateItem[] = []
-    for (const item of foundedDeprecatedItems) {
-      const { description, value, deprecatedReason } = item
-      const declarationJsonPaths = resolveOrigins(value, JSON_SCHEMA_PROPERTY_DEPRECATED, ORIGINS_SYMBOL)?.map(pathItemToFullPath) ?? []
+  const foundedDeprecatedItems = calculateDeprecatedItems(singleOperationEffectiveSpec, ORIGINS_SYMBOL)
+  const deprecatedItems: DeprecateItem[] = []
+  for (const item of foundedDeprecatedItems) {
+    const { description, value, deprecatedReason } = item
+    const declarationJsonPaths = resolveOrigins(value, JSON_SCHEMA_PROPERTY_DEPRECATED, ORIGINS_SYMBOL)?.map(pathItemToFullPath) ?? []
 
-      const isOperation = isOperationPaths(declarationJsonPaths)
-      const [version] = getSplittedVersionKey(config.version)
-      const hash = isOperation ? undefined : calculateHash(value, normalizedSpecFragmentsHashCache)
+    const isOperation = isOperationPaths(declarationJsonPaths)
+    const [version] = getSplittedVersionKey(config.version)
+    const hash = isOperation ? undefined : calculateHash(value, normalizedSpecFragmentsHashCache)
 
-      result.push({
-        declarationJsonPaths,
-        ...takeIfDefined({ description }),
-        ...takeIfDefined({ deprecatedInfo: deprecatedReason }),
-        ...takeIf({ [isOperationDeprecated]: true }, isOperation),
-        deprecatedInPreviousVersions: config.status === VERSION_STATUS.RELEASE ? [version] : [],
-        ...takeIfDefined({ hash: hash }),
-      })
-    }
-    return result
-  }, debugCtx)
+    deprecatedItems.push({
+      declarationJsonPaths,
+      ...takeIfDefined({ description }),
+      ...takeIfDefined({ deprecatedInfo: deprecatedReason }),
+      ...takeIf({ [isOperationDeprecated]: true }, isOperation),
+      deprecatedInPreviousVersions: config.status === VERSION_STATUS.RELEASE ? [version] : [],
+      ...takeIfDefined({ hash: hash }),
+    })
+  }
 
   const searchTextFilePath = `search/${operationId}.txt`
   const operation = effectiveDocument[type]?.[method]

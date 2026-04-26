@@ -1,0 +1,37 @@
+asyncapi: 3.0.0
+info:
+  title: Root Fields Service
+  version: 1.0.0
+defaultContentType: application/json
+x-apihub-custom:
+  foo: bar
+x-vendor-flag: true
+servers:
+  amqp1:
+    host: broker-amqp.example.com
+    protocol: amqp
+channels:
+  userSignedup:
+    address: user/signedup
+    servers:
+      - $ref: '#/servers/amqp1'
+    messages:
+      UserSignedUp:
+        $ref: '#/components/messages/UserSignedUp'
+operations:
+  sendUserSignedup:
+    action: send
+    channel:
+      $ref: '#/channels/userSignedup'
+    messages:
+      - $ref: '#/channels/userSignedup/messages/UserSignedUp'
+components:
+  messages:
+    UserSignedUp:
+      title: User Signed Up
+      payload:
+        type: object
+        properties:
+          email:
+            type: string
+            format: email

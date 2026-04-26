@@ -1,0 +1,42 @@
+asyncapi: 3.0.0
+info:
+  title: Account Service
+  version: 1.0.0
+channels:
+  channel:
+    address: user/signedup
+    messages:
+      UserSignedUp:
+        $ref: '#/components/messages/UserSignedUp'
+      UserQuit:
+        $ref: '#/components/messages/UserQuit'
+operations:
+  operation1:
+    action: send
+    channel:
+      $ref: '#/channels/channel'
+    messages:
+      - $ref: '#/channels/channel/messages/UserSignedUp'
+  operation2:
+    action: send
+    channel:
+      $ref: '#/channels/channel'
+    messages:
+      - $ref: '#/channels/channel/messages/UserQuit'
+components:
+  messages:
+    UserSignedUp:
+      title: User Signed Up
+      payload:
+        type: object
+        properties:
+          email:
+            type: string
+    UserQuit:
+      title: User Quit
+      payload:
+        type: object
+        properties:
+          email:
+            type: string
+            deprecated: true

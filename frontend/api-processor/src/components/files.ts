@@ -19,7 +19,6 @@ import { buildDocument, buildErrorDocument } from './document'
 import { MESSAGE_SEVERITY } from '../consts'
 import { buildOperations } from './operations'
 import { SLUG_OPTIONS_DOCUMENT_ID, slugify } from '../utils'
-import { asyncDebugPerformance, DebugPerformanceContext } from '../utils/logs'
 
 export const createFileSlugs = (files: BuildConfigFile[], basePath: string): BuildConfigFile[] => {
   const { fs, slugs } = files.reduce(({ fs, slugs }, file) => {
@@ -40,8 +39,8 @@ export const createFileSlugs = (files: BuildConfigFile[], basePath: string): Bui
   return files
 }
 
-export const buildFile = async (file: BuildConfigFile, ctx: BuilderContext, debugCtx: DebugPerformanceContext): Promise<BuildFileResult> => {
-  const data = await asyncDebugPerformance('[Parse]', () => ctx.parsedFileResolver(file.fileId), debugCtx)
+export const buildFile = async (file: BuildConfigFile, ctx: BuilderContext): Promise<BuildFileResult> => {
+  const data = await ctx.parsedFileResolver(file.fileId)
 
   if (!data) {
     ctx.notifications.push({
@@ -54,12 +53,7 @@ export const buildFile = async (file: BuildConfigFile, ctx: BuilderContext, debu
     }
   }
 
-  const document = await asyncDebugPerformance(
-    '[Document]',
-    () => buildDocument(data, file, ctx),
-    debugCtx,
-    [data.type],
-  )
+  const document = await buildDocument(data, file, ctx)
 
   if (!document) {
     ctx.notifications.push({
@@ -76,17 +70,13 @@ export const buildFile = async (file: BuildConfigFile, ctx: BuilderContext, debu
     return { document, operations: [] }
   }
 
-  const operations = await asyncDebugPerformance(
-    '[Operations]',
-    (innterDebugCtx) => buildOperations(document, ctx, innterDebugCtx),
-    debugCtx,
-  )
+  const operations = await buildOperations(document, ctx)
 
   document.operationIds = operations?.map(({ operationId }) => operationId)
   return { document, operations }
 }
 
-export const buildFiles = async (files: BuildConfigFile[], ctx: BuilderContext, debugCtx?: DebugPerformanceContext): Promise<BuildFileResult[]> => {
+export const buildFiles = async (files: BuildConfigFile[], ctx: BuilderContext): Promise<BuildFileResult[]> => {
 
   files = createFileSlugs(files, ctx.basePath)
 
@@ -95,12 +85,7 @@ export const buildFiles = async (files: BuildConfigFile[], ctx: BuilderContext, 
   for (const file of files) {
     if (!file.fileId) { continue }
     tasks.push(
-      asyncDebugPerformance(
-        '[File]',
-        (innerDebugCtx) => buildFile(file, ctx, innerDebugCtx),
-        debugCtx,
-        [file.fileId],
-      ),
+      buildFile(file, ctx),
     )
   }
 

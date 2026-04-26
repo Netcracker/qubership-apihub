@@ -15,7 +15,6 @@
  */
 
 import { BuildConfig, BuilderStrategy, BuildResult, BuildTypeContexts } from './types'
-import { DebugPerformanceContext } from './utils/logs'
 
 export class BuilderStrategyContext {
   constructor(
@@ -29,7 +28,7 @@ export class BuilderStrategyContext {
     this.strategy = strategy
   }
 
-  async executeStrategy(debugContext?: DebugPerformanceContext): Promise<BuildResult> {
-    return this.strategy.execute(this.config, this.buildResult, this.contexts, debugContext)
+  async executeStrategy(): Promise<BuildResult> {
+    return this.strategy.execute(this.config, this.buildResult, this.contexts)
   }
 }

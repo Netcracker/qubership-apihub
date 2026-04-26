@@ -15,14 +15,13 @@
  */
 
 import type { ApiOperation, BuilderContext, VersionDocument } from '../types'
-import { DebugPerformanceContext } from '../utils/logs'
 
-export const buildOperations = async (document: VersionDocument, ctx: BuilderContext, debugCtx?: DebugPerformanceContext): Promise<ApiOperation[]> => {
+export const buildOperations = async (document: VersionDocument, ctx: BuilderContext): Promise<ApiOperation[]> => {
   const builder = ctx.apiBuilders.find(({ types }) => types.includes(document.type))
 
   if (builder) {
     try {
-      return await builder.buildOperations?.(document, ctx, debugCtx) ?? []
+      return await builder.buildOperations?.(document, ctx) ?? []
     } catch (error) {
       throw new Error(`Cannot process the "${document.fileId}" document. ${error instanceof Error ? error.message : 'Unknown error'}`)
     }

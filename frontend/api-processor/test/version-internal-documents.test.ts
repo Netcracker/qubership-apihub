@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { buildPackage, DEFAULT_PROJECTS_PATH, loadFileAsString, VERSIONS_PATH } from './helpers'
+import { buildPackage, DEFAULT_PROJECTS_PATH, loadFileAsString, VERSIONS_PATH, loadFileAsStringFromRegistry } from './helpers'
 import { ApiOperation, PACKAGE, PackageOperations, VersionDocument } from '../src'
 
 const DOCUMENT_FILE_NAME = 'spec'
@@ -91,7 +91,7 @@ describe('Version Internal Documents tests', () => {
 
     test('should operations from file have versionInternalDocumentId', async () => {
       await buildPackage(packageId)
-      const operationsFile = await loadFileAsString(
+      const operationsFile = await loadFileAsStringFromRegistry(
         VERSIONS_PATH,
         `${packageId}/v1`,
         PACKAGE.OPERATIONS_FILE_NAME,

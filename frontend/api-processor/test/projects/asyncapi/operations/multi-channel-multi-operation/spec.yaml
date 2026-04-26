@@ -1,0 +1,51 @@
+asyncapi: 3.0.0
+info:
+  title: Test Events API
+  version: 1.0.0
+channels:
+  user/signedup:
+    address: user/signedup
+    title: user/signedup
+    messages:
+      UserSignedUp:
+        $ref: '#/components/messages/UserSignedUp'
+  order/created:
+    address: order/created
+    title: order/created
+    messages:
+      OrderCreated:
+        $ref: '#/components/messages/OrderCreated'
+operations:
+  publishUserSignedUp:
+    action: send
+    channel:
+      $ref: '#/channels/user~1signedup'
+    messages:
+      - $ref: '#/channels/user~1signedup/messages/UserSignedUp'
+  receiveOrderCreated:
+    action: receive
+    channel:
+      $ref: '#/channels/order~1created'
+    messages:
+      - $ref: '#/channels/order~1created/messages/OrderCreated'
+components:
+  messages:
+    UserSignedUp:
+      title: User Signed Up
+      payload:
+        $ref: '#/components/schemas/User'
+    OrderCreated:
+      title: Order Created
+      payload:
+        $ref: '#/components/schemas/Order'
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+    Order:
+      type: object
+      properties:
+        orderId:
+          type: string

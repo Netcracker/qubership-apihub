@@ -28,7 +28,7 @@ import {
   TRANSFORMATION_KIND_REDUCED,
 } from '../src'
 import { parseGraphQLSource } from '../src/utils/graphql-transformer'
-import { Editor, loadFileAsString, LocalRegistry, VERSIONS_PATH } from './helpers'
+import { Editor, loadFileAsString, LocalRegistry, VERSIONS_PATH, loadFileAsStringFromRegistry } from './helpers'
 
 const GROUP_NAME = 'manualGroup'
 const groupToOperationIdsMap = {
@@ -288,7 +288,7 @@ describe('Document Group test', () => {
         const pkg = LocalRegistry.openPackage(`document-group/${folder}/not-hang-up-when-processing-cycled-chain-for-response`, groupToOnePathOperationIdsMap)
         await pkg.publish(pkg.packageId, { packageId: pkg.packageId })
 
-        const notificationFile = await loadFileAsString(
+        const notificationFile = await loadFileAsStringFromRegistry(
           VERSIONS_PATH,
           `${pkg.packageId}/v1`,
           `${PACKAGE.NOTIFICATIONS_FILE_NAME}`,

@@ -22,35 +22,29 @@ import { INLINE_REFS_FLAG } from '../../consts'
 import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
 import { buildGraphQLOperation } from './graphql.operation'
 import { asyncFunction } from '../../utils/async'
-import { logLongBuild, syncDebugPerformance } from '../../utils/logs'
 import { normalize } from '@netcracker/qubership-apihub-api-unifier'
 import { GRAPHQL_EFFECTIVE_NORMALIZE_OPTIONS } from '../graphql'
 
-export const buildGraphQLOperations: OperationsBuilder<GraphApiSchema> = async (document, ctx, debugCtx) => {
+export const buildGraphQLOperations: OperationsBuilder<GraphApiSchema> = async (document, ctx) => {
   const { notifications, normalizedSpecFragmentsHashCache, config } = ctx
 
   const documentWithoutComponents = removeComponents(document.data) as GraphApiSchema
 
-  const { effectiveDocument, refsOnlyDocument } = syncDebugPerformance('[NormalizeDocument]', () => {
-      const effectiveDocument = normalize(
-        documentWithoutComponents,
-        {
-          ...GRAPHQL_EFFECTIVE_NORMALIZE_OPTIONS,
-          source: document.data,
-        },
-      ) as GraphApiSchema
-      const refsOnlyDocument = normalize(
-        documentWithoutComponents,
-        {
-          mergeAllOf: false,
-          inlineRefsFlag: INLINE_REFS_FLAG,
-          source: document.data,
-        },
-      ) as GraphApiSchema
-      return { effectiveDocument, refsOnlyDocument }
+  const effectiveDocument = normalize(
+    documentWithoutComponents,
+    {
+      ...GRAPHQL_EFFECTIVE_NORMALIZE_OPTIONS,
+      source: document.data,
     },
-    debugCtx,
-  )
+  ) as GraphApiSchema
+  const refsOnlyDocument = normalize(
+    documentWithoutComponents,
+    {
+      mergeAllOf: false,
+      inlineRefsFlag: INLINE_REFS_FLAG,
+      source: document.data,
+    },
+  ) as GraphApiSchema
 
   const { queries, mutations, subscriptions } = documentWithoutComponents
   const operations: VersionGraphQLOperation[] = []
@@ -66,23 +60,18 @@ export const buildGraphQLOperations: OperationsBuilder<GraphApiSchema> = async (
       await asyncFunction(async () => {
         const operationId = calculateGraphqlOperationId(GRAPHQL_TYPE[type], operationKey)
 
-        syncDebugPerformance('[Operation]', (innerDebugCtx) =>
-          logLongBuild(() => {
-            const operation: VersionGraphQLOperation = buildGraphQLOperation(
-              operationId,
-              type,
-              operationKey,
-              document,
-              effectiveDocument,
-              refsOnlyDocument,
-              notifications,
-              config,
-              normalizedSpecFragmentsHashCache,
-              innerDebugCtx,
-            )
-            operations.push(operation)
-            }, `${config.packageId}/${config.version} ${operationId}`,
-          ), debugCtx, [operationId])
+        const operation: VersionGraphQLOperation = buildGraphQLOperation(
+          operationId,
+          type,
+          operationKey,
+          document,
+          effectiveDocument,
+          refsOnlyDocument,
+          notifications,
+          config,
+          normalizedSpecFragmentsHashCache,
+        )
+        operations.push(operation)
       })
     }
   }

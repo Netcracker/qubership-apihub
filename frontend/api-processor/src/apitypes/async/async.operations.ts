@@ -29,7 +29,6 @@ import type * as TYPE from './async.types'
 import { AsyncOperationActionType } from './async.types'
 import { FIRST_REFERENCE_KEY_PROPERTY, INLINE_REFS_FLAG } from '../../consts'
 import { asyncFunction } from '../../utils/async'
-import { logLongBuild, syncDebugPerformance } from '../../utils/logs'
 import { normalize, RefErrorType } from '@netcracker/qubership-apihub-api-unifier'
 import { ASYNC_EFFECTIVE_NORMALIZE_OPTIONS } from './async.consts'
 import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
@@ -38,35 +37,30 @@ import { getAsyncChannelId, getAsyncMessageId } from './async.utils'
 
 type OperationInfo = { messageId: string; channelId: string; asyncOperationId: string }
 
-export const buildAsyncApiOperations: OperationsBuilder<AsyncAPIV3.AsyncAPIObject> = async (document, ctx, debugCtx) => {
+export const buildAsyncApiOperations: OperationsBuilder<AsyncAPIV3.AsyncAPIObject> = async (document, ctx) => {
   const { data: documentData, fileId: documentFileId } = document
   const documentWithoutComponents = removeComponents(documentData)
   const bundlingErrorHandler = createBundlingErrorHandler(ctx, documentFileId)
 
   const { notifications, normalizedSpecFragmentsHashCache, config } = ctx
-  const { effectiveDocument, refsOnlyDocument } = syncDebugPerformance('[NormalizeDocument]', () => {
-      const effectiveDocument = normalize(
-        documentWithoutComponents,
-        {
-          ...ASYNC_EFFECTIVE_NORMALIZE_OPTIONS,
-          source: documentData,
-          onRefResolveError: (message: string, _path: PropertyKey[], _ref: string, errorType: RefErrorType) =>
-            bundlingErrorHandler([{ message, errorType }]),
-        },
-      ) as AsyncAPIV3.AsyncAPIObject
-      const refsOnlyDocument = normalize(
-        documentWithoutComponents,
-        {
-          mergeAllOf: false,
-          firstReferenceKeyProperty: FIRST_REFERENCE_KEY_PROPERTY,
-          inlineRefsFlag: INLINE_REFS_FLAG,
-          source: documentData,
-        },
-      ) as AsyncAPIV3.AsyncAPIObject
-      return { effectiveDocument, refsOnlyDocument }
+  const effectiveDocument = normalize(
+    documentWithoutComponents,
+    {
+      ...ASYNC_EFFECTIVE_NORMALIZE_OPTIONS,
+      source: documentData,
+      onRefResolveError: (message: string, _path: PropertyKey[], _ref: string, errorType: RefErrorType) =>
+        bundlingErrorHandler([{ message, errorType }]),
     },
-    debugCtx,
-  )
+  ) as AsyncAPIV3.AsyncAPIObject
+  const refsOnlyDocument = normalize(
+    documentWithoutComponents,
+    {
+      mergeAllOf: false,
+      firstReferenceKeyProperty: FIRST_REFERENCE_KEY_PROPERTY,
+      inlineRefsFlag: INLINE_REFS_FLAG,
+      source: documentData,
+    },
+  ) as AsyncAPIV3.AsyncAPIObject
 
   const { operations } = effectiveDocument
 
@@ -105,28 +99,22 @@ export const buildAsyncApiOperations: OperationsBuilder<AsyncAPIV3.AsyncAPIObjec
       operationIdMap.get(operationId)!.push({ asyncOperationId, channelId, messageId})
 
       await asyncFunction(() => {
-        syncDebugPerformance('[Operation]', (innerDebugCtx) =>
-          logLongBuild(() => {
-              const builtOperation = buildAsyncApiOperation(
-                operationId,
-                messageId,
-                channelId,
-                asyncOperationId,
-                action,
-                channel,
-                message,
-                document,
-                effectiveDocument,
-                refsOnlyDocument,
-                notifications,
-                config,
-                normalizedSpecFragmentsHashCache,
-                innerDebugCtx,
-              )
-              apihubOperations.push(builtOperation)
-            },
-            `${config.packageId}/${config.version} ${operationId}`,
-          ), debugCtx, [operationId])
+        const builtOperation = buildAsyncApiOperation(
+          operationId,
+          messageId,
+          channelId,
+          asyncOperationId,
+          action,
+          channel,
+          message,
+          document,
+          effectiveDocument,
+          refsOnlyDocument,
+          notifications,
+          config,
+          normalizedSpecFragmentsHashCache,
+        )
+        apihubOperations.push(builtOperation)
       })
     }
   }
