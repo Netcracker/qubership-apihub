@@ -15,7 +15,7 @@
         "@nestjs/core": "^10.0.0",
         "@nestjs/platform-express": "^10.0.0",
         "@nestjs/swagger": "^7.0.0",
-        "@netcracker/qubership-apihub-api-processor": "next",
+        "@netcracker/qubership-apihub-api-processor": "5.2.1",
         "@sinclair/typebox": "^0.32.1",
         "adm-zip": "^0.5.10",
         "dotenv": "^16.3.1",
@@ -1962,9 +1962,9 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-diff": {
-      "version": "3.2.0-next.20260426152404",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-diff/3.2.0-next.20260426152404/0def7b47fadb242f52445320ebdaaffc6b21c5b0",
-      "integrity": "sha512-caBIggm8+fchMAYI03zvK0fg43v6qKsE026iqM4WdQNX0amju6ExzBBBMZh1R/VyfPHHvehJNAozRABBn/uHrA==",
+      "version": "3.2.0",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-diff/3.2.0/97ebda49cb462085c52235c0a761e25f633d6e4a",
+      "integrity": "sha512-ZcouDw61zjyE9ECL7qM7ZC6KbsY1u4v2yr6sAhKfrDChaXM0e1ltKrgzpeaU4tXmRVqnTYjJDUiociRJEckFtA==",
       "dependencies": {
         "@netcracker/qubership-apihub-api-unifier": "2.7.0",
         "@netcracker/qubership-apihub-json-crawl": "1.2.0",
@@ -1981,13 +1981,13 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-processor": {
-      "version": "5.2.1-next.20260426154116",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/5.2.1-next.20260426154116/9f7c138903990db92f1236809a364f5b9a05d97b",
-      "integrity": "sha512-6xDmhAhXfBk+Thu+D9sTiUFt/rO9O7XEnhN02k7G/CrW0P7nbrMiiLAht3U2tjCQbEoycSiPfGMAnci6pq7ufw==",
+      "version": "5.2.1",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/5.2.1/6f89d010cac81fb4980b7812c682d3fd9169beb1",
+      "integrity": "sha512-ge9CRax1uWy5xWCiic8MqcUxa35KEHS107NjSgo40efpAv/FoTQvO4pdHAmdLDgfzUeP1PCdbxCLX8qTYShXZg==",
       "license": "Apache-2.0",
       "dependencies": {
         "@asyncapi/parser": "3.6.0",
-        "@netcracker/qubership-apihub-api-diff": "next",
+        "@netcracker/qubership-apihub-api-diff": "3.2.0",
         "@netcracker/qubership-apihub-api-unifier": "2.7.0",
         "@netcracker/qubership-apihub-graphapi": "1.0.9",
         "@netcracker/qubership-apihub-json-crawl": "1.2.0",
