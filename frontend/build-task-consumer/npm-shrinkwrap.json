@@ -1,12 +1,12 @@
 {
   "name": "@netcracker/qubership-apihub-build-task-consumer",
-  "version": "3.1.11",
+  "version": "3.1.12",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@netcracker/qubership-apihub-build-task-consumer",
-      "version": "3.1.11",
+      "version": "3.1.12",
       "license": "Apache-2.0",
       "dependencies": {
         "@nestjs/axios": "^3.0.0",
@@ -15,7 +15,7 @@
         "@nestjs/core": "^10.0.0",
         "@nestjs/platform-express": "^10.0.0",
         "@nestjs/swagger": "^7.0.0",
-        "@netcracker/qubership-apihub-api-processor": "5.2.0",
+        "@netcracker/qubership-apihub-api-processor": "5.2.1",
         "@sinclair/typebox": "^0.32.1",
         "adm-zip": "^0.5.10",
         "dotenv": "^16.3.1",
@@ -102,6 +102,22 @@
         "chokidar": {
           "optional": true
         }
+      }
+    },
+    "node_modules/@angular-devkit/core/node_modules/ajv": {
+      "version": "8.12.0",
+      "resolved": "https://registry.npmjs.org/ajv/-/ajv-8.12.0.tgz",
+      "integrity": "sha512-sRu1kpcO9yLtYxBKvqfTeh9KzZEwO3STyX1HT+4CaDzC6HpTGYhIhPIzj9XuKU7KYDwnaeh5hcOwjy1QuJzBPA==",
+      "dev": true,
+      "dependencies": {
+        "fast-deep-equal": "^3.1.1",
+        "json-schema-traverse": "^1.0.0",
+        "require-from-string": "^2.0.2",
+        "uri-js": "^4.2.2"
+      },
+      "funding": {
+        "type": "github",
+        "url": "https://github.com/sponsors/epoberezkin"
       }
     },
     "node_modules/@angular-devkit/core/node_modules/picomatch": {
@@ -269,22 +285,6 @@
         "js-yaml": "^4.1.1",
         "jsonpath-plus": "^10.0.7",
         "node-fetch": "2.6.7"
-      }
-    },
-    "node_modules/@asyncapi/parser/node_modules/ajv": {
-      "version": "8.18.0",
-      "resolved": "https://registry.npmjs.org/ajv/-/ajv-8.18.0.tgz",
-      "integrity": "sha512-PlXPeEWMXMZ7sPYOHqmDyCJzcfNrUr3fGNKtezX14ykXOEIvyK81d+qydx89KY5O71FKMPaQ2vBfBFI5NHR63A==",
-      "license": "MIT",
-      "dependencies": {
-        "fast-deep-equal": "^3.1.3",
-        "fast-uri": "^3.0.1",
-        "json-schema-traverse": "^1.0.0",
-        "require-from-string": "^2.0.2"
-      },
-      "funding": {
-        "type": "github",
-        "url": "https://github.com/sponsors/epoberezkin"
       }
     },
     "node_modules/@asyncapi/parser/node_modules/js-yaml": {
@@ -933,11 +933,10 @@
       }
     },
     "node_modules/@eslint/eslintrc/node_modules/ajv": {
-      "version": "6.12.6",
-      "resolved": "https://registry.npmjs.org/ajv/-/ajv-6.12.6.tgz",
-      "integrity": "sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g==",
+      "version": "6.14.0",
+      "resolved": "https://registry.npmjs.org/ajv/-/ajv-6.14.0.tgz",
+      "integrity": "sha512-IWrosm/yrn43eiKqkfkHis7QioDleaXQHdDVPKg0FSwwd/DuvyX79TZnFOnYpB7dcsFAMmtFztZuXPDvSePkFw==",
       "dev": true,
-      "license": "MIT",
       "dependencies": {
         "fast-deep-equal": "^3.1.1",
         "fast-json-stable-stringify": "^2.0.0",
@@ -953,8 +952,7 @@
       "version": "0.4.1",
       "resolved": "https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-0.4.1.tgz",
       "integrity": "sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg==",
-      "dev": true,
-      "license": "MIT"
+      "dev": true
     },
     "node_modules/@eslint/js": {
       "version": "8.57.1",
@@ -1964,9 +1962,9 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-diff": {
-      "version": "3.1.0",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-diff/3.1.0/93448d3f55036b89ddad2300a50209cdfc2adae7",
-      "integrity": "sha512-RWYQPoykZ0m0R6M/i3/KWR91S79KrbQFvrlfwc7KL5aeM+DGMGZyXPPobbGHfJtCGFI9STav1SC0QP5fdCcI0g==",
+      "version": "3.2.0",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-diff/3.2.0/97ebda49cb462085c52235c0a761e25f633d6e4a",
+      "integrity": "sha512-ZcouDw61zjyE9ECL7qM7ZC6KbsY1u4v2yr6sAhKfrDChaXM0e1ltKrgzpeaU4tXmRVqnTYjJDUiociRJEckFtA==",
       "dependencies": {
         "@netcracker/qubership-apihub-api-unifier": "2.7.0",
         "@netcracker/qubership-apihub-json-crawl": "1.2.0",
@@ -1983,13 +1981,13 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-processor": {
-      "version": "5.2.0",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/5.2.0/e6df022af9c22ae443311c2070e4cb64d61424b5",
-      "integrity": "sha512-A9tAlNvGbNNQtOTFsiKHSCoVHXPprlpeY190UCb7qxUY2v/J3uwPznP0DCJXVV6T9dBK6xmqts5yA2yB6ZewxQ==",
+      "version": "5.2.1",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/5.2.1/6f89d010cac81fb4980b7812c682d3fd9169beb1",
+      "integrity": "sha512-ge9CRax1uWy5xWCiic8MqcUxa35KEHS107NjSgo40efpAv/FoTQvO4pdHAmdLDgfzUeP1PCdbxCLX8qTYShXZg==",
       "license": "Apache-2.0",
       "dependencies": {
-        "@asyncapi/parser": "^3.0.0",
-        "@netcracker/qubership-apihub-api-diff": "3.1.0",
+        "@asyncapi/parser": "3.6.0",
+        "@netcracker/qubership-apihub-api-diff": "3.2.0",
         "@netcracker/qubership-apihub-api-unifier": "2.7.0",
         "@netcracker/qubership-apihub-graphapi": "1.0.9",
         "@netcracker/qubership-apihub-json-crawl": "1.2.0",
@@ -2390,22 +2388,6 @@
         "node": "^12.20 || >=14.13"
       }
     },
-    "node_modules/@stoplight/spectral-core/node_modules/ajv": {
-      "version": "8.18.0",
-      "resolved": "https://registry.npmjs.org/ajv/-/ajv-8.18.0.tgz",
-      "integrity": "sha512-PlXPeEWMXMZ7sPYOHqmDyCJzcfNrUr3fGNKtezX14ykXOEIvyK81d+qydx89KY5O71FKMPaQ2vBfBFI5NHR63A==",
-      "license": "MIT",
-      "dependencies": {
-        "fast-deep-equal": "^3.1.3",
-        "fast-uri": "^3.0.1",
-        "json-schema-traverse": "^1.0.0",
-        "require-from-string": "^2.0.2"
-      },
-      "funding": {
-        "type": "github",
-        "url": "https://github.com/sponsors/epoberezkin"
-      }
-    },
     "node_modules/@stoplight/spectral-core/node_modules/lodash": {
       "version": "4.17.23",
       "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.17.23.tgz",
@@ -2447,22 +2429,6 @@
       },
       "engines": {
         "node": "^16.20 || ^18.18 || >= 20.17"
-      }
-    },
-    "node_modules/@stoplight/spectral-functions/node_modules/ajv": {
-      "version": "8.18.0",
-      "resolved": "https://registry.npmjs.org/ajv/-/ajv-8.18.0.tgz",
-      "integrity": "sha512-PlXPeEWMXMZ7sPYOHqmDyCJzcfNrUr3fGNKtezX14ykXOEIvyK81d+qydx89KY5O71FKMPaQ2vBfBFI5NHR63A==",
-      "license": "MIT",
-      "dependencies": {
-        "fast-deep-equal": "^3.1.3",
-        "fast-uri": "^3.0.1",
-        "json-schema-traverse": "^1.0.0",
-        "require-from-string": "^2.0.2"
-      },
-      "funding": {
-        "type": "github",
-        "url": "https://github.com/sponsors/epoberezkin"
       }
     },
     "node_modules/@stoplight/spectral-parsers": {
@@ -3448,15 +3414,14 @@
       }
     },
     "node_modules/ajv": {
-      "version": "8.12.0",
-      "resolved": "https://registry.npmjs.org/ajv/-/ajv-8.12.0.tgz",
-      "integrity": "sha512-sRu1kpcO9yLtYxBKvqfTeh9KzZEwO3STyX1HT+4CaDzC6HpTGYhIhPIzj9XuKU7KYDwnaeh5hcOwjy1QuJzBPA==",
-      "license": "MIT",
+      "version": "8.18.0",
+      "resolved": "https://registry.npmjs.org/ajv/-/ajv-8.18.0.tgz",
+      "integrity": "sha512-PlXPeEWMXMZ7sPYOHqmDyCJzcfNrUr3fGNKtezX14ykXOEIvyK81d+qydx89KY5O71FKMPaQ2vBfBFI5NHR63A==",
       "dependencies": {
-        "fast-deep-equal": "^3.1.1",
+        "fast-deep-equal": "^3.1.3",
+        "fast-uri": "^3.0.1",
         "json-schema-traverse": "^1.0.0",
-        "require-from-string": "^2.0.2",
-        "uri-js": "^4.2.2"
+        "require-from-string": "^2.0.2"
       },
       "funding": {
         "type": "github",
@@ -5386,11 +5351,10 @@
       }
     },
     "node_modules/eslint/node_modules/ajv": {
-      "version": "6.12.6",
-      "resolved": "https://registry.npmjs.org/ajv/-/ajv-6.12.6.tgz",
-      "integrity": "sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g==",
+      "version": "6.14.0",
+      "resolved": "https://registry.npmjs.org/ajv/-/ajv-6.14.0.tgz",
+      "integrity": "sha512-IWrosm/yrn43eiKqkfkHis7QioDleaXQHdDVPKg0FSwwd/DuvyX79TZnFOnYpB7dcsFAMmtFztZuXPDvSePkFw==",
       "dev": true,
-      "license": "MIT",
       "dependencies": {
         "fast-deep-equal": "^3.1.1",
         "fast-json-stable-stringify": "^2.0.0",
@@ -5463,8 +5427,7 @@
       "version": "0.4.1",
       "resolved": "https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-0.4.1.tgz",
       "integrity": "sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg==",
-      "dev": true,
-      "license": "MIT"
+      "dev": true
     },
     "node_modules/eslint/node_modules/locate-path": {
       "version": "6.0.0",
@@ -9391,7 +9354,7 @@
       "version": "2.3.1",
       "resolved": "https://registry.npmjs.org/punycode/-/punycode-2.3.1.tgz",
       "integrity": "sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==",
-      "license": "MIT",
+      "dev": true,
       "engines": {
         "node": ">=6"
       }
@@ -9930,11 +9893,10 @@
       }
     },
     "node_modules/schema-utils/node_modules/ajv": {
-      "version": "6.12.6",
-      "resolved": "https://registry.npmjs.org/ajv/-/ajv-6.12.6.tgz",
-      "integrity": "sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g==",
+      "version": "6.14.0",
+      "resolved": "https://registry.npmjs.org/ajv/-/ajv-6.14.0.tgz",
+      "integrity": "sha512-IWrosm/yrn43eiKqkfkHis7QioDleaXQHdDVPKg0FSwwd/DuvyX79TZnFOnYpB7dcsFAMmtFztZuXPDvSePkFw==",
       "dev": true,
-      "license": "MIT",
       "dependencies": {
         "fast-deep-equal": "^3.1.1",
         "fast-json-stable-stringify": "^2.0.0",
@@ -9960,8 +9922,7 @@
       "version": "0.4.1",
       "resolved": "https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-0.4.1.tgz",
       "integrity": "sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg==",
-      "dev": true,
-      "license": "MIT"
+      "dev": true
     },
     "node_modules/semver": {
       "version": "7.7.1",
@@ -11448,7 +11409,7 @@
       "version": "4.4.1",
       "resolved": "https://registry.npmjs.org/uri-js/-/uri-js-4.4.1.tgz",
       "integrity": "sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==",
-      "license": "BSD-2-Clause",
+      "dev": true,
       "dependencies": {
         "punycode": "^2.1.0"
       }
