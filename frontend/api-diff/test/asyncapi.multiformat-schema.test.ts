@@ -1,4 +1,4 @@
-import { apiDiff, breaking, CompareOptions, DiffAction, nonBreaking, unclassified } from '../src'
+import { apiDiff, breaking, CompareOptions, DiffAction, nonBreaking, risky, unclassified } from '../src'
 import { COMPARE_SCOPE_RECEIVE, COMPARE_SCOPE_SEND } from '../src/asyncapi/asyncapi3.const'
 import { COMPARE_SCOPE_ROOT } from '../src/types'
 import { diffsMatcher } from './helper/matchers'
@@ -297,7 +297,7 @@ describe('AsyncAPI: scope-based classification', () => {
       ]))
     })
 
-    it('remove-required-property-receive-scope: breaking', () => {
+    it('remove-required-property-receive-scope: risky', () => {
       const before = { type: 'object', properties: { a: { type: 'string' } }, required: ['a'] }
       const after = { type: 'object', properties: { a: { type: 'string' } } }
 
@@ -305,7 +305,7 @@ describe('AsyncAPI: scope-based classification', () => {
 
       expect(diffs).toEqual(diffsMatcher([
         expect.objectContaining({ scope: COMPARE_SCOPE_ROOT, action: DiffAction.remove, type: nonBreaking }),
-        expect.objectContaining({ scope: COMPARE_SCOPE_RECEIVE, action: DiffAction.remove, type: breaking }),
+        expect.objectContaining({ scope: COMPARE_SCOPE_RECEIVE, action: DiffAction.remove, type: risky }),
       ]))
     })
   })
