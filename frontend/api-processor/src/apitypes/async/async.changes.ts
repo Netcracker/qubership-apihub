@@ -224,7 +224,7 @@ function createCopyWithEmptyOperations(template: AsyncAPIV3.AsyncAPIObject): Asy
 
   return {
     operations: operations ? Object.fromEntries(
-      Object.keys(operations).map(key => [key, {} as AsyncAPIV3.OperationObject]),
+      Object.entries(operations).map(([key, operation]) => [key, { ...operation, messages: [] }]),
     ) : {},
     ...rest,
   }

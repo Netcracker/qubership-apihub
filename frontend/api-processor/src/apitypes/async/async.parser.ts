@@ -21,6 +21,7 @@ import { ASYNC_DOCUMENT_TYPE, ASYNC_FILE_FORMAT } from './async.consts'
 import { FILE_KIND, TextFile } from '../../types'
 import { getFileExtension } from '../../utils'
 import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
+import { RulesetOptions } from '@asyncapi/parser/esm/ruleset'
 
 interface ValidationError {
   message: string
@@ -114,6 +115,20 @@ async function getParserClass(): Promise<typeof Parser> {
 }
 
 /**
+ * Parser ruleset options with intentionally suppressed rules.
+ *
+ * asyncapi-latest-version: fires when the document uses AsyncAPI 3.0.0 instead of the newest
+ * version known to the parser. We support 3.0.0 documents and do not want to treat
+ * "not the latest version" as an error or warning.
+ */
+const ASYNCAPI_PARSER_RULESET: RulesetOptions = {
+  extends: [],
+  rules: {
+    'asyncapi-latest-version': 'off',
+  },
+}
+
+/**
  * Validates AsyncAPI document using official parser.
  * This provides spec validation while avoiding circular reference issues
  * by using the parser only for validation, not for the actual parsing.
@@ -124,7 +139,7 @@ async function getParserClass(): Promise<typeof Parser> {
 async function validateAsyncApiDocument(sourceString: string): Promise<ValidationError[] | undefined> {
   try {
     const ParserClass = await getParserClass()
-    const parser: Parser = new ParserClass()
+    const parser: Parser = new ParserClass({ ruleset: ASYNCAPI_PARSER_RULESET })
     const { diagnostics }: ParseOutput = await parser.parse(sourceString)
 
     const criticalErrors: Diagnostic[] = diagnostics.filter(diagnostic => diagnostic.severity === 0)
