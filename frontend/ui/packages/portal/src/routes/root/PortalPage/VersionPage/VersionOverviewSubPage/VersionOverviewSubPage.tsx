@@ -52,7 +52,7 @@ export const VersionOverviewSubPage: FC = memo(() => {
       navigation={<OverviewSidebar/>}
       body={OVERVIEW_SUB_PAGE_MAP[sidebarItem as OverviewPageRoute]}
       nestedPage
-      testId="OverviewTab"
+      data-testid="OverviewTab"
     />
   )
 })
@@ -64,4 +64,3 @@ const OVERVIEW_SUB_PAGE_MAP: Record<OverviewPageRoute, ReactNode> = {
   [REVISION_HISTORY_PAGE]: <RevisionsHistoryCard/>,
   [OPERATION_GROUPS_PAGE]: <OperationGroupsCard/>,
 }
-

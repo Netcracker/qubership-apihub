@@ -40,7 +40,7 @@ export type SidebarMenu = {
   icon?: ReactNode
   disabled?: boolean
   tooltip?: string
-  testId: string
+  'data-testid': string
 }
 
 export type NavigationMenuProps = {
@@ -84,7 +84,7 @@ export const NavigationMenu: FC<NavigationMenuProps> = memo<NavigationMenuProps>
           ? <KeyboardDoubleArrowLeftIcon/>
           : <KeyboardDoubleArrowRightIcon/>
       ),
-      testId: open ? 'CollapseButton' : 'ExpandButton',
+      'data-testid': open ? 'CollapseButton' : 'ExpandButton',
     },
   ], [open, sidebarServiceMenuItems])
 
@@ -107,7 +107,7 @@ export const NavigationMenu: FC<NavigationMenuProps> = memo<NavigationMenuProps>
       >
         <List sx={{ height: `calc(100% - ${serviceItems.length} *  48px)` }}>
           {sidebarMenuItems.map(menuItem => {
-            const { id, title, disabled, tooltip, icon, testId } = menuItem
+            const { id, title, disabled, tooltip, icon, 'data-testid': dataTestId } = menuItem
             return (
               <Tooltip key={`tooltip-${id}`} title={tooltip} disableHoverListener={open && !disabled} placement="right">
                 <ListItem key={id} disablePadding sx={{ display: 'block' }}>
@@ -115,7 +115,7 @@ export const NavigationMenu: FC<NavigationMenuProps> = memo<NavigationMenuProps>
                     sx={LIST_ITEM_BUTTON_STYLE(activeItem, id)}
                     onClick={() => onClickItem(id)}
                     disabled={disabled}
-                    data-testid={testId}
+                    data-testid={dataTestId}
                   >
                     <ListItemIcon sx={LIST_ITEM_ICON_STYLE}>
                       {icon}
@@ -129,7 +129,7 @@ export const NavigationMenu: FC<NavigationMenuProps> = memo<NavigationMenuProps>
         </List>
         <List sx={{ height: 'auto' }}>
           {serviceItems.map(menuItem => {
-            const { id, title, disabled, tooltip, icon, testId } = menuItem
+            const { id, title, disabled, tooltip, icon, 'data-testid': dataTestId } = menuItem
             return (
               <Tooltip key={`tooltip-${id}`} title={tooltip} disableHoverListener={open && !disabled} placement="right">
                 <ListItem key={id} disablePadding sx={{ display: 'block' }}>
@@ -137,7 +137,7 @@ export const NavigationMenu: FC<NavigationMenuProps> = memo<NavigationMenuProps>
                     sx={LIST_ITEM_BUTTON_STYLE(activeItem, id)}
                     onClick={() => onClickItem(id)}
                     disabled={disabled}
-                    data-testid={testId}
+                    data-testid={dataTestId}
                   >
                     <ListItemIcon sx={LIST_ITEM_ICON_STYLE}>
                       {icon}

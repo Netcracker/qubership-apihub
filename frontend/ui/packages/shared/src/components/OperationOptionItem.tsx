@@ -30,7 +30,7 @@ export type OperationOptionItemProps = {
 export const OperationOptionItem: FC<OperationOptionItemProps> = memo<OperationOptionItemProps>(({
   props,
   operation,
-  testId,
+  'data-testid': dataTestId,
 }) => {
   const [subtitle, chipValue] = useMemo(() => (
     isRestOperation(operation)
@@ -45,7 +45,7 @@ export const OperationOptionItem: FC<OperationOptionItemProps> = memo<OperationO
       title={operation.title}
       subtitle={subtitle}
       chipValue={chipValue}
-      testId={testId}
+      data-testid={dataTestId}
       props={props}
     />
   )

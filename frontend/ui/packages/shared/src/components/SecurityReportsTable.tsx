@@ -221,7 +221,7 @@ export const SecurityReportsTable: FC<SecurityReportsTableProps> = memo(({
             invisible={isLoading}
             area={CONTENT_PLACEHOLDER_AREA}
             message="No reports"
-            testId="NoReportsPlaceholder"
+            data-testid="NoReportsPlaceholder"
           />
         ) : null
       }

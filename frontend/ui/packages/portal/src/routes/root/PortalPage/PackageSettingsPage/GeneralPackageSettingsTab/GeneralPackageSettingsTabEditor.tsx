@@ -170,7 +170,7 @@ export const GeneralPackageSettingsTabEditor: FC<PackageSettingsTabProps> = memo
                 <TitledValue
                   title="Alias"
                   value={transformStringValue(alias)}
-                  testId="AliasContent"
+                  data-testid="AliasContent"
                 />
               </Grid>
               {[PACKAGE_KIND, DASHBOARD_KIND].includes(kind) &&
@@ -188,7 +188,7 @@ export const GeneralPackageSettingsTabEditor: FC<PackageSettingsTabProps> = memo
                     <TitledValue
                       title="Service Name"
                       value={transformStringValue(serviceName)}
-                      testId="ServiceNameContent"
+                      data-testid="ServiceNameContent"
                     />
                   )}
                 </Grid>
@@ -198,7 +198,7 @@ export const GeneralPackageSettingsTabEditor: FC<PackageSettingsTabProps> = memo
                   <TitledValue
                     title="Parent Group"
                     value={transformStringValue(parentGroup)}
-                    testId="ParentGroupContent"
+                    data-testid="ParentGroupContent"
                   />
                 </Grid>
               }

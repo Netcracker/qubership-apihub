@@ -83,9 +83,9 @@ export const PackagesFilterer: FC<PackagesFiltererProps> = memo<PackagesFilterer
   }), [rootPackageKey, showCreatePackageDialog])
 
   const CREATE_BUTTON_OPTIONS = [
-    { key: GROUP_KIND, label: 'Group', method: showCreateGroupDialogHandle, testId: 'GroupMenuItem' },
-    { key: PACKAGE_KIND, label: 'Package', method: showCreatePackageDialogHandle, testId: 'PackageMenuItem' },
-    { key: DASHBOARD_KIND, label: 'Dashboard', method: showCreateDashboardDialogHandle, testId: 'DashboardMenuItem' },
+    { key: GROUP_KIND, label: 'Group', method: showCreateGroupDialogHandle, 'data-testid': 'GroupMenuItem' },
+    { key: PACKAGE_KIND, label: 'Package', method: showCreatePackageDialogHandle, 'data-testid': 'PackageMenuItem' },
+    { key: DASHBOARD_KIND, label: 'Dashboard', method: showCreateDashboardDialogHandle, 'data-testid': 'DashboardMenuItem' },
   ]
 
   const hasCreatePackagePermission = useMemo(
@@ -121,7 +121,7 @@ export const PackagesFilterer: FC<PackagesFiltererProps> = memo<PackagesFilterer
           hint="You do not have permission to create packages"
           label="Create"
           options={CREATE_BUTTON_OPTIONS}
-          testId="CreatePackageMenuButton"
+          data-testid="CreatePackageMenuButton"
         />
       )}
       {isWorkspacesPage && isSuperAdmin && (

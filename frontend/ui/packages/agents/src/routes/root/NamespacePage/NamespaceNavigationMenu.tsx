@@ -69,7 +69,7 @@ export const NamespaceNavigationMenu: FC = memo(() => {
           title: 'Automation',
           tooltip: 'Automation',
           icon: <AutomationIcon/>,
-          testId: 'AutomationTabButton',
+          'data-testid': 'AutomationTabButton',
         }]
     ),
     [ncServiceEnabled],
@@ -92,20 +92,20 @@ const MENU_ITEMS: SidebarMenu[] = [
     title: 'Cloud services',
     tooltip: 'Cloud services',
     icon: <CloudSettingsIcon/>,
-    testId: 'ServicesTabButton',
+    'data-testid': 'ServicesTabButton',
   },
   {
     id: SNAPSHOTS_PAGE,
     title: 'Snapshots',
     tooltip: 'Snapshots',
     icon: <SnapshotsIcon/>,
-    testId: 'SnapshotsTabButton',
+    'data-testid': 'SnapshotsTabButton',
   },
   {
     id: `${SECURITY_REPORTS_PAGE}/${AUTHENTICATION_REPORTS_PAGE}`,
     title: 'Security Reports',
     tooltip: 'Security Reports',
     icon: <LockOpenIcon/>,
-    testId: 'SecurityReportsTabButton',
+    'data-testid': 'SecurityReportsTabButton',
   },
 ]

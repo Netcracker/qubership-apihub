@@ -52,7 +52,7 @@ export const PrivatePagePlaceholder: FC = memo(() => {
               />
             </Box>
           }
-          testId="PrivateWorkspacePlaceholder"
+          data-testid="PrivateWorkspacePlaceholder"
         />
       }
     />

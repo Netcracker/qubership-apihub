@@ -37,9 +37,9 @@ export const OverviewNavigationItem: FC<OverviewNavigationItemProps> = memo<Over
   url,
   title,
   id,
-  testId,
   sidebarItem,
   deletedReferences,
+  'data-testid': dataTestId,
 }) => {
   const navigate = useNavigate()
 
@@ -55,7 +55,7 @@ export const OverviewNavigationItem: FC<OverviewNavigationItemProps> = memo<Over
         }}
         selected={id === sidebarItem}
         onClick={() => url && navigate(url)}
-        data-testid={testId}
+        data-testid={dataTestId}
       >
         <ListItemText
           primaryTypographyProps={{ sx: { mt: 1 } }}

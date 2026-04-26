@@ -34,7 +34,7 @@ export const TextWithOverflowTooltip: FC<TextWithTooltipProps> = ({
   children,
   tooltipText = '',
   sx,
-  testId,
+  'data-testid': dataTestId,
   ...props
 }) => {
   return (
@@ -42,7 +42,7 @@ export const TextWithOverflowTooltip: FC<TextWithTooltipProps> = ({
       title={tooltipText}
       {...props}
     >
-      <Typography noWrap variant={variant} sx={sx} data-testid={testId}>
+      <Typography noWrap variant={variant} sx={sx} data-testid={dataTestId}>
         {children}
       </Typography>
     </OverflowTooltip>

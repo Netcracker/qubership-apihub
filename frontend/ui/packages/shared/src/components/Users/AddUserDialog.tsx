@@ -151,7 +151,7 @@ export const AddUserPopup: FC<AddUserPopupProps> = memo<AddUserPopupProps>((prop
                     data-testid="UserChip"
                   />
                 ))}
-              testId="UsersAutocomplete"
+              data-testid="UsersAutocomplete"
             />
           }
         />
@@ -189,7 +189,7 @@ export const AddUserPopup: FC<AddUserPopupProps> = memo<AddUserPopupProps>((prop
                   />
                 ))
               }
-              testId="RolesAutocomplete"
+              data-testid="RolesAutocomplete"
             />
           }
         />

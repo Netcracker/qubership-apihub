@@ -207,7 +207,7 @@ export const VersionCompareContent: FC = memo(() => {
         invisible={isNotEmpty(filteredPackageChanges)}
         area={CONTENT_PLACEHOLDER_AREA}
         message="No differences"
-        testId="NoDifferencesPlaceholder">
+        data-testid="NoDifferencesPlaceholder">
         <CardContent
           sx={{
             display: 'flex',
@@ -355,4 +355,3 @@ const OperationChangesSummary: FC<OperationChangesSummaryProps> = memo<Operation
     </ListItem>
   )
 })
-

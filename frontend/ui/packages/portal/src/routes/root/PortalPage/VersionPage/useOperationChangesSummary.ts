@@ -69,6 +69,7 @@ export function useOperationChangesSummary(options: Options): Result {
     queryFn: () => getOperationChangesSummary(options),
     enabled: enabled && !!packageId && !!versionId && !!apiType && !!operationId,
     select: toOperationChangesSummary,
+    retry: true,
   })
   return {
     data: operationChangesSummary ?? EMPTY_CHANGES_SUMMARY,
@@ -103,7 +104,7 @@ function getOperationChangesSummary(options: Options): Promise<ChangesSummaryDto
   return requestJson<ChangesSummaryDto>(
     `${endpoint}?${queryParams}`,
     { method: 'GET' },
-    { basePath: API_V2 },
+    { basePath: API_V2, ignoreNotFound: true },
   )
 }
 

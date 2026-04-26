@@ -40,10 +40,10 @@ function CustomListItemButtonComponent<T>(props: CustomListItemButtonProps<T>): 
     itemComponent,
     refObject,
     onClick,
-    testId,
     isSelected,
     isSubListItem = false,
     size = LIST_ITEM_SIZE_SMALL,
+    'data-testid': dataTestId,
   } = props
 
   const handleClick = useCallback(() => onClick?.(data), [onClick, data])
@@ -58,7 +58,7 @@ function CustomListItemButtonComponent<T>(props: CustomListItemButtonProps<T>): 
       }}
       key={keyProp}
       onClick={handleClick}
-      data-testid={testId}
+      data-testid={dataTestId}
     >
       {itemComponent}
     </ListItemButton>

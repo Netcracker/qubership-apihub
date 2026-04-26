@@ -65,7 +65,7 @@ export const RichFiltersLayout: FC<VersionOperationsLayoutProps> = memo<VersionO
   searchPlaceholder = 'Search',
   setSearchValue,
   filters,
-  testId,
+  'data-testid': dataTestId,
 }) => {
 
   const [hiddenFiltersPanel, setHiddenFiltersPanel] = useStateWithExternal<boolean>(hideFiltersPanel, hideFiltersPanel, onClickFilterButton)
@@ -128,7 +128,7 @@ export const RichFiltersLayout: FC<VersionOperationsLayoutProps> = memo<VersionO
           {body}
         </Box>
       }
-      testId={testId}
+      data-testid={dataTestId}
     />
   )
 })

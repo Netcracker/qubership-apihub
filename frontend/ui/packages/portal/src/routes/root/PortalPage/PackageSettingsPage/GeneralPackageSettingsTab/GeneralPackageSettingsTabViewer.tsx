@@ -137,14 +137,14 @@ export const GeneralPackageSettingsTabViewer: FC<PackageSettingsTabProps> = memo
                   <TitledValue
                     title={`${PACKAGE_KINDS_NAMES_MAP[kind]} Name`}
                     value={transformStringValue(name)}
-                    testId="PackageNameContent"
+                    data-testid="PackageNameContent"
                   />
                 </Grid>
                 <Grid item xs={6}>
                   <TitledValue
                     title="Alias"
                     value={transformStringValue(alias)}
-                    testId="AliasContent"
+                    data-testid="AliasContent"
                   />
                 </Grid>
                 {[PACKAGE_KIND, DASHBOARD_KIND].includes(kind) && (
@@ -152,7 +152,7 @@ export const GeneralPackageSettingsTabViewer: FC<PackageSettingsTabProps> = memo
                       <TitledValue
                         title="Service Name"
                         value={transformStringValue(serviceName)}
-                        testId="ServiceNameContent"
+                        data-testid="ServiceNameContent"
                       />
                     </Grid>
                   )}
@@ -161,7 +161,7 @@ export const GeneralPackageSettingsTabViewer: FC<PackageSettingsTabProps> = memo
                       <TitledValue
                         title="Parent Group"
                         value={transformStringValue(parentGroup)}
-                        testId="ParentGroupContent"
+                        data-testid="ParentGroupContent"
                       />
                     </Grid>
                   )}
@@ -169,7 +169,7 @@ export const GeneralPackageSettingsTabViewer: FC<PackageSettingsTabProps> = memo
                   <TitledValue
                     title={`${PACKAGE_KINDS_NAMES_MAP[kind]} Visibility`}
                     value={packageVisibility ? 'Private' : 'Public (default role - Viewer)'}
-                    testId="PackageVisibilityContent"
+                    data-testid="PackageVisibilityContent"
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -199,13 +199,13 @@ export const GeneralPackageSettingsTabViewer: FC<PackageSettingsTabProps> = memo
                           <TitledValue
                             title="Default Release Version"
                             value={transformStringValue(getSplittedVersionKey(defaultReleaseVersion).versionKey)}
-                            testId="DefaultReleaseVersionContent"
+                            data-testid="DefaultReleaseVersionContent"
                           />
                         )}
                       <TitledValue
                         title="Release Version Pattern (Regular Expression)"
                         value={transformStringValue(releaseVersionPattern)}
-                        testId="ReleaseVersionPatternContent"
+                        data-testid="ReleaseVersionPatternContent"
                       />
                     </AccordionDetails>
                   </Accordion>

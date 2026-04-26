@@ -53,7 +53,7 @@ export const VersionApiQualitySubPage: FC = memo(() => {
             <Placeholder
               invisible={validationSummaryAvailable}
               area={CONTENT_PLACEHOLDER_AREA}
-              testId="ApiQualityNoResultsPlaceholder"
+              data-testid="ApiQualityNoResultsPlaceholder"
               message={
                 <Typography component="div" variant="h6" color="#8F9EB4">
                   API Quality results are not available

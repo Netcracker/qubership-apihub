@@ -136,7 +136,7 @@ export const VersionApiChangesSubPage: FC = memo(() => {
         filters={<ApiChangesNavigation/>}
         onClickFilterButton={toggleHideFiltersPanel}
         body={<ApiChangesCard searchValue={searchValue}/>}
-        testId="ApiChangesTab"
+        data-testid="ApiChangesTab"
       />
     </ChangesSummaryProvider>
   )

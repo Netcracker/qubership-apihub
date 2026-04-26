@@ -319,7 +319,7 @@ export const OperationTable: FC<OperationTableProps> = memo<OperationTableProps>
           invisible={isNotEmpty(value)}
           area={CONTENT_PLACEHOLDER_AREA}
           message="No operations"
-          testId="NoOperationsPlaceholder"
+          data-testid="NoOperationsPlaceholder"
         />
       )}
     </TableContainer>

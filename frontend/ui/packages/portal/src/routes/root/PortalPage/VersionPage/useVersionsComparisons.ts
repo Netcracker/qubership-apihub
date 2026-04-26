@@ -55,11 +55,17 @@ export function useVersionsComparisons(options?: {
 
   const changedPackageKey = options?.changedPackageKey ?? packageKey ?? NO_VERSION_TO_COMPARE
   const changedVersionKey = options?.changedVersionKey ?? versionKey ?? NO_VERSION_TO_COMPARE
-  const { fullVersion: changedVersion = changedVersionKey } = useVersionWithRevision(changedVersionKey, changedPackageKey)
+  const {
+    fullVersion: changedVersion = changedVersionKey,
+    isLoading: isLoadingChangedRevision,
+  } = useVersionWithRevision(changedVersionKey, changedPackageKey)
 
   const originPackageKey = options?.originPackageKey ?? changedPackageKey
   const originVersionKey = options?.originVersionKey ?? NO_VERSION_TO_COMPARE
-  const { fullVersion: originVersion = originVersionKey } = useVersionWithRevision(originVersionKey, originPackageKey)
+  const {
+    fullVersion: originVersion = originVersionKey,
+    isLoading: isLoadingOriginRevision,
+  } = useVersionWithRevision(originVersionKey, originPackageKey)
 
   const allComparisonParamsProvided = changedPackageKey !== NO_VERSION_TO_COMPARE &&
     changedVersionKey !== NO_VERSION_TO_COMPARE &&
@@ -68,7 +74,7 @@ export function useVersionsComparisons(options?: {
 
   const { data, isLoading, isSuccess, refetch } = useQuery<VersionsComparison[] | undefined, Error>({
     queryKey: [VERSION_CHANGES_QUERY_KEY, originPackageKey!, originVersion, changedPackageKey, changedVersion],
-    enabled: !options?.hasCache && allComparisonParamsProvided && !!changedVersion && !!originVersion,
+    enabled: !options?.hasCache && allComparisonParamsProvided && !!changedVersion && !!originVersion && !isLoadingOriginRevision && !isLoadingChangedRevision,
     retry: false,
     queryFn: async () => {
       const comparisonBuild = await getVersionChangelogOrBuildResponse({

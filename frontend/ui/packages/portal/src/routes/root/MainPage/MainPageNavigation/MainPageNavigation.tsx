@@ -66,13 +66,13 @@ export const MainPageNavigation: FC = memo(() => {
   return (
     <Box sx={{ width: '20%', maxWidth: '180px' }} data-testid="PortalSidebar">
       <List>
-        {MAIN_PAGE_NAVIGATION_ITEMS.map(({ id, label, to, icon, testId }) => (
+        {MAIN_PAGE_NAVIGATION_ITEMS.map(({ id, label, to, icon, 'data-testid': dataTestId }) => (
           <NavigationItem
             key={id}
             to={to}
             label={label}
             icon={icon}
-            testId={testId}
+            data-testid={dataTestId}
             selected={pathname?.includes(id)}
           />
         ))}
@@ -99,7 +99,7 @@ type MainPageNavigationItem = Readonly<{
   to: Partial<Path>
   label: string
   icon: React.ReactNode
-  testId: string
+  'data-testid': string
 }>
 
 const MAIN_PAGE_NAVIGATION_ITEMS: MainPageNavigationItem[] = [
@@ -108,27 +108,27 @@ const MAIN_PAGE_NAVIGATION_ITEMS: MainPageNavigationItem[] = [
     to: { pathname: 'favorite' },
     label: 'Favorite',
     icon: <StarOutlineRoundedIcon fontSize="medium"/>,
-    testId: 'FavoritesButton',
+    'data-testid': 'FavoritesButton',
   },
   {
     id: SHARED_PAGE,
     to: { pathname: 'shared' },
     label: 'Shared',
     icon: <GroupsOutlinedIcon fontSize="medium"/>,
-    testId: 'SharedButton',
+    'data-testid': 'SharedButton',
   },
   {
     id: PRIVATE_PAGE,
     to: { pathname: 'private' },
     label: 'Private',
     icon: <PermIdentityIcon fontSize="medium"/>,
-    testId: 'PrivateButton',
+    'data-testid': 'PrivateButton',
   },
   {
     id: WORKSPACES_PAGE,
     to: { pathname: 'workspaces' },
     label: 'Workspaces',
     icon: <WorkspacesOutlinedIcon/>,
-    testId: 'WorkspacesButton',
+    'data-testid': 'WorkspacesButton',
   },
 ]

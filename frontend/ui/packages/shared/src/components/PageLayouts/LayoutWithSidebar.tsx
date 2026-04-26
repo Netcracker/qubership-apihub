@@ -44,8 +44,8 @@ export const LayoutWithSidebar: FC<LayoutWithSidebarProps> = memo<LayoutWithSide
   action,
   sidebar,
   body,
-  testId,
   disableHorizontalDivider,
+  'data-testid': dataTestId,
 }) => {
   return (
     <Box
@@ -56,7 +56,7 @@ export const LayoutWithSidebar: FC<LayoutWithSidebarProps> = memo<LayoutWithSide
         gridTemplateColumns: 'auto 1fr',
         gridTemplateAreas: `${createGridAreas({ toolbar: header, sidebar: sidebar })}`,
       }}
-      data-testid={testId}
+      data-testid={dataTestId}
     >
       <Box sx={{
         gridArea: TOOLBAR_GRID_AREA,
@@ -116,4 +116,3 @@ export const LayoutWithSidebar: FC<LayoutWithSidebarProps> = memo<LayoutWithSide
     </Box>
   )
 })
-

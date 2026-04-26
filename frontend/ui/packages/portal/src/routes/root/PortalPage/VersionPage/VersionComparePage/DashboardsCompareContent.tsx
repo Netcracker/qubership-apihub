@@ -143,7 +143,7 @@ export const DashboardsCompareContent: FC = memo(() => {
         invisible={isNotEmpty(filteredDashboardChanges)}
         area={CONTENT_PLACEHOLDER_AREA}
         message="No differences"
-        testId="NoDifferencesPlaceholder">
+        data-testid="NoDifferencesPlaceholder">
         <CardContent
           sx={{
             display: 'flex',
@@ -329,5 +329,3 @@ const Package: FC<PackageProps> = memo<PackageProps>(({ value, operationTypes })
 function getApiTypeFilter(apiTypeParameter: string): ApiType | undefined {
   return apiTypeParameter === 'all' ? undefined : apiTypeParameter as ApiType
 }
-
-

@@ -226,25 +226,23 @@ function getComparedOperationNormalizedIds(
   }
 }
 
-function isMatchedComparedOperationNormalizedId(
-  operationNormalizedId: string,
-  comparedOperationNormalizedIds: ComparedOperationNormalizedIds,
-): boolean {
-  return (
-    comparedOperationNormalizedIds.currentOperationNormalizedId === operationNormalizedId ||
-    comparedOperationNormalizedIds.previousOperationNormalizedId === operationNormalizedId
-  )
-}
-
 function findMatchedPathByNormalizedId(
-  pathKeys: string[],
+  paths: Record<string, unknown>,
   serverBasePath: string,
   operationMethod: string,
   comparedOperationNormalizedIds: ComparedOperationNormalizedIds,
 ): string | undefined {
-  for (const pathKey of pathKeys) {
+  for (const pathKey of Object.keys(paths)) {
+    const pathObject = paths[pathKey]
     const operationNormalizedId = calculateNormalizedRestOperationId(serverBasePath, pathKey, operationMethod)
-    if (isMatchedComparedOperationNormalizedId(operationNormalizedId, comparedOperationNormalizedIds)) {
+
+    const matchedById = (
+      comparedOperationNormalizedIds.currentOperationNormalizedId === operationNormalizedId ||
+      comparedOperationNormalizedIds.previousOperationNormalizedId === operationNormalizedId
+    )
+    const matchedByMethod = isObject(pathObject) && !!pathObject?.[operationMethod]
+
+    if (matchedById && matchedByMethod) {
       return pathKey
     }
   }
@@ -280,7 +278,7 @@ function cherryPickOperation(options: CherryPickOperationOptions): OpenAPIV3.Doc
 
   const firstServerBasePath = extractOperationBasePath(servers)
   const foundPath = findMatchedPathByNormalizedId(
-    Object.keys(paths),
+    paths,
     firstServerBasePath,
     comparedOperationMethod,
     comparedOperationNormalizedIds,
@@ -302,7 +300,7 @@ function cherryPickOperation(options: CherryPickOperationOptions): OpenAPIV3.Doc
     const clonedPathsWithDiffs = clonedOasComparisonInternalDocument.paths as Record<PropertyKey, unknown>
     clonedPathsWithDiffs[DIFF_META_KEY] = clonedWhollyChangedPaths
     const matchedWhollyChangedPath = findMatchedPathByNormalizedId(
-      Object.keys(whollyChangedPaths),
+      whollyChangedPaths,
       firstServerBasePath,
       comparedOperationMethod,
       comparedOperationNormalizedIds,

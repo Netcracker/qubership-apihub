@@ -56,11 +56,11 @@ export const BasePage: FC = memo(() => {
   const links = useMemo(
     () => (agentEnabled
       ? [
-        { name: 'Portal', pathname: '/portal', testId: 'PortalHeaderButton' },
-        { name: 'Agent', pathname: '/agents', active: true, testId: 'AgentHeaderButton' },
+        { name: 'Portal', pathname: '/portal', 'data-testid': 'PortalHeaderButton' },
+        { name: 'Agent', pathname: '/agents', active: true, 'data-testid': 'AgentHeaderButton' },
       ]
       : [
-        { name: 'Portal', pathname: '/portal', active: true, testId: 'PortalHeaderButton' },
+        { name: 'Portal', pathname: '/portal', active: true, 'data-testid': 'PortalHeaderButton' },
       ]),
     [agentEnabled],
   )

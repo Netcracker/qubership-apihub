@@ -54,7 +54,7 @@ export const PageLayout: FC<PageLayoutProps> = memo<PageLayoutProps>(({
   menu,
   nestedPage,
   withShadow = true,
-  testId,
+  'data-testid': dataTestId,
 }) => {
   return (
     <Box
@@ -66,7 +66,7 @@ export const PageLayout: FC<PageLayoutProps> = memo<PageLayoutProps>(({
         gridTemplateColumns: 'auto 1fr',
         gridTemplateAreas: `${createGridAreas(navigation, menu)}`,
       }}
-      data-testid={testId}
+      data-testid={dataTestId}
     >
       {toolbar && (
         <Box sx={{

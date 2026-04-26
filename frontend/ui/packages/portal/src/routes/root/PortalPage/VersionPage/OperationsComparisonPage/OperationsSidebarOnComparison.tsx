@@ -88,7 +88,7 @@ export const OperationsSidebarOnComparison: FC<OperationsSidebarOnComparisonProp
                 invisible={isNotEmpty(tags)}
                 area={NAVIGATION_PLACEHOLDER_AREA}
                 message={searchValue ? NO_SEARCH_RESULTS : 'No tags'}
-                testId={searchValue ? 'NoSearchResultsPlaceholder' : 'NoTagsPlaceholder'}
+                data-testid={searchValue ? 'NoSearchResultsPlaceholder' : 'NoTagsPlaceholder'}
               >
                 {tags.map(tag =>
                   <OperationsByTagList

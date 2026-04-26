@@ -54,7 +54,7 @@ export const Selector: FC<SelectorProps> = memo<SelectorProps>(({
   onSearch,
   isSearching,
   disabled = false,
-  testId = 'Select',
+  'data-testid': dataTestId = 'Select',
 }) => {
   const [searchValue, setSearchValue] = useState('')
   const [anchor, setAnchor] = useState<HTMLElement>()
@@ -62,7 +62,7 @@ export const Selector: FC<SelectorProps> = memo<SelectorProps>(({
   useEffect(() => onSearch?.(searchValue), [onSearch, searchValue])
 
   return (
-    <Box data-testid={testId} display="flex" alignItems="center" gap={2} overflow="hidden">
+    <Box display="flex" alignItems="center" gap={2} overflow="hidden" data-testid={dataTestId} >
       <Typography variant="subtitle3" color={disabled ? TEXT_DISABLED_COLOR : 'default'}>{title}</Typography>
 
       <Button

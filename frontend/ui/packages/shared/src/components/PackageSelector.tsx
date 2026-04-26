@@ -47,7 +47,7 @@ export const PackageSelector: FC<PackageSelectorProps> = memo<PackageSelectorPro
   onSelect,
   loading = false,
   disabled = false,
-  testId,
+  'data-testid': dataTestId,
 }) => {
   const onInputChange = useCallback((_: SyntheticEvent, value: string, reason: AutocompleteInputChangeReason) =>
       onInput(reason === 'input' ? value : ''),
@@ -86,7 +86,7 @@ export const PackageSelector: FC<PackageSelectorProps> = memo<PackageSelectorPro
         )}
         onInputChange={debounce(onInputChange, DEFAULT_DEBOUNCE)}
         onChange={onChange}
-        data-testid={testId}
+        data-testid={dataTestId}
       />
     </Box>
   )

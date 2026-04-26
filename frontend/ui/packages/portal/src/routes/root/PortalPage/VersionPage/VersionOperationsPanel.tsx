@@ -60,11 +60,11 @@ export const VersionOperationsPanel: FC<VersionOperationsProps> = memo<VersionOp
   list,
   filters,
   exportButton,
-  testId,
   operationsViewMode,
   toggleOperationsViewMode,
   toggleHideFiltersPanel,
   hideFiltersPanel,
+  'data-testid': dataTestId,
 }) => {
   const { apiType = DEFAULT_API_TYPE } = useParams<{ apiType: ApiType }>()
   const [packageObject] = usePackage({ showParents: true })
@@ -113,7 +113,7 @@ export const VersionOperationsPanel: FC<VersionOperationsProps> = memo<VersionOp
         ? <ListBox>{table}</ListBox>
         : list
       }
-      testId={testId}
+      data-testid={dataTestId}
     />
   )
 })

@@ -21,7 +21,7 @@ import { PublishDashboardVersionFromCSVDialog } from '@apihub/routes/root/Portal
 import { TOGGLE_SIDEBAR_BUTTON } from '@netcracker/qubership-apihub-ui-shared/components/NavigationMenu'
 import { LayoutWithTabs } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithTabs'
 import { LayoutWithToolbar } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithToolbar'
-import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { DASHBOARD_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { useLinterEnabled } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
 import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
 import { PreviousReleaseOptionsProvider } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget'
@@ -57,11 +57,12 @@ export const VersionPage: FC = memo(() => {
   const [packageObject, isLoading] = usePackage({ showParents: true })
 
   const linterEnabled = useLinterEnabled()
+  const isLinterEnabled = linterEnabled && packageObject?.kind === PACKAGE_KIND
   const [validationStatus, setValidationStatus] = useState<ClientValidationStatus | undefined>()
   const {
     data: validationSummary,
     refetch: refetchValidationSummary,
-  } = useValidationSummaryByPackageVersion(linterEnabled, packageId!, versionId!, setValidationStatus)
+  } = useValidationSummaryByPackageVersion(isLinterEnabled, packageId!, versionId!, setValidationStatus)
   useAutoSetClientValidationStatusBySummary(validationSummary, setValidationStatus)
   usePollingForValidationSummaryReadiness(validationStatus, setValidationStatus, refetchValidationSummary)
 
@@ -70,7 +71,7 @@ export const VersionPage: FC = memo(() => {
       <FullMainVersionProvider>
         <ActivityHistoryFiltersProvider>
           <ApiQualityDataProvider
-            linterEnabled={linterEnabled}
+            linterEnabled={isLinterEnabled}
             validationSummary={validationSummary}
             clientValidationStatus={validationStatus}
             setClientValidationStatus={setValidationStatus}

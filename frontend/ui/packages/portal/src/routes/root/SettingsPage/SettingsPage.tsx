@@ -37,7 +37,7 @@ export const SettingsPage: FC = memo(() => {
         invisible={isSuperAdmin}
         area={CONTENT_PLACEHOLDER_AREA}
         message={NO_PERMISSION}
-        testId="NoPermissionPlaceholder"
+        data-testid="NoPermissionPlaceholder"
       >
         <ActiveTabContentContext.Provider value={menuItem as SettingsPageRoute}>
           <SetActiveTabContentContext.Provider value={setActiveTab}>

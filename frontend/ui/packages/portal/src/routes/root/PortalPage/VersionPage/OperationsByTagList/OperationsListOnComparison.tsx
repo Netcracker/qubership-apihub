@@ -168,7 +168,7 @@ export const OperationsListOnComparison: FC<OperationsListOnComparisonProps> = m
             onClick={handleListItemClick}
             itemComponent={<OperationListItem operation={operationPair.currentOperation ?? operationPair.previousOperation!} />}
             isSelected={isSelected}
-            testId="OperationButton"
+            data-testid="OperationButton"
           />
         )
       })}

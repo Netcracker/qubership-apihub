@@ -228,21 +228,21 @@ const getAvailableSidebarMenuItems = (
       title: 'Configuration',
       tooltip: 'Configuration',
       icon: <ConfigureIcon />,
-      testId: 'ConfigureDashboardButton',
+      'data-testid': 'ConfigureDashboardButton',
     },
     {
       id: OVERVIEW_PAGE,
       title: 'Overview',
       tooltip: 'Overview',
       icon: <ServicesIcon />,
-      testId: 'OverviewButton',
+      'data-testid': 'OverviewButton',
     },
     {
       id: OPERATIONS_PAGE,
       title: 'Operations',
       tooltip: 'Operations',
       icon: <ApiIcon />,
-      testId: 'OperationsButton',
+      'data-testid': 'OperationsButton',
     },
     {
       id: API_CHANGES_PAGE,
@@ -250,7 +250,7 @@ const getAvailableSidebarMenuItems = (
       tooltip: !previousVersion ? 'No API changes since there is no previous version' : 'API Changes',
       disabled: !previousVersion || disableTab,
       icon: <ComparisonIcon />,
-      testId: 'ApiChangesButton',
+      'data-testid': 'ApiChangesButton',
     },
     {
       id: DEPRECATED_PAGE,
@@ -258,14 +258,14 @@ const getAvailableSidebarMenuItems = (
       tooltip: 'Deprecated',
       disabled: disableTab,
       icon: <DefaultWarningIcon />,
-      testId: 'DeprecatedButton',
+      'data-testid': 'DeprecatedButton',
     },
     {
       id: DOCUMENTS_PAGE,
       title: 'Documents',
       tooltip: 'Documents',
       icon: <FileIcon />,
-      testId: 'DocumentsButton',
+      'data-testid': 'DocumentsButton',
     },
   ]
 
@@ -284,7 +284,7 @@ const getAvailableSidebarMenuItems = (
         disabled: apiQualityTabOptions.tabDisabled,
         tooltip: apiQualityTabOptions.tooltip ?? 'API Quality',
         icon: <CertifiedFileIcon />,
-        testId: 'ApiQualityButton',
+        'data-testid': 'ApiQualityButton',
       })
     }
   }
@@ -303,7 +303,7 @@ const getAvailableSidebarServiceMenuItems = (
       title: 'Settings',
       tooltip: 'Package Settings',
       icon: <SettingIcon color="#626D82" />,
-      testId: 'SettingsButton',
+      'data-testid': 'SettingsButton',
     })
   }
 

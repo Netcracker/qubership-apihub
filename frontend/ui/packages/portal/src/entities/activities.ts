@@ -19,6 +19,7 @@ import type { PackageKind } from '@netcracker/qubership-apihub-ui-shared/entitie
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import type { Principal } from '@netcracker/qubership-apihub-ui-shared/entities/principals'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { ShareabilityStatus } from '@netcracker/qubership-apihub-api-processor'
 
 type Version = string
 
@@ -93,6 +94,13 @@ export type UpdateOperationsGroupParametersEventDetails = {
   apiType: ApiType
 }
 
+export type UpdateDocumentShareabilityEventDetails = {
+  version: Version
+  documentDisplayName: string
+  shareabilityStatus: ShareabilityStatus
+  notLatestRevision?: boolean
+}
+
 export type EventDetails =
   | GrantOrDeleteRoleEventDetails
   | UpdateRoleEventDetails
@@ -102,6 +110,7 @@ export type EventDetails =
   | PatchPackageMetaEventDetails
   | CreateOrDeleteManualGroupEventDetails
   | UpdateOperationsGroupParametersEventDetails
+  | UpdateDocumentShareabilityEventDetails
 
 export type ActivityDto = {
   eventType: EventType
@@ -136,6 +145,8 @@ export type CreateOrDeleteManualGroupActivityDetails = CreateOrDeleteManualGroup
 
 export type UpdateOperationsGroupParametersActivityDetails = UpdateOperationsGroupParametersEventDetails
 
+export type UpdateDocumentShareabilityActivityDetails = UpdateDocumentShareabilityEventDetails
+
 export type ActivityDetails =
   | GrantOrDeleteRoleActivityDetails
   | UpdateRoleActivityDetails
@@ -145,6 +156,7 @@ export type ActivityDetails =
   | PatchPackageMetaActivityDetails
   | CreateOrDeleteManualGroupActivityDetails
   | UpdateOperationsGroupParametersActivityDetails
+  | UpdateDocumentShareabilityActivityDetails
 
 export type Activity = {
   activityType: ActivityEventType

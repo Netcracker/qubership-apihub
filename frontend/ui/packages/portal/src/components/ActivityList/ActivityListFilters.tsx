@@ -62,8 +62,8 @@ export const ActivityListFilters: FC<ActivityListFiltersProps> = ({
         key: filterKey,
         label: filterName,
         selected: selectedFilters.includes(filterKey as ActivityType),
-        testId: filterKey,
         method: () => setNewSelectedFilters(filterKey as ActivityType),
+        'data-testid': filterKey,
       })
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -83,7 +83,7 @@ export const ActivityListFilters: FC<ActivityListFiltersProps> = ({
         disableHint={true}
         options={filterButtonOptions}
         closeOnClick={false}
-        testId="FilterButton"
+        data-testid="FilterButton"
       />
     </Box>
   )

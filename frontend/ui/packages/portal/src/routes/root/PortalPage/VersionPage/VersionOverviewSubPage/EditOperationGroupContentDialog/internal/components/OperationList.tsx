@@ -130,7 +130,7 @@ export const OperationList: FC<OperationListProps> = (props) => {
                 invisible={isNotEmpty(operations)}
                 area={NAVIGATION_PLACEHOLDER_AREA}
                 message="No operations"
-                testId="NoOperationsPlaceholder"
+                data-testid="NoOperationsPlaceholder"
               />
               <AutoSizer>
                 {({ height, width }: Size) => (
