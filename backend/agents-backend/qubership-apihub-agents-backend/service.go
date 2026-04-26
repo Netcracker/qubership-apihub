@@ -12,6 +12,7 @@ import (
 	"github.com/Netcracker/qubership-apihub-agents-backend/controller"
 	"github.com/Netcracker/qubership-apihub-agents-backend/db"
 	"github.com/Netcracker/qubership-apihub-agents-backend/exception"
+	midldleware "github.com/Netcracker/qubership-apihub-agents-backend/middleware"
 	"github.com/Netcracker/qubership-apihub-agents-backend/repository"
 	"github.com/Netcracker/qubership-apihub-agents-backend/security"
 	exposer "github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer"
@@ -33,6 +34,7 @@ func main() {
 
 	basePath := systemInfoService.GetBasePath()
 	r := mux.NewRouter().SkipClean(true).UseEncodedPath()
+	r.Use(midldleware.WriteDeadlineMiddleware)
 
 	dbCreds := systemInfoService.GetDBCredsFromEnv()
 	cp := db.NewConnectionProvider(dbCreds)
@@ -226,11 +228,30 @@ func makeServer(systemInfoService service.SystemInfoService, r *mux.Router) *htt
 	}
 	corsOptions = append(corsOptions, handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"}))
 
+	// ReadTimeout limits the time for the client to send the full request (headers + body).
+	// The timer starts when the connection is accepted and applies to the entire read phase:
+	//   - During header reading: if headers aren't fully received within the deadline, the
+	//     server closes the connection immediately and the handler is never called.
+	//   - During body reading (inside handler): the remaining time from the same deadline
+	//     applies to r.Body reads. If the deadline expires, r.Body.Read() returns a timeout
+	//     error — the connection is NOT dropped automatically, the handler must handle the error.
+	//   - For requests with no body (e.g., GET), the body phase is irrelevant.
+	// This protects against slow or abandoned connections consuming server resources.
+	//
+	// WriteTimeout is intentionally NOT set. Go's WriteTimeout starts its timer when request
+	// headers are read and covers the entire handler execution plus response writing.
+	// This makes it unsuitable for long-running requests: a handler that legitimately processes
+	// for 4 minutes would have only 1 minute left for writing (with WriteTimeout=300s).
+	// The connection won't be dropped at the timeout mark — it stays open while the handler
+	// runs — but the write will immediately fail when the handler finally tries to respond.
+	// Instead, we use:
+	//   - http.ResponseController.SetWriteDeadline per-request (see middleware/write_deadline_middleware.go) to set
+	//     a deadline only on the response writing phase, independent of processing time.
+	//   - Context with deadline for processing time control (planned, not yet implemented).
 	return &http.Server{
-		Handler:      handlers.CompressHandler(handlers.CORS(corsOptions...)(r)),
-		Addr:         listenAddr,
-		WriteTimeout: 600 * time.Second,
-		ReadTimeout:  60 * time.Second,
+		Handler:     handlers.CompressHandler(handlers.CORS(corsOptions...)(r)),
+		Addr:        listenAddr,
+		ReadTimeout: 60 * time.Second,
 	}
 }
 
