@@ -5,7 +5,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	apihubctx "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
 	aiservice "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
@@ -17,14 +19,16 @@ type ChatController interface {
 	ChatStream(w http.ResponseWriter, r *http.Request)
 }
 
-func NewChatController(chatService aiservice.ChatService) ChatController {
+func NewChatController(chatService aiservice.ChatService, monitoringService aiservice.MonitoringService) ChatController {
 	return &chatControllerImpl{
-		chatService: chatService,
+		chatService:       chatService,
+		monitoringService: monitoringService,
 	}
 }
 
 type chatControllerImpl struct {
-	chatService aiservice.ChatService
+	chatService       aiservice.ChatService
+	monitoringService aiservice.MonitoringService
 }
 
 func (c *chatControllerImpl) Chat(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +74,17 @@ func (c *chatControllerImpl) Chat(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	response, err := c.chatService.Chat(r.Context(), chatReq)
+	secCtx := apihubctx.Create(r)
+	userID := secCtx.GetUserId()
+	if userID == "" {
+		userID = secCtx.GetApiKeyId()
+	}
+	c.monitoringService.IncreaseBusinessMetricCounter(userID, metrics.AIChatCalled, "chat messages")
+
+	ctx := r.Context()
+	ctx = aiservice.SetUserIDOnMCPCtx(ctx, userID) //AI chat can call MCP tools, user ID in the context is required for business metrics
+	ctx = aiservice.SetMCPClientLabel(ctx, aiservice.MCPClientLabelInternalAIChat)
+	response, err := c.chatService.Chat(ctx, chatReq)
 	if err != nil {
 		log.Errorf("Chat service error: %v", err)
 		utils.RespondWithError(w, "Failed to process chat request", err)
@@ -117,6 +131,13 @@ func (c *chatControllerImpl) ChatStream(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
+	secCtx := apihubctx.Create(r)
+	userID := secCtx.GetUserId()
+	if userID == "" {
+		userID = secCtx.GetApiKeyId()
+	}
+	c.monitoringService.IncreaseBusinessMetricCounter(userID, metrics.AIChatCalled, "chat messages")
+
 	// Set headers for streaming
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
@@ -135,6 +156,8 @@ func (c *chatControllerImpl) ChatStream(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Stream the response
+	// TODO: when streaming starts invoking MCP tools, call SetUserIDOnMCPCtx and SetMCPClientLabel
+	// otherwise tool-call business metrics will be recorded with empty userID and "unknown" client.
 	err = c.chatService.ChatStream(r.Context(), chatReq, w)
 	if err != nil {
 		// Try to send error as JSON

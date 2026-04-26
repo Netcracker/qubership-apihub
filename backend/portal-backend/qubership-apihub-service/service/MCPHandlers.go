@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/mark3labs/mcp-go/mcp"
 	log "github.com/sirupsen/logrus"
@@ -26,6 +27,8 @@ func (m mcpService) ExecuteGetSpecTool(ctx context.Context, req mcp.CallToolRequ
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
+
+	m.monitoringService.IncreaseBusinessMetricCounter(UserIDFromMCPCtx(ctx), metrics.MCPGetSpecToolCalled, mcpMetricKey(ctx, packageId))
 
 	log.Infof("get_rest_api_operations_specification: operationId=%s, packageId=%s, version=%s", operationId, packageId, version)
 
@@ -73,6 +76,8 @@ func (m mcpService) ExecuteSearchTool(ctx context.Context, req mcp.CallToolReque
 		log.Errorf("Group parameter should start with %s. Given: %s", mcpWorkspace, group)
 		return mcp.NewToolResultError(fmt.Sprintf("Requested package is not allowed for search, only packages from workspace %s are allowed", mcpWorkspace)), nil
 	}
+
+	m.monitoringService.IncreaseBusinessMetricCounter(UserIDFromMCPCtx(ctx), metrics.MCPSearchToolCalled, mcpMetricKey(ctx, group))
 
 	var packageIds []string
 	if group != "" {
@@ -129,6 +134,8 @@ func (m mcpService) ExecuteGetOperationDiffTool(ctx context.Context, req mcp.Cal
 		return mcp.NewToolResultError(err.Error()), nil
 	}
 
+	m.monitoringService.IncreaseBusinessMetricCounter(UserIDFromMCPCtx(ctx), metrics.MCPGetDiffToolCalled, mcpMetricKey(ctx, packageId))
+
 	log.Infof("get_rest_api_operation_diff: operationId=%s, packageId=%s, version=%s, previousVersion=%s", operationId, packageId, version, previousVersion)
 
 	operationChangesView, err := m.operationService.GetOperationChanges(packageId, version, operationId, packageId, previousVersion, []string{})
@@ -143,4 +150,8 @@ func (m mcpService) ExecuteGetOperationDiffTool(ctx context.Context, req mcp.Cal
 	log.Debugf("MCP tool get_rest_api_operation_diff response: %s", string(payloadJSON))
 
 	return mcp.NewToolResultStructuredOnly(payload), nil
+}
+
+func mcpMetricKey(ctx context.Context, packageId string) string {
+	return MCPClientLabelFromCtx(ctx) + "|" + packageId
 }

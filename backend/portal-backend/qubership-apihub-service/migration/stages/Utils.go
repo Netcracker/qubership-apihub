@@ -3,7 +3,9 @@ package stages
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
@@ -21,11 +23,16 @@ import (
 
 const MigrationBuildPriority = -100
 const CancelledMigrationError = "cancelled"
+const retryInterval = 30 * time.Second
+
+var errOwnershipLost = errors.New("migration ownership lost") //makes sense only in case of multiple backend instances
 
 func (d OpsMigration) createBuilds(versionsQuery string, params []interface{}, migrationId string, migrationStage mView.OpsMigrationStage) (int, error) {
 	var versions []entity.PublishedVersionEntity
 
-	_, err := d.cp.GetConnection().QueryContext(d.migrationCtx, &versions, versionsQuery, params...)
+	_, err := withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().QueryContext(d.migrationCtx, &versions, versionsQuery, params...)
+	})
 	if err != nil {
 		return 0, fmt.Errorf("failed to read versions for migration: %w", err)
 	}
@@ -47,7 +54,9 @@ func (d OpsMigration) createBuilds(versionsQuery string, params []interface{}, m
 func (d OpsMigration) createComparisonBuilds(versionCompQuery string, params []interface{}, migrationId string, migrationStage mView.OpsMigrationStage) (int, error) {
 	var versionComps []entity.VersionComparisonEntity
 
-	_, err := d.cp.GetConnection().QueryContext(d.migrationCtx, &versionComps, versionCompQuery, params...)
+	_, err := withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().QueryContext(d.migrationCtx, &versionComps, versionCompQuery, params...)
+	})
 	if err != nil {
 		return 0, fmt.Errorf("failed to read version comparisons for migration: %w", err)
 	}
@@ -71,13 +80,15 @@ func (d OpsMigration) waitForBuilds(stage mView.OpsMigrationStage, round int) (i
 	processed := 0
 	var builds []entity.BuildEntity
 
-	totalCount, err := d.cp.GetConnection().ModelContext(d.migrationCtx, &builds).
-		WhereOrGroup(func(query *orm.Query) (*orm.Query, error) {
-			query = query.WhereOr("status=?", view.StatusNotStarted)
-			query = query.WhereOr("status=?", view.StatusRunning)
-			return query, nil
-		}).
-		Where("metadata->>'migration_id'=?", d.ent.Id).Count()
+	totalCount, err := withDBRetry(d, func() (int, error) {
+		return d.cp.GetConnection().ModelContext(d.migrationCtx, &builds).
+			WhereOrGroup(func(query *orm.Query) (*orm.Query, error) {
+				query = query.WhereOr("status=?", view.StatusNotStarted)
+				query = query.WhereOr("status=?", view.StatusRunning)
+				return query, nil
+			}).
+			Where("metadata->>'migration_id'=?", d.ent.Id).Count()
+	})
 	if err != nil {
 		return processed, fmt.Errorf("failed to get active builds for migration %s on stage %s: %w", d.ent.Id, stage, err)
 	}
@@ -87,13 +98,15 @@ func (d OpsMigration) waitForBuilds(stage mView.OpsMigrationStage, round int) (i
 	start := time.Now()
 	limitSec := time.Duration(totalCount) * time.Second * time.Duration(1800) // limit per build with great reserve
 	for {
-		count, err := d.cp.GetConnection().ModelContext(d.migrationCtx, &builds).
-			WhereOrGroup(func(query *orm.Query) (*orm.Query, error) {
-				query = query.WhereOr("status=?", view.StatusNotStarted)
-				query = query.WhereOr("status=?", view.StatusRunning)
-				return query, nil
-			}).
-			Where("metadata->>'migration_id'=?", d.ent.Id).Count()
+		count, err := withDBRetry(d, func() (int, error) {
+			return d.cp.GetConnection().ModelContext(d.migrationCtx, &builds).
+				WhereOrGroup(func(query *orm.Query) (*orm.Query, error) {
+					query = query.WhereOr("status=?", view.StatusNotStarted)
+					query = query.WhereOr("status=?", view.StatusRunning)
+					return query, nil
+				}).
+				Where("metadata->>'migration_id'=?", d.ent.Id).Count()
+		})
 		if err != nil {
 			return processed, fmt.Errorf("failed to get active builds for migration %s on stage %s: %w", d.ent.Id, stage, err)
 		}
@@ -255,7 +268,9 @@ func (d OpsMigration) addCompTaskToRebuild(migrationId string, compEnt entity.Ve
 
 func (d OpsMigration) getPublishedSrcDataConfigEntity(query, packageId, version string, revision int) (*entity.PublishedSrcDataConfigEntity, error) {
 	savedSources := new(entity.PublishedSrcDataConfigEntity)
-	_, err := d.cp.GetConnection().QueryContext(d.migrationCtx, savedSources, query, packageId, version, revision)
+	_, err := withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().QueryContext(d.migrationCtx, savedSources, query, packageId, version, revision)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +298,9 @@ func (d OpsMigration) makeBuildSourceEntityFromSources(migrationId string, build
 		and revision = ?
 	`
 	var fileEntities []entity.PublishedContentEntity
-	_, err = d.cp.GetConnection().QueryContext(d.migrationCtx, &fileEntities, publishedFilesQuery, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().QueryContext(d.migrationCtx, &fileEntities, publishedFilesQuery, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -361,7 +378,9 @@ func (d OpsMigration) makeBuildSourceEntityFromPublishedFiles(migrationId string
 		and rc.revision = ?
 	`
 	var fileEntities []mEntity.PublishedContentMigrationEntity
-	_, err = d.cp.GetConnection().QueryContext(d.migrationCtx, &fileEntities, filesWithDataQuery, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().QueryContext(d.migrationCtx, &fileEntities, filesWithDataQuery, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -434,27 +453,31 @@ func (d OpsMigration) makeBuildSourceEntityFromPublishedFiles(migrationId string
 }
 
 func (d OpsMigration) storeVersionBuildTask(buildEnt entity.BuildEntity, sourceEnt entity.BuildSourceEntity) error {
-	return d.cp.GetConnection().RunInTransaction(d.migrationCtx, func(tx *pg.Tx) error {
-		_, err := tx.Model(&buildEnt).Insert()
-		if err != nil {
+	_, err := withDBRetry(d, func() (orm.Result, error) {
+		return nil, d.cp.GetConnection().RunInTransaction(d.migrationCtx, func(tx *pg.Tx) error {
+			result, err := tx.Model(&buildEnt).OnConflict("(build_id) DO NOTHING").Insert()
+			if err != nil {
+				return err
+			}
+			if result.RowsAffected() == 0 {
+				return nil // build already exists from a prior committed transaction, source was inserted with it
+			}
+			_, err = tx.Model(&sourceEnt).Insert()
 			return err
-		}
-		_, err = tx.Model(&sourceEnt).Insert()
-		if err != nil {
-			return err
-		}
-
-		return nil
+		})
 	})
+	return err
 }
 
 func (d OpsMigration) getVersionConfigReferences(packageId string, version string, revision int) ([]view.BCRef, error) {
 	var refEntities []entity.PublishedReferenceEntity
-	err := d.cp.GetConnection().ModelContext(d.migrationCtx, &refEntities).
-		Where("package_id = ?", packageId).
-		Where("version = ?", version).
-		Where("revision = ?", revision).
-		Select()
+	_, err := withDBRetry(d, func() (orm.Result, error) {
+		return nil, d.cp.GetConnection().ModelContext(d.migrationCtx, &refEntities).
+			Where("package_id = ?", packageId).
+			Where("version = ?", version).
+			Where("revision = ?", revision).
+			Select()
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -469,4 +492,108 @@ func (d OpsMigration) getVersionConfigReferences(packageId string, version strin
 		})
 	}
 	return configRefs, nil
+}
+
+func (d OpsMigration) waitForRetry() error {
+	select {
+	case <-d.migrationCtx.Done():
+		return d.migrationCtx.Err()
+	case <-time.After(retryInterval):
+		return nil
+	}
+}
+
+func (d OpsMigration) verifyOwnership() (bool, error) {
+	var currentEnt mEntity.MigrationRunEntity
+	err := d.cp.GetConnection().Model(&currentEnt).
+		Column("instance_id").
+		Where("id = ?", d.ent.Id).
+		Select()
+	if err != nil {
+		return false, err
+	}
+	return currentEnt.InstanceId == d.ent.InstanceId, nil
+}
+
+type dbOp[T any] func() (T, error)
+
+func withDBRetry[T any](d OpsMigration, fn dbOp[T]) (T, error) {
+	var zero T
+	for attempt := 0; ; attempt++ {
+		if attempt > 0 {
+			if err := d.verifyOwnershipWithRetry(); err != nil {
+				return zero, err
+			}
+		}
+
+		result, err := fn()
+		if err == nil {
+			return result, nil
+		}
+		if !isDBUnavailableError(err) {
+			return zero, err
+		}
+		log.Warnf("Migration %s: DB unavailable: %s, retrying", d.ent.Id, err)
+		if err := d.waitForRetry(); err != nil {
+			return zero, err
+		}
+	}
+}
+
+func (d OpsMigration) verifyOwnershipWithRetry() error {
+	for {
+		owned, err := d.verifyOwnership()
+		if err == nil {
+			if !owned {
+				return fmt.Errorf("migration %s: %w", d.ent.Id, errOwnershipLost)
+			}
+			return nil
+		}
+		if !isDBUnavailableError(err) {
+			return fmt.Errorf("migration %s: failed to verify ownership: %w", d.ent.Id, err)
+		}
+		log.Warnf("Migration %s: cannot verify ownership (DB unavailable), will retry: %s", d.ent.Id, err)
+		if err := d.waitForRetry(); err != nil {
+			return err
+		}
+	}
+}
+
+func isDBUnavailableError(err error) bool {
+	if err == nil {
+		return false
+	}
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+	if errors.Is(err, pg.ErrNoRows) || errors.Is(err, pg.ErrMultiRows) {
+		return false
+	}
+	var pgErr pg.Error
+	if errors.As(err, &pgErr) {
+		code := pgErr.Field('C') // SQLSTATE code
+		if len(code) < 2 {
+			return false
+		}
+		class := code[:2]
+		switch class {
+		case "08": // Connection Exception (connection_failure, connection_does_not_exist, etc.)
+			return true
+		case "53": // Insufficient Resources (too_many_connections, out_of_memory, etc.)
+			return true
+		case "57": // Operator Intervention (admin_shutdown, crash_shutdown, cannot_connect_now, etc.)
+			// 57014 = query_canceled, not a DB issue
+			if code == "57014" {
+				return false
+			}
+			return true
+		case "58": // System Error (io_error, system_error — server-side I/O or OS failures)
+			return true
+		default:
+			// Other pg errors = DB is reachable, query failed
+			return false
+		}
+	}
+	// Everything else (connection refused, EOF, reset, timeout, pool errors) = DB unavailable
+	return true
 }

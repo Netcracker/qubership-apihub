@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: APIHUB system administrators API – Internal
   description: |
-    Internal-only API contract for system administrators.
+    Internal-only API contract for system administrators. This API includes privileged technical administration endpoints for diagnostics, maintenance, and internal management operations.
   contact:
     name: Netcracker Opensource Group
     email: opensourcegroup@netcracker.com
@@ -12,14 +12,14 @@ info:
   version: "2026.1"
   x-nc-api-audience: BWC
 externalDocs:
-  description: Find out more about package
+  description: Find out more about this project and repository documentation
   url: https://github.com/Netcracker/qubership-apihub
 servers:
   - url: https://{apihub}.qubership.org
-    description: APIHUB server
+    description: Primary APIHUB server endpoint (use the apihub variable to select production, development, or staging).
     variables:
       apihub:
-        description: Name of the APIHUB server.
+        description: APIHUB subdomain/environment selector (apihub=production, dev.apihub=development, staging.apihub=staging).
         enum:
           - apihub
           - dev.apihub
@@ -592,26 +592,26 @@ paths:
 components:
   schemas:
     ErrorResponse:
-      description: An error description
+      description: Standard error response returned for failed requests. Includes HTTP status, internal error code, human-readable message, optional message parameters, and optional debug details (non-production only).
       type: object
       properties:
         status:
-          description: HTTP Status Code
+          description: HTTP status code as an integer; expected to match the actual HTTP response status.
           type: number
         code:
           description: Internal string error code. Mandatory in response.
           type: string
         message:
-          description: The attribute contains an error message.
+          description: Human-readable error message describing what went wrong; intended for diagnostics and safe client display.
           type: string
         params:
           type: object
-          description: Message parameters
+          description: Optional key/value parameters used to format or contextualize the error message (for example, identifiers or field names).
           example:
             id: 12345
             type: string
         debug:
-          description: The attribute contains debug details (e.g. stack-trace). Presented in the error response only on Dev/Test environments if corresponding logging level is enabled.
+          description: Optional debug details (for example, stack traces). Returned only in development/test environments when verbose logging is enabled; do not rely on this field in production because it may contain sensitive data.
           type: string
       required:
         - status
@@ -786,7 +786,7 @@ components:
         code: "APIHUB-COMMON-4001"
         message: "Incorrect input parameters"
     InternalServerError:
-      description: Default internal server error
+      description: "Example: default internal server error response"
       value:
         status: 500
         code: "APIHUB-8000"
@@ -795,7 +795,7 @@ components:
   securitySchemes:
     BearerAuth:
       type: http
-      description: Bearer token authentication. Default secutity scheme for API usage.
+      description: "Bearer token authentication (JWT). Default security scheme for API usage. Provide Authorization: Bearer <token>."
       scheme: bearer
       bearerFormat: JWT
     CookieAuth:
@@ -805,12 +805,12 @@ components:
       description: Authentication via the `apihub-access-token` cookie.
     api-key:
       type: apiKey
-      description: Api-key authentication.
+      description: API key authentication. Send the key in the api-key header.
       name: api-key
       in: header
     PersonalAccessToken:
       type: apiKey
-      description: Authentication by personal access token.
+      description: Personal access token authentication. Send the token in the X-Personal-Access-Token header; use for user-issued/script access.
       name: X-Personal-Access-Token
       in: header
 

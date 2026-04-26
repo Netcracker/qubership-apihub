@@ -103,6 +103,8 @@ technicalParameters:
   listenAddress: ':8080'
   # Optional; Directory containing API specifications for exposure; If not set, defaults to basePath + "/api"; Example: ./docs/api
   apiSpecDirectory: ''
+  # Optional; Maximum wait time in minutes for lock release during migration restart; If not set, default value: 30; Example: 60
+  migrationLockMaxWaitMinutes: 30
 
 # Section with various parameters related to APIHUB business logic
 businessParameters:
@@ -119,6 +121,8 @@ businessParameters:
   publishFileSizeLimitMb: 15
   # Optional; Limit for uploaded operation group template file size in MB; If not set, default value: 1; Example: 2
   templateSizeLimitMb: 1
+  # Optional; Limit for uploaded shareability report xlsx file size in MB; If not set, default value: 10; Example: 10
+  shareabilityReportSizeLimitMb: 10
   # Optional; If set - footer with this text is shown for all APIHUB users in APIHUB UI. Designed for maintenance windows notifications.; If not set, default value: ""; Example: Maintenance scheduled on 2023-10-15
   systemNotification: ''
   # Optional; Set to true to fail build on broken refs; If not set, default value: true; Example: true

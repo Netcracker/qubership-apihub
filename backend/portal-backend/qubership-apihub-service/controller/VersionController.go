@@ -43,25 +43,30 @@ type VersionController interface {
 	GetCSVDashboardPublishStatus(w http.ResponseWriter, r *http.Request)
 	GetCSVDashboardPublishReport(w http.ResponseWriter, r *http.Request)
 	UpdateDocumentShareability(w http.ResponseWriter, r *http.Request)
+	BulkUpdateDocumentShareability(w http.ResponseWriter, r *http.Request)
 }
 
 func NewVersionController(versionService service.VersionService, roleService service.RoleService, monitoringService service.MonitoringService,
-	ptHandler service.PackageTransitionHandler, isSysadm func(context.SecurityContext) bool) VersionController {
+	ptHandler service.PackageTransitionHandler, isSysadm func(context.SecurityContext) bool, excelService service.ExcelService, shareabilityReportSizeLimit int64) VersionController {
 	return &versionControllerImpl{
-		versionService:    versionService,
-		roleService:       roleService,
-		monitoringService: monitoringService,
-		ptHandler:         ptHandler,
-		isSysadm:          isSysadm,
+		versionService:              versionService,
+		roleService:                 roleService,
+		monitoringService:           monitoringService,
+		ptHandler:                   ptHandler,
+		isSysadm:                    isSysadm,
+		excelService:                excelService,
+		shareabilityReportSizeLimit: shareabilityReportSizeLimit,
 	}
 }
 
 type versionControllerImpl struct {
-	versionService    service.VersionService
-	roleService       service.RoleService
-	monitoringService service.MonitoringService
-	ptHandler         service.PackageTransitionHandler
-	isSysadm          func(context.SecurityContext) bool
+	versionService              service.VersionService
+	roleService                 service.RoleService
+	monitoringService           service.MonitoringService
+	ptHandler                   service.PackageTransitionHandler
+	isSysadm                    func(context.SecurityContext) bool
+	excelService                service.ExcelService
+	shareabilityReportSizeLimit int64
 }
 
 func (v versionControllerImpl) SharePublishedFile(w http.ResponseWriter, r *http.Request) {
@@ -1416,6 +1421,36 @@ func (v versionControllerImpl) UpdateDocumentShareability(w http.ResponseWriter,
 	err = v.versionService.UpdateDocumentShareability(ctx, packageId, versionName, slug, req.ShareabilityStatus)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, v.ptHandler, packageId, "Failed to update document shareability", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (v versionControllerImpl) BulkUpdateDocumentShareability(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Create(r)
+
+	defer r.Body.Close()
+
+	if r.ContentLength > v.shareabilityReportSizeLimit {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.ShareabilityReportSizeExceeded,
+			Message: exception.ShareabilityReportSizeExceededMsg,
+			Params:  map[string]interface{}{"size": v.shareabilityReportSizeLimit},
+		})
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, v.shareabilityReportSizeLimit)
+
+	rows, err := v.excelService.ParseShareabilityReport(r.Body)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to parse shareability report", err)
+		return
+	}
+
+	if err := v.versionService.BulkUpdateDocumentShareability(ctx, rows); err != nil {
+		utils.RespondWithError(w, "Failed to bulk update document shareability", err)
 		return
 	}
 

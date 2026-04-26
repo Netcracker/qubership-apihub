@@ -7,6 +7,7 @@ import (
 
 	secctx "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/mark3labs/mcp-go/mcp"
 	mcpserver "github.com/mark3labs/mcp-go/server"
@@ -21,12 +22,13 @@ type MCPService interface {
 	GetPackagesList(ctx context.Context, workspaceId string) ([]mcp.ResourceContents, error)
 }
 
-func NewMCPService(systemInfoService SystemInfoService, operationService OperationService, packageService PackageService, versionService VersionService) MCPService {
+func NewMCPService(systemInfoService SystemInfoService, operationService OperationService, packageService PackageService, versionService VersionService, monitoringService MonitoringService) MCPService {
 	return &mcpService{
 		systemInfoService: systemInfoService,
 		operationService:  operationService,
 		packageService:    packageService,
 		versionService:    versionService,
+		monitoringService: monitoringService,
 	}
 }
 
@@ -35,14 +37,21 @@ type mcpService struct {
 	operationService  OperationService
 	packageService    PackageService
 	versionService    VersionService
+	monitoringService MonitoringService
 }
 
 func (m mcpService) MakeMCPServer() *mcpserver.MCPServer {
+	hooks := &mcpserver.Hooks{}
+	hooks.AddAfterInitialize(func(ctx context.Context, _ any, req *mcp.InitializeRequest, _ *mcp.InitializeResult) {
+		m.monitoringService.IncreaseBusinessMetricCounter(UserIDFromMCPCtx(ctx), metrics.MCPSessionInitialized, createMCPClientLabel(req.Params.ClientInfo))
+	})
+
 	s := mcpserver.NewMCPServer(
 		"apihub-mcp",
 		"0.0.2",
 		mcpserver.WithToolCapabilities(false),
 		mcpserver.WithInstructions(mcpInstructions),
+		mcpserver.WithHooks(hooks),
 	)
 
 	toolsMetadata := getToolMetadata()
@@ -172,6 +181,45 @@ func (m mcpService) GetPackagesList(ctx context.Context, workspaceId string) ([]
 			Text:     string(jsonData),
 		},
 	}, nil
+}
+
+func SetUserIDOnMCPCtx(ctx context.Context, userID string) context.Context {
+	return context.WithValue(ctx, "apihubUserID", userID)
+}
+
+func UserIDFromMCPCtx(ctx context.Context) string {
+	if v, ok := ctx.Value("apihubUserID").(string); ok {
+		return v
+	}
+	return ""
+}
+
+const MCPClientLabelInternalAIChat = "apihub-chat/internal"
+
+func SetMCPClientLabel(ctx context.Context, label string) context.Context {
+	return context.WithValue(ctx, "apihubMCPClient", label)
+}
+
+func MCPClientLabelFromCtx(ctx context.Context) string {
+	if sess := mcpserver.ClientSessionFromContext(ctx); sess != nil {
+		if sci, ok := sess.(mcpserver.SessionWithClientInfo); ok {
+			return createMCPClientLabel(sci.GetClientInfo())
+		}
+	}
+	if v, ok := ctx.Value("apihubMCPClient").(string); ok && v != "" {
+		return v
+	}
+	return "unknown"
+}
+
+func createMCPClientLabel(impl mcp.Implementation) string {
+	if impl.Name == "" {
+		return "unknown"
+	}
+	if impl.Version != "" {
+		return impl.Name + "/" + impl.Version
+	}
+	return impl.Name
 }
 
 const mcpInstructions = `The apihub-mcp MCP server provides information about REST API specifications.

@@ -74,7 +74,7 @@ func (e exportServiceImpl) StartVersionExport(ctx context.SecurityContext, req v
 	}
 
 	if len(req.AllowedShareabilityStatuses) == 0 {
-		req.AllowedShareabilityStatuses = append(req.AllowedShareabilityStatuses, view.ShareabilityShareable, view.ShareabilityNonShareable, view.ShareabilityUnknown)
+		req.AllowedShareabilityStatuses = view.AllowedShareabilityValues()
 	}
 	err = validateAllowedShareabilityStatuses(req.AllowedShareabilityStatuses)
 	if err != nil {

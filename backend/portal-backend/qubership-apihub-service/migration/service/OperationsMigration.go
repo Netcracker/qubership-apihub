@@ -32,7 +32,7 @@ func (d *dbMigrationServiceImpl) StartMigrateOperations(req mView.MigrationReque
 	err := d.cp.GetConnection().RunInTransaction(context.Background(), func(tx *pg.Tx) error {
 		// Allow only one migration.
 		var ents []mEntity.MigrationRunEntity
-		err := tx.Model(&ents).Where("status=?", mView.MigrationStatusRunning).Select()
+		err := tx.Model(&ents).Where("status in (?)", pg.In([]string{mView.MigrationStatusRunning, mView.MigrationStatusCancelling})).Select()
 		if err != nil {
 			return err
 		}
@@ -42,7 +42,7 @@ func (d *dbMigrationServiceImpl) StartMigrateOperations(req mView.MigrationReque
 				Status:  http.StatusConflict,
 				Code:    exception.OperationsMigrationConflict,
 				Message: exception.OperationsMigrationConflictMsg,
-				Params:  map[string]interface{}{"reason": "migration is already running"},
+				Params:  map[string]interface{}{"reason": "migration is already running or cancelling"},
 			}
 		}
 

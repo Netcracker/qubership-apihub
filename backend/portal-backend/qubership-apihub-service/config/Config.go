@@ -87,23 +87,25 @@ type ZeroDayConfig struct {
 }
 
 type TechnicalParameters struct {
-	InstanceId            string
-	BasePath              string
-	BackendVersion        string
-	ListenAddress         string `validate:"required"`
-	MetricsGetterSchedule string
-	ApiSpecDirectory      string
+	InstanceId                  string
+	BasePath                    string
+	BackendVersion              string
+	ListenAddress               string `validate:"required"`
+	MetricsGetterSchedule       string
+	ApiSpecDirectory            string
+	MigrationLockMaxWaitMinutes int
 }
 
 type BusinessParameters struct {
-	ExternalLinks             []string
-	DefaultWorkspaceId        string
-	ReleaseVersionPattern     string
-	PublishArchiveSizeLimitMb int    `validate:"gt=0,lte=8796093022207"` //validation was added based on security scan results to avoid integer overflow, 8796093022207 * 1048576 is safely below MaxInt64
-	PublishFileSizeLimitMb    int    `validate:"gt=0,lte=8796093022207"` //validation was added based on security scan results to avoid integer overflow, 8796093022207 * 1048576 is safely below MaxInt64
-	TemplateSizeLimitMb       int    `validate:"gt=0,lte=8796093022207"` //validation was added based on security scan results to avoid integer overflow, 8796093022207 * 1048576 is safely below MaxInt64
-	SystemNotification        string //TODO: replace with db impl
-	FailBuildOnBrokenRefs     bool
+	ExternalLinks                 []string
+	DefaultWorkspaceId            string
+	ReleaseVersionPattern         string
+	PublishArchiveSizeLimitMb     int    `validate:"gt=0,lte=8796093022207"` //validation was added based on security scan results to avoid integer overflow, 8796093022207 * 1048576 is safely below MaxInt64
+	PublishFileSizeLimitMb        int    `validate:"gt=0,lte=8796093022207"` //validation was added based on security scan results to avoid integer overflow, 8796093022207 * 1048576 is safely below MaxInt64
+	TemplateSizeLimitMb           int    `validate:"gt=0,lte=8796093022207"` //validation was added based on security scan results to avoid integer overflow, 8796093022207 * 1048576 is safely below MaxInt64
+	ShareabilityReportSizeLimitMb int    `validate:"gt=0,lte=8796093022207"` //validation was added based on security scan results to avoid integer overflow, 8796093022207 * 1048576 is safely below MaxInt64
+	SystemNotification            string //TODO: replace with db impl
+	FailBuildOnBrokenRefs         bool
 }
 
 type MonitoringConfig struct {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
+	"github.com/go-pg/pg/v10/orm"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -28,7 +29,9 @@ func (d OpsMigration) StageTSRecalculate() error {
         for update skip locked
 	on conflict (data_hash) do update
 	set scope_all = EXCLUDED.scope_all`, d.ent.Id)
-	_, err := d.cp.GetConnection().ExecContext(d.migrationCtx, calculateAllTextSearchDataQuery, view.ScopeAll)
+	_, err := withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().ExecContext(d.migrationCtx, calculateAllTextSearchDataQuery, view.ScopeAll)
+	})
 	if err != nil {
 		return fmt.Errorf("failed to calculate ts_operation_data: %w", err)
 	}
@@ -51,7 +54,9 @@ func (d OpsMigration) StageTSRecalculate() error {
         for update skip locked
 	on conflict (data_hash) do update
 	set data_vector = EXCLUDED.data_vector`, d.ent.Id)
-	_, err = d.cp.GetConnection().ExecContext(d.migrationCtx, calculateFullTextSearchOperationsQuery)
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().ExecContext(d.migrationCtx, calculateFullTextSearchOperationsQuery)
+	})
 	if err != nil {
 		return fmt.Errorf("failed to calculate fts_operation_data: %w", err)
 	}
@@ -75,7 +80,9 @@ func (d OpsMigration) StageTSRecalculate() error {
 	INNER JOIN latest_rev lr ON o.package_id = lr.package_id AND o.version = lr.version AND o.revision = lr.revision
 	ON CONFLICT (package_id, version, revision, operation_id)
 	DO UPDATE SET data_vector = EXCLUDED.data_vector`, d.ent.Id)
-	_, err = d.cp.GetConnection().ExecContext(d.migrationCtx, recalculateLiteSearchQuery)
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().ExecContext(d.migrationCtx, recalculateLiteSearchQuery)
+	})
 	if err != nil {
 		return fmt.Errorf("failed to recalculate fts_latest_release_operation_data: %w", err)
 	}
@@ -90,7 +97,9 @@ func (d OpsMigration) StageTSRecalculate() error {
 	ON CONFLICT (package_id, version, revision, operation_id) DO UPDATE
 		SET search_data_hash = EXCLUDED.search_data_hash,
 			data_vector = EXCLUDED.data_vector`, d.ent.Id)
-	_, err = d.cp.GetConnection().ExecContext(d.migrationCtx, recalculateFtsOperationSearchTextQuery)
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().ExecContext(d.migrationCtx, recalculateFtsOperationSearchTextQuery)
+	})
 	if err != nil {
 		return fmt.Errorf("failed to recalculate fts_operation_search_text: %w", err)
 	}

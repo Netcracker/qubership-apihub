@@ -32,6 +32,7 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/controller"
+	midldleware "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/middleware"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
@@ -84,6 +85,7 @@ func main() {
 	initSrvStoppedChan := make(chan bool)
 	r := mux.NewRouter()
 	// r.Use(midldleware.PrometheusMiddleware) todo figure out why breaks streaming
+	r.Use(midldleware.WriteDeadlineMiddleware)
 	r.SkipClean(true)
 	r.UseEncodedPath()
 	healthController := controller.NewHealthController(readyChan)
@@ -243,7 +245,7 @@ func main() {
 	portalService := service.NewPortalService(basePath, publishedService, publishedRepository)
 
 	operationGroupService := service.NewOperationGroupService(operationRepository, publishedRepository, exportRepository, packageVersionEnrichmentService, activityTrackingService)
-	versionService := service.NewVersionService(favoritesRepository, publishedRepository, publishedService, operationRepository, exportRepository, operationService, activityTrackingService, systemInfoService, packageVersionEnrichmentService, portalService, versionCleanupRepository, operationGroupService, monitoringService)
+	versionService := service.NewVersionService(favoritesRepository, publishedRepository, publishedService, operationRepository, exportRepository, operationService, activityTrackingService, systemInfoService, packageVersionEnrichmentService, portalService, versionCleanupRepository, operationGroupService, monitoringService, roleService)
 	packageService := service.NewPackageService(favoritesRepository, publishedRepository, versionService, roleService, activityTrackingService, monitoringService, operationGroupService, usersRepository, ptHandler, systemInfoService)
 
 	logsService := service.NewLogsService()
@@ -280,7 +282,7 @@ func main() {
 	tokenRevocationService := service.NewTokenRevocationService(olricProvider, systemInfoService.GetRefreshTokenDurationSec())
 	systemStatsService := service.NewSystemStatsService(systemStatsRepository)
 
-	mcpService := service.NewMCPService(systemInfoService, operationService, packageService, versionService)
+	mcpService := service.NewMCPService(systemInfoService, operationService, packageService, versionService, monitoringService)
 	chatService := service.NewChatService(systemInfoService, mcpService)
 
 	idpManager, err := providers.NewIDPManager(systemInfoService.GetAuthConfig(), systemInfoService.GetAllowedHosts(), systemInfoService.IsProductionMode(), userService)
@@ -302,7 +304,7 @@ func main() {
 	exportController := controller.NewExportController(publishedService, portalService, roleService, excelService, versionService, monitoringService, exportService, packageService)
 
 	packageController := controller.NewPackageController(packageService, publishedService, portalService, roleService, monitoringService, ptHandler)
-	versionController := controller.NewVersionController(versionService, roleService, monitoringService, ptHandler, roleService.IsSysadm)
+	versionController := controller.NewVersionController(versionService, roleService, monitoringService, ptHandler, roleService.IsSysadm, excelService, systemInfoService.GetShareabilityReportSizeLimitMB())
 	roleController := controller.NewRoleController(roleService)
 	samlAuthController := controller.NewSamlAuthController(userService, systemInfoService, idpManager) //deprecated
 	authController := controller.NewAuthController(systemInfoService, idpManager)
@@ -324,7 +326,7 @@ func main() {
 	systemStatsController := controller.NewSystemStatsController(systemStatsService, roleService)
 	internalDocsController := controller.NewInternalDocumentController(publishedService, roleService)
 	mcpController := controller.NewMCPController(mcpService)
-	chatController := controller.NewChatController(chatService)
+	chatController := controller.NewChatController(chatService, monitoringService)
 	buildController := controller.NewBuildController(buildResultService, buildService, roleService.IsSysadm)
 	adminPublishedController := controller.NewAdminPublishedController(publishedService, roleService.IsSysadm, systemInfoService.GetPublishArchiveSizeLimitMB())
 
@@ -490,6 +492,7 @@ func main() {
 	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/export/changes", security.Secure(exportController.GenerateApiChangesExcelReportV3)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/export/operations", security.Secure(exportController.GenerateOperationsExcelReport)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/export/operations/deprecated", security.Secure(exportController.GenerateDeprecatedOperationsExcelReport)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/export/shareability-report", security.Secure(exportController.GenerateShareabilityReport)).Methods(http.MethodGet)
 
 	r.Path("/metrics").Handler(promhttp.Handler())
 	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/build/groups/{groupName}/buildType/{buildType}", security.Secure(transformationController.TransformDocuments_deprecated_2)).Methods(http.MethodPost)             //deprecated
@@ -521,6 +524,8 @@ func main() {
 	r.HandleFunc("/api/v1/version-internal-documents/{hash}", security.Secure(internalDocsController.GetVersionInternalDocumentData)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/comparison-internal-documents", security.Secure(internalDocsController.GetComparisonInternalDocuments)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/comparison-internal-documents/{hash}", security.Secure(internalDocsController.GetComparisonInternalDocumentData)).Methods(http.MethodGet)
+
+	r.HandleFunc("/api/v1/shareability/bulk-update", security.Secure(versionController.BulkUpdateDocumentShareability)).Methods(http.MethodPost)
 
 	//debug + cleanup
 	if !systemInfoService.GetSystemInfo().ProductionMode {
@@ -661,10 +666,29 @@ func makeServer(systemInfoService service.SystemInfoService, r *mux.Router) *htt
 	}
 	corsOptions = append(corsOptions, handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"}))
 
+	// ReadTimeout limits the time for the client to send the full request (headers + body).
+	// The timer starts when the connection is accepted and applies to the entire read phase:
+	//   - During header reading: if headers aren't fully received within the deadline, the
+	//     server closes the connection immediately and the handler is never called.
+	//   - During body reading (inside handler): the remaining time from the same deadline
+	//     applies to r.Body reads. If the deadline expires, r.Body.Read() returns a timeout
+	//     error — the connection is NOT dropped automatically, the handler must handle the error.
+	//   - For requests with no body (e.g., GET), the body phase is irrelevant.
+	// This protects against slow or abandoned connections consuming server resources.
+	//
+	// WriteTimeout is intentionally NOT set. Go's WriteTimeout starts its timer when request
+	// headers are read and covers the entire handler execution plus response writing.
+	// This makes it unsuitable for long-running requests: a handler that legitimately processes
+	// for 4 minutes would have only 1 minute left for writing (with WriteTimeout=300s).
+	// The connection won't be dropped at the timeout mark — it stays open while the handler
+	// runs — but the write will immediately fail when the handler finally tries to respond.
+	// Instead, we use:
+	//   - http.ResponseController.SetWriteDeadline per-request (see middleware/WriteDeadlineMiddleware.go) to set
+	//     a deadline only on the response writing phase, independent of processing time.
+	//   - Context with deadline for processing time control (planned, not yet implemented).
 	return &http.Server{
-		Handler:      handlers.CompressHandler(handlers.CORS(corsOptions...)(r)),
-		Addr:         listenAddr,
-		WriteTimeout: 300 * time.Second,
-		ReadTimeout:  30 * time.Second,
+		Handler:     handlers.CompressHandler(handlers.CORS(corsOptions...)(r)),
+		Addr:        listenAddr,
+		ReadTimeout: 60 * time.Second,
 	}
 }

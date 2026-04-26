@@ -6,6 +6,7 @@ import (
 
 	mEntity "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/migration/entity"
 	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -49,7 +50,9 @@ func (d OpsMigration) StagePostCheck() error {
 			and (v.metadata is null or not (v.metadata \? 'migration_id') or v.metadata->>'migration_id' is distinct from '%s') %s %s`,
 			d.ent.Id, wherePackageIn, whereVersionIn)
 
-		_, err := d.cp.GetConnection().QueryContext(d.migrationCtx, &postCheckResult.NotMigratedVersions, notMigratedVersionsQuery, queryParams...)
+		_, err := withDBRetry(d, func() (orm.Result, error) {
+			return d.cp.GetConnection().QueryContext(d.migrationCtx, &postCheckResult.NotMigratedVersions, notMigratedVersionsQuery, queryParams...)
+		})
 		if err != nil {
 			return fmt.Errorf("failed to query not migrated versions: %v", err.Error())
 		}
@@ -65,15 +68,19 @@ func (d OpsMigration) StagePostCheck() error {
 		  and (v.metadata is null or not (v.metadata \? 'migration_id') or v.metadata->>'migration_id' is distinct from '%s') %s %s`,
 		d.ent.Id, wherePackageIn, whereVersionIn)
 
-	_, err := d.cp.GetConnection().QueryContext(d.migrationCtx, &postCheckResult.NotMigratedComparisons, notMigratedComparisonsQuery, queryParams...)
+	_, err := withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().QueryContext(d.migrationCtx, &postCheckResult.NotMigratedComparisons, notMigratedComparisonsQuery, queryParams...)
+	})
 	if err != nil {
 		return fmt.Errorf("failed to query not migrated comparisons: %v", err.Error())
 	}
 
 	if len(postCheckResult.NotMigratedVersions) > 0 || len(postCheckResult.NotMigratedComparisons) > 0 {
-		_, err := d.cp.GetConnection().Model(&mEntity.MigrationRunEntity{}).
-			Set("post_check_result = ?", postCheckResult).
-			Where("id = ?", d.ent.Id).Update()
+		_, err := withDBRetry(d, func() (orm.Result, error) {
+			return d.cp.GetConnection().Model(&mEntity.MigrationRunEntity{}).
+				Set("post_check_result = ?", postCheckResult).
+				Where("id = ?", d.ent.Id).Update()
+		})
 		if err != nil {
 			return fmt.Errorf("failed to store post-check result: %v", err.Error())
 		}

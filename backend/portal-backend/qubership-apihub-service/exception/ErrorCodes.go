@@ -807,3 +807,21 @@ const InvalidTemplateContentMsg = "Template file content is not valid $format"
 
 const InvalidShareabilityStatus = "8200"
 const InvalidShareabilityStatusMsg = "Allowed shareability statuses list contains unsupported value '$value'"
+
+const InvalidShareabilityReportStructure = "8300"
+const InvalidShareabilityReportStructureMsg = "Shareability report file has invalid structure: $details"
+
+const InvalidShareabilityReportRow = "8301"
+const InvalidShareabilityReportRowMsg = "Shareability report row $row is invalid: $details"
+
+const ShareabilityReportDuplicateRow = "8302"
+const ShareabilityReportDuplicateRowMsg = "Shareability report contains duplicate document entry at rows $firstRow and $secondRow (packageId=$packageId, version=$version, slug=$slug)"
+
+const ShareabilityReportVersionNotFound = "8303"
+const ShareabilityReportVersionNotFoundMsg = "Version '$version' not found for package '$packageId' (row $row)"
+
+const ShareabilityReportDocumentNotFound = "8304"
+const ShareabilityReportDocumentNotFoundMsg = "Document with slug '$slug' not found for package '$packageId' version '$version' (row $row)"
+
+const ShareabilityReportSizeExceeded = "8305"
+const ShareabilityReportSizeExceededMsg = "Shareability report file size exceeded. File size limit - $size"

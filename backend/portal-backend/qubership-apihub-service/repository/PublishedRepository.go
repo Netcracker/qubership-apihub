@@ -54,6 +54,7 @@ type PublishedRepository interface {
 	GetDeletedPackage(id string) (*entity.PackageEntity, error)
 	GetPackageIncludingDeleted(id string) (*entity.PackageEntity, error)
 	GetAllChildPackageIdsIncludingParent(parentId string) ([]string, error)
+	GetDescendantPackages(parentId string) ([]entity.PackageEntity, error)
 	GetParentsForPackage(id string, includeDeleted bool) ([]entity.PackageEntity, error)
 	UpdatePackage(ent *entity.PackageEntity, excludeFromSearchChanged bool) (*entity.PackageEntity, error)
 	DeletePackage(id string, userId string) (int, error)
@@ -98,6 +99,7 @@ type PublishedRepository interface {
 	GetComparisonInternalDocumentData(hash string) (*entity.EnrichedComparisonInternalDocumentDataEntity, error)
 
 	UpdateDocumentShareabilityBySlug(packageId string, version string, revision int, slug string, shareability string) error
+	BulkUpdateDocumentShareability(entities []*entity.PublishedContentEntity) error
 
 	UpdatePublishedSourcesArchive(packageId string, version string, revision int, newChecksum string, srcArchive *entity.PublishedSrcArchiveEntity, trackingEntity *entity.SourcesUpdateTrackingEntity) error
 	UpdatePublishedSourcesChecksum(packageId string, version string, revision int, newChecksum string, trackingEntity *entity.SourcesUpdateTrackingEntity) error

@@ -1,12 +1,13 @@
 package midldleware
 
 import (
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
-	"github.com/gorilla/mux"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
+	"github.com/gorilla/mux"
 )
 
 type loggingResponseWriter struct {
@@ -23,6 +24,7 @@ func (lrw *loggingResponseWriter) WriteHeader(code int) {
 	lrw.ResponseWriter.WriteHeader(code)
 }
 
+// TODO: if PrometheusMiddleware is re-enabled, its loggingResponseWriter must implement Unwrap() for SetWriteDeadline to reach the underlying connection
 func PrometheusMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		route := mux.CurrentRoute(r)
