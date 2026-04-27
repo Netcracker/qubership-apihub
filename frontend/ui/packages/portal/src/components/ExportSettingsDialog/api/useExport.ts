@@ -7,11 +7,12 @@ import type { ShareabilityStatus } from '@netcracker/qubership-apihub-api-proces
 export enum ExportedEntityKind {
   VERSION = 'version',
   SINGLE_DOCUMENT = 'restDocument',
-  REST_OPERATIONS_GROUP = 'restOperationsGroup'
+  REST_OPERATIONS_GROUP = 'restOperationsGroup',
+  ASYNC_API_OPERATIONS_GROUP = 'asyncapiOperationsGroup'
 }
 
 export enum ExportedEntityKindWithoutForm {
-  GRAPHQL_OPERATIONS_GROUP = 'graphqlOperationsGroup'
+  GRAPHQL_OPERATIONS_GROUP = 'graphqlOperationsGroup',
 }
 
 export enum ExportedFileFormat {
@@ -67,6 +68,17 @@ export class RequestDataExportRestDocument extends CommonRequestDataExport {
     removeOasExtensions?: boolean,
   ) {
     super(ExportedEntityKind.SINGLE_DOCUMENT, packageId, version, format, removeOasExtensions)
+  }
+}
+
+export class RequestDataExportAsyncApiGroup extends CommonRequestDataExport {
+  constructor(
+    public readonly groupName: string,
+    packageId: PackageKey,
+    version: VersionKey,
+    format: ExportedFileFormat,
+  ) {
+    super(ExportedEntityKind.ASYNC_API_OPERATIONS_GROUP, packageId, version, format, false)
   }
 }
 

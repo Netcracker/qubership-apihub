@@ -49,10 +49,12 @@ const FIELD_OPTION_FILE_FORMAT_OAS_INTERACTIVE_HTML: ExportSettingsFormFieldOpti
   label: 'Interactive HTML',
   value: ExportedFileFormat.HTML,
 }
+
 export enum ExportSettingsFormFieldOptionOasExtensions {
   PRESERVE = 'preserve',
   REMOVE = 'remove'
 }
+
 const FIELD_OPTION_OAS_EXTENSIONS_PRESERVE: ExportSettingsFormFieldOption = {
   label: 'Preserve all OAS extensions',
   value: ExportSettingsFormFieldOptionOasExtensions.PRESERVE,
@@ -77,6 +79,11 @@ export const FIELD_OPTION_LIST_FILE_FORMAT_OAS: ReadonlyArray<ExportSettingsForm
   FIELD_OPTION_FILE_FORMAT_OAS_JSON,
   FIELD_OPTION_FILE_FORMAT_OAS_INTERACTIVE_HTML,
 ]
+
+export const FIELD_OPTION_LIST_FILE_FORMAT_ASYNC_API: ReadonlyArray<ExportSettingsFormFieldOption> = [
+  FIELD_OPTION_FILE_FORMAT_OAS_YAML,
+  FIELD_OPTION_FILE_FORMAT_OAS_JSON,
+]
 export const FIELD_OPTION_LIST_OAS_EXTENSIONS: ReadonlyArray<ExportSettingsFormFieldOption> = [
   FIELD_OPTION_OAS_EXTENSIONS_PRESERVE,
   FIELD_OPTION_OAS_EXTENSIONS_REMOVE,
@@ -86,6 +93,7 @@ export enum ExportSettingsFormFieldOptionScope {
   ONLY_SHAREABLE = 'onlyShareable',
   ALL_DOCUMENTS = 'allDocuments',
 }
+
 const FIELD_OPTION_SCOPE_ONLY_SHAREABLE: ExportSettingsFormFieldOption = {
   label: 'Only Shareable',
   value: ExportSettingsFormFieldOptionScope.ONLY_SHAREABLE,
