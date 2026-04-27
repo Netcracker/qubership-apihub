@@ -135,6 +135,10 @@ export interface ExportGraphQLOperationsGroupBuildConfig extends ExportOperation
   buildType: typeof BUILD_TYPE.EXPORT_GRAPHQL_OPERATIONS_GROUP
 }
 
+export interface ExportAsyncApiOperationsGroupBuildConfig extends ExportOperationsGroupBuildConfig {
+  buildType: typeof BUILD_TYPE.EXPORT_ASYNC_API_OPERATIONS_GROUP
+}
+
 // deprecated
 export interface ReducedSourceSpecificationsBuildConfig extends BuildConfigBase {
   buildType: typeof BUILD_TYPE.REDUCED_SOURCE_SPECIFICATIONS

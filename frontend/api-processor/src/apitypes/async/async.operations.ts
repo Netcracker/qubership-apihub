@@ -27,8 +27,7 @@ import {
 } from '../../utils'
 import type * as TYPE from './async.types'
 import { AsyncOperationActionType } from './async.types'
-import { FIRST_REFERENCE_KEY_PROPERTY, INLINE_REFS_FLAG } from '../../consts'
-import { asyncFunction } from '../../utils/async'
+import { asyncFunction, normalizeAsyncApiToRefsDocument } from '../../utils/async'
 import { normalize, RefErrorType } from '@netcracker/qubership-apihub-api-unifier'
 import { ASYNC_EFFECTIVE_NORMALIZE_OPTIONS } from './async.consts'
 import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
@@ -52,15 +51,7 @@ export const buildAsyncApiOperations: OperationsBuilder<AsyncAPIV3.AsyncAPIObjec
         bundlingErrorHandler([{ message, errorType }]),
     },
   ) as AsyncAPIV3.AsyncAPIObject
-  const refsOnlyDocument = normalize(
-    documentWithoutComponents,
-    {
-      mergeAllOf: false,
-      firstReferenceKeyProperty: FIRST_REFERENCE_KEY_PROPERTY,
-      inlineRefsFlag: INLINE_REFS_FLAG,
-      source: documentData,
-    },
-  ) as AsyncAPIV3.AsyncAPIObject
+  const refsOnlyDocument = normalizeAsyncApiToRefsDocument(documentData)
 
   const { operations } = effectiveDocument
 

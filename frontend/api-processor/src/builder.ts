@@ -82,6 +82,7 @@ import { ExportRestDocumentStrategy } from './strategies/export-rest-document.st
 import { ExportRestOperationsGroupStrategy } from './strategies/export-rest-operations-group.strategy'
 import { ResolvedPackage } from './types/external/package'
 import { ExportGraphQlOperationsGroupStrategy } from './strategies/export-graphql-operations-group.strategy'
+import { ExportAsyncApiOperationsGroupStrategy } from './strategies/export-async-api-operations-group.strategy'
 
 export const DEFAULT_RUN_OPTIONS: BuilderRunOptions = {
   cleanCache: false,
@@ -284,6 +285,10 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
 
     if (buildType === BUILD_TYPE.EXPORT_GRAPHQL_OPERATIONS_GROUP) {
       builderStrategyContext.setStrategy(new ExportGraphQlOperationsGroupStrategy())
+    }
+
+    if (buildType === BUILD_TYPE.EXPORT_ASYNC_API_OPERATIONS_GROUP) {
+      builderStrategyContext.setStrategy(new ExportAsyncApiOperationsGroupStrategy())
     }
 
     this.setBuildResult(await builderStrategyContext.executeStrategy())

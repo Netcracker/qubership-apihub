@@ -33,6 +33,7 @@ import {
 } from '../types'
 import { bundle, Resolver } from 'api-ref-bundler'
 import {
+  ASYNCAPI_API_TYPE,
   FILE_FORMAT_GRAPHQL,
   FILE_FORMAT_HTML,
   FILE_FORMAT_JSON,
@@ -51,6 +52,9 @@ type RestFileFormat = typeof REST_FILE_FORMATS[number]
 const GRAPHQL_FILE_FORMATS = [FILE_FORMAT_GRAPHQL] as const
 type GraphQlFileFormat = typeof GRAPHQL_FILE_FORMATS[number]
 
+const ASYNCAPI_FILE_FORMATS = [FILE_FORMAT_YAML, FILE_FORMAT_JSON] as const
+type AsyncApiFileFormat = typeof ASYNCAPI_FILE_FORMATS[number]
+
 export const EXPORT_FORMAT_TO_FILE_FORMAT = new Map<ExportFormat, RestFileFormat>([
   [FILE_FORMAT_YAML, FILE_FORMAT_YAML],
   [FILE_FORMAT_JSON, FILE_FORMAT_JSON],
@@ -61,9 +65,15 @@ export const EXPORT_GRAPHQL_FORMAT_TO_FILE_FORMAT = new Map<ExportFormat, GraphQ
   [FILE_FORMAT_GRAPHQL, FILE_FORMAT_GRAPHQL],
 ])
 
-export const EXPORT_API_TYPE_FORMATS = new Map<OperationsApiType, Map<ExportFormat, RestFileFormat | GraphQlFileFormat>>([
+export const EXPORT_ASYNCAPI_FORMAT_TO_FILE_FORMAT = new Map<ExportFormat, AsyncApiFileFormat>([
+  [FILE_FORMAT_YAML, FILE_FORMAT_YAML],
+  [FILE_FORMAT_JSON, FILE_FORMAT_JSON],
+])
+
+export const EXPORT_API_TYPE_FORMATS = new Map<OperationsApiType, Map<ExportFormat, RestFileFormat | GraphQlFileFormat | AsyncApiFileFormat>>([
   [REST_API_TYPE, EXPORT_FORMAT_TO_FILE_FORMAT],
   [GRAPHQL_API_TYPE, EXPORT_GRAPHQL_FORMAT_TO_FILE_FORMAT],
+  [ASYNCAPI_API_TYPE, EXPORT_ASYNCAPI_FORMAT_TO_FILE_FORMAT],
 ])
 
 export function toVersionDocument(document: ResolvedGroupDocument, fileFormat: FileFormat): VersionDocument {

@@ -1,30 +1,32 @@
 asyncapi: 3.0.0
 info:
-  title: Valid AsyncAPI Document
+  title: Account Service YAML
   version: 1.0.0
-  description: A completely valid AsyncAPI document for testing
+  description: This service is in charge of processing user signups
 channels:
-  userSignup:
-    address: user/signup
+  userSignedUp:
+    address: user/signedup
     messages:
-      userSignedUp:
-        $ref: "#/components/messages/UserSignedUp"
+      UserSignedUp:
+        $ref: '#/components/messages/UserSignedUp'
 operations:
-  onUserSignup:
-    action: receive
+  sendUserSignedUp:
+    action: send
     channel:
-      $ref: "#/channels/userSignup"
-    summary: User signup event
+      $ref: '#/channels/userSignedUp'
+    messages:
+      - $ref: '#/channels/userSignedUp/messages/UserSignedUp'
 components:
   messages:
     UserSignedUp:
+      title: User Signed Up
       payload:
         type: object
         properties:
-          userId:
+          displayName:
             type: string
-            description: User ID
+            description: Name of the user
           email:
             type: string
             format: email
-            description: User email address
+            description: Email of the user

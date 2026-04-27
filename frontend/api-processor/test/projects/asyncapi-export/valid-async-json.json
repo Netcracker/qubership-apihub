@@ -1,47 +1,69 @@
 {
   "asyncapi": "3.0.0",
   "info": {
-    "title": "Valid AsyncAPI JSON Document",
+    "title": "Account Service JSON",
     "version": "1.0.0",
-    "description": "A completely valid AsyncAPI document for testing"
+    "description": "This service is in charge of processing user sign-outs"
   },
   "channels": {
-    "userSignup": {
-      "address": "user/signup",
+    "userSignedOut": {
+      "address": "user/signedout",
       "messages": {
-        "userSignedUp": {
-          "$ref": "#/components/messages/UserSignedUp"
+        "UserSignedOut": {
+          "$ref": "#/components/messages/UserSignedOut"
+        },
+        "UserSignedOutTest": {
+          "$ref": "#/components/messages/UserSignedOut"
         }
       }
     }
   },
   "operations": {
-    "onUserSignup": {
+    "sendUserSignedOut": {
       "action": "receive",
       "channel": {
-        "$ref": "#/channels/userSignup"
+        "$ref": "#/channels/userSignedOut"
       },
-      "summary": "User signup event"
+      "messages": [
+        { "$ref": "#/channels/userSignedOut/messages/UserSignedOut" },
+        { "$ref": "#/channels/userSignedOut/messages/UserSignedOutTest" }
+      ]
     }
   },
   "components": {
     "messages": {
-      "UserSignedUp": {
+      "UserSignedOut": {
+        "title": "User Signed Out",
         "payload": {
           "type": "object",
           "properties": {
-            "userId": {
-              "type": "string"
+            "displayName": {
+              "type": "string",
+              "description": "Name of the user"
             },
             "email": {
               "type": "string",
-              "format": "email"
+              "format": "email",
+              "description": "Email of the user"
             }
-          },
-          "required": [
-            "userId",
-            "email"
-          ]
+          }
+        }
+      },
+      "UserSignedOutTest": {
+        "title": "User Signed Out",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "displayName": {
+              "type": "string",
+              "description": "Name of the user"
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "description": "Email of the user"
+            }
+          }
         }
       }
     }

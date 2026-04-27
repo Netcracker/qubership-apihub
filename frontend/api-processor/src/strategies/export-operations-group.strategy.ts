@@ -20,6 +20,8 @@ import {
   BuilderStrategy,
   BuildResult,
   BuildTypeContexts,
+  ExportDocument,
+  ExportFormat,
   ExportOperationsGroupBuildConfig,
   OperationsApiType,
   TRANSFORMATION_KIND_MERGED,
@@ -67,17 +69,29 @@ export abstract class ExportOperationsGroupStrategy<T extends ExportOperationsGr
     return buildResult
   }
 
-  protected abstract exportMergedDocument(
-    config: T,
-    buildResult: BuildResult,
-    contexts: BuildTypeContexts,
-  ): Promise<void>
+  protected createExportDocument(_filename: string, _data: string, _format: ExportFormat): ExportDocument | Promise<ExportDocument> {
+    throw new Error(`createExportDocument is not implemented in ${this.constructor.name}`)
+  }
 
-  protected abstract exportReducedDocuments(
+  protected exportMergedDocument(config: T, _buildResult: BuildResult, _contexts: BuildTypeContexts): Promise<void> {
+    throw new Error(`This transformation kind is not supported for ${config.apiType} apiType`)
+  }
+
+  protected async exportReducedDocuments(
     config: T,
     buildResult: BuildResult,
     contexts: BuildTypeContexts,
-  ): Promise<void>
+  ): Promise<void> {
+    await this.resolveReducedDocuments(config, buildResult, contexts)
+
+    const transformedDocuments = await Promise.all(
+      [...buildResult.documents.values()].map(document =>
+        this.createExportDocument(document.filename, document.data as string, config.format),
+      ),
+    )
+
+    buildResult.exportDocuments.push(...transformedDocuments)
+  }
 
   protected async resolveReducedDocuments(
     config: T,

@@ -91,37 +91,3 @@ export const dumpAsyncApiDocument: DocumentDumper<AsyncAPIV3.AsyncAPIObject> = (
   return new Blob(...dump(document.data, format ?? FILE_FORMAT.JSON))
 }
 
-export function createAsyncExportDocument(
-  filename: string,
-  data: string,
-  format: ExportFormat,
-  allowedOasExtensions?: OpenApiExtensionKey[],
-): ExportDocument {
-  if (format === FILE_FORMAT_HTML) {
-    throw new Error('HTML export is not supported for AsyncAPI documents')
-  }
-
-  const exportFilename = `${getDocumentTitle(filename)}.${format}`
-
-  let parsed: object
-  try {
-    parsed = JSON.parse(data)
-  } catch (e) {
-    throw new Error(`Failed to parse document '${filename}': ${(e as Error).message}`)
-  }
-
-  const fileFormat = EXPORT_FORMAT_TO_FILE_FORMAT.get(format)
-  if (!fileFormat) {
-    throw new Error(`Unsupported export format: ${format}`)
-  }
-
-  const [[document], blobProperties] = dump(
-    removeOasExtensions(parsed as Parameters<typeof removeOasExtensions>[0], allowedOasExtensions),
-    fileFormat,
-  )
-
-  return {
-    data: new Blob([document], blobProperties),
-    filename: exportFilename,
-  }
-}

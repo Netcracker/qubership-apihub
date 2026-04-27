@@ -92,6 +92,7 @@ export const BUILD_TYPE = {
   EXPORT_REST_DOCUMENT: 'exportRestDocument',
   EXPORT_REST_OPERATIONS_GROUP: 'exportRestOperationsGroup',
   EXPORT_GRAPHQL_OPERATIONS_GROUP: 'exportGraphqlOperationsGroup',
+  EXPORT_ASYNC_API_OPERATIONS_GROUP: 'exportAsyncapiOperationsGroup',
 } as const
 
 export const EXPORT_BUILD_TYPES = [
@@ -99,6 +100,7 @@ export const EXPORT_BUILD_TYPES = [
   BUILD_TYPE.EXPORT_REST_DOCUMENT,
   BUILD_TYPE.EXPORT_REST_OPERATIONS_GROUP,
   BUILD_TYPE.EXPORT_GRAPHQL_OPERATIONS_GROUP,
+  BUILD_TYPE.EXPORT_ASYNC_API_OPERATIONS_GROUP,
 ]
 
 export type ExportBuildType = typeof EXPORT_BUILD_TYPES[number]
