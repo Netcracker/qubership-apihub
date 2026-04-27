@@ -16236,7 +16236,7 @@
                                     "        'manage_archived_version',\r",
                                     "        'user_access_management',\r",
                                     "        'access_token_management',\r",
-                                    "        'document_shareability_management' // Додано сюди\r",
+                                    "        'document_shareability_management'\r",
                                     "    ];\r",
                                     "\r",
                                     "    data.permissions.forEach(function(item) {\r",
