@@ -20,6 +20,7 @@ type ExportService interface {
 	StartOASDocExport(ctx context.SecurityContext, req view.ExportOASDocumentReq) (string, error)
 	StartRESTOpGroupExport(ctx context.SecurityContext, req view.ExportRestOperationsGroupReq) (string, error)
 	StartGraphQLOpGroupExport(ctx context.SecurityContext, req view.ExportGraphqlOperationsGroupReq) (string, error)
+	StartAsyncAPIOpGroupExport(ctx context.SecurityContext, req view.ExportAsyncapiOperationsGroupReq) (string, error)
 
 	GetAsyncExportStatus(exportId string) (*view.ExportStatus, *view.ExportResult, string, error)
 
@@ -192,6 +193,33 @@ func (e exportServiceImpl) StartGraphQLOpGroupExport(ctx context.SecurityContext
 	return exportId, nil
 }
 
+func (e exportServiceImpl) StartAsyncAPIOpGroupExport(ctx context.SecurityContext, req view.ExportAsyncapiOperationsGroupReq) (string, error) {
+	err := validateFormatAsyncAPI(req.Format)
+	if err != nil {
+		return "", err
+	}
+
+	// TODO: validate groupName?
+
+	buildConfig := view.BuildConfig{
+		PackageId:                    req.PackageId,
+		Version:                      req.Version,
+		BuildType:                    view.ExportAsyncapiOperationsGroup,
+		CreatedBy:                    ctx.GetUserId(),
+		ApiType:                      string(view.AsyncapiApiType),
+		GroupName:                    req.GroupName,
+		OperationsSpecTransformation: view.TransformationReducedSource,
+		Format:                       req.Format,
+	}
+
+	exportId, _, err := e.buildService.CreateBuildWithoutDependencies(buildConfig, false, "")
+	if err != nil {
+		return "", err
+	}
+
+	return exportId, nil
+}
+
 func (e exportServiceImpl) makeAllowedOasExtensions(removeOasExtensions bool, packageId string) (*[]string, error) {
 	var allowedOasExtensions *[]string
 
@@ -294,6 +322,21 @@ func (e exportServiceImpl) PublishTransformedDocuments(buildArc *archive.BuildRe
 func validateFormat(format string) error {
 	switch format {
 	case view.FormatYAML, view.FormatJSON, view.FormatHTML:
+		break
+	default:
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.ExportFormatUnknown,
+			Message: exception.ExportFormatUnknownMsg,
+			Params:  map[string]interface{}{"format": format},
+		}
+	}
+	return nil
+}
+
+func validateFormatAsyncAPI(format string) error {
+	switch format {
+	case view.FormatYAML, view.FormatJSON:
 		break
 	default:
 		return &exception.CustomError{

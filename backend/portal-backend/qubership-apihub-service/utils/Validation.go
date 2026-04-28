@@ -79,6 +79,9 @@ func getValidatedValuesTags(b interface{}, targetNames []string) []string {
 }
 
 func getTagReflective(value reflect.Type, splitName []string, name string) string {
+	if value.Kind() == reflect.Pointer {
+		value = value.Elem()
+	}
 	currentElem, splitName := splitName[0], splitName[1:]
 	currentElemSplit := strings.Split(currentElem, "[")
 	arrayIndex := ""

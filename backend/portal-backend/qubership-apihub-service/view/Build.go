@@ -87,6 +87,7 @@ const ExportVersion BuildType = "exportVersion"
 const ExportRestDocument BuildType = "exportRestDocument"
 const ExportRestOperationsGroup BuildType = "exportRestOperationsGroup"
 const ExportGraphqlOperationsGroup BuildType = "exportGraphqlOperationsGroup"
+const ExportAsyncapiOperationsGroup BuildType = "exportAsyncapiOperationsGroup"
 
 // TODO: add new export type here
 

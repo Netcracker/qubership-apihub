@@ -616,6 +616,17 @@ func (o operationGroupServiceImpl) publishOperationGroup(ctx context.SecurityCon
 			OperationsSpecTransformation: view.TransformationReducedSource,
 			Format:                       "graphql",
 		}
+	} else if apiType == string(view.AsyncapiApiType) {
+		buildConfig = view.BuildConfig{
+			PackageId:                    version.PackageId,
+			Version:                      view.MakeVersionRefKey(version.Version, version.Revision),
+			BuildType:                    view.ExportAsyncapiOperationsGroup,
+			CreatedBy:                    ctx.GetUserId(),
+			ApiType:                      string(view.AsyncapiApiType),
+			GroupName:                    groupName,
+			OperationsSpecTransformation: view.TransformationReducedSource,
+			Format:                       view.FormatJSON,
+		}
 	} else {
 		o.updatePublishProcess(publishEnt, string(view.StatusError), fmt.Sprintf("unsupported API type: %s", apiType))
 		return

@@ -44,10 +44,11 @@ func ValidateApiChangesExportFormat(format string) bool {
 type ExportedEntity string
 
 const (
-	ExportEntityVersion                ExportedEntity = "version"
-	ExportEntityRestDocument           ExportedEntity = "restDocument"
-	ExportEntityRestOperationsGroup    ExportedEntity = "restOperationsGroup"
-	ExportEntityGraphqlOperationsGroup ExportedEntity = "graphqlOperationsGroup"
+	ExportEntityVersion                 ExportedEntity = "version"
+	ExportEntityRestDocument            ExportedEntity = "restDocument"
+	ExportEntityRestOperationsGroup     ExportedEntity = "restOperationsGroup"
+	ExportEntityGraphqlOperationsGroup  ExportedEntity = "graphqlOperationsGroup"
+	ExportEntityAsyncapiOperationsGroup ExportedEntity = "asyncapiOperationsGroup"
 )
 
 type ExportRequestDiscriminator struct {
@@ -89,6 +90,14 @@ type ExportGraphqlOperationsGroupReq struct {
 	PackageId      string         `json:"packageId" validate:"required"`
 	Version        string         `json:"version" validate:"required"`
 	GroupName      string         `json:"groupName" validate:"required"`
+}
+
+type ExportAsyncapiOperationsGroupReq struct {
+	ExportedEntity ExportedEntity `json:"exportedEntity" validate:"required"`
+	PackageId      string         `json:"packageId" validate:"required"`
+	Version        string         `json:"version" validate:"required"`
+	GroupName      string         `json:"groupName" validate:"required"`
+	Format         string         `json:"format" validate:"required"`
 }
 
 type ExportResponse struct {
