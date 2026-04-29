@@ -1,4 +1,5 @@
-import { ClassifierType, DiffAction, DIFF_META_KEY, extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
+import type { Diff } from '@netcracker/qubership-apihub-api-diff'
+import { ClassifierType, DiffAction, DIFF_META_KEY, extractOperationBasePath, isDiffAdd, isDiffRemove, isDiffRename, isDiffReplace } from '@netcracker/qubership-apihub-api-diff'
 import { calculateNormalizedRestOperationId } from '@netcracker/qubership-apihub-api-processor'
 import { isRestOperation, type OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { isObject } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
@@ -240,13 +241,20 @@ function findMatchedPathByNormalizedId(
       comparedOperationNormalizedIds.currentOperationNormalizedId === operationNormalizedId ||
       comparedOperationNormalizedIds.previousOperationNormalizedId === operationNormalizedId
     )
-    const matchedByMethod = isObject(pathObject) && !!pathObject?.[operationMethod]
+    const isPathObject = isObject(pathObject)
+    const matchedByMethod = isPathObject && !!pathObject?.[operationMethod]
+    const matchedByDiff = isPathObject && isDiff(pathObject)
 
-    if (matchedById && matchedByMethod) {
+    if (matchedById && (matchedByMethod || matchedByDiff)) {
       return pathKey
     }
   }
   return undefined
+}
+
+function isDiff(maybeDiff: Record<PropertyKey, unknown>): boolean {
+  const candidate = maybeDiff as unknown as Diff
+  return isDiffAdd(candidate) || isDiffRemove(candidate) || isDiffReplace(candidate) || isDiffRename(candidate)
 }
 
 function findWhollyChangedMethodDiff(

@@ -1,4 +1,4 @@
-import { DIFF_META_KEY, type Diff, extractOperationBasePath, isDiffAdd, isDiffRemove, isDiffRename, isDiffReplace } from '@netcracker/qubership-apihub-api-diff'
+import { DIFF_META_KEY, extractOperationBasePath, isDiffAdd, isDiffRemove, isDiffRename, isDiffReplace, type Diff } from '@netcracker/qubership-apihub-api-diff'
 import { calculateNormalizedRestOperationId } from '@netcracker/qubership-apihub-api-processor'
 import { isObject } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
 import { OpenAPIV3 } from 'openapi-types'
@@ -67,6 +67,7 @@ export function detectServerBasePathMigratedToPath(document: OpenAPIV3.Document)
     let beforePaths: OpenAPIV3.PathsObject = { ...paths }
     let afterPaths: OpenAPIV3.PathsObject = { ...paths }
     const diffSpecificPaths = pathsWithDiffs[DIFF_META_KEY]
+    // handle wholly changed operation path items
     if (isObject(diffSpecificPaths)) {
       for (const changedSpecificPath of Object.keys(diffSpecificPaths)) {
         const diffSpecificPath = diffSpecificPaths[changedSpecificPath]! as Diff
@@ -86,6 +87,7 @@ export function detectServerBasePathMigratedToPath(document: OpenAPIV3.Document)
         }
       }
     }
+    // handle wholly changed operation methods
     for (const [path, pathObject] of Object.entries(paths)) {
       if (!pathObject) {
         continue
@@ -95,19 +97,30 @@ export function detectServerBasePathMigratedToPath(document: OpenAPIV3.Document)
       if (!isObject(diffSpecificPathMethods)) {
         continue
       }
-      let beforePathObject = beforePaths[path] as unknown as Record<PropertyKey, unknown>
-      let afterPathObject = afterPaths[path] as unknown as Record<PropertyKey, unknown>
+      let beforePathObject = beforePaths[path] as unknown as Record<PropertyKey, unknown> | undefined
+      let afterPathObject = afterPaths[path] as unknown as Record<PropertyKey, unknown> | undefined
+      if (!beforePathObject || !afterPathObject) {
+        /**
+         * Edge case when APIHUB Portal allowed not valid OpenAPI document when we have 2 paths different only by path parameter name.
+         * For example:
+         * /endpoint/{param}
+         * /endpoint/{parameter}
+         * In case of comparison such documents it produces abnormal diffs which break an assumption
+         * that we CANNOT have diffs of methods if we have diffs of path items.
+         */
+        continue
+      }
       for (const changedSpecificPathMethod of Object.keys(diffSpecificPathMethods)) {
         const diffSpecificPathMethod = diffSpecificPathMethods[changedSpecificPathMethod]! as Diff
         if (isDiffRemove(diffSpecificPathMethod)) {
           beforePathObject[changedSpecificPathMethod] = diffSpecificPathMethod.beforeValue as OpenAPIV3.OperationObject
-          afterPathObject = copyWithoutProperty(afterPathObject, changedSpecificPathMethod)
+          afterPathObject = copyWithoutProperty<OpenAPIV3.PathItemObject>(afterPathObject, changedSpecificPathMethod)
         }
         if (isDiffReplace(diffSpecificPathMethod)) {
           beforePathObject[changedSpecificPathMethod] = diffSpecificPathMethod.beforeValue as OpenAPIV3.OperationObject
         }
         if (isDiffAdd(diffSpecificPathMethod)) {
-          beforePathObject = copyWithoutProperty(beforePathObject, changedSpecificPathMethod)
+          beforePathObject = copyWithoutProperty<OpenAPIV3.PathItemObject>(beforePathObject, changedSpecificPathMethod)
         }
       }
     }
