@@ -339,7 +339,7 @@ const Spec: FC<SpecProps> = memo<SpecProps>(({ value, changes }) => {
         />
       </Box>
       {changes && (
-        <Changes value={changes} />
+        <Changes value={changes} mode="compact"/>
       )}
     </ListItem>
   )
