@@ -20,6 +20,9 @@ This document describes various data maintenance features available in the APIHU
 - [Unreferenced Data Cleanup](#unreferenced-data-cleanup)
     - [Configuration](#configuration-3)
     - [How job works](#how-job-works-3)
+- [Maintenance Vacuum](#maintenance-vacuum)
+    - [Configuration](#configuration-4)
+    - [How job works](#how-job-works-4)
 - [Cleanup Job Schedules](#cleanup-job-schedules)
 
 ## Revisions TTL
@@ -243,6 +246,29 @@ The unreferenced data cleanup job performs the following steps:
 **Note**: Unlike other cleanup jobs, this job does not use a TTL (Time-To-Live) configuration. It removes all
 unreferenced data regardless of age, as unreferenced data serves no purpose in the system.
 
+## Maintenance Vacuum
+
+APIHUB backend runs a dedicated scheduled maintenance vacuum job to execute `VACUUM FULL ANALYZE` for eligible
+public tables. This job is independent from migration stages and should be scheduled during low-traffic windows
+because it may lock tables.
+
+### Configuration
+
+The maintenance vacuum job is configured via configuration properties:
+
+| Configuration property                      | Default value | Description                                                                    |
+|---------------------------------------------|---------------|--------------------------------------------------------------------------------|
+| `cleanup.maintenanceVacuum.schedule`        | `0 2 * * 1`   | Cron schedule for maintenance vacuum job (Monday 2:00 AM by default)           |
+| `cleanup.maintenanceVacuum.timeoutMinutes`  | `300`         | Maximum duration of maintenance vacuum phase (`VACUUM FULL ANALYZE`) in minutes |
+
+### How job works
+
+The maintenance vacuum job performs the following steps:
+
+1. Checks if any migrations are running - if so, it skips execution to avoid conflicts.
+2. Fetches all public tables (via `pg_stat_all_tables`).
+3. Executes `VACUUM FULL ANALYZE` for each eligible table.
+
 ## Cleanup Job Schedules
 
 All cleanup jobs run on predefined schedules to avoid conflicts and distribute system load:
@@ -254,6 +280,7 @@ All cleanup jobs run on predefined schedules to avoid conflicts and distribute s
 | Soft Deleted Data Cleanup  | `0 22 * * 5`     | Friday at 10:00 PM   | Every Friday   | Configured via `cleanup.softDeletedData.timeoutMinutes`    | 6 hours (not configurable) |
 | Unreferenced Data Cleanup  | `0 15 * * 6`     | Saturday at 3:00 PM  | Every Saturday | Configured via `cleanup.unreferencedData.timeoutMinutes`   | 3 hours (not configurable) |
 | Builds Cleanup             | `0 1 * * 0`      | Sunday at 1:00 AM    | Every Sunday   | —                                                          | —                          |
+| Maintenance Vacuum         | `0 2 * * 1`      | Monday at 2:00 AM    | Every Monday   | —                                                          | Configured via `cleanup.maintenanceVacuum.timeoutMinutes` |
 
 **Note**: when scheduling `Comparisons Cleanup`, `Soft Deleted Data Cleanup`, `Unreferenced Data Cleanup` and
 `Builds Cleanup` jobs, it is important to keep in mind that each job consists of two phases: cleanup and vacuuming of

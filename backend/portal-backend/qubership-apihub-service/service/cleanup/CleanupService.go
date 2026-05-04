@@ -16,6 +16,7 @@ import (
 const (
 	defaultCleanupJobTimeout = 48 * time.Hour
 	cleanupJobTimeoutBuffer  = 1 * time.Hour
+	maxRevisionsJobTimeout   = 4 * time.Hour
 )
 
 type CleanupService interface {
@@ -24,6 +25,7 @@ type CleanupService interface {
 	CreateComparisonsCleanupJob(publishedRepo repository.PublishedRepository, migrationRepository mRepository.MigrationRunRepository, comparisonCleanupRepo repository.ComparisonCleanupRepository, lockService service.LockService, instanceId string, schedule string, timeoutMinutes int, ttl int) error
 	CreateSoftDeletedDataCleanupJob(publishedRepo repository.PublishedRepository, migrationRepository mRepository.MigrationRunRepository, deletedDataCleanupRepo repository.SoftDeletedDataCleanupRepository, lockService service.LockService, instanceId string, schedule string, timeoutMinutes int, ttl int) error
 	CreateUnreferencedDataCleanupJob(migrationRepository mRepository.MigrationRunRepository, unreferencedDataCleanupRepo repository.UnreferencedDataCleanupRepository, lockService service.LockService, instanceId string, schedule string, timeoutMinutes int) error
+	CreateMaintenanceVacuumCleanupJob(migrationRepository mRepository.MigrationRunRepository, lockService service.LockService, instanceId string, schedule string, timeoutMinutes int) error
 }
 
 func NewCleanupService(cp db.ConnectionProvider) CleanupService {
@@ -179,12 +181,20 @@ func (c cleanupServiceImpl) calculateCleanupJobTimeout(schedule string, jobType 
 		timeout := time.Duration(float64(interval) * 0.9)
 		log.Warnf("Calculated interval from cron schedule '%s' for %s cleanup job is very short: %v. Using %v as timeout.",
 			schedule, jobType, interval, timeout)
-		return timeout
+		return c.limitCleanupJobTimeout(jobType, timeout)
 	}
 
 	timeout := interval - cleanupJobTimeoutBuffer
 	log.Infof("Calculated cleanup job timeout for %s cleanup job with schedule '%s': %v (interval: %v)",
 		jobType, schedule, timeout, interval)
+	return c.limitCleanupJobTimeout(jobType, timeout)
+}
+
+func (c cleanupServiceImpl) limitCleanupJobTimeout(jobType jobType, timeout time.Duration) time.Duration {
+	if jobType == revisionsCleanup && timeout > maxRevisionsJobTimeout {
+		log.Infof("Capping timeout for %s cleanup job from %v to %v", jobType, timeout, maxRevisionsJobTimeout)
+		return maxRevisionsJobTimeout
+	}
 	return timeout
 }
 
@@ -251,6 +261,24 @@ func (c cleanupServiceImpl) CreateUnreferencedDataCleanupJob(migrationRepository
 		processor:           processor,
 	}
 	return c.addCleanupJob(runner, schedule, unreferencedDataCleanup)
+}
+
+func (c cleanupServiceImpl) CreateMaintenanceVacuumCleanupJob(migrationRepository mRepository.MigrationRunRepository, lockService service.LockService, instanceId string, schedule string, timeoutMinutes int) error {
+	config := jobConfig{
+		jobType:    maintenanceVacuum,
+		instanceId: instanceId,
+		ttl:        0,
+		timeout:    0,
+	}
+	processor := NewMaintenanceVacuumCleanupJobProcessor(c.cp, timeoutMinutes)
+	runner := &JobRunner{
+		cp:                  c.cp,
+		migrationRepository: migrationRepository,
+		lockService:         lockService,
+		config:              config,
+		processor:           processor,
+	}
+	return c.addCleanupJob(runner, schedule, maintenanceVacuum)
 }
 
 func (c cleanupServiceImpl) addCleanupJob(job cron.Job, schedule string, jobType jobType) error {

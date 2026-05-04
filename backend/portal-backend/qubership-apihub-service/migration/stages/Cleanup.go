@@ -54,10 +54,6 @@ func (d OpsMigration) StageCleanupBefore() error {
 			log.Infof("ops migration %s: Cleanup before full migration cleaned up %d entries", d.ent.Id, deleted)
 		}
 
-		err = d.runVacuumForAllTables()
-		if err != nil {
-			return err
-		}
 		d.resetStatStatements()
 
 	}
@@ -89,40 +85,6 @@ func (d OpsMigration) StageCleanupAfter() error {
 	})
 	if err != nil {
 		log.Errorf("ops migration %s: failed to cleanup migration tables: %v", d.ent.Id, err.Error())
-	}
-	return nil
-}
-
-func (d OpsMigration) runVacuumForAllTables() error {
-	log.Infof("ops migration %s: Run vacuum for all tables", d.ent.Id)
-
-	type relation struct {
-		Schema string `pg:"schemaname, type:varchar"`
-		Name   string `pg:"relname, type:varchar"`
-	}
-
-	var rels []relation
-	_, err := withDBRetry(d, func() (orm.Result, error) {
-		return d.cp.GetConnection().Query(&rels, `select schemaname, relname
-				from pg_stat_all_tables where schemaname = 'public' and relname not like 'pg_%'
-				                          and ((last_analyze is null and last_autoanalyze is null)
-				        or last_analyze < (current_date - interval '1 day')
-				        or last_autoanalyze < (current_date - interval '1 day'));`)
-	})
-	if err != nil {
-		return err
-	}
-	vacuumQueries := []string{}
-	for _, rel := range rels {
-		vacuumQueries = append(vacuumQueries, fmt.Sprintf("VACUUM FULL ANALYZE %s.\"%s\";", rel.Schema, rel.Name))
-	}
-	for _, query := range vacuumQueries {
-		_, err = withDBRetry(d, func() (orm.Result, error) {
-			return d.cp.GetConnection().Exec(query)
-		})
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }

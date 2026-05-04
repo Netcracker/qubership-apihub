@@ -129,11 +129,12 @@ type OlricConfig struct {
 }
 
 type CleanupConfig struct {
-	Revisions        RevisionsCleanupConfig
-	Comparisons      ComparisonsCleanupConfig
-	SoftDeletedData  SoftDeletedDataCleanupConfig
-	UnreferencedData UnreferencedDataCleanupConfig
-	Builds           BuildsCleanupConfig
+	Revisions         RevisionsCleanupConfig
+	Comparisons       ComparisonsCleanupConfig
+	SoftDeletedData   SoftDeletedDataCleanupConfig
+	UnreferencedData  UnreferencedDataCleanupConfig
+	MaintenanceVacuum MaintenanceVacuumCleanupConfig
+	Builds            BuildsCleanupConfig
 }
 
 type AIConfig struct {
@@ -183,6 +184,11 @@ type UnreferencedDataCleanupConfig struct {
 
 type BuildsCleanupConfig struct {
 	Schedule string
+}
+
+type MaintenanceVacuumCleanupConfig struct {
+	Schedule       string
+	TimeoutMinutes int
 }
 
 type FeatureFlagsConfig struct {

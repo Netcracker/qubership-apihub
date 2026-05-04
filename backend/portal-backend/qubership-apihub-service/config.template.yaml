@@ -191,6 +191,11 @@ cleanup:
     schedule: '0 15 * * 6'
     # Optional; Timeout in minutes for unreferenced data cleanup. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination; If not set, default value: 360; Example: 120
     timeoutMinutes: 360
+  maintenanceVacuum:
+    # Optional; Cron schedule for maintenance vacuum job; If not set default value: '0 2 * * 1'; Example: '0 2 * * 1'
+    schedule: '0 2 * * 1'
+    # Optional; Timeout in minutes for maintenance vacuum phase (VACUUM FULL ANALYZE); If not set, default value: 300; Example: 180
+    timeoutMinutes: 300
   builds:
     # Optional; Schedule for the builds cleanup job. If not set, default value: "0 1 * * 0"; Example: "* * * * *"
     schedule: '0 1 * * 0'

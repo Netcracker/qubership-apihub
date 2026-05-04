@@ -234,6 +234,9 @@ func main() {
 	if err := cleanupService.CreateUnreferencedDataCleanupJob(migrationRunRepository, unreferencedDataCleanupRepository, lockService, systemInfoService.GetInstanceId(), systemInfoService.GetUnreferencedDataCleanupSchedule(), systemInfoService.GetUnreferencedDataCleanupTimeout()); err != nil {
 		log.Error("Failed to start unreferenced data cleaning job" + err.Error())
 	}
+	if err := cleanupService.CreateMaintenanceVacuumCleanupJob(migrationRunRepository, lockService, systemInfoService.GetInstanceId(), systemInfoService.GetMaintenanceVacuumCleanupSchedule(), systemInfoService.GetMaintenanceVacuumCleanupTimeout()); err != nil {
+		log.Error("Failed to start maintenance vacuum cleaning job" + err.Error())
+	}
 
 	packageVersionEnrichmentService := service.NewPackageVersionEnrichmentService(publishedRepository)
 	activityTrackingService := service.NewActivityTrackingService(activityTrackingRepository, publishedRepository, userService)

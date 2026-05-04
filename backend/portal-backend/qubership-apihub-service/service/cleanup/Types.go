@@ -13,6 +13,7 @@ const (
 	comparisonsCleanup      jobType = "comparisons cleanup"
 	deletedDataCleanup      jobType = "soft deleted data cleanup"
 	unreferencedDataCleanup jobType = "unreferenced data cleanup"
+	maintenanceVacuum       jobType = "maintenance vacuum"
 
 	statusRunning  jobStatus = "running"
 	statusComplete jobStatus = "complete"
