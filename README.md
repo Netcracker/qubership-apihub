@@ -108,7 +108,8 @@ More context: [Supplementary applications](https://github.com/Netcracker/qubersh
 
 | | |
 |--|--|
-| **Hub (start here)** | [docs/README.md](./docs/README.md) — maps guides, Helm, Compose, ERD, wiki links |
+| **Hub (start here)** | [docs/README.md](./docs/README.md) — layered guides, Helm/Compose anchors, wiki links |
+| **Configuration map** | [docs/configuration-reference.md](./docs/configuration-reference.md) — files vs env vars vs Helm; template repos |
 | **Installation** | [docs/installation-guide.md](./docs/installation-guide.md) |
 | **Administration** | [docs/admin-guide.md](./docs/admin-guide.md) |
 | **User guide** | [docs/user-guide.md](./docs/user-guide.md) |
