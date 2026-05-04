@@ -169,18 +169,18 @@ test.describe('12.1.4 Prefix grouping: Viewing', () => {
         await expect.soft(getUserV1Row.leftSummary.path).toHaveText(`${GET_USER_BY_NAME_V1.method}${GET_USER_BY_NAME_V1.path}`)
         await expect.soft(getUserV1Row.leftSummary.changes).toBeHidden()
         await expect.soft(getUserV1Row.rightSummary.path).toBeHidden()
-        await expect.soft(getUserV1Row.rightSummary.changes.breaking).toHaveText('Breaking: 1')
+        await expect.soft(getUserV1Row.rightSummary.changes.breaking).toHaveText('1')
 
         await expect.soft(createListV1Row.changeSeverityIndicator).toHaveText('breaking')
         await expect.soft(createListV1Row.leftSummary.path).toHaveText(`${CREATE_LIST_OF_USERS_V1_UPDATED.method}${CREATE_LIST_OF_USERS_V1_UPDATED.path}`)
         await expect.soft(createListV1Row.leftSummary.changes).toBeHidden()
         await expect.soft(createListV1Row.rightSummary.path).toHaveText(`${CREATE_LIST_OF_USERS_V2.method}${CREATE_LIST_OF_USERS_V2.path}`)
-        await expect.soft(createListV1Row.rightSummary.changes.breaking).toHaveText('Breaking: 1')
+        await expect.soft(createListV1Row.rightSummary.changes.breaking).toHaveText('1')
         await expect.soft(createListV1Row.rightSummary.changes.risky).toBeHidden()
-        await expect.soft(createListV1Row.rightSummary.changes.deprecated).toHaveText('Deprecated: 1')
-        await expect.soft(createListV1Row.rightSummary.changes.nonBreaking).toHaveText('Non-breaking: 1') //Issue TestCase-B-1442
-        await expect.soft(createListV1Row.rightSummary.changes.annotation).toHaveText('Annotation: 1')
-        await expect.soft(createListV1Row.rightSummary.changes.unclassified).toHaveText('Unclassified: 1')
+        await expect.soft(createListV1Row.rightSummary.changes.deprecated).toHaveText('1')
+        await expect.soft(createListV1Row.rightSummary.changes.nonBreaking).toHaveText('1') //Issue TestCase-B-1442
+        await expect.soft(createListV1Row.rightSummary.changes.annotation).toHaveText('1')
+        await expect.soft(createListV1Row.rightSummary.changes.unclassified).toHaveText('1')
       })
 
       await test.step('Swap', async () => {
@@ -201,18 +201,18 @@ test.describe('12.1.4 Prefix grouping: Viewing', () => {
         await expect.soft(getUserV1Row.leftSummary.path).toBeHidden()
         await expect.soft(getUserV1Row.leftSummary.changes).toBeHidden()
         await expect.soft(getUserV1Row.rightSummary.path).toHaveText(`${GET_USER_BY_NAME_V1.method}${GET_USER_BY_NAME_V1.path}`)
-        await expect.soft(getUserV1Row.rightSummary.changes.nonBreaking).toHaveText('Non-breaking: 1')
+        await expect.soft(getUserV1Row.rightSummary.changes.nonBreaking).toHaveText('1')
 
         await expect.soft(createListV1Row.changeSeverityIndicator).toHaveText('breaking')
         await expect.soft(createListV1Row.leftSummary.path).toHaveText(`${CREATE_LIST_OF_USERS_V2.method}${CREATE_LIST_OF_USERS_V2.path}`)
         await expect.soft(createListV1Row.leftSummary.changes).toBeHidden()
         await expect.soft(createListV1Row.rightSummary.path).toHaveText(`${CREATE_LIST_OF_USERS_V1_UPDATED.method}${CREATE_LIST_OF_USERS_V1_UPDATED.path}`)
-        await expect.soft(createListV1Row.rightSummary.changes.breaking).toHaveText('Breaking: 1')
+        await expect.soft(createListV1Row.rightSummary.changes.breaking).toHaveText('1')
         await expect.soft(createListV1Row.rightSummary.changes.risky).toBeHidden
-        await expect.soft(createListV1Row.rightSummary.changes.deprecated).toHaveText('Deprecated: 1')
-        await expect.soft(createListV1Row.rightSummary.changes.nonBreaking).toHaveText('Non-breaking: 1') //Issue TestCase-B-1442
-        await expect.soft(createListV1Row.rightSummary.changes.annotation).toHaveText('Annotation: 1')
-        await expect.soft(createListV1Row.rightSummary.changes.unclassified).toHaveText('Unclassified: 1')
+        await expect.soft(createListV1Row.rightSummary.changes.deprecated).toHaveText('1')
+        await expect.soft(createListV1Row.rightSummary.changes.nonBreaking).toHaveText('1') //Issue TestCase-B-1442
+        await expect.soft(createListV1Row.rightSummary.changes.annotation).toHaveText('1')
+        await expect.soft(createListV1Row.rightSummary.changes.unclassified).toHaveText('1')
       })
 
       //Cover TestCase-A-10265 defect - operation comparison opening
