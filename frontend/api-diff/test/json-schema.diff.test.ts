@@ -55,13 +55,13 @@ describe('JSON schema changes', () => {
         expect.objectContaining({
           action: DiffAction.add,
           afterValue: 'MyType',
-          afterDeclarationPaths: [['defs','MyType']],
+          afterDeclarationPaths: [['defs', 'MyType']],
         }),
         expect.objectContaining({
           action: DiffAction.replace,
           beforeValue: 'prop1',
           afterValue: 'MyType',
-          afterDeclarationPaths: [['defs','MyType']],
+          afterDeclarationPaths: [['defs', 'MyType']],
           beforeDeclarationPaths: [['properties', 'prop1']],
         }),
       ]))
@@ -119,7 +119,7 @@ describe('JSON schema changes', () => {
         beforeSource: beforeSource,
       })
 
-      
+
       expect(diffs.diffs).toEqual(diffsMatcher([
         expect.objectContaining({
           action: DiffAction.replace,
@@ -414,6 +414,117 @@ describe('JSON schema changes', () => {
         afterDeclarationPaths: [['enum', 1]],
       }),
     ]))
+  })
+
+  describe('combiner matching by inlineRefsFlag', () => {
+    // SchemaA holds `type: string` and SchemaB holds `type: integer` in before.
+    // After intentionally swaps the content: SchemaA → integer, SchemaB → string.
+    // The $ref names in the oneOf are unchanged, so the inlineRefsFlag paths match
+    // before[0]↔after[0] (both from SchemaA) and before[1]↔after[1] (both from SchemaB).
+    const beforeSource = {
+      defs: {
+        SchemaA: { type: 'string' },
+        SchemaB: { type: 'integer' },
+      },
+    }
+
+    const before = {
+      oneOf: [
+        { $ref: '#/defs/SchemaA' },
+        { $ref: '#/defs/SchemaB' },
+      ],
+    }
+
+    const afterSource = {
+      defs: {
+        SchemaA: { type: 'integer' },
+        SchemaB: { type: 'string' },
+      },
+    }
+
+    const after = {
+      oneOf: [
+        { $ref: '#/defs/SchemaA' },
+        { $ref: '#/defs/SchemaB' },
+      ],
+    }
+
+    const afterReordered = {
+      oneOf: [
+        { $ref: '#/defs/SchemaB' },
+        { $ref: '#/defs/SchemaA' },
+      ],
+    }
+
+    it('matches by ref origin and detects type swap inside named schemas', () => {
+      const result = apiDiff(before, after, {
+        inlineRefsFlag: TEST_INLINE_REF_FLAG,
+        beforeSource,
+        afterSource,
+      })
+
+      expect(result.diffs).toEqual(diffsMatcher([
+        expect.objectContaining({
+          action: DiffAction.replace,
+          beforeValue: 'string',
+          afterValue: 'integer',
+          beforeDeclarationPaths: [['defs', 'SchemaA', 'type']],
+          afterDeclarationPaths: [['defs', 'SchemaA', 'type']],
+        }),
+        expect.objectContaining({
+          action: DiffAction.replace,
+          beforeValue: 'integer',
+          afterValue: 'string',
+          beforeDeclarationPaths: [['defs', 'SchemaB', 'type']],
+          afterDeclarationPaths: [['defs', 'SchemaB', 'type']],
+        }),
+      ]))
+    })
+
+    it('without explicit inlineRefsFlag the internal flag still enables ref-based matching', () => {
+      // inlineRefsFlag is injected internally when not supplied, so the behaviour is the same.
+      const result = apiDiff(before, after, {
+        beforeSource,
+        afterSource,
+      })
+
+      expect(result.diffs).toEqual(diffsMatcher([
+        expect.objectContaining({
+          action: DiffAction.replace,
+          beforeValue: 'string',
+          afterValue: 'integer',
+        }),
+        expect.objectContaining({
+          action: DiffAction.replace,
+          beforeValue: 'integer',
+          afterValue: 'string',
+        }),
+      ]))
+    })
+
+    it('keeps ref-origin matching when after oneOf branches are reordered', () => {
+      const result = apiDiff(before, afterReordered, {
+        beforeSource,
+        afterSource,
+      })
+
+      expect(result.diffs).toEqual(diffsMatcher([
+        expect.objectContaining({
+          action: DiffAction.replace,
+          beforeValue: 'string',
+          afterValue: 'integer',
+          beforeDeclarationPaths: [['defs', 'SchemaA', 'type']],
+          afterDeclarationPaths: [['defs', 'SchemaA', 'type']],
+        }),
+        expect.objectContaining({
+          action: DiffAction.replace,
+          beforeValue: 'integer',
+          afterValue: 'string',
+          beforeDeclarationPaths: [['defs', 'SchemaB', 'type']],
+          afterDeclarationPaths: [['defs', 'SchemaB', 'type']],
+        }),
+      ]))
+    })
   })
 
   describe('diff in combiners', () => {

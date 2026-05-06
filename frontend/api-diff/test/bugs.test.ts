@@ -353,4 +353,19 @@ describe('Real Data', () => {
 
     expect(merged).not.toHaveProperty(['paths', '/path1', 'put', 'responses', '200', 'content', 'application/json', 'schema', 'additionalProperties'])
   })
+
+  it('deleted property reported wrongly due to incorrect matching on options in combiner', () => {
+    const before = loadYamlSample('deleted-property-reported-wrongly/before.yaml')
+    const after = loadYamlSample('deleted-property-reported-wrongly/after.yaml')
+
+    const { diffs } = apiDiff(before, after, OPTIONS)
+
+    expect(diffs).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        action: DiffAction.remove,
+        beforeDeclarationPaths: [['components', 'schemas', 'QipDatafixCreateDto', 'properties', 'qipChain']],
+        type: breaking,
+      }),
+    ]))
+  })
 })
