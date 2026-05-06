@@ -61,6 +61,8 @@ spec:
                 env:
                 -   name: LOG_LEVEL
                     value: '{{ .Values.qubershipApihubBackend.env.logLevel }}'
+                -   name: GOMEMLIMIT
+                    value: '{{ .Values.qubershipApihubBackend.goMemLimit | default "410MiB" }}'
                 -   name: APIHUB_CONFIG_FOLDER
                     value: '/app/qubership-apihub-service/etc/'
                 resources:
