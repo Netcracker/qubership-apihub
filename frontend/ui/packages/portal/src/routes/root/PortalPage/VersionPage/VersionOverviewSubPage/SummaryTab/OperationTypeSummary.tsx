@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import { useAggregatedValidationSummaryByPackageVersion } from '@apihub/api-hooks/ApiQuality/useAggregatedValidationSummaryByPackageVersion'
+import {
+  useAggregatedValidationSummaryByPackageVersion,
+} from '@apihub/api-hooks/ApiQuality/useAggregatedValidationSummaryByPackageVersion'
 import { useManualRunApiQualityValidation } from '@apihub/api-hooks/ApiQuality/useManualRunApiQualityValidation'
 import { ValidationRulesetLink } from '@apihub/components/ApiQuality/ValidatationRulesetLink'
 import { ValidationIssuesTooltip } from '@apihub/components/ApiQuality/ValidationIssuesTooltip'
@@ -23,7 +25,12 @@ import type { IssuesSummary } from '@apihub/entities/api-quality/package-version
 import { RulesetStatuses } from '@apihub/entities/api-quality/rulesets'
 import { ValidationStatuses } from '@apihub/entities/api-quality/validation-statuses'
 import { Box, Link, Tooltip, Typography } from '@mui/material'
-import { API_AUDIENCE_EXTERNAL, API_AUDIENCE_INTERNAL, API_AUDIENCE_UNKNOWN, type ApiAudienceTransition } from '@netcracker/qubership-apihub-api-processor'
+import {
+  API_AUDIENCE_EXTERNAL,
+  API_AUDIENCE_INTERNAL,
+  API_AUDIENCE_UNKNOWN,
+  type ApiAudienceTransition,
+} from '@netcracker/qubership-apihub-api-processor'
 import { Changes } from '@netcracker/qubership-apihub-ui-shared/components/Changes'
 import { CATEGORY_OPERATION } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
@@ -85,7 +92,7 @@ export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<Operatio
   const apiQualitySummaryPlaceholder = getApiQualitySummaryPlaceholder(onManualRunLinter, clientValidationStatus)
   const showApiQualityPlaceholder = !!apiQualitySummaryPlaceholder
   const showApiQualitySummary = !apiQualitySummaryPlaceholder
-  const validationSummary = useApiQualityValidationSummary()
+  const validationSummary = useApiQualityValidationSummary(apiType)
   const validationRulesets = validationSummary?.rulesets ?? []
   const hasInactiveRulesets = validationRulesets.some(ruleset => ruleset.status === RulesetStatuses.INACTIVE)
   const aggregatedValidationSummary: IssuesSummary = useAggregatedValidationSummaryByPackageVersion(validationSummary)

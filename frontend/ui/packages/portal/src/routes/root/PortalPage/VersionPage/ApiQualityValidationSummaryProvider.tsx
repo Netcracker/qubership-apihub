@@ -1,12 +1,14 @@
 import { type ValidationSummary } from '@apihub/entities/api-quality/package-version-validation-summary'
 import { Link } from '@mui/material'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_ASYNCAPI } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { API_TYPE_GRAPHQL } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import type { FC, PropsWithChildren, ReactNode } from 'react'
+import type { FC, PropsWithChildren, ReactNode} from 'react'
+import { useMemo } from 'react'
 import { createContext, memo, useContext } from 'react'
 import { usePackageKind } from '@apihub/routes/root/PortalPage/usePackageKind'
 import { PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { ASYNCAPI_API_TYPE, REST_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
+import { isAsyncApiLinterType, isOasLinterType } from '@apihub/entities/api-quality/linter-api-types'
 
 export const ClientValidationStatuses = {
   CHECKING: 'checking',
@@ -33,8 +35,30 @@ type ApiQualityDataProviderProps = PropsWithChildren & {
   setClientValidationStatus: SetClientValidationStatus
 }
 
-export function useApiQualityValidationSummary(): ValidationSummary | undefined {
-  return useContext(ApiQualityValidationSummaryContext)
+export function useApiQualityValidationSummary(apiType?: ApiType): ValidationSummary | undefined {
+  const validationSummary = useContext(ApiQualityValidationSummaryContext)
+
+  return useMemo(() => {
+    if (!validationSummary || !apiType) {
+      return validationSummary
+    }
+    switch (apiType) {
+      case REST_API_TYPE:
+        return {
+          ...validationSummary,
+          documents: validationSummary.documents?.filter(({ apiType }) => isOasLinterType(apiType)),
+          rulesets: validationSummary.rulesets?.filter(({ apiType }) => isOasLinterType(apiType)),
+        }
+      case ASYNCAPI_API_TYPE:
+        return {
+          ...validationSummary,
+          documents: validationSummary.documents?.filter(({ apiType }) => isAsyncApiLinterType(apiType)),
+          rulesets: validationSummary.rulesets?.filter(({ apiType }) => isAsyncApiLinterType(apiType)),
+        }
+      default:
+        return validationSummary
+    }
+  }, [apiType, validationSummary])
 }
 
 export function useApiQualityClientValidationStatus(): [ClientValidationStatus | undefined, SetClientValidationStatus | undefined] {
@@ -44,7 +68,7 @@ export function useApiQualityClientValidationStatus(): [ClientValidationStatus |
   ]
 }
 
-const NOT_LINTED_API_TYPES: ApiType[] = [API_TYPE_GRAPHQL, API_TYPE_ASYNCAPI]
+const NOT_LINTED_API_TYPES: ApiType[] = [API_TYPE_GRAPHQL]
 
 export function NotLintedApiTypes(apiType?: ApiType): boolean {
   return !apiType || !NOT_LINTED_API_TYPES.some(notLintedApiType => notLintedApiType === apiType)
@@ -94,7 +118,7 @@ export function getApiQualitySummaryPlaceholder(
     case ClientValidationStatuses.NOT_VALIDATED:
       return <>
         No validation results.
-        <br />
+        <br/>
         <Link onClick={onManualRunLinter} data-testid="RunValidationLink">
           Run Validation
         </Link>
