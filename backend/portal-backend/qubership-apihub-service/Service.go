@@ -689,8 +689,18 @@ func makeServer(systemInfoService service.SystemInfoService, r *mux.Router) *htt
 	//   - http.ResponseController.SetWriteDeadline per-request (see middleware/WriteDeadlineMiddleware.go) to set
 	//     a deadline only on the response writing phase, independent of processing time.
 	//   - Context with deadline for processing time control (planned, not yet implemented).
+	corsHandler := handlers.CORS(corsOptions...)(r)
+	compressedHandler := handlers.CompressHandler(corsHandler)
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/api/v1/mcp/") {
+			corsHandler.ServeHTTP(w, r)
+			return
+		}
+		compressedHandler.ServeHTTP(w, r)
+	})
+
 	return &http.Server{
-		Handler:     handlers.CompressHandler(handlers.CORS(corsOptions...)(r)),
+		Handler:     handler,
 		Addr:        listenAddr,
 		ReadTimeout: 60 * time.Second,
 	}
