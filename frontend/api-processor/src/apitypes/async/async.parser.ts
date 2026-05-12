@@ -170,4 +170,3 @@ async function validateAsyncApiDocument(sourceString: string): Promise<Validatio
     throw new Error(`AsyncAPI validation error: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
-

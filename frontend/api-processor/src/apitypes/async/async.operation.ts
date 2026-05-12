@@ -83,7 +83,6 @@ export const buildAsyncApiOperation = (
   } = document
   const effectiveOperationObject: AsyncAPIV3.OperationObject = effectiveDocument.operations?.[asyncOperationId] as AsyncAPIV3.OperationObject || {}
   const effectiveSingleOperationSpec = createOperationSpec(effectiveDocument, operationId)
-  const refsOnlySingleOperationSpec = createOperationSpec(refsOnlyDocument, operationId)
 
   // TODO Out of scope
   const tags: string[] = effectiveOperationObject?.tags?.map(tag => (tag as AsyncAPIV3.TagObject)?.name) || []
@@ -99,7 +98,7 @@ export const buildAsyncApiOperation = (
 
   // TODO: Populate models when AsyncAPI model extraction is implemented
   const models: Record<string, string> = {}
-  const specWithSingleOperation = createOperationSpecEnrichedWithRefs(operationId, documentData, refsOnlySingleOperationSpec)
+  const specWithSingleOperation = createOperationSpecEnrichedWithRefs(operationId, documentData, refsOnlyDocument)
 
   const deprecatedOperationItem = deprecatedItems.find(isDeprecatedOperationItem)
 
@@ -241,7 +240,7 @@ const collectDeprecatedItems = (
  * - a message in source `operations` has no resolvable id
  */
 export const createOperationSpec = (
-  normalizedDocument: AsyncAPIV3.AsyncAPIObject,
+  normalizedDocument: AsyncAPIV3.AsyncAPIObject | TYPE.AsyncOperationData,
   operationId: string | string[],
 ): TYPE.AsyncOperationData => {
   const operations = getAsyncApiOperations(normalizedDocument)
@@ -332,9 +331,10 @@ export const createOperationSpec = (
 export const createOperationSpecEnrichedWithRefs = (
   operationId: string | string[],
   document: AsyncAPIV3.AsyncAPIObject,
-  refsDocument: AsyncOperationData,
+  refsDocument: AsyncAPIV3.AsyncAPIObject | AsyncOperationData,
 ): AsyncOperationData => {
-  const operations = getAsyncApiOperations(refsDocument)
+  const refsOnlySingleOperationSpec = createOperationSpec(refsDocument, operationId)
+  const operations = getAsyncApiOperations(refsOnlySingleOperationSpec)
   const operationIds = normalizeOperationIds(operationId)
 
   const matchedMessageRefsByOperation = matchMessageRefsByOperations(
@@ -350,7 +350,7 @@ export const createOperationSpecEnrichedWithRefs = (
     )
   }
 
-  const resultSpec = buildAsyncApiSpecFromDocument(document, matchedMessageRefsByOperation, refsDocument)
-  enrichAsyncApiDocumentWithRefs(resultSpec, document, refsDocument)
+  const resultSpec = buildAsyncApiSpecFromDocument(document, matchedMessageRefsByOperation, refsOnlySingleOperationSpec)
+  enrichAsyncApiDocumentWithRefs(resultSpec, document, refsOnlySingleOperationSpec)
   return resultSpec
 }

@@ -14,33 +14,31 @@
  * limitations under the License.
  */
 
-import { createGraphQLExportDocument } from '../apitypes/graphql/graphql.document'
-import { BuildResult, BuildTypeContexts, ExportGraphQLOperationsGroupBuildConfig } from '../types'
+import { ExportDocument, ExportFormat, ExportGraphQLOperationsGroupBuildConfig } from '../types'
 import { ExportOperationsGroupStrategy } from './export-operations-group.strategy'
 import { GRAPHQL_API_TYPE } from '../consts'
+import { getDocumentTitle } from '../utils'
 
 export class ExportGraphQlOperationsGroupStrategy extends ExportOperationsGroupStrategy<ExportGraphQLOperationsGroupBuildConfig> {
   protected readonly supportedApiType = GRAPHQL_API_TYPE
 
-  async exportReducedDocuments(
-    config: ExportGraphQLOperationsGroupBuildConfig,
-    buildResult: BuildResult,
-    contexts: BuildTypeContexts,
-  ): Promise<void> {
-    await this.resolveReducedDocuments(config, buildResult, contexts)
-
-    const transformedDocuments = await Promise.all([...buildResult.documents.values()].map(async document => {
-      return createGraphQLExportDocument(
-        document.filename,
-        document.data as string,
-        config.format,
-      )
-    }))
-
-    buildResult.exportDocuments.push(...transformedDocuments)
+  protected createExportDocument(filename: string, data: string, format: ExportFormat): Promise<ExportDocument> {
+    return this.createGraphQLExportDocument(filename, data, format)
   }
 
-  protected exportMergedDocument(): Promise<void> {
-    throw new Error('This transformation kind is not supported for graphql apiType')
+  private async createGraphQLExportDocument(
+    filename: string,
+    data: string,
+    format: ExportFormat,
+  ): Promise<ExportDocument> {
+    if (format !== GRAPHQL_API_TYPE) {
+      throw new Error('Unsupported format type')
+    }
+    const exportFilename = `${getDocumentTitle(filename)}.${GRAPHQL_API_TYPE}`
+
+    return {
+      data: new Blob([data], { type: 'application/graphql' }),
+      filename: exportFilename,
+    }
   }
 }

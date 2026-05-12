@@ -17,7 +17,7 @@
 import { beforeAll, describe, expect, it, test } from '@jest/globals'
 import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
 import { createOperationSpec, createOperationSpecEnrichedWithRefs } from '../src/apitypes/async/async.operation'
-import { calculateAsyncOperationId } from '../src/utils'
+import { calculateAsyncOperationId, removeComponents } from '../src/utils'
 import { buildPackageWithDefaultConfig, cloneDocument, loadYamlFile, LocalRegistry } from './helpers'
 import { extractProtocol, getRequiredDefaultContentType } from '../src/apitypes/async/async.utils'
 import { FIRST_REFERENCE_KEY_PROPERTY, INLINE_REFS_FLAG } from '../src/consts'
@@ -147,20 +147,22 @@ describe('AsyncAPI 3.0 Operation Tests', () => {
     const OPERATION_KEY_2 = 'sendUserSignedOut'
     const MESSAGE_ID_1 = 'UserSignedUp'
     const MESSAGE_ID_2 = 'UserSignedOut'
-    const MESSAGE_REF_1 = '#/channels/userSignedUp/messages/UserSignedUp'
 
     let OPERATION_ID_1: string
     let OPERATION_ID_2: string
 
-    const buildRefsOnlyDocForOp1 = (): AsyncAPIV3.AsyncAPIObject => ({
-      operations: {
-        [OPERATION_KEY_1]: {
-          messages: [
-            createRefsMessage(MESSAGE_ID_1, [MESSAGE_REF_1]),
-          ],
+    const buildRefsOnlyDoc = (source: AsyncAPIV3.AsyncAPIObject): AsyncAPIV3.AsyncAPIObject => {
+      const documentWithoutComponents = removeComponents(source)
+      return normalize(
+        documentWithoutComponents,
+        {
+          mergeAllOf: false,
+          firstReferenceKeyProperty: FIRST_REFERENCE_KEY_PROPERTY,
+          inlineRefsFlag: INLINE_REFS_FLAG,
+          source,
         },
-      },
-    } as unknown as AsyncAPIV3.AsyncAPIObject)
+      ) as AsyncAPIV3.AsyncAPIObject
+    }
 
     let baseDocument: AsyncAPIV3.AsyncAPIObject
     let normalizedDocument: AsyncAPIV3.AsyncAPIObject
@@ -410,29 +412,7 @@ describe('AsyncAPI 3.0 Operation Tests', () => {
 
     describe('createOperationSpecEnrichedWithRefs', () => {
       test('should add referenced channels/servers/components when refsOnlyDocument has inline refs', () => {
-        const COMPONENT_MSG_REF_1 = '#/components/messages/UserSignedUp'
-        const serverObj: Record<string | symbol, unknown> = { host: 'broker-amqp.example.com', protocol: 'amqp' }
-        serverObj[INLINE_REFS_FLAG] = ['#/servers/amqp1']
-
-        const channelObj: Record<string | symbol, unknown> = {
-          address: 'user/signedup',
-          messages: { UserSignedUp: createRefsMessage(MESSAGE_ID_1, [COMPONENT_MSG_REF_1, MESSAGE_REF_1]) },
-          servers: [serverObj],
-        }
-        channelObj[INLINE_REFS_FLAG] = ['#/channels/userSignedUp']
-
-        const refsOnlyDocument = {
-          operations: {
-            [OPERATION_KEY_1]: {
-              channel: channelObj,
-              messages: [
-                createRefsMessage(MESSAGE_ID_1, [COMPONENT_MSG_REF_1, MESSAGE_REF_1]),
-              ],
-            },
-          },
-        } as unknown as AsyncAPIV3.AsyncAPIObject
-
-        const result = createOperationSpecEnrichedWithRefs(OPERATION_ID_1, baseDocument, refsOnlyDocument)
+        const result = createOperationSpecEnrichedWithRefs(OPERATION_ID_1, baseDocument, buildRefsOnlyDoc(baseDocument))
 
         expect(result).toHaveProperty(['servers', 'amqp1'], baseDocument.servers?.amqp1)
         expect(result).toHaveProperty(['channels', 'userSignedUp'], baseDocument.channels?.userSignedUp)
@@ -440,22 +420,22 @@ describe('AsyncAPI 3.0 Operation Tests', () => {
         expect(result).toHaveProperty(['components', 'messages', 'UserSignedUp'], baseDocument.components?.messages?.UserSignedUp)
       })
 
-      test('should resolve only matched operations when refsOnlyDocument contains a subset of requested', () => {
-        const refsOnlyDocument = {
-          operations: {
-            [OPERATION_KEY_1]: {
-              messages: [
-                createRefsMessage(MESSAGE_ID_1, [MESSAGE_REF_1]),
-              ],
-            },
-          },
-        } as unknown as AsyncAPIV3.AsyncAPIObject
-
-        const result = createOperationSpecEnrichedWithRefs([OPERATION_ID_1, OPERATION_ID_2], baseDocument, refsOnlyDocument)
+      test('should resolve only matched operations when some requested ids are not found', () => {
+        const result = createOperationSpecEnrichedWithRefs(
+          [OPERATION_ID_1, 'nonexistent-op'],
+          baseDocument,
+          buildRefsOnlyDoc(baseDocument),
+        )
 
         const operationKeys = Object.keys(result.operations || {})
         expect(operationKeys).toEqual([OPERATION_KEY_1])
         expect(operationKeys).not.toContain(OPERATION_KEY_2)
+      })
+
+      test('should include only channels referenced by selected operations from full refsDocument', () => {
+        const result = createOperationSpecEnrichedWithRefs(OPERATION_ID_1, baseDocument, buildRefsOnlyDoc(baseDocument))
+
+        expect(Object.keys(result.channels!)).toEqual(['userSignedUp'])
       })
 
       describe('defaultContentType propagation', () => {
@@ -463,7 +443,7 @@ describe('AsyncAPI 3.0 Operation Tests', () => {
           const document = cloneDocument(baseDocument)
           document.defaultContentType = 'application/json'
 
-          const result = createOperationSpecEnrichedWithRefs(OPERATION_ID_1, document, buildRefsOnlyDocForOp1())
+          const result = createOperationSpecEnrichedWithRefs(OPERATION_ID_1, document, buildRefsOnlyDoc(baseDocument))
           expect(result.defaultContentType).toBe('application/json')
         })
 
@@ -472,7 +452,7 @@ describe('AsyncAPI 3.0 Operation Tests', () => {
           document.defaultContentType = 'application/json';
           (document.components!.messages!.UserSignedUp as AsyncAPIV3.MessageObject).contentType = 'application/xml'
 
-          const refsOnlyDoc = buildRefsOnlyDocForOp1()
+          const refsOnlyDoc = buildRefsOnlyDoc(baseDocument)
           const resolvedMessage = (refsOnlyDoc.operations![OPERATION_KEY_1] as AsyncAPIV3.OperationObject).messages![0] as Record<string, unknown>
           resolvedMessage.contentType = 'application/xml'
 
@@ -481,8 +461,18 @@ describe('AsyncAPI 3.0 Operation Tests', () => {
         })
 
         test('should omit defaultContentType when source document has none', () => {
-          const result = createOperationSpecEnrichedWithRefs(OPERATION_ID_1, baseDocument, buildRefsOnlyDocForOp1())
+          const result = createOperationSpecEnrichedWithRefs(OPERATION_ID_1, baseDocument, buildRefsOnlyDoc(baseDocument))
           expect(result.defaultContentType).toBeUndefined()
+        })
+
+        test('should include root defaultContentType when selecting a non-first message from a multi-message operation', async () => {
+          const sharedChannelDoc = await loadYamlFile<AsyncAPIV3.AsyncAPIObject>('asyncapi/operations/shared-channel/spec.yaml')
+          const document = cloneDocument(sharedChannelDoc)
+          document.defaultContentType = 'application/json'
+
+          const operationIdB = calculateAsyncOperationId('multiMessageOp', 'MessageB')
+          const result = createOperationSpecEnrichedWithRefs(operationIdB, document, buildRefsOnlyDoc(sharedChannelDoc))
+          expect(result.defaultContentType).toBe('application/json')
         })
       })
 
@@ -492,13 +482,13 @@ describe('AsyncAPI 3.0 Operation Tests', () => {
           document['x-apihub-custom'] = { foo: 'bar' }
           document['x-vendor-flag'] = true
 
-          const result = createOperationSpecEnrichedWithRefs(OPERATION_ID_1, document, buildRefsOnlyDocForOp1()) as unknown as Record<string, unknown>
+          const result = createOperationSpecEnrichedWithRefs(OPERATION_ID_1, document, buildRefsOnlyDoc(baseDocument)) as unknown as Record<string, unknown>
           expect(result['x-apihub-custom']).toEqual({ foo: 'bar' })
           expect(result['x-vendor-flag']).toBe(true)
         })
 
         test('should not add extension keys when source has none', () => {
-          const result = createOperationSpecEnrichedWithRefs(OPERATION_ID_1, baseDocument, buildRefsOnlyDocForOp1()) as unknown as Record<string, unknown>
+          const result = createOperationSpecEnrichedWithRefs(OPERATION_ID_1, baseDocument, buildRefsOnlyDoc(baseDocument)) as unknown as Record<string, unknown>
           const extensionKeys = Object.keys(result).filter(k => k.startsWith('x-'))
           expect(extensionKeys).toEqual([])
         })
