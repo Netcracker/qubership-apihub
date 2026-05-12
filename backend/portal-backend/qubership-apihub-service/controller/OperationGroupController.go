@@ -853,7 +853,7 @@ func (o operationGroupControllerImpl) StartOperationGroupPublish(w http.Response
 		})
 		return
 	}
-	if apiType != string(view.RestApiType) && apiType != string(view.GraphqlApiType) {
+	if apiType != string(view.RestApiType) && apiType != string(view.GraphqlApiType) && apiType != string(view.AsyncapiApiType) {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.UnsupportedApiType,

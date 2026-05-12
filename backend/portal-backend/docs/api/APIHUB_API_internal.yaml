@@ -309,7 +309,8 @@ paths:
             - exportRestDocument - process of exporting one OpenAPI document form the version.
             - exportRestOperationsGroup - process of exporting one operations group with apiType = rest.
             - exportGraphqlOperationsGroup - process of exporting one operations group with apiType = graphql.
-          There are no any config files in buid result archive for exportVersion/exportRestDocument/exportRestOperationsGroup/exportGraphqlOperationsGroup build types, i.e. only the resulting build files will be in the archive.
+            - exportAsyncapiOperationsGroup - process of exporting one operations group with apiType = asyncapi.
+          There are no any config files in buid result archive for exportVersion/exportRestDocument/exportRestOperationsGroup/exportGraphqlOperationsGroup/exportAsyncapiOperationsGroup build types, i.e. only the resulting build files will be in the archive.
         content:
           multipart/form-data:
             schema:
@@ -477,6 +478,7 @@ paths:
                       - $ref: "#/components/schemas/ExportRestDocumentBuildConfig"
                       - $ref: "#/components/schemas/ExportRestOperationsGroupBuildConfig"
                       - $ref: "#/components/schemas/ExportGraphqlOperationsGroupBuildConfig"
+                      - $ref: "#/components/schemas/ExportAsyncapiOperationsGroupBuildConfig"
                     discriminator:
                       propertyName: buildType
         "204":
@@ -1286,7 +1288,8 @@ components:
           - exportRestDocument - process of exporting one OpenAPI document form the version.
           - exportRestOperationsGroup - process of exporting one operations group with apiType = rest.
           - exportGraphqlOperationsGroup - process of exporting one operations group with apiType = graphql.
-        There are no any config files in buid result archive for exportVersion/exportRestDocument/exportRestOperationsGroup/exportGraphqlOperationsGroup build types, i.e. only the resulting build files will be in the archive.
+          - exportAsyncapiOperationsGroup - process of exporting one operations group with apiType = asyncapi.
+        There are no any config files in buid result archive for exportVersion/exportRestDocument/exportRestOperationsGroup/exportGraphqlOperationsGroup/exportAsyncapiOperationsGroup build types, i.e. only the resulting build files will be in the archive.
       title: Build result
       oneOf:
         - title: Build result for build
@@ -2322,6 +2325,55 @@ components:
           type: string
           enum:
             - graphql
+    ExportAsyncapiOperationsGroupBuildConfig:
+      description: Build config for export of AsyncAPI operations group.
+      type: object
+      required:
+        - buildType
+        - packageId
+        - version
+        - groupName
+        - apiType
+        - operationsSpecTransformation
+        - format
+      properties:
+        buildType:
+          description: Type of the build process.
+          type: string
+          enum:
+            - exportAsyncapiOperationsGroup
+        packageId:
+          description: Package unique identifier (full alias).
+          type: string
+          example: NC.CBSS.CPQ.TMF
+        version:
+          description: |
+            Package version.\
+            The mask <version>@<revision> will be used for return in a
+            specific revision.
+          type: string
+          example: 2022.3@3
+        groupName:
+          description: Name of the group
+          type: string
+          example: v1
+        apiType:
+          description: Type of the API.
+          type: string
+          enum:
+            - asyncapi
+        operationsSpecTransformation:
+          description: >
+            Type of specification transformation. For AsyncAPI operations group export, only reducedSourceSpecifications is used.
+          type: string
+          enum:
+            - reducedSourceSpecifications
+        format:
+          description: Format of the exported file.
+          type: string
+          enum:
+            - yaml
+            - json
     InternalDocumentMetadata:
       type: object
       required:

@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"net/http"
+	"time"
 
 	apihubctx "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
@@ -20,6 +21,7 @@ type mcpControllerImpl struct {
 func (m mcpControllerImpl) MakeMCPServer() http.Handler {
 	return mcpserver.NewStreamableHTTPServer(
 		m.mcpService.MakeMCPServer(),
+		mcpserver.WithSessionIdleTTL(15*time.Minute),
 		mcpserver.WithHTTPContextFunc(func(ctx context.Context, r *http.Request) context.Context {
 			secCtx := apihubctx.Create(r)
 			userID := secCtx.GetUserId()

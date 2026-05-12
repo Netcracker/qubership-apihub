@@ -61,7 +61,7 @@ func (b buildCleanUpRepositoryImpl) RemoveOldBuildEntities(runId int, scheduledA
 		}
 
 		successBuildsRetention := time.Now().Add(-(time.Hour * 168)) // 1 week
-		failedBuildsRetention := time.Now().Add(-(time.Hour * 336))  // 2 weeks
+		failedBuildsRetention := time.Now().Add(-(time.Hour * 720))  // 30 days
 
 		deletedBuildSources, err = b.removeOldBuildSources(tx, successBuildsRetention, failedBuildsRetention)
 		if err != nil {
@@ -133,7 +133,7 @@ func (b buildCleanUpRepositoryImpl) RemoveOldBuildSourcesByIds(ctx context.Conte
 
 func (b buildCleanUpRepositoryImpl) GetRemoveCandidateOldBuildEntitiesIds() ([]string, error) {
 	successBuildsRetention := time.Now().Add(-(time.Hour * 168)) // 1 week
-	failedBuildsRetention := time.Now().Add(-(time.Hour * 336))  // 2 weeks
+	failedBuildsRetention := time.Now().Add(-(time.Hour * 720))  // 30 days
 
 	return b.getRemoveCandidateOldBuildEntities(successBuildsRetention, failedBuildsRetention)
 }

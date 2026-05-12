@@ -11,6 +11,7 @@
 ## Functionality guides
 ### [Build process](build.md)
 ### [Data maintenance](data_maintenance.md)
+### [Business metrics](business_metrics.md)
 
 ## Admin guides
 ### [Operations migration analysis](ops_migration_analysis_guide.md)
