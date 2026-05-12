@@ -1,8 +1,11 @@
 import type { ExportedEntityTransformation, ExportedFileFormat } from '../api/useExport'
 import { ExportedEntityKind } from '../api/useExport'
-import type { ExportSettingsFormField ,
+import type {
+  ExportSettingsFormField,
   ExportSettingsFormFieldOptionOasExtensions,
-  ExportSettingsFormFieldOptionScope} from './export-settings-form-field'
+  ExportSettingsFormFieldOptionScope,
+} from './export-settings-form-field'
+import { FIELD_OPTION_LIST_FILE_FORMAT_ASYNC_API } from './export-settings-form-field'
 import {
   ExportSettingsFormFieldKind,
   FIELD_LABEL_SCOPE,
@@ -54,6 +57,14 @@ export const EXPORT_SETTINGS_FORM_FIELDS_BY_PLACE: Record<ExportedEntityKind, Ex
       label: FIELD_LABEL_OAS_EXTENSIONS,
       options: FIELD_OPTION_LIST_OAS_EXTENSIONS,
       defaultValue: FIELD_OPTION_LIST_OAS_EXTENSIONS[0].value,
+    },
+  ],
+  [ExportedEntityKind.ASYNC_API_OPERATIONS_GROUP]: [
+    {
+      kind: ExportSettingsFormFieldKind.FILE_FORMAT,
+      label: FIELD_LABEL_FILE_FORMAT,
+      options: FIELD_OPTION_LIST_FILE_FORMAT_ASYNC_API,
+      defaultValue: FIELD_OPTION_LIST_FILE_FORMAT_ASYNC_API[0].value,
     },
   ],
   [ExportedEntityKind.REST_OPERATIONS_GROUP]: [

@@ -23,10 +23,10 @@ http {
     add_header Content-Security-Policy "frame-ancestors 'none'"         always;
 
     sendfile              on;
-    keepalive_timeout     1200;
-    send_timeout          3600;
-    client_body_timeout   3600;
-    client_header_timeout 3600;
+    keepalive_timeout     75;
+    send_timeout          60;
+    client_body_timeout   60;
+    client_header_timeout 60;
     client_max_body_size  0;
 
     log_format main '$remote_addr - $remote_user [$time_local] '
@@ -67,9 +67,9 @@ http {
         port_in_redirect off;
         absolute_redirect  off;
 
-        proxy_connect_timeout 3600;
-        proxy_read_timeout    3600;
-        proxy_send_timeout    3600;
+        proxy_connect_timeout 60;
+        proxy_read_timeout    600;
+        proxy_send_timeout    60;
 
         # Decline suspicious URL-encodings
         if ($request_uri ~* "%[0-1][0-9A-Fa-f]") {
@@ -87,6 +87,10 @@ http {
             add_header Content-Security-Policy "frame-ancestors 'none'"          always;
 
             proxy_pass http://${APIHUB_BACKEND_ADDRESS};
+
+            proxy_connect_timeout 1s;
+            proxy_next_upstream off;
+            proxy_intercept_errors off;
         }
 
         # API endpoints proxifying to backend. Static upstream resolution
@@ -98,6 +102,10 @@ http {
             add_header X-Frame-Options         "DENY"                            always;
             add_header Content-Security-Policy "frame-ancestors 'none'"          always;
             proxy_pass http://${APIHUB_BACKEND_ADDRESS};
+
+            proxy_connect_timeout 1s;
+            proxy_next_upstream off;
+            proxy_intercept_errors off;
         }
 
         # Special section for apihub-nc (rewrite required). Dynamic upstream resolution

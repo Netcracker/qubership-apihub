@@ -85,6 +85,7 @@ export function useComparedOperations(options: Options): QueryResultWithNoIntern
     if (!rawComparisonInternalDocument) {
       return undefined
     }
+    // FIXME 27.04.26 // Decrease invocations!
     return deserialize(rawComparisonInternalDocument, INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING)
   }, [rawComparisonInternalDocument])
 

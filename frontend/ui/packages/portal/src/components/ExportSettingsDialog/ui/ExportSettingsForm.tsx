@@ -29,7 +29,7 @@ import type { ExportConfig } from '../../../routes/root/PortalPage/useExportConf
 import {
   ExportedEntityKind,
   ExportedFileFormat,
-  type IRequestDataExport,
+  type IRequestDataExport, RequestDataExportAsyncApiGroup,
   RequestDataExportRestDocument,
   RequestDataExportRestOperationsGroup,
   RequestDataExportVersion,
@@ -91,7 +91,7 @@ const ExportSettingsFormFields: FC<ExportSettingsFormFieldsProps> = memo(props =
                         value={option.value}
                         label={option.label}
                         checked={!value && option.value === field.defaultValue || value === option.value}
-                        control={<RadioCustom disabled={disabled} />}
+                        control={<RadioCustom disabled={disabled}/>}
                       />
                       {option.tooltip && (
                         <Tooltip
@@ -99,7 +99,7 @@ const ExportSettingsFormFields: FC<ExportSettingsFormFieldsProps> = memo(props =
                           title={typeof option.tooltip === 'function' ? option.tooltip(exportConfig) : option.tooltip}
                           placement="right"
                         >
-                          <InfoContextIcon fontSize="extra-small" />
+                          <InfoContextIcon fontSize="extra-small"/>
                         </Tooltip>
                       )}
                     </Box>
@@ -254,6 +254,14 @@ export const ExportSettingsForm: FC<ExportSettingsFormProps> = memo(props => {
           version,
           fileFormat,
           removeOasExtensions,
+        )
+        break
+      case ExportedEntityKind.ASYNC_API_OPERATIONS_GROUP:
+        requestData = new RequestDataExportAsyncApiGroup(
+          groupName!,
+          packageId,
+          version,
+          fileFormat,
         )
         break
     }
