@@ -32,13 +32,13 @@
         "@nestjs/schematics": "^10.0.0",
         "@nestjs/testing": "^10.0.0",
         "@netcracker/qubership-apihub-api-unifier": "2.7.0",
-        "@netcracker/qubership-apihub-npm-gitflow": "3.1.0",
+        "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
         "@types/adm-zip": "^0.5.1",
         "@types/express": "^4.17.21",
         "@types/jest": "^29.5.6",
         "@types/js-yaml": "^4.0.5",
         "@types/multer": "^1.4.9",
-        "@types/node": "^20.10.5",
+        "@types/node": "^24.0.0",
         "@types/supertest": "^2.0.12",
         "@typescript-eslint/eslint-plugin": "^6.13.2",
         "@typescript-eslint/parser": "^6.13.2",
@@ -59,7 +59,7 @@
         "typescript": "^5.3.3"
       },
       "engines": {
-        "node": ">=18.0.0"
+        "node": ">=24.0.0"
       }
     },
     "node_modules/@ampproject/remapping": {
@@ -2054,9 +2054,9 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-npm-gitflow": {
-      "version": "3.1.0",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-npm-gitflow/3.1.0/9d5ec4db1aa7e1fc7ff3d15dcccc1c2741bc06cd",
-      "integrity": "sha512-MoZVHLurOpx1eWb+iSBcpqe6hSTGL60Dv+dcD2Q3Ze0LeE0XPlqLnMFeKyAEQnkq/nynPlnsbNPFGBAgJMYe6w==",
+      "version": "3.1.1",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-npm-gitflow/3.1.1/bb451b4e983f249a7e45e29769e6aa0b9d736fe9",
+      "integrity": "sha512-UV8KqfTRgSKcGswg2SbFmgbfDx0N2HTkaT3yTE8JGo44+P+mBFu3IPGPDsn2yzMLkyJBgOLgyaXdmVeY1G+zuA==",
       "dev": true,
       "license": "Apache-2.0",
       "dependencies": {
@@ -2832,12 +2832,12 @@
       }
     },
     "node_modules/@types/node": {
-      "version": "20.17.32",
-      "resolved": "https://registry.npmjs.org/@types/node/-/node-20.17.32.tgz",
-      "integrity": "sha512-zeMXFn8zQ+UkjK4ws0RiOC9EWByyW1CcVmLe+2rQocXRsGEDxUCwPEIVgpsGcLHS/P8JkT0oa3839BRABS0oPw==",
+      "version": "24.12.2",
+      "resolved": "https://registry.npmjs.org/@types/node/-/node-24.12.2.tgz",
+      "integrity": "sha512-A1sre26ke7HDIuY/M23nd9gfB+nrmhtYyMINbjI1zHJxYteKR6qSMX56FsmjMcDb3SMcjJg5BiRRgOCC/yBD0g==",
       "license": "MIT",
       "dependencies": {
-        "undici-types": "~6.19.2"
+        "undici-types": "~7.16.0"
       }
     },
     "node_modules/@types/qs": {
@@ -11350,9 +11350,9 @@
       }
     },
     "node_modules/undici-types": {
-      "version": "6.19.8",
-      "resolved": "https://registry.npmjs.org/undici-types/-/undici-types-6.19.8.tgz",
-      "integrity": "sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==",
+      "version": "7.16.0",
+      "resolved": "https://registry.npmjs.org/undici-types/-/undici-types-7.16.0.tgz",
+      "integrity": "sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==",
       "license": "MIT"
     },
     "node_modules/universalify": {
