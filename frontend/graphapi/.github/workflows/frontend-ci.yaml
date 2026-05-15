@@ -1,4 +1,4 @@
-name: frontend-ci 
+name: frontend-ci
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
       - hotfix
       - develop
       - feature/*
-      - bugfix/*      
+      - bugfix/*
     tags:
       - '**'
 
