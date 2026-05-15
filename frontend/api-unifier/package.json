@@ -40,15 +40,15 @@
     "simplify"
   ],
   "dependencies": {
-    "@netcracker/qubership-apihub-json-crawl": "1.2.0",
+    "@netcracker/qubership-apihub-json-crawl": "dev",
     "object-hash": "3.0.0",
     "fast-equals": "4.0.3",
     "flatted": "^3.2.9"
   },
   "devDependencies": {
     "@asyncapi/parser": "3.4.0",
-    "@netcracker/qubership-apihub-graphapi": "1.0.9",
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.0",
+    "@netcracker/qubership-apihub-graphapi": "dev",
+    "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
     "@types/object-hash": "3.0.6",
     "@types/jest": "29.5.2",
     "@types/js-yaml": "4.0.5",
