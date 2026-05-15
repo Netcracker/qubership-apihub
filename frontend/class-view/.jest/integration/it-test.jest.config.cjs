@@ -14,19 +14,10 @@
  * limitations under the License.
  */
 
-import baseConfig from './it-test.jest.config.js'
-import presetConfig from './docker/jest-preset.cjs'
+const path = require('path')
+const { prepareJestConfig } = require('@netcracker/qubership-apihub-jest-chrome-in-docker-environment')
 
-process.env.JEST_PUPPETEER_CONFIG = '.jest/integration/puppeteer-docker.config.cjs'
-process.env.RUN_IN_DOCKER = 'true'
-const customConfig = Object.assign({}, baseConfig)
-
-delete customConfig.testRunner
-delete customConfig.globalSetup
-delete customConfig.globalTeardown
-delete customConfig.testEnvironment
-
-export default {
-  ...customConfig,
-  ...presetConfig
-}
+module.exports = prepareJestConfig(
+  path.resolve(__dirname, './common-it-test.jest.config.cjs'),
+  path.resolve(__dirname, './common-puppeteer.config.cjs'),
+)

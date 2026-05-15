@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-const ourConfig = require('./puppeteer.config.cjs')
-const libConfig = require('./docker/config.cjs')()
-const customConfig = Object.assign({}, libConfig)
-
-customConfig.connect.defaultViewport = {
-  width: 1800,
-  height: 1000
+module.exports = {
+  headless: true,
+  devtools: false,
+  args: [
+    '--window-size=1800,1000',
+  ],
 }
-customConfig.chromiumFlags = ourConfig.launch.args.filter(arg => !arg.startsWith('--window-size'))
-module.exports = customConfig

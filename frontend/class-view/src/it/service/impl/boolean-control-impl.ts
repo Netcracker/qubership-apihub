@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-import { ElementHandle, Page } from 'puppeteer'
+import { ElementHandle } from 'puppeteer'
 import { BooleanControl } from '../controls'
 
 export class BooleanControlImpl implements BooleanControl {
 
   constructor(
     private readonly _domElement: ElementHandle,
-    private readonly _page: Page,
     private readonly _prepareToNextRenderFinish: () => Promise<void>
   ) {
   }
 
   public async click(waitUpdate = true): Promise<void> {
-    const promise = waitUpdate ? this._prepareToNextRenderFinish() : this._page.waitForTimeout(1)
+    const promise = waitUpdate ? this._prepareToNextRenderFinish() : new Promise<void>(r => setTimeout(r, 1))
     await this._domElement.click()
     return promise
   }
