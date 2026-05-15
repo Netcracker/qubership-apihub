@@ -10,9 +10,9 @@ name: Automatic PR Labeler
 
 on:
   pull_request:
-    branches: [develop]
+    branches: [ develop ]
     types:
-      [opened, reopened, synchronize]
+      [ opened, reopened, synchronize ]
 
 permissions:
   pull-requests: write
@@ -24,7 +24,7 @@ jobs:
     if: (github.event.pull_request.merged == false) && (github.event.pull_request.user.login != 'dependabot[bot]') && (github.event.pull_request.user.login != 'github-actions[bot]')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: "Execute assign labels"
         id: action-assign-labels

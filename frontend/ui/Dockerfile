@@ -1,13 +1,15 @@
-FROM docker.io/node:20 as builder
+FROM docker.io/node:24 AS builder
 
 ARG TAG=dev
 
 WORKDIR /workspace
 
-RUN --mount=type=secret,id=npmrc,target=.npmrc mv $(npm pack @netcracker/qubership-apihub-ui-agents@"$TAG") qubership-apihub-ui-agents.tgz
-RUN --mount=type=secret,id=npmrc,target=.npmrc mv $(npm pack @netcracker/qubership-apihub-ui-portal@"$TAG") qubership-apihub-ui-portal.tgz
+RUN --mount=type=secret,id=npmrc,target=.npmrc mv "$(npm pack @netcracker/qubership-apihub-ui-agents@"$TAG")" qubership-apihub-ui-agents.tgz
+RUN --mount=type=secret,id=npmrc,target=.npmrc mv "$(npm pack @netcracker/qubership-apihub-ui-portal@"$TAG")" qubership-apihub-ui-portal.tgz
 
 FROM docker.io/nginx:1.28.0-alpine3.21
+
+WORKDIR /tmp/build
 
 COPY nginx/errors                        /var/www/error
 COPY nginx/nginx.conf.template           /etc/nginx/nginx.conf.template
