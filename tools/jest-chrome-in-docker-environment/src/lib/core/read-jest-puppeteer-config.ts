@@ -21,7 +21,7 @@ import findNodeModules from "find-node-modules"
 
 import colors from "colors";
 import type { ChromeArg, JestPuppeteerConfig } from "../index.types"
-import { CONSOLE_PREFIX, DEFAULT_CHROME_FLAGS, DEFAULT_PROTOCOL_TIMEOUT } from "./defaults"
+import { CHROME_INTERNAL_PORT, CONSOLE_PREFIX, DEFAULT_CHROME_FLAGS, DEFAULT_PROTOCOL_TIMEOUT } from "./defaults"
 
 const {bgYellow, black, yellow} = colors;
 
@@ -158,6 +158,7 @@ export async function initPuppeteerWithChromeInDockerConfig(): Promise<JestPuppe
         }
     }
     setChromeArgs(mergedConfig, "connect")
+    mergedConfig.connect.args.push(`--remote-debugging-port=${CHROME_INTERNAL_PORT}`)
     setAutoOpenDevtoolsForTabsFromLaunch(mergedConfig)
     setSowMoFromLaunch(mergedConfig)
     setProtocolTimeout(mergedConfig)
@@ -179,10 +180,14 @@ export async function initPuppeteerWithLocalChromeConfig() {
         )),
         connect: {
             args: [],
-            browserWSEndpoint: "NOT_INITIALIZED_YET_SHOULD_VE_SET_AFTER_CHROME_IS_STARTED"
         }
     }
     mergedConfig.launch.defaultViewport = mergedConfig.launch?.defaultViewport || null;
+    // Puppeteer 24+ no longer auto-discovers system Chrome when PUPPETEER_SKIP_DOWNLOAD is set.
+    // See https://pptr.dev/troubleshooting#chrome-is-downloaded-but-fails-to-launch
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+        mergedConfig.launch.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH
+    }
     setChromeArgs(mergedConfig, "launch")
     // @ts-ignore
     delete mergedConfig["connect"]
