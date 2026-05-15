@@ -8,6 +8,6 @@
   "license": "Apache-2.0",
   "main": "src/index.ts",
   "engines": {
-    "node": ">=16"
+    "node": ">=24.0.0"
   }
 }

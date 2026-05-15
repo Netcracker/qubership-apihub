@@ -9,7 +9,7 @@ export class ViewComponentImpl implements ViewComponent {
   ) {
   }
 
-  public async captureScreenshot(): Promise<Buffer | string> {
+  public async captureScreenshot(): Promise<Uint8Array> {
     return captureScreenshot(this._domElement)
   }
 }
