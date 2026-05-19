@@ -89,6 +89,10 @@ function isOperationsGroupComparisonObject(
   return object?.type === COMPARISON_OBJECT_TYPE_OPERATIONS_GROUP_IN_PACKAGE_REVISION
 }
 
+export function isOperationsGroupComparison(obj1: ComparisonObject | null, obj2: ComparisonObject | null): boolean {
+  return isOperationsGroupComparisonObject(obj1) && isOperationsGroupComparisonObject(obj2)
+}
+
 export function useCompareBreadcrumbs(
   obj1: ComparisonObject | null,
   obj2: ComparisonObject | null,
@@ -102,7 +106,6 @@ export function useCompareBreadcrumbs(
   const isRevisionCompare = !!obj1?.revision && obj1?.version === obj2?.version && obj1?.revision !== obj2?.revision
   const isOperationsCompare = isOperationComparisonObject(obj1) && isOperationComparisonObject(obj2)
   const areOperationsDifferent = isOperationsCompare && obj1?.operationId !== obj2?.operationId
-  const isOperationsGroupCompare = isOperationsGroupComparisonObject(obj1) && isOperationsGroupComparisonObject(obj2)
 
   const [originPackageOrDashboard] = usePackage({ packageKey: obj1?.id, showParents: true })
   const [changedPackageOrDashboard] = usePackage({ packageKey: obj2?.id, showParents: true })
@@ -137,7 +140,7 @@ export function useCompareBreadcrumbs(
       changedBreadcrumbs.push(getOperationBreadcrumb(changedOperation))
     }
 
-    if (isOperationsGroupCompare) {
+    if (isOperationsGroupComparisonObject(obj1) && isOperationsGroupComparisonObject(obj2)) {
       originBreadcrumbs.push(getGroupBreadcrumb(obj1.group, originPackageOrDashboard))
       changedBreadcrumbs.push(getGroupBreadcrumb(obj2.group, changedPackageOrDashboard))
     }
@@ -153,7 +156,7 @@ export function useCompareBreadcrumbs(
     changedIsLatestRevision,
     originOperation,
     changedOperation,
-    isOperationsGroupCompare,
+    isOperationsGroupComparison,
   ])
 }
 
