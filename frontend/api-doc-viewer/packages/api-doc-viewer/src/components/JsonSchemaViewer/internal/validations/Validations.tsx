@@ -102,9 +102,9 @@ export const Validations: FC<ValidationsProps> = (props) => {
   // Value Range begins
   const valueRangeData: ValueRangeInitialData = {
     minimum: (nodeValue as IJsonSchemaNumberType)?.minimum,
-    exclusiveMinimum: Boolean((nodeValue as IJsonSchemaNumberType)?.exclusiveMinimum),
+    exclusiveMinimum: (nodeValue as IJsonSchemaNumberType)?.exclusiveMinimum as number | boolean | undefined,
     maximum: (nodeValue as IJsonSchemaNumberType)?.maximum,
-    exclusiveMaximum: Boolean((nodeValue as IJsonSchemaNumberType)?.exclusiveMaximum),
+    exclusiveMaximum: (nodeValue as IJsonSchemaNumberType)?.exclusiveMaximum as number | boolean | undefined,
   }
   const diffForMinimum = $nodeValue?.$changes?.minimum
   const diffForExclusiveMinimum = $nodeValue?.$changes?.exclusiveMinimum

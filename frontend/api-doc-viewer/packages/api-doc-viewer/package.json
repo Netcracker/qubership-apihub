@@ -20,6 +20,7 @@
     "bin"
   ],
   "scripts": {
+    "test": "jest --maxWorkers 3 --verbose",
     "build": "npm run build:dist",
     "build:dist": "tsc && vite build",
     "build:showcase": "npm run generate-stories && storybook build -o ../../dist-showcase --disable-telemetry",
