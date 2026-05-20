@@ -31,6 +31,32 @@ const TEST_NORMALIZE_OPTIONS: CompareOptions = {
   allowNotValidSyntheticChanges: true,
 }
 
+const openApiSpecWithRequestSchema = (openapi: string, schema: unknown): unknown => ({
+  openapi,
+  info: {
+    title: 'OpenAPI exclusive bounds test',
+    version: '1.0.0',
+  },
+  paths: {
+    '/path1': {
+      post: {
+        requestBody: {
+          content: {
+            'application/json': {
+              schema,
+            },
+          },
+        },
+        responses: {
+          '200': {
+            description: 'OK',
+          },
+        },
+      },
+    },
+  },
+})
+
 describe('OpenAPI 3.0 to 3.1 Comparison Tests', () => {
   /*
     Empty schema in 3.1 includes null type, while empty schema in 3.0 does not,
@@ -136,6 +162,211 @@ describe('OpenAPI 3.0 to 3.1 Comparison Tests', () => {
       expect(diffs).toEqual(diffsMatcher([
         expectOpenApiVersionChange(),
       ]))
+    })
+  })
+
+  describe('Comparison exclusive numeric bounds', () => {
+    test('OAS 3.0 boolean exclusive bounds are equivalent to OAS 3.1 numeric exclusive bounds', () => {
+      const before = openApiSpecWithRequestSchema('3.0.4', {
+        type: 'object',
+        properties: {
+          minimumValue: {
+            type: 'number',
+            minimum: 1,
+            exclusiveMinimum: true,
+          },
+          maximumValue: {
+            type: 'number',
+            maximum: 10,
+            exclusiveMaximum: true,
+          },
+        },
+      })
+      const after = openApiSpecWithRequestSchema('3.1.0', {
+        type: 'object',
+        properties: {
+          minimumValue: {
+            type: 'number',
+            exclusiveMinimum: 1,
+          },
+          maximumValue: {
+            type: 'number',
+            exclusiveMaximum: 10,
+          },
+        },
+      })
+
+      const { diffs } = apiDiff(before, after, TEST_NORMALIZE_OPTIONS)
+
+      expect(diffs).toEqual(diffsMatcher([
+        expectOpenApiVersionChange(),
+      ]))
+    })
+
+    test('OAS 3.0 explicit inclusive bounds are equivalent to OAS 3.1 inclusive bounds', () => {
+      const before = openApiSpecWithRequestSchema('3.0.4', {
+        type: 'object',
+        properties: {
+          minimumValue: {
+            type: 'number',
+            minimum: 1,
+            exclusiveMinimum: false,
+          },
+          maximumValue: {
+            type: 'number',
+            maximum: 10,
+            exclusiveMaximum: false,
+          },
+        },
+      })
+      const after = openApiSpecWithRequestSchema('3.1.0', {
+        type: 'object',
+        properties: {
+          minimumValue: {
+            type: 'number',
+            minimum: 1,
+          },
+          maximumValue: {
+            type: 'number',
+            maximum: 10,
+          },
+        },
+      })
+
+      const { diffs } = apiDiff(before, after, TEST_NORMALIZE_OPTIONS)
+
+      expect(diffs).toEqual(diffsMatcher([
+        expectOpenApiVersionChange(),
+      ]))
+    })
+
+    test('OAS 3.0 bare boolean exclusive bounds are ignored when no numeric bound can be inferred', () => {
+      const before = openApiSpecWithRequestSchema('3.0.4', {
+        type: 'object',
+        properties: {
+          minimumValue: {
+            type: 'number',
+            exclusiveMinimum: true,
+          },
+          maximumValue: {
+            type: 'number',
+            exclusiveMaximum: true,
+          },
+        },
+      })
+      const after = openApiSpecWithRequestSchema('3.1.0', {
+        type: 'object',
+        properties: {
+          minimumValue: {
+            type: 'number',
+          },
+          maximumValue: {
+            type: 'number',
+          },
+        },
+      })
+
+      const { diffs } = apiDiff(before, after, TEST_NORMALIZE_OPTIONS)
+
+      expect(diffs).toEqual(diffsMatcher([
+        expectOpenApiVersionChange(),
+      ]))
+    })
+
+    describe('origins', () => {
+      const SCHEMA_PATH = ['paths', '/path1', 'post', 'requestBody', 'content', 'application/json', 'schema']
+
+      test('when exclusiveMinimum is true, diff beforeDeclarationPaths point to minimum', () => {
+        const before = openApiSpecWithRequestSchema('3.0.4', {
+          type: 'number',
+          minimum: 1,
+          exclusiveMinimum: true,
+        })
+        const after = openApiSpecWithRequestSchema('3.1.0', {
+          type: 'number',
+          exclusiveMinimum: 2,
+        })
+
+        const { diffs } = apiDiff(before, after, TEST_NORMALIZE_OPTIONS)
+
+        expect(diffs).toEqual(diffsMatcher([
+          expectOpenApiVersionChange(),
+          expect.objectContaining({
+            action: 'replace',
+            beforeDeclarationPaths: [[...SCHEMA_PATH, 'minimum']],
+            afterDeclarationPaths: [[...SCHEMA_PATH, 'exclusiveMinimum']],
+          }),
+        ]))
+      })
+
+      test('when exclusiveMaximum is true, diff beforeDeclarationPaths point to maximum', () => {
+        const before = openApiSpecWithRequestSchema('3.0.4', {
+          type: 'number',
+          maximum: 10,
+          exclusiveMaximum: true,
+        })
+        const after = openApiSpecWithRequestSchema('3.1.0', {
+          type: 'number',
+          exclusiveMaximum: 9,
+        })
+
+        const { diffs } = apiDiff(before, after, TEST_NORMALIZE_OPTIONS)
+
+        expect(diffs).toEqual(diffsMatcher([
+          expectOpenApiVersionChange(),
+          expect.objectContaining({
+            action: 'replace',
+            beforeDeclarationPaths: [[...SCHEMA_PATH, 'maximum']],
+            afterDeclarationPaths: [[...SCHEMA_PATH, 'exclusiveMaximum']],
+          }),
+        ]))
+      })
+
+      test('when exclusiveMinimum is false, diff on minimum retains minimum origins', () => {
+        const before = openApiSpecWithRequestSchema('3.0.4', {
+          type: 'number',
+          minimum: 1,
+          exclusiveMinimum: false,
+        })
+        const after = openApiSpecWithRequestSchema('3.1.0', {
+          type: 'number',
+          minimum: 2,
+        })
+
+        const { diffs } = apiDiff(before, after, TEST_NORMALIZE_OPTIONS)
+
+        expect(diffs).toEqual(diffsMatcher([
+          expectOpenApiVersionChange(),
+          expect.objectContaining({
+            action: 'replace',
+            beforeDeclarationPaths: [[...SCHEMA_PATH, 'minimum']],
+            afterDeclarationPaths: [[...SCHEMA_PATH, 'minimum']],
+          }),
+        ]))
+      })
+
+      test('when exclusiveMaximum is false, diff on maximum retains maximum origins', () => {
+        const before = openApiSpecWithRequestSchema('3.0.4', {
+          type: 'number',
+          maximum: 10,
+          exclusiveMaximum: false,
+        })
+        const after = openApiSpecWithRequestSchema('3.1.0', {
+          type: 'number',
+          maximum: 9,
+        })
+
+        const { diffs } = apiDiff(before, after, TEST_NORMALIZE_OPTIONS)
+
+        expect(diffs).toEqual(diffsMatcher([
+          expectOpenApiVersionChange(),
+          expect.objectContaining({
+            action: 'replace',
+            beforeDeclarationPaths: [[...SCHEMA_PATH, 'maximum']],
+            afterDeclarationPaths: [[...SCHEMA_PATH, 'maximum']],
+          }),
+        ]))
+      })
     })
   })
 })
