@@ -22,12 +22,28 @@ type TransformFunction = (value: unknown, context: UnifyContext) => unknown
 type MutationFunction = (value: unknown, context: UnifyContext) => void
 
 type UnifyFunction =
-  | TransformFunction  // Simple forward-only transformation
+  | TransformFunction  // Forward-only transformation (non-reversible)
   | {
       forward: TransformFunction    // Applied during unification
       backward: MutationFunction    // Applied during de-unification (reverses changes)
     }
 ```
+
+### When to Use Forward-Only vs. Reversible Transformations
+
+The choice between `TransformFunction` and a forward/backward pair depends on the **purpose of the transformation** within the api-unifier pipeline:
+
+**Unification** transforms API specifications into a normalized form so that specifications that express the same semantics differently can be compared correctly in api-diff. The goal is semantic equivalence, not human readability.
+
+**De-unification** exists for end user consumption. Normalized form is often less readable than the original: for example, a schema with all specification-mandated defaults filled in is correct for diffing but overwhelming to read. De-unification strips synthetic additions so the output is as concise and comprehensible as the original.
+
+**Use `TransformFunction` (forward-only) when:**
+- The transformation produces a strictly better or more correct normalized form — one where reversing it would reintroduce noise rather than restore meaningful information. Example: removing a redundant `minimum` when `exclusiveMinimum` is already stricter. The result is cleaner; there is nothing useful to restore.
+- The change is permanent normalization: deduplication, constraint simplification, structural cleanup.
+
+**Use forward/backward (`{ forward, backward }`) when:**
+- The forward pass adds or replaces something that is absent from the original specification (e.g., synthetic defaults, sentinel-value replacements). These additions are required for correct diffing but would clutter the output shown to a user, so the backward pass removes them.
+- A user reading the de-unified output would be confused or misled if the synthetic change were left in place.
 
 ### Rule Declaration
 
@@ -211,9 +227,9 @@ export const unifyEnum: UnifyFunction = (jso, ctx) => {
 ```
 
 **When to use**:
-- One-way transformations that don't need reversal
-- Data cleanup and normalization
-- Deduplication
+- The result is a strictly better normalized form — reversing it would reintroduce noise rather than restore meaningful information (e.g., removing a redundant constraint when a stricter one is already present, deduplicating arrays).
+- The transformation is a permanent normalization: structural cleanup, constraint simplification, removal of logically redundant data.
+- The de-unified output shown to users is not made less readable by keeping this change in place.
 
 ### Pattern 2: Reversible Transform (Forward/Backward)
 Transformation that can be undone for de-unification:
@@ -235,9 +251,8 @@ export const valueDefaults: (map: DefaultValueMapping) => UnifyFunction = (map) 
 ```
 
 **When to use**:
-- Changes that should be reversed when de-unifying
-- Adding/removing synthetic properties
-- Value replacements that need to be undone
+- The forward pass adds or replaces something absent from the original (synthetic defaults, sentinel-value replacements). These additions are necessary for correct api-diff comparison but would clutter or confuse the output a user reads.
+- A user looking at the de-unified result would be misled or overwhelmed if the synthetic change were left in place (e.g., a schema with every specification-mandated default filled in is correct for diffing but significantly harder to read than the original).
 
 ### Pattern 3: Guard Pattern
 Always start with type and state checks:
@@ -726,13 +741,13 @@ const EXTENDED_DEFAULTS = {
 
 ## ValueReplaces Pattern Deep Dive
 
-### Purpose
+### Role
 Replaces specific values (usually primitives or markers) with more complex objects. Common uses:
 1. Replace marker symbols with actual empty arrays/objects
 2. Replace boolean values with schema objects
 3. Replace sentinel values with generated structures
 
-### Structure
+### Replace Mapping Structure
 
 ```typescript
 interface ReplaceMapping {
@@ -973,7 +988,7 @@ unify: [
 3. Clean separation of concerns
 4. Reversible for de-unification
 
-### Best Practices
+### Best Practices for ValueReplaces
 
 #### 1. Use Symbols for Markers
 ```typescript
@@ -1128,7 +1143,7 @@ When writing unification rules:
 - [ ] Use lazy shallow copy pattern for performance
 - [ ] Return new object (immutability) or original if unchanged
 - [ ] Properly handle origins metadata
-- [ ] Provide backward operation if changes should be reversible
+- [ ] Decide forward-only vs. reversible: use `TransformFunction` for permanent normalization (deduplication, redundancy removal, constraint simplification); use forward/backward for synthetic additions (defaults, sentinel replacements) that reduce readability when left in place for end users
 - [ ] Use constants for property names
 - [ ] Group related defaults and replaces
 - [ ] Reuse common patterns (TO_EMPTY_OBJECT_MAPPING, etc.)
