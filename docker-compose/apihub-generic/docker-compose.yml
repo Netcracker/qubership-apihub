@@ -39,7 +39,7 @@ services:
         - "3000:3000"
         env_file: "qubership-apihub-build-task-consumer.env"
         healthcheck:
-            test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/swagger || exit 1" ]
+            test: [ "CMD-SHELL", "curl --silent --fail localhost:3000/live || exit 1" ]
             interval: 120s
             timeout: 60s
             retries: 10
