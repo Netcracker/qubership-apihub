@@ -14,7 +14,7 @@ spec:
     selector:
         matchLabels:
           name: qubership-apihub-ui
-    replicas: {{ .Values.qubershipApihubUi.replicas }}
+    replicas: {{ .Values.qubershipApihubUi.replicas }} # yamllint disable-line rule:braces
     strategy:
         type: RollingUpdate
         rollingUpdate:
@@ -95,4 +95,3 @@ spec:
                   seccompProfile:
                       type: RuntimeDefault
                   allowPrivilegeEscalation: false
-         
