@@ -14,7 +14,7 @@ spec:
     selector:
         matchLabels:
           name: qubership-apihub-ui
-    replicas: '{{ .Values.qubershipApihubUi.replicas }}'
+    replicas: {{ .Values.qubershipApihubUi.replicas }}
     strategy:
         type: RollingUpdate
         rollingUpdate:
@@ -35,28 +35,14 @@ spec:
             dnsPolicy: ClusterFirst
             hostPID: false
             hostIPC: false
-            initContainers:
-            - name: init-nginx-config
-              image: '{{ .Values.qubershipApihubUi.image.repository }}:{{ .Values.qubershipApihubUi.image.tag }}'
-              command:
-                  - sh
-                  - -c
-                  - cp -rL /etc/nginx/. /mnt/nginx-etc/
-              volumeMounts:
-              - name: nginx-etc
-                mountPath: /mnt/nginx-etc
-              securityContext:
-                  runAsUser: 10001
-                  runAsGroup: 10001
-                  runAsNonRoot: true
-                  readOnlyRootFilesystem: true
-                  allowPrivilegeEscalation: false
             volumes:
-            - name: nginx-etc
+            - name: nginx-conf
               emptyDir: {}
             - name: nginx-cache
               emptyDir: {}
             - name: nginx-run
+              emptyDir: {}
+            - name: nginx-log
               emptyDir: {}
             containers:
             - name: 'qubership-apihub-ui'
@@ -82,12 +68,14 @@ spec:
                       memory: '{{ .Values.qubershipApihubUi.resource.memory.limit }}'
                       cpu: '{{ .Values.qubershipApihubUi.resource.cpu.limit }}'
               volumeMounts:
-              - name: nginx-etc
-                mountPath: /etc/nginx
+              - name: nginx-conf
+                mountPath: /app/nginx
               - name: nginx-cache
                 mountPath: /var/cache/nginx
               - name: nginx-run
                 mountPath: /var/run
+              - name: nginx-log
+                mountPath: /var/log/nginx
               livenessProbe:
                 httpGet:
                   path: /probes/live
@@ -107,7 +95,4 @@ spec:
                   seccompProfile:
                       type: RuntimeDefault
                   allowPrivilegeEscalation: false
-                  capabilities:
-                      drop:
-                        - ALL
-    revisionHistoryLimit: 3
+         
