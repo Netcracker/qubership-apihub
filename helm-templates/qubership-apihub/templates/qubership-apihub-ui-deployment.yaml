@@ -14,7 +14,7 @@ spec:
     selector:
         matchLabels:
           name: qubership-apihub-ui
-    replicas: {{ .Values.qubershipApihubUi.replicas }} # yamllint disable-line rule:braces
+    replicas: {{ .Values.qubershipApihubUi.replicas }}
     strategy:
         type: RollingUpdate
         rollingUpdate:
