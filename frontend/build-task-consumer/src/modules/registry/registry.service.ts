@@ -358,6 +358,23 @@ export class RegistryService implements OnModuleInit {
     )
   }
 
+  public async getSystemInfo(): Promise<{ migrationInProgress: boolean }> {
+    const url = `${this.baseUrl}/api/v1/system/info`
+    const logTag = '[getSystemInfo]'
+
+    return lastValueFrom(this.httpService
+      .get(url, { headers: this.headers })
+      .pipe(
+        retry({ delay: this.requestRetryHandler(logTag) }),
+        map(({ data }) => ({ migrationInProgress: data.migrationInProgress ?? false })),
+        catchError(err => {
+          this.logger.error(logTag, err?.response?.data ?? err)
+          return of({ migrationInProgress: false })
+        }),
+      ),
+    )
+  }
+
   private requestRetryHandler(logMessage: string): (error: any, retryCount: number) => ObservableInput<any> {
     return (error, retryCount) => {
       if (retryCount > RETRY_COUNT || NO_RETRY_STATUSES.includes(error?.response?.status)) {

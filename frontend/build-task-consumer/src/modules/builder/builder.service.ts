@@ -21,6 +21,7 @@ import {
   ResolvedGroupDocuments,
   ResolvedVersionDocuments,
   ResolvedPackage,
+  VERSION_VALIDATION_LEVEL,
 } from '@netcracker/qubership-apihub-api-processor'
 import { ConfigService } from '@nestjs/config'
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
@@ -315,11 +316,15 @@ export class BuilderService implements OnModuleInit {
     const withoutChangelog = noChangeLog && buildType === 'build'
     withoutChangelog && this.logger.log('[Builder Service] Run build without changelog')
 
+    const { migrationInProgress } = await this.registry.getSystemInfo()
+    const apiProcessorVersionValidationLevel = migrationInProgress ? VERSION_VALIDATION_LEVEL.MAJOR : VERSION_VALIDATION_LEVEL.STRICT
+    migrationInProgress && this.logger.log('[Builder Service] Migration in progress, using major version validation')
+
     //override native logger
     console.debug = (message: string) => {
       this.logger.debug(message)
     }
-    const result = await builder.run({ withoutChangelog })
+    const result = await builder.run({ withoutChangelog, apiProcessorVersionValidationLevel })
     this.logger.log(`[Builder Service] Built ${result.operations.size ?? 0} operations from ${config.packageId}/${config.version}`)
 
     return await builder.createNodeVersionPackage()
