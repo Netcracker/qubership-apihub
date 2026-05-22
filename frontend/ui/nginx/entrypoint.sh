@@ -1,7 +1,7 @@
 #!/bin/sh
-if ! whoami > /dev/null 2>&1; then
+if ! whoami >/dev/null 2>&1; then
   if [ -w /etc/passwd ]; then
-    echo "default:x:$(id -u):0:default user:${HOME}:/sbin/nologin" >> /etc/passwd
+    echo "default:x:$(id -u):0:default user:${HOME}:/sbin/nologin" >>/etc/passwd
   fi
 fi
 
@@ -15,7 +15,8 @@ fi
 [ -n "$POD_NAMESPACE" ] || POD_NAMESPACE="default"
 export POD_NAMESPACE
 
-CLUSTER_DOMAIN="$(awk '
+CLUSTER_DOMAIN="$(
+  awk '
   /^search/ {
     for (i=2; i<=NF; i++) {
       if ($i ~ /\.svc\./) { sub(/.*\.svc\./, "", $i); print $i; exit }
@@ -29,13 +30,13 @@ adjust_addr() {
   var="$1"
   val="$(eval echo \$"$var")"
   case "$val" in
-    *localhost*|*host.docker.internal*|*qubership-*) ;;
-    "")
-      val="invalid.invalid.:80"
-      ;;
-    *)
-      val="${val%:*}.${POD_NAMESPACE}.svc.${CLUSTER_DOMAIN}.:${val##*:}"
-      ;;
+  *localhost* | *host.docker.internal* | *qubership-*) ;;
+  "")
+    val="invalid.invalid.:80"
+    ;;
+  *)
+    val="${val%:*}.${POD_NAMESPACE}.svc.${CLUSTER_DOMAIN}.:${val##*:}"
+    ;;
   esac
   eval export "$var"=\"\$val\"
 }
@@ -46,5 +47,5 @@ adjust_addr APIHUB_AGENTS_BACKEND_ADDRESS
 
 # No need to modify APIHUB_BACKEND_ADDRESS as its resolution is static
 # shellcheck disable=SC2016 # envsubst requires literal variable names in single quotes
-envsubst '${APIHUB_BACKEND_ADDRESS} ${APIHUB_NC_SERVICE_ADDRESS} ${API_LINTER_SERVICE_ADDRESS} ${APIHUB_AGENTS_BACKEND_ADDRESS} ${DNS_RESOLVERS}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
-nginx -g "daemon off;"
+envsubst '${APIHUB_BACKEND_ADDRESS} ${APIHUB_NC_SERVICE_ADDRESS} ${API_LINTER_SERVICE_ADDRESS} ${APIHUB_AGENTS_BACKEND_ADDRESS} ${DNS_RESOLVERS}' </app/nginx.conf.template >/app/nginx/nginx.conf
+nginx -c /app/nginx/nginx.conf -g "daemon off;"
