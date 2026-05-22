@@ -1,0 +1,14 @@
+# IDEs
+/.idea
+!/.idea/icon.png
+/.vscode
+*.iml
+
+# dependencies
+node_modules/
+
+# build
+dist/
+
+# logs
+*.log*
