@@ -42,8 +42,6 @@ spec:
               emptyDir: {}
             - name: nginx-run
               emptyDir: {}
-            - name: nginx-log
-              emptyDir: {}
             containers:
             - name: 'qubership-apihub-ui'
               image: '{{ .Values.qubershipApihubUi.image.repository }}:{{ .Values.qubershipApihubUi.image.tag }}'
@@ -74,8 +72,6 @@ spec:
                 mountPath: /var/cache/nginx
               - name: nginx-run
                 mountPath: /var/run
-              - name: nginx-log
-                mountPath: /var/log/nginx
               livenessProbe:
                 httpGet:
                   path: /probes/live
@@ -95,3 +91,6 @@ spec:
                   seccompProfile:
                       type: RuntimeDefault
                   allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                      - ALL
