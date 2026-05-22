@@ -20,7 +20,8 @@ import type { PublishDetails } from '@apihub/entities/publish-details'
 import { setPublicationDetails } from '@apihub/entities/publish-details'
 import type { PublishStatus } from '@apihub/entities/statuses'
 import { COMPLETE_PUBLISH_STATUS, ERROR_PUBLISH_STATUS } from '@apihub/entities/statuses'
-import { BUILD_TYPE, PackageVersionBuilder } from '@netcracker/qubership-apihub-api-processor'
+import type { VersionValidationLevel } from '@netcracker/qubership-apihub-api-processor'
+import { BUILD_TYPE, PackageVersionBuilder, VERSION_VALIDATION_LEVEL } from '@netcracker/qubership-apihub-api-processor'
 import {
   packageVersionResolver,
   rawDocumentResolver,
@@ -30,6 +31,7 @@ import {
   versionReferencesResolver,
 } from '@netcracker/qubership-apihub-ui-shared/utils/builder-resolvers'
 import { NONE_PUBLISH_STATUS, RUNNING_PUBLISH_STATUS } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
+import { getSystemInfo } from '@netcracker/qubership-apihub-ui-shared/utils/system-info'
 import { expose } from 'comlink'
 import { getSpecBlob } from '../../useSpecRaw'
 
@@ -47,6 +49,15 @@ export type PublishServiceOptions = {
 
 export type PackageVersionBuilderWorker = {
   publishService: (options: PublishServiceOptions) => Promise<PublishDetails>
+}
+
+async function getValidationLevel(): Promise<VersionValidationLevel> {
+  try {
+    const info = await getSystemInfo()
+    return info.migrationInProgress ? VERSION_VALIDATION_LEVEL.MAJOR : VERSION_VALIDATION_LEVEL.STRICT
+  } catch {
+    return VERSION_VALIDATION_LEVEL.STRICT
+  }
 }
 
 const worker: PackageVersionBuilderWorker = {
@@ -88,7 +99,8 @@ const worker: PackageVersionBuilderWorker = {
     let message
 
     try {
-      await builder.run()
+      const level = await getValidationLevel()
+      await builder.run({ apiProcessorVersionValidationLevel: level })
       const data = await builder.createVersionPackage({ type: 'blob' })
       stopSendingRunningStatus()
 
