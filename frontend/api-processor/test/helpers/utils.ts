@@ -28,9 +28,12 @@ import {
   EMPTY_CHANGE_SUMMARY, Labels,
   SERIALIZE_SYMBOL_STRING_MAPPING,
   VERSION_STATUS,
+  VERSION_VALIDATION_LEVEL,
+  PackageVersionBuilder,
+  VersionValidationLevel,
 } from '../../src'
 import { buildSchema, introspectionFromSchema } from 'graphql/utilities'
-import { LocalRegistry } from './registry'
+import { LocalRegistry, VersionOverrideRegistry } from './registry'
 import { Editor } from './editor'
 import { getFileExtension, normalizeGraphQL, parseGraphQLSource, takeIfDefined } from '../../src/utils'
 import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
@@ -402,4 +405,49 @@ export function parseAndNormalizeGraphQLSchema(sdl: string): { source: GraphApiS
   const source = parseGraphQLSource(sdl)
   const normalized = normalizeGraphQL(source)
   return { source, normalized }
+}
+
+const DEFAULT_SPEC = JSON.stringify({
+  openapi: '3.0.0',
+  info: { title: 'Test', version: '1.0' },
+  paths: { '/test': { get: { operationId: 'getTest', responses: { '200': { description: 'OK' } } } } },
+})
+
+export async function buildChangelogWithVersionOverrides(
+  packageId: string,
+  overrides: Record<string, string>,
+  validationLevel: VersionValidationLevel = VERSION_VALIDATION_LEVEL.MAJOR,
+  beforeContent: string = DEFAULT_SPEC,
+  afterContent: string = DEFAULT_SPEC,
+): Promise<BuildResult> {
+  const registry = new VersionOverrideRegistry(packageId)
+  for (const [version, value] of Object.entries(overrides)) {
+    registry.overrideApiProcessorVersion(version, value)
+  }
+
+  await registry.publishFromContent(
+    { 'spec.json': beforeContent },
+    { packageId, version: 'v1', files: [{ fileId: 'spec.json', publish: true }] },
+  )
+  await registry.publishFromContent(
+    { 'spec.json': afterContent },
+    { packageId, version: 'v2', files: [{ fileId: 'spec.json' }] },
+  )
+
+  const config: BuildConfig = {
+    version: 'v2',
+    packageId,
+    previousVersionPackageId: packageId,
+    previousVersion: 'v1',
+    buildType: BUILD_TYPE.CHANGELOG,
+    status: VERSION_STATUS.RELEASE,
+  }
+
+  const builder = new PackageVersionBuilder(config, {
+    resolvers: {
+      fileResolver: () => Promise.resolve(null),
+      ...registry.versionResolvers,
+    },
+  })
+  return builder.run({ apiProcessorVersionValidationLevel: validationLevel })
 }

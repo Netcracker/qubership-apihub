@@ -16,6 +16,7 @@
 
 import { BuildConfig, BuilderStrategy, BuildResult, BuildTypeContexts } from '../types'
 import { compareVersions } from '../components/compare'
+import { applyBuilderVersionInfo } from '../validators'
 import { validateGroupPrefix } from '../apitypes/rest/rest.utils'
 
 export class PrefixGroupsChangelogStrategy implements BuilderStrategy {
@@ -27,11 +28,13 @@ export class PrefixGroupsChangelogStrategy implements BuilderStrategy {
     validateGroupPrefix(config.currentGroup, 'currentGroup')
     validateGroupPrefix(config.previousGroup, 'previousGroup')
 
-    buildResult.comparisons = await compareVersions(
+    const compareResult = await compareVersions(
       [version, packageId],
       [version, packageId],
       compareContext(config),
     )
+    buildResult.comparisons = compareResult.comparisons
+    applyBuilderVersionInfo(config, compareResult)
 
     return buildResult
   }

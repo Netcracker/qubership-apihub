@@ -74,6 +74,9 @@ export interface BuildConfig extends BuildConfigBase {
   // todo since it goes straight to the info.json, remove it from every buildconfig except the one that is 'build'
   validationRulesSeverity?: ValidationRulesSeverity
   operationsSpecTransformation?: OperationsSpecTransformation
+
+  previousVersionBuilderVersion?: string
+  currentVersionBuilderVersion?: string
 }
 
 // todo rename

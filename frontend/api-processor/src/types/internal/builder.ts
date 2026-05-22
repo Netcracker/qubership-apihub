@@ -71,6 +71,13 @@ export interface IPackageVersionBuilder {
 
 export type FileSourceMap = Record<string, Blob>
 
+export const VERSION_VALIDATION_LEVEL = {
+  STRICT: 'strict',
+  MAJOR: 'major',
+} as const
+
+export type VersionValidationLevel = typeof VERSION_VALIDATION_LEVEL[keyof typeof VERSION_VALIDATION_LEVEL]
+
 /**
  * @param {boolean} [withChangelog=true] - Generate changelog flag.
  * @param {boolean} [withBwc=true] - Check backward compatibility flag.
@@ -82,6 +89,7 @@ export type BuilderRunOptions = Partial<{
   withoutBwc: boolean
   withoutDeprecatedDepth: boolean
   cleanCache: boolean
+  apiProcessorVersionValidationLevel: VersionValidationLevel
 }>
 
 export interface BuildFileResult<T = any> {

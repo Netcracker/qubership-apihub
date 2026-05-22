@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { BuildConfig, VersionCache } from './types'
+import { BuildConfig, BuilderVersionInfo, PackageConfig, VERSION_VALIDATION_LEVEL, VersionCache, VersionValidationLevel } from './types'
 import { assert } from './utils'
 import { BUILD_TYPE } from './consts'
 import { version as apiProcessorVersion } from '../package.json'
@@ -30,14 +30,56 @@ export function validateConfig(config: BuildConfig): void {
   }
 }
 
-export function validateApiProcessorVersion(resolvedVersion: VersionCache | null, errorPrefix?: string): void {
+export function validateApiProcessorVersion(
+  resolvedVersion: VersionCache | null,
+  validationLevel: VersionValidationLevel,
+  errorPrefix?: string,
+): void {
 
   if (!resolvedVersion) {
     return
   }
 
+  if (validationLevel === VERSION_VALIDATION_LEVEL.MAJOR) {
+    const resolvedMajor = parseMajorVersion(resolvedVersion.apiProcessorVersion)
+    const currentMajor = parseMajorVersion(apiProcessorVersion)
+    if (resolvedMajor === null || currentMajor === null) {
+      return
+    }
+    if (resolvedMajor !== currentMajor) {
+      errorPrefix = errorPrefix ? `${errorPrefix} ` : ''
+      throw new Error(`${errorPrefix}Expected api-processor major version: ${currentMajor}, got ${resolvedMajor} for package ${resolvedVersion.packageId} version ${resolvedVersion.version}`)
+    }
+    return
+  }
+
   if (resolvedVersion.apiProcessorVersion !== apiProcessorVersion) {
     errorPrefix = errorPrefix ? `${errorPrefix} ` : ''
-    throw new Error(`${errorPrefix}Expected api-processor version:  ${apiProcessorVersion}, got ${resolvedVersion.apiProcessorVersion} for package ${resolvedVersion.packageId} version ${resolvedVersion.version}`)
+    throw new Error(`${errorPrefix}Expected api-processor version: ${apiProcessorVersion}, got ${resolvedVersion.apiProcessorVersion} for package ${resolvedVersion.packageId} version ${resolvedVersion.version}`)
   }
+}
+
+export function getMismatchedBuilderVersion(versionData: VersionCache | null | undefined): string | undefined {
+  if (!versionData?.apiProcessorVersion || versionData.apiProcessorVersion === apiProcessorVersion) {
+    return undefined
+  }
+  return versionData.apiProcessorVersion
+}
+
+export function applyBuilderVersionInfo(config: PackageConfig, source: BuilderVersionInfo): void {
+  if (source.previousVersionBuilderVersion) {
+    config.previousVersionBuilderVersion = source.previousVersionBuilderVersion
+  } else {
+    delete config.previousVersionBuilderVersion
+  }
+  if (source.currentVersionBuilderVersion) {
+    config.currentVersionBuilderVersion = source.currentVersionBuilderVersion
+  } else {
+    delete config.currentVersionBuilderVersion
+  }
+}
+
+function parseMajorVersion(version: string): number | null {
+  const match = version.match(/^(\d+)\./)
+  return match ? parseInt(match[1], 10) : null
 }
