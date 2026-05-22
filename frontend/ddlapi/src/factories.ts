@@ -1,4 +1,4 @@
-import { ObjectKind, ReferenceOption } from './constants'
+import { AttrKind, ExprKind, ObjectKind, ReferenceOption, TypeKind } from './constants'
 import type { Attr, Check, GeneratedExpr, Comment, Charset, Collation, Pos, PosPoint } from './attrs'
 import type { Expr, Literal, RawExpr, NamedDefault } from './exprs'
 import type {
@@ -10,7 +10,6 @@ import type {
   Realm, Schema, Table, View, Column, ColumnType, Index, IndexPart,
   ForeignKey, SchemaObject,
 } from './schema'
-import { AttrKind, ExprKind, TypeKind } from './constants'
 
 // ── Schema factories ─────────────────────────────────────────────────────────
 
@@ -133,11 +132,13 @@ export function newColumn(
 }
 
 /**
- * Shorthand for a nullable column with no type set yet.
+ * Shorthand for a nullable column with no dialect type known at construction time.
+ * Uses `UnsupportedType('')` as a placeholder — callers that know the concrete type
+ * should use `newColumn(name, { type: columnType(myType, { null: true }) })` instead.
  * @remarks Pure constructor — no runtime validation.
  */
 export function newNullableColumn(name: string): Column {
-  return { name, type: { type: { kind: TypeKind.UnsupportedType, t: '' }, null: true } }
+  return newColumn(name, { type: columnType(unsupportedType(''), { null: true }) })
 }
 
 /**
