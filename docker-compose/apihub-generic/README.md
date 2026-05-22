@@ -12,22 +12,24 @@ Optional: For PostgreSQL access install PGADmin or any other similar tool.
 
 ## Parameters setup
 
-Review *.env files in this folder and fill values for the following ones:
+Review *.env and *config.yaml files in this folder and fill values for the following ones:
 
 ```
-qubership-apihub-backend.env --->
+qubership-apihub-backend-config.yaml --->
 
-# <put_your_key_here - ssh private key base64 encoded>
-JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
-
-# <admin_login, example: apihub>
-APIHUB_ADMIN_EMAIL=${APIHUB_ADMIN_EMAIL}
-
-# <admin_password, example: password>
-APIHUB_ADMIN_PASSWORD=${APIHUB_ADMIN_PASSWORD}
-
-# <put_your_key_here - any random string>
-APIHUB_ACCESS_TOKEN=${APIHUB_ACCESS_TOKEN}
+security:
+...
+  jwt:
+    # <put_your_key_here - ssh private key base64 encoded>
+    privateKey: ${JWT_PRIVATE_KEY}
+...
+zeroDayConfiguration:
+  # <access_token, example: 1RnECckUUB>
+  accessToken: ${APIHUB_ACCESS_TOKEN}
+  # <admin_login, example: apihub>
+  adminEmail: ${APIHUB_ADMIN_EMAIL}
+  # <admin_password, example: password>
+  adminPassword: ${APIHUB_ADMIN_PASSWORD}
 ```
 
 ```
@@ -62,7 +64,7 @@ http://localhost:8081/login - Qubserhip-APIHUB UI URL
 If you want to start APIHUB via compose with locally build docker image of any module you need to do the following:
 
 1. Build module repository (ex: qubership-apihub-backend) by executing its build.cmd/sh
-2. Change `image` URI in docker-compose.yml from `ghcr.io/netcarcker/qubership-apihub-backend:latest` to `localhost/netcracker/qubership-apihub-backend:latest`
+2. Change `image` URI in `docker-compose.yml` from `ghcr.io/netcracker/qubership-apihub-backend:latest` to `localhost/netcracker/qubership-apihub-backend:latest`
 3. Run `podman compose up` as usual
 
 ## How to make Postgres data be persistent

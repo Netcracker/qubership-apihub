@@ -1,0 +1,124 @@
+# Apache Superset - minimal local deployment for Kind cluster
+# Connects to existing postgres-db (pg-common) for metadata and APIHUB datasources
+#
+# Subchart values are nested under "superset:" for the superset dependency
+
+# --- Our chart values (pg-init hook) ---
+pgInit:
+  host: pg-common.postgres-db.svc.cluster.local
+  port: "5432"
+  adminUser: postgres
+  adminPassword: postgres
+
+# --- Superset subchart overrides ---
+superset:
+  # Use external PostgreSQL from postgres-db chart (pg-common)
+  postgresql:
+    enabled: false
+
+  # Use embedded Redis (lightweight, no persistence for local dev)
+  # Override image tag: 7.0.10-debian-11-r4 was removed from registry
+  redis:
+    enabled: true
+    architecture: standalone
+    image:
+      tag: latest
+    auth:
+      enabled: false
+    master:
+      persistence:
+        enabled: false
+    replica:
+      replicaCount: 0
+
+  # Use -dev image: includes psycopg2-binary (lean image has no DB drivers)
+  image:
+    repository: apache/superset
+    tag: latest-dev
+
+  # Superset metadata DB connection - points to pg-common
+  supersetNode:
+    replicas:
+      replicaCount: 1
+    connections:
+      db_type: postgresql
+      db_host: pg-common.postgres-db.svc.cluster.local
+      db_port: "5432"
+      db_user: superset
+      db_pass: superset
+      db_name: superset
+    resources:
+      limits:
+        cpu: "500m"
+        memory: "1Gi"
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+
+  # Single worker for minimal footprint
+  supersetWorker:
+    replicas:
+      enabled: true
+      replicaCount: 1
+    resources:
+      limits:
+        cpu: "250m"
+        memory: "512Mi"
+      requests:
+        cpu: "50m"
+        memory: "128Mi"
+
+  # Disable Celery Beat (not needed for basic reports)
+  supersetCeleryBeat:
+    enabled: false
+
+  # Ingress for localtest.me access
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    hosts:
+      - superset.localtest.me
+    path: /
+    pathType: ImplementationSpecific
+
+  # Secret key for local dev (override in production)
+  configOverrides:
+    secret: |
+      SECRET_KEY = 'superset-local-dev-secret-key-change-in-production'
+
+  # Pre-configured datasources: APIHUB backend databases from pg-common
+  extraConfigs:
+    import_datasources.yaml: |
+      databases:
+      - allow_file_upload: true
+        allow_ctas: false
+        allow_cvas: false
+        database_name: apihub_backend
+        sqlalchemy_uri: postgresql://apihub_backend_user:apihub_backend_password@pg-common.postgres-db.svc.cluster.local:5432/apihub_backend
+        tables: []
+      - allow_file_upload: true
+        allow_ctas: false
+        allow_cvas: false
+        database_name: api_linter
+        sqlalchemy_uri: postgresql://api_linter_user:api_linter_password@pg-common.postgres-db.svc.cluster.local:5432/api_linter
+        tables: []
+      - allow_file_upload: true
+        allow_ctas: false
+        allow_cvas: false
+        database_name: agents_backend
+        sqlalchemy_uri: postgresql://agents_backend_user:agents_backend_password@pg-common.postgres-db.svc.cluster.local:5432/agents_backend
+        tables: []
+
+  # Default admin credentials (change after first login)
+  init:
+    createAdmin: true
+    adminUser:
+      username: admin
+      firstname: Admin
+      lastname: User
+      email: admin@superset.local
+      password: admin

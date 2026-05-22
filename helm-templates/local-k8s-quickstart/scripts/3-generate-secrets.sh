@@ -19,7 +19,7 @@ generate_saml_private_cert_and_key
 
 export APIHUB_ADMIN_EMAIL=x_apihub_$(generate_random_string 6)@qubership.org
 export APIHUB_ADMIN_PASSWORD=$(generate_random_string 8)
-export APIHUB_ACCESS_TOKEN=$(generate_random_string 10)
+export APIHUB_ACCESS_TOKEN=$(generate_random_string 30)
 export JWT_PRIVATE_KEY=$(cat ./jwt_private_key)
 export SAML_CRT_ORIG=$(cat certificate.pem)
 export SAML_KEY_ORIG=$(cat private_key.pem)
@@ -37,7 +37,7 @@ rm -f private_key.pem
 rm -f certificate.pem
 
 envsubst < ../qubership-apihub/local-secrets.yaml.template > ../qubership-apihub/local-secrets.yaml 
-envsubst < ../qubership-apihub/with-keycloack-local-secrets.yaml.template > ../qubership-apihub/with-keycloack-local-secrets.yaml 
+envsubst < ../qubership-apihub/with-keycloak-local-secrets.yaml.template > ../qubership-apihub/with-keycloak-local-secrets.yaml 
 envsubst < ../keycloak/files/realm.json.template > ../keycloak/files/realm.json
 
 echo "APIHUB_ADMIN_EMAIL = $APIHUB_ADMIN_EMAIL"
