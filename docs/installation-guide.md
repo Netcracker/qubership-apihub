@@ -224,9 +224,15 @@ All other parameters are `config.yaml` keys. Most important:
 | `security.ldap.baseDN` | No | — | LDAP base DN |
 | `security.ldap.organizationUnit` | No | — | LDAP OU |
 | `security.ldap.searchBase` | No | — | LDAP search base |
-| `zeroDayConfiguration.accessToken` | Yes | — | System API token provisioned on first boot (≥30 chars recommended). Must match `APIHUB_API_KEY` / `APIHUB_ACCESS_TOKEN` in all other services. |
-| `zeroDayConfiguration.adminEmail` | No | — | Local admin login auto-created on first boot |
-| `zeroDayConfiguration.adminPassword` | No | — | Local admin password |
+| `zeroDayConfiguration.accessToken` | Yes | — | System API token provisioned on first boot (minimum 30 characters). Must match `APIHUB_API_KEY` / `APIHUB_ACCESS_TOKEN` in all other services. |
+| `zeroDayConfiguration.adminEmail` | Yes | — | Local admin login auto-created on first boot |
+| `zeroDayConfiguration.adminPassword` | Yes | — | Local admin password |
+| `technicalParameters.basePath` | No | `.` | Base path for binary and static files |
+| `technicalParameters.listenAddress` | No | `:8080` | Backend HTTP listen address |
+| `technicalParameters.apiSpecDirectory` | No | `basePath + "/api"` | Directory containing API specifications for exposure |
+| `technicalParameters.migrationLockMaxWaitMinutes` | No | `30` | Max wait time (minutes) for lock release during migration restart |
+| `technicalParameters.ephemeralFileDirectory` | No | `/tmp/apihub-ephemeral-files` | Base directory for ephemeral (temporary) file storage |
+| `businessParameters.externalLinks` | No | `[]` | Links shown under (i) button in UI |
 | `businessParameters.releaseVersionPattern` | No | `.*` | Regex for release name validation |
 | `businessParameters.publishArchiveSizeLimitMb` | No | `50` | Max upload archive size (MB) |
 | `businessParameters.publishFileSizeLimitMb` | No | `15` | Max single file size inside archive (MB) |
@@ -235,6 +241,8 @@ All other parameters are `config.yaml` keys. Most important:
 | `businessParameters.systemNotification` | No | — | Banner text shown to all Portal users (e.g. maintenance window) |
 | `businessParameters.failBuildOnBrokenRefs` | No | `true` | Fail package build if file references can't be resolved |
 | `businessParameters.defaultWorkspaceId` | No | — | Default workspace for Agents UI |
+| `businessParameters.ephemeralFileMaxSizeMb` | No | `50` | Max size (MB) for ephemeral (temporary) files |
+| `businessParameters.ephemeralFileTTLMinutes` | No | `30` | TTL (minutes) for ephemeral files before they expire |
 | `monitoring.enabled` | No | `false` | Create Prometheus `ServiceMonitor` CRD |
 | `s3Storage.enabled` | No | `false` | Enable S3 for build artefact offload |
 | `s3Storage.url` | No | — | S3 endpoint URL |
@@ -258,16 +266,24 @@ All other parameters are `config.yaml` keys. Most important:
 | `cleanup.softDeletedData.timeoutMinutes` | No | `600` | Max run time |
 | `cleanup.unreferencedData.schedule` | No | `0 15 * * 6` | Cron for unreferenced data cleanup |
 | `cleanup.unreferencedData.timeoutMinutes` | No | `360` | Max run time |
+| `cleanup.maintenanceVacuum.schedule` | No | `0 2 * * 1` | Cron for maintenance vacuum job (`VACUUM FULL ANALYZE`) |
+| `cleanup.maintenanceVacuum.timeoutMinutes` | No | `300` | Max run time for maintenance vacuum phase |
 | `cleanup.builds.schedule` | No | `0 1 * * 0` | Cron for build table cleanup |
+| `cleanup.ephemeralFiles.schedule` | No | `*/5 * * * *` | Cron for ephemeral files cleanup |
 | `ai.mcp.workspace` | No | — | Default workspace for MCP integration |
-| `ai.chat.openAI.apiKey` | Cond. | — | OpenAI API key for AI chat feature |
+| `ai.chat.enabled` | No | `false` | Master kill-switch for AI chat routes and retention job |
+| `ai.chat.retentionDays` | No | `30` | Chat retention period (days) |
+| `ai.chat.pinnedForeverCount` | No | `10` | Number of pinned chats kept indefinitely |
+| `ai.chat.compactAtContextPercent` | No | `80` | Context usage threshold (%) to trigger chat compaction |
+| `ai.chat.cleanupSchedule` | No | `15 3 * * *` | Cron for chat retention cleanup |
+| `ai.chat.openAI.apiKey` | Cond. | — | OpenAI API key for AI chat feature (required when `ai.chat.enabled: true`) |
 | `ai.chat.openAI.model` | No | `gpt-4o` | OpenAI model (e.g. `gpt-5`) |
 | `ai.chat.openAI.proxyURL` | No | — | HTTP proxy for OpenAI requests |
 | `ai.chat.openAI.temperature` | No | `1.0` | Model temperature (0.0–2.0) |
 | `ai.chat.openAI.reasoningEffort` | No | `medium` | Reasoning depth for o-series / gpt-5: `minimal` / `low` / `medium` / `high` |
 | `ai.chat.openAI.verbosity` | No | `medium` | Response verbosity: `low` / `medium` / `high` |
 | `extensions[]` | No | see values | List of sidecar extensions. Each entry: `name`, `baseUrl`, `pathPrefix`. Defaults wire linter + agents-backend. |
-| `featureFlags.useV3Search` | No | `false` | Use legacy v3 global search API instead of v4 |
+| `featureFlags.useV3Search` | No | `false` | Use v3 search API instead of v4 |
 
 ---
 
@@ -385,6 +401,8 @@ qubershipApihubBackend:
       apihubExternalUrl: 'https://apihub.example.com'
     zeroDayConfiguration:
       accessToken: '<random string ≥ 30 chars>'
+      adminEmail: 'admin@example.com'
+      adminPassword: 'changeme'
 
 qubershipApihubBuildTaskConsumer:
   env:
@@ -446,10 +464,13 @@ helm uninstall apihub -n qubership-apihub
 | `qubershipApihubBackend.env.security.jwt.privateKey` | Yes | Backend `config.yaml` `security.jwt.privateKey` |
 | `qubershipApihubBackend.env.security.apihubExternalUrl` | Yes | Backend `config.yaml` `security.apihubExternalUrl` |
 | `qubershipApihubBackend.env.zeroDayConfiguration.accessToken` | Yes | Backend `config.yaml` `zeroDayConfiguration.accessToken` |
+| `qubershipApihubBackend.env.zeroDayConfiguration.adminEmail` | Yes | Backend `config.yaml` `zeroDayConfiguration.adminEmail` |
+| `qubershipApihubBackend.env.zeroDayConfiguration.adminPassword` | Yes | Backend `config.yaml` `zeroDayConfiguration.adminPassword` |
 | `qubershipApihubBackend.env.security.productionMode` | No | Default `true`. Set `false` for non-prod local-login |
 | `qubershipApihubBackend.env.security.externalIdentityProviders` | Cond. | SAML / OIDC config (required when `productionMode: true`) |
 | `qubershipApihubBackend.env.security.ldap.*` | No | LDAP user sync |
 | `qubershipApihubBackend.env.s3Storage.*` | No | S3 offload |
+| `qubershipApihubBackend.env.technicalParameters.*` | No | Listen address, ephemeral file directory, migration lock timeout |
 | `qubershipApihubBackend.env.cleanup.*` | No | Data retention schedules / TTLs |
 | `qubershipApihubBackend.env.ai.chat.openAI.*` | No | AI chat feature |
 | `qubershipApihubBackend.env.monitoring.enabled` | No | `true` creates Prometheus `ServiceMonitor` |

@@ -32,9 +32,9 @@ qubershipApihubBackend:
       port:
       # Mandatory; Logical database in PostgreSQL cluster for APIHUB. Manual pre-creation required; If not set, default value: apihub; Example: apihub_backend_prod_db
       name: ''
-      # Mandatory; User for database.name database; If not set, default value: apihub; Example: apihub_backend_prod_admin
+      # Mandatory; User for APIHUB_POSTGRESQL_DB_NAME database; If not set, default value: apihub; Example: apihub_backend_prod_admin
       username: ''
-      # Mandatory; Password for database.user.; If not set, default value: apihub; Example: apihub_backend_prod_password
+      # Mandatory; Password for APIHUB_POSTGRESQL_USERNAME user.; If not set, default value: apihub; Example: apihub_backend_prod_password
       password: ''
 
     # Section with all security (authentication and authorization) parameters
@@ -43,7 +43,7 @@ qubershipApihubBackend:
       productionMode: true  # set to false at your own risk
       # Section with parameters for configuring JWT tokens issued by APIHUB
       jwt:
-        # Mandatory; Self generated private PKCS#8 private key, base64 encoded. Used for siging of JWT tokens issued by APIHUB, must be unique fore each APIHUB instance; If not set, default value: ""; Example: LS0tLS1CRUdJTiBQUklWQV...
+        # Mandatory; Self generated private PKCS#8 private key, base64 encoded. The RSA key length must be at least 2048 bits and no more than 4096 bits to ensure a balance between security and performance. Used for siging of JWT tokens issued by APIHUB, must be unique fore each APIHUB instance; If not set, default value: ""; Example: LS0tLS1CRUdJTiBQUklWQV...
         privateKey: ''
         # Optional; Duration in seconds for access tokens issued by APIHUB; If not set, default value: 1800; Example: 1800
         accessTokenDurationSec:
@@ -51,8 +51,6 @@ qubershipApihubBackend:
         refreshTokenDurationSec:
       # Mandatory; Factual APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
       apihubExternalUrl: ''
-      # Optional; Set to true to enable apihub playground work without authtorization. Dangerous. Not recommended; If not set, default value: false; Example: true
-      insecureProxy: false
       # Optional; Allowed list of hosts that are accepted for proxy(playground) requests.; If not set, default value: []; Example: [example.com]
       allowedHostsForProxy: []
       # Optional; Allows to set extra allowed origins to CORS header. Used for FE debugging. Should be empty on prod envs.; If not set, default value: []; Example: [https://localhost:5137]
@@ -113,12 +111,25 @@ qubershipApihubBackend:
 
     # Section with zero-day settings
     zeroDayConfiguration:
-      # Mandatory; Default system access token (any string). The token will be provisioned automatically during startup; If not set, default value: ""; Example: access-token-12345
+      # Mandatory; Default system access token (any string, minimum 30 characters). The token will be provisioned automatically during startup; If not set, default value: ""; Example: access-token-12345-67890-abcdef-ghijklmnop
       accessToken: ''
-      # Optional; Default local admin user login. If set - this admin user will be created automatically.; If not set, default value: ""; Example: admin@example.com
+      # Mandatory; Default local admin user login. If set - this admin user will be created automatically.; If not set, default value: ""; Example: admin@example.com
       adminEmail: ''
-      # Optional; Default local admin user password; If not set, default value: ""; Example: admin-password
+      # Mandatory; Default local admin user password; If not set, default value: ""; Example: admin-password
       adminPassword: ''
+
+    # Section with technical parameters
+    technicalParameters:
+      # Optional; Base path for binary and static files, default value: .; Example: /tmp
+      basePath: '.'
+      # Optional; Listen address for APIHUB backend, can be used to avoid port conflicts in case of run on bare metall; If not set, default value: :8080; Example: :8080
+      listenAddress: ':8080'
+      # Optional; Directory containing API specifications for exposure; If not set, defaults to basePath + "/api"; Example: ./docs/api
+      apiSpecDirectory: ''
+      # Optional; Maximum wait time in minutes for lock release during migration restart; If not set, default value: 30; Example: 60
+      migrationLockMaxWaitMinutes: 30
+      # Optional; Base directory for ephemeral (temporary) file storage; If not set, default value: /tmp/apihub-ephemeral-files; Example: /var/apihub/ephemeral
+      ephemeralFileDirectory: '/tmp/apihub-ephemeral-files'
 
     # Section with various parameters related to APIHUB business logic
     businessParameters:
@@ -134,11 +145,16 @@ qubershipApihubBackend:
       publishFileSizeLimitMb: 15
       # Optional; Limit for uploaded operation group template file size in MB; If not set, default value: 1; Example: 2
       templateSizeLimitMb: 1
+      # Optional; Limit for uploaded shareability report xlsx file size in MB; If not set, default value: 10; Example: 10
+      shareabilityReportSizeLimitMb: 10
       # Optional; If set - footer with this text is shown for all APIHUB users in APIHUB UI. Designed for maintenance windows notifications.; If not set, default value: ""; Example: Maintenance scheduled on 2023-10-15
       systemNotification: ''
       # Optional; Set to true to fail build on broken refs; If not set, default value: true; Example: true
       failBuildOnBrokenRefs: true
-
+      # Optional; Maximum size in MB for ephemeral (temporary) files; If not set, default value: 50; Example: 100
+      ephemeralFileMaxSizeMb: 50
+      # Optional; Time-to-live in minutes for ephemeral files before they expire; If not set, default value: 30; Example: 60
+      ephemeralFileTTLMinutes: 30
 
     # Section with monitoring configuration for APIHUB
     # APIHUB backend is using Prometheus for monitoring and Grafana for visualization
@@ -163,7 +179,7 @@ qubershipApihubBackend:
       # Optional; Set to true to store only build results (less data amout) in S3 storage; If not set, default value: false; Example: true
       storeOnlyBuildResult: false
 
-    # Section with Olric configuration.
+    # Section with Olric(distributed cache and pub-sub) configuration.
     olric:
       # Optional; Discovery mode for Olric. If not set, default value: local; Example: local
       discoveryMode: 'lan'
@@ -202,35 +218,34 @@ qubershipApihubBackend:
         schedule: '0 15 * * 6'
         # Optional; Timeout in minutes for unreferenced data cleanup. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination; If not set, default value: 360; Example: 120
         timeoutMinutes: 360
+      maintenanceVacuum:
+        # Optional; Cron schedule for maintenance vacuum job; If not set default value: '0 2 * * 1'; Example: '0 2 * * 1'
+        schedule: '0 2 * * 1'
+        # Optional; Timeout in minutes for maintenance vacuum phase (VACUUM FULL ANALYZE); If not set, default value: 300; Example: 180
+        timeoutMinutes: 300
       builds:
         # Optional; Schedule for the builds cleanup job. If not set, default value: "0 1 * * 0"; Example: "* * * * *"
         schedule: '0 1 * * 0'
+      ephemeralFiles:
+        # Optional; Cron schedule for ephemeral files cleanup job; If not set, default value: "*/5 * * * *"; Example: "*/10 * * * *"
+        schedule: '*/5 * * * *'
 
     ai:
       mcp:
         # Default workspace for MCP to work with
-        workspace: 'APG'
+        workspace: ''
       chat:
         # Master kill-switch for the AI chat feature. When true, /api/v1/ai-chat/chats
-        # and /api/v1/generated-files routes are registered and the periodic retention/
-        # generated-files cleanup jobs are scheduled. When false, none of those are wired
-        # up regardless of the rest of the ai.chat.* config. Default kept as `false` so
-        # operators have to consciously opt in (the feature requires an OpenAI API key,
-        # writable /tmp directory, and the 34_ai_chat migration to be applied).
+        # routes are registered and the periodic chat retention job is scheduled
         enabled: false
         retentionDays: 30
         pinnedForeverCount: 10
         compactAtContextPercent: 80
         cleanupSchedule: "15 3 * * *"
-        generatedFiles:
-          directory: "/tmp/apihub-ai-chat"
-          ttlMinutes: 30
-          cleanupSchedule: "*/5 * * * *"
-          maxFileSizeMB: 50
         # Section with OpenAI configuration for AI-assisted chat
         openAI:
           # Mandatory; OpenAI API key for chat functionality; If not set, default value: ""; Example: sk-...
-          apiKey: 'sk-proj-98Gco0Ykm...'
+          apiKey: ''
           # Optional; OpenAI model to use for chat; If not set, default value: gpt-4o; Example: gpt-4o
           model: 'gpt-5'
           # Optional; Proxy server URL for OpenAI API requests; If not set, default value: ""; Example: 'http://proxy.example.com:8080'
@@ -242,6 +257,11 @@ qubershipApihubBackend:
           # Optional; Controls verbosity and detail level of the model's response. Values: "low" (concise), "medium" (balanced, default), "high" (detailed with examples); If not set, default value: "medium"; Example: "medium"
           verbosity: 'medium'
 
+    # Section with feature flags for controlling feature availability
+    featureFlags:
+      # Optional; When true, signals to use v3 search API instead of v4 search API; Default: false; Example: true
+      useV3Search: false
+
     # Optional; Section APIHUB extensions list. If not set, default value: [];
     extensions:
       # API Linter enabled by default. See section qubershipApiLinterService below for configuration
@@ -252,11 +272,6 @@ qubershipApihubBackend:
       - name: agents-backend
         baseUrl: http://qubership-apihub-agents-backend:8080
         pathPrefix: agents-backend
-
-    # Section with feature flags for controlling feature availability
-    featureFlags:
-      # Optional; When true, signals to use v3 legacy global search instead of v4 global search
-      useV3Search: false
 
 # Section with APIHUB Build Task Consumer configuration
 qubershipApihubBuildTaskConsumer:
