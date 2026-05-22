@@ -12,6 +12,7 @@ import (
 type MigrationRunRepository interface {
 	GetMigrationRun(migrationId string) (*mEntity.MigrationRunEntity, error)
 	GetRunningMigrations() ([]*mEntity.MigrationRunEntity, error)
+	GetRunningFullMigrations() ([]*mEntity.MigrationRunEntity, error)
 }
 
 func NewMigrationRunRepository(cp db.ConnectionProvider) MigrationRunRepository {
@@ -41,6 +42,22 @@ func (m migrationRunRepositoryImpl) GetRunningMigrations() ([]*mEntity.Migration
 	err := m.cp.GetConnection().Model(&ents).
 		Where("status = ?", view.MigrationStatusRunning).
 		Where("started_at > ?", time.Now().Add(-7*24*time.Hour)).
+		Select()
+	if err != nil {
+		if err != pg.ErrNoRows {
+			return nil, err
+		}
+	}
+	return ents, nil
+}
+
+func (m migrationRunRepositoryImpl) GetRunningFullMigrations() ([]*mEntity.MigrationRunEntity, error) {
+	ents := make([]*mEntity.MigrationRunEntity, 0)
+	err := m.cp.GetConnection().Model(&ents).
+		Where("status = ?", view.MigrationStatusRunning).
+		Where("started_at > ?", time.Now().Add(-7*24*time.Hour)).
+		Where("(package_ids IS NULL OR package_ids = '{}')").
+		Where("(versions IS NULL OR versions = '{}')").
 		Select()
 	if err != nil {
 		if err != pg.ErrNoRows {

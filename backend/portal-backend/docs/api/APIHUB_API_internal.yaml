@@ -1642,7 +1642,17 @@ components:
                   type: string
                 builderVersion:
                   type: string
-                  description: Version of the builder with which build was made.
+                  description: Version of the builder (current api-processor version) with which this build was made.
+                previousVersionBuilderVersion:
+                  type: string
+                  description: |
+                    Version of the builder with which the previous package version was built.
+                    Only present when it differs from the current api-processor version (builderVersion).
+                currentVersionBuilderVersion:
+                  type: string
+                  description: |
+                    Version of the builder with which the current package version was built.
+                    Only present when it differs from the current api-processor version (builderVersion).
                 createdBy:
                   type: string
                   description: The user who started the build process.

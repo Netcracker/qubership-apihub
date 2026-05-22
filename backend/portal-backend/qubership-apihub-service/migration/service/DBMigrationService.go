@@ -386,7 +386,7 @@ func (d *dbMigrationServiceImpl) CancelRunningMigrations() error {
 }
 
 func (d *dbMigrationServiceImpl) IsMigrationInProgress() (bool, error) {
-	migrations, err := d.repo.GetRunningMigrations()
+	migrations, err := d.repo.GetRunningFullMigrations()
 	if err != nil {
 		return false, err
 	}

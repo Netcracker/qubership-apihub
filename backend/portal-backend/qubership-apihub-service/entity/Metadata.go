@@ -26,6 +26,8 @@ const EXTERNAL_DOCS = "external_docs"
 const VERSION = "version"
 const DOC_TAGS_KEY = "tags"
 const MIGRATION_ID_KEY = "migration_id"
+const PREVIOUS_VERSION_BUILDER_VERSION_KEY = "previous_version_builder_version"
+const CURRENT_VERSION_BUILDER_VERSION_KEY = "current_version_builder_version"
 const ACTION_KEY = "action"
 const CHANNEL_KEY = "channel"
 const PROTOCOL_KEY = "protocol"
@@ -326,6 +328,28 @@ func (m Metadata) SetMigrationId(migrationId string) {
 func (m Metadata) GetMigrationId() string {
 	if migrationId, ok := m[MIGRATION_ID_KEY].(string); ok {
 		return migrationId
+	}
+	return ""
+}
+
+func (m Metadata) SetPreviousVersionBuilderVersion(v string) {
+	m[PREVIOUS_VERSION_BUILDER_VERSION_KEY] = v
+}
+
+func (m Metadata) GetPreviousVersionBuilderVersion() string {
+	if v, ok := m[PREVIOUS_VERSION_BUILDER_VERSION_KEY].(string); ok {
+		return v
+	}
+	return ""
+}
+
+func (m Metadata) SetCurrentVersionBuilderVersion(v string) {
+	m[CURRENT_VERSION_BUILDER_VERSION_KEY] = v
+}
+
+func (m Metadata) GetCurrentVersionBuilderVersion() string {
+	if v, ok := m[CURRENT_VERSION_BUILDER_VERSION_KEY].(string); ok {
+		return v
 	}
 	return ""
 }

@@ -10010,7 +10010,7 @@ components:
             type: string
           example: [User guide|https://www.example.com/guide, Support team|https://www.example.com/support]
         migrationInProgress:
-          description: Identifies if migration is currently in progress.
+          description: Identifies if a full migration is currently in progress. Returns false when no migration or only a partial migration is running.
           type: boolean
           default: false
         featureFlags:
