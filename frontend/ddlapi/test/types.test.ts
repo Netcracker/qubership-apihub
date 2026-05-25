@@ -18,8 +18,8 @@ import type {
   StringType, BinaryType, TimeType, JSONType, SpatialType, UUIDType, UnsupportedType,
   Literal, RawExpr, NamedDefault,
   Comment, Charset, Collation, Check, GeneratedExpr, Pos,
-} from '@netcracker/qubership-apihub-db-schema'
-import { TypeKind, ExprKind, AttrKind, ObjectKind } from '@netcracker/qubership-apihub-db-schema'
+} from '@netcracker/qubership-apihub-ddlapi'
+import { TypeKind, ExprKind, AttrKind, ObjectKind } from '@netcracker/qubership-apihub-ddlapi'
 
 /** Fails to compile if `x` is not `never` — used as the exhaustiveness sentinel. */
 function assertNever(x: never): never {

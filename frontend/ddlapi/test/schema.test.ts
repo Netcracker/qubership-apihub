@@ -13,7 +13,7 @@ import {
   timeType, jsonType, spatialType, uuidType, unsupportedType, enumType,
   comment, charset, collation, generatedExpr, filePos,
   literal, rawExpr, namedDefault,
-} from '@netcracker/qubership-apihub-db-schema'
+} from '@netcracker/qubership-apihub-ddlapi'
 
 // ── Task 2: Constants ────────────────────────────────────────────────────────
 

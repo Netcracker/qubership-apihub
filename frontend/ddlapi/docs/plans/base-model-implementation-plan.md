@@ -10,8 +10,8 @@ no driver-specific types.
 
 | | |
 |---|---|
-| **Name** | `@netcracker/qubership-apihub-db-schema` |
-| **Location** | `C:\git\apihub-ddl\db-schema\` |
+| **Name** | `@netcracker/qubership-apihub-ddlapi` |
+| **Location** | `https://github.com/Netcracker/qubership-apihub-ddlapi` |
 | **Output** | Dual CJS + ESM, TypeScript declarations |
 | **Tooling** | Vite 4 + vite-plugin-dts, ts-jest, TypeScript 5.x |
 
@@ -289,7 +289,7 @@ export interface BoolType {
 Consumers use the appropriate group constant in comparisons and switch cases:
 
 ```typescript
-import { TypeKind, AttrKind, ReferenceOption } from '@netcracker/qubership-apihub-db-schema'
+import { TypeKind, AttrKind, ReferenceOption } from '@netcracker/qubership-apihub-ddlapi'
 
 switch (col.type.kind) {
   case TypeKind.BoolType:    ...
@@ -363,7 +363,7 @@ concern of the layer that builds the graph, not of the data model.
 ## Repository Layout
 
 ```
-db-schema/
+ddlapi/
 ├── src/
 │   ├── index.ts          ← public API (re-exports everything)
 │   ├── schema.ts         ← Realm, Schema, Table, View, Column, Index, ForeignKey,
@@ -942,7 +942,7 @@ publish-ready for a future npm registry. No `publishConfig` yet (registry TBD), 
 
 ```jsonc
 {
-  "name": "@netcracker/qubership-apihub-db-schema",
+  "name": "@netcracker/qubership-apihub-ddlapi",
   "version": "0.1.0",
   "license": "Apache-2.0",
   "files": ["dist", "package.json"],
@@ -966,7 +966,7 @@ publish-ready for a future npm registry. No `publishConfig` yet (registry TBD), 
 ```
 
 **Acceptance criteria:**
-- [ ] `package.json` name is `@netcracker/qubership-apihub-db-schema`
+- [ ] `package.json` name is `@netcracker/qubership-apihub-ddlapi`
 - [ ] `npm run build` produces CJS, ESM, and `.d.ts` (even with empty exports initially)
 - [ ] `npm test` runs Jest via ts-jest with zero tests (empty suite is OK)
 - [ ] `src/index.ts` exists as the sole public entry point
@@ -975,8 +975,8 @@ publish-ready for a future npm registry. No `publishConfig` yet (registry TBD), 
 - [ ] `npm run build` exits 0
 - [ ] `npm test` exits 0
 
-**Dependencies:** None  
-**Files:** `package.json`, `tsconfig.json`, `vite.config.ts`, `jest.config.ts`, `src/index.ts`, `test/schema.test.ts` (empty placeholder)  
+**Dependencies:** None
+**Files:** `package.json`, `tsconfig.json`, `vite.config.ts`, `jest.config.ts`, `src/index.ts`, `test/schema.test.ts` (empty placeholder)
 **Size:** S
 
 ---
@@ -996,8 +996,8 @@ type alias (`typeof X[keyof typeof X]`).
 - [ ] Unit test: `ReferenceOption.Cascade === 'CASCADE'`, `TypeKind.BoolType === 'BoolType'`
 - [ ] `npm run build` succeeds
 
-**Dependencies:** Task 1  
-**Files:** `src/constants.ts`, `src/index.ts`, `test/schema.test.ts`  
+**Dependencies:** Task 1
+**Files:** `src/constants.ts`, `src/index.ts`, `test/schema.test.ts`
 **Size:** XS
 
 ---
@@ -1028,9 +1028,9 @@ union. `NamedDefault` uses `ObjectKind.NamedDefault` (not an `ExprKind` entry). 
 - [ ] Compile-time test: exhaustive `switch (e.kind)` over sample `Expr` values type-checks
 - [ ] `npm run build` succeeds
 
-**Dependencies:** Task 2  
-**Files:** `src/exprs.ts`, `src/index.ts`  
-**Size:** S  
+**Dependencies:** Task 2
+**Files:** `src/exprs.ts`, `src/index.ts`
+**Size:** S
 **Note:** Use `import type { Attr }` if referencing attrs on `NamedDefault`.
 
 ---
@@ -1049,8 +1049,8 @@ union. `NamedDefault` uses `ObjectKind.NamedDefault` (not an `ExprKind` entry). 
 - [ ] Compile-time narrowing test for `AttrKind.Comment` in a switch
 - [ ] `npm run build` succeeds
 
-**Dependencies:** Task 2  
-**Files:** `src/attrs.ts`, `src/index.ts`  
+**Dependencies:** Task 2
+**Files:** `src/attrs.ts`, `src/index.ts`
 **Size:** S
 
 ---
@@ -1070,8 +1070,8 @@ references `Schema` and `Attr` via type-only imports to avoid circular dependenc
 - [ ] `tsc --noEmit` clean with `EnumType` referencing `Schema` via `import type`
 - [ ] Exhaustive `switch` over `SchemaType` compiles without `never` leak
 
-**Dependencies:** Tasks 2, 4 (some types carry `Attr` fields)  
-**Files:** `src/types.ts`, `src/index.ts`  
+**Dependencies:** Tasks 2, 4 (some types carry `Attr` fields)
+**Files:** `src/types.ts`, `src/index.ts`
 **Size:** M
 
 ---
@@ -1093,8 +1093,8 @@ out per §3 (not deleted). `Index` and `ForeignKey` gain a `kind` field (TS-only
 - [ ] Compile a minimal object graph using plain object literals (no factories yet)
 - [ ] `npm run build` succeeds
 
-**Dependencies:** Tasks 3, 4, 5  
-**Files:** `src/schema.ts`, `src/index.ts`  
+**Dependencies:** Tasks 3, 4, 5
+**Files:** `src/schema.ts`, `src/index.ts`
 **Size:** M
 
 ---
@@ -1123,8 +1123,8 @@ Each JSDoc carries an `@remarks` noting the no-validation contract.
 - [ ] Test: build a `Schema` with one `Table`; assert shape and `undefined` defaults
 - [ ] `npm test` passes
 
-**Dependencies:** Task 6  
-**Files:** `src/factories.ts` (partial), `test/schema.test.ts`  
+**Dependencies:** Task 6
+**Files:** `src/factories.ts` (partial), `test/schema.test.ts`
 **Size:** S
 
 ---
@@ -1150,8 +1150,8 @@ Explicitly **not** implementing Go's composite column helpers (`newIntColumn`,
 - [ ] Test: PK index parts share the same `Column` reference (`===`) as table columns
 - [ ] Test: FK `columns` and `refColumns` hold exact same column object references
 
-**Dependencies:** Task 7  
-**Files:** `src/factories.ts`, `test/schema.test.ts`  
+**Dependencies:** Task 7
+**Files:** `src/factories.ts`, `test/schema.test.ts`
 **Size:** M
 
 ---
@@ -1172,8 +1172,8 @@ factories (`literal`, `rawExpr`, `namedDefault`).
 - [ ] Test: construct column with `integerType('bigint', { unsigned: true })`
 - [ ] Test: `EnumType` usable as both `SchemaType` and `SchemaObject`
 
-**Dependencies:** Task 8  
-**Files:** `src/factories.ts`, `test/schema.test.ts`  
+**Dependencies:** Task 8
+**Files:** `src/factories.ts`, `test/schema.test.ts`
 **Size:** M
 
 ---
@@ -1194,8 +1194,8 @@ factories (`literal`, `rawExpr`, `namedDefault`).
 - [ ] Test: `underlyingExpr(namedDefault('n', literal('x')))` returns the inner `Literal`
 - [ ] `npm test` passes
 
-**Dependencies:** Tasks 3, 4  
-**Files:** `src/utils.ts`, `test/schema.test.ts`, `src/index.ts`  
+**Dependencies:** Tasks 3, 4
+**Files:** `src/utils.ts`, `test/schema.test.ts`, `src/index.ts`
 **Size:** S
 
 ---
@@ -1224,8 +1224,8 @@ symbols are importable from the package root. Validate CJS, ESM, and declaration
 - [ ] `node -e "const s = require('.'); console.log(Object.keys(s))"` lists expected exports
 - [ ] Final `npm test` suite green
 
-**Dependencies:** Tasks 7–10  
-**Files:** `src/index.ts`, `package.json`, `vite.config.ts`  
+**Dependencies:** Tasks 7–10
+**Files:** `src/index.ts`, `package.json`, `vite.config.ts`
 **Size:** S
 
 ---

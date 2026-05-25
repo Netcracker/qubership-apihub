@@ -5,6 +5,6 @@ module.exports = {
   roots: ['<rootDir>/test'],
   testMatch: ['**/*.test.ts'],
   moduleNameMapper: {
-    '^@netcracker/qubership-apihub-db-schema$': '<rootDir>/src/index.ts',
+    '^@netcracker/qubership-apihub-ddlapi$': '<rootDir>/src/index.ts',
   },
 }
