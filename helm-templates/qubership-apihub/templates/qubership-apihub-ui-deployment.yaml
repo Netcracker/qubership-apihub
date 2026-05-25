@@ -35,49 +35,62 @@ spec:
             dnsPolicy: ClusterFirst
             hostPID: false
             hostIPC: false
+            volumes:
+            - name: nginx-conf
+              emptyDir: {}
+            - name: nginx-cache
+              emptyDir: {}
+            - name: nginx-run
+              emptyDir: {}
             containers:
-            -   name: 'qubership-apihub-ui'
-                image: '{{ .Values.qubershipApihubUi.image.repository }}:{{ .Values.qubershipApihubUi.image.tag }}'
-                ports:
-                -   name: web
-                    containerPort: 8080
-                    protocol: TCP
-                env:
-                - name: APIHUB_BACKEND_ADDRESS
-                  value: '{{ .Values.qubershipApihubUi.env.apihubBackendAddress }}'
-                - name: APIHUB_NC_SERVICE_ADDRESS
-                  value: '{{ .Values.qubershipApihubUi.env.apihubNcServiceAddress }}'
-                - name: API_LINTER_SERVICE_ADDRESS
-                  value: '{{ .Values.qubershipApihubUi.env.apiLinterServiceAddress }}' 
-                - name: APIHUB_AGENTS_BACKEND_ADDRESS
-                  value: '{{ .Values.qubershipApihubUi.env.apihubAgentsBackendAddress }}' 
-                resources:
-                    requests:
-                        cpu: '{{ .Values.qubershipApihubUi.resource.cpu.request }}'
-                        memory: '{{ .Values.qubershipApihubUi.resource.memory.request }}'
-                    limits:
-                        memory: '{{ .Values.qubershipApihubUi.resource.memory.limit }}'
-                        cpu: {{ .Values.qubershipApihubUi.resource.cpu.limit }}
-                livenessProbe:
-                  httpGet:
-                    path: /probes/live
-                    port: web
-                  initialDelaySeconds: 5
-                  timeoutSeconds: 15
-                readinessProbe:
-                  httpGet:
-                    path: /probes/ready
-                    port: web
-                  initialDelaySeconds: 5
-                securityContext:
-                    runAsUser: 10001
-                    runAsGroup: 10001
-                    readOnlyRootFilesystem: false
-                    runAsNonRoot: true
-                    seccompProfile:
-                        type: RuntimeDefault
-                    allowPrivilegeEscalation: false
-                    capabilities:
-                        drop:
-                          - ALL
-    revisionHistoryLimit: 3
+            - name: 'qubership-apihub-ui'
+              image: '{{ .Values.qubershipApihubUi.image.repository }}:{{ .Values.qubershipApihubUi.image.tag }}'
+              ports:
+              - name: web
+                containerPort: 8080
+                protocol: TCP
+              env:
+              - name: APIHUB_BACKEND_ADDRESS
+                value: '{{ .Values.qubershipApihubUi.env.apihubBackendAddress }}'
+              - name: APIHUB_NC_SERVICE_ADDRESS
+                value: '{{ .Values.qubershipApihubUi.env.apihubNcServiceAddress }}'
+              - name: API_LINTER_SERVICE_ADDRESS
+                value: '{{ .Values.qubershipApihubUi.env.apiLinterServiceAddress }}'
+              - name: APIHUB_AGENTS_BACKEND_ADDRESS
+                value: '{{ .Values.qubershipApihubUi.env.apihubAgentsBackendAddress }}'
+              resources:
+                  requests:
+                      cpu: '{{ .Values.qubershipApihubUi.resource.cpu.request }}'
+                      memory: '{{ .Values.qubershipApihubUi.resource.memory.request }}'
+                  limits:
+                      memory: '{{ .Values.qubershipApihubUi.resource.memory.limit }}'
+                      cpu: '{{ .Values.qubershipApihubUi.resource.cpu.limit }}'
+              volumeMounts:
+              - name: nginx-conf
+                mountPath: /app/nginx
+              - name: nginx-cache
+                mountPath: /var/cache/nginx
+              - name: nginx-run
+                mountPath: /var/run
+              livenessProbe:
+                httpGet:
+                  path: /probes/live
+                  port: web
+                initialDelaySeconds: 5
+                timeoutSeconds: 15
+              readinessProbe:
+                httpGet:
+                  path: /probes/ready
+                  port: web
+                initialDelaySeconds: 5
+              securityContext:
+                  runAsUser: 10001
+                  runAsGroup: 10001
+                  readOnlyRootFilesystem: true
+                  runAsNonRoot: true
+                  seccompProfile:
+                      type: RuntimeDefault
+                  allowPrivilegeEscalation: false
+                  capabilities:
+                    drop:
+                      - ALL

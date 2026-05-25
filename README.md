@@ -1,5 +1,7 @@
 # Qubership APIHUB
 
+**Product site:** [Qubership APIHUB on GitHub Pages](https://netcracker.github.io/apihub/) — use cases, feature tour, capabilities matrix, releases, and deployment entry points.
+
 **One place for your organization’s API specifications** — browse, compare, lint, and evolve APIs with confidence. Qubership APIHUB is Netcracker’s API **registry and Dev Portal**: a Kubernetes-native platform that turns scattered OpenAPI, GraphQL, AsyncAPI, and related specs into a **single source of truth**, with rich UI, automation, and optional cluster-side discovery.
 
 ---
@@ -26,6 +28,22 @@
 - **Rich Portal** — Interactive docs (including AsyncAPI), comparison views, API quality views, export with **document shareability** options.
 - **Kubernetes agent (optional)** — Discover **OpenAPI, GraphQL, AsyncAPI**, Markdown, and JSON Schema in-cluster; snapshots and promotion into the catalog.
 - **Enterprise-ready** — SAML, OIDC, LDAP, RBAC, API keys and PATs; Helm charts and Docker Compose for different lifecycles.
+
+---
+
+## Screenshots
+
+The **Portal** UI: catalog, version comparison, interactive documentation, and operation lists.
+
+| Workspace & governance | Compare package versions |
+|:-:|:-:|
+| ![Workspace catalog: packages, latest releases, backward-compatibility status, activity history](./docs/images/screenshot-workspace-catalog.png) | ![Side-by-side diff of two API versions with breaking, added, and changed operations](./docs/images/screenshot-compare-versions.png) |
+| *Workspaces: searchable package tree, latest releases, **BWC** signals, and audit trail.* | *Compare releases: color-coded breaking vs safe changes across operations.* |
+
+| API operations | Endpoint documentation |
+|:-:|:-:|
+| ![Package API operations: filters, tags, methods, paths, audience, and kind](./docs/images/screenshot-api-operations.png) | ![Interactive OpenAPI doc: method, path, security, parameters, and response models](./docs/images/screenshot-endpoint-documentation.png) |
+| *Per-version operation index with filters and export/compare actions.* | *Rich **Doc** view for a single operation, with parameters and schemas.* |
 
 ---
 
@@ -90,7 +108,8 @@ More context: [Supplementary applications](https://github.com/Netcracker/qubersh
 
 | | |
 |--|--|
-| **Hub (start here)** | [docs/README.md](./docs/README.md) — maps guides, Helm, Compose, ERD, wiki links |
+| **Hub (start here)** | [docs/README.md](./docs/README.md) — layered guides, Helm/Compose anchors, wiki links |
+| **Configuration map** | [docs/configuration-reference.md](./docs/configuration-reference.md) — files vs env vars vs Helm; template repos |
 | **Installation** | [docs/installation-guide.md](./docs/installation-guide.md) |
 | **Administration** | [docs/admin-guide.md](./docs/admin-guide.md) |
 | **User guide** | [docs/user-guide.md](./docs/user-guide.md) |

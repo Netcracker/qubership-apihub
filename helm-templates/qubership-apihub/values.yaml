@@ -16,6 +16,9 @@ qubershipApihubBackend:
     memory:
      limit: "512Mi"
 
+  # Optional; Go runtime memory soft limit passed as GOMEMLIMIT (container env). Keep below resource.memory.limit; If not set, default value: 410MiB (~80% of default memory.limit 512Mi); Example: 2400MiB
+  goMemLimit: '410MiB'
+
   # Section with business and technical parameters for APIHUB.
   env:
     # Optional; Set log level on init to specified value. Values: Info, Warn, Error, etc; If not set, default value: INFO; Example: DEBUG

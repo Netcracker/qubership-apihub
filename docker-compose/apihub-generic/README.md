@@ -64,7 +64,7 @@ http://localhost:8081/login - Qubserhip-APIHUB UI URL
 If you want to start APIHUB via compose with locally build docker image of any module you need to do the following:
 
 1. Build module repository (ex: qubership-apihub-backend) by executing its build.cmd/sh
-2. Change `image` URI in docker-compose.yml from `ghcr.io/netcarcker/qubership-apihub-backend:latest` to `localhost/netcracker/qubership-apihub-backend:latest`
+2. Change `image` URI in `docker-compose.yml` from `ghcr.io/netcracker/qubership-apihub-backend:latest` to `localhost/netcracker/qubership-apihub-backend:latest`
 3. Run `podman compose up` as usual
 
 ## How to make Postgres data be persistent

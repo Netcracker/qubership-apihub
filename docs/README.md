@@ -1,63 +1,75 @@
-# Qubership APIHUB documentation
+# Qubership APIHUB documentation hub
 
-This folder contains **product documentation** shipped with the deployment repository: installation and operations guides, the user guide, project history, and **generated database documentation** (ERD). It complements the [GitHub Wiki](https://github.com/Netcracker/qubership-apihub/wiki), which holds architecture deep-dives and development process material.
+Shipped beside Helm charts and Compose stacks inside repository [**qubership-apihub**](https://github.com/Netcracker/qubership-apihub). This hub is deliberately **installation- and operator-centric** so a single checkout answers “how do I run it reproducibly?”
 
-Use the sections below to find the right entry point.
-
-## Product overview (Wiki)
-
-High-level material lives on the wiki and is updated independently of this repo:
-
-| Topic | Wiki page |
-|-------|-----------|
-| System architecture, microservices, TS processing stack, API type matrix | [Architecture landscape](https://github.com/Netcracker/qubership-apihub/wiki/Architecture-landscape) |
-| Feature inventory (AsyncAPI, linting, scoring, agents, UI, limits) | [Features list](https://github.com/Netcracker/qubership-apihub/wiki/Features-list) |
-| Development management (ticketing, branches, releases) | [Development Management Guide](https://github.com/Netcracker/qubership-apihub/wiki/Development-Management-Guide) |
-| Wiki home (agents, linter, sniffer, links) | [Home](https://github.com/Netcracker/qubership-apihub/wiki) |
-
-## Guides in this repository
-
-| Document | Audience | Description |
-|----------|----------|-------------|
-| [Installation guide](./installation-guide.md) | Platform / DevOps | Dependencies, hardware sizing, Docker Compose, Helm install |
-| [Admin guide](./admin-guide.md) | Administrators | Day-one administration tasks |
-| [Maintenance guide](./maintenance-guide.md) | Operators | Ongoing maintenance |
-| [User guide](./user-guide.md) | End users | Using the Portal and core workflows |
-| [Project history](./apihub-history.md) | Anyone | Why APIHUB exists, background and evolution |
-
-## Deployment artifacts (outside `docs/`)
-
-These paths are the usual starting points when installing or customizing the stack:
-
-| Path | Purpose |
-|------|---------|
-| [../docker-compose/apihub-generic/](../docker-compose/apihub-generic/) | Full stack via Docker Compose (dev/test); Keycloak variant under `../docker-compose/with-keycloak/` |
-| [../helm-templates/README.md](../helm-templates/README.md) | Production-oriented Helm chart for Kubernetes |
-| [../helm-templates/qubership-apihub/values.yaml](../helm-templates/qubership-apihub/values.yaml) | Central configuration values (commented) |
-| [../helm-templates/local-k8s-quickstart/README.md](../helm-templates/local-k8s-quickstart/README.md) | Local K8s quickstart (Kind/Rancher, optional **Apache Superset**, not production-grade) |
-
-## Reference: database ERD (generated)
-
-Static HTML generated from the backend database schema (e.g. SchemaSpy-style tables and relationships):
-
-- [Database documentation (ERD)](./pages/erd/index.html) — open in a browser from a clone, or browse the `pages/erd/` tree in your IDE.
-
-Regeneration procedures, if any, are typically described in backend or CI documentation; this folder is mainly for **read-only reference**.
-
-## Related source repositories (docs & APIs)
-
-Each component often has its own `docs/` or OpenAPI specs on GitHub:
-
-| Component | Repository (docs / `develop` branch) |
-|-----------|--------------------------------------|
-| Backend (API registry, core REST API) | [qubership-apihub-backend](https://github.com/Netcracker/qubership-apihub-backend/tree/develop/docs) |
-| Web UI (Portal + Agents) | [qubership-apihub-ui](https://github.com/Netcracker/qubership-apihub-ui/tree/develop/docs) |
-| Build worker (NestJS) | [qubership-apihub-build-task-consumer](https://github.com/Netcracker/qubership-apihub-build-task-consumer/tree/develop/docs) |
-| API Linter (Spectral, AI lint, version scoring) | [qubership-api-linter-service](https://github.com/Netcracker/qubership-api-linter-service) |
-| K8s discovery agent | [qubership-apihub-agent](https://github.com/Netcracker/qubership-apihub-agent) |
-| Agents backend | [qubership-apihub-agents-backend](https://github.com/Netcracker/qubership-apihub-agents-backend) |
-| Reusable CI workflows | [qubership-apihub-ci](https://github.com/Netcracker/qubership-apihub-ci) |
+High-level narratives (architecture roadmap, backlog process) evolve on the [GitHub Wiki](https://github.com/Netcracker/qubership-apihub/wiki).
 
 ---
 
-**Tip:** The repository [root README](../README.md) summarizes product goals and modules; this `docs/README.md` focuses on **where to read** for install, operations, and architecture.
+## How guides are layered
+
+| Guide | Audience | Scope |
+|-------|----------|-------|
+| [Configuration reference](./configuration-reference.md) | DevOps / platform | **Helm-first K8s contract**, then compose; **runtime truth per service source** (`config.yaml` only backend/agent; linter env-only; link to [`system_info.go`](https://github.com/Netcracker/qubership-api-linter-service/blob/develop/qubership-api-linter-service/service/system_info.go)) |
+| [Installation guide](./installation-guide.md) | Same | Prerequisites, Compose/Podman walkthrough (ports, JWT, substitutions), Helm install/upgrade, quickstart pointers |
+| [Admin guide](./admin-guide.md) | Platform owners post-install | SSO rotation, Helm operations, Compose caveats (`generate_env_*`), extensions matrix |
+| [Maintenance guide](./maintenance-guide.md) | Operators on-call | Postgres backup tables, TTL links, SSO/token wiki hops |
+| [User guide](./user-guide.md) | Portal/API authors | Everyday vocabulary/workflows + links into UI-repo Markdown UX guides |
+
+**Upstream depth:** whenever behaviour is protocol-level (OAuth dance, SAML attributes, MCP API), link to **`qubership-apihub-backend/docs`** on GitHub (`develop`). Do not duplicate long PDFs inside this umbrella repo—the goal is coherent navigation plus accurate deployment facts.
+
+---
+
+## Wiki vs this folder
+
+| Topic | Where it lives |
+|-------|----------------|
+| Landscape diagram, TS processing stack matrix | Wiki — [Architecture landscape](https://github.com/Netcracker/qubership-apihub/wiki/Architecture-landscape) |
+| Feature inventory (`asyncapi`, AI scoring…) | Wiki — [Features list](https://github.com/Netcracker/qubership-apihub/wiki/Features-list) |
+| Process / ticketing / branching | Wiki — [Development Management Guide](https://github.com/Netcracker/qubership-apihub/wiki/Development-Management-Guide) |
+| **Exact chart values, Compose env keys, JWT scripts** | This repo — `docs/` + `helm-templates/` + `docker-compose/` |
+
+---
+
+## Deployment artifacts (outside `docs/`)
+
+| Path | Role |
+|------|------|
+| [`../docker-compose/apihub-generic/`](../docker-compose/apihub-generic/) | Reference Podman Compose stack + `init.sql` + `generate_env_and_up_compose.sh` |
+| [`../docker-compose/with-keycloak/`](../docker-compose/with-keycloak/) | Compose + Keycloak SAML/OIDC recipe |
+| [`../helm-templates/README.md`](../helm-templates/README.md) | Chart entry text |
+| [`../helm-templates/qubership-apihub/values.yaml`](../helm-templates/qubership-apihub/values.yaml) | Commented production values (mirrors backend `config.template.yaml` shape) |
+| [`../helm-templates/local-k8s-quickstart/`](../helm-templates/local-k8s-quickstart/) | Kind/Rancher lab automation — **not** production |
+
+---
+
+## Annotated templates in component repositories
+
+Use these as **copy/paste starting points** (comments describe every knob):
+
+| Component | Remote template |
+|-----------|----------------|
+| Backend / Registry | [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/qubership-apihub-service/config.template.yaml) |
+| Kubernetes discovery Agent | [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-agent/blob/develop/qubership-apihub-agent/config.template.yaml) |
+
+When working from the **APIHUB-ALL** workspace layouts, mirrored paths (`../qubership-apihub-backend/...`) match those templates one-to-one.
+
+---
+
+## Generated database ERD
+
+Static HTML under [`./pages/erd/`](./pages/erd/index.html) — open in a browser for schema-only reference. Regeneration happens through backend/CI automation; this tree is read-only for most readers.
+
+---
+
+## Related component docs (GitHub `develop`)
+
+| Area | Link |
+|------|------|
+| Backend security & data maintenance | [`qubership-apihub-backend/docs`](https://github.com/Netcracker/qubership-apihub-backend/tree/develop/docs) |
+| Portal & Agents UX Markdown | [`qubership-apihub-ui/docs`](https://github.com/Netcracker/qubership-apihub-ui/tree/develop/docs) |
+| Reusable CI | [`qubership-apihub-ci`](https://github.com/Netcracker/qubership-apihub-ci) |
+
+---
+
+**Next step:** open [Configuration reference](./configuration-reference.md) if you are editing manifests, or [Installation guide](./installation-guide.md) if you are bringing an environment up for the first time.
