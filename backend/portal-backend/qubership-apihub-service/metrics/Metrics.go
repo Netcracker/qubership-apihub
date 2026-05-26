@@ -95,6 +95,80 @@ var NumberOfBuildRetries = prometheus.NewGaugeVec(
 	[]string{},
 )
 
+// AI chat metrics
+
+var AiChatTurnsTotal = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "apihub_ai_chat_turns_total",
+		Help: "Number of AI chat turns processed, partitioned by mode (sync/stream) and status (ok/error).",
+	},
+	[]string{"mode", "status"},
+)
+
+var AiChatTurnDuration = prometheus.NewHistogramVec(
+	prometheus.HistogramOpts{
+		Name:    "apihub_ai_chat_turn_duration_seconds",
+		Help:    "End-to-end duration of an AI chat turn (LLM + tool calls + persistence).",
+		Buckets: []float64{0.5, 1, 2, 3, 5, 8, 13, 20, 30, 60, 120},
+	},
+	[]string{"mode", "status"},
+)
+
+var AiChatTurnTokens = prometheus.NewHistogramVec(
+	prometheus.HistogramOpts{
+		Name:    "apihub_ai_chat_turn_tokens",
+		Help:    "Total tokens (prompt+completion) reported by the LLM provider per turn.",
+		Buckets: []float64{500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 96000, 128000},
+	},
+	[]string{"mode"},
+)
+
+var AiChatToolCallsTotal = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "apihub_ai_chat_tool_calls_total",
+		Help: "Number of MCP tool invocations performed during AI chat turns.",
+	},
+	[]string{"tool", "status"},
+)
+
+var AiChatCompactionsTotal = prometheus.NewCounter(
+	prometheus.CounterOpts{
+		Name: "apihub_ai_chat_compactions_total",
+		Help: "Number of context compactions performed.",
+	},
+)
+
+var EphemeralFilesTotal = prometheus.NewCounter(
+	prometheus.CounterOpts{
+		Name: "apihub_ephemeral_files_total",
+		Help: "Number of ephemeral files persisted.",
+	},
+)
+
+var EphemeralFileBytes = prometheus.NewHistogram(
+	prometheus.HistogramOpts{
+		Name:    "apihub_ephemeral_file_bytes",
+		Help:    "Size of ephemeral files in bytes.",
+		Buckets: []float64{1024, 8 * 1024, 64 * 1024, 512 * 1024, 4 * 1024 * 1024, 32 * 1024 * 1024},
+	},
+)
+
+var AiChatCleanupDeleted = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "apihub_ai_chat_cleanup_deleted_total",
+		Help: "Items deleted by the AI chat retention cleanup job.",
+	},
+	[]string{"job", "kind"},
+)
+
+var EphemeralFileCleanupDeleted = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "apihub_ephemeral_file_cleanup_deleted_total",
+		Help: "Items deleted by the ephemeral file cleanup job.",
+	},
+	[]string{"kind"},
+)
+
 func RegisterAllPrometheusApplicationMetrics() {
 	prometheus.Register(TotalRequests)
 	prometheus.Register(HttpDuration)
@@ -106,4 +180,14 @@ func RegisterAllPrometheusApplicationMetrics() {
 	prometheus.Register(MaxBuildTime)
 	prometheus.Register(AvgBuildTime)
 	prometheus.Register(NumberOfBuildRetries)
+
+	prometheus.Register(AiChatTurnsTotal)
+	prometheus.Register(AiChatTurnDuration)
+	prometheus.Register(AiChatTurnTokens)
+	prometheus.Register(AiChatToolCallsTotal)
+	prometheus.Register(AiChatCompactionsTotal)
+	prometheus.Register(EphemeralFilesTotal)
+	prometheus.Register(EphemeralFileBytes)
+	prometheus.Register(AiChatCleanupDeleted)
+	prometheus.Register(EphemeralFileCleanupDeleted)
 }

@@ -105,6 +105,8 @@ technicalParameters:
   apiSpecDirectory: ''
   # Optional; Maximum wait time in minutes for lock release during migration restart; If not set, default value: 30; Example: 60
   migrationLockMaxWaitMinutes: 30
+  # Optional; Base directory for ephemeral (temporary) file storage; If not set, default value: /tmp/apihub-ephemeral-files; Example: /var/apihub/ephemeral
+  ephemeralFileDirectory: '/tmp/apihub-ephemeral-files'
 
 # Section with various parameters related to APIHUB business logic
 businessParameters:
@@ -127,6 +129,10 @@ businessParameters:
   systemNotification: ''
   # Optional; Set to true to fail build on broken refs; If not set, default value: true; Example: true
   failBuildOnBrokenRefs: true
+  # Optional; Maximum size in MB for ephemeral (temporary) files; If not set, default value: 50; Example: 100
+  ephemeralFileMaxSizeMb: 50
+  # Optional; Time-to-live in minutes for ephemeral files before they expire; If not set, default value: 30; Example: 60
+  ephemeralFileTTLMinutes: 30
 
 
 # Section with monitoring configuration for APIHUB
@@ -199,12 +205,22 @@ cleanup:
   builds:
     # Optional; Schedule for the builds cleanup job. If not set, default value: "0 1 * * 0"; Example: "* * * * *"
     schedule: '0 1 * * 0'
+  ephemeralFiles:
+    # Optional; Cron schedule for ephemeral files cleanup job; If not set, default value: "*/5 * * * *"; Example: "*/10 * * * *"
+    schedule: '*/5 * * * *'
 
 ai:
   mcp:
     # Default workspace for MCP to work with
     workspace: ''
   chat:
+    # Master kill-switch for the AI chat feature. When true, /api/v1/ai-chat/chats
+    # routes are registered and the periodic chat retention job is scheduled
+    enabled: false
+    retentionDays: 30
+    pinnedForeverCount: 10
+    compactAtContextPercent: 80
+    cleanupSchedule: "15 3 * * *"
     # Section with OpenAI configuration for AI-assisted chat
     openAI:
       # Mandatory; OpenAI API key for chat functionality; If not set, default value: ""; Example: sk-...

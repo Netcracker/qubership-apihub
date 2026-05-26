@@ -9,16 +9,23 @@ import (
 
 // TransformedOperation represents a transformed operation for MCP response
 type TransformedOperation struct {
-	OperationId string `json:"operationId"`
-	ApiKind     string `json:"apiKind"`
-	ApiType     string `json:"apiType"`
-	ApiAudience string `json:"apiAudience"`
-	Path        string `json:"path"`
-	Method      string `json:"method"`
-	PackageId   string `json:"packageId"`
-	PackageName string `json:"packageName"`
-	Version     string `json:"version"`
-	Title       string `json:"title"`
+	OperationId          string `json:"operationId"`
+	ApiKind              string `json:"apiKind"`
+	ApiType              string `json:"apiType"`
+	ApiAudience          string `json:"apiAudience"`
+	DocumentId           string `json:"documentId"`
+	PackageId            string `json:"packageId"`
+	PackageName          string `json:"packageName"`
+	Version              string `json:"version"`
+	Title                string `json:"title"`
+	Path                 string `json:"path,omitempty"`
+	Method               string `json:"method,omitempty"`
+	GraphQLOperationType string `json:"operationType,omitempty"`
+	Channel              string `json:"channel,omitempty"`
+	Action               string `json:"action,omitempty"`
+	Protocol             string `json:"protocol,omitempty"`
+	AsyncOperationId     string `json:"asyncOperationId,omitempty"`
+	MessageId            string `json:"messageId,omitempty"`
 }
 
 // ToolMetadata Tool metadata structure

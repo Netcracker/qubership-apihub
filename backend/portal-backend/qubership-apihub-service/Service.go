@@ -31,6 +31,7 @@ import (
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/client"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/controller"
 	midldleware "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/middleware"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
@@ -286,7 +287,36 @@ func main() {
 	systemStatsService := service.NewSystemStatsService(systemStatsRepository)
 
 	mcpService := service.NewMCPService(systemInfoService, operationService, packageService, versionService, monitoringService)
-	chatService := service.NewChatService(systemInfoService, mcpService)
+
+	ephemeralFileRepository := repository.NewEphemeralFileRepositoryPG(cp)
+	ephemeralFileService := service.NewEphemeralFileService(systemInfoService, ephemeralFileRepository)
+	ephemeralFileController := controller.NewEphemeralFileController(ephemeralFileService)
+	ephemeralFileCleanup := service.NewEphemeralFileCleanupService(ephemeralFileRepository, lockService)
+	if err := ephemeralFileCleanup.StartCleanupJob(systemInfoService.GetEphemeralFilesCleanupSchedule(), systemInfoService.GetEphemeralFileDirectory()); err != nil {
+		log.Warnf("Failed to start ephemeral files cleanup: %v", err)
+	}
+
+	aiChatEnabled := isAiChatEnabled(systemInfoService)
+	var aiChatController *controller.AiChatController
+	if aiChatEnabled {
+		log.Info("ai-chat: routes and cleanup jobs are ENABLED")
+		aiChatRepository := repository.NewAiChatRepositoryPG(cp)
+		llmClient, err := client.NewOpenAILlmClient(systemInfoService.GetAiChatConfig().OpenAI)
+		if err != nil {
+			log.Fatalf("Failed to create OpenAI LLM client: %v", err)
+		}
+		aiChatsService := service.NewAiChatsService(aiChatRepository)
+		aiChatTurnService, err := service.NewAiChatTurnService(systemInfoService, aiChatRepository, llmClient, mcpService, ephemeralFileService, security.MintEphemeralFileToken)
+		if err != nil {
+			log.Fatalf("Failed to create AiChatTurnService: %v", err)
+		}
+		aiChatController = controller.NewAiChatController(aiChatsService, aiChatTurnService)
+		aiChatCleanup := service.NewAiChatCleanupService(aiChatRepository, lockService)
+		aiCfg := systemInfoService.GetAiChatConfig()
+		if err := aiChatCleanup.StartChatRetentionJob(aiCfg.CleanupSchedule, aiCfg.RetentionDays, aiCfg.PinnedForeverCount); err != nil {
+			log.Warnf("Failed to start ai chat retention cleanup: %v", err)
+		}
+	}
 
 	idpManager, err := providers.NewIDPManager(systemInfoService.GetAuthConfig(), systemInfoService.GetAllowedHosts(), systemInfoService.IsProductionMode(), userService)
 	if err != nil {
@@ -329,7 +359,6 @@ func main() {
 	systemStatsController := controller.NewSystemStatsController(systemStatsService, roleService)
 	internalDocsController := controller.NewInternalDocumentController(publishedService, roleService)
 	mcpController := controller.NewMCPController(mcpService)
-	chatController := controller.NewChatController(chatService, monitoringService)
 	buildController := controller.NewBuildController(buildResultService, buildService, roleService.IsSysadm)
 	adminPublishedController := controller.NewAdminPublishedController(publishedService, roleService.IsSysadm, systemInfoService.GetPublishArchiveSizeLimitMB())
 
@@ -543,10 +572,19 @@ func main() {
 		r.PathPrefix("/debug/").Handler(http.DefaultServeMux)
 
 		r.HandleFunc("/api/internal/minio/download", security.Secure(minioStorageController.DownloadFilesFromMinioToDatabase)).Methods(http.MethodPost)
+	}
 
-		//Chat
-		r.HandleFunc("/api/v1/ai-chat", security.Secure(chatController.Chat)).Methods(http.MethodPost)
-		r.HandleFunc("/api/v1/ai-chat/stream", security.Secure(chatController.ChatStream)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/ephemeral-files/{fileId}", security.NoSecure(ephemeralFileController.Download)).Methods(http.MethodGet)
+
+	if aiChatEnabled {
+		r.HandleFunc("/api/v1/ai-chat/chats", security.Secure(aiChatController.ListChats)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/ai-chat/chats", security.Secure(aiChatController.CreateChat)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/ai-chat/chats/{chatId}", security.Secure(aiChatController.GetChat)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/ai-chat/chats/{chatId}", security.Secure(aiChatController.UpdateChat)).Methods(http.MethodPatch)
+		r.HandleFunc("/api/v1/ai-chat/chats/{chatId}", security.Secure(aiChatController.DeleteChat)).Methods(http.MethodDelete)
+		r.HandleFunc("/api/v1/ai-chat/chats/{chatId}/messages", security.Secure(aiChatController.ListMessages)).Methods(http.MethodGet)
+		r.HandleFunc("/api/v1/ai-chat/chats/{chatId}/messages", security.Secure(aiChatController.SendMessage)).Methods(http.MethodPost)
+		r.HandleFunc("/api/v1/ai-chat/chats/{chatId}/messages/stream", security.Secure(aiChatController.SendMessageStream)).Methods(http.MethodPost)
 	}
 
 	mcpHandler := mcpController.MakeMCPServer()
@@ -654,6 +692,10 @@ func main() {
 	log.Fatalf("Http server returned error: %v", srv.ListenAndServe())
 }
 
+func isAiChatEnabled(sis service.SystemInfoService) bool {
+	return sis.GetAiChatConfig().Enabled
+}
+
 func makeServer(systemInfoService service.SystemInfoService, r *mux.Router) *http.Server {
 	listenAddr := systemInfoService.GetListenAddress()
 
@@ -691,13 +733,7 @@ func makeServer(systemInfoService service.SystemInfoService, r *mux.Router) *htt
 	//   - Context with deadline for processing time control (planned, not yet implemented).
 	corsHandler := handlers.CORS(corsOptions...)(r)
 	compressedHandler := handlers.CompressHandler(corsHandler)
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, "/api/v1/mcp/") {
-			corsHandler.ServeHTTP(w, r)
-			return
-		}
-		compressedHandler.ServeHTTP(w, r)
-	})
+	handler := midldleware.NewSelectiveCompressionHandler(corsHandler, compressedHandler)
 
 	return &http.Server{
 		Handler:     handler,

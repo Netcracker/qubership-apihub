@@ -13,6 +13,9 @@ import (
 	"github.com/go-pg/pg/v10/orm"
 )
 
+// globalSearchWorkMem limits lossy GIN bitmap recheck during FTS on fts_operation_search_text when server default work_mem is very low.
+const globalSearchWorkMem = "16MB"
+
 type OperationRepository interface {
 	GetOperationsByIds(packageId string, version string, revision int, operationIds []string) ([]entity.OperationEntity, error)
 	GetOperations(packageId string, version string, revision int, operationType string, skipRefs bool, searchReq view.OperationListReq) ([]entity.OperationRichEntity, error)
@@ -24,7 +27,7 @@ type OperationRepository interface {
 	SearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult_deprecated, error)
 	FullTextSearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult_deprecated, error)
 	LiteSearchForOperations(searchQuery *entity.OperationSearchQuery) ([]entity.OperationSearchResult_deprecated, error)
-	GlobalSearchForOperations(searchQuery *entity.GlobalOperationSearchQuery) ([]entity.OperationSearchResult, error)
+	GlobalSearchForOperations(ctx context.Context, searchQuery *entity.GlobalOperationSearchQuery) ([]entity.OperationSearchResult, error)
 	GetOperationsTypeCount(packageId string, version string, revision int, showOnlyDeleted bool) ([]entity.OperationsTypeCountEntity, error)
 	GetOperationsTypes(packageId string, version string, revision int) ([]entity.OperationsTypeEntity, error)
 	GetOperationsInfo(packageId string, version string, revision int) (entity.OperationsInfoEntity, error)
@@ -1623,11 +1626,7 @@ func (o operationRepositoryImpl) GetOperationsByModelHash(packageId string, vers
 	return result, nil
 }
 
-func (o operationRepositoryImpl) GlobalSearchForOperations(searchQuery *entity.GlobalOperationSearchQuery) ([]entity.OperationSearchResult, error) {
-	_, err := o.cp.GetConnection().Exec("select websearch_to_tsquery(?)", searchQuery.OriginalTextInput)
-	if err != nil {
-		return nil, fmt.Errorf("invalid search string: %v", err.Error())
-	}
+func (o operationRepositoryImpl) GlobalSearchForOperations(ctx context.Context, searchQuery *entity.GlobalOperationSearchQuery) ([]entity.OperationSearchResult, error) {
 	var result []entity.OperationSearchResult
 
 	operationsSearchQuery := `
@@ -1644,6 +1643,7 @@ select
     o.kind,
     o.type,
     o.metadata,
+    o.document_id,
     parent_package_names(o.package_id) parent_names
 from operation o
          inner join (
@@ -1660,7 +1660,7 @@ from operation o
         and ts.api_type = ?api_type
         and (?versions = '{}' or version like ANY(
 						select id from unnest(?versions::text[]) id))
-        and (package_id like ANY(
+        and (?packages = '{}' or package_id like ANY(
 						select id from unnest(?packages::text[]) id
 						union
 						select id||'.%' from unnest(?packages::text[]) id))
@@ -1688,7 +1688,19 @@ order by all_ts.rank desc, o.operation_id
 limit ?limit;
 `
 
-	_, err = o.cp.GetConnection().Model(searchQuery).Query(&result, operationsSearchQuery)
+	err := o.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		if _, err := tx.Exec("SET LOCAL work_mem = ?", globalSearchWorkMem); err != nil {
+			return err
+		}
+		if _, err := tx.Exec("select websearch_to_tsquery(?)", searchQuery.OriginalTextInput); err != nil {
+			return fmt.Errorf("invalid search string: %v", err.Error())
+		}
+		_, err := tx.Model(searchQuery).Query(&result, operationsSearchQuery)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil

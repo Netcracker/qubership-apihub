@@ -2,7 +2,6 @@ package midldleware
 
 import (
 	"net/http"
-	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -19,11 +18,11 @@ import (
 // The client receives whatever bytes were already transmitted, then sees a connection reset.
 // The server goroutine is freed when the handler returns.
 const responseWriteDeadline = 5 * time.Minute
-const mcpPathPrefix = "/api/v1/mcp/"
 
 type deadlineResponseWriter struct {
 	http.ResponseWriter
 	deadlineSet bool
+	deadline    time.Duration
 }
 
 func (w *deadlineResponseWriter) setDeadlineOnce() {
@@ -32,7 +31,7 @@ func (w *deadlineResponseWriter) setDeadlineOnce() {
 	}
 	w.deadlineSet = true
 	rc := http.NewResponseController(w.ResponseWriter)
-	if err := rc.SetWriteDeadline(time.Now().Add(responseWriteDeadline)); err != nil {
+	if err := rc.SetWriteDeadline(time.Now().Add(w.deadline)); err != nil {
 		log.Warnf("Failed to set response write deadline: %v", err)
 	}
 }
@@ -61,10 +60,14 @@ func WriteDeadlineMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// MCP uses long-lived streaming responses, so a fixed write deadline
 		// would terminate healthy streams and force clients to reconnect.
-		if strings.HasPrefix(r.URL.Path, mcpPathPrefix) {
+		if isMCPPath(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
-		next.ServeHTTP(&deadlineResponseWriter{ResponseWriter: w}, r)
+		d := responseWriteDeadline
+		if isAiChatSSEPath(r.URL.Path) {
+			d = StreamingResponseWriteDeadline
+		}
+		next.ServeHTTP(&deadlineResponseWriter{ResponseWriter: w, deadline: d}, r)
 	})
 }

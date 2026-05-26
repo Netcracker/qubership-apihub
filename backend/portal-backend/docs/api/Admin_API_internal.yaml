@@ -10,7 +10,7 @@ info:
     name: Apache 2.0
     url: https://github.com/Netcracker/qubership-apihub-backend/raw/refs/heads/main/LICENSE
   version: "2026.1"
-  x-nc-api-audience: BWC
+  x-api-kind: no-BWC
 externalDocs:
   description: Find out more about this project and repository documentation
   url: https://github.com/Netcracker/qubership-apihub

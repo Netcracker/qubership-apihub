@@ -1,0 +1,62 @@
+---
+description: Go backend conventions for qubership-apihub-service
+globs: qubership-apihub-service/**/*.go
+alwaysApply: false
+---
+
+# Go Backend Conventions
+
+## Error handling (fail fast, root cause)
+
+- **Bug fixes:** investigate and fix the **root cause**; do not patch symptoms by swallowing errors or forcing default behavior when something failed.
+- **Do not:** `_ = err`; `return nil` / empty data after a failed DB or external call; `log` then continue as if success; catch-all `recover()` without re-panic or proper fatal handling; widen `if err != nil` to ignore and use a zero value unless product spec requires it.
+- **Do:** return `error` from lower layers; handle once at the boundary (controller / job) with proper API error codes and ERROR-level logs.
+- **Fail fast** on misconfiguration and fatal wiring (`log.Fatalf` in `Service.go`, `ValidateConfig` at startup).
+- Intentional degradation only with explicit product requirement — log the failure and document the fallback.
+
+## Constants and literals
+
+- Do not use magic numbers; declare named constants.
+- If a numeric literal is unavoidable, add a brief comment explaining what it is and why that value is used.
+- If a string literal is repeated, extract it to a constant.
+- Do **not** duplicate config defaults in service code. Defaults belong in `SystemInfoService.setDefaults()` (`viper.SetDefault`); valid ranges belong on `config.Config` struct fields via `validate` tags (checked at startup by `utils.ValidateConfig`). Services read validated config directly — no `if cfg.X <= 0 { fallback }` for config-backed values.
+
+## Configuration defaults
+
+- **Single source of truth:** `viper.SetDefault` in `service/SystemInfoService.go` (`setDefaults`).
+- **Validation:** `validate` tags on types in `config/Config.go` (mirror `BusinessParameters` size limits: `gt=0`, `lte=8796093022207` where MB→bytes conversion applies).
+- **Startup:** invalid config fails fast in `SystemInfoService.Init()` via `utils.ValidateConfig`.
+- **Services:** use `GetAiChatConfig()` / other getters after init; do not re-declare the same default as a Go constant.
+
+## HTTP status codes
+
+- Use `net/http` named constants (`http.StatusOK`, `http.StatusBadRequest`, `http.StatusNotFound`, etc.).
+- Do not use raw status integers (e.g. `200`, `400`, `404`) in handlers, middleware, or tests.
+
+## Comments
+
+- Comment only when it materially helps understanding non-obvious logic.
+- Do not comment obvious code.
+- Do not add comments that map structs/functions to HTTP routes (e.g. `// AiChatsListResponse is GET /chats`).
+
+## CI / EditorConfig in Go sources
+
+- Raw string literals (system prompts, embedded templates): continuation lines that look indented must use **tabs**, not spaces — see `.claude/rules/ci-linters.md`.
+
+## Entity → view converters
+
+- Converters with **no dependencies** belong in the `entity` package next to the entity struct.
+- Name them `Make{Name}View` (e.g. `MakePackageSearchResultView`).
+
+## Service.go wiring
+
+- Add new repositories, services, and controllers at the **end** of their corresponding sections in `Service.go`.
+- Use `log.Fatalf` for fail-fast fatal errors during wiring/startup in `Service.go` when initialization cannot continue.
+
+## API errors
+
+- Error codes and messages returned in HTTP responses must be constants in `exception/ErrorCodes.go`.
+- **Legacy errors:** numeric string codes (`"9"`, `"22"`) with a paired `*Msg`; blank line between pairs.
+- **AI Chat errors:** `APIHUB-AI-*` codes with the same pairing rules.
+- **Variant messages** (same code, different text): declare only `*Msg` next to the parent code block — reuse the parent `Code` at call sites (see `InvalidParameterValue` + `InvalidLimitMsg`, or `AiChatValidationFailed` + `AiChatMessageTooLongMsg`). Do not add orphan `*Msg` constants without documenting which code they belong to.
+- Do not use inline `Message:` strings for client-facing errors in new code.

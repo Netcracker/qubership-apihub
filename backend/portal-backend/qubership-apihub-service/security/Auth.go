@@ -32,6 +32,7 @@ var refreshTokenStrategy auth.Strategy
 var apiKeyStrategy auth.Strategy
 
 var keeper jwt.SecretsKeeper
+var defaultJWTValidator JWTValidator
 var userService service.UserService
 var roleService service.RoleService
 
@@ -78,6 +79,7 @@ func SetupGoGuardian(userServiceLocal service.UserService, roleServiceLocal serv
 		cache.Delete(key)
 	})
 	jwtValidator := NewJWTValidator(keeper, tokenRevocationService)
+	defaultJWTValidator = jwtValidator
 	bearerTokenStrategy := NewBearerTokenStrategy(cache, jwtValidator)
 	cookieTokenStrategy := NewCookieTokenStrategy(cache, jwtValidator)
 	refreshTokenStrategy = NewRefreshTokenStrategy(cache, jwtValidator)

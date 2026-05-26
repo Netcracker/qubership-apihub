@@ -97,6 +97,10 @@ type SystemInfoService interface {
 	GetApiSpecDirectory() string
 	GetFeatureFlags() view.FeatureFlags
 	GetMigrationLockMaxWaitMinutes() int
+	GetEphemeralFileDirectory() string
+	GetEphemeralFileMaxSizeMb() int
+	GetEphemeralFileTTLMinutes() int
+	GetEphemeralFilesCleanupSchedule() string
 }
 
 func (g *systemInfoServiceImpl) GetCredsFromEnv() *view.DbCredentials {
@@ -243,10 +247,19 @@ func (g *systemInfoServiceImpl) setDefaults() {
 	viper.SetDefault("cleanup.unreferencedData.timeoutMinutes", 360)    //6 hours
 	viper.SetDefault("cleanup.maintenanceVacuum.schedule", "0 2 * * 1") //at 2 AM on Monday
 	viper.SetDefault("cleanup.maintenanceVacuum.timeoutMinutes", 300)   //5 hours
-	viper.SetDefault("openAI.model", "gpt-4o")
-	viper.SetDefault("openAI.temperature", 1.0)
-	viper.SetDefault("openAI.reasoningEffort", "medium")
-	viper.SetDefault("openAI.verbosity", "medium")
+	viper.SetDefault("ai.chat.enabled", false)
+	viper.SetDefault("ai.chat.openAI.model", "gpt-4o")
+	viper.SetDefault("ai.chat.openAI.temperature", 1.0)
+	viper.SetDefault("ai.chat.openAI.reasoningEffort", "medium")
+	viper.SetDefault("ai.chat.openAI.verbosity", "medium")
+	viper.SetDefault("ai.chat.retentionDays", 30)
+	viper.SetDefault("ai.chat.pinnedForeverCount", 10)
+	viper.SetDefault("ai.chat.compactAtContextPercent", 80)
+	viper.SetDefault("ai.chat.cleanupSchedule", "15 3 * * *")
+	viper.SetDefault("technicalParameters.ephemeralFileDirectory", "/tmp/apihub-ephemeral-files")
+	viper.SetDefault("businessParameters.ephemeralFileMaxSizeMb", 50)
+	viper.SetDefault("businessParameters.ephemeralFileTTLMinutes", 30)
+	viper.SetDefault("cleanup.ephemeralFiles.schedule", "*/5 * * * *")
 }
 
 func (g *systemInfoServiceImpl) GetConfigFolder() string {
@@ -639,6 +652,22 @@ func (g *systemInfoServiceImpl) GetAiChatConfig() config.ChatConfig {
 
 func (g *systemInfoServiceImpl) GetAiMCPConfig() config.MCPConfig {
 	return g.config.Ai.MCP
+}
+
+func (g *systemInfoServiceImpl) GetEphemeralFileDirectory() string {
+	return g.config.TechnicalParameters.EphemeralFileDirectory
+}
+
+func (g *systemInfoServiceImpl) GetEphemeralFileMaxSizeMb() int {
+	return g.config.BusinessParameters.EphemeralFileMaxSizeMb
+}
+
+func (g *systemInfoServiceImpl) GetEphemeralFileTTLMinutes() int {
+	return g.config.BusinessParameters.EphemeralFileTTLMinutes
+}
+
+func (g *systemInfoServiceImpl) GetEphemeralFilesCleanupSchedule() string {
+	return g.config.Cleanup.EphemeralFiles.Schedule
 }
 
 func (g *systemInfoServiceImpl) GetFeatureFlags() view.FeatureFlags {

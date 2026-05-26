@@ -1,11 +1,15 @@
 package service
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
+	"github.com/mark3labs/mcp-go/mcp"
 )
 
 // CalculateNearestCompletedReleaseVersion calculates the nearest completed release version
@@ -78,24 +82,124 @@ func projectPublishedVersionsForMCP(versions []view.PublishedVersionListView) []
 	return projected
 }
 
-// transformOperations transforms view.RestOperationSearchResult_deprecated to TransformedOperation
-func transformOperations(items []view.RestOperationSearchResult_deprecated) []view.TransformedOperation {
-	transformed := make([]view.TransformedOperation, len(items))
+func requireMCPApiType(req mcp.CallToolRequest, allowed ...view.ApiType) (string, error) {
+	apiType, err := req.RequireString("apiType")
+	if err != nil {
+		return "", err
+	}
+	if !isMCPApiTypeAllowed(apiType, allowed...) {
+		return "", fmt.Errorf("apiType must be one of: %v", allowed)
+	}
+	return apiType, nil
+}
 
-	for i, item := range items {
-		transformed[i] = view.TransformedOperation{
-			OperationId: item.OperationId,
-			ApiKind:     item.ApiKind,
-			ApiType:     item.ApiType,
-			ApiAudience: item.ApiAudience,
-			Path:        item.Path,
-			Method:      item.Method,
-			PackageId:   item.PackageId,
-			PackageName: item.PackageName,
-			Version:     item.Version,
-			Title:       item.Title,
+func isMCPApiTypeAllowed(apiType string, allowed ...view.ApiType) bool {
+	for _, allowedApiType := range allowed {
+		if apiType == string(allowedApiType) {
+			return true
 		}
 	}
+	return false
+}
 
+// transformOperations projects generic operation search results to the compact MCP response shape.
+func transformOperations(items []interface{}) []view.TransformedOperation {
+	transformed := make([]view.TransformedOperation, 0, len(items))
+	for _, item := range items {
+		if op, ok := transformOperation(item); ok {
+			transformed = append(transformed, op)
+		}
+	}
 	return transformed
+}
+
+func transformOperation(item interface{}) (view.TransformedOperation, bool) {
+	switch op := item.(type) {
+	case view.RestOperationSearchResult:
+		result := transformCommonOperation(op.CommonOperationSearchResult, op.CommonOperationView)
+		result.Path = op.Path
+		result.Method = op.Method
+		return result, true
+	case view.GraphQLOperationSearchResult:
+		result := transformCommonOperation(op.CommonOperationSearchResult, op.CommonOperationView)
+		result.GraphQLOperationType = op.Type
+		result.Method = op.Method
+		return result, true
+	case view.AsyncAPIOperationSearchResult:
+		result := transformCommonOperation(op.CommonOperationSearchResult, op.CommonOperationView)
+		result.Action = op.Action
+		result.Channel = op.Channel
+		result.Protocol = op.Protocol
+		result.AsyncOperationId = op.AsyncOperationId
+		result.MessageId = op.MessageId
+		return result, true
+	case view.CommonOperationSearchResult:
+		return view.TransformedOperation{
+			PackageId:   op.PackageId,
+			PackageName: op.PackageName,
+			Version:     op.Version,
+			Title:       op.Title,
+		}, true
+	default:
+		return view.TransformedOperation{}, false
+	}
+}
+
+func transformCommonOperation(search view.CommonOperationSearchResult, operation view.CommonOperationView) view.TransformedOperation {
+	return view.TransformedOperation{
+		OperationId: operation.OperationId,
+		ApiKind:     operation.ApiKind,
+		ApiType:     operation.ApiType,
+		ApiAudience: operation.ApiAudience,
+		DocumentId:  operation.DocumentId,
+		PackageId:   search.PackageId,
+		PackageName: search.PackageName,
+		Version:     search.Version,
+		Title:       search.Title,
+	}
+}
+
+func extractOperationData(operationViewInterface interface{}) (interface{}, error) {
+	ptr, ok := operationViewInterface.(*interface{})
+	if !ok || ptr == nil {
+		return nil, fmt.Errorf("operation view is empty")
+	}
+	switch op := (*ptr).(type) {
+	case view.RestOperationSingleView:
+		return op.Data, nil
+	case view.AsyncAPIOperationSingleView:
+		return op.Data, nil
+	default:
+		return nil, fmt.Errorf("operation specification is not supported for returned operation type %T", op)
+	}
+}
+
+func makeMCPDocumentPayload(apiType string, document *view.PublishedContent, documentData *view.ContentData) (map[string]any, error) {
+	if document == nil || documentData == nil {
+		return nil, fmt.Errorf("document was not found")
+	}
+	if !isDocumentTypeAllowedForAPIType(document.Type.String(), apiType) {
+		return nil, fmt.Errorf("document type %s is not supported for apiType %s", document.Type, apiType)
+	}
+
+	return map[string]any{
+		"documentType": document.Type.String(),
+		"format":       document.Format,
+		"documentData": makeMCPDocumentData(documentData.Data),
+	}, nil
+}
+
+func isDocumentTypeAllowedForAPIType(documentType string, apiType string) bool {
+	return slices.Contains(view.GetDocumentTypesForApiType(apiType), documentType)
+}
+
+func makeMCPDocumentData(data []byte) any {
+	trimmed := bytes.TrimSpace(data)
+	if len(trimmed) == 0 {
+		return ""
+	}
+	if json.Valid(trimmed) {
+		return json.RawMessage(trimmed)
+	}
+	return string(data)
 }
