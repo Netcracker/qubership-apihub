@@ -7,6 +7,7 @@ import (
 	"github.com/Netcracker/qubership-api-linter-service/client"
 	"github.com/Netcracker/qubership-api-linter-service/secctx"
 
+	"github.com/shaj13/go-guardian/v2/auth"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/jwt"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/union"
 	"github.com/shaj13/libcache"
@@ -17,6 +18,9 @@ import (
 )
 
 var strategy union.Union
+
+// apiKeyStrategy is used by SecureMCP (API key only), aligned with qubership-apihub-backend.
+var apiKeyStrategy auth.Strategy
 
 func SetupGoGuardian(apihubClient client.ApihubClient) error {
 	if apihubClient == nil {
@@ -52,6 +56,7 @@ func SetupGoGuardian(apihubClient client.ApihubClient) error {
 
 	jwtStrategy := jwt.New(cache, keeper) // TODO: replace with custom strategy to support logout
 	apihubApiKeyStrategy := NewApihubApiKeyStrategy(apihubClient)
+	apiKeyStrategy = apihubApiKeyStrategy
 	cookieTokenStrategy := NewCookieTokenStrategy(apihubClient)
 	patStrategy := NewApihubPATStrategy(apihubClient)
 	strategy = union.New(jwtStrategy, apihubApiKeyStrategy, cookieTokenStrategy, patStrategy)
