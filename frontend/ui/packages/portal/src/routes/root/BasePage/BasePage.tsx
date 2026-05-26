@@ -1,61 +1,48 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-import { Box, IconButton } from '@mui/material'
-import type { FC } from 'react'
-import { useMemo } from 'react'
-import { memo, useCallback, useEffect } from 'react'
-import { generatePath, Outlet } from 'react-router-dom'
-import { MainPageProvider } from '../MainPage/MainPageProvider'
-import { GlobalSearchPanel } from './GlobalSearchPanel/GlobalSearchPanel'
-
-import { useEventBus } from '@apihub/routes/EventBusProvider'
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined'
+import { Box } from '@mui/material'
 import type { Theme } from '@mui/material/styles'
 import type { SystemStyleObject } from '@mui/system/styleFunctionSx/styleFunctionSx'
+import { type FC, memo, useCallback, useEffect, useMemo } from 'react'
+import { generatePath, Outlet } from 'react-router-dom'
+
 import { AppHeader } from '@netcracker/qubership-apihub-ui-shared/components/AppHeader'
-import { ExceptionSituationHandler } from '@netcracker/qubership-apihub-ui-shared/components/ExceptionSituationHandler'
-import {
-  MaintenanceNotification,
-  NOTIFICATION_HEIGHT,
-} from '@netcracker/qubership-apihub-ui-shared/components/MaintenanceNotification'
-import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import { SystemInfoPopup, useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
-import { useSuperAdminCheck } from '@netcracker/qubership-apihub-ui-shared/hooks/user-roles/useSuperAdminCheck'
-import { LogoIcon } from '@netcracker/qubership-apihub-ui-shared/icons/LogoIcon'
-import { cutViewPortStyleCalculator } from '@netcracker/qubership-apihub-ui-shared/utils/themes'
-import { matchPathname } from '@netcracker/qubership-apihub-ui-shared/utils/urls'
-import * as packageJson from '../../../../package.json'
-import { PORTAL_PATH_PATTERNS } from '../../../routes'
-import { Notification, useShowErrorNotification } from '../BasePage/Notification'
-import { PortalSettingsButton } from './PortalSettingsButton'
-import { UserPanel } from './UserPanel'
-import { useVersionInfo } from '@netcracker/qubership-apihub-ui-shared/hooks/frontend-version/useVersionInfo'
-import {
-  ModuleFetchingErrorBoundary,
-} from '@netcracker/qubership-apihub-ui-shared/components/ModuleFetchingErrorBoundary/ModuleFetchingErrorBoundary'
+import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
 import {
   VsCodeExtensionButton,
 } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/VsCodeExtensionButton/VsCodeExtensionButton'
 import {
   AppHeaderDivider,
 } from '@netcracker/qubership-apihub-ui-shared/components/Dividers/AppHeaderDivider/AppHeaderDivider'
-import { PackageVersionBuilder } from '@apihub/routes/root/PortalPage/package-version-builder'
-import { SESSION_STORAGE_KEY_LAST_IDENTITY_PROVIDER_ID } from '@netcracker/qubership-apihub-ui-shared/utils/constants'
+import { ExceptionSituationHandler } from '@netcracker/qubership-apihub-ui-shared/components/ExceptionSituationHandler'
+import {
+  MaintenanceNotification,
+  NOTIFICATION_HEIGHT,
+} from '@netcracker/qubership-apihub-ui-shared/components/MaintenanceNotification'
+import {
+  ModuleFetchingErrorBoundary,
+} from '@netcracker/qubership-apihub-ui-shared/components/ModuleFetchingErrorBoundary/ModuleFetchingErrorBoundary'
+import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { useAgentEnabled } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
+import { SystemInfoPopup, useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
+import { useVersionInfo } from '@netcracker/qubership-apihub-ui-shared/hooks/frontend-version/useVersionInfo'
+import { useSuperAdminCheck } from '@netcracker/qubership-apihub-ui-shared/hooks/user-roles/useSuperAdminCheck'
+import { LogoIcon } from '@netcracker/qubership-apihub-ui-shared/icons/LogoIcon'
+import { SESSION_STORAGE_KEY_LAST_IDENTITY_PROVIDER_ID } from '@netcracker/qubership-apihub-ui-shared/utils/constants'
+import { cutViewPortStyleCalculator } from '@netcracker/qubership-apihub-ui-shared/utils/themes'
+import { matchPathname } from '@netcracker/qubership-apihub-ui-shared/utils/urls'
+
+import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { PackageVersionBuilder } from '@apihub/routes/root/PortalPage/package-version-builder'
+import { AiAssistantButton } from '@netcracker/qubership-apihub-ui-portal/src/components/AiAssistant/AiAssistantButton'
+import { AiAssistantPanel } from '@netcracker/qubership-apihub-ui-portal/src/components/AiAssistant/AiAssistantPanel'
+import { AiAssistantProvider } from '@netcracker/qubership-apihub-ui-portal/src/components/AiAssistant/state/AiAssistantProvider'
+import * as packageJson from '../../../../package.json'
+import { PORTAL_PATH_PATTERNS } from '../../../routes'
+import { Notification, useShowErrorNotification } from '../BasePage/Notification'
+import { MainPageProvider } from '../MainPage/MainPageProvider'
+import { GlobalSearchPanel } from './GlobalSearchPanel/GlobalSearchPanel'
+import { PortalSettingsButton } from './PortalSettingsButton'
+import { UserPanel } from './UserPanel'
 
 export const BasePage: FC = memo(() => {
   const { notification: systemNotification } = useSystemInfo()
@@ -89,60 +76,73 @@ export const BasePage: FC = memo(() => {
   return (
     <MainPageProvider>
       <ModuleFetchingErrorBoundary showReloadPopup={packageJson.version !== frontendVersion}>
-        <Box
-          display="grid"
-          gridTemplateRows="max-content 1fr"
-          height="100vh"
-        >
-          <AppHeader
-            logo={<LogoIcon/>}
-            title="APIHUB"
-            links={links}
-            action={
-              <>
-                <VsCodeExtensionButton/>
-                <AppHeaderDivider/>
-                <SearchButton/>
-                {isSuperAdmin && <PortalSettingsButton/>}
-                <SystemInfoPopup
-                  frontendVersionKey={frontendVersion}
-                  apiProcessorVersion={apiProcessorVersion}
-                />
-                <UserPanel/>
-              </>
-            }
-          />
-          <Box sx={viewPortStyleCalculator}>
-            <ExceptionSituationHandler
-              homePath="/portal"
-              showErrorNotification={showErrorNotification}
-              redirectUrlFactory={replacePackageId}
-            >
-              <Outlet/>
-            </ExceptionSituationHandler>
+        <AiAssistantProvider>
+          <Box
+            display="grid"
+            gridTemplateRows="max-content 1fr"
+            height="100vh"
+          >
+            <AppHeader
+              logo={<LogoIcon />}
+              title="APIHUB"
+              links={links}
+              action={
+                <>
+                  <VsCodeExtensionButton />
+                  <AppHeaderDivider />
+                  <SearchButton />
+                  <AiAssistantButton />
+                  {isSuperAdmin && <PortalSettingsButton />}
+                  <SystemInfoPopup
+                    frontendVersionKey={frontendVersion}
+                    apiProcessorVersion={apiProcessorVersion}
+                  />
+                  <UserPanel />
+                </>
+              }
+            />
+            <Box sx={viewPortStyleCalculator}>
+              <ExceptionSituationHandler
+                homePath="/portal"
+                showErrorNotification={showErrorNotification}
+                redirectUrlFactory={replacePackageId}
+              >
+                <Outlet />
+              </ExceptionSituationHandler>
+            </Box>
+            <Notification />
+            <GlobalSearchPanel />
+            <AiAssistantPanel />
+            {systemNotification && <MaintenanceNotification value={systemNotification} />}
           </Box>
-          <Notification/>
-          <GlobalSearchPanel/>
-          {systemNotification && <MaintenanceNotification value={systemNotification}/>}
-        </Box>
+        </AiAssistantProvider>
       </ModuleFetchingErrorBoundary>
     </MainPageProvider>
   )
 })
 
 const SearchButton: FC = memo(() => {
-  const { showGlobalSearchPanel } = useEventBus()
+  const { hideAiAssistantPanel, showGlobalSearchPanel } = useEventBus()
+
+  const handleClick = useCallback((): void => {
+    hideAiAssistantPanel()
+    showGlobalSearchPanel()
+  }, [hideAiAssistantPanel, showGlobalSearchPanel])
+
   return (
-    <IconButton
-      data-testid="GlobalSearchButton"
+    <ButtonWithHint
+      hint="Global Search"
+      startIcon={<SearchOutlinedIcon />}
+      aria-label="Global Search"
       size="large"
       color="inherit"
-      onClick={showGlobalSearchPanel}
-    >
-      <SearchOutlinedIcon/>
-    </IconButton>
+      data-testid="GlobalSearchButton"
+      onClick={handleClick}
+    />
   )
 })
+
+SearchButton.displayName = 'SearchButton'
 
 function replacePackageId(locationPathname: string, searchParams: URLSearchParams, packageId: Key): string {
   const locationMatch = matchPathname(locationPathname, PORTAL_PATH_PATTERNS)!

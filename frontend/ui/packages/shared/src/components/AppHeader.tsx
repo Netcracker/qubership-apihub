@@ -1,28 +1,15 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-import type { FC, ReactNode } from 'react'
-import { memo } from 'react'
 import AppBar from '@mui/material/AppBar'
 import Box from '@mui/material/Box'
-import IconButton from '@mui/material/IconButton'
+import { styled } from '@mui/material/styles'
 import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
-import type { TestableProps } from './Testable'
+import type { TypographyProps } from '@mui/material/Typography'
+import type { FC, ReactNode } from 'react'
+import { memo } from 'react'
+
+import { BUTTON_PRESSED_COLOR } from '../themes/colors'
 import { APP_HEADER_HEIGHT } from '../themes/components'
+import type { TestableProps } from './Testable'
 
 type AppHeaderLink = {
   name: string
@@ -41,16 +28,20 @@ export const AppHeader: FC<AppHeaderProps> = memo<AppHeaderProps>(({ logo, title
   return (
     <Box data-testid="AppHeader" flexGrow={1}>
       <AppBar position="static" sx={{ height: APP_HEADER_HEIGHT }}>
-        <Toolbar>
-          {logo && (
-            <IconButton disabled sx={{ mr: 2 }} size="large" edge="start" color="inherit">
-              {logo}
-            </IconButton>
-          )}
-          {title && (
-            <Typography sx={{ mr: 3 }} variant="h2" component="div">
-              {title}
-            </Typography>
+        <AppHeaderToolbar>
+          {(logo || title) && (
+            <Brand>
+              {logo && (
+                <LogoContent>
+                  {logo}
+                </LogoContent>
+              )}
+              {title && (
+                <TitleContent variant="h2">
+                  {title}
+                </TitleContent>
+              )}
+            </Brand>
           )}
           {links && links.map(({ name, pathname, active, 'data-testid': dataTestId }) => (
             <Box
@@ -77,7 +68,7 @@ export const AppHeader: FC<AppHeaderProps> = memo<AppHeaderProps>(({ logo, title
               {action}
             </Box>
           )}
-        </Toolbar>
+        </AppHeaderToolbar>
       </AppBar>
     </Box>
   )
@@ -96,3 +87,42 @@ const APP_HEADER_LINK_STYLES_SELECTED = {
   backgroundColor: '#0052EE',
   boxShadow: 'inset 0px -3px 0px #002B80',
 }
+
+// TODO: 14.05.16 temporary solution for the header. Not doing a global
+// button rebalancing yet, because we need to verify compatibility across
+// the whole project.
+const AppHeaderToolbar = styled(Toolbar)(({ theme }) => ({
+  '& .MuiIconButton-root, & .AppHeaderIconButton': {
+    width: APP_HEADER_HEIGHT,
+    height: APP_HEADER_HEIGHT,
+  },
+  '& .MuiButton-root, & .MuiIconButton-root, & .AppHeaderIconButton': {
+    borderRadius: 0,
+    '&:hover': {
+      backgroundColor: theme.palette.primary.dark,
+    },
+    '&:active': {
+      backgroundColor: BUTTON_PRESSED_COLOR,
+    },
+  },
+}))
+
+const Brand = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+  flex: `0 1 ${theme.spacing(19.5)}`,
+  minWidth: 'fit-content',
+  paddingRight: theme.spacing(2),
+}))
+
+const TitleContent = styled(Typography)<TypographyProps<'div'>>({
+  margin: 0,
+})
+
+const LogoContent = styled(Box)(({ theme }) => ({
+  fontSize: theme.typography.h2.fontSize,
+  '& img': {
+    height: '1em',
+  },
+}))

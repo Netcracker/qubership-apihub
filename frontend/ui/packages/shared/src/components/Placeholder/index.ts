@@ -24,6 +24,7 @@ export {
   NO_PERMISSION,
   NO_SEARCH_RESULTS,
   Placeholder,
+  ROBOT_PLACEHOLDER_VARIANT,
   SEARCH_RAINY_DAY_PLACEHOLDER_VARIANT,
 } from './Placeholder'
 export type { PlaceholderProps } from './Placeholder'

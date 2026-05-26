@@ -23,6 +23,7 @@ import type { TestableProps } from '../Testable'
 import everythingOkSvg from './everything-ok.svg'
 import noDataSvg from './no-data.svg'
 import nothingFoundSvg from './nothing-found.svg'
+import robotPlaceholderSvg from './robot.svg'
 
 export type PlaceholderProps = PropsWithChildren<{
   invisible: boolean
@@ -55,6 +56,9 @@ export const Placeholder: FC<PlaceholderProps> = memo<PlaceholderProps>(({
         break
       case SEARCH_RAINY_DAY_PLACEHOLDER_VARIANT:
         url = nothingFoundSvg
+        break
+      case ROBOT_PLACEHOLDER_VARIANT:
+        url = robotPlaceholderSvg
         break
     }
     return `url('${url}')`
@@ -100,11 +104,13 @@ export const NO_PERMISSION = 'You do not have permission to see this page'
 export const SEARCH_RAINY_DAY_PLACEHOLDER_VARIANT = 'search'
 export const DATA_SUNNY_DAY_PLACEHOLDER_VARIANT = 'data-sunny-day'
 export const DATA_RAINY_DAY_PLACEHOLDER_VARIANT = 'data-rainy-day'
+export const ROBOT_PLACEHOLDER_VARIANT = 'robot'
 
 type PlaceholderVariant =
   | typeof SEARCH_RAINY_DAY_PLACEHOLDER_VARIANT
   | typeof DATA_SUNNY_DAY_PLACEHOLDER_VARIANT
   | typeof DATA_RAINY_DAY_PLACEHOLDER_VARIANT
+  | typeof ROBOT_PLACEHOLDER_VARIANT
 
 export const NAVIGATION_PLACEHOLDER_AREA = 'navigation'
 export const CONTENT_PLACEHOLDER_AREA = 'content'

@@ -322,6 +322,8 @@ export type FetchErrorDetails = {
   message: ErrorMessage
   code: ErrorCode
   status: ErrorStatus
+  /** When true, always snackbar — never the full-page ErrorPage (used by AI Chat over the portal). */
+  forceSnackbar?: boolean
 }
 
 export const FETCH_REDIRECT_TYPE_PACKAGE = 'package-redirect'

@@ -19,6 +19,7 @@ import { memo, useState } from 'react'
 import { Box, DialogContent, DialogTitle, Divider, IconButton, Link, Popover, Typography } from '@mui/material'
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
+import { ButtonWithHint } from '../../../components/Buttons/ButtonWithHint'
 import { useSystemInfo } from '../api/useSystemInfo'
 import { isNotEmpty } from '../../../utils/arrays'
 import { InfoContextIcon } from '../../../icons/InfoContextIcon'
@@ -38,14 +39,15 @@ export const SystemInfoPopup: FC<SystemInfoPopupProps> = memo(({
 
   return (
     <>
-      <IconButton
-        data-testid="SystemInfoButton"
+      <ButtonWithHint
+        hint="System Information"
+        startIcon={<InfoOutlinedIcon/>}
+        aria-label="System Information"
         size="large"
         color="inherit"
         onClick={({ currentTarget }) => setAnchor(currentTarget)}
-      >
-        <InfoOutlinedIcon/>
-      </IconButton>
+        data-testid="SystemInfoButton"
+      />
       <Popover
         sx={{ m: 0, p: 3 }}
         id={anchor ? 'popover' : undefined}

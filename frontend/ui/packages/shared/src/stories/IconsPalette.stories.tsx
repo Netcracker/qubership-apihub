@@ -1,11 +1,14 @@
 import { Box, Grid, Paper, type SvgIconProps, Typography, useTheme } from '@mui/material'
 import type { Meta, StoryObj } from '@storybook/react'
 import React, { memo, useMemo } from 'react'
+
 import { SECONDARY_TEXT_COLOR } from '../themes/colors'
 import { createVariantStory } from './commons/utils'
 
+import { ActionsIcon } from '../icons/ActionsIcon'
 import { AddIcon } from '../icons/AddIcon'
 import { AddSquareIcon } from '../icons/AddSquareIcon'
+import { BackArrowIcon } from '../icons/BackArrowIcon'
 import { ApiIcon } from '../icons/ApiIcon'
 import { ArrowDown } from '../icons/ArrowDown'
 import { ArrowUp } from '../icons/ArrowUp'
@@ -18,6 +21,7 @@ import { CheckboxDisabledIcon } from '../icons/CheckboxDisabledIcon'
 import { CheckboxIcon } from '../icons/CheckboxIcon'
 import { CheckCircleIcon } from '../icons/CheckCircleIcon'
 import { CheckIcon } from '../icons/CheckIcon'
+import { CheckIconMui } from '../icons/CheckIconMui'
 import { ClockBackwardIcon } from '../icons/ClockBackwardIcon'
 import { CloseIcon } from '../icons/CloseIcon'
 import { CloudIcon } from '../icons/CloudIcon'
@@ -26,6 +30,7 @@ import { CloudUploadIcon } from '../icons/CloudUploadIcon'
 import { ComparisonIcon } from '../icons/ComparisonIcon'
 import { ComponentIcon } from '../icons/ComponentIcon'
 import { ConfigureIcon } from '../icons/ConfigureIcon'
+import { CopyIcon } from '../icons/CopyIcon'
 import { DashboardIcon } from '../icons/DashboardIcon'
 import { DefaultSideBarIcon } from '../icons/DefaultSideBarIcon'
 import { DeleteIcon } from '../icons/DeleteIcon'
@@ -38,6 +43,7 @@ import { EditIcon } from '../icons/EditIcon'
 import { EmptyUserIcon } from '../icons/EmptyUserIcon'
 import { ErrorIcon } from '../icons/ErrorIcon'
 import { ExitIcon } from '../icons/ExitIcon'
+import { ExtLinkIcon } from '../icons/ExtLinkIcon'
 import { FileIcon } from '../icons/FileIcon'
 import { FilterIcon } from '../icons/FilterIcon'
 import { FolderIcon } from '../icons/FolderIcon'
@@ -61,14 +67,17 @@ import { MinusIcon } from '../icons/MinusIcon'
 import { OpenapiIcon } from '../icons/OpenapiIcon'
 import { OverviewIcon } from '../icons/OverviewIcon'
 import { PackageIcon } from '../icons/PackageIcon'
+import { PinIcon } from '../icons/PinIcon'
 import { PlayIcon } from '../icons/PlayIcon'
 import { PlusIcon } from '../icons/PlusIcon'
 import { PortalSettingsIcon } from '../icons/PortalSettingsIcon'
 import { ProtobufIcon } from '../icons/ProtobufIcon'
 import { PublishIcon } from '../icons/PublishIcon'
 import { RestApiIcon } from '../icons/RestApiIcon'
+import { RobotFilledIcon } from '../icons/RobotFilledIcon'
 import { RobotIcon } from '../icons/RobotIcon'
 import { SegmentItemIcon } from '../icons/SegmentItemIcon'
+import { SendIcon } from '../icons/SendIcon'
 import { ServicesIcon } from '../icons/ServicesIcon'
 import { SettingIcon } from '../icons/SettingIcon'
 import {
@@ -79,6 +88,7 @@ import {
 import { ShareIcon } from '../icons/ShareIcon'
 import { SliderIcon } from '../icons/SliderIcon'
 import { SnapshotsIcon } from '../icons/SnapshotsIcon'
+import { StopIcon } from '../icons/StopIcon'
 import { SwaggerIcon } from '../icons/SwaggerIcon'
 import { ToLeftIcon } from '../icons/ToLeftIcon'
 import { ToRightIcon } from '../icons/ToRightIcon'
@@ -125,6 +135,7 @@ const CUSTOM_ICONS_REGISTRY: readonly IconItem<CustomIconComponent>[] = [
   { name: 'ConfigureIcon', component: ConfigureIcon },
   { name: 'DashboardIcon', component: DashboardIcon },
   { name: 'DefaultSideBarIcon', component: DefaultSideBarIcon },
+  { name: 'DefaultWarningIcon', component: DefaultWarningIcon },
   { name: 'DeleteIcon', component: DeleteIcon },
   { name: 'DoneIcon', component: DoneIcon },
   { name: 'DownloadIcon', component: DownloadIcon },
@@ -155,6 +166,8 @@ const CUSTOM_ICONS_REGISTRY: readonly IconItem<CustomIconComponent>[] = [
   { name: 'PortalSettingsIcon', component: PortalSettingsIcon },
   { name: 'ProtobufIcon', component: ProtobufIcon },
   { name: 'PublishIcon', component: PublishIcon },
+  { name: 'RedWarningCircleIcon', component: RedWarningCircleIcon },
+  { name: 'RedWarningIcon', component: RedWarningIcon },
   { name: 'RestApiIcon', component: RestApiIcon },
   { name: 'SegmentItemIcon', component: SegmentItemIcon },
   { name: 'ServicesIcon', component: ServicesIcon },
@@ -170,28 +183,34 @@ const CUSTOM_ICONS_REGISTRY: readonly IconItem<CustomIconComponent>[] = [
   { name: 'UploadImageIcon', component: UploadImageIcon },
   { name: 'VersionIcon', component: VersionIcon },
   { name: 'YellowWarningCircleIcon', component: YellowWarningCircleIcon },
-  { name: 'RedWarningCircleIcon', component: RedWarningCircleIcon },
-  { name: 'DefaultWarningIcon', component: DefaultWarningIcon },
   { name: 'YellowWarningIcon', component: YellowWarningIcon },
-  { name: 'RedWarningIcon', component: RedWarningIcon },
 ] as const
 
 const MUI_ICONS_REGISTRY: readonly IconItem<MuiIconComponent>[] = [
-  { name: 'InfoContextIcon', component: InfoContextIcon },
-  { name: 'InfoFilledIcon', component: InfoFilledIcon },
+  { name: 'ActionsIcon', component: ActionsIcon },
+  { name: 'BackArrowIcon', component: BackArrowIcon },
   { name: 'CheckCircleIcon', component: CheckCircleIcon },
+  { name: 'CheckIconMui', component: CheckIconMui },
   { name: 'ClockBackwardIcon', component: ClockBackwardIcon },
   { name: 'CloseIcon', component: CloseIcon },
   { name: 'CloudUploadIcon', component: CloudUploadIcon },
+  { name: 'CopyIcon', component: CopyIcon },
   { name: 'DeleteIconMui', component: DeleteIconMui },
   { name: 'DownloadIconMui', component: DownloadIconMui },
   { name: 'ErrorIcon', component: ErrorIcon },
+  { name: 'ExtLinkIcon', component: ExtLinkIcon },
+  { name: 'InfoContextIcon', component: InfoContextIcon },
+  { name: 'InfoFilledIcon', component: InfoFilledIcon },
   { name: 'LinkIcon', component: LinkIcon },
+  { name: 'NonShareableIcon', component: ShareabilityNonShareableIcon },
+  { name: 'PinIcon', component: PinIcon },
   { name: 'PlayIcon', component: PlayIcon },
   { name: 'PlusIcon', component: PlusIcon },
+  { name: 'RobotFilledIcon', component: RobotFilledIcon },
   { name: 'RobotIcon', component: RobotIcon },
+  { name: 'SendIcon', component: SendIcon },
   { name: 'ShareableIcon', component: ShareabilityShareableIcon },
-  { name: 'NonShareableIcon', component: ShareabilityNonShareableIcon },
+  { name: 'StopIcon', component: StopIcon },
   { name: 'UnknownShareabilityIcon', component: ShareabilityUnknownIcon },
   { name: 'WarningIconMui', component: WarningIconMui },
 ] as const

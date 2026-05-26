@@ -73,6 +73,8 @@ export const SHOW_COMPARE_REST_GROUPS_DIALOG = 'show-compare-rest-groups-dialog'
 export const SHOW_COMPARE_OPERATIONS_WITH_UPLOADED_FILE_DIALOG = 'show-compare-operations-with-uploaded-file-dialog'
 export const SHOW_GLOBAL_SEARCH_PANEL = 'show-global-search-panel'
 export const HIDE_GLOBAL_SEARCH_PANEL = 'hide-global-search-panel'
+export const SHOW_AI_ASSISTANT_PANEL = 'show-ai-assistant-panel'
+export const HIDE_AI_ASSISTANT_PANEL = 'hide-ai-assistant-panel'
 export const APPLY_GLOBAL_SEARCH_FILTERS = 'apply-global-search-filters'
 export const SHOW_EDIT_WORKSPACES_LIST_DIALOG = 'show-edit-workspaces-list-dialog'
 export const SHOW_EDIT_PACKAGE_VERSION_DIALOG = 'show-edit-package-version-dialog'
@@ -211,6 +213,8 @@ type EventBus = {
   showCreatePackageDialog: (detail: ShowCreatePackageDetail) => void
   showGlobalSearchPanel: () => void
   hideGlobalSearchPanel: () => void
+  showAiAssistantPanel: () => void
+  hideAiAssistantPanel: () => void
   applyGlobalSearchFilters: (details: GlobalSearchPanelDetails) => void
 
   // portal
@@ -272,6 +276,8 @@ function eventBusProvider(): EventBus {
       showCreatePackageDialog: slot<ShowCreatePackageDetail>(),
       showGlobalSearchPanel: slot(),
       hideGlobalSearchPanel: slot(),
+      showAiAssistantPanel: slot(),
+      hideAiAssistantPanel: slot(),
       applyGlobalSearchFilters: slot<GlobalSearchPanelDetails>(),
 
       // portal
@@ -344,6 +350,12 @@ function eventBusProvider(): EventBus {
   })
   eventBus.hideGlobalSearchPanel.on(() => {
     dispatchEvent(new CustomEvent(HIDE_GLOBAL_SEARCH_PANEL))
+  })
+  eventBus.showAiAssistantPanel.on(() => {
+    dispatchEvent(new CustomEvent(SHOW_AI_ASSISTANT_PANEL))
+  })
+  eventBus.hideAiAssistantPanel.on(() => {
+    dispatchEvent(new CustomEvent(HIDE_AI_ASSISTANT_PANEL))
   })
   eventBus.applyGlobalSearchFilters.on((detail: GlobalSearchPanelDetails) => {
     dispatchEvent(new CustomEvent(APPLY_GLOBAL_SEARCH_FILTERS, { detail }))

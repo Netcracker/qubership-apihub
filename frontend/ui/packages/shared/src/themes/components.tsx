@@ -769,8 +769,14 @@ export function createComponents(): Components<Theme> {
     MuiToolbar: {
       styleOverrides: {
         root: {
-          '@media (min-width: 600px)': {
+          // TODO: 14.05.26 find a better approach (possibly via `mixins`) for this override.
+          // ToolbarRoot merges `theme.mixins.toolbar` (56px, then 64px from `sm`), which
+          // fights the fixed 44px AppBar; keep 44px at every breakpoint / orientation.
+          '&&': {
             minHeight: APP_HEADER_HEIGHT,
+            '@media (min-width: 600px)': {
+              minHeight: APP_HEADER_HEIGHT,
+            },
           },
         },
       },
