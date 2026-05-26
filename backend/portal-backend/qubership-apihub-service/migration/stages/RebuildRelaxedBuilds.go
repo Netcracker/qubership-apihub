@@ -65,7 +65,7 @@ func makeRelaxedVersionsQuery(packageIds []string, versionsIn []string, migratio
 		INNER JOIN package_group pkg ON pv.package_id = pkg.id
 		WHERE pv.deleted_at IS NULL AND pkg.deleted_at IS NULL
 		  AND pkg.kind = '%s'
-		  AND (pv.metadata ? '%s' OR pv.metadata ? '%s')
+		  AND (pv.metadata \? '%s' OR pv.metadata \? '%s')
 		  %s
 		  %s
 		  AND NOT EXISTS (
@@ -107,7 +107,7 @@ func makeRelaxedComparisonsQuery(packageIds []string, versionsIn []string, migra
 
 	query := fmt.Sprintf(`
 		SELECT vc.* FROM version_comparison vc
-		WHERE (vc.metadata ? '%s' OR vc.metadata ? '%s')
+		WHERE (vc.metadata \? '%s' OR vc.metadata \? '%s')
 		  %s
 		  %s
 		  AND NOT EXISTS (
