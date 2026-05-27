@@ -30,7 +30,6 @@
     "@nestjs/config": "^3.0.0",
     "@nestjs/core": "^10.0.0",
     "@nestjs/platform-express": "^10.0.0",
-    "@nestjs/swagger": "^7.0.0",
     "@netcracker/qubership-apihub-api-processor": "dev",
     "@sinclair/typebox": "^0.32.1",
     "adm-zip": "^0.5.10",
@@ -40,7 +39,6 @@
     "openapi-types": "^12.1.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
-    "swagger-ui-express": "^4.6.3",
     "uuid": "^11.1.0"
   },
   "devDependencies": {
