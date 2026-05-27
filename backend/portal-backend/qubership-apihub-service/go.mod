@@ -16,7 +16,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/gosimple/slug v1.15.0
 	github.com/iancoleman/orderedmap v0.3.0
-	github.com/mark3labs/mcp-go v0.52.0
+	github.com/mark3labs/mcp-go v0.54.1
 	github.com/minio/minio-go/v7 v7.1.0
 	github.com/openai/openai-go/v3 v3.37.0
 	github.com/pkg/errors v0.9.1
