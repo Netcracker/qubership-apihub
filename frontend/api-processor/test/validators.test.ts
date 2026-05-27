@@ -1,5 +1,10 @@
 import { applyBuilderVersionInfo, validateApiProcessorVersion } from '../src/validators'
-import { PackageConfig, VERSION_VALIDATION_LEVEL, VersionCache, VersionValidationLevel } from '../src'
+import {
+  PackageConfig,
+  VERSION_VALIDATION_LEVEL,
+  VersionCache,
+  VersionValidationLevel,
+} from '../src'
 import { buildChangelogWithVersionOverrides } from './helpers'
 
 let mockVersion = '1.0.0'
