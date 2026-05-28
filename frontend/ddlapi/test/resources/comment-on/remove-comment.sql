@@ -1,0 +1,5 @@
+CREATE TABLE users (id bigint PRIMARY KEY, email text);
+
+COMMENT ON TABLE users IS 'Temp comment';
+
+COMMENT ON TABLE users IS NULL;
