@@ -1,4 +1,5 @@
 import {
+  DDLAPI_VERSION,
   ObjectKind, TypeKind, ExprKind, AttrKind, ReferenceOption,
   type Expr, type Literal, type RawExpr, type NamedDefault, type UnknownExpr,
   type Attr, type Comment, type Check,
@@ -264,7 +265,7 @@ describe('Schema interfaces', () => {
     const pk: Index = { kind: ObjectKind.Index, name: 'PRIMARY', unique: true, parts: [{ seqNo: 0, c: col }] }
     const tbl: Table = { kind: ObjectKind.Table, name: 'users', columns: [col], primaryKey: pk }
     const schema: Schema = { name: 'public', tables: [tbl] }
-    const realm: Realm = { ddlapi: '1.0.0', schemas: [schema] }
+    const realm: Realm = { ddlapi: DDLAPI_VERSION, schemas: [schema] }
 
     expect(realm.schemas[0].name).toBe('public')
     expect(realm.schemas[0].tables?.[0].name).toBe('users')
@@ -294,7 +295,7 @@ describe('Schema interfaces', () => {
 describe('newRealm', () => {
   test('empty realm', () => {
     const r = newRealm()
-    expect(r.ddlapi).toBe('1.0.0')
+    expect(r.ddlapi).toBe(DDLAPI_VERSION)
     expect(r.schemas).toEqual([])
     expect(r.attrs).toBeUndefined()
     expect(r.objects).toBeUndefined()
@@ -303,7 +304,7 @@ describe('newRealm', () => {
   test('realm with schemas', () => {
     const s = newSchema('public')
     const r = newRealm([s])
-    expect(r.ddlapi).toBe('1.0.0')
+    expect(r.ddlapi).toBe(DDLAPI_VERSION)
     expect(r.schemas).toHaveLength(1)
     expect(r.schemas[0].name).toBe('public')
   })

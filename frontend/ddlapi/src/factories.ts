@@ -10,6 +10,7 @@ import type {
   Realm, Schema, Table, View, Column, ColumnType, Index, IndexPart,
   ForeignKey, SchemaObject,
 } from './schema'
+import { DDLAPI_VERSION } from './schema'
 
 // ── Schema factories ─────────────────────────────────────────────────────────
 
@@ -21,7 +22,7 @@ export function newRealm(
   props?: { attrs?: readonly Attr[]; objects?: readonly SchemaObject[] },
 ): Realm {
   return {
-    ddlapi: '1.0.0',
+    ddlapi: DDLAPI_VERSION,
     schemas: schemas ?? [],
     ...(props?.attrs !== undefined && { attrs: props.attrs }),
     ...(props?.objects !== undefined && { objects: props.objects }),

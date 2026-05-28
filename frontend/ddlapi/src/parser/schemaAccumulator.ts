@@ -2,6 +2,7 @@
 
 import type { SchemaType } from '../types'
 import type { Table, Schema, SchemaObject, Column, Index, IndexPart, ForeignKey, Realm } from '../schema'
+import { DDLAPI_VERSION } from '../schema'
 import type { Attr } from '../attrs'
 import type { SourceRange } from './positions'
 
@@ -150,6 +151,6 @@ export class SchemaAccumulator {
       }
       schemasList.push(schema)
     }
-    return { ddlapi: '1.0.0', schemas: schemasList }
+    return { ddlapi: DDLAPI_VERSION, schemas: schemasList }
   }
 }

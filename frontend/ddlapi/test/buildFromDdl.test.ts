@@ -1,4 +1,4 @@
-import { buildFromDdl, DdlParseError, DdlBuildError } from '../src'
+import { buildFromDdl, DdlParseError, DdlBuildError, DDLAPI_VERSION } from '../src'
 import type { DdlNonFatalError } from '../src'
 import { TypeKind, DdlErrorKind } from '../src/constants'
 
@@ -7,19 +7,19 @@ import { TypeKind, DdlErrorKind } from '../src/constants'
 describe('realm structure', () => {
   test('empty input returns minimal realm', async () => {
     const realm = await buildFromDdl('')
-    expect(realm.ddlapi).toBe('1.0.0')
+    expect(realm.ddlapi).toBe(DDLAPI_VERSION)
     expect(realm.schemas).toHaveLength(0)
   })
 
   test('whitespace-only input returns minimal realm', async () => {
     const realm = await buildFromDdl('   \n\t  ')
-    expect(realm.ddlapi).toBe('1.0.0')
+    expect(realm.ddlapi).toBe(DDLAPI_VERSION)
     expect(realm.schemas).toHaveLength(0)
   })
 
   test('ddlapi version is always 1.0.0', async () => {
     const realm = await buildFromDdl('CREATE TABLE t (id bigint);')
-    expect(realm.ddlapi).toBe('1.0.0')
+    expect(realm.ddlapi).toBe(DDLAPI_VERSION)
   })
 
   test('single table ends up in schemas[0]', async () => {

@@ -16,6 +16,9 @@ export type SchemaObject =
 /** Driver-specific or future schema objects pass through without casting. */
 export interface UnknownObject { readonly kind: string; readonly [key: string]: unknown }
 
+/** Specification format version stamp written into every Realm. */
+export const DDLAPI_VERSION = '1.0.0'
+
 /**
  * A Realm or a database describes a domain of schema resources that are
  * logically connected and can be accessed and queried in the same connection

@@ -6,6 +6,7 @@ import type {
   CreateEnumStmt, CompositeTypeStmt, CreateRangeStmt, CreateTrigStmt,
 } from '@pgsql/types'
 import { DdlErrorKind } from '../constants'
+import { DDLAPI_VERSION } from '../schema'
 import type { SourceRange } from './positions'
 import { parseStatements, stmtTypeName, stmtBody } from './pgParser'
 import { stmtRangeOf } from './astHelpers'
@@ -161,7 +162,7 @@ export async function buildFromDdl(ddl: string, options?: BuildFromDdlOptions): 
 
   // Fast path — empty input
   if (!ddl.trim()) {
-    return { ddlapi: '1.0.0', schemas: [] }
+    return { ddlapi: DDLAPI_VERSION, schemas: [] }
   }
 
   // Parse all statements (WASM init on first call)
