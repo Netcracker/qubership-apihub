@@ -1,4 +1,5 @@
-import type { Attr } from './attrs'
+import type { Attr, Check } from './attrs'
+import type { Expr } from './exprs'
 import type { Schema } from './schema'
 import { TypeKind } from './constants'
 
@@ -15,7 +16,7 @@ import { TypeKind } from './constants'
  * Ported from Go: schema.Type interface.
  */
 export type SchemaType =
-  | BoolType | EnumType | IntegerType | DecimalType | FloatType
+  | BoolType | EnumType | DomainType | IntegerType | DecimalType | FloatType
   | StringType | BinaryType | TimeType | JSONType | SpatialType
   | UUIDType | UnsupportedType | UnknownType
 
@@ -104,5 +105,31 @@ export interface TimeType {
   readonly t: string
   readonly precision?: number
   readonly scale?: number
+  readonly attrs?: readonly Attr[]
+}
+
+/**
+ * DomainType represents a PostgreSQL domain — a named type alias with optional
+ * constraints. Dual-role: both a SchemaType (column type reference) and a
+ * SchemaObject (top-level object in Schema.objects).
+ *
+ * baseType may itself be a DomainType (PostgreSQL allows CREATE DOMAIN d2 AS d1).
+ *
+ * Atlas Go equivalent: schema.DomainType (sql/schema/schema.go)
+ */
+export interface DomainType {
+  readonly kind: typeof TypeKind.DomainType
+  /** Qualified type name as written (e.g. "public.positive_int"). */
+  readonly t: string
+  /** Back-ref to owning schema — not populated; navigate top-down from Realm. */
+  readonly schema?: Schema
+  /** Underlying type; may itself be a DomainType. */
+  readonly baseType: SchemaType
+  /** Domain-level NOT NULL constraint (false = NOT NULL; undefined = no constraint). */
+  readonly null?: boolean
+  /** Domain DEFAULT expression. */
+  readonly default?: Expr
+  /** Domain CHECK constraints. */
+  readonly checks?: readonly Check[]
   readonly attrs?: readonly Attr[]
 }

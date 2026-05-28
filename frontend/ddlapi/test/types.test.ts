@@ -14,10 +14,10 @@
  */
 
 import type {
-  BoolType, EnumType, IntegerType, DecimalType, FloatType,
+  BoolType, EnumType, DomainType, IntegerType, DecimalType, FloatType,
   StringType, BinaryType, TimeType, JSONType, SpatialType, UUIDType, UnsupportedType,
   Literal, RawExpr, NamedDefault,
-  Comment, Charset, Collation, Check, GeneratedExpr, Pos,
+  Comment, Charset, Collation, Check, GeneratedExpr,
 } from '@netcracker/qubership-apihub-ddlapi'
 import { TypeKind, ExprKind, AttrKind, ObjectKind } from '@netcracker/qubership-apihub-ddlapi'
 
@@ -33,7 +33,7 @@ function assertNever(x: never): never {
  * Keep in sync with SchemaType / TypeKind when adding new types.
  */
 type KnownSchemaType =
-  | BoolType | EnumType | IntegerType | DecimalType | FloatType
+  | BoolType | EnumType | DomainType | IntegerType | DecimalType | FloatType
   | StringType | BinaryType | TimeType | JSONType | SpatialType
   | UUIDType | UnsupportedType
 
@@ -41,6 +41,7 @@ function _exhaustiveSchemaType(t: KnownSchemaType): string {
   switch (t.kind) {
     case TypeKind.BoolType: return t.t
     case TypeKind.EnumType: return t.values.join(',')
+    case TypeKind.DomainType: return t.t
     case TypeKind.IntegerType: return t.t
     case TypeKind.DecimalType: return t.t
     case TypeKind.FloatType: return t.t
@@ -80,7 +81,7 @@ function _exhaustiveExpr(e: KnownExpr): string {
  * All known Attr variants, excluding the UnknownAttr escape hatch.
  * Keep in sync with Attr / AttrKind.
  */
-type KnownAttr = Comment | Charset | Collation | Check | GeneratedExpr | Pos
+type KnownAttr = Comment | Charset | Collation | Check | GeneratedExpr
 
 function _exhaustiveAttr(a: KnownAttr): string {
   switch (a.kind) {
@@ -89,7 +90,6 @@ function _exhaustiveAttr(a: KnownAttr): string {
     case AttrKind.Collation: return a.v
     case AttrKind.Check: return a.expr
     case AttrKind.GeneratedExpr: return a.expr
-    case AttrKind.Pos: return a.filename ?? ''
     default:
       return assertNever(a)
   }

@@ -8,3 +8,13 @@ export * from './types'
 export * from './schema'
 export * from './factories'
 export * from './utils'
+
+// Parser public surface
+export { type SourceRange } from './parser/positions'
+export {
+  buildFromDdl,
+  DdlParseError,
+  DdlBuildError,
+  type DdlNonFatalError,
+  type BuildFromDdlOptions,
+} from './parser/buildFromDdl'

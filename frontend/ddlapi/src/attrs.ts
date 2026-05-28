@@ -4,9 +4,11 @@ import { AttrKind } from './constants'
  * Attr represents a schema element attribute.
  *
  * Ported from Go: schema.Attr interface.
+ * Note: PCompared to Atlas Go, Pos attr is deliberately omitted from this API,
+ * since it is technical data not related to DB schema.
  */
 export type Attr =
-  | Comment | Charset | Collation | Check | GeneratedExpr | Pos | UnknownAttr
+  | Comment | Charset | Collation | Check | GeneratedExpr | UnknownAttr
 
 /** Comment describes a schema element comment. */
 export interface Comment { readonly kind: typeof AttrKind.Comment; readonly text: string }
@@ -36,19 +38,6 @@ export interface GeneratedExpr {
   /** Optional type. e.g. STORED or VIRTUAL. */
   readonly type?: string
 }
-
-/** Pos is an attribute that holds the position of a schema element. */
-export interface Pos {
-  readonly kind: typeof AttrKind.Pos
-  /** The name (or full path) of the file which loaded the schema element. */
-  readonly filename?: string
-  /** Start and End represent the bounds of this range. */
-  readonly start?: PosPoint
-  readonly end?: PosPoint
-}
-
-/** Line, column, and byte offset within a source file (mirrors hcl.Pos fields). */
-export interface PosPoint { readonly line: number; readonly column: number; readonly byte: number }
 
 /** Driver-specific or future attrs pass through without casting. */
 export interface UnknownAttr { readonly kind: string; readonly [key: string]: unknown }

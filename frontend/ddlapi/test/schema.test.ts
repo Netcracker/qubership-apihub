@@ -11,7 +11,7 @@ import {
   findAttr, replaceOrAppendAttr, removeAttr, underlyingExpr,
   boolType, integerType, decimalType, floatType, stringType, binaryType,
   timeType, jsonType, spatialType, uuidType, unsupportedType, enumType,
-  comment, charset, collation, generatedExpr, filePos,
+  comment, charset, collation, generatedExpr,
   literal, rawExpr, namedDefault,
 } from '@netcracker/qubership-apihub-ddlapi'
 
@@ -64,7 +64,6 @@ describe('AttrKind', () => {
     expect(AttrKind.Collation).toBe('Collation')
     expect(AttrKind.Check).toBe('Check')
     expect(AttrKind.GeneratedExpr).toBe('GeneratedExpr')
-    expect(AttrKind.Pos).toBe('Pos')
   })
 })
 
@@ -131,7 +130,6 @@ function describeAttr(a: Attr): string {
     case AttrKind.Collation: return `collation:${a.v}`
     case AttrKind.Check: return `check:${a.expr}`
     case AttrKind.GeneratedExpr: return `gen:${a.expr}`
-    case AttrKind.Pos: return `pos:${a.filename ?? ''}`
     default: {
       const unk: { kind: string } = a
       return `unknown:${unk.kind}`
@@ -154,17 +152,6 @@ describe('Attr', () => {
   test('Check with optional name absent', () => {
     const ch: Check = { kind: AttrKind.Check, expr: 'x > 0' }
     expect(ch.name).toBeUndefined()
-  })
-
-  test('Pos with all fields', () => {
-    const p = {
-      kind: AttrKind.Pos,
-      filename: 'schema.hcl',
-      start: { line: 1, column: 1, byte: 0 },
-      end: { line: 1, column: 5, byte: 4 },
-    }
-    expect(describeAttr(p)).toBe('pos:schema.hcl')
-    expect(p.start?.byte).toBe(0)
   })
 
   test('UnknownAttr passes through', () => {
@@ -226,9 +213,11 @@ describe('SchemaType', () => {
 // ── Task 6: Schema interfaces ─────────────────────────────────────────────────
 
 describe('Schema interfaces', () => {
-  test('ColumnType.null is required boolean', () => {
-    const ct: ColumnType = { type: { kind: TypeKind.BoolType, t: 'bool' }, null: false }
-    expect(ct.null).toBe(false)
+  test('ColumnType.null is optional boolean', () => {
+    const ct: ColumnType = { type: { kind: TypeKind.BoolType, t: 'bool' } }
+    expect(ct.null).toBeUndefined()
+    const ctExplicitFalse: ColumnType = { type: { kind: TypeKind.BoolType, t: 'bool' }, null: false }
+    expect(ctExplicitFalse.null).toBe(false)
   })
 
   test('ColumnType with raw', () => {
@@ -275,7 +264,7 @@ describe('Schema interfaces', () => {
     const pk: Index = { kind: ObjectKind.Index, name: 'PRIMARY', unique: true, parts: [{ seqNo: 0, c: col }] }
     const tbl: Table = { kind: ObjectKind.Table, name: 'users', columns: [col], primaryKey: pk }
     const schema: Schema = { name: 'public', tables: [tbl] }
-    const realm: Realm = { schemas: [schema] }
+    const realm: Realm = { ddlapi: '1.0.0', schemas: [schema] }
 
     expect(realm.schemas[0].name).toBe('public')
     expect(realm.schemas[0].tables?.[0].name).toBe('users')
@@ -305,6 +294,7 @@ describe('Schema interfaces', () => {
 describe('newRealm', () => {
   test('empty realm', () => {
     const r = newRealm()
+    expect(r.ddlapi).toBe('1.0.0')
     expect(r.schemas).toEqual([])
     expect(r.attrs).toBeUndefined()
     expect(r.objects).toBeUndefined()
@@ -313,6 +303,7 @@ describe('newRealm', () => {
   test('realm with schemas', () => {
     const s = newSchema('public')
     const r = newRealm([s])
+    expect(r.ddlapi).toBe('1.0.0')
     expect(r.schemas).toHaveLength(1)
     expect(r.schemas[0].name).toBe('public')
   })
@@ -372,7 +363,7 @@ describe('newColumn', () => {
 
   test('with type', () => {
     const c = newColumn('id', { type: columnType(integerType('int')) })
-    expect(c.type?.null).toBe(false)
+    expect(c.type?.null).toBeUndefined()
     expect(c.type?.type.kind).toBe(TypeKind.IntegerType)
   })
 })
@@ -386,9 +377,9 @@ describe('newNullableColumn', () => {
 })
 
 describe('columnType', () => {
-  test('null defaults to false', () => {
+  test('null omitted when not specified', () => {
     const ct = columnType(boolType('boolean'))
-    expect(ct.null).toBe(false)
+    expect(ct.null).toBeUndefined()
     expect(ct.raw).toBeUndefined()
   })
 
@@ -396,6 +387,11 @@ describe('columnType', () => {
     const ct = columnType(stringType('varchar'), { null: true, raw: 'varchar(255)' })
     expect(ct.null).toBe(true)
     expect(ct.raw).toBe('varchar(255)')
+  })
+
+  test('explicit null: false', () => {
+    const ct = columnType(integerType('int'), { null: false })
+    expect(ct.null).toBe(false)
   })
 })
 
@@ -596,19 +592,6 @@ describe('attr factories', () => {
     expect(g.type).toBeUndefined()
   })
 
-  test('filePos with start and end', () => {
-    const p = filePos('main.hcl', { line: 1, column: 1, byte: 0 }, { line: 2, column: 5, byte: 20 })
-    expect(p.kind).toBe(AttrKind.Pos)
-    expect(p.filename).toBe('main.hcl')
-    expect(p.start?.line).toBe(1)
-    expect(p.end?.byte).toBe(20)
-  })
-
-  test('filePos without start/end', () => {
-    const p = filePos('schema.hcl')
-    expect(p.start).toBeUndefined()
-    expect(p.end).toBeUndefined()
-  })
 })
 
 describe('expr factories', () => {

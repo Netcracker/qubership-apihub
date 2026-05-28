@@ -1,6 +1,6 @@
 import type { Attr, Check } from './attrs'
 import type { Expr, NamedDefault } from './exprs'
-import type { SchemaType, EnumType } from './types'
+import type { SchemaType, EnumType, DomainType } from './types'
 import { ObjectKind, ReferenceOption } from './constants'
 
 /**
@@ -11,7 +11,7 @@ import { ObjectKind, ReferenceOption } from './constants'
  * Ported from Go: schema.Object interface.
  */
 export type SchemaObject =
-  | Table | View | EnumType | Index | Check | ForeignKey | NamedDefault | UnknownObject
+  | Table | View | EnumType | DomainType | Index | Check | ForeignKey | NamedDefault | UnknownObject
 
 /** Driver-specific or future schema objects pass through without casting. */
 export interface UnknownObject { readonly kind: string; readonly [key: string]: unknown }
@@ -22,6 +22,8 @@ export interface UnknownObject { readonly kind: string; readonly [key: string]: 
  * (e.g. a physical database instance).
  */
 export interface Realm {
+  /** Specification format version and type marker (e.g. "1.0.0"). */
+  readonly ddlapi: string
   readonly schemas: readonly Schema[]
   readonly attrs?: readonly Attr[]
   /** Realm-level objects (e.g., users or extensions). */
@@ -51,6 +53,8 @@ export interface Table {
   readonly foreignKeys?: readonly ForeignKey[]
   /** Attrs, constraints and options. */
   readonly attrs?: readonly Attr[]
+  /** Table-level schema objects (e.g., ExcludeConstraint). */
+  readonly objects?: readonly SchemaObject[]
   /** Objects this table depends on. */
   readonly deps?: readonly SchemaObject[]
   // readonly refs?: readonly SchemaObject[]  // back-ref — objects that depend on this table; omitted
@@ -72,7 +76,11 @@ export interface View {
 export interface ColumnType {
   readonly type: SchemaType
   readonly raw?: string
-  readonly null: boolean
+  /**
+   * Explicit nullability declaration.
+   * false = NOT NULL; true = NULL (explicit); undefined = no nullability clause written.
+   */
+  readonly null?: boolean
 }
 
 /** A Column represents a column definition. */
@@ -144,6 +152,10 @@ export type { NamedDefault } from './exprs'
 // EnumType is defined in src/types.ts (it is primarily a Type).
 // It is re-exported here because it is also a SchemaObject.
 export type { EnumType } from './types'
+
+// DomainType is defined in src/types.ts (it is primarily a Type).
+// It is re-exported here because it is also a SchemaObject.
+export type { DomainType } from './types'
 
 // Check is defined in src/attrs.ts (it is primarily an Attr).
 // It is re-exported here because it is also a SchemaObject.

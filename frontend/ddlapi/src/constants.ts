@@ -24,6 +24,7 @@ export const TypeKind = {
   SpatialType:     'SpatialType',
   UUIDType:        'UUIDType',
   UnsupportedType: 'UnsupportedType',
+  DomainType:      'DomainType',   // also in ObjectKind (dual-role: SchemaType + SchemaObject)
 } as const
 export type TypeKind = typeof TypeKind[keyof typeof TypeKind]
 
@@ -41,9 +42,17 @@ export const AttrKind = {
   Collation:     'Collation',
   Check:         'Check',        // also in ObjectKind
   GeneratedExpr: 'GeneratedExpr',
-  Pos:           'Pos',
 } as const
 export type AttrKind = typeof AttrKind[keyof typeof AttrKind]
+
+/** Discriminants for DdlNonFatalError.kind. */
+export const DdlErrorKind = {
+  OutOfScopeStatement:  'out-of-scope-statement',
+  UnresolvedReference:  'unresolved-reference',
+  DuplicateObject:      'duplicate-object',
+  UnresolvedLikeSource: 'unresolved-like-source',
+} as const
+export type DdlErrorKind = typeof DdlErrorKind[keyof typeof DdlErrorKind]
 
 /**
  * Reference options (actions) specified by ON UPDATE and ON DELETE

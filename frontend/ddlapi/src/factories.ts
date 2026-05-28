@@ -1,10 +1,10 @@
 import { AttrKind, ExprKind, ObjectKind, ReferenceOption, TypeKind } from './constants'
-import type { Attr, Check, GeneratedExpr, Comment, Charset, Collation, Pos, PosPoint } from './attrs'
+import type { Attr, Check, GeneratedExpr, Comment, Charset, Collation } from './attrs'
 import type { Expr, Literal, RawExpr, NamedDefault } from './exprs'
 import type {
   SchemaType, BoolType, IntegerType, DecimalType, FloatType,
   StringType, BinaryType, TimeType, JSONType, SpatialType, UUIDType,
-  UnsupportedType, EnumType,
+  UnsupportedType, EnumType, DomainType,
 } from './types'
 import type {
   Realm, Schema, Table, View, Column, ColumnType, Index, IndexPart,
@@ -21,6 +21,7 @@ export function newRealm(
   props?: { attrs?: readonly Attr[]; objects?: readonly SchemaObject[] },
 ): Realm {
   return {
+    ddlapi: '1.0.0',
     schemas: schemas ?? [],
     ...(props?.attrs !== undefined && { attrs: props.attrs }),
     ...(props?.objects !== undefined && { objects: props.objects }),
@@ -103,12 +104,12 @@ export function newView(
  */
 export function columnType(
   type: SchemaType,
-  opts?: { raw?: string; null?: boolean },
+  opts?: { null?: boolean; raw?: string },
 ): ColumnType {
   return {
     type,
-    null: opts?.null ?? false,
-    ...(opts?.raw !== undefined && { raw: opts.raw }),
+    ...(opts?.null !== undefined ? { null: opts.null } : {}),
+    ...(opts?.raw !== undefined ? { raw: opts.raw } : {}),
   }
 }
 
@@ -358,6 +359,23 @@ export function enumType(
   }
 }
 
+/** @remarks Pure constructor — no runtime validation. */
+export function domainType(
+  t: string,
+  baseType: SchemaType,
+  opts?: { null?: boolean; default?: Expr; checks?: readonly Check[]; attrs?: readonly Attr[] },
+): DomainType {
+  return {
+    kind: TypeKind.DomainType,
+    t,
+    baseType,
+    ...(opts?.null !== undefined ? { null: opts.null } : {}),
+    ...(opts?.default !== undefined && { default: opts.default }),
+    ...(opts?.checks !== undefined && { checks: opts.checks }),
+    ...(opts?.attrs !== undefined && { attrs: opts.attrs }),
+  }
+}
+
 // ── Attr factories ───────────────────────────────────────────────────────────
 
 /** @remarks Pure constructor — no runtime validation. */
@@ -381,19 +399,6 @@ export function generatedExpr(expr: string, type?: string): GeneratedExpr {
     kind: AttrKind.GeneratedExpr,
     expr,
     ...(type !== undefined && { type }),
-  }
-}
-
-/**
- * Mirrors Go's NewFilePos. filename is required.
- * @remarks Pure constructor — no runtime validation.
- */
-export function filePos(name: string, start?: PosPoint, end?: PosPoint): Pos {
-  return {
-    kind: AttrKind.Pos,
-    filename: name,
-    ...(start !== undefined && { start }),
-    ...(end !== undefined && { end }),
   }
 }
 
