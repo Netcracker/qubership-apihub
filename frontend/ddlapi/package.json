@@ -2,20 +2,23 @@
   "name": "@netcracker/qubership-apihub-ddlapi",
   "version": "0.1.0",
   "license": "Apache-2.0",
-  "files": ["dist", "package.json"],
-  "main":    "./dist/index.cjs",
-  "module":  "./dist/index.js",
-  "types":   "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "package.json"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import":  "./dist/index.js",
+      "import": "./dist/index.js",
       "require": "./dist/index.cjs",
-      "types":   "./dist/index.d.ts"
+      "types": "./dist/index.d.ts"
     }
   },
   "scripts": {
-    "build":     "vite build",
-    "test":      "jest",
+    "build": "vite build",
+    "test": "jest",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
@@ -25,5 +28,9 @@
     "typescript": "^5.8.3",
     "vite": "^4.5.14",
     "vite-plugin-dts": "^3.9.1"
+  },
+  "dependencies": {
+    "@pgsql/types": "^17.6.2",
+    "pgsql-parser": "^17.9.15"
   }
 }
