@@ -36,7 +36,6 @@ export function newSchema(
   name: string,
   props?: {
     tables?: readonly Table[]
-    views?: readonly View[]
     attrs?: readonly Attr[]
     objects?: readonly SchemaObject[]
   },
@@ -44,7 +43,6 @@ export function newSchema(
   return {
     name,
     ...(props?.tables !== undefined && { tables: props.tables }),
-    ...(props?.views !== undefined && { views: props.views }),
     ...(props?.attrs !== undefined && { attrs: props.attrs }),
     ...(props?.objects !== undefined && { objects: props.objects }),
   }

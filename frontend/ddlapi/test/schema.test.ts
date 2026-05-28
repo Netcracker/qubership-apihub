@@ -315,7 +315,6 @@ describe('newSchema', () => {
     const s = newSchema('mydb')
     expect(s.name).toBe('mydb')
     expect(s.tables).toBeUndefined()
-    expect(s.views).toBeUndefined()
     expect(s.attrs).toBeUndefined()
     expect(s.objects).toBeUndefined()
   })

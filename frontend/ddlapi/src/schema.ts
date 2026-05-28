@@ -38,7 +38,7 @@ export interface Schema {
   readonly name: string
   // readonly realm?: Realm          // back-ref to parent Realm — omitted; navigate top-down
   readonly tables?: readonly Table[]
-  readonly views?: readonly View[]
+  // readonly views?: readonly View[] // not supported for now
   /** Attrs and options. */
   readonly attrs?: readonly Attr[]
   /** Schema-level objects (e.g., types or sequences). */
