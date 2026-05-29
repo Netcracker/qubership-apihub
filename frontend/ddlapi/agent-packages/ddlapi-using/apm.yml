@@ -1,0 +1,4 @@
+name: ddlapi-using
+version: 1.0.0
+description: How to consume the ddlapi library — navigate the schema model, distinguish the driver-neutral core from PostgreSQL escape-hatch extensions, and call buildFromDdl correctly.
+author: Netcracker

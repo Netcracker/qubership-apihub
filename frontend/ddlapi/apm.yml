@@ -1,0 +1,8 @@
+name: qubership-apihub-ddlapi-dev-kit
+version: 1.0.0
+description: Umbrella APM project for the ddlapi repository — pulls in the authoring and testing conventions for contributors working in this repo.
+author: Netcracker
+dependencies:
+  apm:
+    - Netcracker/qubership-apihub-ddlapi/agent-packages/ddlapi-authoring#main
+    - Netcracker/qubership-apihub-ddlapi/agent-packages/ddlapi-testing#main

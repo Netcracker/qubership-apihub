@@ -1,0 +1,4 @@
+name: ddlapi-authoring
+version: 1.0.0
+description: Conventions for developing the ddlapi library itself — the Atlas-Go-derived schema model and the two-pass PostgreSQL DDL parser.
+author: Netcracker

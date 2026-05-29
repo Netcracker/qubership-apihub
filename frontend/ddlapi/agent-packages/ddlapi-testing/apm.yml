@@ -1,0 +1,4 @@
+name: ddlapi-testing
+version: 1.0.0
+description: How to write tests for the ddlapi library — fixture layout, the WASM single-worker constraint, and the compile-time exhaustiveness pattern.
+author: Netcracker
