@@ -4,5 +4,8 @@ description: Umbrella APM project for the ddlapi repository — pulls in the aut
 author: Netcracker
 dependencies:
   apm:
-    - Netcracker/qubership-apihub-ddlapi/agent-packages/ddlapi-authoring#main
-    - Netcracker/qubership-apihub-ddlapi/agent-packages/ddlapi-testing#main
+    - ./agent-packages/ddlapi-authoring
+    - ./agent-packages/ddlapi-testing
+targets:
+  - claude
+  - cursor
