@@ -1,0 +1,32 @@
+lockfile_version: '1'
+generated_at: '2026-05-29T13:06:37.811622+00:00'
+apm_version: 0.14.2
+dependencies:
+- repo_url: _local/api-unifier-authoring
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/api-unifier-authoring
+  - .claude/rules/api-unifier-authoring.md
+  - .claude/skills/api-unifier-authoring
+  - .cursor/rules/api-unifier-authoring.mdc
+  - .github/instructions/api-unifier-authoring.instructions.md
+  deployed_file_hashes:
+    .claude/rules/api-unifier-authoring.md: sha256:ffc502c9999ceecb5f70a1c0a0d1945c6e9c4efa5c74384cdce511b84e854b99
+    .cursor/rules/api-unifier-authoring.mdc: sha256:78b484611411290272faf2f87afaaa4923e4649fc97eedf5e1392692254935ea
+    .github/instructions/api-unifier-authoring.instructions.md: sha256:53f72b77b2c0471e57391a250eb1e3c907b29beae771461b0a2213c1cab045cc
+  source: local
+  local_path: ./agent-packages/api-unifier-authoring
+- repo_url: _local/api-unifier-testing
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/api-unifier-testing
+  - .claude/rules/api-unifier-testing.md
+  - .claude/skills/api-unifier-testing
+  - .cursor/rules/api-unifier-testing.mdc
+  - .github/instructions/api-unifier-testing.instructions.md
+  deployed_file_hashes:
+    .claude/rules/api-unifier-testing.md: sha256:d99e03cb75b69fae37d7d54b89ed0594232c12b958cc9c90c58803fad17b4b46
+    .cursor/rules/api-unifier-testing.mdc: sha256:ce42a22b125ef1f4afd564ebed702ab87539fa0280dd5fe8f138e4c86b496740
+    .github/instructions/api-unifier-testing.instructions.md: sha256:b1d11c70d27c782d80e1accd296a5301db642e095095ff129569697f93e1ae10
+  source: local
+  local_path: ./agent-packages/api-unifier-testing

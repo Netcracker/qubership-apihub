@@ -1,0 +1,14 @@
+name: qubership-apihub-api-unifier
+version: 1.0.0
+description: Agent guidance for developing and testing the api-unifier normalization engine.
+author: netcracker
+license: Apache-2.0
+
+targets:
+  - claude
+  - cursor
+
+dependencies:
+  apm:
+    - ./agent-packages/api-unifier-authoring
+    - ./agent-packages/api-unifier-testing

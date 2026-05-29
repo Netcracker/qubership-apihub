@@ -11,3 +11,10 @@ coverage/
 .yarn
 *.iml
 /.idea/
+
+# APM dependencies
+apm_modules/
+
+# Local harness overrides
+.claude/settings.local.json
+.cursor/settings.local.json

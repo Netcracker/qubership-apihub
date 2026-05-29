@@ -1,0 +1,5 @@
+name: api-unifier-authoring
+version: 1.0.0
+description: Conventions for extending the api-unifier normalization engine (rules, unify functions, validators).
+author: netcracker
+license: Apache-2.0
