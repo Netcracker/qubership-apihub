@@ -1,0 +1,34 @@
+lockfile_version: '1'
+generated_at: '2026-05-29T12:29:21.052986+00:00'
+apm_version: 0.14.2
+dependencies:
+- repo_url: _local/ddlapi-authoring
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/ddlapi-authoring
+  - .claude/rules/ddlapi-authoring.md
+  - .claude/skills/ddlapi-authoring
+  - .cursor/rules/ddlapi-authoring.mdc
+  deployed_file_hashes:
+    .claude/rules/ddlapi-authoring.md: sha256:0f70d115b7d0375d912f5e92909e0cd883b731e2d0b6328e8ee4e272057321fb
+    .cursor/rules/ddlapi-authoring.mdc: sha256:9d5d428f7b27737c0e82740748f0fdba612209951d00b4afaa399bf420a20f10
+  source: local
+  local_path: ./agent-packages/ddlapi-authoring
+- repo_url: _local/ddlapi-testing
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/ddlapi-testing
+  - .claude/rules/ddlapi-testing.md
+  - .claude/skills/ddlapi-testing
+  - .cursor/rules/ddlapi-testing.mdc
+  deployed_file_hashes:
+    .claude/rules/ddlapi-testing.md: sha256:988804acb12dab6866345c3821517b73215019caa954b5c9bb02cc50c1dedcc6
+    .cursor/rules/ddlapi-testing.mdc: sha256:7fecfb15827376de63c3c56094320d1d9e52ca738bfb358048666bcb74c514d3
+  source: local
+  local_path: ./agent-packages/ddlapi-testing
+local_deployed_files:
+- .claude/rules/ddlapi-dev-kit.md
+- .cursor/rules/ddlapi-dev-kit.mdc
+local_deployed_file_hashes:
+  .claude/rules/ddlapi-dev-kit.md: sha256:25abe6f9101ade446663b93effec7796addcd4e612fef8589a369fd41fdddbd9
+  .cursor/rules/ddlapi-dev-kit.mdc: sha256:9c07bb05fd1d43f9a5a692e90e8a8a592242bffabd5e0412c1ced8361a932f89
