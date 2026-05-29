@@ -119,10 +119,10 @@ describe('createType', () => {
   })
 
   describe('createDomain', () => {
-    test('simple: creates DomainType in schema.objects and typeRegistry', async () => {
+    test('simple: creates pg:domain object in schema.objects', async () => {
       const realm = await buildFromDdl(loadSql('create-domain/simple.sql'))
       const schema = realm.schemas[0]!
-      const dt = schema.objects!.find(o => o.kind === TypeKind.DomainType)
+      const dt = schema.objects!.find(o => o.kind === 'pg:domain')
       expect(dt).toBeDefined()
       expect((dt as { t: string }).t).toBe('positive_int')
     })
@@ -130,7 +130,7 @@ describe('createType', () => {
     test('simple: baseType is IntegerType', async () => {
       const realm = await buildFromDdl(loadSql('create-domain/simple.sql'))
       const schema = realm.schemas[0]!
-      const dt = schema.objects!.find(o => o.kind === TypeKind.DomainType) as {
+      const dt = schema.objects!.find(o => o.kind === 'pg:domain') as unknown as {
         baseType: { kind: string; t: string }
         checks?: unknown[]
       }
@@ -141,7 +141,7 @@ describe('createType', () => {
     test('simple: CHECK constraint stored as checks array', async () => {
       const realm = await buildFromDdl(loadSql('create-domain/simple.sql'))
       const schema = realm.schemas[0]!
-      const dt = schema.objects!.find(o => o.kind === TypeKind.DomainType) as { checks?: { expr: string }[] }
+      const dt = schema.objects!.find(o => o.kind === 'pg:domain') as { checks?: { expr: string }[] }
       expect(dt.checks).toHaveLength(1)
       expect(dt.checks![0]!.expr).toBeTruthy()
     })
@@ -149,7 +149,7 @@ describe('createType', () => {
     test('with-not-null-default: NOT NULL and DEFAULT captured', async () => {
       const realm = await buildFromDdl(loadSql('create-domain/with-not-null-default.sql'))
       const schema = realm.schemas[0]!
-      const dt = schema.objects!.find(o => o.kind === TypeKind.DomainType) as {
+      const dt = schema.objects!.find(o => o.kind === 'pg:domain') as {
         null?: boolean
         default?: unknown
       }
@@ -160,13 +160,13 @@ describe('createType', () => {
     test('with-named-constraint: CHECK has name', async () => {
       const realm = await buildFromDdl(loadSql('create-domain/with-named-constraint.sql'))
       const schema = realm.schemas[0]!
-      const dt = schema.objects!.find(o => o.kind === TypeKind.DomainType) as {
+      const dt = schema.objects!.find(o => o.kind === 'pg:domain') as {
         checks?: { name?: string; expr: string }[]
       }
       expect(dt.checks![0]!.name).toBe('valid_zip')
     })
 
-    test('column referencing domain: type upgraded to DomainType instance', async () => {
+    test('column referencing domain: type resolves to shared pg:domain instance', async () => {
       const errors: unknown[] = []
       const realm = await buildFromDdl(
         `CREATE DOMAIN positive_int AS integer CHECK (VALUE > 0);
@@ -177,9 +177,9 @@ describe('createType', () => {
       const schema = realm.schemas[0]!
       const table = schema.tables!.find(t => t.name === 'items')!
       const qtyCol = table.columns!.find(c => c.name === 'qty')!
-      expect(qtyCol.type!.type.kind).toBe(TypeKind.DomainType)
-      // Referential equality
-      const domainObj = schema.objects!.find(o => o.kind === TypeKind.DomainType)!
+      expect(qtyCol.type!.type.kind).toBe('pg:domain')
+      // Referential equality — column type is the same object as schema.objects entry
+      const domainObj = schema.objects!.find(o => o.kind === 'pg:domain')!
       expect(qtyCol.type!.type).toBe(domainObj)
     })
   })

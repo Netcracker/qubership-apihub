@@ -4,7 +4,7 @@ import type { Expr, Literal, RawExpr, NamedDefault } from './exprs'
 import type {
   SchemaType, BoolType, IntegerType, DecimalType, FloatType,
   StringType, BinaryType, TimeType, JSONType, SpatialType, UUIDType,
-  UnsupportedType, EnumType, DomainType,
+  UnsupportedType, EnumType,
 } from './types'
 import type {
   Realm, Schema, Table, View, Column, ColumnType, Index, IndexPart,
@@ -354,23 +354,6 @@ export function enumType(
     values,
     ...(opts?.t !== undefined && { t: opts.t }),
     ...(opts?.schema !== undefined && { schema: opts.schema }),
-    ...(opts?.attrs !== undefined && { attrs: opts.attrs }),
-  }
-}
-
-/** @remarks Pure constructor — no runtime validation. */
-export function domainType(
-  t: string,
-  baseType: SchemaType,
-  opts?: { null?: boolean; default?: Expr; checks?: Check[]; attrs?: Attr[] },
-): DomainType {
-  return {
-    kind: TypeKind.DomainType,
-    t,
-    baseType,
-    ...(opts?.null !== undefined ? { null: opts.null } : {}),
-    ...(opts?.default !== undefined && { default: opts.default }),
-    ...(opts?.checks !== undefined && { checks: opts.checks }),
     ...(opts?.attrs !== undefined && { attrs: opts.attrs }),
   }
 }

@@ -14,7 +14,7 @@
  */
 
 import type {
-  BoolType, EnumType, DomainType, IntegerType, DecimalType, FloatType,
+  BoolType, EnumType, IntegerType, DecimalType, FloatType,
   StringType, BinaryType, TimeType, JSONType, SpatialType, UUIDType, UnsupportedType,
   Literal, RawExpr, NamedDefault,
   Comment, Charset, Collation, Check, GeneratedExpr,
@@ -33,7 +33,7 @@ function assertNever(x: never): never {
  * Keep in sync with SchemaType / TypeKind when adding new types.
  */
 type KnownSchemaType =
-  | BoolType | EnumType | DomainType | IntegerType | DecimalType | FloatType
+  | BoolType | EnumType | IntegerType | DecimalType | FloatType
   | StringType | BinaryType | TimeType | JSONType | SpatialType
   | UUIDType | UnsupportedType
 
@@ -41,7 +41,6 @@ function _exhaustiveSchemaType(t: KnownSchemaType): string {
   switch (t.kind) {
     case TypeKind.BoolType: return t.t
     case TypeKind.EnumType: return t.values.join(',')
-    case TypeKind.DomainType: return t.t
     case TypeKind.IntegerType: return t.t
     case TypeKind.DecimalType: return t.t
     case TypeKind.FloatType: return t.t

@@ -1,4 +1,12 @@
 // Private module — handles CreateDomainStmt (CREATE DOMAIN).
+//
+// Domains are a PostgreSQL-specific construct. They are not modelled as a
+// first-class SchemaType in the generic ddlapi schema; instead each domain is
+// stored as a plain UnknownObject / UnknownType with kind 'pg:domain'. This
+// keeps the core schema model driver-neutral while still allowing PG-aware
+// consumers to inspect domain definitions and ensuring that columns whose type
+// references a domain resolve to the shared 'pg:domain' instance rather than
+// staying as a raw UnsupportedType.
 
 import type { CreateDomainStmt, RawStmt, Node, Constraint } from '@pgsql/types'
 import type { SchemaObject } from '../../schema'
@@ -6,7 +14,7 @@ import type { SchemaType } from '../../types'
 import type { Check } from '../../attrs'
 import type { Expr } from '../../exprs'
 import { DdlErrorKind } from '../../constants'
-import { domainType, newCheck, unsupportedType } from '../../factories'
+import { newCheck, unsupportedType } from '../../factories'
 import { mapTypeName } from '../typeMapper'
 import type { SchemaAccumulator } from '../schemaAccumulator'
 import { strVal, stmtRangeOf, nodeToExpr, exprToString } from '../astHelpers'
@@ -28,12 +36,11 @@ export function handleCreateDomain(
       : defaultSchemaName
   const qualifiedName = `${schemaName}.${domainName}`
 
-  // Duplicate check
   if (acc.typeRegistry.has(qualifiedName)) {
     const range = stmtRangeOf(rawStmt)
     onError({
       kind: DdlErrorKind.DuplicateObject,
-      objectKind: 'DomainType',
+      objectKind: 'pg:domain',
       qualifiedName,
       message: `Duplicate domain: ${qualifiedName}`,
       ...(range && { range }),
@@ -68,11 +75,14 @@ export function handleCreateDomain(
     }
   }
 
-  const dt = domainType(domainName, baseType, {
+  const pgDomain = {
+    kind: 'pg:domain' as const,
+    t: domainName,
+    baseType,
     ...(nullability !== undefined && { null: nullability }),
     ...(defaultExpr !== undefined && { default: defaultExpr }),
     ...(checks.length > 0 && { checks }),
-  })
+  }
 
-  acc.registerType(schemaName, domainName, dt as SchemaType & SchemaObject)
+  acc.registerType(schemaName, domainName, pgDomain as unknown as SchemaType & SchemaObject)
 }

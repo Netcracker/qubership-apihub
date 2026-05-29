@@ -1,6 +1,6 @@
 import type { Attr, Check } from './attrs'
 import type { Expr, NamedDefault } from './exprs'
-import type { SchemaType, EnumType, DomainType } from './types'
+import type { SchemaType, EnumType } from './types'
 import { ObjectKind, ReferenceOption } from './constants'
 
 /**
@@ -11,7 +11,7 @@ import { ObjectKind, ReferenceOption } from './constants'
  * Ported from Go: schema.Object interface.
  */
 export type SchemaObject =
-  | Table | View | EnumType | DomainType | Index | Check | ForeignKey | NamedDefault | UnknownObject
+  | Table | View | EnumType | Index | Check | ForeignKey | NamedDefault | UnknownObject
 
 /** Driver-specific or future schema objects pass through without casting. */
 export interface UnknownObject { kind: string;[key: string]: unknown }
@@ -155,10 +155,6 @@ export type { NamedDefault } from './exprs'
 // EnumType is defined in src/types.ts (it is primarily a Type).
 // It is re-exported here because it is also a SchemaObject.
 export type { EnumType } from './types'
-
-// DomainType is defined in src/types.ts (it is primarily a Type).
-// It is re-exported here because it is also a SchemaObject.
-export type { DomainType } from './types'
 
 // Check is defined in src/attrs.ts (it is primarily an Attr).
 // It is re-exported here because it is also a SchemaObject.

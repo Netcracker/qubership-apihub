@@ -24,7 +24,6 @@ export const TypeKind = {
   SpatialType:     'SpatialType',
   UUIDType:        'UUIDType',
   UnsupportedType: 'UnsupportedType',
-  DomainType:      'DomainType',   // also in ObjectKind (dual-role: SchemaType + SchemaObject)
 } as const
 export type TypeKind = typeof TypeKind[keyof typeof TypeKind]
 
