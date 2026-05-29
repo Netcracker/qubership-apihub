@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "module": "CommonJS",
+    "rootDir": ".",
+    "baseUrl": ".",
+    "paths": {
+      "@netcracker/qubership-apihub-ddlapi": ["./src/index.ts"]
+    }
+  },
+  "include": ["src/**/*", "test/**/*"]
+}
