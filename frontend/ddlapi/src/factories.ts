@@ -18,8 +18,8 @@ import { DDLAPI_VERSION } from './schema'
  * @remarks Pure constructor — no runtime validation.
  */
 export function newRealm(
-  schemas?: readonly Schema[],
-  props?: { attrs?: readonly Attr[]; objects?: readonly SchemaObject[] },
+  schemas?: Schema[],
+  props?: { attrs?: Attr[]; objects?: SchemaObject[] },
 ): Realm {
   return {
     ddlapi: DDLAPI_VERSION,
@@ -35,9 +35,9 @@ export function newRealm(
 export function newSchema(
   name: string,
   props?: {
-    tables?: readonly Table[]
-    attrs?: readonly Attr[]
-    objects?: readonly SchemaObject[]
+    tables?: Table[]
+    attrs?: Attr[]
+    objects?: SchemaObject[]
   },
 ): Schema {
   return {
@@ -54,12 +54,12 @@ export function newSchema(
 export function newTable(
   name: string,
   props?: {
-    columns?: readonly Column[]
-    indexes?: readonly Index[]
+    columns?: Column[]
+    indexes?: Index[]
     primaryKey?: Index
-    foreignKeys?: readonly ForeignKey[]
-    attrs?: readonly Attr[]
-    deps?: readonly SchemaObject[]
+    foreignKeys?: ForeignKey[]
+    attrs?: Attr[]
+    deps?: SchemaObject[]
   },
 ): Table {
   return {
@@ -81,9 +81,9 @@ export function newView(
   name: string,
   props?: {
     def?: string
-    columns?: readonly Column[]
-    attrs?: readonly Attr[]
-    deps?: readonly SchemaObject[]
+    columns?: Column[]
+    attrs?: Attr[]
+    deps?: SchemaObject[]
   },
 ): View {
   return {
@@ -120,7 +120,7 @@ export function newColumn(
   props?: {
     type?: ColumnType
     default?: Expr
-    attrs?: readonly Attr[]
+    attrs?: Attr[]
   },
 ): Column {
   return {
@@ -148,8 +148,8 @@ export function newIndex(
   name?: string,
   props?: {
     unique?: boolean
-    attrs?: readonly Attr[]
-    parts?: readonly IndexPart[]
+    attrs?: Attr[]
+    parts?: IndexPart[]
   },
 ): Index {
   return {
@@ -166,7 +166,7 @@ export function newIndex(
  */
 export function newUniqueIndex(
   name: string,
-  props?: { attrs?: readonly Attr[]; parts?: readonly IndexPart[] },
+  props?: { attrs?: Attr[]; parts?: IndexPart[] },
 ): Index {
   return newIndex(name, { unique: true, ...props })
 }
@@ -176,7 +176,7 @@ export function newUniqueIndex(
  * Back-references on columns are NOT wired — see design decision §3.
  * @remarks Pure constructor — no runtime validation.
  */
-export function newPrimaryKey(columns: readonly Column[]): Index {
+export function newPrimaryKey(columns: Column[]): Index {
   const parts: IndexPart[] = columns.map((c, i) => ({ seqNo: i, c }))
   return {
     kind: ObjectKind.Index,
@@ -192,7 +192,7 @@ export function newIndexPart(props?: {
   desc?: boolean
   x?: Expr
   c?: Column
-  attrs?: readonly Attr[]
+  attrs?: Attr[]
 }): IndexPart {
   return {
     seqNo: props?.seqNo ?? 0,
@@ -207,7 +207,7 @@ export function newIndexPart(props?: {
  * Mirrors Go's NewColumnPart. seqNo defaults to 0.
  * @remarks Pure constructor — no runtime validation.
  */
-export function newColumnPart(c: Column, props?: { seqNo?: number; desc?: boolean; attrs?: readonly Attr[] }): IndexPart {
+export function newColumnPart(c: Column, props?: { seqNo?: number; desc?: boolean; attrs?: Attr[] }): IndexPart {
   return newIndexPart({ seqNo: props?.seqNo ?? 0, c, desc: props?.desc, attrs: props?.attrs })
 }
 
@@ -215,7 +215,7 @@ export function newColumnPart(c: Column, props?: { seqNo?: number; desc?: boolea
  * Mirrors Go's NewExprPart. seqNo defaults to 0.
  * @remarks Pure constructor — no runtime validation.
  */
-export function newExprPart(x: Expr, props?: { seqNo?: number; desc?: boolean; attrs?: readonly Attr[] }): IndexPart {
+export function newExprPart(x: Expr, props?: { seqNo?: number; desc?: boolean; attrs?: Attr[] }): IndexPart {
   return newIndexPart({ seqNo: props?.seqNo ?? 0, x, desc: props?.desc, attrs: props?.attrs })
 }
 
@@ -225,12 +225,12 @@ export function newExprPart(x: Expr, props?: { seqNo?: number; desc?: boolean; a
 export function newForeignKey(
   symbol?: string,
   props?: {
-    columns?: readonly Column[]
+    columns?: Column[]
     refTable?: Table
-    refColumns?: readonly Column[]
+    refColumns?: Column[]
     onUpdate?: ReferenceOption
     onDelete?: ReferenceOption
-    attrs?: readonly Attr[]
+    attrs?: Attr[]
   },
 ): ForeignKey {
   return {
@@ -264,7 +264,7 @@ export function boolType(t: string): BoolType {
 }
 
 /** @remarks Pure constructor — no runtime validation. */
-export function integerType(t: string, opts?: { unsigned?: boolean; attrs?: readonly Attr[] }): IntegerType {
+export function integerType(t: string, opts?: { unsigned?: boolean; attrs?: Attr[] }): IntegerType {
   return {
     kind: TypeKind.IntegerType,
     t,
@@ -295,7 +295,7 @@ export function floatType(t: string, opts?: { unsigned?: boolean; precision?: nu
 }
 
 /** @remarks Pure constructor — no runtime validation. */
-export function stringType(t: string, opts?: { size?: number; attrs?: readonly Attr[] }): StringType {
+export function stringType(t: string, opts?: { size?: number; attrs?: Attr[] }): StringType {
   return {
     kind: TypeKind.StringType,
     t,
@@ -314,7 +314,7 @@ export function binaryType(t: string, opts?: { size?: number }): BinaryType {
 }
 
 /** @remarks Pure constructor — no runtime validation. */
-export function timeType(t: string, opts?: { precision?: number; scale?: number; attrs?: readonly Attr[] }): TimeType {
+export function timeType(t: string, opts?: { precision?: number; scale?: number; attrs?: Attr[] }): TimeType {
   return {
     kind: TypeKind.TimeType,
     t,
@@ -346,8 +346,8 @@ export function unsupportedType(t: string): UnsupportedType {
 
 /** @remarks Pure constructor — no runtime validation. */
 export function enumType(
-  values: readonly string[],
-  opts?: { t?: string; schema?: Schema; attrs?: readonly Attr[] },
+  values: string[],
+  opts?: { t?: string; schema?: Schema; attrs?: Attr[] },
 ): EnumType {
   return {
     kind: TypeKind.EnumType,
@@ -362,7 +362,7 @@ export function enumType(
 export function domainType(
   t: string,
   baseType: SchemaType,
-  opts?: { null?: boolean; default?: Expr; checks?: readonly Check[]; attrs?: readonly Attr[] },
+  opts?: { null?: boolean; default?: Expr; checks?: Check[]; attrs?: Attr[] },
 ): DomainType {
   return {
     kind: TypeKind.DomainType,
@@ -414,7 +414,7 @@ export function rawExpr(x: string): RawExpr {
 }
 
 /** @remarks Pure constructor — no runtime validation. */
-export function namedDefault(name: string, expr: Literal | RawExpr, attrs?: readonly Attr[]): NamedDefault {
+export function namedDefault(name: string, expr: Literal | RawExpr, attrs?: Attr[]): NamedDefault {
   return {
     kind: ObjectKind.NamedDefault,
     name,

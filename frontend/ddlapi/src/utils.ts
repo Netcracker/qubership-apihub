@@ -24,7 +24,7 @@ export function findAttr<K extends Attr['kind']>(
  * unique, stable `kind` string per attr type; two distinct driver attrs with the
  * same `kind` string would collide here just as two Go types would not.
  */
-export function replaceOrAppendAttr(attrs: readonly Attr[] | undefined, attr: Attr): readonly Attr[] {
+export function replaceOrAppendAttr(attrs: readonly Attr[] | undefined, attr: Attr): Attr[] {
   if (attrs === undefined) return [attr]
   const idx = attrs.findIndex(a => a.kind === attr.kind)
   if (idx === -1) return [...attrs, attr]
@@ -37,7 +37,7 @@ export function replaceOrAppendAttr(attrs: readonly Attr[] | undefined, attr: At
 export function removeAttr<K extends Attr['kind']>(
   attrs: readonly Attr[] | undefined,
   kind: K,
-): readonly Attr[] {
+): Attr[] {
   if (attrs === undefined) return []
   return attrs.filter(a => a.kind !== kind)
 }

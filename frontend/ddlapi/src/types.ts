@@ -21,54 +21,54 @@ export type SchemaType =
   | UUIDType | UnsupportedType | UnknownType
 
 /** BoolType represents a boolean type. */
-export interface BoolType { readonly kind: typeof TypeKind.BoolType; readonly t: string }
+export interface BoolType { kind: typeof TypeKind.BoolType; t: string }
 /** JSONType represents a JSON type. */
-export interface JSONType { readonly kind: typeof TypeKind.JSONType; readonly t: string }
+export interface JSONType { kind: typeof TypeKind.JSONType; t: string }
 /** SpatialType represents a spatial/geometric type. */
-export interface SpatialType { readonly kind: typeof TypeKind.SpatialType; readonly t: string }
+export interface SpatialType { kind: typeof TypeKind.SpatialType; t: string }
 /** A UUIDType defines a UUID type. */
-export interface UUIDType { readonly kind: typeof TypeKind.UUIDType; readonly t: string }
+export interface UUIDType { kind: typeof TypeKind.UUIDType; t: string }
 /** UnsupportedType represents a type that is not supported by the drivers. */
-export interface UnsupportedType { readonly kind: typeof TypeKind.UnsupportedType; readonly t: string }
+export interface UnsupportedType { kind: typeof TypeKind.UnsupportedType; t: string }
 /** Driver-specific or future types pass through without casting. */
-export interface UnknownType { readonly kind: string; readonly [key: string]: unknown }
+export interface UnknownType { kind: string;[key: string]: unknown }
 
 /** EnumType represents an enum type. */
 export interface EnumType {
-  readonly kind: typeof TypeKind.EnumType
+  kind: typeof TypeKind.EnumType
   /** Optional type name (e.g. a named enum in PostgreSQL). */
-  readonly t?: string
+  t?: string
   /** Enum values. */
-  readonly values: readonly string[]
+  values: string[]
   /** Optional schema. */
-  readonly schema?: Schema
+  schema?: Schema
   /** Extra attributes. */
-  readonly attrs?: readonly Attr[]
+  attrs?: Attr[]
 }
 
 /** IntegerType represents an int type. */
 export interface IntegerType {
-  readonly kind: typeof TypeKind.IntegerType
-  readonly t: string
-  readonly unsigned?: boolean
-  readonly attrs?: readonly Attr[]
+  kind: typeof TypeKind.IntegerType
+  t: string
+  unsigned?: boolean
+  attrs?: Attr[]
 }
 
 /** DecimalType represents a fixed-point type that stores exact numeric values. */
 export interface DecimalType {
-  readonly kind: typeof TypeKind.DecimalType
-  readonly t: string
-  readonly precision?: number
-  readonly scale?: number
-  readonly unsigned?: boolean
+  kind: typeof TypeKind.DecimalType
+  t: string
+  precision?: number
+  scale?: number
+  unsigned?: boolean
 }
 
 /** FloatType represents a floating-point type that stores approximate numeric values. */
 export interface FloatType {
-  readonly kind: typeof TypeKind.FloatType
-  readonly t: string
-  readonly unsigned?: boolean
-  readonly precision?: number
+  kind: typeof TypeKind.FloatType
+  t: string
+  unsigned?: boolean
+  precision?: number
 }
 
 /**
@@ -80,10 +80,10 @@ export interface FloatType {
  * Go convention but this library cannot enforce it in a pure constructor.
  */
 export interface StringType {
-  readonly kind: typeof TypeKind.StringType
-  readonly t: string
-  readonly size?: number
-  readonly attrs?: readonly Attr[]
+  kind: typeof TypeKind.StringType
+  t: string
+  size?: number
+  attrs?: Attr[]
 }
 
 /**
@@ -94,18 +94,18 @@ export interface StringType {
  * undefined = absent. Unlike StringType, a size value of 0 is semantically valid here.
  */
 export interface BinaryType {
-  readonly kind: typeof TypeKind.BinaryType
-  readonly t: string
-  readonly size?: number
+  kind: typeof TypeKind.BinaryType
+  t: string
+  size?: number
 }
 
 /** TimeType represents a date/time type. */
 export interface TimeType {
-  readonly kind: typeof TypeKind.TimeType
-  readonly t: string
-  readonly precision?: number
-  readonly scale?: number
-  readonly attrs?: readonly Attr[]
+  kind: typeof TypeKind.TimeType
+  t: string
+  precision?: number
+  scale?: number
+  attrs?: Attr[]
 }
 
 /**
@@ -118,18 +118,18 @@ export interface TimeType {
  * Atlas Go equivalent: schema.DomainType (sql/schema/schema.go)
  */
 export interface DomainType {
-  readonly kind: typeof TypeKind.DomainType
+  kind: typeof TypeKind.DomainType
   /** Qualified type name as written (e.g. "public.positive_int"). */
-  readonly t: string
+  t: string
   /** Back-ref to owning schema — not populated; navigate top-down from Realm. */
-  readonly schema?: Schema
+  schema?: Schema
   /** Underlying type; may itself be a DomainType. */
-  readonly baseType: SchemaType
+  baseType: SchemaType
   /** Domain-level NOT NULL constraint (false = NOT NULL; undefined = no constraint). */
-  readonly null?: boolean
+  null?: boolean
   /** Domain DEFAULT expression. */
-  readonly default?: Expr
+  default?: Expr
   /** Domain CHECK constraints. */
-  readonly checks?: readonly Check[]
-  readonly attrs?: readonly Attr[]
+  checks?: Check[]
+  attrs?: Attr[]
 }

@@ -54,7 +54,7 @@ export function resolveReferences(
     const ownColumns = (table.columns ?? []) as Column[]
     const merged = [...copiedColumns, ...ownColumns]
     if (merged.length > 0) {
-      ; ((table as unknown) as Record<string, unknown>)['columns'] = merged
+      table.columns = merged
     }
 
     // Register the copied columns so subsequent type-upgrade and FK resolution can find them
@@ -85,7 +85,7 @@ export function resolveReferences(
     const typeKey = rawName.includes('.') ? rawName : `${schemaName}.${rawName}`
     const resolvedType = acc.typeRegistry.get(typeKey)
     if (resolvedType) {
-      ; ((colType as unknown) as Record<string, unknown>)['type'] = resolvedType
+      colType.type = resolvedType
     }
   }
 
@@ -122,7 +122,7 @@ export function resolveReferences(
       continue
     }
 
-    ; ((fk as unknown) as Record<string, unknown>)['refTable'] = refTable
+    fk.refTable = refTable
 
     if (refColumnNames.length > 0) {
       const refColumns: Column[] = []
@@ -140,7 +140,7 @@ export function resolveReferences(
         }
       }
       if (refColumns.length > 0) {
-        ; ((fk as unknown) as Record<string, unknown>)['refColumns'] = refColumns
+        fk.refColumns = refColumns
       }
     }
   }
@@ -150,7 +150,7 @@ export function resolveReferences(
   for (const { part, columnKey } of acc.pendingIndexParts) {
     const col = acc.columnRegistry.get(columnKey)
     if (col) {
-      ; ((part as unknown) as Record<string, unknown>)['c'] = col
+      part.c = col
     }
     // Missing column is not reported — the index part stays without a column ref
   }

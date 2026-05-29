@@ -11,21 +11,21 @@ export type Attr =
   | Comment | Charset | Collation | Check | GeneratedExpr | UnknownAttr
 
 /** Comment describes a schema element comment. */
-export interface Comment { readonly kind: typeof AttrKind.Comment; readonly text: string }
+export interface Comment { kind: typeof AttrKind.Comment; text: string }
 /** Charset describes a column or a table character-set setting. */
-export interface Charset { readonly kind: typeof AttrKind.Charset; readonly v: string }
+export interface Charset { kind: typeof AttrKind.Charset; v: string }
 /** Collation describes a column or a table collation setting. */
-export interface Collation { readonly kind: typeof AttrKind.Collation; readonly v: string }
+export interface Collation { kind: typeof AttrKind.Collation; v: string }
 
 /** Check describes a CHECK constraint. */
 export interface Check {
-  readonly kind: typeof AttrKind.Check
+  kind: typeof AttrKind.Check
   /** Optional constraint name. */
-  readonly name?: string
+  name?: string
   /** Actual CHECK expression. */
-  readonly expr: string
+  expr: string
   /** Additional attributes (e.g. ENFORCED). */
-  readonly attrs?: readonly Attr[]
+  attrs?: Attr[]
 }
 
 /**
@@ -33,11 +33,11 @@ export interface Check {
  * the value of a generated/virtual column.
  */
 export interface GeneratedExpr {
-  readonly kind: typeof AttrKind.GeneratedExpr
-  readonly expr: string
+  kind: typeof AttrKind.GeneratedExpr
+  expr: string
   /** Optional type. e.g. STORED or VIRTUAL. */
-  readonly type?: string
+  type?: string
 }
 
 /** Driver-specific or future attrs pass through without casting. */
-export interface UnknownAttr { readonly kind: string; readonly [key: string]: unknown }
+export interface UnknownAttr { kind: string;[key: string]: unknown }

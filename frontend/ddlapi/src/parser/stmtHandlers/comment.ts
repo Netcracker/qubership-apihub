@@ -19,13 +19,13 @@ function listStrings(node: Node | undefined): string[] {
   return list.items.map(n => strVal(n) ?? '').filter(Boolean)
 }
 
-function setAttr(obj: object, attrs: readonly Attr[] | undefined, newAttr: Attr): void {
-  ; (obj as Record<string, unknown>)['attrs'] = replaceOrAppendAttr(attrs, newAttr)
+function setAttr(obj: { attrs?: Attr[] }, newAttr: Attr): void {
+  obj.attrs = replaceOrAppendAttr(obj.attrs, newAttr)
 }
 
-function clearAttr(obj: object, attrs: readonly Attr[] | undefined, kind: string): void {
-  const result = removeAttr(attrs, kind as Attr['kind'])
-    ; (obj as Record<string, unknown>)['attrs'] = result.length > 0 ? result : undefined
+function clearAttr(obj: { attrs?: Attr[] }, kind: string): void {
+  const result = removeAttr(obj.attrs, kind as Attr['kind'])
+  obj.attrs = result.length > 0 ? result : undefined
 }
 
 export function handleComment(
@@ -52,9 +52,9 @@ export function handleComment(
         return
       }
       if (commentText !== undefined) {
-        setAttr(table as object, table.attrs, makeComment(commentText))
+        setAttr(table, makeComment(commentText))
       } else {
-        clearAttr(table as object, table.attrs, AttrKind.Comment)
+        clearAttr(table, AttrKind.Comment)
       }
       break
     }
@@ -73,9 +73,9 @@ export function handleComment(
         return
       }
       if (commentText !== undefined) {
-        setAttr(col as object, col.attrs, makeComment(commentText))
+        setAttr(col, makeComment(commentText))
       } else {
-        clearAttr(col as object, col.attrs, AttrKind.Comment)
+        clearAttr(col, AttrKind.Comment)
       }
       break
     }
@@ -93,9 +93,9 @@ export function handleComment(
         return
       }
       if (commentText !== undefined) {
-        setAttr(index as object, index.attrs, makeComment(commentText))
+        setAttr(index, makeComment(commentText))
       } else {
-        clearAttr(index as object, index.attrs, AttrKind.Comment)
+        clearAttr(index, AttrKind.Comment)
       }
       break
     }
@@ -116,9 +116,9 @@ export function handleComment(
         return
       }
       if (commentText !== undefined) {
-        setAttr(typeObj as object, (typeObj as { attrs?: readonly Attr[] }).attrs, makeComment(commentText))
+        setAttr(typeObj as { attrs?: Attr[] }, makeComment(commentText))
       } else {
-        clearAttr(typeObj as object, (typeObj as { attrs?: readonly Attr[] }).attrs, AttrKind.Comment)
+        clearAttr(typeObj as { attrs?: Attr[] }, AttrKind.Comment)
       }
       break
     }
@@ -144,15 +144,9 @@ export function handleComment(
       for (const attr of tableAttrs) {
         if (attr.kind === AttrKind.Check && (attr as { name?: string }).name === constraintName) {
           if (commentText !== undefined) {
-            ; (attr as Record<string, unknown>)['attrs'] = replaceOrAppendAttr(
-              (attr as { attrs?: readonly Attr[] }).attrs,
-              makeComment(commentText),
-            )
+            setAttr(attr as { attrs?: Attr[] }, makeComment(commentText))
           } else {
-            ; (attr as Record<string, unknown>)['attrs'] = removeAttr(
-              (attr as { attrs?: readonly Attr[] }).attrs,
-              AttrKind.Comment,
-            )
+            clearAttr(attr as { attrs?: Attr[] }, AttrKind.Comment)
           }
           found = true
           break
@@ -165,9 +159,9 @@ export function handleComment(
         for (const fk of fks) {
           if (fk.symbol === constraintName) {
             if (commentText !== undefined) {
-              setAttr(fk as object, fk.attrs, makeComment(commentText))
+              setAttr(fk, makeComment(commentText))
             } else {
-              clearAttr(fk as object, fk.attrs, AttrKind.Comment)
+              clearAttr(fk, AttrKind.Comment)
             }
             found = true
             break

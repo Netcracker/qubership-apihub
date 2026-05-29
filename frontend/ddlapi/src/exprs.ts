@@ -15,13 +15,13 @@ export type Expr = Literal | RawExpr | NamedDefault | UnknownExpr
  * Literal represents a basic literal expression like 1, or '1'.
  * String literals are usually quoted with single or double quotes.
  */
-export interface Literal { readonly kind: typeof ExprKind.Literal; readonly v: string }
+export interface Literal { kind: typeof ExprKind.Literal; v: string }
 
 /**
  * RawExpr represents a raw expression like "uuid()" or "current_timestamp()".
  * Unlike literals, raw expressions are usually inlined as-is on migration.
  */
-export interface RawExpr { readonly kind: typeof ExprKind.RawExpr; readonly x: string }
+export interface RawExpr { kind: typeof ExprKind.RawExpr; x: string }
 
 /**
  * NamedDefault defines a named default expression (e.g. DEFAULT NEXT VALUE FOR <seq>).
@@ -33,11 +33,11 @@ export interface RawExpr { readonly kind: typeof ExprKind.RawExpr; readonly x: s
  * constant when switching over Expr values.
  */
 export interface NamedDefault {
-  readonly kind: typeof ObjectKind.NamedDefault
-  readonly expr: Literal | RawExpr
-  readonly name: string
-  readonly attrs?: readonly Attr[]
+  kind: typeof ObjectKind.NamedDefault
+  expr: Literal | RawExpr
+  name: string
+  attrs?: Attr[]
 }
 
 /** Driver-specific or future expressions pass through without casting. */
-export interface UnknownExpr { readonly kind: string; readonly [key: string]: unknown }
+export interface UnknownExpr { kind: string;[key: string]: unknown }

@@ -119,26 +119,16 @@ export class SchemaAccumulator {
     }
   }
 
-  /**
-   * Appends an index to an existing table's indexes array.
-   * Centralises the `as unknown` cast needed to mutate readonly Table.indexes.
-   */
   appendTableIndex(tableKey: string, index: Index): void {
     const table = this.tableRegistry.get(tableKey)
     if (!table) return
-    const existing = (table.indexes ?? []) as Index[]
-      ; (table as unknown as Record<string, unknown>)['indexes'] = [...existing, index]
+    table.indexes = [...(table.indexes ?? []), index]
   }
 
-  /**
-   * Appends a single attr to an existing table's attrs array.
-   * Centralises the `as unknown` cast needed to mutate readonly Table.attrs.
-   */
   appendTableAttr(tableKey: string, attr: Attr): void {
     const table = this.tableRegistry.get(tableKey)
     if (!table) return
-    const existing = (table.attrs ?? []) as Attr[]
-      ; (table as unknown as Record<string, unknown>)['attrs'] = [...existing, attr]
+    table.attrs = [...(table.attrs ?? []), attr]
   }
 
   buildRealm(): Realm {

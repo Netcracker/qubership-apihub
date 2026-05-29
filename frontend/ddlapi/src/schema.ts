@@ -14,7 +14,7 @@ export type SchemaObject =
   | Table | View | EnumType | DomainType | Index | Check | ForeignKey | NamedDefault | UnknownObject
 
 /** Driver-specific or future schema objects pass through without casting. */
-export interface UnknownObject { readonly kind: string; readonly [key: string]: unknown }
+export interface UnknownObject { kind: string;[key: string]: unknown }
 
 /** Specification format version stamp written into every Realm. */
 export const DDLAPI_VERSION = '1.0.0'
@@ -26,75 +26,75 @@ export const DDLAPI_VERSION = '1.0.0'
  */
 export interface Realm {
   /** Specification format version and type marker (e.g. "1.0.0"). */
-  readonly ddlapi: string
-  readonly schemas: readonly Schema[]
-  readonly attrs?: readonly Attr[]
+  ddlapi: string
+  schemas: Schema[]
+  attrs?: Attr[]
   /** Realm-level objects (e.g., users or extensions). */
-  readonly objects?: readonly SchemaObject[]
+  objects?: SchemaObject[]
 }
 
 /** A Schema describes a database schema (i.e. named database). */
 export interface Schema {
-  readonly name: string
-  // readonly realm?: Realm          // back-ref to parent Realm — omitted; navigate top-down
-  readonly tables?: readonly Table[]
-  // readonly views?: readonly View[] // not supported for now
+  name: string
+  // realm?: Realm          // back-ref to parent Realm — omitted; navigate top-down
+  tables?: Table[]
+  // views?: View[] // not supported for now
   /** Attrs and options. */
-  readonly attrs?: readonly Attr[]
+  attrs?: Attr[]
   /** Schema-level objects (e.g., types or sequences). */
-  readonly objects?: readonly SchemaObject[]
+  objects?: SchemaObject[]
 }
 
 /** A Table represents a table definition. */
 export interface Table {
-  readonly kind: typeof ObjectKind.Table
-  readonly name: string
-  // readonly schema?: Schema        // back-ref to parent Schema — omitted; navigate top-down
-  readonly columns?: readonly Column[]
-  readonly indexes?: readonly Index[]
-  readonly primaryKey?: Index
-  readonly foreignKeys?: readonly ForeignKey[]
+  kind: typeof ObjectKind.Table
+  name: string
+  // schema?: Schema        // back-ref to parent Schema — omitted; navigate top-down
+  columns?: Column[]
+  indexes?: Index[]
+  primaryKey?: Index
+  foreignKeys?: ForeignKey[]
   /** Attrs, constraints and options. */
-  readonly attrs?: readonly Attr[]
+  attrs?: Attr[]
   /** Table-level schema objects (e.g., ExcludeConstraint). */
-  readonly objects?: readonly SchemaObject[]
+  objects?: SchemaObject[]
   /** Objects this table depends on. */
-  readonly deps?: readonly SchemaObject[]
-  // readonly refs?: readonly SchemaObject[]  // back-ref — objects that depend on this table; omitted
+  deps?: SchemaObject[]
+  // refs?: SchemaObject[]  // back-ref — objects that depend on this table; omitted
 }
 
 /** A View represents a view definition. */
 export interface View {
-  readonly kind: typeof ObjectKind.View
-  readonly name: string
-  // readonly schema?: Schema        // back-ref to parent Schema — omitted; navigate top-down
-  readonly def?: string
-  readonly columns?: readonly Column[]
-  readonly attrs?: readonly Attr[]
+  kind: typeof ObjectKind.View
+  name: string
+  // schema?: Schema        // back-ref to parent Schema — omitted; navigate top-down
+  def?: string
+  columns?: Column[]
+  attrs?: Attr[]
   /** Objects this view depends on. */
-  readonly deps?: readonly SchemaObject[]
+  deps?: SchemaObject[]
 }
 
 /** ColumnType represents a column type that is implemented by the dialect. */
 export interface ColumnType {
-  readonly type: SchemaType
-  readonly raw?: string
+  type: SchemaType
+  raw?: string
   /**
    * Explicit nullability declaration.
    * false = NOT NULL; true = NULL (explicit); undefined = no nullability clause written.
    */
-  readonly null?: boolean
+  null?: boolean
 }
 
 /** A Column represents a column definition. */
 export interface Column {
-  readonly name: string
-  readonly type?: ColumnType
-  readonly default?: Expr
-  readonly attrs?: readonly Attr[]
-  // readonly indexes?: readonly Index[]          // back-ref — omitted; navigate top-down
+  name: string
+  type?: ColumnType
+  default?: Expr
+  attrs?: Attr[]
+  // indexes?: Index[]          // back-ref — omitted; navigate top-down
   // /** Foreign keys that this column is part of their child columns. */
-  // readonly foreignKeys?: readonly ForeignKey[] // back-ref — omitted; navigate top-down
+  // foreignKeys?: ForeignKey[] // back-ref — omitted; navigate top-down
 }
 
 /**
@@ -106,12 +106,12 @@ export interface Column {
  * traversing deps/refs arrays.
  */
 export interface Index {
-  readonly kind: typeof ObjectKind.Index
-  readonly name?: string
-  readonly unique?: boolean
-  // readonly table?: Table          // back-ref to owning Table — omitted; navigate top-down
-  readonly attrs?: readonly Attr[]
-  readonly parts?: readonly IndexPart[]
+  kind: typeof ObjectKind.Index
+  name?: string
+  unique?: boolean
+  // table?: Table          // back-ref to owning Table — omitted; navigate top-down
+  attrs?: Attr[]
+  parts?: IndexPart[]
 }
 
 /**
@@ -119,12 +119,12 @@ export interface Index {
  */
 export interface IndexPart {
   /** SeqNo represents the sequence number of the key part in the index. */
-  readonly seqNo: number
+  seqNo: number
   /** Desc indicates if the key part is stored in descending order. All databases use ascending order as default. */
-  readonly desc?: boolean
-  readonly x?: Expr                 // expression part
-  readonly c?: Column               // column part
-  readonly attrs?: readonly Attr[]
+  desc?: boolean
+  x?: Expr                 // expression part
+  c?: Column               // column part
+  attrs?: Attr[]
 }
 
 /**
@@ -136,16 +136,16 @@ export interface IndexPart {
  * NOTE: `kind` is not present in the Go model — same reasoning as Index above.
  */
 export interface ForeignKey {
-  readonly kind: typeof ObjectKind.ForeignKey
+  kind: typeof ObjectKind.ForeignKey
   /** Constraint name, if exists. */
-  readonly symbol?: string
-  // readonly table?: Table          // back-ref to owning Table — omitted; navigate top-down
-  readonly columns?: readonly Column[]
-  readonly refTable?: Table
-  readonly refColumns?: readonly Column[]
-  readonly onUpdate?: ReferenceOption
-  readonly onDelete?: ReferenceOption
-  readonly attrs?: readonly Attr[]
+  symbol?: string
+  // table?: Table          // back-ref to owning Table — omitted; navigate top-down
+  columns?: Column[]
+  refTable?: Table
+  refColumns?: Column[]
+  onUpdate?: ReferenceOption
+  onDelete?: ReferenceOption
+  attrs?: Attr[]
 }
 
 // NamedDefault is defined in src/exprs.ts (it is primarily an Expr).
