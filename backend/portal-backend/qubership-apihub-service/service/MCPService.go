@@ -104,7 +104,7 @@ func (m mcpService) MakeMCPServer() *mcpserver.MCPServer {
 		s.AddResource(mcp.Resource{
 			URI:         "api-packages-list",
 			Name:        "API Packages List",
-			Description: "List of all API packages in the system. The resource returns a JSON object with a 'packages' array. Each item includes package metadata (name, packageId, kind, parents, etc.) and a 'versions' list containing up to 100 release versions sorted by version desc (status=release, sortBy=version, sortOrder=desc). Package ID can serve as a hint to which domain the API belongs. Use this resource to: get a list of all available packages, find package ID by package name, and review available release versions. Package IDs from this resource should be used in the 'group' parameter of the search_api_operations tool.",
+			Description: "List of all API packages in the system. The resource returns a JSON object with a 'packages' array. Each item includes package metadata (name, packageId, kind, parents, etc.) and a 'versions' list containing up to 100 release versions sorted by version desc (status=release, sortBy=version, sortOrder=desc). Version strings are package-specific (YYYY.Q, semver such as 0.1.0, v1, etc.). Use this resource to: get a list of all available packages, find package ID by package name, and review available release versions. Package IDs from this resource should be used in the 'group' parameter of the search_api_operations tool. When search without an explicit 'release' returns no results, pick a real version from the package's 'versions' list and retry search with 'release' set explicitly.",
 			MIMEType:    "application/json",
 		}, func(ctx context.Context, request mcp.ReadResourceRequest) ([]mcp.ResourceContents, error) {
 			return m.GetPackagesList(ctx, mcpWorkspace)
@@ -301,7 +301,7 @@ DATA STRUCTURE:
 - API specifications are organized into packages
 - Package ID can serve as a hint to which domain the API belongs
 - Each package contains versioned API specifications and API operations extracted from those specifications
-- Each package can have multiple versions in YYYY.Q format (e.g., 2024.3, 2024.4)
+- Each package can have multiple release versions (often YYYY.Q such as 2024.3, but also semver or other schemes)
 - api-packages-list resource includes release versions per package (up to 100, sorted by version desc)
 
 WHEN TO USE THIS SERVER:
@@ -321,8 +321,9 @@ AVAILABLE RESOURCES:
 - api-packages-list - list of all packages in the system. Use this resource when:
 	* User asks "what packages are available", "show all APIs", "list packages"
 	* You need to find package ID by package name for use in tool calls
-	* The resource returns a JSON object with 'packages' array. Each package contains metadata and 'versions' list (release versions sorted by version desc)
+	* The resource returns a JSON object with 'packages' array. Each package contains metadata and 'versions' list (release versions sorted by version desc; strings may be YYYY.Q, semver, etc.)
 	* Use package ID from this resource in the 'group' parameter of search_api_operations tool
+	* Search without 'release' returned no results after query/synonym retries — read the target package's 'versions' list and retry search with explicit 'release' (prefer the newest unless the user named one)
 
 RESPONSES:
 - Provide concise and structured answers
@@ -365,15 +366,15 @@ LLM INSTRUCTIONS:
 - Return all metadata that MCP returns (operationId, packageId, packageName, version, title, apiKind, apiType, apiAudience, documentId, and API-specific fields)
 - documentId is the specification slug to pass as get_document.slug
 - Return the most recent versions of operations (by default, search is performed in the latest completed version)
-- If the first call returned few unique operations - make repeated calls:
+- If the first call returned few or no unique operations - make repeated calls:
 	* Increase page number for pagination
-	* Simplify or generalize the search query
-	* Search in other packages (use 'group' parameter for a specific package)
-	* Search in older versions only if user explicitly requested it
+	* Simplify or generalize the search query, or try alternative/synonym terms
+	* Search in other packages (use 'group' parameter with packageId from api-packages-list)
+	* If default version (omit release) and query variations still return nothing: read api-packages-list, find the target package's actual 'versions' list, and retry with explicit 'release' set to the newest (or user-mentioned) version from that list. Packages may use YYYY.Q (e.g., 2024.3), semver (0.0.1, 0.1.0), or other schemes — never assume the calendar default exists for every package
 - If user asks for more results - increment page, simplify query, or search in other packages/versions
 - DO NOT use get_api_operation_specification in advance - first show a list of operations to choose from, even if only one is found
 - Use get_api_operation_specification only when user explicitly requests details about a REST or AsyncAPI operation
-- VERSION — IMPORTANT: the default "latest completed version" is computed from the current calendar date (e.g., current quarter 2026.2), NOT from the latest version actually published in the system. If the user mentions any version number (e.g., "2025.4"), ALWAYS pass it explicitly as the 'release' parameter. Never assume the default will match what the user expects. Check api-packages-list for available versions when uncertain
+- VERSION — IMPORTANT: when 'release' is omitted, the tool uses the nearest completed calendar quarter (e.g., 2026.2), NOT the latest version actually published in the system. Many packages do not have that calendar version yet; some use semver or other schemes. If the user mentions any version number, ALWAYS pass it explicitly as 'release'. When search without 'release' returns no results even after query/synonym retries, consult api-packages-list for the package's real versions and repeat search with 'release' set explicitly
 - If user requests results from a specific package - use 'group' parameter with packageId (not packageName)`
 
 	ToolDescriptionGetOperationSpecMCP = `Get operation-level specification data extracted from an OpenAPI or AsyncAPI specification.
@@ -454,15 +455,15 @@ LLM INSTRUCTIONS:
 - Return all metadata that MCP returns (operationId, packageId, packageName, version, title, apiKind, apiType, apiAudience, documentId, and API-specific fields)
 - documentId is the specification slug to pass as get_document.slug
 - Return the most recent versions of operations (by default, search is performed in the latest completed version)
-- If the first call returned few unique operations - make repeated calls:
+- If the first call returned few or no unique operations - make repeated calls:
 	* Increase page number for pagination
-	* Simplify or generalize the search query
-	* Search in other packages (use 'group' parameter for a specific package)
-	* Search in older versions only if user explicitly requested it
+	* Simplify or generalize the search query, or try alternative/synonym terms
+	* Search in other packages (use 'group' parameter with packageId from api-packages-list)
+	* If default version (omit release) and query variations still return nothing: read api-packages-list, find the target package's actual 'versions' list, and retry with explicit 'release' set to the newest (or user-mentioned) version from that list. Packages may use YYYY.Q (e.g., 2024.3), semver (0.0.1, 0.1.0), or other schemes — never assume the calendar default exists for every package
 - If user asks for more results - increment page, simplify query, or search in other packages/versions
 - DO NOT use get_api_operation_specification in advance - first show a list of operations to choose from in markdown format, even if only one is found
 - Use get_api_operation_specification only when user explicitly requests details about a REST or AsyncAPI operation
-- VERSION — IMPORTANT: the default "latest completed version" is computed from the current calendar date (e.g., current quarter 2026.2), NOT from the latest version actually published in the system. If the user mentions any version number (e.g., "2025.4"), ALWAYS pass it explicitly as the 'release' parameter. Never assume the default will match what the user expects. Check api-packages-list for available versions when uncertain
+- VERSION — IMPORTANT: when 'release' is omitted, the tool uses the nearest completed calendar quarter (e.g., 2026.2), NOT the latest version actually published in the system. Many packages do not have that calendar version yet; some use semver or other schemes. If the user mentions any version number, ALWAYS pass it explicitly as 'release'. When search without 'release' returns no results even after query/synonym retries, consult api-packages-list for the package's real versions and repeat search with 'release' set explicitly
 - If user requests results from a specific package - use 'group' parameter with packageId (not packageName)
 - REQUIRED: Convert metadata to markdown links (relative, without baseUrl):
 	* packageId -> [packageId](/portal/packages/<packageId>)
@@ -761,7 +762,7 @@ func getParameterDescription(toolName, paramName string) string {
 			"query":   "Text search query for finding API operations. Important: search is lexical and index-bound, so try different query variations (simplified, with keywords)",
 			"limit":   "Maximum number of results to return (10-100). For the first search, it's recommended to use 100",
 			"page":    "Page number for pagination (starts from 0). Use to get additional results",
-			"release": "Release version in YYYY.Q format (e.g., 2024.3). WARNING: the default 'latest completed version' is computed from the current calendar date, not from the latest version actually published in the system. If the user mentions any version number, always pass it here explicitly. Omit only when the user has not mentioned any specific version.",
+			"release": "Package release version to search in (exact string from api-packages-list, e.g. 2024.3, 0.1.0, v1). When omitted, defaults to the nearest completed calendar quarter — which may not exist for the package. If search without release returns nothing after query retries, read api-packages-list and pass an actual published version here explicitly.",
 			"group":   "Package ID (packageId) to filter search by a specific package. Use packageId from api-packages-list resource, not packageName",
 		},
 		ToolNameGetOperationSpec: {
