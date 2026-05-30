@@ -1,7 +1,14 @@
 openapi: 3.0.3
 info:
   title: Qubership APIHUB Agents Backend Admin API
-  description: External API contract for system administrators.
+  description: |
+    Admin-facing API for managing Qubership APIHUB Agents Backend. Exposes debug, logging,
+    and other administrative endpoints for system operators. Covers runtime diagnostics such
+    as reading and changing the service log level. All endpoints require authenticated access
+    with system administrator privileges (Bearer token, cookie, API key, or Personal Access Token).
+  contact:
+    name: Netcracker Opensource Group
+    email: opensourcegroup@netcracker.com
   license:
     name: qubership
     url: https://qubership.org
@@ -10,10 +17,10 @@ info:
 
 servers:
   - url: https://{apihubAgentsBackend}.qubership.org
-    description: APIHUB server
+    description: Primary APIHUB Agents Backend endpoint (production by default). Use staging and dev hostnames for non-production testing.
     variables:
       apihubAgentsBackend:
-        description: Name of the APIHUB Agents Backend server.
+        description: Environment identifier used to select server host; valid values are 'apihub-agents-backend' (production), 'dev.apihub-agents-backend' (development), and 'staging.apihub-agents-backend' (staging).
         enum:
           - apihub-agents-backend
           - dev.apihub-agents-backend
@@ -34,7 +41,13 @@ paths:
         - Debug
       summary: Check log level
       description: |
-        Check current log level.
+        Returns the current global logging level for the service. Requires system administrator
+        privileges; does not change configuration.
+
+        As a diagnostic side effect, the endpoint writes one sample log entry per severity level
+        (error, warn, info, debug, trace) to all configured log sinks. Monitoring and log
+        aggregation systems may therefore observe a short burst of entries when this endpoint is
+        called.
       operationId: checkLogLevel
       responses:
         "200":
@@ -43,7 +56,10 @@ paths:
             text/plain:
               schema:
                 type: string
-                description: Current log level
+                description: |
+                  Plain-text message naming the active log level. The quoted value is one of:
+                  panic, fatal, error, warn, info, debug, or trace.
+                example: "Current log level is 'info'. See logs for details"
         "401":
           $ref: '#/components/responses/Unauthorized'
         "500":
@@ -54,7 +70,10 @@ paths:
         - Debug
       summary: Set log level
       description: |
-        Set log level.
+        Changes the global in-memory logging level for the running service instance. The change
+        applies process-wide (not per-component) and is not persisted across restarts. Requires
+        system administrator privileges. Typical use cases include temporarily enabling debug or
+        trace output during incident investigation.
       operationId: setLogLevel
       requestBody:
         required: true
@@ -67,15 +86,19 @@ paths:
               properties:
                 level:
                   type: string
-                  description: Log level to set
+                  description: |
+                    Target log level. Allowed values (most to least verbose): trace, debug, info,
+                    warn, error, fatal, panic. Higher verbosity increases log volume. The panic
+                    and fatal levels may cause the service process to terminate when such events
+                    are logged; use them with caution in production.
                   enum:
-                    - panic
-                    - fatal
-                    - error
-                    - warn
-                    - info
-                    - debug
                     - trace
+                    - debug
+                    - info
+                    - warn
+                    - error
+                    - fatal
+                    - panic
       responses:
         "200":
           description: Success
@@ -97,39 +120,67 @@ components:
   schemas:
     CustomError:
       type: object
-      description: An error description
+      description: |
+        Standard error response returned on failed requests. Required fields are `status` and
+        `message`; `code`, `debug`, and `params` are optional. See the schema `example` for a
+        typical response body.
+      required:
+        - status
+        - message
+      example:
+        status: 400
+        code: "2"
+        message: Failed to decode body
+        debug: invalid character 'x' looking for beginning of value
       properties:
         status:
           type: integer
           description: HTTP status code
         code:
           type: string
-          description: Internal string error code. Mandatory in response.
+          description: |
+            Stable internal error identifier for programmatic handling. Present for
+            application-defined errors; may be omitted for unexpected internal failures.
         message:
           type: string
-          description: Error message
+          description: |
+            Human-readable error summary intended for API clients and operators. Messages are in
+            English, not localized, and may include remediation hints or placeholder tokens
+            (for example, `$param`) that are substituted using values from `params`. Safe to
+            display in admin tooling; avoid exposing `debug` details to end users.
         debug:
           type: string
           description: Debug information
         params:
           type: object
           additionalProperties: true
-          description: Error parameters
+          description: |
+            Optional free-form map of contextual parameters for the error (for example, field
+            names, invalid values, or resource identifiers). Keys and values depend on the
+            specific error code.
   responses:
     BadRequest:
-      description: Bad request
+      description: |
+        Invalid request. Typical causes include malformed JSON in the request body or an
+        unrecognized log level value. The response body uses the CustomError schema with
+        remediation hints in the message and debug fields.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/CustomError'
     Unauthorized:
-      description: Unauthorized access
+      description: |
+        Authentication required, or the provided token or credentials are invalid or expired.
+        Re-authenticate or refresh the token before retrying the request.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/CustomError'
     InternalServerError:
-      description: Internal server error
+      description: |
+        Unexpected server error. Returns HTTP 500 with a CustomError body. Clients should retry
+        later; contact support with any correlation or debug details from the response if the
+        problem persists.
       content:
         application/json:
           schema:
@@ -139,7 +190,10 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: JWT Bearer token authentication.
+      description: |
+        JWT Bearer token authentication. Send the token in the Authorization header as
+        `Authorization: Bearer <token>`. Tokens are issued by the APIHUB authentication service;
+        use a valid session or service account JWT with system administrator privileges.
     CookieAuth:
       type: apiKey
       in: cookie
@@ -149,9 +203,15 @@ components:
       type: apiKey
       in: header
       name: api-key
-      description: API key authentication.
+      description: |
+        API key authentication. Send the key in the `api-key` request header. Keys are issued
+        through APIHUB administration; ensure the key belongs to a user with system administrator
+        privileges. Rotate or revoke compromised keys in the APIHUB admin UI.
     PersonalAccessToken:
       type: apiKey
       in: header
       name: X-Personal-Access-Token
-      description: Personal Access Token authentication
+      description: |
+        Personal Access Token authentication for user-level programmatic access. Send the token
+        in the `X-Personal-Access-Token` header. Create and revoke tokens in APIHUB user settings;
+        the token inherits the issuing user's permissions and remains valid until revoked or expired.

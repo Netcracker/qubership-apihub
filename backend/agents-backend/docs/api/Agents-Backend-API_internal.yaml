@@ -1,19 +1,46 @@
 openapi: 3.0.3
 info:
   title: Qubership APIHUB Agents Backend Internal API
-  description: Internal REST API for Qubership APIHUB Agents Backend.
+  description: |
+    Internal-only REST API contract for Qubership APIHUB Agents Backend (`x-api-kind: no-BWC`).
+    This specification documents endpoints that are not part of the backward-compatible public
+    surface; the contract may change without prior notice.
+
+    **Purpose.** Allows deployed Qubership APIHUB Agent instances to send periodic heartbeat
+    signals so the backend can register new agents, refresh liveness metadata, and return the
+    expected agent software version for compatibility checks.
+
+    **Intended audience.** Trusted platform components only — primarily the
+    `qubership-apihub-agent` service running inside the same APIHUB deployment. Not for portal
+    users, external integrations, or third-party API consumers. Operator-facing endpoints are
+    documented separately in `Agents-Backend-API.yaml`.
+
+    **Typical use cases.** (1) First-time agent registration after deployment when a new
+    cloud/namespace pair appears. (2) Periodic keepalive to update `lastActive` and agent
+    metadata. (3) Runtime compatibility validation against the backend-supported agent version.
+
+    **Authentication.** All operations require a valid credential defined in
+    `components.securitySchemes` and system administrator privileges; unauthenticated or
+    under-privileged callers receive `401` or `403`.
+
+    **Environment constraints.** Uses the same Agents Backend hostnames as the public API
+    (`apihub-agents-backend`, `dev.apihub-agents-backend`, `staging.apihub-agents-backend`).
+    Callers must reach the backend from the deployment network; do not expose this contract
+    outside the APIHUB trust boundary.
+  contact:
+    name: Netcracker Opensource Group
+    email: opensourcegroup@netcracker.com
   license:
     name: qubership
     url: https://qubership.org
   version: "2024.2"
-  x-api-audience: internal
-
+  x-api-kind: no-BWC
 servers:
   - url: https://{apihubAgentsBackend}.qubership.org
-    description: APIHUB server
+    description: Primary APIHUB Agents Backend endpoint (production by default). Use staging and dev hostnames for non-production testing.
     variables:
       apihubAgentsBackend:
-        description: Name of the APIHUB Agents Backend server.
+        description: Environment identifier used to select server host; valid values are 'apihub-agents-backend' (production), 'dev.apihub-agents-backend' (development), and 'staging.apihub-agents-backend' (staging).
         enum:
           - apihub-agents-backend
           - dev.apihub-agents-backend
@@ -33,7 +60,11 @@ paths:
       tags:
         - Agents
       summary: Process agent signal
-      description: Process registration/keepalive message from an agent
+      description: |
+        Accepts periodic heartbeat messages from a deployed agent instance. On the first call for
+        a given cloud/namespace pair, the backend registers the agent; on subsequent calls it
+        updates the agent record and refreshes the last-active timestamp. The response returns
+        the expected agent version for compatibility checks.
       operationId: processAgentSignal
       security:
         - BearerAuth: []
@@ -54,22 +85,42 @@ paths:
               properties:
                 cloud:
                   type: string
-                  description: Cloud where agent is deployed
+                  description: |
+                    Logical identifier of the PaaS or cloud environment where the agent is deployed,
+                    as configured in the agent (for example, `Kind`, `production-east`). Together
+                    with `namespace`, it forms the unique agent identifier (`{cloud}_{namespace}`).
                 namespace:
                   type: string
-                  description: Namespace where agent is deployed
+                  description: |
+                    Kubernetes or OpenShift namespace where the agent pod is deployed, as configured
+                    in the agent (for example, `apihub-agent`). Combined with `cloud`, uniquely
+                    identifies the agent instance in the backend.
                 url:
                   type: string
-                  description: Agent URL
+                  description: |
+                    Base URL where the agent is reachable from the Agents Backend (scheme, hostname,
+                    and optional port). Must be a valid HTTP(S) URL that the backend can use for
+                    subsequent proxy requests to the agent.
                 backendVersion:
                   type: string
-                  description: Backend version
+                  description: |
+                    Version of the Agents Backend that the agent is configured to communicate
+                    with, as reported by the agent (typically a semantic version or build
+                    identifier).
                 name:
                   type: string
-                  description: Agent name
+                  description: |
+                    Optional human-readable display name for the agent. When omitted, the backend
+                    derives a default from `{namespace}.{cloud}`. Not used as the primary identifier;
+                    uniqueness is enforced by the `cloud` and `namespace` pair.
                 agentVersion:
                   type: string
-                  description: Agent version
+                  description: |
+                    Semantic version of the running agent instance in `MAJOR.MINOR.PATCH` format
+                    (for example, `1.0.0`; prerelease labels are not evaluated). The backend
+                    compares major, minor, and patch segments against the expected version: a major
+                    mismatch is treated as incompatible, minor/patch differences produce a warning,
+                    and an empty value indicates the agent does not support versioning.
       responses:
         '200':
           description: Message successfully processed
@@ -93,7 +144,10 @@ components:
   schemas:
     CustomError:
       type: object
-      description: An error description
+      description: |
+        Standard error response returned on failed requests. Contains HTTP status, internal
+        error code, human-readable message, optional debug details for operators, and an optional
+        parameter map for client-side handling.
       properties:
         status:
           type: integer
@@ -103,35 +157,52 @@ components:
           description: Internal string error code. Mandatory in response.
         message:
           type: string
-          description: Error message
+          description: |
+            Human-readable, user-facing error message with guidance or remediation steps where
+            applicable. Messages are returned in English and must not contain sensitive data.
         debug:
           type: string
           description: Debug information
         params:
           type: object
           additionalProperties: true
-          description: Error parameters
+          description: |
+            Optional free-form map of contextual parameters for the error (for example, field
+            names, invalid values, or resource identifiers). Keys and values depend on the
+            specific error code.
   responses:
     BadRequest:
-      description: Bad request
+      description: |
+        Invalid request. Typical causes include malformed JSON, missing required fields, invalid
+        query parameters, or unrecognized enum values. The response body uses the CustomError
+        schema with remediation hints in the message and debug fields.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/CustomError'
     Unauthorized:
-      description: Unauthorized access
+      description: |
+        Authentication required, or the provided token or credentials are invalid or expired.
+        Re-authenticate or refresh the token before retrying the request. The response body
+        uses the CustomError schema.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/CustomError'
     Forbidden:
-      description: Access forbidden
+      description: |
+        Authenticated but not authorized to perform this operation. For agent signal processing,
+        the caller must have system administrator privileges. The response body uses the
+        CustomError schema and may include the required role or permission in the message field.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/CustomError'
     InternalServerError:
-      description: Internal server error
+      description: |
+        Unexpected server error. Returns HTTP 500 with a CustomError body. Clients should retry
+        later; contact support with any correlation or debug details from the response if the
+        problem persists.
       content:
         application/json:
           schema:
