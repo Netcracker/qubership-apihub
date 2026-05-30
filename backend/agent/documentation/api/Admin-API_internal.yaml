@@ -16,27 +16,45 @@ openapi: 3.0.3
 info:
   title: APIHUB Agent Admin Internal API
   version: 1.0.0
-  description: Internal-only API contract for system administrators.
+  description: |
+    Internal-only API contract for system administrators managing the APIHUB Agent.
+    Covers cloud-wide discovery orchestration and namespace/service summary retrieval scoped by workspace.
+    Intended for trusted operators within the deployment network; not exposed to external API consumers.
+    Authentication uses APIHUB bearer token, API key, or session cookie.
+  contact:
+    name: Netcracker Opensource Group
+    email: opensourcegroup@netcracker.com
+  license:
+    name: Apache 2.0
+    url: https://github.com/Netcracker/qubership-apihub-agent/raw/refs/heads/main/LICENSE
+  x-api-kind: no-BWC
 servers:
   - url: "https://{agentUrl}/api"
-    description: Agent backend address
+    description: Base URL of the Agent backend API (replace {agentUrl} with the agent host, for example agent.local or localhost:8080).
     variables:
       agentUrl:
         default: localhost
-        description: Local server
+        description: >-
+          Agent backend host without scheme or path. Accepted formats: hostname (agent.my-cluster.svc),
+          hostname:port (localhost:8080), or FQDN. Do not include https:// or /api.
+          Illustrative pattern: ^[A-Za-z0-9._-]+(?::[0-9]{1,5})?$
 security:
   - BearerAuth: []
   - ApiKeyAuth: []
   - CookieAuth: []
 tags:
   - name: Cloud Services
-    description: Cloud Services API
+    description: Cloud-wide discovery and service inventory endpoints, including deprecated discover operations and workspace-scoped namespace summaries.
 paths:
   /v1/discover:
     post:
       summary: Run discover for whole cloud
-      description: |
-        Run discover for the whole cloud.
+      description: >-
+        Starts asynchronous API discovery across all namespaces in the cloud.
+        Returns 202 Accepted with an empty body when the request is accepted (no job identifier or Location header).
+        Poll GET /v1/services for cloud-wide discovery status.
+        If discovery is already running, the call is accepted without starting a parallel run.
+        Requires authenticated administrator access.
       operationId: postCloudDiscover
       deprecated: true
       x-deprecation-reason: New version of API is created - POST /v2/workspaces/{workspaceId}/discover
@@ -59,19 +77,18 @@ paths:
           $ref: "#/components/responses/serviceUnavailable503"
   /v2/workspaces/{workspaceId}/discover:
     parameters:
-      - name: workspaceId
-        in: path
-        description: Workspace unique identifier. Workspace determines scope within which packages are searched by service names.
-        required: true
-        schema:
-          type: string
-        example: NC
+      - $ref: "#/components/parameters/WorkspaceId"
     post:
       summary: Run discover for whole cloud
-      description: |
-        Run discover for the whole cloud.
+      description: >-
+        Starts asynchronous cloud-wide discovery for the workspace in the path.
+        Returns 202 Accepted with an empty body when accepted (no job identifier or Location header).
+        Poll GET /v2/workspaces/{workspaceId}/services for status.
+        If discovery is already running, the call is accepted without starting a parallel run.
+        Requires authenticated administrator access.
       operationId: postCloudDiscoverV2
       deprecated: true
+      x-deprecation-reason: Prefer POST /v2/namespaces/{name}/workspaces/{workspaceId}/discover on the Agent API.
       tags:
         - Cloud Services
       responses:
@@ -92,8 +109,12 @@ paths:
   /v1/services:
     get:
       summary: Get namespaces summary for the whole cloud
-      description: |
-        Get namespaces summary for the whole cloud.
+      description: >-
+        Returns a cloud-wide discovery summary: process status (none, running, complete, error),
+        progress and timing metrics, aggregate counts (namespaces, services, baselines, documents),
+        and per-namespace service lists with discovered specs.
+        Read-only; does not start discovery. Requires authenticated administrator access.
+        Deprecated; use GET /v2/workspaces/{workspaceId}/services instead.
       operationId: getCloudNamespaces
       deprecated: true
       x-deprecation-reason: New version of API is created - GET /v2/workspaces/{workspaceId}/services
@@ -158,19 +179,16 @@ paths:
           $ref: "#/components/responses/serviceUnavailable503"
   /v2/workspaces/{workspaceId}/services:
     parameters:
-      - name: workspaceId
-        in: path
-        description: Workspace unique identifier. Workspace determines scope within which packages are searched by service names.
-        required: true
-        schema:
-          type: string
-        example: NC
+      - $ref: "#/components/parameters/WorkspaceId"
     get:
       summary: Get namespaces summary for the whole cloud
-      description: |
-        Get namespaces summary for the whole cloud.
+      description: >-
+        Returns a cloud-wide discovery summary for the given workspace: process status,
+        progress and timing metrics, aggregate counts, and namespaceData with discovered services.
+        Read-only; does not start discovery. Requires authenticated administrator access.
       operationId: getCloudNamespacesV2
       deprecated: true
+      x-deprecation-reason: Prefer GET /v2/namespaces/{name}/workspaces/{workspaceId}/services on the Agent API.
       tags:
         - Cloud Services
       responses:
@@ -225,6 +243,21 @@ paths:
           $ref: "#/components/responses/serviceUnavailable503"
 
 components:
+  parameters:
+    WorkspaceId:
+      name: workspaceId
+      in: path
+      description: >-
+        APIHUB workspace identifier (opaque string, case-sensitive).
+        Defines the scope for package lookup by service name.
+        Typically a short alphanumeric code (for example NC or QS); must not contain / or URL-unsafe characters.
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+        pattern: "^[A-Za-z0-9._-]+$"
+      example: NC
   schemas:
     SpecificationType:
       title: type
@@ -273,9 +306,9 @@ components:
           example: apihub-be
         url:
           type: string
-          description: The URL to view this baseline package in APIHUB Portal
+          description: URL to view this service in the APIHUB Portal.
         serviceLabels:
-          description: List of service's labels and values as a key-value pairs.
+          description: Service labels as key-value pairs (string keys with string values; keys are unique per service).
           type: object
           additionalProperties:
             type: string
@@ -283,9 +316,10 @@ components:
             part-of: CloudBSS-CPQBE
             app_name: cpq
         availablePromoteStatuses:
-          description: |
-            List of statuses available to the user to promote the service.
-            The list of statuses is calculated based on the user's permissions.
+          description: >-
+            Package version statuses the authenticated user may assign when promoting this service's baseline package.
+            Resolved by APIHUB from the caller's roles and package permissions
+            (APIHUB GET /api/v2/users/{userId}/availablePackagePromoteStatuses); the agent does not compute this list locally.
           type: array
           items:
             type: string
@@ -296,7 +330,7 @@ components:
               - deprecated
               - archived
         baseline:
-          description: Baseline Package with serviceName equals to id
+          description: Baseline package whose serviceName equals the service id.
           type: object
           required:
             - packageId
@@ -319,7 +353,7 @@ components:
               items:
                 type: string
         specs:
-          description: List of the service's API documents, found on environment.
+          description: List of API specification documents discovered on the target service during the last discovery run.
           type: array
           items:
             description: Service API documents
@@ -367,11 +401,11 @@ components:
                   - unknown
               xApiKind:
                 type: string
-                description: Api kind value from swagger/apihub config
+                description: API kind classification from the discovered document configuration (`x-api-kind` in apihub-swagger-config or per-document URL config). Example BWC.
                 example: "BWC"
         proxyServerUrl:
           type: string
-          description: The server used in 'Try It' component.
+          description: Relative proxy URL used by the APIHUB Portal "Try It" feature to forward requests to the target service through the agent (same authentication as other agent APIs).
           example: '/agents/k8s-apps3_api-hub-dev/namespaces/api-hub-dev/services/apihub-agent-test-service/proxy/'
         error:
           type: string
@@ -394,9 +428,9 @@ components:
           example: apihub-be
         url:
           type: string
-          description: The URL to view this baseline package in APIHUB Portal
+          description: URL to view this service in the APIHUB Portal.
         serviceLabels:
-          description: List of service's labels and values as a key-value pairs.
+          description: Service labels as key-value pairs (string keys with string values; keys are unique per service).
           type: object
           additionalProperties:
             type: string
@@ -404,9 +438,10 @@ components:
             part-of: CloudBSS-CPQBE
             app_name: cpq
         availablePromoteStatuses:
-          description: |
-            List of statuses available to the user to promote the service.
-            The list of statuses is calculated based on the user's permissions.
+          description: >-
+            Package version statuses the authenticated user may assign when promoting this service's baseline package.
+            Resolved by APIHUB from the caller's roles and package permissions
+            (APIHUB GET /api/v2/users/{userId}/availablePackagePromoteStatuses); the agent does not compute this list locally.
           type: array
           items:
             type: string
@@ -417,7 +452,7 @@ components:
               - deprecated
               - archived
         baseline:
-          description: Baseline Package with serviceName equals to id
+          description: Baseline package whose serviceName equals the service id.
           type: object
           required:
             - packageId
@@ -440,7 +475,7 @@ components:
               items:
                 type: string
         specs:
-          description: List of the service's API documents, found on environment.
+          description: List of API specification documents discovered on the target service during the last discovery run.
           type: array
           items:
             description: Service API documents
@@ -469,11 +504,11 @@ components:
                 $ref: "#/components/schemas/SpecificationType"
               xApiKind:
                 type: string
-                description: Api kind value from swagger/apihub config
+                description: API kind classification from the discovered document configuration (`x-api-kind` in apihub-swagger-config or per-document URL config). Example BWC.
                 example: "BWC"
         proxyServerUrl:
           type: string
-          description: The server used in 'Try It' component.
+          description: Relative proxy URL used by the APIHUB Portal "Try It" feature to forward requests to the target service through the agent (same authentication as other agent APIs).
           example: '/agents/k8s-apps3_api-hub-dev/namespaces/api-hub-dev/services/apihub-agent-test-service/proxy/'
         error:
           type: string
@@ -488,7 +523,7 @@ components:
           items:
             $ref: "#/components/schemas/Service"
     ErrorResponse:
-      description: An error description
+      description: Standard error response envelope returned for failed requests. Always includes HTTP status, internal error code, and human-readable message; params and debug are optional.
       type: object
       properties:
         status:
@@ -498,18 +533,16 @@ components:
           description: Internal string error code. Mandatory in response.
           type: string
         message:
-          description: The attribute contains an error message.
+          description: Human-readable error message describing the failure; intended for diagnostics and safe display to end users (typically English).
           type: string
         params:
-          description: Message parameters
+          description: Optional key/value parameters used to format or contextualize the error message (for example, resource identifiers or field names). Keys are not standardized; values are strings. Clients may use params for localization or UI rendering but should not depend on specific keys being present.
           type: object
           example:
             "id": "12345"
             "type": "string"
         debug:
-          description: |
-            The attribute contains debug details (e.g. stack-trace).
-            Presented in the error response only on Dev/Test environments if corresponding logging level is enabled.
+          description: Optional debug details (for example, stack traces). Returned only in non-production environments or when debug logging is enabled; do not rely on this field in production.
           type: string
       required:
         - status
@@ -517,13 +550,13 @@ components:
         - message
   responses:
     internalServerError500:
-      description: Internal server error
+      description: An unexpected server error prevented the request from completing. The response body follows the `ErrorResponse` schema. The optional `debug` field may include stack traces or other diagnostic details only in non-production environments.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     serviceUnavailable503:
-      description: Internal server error
+      description: Service unavailable — the agent cannot handle the request (for example, overload, maintenance, or a dependency outage). The response body follows the `ErrorResponse` schema.
       content:
         application/json:
           schema:
@@ -533,14 +566,19 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: JWT Bearer token authentication
+      description: >-
+        JWT bearer token issued by the APIHUB auth service.
+        Send as Authorization: Bearer <token>.
+        Token lifetime and claims follow APIHUB identity configuration; no additional agent-specific scopes are required beyond a valid authenticated session.
     ApiKeyAuth:
       type: apiKey
       in: header
       name: api-key
-      description: APIHUB API Key authentication
+      description: >-
+        APIHUB API key authentication. Send an opaque API key in the api-key request header.
+        Keys are issued and rotated in APIHUB; expiration and revocation follow APIHUB key management policies.
     CookieAuth:
       type: apiKey
       in: cookie
       name: apihub-access-token
-      description: Cookie-based authentication
+      description: Session cookie authentication. Clients send the apihub-access-token cookie set by the APIHUB Portal UI after login.
