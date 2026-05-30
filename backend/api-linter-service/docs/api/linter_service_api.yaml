@@ -2,7 +2,15 @@ openapi: 3.0.3
 info:
   title: Linter Service API
   version: "1.0"
-  description: The Linter Service API provides a set of operations for validating (linting) the quality of OpenAPI specifications. It enables the retrieval of validation results and ruleset metadata.
+  description: >
+    The Linter Service API provides operations for validating (linting) the quality of API specifications.
+    It supports multiple linters (Spectral and ai_linter, the AI OAS linter) and enables retrieval of
+    validation results, ruleset metadata, and version scoring — an aggregated quality and backwards-compatibility
+    assessment for a package version (see GET .../scoring and the VersionScore schema). All endpoints require
+    authenticated access unless explicitly noted.
+  contact:
+    name: Netcracker Opensource Group
+    email: opensourcegroup@netcracker.com
 servers:
   - url: /
 security:
@@ -13,9 +21,9 @@ tags:
   - name: Linters
     description: API for retrieving available linter configurations.
   - name: Ruleset Management
-    description: API related to management of validation rulesets.
+    description: API for managing validation rulesets, including metadata, activation history, and file download.
   - name: Validation Result
-    description: API for retrieving Spectral validation results for package versions.
+    description: API for retrieving validation results for package versions from all configured linters (Spectral, ai_linter).
   - name: Validation Operations
     description: API operations for managing validation processes.
   - name: Scoring
@@ -57,8 +65,9 @@ paths:
         - Ruleset Management
       summary: Get ruleset metadata
       description: >
-        Returns the ruleset name, status, and activation history.
-        This operation requires read permission.
+        Returns full ruleset metadata including identifier, name, filename, status, applicable API type,
+        target linter, creation date, and whether the ruleset can be deleted.
+        Requires read permission on rulesets.
       operationId: getRulesetById
       parameters:
         - name: id
@@ -66,7 +75,7 @@ paths:
           required: true
           schema:
             type: string
-          description: Unique ruleset ID
+          description: Unique ruleset identifier (UUID v4).
       responses:
         "200":
           description: Success
@@ -98,9 +107,10 @@ paths:
         - Ruleset Management
       summary: Get activation history for a ruleset
       description: >
-        Returns the activation history for the specified ruleset.
-        Shows periods when the ruleset was activated and deactivated.
-        Only the latest 100 activation records are returned.
+        Returns the activation history for the specified ruleset, showing periods when the ruleset was
+        activated and deactivated. Records are sorted by activeFrom in descending order (most recent first).
+        Timestamps use ISO 8601 date-time format in UTC. See the RulesetActivationHistory schema for
+        response structure and record limits.
       operationId: getRulesetActivationHistory
       parameters:
         - name: id
@@ -108,7 +118,7 @@ paths:
           required: true
           schema:
             type: string
-          description: Unique ruleset ID
+          description: Unique ruleset identifier (UUID v4).
       responses:
         "200":
           description: Success
@@ -146,7 +156,7 @@ paths:
       parameters:
         - name: id
           in: path
-          description: Unique ruleset ID
+          description: Unique ruleset identifier (UUID v4).
           required: true
           schema:
             type: string
@@ -199,10 +209,10 @@ paths:
         - Validation Result
       summary: Get validation summary for a package version (v1)
       description: >
-        Returns a summary of the validation status for the specified package version,
-        including the ruleset used and issue counts grouped by severity.
-        If the package version contains multiple documents, the returned summary is aggregated across all validated documents.
-        **Deprecated:** Use v2 endpoint for multi-linter support.
+        Returns an aggregated validation summary for the specified package version, including the ruleset
+        used and issue counts grouped by severity. If the package version contains multiple documents,
+        the summary is aggregated across all validated documents. Use GET
+        /api/v2/packages/{packageId}/versions/{version}/validation/summary for multi-linter support.
       operationId: getPackageVersionValidationSummary
       deprecated: true
       parameters:
@@ -250,7 +260,7 @@ paths:
       description: >
         Returns a summary of the validation status for the specified package version,
         including the rulesets used and issue counts grouped by severity.
-        Supports multiple linters (Spectral, AI OAS) per document.
+        Supports multiple linters (Spectral, ai_linter) per document.
       operationId: getPackageVersionValidationSummaryV2
       parameters:
         - name: packageId
@@ -295,10 +305,10 @@ paths:
         - Scoring
       summary: Get scoring for a package version
       description: >
-        Returns the scoring result for the specified package version: overall `status`, human-readable
-        `reason` and optional `debug` messages, `backwardsCompatibilityDetails` per API kind
-        (`rest`, `graphql`, `asyncapi`), and `qualityCheckDetails` with linter results per API kind.
-        The version parameter may include revision (e.g., `1.0.0@1`) or omit it to resolve the latest revision.
+        Returns the scoring result for the specified package version: overall status, human-readable
+        reasons and optional debug messages, backwardsCompatibilityDetails per API kind
+        (rest, graphql, protobuf, asyncapi), and qualityCheckDetails with linter results per API kind.
+        The version parameter may include revision (e.g., 1.0.0@1) or omit it to resolve the latest revision.
       operationId: getScoringForVersion
       parameters:
         - name: packageId
@@ -306,7 +316,8 @@ paths:
           required: true
           schema:
             type: string
-          description: Unique package identifier
+          description: >
+            Unique APIHUB package identifier (for example, a dot-separated hierarchical ID such as SD.TL.TLQSS).
         - name: version
           in: path
           required: true
@@ -350,9 +361,13 @@ paths:
         - Validation Operations
       summary: Run manual validation for a package version
       description: >
-        Manually run validation for a specific package version.
-        This is used when linter service was deployed after version publication.
-        This operation is available only to users with publication rights.
+        Manually triggers validation for a specific package version. Used when the linter service was
+        deployed after version publication. Returns 202 Accepted with an empty body when the validation
+        task is queued. Poll GET /api/v2/packages/{packageId}/versions/{version}/validation/summary
+        (or the v1 equivalent) until status is no longer inProgress to observe completion. Repeating
+        the request with recalculate=false is idempotent when cached results exist; recalculate=true
+        forces a fresh run. Requires the manage_draft_version permission on the target package (or
+        system administrator access).
       operationId: runPackageVersionValidation
       parameters:
         - name: packageId
@@ -360,13 +375,16 @@ paths:
           required: true
           schema:
             type: string
-          description: Unique package identifier
+          description: >
+            Unique APIHUB package identifier (for example, a dot-separated hierarchical ID such as SD.TL.TLQSS).
         - name: version
           in: path
           required: true
           schema:
             type: string
-          description: Package version
+          description: >
+            Package version identifier (e.g., 2024.1 or 1.0.0@1 with revision).
+            Omit the revision suffix to resolve the latest revision.
         - name: recalculate
           in: query
           required: false
@@ -375,7 +393,7 @@ paths:
             default: false
           description: >
             When true, bypasses the lint cache and forces fresh validation.
-            Use `true` to enable. Omit or use `false` to use cached results when available.
+            Use true to enable. Omit or use false to use cached results when available.
       responses:
         "202":
           description: Validation started successfully
@@ -409,8 +427,9 @@ paths:
         - Validation Operations
       summary: Start bulk validation for a package
       description: >
-        Starts validation for all versions of a package (or a specific version).
-        Requires publication rights on the target package.
+        Starts an asynchronous bulk validation job for all versions of a package, or a specific version
+        when the version field is provided. Returns a jobId for polling status via GET /api/v1/bulkValidation/{jobId}.
+        Requires the manage_draft_version permission on the target package (or system administrator access).
       operationId: startBulkValidation
       requestBody:
         required: true
@@ -455,7 +474,10 @@ paths:
         - Validation Operations
       summary: Get bulk validation job status
       description: >
-        Returns the current status and progress of a bulk validation job.
+        Returns the current status, progress counters, and per-version results of a bulk validation job
+        identified by jobId. Poll this endpoint after starting a job via POST /api/v1/bulkValidation.
+        Requires the manage_draft_version permission (or system administrator access). Poll at reasonable intervals (for
+        example, every few seconds) while status is processing; results are not cached between polls.
       operationId: getBulkValidationStatus
       parameters:
         - name: jobId
@@ -463,7 +485,9 @@ paths:
           required: true
           schema:
             type: string
-          description: Bulk validation job ID returned by the start endpoint
+          description: >
+            Unique job identifier (UUID v4) returned by POST /api/v1/bulkValidation. Case-sensitive;
+            must reference an existing bulk validation job. Example: 550e8400-e29b-41d4-a716-446655440000.
       responses:
         "200":
           description: Success
@@ -495,12 +519,12 @@ paths:
         - Validation Result
       summary: Get validation details for a specific document (v1)
       description: >
-        Returns detailed validation results for a specific document within the package version, including the list of issues and severity levels.
-        **Deprecated:** Use v2 endpoint for multi-linter support.
-
-        Sorting of validation issues:
-        1. By severity: "error" -> "warning" -> "info".
-        2. Within the same severity by document position from start to end.
+        Returns detailed validation results for a specific document within the package version, including
+        the list of issues and severity levels. Use GET
+        /api/v2/packages/{packageId}/versions/{version}/validation/documents/{slug}/details for
+        multi-linter support. Issues are sorted first by severity (error, then warning, then info),
+        then lexicographically by path segment array (compared element by element, shorter paths first
+        when one is a prefix of another).
       operationId: getPackageVersionValidationDocumentsDetails
       deprecated: true
       parameters:
@@ -551,11 +575,11 @@ paths:
       summary: Get validation details for a specific document
       description: >
         Returns detailed validation results for a specific document within the package version.
-        Supports multiple linters (Spectral, AI OAS) - each linter result includes its ruleset and issues.
-
-        Sorting of validation issues:
-        1. By severity: "error" -> "warning" -> "info".
-        2. Within the same severity by document position from start to end.
+        Supports multiple linters (Spectral, ai_linter) — each linter result includes its ruleset and issues.
+        Issues within each linter result are sorted first by severity (error, then warning, then info),
+        then lexicographically by path segment array: segments are compared left to right as strings
+        (array indices are string tokens); when one path is a prefix of another, the shorter path comes first.
+        Example: ["paths", "/pets", "get"] precedes ["paths", "/pets", "post"] at the same severity.
       operationId: getPackageVersionValidationDocumentsDetailsV2
       parameters:
         - name: packageId
@@ -601,7 +625,9 @@ paths:
 components:
   schemas:
     ExternalLinterConfig:
-      description: Configuration of an available linter.
+      description: >
+        Read-only configuration of an available linter as exposed by the service. Derived from system
+        settings; the enabled flag and supported apiTypes reflect the current deployment configuration.
       type: object
       required:
         - linter
@@ -610,7 +636,9 @@ components:
         - enabled
       properties:
         linter:
-          description: Linter identifier.
+          description: >
+            Linter identifier (case-sensitive). Allowed values are exactly spectral and ai_linter as
+            defined by the enum; additional values may be added in future releases.
           type: string
           enum:
             - spectral
@@ -632,7 +660,10 @@ components:
           description: Whether the linter is enabled in the current configuration.
           type: boolean
     ErrorResponse:
-      description: An error description
+      description: >
+        Standard error response body returned for non-2xx responses. Includes HTTP status, internal
+        error code, and a human-readable message. Optional params provide key/value placeholders for
+        message interpolation; optional debug contains diagnostic details (non-production only).
       type: object
       required:
         - status
@@ -640,22 +671,37 @@ components:
         - message
       properties:
         status:
-          description: HTTP Status Code
+          description: >
+            Numeric HTTP status code for this error (integer). Matches the HTTP response status line.
           type: integer
         code:
-          description: Internal string error code. Mandatory in response.
+          description: >
+            Internal numeric string error code for programmatic handling (for example, 15, 1900, 2000).
+            The message field may contain $-prefixed placeholders that correspond to keys in params.
           type: string
+          example: "1900"
         message:
-          description: The attribute contains an error message.
+          description: Human-readable error message describing the failure; intended for diagnostics and safe client display.
           type: string
         params:
           type: object
-          description: Optional message parameters
+          additionalProperties: true
+          description: >
+            Optional key-value map of parameters used to populate $key placeholders in message. Keys are
+            strings; values are primitive types only (string, number, or boolean) — nested objects are not
+            supported.
+          example:
+            id: "abc-123"
+            field: name
         debug:
-          description: Debug details
+          description: >
+            Optional diagnostic details (for example, stack traces). Returned only in development or
+            test environments; do not rely on this field in production because it may contain sensitive data.
           type: string
     Ruleset:
-      description: Ruleset's parameters
+      description: >
+        Metadata for a validation ruleset used by the linter, including identifiers, status, applicable
+        API type, target linter, and lifecycle information.
       type: object
       required:
         - id
@@ -669,23 +715,26 @@ components:
       properties:
         id:
           type: string
-          description: Unique identifier of the ruleset.
+          description: Unique identifier of the ruleset (UUID v4).
         name:
           type: string
           description: Unique name of the ruleset.
           example: "OpenAPI Quality Ruleset"
         fileName:
           type: string
-          description: Filename of the ruleset file.
+          description: Name of the ruleset file (typically a YAML file, e.g., R2025Ruleset.yaml).
           example: "R2025Ruleset.yaml"
         status:
-          description: Status of the ruleset.
+          description: >
+            Lifecycle status of the ruleset. active — selected for new validations when applicable;
+            inactive — not used for new validations and eligible for deletion when canBeDeleted is true.
           type: string
           enum:
             - active
             - inactive
         apiType:
-          description: API type which is going to be checked against the ruleset.
+          description: >
+            API specification format for which this ruleset is intended (for example, openapi-3-0).
           type: string
           enum:
             - openapi-2-0
@@ -693,7 +742,9 @@ components:
             - openapi-3-1
             - asyncapi-3-0
         linter:
-          description: Name of the linter for which this ruleset suitable to.
+          description: >
+            Canonical linter identifier that this ruleset targets. spectral — rule-based Spectral engine
+            for OpenAPI/AsyncAPI; ai_linter — AI-assisted OpenAPI quality checks.
           type: string
           enum:
             - spectral
@@ -703,15 +754,15 @@ components:
           type: string
           format: date-time
         canBeDeleted:
-          description: |
-            Indicates whether the ruleset can be deleted:
-              - canBeDeleted = true - if both of the following conditins are met:
-                  - ruleset is in inactive status
-                  - there is no existing version revision that was validated against current ruleset.
+          description: >
+            Indicates whether the ruleset can be deleted. True only if the ruleset is inactive and no
+            existing package version revision has been validated using this ruleset.
           type: boolean
           example: true
     RulesetActivationHistory:
-      description: Activation history for a ruleset
+      description: >
+        Activation history for a ruleset, including the ruleset identifier and a chronologically ordered
+        list of activation periods. Used to audit when a ruleset was active or inactive.
       type: object
       required:
         - id
@@ -719,12 +770,12 @@ components:
       properties:
         id:
           type: string
-          description: Unique identifier of the ruleset
+          description: Unique identifier of the ruleset (UUID v4).
         activationHistory:
-          description: |
-            Information about periods when ruleset was activated/deactivated.
-            If empty, means that ruleset was never activated.
-            Only the latest 100 activation records are returned.
+          description: >
+            Periods when the ruleset was activated and deactivated, sorted by activeFrom in descending
+            order (most recent first). Timestamps use ISO 8601 date-time in UTC. Empty array means the
+            ruleset was never activated. Only the latest 100 records are returned; pagination is not supported.
           type: array
           items:
             type: object
@@ -732,11 +783,14 @@ components:
               - activeFrom
             properties:
               activeFrom:
-                description: Date when ruleset was activated.
+                description: >
+                  ISO 8601 date-time in UTC when the ruleset became active. Inclusive of the activation moment.
                 type: string
                 format: date-time
               activeTo:
-                description: Date when ruleset was deactivated. Null if currently active.
+                description: >
+                  ISO 8601 date-time in UTC when the ruleset was deactivated. Null means the ruleset is
+                  currently active; null is expected and not an error. Inclusive of the deactivation moment.
                 type: string
                 format: date-time
                 nullable: true
@@ -750,17 +804,19 @@ components:
         - status
       properties:
         id:
-          description: Unique identifier of the ruleset.
+          description: Unique identifier of the ruleset (UUID v4).
           type: string
         name:
           description: Name of the ruleset.
           type: string
         fileName:
           type: string
-          description: Filename of the ruleset file.
+          description: Name of the ruleset file (typically a YAML file).
           example: "R2025Ruleset.yaml"
         status:
-          description: Current status of the ruleset.
+          description: >
+            Lifecycle status of the ruleset. active — used for validation; inactive — not used for
+            new validations.
           type: string
           enum:
             - active
@@ -772,7 +828,9 @@ components:
         - status
       properties:
         status:
-          description: Current validation status for the package version.
+          description: >
+            Overall validation status for the package version. success — all documents validated;
+            inProgress — validation is still running; error — validation failed for one or more documents.
           type: string
           enum:
             - success
@@ -839,10 +897,11 @@ components:
         - documentName
       properties:
         slug:
-          description: Unique identifier of the document in a slug format.
+          description: >
+            Unique document identifier in slug format (URL-safe string used in API paths).
           type: string
         specificationType:
-          description: Type of the specification notation.
+          description: Specification format of the validated document (for example, openapi-3-1 or asyncapi-3-0).
           type: string
           enum:
             - openapi-3-1
@@ -853,7 +912,9 @@ components:
           description: Display name of the document.
           type: string
     ValidationDetails:
-      description: Validation details for one document under one ruleset.
+      description: >
+        Validation details for one document under one ruleset, including ruleset metadata, the validated
+        document, and a pre-sorted list of validation issues.
       type: object
       required:
         - ruleset
@@ -879,7 +940,7 @@ components:
         document:
           $ref: "#/components/schemas/ValidatedDocument"
         results:
-          description: Validation results from each linter (Spectral, AI OAS, etc.).
+          description: Validation results from each configured linter (spectral, ai_linter).
           type: array
           items:
             $ref: "#/components/schemas/LinterResult"
@@ -892,7 +953,8 @@ components:
         - issues
       properties:
         linter:
-          description: Name of the linter that produced this result.
+          description: >
+            Name of the linter that produced this result. Canonical values are spectral and ai_linter.
           type: string
           enum:
             - spectral
@@ -905,7 +967,9 @@ components:
           items:
             $ref: "#/components/schemas/ValidationIssue"
     ValidationIssue:
-      description: A single validation issue.
+      description: >
+        A single validation issue reported by a linter, including the location in the document, rule
+        identifier, severity level, and a human-readable message.
       type: object
       required:
         - path
@@ -914,12 +978,16 @@ components:
         - code
       properties:
         path:
-          description: Path segments pointing to the issue location in the document.
+          description: >
+            Array of document path segments pointing to the issue location. This is not an RFC 6901 JSON
+            Pointer string; each element is a property name or array index encoded as a string (for example,
+            "0" for the first array element). Special characters appear as literal segment values without
+            JSON Pointer escaping. Example: ["paths", "/pets", "get", "responses", "200"].
           type: array
           items:
             type: string
         code:
-          description: Id of the rule that identified the issue.
+          description: Identifier of the rule that reported the issue (for example, a Spectral rule key).
           type: string
         severity:
           type: string
@@ -937,7 +1005,10 @@ components:
         - status
       properties:
         status:
-          description: Overall scoring status.
+          description: >
+            Overall scoring status derived from backwards-compatibility and quality-check results.
+            passed — no blocking issues; passed_with_defects — non-blocking warnings or minor defects;
+            not_passed — blocking errors, breaking changes, or internal calculation failures.
           type: string
           enum:
             - passed
@@ -956,7 +1027,7 @@ components:
         backwardsCompatibilityDetails:
           description: >
             Backwards compatibility breakdown per API kind. A property is present only when that API type
-            exists for the version.
+            exists for the version. Supported kinds are rest, graphql, protobuf, and asyncapi.
           type: object
           properties:
             rest:
@@ -1016,13 +1087,13 @@ components:
           description: Breaking changes for unknown audience.
         internal2Unknown:
           type: integer
-          description: Internal to unknown audience transitions.
+          description: Number of changes where the audience changed from internal to unknown.
         external2Internal:
           type: integer
-          description: External to internal audience transitions.
+          description: Number of changes where the audience changed from external to internal.
         external2Unknown:
           type: integer
-          description: External to unknown audience transitions.
+          description: Number of changes where the audience changed from external to unknown.
     QualityCheckDetails:
       description: Quality check result from a single linter for one API kind.
       type: object
@@ -1052,9 +1123,18 @@ components:
           type: integer
         internalErrors:
           type: string
-          description: Set when the linter failed internally (optional).
+          description: >
+            Plain-text diagnostic message returned only when a linter fails internally (for example, a
+            runtime or configuration error) instead of producing validation issues. Visible to authenticated
+            API clients with access to scoring results; intended for operators and integrators, not for
+            display in end-user interfaces. The API does not redact or truncate this field in any environment.
     BulkValidationRequest:
-      description: Request body for starting a bulk validation job.
+      description: >
+        Request body for starting a bulk validation job. packageId identifies the root package, group, or
+        workspace to validate. When version is set, only that version is validated per target package;
+        when omitted, all versions of each target package are validated. excludePackages lists package
+        IDs to skip when packageId resolves to a group or workspace (child packages only; does not
+        affect packages outside the resolved tree). recalculate controls cache bypass for each queued task.
       type: object
       required:
         - packageId
@@ -1075,16 +1155,22 @@ components:
           description: When true, bypasses the lint cache and forces fresh validation.
           default: false
     BulkValidationStartResponse:
-      description: Response returned when a bulk validation job is successfully started.
+      description: >
+        Response returned when a bulk validation job is successfully started. Use the returned jobId
+        to poll GET /api/v1/bulkValidation/{jobId} for status and progress.
       type: object
       required:
         - jobId
       properties:
         jobId:
           type: string
-          description: Unique identifier of the started bulk validation job.
+          description: Unique identifier of the started bulk validation job (UUID v4).
     BulkValidationStatusResponse:
-      description: Current status and progress of a bulk validation job.
+      description: >
+        Current status and progress of a bulk validation job. processedVersions counts completed versions
+        (including per-version failures) out of totalVersions. status transitions: not_started (initial,
+        rarely observed) → processing → success (job finished) or error (job aborted). success means the
+        job completed processing all scheduled versions, not that every version passed validation.
       type: object
       required:
         - jobId
@@ -1094,10 +1180,13 @@ components:
       properties:
         jobId:
           type: string
-          description: Unique identifier of the bulk validation job.
+          description: Unique identifier of the bulk validation job (UUID v4).
         status:
           type: string
-          description: Current status of the job.
+          description: >
+            Current job status. not_started — job created but not yet processing; processing — versions
+            are being validated; success — all scheduled versions processed; error — job failed before
+            completion (see error field).
           enum:
             - not_started
             - processing
@@ -1118,7 +1207,9 @@ components:
           items:
             $ref: "#/components/schemas/BulkValidationEntry"
     BulkValidationEntry:
-      description: Validation result entry for a single package version.
+      description: >
+        Validation result entry for a single package version within a bulk validation job, indicating
+        whether validation was successfully queued and the associated task identifier when available.
       type: object
       required:
         - packageId
@@ -1127,29 +1218,39 @@ components:
       properties:
         packageId:
           type: string
-          description: Package ID.
+          description: Package identifier (UUID v4) of the validated package version.
         version:
           type: string
-          description: Package version.
+          description: >
+            Package version string (for example, 2024.1 or 1.0.0@1 with optional revision suffix).
         validationTaskId:
           type: string
           description: ID of the validation task created for this version.
         validationStarted:
           type: boolean
-          description: Whether validation was successfully started for this version.
+          description: >
+            True if a validation task was successfully created and queued for this version; false if
+            validation could not be started (for example, due to missing metadata or an error).
   securitySchemes:
     BearerAuth:
       type: http
-      description: Bearer token authentication. Default security scheme for API usage.
+      description: >
+        JWT Bearer token authentication for Qubership APIHUB. Send Authorization: Bearer <token> in the
+        request header. The token grants access according to the caller's assigned roles and permissions.
       scheme: bearer
       bearerFormat: JWT
     api-key:
       type: apiKey
-      description: Api-key authentication.
+      description: >
+        API key authentication for Qubership APIHUB. Send the key in the api-key request header
+        (for example, api-key: <your-key>). The key inherits the associated user's permissions.
       name: api-key
       in: header
     PersonalAccessToken:
       type: apiKey
-      description: Authentication by personal access token.
+      description: >
+        Personal access token authentication for programmatic access to Qubership APIHUB. Send the token
+        in the X-Personal-Access-Token header. The token inherits the issuing user's permissions and
+        remains valid until revoked or expired.
       name: X-Personal-Access-Token
       in: header
