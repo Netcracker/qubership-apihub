@@ -4,6 +4,7 @@ import type { CreateEnumStmt, CompositeTypeStmt, CreateRangeStmt, RawStmt, Node,
 import type { Column, SchemaObject } from '../../schema'
 import type { SchemaType } from '../../types'
 import { DdlErrorKind } from '../../constants'
+import { PgObjectKind } from '../../postgres.constants'
 import { enumType, unsupportedType } from '../../factories'
 import { mapTypeName } from '../typeMapper'
 import type { SchemaAccumulator } from '../schemaAccumulator'
@@ -70,7 +71,7 @@ export function handleCreateCompositeType(
     const range = stmtRangeOf(rawStmt)
     onError({
       kind: DdlErrorKind.DuplicateObject,
-      objectKind: 'CompositeType',
+      objectKind: PgObjectKind.CompositeType,
       qualifiedName,
       message: `Duplicate type: ${qualifiedName}`,
       ...(range && { range }),
@@ -92,7 +93,7 @@ export function handleCreateCompositeType(
   })
 
   const obj: SchemaObject = {
-    kind: 'CompositeType',
+    kind: PgObjectKind.CompositeType,
     name: typeName,
     schema: schemaName,
     fields,
@@ -124,7 +125,7 @@ export function handleCreateRangeType(
     const range = stmtRangeOf(rawStmt)
     onError({
       kind: DdlErrorKind.DuplicateObject,
-      objectKind: 'RangeType',
+      objectKind: PgObjectKind.RangeType,
       qualifiedName,
       message: `Duplicate type: ${qualifiedName}`,
       ...(range && { range }),
@@ -157,7 +158,7 @@ export function handleCreateRangeType(
   }
 
   const obj: SchemaObject = {
-    kind: 'RangeType',
+    kind: PgObjectKind.RangeType,
     name: typeName,
     schema: schemaName,
     ...(subtype !== undefined && { subtype }),

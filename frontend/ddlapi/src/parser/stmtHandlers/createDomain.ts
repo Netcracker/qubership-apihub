@@ -2,10 +2,10 @@
 //
 // Domains are a PostgreSQL-specific construct. They are not modelled as a
 // first-class SchemaType in the generic ddlapi schema; instead each domain is
-// stored as a plain UnknownObject / UnknownType with kind 'pg:domain'. This
+// stored as a plain UnknownObject / UnknownType with kind 'Domain'. This
 // keeps the core schema model driver-neutral while still allowing PG-aware
 // consumers to inspect domain definitions and ensuring that columns whose type
-// references a domain resolve to the shared 'pg:domain' instance rather than
+// references a domain resolve to the shared 'Domain' instance rather than
 // staying as a raw UnsupportedType.
 
 import type { CreateDomainStmt, RawStmt, Node, Constraint } from '@pgsql/types'
@@ -19,6 +19,7 @@ import { mapTypeName } from '../typeMapper'
 import type { SchemaAccumulator } from '../schemaAccumulator'
 import { strVal, stmtRangeOf, nodeToExpr, exprToString } from '../astHelpers'
 import type { DdlNonFatalError } from '../buildFromDdl'
+import { PgObjectKind } from '../../postgres.constants'
 
 export function handleCreateDomain(
   stmt: CreateDomainStmt,
@@ -40,7 +41,7 @@ export function handleCreateDomain(
     const range = stmtRangeOf(rawStmt)
     onError({
       kind: DdlErrorKind.DuplicateObject,
-      objectKind: 'pg:domain',
+      objectKind: PgObjectKind.Domain,
       qualifiedName,
       message: `Duplicate domain: ${qualifiedName}`,
       ...(range && { range }),
@@ -76,7 +77,7 @@ export function handleCreateDomain(
   }
 
   const pgDomain = {
-    kind: 'pg:domain' as const,
+    kind: PgObjectKind.Domain,
     t: domainName,
     baseType,
     ...(nullability !== undefined && { null: nullability }),

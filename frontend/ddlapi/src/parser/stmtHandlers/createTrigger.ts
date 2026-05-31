@@ -3,6 +3,7 @@
 import { deparseSync } from 'pgsql-parser'
 import type { CreateTrigStmt, RawStmt, Node } from '@pgsql/types'
 import { DdlErrorKind } from '../../constants'
+import { PgAttrKind } from '../../postgres.constants'
 import type { Attr } from '../../attrs'
 import type { SchemaAccumulator } from '../schemaAccumulator'
 import { strVal, stmtRangeOf } from '../astHelpers'
@@ -80,7 +81,7 @@ export function handleCreateTrigger(
   }
 
   const triggerAttr: Attr = {
-    kind: 'Trigger',
+    kind: PgAttrKind.Trigger,
     name: stmt.trigname ?? '',
     timing,
     events,

@@ -3,6 +3,7 @@
 import { deparseSync } from 'pgsql-parser'
 import type { IndexStmt, RawStmt, Node, IndexElem } from '@pgsql/types'
 import { ObjectKind, DdlErrorKind } from '../../constants'
+import { PgAttrKind } from '../../postgres.constants'
 import type { Index, IndexPart } from '../../schema'
 import type { Attr } from '../../attrs'
 import type { Expr } from '../../exprs'
@@ -57,16 +58,16 @@ export function handleCreateIndex(
 
     // NULLS FIRST / NULLS LAST
     if (elem.nulls_ordering === 'SORTBY_NULLS_FIRST') {
-      partAttrs.push({ kind: 'IndexColumnProp', nullsFirst: true, nullsLast: false } as Attr)
+      partAttrs.push({ kind: PgAttrKind.IndexColumnProp, nullsFirst: true, nullsLast: false } as Attr)
     } else if (elem.nulls_ordering === 'SORTBY_NULLS_LAST') {
-      partAttrs.push({ kind: 'IndexColumnProp', nullsFirst: false, nullsLast: true } as Attr)
+      partAttrs.push({ kind: PgAttrKind.IndexColumnProp, nullsFirst: false, nullsLast: true } as Attr)
     }
 
     // Operator class
     if (elem.opclass && elem.opclass.length > 0) {
       const opclassName = strVal(elem.opclass[0])
       if (opclassName) {
-        partAttrs.push({ kind: 'IndexOpClass', name: opclassName } as Attr)
+        partAttrs.push({ kind: PgAttrKind.IndexOpClass, name: opclassName } as Attr)
       }
     }
 
@@ -93,23 +94,23 @@ export function handleCreateIndex(
 
   // Access method — only record if not the default btree
   if (stmt.accessMethod && stmt.accessMethod !== 'btree') {
-    indexAttrs.push({ kind: 'IndexType', T: stmt.accessMethod } as Attr)
+    indexAttrs.push({ kind: PgAttrKind.IndexType, T: stmt.accessMethod } as Attr)
   }
 
   // WHERE predicate
   if (stmt.whereClause) {
     const pred = deparseSync(stmt.whereClause as Record<string, unknown>)
-    indexAttrs.push({ kind: 'IndexPredicate', P: pred } as Attr)
+    indexAttrs.push({ kind: PgAttrKind.IndexPredicate, P: pred } as Attr)
   }
 
   // CONCURRENTLY
   if (stmt.concurrent) {
-    indexAttrs.push({ kind: 'Concurrently' } as Attr)
+    indexAttrs.push({ kind: PgAttrKind.Concurrently } as Attr)
   }
 
   // NULLS [NOT] DISTINCT
   if (stmt.nulls_not_distinct) {
-    indexAttrs.push({ kind: 'IndexNullsDistinct', V: false } as Attr)
+    indexAttrs.push({ kind: PgAttrKind.IndexNullsDistinct, V: false } as Attr)
   }
 
   // INCLUDE columns
@@ -120,7 +121,7 @@ export function handleCreateIndex(
       return elem?.name ?? ''
     }).filter(Boolean)
     if (includeColNames.length > 0) {
-      indexAttrs.push({ kind: 'IndexInclude', columns: includeColNames } as Attr)
+      indexAttrs.push({ kind: PgAttrKind.IndexInclude, columns: includeColNames } as Attr)
     }
   }
 
@@ -135,7 +136,7 @@ export function handleCreateIndex(
       if (name && arg) params[name] = deparseSync(arg as Record<string, unknown>)
     }
     if (Object.keys(params).length > 0) {
-      indexAttrs.push({ kind: 'StorageParams', params } as Attr)
+      indexAttrs.push({ kind: PgAttrKind.StorageParams, params } as Attr)
     }
   }
 

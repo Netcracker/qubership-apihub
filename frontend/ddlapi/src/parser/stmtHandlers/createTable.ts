@@ -3,6 +3,7 @@
 import { deparseSync } from 'pgsql-parser'
 import type { CreateStmt, RawStmt, Node, ColumnDef, Constraint, TableLikeClause } from '@pgsql/types'
 import { ObjectKind, AttrKind, ReferenceOption, DdlErrorKind } from '../../constants'
+import { PgAttrKind, PgObjectKind } from '../../postgres.constants'
 import type { Table, Column, ColumnType, Index, IndexPart, ForeignKey, SchemaObject } from '../../schema'
 import type { Attr } from '../../attrs'
 import type { Expr } from '../../exprs'
@@ -149,7 +150,7 @@ function buildColumn(
         }
       }
       attrs.push({
-        kind: 'Identity',
+        kind: PgAttrKind.Identity,
         generation,
         ...(seqStart !== undefined && { seqStart }),
         ...(seqIncrement !== undefined && { seqIncrement }),
@@ -291,10 +292,10 @@ export function handleCreateTable(
       const includeColNames = including.map(n => strVal(n) ?? '').filter(Boolean)
       const attrs: Attr[] = []
       if (includeColNames.length > 0) {
-        attrs.push({ kind: 'IndexInclude', columns: includeColNames } as Attr)
+        attrs.push({ kind: PgAttrKind.IndexInclude, columns: includeColNames } as Attr)
       }
       if (con.nulls_not_distinct) {
-        attrs.push({ kind: 'IndexNullsDistinct', V: false } as Attr)
+        attrs.push({ kind: PgAttrKind.IndexNullsDistinct, V: false } as Attr)
       }
       const idxParts: IndexPart[] = colNames.map((_, i) => ({ seqNo: i }))
       const idx: Index = {
@@ -334,7 +335,7 @@ export function handleCreateTable(
       tableAttrs.push(newCheck(expr, con.conname))
     } else if (ct === 'CONSTR_EXCLUSION') {
       tableObjects.push({
-        kind: 'ExcludeConstraint',
+        kind: PgObjectKind.ExcludeConstraint,
         ...(con.conname !== undefined && { name: con.conname }),
         method: con.access_method,
         exclusions: con.exclusions,
@@ -363,7 +364,7 @@ export function handleCreateTable(
       if (pe['expr']) return { type: 'expr', expr: exprToString(pe['expr'] as Node) }
       return undefined
     }).filter(Boolean)
-    tableAttrs.push({ kind: 'Partition', T, parts } as Attr)
+    tableAttrs.push({ kind: PgAttrKind.Partition, T, parts } as Attr)
   }
 
   if (stmt.inhRelations && stmt.inhRelations.length > 0) {
@@ -371,7 +372,7 @@ export function handleCreateTable(
       const rv = (r as Record<string, unknown>)['RangeVar'] as Record<string, unknown> | undefined
       return rv?.['relname'] as string | undefined
     }).filter(Boolean) as string[]
-    tableAttrs.push({ kind: 'Inherits', parents } as Attr)
+    tableAttrs.push({ kind: PgAttrKind.Inherits, parents } as Attr)
   }
 
   if (stmt.options && stmt.options.length > 0) {
@@ -384,7 +385,7 @@ export function handleCreateTable(
       if (name && arg) params[name] = deparseSync(arg as Record<string, unknown>)
     }
     if (Object.keys(params).length > 0) {
-      tableAttrs.push({ kind: 'StorageParams', params } as Attr)
+      tableAttrs.push({ kind: PgAttrKind.StorageParams, params } as Attr)
     }
   }
 

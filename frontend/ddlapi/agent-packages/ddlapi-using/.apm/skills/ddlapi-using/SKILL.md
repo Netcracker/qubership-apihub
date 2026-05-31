@@ -12,7 +12,7 @@ the contracts that the type signatures alone do not make obvious.
 ## Import only from the package root
 
 ```typescript
-import { buildFromDdl, TypeKind, ObjectKind } from '@netcracker/qubership-apihub-ddlapi'
+import { buildFromDdl, TypeKind, ObjectKind, PgAttrKind, PgObjectKind, PgTypeKind } from '@netcracker/qubership-apihub-ddlapi'
 ```
 
 Everything is re-exported from the package entry (`index.ts`); internal module
@@ -42,8 +42,9 @@ table while iterating columns, track it in your own loop variable.
 ## Discriminate on `kind` with the exported constants
 
 Every node in a union carries a `kind` string. Switch on it using the constant
-groups — `TypeKind`, `AttrKind`, `ExprKind`, `ObjectKind` — not bare literals,
-and always handle the open default:
+groups — `TypeKind`, `AttrKind`, `ExprKind`, `ObjectKind` for core nodes,
+`PgAttrKind`, `PgObjectKind`, `PgTypeKind` for PostgreSQL escape-hatch nodes —
+not bare literals, and always handle the open default:
 
 ```typescript
 switch (col.type!.type.kind) {
@@ -90,11 +91,12 @@ these escape-hatch kinds:
 | `'pg:domain'` | schema `objects` **and** column type | `t`, `baseType`, `null?`, `default?`, `checks?` |
 | `'Trigger'` | **table** `attrs` (on the target table) | `name`, `timing`, `events`, `forEachRow`, `funcName`, `when?`, `isConstraint?`, `deferrable?`, `initDeferred?` |
 
-These strings are not in the core type definitions, so treat the default branch
-of a `switch` as "PostgreSQL detail" and narrow by `kind`:
+These kinds are available as named constants (`PgAttrKind`, `PgObjectKind`,
+`PgTypeKind`) — use them instead of bare string literals. Treat the default
+branch of a `switch` as "PostgreSQL detail" and narrow by `kind`:
 
 ```typescript
-const identity = col.attrs?.find(a => a.kind === 'Identity') as
+const identity = col.attrs?.find(a => a.kind === PgAttrKind.Identity) as
   | { generation: 'ALWAYS' | 'BY DEFAULT'; seqStart?: number } | undefined
 ```
 

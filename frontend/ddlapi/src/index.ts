@@ -2,6 +2,7 @@
 // Consumers must import from this module only; internal module paths are unstable.
 
 export * from './constants'
+export * from './postgres.constants'
 export * from './attrs'
 export * from './exprs'
 export * from './types'

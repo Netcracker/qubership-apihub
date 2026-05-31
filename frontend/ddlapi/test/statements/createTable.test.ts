@@ -1,6 +1,7 @@
 import { buildFromDdl } from '../../src'
 import { loadSql } from '../helpers/loadSql'
 import { TypeKind, AttrKind, DdlErrorKind } from '../../src/constants'
+import { PgAttrKind, PgObjectKind } from '../../src/postgres.constants'
 
 describe('createTable', () => {
   describe('column types', () => {
@@ -112,7 +113,7 @@ describe('createTable', () => {
       const table = realm.schemas[0]!.tables![0]!
       const uqIdx = table.indexes!.find(i => i.unique)
       expect(uqIdx).toBeDefined()
-      const nd = uqIdx!.attrs!.find(a => a.kind === 'IndexNullsDistinct')
+      const nd = uqIdx!.attrs!.find(a => a.kind === PgAttrKind.IndexNullsDistinct)
       expect(nd).toBeDefined()
       expect((nd as unknown as { V: boolean }).V).toBe(false)
     })
@@ -185,7 +186,7 @@ describe('createTable', () => {
       const realm = await buildFromDdl(loadSql('create-table/identity-always.sql'))
       const cols = realm.schemas[0]!.tables![0]!.columns!
       const idCol = cols.find(c => c.name === 'id')!
-      const ident = idCol.attrs!.find(a => a.kind === 'Identity') as { generation: string } | undefined
+      const ident = idCol.attrs!.find(a => a.kind === PgAttrKind.Identity) as { generation: string } | undefined
       expect(ident).toBeDefined()
       expect(ident!.generation).toBe('ALWAYS')
     })
@@ -194,7 +195,7 @@ describe('createTable', () => {
       const realm = await buildFromDdl(loadSql('create-table/identity-by-default.sql'))
       const cols = realm.schemas[0]!.tables![0]!.columns!
       const idCol = cols.find(c => c.name === 'id')!
-      const ident = idCol.attrs!.find(a => a.kind === 'Identity') as { generation: string; seqStart?: number } | undefined
+      const ident = idCol.attrs!.find(a => a.kind === PgAttrKind.Identity) as { generation: string; seqStart?: number } | undefined
       expect(ident!.generation).toBe('BY DEFAULT')
       expect(ident!.seqStart).toBe(100)
     })
@@ -215,7 +216,7 @@ describe('createTable', () => {
     test('partition-range: stores Partition attr', async () => {
       const realm = await buildFromDdl(loadSql('create-table/partition-range.sql'))
       const table = realm.schemas[0]!.tables![0]!
-      const part = table.attrs!.find(a => a.kind === 'Partition') as { T: string; parts: unknown[] } | undefined
+      const part = table.attrs!.find(a => a.kind === PgAttrKind.Partition) as { T: string; parts: unknown[] } | undefined
       expect(part).toBeDefined()
       expect(part!.T).toBe('RANGE')
       expect(part!.parts).toHaveLength(1)
@@ -225,7 +226,7 @@ describe('createTable', () => {
       const realm = await buildFromDdl(loadSql('create-table/inheritance.sql'))
       const schema = realm.schemas[0]!
       const capitals = schema.tables!.find(t => t.name === 'capitals')!
-      const inh = capitals.attrs!.find(a => a.kind === 'Inherits') as { parents: string[] } | undefined
+      const inh = capitals.attrs!.find(a => a.kind === PgAttrKind.Inherits) as { parents: string[] } | undefined
       expect(inh).toBeDefined()
       expect(inh!.parents).toContain('cities')
     })
@@ -233,7 +234,7 @@ describe('createTable', () => {
     test('storage-params: stores StorageParams attr', async () => {
       const realm = await buildFromDdl(loadSql('create-table/storage-params.sql'))
       const table = realm.schemas[0]!.tables![0]!
-      const sp = table.attrs!.find(a => a.kind === 'StorageParams') as { params: Record<string, string> } | undefined
+      const sp = table.attrs!.find(a => a.kind === PgAttrKind.StorageParams) as { params: Record<string, string> } | undefined
       expect(sp).toBeDefined()
       expect(sp!.params['fillfactor']).toBeDefined()
     })
@@ -282,7 +283,7 @@ describe('createTable', () => {
     test('exclude-constraint: stores ExcludeConstraint in table.objects', async () => {
       const realm = await buildFromDdl(loadSql('create-table/exclude-constraint.sql'))
       const table = realm.schemas[0]!.tables![0]!
-      const excl = table.objects!.find(o => o.kind === 'ExcludeConstraint')
+      const excl = table.objects!.find(o => o.kind === PgObjectKind.ExcludeConstraint)
       expect(excl).toBeDefined()
     })
   })

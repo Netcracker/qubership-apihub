@@ -1,6 +1,7 @@
 import { buildFromDdl } from '../../src'
 import { loadSql } from '../helpers/loadSql'
 import { DdlErrorKind } from '../../src/constants'
+import { PgAttrKind } from '../../src/postgres.constants'
 
 describe('createIndex', () => {
   test('basic-btree: creates index attached to table', async () => {
@@ -56,7 +57,7 @@ describe('createIndex', () => {
     const schema = realm.schemas[0]!
     const tasks = schema.tables!.find(t => t.name === 'tasks')!
     const idx = tasks.indexes!.find(i => i.name === 'idx_active_tasks')!
-    const pred = idx.attrs!.find(a => a.kind === 'IndexPredicate')
+    const pred = idx.attrs!.find(a => a.kind === PgAttrKind.IndexPredicate)
     expect(pred).toBeDefined()
     expect((pred as unknown as { P: string }).P).toContain('active')
   })
@@ -66,7 +67,7 @@ describe('createIndex', () => {
     const schema = realm.schemas[0]!
     const t = schema.tables!.find(t => t.name === 'order_lines')!
     const idx = t.indexes!.find(i => i.name === 'idx_order_lines_order')!
-    const inc = idx.attrs!.find(a => a.kind === 'IndexInclude') as { columns: string[] } | undefined
+    const inc = idx.attrs!.find(a => a.kind === PgAttrKind.IndexInclude) as { columns: string[] } | undefined
     expect(inc).toBeDefined()
     expect(inc!.columns).toContain('customer_id')
     expect(inc!.columns).toContain('total_amount')
@@ -77,7 +78,7 @@ describe('createIndex', () => {
     const schema = realm.schemas[0]!
     const articles = schema.tables!.find(t => t.name === 'articles')!
     const idx = articles.indexes!.find(i => i.name === 'idx_articles_content_pattern')!
-    const opclass = idx.parts![0]!.attrs!.find(a => a.kind === 'IndexOpClass') as { name: string } | undefined
+    const opclass = idx.parts![0]!.attrs!.find(a => a.kind === PgAttrKind.IndexOpClass) as { name: string } | undefined
     expect(opclass).toBeDefined()
     expect(opclass!.name).toBe('text_pattern_ops')
   })
@@ -87,7 +88,7 @@ describe('createIndex', () => {
     const schema = realm.schemas[0]!
     const metrics = schema.tables!.find(t => t.name === 'metrics')!
     const idx = metrics.indexes!.find(i => i.name === 'idx_metrics_x_nulls_first')!
-    const prop = idx.parts![0]!.attrs!.find(a => a.kind === 'IndexColumnProp') as { nullsFirst: boolean } | undefined
+    const prop = idx.parts![0]!.attrs!.find(a => a.kind === PgAttrKind.IndexColumnProp) as { nullsFirst: boolean } | undefined
     expect(prop).toBeDefined()
     expect(prop!.nullsFirst).toBe(true)
   })
@@ -97,7 +98,7 @@ describe('createIndex', () => {
     const schema = realm.schemas[0]!
     const memberships = schema.tables!.find(t => t.name === 'memberships')!
     const idx = memberships.indexes!.find(i => i.name === 'idx_memberships_unique')!
-    const nd = idx.attrs!.find(a => a.kind === 'IndexNullsDistinct') as { V: boolean } | undefined
+    const nd = idx.attrs!.find(a => a.kind === PgAttrKind.IndexNullsDistinct) as { V: boolean } | undefined
     expect(nd).toBeDefined()
     expect(nd!.V).toBe(false)
   })
@@ -107,7 +108,7 @@ describe('createIndex', () => {
     const schema = realm.schemas[0]!
     const events = schema.tables!.find(t => t.name === 'events')!
     const idx = events.indexes!.find(i => i.name === 'idx_events_payload')!
-    const it = idx.attrs!.find(a => a.kind === 'IndexType') as { T: string } | undefined
+    const it = idx.attrs!.find(a => a.kind === PgAttrKind.IndexType) as { T: string } | undefined
     expect(it).toBeDefined()
     expect(it!.T).toBe('gin')
   })
@@ -117,7 +118,7 @@ describe('createIndex', () => {
     const schema = realm.schemas[0]!
     // Find the table from the resource file
     const table = schema.tables![0]!
-    const idx = table.indexes!.find(i => i.attrs?.some(a => a.kind === 'Concurrently'))
+    const idx = table.indexes!.find(i => i.attrs?.some(a => a.kind === PgAttrKind.Concurrently))
     expect(idx).toBeDefined()
   })
 
@@ -125,7 +126,7 @@ describe('createIndex', () => {
     const realm = await buildFromDdl(loadSql('create-index/storage-params.sql'))
     const schema = realm.schemas[0]!
     const table = schema.tables![0]!
-    const idx = table.indexes!.find(i => i.attrs?.some(a => a.kind === 'StorageParams'))
+    const idx = table.indexes!.find(i => i.attrs?.some(a => a.kind === PgAttrKind.StorageParams))
     expect(idx).toBeDefined()
   })
 

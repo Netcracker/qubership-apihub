@@ -1,6 +1,7 @@
 import { buildFromDdl } from '../../src'
 import { loadSql } from '../helpers/loadSql'
 import { DdlErrorKind } from '../../src/constants'
+import { PgAttrKind } from '../../src/postgres.constants'
 
 describe('createTrigger', () => {
   test('after-insert-row: attached as Trigger attr on table', async () => {
@@ -9,7 +10,7 @@ describe('createTrigger', () => {
     expect(errors).toHaveLength(0)
     const schema = realm.schemas[0]!
     const users = schema.tables!.find(t => t.name === 'users')!
-    const trig = users.attrs!.find(a => a.kind === 'Trigger') as {
+    const trig = users.attrs!.find(a => a.kind === PgAttrKind.Trigger) as {
       name: string; timing: string; events: string[]; forEachRow: boolean; funcName: string
     } | undefined
     expect(trig).toBeDefined()
@@ -25,7 +26,7 @@ describe('createTrigger', () => {
     const realm = await buildFromDdl(loadSql('create-trigger/before-update-when.sql'), { onError: e => errors.push(e) })
     expect(errors).toHaveLength(0)
     const table = realm.schemas[0]!.tables!.find(t => t.name === 'employees')!
-    const trig = table.attrs!.find(a => a.kind === 'Trigger') as {
+    const trig = table.attrs!.find(a => a.kind === PgAttrKind.Trigger) as {
       timing: string; events: string[]; when?: string
     } | undefined
     expect(trig!.timing).toBe('BEFORE')
@@ -38,7 +39,7 @@ describe('createTrigger', () => {
     const realm = await buildFromDdl(loadSql('create-trigger/statement-level.sql'), { onError: e => errors.push(e) })
     expect(errors).toHaveLength(0)
     const table = realm.schemas[0]!.tables!.find(t => t.name === 'audit_target')!
-    const trig = table.attrs!.find(a => a.kind === 'Trigger') as {
+    const trig = table.attrs!.find(a => a.kind === PgAttrKind.Trigger) as {
       forEachRow: boolean; events: string[]
     } | undefined
     expect(trig!.forEachRow).toBe(false)
@@ -61,7 +62,7 @@ describe('createTrigger', () => {
     const realm = await buildFromDdl(loadSql('create-trigger/constraint-trigger.sql'), { onError: e => errors.push(e) })
     expect(errors).toHaveLength(0)
     const table = realm.schemas[0]!.tables!.find(t => t.name !== undefined)!
-    const trig = table.attrs!.find(a => a.kind === 'Trigger') as {
+    const trig = table.attrs!.find(a => a.kind === PgAttrKind.Trigger) as {
       isConstraint?: boolean; deferrable?: boolean
     } | undefined
     expect(trig).toBeDefined()

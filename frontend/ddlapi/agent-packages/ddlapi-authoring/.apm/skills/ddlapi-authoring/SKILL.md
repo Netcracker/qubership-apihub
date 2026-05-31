@@ -31,8 +31,10 @@ comment in place.
 
 Go groups types with empty marker methods (`obj()`, `typ()`, `expr()`,
 `attr()`). TypeScript replaces each with a `kind` string discriminant and a
-matching constant group in `constants.ts`: `ObjectKind`, `TypeKind`,
-`ExprKind`, `AttrKind`. Rules when extending a union:
+matching constant group: `ObjectKind`, `TypeKind`, `ExprKind`, `AttrKind` for
+driver-neutral core kinds in `constants.ts`; `PgAttrKind`, `PgObjectKind`,
+`PgTypeKind` for PostgreSQL escape-hatch kinds in `postgres.constants.ts`.
+Rules when extending a union:
 
 - Add the literal to the relevant constant group; reference it from the
   interface (`kind: typeof TypeKind.Foo`) so the string is defined once.
