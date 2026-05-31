@@ -25,7 +25,11 @@ function setAttr(obj: { attrs?: Attr[] }, newAttr: Attr): void {
 
 function clearAttr(obj: { attrs?: Attr[] }, kind: string): void {
   const result = removeAttr(obj.attrs, kind as Attr['kind'])
-  obj.attrs = result.length > 0 ? result : undefined
+  if (result.length > 0) {
+    obj.attrs = result
+  } else {
+    delete obj.attrs
+  }
 }
 
 export function handleComment(

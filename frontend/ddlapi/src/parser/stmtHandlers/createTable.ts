@@ -335,7 +335,7 @@ export function handleCreateTable(
     } else if (ct === 'CONSTR_EXCLUSION') {
       tableObjects.push({
         kind: 'ExcludeConstraint',
-        name: con.conname,
+        ...(con.conname !== undefined && { name: con.conname }),
         method: con.access_method,
         exclusions: con.exclusions,
       } as SchemaObject)
