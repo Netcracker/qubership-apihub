@@ -825,3 +825,43 @@ const ShareabilityReportDocumentNotFoundMsg = "Document with slug '$slug' not fo
 
 const ShareabilityReportSizeExceeded = "8305"
 const ShareabilityReportSizeExceededMsg = "Shareability report file size exceeded. File size limit - $size"
+
+// AI Chat error codes (APIHUB-AI-*). Each public error has a Code constant; variant
+// messages reuse the parent Code (same pattern as InvalidParameterValue + InvalidLimitMsg).
+
+const AiChatNotFound = "APIHUB-AI-3001"
+const AiChatNotFoundMsg = "chat with chatId = $chatId not found"
+
+const AiChatValidationFailed = "APIHUB-AI-4001"
+const AiChatValidationFailedMsg = "Message validation failed"
+const AiChatMessageTooLongMsg = "Message exceeds maximum length of $max characters"
+const AiChatInvalidBeforeCursorMsg = "Invalid before cursor"
+const AiChatEmptyBodyMsg = "Empty body"
+
+const AiChatPinLimitExceeded = "APIHUB-AI-4003"
+const AiChatPinLimitExceededMsg = "Cannot pin chat: user already has $max pinned chats (the limit is $max)"
+
+const AiChatInternalError = "APIHUB-AI-5000"
+const AiChatInternalErrorMsg = "Internal error"
+const AiChatIdempotentReplayFailedMsg = "Idempotent replay failed"
+const AiChatIdempotentRetryFailedMsg = "Idempotent retry failed"
+const AiChatStreamingNotSupportedMsg = "Streaming not supported"
+
+const AiChatLLMError = "APIHUB-AI-5001"
+const AiChatLLMErrorMsg = "LLM provider error"
+
+// Ephemeral file error codes (APIHUB-EF-*). Each public error has a Code constant; variant
+// messages reuse the parent Code (same pattern as InvalidParameterValue + InvalidLimitMsg).
+
+const EphemeralFileNotFound = "APIHUB-EF-3001"
+const EphemeralFileNotFoundMsg = "ephemeral file with fileId = $fileId not found"
+
+const EphemeralFileTokenInvalid = "APIHUB-EF-3002"
+const EphemeralFileTokenInvalidMsg = "Invalid download token"
+const EphemeralFileTokenFileMismatchMsg = "download token is not valid for this file"
+
+const EphemeralFileTokenMissing = "APIHUB-EF-3003"
+const EphemeralFileTokenMissingMsg = "Missing token query parameter"
+
+const EphemeralFileTokenExpired = "APIHUB-EF-4101"
+const EphemeralFileTokenExpiredMsg = "download token expired, please request the file again"

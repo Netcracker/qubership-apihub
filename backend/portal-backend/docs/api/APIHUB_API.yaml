@@ -10,7 +10,7 @@ info:
     name: Apache 2.0
     url: https://github.com/Netcracker/qubership-apihub-backend/raw/refs/heads/main/LICENSE
   version: "2026.1"
-  x-nc-api-audience: BWC
+  x-api-kind: BWC
 externalDocs:
   description: Find out more about this project and repository documentation
   url: https://github.com/Netcracker/qubership-apihub
@@ -65,6 +65,16 @@ tags:
     description: APIs for user's personal settings.
   - name: Custom
     description: Custom APIs.
+  - name: Internal Documents
+    description: APIs for internal documents management.
+  - name: AI Chat
+    description: |
+      APIs for AI chat assistant.
+      Each user has their own chat list; chats are persisted on the server with a configurable TTL and pinning support.
+      Conversations support streaming responses (SSE) and automatic context compaction (old messages are re-packed into a summary when the conversation approaches the model's context window, so that older facts are preserved instead of being silently dropped by the LLM).
+  - name: Ephemeral Files
+    description: |
+      APIs for short-lived file downloads. Files are stored temporarily on the server and accessed via signed tokens embedded in producer responses (e.g. AI chat assistant markdown links).
 paths:
   "/api/v1/system/info":
     get:
@@ -9497,7 +9507,8 @@ paths:
                   example: "QS"
                 status:
                   description: Package version status.
-                  $ref: "#/components/schemas/VersionStatusEnum"
+                  allOf:
+                    - $ref: "#/components/schemas/VersionStatusEnum"
                 packageIds:
                   description: |
                     List of Package Id(s). Must belong to the specified workspace.
@@ -9841,6 +9852,604 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+  "/api/v1/ai-chat/chats":
+    get:
+      tags:
+        - AI Chat
+      summary: List chats of the current user.
+      description: |
+        Returns chat metadata (without messages) for the authenticated user, sorted first by `pinned` desc, then by `lastMessageAt` desc.
+        Chats of other users are never returned.
+
+        Pagination is keyset-based rather than page-based because a user's chat list is a live view: pinning/unpinning and incoming messages constantly reorder entries, so a second offset-based request would produce duplicates or gaps. A timestamp cursor (`before`) is stable under these changes.
+
+        Usage: the first request omits `before` and receives the newest `limit` chats; subsequent requests pass `before` = `lastMessageAt` of the last (oldest) chat from the previous page. The client never generates the timestamp itself, so no client/server clock-skew handling is required.
+      operationId: listAiChats
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of chats to return. Server may cap this value.
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 100
+        - name: before
+          in: query
+          description: |
+            Keyset cursor. Return only chats with `lastMessageAt` strictly less than this value. Format: RFC 3339 timestamp.
+            When omitted, the server returns the newest `limit` chats (i.e. the first page).
+            Pinned chats are always returned before non-pinned chats regardless of the cursor.
+          required: false
+          schema:
+            type: string
+            format: date-time
+            example: "2026-04-18T09:12:33Z"
+        - name: search
+          in: query
+          description: Optional case-insensitive substring match on chat `title`.
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Successful execution
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - chats
+                properties:
+                  chats:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AiChat"
+                  hasMore:
+                    description: True if more chats are available with an earlier `lastMessageAt`.
+                    type: boolean
+              examples:
+                AiChatsList:
+                  $ref: "#/components/examples/AiChatsList"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                Unauthorized:
+                  $ref: "#/components/examples/Unauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+    post:
+      tags:
+        - AI Chat
+      summary: Create a new chat.
+      description: |
+        Creates an empty chat owned by the authenticated user.
+        The title is optional and will be filled automatically (from the first user message) if omitted; it can be changed later via PATCH.
+      operationId: createAiChat
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiChatCreateRequest"
+      responses:
+        "201":
+          description: Chat created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiChat"
+              examples:
+                AiChat:
+                  $ref: "#/components/examples/AiChat"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                Unauthorized:
+                  $ref: "#/components/examples/Unauthorized"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/ai-chat/chats/{chatId}":
+    parameters:
+      - $ref: "#/components/parameters/chatId"
+    get:
+      tags:
+        - AI Chat
+      summary: Get chat metadata.
+      description: |
+        Returns the metadata of a chat owned by the current user.
+        The response does not contain messages — use `GET /api/v1/ai-chat/chats/{chatId}/messages` to retrieve them.
+      operationId: getAiChat
+      responses:
+        "200":
+          description: Successful execution
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiChat"
+              examples:
+                AiChat:
+                  $ref: "#/components/examples/AiChat"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                Unauthorized:
+                  $ref: "#/components/examples/Unauthorized"
+        "404":
+          description: Chat not found or does not belong to the current user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                AiChatNotFound:
+                  $ref: "#/components/examples/AiChatNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+    patch:
+      tags:
+        - AI Chat
+      summary: Update chat (rename / pin / unpin).
+      description: |
+        Partially updates a chat. Only the fields present in the request body are updated.
+        Pinning rules:
+          * a user may pin at most **3** chats (the limit is hard-coded identically on the client and on the server); pinning beyond the limit returns `400`;
+          * pinned chats are exempt from TTL-based cleanup.
+      operationId: updateAiChat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiChatUpdateRequest"
+      responses:
+        "200":
+          description: Chat updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiChat"
+        "400":
+          description: |
+            Bad request. Typical reasons:
+              * attempting to pin when the user already has the maximum allowed number of pinned chats;
+              * `title` too long or empty after trimming.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PinLimitExceeded:
+                  $ref: "#/components/examples/AiChatPinLimitExceeded"
+                AiChatValidationFailed:
+                  $ref: "#/components/examples/AiChatValidationFailed"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                Unauthorized:
+                  $ref: "#/components/examples/Unauthorized"
+        "404":
+          description: Chat not found or does not belong to the current user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                AiChatNotFound:
+                  $ref: "#/components/examples/AiChatNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+    delete:
+      tags:
+        - AI Chat
+      summary: Delete a chat.
+      description: |
+        Permanently deletes a chat together with all its messages. Any generated files referenced by its messages remain available on disk until their file-level TTL expires.
+      operationId: deleteAiChat
+      responses:
+        "204":
+          description: Chat deleted
+          content: {}
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                Unauthorized:
+                  $ref: "#/components/examples/Unauthorized"
+        "404":
+          description: Chat not found or does not belong to the current user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                AiChatNotFound:
+                  $ref: "#/components/examples/AiChatNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/ai-chat/chats/{chatId}/messages":
+    parameters:
+      - $ref: "#/components/parameters/chatId"
+    get:
+      tags:
+        - AI Chat
+      summary: List chat messages.
+      description: |
+        Returns messages of the given chat in reverse-chronological order (newest first). Use keyset pagination via `before` to fetch older pages.
+
+        Keyset pagination is used (rather than `page`) because messages are appended live: a naive offset would miss or duplicate items whenever a new message arrives between two page fetches. The first request omits `before` and receives the newest `limit` messages; subsequent requests pass `before` = `createdAt` of the last (oldest) message from the previous page.
+
+        For every `assistant` message the response includes:
+          * full markdown `content` (same that was streamed) — including any inline markdown links to generated files, with freshly re-issued signed tokens so the links remain usable for the standard file TTL at the moment of the request;
+          * `toolInvocations` — UI-facing summaries (tool name, status, duration) that were shown as transient pills during the live stream, so that after a reload the user still sees which tools were used. Clients that do not need this telemetry may ignore the field.
+
+        What is intentionally not returned:
+          * raw LLM tool-call arguments and tool results (internal; not needed for rendering);
+          * system prompt and compaction summaries (internal context-management artefacts).
+
+        This endpoint is the only way to load history — the streaming endpoint is strictly for producing new turns, not for replaying existing ones.
+      operationId: listAiChatMessages
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of messages to return.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 100
+        - name: before
+          in: query
+          required: false
+          description: |
+            Keyset cursor. Return only messages created strictly before this timestamp (RFC 3339).
+            When omitted, the server returns the newest `limit` messages (i.e. the first page).
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Successful execution
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - messages
+                properties:
+                  messages:
+                    type: array
+                    description: Messages in reverse-chronological order (newest first).
+                    items:
+                      $ref: "#/components/schemas/AiChatMessage"
+                  hasMore:
+                    description: True if more messages are available before the oldest returned one.
+                    type: boolean
+              examples:
+                AiChatMessagesList:
+                  $ref: "#/components/examples/AiChatMessagesList"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                Unauthorized:
+                  $ref: "#/components/examples/Unauthorized"
+        "404":
+          description: Chat not found or does not belong to the current user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                AiChatNotFound:
+                  $ref: "#/components/examples/AiChatNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+    post:
+      tags:
+        - AI Chat
+      summary: Send a message (non-streaming).
+      description: |
+        Appends a user message to the chat and waits synchronously for the assistant response.
+        Intended for integration scripts or clients that do not want to handle SSE. Interactive UIs should use the streaming variant (`/messages/stream`) instead.
+        The request body must carry **only the new user message** — never the full history. The server reconstructs the conversation context from its own storage (including any compaction summary) and sends the resulting message list to the LLM on each turn.
+      operationId: sendAiChatMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiChatSendMessageRequest"
+      responses:
+        "200":
+          description: Assistant response produced
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiChatSendMessageResponse"
+              examples:
+                AiChatSendMessageResponse:
+                  $ref: "#/components/examples/AiChatSendMessageResponse"
+        "400":
+          description: Bad request (empty content, invalid clientMessageId, etc.).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                AiChatValidationFailed:
+                  $ref: "#/components/examples/AiChatValidationFailed"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                Unauthorized:
+                  $ref: "#/components/examples/Unauthorized"
+        "404":
+          description: Chat not found or does not belong to the current user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                AiChatNotFound:
+                  $ref: "#/components/examples/AiChatNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/ai-chat/chats/{chatId}/messages/stream":
+    parameters:
+      - $ref: "#/components/parameters/chatId"
+    post:
+      tags:
+        - AI Chat
+      summary: Send a message with streaming response (SSE).
+      description: |
+        Appends a user message to the chat and streams the assistant response as Server-Sent Events.
+
+        Request semantics:
+          * the body carries **only the new user message** plus (optionally) a client-generated `clientMessageId` for idempotency — never the full conversation history;
+          * the server reconstructs context from its own storage (including any compaction summary) and sends the resulting message list to the LLM on each turn — the client never transmits prior turns;
+          * on the very first message in a chat the server may auto-fill the chat title in the background.
+
+        Response semantics (SSE):
+          * `Content-Type: text/event-stream; charset=utf-8`;
+          * each event is framed as `event: <type>\n` + `data: <json>\n\n`;
+          * the connection is closed by the server after emitting a terminal event (`done` or `error`);
+          * to cancel a turn the client may abort the underlying HTTP request; the server will stop the upstream LLM call best-effort but the partial assistant message that was already persisted stays in the history.
+
+        Possible event types (in order of occurrence):
+          * `context.compacted` — emitted at most once per turn, before the assistant starts streaming, when the server auto-compacted earlier history into a summary;
+          * `message.assistant.start` — assistant message created; contains its `id`;
+          * `tool.started` — MCP tool call has started (UI hint: "Searching API operations…");
+          * `tool.completed` — MCP tool call finished (`ok: true/false`, duration);
+          * `message.assistant.delta` — incremental markdown chunk to append; chunks are safe to concatenate as-is;
+          * `message.assistant.completed` — full final markdown of the assistant message, including any inline markdown links to generated files;
+          * `error` — unrecoverable error; stream ends;
+          * `done` — terminal marker; stream ends.
+
+        Every event payload is a JSON object; see `AiChatStreamEvent` schemas for details.
+      operationId: sendAiChatMessageStream
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiChatSendMessageRequest"
+      responses:
+        "200":
+          description: |
+            Streaming response. The body is a sequence of SSE events, not a single JSON object.
+            The schema below is provided for documentation only: each `data:` payload conforms to `AiChatStreamEvent`.
+          content:
+            text/event-stream:
+              schema:
+                $ref: "#/components/schemas/AiChatStreamEvent"
+              examples:
+                AiChatStreamEvents:
+                  $ref: "#/components/examples/AiChatStreamEvents"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                AiChatValidationFailed:
+                  $ref: "#/components/examples/AiChatValidationFailed"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                Unauthorized:
+                  $ref: "#/components/examples/Unauthorized"
+        "404":
+          description: Chat not found or does not belong to the current user.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                AiChatNotFound:
+                  $ref: "#/components/examples/AiChatNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/ephemeral-files/{fileId}":
+    parameters:
+      - name: fileId
+        in: path
+        required: true
+        description: Opaque identifier of an ephemeral file.
+        schema:
+          type: string
+          format: uuid
+    get:
+      tags:
+        - Ephemeral Files
+      summary: Download an ephemeral file.
+      description: |
+        Downloads a short-lived file stored by the backend. Producers (such as the AI chat assistant) embed a signed download URL into their response; other subsystems can reuse the same mechanism for exports, reports, and similar artefacts.
+        The endpoint is served without session authentication; instead, access is authorized via a short-lived signed token passed in the `token` query parameter. The token lifetime is a server-side setting and is not published to the client.
+      operationId: downloadEphemeralFile
+      security: []
+      parameters:
+        - name: token
+          in: query
+          required: true
+          description: Short-lived signed access token scoped to this file. Opaque to the client — issued by the server as part of the download URL and simply echoed back.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: File contents
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                description: Suggested file name for saving the attachment.
+                example: 'attachment; filename="report.csv"'
+            Content-Type:
+              schema:
+                type: string
+                description: Original MIME type of the file if known, otherwise `application/octet-stream`.
+        "401":
+          description: Token missing, malformed or signature invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                EphemeralFileTokenMissing:
+                  $ref: "#/components/examples/EphemeralFileTokenMissing"
+                EphemeralFileTokenInvalid:
+                  $ref: "#/components/examples/EphemeralFileTokenInvalid"
+        "404":
+          description: File not found or already cleaned up.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                EphemeralFileNotFound:
+                  $ref: "#/components/examples/EphemeralFileNotFound"
+        "410":
+          description: |
+            Token expired. The browser will surface this as a failed download; the client does not need to handle it specially.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                EphemeralFileTokenExpired:
+                  $ref: "#/components/examples/EphemeralFileTokenExpired"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
 components:
   parameters:
     apiAudience:
@@ -9989,6 +10598,15 @@ components:
       schema:
         type: string
         example: "CreateItemDto"
+    chatId:
+      name: chatId
+      in: path
+      required: true
+      description: AI chat identifier.
+      schema:
+        type: string
+        format: uuid
+        example: "e1a9f6d2-4a17-4a3b-9b91-4d7e9e8a0f11"
   schemas:
     SystemInfo:
       description: Information about the APIHUB product
@@ -10010,7 +10628,7 @@ components:
             type: string
           example: [User guide|https://www.example.com/guide, Support team|https://www.example.com/support]
         migrationInProgress:
-          description: Identifies if migration is currently in progress.
+          description: Identifies if a full migration is currently in progress. Returns false when no migration or only a partial migration is running.
           type: boolean
           default: false
         featureFlags:
@@ -12182,6 +12800,337 @@ components:
           type: string
           description: File name (slug+extension).
           example: "qitmf-v5.11.json"
+    AiChat:
+      description: AI chat metadata (messages are not included).
+      type: object
+      required:
+        - chatId
+        - title
+        - createdAt
+        - lastMessageAt
+        - messagesCount
+      properties:
+        chatId:
+          description: Unique chat identifier.
+          type: string
+          format: uuid
+          example: "e1a9f6d2-4a17-4a3b-9b91-4d7e9e8a0f11"
+        title:
+          description: Display title of the chat. Auto-filled from the first user message if not provided explicitly.
+          type: string
+          maxLength: 120
+          example: "How do I paginate REST operations?"
+        pinned:
+          description: |
+            If true, the chat is pinned. Pinned chats are exempt from TTL-based cleanup and are shown above non-pinned chats in the list.
+            Omitted by the server when the chat is not pinned; clients should treat a missing value as `false`.
+          type: boolean
+          default: false
+        createdAt:
+          description: Chat creation timestamp (RFC 3339).
+          type: string
+          format: date-time
+          example: "2026-04-12T08:01:07Z"
+        lastMessageAt:
+          description: |
+            Timestamp of the last user or assistant message in the chat. Always populated by the server; for a freshly created chat that has no messages yet, equals `createdAt`. Used to rank chats in the sidebar and to evaluate the "last M chats kept forever" rule.
+          type: string
+          format: date-time
+          example: "2026-04-19T15:44:12Z"
+        messagesCount:
+          description: Total number of user+assistant messages currently persisted in the chat.
+          type: integer
+          minimum: 0
+          example: 42
+    AiChatCreateRequest:
+      description: Optional payload for creating a new chat.
+      type: object
+      properties:
+        title:
+          description: Explicit chat title. If omitted, the title will be derived from the first user message.
+          type: string
+          maxLength: 120
+          example: "Playground checklist"
+    AiChatUpdateRequest:
+      description: |
+        Partial update of a chat. Only fields present in the request are modified. At least one field must be supplied.
+      type: object
+      minProperties: 1
+      properties:
+        title:
+          description: New title for the chat.
+          type: string
+          minLength: 1
+          maxLength: 120
+          example: "Tenant-aware search questions"
+        pinned:
+          description: |
+            If true, pins the chat. Pinning is rejected with `400` when the user already has the maximum allowed number of pinned chats (hard-coded to 3 on both client and server).
+            If false, unpins the chat.
+          type: boolean
+          example: true
+    AiChatToolInvocation:
+      description: |
+        Minimal, UI-facing descriptor of an MCP tool call that happened while producing an assistant message. The server intentionally does not expose tool arguments or raw results in order to keep the contract stable and avoid leaking internal data.
+      type: object
+      required:
+        - name
+        - status
+      properties:
+        name:
+          description: MCP tool name (e.g. `search_rest_api_operations`).
+          type: string
+          example: "search_rest_api_operations"
+        status:
+          description: Final status of the tool invocation.
+          type: string
+          enum:
+            - ok
+            - error
+        durationMs:
+          description: Wall-clock execution time in milliseconds.
+          type: integer
+          minimum: 0
+          example: 312
+    AiChatMessage:
+      description: |
+        A single chat message visible to the client.
+        Assistant messages always carry markdown-formatted content; user messages carry raw text.
+      type: object
+      required:
+        - messageId
+        - role
+        - content
+        - createdAt
+      properties:
+        messageId:
+          description: Stable server-assigned identifier.
+          type: string
+          format: uuid
+          example: "2f5a8c6b-8c11-4b1a-9c6a-1c2e4d5f6a7b"
+        clientMessageId:
+          description: |
+            Optional client-supplied idempotency key. Echoed back for user messages so that the FE can reconcile optimistic UI state. Never populated for assistant messages.
+          type: string
+          format: uuid
+          nullable: true
+        role:
+          description: Role of the message author.
+          type: string
+          enum:
+            - user
+            - assistant
+        content:
+          description: |
+            Message text. For `assistant` messages this is markdown; the FE should render it through its markdown renderer.
+            For `user` messages this is the original plain text as typed.
+          type: string
+        createdAt:
+          description: Server-assigned creation timestamp (RFC 3339).
+          type: string
+          format: date-time
+          example: "2026-04-19T15:44:12Z"
+        toolInvocations:
+          description: |
+            Optional UI-facing summaries of MCP tool calls that happened while producing this assistant message. The FE may render them as inline pills or ignore them entirely; they are surfaced mainly for transparency and for debugging chat behaviour.
+            Always empty (or omitted) for user messages.
+          type: array
+          items:
+            $ref: "#/components/schemas/AiChatToolInvocation"
+    AiChatSendMessageRequest:
+      description: |
+        Request body for sending a new user message. The body carries **only the new message** — never the full history.
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          description: |
+            User message text (plain text, not markdown). Length limit is hard-coded identically on the client (validation) and on the server (enforcement) to the value of `maxLength` below.
+          type: string
+          minLength: 1
+          maxLength: 32000
+          example: "List all REST operations in package QS.QSS.PRG.APIHUB and export them as CSV."
+        clientMessageId:
+          description: |
+            Optional idempotency key supplied by the client. If the server sees a duplicate `clientMessageId` for the same chat it returns the previous assistant response instead of re-sending to the LLM.
+          type: string
+          format: uuid
+          example: "9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc"
+    AiChatSendMessageResponse:
+      description: Non-streaming response after a user message has been processed.
+      type: object
+      required:
+        - userMessage
+        - assistantMessage
+      properties:
+        userMessage:
+          $ref: "#/components/schemas/AiChatMessage"
+        assistantMessage:
+          $ref: "#/components/schemas/AiChatMessage"
+    AiChatStreamEvent:
+      description: |
+        Documentation-only schema describing the shape of a single SSE event payload. The wire format is not JSON — each event is framed as:
+
+        ```
+        event: <type>
+        data: <json>
+
+        ```
+
+        where the `<json>` line conforms to one of the variants below, selected by the `type` field.
+      type: object
+      required:
+        - type
+      discriminator:
+        propertyName: type
+        mapping:
+          message.assistant.start: "#/components/schemas/AiChatStreamAssistantStartEvent"
+          message.assistant.delta: "#/components/schemas/AiChatStreamAssistantDeltaEvent"
+          message.assistant.completed: "#/components/schemas/AiChatStreamAssistantCompletedEvent"
+          tool.started: "#/components/schemas/AiChatStreamToolStartedEvent"
+          tool.completed: "#/components/schemas/AiChatStreamToolCompletedEvent"
+          context.compacted: "#/components/schemas/AiChatStreamContextCompactedEvent"
+          error: "#/components/schemas/AiChatStreamErrorEvent"
+          done: "#/components/schemas/AiChatStreamDoneEvent"
+      oneOf:
+        - $ref: "#/components/schemas/AiChatStreamAssistantStartEvent"
+        - $ref: "#/components/schemas/AiChatStreamAssistantDeltaEvent"
+        - $ref: "#/components/schemas/AiChatStreamAssistantCompletedEvent"
+        - $ref: "#/components/schemas/AiChatStreamToolStartedEvent"
+        - $ref: "#/components/schemas/AiChatStreamToolCompletedEvent"
+        - $ref: "#/components/schemas/AiChatStreamContextCompactedEvent"
+        - $ref: "#/components/schemas/AiChatStreamErrorEvent"
+        - $ref: "#/components/schemas/AiChatStreamDoneEvent"
+    AiChatStreamAssistantStartEvent:
+      description: Emitted once, right before the first `message.assistant.delta` event.
+      type: object
+      required: [type, messageId]
+      properties:
+        type:
+          type: string
+          enum: ["message.assistant.start"]
+        messageId:
+          type: string
+          format: uuid
+    AiChatStreamAssistantDeltaEvent:
+      description: |
+        Incremental markdown chunk for the assistant message. The client is expected to simply concatenate `delta` values in the order received.
+      type: object
+      required: [type, delta]
+      properties:
+        type:
+          type: string
+          enum: ["message.assistant.delta"]
+        delta:
+          type: string
+          example: "Here are the operations I found:\n"
+    AiChatStreamAssistantCompletedEvent:
+      description: Terminal event for the assistant message. Carries the full final markdown (including any inline links to generated files).
+      type: object
+      required: [type, message]
+      properties:
+        type:
+          type: string
+          enum: ["message.assistant.completed"]
+        message:
+          $ref: "#/components/schemas/AiChatMessage"
+    AiChatStreamToolStartedEvent:
+      description: |
+        Emitted when the assistant decides to call an MCP tool. Multiple tool events may appear between `message.assistant.start` and `message.assistant.completed`.
+      type: object
+      required: [type, toolCallId, name]
+      properties:
+        type:
+          type: string
+          enum: ["tool.started"]
+        toolCallId:
+          description: Opaque identifier correlating `tool.started` with `tool.completed`.
+          type: string
+          example: "call_1a2b3c"
+        name:
+          type: string
+          example: "search_rest_api_operations"
+    AiChatStreamToolCompletedEvent:
+      description: Paired with the corresponding `tool.started` event.
+      type: object
+      required: [type, toolCallId, name, status]
+      properties:
+        type:
+          type: string
+          enum: ["tool.completed"]
+        toolCallId:
+          type: string
+          example: "call_1a2b3c"
+        name:
+          type: string
+          example: "search_rest_api_operations"
+        status:
+          type: string
+          enum: [ok, error]
+        durationMs:
+          type: integer
+          minimum: 0
+          example: 214
+    AiChatStreamContextCompactedEvent:
+      description: |
+        Emitted at most once per turn, before the assistant starts streaming, if the server had to auto-compact earlier history. The client may use this signal to visually indicate that the older portion of the conversation is now represented by a summary stored server-side (`ai_chat.compaction_summary`). The number of messages actually folded into that summary is `messagesBefore - messagesKeptRaw`.
+      type: object
+      required: [type, compactedUpTo, summaryPreview, messagesBefore, messagesKeptRaw]
+      properties:
+        type:
+          type: string
+          enum: ["context.compacted"]
+        compactedUpTo:
+          description: |
+            Timestamp (UTC, RFC3339) of the last message included in the compaction boundary. Messages with `createdAt` after this value remain verbatim in the model context; older messages are represented only by the stored summary.
+          type: string
+          format: date-time
+          example: "2026-04-19T15:40:00Z"
+        summaryPreview:
+          description: |
+            Short preview of the compaction summary (truncated to a fixed rune limit on the server). Intended for optional UI hints or debugging — not the authoritative summary text.
+          type: string
+          example: "The user asked about REST operations in package QS.QSS.PRG.APIHUB for version 2025.4. Search returned three matching operations. The assistant recommended…"
+        messagesBefore:
+          description: Total number of user/assistant messages in the server context immediately before compaction ran.
+          type: integer
+          minimum: 1
+          example: 48
+        messagesKeptRaw:
+          description: How many trailing messages the server kept verbatim after compaction (the recent tail of the conversation).
+          type: integer
+          minimum: 0
+          example: 8
+    AiChatStreamErrorEvent:
+      description: |
+        Emitted when the turn cannot be completed. After this event the server closes the stream without sending `done`.
+      type: object
+      required: [type, code, message]
+      properties:
+        type:
+          type: string
+          enum: ["error"]
+        code:
+          description: |
+            Stable error code for mid-turn failures (HTTP validation/auth errors use the same codes in a JSON body before any SSE frame). Known values:
+              * `APIHUB-AI-5001` — upstream LLM provider error;
+              * `APIHUB-AI-4001` — message validation failed mid-flight (rare);
+              * `APIHUB-AI-5000` — internal error.
+            MCP tool failures are surfaced as `tool.completed` with `status: error` and do not terminate the stream with a dedicated error code.
+          type: string
+          example: "APIHUB-AI-5001"
+        message:
+          type: string
+          example: "Upstream LLM provider request failed"
+    AiChatStreamDoneEvent:
+      description: Terminal marker. Always the last event on a successful stream.
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: ["done"]
   examples:
     SystemInfo:
       description: Example of the system description
@@ -12243,6 +13192,147 @@ components:
         code: "APIHUB-8000"
         reason: "InternalServerError"
         message: "InternalServerError"
+    AiChat:
+      description: Single chat metadata
+      value:
+        chatId: "e1a9f6d2-4a17-4a3b-9b91-4d7e9e8a0f11"
+        title: "How do I paginate REST operations?"
+        createdAt: "2026-04-12T08:01:07Z"
+        lastMessageAt: "2026-04-19T15:44:12Z"
+        messagesCount: 42
+    AiChatsList:
+      description: A page of the user's chats
+      value:
+        chats:
+          - chatId: "a1111111-1111-1111-1111-111111111111"
+            title: "Pinned: release checklist"
+            pinned: true
+            createdAt: "2026-04-01T07:00:00Z"
+            lastMessageAt: "2026-04-19T10:22:01Z"
+            messagesCount: 18
+          - chatId: "e1a9f6d2-4a17-4a3b-9b91-4d7e9e8a0f11"
+            title: "How do I paginate REST operations?"
+            createdAt: "2026-04-12T08:01:07Z"
+            lastMessageAt: "2026-04-19T15:44:12Z"
+            messagesCount: 42
+        hasMore: true
+    AiChatMessagesList:
+      description: Last page of messages in a chat (newest first).
+      value:
+        messages:
+          - messageId: "2f5a8c6b-8c11-4b1a-9c6a-1c2e4d5f6a7b"
+            role: "assistant"
+            content: |
+              Here are the operations I found:
+
+              | Operation | Method | Path |
+              | --- | --- | --- |
+              | [get-packages-list](/portal/packages/QS.QSS.PRG.APIHUB/2026.1/operations/rest/get-packages-list) | GET | /api/v2/packages |
+
+              And a CSV export: [operations-report.csv](/api/v1/ephemeral-files/7b6f4f87-4c8f-4d69-a66e-4a3c8a1b2c55?token=eyJhbGciOi...)
+            createdAt: "2026-04-19T15:44:12Z"
+            toolInvocations:
+              - name: "search_rest_api_operations"
+                status: "ok"
+                durationMs: 312
+          - messageId: "1a0bcd12-0000-4000-8000-000000000001"
+            clientMessageId: "9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc"
+            role: "user"
+            content: "List all REST operations in package QS.QSS.PRG.APIHUB."
+            createdAt: "2026-04-19T15:44:03Z"
+        hasMore: true
+    AiChatSendMessageResponse:
+      description: Non-streaming response after a user message has been answered.
+      value:
+        userMessage:
+          messageId: "1a0bcd12-0000-4000-8000-000000000001"
+          clientMessageId: "9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc"
+          role: "user"
+          content: "List all REST operations in package QS.QSS.PRG.APIHUB."
+          createdAt: "2026-04-19T15:44:03Z"
+        assistantMessage:
+          messageId: "2f5a8c6b-8c11-4b1a-9c6a-1c2e4d5f6a7b"
+          role: "assistant"
+          content: "Here are the operations I found..."
+          createdAt: "2026-04-19T15:44:12Z"
+          toolInvocations:
+            - name: "search_rest_api_operations"
+              status: "ok"
+              durationMs: 312
+    AiChatStreamEvents:
+      summary: Full SSE turn — context compaction + tool call + delta chunks + done
+      description: |
+        Example of a full SSE response body. Each event is framed as `event: <type>\ndata: <json>\n\n`.
+
+        ```
+        event: context.compacted
+        data: {"type":"context.compacted","compactedUpTo":"2026-04-19T15:40:00Z","summaryPreview":"The user asked about REST operations in package QS.QSS.PRG.APIHUB…","messagesBefore":48,"messagesKeptRaw":8}
+
+        event: message.assistant.start
+        data: {"type":"message.assistant.start","messageId":"2f5a8c6b-8c11-4b1a-9c6a-1c2e4d5f6a7b"}
+
+        event: tool.started
+        data: {"type":"tool.started","toolCallId":"call_1","name":"search_rest_api_operations"}
+
+        event: tool.completed
+        data: {"type":"tool.completed","toolCallId":"call_1","name":"search_rest_api_operations","status":"ok","durationMs":312}
+
+        event: message.assistant.delta
+        data: {"type":"message.assistant.delta","delta":"Here are the operations I found:\n\n"}
+
+        event: message.assistant.completed
+        data: {"type":"message.assistant.completed","message":{"messageId":"2f5a8c6b-8c11-4b1a-9c6a-1c2e4d5f6a7b","role":"assistant","content":"Here are the operations I found:\n\n","createdAt":"2026-04-19T15:44:12Z","toolInvocations":[{"name":"search_rest_api_operations","status":"ok","durationMs":312}]}}
+
+        event: done
+        data: {"type":"done"}
+        ```
+      value:
+        type: done
+
+    AiChatNotFound:
+      description: Chat not found by id. Response for the 404 error.
+      value:
+        status: 404
+        code: "APIHUB-AI-3001"
+        message: "chat with chatId = $chatId not found"
+    AiChatPinLimitExceeded:
+      description: User attempts to pin more chats than allowed.
+      value:
+        status: 400
+        code: "APIHUB-AI-4003"
+        message: "Cannot pin chat: user already has 3 pinned chats (the limit is 3)"
+    AiChatValidationFailed:
+      description: AI chat request validation failed (empty content, message too long, invalid cursor, malformed JSON body, etc.).
+      value:
+        status: 400
+        code: "APIHUB-AI-4001"
+        message: "Message exceeds maximum length of 32000 characters"
+        params:
+          max: 32000
+    EphemeralFileNotFound:
+      description: Ephemeral file not found or already cleaned up.
+      value:
+        status: 404
+        code: "APIHUB-EF-3001"
+        message: "ephemeral file with fileId = $fileId not found"
+    EphemeralFileTokenExpired:
+      description: Signed download token expired.
+      value:
+        status: 410
+        code: "APIHUB-EF-4101"
+        message: "download token expired, please request the file again"
+    EphemeralFileTokenMissing:
+      description: Download token query parameter missing.
+      value:
+        status: 401
+        code: "APIHUB-EF-3003"
+        message: "Missing token query parameter"
+    EphemeralFileTokenInvalid:
+      description: Download token invalid or not valid for the requested file.
+      value:
+        status: 401
+        code: "APIHUB-EF-3002"
+        message: "Invalid download token"
   securitySchemes:
     BearerAuth:
       type: http

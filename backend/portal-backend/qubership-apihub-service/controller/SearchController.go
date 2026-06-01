@@ -150,7 +150,7 @@ func (s searchControllerImpl) Search(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			result, err := s.operationService.GlobalSearchForOperations(searchQuery)
+			result, err := s.operationService.GlobalSearchForOperations(r.Context(), searchQuery)
 			if err != nil {
 				utils.RespondWithError(w, "Failed to perform search for operations", err)
 				return

@@ -429,6 +429,12 @@ func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(publish
 		if a.PackageInfo.MigrationBuild {
 			versionComparisonEnt.Metadata.SetMigrationId(a.PackageInfo.MigrationId)
 		}
+		if a.PackageInfo.PreviousVersionBuilderVersion != "" {
+			versionComparisonEnt.Metadata.SetPreviousVersionBuilderVersion(a.PackageInfo.PreviousVersionBuilderVersion)
+		}
+		if a.PackageInfo.CurrentVersionBuilderVersion != "" {
+			versionComparisonEnt.Metadata.SetCurrentVersionBuilderVersion(a.PackageInfo.CurrentVersionBuilderVersion)
+		}
 		if !mainVersion {
 			mainVersionRefs = append(mainVersionRefs, versionComparisonEnt.ComparisonId)
 		}

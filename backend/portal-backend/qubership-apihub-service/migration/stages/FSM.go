@@ -8,13 +8,13 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
-	"github.com/go-pg/pg/v10/orm"
 	mEntity "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/migration/entity"
 	mRepository "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/migration/repository"
 	mView "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/migration/view"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
+	"github.com/go-pg/pg/v10/orm"
 
 	"time"
 
@@ -140,6 +140,13 @@ func (d OpsMigration) processStage(stage mView.OpsMigrationStage) error {
 
 	case mView.MigrationStageDependentVersionsOldRevs:
 		err = utils.SafeSync(d.StageDependentVersionsOldRevs)
+		nextStage = mView.MigrationStageRebuildRelaxedBuilds
+
+	case mView.MigrationStageRebuildRelaxedBuilds:
+		// Rebuild versions that were published during migration if previous version was set, and it was not migrated yet.
+		// The triggers are previousVersionBuilderVersion and currentVersionBuilderVersion metadata fields that indicate
+		// that the comparison result might not be accurate.
+		err = utils.SafeSync(d.StageRebuildRelaxedBuilds)
 		nextStage = mView.MigrationStageDashboardVersions
 
 	case mView.MigrationStageDashboardVersions:

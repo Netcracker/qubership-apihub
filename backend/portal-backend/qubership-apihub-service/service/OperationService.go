@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -12,6 +13,8 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type OperationService interface {
@@ -22,7 +25,7 @@ type OperationService interface {
 	GetVersionChanges(packageId string, version string, apiType string, searchReq view.VersionChangesReq) (*view.VersionChangesView, error)
 	SearchForOperations(searchReq view.SearchQueryReq_deprecated) (*view.SearchResult, error)
 	LiteSearchForOperations(searchReq view.SearchQueryReq_deprecated) (*view.SearchResult, error)
-	GlobalSearchForOperations(searchReq view.SearchQueryReq) (*view.SearchResult, error)
+	GlobalSearchForOperations(ctx context.Context, searchReq view.SearchQueryReq) (*view.SearchResult, error)
 	GetDeprecatedOperations(packageId string, version string, searchReq view.DeprecatedOperationListReq) (*view.Operations, error)
 	GetOperationDeprecatedItems(searchReq view.OperationBasicSearchReq) (*view.DeprecatedItems, error)
 	GetDeprecatedOperationsSummary(packageId string, version string) (*view.DeprecatedOperationsSummary, error)
@@ -648,7 +651,25 @@ func (o operationServiceImpl) LiteSearchForOperations(searchReq view.SearchQuery
 	return &view.SearchResult{Operations: &operations}, nil
 }
 
-func (o operationServiceImpl) GlobalSearchForOperations(searchReq view.SearchQueryReq) (*view.SearchResult, error) {
+func (o operationServiceImpl) GlobalSearchForOperations(ctx context.Context, searchReq view.SearchQueryReq) (*view.SearchResult, error) {
+	log.Debugf(
+		"GlobalSearchForOperations called: searchString=%q apiType=%s workspace=%s status=%s packageIds=%v versions=%v startDate=%v endDate=%v limit=%d page=%d",
+		searchReq.SearchString,
+		searchReq.ApiType,
+		searchReq.Workspace,
+		searchReq.Status,
+		searchReq.PackageIds,
+		searchReq.Versions,
+		searchReq.PublicationDateInterval.StartDate,
+		searchReq.PublicationDateInterval.EndDate,
+		searchReq.Limit,
+		searchReq.Page,
+	)
+
+	packages := searchReq.PackageIds
+	if packages == nil {
+		packages = make([]string, 0)
+	}
 	versions := searchReq.Versions
 	if versions == nil {
 		versions = make([]string, 0)
@@ -666,7 +687,7 @@ func (o operationServiceImpl) GlobalSearchForOperations(searchReq view.SearchQue
 	searchQuery := &entity.GlobalOperationSearchQuery{
 		OriginalTextInput: searchReq.SearchString,
 		ApiType:           searchReq.ApiType,
-		Packages:          searchReq.PackageIds,
+		Packages:          packages,
 		Versions:          versions,
 		Status:            searchReq.Status,
 		StartDate:         startDate,
@@ -675,10 +696,14 @@ func (o operationServiceImpl) GlobalSearchForOperations(searchReq view.SearchQue
 		Offset:            searchReq.Limit * searchReq.Page,
 	}
 
-	operationEntities, err := o.operationRepository.GlobalSearchForOperations(searchQuery)
+	repoSearchStart := time.Now()
+	operationEntities, err := o.operationRepository.GlobalSearchForOperations(ctx, searchQuery)
+	repoSearchElapsed := time.Since(repoSearchStart)
 	if err != nil {
+		log.Debugf("GlobalSearchForOperations: repository search finished with error after %s: %v", repoSearchElapsed, err)
 		return nil, err
 	}
+	log.Debugf("GlobalSearchForOperations: repository search finished in %s, resultCount=%d", repoSearchElapsed, len(operationEntities))
 	operations := make([]interface{}, 0)
 	for _, ent := range operationEntities {
 		operations = append(operations, entity.MakeGlobalOperationSearchResultView(ent))

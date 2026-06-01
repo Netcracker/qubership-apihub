@@ -1,0 +1,6 @@
+{
+  "exclude": [
+    "docs/api/",
+    "\\.claude/.*/scripts/"
+  ]
+}

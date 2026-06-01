@@ -114,27 +114,29 @@ type PatchPackageReq struct {
 
 // build result
 type PackageInfoFile struct {
-	PackageId                string                 `json:"packageId" validate:"required"`
-	Kind                     string                 `json:"-"`
-	BuildType                BuildType              `json:"buildType"`
-	Version                  string                 `json:"version" validate:"required"`
-	Status                   string                 `json:"status" validate:"required"`
-	PreviousVersion          string                 `json:"previousVersion"`
-	PreviousVersionPackageId string                 `json:"previousVersionPackageId"`
-	Metadata                 map[string]interface{} `json:"metadata"`
-	Refs                     []BCRef                `json:"refs"`
-	Revision                 int                    `json:"-"`
-	PreviousVersionRevision  int                    `json:"-"`
-	CreatedBy                string                 `json:"createdBy"`
-	BuilderVersion           string                 `json:"builderVersion"`
-	PublishedAt              *time.Time             `json:"publishedAt"`           //for migration
-	MigrationBuild           bool                   `json:"migrationBuild"`        //for migration
-	MigrationId              string                 `json:"migrationId"`           //for migration
-	NoChangelog              bool                   `json:"noChangeLog,omitempty"` //for migration
-	ApiType                  string                 `json:"apiType"`
-	GroupName                string                 `json:"groupName"`
-	Format                   string                 `json:"format"`
-	ExternalMetadata         *ExternalMetadata      `json:"externalMetadata,omitempty"`
+	PackageId                     string                 `json:"packageId" validate:"required"`
+	Kind                          string                 `json:"-"`
+	BuildType                     BuildType              `json:"buildType"`
+	Version                       string                 `json:"version" validate:"required"`
+	Status                        string                 `json:"status" validate:"required"`
+	PreviousVersion               string                 `json:"previousVersion"`
+	PreviousVersionPackageId      string                 `json:"previousVersionPackageId"`
+	Metadata                      map[string]interface{} `json:"metadata"`
+	Refs                          []BCRef                `json:"refs"`
+	Revision                      int                    `json:"-"`
+	PreviousVersionRevision       int                    `json:"-"`
+	CreatedBy                     string                 `json:"createdBy"`
+	BuilderVersion                string                 `json:"builderVersion"`
+	PreviousVersionBuilderVersion string                 `json:"previousVersionBuilderVersion,omitempty"`
+	CurrentVersionBuilderVersion  string                 `json:"currentVersionBuilderVersion,omitempty"`
+	PublishedAt                   *time.Time             `json:"publishedAt"`           //for migration
+	MigrationBuild                bool                   `json:"migrationBuild"`        //for migration
+	MigrationId                   string                 `json:"migrationId"`           //for migration
+	NoChangelog                   bool                   `json:"noChangeLog,omitempty"` //for migration
+	ApiType                       string                 `json:"apiType"`
+	GroupName                     string                 `json:"groupName"`
+	Format                        string                 `json:"format"`
+	ExternalMetadata              *ExternalMetadata      `json:"externalMetadata,omitempty"`
 }
 
 type ChangelogInfoFile struct {

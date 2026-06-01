@@ -130,6 +130,7 @@ const MigrationStageDependentVersionsLastRevs OpsMigrationStage = "dependent_ver
 
 const MigrationStageIndependentVersionsOldRevs OpsMigrationStage = "independent_versions_old"
 const MigrationStageDependentVersionsOldRevs OpsMigrationStage = "dependent_versions_old"
+const MigrationStageRebuildRelaxedBuilds OpsMigrationStage = "rebuild_relaxed_builds"
 
 const MigrationStageDashboardVersions OpsMigrationStage = "dashboard_versions"
 
