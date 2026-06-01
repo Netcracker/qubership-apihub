@@ -28,4 +28,7 @@ export interface PackageConfig {
 
   metadata?: Record<string, unknown>
   format?: ExportFormat
+
+  previousVersionBuilderVersion?: string
+  currentVersionBuilderVersion?: string
 }

@@ -37,6 +37,7 @@ import {
   BuilderType,
 } from './apiBuilder'
 import { ObjectHashCache } from '../../utils/hashes'
+import { VersionValidationLevel } from './builder'
 import { ApihubApiCompatibilityKind } from '../../consts'
 
 export type ChangeKind = keyof ChangeSummary
@@ -126,4 +127,14 @@ export interface CompareContext {
   versionDocumentsResolver: VersionDocumentsResolver
   rawDocumentResolver: _RawDocumentResolver
   normalizedSpecFragmentsHashCache: ObjectHashCache
+  apiProcessorVersionValidationLevel?: VersionValidationLevel
 }
+
+export type BuilderVersionInfo = {
+  previousVersionBuilderVersion?: string
+  currentVersionBuilderVersion?: string
+}
+
+export type CompareResult = {
+  comparisons: VersionsComparison[]
+} & BuilderVersionInfo

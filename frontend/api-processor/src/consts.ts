@@ -121,6 +121,10 @@ export type ApihubApiCompatibilityKind = typeof APIHUB_API_COMPATIBILITY_KIND_BW
   | typeof APIHUB_API_COMPATIBILITY_KIND_NO_BWC
   | typeof APIHUB_API_COMPATIBILITY_KIND_EXPERIMENTAL
 
+export const isNoBwcLike = (kind: ApihubApiCompatibilityKind | undefined): boolean => {
+  return kind === APIHUB_API_COMPATIBILITY_KIND_NO_BWC || kind === APIHUB_API_COMPATIBILITY_KIND_EXPERIMENTAL
+}
+
 export const API_KIND_LABEL = 'apihub/x-api-kind'
 
 export const DOCUMENT_TYPE = {

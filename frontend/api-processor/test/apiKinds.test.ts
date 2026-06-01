@@ -177,6 +177,7 @@ describe('Check Api Compatibility Function tests', () => {
   const CURR_VERSION = 'v2'
   const API_KIND_NO_BWC_LABEL = 'apihub/x-api-kind: no-BWC'
   const API_KIND_BWC_LABEL = 'apihub/x-api-kind: BWC'
+  const API_KIND_EXPERIMENTAL_LABEL = 'apihub/x-api-kind: experimental'
 
   describe('Calculate default ApiKind', () => {
     test('should apply BWC api kind by default', async () => {
@@ -607,6 +608,154 @@ describe('Check Api Compatibility Function tests', () => {
       const result = await runApiKindTest('api-kinds/remove-pathItem-operations-noBWC-and-noBWC-in-prev-document', [], [API_KIND_BWC_LABEL])
       expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 2 }))
       expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+    })
+  })
+
+  describe('Experimental apiKind has same influence as no-bwc', () => {
+    describe('Experimental label tests', () => {
+      test('should apply file label experimental from previous document', async () => {
+        const result = await runApiKindTest('api-kinds/no-api-kind-in-documents', [API_KIND_EXPERIMENTAL_LABEL])
+        expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 1 }))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
+
+      test('should apply file label experimental from current document', async () => {
+        const result = await runApiKindTest('api-kinds/no-api-kind-in-documents', [], [API_KIND_EXPERIMENTAL_LABEL])
+        expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 1 }))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
+
+      test('should apply version label experimental from previous document', async () => {
+        const result = await runApiKindTest(
+          'api-kinds/no-api-kind-in-documents', [], [], [API_KIND_EXPERIMENTAL_LABEL],
+        )
+        expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 1 }))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
+
+      test('should apply version label experimental from current document', async () => {
+        const result = await runApiKindTest(
+          'api-kinds/no-api-kind-in-documents', [], [], [], [API_KIND_EXPERIMENTAL_LABEL],
+        )
+        expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 1 }))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
+    })
+
+    describe('Experimental info property tests', () => {
+      test('should apply info experimental property in previous document', async () => {
+        const result = await runApiKindTest('api-kinds/info-experimental-in-prev-document')
+        expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 1 }))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
+
+      test('should apply info experimental property in current document', async () => {
+        const result = await runApiKindTest('api-kinds/info-experimental-in-curr-document')
+        expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 1 }))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
+    })
+
+    describe('Experimental operation section tests', () => {
+      test('should apply operation experimental in current document', async () => {
+        const result = await runApiKindTest('api-kinds/operation-experimental-in-curr-document')
+        expect(result).toEqual(changesSummaryMatcher(OPERATION_RISKY_CHANGE_TYPES))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
+
+      test('should apply operation experimental in previous document', async () => {
+        const result = await runApiKindTest('api-kinds/operation-experimental-in-prev-document')
+        expect(result).toEqual(changesSummaryMatcher(OPERATION_RISKY_CHANGE_TYPES))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
+    })
+
+    describe('Remove experimental operations tests', () => {
+      test('should apply removed experimental operations as risky', async () => {
+        const result = await runApiKindTest('api-kinds/remove-operations-experimental')
+        expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 1 }))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
+
+      test('should apply removed pathItem with experimental operation as risky', async () => {
+        const result = await runApiKindTest('api-kinds/remove-pathItem-operation-experimental-in-prev-document')
+        expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 1 }))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
+    })
+  })
+
+  describe('Mixed no-bwc and experimental apiKind tests', () => {
+    describe('Mixed file label tests', () => {
+      test('should apply file label no-BWC in previous document and experimental in current document', async () => {
+        const result = await runApiKindTest(
+          'api-kinds/no-api-kind-in-documents', [API_KIND_NO_BWC_LABEL], [API_KIND_EXPERIMENTAL_LABEL],
+        )
+        expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 1 }))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
+
+      test('should apply file label experimental in previous document and no-BWC in current document', async () => {
+        const result = await runApiKindTest(
+          'api-kinds/no-api-kind-in-documents', [API_KIND_EXPERIMENTAL_LABEL], [API_KIND_NO_BWC_LABEL],
+        )
+        expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 1 }))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
+    })
+
+    describe('Mixed version label tests', () => {
+      test('should apply version label no-BWC in previous document and experimental in current document', async () => {
+        const result = await runApiKindTest(
+          'api-kinds/no-api-kind-in-documents', [], [], [API_KIND_NO_BWC_LABEL], [API_KIND_EXPERIMENTAL_LABEL],
+        )
+        expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 1 }))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
+
+      test('should apply version label experimental in previous document and no-BWC in current document', async () => {
+        const result = await runApiKindTest(
+          'api-kinds/no-api-kind-in-documents', [], [], [API_KIND_EXPERIMENTAL_LABEL], [API_KIND_NO_BWC_LABEL],
+        )
+        expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 1 }))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
+    })
+
+    describe('Mixed info property tests', () => {
+      test('should apply info no-BWC property in previous document and experimental property in current document', async () => {
+        const result = await runApiKindTest('api-kinds/info-noBWC-in-prev-document-info-experimental-in-curr-document')
+        expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 1 }))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
+
+      test('should apply info experimental property in previous document and no-BWC property in current document', async () => {
+        const result = await runApiKindTest('api-kinds/info-experimental-in-prev-document-info-noBWC-in-curr-document')
+        expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 1 }))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
+    })
+
+    describe('Mixed operation section tests', () => {
+      test('should apply operation no-BWC in previous document and experimental in current document', async () => {
+        const result = await runApiKindTest('api-kinds/operation-noBWC-in-prev-document-operation-experimental-in-curr-document')
+        expect(result).toEqual(changesSummaryMatcher(OPERATION_RISKY_CHANGE_TYPES))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
+
+      test('should apply operation experimental in previous document and no-BWC in current document', async () => {
+        const result = await runApiKindTest('api-kinds/operation-experimental-in-prev-document-operation-noBWC-in-curr-document')
+        expect(result).toEqual(changesSummaryMatcher(OPERATION_RISKY_CHANGE_TYPES))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
+    })
+
+    describe('Mixed apiKind within same pathItem tests', () => {
+      test('should apply removed pathItem with mixed no-BWC and experimental operations as risky', async () => {
+        const result = await runApiKindTest('api-kinds/remove-pathItem-operations-noBWC-and-experimental-in-prev-document')
+        expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 2 }))
+        expect(result).toEqual(serializedComparisonDocumentMatcher([RISKY_CHANGE_TYPE]))
+      })
     })
   })
 

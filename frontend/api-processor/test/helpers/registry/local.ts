@@ -711,3 +711,20 @@ export class LocalRegistry implements IRegistry {
     versionCache?.operations.set(operationId, modifier(operation))
   }
 }
+
+export class VersionOverrideRegistry extends LocalRegistry {
+  private apiProcessorVersionOverrides = new Map<string, string>()
+
+  overrideApiProcessorVersion(version: string, value: string): void {
+    this.apiProcessorVersionOverrides.set(version, value)
+  }
+
+  async versionResolver(packageId: string = '', version: string): Promise<ResolvedVersion | null> {
+    const result = await super.versionResolver(packageId, version)
+    const override = this.apiProcessorVersionOverrides.get(version)
+    if (result && override) {
+      result.apiProcessorVersion = override
+    }
+    return result
+  }
+}

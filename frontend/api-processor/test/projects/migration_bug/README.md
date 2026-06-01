@@ -8,7 +8,7 @@ Supports OpenAPI and GraphQL specifications processing.
 - Added cycles support during combiners resolve
 - Added origins support- it is now possible for any value in the unified JSO to track its origins in the source specification
 - Store original ref for the object if the object was resolved from ref
-- Gathered various API unification adapters from different libraries in the stack to a single place 
+- Gathered various API unification adapters from different libraries in the stack to a single place
 - Support data structure hash calculation
 - Process different phases sequentially (reference resolving, allOf merge, unification)
 - Support synthetic `any` and `nothing` type for OAS
@@ -26,16 +26,16 @@ Supports OpenAPI and GraphQL specifications processing.
 - Correctly merge additionalProperties, patternProperties and properties taking into account common validations
 - Correctly merge items and additionalItems taking into account common validations
 - Supports custom rules to merge other document types and JsonSchema versions
-- Supports input with circular references (javaScript references)
+- Supports input with circular references (JavaScript references)
 - Supports $refs and circular $refs either (internal references only)
 - Correctly merge of $refs with sibling content (optionally)
 - Correctly merge of combiners (anyOf, oneOf) with sibling content (optionally)
-- Typescript syntax support out of the box
-- No dependencies (except json-crawl), can be used in NodeJS or browser
+- TypeScript syntax support out of the box
+- No dependencies (except json-crawl), can be used in Node.js or browser
 
-## Works perfectly with specifications:
+## Works perfectly with specifications
 
-- [JsonSchema](https://json-schema.org/draft/2020-12/json-schema-core.html)
+- [JsonSchema](https://json-schema.org/draft/2020-12/json-schema-core)
 - [OpenApi 3.x](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md)
 - GraphApi
 - ~~Swagger 2.x~~ (roadmap)

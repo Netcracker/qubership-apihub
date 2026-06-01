@@ -16,6 +16,7 @@
 
 import { BuildConfig, BuilderStrategy, BuildResult, BuildTypeContexts, VersionCache } from '../types'
 import { compareVersions } from '../components/compare'
+import { applyBuilderVersionInfo } from '../validators'
 import { MESSAGE_SEVERITY } from '../consts'
 
 export class ChangelogStrategy implements BuilderStrategy {
@@ -37,11 +38,13 @@ export class ChangelogStrategy implements BuilderStrategy {
       })
     }
 
-    buildResult.comparisons = await compareVersions(
+    const compareResult = await compareVersions(
       comparisonPreviousVersion ? [comparisonPreviousVersion, previousVersionPackageId || packageId] : null,
       [version, packageId],
       compareContextObject,
     )
+    buildResult.comparisons = compareResult.comparisons
+    applyBuilderVersionInfo(config, compareResult)
 
     return buildResult
   }

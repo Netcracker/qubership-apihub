@@ -15,12 +15,14 @@
  */
 import {
   ApiAudienceTransition,
+  BuilderVersionInfo,
   CompareContext,
   CompareOperationsPairContext,
   ComparisonDocument,
   OperationChanges,
   OperationsApiType,
   OperationType,
+  VERSION_VALIDATION_LEVEL,
   VersionCache,
   VersionParams,
   VersionsComparison,
@@ -44,26 +46,30 @@ import {
   SLUG_OPTIONS_OPERATION_ID,
   slugify,
 } from '../../utils'
-import { validateApiProcessorVersion } from '../../validators'
+import { getMismatchedBuilderVersion, validateApiProcessorVersion } from '../../validators'
 
 export async function compareVersionsOperations(
   prev: VersionParams,
   curr: VersionParams,
   ctx: CompareContext,
-): Promise<VersionsComparison> {
+): Promise<VersionsComparison & BuilderVersionInfo> {
   const changes: OperationChanges[] = []
   const operationTypes: OperationType[] = []
   const comparisonDocuments: ComparisonDocument[] = []
 
   const { versionResolver } = ctx
+  const validationLevel = ctx.apiProcessorVersionValidationLevel ?? VERSION_VALIDATION_LEVEL.STRICT
 
   // resolve both versions
   const prevVersionData = prev && await versionResolver(...prev)
   const currVersionData = curr && await versionResolver(...curr)
 
   // validate api-processor version compatibility
-  validateApiProcessorVersion(prevVersionData, 'Can\'t build the changelog if previous version was built using an outdated api-processor.')
-  validateApiProcessorVersion(currVersionData, 'Can\'t build the changelog if current version was built using an outdated api-processor.')
+  validateApiProcessorVersion(prevVersionData, validationLevel, 'Can\'t build the changelog if previous version was built using an outdated api-processor.')
+  validateApiProcessorVersion(currVersionData, validationLevel, 'Can\'t build the changelog if current version was built using an outdated api-processor.')
+
+  const previousVersionBuilderVersion = getMismatchedBuilderVersion(prevVersionData)
+  const currentVersionBuilderVersion = getMismatchedBuilderVersion(currVersionData)
 
   // compare operations of each type
   for (const apiType of getUniqueApiTypesFromVersions(prevVersionData, currVersionData)) {
@@ -100,6 +106,8 @@ export async function compareVersionsOperations(
       data: changes,
     } : {},
     comparisonInternalDocuments,
+    previousVersionBuilderVersion,
+    currentVersionBuilderVersion,
   }
 }
 
