@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-processor",
-  "version": "5.3.1",
+  "version": "5.4.0",
   "description": "",
   "license": "Apache-2.0",
   "module": "dist/esm/src/index.js",
@@ -33,10 +33,10 @@
   },
   "dependencies": {
     "@asyncapi/parser": "^3.6.0",
-    "@netcracker/qubership-apihub-api-diff": "next",
-    "@netcracker/qubership-apihub-api-unifier": "next",
-    "@netcracker/qubership-apihub-graphapi": "next",
-    "@netcracker/qubership-apihub-json-crawl": "next",
+    "@netcracker/qubership-apihub-api-diff": "3.3.0",
+    "@netcracker/qubership-apihub-api-unifier": "2.8.0",
+    "@netcracker/qubership-apihub-graphapi": "1.0.10",
+    "@netcracker/qubership-apihub-json-crawl": "1.2.1",
     "adm-zip": "0.5.10",
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
