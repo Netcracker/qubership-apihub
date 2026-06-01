@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-compatibility-suites",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "license": "Apache-2.0",
   "type": "module",
   "module": "./dist/index.es.js",
@@ -25,7 +25,7 @@
     "update-lock-file": "update-lock-file @netcracker"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.0",
+    "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
     "@types/js-yaml": "4.0.9",
     "@types/node": "25.0.3",
     "js-yaml": "4.1.1",
