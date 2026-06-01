@@ -7,5 +7,5 @@
   "compilerOptions": {
     "module": "commonjs",
     "noUnusedLocals": false
-  }
+  },
 }
