@@ -1,7 +1,15 @@
 openapi: 3.0.3
 info:
   title: Qubership APIHUB Agents Backend API
-  description: REST API for managing agents, discovery, snapshots, security checks, and service specifications in Qubership APIHUB Agents Backend
+  description: |
+    Operator-facing API for Qubership APIHUB Agents Backend. Manages registered agent instances,
+    namespace and workspace discovery, service specification retrieval, snapshot creation and
+    listing, authentication security checks, and service proxying. Intended for APIHUB portal
+    integrations and automation that orchestrate agent workflows. Authentication options are
+    defined in `components.securitySchemes`.
+  contact:
+    name: Netcracker Opensource Group
+    email: opensourcegroup@netcracker.com
   license:
     name: qubership
     url: https://qubership.org
@@ -10,10 +18,10 @@ info:
 
 servers:
   - url: https://{apihubAgentsBackend}.qubership.org
-    description: APIHUB server
+    description: Primary APIHUB Agents Backend endpoint (production by default). Use staging and dev hostnames for non-production testing.
     variables:
       apihubAgentsBackend:
-        description: Name of the APIHUB Agents Backend server.
+        description: Environment identifier used to select server host; valid values are 'apihub-agents-backend' (production), 'dev.apihub-agents-backend' (development), and 'staging.apihub-agents-backend' (staging).
         enum:
           - apihub-agents-backend
           - dev.apihub-agents-backend
@@ -26,22 +34,31 @@ security:
   - PersonalAccessToken: []
 tags:
   - name: Agents
-    description: Agent management operations
+    description: Agent registration, listing, and namespace discovery operations
   - name: Discovery
-    description: Service discovery operations
+    description: Service discovery operations for agent workspaces
   - name: Snapshots
-    description: Snapshot management operations
+    description: Snapshot creation, listing, and retrieval operations
   - name: Specifications
-    description: Service specification retrieval
+    description: |
+      Retrieval of raw API specification files discovered for a service. Returns OpenAPI, AsyncAPI,
+      GraphQL, and other supported document formats as plain text.
   - name: Security
-    description: Namespace security check operations
+    description: Namespace authentication security check operations
+  - name: Proxy
+    description: |
+      Service proxy operations that forward HTTP GET requests to discovered backend services.
+      Preserves target response status codes, headers, and body content.
 paths:
   /api/v2/agents:
     get:
       tags:
         - Agents
       summary: Get list of Agent instances
-      description: Retrieves a list of registered agents with optional filtering
+      description: |
+        Retrieves all registered agent instances. Use `onlyActive=true` (default) to exclude
+        inactive agents, and `showIncompatible=true` to include agents with version compatibility
+        warnings. Results are returned as a single array without pagination.
       operationId: listAgents
       security:
         - BearerAuth: []
@@ -94,9 +111,12 @@ paths:
         - name: id
           in: path
           required: true
-          description: Agent ID
+          description: |
+            Unique agent identifier (`{cloud}_{namespace}`, lowercased). Obtain from
+            `GET /api/v2/agents`. Example: `production_team-a`.
           schema:
             type: string
+            example: production_team-a
       responses:
         '200':
           description: Agent information
@@ -116,7 +136,9 @@ paths:
         - Agents
       summary: Get agent namespaces
       deprecated: true
-      description: Retrieves the list of namespaces available for the specified agent
+      description: |
+        Retrieves namespaces available for the specified agent. **Deprecated** — use
+        `GET /api/v2/agents/{agentId}/namespaces` instead; behavior is identical.
       operationId: getAgentNamespacesV1
       security:
         - BearerAuth: []
@@ -234,7 +256,11 @@ paths:
       tags:
         - Discovery
       summary: Start discovery process
-      description: Initiates the service discovery process for the specified workspace
+      description: |
+        Starts an asynchronous service discovery run for the specified workspace. Returns `202`
+        immediately; poll `GET .../services` to observe progress via the `status` field
+        (`none`, `running`, `complete`, `error`, `failed`). Re-running discovery replaces the
+        in-progress or previous result for the same workspace.
       operationId: startDiscovery
       security:
         - BearerAuth: []
@@ -361,7 +387,11 @@ paths:
       tags:
         - Discovery
       summary: List discovered services
-      description: Retrieves the list of services discovered in the specified workspace
+      description: |
+        Retrieves services discovered in the specified workspace, including document metadata,
+        baseline references, diagnostic information, and proxy URLs. The top-level `status` field
+        reflects the latest discovery run state. Results are scoped to the requested workspace and
+        are not paginated.
       operationId: listDiscoveredServicesV3
       security:
         - BearerAuth: []
@@ -492,7 +522,10 @@ paths:
       tags:
         - Specifications
       summary: Get service specification
-      description: Retrieves the specification file for a specific service
+      description: |
+        Returns the raw specification file content for a discovered service document. The response
+        is plain text (`text/plain`) in the original format (JSON or YAML as reported during
+        discovery). Obtain `fileId` from the `documents` array in the services listing endpoint.
       operationId: getServiceSpecification
       security:
         - BearerAuth: []
@@ -506,9 +539,12 @@ paths:
         - name: fileId
           in: path
           required: true
-          description: Specification file ID
+          description: |
+            Opaque file identifier from the `documents[].fileId` field in the services listing
+            response. Example: `openapi.yaml`.
           schema:
             type: string
+            example: openapi.yaml
       responses:
         '200':
           description: Service specification file content
@@ -529,7 +565,12 @@ paths:
       tags:
         - Snapshots
       summary: Create snapshot
-      description: Creates a new snapshot of services in the specified workspace
+      description: |
+        Creates a package snapshot for selected services in the workspace. The operation is
+        synchronous and returns build metadata on success. When `promote=true`, discovered
+        specifications are published to the baseline package. When `clientBuild=true`, a
+        `builderId` must be supplied in the request body to bind the build to a browser-based
+        executor.
       operationId: createSnapshot
       security:
         - BearerAuth: []
@@ -542,7 +583,9 @@ paths:
         - name: clientBuild
           in: query
           required: false
-          description: Client-side package build will be used. Should be used only for browser-based build process
+          description: |
+            If true, a client-side package build is used instead of a server-side build.
+            Intended for browser-based build processes; requires `builderId` in the request body.
           schema:
             type: boolean
             default: false
@@ -564,21 +607,33 @@ paths:
               properties:
                 version:
                   type: string
-                  description: Snapshot version
+                  description: |
+                    Snapshot version label (APIHUB package version). Must not contain restricted
+                    characters. Example: `2024.4`.
+                  example: "2024.4"
                 previousVersion:
                   type: string
-                  description: Previous baseline version
+                  description: |
+                    Previous baseline version to compare against. Omit when creating the first
+                    snapshot for the workspace.
+                  example: "2024.3"
                 services:
                   type: array
                   items:
                     type: string
-                  description: List of service IDs to include
+                  description: |
+                    List of service IDs to include in the snapshot. Omit or leave empty to include
+                    all discovered services in the workspace.
+                  example:
+                    - service-001
                 status:
                   type: string
-                  description: Snapshot status
+                  description: Optional snapshot status label stored with the build metadata.
                 builderId:
                   type: string
-                  description: Builder identifier. **Required** only if clientBuild=true. Used to bind the build to specific executor
+                  description: |
+                    Build executor identifier. **Required** when `clientBuild=true`; ignored
+                    otherwise. Binds the build to a specific browser-based builder instance.
       responses:
         '200':
           description: Snapshot created successfully
@@ -858,7 +913,12 @@ paths:
       tags:
         - Security
       summary: Start authentication security check
-      description: Initiates an authentication security check process for the specified namespace and workspace
+      description: |
+        Starts an asynchronous authentication security check for services in the specified
+        namespace and workspace. The check verifies that discovered services enforce authentication
+        as expected. Returns `202` with a `processId`; poll
+        `GET /api/v2/security/authCheck/{processId}/status` for progress and download the Excel
+        report from `GET /api/v2/security/authCheck/{processId}/report` when complete.
       operationId: startAuthSecurityCheck
       security:
         - BearerAuth: []
@@ -878,13 +938,22 @@ paths:
               properties:
                 agentId:
                   type: string
-                  description: Agent ID
+                  description: |
+                    Agent identifier (`{cloud}_{namespace}`, lowercased). Example:
+                    `production_team-a`.
+                  example: production_team-a
                 name:
                   type: string
-                  description: Namespace name
+                  description: |
+                    Kubernetes namespace name on the agent deployment cloud (not a display label).
+                    Case-sensitive. Example: `team-a`.
+                  example: team-a
                 workspaceId:
                   type: string
-                  description: Workspace ID
+                  description: |
+                    APIHUB workspace identifier. Example:
+                    `3fa85f64-5717-4562-b3fc-2c963f66afa6`.
+                  example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
       responses:
         '202':
           description: Security check process started
@@ -907,7 +976,11 @@ paths:
       tags:
         - Security
       summary: Get authentication security check reports
-      description: Retrieves list of authentication security check reports
+      description: |
+        Returns a paginated list of authentication security check reports. Filter by `agentId`,
+        `name` (namespace), and/or `workspaceId`. Use `page` (zero-based, default 0) and `limit`
+        (default 100, max per server configuration) to paginate. Each report includes process
+        status, timestamps, and service processing counters.
       operationId: getAuthSecurityCheckReports
       security:
         - BearerAuth: []
@@ -1020,7 +1093,12 @@ paths:
       tags:
         - Security
       summary: Get authentication security check result
-      description: Downloads the security check result as an Excel report
+      description: |
+        Downloads the completed security check report as a binary Excel file
+        (`application/octet-stream`). The suggested filename is provided in the
+        `Content-Disposition` header (for example,
+        `attachment; filename="security-report.xlsx"`). Poll the status endpoint until the check
+        completes before requesting the report.
       operationId: getAuthSecurityCheckResult
       security:
         - BearerAuth: []
@@ -1056,12 +1134,17 @@ paths:
     get:
       summary: Proxy endpoint to service
       deprecated: true
-      description: Proxy endpoint to service
+      description: |
+        Forwards the incoming GET request to the specified backend service instance and returns
+        the service response. Preserves the HTTP method, request body, and most headers; query
+        string and path fragments in `{path}` are appended to the target URL as-is. Use
+        `X-Apihub-Authorization` for nc-service authentication when `INSECURE_PROXY` is not
+        enabled. **Deprecated** — use `/api/v2/agents/.../proxy/{path}` instead.
       operationId: getAgentsIdNamespacesIdServicesProxy
       security:
         - {}
       tags:
-        - Agent
+        - Proxy
       parameters:
         - $ref: "#/components/parameters/AgentId"
         - $ref: "#/components/parameters/Namespace"
@@ -1071,7 +1154,10 @@ paths:
           required: true
           schema:
             type: string
-          description: String that includes paths and query params
+          description: |
+            Catch-all remainder of the target URL path and optional query string (may contain
+            slashes). URL-encode reserved characters; the `?` starting a query string must be
+            encoded as `%3F` when embedded in this path segment. Appended to the service base URL.
           example: api/v2/escaped/te%20xt/text/text123?escaped=te%20xt
         - name: X-Apihub-Authorization
           in: header
@@ -1083,44 +1169,59 @@ paths:
               * if system env INSECURE_PROXY = true, then then X-Apihub-Authorization is optional
       responses:
         1XX:
-          description: Information responses
+          description: Informational response proxied from the target service
           content:
             "*/*":
               schema:
-                description: Schema of any type
+                type: string
+                format: binary
+                description: Response body passed through from the proxied target service; content type preserved.
         2XX:
-          description: Successful responses
+          description: Successful response proxied from the target service; status code and headers preserved
           content:
             "*/*":
               schema:
-                description: Schema of any type
+                type: string
+                format: binary
+                description: Response body passed through from the proxied target service; content type preserved.
         3XX:
-          description: Redirection messages
+          description: Redirect response from the target service; passed through without being followed by the proxy
           content:
             "*/*":
               schema:
-                description: Schema of any type
+                type: string
+                format: binary
+                description: Response body passed through from the proxied target service; content type preserved.
         4XX:
-          description: Client error responses
+          description: Client error from the target service or from the proxy (invalid path, missing authorization)
           content:
             "*/*":
               schema:
-                description: Schema of any type
+                type: string
+                format: binary
+                description: Error response body from the target service or proxy; not normalized to CustomError.
         5XX:
-          description: Server error responses
+          description: Server error from the target service or from the proxy (target unreachable, timeout)
           content:
             "*/*":
               schema:
-                description: Schema of any type
+                type: string
+                format: binary
+                description: Error response body from the target service or proxy; not normalized to CustomError.
   /api/v2/agents/{agentId}/namespaces/{namespace}/services/{serviceId}/proxy/{path}:
     get:
       summary: Proxy endpoint to service
-      description: Proxy endpoint to service
+      description: |
+        Forwards the incoming GET request to the specified backend service instance and returns
+        the service response. Preserves the HTTP method, request body, and most headers. The
+        `Authorization` header is forwarded to the target service; use `X-Apihub-Authorization`
+        for agents-backend authentication instead. Query string and path fragments in `{path}` are
+        appended to the target URL as-is.
       operationId: getAgentsIdNamespacesIdServicesProxyV2
       security:
         - {}
       tags:
-        - Agent
+        - Proxy
       parameters:
         - $ref: "#/components/parameters/AgentId"
         - $ref: "#/components/parameters/Namespace"
@@ -1130,7 +1231,10 @@ paths:
           required: true
           schema:
             type: string
-          description: String that includes paths and query params
+          description: |
+            Catch-all remainder of the target URL path and optional query string (may contain
+            slashes). URL-encode reserved characters; the `?` starting a query string must be
+            encoded as `%3F` when embedded in this path segment. Appended to the service base URL.
           example: api/v2/escaped/te%20xt/text/text123?escaped=te%20xt
         - name: X-Apihub-Authorization
           in: header
@@ -1140,65 +1244,87 @@ paths:
             The header is a replacement for Authorization header, because original Authorization header should be passed to the target service.
       responses:
         1XX:
-          description: Information responses
+          description: Informational response proxied from the target service
           content:
             "*/*":
               schema:
-                description: Schema of any type
+                type: string
+                format: binary
+                description: Response body passed through from the proxied target service; content type preserved.
         2XX:
-          description: Successful responses
+          description: Successful response proxied from the target service; status code and headers preserved
           content:
             "*/*":
               schema:
-                description: Schema of any type
+                type: string
+                format: binary
+                description: Response body passed through from the proxied target service; content type preserved.
         3XX:
-          description: Redirection messages
+          description: Redirect response from the target service; passed through without being followed by the proxy
           content:
             "*/*":
               schema:
-                description: Schema of any type
+                type: string
+                format: binary
+                description: Response body passed through from the proxied target service; content type preserved.
         4XX:
-          description: Client error responses
+          description: Client error from the target service or from the proxy (invalid path, missing authorization)
           content:
             "*/*":
               schema:
-                description: Schema of any type
+                type: string
+                format: binary
+                description: Error response body from the target service or proxy; not normalized to CustomError.
         5XX:
-          description: Server error responses
+          description: Server error from the target service or from the proxy (target unreachable, timeout)
           content:
             "*/*":
               schema:
-                description: Schema of any type
+                type: string
+                format: binary
+                description: Error response body from the target service or proxy; not normalized to CustomError.
 components:
   parameters:
     AgentId:
       name: agentId
       in: path
       required: true
-      description: Agent ID
+      description: |
+        Unique agent identifier assigned at registration. Format is `{cloud}_{namespace}` (both
+        parts lowercased). Obtain valid values from `GET /api/v2/agents`.
       schema:
         type: string
+        example: production_team-a
     Namespace:
       name: namespace
       in: path
       required: true
-      description: Namespace name
+      description: |
+        Kubernetes namespace name on the agent deployment cloud. Case-sensitive string as reported
+        by the agent.
       schema:
         type: string
+        example: team-a
     WorkspaceId:
       name: workspaceId
       in: path
       required: true
-      description: Workspace ID
+      description: |
+        APIHUB workspace identifier that scopes discovery and snapshot operations. Typically a
+        UUID assigned when the workspace is created in APIHUB.
       schema:
         type: string
+        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
     ServiceId:
       name: serviceId
       in: path
       required: true
-      description: Service ID (URL encoded)
+      description: |
+        Discovered service identifier. Must be URL-encoded when used as a path segment; encode
+        reserved characters such as `/`, `?`, `#`, and `%`.
       schema:
         type: string
+        example: my%2Fservice%3Fv1
     Page:
       name: page
       in: query
@@ -1221,16 +1347,20 @@ components:
       name: processId
       in: path
       required: true
-      description: Process ID of the security check
+      description: |
+        UUID of an authentication security check process. Returned in the `202` response of
+        `POST /api/v2/security/authCheck` and used to poll status or download the report.
       schema:
         type: string
+        format: uuid
+        example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
   schemas:
     AgentInstance:
       type: object
       properties:
         agentId:
           type: string
-          description: Unique agent identifier
+          description: Unique agent identifier (`{cloud}_{namespace}`, lowercased)
         agentDeploymentCloud:
           type: string
           description: Cloud where agent is deployed
@@ -1239,7 +1369,10 @@ components:
           description: Namespace where agent is deployed
         agentUrl:
           type: string
-          description: Agent URL endpoint
+          format: uri
+          description: |
+            HTTPS URL of the agent keepalive endpoint, reachable from the agents backend within
+            the deployment network. Example: `https://agent.example.com/api/v1/signal`.
         lastActive:
           type: string
           format: date-time
@@ -1252,13 +1385,17 @@ components:
           description: Current status of the agent
         backendVersion:
           type: string
-          description: Backend version
+          description: |
+            Version of the APIHUB backend the agent is configured to communicate with (semver).
+            Used with `compatibilityError` to detect unsupported agent deployments.
         name:
           type: string
           description: Agent name
         agentVersion:
           type: string
-          description: Agent version
+          description: |
+            Version of the deployed agent software (semver). Differs from `backendVersion`, which
+            refers to the APIHUB backend dependency rather than the agent binary.
         compatibilityError:
           $ref: '#/components/schemas/AgentCompatibilityError'
     AgentCompatibilityError:
@@ -1275,57 +1412,83 @@ components:
           description: Error message details
     CustomError:
       type: object
-      description: An error description
+      description: |
+        Standard error response returned on failed requests. Required fields are `status` and
+        `message`; `code`, `debug`, and `params` are optional.
+      required:
+        - status
+        - message
       properties:
         status:
           type: integer
           description: HTTP status code
         code:
           type: string
-          description: Internal string error code. Mandatory in response.
+          description: |
+            Stable internal error identifier for programmatic handling. Present for
+            application-defined errors; may be omitted for unexpected internal failures.
         message:
           type: string
-          description: Error message
+          description: |
+            Human-readable error summary intended for API clients and operators. Messages are in
+            English, not localized, and may include remediation hints or placeholder tokens
+            (for example, `$param`) substituted using values from `params`. Safe to display in
+            admin tooling; avoid exposing `debug` details to end users.
         debug:
           type: string
-          description: Debug information
+          description: |
+            Optional operator-only diagnostics (stack traces, internal error details, correlation
+            data). May contain sensitive information; do not expose to end users or log in
+            untrusted contexts.
         params:
           type: object
           additionalProperties: true
-          description: Error parameters
+          description: |
+            Optional free-form map of contextual parameters for the error. Typical keys include
+            `agentId`, `namespace`, `workspaceId`, `processId`, `param`, and `value` depending on
+            the error code; values are strings or numbers.
   responses:
     BadRequest:
-      description: Bad request
+      description: |
+        Invalid request. Typical causes include malformed JSON, missing required fields, invalid
+        query parameters, or unrecognized enum values. The response body uses the CustomError
+        schema with remediation hints in the message and debug fields.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/CustomError'
     Unauthorized:
-      description: Unauthorized access
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/CustomError'
-    Forbidden:
-      description: Access forbidden
+      description: |
+        Authentication required, or the provided token or credentials are invalid or expired.
+        Re-authenticate or refresh the token before retrying the request.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/CustomError'
     NotFound:
-      description: Resource not found
+      description: |
+        Requested resource was not found. Typical causes include an invalid agent, namespace,
+        workspace, service, file, snapshot version, or security check process ID. The response
+        body uses the CustomError schema; check `message` and `params` for the missing identifier.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/CustomError'
     FailedDependency:
-      description: Failed dependency
+      description: |
+        An upstream dependency required to fulfill the request is unavailable. Typically returned
+        when the agent cannot be reached or APIHUB backend communication fails (for example,
+        listing namespaces). The CustomError body may include `agentId` or related identifiers in
+        `params`. Clients should retry with exponential backoff once the dependency is restored.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/CustomError'
     InternalServerError:
-      description: Internal server error
+      description: |
+        Unexpected server error. Returns HTTP 500 with a CustomError body. Clients should retry
+        later; contact support with any correlation or debug details from the response if the
+        problem persists.
       content:
         application/json:
           schema:
@@ -1335,19 +1498,31 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: JWT Bearer token authentication.
+      description: |
+        JWT Bearer token authentication. Send the token in the Authorization header as
+        `Authorization: Bearer <token>`. Tokens are issued by the APIHUB authentication service;
+        use a valid session or service account JWT with appropriate APIHUB permissions.
     CookieAuth:
       type: apiKey
       in: cookie
       name: apihub-access-token
-      description: Authentication via the `apihub-access-token` cookie.
+      description: |
+        Session authentication via the `apihub-access-token` cookie set after interactive login to
+        APIHUB. The cookie is HttpOnly and Secure in production deployments. Prefer Bearer or
+        Personal Access Token for programmatic integrations.
     ApiKeyAuth:
       type: apiKey
       in: header
       name: api-key
-      description: API key authentication.
+      description: |
+        API key authentication. Send the key in the `api-key` request header. Keys are issued
+        through APIHUB administration; ensure the key belongs to a user with sufficient privileges
+        for the requested operation. Rotate or revoke compromised keys in the APIHUB admin UI.
     PersonalAccessToken:
       type: apiKey
       in: header
       name: X-Personal-Access-Token
-      description: Personal Access Token authentication
+      description: |
+        Personal Access Token authentication for user-level programmatic access. Send the token
+        in the `X-Personal-Access-Token` header. Create and revoke tokens in APIHUB user settings;
+        the token inherits the issuing user's permissions and remains valid until revoked or expired.
