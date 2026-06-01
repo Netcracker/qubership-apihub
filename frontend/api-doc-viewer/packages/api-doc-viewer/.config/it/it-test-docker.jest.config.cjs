@@ -21,6 +21,6 @@ module.exports = prepareJestConfig(
   path.resolve(__dirname, './common-it-test.jest.config.cjs'),
   path.resolve(__dirname, './common-puppeteer.config.cjs'),
   {
-    dockerImage: 'ghcr.io/netcracker/qubership-apihub-nodejs-dev-image:1.8.0',
+    dockerImage: 'ghcr.io/netcracker/qubership-apihub-nodejs-dev-image:1.9.0',
   },
 )

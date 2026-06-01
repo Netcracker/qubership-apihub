@@ -69,16 +69,19 @@ export function useValidations(
   const pattern = (nodeValue as IJsonSchemaStringType)?.pattern
   // Number
   const numberNodeValue = (nodeValue as IJsonSchemaNumberType)
+  const rawExclusiveMinimum = numberNodeValue?.exclusiveMinimum as number | boolean | undefined
+  const rawExclusiveMaximum = numberNodeValue?.exclusiveMaximum as number | boolean | undefined
+  // JSON Schema Draft 07 and above numeric value: exclusiveMinimum is itself a number; JSON Schema Draft 04: it's a boolean flag, value comes from minimum
   const exclusiveMinimum =
-    numberNodeValue?.exclusiveMinimum && isDefined(numberNodeValue?.minimum)
-      ? numberNodeValue.minimum
-      : undefined
+    typeof rawExclusiveMinimum === 'number'
+      ? rawExclusiveMinimum
+      : (rawExclusiveMinimum === true && isDefined(numberNodeValue?.minimum) ? numberNodeValue.minimum : undefined)
   const exclusiveMaximum =
-    numberNodeValue?.exclusiveMaximum && isDefined(numberNodeValue?.maximum)
-      ? numberNodeValue.maximum
-      : undefined
-  const minimum = exclusiveMinimum ? undefined : numberNodeValue?.minimum
-  const maximum = exclusiveMaximum ? undefined : numberNodeValue?.maximum
+    typeof rawExclusiveMaximum === 'number'
+      ? rawExclusiveMaximum
+      : (rawExclusiveMaximum === true && isDefined(numberNodeValue?.maximum) ? numberNodeValue.maximum : undefined)
+  const minimum = rawExclusiveMinimum === true ? undefined : numberNodeValue?.minimum
+  const maximum = rawExclusiveMaximum === true ? undefined : numberNodeValue?.maximum
   const multipleOf = numberNodeValue?.multipleOf
   // Object
   // FIXME 20.10.23 // Possible problems here in combiner nodes

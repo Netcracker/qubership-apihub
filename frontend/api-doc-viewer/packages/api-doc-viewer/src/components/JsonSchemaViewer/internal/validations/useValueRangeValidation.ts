@@ -29,9 +29,9 @@ import { isDefined } from "../../../../utils/common/checkers";
 
 export type ValueRangeInitialData = Partial<{
   minimum: number
-  exclusiveMinimum: boolean
+  exclusiveMinimum: number | boolean
   maximum: number
-  exclusiveMaximum: boolean
+  exclusiveMaximum: number | boolean
 }>
 
 export type ValueRangeDiffData = Partial<{
@@ -60,6 +60,7 @@ type UseValueRangeValidationResult = {
 
 const DEFAULT_CHARACTER = '?'
 const VALUE_MASK = '{value}'
+const EXCLUSIVE_VALUE_MASK = '{exclusive_value}'
 const GREATER_THAN = '>'
 const GREATER_THAN_OR_EQUALS = '>='
 const LESS_THAN = '<'
@@ -70,23 +71,27 @@ const BITWISE_EXCLUSIVE_MINIMUM = 1 << 1
 const BITWISE_MAXIMUM = 1 << 2
 const BITWISE_EXCLUSIVE_MAXIMUM = 1 << 3
 
+// Templates use VALUE_MASK for the regular bound value and EXCLUSIVE_VALUE_MASK for the exclusive bound value.
+// substituteValues is called separately for lower (with minimum / exclusiveLowerValue) and upper
+// (with maximum / exclusiveUpperValue), so a single EXCLUSIVE_VALUE_MASK suffices for both sides.
+// EXCLUSIVE_VALUE_MASK falls back to DEFAULT_CHARACTER when no numeric exclusive value is available (JSON Schema Draft 04 boolean style).
 const MINIMAX_CHAINS_MAPPING: Record<number, ValueRange> = {
   // no fields
   0: { lower: undefined, upper: undefined },
-  // one fields
+  // one field
   [BITWISE_MINIMUM]: { lower: `${GREATER_THAN_OR_EQUALS} ${VALUE_MASK}`, upper: undefined },
-  [BITWISE_EXCLUSIVE_MINIMUM]: { lower: `${GREATER_THAN} ${DEFAULT_CHARACTER}`, upper: undefined },
+  [BITWISE_EXCLUSIVE_MINIMUM]: { lower: `${GREATER_THAN} ${EXCLUSIVE_VALUE_MASK}`, upper: undefined },
   [BITWISE_MAXIMUM]: { lower: undefined, upper: `${LESS_THAN_OR_EQUALS} ${VALUE_MASK}` },
-  [BITWISE_EXCLUSIVE_MAXIMUM]: { lower: undefined, upper: `${LESS_THAN} ${DEFAULT_CHARACTER}` },
+  [BITWISE_EXCLUSIVE_MAXIMUM]: { lower: undefined, upper: `${LESS_THAN} ${EXCLUSIVE_VALUE_MASK}` },
   // two fields
   [BITWISE_EXCLUSIVE_MINIMUM | BITWISE_MINIMUM]:
     { lower: `${GREATER_THAN} ${VALUE_MASK}`, upper: undefined },
   [BITWISE_EXCLUSIVE_MINIMUM | BITWISE_MAXIMUM]:
-    { lower: `${GREATER_THAN} ${DEFAULT_CHARACTER}`, upper: `${LESS_THAN_OR_EQUALS} ${VALUE_MASK}` },
+    { lower: `${GREATER_THAN} ${EXCLUSIVE_VALUE_MASK}`, upper: `${LESS_THAN_OR_EQUALS} ${VALUE_MASK}` },
   [BITWISE_EXCLUSIVE_MINIMUM | BITWISE_EXCLUSIVE_MAXIMUM]:
-    { lower: `${GREATER_THAN} ${DEFAULT_CHARACTER}`, upper: `${LESS_THAN} ${DEFAULT_CHARACTER}` },
+    { lower: `${GREATER_THAN} ${EXCLUSIVE_VALUE_MASK}`, upper: `${LESS_THAN} ${EXCLUSIVE_VALUE_MASK}` },
   [BITWISE_EXCLUSIVE_MAXIMUM | BITWISE_MINIMUM]:
-    { lower: `${GREATER_THAN_OR_EQUALS} ${VALUE_MASK}`, upper: `${LESS_THAN} ${DEFAULT_CHARACTER}` },
+    { lower: `${GREATER_THAN_OR_EQUALS} ${VALUE_MASK}`, upper: `${LESS_THAN} ${EXCLUSIVE_VALUE_MASK}` },
   [BITWISE_EXCLUSIVE_MAXIMUM | BITWISE_MAXIMUM]:
     { lower: undefined, upper: `${LESS_THAN} ${VALUE_MASK}` },
   [BITWISE_MAXIMUM | BITWISE_MINIMUM]:
@@ -95,14 +100,65 @@ const MINIMAX_CHAINS_MAPPING: Record<number, ValueRange> = {
   [BITWISE_EXCLUSIVE_MINIMUM | BITWISE_MINIMUM | BITWISE_MAXIMUM]:
     { lower: `${GREATER_THAN} ${VALUE_MASK}`, upper: `${LESS_THAN_OR_EQUALS} ${VALUE_MASK}` },
   [BITWISE_EXCLUSIVE_MINIMUM | BITWISE_MINIMUM | BITWISE_EXCLUSIVE_MAXIMUM]:
-    { lower: `${GREATER_THAN} ${VALUE_MASK}`, upper: `${LESS_THAN} ${DEFAULT_CHARACTER}` },
+    { lower: `${GREATER_THAN} ${VALUE_MASK}`, upper: `${LESS_THAN} ${EXCLUSIVE_VALUE_MASK}` },
   [BITWISE_EXCLUSIVE_MINIMUM | BITWISE_MAXIMUM | BITWISE_EXCLUSIVE_MAXIMUM]:
-    { lower: `${GREATER_THAN} ${DEFAULT_CHARACTER}`, upper: `${LESS_THAN} ${VALUE_MASK}` },
+    { lower: `${GREATER_THAN} ${EXCLUSIVE_VALUE_MASK}`, upper: `${LESS_THAN} ${VALUE_MASK}` },
   [BITWISE_EXCLUSIVE_MAXIMUM | BITWISE_MINIMUM | BITWISE_MAXIMUM]:
     { lower: `${GREATER_THAN_OR_EQUALS} ${VALUE_MASK}`, upper: `${LESS_THAN} ${VALUE_MASK}` },
   // all fields
   [BITWISE_MINIMUM | BITWISE_EXCLUSIVE_MINIMUM | BITWISE_MAXIMUM | BITWISE_EXCLUSIVE_MAXIMUM]:
     { lower: `${GREATER_THAN} ${VALUE_MASK}`, upper: `${LESS_THAN} ${VALUE_MASK}` },
+}
+
+// True when an exclusive bound is active: boolean true (JSON Schema Draft 04 boolean style)
+// or any number including 0 (JSON Schema Draft 07 and above numeric value).
+function isExclusiveActive(v: number | boolean | undefined): boolean {
+  return v !== undefined && v !== false
+}
+
+// True when a diff beforeValue/afterValue represents an active exclusive bound.
+function isExclusiveDiffValueActive(v: unknown): boolean {
+  return v !== undefined && v !== false
+}
+
+// When both the regular lower bound and a numeric (JSON Schema Draft 07 and above numeric value) exclusive lower bound are set,
+// keep only the stricter bit. For JSON Schema Draft 04 (exclusiveMinimum is a boolean flag), both bits together
+// is correct — the template for that combo uses VALUE_MASK which correctly renders the minimum value.
+function resolveEffectiveLowerBitwiseKey(key: number, minValue: unknown, exclMinValue: number | undefined): number {
+  if ((key & (BITWISE_MINIMUM | BITWISE_EXCLUSIVE_MINIMUM)) !== (BITWISE_MINIMUM | BITWISE_EXCLUSIVE_MINIMUM)) {
+    return key
+  }
+  if (exclMinValue === undefined || typeof minValue !== 'number') {
+    return key  // JSON Schema Draft 04 combo (boolean exclusive flag): both bits are intentional
+  }
+  // JSON Schema Draft 07 and above numeric value: exclusive bound is stricter when exclMin >= min (equal prefers exclusive: x>5 is stricter than x>=5)
+  return exclMinValue >= minValue
+    ? key & ~BITWISE_MINIMUM           // exclusive is stricter → > exclMin
+    : key & ~BITWISE_EXCLUSIVE_MINIMUM // regular is stricter  → >= min
+}
+
+// Symmetric counterpart for the upper bound.
+function resolveEffectiveUpperBitwiseKey(key: number, maxValue: unknown, exclMaxValue: number | undefined): number {
+  if ((key & (BITWISE_MAXIMUM | BITWISE_EXCLUSIVE_MAXIMUM)) !== (BITWISE_MAXIMUM | BITWISE_EXCLUSIVE_MAXIMUM)) {
+    return key
+  }
+  if (exclMaxValue === undefined || typeof maxValue !== 'number') {
+    return key  // JSON Schema Draft 04 combo: both bits are intentional
+  }
+  // JSON Schema Draft 07 and above numeric value: exclusive upper bound is stricter when exclMax <= max (equal prefers exclusive: x<5 is stricter than x<=5)
+  return exclMaxValue <= maxValue
+    ? key & ~BITWISE_MAXIMUM           // exclusive is stricter → < exclMax
+    : key & ~BITWISE_EXCLUSIVE_MAXIMUM // regular is stricter  → <= max
+}
+
+function substituteValues(
+  template: string,
+  regularValue: unknown,
+  exclusiveValue: number | undefined,
+): string {
+  return template
+    .replace(VALUE_MASK, `${regularValue}`)
+    .replace(EXCLUSIVE_VALUE_MASK, isDefined(exclusiveValue) ? `${exclusiveValue}` : DEFAULT_CHARACTER)
 }
 
 export function useValueRangeValidation(
@@ -143,6 +199,10 @@ export function useValueRangeValidation(
   const maximumRemoved = diffRemove(diffMaximum)
   const maximumReplaced = diffReplace(diffMaximum)
 
+  // Numeric exclusive bound values from the current (after) state for substitution
+  const exclusiveLowerValue = typeof exclusiveMinimum === 'number' ? exclusiveMinimum : undefined
+  const exclusiveUpperValue = typeof exclusiveMaximum === 'number' ? exclusiveMaximum : undefined
+
   let beforeBitwiseKey: number = 0
   let afterBitwiseKey: number = 0
 
@@ -150,23 +210,48 @@ export function useValueRangeValidation(
   if (hasMinimum && (!hasMinimumChanged || minimumAdded || minimumReplaced)) {
     afterBitwiseKey |= BITWISE_MINIMUM
   }
-  if (exclusiveMinimum && (!hasExclusiveMinimumChanged || diffReplace(diffExclusiveMinimum) && diffExclusiveMinimum.afterValue)) {
+  if (isExclusiveActive(exclusiveMinimum) && (
+    !hasExclusiveMinimumChanged ||
+    diffAdd(diffExclusiveMinimum) ||
+    (diffReplace(diffExclusiveMinimum) && isExclusiveDiffValueActive(diffExclusiveMinimum?.afterValue))
+  )) {
     afterBitwiseKey |= BITWISE_EXCLUSIVE_MINIMUM
   }
   if (hasMaximum && (!hasMaximumChanged || maximumAdded || maximumReplaced)) {
     afterBitwiseKey |= BITWISE_MAXIMUM
   }
-  if (exclusiveMaximum && (!hasExclusiveMaximumChanged || diffReplace(diffExclusiveMaximum) && diffExclusiveMaximum.afterValue)) {
+  if (isExclusiveActive(exclusiveMaximum) && (
+    !hasExclusiveMaximumChanged ||
+    diffAdd(diffExclusiveMaximum) ||
+    (diffReplace(diffExclusiveMaximum) && isExclusiveDiffValueActive(diffExclusiveMaximum?.afterValue))
+  )) {
     afterBitwiseKey |= BITWISE_EXCLUSIVE_MAXIMUM
   }
+
+  // OAS 3.0 boolean exclusive flags are modifiers on the regular bound — without a paired minimum/maximum
+  // they carry no display value and must be suppressed (otherwise the template renders '> ?' / '< ?').
+  if (typeof exclusiveMinimum !== 'number' && !(afterBitwiseKey & BITWISE_MINIMUM)) {
+    afterBitwiseKey &= ~BITWISE_EXCLUSIVE_MINIMUM
+  }
+  if (typeof exclusiveMaximum !== 'number' && !(afterBitwiseKey & BITWISE_MAXIMUM)) {
+    afterBitwiseKey &= ~BITWISE_EXCLUSIVE_MAXIMUM
+  }
+
+  // For JSON Schema Draft 07 and above numeric value: when both bits are set, keep only the effective (stricter) one
+  afterBitwiseKey = resolveEffectiveLowerBitwiseKey(afterBitwiseKey, minimum, exclusiveLowerValue)
+  afterBitwiseKey = resolveEffectiveUpperBitwiseKey(afterBitwiseKey, maximum, exclusiveUpperValue)
 
   // Mapping to human-readable values
   const afterMapping =
     afterBitwiseKey in MINIMAX_CHAINS_MAPPING
       ? { ...MINIMAX_CHAINS_MAPPING[afterBitwiseKey] }
       : undefined
-  afterMapping?.lower && (afterMapping.lower = afterMapping.lower.replace(VALUE_MASK, `${minimum}`))
-  afterMapping?.upper && (afterMapping.upper = afterMapping.upper.replace(VALUE_MASK, `${maximum}`))
+  if (afterMapping?.lower) {
+    afterMapping.lower = substituteValues(afterMapping.lower, minimum, exclusiveLowerValue)
+  }
+  if (afterMapping?.upper) {
+    afterMapping.upper = substituteValues(afterMapping.upper, maximum, exclusiveUpperValue)
+  }
 
   // Saving them
   result.data.lower = afterMapping?.lower
@@ -181,6 +266,9 @@ export function useValueRangeValidation(
   // Scan which props are present in "before", if there are any changes
   let beforeMinimum: unknown
   let beforeMaximum: unknown
+  let beforeExclusiveLowerValue: number | undefined
+  let beforeExclusiveUpperValue: number | undefined
+
   if (hasMinimum && !hasMinimumChanged) {
     beforeMinimum = minimum
     beforeBitwiseKey |= BITWISE_MINIMUM
@@ -197,20 +285,65 @@ export function useValueRangeValidation(
     beforeMaximum = diffMaximum.beforeValue
     beforeBitwiseKey |= BITWISE_MAXIMUM
   }
-  if (exclusiveMinimum && !hasExclusiveMinimumChanged || diffReplace(diffExclusiveMinimum) && diffExclusiveMinimum.beforeValue) {
+
+  // Exclusive minimum before state: present when unchanged, replaced, or removed
+  if (isExclusiveActive(exclusiveMinimum) && !hasExclusiveMinimumChanged) {
     beforeBitwiseKey |= BITWISE_EXCLUSIVE_MINIMUM
+    beforeExclusiveLowerValue = exclusiveLowerValue
   }
-  if (exclusiveMaximum && !hasExclusiveMaximumChanged || diffReplace(diffExclusiveMaximum) && diffExclusiveMaximum.beforeValue) {
+  if ((diffReplace(diffExclusiveMinimum) || diffRemove(diffExclusiveMinimum)) &&
+    isExclusiveDiffValueActive(diffExclusiveMinimum?.beforeValue)) {
+    beforeBitwiseKey |= BITWISE_EXCLUSIVE_MINIMUM
+    if (typeof diffExclusiveMinimum!.beforeValue === 'number') {
+      beforeExclusiveLowerValue = diffExclusiveMinimum!.beforeValue as number
+    }
+  }
+
+  // Exclusive maximum before state: present when unchanged, replaced, or removed
+  if (isExclusiveActive(exclusiveMaximum) && !hasExclusiveMaximumChanged) {
     beforeBitwiseKey |= BITWISE_EXCLUSIVE_MAXIMUM
+    beforeExclusiveUpperValue = exclusiveUpperValue
   }
+  if ((diffReplace(diffExclusiveMaximum) || diffRemove(diffExclusiveMaximum)) &&
+    isExclusiveDiffValueActive(diffExclusiveMaximum?.beforeValue)) {
+    beforeBitwiseKey |= BITWISE_EXCLUSIVE_MAXIMUM
+    if (typeof diffExclusiveMaximum!.beforeValue === 'number') {
+      beforeExclusiveUpperValue = diffExclusiveMaximum!.beforeValue as number
+    }
+  }
+
+  // Same suppression as for after-state: a boolean exclusive flag without its paired regular bound is meaningless.
+  // Determine the before-state exclusive type: unchanged → same as current; replaced/removed → from beforeValue.
+  const beforeExclMinIsBoolean =
+    (!hasExclusiveMinimumChanged && typeof exclusiveMinimum !== 'number') ||
+    ((diffReplace(diffExclusiveMinimum) || diffRemove(diffExclusiveMinimum)) &&
+      typeof diffExclusiveMinimum!.beforeValue !== 'number')
+  if (beforeExclMinIsBoolean && !(beforeBitwiseKey & BITWISE_MINIMUM)) {
+    beforeBitwiseKey &= ~BITWISE_EXCLUSIVE_MINIMUM
+  }
+  const beforeExclMaxIsBoolean =
+    (!hasExclusiveMaximumChanged && typeof exclusiveMaximum !== 'number') ||
+    ((diffReplace(diffExclusiveMaximum) || diffRemove(diffExclusiveMaximum)) &&
+      typeof diffExclusiveMaximum!.beforeValue !== 'number')
+  if (beforeExclMaxIsBoolean && !(beforeBitwiseKey & BITWISE_MAXIMUM)) {
+    beforeBitwiseKey &= ~BITWISE_EXCLUSIVE_MAXIMUM
+  }
+
+  // For JSON Schema Draft 07 and above numeric value: when both bits are set, keep only the effective (stricter) one
+  beforeBitwiseKey = resolveEffectiveLowerBitwiseKey(beforeBitwiseKey, beforeMinimum, beforeExclusiveLowerValue)
+  beforeBitwiseKey = resolveEffectiveUpperBitwiseKey(beforeBitwiseKey, beforeMaximum, beforeExclusiveUpperValue)
 
   // Mapping to human-readable values
   const beforeMapping =
     beforeBitwiseKey in MINIMAX_CHAINS_MAPPING
       ? { ...MINIMAX_CHAINS_MAPPING[beforeBitwiseKey] }
       : undefined
-  beforeMapping?.lower && (beforeMapping.lower = beforeMapping.lower.replace(VALUE_MASK, `${beforeMinimum}`))
-  beforeMapping?.upper && (beforeMapping.upper = beforeMapping.upper.replace(VALUE_MASK, `${beforeMaximum}`))
+  if (beforeMapping?.lower) {
+    beforeMapping.lower = substituteValues(beforeMapping.lower, beforeMinimum, beforeExclusiveLowerValue)
+  }
+  if (beforeMapping?.upper) {
+    beforeMapping.upper = substituteValues(beforeMapping.upper, beforeMaximum, beforeExclusiveUpperValue)
+  }
 
   // Re-saving them
   result.data.lower ??= beforeMapping?.lower
