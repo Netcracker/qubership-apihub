@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-apispec-view",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "description": "Web Component to represent various API-specifications as a human-readable document",
   "license": "Apache-2.0",
   "sideEffects": [
@@ -16,7 +16,7 @@
     ".": "./dist/index.js"
   },
   "engines": {
-    "node": ">=14.13"
+    "node": ">=24.0.0"
   },
   "scripts": {
     "generate-stories": "node bin/generate-openapi-compatibility-suite-stories.mjs",
@@ -28,10 +28,10 @@
     "build:showcase": "npm run generate-stories && storybook build -o ../../dist-showcase --disable-telemetry",
     "development:storybook": "npm run generate-stories && storybook dev -p 9099",
     "development:local-server:static": "npm run build:showcase && ws -p 9009 -d ../../dist-showcase --spa index.html --static.maxage 3600",
-    "screenshot-test:ci": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 -c .config/it/it-test.jest.config.js\"",
-    "screenshot-test:docker": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 -c .config/it/it-test-docker.jest.config.js\"",
-    "regenerate-screenshots:ci": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test.jest.config.js\"",
-    "regenerate-screenshots:docker": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test-docker.jest.config.js\"",
+    "screenshot-test": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 -c .config/it/it-test-docker.jest.config.js\"",
+    "screenshot-test:ci-legacy": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 -c .config/it/it-test.jest.config.js\"",
+    "regenerate-screenshots": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test-docker.jest.config.js\"",
+    "regenerate-screenshots:ci-legacy": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test.jest.config.js\"",
     "type-check": "tsc --noEmit"
   },
   "rollup": {
