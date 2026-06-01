@@ -2,7 +2,13 @@ openapi: 3.0.3
 info:
   title: Linter Service Admin API
   version: "1.0"
-  description: The Linter Service Admin API provides administrative operations for managing validation rulesets and service debugging. These operations require system administrator privileges.
+  description: >
+    Provides administrative operations for managing validation rulesets and performing Linter Service debugging
+    (runtime log level inspection and adjustment). All operations require the system administrator role and
+    appropriate authentication (Bearer token, API key, or Personal Access Token).
+  contact:
+    name: Netcracker Opensource Group
+    email: opensourcegroup@netcracker.com
 servers:
   - url: /
 security:
@@ -11,7 +17,7 @@ security:
   - PersonalAccessToken: []
 tags:
   - name: Ruleset Management
-    description: API related to management of validation rulesets.
+    description: APIs for managing validation rulesets.
   - name: Debug
     description: API for debugging and log management.
 paths:
@@ -82,9 +88,13 @@ paths:
         - Ruleset Management
       summary: Create a new ruleset
       description: >
-        Allows an admin to create a new ruleset by uploading a YAML file.
-        The new ruleset is set to 'Inactive' by default.
-        This operation is available only to users with the `system administrator` role.
+        Allows an admin to create a new ruleset by uploading a ruleset file via multipart form data.
+        The required file format depends on the selected linter (for example, Spectral YAML for spectral,
+        or AI linter rules YAML for ai_linter). The new ruleset is stored with inactive status.
+
+        Input validation at upload checks required fields, supported apiType and linter values, file
+        readability, and rulesetName uniqueness within the selected apiType. Ruleset rule content is not
+        linted at upload time.
       operationId: postRuleset
       requestBody:
         required: true
@@ -100,23 +110,57 @@ paths:
               schema:
                 $ref: "#/components/schemas/Ruleset"
         "400":
-          description: Bad Request
+          description: >
+            Bad Request — missing required fields, invalid multipart body, or unreadable ruleset file.
+            Returns ErrorResponse.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                missingParams:
+                  summary: Missing required field
+                  value:
+                    status: 400
+                    code: "15"
+                    message: "Required parameters are missing: $params"
+                    params:
+                      params: rulesetName
         "401":
-          description: Unauthorized
+          description: Unauthorized — authentication credentials are missing or invalid.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "403":
-          description: Forbidden
+          description: Forbidden — caller lacks ruleset management permission.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                insufficientPrivileges:
+                  summary: Insufficient privileges
+                  value:
+                    status: 403
+                    code: "1900"
+                    message: "You don't have enough privileges to perform this operation"
+        "409":
+          description: Conflict — a ruleset with the same name already exists for the API type.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                duplicateName:
+                  summary: Duplicate ruleset name
+                  value:
+                    status: 409
+                    code: "2001"
+                    message: "Ruleset name $name is not unique for API type $type"
+                    params:
+                      name: "My Ruleset"
+                      type: openapi-3-0
         "500":
           description: Internal Server Error
           content:
@@ -129,8 +173,8 @@ paths:
         - Ruleset Management
       summary: Delete a ruleset
       description: >
-        Delete a ruleset.
-        Ruleset can be deleted if it is in inactive status and no version validated against this ruleset exist.
+        Deletes a ruleset. A ruleset can be deleted only if it is inactive and no API package versions
+        have been validated against it. Returns `400 Bad Request` if deletion preconditions are not met.
         This operation is available only to users with the `system administrator` role.
       operationId: deleteRuleset
       parameters:
@@ -139,30 +183,38 @@ paths:
           required: true
           schema:
             type: string
-          description: Unique ruleset identifier
+          description: Unique ruleset identifier (UUID).
+          example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
       responses:
         "204":
-          description: Success
+          description: >
+            No Content — the ruleset was deleted successfully. The response has no body.
         "400":
-          description: Bad Request
+          description: >
+            Bad Request — deletion preconditions are not met (ruleset is active, was previously activated,
+            or has validation history). Returns `ErrorResponse` with code `2000` (`RulesetCanNotBeDeleted`).
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "401":
-          description: Unauthorized
+          description: >
+            Unauthorized — authentication credentials are missing or invalid. Returns `ErrorResponse`.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "403":
-          description: Forbidden
+          description: >
+            Forbidden — the caller lacks the system administrator role. Returns `ErrorResponse` with code
+            `1900` (`InsufficientPrivileges`).
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "500":
-          description: Internal Server Error
+          description: >
+            Internal Server Error — an unexpected failure occurred during deletion. Returns `ErrorResponse`.
           content:
             application/json:
               schema:
@@ -182,7 +234,8 @@ paths:
           required: true
           schema:
             type: string
-          description: Unique ruleset ID.
+          description: Unique ruleset identifier (UUID).
+          example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
       responses:
         "204":
           description: Success
@@ -215,17 +268,22 @@ paths:
       tags:
         - Debug
       summary: Check log level
-      description: |
-        Check current log level.
+      description: >
+        Returns the current service-wide log level. As a side effect, emits sample log entries at error,
+        warn, info, debug, and trace severities to verify logging output; each call may increase log volume
+        in monitoring systems.
       operationId: checkLogLevel
       responses:
         "200":
-          description: Success
+          description: Current service-wide log level as plain text.
           content:
             text/plain:
               schema:
                 type: string
-                description: Current log level
+                description: >
+                  Lowercase logrus level name embedded in a plain-text status message. Allowed level values
+                  are panic, fatal, error, warn, info, debug, and trace.
+                example: "Current log level is 'info'. See logs for details"
         "401":
           description: Unauthorized
           content:
@@ -243,8 +301,10 @@ paths:
       tags:
         - Debug
       summary: Set log level
-      description: |
-        Set log level.
+      description: >
+        Sets the service-wide log level for the running process. The change takes effect immediately,
+        applies globally to all components, and does not persist across service restarts. Accepted level
+        values are defined in the request body schema.
       operationId: setLogLevel
       requestBody:
         required: true
@@ -257,7 +317,9 @@ paths:
               properties:
                 level:
                   type: string
-                  description: Log level to set
+                  description: >
+                    Service-wide log level to apply immediately for the running process. The setting is not
+                    persisted across restarts.
                   enum:
                     - panic
                     - fatal
@@ -270,7 +332,7 @@ paths:
         "200":
           description: Success
         "400":
-          description: Bad request
+          description: Bad Request — invalid JSON body or unrecognized level value.
           content:
             application/json:
               schema:
@@ -290,30 +352,57 @@ paths:
 components:
   schemas:
     ErrorResponse:
-      description: An error description
+      description: >
+        Standard error payload returned for failed requests. Use code for programmatic handling. When params
+        is present, message contains unsubstituted $key placeholders; clients must perform substitution
+        before display (see message and params property descriptions).
       type: object
+      example:
+        status: 400
+        code: "15"
+        message: "Required parameters are missing: $params"
+        params:
+          params: rulesetName
       required:
         - status
         - code
         - message
       properties:
         status:
-          description: HTTP Status Code
+          description: HTTP status code as an integer; expected to match the actual HTTP response status.
           type: integer
         code:
-          description: Internal string error code. Mandatory in response.
+          description: >
+            Internal numeric string error code for programmatic handling (for example, `15`, `1900`, `2000`).
+            The `message` field may contain `$`-prefixed placeholders that correspond to keys in `params`.
           type: string
+          example: "1900"
         message:
-          description: The attribute contains an error message.
+          description: >
+            Human-readable error message in English. The server returns the message template as-is; it does
+            not substitute placeholders. When params is present, replace each $key in this field with the
+            corresponding value from params before displaying the message to users.
           type: string
+          example: "Required parameters are missing: $params"
         params:
           type: object
-          description: Optional message parameters
+          description: >
+            Optional key-value map of parameters used to populate `$key` placeholders in `message`
+            (for example, `{ "params": "rulesetName" }` or `{ "name": "My Ruleset", "type": "openapi-3-0" }`).
+            Values are typically strings or numbers.
+          example:
+            params: rulesetName
         debug:
-          description: Debug details
+          description: >
+            Optional technical details for troubleshooting (for example, parse errors or internal exception
+            messages). Present when the server attaches diagnostic information, often on `400 Bad Request`.
+            May contain sensitive data or internal identifiers; do not display to end users or persist in
+            client logs without appropriate access controls.
           type: string
     Ruleset:
-      description: Ruleset's parameters
+      description: >
+        Representation of a validation ruleset and its metadata, including identifier, name, file name,
+        status, target API type, linter, creation timestamp, and whether it can be deleted.
       type: object
       required:
         - id
@@ -334,16 +423,19 @@ components:
           example: "OpenAPI Quality Ruleset"
         fileName:
           type: string
-          description: Filename of the ruleset file.
+          description: Ruleset file name.
           example: "R2025Ruleset.yaml"
         status:
-          description: Status of the ruleset.
+          description: >
+            Lifecycle state of the ruleset. active means the ruleset is currently applied during API
+            specification validation for its apiType and linter; inactive means it is stored but not used
+            for validation until activated.
           type: string
           enum:
             - active
             - inactive
         apiType:
-          description: API type which is going to be checked against the ruleset.
+          description: API type that this ruleset targets (for example, openapi-3-0 or asyncapi-3-0).
           type: string
           enum:
             - openapi-2-0
@@ -351,25 +443,26 @@ components:
             - openapi-3-1
             - asyncapi-3-0
         linter:
-          description: Name of the linter for which this ruleset suitable to.
+          description: Name of the linter that this ruleset is suitable for.
           type: string
           enum:
             - spectral
             - ai_linter
         createdAt:
-          description: Date of ruleset creation.
+          description: Ruleset creation timestamp in ISO 8601 format (UTC).
           type: string
           format: date-time
+          example: "2025-05-30T12:00:00Z"
         canBeDeleted:
-          description: |
-            Indicates whether the ruleset can be deleted:
-              - canBeDeleted = true - if both of the following conditins are met:
-                  - ruleset is in inactive status
-                  - there is no existing version revision that was validated against current ruleset.
+          description: >
+            Indicates whether the ruleset can be deleted. Returns `true` only when the ruleset is inactive
+            and no API package versions have been validated against it; otherwise `false`.
           type: boolean
           example: true
     RulesetCreate:
-      description: Parameters for creating a ruleset
+      description: >
+        Multipart form fields for creating a new ruleset. All listed properties are required. The uploaded
+        file format depends on the selected linter.
       type: object
       required:
         - rulesetName
@@ -378,11 +471,13 @@ components:
         - rulesetFile
       properties:
         rulesetName:
-          description: Unique name of the ruleset.
+          description: >
+            Unique name of the ruleset within the selected API type. Duplicate names for the same API type
+            return `409 Conflict`.
           type: string
           example: "New Ruleset"
         apiType:
-          description: API type which is going to be checked against the ruleset.
+          description: API type that this ruleset targets (for example, openapi-3-0 or asyncapi-3-0).
           type: string
           enum:
             - openapi-2-0
@@ -390,28 +485,39 @@ components:
             - openapi-3-1
             - asyncapi-3-0
         linter:
-          description: Name of the linter for which this ruleset suitable to.
+          description: Target linter for this ruleset.
           type: string
           enum:
             - spectral
             - ai_linter
         rulesetFile:
-          description: YAML file with Spectral rules.
+          description: >
+            Ruleset file to upload. The required format depends on the selected linter: Spectral YAML for
+            `spectral`, or AI linter rules YAML for `ai_linter`.
           type: string
           format: binary
   securitySchemes:
     BearerAuth:
       type: http
-      description: Bearer token authentication. Default security scheme for API usage.
+      description: >
+        JWT bearer token authentication. Send the token in the `Authorization` header as
+        `Authorization: Bearer <token>`. Any one of the declared security schemes (Bearer token, API key,
+        or Personal Access Token) is sufficient; schemes are alternatives, not combined requirements.
+        Always use HTTPS in production to protect tokens in transit.
       scheme: bearer
       bearerFormat: JWT
     api-key:
       type: apiKey
-      description: Api-key authentication.
+      description: >
+        API key authentication. Provide the key in the `api-key` request header
+        (for example, `api-key: <your-api-key>`).
       name: api-key
       in: header
     PersonalAccessToken:
       type: apiKey
-      description: Authentication by personal access token.
+      description: >
+        Personal access token authentication for programmatic access. Provide the token in the
+        `X-Personal-Access-Token` request header. Intended for long-lived integrations where bearer
+        session tokens are not used.
       name: X-Personal-Access-Token
       in: header

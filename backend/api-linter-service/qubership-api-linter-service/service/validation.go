@@ -22,6 +22,9 @@ import (
 type ValidationService interface {
 	ValidateVersion(ctx context.Context, packageId string, version string, eventId string, recalculate bool) (string, error)
 	GetVersionSummary(ctx context.Context, packageId string, version string) (*view.ValidationSummaryForVersion, error)
+	// GetLintIssuesForPackageVersion returns stored linter issues per document for a linted package version.
+	// Returns (nil, nil) when the version has not been linted and no lint task is in progress (same as summary).
+	GetLintIssuesForPackageVersion(ctx context.Context, packageId string, version string) (*view.VersionLintIssues, error)
 	GetVersionSummary_deprecated(ctx context.Context, packageId string, version string) (*view.ValidationSummaryForVersion, error)
 	GetValidationResult_deprecated(ctx context.Context, packageId string, version string, slug string) (*view.DocumentResult_deprecated, error)
 	GetValidationResult(ctx context.Context, packageId string, version string, slug string) (*view.DocumentResult, error)
@@ -190,6 +193,94 @@ func (v *validationServiceImpl) GetVersionSummary(ctx context.Context, packageId
 		result.Rulesets = append(result.Rulesets, entity.MakeRulesetView(val))
 	}
 	return result, nil
+}
+
+func (v *validationServiceImpl) GetLintIssuesForPackageVersion(ctx context.Context, packageId string, versionDisplay string) (*view.VersionLintIssues, error) {
+	ver, rev, err := v.getVersionAndRevision(ctx, packageId, versionDisplay)
+	if err != nil {
+		return nil, err
+	}
+
+	lintedVer, lintedDocs, err := v.versionResultRepository.GetVersionAndDocsSummary(ctx, packageId, ver, rev)
+	if err != nil {
+		return nil, err
+	}
+	if lintedVer == nil {
+		varTasks, err := v.verTaskRepo.GetRunningTaskForVersion(ctx, packageId, ver, rev)
+		if err != nil {
+			return nil, err
+		}
+		if len(varTasks) > 0 {
+			return &view.VersionLintIssues{
+				PackageId:      packageId,
+				Version:        versionDisplay,
+				VersionStatus:  view.VersionStatusInProgress,
+				VersionDetails: "",
+				Documents:      nil,
+			}, nil
+		}
+		return nil, nil
+	}
+
+	out := &view.VersionLintIssues{
+		PackageId:      packageId,
+		Version:        versionDisplay,
+		VersionStatus:  lintedVer.LintStatus,
+		VersionDetails: lintedVer.LintDetails,
+		Documents:      make([]view.DocumentLintBlock, 0),
+	}
+
+	slugSeen := make(map[string]struct{})
+	var orderedSlugs []string
+	for i := range lintedDocs {
+		d := &lintedDocs[i]
+		if _, ok := slugSeen[d.Slug]; ok {
+			continue
+		}
+		slugSeen[d.Slug] = struct{}{}
+		orderedSlugs = append(orderedSlugs, d.Slug)
+	}
+
+	for _, slug := range orderedSlugs {
+		dr, err := v.GetValidationResult(ctx, packageId, versionDisplay, slug)
+		if err != nil {
+			return nil, err
+		}
+
+		block := view.DocumentLintBlock{Slug: slug}
+		hasDocErr := false
+		var errDetails string
+		for i := range lintedDocs {
+			d := &lintedDocs[i]
+			if d.Slug != slug {
+				continue
+			}
+			if d.LintStatus == view.StatusError {
+				hasDocErr = true
+				if d.LintDetails != "" {
+					errDetails = d.LintDetails
+				}
+			}
+			if block.DocumentName == "" {
+				block.DocumentName = d.FileId
+				block.ApiType = d.SpecificationType
+			}
+		}
+		if dr != nil {
+			block.DocumentName = dr.ValidatedDocument.DocName
+			block.ApiType = dr.ValidatedDocument.ApiType
+			block.LinterResults = dr.Results
+		}
+		if hasDocErr {
+			block.LintStatus = view.StatusError
+			block.LintDetails = errDetails
+		} else {
+			block.LintStatus = view.StatusSuccess
+		}
+		out.Documents = append(out.Documents, block)
+	}
+
+	return out, nil
 }
 
 func (v *validationServiceImpl) GetVersionSummary_deprecated(ctx context.Context, packageId string, version string) (*view.ValidationSummaryForVersion, error) {
