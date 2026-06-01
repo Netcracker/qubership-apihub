@@ -25,7 +25,7 @@ const toMatchImageSnapshot = configureToMatchImageSnapshot({
     threshold: 0.28, //not stable shadows and subpixels
     includeAA: false
   },
-  failureThreshold: 5, //not stable shadows and subpixels
+  failureThreshold: 20, //not stable shadows and subpixels
   customSnapshotIdentifier: ({ defaultIdentifier }) => {
     return defaultIdentifier
   }

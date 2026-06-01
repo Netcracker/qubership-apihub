@@ -2,14 +2,13 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "resolveJsonModule": true,
+    "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
   "exclude": [
-    "node_modules",
-    "../src/main",
-    "../src/stories"
+    "node_modules"
   ],
   "include": [
-    "../src/it/**/*.ts"
+    "../../src"
   ]
 }

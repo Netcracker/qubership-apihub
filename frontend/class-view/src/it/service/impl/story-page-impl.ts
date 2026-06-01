@@ -48,15 +48,15 @@ export class StoryPageImpl implements StoryPage {
     if (!control) {
       throw new Error(`Unable to find control ${name}`)
     }
-    return new BooleanControlImpl(control, this._page, () => ViewComponentImpl.startWaitingUpdateFinish(this._renderEventTarget))
+    return new BooleanControlImpl(control, () => ViewComponentImpl.startWaitingUpdateFinish(this._renderEventTarget))
   }
 
   public async embeddedOptionsControl(name: string): Promise<EmbeddedOptionsControl> {
-    const control = (await this._page.waitForXPath(`//td[./span[text()='${name}']]/following-sibling::td//div`)) as ElementHandle
+    const control = (await this._page.waitForSelector(`::-p-xpath(//td[./span[text()='${name}']]/following-sibling::td//div)`)) as ElementHandle
     if (!control) {
       throw new Error(`Unable to find control ${name}`)
     }
-    return new EmbeddedOptionsControlImpl(control, this._page, () => ViewComponentImpl.startWaitingUpdateFinish(this._renderEventTarget))
+    return new EmbeddedOptionsControlImpl(control, () => ViewComponentImpl.startWaitingUpdateFinish(this._renderEventTarget))
   }
 
   public async numberControl(name: string): Promise<NumberControlImpl> {
@@ -76,7 +76,7 @@ export class StoryPageImpl implements StoryPage {
   }
 
   public async reset(): Promise<void> {
-    const button = await this._page.waitForXPath('//button[@title="Reset controls"]', { timeout: 0 }) as ElementHandle<HTMLButtonElement>
+    const button = await this._page.waitForSelector('::-p-xpath(//button[@title="Reset controls"])', { timeout: 0 }) as ElementHandle<HTMLButtonElement>
     if (!button) {
       throw new Error('Unable to find Reset button')
     }

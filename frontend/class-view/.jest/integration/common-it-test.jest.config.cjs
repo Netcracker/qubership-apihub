@@ -14,23 +14,15 @@
  * limitations under the License.
  */
 
-const path = require('path')
-const fs = require('fs')
-
-module.exports = () => {
-  // use the existing Chromium WebSocket for tests
-  const endpointPath = path.join(__dirname, 'wsEndpoint')
-  let wsEndpoint = ''
-
-  if (!fs.existsSync(endpointPath)) {
-    fs.writeFileSync(endpointPath, '', { encoding: 'utf8' })
-  } else {
-    wsEndpoint = fs.readFileSync(endpointPath, 'utf8')
-  }
-
-  return {
-    connect: {
-      browserWSEndpoint: wsEndpoint
-    }
-  }
+module.exports = {
+  rootDir: '../..',
+  testMatch: ['**/*.it-test.ts'],
+  roots: ['<rootDir>/src/it'],
+  setupFilesAfterEnv: ['<rootDir>/.jest/integration/setup.it-test.ts'],
+  moduleFileExtensions: ['ts', 'js', 'json', 'node'],
+  transform: {
+    '\\.ts?$': [
+      'ts-jest', { tsconfig: '<rootDir>/.jest/integration/tsconfig.it-test.json' }
+    ]
+  },
 }

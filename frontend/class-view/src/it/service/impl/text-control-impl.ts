@@ -26,7 +26,7 @@ export class TextControlImpl implements TextControl {
   }
 
   public async fill(text: string, waitUpdate = true): Promise<void> {
-    const promise = waitUpdate ? this._prepareToNextRenderFinish() : this._page.waitForTimeout(1)
+    const promise = waitUpdate ? this._prepareToNextRenderFinish() : new Promise<void>(r => setTimeout(r, 1))
     await this._page.evaluate((newContent, element) => {
       // WA for react component https://stackoverflow.com/questions/23892547/what-is-the-best-way-to-trigger-onchange-event-in-react-js
       const nativeInputValueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!

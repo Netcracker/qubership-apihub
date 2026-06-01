@@ -15,9 +15,14 @@
  */
 
 const path = require('path')
+const { prepareJestConfig } = require('@netcracker/qubership-apihub-jest-chrome-in-docker-environment')
 
-module.exports = {
-  globalSetup: path.join(__dirname, 'setup.cjs'),
-  globalTeardown: path.join(__dirname, 'teardown.cjs'),
-  testEnvironment: 'jest-environment-puppeteer'
-}
+process.env.HOST_CHECK_PORT = '6006'
+
+module.exports = prepareJestConfig(
+  path.resolve(__dirname, './common-it-test.jest.config.cjs'),
+  path.resolve(__dirname, './common-puppeteer.config.cjs'),
+  {
+    dockerImage: 'ghcr.io/netcracker/qubership-apihub-nodejs-dev-image:1.9.0',
+  },
+)

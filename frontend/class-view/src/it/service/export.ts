@@ -15,5 +15,5 @@
  */
 
 export interface Export {
-  captureScreenshot(): Promise<Buffer | string>;
+  captureScreenshot(): Promise<Uint8Array>;
 }

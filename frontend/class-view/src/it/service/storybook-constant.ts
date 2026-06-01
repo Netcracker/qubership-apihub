@@ -14,5 +14,4 @@
  * limitations under the License.
  */
 
-export const FUNCTION_NAME_UPDATE_FINISH = 'updateFinish'
 export const EVENT_NAME_UPDATE_FINISH = 'update-finish'

@@ -118,7 +118,7 @@ describe('Selection Test', () => {
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
 
     await page.mouse.click(300, 300)
-    await page.waitForTimeout(1000)
+    await new Promise(r => setTimeout(r, 1000))
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
 
     expect(await component.captureScreenshot()).toMatchImageSnapshot()

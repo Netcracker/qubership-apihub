@@ -28,7 +28,7 @@ export class ViewComponentImpl implements ViewComponent {
   ) {
   }
 
-  public async captureScreenshot(): Promise<Buffer | string> {
+  public async captureScreenshot(): Promise<Uint8Array> {
     return captureScreenshot(this._domElement)
   }
 
@@ -53,9 +53,9 @@ export class ViewComponentImpl implements ViewComponent {
   }
 
   private async findTextElement(text: string): Promise<ElementHandle> {
-    let elements: ElementHandle[] = await this._domElement.$x(`//*[name()='text'][text()='${text}']`) as ElementHandle<Element>[]
+    let elements: ElementHandle[] = await this._domElement.$$(`::-p-xpath(.//*[name()='text'][text()='${text}'])`)
     if (elements.length === 0) {
-      elements = await this._domElement.$x(`//*[name()='tspan'][text()='${text}']`) as ElementHandle<Element>[]
+      elements = await this._domElement.$$(`::-p-xpath(.//*[name()='tspan'][text()='${text}'])`)
     }
     if (elements.length > 0) {
       return elements[0]
