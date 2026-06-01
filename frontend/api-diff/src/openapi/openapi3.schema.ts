@@ -41,6 +41,7 @@ import {
 import { schemaParamsCalculator } from './openapi3.description.schema'
 import { openApiSpecificationExtensionRulesFunction } from './openapi3.compare.rules'
 import { isArray, isObject } from '../utils'
+import { booleanExclusiveBoundsOas30to31Adapter } from '../jsonSchema/jsonSchema.numeric-bounds'
 
 const NULL_TYPE_COMBINERS = [JSON_SCHEMA_PROPERTY_ANY_OF, JSON_SCHEMA_PROPERTY_ONE_OF] as const
 const SPEC_TYPE_TO_VERSION: Record<OpenApiSpecVersion, string> = {
@@ -209,7 +210,14 @@ export const openApiSchemaRules = (options: OpenApi3SchemaRulesOptions): Compare
   const schemaRules = jsonSchemaRules({
     additionalRules: {
       adapter: [
-        ...(options.version === SPEC_TYPE_OPEN_API_31 ? [jsonSchemaOas30to31Adapter(openApiJsonSchemaAnyFactory(options.version))] : []),
+        ...(
+          options.version === SPEC_TYPE_OPEN_API_31
+            ? [
+              booleanExclusiveBoundsOas30to31Adapter,
+              jsonSchemaOas30to31Adapter(openApiJsonSchemaAnyFactory(options.version))
+            ]
+            : []
+        ),
         jsonSchemaAdapter(openApiJsonSchemaAnyFactory(options.version)),
       ],
       descriptionParamCalculator: schemaParamsCalculator,

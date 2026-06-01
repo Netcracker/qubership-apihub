@@ -3,16 +3,23 @@ import {
   addDiffObjectToContainer,
   ANY_COMBINER_INDEX,
   ANY_COMBINER_PATH,
+  breaking,
   createChildContext,
   diffFactory,
   getOrCreateChildDiffAdd,
   getOrCreateChildDiffRemove,
   nestedCompare,
   createDiffEntry,
+  risky,
 } from '../core'
 import type { CompareResolver, Diff, DiffEntry } from '../types'
 import { isArray, isObject, onlyExistedArrayIndexes } from '../utils'
 import { copyDescriptors } from '@netcracker/qubership-apihub-api-unifier'
+
+const haveCommonRef = (a: string[], b: string[]): boolean => {
+  const bSet = new Set(b)
+  return a.some(ref => bSet.has(ref))
+}
 
 export const combinersCompareResolver: CompareResolver = (ctx) => {
   const { before, after, options, scope } = ctx
@@ -30,45 +37,72 @@ export const combinersCompareResolver: CompareResolver = (ctx) => {
   // match combiners
   const beforeArrayIndexes = onlyExistedArrayIndexes(before.value)
   const afterArrayIndexes = onlyExistedArrayIndexes(after.value)
-  const beforeMatchedArrayIndexes = new Set<number>(beforeArrayIndexes)
-  const afterMatchedArrayIndexes = new Set<number>(afterArrayIndexes)
+  const beforeUnmatchedIndexes = new Set<number>(beforeArrayIndexes)
+  const afterUnmatchedIndexes = new Set<number>(afterArrayIndexes)
   const comparedItems = []
   const mergedCombinerJsoArray: unknown[] = []
   const diffs: Set<Diff> = new Set()
 
   const rules = getNodeRules(ctx.rules, ANY_COMBINER_INDEX, ANY_COMBINER_PATH, before.value) || {}
 
+  const compareCombinerItems = (beforeItem: unknown, afterItem: unknown) =>
+    ctx.options.mergedJsoCache.cacheEvaluationResultByFootprint(
+      [beforeItem, afterItem, scope],
+      ([b, a]) => nestedCompare(b, a, { ...options, rules, compareScope: ctx.scope }),
+      { diffs: [], ownerDiffEntry: undefined, merged: {} },
+      (result, guard) => {
+        guard.diffs.push(...result.diffs)
+        if (isObject(guard.merged) && isObject(result.merged))
+          guard.merged = copyDescriptors(guard.merged, result.merged)
+        else
+          guard.merged = result.merged
+        return guard
+      })
+
+  // First pass: definitively match combiner options that share the same $ref origin.
+  // The assumption is that in real world cases if schema names are the same, then
+  // this is what we want to compare.
+  const { inlineRefsFlag } = options
+  if (inlineRefsFlag) {
+    for (const i of beforeArrayIndexes) {
+      if (!beforeUnmatchedIndexes.has(i)) { continue }
+      const beforeItem = before.value[i]
+      if (!isObject(beforeItem)) { continue }
+      const beforeRefs = beforeItem[inlineRefsFlag] as string[] | undefined
+      if (!beforeRefs?.length) { continue }
+
+      for (const j of afterArrayIndexes) {
+        if (!afterUnmatchedIndexes.has(j)) { continue }
+        const afterItem = after.value[j]
+        if (!isObject(afterItem)) { continue }
+        const afterRefs = afterItem[inlineRefsFlag] as string[] | undefined
+        if (!afterRefs?.length) { continue }
+
+        if (haveCommonRef(beforeRefs, afterRefs)) {
+          beforeUnmatchedIndexes.delete(i)
+          afterUnmatchedIndexes.delete(j)
+          const { diffs: localDiffs, merged } = compareCombinerItems(beforeItem, afterItem)
+          mergedCombinerJsoArray[j] = merged
+          localDiffs.forEach(diff => diffs.add(diff))
+          break
+        }
+      }
+    }
+  }
+
   // compare all combinations, find min diffs
   for (const i of beforeArrayIndexes) {
+    if (!beforeUnmatchedIndexes.has(i)) { continue }
     const beforeCombinerJso = before.value[i]
     for (const j of afterArrayIndexes) {
-      if (!afterMatchedArrayIndexes.has(j)) { continue }
+      if (!afterUnmatchedIndexes.has(j)) { continue }
       const afterCombinerJso = after.value[j]
 
-      const {
-        diffs: localDiffs,
-        merged,
-      } = ctx.options.mergedJsoCache.cacheEvaluationResultByFootprint(
-        [beforeCombinerJso, afterCombinerJso, scope],
-        ([beforeCombinerJso, afterCombinerJso]) =>
-          nestedCompare(beforeCombinerJso, afterCombinerJso, {
-            ...options,
-            rules,
-            compareScope: ctx.scope,
-          }),
-        { diffs: [], ownerDiffEntry: undefined, merged: {} },
-        (result, guard) => {
-          guard.diffs.push(...result.diffs)
-          if (isObject(guard.merged) && isObject(result.merged))
-            guard.merged = copyDescriptors(guard.merged, result.merged)
-          else
-            guard.merged = result.merged
-          return guard
-        })
+      const { diffs: localDiffs, merged } = compareCombinerItems(beforeCombinerJso, afterCombinerJso)
 
       if (!localDiffs.length) {
-        afterMatchedArrayIndexes.delete(j)
-        beforeMatchedArrayIndexes.delete(i)
+        afterUnmatchedIndexes.delete(j)
+        beforeUnmatchedIndexes.delete(i)
         mergedCombinerJsoArray[j] = merged
         break
       }
@@ -81,21 +115,26 @@ export const combinersCompareResolver: CompareResolver = (ctx) => {
     }
   }
 
+  const dangerousSeverityCount = (diffs: Diff[]) =>
+    diffs.filter(d => d.type === breaking || d.type === risky).length
+
   comparedItems.sort((a, b) => {
-    const mainDiff = a.diffs.length - b.diffs.length
+    const dangerousSeverityDiff = dangerousSeverityCount(a.diffs) - dangerousSeverityCount(b.diffs)
+    if (dangerousSeverityDiff !== 0) { return dangerousSeverityDiff }
+    const totalDiff = a.diffs.length - b.diffs.length
     //reduce randomization when same diffs count
-    return mainDiff !== 0 ? mainDiff : Math.abs(a.before - a.after) - Math.abs(b.before - b.after)
+    return totalDiff !== 0 ? totalDiff : Math.abs(a.before - a.after) - Math.abs(b.before - b.after)
   })
 
   for (const compared of comparedItems) {
-    if (!afterMatchedArrayIndexes.has(compared.after) || !beforeMatchedArrayIndexes.has(compared.before)) { continue }
-    afterMatchedArrayIndexes.delete(compared.after)
-    beforeMatchedArrayIndexes.delete(compared.before)
+    if (!afterUnmatchedIndexes.has(compared.after) || !beforeUnmatchedIndexes.has(compared.before)) { continue }
+    afterUnmatchedIndexes.delete(compared.after)
+    beforeUnmatchedIndexes.delete(compared.before)
     mergedCombinerJsoArray[compared.after] = compared.merged
     compared.diffs.forEach(diff => diffs.add(diff))
   }
   const arrayMetaDiffEntries: DiffEntry<Diff>[] = []
-  for (const j of afterMatchedArrayIndexes.values()) {
+  for (const j of afterUnmatchedIndexes.values()) {
     mergedCombinerJsoArray[j] = after.value[j]
     const childCtx = createChildContext(ctx, j, undefined, j)
     const diffEntry = getOrCreateChildDiffAdd(options.diffUniquenessCache, childCtx)
@@ -114,7 +153,7 @@ export const combinersCompareResolver: CompareResolver = (ctx) => {
     }
   }
 
-  for (const i of beforeMatchedArrayIndexes.values()) {
+  for (const i of beforeUnmatchedIndexes.values()) {
     const safeInsertIndex = freeIndexesArray.shift()!/*length enough*/
     mergedCombinerJsoArray[safeInsertIndex] = before.value[i]
     const childCtx = createChildContext(ctx, safeInsertIndex, i, undefined)

@@ -542,15 +542,21 @@ function addNormalizedValuesToDenormalizedDiff(
 }
 
 export const compare = (before: unknown, after: unknown, options: InternalCompareOptions): CompareResult => {
+  // Ensure inlineRefsFlag is always set so combinersCompareResolver can use ref-based matching.
+  // If the caller already provides one we reuse it; otherwise we create an internal symbol.
+  const effectiveOptions: InternalCompareOptions = options.inlineRefsFlag
+    ? options
+    : { ...options, inlineRefsFlag: Symbol('inline-refs') }
+
   const beforeSpec = resolveSpec(before)
   const afterSpec = resolveSpec(after)
 
   const beforeFullyResolved = normalize(before, {
-    ...options,
+    ...effectiveOptions,
     source: options.beforeSource,
   })
   const afterFullyResolved = normalize(after, {
-    ...options,
+    ...effectiveOptions,
     source: options.afterSource,
   })
 
@@ -565,8 +571,8 @@ export const compare = (before: unknown, after: unknown, options: InternalCompar
 
   const rawDiffs: Diff[] = []
   const onDiff: DiffCallback = diff => rawDiffs.push(diff)
-  let merged = compareInternal(beforeFullyResolved, afterFullyResolved, onDiff, options)
-  if (options.normalizedResult) {
+  let merged = compareInternal(beforeFullyResolved, afterFullyResolved, onDiff, effectiveOptions)
+  if (effectiveOptions.normalizedResult) {
     return {
       diffs: rawDiffs,
       ownerDiffEntry: undefined,
@@ -584,10 +590,10 @@ export const compare = (before: unknown, after: unknown, options: InternalCompar
   // If before/after spec types differ, a single denormalization pass may only correctly interpret one side,
   // so we run it twice forcing each spec type to make diffs readable.
   if (beforeSpecType === afterSpecType) {
-    merged = denormalizeWithDiffsSave(merged, options)
+    merged = denormalizeWithDiffsSave(merged, effectiveOptions)
   } else {
     for (const forceRulesForSpecVersion of [beforeSpecType, afterSpecType]) {
-      merged = denormalizeWithDiffsSave(merged, { ...options, forceRulesForSpecVersion })
+      merged = denormalizeWithDiffsSave(merged, { ...effectiveOptions, forceRulesForSpecVersion })
     }
   }
 
@@ -600,8 +606,8 @@ export const compare = (before: unknown, after: unknown, options: InternalCompar
   addNormalizedValuesToDenormalizedDiff(
     denormalizedDiffs,
     rawDiffs,
-    options.beforeValueNormalizedProperty,
-    options.afterValueNormalizedProperty
+    effectiveOptions.beforeValueNormalizedProperty,
+    effectiveOptions.afterValueNormalizedProperty
   )
   return {
     diffs: denormalizedDiffs,

@@ -274,3 +274,245 @@ describe('Openapi3 operation changes', () => {
   })
 
 })
+
+describe('Openapi3 combiner matching by ref origin', () => {
+  // SchemaA holds `type: string` and SchemaB holds `type: integer` in before.
+  // After swaps their content: SchemaA → integer, SchemaB → string.
+  // Without ref-based matching, content similarity would pair string↔string and
+  // integer↔integer across documents, producing 0 diffs — an incorrect result.
+  // With ref-based matching, SchemaA is paired with SchemaA and SchemaB with SchemaB,
+  // correctly reporting a type change inside each named component.
+  const beforeComponents = {
+    schemas: {
+      SchemaA: { type: 'string' },
+      SchemaB: { type: 'integer' },
+    },
+  }
+
+  const afterComponents = {
+    schemas: {
+      SchemaA: { type: 'integer' },
+      SchemaB: { type: 'string' },
+    },
+  }
+
+  const oneOfDirectOrder = () => [
+    { $ref: '#/components/schemas/SchemaA' },
+    { $ref: '#/components/schemas/SchemaB' },
+  ]
+
+  const oneOfReversedOrder = () => [
+    { $ref: '#/components/schemas/SchemaB' },
+    { $ref: '#/components/schemas/SchemaA' },
+  ]
+
+  const skipScopes = new Set(['components'])
+
+  it('detects type swap in oneOf response schema branches referenced by name', () => {
+    const before = {
+      openapi: '3.0.0',
+      info: { version: '0.0.1', title: 'Test' },
+      paths: {
+        '/test': {
+          get: {
+            responses: {
+              '200': {
+                description: 'OK',
+                content: {
+                  'application/json': {
+                    schema: {
+                      oneOf: oneOfDirectOrder(),
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      components: beforeComponents,
+    }
+
+    const after = {
+      openapi: '3.0.0',
+      info: { version: '0.0.1', title: 'Test' },
+      paths: {
+        '/test': {
+          get: {
+            responses: {
+              '200': {
+                description: 'OK',
+                content: {
+                  'application/json': {
+                    schema: {
+                      oneOf: oneOfDirectOrder(),
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      components: afterComponents,
+    }
+
+    const diffs = compareSpecs(before, after)
+    // Skip 'components' scope — its diffs duplicate the response-scoped ones
+    expect(diffs).toEqual(diffsMatcher([
+      expect.objectContaining({
+        action: DiffAction.replace,
+        beforeValue: 'string',
+        afterValue: 'integer',
+        beforeDeclarationPaths: [['components', 'schemas', 'SchemaA', 'type']],
+        afterDeclarationPaths: [['components', 'schemas', 'SchemaA', 'type']],
+        scope: 'response',
+      }),
+      expect.objectContaining({
+        action: DiffAction.replace,
+        beforeValue: 'integer',
+        afterValue: 'string',
+        beforeDeclarationPaths: [['components', 'schemas', 'SchemaB', 'type']],
+        afterDeclarationPaths: [['components', 'schemas', 'SchemaB', 'type']],
+        scope: 'response',
+      }),
+    ], skipScopes))
+  })
+
+  it('detects type swap in oneOf request body schema branches referenced by name', () => {
+    const before = {
+      openapi: '3.0.0',
+      info: { version: '0.0.1', title: 'Test' },
+      paths: {
+        '/test': {
+          post: {
+            requestBody: {
+              content: {
+                'application/json': {
+                  schema: {
+                    oneOf: oneOfDirectOrder(),
+                  },
+                },
+              },
+            },
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+      },
+      components: beforeComponents,
+    }
+
+    const after = {
+      openapi: '3.0.0',
+      info: { version: '0.0.1', title: 'Test' },
+      paths: {
+        '/test': {
+          post: {
+            requestBody: {
+              content: {
+                'application/json': {
+                  schema: {
+                    oneOf: oneOfDirectOrder(),
+                  },
+                },
+              },
+            },
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+      },
+      components: afterComponents,
+    }
+
+    const diffs = compareSpecs(before, after)
+    // Skip 'components' scope — its diffs duplicate the request-scoped ones
+    expect(diffs).toEqual(diffsMatcher([
+      expect.objectContaining({
+        action: DiffAction.replace,
+        beforeValue: 'string',
+        afterValue: 'integer',
+        beforeDeclarationPaths: [['components', 'schemas', 'SchemaA', 'type']],
+        afterDeclarationPaths: [['components', 'schemas', 'SchemaA', 'type']],
+        scope: 'request',
+      }),
+      expect.objectContaining({
+        action: DiffAction.replace,
+        beforeValue: 'integer',
+        afterValue: 'string',
+        beforeDeclarationPaths: [['components', 'schemas', 'SchemaB', 'type']],
+        afterDeclarationPaths: [['components', 'schemas', 'SchemaB', 'type']],
+        scope: 'request',
+      }),
+    ], skipScopes))
+  })
+
+  it('keeps ref-origin matching when after oneOf response schema branches are reordered', () => {
+    const before = {
+      openapi: '3.0.0',
+      info: { version: '0.0.1', title: 'Test' },
+      paths: {
+        '/test': {
+          get: {
+            responses: {
+              '200': {
+                description: 'OK',
+                content: {
+                  'application/json': {
+                    schema: {
+                      oneOf: oneOfDirectOrder(),
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      components: beforeComponents,
+    }
+
+    const after = {
+      openapi: '3.0.0',
+      info: { version: '0.0.1', title: 'Test' },
+      paths: {
+        '/test': {
+          get: {
+            responses: {
+              '200': {
+                description: 'OK',
+                content: {
+                  'application/json': {
+                    schema: {
+                      oneOf: oneOfReversedOrder(),
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      components: afterComponents,
+    }
+
+    const diffs = compareSpecs(before, after)
+    expect(diffs).toEqual(diffsMatcher([
+      expect.objectContaining({
+        action: DiffAction.replace,
+        beforeValue: 'string',
+        afterValue: 'integer',
+        beforeDeclarationPaths: [['components', 'schemas', 'SchemaA', 'type']],
+        afterDeclarationPaths: [['components', 'schemas', 'SchemaA', 'type']],
+        scope: 'response',
+      }),
+      expect.objectContaining({
+        action: DiffAction.replace,
+        beforeValue: 'integer',
+        afterValue: 'string',
+        beforeDeclarationPaths: [['components', 'schemas', 'SchemaB', 'type']],
+        afterDeclarationPaths: [['components', 'schemas', 'SchemaB', 'type']],
+        scope: 'response',
+      }),
+    ], skipScopes))
+  })
+})

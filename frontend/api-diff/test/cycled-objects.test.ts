@@ -1,4 +1,4 @@
-import { apiDiff, breaking, DiffAction, nonBreaking } from '../src'
+import { apiDiff, risky, DiffAction, nonBreaking } from '../src'
 
 import { OpenapiBuilder } from './helper'
 import { OpenAPIV3 } from 'openapi-types'
@@ -83,7 +83,7 @@ describe('Cycled Objects', () => {
         beforeDeclarationPaths: [['components', 'schemas', 'reference', 'properties', 'max', 'maximum']],
         afterDeclarationPaths: [['components', 'schemas', 'reference', 'properties', 'max', 'maximum']],
         scope: 'response',
-        type: breaking,
+        type: risky,
       }),
       expect.objectContaining({
         action: DiffAction.replace,
