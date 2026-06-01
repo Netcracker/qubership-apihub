@@ -14,16 +14,24 @@
  * limitations under the License.
  */
 
-import { useAggregatedValidationSummaryByPackageVersion } from '@apihub/api-hooks/ApiQuality/useAggregatedValidationSummaryByPackageVersion'
+import {
+  useAggregatedValidationSummaryByPackageVersion,
+} from '@apihub/api-hooks/ApiQuality/useAggregatedValidationSummaryByPackageVersion'
 import { useManualRunApiQualityValidation } from '@apihub/api-hooks/ApiQuality/useManualRunApiQualityValidation'
 import { ValidationRulesetLink } from '@apihub/components/ApiQuality/ValidatationRulesetLink'
 import { ValidationIssuesTooltip } from '@apihub/components/ApiQuality/ValidationIssuesTooltip'
 import { ISSUE_SEVERITIES_LIST, ISSUE_SEVERITY_COLOR_MAP } from '@apihub/entities/api-quality/issue-severities'
 import type { IssuesSummary } from '@apihub/entities/api-quality/package-version-validation-summary'
+import type { RulesetMetadataDto } from '@apihub/entities/api-quality/rulesets'
 import { RulesetStatuses } from '@apihub/entities/api-quality/rulesets'
 import { ValidationStatuses } from '@apihub/entities/api-quality/validation-statuses'
 import { Box, Link, Tooltip, Typography } from '@mui/material'
-import { API_AUDIENCE_EXTERNAL, API_AUDIENCE_INTERNAL, API_AUDIENCE_UNKNOWN, type ApiAudienceTransition } from '@netcracker/qubership-apihub-api-processor'
+import {
+  API_AUDIENCE_EXTERNAL,
+  API_AUDIENCE_INTERNAL,
+  API_AUDIENCE_UNKNOWN,
+  type ApiAudienceTransition,
+} from '@netcracker/qubership-apihub-api-processor'
 import { Changes } from '@netcracker/qubership-apihub-ui-shared/components/Changes'
 import { CATEGORY_OPERATION } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
@@ -85,10 +93,20 @@ export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<Operatio
   const apiQualitySummaryPlaceholder = getApiQualitySummaryPlaceholder(onManualRunLinter, clientValidationStatus)
   const showApiQualityPlaceholder = !!apiQualitySummaryPlaceholder
   const showApiQualitySummary = !apiQualitySummaryPlaceholder
-  const validationSummary = useApiQualityValidationSummary()
+  const validationSummary = useApiQualityValidationSummary(apiType)
   const validationRulesets = validationSummary?.rulesets ?? []
+  const activeRulesets = validationSummary?.rulesets?.filter(({ status }) => status === RulesetStatuses.ACTIVE)
+
   const hasInactiveRulesets = validationRulesets.some(ruleset => ruleset.status === RulesetStatuses.INACTIVE)
-  const aggregatedValidationSummary: IssuesSummary = useAggregatedValidationSummaryByPackageVersion(validationSummary)
+  const aggregatedValidationSummary: IssuesSummary = useAggregatedValidationSummaryByPackageVersion(
+    validationSummary && {
+      ...validationSummary,
+      documents: validationSummary.documents?.filter(document =>
+        activeRulesets?.some(ruleset => ruleset.id === document.rulesetId) ?? false,
+      ),
+    },
+  )
+
   const documentsWithFailedValidation = useMemo(
     () => (validationSummary?.documents ?? []).reduce((result, document) => {
       if (document.status === ValidationStatuses.ERROR) {
@@ -346,11 +364,10 @@ export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<Operatio
                     alignItems='flex-start'
                     gap={1}
                   >
-                    {validationRulesets.map(ruleset => (
-                      <Box key={ruleset.id} display='flex' alignItems='center' data-testid="ValidationRulesetContainer">
-                        <ValidationRulesetLink data={ruleset} loading={false} />
-                      </Box>
-                    ))}
+                    {(activeRulesets?.length
+                      ? activeRulesets : validationRulesets).map(ruleset => (
+                        <ValidationRulesetItem key={ruleset.id} ruleset={ruleset}/>
+                      ))}
                     {hasInactiveRulesets && (
                       <Typography variant="body2">
                         <Link onClick={onManualRunLinter} data-testid="RunValidationLink">
@@ -415,6 +432,16 @@ export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<Operatio
     </Box>
   )
 })
+
+type ValidationRulesetItemProps = Readonly<{
+  ruleset: RulesetMetadataDto
+}>
+
+const ValidationRulesetItem: FC<ValidationRulesetItemProps> = ({ ruleset }) => (
+  <Box display="flex" alignItems="center" data-testid="ValidationRulesetContainer">
+    <ValidationRulesetLink data={ruleset} loading={false}/>
+  </Box>
+)
 
 const OPERATION_TYPE_SUMMARY_STYLE = {
   display: 'grid',

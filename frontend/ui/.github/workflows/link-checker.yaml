@@ -11,7 +11,7 @@ jobs:
   linkChecker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Link Checker
         id: lychee
@@ -19,6 +19,7 @@ jobs:
         with:
           args: >-
             './**/*.md'
+            --root-dir .
             --verbose
             --no-progress
             --user-agent 'Mozilla/5.0 (X11; Linux x86_64) Chrome/134.0.0.0'

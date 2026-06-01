@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { FC, PropsWithChildren } from 'react'
+import type { ElementType, FC, PropsWithChildren } from 'react'
 import * as React from 'react'
 import type { Variant } from '@mui/material/styles/createTypography'
 import { OverflowTooltip } from './OverflowTooltip'
@@ -27,6 +27,7 @@ export type TextWithTooltipProps = {
   variant?: Variant | 'inherit'
   tooltipText?: React.ReactNode
   sx?: SxProps<Theme>
+  typographyComponent?: ElementType
 } & PropsWithChildren & TestableProps
 
 export const TextWithOverflowTooltip: FC<TextWithTooltipProps> = ({
@@ -34,17 +35,23 @@ export const TextWithOverflowTooltip: FC<TextWithTooltipProps> = ({
   children,
   tooltipText = '',
   sx,
+  typographyComponent,
   'data-testid': dataTestId,
   ...props
 }) => {
+  const typographyRoot =
+    typographyComponent === undefined ? {} : { component: typographyComponent }
+
   return (
     <OverflowTooltip
       title={tooltipText}
       {...props}
     >
-      <Typography noWrap variant={variant} sx={sx} data-testid={dataTestId}>
+      <Typography noWrap variant={variant} {...typographyRoot} sx={sx} data-testid={dataTestId}>
         {children}
       </Typography>
     </OverflowTooltip>
   )
 }
+
+TextWithOverflowTooltip.displayName = 'TextWithOverflowTooltip'

@@ -43,8 +43,12 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
 import type { VersionChanges } from '@netcracker/qubership-apihub-ui-shared/entities/version-changelog'
 import { isDashboardComparisonSummary } from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
-import { useSeverityFiltersSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
-import { usePackageSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
+import {
+  useSeverityFiltersSearchParam,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
+import {
+  usePackageSearchParam,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
 import type { FC } from 'react'
 import { memo, useCallback, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -72,10 +76,11 @@ export type InternalDocumentOptions = {
 export type ComparisonPageToolbarProps = {
   compareToolbarMode: CompareToolbarMode
   internalDocumentOptions?: InternalDocumentOptions
+  isOperationsGroupCompare?: boolean
 }
 
 export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<ComparisonPageToolbarProps>((props) => {
-  const { compareToolbarMode, internalDocumentOptions } = props
+  const { compareToolbarMode, internalDocumentOptions, isOperationsGroupCompare = false } = props
   const { apiType: apiTypeSearchParam } = useApiTypeSearchParam()
   const [packageSearchParam] = usePackageSearchParam()// in case of package/dashboard comparison we don't hase apiType in url, we have it in searchParams
   const {
@@ -197,19 +202,21 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
                 category={getChangeSeverityCategory(isDashboardsComparison, isPackagesComparison)}
                 apiType={apiTypeFromUrl ?? API_TYPES.find(type => type.toString() === apiTypeSearchParam)}
               />
-              {isDashboardsComparison && showApiTypeSelector && <ApiTypeSegmentedSelector />}
+              {isDashboardsComparison && showApiTypeSelector && <ApiTypeSegmentedSelector/>}
             </>
         )}
       </Box>
-      <ExportChangesMenu
-        apiType={apiTypeFromUrl}
-        severityFilter={severityFilter}
-        severityChanges={CHANGE_SEVERITIES}
-        tag={selectedTag}
-        previousVersion={previousVersion}
-        previousVersionPackageId={previousVersionPackageId}
-        onDownloadAllChanges={onDownloadAllChanges}
-      />
+      {!isOperationsGroupCompare &&
+        <ExportChangesMenu
+          apiType={apiTypeFromUrl}
+          severityFilter={severityFilter}
+          severityChanges={CHANGE_SEVERITIES}
+          tag={selectedTag}
+          previousVersion={previousVersion}
+          previousVersionPackageId={previousVersionPackageId}
+          onDownloadAllChanges={onDownloadAllChanges}
+        />
+      }
     </Box>
   )
 })

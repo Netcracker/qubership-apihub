@@ -71,9 +71,14 @@ export const ExceptionSituationHandler: FC<ExceptionSituationHandlerProps> = mem
 
   useEffect(() => {
     const errorHandler = (event: CustomEvent<FetchErrorDetails>): void => {
-      const { title, message, status, code } = event.detail
+      const { title, message, status, code, forceSnackbar } = event.detail
 
       if (IGNORED_ERROR_CODES.includes(code)) {
+        return
+      }
+
+      if (forceSnackbar) {
+        showErrorNotification?.({ title, message })
         return
       }
 

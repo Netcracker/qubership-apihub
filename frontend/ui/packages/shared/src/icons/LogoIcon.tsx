@@ -19,8 +19,6 @@ import { memo } from 'react'
 
 export const LogoIcon: FC = memo(() => {
   return (
-    <div style={{ display: 'flex' }}>
-      <img src="/icons/logo.svg" />
-    </div>
+    <img src="/icons/logo.svg" alt="APIHUB Logo" />
   )
 })

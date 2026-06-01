@@ -1,40 +1,28 @@
 import { LoadingButton } from '@mui/lab'
 import { Box, Button, DialogActions, DialogContent, DialogContentText, DialogTitle, IconButton } from '@mui/material'
 import type { ButtonPropsColorOverrides } from '@mui/material/Button/Button'
+import { styled } from '@mui/material/styles'
 import type { OverridableStringUnion } from '@mui/types'
-import { type FC, memo, useEffect } from 'react'
+import { type FC, memo, type ReactNode, useEffect } from 'react'
+
 import { CloseIcon } from '../../icons/CloseIcon'
 import { DialogForm } from '../DialogForm'
-
-const STYLE_DIALOG_TITLE = {
-  px: 2.5,
-  pt: 2.5,
-  pb: 0.5,
-}
-
-const STYLE_DIALOG_CONTENT = {
-  minWidth: 420,
-  pl: 2.5,
-  pr: 6.5,
-  pb: 0.5,
-}
-
-const STYLE_DIALOG_ACTIONS = {
-  px: 2.5,
-  pt: 1.5,
-  pb: 2.5,
-}
 
 export type ConfirmationDialogProps = {
   open: boolean
   title?: string
-  message?: string
+  message?: ReactNode
   loading?: boolean
   confirmButtonName?: string
   confirmButtonColor?: ButtonColor
   onConfirm?: () => void
   onCancel?: () => void
 }
+
+type ButtonColor = OverridableStringUnion<
+  'inherit' | 'primary' | 'secondary' | 'success' | 'error' | 'info' | 'warning',
+  ButtonPropsColorOverrides
+>
 
 export const ConfirmationDialog: FC<ConfirmationDialogProps> = memo<ConfirmationDialogProps>(({
   loading,
@@ -54,32 +42,27 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = memo<Confirmation
       onClose={onCancel}
       width="420px"
     >
-      <DialogTitle
-        sx={STYLE_DIALOG_TITLE}
-      >
-        <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+      <StyledDialogTitle>
+        <TitleRow>
           {title}
-          <IconButton
-            onClick={onCancel}
-            sx={{ p: 0 }}
-          >
+          <CloseIconButton onClick={onCancel}>
             <CloseIcon fontSize="small" />
-          </IconButton>
-        </Box>
-      </DialogTitle>
+          </CloseIconButton>
+        </TitleRow>
+      </StyledDialogTitle>
 
       {message && (
-        <DialogContent sx={STYLE_DIALOG_CONTENT}>
+        <StyledDialogContent>
           <DialogContentText
             variant="body2"
             data-testid="ConfirmationDialogContent"
           >
             {message}
           </DialogContentText>
-        </DialogContent>
+        </StyledDialogContent>
       )}
 
-      <DialogActions sx={STYLE_DIALOG_ACTIONS}>
+      <StyledDialogActions>
         <LoadingButton
           variant="contained"
           color={confirmButtonColor}
@@ -97,10 +80,35 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = memo<Confirmation
         >
           Cancel
         </Button>
-      </DialogActions>
+      </StyledDialogActions>
     </DialogForm>
   )
 })
+
+ConfirmationDialog.displayName = 'ConfirmationDialog'
+
+const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
+  padding: theme.spacing(2.5, 2.5, 0.5),
+}))
+
+const TitleRow = styled(Box)({
+  display: 'flex',
+  alignItems: 'flex-start',
+})
+
+const CloseIconButton = styled(IconButton)({
+  padding: 0,
+  marginLeft: 'auto',
+})
+
+const StyledDialogContent = styled(DialogContent)(({ theme }) => ({
+  minWidth: 420,
+  padding: theme.spacing(0, 6.5, 0.5, 2.5),
+}))
+
+const StyledDialogActions = styled(DialogActions)(({ theme }) => ({
+  padding: theme.spacing(1.5, 2.5, 2.5),
+}))
 
 function useCloseOnSuccess(
   loading?: boolean,
@@ -109,8 +117,3 @@ function useCloseOnSuccess(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loading === false && onClose?.() }, [loading])
 }
-
-type ButtonColor = OverridableStringUnion<
-  'inherit' | 'primary' | 'secondary' | 'success' | 'error' | 'info' | 'warning',
-  ButtonPropsColorOverrides
->
