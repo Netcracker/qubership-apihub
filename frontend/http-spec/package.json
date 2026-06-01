@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-http-spec",
-  "version": "5.5.9",
+  "version": "5.5.10",
   "description": "",
   "keywords": [],
   "sideEffects": false,
@@ -143,7 +143,7 @@
     "type-is": "^1.6.18"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.0",
+    "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
     "@stoplight/eslint-config": "^3.0.0",
     "@stoplight/scripts": "^9.2.0",
     "@types/jest": "27.4.1",
