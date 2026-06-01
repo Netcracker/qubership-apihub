@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-build-task-consumer",
-  "version": "3.1.14",
+  "version": "3.2.0",
   "license": "Apache-2.0",
   "files": [
     "dist",
@@ -45,7 +45,7 @@
     "@nestjs/cli": "^10.0.0",
     "@nestjs/schematics": "^10.0.0",
     "@nestjs/testing": "^10.0.0",
-    "@netcracker/qubership-apihub-api-unifier": "dev",
+    "@netcracker/qubership-apihub-api-unifier": "2.8.0",
     "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
     "@types/adm-zip": "^0.5.1",
     "@types/express": "^4.17.21",
