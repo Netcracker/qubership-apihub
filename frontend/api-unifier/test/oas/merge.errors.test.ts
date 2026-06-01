@@ -5,7 +5,7 @@ describe("merge errors handling", function () {
   it('should trigger onRefResolveError when merging broken $ref', (done) => {
 
     const onRefResolveError = (message: string, path: JsonPath, ref: string, errorType: RefErrorType) => {
-      
+
       expect(ref).toBe("#/foo")
       expect(errorType).toBe(RefErrorTypes.REF_NOT_FOUND)
       done()
