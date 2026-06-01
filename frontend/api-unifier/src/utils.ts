@@ -509,3 +509,12 @@ export function determineSpecTypeFamily(specType: SpecType): SpecTypeFamily {
   }
   return SPEC_TYPE_GRAPH_API_TYPE_FAMILY
 }
+
+//TODO: review is<> functions across whole core libraries stack and extract to common package
+export function isString(value: unknown): value is string {
+  return typeof value === 'string'
+}
+
+export function isNumber(value: unknown): value is number {
+  return typeof value === 'number' || isString(value) && !Number.isNaN(+value)
+}

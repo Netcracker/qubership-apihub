@@ -37,14 +37,14 @@ Modified version of [udamir/allof-merge](https://github.com/udamir/allof-merge)
 
 ## Works perfectly with specifications
 
-- [JsonSchema](https://json-schema.org/draft/2020-12/json-schema-core.html)
+- [JsonSchema](https://json-schema.org/draft/2020-12/json-schema-core)
 - [OpenApi 3.x](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md)
 - [AsyncApi 3.x](https://www.asyncapi.com/docs/reference/specification/v3.0.0)
 - GraphApi
 - ~~Swagger 2.x~~ (roadmap)
 
 ## Other libraries
-There are some libraries that can merge schemas combined with allOf. One of the most popular is [mokkabonna/json-schema-merge-allof](https://npmjs.com/package/json-schema-merge-allof), but it has some limitatons: Does not support circular $refs and no TypeScript syntax out of the box.
+There are some libraries that can merge schemas combined with allOf. One of the most popular is [mokkabonna/json-schema-merge-allof](https://github.com/mokkabonna/json-schema-merge-allof), but it has some limitatons: Does not support circular $refs and no TypeScript syntax out of the box.
 
 ## External $ref
 If schema contains an external $ref, you should bundle it via [api-ref-bundler](https://github.com/udamir/api-ref-bundler) first.

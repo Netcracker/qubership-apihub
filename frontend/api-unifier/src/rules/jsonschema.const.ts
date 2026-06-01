@@ -63,6 +63,13 @@ export const JSON_SCHEMA_PROPERTY_MAXIMUM = 'maximum'
 export const JSON_SCHEMA_PROPERTY_EXCLUSIVE_MAXIMUM = 'exclusiveMaximum'
 export const JSON_SCHEMA_PROPERTY_MINIMUM = 'minimum'
 export const JSON_SCHEMA_PROPERTY_EXCLUSIVE_MINIMUM = 'exclusiveMinimum'
+
+export type JsonSchemaNumericValidationKeywordsType =
+  typeof JSON_SCHEMA_PROPERTY_MINIMUM
+  | typeof JSON_SCHEMA_PROPERTY_MAXIMUM
+  | typeof JSON_SCHEMA_PROPERTY_EXCLUSIVE_MINIMUM
+  | typeof JSON_SCHEMA_PROPERTY_EXCLUSIVE_MAXIMUM
+
 export const JSON_SCHEMA_PROPERTY_MAX_LENGTH = 'maxLength'
 export const JSON_SCHEMA_PROPERTY_MIN_LENGTH = 'minLength'
 export const JSON_SCHEMA_PROPERTY_PATTERN = 'pattern'

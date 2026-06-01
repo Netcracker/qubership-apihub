@@ -55,6 +55,7 @@ export interface UnifyOptions {
   unify?: boolean                                  // enable defaults, type infer and so on unified actions
   defaultsFlag?: symbol,                           // mark synthetic default properties
   allowNotValidSyntheticChanges?: boolean,         // for example in JSON Schema allow type: 'nothing', 'any'
+  removeRedundantConstraints?: boolean,            // remove weaker JSON Schema constraints if there are stricter ones
   createOriginsForDefaults?: OriginsFactory        // factory for origins for defaults
   onUnifyError?: (message: string, path: JsonPath, value: any, cause?: unknown) => void
 }
@@ -111,19 +112,21 @@ export interface InternalValidationOptions extends Omit<ValidateOptions, 'valida
 
 export type PropertySkipFunction = (value: unknown, path: JsonPath) => boolean
 
-export interface InternalUnifyOptions extends Omit<UnifyOptions, 'unify' | 'allowNotValidSyntheticChanges' | 'createOriginsForDefaults'>, InternalLiftCombinersOptions, HasInternalIgnoreSymbols {
+export interface InternalUnifyOptions extends Omit<UnifyOptions, 'unify' | 'allowNotValidSyntheticChanges' | 'removeRedundantConstraints' | 'createOriginsForDefaults'>, InternalLiftCombinersOptions, HasInternalIgnoreSymbols {
   source: unknown
   syntheticMetaDefinitions: MetaDefinitions
   nativeMetaDefinitions: MetaDefinitions
   allowNotValidSyntheticChanges: boolean
+  removeRedundantConstraints: boolean
   createOriginsForDefaults: OriginsFactory
 }
 
-export interface InternalDeUnifyOptions extends Omit<DeUnifyOptions, 'unify' | 'allowNotValidSyntheticChanges' | 'createOriginsForDefaults'>, InternalLiftCombinersOptions, HasInternalIgnoreSymbols {
+export interface InternalDeUnifyOptions extends Omit<DeUnifyOptions, 'unify' | 'allowNotValidSyntheticChanges' | 'removeRedundantConstraints' | 'createOriginsForDefaults'>, InternalLiftCombinersOptions, HasInternalIgnoreSymbols {
   source: unknown
   syntheticMetaDefinitions: MetaDefinitions
   nativeMetaDefinitions: MetaDefinitions
   allowNotValidSyntheticChanges: boolean
+  removeRedundantConstraints: boolean
   createOriginsForDefaults: OriginsFactory
 }
 
@@ -301,6 +304,7 @@ export const DEFAULT_TYPE_FLAG_SYNTHETIC = 'synthetic'
 export type DefaultTypeFlag = typeof DEFAULT_TYPE_FLAG_PURE | typeof DEFAULT_TYPE_FLAG_SYNTHETIC
 
 export const DEFAULT_OPTION_ALLOW_NOT_VALID_SYNTHETIC_CHANGES = false
+export const DEFAULT_OPTION_REMOVE_REDUNDANT_CONSTRAINTS = true
 export const DEFAULT_OPTION_ORIGINS_ALREADY_DEFINED = false
 export const DEFAULT_OPTION_LIFT_COMBINERS = false
 export const DEFAULT_OPTION_RESOLVE_REF = true

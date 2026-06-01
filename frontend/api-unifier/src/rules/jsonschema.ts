@@ -63,6 +63,7 @@ import { createEvaluationCacheService } from '../cache'
 import { calculateSchemaName } from '../deprecated-item-description'
 import { JSON_SCHEMA_DEPRECATION_RESOLVER } from './jsonschema.deprecated'
 import { notAllowedReferenceHandler, jsonSchemaReferenceResolver } from '../references/ref-resolver'
+import { unifyJsonSchemaExclusiveBounds } from '../unifies/redundant-numeric-bounds'
 
 const EMPTY_MARKER = Symbol('empty-items')
 
@@ -531,6 +532,7 @@ export const jsonSchemaRules: (
     JSON_SCHEMA_REPLACES_UNIFY_FUNCTION[version],
     splitJsonSchemaTypeArray,
     cleanJsonSchemaTypeSpecificProperties,
+    ...(version === SPEC_TYPE_JSON_SCHEMA_04 ? [] : [unifyJsonSchemaExclusiveBounds]),
     unifyJsonSchemaRequired,
     cleanUpSyntheticJsonSchemaTypes,
   ],

@@ -1,4 +1,3 @@
-import { hash } from '../../src/hash'
 import {
   convertOriginToHumanReadable,
   denormalize,
@@ -1099,6 +1098,6 @@ describe('e2e', () => {
       validate: true,
       unify: true,
     })
-    expect(result).toHaveProperty(['paths', '/path1', 'post', 'responses', 200, 'content', 'application/json', 'schema', 'properties', 'id', 'xml', 'name'], 'xml-id')    
+    expect(result).toHaveProperty(['paths', '/path1', 'post', 'responses', 200, 'content', 'application/json', 'schema', 'properties', 'id', 'xml', 'name'], 'xml-id')
   })
 })
