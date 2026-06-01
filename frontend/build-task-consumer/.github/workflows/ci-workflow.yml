@@ -11,7 +11,7 @@ on:
     tags:
       - '**'
   pull_request:
-    types: [opened, reopened, synchronize]
+    types: [ opened, reopened, synchronize ]
     paths-ignore:
       - 'docs/**'
 
@@ -61,7 +61,7 @@ jobs:
       repo-name: qubership-apihub-agents-backend
   run-e2e-tests:
     uses: netcracker/qubership-apihub-ci/.github/workflows/run-e2e-tests.yml@main
-    needs: [build-docker-image, calculate-ui-tag, calculate-backend-tag, calculate-api-linter-service-tag, calculate-agents-backend-tag]
+    needs: [ build-docker-image, calculate-ui-tag, calculate-backend-tag, calculate-api-linter-service-tag, calculate-agents-backend-tag ]
     if: github.event_name == 'pull_request'
     with:
       apihub-ui-image-tag: ${{ needs.calculate-ui-tag.outputs.tag }}

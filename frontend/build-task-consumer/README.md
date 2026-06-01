@@ -32,6 +32,15 @@ npm run build
 podman build -f Dockerfile.local .
 ```
 
+### Production Docker image (locally)
+
+Uses the same `.npmrc` as above. The production `Dockerfile` does not copy it into the image; pass it as a build secret:
+
+```bash
+podman build --secret id=npmrc,src=.npmrc .
+```
+
+Optional: `--build-arg TAG=<version>` (default is `dev`) to select the published package version from GitHub Packages.
 
 ## Running the app
 
@@ -45,8 +54,3 @@ $ npm start:dev
 # production mode
 $ npm start:prod
 ```
-
-
-## API documentation
-
-[http://localhost:3000/api](http://localhost:3000/api)
