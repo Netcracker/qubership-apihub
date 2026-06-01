@@ -25,8 +25,8 @@ jobs:
     timeout-minutes: 80
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v6
       with:
         node-version: 22
     - name: Install dependencies
@@ -39,7 +39,7 @@ jobs:
     - name: Run Portal e2e tests
       run: ${{ inputs.env-vars }} npx playwright test --project=Portal
       if: ${{ inputs.portal-e2e && success() }}
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: ${{ !cancelled() }}
       with:
         name: reports
