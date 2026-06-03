@@ -7,3 +7,6 @@ host.docker.internal
 ^\.cursor/
 ^\.claude/
 ^\.agents/
+^\.github/instructions/
+^\.github/skills/
+^\.github/prompts/
