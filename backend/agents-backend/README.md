@@ -27,3 +27,30 @@ Presence of this plug-in in Qubership-APIHUB deployments enables `Agents` tab in
 Just run `build_golang_binary.cmd` file.
 
 For Docker builds, use `build_docker_image.cmd`.
+
+## AI agent configuration (APM)
+
+Agent context is split between a **central store** and **this repository**:
+
+| Scope | Location |
+|-------|----------|
+| Generic skills/rules (Go conventions, planner, …) | [`qubership-apihub-ci/agent-packages`](https://github.com/Netcracker/qubership-apihub-ci/tree/apm_migration/agent-packages) |
+| Agents-backend-specific packages | [`agent-packages/`](agent-packages/) in this repository |
+| Deployed harness output | `.cursor/` and `.claude/` (committed; refresh with APM) |
+
+After changing package sources or `apm.yml`, refresh deployed harness files:
+
+```bash
+# one-time: install APM (see https://microsoft.github.io/apm/)
+brew install microsoft/apm/apm   # or: pip install apm-cli
+
+# from the repository root:
+apm install --target cursor,claude --legacy-skill-paths
+```
+
+This reads root `apm.yml` (CI dependencies + local `agent-packages/`), updates
+`apm.lock.yaml`, and deploys into `.cursor/` and `.claude/`. Commit the refreshed harness
+trees together with package or manifest changes.
+
+During migration, CI dependencies may use `#apm_migration`; drop the suffix after the store PR
+merges.

@@ -1,0 +1,8 @@
+---
+paths:
+  - "qubership-apihub-agents-backend/**/*.go"
+---
+
+When implementing or modifying the APIHUB Agents Backend Go service (controllers, services,
+repositories, migrations, service.go wiring, exception errors, or OpenAPI specs) in
+`qubership-apihub-agents-backend`, apply the `apihub-agents-backend-developer` skill.
