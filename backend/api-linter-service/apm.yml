@@ -1,0 +1,17 @@
+name: qubership-api-linter-service
+version: 0.0.0
+targets:
+  - cursor
+  - claude
+dependencies:
+  apm:
+    - Netcracker/qubership-ai-packages/agent-packages/english-developer-style
+    - Netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+    - Netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
+    - Netcracker/qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
+    - Netcracker/qubership-apihub-ci/agent-packages/development-conventions
+    - Netcracker/qubership-apihub-ci/agent-packages/go-conventions
+
+
+
+
