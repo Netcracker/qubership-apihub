@@ -45,7 +45,6 @@ user to the appropriate component repo; return here only for deployment and docu
 
 - Do **not** change deployment files until requirements (environment, SSO mode, extensions on/off,
   target cluster vs Compose) are clear.
-- For GitHub ticket work, use `github-ticket-implementation-planner` before implementation.
 - State assumptions explicitly when greenfield vs upgrade paths differ.
 
 ## Configuration discipline
@@ -86,7 +85,6 @@ apm install --target cursor,claude --legacy-skill-paths
 ```
 
 - **Deployment workflow** — `apihub-deployment-authoring` (local `agent-packages/`)
-- **Ticket planning** — `github-ticket-implementation-planner` (CI store)
 - **Always-on conventions** — `common-conventions`, `english-developer-style`, `markdown-line-length-120`
 
 See [README — AI agent configuration (APM)](README.md#ai-agent-configuration-apm),

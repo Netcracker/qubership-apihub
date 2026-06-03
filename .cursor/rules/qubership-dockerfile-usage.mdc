@@ -1,8 +1,0 @@
----
-description: Authoring Dockerfiles for Qubership platform microservices on top of the official Qubership base images (qubership-core-base, qubership-java-base, qubership-nginx-base).
-globs: "**/{Dockerfile,Dockerfile.*,*.Dockerfile}"
----
-
-## Skill trigger: `qubership-dockerfile-usage`
-
-When editing a `Dockerfile` for a Qubership / Netcracker microservice, apply the `qubership-dockerfile-usage` skill.
