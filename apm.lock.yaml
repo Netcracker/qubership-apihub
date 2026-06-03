@@ -1,42 +1,45 @@
 lockfile_version: '1'
-generated_at: '2026-06-03T10:58:16.356719+00:00'
+generated_at: '2026-06-03T14:56:17.725219+00:00'
 apm_version: 0.16.0
 dependencies:
 - repo_url: Netcracker/qubership-ai-packages
   host: github.com
-  resolved_commit: 3024f029cbc9042d6905037d2fa0a98e7b6e27f2
-  resolved_ref: v1.0.1
+  resolved_commit: 785ac701be71e5f09f8857970c026d5f6bbbbb1a
   virtual_path: agent-packages/english-developer-style
   is_virtual: true
   package_type: apm_package
   deployed_files:
+  - .agents/skills/english-developer-style
   - .claude/rules/english-developer-style.md
   - .claude/skills/english-developer-style
   - .cursor/rules/english-developer-style.mdc
-  - .cursor/skills/english-developer-style
+  - .github/instructions/english-developer-style.instructions.md
   deployed_file_hashes:
     .claude/rules/english-developer-style.md: sha256:71d5921cbb7e91db77b2ad7403714cc4d8471e3af7a974b850e9831df2ca25b9
     .cursor/rules/english-developer-style.mdc: sha256:981d72b4b97f7b5fb861ea9beb32edef5746c8ed87419abaadc999e14861a6a9
+    .github/instructions/english-developer-style.instructions.md: sha256:9bd3f0ea1da9c84677b4d7e91126208b437bc93b82ea6c684e1d76db9e42abde
   content_hash: sha256:107dd671a330a3afcb3bcce940afa130f5576c17840cee77d9fcefeb4550c68c
 - repo_url: Netcracker/qubership-ai-packages
   host: github.com
-  resolved_commit: 3024f029cbc9042d6905037d2fa0a98e7b6e27f2
-  resolved_ref: main
+  resolved_commit: 785ac701be71e5f09f8857970c026d5f6bbbbb1a
   virtual_path: agent-packages/markdown-line-length-120
   is_virtual: true
   package_type: apm_package
   deployed_files:
+  - .agents/skills/markdown-line-length-120
   - .claude/rules/markdown-line-length-120.md
   - .claude/skills/markdown-line-length-120
   - .cursor/rules/markdown-line-length-120.mdc
-  - .cursor/skills/markdown-line-length-120
+  - .github/instructions/markdown-line-length-120.instructions.md
   deployed_file_hashes:
     .claude/rules/markdown-line-length-120.md: sha256:17478b76774dca2ab2ae0ace590f84fa4efc0c02d39502aca8de7abb8a67c869
     .cursor/rules/markdown-line-length-120.mdc: sha256:4eeb64d82c3f86bb228cb7d8c4a030c4091750bf87b58e39751257a80b1b6ce5
+    .github/instructions/markdown-line-length-120.instructions.md: sha256:6ba398a796f727912bbeeec70cf4203affa8b1999d715d6f11830e8703dac350
   content_hash: sha256:a1aefd3975421bee49843021ae90295c61df1e7f9b897d2bbe38d696e40c1583
 - repo_url: _local/apihub-deployment-authoring
   package_type: apm_package
   deployed_files:
+  - .agents/skills/apihub-deployment-authoring
   - .claude/rules/apihub-deployment-authoring.md
   - .claude/rules/apihub-deployment-compose.md
   - .claude/rules/apihub-deployment-docs.md
@@ -44,7 +47,9 @@ dependencies:
   - .cursor/rules/apihub-deployment-authoring.mdc
   - .cursor/rules/apihub-deployment-compose.mdc
   - .cursor/rules/apihub-deployment-docs.mdc
-  - .cursor/skills/apihub-deployment-authoring
+  - .github/instructions/apihub-deployment-authoring.instructions.md
+  - .github/instructions/apihub-deployment-compose.instructions.md
+  - .github/instructions/apihub-deployment-docs.instructions.md
   deployed_file_hashes:
     .claude/rules/apihub-deployment-authoring.md: sha256:7d7689cd3025c0fa4c0c52b52b9dcca3818667a9c00f97e587472ef9a919a8d4
     .claude/rules/apihub-deployment-compose.md: sha256:fb8eda85642f6e4c612a5839d5212b65d8f7af04e691efdf0c6ce36090197c0d
@@ -52,15 +57,26 @@ dependencies:
     .cursor/rules/apihub-deployment-authoring.mdc: sha256:66831d7cd2ba810fef5c86195feec587222921b3c821ed9d6f84719fca871031
     .cursor/rules/apihub-deployment-compose.mdc: sha256:bac7257fd06c396b7b2e8355cf591d20c669ae5683c1f34930e517b9cf8324f9
     .cursor/rules/apihub-deployment-docs.mdc: sha256:b66712261f853511469469f452f907d8556a19347712c97c6d0d609edeecc8b4
+    .github/instructions/apihub-deployment-authoring.instructions.md: sha256:0a803ff052e949379c0d7bde197f8d00775c574d0bd48b35d90082234d2510fc
+    .github/instructions/apihub-deployment-compose.instructions.md: sha256:3ef52907dd1a51863826383cd1a7d80a07c2053ff6f1e4bc8568fe979d3323a0
+    .github/instructions/apihub-deployment-docs.instructions.md: sha256:53ce198c166901a24df323dec3541a6165eb886bd3ff4f5399f4277e1087928c
   source: local
   local_path: ./agent-packages/apihub-deployment-authoring
-- repo_url: _local/common-conventions
+- repo_url: _local/development-conventions
   package_type: apm_package
   deployed_files:
+  - .claude/rules/ci-super-linter.md
   - .claude/rules/clarify-before-coding.md
+  - .cursor/rules/ci-super-linter.mdc
   - .cursor/rules/clarify-before-coding.mdc
+  - .github/instructions/ci-super-linter.instructions.md
+  - .github/instructions/clarify-before-coding.instructions.md
   deployed_file_hashes:
+    .claude/rules/ci-super-linter.md: sha256:d655a548333e52a748113632665f810e3fb6084339852306aca90f02cfb4f0c7
     .claude/rules/clarify-before-coding.md: sha256:a3e34e5277a4a3fba12fd6f236e921a59c561e6ee82e240eec247861aa8a398c
+    .cursor/rules/ci-super-linter.mdc: sha256:2f264db238d0d7ffd9d8b830dd383233c57b20e057557d65084fe3f0e7512967
     .cursor/rules/clarify-before-coding.mdc: sha256:ceb003b39ea330002556d10d3ca52445909bbaf23705ff27f2643705db98c0f4
+    .github/instructions/ci-super-linter.instructions.md: sha256:7e8e2395715e9bd69ec938d4e106ec16d0e9256053c1562cf915a40bf33c7fe5
+    .github/instructions/clarify-before-coding.instructions.md: sha256:f0723cdf5b2cc34bc46992a6c550842f8eb9dcc5b39540c9916835a4ee58d60d
   source: local
-  local_path: c:\sources\GIT\Github\APIHUB-ALL\qubership-apihub-ci\agent-packages/common-conventions
+  local_path: ../qubership-apihub-ci/agent-packages/development-conventions

@@ -85,7 +85,7 @@ apm install --target cursor,claude --legacy-skill-paths
 ```
 
 - **Deployment workflow** — `apihub-deployment-authoring` (local `agent-packages/`)
-- **Always-on conventions** — `common-conventions`, `english-developer-style`, `markdown-line-length-120`
+- **Always-on conventions** — `development-conventions`, `english-developer-style`, `markdown-line-length-120`
 
 See [README — AI agent configuration (APM)](README.md#ai-agent-configuration-apm),
 root `apm.yml`, and [`agent-packages/README.md`](agent-packages/README.md).
