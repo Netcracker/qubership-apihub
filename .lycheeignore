@@ -2,3 +2,11 @@
 ^.*xmlsoap.org
 host.docker.internal
 ^.*localtest.me
+
+# APM-deployed agent harness (upstream package markdown)
+^\.cursor/
+^\.claude/
+^\.agents/
+^\.github/instructions/
+^\.github/skills/
+^\.github/prompts/

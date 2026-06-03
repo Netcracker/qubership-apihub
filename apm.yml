@@ -1,0 +1,13 @@
+name: qubership-apihub
+version: 0.0.0
+targets:
+  - cursor
+  - claude
+dependencies:
+  apm:
+    - Netcracker/qubership-ai-packages/agent-packages/english-developer-style
+    - Netcracker/qubership-ai-packages/agent-packages/markdown-line-length-120
+    - Netcracker/qubership-apihub-ci/agent-packages/development-conventions
+    - ./agent-packages/apihub-deployment-authoring
+
+
