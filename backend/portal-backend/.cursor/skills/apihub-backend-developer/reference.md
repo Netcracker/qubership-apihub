@@ -1,6 +1,6 @@
 # APIHub Backend Developer — Reference
 
-Read this file when you need examples or doc-routing detail. Keep `SKILL.md` as the workflow checklist.
+Read this file when you need backend-specific examples or doc-routing detail. Keep `SKILL.md` as the workflow checklist. Generic patterns are in `apihub-go-developer/reference.md`.
 
 ## Doc routing (where to update documentation)
 
@@ -15,63 +15,6 @@ Read this file when you need examples or doc-routing detail. Keep `SKILL.md` as 
 
 Full index: `docs/README.md`.
 
-## CI linters
-
-See `.cursor/rules/ci-linters.mdc`. Highlights for agents:
-
-| Area | Rule |
-|------|------|
-| Go prompts in backticks | Tabs for indented lines inside raw strings |
-| Markdown / design docs | Prose ≤400 chars per line; fix links when editing `.claude/**` |
-| OpenAPI | Match file indentation; no trailing spaces in changed lines |
-| textlint | Use terms from `.github/linters/.textlintrc` |
-
-## Error handling — anti-patterns
-
-**Reject as a bug fix or new code:**
-
-```go
-if err != nil {
-    log.Error(err)
-    return nil, nil // pretend success with empty data
-}
-
-_ = repo.Save(ctx, ent)
-
-result, _ := fetch() // swallowed error
-
-if err != nil {
-    return defaultConfig() // silent fallback without product requirement
-}
-```
-
-**Prefer:**
-
-```go
-if err != nil {
-    log.Errorf("failed to save entity: %s", err.Error())
-    return nil, err
-}
-```
-
-Controller maps service `error` to client response using `exception` helpers and `ErrorCodes.go`.
-
-## HTTP status codes
-
-**Good:**
-
-```go
-import "net/http"
-
-w.WriteHeader(http.StatusNotFound)
-```
-
-**Avoid:**
-
-```go
-w.WriteHeader(404)
-```
-
 ## Related repositories (Helm, E2E)
 
 See [`docs/agent/related-repositories.md`](../../../docs/agent/related-repositories.md). Agents cannot edit those repos unless they are in the workspace; **remind** the developer with links when:
@@ -83,35 +26,7 @@ See [`docs/agent/related-repositories.md`](../../../docs/agent/related-repositor
 | New/changed REST API | Postman collection repo + `docs/api/*.yaml` |
 | New auth or error contract | Postman assertions |
 
-Update placeholder Helm URL in `related-repositories.md` when your team’s chart repo is known.
-
-## Entity → view converter (`Make{Name}View`)
-
-Place dependency-free converters in `entity/` next to the entity struct.
-
-**Good:**
-
-```go
-// entity/ExampleEntity.go
-type ExampleEntity struct {
-    Id   string
-    Name string
-}
-
-func MakeExampleView(ent ExampleEntity) view.Example {
-    return view.Example{
-        Id:   ent.Id,
-        Name: ent.Name,
-    }
-}
-```
-
-**Avoid:**
-
-- Converter in `view/` or `service/` when it only maps fields and has no dependencies.
-- Comments like `// MakeExampleView is GET /examples/{id}`.
-
-If the converter needs repositories or services, keep it in `service/` (or an appropriate layer), not `entity/`.
+Update placeholder Helm URL in `related-repositories.md` when your team's chart repo is known.
 
 ## Error codes (`exception/ErrorCodes.go`)
 
@@ -135,6 +50,8 @@ Use existing patterns for parameter placeholders (`$id`, `$param`, etc.). Do not
 
 Naming: `{N}_{description}.up.sql` and `{N}_{description}.down.sql` where `N` is the next free integer.
 
+Directory: `qubership-apihub-service/resources/migrations/`
+
 Validate (from repository root):
 
 ```bash
@@ -144,18 +61,6 @@ bash .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.sh
 ```powershell
 powershell -File .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1
 ```
-
-## Commit message (conventional commits)
-
-Examples:
-
-```text
-feat(ai-chat): add pinned chat retention cleanup job
-
-fix(search): correct FTS config for lite operation search
-```
-
-One line subject; optional body for non-obvious rationale.
 
 ## Further reading
 

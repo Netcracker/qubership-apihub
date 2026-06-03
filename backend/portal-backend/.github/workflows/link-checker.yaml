@@ -19,6 +19,16 @@ jobs:
         with:
           args: >-
             './**/*.md'
+            --exclude-path '.cursor/**'
+            --exclude-path '.claude/**'
+            --exclude-path '.agents/**'
+            --exclude-path '.github/instructions/**'
+            --exclude-path '.github/skills/**'
+            --exclude-path '.github/prompts/**'
+            --exclude-path 'agent-packages/**'
+            --exclude-path 'AGENTS.md'
+            --exclude-path 'GEMINI.md'
+            --exclude-path 'CLAUDE.md'
             --verbose
             --no-progress
             --user-agent 'Mozilla/5.0 (X11; Linux x86_64) Chrome/134.0.0.0'

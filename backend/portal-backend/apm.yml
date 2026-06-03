@@ -1,0 +1,16 @@
+name: qubership-apihub-backend
+version: 0.0.0
+targets:
+  - cursor
+  - claude
+dependencies:
+  apm:
+    - Netcracker/qubership-ai-packages/agent-packages/english-developer-style
+    - Netcracker/qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
+    - Netcracker/qubership-apihub-ci/agent-packages/development-conventions
+    - Netcracker/qubership-apihub-ci/agent-packages/go-conventions
+    - Netcracker/qubership-apihub/agent-packages/apihub-deployment-followup
+    - Netcracker/qubership-apihub-postman-collections/agent-packages/postman-e2e-followup
+    - ./agent-packages/apihub-backend-developer
+    - ./agent-packages/apihub-backend-self-review
+    - ./agent-packages/backend-conventions

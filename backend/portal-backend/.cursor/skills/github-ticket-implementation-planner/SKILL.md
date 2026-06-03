@@ -8,7 +8,7 @@ description: Plan implementation from a GitHub ticket by clarifying missing requ
 ## Core Prompt (Verbatim)
 Read ticket description.
 Highlight not clear or missing requirements, ask questions.
-Analyze code base and build implementation plan.
+Analyze codebase and build implementation plan.
 
 ## Workflow
 1. Read the ticket description and extract goals, scope, constraints, acceptance criteria, and non-functional expectations.
