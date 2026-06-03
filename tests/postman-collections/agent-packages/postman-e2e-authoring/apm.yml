@@ -1,0 +1,6 @@
+name: postman-e2e-authoring
+version: 1.0.0
+description: Conventions for authoring and maintaining APIHUB backend Newman/Postman E2E collections and environments.
+author: Qubership APIHUB
+dependencies:
+  apm: []

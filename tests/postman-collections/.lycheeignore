@@ -1,1 +1,9 @@
 ^.*example.com
+
+# APM-deployed agent harness (upstream package markdown)
+^\.cursor/
+^\.claude/
+^\.agents/
+^\.github/instructions/
+^\.github/skills/
+^\.github/prompts/
