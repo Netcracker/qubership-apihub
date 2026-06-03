@@ -1,0 +1,101 @@
+lockfile_version: '1'
+generated_at: '2026-06-03T10:55:39.051708+00:00'
+apm_version: 0.16.0
+dependencies:
+- repo_url: Netcracker/qubership-ai-packages
+  host: github.com
+  resolved_commit: 3024f029cbc9042d6905037d2fa0a98e7b6e27f2
+  resolved_ref: v1.0.1
+  virtual_path: agent-packages/english-developer-style
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/english-developer-style.md
+  - .claude/skills/english-developer-style
+  - .cursor/rules/english-developer-style.mdc
+  - .cursor/skills/english-developer-style
+  deployed_file_hashes:
+    .claude/rules/english-developer-style.md: sha256:71d5921cbb7e91db77b2ad7403714cc4d8471e3af7a974b850e9831df2ca25b9
+    .cursor/rules/english-developer-style.mdc: sha256:981d72b4b97f7b5fb861ea9beb32edef5746c8ed87419abaadc999e14861a6a9
+  content_hash: sha256:107dd671a330a3afcb3bcce940afa130f5576c17840cee77d9fcefeb4550c68c
+- repo_url: Netcracker/qubership-ai-packages
+  host: github.com
+  resolved_commit: 3024f029cbc9042d6905037d2fa0a98e7b6e27f2
+  resolved_ref: v1.0.0
+  virtual_path: agent-packages/markdown-line-length-120
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/markdown-line-length-120.md
+  - .claude/skills/markdown-line-length-120
+  - .cursor/rules/markdown-line-length-120.mdc
+  - .cursor/skills/markdown-line-length-120
+  deployed_file_hashes:
+    .claude/rules/markdown-line-length-120.md: sha256:17478b76774dca2ab2ae0ace590f84fa4efc0c02d39502aca8de7abb8a67c869
+    .cursor/rules/markdown-line-length-120.mdc: sha256:4eeb64d82c3f86bb228cb7d8c4a030c4091750bf87b58e39751257a80b1b6ce5
+  content_hash: sha256:a1aefd3975421bee49843021ae90295c61df1e7f9b897d2bbe38d696e40c1583
+- repo_url: Netcracker/qubership-apihub-ci
+  host: github.com
+  resolved_commit: 00d6077e267bbd38751b70eba3959509d79941d2
+  resolved_ref: apm_migration
+  virtual_path: agent-packages/common-conventions
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/clarify-before-coding.md
+  - .cursor/rules/clarify-before-coding.mdc
+  deployed_file_hashes:
+    .claude/rules/clarify-before-coding.md: sha256:a3e34e5277a4a3fba12fd6f236e921a59c561e6ee82e240eec247861aa8a398c
+    .cursor/rules/clarify-before-coding.mdc: sha256:ceb003b39ea330002556d10d3ca52445909bbaf23705ff27f2643705db98c0f4
+  content_hash: sha256:a73ff63f83828d3bc3db8d01c4214768a3ee296c76f7077e6157f5464642ae6f
+- repo_url: Netcracker/qubership-core-base-images
+  host: github.com
+  resolved_commit: 4594b3b9d09c066ec549f4b6cee2eb1266c7f948
+  resolved_ref: feat/agent-packages
+  virtual_path: agent-packages/qubership-dockerfile-usage
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/qubership-dockerfile-usage.md
+  - .claude/skills/qubership-dockerfile-usage
+  - .cursor/rules/qubership-dockerfile-usage.mdc
+  - .cursor/skills/qubership-dockerfile-usage
+  deployed_file_hashes:
+    .claude/rules/qubership-dockerfile-usage.md: sha256:b25340f50a8a0b64c1d20ea2b57b1d15248ac8930f6a6c8f0b5eaa1bf50c4858
+    .cursor/rules/qubership-dockerfile-usage.mdc: sha256:c32b6c508a7818dd5a124cf8af7492345448e8cc7dd54bed2eb0b2cefbbdb4f1
+  content_hash: sha256:aac97dc693ddc522c00f2fa0115951bb7cac7d1e5aac290161d7b4a47a778472
+- repo_url: _local/apihub-deployment-authoring
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/apihub-deployment-authoring.md
+  - .claude/rules/apihub-deployment-compose.md
+  - .claude/rules/apihub-deployment-docs.md
+  - .claude/skills/apihub-deployment-authoring
+  - .cursor/rules/apihub-deployment-authoring.mdc
+  - .cursor/rules/apihub-deployment-compose.mdc
+  - .cursor/rules/apihub-deployment-docs.mdc
+  - .cursor/skills/apihub-deployment-authoring
+  deployed_file_hashes:
+    .claude/rules/apihub-deployment-authoring.md: sha256:7d7689cd3025c0fa4c0c52b52b9dcca3818667a9c00f97e587472ef9a919a8d4
+    .claude/rules/apihub-deployment-compose.md: sha256:fb8eda85642f6e4c612a5839d5212b65d8f7af04e691efdf0c6ce36090197c0d
+    .claude/rules/apihub-deployment-docs.md: sha256:c48df0c775f3928ee2c72bba29648cffdd7c92aa255de26a48e090624721fa51
+    .cursor/rules/apihub-deployment-authoring.mdc: sha256:66831d7cd2ba810fef5c86195feec587222921b3c821ed9d6f84719fca871031
+    .cursor/rules/apihub-deployment-compose.mdc: sha256:bac7257fd06c396b7b2e8355cf591d20c669ae5683c1f34930e517b9cf8324f9
+    .cursor/rules/apihub-deployment-docs.mdc: sha256:b66712261f853511469469f452f907d8556a19347712c97c6d0d609edeecc8b4
+  source: local
+  local_path: ./agent-packages/apihub-deployment-authoring
+- repo_url: Netcracker/qubership-apihub-ci
+  host: github.com
+  resolved_commit: 00d6077e267bbd38751b70eba3959509d79941d2
+  resolved_ref: apm_migration
+  virtual_path: agent-packages/github-ticket-implementation-planner
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/github-ticket-implementation-planner.md
+  - .claude/skills/github-ticket-implementation-planner
+  - .cursor/rules/github-ticket-implementation-planner.mdc
+  - .cursor/skills/github-ticket-implementation-planner
+  deployed_file_hashes:
+    .claude/rules/github-ticket-implementation-planner.md: sha256:4e13f07f0749bcfd778fe44899221bff81152ee83a90b74fc7dcfafff838353c
+    .cursor/rules/github-ticket-implementation-planner.mdc: sha256:67d9c2440bc50c68b21b1afd6aa25c0a8447db76bfa7c0a7898920a3cf297d20

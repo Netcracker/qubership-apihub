@@ -127,6 +127,26 @@ More context: [Supplementary applications](https://github.com/Netcracker/qubersh
 
 ---
 
+## AI agent configuration (APM)
+
+Agent context for deployment work is split between a **central store** and **this repository**:
+
+| Scope | Location |
+|-------|----------|
+| Generic skills/rules (planner, conventions, doc style) | [`qubership-apihub-ci/agent-packages`](https://github.com/Netcracker/qubership-apihub-ci/tree/apm_migration/agent-packages), [`qubership-ai-packages`](https://github.com/Netcracker/qubership-ai-packages/tree/main/agent-packages) |
+| Deployment-specific package | [`agent-packages/`](agent-packages/) |
+| Deployed harness output | `.cursor/` and `.claude/` (committed; refresh with APM) |
+
+From the repository root:
+
+```bash
+apm install --target cursor,claude --legacy-skill-paths
+```
+
+See [`AGENTS.md`](AGENTS.md) and [`agent-packages/README.md`](agent-packages/README.md).
+
+---
+
 ## Repository role
 
 This repository (**qubership-apihub**) is the **umbrella deployment project**: Helm charts, Compose stacks, and product-level documentation. Application source code lives in the component repositories linked above; reusable CI is in [qubership-apihub-ci](https://github.com/Netcracker/qubership-apihub-ci).

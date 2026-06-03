@@ -6,3 +6,9 @@ docker-compose/with-gitlab/gitlab/**
 helm-templates/qubership-apihub/jwt_private_key
 helm-templates/qubership-apihub/local-secrets.yaml
 .idea
+
+# APM cache (installed package sources)
+apm_modules/
+
+# APM pack build artifacts
+agent-packages/**/build/
