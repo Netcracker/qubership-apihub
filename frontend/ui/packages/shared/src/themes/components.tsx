@@ -195,6 +195,15 @@ export function createComponents(): Components<Theme> {
       defaultProps: {
         disableRipple: true,
       },
+      styleOverrides: {
+        root: {
+          // Hide the default focus ring on pointer clicks; MUI still applies
+          // `.Mui-focusVisible` for keyboard Tab navigation so the outline stays visible there.
+          // TODO: remove once doc-viewer focus styles are fixed - https://github.com/Netcracker/qubership-apihub/issues/311
+          '&:focus': { outline: 'none' },
+          '&.Mui-focusVisible': { outline: '4px auto -webkit-focus-ring-color' },
+        },
+      },
     },
     MuiButtonGroup: {
       defaultProps: {
