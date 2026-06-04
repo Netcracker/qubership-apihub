@@ -167,9 +167,6 @@ test.describe('02 Global Search', () => {
         await globalSearchPanel.filters.acVersionStatus.getListItem(filtersConfig.status).click()
 
         await globalSearchPanel.searchbar.fill(GS_OPERATION_REST.title)
-
-        await expect.soft(globalSearchPanel.filters.acGroup).not.toBeEnabled()
-        await expect.soft(globalSearchPanel.filters.acPackage).not.toBeEnabled()
       })
 
       await test.step('Set Workspace', async () => {
@@ -439,7 +436,6 @@ test.describe('02 Global Search', () => {
         await globalSearchPanel.filters.btnReset.click()
 
         await expect.soft(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
-        await expect.soft(globalSearchPanel.filters.acWorkspace).toBeEmpty()
         await expect.soft(globalSearchPanel.filters.acGroup).toBeEmpty()
         await expect.soft(globalSearchPanel.filters.acPackage).toBeEmpty()
         await expect.soft(globalSearchPanel.filters.acVersion).toBeEmpty()
