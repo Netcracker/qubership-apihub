@@ -48,8 +48,8 @@ not bare literals, and always handle the open default:
 
 ```typescript
 switch (col.type!.type.kind) {
-  case TypeKind.IntegerType: /* t: 'smallint' | 'integer' | 'bigint' | ... */ break
-  case TypeKind.StringType:  /* t, size? */ break
+  case TypeKind.IntegerType: /* type: 'smallint' | 'integer' | 'bigint' | ... */ break
+  case TypeKind.StringType:  /* type, size? */ break
   case TypeKind.EnumType:    /* values: string[] */ break
   default:                   /* UnknownType / dialect escape hatch — see below */ break
 }
@@ -61,7 +61,7 @@ The core unions are **closed and driver-neutral**:
 
 - `SchemaType`: `BoolType`, `IntegerType`, `DecimalType`, `FloatType`,
   `StringType`, `BinaryType`, `TimeType`, `JSONType`, `SpatialType`, `UUIDType`,
-  `EnumType`, plus `UnsupportedType`. Each carries `t` — the dialect spelling of
+  `EnumType`, plus `UnsupportedType`. Each carries `type` — the dialect spelling of
   the type (e.g. `'character varying'`, `'bigint'`).
 - `Attr`: `Comment`, `Charset`, `Collation`, `Check`, `GeneratedExpr`.
 - `Expr`: `Literal`, `RawExpr`, `NamedDefault`.
@@ -88,7 +88,7 @@ these escape-hatch kinds:
 | `'ExcludeConstraint'` | table `objects` | `name`, `method`, `exclusions` |
 | `'CompositeType'` | schema `objects` | `name`, `schema`, `fields` |
 | `'RangeType'` | schema `objects` | `name`, `schema`, `subtype?`, `params?` |
-| `'pg:domain'` | schema `objects` **and** column type | `t`, `baseType`, `null?`, `default?`, `checks?` |
+| `'pg:domain'` | schema `objects` **and** column type | `type`, `baseType`, `null?`, `default?`, `checks?` |
 | `'Trigger'` | **table** `attrs` (on the target table) | `name`, `timing`, `events`, `forEachRow`, `funcName`, `when?`, `isConstraint?`, `deferrable?`, `initDeferred?` |
 
 These kinds are available as named constants (`PgAttrKind`, `PgObjectKind`,
@@ -103,7 +103,7 @@ const identity = col.attrs?.find(a => a.kind === PgAttrKind.Identity) as
 `UnsupportedType` is different — it is a **core** member, not the escape hatch.
 It represents a SQL column type with no generic mapping (`interval`, `xml`,
 `money`, `bit`, `inet`/`cidr`, `tsvector`, array types, range types, or a
-user-defined type that was never resolved). Its `t` holds the raw type name.
+user-defined type that was never resolved). Its `type` holds the raw type name.
 
 A column's domain type (`'pg:domain'`) is dual-role: the same object instance
 appears in the schema's `objects` and as the column's `type.type`.
@@ -163,7 +163,7 @@ duplicating them, so you can correlate with `===`:
 - `foreignKey.columns[i]` / `refColumns[i]` are the exact `Column` instances.
 - A column whose type is an enum points at the same `EnumType` instance held in
   `schema.objects`.
-- An index part's `.c` is the same `Column` object as in `table.columns`.
+- An index part's `.column` is the same `Column` object as in `table.columns`.
 
 The one exception is `CREATE TABLE … (LIKE source)`: copied columns are **fresh
 `Column` objects**, though they still share the underlying type instances.
@@ -180,7 +180,7 @@ the index part / foreign key that should point at it:
 ```typescript
 const id = newColumn('id', { type: columnType(integerType('bigint'), { null: false }) })
 const users = newTable('users', { columns: [id], primaryKey: newPrimaryKey([id]) })
-// users.primaryKey.parts[0].c === users.columns[0]
+// users.primaryKey.parts[0].column === users.columns[0]
 ```
 
 To read or edit attribute lists, use the helpers in the public API:

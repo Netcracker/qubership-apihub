@@ -15,13 +15,13 @@ export type Expr = Literal | RawExpr | NamedDefault | UnknownExpr
  * Literal represents a basic literal expression like 1, or '1'.
  * String literals are usually quoted with single or double quotes.
  */
-export interface Literal { kind: typeof ExprKind.Literal; v: string }
+export interface Literal { kind: typeof ExprKind.Literal; value: string /* Atlas Go: V string */ }
 
 /**
  * RawExpr represents a raw expression like "uuid()" or "current_timestamp()".
  * Unlike literals, raw expressions are usually inlined as-is on migration.
  */
-export interface RawExpr { kind: typeof ExprKind.RawExpr; x: string }
+export interface RawExpr { kind: typeof ExprKind.RawExpr; expr: string /* Atlas Go: X string */ }
 
 /**
  * NamedDefault defines a named default expression (e.g. DEFAULT NEXT VALUE FOR <seq>).

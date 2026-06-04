@@ -5,7 +5,7 @@
 //   2. Column type upgrade (UnsupportedType → registered type)
 //   3. Index re-attachment (orphan → Table.indexes)
 //   4. ForeignKey resolution (refTable + refColumns)
-//   5. Index part column resolution (part.c)
+//   5. Index part column resolution (part.column)
 
 import { TypeKind, DdlErrorKind } from '../constants'
 import type { Column } from '../schema'
@@ -74,7 +74,7 @@ export function resolveReferences(
     const type = colType.type
     if (!type || type.kind !== TypeKind.UnsupportedType) continue
     // Cast via unknown to avoid TypeScript not narrowing through UnknownType's index signature
-    const rawName = (type as unknown as { t: string }).t
+    const rawName = (type as unknown as { type: string }).type
     if (!rawName) continue
 
     // Determine the schema scope from the column key ("schema.table.column")
@@ -150,7 +150,7 @@ export function resolveReferences(
   for (const { part, columnKey } of acc.pendingIndexParts) {
     const col = acc.columnRegistry.get(columnKey)
     if (col) {
-      part.c = col
+      part.column = col
     }
     // Missing column is not reported — the index part stays without a column ref
   }

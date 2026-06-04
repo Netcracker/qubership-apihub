@@ -78,7 +78,7 @@ export function handleCreateDomain(
 
   const pgDomain = {
     kind: PgObjectKind.Domain,
-    t: domainName,
+    type: domainName,
     baseType,
     ...(nullability !== undefined && { null: nullability }),
     ...(defaultExpr !== undefined && { default: defaultExpr }),

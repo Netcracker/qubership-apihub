@@ -39,18 +39,18 @@ type KnownSchemaType =
 
 function _exhaustiveSchemaType(t: KnownSchemaType): string {
   switch (t.kind) {
-    case TypeKind.BoolType: return t.t
+    case TypeKind.BoolType: return t.type
     case TypeKind.EnumType: return t.values.join(',')
-    case TypeKind.IntegerType: return t.t
-    case TypeKind.DecimalType: return t.t
-    case TypeKind.FloatType: return t.t
-    case TypeKind.StringType: return t.t
-    case TypeKind.BinaryType: return t.t
-    case TypeKind.TimeType: return t.t
-    case TypeKind.JSONType: return t.t
-    case TypeKind.SpatialType: return t.t
-    case TypeKind.UUIDType: return t.t
-    case TypeKind.UnsupportedType: return t.t
+    case TypeKind.IntegerType: return t.type
+    case TypeKind.DecimalType: return t.type
+    case TypeKind.FloatType: return t.type
+    case TypeKind.StringType: return t.type
+    case TypeKind.BinaryType: return t.type
+    case TypeKind.TimeType: return t.type
+    case TypeKind.JSONType: return t.type
+    case TypeKind.SpatialType: return t.type
+    case TypeKind.UUIDType: return t.type
+    case TypeKind.UnsupportedType: return t.type
     default:
       return assertNever(t)
   }
@@ -66,8 +66,8 @@ type KnownExpr = Literal | RawExpr | NamedDefault
 
 function _exhaustiveExpr(e: KnownExpr): string {
   switch (e.kind) {
-    case ExprKind.Literal: return e.v
-    case ExprKind.RawExpr: return e.x
+    case ExprKind.Literal: return e.value
+    case ExprKind.RawExpr: return e.expr
     case ObjectKind.NamedDefault: return e.name
     default:
       return assertNever(e)
@@ -85,8 +85,8 @@ type KnownAttr = Comment | Charset | Collation | Check | GeneratedExpr
 function _exhaustiveAttr(a: KnownAttr): string {
   switch (a.kind) {
     case AttrKind.Comment: return a.text
-    case AttrKind.Charset: return a.v
-    case AttrKind.Collation: return a.v
+    case AttrKind.Charset: return a.value
+    case AttrKind.Collation: return a.value
     case AttrKind.Check: return a.expr
     case AttrKind.GeneratedExpr: return a.expr
     default:

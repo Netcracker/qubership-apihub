@@ -122,8 +122,8 @@ export interface IndexPart {
   seqNo: number
   /** Desc indicates if the key part is stored in descending order. All databases use ascending order as default. */
   desc?: boolean
-  x?: Expr                 // expression part
-  c?: Column               // column part
+  expr?: Expr              // Atlas Go: X Expr
+  column?: Column          // Atlas Go: C *Column
   attrs?: Attr[]
 }
 

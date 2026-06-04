@@ -177,7 +177,7 @@ export function newUniqueIndex(
  * @remarks Pure constructor — no runtime validation.
  */
 export function newPrimaryKey(columns: Column[]): Index {
-  const parts: IndexPart[] = columns.map((c, i) => ({ seqNo: i, c }))
+  const parts: IndexPart[] = columns.map((column, i) => ({ seqNo: i, column }))
   return {
     kind: ObjectKind.Index,
     parts,
@@ -190,15 +190,15 @@ export function newPrimaryKey(columns: Column[]): Index {
 export function newIndexPart(props?: {
   seqNo?: number
   desc?: boolean
-  x?: Expr
-  c?: Column
+  expr?: Expr
+  column?: Column
   attrs?: Attr[]
 }): IndexPart {
   return {
     seqNo: props?.seqNo ?? 0,
     ...(props?.desc !== undefined && { desc: props.desc }),
-    ...(props?.x !== undefined && { x: props.x }),
-    ...(props?.c !== undefined && { c: props.c }),
+    ...(props?.expr !== undefined && { expr: props.expr }),
+    ...(props?.column !== undefined && { column: props.column }),
     ...(props?.attrs !== undefined && { attrs: props.attrs }),
   }
 }
@@ -207,16 +207,16 @@ export function newIndexPart(props?: {
  * Mirrors Go's NewColumnPart. seqNo defaults to 0.
  * @remarks Pure constructor — no runtime validation.
  */
-export function newColumnPart(c: Column, props?: { seqNo?: number; desc?: boolean; attrs?: Attr[] }): IndexPart {
-  return newIndexPart({ seqNo: props?.seqNo ?? 0, c, desc: props?.desc, attrs: props?.attrs })
+export function newColumnPart(column: Column, props?: { seqNo?: number; desc?: boolean; attrs?: Attr[] }): IndexPart {
+  return newIndexPart({ seqNo: props?.seqNo ?? 0, column, desc: props?.desc, attrs: props?.attrs })
 }
 
 /**
  * Mirrors Go's NewExprPart. seqNo defaults to 0.
  * @remarks Pure constructor — no runtime validation.
  */
-export function newExprPart(x: Expr, props?: { seqNo?: number; desc?: boolean; attrs?: Attr[] }): IndexPart {
-  return newIndexPart({ seqNo: props?.seqNo ?? 0, x, desc: props?.desc, attrs: props?.attrs })
+export function newExprPart(expr: Expr, props?: { seqNo?: number; desc?: boolean; attrs?: Attr[] }): IndexPart {
+  return newIndexPart({ seqNo: props?.seqNo ?? 0, expr, desc: props?.desc, attrs: props?.attrs })
 }
 
 /**
@@ -259,25 +259,25 @@ export function newCheck(expr: string, name?: string): Check {
 // ── Type factories ───────────────────────────────────────────────────────────
 
 /** @remarks Pure constructor — no runtime validation. */
-export function boolType(t: string): BoolType {
-  return { kind: TypeKind.BoolType, t }
+export function boolType(type: string): BoolType {
+  return { kind: TypeKind.BoolType, type }
 }
 
 /** @remarks Pure constructor — no runtime validation. */
-export function integerType(t: string, opts?: { unsigned?: boolean; attrs?: Attr[] }): IntegerType {
+export function integerType(type: string, opts?: { unsigned?: boolean; attrs?: Attr[] }): IntegerType {
   return {
     kind: TypeKind.IntegerType,
-    t,
+    type,
     ...(opts?.unsigned !== undefined && { unsigned: opts.unsigned }),
     ...(opts?.attrs !== undefined && { attrs: opts.attrs }),
   }
 }
 
 /** @remarks Pure constructor — no runtime validation. */
-export function decimalType(t: string, opts?: { precision?: number; scale?: number; unsigned?: boolean }): DecimalType {
+export function decimalType(type: string, opts?: { precision?: number; scale?: number; unsigned?: boolean }): DecimalType {
   return {
     kind: TypeKind.DecimalType,
-    t,
+    type,
     ...(opts?.precision !== undefined && { precision: opts.precision }),
     ...(opts?.scale !== undefined && { scale: opts.scale }),
     ...(opts?.unsigned !== undefined && { unsigned: opts.unsigned }),
@@ -285,39 +285,39 @@ export function decimalType(t: string, opts?: { precision?: number; scale?: numb
 }
 
 /** @remarks Pure constructor — no runtime validation. */
-export function floatType(t: string, opts?: { unsigned?: boolean; precision?: number }): FloatType {
+export function floatType(type: string, opts?: { unsigned?: boolean; precision?: number }): FloatType {
   return {
     kind: TypeKind.FloatType,
-    t,
+    type,
     ...(opts?.unsigned !== undefined && { unsigned: opts.unsigned }),
     ...(opts?.precision !== undefined && { precision: opts.precision }),
   }
 }
 
 /** @remarks Pure constructor — no runtime validation. */
-export function stringType(t: string, opts?: { size?: number; attrs?: Attr[] }): StringType {
+export function stringType(type: string, opts?: { size?: number; attrs?: Attr[] }): StringType {
   return {
     kind: TypeKind.StringType,
-    t,
+    type,
     ...(opts?.size !== undefined && { size: opts.size }),
     ...(opts?.attrs !== undefined && { attrs: opts.attrs }),
   }
 }
 
 /** @remarks Pure constructor — no runtime validation. */
-export function binaryType(t: string, opts?: { size?: number }): BinaryType {
+export function binaryType(type: string, opts?: { size?: number }): BinaryType {
   return {
     kind: TypeKind.BinaryType,
-    t,
+    type,
     ...(opts?.size !== undefined && { size: opts.size }),
   }
 }
 
 /** @remarks Pure constructor — no runtime validation. */
-export function timeType(t: string, opts?: { precision?: number; scale?: number; attrs?: Attr[] }): TimeType {
+export function timeType(type: string, opts?: { precision?: number; scale?: number; attrs?: Attr[] }): TimeType {
   return {
     kind: TypeKind.TimeType,
-    t,
+    type,
     ...(opts?.precision !== undefined && { precision: opts.precision }),
     ...(opts?.scale !== undefined && { scale: opts.scale }),
     ...(opts?.attrs !== undefined && { attrs: opts.attrs }),
@@ -325,34 +325,34 @@ export function timeType(t: string, opts?: { precision?: number; scale?: number;
 }
 
 /** @remarks Pure constructor — no runtime validation. */
-export function jsonType(t: string): JSONType {
-  return { kind: TypeKind.JSONType, t }
+export function jsonType(type: string): JSONType {
+  return { kind: TypeKind.JSONType, type }
 }
 
 /** @remarks Pure constructor — no runtime validation. */
-export function spatialType(t: string): SpatialType {
-  return { kind: TypeKind.SpatialType, t }
+export function spatialType(type: string): SpatialType {
+  return { kind: TypeKind.SpatialType, type }
 }
 
 /** @remarks Pure constructor — no runtime validation. */
-export function uuidType(t: string): UUIDType {
-  return { kind: TypeKind.UUIDType, t }
+export function uuidType(type: string): UUIDType {
+  return { kind: TypeKind.UUIDType, type }
 }
 
 /** @remarks Pure constructor — no runtime validation. */
-export function unsupportedType(t: string): UnsupportedType {
-  return { kind: TypeKind.UnsupportedType, t }
+export function unsupportedType(type: string): UnsupportedType {
+  return { kind: TypeKind.UnsupportedType, type }
 }
 
 /** @remarks Pure constructor — no runtime validation. */
 export function enumType(
   values: string[],
-  opts?: { t?: string; schema?: Schema; attrs?: Attr[] },
+  opts?: { type?: string; schema?: Schema; attrs?: Attr[] },
 ): EnumType {
   return {
     kind: TypeKind.EnumType,
     values,
-    ...(opts?.t !== undefined && { t: opts.t }),
+    ...(opts?.type !== undefined && { type: opts.type }),
     ...(opts?.schema !== undefined && { schema: opts.schema }),
     ...(opts?.attrs !== undefined && { attrs: opts.attrs }),
   }
@@ -366,13 +366,13 @@ export function comment(text: string): Comment {
 }
 
 /** @remarks Pure constructor — no runtime validation. */
-export function charset(v: string): Charset {
-  return { kind: AttrKind.Charset, v }
+export function charset(value: string): Charset {
+  return { kind: AttrKind.Charset, value }
 }
 
 /** @remarks Pure constructor — no runtime validation. */
-export function collation(v: string): Collation {
-  return { kind: AttrKind.Collation, v }
+export function collation(value: string): Collation {
+  return { kind: AttrKind.Collation, value }
 }
 
 /** @remarks Pure constructor — no runtime validation. */
@@ -387,13 +387,13 @@ export function generatedExpr(expr: string, type?: string): GeneratedExpr {
 // ── Expr factories ───────────────────────────────────────────────────────────
 
 /** @remarks Pure constructor — no runtime validation. */
-export function literal(v: string): Literal {
-  return { kind: ExprKind.Literal, v }
+export function literal(value: string): Literal {
+  return { kind: ExprKind.Literal, value }
 }
 
 /** @remarks Pure constructor — no runtime validation. */
-export function rawExpr(x: string): RawExpr {
-  return { kind: ExprKind.RawExpr, x }
+export function rawExpr(expr: string): RawExpr {
+  return { kind: ExprKind.RawExpr, expr }
 }
 
 /** @remarks Pure constructor — no runtime validation. */

@@ -125,18 +125,18 @@ describe('createType', () => {
       const schema = realm.schemas[0]!
       const dt = schema.objects!.find(o => o.kind === PgObjectKind.Domain)
       expect(dt).toBeDefined()
-      expect((dt as { t: string }).t).toBe('positive_int')
+      expect((dt as { type: string }).type).toBe('positive_int')
     })
 
     test('simple: baseType is IntegerType', async () => {
       const realm = await buildFromDdl(loadSql('create-domain/simple.sql'))
       const schema = realm.schemas[0]!
       const dt = schema.objects!.find(o => o.kind === PgObjectKind.Domain) as unknown as {
-        baseType: { kind: string; t: string }
+        baseType: { kind: string; type: string }
         checks?: unknown[]
       }
       expect(dt.baseType.kind).toBe(TypeKind.IntegerType)
-      expect(dt.baseType.t).toBe('integer')
+      expect(dt.baseType.type).toBe('integer')
     })
 
     test('simple: CHECK constraint stored as checks array', async () => {

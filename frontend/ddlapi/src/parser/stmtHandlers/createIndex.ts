@@ -83,7 +83,7 @@ export function handleCreateIndex(
     } else if (elem.expr) {
       // Expression part — deparsed to string, set immediately
       const exprStr = deparseSync(elem.expr as Record<string, unknown>)
-        part.x = rawExpr(exprStr)
+        part.expr = rawExpr(exprStr)
     }
 
     parts.push(part)

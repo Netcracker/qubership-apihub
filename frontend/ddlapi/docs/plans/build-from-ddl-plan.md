@@ -104,7 +104,7 @@ same dual-role pattern as `EnumType`. This allows a column's `ColumnType.type` t
 ```typescript
 export interface DomainType {
   readonly kind: typeof TypeKind.DomainType
-  readonly t: string                       // qualified type name as written
+  readonly type: string                    // qualified type name as written (Atlas Go: T string)
   readonly schema?: Schema                 // back-ref — not populated; navigate from Realm
   readonly baseType: SchemaType            // underlying type; can itself be a DomainType
   readonly null?: boolean                  // domain-level NOT NULL constraint
@@ -129,7 +129,7 @@ export const TypeKind = {
 
 ```typescript
 export function domainType(
-  t: string,
+  type: string,
   baseType: SchemaType,
   opts?: { null?: boolean; default?: Expr; checks?: readonly Check[]; attrs?: readonly Attr[] }
 ): DomainType
@@ -472,10 +472,10 @@ Runs after all statements are parsed. Order within pass 2:
    `tableRegistry` and `columnRegistry`. Unresolvable → `unresolved-reference` error; field left
    undefined.
 
-5. **Index part columns**: resolve `Index.parts[].c` (column-name parts) using `columnRegistry`.
+5. **Index part columns**: resolve `Index.parts[].column` (column-name parts) using `columnRegistry`.
 
 6. **Primary key and unique index parts**: same column resolution for
-   `Table.primaryKey.parts[].c` and inline-unique index parts.
+   `Table.primaryKey.parts[].column` and inline-unique index parts.
 
 ### 8.3 Cases NOT Requiring Referential Equality
 

@@ -16,7 +16,9 @@ live only in the parser. These rules are what the type system and the godoc of
 The TypeScript structures are a deliberate, traceable translation of the Go
 source. Keep the correspondence visible so a reader can hold both side by side:
 
-- Go exported field `T string` becomes `t: string` (camelCase, same letter).
+- Single-letter Go exported fields (`T string`, `V string`, `X Expr`, `C *Column`)
+  get descriptive TypeScript names (`type`, `value`, `expr`, `column`). The
+  Atlas Go origin is documented as an inline comment on each field, e.g. `/* Atlas Go: T string */`.
 - A Go pointer used for optionality (`*int`, `*Struct`, `nil` = absent) becomes
   an optional field (`field?: number`) — omitted when absent, never `null`.
 - Back-reference pointers (`table.Schema`, `index.Table`, `column.indexes`) are
@@ -64,7 +66,7 @@ keep the core driver-neutral — do not reintroduce it into the core union.)
 
 `UnsupportedType` is the one core type that names an un-modelled dialect type
 (`unsupportedType('interval')`): use it for SQL types with no generic
-representation, and store the raw spelling in `t`. Use `Unknown*` for
+representation, and store the raw spelling in `type`. Use `Unknown*` for
 everything that is not a column *type* (attrs, objects, exprs).
 
 The `kind` string is also the identity key for `replaceOrAppendAttr` /
@@ -81,10 +83,10 @@ Match the existing construction pattern exactly: spread optional fields only
 when defined, so the output object has no `field: undefined` keys.
 
 ```typescript
-export function integerType(t: string, opts?: { unsigned?: boolean; attrs?: Attr[] }): IntegerType {
+export function integerType(type: string, opts?: { unsigned?: boolean; attrs?: Attr[] }): IntegerType {
   return {
     kind: TypeKind.IntegerType,
-    t,
+    type,
     ...(opts?.unsigned !== undefined && { unsigned: opts.unsigned }),
     ...(opts?.attrs !== undefined && { attrs: opts.attrs }),
   }

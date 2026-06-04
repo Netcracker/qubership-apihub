@@ -20,23 +20,23 @@ export type SchemaType =
   | UUIDType | UnsupportedType | UnknownType
 
 /** BoolType represents a boolean type. */
-export interface BoolType { kind: typeof TypeKind.BoolType; t: string }
+export interface BoolType { kind: typeof TypeKind.BoolType; type: string /* Atlas Go: T string */ }
 /** JSONType represents a JSON type. */
-export interface JSONType { kind: typeof TypeKind.JSONType; t: string }
+export interface JSONType { kind: typeof TypeKind.JSONType; type: string /* Atlas Go: T string */ }
 /** SpatialType represents a spatial/geometric type. */
-export interface SpatialType { kind: typeof TypeKind.SpatialType; t: string }
+export interface SpatialType { kind: typeof TypeKind.SpatialType; type: string /* Atlas Go: T string */ }
 /** A UUIDType defines a UUID type. */
-export interface UUIDType { kind: typeof TypeKind.UUIDType; t: string }
+export interface UUIDType { kind: typeof TypeKind.UUIDType; type: string /* Atlas Go: T string */ }
 /** UnsupportedType represents a type that is not supported by the drivers. */
-export interface UnsupportedType { kind: typeof TypeKind.UnsupportedType; t: string }
+export interface UnsupportedType { kind: typeof TypeKind.UnsupportedType; type: string /* Atlas Go: T string */ }
 /** Driver-specific or future types pass through without casting. */
 export interface UnknownType { kind: string;[key: string]: unknown }
 
 /** EnumType represents an enum type. */
 export interface EnumType {
   kind: typeof TypeKind.EnumType
-  /** Optional type name (e.g. a named enum in PostgreSQL). */
-  t?: string
+  /** Optional type name (e.g. a named enum in PostgreSQL). Atlas Go: T string */
+  type?: string
   /** Enum values. */
   values: string[]
   /** Optional schema. */
@@ -48,7 +48,7 @@ export interface EnumType {
 /** IntegerType represents an int type. */
 export interface IntegerType {
   kind: typeof TypeKind.IntegerType
-  t: string
+  type: string /* Atlas Go: T string */
   unsigned?: boolean
   attrs?: Attr[]
 }
@@ -56,7 +56,7 @@ export interface IntegerType {
 /** DecimalType represents a fixed-point type that stores exact numeric values. */
 export interface DecimalType {
   kind: typeof TypeKind.DecimalType
-  t: string
+  type: string /* Atlas Go: T string */
   precision?: number
   scale?: number
   unsigned?: boolean
@@ -65,7 +65,7 @@ export interface DecimalType {
 /** FloatType represents a floating-point type that stores approximate numeric values. */
 export interface FloatType {
   kind: typeof TypeKind.FloatType
-  t: string
+  type: string /* Atlas Go: T string */
   unsigned?: boolean
   precision?: number
 }
@@ -80,7 +80,7 @@ export interface FloatType {
  */
 export interface StringType {
   kind: typeof TypeKind.StringType
-  t: string
+  type: string /* Atlas Go: T string */
   size?: number
   attrs?: Attr[]
 }
@@ -94,14 +94,14 @@ export interface StringType {
  */
 export interface BinaryType {
   kind: typeof TypeKind.BinaryType
-  t: string
+  type: string /* Atlas Go: T string */
   size?: number
 }
 
 /** TimeType represents a date/time type. */
 export interface TimeType {
   kind: typeof TypeKind.TimeType
-  t: string
+  type: string /* Atlas Go: T string */
   precision?: number
   scale?: number
   attrs?: Attr[]

@@ -45,7 +45,7 @@ export function handleCreateEnum(
   const vals = (stmt.vals ?? []) as Node[]
   const values = vals.map(v => strVal(v) ?? '').filter(Boolean)
 
-  const et = enumType(values, { t: typeName })
+  const et = enumType(values, { type: typeName })
 
   acc.registerType(schemaName, typeName, et as SchemaType & SchemaObject)
 }

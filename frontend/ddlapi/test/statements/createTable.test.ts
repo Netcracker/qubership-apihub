@@ -9,12 +9,12 @@ describe('createTable', () => {
       const realm = await buildFromDdl(loadSql('create-table/column-types-numeric.sql'))
       const cols = realm.schemas[0]!.tables![0]!.columns!
       expect(cols[0]!.type!.type.kind).toBe(TypeKind.IntegerType)
-      expect(cols[0]!.type!.type.t).toBe('smallint')
-      expect(cols[1]!.type!.type.t).toBe('integer')
-      expect(cols[2]!.type!.type.t).toBe('bigint')
+      expect(cols[0]!.type!.type.type).toBe('smallint')
+      expect(cols[1]!.type!.type.type).toBe('integer')
+      expect(cols[2]!.type!.type.type).toBe('bigint')
       expect(cols[3]!.type!.type.kind).toBe(TypeKind.FloatType)
-      expect(cols[3]!.type!.type.t).toBe('real')
-      expect(cols[4]!.type!.type.t).toBe('double precision')
+      expect(cols[3]!.type!.type.type).toBe('real')
+      expect(cols[4]!.type!.type.type).toBe('double precision')
       expect(cols[5]!.type!.type.kind).toBe(TypeKind.DecimalType)
       expect((cols[5]!.type!.type as { precision: number }).precision).toBe(10)
       expect((cols[5]!.type!.type as { scale: number }).scale).toBe(2)
@@ -70,16 +70,16 @@ describe('createTable', () => {
       expect(table.primaryKey).toBeDefined()
       expect(table.primaryKey!.parts).toHaveLength(1)
       // Column ref resolved
-      expect(table.primaryKey!.parts![0]!.c).toBeDefined()
-      expect(table.primaryKey!.parts![0]!.c!.name).toBe('id')
+      expect(table.primaryKey!.parts![0]!.column).toBeDefined()
+      expect(table.primaryKey!.parts![0]!.column!.name).toBe('id')
     })
 
     test('primary-key-composite: table-level PK with two columns', async () => {
       const realm = await buildFromDdl(loadSql('create-table/primary-key-composite.sql'))
       const table = realm.schemas[0]!.tables![0]!
       expect(table.primaryKey!.parts).toHaveLength(2)
-      expect(table.primaryKey!.parts![0]!.c!.name).toBe('tenant_id')
-      expect(table.primaryKey!.parts![1]!.c!.name).toBe('user_id')
+      expect(table.primaryKey!.parts![0]!.column!.name).toBe('tenant_id')
+      expect(table.primaryKey!.parts![1]!.column!.name).toBe('user_id')
     })
 
     test('primary-key-named: named PK constraint', async () => {
@@ -96,7 +96,7 @@ describe('createTable', () => {
       const table = realm.schemas[0]!.tables![0]!
       const uq = table.indexes!.find(i => i.unique)
       expect(uq).toBeDefined()
-      expect(uq!.parts![0]!.c).toBeDefined()
+      expect(uq!.parts![0]!.column).toBeDefined()
     })
 
     test('unique-table-level: table-level UNIQUE creates index', async () => {
@@ -105,7 +105,7 @@ describe('createTable', () => {
       // The table-level UNIQUE (phone) creates an Index in table.indexes
       const uqIdx = table.indexes!.find(i => i.unique)
       expect(uqIdx).toBeDefined()
-      expect(uqIdx!.parts![0]!.c!.name).toBe('phone')
+      expect(uqIdx!.parts![0]!.column!.name).toBe('phone')
     })
 
     test('unique-nulls-not-distinct: sets IndexNullsDistinct attr', async () => {
@@ -206,9 +206,9 @@ describe('createTable', () => {
       const realm = await buildFromDdl(loadSql('create-table/serial.sql'))
       const cols = realm.schemas[0]!.tables![0]!.columns!
       expect(cols[0]!.type!.type.kind).toBe(TypeKind.IntegerType)
-      expect(cols[0]!.type!.type.t).toBe('smallserial')
-      expect(cols[1]!.type!.type.t).toBe('serial')
-      expect(cols[2]!.type!.type.t).toBe('bigserial')
+      expect(cols[0]!.type!.type.type).toBe('smallserial')
+      expect(cols[1]!.type!.type.type).toBe('serial')
+      expect(cols[2]!.type!.type.type).toBe('bigserial')
     })
   })
 

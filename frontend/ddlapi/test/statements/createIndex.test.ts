@@ -18,11 +18,11 @@ describe('createIndex', () => {
     const schema = realm.schemas[0]!
     const users = schema.tables!.find(t => t.name === 'users')!
     const idx = users.indexes!.find(i => i.name === 'idx_users_email')!
-    expect(idx.parts![0]!.c).toBeDefined()
-    expect(idx.parts![0]!.c!.name).toBe('email')
+    expect(idx.parts![0]!.column).toBeDefined()
+    expect(idx.parts![0]!.column!.name).toBe('email')
     // Referential equality: same Column instance as in users.columns
     const emailCol = users.columns!.find(c => c.name === 'email')!
-    expect(idx.parts![0]!.c).toBe(emailCol)
+    expect(idx.parts![0]!.column).toBe(emailCol)
   })
 
   test('unique: sets unique=true', async () => {
@@ -43,13 +43,13 @@ describe('createIndex', () => {
     expect(idx.parts![1]!.desc).toBe(true)
   })
 
-  test('expression: part has x (RawExpr), no c', async () => {
+  test('expression: part has expr (RawExpr), no column', async () => {
     const realm = await buildFromDdl(loadSql('create-index/expression.sql'))
     const schema = realm.schemas[0]!
     const users = schema.tables!.find(t => t.name === 'users')!
     const idx = users.indexes!.find(i => i.name === 'idx_users_email_lower')!
-    expect(idx.parts![0]!.c).toBeUndefined()
-    expect(idx.parts![0]!.x).toBeDefined()
+    expect(idx.parts![0]!.column).toBeUndefined()
+    expect(idx.parts![0]!.expr).toBeDefined()
   })
 
   test('partial: stores IndexPredicate attr', async () => {

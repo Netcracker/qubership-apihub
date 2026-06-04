@@ -282,7 +282,7 @@ import { TypeKind } from './constants'
 
 export interface BoolType {
   readonly kind: typeof TypeKind.BoolType   // = 'BoolType'
-  readonly t: string
+  readonly type: string                     // Atlas Go: T string
 }
 ```
 
@@ -324,7 +324,7 @@ const users = newTable('users', { columns: [id], primaryKey: pk })
 
 #### References are opaque
 
-`IndexPart.c`, `ForeignKey.columns`, `ForeignKey.refColumns`, and `Table.deps` hold object
+`IndexPart.column`, `ForeignKey.columns`, `ForeignKey.refColumns`, and `Table.deps` hold object
 references. The library does not validate that those objects actually live under the same
 schema or realm. Structural consistency (e.g. all FK ref columns come from `refTable`) is a
 concern of the layer that builds the graph, not of the data model.
@@ -333,7 +333,7 @@ concern of the layer that builds the graph, not of the data model.
 
 | Go | TypeScript | Notes |
 |---|---|---|
-| Exported field `T string` | `t: string` | Lowercase camelCase — Go exports with uppercase, TS convention is camelCase |
+| Single-letter exported fields (`T string`, `V string`, `X Expr`, `C *Column`) | `type`, `value`, `expr`, `column` | Descriptive names replace single-letter Go field names; Atlas Go origin documented as an inline comment `/* Atlas Go: T string */` |
 | `Field *int` (pointer used for optionality) | `field?: number` | Go has no optional primitive; a pointer (`nil` = absent) maps to a TypeScript optional field. `?: T` is preferred over `T \| null` because the field is simply omitted when absent, not explicitly set to null. Applies to any `*PrimitiveType`: `*int → ?: number`, `*string → ?: string`. |
 | `Field *Struct` (pointer to struct, non-back-ref) | `field?: StructType` | Same rule as above — `nil` in Go means absent, maps to an omittable field. Back-reference pointers (`table.Schema`, `index.Table`, etc.) are handled separately: they are commented out — see design decision §3. |
 | `ReferenceOption` (Go `const` block with iota-like strings) | `ReferenceOption` const object + type alias | Values are SQL keywords as strings (`'NO ACTION'` etc.) matching Go's string constants. All other `kind` discriminants use PascalCase (`'BoolType'`) matching Go struct names. The two conventions coexist in the same file; the grouping (`ReferenceOption` vs `TypeKind`/`AttrKind`) makes the intent clear. |
@@ -482,23 +482,23 @@ export type SchemaType =
   | UUIDType | UnsupportedType | UnknownType
 
 /** BoolType represents a boolean type. */
-export interface BoolType        { readonly kind: typeof TypeKind.BoolType;        readonly t: string }
+export interface BoolType        { readonly kind: typeof TypeKind.BoolType;        readonly type: string /* Atlas Go: T string */ }
 /** JSONType represents a JSON type. */
-export interface JSONType         { readonly kind: typeof TypeKind.JSONType;         readonly t: string }
+export interface JSONType         { readonly kind: typeof TypeKind.JSONType;         readonly type: string /* Atlas Go: T string */ }
 /** SpatialType represents a spatial/geometric type. */
-export interface SpatialType     { readonly kind: typeof TypeKind.SpatialType;     readonly t: string }
+export interface SpatialType     { readonly kind: typeof TypeKind.SpatialType;     readonly type: string /* Atlas Go: T string */ }
 /** A UUIDType defines a UUID type. */
-export interface UUIDType        { readonly kind: typeof TypeKind.UUIDType;        readonly t: string }
+export interface UUIDType        { readonly kind: typeof TypeKind.UUIDType;        readonly type: string /* Atlas Go: T string */ }
 /** UnsupportedType represents a type that is not supported by the drivers. */
-export interface UnsupportedType { readonly kind: typeof TypeKind.UnsupportedType; readonly t: string }
+export interface UnsupportedType { readonly kind: typeof TypeKind.UnsupportedType; readonly type: string /* Atlas Go: T string */ }
 /** Driver-specific or future types pass through without casting. */
 export interface UnknownType     { readonly kind: string; readonly [key: string]: unknown }
 
 /** EnumType represents an enum type. */
 export interface EnumType {
   readonly kind: typeof TypeKind.EnumType
-  /** Optional type name (e.g. a named enum in PostgreSQL). */
-  readonly t?: string
+  /** Optional type name (e.g. a named enum in PostgreSQL). Atlas Go: T string */
+  readonly type?: string
   /** Enum values. */
   readonly values: readonly string[]
   /** Optional schema. */
@@ -510,7 +510,7 @@ export interface EnumType {
 /** IntegerType represents an int type. */
 export interface IntegerType {
   readonly kind: typeof TypeKind.IntegerType
-  readonly t: string
+  readonly type: string /* Atlas Go: T string */
   readonly unsigned?: boolean
   readonly attrs?: readonly Attr[]
 }
@@ -518,7 +518,7 @@ export interface IntegerType {
 /** DecimalType represents a fixed-point type that stores exact numeric values. */
 export interface DecimalType {
   readonly kind: typeof TypeKind.DecimalType
-  readonly t: string
+  readonly type: string /* Atlas Go: T string */
   readonly precision?: number
   readonly scale?: number
   readonly unsigned?: boolean
@@ -527,7 +527,7 @@ export interface DecimalType {
 /** FloatType represents a floating-point type that stores approximate numeric values. */
 export interface FloatType {
   readonly kind: typeof TypeKind.FloatType
-  readonly t: string
+  readonly type: string /* Atlas Go: T string */
   readonly unsigned?: boolean
   readonly precision?: number
 }
@@ -542,7 +542,7 @@ export interface FloatType {
  */
 export interface StringType {
   readonly kind: typeof TypeKind.StringType
-  readonly t: string
+  readonly type: string /* Atlas Go: T string */
   readonly size?: number
   readonly attrs?: readonly Attr[]
 }
@@ -556,14 +556,14 @@ export interface StringType {
  */
 export interface BinaryType {
   readonly kind: typeof TypeKind.BinaryType
-  readonly t: string
+  readonly type: string /* Atlas Go: T string */
   readonly size?: number
 }
 
 /** TimeType represents a date/time type. */
 export interface TimeType {
   readonly kind: typeof TypeKind.TimeType
-  readonly t: string
+  readonly type: string /* Atlas Go: T string */
   readonly precision?: number
   readonly scale?: number
   readonly attrs?: readonly Attr[]
@@ -591,13 +591,13 @@ export type Expr = Literal | RawExpr | NamedDefault | UnknownExpr
  * Literal represents a basic literal expression like 1, or '1'.
  * String literals are usually quoted with single or double quotes.
  */
-export interface Literal { readonly kind: typeof ExprKind.Literal; readonly v: string }
+export interface Literal { readonly kind: typeof ExprKind.Literal; readonly value: string /* Atlas Go: V string */ }
 
 /**
  * RawExpr represents a raw expression like "uuid()" or "current_timestamp()".
  * Unlike literals, raw expressions are usually inlined as-is on migration.
  */
-export interface RawExpr { readonly kind: typeof ExprKind.RawExpr; readonly x: string }
+export interface RawExpr { readonly kind: typeof ExprKind.RawExpr; readonly expr: string /* Atlas Go: X string */ }
 
 /**
  * NamedDefault defines a named default expression (e.g. DEFAULT NEXT VALUE FOR <seq>).
@@ -640,9 +640,9 @@ export type Attr =
 /** Comment describes a schema element comment. */
 export interface Comment   { readonly kind: typeof AttrKind.Comment;   readonly text: string }
 /** Charset describes a column or a table character-set setting. */
-export interface Charset   { readonly kind: typeof AttrKind.Charset;   readonly v: string }
+export interface Charset   { readonly kind: typeof AttrKind.Charset;   readonly value: string /* Atlas Go: V string */ }
 /** Collation describes a column or a table collation setting. */
-export interface Collation { readonly kind: typeof AttrKind.Collation; readonly v: string }
+export interface Collation { readonly kind: typeof AttrKind.Collation; readonly value: string /* Atlas Go: V string */ }
 
 /** Check describes a CHECK constraint. */
 export interface Check {
@@ -799,8 +799,8 @@ export interface IndexPart {
   readonly seqNo: number
   /** Desc indicates if the key part is stored in descending order. All databases use ascending order as default. */
   readonly desc?: boolean
-  readonly x?: Expr                 // expression part
-  readonly c?: Column               // column part
+  readonly expr?: Expr        // Atlas Go: X Expr
+  readonly column?: Column          // Atlas Go: C *Column
   readonly attrs?: readonly Attr[]
 }
 
@@ -1061,7 +1061,7 @@ union. `NamedDefault` uses `ObjectKind.NamedDefault` (not an `ExprKind` entry). 
 references `Schema` and `Attr` via type-only imports to avoid circular dependencies.
 
 **Acceptance criteria:**
-- [ ] All variants match PLAN field mapping (Go `T` → `t`; Go `*int` → `?: number`)
+- [ ] All variants match PLAN field mapping (Go single-letter fields → descriptive names with `/* Atlas Go: X string */` comment; Go `*int` → `?: number`)
 - [ ] `SchemaType` union is exhaustive including `UnknownType`
 - [ ] `StringType.size` JSDoc notes that 0 is semantically absent (Go plain-`int` convention)
 - [ ] `BinaryType.size` JSDoc notes that `*int` in Go means 0 is a valid explicit size
@@ -1165,7 +1165,7 @@ factories (`literal`, `rawExpr`, `namedDefault`).
 **Acceptance criteria:**
 - [ ] All factories listed in the factories section above are implemented
 - [ ] Type factories pass optional fields through without coercion (pure constructors)
-- [ ] `enumType` accepts a values array plus optional `t`, `schema`, `attrs`
+- [ ] `enumType` accepts a values array plus optional `type`, `schema`, `attrs`
 - [ ] `filePos(name, start?, end?)` mirrors Go's `NewFilePos`; `name` is required
 
 **Verification:**
@@ -1271,7 +1271,7 @@ flowchart TD
 - FK column reference: verify that `ForeignKey.columns` and `ForeignKey.refColumns` hold
   the exact same `Column` object references as the owning table's columns array (identity,
   not copy) — caller's responsibility pattern.
-- Index column reference: verify `IndexPart.c` is the same object reference as the
+- Index column reference: verify `IndexPart.column` is the same object reference as the
   corresponding `Column` in the table.
 
 ---

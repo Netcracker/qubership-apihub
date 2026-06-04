@@ -81,8 +81,8 @@ describe('dual-role kinds', () => {
 
 function describeExpr(e: Expr): string {
   switch (e.kind) {
-    case ExprKind.Literal: return `literal:${(e as Literal).v}`
-    case ExprKind.RawExpr: return `raw:${(e as RawExpr).x}`
+    case ExprKind.Literal: return `literal:${(e as Literal).value}`
+    case ExprKind.RawExpr: return `raw:${(e as RawExpr).expr}`
     case ObjectKind.NamedDefault: return `named:${(e as NamedDefault).name}`
     default:
       return `unknown:${(e as UnknownExpr).kind}`
@@ -90,20 +90,20 @@ function describeExpr(e: Expr): string {
 }
 
 describe('Expr', () => {
-  test('Literal has v field', () => {
-    const lit: Literal = { kind: ExprKind.Literal, v: '42' }
-    expect(lit.v).toBe('42')
+  test('Literal has value field', () => {
+    const lit: Literal = { kind: ExprKind.Literal, value: '42' }
+    expect(lit.value).toBe('42')
     expect(describeExpr(lit)).toBe('literal:42')
   })
 
-  test('RawExpr has x field', () => {
-    const raw: RawExpr = { kind: ExprKind.RawExpr, x: 'uuid()' }
-    expect(raw.x).toBe('uuid()')
+  test('RawExpr has expr field', () => {
+    const raw: RawExpr = { kind: ExprKind.RawExpr, expr: 'uuid()' }
+    expect(raw.expr).toBe('uuid()')
     expect(describeExpr(raw)).toBe('raw:uuid()')
   })
 
   test('NamedDefault uses ObjectKind.NamedDefault as kind', () => {
-    const lit: Literal = { kind: ExprKind.Literal, v: '0' }
+    const lit: Literal = { kind: ExprKind.Literal, value: '0' }
     const nd: NamedDefault = { kind: ObjectKind.NamedDefault, name: 'seq_next', expr: lit }
     expect(nd.kind).toBe('NamedDefault')
     expect(nd.expr).toBe(lit)
@@ -116,7 +116,7 @@ describe('Expr', () => {
   })
 
   test('NamedDefault.expr is typed as Literal | RawExpr (not full Expr union)', () => {
-    const lit: Literal = { kind: ExprKind.Literal, v: '1' }
+    const lit: Literal = { kind: ExprKind.Literal, value: '1' }
     const nd: NamedDefault = { kind: ObjectKind.NamedDefault, name: 'n', expr: lit }
     expect(nd.expr.kind).toBe(ExprKind.Literal)
   })
@@ -127,8 +127,8 @@ describe('Expr', () => {
 function describeAttr(a: Attr): string {
   switch (a.kind) {
     case AttrKind.Comment: return `comment:${a.text}`
-    case AttrKind.Charset: return `charset:${a.v}`
-    case AttrKind.Collation: return `collation:${a.v}`
+    case AttrKind.Charset: return `charset:${a.value}`
+    case AttrKind.Collation: return `collation:${a.value}`
     case AttrKind.Check: return `check:${a.expr}`
     case AttrKind.GeneratedExpr: return `gen:${a.expr}`
     default: {
@@ -165,17 +165,17 @@ describe('Attr', () => {
 
 function describeType(t: SchemaType): string {
   switch (t.kind) {
-    case TypeKind.BoolType: return `bool:${t.t}`
-    case TypeKind.IntegerType: return `int:${t.t}`
-    case TypeKind.DecimalType: return `decimal:${t.t}`
-    case TypeKind.FloatType: return `float:${t.t}`
-    case TypeKind.StringType: return `string:${t.t}`
-    case TypeKind.BinaryType: return `binary:${t.t}`
-    case TypeKind.TimeType: return `time:${t.t}`
-    case TypeKind.JSONType: return `json:${t.t}`
-    case TypeKind.SpatialType: return `spatial:${t.t}`
-    case TypeKind.UUIDType: return `uuid:${t.t}`
-    case TypeKind.UnsupportedType: return `unsupported:${t.t}`
+    case TypeKind.BoolType: return `bool:${t.type}`
+    case TypeKind.IntegerType: return `int:${t.type}`
+    case TypeKind.DecimalType: return `decimal:${t.type}`
+    case TypeKind.FloatType: return `float:${t.type}`
+    case TypeKind.StringType: return `string:${t.type}`
+    case TypeKind.BinaryType: return `binary:${t.type}`
+    case TypeKind.TimeType: return `time:${t.type}`
+    case TypeKind.JSONType: return `json:${t.type}`
+    case TypeKind.SpatialType: return `spatial:${t.type}`
+    case TypeKind.UUIDType: return `uuid:${t.type}`
+    case TypeKind.UnsupportedType: return `unsupported:${t.type}`
     case TypeKind.EnumType: return `enum:${(t as EnumType).values.join(',')}`
     default:
       return `unknown:${(t as UnknownType).kind}`
@@ -184,12 +184,12 @@ function describeType(t: SchemaType): string {
 
 describe('SchemaType', () => {
   test('BoolType', () => {
-    const bt: BoolType = { kind: TypeKind.BoolType, t: 'boolean' }
+    const bt: BoolType = { kind: TypeKind.BoolType, type: 'boolean' }
     expect(describeType(bt)).toBe('bool:boolean')
   })
 
   test('IntegerType with unsigned', () => {
-    const it: IntegerType = { kind: TypeKind.IntegerType, t: 'bigint', unsigned: true }
+    const it: IntegerType = { kind: TypeKind.IntegerType, type: 'bigint', unsigned: true }
     expect(it.unsigned).toBe(true)
     expect(describeType(it)).toBe('int:bigint')
   })
@@ -199,9 +199,9 @@ describe('SchemaType', () => {
     expect(describeType(et)).toBe('enum:a,b')
   })
 
-  test('EnumType optional t and schema', () => {
-    const et: EnumType = { kind: TypeKind.EnumType, values: ['x'], t: 'status' }
-    expect(et.t).toBe('status')
+  test('EnumType optional type and schema', () => {
+    const et: EnumType = { kind: TypeKind.EnumType, values: ['x'], type: 'status' }
+    expect(et.type).toBe('status')
     expect(et.schema).toBeUndefined()
   })
 
@@ -215,15 +215,15 @@ describe('SchemaType', () => {
 
 describe('Schema interfaces', () => {
   test('ColumnType.null is optional boolean', () => {
-    const ct: ColumnType = { type: { kind: TypeKind.BoolType, t: 'bool' } }
+    const ct: ColumnType = { type: { kind: TypeKind.BoolType, type: 'bool' } }
     expect(ct.null).toBeUndefined()
-    const ctExplicitFalse: ColumnType = { type: { kind: TypeKind.BoolType, t: 'bool' }, null: false }
+    const ctExplicitFalse: ColumnType = { type: { kind: TypeKind.BoolType, type: 'bool' }, null: false }
     expect(ctExplicitFalse.null).toBe(false)
   })
 
   test('ColumnType with raw', () => {
     const ct: ColumnType = {
-      type: { kind: TypeKind.IntegerType, t: 'int' },
+      type: { kind: TypeKind.IntegerType, type: 'int' },
       raw: 'int',
       null: true,
     }
@@ -252,7 +252,7 @@ describe('Schema interfaces', () => {
     const nd: NamedDefault = {
       kind: ObjectKind.NamedDefault,
       name: 'seq',
-      expr: { kind: ExprKind.RawExpr, x: 'NEXT VALUE FOR seq' },
+      expr: { kind: ExprKind.RawExpr, expr: 'NEXT VALUE FOR seq' },
     }
     const asExpr: Expr = nd
     const asObj: SchemaObject = nd
@@ -261,15 +261,15 @@ describe('Schema interfaces', () => {
   })
 
   test('minimal object graph with plain object literals', () => {
-    const col: Column = { name: 'id', type: { type: { kind: TypeKind.IntegerType, t: 'int' }, null: false } }
-    const pk: Index = { kind: ObjectKind.Index, name: 'PRIMARY', unique: true, parts: [{ seqNo: 0, c: col }] }
+    const col: Column = { name: 'id', type: { type: { kind: TypeKind.IntegerType, type: 'int' }, null: false } }
+    const pk: Index = { kind: ObjectKind.Index, name: 'PRIMARY', unique: true, parts: [{ seqNo: 0, column: col }] }
     const tbl: Table = { kind: ObjectKind.Table, name: 'users', columns: [col], primaryKey: pk }
     const schema: Schema = { name: 'public', tables: [tbl] }
     const realm: Realm = { ddlapi: DDLAPI_VERSION, schemas: [schema] }
 
     expect(realm.schemas[0].name).toBe('public')
     expect(realm.schemas[0].tables?.[0].name).toBe('users')
-    expect(realm.schemas[0].tables?.[0].primaryKey?.parts?.[0].c).toBe(col)
+    expect(realm.schemas[0].tables?.[0].primaryKey?.parts?.[0].column).toBe(col)
   })
 
   test('Index.kind is ObjectKind.Index', () => {
@@ -401,7 +401,7 @@ describe('newPrimaryKey', () => {
     const pk = newPrimaryKey([id])
     expect(pk.parts).toHaveLength(1)
     expect(pk.parts?.[0].seqNo).toBe(0)
-    expect(pk.parts?.[0].c).toBe(id)   // same reference
+    expect(pk.parts?.[0].column).toBe(id)   // same reference
   })
 
   test('composite PK — seqNo 0,1,2', () => {
@@ -416,7 +416,7 @@ describe('newPrimaryKey', () => {
     const id = newColumn('id', { type: columnType(integerType('int')) })
     const pk = newPrimaryKey([id])
     const tbl = newTable('users', { columns: [id], primaryKey: pk })
-    expect(tbl.primaryKey?.parts?.[0].c).toBe(tbl.columns?.[0])
+    expect(tbl.primaryKey?.parts?.[0].column).toBe(tbl.columns?.[0])
   })
 })
 
@@ -424,22 +424,22 @@ describe('newIndexPart / newColumnPart / newExprPart', () => {
   test('newIndexPart defaults seqNo to 0', () => {
     const p = newIndexPart()
     expect(p.seqNo).toBe(0)
-    expect(p.c).toBeUndefined()
-    expect(p.x).toBeUndefined()
+    expect(p.column).toBeUndefined()
+    expect(p.expr).toBeUndefined()
   })
 
   test('newColumnPart wraps column', () => {
     const col = newColumn('name')
     const p = newColumnPart(col, { seqNo: 2 })
     expect(p.seqNo).toBe(2)
-    expect(p.c).toBe(col)
+    expect(p.column).toBe(col)
   })
 
-  test('newExprPart wraps expression', () => {
+  test('newExprPart wraps expr', () => {
     const x = rawExpr('lower(email)')
     const p = newExprPart(x)
     expect(p.seqNo).toBe(0)
-    expect(p.x).toBe(x)
+    expect(p.expr).toBe(x)
   })
 })
 
@@ -506,7 +506,7 @@ describe('type factories', () => {
   test('boolType', () => {
     const t = boolType('boolean')
     expect(t.kind).toBe(TypeKind.BoolType)
-    expect(t.t).toBe('boolean')
+    expect(t.type).toBe('boolean')
   })
 
   test('integerType with unsigned', () => {
@@ -560,9 +560,9 @@ describe('type factories', () => {
   })
 
   test('enumType as SchemaType and SchemaObject', () => {
-    const et = enumType(['a', 'b'], { t: 'mood' })
+    const et = enumType(['a', 'b'], { type: 'mood' })
     expect(et.kind).toBe(TypeKind.EnumType)
-    expect(et.t).toBe('mood')
+    expect(et.type).toBe('mood')
     const asType: SchemaType = et
     const asObj: SchemaObject = et
     expect(asType.kind).toBe(asObj.kind)
@@ -577,8 +577,8 @@ describe('attr factories', () => {
   })
 
   test('charset / collation', () => {
-    expect(charset('utf8mb4').v).toBe('utf8mb4')
-    expect(collation('utf8mb4_unicode_ci').v).toBe('utf8mb4_unicode_ci')
+    expect(charset('utf8mb4').value).toBe('utf8mb4')
+    expect(collation('utf8mb4_unicode_ci').value).toBe('utf8mb4_unicode_ci')
   })
 
   test('generatedExpr with type', () => {
@@ -598,13 +598,13 @@ describe('expr factories', () => {
   test('literal', () => {
     const l = literal('42')
     expect(l.kind).toBe(ExprKind.Literal)
-    expect(l.v).toBe('42')
+    expect(l.value).toBe('42')
   })
 
   test('rawExpr', () => {
     const r = rawExpr('uuid()')
     expect(r.kind).toBe(ExprKind.RawExpr)
-    expect(r.x).toBe('uuid()')
+    expect(r.expr).toBe('uuid()')
   })
 
   test('namedDefault', () => {
@@ -663,7 +663,7 @@ describe('full Realm graph via factories', () => {
     expect(realm.schemas[0].tables).toHaveLength(2)
 
     // PK part references same Column as table.columns
-    expect(users.primaryKey?.parts?.[0].c).toBe(users.columns?.[0])
+    expect(users.primaryKey?.parts?.[0].column).toBe(users.columns?.[0])
 
     // FK references same Column objects
     const fk = posts.foreignKeys?.[0]
@@ -671,7 +671,7 @@ describe('full Realm graph via factories', () => {
     expect(fk?.refColumns?.[0]).toBe(users.columns?.[0])
 
     // index part references same Column
-    expect(users.indexes?.[0].parts?.[0].c).toBe(users.columns?.[1])
+    expect(users.indexes?.[0].parts?.[0].column).toBe(users.columns?.[1])
 
     // nullable column
     expect(bio.type?.null).toBe(true)
@@ -749,7 +749,7 @@ describe('replaceOrAppendAttr', () => {
   test('round-trip: find → replace → find', () => {
     const attrs = replaceOrAppendAttr([comment('v1'), charset('utf8')], comment('v2'))
     expect(findAttr(attrs, AttrKind.Comment)?.text).toBe('v2')
-    expect(findAttr(attrs, AttrKind.Charset)?.v).toBe('utf8')
+    expect(findAttr(attrs, AttrKind.Charset)?.value).toBe('utf8')
   })
 })
 
@@ -778,7 +778,7 @@ describe('removeAttr', () => {
     expect(findAttr(attrs, AttrKind.Comment)?.text).toBe('hello')
     attrs = removeAttr(attrs, AttrKind.Comment)
     expect(findAttr(attrs, AttrKind.Comment)).toBeUndefined()
-    expect(findAttr(attrs, AttrKind.Charset)?.v).toBe('utf8')
+    expect(findAttr(attrs, AttrKind.Charset)?.value).toBe('utf8')
   })
 })
 
