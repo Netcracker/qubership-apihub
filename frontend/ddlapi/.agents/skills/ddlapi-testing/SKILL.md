@@ -58,7 +58,8 @@ about cross-statement interaction or errors, as `buildFromDdl.test.ts` does.
   string and cast to read extra properties:
 
   ```typescript
-  const ident = idCol.attrs!.find(a => a.kind === 'Identity') as { generation: string } | undefined
+  import { PgAttrKind } from '@netcracker/qubership-apihub-ddlapi'
+  const ident = idCol.attrs!.find(a => a.kind === PgAttrKind.Identity) as { generation: string } | undefined
   expect(ident!.generation).toBe('ALWAYS')
   ```
 
