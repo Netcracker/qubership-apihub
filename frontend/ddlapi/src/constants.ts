@@ -1,3 +1,67 @@
+/** Property name strings for every field in the ddlapi schema model. */
+export const DdlapiProperties = {
+  // Realm
+  Ddlapi:      'ddlapi',    // version stamp / type marker
+  Schemas:     'schemas',
+
+  // Schema
+  Tables:      'tables',
+
+  // Table / View / shared collections
+  Columns:     'columns',
+  Indexes:     'indexes',
+  PrimaryKey:  'primaryKey',
+  ForeignKeys: 'foreignKeys',
+  Objects:     'objects',
+  Attrs:       'attrs',
+  Deps:        'deps',
+
+  // Cross-cutting scalars
+  Kind:  'kind',
+  Name:  'name',
+
+  // ColumnType
+  Type: 'type',    // also SchemaType.type, GeneratedExpr.type   /* Atlas Go: T string */
+  Raw:  'raw',
+  Null: 'null',
+
+  // Column
+  Default: 'default',
+
+  // View
+  Def: 'def',
+
+  // Index
+  Unique: 'unique',
+  Parts:  'parts',
+
+  // IndexPart
+  SeqNo:  'seqNo',
+  Desc:   'desc',
+  Expr:   'expr',    // also RawExpr.expr, Check.expr, GeneratedExpr.expr  /* Atlas Go: X Expr */
+  Column: 'column',  // Atlas Go: C *Column
+
+  // ForeignKey
+  Symbol:     'symbol',
+  RefTable:   'refTable',
+  RefColumns: 'refColumns',
+  OnUpdate:   'onUpdate',
+  OnDelete:   'onDelete',
+
+  // SchemaType numerics / EnumType
+  Values:    'values',
+  Schema:    'schema',
+  Unsigned:  'unsigned',
+  Precision: 'precision',
+  Scale:     'scale',
+  Size:      'size',
+
+  // Attr members
+  Text:  'text',   // Comment.text
+  Value: 'value',  // Charset.value, Collation.value, Literal.value  /* Atlas Go: V string */
+} as const
+export type DdlapiProperties = typeof DdlapiProperties[keyof typeof DdlapiProperties]
+
 /** Discriminants for the SchemaObject union. Mirrors Go's Object marker interface (obj()). */
 export const ObjectKind = {
   Table:        'Table',

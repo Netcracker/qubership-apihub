@@ -3,7 +3,7 @@
 import { deparseSync } from 'pgsql-parser'
 import type { CreateStmt, RawStmt, Node, ColumnDef, Constraint, TableLikeClause } from '@pgsql/types'
 import { ObjectKind, AttrKind, ReferenceOption, DdlErrorKind } from '../../constants'
-import { PgAttrKind, PgObjectKind } from '../../postgres.constants'
+import { PgAttrKind, PgObjectKind, PgGeneratedExprType, PgIdentityGeneration, PgPartitionStrategy } from '../../postgres.constants'
 import type { Table, Column, ColumnType, Index, IndexPart, ForeignKey, SchemaObject } from '../../schema'
 import type { Attr } from '../../attrs'
 import type { Expr } from '../../exprs'
@@ -130,11 +130,11 @@ function buildColumn(
       const re = con.raw_expr as Node | undefined
       const genWhen = (con as Record<string, unknown>)['generated_when'] as string | undefined
       if (re) {
-        attrs.push(generatedExpr(exprToString(re), 'STORED'))
+        attrs.push(generatedExpr(exprToString(re), PgGeneratedExprType.Stored))
       }
     } else if (ct === 'CONSTR_IDENTITY') {
       const genWhen = (con as Record<string, unknown>)['generated_when'] as string | undefined
-      const generation = genWhen === 'a' ? 'ALWAYS' : 'BY DEFAULT'
+      const generation = genWhen === 'a' ? PgIdentityGeneration.Always : PgIdentityGeneration.ByDefault
       const options = (con as Record<string, unknown>)['options'] as Node[] | undefined
       let seqStart: number | undefined
       let seqIncrement: number | undefined
@@ -353,9 +353,9 @@ export function handleCreateTable(
   if (stmt.partspec) {
     const ps = stmt.partspec as Record<string, unknown>
     const strategy = ps['strategy'] as string | undefined
-    const T = strategy === 'PARTITION_STRATEGY_RANGE' ? 'RANGE'
-      : strategy === 'PARTITION_STRATEGY_LIST' ? 'LIST'
-        : 'HASH'
+    const T = strategy === 'PARTITION_STRATEGY_RANGE' ? PgPartitionStrategy.Range
+      : strategy === 'PARTITION_STRATEGY_LIST' ? PgPartitionStrategy.List
+        : PgPartitionStrategy.Hash
     const params = (ps['partParams'] as Node[] | undefined) ?? []
     const parts = params.map(p => {
       const pe = (p as Record<string, unknown>)['PartitionElem'] as Record<string, unknown> | undefined

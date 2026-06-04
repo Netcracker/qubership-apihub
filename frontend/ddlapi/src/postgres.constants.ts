@@ -30,6 +30,48 @@ export const PgTypeKind = {
 } as const
 export type PgTypeKind = typeof PgTypeKind[keyof typeof PgTypeKind]
 
+/** Default schema name in a PostgreSQL database. */
+export const PG_DEFAULT_SCHEMA = 'public'
+
+/** Values for GeneratedExpr.type (GENERATED … stored-vs-virtual). */
+export const PgGeneratedExprType = {
+  Stored:  'STORED',
+  Virtual: 'VIRTUAL',
+} as const
+export type PgGeneratedExprType = typeof PgGeneratedExprType[keyof typeof PgGeneratedExprType]
+
+/** Values for the Identity attr's `generation` field. */
+export const PgIdentityGeneration = {
+  Always:    'ALWAYS',
+  ByDefault: 'BY DEFAULT',
+} as const
+export type PgIdentityGeneration = typeof PgIdentityGeneration[keyof typeof PgIdentityGeneration]
+
+/** Partition strategy values for the Partition attr's `T` field. */
+export const PgPartitionStrategy = {
+  Range: 'RANGE',
+  List:  'LIST',
+  Hash:  'HASH',
+} as const
+export type PgPartitionStrategy = typeof PgPartitionStrategy[keyof typeof PgPartitionStrategy]
+
+/** Values for the Trigger attr's `timing` field. */
+export const PgTriggerTiming = {
+  Before:    'BEFORE',
+  After:     'AFTER',
+  InsteadOf: 'INSTEAD OF',
+} as const
+export type PgTriggerTiming = typeof PgTriggerTiming[keyof typeof PgTriggerTiming]
+
+/** Values for entries of the Trigger attr's `events` array. */
+export const PgTriggerEvent = {
+  Insert:   'INSERT',
+  Update:   'UPDATE',
+  Delete:   'DELETE',
+  Truncate: 'TRUNCATE',
+} as const
+export type PgTriggerEvent = typeof PgTriggerEvent[keyof typeof PgTriggerEvent]
+
 /**
  * PostgreSQL-specific SQL type name strings written into SchemaType.type.
  * ANSI SQL standard names shared across dialects live in SqlTypeName (constants.ts).

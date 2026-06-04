@@ -3,7 +3,7 @@
 import { deparseSync } from 'pgsql-parser'
 import type { CreateTrigStmt, RawStmt, Node } from '@pgsql/types'
 import { DdlErrorKind } from '../../constants'
-import { PgAttrKind } from '../../postgres.constants'
+import { PgAttrKind, PgTriggerTiming, PgTriggerEvent } from '../../postgres.constants'
 import type { Attr } from '../../attrs'
 import type { SchemaAccumulator } from '../schemaAccumulator'
 import { strVal, stmtRangeOf } from '../astHelpers'
@@ -36,13 +36,13 @@ export function handleCreateTrigger(
 
   // Decode timing
   const timingVal = stmt.timing ?? 0
-  let timing: 'BEFORE' | 'AFTER' | 'INSTEAD OF'
+  let timing: PgTriggerTiming
   if (timingVal === TIMING_INSTEAD) {
-    timing = 'INSTEAD OF'
+    timing = PgTriggerTiming.InsteadOf
   } else if (timingVal === TIMING_BEFORE) {
-    timing = 'BEFORE'
+    timing = PgTriggerTiming.Before
   } else {
-    timing = 'AFTER'
+    timing = PgTriggerTiming.After
   }
 
   // Find the target table
@@ -65,10 +65,10 @@ export function handleCreateTrigger(
   // Decode events bitmask
   const eventsVal = stmt.events ?? 0
   const events: string[] = []
-  if (eventsVal & EVENT_INSERT) events.push('INSERT')
-  if (eventsVal & EVENT_UPDATE) events.push('UPDATE')
-  if (eventsVal & EVENT_DELETE) events.push('DELETE')
-  if (eventsVal & EVENT_TRUNCATE) events.push('TRUNCATE')
+  if (eventsVal & EVENT_INSERT) events.push(PgTriggerEvent.Insert)
+  if (eventsVal & EVENT_UPDATE) events.push(PgTriggerEvent.Update)
+  if (eventsVal & EVENT_DELETE) events.push(PgTriggerEvent.Delete)
+  if (eventsVal & EVENT_TRUNCATE) events.push(PgTriggerEvent.Truncate)
 
   // Function name — list of String nodes
   const funcnameParts = (stmt.funcname ?? []) as Node[]

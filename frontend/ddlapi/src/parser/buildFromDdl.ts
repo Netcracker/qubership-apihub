@@ -6,6 +6,7 @@ import type {
   CreateEnumStmt, CompositeTypeStmt, CreateRangeStmt, CreateTrigStmt,
 } from '@pgsql/types'
 import { DdlErrorKind } from '../constants'
+import { PG_DEFAULT_SCHEMA } from '../postgres.constants'
 import { DDLAPI_VERSION } from '../schema'
 import type { SourceRange } from './positions'
 import { parseStatements, stmtTypeName, stmtBody } from './pgParser'
@@ -194,42 +195,42 @@ export async function buildFromDdl(ddl: string, options?: BuildFromDdlOptions): 
     switch (typeName) {
       case 'CreateStmt': {
         const stmt = stmtBody(rawStmt, 'CreateStmt') as CreateStmt | undefined
-        if (stmt) handleCreateTable(stmt, rawStmt, 'public', acc, onError)
+        if (stmt) handleCreateTable(stmt, rawStmt, PG_DEFAULT_SCHEMA, acc, onError)
         break
       }
       case 'IndexStmt': {
         const stmt = stmtBody(rawStmt, 'IndexStmt') as IndexStmt | undefined
-        if (stmt) handleCreateIndex(stmt, rawStmt, 'public', acc, onError)
+        if (stmt) handleCreateIndex(stmt, rawStmt, PG_DEFAULT_SCHEMA, acc, onError)
         break
       }
       case 'CommentStmt': {
         const stmt = stmtBody(rawStmt, 'CommentStmt') as CommentStmt | undefined
-        if (stmt) handleComment(stmt, rawStmt, 'public', acc, onError)
+        if (stmt) handleComment(stmt, rawStmt, PG_DEFAULT_SCHEMA, acc, onError)
         break
       }
       case 'CreateDomainStmt': {
         const stmt = stmtBody(rawStmt, 'CreateDomainStmt') as CreateDomainStmt | undefined
-        if (stmt) handleCreateDomain(stmt, rawStmt, 'public', acc, onError)
+        if (stmt) handleCreateDomain(stmt, rawStmt, PG_DEFAULT_SCHEMA, acc, onError)
         break
       }
       case 'CreateEnumStmt': {
         const stmt = stmtBody(rawStmt, 'CreateEnumStmt') as CreateEnumStmt | undefined
-        if (stmt) handleCreateEnum(stmt, rawStmt, 'public', acc, onError)
+        if (stmt) handleCreateEnum(stmt, rawStmt, PG_DEFAULT_SCHEMA, acc, onError)
         break
       }
       case 'CompositeTypeStmt': {
         const stmt = stmtBody(rawStmt, 'CompositeTypeStmt') as CompositeTypeStmt | undefined
-        if (stmt) handleCreateCompositeType(stmt, rawStmt, 'public', acc, onError)
+        if (stmt) handleCreateCompositeType(stmt, rawStmt, PG_DEFAULT_SCHEMA, acc, onError)
         break
       }
       case 'CreateRangeStmt': {
         const stmt = stmtBody(rawStmt, 'CreateRangeStmt') as CreateRangeStmt | undefined
-        if (stmt) handleCreateRangeType(stmt, rawStmt, 'public', acc, onError)
+        if (stmt) handleCreateRangeType(stmt, rawStmt, PG_DEFAULT_SCHEMA, acc, onError)
         break
       }
       case 'CreateTrigStmt': {
         const stmt = stmtBody(rawStmt, 'CreateTrigStmt') as CreateTrigStmt | undefined
-        if (stmt) handleCreateTrigger(stmt, rawStmt, 'public', acc, onError)
+        if (stmt) handleCreateTrigger(stmt, rawStmt, PG_DEFAULT_SCHEMA, acc, onError)
         break
       }
       default: {
