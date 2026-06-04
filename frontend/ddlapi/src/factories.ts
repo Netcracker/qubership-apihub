@@ -12,11 +12,11 @@ import type {
 } from './schema'
 import { DDLAPI_VERSION } from './schema'
 
+// All factory functions in this module are pure constructors — they build typed
+// objects directly from their arguments with no runtime validation.
+
 // ── Schema factories ─────────────────────────────────────────────────────────
 
-/**
- * @remarks Pure constructor — no runtime validation.
- */
 export function newRealm(
   schemas?: Schema[],
   props?: { attrs?: Attr[]; objects?: SchemaObject[] },
@@ -29,9 +29,6 @@ export function newRealm(
   }
 }
 
-/**
- * @remarks Pure constructor — no runtime validation.
- */
 export function newSchema(
   name: string,
   props?: {
@@ -48,9 +45,6 @@ export function newSchema(
   }
 }
 
-/**
- * @remarks Pure constructor — no runtime validation.
- */
 export function newTable(
   name: string,
   props?: {
@@ -74,9 +68,6 @@ export function newTable(
   }
 }
 
-/**
- * @remarks Pure constructor — no runtime validation.
- */
 export function newView(
   name: string,
   props?: {
@@ -98,9 +89,6 @@ export function newView(
 
 // ── Column / constraint factories ────────────────────────────────────────────
 
-/**
- * @remarks Pure constructor — no runtime validation.
- */
 export function columnType(
   type: SchemaType,
   opts?: { null?: boolean; raw?: string },
@@ -112,9 +100,6 @@ export function columnType(
   }
 }
 
-/**
- * @remarks Pure constructor — no runtime validation.
- */
 export function newColumn(
   name: string,
   props?: {
@@ -135,15 +120,11 @@ export function newColumn(
  * Shorthand for a nullable column with no dialect type known at construction time.
  * Uses `UnsupportedType('')` as a placeholder — callers that know the concrete type
  * should use `newColumn(name, { type: columnType(myType, { null: true }) })` instead.
- * @remarks Pure constructor — no runtime validation.
  */
 export function newNullableColumn(name: string): Column {
   return newColumn(name, { type: columnType(unsupportedType(''), { null: true }) })
 }
 
-/**
- * @remarks Pure constructor — no runtime validation.
- */
 export function newIndex(
   name?: string,
   props?: {
@@ -161,9 +142,6 @@ export function newIndex(
   }
 }
 
-/**
- * @remarks Pure constructor — no runtime validation.
- */
 export function newUniqueIndex(
   name: string,
   props?: { attrs?: Attr[]; parts?: IndexPart[] },
@@ -174,7 +152,6 @@ export function newUniqueIndex(
 /**
  * Creates a primary key index. Parts are auto-assigned sequential seqNo starting at 0.
  * Back-references on columns are NOT wired — see design decision §3.
- * @remarks Pure constructor — no runtime validation.
  */
 export function newPrimaryKey(columns: Column[]): Index {
   const parts: IndexPart[] = columns.map((column, i) => ({ seqNo: i, column }))
@@ -184,9 +161,6 @@ export function newPrimaryKey(columns: Column[]): Index {
   }
 }
 
-/**
- * @remarks Pure constructor — no runtime validation.
- */
 export function newIndexPart(props?: {
   seqNo?: number
   desc?: boolean
@@ -203,25 +177,16 @@ export function newIndexPart(props?: {
   }
 }
 
-/**
- * Mirrors Go's NewColumnPart. seqNo defaults to 0.
- * @remarks Pure constructor — no runtime validation.
- */
+/** Mirrors Go's NewColumnPart. seqNo defaults to 0. */
 export function newColumnPart(column: Column, props?: { seqNo?: number; desc?: boolean; attrs?: Attr[] }): IndexPart {
   return newIndexPart({ seqNo: props?.seqNo ?? 0, column, desc: props?.desc, attrs: props?.attrs })
 }
 
-/**
- * Mirrors Go's NewExprPart. seqNo defaults to 0.
- * @remarks Pure constructor — no runtime validation.
- */
+/** Mirrors Go's NewExprPart. seqNo defaults to 0. */
 export function newExprPart(expr: Expr, props?: { seqNo?: number; desc?: boolean; attrs?: Attr[] }): IndexPart {
   return newIndexPart({ seqNo: props?.seqNo ?? 0, expr, desc: props?.desc, attrs: props?.attrs })
 }
 
-/**
- * @remarks Pure constructor — no runtime validation.
- */
 export function newForeignKey(
   symbol?: string,
   props?: {
@@ -245,9 +210,6 @@ export function newForeignKey(
   }
 }
 
-/**
- * @remarks Pure constructor — no runtime validation.
- */
 export function newCheck(expr: string, name?: string): Check {
   return {
     kind: AttrKind.Check,
@@ -258,12 +220,10 @@ export function newCheck(expr: string, name?: string): Check {
 
 // ── Type factories ───────────────────────────────────────────────────────────
 
-/** @remarks Pure constructor — no runtime validation. */
 export function boolType(type: string): BoolType {
   return { kind: TypeKind.BoolType, type }
 }
 
-/** @remarks Pure constructor — no runtime validation. */
 export function integerType(type: string, opts?: { unsigned?: boolean; attrs?: Attr[] }): IntegerType {
   return {
     kind: TypeKind.IntegerType,
@@ -273,7 +233,6 @@ export function integerType(type: string, opts?: { unsigned?: boolean; attrs?: A
   }
 }
 
-/** @remarks Pure constructor — no runtime validation. */
 export function decimalType(type: string, opts?: { precision?: number; scale?: number; unsigned?: boolean }): DecimalType {
   return {
     kind: TypeKind.DecimalType,
@@ -284,7 +243,6 @@ export function decimalType(type: string, opts?: { precision?: number; scale?: n
   }
 }
 
-/** @remarks Pure constructor — no runtime validation. */
 export function floatType(type: string, opts?: { unsigned?: boolean; precision?: number }): FloatType {
   return {
     kind: TypeKind.FloatType,
@@ -294,7 +252,6 @@ export function floatType(type: string, opts?: { unsigned?: boolean; precision?:
   }
 }
 
-/** @remarks Pure constructor — no runtime validation. */
 export function stringType(type: string, opts?: { size?: number; attrs?: Attr[] }): StringType {
   return {
     kind: TypeKind.StringType,
@@ -304,7 +261,6 @@ export function stringType(type: string, opts?: { size?: number; attrs?: Attr[] 
   }
 }
 
-/** @remarks Pure constructor — no runtime validation. */
 export function binaryType(type: string, opts?: { size?: number }): BinaryType {
   return {
     kind: TypeKind.BinaryType,
@@ -313,7 +269,6 @@ export function binaryType(type: string, opts?: { size?: number }): BinaryType {
   }
 }
 
-/** @remarks Pure constructor — no runtime validation. */
 export function timeType(type: string, opts?: { precision?: number; scale?: number; attrs?: Attr[] }): TimeType {
   return {
     kind: TypeKind.TimeType,
@@ -324,27 +279,22 @@ export function timeType(type: string, opts?: { precision?: number; scale?: numb
   }
 }
 
-/** @remarks Pure constructor — no runtime validation. */
 export function jsonType(type: string): JSONType {
   return { kind: TypeKind.JSONType, type }
 }
 
-/** @remarks Pure constructor — no runtime validation. */
 export function spatialType(type: string): SpatialType {
   return { kind: TypeKind.SpatialType, type }
 }
 
-/** @remarks Pure constructor — no runtime validation. */
 export function uuidType(type: string): UUIDType {
   return { kind: TypeKind.UUIDType, type }
 }
 
-/** @remarks Pure constructor — no runtime validation. */
 export function unsupportedType(type: string): UnsupportedType {
   return { kind: TypeKind.UnsupportedType, type }
 }
 
-/** @remarks Pure constructor — no runtime validation. */
 export function enumType(
   values: string[],
   opts?: { type?: string; schema?: Schema; attrs?: Attr[] },
@@ -360,22 +310,18 @@ export function enumType(
 
 // ── Attr factories ───────────────────────────────────────────────────────────
 
-/** @remarks Pure constructor — no runtime validation. */
 export function comment(text: string): Comment {
   return { kind: AttrKind.Comment, text }
 }
 
-/** @remarks Pure constructor — no runtime validation. */
 export function charset(value: string): Charset {
   return { kind: AttrKind.Charset, value }
 }
 
-/** @remarks Pure constructor — no runtime validation. */
 export function collation(value: string): Collation {
   return { kind: AttrKind.Collation, value }
 }
 
-/** @remarks Pure constructor — no runtime validation. */
 export function generatedExpr(expr: string, type?: string): GeneratedExpr {
   return {
     kind: AttrKind.GeneratedExpr,
@@ -386,17 +332,14 @@ export function generatedExpr(expr: string, type?: string): GeneratedExpr {
 
 // ── Expr factories ───────────────────────────────────────────────────────────
 
-/** @remarks Pure constructor — no runtime validation. */
 export function literal(value: string): Literal {
   return { kind: ExprKind.Literal, value }
 }
 
-/** @remarks Pure constructor — no runtime validation. */
 export function rawExpr(expr: string): RawExpr {
   return { kind: ExprKind.RawExpr, expr }
 }
 
-/** @remarks Pure constructor — no runtime validation. */
 export function namedDefault(name: string, expr: Literal | RawExpr, attrs?: Attr[]): NamedDefault {
   return {
     kind: ObjectKind.NamedDefault,
