@@ -2,6 +2,8 @@
 
 import type { TypeName, Node } from '@pgsql/types'
 import type { SchemaType } from '../types'
+import { SqlTypeName } from '../constants'
+import { PgSqlTypeName } from '../postgres.constants'
 import {
   boolType, integerType, decimalType, floatType, stringType,
   binaryType, timeType, jsonType, spatialType, uuidType, unsupportedType,
@@ -30,26 +32,26 @@ function pgCatalog(pgName: string, typmods?: Node[]): SchemaType {
   const p0 = typmod(typmods, 0)
   const p1 = typmod(typmods, 1)
   switch (pgName) {
-    case 'bool':      return boolType('boolean')
-    case 'int2':      return integerType('smallint')
-    case 'int4':      return integerType('integer')
-    case 'int8':      return integerType('bigint')
-    case 'float4':    return floatType('real')
-    case 'float8':    return floatType('double precision')
-    case 'numeric':   return p0 !== undefined ? decimalType('numeric', { precision: p0, scale: p1 }) : decimalType('numeric')
-    case 'varchar':   return p0 !== undefined ? stringType('character varying', { size: p0 }) : stringType('character varying')
-    case 'bpchar':    return p0 !== undefined ? stringType('character', { size: p0 }) : stringType('character')
-    case 'text':      return stringType('text')
-    case 'bytea':     return binaryType('bytea')
-    case 'date':      return timeType('date')
-    case 'time':      return p0 !== undefined ? timeType('time', { precision: p0 }) : timeType('time')
-    case 'timetz':    return p0 !== undefined ? timeType('time', { precision: p0 }) : timeType('time')
-    case 'timestamp': return p0 !== undefined ? timeType('timestamp', { precision: p0 }) : timeType('timestamp')
-    case 'timestamptz': return p0 !== undefined ? timeType('timestamp', { precision: p0 }) : timeType('timestamp')
+    case 'bool':      return boolType(SqlTypeName.Boolean)
+    case 'int2':      return integerType(SqlTypeName.SmallInt)
+    case 'int4':      return integerType(SqlTypeName.Integer)
+    case 'int8':      return integerType(SqlTypeName.BigInt)
+    case 'float4':    return floatType(SqlTypeName.Real)
+    case 'float8':    return floatType(SqlTypeName.DoublePrecision)
+    case 'numeric':   return p0 !== undefined ? decimalType(SqlTypeName.Numeric, { precision: p0, scale: p1 }) : decimalType(SqlTypeName.Numeric)
+    case 'varchar':   return p0 !== undefined ? stringType(SqlTypeName.Varchar, { size: p0 }) : stringType(SqlTypeName.Varchar)
+    case 'bpchar':    return p0 !== undefined ? stringType(SqlTypeName.Char, { size: p0 }) : stringType(SqlTypeName.Char)
+    case 'text':      return stringType(PgSqlTypeName.Text)
+    case 'bytea':     return binaryType(PgSqlTypeName.Bytea)
+    case 'date':      return timeType(SqlTypeName.Date)
+    case 'time':      return p0 !== undefined ? timeType(SqlTypeName.Time, { precision: p0 }) : timeType(SqlTypeName.Time)
+    case 'timetz':    return p0 !== undefined ? timeType(SqlTypeName.Time, { precision: p0 }) : timeType(SqlTypeName.Time)
+    case 'timestamp': return p0 !== undefined ? timeType(SqlTypeName.Timestamp, { precision: p0 }) : timeType(SqlTypeName.Timestamp)
+    case 'timestamptz': return p0 !== undefined ? timeType(SqlTypeName.Timestamp, { precision: p0 }) : timeType(SqlTypeName.Timestamp)
     case 'interval':  return unsupportedType('interval')
-    case 'json':      return jsonType('json')
-    case 'jsonb':     return jsonType('jsonb')
-    case 'uuid':      return uuidType('uuid')
+    case 'json':      return jsonType(PgSqlTypeName.Json)
+    case 'jsonb':     return jsonType(PgSqlTypeName.Jsonb)
+    case 'uuid':      return uuidType(PgSqlTypeName.Uuid)
     case 'xml':       return unsupportedType('xml')
     case 'money':     return unsupportedType('money')
     case 'bit':       return unsupportedType(p0 !== undefined ? `bit(${p0})` : 'bit')
@@ -60,21 +62,21 @@ function pgCatalog(pgName: string, typmods?: Node[]): SchemaType {
     case 'macaddr8':  return unsupportedType('macaddr8')
     case 'tsvector':  return unsupportedType('tsvector')
     case 'tsquery':   return unsupportedType('tsquery')
-    case 'point':     return spatialType('point')
-    case 'line':      return spatialType('line')
-    case 'lseg':      return spatialType('lseg')
-    case 'box':       return spatialType('box')
-    case 'path':      return spatialType('path')
-    case 'polygon':   return spatialType('polygon')
-    case 'circle':    return spatialType('circle')
+    case 'point':     return spatialType(PgSqlTypeName.Point)
+    case 'line':      return spatialType(PgSqlTypeName.Line)
+    case 'lseg':      return spatialType(PgSqlTypeName.Lseg)
+    case 'box':       return spatialType(PgSqlTypeName.Box)
+    case 'path':      return spatialType(PgSqlTypeName.Path)
+    case 'polygon':   return spatialType(PgSqlTypeName.Polygon)
+    case 'circle':    return spatialType(PgSqlTypeName.Circle)
     default:          return unsupportedType(pgName)
   }
 }
 
 const SERIAL: Record<string, string> = {
-  smallserial: 'smallserial', serial2: 'smallserial',
-  serial: 'serial',           serial4: 'serial',
-  bigserial: 'bigserial',     serial8: 'bigserial',
+  smallserial: PgSqlTypeName.SmallSerial, serial2: PgSqlTypeName.SmallSerial,
+  serial:      PgSqlTypeName.Serial,      serial4: PgSqlTypeName.Serial,
+  bigserial:   PgSqlTypeName.BigSerial,   serial8: PgSqlTypeName.BigSerial,
 }
 
 /** Maps a pgsql-parser TypeName AST node to a ddlapi SchemaType. */

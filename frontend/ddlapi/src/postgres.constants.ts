@@ -29,3 +29,32 @@ export const PgTypeKind = {
   Domain: 'Domain',  // also in PgObjectKind
 } as const
 export type PgTypeKind = typeof PgTypeKind[keyof typeof PgTypeKind]
+
+/**
+ * PostgreSQL-specific SQL type name strings written into SchemaType.type.
+ * ANSI SQL standard names shared across dialects live in SqlTypeName (constants.ts).
+ */
+export const PgSqlTypeName = {
+  // StringType
+  Text:        'text',
+  // BinaryType
+  Bytea:       'bytea',
+  // JSONType
+  Json:        'json',
+  Jsonb:       'jsonb',
+  // UUIDType
+  Uuid:        'uuid',
+  // IntegerType — serial aliases (sugar for integer + sequence)
+  SmallSerial: 'smallserial',
+  Serial:      'serial',
+  BigSerial:   'bigserial',
+  // SpatialType
+  Point:       'point',
+  Line:        'line',
+  Lseg:        'lseg',
+  Box:         'box',
+  Path:        'path',
+  Polygon:     'polygon',
+  Circle:      'circle',
+} as const
+export type PgSqlTypeName = typeof PgSqlTypeName[keyof typeof PgSqlTypeName]

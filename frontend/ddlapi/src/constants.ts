@@ -54,6 +54,33 @@ export const DdlErrorKind = {
 export type DdlErrorKind = typeof DdlErrorKind[keyof typeof DdlErrorKind]
 
 /**
+ * Canonical SQL type name strings written into SchemaType.type.
+ * These are ANSI SQL standard names shared across dialects.
+ * PostgreSQL-only type names live in PgSqlTypeName (postgres.constants.ts).
+ */
+export const SqlTypeName = {
+  // BoolType
+  Boolean:          'boolean',
+  // IntegerType
+  SmallInt:         'smallint',
+  Integer:          'integer',
+  BigInt:           'bigint',
+  // FloatType
+  Real:             'real',
+  DoublePrecision:  'double precision',
+  // DecimalType
+  Numeric:          'numeric',
+  // StringType
+  Varchar:          'varchar',
+  Char:             'char',
+  // TimeType
+  Date:             'date',
+  Time:             'time',
+  Timestamp:        'timestamp',
+} as const
+export type SqlTypeName = typeof SqlTypeName[keyof typeof SqlTypeName]
+
+/**
  * Reference options (actions) specified by ON UPDATE and ON DELETE
  * subclauses of the FOREIGN KEY clause.
  */
