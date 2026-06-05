@@ -49,9 +49,9 @@ export function removeAttr<K extends Attr['kind']>(
  *
  * Use when you need the concrete expression value regardless of whether it is named.
  */
-export function underlyingExpr(x: Expr): Literal | RawExpr {
-  if (x.kind === ExprKind.Literal) return x as Literal
-  if (x.kind === ExprKind.RawExpr) return x as RawExpr
-  if (x.kind === ObjectKind.NamedDefault) return (x as NamedDefault).expr
-  throw new Error(`underlyingExpr: cannot unwrap UnknownExpr with kind '${x.kind}'`)
+export function underlyingExpr(expr: Expr): Literal | RawExpr {
+  if (expr.kind === ExprKind.Literal) return expr as Literal
+  if (expr.kind === ExprKind.RawExpr) return expr as RawExpr
+  if (expr.kind === ObjectKind.NamedDefault) return (expr as NamedDefault).expr
+  throw new Error(`underlyingExpr: cannot unwrap UnknownExpr with kind '${expr.kind}'`)
 }
