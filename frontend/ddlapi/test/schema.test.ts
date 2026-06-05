@@ -5,7 +5,7 @@ import {
   type Attr, type Comment, type Check,
   type SchemaType, type BoolType, type IntegerType, type EnumType, type UnknownType,
   type SchemaObject, type Realm, type Schema, type Table, type Column, type ColumnType,
-  type Index, type IndexPart, type ForeignKey, type View,
+  type Index, type ForeignKey,
   newRealm, newSchema, newTable, newView,
   newColumn, newNullableColumn, columnType, newIndex, newUniqueIndex, newPrimaryKey,
   newIndexPart, newColumnPart, newExprPart, newForeignKey, newCheck,
@@ -199,10 +199,9 @@ describe('SchemaType', () => {
     expect(describeType(et)).toBe('enum:a,b')
   })
 
-  test('EnumType optional type and schema', () => {
+  test('EnumType optional type', () => {
     const et: EnumType = { kind: TypeKind.EnumType, values: ['x'], type: 'status' }
     expect(et.type).toBe('status')
-    expect(et.schema).toBeUndefined()
   })
 
   test('UnknownType escape hatch', () => {

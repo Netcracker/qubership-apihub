@@ -48,9 +48,8 @@ export const DdlapiProperties = {
   OnUpdate:   'onUpdate',
   OnDelete:   'onDelete',
 
-  // SchemaType numerics / EnumType
+  // SchemaType numerics
   Values:    'values',
-  Schema:    'schema',
   Unsigned:  'unsigned',
   Precision: 'precision',
   Scale:     'scale',

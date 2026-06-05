@@ -297,13 +297,12 @@ export function unsupportedType(type: string): UnsupportedType {
 
 export function enumType(
   values: string[],
-  opts?: { type?: string; schema?: Schema; attrs?: Attr[] },
+  opts?: { type?: string; attrs?: Attr[] },
 ): EnumType {
   return {
     kind: TypeKind.EnumType,
     values,
     ...(opts?.type !== undefined && { type: opts.type }),
-    ...(opts?.schema !== undefined && { schema: opts.schema }),
     ...(opts?.attrs !== undefined && { attrs: opts.attrs }),
   }
 }

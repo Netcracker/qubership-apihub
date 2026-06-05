@@ -95,7 +95,6 @@ export function handleCreateCompositeType(
   const obj: SchemaObject = {
     kind: PgObjectKind.CompositeType,
     name: typeName,
-    schema: schemaName,
     fields,
   } as SchemaObject
 
@@ -160,7 +159,6 @@ export function handleCreateRangeType(
   const obj: SchemaObject = {
     kind: PgObjectKind.RangeType,
     name: typeName,
-    schema: schemaName,
     ...(subtype !== undefined && { subtype }),
     ...(Object.keys(rangeParams).length > 0 && { params: rangeParams }),
   } as SchemaObject

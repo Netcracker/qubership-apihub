@@ -1,5 +1,4 @@
 import type { Attr } from './attrs'
-import type { Schema } from './schema'
 import { TypeKind } from './constants'
 
 /**
@@ -39,8 +38,7 @@ export interface EnumType {
   type?: string
   /** Enum values. */
   values: string[]
-  /** Optional schema. */
-  schema?: Schema
+  // schema?: Schema  // back-ref to parent Schema — omitted; navigate top-down
   /** Extra attributes. */
   attrs?: Attr[]
 }
