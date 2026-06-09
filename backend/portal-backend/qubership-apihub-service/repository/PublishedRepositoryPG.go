@@ -475,7 +475,7 @@ func (p publishedRepositoryImpl) GetServiceOwner(workspaceId string, serviceName
 func (p publishedRepositoryImpl) validateMigrationResult(tx *pg.Tx, packageInfo view.PackageInfoFile, publishId string, version *entity.PublishedVersionEntity, content []*entity.PublishedContentEntity, contentData []*entity.PublishedContentDataEntity,
 	refs []*entity.PublishedReferenceEntity, src *entity.PublishedSrcEntity, operations []*entity.OperationEntity, operationData []*entity.OperationDataEntity, versionComparisons []*entity.VersionComparisonEntity, operationComparisons []*entity.OperationComparisonEntity, versionComparisonsFromCache []string,
 	versionInternalDocs []*entity.VersionInternalDocumentEntity, versionInternalDocData []*entity.VersionInternalDocumentDataEntity, comparisonInternalDocs []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocData []*entity.ComparisonInternalDocumentDataEntity,
-	operationSearchTexts []*entity.OperationSearchTextEntity) error {
+	operationSearchTexts []*entity.OperationSearchTextEntity, maxRevision int) error {
 	migrationRun := new(mEntity.MigrationRunEntity)
 
 	err := tx.Model(migrationRun).Where("id = ?", packageInfo.MigrationId).First()
@@ -823,45 +823,49 @@ func (p publishedRepositoryImpl) validateMigrationResult(tx *pg.Tx, packageInfo 
 		}
 	}
 
-	currentTable = "fts_operation_search_text"
-	oldSearchTexts := make([]entity.FtsOperationSearchTextEntity, 0)
-	err = tx.Model(&oldSearchTexts).
-		Where("package_id = ?", version.PackageId).
-		Where("version = ?", version.Version).
-		Where("revision = ?", version.Revision).
-		Select()
-	if err != nil {
-		return err
-	}
-	searchTextChanges := make(map[string]interface{}, 0)
-	matchedSearchTexts := make(map[string]struct{}, 0)
-	for _, s := range oldSearchTexts {
-		found := false
-		for _, t := range operationSearchTexts {
-			if s.OperationId == t.OperationId {
-				found = true
-				matchedSearchTexts[s.OperationId] = struct{}{}
-				oldSt := entity.OperationSearchTextEntity{SearchDataHash: s.SearchDataHash}
-				if stChanges := oldSt.GetChanges(entity.OperationSearchTextEntity{SearchDataHash: t.SearchDataHash}); len(stChanges) > 0 {
-					searchTextChanges[s.OperationId] = stChanges
-					changesOverview.setTableChanges(currentTable, stChanges)
-					continue
+	// fts_operation_search_text is stored only for the latest revision of a version
+	// so validate it only for the latest revision — otherwise non-latest revisions are falsely flagged as suspicious
+	if version.Revision == maxRevision {
+		currentTable = "fts_operation_search_text"
+		oldSearchTexts := make([]entity.FtsOperationSearchTextEntity, 0)
+		err = tx.Model(&oldSearchTexts).
+			Where("package_id = ?", version.PackageId).
+			Where("version = ?", version.Version).
+			Where("revision = ?", version.Revision).
+			Select()
+		if err != nil {
+			return err
+		}
+		searchTextChanges := make(map[string]interface{}, 0)
+		matchedSearchTexts := make(map[string]struct{}, 0)
+		for _, s := range oldSearchTexts {
+			found := false
+			for _, t := range operationSearchTexts {
+				if s.OperationId == t.OperationId {
+					found = true
+					matchedSearchTexts[s.OperationId] = struct{}{}
+					oldSt := entity.OperationSearchTextEntity{SearchDataHash: s.SearchDataHash}
+					if stChanges := oldSt.GetChanges(entity.OperationSearchTextEntity{SearchDataHash: t.SearchDataHash}); len(stChanges) > 0 {
+						searchTextChanges[s.OperationId] = stChanges
+						changesOverview.setTableChanges(currentTable, stChanges)
+						continue
+					}
 				}
 			}
+			if !found {
+				searchTextChanges[s.OperationId] = "search text not found in build archive"
+				changesOverview.setNotFoundEntry(currentTable)
+			}
 		}
-		if !found {
-			searchTextChanges[s.OperationId] = "search text not found in build archive"
-			changesOverview.setNotFoundEntry(currentTable)
+		for _, t := range operationSearchTexts {
+			if _, matched := matchedSearchTexts[t.OperationId]; !matched {
+				searchTextChanges[t.OperationId] = "unexpected search text (not found in database)"
+				changesOverview.setUnexpectedEntry(currentTable)
+			}
 		}
-	}
-	for _, t := range operationSearchTexts {
-		if _, matched := matchedSearchTexts[t.OperationId]; !matched {
-			searchTextChanges[t.OperationId] = "unexpected search text (not found in database)"
-			changesOverview.setUnexpectedEntry(currentTable)
+		if len(searchTextChanges) > 0 {
+			changes[currentTable] = searchTextChanges
 		}
-	}
-	if len(searchTextChanges) > 0 {
-		changes[currentTable] = searchTextChanges
 	}
 
 	if len(changes) > 0 {
@@ -1246,9 +1250,17 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 		}
 		utils.PerfLog(time.Since(start).Milliseconds(), 50, "CreateVersionWithData: insert version")
 
+		var maxRevision int
 		if packageInfo.MigrationBuild {
+			_, err = tx.Query(pg.Scan(&maxRevision),
+				`SELECT COALESCE(MAX(revision), 0) FROM published_version WHERE package_id = ? AND version = ? AND deleted_at IS NULL`,
+				version.PackageId, version.Version)
+			if err != nil {
+				return fmt.Errorf("failed to get max revision: %w", err)
+			}
+
 			start = time.Now()
-			err := p.validateMigrationResult(tx, packageInfo, buildId, version, content, data, refs, src, operations, operationsData, versionComparisons, operationComparisons, versionComparisonsFromCache, versionInternalDocEntities, versionInternalDocDataEntities, comparisonInternalDocEntities, comparisonInternalDocDataEntities, operationSearchTexts)
+			err := p.validateMigrationResult(tx, packageInfo, buildId, version, content, data, refs, src, operations, operationsData, versionComparisons, operationComparisons, versionComparisonsFromCache, versionInternalDocEntities, versionInternalDocDataEntities, comparisonInternalDocEntities, comparisonInternalDocDataEntities, operationSearchTexts, maxRevision)
 			if err != nil {
 				return fmt.Errorf("migration result validation failed: %v", err.Error())
 			}
@@ -1529,13 +1541,6 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 			} else if packageInfo.MigrationBuild {
 				// Store search texts in tmp table for selective recalculation at end of migration.
 				// Only populate for the latest revision of the version — older revisions are skipped.
-				var maxRevision int
-				_, err = tx.Query(pg.Scan(&maxRevision),
-					`SELECT COALESCE(MAX(revision), 0) FROM published_version WHERE package_id = ? AND version = ? AND deleted_at IS NULL`,
-					version.PackageId, version.Version)
-				if err != nil {
-					return fmt.Errorf("failed to get max revision for fts_operation_search_text: %w", err)
-				}
 				if version.Revision == maxRevision {
 					for _, st := range operationSearchTexts {
 						insertTmpQuery := fmt.Sprintf(`
