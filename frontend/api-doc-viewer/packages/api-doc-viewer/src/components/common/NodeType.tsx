@@ -15,7 +15,7 @@
  */
 
 import { isDiff } from '@netcracker/qubership-apihub-api-data-model'
-import { DiffAction } from '@netcracker/qubership-apihub-api-diff'
+import { Diff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import type { FC, ReactNode } from 'react'
 import { DEFAULT_STRIKETHROUGH_VALUE_CLASS, INLINE_CONTENT_DIFF_COLOR_SCHEMAS } from '../../consts/changes'
 import { NULLABLE_TYPE_SUFFIX_TEXT, UNKNOWN_TYPE_TEXT } from '../../consts/types'
@@ -26,6 +26,7 @@ import { PropsWithoutChangesSummary } from '../../types/PropsWithoutChangesSumma
 import { LayoutSide } from '../../types/internal/LayoutSide'
 import { PropsWithChanges } from '../../types/internal/PropsWithChanges'
 import {
+  diffRemove,
   diffReplace,
   getLayoutModeFlags,
   getLayoutSideFlags,
@@ -58,7 +59,8 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
     brokenRef,
     type,
     nullable,
-    entity,
+    title,
+    qualifier,
     combiner,
     // diffs
     layoutMode,
@@ -71,7 +73,6 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
 
   const filters = useChangeSeverityFilters()
 
-  const wrappedEntity = entity ? wrapAsEntity(entity) : null
   const resolvedNullableText = nullable ? NULLABLE_TYPE_SUFFIX_TEXT : null
 
   const $typeChange = isDiff($changes?.type) ? $changes?.type : undefined
@@ -130,7 +131,11 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
 
   let actualType: string | ReactNode = type
   let actualNullable: string | ReactNode = resolvedNullableText
-  let actualEntity: ReactNode | null = wrappedEntity
+  // Rendered as `<type>[(<qualifier>)][<<title>>]`, e.g. `string(date-time)<MyTitle>`:
+  // the qualifier (for a JSON type, its `format`) is a parenthesized suffix,
+  // title an angle-bracketed suffix after it.
+  let actualQualifier: ReactNode | null = hasText(qualifier) ? `(${qualifier})` : null
+  let actualTitle: ReactNode | null = hasText(title) ? `<${title}>` : null
   if (!isDocumentLayoutMode) {
     // Node Type
     if (isSideBySideDiffsLayoutMode) {
@@ -369,162 +374,178 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
       }
     }
 
-    // Entity
-    const entityRemoved = formatRemoved || titleRemoved
-    const entityAdded = formatAdded || titleAdded
-    const entityReplaced = formatReplaced || titleReplaced
-
-    const diffTypeForEntityIncluded = diffTypeForFormatIncluded || diffTypeForTitleIncluded
-
-    if (isSideBySideDiffsLayoutMode) {
-      let diffStyles: unknown = null
-      if (entityRemoved) {
-        if (originSide) {
-          diffStyles = classes(
-            getIf(
-              diffTypeForEntityIncluded && contentChangesStrikethrough,
-              DEFAULT_STRIKETHROUGH_VALUE_CLASS
-            ),
-            getIf(
-              diffTypeForEntityIncluded && contentChangesColorizing,
-              INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove]
-            )
-          )
-          actualEntity =
-            <div className={`inline ${diffStyles}`}>
-              {wrappedEntity}
-            </div>
-        }
-        if (changedSide) {
-          actualEntity = null
-        }
-      }
-      if (entityAdded) {
-        if (originSide) {
-          actualEntity = null
-        }
-        if (changedSide) {
-          diffStyles = getIf(
-            diffTypeForEntityIncluded && contentChangesColorizing,
-            INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.add]
-          )
-          actualEntity =
-            <div className={`inline ${diffStyles}`}>
-              {wrappedEntity}
-            </div>
-        }
-      }
-      if (entityReplaced) {
-        if (originSide) {
-          diffStyles = classes(
-            getIf(
-              diffTypeForEntityIncluded && contentChangesStrikethrough,
-              DEFAULT_STRIKETHROUGH_VALUE_CLASS
-            ),
-            getIf(
-              diffTypeForEntityIncluded && contentChangesColorizing,
-              INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove]
-            )
-          )
-          const replacedFormatValue =
-            diffReplace($formatChange)
-              ? $formatChange.beforeValue
-              : undefined
-          const replacedTitleValue =
-            diffReplace($titleChange)
-              ? $titleChange.beforeValue
-              : undefined
-          actualEntity =
-            <div className={`inline ${diffStyles}`}>
-              {wrapAsEntity(replacedFormatValue ?? replacedTitleValue)}
-            </div>
-        }
-        if (changedSide) {
-          diffStyles = getIf(
-            diffTypeForEntityIncluded && contentChangesColorizing,
-            INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.add]
-          )
-          actualEntity =
-            <div className={`inline ${diffStyles}`}>
-              {wrappedEntity}
-            </div>
-        }
-      }
+    // The qualifier (`(...)`) and title (`<...>`) are independent suffix tokens,
+    // each colorized as a whole (including its decoration) by its own change.
+    // For a JSON type the qualifier slot is fed from the `format` keyword's change.
+    const titleInput: QualifierPartInput = {
+      value: title,
+      beforeValue: beforeValueOf($titleChange),
+      added: titleAdded,
+      removed: titleRemoved,
+      replaced: titleReplaced,
+      included: diffTypeForTitleIncluded,
+    }
+    const qualifierInput: QualifierPartInput = {
+      value: qualifier,
+      beforeValue: beforeValueOf($formatChange),
+      added: formatAdded,
+      removed: formatRemoved,
+      replaced: formatReplaced,
+      included: diffTypeForFormatIncluded,
     }
 
-    if (isInlineDiffsLayoutMode) {
-      if (entityRemoved) {
-        const diffStylesBefore = classes(
-          getIf(
-            diffTypeForEntityIncluded && contentChangesStrikethrough,
-            DEFAULT_STRIKETHROUGH_VALUE_CLASS
-          ),
-          getIf(
-            diffTypeForEntityIncluded && contentChangesColorizing,
-            INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove]
-          )
-        )
-        actualEntity =
-          <div className={`inline ${diffStylesBefore}`}>
-            {wrappedEntity}
-          </div>
-      }
-      if (entityAdded) {
-        const diffStylesAfter = getIf(
-          diffTypeForEntityIncluded && contentChangesColorizing,
-          INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.add]
-        )
-        actualEntity =
-          <div className={`inline ${diffStylesAfter}`}>
-            {wrappedEntity}
-          </div>
-      }
-      if (entityReplaced) {
-        const diffStylesBefore = classes(
-          getIf(
-            diffTypeForEntityIncluded && contentChangesStrikethrough,
-            DEFAULT_STRIKETHROUGH_VALUE_CLASS
-          ),
-          getIf(
-            diffTypeForEntityIncluded && contentChangesColorizing,
-            INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove]
-          )
-        )
-        const diffStylesAfter = getIf(
-          diffTypeForEntityIncluded && contentChangesColorizing,
-          INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.add]
-        )
-        const replacedFormatValue =
-          diffReplace($formatChange)
-            ? $formatChange.beforeValue
-            : undefined
-        const replacedTitleValue =
-          diffReplace($titleChange)
-            ? $titleChange.beforeValue
-            : undefined
-        actualEntity = <>
-          <div className={`inline ${diffStylesBefore}`}>
-            {wrapAsEntity(replacedFormatValue ?? replacedTitleValue)}
-          </div>
-          <div className={`inline ${diffStylesAfter}`}>
-            {wrappedEntity}
-          </div>
-        </>
-      }
-    }
+    actualTitle = renderScalarDiff({
+      input: titleInput,
+      decorate: (text) => `<${text}>`,
+      isSideBySide: isSideBySideDiffsLayoutMode,
+      isInline: isInlineDiffsLayoutMode,
+      originSide,
+      colorizing: contentChangesColorizing,
+      strikethrough: contentChangesStrikethrough,
+    })
+    actualQualifier = renderScalarDiff({
+      input: qualifierInput,
+      decorate: (text) => `(${text})`,
+      isSideBySide: isSideBySideDiffsLayoutMode,
+      isInline: isInlineDiffsLayoutMode,
+      originSide,
+      colorizing: contentChangesColorizing,
+      strikethrough: contentChangesStrikethrough,
+    })
   }
 
   return (
     <div className="inline-flex flex-row gap-1 items-center">
-      {brokenRef && <WarningIcon/>}
-      {actualType && <div className="inline">{actualType}{actualEntity} {showNullable ? actualNullable : null}</div>}
+      {brokenRef && <WarningIcon />}
+      {actualType && <div className="inline">{actualType}{actualQualifier}{actualTitle} {showNullable ? actualNullable : null}</div>}
       {combiner && <div className="inline">({combiner})</div>}
     </div>
   )
 }
 
-function wrapAsEntity(entity: unknown): ReactNode {
-  return <>{'<'}{entity}{'>'}</>
+type QualifierPartInput = {
+  value: string | undefined        // after-state value of this part
+  beforeValue: string | undefined  // before-state value (for remove/replace)
+  added: boolean
+  removed: boolean
+  replaced: boolean
+  included: boolean                // is this part's change included by the active filters
+}
+
+// non-null and not blank (treats empty / whitespace-only as absent)
+function hasText(value: string | undefined): value is string {
+  return !!value && value.trim().length > 0
+}
+
+function beforeValueOf(change?: Diff): string | undefined {
+  if (diffRemove(change) || diffReplace(change)) {
+    return typeof change.beforeValue === 'string' ? change.beforeValue : undefined
+  }
+  return undefined
+}
+
+function partStyles(
+  included: boolean,
+  colorizing: boolean,
+  strikethrough: boolean,
+): { removeCls: string; addCls: string } {
+  const removeCls = classes(
+    getIf(included && strikethrough, DEFAULT_STRIKETHROUGH_VALUE_CLASS),
+    getIf(included && colorizing, INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove]),
+  )
+  const addCls = getIf(included && colorizing, INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.add]) ?? ''
+  return { removeCls, addCls }
+}
+
+function styledText(text: string, cls: string): ReactNode {
+  return <span className={`inline ${cls}`.trimEnd()}>{text}</span>
+}
+
+function joinInlineFragments(fragments: ReactNode[]): ReactNode {
+  const out: ReactNode[] = []
+  fragments.forEach((fragment, index) => {
+    if (index > 0) {
+      out.push(<span key={`gap-${index}`} className="inline">{' '}</span>)
+    }
+    out.push(<span key={`frag-${index}`} className="inline">{fragment}</span>)
+  })
+  return <span className="inline">{out}</span>
+}
+
+// Renders a single decorated scalar token (the title `<...>` or the qualifier `(...)`),
+// colorizing the whole decorated token by its own change.
+function renderScalarDiff(params: {
+  input: QualifierPartInput
+  decorate: (text: string) => string
+  isSideBySide: boolean
+  isInline: boolean
+  originSide: boolean
+  colorizing: boolean
+  strikethrough: boolean
+}): ReactNode | null {
+  const { input, decorate, isSideBySide, isInline, originSide, colorizing, strikethrough } = params
+  const { value, beforeValue, added, removed, replaced, included } = input
+  const { removeCls, addCls } = partStyles(included, colorizing, strikethrough)
+
+  // Renders one decorated token, or null when the value is absent / blank.
+  const renderToken = (raw: string | undefined, cls: string): ReactNode | null =>
+    hasText(raw) ? styledText(decorate(raw), cls) : null
+
+  if (isSideBySide) {
+    if (originSide) {
+      // origin shows the BEFORE state
+      if (added) {
+        return null
+      }
+      if (removed) {
+        return renderToken(beforeValue ?? value, removeCls)
+      }
+      if (replaced) {
+        return renderToken(beforeValue, removeCls)
+      }
+      return renderToken(value, '')
+    }
+    // changed side shows the AFTER state
+    if (removed) {
+      return null
+    }
+    if (added || replaced) {
+      return renderToken(value, addCls)
+    }
+    return renderToken(value, '')
+  }
+
+  if (isInline) {
+    const fragments: ReactNode[] = []
+    if (added) {
+      const after = renderToken(value, addCls)
+      if (after) {
+        fragments.push(after)
+      }
+    } else if (removed) {
+      const before = renderToken(beforeValue ?? value, removeCls)
+      if (before) {
+        fragments.push(before)
+      }
+    } else if (replaced) {
+      const before = renderToken(beforeValue, removeCls)
+      const after = renderToken(value, addCls)
+      if (before) {
+        fragments.push(before)
+      }
+      if (after) {
+        fragments.push(after)
+      }
+    } else {
+      const neutral = renderToken(value, '')
+      if (neutral) {
+        fragments.push(neutral)
+      }
+    }
+    return fragments.length > 0 ? joinInlineFragments(fragments) : null
+  }
+
+  return null
 }
 
 function getIf<T>(condition: boolean, value: T | undefined): T | null {

@@ -111,8 +111,9 @@ export function buildNodeTypeData(options: JsonNodeTypeDataOptions | GraphNodeTy
   const brokenRef = isRefNode(node) && node?.meta && 'brokenRef' in node.meta ? `${node.meta.brokenRef}` : undefined
   const type = brokenRef ? `$ref: ${brokenRef}` : $nodeValue?.type ?? UNKNOWN_TYPE_TEXT
   const nullable = nodeValue?.nullable
-  const entity = (nodeValue as IJsonSchemaStringType)?.format ?? $nodeValue?.title
+  const title = $nodeValue?.title
+  const qualifier = (nodeValue as IJsonSchemaStringType)?.format
   const combiner = isCombiner ? originalNode?.type : ''
 
-  return { brokenRef, type, nullable, entity, combiner }
+  return { brokenRef, type, nullable, title, qualifier, combiner }
 }
