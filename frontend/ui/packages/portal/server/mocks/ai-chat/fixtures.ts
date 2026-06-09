@@ -1,14 +1,13 @@
+import { buildOverviewFixtureMarkdown } from './markdownSamples'
 import type { ChatState } from './store'
 import type { AiChat, AiChatMessage } from './types'
 
 // Deterministic UUIDs so tests and manual curl calls can reference the
 // same chat across restarts.
-export const FIXTURE_PINNED_CHAT_ID = 'fc000001-0000-4000-8000-000000000001'
-export const FIXTURE_WITH_HISTORY_CHAT_ID = 'fc000001-0000-4000-8000-000000000002'
+export const FIXTURE_CUSTOMERS_CHAT_ID = 'fc000001-0000-4000-8000-000000000001'
+export const FIXTURE_OVERVIEW_CHAT_ID = 'fc000001-0000-4000-8000-000000000002'
 export const FIXTURE_RECENT_CHAT_ID = 'fc000001-0000-4000-8000-000000000003'
-export const FIXTURE_EMPTY_CHAT_ID = 'fc000001-0000-4000-8000-000000000004'
-export const FIXTURE_OLD_CHAT_ID = 'fc000001-0000-4000-8000-000000000005'
-/** 120 user + 120 assistant (newest-first: Response #120 / Request #120 ... #1). See server/README.md. */
+// 120 user + 120 assistant
 export const FIXTURE_PAGINATION_120_CHAT_ID = 'fc000001-0000-4000-8000-0000000000b0'
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -31,27 +30,6 @@ function makeMessage(
     content: partial.content,
     createdAt: partial.createdAt,
   }
-}
-
-// Helper that produces N alternating user/assistant messages, newest-first,
-// spaced 60 seconds apart, oldest starting at `startOffsetMs` from REFERENCE.
-function buildPaginationHistory(chatId: string, count: number): AiChatMessage[] {
-  const messages: AiChatMessage[] = []
-  // Start oldest at 10 days back, 60 s apart -> newest at ~10d - count*60s.
-  const base = -10 * DAY_MS
-  for (let i = 0; i < count; i++) {
-    const role = i % 2 === 0 ? 'user' : 'assistant'
-    const createdAt = iso(base + i * 60_000)
-    const messageId = `${chatId}-msg-${String(i).padStart(3, '0')}`
-    const content = role === 'user'
-      ? `Historical question ${i + 1} about REST API operations.`
-      : `Historical assistant answer ${
-        i + 1
-      } demonstrating multiline\nmarkdown **content** with an inline \`code\` snippet.`
-    messages.push(makeMessage({ messageId, role, content, createdAt }))
-  }
-  // Newest first.
-  return messages.reverse()
 }
 
 // 120 user + 120 assistant: chronological U1,R1,... U120,R120; #1 is oldest pair.
@@ -108,21 +86,20 @@ export function buildFixtureChats(): ChatState[] {
     messages: pagination120Messages,
   })
 
-  const pinned = makeChatState({
-    chatId: FIXTURE_PINNED_CHAT_ID,
-    title: 'Pinned: customer operations exploration',
-    pinned: true,
+  const customers = makeChatState({
+    chatId: FIXTURE_CUSTOMERS_CHAT_ID,
+    title: 'Customer operations exploration',
     createdAt: iso(-3 * DAY_MS),
     lastMessageAt: iso(-1 * DAY_MS),
     messages: [
       makeMessage({
-        messageId: 'pin-m2',
+        messageId: 'customers-m2',
         role: 'assistant',
         content: 'Here are three relevant operations in the **Customers** package.',
         createdAt: iso(-1 * DAY_MS),
       }),
       makeMessage({
-        messageId: 'pin-m1',
+        messageId: 'customers-m1',
         role: 'user',
         content: 'Find API operations related to customers.',
         createdAt: iso(-1 * DAY_MS - 30_000),
@@ -130,12 +107,27 @@ export function buildFixtureChats(): ChatState[] {
     ],
   })
 
-  const withHistory = makeChatState({
-    chatId: FIXTURE_WITH_HISTORY_CHAT_ID,
-    title: 'Pagination sample (40 messages)',
-    createdAt: iso(-10 * DAY_MS),
-    lastMessageAt: iso(-10 * DAY_MS + 39 * 60_000),
-    messages: buildPaginationHistory(FIXTURE_WITH_HISTORY_CHAT_ID, 40),
+  const overviewContent = buildOverviewFixtureMarkdown()
+  const overview = makeChatState({
+    chatId: FIXTURE_OVERVIEW_CHAT_ID,
+    title: 'Overview',
+    pinned: true,
+    createdAt: iso(-5 * DAY_MS),
+    lastMessageAt: iso(-4 * DAY_MS),
+    messages: [
+      makeMessage({
+        messageId: 'overview-a1',
+        role: 'assistant',
+        content: overviewContent,
+        createdAt: iso(-4 * DAY_MS),
+      }),
+      makeMessage({
+        messageId: 'overview-u1',
+        role: 'user',
+        content: 'Show the full markdown rendering gallery.',
+        createdAt: iso(-4 * DAY_MS - 30_000),
+      }),
+    ],
   })
 
   const recent = makeChatState({
@@ -159,34 +151,5 @@ export function buildFixtureChats(): ChatState[] {
     ],
   })
 
-  const empty = makeChatState({
-    chatId: FIXTURE_EMPTY_CHAT_ID,
-    title: '',
-    createdAt: iso(-5 * 60 * 1000),
-    lastMessageAt: iso(-5 * 60 * 1000),
-    messages: [],
-  })
-
-  const old = makeChatState({
-    chatId: FIXTURE_OLD_CHAT_ID,
-    title: 'Archived exploration (low activity)',
-    createdAt: iso(-30 * DAY_MS),
-    lastMessageAt: iso(-20 * DAY_MS),
-    messages: [
-      makeMessage({
-        messageId: 'old-m2',
-        role: 'assistant',
-        content: 'Sure, the `GET /health` probe is defined at the platform level.',
-        createdAt: iso(-20 * DAY_MS),
-      }),
-      makeMessage({
-        messageId: 'old-m1',
-        role: 'user',
-        content: 'Does the platform expose a health probe?',
-        createdAt: iso(-20 * DAY_MS - 30_000),
-      }),
-    ],
-  })
-
-  return [pagination120, pinned, withHistory, recent, empty, old]
+  return [pagination120, overview, customers, recent]
 }

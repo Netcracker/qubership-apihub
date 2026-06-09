@@ -4,9 +4,9 @@ import { Resizable, type ResizeCallback } from 're-resizable'
 import { type FC, useCallback, useState } from 'react'
 
 import { APP_HEADER_HEIGHT } from '@netcracker/qubership-apihub-ui-shared/themes/components'
-import { AI_ASSISTANT_HISTORY_SCREEN, useAiAssistantContext } from './state/AiAssistantContext'
-import { AiAssistantChatScreen } from './ui/chat/AiAssistantChatScreen'
-import { AiAssistantHistoryScreen } from './ui/history/AiAssistantHistoryScreen'
+import { PANEL_SCREEN_HISTORY, usePanel } from './state/panelContext'
+import { ChatScreen } from './ui/screens/ChatScreen'
+import { HistoryScreen } from './ui/screens/HistoryScreen'
 
 const AI_ASSISTANT_PANEL_WIDTH_STORAGE_KEY = 'apihub.aiAssistant.panelWidth'
 const AI_ASSISTANT_PANEL_MIN_WIDTH = 360
@@ -43,7 +43,7 @@ const DRAWER_LAYOUT_STYLES = {
 }
 
 export const AiAssistantPanel: FC = () => {
-  const { open, closePanel, screen } = useAiAssistantContext()
+  const { open, closePanel, screen } = usePanel()
   const [panelWidth, setPanelWidth] = useState(readStoredPanelWidth)
 
   const handleResizeStop: ResizeCallback = useCallback((_event, _direction, elementRef) => {
@@ -68,7 +68,7 @@ export const AiAssistantPanel: FC = () => {
         onResizeStop={handleResizeStop}
       >
         <PanelContainer data-testid="AiAssistantPanel">
-          {screen === AI_ASSISTANT_HISTORY_SCREEN ? <AiAssistantHistoryScreen /> : <AiAssistantChatScreen />}
+          {screen === PANEL_SCREEN_HISTORY ? <HistoryScreen /> : <ChatScreen />}
         </PanelContainer>
       </Resizable>
     </StyledDrawer>

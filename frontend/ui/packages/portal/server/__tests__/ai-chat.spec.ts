@@ -3,16 +3,14 @@ import request from 'supertest'
 
 import { createApp } from '../createApp'
 import { MAGIC_EXPIRED_FILE_ID, MAGIC_MISSING_FILE_ID, MOCK_FILE_DOWNLOAD_TOKEN } from '../mocks/ai-chat/constants'
+import { MOCK_ATTACHMENT_FILE_ID } from '../mocks/ai-chat/ephemeralFileUrl'
 import {
   buildFixtureChats,
-  FIXTURE_EMPTY_CHAT_ID,
-  FIXTURE_OLD_CHAT_ID,
+  FIXTURE_OVERVIEW_CHAT_ID,
   FIXTURE_PAGINATION_120_CHAT_ID,
-  FIXTURE_PINNED_CHAT_ID,
+  FIXTURE_CUSTOMERS_CHAT_ID,
   FIXTURE_RECENT_CHAT_ID,
-  FIXTURE_WITH_HISTORY_CHAT_ID,
 } from '../mocks/ai-chat/fixtures'
-import { MOCK_ATTACHMENT_FILE_ID } from '../mocks/ai-chat/ephemeralFileUrl'
 import { aiChatStore } from '../mocks/ai-chat/store'
 import type {
   AiChat,
@@ -73,9 +71,9 @@ describe('AI Chat mock server - GET /chats', () => {
   it('lists all seeded chats with pinned first', async () => {
     const res = await request(app).get(`${BASE}/chats`).expect(200)
     const body = res.body as AiChatsListResponse
-    expect(body.chats.length).toBe(6)
+    expect(body.chats.length).toBe(4)
     expect(body.hasMore).toBe(false)
-    expect(body.chats[0].chatId).toBe(FIXTURE_PINNED_CHAT_ID)
+    expect(body.chats[0].chatId).toBe(FIXTURE_OVERVIEW_CHAT_ID)
     expect(body.chats[0].pinned).toBe(true)
     const unpinnedPart = body.chats.slice(1)
     // Within unpinned, order must be lastMessageAt desc.
@@ -132,8 +130,8 @@ describe('AI Chat mock server - POST /chats', () => {
 
 describe('AI Chat mock server - GET/PATCH/DELETE /chats/:id', () => {
   it('GET returns the chat', async () => {
-    const res = await request(app).get(`${BASE}/chats/${FIXTURE_PINNED_CHAT_ID}`).expect(200)
-    expect((res.body as AiChat).chatId).toBe(FIXTURE_PINNED_CHAT_ID)
+    const res = await request(app).get(`${BASE}/chats/${FIXTURE_CUSTOMERS_CHAT_ID}`).expect(200)
+    expect((res.body as AiChat).chatId).toBe(FIXTURE_CUSTOMERS_CHAT_ID)
   })
 
   it('GET returns APIHUB-AI-3001 / 404 for unknown chat', async () => {
@@ -172,12 +170,12 @@ describe('AI Chat mock server - GET/PATCH/DELETE /chats/:id', () => {
       .send({ pinned: true })
       .expect(200)
     await request(app)
-      .patch(`${BASE}/chats/${FIXTURE_OLD_CHAT_ID}`)
+      .patch(`${BASE}/chats/${FIXTURE_CUSTOMERS_CHAT_ID}`)
       .send({ pinned: true })
       .expect(200)
     // Fourth pin must fail.
     const res = await request(app)
-      .patch(`${BASE}/chats/${FIXTURE_EMPTY_CHAT_ID}`)
+      .patch(`${BASE}/chats/${FIXTURE_PAGINATION_120_CHAT_ID}`)
       .send({ pinned: true })
       .expect(400)
     expect((res.body as AiChatErrorResponse).code).toBe('APIHUB-AI-4003')
@@ -197,12 +195,13 @@ describe('AI Chat mock server - GET/PATCH/DELETE /chats/:id', () => {
 describe('AI Chat mock server - GET /chats/:id/messages', () => {
   it('returns the newest page by default', async () => {
     const res = await request(app)
-      .get(`${BASE}/chats/${FIXTURE_WITH_HISTORY_CHAT_ID}/messages`)
+      .get(`${BASE}/chats/${FIXTURE_PAGINATION_120_CHAT_ID}/messages`)
       .query({ limit: 10 })
       .expect(200)
     const body = res.body as AiChatMessagesListResponse
     expect(body.messages.length).toBe(10)
     expect(body.hasMore).toBe(true)
+    expect(body.messages[0].content).toMatch(/Response #120/)
     // Newest first.
     for (let i = 1; i < body.messages.length; i++) {
       expect(body.messages[i - 1].createdAt >= body.messages[i].createdAt).toBe(true)
@@ -211,20 +210,33 @@ describe('AI Chat mock server - GET /chats/:id/messages', () => {
 
   it('keyset-paginates with the `before` cursor', async () => {
     const first = await request(app)
-      .get(`${BASE}/chats/${FIXTURE_WITH_HISTORY_CHAT_ID}/messages`)
+      .get(`${BASE}/chats/${FIXTURE_PAGINATION_120_CHAT_ID}/messages`)
       .query({ limit: 10 })
       .expect(200)
     const firstBody = first.body as AiChatMessagesListResponse
     const cursor = firstBody.messages[firstBody.messages.length - 1].createdAt
     const next = await request(app)
-      .get(`${BASE}/chats/${FIXTURE_WITH_HISTORY_CHAT_ID}/messages`)
+      .get(`${BASE}/chats/${FIXTURE_PAGINATION_120_CHAT_ID}/messages`)
       .query({ limit: 50, before: cursor })
       .expect(200)
     const nextBody = next.body as AiChatMessagesListResponse
     for (const m of nextBody.messages) {
       expect(m.createdAt < cursor).toBe(true)
     }
-    expect(nextBody.messages.length + firstBody.messages.length).toBeLessThanOrEqual(40)
+    expect(nextBody.messages.length).toBe(50)
+    expect(nextBody.hasMore).toBe(true)
+  })
+
+  it('Overview fixture includes markdown gallery, portal links, and file download URL', async () => {
+    const res = await request(app)
+      .get(`${BASE}/chats/${FIXTURE_OVERVIEW_CHAT_ID}/messages`)
+      .expect(200)
+    const body = res.body as AiChatMessagesListResponse
+    const assistant = body.messages.find((m) => m.role === 'assistant')
+    expect(assistant).toBeDefined()
+    expect(assistant!.content).toContain('## Overview')
+    expect(assistant!.content).toContain('/portal/packages/QS.QSS.PRG.APIHUB/2026.1')
+    expect(assistant!.content).toMatch(/\/api\/v1\/ephemeral-files\//)
   })
 
   it('fixture pagination-120 requires a second messages page at default limit 100', async () => {

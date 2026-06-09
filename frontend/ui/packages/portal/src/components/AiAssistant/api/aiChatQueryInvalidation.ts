@@ -1,6 +1,6 @@
 import type { InvalidateQueryFilters, QueryClient } from '@tanstack/react-query'
 
-import { aiChatMessagesKey, isAiChatsInfiniteListQueryKey } from './queryKeys'
+import { aiChatItemKey, aiChatMessagesKey, isAiChatsInfiniteListQueryKey } from './queryKeys'
 import type { ChatId } from './types'
 
 type InvalidateOptions = Pick<InvalidateQueryFilters, 'refetchType'>
@@ -18,6 +18,7 @@ export function invalidateAiChatListQueries(
   queryClient: QueryClient,
   options: InvalidateOptions = {},
 ): Promise<void> {
+  // Drop unsubscribed list caches (e.g. previous History search strings) so they do not linger stale.
   queryClient.removeQueries({
     predicate: (query) => listQueryPredicate(query) && query.getObserversCount() === 0,
   })
@@ -31,6 +32,11 @@ export function invalidateAiChatListQueries(
  * Marks the messages cache for one chat stale (`aiChatMessagesKey`).
  * `refetchType` defaults to `'active'`; `'none'` keeps the SSE-filled cache until the chat is opened again.
  */
+export function invalidateAiChatPerChatQueries(queryClient: QueryClient, chatId: ChatId): void {
+  void queryClient.invalidateQueries({ queryKey: aiChatItemKey(chatId), exact: true })
+  void queryClient.invalidateQueries({ queryKey: aiChatMessagesKey(chatId), exact: true })
+}
+
 export function invalidateAiChatMessagesQuery(
   queryClient: QueryClient,
   chatId: ChatId,

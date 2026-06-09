@@ -5,7 +5,7 @@ import { styled } from '@mui/material/styles'
 
 import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
 
-export type HistorySearchFieldProps = {
+type HistorySearchFieldProps = {
   value: string
   onChange: (value: string) => void
 }

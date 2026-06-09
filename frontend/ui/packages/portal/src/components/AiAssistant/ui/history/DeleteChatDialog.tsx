@@ -4,7 +4,7 @@ import { styled } from '@mui/material/styles'
 
 import { ConfirmationDialog } from '@netcracker/qubership-apihub-ui-shared/components/ConfirmationDialog/ConfirmationDialog'
 
-export type DeleteChatConfirmationProps = {
+type DeleteChatConfirmationProps = {
   open: boolean
   loading: boolean
   chatTitle?: string
@@ -19,7 +19,7 @@ export const DeleteChatConfirmation: FC<DeleteChatConfirmationProps> = memo(({
   onConfirm,
   onCancel,
 }) => {
-  const title = chatTitle?.trim() ? chatTitle.trim() : 'this chat'
+  const title = chatTitle?.trim() || 'this chat'
 
   return (
     <ConfirmationDialog

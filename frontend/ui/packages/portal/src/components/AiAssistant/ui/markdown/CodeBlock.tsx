@@ -3,9 +3,8 @@ import { styled } from '@mui/material/styles'
 import Typography from '@mui/material/Typography'
 import { type FC, memo, type ReactNode } from 'react'
 
-import { useShowErrorNotification } from '@netcracker/qubership-apihub-ui-portal/src/routes/root/BasePage/Notification'
-import { useCopyWithFeedback } from '../../hooks/useCopyWithFeedback'
 import { CopyIconButton } from '../common/CopyIconButton'
+import { useCopyToClipboardWithFeedback } from '../common/useCopyToClipboardWithFeedback'
 
 type CodeBlockProps = {
   className?: string
@@ -26,7 +25,7 @@ export const CodeBlock: FC<CodeBlockProps> = memo(({ className, rawText, childre
   <CodeBlockRoot>
     {showHeader ? <CodeBlockHeaderBar className={className} rawText={rawText} /> : null}
     <CodeBlockBody>
-      <CodeBlockCode className={className}>{children}</CodeBlockCode>
+      <CodeBlockContent className={className}>{children}</CodeBlockContent>
     </CodeBlockBody>
   </CodeBlockRoot>
 ))
@@ -39,14 +38,7 @@ type CodeBlockHeaderBarProps = {
 }
 
 const CodeBlockHeaderBar: FC<CodeBlockHeaderBarProps> = memo(({ className, rawText }) => {
-  const showError = useShowErrorNotification()
-  const { createCopyHandler, copied } = useCopyWithFeedback({
-    onError: (error) =>
-      showError({
-        title: 'Copy failed',
-        message: error instanceof Error ? error.message : 'Clipboard access was denied.',
-      }),
-  })
+  const { createCopyHandler, copied } = useCopyToClipboardWithFeedback()
 
   const languageLabel = languageLabelFromClassName(className)
 
@@ -110,7 +102,7 @@ const CodeBlockBody = styled(Box)(({ theme }) => ({
   },
 }))
 
-const CodeBlockCode = styled('code')({
+const CodeBlockContent = styled('code')({
   fontFamily: 'monospace',
   display: 'block',
   whiteSpace: 'pre',

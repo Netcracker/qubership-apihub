@@ -92,11 +92,8 @@ const APP_HEADER_LINK_STYLES_SELECTED = {
 // button rebalancing yet, because we need to verify compatibility across
 // the whole project.
 const AppHeaderToolbar = styled(Toolbar)(({ theme }) => ({
-  '& .MuiIconButton-root, & .AppHeaderIconButton': {
-    width: APP_HEADER_HEIGHT,
-    height: APP_HEADER_HEIGHT,
-  },
   '& .MuiButton-root, & .MuiIconButton-root, & .AppHeaderIconButton': {
+    height: APP_HEADER_HEIGHT,
     borderRadius: 0,
     '&:hover': {
       backgroundColor: theme.palette.primary.dark,
@@ -104,6 +101,9 @@ const AppHeaderToolbar = styled(Toolbar)(({ theme }) => ({
     '&:active': {
       backgroundColor: BUTTON_PRESSED_COLOR,
     },
+  },
+  '& .MuiIconButton-root, & .AppHeaderIconButton': {
+    width: APP_HEADER_HEIGHT,
   },
 }))
 

@@ -6,25 +6,27 @@ import { styled, type Theme } from '@mui/material/styles'
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 import { PinIcon } from '@netcracker/qubership-apihub-ui-shared/icons/PinIcon'
 
-import type { AiChat, ChatId } from '../../api/types'
+import { type AiChat, type ChatId, MAX_PINNED_PER_USER } from '../../api/types'
 import { ChatRowActionsMenu } from './ChatRowActionsMenu'
 import { InlineRenameField } from './InlineRenameField'
 
-export type ChatListRowProps = {
+const PIN_LIMIT_TOOLTIP = `The maximum of ${MAX_PINNED_PER_USER} pinned chats is reached. Unpin one to pin another.`
+
+type ChatListRowProps = {
   chat: AiChat
   /** Shown until list cache matches (rename save). */
   rowTitleOverride?: string
   isActive: boolean
   isEditing: boolean
-  isPinDisabled: boolean
-  pinDisabledTooltip?: string
-  isDeleteDisabled: boolean
-  onOpen: () => void
-  onStartRename: () => void
-  onRename: (title: string) => void
+  loadedPinnedCount: number
+  isBusy: boolean
+  activeTurnChatId: ChatId | null
+  onOpenChat: (chatId: ChatId) => void
+  onStartRename: (chatId: ChatId) => void
+  onRenameChat: (chatId: ChatId, title: string) => void
   onCancelRename: () => void
-  onTogglePin: (nextPinned: boolean) => void
-  onDelete: () => void
+  onTogglePin: (chatId: ChatId, nextPinned: boolean) => void
+  onRequestDelete: (chat: AiChat) => void
   onReleaseRowTitleOverride: (chatId: ChatId) => void
 }
 
@@ -33,19 +35,22 @@ export const ChatListRow: FC<ChatListRowProps> = memo(({
   rowTitleOverride,
   isActive,
   isEditing,
-  isPinDisabled,
-  pinDisabledTooltip,
-  isDeleteDisabled,
-  onOpen,
+  loadedPinnedCount,
+  isBusy,
+  activeTurnChatId,
+  onOpenChat,
   onStartRename,
-  onRename,
+  onRenameChat,
   onCancelRename,
   onTogglePin,
-  onDelete,
+  onRequestDelete,
   onReleaseRowTitleOverride,
 }) => {
+  const { chatId } = chat
   const listTitleSource = rowTitleOverride ?? chat.title
   const displayedTitle = listTitleSource.trim() || 'Untitled chat'
+  const pinDisabled = !chat.pinned && loadedPinnedCount >= MAX_PINNED_PER_USER
+  const deleteDisabled = isBusy && activeTurnChatId === chatId
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false)
 
   useEffect(() => {
@@ -59,16 +64,16 @@ export const ChatListRow: FC<ChatListRowProps> = memo(({
       return
     }
     if (chat.title.trim() === rowTitleOverride.trim()) {
-      onReleaseRowTitleOverride(chat.chatId)
+      onReleaseRowTitleOverride(chatId)
     }
-  }, [chat.chatId, chat.title, onReleaseRowTitleOverride, rowTitleOverride])
+  }, [chat.title, chatId, onReleaseRowTitleOverride, rowTitleOverride])
 
   const handleOpen = useCallback(() => {
     if (isEditing) {
       return
     }
-    onOpen()
-  }, [isEditing, onOpen])
+    onOpenChat(chatId)
+  }, [chatId, isEditing, onOpenChat])
 
   const handleKeyDown = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
     if (isEditing) {
@@ -78,8 +83,16 @@ export const ChatListRow: FC<ChatListRowProps> = memo(({
       return
     }
     event.preventDefault()
-    onOpen()
-  }, [isEditing, onOpen])
+    onOpenChat(chatId)
+  }, [chatId, isEditing, onOpenChat])
+
+  const handleRename = useCallback((title: string) => {
+    onRenameChat(chatId, title)
+  }, [chatId, onRenameChat])
+
+  const handleTogglePin = useCallback((nextPinned: boolean) => {
+    onTogglePin(chatId, nextPinned)
+  }, [chatId, onTogglePin])
 
   return (
     <RowRoot
@@ -91,14 +104,13 @@ export const ChatListRow: FC<ChatListRowProps> = memo(({
       onClick={handleOpen}
       onKeyDown={handleKeyDown}
       data-testid="AiAssistantHistoryChatRow"
-      aria-label={isEditing ? undefined : displayedTitle}
     >
       <TitleSlot>
         {isEditing
           ? (
             <InlineRenameField
               initialTitle={listTitleSource}
-              onSave={onRename}
+              onSave={handleRename}
               onCancel={onCancelRename}
             />
           )
@@ -108,23 +120,21 @@ export const ChatListRow: FC<ChatListRowProps> = memo(({
             </RowTitle>
           )}
       </TitleSlot>
-      {!isEditing
-        ? (
-          <ActionsSlot>
-            {chat.pinned ? <PinIcon aria-hidden fontSize="small" /> : null}
-            <ChatRowActionsMenu
-              pinned={Boolean(chat.pinned)}
-              pinDisabled={isPinDisabled}
-              pinDisabledTooltip={pinDisabledTooltip}
-              deleteDisabled={isDeleteDisabled}
-              onRename={onStartRename}
-              onTogglePin={onTogglePin}
-              onDelete={onDelete}
-              onMenuOpenChange={setActionsMenuOpen}
-            />
-          </ActionsSlot>
-        )
-        : null}
+      {!isEditing && (
+        <ActionsSlot>
+          {chat.pinned && <PinIcon aria-hidden fontSize="small" />}
+          <ChatRowActionsMenu
+            pinned={!!chat.pinned}
+            pinDisabled={pinDisabled}
+            pinDisabledTooltip={pinDisabled ? PIN_LIMIT_TOOLTIP : undefined}
+            deleteDisabled={deleteDisabled}
+            onRename={() => onStartRename(chatId)}
+            onTogglePin={handleTogglePin}
+            onDelete={() => onRequestDelete(chat)}
+            onMenuOpenChange={setActionsMenuOpen}
+          />
+        </ActionsSlot>
+      )}
     </RowRoot>
   )
 })
