@@ -20,7 +20,7 @@ type ApihubApiKeyService interface {
 	CreateApiKey(ctx context.SecurityContext, packageId, name string, createdFor string, requestRoles []string) (*view.ApihubApiKey, error)
 	RevokePackageApiKey(ctx context.SecurityContext, apiKeyId string, packageId string) error
 	GetProjectApiKeys(packageId string) (*view.ApihubApiKeys, error)
-	GetApiKeyStatus(apiKey string, packageId string) (bool, *view.ApihubApiKey, error)
+	GetApiKeyStatus(apiKey string) (bool, *view.ApihubApiKey, error)
 	GetApiKeyByKey(apiKey string) (*view.ApihubApiKeyExtAuthView, error)
 	GetApiKeyById(apiKeyId string) (*view.ApihubApiKeyExtAuthView, error)
 	CreateSystemApiKey() error
@@ -365,7 +365,7 @@ func (t apihubApiKeyServiceImpl) GetProjectApiKeys(packageId string) (*view.Apih
 	return &view.ApihubApiKeys{ApiKeys: apiKeys}, nil
 }
 
-func (t apihubApiKeyServiceImpl) GetApiKeyStatus(apiKey string, packageId string) (bool, *view.ApihubApiKey, error) {
+func (t apihubApiKeyServiceImpl) GetApiKeyStatus(apiKey string) (bool, *view.ApihubApiKey, error) {
 	apiKeyHash := crypto.CreateSHA256Hash([]byte(apiKey))
 	apiKeyEnt, err := t.apiKeyRepository.GetApiKeyByHash(apiKeyHash)
 	if err != nil {
@@ -381,13 +381,6 @@ func (t apihubApiKeyServiceImpl) GetApiKeyStatus(apiKey string, packageId string
 		return true, entity.MakeApihubApiKeyView(apiKeyUserEnt), nil
 	}
 
-	if apiKeyEnt.PackageId != "*" && apiKeyEnt.PackageId != packageId && !strings.HasPrefix(packageId, apiKeyEnt.PackageId+".") {
-		return false, nil, &exception.CustomError{
-			Status:  http.StatusForbidden,
-			Code:    exception.InsufficientPrivileges,
-			Message: exception.InsufficientPrivilegesMsg,
-		}
-	}
 	//apiKey exists
 	return false, entity.MakeApihubApiKeyView(apiKeyUserEnt), nil
 }

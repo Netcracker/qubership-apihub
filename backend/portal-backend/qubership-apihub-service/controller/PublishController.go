@@ -561,6 +561,16 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 }
 
 func (p publishV2ControllerImpl) GetFreeBuild(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Create(r)
+	sufficientPrivileges := p.roleService.IsSysadm(ctx)
+	if !sufficientPrivileges {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
 	builderId := getStringParam(r, "builderId")
 	start := time.Now()
 

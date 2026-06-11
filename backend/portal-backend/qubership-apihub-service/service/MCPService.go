@@ -27,13 +27,14 @@ type MCPService interface {
 	IDSAuthoringKit(userInput string) (string, error)
 }
 
-func NewMCPService(systemInfoService SystemInfoService, operationService OperationService, packageService PackageService, versionService VersionService, monitoringService MonitoringService) MCPService {
+func NewMCPService(systemInfoService SystemInfoService, operationService OperationService, packageService PackageService, versionService VersionService, monitoringService MonitoringService, roleService RoleService) MCPService {
 	return &mcpService{
 		systemInfoService: systemInfoService,
 		operationService:  operationService,
 		packageService:    packageService,
 		versionService:    versionService,
 		monitoringService: monitoringService,
+		roleService:       roleService,
 		assets:            loadMCPAssets(mcpAssetsRootDir),
 	}
 }
@@ -44,6 +45,7 @@ type mcpService struct {
 	packageService    PackageService
 	versionService    VersionService
 	monitoringService MonitoringService
+	roleService       RoleService
 
 	assets *mcpAssets
 }
@@ -77,13 +79,13 @@ func (m mcpService) MakeMCPServer() *mcpserver.MCPServer {
 	)
 
 	toolHandlers := map[string]func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error){
-		ToolNameSearchOperations: m.ExecuteSearchTool,
-		ToolNameGetOperationSpec: m.ExecuteGetSpecTool,
-		ToolNameGetOperationDiff: m.ExecuteGetOperationDiffTool,
-		ToolNameGetDocument:      m.ExecuteGetDocumentTool,
-		LegacyToolNameSearchRestOperations:        m.ExecuteLegacyRestSearchTool,
-		LegacyToolNameGetRestOperationSpec:        m.ExecuteLegacyRestGetSpecTool,
-		LegacyToolNameGetRestOperationDiff:        m.ExecuteLegacyRestGetOperationDiffTool,
+		ToolNameSearchOperations:           m.ExecuteSearchTool,
+		ToolNameGetOperationSpec:           m.ExecuteGetSpecTool,
+		ToolNameGetOperationDiff:           m.ExecuteGetOperationDiffTool,
+		ToolNameGetDocument:                m.ExecuteGetDocumentTool,
+		LegacyToolNameSearchRestOperations: m.ExecuteLegacyRestSearchTool,
+		LegacyToolNameGetRestOperationSpec: m.ExecuteLegacyRestGetSpecTool,
+		LegacyToolNameGetRestOperationDiff: m.ExecuteLegacyRestGetOperationDiffTool,
 	}
 	for _, meta := range getMCPServerToolMetadata() {
 		handler, ok := toolHandlers[meta.Name]
@@ -256,13 +258,24 @@ func (m mcpService) GetPackagesList(ctx context.Context, workspaceId string) ([]
 	}, nil
 }
 
-func SetUserIDOnMCPCtx(ctx context.Context, userID string) context.Context {
-	return context.WithValue(ctx, "apihubUserID", userID)
+func SetSecCtxOnMCPCtx(ctx context.Context, secCtx secctx.SecurityContext) context.Context {
+	return context.WithValue(ctx, "secCtx", secCtx)
+}
+
+func GetSecCtxFromMCPCtx(ctx context.Context) secctx.SecurityContext {
+	if v, ok := ctx.Value("secCtx").(secctx.SecurityContext); ok {
+		return v
+	}
+	return nil
 }
 
 func UserIDFromMCPCtx(ctx context.Context) string {
-	if v, ok := ctx.Value("apihubUserID").(string); ok {
-		return v
+	if v, ok := ctx.Value("secCtx").(secctx.SecurityContext); ok {
+		userID := v.GetUserId()
+		if userID == "" {
+			userID = v.GetApiKeyId()
+		}
+		return userID
 	}
 	return ""
 }
@@ -331,7 +344,15 @@ RESPONSES:
 - When using get_document, use documentData as the source specification content; documentType identifies the specification type and format describes its syntax
 - First show a list of operations to choose from, even if only one operation is found
 - Use get_api_operation_specification only when user explicitly requests details about a REST or AsyncAPI operation
-- Do not ask the user for a specification slug after search; use the selected result's documentId as get_document.slug`
+- Do not ask the user for a specification slug after search; use the selected result's documentId as get_document.slug
+
+ACCESS CONTROL AND AUTHORIZATION ERRORS:
+- Access to packages depends on the credentials used for this connection; some packages or operations may be restricted for the current user
+- A tool result is an authorization error when it starts with "Failed to check user privileges" or states the user does not have enough "privileges" or access to the package
+- On such an error, STOP working on that package or operation. Do NOT retry the same tool, call other tools for the same package/operation, or search other packages or versions to work around the restriction
+- Inform the user clearly that they do not have access to the requested package or operation with their current credentials and that they may need to request access
+- This is different from an empty search result: empty results may justify query, term, or version retries (see search guidance above), but an authorization error must not
+- If the request also covers packages the user can access, continue with those and report the restricted package or operation separately`
 
 // Tool names constants
 const (
@@ -391,7 +412,8 @@ LLM INSTRUCTIONS:
 	* Description of request, response, message, or channel structure
 	* Specify the package (packageId), version, and apiType in which this operation is located
 - Generate examples based on the operation data when possible
-- Provide the user with complete information about the operation`
+- Provide the user with complete information about the operation
+- If the result reports an authorization problem (a message starting with "Failed to check user privileges" or stating you lack "privileges"/access), STOP. Do not retry, call other tools, or search other packages or versions to work around it. Tell the user they do not have access to this package and may need to request it`
 
 	ToolDescriptionGetOperationDiffMCP = `Get list of changes of the specific operation from OpenAPI or AsyncAPI specification from the specific package and version to the previous version.
 
@@ -402,7 +424,8 @@ Use this tool ONLY when the user explicitly requests changes of a specific REST 
 LLM INSTRUCTIONS:
 - Always pass apiType from the selected search_api_operations result
 - The response contains JSON with list of changes of the specific operation from OpenAPI or AsyncAPI specification from the specific package and version to the previous version
-- If users ask for changes for many operations - call this tool for each operation`
+- If users ask for changes for many operations - call this tool for each operation
+- If the result reports an authorization problem (a message starting with "Failed to check user privileges" or stating you lack "privileges"/access), STOP. Do not retry, call other tools, or search other packages or versions to work around it. Tell the user they do not have access to this package and may need to request it`
 
 	ToolDescriptionGetDocumentMCP = `Get a source API specification by slug.
 
@@ -416,7 +439,8 @@ LLM INSTRUCTIONS:
 - Do not invent slug values
 - Use documentId from a selected search_api_operations result as this tool's slug parameter
 - Return the full documentData from the response; use documentType to interpret specification semantics and format to render text payloads
-- Put large JSON or YAML documentData in fenced markdown code blocks, not as inline plain text`
+- Put large JSON or YAML documentData in fenced markdown code blocks, not as inline plain text
+- If the result reports an authorization problem (a message starting with "Failed to check user privileges" or stating you lack "privileges"/access), STOP. Do not retry, call other tools, or search other packages or versions to work around it. Tell the user they do not have access to this package and may need to request it`
 
 	LegacyToolDescriptionSearchOperationsMCP = `Deprecated compatibility alias for search_api_operations.
 

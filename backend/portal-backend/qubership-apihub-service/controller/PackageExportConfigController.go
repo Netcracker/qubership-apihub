@@ -3,13 +3,14 @@ package controller
 import (
 	"encoding/json"
 	"errors"
+	"io"
+	"net/http"
+
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
-	"io"
-	"net/http"
 )
 
 type PackageExportConfigController interface {
@@ -30,7 +31,21 @@ type packageExportConfigControllerImpl struct {
 }
 
 func (p packageExportConfigControllerImpl) GetConfig(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Create(r)
 	packageId := getStringParam(r, "packageId")
+	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
 
 	result, err := p.expConfSvc.GetConfig(packageId)
 	if err != nil {

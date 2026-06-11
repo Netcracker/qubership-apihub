@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -78,15 +79,22 @@ func (m mcpService) ExecuteLegacyRestGetOperationDiffTool(ctx context.Context, r
 
 // ExecuteGetSpecTool executes the get_api_operation_specification tool
 func (m mcpService) ExecuteGetSpecTool(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	packageId, err := req.RequireString("packageId")
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
+	sufficientPrivileges, err := m.roleService.HasRequiredPermissions(GetSecCtxFromMCPCtx(ctx), packageId, view.ReadPermission)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to check user privileges: %s", err.Error())), nil
+	}
+	if !sufficientPrivileges {
+		return mcp.NewToolResultError(exception.InsufficientPrivilegesMsg), nil
+	}
 	apiType, err := requireMCPApiType(req, view.RestApiType, view.AsyncapiApiType)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
 	operationId, err := req.RequireString("operationId")
-	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
-	}
-	packageId, err := req.RequireString("packageId")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -187,15 +195,22 @@ func (m mcpService) ExecuteSearchTool(ctx context.Context, req mcp.CallToolReque
 
 // ExecuteGetOperationDiffTool executes the get_api_operation_diff tool
 func (m mcpService) ExecuteGetOperationDiffTool(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	packageId, err := req.RequireString("packageId")
+	if err != nil {
+		return mcp.NewToolResultError(err.Error()), nil
+	}
+	sufficientPrivileges, err := m.roleService.HasRequiredPermissions(GetSecCtxFromMCPCtx(ctx), packageId, view.ReadPermission)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to check user privileges: %s", err.Error())), nil
+	}
+	if !sufficientPrivileges {
+		return mcp.NewToolResultError(exception.InsufficientPrivilegesMsg), nil
+	}
 	apiType, err := requireMCPApiType(req, view.RestApiType, view.AsyncapiApiType)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
 	operationId, err := req.RequireString("operationId")
-	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
-	}
-	packageId, err := req.RequireString("packageId")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
@@ -229,11 +244,18 @@ func (m mcpService) ExecuteGetOperationDiffTool(ctx context.Context, req mcp.Cal
 
 // ExecuteGetDocumentTool executes the get_document tool
 func (m mcpService) ExecuteGetDocumentTool(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	apiType, err := requireMCPApiType(req, view.RestApiType, view.GraphqlApiType, view.AsyncapiApiType)
+	packageId, err := req.RequireString("packageId")
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}
-	packageId, err := req.RequireString("packageId")
+	sufficientPrivileges, err := m.roleService.HasRequiredPermissions(GetSecCtxFromMCPCtx(ctx), packageId, view.ReadPermission)
+	if err != nil {
+		return mcp.NewToolResultError(fmt.Sprintf("Failed to check user privileges: %s", err.Error())), nil
+	}
+	if !sufficientPrivileges {
+		return mcp.NewToolResultError(exception.InsufficientPrivilegesMsg), nil
+	}
+	apiType, err := requireMCPApiType(req, view.RestApiType, view.GraphqlApiType, view.AsyncapiApiType)
 	if err != nil {
 		return mcp.NewToolResultError(err.Error()), nil
 	}

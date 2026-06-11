@@ -3,10 +3,9 @@ package security
 import (
 	goctx "context"
 	"fmt"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
-	"github.com/gorilla/mux"
 	"net/http"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/shaj13/go-guardian/v2/auth"
 )
@@ -26,8 +25,7 @@ func (a apihubApiKeyStrategyImpl) Authenticate(ctx goctx.Context, r *http.Reques
 	if apiKey == "" {
 		return nil, fmt.Errorf("authentication failed: header '%v' is empty", ApiKeyHeader)
 	}
-	packageId := getReqStringParam(r, "packageId")
-	apiKeyRevoked, apiKeyView, err := a.apihubApiKeyService.GetApiKeyStatus(apiKey, packageId)
+	apiKeyRevoked, apiKeyView, err := a.apihubApiKeyService.GetApiKeyStatus(apiKey)
 	if err != nil {
 		return nil, err
 	}
@@ -43,9 +41,4 @@ func (a apihubApiKeyStrategyImpl) Authenticate(ctx goctx.Context, r *http.Reques
 	userExtensions.Set(context.ApikeyRoleExt, context.MergeApikeyRoles(apiKeyView.Roles))
 
 	return auth.NewDefaultUser(apiKeyView.Name, apiKeyView.Id, []string{}, userExtensions), nil
-}
-
-func getReqStringParam(r *http.Request, p string) string {
-	params := mux.Vars(r)
-	return params[p]
 }
