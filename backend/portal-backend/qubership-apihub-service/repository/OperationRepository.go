@@ -16,6 +16,11 @@ import (
 // globalSearchWorkMem limits lossy GIN bitmap recheck during FTS on fts_operation_search_text when server default work_mem is very low.
 const globalSearchWorkMem = "16MB"
 
+// globalSearchScopeJoinPlaceholder marks where the optional package-scope join is spliced into the
+// global search query. It is a SQL comment so the template stays valid SQL when no scope join is
+// applied (no packages requested).
+const globalSearchScopeJoinPlaceholder = "/*scope_join*/"
+
 type OperationRepository interface {
 	GetOperationsByIds(packageId string, version string, revision int, operationIds []string) ([]entity.OperationEntity, error)
 	GetOperations(packageId string, version string, revision int, operationType string, skipRefs bool, searchReq view.OperationListReq) ([]entity.OperationRichEntity, error)
@@ -1635,7 +1640,7 @@ select
     pg.name,
     o.version,
     o.revision,
-    pv.status,
+    all_ts.status,
     o.operation_id,
     o.title,
     o.data_hash,
@@ -1646,47 +1651,60 @@ select
     o.document_id,
     parent_package_names(o.package_id) parent_names
 from operation o
-         inner join (
-    SELECT DISTINCT ON (rank, package_id, operation_id)
-        ts_rank(data_vector, search_query) as rank,
-        ts.package_id   as package_id,
-        ts.operation_id as operation_id,
-        ts.version      as version,
-        ts.revision     as revision
-
-    FROM fts_operation_search_text ts,
-         websearch_to_tsquery(?original_text_input) search_query
-    WHERE ts.status = ?status
-        and ts.api_type = ?api_type
-        and (?versions = '{}' or version like ANY(
-						select id from unnest(?versions::text[]) id))
-        and (?packages = '{}' or package_id like ANY(
-						select id from unnest(?packages::text[]) id
-						union
-						select id||'.%' from unnest(?packages::text[]) id))
-        and search_query @@ data_vector
-    ORDER BY ts_rank(data_vector, search_query) DESC,
-             package_id,
-             operation_id desc,
-             version DESC,
-             revision DESC
-    LIMIT ?limit OFFSET ?offset
-) all_ts
-                   on all_ts.package_id = o.package_id and
-                      all_ts.version = o.version and
-                      all_ts.revision = o.revision and
-		all_ts.operation_id = o.operation_id
-
-inner join published_version pv on o.package_id=pv.package_id and o.version=pv.version and o.revision=pv.revision
-inner join package_group pg on o.package_id=pg.id
-
+    inner join (
+        SELECT DISTINCT ON (rank, package_id, operation_id)
+            ts_rank(ts.data_vector, search_query) as rank,
+            ts.package_id   as package_id,
+            ts.operation_id as operation_id,
+            ts.version      as version,
+            ts.revision     as revision,
+            pv.status       as status
+        FROM fts_operation_search_text ts
+            inner join published_version pv
+                on pv.package_id = ts.package_id
+                and pv.version = ts.version
+                and pv.revision = ts.revision
+            cross join websearch_to_tsquery(?original_text_input) search_query
+            /*scope_join*/
+        WHERE ts.status = ?status
+            and ts.api_type = ?api_type
+            and (?versions = '{}' or ts.version like ANY(
+                    select id from unnest(?versions::text[]) id))
+            and pv.deleted_at is null
+            and pv.published_at >= ?start_date
+            and pv.published_at <= ?end_date
+            and search_query @@ ts.data_vector
+        ORDER BY ts_rank(ts.data_vector, search_query) DESC,
+                 package_id,
+                 operation_id desc,
+                 version DESC,
+                 revision DESC
+        LIMIT ?limit OFFSET ?offset
+    ) all_ts
+        on all_ts.package_id = o.package_id
+        and all_ts.version = o.version
+        and all_ts.revision = o.revision
+        and all_ts.operation_id = o.operation_id
+    inner join package_group pg on o.package_id = pg.id
 where all_ts.rank > 0
-and pv.deleted_at is null
-and pv.published_at >= ?start_date
-and pv.published_at <= ?end_date
 order by all_ts.rank desc, o.operation_id
 limit ?limit;
 `
+	packagesSearchScopeJoin := ""
+	if len(searchQuery.Packages) != 0 {
+		//limits the search to the requested packages and their subtrees, written as a join
+		//so the planner is free to drive the fts_operation_search_text scan from the scope btree
+		//('/' is the byte right after '.', so the range covers exactly 'parent.<anything>' and excludes siblings such as 'parentX')
+		//~>=~/~<~ compare byte-wise and match the varchar_pattern_ops index (migration 35) regardless of the database locale;
+		//plain >=/< cannot be used: they compare per the database collation, where this range does not equal
+		//the 'parent.' prefix set on non-C locales, and they cannot use a varchar_pattern_ops index (different operator family);
+		//LIKE 'parent.%' cannot be used either: its prefix-to-range index rewrite requires a plan-time constant pattern,
+		//while these bounds are computed per joined row
+		packagesSearchScopeJoin = `
+            inner join unnest(?packages::text[]) as scope_pkg(parent)
+                on ts.package_id = scope_pkg.parent
+                or (ts.package_id ~>=~ (scope_pkg.parent || '.') and ts.package_id ~<~ (scope_pkg.parent || '/'))`
+	}
 
 	err := o.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		if _, err := tx.Exec("SET LOCAL work_mem = ?", globalSearchWorkMem); err != nil {
@@ -1695,8 +1713,8 @@ limit ?limit;
 		if _, err := tx.Exec("select websearch_to_tsquery(?)", searchQuery.OriginalTextInput); err != nil {
 			return fmt.Errorf("invalid search string: %v", err.Error())
 		}
-		_, err := tx.Model(searchQuery).Query(&result, operationsSearchQuery)
-		if err != nil {
+		query := strings.Replace(operationsSearchQuery, globalSearchScopeJoinPlaceholder, packagesSearchScopeJoin, 1)
+		if _, err := tx.Model(searchQuery).Query(&result, query); err != nil {
 			return err
 		}
 		return nil
