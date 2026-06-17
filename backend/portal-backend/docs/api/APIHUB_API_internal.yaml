@@ -859,11 +859,11 @@ paths:
                   description: Email address of the user
                   type: string
                   format: email
-                  example: "name.surname@qubership.org"
+                  example: "john.doe@example.com"
                 name:
                   description: Name of the user
                   type: string
-                  example: "Name Surname"
+                  example: "John Doe"
                 password:
                   type: string
                   description: User password.
@@ -1009,12 +1009,12 @@ components:
         name:
           description: Name of the user
           type: string
-          example: "Name Surname"
+          example: "John Doe"
         email:
           description: Email address of the user
           type: string
           format: email
-          example: "name.surname@qubership.org"
+          example: "john.doe@example.com"
         avatarUrl:
           description: URL of the user avatar image.
           type: string

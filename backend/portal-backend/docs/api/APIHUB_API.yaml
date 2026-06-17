@@ -571,7 +571,7 @@ paths:
                                 memberName:
                                   description: User which was added/deleted to/from package with some role(s)
                                   type: string
-                                  example: Name Surname
+                                  example: John Doe
                                 roles:
                                   type: array
                                   items:
@@ -590,7 +590,7 @@ paths:
                                 memberName:
                                   description: User which was added/deleted to/from package with some role(s)
                                   type: string
-                                  example: Name Surname
+                                  example: John Doe
                             - type: object
                               title: ParamsForPublishAndDeleteVersion
                               description: params for publish_new_version and delete_version events
@@ -1508,7 +1508,7 @@ paths:
                                 memberName:
                                   description: User which was added/deleted to/from package with some role(s)
                                   type: string
-                                  example: Name Surname
+                                  example: John Doe
                                 roles:
                                   type: array
                                   items:
@@ -1527,7 +1527,7 @@ paths:
                                 memberName:
                                   description: User which was added/deleted to/from package with some role(s)
                                   type: string
-                                  example: Name Surname
+                                  example: John Doe
                             - type: object
                               title: ParamsForPublishAndDeleteVersion
                               description: params for publish_new_version and delete_version events
@@ -11172,12 +11172,12 @@ components:
         name:
           description: Name of the user
           type: string
-          example: "Name Surname"
+          example: "John Doe"
         email:
           description: Email address of the user
           type: string
           format: email
-          example: "name.surname@qubership.org"
+          example: "john.doe@example.com"
         avatarUrl:
           description: URL of the user avatar image.
           type: string
@@ -11295,7 +11295,7 @@ components:
           items:
             type: string
             format: email
-          example: ["name.surname@qubership.org"]
+          example: ["john.doe@example.com"]
         roleIds:
           type: array
           description: List of role IDs, added to the user.
