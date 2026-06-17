@@ -33,8 +33,8 @@ info:
     name: Netcracker Opensource Group
     email: opensourcegroup@netcracker.com
   license:
-    name: Apache 2.0
-    url: https://github.com/Netcracker/qubership-apihub-agent/raw/refs/heads/main/LICENSE
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
   x-api-kind: no-BWC
 servers:
   - url: "https://{agentUrl}/api"
