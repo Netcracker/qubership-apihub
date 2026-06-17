@@ -571,7 +571,7 @@
                                 "header": [],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"email\": \"user1@openmail.com\",\r\n    \"password\": \"password\",\r\n    \"name\": \"AC_user_1\"\r\n}",
+                                    "raw": "{\r\n    \"email\": \"user1@example.com\",\r\n    \"password\": \"password\",\r\n    \"name\": \"AC_user_1\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -638,7 +638,7 @@
                                 "header": [],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"email\": \"user2@openmail.com\",\r\n    \"password\": \"password\",\r\n    \"name\": \"AC_user_2\"\r\n}",
+                                    "raw": "{\r\n    \"email\": \"user2@example.com\",\r\n    \"password\": \"password\",\r\n    \"name\": \"AC_user_2\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -705,7 +705,7 @@
                                 "header": [],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"email\": \"user4@openmail.com\",\r\n    \"password\": \"password\",\r\n    \"name\": \"AC_user_4\"\r\n}",
+                                    "raw": "{\r\n    \"email\": \"user4@example.com\",\r\n    \"password\": \"password\",\r\n    \"name\": \"AC_user_4\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -772,7 +772,7 @@
                                 "header": [],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"email\": \"user5@openmail.com\",\r\n    \"password\": \"password\",\r\n    \"name\": \"AC_user_5\"\r\n}",
+                                    "raw": "{\r\n    \"email\": \"user5@example.com\",\r\n    \"password\": \"password\",\r\n    \"name\": \"AC_user_5\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"

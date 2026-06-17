@@ -4522,9 +4522,9 @@
                                             "});",
                                             "",
                                             "var data = JSON.parse(responseBody);",
-                                            "pm.environment.set(\"runenvEmail\", \"runenv.surname@qubership.org\");",
+                                            "pm.environment.set(\"runenvEmail\", \"runenv.surname@example.com\");",
                                             "pm.environment.set(\"runenvPassword\", \"pa$$word\");",
-                                            "pm.environment.set(\"runenvId\",  \"runenv-surnameatqubership-org\");"
+                                            "pm.environment.set(\"runenvId\",  \"runenv-surnameatexample-com\");"
                                         ]
                                     }
                                 },
@@ -4554,7 +4554,7 @@
                                 "header": [],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n  \"email\": \"runenv.surname@qubership.org\",\r\n  \"name\": \"RUNENV RUNENV\",\r\n  \"password\": \"pa$$word\",\r\n  \"privateWorkspaceId\": \"\"\r\n}",
+                                    "raw": "{\r\n  \"email\": \"runenv.surname@example.com\",\r\n  \"name\": \"RUNENV RUNENV\",\r\n  \"password\": \"pa$$word\",\r\n  \"privateWorkspaceId\": \"\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
