@@ -46,6 +46,7 @@ Chart: **[`helm-templates/qubership-apihub/`](../helm-templates/qubership-apihub
 | `values.yaml` root key | Produced runtime configuration |
 |------------------------|-------------------------------|
 | `qubershipApihubBackend.env` | Rendered **as YAML** into Secret `config.yaml`, mounted under **`/app/qubership-apihub-service/etc/`** with **`APIHUB_CONFIG_FOLDER=/app/qubership-apihub-service/etc/`**. Olric **`namespace`** / **`replicaCount`** patched from Helm. Same schema as **`config.template.yaml`**. |
+| `qubershipApihubBackend.customCa` | Optional Kubernetes Secret mounted at **`/tmp/cert`** on the backend pod. Used with the [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) runtime image: the entrypoint loads PEM files into the system trust store before the app starts (OIDC, SAML, playground proxy, AI chat). Set **`enabled: true`** and **`secretName`**. |
 | `qubershipApihubBuildTaskConsumer.env` | Pod env (**`APIHUB_API_KEY`**, etc.). Address often mirrors **`qubershipApihubUi.env.apihubBackendAddress`**. **`accessToken`** must match backend **`zeroDayConfiguration.accessToken`** on clean install. |
 | `qubershipApihubUi.env` + `apihubUrl`, ingress TLS | UI env + public **`apihubUrl`** (keep equal to **`security.apihubExternalUrl`**). |
 | `qubershipApiLinterService.env` | Pod env vars only (**no YAML mount for service config** in current chart): DB refs, **`APIHUB_URL`/`APIHUB_ACCESS_TOKEN`**, Spectral/Olric/AI knobs. |
@@ -64,6 +65,7 @@ Repository path: **[`docker-compose/apihub-generic/`](../docker-compose/apihub-g
 | File | Service | Role |
 |------|---------|------|
 | `qubership-apihub-backend-config.yaml` | Backend | Mounted as `config.yaml`. Uses **`${JWT_PRIVATE_KEY}`**, **`${APIHUB_ACCESS_TOKEN}`**, **`${APIHUB_ADMIN_EMAIL}`**, **`${APIHUB_ADMIN_PASSWORD}`** for `generate_env_and_up_compose.sh` substitution. **`extensions[].baseUrl`** must be reachable **from users’ browsers and from the backend** (see Compose README — often `host.docker.internal` plus published ports). |
+| `certs/` (optional) | Backend | Place corporate CA **`.crt`/`.cer`/`.pem`** files here and uncomment **`./certs:/tmp/cert:ro`** in **`docker-compose.yml`**. Uses the [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) **`/tmp/cert`** contract. MinIO/S3 custom CA remains in **`s3Storage.crt`** inside the backend config YAML. |
 | `qubership-apihub-ui.env` | Portal UI | Internal upstream addresses (`APIHUB_BACKEND_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, …). |
 | `qubership-apihub-build-task-consumer.env` | Builder | **`APIHUB_API_KEY`**, **`APIHUB_BACKEND_ADDRESS`**. Compose uses **`host.docker.internal:8090`** so the worker reaches the backend through the published host port. |
 | `qubership-api-linter-service.env` | Linter | DB + **`APIHUB_URL`** (Portal base URL as seen from the linter pod) + token. |

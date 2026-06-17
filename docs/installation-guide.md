@@ -199,6 +199,8 @@ Process-level env vars (the only ones the backend binary reads directly):
 | `APIHUB_CONFIG_FOLDER` | No | `./` | Directory where the process looks for `config.yaml` |
 | `LOG_LEVEL` | No | `INFO` | Bootstrap log level. Values: `DEBUG`, `INFO`, `WARN`, `ERROR` |
 
+**Custom CA certificates (HTTPS outbound):** from backend release with [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images), mount PEM files at **`/tmp/cert`** (Compose: **`./certs:/tmp/cert:ro`**; Helm: **`qubershipApihubBackend.customCa`**). The base image entrypoint imports them into the system trust store before the process starts. MinIO/S3 endpoint CA stays in **`s3Storage.crt`** in `config.yaml`. See [Configuration reference — custom CA](./configuration-reference.md).
+
 All other parameters are `config.yaml` keys. Most important:
 
 | `config.yaml` key | Mandatory | Default | Description |

@@ -9,6 +9,9 @@ qubershipApihubBackend:
       limit: "1"
     memory:
      limit: "512Mi"
+  customCa:
+    enabled: false
+    secretName: ''
   env:
     logLevel: ''
     database:

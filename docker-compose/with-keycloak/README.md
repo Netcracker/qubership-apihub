@@ -83,6 +83,10 @@ For database access connect to localhost:5432 postgres/postgres
 
 **NOTE2:** about `SAML_CRT`, `SAML_KEY`, `SAML_CRT_KEYCLOAK` and `SAML_KEY_KEYCLOAK`. You need to generate private key and self-signed certificate in PEM format. For `SAML_CRT` and `SAML_KEY` provide base64 encoded values. For `SAML_CRT_KEYCLOAK` and `SAML_KEY_KEYCLOAK` provide orignial values but with removed first and last lines and removed `\n`
 
+### Optional: custom CA for backend HTTPS
+
+If the backend image is based on [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images), place corporate CA files (`.crt`, `.cer`, or `.pem`) in **`certs/`** and uncomment the **`./certs:/tmp/cert:ro`** volume in **`docker-compose.yml`**. MinIO/S3 CA stays in **`s3Storage.crt`** in the backend config YAML.
+
 ## Start
 
 Execute `podman compose up`

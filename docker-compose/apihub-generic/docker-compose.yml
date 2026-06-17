@@ -12,6 +12,9 @@ services:
             - APIHUB_CONFIG_FOLDER=/app/qubership-apihub-service/
         volumes:
             - ./qubership-apihub-backend-config.yaml:/app/qubership-apihub-service/config.yaml
+            # Optional corporate CA for HTTPS outbound calls (qubership-core-base /tmp/cert contract).
+            # Uncomment and place .crt/.cer/.pem files in ./certs/
+            # - ./certs:/tmp/cert:ro
         healthcheck:
             test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/ready || exit 1" ]
             interval: 10s

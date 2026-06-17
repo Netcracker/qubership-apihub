@@ -43,6 +43,10 @@ For database access connect to localhost:5432 postgres/postgres
 
 NOTE: you can use `generate_jwt_pkey.sh` script for generation a value for JWT_PRIVATE_KEY
 
+### Optional: custom CA for backend HTTPS
+
+If the backend image is based on [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images), place corporate CA files (`.crt`, `.cer`, or `.pem`) in **`certs/`** and uncomment the **`./certs:/tmp/cert:ro`** volume in **`docker-compose.yml`**. MinIO/S3 CA stays in **`s3Storage.crt`** in the backend config YAML.
+
 ## Start
 
 Execute `podman compose up`

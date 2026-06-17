@@ -19,6 +19,15 @@ qubershipApihubBackend:
   # Optional; Go runtime memory soft limit passed as GOMEMLIMIT (container env). Keep below resource.memory.limit; If not set, default value: 410MiB (~80% of default memory.limit 512Mi); Example: 2400MiB
   goMemLimit: '410MiB'
 
+  # Optional; custom CA certificates for backend HTTPS outbound calls (OIDC, SAML, playground proxy, AI chat).
+  # Requires the qubership-core-base runtime image. The base image entrypoint loads .crt/.cer/.pem files from
+  # /tmp/cert into the system trust store before the application starts.
+  customCa:
+    # Optional; mount custom CA Secret when true; If not set, default value: false; Example: true
+    enabled: false
+    # Optional; Kubernetes Secret name with one or more PEM certificate files (.crt, .cer, or .pem keys); If not set, default value: ""; Example: apihub-backend-custom-ca
+    secretName: ''
+
   # Section with business and technical parameters for APIHUB.
   env:
     # Optional; Set log level on init to specified value. Values: Info, Warn, Error, etc; If not set, default value: INFO; Example: DEBUG

@@ -165,6 +165,31 @@ Qubership APIHUB will be accessible on [https://qubership-apihub.localtest.me](h
 
 Credentials for login can be found in `./qubership-apihub/local-secrets.yaml` file
 
+## Optional: custom CA for backend HTTPS outbound calls
+
+When the backend uses the [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) runtime image, mount corporate CA certificates at **`/tmp/cert`**. The base image entrypoint loads them before the application starts.
+
+1. Create a Secret in the APIHUB namespace (one or more `.crt`/`.pem` files):
+
+```bash
+kubectl create secret generic apihub-backend-custom-ca \
+  --from-file=company-ca.pem=./company-ca.pem \
+  -n qubership-apihub
+```
+
+2. Enable the mount in `qubership-apihub/local-k8s-values.yaml` (or the Keycloak overlay):
+
+```yaml
+qubershipApihubBackend:
+  customCa:
+    enabled: true
+    secretName: apihub-backend-custom-ca
+```
+
+3. Upgrade the release: `helm upgrade apihub ./helm-templates/qubership-apihub -n qubership-apihub -f qubership-apihub/local-k8s-values.yaml -f qubership-apihub/local-secrets.yaml`
+
+MinIO/S3 custom CA remains in **`s3Storage.crt`** inside the backend config Secret, not in `/tmp/cert`.
+
 
 ## Uninstallation
 
