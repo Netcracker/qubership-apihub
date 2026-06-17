@@ -199,7 +199,7 @@ Process-level env vars (the only ones the backend binary reads directly):
 | `APIHUB_CONFIG_FOLDER` | No | `./` | Directory where the process looks for `config.yaml` |
 | `LOG_LEVEL` | No | `INFO` | Bootstrap log level. Values: `DEBUG`, `INFO`, `WARN`, `ERROR` |
 
-**Custom CA certificates (HTTPS outbound):** from backend release with [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images), mount PEM files at **`/tmp/cert`** (Compose: **`./certs:/tmp/cert:ro`**; Helm: **`qubershipApihubBackend.customCa`**). The base image entrypoint imports them into the system trust store before the process starts. MinIO/S3 endpoint CA stays in **`s3Storage.crt`** in `config.yaml`. See [Configuration reference — custom CA](./configuration-reference.md).
+**Custom CA certificates (HTTPS outbound):** from backend and linter releases with [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images), mount PEM files at **`/tmp/cert`** (Compose: **`./certs:/tmp/cert:ro`** on backend and linter services; Helm: **`qubershipApihubBackend.customCa`**, **`qubershipApiLinterService.customCa`**). The base image entrypoint imports them into the system trust store before the process starts. MinIO/S3 endpoint CA stays in **`s3Storage.crt`** in `config.yaml`. See [Configuration reference — custom CA](./configuration-reference.md).
 
 All other parameters are `config.yaml` keys. Most important:
 
@@ -321,6 +321,8 @@ All configuration via **environment variables**.
 #### qubership-api-linter-service
 
 All configuration via **environment variables** (no `config.yaml` for process startup). Source: [`system_info.go`](https://github.com/Netcracker/qubership-api-linter-service/blob/develop/qubership-api-linter-service/service/system_info.go).
+
+**Custom CA certificates (HTTPS outbound):** with the [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) runtime image, mount PEM files at **`/tmp/cert`** (Compose: uncomment the linter **`./certs:/tmp/cert:ro`** volume; Helm: **`qubershipApiLinterService.customCa`**). Required for corporate HTTPS to APIHUB or OpenAI when public CAs are insufficient.
 
 | Env var | Mandatory | Default | Description |
 |---------|-----------|---------|-------------|
@@ -476,6 +478,7 @@ helm uninstall apihub -n qubership-apihub
 | `qubershipApihubBackend.env.cleanup.*` | No | Data retention schedules / TTLs |
 | `qubershipApihubBackend.env.ai.chat.openAI.*` | No | AI chat feature |
 | `qubershipApihubBackend.env.monitoring.enabled` | No | `true` creates Prometheus `ServiceMonitor` |
+| `qubershipApihubBackend.customCa` | No | Optional Secret mounted at `/tmp/cert` for corporate HTTPS outbound |
 | `qubershipApihubBuildTaskConsumer.env.accessToken` | Yes | → `APIHUB_API_KEY` (must match `zeroDayConfiguration.accessToken`) |
 | `qubershipApihubBuildTaskConsumer.replicas` | No | Scale workers (3–6 for load) |
 | `qubershipApihubUi.apihubUrl` | Yes | → UI env, must equal `apihubExternalUrl` |
@@ -486,6 +489,7 @@ helm uninstall apihub -n qubership-apihub
 | `qubershipApiLinterService.env.apihub.accessToken` | Yes | → `APIHUB_ACCESS_TOKEN` |
 | `qubershipApiLinterService.env.apihub.url` | No | Default `http://qubership-apihub-ui:8080` |
 | `qubershipApiLinterService.env.linters.spectral.workers` | No | Spectral worker count |
+| `qubershipApiLinterService.customCa` | No | Optional Secret mounted at `/tmp/cert` for corporate HTTPS outbound |
 | `qubershipApiLinterService.env.ai.*` | No | AI linter (OpenAI key, workers, include/exclude lists) |
 | `qubershipApihubAgentsBackend.env.database.*` | Yes | → `AGENTS_BACKEND_POSTGRESQL_*` |
 | `qubershipApihubAgentsBackend.env.apihub.accessToken` | Yes | → `APIHUB_ACCESS_TOKEN` |

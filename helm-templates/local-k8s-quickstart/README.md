@@ -167,12 +167,20 @@ Credentials for login can be found in `./qubership-apihub/local-secrets.yaml` fi
 
 ## Optional: custom CA for backend HTTPS outbound calls
 
-When the backend uses the [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) runtime image, mount corporate CA certificates at **`/tmp/cert`**. The base image entrypoint loads them before the application starts.
+When the backend or linter uses the [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) runtime image, mount corporate CA certificates at **`/tmp/cert`**. The base image entrypoint loads them before the application starts.
 
 1. Create a Secret in the APIHUB namespace (one or more `.crt`/`.pem` files):
 
 ```bash
 kubectl create secret generic apihub-backend-custom-ca \
+  --from-file=company-ca.pem=./company-ca.pem \
+  -n qubership-apihub
+```
+
+For the linter service, create a separate Secret (or reuse the same PEM files):
+
+```bash
+kubectl create secret generic apihub-linter-custom-ca \
   --from-file=company-ca.pem=./company-ca.pem \
   -n qubership-apihub
 ```
@@ -184,6 +192,11 @@ qubershipApihubBackend:
   customCa:
     enabled: true
     secretName: apihub-backend-custom-ca
+
+qubershipApiLinterService:
+  customCa:
+    enabled: true
+    secretName: apihub-linter-custom-ca
 ```
 
 3. Upgrade the release: `helm upgrade apihub ./helm-templates/qubership-apihub -n qubership-apihub -f qubership-apihub/local-k8s-values.yaml -f qubership-apihub/local-secrets.yaml`

@@ -89,6 +89,9 @@ qubershipApiLinterService:
     repository: 'ghcr.io/netcracker/qubership-api-linter-service'
     tag: 'dev'
   replicas: 1
+  customCa:
+    enabled: false
+    secretName: ''
   resource:
     cpu:
       request: "30m"

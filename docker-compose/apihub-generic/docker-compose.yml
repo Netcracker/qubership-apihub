@@ -93,6 +93,10 @@ services:
         ports:
         - "8091:8080"
         env_file: "qubership-api-linter-service.env"
+        # Optional corporate CA for HTTPS outbound calls (qubership-core-base /tmp/cert contract).
+        # Uncomment and place .crt/.cer/.pem files in ./certs/
+        # volumes:
+        #     - ./certs:/tmp/cert:ro
         healthcheck:
             test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/ready || exit 1" ]
             interval: 10s
