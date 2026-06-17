@@ -134,6 +134,9 @@ qubershipApihubAgentsBackend:
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-agents-backend'
     tag: 'dev'
+  customCa:
+    enabled: false
+    secretName: ''
   replicas: 1
   resource:
     memory:

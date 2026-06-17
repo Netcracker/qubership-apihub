@@ -31,6 +31,12 @@ spec:
       volumes:
       - name: tmp-volume
         emptyDir: {}
+      {{- if and .Values.qubershipApihubAgentsBackend.customCa.enabled .Values.qubershipApihubAgentsBackend.customCa.secretName }}
+      - name: qubership-apihub-agents-backend-custom-ca
+        secret:
+          defaultMode: 420
+          secretName: {{ .Values.qubershipApihubAgentsBackend.customCa.secretName | quote }}
+      {{- end }}
       containers:
       - name: qubership-apihub-agents-backend
         image: '{{.Values.qubershipApihubAgentsBackend.image.repository}}:{{.Values.qubershipApihubAgentsBackend.image.tag}}'
@@ -38,6 +44,11 @@ spec:
         volumeMounts:
           - name: tmp-volume
             mountPath: /tmp
+          {{- if and .Values.qubershipApihubAgentsBackend.customCa.enabled .Values.qubershipApihubAgentsBackend.customCa.secretName }}
+          - name: qubership-apihub-agents-backend-custom-ca
+            mountPath: /tmp/cert
+            readOnly: true
+          {{- end }}
         ports:
           - name: web
             containerPort: 8080

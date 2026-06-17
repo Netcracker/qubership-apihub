@@ -185,6 +185,14 @@ kubectl create secret generic apihub-linter-custom-ca \
   -n qubership-apihub
 ```
 
+For the agents-backend service:
+
+```bash
+kubectl create secret generic apihub-agents-backend-custom-ca \
+  --from-file=company-ca.pem=./company-ca.pem \
+  -n qubership-apihub
+```
+
 2. Enable the mount in `qubership-apihub/local-k8s-values.yaml` (or the Keycloak overlay):
 
 ```yaml
@@ -197,6 +205,11 @@ qubershipApiLinterService:
   customCa:
     enabled: true
     secretName: apihub-linter-custom-ca
+
+qubershipApihubAgentsBackend:
+  customCa:
+    enabled: true
+    secretName: apihub-agents-backend-custom-ca
 ```
 
 3. Upgrade the release: `helm upgrade apihub ./helm-templates/qubership-apihub -n qubership-apihub -f qubership-apihub/local-k8s-values.yaml -f qubership-apihub/local-secrets.yaml`

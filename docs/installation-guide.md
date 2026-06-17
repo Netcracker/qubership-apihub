@@ -199,7 +199,7 @@ Process-level env vars (the only ones the backend binary reads directly):
 | `APIHUB_CONFIG_FOLDER` | No | `./` | Directory where the process looks for `config.yaml` |
 | `LOG_LEVEL` | No | `INFO` | Bootstrap log level. Values: `DEBUG`, `INFO`, `WARN`, `ERROR` |
 
-**Custom CA certificates (HTTPS outbound):** from backend and linter releases with [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images), mount PEM files at **`/tmp/cert`** (Compose: **`./certs:/tmp/cert:ro`** on backend and linter services; Helm: **`qubershipApihubBackend.customCa`**, **`qubershipApiLinterService.customCa`**). The base image entrypoint imports them into the system trust store before the process starts. MinIO/S3 endpoint CA stays in **`s3Storage.crt`** in `config.yaml`. See [Configuration reference — custom CA](./configuration-reference.md).
+**Custom CA certificates (HTTPS outbound):** from backend and linter releases with [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images), mount PEM files at **`/tmp/cert`** (Compose: **`./certs:/tmp/cert:ro`** on backend, linter, and agents-backend services; Helm: **`qubershipApihubBackend.customCa`**, **`qubershipApiLinterService.customCa`**, **`qubershipApihubAgentsBackend.customCa`**). The base image entrypoint imports them into the system trust store before the process starts. MinIO/S3 endpoint CA stays in **`s3Storage.crt`** in `config.yaml`. See [Configuration reference — custom CA](./configuration-reference.md).
 
 All other parameters are `config.yaml` keys. Most important:
 
@@ -374,6 +374,8 @@ All configuration via **environment variables**. Source: [`system_info.go`](http
 | `INSECURE_PROXY` | No | `false` | Enable unauthenticated proxy. Dangerous — do not enable on prod |
 | `ORIGIN_ALLOWED` | No | — | Extra CORS origin (dev debugging only) |
 
+**Custom CA certificates (HTTPS outbound):** with the [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) runtime image, mount PEM files at **`/tmp/cert`** (Compose: uncomment the agents-backend **`./certs:/tmp/cert:ro`** volume; Helm: **`qubershipApihubAgentsBackend.customCa`**). Required for corporate HTTPS to APIHUB or remote agents when public CAs are insufficient.
+
 ---
 
 ## Helm (Kubernetes)
@@ -496,6 +498,7 @@ helm uninstall apihub -n qubership-apihub
 | `qubershipApihubAgentsBackend.env.defaultWorkspaceId` | No | → `DEFAULT_WORKSPACE_ID` |
 | `qubershipApihubAgentsBackend.env.snapshotsCleanupSchedule` | No | → `SNAPSHOTS_CLEANUP_SCHEDULE` |
 | `qubershipApihubAgentsBackend.env.snapshotsTtlDays` | No | → `SNAPSHOTS_TTL_DAYS` |
+| `qubershipApihubAgentsBackend.customCa` | No | Optional Secret mounted at `/tmp/cert` for corporate HTTPS outbound |
 
 For secrets management on production clusters use Kubernetes **ExternalSecrets**, CSI driver, or sealed-secrets — do not commit plaintext credentials in `values.yaml`.
 

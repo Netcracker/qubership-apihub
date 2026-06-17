@@ -122,6 +122,9 @@ services:
         ports:
         - "8092:8080"
         env_file: "qubership-apihub-agents-backend.env"
+        # Optional: corporate CA for HTTPS outbound (APIHUB, agents). Requires core-base image.
+        # volumes:
+        #     - ./certs:/tmp/cert:ro
         healthcheck:
             test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/ready || exit 1" ]
             interval: 10s
