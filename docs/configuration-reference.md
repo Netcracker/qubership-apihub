@@ -19,7 +19,7 @@ Annotated **YAML schemas** used by file-backed binaries live only where the load
 | API Registry | [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/qubership-apihub-service/config.template.yaml) (`../qubership-apihub-backend/qubership-apihub-service/` locally) | `APIHUB_CONFIG_FOLDER` → `config.yaml`; see backend service bootstrap. |
 | Kubernetes Agent | [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-agent/blob/develop/qubership-apihub-agent/config.template.yaml) | Agent image (file-based like backend). |
 | **API Linter** | *(none)* | **No `config.yaml` for process startup.** Operational settings arrive **only via environment variables** aggregated in [`system_info.go`](https://github.com/Netcracker/qubership-api-linter-service/blob/develop/qubership-api-linter-service/service/system_info.go) (`Getenv`). YAML files are **Spectral ruleset payloads** managed through the linter API/database — that is **data**, not a replacement for env-based service config unless the product introduces a YAML loader upstream. |
-| Builders / Agents-backend / UI | *(none)* | Env only (NestJS/UI nginx wrappers).
+| Builders / Agents-backend / UI | *(none)* | Env only (NestJS/UI nginx wrappers). |
 
 **Golden path for admins:** derive intent from Helm values → rendered manifests → confirm against the Go/TS loaders above when in doubt.
 
@@ -103,7 +103,7 @@ Repository path: **[`docker-compose/apihub-generic/`](../docker-compose/apihub-g
 
 | File | Service | Role |
 |------|---------|------|
-| `qubership-apihub-backend-config.yaml` | Backend | Mounted as `config.yaml`. Uses **`${JWT_PRIVATE_KEY}`**, **`${APIHUB_ACCESS_TOKEN}`**, **`${APIHUB_ADMIN_EMAIL}`**, **`${APIHUB_ADMIN_PASSWORD}`** for `generate_env_and_up_compose.sh` substitution. **`extensions[].baseUrl`** must be reachable **from users’ browsers and from the backend** (see Compose stack readme — often `host.docker.internal` plus published ports). |
+| `qubership-apihub-backend-config.yaml` | Backend | Mounted as `config.yaml`. Uses **`${JWT_PRIVATE_KEY}`**, **`${APIHUB_ACCESS_TOKEN}`**, **`${APIHUB_ADMIN_EMAIL}`**, **`${APIHUB_ADMIN_PASSWORD}`** for `generate_env_and_up_compose.sh` substitution. **`extensions[].baseUrl`** must be reachable **from users’ browsers and from the backend** (see Compose stack readme). |
 | `certs/` (optional) | Backend, linter, agents-backend | Place corporate CA **`.crt`/`.cer`/`.pem`** files in **`certs/`** and uncomment **`./certs:/tmp/cert:ro`** in **`docker-compose.yml`** on the three services. Uses the [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) **`/tmp/cert`** contract. MinIO/S3 custom CA remains in **`s3Storage.crt`** inside the backend config YAML. |
 | `qubership-apihub-ui.env` | Portal UI | Internal upstream addresses (`APIHUB_BACKEND_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, …). |
 | `qubership-apihub-build-task-consumer.env` | Builder | **`APIHUB_API_KEY`**, **`APIHUB_BACKEND_ADDRESS`**. Compose uses **`host.docker.internal:8090`** so the worker reaches the backend through the published host port. |
