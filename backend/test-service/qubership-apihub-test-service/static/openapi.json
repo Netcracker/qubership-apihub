@@ -4,24 +4,24 @@
     "title": "APIHUB registry public API",
     "description": "The API contract for APIHUB direct call\n",
     "contact": {
-      "url": "https://apihub.domain.com",
-      "email": "author@domain.com",
+      "url": "https://apihub.example.com",
+      "email": "author@example.com",
       "name": "Author"
     },
     "license": {
       "name": "Qubership",
-      "url": "https://domain.com"
+      "url": "https://example.com"
     },
     "version": "0.1.14",
     "x-nc-api-audience": "non-BWC"
   },
   "externalDocs": {
     "description": "Find out more about package",
-    "url": "https://wiki.domain.com"
+    "url": "https://wiki.example.com"
   },
   "servers": [
     {
-      "url": "https://{apihub}.domain.com/api/v2",
+      "url": "https://{apihub}.example.com/api/v2",
       "description": "APIHUB server",
       "variables": {
         "apihub": {
@@ -401,7 +401,7 @@
             "schema": {
               "type": "string",
               "format": "uri",
-              "example": "https://apihub.domain.com/portal"
+              "example": "https://apihub.example.com/portal"
             }
           }
         ],
@@ -1787,7 +1787,7 @@
                             "description": "Url of the Git repository.",
                             "type": "string",
                             "format": "URI",
-                            "example": "https://git.domain.com/apihub-registry"
+                            "example": "https://git.example.com/apihub-registry"
                           },
                           "cloudName": {
                             "description": "Name of the cloud for publication from Agent.",
@@ -1798,7 +1798,7 @@
                             "description": "Full address of the cloud from Agent.",
                             "type": "string",
                             "format": "URI",
-                            "example": "https://k8s.domain.com"
+                            "example": "https://k8s.example.com"
                           },
                           "namespace": {
                             "description": "Namespace of Agent's publication.",
@@ -5416,12 +5416,12 @@
                     "description": "Email address of the user",
                     "type": "string",
                     "format": "email",
-                    "example": "name.surname@domain.com"
+                    "example": "john.doe@example.com"
                   },
                   "name": {
                     "description": "Name of the user",
                     "type": "string",
-                    "example": "Name Surname"
+                    "example": "John Doe"
                   },
                   "password": {
                     "type": "string",
@@ -7489,13 +7489,13 @@
           "name": {
             "description": "Name of the user",
             "type": "string",
-            "example": "Name Surname"
+            "example": "John Doe"
           },
           "email": {
             "description": "Email address of the user",
             "type": "string",
             "format": "email",
-            "example": "name.surname@domain.com"
+            "example": "john.doe@example.com"
           },
           "avatarUrl": {
             "description": "Avatar of the user",
@@ -7568,7 +7568,7 @@
               "format": "email"
             },
             "example": [
-              "name.surname@domain.com"
+              "john.doe@example.com"
             ]
           },
           "role": {
@@ -8678,7 +8678,7 @@
                 "description": "Url of the Git repository.",
                 "type": "string",
                 "format": "URI",
-                "example": "https://git.domain.com/apihub-registry"
+                "example": "https://git.example.com/apihub-registry"
               },
               "labels": {
                 "description": "List of version labels.",
@@ -8699,7 +8699,7 @@
                 "description": "Full address of the cloud from Agent.",
                 "type": "string",
                 "format": "URI",
-                "example": "https://k8s-apps2.k8s.sdntest.domain.com"
+                "example": "https://k8s-apps2.k8s.sdntest.example.com"
               },
               "namespace": {
                 "description": "Namespace of Agent's publication.",
@@ -8830,7 +8830,7 @@
           "code": "APIHUB-3020",
           "reason": "packageNotFound",
           "message": "package with packageId = $packageId not found",
-          "referenceError": "https://wiki.domain.com/display/APIM/APIHUB+Error+codes",
+          "referenceError": "https://wiki.example.com/display/APIM/APIHUB+Error+codes",
           "status": 404
         }
       },
@@ -8841,7 +8841,7 @@
           "code": "APIHUB-3050",
           "reason": "PublishedVersionNotFound",
           "message": "Published version $version not found",
-          "referenceError": "https://wiki.domain.com/display/APIM/APIHUB+Error+codes",
+          "referenceError": "https://wiki.example.com/display/APIM/APIHUB+Error+codes",
           "status": 404
         }
       },
@@ -8852,7 +8852,7 @@
           "code": "APIHUB-3043",
           "reason": "FileNotFound",
           "message": "File for path $fileId not found",
-          "referenceError": "https://wiki.domain.com/display/APIM/APIHUB+Error+codes",
+          "referenceError": "https://wiki.example.com/display/APIM/APIHUB+Error+codes",
           "status": 404
         }
       },
@@ -8863,7 +8863,7 @@
           "code": "APIHUB-COMMON-4001",
           "reason": "Incorrect input parameters",
           "message": "Incorrect input parameters",
-          "referenceError": "https://wiki.domain.com/display/APIM/APIHUB+Error+codes",
+          "referenceError": "https://wiki.example.com/display/APIM/APIHUB+Error+codes",
           "status": 400
         }
       },
@@ -8874,7 +8874,7 @@
           "code": "APIHUB-8000",
           "reason": "InternalServerError",
           "message": "InternalServerError",
-          "refwrerenceError": "https://apihub.domain.com/error/APIHUB-COMMON-0001",
+          "refwrerenceError": "https://apihub.example.com/error/APIHUB-COMMON-0001",
           "status": 500
         }
       }
