@@ -9,6 +9,9 @@ info:
   contact:
     name: Netcracker Opensource Group
     email: opensourcegroup@netcracker.com
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
 servers:
   - url: /
 security:
