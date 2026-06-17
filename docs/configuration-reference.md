@@ -8,7 +8,7 @@ This page ties together **what you edit in GitOps** versus **what the processes 
 
 1. **`qubership-apihub` Helm chart** ([`helm-templates/qubership-apihub/`](../helm-templates/qubership-apihub/) — **`values.yaml` + templates**) is the **canonical delivery contract for Kubernetes**: it defines Secrets, mounts, injected env vars, images, probes. Supported production shapes should be expressible **without bypassing** the chart (operators extend via values/overlays).
 
-2. **Component source code** is the **authority on runtime behaviour**: which knobs are read from **`config.yaml`**, which from **environment**, and exact variable names. The umbrella markdown is a map; disagreeing forks should be settled against code on `develop`.
+2. **Component source code** is the **authority on runtime behaviour**: which knobs are read from **`config.yaml`**, which from **environment**, and exact variable names. The umbrella Markdown is a map; disagreeing forks should be settled against code on `develop`.
 
 3. **`docker-compose/` stacks** reproduce the **same split** for local rigs; they are **downstream helpers**, not replacements for Helm when you argue about cluster installs.
 
@@ -58,6 +58,43 @@ Default **`extensions`** URLs use cluster DNS (`http://qubership-api-linter-serv
 
 Commands: [Installation guide — Helm](./installation-guide.md#helm-kubernetes). Template reference: **`templates/qubership-*-deployment.yaml`** in the chart.
 
+### Custom CA Kubernetes Secret (Helm)
+
+When **`customCa.enabled: true`**, create the Secret **before** `helm install` / `helm upgrade`. Each key under **`data`** or **`stringData`** becomes a filename under **`/tmp/cert`** (use **`.crt`**, **`.cer`**, or **`.pem`** suffixes). One Secret per service is typical; PEM contents may be identical across backend, linter, and agents-backend.
+
+**Backend** — save as `apihub-backend-custom-ca-secret.yaml`, set **`namespace`** to your APIHUB release namespace, then `kubectl apply -f apihub-backend-custom-ca-secret.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: apihub-backend-custom-ca
+  namespace: qubership-apihub
+type: Opaque
+stringData:
+  company-root-ca.pem: |
+    -----BEGIN CERTIFICATE-----
+    # paste PEM body from your corporate CA
+    -----END CERTIFICATE-----
+```
+
+**Linter** — same shape; change **`metadata.name`** to match **`qubershipApiLinterService.customCa.secretName`** (for example `apihub-linter-custom-ca`).
+
+**Agents-backend** — same shape; change **`metadata.name`** to match **`qubershipApihubAgentsBackend.customCa.secretName`** (for example `apihub-agents-backend-custom-ca`).
+
+Enable the mount in **`values.yaml`** (defaults keep **`enabled: false`**):
+
+```yaml
+qubershipApihubBackend:
+  customCa:
+    enabled: true
+    secretName: apihub-backend-custom-ca
+```
+
+Alternative: `kubectl create secret generic apihub-backend-custom-ca --from-file=company-root-ca.pem=./company-root-ca.pem -n qubership-apihub`.
+
+MinIO/S3 endpoint CA stays in **`s3Storage.crt`** inside the backend config Secret — not in **`/tmp/cert`**.
+
 ---
 
 ## 3. Compose — which file to edit
@@ -66,8 +103,8 @@ Repository path: **[`docker-compose/apihub-generic/`](../docker-compose/apihub-g
 
 | File | Service | Role |
 |------|---------|------|
-| `qubership-apihub-backend-config.yaml` | Backend | Mounted as `config.yaml`. Uses **`${JWT_PRIVATE_KEY}`**, **`${APIHUB_ACCESS_TOKEN}`**, **`${APIHUB_ADMIN_EMAIL}`**, **`${APIHUB_ADMIN_PASSWORD}`** for `generate_env_and_up_compose.sh` substitution. **`extensions[].baseUrl`** must be reachable **from users’ browsers and from the backend** (see Compose README — often `host.docker.internal` plus published ports). |
-| `certs/` (optional) | Backend, linter, agents-backend | Place corporate CA **`.crt`/`.cer`/`.pem`** files here and uncomment **`./certs:/tmp/cert:ro`** in **`docker-compose.yml`** on **`qubership-apihub-backend`**, **`qubership-api-linter-service`**, and **`qubership-apihub-agents-backend`**. Uses the [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) **`/tmp/cert`** contract. MinIO/S3 custom CA remains in **`s3Storage.crt`** inside the backend config YAML. |
+| `qubership-apihub-backend-config.yaml` | Backend | Mounted as `config.yaml`. Uses **`${JWT_PRIVATE_KEY}`**, **`${APIHUB_ACCESS_TOKEN}`**, **`${APIHUB_ADMIN_EMAIL}`**, **`${APIHUB_ADMIN_PASSWORD}`** for `generate_env_and_up_compose.sh` substitution. **`extensions[].baseUrl`** must be reachable **from users’ browsers and from the backend** (see Compose stack readme — often `host.docker.internal` plus published ports). |
+| `certs/` (optional) | Backend, linter, agents-backend | Place corporate CA **`.crt`/`.cer`/`.pem`** files in **`certs/`** and uncomment **`./certs:/tmp/cert:ro`** in **`docker-compose.yml`** on the three services. Uses the [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) **`/tmp/cert`** contract. MinIO/S3 custom CA remains in **`s3Storage.crt`** inside the backend config YAML. |
 | `qubership-apihub-ui.env` | Portal UI | Internal upstream addresses (`APIHUB_BACKEND_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, …). |
 | `qubership-apihub-build-task-consumer.env` | Builder | **`APIHUB_API_KEY`**, **`APIHUB_BACKEND_ADDRESS`**. Compose uses **`host.docker.internal:8090`** so the worker reaches the backend through the published host port. |
 | `qubership-api-linter-service.env` | Linter | DB + **`APIHUB_URL`** (Portal base URL as seen from the linter pod) + token. |
@@ -94,4 +131,4 @@ These must stay **aligned across files/env**:
 |-------|--------|
 | Auth / SAML / OIDC model | Backend [security_model.md](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/security/security_model.md), **`security.externalIdentityProviders`** in **`config.template.yaml`** |
 | Data retention / cleanup jobs | Backend **`cleanup`** section + [data_maintenance](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/data_maintenance.md) |
-| End-user workflows | Portal & Agents Markdown guides ([Portal User Guide](https://github.com/Netcracker/qubership-apihub-ui/blob/develop/docs/Portal%20User%20Guide.md), [Agent User Guide](https://github.com/Netcracker/qubership-apihub-ui/blob/develop/docs/Agent%20User%20Guide.md)) + [Wiki](https://github.com/Netcracker/qubership-apihub/wiki) |
+| End user workflows | Portal & Agents Markdown guides ([Portal User Guide](https://github.com/Netcracker/qubership-apihub-ui/blob/develop/docs/Portal%20User%20Guide.md), [Agent User Guide](https://github.com/Netcracker/qubership-apihub-ui/blob/develop/docs/Agent%20User%20Guide.md)) + [Wiki](https://github.com/Netcracker/qubership-apihub/wiki) |

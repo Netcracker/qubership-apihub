@@ -12,9 +12,9 @@ Optional: For PostgreSQL access install PGADmin or any other similar tool.
 
 ## Parameters setup
 
-Review *.env and *config.yaml files in this folder and fill values for the following ones:
+Review `.env` and `config.yaml` files in this folder and fill values for the following ones:
 
-```
+```text
 qubership-apihub-backend-config.yaml --->
 
 security:
@@ -32,7 +32,7 @@ zeroDayConfiguration:
   adminPassword: ${APIHUB_ADMIN_PASSWORD}
 ```
 
-```
+```text
 qubership-apihub-build-task-consumer.env --->
 
 # <put_your_key_here - any random string. Must be the same as APIHUB_ACCESS_TOKEN in BE>
@@ -45,7 +45,10 @@ NOTE: you can use `generate_jwt_pkey.sh` script for generation a value for JWT_P
 
 ### Optional: custom CA for backend HTTPS
 
-If the backend image is based on [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images), place corporate CA files (`.crt`, `.cer`, or `.pem`) in **`certs/`** and uncomment the **`./certs:/tmp/cert:ro`** volume in **`docker-compose.yml`** for **`qubership-apihub-backend`**, **`qubership-api-linter-service`**, and **`qubership-apihub-agents-backend`**. MinIO/S3 CA stays in **`s3Storage.crt`** in the backend config YAML.
+If the backend image is based on [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images),
+place corporate CA files (`.crt`, `.cer`, or `.pem`) in **`certs/`** and uncomment **`./certs:/tmp/cert:ro`** in
+**`docker-compose.yml`** for **`qubership-apihub-backend`**, **`qubership-api-linter-service`**, and
+**`qubership-apihub-agents-backend`**. MinIO/S3 CA stays in **`s3Storage.crt`** in the backend config YAML.
 
 ## Start
 
@@ -61,7 +64,7 @@ Execute `generate_env_and_up_compose.sh` - it will initialize all require ENV VA
 
 ## Usage
 
-http://localhost:8081/login - Qubserhip-APIHUB UI URL
+<http://localhost:8081/login> - Qubserhip-APIHUB UI URL
 
 ## Startup with locally built images
 
@@ -86,12 +89,11 @@ On Windows need to tune WSL:
 2. Edit file '/etc/wsl.conf' (using sudo)
 Add the following lines to the end:
 
-```
+```text
 [automount]
 options = "metadata"
 ```
-One liner to do it: `echo -e "\n[automount]\noptions = "metadata"" | sudo tee -a /etc/wsl.conf`
+
+One-liner to do it: `echo -e "\n[automount]\noptions = "metadata"" | sudo tee -a /etc/wsl.conf`
 
 3. Restart your PC (restart of WSL only is not enough)
-
-

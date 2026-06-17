@@ -14,9 +14,9 @@ Optional: For PostgreSQL access install PGADmin or any other similar tool.
 
 ## Parameters setup
 
-Review *.env and *config.yaml files in this folder and fill values for the following ones:
+Review `.env` and `config.yaml` files in this folder and fill values for the following ones:
 
-```
+```text
 qubership-apihub-backend-config.yaml --->
 
 security:
@@ -54,15 +54,14 @@ zeroDayConfiguration:
   adminPassword: ${APIHUB_ADMIN_PASSWORD}
 ```
 
-```
+```text
 qubership-apihub-build-task-consumer.env --->
 
 # <put_your_key_here - any random string. Must be the same as APIHUB_ACCESS_TOKEN in BE>
 APIHUB_API_KEY=${APIHUB_ACCESS_TOKEN}
 ```
 
-
-```
+```text
 keycloak/realm.json  --->
 
 "baseUrl": "http://host.docker.internal:8081", // change 8081 to 5173 if you are working on proxy FE application
@@ -85,7 +84,10 @@ For database access connect to localhost:5432 postgres/postgres
 
 ### Optional: custom CA for backend HTTPS
 
-If the backend image is based on [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images), place corporate CA files (`.crt`, `.cer`, or `.pem`) in **`certs/`** and uncomment the **`./certs:/tmp/cert:ro`** volume in **`docker-compose.yml`** for **`qubership-apihub-backend`**, **`qubership-api-linter-service`**, and **`qubership-apihub-agents-backend`**. MinIO/S3 CA stays in **`s3Storage.crt`** in the backend config YAML.
+If the backend image is based on [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images),
+place corporate CA files (`.crt`, `.cer`, or `.pem`) in **`certs/`** and uncomment **`./certs:/tmp/cert:ro`** in
+**`docker-compose.yml`** for **`qubership-apihub-backend`**, **`qubership-api-linter-service`**, and
+**`qubership-apihub-agents-backend`**. MinIO/S3 CA stays in **`s3Storage.crt`** in the backend config YAML.
 
 ## Start
 
@@ -102,7 +104,7 @@ Execute `generate_env_and_up_compose.sh` - it will initialize all require ENV VA
 
 ## Usage
 
-http://host.docker.internal:8081/ - Qubserhip-APIHUB UI URL
+<http://host.docker.internal:8081/> - Qubserhip-APIHUB UI URL
 
 You will be able to login under user/user credential (set in ./keycloak/realm.json)
 
@@ -129,9 +131,10 @@ On Windows need to tune WSL:
 2. Edit file '/etc/wsl.conf' (using sudo)
 Add the following lines to the end:
 
-```
+```text
 [automount]
 options = "metadata"
 ```
+
 3. Restart Podman machine
 4. Restart your PC

@@ -85,7 +85,7 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 
 ⚠️ This script **overwrites** template files in-place (`.env` + `qubership-apihub-backend-config.yaml`). Stash or branch before running if you want reproducibility.
 
-After start: **http://localhost:8081/login** — Portal UI.
+After start: <http://localhost:8081/login> — Portal UI.
 
 ### Published ports (generic compose)
 
@@ -199,7 +199,12 @@ Process-level env vars (the only ones the backend binary reads directly):
 | `APIHUB_CONFIG_FOLDER` | No | `./` | Directory where the process looks for `config.yaml` |
 | `LOG_LEVEL` | No | `INFO` | Bootstrap log level. Values: `DEBUG`, `INFO`, `WARN`, `ERROR` |
 
-**Custom CA certificates (HTTPS outbound):** from backend and linter releases with [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images), mount PEM files at **`/tmp/cert`** (Compose: **`./certs:/tmp/cert:ro`** on backend, linter, and agents-backend services; Helm: **`qubershipApihubBackend.customCa`**, **`qubershipApiLinterService.customCa`**, **`qubershipApihubAgentsBackend.customCa`**). The base image entrypoint imports them into the system trust store before the process starts. MinIO/S3 endpoint CA stays in **`s3Storage.crt`** in `config.yaml`. See [Configuration reference — custom CA](./configuration-reference.md).
+**Custom CA certificates (HTTPS outbound):** from backend and linter releases with
+[qubership-core-base](https://github.com/Netcracker/qubership-core-base-images), mount PEM files at **`/tmp/cert`**
+(Compose: **`./certs:/tmp/cert:ro`** on backend, linter, and agents-backend; Helm: **`*.customCa`** values).
+The base image entrypoint imports them into the system trust store before the process starts.
+MinIO/S3 endpoint CA stays in **`s3Storage.crt`** in `config.yaml`.
+See [Configuration reference — custom CA Secret](./configuration-reference.md#custom-ca-kubernetes-secret-helm).
 
 All other parameters are `config.yaml` keys. Most important:
 
@@ -235,7 +240,7 @@ All other parameters are `config.yaml` keys. Most important:
 | `technicalParameters.migrationLockMaxWaitMinutes` | No | `30` | Max wait time (minutes) for lock release during migration restart |
 | `technicalParameters.ephemeralFileDirectory` | No | `/tmp/apihub-ephemeral-files` | Base directory for ephemeral (temporary) file storage |
 | `businessParameters.externalLinks` | No | `[]` | Links shown under (i) button in UI |
-| `businessParameters.releaseVersionPattern` | No | `.*` | Regex for release name validation |
+| `businessParameters.releaseVersionPattern` | No | `.*` | Regular expression for release name validation |
 | `businessParameters.publishArchiveSizeLimitMb` | No | `50` | Max upload archive size (MB) |
 | `businessParameters.publishFileSizeLimitMb` | No | `15` | Max single file size inside archive (MB) |
 | `businessParameters.templateSizeLimitMb` | No | `1` | Max operation group template size (MB) |
@@ -262,14 +267,14 @@ All other parameters are `config.yaml` keys. Most important:
 | `cleanup.revisions.deleteReleaseRevisions` | No | `false` | Also delete revisions with `release` status |
 | `cleanup.comparisons.schedule` | No | `0 5 * * 0` | Cron for old ad-hoc comparison cleanup |
 | `cleanup.comparisons.ttlDays` | No | `30` | Ad-hoc comparisons TTL (days) |
-| `cleanup.comparisons.timeoutMinutes` | No | `360` | Max run time for comparison cleanup job |
+| `cleanup.comparisons.timeoutMinutes` | No | `360` | Max runtime for comparison cleanup job |
 | `cleanup.softDeletedData.schedule` | No | `0 22 * * 5` | Cron for soft-deleted data purge |
 | `cleanup.softDeletedData.ttlDays` | No | `730` | Soft-deleted data TTL (days) |
-| `cleanup.softDeletedData.timeoutMinutes` | No | `600` | Max run time |
+| `cleanup.softDeletedData.timeoutMinutes` | No | `600` | Max runtime |
 | `cleanup.unreferencedData.schedule` | No | `0 15 * * 6` | Cron for unreferenced data cleanup |
-| `cleanup.unreferencedData.timeoutMinutes` | No | `360` | Max run time |
+| `cleanup.unreferencedData.timeoutMinutes` | No | `360` | Max runtime |
 | `cleanup.maintenanceVacuum.schedule` | No | `0 2 * * 1` | Cron for maintenance vacuum job (`VACUUM FULL ANALYZE`) |
-| `cleanup.maintenanceVacuum.timeoutMinutes` | No | `300` | Max run time for maintenance vacuum phase |
+| `cleanup.maintenanceVacuum.timeoutMinutes` | No | `300` | Max runtime for maintenance vacuum phase |
 | `cleanup.builds.schedule` | No | `0 1 * * 0` | Cron for build table cleanup |
 | `cleanup.ephemeralFiles.schedule` | No | `*/5 * * * *` | Cron for ephemeral files cleanup |
 | `ai.mcp.workspace` | No | — | Default workspace for MCP integration |

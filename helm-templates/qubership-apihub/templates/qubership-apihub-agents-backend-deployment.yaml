@@ -42,13 +42,13 @@ spec:
         image: '{{.Values.qubershipApihubAgentsBackend.image.repository}}:{{.Values.qubershipApihubAgentsBackend.image.tag}}'
         imagePullPolicy: IfNotPresent
         volumeMounts:
-          - name: tmp-volume
-            mountPath: /tmp
-          {{- if and .Values.qubershipApihubAgentsBackend.customCa.enabled .Values.qubershipApihubAgentsBackend.customCa.secretName }}
-          - name: qubership-apihub-agents-backend-custom-ca
-            mountPath: /tmp/cert
-            readOnly: true
-          {{- end }}
+        - name: tmp-volume
+          mountPath: /tmp
+        {{- if and .Values.qubershipApihubAgentsBackend.customCa.enabled .Values.qubershipApihubAgentsBackend.customCa.secretName }}
+        - name: qubership-apihub-agents-backend-custom-ca
+          mountPath: /tmp/cert
+          readOnly: true
+        {{- end }}
         ports:
           - name: web
             containerPort: 8080
