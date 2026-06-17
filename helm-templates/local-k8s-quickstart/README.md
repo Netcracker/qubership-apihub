@@ -21,7 +21,7 @@ It is not a production ready deployment schema.
   * [Uninstallation](#uninstallation)
   * [Apache Superset (optional)](#apache-superset-optional)
   * [Deploy several APIHUBs simultaneously](#deploy-several-apihubs-simultaneously)
-  
+- [Tips & tricks](#tips--tricks)
 ## Quickstart
 
 1. Install the following tools: podman, kind, kubectl, helm
@@ -333,3 +333,49 @@ helm install apihub -n qubership-apihub-2 --create-namespace -f ../qubership-api
 **Done**
 
 New APIHUB is acessible via `https://qubership-apihub-2.localtest.me`
+
+## Tips & tricks
+
+### Clean up Podman + kind and compact the WSL disk (Windows)
+
+After many quickstart runs, Podman and kind can leave unused images and grow the WSL virtual disk. The steps below reclaim space.
+
+#### 1. Remove unused Podman images
+
+```powershell
+podman image prune -a
+```
+
+#### 2. Prune images inside the kind node
+
+```powershell
+podman exec -it kind-control-plane crictl rmi --prune
+```
+
+#### 3. Stop Podman Machine and WSL
+
+```powershell
+podman machine stop
+wsl --shutdown
+```
+
+#### 4. Compact the WSL virtual disk
+
+Open **PowerShell as Administrator**, then run `diskpart`. Inside `diskpart`, select your Podman Machine VHDX
+(typical path; adjust `<your-user>` and machine name if yours differs — check Podman Desktop → Settings → Resources):
+
+```text
+select vdisk file="C:\Users\<your-user>\.local\share\containers\podman\machine\wsl\wsldist\podman-machine-default\ext4.vhdx"
+attach vdisk readonly
+compact vdisk
+detach vdisk
+exit
+```
+
+#### 5. Start Podman again and verify the cluster
+
+```powershell
+podman machine start
+kubectl get nodes
+kubectl get pods -A
+```
