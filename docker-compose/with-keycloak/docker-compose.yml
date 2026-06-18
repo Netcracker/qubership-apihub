@@ -9,6 +9,7 @@ services:
       - "47376:47376"
     environment:
             - APIHUB_CONFIG_FOLDER=/app/qubership-apihub-service/
+            - GOMEMLIMIT=800MiB
     volumes:
             - ./qubership-apihub-backend-config.yaml:/app/qubership-apihub-service/config.yaml
     healthcheck:

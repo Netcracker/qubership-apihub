@@ -357,6 +357,10 @@ qubershipApiLinterService:
     memory:
      request: "150Mi"
      limit: "1000Mi"
+
+  # Optional; Go runtime memory soft limit passed as GOMEMLIMIT (container env). Keep below resource.memory.limit; If not set, default value: 800MiB (~80% of default memory.limit 1000Mi); Example: 2400MiB
+  goMemLimit: '800MiB'
+
   env:
     # Optional; Set log level on init to specified value. Values: Info, Warn, Error, etc; If not set, default value: INFO; Example: DEBUG
     logLevel: 'INFO'
@@ -437,6 +441,9 @@ qubershipApihubAgentsBackend:
     cpu:
       request: "30m"
       limit: "1"
+
+  # Optional; Go runtime memory soft limit passed as GOMEMLIMIT (container env). Keep below resource.memory.limit; If not set, default value: 205MiB (~80% of default memory.limit 256Mi); Example: 2400MiB
+  goMemLimit: '205MiB'
 
   # Section with business and technical parameters for Qubership APIHUB Agents Backend.
   env:

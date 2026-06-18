@@ -50,11 +50,11 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 
 | Service | Boot configuration | Key env var(s) |
 |---------|-------------------|----------------|
-| **qubership-apihub-backend** | **`config.yaml`** (path set by `APIHUB_CONFIG_FOLDER`, default `./`) | `APIHUB_CONFIG_FOLDER`, `LOG_LEVEL` |
+| **qubership-apihub-backend** | **`config.yaml`** (path set by `APIHUB_CONFIG_FOLDER`, default `./`) | `APIHUB_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
 | **qubership-apihub-ui** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_NC_SERVICE_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, `APIHUB_AGENTS_BACKEND_ADDRESS` |
 | **qubership-apihub-build-task-consumer** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_API_KEY`, `LOG_LEVEL`, `FOLDER_STORE`, `OPERATIONS_BUILD_BATCH` |
-| **qubership-api-linter-service** | **Env vars only** (confirmed in [`system_info.go`](https://github.com/Netcracker/qubership-api-linter-service/blob/develop/qubership-api-linter-service/service/system_info.go)) | `LINTER_POSTGRESQL_*`, `APIHUB_URL`, `APIHUB_ACCESS_TOKEN`, `SPECTRAL_*`, `OLRIC_*`, `OPENAI_*`, … |
-| **qubership-apihub-agents-backend** | Env vars only | `AGENTS_BACKEND_POSTGRESQL_*`, `APIHUB_URL`, `APIHUB_ACCESS_TOKEN`, `SNAPSHOTS_*`, … |
+| **qubership-api-linter-service** | **Env vars only** (confirmed in [`system_info.go`](https://github.com/Netcracker/qubership-api-linter-service/blob/develop/qubership-api-linter-service/service/system_info.go)) | `LINTER_POSTGRESQL_*`, `APIHUB_URL`, `APIHUB_ACCESS_TOKEN`, `GOMEMLIMIT`, `SPECTRAL_*`, `OLRIC_*`, `OPENAI_*`, … |
+| **qubership-apihub-agents-backend** | Env vars only | `AGENTS_BACKEND_POSTGRESQL_*`, `APIHUB_URL`, `APIHUB_ACCESS_TOKEN`, `GOMEMLIMIT`, `SNAPSHOTS_*`, … |
 | **qubership-apihub-agent** *(K8s, optional)* | **`config.yaml`** (same pattern as backend) | `APIHUB_CONFIG_FOLDER` |
 
 **Helm:** `qubershipApihubBackend.env` in `values.yaml` is serialized as YAML into Secret `config.yaml` mounted at `/app/qubership-apihub-service/etc/` — same schema as [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/qubership-apihub-service/config.template.yaml). All other services receive env vars injected directly by Deployment templates.
@@ -198,6 +198,7 @@ Process-level env vars (the only ones the backend binary reads directly):
 |---------|-----------|---------|-------------|
 | `APIHUB_CONFIG_FOLDER` | No | `./` | Directory where the process looks for `config.yaml` |
 | `LOG_LEVEL` | No | `INFO` | Bootstrap log level. Values: `DEBUG`, `INFO`, `WARN`, `ERROR` |
+| `GOMEMLIMIT` | No | `410MiB` (Helm default); `800MiB` (Compose) | Go runtime memory soft limit. Keep below the container memory limit (~80% of limit in chart/Compose defaults). Helm: `qubershipApihubBackend.goMemLimit`. Compose: `docker-compose.yml` `environment`. |
 
 All other parameters are `config.yaml` keys. Most important:
 
@@ -331,6 +332,7 @@ All configuration via **environment variables** (no `config.yaml` for process st
 | `LINTER_POSTGRESQL_PASSWORD` | Yes | — | Database password |
 | `LINTER_PG_SSL_MODE` | No | — | PostgreSQL SSL mode (`disable`, `require`, `verify-full`, …) |
 | `LOG_LEVEL` | No | `INFO` | Log level |
+| `GOMEMLIMIT` | No | `800MiB` (Helm); `1600MiB` (Compose) | Go runtime memory soft limit. Helm: `qubershipApiLinterService.goMemLimit`. Compose: `qubership-api-linter-service.env`. |
 | `LISTEN_ADDRESS` | No | `:8080` | Listen address for the HTTP server |
 | `SPECTRAL_BIN_PATH` | No | `resources/spectral/linux/spectral` | Path to Spectral binary inside the container |
 | `SPECTRAL_LINTER_WORKERS` | No | `1` | Number of concurrent Spectral linter workers |
@@ -364,6 +366,7 @@ All configuration via **environment variables**. Source: [`system_info.go`](http
 | `AGENTS_BACKEND_POSTGRESQL_USERNAME` | Yes | `apihub_agents_backend` | Database user |
 | `AGENTS_BACKEND_POSTGRESQL_PASSWORD` | Yes | — | Database password |
 | `LOG_LEVEL` | No | `INFO` | Log level |
+| `GOMEMLIMIT` | No | `205MiB` | Go runtime memory soft limit. Helm: `qubershipApihubAgentsBackend.goMemLimit`. Compose: `qubership-apihub-agents-backend.env`. |
 | `DEFAULT_WORKSPACE_ID` | No | — | If set, package structure is copied from this workspace to the target workspace during discovery |
 | `SNAPSHOTS_CLEANUP_SCHEDULE` | No | `0 2 * * 0` | Cron schedule for snapshot cleanup job |
 | `SNAPSHOTS_TTL_DAYS` | No | `183` | Number of days to keep snapshots |
@@ -468,6 +471,7 @@ helm uninstall apihub -n qubership-apihub
 | `qubershipApihubBackend.env.zeroDayConfiguration.adminPassword` | Yes | Backend `config.yaml` `zeroDayConfiguration.adminPassword` |
 | `qubershipApihubBackend.env.security.productionMode` | No | Default `true`. Set `false` for non-prod local-login |
 | `qubershipApihubBackend.env.security.externalIdentityProviders` | Cond. | SAML / OIDC config (required when `productionMode: true`) |
+| `qubershipApihubBackend.goMemLimit` | No | → `GOMEMLIMIT` (default `410MiB`, ~80% of default `memory.limit` `512Mi`) |
 | `qubershipApihubBackend.env.security.ldap.*` | No | LDAP user sync |
 | `qubershipApihubBackend.env.s3Storage.*` | No | S3 offload |
 | `qubershipApihubBackend.env.technicalParameters.*` | No | Listen address, ephemeral file directory, migration lock timeout |
@@ -483,10 +487,12 @@ helm uninstall apihub -n qubership-apihub
 | `qubershipApiLinterService.env.database.*` | Yes | → `LINTER_POSTGRESQL_*` |
 | `qubershipApiLinterService.env.apihub.accessToken` | Yes | → `APIHUB_ACCESS_TOKEN` |
 | `qubershipApiLinterService.env.apihub.url` | No | Default `http://qubership-apihub-ui:8080` |
+| `qubershipApiLinterService.goMemLimit` | No | → `GOMEMLIMIT` (default `800MiB`, ~80% of default `memory.limit` `1000Mi`) |
 | `qubershipApiLinterService.env.linters.spectral.workers` | No | Spectral worker count |
 | `qubershipApiLinterService.env.ai.*` | No | AI linter (OpenAI key, workers, include/exclude lists) |
 | `qubershipApihubAgentsBackend.env.database.*` | Yes | → `AGENTS_BACKEND_POSTGRESQL_*` |
 | `qubershipApihubAgentsBackend.env.apihub.accessToken` | Yes | → `APIHUB_ACCESS_TOKEN` |
+| `qubershipApihubAgentsBackend.goMemLimit` | No | → `GOMEMLIMIT` (default `205MiB`, ~80% of default `memory.limit` `256Mi`) |
 | `qubershipApihubAgentsBackend.env.defaultWorkspaceId` | No | → `DEFAULT_WORKSPACE_ID` |
 | `qubershipApihubAgentsBackend.env.snapshotsCleanupSchedule` | No | → `SNAPSHOTS_CLEANUP_SCHEDULE` |
 | `qubershipApihubAgentsBackend.env.snapshotsTtlDays` | No | → `SNAPSHOTS_TTL_DAYS` |
