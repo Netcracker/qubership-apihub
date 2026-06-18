@@ -45,7 +45,7 @@ import { PortalSettingsButton } from './PortalSettingsButton'
 import { UserPanel } from './UserPanel'
 
 export const BasePage: FC = memo(() => {
-  const { notification: systemNotification } = useSystemInfo()
+  const { notification: systemNotification, aiChatEnabled } = useSystemInfo()
   const showErrorNotification = useShowErrorNotification()
   const isSuperAdmin = useSuperAdminCheck()
   const { frontendVersion, apiProcessorVersion } = useVersionInfo()
@@ -73,49 +73,53 @@ export const BasePage: FC = memo(() => {
     [agentEnabled],
   )
 
+  const pageContent = (
+    <Box
+      display="grid"
+      gridTemplateRows="max-content 1fr"
+      height="100vh"
+    >
+      <AppHeader
+        logo={<LogoIcon />}
+        title="APIHUB"
+        links={links}
+        action={
+          <>
+            <VsCodeExtensionButton />
+            <AppHeaderDivider />
+            <SearchButton />
+            {aiChatEnabled && <AiAssistantButton />}
+            {isSuperAdmin && <PortalSettingsButton />}
+            <SystemInfoPopup
+              frontendVersionKey={frontendVersion}
+              apiProcessorVersion={apiProcessorVersion}
+            />
+            <UserPanel />
+          </>
+        }
+      />
+      <Box sx={viewPortStyleCalculator}>
+        <ExceptionSituationHandler
+          homePath="/portal"
+          showErrorNotification={showErrorNotification}
+          redirectUrlFactory={replacePackageId}
+        >
+          <Outlet />
+        </ExceptionSituationHandler>
+      </Box>
+      <Notification />
+      <GlobalSearchPanel />
+      {aiChatEnabled && <AiAssistantPanel />}
+      {systemNotification && <MaintenanceNotification value={systemNotification} />}
+    </Box>
+  )
+
   return (
     <MainPageProvider>
       <ModuleFetchingErrorBoundary showReloadPopup={packageJson.version !== frontendVersion}>
-        <AiAssistantProvider>
-          <Box
-            display="grid"
-            gridTemplateRows="max-content 1fr"
-            height="100vh"
-          >
-            <AppHeader
-              logo={<LogoIcon />}
-              title="APIHUB"
-              links={links}
-              action={
-                <>
-                  <VsCodeExtensionButton />
-                  <AppHeaderDivider />
-                  <SearchButton />
-                  <AiAssistantButton />
-                  {isSuperAdmin && <PortalSettingsButton />}
-                  <SystemInfoPopup
-                    frontendVersionKey={frontendVersion}
-                    apiProcessorVersion={apiProcessorVersion}
-                  />
-                  <UserPanel />
-                </>
-              }
-            />
-            <Box sx={viewPortStyleCalculator}>
-              <ExceptionSituationHandler
-                homePath="/portal"
-                showErrorNotification={showErrorNotification}
-                redirectUrlFactory={replacePackageId}
-              >
-                <Outlet />
-              </ExceptionSituationHandler>
-            </Box>
-            <Notification />
-            <GlobalSearchPanel />
-            <AiAssistantPanel />
-            {systemNotification && <MaintenanceNotification value={systemNotification} />}
-          </Box>
-        </AiAssistantProvider>
+        {aiChatEnabled
+          ? <AiAssistantProvider>{pageContent}</AiAssistantProvider>
+          : pageContent}
       </ModuleFetchingErrorBoundary>
     </MainPageProvider>
   )
