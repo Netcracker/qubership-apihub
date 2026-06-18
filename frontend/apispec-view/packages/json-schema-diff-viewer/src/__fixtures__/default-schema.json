@@ -52,7 +52,7 @@
       "type": "string",
       "format": "email",
       "deprecated": true,
-      "default": "default@email.com",
+      "default": "default@example.com",
       "minLength": 2
     },
     "plan": {

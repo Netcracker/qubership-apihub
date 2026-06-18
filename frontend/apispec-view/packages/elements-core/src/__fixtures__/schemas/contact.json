@@ -25,7 +25,7 @@
           "type": "string"
         },
         "middleName": {
-          "description": "Middle name(s), for example \"Lee\" in \"John Lee Smith\".",
+          "description": "Middle name(s), for example \"Michael\" in \"John Michael Doe\".",
           "type": "string"
         },
         "prefix": {
@@ -186,7 +186,7 @@
         },
         "address": {
           "type": "string",
-          "description": "Email address (e.g. john@smith.com)"
+          "description": "Email address (e.g. john.doe@example.com)"
         }
       },
       "title": "Email"

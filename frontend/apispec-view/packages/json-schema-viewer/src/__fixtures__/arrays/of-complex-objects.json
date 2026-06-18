@@ -39,9 +39,9 @@
       "email": {
         "type": "string",
         "format": "email",
-        "examples": ["one@email.com", "two@email.com"],
+        "examples": ["one@example.com", "two@example.com"],
         "deprecated": true,
-        "default": "default@email.com",
+        "default": "default@example.com",
         "minLength": 2
       },
       "plan": {
