@@ -22,7 +22,7 @@ on:
       postman-collections-list:
           description: "Collections to execute"
           type: string
-          default: "./e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json"
+          default: "./e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/3_2_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json"
       playwright-tests-run:
           description: "Flag for executing playwright tests"
           type: boolean
