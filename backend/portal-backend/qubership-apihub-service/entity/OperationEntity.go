@@ -75,9 +75,8 @@ type OperationsInfoEntity struct {
 type OperationDataEntity struct {
 	tableName struct{} `pg:"operation_data, alias:operation_data"`
 
-	DataHash    string                 `pg:"data_hash, pk, type:varchar"`
-	Data        []byte                 `pg:"data, type:bytea"`
-	SearchScope map[string]interface{} `pg:"search_scope, type:jsonb"`
+	DataHash string `pg:"data_hash, pk, type:varchar"`
+	Data     []byte `pg:"data, type:bytea"`
 }
 
 type OperationSearchTextEntity struct {

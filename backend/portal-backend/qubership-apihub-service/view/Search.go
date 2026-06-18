@@ -6,8 +6,6 @@ const SearchLevelOperations = "operations"
 const SearchLevelPackages = "packages"
 const SearchLevelDocuments = "documents"
 
-const ScopeAll = "all"
-
 type PublicationDateInterval struct {
 	// TODO: probably user's timezone is required to handle dates properly
 	StartDate time.Time `json:"startDate"`
@@ -29,6 +27,31 @@ type SearchQueryReq_deprecated struct {
 	OperationSearchParams   *OperationSearchParams  `json:"operationParams"`
 	Limit                   int                     `json:"-"`
 	Page                    int                     `json:"-"`
+}
+
+func MakeSearchQueryReq(deprecated SearchQueryReq_deprecated) SearchQueryReq {
+	apiType := string(RestApiType)
+	if deprecated.OperationSearchParams != nil && deprecated.OperationSearchParams.ApiType != "" {
+		if _, err := ParseApiType(deprecated.OperationSearchParams.ApiType); err == nil {
+			apiType = deprecated.OperationSearchParams.ApiType
+		}
+	}
+	status := string(Release)
+	if len(deprecated.Statuses) != 0 {
+		if _, err := ParseVersionStatus(deprecated.Statuses[0]); err == nil {
+			status = deprecated.Statuses[0]
+		}
+	}
+	return SearchQueryReq{
+		SearchString:            deprecated.SearchString,
+		ApiType:                 apiType,
+		Status:                  status,
+		PackageIds:              deprecated.PackageIds,
+		Versions:                deprecated.Versions,
+		PublicationDateInterval: deprecated.PublicationDateInterval,
+		Limit:                   deprecated.Limit,
+		Page:                    deprecated.Page,
+	}
 }
 
 type SearchQueryReq struct {
@@ -73,18 +96,6 @@ type OperationSearchWeightsDebug struct {
 	OperationOpenCount       float64 `json:"operationOpenCount"`
 }
 
-type CommonOperationSearchResult_deprecated struct {
-	PackageId      string   `json:"packageId"`
-	PackageName    string   `json:"name"`
-	ParentPackages []string `json:"parentPackages"`
-	VersionStatus  string   `json:"status"`
-	Version        string   `json:"version"`
-	Title          string   `json:"title"`
-
-	//debug
-	Debug OperationSearchWeightsDebug `json:"debug,omitempty"`
-}
-
 type CommonOperationSearchResult struct {
 	PackageId      string   `json:"packageId"`
 	PackageName    string   `json:"name"`
@@ -94,19 +105,9 @@ type CommonOperationSearchResult struct {
 	Title          string   `json:"title"`
 }
 
-type RestOperationSearchResult_deprecated struct {
-	RestOperationView
-	CommonOperationSearchResult_deprecated
-}
-
 type RestOperationSearchResult struct {
 	RestOperationView
 	CommonOperationSearchResult
-}
-
-type GraphQLOperationSearchResult_deprecated struct {
-	GraphQLOperationView
-	CommonOperationSearchResult_deprecated
 }
 
 type GraphQLOperationSearchResult struct {

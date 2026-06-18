@@ -287,41 +287,6 @@ func (s OperationEntity) GetChanges(t OperationEntity) map[string]interface{} {
 	return changes
 }
 
-func (s OperationDataEntity) GetChanges(t OperationDataEntity) map[string]interface{} {
-	changes := make(map[string]interface{}, 0)
-	searchScopeChanged := false
-	if len(s.SearchScope) != 0 || len(t.SearchScope) != 0 {
-		for sKey, sVal := range s.SearchScope {
-			if tVal, exists := t.SearchScope[sKey]; exists {
-				if sValStr, isSValStr := sVal.(string); isSValStr {
-					if tValStr, isTValStr := tVal.(string); isTValStr {
-						if sValStr != tValStr {
-							searchScopeChanged = true
-							break
-						}
-					} else {
-						searchScopeChanged = true
-						break
-					}
-				} else {
-					if !reflect.DeepEqual(sVal, tVal) {
-						searchScopeChanged = true
-						break
-					}
-				}
-			} else {
-				searchScopeChanged = true
-				break
-			}
-		}
-	}
-	if searchScopeChanged {
-		// CreateVersionWithData operation_data insert depends on this value (for migration only)
-		changes["SearchScope"] = "SearchScope field has changed"
-	}
-	return changes
-}
-
 func (s OperationSearchTextEntity) GetChanges(t OperationSearchTextEntity) map[string]interface{} {
 	changes := make(map[string]interface{}, 0)
 	if s.SearchDataHash != t.SearchDataHash {

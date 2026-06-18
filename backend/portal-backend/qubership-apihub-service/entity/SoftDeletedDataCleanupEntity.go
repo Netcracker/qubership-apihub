@@ -47,7 +47,6 @@ type DeletedItemsStats struct {
 	TransformedContentData          int                         `json:"transformedContentData"`
 	VersionInternalDocument         int                         `json:"versionInternalDocument"`
 	FtsOperationSearchText          int                         `json:"ftsOperationSearchText"`
-	FtsLatestReleaseOperationData   int                         `json:"ftsLatestReleaseOperationData"`
 	TotalRecords                    int                         `json:"totalRecords"`
 }
 
@@ -60,11 +59,11 @@ type PackageService struct {
 
 func NewDeletedItemsStats() *DeletedItemsStats {
 	return &DeletedItemsStats{
-		Packages:             []string{},
-		PackageRevisions:     []PublishedVersionKeyEntity{},
-		ApiKeys:              []ApihubApiKeyEntity{},
-		PackageMembersRoles:  []PackageMemberRoleEntity{},
-		PackageServices:      []PackageService{},
+		Packages:            []string{},
+		PackageRevisions:    []PublishedVersionKeyEntity{},
+		ApiKeys:             []ApihubApiKeyEntity{},
+		PackageMembersRoles: []PackageMemberRoleEntity{},
+		PackageServices:     []PackageService{},
 	}
 }
 
@@ -97,8 +96,7 @@ func (d *DeletedItemsStats) CalculateTotal() {
 		d.TransformedContentData +
 		d.PackageTransitions +
 		d.VersionInternalDocument +
-		d.FtsOperationSearchText +
-		d.FtsLatestReleaseOperationData
+		d.FtsOperationSearchText
 }
 
 func (d *DeletedItemsStats) Add(other *DeletedItemsStats) {
@@ -131,6 +129,5 @@ func (d *DeletedItemsStats) Add(other *DeletedItemsStats) {
 	d.PackageTransitions += other.PackageTransitions
 	d.VersionInternalDocument += other.VersionInternalDocument
 	d.FtsOperationSearchText += other.FtsOperationSearchText
-	d.FtsLatestReleaseOperationData += other.FtsLatestReleaseOperationData
 	d.CalculateTotal()
 }

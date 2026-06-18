@@ -315,14 +315,9 @@ func (a *BuildResultToEntitiesReader) ReadOperationsToEntities() ([]*entity.Oper
 		})
 
 		if dataHash != nil {
-			searchScope := map[string]interface{}{}
-			if allVal, ok := operation.SearchScopes[view.ScopeAll]; ok {
-				searchScope[view.ScopeAll] = allVal
-			}
 			operationDataEntities = append(operationDataEntities, &entity.OperationDataEntity{
-				DataHash:    *dataHash,
-				Data:        fileData,
-				SearchScope: searchScope,
+				DataHash: *dataHash,
+				Data:     fileData,
 			})
 		}
 
