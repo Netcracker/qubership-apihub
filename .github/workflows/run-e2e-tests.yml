@@ -21,7 +21,7 @@ on:
       postman-collections-list:
           description: "Collections to execute"
           type: string
-          default: "./e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/1_3_Linter_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json"
+          default: "./e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/1_3_Linter_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/3_2_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json"
       playwright-tests-run:
           description: "Flag for executing playwright tests"
           type: boolean
@@ -65,7 +65,7 @@ jobs:
       compose-repository-compose-folder: ${{ github.event.inputs.compose-repository-compose-folder || 'docker-compose/apihub-generic' }}
       postman-collections-run: ${{ github.event.inputs.postman-collections-run == null || fromJson(github.event.inputs.postman-collections-run) }}
       postman-repository-branch: ${{ github.event.inputs.postman-repository-branch  || 'develop' }}
-      postman-collections-list: ${{ github.event.inputs.postman-collections-list  || './e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/1_3_Linter_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json' }}
+      postman-collections-list: ${{ github.event.inputs.postman-collections-list  || './e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/1_3_Linter_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/3_2_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json' }}
       playwright-repository-branch: ${{ github.event.inputs.playwright-repository-branch  || 'develop' }}
       playwright-tests-run: ${{ github.event.inputs.playwright-tests-run == null || fromJson(github.event.inputs.playwright-tests-run) }}
       playwright-test-args: ${{ github.event.inputs.playwright-test-args  || '--project=Portal --workers=8 --grep-invert=@flaky' }}
