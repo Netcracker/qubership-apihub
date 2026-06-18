@@ -61,6 +61,8 @@ spec:
               env:
               - name: LOG_LEVEL
                 value: '{{ .Values.qubershipApiLinterService.env.logLevel }}'
+              - name: GOMEMLIMIT
+                value: '{{ .Values.qubershipApiLinterService.goMemLimit | default "800MiB" }}'
               - name: BASE_PATH
                 value: '{{ .Values.qubershipApiLinterService.env.basePath }}'
               - name: API_SPEC_DIR

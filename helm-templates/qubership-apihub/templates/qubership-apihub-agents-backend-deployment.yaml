@@ -65,6 +65,8 @@ spec:
         env:
           - name: LOG_LEVEL
             value: '{{.Values.qubershipApihubAgentsBackend.env.logLevel}}'
+          - name: GOMEMLIMIT
+            value: '{{.Values.qubershipApihubAgentsBackend.goMemLimit | default "205MiB"}}'
           - name: AGENTS_BACKEND_POSTGRESQL_HOST
             value: '{{.Values.qubershipApihubAgentsBackend.env.database.host}}'
           - name: AGENTS_BACKEND_POSTGRESQL_PORT
