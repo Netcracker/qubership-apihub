@@ -150,6 +150,7 @@ func (g *systemInfoServiceImpl) GetSystemInfo() *view.SystemInfo {
 		ProductionMode: g.IsProductionMode(),
 		Notification:   g.getSystemNotification(),
 		ExternalLinks:  g.GetExternalLinks(),
+		AiChatEnabled:  g.GetAiChatConfig().Enabled,
 		FeatureFlags:   g.GetFeatureFlags(),
 	}
 }

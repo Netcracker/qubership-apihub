@@ -10631,6 +10631,10 @@ components:
           description: Identifies if a full migration is currently in progress. Returns false when no migration or only a partial migration is running.
           type: boolean
           default: false
+        aiChatEnabled:
+          description: Mirrors the ai.chat.enabled kill-switch. When false, AI chat routes are not registered.
+          type: boolean
+          default: false
         featureFlags:
           description: Feature flags for the system
           type: object
@@ -13138,6 +13142,7 @@ components:
         backendVersion: master-20250522.080756-379-RELEASE
         productionMode: true
         migrationInProgress: false
+        aiChatEnabled: false
         externalLinks:
           - User guide|https://www.example.com/guide
           - Support team|https://www.example.com/support]
