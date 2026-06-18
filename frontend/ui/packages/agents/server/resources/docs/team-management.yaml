@@ -5,11 +5,11 @@ info:
     The API contract for APIHUB agent UI.
   contact:
     url: https://apihub.example.com
-    email: john.williams@example.com
-    name: John Williams
+    email: author@example.com
+    name: Author
   license:
     name: Apache-2.0
-    url: https://example.com
+    url: https://www.apache.org/licenses/LICENSE-2.0
   version: 0.1.0
   x-qs-api-audience: noBWC
 servers:

@@ -19,9 +19,9 @@ import type { PackageVersion } from '../../entities/versions'
 export const packageVersion: PackageVersion = {
   createdAt: 'Fri Oct 06 2023',
   createdBy: {
-    name: 'John Williams',
+    name: 'John Doe',
     type: 'user',
-    id: 'JW_1234',
+    id: 'JD_1234',
   },
   status: 'draft',
   previousVersion: '2023.1@3',

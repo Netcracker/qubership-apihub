@@ -19,9 +19,9 @@ import type { UsersDto } from '../auth/types'
 
 export const USERS_LIST: Writeable<UsersDto> = {
   users: [{
-    id: 'user001',
-    email: 'john.williams@example.com',
-    name: 'John Williams',
+    id: 'JD_1234',
+    email: 'john.doe@example.com',
+    name: 'John Doe',
     avatarUrl: 'https://github.com/uploads/001/avatar.png',
   }, {
     id: 'user002',

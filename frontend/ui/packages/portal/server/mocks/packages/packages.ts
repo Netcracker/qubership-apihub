@@ -470,12 +470,12 @@ export const PACKAGES: Writeable<PackagesDto> = {
 
 // Package Members
 
-export const JW1234_MEMBER: PackageMember = {
+export const JD1234_MEMBER: PackageMember = {
   user: {
-    id: 'JW_1234',
-    email: 'john.williams@example.com',
-    name: 'John Williams',
-    avatarUrl: 'https://example.com/avatars/jw1234.jpg',
+    id: 'JD_1234',
+    email: 'john.doe@example.com',
+    name: 'John Doe',
+    avatarUrl: 'https://example.com/avatars/jd1234.jpg',
   },
   role: 'Editor',
 }
@@ -492,7 +492,7 @@ export const RJ5678_MEMBER: PackageMember = {
 
 export const PACKAGE_MEMBERS: Writeable<PackageMembers> = {
   members: [
-    JW1234_MEMBER,
+    JD1234_MEMBER,
     RJ5678_MEMBER,
   ],
 }
