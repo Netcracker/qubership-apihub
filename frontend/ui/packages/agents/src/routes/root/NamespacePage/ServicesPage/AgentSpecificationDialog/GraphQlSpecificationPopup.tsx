@@ -88,7 +88,7 @@ export const GraphQlSpecificationPopup: FC<GraphQlSpecificationPopupProps> = mem
 
   const proxyServer = useMemo(() => ({
     url: getAgentProxyServerUrl(prefix, clickedSpec?.serviceKey, agentId, namespaceKey, endpoint),
-  }), [agentId, clickedSpec?.serviceKey, endpoint, namespaceKey])
+  }), [agentId, clickedSpec?.serviceKey, endpoint, namespaceKey, prefix])
   const spec: Spec = useMemo(() => (
     {
       type: GRAPHQL_SCHEMA_SPEC_TYPE,

@@ -139,7 +139,7 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
       apiType: API_TYPE_REST,
       publicationDatePeriod: defaultPublicationDatePeriod,
     })
-  }, [defaultWorkspace])
+  }, [defaultPublicationDatePeriod, defaultWorkspace, reset])
 
   const {
     operationTypes,
@@ -287,7 +287,7 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
 
       applyGlobalSearchFilters(globalSearchFilter)
     }),
-    [handleSubmit, useV3Search, applyGlobalSearchFilters, packageKey, groupKey, workspaceKey],
+    [handleSubmit, useV3Search, applyGlobalSearchFilters, packageKey, groupKey, workspaceKey, detailedScope, methods],
   )
 
   useDebounce(

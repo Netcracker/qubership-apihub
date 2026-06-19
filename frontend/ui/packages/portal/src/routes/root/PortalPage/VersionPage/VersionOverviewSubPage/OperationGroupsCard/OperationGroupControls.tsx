@@ -16,8 +16,6 @@
 
 import { Box } from '@mui/material'
 import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
-import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { OperationGroup } from '@netcracker/qubership-apihub-ui-shared/entities/operation-groups'
 import {
   DISABLED_BUTTON_COLOR,
@@ -49,9 +47,8 @@ export const OperationGroupControls: FC<OperationGroupControlsProps> = memo<Oper
   onPublish,
   onExport,
 }) => {
-  const { isPrefixGroup, apiType, operationsCount } = operationGroup
+  const { isPrefixGroup, operationsCount } = operationGroup
 
-  const isGraphQlGroup = apiType && API_TYPE_DISABLE_ACTION_MAP[apiType]
   const isDownloadButtonDisabled = !operationsCount
   const isPublishButtonDisabled = !operationsCount
 
@@ -62,7 +59,7 @@ export const OperationGroupControls: FC<OperationGroupControlsProps> = memo<Oper
       }
       return 'Export operations from the group'
     },
-    [isGraphQlGroup, operationsCount],
+    [operationsCount],
   )
 
   const publishButtonTitle = useMemo(() => {
@@ -70,7 +67,7 @@ export const OperationGroupControls: FC<OperationGroupControlsProps> = memo<Oper
       return 'Publish is not available because there are no operations in the group'
     }
     return 'Publish as Package Version'
-  }, [isGraphQlGroup, operationsCount])
+  }, [operationsCount])
 
   return (
     <Box display="flex" gap={2}>
@@ -135,9 +132,3 @@ export const OperationGroupControls: FC<OperationGroupControlsProps> = memo<Oper
     </Box>
   )
 })
-
-export const API_TYPE_DISABLE_ACTION_MAP: Record<ApiType, boolean> = {
-  [API_TYPE_REST]: false,
-  [API_TYPE_GRAPHQL]: true,
-  [API_TYPE_ASYNCAPI]: true,
-}

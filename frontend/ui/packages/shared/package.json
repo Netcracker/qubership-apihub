@@ -9,11 +9,11 @@
   "type": "module",
   "sideEffects": false,
   "scripts": {
-    "lint": "eslint . --ext .ts,.tsx,.json --ignore-path ../../.gitignore --max-warnings 0 --report-unused-disable-directives",
-    "format": "npm run lint --fix",
     "storybook": "storybook dev -p 6006",
     "build:showcase": "storybook build -o ../../dist-showcase --disable-telemetry",
-    "test": "jest -c .jest/unit-tests/unit-test.jest.config.js"
+    "test": "jest -c .jest/unit-tests/unit-test.jest.config.js",
+    "lint:check": "eslint . --ext .ts,.tsx,.json --ignore-path ../../.gitignore --max-warnings 0 --report-unused-disable-directives",
+    "lint:fix": "npm run lint:check -- --fix"
   },
   "peerDependencies": {
     "@emotion/react": "11.10.6",
