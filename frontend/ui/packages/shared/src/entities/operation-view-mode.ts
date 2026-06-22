@@ -68,7 +68,7 @@ export const GQL_OPERATION_COMPARE_VIEW_MODES: ReadonlyArray<OperationViewMode> 
 ]
 
 export const ASYNCAPI_OPERATION_COMPARE_VIEW_MODES: ReadonlyArray<OperationViewMode> = [
-  // DOC_OPERATION_VIEW_MODE, //TODO: add doc view for AsyncAPI
+  DOC_OPERATION_VIEW_MODE,
   RAW_OPERATION_VIEW_MODE,
 ]
 
@@ -100,8 +100,8 @@ function getGraphQlDefaultViewMode(): typeof DOC_OPERATION_VIEW_MODE | typeof RA
   return DOC_OPERATION_VIEW_MODE
 }
 
-const getAsyncApiDefaultViewMode = (comparisonMode: boolean = false): typeof DOC_OPERATION_VIEW_MODE | typeof RAW_OPERATION_VIEW_MODE => {
-  return comparisonMode ? RAW_OPERATION_VIEW_MODE : DOC_OPERATION_VIEW_MODE
+const getAsyncApiDefaultViewMode = (): typeof DOC_OPERATION_VIEW_MODE | typeof RAW_OPERATION_VIEW_MODE => {
+  return DOC_OPERATION_VIEW_MODE
 }
 
 export const DEFAULT_VIEW_MODE_MAP_BY_API_TYPE: Record<ApiType, DefaultViewModeInComparisonMode> = {
