@@ -32,7 +32,7 @@ paths:
                     id: 142
                     firstName: Alice
                     lastName: Smith
-                    email: alice.smith@gmail.com
+                    email: alice.smith@example.com
                     dateOfBirth: 1997-10-31
                     emailVerified: true
                     signUpDate: 2019-08-24
@@ -41,7 +41,7 @@ paths:
                     id: 143
                     firstName: Entony
                     lastName: Brexton
-                    email: tony@gmail.com
+                    email: tony.brexton@example.com
                     dateOfBirth: 1997-10-31
                     emailVerified: true
                     signUpDate: 2019-08-24
@@ -66,7 +66,7 @@ paths:
                     id: 13
                     firstName: Rebecca
                     lastName: Baker
-                    email: rebecca@gmail.com
+                    email: rebecca@example.com
                     dateOfBirth: 1985-10-02
                     emailVerified: false
                     createDate: 2019-08-24
@@ -96,7 +96,7 @@ paths:
                   firstName: Rebecca
               Update Email:
                 value:
-                  email: rebecca@gmail.com
+                  email: rebecca@example.com
               Update Last Name & Date of Birth:
                 value:
                   lastName: Baker
@@ -131,7 +131,7 @@ paths:
                     id: 12
                     firstName: Bob
                     lastName: Fellow
-                    email: bob.fellow@gmail.com
+                    email: bob.fellow@example.com
                     dateOfBirth: 1996-08-24
                     emailVerified: false
                     createDate: 2020-11-18
@@ -164,7 +164,7 @@ paths:
                 value:
                   firstName: Bob
                   lastName: Fellow
-                  email: bob.fellow@gmail.com
+                  email: bob.fellow@example.com
                   dateOfBirth: 1996-08-24
         description: Post the necessary fields for the API to create a new user.
       description: Create a new user.
