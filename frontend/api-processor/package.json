@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-processor",
-  "version": "5.4.3",
+  "version": "5.4.4",
   "description": "",
   "license": "Apache-2.0",
   "module": "dist/esm/src/index.js",
