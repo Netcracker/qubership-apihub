@@ -14,39 +14,11 @@
  * limitations under the License.
  */
 
-import { Controller, Get, Header } from '@nestjs/common'
-import { ApiExcludeController } from '@nestjs/swagger'
+import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common'
 
-@ApiExcludeController()
-@Controller('api')
+@Controller()
 export class AppController {
-  @Get()
-  @Header('content-type', 'text/html')
-  stoplightDoc(): string {
-    return `
-    <!doctype html>
-    <html lang="en">
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <title>Elements in HTML</title>
-        <!-- Embed elements Elements via Web Component -->
-        <script src="https://unpkg.com/@stoplight/elements/web-components.min.js"></script>
-        <link rel="stylesheet" href="https://unpkg.com/@stoplight/elements/styles.min.css">
-        <style type="text/css">
-          a.sl-flex.sl-items-center.sl-px-4.sl-py-3.sl-border-t {
-            display: none;
-          }
-        </style>
-      </head>
-      <body>
-        <elements-api
-          apiDescriptionUrl='/swagger-json'"
-          router="hash"
-          layout="sidebar"
-        />
-      </body>
-    </html>
-    `
-  }
+  @Get('live')
+  @HttpCode(HttpStatus.OK)
+  live(): void {}
 }

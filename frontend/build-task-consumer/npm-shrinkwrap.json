@@ -1,12 +1,12 @@
 {
   "name": "@netcracker/qubership-apihub-build-task-consumer",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@netcracker/qubership-apihub-build-task-consumer",
-      "version": "3.2.0",
+      "version": "3.2.1",
       "license": "Apache-2.0",
       "dependencies": {
         "@nestjs/axios": "^3.0.0",
@@ -14,8 +14,7 @@
         "@nestjs/config": "^3.0.0",
         "@nestjs/core": "^10.0.0",
         "@nestjs/platform-express": "^10.0.0",
-        "@nestjs/swagger": "^7.0.0",
-        "@netcracker/qubership-apihub-api-processor": "5.4.0",
+        "@netcracker/qubership-apihub-api-processor": "5.4.3",
         "@sinclair/typebox": "^0.32.1",
         "adm-zip": "^0.5.10",
         "dotenv": "^16.3.1",
@@ -24,7 +23,6 @@
         "openapi-types": "^12.1.0",
         "reflect-metadata": "^0.1.13",
         "rxjs": "^7.8.1",
-        "swagger-ui-express": "^4.6.3",
         "uuid": "^11.1.0"
       },
       "devDependencies": {
@@ -1610,12 +1608,6 @@
         "node": ">=8"
       }
     },
-    "node_modules/@microsoft/tsdoc": {
-      "version": "0.15.1",
-      "resolved": "https://registry.npmjs.org/@microsoft/tsdoc/-/tsdoc-0.15.1.tgz",
-      "integrity": "sha512-4aErSrCR/On/e5G2hDP0wjooqDdauzEbIq8hIkIe5pXV0rtWJZvdCEKL0ykZxex+IxIwBp0eGeV48hQN07dXtw==",
-      "license": "MIT"
-    },
     "node_modules/@nestjs/axios": {
       "version": "3.1.3",
       "resolved": "https://registry.npmjs.org/@nestjs/axios/-/axios-3.1.3.tgz",
@@ -1829,26 +1821,6 @@
         }
       }
     },
-    "node_modules/@nestjs/mapped-types": {
-      "version": "2.0.5",
-      "resolved": "https://registry.npmjs.org/@nestjs/mapped-types/-/mapped-types-2.0.5.tgz",
-      "integrity": "sha512-bSJv4pd6EY99NX9CjBIyn4TVDoSit82DUZlL4I3bqNfy5Gt+gXTa86i3I/i0iIV9P4hntcGM5GyO+FhZAhxtyg==",
-      "license": "MIT",
-      "peerDependencies": {
-        "@nestjs/common": "^8.0.0 || ^9.0.0 || ^10.0.0",
-        "class-transformer": "^0.4.0 || ^0.5.0",
-        "class-validator": "^0.13.0 || ^0.14.0",
-        "reflect-metadata": "^0.1.12 || ^0.2.0"
-      },
-      "peerDependenciesMeta": {
-        "class-transformer": {
-          "optional": true
-        },
-        "class-validator": {
-          "optional": true
-        }
-      }
-    },
     "node_modules/@nestjs/platform-express": {
       "version": "10.4.17",
       "resolved": "https://registry.npmjs.org/@nestjs/platform-express/-/platform-express-10.4.17.tgz",
@@ -1894,45 +1866,6 @@
       "dev": true,
       "license": "MIT"
     },
-    "node_modules/@nestjs/swagger": {
-      "version": "7.4.2",
-      "resolved": "https://registry.npmjs.org/@nestjs/swagger/-/swagger-7.4.2.tgz",
-      "integrity": "sha512-Mu6TEn1M/owIvAx2B4DUQObQXqo2028R2s9rSZ/hJEgBK95+doTwS0DjmVA2wTeZTyVtXOoN7CsoM5pONBzvKQ==",
-      "license": "MIT",
-      "dependencies": {
-        "@microsoft/tsdoc": "^0.15.0",
-        "@nestjs/mapped-types": "2.0.5",
-        "js-yaml": "4.1.0",
-        "lodash": "4.17.21",
-        "path-to-regexp": "3.3.0",
-        "swagger-ui-dist": "5.17.14"
-      },
-      "peerDependencies": {
-        "@fastify/static": "^6.0.0 || ^7.0.0",
-        "@nestjs/common": "^9.0.0 || ^10.0.0",
-        "@nestjs/core": "^9.0.0 || ^10.0.0",
-        "class-transformer": "*",
-        "class-validator": "*",
-        "reflect-metadata": "^0.1.12 || ^0.2.0"
-      },
-      "peerDependenciesMeta": {
-        "@fastify/static": {
-          "optional": true
-        },
-        "class-transformer": {
-          "optional": true
-        },
-        "class-validator": {
-          "optional": true
-        }
-      }
-    },
-    "node_modules/@nestjs/swagger/node_modules/swagger-ui-dist": {
-      "version": "5.17.14",
-      "resolved": "https://registry.npmjs.org/swagger-ui-dist/-/swagger-ui-dist-5.17.14.tgz",
-      "integrity": "sha512-CVbSfaLpstV65OnSjbXfVd6Sta3q3F7Cj/yYuvHMp1P90LztOLs6PfUnKEVAeiIVQt9u2SaPwv0LiH/OyMjHRw==",
-      "license": "Apache-2.0"
-    },
     "node_modules/@nestjs/testing": {
       "version": "10.4.17",
       "resolved": "https://registry.npmjs.org/@nestjs/testing/-/testing-10.4.17.tgz",
@@ -1962,9 +1895,9 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-diff": {
-      "version": "3.3.0",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-diff/3.3.0/b60b45e06a8c3fa78b3236b06f1432c912cd9536",
-      "integrity": "sha512-9Znt9IfDglwkzsNc2IyZrFcoHnUtm9+uOQ4OPrSCWdBz4PNCVib6hxumnytXo1bCmE/p6vpsu3SgtyoqOOSmnA==",
+      "version": "3.3.3",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-diff/3.3.3/7497f33c787dc0f6b93d9795b3885f6422a6ff60",
+      "integrity": "sha512-4n5zZLGgCrY0mnUu9/+siMTQLM72J/+PbFsbsSdoiDHNaC90s2Z5zh7PRbREGLiLx81FWEq3chSSj4TGz9Mo2w==",
       "dependencies": {
         "@netcracker/qubership-apihub-api-unifier": "2.8.0",
         "@netcracker/qubership-apihub-json-crawl": "1.2.1",
@@ -1981,13 +1914,13 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-processor": {
-      "version": "5.4.0",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/5.4.0/86f8a334fabf4c585301922cd512520771d4ee3e",
-      "integrity": "sha512-gr+2ytdv9TJfdC0MEIKNsQ0pvPWzOnaTEVihfSaP0EJOeJFfdYj2L2zieSDCqN9CNOdcsE+WjcLUlCcD2bKOZw==",
+      "version": "5.4.3",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/5.4.3/38cdc1699a5e94ee8992c6625708e441d7591887",
+      "integrity": "sha512-eguqZYJrp9iavNW8y0zfbVv50sjiMx63lxqEbatElQ//2brut+HEmN6cnTCwUhySqaZzY+GJKjEi1qTkP9CRYg==",
       "license": "Apache-2.0",
       "dependencies": {
         "@asyncapi/parser": "^3.6.0",
-        "@netcracker/qubership-apihub-api-diff": "3.3.0",
+        "@netcracker/qubership-apihub-api-diff": "3.3.3",
         "@netcracker/qubership-apihub-api-unifier": "2.8.0",
         "@netcracker/qubership-apihub-graphapi": "1.0.10",
         "@netcracker/qubership-apihub-json-crawl": "1.2.1",
@@ -2212,13 +2145,6 @@
       "os": [
         "linux"
       ]
-    },
-    "node_modules/@scarf/scarf": {
-      "version": "1.4.0",
-      "resolved": "https://registry.npmjs.org/@scarf/scarf/-/scarf-1.4.0.tgz",
-      "integrity": "sha512-xxeapPiUXdZAE3che6f3xogoJPeZgig6omHEy1rIY5WVsB3H2BHNnZH+gHG6x91SCWyQCzWGsuL2Hh3ClO5/qQ==",
-      "hasInstallScript": true,
-      "license": "Apache-2.0"
     },
     "node_modules/@sinclair/typebox": {
       "version": "0.32.35",
@@ -10650,30 +10576,6 @@
       },
       "funding": {
         "url": "https://github.com/sponsors/ljharb"
-      }
-    },
-    "node_modules/swagger-ui-dist": {
-      "version": "5.18.2",
-      "resolved": "https://registry.npmjs.org/swagger-ui-dist/-/swagger-ui-dist-5.18.2.tgz",
-      "integrity": "sha512-J+y4mCw/zXh1FOj5wGJvnAajq6XgHOyywsa9yITmwxIlJbMqITq3gYRZHaeqLVH/eV/HOPphE6NjF+nbSNC5Zw==",
-      "license": "Apache-2.0",
-      "dependencies": {
-        "@scarf/scarf": "=1.4.0"
-      }
-    },
-    "node_modules/swagger-ui-express": {
-      "version": "4.6.3",
-      "resolved": "https://registry.npmjs.org/swagger-ui-express/-/swagger-ui-express-4.6.3.tgz",
-      "integrity": "sha512-CDje4PndhTD2HkgyKH3pab+LKspDeB/NhPN2OF1j+piYIamQqBYwAXWESOT1Yju2xFg51bRW9sUng2WxDjzArw==",
-      "license": "MIT",
-      "dependencies": {
-        "swagger-ui-dist": ">=4.11.0"
-      },
-      "engines": {
-        "node": ">= v0.10.32"
-      },
-      "peerDependencies": {
-        "express": ">=4.0.0 || >=5.0.0-beta"
       }
     },
     "node_modules/swagger2openapi": {

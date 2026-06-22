@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import { NestFactory } from '@nestjs/core'
 import * as bodyParser from 'body-parser'
 
@@ -23,18 +22,6 @@ import { AppModule } from './app.module'
 async function bootstrap() {
   const port = process.env.port || 3000
   const app = await NestFactory.create(AppModule)
-
-  const config = new DocumentBuilder()
-    .setTitle('APIHUB Node Service API')
-    .setDescription('The API contract for APIHUB NodeJs service')
-    .setVersion('0.1.0')
-    .addTag('compare', 'Compare methods')
-    .addTag('validate', 'Validate methods')
-    .addServer('http://localhost:3000', 'Local server')
-    .setExternalDoc('Find out more about project', 'https://example.com/APIHUB')
-    .build();
-  const document = SwaggerModule.createDocument(app, config)
-  SwaggerModule.setup('swagger', app, document)
 
   app.use(bodyParser.json({limit: '50mb'}));
   app.use(bodyParser.urlencoded({limit: '50mb', extended: true}))
