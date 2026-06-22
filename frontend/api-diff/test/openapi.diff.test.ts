@@ -515,4 +515,32 @@ describe('Openapi3 combiner matching by ref origin', () => {
       }),
     ], skipScopes))
   })
+
+  it('should not report changes when oneOf branches with allOf inheritance are reordered', () => {
+    const makeSpec = (oneOf: object[]) => ({
+      openapi: '3.0.0',
+      info: { version: '0.0.1', title: 'Test' },
+      paths: {
+        '/test': {
+          post: {
+            requestBody: { content: { 'application/json': { schema: { oneOf } } } },
+            responses: { '200': { description: 'OK' } },
+          },
+        },
+      },
+      components: {
+        schemas: {
+          Base: { type: 'object', properties: { id: { type: 'string' } } },
+          ChildA: { allOf: [{ $ref: '#/components/schemas/Base' }, { type: 'object', properties: { fieldA: { type: 'string' } } }] },
+          ChildB: { allOf: [{ $ref: '#/components/schemas/Base' }, { type: 'object', properties: { fieldB: { type: 'string' } } }] },
+        },
+      },
+    })
+
+    const before = makeSpec([{ $ref: '#/components/schemas/ChildA' }, { $ref: '#/components/schemas/ChildB' }])
+    const after = makeSpec([{ $ref: '#/components/schemas/ChildB' }, { $ref: '#/components/schemas/ChildA' }])
+
+    const diffs = compareSpecs(before, after)
+    expect(diffs).toHaveLength(0)
+  })
 })
