@@ -189,8 +189,8 @@ export const OperationAPIImpl: React.FC<APIProps> = props => {
                 color="muted"
                 fontSize="base"
                 pos="relative"
-                pl={8}
-                pr={8}
+                pl={4}
+                pr={4}
               >
                 <Flex w="full" flexDirection="col" m="auto" className="sl-max-w-4xl">
                   <Box w="full" borderB>
