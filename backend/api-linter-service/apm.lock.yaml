@@ -1,0 +1,123 @@
+lockfile_version: '1'
+generated_at: '2026-06-03T14:56:35.765803+00:00'
+apm_version: 0.16.0
+dependencies:
+- repo_url: Netcracker/qubership-ai-packages
+  host: github.com
+  resolved_commit: 785ac701be71e5f09f8857970c026d5f6bbbbb1a
+  virtual_path: agent-packages/english-developer-style
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/english-developer-style
+  - .claude/rules/english-developer-style.md
+  - .claude/skills/english-developer-style
+  - .cursor/rules/english-developer-style.mdc
+  - .github/instructions/english-developer-style.instructions.md
+  deployed_file_hashes:
+    .claude/rules/english-developer-style.md: sha256:71d5921cbb7e91db77b2ad7403714cc4d8471e3af7a974b850e9831df2ca25b9
+    .cursor/rules/english-developer-style.mdc: sha256:981d72b4b97f7b5fb861ea9beb32edef5746c8ed87419abaadc999e14861a6a9
+    .github/instructions/english-developer-style.instructions.md: sha256:9bd3f0ea1da9c84677b4d7e91126208b437bc93b82ea6c684e1d76db9e42abde
+  content_hash: sha256:107dd671a330a3afcb3bcce940afa130f5576c17840cee77d9fcefeb4550c68c
+- repo_url: _local/apihub-go-developer
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/apihub-go-developer
+  - .claude/rules/apihub-go-developer.md
+  - .claude/skills/apihub-go-developer
+  - .cursor/rules/apihub-go-developer.mdc
+  - .github/instructions/apihub-go-developer.instructions.md
+  deployed_file_hashes:
+    .claude/rules/apihub-go-developer.md: sha256:a7ab06cdc6e814ed225065319e1cd20270dee2172ea41d0b1124ff84fc6bf799
+    .cursor/rules/apihub-go-developer.mdc: sha256:bf6ce2a6cc2faea88310673288176fd37c172266b070eb761dd924e99cfa01e3
+    .github/instructions/apihub-go-developer.instructions.md: sha256:ef1557c50549af71a9a6384c6a25483e4a69f5ce5429384357b21d3b3818e495
+  source: local
+  local_path: ../qubership-apihub-ci/agent-packages/apihub-go-developer
+- repo_url: _local/apihub-go-self-review
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/apihub-go-self-review
+  - .claude/rules/apihub-go-self-review.md
+  - .claude/skills/apihub-go-self-review
+  - .cursor/rules/apihub-go-self-review.mdc
+  - .github/instructions/apihub-go-self-review.instructions.md
+  deployed_file_hashes:
+    .claude/rules/apihub-go-self-review.md: sha256:09190a6cb552a30eaa215473633f833eb9fe6c6852c679c552f799b910f3031b
+    .cursor/rules/apihub-go-self-review.mdc: sha256:bec195119cfd4aaff319c0f54d1b4445d8d9b082bd4a7a932420efcaa309eb27
+    .github/instructions/apihub-go-self-review.instructions.md: sha256:ca5b2d888ed042eed2c904d5d68ae74df7435204409a3ba08dbbde3db8756951
+  source: local
+  local_path: ../qubership-apihub-ci/agent-packages/apihub-go-self-review
+- repo_url: _local/development-conventions
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/ci-super-linter.md
+  - .claude/rules/clarify-before-coding.md
+  - .cursor/rules/ci-super-linter.mdc
+  - .cursor/rules/clarify-before-coding.mdc
+  - .github/instructions/ci-super-linter.instructions.md
+  - .github/instructions/clarify-before-coding.instructions.md
+  deployed_file_hashes:
+    .claude/rules/ci-super-linter.md: sha256:d655a548333e52a748113632665f810e3fb6084339852306aca90f02cfb4f0c7
+    .claude/rules/clarify-before-coding.md: sha256:a3e34e5277a4a3fba12fd6f236e921a59c561e6ee82e240eec247861aa8a398c
+    .cursor/rules/ci-super-linter.mdc: sha256:2f264db238d0d7ffd9d8b830dd383233c57b20e057557d65084fe3f0e7512967
+    .cursor/rules/clarify-before-coding.mdc: sha256:ceb003b39ea330002556d10d3ca52445909bbaf23705ff27f2643705db98c0f4
+    .github/instructions/ci-super-linter.instructions.md: sha256:7e8e2395715e9bd69ec938d4e106ec16d0e9256053c1562cf915a40bf33c7fe5
+    .github/instructions/clarify-before-coding.instructions.md: sha256:f0723cdf5b2cc34bc46992a6c550842f8eb9dcc5b39540c9916835a4ee58d60d
+  source: local
+  local_path: ../qubership-apihub-ci/agent-packages/development-conventions
+- repo_url: _local/github-ticket-implementation-planner
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/github-ticket-implementation-planner
+  - .claude/rules/github-ticket-implementation-planner.md
+  - .claude/skills/github-ticket-implementation-planner
+  - .cursor/rules/github-ticket-implementation-planner.mdc
+  - .github/instructions/github-ticket-implementation-planner.instructions.md
+  deployed_file_hashes:
+    .claude/rules/github-ticket-implementation-planner.md: sha256:4e13f07f0749bcfd778fe44899221bff81152ee83a90b74fc7dcfafff838353c
+    .cursor/rules/github-ticket-implementation-planner.mdc: sha256:67d9c2440bc50c68b21b1afd6aa25c0a8447db76bfa7c0a7898920a3cf297d20
+    .github/instructions/github-ticket-implementation-planner.instructions.md: sha256:e2770726d0d63444f1a2df2e848a46f29556cd638c22b5484bc21bdf5ac60264
+  source: local
+  local_path: ../qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
+- repo_url: _local/go-conventions
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/api-first-openapi.md
+  - .claude/rules/go-comments.md
+  - .claude/rules/go-constants-and-http.md
+  - .claude/rules/go-error-handling.md
+  - .claude/rules/go-migrations.md
+  - .claude/rules/sql-performance.md
+  - .cursor/rules/api-first-openapi.mdc
+  - .cursor/rules/go-comments.mdc
+  - .cursor/rules/go-constants-and-http.mdc
+  - .cursor/rules/go-error-handling.mdc
+  - .cursor/rules/go-migrations.mdc
+  - .cursor/rules/sql-performance.mdc
+  - .github/instructions/api-first-openapi.instructions.md
+  - .github/instructions/go-comments.instructions.md
+  - .github/instructions/go-constants-and-http.instructions.md
+  - .github/instructions/go-error-handling.instructions.md
+  - .github/instructions/go-migrations.instructions.md
+  - .github/instructions/sql-performance.instructions.md
+  deployed_file_hashes:
+    .claude/rules/api-first-openapi.md: sha256:2e28a945412a344a23f5900f4704ef6a6a7ceedb0c599056ba09e63432a7bab4
+    .claude/rules/go-comments.md: sha256:57c3326eed8a055caaad74c140917c078778ff04f562cba845d22df63e98b582
+    .claude/rules/go-constants-and-http.md: sha256:f8d52303334e63092309d62e29085321b32a8bb8c4bce8ca38cd79af56f43a69
+    .claude/rules/go-error-handling.md: sha256:61407348b5d86d8e2cf730816c13d04e7fdea3a20be38a5b3405b01a6ce71cb2
+    .claude/rules/go-migrations.md: sha256:1d3e486379993f6fe68d2f4b53f3e2207154988a09b9c1c5ab98659a910edc88
+    .claude/rules/sql-performance.md: sha256:d826f635a958a4e5295a5e3e30f9fe61844a77e987a6d474308083985a91c1af
+    .cursor/rules/api-first-openapi.mdc: sha256:1ec7880c515db06e1d852395d7d8a5728bce08b20b9e1087115a03956d73bcb7
+    .cursor/rules/go-comments.mdc: sha256:f8e9df333a575ef38519b7415f0301235563fdd3dc18867b49dfbc8690de3fca
+    .cursor/rules/go-constants-and-http.mdc: sha256:778efcf145d35ccc3314f68cf0d54e33c1f13ef0ba4a19e809b4b24be80fc9bb
+    .cursor/rules/go-error-handling.mdc: sha256:9c084d61f2b27040a50c277a481232b00ecfd62b7b6da8b6aa7c86aaa184ba6c
+    .cursor/rules/go-migrations.mdc: sha256:79ab6bc7ae81f74719b4ccfbc9b5ce2146ee7ef1c58f47031cf2a742a9765297
+    .cursor/rules/sql-performance.mdc: sha256:b8748ddf13e089c63529ae6423a7fb930a8cfae4160c3366e276c6bf4fac5138
+    .github/instructions/api-first-openapi.instructions.md: sha256:a0fa42fb75fa89eac5e37da4d960015ee1bbb22b3a1fc4beb94007371de10176
+    .github/instructions/go-comments.instructions.md: sha256:87f198201fb384206af8d4e2827c53c7133fa3de4d5e267834e2f5f273ccf2b9
+    .github/instructions/go-constants-and-http.instructions.md: sha256:0854f8fba840ec10b8ddf51af627208801578ea419be6d2e3ff4faa51ea68640
+    .github/instructions/go-error-handling.instructions.md: sha256:f5d8a30e9ed725693ba229392fae6d77576cdb59c4e077070902062627814251
+    .github/instructions/go-migrations.instructions.md: sha256:3a1da7a929ec634031ca03eee095b3272c0e9d5216d579a46d95cf4b6fcf68fc
+    .github/instructions/sql-performance.instructions.md: sha256:7bbfae4b968dd1f2cc024d8e28bf5df5acc188ee24d53f460ab916f19f2df069
+  source: local
+  local_path: ../qubership-apihub-ci/agent-packages/go-conventions
