@@ -1,12 +1,12 @@
 {
   "name": "@netcracker/qubership-apihub-build-task-consumer",
-  "version": "3.2.3",
+  "version": "3.2.1",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@netcracker/qubership-apihub-build-task-consumer",
-      "version": "3.2.3",
+      "version": "3.2.1",
       "license": "Apache-2.0",
       "dependencies": {
         "@nestjs/axios": "^3.0.0",
@@ -14,7 +14,7 @@
         "@nestjs/config": "^3.0.0",
         "@nestjs/core": "^10.0.0",
         "@nestjs/platform-express": "^10.0.0",
-        "@netcracker/qubership-apihub-api-processor": "dev",
+        "@netcracker/qubership-apihub-api-processor": "5.4.3",
         "@sinclair/typebox": "^0.32.1",
         "adm-zip": "^0.5.10",
         "dotenv": "^16.3.1",
@@ -1895,9 +1895,9 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-diff": {
-      "version": "3.3.0",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-diff/3.3.0/b60b45e06a8c3fa78b3236b06f1432c912cd9536",
-      "integrity": "sha512-9Znt9IfDglwkzsNc2IyZrFcoHnUtm9+uOQ4OPrSCWdBz4PNCVib6hxumnytXo1bCmE/p6vpsu3SgtyoqOOSmnA==",
+      "version": "3.3.3",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-diff/3.3.3/7497f33c787dc0f6b93d9795b3885f6422a6ff60",
+      "integrity": "sha512-4n5zZLGgCrY0mnUu9/+siMTQLM72J/+PbFsbsSdoiDHNaC90s2Z5zh7PRbREGLiLx81FWEq3chSSj4TGz9Mo2w==",
       "dependencies": {
         "@netcracker/qubership-apihub-api-unifier": "2.8.0",
         "@netcracker/qubership-apihub-json-crawl": "1.2.1",
@@ -1914,13 +1914,13 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-processor": {
-      "version": "5.4.0",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/5.4.0/86f8a334fabf4c585301922cd512520771d4ee3e",
-      "integrity": "sha512-gr+2ytdv9TJfdC0MEIKNsQ0pvPWzOnaTEVihfSaP0EJOeJFfdYj2L2zieSDCqN9CNOdcsE+WjcLUlCcD2bKOZw==",
+      "version": "5.4.3",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/5.4.3/38cdc1699a5e94ee8992c6625708e441d7591887",
+      "integrity": "sha512-eguqZYJrp9iavNW8y0zfbVv50sjiMx63lxqEbatElQ//2brut+HEmN6cnTCwUhySqaZzY+GJKjEi1qTkP9CRYg==",
       "license": "Apache-2.0",
       "dependencies": {
         "@asyncapi/parser": "^3.6.0",
-        "@netcracker/qubership-apihub-api-diff": "3.3.0",
+        "@netcracker/qubership-apihub-api-diff": "3.3.3",
         "@netcracker/qubership-apihub-api-unifier": "2.8.0",
         "@netcracker/qubership-apihub-graphapi": "1.0.10",
         "@netcracker/qubership-apihub-json-crawl": "1.2.1",
