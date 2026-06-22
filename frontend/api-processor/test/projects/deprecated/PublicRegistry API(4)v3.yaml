@@ -777,12 +777,12 @@ components:
         name:
           description: Name of the user
           type: string
-          example: "Name Surname"
+          example: "John Doe"
         email:
           description: Email address of the user
           type: string
           format: email
-          example: "name.surname@qubership.org"
+          example: "john.doe@example.com"
         avatarUrl:
           description: Avatar of the user
           type: string
@@ -885,7 +885,7 @@ components:
           items:
             type: string
             format: email
-          example: ["name.surname@qubership.org"]
+          example: ["john.doe@example.com"]
         roleIds:
           type: array
           description: List of role IDs, added to the user.
