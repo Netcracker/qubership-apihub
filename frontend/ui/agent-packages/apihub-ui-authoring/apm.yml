@@ -1,0 +1,4 @@
+name: apihub-ui-authoring
+version: 1.0.0
+description: Points agents at APIHUB UI TypeScript coding conventions in docs/dev/CODING_GUIDELINES.md.
+author: Netcracker

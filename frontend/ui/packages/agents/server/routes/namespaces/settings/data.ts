@@ -24,5 +24,5 @@ export const SETTINGS_DTO: Writeable<SettingsDto> = {
   autoDiscovery: 'none',
   schedules: ['30 0 * * *'],
   emailNotificationsEnabled: true,
-  emailNotificationList: ['john.williams@example.com'],
+  emailNotificationList: ['john.doe@example.com'],
 }

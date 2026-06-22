@@ -33,6 +33,7 @@ export type SystemInfo = {
   notification?: string
   migrationInProgress: boolean
   useV3Search: boolean
+  aiChatEnabled?: boolean
 }
 
 type FeatureFlags = {
@@ -46,6 +47,7 @@ export type SystemInfoDto = {
   externalLinks: string[]
   notification?: string
   migrationInProgress: boolean
+  aiChatEnabled?: boolean
   featureFlags: FeatureFlags
 }
 
@@ -79,6 +81,7 @@ export function toSystemInfo(value: SystemInfoDto): SystemInfo {
     notification: value.notification,
     migrationInProgress: value.migrationInProgress,
     useV3Search: value.featureFlags.useV3Search,
+    aiChatEnabled: value.aiChatEnabled,
   }
 }
 

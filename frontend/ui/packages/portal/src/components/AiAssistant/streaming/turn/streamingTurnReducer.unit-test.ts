@@ -1,8 +1,8 @@
-import { AI_CHAT_STREAM_EVENT } from '../../api/streamEvents'
+import { AI_CHAT_STREAM_EVENT } from '../../api/types'
 import { STREAMING_TURN_ACTION, STREAMING_TURN_STATUS } from './streamingTurnConstants'
 import {
   applyStreamingSseEvent,
-  peekPartialBeforeErrorInBatch,
+  peekAssistantBufferBeforeErrorInBatch,
   STREAMING_TURN_IDLE_STATE,
   streamingTurnReducer,
   type StreamingTurnState,
@@ -11,9 +11,6 @@ import {
 const pending: Extract<StreamingTurnState, { status: typeof STREAMING_TURN_STATUS.pending }> = {
   status: STREAMING_TURN_STATUS.pending,
   chatId: 'c1',
-  optimisticUserMessageId: 'opt-1',
-  clientMessageId: 'client-1',
-  submittedContent: 'hi',
 }
 
 describe('streamingTurnReducer', () => {
@@ -21,9 +18,6 @@ describe('streamingTurnReducer', () => {
     const next = streamingTurnReducer(STREAMING_TURN_IDLE_STATE, {
       type: STREAMING_TURN_ACTION.turnRequested,
       chatId: 'c1',
-      clientMessageId: 'client-1',
-      optimisticUserMessageId: 'opt-1',
-      submittedContent: 'hi',
     })
     expect(next).toEqual(pending)
   })
@@ -46,11 +40,11 @@ describe('streamingTurnReducer', () => {
     }
   })
 
-  it('peekPartialBeforeErrorInBatch captures buffer before error clears state', () => {
+  it('peekAssistantBufferBeforeErrorInBatch captures buffer before error clears state', () => {
     let s: StreamingTurnState = pending
     s = applyStreamingSseEvent(s, { type: AI_CHAT_STREAM_EVENT.assistantStart, messageId: 'asst-1' })
     s = applyStreamingSseEvent(s, { type: AI_CHAT_STREAM_EVENT.assistantDelta, delta: 'partial' })
-    const peek = peekPartialBeforeErrorInBatch(s, [
+    const peek = peekAssistantBufferBeforeErrorInBatch(s, [
       { type: AI_CHAT_STREAM_EVENT.assistantDelta, delta: '!' },
       { type: AI_CHAT_STREAM_EVENT.error, code: 'APIHUB-AI-5001', message: 'fail' },
     ])

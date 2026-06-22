@@ -3,7 +3,8 @@ import type { ChatId } from './types'
 export const AI_CHAT_ROOT = 'ai-chat' as const
 
 export const aiChatListKey = (search?: string) => [AI_CHAT_ROOT, 'chats', { search: search ?? '' }] as const
-export const aiChatItemKey = (chatId: ChatId) => [AI_CHAT_ROOT, 'chats', chatId] as const
+export const aiChatItemKey = (chatId: ChatId | null) => [AI_CHAT_ROOT, 'chats', chatId] as const
+export const aiChatMessagesKey = (chatId: ChatId | null) => [AI_CHAT_ROOT, 'messages', chatId] as const
 
 /** Infinite list queries only; excludes per-chat item keys under the same prefix. */
 export function isAiChatsInfiniteListQueryKey(queryKey: readonly unknown[]): boolean {
@@ -13,8 +14,3 @@ export function isAiChatsInfiniteListQueryKey(queryKey: readonly unknown[]): boo
   const [, , tail] = queryKey
   return typeof tail === 'object' && tail !== null && 'search' in tail
 }
-
-export const aiChatMessagesKey = (chatId: ChatId) => [AI_CHAT_ROOT, 'messages', chatId] as const
-
-export const aiChatDisabledItemKey = ['ai-chat', 'chat', 'disabled'] as const
-export const aiChatDisabledMessagesKey = ['ai-chat', 'messages', 'disabled'] as const

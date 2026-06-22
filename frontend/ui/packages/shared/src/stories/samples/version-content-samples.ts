@@ -19,9 +19,9 @@ import type { PackageVersionContent } from '../../entities/version-contents'
 export const versionContent: PackageVersionContent = {
   'createdAt': 'Fri Oct 06 2023',
   'createdBy': {
-    name: 'John Williams',
+    name: 'John Doe',
     type: 'user',
-    id: 'JW_1234',
+    id: 'JD_1234',
   },
   'status': 'draft',
   'version': '2023.1@3',

@@ -73,16 +73,20 @@ export type AiChatStreamEvent =
   | { type: 'error'; code: string; message: string }
   | { type: 'done' }
 
-export type AiChatErrorCode =
-  | 'APIHUB-EF-3001'
-  | 'APIHUB-EF-3002'
-  | 'APIHUB-EF-3003'
-  | 'APIHUB-EF-4101'
-  | 'APIHUB-AI-3001'
-  | 'APIHUB-AI-4001'
-  | 'APIHUB-AI-4003'
-  | 'APIHUB-AI-5000'
-  | 'APIHUB-AI-5001'
+/** Error codes emitted by the mock AI chat and ephemeral-files routers. */
+export const AI_CHAT_MOCK_ERROR_CODES = [
+  'APIHUB-EF-3001',
+  'APIHUB-EF-3002',
+  'APIHUB-EF-3003',
+  'APIHUB-EF-4101',
+  'APIHUB-AI-3001',
+  'APIHUB-AI-4001',
+  'APIHUB-AI-4003',
+  'APIHUB-AI-5000',
+  'APIHUB-AI-5001',
+] as const
+
+export type AiChatErrorCode = (typeof AI_CHAT_MOCK_ERROR_CODES)[number]
 
 export type AiChatErrorResponse = {
   status: number

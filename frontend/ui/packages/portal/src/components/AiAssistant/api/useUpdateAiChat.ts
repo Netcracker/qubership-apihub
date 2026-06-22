@@ -1,12 +1,13 @@
 import { useMutation, type UseMutationResult, useQueryClient } from '@tanstack/react-query'
+import { useCallback } from 'react'
 
 import { invalidateAiChatListQueries } from './aiChatQueryInvalidation'
-import { applyLocalChatPatch } from './chatCache'
-import { AI_CHAT_ROOT, aiChatItemKey } from './queryKeys'
+import { applyLocalChatPatch, cancelAiChatMutationQueries } from './chatCache'
+import { aiChatItemKey } from './queryKeys'
 import { updateAiChat } from './requests'
 import type { AiChat, AiChatUpdateRequest, ChatId } from './types'
 
-export type UpdateAiChatVariables = {
+type UpdateAiChatVariables = {
   chatId: ChatId
   patch: AiChatUpdateRequest
 }
@@ -16,24 +17,40 @@ type UpdateAiChatMutationContext = {
   chatSnapshot: AiChat | undefined
 }
 
-export function useUpdateAiChat(): UseMutationResult<
+type RenameChatOptions = {
+  onError?: () => void
+}
+
+type UpdateAiChatMutation = UseMutationResult<
   AiChat,
   Error,
   UpdateAiChatVariables,
   UpdateAiChatMutationContext
-> {
+>
+
+type UseUpdateAiChatResult = UpdateAiChatMutation & {
+  renameChat: (chatId: ChatId, title: string, options?: RenameChatOptions) => void
+  setChatPinned: (chatId: ChatId, pinned: boolean) => void
+}
+
+export function useUpdateAiChat(): UseUpdateAiChatResult {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  const updateChat = useMutation<
+    AiChat,
+    Error,
+    UpdateAiChatVariables,
+    UpdateAiChatMutationContext
+  >({
     mutationFn: ({ chatId, patch }) => updateAiChat(chatId, patch),
     onMutate: async ({ chatId, patch }) => {
-      await queryClient.cancelQueries({ queryKey: [AI_CHAT_ROOT, 'chats'] })
-      await queryClient.cancelQueries({ queryKey: aiChatItemKey(chatId), exact: true })
+      const itemKey = aiChatItemKey(chatId)
+      await cancelAiChatMutationQueries(queryClient, chatId)
 
-      const chatSnapshot = queryClient.getQueryData<AiChat>(aiChatItemKey(chatId))
+      const chatSnapshot = queryClient.getQueryData<AiChat>(itemKey)
 
       if (chatSnapshot) {
-        queryClient.setQueryData(aiChatItemKey(chatId), applyLocalChatPatch(chatSnapshot, patch))
+        queryClient.setQueryData(itemKey, applyLocalChatPatch(chatSnapshot, patch))
       }
 
       return {
@@ -59,4 +76,21 @@ export function useUpdateAiChat(): UseMutationResult<
       void invalidateAiChatListQueries(queryClient)
     },
   })
+
+  const renameChat = useCallback((chatId: ChatId, title: string, options?: RenameChatOptions) => {
+    updateChat.mutate(
+      { chatId: chatId, patch: { title: title } },
+      { onError: options?.onError },
+    )
+  }, [updateChat])
+
+  const setChatPinned = useCallback((chatId: ChatId, pinned: boolean) => {
+    updateChat.mutate({ chatId: chatId, patch: { pinned: pinned } })
+  }, [updateChat])
+
+  return {
+    ...updateChat,
+    renameChat,
+    setChatPinned,
+  }
 }

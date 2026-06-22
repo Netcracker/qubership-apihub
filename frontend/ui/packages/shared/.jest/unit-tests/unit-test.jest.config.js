@@ -12,11 +12,13 @@ export default {
   ],
   transform: {
     '\\.ts?$': [
-      'ts-jest', { tsconfig: '<rootDir>/.jest/unit-tests/tsconfig.unit-test.json' },
+      'ts-jest',
+      { tsconfig: '<rootDir>/.jest/unit-tests/tsconfig.unit-test.json' },
     ],
   },
   moduleNameMapper: {
     '^@netcracker/qubership-apihub-ui-shared/(.*)$': '<rootDir>/src/$1',
+    '^lodash-es/isPlainObject$': '<rootDir>/../../node_modules/lodash/isPlainObject.js',
   },
   modulePaths: ['<rootDir>/src', '<rootDir>/../portal/src'],
   reporters: [

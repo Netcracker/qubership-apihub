@@ -20,3 +20,11 @@ dist-showcase/
 # bundle analyzer
 stats.html
 /http-client.private.env.json
+
+
+# APM dependencies
+apm_modules/
+
+# Local harness overrides
+.claude/settings.local.json
+.cursor/settings.local.json

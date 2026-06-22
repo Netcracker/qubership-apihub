@@ -8,15 +8,19 @@ import {
 import type { ChatId } from '../api/types'
 import { useStreamingTurn } from '../streaming/turn/useStreamingTurn'
 import {
-  AI_ASSISTANT_CHAT_SCREEN,
-  AiAssistantContext,
-  type AiAssistantContextValue,
-  type AiAssistantScreen,
-} from './AiAssistantContext'
+  PANEL_SCREEN_CHAT,
+  PANEL_SCREEN_HISTORY,
+  PanelContext,
+  type PanelContextValue,
+  type PanelScreen,
+  StreamingActionsContext,
+  StreamingLiveContext,
+  StreamingTurnStatusContext,
+} from './panelContext'
 
 export const AiAssistantProvider: FC<PropsWithChildren> = memo<PropsWithChildren>(({ children }) => {
   const [open, setOpen] = useState<boolean>(false)
-  const [screen, setScreen] = useState<AiAssistantScreen>(AI_ASSISTANT_CHAT_SCREEN)
+  const [screen, setScreen] = useState<PanelScreen>(PANEL_SCREEN_CHAT)
   const [activeChatId, setActiveChatId] = useState<ChatId | null>(null)
 
   const openPanel = useCallback((): void => {
@@ -28,35 +32,43 @@ export const AiAssistantProvider: FC<PropsWithChildren> = memo<PropsWithChildren
   }, [])
 
   const openHistory = useCallback((): void => {
-    setScreen('history')
+    setScreen(PANEL_SCREEN_HISTORY)
     setOpen(true)
   }, [])
 
   const openChatScreen = useCallback((chatId: ChatId | null): void => {
     setActiveChatId(chatId)
-    setScreen('chat')
+    setScreen(PANEL_SCREEN_CHAT)
     setOpen(true)
   }, [])
 
   const resetActiveChat = useCallback((): void => {
     setActiveChatId(null)
-    setScreen('chat')
+    setScreen(PANEL_SCREEN_CHAT)
   }, [])
 
   const clearActiveChat = useCallback((): void => {
     setActiveChatId(null)
   }, [])
 
-  const streaming = useStreamingTurn({
+  const { actions, streamingTurnStatus, live } = useStreamingTurn({
     openChatScreen,
     resetActiveChat,
     activeChatId,
   })
 
+  const { abort, reset } = actions
+
+  const startNewChat = useCallback((): void => {
+    abort()
+    reset()
+    resetActiveChat()
+  }, [abort, reset, resetActiveChat])
+
   useEvent(SHOW_AI_ASSISTANT_PANEL, openPanel)
   useEvent(HIDE_AI_ASSISTANT_PANEL, closePanel)
 
-  const contextValue = useMemo<AiAssistantContextValue>(() => ({
+  const panelContextValue = useMemo<PanelContextValue>(() => ({
     open,
     screen,
     activeChatId,
@@ -66,7 +78,7 @@ export const AiAssistantProvider: FC<PropsWithChildren> = memo<PropsWithChildren
     openChatScreen,
     resetActiveChat,
     clearActiveChat,
-    streaming,
+    startNewChat,
   }), [
     open,
     screen,
@@ -77,12 +89,20 @@ export const AiAssistantProvider: FC<PropsWithChildren> = memo<PropsWithChildren
     openChatScreen,
     resetActiveChat,
     clearActiveChat,
-    streaming,
+    startNewChat,
   ])
 
   return (
-    <AiAssistantContext.Provider value={contextValue}>
-      {children}
-    </AiAssistantContext.Provider>
+    <PanelContext.Provider value={panelContextValue}>
+      <StreamingActionsContext.Provider value={actions}>
+        <StreamingTurnStatusContext.Provider value={streamingTurnStatus}>
+          <StreamingLiveContext.Provider value={live}>
+            {children}
+          </StreamingLiveContext.Provider>
+        </StreamingTurnStatusContext.Provider>
+      </StreamingActionsContext.Provider>
+    </PanelContext.Provider>
   )
 })
+
+AiAssistantProvider.displayName = 'AiAssistantProvider'

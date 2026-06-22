@@ -1,18 +1,36 @@
-/** SSE `event` / `data.type` values from the AI chat stream contract. */
-export const AI_CHAT_STREAM_EVENT = {
-  contextCompacted: 'context.compacted',
-  assistantStart: 'message.assistant.start',
-  assistantDelta: 'message.assistant.delta',
-  assistantCompleted: 'message.assistant.completed',
-  toolStarted: 'tool.started',
-  toolCompleted: 'tool.completed',
-  error: 'error',
-  done: 'done',
-} as const
+import {
+  AI_CHAT_STREAM_EVENT,
+  type AiChatAssistantCompletedStreamEvent,
+  type AiChatAssistantDeltaStreamEvent,
+  type AiChatAssistantStartStreamEvent,
+  type AiChatStreamDoneEvent,
+  type AiChatStreamErrorEvent,
+  type AiChatStreamEvent,
+} from './types'
 
-export function isAssistantStreamProgressEvent(event: { type: string }): boolean {
-  return (
-    event.type === AI_CHAT_STREAM_EVENT.assistantStart ||
+type AiChatAssistantStreamProgressEvent =
+  | AiChatAssistantStartStreamEvent
+  | AiChatAssistantDeltaStreamEvent
+
+export function isAssistantStreamProgressEvent(
+  event: AiChatStreamEvent,
+): event is AiChatAssistantStreamProgressEvent {
+  return event.type === AI_CHAT_STREAM_EVENT.assistantStart ||
     event.type === AI_CHAT_STREAM_EVENT.assistantDelta
-  )
+}
+
+export function isAiChatAssistantCompletedStreamEvent(
+  event: AiChatStreamEvent,
+): event is AiChatAssistantCompletedStreamEvent {
+  return event.type === AI_CHAT_STREAM_EVENT.assistantCompleted
+}
+
+export function isAiChatStreamErrorEvent(event: AiChatStreamEvent): event is AiChatStreamErrorEvent {
+  return event.type === AI_CHAT_STREAM_EVENT.error
+}
+
+export function isAiChatStreamDoneEvent(
+  event: AiChatStreamEvent,
+): event is AiChatStreamDoneEvent {
+  return event.type === AI_CHAT_STREAM_EVENT.done
 }

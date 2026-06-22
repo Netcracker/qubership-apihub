@@ -1,0 +1,14 @@
+lockfile_version: '1'
+generated_at: '2026-06-02T10:05:19.273856+00:00'
+apm_version: 0.16.1
+dependencies:
+- repo_url: _local/apihub-ui-authoring
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/apihub-ui-authoring.md
+  - .cursor/rules/apihub-ui-authoring.mdc
+  deployed_file_hashes:
+    .claude/rules/apihub-ui-authoring.md: sha256:7434397775474d07d05c8dcf84f742293cecb5ac466d1b484af5321b0b184438
+    .cursor/rules/apihub-ui-authoring.mdc: sha256:0e2747dfc5a58653bc305c17fd0e8cd8b64e91c7ff52e716f7d1e74128010bd4
+  source: local
+  local_path: ./agent-packages/apihub-ui-authoring

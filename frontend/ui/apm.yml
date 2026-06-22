@@ -1,0 +1,13 @@
+name: qubership-apihub-ui
+version: 1.0.0
+description: Agent guidance for developing APIHUB UI.
+author: netcracker
+license: Apache-2.0
+
+targets:
+  - claude
+  - cursor
+
+dependencies:
+  apm:
+    - ./agent-packages/apihub-ui-authoring

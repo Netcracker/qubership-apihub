@@ -1,10 +1,20 @@
-import { type FC, type KeyboardEvent, memo, useCallback, useEffect, useRef, useState } from 'react'
+import {
+  type ChangeEvent,
+  type FC,
+  type KeyboardEvent,
+  memo,
+  type MouseEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 
 import Box from '@mui/material/Box'
 import InputBase from '@mui/material/InputBase'
 import { styled } from '@mui/material/styles'
 
-export type InlineRenameFieldProps = {
+type InlineRenameFieldProps = {
   initialTitle: string
   onSave: (title: string) => void
   onCancel: () => void
@@ -51,17 +61,25 @@ export const InlineRenameField: FC<InlineRenameFieldProps> = memo(({ initialTitl
     }
   }, [initialTitle])
 
+  const stopPropagation = useCallback((event: MouseEvent) => {
+    event.stopPropagation()
+  }, [])
+
+  const handleChange = useCallback((event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setValue(event.target.value)
+  }, [])
+
   return (
     <RenameRoot>
       <RenameInput
         inputRef={inputRef}
         value={value}
         fullWidth
-        onChange={(event) => setValue(event.target.value)}
+        onChange={handleChange}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        onClick={(event) => event.stopPropagation()}
-        onMouseDown={(event) => event.stopPropagation()}
+        onClick={stopPropagation}
+        onMouseDown={stopPropagation}
         inputProps={{
           maxLength: 120,
           'aria-label': 'Rename chat',
@@ -82,19 +100,11 @@ const RenameRoot = styled(Box)({
 })
 
 const RenameInput = styled(InputBase)(({ theme }) => ({
-  width: '100%',
   margin: 0,
   fontSize: 13,
   fontWeight: 500,
-  lineHeight: '20px',
-  letterSpacing: '-0.0325px',
   color: theme.palette.text.primary,
   '& .MuiInputBase-input': {
     padding: 0,
-    height: 20,
-    minHeight: 20,
-    '&:focus': {
-      outline: 'none',
-    },
   },
 }))
