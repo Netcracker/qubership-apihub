@@ -31,8 +31,8 @@ info:
     name: Netcracker Opensource Group
     email: opensourcegroup@netcracker.com
   license:
-    name: qubership
-    url: https://qubership.org
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
   version: "2024.2"
   x-api-kind: no-BWC
 servers:

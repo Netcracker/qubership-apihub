@@ -45,7 +45,7 @@ jobs:
   #   needs: build-docker-image
   #   if: github.event_name == 'pull_request'
   #   with:
-  #     postman-collections-list: './e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json'
+  #     postman-collections-list: './e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/3_2_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json'
   #     apihub-backend-image-tag: ${{ needs.build-docker-image.outputs.image_tag }}
   #     # apihub-ui-image-tag: dev
   #     # apihub-build-task-consumer-image-tag: dev
