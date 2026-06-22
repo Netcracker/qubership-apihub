@@ -1,0 +1,40 @@
+asyncapi: 3.0.0
+info:
+  title: Sample AsyncAPI
+  version: 1.0.0
+channels:
+  testChannel:
+    address: events.default
+    messages:
+      TestMessage:
+        $ref: '#/components/messages/TestMessage'
+    servers:
+      - $ref: '#/servers/server0'
+      - $ref: '#/servers/server1'
+operations:
+  sendOperation:
+    action: send
+    channel:
+      $ref: '#/channels/testChannel'
+    messages:
+      - $ref: '#/components/messages/TestMessage'
+components:
+  messages:
+    TestMessage:
+      name: TestMessage
+      payload:
+        type: object
+        properties:
+          id:
+            type: string
+        required:
+          - id
+servers:
+  server0:
+    host: broker-0.example.com:9092
+    protocol: kafka
+    description: Main Kafka broker
+  server1:
+    host: broker-1.example.com:5672
+    protocol: amqp
+    description: Secondary AMQP broker

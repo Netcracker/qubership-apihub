@@ -14,15 +14,26 @@
  * limitations under the License.
  */
 
-import { isObject } from '@netcracker/qubership-apihub-api-data-model'
+import { DiffMetaKeys, isObject } from '@netcracker/qubership-apihub-api-data-model'
 import {
   apiDiff,
-  COMPARE_MODE_OPERATION,
-  DIFF_META_KEY
+  COMPARE_MODE_OPERATION, DIFF_META_KEY
 } from '@netcracker/qubership-apihub-api-diff'
 import { denormalize, normalize, NormalizeOptions, RefErrorType, stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier'
 import { ObjectUtils } from '../utils/common/objects'
+import { TEST_DIFF_META_KEYS } from './async-api-diffs-suite/shared-test-data'
 import { TEST_REFERENCE_NAME_PROPERTY } from './async-api-suite/shared-test-data'
+
+const JSO_DIFFS_OPERATION_KEY = 'test-operation'
+const JSO_DIFFS_CHANNEL_KEY = 'test-channel'
+const JSO_DIFFS_MESSAGE_KEY = 'test-message'
+const JSO_DIFFS_BINDING_KEY = 'test-binding'
+const JSO_DIFFS_BINDING_PATH = [
+  'operations',
+  JSO_DIFFS_OPERATION_KEY,
+  'bindings',
+  JSO_DIFFS_BINDING_KEY,
+] as const
 
 const syntheticTitleFlag = Symbol('syntheticTitle')
 
@@ -446,4 +457,113 @@ export function prepareAsyncApiDocument(options: AsyncApiDocumentOptions): unkno
     mergedSchema.toJSON = () => stringifyCyclicJso(mergedSchema)
   }
   return mergedSchema
+}
+
+type AsyncApiDiffsDocumentOptions = {
+  beforeSource: unknown
+  afterSource: unknown
+  circular?: boolean
+  referenceNamePropertyKey?: symbol
+  storyName?: string
+  diffMetaKeys?: DiffMetaKeys
+}
+
+export function prepareAsyncApiDiffsDocument(options: AsyncApiDiffsDocumentOptions): unknown {
+  const {
+    beforeSource,
+    afterSource,
+    circular = false,
+    referenceNamePropertyKey = TEST_REFERENCE_NAME_PROPERTY,
+    storyName,
+    diffMetaKeys = TEST_DIFF_META_KEYS,
+  } = options
+
+  storyName && console.debug(`[AsyncAPI Diffs] STORY: ${storyName}`)
+  storyName && console.debug('[AsyncAPI Diffs] Before raw source:', beforeSource)
+  storyName && console.debug('[AsyncAPI Diffs] After raw source:', afterSource)
+
+  const mergedSource = apiDiff(beforeSource, afterSource, {
+    beforeSource,
+    afterSource,
+    syntheticTitleFlag: syntheticTitleFlag,
+    firstReferenceKeyProperty: referenceNamePropertyKey,
+    metaKey: diffMetaKeys.diffsMetaKey,
+    validate: true,
+    liftCombiners: true,
+    unify: true,
+  }).merged
+
+  storyName && console.debug('[AsyncAPI Diffs] Merged source:', mergedSource)
+  if (circular && isObject(mergedSource)) {
+    mergedSource.toJSON = () => stringifyCyclicJso(mergedSource)
+  }
+  return mergedSource
+}
+
+function asyncApi3JsoDiffsTemplateInstance(jsoSource: unknown): Record<string, unknown> {
+  return {
+    asyncapi: '3.0.0',
+    operations: {
+      [JSO_DIFFS_OPERATION_KEY]: {
+        action: 'send',
+        channel: { $ref: `#/channels/${JSO_DIFFS_CHANNEL_KEY}` },
+        messages: [{ $ref: `#/channels/${JSO_DIFFS_CHANNEL_KEY}/messages/${JSO_DIFFS_MESSAGE_KEY}` }],
+        bindings: {
+          [JSO_DIFFS_BINDING_KEY]: jsoSource,
+        },
+      },
+    },
+    channels: {
+      [JSO_DIFFS_CHANNEL_KEY]: {
+        messages: {
+          [JSO_DIFFS_MESSAGE_KEY]: {
+            name: 'Test Message',
+          },
+        },
+      },
+    },
+  }
+}
+
+function getJsoBindingFromMergedDocument(mergedDocument: unknown): unknown {
+  return ObjectUtils.get(mergedDocument, [...JSO_DIFFS_BINDING_PATH])
+}
+
+type JsoDiffsDocumentOptions = {
+  beforeSource: unknown
+  afterSource: unknown
+  storyName?: string
+  diffMetaKeys?: DiffMetaKeys
+}
+
+export function prepareJsoDiffsDocument(options: JsoDiffsDocumentOptions): unknown {
+  const {
+    beforeSource,
+    afterSource,
+    storyName,
+    diffMetaKeys = TEST_DIFF_META_KEYS,
+  } = options
+
+  storyName && console.debug(`[JSO Diffs] STORY: ${storyName}`)
+  storyName && console.debug('[JSO Diffs] Before raw source:', beforeSource)
+  storyName && console.debug('[JSO Diffs] After raw source:', afterSource)
+
+  const beforeDocument = asyncApi3JsoDiffsTemplateInstance(beforeSource)
+  const afterDocument = asyncApi3JsoDiffsTemplateInstance(afterSource)
+
+  const mergedDocument = apiDiff(beforeDocument, afterDocument, {
+    beforeSource: beforeDocument,
+    afterSource: afterDocument,
+    syntheticTitleFlag: syntheticTitleFlag,
+    firstReferenceKeyProperty: TEST_REFERENCE_NAME_PROPERTY,
+    metaKey: diffMetaKeys.diffsMetaKey,
+    validate: true,
+    liftCombiners: true,
+    unify: true,
+  }).merged
+
+  const mergedSource = getJsoBindingFromMergedDocument(mergedDocument)
+
+  storyName && console.debug('[JSO Diffs] Merged source:', mergedSource)
+  return mergedSource
 }

@@ -48,7 +48,22 @@ export interface JsonSchemaCreateNodeParams<T, K extends string, M extends objec
   isCycle: boolean
 }
 
-export type JsonSchemaNodeValue<T extends JsonSchemaNodeType = any> = T extends 'any' ? IJsonSchemaAnyType : T extends 'number' ? IJsonSchemaNumberType : T extends 'string' ? IJsonSchemaStringType : T extends 'boolean' ? IJsonSchemaBooleanType : T extends 'object' ? IJsonSchemaObjectType : T extends 'array' ? IJsonSchemaArrayType : T extends 'null' ? IJsonSchemaNullType : never
+export type JsonSchemaNodeValue<T extends JsonSchemaNodeType = any> =
+  T extends 'any'
+  ? IJsonSchemaAnyType
+  : T extends 'number'
+  ? IJsonSchemaNumberType
+  : T extends 'string'
+  ? IJsonSchemaStringType
+  : T extends 'boolean'
+  ? IJsonSchemaBooleanType
+  : T extends 'object'
+  ? IJsonSchemaObjectType
+  : T extends 'array'
+  ? IJsonSchemaArrayType
+  : T extends 'null'
+  ? IJsonSchemaNullType
+  : never
 
 export type IJsonSchemaBaseType = {
   // readonly $id: string
@@ -62,7 +77,7 @@ export type IJsonSchemaBaseType = {
   // const: value => enum: [value]
   readonly default?: any
   // list of extensions, used for OpenAPI mostly, like: [{ 'x-example': 'example' }, { 'x-description': 'description' }]
-  readonly extensions?: Array<{ [K in OpenApiExtensionKey]: unknown }>
+  readonly extensions?: Record<OpenApiExtensionKey, unknown>
 }
 
 export interface IJsonSchemaAnyType extends IJsonSchemaBaseType {

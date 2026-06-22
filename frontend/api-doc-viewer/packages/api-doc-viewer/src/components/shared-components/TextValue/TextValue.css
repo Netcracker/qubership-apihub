@@ -1,0 +1,50 @@
+.text-value {
+  font-family: 'Inter Variable';
+  color: black;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+}
+
+.text-value.font-medium {
+  font-weight: 500 !important;
+}
+
+.text-value.font-normal {
+  font-weight: 400 !important;
+}
+
+h1.text-value {
+  font-size: 32px;
+  font-weight: 600;
+}
+
+h2.text-value {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+h3.text-value {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+h4.text-value {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+h5.text-value {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+h6.text-value {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+span.text-value {
+  font-size: 13px;
+  font-weight: 400;
+}

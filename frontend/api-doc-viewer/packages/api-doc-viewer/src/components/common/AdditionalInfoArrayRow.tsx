@@ -19,16 +19,15 @@ import { DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import type { FC, ReactNode } from 'react'
 import {
   BLOCK_CONTENT_DIFF_COLOR_MAP,
-  DEFAULT_STRIKETHROUGH_VALUE_CLASS,
+  DEFAULT_MUTED_VALUE_CLASS,
+  INLINE_CONTENT_DIFF_COLOR_SCHEMAS,
   NODE_DIFF_COLOR_MAP
 } from '../../consts/changes'
 import {
   DEFAULT_LAYOUT_MODE,
   DEFAULT_ROW_DEPTH,
-  DEFAULT_ROW_PADDING_LEFT,
   DEFAULT_SERIES_ITEM,
   DEFAULT_SERIES_ITEM_TEXT_COLOR,
-  SHIFTED_ROW_PADDING_LEFT
 } from '../../consts/configuration'
 import { useChangeSeverityFilters } from '../../contexts/ChangeSeverityFiltersContext'
 import '../../index.css'
@@ -47,15 +46,15 @@ import {
   getLayoutSideFlags,
   inferRowChange,
   isDiffTypeIncluded,
-  maxDiffType
+  maxDiffTypeFromDiffs
 } from '../../utils/common/changes'
 import { isDefined } from '../../utils/common/checkers'
-import { isSeriesItemEmpty, stringifyItem } from '../../utils/common/rows'
-import { LevelIndicator } from '../AsyncApiOperationViewer/LevelIndicator'
-import { COLOR_SCHEMAS } from '../kit/ux/consts'
-import { BADGE_KIND_DEFAULT } from '../kit/ux/types'
-import { UxBadge } from '../kit/ux/UxBadge'
+import { stringifyItem } from '../../utils/common/rows'
+import { getUxBadgeColorSchema } from '../kit/ux/UxBadge/consts'
+import { BADGE_KIND_DEFAULT } from '../kit/ux/UxBadge/types'
+import { UxBadge } from '../kit/ux/UxBadge/UxBadge'
 import { UxDiffFloatingBadge } from '../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
+import { LevelIndicator } from '../shared-components/LevelIndicator'
 import { EmptyContent } from './diffs/EmptyContent'
 import { UnsupportedContent } from './diffs/UnsupportedContent'
 
@@ -65,9 +64,12 @@ export type AdditionalInfoArrayRowProps = PropsWithoutChangesSummary<
     $changesKey: string
     title: string
     items: unknown[]
+    isPredefinedValuesSet?: boolean
   } &
   PropsWithChanges
 >
+
+const TITLE_INLINE_STYLES = { paddingTop: 2 }
 
 export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) => {
   const {
@@ -75,11 +77,14 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
     $changesKey,
     title,
     items,
+    isPredefinedValuesSet = false,
     layoutMode = DEFAULT_LAYOUT_MODE,
     level = DEFAULT_ROW_DEPTH,
     $nodeChange,
     $changes,
   } = props
+
+  const isArbitraryValuesSet = !isPredefinedValuesSet
 
   const filters = useChangeSeverityFilters()
 
@@ -118,13 +123,13 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
 
   const [diffType, diffTypeCause] =
     isNodeChanged
-      ? maxDiffType($nodeChange)
+      ? maxDiffTypeFromDiffs($nodeChange)
       : isWholeRowChangedNaturally
-        ? maxDiffType($rowChanges)
+        ? maxDiffTypeFromDiffs($rowChanges)
         : isWholeRowChangedSynthetically
-          ? maxDiffType($inferredRowChange)
+          ? maxDiffTypeFromDiffs($inferredRowChange)
           : isRowContentChanged
-            ? maxDiffType(...rowContentChangesList)
+            ? maxDiffTypeFromDiffs(...rowContentChangesList)
             : DEFAULT_DIFF_TYPE_AND_CAUSE_PAIR
   const diffTypeIncluded = isDiffTypeIncluded(diffType, filters)
 
@@ -147,14 +152,20 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
 
   const Content: FC<ContentProps> = ({ layoutSide }) => {
     const width = isSideBySideDiffsLayoutMode ? 'w-1/2' : 'w-full'
+    const rowClasses = [
+      'flex flex-row',
+      !shift && 'gap-6',
+      width,
+    ].filter(Boolean).join(' ')
 
     const { originSide, changedSide } = getLayoutSideFlags(layoutSide)
 
     return (
-      <div className={`flex flex-row gap-6 ${shift ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
+      <div className={rowClasses}>
         <LevelIndicator level={level} />
+        {shift && <div className="w-5" />}
         <div className="flex flex-row flex-wrap items-start gap-2 py-1">
-          <div className="inline text-xs font-normal text-slate-500">
+          <div className="inline text-xs font-normal text-slate-500" style={TITLE_INLINE_STYLES}>
             {title}:
           </div>
           {items.map((item, index) => {
@@ -187,7 +198,6 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
               !itemDefined ? '' : stringifyItem(item)
             const handledReplacedItem =
               !replacedItemDefined ? '' : stringifyItem($itemChange.beforeValue)
-            const isEmptyItem = isSeriesItemEmpty(handledItem, handledReplacedItem)
 
             let itemView: string | ReactNode = handledItem === ''
               ? <span className={DEFAULT_SERIES_ITEM_TEXT_COLOR}>{DEFAULT_SERIES_ITEM}</span>
@@ -196,23 +206,23 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
             if (isSideBySideDiffsLayoutMode) {
               if (itemRemoved) {
                 if (originSide) {
-                  const diffSchemaForContainer = isEmptyItem
-                    ? DEFAULT_SERIES_ITEM_TEXT_COLOR
-                    : DEFAULT_STRIKETHROUGH_VALUE_CLASS
                   itemView =
-                    <div className={`inline ${diffTypeForItemIncluded ? diffSchemaForContainer : ''}`}>
+                    <div className={`inline ${diffTypeForItemIncluded ? DEFAULT_MUTED_VALUE_CLASS : ''}`}>
                       {itemView}
                     </div>
                 }
               }
               if (itemReplaced) {
                 if (originSide) {
-                  const diffSchemaForContainer = isEmptyItem
-                    ? DEFAULT_SERIES_ITEM_TEXT_COLOR
-                    : DEFAULT_STRIKETHROUGH_VALUE_CLASS
                   itemView =
-                    <div className={`inline ${diffTypeForItemIncluded ? diffSchemaForContainer : ''}`}>
+                    <div className={`inline ${diffTypeForItemIncluded && isArbitraryValuesSet ? INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace] : ''}`}>
                       {handledReplacedItem || DEFAULT_SERIES_ITEM}
+                    </div>
+                }
+                if (changedSide) {
+                  itemView =
+                    <div className={`inline ${diffTypeForItemIncluded && isArbitraryValuesSet ? INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace] : ''}`}>
+                      {itemView}
                     </div>
                 }
               }
@@ -220,31 +230,31 @@ export const AdditionalInfoArrayRow: FC<AdditionalInfoArrayRowProps> = (props) =
 
             if (isInlineDiffsLayoutMode) {
               if (itemRemoved) {
-                const diffSchemaForContainer = isEmptyItem
-                  ? DEFAULT_SERIES_ITEM_TEXT_COLOR
-                  : DEFAULT_STRIKETHROUGH_VALUE_CLASS
                 itemView =
-                  <div className={`inline ${diffTypeForItemIncluded ? diffSchemaForContainer : ''}`}>
+                  <div className={`inline ${diffTypeForItemIncluded ? DEFAULT_MUTED_VALUE_CLASS : ''}`}>
                     {itemView}
                   </div>
               }
               if (itemReplaced) {
-                const diffSchemaForContainerBefore =
-                  `${DEFAULT_STRIKETHROUGH_VALUE_CLASS} ${isEmptyItem ? DEFAULT_SERIES_ITEM_TEXT_COLOR : ''}`
                 itemView = <>
-                  <div className={`inline mr-1 ${diffTypeForItemIncluded ? diffSchemaForContainerBefore : ''}`}>
+                  <div className={`inline mr-1 ${diffTypeForItemIncluded && isArbitraryValuesSet ? INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace] : ''}`}>
                     {handledReplacedItem || DEFAULT_SERIES_ITEM}
                   </div>
-                  {itemView}
+                  <div className={`inline ${diffTypeForItemIncluded && isArbitraryValuesSet ? INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace] : ''}`}>
+                    {itemView}
+                  </div>
                 </>
               }
             }
 
             const diffColorSchemaForItem = [
-              COLOR_SCHEMAS[BADGE_KIND_DEFAULT],
-              diffTypeForItemIncluded && $itemAction ? BLOCK_CONTENT_DIFF_COLOR_MAP[$itemAction] : ''
+              getUxBadgeColorSchema(BADGE_KIND_DEFAULT),
+              diffTypeForItemIncluded && $itemAction && (itemRemoved || itemAdded || itemReplaced && isPredefinedValuesSet)
+                ? BLOCK_CONTENT_DIFF_COLOR_MAP[$itemAction]
+                : ''
             ].join(' ')
 
+            // TODO 01.06.26 // REFACTOR: Use DiffBadge component!
             return (
               <UxBadge
                 key={`value-${index}`}

@@ -121,6 +121,7 @@ export const GraphPropNodeBody: FC<GraphPropNodeBodyProps> = (props) => {
   // TODO 29.11.24 // isNullable and nullable in nodeTitleData - not synchronized!!!
   const nodeTitleData = buildNodeTitleData({ node, nodeValue, nodeMeta })
   const nodeTypeData = buildNodeTypeData({ node, nodeValue })
+  const reserveExpanderSpace = isRoot || isOperation
 
   return (
     <div className="flex flex-col">
@@ -170,12 +171,12 @@ export const GraphPropNodeBody: FC<GraphPropNodeBodyProps> = (props) => {
             <div data-name="Content" className="flex flex-col">
               {/* TODO 01.11.23 // "shift" is a WA, find way better */}
               <Annotations
-                shift={isExpandable && isRoot || isOperation}
+                shift={reserveExpanderSpace}
                 state={state}
                 $nodeChange={$nodeChange}
               />
               <Validations
-                shift={isExpandable && isRoot || isOperation}
+                shift={reserveExpanderSpace}
                 level={nodeDepth}
                 nodeValue={nodeValue}
                 $nodeChange={$nodeChange ?? $nodeMeta.$nodeChange}

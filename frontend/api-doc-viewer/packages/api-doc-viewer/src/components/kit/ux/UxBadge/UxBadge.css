@@ -1,0 +1,84 @@
+.ux-badge {
+  border-radius: 4px;
+  padding: 1px 8px 0;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.ux-badge pre {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.ux-badge_default {
+  background-color: rgb(243 244 246);
+  color: rgb(100 116 139);
+  box-shadow: inset 0 0 0 1px #D5DCE3;
+}
+
+.ux-badge_default-outline {
+  box-shadow: inset 0 0 0 1px rgb(100 116 139);
+  color: rgb(100 116 139);
+}
+
+.ux-badge_info {
+  background-color: rgb(224 242 254);
+  color: rgb(29 78 216);
+  box-shadow: inset 0 0 0 1px rgb(224 242 254);
+}
+
+.ux-badge_warning {
+  background-color: rgb(254 252 232);
+  color: rgb(133 77 14);
+  box-shadow: inset 0 0 0 1px rgb(133 77 14);
+}
+
+.ux-badge_alt-info {
+  background-color: rgb(254 249 195);
+  color: rgb(180 83 9);
+  box-shadow: inset 0 0 0 1px rgb(254 249 195);
+}
+
+.ux-badge_error {
+  background-color: rgb(254 242 242);
+  color: rgb(185 28 28);
+  box-shadow: inset 0 0 0 1px rgb(185 28 28);
+}
+
+.ux-badge_success {
+  background-color: rgb(240 253 244);
+  color: rgb(21 128 61);
+  box-shadow: inset 0 0 0 1px rgb(21 128 61);
+}
+
+/* readOnly, writeOnly */
+.ux-badge_tag-blue {
+  background-color: #00C1FF;
+  border-color: #00C1FF;
+  color: white;
+}
+
+/* deprecated */
+.ux-badge_tag-amber {
+  background-color: #EF9206;
+  box-shadow: inset 0 0 0 1px #EF9206;
+  color: white;
+}
+
+.ux-badge_operation-query {
+  background-color: rgb(34 197 94);
+  box-shadow: inset 0 0 0 1px rgb(34 197 94);
+  color: rgb(255 255 255);
+}
+
+.ux-badge_operation-mutation {
+  background-color: rgb(56 189 248);
+  box-shadow: inset 0 0 0 1px rgb(56 189 248);
+  color: rgb(255 255 255);
+}
+
+.ux-badge_operation-subscription {
+  background-color: rgb(245 158 11);
+  box-shadow: inset 0 0 0 1px rgb(245 158 11);
+  color: rgb(255 255 255);
+}

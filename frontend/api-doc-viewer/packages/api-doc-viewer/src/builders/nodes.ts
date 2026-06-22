@@ -21,7 +21,7 @@ import {
   JsonSchemaDiffNodeMeta,
   JsonSchemaDiffNodeValue
 } from '@netcracker/qubership-apihub-api-data-model'
-import { BADGE_KIND_ALTERNATIVE_INFO, BADGE_KIND_INFO } from '../components/kit/ux/types'
+import { BADGE_KIND_ALTERNATIVE_INFO, BADGE_KIND_INFO } from '../components/kit/ux/UxBadge/types'
 import { UNKNOWN_TYPE_TEXT } from '../consts/types'
 import { GraphNodeTitleDataOptions, JsonNodeTitleDataOptions, NodeTitleData, } from '../types/NodeTitleData'
 import { GraphNodeTypeDataOptions, JsonNodeTypeDataOptions, NodeTypeData } from '../types/NodeTypeData'

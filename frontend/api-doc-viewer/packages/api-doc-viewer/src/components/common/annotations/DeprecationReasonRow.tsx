@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-import { LevelIndicator } from "@apihub/components/AsyncApiOperationViewer/LevelIndicator"
+import { LevelIndicator } from "@apihub/components/shared-components/LevelIndicator"
 import { isDiff, isObject } from "@netcracker/qubership-apihub-api-data-model"
 import { Diff, DiffAction, DiffMetaRecord } from "@netcracker/qubership-apihub-api-diff"
 import { GRAPH_API_DIRECTIVE_DEPRECATED_DEFAULT_REASON } from "@netcracker/qubership-apihub-graphapi"
 import type { FC } from 'react'
-import { DEFAULT_STRIKETHROUGH_VALUE_CLASS, NODE_DIFF_COLOR_MAP } from '../../../consts/changes'
+import { INLINE_CONTENT_DIFF_COLOR_SCHEMAS, NODE_DIFF_COLOR_MAP } from '../../../consts/changes'
 import {
   DEFAULT_LAYOUT_MODE,
   DEFAULT_ROW_DEPTH,
-  DEFAULT_ROW_PADDING_LEFT,
-  SHIFTED_ROW_PADDING_LEFT
 } from '../../../consts/configuration'
 import { useChangeSeverityFilters } from '../../../contexts/ChangeSeverityFiltersContext'
 import '../../../index.css'
@@ -36,6 +34,7 @@ import { LayoutMode } from '../../../types/LayoutMode'
 import { PropsWithoutChangesSummary } from "../../../types/PropsWithoutChangesSummary"
 import {
   buildOpenApiDiffCause,
+  diffAdd,
   diffRemove,
   diffReplace,
   getLayoutModeFlags,
@@ -91,12 +90,18 @@ export const DeprecationReasonRow: FC<DeprecationReasonRowProps> = (props) => {
 
   const Content: FC<ContentProps> = ({ layoutSide }) => {
     const width = isSideBySideDiffsLayoutMode ? 'w-1/2' : 'w-full'
+    const rowClasses = [
+      'flex flex-row',
+      !shift && 'gap-6',
+      width,
+    ].filter(Boolean).join(' ')
 
     // FIXME 28.11.23 // Fix this component when it's clear how $changes for deprecation reason are provided not in enum
 
     return (
-      <div className={`flex flex-row gap-6 ${shift ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
+      <div className={rowClasses}>
         <LevelIndicator level={level} />
+        {shift && <div className="w-5" />}
         <div className="inline-block py-1">
           <Value
             value={value}
@@ -170,6 +175,7 @@ type ValueProps = {
   layoutMode: LayoutMode
   layoutSide: LayoutSide
   $changes?: Diff | DiffMetaRecord
+  highlightWholeDiff?: boolean
 }
 
 const Value: FC<ValueProps> = props => {
@@ -177,17 +183,27 @@ const Value: FC<ValueProps> = props => {
     enableDiffs,
     layoutMode,
     layoutSide,
-    $changes
+    $changes,
+    highlightWholeDiff = false
   } = props
 
   const { isInlineDiffsLayoutMode, isSideBySideDiffsLayoutMode } = getLayoutModeFlags(layoutMode)
-  const { originSide } = getLayoutSideFlags(layoutSide)
+  const { originSide, changedSide } = getLayoutSideFlags(layoutSide)
 
   const valueChanged = isDiff($changes)
   const valueRemoved = valueChanged && diffRemove($changes)
   const valueReplaced = valueChanged && diffReplace($changes)
+  const valueAdded = valueChanged && diffAdd($changes)
 
-  const { removed, replaced } = {
+  const { added, removed, replaced } = {
+    added: valueChanged && (
+      valueAdded || (
+        valueReplaced &&
+        isObject($changes.afterValue) &&
+        'reason' in $changes.afterValue &&
+        typeof $changes.afterValue.reason === 'string'
+      )
+    ),
     removed: valueChanged && (
       valueRemoved || (
         valueReplaced &&
@@ -202,20 +218,36 @@ const Value: FC<ValueProps> = props => {
     ),
   }
 
-  let {
-    value,
-    strikethrough,
-  } = props
+  let { value } = props
+
+  let diffColorSchema
 
   if (isSideBySideDiffsLayoutMode || isInlineDiffsLayoutMode) {
     if (originSide && (removed || replaced)) {
-      strikethrough = enableDiffs
-      if (valueChanged && valueReplaced) {
+      if (valueReplaced) {
+        diffColorSchema = INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
         value = (
           isObject($changes.beforeValue) && 'reason' in $changes.beforeValue
             ? `${$changes.beforeValue.reason}`
             : `${$changes.beforeValue}`
         )
+      }
+      if (valueRemoved && highlightWholeDiff) {
+        diffColorSchema = INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove]
+      }
+    }
+    if (changedSide && (added || replaced)) {
+      if (valueReplaced) {
+        diffColorSchema = INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
+        value = (
+          isObject($changes.afterValue) && 'reason' in $changes.afterValue &&
+          typeof $changes.afterValue.reason === 'string'
+          ? `${$changes.afterValue.reason}`
+          : `${$changes.afterValue}`
+        )
+      }
+      if (valueAdded && highlightWholeDiff) {
+        diffColorSchema = INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.add]
       }
     }
   }
@@ -223,7 +255,7 @@ const Value: FC<ValueProps> = props => {
   return (
     <div className={`text-xs text-slate-700`}>
       <b className="font-Inter-Bolder mr-1">Deprecation reason:</b>
-      <span className={`${strikethrough ? DEFAULT_STRIKETHROUGH_VALUE_CLASS : ''}`}>
+      <span className={`${enableDiffs ? diffColorSchema ?? '' : ''}`}>
         {value}
       </span>
     </div>

@@ -1,0 +1,17 @@
+@import "./variables.css";
+
+.diffs-background_red {
+  background-color: var(--diffs-background-red);
+}
+
+.diffs-background_green {
+  background-color: var(--diffs-background-green);
+}
+
+.diffs-background_yellow {
+  background-color: var(--diffs-background-yellow);
+}
+
+.diffs-background_gray {
+  background-color: var(--diffs-background-gray);
+}

@@ -1,0 +1,11 @@
+.diffs-highlighter_red {
+  background-color: var(--diffs-highlighter-red);
+}
+
+.diffs-highlighter_green {
+  background-color: var(--diffs-highlighter-green);
+}
+
+.diffs-highlighter_yellow {
+  background-color: var(--diffs-highlighter-yellow);
+}

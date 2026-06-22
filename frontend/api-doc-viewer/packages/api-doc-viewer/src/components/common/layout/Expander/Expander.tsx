@@ -40,6 +40,8 @@ export const Expander: FC<ExpanderProps> = (props) => {
         <ExpandingCaret onToggle={onToggleExpander} expanded={expanded} />
       </div>
     )
+  } else if (isRoot) {
+    expanderElement = <div className="w-5" />
   } else if (!isRoot && !isOperation) {
     expanderElement = <NestingHorizontalIndicator />
   }

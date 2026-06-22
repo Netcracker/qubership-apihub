@@ -25,6 +25,8 @@ import {
   risky,
   unclassified,
 } from '@netcracker/qubership-apihub-api-diff'
+import { DiffsClassesBuilder } from '@netcracker/qubership-apihub-next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/utilities'
+import { HighlightVariant } from '@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/tree-node.interface'
 
 export const NODE_DIFF_COLOR_MAP: Partial<Record<ActionType, string>> = {
   [DiffAction.add]: 'bg-green-50',
@@ -34,15 +36,15 @@ export const NODE_DIFF_COLOR_MAP: Partial<Record<ActionType, string>> = {
 }
 
 export const BLOCK_CONTENT_DIFF_COLOR_MAP: Partial<Record<ActionType, string>> = {
-  [DiffAction.add]: 'border border-green-500',
-  [DiffAction.remove]: 'border border-red-500',
-  [DiffAction.replace]: 'border border-amber-500',
+  [DiffAction.add]: DiffsClassesBuilder.borderShadow(HighlightVariant.Green),
+  [DiffAction.remove]: DiffsClassesBuilder.borderShadow(HighlightVariant.Red),
+  [DiffAction.replace]: DiffsClassesBuilder.borderShadow(HighlightVariant.Yellow),
 }
 
 export const INLINE_CONTENT_DIFF_COLOR_SCHEMAS: Partial<Record<ActionType, string>> = {
-  [DiffAction.add]: 'text-green-500',
-  [DiffAction.remove]: 'text-red-500',
-  [DiffAction.replace]: 'text-amber-500',
+  [DiffAction.add]: DiffsClassesBuilder.highlighter(HighlightVariant.Green),
+  [DiffAction.remove]: DiffsClassesBuilder.highlighter(HighlightVariant.Red),
+  [DiffAction.replace]: DiffsClassesBuilder.highlighter(HighlightVariant.Yellow),
 }
 
 export const CHANGE_SEVERITIES: Record<DiffType, number> = {
@@ -55,3 +57,5 @@ export const CHANGE_SEVERITIES: Record<DiffType, number> = {
 }
 
 export const DEFAULT_STRIKETHROUGH_VALUE_CLASS = 'line-through'
+
+export const DEFAULT_MUTED_VALUE_CLASS = DiffsClassesBuilder.fontMuted()

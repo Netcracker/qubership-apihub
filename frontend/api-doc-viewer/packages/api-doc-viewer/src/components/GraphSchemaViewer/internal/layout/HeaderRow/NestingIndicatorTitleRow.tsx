@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-import { LevelIndicator } from '@apihub/components/AsyncApiOperationViewer/LevelIndicator'
+import { LevelIndicator } from '@apihub/components/shared-components/LevelIndicator'
 import { DiffNodeMeta, DiffNodeValue, isDiff } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import type { FC, PropsWithChildren } from 'react'
 import { NODE_DIFF_COLOR_MAP } from '../../../../../consts/changes'
-import { DEFAULT_ROW_PADDING_LEFT, SHIFTED_ROW_PADDING_LEFT } from '../../../../../consts/configuration'
 import { useChangeSeverityFilters } from '../../../../../contexts/ChangeSeverityFiltersContext'
 import { ContentProps } from '../../../../../types/internal/ContentProps'
 import { CHANGED_LAYOUT_SIDE, ORIGIN_LAYOUT_SIDE } from '../../../../../types/internal/LayoutSide'
@@ -32,7 +31,7 @@ import {
   getLayoutModeFlags,
   getLayoutSideFlags,
   isDiffTypeIncluded,
-  maxDiffType
+  maxDiffTypeFromDiffs
 } from '../../../../../utils/common/changes'
 import { isDefined } from '../../../../../utils/common/checkers'
 import { EmptyContent } from '../../../../common/diffs/EmptyContent'
@@ -51,7 +50,6 @@ export type NestingIndicatorTitleRowProps = PropsWithShift & {
 }
 
 const CONTENT_CHANGES_COLORIZING = false
-const CONTENT_CHANGES_STRIKETHROUGH = false
 
 export const NestingIndicatorTitleRow: FC<NestingIndicatorTitleRowProps> = (props) => {
   const {
@@ -88,7 +86,7 @@ export const NestingIndicatorTitleRow: FC<NestingIndicatorTitleRowProps> = (prop
     getTypeChangesList($nodeChange, $changes),
     filters
   )
-  const [diffType, diffTypeCause] = maxDiffType(...rowContentChangesList)
+  const [diffType, diffTypeCause] = maxDiffTypeFromDiffs(...rowContentChangesList)
   const diffTypeIncluded = isDiffTypeIncluded(diffType, filters)
   const diffBackground =
     isNodeChanged
@@ -111,7 +109,6 @@ export const NestingIndicatorTitleRow: FC<NestingIndicatorTitleRowProps> = (prop
           layoutMode={layoutMode}
           layoutSide={layoutSide}
           contentChangesColorizing={CONTENT_CHANGES_COLORIZING}
-          contentChangesStrikethrough={CONTENT_CHANGES_STRIKETHROUGH}
           $changes={$changes}
         />
       </Content>
@@ -123,7 +120,7 @@ export const NestingIndicatorTitleRow: FC<NestingIndicatorTitleRowProps> = (prop
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
         {diffType && diffTypeIncluded && (isNodeChanged || isContentChanged) && (
-          <UxDiffFloatingBadge variant={diffType} message={diffTypeCause}/>
+          <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />
         )}
         <Content
           shift={shift}
@@ -136,7 +133,6 @@ export const NestingIndicatorTitleRow: FC<NestingIndicatorTitleRowProps> = (prop
             layoutMode={layoutMode}
             layoutSide={layoutSide}
             contentChangesColorizing={CONTENT_CHANGES_COLORIZING}
-            contentChangesStrikethrough={CONTENT_CHANGES_STRIKETHROUGH}
             $changes={isContentChanged ? $changes : undefined}
           />
         </Content>
@@ -179,7 +175,7 @@ export const NestingIndicatorTitleRow: FC<NestingIndicatorTitleRowProps> = (prop
     return (
       <div className={`flex flex-row relative ${diffTypeIncluded ? diffBackground : ''}`}>
         {diffType && diffTypeIncluded && (isNodeChanged || isContentChanged) && (
-          <UxDiffFloatingBadge variant={diffType} message={diffTypeCause}/>
+          <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />
         )}
         {isContentChanged && beforeAndAfterTypesComplex || isNodeChanged && nodeRemoved
           ? (
@@ -194,12 +190,11 @@ export const NestingIndicatorTitleRow: FC<NestingIndicatorTitleRowProps> = (prop
                 layoutMode={layoutMode}
                 layoutSide={ORIGIN_LAYOUT_SIDE}
                 contentChangesColorizing={CONTENT_CHANGES_COLORIZING}
-                contentChangesStrikethrough={CONTENT_CHANGES_STRIKETHROUGH}
                 $changes={isContentChanged ? $changes : undefined}
               />
             </Content>
           )
-          : <EmptyContent level={$nodeChange?.depth ?? depth}/>}
+          : <EmptyContent level={$nodeChange?.depth ?? depth} />}
         {isContentChanged && beforeAndAfterTypesComplex || isNodeChanged && nodeAdded
           ? (
             <Content
@@ -213,17 +208,16 @@ export const NestingIndicatorTitleRow: FC<NestingIndicatorTitleRowProps> = (prop
                 layoutMode={layoutMode}
                 layoutSide={CHANGED_LAYOUT_SIDE}
                 contentChangesColorizing={CONTENT_CHANGES_COLORIZING}
-                contentChangesStrikethrough={CONTENT_CHANGES_STRIKETHROUGH}
                 $changes={isContentChanged ? $changes : undefined}
               />
             </Content>
           )
-          : <EmptyContent level={$nodeChange?.depth ?? depth}/>}
+          : <EmptyContent level={$nodeChange?.depth ?? depth} />}
       </div>
     )
   }
 
-  return <UnsupportedContent layoutMode={layoutMode}/>
+  return <UnsupportedContent layoutMode={layoutMode} />
 }
 
 type NestingIndicatorTitleRowContentProps = PropsWithShift & ContentProps & {
@@ -247,10 +241,10 @@ const Content: FC<NestingIndicatorTitleRowContentProps> = (props) => {
   const width = isSideBySideDiffsLayoutMode ? 'w-1/2' : 'w-full'
 
   return (
-    <div className={`flex flex-row ${shift ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
-      <LevelIndicator level={level} lastInvisible={true}/>
+    <div className={`flex flex-row ${width}`}>
+      <LevelIndicator level={level} lastInvisible={true} />
       <div className="text-xs text-slate-400 border-b border-slate-400 w-max pt-1"
-           style={{ marginLeft: '-1px' }}
+        style={{ marginLeft: '-1px' }}
       >
         {children}
       </div>

@@ -1,4 +1,4 @@
-import { AsyncApiTreeNode } from "@netcracker/qubership-apihub-next-data-model/model/async-api/types/aliases";
+import { AsyncApiTreeNode, AsyncApiTreeNodeWithDiffs } from "@netcracker/qubership-apihub-next-data-model/model/async-api/types/aliases";
 import { AsyncApiTreeNodeKinds } from "@netcracker/qubership-apihub-next-data-model/model/async-api/types/node-kind";
 
 // Message
@@ -60,14 +60,14 @@ export function isExtensionsNode(
 }
 
 export function isBindingsNode(
-  node: AsyncApiTreeNode
-): node is AsyncApiTreeNode<typeof AsyncApiTreeNodeKinds.BINDINGS> {
+  node: AsyncApiTreeNode | AsyncApiTreeNodeWithDiffs
+): node is AsyncApiTreeNode<typeof AsyncApiTreeNodeKinds.BINDINGS> | AsyncApiTreeNodeWithDiffs<typeof AsyncApiTreeNodeKinds.BINDINGS> {
   return node.kind === AsyncApiTreeNodeKinds.BINDINGS;
 }
 
 export function isBindingNode(
-  node: AsyncApiTreeNode
-): node is AsyncApiTreeNode<typeof AsyncApiTreeNodeKinds.BINDING> {
+  node: AsyncApiTreeNode | AsyncApiTreeNodeWithDiffs
+): node is AsyncApiTreeNode<typeof AsyncApiTreeNodeKinds.BINDING> | AsyncApiTreeNodeWithDiffs<typeof AsyncApiTreeNodeKinds.BINDING> {
   return node.kind === AsyncApiTreeNodeKinds.BINDING;
 }
 
@@ -88,7 +88,7 @@ export function isServersNode(
 }
 
 export function isServerNode(
-  node: AsyncApiTreeNode
-): node is AsyncApiTreeNode<typeof AsyncApiTreeNodeKinds.SERVER> {
+  node: AsyncApiTreeNode | AsyncApiTreeNodeWithDiffs
+): node is AsyncApiTreeNode<typeof AsyncApiTreeNodeKinds.SERVER> | AsyncApiTreeNodeWithDiffs<typeof AsyncApiTreeNodeKinds.SERVER> {
   return node.kind === AsyncApiTreeNodeKinds.SERVER;
 }

@@ -1,16 +1,13 @@
+import { CommonState } from "@apihub/next-data-model/building-service/abstract/json-crawl-entities/state/types"
+import { JsoTreeNodeValueWithDiffs } from "@apihub/next-data-model/model/jso/tree-with-diffs/node-value"
+import { JsoTreeNodeValue } from "@apihub/next-data-model/model/jso/tree/node-value"
+import { JsoTreeNodeWithDiffs } from "@apihub/next-data-model/model/jso/types/aliases"
 import { JsoTreeNodeKind } from "@apihub/next-data-model/model/jso/types/node-kind"
 import { JsoTreeNodeMeta } from "@apihub/next-data-model/model/jso/types/node-meta"
-import { JsoTreeNodeValue } from "@apihub/next-data-model/model/jso/types/node-value"
-import { ITreeNode } from "../../../../model/abstract/tree/tree-node.interface"
-import { CrawlerIterationValue, UnknownObject } from "../../../../utility-types"
 
-export interface CommonState<
-  V extends UnknownObject | null,
-  K extends string,
-  M extends UnknownObject> {
-  parent: ITreeNode<V, K, M> | null
-  container: ITreeNode<V, K, M> | null
-  alreadyConvertedValuesCache: Map<CrawlerIterationValue, ITreeNode<V, K, M>>
+type DiffMetaKeys = {
+  diffsMetaKey: symbol;
+  aggregatedDiffsMetaKey: symbol;
 }
 
 export type JsoTreeCrawlState = CommonState<
@@ -18,3 +15,12 @@ export type JsoTreeCrawlState = CommonState<
   JsoTreeNodeKind,
   JsoTreeNodeMeta
 >
+
+export type JsoTreeWithDiffsCrawlState = CommonState<
+  JsoTreeNodeValueWithDiffs | null,
+  JsoTreeNodeKind,
+  JsoTreeNodeMeta,
+  JsoTreeNodeWithDiffs
+> & {
+  diffMetaKeys: DiffMetaKeys
+}

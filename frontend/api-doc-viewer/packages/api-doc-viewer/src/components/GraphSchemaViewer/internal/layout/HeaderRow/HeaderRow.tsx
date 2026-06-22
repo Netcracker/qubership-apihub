@@ -21,9 +21,7 @@ import type { FC } from 'react'
 import { useCallback /*, useState */ } from 'react'
 import { NODE_DIFF_COLOR_MAP } from '../../../../../consts/changes'
 import {
-  DEFAULT_LAYOUT_MODE,
-  DEFAULT_ROW_PADDING_LEFT,
-  SHIFTED_ROW_PADDING_LEFT,
+  DEFAULT_LAYOUT_MODE
 } from '../../../../../consts/configuration'
 // import {
 //   COLLAPSE_ALL_MENU_ITEM,
@@ -54,7 +52,7 @@ import {
   getDiffTypesFromSummary,
   getLayoutModeFlags,
   isDiffTypeIncluded,
-  maxDiffType,
+  maxDiffTypeFromDiffs,
   toChangesList
 } from '../../../../../utils/common/changes'
 import { isDefined } from '../../../../../utils/common/checkers'
@@ -67,10 +65,10 @@ import { EmptyContent } from '../../../../common/diffs/EmptyContent'
 import { UnsupportedContent } from '../../../../common/diffs/UnsupportedContent'
 import { Expander } from '../../../../common/layout/Expander/Expander'
 import { CircularRefIcon } from '../../../../kit/icons/CircularRefIcon'
-import { UxBadge } from '../../../../kit/ux/UxBadge'
+import { UxBadge } from '../../../../kit/ux/UxBadge/UxBadge'
 // import { UxContextMenu } from '../../../../kit/ux/UxContextMenu/UxContextMenu'
 // import { ToggleContextMenuHandlerOptions } from '../../../../kit/ux/UxContextMenu/types/ToggleContextMenuHandler'
-import { LevelIndicator } from '@apihub/components/AsyncApiOperationViewer/LevelIndicator'
+import { LevelIndicator } from '@apihub/components/shared-components/LevelIndicator'
 import { UxDiffFloatingBadge } from '../../../../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
 import { UxMarkerPanel } from '../../../../kit/ux/UxMarkerPanel/UxMarkerPanel'
 import { UxTooltip } from '../../../../kit/ux/UxTooltip/UxTooltip'
@@ -104,9 +102,9 @@ export type NullabilityPosition =
   | typeof NULLABILITY_POSITION_TYPE
 
 const OPERATION_METHOD_COLOR_SCHEMAS_MAP: Record<string, ColorSchema> = {
-  [QUERY_OPERATION_METHOD]: 'bg-green-500 text-white ring-green-500/20',
-  [MUTATION_OPERATION_METHOD]: 'bg-sky-400 text-white ring-sky-400/20',
-  [SUBSCRIPTION_OPERATION_METHOD]: 'bg-amber-500 text-white ring-amber-500/20',
+  [QUERY_OPERATION_METHOD]: 'ux-badge_operation-query',
+  [MUTATION_OPERATION_METHOD]: 'ux-badge_operation-mutation',
+  [SUBSCRIPTION_OPERATION_METHOD]: 'ux-badge_operation-subscription',
 }
 
 const TRACKED_KEYS_VALUES_CHANGES: string[] = ['type', 'nullable', 'title']
@@ -128,7 +126,6 @@ export type GraphSpecificProps = {
 
 export const HeaderRow: FC<HeaderRowProps> = (props) => {
   const {
-    shift = false,
     nodeTitleData,
     nodeTypeData,
     isCircularRef,
@@ -195,9 +192,9 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
 
   const [diffType, diffTypeCause] =
     isNodeChanged
-      ? maxDiffType($nodeChange)
+      ? maxDiffTypeFromDiffs($nodeChange)
       : isContentChanged
-        ? maxDiffType(...rowContentChangesList)
+        ? maxDiffTypeFromDiffs(...rowContentChangesList)
         : DEFAULT_DIFF_TYPE_AND_CAUSE_PAIR
   const diffTypeIncluded = isDiffTypeIncluded(diffType, filters)
 
@@ -231,6 +228,12 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
 
     const noSubHeaderSide = useNoSubHeaderSide()
     const noSubHeader = noSubHeaderSide && noSubHeaderSide === layoutSide
+    const operationPlaceholder = isOperation
+    const rowClasses = [
+      'flex flex-row',
+      !operationPlaceholder && 'gap-2',
+      width,
+    ].filter(Boolean).join(' ')
 
     const SubHeader: FC = () => <>
       {ArrayUtils.isNotEmpty(args) && (
@@ -310,23 +313,25 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
     </>
 
     return (
-      <div className={`flex flex-row gap-2 ${shift ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
-        {!isOperation && (
-          <div className="flex flex-row relative">
-            <LevelIndicator level={level} />
-            <Expander
-              isRoot={isRoot}
-              isOperation={isOperation}
-              isExpandable={isExpandable}
-              expanded={expanded}
-              onToggleExpander={onToggleExpander}
-              // onToggleContextMenu={onToggleContextMenu}
-            />
-          </div>
-        )}
-        <div className="flex flex-row items-center gap-2 pt-2 pb-1">
+      <div className={rowClasses}>
+        <div className="flex flex-row relative">
+          <LevelIndicator level={level} />
+          {operationPlaceholder
+            ? <div className="w-5" />
+            : (
+              <Expander
+                isRoot={isRoot}
+                isOperation={isOperation}
+                isExpandable={isExpandable}
+                expanded={expanded}
+                onToggleExpander={onToggleExpander}
+                // onToggleContextMenu={onToggleContextMenu}
+              />
+            )}
+        </div>
+        <div className={`flex flex-row items-center gap-2 ${method ? 'py-2' : 'pt-2 pb-1'}`}>
           <div
-            className={`flex flex-row gap-2 text-xs text-black font-Inter-Medium ${isExpandable ? 'hover:cursor-pointer' : ''}`}
+            className={`flex flex-row gap-2 items-center text-xs text-black font-Inter-Medium ${isExpandable ? 'hover:cursor-pointer' : ''}`}
             onClick={isExpandable ? onToggleExpander : undefined}
           // onContextMenu={defaultOnContextMenu(isExpandable, onToggleContextMenu)}
           >

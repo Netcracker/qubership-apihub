@@ -1,20 +1,20 @@
 import { JsoComplexTreeNode } from "@apihub/next-data-model/model/jso/tree/complex-node.impl";
+import { JsoTreeNodeValue } from "@apihub/next-data-model/model/jso/tree/node-value";
 import { JsoSimpleTreeNode } from "@apihub/next-data-model/model/jso/tree/simple-node.impl";
 import { JsoTree } from "@apihub/next-data-model/model/jso/tree/tree.impl";
 import { JsoTreeNodeKind, JsoTreeNodeKindsList } from "@apihub/next-data-model/model/jso/types/node-kind";
 import { JsoTreeNodeMeta } from "@apihub/next-data-model/model/jso/types/node-meta";
-import { JsoTreeNodeValue, JsoTreeNodeValueBase } from "@apihub/next-data-model/model/jso/types/node-value";
 import { JsoPropertyValueTypes } from "@apihub/next-data-model/model/jso/types/node-value-type";
-import { buildPointer } from "@netcracker/qubership-apihub-api-unifier";
-import { isArray, syncCrawl, SyncCrawlHook } from "@netcracker/qubership-apihub-json-crawl";
+import { syncCrawl } from "@netcracker/qubership-apihub-json-crawl";
 import { ComplexTreeNodeParams, ITreeNode, SimpleTreeNodeParams, TreeNodeComplexityTypes, TreeNodeParams } from "../../../model/abstract/tree/tree-node.interface";
 import { isObject } from "../../../utilities";
-import { NodeId, NodeKey, UnknownObject } from "../../../utility-types";
+import { NodeId, NodeKey } from "../../../utility-types";
 import { TreeBuilder } from "../../abstract/tree/builder";
-import { SchemaTransformFunc } from "../../async-api/json-crawl-entities/transformers/types/types";
-import { getJsoCrawlRules } from "../json-crawl-entities/rules/rules";
-import { JsoCrawlRule, SchemaCrawlRule } from "../json-crawl-entities/rules/types";
-import { CommonState, JsoTreeCrawlState } from "../json-crawl-entities/state/types";
+import { getJsoCrawlRules } from "../json-crawl-entities/rules/rules.jso";
+import { JsoCrawlRule } from "../json-crawl-entities/rules/types";
+import { JsoTreeCrawlState } from "../json-crawl-entities/state/types";
+import { createJsoTreeBuildingHooks } from "./building-hooks";
+import { JsoNodeDataBuilder } from "./node-data/builder";
 
 type SimpleJsoTreeNodeParams = SimpleTreeNodeParams<
   JsoTreeNodeValue | null,
@@ -34,10 +34,7 @@ export class JsoTreeBuilder extends TreeBuilder<
   JsoTreeNodeMeta
 > {
   public readonly tree: JsoTree;
-
-  private static readonly JSO_TREE_NODE_VALUE_PROPS: (keyof JsoTreeNodeValueBase)[] = [
-    'title', 'value', 'valueType', 'isPrimitive', 'isArrayItem', 'isPredefinedValueSet'
-  ]
+  private readonly nodeDataBuilder: JsoNodeDataBuilder;
 
   constructor(
     private readonly source: unknown,
@@ -45,6 +42,7 @@ export class JsoTreeBuilder extends TreeBuilder<
   ) {
     super()
     this.tree = new JsoTree();
+    this.nodeDataBuilder = new JsoNodeDataBuilder()
   }
 
   public build(): JsoTree {
@@ -60,13 +58,52 @@ export class JsoTreeBuilder extends TreeBuilder<
 
     const initialRules: JsoCrawlRule = getJsoCrawlRules()
 
+    const hooks = createJsoTreeBuildingHooks({
+      source: this.source,
+      tree: this.tree,
+      supportedNodeKinds: JsoTreeNodeKindsList,
+      createNodeFromRaw: (id, key, kind, complex, params) => this.createNodeFromRaw(id, key, kind, complex, params),
+      createNodeParams: (value, parent, container) => ({
+        value: value ?? null,
+        newDataLevel: true,
+        container,
+        parent,
+      }),
+      createStateForSimpleNode: (_state, node, cache) => ({
+        parent: node,
+        container: null,
+        alreadyConvertedValuesCache: cache,
+      }),
+      createStateForComplexNode: (state, node, cache) => ({
+        parent: state.parent,
+        container: node,
+        alreadyConvertedValuesCache: cache,
+      }),
+      isSimpleNode: (node): node is JsoSimpleTreeNode => this.isJsoSimpleTreeNode(node),
+      isComplexNode: (node): node is JsoComplexTreeNode => this.isJsoComplexTreeNode(node),
+      resolveNodeKey: (key, value) => this.resolveNodeKey(key, value),
+      isDisallowedValue: (value) => value === undefined,
+      shouldStopAfterNodeCreation: (node, value) => {
+        if (!isObject(value) && !Array.isArray(value)) {
+          // we can't crawl non-object values
+          return true
+        }
+        const nodeValue = node.value()
+        if (!nodeValue) { // just a type guard
+          return false
+        }
+        // we should not build-in nodes for json schema or multi-schema values into JSO Tree
+        // they will be processed by separate data models
+        return this.supportJsonSchema && (
+          nodeValue.valueType === JsoPropertyValueTypes.JSON_SCHEMA ||
+          nodeValue.valueType === JsoPropertyValueTypes.MULTI_SCHEMA
+        )
+      },
+    })
+
     syncCrawl<JsoTreeCrawlState, JsoCrawlRule>(
       this.source,
-      [
-        this.instantiateHookPreventingTreeBuildingProcessFromInfiniteLoop(),
-        this.instantiateHookUnifyingValue(this.source),
-        this.instantiateHookCreatingJsoTreeNodes(),
-      ],
+      hooks,
       {
         state: initialState,
         rules: initialRules,
@@ -76,141 +113,9 @@ export class JsoTreeBuilder extends TreeBuilder<
     return this.tree;
   }
 
-  /* Crawlhooks-builders */
-
-  private instantiateHookPreventingTreeBuildingProcessFromInfiniteLoop<
-    V extends UnknownObject | null,
-    K extends string,
-    M extends UnknownObject,
-  >(): SyncCrawlHook<
-    CommonState<V, K, M>,
-    SchemaCrawlRule<K, CommonState<V, K, M>>
-  > {
-    return ({ value, state, key, path }) => {
-      if (typeof key === 'symbol') {
-        return;
-      }
-
-      const {
-        alreadyConvertedValuesCache,
-        parent,
-        container,
-      } = state
-      const alreadyExisted: ITreeNode<V, K, M> | undefined = alreadyConvertedValuesCache.get(value)
-
-      if (
-        !alreadyExisted || (
-          !this.isJsoSimpleTreeNode(alreadyExisted) &&
-          !this.isJsoComplexTreeNode(alreadyExisted)
-        )
-      ) {
-        return { value }
-      }
-
-      if (!parent || !this.isJsoSimpleTreeNode(parent)) {
-        return { value }
-      }
-
-      const id = '#' + buildPointer(path)
-      const cycledClone = this.tree.createCycledClone(alreadyExisted, id, key, parent)
-      if (container) {
-        container.addNestedNode(cycledClone)
-      }
-      if (parent) {
-        parent.addChildNode(cycledClone)
-      }
-      return { done: true }
-    }
-  }
-
-  private instantiateHookUnifyingValue<
-    V extends UnknownObject | null,
-    K extends string,
-    M extends UnknownObject
-  >(
-    source: unknown
-  ): SyncCrawlHook<
-    CommonState<V, K, M>,
-    SchemaCrawlRule<K, CommonState<V, K, M>>
-  > {
-    return ({ key, value, path, state, rules }) => {
-      if (!rules || !Array.isArray(rules.transformers)) {
-        return
-      }
-
-      const transformers: SchemaTransformFunc<CommonState<V, K, M>>[] = rules.transformers ?? []
-      const transformedValue = transformers.reduce(
-        (accumulatedTransformedValue, transform) => transform(key, accumulatedTransformedValue, source, path, state),
-        value
-      )
-
-      return { value: transformedValue }
-    }
-  }
-
-  private instantiateHookCreatingJsoTreeNodes(): SyncCrawlHook<JsoTreeCrawlState, JsoCrawlRule> {
-    return ({ key, value, path, rules, state }) => {
-      if (!rules) {
-        return { done: true };
-      }
-      if (typeof key === 'symbol') {
-        return { done: true };
-      }
-      if (value === undefined || value === null || !isObject(value) && !isArray(value)) {
-        return { done: true };
-      }
-      if (!rules.kind || !JsoTreeNodeKindsList.includes(rules.kind)) {
-        // equivalent to "continue" operator within loop operators
-        // means "keep going deeper in the original object"
-        return;
-      }
-
-      const { parent, container } = state;
-      const id = '#' + buildPointer(path);
-      const { kind, complex = false } = rules;
-
-      const params = container
-        ? { value: Array.isArray(value) ? null : value, newDataLevel: true, container: container, parent: container.parent }
-        : { value: Array.isArray(value) ? null : value, newDataLevel: true, container: null, parent: parent }
-
-      const treeNode = this.createNodeFromRaw(id, key, kind, complex, params)
-
-      if (!treeNode) {
-        return;
-      }
-
-      if (container) {
-        container.addNestedNode(treeNode);
-      } else if (parent) {
-        parent.addChildNode(treeNode);
-      }
-
-      if (isObject(value) && (value.isPrimitive || this.supportJsonSchema && value.valueType === JsoPropertyValueTypes.JSON_SCHEMA)) {
-        // Prevent from falling into infinite loop due to transformed primitives into objects
-        return { done: true };
-      }
-
-      const newCache = new Map(state.alreadyConvertedValuesCache);
-      newCache.set(value, treeNode);
-
-      let newState: JsoTreeCrawlState | undefined;
-      if (this.isJsoSimpleTreeNode(treeNode)) {
-        newState = {
-          parent: treeNode,
-          container: null,
-          alreadyConvertedValuesCache: newCache,
-        }
-      }
-      if (this.isJsoComplexTreeNode(treeNode)) {
-        newState = {
-          parent: parent,
-          container: treeNode,
-          alreadyConvertedValuesCache: newCache,
-        }
-      }
-
-      return { value: value, state: newState };
-    };
+  private resolveNodeKey(key: NodeKey, value: unknown): NodeKey {
+    void value
+    return key
   }
 
   /* Atomic builders */
@@ -260,10 +165,7 @@ export class JsoTreeBuilder extends TreeBuilder<
   ): JsoTreeNodeMeta {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { value, parent = null } = params
-
-    return {
-      _fragment: value,
-    }
+    return this.nodeDataBuilder.createNodeMeta(value)
   }
 
   protected createNodeValue(
@@ -272,27 +174,15 @@ export class JsoTreeBuilder extends TreeBuilder<
     params: TreeNodeParams<object | null, string, object>,
   ): JsoTreeNodeValue | null {
     const { value } = params
-
-    if (value === undefined || value === null) {
-      return null
-    }
-
-    if (!isObject(value)) {
-      return null
-    }
-
-    if (!this.isJsoTreeNodeValue(value)) {
-      return null
-    }
-
-    return value
+    return this.nodeDataBuilder.createNodeValue(
+      kind,
+      key,
+      value,
+      (source, keys) => this.pick(source, keys),
+    )
   }
 
   /* Type guards */
-
-  private isJsoTreeNodeValue(value: unknown): value is JsoTreeNodeValue {
-    return isObject(value) && Object.keys(value).every(key => JsoTreeBuilder.JSO_TREE_NODE_VALUE_PROPS.includes(key as keyof JsoTreeNodeValueBase))
-  }
 
   private isJsoSimpleTreeNode(node: ITreeNode<object | null, string, object>): node is JsoSimpleTreeNode {
     return node.type === TreeNodeComplexityTypes.SIMPLE

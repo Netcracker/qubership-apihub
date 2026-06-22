@@ -38,6 +38,7 @@ import { AdditionalInfoArrayRow } from '../AdditionalInfoArrayRow'
 import { AdditionalInfoObjectRow } from '../AdditionalInfoObjectRow'
 import { DeprecationReasonRow } from './DeprecationReasonRow'
 import { DescriptionRow } from './Description/DescriptionRow'
+import { isBooleanValue } from '@apihub/utils/nodes'
 
 export type AnnotationsProps = PropsWithoutChangesSummary<
   PropsWithShift &
@@ -62,6 +63,8 @@ export const Annotations: FC<AnnotationsProps> = (props) => {
   const nodeValue = state.value
   const $nodeMeta = nodeMeta as JsonSchemaDiffNodeMeta | GraphApiDiffNodeMeta
   const $nodeValue = nodeValue as JsonSchemaDiffNodeValue | GraphSchemaDiffNodeValue
+
+  const isBoolean = isBooleanValue(nodeValue)
 
   const level = useLevelContext()
 
@@ -112,12 +115,13 @@ export const Annotations: FC<AnnotationsProps> = (props) => {
           $changesKeys={ChangesKeys.default}
           title={DEFAULT_VALUE_LABEL}
           items={{
-            default: `${defaultValue}`
+            default: defaultValue
           }}
           layoutMode={layoutMode}
           level={level}
           $nodeChange={$appliedNodeChange}
           $changes={$nodeValue?.$changes}
+          isPredefinedValuesSet={isBoolean}
         />
       )}
       {isDefined(providedValue) && (
@@ -132,6 +136,7 @@ export const Annotations: FC<AnnotationsProps> = (props) => {
           level={level}
           $nodeChange={$appliedNodeChange}
           $changes={$nodeValue?.$changes}
+          isPredefinedValuesSet={isBoolean}
         />
       )}
       {ArrayUtils.isNotEmpty(examples) && (
@@ -144,6 +149,7 @@ export const Annotations: FC<AnnotationsProps> = (props) => {
           level={level}
           $nodeChange={$appliedNodeChange}
           $changes={$nodeValue?.$changes}
+          isPredefinedValuesSet={isBoolean}
         />
       )}
       {location && (

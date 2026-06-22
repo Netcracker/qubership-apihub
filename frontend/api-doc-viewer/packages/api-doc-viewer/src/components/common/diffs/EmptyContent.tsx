@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import { LevelIndicator } from '@apihub/components/AsyncApiOperationViewer/LevelIndicator'
+import { LevelIndicator } from '@apihub/components/shared-components/LevelIndicator'
 import type { FC } from 'react'
-import { DEFAULT_ROW_PADDING_LEFT } from '../../../consts/configuration'
 
 export type EmptyContentProps = {
   level: number
@@ -26,9 +25,9 @@ export const EmptyContent: FC<EmptyContentProps> = (props) => {
   const { level } = props
 
   return (
-    <div className={`flex flex-row w-1/2 ${DEFAULT_ROW_PADDING_LEFT} bg-gray-100`}>
+    <div className="flex flex-row w-1/2 bg-gray-100">
       {/* FIXME 04.07.24 Problem with empty DOM elements */}
-      <LevelIndicator level={level}/>
+      <LevelIndicator level={level} />
     </div>
   )
 }

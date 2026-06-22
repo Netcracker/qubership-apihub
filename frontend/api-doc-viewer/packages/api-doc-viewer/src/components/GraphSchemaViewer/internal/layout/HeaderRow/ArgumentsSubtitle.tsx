@@ -16,10 +16,10 @@
 
 import { DiffNodeMeta, GraphApiDiffTreeNode, GraphApiTreeNode } from '@netcracker/qubership-apihub-api-data-model'
 import { DiffAction } from '@netcracker/qubership-apihub-api-diff'
-import { FC, ReactNode } from 'react'
 import { IModelStatePropNode } from '@netcracker/qubership-apihub-api-state-model'
+import { FC, ReactNode } from 'react'
 import { buildNodeTitleData } from '../../../../../builders/nodes'
-import { DEFAULT_STRIKETHROUGH_VALUE_CLASS, INLINE_CONTENT_DIFF_COLOR_SCHEMAS } from '../../../../../consts/changes'
+import { INLINE_CONTENT_DIFF_COLOR_SCHEMAS } from '../../../../../consts/changes'
 import { useChangeSeverityFilters } from '../../../../../contexts/ChangeSeverityFiltersContext'
 import { LayoutMode } from '../../../../../types/LayoutMode'
 import { NodeTitleData } from '../../../../../types/NodeTitleData'
@@ -92,10 +92,8 @@ export const ArgumentsSubTitle: FC<ArgumentsSubTitleProps> = props => {
         if (sideBySide) {
           if (removed) {
             if (originSide) {
-              const diffColorSchema = [
-                INLINE_CONTENT_DIFF_COLOR_SCHEMAS[diffActionForArgument!],
-                DEFAULT_STRIKETHROUGH_VALUE_CLASS
-              ].join(' ')
+              const diffColorSchema =
+                INLINE_CONTENT_DIFF_COLOR_SCHEMAS[diffActionForArgument!]
               result =
                 <Value
                   key={key}
@@ -137,10 +135,8 @@ export const ArgumentsSubTitle: FC<ArgumentsSubTitleProps> = props => {
 
         if (inline) {
           if (added || removed) {
-            const diffColorSchema = [
-              INLINE_CONTENT_DIFF_COLOR_SCHEMAS[diffActionForArgument!],
-              removed ? DEFAULT_STRIKETHROUGH_VALUE_CLASS : ''
-            ].join(' ')
+            const diffColorSchema =
+              INLINE_CONTENT_DIFF_COLOR_SCHEMAS[diffActionForArgument!]
             result =
               <Value
                 key={key}

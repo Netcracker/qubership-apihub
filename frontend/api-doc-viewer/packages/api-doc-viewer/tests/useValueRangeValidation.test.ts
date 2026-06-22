@@ -39,6 +39,8 @@ function replace(beforeValue: unknown, afterValue: unknown, type: DiffType = BRE
 }
 
 function run(data: ValueRangeInitialData, changes: ValueRangeDiffData = {}) {
+  // This is for testing purposes only, so we can disable the rule
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   return useValueRangeValidation(data, changes, CHANGES_KEYS)
 }
 

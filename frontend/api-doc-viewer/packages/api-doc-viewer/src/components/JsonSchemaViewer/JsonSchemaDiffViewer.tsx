@@ -35,6 +35,7 @@ import { ErrorBoundaryFallback } from "../services/ErrorBoundaryFallback"
 import { JsonCombinerNodeViewer } from './JsonCombinerNodeViewer/JsonCombinerNodeViewer'
 import { JsonPropNodeViewer } from './JsonPropNodeViewer/JsonPropNodeViewer'
 import { isCombinerNodeState, isPropNodeState } from './types/nodes.guards'
+import { DiffMetaKeysContext } from '@apihub/contexts/DiffMetaKeysContext'
 
 export type JsonSchemaDiffViewerProps = {
   schema: unknown,
@@ -110,9 +111,11 @@ const JsonSchemaDiffViewerInner: FC<JsonSchemaDiffViewerProps> = (props) => {
       <ChangeSeverityFiltersContext.Provider value={filters}>
         <DisplayModeContext.Provider value={displayMode}>
           <LayoutModeContext.Provider value={layoutMode}>
-            <LevelContext.Provider value={0}>
-              {content}
-            </LevelContext.Provider>
+            <DiffMetaKeysContext.Provider value={metaKeys}>
+              <LevelContext.Provider value={0}>
+                {content}
+              </LevelContext.Provider>
+            </DiffMetaKeysContext.Provider>
           </LayoutModeContext.Provider>
         </DisplayModeContext.Provider>
       </ChangeSeverityFiltersContext.Provider>

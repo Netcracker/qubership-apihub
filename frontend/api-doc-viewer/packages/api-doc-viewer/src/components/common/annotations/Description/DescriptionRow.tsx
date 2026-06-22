@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-import { LevelIndicator } from "@apihub/components/AsyncApiOperationViewer/LevelIndicator";
+import { LevelIndicator } from "@apihub/components/shared-components/LevelIndicator";
 import { isDiff } from "@netcracker/qubership-apihub-api-data-model";
 import { Diff, DiffAction } from "@netcracker/qubership-apihub-api-diff";
 import type { Dispatch, FC, SetStateAction } from 'react';
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { DEFAULT_STRIKETHROUGH_VALUE_CLASS, NODE_DIFF_COLOR_MAP } from '../../../../consts/changes';
+import { INLINE_CONTENT_DIFF_COLOR_SCHEMAS, NODE_DIFF_COLOR_MAP } from '../../../../consts/changes';
 import {
   DEFAULT_LAYOUT_MODE,
   DEFAULT_ROW_DEPTH,
-  DEFAULT_ROW_PADDING_LEFT,
-  SHIFTED_ROW_PADDING_LEFT
 } from '../../../../consts/configuration';
 import { useChangeSeverityFilters } from '../../../../contexts/ChangeSeverityFiltersContext';
 import '../../../../index.css';
@@ -49,7 +47,7 @@ import {
 import { UxDiffFloatingBadge } from '../../../kit/ux/UxFloatingBadge/UxDiffFloatingBadge';
 import { EmptyContent } from '../../diffs/EmptyContent';
 import { UnsupportedContent } from '../../diffs/UnsupportedContent';
-import './Description.css';
+import './DescriptionRow.css';
 import { DescriptionFontSize } from "./types/DescriptionFontSize";
 
 const OVERFLOW_LINES_AMOUNT = 5
@@ -123,10 +121,16 @@ export const DescriptionRow: FC<DescriptionRowProps> = (props) => {
 
   const Content: FC<ContentProps> = ({ layoutSide }) => {
     const width = isSideBySideDiffsLayoutMode ? 'w-1/2' : 'w-full'
+    const rowClasses = [
+      'flex flex-row',
+      !shift && 'gap-6',
+      width,
+    ].filter(Boolean).join(' ')
 
     return (
-      <div className={`flex flex-row gap-6 ${shift ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
+      <div className={rowClasses}>
         <LevelIndicator level={level} />
+        {shift && <div className="w-5" />}
         <div className="py-1">
           <Value
             value={value}
@@ -224,6 +228,7 @@ type ValueProps = {
   layoutMode: LayoutMode
   layoutSide: LayoutSide
   $changes?: Diff
+  highlightWholeDiff?: boolean
 }
 
 const Value: FC<ValueProps> = props => {
@@ -235,7 +240,8 @@ const Value: FC<ValueProps> = props => {
     enableDiffs,
     layoutMode,
     layoutSide,
-    $changes
+    $changes,
+    highlightWholeDiff = false
   } = props
 
   const [isExpandableInitialValue, shortenInitialValue] = shortenDescription(props.value, expanded)
@@ -251,12 +257,9 @@ const Value: FC<ValueProps> = props => {
   const removed = diffRemove($changes)
   const replaced = diffReplace($changes)
 
-  let strikethrough: boolean = false
-
   if (isValueChanged && (isSideBySideDiffsLayoutMode || isInlineDiffsLayoutMode)) {
     if (originSide) {
       if (removed || replaced) {
-        strikethrough = enableDiffs
         const [
           isExpandableBeforeValue,
           shortenBeforeValue
@@ -287,9 +290,33 @@ const Value: FC<ValueProps> = props => {
     setIsExpandable?.(isExpandable)
   }, [isExpandable, setIsExpandable]);
 
+  const diffColorSchema = useMemo(() => {
+    if (!enableDiffs) {
+      return ''
+    }
+    if (added && highlightWholeDiff) {
+      return INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.add]
+    }
+    if (removed && highlightWholeDiff) {
+      return INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove]
+    }
+    if (replaced) {
+      return INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
+    }
+  }, [enableDiffs, added, highlightWholeDiff, removed, replaced])
+
+  const classes = useMemo(
+    () => ([
+      getFontSizeClass(fontSize),
+      'text-slate-700',
+      enableDiffs ? diffColorSchema ?? '' : '',
+    ].filter(Boolean).join(' ')),
+    [fontSize, enableDiffs, diffColorSchema]
+  )
+
   return (
     <ReactMarkdown
-      className={`markdown ${getFontSizeClass(fontSize)} text-slate-700 ${strikethrough ? DEFAULT_STRIKETHROUGH_VALUE_CLASS : ''}`}
+      className={`markdown ${classes}`}
       remarkPlugins={[remarkGfm]}
     >
       {value}

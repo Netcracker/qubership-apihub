@@ -1,0 +1,10 @@
+changedObject:
+  unchangedProp: same
+  removedProp: bye
+  changedProp: before
+  stableProp: 1
+unchangedObject:
+  first: one
+  second: 2
+  third: true
+  fourth: null

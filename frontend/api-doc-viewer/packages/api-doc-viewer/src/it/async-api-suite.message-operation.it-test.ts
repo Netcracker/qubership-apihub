@@ -160,15 +160,4 @@ describe('AsyncAPI Suite 2 - Message Operation', () => {
     await waitForHtmlRenderingComplete()
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
-
-  it.skip('edge-case-broken-ref-bindings', async () => {
-    story = await storyPage(
-      page,
-      'async-api-suite-message-operation--edge-case-broken-ref-bindings'
-    )
-    component = await story.viewComponent()
-    await switchToOperationSection()
-    await waitForHtmlRenderingComplete()
-    expect(await component.captureScreenshot()).toMatchImageSnapshot()
-  })
 })

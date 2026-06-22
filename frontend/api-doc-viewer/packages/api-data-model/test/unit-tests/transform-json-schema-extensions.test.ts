@@ -36,10 +36,10 @@ describe('Transform JSON schema extensions', () => {
 
       expect(transformJsonSchemaExtensions(value)).toEqual({
         keep: 'ok',
-        extensions: [
-          { 'x-a': 1 },
-          { 'x-b': { nested: true } }
-        ],
+        extensions: {
+          'x-a': 1,
+          'x-b': { nested: true }
+        },
       })
       expect(value).toEqual({ 'x-a': 1, 'x-b': { nested: true }, keep: 'ok' })
     })
@@ -48,10 +48,10 @@ describe('Transform JSON schema extensions', () => {
       const value = { 'x-a': 1, 'x-b': 2 }
 
       expect(transformJsonSchemaExtensions(value)).toEqual({
-        extensions: [
-          { 'x-a': 1 },
-          { 'x-b': 2 }
-        ],
+        extensions: {
+          'x-a': 1,
+          'x-b': 2
+        },
       })
     })
 
@@ -63,10 +63,10 @@ describe('Transform JSON schema extensions', () => {
       expect(transformJsonSchemaExtensions(value)).toEqual({
         [symbolA]: 1,
         [symbolB]: 2,
-        extensions: [
-          { 'x-a': 777 },
-          { 'x-b': "hello world" }
-        ],
+        extensions: {
+          'x-a': 777,
+          'x-b': "hello world"
+        },
       })
     })
   })

@@ -2,6 +2,7 @@ import { isArray } from '@netcracker/qubership-apihub-json-crawl'
 import { SchemaTransformFunc } from '../abstract/types'
 import { isObject } from '../utils'
 import { JsonSchemaCrawlState } from './tree/types'
+import { isOpenApiExtensionKey, OpenApiExtensionKey } from '../oas-extension-key'
 
 export const transformExample: SchemaTransformFunc<JsonSchemaCrawlState> = (value) => {
   if (!isObject(value) || isArray(value)) {
@@ -28,10 +29,11 @@ export function transformJsonSchemaExtensions(value: unknown): unknown {
     return value
   }
   const extensionKeysSet = new Set(extensionKeys)
-  const extensions = extensionKeys.map(extensionKey => {
-    const extensionValue = value[extensionKey]
-    return { [extensionKey]: extensionValue }
-  })
+  const extensions: Record<OpenApiExtensionKey, unknown> = extensionKeys.reduce((extensionsRecord, extensionKey) => {
+    if (!isOpenApiExtensionKey(extensionKey)) { return extensionsRecord }
+    extensionsRecord[extensionKey] = value[extensionKey]
+    return extensionsRecord
+  }, {} as Record<OpenApiExtensionKey, unknown>)
   const result: Record<PropertyKey, unknown> = {}
   for (const key of allKeys) {
     if (typeof key === 'string' && extensionKeysSet.has(key)) {

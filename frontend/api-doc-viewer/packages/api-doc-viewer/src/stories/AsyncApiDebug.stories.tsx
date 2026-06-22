@@ -23,7 +23,6 @@ import { prepareAsyncApiDocument } from './preprocess';
 
 type StoryArgs = ComponentProps<typeof AsyncApiOperationViewer> & {
   sourceText: string
-  operationType?: string
 }
 
 // It's necessary because storybook doesn't render nested stories without this empty story
@@ -44,11 +43,6 @@ const meta = {
       options: ['simple', 'detailed'],
       defaultValue: 'detailed'
     },
-    operationType: {
-      control: 'select',
-      options: ['send', 'receive'],
-      defaultValue: 'send'
-    }
   },
   args: {
     sourceText: `{

@@ -1,5 +1,6 @@
+import { isOpenApiExtensionKey } from '@apihub/api-data-model/oas-extension-key';
 import { Diff, DiffType, isDiffReplace } from '@netcracker/qubership-apihub-api-diff';
-import { buildPointer } from '@netcracker/qubership-apihub-api-unifier';
+import { buildPointer, OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier';
 import { isArray } from '@netcracker/qubership-apihub-json-crawl';
 import { UNKNOWN_TYPE } from '../../abstract/constants';
 import { DiffMetaKeys, DiffNodeMeta, DiffNodeValue, DiffRecord, NodeChange } from '../../abstract/diff';
@@ -94,6 +95,25 @@ export class JsonSchemaModelDiffTree<
         ...previousType ? jsonSchemaNodeValueProps[previousType] : []
       ]
     }
+
+    // Handling diffs on extensions
+    if (isObject(valueDiffs) && 'extensions' in value) {
+      const changedExtensionsKeys = Object.keys(valueDiffs).filter(isOpenApiExtensionKey)
+      const extensionsRecord = isObject(value.extensions) ? value.extensions : undefined
+      if (extensionsRecord) {
+        const extensionsDiffRecord = changedExtensionsKeys
+          .reduce((extensionsDiffRecord, changedExtensionsKey) => {
+            const maybeDiff = valueDiffs[changedExtensionsKey]
+            if (isDiff(maybeDiff)) {
+              extensionsDiffRecord[changedExtensionsKey] = maybeDiff
+            }
+            return extensionsDiffRecord
+          }, {} as Record<OpenApiExtensionKey, Diff>)
+        extensionsRecord[this.metaKeys.diffsMetaKey] = extensionsDiffRecord
+      }
+    }
+    // ----------------------------
+
     const $changes = this.getPropsChanges(value, observedProps)
     return {
       /*

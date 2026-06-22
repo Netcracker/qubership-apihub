@@ -1,0 +1,49 @@
+.diffs-round-marker_breaking,
+.diffs-round-marker_non-breaking,
+.diffs-round-marker_risky,
+.diffs-round-marker_annotation,
+.diffs-round-marker_unclassified,
+.diffs-round-marker_deprecated {
+  position: relative;
+}
+
+.diffs-round-marker_breaking::after,
+.diffs-round-marker_non-breaking::after,
+.diffs-round-marker_risky::after,
+.diffs-round-marker_annotation::after,
+.diffs-round-marker_unclassified::after,
+.diffs-round-marker_deprecated::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translate(50%, -50%);
+  pointer-events: none;
+}
+
+.diffs-round-marker_breaking::after {
+  background-color: #ED4A54;
+}
+
+.diffs-round-marker_non-breaking::after {
+  background-color: #84CB7A;
+}
+
+.diffs-round-marker_risky::after {
+  background-color: #E98554;
+}
+
+.diffs-round-marker_annotation::after {
+  background-color: #B866C9;
+}
+
+.diffs-round-marker_unclassified::after {
+  background-color: #70A9EC;
+}
+
+.diffs-round-marker_deprecated::after {
+  background-color: #FFB02E;
+}

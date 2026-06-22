@@ -7,6 +7,12 @@
       ],
       "@apihub/next-data-model/*": [
         "./src/*"
+      ],
+      "@netcracker/qubership-apihub-samples": [
+        "./../samples/src"
+      ],
+      "@netcracker/qubership-apihub-samples/*": [
+        "./../samples/src/*"
       ]
     }
   },

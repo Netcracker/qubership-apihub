@@ -27,5 +27,15 @@ module.exports = {
   testRegex: '(/tests/.*\\.(test|spec)|(\\.|/)(test|spec))\\.(ts?|tsx?|js?|jsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   modulePathIgnorePatterns: ['<rootDir>/dist/'],
+  moduleNameMapper: {
+    '^@apihub/api-data-model$': '<rootDir>/../api-data-model/src',
+    '^@apihub/api-data-model/(.*)$': '<rootDir>/../api-data-model/src/$1',
+    '^@apihub/next-data-model$': '<rootDir>/../next-data-model/src',
+    '^@apihub/next-data-model/(.*)$': '<rootDir>/../next-data-model/src/$1',
+    '^@netcracker/qubership-apihub-api-data-model$': '<rootDir>/../api-data-model/src',
+    '^@netcracker/qubership-apihub-api-data-model/(.*)$': '<rootDir>/../api-data-model/src/$1',
+    '^@netcracker/qubership-apihub-next-data-model$': '<rootDir>/../next-data-model/src',
+    '^@netcracker/qubership-apihub-next-data-model/(.*)$': '<rootDir>/../next-data-model/src/$1',
+  },
   testEnvironment: 'node',
 }

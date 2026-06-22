@@ -1,6 +1,7 @@
 // It's necessary because storybook doesn't render nested stories without this empty story
 
 import { AsyncApiOperationViewer } from "@apihub/components/AsyncApiOperationViewer/AsyncApiOperationViewer";
+import { userEvent, within } from "@storybook/test";
 import type { Meta, StoryObj } from '@storybook/react';
 import { EXTENSIONS, TEST_REFERENCE_NAME_PROPERTY } from "./shared-test-data";
 import { prepareAsyncApiDocument } from "../preprocess";
@@ -108,7 +109,12 @@ const createStory = (source: ReturnType<typeof createSource>, storyName?: string
       messageKey: MESSAGE_KEY,
     },
     referenceNamePropertyKey: TEST_REFERENCE_NAME_PROPERTY,
-  }
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const buttons = await canvas.findAllByTestId("message-content");
+    await userEvent.click(buttons[0]);
+  },
 });
 
 export const Headers: Story = createStory(createSource({
@@ -240,11 +246,5 @@ export const BindingsOneOptionPayload: Story = createStory(createSource({
       }
     },
     payload: PAYLOAD_SCHEMA,
-  },
-}));
-
-export const EdgeCaseBrokenRefBindings: Story = createStory(createSource({
-  message: {
-    bindings: { $ref: "#/components/bindings/not-existing-bindings" },
   },
 }));
