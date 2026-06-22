@@ -4522,9 +4522,9 @@
                                             "});",
                                             "",
                                             "var data = JSON.parse(responseBody);",
-                                            "pm.environment.set(\"runenvEmail\", \"runenv.surname@qubership.org\");",
+                                            "pm.environment.set(\"runenvEmail\", \"runenv.surname@example.com\");",
                                             "pm.environment.set(\"runenvPassword\", \"pa$$word\");",
-                                            "pm.environment.set(\"runenvId\",  \"runenv-surnameatqubership-org\");"
+                                            "pm.environment.set(\"runenvId\",  \"runenv-surnameatexample-com\");"
                                         ]
                                     }
                                 },
@@ -4554,7 +4554,7 @@
                                 "header": [],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n  \"email\": \"runenv.surname@qubership.org\",\r\n  \"name\": \"RUNENV RUNENV\",\r\n  \"password\": \"pa$$word\",\r\n  \"privateWorkspaceId\": \"\"\r\n}",
+                                    "raw": "{\r\n  \"email\": \"runenv.surname@example.com\",\r\n  \"name\": \"RUNENV RUNENV\",\r\n  \"password\": \"pa$$word\",\r\n  \"privateWorkspaceId\": \"\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -6104,6 +6104,34 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
+                                            "if (pm.response.code === 401 && pm.environment.get(\"authRetried\") !== \"true\") {\r",
+                                            "    pm.environment.set(\"authRetried\", \"true\");\r",
+                                            "\r",
+                                            "    pm.sendRequest({\r",
+                                            "        url: pm.environment.get(\"SERVER_HOST\") + \"/api/v2/auth/local\",\r",
+                                            "        method: \"POST\",\r",
+                                            "        auth: {\r",
+                                            "            type: \"basic\",\r",
+                                            "            basic: [\r",
+                                            "                { key: \"username\", value: pm.environment.get(\"Username\") },\r",
+                                            "                { key: \"password\", value: pm.environment.get(\"Password\") }\r",
+                                            "            ]\r",
+                                            "        }\r",
+                                            "    }, (err, res) => {\r",
+                                            "        if (err || res.code !== 200) {\r",
+                                            "            console.error(\"Token refresh failed:\", err || res.code);\r",
+                                            "            pm.environment.unset(\"authRetried\");\r",
+                                            "            return;\r",
+                                            "        }\r",
+                                            "        pm.environment.set(\"token\", res.json().token);\r",
+                                            "        postman.setNextRequest(pm.info.requestName);\r",
+                                            "    });\r",
+                                            "\r",
+                                            "    return;\r",
+                                            "}\r",
+                                            "\r",
+                                            "pm.environment.unset(\"authRetried\");\r",
+                                            "\r",
                                             "pm.test(\"Status code is 400\", function () {\r",
                                             "    pm.response.to.have.status(400);\r",
                                             "});"
@@ -6141,8 +6169,8 @@
                                 "method": "GET",
                                 "header": [
                                     {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}",
                                         "type": "default"
                                     }
                                 ]
@@ -10830,6 +10858,34 @@
                             "script": {
                                 "type": "text/javascript",
                                 "exec": [
+                                    "if (pm.response.code === 401 && pm.environment.get(\"authRetried\") !== \"true\") {\r",
+                                    "    pm.environment.set(\"authRetried\", \"true\");\r",
+                                    "\r",
+                                    "    pm.sendRequest({\r",
+                                    "        url: pm.environment.get(\"SERVER_HOST\") + \"/api/v2/auth/local\",\r",
+                                    "        method: \"POST\",\r",
+                                    "        auth: {\r",
+                                    "            type: \"basic\",\r",
+                                    "            basic: [\r",
+                                    "                { key: \"username\", value: pm.environment.get(\"Username\") },\r",
+                                    "                { key: \"password\", value: pm.environment.get(\"Password\") }\r",
+                                    "            ]\r",
+                                    "        }\r",
+                                    "    }, (err, res) => {\r",
+                                    "        if (err || res.code !== 200) {\r",
+                                    "            console.error(\"Token refresh failed:\", err || res.code);\r",
+                                    "            pm.environment.unset(\"authRetried\");\r",
+                                    "            return;\r",
+                                    "        }\r",
+                                    "        pm.environment.set(\"token\", res.json().token);\r",
+                                    "        postman.setNextRequest(pm.info.requestName);\r",
+                                    "    });\r",
+                                    "\r",
+                                    "    return;\r",
+                                    "}\r",
+                                    "\r",
+                                    "pm.environment.unset(\"authRetried\");\r",
+                                    "\r",
                                     "pm.test(\"Status code is 400\", function () {\r",
                                     "    pm.response.to.have.status(400);\r",
                                     "});"
@@ -10862,8 +10918,8 @@
                         "method": "POST",
                         "header": [
                             {
-                                "key": "api-key",
-                                "value": "{{at-api-key}}",
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
                                 "type": "default"
                             }
                         ]
