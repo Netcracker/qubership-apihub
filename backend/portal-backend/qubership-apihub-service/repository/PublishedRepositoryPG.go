@@ -146,31 +146,6 @@ func (p publishedRepositoryImpl) PatchVersion(packageId string, versionName stri
 			return err
 		}
 
-		// recalculate lite search index if status has changed
-		if statusChanged && ent.Status == string(view.Draft) {
-			cleanOldLiteSearchOperationsQuery := `delete from fts_latest_release_operation_data where package_id = ? and version = ? and revision = ?`
-			_, err = tx.Exec(cleanOldLiteSearchOperationsQuery,
-				ent.PackageId, ent.Version, ent.Revision)
-			if err != nil {
-				return fmt.Errorf("failed to delete fts_latest_release_operation_data: %w", err)
-			}
-		}
-		if statusChanged && ent.Status == string(view.Release) && !getPackage.ExcludeFromSearch {
-			calculateLiteSearchOperationsQuery := `
-								insert into fts_latest_release_operation_data
-								select o.package_id, o.version, o.revision, o.operation_id, o.type,
-									to_tsvector(convert_from(od.data,'UTF-8') || ' ' || coalesce(o.title,''))
-									data_vector
-								from operation o inner join operation_data od on o.data_hash=od.data_hash
-									where package_id = ? and version = ? and revision = ?
-								on conflict (package_id, version, revision, operation_id) do update set data_vector = EXCLUDED.data_vector;`
-			_, err = tx.Exec(calculateLiteSearchOperationsQuery,
-				ent.PackageId, ent.Version, ent.Revision)
-			if err != nil {
-				return fmt.Errorf("failed to insert fts_latest_release_operation_data: %w", err)
-			}
-		}
-
 		if statusChanged {
 			updateFtsSearchTextStatusQuery := `UPDATE fts_operation_search_text SET status = ? WHERE package_id = ? AND version = ? AND revision = ?`
 			_, err = tx.Exec(updateFtsSearchTextStatusQuery,
@@ -475,7 +450,7 @@ func (p publishedRepositoryImpl) GetServiceOwner(workspaceId string, serviceName
 func (p publishedRepositoryImpl) validateMigrationResult(tx *pg.Tx, packageInfo view.PackageInfoFile, publishId string, version *entity.PublishedVersionEntity, content []*entity.PublishedContentEntity, contentData []*entity.PublishedContentDataEntity,
 	refs []*entity.PublishedReferenceEntity, src *entity.PublishedSrcEntity, operations []*entity.OperationEntity, operationData []*entity.OperationDataEntity, versionComparisons []*entity.VersionComparisonEntity, operationComparisons []*entity.OperationComparisonEntity, versionComparisonsFromCache []string,
 	versionInternalDocs []*entity.VersionInternalDocumentEntity, versionInternalDocData []*entity.VersionInternalDocumentDataEntity, comparisonInternalDocs []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocData []*entity.ComparisonInternalDocumentDataEntity,
-	operationSearchTexts []*entity.OperationSearchTextEntity) error {
+	operationSearchTexts []*entity.OperationSearchTextEntity, maxRevision int) error {
 	migrationRun := new(mEntity.MigrationRunEntity)
 
 	err := tx.Model(migrationRun).Where("id = ?", packageInfo.MigrationId).First()
@@ -688,7 +663,7 @@ func (p publishedRepositoryImpl) validateMigrationResult(tx *pg.Tx, packageInfo 
 	currentTable = "operation_data"
 	oldOperationData := make([]entity.OperationDataEntity, 0)
 	err = tx.Model(&oldOperationData).
-		ColumnExpr("operation_data.data_hash, operation_data.search_scope").
+		ColumnExpr("operation_data.data_hash").
 		Join("inner join operation o").
 		JoinOn("o.data_hash = operation_data.data_hash").
 		JoinOn("o.package_id = ?", version.PackageId).
@@ -706,11 +681,6 @@ func (p publishedRepositoryImpl) validateMigrationResult(tx *pg.Tx, packageInfo 
 			if s.DataHash == t.DataHash {
 				found = true
 				matchedOperationData[s.DataHash] = struct{}{}
-				if dataChanges := s.GetChanges(*t); len(dataChanges) > 0 {
-					operationDataChanges[s.DataHash] = dataChanges
-					changesOverview.setTableChanges(currentTable, dataChanges)
-					continue
-				}
 			}
 		}
 		if !found {
@@ -823,45 +793,49 @@ func (p publishedRepositoryImpl) validateMigrationResult(tx *pg.Tx, packageInfo 
 		}
 	}
 
-	currentTable = "fts_operation_search_text"
-	oldSearchTexts := make([]entity.FtsOperationSearchTextEntity, 0)
-	err = tx.Model(&oldSearchTexts).
-		Where("package_id = ?", version.PackageId).
-		Where("version = ?", version.Version).
-		Where("revision = ?", version.Revision).
-		Select()
-	if err != nil {
-		return err
-	}
-	searchTextChanges := make(map[string]interface{}, 0)
-	matchedSearchTexts := make(map[string]struct{}, 0)
-	for _, s := range oldSearchTexts {
-		found := false
-		for _, t := range operationSearchTexts {
-			if s.OperationId == t.OperationId {
-				found = true
-				matchedSearchTexts[s.OperationId] = struct{}{}
-				oldSt := entity.OperationSearchTextEntity{SearchDataHash: s.SearchDataHash}
-				if stChanges := oldSt.GetChanges(entity.OperationSearchTextEntity{SearchDataHash: t.SearchDataHash}); len(stChanges) > 0 {
-					searchTextChanges[s.OperationId] = stChanges
-					changesOverview.setTableChanges(currentTable, stChanges)
-					continue
+	// fts_operation_search_text is stored only for the latest revision of a version
+	// so validate it only for the latest revision — otherwise non-latest revisions are falsely flagged as suspicious
+	if version.Revision == maxRevision {
+		currentTable = "fts_operation_search_text"
+		oldSearchTexts := make([]entity.FtsOperationSearchTextEntity, 0)
+		err = tx.Model(&oldSearchTexts).
+			Where("package_id = ?", version.PackageId).
+			Where("version = ?", version.Version).
+			Where("revision = ?", version.Revision).
+			Select()
+		if err != nil {
+			return err
+		}
+		searchTextChanges := make(map[string]interface{}, 0)
+		matchedSearchTexts := make(map[string]struct{}, 0)
+		for _, s := range oldSearchTexts {
+			found := false
+			for _, t := range operationSearchTexts {
+				if s.OperationId == t.OperationId {
+					found = true
+					matchedSearchTexts[s.OperationId] = struct{}{}
+					oldSt := entity.OperationSearchTextEntity{SearchDataHash: s.SearchDataHash}
+					if stChanges := oldSt.GetChanges(entity.OperationSearchTextEntity{SearchDataHash: t.SearchDataHash}); len(stChanges) > 0 {
+						searchTextChanges[s.OperationId] = stChanges
+						changesOverview.setTableChanges(currentTable, stChanges)
+						continue
+					}
 				}
 			}
+			if !found {
+				searchTextChanges[s.OperationId] = "search text not found in build archive"
+				changesOverview.setNotFoundEntry(currentTable)
+			}
 		}
-		if !found {
-			searchTextChanges[s.OperationId] = "search text not found in build archive"
-			changesOverview.setNotFoundEntry(currentTable)
+		for _, t := range operationSearchTexts {
+			if _, matched := matchedSearchTexts[t.OperationId]; !matched {
+				searchTextChanges[t.OperationId] = "unexpected search text (not found in database)"
+				changesOverview.setUnexpectedEntry(currentTable)
+			}
 		}
-	}
-	for _, t := range operationSearchTexts {
-		if _, matched := matchedSearchTexts[t.OperationId]; !matched {
-			searchTextChanges[t.OperationId] = "unexpected search text (not found in database)"
-			changesOverview.setUnexpectedEntry(currentTable)
+		if len(searchTextChanges) > 0 {
+			changes[currentTable] = searchTextChanges
 		}
-	}
-	if len(searchTextChanges) > 0 {
-		changes[currentTable] = searchTextChanges
 	}
 
 	if len(changes) > 0 {
@@ -1246,9 +1220,17 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 		}
 		utils.PerfLog(time.Since(start).Milliseconds(), 50, "CreateVersionWithData: insert version")
 
+		var maxRevision int
 		if packageInfo.MigrationBuild {
+			_, err = tx.Query(pg.Scan(&maxRevision),
+				`SELECT COALESCE(MAX(revision), 0) FROM published_version WHERE package_id = ? AND version = ? AND deleted_at IS NULL`,
+				version.PackageId, version.Version)
+			if err != nil {
+				return fmt.Errorf("failed to get max revision: %w", err)
+			}
+
 			start = time.Now()
-			err := p.validateMigrationResult(tx, packageInfo, buildId, version, content, data, refs, src, operations, operationsData, versionComparisons, operationComparisons, versionComparisonsFromCache, versionInternalDocEntities, versionInternalDocDataEntities, comparisonInternalDocEntities, comparisonInternalDocDataEntities, operationSearchTexts)
+			err := p.validateMigrationResult(tx, packageInfo, buildId, version, content, data, refs, src, operations, operationsData, versionComparisons, operationComparisons, versionComparisonsFromCache, versionInternalDocEntities, versionInternalDocDataEntities, comparisonInternalDocEntities, comparisonInternalDocDataEntities, operationSearchTexts, maxRevision)
 			if err != nil {
 				return fmt.Errorf("migration result validation failed: %v", err.Error())
 			}
@@ -1330,23 +1312,9 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 			}
 			utils.PerfLog(time.Since(start).Milliseconds(), 50, "CreateVersionWithData: src insert")
 		}
-		validationSkipped := true
-		if packageInfo.MigrationBuild {
-			migrationRun := new(mEntity.MigrationRunEntity)
-			err := tx.Model(migrationRun).Where("id = ?", packageInfo.MigrationId).First()
-			if err != nil {
-				return fmt.Errorf("failed to get migration info: %v", err.Error())
-			}
-			validationSkipped = migrationRun.SkipValidation
-		}
 		newOperationsData := make([]entity.OperationDataEntity, 0)
 		if len(operationsData) > 0 {
 			start = time.Now()
-			seachScopeChangesCountQuery := `
-				select count(*)
-				from migrated_version_changes
-				where build_id = ?
-				and (changes -> 'operation_data' -> ? -> 'SearchScope' is not null) limit 1;`
 			oldOperationDataCountQuery := `
 				select count(data_hash)
 				from operation_data
@@ -1361,36 +1329,12 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 					newOperationsData = append(newOperationsData, *data)
 					continue
 				}
-				if validationSkipped {
-					oldOperationData := new(entity.OperationDataEntity)
-					err = tx.Model(oldOperationData).Column("search_scope").Where("data_hash = ?", data.DataHash).First()
-					if err != nil {
-						if err == pg.ErrNoRows {
-							newOperationsData = append(newOperationsData, *data)
-							continue
-						}
-						return err
-					}
-					if len(oldOperationData.GetChanges(*data)) > 0 {
-						newOperationsData = append(newOperationsData, *data)
-					}
-				} else {
-					var count int
-					_, err = tx.Query(pg.Scan(&count), seachScopeChangesCountQuery, buildId, data.DataHash)
-					if err != nil {
-						return err
-					}
-					if count > 0 {
-						newOperationsData = append(newOperationsData, *data)
-						continue
-					}
-				}
 			}
 			utils.PerfLog(time.Since(start).Milliseconds(), 100+int64(len(operationsData)*10), fmt.Sprintf("CreateVersionWithData: operationsData calculation (%d items)", len(operationsData)))
 		}
 		if len(newOperationsData) > 0 {
 			start = time.Now()
-			_, err := tx.Model(&newOperationsData).OnConflict("(data_hash) DO UPDATE SET search_scope = EXCLUDED.search_scope").Insert()
+			_, err := tx.Model(&newOperationsData).OnConflict("(data_hash) DO NOTHING").Insert()
 			if err != nil {
 				return fmt.Errorf("failed to insert operation_data: %w", err)
 			}
@@ -1430,73 +1374,23 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 				return fmt.Errorf("failed to insert operations %+v: %w", operations, err)
 			}
 		}
-		if len(newOperationsData) > 0 {
-			if packageInfo.MigrationBuild {
-				//insert versions that require text search recalculation into specific table. These versions will be recalculated at the end of migration
-				_, err = tx.Exec(
-					fmt.Sprintf(`insert into migration."expired_ts_operation_data_%s" values(?, ?, ?)`, packageInfo.MigrationId),
-					version.PackageId, version.Version, version.Revision)
-				if err != nil {
-					return fmt.Errorf("failed to insert into migration.expired_ts_operation_data: %w", err)
-				}
-			} else {
-				start = time.Now()
-				calculateAllTextSearchDataQuery := `
-				insert into ts_operation_data
-					select data_hash,
-					to_tsvector(jsonb_extract_path_text(search_scope, ?)) scope_all
-					from operation_data
-					where data_hash in (select distinct data_hash from operation where package_id = ? and version = ? and revision = ?)
-				on conflict (data_hash) do update
-				set scope_all = EXCLUDED.scope_all`
-				_, err = tx.Exec(calculateAllTextSearchDataQuery,
-					view.ScopeAll,
-					version.PackageId, version.Version, version.Revision)
-				if err != nil {
-					return fmt.Errorf("failed to insert ts_operation_data: %w", err)
-				}
 
-				calculateFullTextSearchOperationsQuery := `
-					insert into fts_operation_data
-					select data_hash,
-						to_tsvector(convert_from(data,'UTF-8'))  data_vector
-					from operation_data where operation_data.data_hash in (select distinct data_hash from operation where package_id = ? and version = ? and revision = ?)
-					on conflict (data_hash) do update set data_vector = EXCLUDED.data_vector`
-				_, err = tx.Exec(calculateFullTextSearchOperationsQuery,
-					version.PackageId, version.Version, version.Revision)
-				if err != nil {
-					return fmt.Errorf("failed to insert fts_operation_data: %w", err)
-				}
-
-				utils.PerfLog(time.Since(start).Milliseconds(), 1000, "CreateVersionWithData: ts_vectors insert")
-			}
-		}
-
-		if version.Status == string(view.Release) && !packageInfo.MigrationBuild && !pkg.ExcludeFromSearch {
-			start = time.Now()
-			if version.Revision > 1 {
-				cleanOldLiteSearchOperationsQuery := `delete from fts_latest_release_operation_data where package_id = ? and version = ? and revision = ?`
-				_, err = tx.Exec(cleanOldLiteSearchOperationsQuery,
-					version.PackageId, version.Version, version.Revision-1)
-				if err != nil {
-					return fmt.Errorf("failed to cleanup old revision fts_latest_release_operation_data: %w", err)
-				}
-			}
-
-			calculateLiteSearchOperationsQuery := `
-						insert into fts_latest_release_operation_data
-						select o.package_id, o.version, o.revision, o.operation_id, o.type,
-							to_tsvector(convert_from(od.data,'UTF-8') || ' ' || coalesce(o.title,''))
-							data_vector
-						from operation o inner join operation_data od on o.data_hash=od.data_hash
-							where package_id = ? and version = ? and revision = ?
-						on conflict (package_id, version, revision, operation_id) do update set data_vector = EXCLUDED.data_vector;`
-			_, err = tx.Exec(calculateLiteSearchOperationsQuery,
-				version.PackageId, version.Version, version.Revision)
+		// Drop fts_operation_search_text rows for operations that no longer exist in this revision
+		if packageInfo.MigrationBuild && !pkg.ExcludeFromSearch && version.Revision == maxRevision {
+			deleteStaleFtsSearchTextQuery := `
+				DELETE FROM fts_operation_search_text fts
+				WHERE fts.package_id = ? AND fts.version = ? AND fts.revision = ?
+					AND NOT EXISTS (
+						SELECT 1 FROM operation o
+						WHERE o.package_id = fts.package_id
+							AND o.version = fts.version
+							AND o.revision = fts.revision
+							AND o.operation_id = fts.operation_id
+					)`
+			_, err = tx.Exec(deleteStaleFtsSearchTextQuery, version.PackageId, version.Version, version.Revision)
 			if err != nil {
-				return fmt.Errorf("failed to insert fts_latest_release_operation_data: %w", err)
+				return fmt.Errorf("failed to delete stale fts_operation_search_text during migration rebuild: %w", err)
 			}
-			utils.PerfLog(time.Since(start).Milliseconds(), 1000, "CreateVersionWithData: fts_latest_release_operation_data insert")
 		}
 
 		if len(operationSearchTexts) > 0 && !pkg.ExcludeFromSearch {
@@ -1529,13 +1423,6 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 			} else if packageInfo.MigrationBuild {
 				// Store search texts in tmp table for selective recalculation at end of migration.
 				// Only populate for the latest revision of the version — older revisions are skipped.
-				var maxRevision int
-				_, err = tx.Query(pg.Scan(&maxRevision),
-					`SELECT COALESCE(MAX(revision), 0) FROM published_version WHERE package_id = ? AND version = ? AND deleted_at IS NULL`,
-					version.PackageId, version.Version)
-				if err != nil {
-					return fmt.Errorf("failed to get max revision for fts_operation_search_text: %w", err)
-				}
 				if version.Revision == maxRevision {
 					for _, st := range operationSearchTexts {
 						insertTmpQuery := fmt.Sprintf(`
@@ -2707,37 +2594,10 @@ func (p publishedRepositoryImpl) updatePackage(tx *pg.Tx, ent *entity.PackageEnt
 
 func (p publishedRepositoryImpl) updateFtsIndexForExcludeFromSearchChange(tx *pg.Tx, packageId string, excludeFromSearch bool) error {
 	if excludeFromSearch {
-		_, err := tx.Exec(`DELETE FROM fts_latest_release_operation_data WHERE package_id = ? OR package_id LIKE ? || '.%'`,
-			packageId, packageId)
-		if err != nil {
-			return fmt.Errorf("failed to delete fts_latest_release_operation_data on exclude_from_search change: %w", err)
-		}
-		_, err = tx.Exec(`DELETE FROM fts_operation_search_text WHERE package_id = ? OR package_id LIKE ? || '.%'`,
+		_, err := tx.Exec(`DELETE FROM fts_operation_search_text WHERE package_id = ? OR package_id LIKE ? || '.%'`,
 			packageId, packageId)
 		if err != nil {
 			return fmt.Errorf("failed to delete fts_operation_search_text on exclude_from_search change: %w", err)
-		}
-	} else {
-		// fts_operation_search_text is intentionally not repopulated — it will be recalculated during the next migration.
-		repopulateLiteSearchQuery := `
-			WITH maxrev AS (
-				SELECT pv.package_id, pv.version, MAX(pv.revision) AS revision
-				FROM published_version pv
-				WHERE (pv.package_id = ? OR pv.package_id LIKE ? || '.%')
-				  AND pv.status = 'release'
-				  AND pv.deleted_at IS NULL
-				GROUP BY pv.package_id, pv.version
-			)
-			INSERT INTO fts_latest_release_operation_data (package_id, version, revision, operation_id, api_type, data_vector)
-			SELECT o.package_id, o.version, o.revision, o.operation_id, o.type,
-				   to_tsvector(convert_from(od.data, 'UTF-8'))
-			FROM operation o
-			INNER JOIN operation_data od ON o.data_hash = od.data_hash
-			INNER JOIN maxrev mr ON o.package_id = mr.package_id AND o.version = mr.version AND o.revision = mr.revision
-			ON CONFLICT (package_id, version, revision, operation_id) DO UPDATE SET data_vector = EXCLUDED.data_vector`
-		_, err := tx.Exec(repopulateLiteSearchQuery, packageId, packageId)
-		if err != nil {
-			return fmt.Errorf("failed to repopulate fts_latest_release_operation_data on exclude_from_search change: %w", err)
 		}
 	}
 	return nil
@@ -4115,13 +3975,6 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackagesBeforeDate(ctx context
 			return fmt.Errorf("failed to delete fts_operation_search_text: %w", err)
 		}
 
-		logger.Trace(ctx, "Deleting FTS latest release operation data for packages")
-		deleteFtsLiteSearchQuery := `DELETE FROM fts_latest_release_operation_data WHERE package_id IN (?)`
-		_, err = tx.ExecContext(ctx, deleteFtsLiteSearchQuery, pg.In(packageIds))
-		if err != nil {
-			return fmt.Errorf("failed to delete fts_latest_release_operation_data: %w", err)
-		}
-
 		logger.Tracef(ctx, "Deleting packages: %v", packageIds)
 		deletePackagesQuery := `
 			DELETE FROM package_group
@@ -4195,12 +4048,6 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackageRevisionsBeforeDate(ctx
 		_, err = tx.ExecContext(ctx, deleteFtsSearchTextQuery, args...)
 		if err != nil {
 			return fmt.Errorf("failed to delete fts_operation_search_text: %w", err)
-		}
-
-		deleteFtsLiteSearchQuery := `DELETE FROM fts_latest_release_operation_data WHERE (package_id, version, revision) IN (` + valuesClause + `)`
-		_, err = tx.ExecContext(ctx, deleteFtsLiteSearchQuery, args...)
-		if err != nil {
-			return fmt.Errorf("failed to delete fts_latest_release_operation_data: %w", err)
 		}
 
 		logger.Tracef(ctx, "Deleting package revisions: %v", revisionKeys)
@@ -4420,12 +4267,6 @@ func (p publishedRepositoryImpl) countRelatedDataForPackagesTx(ctx context.Conte
 		return err
 	}
 
-	_, err = tx.QueryOneContext(ctx, pg.Scan(&stats.FtsLatestReleaseOperationData),
-		`SELECT COUNT(*) FROM fts_latest_release_operation_data WHERE package_id IN (?)`, pg.In(packageIds))
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -4503,12 +4344,6 @@ func (p publishedRepositoryImpl) countRelatedDataForPackageRevisionsTx(ctx conte
 
 	_, err = tx.QueryOneContext(ctx, pg.Scan(&stats.FtsOperationSearchText),
 		`SELECT COUNT(*) FROM fts_operation_search_text WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.QueryOneContext(ctx, pg.Scan(&stats.FtsLatestReleaseOperationData),
-		`SELECT COUNT(*) FROM fts_latest_release_operation_data WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
 	if err != nil {
 		return err
 	}

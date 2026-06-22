@@ -61,53 +61,30 @@ func (u unreferencedDataCleanupRepositoryImpl) DeleteUnreferencedOperationData(c
 	var deletedItems entity.DeletedItemsCounts
 
 	err := u.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
-		getUnreferencedDataHashQuery := `
-			SELECT od.data_hash
-			FROM operation_data od
-			WHERE NOT EXISTS (
-    			SELECT 1 FROM operation o WHERE o.data_hash = od.data_hash
-			)
-			ORDER BY od.data_hash
-			LIMIT ?`
-
-		var dataHash []string
-		_, err := tx.QueryContext(ctx, &dataHash, getUnreferencedDataHashQuery, batchSize)
-		if err != nil {
-			return fmt.Errorf("failed to get unreferenced data hash: %w", err)
-		}
-
-		if len(dataHash) == 0 {
-			return nil
-		}
-		logger.Debugf(ctx, "Found %d operation data entities to delete in current batch", len(dataHash))
-
-		logger.Tracef(ctx, "Deleting related data for operation data with hash: %v", dataHash)
-
-		logger.Debug(ctx, "Deleting related data from ts_operation_data")
-		deleteOpDataQuery := `DELETE FROM ts_operation_data WHERE data_hash IN (?)`
-		opResult, err := tx.ExecContext(ctx, deleteOpDataQuery, pg.In(dataHash))
-		if err != nil {
-			return fmt.Errorf("failed to delete records from ts_operation_data: %w", err)
-		}
-		deletedItems.TSOperationData = opResult.RowsAffected()
-
-		logger.Debug(ctx, "Deleting related data from fts_operation_data")
-		deleteFTSDataQuery := `DELETE FROM fts_operation_data WHERE data_hash IN (?)`
-		ftsResult, err := tx.ExecContext(ctx, deleteFTSDataQuery, pg.In(dataHash))
-		if err != nil {
-			return fmt.Errorf("failed to delete records from fts_operation_data: %w", err)
-		}
-		deletedItems.FTSOperationData = ftsResult.RowsAffected()
-
-		logger.Tracef(ctx, "Deleting operation data with hash: %v", dataHash)
-
 		logger.Debug(ctx, "Deleting unreferenced data from operation_data")
-		deleteOperationDataQuery := `DELETE FROM operation_data WHERE data_hash IN (?)`
-		_, err = tx.ExecContext(ctx, deleteOperationDataQuery, pg.In(dataHash))
+		deleteOperationDataQuery := `
+			DELETE FROM operation_data od
+			USING (
+				SELECT data_hash
+				FROM operation_data od2
+				WHERE NOT EXISTS (
+					SELECT 1 FROM operation o WHERE o.data_hash = od2.data_hash
+				)
+				ORDER BY od2.data_hash
+				LIMIT ?
+			) del
+			WHERE od.data_hash = del.data_hash`
+
+		res, err := tx.ExecContext(ctx, deleteOperationDataQuery, batchSize)
 		if err != nil {
 			return fmt.Errorf("failed to delete operation data: %w", err)
 		}
-		deletedItems.OperationData = len(dataHash)
+
+		if res.RowsAffected() == 0 {
+			return nil
+		}
+		deletedItems.OperationData = res.RowsAffected()
+		logger.Debugf(ctx, "Deleted %d operation data entities in current batch", deletedItems.OperationData)
 
 		var cleanupRun entity.UnreferencedDataCleanupEntity
 		err = tx.Model(&cleanupRun).
@@ -120,8 +97,6 @@ func (u unreferencedDataCleanupRepositoryImpl) DeleteUnreferencedOperationData(c
 			cleanupRun.DeletedItems = &deletedItems
 		} else {
 			cleanupRun.DeletedItems.OperationData += deletedItems.OperationData
-			cleanupRun.DeletedItems.TSOperationData += deletedItems.TSOperationData
-			cleanupRun.DeletedItems.FTSOperationData += deletedItems.FTSOperationData
 		}
 		_, err = tx.Model(&cleanupRun).
 			Column("deleted_items").
@@ -134,9 +109,7 @@ func (u unreferencedDataCleanupRepositoryImpl) DeleteUnreferencedOperationData(c
 		return nil
 	})
 
-	return deletedItems.OperationData +
-		deletedItems.TSOperationData +
-		deletedItems.FTSOperationData, err
+	return deletedItems.OperationData, err
 }
 
 func (u unreferencedDataCleanupRepositoryImpl) DeleteUnreferencedOperationGroupTemplates(ctx context.Context, runId string, batchSize int) (int, error) {
@@ -421,29 +394,7 @@ func (u unreferencedDataCleanupRepositoryImpl) VacuumAffectedTables(ctx context.
 				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-			logger.Trace(ctx, "Successfully vacuumed 'operation_data' table")
-		}
-	}
-		if deletedItems.TSOperationData > 0 {
-			logger.Debugf(ctx, "Vacuuming 'ts_operation_data' table for %d deleted entries", deletedItems.TSOperationData)
-			_, err = u.cp.GetConnection().ExecContext(ctx, "VACUUM FULL ts_operation_data")
-			if err != nil {
-				errorMsg := fmt.Sprintf("Failed to vacuum 'ts_operation_data' table: %v", err)
-				logger.Warn(ctx, errorMsg)
-				vacuumErrors = append(vacuumErrors, errorMsg)
-			} else {
-				logger.Trace(ctx, "Successfully vacuumed 'ts_operation_data' table")
-			}
-		}
-		if deletedItems.FTSOperationData > 0 {
-			logger.Debugf(ctx, "Vacuuming 'fts_operation_data' table for %d deleted entries", deletedItems.FTSOperationData)
-			_, err = u.cp.GetConnection().ExecContext(ctx, "VACUUM FULL fts_operation_data")
-			if err != nil {
-				errorMsg := fmt.Sprintf("Failed to vacuum 'fts_operation_data' table: %v", err)
-				logger.Warn(ctx, errorMsg)
-				vacuumErrors = append(vacuumErrors, errorMsg)
-			} else {
-				logger.Trace(ctx, "Successfully vacuumed 'fts_operation_data' table")
+				logger.Trace(ctx, "Successfully vacuumed 'operation_data' table")
 			}
 		}
 		if deletedItems.OperationGroupTemplate > 0 {

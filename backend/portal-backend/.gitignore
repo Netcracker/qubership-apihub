@@ -30,3 +30,10 @@ jwt_private_key
 
 qubership-apihub-service/local_config/config.yaml
 docs/local_development/docker-compose/DB/data/**
+
+
+# APM cache (installed package sources)
+apm_modules/
+
+# apm pack output
+agent-packages/**/build/

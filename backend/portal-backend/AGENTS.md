@@ -116,10 +116,10 @@ Pull requests run **super-linter** on changed files and **lychee** on Markdown l
 - **Go (EditorConfig):** tabs in `*.go`; in raw string literals (prompts), nested indented lines use tabs, not spaces.
 - **Markdown:** prose lines ≤ **400** characters (MD013); one H1 per file (MD025).
 - **Terminology (textlint):** follow `.github/linters/.textlintrc`; do not add conflicting custom terms.
-- **Markdown links:** repo-relative paths must match directory depth (see `.claude/skills/README.md` for nested-copy pitfalls).
+- **Markdown links:** repo-relative paths must resolve from the editing file's directory.
 - **OpenAPI YAML:** no trailing whitespace in changed lines; match existing indentation; valid `$ref` / `allOf` patterns.
 
-Full checklist: `.cursor/rules/ci-linters.mdc` (and `.claude/rules/ci-linters.md`).
+Full checklist: deployed CI linter rules (`.cursor/rules/ci-super-linter.mdc` after `apm install`).
 
 ## SQL performance
 
@@ -128,14 +128,13 @@ Full checklist: `.cursor/rules/ci-linters.mdc` (and `.claude/rules/ci-linters.md
 ## Completion
 
 - After substantive changes, propose **one** concise commit message (conventional commits style; see `docs/development_guide.md`).
-- For an independent review of your diff, invoke the `apihub-self-review` skill in a **new chat** or with a **different model**.
+- For an independent review of your diff, invoke the `apihub-backend-self-review` skill in a **new chat** or with a **different model**.
 
 ## Project skills (Cursor / Claude)
 
-| Skill | When |
-|-------|------|
-| `github-ticket-implementation-planner` | Planning from a GitHub issue |
-| `apihub-backend-developer` | Implementing backend features, migrations, API changes |
-| `apihub-self-review` | Post-implementation review of a diff (explicit invocation) |
-
-Skills live in `.cursor/skills/` (canonical). For Claude Code, see `.claude/skills/README.md`.
+Project skills and rules are provisioned by APM
+(`apm install --target cursor,claude --legacy-skill-paths`); the agent discovers them automatically from
+`.cursor/skills/` and `.claude/skills/`. Generic packages come from the
+[CI store](https://github.com/Netcracker/qubership-apihub-ci/tree/apm_migration/agent-packages);
+backend-specific sources live in [`agent-packages/`](agent-packages/). See
+[README — AI agent configuration (APM)](README.md#ai-agent-configuration-apm).

@@ -286,7 +286,7 @@ func main() {
 	tokenRevocationService := service.NewTokenRevocationService(olricProvider, systemInfoService.GetRefreshTokenDurationSec())
 	systemStatsService := service.NewSystemStatsService(systemStatsRepository)
 
-	mcpService := service.NewMCPService(systemInfoService, operationService, packageService, versionService, monitoringService)
+	mcpService := service.NewMCPService(systemInfoService, operationService, packageService, versionService, monitoringService, roleService)
 
 	ephemeralFileRepository := repository.NewEphemeralFileRepositoryPG(cp)
 	ephemeralFileService := service.NewEphemeralFileService(systemInfoService, ephemeralFileRepository)
@@ -310,7 +310,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Failed to create AiChatTurnService: %v", err)
 		}
-		aiChatController = controller.NewAiChatController(aiChatsService, aiChatTurnService)
+		aiChatController = controller.NewAiChatController(aiChatsService, aiChatTurnService, monitoringService)
 		aiChatCleanup := service.NewAiChatCleanupService(aiChatRepository, lockService)
 		aiCfg := systemInfoService.GetAiChatConfig()
 		if err := aiChatCleanup.StartChatRetentionJob(aiCfg.CleanupSchedule, aiCfg.RetentionDays, aiCfg.PinnedForeverCount); err != nil {
@@ -324,7 +324,7 @@ func main() {
 		panic("Failed to initialize external IDP: " + err.Error())
 	}
 
-	publishedController := controller.NewPublishedController(publishedService, portalService)
+	publishedController := controller.NewPublishedController(publishedService, portalService, roleService)
 
 	logsController := controller.NewLogsController(logsService, roleService)
 	systemInfoController := controller.NewSystemInfoController(systemInfoService, dbMigrationService)
@@ -366,13 +366,13 @@ func main() {
 	r.HandleFunc("/api/v1/system/configuration", samlAuthController.GetSystemSSOInfo_deprecated).Methods(http.MethodGet) //deprecated
 	r.HandleFunc("/api/v2/system/configuration", security.NoSecure(authController.GetSystemConfigurationInfo)).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v1/debug/logs", security.Secure(logsController.StoreLogs)).Methods(http.MethodPut)
+	r.HandleFunc("/api/v1/debug/logs", security.SecureUser(logsController.StoreLogs)).Methods(http.MethodPut)
 	r.HandleFunc("/api/v1/debug/logs/setLevel", security.Secure(logsController.SetLogLevel)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/debug/logs/checkLevel", security.Secure(logsController.CheckLogLevel)).Methods(http.MethodGet)
 
 	//Search
-	r.HandleFunc("/api/v3/search/{searchLevel}", security.Secure(searchController.Search_deprecated)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v4/search/{searchLevel}", security.Secure(searchController.Search)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v3/search/{searchLevel}", security.SecureUser(searchController.Search_deprecated)).Methods(http.MethodPost) //TODO: add API key strategy after authorization fix
+	r.HandleFunc("/api/v4/search/{searchLevel}", security.SecureUser(searchController.Search)).Methods(http.MethodPost)            //TODO: add API key strategy after authorization fix
 
 	r.HandleFunc("/api/v2/builders/{builderId}/tasks", security.Secure(publishV2Controller.GetFreeBuild)).Methods(http.MethodPost)
 
@@ -479,7 +479,7 @@ func main() {
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/copy", security.Secure(versionController.CopyVersion)).Methods(http.MethodPost)
 
 	r.HandleFunc("/api/v4/packages/{packageId}/activity", security.Secure(activityTrackingController.GetActivityHistoryForPackage)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v4/activity", security.Secure(activityTrackingController.GetActivityHistory)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v4/activity", security.SecureUser(activityTrackingController.GetActivityHistory)).Methods(http.MethodGet) //TODO: add API key strategy after authorization fix
 
 	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/groups", security.Secure(operationGroupController.CreateOperationGroup)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}", security.Secure(operationGroupController.DeleteOperationGroup)).Methods(http.MethodDelete)

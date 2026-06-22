@@ -5,11 +5,12 @@ import (
 )
 
 type SystemInfo struct {
-	BackendVersion      string         `json:"backendVersion"`
-	ProductionMode      bool           `json:"productionMode"`
-	Notification        string         `json:"notification,omitempty"`
-	ExternalLinks       []string       `json:"externalLinks"`
-	MigrationInProgress bool           `json:"migrationInProgress"`
+	BackendVersion      string       `json:"backendVersion"`
+	ProductionMode      bool         `json:"productionMode"`
+	Notification        string       `json:"notification,omitempty"`
+	ExternalLinks       []string     `json:"externalLinks"`
+	MigrationInProgress bool         `json:"migrationInProgress"`
+	AiChatEnabled       bool         `json:"aiChatEnabled"`
 	FeatureFlags        FeatureFlags `json:"featureFlags"`
 }
 

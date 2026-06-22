@@ -161,12 +161,6 @@ on migration."version_comparison_%s"(package_id,version,revision,previous_packag
 	}
 
 	_, err = withDBRetry(d, func() (orm.Result, error) {
-		return d.cp.GetConnection().ExecContext(d.migrationCtx, fmt.Sprintf(`create table if not exists migration."expired_ts_operation_data_%s" (package_id varchar, version varchar, revision integer);`, d.ent.Id))
-	})
-	if err != nil {
-		return err
-	}
-	_, err = withDBRetry(d, func() (orm.Result, error) {
 		return d.cp.GetConnection().ExecContext(d.migrationCtx,
 			fmt.Sprintf(`create table if not exists migration."fts_operation_search_text_tmp_%s" (
 			package_id varchar, version varchar, revision integer,

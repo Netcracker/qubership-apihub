@@ -23,8 +23,6 @@ type OperationService interface {
 	GetOperationsTags(searchReq view.OperationBasicSearchReq, skipRefs bool) (*view.OperationTags, error)
 	GetOperationChanges(packageId string, version string, operationId string, previousPackageId string, previousVersion string, severities []string) (*view.OperationChangesView, error)
 	GetVersionChanges(packageId string, version string, apiType string, searchReq view.VersionChangesReq) (*view.VersionChangesView, error)
-	SearchForOperations(searchReq view.SearchQueryReq_deprecated) (*view.SearchResult, error)
-	LiteSearchForOperations(searchReq view.SearchQueryReq_deprecated) (*view.SearchResult, error)
 	GlobalSearchForOperations(ctx context.Context, searchReq view.SearchQueryReq) (*view.SearchResult, error)
 	GetDeprecatedOperations(packageId string, version string, searchReq view.DeprecatedOperationListReq) (*view.Operations, error)
 	GetOperationDeprecatedItems(searchReq view.OperationBasicSearchReq) (*view.DeprecatedItems, error)
@@ -565,92 +563,6 @@ func (o operationServiceImpl) GetVersionChanges(packageId string, version string
 	return changelog, nil
 }
 
-func (o operationServiceImpl) SearchForOperations(searchReq view.SearchQueryReq_deprecated) (*view.SearchResult, error) {
-	searchQuery, err := entity.MakeOperationSearchQueryEntity(&searchReq)
-	if err != nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidSearchParameters,
-			Message: exception.InvalidSearchParametersMsg,
-			Params:  map[string]interface{}{"error": err.Error()},
-		}
-	}
-	err = setOperationSearchParams(searchReq.OperationSearchParams, searchQuery)
-	if err != nil {
-		return nil, err
-	}
-	//todo maybe move to envs
-	searchQuery.OperationSearchWeight = entity.OperationSearchWeight{
-		ScopeWeight:     13,
-		TitleWeight:     3,
-		OpenCountWeight: 0.2,
-	}
-	searchQuery.VersionStatusSearchWeight = entity.VersionStatusSearchWeight{
-		VersionReleaseStatus:        string(view.Release),
-		VersionReleaseStatusWeight:  4,
-		VersionDraftStatus:          string(view.Draft),
-		VersionDraftStatusWeight:    0.6,
-		VersionArchivedStatus:       string(view.Archived),
-		VersionArchivedStatusWeight: 0.1,
-	}
-
-	var operationEntities []entity.OperationSearchResult_deprecated
-
-	if strings.HasPrefix(searchQuery.OriginalTextInput, "_") {
-		searchQuery.TextFilter = strings.TrimPrefix(searchQuery.TextFilter, "_")
-		searchQuery.OriginalTextInput = strings.TrimPrefix(searchQuery.OriginalTextInput, "_")
-		if strings.HasPrefix(searchQuery.OriginalTextInput, "_") {
-			// experimental 2: lite search
-			searchQuery.TextFilter = strings.TrimPrefix(searchQuery.TextFilter, "_")
-			searchQuery.OriginalTextInput = strings.TrimPrefix(searchQuery.OriginalTextInput, "_")
-			operationEntities, err = o.operationRepository.LiteSearchForOperations(searchQuery)
-		} else {
-			// experimental: full text search
-			operationEntities, err = o.operationRepository.FullTextSearchForOperations(searchQuery)
-		}
-	} else {
-		// old prod search
-		operationEntities, err = o.operationRepository.SearchForOperations(searchQuery)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-	operations := make([]interface{}, 0)
-	for _, ent := range operationEntities {
-		operations = append(operations, entity.MakeOperationSearchResultView(ent))
-	}
-
-	return &view.SearchResult{Operations: &operations}, nil
-}
-
-func (o operationServiceImpl) LiteSearchForOperations(searchReq view.SearchQueryReq_deprecated) (*view.SearchResult, error) {
-	searchQuery, err := entity.MakeOperationSearchQueryEntity(&searchReq)
-	if err != nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidSearchParameters,
-			Message: exception.InvalidSearchParametersMsg,
-			Params:  map[string]interface{}{"error": err.Error()},
-		}
-	}
-	err = setOperationSearchParams(searchReq.OperationSearchParams, searchQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	operationEntities, err := o.operationRepository.LiteSearchForOperations(searchQuery)
-	if err != nil {
-		return nil, err
-	}
-	operations := make([]interface{}, 0)
-	for _, ent := range operationEntities {
-		operations = append(operations, entity.MakeOperationSearchResultView(ent))
-	}
-
-	return &view.SearchResult{Operations: &operations}, nil
-}
-
 func (o operationServiceImpl) GlobalSearchForOperations(ctx context.Context, searchReq view.SearchQueryReq) (*view.SearchResult, error) {
 	log.Debugf(
 		"GlobalSearchForOperations called: searchString=%q apiType=%s workspace=%s status=%s packageIds=%v versions=%v startDate=%v endDate=%v limit=%d page=%d",
@@ -710,47 +622,6 @@ func (o operationServiceImpl) GlobalSearchForOperations(ctx context.Context, sea
 	}
 
 	return &view.SearchResult{Operations: &operations}, nil
-}
-
-func setOperationSearchParams(operationParams *view.OperationSearchParams, searchQuery *entity.OperationSearchQuery) error {
-	if operationParams == nil {
-		return nil
-	}
-	switch operationParams.ApiType {
-	case string(view.RestApiType):
-		return setRestOperationSearchParams(operationParams, searchQuery)
-	case string(view.GraphqlApiType):
-		return setGraphqlOperationSearchParams(operationParams, searchQuery)
-	default:
-		return &exception.CustomError{
-			Status:  http.StatusBadRequest,
-			Code:    exception.InvalidSearchParameters,
-			Message: exception.InvalidSearchParametersMsg,
-			Params:  map[string]interface{}{"error": fmt.Sprintf("%v apiType is not supported", operationParams.ApiType)},
-		}
-	}
-}
-
-func setRestOperationSearchParams(restOperationParams *view.OperationSearchParams, searchQuery *entity.OperationSearchQuery) error {
-	searchQuery.ApiType = restOperationParams.ApiType
-	searchQuery.Methods = append(searchQuery.Methods, restOperationParams.Methods...)
-	return nil
-}
-
-func setGraphqlOperationSearchParams(graphqlOperationParams *view.OperationSearchParams, searchQuery *entity.OperationSearchQuery) error {
-	searchQuery.ApiType = graphqlOperationParams.ApiType
-	for _, operationType := range graphqlOperationParams.OperationTypes {
-		if !view.ValidGraphQLOperationType(operationType) {
-			return &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.InvalidSearchParameters,
-				Message: exception.InvalidSearchParametersMsg,
-				Params:  map[string]interface{}{"error": fmt.Sprintf("operation type %v is invalid for %v apiType", operationType, graphqlOperationParams.ApiType)},
-			}
-		}
-	}
-	searchQuery.OperationTypes = append(searchQuery.OperationTypes, graphqlOperationParams.OperationTypes...)
-	return nil
 }
 
 func (o operationServiceImpl) GetOperationModelUsages(packageId string, version string, apiType string, operationId string, modelName string) (*view.OperationModelUsages, error) {

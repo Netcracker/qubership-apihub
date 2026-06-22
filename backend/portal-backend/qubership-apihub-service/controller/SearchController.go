@@ -284,7 +284,8 @@ func (s searchControllerImpl) Search_deprecated(w http.ResponseWriter, r *http.R
 	switch searchLevel {
 	case view.SearchLevelOperations:
 		{
-			result, err := s.operationService.SearchForOperations(searchQuery)
+			searchQueryReq := view.MakeSearchQueryReq(searchQuery)
+			result, err := s.operationService.GlobalSearchForOperations(r.Context(), searchQueryReq)
 			if err != nil {
 				utils.RespondWithError(w, "Failed to perform search for operations", err)
 				return

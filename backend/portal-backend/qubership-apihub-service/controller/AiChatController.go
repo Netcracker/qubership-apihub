@@ -8,18 +8,20 @@ import (
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
-	aiservice "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 )
 
 type AiChatController struct {
-	chatsSvc aiservice.AiChatsService
-	aiSvc    aiservice.AiChatTurnService
+	chatsSvc      service.AiChatsService
+	aiSvc         service.AiChatTurnService
+	monitoringSvc service.MonitoringService
 }
 
-func NewAiChatController(chatsSvc aiservice.AiChatsService, aiSvc aiservice.AiChatTurnService) *AiChatController {
-	return &AiChatController{chatsSvc: chatsSvc, aiSvc: aiSvc}
+func NewAiChatController(chatsSvc service.AiChatsService, aiSvc service.AiChatTurnService, monitoringSvc service.MonitoringService) *AiChatController {
+	return &AiChatController{chatsSvc: chatsSvc, aiSvc: aiSvc, monitoringSvc: monitoringSvc}
 }
 
 func (c *AiChatController) ListChats(w http.ResponseWriter, r *http.Request) {
@@ -127,7 +129,8 @@ func (c *AiChatController) ListMessages(w http.ResponseWriter, r *http.Request) 
 }
 
 func (c *AiChatController) SendMessage(w http.ResponseWriter, r *http.Request) {
-	uid := context.Create(r).GetUserId()
+	secCtx := context.Create(r)
+	uid := secCtx.GetUserId()
 	chatID := getStringParam(r, "chatId")
 	var body view.AiChatSendMessageRequest
 	if ce := decodeAiChatJSONBody(r, &body, false); ce != nil {
@@ -138,7 +141,12 @@ func (c *AiChatController) SendMessage(w http.ResponseWriter, r *http.Request) {
 		utils.RespondWithCustomError(w, ce)
 		return
 	}
-	res, err := c.aiSvc.SendMessage(r.Context(), uid, chatID, &body)
+	c.monitoringSvc.IncreaseBusinessMetricCounter(uid, metrics.AIChatCalled, "chat messages")
+
+	ctx := r.Context()
+	ctx = service.SetSecCtxOnMCPCtx(ctx, secCtx)
+	ctx = service.SetMCPClientLabel(ctx, service.MCPClientLabelInternalAIChat)
+	res, err := c.aiSvc.SendMessage(ctx, uid, chatID, &body)
 	if err != nil {
 		utils.RespondWithError(w, "send", err)
 		return
@@ -147,7 +155,8 @@ func (c *AiChatController) SendMessage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *AiChatController) SendMessageStream(w http.ResponseWriter, r *http.Request) {
-	uid := context.Create(r).GetUserId()
+	secCtx := context.Create(r)
+	uid := secCtx.GetUserId()
 	chatID := getStringParam(r, "chatId")
 	var body view.AiChatSendMessageRequest
 	if ce := decodeAiChatJSONBody(r, &body, false); ce != nil {
@@ -169,7 +178,12 @@ func (c *AiChatController) SendMessageStream(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	ch, err := c.aiSvc.SendMessageStream(r.Context(), uid, chatID, &body)
+	c.monitoringSvc.IncreaseBusinessMetricCounter(uid, metrics.AIChatCalled, "chat messages")
+
+	ctx := r.Context()
+	ctx = service.SetSecCtxOnMCPCtx(ctx, secCtx)
+	ctx = service.SetMCPClientLabel(ctx, service.MCPClientLabelInternalAIChat)
+	ch, err := c.aiSvc.SendMessageStream(ctx, uid, chatID, &body)
 	if err != nil {
 		utils.RespondWithError(w, "stream", err)
 		return

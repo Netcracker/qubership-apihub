@@ -280,9 +280,6 @@ func (d dbMigrationServiceImpl) fixDataAfterTransitions() error {
 
 	for _, transition := range transitions {
 		log.Infof("Applying data fixes for transition: %s -> %s", transition.FromId, transition.ToId)
-		if err := d.fixLiteSearchPackageId(ctx, transition.FromId, transition.ToId); err != nil {
-			return fmt.Errorf("failed to fix fts_latest_release_operation_data for %s -> %s: %w", transition.FromId, transition.ToId, err)
-		}
 		if err := d.fixDashboardParentReferenceId(ctx, transition.FromId, transition.ToId); err != nil {
 			return fmt.Errorf("failed to fix published_version_reference for %s -> %s: %w", transition.FromId, transition.ToId, err)
 		}
@@ -374,16 +371,6 @@ func (d dbMigrationServiceImpl) logWarningsForExistingFromIds(ctx context.Contex
 		log.Warnf("Transition from_id '%s' still exists in package_group. "+
 			"Data fix may incorrectly affect this package's data.", pkg.Id)
 	}
-}
-
-func (d dbMigrationServiceImpl) fixLiteSearchPackageId(ctx context.Context, fromId, toId string) error {
-	_, err := d.cp.GetConnection().ExecContext(ctx,
-		`UPDATE fts_latest_release_operation_data SET package_id = ? WHERE package_id = ?`,
-		toId, fromId)
-	if err != nil {
-		return fmt.Errorf("failed to update fts_latest_release_operation_data for %s -> %s: %w", fromId, toId, err)
-	}
-	return nil
 }
 
 func (d dbMigrationServiceImpl) fixDashboardParentReferenceId(ctx context.Context, fromId, toId string) error {

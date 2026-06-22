@@ -7,8 +7,8 @@ info:
     name: Netcracker Opensource Group
     email: opensourcegroup@netcracker.com
   license:
-    name: Apache 2.0
-    url: https://github.com/Netcracker/qubership-apihub-backend/raw/refs/heads/main/LICENSE
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
   version: "2026.1"
   x-api-kind: BWC
 externalDocs:
@@ -571,7 +571,7 @@ paths:
                                 memberName:
                                   description: User which was added/deleted to/from package with some role(s)
                                   type: string
-                                  example: Name Surname
+                                  example: John Doe
                                 roles:
                                   type: array
                                   items:
@@ -590,7 +590,7 @@ paths:
                                 memberName:
                                   description: User which was added/deleted to/from package with some role(s)
                                   type: string
-                                  example: Name Surname
+                                  example: John Doe
                             - type: object
                               title: ParamsForPublishAndDeleteVersion
                               description: params for publish_new_version and delete_version events
@@ -1508,7 +1508,7 @@ paths:
                                 memberName:
                                   description: User which was added/deleted to/from package with some role(s)
                                   type: string
-                                  example: Name Surname
+                                  example: John Doe
                                 roles:
                                   type: array
                                   items:
@@ -1527,7 +1527,7 @@ paths:
                                 memberName:
                                   description: User which was added/deleted to/from package with some role(s)
                                   type: string
-                                  example: Name Surname
+                                  example: John Doe
                             - type: object
                               title: ParamsForPublishAndDeleteVersion
                               description: params for publish_new_version and delete_version events
@@ -10631,6 +10631,10 @@ components:
           description: Identifies if a full migration is currently in progress. Returns false when no migration or only a partial migration is running.
           type: boolean
           default: false
+        aiChatEnabled:
+          description: Mirrors the ai.chat.enabled kill-switch. When false, AI chat routes are not registered.
+          type: boolean
+          default: false
         featureFlags:
           description: Feature flags for the system
           type: object
@@ -11172,12 +11176,12 @@ components:
         name:
           description: Name of the user
           type: string
-          example: "Name Surname"
+          example: "John Doe"
         email:
           description: Email address of the user
           type: string
           format: email
-          example: "name.surname@qubership.org"
+          example: "john.doe@example.com"
         avatarUrl:
           description: URL of the user avatar image.
           type: string
@@ -11295,7 +11299,7 @@ components:
           items:
             type: string
             format: email
-          example: ["name.surname@qubership.org"]
+          example: ["john.doe@example.com"]
         roleIds:
           type: array
           description: List of role IDs, added to the user.
@@ -13138,6 +13142,7 @@ components:
         backendVersion: master-20250522.080756-379-RELEASE
         productionMode: true
         migrationInProgress: false
+        aiChatEnabled: false
         externalLinks:
           - User guide|https://www.example.com/guide
           - Support team|https://www.example.com/support]

@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"strings"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
@@ -16,51 +15,6 @@ type VersionStatusSearchWeight struct {
 	VersionArchivedStatusWeight float64 `pg:"version_status_archived_weight, type:real, use_zero"`
 }
 
-type OperationSearchWeight struct {
-	ScopeWeight     float64 `pg:"scope_weight, type:real, use_zero"`
-	TitleWeight     float64 `pg:"title_weight, type:real, use_zero"`
-	OpenCountWeight float64 `pg:"open_count_weight, type:real, use_zero"`
-}
-
-type OperationSearchQuery struct {
-	OperationSearchWeight
-	VersionStatusSearchWeight
-	SearchString      string    `pg:"search_filter, type:varchar, use_zero"`       //for postgres ts indexes
-	TextFilter        string    `pg:"text_filter, type:varchar, use_zero"`         //for varchar
-	OriginalTextInput string    `pg:"original_text_input, type:varchar, use_zero"` // for FTS
-	ApiType           string    `pg:"api_type, type:varchar, use_zero"`
-	Packages          []string  `pg:"packages, type:varchar[], use_zero"`
-	Versions          []string  `pg:"versions, type:varchar[], use_zero"`
-	Statuses          []string  `pg:"statuses, type:varchar[], use_zero"`
-	Methods           []string  `pg:"methods, type:varchar[], use_zero"`
-	OperationTypes    []string  `pg:"operation_types, type:varchar[], use_zero"`
-	StartDate         time.Time `pg:"start_date, type:timestamp without time zone, use_zero"`
-	EndDate           time.Time `pg:"end_date, type:timestamp without time zone, use_zero"`
-	Limit             int       `pg:"limit, type:integer, use_zero"`
-	Offset            int       `pg:"offset, type:integer, use_zero"`
-
-	RestApiType    string `pg:"rest_api_type, type:varchar, use_zero"`
-	GraphqlApiType string `pg:"graphql_api_type, type:varchar, use_zero"`
-}
-
-type OperationSearchResult_deprecated struct {
-	tableName struct{} `pg:",discard_unknown_columns"`
-
-	OperationEntity
-	PackageName   string   `pg:"name, type:varchar"`
-	VersionStatus string   `pg:"status, type:varchar"`
-	ParentNames   []string `pg:"parent_names, type:varchar[]"`
-
-	//debug
-	ScopeWeight        float64 `pg:"scope_weight, type:real"`
-	ScopeTf            float64 `pg:"scope_tf, type:real"`
-	TitleTf            float64 `pg:"title_tf, type:real"`
-	VersionStatusTf    float64 `pg:"version_status_tf, type:real"`
-	OpenCountWeight    float64 `pg:"open_count_weight, type:real"`
-	OperationOpenCount float64 `pg:"operation_open_count, type:real"`
-	AllTsRank          float64 `pg:"all_ts.rank, type:real"`
-}
-
 type OperationSearchResult struct {
 	tableName struct{} `pg:",discard_unknown_columns"`
 
@@ -68,65 +22,6 @@ type OperationSearchResult struct {
 	PackageName   string   `pg:"name, type:varchar"`
 	VersionStatus string   `pg:"status, type:varchar"`
 	ParentNames   []string `pg:"parent_names, type:varchar[]"`
-}
-
-func MakeOperationSearchQueryEntity(searchQuery *view.SearchQueryReq_deprecated) (*OperationSearchQuery, error) {
-
-	//todo probably need to replace more symbols
-	ftsSearchString := searchQuery.SearchString
-	ftsSearchString = strings.ReplaceAll(ftsSearchString, " ", " & ")
-	ftsSearchString = strings.ReplaceAll(ftsSearchString, "/", " & ")
-	ftsSearchString = strings.ReplaceAll(ftsSearchString, "_", " & ")
-	ftsSearchString = strings.ReplaceAll(ftsSearchString, "-", " & ")
-	ftsSearchString = strings.TrimSpace(ftsSearchString)
-	ftsSearchString = strings.Trim(ftsSearchString, "&")
-	ftsSearchString = strings.Trim(ftsSearchString, "|")
-	ftsSearchString = strings.ReplaceAll(ftsSearchString, ":*", "")
-	ftsSearchString = strings.TrimSpace(ftsSearchString) + ":*" //starts with
-
-	parts := strings.Split(ftsSearchString, "&")
-	var partsFiltered []string
-	for _, part := range parts {
-		part = strings.TrimSpace(part)
-		if part == "" {
-			continue
-		}
-		partsFiltered = append(partsFiltered, part)
-	}
-	ftsSearchString = strings.Join(partsFiltered, " & ")
-
-	searchQueryEntity := &OperationSearchQuery{
-		SearchString:      ftsSearchString,
-		TextFilter:        searchQuery.SearchString,
-		OriginalTextInput: searchQuery.SearchString,
-		Packages:          searchQuery.PackageIds,
-		Versions:          searchQuery.Versions,
-		Statuses:          searchQuery.Statuses,
-		StartDate:         searchQuery.PublicationDateInterval.StartDate,
-		EndDate:           searchQuery.PublicationDateInterval.EndDate,
-		Methods:           make([]string, 0),
-		OperationTypes:    make([]string, 0),
-		Limit:             searchQuery.Limit,
-		Offset:            searchQuery.Limit * searchQuery.Page,
-		RestApiType:       string(view.RestApiType),
-		GraphqlApiType:    string(view.GraphqlApiType),
-	}
-	if searchQueryEntity.Packages == nil {
-		searchQueryEntity.Packages = make([]string, 0)
-	}
-	if searchQueryEntity.Versions == nil {
-		searchQueryEntity.Versions = make([]string, 0)
-	}
-	if searchQueryEntity.Statuses == nil {
-		searchQueryEntity.Statuses = make([]string, 0)
-	}
-	if searchQueryEntity.StartDate.IsZero() {
-		searchQueryEntity.StartDate = time.Unix(0, 0) //January 1, 1970
-	}
-	if searchQueryEntity.EndDate.IsZero() {
-		searchQueryEntity.EndDate = time.Unix(2556057600, 0) //December 31, 2050
-	}
-	return searchQueryEntity, nil
 }
 
 type GlobalOperationSearchQuery struct {
@@ -139,41 +34,6 @@ type GlobalOperationSearchQuery struct {
 	EndDate           time.Time `pg:"end_date, type:timestamp without time zone, use_zero"`
 	Limit             int       `pg:"limit, type:integer, use_zero"`
 	Offset            int       `pg:"offset, type:integer, use_zero"`
-}
-
-func MakeOperationSearchResultView(ent OperationSearchResult_deprecated) interface{} {
-	operationSearchResult := view.CommonOperationSearchResult_deprecated{
-		PackageId:      ent.PackageId,
-		PackageName:    ent.PackageName,
-		ParentPackages: ent.ParentNames,
-		VersionStatus:  ent.VersionStatus,
-		Version:        view.MakeVersionRefKey(ent.Version, ent.Revision),
-		Title:          ent.Title,
-
-		//debug
-		Debug: view.OperationSearchWeightsDebug{
-			ScopeWeight:              ent.ScopeWeight,
-			ScopeTf:                  ent.ScopeTf,
-			TitleTf:                  ent.TitleTf,
-			VersionStatusTf:          ent.VersionStatusTf,
-			OperationOpenCountWeight: ent.OpenCountWeight,
-			OperationOpenCount:       ent.OperationOpenCount,
-		},
-	}
-
-	switch ent.Type {
-	case string(view.RestApiType):
-		return view.RestOperationSearchResult_deprecated{
-			CommonOperationSearchResult_deprecated: operationSearchResult,
-			RestOperationView:                      MakeRestOperationView(&ent.OperationEntity),
-		}
-	case string(view.GraphqlApiType):
-		return view.GraphQLOperationSearchResult_deprecated{
-			CommonOperationSearchResult_deprecated: operationSearchResult,
-			GraphQLOperationView:                   MakeGraphQLOperationView(&ent.OperationEntity),
-		}
-	}
-	return operationSearchResult
 }
 
 func MakeGlobalOperationSearchResultView(ent OperationSearchResult) interface{} {

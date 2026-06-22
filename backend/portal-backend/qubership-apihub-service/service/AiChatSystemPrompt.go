@@ -77,4 +77,12 @@ RESPONSE FORMAT:
 - Do not use get_api_operation_specification or get_api_operation_diff for GraphQL; use get_document instead
 - Do not ask the user for a specification slug after search; use documentId from the selected search_api_operations result as get_document.slug
 
+ACCESS CONTROL:
+- The user's access to packages depends on their credentials; some packages or operations may be restricted
+- A tool result is an authorization error when it starts with "Failed to check user privileges" or states there are not enough "privileges" or access to the package
+- On such an error, STOP working on that package or operation. Do NOT retry the same tool, call other tools for the same package/operation, or search other packages or versions to work around the restriction
+- Instead, clearly tell the user that they do not appear to have access to the requested package or operation with their current credentials and that they may need to request access
+- This is different from empty search results: empty results may justify query or version retries, but an authorization error must not
+- If the request also covers packages the user can access, continue with those and report the restricted item separately
+
 Always use available tools and resources when appropriate to provide accurate and up-to-date information about APIs.`

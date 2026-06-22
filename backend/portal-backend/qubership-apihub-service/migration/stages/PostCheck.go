@@ -2,7 +2,7 @@ package stages
 
 import (
 	"fmt"
-	"strings"
+	"time"
 
 	mEntity "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/migration/entity"
 	"github.com/go-pg/pg/v10"
@@ -14,27 +14,12 @@ import (
 func (d OpsMigration) StagePostCheck() error {
 	// self-check
 
-	var wherePackageIn string
-	var whereVersionIn string
-	queryParams := make([]interface{}, 0)
-
-	if len(d.ent.PackageIds) > 0 {
-		wherePackageIn = " and v.package_id in (?) "
-		queryParams = append(queryParams, pg.In(d.ent.PackageIds))
+	actualBuilderVersion, err := d.getActualBuilderVersion()
+	if err != nil {
+		return fmt.Errorf("failed to determine actual builder version for post-check: %v", err.Error())
 	}
-
-	if len(d.ent.Versions) > 0 {
-		extractedVersions := make([]string, 0, len(d.ent.Versions))
-		for _, ver := range d.ent.Versions {
-			verSplit := strings.Split(ver, "@")
-			if len(verSplit) > 0 && verSplit[0] != "" {
-				extractedVersions = append(extractedVersions, verSplit[0])
-			}
-		}
-		if len(extractedVersions) > 0 {
-			whereVersionIn = " and v.version in (?) "
-			queryParams = append(queryParams, pg.In(extractedVersions))
-		}
+	if actualBuilderVersion == "" {
+		log.Warnf("Migration %s post-check: could not determine actual builder version, falling back to strict migration_id-only check", d.ent.Id)
 	}
 
 	postCheckResult := &mEntity.PostCheckResultEntity{
@@ -43,33 +28,18 @@ func (d OpsMigration) StagePostCheck() error {
 	}
 
 	if !d.ent.IsRebuildChangelogOnly {
-		notMigratedVersionsQuery := fmt.Sprintf(`
-			select v.package_id, v.version, v.revision, v.previous_version, v.previous_version_package_id from published_version v
-			inner join package_group pkg on v.package_id = pkg.id
-			where v.deleted_at is null and pkg.deleted_at is null
-			and (v.metadata is null or not (v.metadata \? 'migration_id') or v.metadata->>'migration_id' is distinct from '%s') %s %s`,
-			d.ent.Id, wherePackageIn, whereVersionIn)
-
+		query, params := makeNotMigratedVersionsQuery(d.ent.PackageIds, d.ent.Versions, d.ent.Id, d.ent.StartedAt, actualBuilderVersion)
 		_, err := withDBRetry(d, func() (orm.Result, error) {
-			return d.cp.GetConnection().QueryContext(d.migrationCtx, &postCheckResult.NotMigratedVersions, notMigratedVersionsQuery, queryParams...)
+			return d.cp.GetConnection().QueryContext(d.migrationCtx, &postCheckResult.NotMigratedVersions, query, params...)
 		})
 		if err != nil {
 			return fmt.Errorf("failed to query not migrated versions: %v", err.Error())
 		}
 	}
 
-	notMigratedComparisonsQuery := fmt.Sprintf(`
-		select v.package_id, v.version, v.revision, v.previous_package_id, v.previous_version, v.previous_revision from version_comparison v
-		inner join published_version pv1 on v.package_id=pv1.package_id and v.version=pv1.version and v.revision=pv1.revision
-		inner join published_version pv2 on v.previous_package_id=pv2.package_id and v.previous_version=pv2.version and v.previous_revision=pv2.revision
-		inner join package_group pg1 on v.package_id=pg1.id
-		inner join package_group pg2 on v.previous_package_id=pg2.id
-		where pv1.deleted_at is null and pv2.deleted_at is null and pg1.deleted_at is null and pg2.deleted_at is null
-		  and (v.metadata is null or not (v.metadata \? 'migration_id') or v.metadata->>'migration_id' is distinct from '%s') %s %s`,
-		d.ent.Id, wherePackageIn, whereVersionIn)
-
-	_, err := withDBRetry(d, func() (orm.Result, error) {
-		return d.cp.GetConnection().QueryContext(d.migrationCtx, &postCheckResult.NotMigratedComparisons, notMigratedComparisonsQuery, queryParams...)
+	cQuery, cParams := makeNotMigratedComparisonsQuery(d.ent.PackageIds, d.ent.Versions, d.ent.Id, d.ent.StartedAt, actualBuilderVersion)
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().QueryContext(d.migrationCtx, &postCheckResult.NotMigratedComparisons, cQuery, cParams...)
 	})
 	if err != nil {
 		return fmt.Errorf("failed to query not migrated comparisons: %v", err.Error())
@@ -90,4 +60,94 @@ func (d OpsMigration) StagePostCheck() error {
 		len(postCheckResult.NotMigratedVersions), len(postCheckResult.NotMigratedComparisons))
 
 	return nil
+}
+
+func (d OpsMigration) getActualBuilderVersion() (string, error) {
+	var query string
+	if d.ent.IsRebuildChangelogOnly {
+		query = `
+			select v.builder_version from version_comparison v
+			where v.metadata->>'migration_id' = ? and v.builder_version is not null
+			limit 1`
+	} else {
+		query = `
+			select v.metadata->>'builder_version' from published_version v
+			where v.metadata->>'migration_id' = ? and v.metadata \? 'builder_version'
+			limit 1`
+	}
+
+	var results []string
+	_, err := withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().QueryContext(d.migrationCtx, &results, query, d.ent.Id)
+	})
+	if err != nil {
+		return "", err
+	}
+	if len(results) == 0 {
+		return "", nil
+	}
+	return results[0], nil
+}
+
+func makeNotMigratedVersionsQuery(packageIds []string, versionsIn []string, migrationId string, startedAt time.Time, actualBuilderVersion string) (string, []interface{}) {
+	params := make([]interface{}, 0)
+	params = append(params, migrationId)
+
+	relaxClause := ""
+	if actualBuilderVersion != "" {
+		relaxClause = " and not (v.published_at > ? and v.metadata->>'builder_version' = ?) "
+		params = append(params, startedAt, actualBuilderVersion)
+	}
+
+	wherePackageIn, whereVersionIn := appendScopeFilters(&params, packageIds, versionsIn)
+
+	query := fmt.Sprintf(`
+		select v.package_id, v.version, v.revision, v.previous_version, v.previous_version_package_id from published_version v
+		inner join package_group pkg on v.package_id = pkg.id
+		where v.deleted_at is null and pkg.deleted_at is null
+		and (v.metadata is null or not (v.metadata \? 'migration_id') or v.metadata->>'migration_id' is distinct from ?)%s%s%s`,
+		relaxClause, wherePackageIn, whereVersionIn)
+	return query, params
+}
+
+func makeNotMigratedComparisonsQuery(packageIds []string, versionsIn []string, migrationId string, startedAt time.Time, actualBuilderVersion string) (string, []interface{}) {
+	params := make([]interface{}, 0)
+	params = append(params, migrationId)
+
+	relaxClause := ""
+	if actualBuilderVersion != "" {
+		relaxClause = " and not (v.last_active > ? and v.builder_version = ?) "
+		params = append(params, startedAt, actualBuilderVersion)
+	}
+
+	wherePackageIn, whereVersionIn := appendScopeFilters(&params, packageIds, versionsIn)
+
+	query := fmt.Sprintf(`
+		select v.package_id, v.version, v.revision, v.previous_package_id, v.previous_version, v.previous_revision from version_comparison v
+		inner join published_version pv1 on v.package_id=pv1.package_id and v.version=pv1.version and v.revision=pv1.revision
+		inner join published_version pv2 on v.previous_package_id=pv2.package_id and v.previous_version=pv2.version and v.previous_revision=pv2.revision
+		inner join package_group pg1 on v.package_id=pg1.id
+		inner join package_group pg2 on v.previous_package_id=pg2.id
+		where pv1.deleted_at is null and pv2.deleted_at is null and pg1.deleted_at is null and pg2.deleted_at is null
+		  and (v.metadata is null or not (v.metadata \? 'migration_id') or v.metadata->>'migration_id' is distinct from ?)%s%s%s`,
+		relaxClause, wherePackageIn, whereVersionIn)
+	return query, params
+}
+
+// appendScopeFilters appends optional package/version IN-filter parameters (aliased to "v") and returns the
+// matching SQL fragments. Both queries scope by the same package/version filters.
+func appendScopeFilters(params *[]interface{}, packageIds []string, versionsIn []string) (string, string) {
+	wherePackageIn := ""
+	if len(packageIds) > 0 {
+		wherePackageIn = " and v.package_id in (?) "
+		*params = append(*params, pg.In(packageIds))
+	}
+
+	whereVersionIn := ""
+	extractedVersions := extractVersions(versionsIn)
+	if len(extractedVersions) > 0 {
+		whereVersionIn = " and v.version in (?) "
+		*params = append(*params, pg.In(extractedVersions))
+	}
+	return wherePackageIn, whereVersionIn
 }

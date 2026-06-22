@@ -1,0 +1,187 @@
+lockfile_version: '1'
+generated_at: '2026-06-03T14:56:14.739069+00:00'
+apm_version: 0.16.0
+dependencies:
+- repo_url: Netcracker/qubership-ai-packages
+  host: github.com
+  resolved_commit: 785ac701be71e5f09f8857970c026d5f6bbbbb1a
+  virtual_path: agent-packages/english-developer-style
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/english-developer-style
+  - .claude/rules/english-developer-style.md
+  - .claude/skills/english-developer-style
+  - .cursor/rules/english-developer-style.mdc
+  - .github/instructions/english-developer-style.instructions.md
+  deployed_file_hashes:
+    .claude/rules/english-developer-style.md: sha256:71d5921cbb7e91db77b2ad7403714cc4d8471e3af7a974b850e9831df2ca25b9
+    .cursor/rules/english-developer-style.mdc: sha256:981d72b4b97f7b5fb861ea9beb32edef5746c8ed87419abaadc999e14861a6a9
+    .github/instructions/english-developer-style.instructions.md: sha256:9bd3f0ea1da9c84677b4d7e91126208b437bc93b82ea6c684e1d76db9e42abde
+  content_hash: sha256:107dd671a330a3afcb3bcce940afa130f5576c17840cee77d9fcefeb4550c68c
+- repo_url: _local/apihub-backend-developer
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/apihub-backend-developer
+  - .claude/rules/apihub-backend-developer.md
+  - .claude/skills/apihub-backend-developer
+  - .cursor/rules/apihub-backend-developer.mdc
+  - .github/instructions/apihub-backend-developer.instructions.md
+  deployed_file_hashes:
+    .claude/rules/apihub-backend-developer.md: sha256:ae96bb6d936cb107292053eb6fe87d81a59ef8cf0bf0a48f728cd7d80d1ebc2a
+    .cursor/rules/apihub-backend-developer.mdc: sha256:88e2335c110100e4b1b9eb8d1042d8824cbdf0a1864938a0c6cf349e42e40c6c
+    .github/instructions/apihub-backend-developer.instructions.md: sha256:4ec9cb4965eec545ac9a8663612b6b310b6127b824595cf0cb3156017507e204
+  source: local
+  local_path: ./agent-packages/apihub-backend-developer
+- repo_url: _local/apihub-backend-self-review
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/apihub-backend-self-review
+  - .claude/rules/apihub-backend-self-review.md
+  - .claude/skills/apihub-backend-self-review
+  - .cursor/rules/apihub-backend-self-review.mdc
+  - .github/instructions/apihub-backend-self-review.instructions.md
+  deployed_file_hashes:
+    .claude/rules/apihub-backend-self-review.md: sha256:2ffc9cdada7bcf1aae66c9abaf74273062193b46c51778e0a420de4a7aa4e2ae
+    .cursor/rules/apihub-backend-self-review.mdc: sha256:cc718c9c2e859657b790d250fa7d57da6952d78076c668021019438452984646
+    .github/instructions/apihub-backend-self-review.instructions.md: sha256:aaf6b5d673c54a9fe67719d4004e3db41207ac161781be4d1e3177d602f06397
+  source: local
+  local_path: ./agent-packages/apihub-backend-self-review
+- repo_url: _local/apihub-deployment-followup
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/apihub-deployment-followup
+  - .claude/rules/apihub-deployment-followup.md
+  - .claude/skills/apihub-deployment-followup
+  - .cursor/rules/apihub-deployment-followup.mdc
+  - .github/instructions/apihub-deployment-followup.instructions.md
+  deployed_file_hashes:
+    .claude/rules/apihub-deployment-followup.md: sha256:030ba53c457e5582407047552d95b58982f65188d042227ae07f22a9fe50e18c
+    .cursor/rules/apihub-deployment-followup.mdc: sha256:3e2060fa42d257f3e428a6b66615a58d84f8230c4398a552cfa2d9d3bdaa1773
+    .github/instructions/apihub-deployment-followup.instructions.md: sha256:3656950b40a216c5de698bb3cc6ef6d5d9016aedd9acb36393db55beaabcade6
+  source: local
+  local_path: ../qubership-apihub/agent-packages/apihub-deployment-followup
+- repo_url: _local/backend-conventions
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/backend-config-defaults.md
+  - .claude/rules/backend-db-migrations.md
+  - .claude/rules/backend-error-codes.md
+  - .claude/rules/backend-openapi-files.md
+  - .claude/rules/backend-service-wiring.md
+  - .cursor/rules/backend-config-defaults.mdc
+  - .cursor/rules/backend-db-migrations.mdc
+  - .cursor/rules/backend-error-codes.mdc
+  - .cursor/rules/backend-openapi-files.mdc
+  - .cursor/rules/backend-service-wiring.mdc
+  - .github/instructions/backend-config-defaults.instructions.md
+  - .github/instructions/backend-db-migrations.instructions.md
+  - .github/instructions/backend-error-codes.instructions.md
+  - .github/instructions/backend-openapi-files.instructions.md
+  - .github/instructions/backend-service-wiring.instructions.md
+  deployed_file_hashes:
+    .claude/rules/backend-config-defaults.md: sha256:47184010bcdb87818796a477b4541056af054331941fbecfa325317590fd646a
+    .claude/rules/backend-db-migrations.md: sha256:afc9d79ba447b39bccfa8baf6f246f6618e49a239ab12e27313aa29030fc4449
+    .claude/rules/backend-error-codes.md: sha256:9ecbab554991dfa028363c61a1a0098ff2b126c051645becbc7a1bf4ccac9a6c
+    .claude/rules/backend-openapi-files.md: sha256:cebd970ea38645fc0ae548094eadb396039fee1cdf871a0faf379b7f66114959
+    .claude/rules/backend-service-wiring.md: sha256:e52c1db52efb9680d9b386efed2b2991006c474dafbee9ddaad7bb3a29ef378f
+    .cursor/rules/backend-config-defaults.mdc: sha256:11e0cc4e77398843367929e033e5f307458aad62ed24e7798570449dac415d4a
+    .cursor/rules/backend-db-migrations.mdc: sha256:bab0f5c5b6a138346be27dc163a36adb9cfbf5640252fba3ac2cc755d74ce950
+    .cursor/rules/backend-error-codes.mdc: sha256:ca7fd3145301531860657195141c77960d617f05ffaafd321c194e64cac89fad
+    .cursor/rules/backend-openapi-files.mdc: sha256:b51d71c8f61fe15f61e7893bea725b19fad7f526725ffeffbc7476267052acf7
+    .cursor/rules/backend-service-wiring.mdc: sha256:1ed8acf571d72fb4983aad0af7e22cdcf080464ba31ab953d363f5c1ff9d7f2c
+    .github/instructions/backend-config-defaults.instructions.md: sha256:72a2d29eac0baf4d4c92a7042003dd38f2c5efc97c423ff65a43a0643bb299dd
+    .github/instructions/backend-db-migrations.instructions.md: sha256:9329437fddbfe9808b141e86257e4511c427ed57bfaaf2a1df466ec946daad22
+    .github/instructions/backend-error-codes.instructions.md: sha256:1d80d375ff40c642f056134f5c4360f52bc9adfcb5d5e90102cb74a4bb82ed90
+    .github/instructions/backend-openapi-files.instructions.md: sha256:1d5ce89d5186de4f5c34eb98faae3d7626623170001443acbc5108b850bb45d6
+    .github/instructions/backend-service-wiring.instructions.md: sha256:5d48745c1317a52c6388afba008780969998e869269b1e058ea3915b55c316d4
+  source: local
+  local_path: ./agent-packages/backend-conventions
+- repo_url: _local/development-conventions
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/ci-super-linter.md
+  - .claude/rules/clarify-before-coding.md
+  - .cursor/rules/ci-super-linter.mdc
+  - .cursor/rules/clarify-before-coding.mdc
+  - .github/instructions/ci-super-linter.instructions.md
+  - .github/instructions/clarify-before-coding.instructions.md
+  deployed_file_hashes:
+    .claude/rules/ci-super-linter.md: sha256:d655a548333e52a748113632665f810e3fb6084339852306aca90f02cfb4f0c7
+    .claude/rules/clarify-before-coding.md: sha256:a3e34e5277a4a3fba12fd6f236e921a59c561e6ee82e240eec247861aa8a398c
+    .cursor/rules/ci-super-linter.mdc: sha256:2f264db238d0d7ffd9d8b830dd383233c57b20e057557d65084fe3f0e7512967
+    .cursor/rules/clarify-before-coding.mdc: sha256:ceb003b39ea330002556d10d3ca52445909bbaf23705ff27f2643705db98c0f4
+    .github/instructions/ci-super-linter.instructions.md: sha256:7e8e2395715e9bd69ec938d4e106ec16d0e9256053c1562cf915a40bf33c7fe5
+    .github/instructions/clarify-before-coding.instructions.md: sha256:f0723cdf5b2cc34bc46992a6c550842f8eb9dcc5b39540c9916835a4ee58d60d
+  source: local
+  local_path: ../qubership-apihub-ci/agent-packages/development-conventions
+- repo_url: _local/github-ticket-implementation-planner
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/github-ticket-implementation-planner
+  - .claude/rules/github-ticket-implementation-planner.md
+  - .claude/skills/github-ticket-implementation-planner
+  - .cursor/rules/github-ticket-implementation-planner.mdc
+  - .github/instructions/github-ticket-implementation-planner.instructions.md
+  deployed_file_hashes:
+    .claude/rules/github-ticket-implementation-planner.md: sha256:4e13f07f0749bcfd778fe44899221bff81152ee83a90b74fc7dcfafff838353c
+    .cursor/rules/github-ticket-implementation-planner.mdc: sha256:67d9c2440bc50c68b21b1afd6aa25c0a8447db76bfa7c0a7898920a3cf297d20
+    .github/instructions/github-ticket-implementation-planner.instructions.md: sha256:e2770726d0d63444f1a2df2e848a46f29556cd638c22b5484bc21bdf5ac60264
+  source: local
+  local_path: ../qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
+- repo_url: _local/go-conventions
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/api-first-openapi.md
+  - .claude/rules/go-comments.md
+  - .claude/rules/go-constants-and-http.md
+  - .claude/rules/go-error-handling.md
+  - .claude/rules/go-migrations.md
+  - .claude/rules/sql-performance.md
+  - .cursor/rules/api-first-openapi.mdc
+  - .cursor/rules/go-comments.mdc
+  - .cursor/rules/go-constants-and-http.mdc
+  - .cursor/rules/go-error-handling.mdc
+  - .cursor/rules/go-migrations.mdc
+  - .cursor/rules/sql-performance.mdc
+  - .github/instructions/api-first-openapi.instructions.md
+  - .github/instructions/go-comments.instructions.md
+  - .github/instructions/go-constants-and-http.instructions.md
+  - .github/instructions/go-error-handling.instructions.md
+  - .github/instructions/go-migrations.instructions.md
+  - .github/instructions/sql-performance.instructions.md
+  deployed_file_hashes:
+    .claude/rules/api-first-openapi.md: sha256:2e28a945412a344a23f5900f4704ef6a6a7ceedb0c599056ba09e63432a7bab4
+    .claude/rules/go-comments.md: sha256:57c3326eed8a055caaad74c140917c078778ff04f562cba845d22df63e98b582
+    .claude/rules/go-constants-and-http.md: sha256:f8d52303334e63092309d62e29085321b32a8bb8c4bce8ca38cd79af56f43a69
+    .claude/rules/go-error-handling.md: sha256:61407348b5d86d8e2cf730816c13d04e7fdea3a20be38a5b3405b01a6ce71cb2
+    .claude/rules/go-migrations.md: sha256:1d3e486379993f6fe68d2f4b53f3e2207154988a09b9c1c5ab98659a910edc88
+    .claude/rules/sql-performance.md: sha256:d826f635a958a4e5295a5e3e30f9fe61844a77e987a6d474308083985a91c1af
+    .cursor/rules/api-first-openapi.mdc: sha256:1ec7880c515db06e1d852395d7d8a5728bce08b20b9e1087115a03956d73bcb7
+    .cursor/rules/go-comments.mdc: sha256:f8e9df333a575ef38519b7415f0301235563fdd3dc18867b49dfbc8690de3fca
+    .cursor/rules/go-constants-and-http.mdc: sha256:778efcf145d35ccc3314f68cf0d54e33c1f13ef0ba4a19e809b4b24be80fc9bb
+    .cursor/rules/go-error-handling.mdc: sha256:9c084d61f2b27040a50c277a481232b00ecfd62b7b6da8b6aa7c86aaa184ba6c
+    .cursor/rules/go-migrations.mdc: sha256:79ab6bc7ae81f74719b4ccfbc9b5ce2146ee7ef1c58f47031cf2a742a9765297
+    .cursor/rules/sql-performance.mdc: sha256:b8748ddf13e089c63529ae6423a7fb930a8cfae4160c3366e276c6bf4fac5138
+    .github/instructions/api-first-openapi.instructions.md: sha256:a0fa42fb75fa89eac5e37da4d960015ee1bbb22b3a1fc4beb94007371de10176
+    .github/instructions/go-comments.instructions.md: sha256:87f198201fb384206af8d4e2827c53c7133fa3de4d5e267834e2f5f273ccf2b9
+    .github/instructions/go-constants-and-http.instructions.md: sha256:0854f8fba840ec10b8ddf51af627208801578ea419be6d2e3ff4faa51ea68640
+    .github/instructions/go-error-handling.instructions.md: sha256:f5d8a30e9ed725693ba229392fae6d77576cdb59c4e077070902062627814251
+    .github/instructions/go-migrations.instructions.md: sha256:3a1da7a929ec634031ca03eee095b3272c0e9d5216d579a46d95cf4b6fcf68fc
+    .github/instructions/sql-performance.instructions.md: sha256:7bbfae4b968dd1f2cc024d8e28bf5df5acc188ee24d53f460ab916f19f2df069
+  source: local
+  local_path: ../qubership-apihub-ci/agent-packages/go-conventions
+- repo_url: _local/postman-e2e-followup
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/postman-e2e-followup
+  - .claude/rules/postman-e2e-followup.md
+  - .claude/skills/postman-e2e-followup
+  - .cursor/rules/postman-e2e-followup.mdc
+  - .github/instructions/postman-e2e-followup.instructions.md
+  deployed_file_hashes:
+    .claude/rules/postman-e2e-followup.md: sha256:743ba7b72423e1b25c811b49c877560340968df1798445da252ab801daf02f2f
+    .cursor/rules/postman-e2e-followup.mdc: sha256:0eba51ee5735acec9b28940b538783823475bb8cfb0c5755148c78422f6850e0
+    .github/instructions/postman-e2e-followup.instructions.md: sha256:0234737d815eeb9dc06891e2017a054e5d5494e6e5add828c3ac86988595e115
+  source: local
+  local_path: ../qubership-apihub-postman-collections/agent-packages/postman-e2e-followup
