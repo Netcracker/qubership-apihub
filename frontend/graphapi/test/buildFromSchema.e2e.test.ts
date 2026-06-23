@@ -1,4 +1,4 @@
-import YAML from 'js-yaml'
+import { parse } from 'yaml'
 
 import { buildSchema, getIntrospectionQuery, graphqlSync } from 'graphql'
 import { buildFromIntrospection, buildFromSchema, GRAPH_API_VERSION } from '../src'
@@ -28,7 +28,7 @@ describe('Build GraphApi', () => {
     const schema = buildSchema(source, { noLocation: true })
     const graphapi = buildFromSchema(schema)
 
-    const example = YAML.load(loadFile('example.yaml')) as object
+    const example = parse(loadFile('example.yaml')) as object
 
     expect(graphapi).toMatchObject(example)
   })
@@ -42,7 +42,7 @@ describe('Build GraphApi', () => {
     }).data
     const graphapi = buildFromIntrospection(introspection)
 
-    const example = YAML.load(loadFile('example.yaml')) as any
+    const example = parse(loadFile('example.yaml')) as any
 
     delete example.queries.todos.directives
 
