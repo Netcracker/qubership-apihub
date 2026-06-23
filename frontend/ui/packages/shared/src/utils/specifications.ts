@@ -17,7 +17,8 @@
 import type { JSONSchema } from '@stoplight/spectral-core'
 import type { ILocation } from '@stoplight/types'
 import { getLocationForJsonPath, parseWithPointers } from '@stoplight/yaml'
-import { dump, type DumpOptions } from 'js-yaml'
+import { Document, visit, Scalar } from 'yaml'
+import { stringifyYaml } from '@netcracker/qubership-apihub-api-processor'
 import type { Key } from './types'
 import { loadYaml } from '@netcracker/qubership-apihub-api-unifier'
 
@@ -210,11 +211,17 @@ export function decodeKey(key: Key): Key {
 }
 
 export function toYaml(value: unknown): string | null {
-  let yaml: string | null
   try {
-    yaml = dump(value, { noRefs: true } as DumpOptions)
+    const doc = new Document(value)
+    visit(doc, {
+      Scalar(_, node) {
+        if (typeof node.value === 'string' && node.value.includes('\n')) {
+          node.type = Scalar.BLOCK_LITERAL
+        }
+      },
+    })
+    return stringifyYaml(doc)
   } catch (e) {
-    yaml = null
+    return null
   }
-  return yaml
 }

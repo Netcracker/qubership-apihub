@@ -6,7 +6,7 @@ import { JSON_FILE_FORMAT, YAML_FILE_FORMAT } from '@netcracker/qubership-apihub
 import type { SpecItemUri } from '@netcracker/qubership-apihub-ui-shared/utils/specifications'
 import { encodeKey } from '@netcracker/qubership-apihub-ui-shared/utils/specifications'
 import { safeParse } from '@stoplight/json'
-import { dump } from 'js-yaml'
+import { stringifyYaml } from '@netcracker/qubership-apihub-api-processor'
 import type { OriginalDocumentFileFormat } from '../types'
 import type { RulesetMetadata } from '@apihub/entities/api-quality/rulesets'
 
@@ -45,7 +45,7 @@ export function transformRawDocumentByFormat(
     case JSON_FILE_FORMAT:
       return JSON.stringify(parsed, null, 2)
     case YAML_FILE_FORMAT:
-      return dump(parsed)
+      return stringifyYaml(parsed)
     default:
       return value
   }
