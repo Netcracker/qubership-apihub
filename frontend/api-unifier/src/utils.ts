@@ -21,7 +21,7 @@ import {
 } from './types'
 import { JSON_SCHEMA_PROPERTY_REF } from './rules/jsonschema.const'
 import { copyOrigins, copyProperty, resolveOrigins, setOriginsForArray } from './origins'
-import { JSON_SCHEMA, load } from 'js-yaml'
+import { parse } from 'yaml'
 import {
   JSON_SCHEMA_SPEC_TYPES,
   OPEN_API_SPEC_TYPES,
@@ -493,8 +493,8 @@ export function mergePatchWithOrigins(
   copyOrigins(patch, target, propertyKey, propertyKey, originsFlag)
 }
 
-export function loadYaml(file: string) {
-  return load(file, { schema: JSON_SCHEMA })
+export function loadYaml(file: string): unknown {
+  return parse(file)
 }
 
 export function determineSpecTypeFamily(specType: SpecType): SpecTypeFamily {
