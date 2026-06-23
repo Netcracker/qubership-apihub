@@ -16,7 +16,7 @@
 
 import { AsyncApiOperationDiffsViewer } from '@apihub/components/AsyncApiOperationViewer/AsyncApiOperationDiffsViewer';
 import type { Meta, StoryObj } from '@storybook/react';
-import YAML from 'js-yaml';
+import { parse } from 'yaml';
 import type { ComponentProps } from 'react';
 import { TEST_DIFF_META_KEYS } from './async-api-diffs-suite/shared-test-data';
 import { TEST_REFERENCE_NAME_PROPERTY } from './async-api-suite/shared-test-data';
@@ -39,7 +39,7 @@ const parseSourceText = (sourceText: string): Record<string, unknown> => {
 
   try {
     if (!parsedSource) {
-      parsedSource = YAML.load(sourceText)
+      parsedSource = parse(sourceText)
     }
   } catch (error) {
     console.error('Cannot parse YAML:', error)

@@ -1,4 +1,4 @@
-import YAML from "js-yaml";
+import { parse } from "yaml";
 
 export const parseYamlSource = (sourceText: string): Record<string, unknown> => {
   let parsedSource: unknown = undefined;
@@ -12,7 +12,7 @@ export const parseYamlSource = (sourceText: string): Record<string, unknown> => 
 
   try {
     if (!parsedSource) {
-      parsedSource = YAML.load(sourceText);
+      parsedSource = parse(sourceText);
     }
   } catch (error) {
     console.error("Cannot parse YAML:", error);

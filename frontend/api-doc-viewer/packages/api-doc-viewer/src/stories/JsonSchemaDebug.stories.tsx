@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { JsonSchemaViewer } from '../components/JsonSchemaViewer/JsonSchemaViewer';
 import { prepareJsonSchema, REQUEST_BODY_TARGET } from './preprocess';
 import { ComponentProps } from 'react';
-import YAML from 'js-yaml';
+import { parse } from 'yaml';
 import { isObject } from '@netcracker/qubership-apihub-json-crawl';
 
 type StoryArgs = ComponentProps<typeof JsonSchemaViewer> & {
@@ -72,7 +72,7 @@ function parseJsonOrYaml(text: string): unknown {
   }
   try {
     if (!parsed) {
-      parsed = YAML.load(text)
+      parsed = parse(text)
     }
   } catch (error) {
     console.error('Cannot parse YAML:', error)

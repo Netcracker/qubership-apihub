@@ -16,7 +16,7 @@
 
 import { AsyncApiOperationViewer } from '@apihub/components/AsyncApiOperationViewer/AsyncApiOperationViewer';
 import type { Meta, StoryObj } from '@storybook/react';
-import YAML from 'js-yaml';
+import { parse } from 'yaml';
 import type { ComponentProps } from 'react';
 import { TEST_REFERENCE_NAME_PROPERTY } from './async-api-suite/shared-test-data';
 import { prepareAsyncApiDocument } from './preprocess';
@@ -102,7 +102,7 @@ export const Debug: Story = {
     }
     try {
       if (!parsedSource) {
-        parsedSource = YAML.load(sourceText)
+        parsedSource = parse(sourceText)
       }
     } catch (error) {
       console.error('Cannot parse YAML:', error)
