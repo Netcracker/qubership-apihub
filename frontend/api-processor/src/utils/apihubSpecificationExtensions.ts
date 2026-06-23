@@ -22,7 +22,7 @@ import {
   SPECIFICATION_EXTENSION_PREFIX,
 } from '../consts'
 import { API_AUDIENCE_EXTERNAL, API_AUDIENCE_INTERNAL, API_AUDIENCE_UNKNOWN, ApiAudience } from '../types'
-import YAML from 'js-yaml'
+import { stringifyYaml } from './export'
 
 export type CustomTags = Record<string, unknown>
 
@@ -73,7 +73,7 @@ type TextBlobConstructorParameters = [[string], BlobPropertyBag]
  */
 export const dump = (value: unknown, format: typeof FILE_FORMAT_YAML | typeof FILE_FORMAT_JSON): TextBlobConstructorParameters => {
   if (format === FILE_FORMAT_YAML) {
-    return [[YAML.dump(value)], { type: 'application/yaml' }]
+    return [[stringifyYaml(value)], { type: 'application/yaml' }]
   }
   if (format === FILE_FORMAT_JSON) {
     return [[JSON.stringify(value, undefined, 2)], { type: 'application/json' }]

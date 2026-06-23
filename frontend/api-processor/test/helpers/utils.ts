@@ -37,7 +37,7 @@ import { LocalRegistry, VersionOverrideRegistry } from './registry'
 import { Editor } from './editor'
 import { getFileExtension, normalizeGraphQL, parseGraphQLSource, takeIfDefined } from '../../src/utils'
 import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
-import YAML from 'js-yaml'
+import { parse } from 'yaml'
 import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
 
 /**
@@ -398,7 +398,7 @@ export const cloneDocument = <T>(value: T): T => JSON.parse(JSON.stringify(value
 export const loadYamlFile = async <T>(relativePath: string): Promise<T> => {
   const filePath = path.join(process.cwd(), 'test/projects', relativePath)
   const content = await fs.readFile(filePath, 'utf8')
-  return YAML.load(content) as T
+  return parse(content) as T
 }
 
 export function parseAndNormalizeGraphQLSchema(sdl: string): { source: GraphApiSchema; normalized: GraphApiSchema } {

@@ -29,3 +29,4 @@ export {
   removeComponents,
 } from './utils'
 export { convertDtoFieldOperationTypes, replacePropertyInChangesSummary } from './utils/transformToDto'
+export { stringifyYaml } from './utils/export'

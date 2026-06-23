@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import YAML from 'js-yaml'
+import { parse as  parseYaml} from 'yaml'
 import type { Parser, ParseOutput, Diagnostic } from '@asyncapi/parser'
 
 import { ASYNC_DOCUMENT_TYPE, ASYNC_FILE_FORMAT } from './async.consts'
@@ -55,7 +55,7 @@ function detectFormat(extension: string, sourceString: string): FormatInfo | und
     if (ASYNCAPI_3_YAML_PATTERN.test(sourceString)) {
       return {
         format: ASYNC_FILE_FORMAT.YAML,
-        parse: (s) => YAML.load(s) as AsyncAPIV3.AsyncAPIObject,
+        parse: (s) => parseYaml(s) as AsyncAPIV3.AsyncAPIObject,
       }
     }
   }

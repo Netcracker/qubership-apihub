@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as YAML from 'js-yaml'
+import { stringifyYaml } from '../../../src'
 
 import {
   BuildConfig,
@@ -112,7 +112,7 @@ export class Editor {
   async updateYamlFile(fileId: string, modifier: (obj: any) => any): Promise<void> {
     return this.updateTextFile(fileId, (data: string) => {
       const parsedData = loadYaml(data)
-      return YAML.dump(modifier(parsedData))
+      return stringifyYaml(modifier(parsedData))
     })
   }
 

@@ -15,8 +15,14 @@
  */
 import { _TemplateResolver, ExportDocument, FileFormat } from '../types'
 import { getDocumentTitle } from './document'
-import YAML from 'js-yaml'
+import { stringify } from 'yaml'
 import { FILE_FORMAT_GRAPHQL, FILE_FORMAT_JSON, FILE_FORMAT_YAML } from '../consts'
+
+const YAML_STRINGIFY_OPTIONS = { aliasDuplicateObjects: false, lineWidth: 0, singleQuote: true } as const
+
+export function stringifyYaml(value: unknown): string {
+  return stringify(value, YAML_STRINGIFY_OPTIONS)
+}
 
 export async function createCommonStaticExportDocuments(packageName: string, version: string, templateResolver: _TemplateResolver): Promise<ExportDocument[]> {
   return [
@@ -107,7 +113,7 @@ export const dump = (
 ): TextBlobConstructorParameters => {
   switch (format) {
     case FILE_FORMAT_YAML:
-      return [[YAML.dump(value)], { type: 'application/yaml' }]
+      return [[stringifyYaml(value)], { type: 'application/yaml' }]
 
     case FILE_FORMAT_JSON:
       return [[JSON.stringify(value, undefined, 2)], { type: 'application/json' }]
