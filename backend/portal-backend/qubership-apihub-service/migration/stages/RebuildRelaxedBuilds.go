@@ -6,6 +6,7 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	mView "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/migration/view"
 	"github.com/go-pg/pg/v10"
+	log "github.com/sirupsen/logrus"
 )
 
 func (d OpsMigration) StageRebuildRelaxedBuilds() error {
@@ -21,7 +22,8 @@ func (d OpsMigration) StageRebuildRelaxedBuilds() error {
 		return fmt.Errorf("migration %s stage %s (versions): %w", d.ent.Id, mView.MigrationStageRebuildRelaxedBuilds, err)
 	}
 	if vCount > 0 {
-		_, err = d.waitForBuilds(mView.MigrationStageRebuildRelaxedBuilds, 2)
+		log.Infof("migration %s stage %s: %d relaxed version builds found", d.ent.Id, mView.MigrationStageRebuildRelaxedBuilds, vCount)
+		_, err = d.waitForBuilds(mView.MigrationStageRebuildRelaxedBuilds, 1)
 		if err != nil {
 			return err
 		}
@@ -34,7 +36,8 @@ func (d OpsMigration) StageRebuildRelaxedBuilds() error {
 		return fmt.Errorf("migration %s stage %s (comparisons): %w", d.ent.Id, mView.MigrationStageRebuildRelaxedBuilds, err)
 	}
 	if cCount > 0 {
-		_, err = d.waitForBuilds(mView.MigrationStageRebuildRelaxedBuilds, 3)
+		log.Infof("migration %s stage %s: %d relaxed comparisons found", d.ent.Id, mView.MigrationStageRebuildRelaxedBuilds, vCount)
+		_, err = d.waitForBuilds(mView.MigrationStageRebuildRelaxedBuilds, 1)
 		if err != nil {
 			return err
 		}
@@ -64,7 +67,6 @@ func makeRelaxedVersionsQuery(packageIds []string, versionsIn []string, migratio
 		SELECT pv.* FROM published_version pv
 		INNER JOIN package_group pkg ON pv.package_id = pkg.id
 		WHERE pv.deleted_at IS NULL AND pkg.deleted_at IS NULL
-		  AND pkg.kind = '%s'
 		  AND (pv.metadata \? '%s' OR pv.metadata \? '%s')
 		  %s
 		  %s
@@ -77,7 +79,6 @@ func makeRelaxedVersionsQuery(packageIds []string, versionsIn []string, migratio
 		        AND b.metadata->>'migration_id' = '%s'
 		        AND b.metadata->>'migration_stage' = '%s'
 		  )`,
-		entity.KIND_PACKAGE,
 		entity.PREVIOUS_VERSION_BUILDER_VERSION_KEY,
 		entity.CURRENT_VERSION_BUILDER_VERSION_KEY,
 		wherePackageIn,

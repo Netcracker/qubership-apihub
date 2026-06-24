@@ -163,7 +163,11 @@ func (j *ephemeralFilesCleanupJob) Run() {
 		if rmFs > 0 {
 			metrics.EphemeralFileCleanupDeleted.WithLabelValues("fs").Add(float64(rmFs))
 		}
-		log.Infof("[EphemeralFileCleanup] job %s done: removedFromDB=%d unlinked=%d errors=%d", jobID, rmDb, rmFs, errs)
+		if rmDb > 0 || rmFs > 0 {
+			log.Infof("[EphemeralFileCleanup] job %s done: removedFromDB=%d unlinked=%d errors=%d", jobID, rmDb, rmFs, errs)
+		} else {
+			log.Tracef("[EphemeralFileCleanup] job %s done: removedFromDB=%d unlinked=%d errors=%d", jobID, rmDb, rmFs, errs)
+		}
 		return nil
 	})
 	if err == errEphemeralFileCleanupLockBusy {
