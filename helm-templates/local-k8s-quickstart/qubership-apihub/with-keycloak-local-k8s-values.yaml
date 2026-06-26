@@ -8,7 +8,10 @@ qubershipApihubBackend:
       request: "100m"
       limit: "1"
     memory:
-     limit: "512Mi"
+      limit: "512Mi"
+  customCa:
+    enabled: false
+    secretName: ''
   env:
     logLevel: ''
     database:
@@ -48,8 +51,8 @@ qubershipApihubBuildTaskConsumer:
       request: "100m"
       limit: "1.25"
     memory:
-     limit: "4200Mi"
-     request: "750Mi"
+      limit: "4200Mi"
+      request: "750Mi"
   env:
     operationsBuildBatch: "16"
     logLevel: ''
@@ -65,8 +68,8 @@ qubershipApihubUi:
       request: "30m"
       limit: "1"
     memory:
-     limit: "64Mi"
-     request: "64Mi"
+      limit: "64Mi"
+      request: "64Mi"
   env:
     apihubBackendAddress: 'qubership-apihub-backend:8080'
     apihubNcServiceAddress: 'qubership-apihub-backend.qubership-apihub.svc.cluster.local.:8080'
@@ -88,13 +91,16 @@ qubershipApiLinterService:
     repository: 'ghcr.io/netcracker/qubership-api-linter-service'
     tag: 'dev'
   replicas: 1
+  customCa:
+    enabled: false
+    secretName: ''
   resource:
     cpu:
       request: "30m"
       limit: "1.25"
     memory:
-     request: "150Mi"
-     limit: "1000Mi"
+      request: "150Mi"
+      limit: "1000Mi"
   env:
     logLevel: 'INFO'
     database:
@@ -128,6 +134,9 @@ qubershipApihubAgentsBackend:
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-agents-backend'
     tag: 'dev'
+  customCa:
+    enabled: false
+    secretName: ''
   replicas: 1
   resource:
     memory:
