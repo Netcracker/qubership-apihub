@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security/idp"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
@@ -85,7 +86,13 @@ func (i *idpManagerImpl) createOIDCProvider(idpConfig idp.IDP, userService servi
 		return nil, fmt.Errorf("OIDC configuration is invalid")
 	}
 
-	ctx := context.Background()
+	// Create a secure HTTP client for OIDC discovery
+	httpClient, err := createSecureHTTPClient()
+	if err != nil {
+		return nil, fmt.Errorf("create secure HTTP client for OIDC discovery: %w", err)
+	}
+	ctx := oidc.ClientContext(context.Background(), httpClient)
+
 	provider, err := oidc.NewProvider(ctx, idpConfig.OIDCConfiguration.ProviderURL)
 	if err != nil {
 		log.Errorf("Failed to create OIDC provider: %v", err)
@@ -177,9 +184,11 @@ func CreateSAMLInstance(idpId string, samlConfig *idp.SAMLConfiguration) (*samls
 		return nil, err
 	}
 
-	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
-	idpMetadata, err := samlsp.FetchMetadata(context.Background(), &cl, *idpMetadataURL)
+	httpClient, err := createSecureHTTPClient()
+	if err != nil {
+		return nil, fmt.Errorf("create secure HTTP client for SAML metadata: %w", err)
+	}
+	idpMetadata, err := samlsp.FetchMetadata(context.Background(), httpClient, *idpMetadataURL)
 
 	if err != nil {
 		log.Errorf("idpMetadata error - %s", err)
@@ -217,4 +226,15 @@ func CreateSAMLInstance(idpId string, samlConfig *idp.SAMLConfiguration) (*samls
 	}
 	log.Infof("SAML instance initialized")
 	return samlSP, nil
+}
+
+// createSecureHTTPClient creates an HTTP client with secure TLS configuration
+// for use in OIDC provider discovery and SAML metadata fetching
+func createSecureHTTPClient() (*http.Client, error) {
+	tlsConfig, err := utils.BuildSecureTLSConfig(nil)
+	if err != nil {
+		return nil, err
+	}
+	tr := http.Transport{TLSClientConfig: tlsConfig}
+	return &http.Client{Transport: &tr, Timeout: time.Second * 60}, nil
 }

@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"crypto/tls"
 	"io"
 	"net/http"
 	"net/url"
@@ -20,10 +19,14 @@ type ProxyController interface {
 	Proxy(w http.ResponseWriter, req *http.Request)
 }
 
-func NewPlaygroundProxyController(systemInfoService service.SystemInfoService) ProxyController {
+func NewPlaygroundProxyController(systemInfoService service.SystemInfoService) (ProxyController, error) {
+	tlsConfig, err := utils.BuildSecureTLSConfig(nil)
+	if err != nil {
+		return nil, err
+	}
 	return &playgroundProxyControllerImpl{
-		tr:                http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
-		systemInfoService: systemInfoService}
+		tr:                http.Transport{TLSClientConfig: tlsConfig},
+		systemInfoService: systemInfoService}, nil
 }
 
 type playgroundProxyControllerImpl struct {

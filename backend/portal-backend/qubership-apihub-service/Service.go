@@ -78,6 +78,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	if err := utils.ValidateTLSAtStartup(); err != nil {
+		log.Fatalf("TLS configuration failed: %v", err)
+	}
 	basePath := systemInfoService.GetBasePath()
 
 	// Create router and server to expose live and ready endpoints during initialization
@@ -332,7 +335,10 @@ func main() {
 	apihubApiKeyController := controller.NewApihubApiKeyController(apihubApiKeyService, roleService)
 	cleanupController := controller.NewCleanupController(cleanupService)
 
-	playgroundProxyController := controller.NewPlaygroundProxyController(systemInfoService)
+	playgroundProxyController, err := controller.NewPlaygroundProxyController(systemInfoService)
+	if err != nil {
+		log.Fatalf("Failed to create PlaygroundProxyController: %v", err)
+	}
 	publishV2Controller := controller.NewPublishV2Controller(buildService, publishedService, buildResultService, roleService, systemInfoService)
 	exportController := controller.NewExportController(publishedService, portalService, roleService, excelService, versionService, monitoringService, exportService, packageService)
 
