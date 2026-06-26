@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Netcracker/qubership-api-linter-service/utils"
 	"github.com/Netcracker/qubership-api-linter-service/view"
 	"github.com/invopop/jsonschema"
 	"github.com/openai/openai-go/v3"
@@ -62,9 +62,13 @@ func NewOpenaiClient(apiKey string, model string, proxy string, rateLimitRPS flo
 		openAIModel = openai.ChatModelGPT5
 	}
 
+	tlsConfig, err := utils.BuildSecureTLSConfig(nil)
+	if err != nil {
+		return nil, fmt.Errorf("build TLS config: %w", err)
+	}
 	tr := http.Transport{
 		Dial:                  dialTimeout,
-		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig:       tlsConfig,
 		TLSHandshakeTimeout:   time.Second * 1800,
 		IdleConnTimeout:       time.Second * 1800,
 		ResponseHeaderTimeout: time.Second * 1800,

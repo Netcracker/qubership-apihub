@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/Netcracker/qubership-api-linter-service/exception"
 	"github.com/Netcracker/qubership-api-linter-service/secctx"
+	"github.com/Netcracker/qubership-api-linter-service/utils"
 	"github.com/Netcracker/qubership-api-linter-service/view"
 
 	"time"
@@ -46,7 +46,7 @@ type ApihubClient interface {
 	GetSystemInfo(ctx context.Context) (*view.ApihubSystemInfo, error)
 }
 
-func NewApihubClient(apihubUrl, accessToken string) ApihubClient {
+func NewApihubClient(apihubUrl, accessToken string) (ApihubClient, error) {
 	parsedApihubUrl, err := url.Parse(apihubUrl)
 	apihubHost := ""
 	if err != nil {
@@ -55,14 +55,16 @@ func NewApihubClient(apihubUrl, accessToken string) ApihubClient {
 		apihubHost = parsedApihubUrl.Hostname()
 	}
 
-	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
-	client := resty.NewWithClient(&cl)
+	cl, err := newSecureHTTPClient(time.Second * 60)
+	if err != nil {
+		return nil, fmt.Errorf("create APIHUB HTTP client: %w", err)
+	}
+	client := resty.NewWithClient(cl)
 	if apihubHost != "" {
 		client.SetRedirectPolicy(resty.DomainCheckRedirectPolicy(apihubHost))
 	}
 
-	return &apihubClientImpl{apihubUrl: apihubUrl, accessToken: accessToken, apiHubHost: apihubHost, client: client}
+	return &apihubClientImpl{apihubUrl: apihubUrl, accessToken: accessToken, apiHubHost: apihubHost, client: client}, nil
 }
 
 type apihubClientImpl struct {
@@ -73,10 +75,12 @@ type apihubClientImpl struct {
 }
 
 func (a apihubClientImpl) GetApiKeyByKey(apiKey string) (*view.ApihubApiKeyView, error) {
-	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
+	cl, err := newSecureHTTPClient(time.Second * 60)
+	if err != nil {
+		return nil, err
+	}
 
-	client := resty.NewWithClient(&cl)
+	client := resty.NewWithClient(cl)
 	req := client.R()
 
 	req.SetHeader("api-key", apiKey)
@@ -496,10 +500,12 @@ func (a apihubClientImpl) GetOperationWithData(ctx context.Context, packageId, v
 }
 
 func (a apihubClientImpl) CheckAuthToken(ctx context.Context, token string) (bool, error) {
-	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
+	cl, err := newSecureHTTPClient(time.Second * 60)
+	if err != nil {
+		return false, err
+	}
 
-	client := resty.NewWithClient(&cl)
+	client := resty.NewWithClient(cl)
 	req := client.R()
 	req.SetContext(ctx)
 	req.SetHeader("Cookie", fmt.Sprintf("%s=%s", view.AccessTokenCookieName, token))
@@ -515,10 +521,12 @@ func (a apihubClientImpl) CheckAuthToken(ctx context.Context, token string) (boo
 }
 
 func (a apihubClientImpl) GetUserByPAT(ctx context.Context, token string) (*view.User, error) {
-	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
+	cl, err := newSecureHTTPClient(time.Second * 60)
+	if err != nil {
+		return nil, err
+	}
 
-	client := resty.NewWithClient(&cl)
+	client := resty.NewWithClient(cl)
 	req := client.R()
 	req.SetContext(ctx)
 	req.SetHeader("X-Personal-Access-Token", token)
@@ -541,10 +549,12 @@ func (a apihubClientImpl) GetUserByPAT(ctx context.Context, token string) (*view
 }
 
 func (a apihubClientImpl) GetPatByPAT(ctx context.Context, token string) (*view.PersonalAccessTokenExtAuthView, error) {
-	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
+	cl, err := newSecureHTTPClient(time.Second * 60)
+	if err != nil {
+		return nil, err
+	}
 
-	client := resty.NewWithClient(&cl)
+	client := resty.NewWithClient(cl)
 	req := client.R()
 	req.SetContext(ctx)
 	req.SetHeader("X-Personal-Access-Token", token)
@@ -601,6 +611,15 @@ func (a apihubClientImpl) GetSystemInfo(ctx context.Context) (*view.ApihubSystem
 		return nil, err
 	}
 	return &config, nil
+}
+
+func newSecureHTTPClient(timeout time.Duration) (*http.Client, error) {
+	tlsConfig, err := utils.BuildSecureTLSConfig(nil)
+	if err != nil {
+		return nil, err
+	}
+	tr := http.Transport{TLSClientConfig: tlsConfig}
+	return &http.Client{Transport: &tr, Timeout: timeout}, nil
 }
 
 func (a apihubClientImpl) makeRequest(ctx context.Context) *resty.Request {
