@@ -61,6 +61,9 @@ func main() {
 		log.Error("Failed to read system info: " + err.Error())
 		panic("Failed to read system info: " + err.Error())
 	}
+	if err := utils.ValidateTLSAtStartup(); err != nil {
+		log.Fatalf("TLS configuration failed: %v", err)
+	}
 
 	var paasCl paasService.PlatformService
 	stubPm := os.Getenv("STUB_PM")
@@ -77,8 +80,14 @@ func main() {
 		}
 	}
 
-	apihubClient := client.NewApihubClient(systemInfoService.GetApihubUrl(), systemInfoService.GetAccessToken(), systemInfoService.GetCloudName())
-	agentsBackendClient := client.NewAgentsBackendClient(systemInfoService.GetApihubUrl(), systemInfoService.GetAccessToken())
+	apihubClient, err := client.NewApihubClient(systemInfoService.GetApihubUrl(), systemInfoService.GetAccessToken(), systemInfoService.GetCloudName())
+	if err != nil {
+		panic(fmt.Sprintf("Can't create APIHUB client: %s", err.Error()))
+	}
+	agentsBackendClient, err := client.NewAgentsBackendClient(systemInfoService.GetApihubUrl(), systemInfoService.GetAccessToken())
+	if err != nil {
+		panic(fmt.Sprintf("Can't create agents-backend client: %s", err.Error()))
+	}
 
 	disablingSerivce := service.NewDisablingService()
 	namespaceListCache := service.NewNamespaceListCache(systemInfoService.GetCloudName(), paasCl, systemInfoService.GetNamespacesCacheTTL())
@@ -96,7 +105,10 @@ func main() {
 	namespaceController := controller.NewNamespaceController(namespaceListCache)
 	serviceController := controller.NewServiceController(serviceListCache, discoveryService, listService)
 	documentController := controller.NewDocumentController(documentService)
-	serviceProxyController := controller.NewServiceProxyController(discoveryService)
+	serviceProxyController, err := controller.NewServiceProxyController(discoveryService)
+	if err != nil {
+		panic(fmt.Sprintf("Can't create service proxy controller: %s", err.Error()))
+	}
 	apiDocsController := controller.NewApiDocsController(systemInfoService.GetBasePath())
 	cloudController := controller.NewCloudController(cloudService)
 	routesController := controller.NewRoutesController(routesService)

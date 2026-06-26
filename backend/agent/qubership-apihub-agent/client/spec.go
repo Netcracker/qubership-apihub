@@ -12,7 +12,10 @@ import (
 )
 
 func GetRawGraphqlIntrospectionFromUrl(url string, timeout time.Duration) ([]byte, error) {
-	client := utils.MakeDiscoveryHttpClient(timeout)
+	client, err := utils.MakeDiscoveryHttpClient(timeout)
+	if err != nil {
+		return nil, err
+	}
 
 	start := time.Now()
 	req, err := http.NewRequest(http.MethodPost, url, nil)
@@ -46,7 +49,10 @@ func GetRawGraphqlIntrospectionFromUrl(url string, timeout time.Duration) ([]byt
 }
 
 func GetRawDocumentFromUrl(url, documentType string, timeout time.Duration) ([]byte, error) {
-	client := utils.MakeDiscoveryHttpClient(timeout)
+	client, err := utils.MakeDiscoveryHttpClient(timeout)
+	if err != nil {
+		return nil, err
+	}
 	start := time.Now()
 	resp, err := client.Get(url)
 	if err != nil {

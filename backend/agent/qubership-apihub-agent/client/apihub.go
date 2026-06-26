@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/Netcracker/qubership-apihub-agent/exception"
 	"github.com/Netcracker/qubership-apihub-agent/secctx"
+	"github.com/Netcracker/qubership-apihub-agent/utils"
 	"github.com/Netcracker/qubership-apihub-agent/view"
 	"gopkg.in/resty.v1"
 )
@@ -35,14 +35,24 @@ type ApihubClient interface {
 	GetApiKeyByKey(ctx context.Context, apiKey string) (*view.ApihubApiKeyView, error)
 }
 
-func NewApihubClient(apihubUrl string, accessToken string, cloudName string) ApihubClient {
-	return &apihubClientImpl{apihubUrl: apihubUrl, accessToken: accessToken, cloudName: cloudName}
+func NewApihubClient(apihubUrl string, accessToken string, cloudName string) (ApihubClient, error) {
+	httpClient, err := utils.CreateSecureHTTPClient(time.Second * 60)
+	if err != nil {
+		return nil, err
+	}
+	return &apihubClientImpl{
+		apihubUrl:   apihubUrl,
+		accessToken: accessToken,
+		cloudName:   cloudName,
+		restyClient: resty.NewWithClient(httpClient),
+	}, nil
 }
 
 type apihubClientImpl struct {
 	apihubUrl   string
 	accessToken string
 	cloudName   string
+	restyClient *resty.Client
 }
 
 func checkUnauthorized(resp *resty.Response) error {
@@ -161,11 +171,7 @@ func (a apihubClientImpl) GetUserPackagesPromoteStatuses(ctx secctx.SecurityCont
 }
 
 func (a apihubClientImpl) CheckApiKeyValid(apiKey string) (bool, error) {
-	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
-
-	client := resty.NewWithClient(&cl)
-	req := client.R()
+	req := a.restyClient.R()
 
 	req.SetHeader("api-key", apiKey)
 
@@ -180,11 +186,7 @@ func (a apihubClientImpl) CheckApiKeyValid(apiKey string) (bool, error) {
 }
 
 func (a apihubClientImpl) CheckAuthToken(ctx context.Context, token string) (bool, error) {
-	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
-
-	client := resty.NewWithClient(&cl)
-	req := client.R()
+	req := a.restyClient.R()
 	req.SetContext(ctx)
 	req.SetHeader("Cookie", fmt.Sprintf("%s=%s", view.AccessTokenCookieName, token))
 
@@ -216,11 +218,7 @@ func (a apihubClientImpl) GetSystemConfiguration() (*view.ApihubSystemConfigurat
 }
 
 func (a apihubClientImpl) GetApiKeyByKey(ctx context.Context, apiKey string) (*view.ApihubApiKeyView, error) {
-	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
-
-	client := resty.NewWithClient(&cl)
-	req := client.R()
+	req := a.restyClient.R()
 	req.SetContext(ctx)
 	req.SetHeader("api-key", apiKey)
 
@@ -242,11 +240,7 @@ func (a apihubClientImpl) GetApiKeyByKey(ctx context.Context, apiKey string) (*v
 }
 
 func (a apihubClientImpl) makeRequest(ctx secctx.SecurityContext) *resty.Request {
-	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
-
-	client := resty.NewWithClient(&cl)
-	req := client.R()
+	req := a.restyClient.R()
 	if ctx.GetUserToken() != "" {
 		req.SetHeader("Authorization", fmt.Sprintf("Bearer %s", ctx.GetUserToken()))
 	} else {

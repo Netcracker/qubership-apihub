@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"crypto/tls"
 	"fmt"
 	"github.com/Netcracker/qubership-apihub-agent/view"
 	"io"
@@ -15,11 +14,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func NewServiceProxyController(discoveryService service.DiscoveryService) ProxyController {
-	return &serviceProxyControllerImpl{
-		tr:               http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}},
-		discoveryService: discoveryService,
+func NewServiceProxyController(discoveryService service.DiscoveryService) (ProxyController, error) {
+	tlsConfig, err := utils.BuildSecureTLSConfig(nil)
+	if err != nil {
+		return nil, err
 	}
+	return &serviceProxyControllerImpl{
+		tr:               http.Transport{TLSClientConfig: tlsConfig},
+		discoveryService: discoveryService,
+	}, nil
 }
 
 type serviceProxyControllerImpl struct {
