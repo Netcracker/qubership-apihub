@@ -1,3 +1,4 @@
+# yamllint disable-file
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -40,6 +41,12 @@ spec:
                 secretName: qubership-api-linter-service-config-secret
             - name: tmp-volume
               emptyDir: {}
+            {{- if and .Values.qubershipApiLinterService.customCa.enabled .Values.qubershipApiLinterService.customCa.secretName }}
+            - name: qubership-api-linter-service-custom-ca
+              secret:
+                  defaultMode: 420
+                  secretName: {{ .Values.qubershipApiLinterService.customCa.secretName | quote }}
+            {{- end }}
             containers:
             - name: 'qubership-api-linter-service'
               image: '{{ .Values.qubershipApiLinterService.image.repository }}:{{ .Values.qubershipApiLinterService.image.tag }}'
@@ -48,6 +55,11 @@ spec:
                 mountPath: /app/qubership-api-linter-service/etc/
               - name: tmp-volume
                 mountPath: /tmp
+              {{- if and .Values.qubershipApiLinterService.customCa.enabled .Values.qubershipApiLinterService.customCa.secretName }}
+              - name: qubership-api-linter-service-custom-ca
+                mountPath: /tmp/cert
+                readOnly: true
+              {{- end }}
               ports:
               - name: web
                 containerPort: 8080

@@ -25,3 +25,4 @@ skip-check:
 skip-path:
 - keycloak
 - postgres-db
+- apache-superset

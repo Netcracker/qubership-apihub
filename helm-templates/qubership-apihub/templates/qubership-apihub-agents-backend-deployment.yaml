@@ -1,3 +1,4 @@
+# yamllint disable-file
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -35,6 +36,12 @@ spec:
             secretName: qubership-apihub-agents-backend-config-secret
       - name: tmp-volume
         emptyDir: {}
+      {{- if and .Values.qubershipApihubAgentsBackend.customCa.enabled .Values.qubershipApihubAgentsBackend.customCa.secretName }}
+      - name: qubership-apihub-agents-backend-custom-ca
+        secret:
+            defaultMode: 420
+            secretName: {{ .Values.qubershipApihubAgentsBackend.customCa.secretName | quote }}
+      {{- end }}
       containers:
       - name: qubership-apihub-agents-backend
         image: '{{.Values.qubershipApihubAgentsBackend.image.repository}}:{{.Values.qubershipApihubAgentsBackend.image.tag}}'
@@ -44,6 +51,11 @@ spec:
             mountPath: /app/qubership-apihub-agents-backend/etc/
           - name: tmp-volume
             mountPath: /tmp
+          {{- if and .Values.qubershipApihubAgentsBackend.customCa.enabled .Values.qubershipApihubAgentsBackend.customCa.secretName }}
+          - name: qubership-apihub-agents-backend-custom-ca
+            mountPath: /tmp/cert
+            readOnly: true
+          {{- end }}
         ports:
           - name: web
             containerPort: 8080
