@@ -131,11 +131,11 @@ services:
         environment:
             - LOG_LEVEL=INFO
             - GOMEMLIMIT=205MiB
-            - AGENTS_BACKEND_CONFIG_FOLDER=/app/qubership-apihub-agents-backend/            
-        # Optional: corporate CA for HTTPS outbound (APIHUB, agents). Requires core-base image.
+            - AGENTS_BACKEND_CONFIG_FOLDER=/app/qubership-apihub-agents-backend/
         volumes:
             - ./qubership-apihub-agents-backend-config.yaml:/app/qubership-apihub-agents-backend/config.yaml
         # Optional: corporate CA for HTTPS outbound (APIHUB, agents). Requires core-base image.
+        # Uncomment and place .crt/.cer/.pem files in ./certs/
         #     - ./certs:/tmp/cert:ro
         healthcheck:
             test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/ready || exit 1" ]

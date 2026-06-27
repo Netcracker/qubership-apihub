@@ -33,8 +33,8 @@ update deployment assets here when install shape, env vars, or documented config
 | API Registry (backend) | [qubership-apihub-backend](https://github.com/Netcracker/qubership-apihub-backend) | `config.template.yaml` → mounted `config.yaml` |
 | Builder | [qubership-apihub-build-task-consumer](https://github.com/Netcracker/qubership-apihub-build-task-consumer) | Environment only |
 | Portal UI | [qubership-apihub-ui](https://github.com/Netcracker/qubership-apihub-ui) | Environment only |
-| API Linter (extension) | [qubership-api-linter-service](https://github.com/Netcracker/qubership-api-linter-service) | Environment only |
-| Agents backend (extension) | [qubership-apihub-agents-backend](https://github.com/Netcracker/qubership-apihub-agents-backend) | Environment only |
+| API Linter (extension) | [qubership-api-linter-service](https://github.com/Netcracker/qubership-api-linter-service) | `config.template.yaml` → mounted `config.yaml` |
+| Agents backend (extension) | [qubership-apihub-agents-backend](https://github.com/Netcracker/qubership-apihub-agents-backend) | `config.template.yaml` → mounted `config.yaml` |
 | Kubernetes agent (extension) | [qubership-apihub-agent](https://github.com/Netcracker/qubership-apihub-agent) | `config.yaml` (file-based) |
 | Reusable CI / generic agent packages | [qubership-apihub-ci](https://github.com/Netcracker/qubership-apihub-ci) | Workflows and `agent-packages/` store |
 
@@ -51,8 +51,8 @@ user to the appropriate component repo; return here only for deployment and docu
 
 - **Helm `values.yaml` + templates** are the canonical Kubernetes contract.
 - **`docs/configuration-reference.md`** must stay in sync when knobs, env names, or mount paths change.
-- **Compose** reproduces the same logical split; keep tokens and URLs aligned across backend YAML,
-  builder env, linter env, and agents-backend env (see configuration reference §4).
+- **Compose** reproduces the same logical split; keep tokens and URLs aligned across the backend,
+  linter, and agents-backend `config.yaml` files and the builder env (see configuration reference §4).
 - **Extensions** — linter and agents-backend URLs in backend `extensions` must match how each stack
   reaches those services (cluster DNS vs `host.docker.internal`).
 

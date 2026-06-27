@@ -53,11 +53,11 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 | **qubership-apihub-backend** | **`config.yaml`** (path set by `APIHUB_CONFIG_FOLDER`, default `./`) | `APIHUB_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
 | **qubership-apihub-ui** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_NC_SERVICE_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, `APIHUB_AGENTS_BACKEND_ADDRESS` |
 | **qubership-apihub-build-task-consumer** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_API_KEY`, `LOG_LEVEL`, `FOLDER_STORE`, `OPERATIONS_BUILD_BATCH` |
-| **qubership-api-linter-service** | **Env vars only** (confirmed in [`system_info.go`](https://github.com/Netcracker/qubership-api-linter-service/blob/develop/qubership-api-linter-service/service/system_info.go)) | `LINTER_POSTGRESQL_*`, `APIHUB_URL`, `APIHUB_ACCESS_TOKEN`, `GOMEMLIMIT`, `SPECTRAL_*`, `OLRIC_*`, `OPENAI_*`, … |
-| **qubership-apihub-agents-backend** | Env vars only | `AGENTS_BACKEND_POSTGRESQL_*`, `APIHUB_URL`, `APIHUB_ACCESS_TOKEN`, `GOMEMLIMIT`, `SNAPSHOTS_*`, … |
+| **qubership-api-linter-service** | **`config.yaml`** (path set by `LINTER_CONFIG_FOLDER`) | `LINTER_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
+| **qubership-apihub-agents-backend** | **`config.yaml`** (path set by `AGENTS_BACKEND_CONFIG_FOLDER`) | `AGENTS_BACKEND_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
 | **qubership-apihub-agent** *(K8s, optional)* | **`config.yaml`** (same pattern as backend) | `APIHUB_CONFIG_FOLDER` |
 
-**Helm:** `qubershipApihubBackend.env` in `values.yaml` is serialized as YAML into Secret `config.yaml` mounted at `/app/qubership-apihub-service/etc/` — same schema as [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/qubership-apihub-service/config.template.yaml). All other services receive env vars injected directly by Deployment templates.
+**Helm:** `qubershipApihubBackend.env`, `qubershipApiLinterService.env`, and `qubershipApihubAgentsBackend.env` in `values.yaml` are each serialised as YAML into a per-service Secret `config.yaml`, mounted under `/app/<service>/etc/`. The UI and builder receive env vars injected directly by Deployment templates.
 
 ---
 
@@ -83,7 +83,7 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 ./docker-compose/apihub-generic/generate_env_and_up_compose.sh
 ```
 
-⚠️ This script **overwrites** template files in-place (`.env` + `qubership-apihub-backend-config.yaml`). Stash or branch before running if you want reproducibility.
+⚠️ This script **overwrites** template files in-place (`.env` files + every `*-config.yaml`). Stash or branch before running if you want reproducibility.
 
 After start: <http://localhost:8081/login> — Portal UI.
 
@@ -147,28 +147,34 @@ APIHUB_BACKEND_ADDRESS=host.docker.internal:8090
 APIHUB_API_KEY=<same value as zeroDayConfiguration.accessToken>
 ```
 
-#### `qubership-api-linter-service.env` (linter)
+#### `qubership-api-linter-service-config.yaml` (linter)
 
-```ini
-APIHUB_URL=http://host.docker.internal:8081
-APIHUB_ACCESS_TOKEN=<same value as zeroDayConfiguration.accessToken>
-LINTER_POSTGRESQL_HOST=host.docker.internal
-LINTER_POSTGRESQL_PORT=5432
-LINTER_POSTGRESQL_DB_NAME=api_linter
-LINTER_POSTGRESQL_USERNAME=api_linter_user
-LINTER_POSTGRESQL_PASSWORD=api_linter_password
+```yaml
+database:
+  host: 'host.docker.internal'
+  port: 5432
+  name: 'api_linter'
+  username: 'api_linter_user'
+  password: 'api_linter_password'
+technicalParameters:
+  apihub:
+    url: 'http://host.docker.internal:8081'
+    accessToken: '<same value as zeroDayConfiguration.accessToken>'
 ```
 
-#### `qubership-apihub-agents-backend.env` (agents backend)
+#### `qubership-apihub-agents-backend-config.yaml` (agents backend)
 
-```ini
-APIHUB_URL=http://host.docker.internal:8081
-APIHUB_ACCESS_TOKEN=<same value as zeroDayConfiguration.accessToken>
-AGENTS_BACKEND_POSTGRESQL_HOST=host.docker.internal
-AGENTS_BACKEND_POSTGRESQL_PORT=5432
-AGENTS_BACKEND_POSTGRESQL_DB_NAME=agents_backend
-AGENTS_BACKEND_POSTGRESQL_USERNAME=agents_backend_user
-AGENTS_BACKEND_POSTGRESQL_PASSWORD=agents_backend_password
+```yaml
+database:
+  host: 'host.docker.internal'
+  port: 5432
+  name: 'agents_backend'
+  username: 'agents_backend_user'
+  password: 'agents_backend_password'
+technicalParameters:
+  apihub:
+    url: 'http://host.docker.internal:8081'
+    accessToken: '<same value as zeroDayConfiguration.accessToken>'
 ```
 
 #### `qubership-apihub-ui.env` (portal UI)
@@ -326,61 +332,67 @@ All configuration via **environment variables**.
 
 #### qubership-api-linter-service
 
-All configuration via **environment variables** (no `config.yaml` for process startup). Source: [`system_info.go`](https://github.com/Netcracker/qubership-api-linter-service/blob/develop/qubership-api-linter-service/service/system_info.go).
+All configuration via **`config.yaml`** (path: `LINTER_CONFIG_FOLDER`). Helm renders
+`qubershipApiLinterService.env` into this file; Compose mounts `qubership-api-linter-service-config.yaml`.
+`LOG_LEVEL` and `GOMEMLIMIT` stay container environment variables (`GOMEMLIMIT` default `800MiB` Helm /
+`1600MiB` Compose; Helm key `qubershipApiLinterService.goMemLimit`).
 
 **Custom CA certificates (HTTPS outbound):** with the [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) runtime image, mount PEM files at **`/tmp/cert`** (Compose: uncomment the linter **`./certs:/tmp/cert:ro`** volume; Helm: **`qubershipApiLinterService.customCa`**). Required for corporate HTTPS to APIHUB or OpenAI when public CAs are insufficient.
 
-| Env var | Mandatory | Default | Description |
-|---------|-----------|---------|-------------|
-| `APIHUB_URL` | Yes | — | Portal base URL reachable from inside the linter container (e.g. `http://qubership-apihub-ui:8080`) |
-| `APIHUB_ACCESS_TOKEN` | Yes | — | System API token. Must match `zeroDayConfiguration.accessToken` in backend config |
-| `LINTER_POSTGRESQL_HOST` | Yes | `localhost` | PostgreSQL host |
-| `LINTER_POSTGRESQL_PORT` | Yes | `5432` | PostgreSQL port |
-| `LINTER_POSTGRESQL_DB_NAME` | Yes | `apihub_linter` | Database name (must be pre-created) |
-| `LINTER_POSTGRESQL_USERNAME` | Yes | `apihub_linter` | Database user |
-| `LINTER_POSTGRESQL_PASSWORD` | Yes | — | Database password |
-| `LINTER_PG_SSL_MODE` | No | — | PostgreSQL SSL mode (`disable`, `require`, `verify-full`, …) |
-| `LOG_LEVEL` | No | `INFO` | Log level |
-| `GOMEMLIMIT` | No | `800MiB` (Helm); `1600MiB` (Compose) | Go runtime memory soft limit. Helm: `qubershipApiLinterService.goMemLimit`. Compose: `qubership-api-linter-service.env`. |
-| `LISTEN_ADDRESS` | No | `:8080` | Listen address for the HTTP server |
-| `SPECTRAL_BIN_PATH` | No | `resources/spectral/linux/spectral` | Path to Spectral binary inside the container |
-| `SPECTRAL_LINTER_WORKERS` | No | `1` | Number of concurrent Spectral linter workers |
-| `OLRIC_DISCOVERY_MODE` | No | `local` | Olric discovery: `local` (single pod) or `lan` (multi-pod) |
-| `OLRIC_REPLICA_COUNT` | No | `1` | Olric replica count |
-| `NAMESPACE` | No | — | K8s namespace (injected by Helm; used by Olric discovery) |
-| `ORIGIN_ALLOWED` | No | — | Extra CORS origin (dev only; empty on prod) |
-| `ENABLE_AI_OAS_LINTER` | No | `false` | Enable AI-powered OpenAPI linter |
-| `OPENAI_API_KEY` | Cond. | — | OpenAI API key (required when `ENABLE_AI_OAS_LINTER=true`) |
-| `OPENAI_API_PROXY` | No | — | HTTP proxy for OpenAI requests |
-| `OPENAI_MODEL` | No | — | OpenAI model to use (e.g. `gpt-4o`) |
-| `OPENAI_RATE_LIMIT_RPS` | No | `10` | OpenAI requests per second limit |
-| `OPENAI_RATE_LIMIT_BURST` | No | `30` | OpenAI burst limit |
-| `AI_LINTER_WORKERS` | No | `1` | Number of concurrent AI linter workers |
-| `AI_LINTER_EXCLUDED_PACKAGES` | No | — | Comma-separated package IDs to exclude from AI linting |
-| `AI_LINTER_INCLUDED_PACKAGES` | No | — | Comma-separated package IDs to include (empty = all) |
+| Config key | Mandatory | Default | Description |
+|------------|-----------|---------|-------------|
+| `database.host` | Yes | `localhost` | PostgreSQL host |
+| `database.port` | Yes | `5432` | PostgreSQL port |
+| `database.name` | Yes | `apihub_linter` | Database name (must be pre-created) |
+| `database.username` | Yes | `apihub_linter` | Database user |
+| `database.password` | Yes | — | Database password |
+| `technicalParameters.apihub.url` | Yes | `http://localhost:8090` | Portal base URL reachable from inside the linter container (e.g. `http://qubership-apihub-ui:8080`) |
+| `technicalParameters.apihub.accessToken` | Yes | — | System API token. Must match `zeroDayConfiguration.accessToken` in backend config |
+| `technicalParameters.basePath` | No | `.` | Base path for binary and static files |
+| `technicalParameters.listenAddress` | No | `:8080` | Listen address for the HTTP server |
+| `technicalParameters.apiSpecDirectory` | No | `<basePath>/api` | Directory of API specifications to expose |
+| `security.allowedOrigins` | No | `[]` | Extra CORS origins (dev only; empty on prod) |
+| `linters.spectral.binPath` | Yes | `resources/spectral/linux/spectral` | Path to the Spectral binary inside the container |
+| `linters.spectral.workers` | No | `1` | Number of concurrent Spectral linter workers |
+| `linters.ai.enabled` | No | `false` | Enable the AI-powered OpenAPI linter |
+| `linters.ai.workers` | No | `1` | Number of concurrent AI linter workers |
+| `linters.ai.excludedPackages` | No | `[]` | Package IDs to exclude from AI linting |
+| `linters.ai.includedPackages` | No | `[]` | Package IDs to include (empty = all) |
+| `linters.ai.openAI.apiKey` | Cond. | — | OpenAI API key (required when `linters.ai.enabled: true`) |
+| `linters.ai.openAI.apiProxy` | No | — | HTTP proxy for OpenAI requests |
+| `linters.ai.openAI.model` | No | — | OpenAI model to use (e.g. `gpt-4o`) |
+| `linters.ai.openAI.rateLimitRPS` | No | `10` | OpenAI requests per second limit |
+| `linters.ai.openAI.rateLimitBurst` | No | `30` | OpenAI burst limit |
+| `olric.discoveryMode` | No | `local` | Olric discovery: `local` (single pod) or `lan` (multi-pod) |
+| `olric.replicaCount` | No | `1` | Olric replica count |
+| `olric.namespace` | No | — | Olric discovery namespace (set by Helm to the release namespace) |
 
 ---
 
 #### qubership-apihub-agents-backend
 
-All configuration via **environment variables**. Source: [`system_info.go`](https://github.com/Netcracker/qubership-apihub-agents-backend/blob/develop/qubership-apihub-agents-backend/service/system_info.go).
+All configuration via **`config.yaml`** (path: `AGENTS_BACKEND_CONFIG_FOLDER`). Helm renders
+`qubershipApihubAgentsBackend.env` into this file; Compose mounts `qubership-apihub-agents-backend-config.yaml`.
+`LOG_LEVEL` and `GOMEMLIMIT` stay container environment variables (`GOMEMLIMIT` default `205MiB`; Helm key
+`qubershipApihubAgentsBackend.goMemLimit`).
 
-| Env var | Mandatory | Default | Description |
-|---------|-----------|---------|-------------|
-| `APIHUB_URL` | Yes | — | Portal base URL reachable from inside the agents-backend container |
-| `APIHUB_ACCESS_TOKEN` | Yes | — | System API token. Must match `zeroDayConfiguration.accessToken` |
-| `AGENTS_BACKEND_POSTGRESQL_HOST` | Yes | `localhost` | PostgreSQL host |
-| `AGENTS_BACKEND_POSTGRESQL_PORT` | Yes | `5432` | PostgreSQL port |
-| `AGENTS_BACKEND_POSTGRESQL_DB_NAME` | Yes | `apihub_agents_backend` | Database name (must be pre-created) |
-| `AGENTS_BACKEND_POSTGRESQL_USERNAME` | Yes | `apihub_agents_backend` | Database user |
-| `AGENTS_BACKEND_POSTGRESQL_PASSWORD` | Yes | — | Database password |
-| `LOG_LEVEL` | No | `INFO` | Log level |
-| `GOMEMLIMIT` | No | `205MiB` | Go runtime memory soft limit. Helm: `qubershipApihubAgentsBackend.goMemLimit`. Compose: `qubership-apihub-agents-backend.env`. |
-| `DEFAULT_WORKSPACE_ID` | No | — | If set, package structure is copied from this workspace to the target workspace during discovery |
-| `SNAPSHOTS_CLEANUP_SCHEDULE` | No | `0 2 * * 0` | Cron schedule for snapshot cleanup job |
-| `SNAPSHOTS_TTL_DAYS` | No | `183` | Number of days to keep snapshots |
-| `INSECURE_PROXY` | No | `false` | Enable unauthenticated proxy. Dangerous — do not enable on prod |
-| `ORIGIN_ALLOWED` | No | — | Extra CORS origin (dev debugging only) |
+| Config key | Mandatory | Default | Description |
+|------------|-----------|---------|-------------|
+| `database.host` | Yes | `localhost` | PostgreSQL host |
+| `database.port` | Yes | `5432` | PostgreSQL port |
+| `database.name` | Yes | `apihub_agents_backend` | Database name (must be pre-created) |
+| `database.username` | Yes | `apihub_agents_backend` | Database user |
+| `database.password` | Yes | — | Database password |
+| `technicalParameters.apihub.url` | Yes | `http://localhost:8090` | Portal base URL reachable from inside the agents-backend container |
+| `technicalParameters.apihub.accessToken` | Yes | — | System API token. Must match `zeroDayConfiguration.accessToken` |
+| `technicalParameters.basePath` | No | `.` | Base path for binary and static files |
+| `technicalParameters.listenAddress` | No | `:8080` | Listen address for the HTTP server |
+| `technicalParameters.apiSpecDirectory` | No | `<basePath>/api` | Directory of API specifications to expose |
+| `businessParameters.defaultWorkspaceId` | No | — | If set, package structure is copied from this workspace to the target workspace during discovery |
+| `security.allowedOrigins` | No | `[]` | Extra CORS origins (dev debugging only) |
+| `security.insecureProxy` | No | `false` | Deprecated. Enable the unauthenticated proxy endpoint. Dangerous — do not enable on prod |
+| `cleanup.snapshots.schedule` | No | `0 22 * * 0` | Cron schedule for the snapshots cleanup job |
+| `cleanup.snapshots.ttlDays` | No | `30` | Retention period in days for snapshots (`0` removes all) |
 
 **Custom CA certificates (HTTPS outbound):** with the [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) runtime image, mount PEM files at **`/tmp/cert`** (Compose: uncomment the agents-backend **`./certs:/tmp/cert:ro`** volume; Helm: **`qubershipApihubAgentsBackend.customCa`**). Required for corporate HTTPS to APIHUB or remote agents when public CAs are insufficient.
 
@@ -436,8 +448,10 @@ qubershipApiLinterService:
       name: 'api_linter'
       username: 'api_linter_user'
       password: 'changeme'
-    apihub:
-      accessToken: '<same value as zeroDayConfiguration.accessToken>'
+    technicalParameters:
+      apihub:
+        url: 'http://qubership-apihub-ui:8080'
+        accessToken: '<same value as zeroDayConfiguration.accessToken>'
 
 qubershipApihubAgentsBackend:
   env:
@@ -446,8 +460,10 @@ qubershipApihubAgentsBackend:
       name: 'agents_backend'
       username: 'agents_backend_user'
       password: 'changeme'
-    apihub:
-      accessToken: '<same value as zeroDayConfiguration.accessToken>'
+    technicalParameters:
+      apihub:
+        url: 'http://qubership-apihub-ui:8080'
+        accessToken: '<same value as zeroDayConfiguration.accessToken>'
 ```
 
 ### Install / upgrade / uninstall
@@ -496,19 +512,22 @@ helm uninstall apihub -n qubership-apihub
 | `qubershipApihubUi.tlsIngress.tlsSecret.certificate` | Yes | TLS cert for HTTPS ingress (base64) |
 | `qubershipApihubUi.tlsIngress.tlsSecret.certificateKey` | Yes | TLS key (base64) |
 | `qubershipApihubUi.env.*BackendAddress` | No | K8s DNS defaults — change only if you rename services |
-| `qubershipApiLinterService.env.database.*` | Yes | → `LINTER_POSTGRESQL_*` |
-| `qubershipApiLinterService.env.apihub.accessToken` | Yes | → `APIHUB_ACCESS_TOKEN` |
-| `qubershipApiLinterService.env.apihub.url` | No | Default `http://qubership-apihub-ui:8080` |
+| `qubershipApiLinterService.env.database.*` | Yes | Linter `config.yaml` `database.*` |
+| `qubershipApiLinterService.env.technicalParameters.apihub.accessToken` | Yes | Must match `zeroDayConfiguration.accessToken` |
+| `qubershipApiLinterService.env.technicalParameters.apihub.url` | No | Default `http://localhost:8090`; in-cluster set to `http://qubership-apihub-ui:8080` |
 | `qubershipApiLinterService.goMemLimit` | No | → `GOMEMLIMIT` (default `800MiB`, ~80% of default `memory.limit` `1000Mi`) |
-| `qubershipApiLinterService.env.linters.spectral.workers` | No | Spectral worker count |
+| `qubershipApiLinterService.env.linters.spectral.*` | No | Spectral binary path and worker count |
+| `qubershipApiLinterService.env.linters.ai.*` | No | AI linter (OpenAI key, workers, include/exclude lists) |
+| `qubershipApiLinterService.env.olric.*` | No | Olric discovery mode / replicas (namespace set by Helm) |
 | `qubershipApiLinterService.customCa` | No | Optional Secret mounted at `/tmp/cert` for corporate HTTPS outbound |
-| `qubershipApiLinterService.env.ai.*` | No | AI linter (OpenAI key, workers, include/exclude lists) |
-| `qubershipApihubAgentsBackend.env.database.*` | Yes | → `AGENTS_BACKEND_POSTGRESQL_*` |
-| `qubershipApihubAgentsBackend.env.apihub.accessToken` | Yes | → `APIHUB_ACCESS_TOKEN` |
+| `qubershipApihubAgentsBackend.env.database.*` | Yes | Agents-backend `config.yaml` `database.*` |
+| `qubershipApihubAgentsBackend.env.technicalParameters.apihub.accessToken` | Yes | Must match `zeroDayConfiguration.accessToken` |
+| `qubershipApihubAgentsBackend.env.technicalParameters.apihub.url` | Yes | Portal base URL reachable from the agents-backend pod |
 | `qubershipApihubAgentsBackend.goMemLimit` | No | → `GOMEMLIMIT` (default `205MiB`, ~80% of default `memory.limit` `256Mi`) |
-| `qubershipApihubAgentsBackend.env.defaultWorkspaceId` | No | → `DEFAULT_WORKSPACE_ID` |
-| `qubershipApihubAgentsBackend.env.snapshotsCleanupSchedule` | No | → `SNAPSHOTS_CLEANUP_SCHEDULE` |
-| `qubershipApihubAgentsBackend.env.snapshotsTtlDays` | No | → `SNAPSHOTS_TTL_DAYS` |
+| `qubershipApihubAgentsBackend.env.businessParameters.defaultWorkspaceId` | No | Default workspace copied into the target during discovery |
+| `qubershipApihubAgentsBackend.env.security.insecureProxy` | No | Deprecated; unauthenticated proxy (do not enable on prod) |
+| `qubershipApihubAgentsBackend.env.cleanup.snapshots.schedule` | No | Snapshots cleanup cron (default `0 22 * * 0`) |
+| `qubershipApihubAgentsBackend.env.cleanup.snapshots.ttlDays` | No | Snapshots retention in days (default `30`) |
 | `qubershipApihubAgentsBackend.customCa` | No | Optional Secret mounted at `/tmp/cert` for corporate HTTPS outbound |
 
 For secrets management on production clusters use Kubernetes **ExternalSecrets**, CSI driver, or sealed-secrets — do not commit plaintext credentials in `values.yaml`.

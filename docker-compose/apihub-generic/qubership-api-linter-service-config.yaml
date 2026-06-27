@@ -19,7 +19,7 @@ linters:
       model: ''
       rateLimitRPS: 10
       rateLimitBurst: 30
-technicalParameters:    
+technicalParameters:
   apihub:
     url: 'http://host.docker.internal:8081'
     #Must be the same as APIHUB_ACCESS_TOKEN in BE>

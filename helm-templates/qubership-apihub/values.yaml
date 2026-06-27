@@ -395,7 +395,7 @@ qubershipApiLinterService:
       username: ''
       # Mandatory; Password for database.user.; If not set, default value: apihub; Example: apihub_api_linter_service_prod_password
       password: ''
-    
+
     # Section with technical parameters
     technicalParameters:
       # Optional; Base path for binary and static files; If not set, default value: .; Example: /app
@@ -409,12 +409,12 @@ qubershipApiLinterService:
         url: 'http://localhost:8090'
         # Mandatory; APIHUB access token. In case of clean installation - must be the same as in qubershipApihubBackend.env.zeroDayConfiguration.accessToken section; If not set, default value: ""; Example: access-token-12345
         accessToken: ''
-        
+
     # Security parameters.
     security:
       # Optional; Allows to set extra allowed origins to CORS header. Used for FE debugging. Should be empty on prod envs.; If not set, default value: []; Example: [https://localhost:5137]
       allowedOrigins: []
-    
+
     # Configuration for linters
     linters:
       spectral:
@@ -492,9 +492,9 @@ qubershipApihubAgentsBackend:
       port: null
       # Mandatory; Logical database in PostgreSQL cluster for APIHUB. Manual pre-creation required; If not set, default value: apihub_agents_backend; Example: apihub_agents_backend_prod_db
       name: ''
-      # Mandatory; User for AGENTS_BACKEND_POSTGRESQL_DB_NAME database; If not set, default value: apihub_agents_backend; Example: apihub_agents_backend_prod_admin
+      # Mandatory; User for database.name database; If not set, default value: apihub_agents_backend; Example: apihub_agents_backend_prod_admin
       username: ''
-      # Mandatory; Password for AGENTS_BACKEND_POSTGRESQL_USERNAME user.; If not set, default value: ""; Example: apihub_agents_backend_prod_password
+      # Mandatory; Password for database.username user.; If not set, default value: ""; Example: apihub_agents_backend_prod_password
       password: ''
 
     # Section with technical parameters
@@ -522,7 +522,7 @@ qubershipApihubAgentsBackend:
       allowedOrigins: []
       # Deprecated; Set to true to allow the deprecated agent proxy endpoint to work without authorization. Dangerous, not recommended; If not set, default value: false; Example: false
       insecureProxy: false
-      
+
     # Section with cleanup jobs configuration
     cleanup:
       snapshots:

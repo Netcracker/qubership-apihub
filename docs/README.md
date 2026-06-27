@@ -10,7 +10,7 @@ High-level narratives (architecture roadmap, backlog process) evolve on the [Git
 
 | Guide | Audience | Scope |
 |-------|----------|-------|
-| [Configuration reference](./configuration-reference.md) | DevOps / platform | **Helm-first K8s contract**, then compose; **runtime truth per service source** (`config.yaml` only backend/agent; linter env-only; link to [`system_info.go`](https://github.com/Netcracker/qubership-api-linter-service/blob/develop/qubership-api-linter-service/service/system_info.go)) |
+| [Configuration reference](./configuration-reference.md) | DevOps / platform | **Helm-first K8s contract**, then compose; **runtime truth per service source** (`config.yaml` for backend, agent, linter, and agents-backend; UI and builder env-only) |
 | [Installation guide](./installation-guide.md) | Same | Prerequisites, Compose/Podman walkthrough (ports, JWT, substitutions), Helm install/upgrade, quickstart pointers |
 | [Admin guide](./admin-guide.md) | Platform owners post-install | SSO rotation, Helm operations, Compose caveats (`generate_env_*`), extensions matrix |
 | [Maintenance guide](./maintenance-guide.md) | Operators on-call | Postgres backup tables, TTL links, SSO/token wiki hops |

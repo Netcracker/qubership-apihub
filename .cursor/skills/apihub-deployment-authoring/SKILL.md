@@ -22,8 +22,9 @@ source code lives in sibling component repositories; do not implement Go/TS/UI f
 
 ## Helm (`helm-templates/qubership-apihub/`)
 
-- **`values.yaml`** is the canonical contract: `qubershipApihubBackend.env` renders into
-  backend `config.yaml` via templates; UI, builder, linter, and agents-backend use pod env
+- **`values.yaml`** is the canonical contract: `qubershipApihubBackend.env`,
+  `qubershipApiLinterService.env`, and `qubershipApihubAgentsBackend.env` each render into a
+  service `config.yaml` via templates (mounted from a config Secret); UI and builder use pod env
   from their `*.env` sections.
 - **Templates** — prefer extending existing `templates/qubership-*-deployment.yaml` and
   Secret/ConfigMap patterns; do not bypass the chart for supported production shapes.
@@ -41,13 +42,14 @@ After chart edits, sanity-check against `docs/configuration-reference.md` § Hel
 | Generic | `apihub-generic/` | Default local rig |
 | Keycloak SSO | `with-keycloak/` | SSO example; parallel env/YAML layout |
 
-- **Backend** — `qubership-apihub-backend-config.yaml` mounted as `config.yaml`; placeholders
-  `${JWT_PRIVATE_KEY}`, `${APIHUB_ACCESS_TOKEN}`, etc. via `generate_env_and_up_compose.sh`.
-- **Per-service env** — `qubership-apihub-ui.env`, `qubership-apihub-build-task-consumer.env`,
-  `qubership-api-linter-service.env`, `qubership-apihub-agents-backend.env`.
+- **Config-file services** — `qubership-apihub-backend-config.yaml`,
+  `qubership-api-linter-service-config.yaml`, and `qubership-apihub-agents-backend-config.yaml`
+  are each mounted as `config.yaml`; placeholders (`${JWT_PRIVATE_KEY}`, `${APIHUB_ACCESS_TOKEN}`,
+  `${OPENAI_TOKEN}`, …) are substituted by `generate_env_and_up_compose.sh`.
+- **Per-service env** — `qubership-apihub-ui.env`, `qubership-apihub-build-task-consumer.env`.
 - **`APIHUB_API_KEY`** (builder) must match backend `zeroDayConfiguration.accessToken`.
-- **`APIHUB_URL`** for linter/agents-backend is the Portal URL **reachable from their containers**
-  (often `host.docker.internal` + published UI port on desktop Compose).
+- **`technicalParameters.apihub.url`** for linter/agents-backend is the Portal URL **reachable
+  from their containers** (often `host.docker.internal` + published UI port on desktop Compose).
 - **`extensions[].baseUrl`** in backend YAML must be reachable from users' browsers **and** from
   the backend process.
 
@@ -64,21 +66,25 @@ Do not treat Compose as replacing Helm for production install arguments.
 
 ## Extensions (optional components)
 
-| Extension | Helm values key | Compose env file | Component repo |
-|-----------|-----------------|------------------|----------------|
-| API Linter | `qubershipApiLinterService` | `qubership-api-linter-service.env` | qubership-api-linter-service |
-| Agents backend | `qubershipApihubAgentsBackend` | `qubership-apihub-agents-backend.env` | qubership-apihub-agents-backend |
+| Extension | Helm values key | Compose config file | Component repo |
+|-----------|-----------------|---------------------|----------------|
+| API Linter | `qubershipApiLinterService` | `qubership-api-linter-service-config.yaml` | qubership-api-linter-service |
+| Agents backend | `qubershipApihubAgentsBackend` | `qubership-apihub-agents-backend-config.yaml` | qubership-apihub-agents-backend |
 
-- Linter: **env-only** runtime config (no `config.yaml` mount in chart); Spectral rules are data,
-  not boot config.
-- Agents-backend: DB + `APIHUB_URL` / `APIHUB_ACCESS_TOKEN` + `SNAPSHOTS_*` schedule/TTL env names.
+- Both extensions load a `config.yaml` (the `*.env` value block rendered into a config Secret on
+  Helm; a mounted file on Compose) and read only `LOG_LEVEL`, `GOMEMLIMIT`, and `*_CONFIG_FOLDER`
+  from pod env.
+- Linter `config.yaml`: `database`, `technicalParameters.apihub.*`, `linters.spectral.*`,
+  `linters.ai.*`, and `olric.*`. Spectral rulesets stay data managed through the linter API.
+- Agents-backend `config.yaml`: `database`, `technicalParameters.apihub.*`,
+  `businessParameters.defaultWorkspaceId`, `security.*`, and `cleanup.snapshots.{schedule,ttlDays}`.
 
 ## Documentation parity
 
 When adding or renaming a configuration knob:
 
-1. Confirm the **authoritative loader** in the component repo (`config.template.yaml` for
-   backend/agent, `system_info.go` for linter, env-only for UI/builder).
+1. Confirm the **authoritative loader** in the component repo (`config.template.yaml` for backend, agent,
+   linter, and agents-backend; env-only for UI/builder).
 2. Update **`docs/configuration-reference.md`** tables (Helm mapping, Compose file list,
    cross-cutting consistency).
 3. Link from **`docs/installation-guide.md`** when install steps change.
