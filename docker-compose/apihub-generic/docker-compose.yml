@@ -120,7 +120,7 @@ services:
                 aliases:
                 - qubership-api-linter-service
         depends_on:
-            qubership-apihub-backend:
+            qubership-apihub-ui:
                 condition: service_healthy
 
     qubership-apihub-agents-backend:
@@ -154,7 +154,7 @@ services:
                 aliases:
                 - qubership-apihub-agents-backend
         depends_on:
-            qubership-apihub-backend:
+            qubership-apihub-ui:
                 condition: service_healthy
 
     ###### 3rd party services

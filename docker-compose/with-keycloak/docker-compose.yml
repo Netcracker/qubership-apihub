@@ -88,65 +88,6 @@ services:
       qubership-apihub-backend:
         condition: service_healthy
 
-    qubership-api-linter-service:
-        image: ghcr.io/netcracker/qubership-api-linter-service:remake
-        container_name: qubership-api-linter-service
-        ports:
-        - "8091:8080"
-        env_file: "qubership-api-linter-service.env"
-        # Optional corporate CA for HTTPS outbound calls (qubership-core-base /tmp/cert contract).
-        # Uncomment and place .crt/.cer/.pem files in ./certs/
-        # volumes:
-        #     - ./certs:/tmp/cert:ro
-        healthcheck:
-            test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/ready || exit 1" ]
-            interval: 10s
-            timeout: 10s
-            retries: 10
-            start_period: 5s
-        restart: unless-stopped
-        deploy:
-            resources:
-                limits:
-                    cpus: '1'
-                    memory: 2G
-        networks:
-            default:
-                aliases:
-                - qubership-api-linter-service
-        depends_on:
-            qubership-apihub-ui:
-                condition: service_healthy
-
-    qubership-apihub-agents-backend:
-        image: ghcr.io/netcracker/qubership-apihub-agents-backend:impl
-        container_name: qubership-apihub-agents-backend
-        ports:
-        - "8092:8080"
-        env_file: "qubership-apihub-agents-backend.env"
-        # Optional: corporate CA for HTTPS outbound (APIHUB, agents). Requires core-base image.
-        # volumes:
-        #     - ./certs:/tmp/cert:ro
-        healthcheck:
-            test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/ready || exit 1" ]
-            interval: 10s
-            timeout: 10s
-            retries: 10
-            start_period: 5s
-        restart: unless-stopped
-        deploy:
-            resources:
-                limits:
-                    cpus: '0.25'
-                    memory: 256M
-        networks:
-            default:
-                aliases:
-                - qubership-apihub-agents-backend
-        depends_on:
-            qubership-apihub-ui:
-                condition: service_healthy
-
   qubership-api-linter-service:
     image: ghcr.io/netcracker/qubership-api-linter-service:dev
     container_name: qubership-api-linter-service
@@ -178,8 +119,9 @@ services:
             aliases:
             - qubership-api-linter-service
     depends_on:
-        qubership-apihub-backend:
+        qubership-apihub-ui:
             condition: service_healthy
+            
   qubership-apihub-agents-backend:
     image: ghcr.io/netcracker/qubership-apihub-agents-backend:dev
     container_name: qubership-apihub-agents-backend
@@ -211,7 +153,7 @@ services:
             aliases:
             - qubership-apihub-agents-backend
     depends_on:
-        qubership-apihub-backend:
+        qubership-apihub-ui:
             condition: service_healthy
 
   ###### 3rd party services
