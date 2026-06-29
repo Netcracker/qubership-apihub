@@ -212,6 +212,16 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
 
   const { useV3Search } = useSystemInfo()
 
+  const packageIdsDataForPackageAndGroup = useMemo(() => {
+    if (packageKey) {
+      return [packageKey]
+    }
+    if (groupKey) {
+      return [groupKey]
+    }
+    return []
+  }, [packageKey, groupKey])
+
   const onSubmit = useMemo(
     () => handleSubmit((value) => {
       const {
@@ -222,12 +232,10 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
       } = value
 
       const versionData = version ? [version] : []
+
       const packageIdsData = (): string[] => {
-        if (packageKey) {
-          return [packageKey]
-        }
-        if (groupKey) {
-          return [groupKey]
+        if (packageKey || groupKey) {
+          return packageIdsDataForPackageAndGroup
         }
         if (workspaceKey) {
           return [workspaceKey]
@@ -274,7 +282,7 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
         : {
           filters: {
             workspace: workspaceKey,
-            packageIds: packageKey ? [packageKey] : [],
+            packageIds: packageIdsDataForPackageAndGroup,
             versions: versionData,
             status: status as VersionStatus,
             creationDateInterval: {
@@ -287,7 +295,7 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
 
       applyGlobalSearchFilters(globalSearchFilter)
     }),
-    [handleSubmit, useV3Search, applyGlobalSearchFilters, packageKey, groupKey, workspaceKey, detailedScope, methods],
+    [handleSubmit, detailedScope, methods, useV3Search, workspaceKey, packageIdsDataForPackageAndGroup, applyGlobalSearchFilters, packageKey, groupKey],
   )
 
   useDebounce(
