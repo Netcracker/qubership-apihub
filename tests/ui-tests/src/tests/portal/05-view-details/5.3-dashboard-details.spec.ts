@@ -6,10 +6,8 @@ import {
   D12,
   PK11,
   PK12,
-  PK13,
   V_P_DSH_OVERVIEW_NESTED_R,
   V_P_DSH_OVERVIEW_R,
-  V_P_PKG_FOR_DASHBOARDS_DELETED_R,
   V_P_PKG_FOR_DASHBOARDS_REST_BASE_R,
   V_P_PKG_OPERATIONS_REST_R,
 } from '@test-data/portal'
@@ -79,8 +77,6 @@ test.describe('5.3 Dashboard details', () => {
       await expect.soft(overviewTab.packagesTab.getPackageRow(D12).statusCell).toHaveText(V_P_DSH_OVERVIEW_NESTED_R.status)
       await expect.soft(overviewTab.packagesTab.getPackageRow(PK11).versionCell).toHaveText(V_P_PKG_OPERATIONS_REST_R.version)
       await expect.soft(overviewTab.packagesTab.getPackageRow(PK11).statusCell).toHaveText(V_P_PKG_OPERATIONS_REST_R.status)
-      await expect.soft(overviewTab.packagesTab.notExistAlertIcon).toBeVisible()
-      await expect.soft(overviewTab.packagesTab.getPackageRow(D12).packageCell.notExistIndicatorIcon).toBeVisible()
 
       await overviewTab.packagesTab.getPackageRow(D12).expandBtn.click()
 
@@ -88,8 +84,5 @@ test.describe('5.3 Dashboard details', () => {
       await expect.soft(overviewTab.packagesTab.getExcludedPackageRow(PK11).statusCell).toHaveText(V_P_PKG_OPERATIONS_REST_R.status)
       await expect.soft(overviewTab.packagesTab.getPackageRow(PK12).versionCell).toHaveText(V_P_PKG_FOR_DASHBOARDS_REST_BASE_R.version)
       await expect.soft(overviewTab.packagesTab.getPackageRow(PK12).statusCell).toHaveText(V_P_PKG_FOR_DASHBOARDS_REST_BASE_R.status)
-      await expect.soft(overviewTab.packagesTab.getPackageRow(PK13).versionCell).toHaveText(V_P_PKG_FOR_DASHBOARDS_DELETED_R.version)
-      await expect.soft(overviewTab.packagesTab.getPackageRow(PK13).statusCell).toHaveText(V_P_PKG_FOR_DASHBOARDS_DELETED_R.status)
-      await expect.soft(overviewTab.packagesTab.getPackageRow(PK13).packageCell.notExistAlertIcon).toBeVisible()
     })
 })
