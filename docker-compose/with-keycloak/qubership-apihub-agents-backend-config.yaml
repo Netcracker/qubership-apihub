@@ -1,0 +1,15 @@
+database:
+  host: 'host.docker.internal'
+  port: 5432
+  name: 'agents_backend'
+  username: 'agents_backend_user'
+  password: 'agents_backend_password'
+businessParameters:
+  defaultWorkspaceId: 'QS'
+technicalParameters:
+  apihub:
+    url: 'http://host.docker.internal:8081'
+    #Must be the same as APIHUB_ACCESS_TOKEN in BE>
+    accessToken: ${APIHUB_ACCESS_TOKEN}
+security:
+  insecureProxy: true

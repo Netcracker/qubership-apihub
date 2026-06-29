@@ -1,0 +1,29 @@
+database:
+  host: 'host.docker.internal'
+  port: 5432
+  name: 'api_linter'
+  username: 'api_linter_user'
+  password: 'api_linter_password'
+linters:
+  spectral:
+    binPath: './resources/spectral/linux/spectral'
+    workers: 1
+  ai:
+    enabled: false
+    workers: 1
+    excludedPackages: []
+    includedPackages: []
+    openAI:
+      apiKey: ${OPENAI_TOKEN}
+      apiProxy: ''
+      model: ''
+      rateLimitRPS: 10
+      rateLimitBurst: 30
+technicalParameters:
+  apihub:
+    url: 'http://host.docker.internal:8081'
+    #Must be the same as APIHUB_ACCESS_TOKEN in BE>
+    accessToken: ${APIHUB_ACCESS_TOKEN}
+olric:
+  discoveryMode: 'local'
+  replicaCount: 1

@@ -18,8 +18,9 @@ Annotated **YAML schemas** used by file-backed binaries live only where the load
 |-----------|--------------------------|-------------------|
 | API Registry | [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/qubership-apihub-service/config.template.yaml) (`../qubership-apihub-backend/qubership-apihub-service/` locally) | `APIHUB_CONFIG_FOLDER` → `config.yaml`; see backend service bootstrap. |
 | Kubernetes Agent | [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-agent/blob/develop/qubership-apihub-agent/config.template.yaml) | Agent image (file-based like backend). |
-| **API Linter** | *(none)* | **No `config.yaml` for process startup.** Operational settings arrive **only via environment variables** aggregated in [`system_info.go`](https://github.com/Netcracker/qubership-api-linter-service/blob/develop/qubership-api-linter-service/service/system_info.go) (`Getenv`). YAML files are **Spectral ruleset payloads** managed through the linter API/database — that is **data**, not a replacement for env-based service config unless the product introduces a YAML loader upstream. |
-| Builders / Agents-backend / UI | *(none)* | Env only (NestJS/UI nginx wrappers). |
+| **API Linter** | [`config.template.yaml`](https://github.com/Netcracker/qubership-api-linter-service/blob/develop/qubership-api-linter-service/config.template.yaml) | **`LINTER_CONFIG_FOLDER`** → `config.yaml`. Spectral rulesets stay **data** managed through the linter API/database, separate from this boot config. |
+| **Agents-backend** | [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-agents-backend/blob/develop/qubership-apihub-agents-backend/config.template.yaml) | **`AGENTS_BACKEND_CONFIG_FOLDER`** → `config.yaml`. |
+| Builders / UI | *(none)* | Env only (builder env / UI nginx wrapper). |
 
 **Golden path for admins:** derive intent from Helm values → rendered manifests → confirm against the Go/TS loaders above when in doubt.
 
@@ -32,8 +33,8 @@ Annotated **YAML schemas** used by file-backed binaries live only where the load
 | **qubership-apihub-backend** | **`config.yaml` on disk** | Path via **`APIHUB_CONFIG_FOLDER`**; optional **`LOG_LEVEL`** and **`GOMEMLIMIT`** (Go runtime soft limit; Helm **`goMemLimit`**). Most behaviour (DB, security, SSO, S3, Olric, cleanup, AI chat, `extensions`) is file-backed. Helm serializes **`qubershipApihubBackend.env`** into the same YAML shape (`qubership-apihub-backend-config-secret.yaml`). |
 | **qubership-apihub-ui** | Environment variables only | Internal upstream DNS (`*_ADDRESS`). Public URL stays in **`security.apihubExternalUrl`** (backend file). See [Installation guide § UI](./installation-guide.md#portal-ui-internal-addresses). |
 | **qubership-apihub-build-task-consumer** | Environment variables only | **`APIHUB_BACKEND_ADDRESS`** + **`APIHUB_API_KEY`** (aligned with backend **`zeroDayConfiguration.accessToken`** on bootstrap). |
-| **qubership-api-linter-service** | **Environment variables only** | Full list originates from code (`system_info.go` above). Helm’s **`qubershipApiLinterService.env`** mirrors pod injection in-cluster; **`GOMEMLIMIT`** comes from **`goMemLimit`**. YAML shows up elsewhere as Spectral rule documents, **not** as service boot configuration. |
-| **qubership-apihub-agents-backend** | Environment variables only | DB + **`APIHUB_URL`** / **`APIHUB_ACCESS_TOKEN`**, **`SNAPSHOTS_*`**, **`GOMEMLIMIT`** (Helm **`goMemLimit`**), … — see deployment template / `agents-backend` source. |
+| **qubership-api-linter-service** | **`config.yaml` on disk** | Path via **`LINTER_CONFIG_FOLDER`**; optional **`LOG_LEVEL`** and **`GOMEMLIMIT`** (Helm **`goMemLimit`**). DB, `technicalParameters.apihub.*`, `linters.spectral.*`, `linters.ai.*`, and `olric.*` are file-backed. Helm serialises **`qubershipApiLinterService.env`** into the same YAML shape (`qubership-api-linter-service-config-secret.yaml`). Spectral rule documents stay data, separate from boot config. |
+| **qubership-apihub-agents-backend** | **`config.yaml` on disk** | Path via **`AGENTS_BACKEND_CONFIG_FOLDER`**; optional **`LOG_LEVEL`** and **`GOMEMLIMIT`** (Helm **`goMemLimit`**). DB, `technicalParameters.apihub.*`, `businessParameters.*`, `security.*`, and `cleanup.snapshots.*` are file-backed. Helm serialises **`qubershipApihubAgentsBackend.env`** into the same YAML shape (`qubership-apihub-agents-backend-config-secret.yaml`). |
 
 **Kubernetes agent** (optional extension, not started by default Compose bundle): configured like the backend pattern — **`config.yaml`** from [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-agent/blob/develop/qubership-apihub-agent/config.template.yaml), plus Ingress for **`agentUrl`**.
 
@@ -50,10 +51,10 @@ Chart: **[`helm-templates/qubership-apihub/`](../helm-templates/qubership-apihub
 | `qubershipApihubBackend.goMemLimit` | Pod env **`GOMEMLIMIT`** (Go runtime soft limit; not part of `config.yaml`). Default **`410MiB`** (~80% of default **`resource.memory.limit`** `512Mi`). |
 | `qubershipApihubBuildTaskConsumer.env` | Pod env (**`APIHUB_API_KEY`**, etc.). Address often mirrors **`qubershipApihubUi.env.apihubBackendAddress`**. **`accessToken`** must match backend **`zeroDayConfiguration.accessToken`** on clean install. |
 | `qubershipApihubUi.env` + `apihubUrl`, ingress TLS | UI env + public **`apihubUrl`** (keep equal to **`security.apihubExternalUrl`**). |
-| `qubershipApiLinterService.env` | Pod env vars only (**no YAML mount for service config** in current chart): DB refs, **`APIHUB_URL`/`APIHUB_ACCESS_TOKEN`**, Spectral/Olric/AI knobs. |
+| `qubershipApiLinterService.env` | Rendered **as YAML** into Secret `config.yaml`, mounted under **`/app/qubership-api-linter-service/etc/`** with **`LINTER_CONFIG_FOLDER`** (`qubership-api-linter-service-config-secret.yaml`). Olric **`namespace`**/**`replicaCount`** patched from Helm. |
 | `qubershipApiLinterService.customCa` | Optional Kubernetes Secret mounted at **`/tmp/cert`** on the linter pod. Same [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) contract for HTTPS outbound calls to APIHUB and OpenAI. Set **`enabled: true`** and **`secretName`**. |
 | `qubershipApiLinterService.goMemLimit` | Pod env **`GOMEMLIMIT`**. Default **`800MiB`** (~80% of default **`resource.memory.limit`** `1000Mi`). |
-| `qubershipApihubAgentsBackend.env` | Agents pod env; Helm maps schedule/TTL strings to **`SNAPSHOTS_*`** env names. |
+| `qubershipApihubAgentsBackend.env` | Rendered **as YAML** into Secret `config.yaml`, mounted under **`/app/qubership-apihub-agents-backend/etc/`** with **`AGENTS_BACKEND_CONFIG_FOLDER`** (`qubership-apihub-agents-backend-config-secret.yaml`). |
 | `qubershipApihubAgentsBackend.customCa` | Optional Kubernetes Secret mounted at **`/tmp/cert`** on the agents-backend pod. Same [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) contract for HTTPS outbound calls to APIHUB and remote agents. Set **`enabled: true`** and **`secretName`**. |
 | `qubershipApihubAgentsBackend.goMemLimit` | Pod env **`GOMEMLIMIT`**. Default **`205MiB`** (~80% of default **`resource.memory.limit`** `256Mi`). |
 
@@ -111,11 +112,11 @@ Repository path: **[`docker-compose/apihub-generic/`](../docker-compose/apihub-g
 | `docker-compose.yml` (`qubership-apihub-backend` `environment`) | Backend | **`APIHUB_CONFIG_FOLDER`**, **`GOMEMLIMIT`** (Go runtime soft limit; default **`800MiB`** for Compose **`memory: 1G`** limit). |
 | `qubership-apihub-ui.env` | Portal UI | Internal upstream addresses (`APIHUB_BACKEND_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, …). |
 | `qubership-apihub-build-task-consumer.env` | Builder | **`APIHUB_API_KEY`**, **`APIHUB_BACKEND_ADDRESS`**. Compose uses **`host.docker.internal:8090`** so the worker reaches the backend through the published host port. |
-| `qubership-api-linter-service.env` | Linter | DB + **`APIHUB_URL`** (Portal base URL as seen from the linter pod) + token + **`GOMEMLIMIT`** (default **`1600MiB`** for Compose **`memory: 2G`** limit). |
-| `qubership-apihub-agents-backend.env` | Agents backend | DB + **`APIHUB_URL`** + token + **`SNAPSHOTS_CLEANUP_SCHEDULE`** / **`SNAPSHOTS_TTL_DAYS`** + **`GOMEMLIMIT`** (default **`205MiB`** for Compose **`memory: 256M`** limit). |
+| `qubership-api-linter-service-config.yaml` | Linter | Mounted as `config.yaml`: DB, **`technicalParameters.apihub.{url,accessToken}`** (`${APIHUB_ACCESS_TOKEN}`), **`linters.spectral.*`**, **`linters.ai.*`** (OpenAI). The `docker-compose.yml` `environment` sets **`LINTER_CONFIG_FOLDER`** and **`GOMEMLIMIT`** (default **`1600MiB`** for Compose **`memory: 2G`** limit). |
+| `qubership-apihub-agents-backend-config.yaml` | Agents backend | Mounted as `config.yaml`: DB, **`technicalParameters.apihub.{url,accessToken}`**, **`businessParameters.defaultWorkspaceId`**, **`security.*`**, **`cleanup.snapshots.{schedule,ttlDays}`**. The `docker-compose.yml` `environment` sets **`AGENTS_BACKEND_CONFIG_FOLDER`** and **`GOMEMLIMIT`** (default **`205MiB`** for Compose **`memory: 256M`** limit). |
 | `scripts/init-db/init.sql` | PostgreSQL init | Creates users/DBs: `apihub_backend`, `api_linter`, `agents_backend`. |
 
-Secrets helper: **`generate_jwt_pkey.sh`** (JWT private key PEM → base64 for YAML), **`generate_env_and_up_compose.sh`** (random token/admin + `envsubst`). **Important:** running `generate_env_and_up_compose.sh` **overwrites** the processed `.env` and backend YAML placeholders with substituted values — use version control if you care about reproducible templates.
+Secrets helper: **`generate_jwt_pkey.sh`** (JWT private key PEM → base64 for YAML), **`generate_env_and_up_compose.sh`** (random token/admin + `envsubst`). **Important:** running `generate_env_and_up_compose.sh` **overwrites** the processed `.env` files and every `*-config.yaml` with substituted values — use version control if you care about reproducible templates.
 
 ---
 
@@ -123,9 +124,9 @@ Secrets helper: **`generate_jwt_pkey.sh`** (JWT private key PEM → base64 for Y
 
 These must stay **aligned across files/env**:
 
-1. **`zeroDayConfiguration.accessToken`** (backend YAML) = **`APIHUB_API_KEY`** (builder) = **`APIHUB_ACCESS_TOKEN`** (linter) = **`APIHUB_ACCESS_TOKEN`** (agents backend) on greenfield Compose/Helm.
+1. **`zeroDayConfiguration.accessToken`** (backend YAML) = **`APIHUB_API_KEY`** (builder env) = **`technicalParameters.apihub.accessToken`** (linter and agents-backend `config.yaml`) on greenfield Compose/Helm.
 2. **`security.apihubExternalUrl`** (backend) = public HTTPS/HTTP origin users open = **`apihubUrl`** (Helm UI) ≈ Compose example **`http://host.docker.internal:8081`** (only for local desktops).
-3. **`APIHUB_URL`** for linter and agents backend is **the Portal base URL reachable from inside their containers** (`http://qubership-apihub-ui:8080` in-cluster; `http://host.docker.internal:8081`-style patterns on Compose with published UI port).
+3. **`technicalParameters.apihub.url`** for linter and agents backend is **the Portal base URL reachable from inside their containers** (`http://qubership-apihub-ui:8080` in-cluster; `http://host.docker.internal:8081`-style patterns on Compose with published UI port).
 4. **`GOMEMLIMIT`** on Go backends (backend, linter, agents-backend) should stay **below the container memory limit** — chart and Compose defaults use ~80% of the paired **`resource.memory.limit`** / Compose **`deploy.resources.limits.memory`**. When you raise memory limits, update **`goMemLimit`** (Helm) or **`GOMEMLIMIT`** (Compose) in the same change.
 
 ---

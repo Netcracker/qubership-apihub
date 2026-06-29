@@ -57,8 +57,8 @@ Scripts under **`docker-compose/apihub-generic/`**:
 
 | Extension | Operational note |
 |-----------|-------------------|
-| **API Linter** | Own PostgreSQL; Olric discovery mode mirrors backend guidelines; Spectral binaries ship in image (`SPECTRAL_BIN_PATH`). Optional AI lint pulls OpenAI keys through env/Helm secrets. |
-| **Agents Backend** | Own PostgreSQL; **`SNAPSHOTS_CLEANUP_SCHEDULE`** (`cron`) + **`SNAPSHOTS_TTL_DAYS`** regulate snapshot retention (`DRAFTS_*` naming is obsolete). Align **`DEFAULT_WORKSPACE_ID`** with a real workspace slug when cloning package trees after discovery |
+| **API Linter** | Own PostgreSQL; Olric discovery mode mirrors backend guidelines; Spectral binaries ship in image (`linters.spectral.binPath` in `config.yaml`). Optional AI lint pulls OpenAI keys through `config.yaml` / Helm secret. |
+| **Agents Backend** | Own PostgreSQL; **`cleanup.snapshots.schedule`** (`cron`) + **`cleanup.snapshots.ttlDays`** in `config.yaml` regulate snapshot retention. Align **`businessParameters.defaultWorkspaceId`** with a real workspace slug when cloning package trees after discovery |
 | **K8s Agent** | Installed separately; config file from [`agent config.template.yaml`](https://github.com/Netcracker/qubership-apihub-agent/blob/develop/qubership-apihub-agent/config.template.yaml); requires reachable **`agentUrl`**, **`cloudName`**, **`namespace`**, **`apihub.url`/`accessToken`**. |
 
 ---
@@ -69,7 +69,7 @@ Scripts under **`docker-compose/apihub-generic/`**:
 |------|----------|
 | IdP onboarding | SAML metadata / OIDC client credentials live under **`externalIdentityProviders`**. Detailed flows: [**security_model.md**](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/security/security_model.md). Keycloak Compose recipe: **`docker-compose/with-keycloak/`**. |
 | Rotate JWT signing key | Plan user re-login sessions; coordinate with SSO session lifetime. Replace **`jwt.privateKey`**, bounce backend pods/deployments. |
-| Rotate system token | Change backend **`accessToken`** and matching worker env concurrently; regenerate secrets in Helm (`build-task-consumer`, linter, agents-backend). |
+| Rotate system token | Change backend **`accessToken`**, the builder **`APIHUB_API_KEY`**, and linter / agents-backend **`technicalParameters.apihub.accessToken`** concurrently; regenerate the Helm config Secrets (`build-task-consumer`, linter, agents-backend). |
 | Playground proxy hardening | Keep **`security.insecureProxy`** / **`allowedHostsForProxy`** tight; never expose unsafe proxy settings on untrusted networks. |
 
 ---

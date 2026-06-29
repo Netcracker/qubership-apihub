@@ -396,19 +396,52 @@ qubershipApiLinterService:
       # Mandatory; Password for database.user.; If not set, default value: apihub; Example: apihub_api_linter_service_prod_password
       password: ''
 
+    # Section with technical parameters
+    technicalParameters:
+      # Optional; Base path for binary and static files; If not set, default value: .; Example: /app
+      basePath: '.'
+      # Optional; Listen address for Linter Service; If not set, default value: :8080; Example: :8080
+      listenAddress: ':8080'
+      # Optional; Directory containing API specifications for exposure; If not set, defaults to basePath + "/api"; Example: ./docs/api
+      apiSpecDirectory: ''
+      apihub:
+        # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: http://localhost:8090; Example: https://apihub.example.com
+        url: 'http://localhost:8090'
+        # Mandatory; APIHUB access token. In case of clean installation - must be the same as in qubershipApihubBackend.env.zeroDayConfiguration.accessToken section; If not set, default value: ""; Example: access-token-12345
+        accessToken: ''
+
+    # Security parameters.
+    security:
+      # Optional; Allows to set extra allowed origins to CORS header. Used for FE debugging. Should be empty on prod envs.; If not set, default value: []; Example: [https://localhost:5137]
+      allowedOrigins: []
+
     # Configuration for linters
     linters:
       spectral:
-        # Path to Spectral binary inside docker container
-        bin_path: 'resources/spectral/linux/spectral'
+        # Mandatory; Path to the Spectral binary; If not set, default value: ""; Example: ./resources/spectral/linux/spectral
+        binPath: 'resources/spectral/linux/spectral'
         # Optional; Number of Spectral linter workers; If not set, default value: 1; Example: 4
         workers: 1
-
-    apihub:
-      # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
-      url: 'http://qubership-apihub-ui:8080'
-      # Mandatory; APIHUB access token. In case of clean installation - must be the same as in qubershipApihubBackend.env.zeroDayConfiguration.accessToken section; If not set, default value: ""; Example: access-token-12345
-      accessToken: ''
+      ai:
+        # Optional; Enable AI-powered OAS linter; If not set, default value: false; Example: true
+        enabled: false
+        # Optional; Number of AI linter workers; If not set, default value: 1; Example: 4
+        workers: 1
+        # Optional; List of package IDs to exclude from AI linting; If not set, default value: []; Example: [pkg1,pkg2]
+        excludedPackages: []
+        # Optional; List of package IDs to include for AI linting (empty = all); If not set, default value: []; Example: [pkg1,pkg2]
+        includedPackages: []
+        openAI:
+          # Mandatory when AI linter enabled; OpenAI API key; If not set, default value: ""; Example: sk-...
+          apiKey: ''
+          # Optional; Proxy URL for OpenAI API requests; If not set, default value: ""; Example: http://proxy.example.com:8080
+          apiProxy: ''
+          # Optional; OpenAI model to use; If not set, default value: ""; Example: gpt-4o
+          model: ''
+          # Optional; OpenAI API rate limit (requests per second); If not set, default value: 10; Example: 10
+          rateLimitRPS: 10
+          # Optional; OpenAI API rate limit burst; If not set, default value: 30; Example: 30
+          rateLimitBurst: 30
 
     # Section with Olric configuration.
     olric:
@@ -418,28 +451,6 @@ qubershipApiLinterService:
       replicaCount: 1
       # Optional; Namespace for Olric discovery. If not set, default value: ""; Example: apihub
       namespace: ''
-
-    # Section with AI OAS linter configuration
-    ai:
-      # Optional; Enable AI-powered OAS linter; If not set, default value: false; Example: true
-      enable: false
-      # Optional; Number of AI linter workers; If not set, default value: 1; Example: 4
-      workers: 1
-      # Optional; Comma-separated list of package IDs to exclude from AI linting; If not set, default value: ""; Example: pkg1,pkg2
-      excludedPackages: ''
-      # Optional; Comma-separated list of package IDs to include for AI linting (empty = all); If not set, default value: ""; Example: pkg1,pkg2
-      includedPackages: ''
-      openai:
-        # Mandatory when AI linter enabled; OpenAI API key; If not set, default value: ""; Example: sk-...
-        apiKey: ''
-        # Optional; Proxy URL for OpenAI API requests; If not set, default value: ""; Example: http://proxy.example.com:8080
-        apiProxy: ''
-        # Optional; OpenAI model to use; If not set, default value: ""; Example: gpt-4o
-        model: ''
-        # Optional; OpenAI API rate limit (requests per second); If not set, default value: 10; Example: 10
-        rateLimitRps: 10
-        # Optional; OpenAI API rate limit burst; If not set, default value: 30; Example: 30
-        rateLimitBurst: 30
 
 # Section with Qubership APIHUB Agents Backend deployment configuration
 qubershipApihubAgentsBackend:
@@ -481,27 +492,41 @@ qubershipApihubAgentsBackend:
       port: null
       # Mandatory; Logical database in PostgreSQL cluster for APIHUB. Manual pre-creation required; If not set, default value: apihub_agents_backend; Example: apihub_agents_backend_prod_db
       name: ''
-      # Mandatory; User for AGENTS_BACKEND_POSTGRESQL_DB_NAME database; If not set, default value: apihub_agents_backend; Example: apihub_agents_backend_prod_admin
+      # Mandatory; User for database.name database; If not set, default value: apihub_agents_backend; Example: apihub_agents_backend_prod_admin
       username: ''
-      # Mandatory; Password for AGENTS_BACKEND_POSTGRESQL_USERNAME user.; If not set, default value: ""; Example: apihub_agents_backend_prod_password
+      # Mandatory; Password for database.username user.; If not set, default value: ""; Example: apihub_agents_backend_prod_password
       password: ''
 
-    apihub:
-      # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
-      url: 'http://qubership-apihub-ui:8080'
-      # Mandatory; APIHUB access token. In case of clean installation - must be the same as in qubershipApihubBackend.env.zeroDayConfiguration.accessToken section; If not set, default value: ""; Example: access-token-12345
-      accessToken: ''
+    # Section with technical parameters
+    technicalParameters:
+      # Optional; Base path for binary and static files; If not set, default value: .; Example: /app
+      basePath: '.'
+      # Optional; Listen address for the Agents Backend, can be used to avoid port conflicts in case of run on bare metal; If not set, default value: :8080; Example: :8080
+      listenAddress: ':8080'
+      # Optional; Directory containing API specifications for exposure; If not set, defaults to basePath + "/api"; Example: ./docs/api
+      apiSpecDirectory: ''
+      apihub:
+        # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: http://localhost:8090; Example: https://apihub.example.com
+        url: ''
+        # Mandatory; APIHUB access token. In case of clean installation - must be the same as in qubershipApihubBackend.env.zeroDayConfiguration.accessToken section; If not set, default value: ""; Example: access-token-12345
+        accessToken: ''
 
-    # Optional; If specified, during discovery the package structure is copied from the default workspace to the target discovery workspace.; If not set, default value: ""; Example: QS
-    defaultWorkspaceId: ''
+    # Section with business parameters
+    businessParameters:
+      # Optional; ID of the default workspace; when discovery targets a different workspace, the service/package structure is copied from this default workspace into the target; leave empty to disable copying; If not set, default value: ""; Example: WS
+      defaultWorkspaceId: ''
 
-    # Optional; Schedule for the snapshot cleanup job. If not set, default value: "0 2 * * 0"; Example: "* * * * *"
-    snapshotsCleanupSchedule: ''
-    # Optional; Number of days to keep snapshots before cleanup; If not set, default value: 183; Example: 30
-    snapshotsTtlDays: ''
+    # Section with all security parameters
+    security:
+      # Optional; Allows to set extra allowed origins to CORS header. Used for FE debugging. Should be empty on prod envs.; If not set, default value: []; Example: [https://localhost:5137]
+      allowedOrigins: []
+      # Deprecated; Set to true to allow the deprecated agent proxy endpoint to work without authorization. Dangerous, not recommended; If not set, default value: false; Example: false
+      insecureProxy: false
 
-    # Optional; Set to true to enable apihub playground work without authtorization. Dangerous. Not recommended; If not set, default value: false; Example: true
-    insecureProxy: false
-
-    # Optional; Allows to set extra allowed origin to CORS header. Used for FE debugging. Should be empty on prod evs.; If not set, default value: ""; Example: https://localhost:5137
-    originAllowed: ''
+    # Section with cleanup jobs configuration
+    cleanup:
+      snapshots:
+        # Optional; Schedule for the snapshots cleanup job; If not set, default value: 0 22 * * 0 (at 10:00 PM every Sunday); Example: 0 22 * * 0
+        schedule: '0 22 * * 0'
+        # Optional; Retention period in days for snapshots; snapshots older than this are removed by the cleanup job. WARNING: a value of 0 removes ALL snapshots; If not set, default value: 30; Example: 30
+        ttlDays: 30
