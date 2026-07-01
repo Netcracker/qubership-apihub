@@ -33,6 +33,8 @@ import {
 } from '../../../src'
 import { PACKAGE } from '../../../src/consts'
 import { toPackageDocument } from '../../../src/utils'
+import { groupMcpEntitiesByKind } from '../../../src/components/mcp'
+import { McpEntityIndex } from '../../../src/types/package/mcp'
 
 export async function saveComparisonsArray(
   comparisons: VersionsComparisonDto[],
@@ -290,4 +292,20 @@ export function getDocumentFileContent(
 ): Blob {
   const builder = ctx.apiBuilders.find(({ types }) => types.includes(document.type)) || unknownApiBuilder
   return builder.dumpDocument(document, FILE_FORMAT_JSON)
+}
+
+export async function saveMcpEntities(
+  mcpEntities: McpEntityIndex | undefined,
+  basePath: string,
+): Promise<void> {
+  if (!mcpEntities?.size) { return }
+
+  await registryFs.writeFile(`${basePath}/${PACKAGE.MCP_FILE_NAME}`, JSON.stringify(groupMcpEntitiesByKind(mcpEntities), undefined, 2))
+
+  const mcpDir = `${basePath}/${PACKAGE.MCP_DIR_NAME}`
+  await registryFs.mkdir(mcpDir, { recursive: true })
+
+  for (const entity of mcpEntities.values()) {
+    await registryFs.writeFile(`${mcpDir}/${entity.mcpEntityId}`, JSON.stringify(entity.data, undefined, 2))
+  }
 }

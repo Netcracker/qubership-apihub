@@ -14,13 +14,23 @@
  * limitations under the License.
  */
 
-import { BuildConfig, BuilderResolvers, FileId, PackageId, ResolvedVersion, VersionId } from '../external'
+import {
+  BuildConfig,
+  BuildConfigFile,
+  BuilderResolvers,
+  FileId,
+  PackageId,
+  ResolvedVersion,
+  VersionId,
+} from '../external'
 import { VersionsComparison, VersionsComparisonDto } from './compare'
 import { PackageConfig } from '../package/config'
 import { NotificationMessage } from '../package/notifications'
 import { ExportDocument, VersionDocument } from './documents'
 import { SourceFile } from './internal'
 import { ApiOperation } from './operation'
+import { ApiBuilder } from './apiBuilder'
+import { McpEntityIndex } from '../package/mcp'
 
 export type VersionCache = ResolvedVersion & {
   packageId: PackageId
@@ -35,6 +45,7 @@ export interface BuildResultDto {
   exportDocuments: ExportDocument[]
   operations: Map<string, ApiOperation>
   merged?: VersionDocument
+  mcpEntities: McpEntityIndex
 }
 
 export interface BuildResult {
@@ -46,6 +57,7 @@ export interface BuildResult {
   exportFileName?: string
   operations: Map<string, ApiOperation>
   merged?: VersionDocument
+  mcpEntities: McpEntityIndex
 }
 
 export type BuilderConfiguration = {
@@ -66,6 +78,7 @@ export interface IPackageVersionBuilder {
   readonly versionsCache: Map<string, VersionCache>
 
   run: (options?: BuilderRunOptions) => Promise<BuildResult>
+  //TODO: remove update method, since it is not used in production code after Editor was removed
   update: (config: BuildConfig, changedFiles?: FileId[], options?: BuilderRunOptions) => Promise<BuildResult>
 }
 
@@ -93,8 +106,9 @@ export type BuilderRunOptions = Partial<{
 }>
 
 export interface BuildFileResult<T = any> {
+  file: BuildConfigFile
   document: VersionDocument<T>
-  operations?: ApiOperation[]
+  builder?: ApiBuilder
 }
 
 

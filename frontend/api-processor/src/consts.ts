@@ -75,6 +75,8 @@ export const PACKAGE = {
   COMPARISONS_DIR_NAME: 'comparisons',
   VERSION_INTERNAL_DOCUMENTS_DIR_NAME: 'version-internal-documents',
   COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME: 'comparison-internal-documents',
+  MCP_FILE_NAME: 'mcp.json',
+  MCP_DIR_NAME: 'mcp',
 } as const
 
 export const EDITOR_MESSAGES = {
@@ -214,3 +216,4 @@ export const API_KIND_SPECIFICATION_EXTENSION = 'x-api-kind'
 export const REST_API_TYPE = 'rest' as const
 export const GRAPHQL_API_TYPE = 'graphql' as const
 export const ASYNCAPI_API_TYPE = 'asyncapi' as const
+export const MCP_API_TYPE = 'mcp' as const

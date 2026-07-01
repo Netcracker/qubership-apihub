@@ -41,6 +41,8 @@ import { unknownApiBuilder } from '../apitypes'
 import { BUILD_TYPE, FILE_FORMAT_JSON, MESSAGE_SEVERITY, PACKAGE } from '../consts'
 import { EXPORT_FORMAT_TO_FILE_FORMAT, takeIf, toPackageDocument } from '../utils'
 import { toVersionsComparisonDto } from '../utils/transformToDto'
+import { groupMcpEntitiesByKind } from './mcp'
+import { McpEntityIndex } from '../types/package/mcp'
 
 export interface ZipTool {
   // todo method should only accept Blob content, transformation is not a responsibility of this method
@@ -96,6 +98,10 @@ export const createVersionPackage = async (
   for (const { data, operationId } of buildResultDto.operations.values()) {
     if (!data) { continue }
     createOperationDataFile(operationsDir, operationId, data)
+  }
+
+  if (buildResultDto.mcpEntities.size) {
+    createMcpFiles(zip, buildResultDto.mcpEntities)
   }
 
   if (buildResultDto.comparisons.length) {
@@ -172,7 +178,7 @@ const createComparisonInternalDocumentsFile = (zip: ZipTool, comparisonDocument:
       continue
     }
     const { comparisonDocumentId: comparisonInternalDocumentId, comparisonFileId } = comparisonInternalDocument
-    if(!comparisonInternalDocumentId || !comparisonFileId) {
+    if (!comparisonInternalDocumentId || !comparisonFileId) {
       continue
     }
     result.documents.push({
@@ -291,4 +297,12 @@ const createComparisonsFile = (zip: ZipTool, comparisons: PackageComparisons): v
 
 const createComparisonDataFile = (zipFolder: ZipTool, comparisonFileId: string, comparison: PackageComparisonOperations): void => {
   zipFolder.file(comparisonFileId, comparison)
+}
+
+const createMcpFiles = (zip: ZipTool, mcpEntities: McpEntityIndex): void => {
+  zip.file(PACKAGE.MCP_FILE_NAME, groupMcpEntitiesByKind(mcpEntities))
+  const mcpDir = zip.folder(PACKAGE.MCP_DIR_NAME)
+  for (const entity of mcpEntities.values()) {
+    mcpDir.file(entity.mcpEntityId, entity.data)
+  }
 }

@@ -19,7 +19,6 @@ import {
   ApiDocument,
   ApiOperation,
   BuilderContext,
-  BuildResult,
   ExportFormat,
   FILE_KIND,
   FileFormat,
@@ -110,25 +109,23 @@ export function toPackageDocument(document: VersionDocument): PackageDocument {
   }
 }
 
-export type DuplicateOperationHandler = (
-  existing: ApiOperation,
-  duplicate: ApiOperation,
-) => void
+export type DuplicateHandler<T> = (existing: T, duplicate: T) => void
 
-export function setDocument(
-  buildResult: BuildResult,
-  document: VersionDocument,
-  operations: ApiOperation[] = [],
-  handleDuplicateOperation?: DuplicateOperationHandler,
+export type DuplicateOperationHandler = DuplicateHandler<ApiOperation>
+
+/**
+ * Put `value` into `map` under `key`; if an entry already existed for that key, invoke `onDuplicate`
+ * with `(existing, incoming)` before overwriting. Shared by operation and MCP-entity indexing.
+ */
+export function setReportingDuplicate<K, V>(
+  map: Map<K, V>,
+  key: K,
+  value: V,
+  onDuplicate?: DuplicateHandler<V>,
 ): void {
-  buildResult.documents.set(document.fileId, document)
-  for (const operation of operations) {
-    const existingOperation = buildResult.operations.get(operation.operationId)
-    if (existingOperation && handleDuplicateOperation) {
-      handleDuplicateOperation(existingOperation, operation)
-    }
-    buildResult.operations.set(operation.operationId, operation)
-  }
+  const existing = map.get(key)
+  if (existing !== undefined && onDuplicate) { onDuplicate(existing, value) }
+  map.set(key, value)
 }
 
 export const findSharedPath = (fileIds: string[]): string => {

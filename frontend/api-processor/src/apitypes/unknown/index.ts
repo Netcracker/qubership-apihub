@@ -23,7 +23,7 @@ import { DOCUMENT_TYPE } from '../../consts'
 export * from './unknown.consts'
 export { buildBinaryDocument } from './unknown.document'
 
-export const unknownApiBuilder: ApiBuilder<string> = {
+export const unknownApiBuilder: ApiBuilder<unknown> = {
   apiType: UNKNOWN_API_TYPE,
   types: [DOCUMENT_TYPE.JSON, DOCUMENT_TYPE.YAML, DOCUMENT_TYPE.UNKNOWN],
   parser: parseUnknownFile,

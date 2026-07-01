@@ -17,7 +17,6 @@
 import type { BuildConfigFile, BuilderContext, BuildFileResult } from '../types'
 import { buildDocument, buildErrorDocument } from './document'
 import { MESSAGE_SEVERITY } from '../consts'
-import { buildOperations } from './operations'
 import { SLUG_OPTIONS_DOCUMENT_ID, slugify } from '../utils'
 
 export const createFileSlugs = (files: BuildConfigFile[], basePath: string): BuildConfigFile[] => {
@@ -49,31 +48,26 @@ export const buildFile = async (file: BuildConfigFile, ctx: BuilderContext): Pro
       fileId: file.fileId,
     })
     return {
+      file,
       document: buildErrorDocument(file),
     }
   }
 
-  const document = await buildDocument(data, file, ctx)
+  const result = await buildDocument(data, file, ctx)
 
-  if (!document) {
+  if (!result) {
     ctx.notifications.push({
       severity: MESSAGE_SEVERITY.Error,
       message: 'Cannot build document',
       fileId: file.fileId,
     })
     return {
+      file,
       document: buildErrorDocument(file),
     }
   }
 
-  if (file.publish === false) {
-    return { document, operations: [] }
-  }
-
-  const operations = await buildOperations(document, ctx)
-
-  document.operationIds = operations?.map(({ operationId }) => operationId)
-  return { document, operations }
+  return { file, document: result.document, builder: result.builder }
 }
 
 export const buildFiles = async (files: BuildConfigFile[], ctx: BuilderContext): Promise<BuildFileResult[]> => {

@@ -15,12 +15,12 @@
  */
 
 import { FileId, KeyOfConstType, OperationId } from '../external'
+import { McpEntityId } from '../package'
 import { ApihubApiCompatibilityKind, FILE_FORMAT } from '../../consts'
 
 export interface VersionDocuments {
   documents: VersionDocument[]
 }
-
 
 export interface ExportDocument {
   data: Blob
@@ -52,6 +52,8 @@ export interface VersionDocument<T = any> extends ZippableDocument<T> {
   filename: string
   dependencies: string[]
   operationIds: OperationId[]
+  //TODO: split typing, document can't have both operationIds and mcpEntityIds
+  mcpEntityIds?: McpEntityId[]
   metadata: Record<string, unknown>
   errors?: number
   /*

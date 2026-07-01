@@ -29,9 +29,11 @@ import {
   graphqlApiBuilder,
   isAsyncApiDocument,
   isGraphqlDocument,
+  isMcpDocument,
   isRestDocument,
   KIND_PACKAGE,
   Labels,
+  MCP_API_TYPE,
   MESSAGE_SEVERITY,
   NotificationMessage,
   OperationId,
@@ -76,6 +78,7 @@ import {
   saveEachDocument,
   saveEachOperation,
   saveInfo,
+  saveMcpEntities,
   saveNotifications,
   saveOperationsArray,
   saveSearchTextFiles,
@@ -357,7 +360,7 @@ export class LocalRegistry implements IRegistry {
     return undefined
   }
 
-  private getDocApiTypeGuard(apiType: OperationsApiType): (document: ZippableDocument | ResolvedVersionDocument) => void {
+  private getDocApiTypeGuard(apiType: OperationsApiType | typeof MCP_API_TYPE): (document: ZippableDocument | ResolvedVersionDocument) => void {
     switch (apiType) {
       case 'rest':
         return isRestDocument
@@ -365,6 +368,10 @@ export class LocalRegistry implements IRegistry {
         return isGraphqlDocument
       case 'asyncapi':
         return isAsyncApiDocument
+      case 'mcp':
+        return isMcpDocument
+      default:
+        throw new Error(`Unknown API type: ${apiType}`)
     }
   }
 
@@ -510,6 +517,7 @@ export class LocalRegistry implements IRegistry {
       documents,
       comparisons,
       notifications,
+      mcpEntities,
     } = buildResult
 
     const basePath = `${VERSIONS_PATH}/${config.packageId}/${config.version}`
@@ -546,6 +554,8 @@ export class LocalRegistry implements IRegistry {
 
     await saveComparisonInternalDocumentsArray(comparisonInternalDocuments, basePath)
     await saveComparisonInternalDocuments(comparisonInternalDocuments, basePath)
+
+    await saveMcpEntities(mcpEntities, basePath)
   }
 
   async updateOperationsHash(packageId: string, publishParams?: Partial<BuildConfig>): Promise<void> {

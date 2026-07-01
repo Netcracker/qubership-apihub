@@ -51,7 +51,7 @@ import {
   saveEachOperation,
   saveInfo,
   saveNotifications,
-  saveOperationsArray, saveSearchTextFiles, saveVersionInternalDocuments, saveVersionInternalDocumentsArray,
+  saveMcpEntities, saveOperationsArray, saveSearchTextFiles, saveVersionInternalDocuments, saveVersionInternalDocumentsArray,
 } from './utils'
 import { toVersionsComparisonDto } from '../../../src/utils/transformToDto'
 
@@ -101,6 +101,7 @@ export class ApihubRegistry implements IRegistry {
       documents,
       comparisons,
       notifications,
+      mcpEntities,
     } = buildResult
 
     const basePath = `${VERSIONS_PATH}/${config.packageId}/${config.version}`
@@ -138,6 +139,8 @@ export class ApihubRegistry implements IRegistry {
     await saveVersionInternalDocuments(documents, basePath)
     await saveComparisonInternalDocuments(comparisonInternalDocuments, basePath)
     await saveComparisonInternalDocumentsArray(comparisonInternalDocuments, basePath)
+
+    await saveMcpEntities(mcpEntities, basePath)
   }
 
   get versionResolvers(): BuilderResolvers {
