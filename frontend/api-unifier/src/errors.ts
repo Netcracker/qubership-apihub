@@ -9,4 +9,8 @@ export const ErrorMessage = {
   refNotFound: (ref: string) => `${JSON_SCHEMA_PROPERTY_REF} can't be resolved: ${ref}`,
   refNotValidFormat: (ref: string) => `${JSON_SCHEMA_PROPERTY_REF} can't be parsed: ${ref}`,
   duplicateParameter: (name: string, location: string) => `Duplicate parameter detected: name='${name}', in='${location}'`,
+  // Stable prefix 'ddlapi: dangling foreign key' for consumers that string-match. A
+  // structured `cause` for these cases is a deferred additive follow-up.
+  ddlApiDanglingForeignKey: (symbol?: string) =>
+    `ddlapi: dangling foreign key${symbol ? ` '${symbol}'` : ''} has columns but no resolved refTable (partial realm)`,
 } as const

@@ -11,6 +11,8 @@ import {
   NormalizeOptions,
 } from './types'
 import { deDefineOriginsAndResolvedRefSymbols, defineOriginsAndResolveRef } from './define-origins-and-resolve-ref'
+import { defineDdlApiOrigins } from './define-ddlapi-origins'
+import { isDdlApi } from './spec-type'
 import { preValidate, validate } from './validate'
 import { mergeTraits } from './merge-traits'
 import { merge } from './merge'
@@ -22,7 +24,15 @@ export const normalize = (value: unknown, options: NormalizeOptions = {}) => {
   const optionsWithDefaults = createOptionsWithDefaults(options)
   let spec = value
   if (optionsWithDefaults.validate) { preValidate(spec, options) }
-  if (optionsWithDefaults.resolveRef || (!optionsWithDefaults.originsAlreadyDefined && optionsWithDefaults.originsFlag)) {spec = defineOriginsAndResolveRef(spec, optionsWithDefaults)}
+  if (optionsWithDefaults.resolveRef || (!optionsWithDefaults.originsAlreadyDefined && optionsWithDefaults.originsFlag)) {
+    // ddlapi uses a dedicated model-aware origins walk; the JSON `$ref`/origins path is
+    // untouched for every other family. Dispatch on the `ddlapi` stamp, NOT on a
+    // successful resolveSpec: a stamped-but-unsupported version (e.g. 2.0.0) must still take
+    // the ddlapi origins stage; version rejection is the job of validate/unify/hash.
+    spec = isDdlApi(spec)
+      ? defineDdlApiOrigins(spec, optionsWithDefaults)
+      : defineOriginsAndResolveRef(spec, optionsWithDefaults)
+  }
   if (optionsWithDefaults.validate) { spec = validate(spec, optionsWithDefaults) }
   if (optionsWithDefaults.mergeAllOf) { spec = merge(spec, optionsWithDefaults) }
 

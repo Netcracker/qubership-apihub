@@ -14,6 +14,7 @@ import {
 } from '../rules/jsonschema.const'
 import {
   SPEC_TYPE_ASYNCAPI_3,
+  SPEC_TYPE_DDL_API_1,
   SPEC_TYPE_GRAPH_API,
   SPEC_TYPE_JSON_SCHEMA_04,
   SPEC_TYPE_JSON_SCHEMA_06,
@@ -73,6 +74,10 @@ const SOME_NATIVE_ANY: Record<SpecType, NativeAny> = {
   [SPEC_TYPE_OPEN_API_31]: createNativeAnySchema(SPEC_TYPE_OPEN_API_31, undefined, undefined),
   [SPEC_TYPE_ASYNCAPI_3]: createNativeAnySchema(SPEC_TYPE_ASYNCAPI_3, undefined, undefined),
   [SPEC_TYPE_GRAPH_API]: createNativeAnySchema(SPEC_TYPE_GRAPH_API, undefined, undefined),
+  // ddlapi has no JSON-Schema "any" concept and its rules never reference empty-schema
+  // meta, but unify constructs nativeMetaDefinitions for every spec type unconditionally
+  // (see unify.ts) — provide a harmless entry, as graphapi does.
+  [SPEC_TYPE_DDL_API_1]: createNativeAnySchema(SPEC_TYPE_DDL_API_1, undefined, undefined),
 }
 
 export const createNativeMetaDefinitions: (specType: SpecType, originsFlag: symbol | undefined) => MetaDefinitions = (specType, originsFlag) => {

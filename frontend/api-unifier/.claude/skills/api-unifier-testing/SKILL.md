@@ -51,10 +51,37 @@ pass `onUnifyError: (message) => errors.push(message)` and assert on
 
 - **Output shape:** read nested values with `resolveValueByPath` /
   `getValueByPath`; prefer `toMatchObject` for partial structure.
-- **Origins:** call `commonOriginsCheck(result, { source })` to validate
-  the whole origins tree, or `checkOriginsAreTheSame(...)` for a specific
-  shared reference. Do not call `resolveOrigins()` in tests — the helper
-  comment flags it as unreliable.
+- **Origins:** three tools, each with a distinct scope:
+  - `commonOriginsCheck(result, { source })` — validates the whole tree:
+    every node carries an origins record, every ChainItem is interned, and
+    (when `source` is supplied) every path actually exists in the source.
+    Call this first; it is the broadest contract check.
+  - `convertOriginToHumanReadable(result, TEST_ORIGINS_FLAG)` — converts
+    ChainItem chains to slash-joined path strings in place, returning the
+    same object. Call it **after** `commonOriginsCheck` (it mutates).
+    Then assert specific origins with `toHaveProperty`:
+
+    ```typescript
+    const r = convertOriginToHumanReadable(result, TEST_ORIGINS_FLAG)
+    expect(r).toHaveProperty(
+      ['components', 'schemas', 'Pet', TEST_ORIGINS_FLAG, 'description'],
+      ['components/schemas/Pet/allOf/1/description'],
+    )
+    // array slot origin
+    expect(r).toHaveProperty(
+      ['components', 'schemas', TEST_ORIGINS_FLAG, 0],
+      ['components/schemas/0'],
+    )
+    ```
+
+    Path segments are joined by `/`; array indices are numbers in both the
+    `toHaveProperty` key path and the expected string.
+  - `checkOriginsAreTheSame(obj1, obj2, propertyName, originsFlag)` — asserts
+    that two nodes carry the **same interned ChainItem** for a property (i.e.
+    `===`, not just equal strings). Use this for shared-reference cases
+    (FK columns, index parts, enum type) where identity matters more than
+    the string value. Do not call `resolveOrigins()` in tests — the helper
+    comment flags it as unreliable.
 - **Hashes:** `checkHashesEqualByPath` / `checkHashesNotEqualByPath`
   assert two nodes hash the same (semantic equality) or differ.
 - **Round-trip:** for any reversible unify change, assert

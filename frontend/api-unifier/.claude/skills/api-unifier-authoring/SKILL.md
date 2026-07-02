@@ -103,3 +103,48 @@ After adding a rule:
   property you introduce.
 - Add round-trip tests (`normalize` then `denormalize`) — see the
   `api-unifier-testing` skill.
+
+## Hash rules
+
+Hash rules support tolerant-hash calculation for **deprecated items
+tracking with extract-to-component refactoring support** (OAS schemas and
+parameters). If a spec type has no deprecated items or no component
+extraction, skip hash rules entirely. GraphQL (`graphapi`) has no hash
+support today — do not add hash rules for it.
+
+When adding hash rules for a new spec type, first ask the user:
+- Does this spec support deprecated items?
+- Does it support reusable components (extract-to-component)?
+
+### The critical non-obvious rule
+
+**Hashing is opt-in per key.** A rule without `hashStrategy` is
+**excluded** from the hash — this is the opposite of what most people
+expect. Forgetting `hashStrategy` silently drops a key.
+
+### Three properties
+
+```typescript
+hashStrategy?: CURRENT_DATA_LEVEL | BEFORE_SECOND_DATA_LEVEL
+hashOwner?: boolean      // entity owns a hash thunk
+newDataLayer?: boolean   // increments depth counter when descending
+```
+
+### How to apply
+
+1. **Every content key** you want in the hash: `hashStrategy: CURRENT_DATA_LEVEL`.
+   Omit it for annotation keys (description, title, examples, extensions).
+2. **Each independently-comparable entity** (schema, parameter, …): add
+   `hashOwner: true` + `hashStrategy: CURRENT_DATA_LEVEL` on its root rule.
+3. **Nested entity boundaries**: where one entity contains another (or where
+   a cycle is possible), wrap the nested entity's rule with
+   `newDataLayer: true` + `hashStrategy: BEFORE_SECOND_DATA_LEVEL`. This
+   makes the nested entity appear as a structural placeholder in the parent's
+   hash while the nested entity owns its own deeper hash. It also makes the
+   cloned graph acyclic (`object-hash` is not cycle-safe).
+4. **Consequence**: a nested entity's content change does **not** change the
+   parent's hash. Correlate changes by per-element hash + origins, never by
+   array index.
+
+The full depth model and a worked OAS-parameter example are in
+`docs/hashing_rules_guidelines.md`.

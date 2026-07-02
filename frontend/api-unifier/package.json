@@ -21,8 +21,8 @@
     "prebuild": "rimraf ./dist",
     "build": "vite build",
     "performance:run-inspect": "vite build --sourcemap=inline -c=vite.performance.config.ts && node --inspect dist/index.es.mjs",
-    "development:link": "npm link && npm link @netcracker/qubership-apihub-json-crawl && npm link @netcracker/qubership-apihub-graphapi",
-    "development:unlink": "npm unlink && npm unlink @netcracker/qubership-apihub-json-crawl && npm unlink @netcracker/qubership-apihub-graphapi",
+    "development:link": "npm link && npm link @netcracker/qubership-apihub-json-crawl && npm link @netcracker/qubership-apihub-graphapi && npm link @netcracker/qubership-apihub-ddlapi",
+    "development:unlink": "npm unlink && npm unlink @netcracker/qubership-apihub-json-crawl && npm unlink @netcracker/qubership-apihub-graphapi && npm unlink @netcracker/qubership-apihub-ddlapi",
     "test": "jest --verbose --maxWorkers 3",
     "test:coverage": "jest --verbose --coverage",
     "update-lock-file": "update-lock-file @netcracker"
@@ -40,6 +40,7 @@
     "simplify"
   ],
   "dependencies": {
+    "@netcracker/qubership-apihub-ddlapi": "dev",
     "@netcracker/qubership-apihub-json-crawl": "1.2.1",
     "object-hash": "3.0.0",
     "fast-equals": "4.0.3",

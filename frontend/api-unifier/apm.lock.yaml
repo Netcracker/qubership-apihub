@@ -1,32 +1,69 @@
 lockfile_version: '1'
-generated_at: '2026-05-29T13:06:37.811622+00:00'
-apm_version: 0.14.2
+generated_at: '2026-06-26T10:38:26.173817+00:00'
+apm_version: 0.22.0
 dependencies:
+- repo_url: Netcracker/qubership-apihub-ddlapi
+  name: ddlapi-using
+  host: github.com
+  resolved_commit: 65039a072a07258e95435a8d12775f1a2ffe214a
+  version: 1.0.0
+  virtual_path: agent-packages/ddlapi-using
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/ddlapi-using
+  - .agents/skills/ddlapi-using/SKILL.md
+  - .claude/rules/ddlapi-using.md
+  - .claude/skills/ddlapi-using
+  - .claude/skills/ddlapi-using/SKILL.md
+  - .cursor/rules/ddlapi-using.mdc
+  - .github/instructions/ddlapi-using.instructions.md
+  deployed_file_hashes:
+    .agents/skills/ddlapi-using/SKILL.md: sha256:7ab1e9bd725f92fd65366ec9b72dfd7a336c136a1d10df961836da079370648b
+    .claude/rules/ddlapi-using.md: sha256:6aaa86c79159406265060e4d0f3ce2d903f3e5a7054acfbaeba0f475e383d0b8
+    .claude/skills/ddlapi-using/SKILL.md: sha256:7ab1e9bd725f92fd65366ec9b72dfd7a336c136a1d10df961836da079370648b
+    .cursor/rules/ddlapi-using.mdc: sha256:61d2af786a6623c3857ed87edd5cb3d212f0c6d18e98c9b71da843a3873cb27a
+    .github/instructions/ddlapi-using.instructions.md: sha256:a12f9f14d89ba48e3ef6631e1727f9f26c908d573c7ea836c3b44873672be558
+  content_hash: sha256:5ce7d34b3bb9aa88429a0c024c2bcc388444f82c3bfb118ea7e437350aec6ef2
 - repo_url: _local/api-unifier-authoring
+  name: api-unifier-authoring
+  version: 1.0.0
   package_type: apm_package
   deployed_files:
   - .agents/skills/api-unifier-authoring
+  - .agents/skills/api-unifier-authoring/SKILL.md
   - .claude/rules/api-unifier-authoring.md
   - .claude/skills/api-unifier-authoring
+  - .claude/skills/api-unifier-authoring/SKILL.md
   - .cursor/rules/api-unifier-authoring.mdc
   - .github/instructions/api-unifier-authoring.instructions.md
   deployed_file_hashes:
-    .claude/rules/api-unifier-authoring.md: sha256:ffc502c9999ceecb5f70a1c0a0d1945c6e9c4efa5c74384cdce511b84e854b99
-    .cursor/rules/api-unifier-authoring.mdc: sha256:78b484611411290272faf2f87afaaa4923e4649fc97eedf5e1392692254935ea
-    .github/instructions/api-unifier-authoring.instructions.md: sha256:53f72b77b2c0471e57391a250eb1e3c907b29beae771461b0a2213c1cab045cc
+    .agents/skills/api-unifier-authoring/SKILL.md: sha256:025fbfd81436cdf1d99a68557869bde8f9da04e5cb457870771a2c6b4497d063
+    .claude/rules/api-unifier-authoring.md: sha256:49614ffb2d8aaa44b7ebf037106008cc2fdb3bbb12ac240f5193fb41e1d3dc4b
+    .claude/skills/api-unifier-authoring/SKILL.md: sha256:025fbfd81436cdf1d99a68557869bde8f9da04e5cb457870771a2c6b4497d063
+    .cursor/rules/api-unifier-authoring.mdc: sha256:82db6491d8dfb1b7ca06b3bd4b82a529cd5130fcbac43375c8d29e8985f2fa77
+    .github/instructions/api-unifier-authoring.instructions.md: sha256:1c8f98f1d5295b8f659d46a4c6ac9e35e6642888bb5a1f5a30676d6eb14a92ad
   source: local
   local_path: ./agent-packages/api-unifier-authoring
+  declared_license: Apache-2.0
 - repo_url: _local/api-unifier-testing
+  name: api-unifier-testing
+  version: 1.0.0
   package_type: apm_package
   deployed_files:
   - .agents/skills/api-unifier-testing
+  - .agents/skills/api-unifier-testing/SKILL.md
   - .claude/rules/api-unifier-testing.md
   - .claude/skills/api-unifier-testing
+  - .claude/skills/api-unifier-testing/SKILL.md
   - .cursor/rules/api-unifier-testing.mdc
   - .github/instructions/api-unifier-testing.instructions.md
   deployed_file_hashes:
-    .claude/rules/api-unifier-testing.md: sha256:d99e03cb75b69fae37d7d54b89ed0594232c12b958cc9c90c58803fad17b4b46
-    .cursor/rules/api-unifier-testing.mdc: sha256:ce42a22b125ef1f4afd564ebed702ab87539fa0280dd5fe8f138e4c86b496740
+    .agents/skills/api-unifier-testing/SKILL.md: sha256:d6e3161f17f950aee397411bbc866b75b1488ad56766b2edc2f42786ea8436fa
+    .claude/rules/api-unifier-testing.md: sha256:ac70f5c4942449c3b205bf9008f4b9aebd0f3ba91a5000c8ccba14461e5b014d
+    .claude/skills/api-unifier-testing/SKILL.md: sha256:d6e3161f17f950aee397411bbc866b75b1488ad56766b2edc2f42786ea8436fa
+    .cursor/rules/api-unifier-testing.mdc: sha256:a5a997cada2e3409d9479e5c2d87330ebcfd95ce5c757f703b479a1687a5f72d
     .github/instructions/api-unifier-testing.instructions.md: sha256:b1d11c70d27c782d80e1accd296a5301db642e095095ff129569697f93e1ae10
   source: local
   local_path: ./agent-packages/api-unifier-testing
+  declared_license: Apache-2.0
