@@ -66,6 +66,8 @@ import { ComparisonSwapper } from '../ComparisonSwapper'
 import { useVersionsComparisonGlobalParams } from '../VersionsComparisonGlobalParams'
 import { VERSION_SWAPPER_HEIGHT } from '../shared-styles'
 import { useFilteredDashboardChanges } from './useFilteredDashboardChanges'
+import { toComparedApiTypeFilter } from './compareApiTypeFilter'
+import { useApiTypeSearchParam } from '../useApiTypeSearchParam'
 import { WarningApiProcessorVersion } from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
 
 export const DashboardsCompareContent: FC = memo(() => {
@@ -74,6 +76,7 @@ export const DashboardsCompareContent: FC = memo(() => {
   const setBackwardLocation = useSetBackwardLocationContext()
 
   const { isPackageFromDashboard, refPackageKey } = useIsPackageFromDashboard()
+  const { apiType: apiTypeSearchParam } = useApiTypeSearchParam()
 
   const {
     originPackageKey,
@@ -99,7 +102,7 @@ export const DashboardsCompareContent: FC = memo(() => {
   }, [changesSummary, setChangesLoadingStatus])
 
   const [filters] = useSeverityFiltersSearchParam()
-  const apiTypeFilter = getApiTypeFilter(apiType as string)
+  const apiTypeFilter = toComparedApiTypeFilter(apiTypeSearchParam) as ApiType | undefined
   const filteredDashboardChanges = useFilteredDashboardChanges(changesSummary, filters, apiTypeFilter)
 
   const onPackageChangeClick = (): void => {
@@ -325,7 +328,3 @@ const Package: FC<PackageProps> = memo<PackageProps>(({ value, operationTypes })
   )
 })
 
-// handle specific dashboard comparison value
-function getApiTypeFilter(apiTypeParameter: string): ApiType | undefined {
-  return apiTypeParameter === 'all' ? undefined : apiTypeParameter as ApiType
-}

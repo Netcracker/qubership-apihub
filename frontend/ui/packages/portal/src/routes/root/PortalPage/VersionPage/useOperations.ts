@@ -171,28 +171,29 @@ export function useOperations(options?: Partial<{
   groupName?: OperationGroupName
   page: number
   limit: number
+  enabled?: boolean
 }>): [OperationsData, IsLoading, FetchNextOperationList, IsFetchingNextPage, HasNextPage] {
-  const packageKey = options?.packageKey
-  const versionKey = options?.versionKey
-
-  const { fullVersion } = useVersionWithRevision(versionKey, packageKey)
-
   const {
-    textFilter,
-    tag,
+    packageKey,
+    versionKey,
+    deprecated,
     ids,
     includeData,
-    label,
-    deprecated,
     kind,
     apiAudience,
+    label,
+    tag,
+    textFilter,
     apiType,
     excludedGroupName,
     groupName,
     page,
     limit,
     refPackageKey,
+    enabled = true,
   } = options ?? {}
+
+  const { fullVersion } = useVersionWithRevision(versionKey, packageKey)
 
   const {
     resolvedExcludedGroupName,
@@ -236,7 +237,7 @@ export function useOperations(options?: Partial<{
 
       return lastPage.length === limit ? allPages.length + 1 : undefined
     },
-    enabled: !!packageKey && !!fullVersion,
+    enabled: enabled && !!packageKey && !!fullVersion,
   })
 
   return [

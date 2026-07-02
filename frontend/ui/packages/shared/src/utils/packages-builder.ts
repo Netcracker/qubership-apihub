@@ -18,6 +18,7 @@ import type {
   ApiAudience,
   ApihubApiCompatibilityKind,
   BuildConfig,
+  ContractType,
   ResolvedDeprecatedOperations,
   ResolvedGroupDocuments,
   ResolvedOperation,
@@ -368,12 +369,13 @@ export async function getResolvedVersionDocuments(
   packageKey: Key,
   versionKey: Key,
   apiType?: ApiType,
+  contractType?: ContractType,
   signal?: AbortSignal,
 ): Promise<ResolvedVersionDocuments> {
   const packageId = encodeURIComponent(packageKey)
   const versionId = encodeURIComponent(versionKey)
 
-  const queryParams = optionalSearchParams({ apiType: { value: apiType } })
+  const queryParams = optionalSearchParams({ apiType: { value: apiType }, contractType: { value: contractType } })
   const pathPattern = '/packages/:packageId/versions/:versionId/documents'
   return await requestJson<ResolvedVersionDocuments>(
     `${generatePath(pathPattern, { packageId, versionId })}?${queryParams}`,

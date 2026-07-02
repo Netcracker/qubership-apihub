@@ -21,6 +21,7 @@ import { useEvent } from 'react-use'
 import { createEventBus, slot } from 'ts-event-bus'
 
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { ContractType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import { AGENT_ROUTE } from '@netcracker/qubership-apihub-ui-shared/entities/application-routes'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type {
@@ -55,7 +56,7 @@ import {
   GROUPS_OPERATIONS_COMPARE_PAGE_PATH_PATTERN,
   GROUPS_PAGE_PATH_PATTERN,
   OPERATION_COMPARE_PAGE_PATH_PATTERN,
-  OPERATIONS_PAGE_PATH_PATTERN,
+  CONTRACTS_PAGE_PATH_PATTERN,
   OVERVIEW_PATH_PATTERN,
   PACKAGE_PAGE_PATH_PATTERN,
   PACKAGE_SETTINGS_PAGE_PATH_PATTERN,
@@ -69,6 +70,8 @@ import {
   VERSION_PAGE_PATH_PATTERN,
   WORKSPACES_PAGE_PATH_PATTERN,
 } from '../routes'
+import type { MCP_ENDPOINT_SEARCH_PARAM } from './root/PortalPage/VersionPage/useMcpEndpointSearchParam'
+import type { MCP_ENTITY_SEARCH_PARAM } from './root/PortalPage/VersionPage/useMcpEntitySearchParam'
 
 export const NAVIGATE_TO_OVERVIEW = 'navigate-to-overview'
 export const NAVIGATE_TO_OPERATIONS = 'navigate-to-operations'
@@ -111,7 +114,7 @@ export type OverviewDetail = {
 export type OperationsDetail = {
   packageKey: Key
   versionKey: Key
-  apiType: ApiType
+  apiType: ApiType | ContractType
   operationKey?: Key
   previousOperationKey?: Key
   search?: {
@@ -124,6 +127,8 @@ export type OperationsDetail = {
     [EXPAND_NAVIGATION_MENU_SEARCH_PARAM]?: SearchParam
     [OPERATIONS_VIEW_MODE_PARAM]?: SearchParam
     [OPERATION_SEARCH_PARAM]?: SearchParam
+    [MCP_ENDPOINT_SEARCH_PARAM]?: SearchParam
+    [MCP_ENTITY_SEARCH_PARAM]?: SearchParam
   }
 }
 
@@ -531,7 +536,7 @@ export function getOperationsPath({
   const operationId = operationKey ? encodeURIComponent(operationKey) : ''
   return {
     pathname: generatePath(
-      `${OPERATIONS_PAGE_PATH_PATTERN}${operationId}`,
+      `${CONTRACTS_PAGE_PATH_PATTERN}${operationId}`,
       { packageId, versionId, apiType },
     ),
     ...(search ? { search: `${optionalSearchParams(search)}` } : {}),

@@ -38,6 +38,8 @@
     "@netcracker/qubership-apihub-apispec-view": "dev",
     "@netcracker/qubership-apihub-class-view": "1.0.4",
     "@netcracker/qubership-apihub-rest-playground": "dev",
+    "@netcracker/qubership-apihub-graphapi": "dev",
+    "@netcracker/qubership-apihub-ddlapi": "dev",
     "@otjs/plaintext": "0.2.2",
     "@otjs/plaintext-editor": "0.2.2",
     "@stoplight/json": "3.21.7",

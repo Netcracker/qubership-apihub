@@ -29,7 +29,7 @@ import type { FC, ReactNode } from 'react'
 import { memo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import type { VersionPageRoute } from '../../../../routes'
-import { API_CHANGES_PAGE, API_QUALITY_PAGE, DEPRECATED_PAGE, DOCUMENTS_PAGE, OPERATIONS_PAGE, OVERVIEW_PAGE } from '../../../../routes'
+import { API_CHANGES_PAGE, API_QUALITY_PAGE, CONTRACTS_PAGE, DEPRECATED_PAGE, DOCUMENTS_PAGE, OVERVIEW_PAGE } from '../../../../routes'
 import { ActivityHistoryFiltersProvider } from '../../MainPage/ActivityHistoryFiltersProvider'
 import { NoPackagePlaceholder } from '../../NoPackagePlaceholder'
 import { NoPackageVersionPlaceholder } from '../../NoPackageVersionPlaceholder'
@@ -41,12 +41,13 @@ import type { ClientValidationStatus } from './ApiQualityValidationSummaryProvid
 import { ApiQualityDataProvider } from './ApiQualityValidationSummaryProvider'
 import { OutdatedRevisionNotification } from './OutdatedRevisionNotification/OutdatedRevisionNotification'
 import { usePollingForValidationSummaryReadiness } from './usePollingForValidationSummaryReadiness'
+import { VersionTabApiTypesProvider } from './VersionTabApiTypesProvider'
 import { VersionApiChangesSubPage } from './VersionApiChangesSubPage/VersionApiChangesSubPage'
 import { RulesetInfoDialog } from './VersionApiQualitySubPage/components/RulesetInfoDialog/RulesetInfoDialog'
 import { VersionApiQualitySubPage } from './VersionApiQualitySubPage/VersionApiQualitySubPage'
 import { VersionDeprecatedOperationsSubPage } from './VersionDeprecatedOperationsSubPage/VersionDeprecatedOperationsSubPage'
 import { VersionDocumentsSubPage } from './VersionDocumentsSubPage/VersionDocumentsSubPage'
-import { VersionOperationsSubPage } from './VersionOperationsSubPage/VersionOperationsSubPage'
+import { VersionContractsSubPage } from './VersionContractsSubPage/VersionContractsSubPage'
 import { VersionOverviewSubPage } from './VersionOverviewSubPage/VersionOverviewSubPage'
 import { VersionPageToolbar } from './VersionPageToolbar'
 
@@ -76,18 +77,20 @@ export const VersionPage: FC = memo(() => {
             clientValidationStatus={validationStatus}
             setClientValidationStatus={setValidationStatus}
           >
-            <NoPackagePlaceholder packageObject={packageObject} isLoading={isLoading}>
-              <NoPackageVersionPlaceholder packageObject={packageObject}>
-                <LayoutWithToolbar
-                  toolbar={<VersionPageToolbar />}
-                  body={<VersionPageBody menuItem={menuItem as VersionPageRoute} />}
-                />
-                <OutdatedRevisionNotification />
-              </NoPackageVersionPlaceholder>
-            </NoPackagePlaceholder>
-            {packageObject?.kind === DASHBOARD_KIND && <PublishDashboardVersionFromCSVDialog />}
-            <ExportSettingsDialog />
-            <RulesetInfoDialog />
+            <VersionTabApiTypesProvider>
+              <NoPackagePlaceholder packageObject={packageObject} isLoading={isLoading}>
+                <NoPackageVersionPlaceholder packageObject={packageObject}>
+                  <LayoutWithToolbar
+                    toolbar={<VersionPageToolbar />}
+                    body={<VersionPageBody menuItem={menuItem as VersionPageRoute} />}
+                  />
+                  <OutdatedRevisionNotification />
+                </NoPackageVersionPlaceholder>
+              </NoPackagePlaceholder>
+              {packageObject?.kind === DASHBOARD_KIND && <PublishDashboardVersionFromCSVDialog />}
+              <ExportSettingsDialog />
+              <RulesetInfoDialog />
+            </VersionTabApiTypesProvider>
           </ApiQualityDataProvider>
         </ActivityHistoryFiltersProvider>
       </FullMainVersionProvider>
@@ -97,9 +100,9 @@ export const VersionPage: FC = memo(() => {
 
 const PATH_PARAM_TO_SUB_PAGE_MAP: Record<VersionPageRoute, ReactNode> = {
   [OVERVIEW_PAGE]: <VersionOverviewSubPage />,
-  [OPERATIONS_PAGE]: (
+  [CONTRACTS_PAGE]: (
     <SelectedPreviewOperationProvider>
-      <VersionOperationsSubPage />
+      <VersionContractsSubPage />
     </SelectedPreviewOperationProvider>
   ),
   [API_CHANGES_PAGE]: (
@@ -118,7 +121,7 @@ const PATH_PARAM_TO_SUB_PAGE_MAP: Record<VersionPageRoute, ReactNode> = {
 
 const VERSION_PAGE_MENU_ITEMS = [
   OVERVIEW_PAGE,
-  OPERATIONS_PAGE,
+  CONTRACTS_PAGE,
   API_CHANGES_PAGE,
   DEPRECATED_PAGE,
   API_QUALITY_PAGE,
@@ -137,3 +140,5 @@ const VersionPageBody: FC<VersionPageBodyProps> = memo<VersionPageBodyProps>(({ 
     />
   )
 })
+
+VersionPageBody.displayName = 'VersionPageBody'

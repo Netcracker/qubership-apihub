@@ -15,8 +15,8 @@
  */
 
 import type { FC, ReactNode} from 'react'
-import { useEffect } from 'react'
-import { useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
+import { styled } from '@mui/material'
 import type { OpenApiSpecViewerProps } from './OpenApiSpecViewer'
 import { OPEN_API_VIEW_MODES, OpenApiSpecViewer } from './OpenApiSpecViewer'
 import type { GraphQlSpecViewerProps } from './GraphQlSpecViewer'
@@ -25,6 +25,7 @@ import type { UnsupportedViewerProps } from './UnsupportedViewer'
 import { UnsupportedViewer } from './UnsupportedViewer'
 import type { JsonSchemaSpecViewerProps } from './JsonSchemaSpecViewer'
 import { JSON_SCHEMA_VIEW_MODES, JsonSchemaSpecViewer } from './JsonSchemaSpecViewer'
+import { RawSpecView } from './RawSpecView'
 import { LoadingIndicator } from '../LoadingIndicator'
 import type { MarkdownViewerProps } from './MarkdownViewer'
 import { MarkdownViewer } from './MarkdownViewer'
@@ -33,7 +34,7 @@ import { DOC_SPEC_VIEW_MODE } from '../SpecViewToggler'
 import type { Spec } from '../../entities/specs'
 import type { ProxyServer } from '../../entities/services'
 import type { SpecType } from '../../utils/specs'
-import { ASYNCAPI_3_SPEC_TYPE } from '../../utils/specs'
+import { ASYNCAPI_3_SPEC_TYPE, DDL_DOCUMENT_TYPE, MCP_DOCUMENT_TYPE } from '../../utils/specs'
 import {
   GRAPHAPI_SPEC_TYPE,
   GRAPHQL_INTROSPECTION_SPEC_TYPE,
@@ -101,8 +102,24 @@ type SpecViewers =
   | FC<JsonSchemaSpecViewerProps>
   | FC<UnsupportedViewerProps>
 
+const RawOnlySpecView = styled(RawSpecView)(({ theme }) => ({
+  paddingLeft: theme.spacing(4),
+  paddingRight: theme.spacing(4),
+  height: '100%',
+}))
+
+const RawOnlySpecViewer: FC<JsonSchemaSpecViewerProps> = memo(({ spec, value }) => (
+  <RawOnlySpecView
+    value={value}
+    {...spec}
+  />
+))
+
+RawOnlySpecViewer.displayName = 'RawOnlySpecViewer'
+
 const openApiView: [SpecViewers, SpecViewMode[]] = [OpenApiSpecViewer, OPEN_API_VIEW_MODES]
 const graphQlView: [SpecViewers, SpecViewMode[]] = [GraphQlSpecViewer, GRAPHQL_VIEW_MODES]
+const rawOnlyView: [SpecViewers, SpecViewMode[]] = [RawOnlySpecViewer, []]
 
 export const specTypeViewers: Partial<Record<SpecType, [SpecViewers, SpecViewMode[]]>> = {
   [OPENAPI_3_1_SPEC_TYPE]: openApiView,
@@ -118,6 +135,13 @@ export const specTypeViewers: Partial<Record<SpecType, [SpecViewers, SpecViewMod
   [ASYNCAPI_3_SPEC_TYPE]: [JsonSchemaSpecViewer, []],
 
   [MARKDOWN_SPEC_TYPE]: [MarkdownViewer, []],
+
+  [MCP_DOCUMENT_TYPE.MCP_INIT]: rawOnlyView,
+  [MCP_DOCUMENT_TYPE.MCP_TOOLS]: rawOnlyView,
+  [MCP_DOCUMENT_TYPE.MCP_RESOURCES]: rawOnlyView,
+  [MCP_DOCUMENT_TYPE.MCP_PROMPTS]: rawOnlyView,
+
+  [DDL_DOCUMENT_TYPE.DDL]: rawOnlyView,
 }
 
 function getFormatViewer(extension: FileExtension, value: string): [SpecViewers, SpecViewMode[]] {

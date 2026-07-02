@@ -1,34 +1,43 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+import { useMemo } from 'react'
+
+import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import {
+  CONTRACT_TYPE_DDL,
+  CONTRACT_TYPE_MCP,
+  type ContractType,
+} from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
+import { hasDdlContracts } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-ddl'
+import { hasMcpContracts } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
+import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 
 import { usePackageVersionContent } from '../../usePackageVersionContent'
-import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
-export function usePackageVersionApiTypes(packageKey: string, versionKey: string): {
-  apiTypes: ApiType[]
+export function usePackageVersionApiTypes(
+  packageKey: string,
+  versionKey: string,
+): {
+  apiTypes: Array<ApiType | ContractType>
   isLoading: IsLoading
 } {
-  const { versionContent, isLoading } = usePackageVersionContent(
-    { packageKey: packageKey, versionKey: versionKey, includeSummary: true })
+  const { versionContent, isLoading } = usePackageVersionContent({
+    packageKey: packageKey,
+    versionKey: versionKey,
+    includeSummary: true,
+  })
 
-  return {
-    apiTypes: versionContent?.operationTypes
-      ? Object.keys(versionContent.operationTypes!) as ApiType[]
-      : [],
-    isLoading: isLoading,
-  }
+  const apiTypes = useMemo<Array<ApiType | ContractType>>(() => {
+    const result: Array<ApiType | ContractType> = []
+    if (versionContent?.operationTypes) {
+      result.push(...Object.keys(versionContent.operationTypes) as ApiType[])
+    }
+    if (hasMcpContracts(versionContent?.contractsSummary?.mcp)) {
+      result.push(CONTRACT_TYPE_MCP)
+    }
+    if (hasDdlContracts(versionContent?.contractsSummary?.ddl)) {
+      result.push(CONTRACT_TYPE_DDL)
+    }
+    return result
+  }, [versionContent])
+
+  return useMemo(() => ({ apiTypes, isLoading }), [apiTypes, isLoading])
 }

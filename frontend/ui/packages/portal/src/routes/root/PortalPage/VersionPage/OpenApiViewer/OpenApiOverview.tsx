@@ -17,9 +17,9 @@
 import { Fragment, memo, useMemo, type FC } from 'react'
 import { Box, Link } from '@mui/material'
 import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
 import { MarkdownViewer } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/MarkdownViewer'
 import type { Document } from '@apihub/entities/documents'
+import { DocumentLabels } from '@apihub/routes/root/PortalPage/VersionPage/VersionDocumentsSubPage/DocumentLabels'
 
 export type OpenApiOverviewProps = Pick<Document, 'labels' | 'description' | 'info' | 'externalDocs'>
 
@@ -80,17 +80,7 @@ export const OpenApiOverview: FC<OpenApiOverviewProps> = memo<OpenApiOverviewPro
         area={CONTENT_PLACEHOLDER_AREA}
         message="No content"
       >
-        {labels && labels.length !== 0 && (
-          <Box sx={blockStyle} data-testid="DocumentLabels">
-            {labels.map(label => (
-              <CustomChip
-                key={`open-api-overview-custom-chip-${label}`}
-                value={label}
-                sx={{ mr: 1 }}
-              />
-            ))}
-          </Box>
-        )}
+        <DocumentLabels labels={labels} />
         <Box sx={blockStyle}>
           {contactLinks}
           {contactLinks && license && (<> | </>)}

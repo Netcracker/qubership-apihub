@@ -26,6 +26,7 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/hooks/operation-groups/useResolvedOperationGroupParameters'
 import { ExportMenuButton } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ExportMenuButton'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { ContractType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 
 export type ExportChangesMenuProps = {
   textFilter?: string
@@ -41,7 +42,7 @@ export type ExportChangesMenuProps = {
   previousVersion?: string
   previousVersionPackageId?: string
   onDownloadAllChanges?: () => void
-  apiType: ApiType
+  apiType: ApiType | ContractType
 }
 
 export const ExportChangesMenu: FC<ExportChangesMenuProps> = memo(({
@@ -79,7 +80,7 @@ export const ExportChangesMenu: FC<ExportChangesMenuProps> = memo(({
     downloadChangesAsExcel({
       packageKey: packageId!,
       version: versionId!,
-      apiType: apiType!,
+      apiType: apiType,
     })
   }
 
@@ -87,7 +88,7 @@ export const ExportChangesMenu: FC<ExportChangesMenuProps> = memo(({
     downloadChangesAsExcel({
       packageKey: packageId!,
       version: versionId!,
-      apiType: apiType!,
+      apiType: apiType,
       textFilter: textFilter!,
       apiKind: kind!,
       apiAudience: apiAudience,

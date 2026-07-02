@@ -21,10 +21,9 @@ import { AddPackageDialog } from './AddPackageDialog'
 import { usePackage } from '../../usePackage'
 import { PublishPackageVersionDialog } from './PublishPackageVersionDialog'
 import { DashboardReferencesContextProvider } from './DashboardReferencesProvider'
-import { CONFIGURATION_PAGE } from '../../../../routes'
 import { NoPackageVersionPlaceholder } from '../../NoPackageVersionPlaceholder'
 import { ConfigureDashboardSubPage } from './ConfigureDashboardSubPage'
-import { VersionNavigationMenu } from '../VersionNavigationMenu'
+import { ConfigureVersionNavigationMenu } from '../ConfigureVersionNavigationMenu'
 import { RecursiveDashboardNameContextProvider } from './RecursiveDashboardNameContextProvider'
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
 
@@ -37,7 +36,7 @@ export const ConfigureDashboardPage: FC = memo(() => {
         <NoPackageVersionPlaceholder packageObject={packageObject}>
           <PageLayout
             toolbar={<ConfigureDashboardToolbar packageObject={packageObject}/>}
-            menu={<VersionNavigationMenu menuItems={CONFIGURE_DASHBOARD_PAGE_MENU_ITEMS}/>}
+            menu={<ConfigureVersionNavigationMenu/>}
             body={<ConfigureDashboardSubPage/>}
           />
         </NoPackageVersionPlaceholder>
@@ -47,7 +46,3 @@ export const ConfigureDashboardPage: FC = memo(() => {
     </DashboardReferencesContextProvider>
   )
 })
-
-const CONFIGURE_DASHBOARD_PAGE_MENU_ITEMS = [
-  CONFIGURATION_PAGE,
-]

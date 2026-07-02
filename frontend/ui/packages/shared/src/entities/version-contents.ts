@@ -21,6 +21,8 @@ import type { OperationGroup, OperationGroupWithApiTypeDto } from './operation-g
 import type { Key, VersionKey } from './keys'
 import type { Principal } from './principals'
 import type { ApiType } from './api-types'
+import { toDdlContractsSummary, type DdlContractsSummary, type DdlContractsSummaryDto } from './contracts-ddl'
+import { toMcpContractsSummary, type McpContractsSummary, type McpContractsSummaryDto } from './contracts-mcp'
 import type { ApiAudienceTransition, DiffTypeDto } from '@netcracker/qubership-apihub-api-processor'
 import type { DiffType } from '@netcracker/qubership-apihub-api-diff'
 
@@ -36,6 +38,7 @@ export type PackageVersionContent = Readonly<{
   previousVersionPackageId?: VersionKey
   versionLabels?: string[]
   operationTypes?: Record<ApiType, OperationTypeSummary>
+  contractsSummary?: VersionContractsSummary
   revisionsCount: number
   apiProcessorVersion: string
 }>
@@ -51,10 +54,41 @@ export type PackageVersionContentDto = Readonly<{
   previousVersionPackageId?: VersionKey
   versionLabels?: string[]
   operationTypes?: ReadonlyArray<OperationTypeSummaryDto>
+  contractsSummary?: VersionContractsSummaryDto
   notLatestRevision?: boolean
   revisionsCount?: number
   apiProcessorVersion: string
 }>
+
+export type VersionContractsSummaryDto = Readonly<{
+  mcp?: McpContractsSummaryDto
+  ddl?: DdlContractsSummaryDto
+}>
+
+export type VersionContractsSummary = Readonly<{
+  mcp?: McpContractsSummary
+  ddl?: DdlContractsSummary
+}>
+
+export function toVersionContractsSummary(
+  contractsSummary: VersionContractsSummaryDto | undefined,
+): VersionContractsSummary | undefined {
+  if (!contractsSummary) {
+    return undefined
+  }
+
+  const mcp = toMcpContractsSummary(contractsSummary.mcp)
+  const ddl = toDdlContractsSummary(contractsSummary.ddl)
+
+  if (!mcp && !ddl) {
+    return undefined
+  }
+
+  return {
+    ...(mcp !== undefined && { mcp: mcp }),
+    ...(ddl !== undefined && { ddl: ddl }),
+  }
+}
 
 export type OperationTypeSummary<T extends DiffType | DiffTypeDto = DiffType> = Readonly<{
   apiType: ApiType

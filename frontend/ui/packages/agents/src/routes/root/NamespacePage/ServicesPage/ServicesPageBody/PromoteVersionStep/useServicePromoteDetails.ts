@@ -23,13 +23,22 @@ import { RUNNING_PUBLISH_STATUS } from '@netcracker/qubership-apihub-ui-shared/u
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { onQueryUnauthorized } from '@netcracker/qubership-apihub-ui-shared/utils/security'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { wrap } from 'comlink'
+import { wrap, type Remote } from 'comlink'
 import { useParams } from 'react-router-dom'
 import type { PackageVersionBuilderWorker } from '../package-version-builder-worker'
 import Worker from '../package-version-builder-worker?worker'
 
 const SERVICE_PROMOTE_DETAILS_QUERY_KEY = 'service-promote-details-query-key'
-const { publishService } = wrap<PackageVersionBuilderWorker>(new Worker())
+
+// Lazily create the build worker on first promote poll so its chunk + WASM are not
+// fetched on app load.
+let builderWorker: Remote<PackageVersionBuilderWorker> | null = null
+function getServiceBuilderWorker(): Remote<PackageVersionBuilderWorker> {
+  if (!builderWorker) {
+    builderWorker = wrap<PackageVersionBuilderWorker>(new Worker())
+  }
+  return builderWorker
+}
 
 export function useServicePromoteDetails(options?: Partial<{
   serviceConfig: ServiceConfig
@@ -41,7 +50,7 @@ export function useServicePromoteDetails(options?: Partial<{
 
   const { data, isLoading, refetch } = useQuery<PublishDetailsDto, Error, PublishDetails>({
     queryKey: [SERVICE_PROMOTE_DETAILS_QUERY_KEY, serviceConfig, builderId],
-    queryFn: () => publishService({
+    queryFn: () => getServiceBuilderWorker().publishService({
       agentId: agentId!,
       namespaceKey: namespaceKey!,
       workspaceKey: workspaceKey!,

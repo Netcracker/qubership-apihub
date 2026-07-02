@@ -32,6 +32,7 @@ import { ComponentIcon } from '../icons/ComponentIcon'
 import { ConfigureIcon } from '../icons/ConfigureIcon'
 import { CopyIcon } from '../icons/CopyIcon'
 import { DashboardIcon } from '../icons/DashboardIcon'
+import { DdlIcon } from '../icons/DdlIcon'
 import { DefaultSideBarIcon } from '../icons/DefaultSideBarIcon'
 import { DeleteIcon } from '../icons/DeleteIcon'
 import { DeleteIconMui } from '../icons/DeleteIconMui'
@@ -62,6 +63,11 @@ import { LockIcon } from '../icons/LockIcon'
 import { LockOpenIcon } from '../icons/LockOpenIcon'
 import { LogoIcon } from '../icons/LogoIcon'
 import { MarkdownIcon } from '../icons/MarkdownIcon'
+import { McpEndpointIcon } from '../icons/McpEndpointIcon'
+import { McpInitIcon } from '../icons/McpInitIcon'
+import { McpPromptIcon } from '../icons/McpPromptIcon'
+import { McpResourceIcon } from '../icons/McpResourceIcon'
+import { McpToolIcon } from '../icons/McpToolIcon'
 import { MergeIcon } from '../icons/MergeIcon'
 import { MinusIcon } from '../icons/MinusIcon'
 import { OpenapiIcon } from '../icons/OpenapiIcon'
@@ -195,6 +201,7 @@ const MUI_ICONS_REGISTRY: readonly IconItem<MuiIconComponent>[] = [
   { name: 'CloseIcon', component: CloseIcon },
   { name: 'CloudUploadIcon', component: CloudUploadIcon },
   { name: 'CopyIcon', component: CopyIcon },
+  { name: 'DdlIcon', component: DdlIcon },
   { name: 'DeleteIconMui', component: DeleteIconMui },
   { name: 'DownloadIconMui', component: DownloadIconMui },
   { name: 'ErrorIcon', component: ErrorIcon },
@@ -202,6 +209,11 @@ const MUI_ICONS_REGISTRY: readonly IconItem<MuiIconComponent>[] = [
   { name: 'InfoContextIcon', component: InfoContextIcon },
   { name: 'InfoFilledIcon', component: InfoFilledIcon },
   { name: 'LinkIcon', component: LinkIcon },
+  { name: 'McpEndpointIcon', component: McpEndpointIcon },
+  { name: 'McpInitIcon', component: McpInitIcon },
+  { name: 'McpPromptIcon', component: McpPromptIcon },
+  { name: 'McpResourceIcon', component: McpResourceIcon },
+  { name: 'McpToolIcon', component: McpToolIcon },
   { name: 'NonShareableIcon', component: ShareabilityNonShareableIcon },
   { name: 'PinIcon', component: PinIcon },
   { name: 'PlayIcon', component: PlayIcon },

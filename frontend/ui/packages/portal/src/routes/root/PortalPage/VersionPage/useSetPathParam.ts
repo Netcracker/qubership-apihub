@@ -23,7 +23,7 @@ import {
   DEPRECATED_PAGE,
   DOCUMENTS_PAGE,
   OPERATION_GROUPS_PAGE,
-  OPERATIONS_PAGE,
+  CONTRACTS_PAGE,
   OVERVIEW_PAGE,
   PACKAGES_PAGE,
   REVISION_HISTORY_PAGE,
@@ -38,8 +38,8 @@ const routes = [
   `${versionPageRoute}/${OVERVIEW_PAGE}/${REVISION_HISTORY_PAGE}`,
   `${versionPageRoute}/${OVERVIEW_PAGE}/${OPERATION_GROUPS_PAGE}`,
   // operations
-  `${versionPageRoute}/${OPERATIONS_PAGE}/:apiType`,
-  `${versionPageRoute}/${OPERATIONS_PAGE}/:apiType/:operationId`,
+  `${versionPageRoute}/${CONTRACTS_PAGE}/:apiType`,
+  `${versionPageRoute}/${CONTRACTS_PAGE}/:apiType/:operationId`,
   // api changes
   `${versionPageRoute}/${API_CHANGES_PAGE}/:apiType`,
   // deprecated

@@ -21,13 +21,12 @@ import type { Path } from '@remix-run/router/history'
 import Box from '@mui/material/Box'
 import { CustomListItemButton, LIST_ITEM_SIZE_BIG } from '../CustomListItemButton'
 import { Divider, Skeleton } from '@mui/material'
-import { NAVIGATION_PLACEHOLDER_AREA, Placeholder } from '../Placeholder'
 import type { ResizeCallback } from 're-resizable'
-import { Resizable } from 're-resizable'
+import { MetaClickableListWithPreview } from '../MetaClickableListWithPreview'
+import { NAVIGATION_PLACEHOLDER_AREA, Placeholder } from '../Placeholder'
 import { ExpandableItem } from '../ExpandableItem'
 import type { FetchNextOperationList, OperationData, OperationsData, PackageRef } from '../../entities/operations'
 import { useIntersectionObserver } from '../../hooks/common/useIntersectionObserver'
-import { ListBox } from '../Panels/ListBox'
 import { isNotEmpty } from '../../utils/arrays'
 import type { Key } from '../../entities/keys'
 
@@ -94,6 +93,7 @@ export const OperationWithMetaClickableList: FC<OperationWithMetaClickableListPr
 
       return (
         <OperationItemButton
+          key={operationKey}
           title={title}
           operation={operation}
           expandable={expandable}
@@ -106,62 +106,41 @@ export const OperationWithMetaClickableList: FC<OperationWithMetaClickableListPr
     [SubComponent, handleRowClick, isExpandableItem, onLinkClick, operations, prepareLinkFn, selectedOperationKey],
   )
 
+  const listFooter = (
+    <>
+      {hasNextPage && <Box ref={ref}><Skeleton variant="rectangular" width="100%"/></Box>}
+    </>
+  )
+
   return (
-    <Box display="grid" gridTemplateColumns="1fr auto" height="inherit">
-      <ListBox>
+    <MetaClickableListWithPreview
+      items={operations ?? []}
+      getItemKey={operation => operation.operationKey}
+      renderTitle={() => null}
+      isLoading={isLoading}
+      initialSize={initialSize}
+      handleResize={handleResize}
+      maxWidth={maxWidth}
+      emptyListPlaceholder={
         <Placeholder
-          sx={{ width: 'inherit' }}
-          invisible={isNotEmpty(operations) || isLoading}
+          invisible={false}
           area={NAVIGATION_PLACEHOLDER_AREA}
           message="No operations"
           data-testid="NoOperationsPlaceholder"
-        >
-          <Box overflow="auto" height="inherit">
-            {operationsList}
-
-            {isLoading && <ListSkeleton/>}
-            {hasNextPage && <Box ref={ref}><Skeleton variant="rectangular" width="100%"/></Box>}
-          </Box>
-        </Placeholder>
-      </ListBox>
-
-      <Resizable
-        style={{
-          borderLeft: '1px solid #D5DCE3',
-          backgroundColor: '#FFFFFF',
-          overflowY: 'scroll',
-        }}
-
-        enable={{
-          top: false,
-          right: false,
-          bottom: false,
-          left: true,
-          topRight: false,
-          bottomRight: false,
-          bottomLeft: false,
-          topLeft: false,
-        }}
-        boundsByDirection={true}
-        size={{ width: initialSize, height: '100%' }}
-        maxWidth={maxWidth}
-        onResizeStop={handleResize}
-      >
-        {previewComponent}
-      </Resizable>
-    </Box>
-  )
-})
-
-const ListSkeleton: FC = memo(() => {
-  return (
-    <Box>
-      {[...Array(5)].map((_, index) => (
-        <Box key={index} mb={2}>
-          <Skeleton variant="rectangular" height={20} width="100%"/>
-        </Box>
-      ))}
-    </Box>
+        />
+      }
+      previewComponent={previewComponent}
+      listOverride={
+        isNotEmpty(operations) || isLoading
+          ? (
+            <>
+              {operationsList}
+              {listFooter}
+            </>
+          )
+          : undefined
+      }
+    />
   )
 })
 
@@ -193,7 +172,6 @@ const OperationItemButton: FC<OperationItemButtonProps> = memo<OperationItemButt
           onClick={onClick}
           size={LIST_ITEM_SIZE_BIG}
           isSelected={selected}
-          data-testid="Cell-endpoints"
         />
         <Divider orientation="horizontal" variant="fullWidth"/>
 
@@ -204,3 +182,5 @@ const OperationItemButton: FC<OperationItemButtonProps> = memo<OperationItemButt
     )
   },
 )
+
+OperationItemButton.displayName = 'OperationItemButton'

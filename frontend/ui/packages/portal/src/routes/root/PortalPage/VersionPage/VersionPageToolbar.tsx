@@ -22,6 +22,7 @@ import { useEventBus } from '@apihub/routes/EventBusProvider'
 import { CreateDashboardVersionButton } from '@apihub/routes/root/PortalPage/DashboardPage/CreateDashboardVersionButton'
 import { usePackageVersionConfig } from '@apihub/routes/root/PortalPage/usePackageVersionConfig'
 import { CopyPackageVersionButton } from '@apihub/routes/root/PortalPage/VersionPage/CopyPackageVersionButton'
+import { getDefaultApiType } from '@apihub/utils/operation-types'
 import { Box, Button, Divider, Typography } from '@mui/material'
 import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
@@ -29,6 +30,12 @@ import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolb
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import {
+  CONTRACT_TYPE_DDL,
+  CONTRACT_TYPE_MCP,
+  type ContractType,
+  toRouteApiType,
+} from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import { CREATE_VERSION_PERMISSIONS } from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
 import { DASHBOARD_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { VERSION_STATUS_MANAGE_PERMISSIONS } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
@@ -37,19 +44,20 @@ import { AddIcon } from '@netcracker/qubership-apihub-ui-shared/icons/AddIcon'
 import type { FC } from 'react'
 import { memo, useCallback, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
+
 import { useNavigation } from '../../../NavigationProvider'
 import { PackageBreadcrumbs } from '../../PackageBreadcrumbs'
 import { useBackwardLocation } from '../../useBackwardLocation'
-import { useEffectiveApiType } from '../../useEffectiveApiType'
 import { usePackageVersionContent } from '../../usePackageVersionContent'
 import { useSetFullMainVersion, useSetIsLatestRevision } from '../FullMainVersionProvider'
 import { VersionSelector } from '../VersionSelector'
 import { ComparisonSelectorButton } from './ComparisonSelectorButton'
 import { EditButton } from './EditButton'
+import { usePackageVersionApiTypes } from './usePackageVersionApiTypes'
 import { WarningApiProcessorVersion } from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
 
 export const VersionPageToolbar: FC = memo(() => {
-  const { packageId, versionId } = useParams()
+  const { packageId, versionId, apiType } = useParams()
   const setFullMainVersion = useSetFullMainVersion()
   const setIsLatestRevision = useSetIsLatestRevision()
   const location = useBackwardLocation()
@@ -68,9 +76,13 @@ export const VersionPageToolbar: FC = memo(() => {
     versionKey: versionId,
     includeSummary: true,
   })
-  const { version: fullVersion, status, latestRevision, operationTypes } = versionContent ?? {}
+  const { version: fullVersion, status, latestRevision } = versionContent ?? {}
   const { restGroupingPrefix, permissions } = currentPackage ?? {}
-  const defaultApiType = useEffectiveApiType(operationTypes)
+  const { apiTypes } = usePackageVersionApiTypes(packageId!, versionId!)
+  const defaultApiType = useMemo(
+    () => toRouteApiType(apiType, getDefaultApiType(apiTypes.length > 0 ? apiTypes : undefined)),
+    [apiType, apiTypes],
+  )
 
   const [config, isConfigLoading] = usePackageVersionConfig(packageId, versionId)
 
@@ -85,9 +97,7 @@ export const VersionPageToolbar: FC = memo(() => {
   }, [latestRevision, setBackwardLocation, setFullMainVersion, setIsLatestRevision, fullVersion])
 
   const showCompareGroups = useMemo(
-    () => (
-      API_TYPE_SHOW_COMPARE_GROUPS_MAP[defaultApiType](isPackage, restGroupingPrefix)
-    ),
+    () => API_TYPE_SHOW_COMPARE_GROUPS_MAP[defaultApiType](isPackage, restGroupingPrefix),
     [defaultApiType, isPackage, restGroupingPrefix],
   )
 
@@ -205,8 +215,11 @@ const haveFoldersMessage = (latestRevision: boolean): string =>
   `The content of the current ${latestRevision ? 'version' : 'revision'} cannot be edited because the version source files have a hierarchical structure with folders, and editing such a structure is not currently supported in the Portal.`
 
 type ShowCompareGroupsCallback = (isPackage: boolean, restGroupingPrefix: string | undefined) => boolean
-const API_TYPE_SHOW_COMPARE_GROUPS_MAP: Record<ApiType, ShowCompareGroupsCallback> = {
+
+const API_TYPE_SHOW_COMPARE_GROUPS_MAP: Record<ApiType | ContractType, ShowCompareGroupsCallback> = {
   [API_TYPE_REST]: (isPackage, restGroupingPrefix) => isPackage && !!restGroupingPrefix,
   [API_TYPE_GRAPHQL]: () => false,
   [API_TYPE_ASYNCAPI]: () => false,
+  [CONTRACT_TYPE_MCP]: () => false,
+  [CONTRACT_TYPE_DDL]: () => false,
 }

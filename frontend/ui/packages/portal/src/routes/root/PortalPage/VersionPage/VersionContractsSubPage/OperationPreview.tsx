@@ -20,7 +20,12 @@ import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/compone
 import {
   OperationTitleWithMeta,
 } from '@netcracker/qubership-apihub-ui-shared/components/Operations/OperationTitleWithMeta'
-import { CONTENT_PLACEHOLDER_AREA, NAVIGATION_PLACEHOLDER_AREA, Placeholder, PLACEHOLDER_MESSAGE_NO_INTERNAL_DOCUMENT } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
+import {
+  CONTENT_PLACEHOLDER_AREA,
+  NAVIGATION_PLACEHOLDER_AREA,
+  Placeholder,
+  PLACEHOLDER_MESSAGE_NO_INTERNAL_DOCUMENT,
+} from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
 import { RawSpecView } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/RawSpecView'
 import { SMALL_TOOLBAR_SIZE, Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
@@ -72,8 +77,11 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
     normalizedChangedOperation,
     hasVersionInternalDocument,
     // ---
-    isLoading, mode, schemaViewMode,
-    productionMode, maxWidthHeaderToolbar,
+    isLoading,
+    mode,
+    schemaViewMode,
+    productionMode,
+    maxWidthHeaderToolbar,
   } = props
 
   const [operationType, operationName] = useMemo(() => {
@@ -102,9 +110,7 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
   } = getFileDetails(apiType, YAML_FILE_VIEW_MODE, changedOperationContent)
 
   if (isLoading) {
-    return (
-      <LoadingIndicator />
-    )
+    return <LoadingIndicator />
   }
 
   if (!changedOperation?.operationKey) {

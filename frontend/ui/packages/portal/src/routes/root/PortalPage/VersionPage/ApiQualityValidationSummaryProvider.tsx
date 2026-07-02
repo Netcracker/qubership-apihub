@@ -2,6 +2,11 @@ import { type ValidationSummary } from '@apihub/entities/api-quality/package-ver
 import { Link } from '@mui/material'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { API_TYPE_GRAPHQL } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import {
+  CONTRACT_TYPE_DDL,
+  CONTRACT_TYPE_MCP,
+  type ContractType,
+} from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import type { FC, PropsWithChildren, ReactNode} from 'react'
 import { useMemo } from 'react'
 import { createContext, memo, useContext } from 'react'
@@ -68,9 +73,13 @@ export function useApiQualityClientValidationStatus(): [ClientValidationStatus |
   ]
 }
 
-const NOT_LINTED_API_TYPES: ApiType[] = [API_TYPE_GRAPHQL]
+const NOT_LINTED_API_TYPES: ReadonlyArray<typeof API_TYPE_GRAPHQL | ContractType> = [
+  API_TYPE_GRAPHQL,
+  CONTRACT_TYPE_MCP,
+  CONTRACT_TYPE_DDL,
+]
 
-export function NotLintedApiTypes(apiType?: ApiType): boolean {
+export function NotLintedApiTypes(apiType?: ApiType | ContractType): boolean {
   return !apiType || !NOT_LINTED_API_TYPES.some(notLintedApiType => notLintedApiType === apiType)
 }
 

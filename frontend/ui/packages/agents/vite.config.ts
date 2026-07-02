@@ -71,6 +71,12 @@ export default defineConfig(({ mode }) => {
       include: [
         '@netcracker/qubership-apihub-api-processor',
       ],
+      // Keep ddlapi out of esbuild pre-bundling so its self-contained '/parser'
+      // (WASM-inlined) stays in the build worker's lazily-loaded chunk rather than
+      // being eagerly pre-bundled. Reached only via api-processor/processor.
+      exclude: [
+        '@netcracker/qubership-apihub-ddlapi',
+      ],
       esbuildOptions: {
         plugins: [
           NodeModulesPolyfill(),

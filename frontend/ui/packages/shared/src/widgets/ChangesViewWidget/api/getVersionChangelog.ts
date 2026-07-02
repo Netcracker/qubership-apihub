@@ -17,10 +17,12 @@
 import type { DiffType } from '@netcracker/qubership-apihub-api-diff'
 import { generatePath } from 'react-router-dom'
 import type { ApiType } from '../../../entities/api-types'
+import type { ContractType } from '../../../entities/contract-types'
+import { DEFAULT_API_TYPE } from '../../../entities/operations'
 import type { Key, VersionKey } from '../../../entities/keys'
 import type { OperationGroupName } from '../../../entities/operation-groups'
 import type { ApiAudience, ApiKind } from '../../../entities/operations'
-import { ALL_API_KIND, API_AUDIENCE_ALL, DEFAULT_API_TYPE } from '../../../entities/operations'
+import { ALL_API_KIND, API_AUDIENCE_ALL } from '../../../entities/operations'
 import type { VersionChangesDto } from '../../../entities/version-changelog'
 import { getPackageRedirectDetails } from '../../../utils/redirects'
 import { API_V4, requestJson } from '../../../utils/requests'
@@ -38,7 +40,7 @@ export type VersionChangelogOptions = Partial<{
   previousVersionPackageKey: Key
   tag: string
   searchValue: string
-  apiType: ApiType
+  apiType: ApiType | ContractType
   apiKind: ApiKind
   apiAudience: ApiAudience
   group: OperationGroupName

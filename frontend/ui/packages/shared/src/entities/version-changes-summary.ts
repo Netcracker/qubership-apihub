@@ -22,13 +22,17 @@ import { convertDtoFieldOperationTypes } from '@netcracker/qubership-apihub-api-
 
 import type { PackageRef, PackagesRefs } from './operations'
 import { toPackageRef } from './operations'
-import { EMPTY_CHANGE_SUMMARY } from './version-changelog'
-import type { VersionStatus } from './version-status'
+import {
+  toVersionComparisonContractsSummary,
+  type VersionComparisonContractsSummary,
+  type VersionComparisonContractsSummaryDto,
+} from './contracts-changes-summary'
 import type { Key } from './keys'
+import type { VersionStatus } from './version-status'
+import { EMPTY_CHANGE_SUMMARY } from './version-changelog'
 import { hasNoChangesInSummary } from '../utils/change-severities'
-import type { DiffType } from '@netcracker/qubership-apihub-api-diff'
 
-export type VersionChangesSummaryDto = PackageComparisonSummary<DiffTypeDto> | DashboardComparisonSummaryDto
+export type VersionChangesSummaryDto = PackageComparisonSummaryDto | DashboardComparisonSummaryDto
 export type VersionChangesSummary = PackageComparisonSummary | DashboardComparisonSummary
 
 export type DashboardComparisonSummaryDto = Readonly<{
@@ -40,6 +44,7 @@ export type RefComparisonSummaryDto = Readonly<{
   packageRef?: string
   previousPackageRef?: string
   operationTypes: ReadonlyArray<OperationType<DiffTypeDto>>
+  contractsChangesSummary?: VersionComparisonContractsSummaryDto
   noContent?: boolean
 }>
 
@@ -52,6 +57,7 @@ export type RefComparisonSummary = Readonly<{
   previousStatus?: VersionStatus
   name: string
   operationTypes: ReadonlyArray<OperationType>
+  contractsChangesSummary?: VersionComparisonContractsSummary
   parentPackages?: ReadonlyArray<string>
   packageRef?: PackageRef
   previousPackageRef?: PackageRef
@@ -60,8 +66,15 @@ export type RefComparisonSummary = Readonly<{
 
 export type DashboardComparisonSummary = ReadonlyArray<RefComparisonSummary>
 
-export type PackageComparisonSummary<T extends DiffType | DiffTypeDto = DiffType> = Readonly<{
-  operationTypes: ReadonlyArray<OperationType<T>>
+export type PackageComparisonSummaryDto = Readonly<{
+  operationTypes: ReadonlyArray<OperationType<DiffTypeDto>>
+  contractsChangesSummary?: VersionComparisonContractsSummaryDto
+  noContent?: boolean
+}>
+
+export type PackageComparisonSummary = Readonly<{
+  operationTypes: ReadonlyArray<OperationType>
+  contractsChangesSummary?: VersionComparisonContractsSummary
   noContent?: boolean
 }>
 
@@ -86,6 +99,7 @@ export function toVersionChangesSummary(value: VersionChangesSummaryDto): Versio
       const originalPackage = toPackageRef(ref.previousPackageRef, value.packages)
       return {
         operationTypes: convertDtoFieldOperationTypes(ref.operationTypes),
+        contractsChangesSummary: toVersionComparisonContractsSummary(ref.contractsChangesSummary),
         refKey: changedPackage?.refId || originalPackage?.refId,
         name: changedPackage?.name ?? originalPackage?.name ?? UNDEFINED_NAME,
         version: changedPackage?.version,
@@ -100,7 +114,14 @@ export function toVersionChangesSummary(value: VersionChangesSummaryDto): Versio
       }
     })
   } else {
-    return value ? { ...value, operationTypes: convertDtoFieldOperationTypes(value?.operationTypes) } : value
+    const packageSummary: PackageComparisonSummary = value
+      ? {
+        operationTypes: convertDtoFieldOperationTypes(value.operationTypes),
+        contractsChangesSummary: toVersionComparisonContractsSummary(value.contractsChangesSummary),
+        noContent: value.noContent,
+      }
+      : value
+    return packageSummary
   }
 }
 

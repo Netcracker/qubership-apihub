@@ -1,5 +1,5 @@
 import MoreVertIcon from '@mui/icons-material/MoreVert'
-import { Box, Skeleton, Typography } from '@mui/material'
+import { Box, Skeleton } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { type Dispatch, type FC, memo, type SetStateAction, useCallback } from 'react'
 
@@ -10,7 +10,7 @@ import {
   OPERATIONS_SUB_PAGE,
   OVERVIEW_SUB_PAGE,
 } from '@apihub/routes/root/PortalPage/VersionPage/OpenApiViewer/OpenApiViewer'
-import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
+import { DocumentTitleWithVersion } from '@netcracker/qubership-apihub-ui-shared/components/Titles/DocumentTitleWithVersion'
 import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
 import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
 import type { FileFormat } from '@netcracker/qubership-apihub-ui-shared/utils/files'
@@ -85,15 +85,8 @@ export const DocumentsTabHeader: FC<DocumentsTabHeaderProps> = (props) => {
   return (
     <TabHeader data-testid="DocumentToolbar">
       <TextSection data-testid="DocumentToolbarTitle">
-        <TitleTooltip title={title}>
-          <TitleText variant="inherit">
-            {title}
-          </TitleText>
-        </TitleTooltip>
+        <DocumentTitleWithVersion title={title} version={version} />
         <TitleSuffix>
-          <VersionText variant="body2">
-            {version}
-          </VersionText>
           {hasShareabilityPermission && docPackageKey && fullVersion
             ? (
               <ShareabilityDropdown
@@ -173,26 +166,6 @@ const TitleSuffix = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   gap: theme.spacing(1),
   flexShrink: 0,
-}))
-
-const TitleTooltip = styled(OverflowTooltip)({
-  display: 'block',
-  minWidth: 0,
-  flex: '0 1 auto',
-})
-
-const TitleText = styled(Typography)({
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-})
-
-const VersionText = styled(Typography)(({ theme }) => ({
-  color: theme.palette.text.secondary,
-  whiteSpace: 'nowrap',
-  flexShrink: 0,
-  paddingLeft: theme.spacing(0.5),
-  paddingRight: theme.spacing(0.5),
 }))
 
 const ActionsSection = styled(Box)(({ theme }) => ({

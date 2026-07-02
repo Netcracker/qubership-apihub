@@ -46,6 +46,10 @@ export type VersionOperationsLayoutProps = {
   setSearchValue?: (value: string) => void
   onOperationsViewChange?: (newViewMode: Key | undefined) => void
   onClickFilterButton?: (value: boolean) => void
+  hideSearch?: boolean
+  hideFilter?: boolean
+  hideViewToggle?: boolean
+  hideExport?: boolean
   filters: ReactNode
 } & TestableProps
 
@@ -64,6 +68,10 @@ export const RichFiltersLayout: FC<VersionOperationsLayoutProps> = memo<VersionO
   onClickFilterButton,
   searchPlaceholder = 'Search',
   setSearchValue,
+  hideSearch = false,
+  hideFilter = false,
+  hideViewToggle = false,
+  hideExport = false,
   filters,
   'data-testid': dataTestId,
 }) => {
@@ -95,23 +103,27 @@ export const RichFiltersLayout: FC<VersionOperationsLayoutProps> = memo<VersionO
     <Box display="flex" alignItems="center" gap={2} ml="auto">
       {additionalActions}
 
-      <SearchBar
-        placeholder={searchPlaceholder}
-        onValueChange={setSearchValue}
-        data-testid="SearchOperations"
-      />
+      {!hideSearch && (
+        <SearchBar
+          placeholder={searchPlaceholder}
+          onValueChange={setSearchValue}
+          data-testid="SearchOperations"
+        />
+      )}
 
-      <FilterButton
-        selected={hiddenFiltersPanel}
-        onSelect={() => setHiddenFiltersPanel(!hiddenFiltersPanel)}
-        showBadge={filtersApplied}
-      />
+      {!hideFilter && (
+        <FilterButton
+          selected={hiddenFiltersPanel}
+          onSelect={() => setHiddenFiltersPanel(!hiddenFiltersPanel)}
+          showBadge={filtersApplied}
+        />
+      )}
 
-      {viewSelector}
+      {!hideViewToggle && viewSelector}
 
-      {exportButton}
+      {!hideExport && exportButton}
     </Box>
-  ), [additionalActions, exportButton, filtersApplied, hiddenFiltersPanel, searchPlaceholder, setHiddenFiltersPanel, setSearchValue, viewSelector])
+  ), [additionalActions, exportButton, filtersApplied, hiddenFiltersPanel, hideExport, hideFilter, hideSearch, hideViewToggle, searchPlaceholder, setHiddenFiltersPanel, setSearchValue, viewSelector])
 
   return (
     <LayoutWithSidebar

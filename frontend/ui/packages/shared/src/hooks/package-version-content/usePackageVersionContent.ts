@@ -17,11 +17,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { generatePath } from 'react-router-dom'
 import type { Key } from '../../utils/types'
-import type {
-  OperationTypeSummary,
-  OperationTypeSummaryDto,
-  PackageVersionContent,
-  PackageVersionContentDto,
+import {
+  toVersionContractsSummary,
+  type OperationTypeSummary,
+  type OperationTypeSummaryDto,
+  type PackageVersionContent,
+  type PackageVersionContentDto,
 } from '../../entities/version-contents'
 import { getPackageRedirectDetails } from '../../utils/redirects'
 import { API_V3, requestJson } from '../../utils/requests'
@@ -86,6 +87,7 @@ export function toPackageVersionContent(value: PackageVersionContentDto): Packag
     packageKey: value.packageId,
     createdAt: new Date(value.createdAt).toDateString(),
     operationTypes: toApiTypeMap(convertDtoFieldOperationTypesWithApiType(value.operationTypes)),
+    contractsSummary: toVersionContractsSummary(value.contractsSummary),
     latestRevision: !value?.notLatestRevision,
     revisionsCount: value.revisionsCount ?? 0,
     operationGroups: value.operationGroups?.map(groupDto => ({

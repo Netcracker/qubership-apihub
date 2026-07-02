@@ -21,7 +21,8 @@ import { setPublicationDetails } from '@apihub/entities/publish-details'
 import type { PublishStatus } from '@apihub/entities/statuses'
 import { COMPLETE_PUBLISH_STATUS, ERROR_PUBLISH_STATUS } from '@apihub/entities/statuses'
 import type { VersionValidationLevel } from '@netcracker/qubership-apihub-api-processor'
-import { BUILD_TYPE, PackageVersionBuilder, VERSION_VALIDATION_LEVEL } from '@netcracker/qubership-apihub-api-processor'
+import { BUILD_TYPE, VERSION_VALIDATION_LEVEL } from '@netcracker/qubership-apihub-api-processor'
+import { PackageVersionBuilder } from '@netcracker/qubership-apihub-api-processor/processor'
 import {
   packageVersionResolver,
   rawDocumentResolver,

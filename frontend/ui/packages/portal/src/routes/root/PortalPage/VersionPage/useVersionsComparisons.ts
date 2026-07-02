@@ -34,7 +34,7 @@ import { useParams } from 'react-router-dom'
 import { v4 as uuidv4 } from 'uuid'
 import { useShowErrorNotification } from '../../BasePage/Notification'
 import { useVersionWithRevision } from '../../useVersionWithRevision'
-import { PackageVersionBuilder } from '../package-version-builder'
+import { getPackageVersionBuilder } from '../package-version-builder'
 
 const VERSION_CHANGES_QUERY_KEY = 'version-changes-query-key'
 
@@ -115,7 +115,7 @@ export function useVersionsComparisons(options?: {
         const builtVersionComparisons: VersionsComparison[] = []
 
         try {
-          const [versionsComparisons, data] = await PackageVersionBuilder.buildChangelogPackage({
+          const [versionsComparisons, data] = await (await getPackageVersionBuilder()).buildChangelogPackage({
             packageKey: changedPackageKey!, //from path param
             versionKey: changedVersion!,
             previousPackageKey: originPackageKey!, //from search param

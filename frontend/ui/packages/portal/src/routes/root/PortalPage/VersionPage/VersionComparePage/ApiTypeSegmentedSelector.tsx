@@ -18,15 +18,18 @@ import type { FC } from 'react'
 import { memo } from 'react'
 import { useApiTypeSearchParam } from '../useApiTypeSearchParam'
 import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
-import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { API_TYPE_TITLE_MAP, API_TYPES } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import {
+  COMPARE_API_TYPE_ALL,
+  type CompareApiTypeFilterOption,
+} from './compareApiTypeFilter'
 
 export const ApiTypeSegmentedSelector: FC = memo(() => {
   const { apiType, setApiTypeSearchParam } = useApiTypeSearchParam()
 
   return (
-    <Toggler<SelectorOption>
-      mode={apiType as SelectorOption}
+    <Toggler<CompareApiTypeFilterOption>
+      mode={apiType as CompareApiTypeFilterOption}
       modes={SELECTOR_OPTIONS}
       onChange={setApiTypeSearchParam}
       modeToText={OPTION_DISPLAYS}
@@ -34,11 +37,8 @@ export const ApiTypeSegmentedSelector: FC = memo(() => {
   )
 })
 
-const API_TYPE_ALL = 'all'
-type SelectorOption = typeof API_TYPE_ALL | ApiType
-
-const SELECTOR_OPTIONS: readonly SelectorOption[] = [API_TYPE_ALL, ...API_TYPES]
+const SELECTOR_OPTIONS: readonly CompareApiTypeFilterOption[] = [COMPARE_API_TYPE_ALL, ...API_TYPES]
 const OPTION_DISPLAYS = {
   ...API_TYPE_TITLE_MAP,
-  [API_TYPE_ALL]: 'All',
+  [COMPARE_API_TYPE_ALL]: 'All',
 }

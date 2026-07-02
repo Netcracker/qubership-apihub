@@ -24,15 +24,24 @@ import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/u
 import { onQueryUnauthorized } from '@netcracker/qubership-apihub-ui-shared/utils/security'
 import type { QueryFilters } from '@tanstack/query-core'
 import { useIsFetching, useQuery } from '@tanstack/react-query'
-import { wrap } from 'comlink'
+import { wrap, type Remote } from 'comlink'
 import { useParams } from 'react-router-dom'
 import type { PackageVersionBuilderWorker } from '../package-version-builder-worker'
 import Worker from '../package-version-builder-worker?worker'
 
 const SERVICE_PUBLISH_DETAILS_QUERY_KEY = 'service-publish-details-query-key'
 
+// Lazily create the build worker on first publish poll so its chunk — and the ddlapi
+// parser + libpg-query WASM it loads on first DDL parse — is fetched only when needed,
+// not on app load.
 // TODO: Move to context?
-const { publishService } = wrap<PackageVersionBuilderWorker>(new Worker())
+let builderWorker: Remote<PackageVersionBuilderWorker> | null = null
+function getServiceBuilderWorker(): Remote<PackageVersionBuilderWorker> {
+  if (!builderWorker) {
+    builderWorker = wrap<PackageVersionBuilderWorker>(new Worker())
+  }
+  return builderWorker
+}
 
 export function useServicePublishDetails(options?: Partial<{
   serviceConfig: ServiceConfig
@@ -45,7 +54,7 @@ export function useServicePublishDetails(options?: Partial<{
   const { data, isLoading, refetch } = useQuery<PublishDetailsDto, Error, PublishDetails>({
     queryKey: [SERVICE_PUBLISH_DETAILS_QUERY_KEY, serviceConfig],
     queryFn: () => {
-      return publishService({
+      return getServiceBuilderWorker().publishService({
         agentId: agentId!,
         namespaceKey: namespaceKey!,
         workspaceKey: workspaceKey!,

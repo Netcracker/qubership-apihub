@@ -41,7 +41,7 @@ import { useNavigation } from '../../NavigationProvider'
 import { useShowErrorNotification } from '../BasePage/Notification'
 import { useAsyncInvalidateVersionContent } from '../usePackageVersionContent'
 import { useAsyncInvalidateVersionSources } from '../useVersionSources'
-import { PackageVersionBuilder } from './package-version-builder'
+import { getPackageVersionBuilder } from './package-version-builder'
 
 export function usePublishPackageVersion(): [PublishPackageVersion, IsLoading, IsSuccess] {
   const { packageId } = useParams()
@@ -54,8 +54,9 @@ export function usePublishPackageVersion(): [PublishPackageVersion, IsLoading, I
   const showErrorNotification = useShowErrorNotification()
 
   const { mutate, isLoading, isSuccess } = useMutation<PublishDetails, Error, Options>({
-    mutationFn: options => {
-      return PackageVersionBuilder.publishPackage(
+    mutationFn: async options => {
+      const builder = await getPackageVersionBuilder()
+      return builder.publishPackage(
         toPublishOptions(packageId!, options, user!.key),
       )
     },

@@ -22,13 +22,14 @@ import { useRefSearchParam } from '../../useRefSearchParam'
 import { useTagSearchFilter } from '../useTagSearchFilter'
 import { ApiTypeListSelector } from './ApiTypeListSelector'
 import { useApiTypeSearchParam } from '../useApiTypeSearchParam'
-import { useApiTypesFromChangesSummary } from './useApiTypesFromChangesSummary'
 import { isDashboardComparisonSummary } from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
 import { getDefaultApiType, isApiTypeSelectorShown } from '@apihub/utils/operation-types'
 import { isAppliedSearchValueForTag } from '@netcracker/qubership-apihub-ui-shared/utils/tags'
 import { SidebarPanel } from '@netcracker/qubership-apihub-ui-shared/components/Panels/SidebarPanel'
 import { SidebarWithTags } from '@netcracker/qubership-apihub-ui-shared/components/SidebarWithTags/SidebarWithTags'
-import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { isApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { useCompareAllowedApiTypes } from './useCompareAllowedApiTypes'
+import { isCompareApiTypeAll } from './compareApiTypeFilter'
 
 export const VersionCompareSidebar = memo(() => {
   const { apiType, setApiTypeSearchParam } = useApiTypeSearchParam()
@@ -43,16 +44,21 @@ export const VersionCompareSidebar = memo(() => {
     ? versionChangesSummary.filter(obj => obj.refKey === refPackageKey)
     : versionChangesSummary
 
-  const tags = useTagsFromChangesSummary(apiType as ApiType, filteredVersionChangesSummary)
+  const tags = useTagsFromChangesSummary(
+    isApiType(apiType) ? apiType : undefined,
+    filteredVersionChangesSummary,
+  )
 
-  const apiTypes = useApiTypesFromChangesSummary(versionChangesSummary, refPackageKey)
+  const apiTypes = useCompareAllowedApiTypes(versionChangesSummary, refPackageKey)
 
   useEffect(() => {
-    if (!apiTypes.includes(apiType as ApiType)) {
+    if (!versionChangesSummary) {
+      return
+    }
+    if (apiTypes.length > 0 && (isCompareApiTypeAll(apiType) || !apiTypes.includes(apiType))) {
       setApiTypeSearchParam(getDefaultApiType(apiTypes))
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiType, apiTypes])
+  }, [apiType, apiTypes, setApiTypeSearchParam, versionChangesSummary])
 
   const filteredTags = useMemo(
     () => tags.filter(tag => isAppliedSearchValueForTag(tag, searchValue)),
@@ -61,7 +67,7 @@ export const VersionCompareSidebar = memo(() => {
 
   return (
     <SidebarPanel
-      header={isApiTypeSelectorShown(apiTypes) && <ApiTypeListSelector/>}
+      header={isApiTypeSelectorShown(apiTypes) && <ApiTypeListSelector allowedApiTypes={apiTypes} />}
       headerFullWidth
       withDivider={isApiTypeSelectorShown(apiTypes)}
       body={

@@ -14,6 +14,15 @@
  * limitations under the License.
  */
 
+import {
+  DDL_DOCUMENT_TYPE,
+  type DdlDocumentType,
+  MCP_DOCUMENT_TYPE,
+  type McpDocumentType,
+} from '@netcracker/qubership-apihub-api-processor'
+
+export { DDL_DOCUMENT_TYPE, type DdlDocumentType, MCP_DOCUMENT_TYPE, type McpDocumentType }
+
 export const OPENAPI_3_1_SPEC_TYPE = 'openapi-3-1'
 export const OPENAPI_3_0_SPEC_TYPE = 'openapi-3-0'
 export const OPENAPI_2_0_SPEC_TYPE = 'openapi-2-0'
@@ -44,6 +53,8 @@ export type SpecType =
   | typeof GRAPHAPI_SPEC_TYPE
   | typeof GRAPHQL_INTROSPECTION_SPEC_TYPE
   | typeof PROTOBUF_3_SPEC_TYPE
+  | McpDocumentType
+  | DdlDocumentType
 
 export const OPENAPI_SPEC_TYPES: ReadonlyArray<string> = [
   OPENAPI_3_1_SPEC_TYPE,
@@ -64,6 +75,13 @@ export const ASYNCAPI_SPEC_TYPES: ReadonlyArray<SpecType> = [
   ASYNCAPI_SPEC_TYPE,
 ] as const
 
+export const MCP_DOCUMENT_SPEC_TYPES: ReadonlyArray<McpDocumentType> = [
+  MCP_DOCUMENT_TYPE.MCP_INIT,
+  MCP_DOCUMENT_TYPE.MCP_TOOLS,
+  MCP_DOCUMENT_TYPE.MCP_PROMPTS,
+  MCP_DOCUMENT_TYPE.MCP_RESOURCES,
+]
+
 export function isOpenApiSpecType(type?: SpecType): boolean {
   return !!type && OPENAPI_SPEC_TYPES.includes(type)
 }
@@ -74,6 +92,18 @@ export function isGraphQlSpecType(type?: SpecType): boolean {
 
 export function isAsyncApiSpecType(type?: SpecType): boolean {
   return !!type && ASYNCAPI_SPEC_TYPES.includes(type)
+}
+
+export function isMcpDocumentSpecType(type?: SpecType): type is McpDocumentType {
+  return !!type && MCP_DOCUMENT_SPEC_TYPES.some(documentType => documentType === type)
+}
+
+export function isMcpInitDocumentSpecType(type?: SpecType): boolean {
+  return type === MCP_DOCUMENT_TYPE.MCP_INIT
+}
+
+export function isDdlDocumentSpecType(type?: SpecType): type is DdlDocumentType {
+  return type === DDL_DOCUMENT_TYPE.DDL
 }
 
 export const isExportableSpecType = (type?: SpecType): boolean => {
