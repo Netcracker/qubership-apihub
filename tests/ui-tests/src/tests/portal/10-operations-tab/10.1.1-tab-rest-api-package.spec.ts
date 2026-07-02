@@ -32,22 +32,22 @@ test.describe('10.1.1 Operations tab REST API (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
-      const testOperationRow = operationsTab.table.getOperationRow(GET_SYSTEM_INFO)
+      const { contractsTab } = versionPage
+      const testOperationRow = contractsTab.table.getOperationRow(GET_SYSTEM_INFO)
 
       await portalPage.gotoPackage(testPackage)
-      await versionPage.operationsTab.click()
+      await versionPage.contractsTab.click()
 
-      await expect.soft(operationsTab.sidebar.apiKindFilterAc).toBeVisible()
-      await expect.soft(operationsTab.sidebar.groupFilterAc).toBeDisabled()
-      await expect.soft(operationsTab.sidebar.searchbar).toBeVisible()
-      await expect.soft(operationsTab.sidebar.getTagButton('pet')).toBeVisible()
-      await expect.soft(operationsTab.toolbar.sltApiType).toBeVisible()
-      await expect.soft(operationsTab.toolbar.searchbar).toBeVisible()
-      await expect.soft(operationsTab.toolbar.filtersBtn).toBeVisible()
-      await expect.soft(operationsTab.toolbar.listViewBtn).toBePressed()
-      await expect.soft(operationsTab.toolbar.detailedViewBtn).toBeVisible()
-      await expect.soft(operationsTab.toolbar.exportMenu).toBeVisible()
+      await expect.soft(contractsTab.sidebar.apiKindFilterAc).toBeVisible()
+      await expect.soft(contractsTab.sidebar.groupFilterAc).toBeDisabled()
+      await expect.soft(contractsTab.sidebar.searchbar).toBeVisible()
+      await expect.soft(contractsTab.sidebar.getTagButton('pet')).toBeVisible()
+      await expect.soft(contractsTab.toolbar.sltApiType).toBeVisible()
+      await expect.soft(contractsTab.toolbar.searchbar).toBeVisible()
+      await expect.soft(contractsTab.toolbar.filtersBtn).toBeVisible()
+      await expect.soft(contractsTab.toolbar.listViewBtn).toBePressed()
+      await expect.soft(contractsTab.toolbar.detailedViewBtn).toBeVisible()
+      await expect.soft(contractsTab.toolbar.exportMenu).toBeVisible()
       await expect.soft(testOperationRow).toBeVisible()
     })
 
@@ -60,23 +60,23 @@ test.describe('10.1.1 Operations tab REST API (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
 
       await portalPage.gotoVersion(versionOperationsMulti, VERSION_OPERATIONS_TAB_REST)
 
-      await operationsTab.toolbar.sltApiType.click()
-      await operationsTab.toolbar.sltApiType.graphQlItm.click()
+      await contractsTab.toolbar.sltApiType.click()
+      await contractsTab.toolbar.sltApiType.graphQlItm.click()
 
-      await expect.soft(operationsTab.toolbar.sltApiType).toHaveText(GRAPHQL_API_TYPE_TITLE)
-      await expect(operationsTab.table.getOperationRow(GQL_LIST_PETS)).toBeVisible()
-      await expect(operationsTab.table.getOperationRow(UPDATE_USER_V1)).not.toBeVisible()
+      await expect.soft(contractsTab.toolbar.sltApiType).toHaveText(GRAPHQL_API_TYPE_TITLE)
+      await expect(contractsTab.table.getOperationRow(GQL_LIST_PETS)).toBeVisible()
+      await expect(contractsTab.table.getOperationRow(UPDATE_USER_V1)).not.toBeVisible()
 
-      await operationsTab.toolbar.sltApiType.click()
-      await operationsTab.toolbar.sltApiType.restApiItm.click()
+      await contractsTab.toolbar.sltApiType.click()
+      await contractsTab.toolbar.sltApiType.restApiItm.click()
 
-      await expect.soft(operationsTab.toolbar.sltApiType).toHaveText(REST_API_TYPE_TITLE)
-      await expect(operationsTab.table.getOperationRow(UPDATE_USER_V1)).toBeVisible()
-      await expect(operationsTab.table.getOperationRow(GQL_LIST_PETS)).not.toBeVisible()
+      await expect.soft(contractsTab.toolbar.sltApiType).toHaveText(REST_API_TYPE_TITLE)
+      await expect(contractsTab.table.getOperationRow(UPDATE_USER_V1)).toBeVisible()
+      await expect(contractsTab.table.getOperationRow(GQL_LIST_PETS)).not.toBeVisible()
     })
 
   test('[P-OTPVW-2] Checking for the absence of the API type selector when there is only one operation type on the Operations tab',
@@ -87,12 +87,12 @@ test.describe('10.1.1 Operations tab REST API (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
 
       await portalPage.gotoVersion(versionOperationsRest, VERSION_OPERATIONS_TAB_REST)
 
-      await expect(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
-      await expect(operationsTab.toolbar.sltApiType).not.toBeVisible()
+      await expect(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
+      await expect(contractsTab.toolbar.sltApiType).not.toBeVisible()
     })
 
   test('[P-OTPSE-1] Search Tags on the Operations tab',
@@ -104,42 +104,42 @@ test.describe('10.1.1 Operations tab REST API (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
 
       await portalPage.gotoVersion(versionOperationsRest, VERSION_OPERATIONS_TAB_REST)
 
       await test.step('Part of a word', async () => {
-        await operationsTab.sidebar.searchbar.fill('pe')
+        await contractsTab.sidebar.searchbar.fill('pe')
         await portalPage.waitForTimeout(SEARCH_TIMEOUT.middle)
 
-        await expect.soft(operationsTab.sidebar.getTagButton()).toHaveCount(1)
+        await expect.soft(contractsTab.sidebar.getTagButton()).toHaveCount(1)
       })
 
       await test.step('Adding part of a word', async () => {
-        await operationsTab.sidebar.searchbar.type('t')
+        await contractsTab.sidebar.searchbar.type('t')
         await portalPage.waitForTimeout(SEARCH_TIMEOUT.middle)
 
-        await expect.soft(operationsTab.sidebar.getTagButton()).toHaveCount(1)
+        await expect.soft(contractsTab.sidebar.getTagButton()).toHaveCount(1)
       })
 
       await test.step('Clearing a search query', async () => {
-        await operationsTab.sidebar.searchbar.clear()
+        await contractsTab.sidebar.searchbar.clear()
 
-        await expect.soft(operationsTab.sidebar.getTagButton()).toHaveCount(3)
+        await expect.soft(contractsTab.sidebar.getTagButton()).toHaveCount(3)
       })
 
       await test.step('Case sensitive', async () => {
-        await operationsTab.sidebar.searchbar.clear()
-        await operationsTab.sidebar.searchbar.fill('Pet')
+        await contractsTab.sidebar.searchbar.clear()
+        await contractsTab.sidebar.searchbar.fill('Pet')
 
-        await expect.soft(operationsTab.sidebar.getTagButton()).toHaveCount(1)
+        await expect.soft(contractsTab.sidebar.getTagButton()).toHaveCount(1)
       })
 
       await test.step('Invalid search query with valid substring', async () => {
-        await operationsTab.sidebar.searchbar.clear()
-        await operationsTab.sidebar.searchbar.fill('pet123')
+        await contractsTab.sidebar.searchbar.clear()
+        await contractsTab.sidebar.searchbar.fill('pet123')
 
-        await expect.soft(operationsTab.sidebar.getTagButton()).toHaveCount(0)
+        await expect.soft(contractsTab.sidebar.getTagButton()).toHaveCount(0)
       })
     })
 
@@ -152,83 +152,83 @@ test.describe('10.1.1 Operations tab REST API (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
 
       await portalPage.gotoVersion(versionOperationsRest, VERSION_OPERATIONS_TAB_REST)
 
       await test.step('Search operation by title', async () => {
 
         await test.step('Part of a word', async () => {
-          await operationsTab.toolbar.searchbar.fill('Find')
+          await contractsTab.toolbar.searchbar.fill('Find')
 
-          await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(4)
+          await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(4)
         })
 
         await test.step('Adding part of a word', async () => {
-          await operationsTab.toolbar.searchbar.type('s')
+          await contractsTab.toolbar.searchbar.type('s')
 
-          await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(2)
+          await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(2)
         })
 
         await test.step('Clearing a search query', async () => {
-          await operationsTab.toolbar.searchbar.clear()
+          await contractsTab.toolbar.searchbar.clear()
 
-          await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(19)
+          await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(19)
         })
 
         await test.step('Two words', async () => {
-          await operationsTab.toolbar.searchbar.clear()
-          await operationsTab.toolbar.searchbar.fill('Finds Pets')
+          await contractsTab.toolbar.searchbar.clear()
+          await contractsTab.toolbar.searchbar.fill('Finds Pets')
 
-          await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(2)
-          await expect.soft(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
+          await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(2)
+          await expect.soft(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
         })
 
         await test.step('Case sensitive', async () => {
-          await operationsTab.toolbar.searchbar.clear()
-          await operationsTab.toolbar.searchbar.fill(GET_PET_BY_TAG_V1.title.toLowerCase())
+          await contractsTab.toolbar.searchbar.clear()
+          await contractsTab.toolbar.searchbar.fill(GET_PET_BY_TAG_V1.title.toLowerCase())
 
-          await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(1)
-          await expect.soft(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
+          await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(1)
+          await expect.soft(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
         })
 
         await test.step('Invalid search query with valid substring', async () => {
-          await operationsTab.toolbar.searchbar.clear()
-          await operationsTab.toolbar.searchbar.fill(`${GET_PET_BY_TAG_V1.title}123`)
+          await contractsTab.toolbar.searchbar.clear()
+          await contractsTab.toolbar.searchbar.fill(`${GET_PET_BY_TAG_V1.title}123`)
 
-          await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(0)
+          await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(0)
         })
       })
 
       await test.step('Search operation by path', async () => {
 
         await test.step('Part of a word', async () => {
-          await operationsTab.toolbar.searchbar.fill('/api/v1/pet/findBy')
+          await contractsTab.toolbar.searchbar.fill('/api/v1/pet/findBy')
 
-          await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(2)
+          await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(2)
         })
 
         await test.step('Adding part of a word', async () => {
-          await operationsTab.toolbar.searchbar.type('Tags')
+          await contractsTab.toolbar.searchbar.type('Tags')
 
-          await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(1)
-          await expect.soft(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
-          await expect.soft(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toContainText('Deprecated')
+          await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(1)
+          await expect.soft(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
+          await expect.soft(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toContainText('Deprecated')
         })
 
         await test.step('Case sensitive', async () => {
-          await operationsTab.toolbar.searchbar.clear()
-          await operationsTab.toolbar.searchbar.fill(GET_PET_BY_TAG_V1.path.toLowerCase())
+          await contractsTab.toolbar.searchbar.clear()
+          await contractsTab.toolbar.searchbar.fill(GET_PET_BY_TAG_V1.path.toLowerCase())
 
-          await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(1)
-          await expect.soft(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
+          await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(1)
+          await expect.soft(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
         })
 
         await test.step('Invalid search query with valid substring', async () => {
-          await operationsTab.toolbar.searchbar.clear()
-          await operationsTab.toolbar.searchbar.fill(`${GET_PET_BY_TAG_V1.path}123`)
+          await contractsTab.toolbar.searchbar.clear()
+          await contractsTab.toolbar.searchbar.fill(`${GET_PET_BY_TAG_V1.path}123`)
 
-          await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(0)
+          await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(0)
         })
       })
     })
@@ -242,21 +242,21 @@ test.describe('10.1.1 Operations tab REST API (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
 
       await portalPage.gotoVersion(versionOperationsRest, VERSION_OPERATIONS_TAB_REST)
 
-      await operationsTab.sidebar.getTagButton('pet').click()
+      await contractsTab.sidebar.getTagButton('pet').click()
 
-      await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(9)
+      await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(9)
 
-      await operationsTab.sidebar.getTagButton('store').click()
+      await contractsTab.sidebar.getTagButton('store').click()
 
-      await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(5)
+      await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(5)
 
-      await operationsTab.sidebar.getTagButton('store').click()
+      await contractsTab.sidebar.getTagButton('store').click()
 
-      await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(19)
+      await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(19)
     })
 
   test('[P-OTPFI-2] Filtering Operations by Kind on the Operations tab',
@@ -268,27 +268,27 @@ test.describe('10.1.1 Operations tab REST API (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
 
       await portalPage.gotoVersion(versionOperationsRest, VERSION_OPERATIONS_TAB_REST)
 
-      await operationsTab.sidebar.apiKindFilterAc.click()
-      await operationsTab.sidebar.apiKindFilterAc.experimentalItm.click()
+      await contractsTab.sidebar.apiKindFilterAc.click()
+      await contractsTab.sidebar.apiKindFilterAc.experimentalItm.click()
 
-      await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(1)
+      await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(1)
 
-      await operationsTab.sidebar.apiKindFilterAc.fill('no bwc')
+      await contractsTab.sidebar.apiKindFilterAc.fill('no bwc')
 
-      await expect.soft(operationsTab.sidebar.apiKindFilterAc.getListItem()).toHaveCount(1)
+      await expect.soft(contractsTab.sidebar.apiKindFilterAc.getListItem()).toHaveCount(1)
 
-      await operationsTab.sidebar.apiKindFilterAc.noBwcItm.click()
+      await contractsTab.sidebar.apiKindFilterAc.noBwcItm.click()
 
-      await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(3)
+      await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(3)
 
-      await operationsTab.sidebar.apiKindFilterAc.click()
-      await operationsTab.sidebar.apiKindFilterAc.allItm.click()
+      await contractsTab.sidebar.apiKindFilterAc.click()
+      await contractsTab.sidebar.apiKindFilterAc.allItm.click()
 
-      await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(19)
+      await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(19)
     })
 
   test('[P-OTPFI-3] Complex filtering Operations with search on the Operations tab',
@@ -299,61 +299,61 @@ test.describe('10.1.1 Operations tab REST API (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
 
       await portalPage.gotoVersion(versionOperationsRest, VERSION_OPERATIONS_TAB_REST)
 
-      await operationsTab.toolbar.searchbar.fill('delete')
+      await contractsTab.toolbar.searchbar.fill('delete')
 
-      await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(3)
+      await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(3)
 
-      await operationsTab.sidebar.getTagButton('pet').click()
+      await contractsTab.sidebar.getTagButton('pet').click()
 
-      await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(1)
+      await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(1)
 
-      await operationsTab.sidebar.apiKindFilterAc.click()
-      await operationsTab.sidebar.apiKindFilterAc.noBwcItm.click()
+      await contractsTab.sidebar.apiKindFilterAc.click()
+      await contractsTab.sidebar.apiKindFilterAc.noBwcItm.click()
 
-      await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(0)
+      await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(0)
 
-      await operationsTab.toolbar.searchbar.clear()
+      await contractsTab.toolbar.searchbar.clear()
 
-      await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(1)
+      await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(1)
 
-      await operationsTab.sidebar.getTagButton('pet').click()
+      await contractsTab.sidebar.getTagButton('pet').click()
 
-      await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(3)
+      await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(3)
 
-      await operationsTab.sidebar.apiKindFilterAc.click()
-      await operationsTab.sidebar.apiKindFilterAc.allItm.click()
+      await contractsTab.sidebar.apiKindFilterAc.click()
+      await contractsTab.sidebar.apiKindFilterAc.allItm.click()
 
-      await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(19)
+      await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(19)
 
-      await operationsTab.sidebar.apiKindFilterAc.click()
-      await operationsTab.sidebar.apiKindFilterAc.noBwcItm.click()
+      await contractsTab.sidebar.apiKindFilterAc.click()
+      await contractsTab.sidebar.apiKindFilterAc.noBwcItm.click()
 
-      await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(3)
+      await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(3)
 
-      await operationsTab.sidebar.getTagButton('pet').click()
+      await contractsTab.sidebar.getTagButton('pet').click()
 
-      await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(1)
+      await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(1)
 
-      await operationsTab.toolbar.searchbar.fill('delete')
+      await contractsTab.toolbar.searchbar.fill('delete')
 
-      await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(0)
+      await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(0)
 
-      await operationsTab.toolbar.searchbar.clear()
+      await contractsTab.toolbar.searchbar.clear()
 
-      await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(1)
+      await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(1)
 
-      await operationsTab.sidebar.getTagButton('pet').click()
+      await contractsTab.sidebar.getTagButton('pet').click()
 
-      await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(3)
+      await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(3)
 
-      await operationsTab.sidebar.apiKindFilterAc.click()
-      await operationsTab.sidebar.apiKindFilterAc.allItm.click()
+      await contractsTab.sidebar.apiKindFilterAc.click()
+      await contractsTab.sidebar.apiKindFilterAc.allItm.click()
 
-      await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(19)
+      await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(19)
     })
 
   test('[P-OTPFI-4] Hide/Show filters on the Operations tab (List view)',
@@ -365,24 +365,24 @@ test.describe('10.1.1 Operations tab REST API (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
 
       await portalPage.gotoVersion(versionOperationsRest, VERSION_OPERATIONS_TAB_REST)
 
-      await operationsTab.toolbar.listViewBtn.click()
-      await operationsTab.toolbar.filtersBtn.click()
+      await contractsTab.toolbar.listViewBtn.click()
+      await contractsTab.toolbar.filtersBtn.click()
 
-      await expect(operationsTab.sidebar.apiKindFilterAc).not.toBeVisible()
-      await expect.soft(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
-      await expect.soft(operationsTab.toolbar.filtersBtn).toBePressed()
-      await expect(operationsTab.operationPreview).not.toBeVisible()
+      await expect(contractsTab.sidebar.apiKindFilterAc).not.toBeVisible()
+      await expect.soft(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
+      await expect.soft(contractsTab.toolbar.filtersBtn).toBePressed()
+      await expect(contractsTab.operationPreview).not.toBeVisible()
 
-      await operationsTab.toolbar.filtersBtn.click()
+      await contractsTab.toolbar.filtersBtn.click()
 
-      await expect(operationsTab.sidebar.apiKindFilterAc).toBeVisible()
-      await expect.soft(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
-      await expect.soft(operationsTab.toolbar.filtersBtn).not.toBePressed()
-      await expect(operationsTab.operationPreview).not.toBeVisible()
+      await expect(contractsTab.sidebar.apiKindFilterAc).toBeVisible()
+      await expect.soft(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
+      await expect.soft(contractsTab.toolbar.filtersBtn).not.toBePressed()
+      await expect(contractsTab.operationPreview).not.toBeVisible()
     })
 
   test('[P-OTPFI-5] Hide/Show filters on the Operations tab (Detailed view)',
@@ -393,24 +393,24 @@ test.describe('10.1.1 Operations tab REST API (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
 
       await portalPage.gotoVersion(versionOperationsRest, VERSION_OPERATIONS_TAB_REST)
 
-      await operationsTab.toolbar.detailedViewBtn.click()
-      await operationsTab.toolbar.filtersBtn.click()
+      await contractsTab.toolbar.detailedViewBtn.click()
+      await contractsTab.toolbar.filtersBtn.click()
 
-      await expect(operationsTab.sidebar.apiKindFilterAc).not.toBeVisible()
-      await expect.soft(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
-      await expect.soft(operationsTab.toolbar.filtersBtn).toBePressed()
-      await expect.soft(operationsTab.operationPreview).toBeVisible()
+      await expect(contractsTab.sidebar.apiKindFilterAc).not.toBeVisible()
+      await expect.soft(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
+      await expect.soft(contractsTab.toolbar.filtersBtn).toBePressed()
+      await expect.soft(contractsTab.operationPreview).toBeVisible()
 
-      await operationsTab.toolbar.filtersBtn.click()
+      await contractsTab.toolbar.filtersBtn.click()
 
-      await expect(operationsTab.sidebar.apiKindFilterAc).toBeVisible()
-      await expect.soft(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
-      await expect.soft(operationsTab.toolbar.filtersBtn).not.toBePressed()
-      await expect.soft(operationsTab.operationPreview).toBeVisible()
+      await expect(contractsTab.sidebar.apiKindFilterAc).toBeVisible()
+      await expect.soft(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
+      await expect.soft(contractsTab.toolbar.filtersBtn).not.toBePressed()
+      await expect.soft(contractsTab.operationPreview).toBeVisible()
     })
 
   test('[P-OTPVW-3] Viewing operation details on the Operations tab',
@@ -422,14 +422,14 @@ test.describe('10.1.1 Operations tab REST API (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
 
       await portalPage.gotoVersion(versionOperationsRest, VERSION_OPERATIONS_TAB_REST)
 
-      await expect.soft(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1).operationLink).toHaveText(GET_PET_BY_TAG_V1.title)
-      await expect.soft(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1).tagsCell).toHaveText(GET_PET_BY_TAG_V1.tags!)
-      await expect.soft(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1).kindCell).toHaveText(GET_PET_BY_TAG_V1.apiKind)
-      await expect.soft(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1).metadataCell).toHaveText(GET_PET_BY_TAG_V1.customMetadata!)
+      await expect.soft(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1).operationLink).toHaveText(GET_PET_BY_TAG_V1.title)
+      await expect.soft(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1).tagsCell).toHaveText(GET_PET_BY_TAG_V1.tags!)
+      await expect.soft(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1).kindCell).toHaveText(GET_PET_BY_TAG_V1.apiKind)
+      await expect.soft(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1).metadataCell).toHaveText(GET_PET_BY_TAG_V1.customMetadata!)
     })
 
   test('[P-OTPVW-4] Switching operations on the Operations tab',
@@ -441,15 +441,15 @@ test.describe('10.1.1 Operations tab REST API (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
 
       await portalPage.gotoVersion(versionOperationsRest, VERSION_OPERATIONS_TAB_REST)
 
-      await operationsTab.toolbar.detailedViewBtn.click()
+      await contractsTab.toolbar.detailedViewBtn.click()
 
-      await operationsTab.table.getOperationRow(DEL_PET_V1).click()
+      await contractsTab.table.getOperationRow(DEL_PET_V1).click()
 
-      await expect(operationsTab.operationPreview.operationTitle).toHaveText(DEL_PET_V1.title)
+      await expect(contractsTab.operationPreview.operationTitle).toHaveText(DEL_PET_V1.title)
     })
 
   test('[P-OTPVW-5] Switching Doc/Simple/Raw modes of Preview on the Operations tab',
@@ -461,28 +461,28 @@ test.describe('10.1.1 Operations tab REST API (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
 
       await portalPage.gotoVersion(versionOperationsRest, VERSION_OPERATIONS_TAB_REST)
 
-      await operationsTab.toolbar.detailedViewBtn.click()
+      await contractsTab.toolbar.detailedViewBtn.click()
 
-      await expect.soft(operationsTab.operationPreview.btnDoc).toBePressed()
+      await expect.soft(contractsTab.operationPreview.btnDoc).toBePressed()
 
-      await operationsTab.operationPreview.btnSimple.click()
+      await contractsTab.operationPreview.btnSimple.click()
 
-      await expect.soft(operationsTab.operationPreview.btnSimple).toBePressed()
-      await expect.soft(operationsTab.operationPreview.viewDoc).toBeVisible()
+      await expect.soft(contractsTab.operationPreview.btnSimple).toBePressed()
+      await expect.soft(contractsTab.operationPreview.viewDoc).toBeVisible()
 
-      await operationsTab.operationPreview.btnRaw.click()
+      await contractsTab.operationPreview.btnRaw.click()
 
-      await expect.soft(operationsTab.operationPreview.btnRaw).toBePressed()
-      await expect.soft(operationsTab.operationPreview.viewRaw).toBeVisible()
+      await expect.soft(contractsTab.operationPreview.btnRaw).toBePressed()
+      await expect.soft(contractsTab.operationPreview.viewRaw).toBeVisible()
 
-      await operationsTab.operationPreview.btnDoc.click()
+      await contractsTab.operationPreview.btnDoc.click()
 
-      await expect.soft(operationsTab.operationPreview.btnDoc).toBePressed()
-      await expect(operationsTab.operationPreview.viewDoc).toBeVisible()
+      await expect.soft(contractsTab.operationPreview.btnDoc).toBePressed()
+      await expect(contractsTab.operationPreview.viewDoc).toBeVisible()
     })
 
   test('[P-OTPVW-6] Switching List/Detailed View on the Operations tab',
@@ -494,29 +494,29 @@ test.describe('10.1.1 Operations tab REST API (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
 
       await portalPage.gotoVersion(versionOperationsRest, VERSION_OPERATIONS_TAB_REST)
 
-      await operationsTab.toolbar.detailedViewBtn.click()
+      await contractsTab.toolbar.detailedViewBtn.click()
 
-      await expect(operationsTab.operationPreview).toBeVisible()
+      await expect(contractsTab.operationPreview).toBeVisible()
 
-      await operationsTab.toolbar.listViewBtn.click()
+      await contractsTab.toolbar.listViewBtn.click()
 
-      await expect(operationsTab.operationPreview).not.toBeVisible()
-      await expect.soft(operationsTab.toolbar.listViewBtn).toBePressed()
-      await expect.soft(operationsTab.toolbar.detailedViewBtn).not.toBePressed()
-      await expect.soft(operationsTab.sidebar.apiKindFilterAc).toBeVisible()
-      await expect.soft(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
+      await expect(contractsTab.operationPreview).not.toBeVisible()
+      await expect.soft(contractsTab.toolbar.listViewBtn).toBePressed()
+      await expect.soft(contractsTab.toolbar.detailedViewBtn).not.toBePressed()
+      await expect.soft(contractsTab.sidebar.apiKindFilterAc).toBeVisible()
+      await expect.soft(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
 
-      await operationsTab.toolbar.detailedViewBtn.click()
+      await contractsTab.toolbar.detailedViewBtn.click()
 
-      await expect(operationsTab.operationPreview).toBeVisible()
-      await expect.soft(operationsTab.toolbar.detailedViewBtn).toBePressed()
-      await expect.soft(operationsTab.toolbar.listViewBtn).not.toBePressed()
-      await expect.soft(operationsTab.sidebar.apiKindFilterAc).toBeVisible()
-      await expect.soft(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
+      await expect(contractsTab.operationPreview).toBeVisible()
+      await expect.soft(contractsTab.toolbar.detailedViewBtn).toBePressed()
+      await expect.soft(contractsTab.toolbar.listViewBtn).not.toBePressed()
+      await expect.soft(contractsTab.sidebar.apiKindFilterAc).toBeVisible()
+      await expect.soft(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
     })
 
   test('[P-OTPDN-1] Exporting operations on the Operations tab',
@@ -528,23 +528,23 @@ test.describe('10.1.1 Operations tab REST API (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
 
       await portalPage.gotoVersion(versionOperationsRest, VERSION_OPERATIONS_TAB_REST)
 
       await test.step('Export all operations', async () => {
 
-        const file = await operationsTab.toolbar.exportMenu.downloadAll()
+        const file = await contractsTab.toolbar.exportMenu.downloadAll()
 
         await expectFile.soft(file).toHaveName(`APIOperations_${testPackage.packageId}_${V_P_PKG_OPERATIONS_REST_R.version}.xlsx`)
       })
 
       await test.step('Export filtered operations', async () => {
 
-        await operationsTab.sidebar.apiKindFilterAc.click()
-        await operationsTab.sidebar.apiKindFilterAc.noBwcItm.click()
+        await contractsTab.sidebar.apiKindFilterAc.click()
+        await contractsTab.sidebar.apiKindFilterAc.noBwcItm.click()
 
-        const file = await operationsTab.toolbar.exportMenu.downloadFiltered()
+        const file = await contractsTab.toolbar.exportMenu.downloadFiltered()
 
         await expectFile.soft(file).toHaveName(`APIOperations_${testPackage.packageId}_${V_P_PKG_OPERATIONS_REST_R.version}.xlsx`)
       })
@@ -558,11 +558,11 @@ test.describe('10.1.1 Operations tab REST API (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
 
       await portalPage.gotoVersion(versionWithoutOperations, VERSION_OPERATIONS_TAB_REST)
 
-      await expect.soft(operationsTab.table.noOperationsPlaceholder).toBeVisible()
-      await expect(operationsTab.toolbar.exportMenu).not.toBeEnabled()
+      await expect.soft(contractsTab.table.noOperationsPlaceholder).toBeVisible()
+      await expect(contractsTab.toolbar.exportMenu).not.toBeEnabled()
     })
 })

@@ -341,7 +341,7 @@ test.describe('12.1.1 Manual grouping: CRUD (Packages)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { overviewTab, operationsTab } = versionPage
+      const { overviewTab, contractsTab } = versionPage
       const { groupsTab } = overviewTab
       const { deleteOperationGroupDialog } = groupsTab
       const { groupName } = OGR_PMGR_DELETE_N
@@ -357,10 +357,10 @@ test.describe('12.1.1 Manual grouping: CRUD (Packages)', () => {
       await expect(groupsTab.getGroupRow(1)).toBeVisible()
       await expect(groupsTab.getGroupRow(groupName)).toBeHidden()
 
-      await versionPage.operationsTab.click()
-      await operationsTab.sidebar.groupFilterAc.click()
+      await versionPage.contractsTab.click()
+      await contractsTab.sidebar.groupFilterAc.click()
 
-      await expect(operationsTab.sidebar.groupFilterAc.ungroupedItm).toBeVisible()
-      await expect(operationsTab.sidebar.groupFilterAc.getListItem(groupName)).toBeHidden()
+      await expect(contractsTab.sidebar.groupFilterAc.ungroupedItm).toBeVisible()
+      await expect(contractsTab.sidebar.groupFilterAc.getListItem(groupName)).toBeHidden()
     })
 })

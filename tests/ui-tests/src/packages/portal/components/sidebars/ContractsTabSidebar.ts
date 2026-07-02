@@ -1,9 +1,9 @@
 import type { Locator } from '@playwright/test'
 import { Autocomplete, SearchBar, TagButton } from '@shared/components/base'
-import { GroupFilterAutocomplete } from './OperationsTabSidebar/GroupFilterAutocomplete'
-import { ApiKindFilterAutocomplete } from './OperationsTabSidebar/ApiKindFilterAutocomplete'
+import { GroupFilterAutocomplete } from './ContractsTabSidebar/GroupFilterAutocomplete'
+import { ApiKindFilterAutocomplete } from './ContractsTabSidebar/ApiKindFilterAutocomplete'
 
-export class OperationsTabSidebar {
+export class ContractsTabSidebar {
 
   readonly packageFilterAc = new Autocomplete(this.rootLocator.getByTestId('PackageFilter'), 'Package Filter')
   readonly groupFilterAc = new GroupFilterAutocomplete(this.rootLocator)

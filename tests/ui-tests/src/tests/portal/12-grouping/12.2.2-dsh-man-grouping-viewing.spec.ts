@@ -115,7 +115,7 @@ test.describe('12.2.2 Manual grouping: Viewing (Dashboards)', () => {
       })
     })
 
-  test('[P-MGO-5.1] Filtering operations on the "Operations" tab',
+  test('[P-MGO-5.1] Filtering operations on the "Contracts" tab',
     {
       tag: '@smoke',
       annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8766` },
@@ -124,56 +124,56 @@ test.describe('12.2.2 Manual grouping: Viewing (Dashboards)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
       const restGroup = OGR_DMGR_FILTERING_REST_R
       const gqlGroup = OGR_DMGR_FILTERING_GQL_R
 
       await portalPage.gotoVersion(testVersion, VERSION_OPERATIONS_TAB_REST)
 
-      await expect(operationsTab.table.getOperationRow()).toHaveCount(19)
+      await expect(contractsTab.table.getOperationRow()).toHaveCount(19)
 
       await test.step('Add filter by REST API operation group', async () => {
-        await operationsTab.sidebar.groupFilterAc.click()
+        await contractsTab.sidebar.groupFilterAc.click()
 
-        await expect.soft(operationsTab.sidebar.groupFilterAc.getListItem(gqlGroup.groupName)).toBeHidden()
+        await expect.soft(contractsTab.sidebar.groupFilterAc.getListItem(gqlGroup.groupName)).toBeHidden()
 
-        await operationsTab.sidebar.groupFilterAc.getListItem(restGroup.groupName).click()
+        await contractsTab.sidebar.groupFilterAc.getListItem(restGroup.groupName).click()
 
-        await expect(operationsTab.table.getOperationRow()).toHaveCount(2)
-        await expect(operationsTab.table.getOperationRow(restGroup.testMeta!.operations![0])).toBeVisible()
-        await expect(operationsTab.table.getOperationRow(restGroup.testMeta!.operations![1])).toBeVisible()
+        await expect(contractsTab.table.getOperationRow()).toHaveCount(2)
+        await expect(contractsTab.table.getOperationRow(restGroup.testMeta!.operations![0])).toBeVisible()
+        await expect(contractsTab.table.getOperationRow(restGroup.testMeta!.operations![1])).toBeVisible()
       })
 
       await test.step('Add filter by package', async () => {
-        await operationsTab.sidebar.packageFilterAc.click()
-        await operationsTab.sidebar.packageFilterAc.getListItem(P_PKG_DMGR_PET_R.name).click()
+        await contractsTab.sidebar.packageFilterAc.click()
+        await contractsTab.sidebar.packageFilterAc.getListItem(P_PKG_DMGR_PET_R.name).click()
 
-        await expect(operationsTab.table.getOperationRow()).toHaveCount(1)
-        await expect(operationsTab.table.getOperationRow(restGroup.testMeta!.operations![0])).toBeVisible()
+        await expect(contractsTab.table.getOperationRow()).toHaveCount(1)
+        await expect(contractsTab.table.getOperationRow(restGroup.testMeta!.operations![0])).toBeVisible()
       })
 
       await test.step('Switch to GraphQL API type', async () => {
-        await operationsTab.toolbar.sltApiType.click()
-        await operationsTab.toolbar.sltApiType.graphQlItm.click()
+        await contractsTab.toolbar.sltApiType.click()
+        await contractsTab.toolbar.sltApiType.graphQlItm.click()
 
-        await expect(operationsTab.table.noOperationsPlaceholder).toBeVisible()
+        await expect(contractsTab.table.noOperationsPlaceholder).toBeVisible()
       })
 
       await test.step('Set filter by GraphQL operation group', async () => {
-        await operationsTab.sidebar.packageFilterAc.clear()
-        await operationsTab.sidebar.groupFilterAc.click()
-        await operationsTab.sidebar.groupFilterAc.allItm.click()
+        await contractsTab.sidebar.packageFilterAc.clear()
+        await contractsTab.sidebar.groupFilterAc.click()
+        await contractsTab.sidebar.groupFilterAc.allItm.click()
 
-        await expect(operationsTab.table.getOperationRow()).toHaveCount(5)
+        await expect(contractsTab.table.getOperationRow()).toHaveCount(5)
 
-        await operationsTab.sidebar.groupFilterAc.click()
+        await contractsTab.sidebar.groupFilterAc.click()
 
-        await expect.soft(operationsTab.sidebar.groupFilterAc.getListItem(restGroup.groupName)).toBeHidden()
+        await expect.soft(contractsTab.sidebar.groupFilterAc.getListItem(restGroup.groupName)).toBeHidden()
 
-        await operationsTab.sidebar.groupFilterAc.getListItem(gqlGroup.groupName).click()
+        await contractsTab.sidebar.groupFilterAc.getListItem(gqlGroup.groupName).click()
 
-        await expect(operationsTab.table.getOperationRow()).toHaveCount(1)
-        await expect(operationsTab.table.getOperationRow(gqlGroup.testMeta!.operations![0])).toBeVisible()
+        await expect(contractsTab.table.getOperationRow()).toHaveCount(1)
+        await expect(contractsTab.table.getOperationRow(gqlGroup.testMeta!.operations![0])).toBeVisible()
       })
     })
 

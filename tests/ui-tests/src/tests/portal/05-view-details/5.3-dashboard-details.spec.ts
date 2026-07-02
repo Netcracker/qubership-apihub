@@ -41,7 +41,7 @@ test.describe('5.3 Dashboard details', () => {
       await expect.soft(versionPage.toolbar.compareMenu).toBeVisible()
       await expect.soft(versionPage.toolbar.settingsBtn).toBeVisible()
       await expect.soft(versionPage.overviewTab).toBeVisible()
-      await expect.soft(versionPage.operationsTab).toBeVisible()
+      await expect.soft(versionPage.contractsTab).toBeVisible()
       await expect.soft(versionPage.deprecatedTab).toBeVisible()
       await expect.soft(versionPage.apiChangesTab).toBeVisible()
       await expect.soft(versionPage.documentsTab).toBeVisible()

@@ -25,19 +25,19 @@ test.describe('11.1.1 Operations details REST API (Package)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
       const { operationPage } = portalPage
 
       await portalPage.gotoVersion(versionOperationsRest, VERSION_OPERATIONS_TAB_REST)
-      await operationsTab.table.getOperationRow(UPDATE_PET_V1).operationLink.click()
+      await contractsTab.table.getOperationRow(UPDATE_PET_V1).operationLink.click()
 
       await expect.soft(operationPage.toolbar.title).toContainText(UPDATE_PET_V1.title)
       await expect.soft(operationPage.docView).toBeVisible()
 
       await operationPage.toolbar.backBtn.click()
 
-      await expect.soft(versionPage.operationsTab).toBeVisible()
-      await expect.soft(operationsTab.table.getOperationRow(UPDATE_PET_V1)).toBeVisible()
+      await expect.soft(versionPage.contractsTab).toBeVisible()
+      await expect.soft(contractsTab.table.getOperationRow(UPDATE_PET_V1)).toBeVisible()
     })
 
   test('[P-ODPOP-2] Operations details: Navigation through breadcrumbs',

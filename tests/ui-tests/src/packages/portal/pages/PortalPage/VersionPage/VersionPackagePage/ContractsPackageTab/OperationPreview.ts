@@ -3,7 +3,6 @@ import { BaseComponent, Button, Content, Placeholder } from '@shared/components/
 import { DocView, RawView } from '@shared/components/custom'
 
 export class OperationPreview extends BaseComponent {
-
   readonly operationTitle = new Content(this.mainLocator.getByTestId('OperationTitle'), 'Operation Title')
   readonly btnDoc = new Button(this.mainLocator.getByTestId('ModeButton-doc'), 'Doc')
   readonly btnSimple = new Button(this.mainLocator.getByTestId('ModeButton-simple'), 'Simple')

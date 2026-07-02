@@ -5,10 +5,10 @@ import { ApiChangesPackageTab } from './VersionPackagePage/ApiChangesPackageTab'
 import { ApiQualityTab } from './VersionPackagePage/ApiQualityTab/ApiQualityTab'
 import { DeprecatedPackageTab } from './VersionPackagePage/DeprecatedPackageTab'
 import { DocumentsPackageTab } from './VersionPackagePage/DocumentsPackageTab'
-import { OperationsPackageTab } from './VersionPackagePage/OperationsPackageTab'
+import { ContractsPackageTab } from './VersionPackagePage/ContractsPackageTab'
 
 export class VersionPackagePage extends BaseVersionPage {
-  readonly operationsTab = new OperationsPackageTab(this.page)
+  readonly contractsTab = new ContractsPackageTab(this.page)
   readonly apiChangesTab = new ApiChangesPackageTab(this.page)
   readonly apiQualityTab = new ApiQualityTab(this.page)
   readonly deprecatedTab = new DeprecatedPackageTab(this.page)

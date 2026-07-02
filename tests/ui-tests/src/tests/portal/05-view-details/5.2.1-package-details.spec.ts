@@ -49,7 +49,7 @@ test.describe('5.2.1 Package details', () => {
       await expect.soft(versionPage.toolbar.compareMenu).toBeVisible()
       await expect.soft(versionPage.toolbar.settingsBtn).toBeVisible()
       await expect.soft(versionPage.overviewTab).toBeVisible()
-      await expect.soft(versionPage.operationsTab).toBeVisible()
+      await expect.soft(versionPage.contractsTab).toBeVisible()
       await expect.soft(versionPage.deprecatedTab).toBeVisible()
       await expect.soft(versionPage.apiChangesTab).toBeVisible()
       await expect.soft(versionPage.documentsTab).toBeVisible()
@@ -212,9 +212,9 @@ test.describe('5.2.1 Package details', () => {
 
       await expect(versionPage.overviewTab).toHaveText(versionPage.overviewTab.componentName!)
 
-      await versionPage.operationsTab.click()
+      await versionPage.contractsTab.click()
 
-      await expect(versionPage.operationsTab.toolbar.searchbar).toBeVisible()
+      await expect(versionPage.contractsTab.toolbar.searchbar).toBeVisible()
       await expect(versionPage.overviewTab).toHaveText(versionPage.overviewTab.componentName!)
 
       await versionPage.documentsTab.click()
@@ -226,9 +226,9 @@ test.describe('5.2.1 Package details', () => {
 
       await expect(versionPage.overviewTab).not.toHaveText(versionPage.overviewTab.componentName!)
 
-      await versionPage.operationsTab.click()
+      await versionPage.contractsTab.click()
 
-      await expect(versionPage.operationsTab.toolbar.searchbar).toBeVisible()
+      await expect(versionPage.contractsTab.toolbar.searchbar).toBeVisible()
       await expect(versionPage.overviewTab).not.toHaveText(versionPage.overviewTab.componentName!)
 
       await versionPage.overviewTab.click()

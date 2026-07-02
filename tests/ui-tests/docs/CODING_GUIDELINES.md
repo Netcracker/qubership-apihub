@@ -508,8 +508,8 @@ await expect.soft(versionPage.toolbar.versionSlt).toBeVisible()
 await expect.soft(versionPage.toolbar.status).toHaveText(V_P_PKG_OVERVIEW_R.status)
 
 // Specific assertions
-await expect.soft(operationsTab.table.getOperationRow()).toHaveCount(2)
-await expect.soft(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
+await expect.soft(contractsTab.table.getOperationRow()).toHaveCount(2)
+await expect.soft(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
 
 // File assertion
 const file = await exportDialog.performExport()

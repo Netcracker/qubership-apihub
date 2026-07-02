@@ -10,7 +10,7 @@ test.describe('13.1.2.2 Dashboard revisions (Outdated revision notification)', (
   const testDashboard = D_REV_VAR
   const testVersion = V_P_DSH_REV_1_N
 
-  test('[P-CODR-3.1] Outdated revision notification on the "Operations" tab',
+  test('[P-CODR-3.1] Outdated revision notification on the "Contracts" tab',
     {
       tag: ['@smoke', '@flaky'],
       annotation: [
@@ -31,7 +31,7 @@ test.describe('13.1.2.2 Dashboard revisions (Outdated revision notification)', (
           await apihubTDM.publishVersion(testVersion)
         })
 
-        await versionPage.operationsTab.click()
+        await versionPage.contractsTab.click()
 
         await expect(oldRevisionDialog.yesBtn).toBeVisible()
 
@@ -47,7 +47,7 @@ test.describe('13.1.2.2 Dashboard revisions (Outdated revision notification)', (
           await apihubTDM.publishVersion(testVersion)
         })
 
-        await versionPage.operationsTab.click()
+        await versionPage.contractsTab.click()
 
         await expect(oldRevisionDialog.yesBtn).toBeVisible()
 
@@ -319,7 +319,7 @@ test.describe('13.1.2.2 Dashboard revisions (Outdated revision notification)', (
       })
     })
 
-  test('[P-CODR-3.8-N] Outdated revision notification on the "Operations" tab (Negative)',
+  test('[P-CODR-3.8-N] Outdated revision notification on the "Contracts" tab (Negative)',
     {
       tag: '@smoke',
       annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8423` },
@@ -336,7 +336,7 @@ test.describe('13.1.2.2 Dashboard revisions (Outdated revision notification)', (
         await apihubTDM.publishVersion(testVersion)
       })
 
-      await versionPage.operationsTab.click()
+      await versionPage.contractsTab.click()
 
       await portalPage.waitForTimeout(SHORT_EXPECT)
 
