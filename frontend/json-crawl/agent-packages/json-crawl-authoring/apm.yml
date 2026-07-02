@@ -1,0 +1,4 @@
+name: json-crawl-authoring
+version: 1.0.0
+description: Conventions for developing the json-crawl library — depth-first and breadth-first traversal, hook lifecycle, and the path-rules engine.
+author: Netcracker

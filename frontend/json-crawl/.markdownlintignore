@@ -1,0 +1,8 @@
+# APM-generated files — updated by `apm compile`, do not hand-edit or lint directly
+AGENTS.md
+CLAUDE.md
+src/CLAUDE.md
+.agents/
+.claude/
+.cursor/
+.github/instructions/
