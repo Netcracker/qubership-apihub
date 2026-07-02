@@ -27,6 +27,9 @@ type ExportController interface {
 	GenerateApiChangesExcelReport(w http.ResponseWriter, r *http.Request) //deprecated
 	GenerateOperationsExcelReport(w http.ResponseWriter, r *http.Request)
 	GenerateDeprecatedOperationsExcelReport(w http.ResponseWriter, r *http.Request)
+	GenerateDdlEntitiesExcelReport(w http.ResponseWriter, r *http.Request)
+	GenerateDdlChangesExcelReport(w http.ResponseWriter, r *http.Request)
+	GenerateMcpEntitiesExcelReport(w http.ResponseWriter, r *http.Request)
 	GenerateShareabilityReport(w http.ResponseWriter, r *http.Request)
 	ExportOperationGroupAsOpenAPIDocuments_deprecated_2(w http.ResponseWriter, r *http.Request) //deprecated
 
@@ -1041,6 +1044,236 @@ func (e exportControllerImpl) GenerateDeprecatedOperationsExcelReport(w http.Res
 	w.Header().Set("Content-Transfer-Encoding", "binary")
 	w.Header().Set("Expires", "0")
 	deprecatedOperationsReport.Write(w)
+}
+
+func (e exportControllerImpl) GenerateDdlEntitiesExcelReport(w http.ResponseWriter, r *http.Request) {
+	packageId := getStringParam(r, "packageId")
+	ctx := context.Create(r)
+	sufficientPrivileges, err := e.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	version, err := getUnescapedStringParam(r, "version")
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "version"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	textFilter, err := url.QueryUnescape(r.URL.Query().Get("textFilter"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "textFilter"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	refPackageId := r.URL.Query().Get("refPackageId")
+
+	e.monitoringService.IncreaseBusinessMetricCounter(ctx.GetUserId(), metrics.ExportsCalled, packageId)
+
+	report, versionName, err := e.excelService.ExportDdlEntities(packageId, version, view.ExportDdlEntitiesRequestView{
+		RefPackageId: refPackageId,
+		TextFilter:   textFilter,
+	})
+	if err != nil {
+		log.Errorf("Excel error - %s", err.Error())
+		utils.RespondWithError(w, "Failed to export DDL entities", err)
+		return
+	}
+	if report == nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.OperationsAreEmpty,
+			Message: exception.OperationsAreEmptyMsg,
+		})
+		return
+	}
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=DDLEntities_%s_%s.xlsx", packageId, versionName))
+	w.Header().Set("Content-Transfer-Encoding", "binary")
+	w.Header().Set("Expires", "0")
+	report.Write(w)
+}
+
+func (e exportControllerImpl) GenerateDdlChangesExcelReport(w http.ResponseWriter, r *http.Request) {
+	packageId := getStringParam(r, "packageId")
+	ctx := context.Create(r)
+	sufficientPrivileges, err := e.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	version, err := getUnescapedStringParam(r, "version")
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "version"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	textFilter, err := url.QueryUnescape(r.URL.Query().Get("textFilter"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "textFilter"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	previousVersion := r.URL.Query().Get("previousVersion")
+	previousVersionPackageId := r.URL.Query().Get("previousVersionPackageId")
+	refPackageId := r.URL.Query().Get("refPackageId")
+	severities, customErr := getListFromParam(r, "severity")
+	if customErr != nil {
+		utils.RespondWithCustomError(w, customErr)
+		return
+	}
+	for _, severity := range severities {
+		if !view.ValidSeverity(severity) {
+			utils.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidParameterValue,
+				Message: exception.InvalidParameterValueMsg,
+				Params:  map[string]interface{}{"param": "severity", "value": severity},
+			})
+			return
+		}
+	}
+
+	e.monitoringService.IncreaseBusinessMetricCounter(ctx.GetUserId(), metrics.ExportsCalled, packageId)
+
+	report, versionName, err := e.excelService.ExportDdlChanges(packageId, version, view.ExportDdlChangesRequestView{
+		PreviousVersion:          previousVersion,
+		PreviousVersionPackageId: previousVersionPackageId,
+		RefPackageId:             refPackageId,
+		Severities:               severities,
+		TextFilter:               textFilter,
+	})
+	if err != nil {
+		log.Errorf("Excel error - %s", err.Error())
+		utils.RespondWithError(w, "Failed to export DDL changes", err)
+		return
+	}
+	if report == nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.ChangesAreEmpty,
+			Message: exception.ChangesAreEmptyMsg,
+		})
+		return
+	}
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=DDLChanges_%s_%s.xlsx", packageId, versionName))
+	w.Header().Set("Content-Transfer-Encoding", "binary")
+	w.Header().Set("Expires", "0")
+	report.Write(w)
+}
+
+func (e exportControllerImpl) GenerateMcpEntitiesExcelReport(w http.ResponseWriter, r *http.Request) {
+	packageId := getStringParam(r, "packageId")
+	ctx := context.Create(r)
+	sufficientPrivileges, err := e.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	version, err := getUnescapedStringParam(r, "version")
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "version"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	entitySegment := getStringParam(r, "entity")
+	kind, ok := view.McpEntitySegmentToKind[entitySegment]
+	if !ok {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidParameterValueMsg,
+			Params:  map[string]interface{}{"param": "entity", "value": entitySegment},
+		})
+		return
+	}
+	textFilter, err := url.QueryUnescape(r.URL.Query().Get("textFilter"))
+	if err != nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "textFilter"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	refPackageId := r.URL.Query().Get("refPackageId")
+
+	e.monitoringService.IncreaseBusinessMetricCounter(ctx.GetUserId(), metrics.ExportsCalled, packageId)
+
+	report, versionName, err := e.excelService.ExportMcpEntities(packageId, version, kind, view.ExportMcpEntitiesRequestView{
+		RefPackageId: refPackageId,
+		TextFilter:   textFilter,
+	})
+	if err != nil {
+		log.Errorf("Excel error - %s", err.Error())
+		utils.RespondWithError(w, "Failed to export MCP entities", err)
+		return
+	}
+	if report == nil {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.OperationsAreEmpty,
+			Message: exception.OperationsAreEmptyMsg,
+		})
+		return
+	}
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=MCPEntities_%s_%s.xlsx", packageId, versionName))
+	w.Header().Set("Content-Transfer-Encoding", "binary")
+	w.Header().Set("Expires", "0")
+	report.Write(w)
 }
 
 func (e exportControllerImpl) StartAsyncExport(w http.ResponseWriter, r *http.Request) {

@@ -191,6 +191,8 @@ func main() {
 
 	roleRepository := repository.NewRoleRepository(cp)
 	operationRepository := repository.NewOperationRepository(cp)
+	ddlContractRepository := repository.NewDDLContractRepository(cp)
+	mcpContractRepository := repository.NewMCPContractRepository(cp)
 	businessMetricRepository := repository.NewBusinessMetricRepository(cp)
 
 	activityTrackingRepository := repository.NewActivityTrackingRepository(cp)
@@ -248,11 +250,13 @@ func main() {
 	roleService := service.NewRoleService(roleRepository, userService, activityTrackingService, publishedRepository)
 	ptHandler := service.NewPackageTransitionHandler(transitionRepository)
 	publishNotificationService := service.NewPublishNotificationService(olricProvider)
-	publishedService := service.NewPublishedService(publishedRepository, buildRepository, favoritesRepository, operationRepository, activityTrackingService, monitoringService, minioStorageService, systemInfoService, publishNotificationService)
+	publishedService := service.NewPublishedService(publishedRepository, buildRepository, favoritesRepository, operationRepository, ddlContractRepository, activityTrackingService, monitoringService, minioStorageService, systemInfoService, publishNotificationService)
 	portalService := service.NewPortalService(basePath, publishedService, publishedRepository)
 
 	operationGroupService := service.NewOperationGroupService(operationRepository, publishedRepository, exportRepository, packageVersionEnrichmentService, activityTrackingService)
-	versionService := service.NewVersionService(favoritesRepository, publishedRepository, publishedService, operationRepository, exportRepository, operationService, activityTrackingService, systemInfoService, packageVersionEnrichmentService, portalService, versionCleanupRepository, operationGroupService, monitoringService, roleService)
+	ddlContractServiceForVersion := service.NewDDLContractService(ddlContractRepository, publishedRepository, packageVersionEnrichmentService)
+	mcpContractServiceForVersion := service.NewMCPContractService(mcpContractRepository, publishedRepository, packageVersionEnrichmentService)
+	versionService := service.NewVersionService(favoritesRepository, publishedRepository, publishedService, operationRepository, exportRepository, operationService, activityTrackingService, systemInfoService, packageVersionEnrichmentService, portalService, versionCleanupRepository, operationGroupService, monitoringService, roleService, ddlContractServiceForVersion, mcpContractServiceForVersion)
 	packageService := service.NewPackageService(favoritesRepository, publishedRepository, versionService, roleService, activityTrackingService, monitoringService, operationGroupService, usersRepository, ptHandler, systemInfoService)
 
 	logsService := service.NewLogsService()
@@ -270,8 +274,8 @@ func main() {
 	versionService.SetBuildService(buildService)
 	operationGroupService.SetBuildService(buildService)
 
-	excelService := service.NewExcelService(publishedRepository, versionService, operationService, packageService)
-	comparisonService := service.NewComparisonService(publishedRepository, operationRepository, packageVersionEnrichmentService)
+	excelService := service.NewExcelService(publishedRepository, versionService, operationService, packageService, ddlContractServiceForVersion, mcpContractServiceForVersion)
+	comparisonService := service.NewComparisonService(publishedRepository, operationRepository, packageVersionEnrichmentService, ddlContractServiceForVersion)
 	businessMetricService := service.NewBusinessMetricService(businessMetricRepository)
 
 	dbCleanupService := service.NewDBCleanupService(buildCleanupRepository, migrationRunRepository, minioStorageService, systemInfoService)
@@ -288,6 +292,9 @@ func main() {
 
 	tokenRevocationService := service.NewTokenRevocationService(olricProvider, systemInfoService.GetRefreshTokenDurationSec())
 	systemStatsService := service.NewSystemStatsService(systemStatsRepository)
+
+	ddlContractService := ddlContractServiceForVersion
+	mcpContractService := mcpContractServiceForVersion
 
 	mcpService := service.NewMCPService(systemInfoService, operationService, packageService, versionService, monitoringService, roleService)
 
@@ -352,7 +359,7 @@ func main() {
 	logoutController := controller.NewLogoutController(tokenRevocationService, systemInfoService)
 	operationController := controller.NewOperationController(roleService, operationService, buildService, monitoringService, ptHandler)
 	operationGroupController := controller.NewOperationGroupController(roleService, operationGroupService, versionService, systemInfoService, packageService)
-	searchController := controller.NewSearchController(operationService, versionService, monitoringService)
+	searchController := controller.NewSearchController(operationService, versionService, monitoringService, ddlContractService, mcpContractService)
 	dataMigrationController := mController.NewTempMigrationController(dbMigrationService, roleService.IsSysadm)
 	activityTrackingController := controller.NewActivityTrackingController(activityTrackingService, roleService, ptHandler)
 	comparisonController := controller.NewComparisonController(operationService, versionService, buildService, roleService, comparisonService, monitoringService, ptHandler)
@@ -364,6 +371,9 @@ func main() {
 	packageExportConfigController := controller.NewPackageExportConfigController(roleService, packageExportConfigService, ptHandler)
 	systemStatsController := controller.NewSystemStatsController(systemStatsService, roleService)
 	internalDocsController := controller.NewInternalDocumentController(publishedService, roleService)
+	ddlContractController := controller.NewDDLContractController(roleService, ddlContractService, ptHandler)
+	mcpContractController := controller.NewMCPContractController(roleService, mcpContractService, ptHandler)
+
 	mcpController := controller.NewMCPController(mcpService)
 	buildController := controller.NewBuildController(buildResultService, buildService, roleService.IsSysadm)
 	adminPublishedController := controller.NewAdminPublishedController(publishedService, roleService.IsSysadm, systemInfoService.GetPublishArchiveSizeLimitMB())
@@ -473,6 +483,23 @@ func main() {
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}/deprecatedItems", security.Secure(operationController.GetOperationDeprecatedItems)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/deprecated/summary", security.Secure(operationController.GetDeprecatedOperationsSummary)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}/changes/summary", security.Secure(operationController.GetOperationChangesSummary)).Methods(http.MethodGet)
+
+	// DDL Contract routes.
+	// Static sub-routes (changes, export/*) are registered before the {ddlEntityId} wildcard
+	// so gorilla/mux does not shadow them.
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/entities", security.Secure(ddlContractController.ListDdlEntities)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/changes", security.Secure(ddlContractController.GetChangedDdlEntities)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/export/entities", security.Secure(exportController.GenerateDdlEntitiesExcelReport)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/export/changes", security.Secure(exportController.GenerateDdlChangesExcelReport)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/entities/{ddlEntityId}", security.Secure(ddlContractController.GetDdlEntity)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/entities/{ddlEntityId}/changes", security.Secure(ddlContractController.GetDdlEntityChanges)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/ddl/entities/{ddlEntityId}/changes/summary", security.Secure(ddlContractController.GetDdlEntityChangesSummary)).Methods(http.MethodGet)
+
+	// MCP Contract routes ({entity} ∈ {inits, tools, prompts, resources}).
+	// mcp/export/{entity} is registered before mcp/{entity}/{mcpEntityId} so it is not shadowed.
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/mcp/export/{entity}", security.Secure(exportController.GenerateMcpEntitiesExcelReport)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/mcp/{entity}", security.Secure(mcpContractController.ListMcpEntities)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/packages/{packageId}/versions/{version}/mcp/{entity}/{mcpEntityId}", security.Secure(mcpContractController.GetMcpEntity)).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/documents/{slug}", security.Secure(versionController.GetVersionedDocument)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/documents", security.Secure(versionController.GetVersionDocuments)).Methods(http.MethodGet)

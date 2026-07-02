@@ -23,20 +23,25 @@ type ExcelService interface {
 	ExportDeprecatedOperations(packageId, version, apiType string, req view.ExportOperationRequestView) (*excelize.File, string, error)
 	ExportApiChanges(packageId, version, apiType string, severities []string, req view.ExportApiChangesRequestView) (*excelize.File, string, error)
 	ExportOperations(packageId, version, apiType string, req view.ExportOperationRequestView) (*excelize.File, string, error)
+	ExportDdlEntities(packageId, version string, req view.ExportDdlEntitiesRequestView) (*excelize.File, string, error)
+	ExportDdlChanges(packageId, version string, req view.ExportDdlChangesRequestView) (*excelize.File, string, error)
+	ExportMcpEntities(packageId, version, kind string, req view.ExportMcpEntitiesRequestView) (*excelize.File, string, error)
 	ExportBusinessMetrics(businessMetrics []view.BusinessMetric) (*excelize.File, string, error)
 	BuildShareabilityReport(groupId, versionName string) (*excelize.File, string, error)
 	ParseShareabilityReport(in io.Reader) ([]view.ShareabilityReportRow, error)
 }
 
-func NewExcelService(publishedRepo repository.PublishedRepository, versionService VersionService, operationService OperationService, packageService PackageService) ExcelService {
-	return &excelServiceImpl{publishedRepo: publishedRepo, versionService: versionService, operationService: operationService, packageService: packageService}
+func NewExcelService(publishedRepo repository.PublishedRepository, versionService VersionService, operationService OperationService, packageService PackageService, ddlContractService DDLContractService, mcpContractService MCPContractService) ExcelService {
+	return &excelServiceImpl{publishedRepo: publishedRepo, versionService: versionService, operationService: operationService, packageService: packageService, ddlContractService: ddlContractService, mcpContractService: mcpContractService}
 }
 
 type excelServiceImpl struct {
-	publishedRepo    repository.PublishedRepository
-	versionService   VersionService
-	operationService OperationService
-	packageService   PackageService
+	publishedRepo      repository.PublishedRepository
+	versionService     VersionService
+	operationService   OperationService
+	packageService     PackageService
+	ddlContractService DDLContractService
+	mcpContractService MCPContractService
 }
 
 func (e excelServiceImpl) ExportApiChanges(packageId, version, apiType string, severities []string, req view.ExportApiChangesRequestView) (*excelize.File, string, error) {
@@ -120,6 +125,345 @@ func (e excelServiceImpl) ExportOperations(packageId, version, apiType string, r
 	}
 	file, err := buildOperationsWorkbook(operations, packageName, versionName, versionStatus)
 	return file, versionName, err
+}
+
+func (e excelServiceImpl) ExportDdlEntities(packageId, version string, req view.ExportDdlEntitiesRequestView) (*excelize.File, string, error) {
+	entities, err := e.ddlContractService.ListDdlEntities(packageId, version, req.TextFilter, 0, 0)
+	if err != nil {
+		return nil, "", err
+	}
+	if entities == nil || len(entities.Entities) == 0 {
+		return nil, "", nil
+	}
+	versionName, err := e.getVersionNameForAttachmentName(packageId, version)
+	if err != nil {
+		return nil, "", err
+	}
+	versionStatus, err := e.versionService.GetVersionStatus(packageId, version)
+	if err != nil {
+		return nil, "", err
+	}
+	packageName, err := e.packageService.GetPackageName(packageId)
+	if err != nil {
+		return nil, "", err
+	}
+	file, err := buildDdlEntitiesWorkbook(entities, packageId, packageName, versionName, versionStatus)
+	return file, versionName, err
+}
+
+func (e excelServiceImpl) ExportMcpEntities(packageId, version, kind string, req view.ExportMcpEntitiesRequestView) (*excelize.File, string, error) {
+	entities, err := e.mcpContractService.ListMcpEntities(packageId, version, kind, "", req.TextFilter, 0, 0)
+	if err != nil {
+		return nil, "", err
+	}
+	if entities == nil || len(entities.Entities) == 0 {
+		return nil, "", nil
+	}
+	versionName, err := e.getVersionNameForAttachmentName(packageId, version)
+	if err != nil {
+		return nil, "", err
+	}
+	versionStatus, err := e.versionService.GetVersionStatus(packageId, version)
+	if err != nil {
+		return nil, "", err
+	}
+	packageName, err := e.packageService.GetPackageName(packageId)
+	if err != nil {
+		return nil, "", err
+	}
+	file, err := buildMcpEntitiesWorkbook(entities, packageId, packageName, versionName, versionStatus)
+	return file, versionName, err
+}
+
+func (e excelServiceImpl) ExportDdlChanges(packageId, version string, req view.ExportDdlChangesRequestView) (*excelize.File, string, error) {
+	changedEntities, err := e.ddlContractService.GetChangedDdlEntities(packageId, version, view.DdlChangesReq{
+		PreviousVersion:          req.PreviousVersion,
+		PreviousVersionPackageId: req.PreviousVersionPackageId,
+		RefPackageId:             req.RefPackageId,
+		Severities:               req.Severities,
+		TextFilter:               req.TextFilter,
+	})
+	if err != nil {
+		return nil, "", err
+	}
+	if changedEntities == nil || len(changedEntities.Entities) == 0 {
+		return nil, "", nil
+	}
+	versionName, err := e.getVersionNameForAttachmentName(packageId, version)
+	if err != nil {
+		return nil, "", err
+	}
+	versionStatus, err := e.versionService.GetVersionStatus(packageId, version)
+	if err != nil {
+		return nil, "", err
+	}
+	packageName, err := e.packageService.GetPackageName(packageId)
+	if err != nil {
+		return nil, "", err
+	}
+	file, err := buildDdlChangesWorkbook(changedEntities, packageName, versionName, versionStatus)
+	return file, versionName, err
+}
+
+func buildDdlEntitiesWorkbook(entities *view.DdlEntityListView, packageId, packageName, versionName, versionStatus string) (*excelize.File, error) {
+	workbook, err := excelize.OpenFile(ExcelTemplatePath)
+	defer func() {
+		if err := workbook.Close(); err != nil {
+			log.Errorf("Failed to close excel template file: %v", err.Error())
+		}
+	}()
+	if err != nil {
+		log.Errorf("Failed to open excel template file: %v", err.Error())
+		return nil, err
+	}
+
+	buildCoverPage(workbook, packageName, "DDL Entities", versionName, versionStatus)
+
+	headerStyle := getHeaderStyle(workbook)
+	evenCellStyle := getEvenCellStyle(workbook)
+	oddCellStyle := getOddCellStyle(workbook)
+
+	sheetIndex, err := workbook.NewSheet(view.DdlSheetName)
+	if err != nil {
+		return nil, err
+	}
+	if err = workbook.SetColWidth(view.DdlSheetName, "A", "G", 35); err != nil {
+		return nil, err
+	}
+	header := map[string]interface{}{
+		"A1": view.PackageIDColumnName,
+		"B1": view.PackageNameColumnName,
+		"C1": view.VersionColumnName,
+		"D1": view.SchemaNameColumnName,
+		"E1": view.NameColumnName,
+		"F1": view.DescriptionColumnName,
+		"G1": view.DocumentIdColumnName,
+	}
+	if err = setCellsValues(workbook, view.DdlSheetName, header); err != nil {
+		return nil, err
+	}
+	if err = workbook.SetCellStyle(view.DdlSheetName, "A1", "G1", headerStyle); err != nil {
+		return nil, err
+	}
+	if err = workbook.AutoFilter(view.DdlSheetName, "A1:G1", []excelize.AutoFilterOptions{}); err != nil {
+		return nil, err
+	}
+
+	rowIndex := 2
+	for _, e := range entities.Entities {
+		entityView, ok := e.(*view.DdlContractEntityView)
+		if !ok {
+			continue
+		}
+		cellsValues := map[string]interface{}{
+			fmt.Sprintf("A%d", rowIndex): packageId,
+			fmt.Sprintf("B%d", rowIndex): packageName,
+			fmt.Sprintf("C%d", rowIndex): versionName,
+			fmt.Sprintf("D%d", rowIndex): entityView.SchemaName,
+			fmt.Sprintf("E%d", rowIndex): entityView.Name,
+			fmt.Sprintf("F%d", rowIndex): entityView.Description,
+			fmt.Sprintf("G%d", rowIndex): entityView.DocumentId,
+		}
+		if err = setCellsValues(workbook, view.DdlSheetName, cellsValues); err != nil {
+			return nil, err
+		}
+		if rowIndex%2 == 0 {
+			err = workbook.SetCellStyle(view.DdlSheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("G%d", rowIndex), evenCellStyle)
+		} else {
+			err = workbook.SetCellStyle(view.DdlSheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("G%d", rowIndex), oddCellStyle)
+		}
+		if err != nil {
+			return nil, err
+		}
+		rowIndex++
+	}
+
+	workbook.SetActiveSheet(sheetIndex)
+	if err = workbook.DeleteSheet("Sheet1"); err != nil {
+		return nil, err
+	}
+	return workbook, nil
+}
+
+func buildMcpEntitiesWorkbook(entities *view.McpEntityListView, packageId, packageName, versionName, versionStatus string) (*excelize.File, error) {
+	workbook, err := excelize.OpenFile(ExcelTemplatePath)
+	defer func() {
+		if err := workbook.Close(); err != nil {
+			log.Errorf("Failed to close excel template file: %v", err.Error())
+		}
+	}()
+	if err != nil {
+		log.Errorf("Failed to open excel template file: %v", err.Error())
+		return nil, err
+	}
+
+	buildCoverPage(workbook, packageName, "MCP Entities", versionName, versionStatus)
+
+	headerStyle := getHeaderStyle(workbook)
+	evenCellStyle := getEvenCellStyle(workbook)
+	oddCellStyle := getOddCellStyle(workbook)
+
+	sheetIndex, err := workbook.NewSheet(view.McpSheetName)
+	if err != nil {
+		return nil, err
+	}
+	if err = workbook.SetColWidth(view.McpSheetName, "A", "H", 35); err != nil {
+		return nil, err
+	}
+	header := map[string]interface{}{
+		"A1": view.PackageIDColumnName,
+		"B1": view.PackageNameColumnName,
+		"C1": view.VersionColumnName,
+		"D1": view.KindColumnNameContract,
+		"E1": view.TitleColumnName,
+		"F1": view.DescriptionColumnName,
+		"G1": view.McpEndpointColumnName,
+		"H1": view.DocumentIdColumnName,
+	}
+	if err = setCellsValues(workbook, view.McpSheetName, header); err != nil {
+		return nil, err
+	}
+	if err = workbook.SetCellStyle(view.McpSheetName, "A1", "H1", headerStyle); err != nil {
+		return nil, err
+	}
+	if err = workbook.AutoFilter(view.McpSheetName, "A1:H1", []excelize.AutoFilterOptions{}); err != nil {
+		return nil, err
+	}
+
+	rowIndex := 2
+	for _, e := range entities.Entities {
+		entityView, ok := e.(*view.McpEntityView)
+		if !ok {
+			continue
+		}
+		cellsValues := map[string]interface{}{
+			fmt.Sprintf("A%d", rowIndex): packageId,
+			fmt.Sprintf("B%d", rowIndex): packageName,
+			fmt.Sprintf("C%d", rowIndex): versionName,
+			fmt.Sprintf("D%d", rowIndex): entityView.Kind,
+			fmt.Sprintf("E%d", rowIndex): entityView.Title,
+			fmt.Sprintf("F%d", rowIndex): entityView.Description,
+			fmt.Sprintf("G%d", rowIndex): entityView.McpEndpoint,
+			fmt.Sprintf("H%d", rowIndex): entityView.DocumentId,
+		}
+		if err = setCellsValues(workbook, view.McpSheetName, cellsValues); err != nil {
+			return nil, err
+		}
+		if rowIndex%2 == 0 {
+			err = workbook.SetCellStyle(view.McpSheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("H%d", rowIndex), evenCellStyle)
+		} else {
+			err = workbook.SetCellStyle(view.McpSheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("H%d", rowIndex), oddCellStyle)
+		}
+		if err != nil {
+			return nil, err
+		}
+		rowIndex++
+	}
+
+	workbook.SetActiveSheet(sheetIndex)
+	if err = workbook.DeleteSheet("Sheet1"); err != nil {
+		return nil, err
+	}
+	return workbook, nil
+}
+
+func buildDdlChangesWorkbook(changedEntities *view.DdlChangedEntitiesView, packageName, versionName, versionStatus string) (*excelize.File, error) {
+	workbook, err := excelize.OpenFile(ExcelTemplatePath)
+	defer func() {
+		if err := workbook.Close(); err != nil {
+			log.Errorf("Failed to close excel template file: %v", err.Error())
+		}
+	}()
+	if err != nil {
+		log.Errorf("Failed to open excel template file: %v", err.Error())
+		return nil, err
+	}
+
+	reportName := fmt.Sprintf("DDL changes between versions %s and %s", changedEntities.PreviousVersion, versionName)
+	buildCoverPage(workbook, packageName, reportName, versionName, versionStatus)
+
+	headerStyle := getHeaderStyle(workbook)
+	evenCellStyle := getEvenCellStyle(workbook)
+	oddCellStyle := getOddCellStyle(workbook)
+
+	sheetIndex, err := workbook.NewSheet(view.DdlSheetName)
+	if err != nil {
+		return nil, err
+	}
+	if err = workbook.SetColWidth(view.DdlSheetName, "A", "K", 30); err != nil {
+		return nil, err
+	}
+	header := map[string]interface{}{
+		"A1": view.VersionColumnName,
+		"B1": view.PreviousVersionColumnName,
+		"C1": view.SchemaNameColumnName,
+		"D1": view.NameColumnName,
+		"E1": view.KindColumnNameContract,
+		"F1": view.BreakingChangesColumnName,
+		"G1": view.SemiBreakingChangesColumnName,
+		"H1": view.DeprecatedChangesColumnName,
+		"I1": view.NonBreakingChangesColumnName,
+		"J1": view.AnnotationChangesColumnName,
+		"K1": view.UnclassifiedChangesColumnName,
+	}
+	if err = setCellsValues(workbook, view.DdlSheetName, header); err != nil {
+		return nil, err
+	}
+	if err = workbook.SetCellStyle(view.DdlSheetName, "A1", "K1", headerStyle); err != nil {
+		return nil, err
+	}
+	if err = workbook.AutoFilter(view.DdlSheetName, "A1:K1", []excelize.AutoFilterOptions{}); err != nil {
+		return nil, err
+	}
+
+	rowIndex := 2
+	for _, e := range changedEntities.Entities {
+		changedView, ok := e.(view.DdlChangedEntityView)
+		if !ok {
+			continue
+		}
+		entityData := changedView.DdlEntityData
+		if entityData == nil {
+			entityData = changedView.PreviousDdlEntityData
+		}
+		var schemaName, name, kind string
+		if entityData != nil {
+			schemaName = entityData.SchemaName
+			name = entityData.Name
+			kind = entityData.Kind
+		}
+		cellsValues := map[string]interface{}{
+			fmt.Sprintf("A%d", rowIndex): versionName,
+			fmt.Sprintf("B%d", rowIndex): changedEntities.PreviousVersion,
+			fmt.Sprintf("C%d", rowIndex): schemaName,
+			fmt.Sprintf("D%d", rowIndex): name,
+			fmt.Sprintf("E%d", rowIndex): kind,
+			fmt.Sprintf("F%d", rowIndex): changedView.ChangeSummary.Breaking,
+			fmt.Sprintf("G%d", rowIndex): changedView.ChangeSummary.SemiBreaking,
+			fmt.Sprintf("H%d", rowIndex): changedView.ChangeSummary.Deprecated,
+			fmt.Sprintf("I%d", rowIndex): changedView.ChangeSummary.NonBreaking,
+			fmt.Sprintf("J%d", rowIndex): changedView.ChangeSummary.Annotation,
+			fmt.Sprintf("K%d", rowIndex): changedView.ChangeSummary.Unclassified,
+		}
+		if err = setCellsValues(workbook, view.DdlSheetName, cellsValues); err != nil {
+			return nil, err
+		}
+		if rowIndex%2 == 0 {
+			err = workbook.SetCellStyle(view.DdlSheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("K%d", rowIndex), evenCellStyle)
+		} else {
+			err = workbook.SetCellStyle(view.DdlSheetName, fmt.Sprintf("A%d", rowIndex), fmt.Sprintf("K%d", rowIndex), oddCellStyle)
+		}
+		if err != nil {
+			return nil, err
+		}
+		rowIndex++
+	}
+
+	workbook.SetActiveSheet(sheetIndex)
+	if err = workbook.DeleteSheet("Sheet1"); err != nil {
+		return nil, err
+	}
+	return workbook, nil
 }
 
 type DeprecatedOperationsReport struct {

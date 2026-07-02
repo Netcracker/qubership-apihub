@@ -185,6 +185,124 @@ type PackageComparisonsFile struct {
 	Comparisons []VersionComparison `json:"comparisons" validate:"dive,required"`
 }
 
+// --- Contract archive types ---
+
+type PackageDdlContractsFile struct {
+	Tables []PackageDdlContract `json:"tables"`
+}
+
+type DdlContractSearch struct {
+	UseEntityDataAsSearchText bool `json:"useEntityDataAsSearchText"`
+}
+
+type PackageDdlContract struct {
+	DdlEntityId               string                 `json:"ddlEntityId"`
+	Kind                      string                 `json:"kind"`
+	SchemaName                string                 `json:"schemaName,omitempty"`
+	Name                      string                 `json:"name,omitempty"`
+	Description               string                 `json:"description,omitempty"`
+	Search                    *DdlContractSearch     `json:"search,omitempty"`
+	Metadata                  map[string]interface{} `json:"metadata,omitempty"`
+	DocumentId                string                 `json:"documentId,omitempty"`
+	VersionInternalDocumentId string                 `json:"versionInternalDocumentId,omitempty"`
+}
+
+// PackageDdlComparisonsFile models the ddl-comparisons.json index (sibling of comparisons.json).
+type PackageDdlComparisonsFile struct {
+	Comparisons []DdlVersionComparison `json:"comparisons"`
+}
+
+type DdlVersionComparison struct {
+	ComparisonFileId         string                            `json:"comparisonFileId"`
+	PackageId                string                            `json:"packageId"`
+	Version                  string                            `json:"version"`
+	Revision                 int                               `json:"revision"`
+	PreviousVersionPackageId string                            `json:"previousVersionPackageId"`
+	PreviousVersion          string                            `json:"previousVersion"`
+	PreviousVersionRevision  int                               `json:"previousVersionRevision"`
+	FromCache                bool                              `json:"fromCache"`
+	// ContractsChangesSummary is the builder format: a map keyed by contract type name.
+	ContractsChangesSummary  map[string]ContractTypeSummary    `json:"contractsChangesSummary"`
+}
+
+// ContractTypeSummary is the per-type payload inside ContractsChangesSummary.
+type ContractTypeSummary struct {
+	ChangesSummary           ChangeSummary `json:"changesSummary"`
+	NumberOfImpactedEntities ChangeSummary `json:"numberOfImpactedEntities"`
+}
+
+// ToContractTypes converts the builder map format to the internal []ContractType slice.
+func (d DdlVersionComparison) ToContractTypes() []ContractType {
+	if len(d.ContractsChangesSummary) == 0 {
+		return nil
+	}
+	result := make([]ContractType, 0, len(d.ContractsChangesSummary))
+	for typeName, summary := range d.ContractsChangesSummary {
+		result = append(result, ContractType{
+			ContractType:             typeName,
+			ChangesSummary:           summary.ChangesSummary,
+			NumberOfImpactedEntities: summary.NumberOfImpactedEntities,
+		})
+	}
+	return result
+}
+
+type ContractType struct {
+	ContractType             string        `json:"contractType"`
+	ChangesSummary           ChangeSummary `json:"changesSummary"`
+	NumberOfImpactedEntities ChangeSummary `json:"numberOfImpactedEntities"`
+}
+
+const ContractTypeDdl = "ddl"
+const ContractTypeMcp = "mcp"
+
+// PackageDdlContractChanges models a per-pair ddl-comparisons/<comparisonFileId> file.
+type PackageDdlContractChanges struct {
+	Entities []DdlChangesDto `json:"entities"`
+}
+
+type DdlChangesDto struct {
+	DdlEntityData                *DdlEntity    `json:"ddlEntityData,omitempty"`
+	PreviousDdlEntityData        *DdlEntity    `json:"previousDdlEntityData,omitempty"`
+	Changes                      interface{}   `json:"changes,omitempty"`
+	ChangeSummary                ChangeSummary `json:"changeSummary"`
+	ComparisonInternalDocumentId string        `json:"comparisonInternalDocumentId,omitempty"`
+}
+
+// DdlEntity is the identified DDL entity descriptor shared by the build-result
+// indexes and per-pair comparison data (see BuildResultDdlComparisonsData in the spec).
+type DdlEntity struct {
+	DdlEntityId string `json:"ddlEntityId"`
+	Kind        string `json:"kind"`
+	Name        string `json:"name"`
+	SchemaName  string `json:"schemaName"`
+	Description string `json:"description"`
+}
+
+type PackageMcpContractsFile struct {
+	Inits     []PackageMcpContract `json:"inits"`
+	Tools     []PackageMcpContract `json:"tools"`
+	Resources []PackageMcpContract `json:"resources"`
+	Prompts   []PackageMcpContract `json:"prompts"`
+}
+
+type McpContractSearch struct {
+	UseEntityDataAsSearchText bool `json:"useEntityDataAsSearchText"`
+}
+
+type PackageMcpContract struct {
+	McpEntityId               string                 `json:"mcpEntityId"`
+	Kind                      string                 `json:"kind"`
+	Title                     string                 `json:"title,omitempty"`
+	Description               string                 `json:"description,omitempty"`
+	McpEndpoint               string                 `json:"mcpEndpoint"`
+	Search                    *McpContractSearch     `json:"search,omitempty"`
+	Metadata                  map[string]interface{} `json:"metadata,omitempty"`
+	DocumentId                string                 `json:"documentId,omitempty"`
+	VersionInternalDocumentId string                 `json:"versionInternalDocumentId,omitempty"`
+	DataHash                  string                 `json:"dataHash,omitempty"`
+}
+
 type VersionComparison struct {
 	PackageId                string          `json:"packageId"`
 	Version                  string          `json:"version"`

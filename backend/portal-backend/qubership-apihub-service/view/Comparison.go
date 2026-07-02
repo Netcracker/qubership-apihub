@@ -5,6 +5,16 @@ type VersionComparisonSummary struct {
 	Refs           *[]RefComparison              `json:"refs,omitempty"`
 	Packages       *map[string]PackageVersionRef `json:"packages,omitempty"`
 	NoContent      bool                          `json:"noContent,omitempty"`
+	Contracts      *ContractsSummary             `json:"contractsChangesSummary,omitempty"`
+}
+
+type ContractsSummary struct {
+	DDL *DDLContractsSummary `json:"ddl,omitempty"`
+}
+
+type DDLContractsSummary struct {
+	ChangesSummary           ChangeSummary `json:"changesSummary"`
+	NumberOfImpactedEntities ChangeSummary `json:"numberOfImpactedEntities"`
 }
 
 type RefComparison struct {

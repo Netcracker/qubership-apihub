@@ -53,6 +53,8 @@ tags:
     description: APIs for role management.
   - name: Operations
     description: Operations APIs.
+  - name: Contracts
+    description: DDL and MCP contract APIs.
   - name: Documents
     description: Documents APIs.
   - name: Changes
@@ -3238,6 +3240,8 @@ paths:
                                   operationsCount:
                                     type: number
                                     description: Number of operations in which the apiAudience was changed from previousAudience to currentAudience
+                      contractsSummary:
+                        $ref: "#/components/schemas/VersionContractsSummary"
                   - type: object
                     properties:
                       operationGroups:
@@ -3312,22 +3316,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
-        - name: previousVersion
-          in: query
-          description: |
-            Package previous version.\
-            If both previousVersion and previousVersionPackageId are not specified, then previous **release** version will be used
-          schema:
-            type: string
-            example: "2022.3"
-        - name: previousVersionPackageId
-          in: query
-          description: |
-            Package unique identifier for previous version.\
-            If both previousVersion and previousVersionPackageId are not specified, then previous **release** version will be used
-          schema:
-            type: string
-            example: "QS.RUNENV.K8S-SERVER.CJM-QSS-DEV-2.Q-TMF"
+        - $ref: "#/components/parameters/previousVersion"
+        - $ref: "#/components/parameters/previousVersionPackageId"
       responses:
         "200":
           description: Success
@@ -3367,6 +3357,8 @@ paths:
                         type: boolean
                         description: true - operation comparison cache is not stored in database
                         default: false
+                      contractsChangesSummary:
+                        $ref: "#/components/schemas/VersionComparisonContractsSummary"
                   - type: object
                     title: dashboardComparison
                     required:
@@ -3421,25 +3413,10 @@ paths:
                               type: boolean
                               description: true - operation comparison cache is not stored in database
                               default: false
+                            contractsChangesSummary:
+                              $ref: "#/components/schemas/VersionComparisonContractsSummary"
                       packages:
-                        description: |
-                          A mapped list of the packageId and version name concatenation with At sign to the package objects.
-                        type: object
-                        additionalProperties:
-                          allOf:
-                            - $ref: "#/components/schemas/ReferencedPackage"
-                            - type: object
-                        example:
-                          QS.CloudQSS.CPQ.Q-TMF@2023.2:
-                            refId: QS.CloudQSS.CPQ.Q-TMF
-                            kind: package
-                            name: Quote Management TMF648
-                            version: "2022.2@5"
-                            status: release
-                            parentPackages: ["qubership", "Qubership JSS", "Sample Management"]
-                            deletedAt: "2023-05-30T17:17:11.755146Z"
-                            deletedBy: "user1221"
-                            notLatestRevision: true
+                        $ref: "#/components/schemas/PackagesMap"
         "301":
           description: Moved Permanently
           headers:
@@ -3492,22 +3469,8 @@ paths:
         - $ref: "#/components/parameters/asyncapiChannel"
         - $ref: "#/components/parameters/asyncapiProtocol"
         - $ref: "#/components/parameters/severity"
-        - name: previousVersion
-          in: query
-          description: |
-            Package previous version.\
-            If both previousVersion and previousVersionPackageId are not specified, then previous **release** version will be used
-          schema:
-            type: string
-            example: "2022.3"
-        - name: previousVersionPackageId
-          in: query
-          description: |
-            Package unique identifier for previous version.\
-            If both previousVersion and previousVersionPackageId are not specified, then previous **release** version will be used
-          schema:
-            type: string
-            example: "QS.RUNENV.K8S-SERVER.CJM-QSS-DEV-2.Q-TMF"
+        - $ref: "#/components/parameters/previousVersion"
+        - $ref: "#/components/parameters/previousVersionPackageId"
         - name: version
           in: path
           description: |
@@ -3648,25 +3611,7 @@ paths:
                               pattern: "^[a-z0-9-]"
                               example: "qitmf-v5-11-qitmf-v5-12-merged-json"
                   packages:
-                    description: >
-                      A mapped list of the packageId and version name
-                      concatenation with At sign to the package objects.
-                        type: object
-                    additionalProperties:
-                      allOf:
-                        - $ref: "#/components/schemas/ReferencedPackage"
-                        - type: object
-                    example:
-                      QS.CloudQSS.CPQ.Q-TMF@2023.2:
-                        refId: QS.CloudQSS.CPQ.Q-TMF
-                        kind: package
-                        name: Quote Management TMF648
-                        version: "2022.2@5"
-                        status: release
-                        parentPackages: ["qubership", "Qubership JSS", "Sample Management"]
-                        deletedAt: "2023-05-30T17:17:11.755146Z"
-                        deletedBy: "user1221"
-                        notLatestRevision: true
+                    $ref: "#/components/schemas/PackagesMap"
         "301":
           description: Moved Permanently
           headers:
@@ -3711,22 +3656,8 @@ paths:
       - $ref: "#/components/parameters/asyncapiChannel"
       - $ref: "#/components/parameters/asyncapiProtocol"
       - $ref: "#/components/parameters/severity"
-      - name: previousVersion
-        in: query
-        description: |
-          Package previous version.\
-          If both previousVersion and previousVersionPackageId are not specified, then comparison with previous **release** version shall be returned.
-        schema:
-          type: string
-          example: "2022.3"
-      - name: previousVersionPackageId
-        in: query
-        description: |
-          Package unique identifier for previous version.\
-          If both previousVersion and previousVersionPackageId are not specified, then comparison with previous **release** version shall be returned.
-        schema:
-          type: string
-          example: "QS.RUNENV.K8S-SERVER.CJM-QSS-DEV-2.Q-TMF"
+      - $ref: "#/components/parameters/previousVersion"
+      - $ref: "#/components/parameters/previousVersionPackageId"
       - name: refPackageId
         description: Filter by package id of ref package and previous ref package.
         in: query
@@ -3854,22 +3785,8 @@ paths:
     parameters:
       - $ref: "#/components/parameters/packageId"
       - $ref: "#/components/parameters/version"
-      - name: previousVersion
-        in: query
-        description: |
-          Package previous version.\
-          If both previousVersion and previousVersionPackageId are not specified, then comparison with previous **release** version shall be returned.
-        schema:
-          type: string
-          example: "2022.3"
-      - name: previousVersionPackageId
-        in: query
-        description: |
-          Package unique identifier for previous version.\
-          If both previousVersion and previousVersionPackageId are not specified, then comparison with previous **release** version shall be returned.
-        schema:
-          type: string
-          example: "QS.RUNENV.K8S-SERVER.CJM-QSS-DEV-2.Q-TMF"
+      - $ref: "#/components/parameters/previousVersion"
+      - $ref: "#/components/parameters/previousVersionPackageId"
       - name: format
         in: query
         description: File format for export
@@ -5991,24 +5908,774 @@ paths:
                               type: string
                               example: "QS.CloudQSS.CPQ.Q-TMF@2023.2"
                   packages:
-                    description: |
-                      A mapped list of the packageId and version name concatenation with At sign to the package objects.
-                    type: object
-                    additionalProperties:
-                      allOf:
-                        - $ref: "#/components/schemas/ReferencedPackage"
-                        - type: object
-                    example:
-                      QS.CloudQSS.CPQ.Q-TMF@2023.2:
-                        refId: QS.CloudQSS.CPQ.Q-TMF
-                        kind: package
-                        name: Quote Management TMF648
-                        version: "2022.2@5"
-                        status: release
-                        parentPackages: ["qubership", "Qubership JSS", "Sample Management"]
-                        deletedAt: "2023-05-30T17:17:11.755146Z"
-                        deletedBy: "user1221"
-                        notLatestRevision: true
+                    $ref: "#/components/schemas/PackagesMap"
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/packages/{packageId}/versions/{version}/ddl/entities":
+    get:
+      tags:
+        - Contracts
+      summary: Get DDL entities
+      description: |
+        Get DDL contract entities for a package version. Only `table` entities are supported now.
+      operationId: getPackageVersionDdlEntities
+      parameters:
+        - $ref: "#/components/parameters/packageId"
+        - $ref: "#/components/parameters/version"
+        - name: textFilter
+          in: query
+          description: Filter by DDL entity name (case-insensitive substring match).
+          schema:
+            type: string
+        - $ref: "#/components/parameters/limit"
+        - name: offset
+          in: query
+          description: Number of records to skip.
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entities:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DdlEntityView"
+                  packages:
+                    $ref: "#/components/schemas/PackagesMap"
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/packages/{packageId}/versions/{version}/ddl/entities/{ddlEntityId}":
+    get:
+      tags:
+        - Contracts
+      summary: Get DDL entity details
+      description: Get DDL contract entity details, including the raw SQL payload. Only `table` entities are supported now.
+      operationId: getPackageVersionDdlEntity
+      parameters:
+        - $ref: "#/components/parameters/packageId"
+        - $ref: "#/components/parameters/version"
+        - $ref: "#/components/parameters/ddlEntityId"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/DdlEntityView"
+                  - type: object
+                    required:
+                      - data
+                    properties:
+                      data:
+                        description: Raw SQL definition of the DDL entity (minimal valid SQL for the table).
+                        type: string
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/packages/{packageId}/versions/{version}/ddl/entities/{ddlEntityId}/changes":
+    get:
+      tags:
+        - Contracts
+        - Changes
+      summary: Get DDL entity changes
+      description: Get changes of one DDL entity between current and previous published package versions. Only `table` entities are supported now.
+      operationId: getPackageVersionDdlEntityChanges
+      parameters:
+        - $ref: "#/components/parameters/packageId"
+        - $ref: "#/components/parameters/version"
+        - $ref: "#/components/parameters/ddlEntityId"
+        - $ref: "#/components/parameters/severity"
+        - $ref: "#/components/parameters/previousVersion"
+        - $ref: "#/components/parameters/previousVersionPackageId"
+        - in: query
+          name: previousVersionDdlEntityId
+          description: DDL entity identifier from previous version.\
+            Empty, if requested entity is added in the current version; otherwise, must be specified.
+          schema:
+            type: string
+            example: public-table-accounts
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  changes:
+                    description: List of individual DDL entity changes.
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SingleOperationChange"
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/packages/{packageId}/versions/{version}/ddl/changes":
+    get:
+      tags:
+        - Contracts
+        - Changes
+      summary: Get list of changed DDL entities
+      description: |
+        Get DDL contract changes between two compared package versions with details by entities.
+        Only `table` entities are supported now.
+      operationId: getPackageVersionDdlChanges
+      parameters:
+        - $ref: "#/components/parameters/packageId"
+        - $ref: "#/components/parameters/version"
+        - $ref: "#/components/parameters/severity"
+        - $ref: "#/components/parameters/previousVersion"
+        - $ref: "#/components/parameters/previousVersionPackageId"
+        - name: refPackageId
+          description: Filter by package id of ref package and previous ref package.
+          in: query
+          schema:
+            type: string
+        - name: textFilter
+          in: query
+          description: Filter by DDL entity name (case-insensitive substring match).
+          schema:
+            type: string
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - entities
+                properties:
+                  previousVersion:
+                    description: Name of the previous published version. The <version>@<revision> mask is used to return the revision number.
+                    type: string
+                    example: "2022.2@5"
+                  previousVersionPackageId:
+                    description: Previous release version package id.
+                    type: string
+                    example: "QS.CloudQSS.CPQ.Q-TMF"
+                  entities:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - changeSummary
+                        - comparisonInternalDocumentId
+                      properties:
+                        ddlEntityData:
+                          $ref: "#/components/schemas/DdlEntityChange"
+                        previousDdlEntityData:
+                          $ref: "#/components/schemas/DdlEntityChange"
+                        changeSummary:
+                          allOf:
+                            - $ref: "#/components/schemas/ChangeSummary"
+                            - type: object
+                              description: Number of declarative changes in one specific DDL entity.
+                        comparisonInternalDocumentId:
+                          description: >
+                            Unique string identifier of the internal merged document,
+                            where diffs between entity and previous entity are present.
+                            Corresponds to `id` field for the document in `comparison-internal-documents.json`
+                          type: string
+                          example: "shop_1.0.0_shop-pkg_shop_2.0.0_shop-pkg"
+                  packages:
+                    $ref: "#/components/schemas/PackagesMap"
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/packages/{packageId}/versions/{version}/ddl/entities/{ddlEntityId}/changes/summary":
+    get:
+      tags:
+        - Contracts
+        - Changes
+      summary: Single DDL entity changes summary
+      description: |
+        Get summary of changes for one DDL entity between current and previous published package version.
+        Only `table` entities are supported now.
+      operationId: getPackageVersionDdlEntityChangesSummary
+      parameters:
+        - $ref: "#/components/parameters/packageId"
+        - $ref: "#/components/parameters/version"
+        - $ref: "#/components/parameters/ddlEntityId"
+        - $ref: "#/components/parameters/previousVersion"
+        - $ref: "#/components/parameters/previousVersionPackageId"
+        - name: refPackageId
+          description: Filter by package id of ref package and previous ref package.
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChangeSummary"
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/packages/{packageId}/versions/{version}/ddl/export/entities":
+    get:
+      tags:
+        - Contracts
+        - Export
+      summary: Export DDL entities to xlsx file
+      description: Export DDL contract entities of a package version. Only `table` entities are supported now.
+      operationId: getPackageVersionDdlEntitiesExport
+      parameters:
+        - $ref: "#/components/parameters/packageId"
+        - $ref: "#/components/parameters/version"
+        - name: refPackageId
+          description: Filter by package id of ref package, shall be used in case of dashboard.
+          in: query
+          schema:
+            type: string
+        - name: textFilter
+          in: query
+          description: Filter by DDL entity name (case-insensitive substring match).
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/xlsx:
+              schema:
+                type: string
+                format: binary
+                description: xlsx file to download
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                description: xlsx file name
+                example: attachment; filename="DDLEntities_package.id_version.xlsx"
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/packages/{packageId}/versions/{version}/ddl/export/changes":
+    get:
+      tags:
+        - Contracts
+        - Changes
+        - Export
+      summary: Export DDL changes to xlsx file
+      description: Export DDL contract changes between two compared package versions. Only `table` entities are supported now.
+      operationId: getPackageVersionDdlChangesExport
+      parameters:
+        - $ref: "#/components/parameters/packageId"
+        - $ref: "#/components/parameters/version"
+        - $ref: "#/components/parameters/severity"
+        - $ref: "#/components/parameters/previousVersion"
+        - $ref: "#/components/parameters/previousVersionPackageId"
+        - name: refPackageId
+          description: Filter by package id of ref package and previous ref package.
+          in: query
+          schema:
+            type: string
+        - name: textFilter
+          in: query
+          description: Filter by DDL entity name (case-insensitive substring match).
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/xlsx:
+              schema:
+                type: string
+                format: binary
+                description: xlsx file to download
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                description: xlsx file name
+                example: attachment; filename="DDLChanges_package.id_version.xlsx"
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+                VersionNotFound:
+                  $ref: "#/components/examples/VersionNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/packages/{packageId}/versions/{version}/mcp/{entity}":
+    get:
+      tags:
+        - Contracts
+      summary: Get MCP contract entities
+      description: Get MCP discovery contract entities for a package version.
+      operationId: getPackageVersionMcpEntities
+      parameters:
+        - $ref: "#/components/parameters/packageId"
+        - $ref: "#/components/parameters/version"
+        - $ref: "#/components/parameters/mcpEntity"
+        - name: mcpEndpoint
+          in: query
+          description: Filter entities belonging to a specific MCP endpoint (relative path, e.g. `/mcp`).
+          schema:
+            type: string
+            example: "/mcp"
+        - name: textFilter
+          in: query
+          description: Filter by MCP entity title and description (case-insensitive substring match).
+          schema:
+            type: string
+        - $ref: "#/components/parameters/limit"
+        - name: offset
+          in: query
+          description: Number of records to skip.
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  entities:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/McpEntityView"
+                  packages:
+                    $ref: "#/components/schemas/PackagesMap"
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/packages/{packageId}/versions/{version}/mcp/{entity}/{mcpEntityId}":
+    get:
+      tags:
+        - Contracts
+      summary: Get MCP contract entity details
+      description: Get MCP discovery contract entity details.
+      operationId: getPackageVersionMcpEntity
+      parameters:
+        - $ref: "#/components/parameters/packageId"
+        - $ref: "#/components/parameters/version"
+        - $ref: "#/components/parameters/mcpEntity"
+        - $ref: "#/components/parameters/mcpEntityId"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/McpEntityView"
+                  - type: object
+                    required:
+                      - data
+                    properties:
+                      data:
+                        description: Original MCP discovery entity payload.
+                        type: object
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/packages/{packageId}/versions/{version}/mcp/export/{entity}":
+    get:
+      tags:
+        - Contracts
+        - Export
+      summary: Export MCP contract entities to xlsx file
+      description: Export MCP discovery contract entities of a package version.
+      operationId: getPackageVersionMcpEntitiesExport
+      parameters:
+        - $ref: "#/components/parameters/packageId"
+        - $ref: "#/components/parameters/version"
+        - $ref: "#/components/parameters/mcpEntity"
+        - name: refPackageId
+          description: Filter by package id of ref package, shall be used in case of dashboard.
+          in: query
+          schema:
+            type: string
+        - name: textFilter
+          in: query
+          description: Filter by MCP entity title and description (case-insensitive substring match).
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/xlsx:
+              schema:
+                type: string
+                format: binary
+                description: xlsx file to download
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                description: xlsx file name
+                example: attachment; filename="MCPEntities_package.id_version.xlsx"
         "301":
           description: Moved Permanently
           headers:
@@ -6125,24 +6792,7 @@ paths:
                                       type: string
                                     example: ["tag1", "tag2"]
                       packages:
-                        description: |
-                          A mapped list of the packageId and version name concatenation with At sign to the package objects.
-                        type: object
-                        additionalProperties:
-                          allOf:
-                            - $ref: "#/components/schemas/ReferencedPackage"
-                            - type: object
-                        example:
-                          QS.CloudQSS.CPQ.Q-TMF@2023.2:
-                            refId: QS.CloudQSS.CPQ.Q-TMF
-                            kind: package
-                            name: Quote Management TMF648
-                            version: "2022.2@5"
-                            status: release
-                            parentPackages: ["qubership", "Qubership JSS", "Sample Management"]
-                            deletedAt: "2023-05-30T17:17:11.755146Z"
-                            deletedBy: "user1221"
-                            notLatestRevision: true
+                        $ref: "#/components/schemas/PackagesMap"
         "301":
           description: Moved Permanently
           headers:
@@ -6348,25 +6998,7 @@ paths:
                             - $ref: "#/components/schemas/ProtobufOperationMeta"
                             - $ref: "#/components/schemas/AsyncAPIOperationMeta"
                   packages:
-                    description: >
-                      A mapped list of the packageId and version name
-                      concatenation with At sign to the package objects.
-                    type: object
-                    additionalProperties:
-                      allOf:
-                        - $ref: "#/components/schemas/ReferencedPackage"
-                        - type: object
-                    example:
-                      QS.CloudQSS.CPQ.Q-TMF@2023.2:
-                        refId: QS.CloudQSS.CPQ.Q-TMF
-                        kind: package
-                        name: Quote Management TMF648
-                        version: "2022.2@5"
-                        status: release
-                        parentPackages: ["qubership", "Qubership JSS", "Sample Management"]
-                        deletedAt: "2023-05-30T17:17:11.755146Z"
-                        deletedBy: "user1221"
-                        notLatestRevision: true
+                    $ref: "#/components/schemas/PackagesMap"
         "301":
           description: Moved Permanently
           headers:
@@ -6900,18 +7532,8 @@ paths:
         - $ref: "#/components/parameters/version"
         - $ref: "#/components/parameters/operationId"
         - $ref: "#/components/parameters/severity"
-        - in: query
-          name: previousVersion
-          schema:
-            type: string
-          description: If both previousVersion and previousVersionPackageId are not specified, then previous **release** version will be used.
-          example: "2022.2"
-        - in: query
-          name: previousVersionPackageId
-          schema:
-            type: string
-          description: If both previousVersion and previousVersionPackageId are not specified, then previous **release** version will be used.
-          example: QS.RUNENV.K8S-SERVER.CJM-QSS-DEV-2.Q-TMF
+        - $ref: "#/components/parameters/previousVersion"
+        - $ref: "#/components/parameters/previousVersionPackageId"
         - in: query
           name: previousVersionOperationId
           description: Operation unique identifier from previous version (not the same as operationId tag from the OpenAPI file).\
@@ -6982,18 +7604,8 @@ paths:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
         - $ref: "#/components/parameters/operationId"
-        - in: query
-          name: previousVersion
-          schema:
-            type: string
-          description: If both previousVersion and previousVersionPackageId are not specified, then previous **release** version will be used.
-          example: "2022.2"
-        - in: query
-          name: previousVersionPackageId
-          schema:
-            type: string
-          description: If both previousVersion and previousVersionPackageId are not specified, then previous **release** version will be used.
-          example: QS.RUNENV.K8S-SERVER.CJM-QSS-DEV-2.Q-TMF
+        - $ref: "#/components/parameters/previousVersion"
+        - $ref: "#/components/parameters/previousVersionPackageId"
         - name: refPackageId
           description: Filter by package id of ref package and previous ref package.
           in: query
@@ -7357,36 +7969,7 @@ paths:
                                 type: string
                                 example: "QS.CloudQSS.CPQ.Q-TMF@2023.2"
                     packages:
-                      description: |
-                        A mapped list of the packageId and version name concatenation with At sign to the package objects.
-                      type: object
-                      additionalProperties:
-                        allOf:
-                          - $ref: "#/components/schemas/PackageVersionRef"
-                          - type: object
-                            properties:
-                              versionRevision:
-                                description: Number of the revision.
-                                type: integer
-                                format: int32
-                                example: 3
-                              parentPackages:
-                                description: List of parent package names.
-                                type: array
-                                items:
-                                  type: string
-                                example: ["qubership", "Qubership JSS", "Sample Management"]
-                      example:
-                        QS.CloudQSS.CPQ.Q-TMF@2023.2:
-                          parentPackages: ["qubership", "Qubership JSS", "Sample Management"]
-                          refId: "QS.CloudQSS.CPQ.Q-TMF"
-                          kind: "package"
-                          name: "Quote Management TMF648"
-                          version: "2023.2"
-                          status: "release"
-                          deletedAt: "2023-05-30T17:17:11.755146Z"
-                          deletedBy: "user1221"
-                          versionRevision: 3
+                      $ref: "#/components/schemas/PackagesMap"
           "301":
             description: Moved Permanently
             headers:
@@ -7809,6 +8392,16 @@ paths:
         - $ref: "#/components/parameters/limit"
         - $ref: "#/components/parameters/page"
         - $ref: "#/components/parameters/apiTypeQueryParam"
+        - name: contractType
+          in: query
+          description: |
+            Filter documents by contract type.
+            Mutually exclusive with `apiType`: specify at most one of `apiType` / `contractType` (if both are specified then 400 will be returned).
+          schema:
+            type: string
+            enum:
+              - ddl
+              - mcp
         - name: skipRefs
           in: query
           description: |
@@ -7843,24 +8436,7 @@ paths:
                               type: string
                               example: QS.CloudQSS.CPQ.Q-TMF@2023.2
                   packages:
-                    description: |
-                      A mapped list of the packageId and version name concatenation with At sign to the package objects.
-                    type: object
-                    additionalProperties:
-                      allOf:
-                        - $ref: "#/components/schemas/ReferencedPackage"
-                        - type: object
-                    example:
-                      QS.CloudQSS.CPQ.Q-TMF@2023.2:
-                        refId: QS.CloudQSS.CPQ.Q-TMF
-                        kind: package
-                        name: Quote Management TMF648
-                        version: "2022.2@5"
-                        status: release
-                        parentPackages: ["qubership", "Qubership JSS", "Sample Management"]
-                        deletedAt: "2023-05-30T17:17:11.755146Z"
-                        deletedBy: "user1221"
-                        notLatestRevision: true
+                    $ref: "#/components/schemas/PackagesMap"
               examples: {}
         "301":
             description: Moved Permanently
@@ -8221,22 +8797,8 @@ paths:
     parameters:
       - $ref: "#/components/parameters/packageId"
       - $ref: "#/components/parameters/version"
-      - name: previousVersionPackageId
-        in: query
-        description: |
-          Package unique identifier for previous version.\
-          If both previousVersion and previousVersionPackageId are not specified, then previous **release** version will be used
-        schema:
-          type: string
-          example: "QS.RUNENV.K8S-SERVER.CJM-QSS-DEV-2.Q-TMF"
-      - name: previousVersion
-        in: query
-        description: |
-          Package previous version.\
-          If both previousVersion and previousVersionPackageId are not specified, then previous **release** version will be used
-        schema:
-          type: string
-          example: "2022.3"
+      - $ref: "#/components/parameters/previousVersionPackageId"
+      - $ref: "#/components/parameters/previousVersion"
     get:
       tags:
         - Internal Documents
@@ -8354,23 +8916,7 @@ paths:
                               type: string
                               example: "QS.CloudQSS.CPQ.Q-TMF@2023.2"
                   packages:
-                    description: |
-                      A mapped list of the packageId and version name concatenation with At sign to the package objects.
-                    type: object
-                    additionalProperties:
-                      allOf:
-                        - $ref: "#/components/schemas/ReferencedPackage"
-                    example:
-                      QS.CloudQSS.CPQ.Q-TMF@2023.2:
-                        refId: QS.CloudQSS.CPQ.Q-TMF
-                        kind: package
-                        name: Quote Management TMF648
-                        version: "2022.2@5"
-                        status: release
-                        parentPackages: ["qubership", "Qubership JSS", "Sample Management"]
-                        deletedAt: "2023-05-30T17:17:11.755146Z"
-                        deletedBy: "user1221"
-                        notLatestRevision: true
+                    $ref: "#/components/schemas/PackagesMap"
               examples: {}
         "301":
           description: Moved Permanently
@@ -8654,24 +9200,7 @@ paths:
                           description: All excluded refs will be ignored (but will still be visible for package version).
                           type: boolean
                   packages:
-                    description: |
-                      A mapped list of the packageId and version name concatenation with At sign to the package objects.
-                    type: object
-                    additionalProperties:
-                      allOf:
-                        - $ref: "#/components/schemas/ReferencedPackage"
-                        - type: object
-                    example:
-                          QS.CloudQSS.CPQ.Q-TMF@2023.2:
-                            refId: QS.CloudQSS.CPQ.Q-TMF
-                            kind: package
-                            name: Quote Management TMF648
-                            version: "2022.2@5"
-                            status: release
-                            parentPackages: ["qubership", "Qubership JSS", "Sample Management"]
-                            deletedAt: "2023-05-30T17:17:11.755146Z"
-                            deletedBy: "user1221"
-                            notLatestRevision: true
+                    $ref: "#/components/schemas/PackagesMap"
               examples: {}
         "301":
           description: Moved Permanently
@@ -9466,6 +9995,8 @@ paths:
             - operations
             - documents
             - packages
+            - ddl
+            - mcp
     post:
       x-nc-api-audience: noBWC
       tags:
@@ -9484,23 +10015,25 @@ paths:
               type: object
               required:
                 - searchString
-                - apiType
                 - workspace
                 - status
               title: searchCommonParamsV4
-              description: Common parameters for Global search v4
+              description: |
+                Common parameters for Global search v4.
+                `apiType` is required when `searchLevel = operations`; it is ignored for `ddl` and `mcp` search levels.
               properties:
                 searchString:
                   description: Search text
                   type: string
                   example: "Billing account"
                 apiType:
-                  description: Type of the API to search for.
+                  description: Type of the API to search for. Required when `searchLevel = operations`.
                   type: string
                   enum:
                     - rest
                     - graphql
                     - asyncapi
+                    - protobuf
                 workspace:
                   description: Top-level workspace ID (no dots).
                   type: string
@@ -9550,14 +10083,27 @@ paths:
                 type: object
                 properties:
                   operations:
+                    description: Returned when `searchLevel = operations`.
                     type: array
                     items:
                       $ref: "#/components/schemas/SearchResultOperation"
+                  ddlContracts:
+                    description: Returned when `searchLevel = ddl`.
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SearchResultDDLContract"
+                  mcpContracts:
+                    description: Returned when `searchLevel = mcp`.
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SearchResultMCPContract"
                   documents:
+                    description: Returned when `searchLevel = documents`.
                     type: array
                     items:
                       $ref: "#/components/schemas/SearchResultDocument"
                   packages:
+                    description: Returned when `searchLevel = packages`.
                     type: array
                     items:
                       $ref: "#/components/schemas/SearchResultPackage"
@@ -10500,6 +11046,7 @@ components:
       in: query
       description: |
         Filter documents by type of the API.
+        Mutually exclusive with `contractType`: specify at most one of `apiType` / `contractType` (if both are specified then 400 will be returned).
       schema:
         type: string
         enum:
@@ -10507,6 +11054,52 @@ components:
           - graphql
           - protobuf
           - asyncapi
+    mcpEntity:
+      name: entity
+      in: path
+      required: true
+      description: MCP entity collection type.
+      schema:
+        type: string
+        enum:
+          - inits
+          - tools
+          - prompts
+          - resources
+    mcpEntityId:
+      name: mcpEntityId
+      in: path
+      required: true
+      description: MCP logical entity identifier (`mcpEntityId` from the list response). Clients must percent-encode unsafe characters.
+      schema:
+        type: string
+        example: "mcp-tool-get_forecast"
+    ddlEntityId:
+      name: ddlEntityId
+      in: path
+      required: true
+      description: DDL entity logical identifier. Clients must percent-encode unsafe characters.
+      schema:
+        type: string
+        example: "public-table-users"
+    previousVersion:
+      name: previousVersion
+      in: query
+      description: |
+        Package previous version.
+        If both previousVersion and previousVersionPackageId are not specified, then the previous **release** version will be used.
+      schema:
+        type: string
+        example: "2022.3"
+    previousVersionPackageId:
+      name: previousVersionPackageId
+      in: query
+      description: |
+        Package unique identifier for previous version.
+        If both previousVersion and previousVersionPackageId are not specified, then the previous **release** version will be used.
+      schema:
+        type: string
+        example: "QS.RUNENV.K8S-SERVER.CJM-QSS-DEV-2.Q-TMF"
     asyncapiChannel:
       name: asyncapiChannel
       in: query
@@ -10705,6 +11298,208 @@ components:
         - graphql
         - protobuf
         - asyncapi
+    DdlContractKind:
+      title: DDL contract kind
+      description: DDL contract entity kind.
+      type: string
+      enum:
+        - table
+        - view
+    McpContractKind:
+      title: MCP contract kind
+      description: MCP discovery contract entity kind.
+      type: string
+      enum:
+        - init
+        - tool
+        - prompt
+        - resource
+    DdlEntity:
+      type: object
+      description: |
+        Identified DDL entity — its stable id and descriptor (kind/name/schemaName/description). The core
+        shared by the build result and the API; each context adds its own fields via allOf.
+      required:
+        - ddlEntityId
+        - kind
+        - name
+        - schemaName
+        - description
+      properties:
+        ddlEntityId:
+          description: Stable DDL entity identifier, `{schemaName}-{kind}-{name}` slugified.
+          type: string
+          example: public-table-users
+        kind:
+          description: DDL contract entity kind. Only `table` is produced in the current version.
+          type: string
+          enum:
+            - table
+          example: table
+        name:
+          description: Table name.
+          type: string
+          example: users
+        schemaName:
+          description: Schema name the entity belongs to (the entity scope).
+          type: string
+          example: public
+        description:
+          description: Value of `COMMENT ON TABLE`, or an empty string when none is present.
+          type: string
+          example: Registered users
+    DdlEntityView:
+      description: DDL entity as returned by the version GET list/details endpoints.
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/DdlEntity"
+        - type: object
+          required:
+            - documentId
+            - versionInternalDocumentId
+          properties:
+            documentId:
+              description: Source document identifier.
+              type: string
+              example: "shop-sql"
+            versionInternalDocumentId:
+              description: >
+                Unique string identifier of the preprocessed (validated, references resolved) internal document
+                where the entity is present. Corresponds to `id` field for the document in `version-internal-documents.json`.
+              type: string
+              example: "shop"
+            packageRef:
+              description: Package and version reference key.
+              type: string
+              example: "QS.CloudQSS.CPQ.Q-TMF@2023.2"
+    DdlEntityChange:
+      description: One side (current or previous) of a DDL entity in a changelog change entry.
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/DdlEntity"
+        - type: object
+          properties:
+            packageRef:
+              description: Package and version reference key.
+              type: string
+              example: "QS.CloudQSS.CPQ.Q-TMF@2023.2"
+    McpEntity:
+      type: object
+      description: |
+        MCP discovery contract entity. Holds the fields common to the API response and the
+        mcp.json build-result index; each context adds its own fields via allOf.
+      required:
+        - mcpEntityId
+        - kind
+        - title
+        - description
+        - mcpEndpoint
+        - documentId
+      properties:
+        mcpEntityId:
+          description: Stable MCP entity identifier, `{mcpEndpoint}-{kind}-{name}` slugified (the leading slash of the endpoint is dropped).
+          type: string
+          example: mcp-tool-get_forecast
+        kind:
+          description: MCP discovery contract entity kind.
+          type: string
+          enum:
+            - init
+            - tool
+            - prompt
+            - resource
+        title:
+          description: MCP entity title. For tools, prompts and resources this is the name from the MCP spec. For init entities the value is always "initialize".
+          type: string
+          example: get_forecast
+        description:
+          description: Entity description, or an empty string when none is present.
+          type: string
+          example: Get the weather forecast for a location
+        mcpEndpoint:
+          description: |
+            MCP endpoint the entity belongs to (the entity scope), from file-level publish metadata.
+            A relative path (e.g. `/mcp`), not an absolute URL.
+          type: string
+          example: /mcp
+        documentId:
+          description: Source document identifier.
+          type: string
+          example: tools-forecast-json
+    McpEntityView:
+      description: |
+        MCP discovery contract entity as returned by the version GET list/details endpoints: the shared
+        `McpEntity` plus (for dashboards) the package reference.
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/McpEntity"
+        - type: object
+          properties:
+            packageRef:
+              description: Package and version reference key.
+              type: string
+              example: "QS.CloudQSS.CPQ.Q-TMF@2023.2"
+    VersionComparisonContractsSummary:
+      description: |
+        Contract comparison summary, keyed by contract type. MCP is omitted in v1 because MCP discovery
+        entities are not diffed.
+      type: object
+      properties:
+        ddl:
+          type: object
+          properties:
+            changesSummary:
+              allOf:
+                - $ref: "#/components/schemas/ChangeSummary"
+                - type: object
+                  description: Number of declarative DDL changes of each severity type.
+            numberOfImpactedEntities:
+              allOf:
+                - $ref: "#/components/schemas/ChangeSummary"
+                - type: object
+                  description: Number of DDL entities impacted by each severity type.
+    VersionContractsSummary:
+      description: |
+        Summary of contract entities published in a package version, keyed by contract type.
+      type: object
+      properties:
+        ddl:
+          type: object
+          properties:
+            tablesCount:
+              type: integer
+              default: 0
+              description: Number of DDL table entities published in the version.
+            changesSummary:
+              allOf:
+                - $ref: "#/components/schemas/ChangeSummary"
+                - type: object
+                  description: Number of declarative DDL changes in the version (compared to the previous release version). Present only when the version has a previous version to compare against.
+            numberOfImpactedEntities:
+              allOf:
+                - $ref: "#/components/schemas/ChangeSummary"
+                - type: object
+                  description: Number of DDL entities impacted by each severity type. Present only when the version has a previous version to compare against.
+        mcp:
+          description: MCP summary keyed by MCP endpoint (one entry per published MCP endpoint in this version).
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              toolsCount:
+                type: integer
+                default: 0
+              promptsCount:
+                type: integer
+                default: 0
+              resourcesCount:
+                type: integer
+                default: 0
+          example:
+            /mcp:
+              toolsCount: 3
+              promptsCount: 1
+              resourcesCount: 2
     ExportVersion:
       type: object
       title: Export entire version
@@ -11519,45 +12314,6 @@ components:
             - unknown
           default: unknown
           example: "unknown"
-    PackageVersionRef:
-      description: Package version reference
-      type: object
-      title: Referenced package version
-      required:
-        - refId
-        - name
-        - version
-        - status
-      properties:
-        refId:
-          description: Referenced package Id
-          type: string
-          example: "QS.CloudQSS.CPQ.Q-TMF"
-        kind:
-          description: Package kind
-          type: string
-          enum:
-            - package
-            - dashboard
-        name:
-          description: Name of the referenced package
-          type: string
-          example: "Quote Management TMF648"
-        version:
-          description: Referenced package version number. The <version>@<revision> mask is used to return the revision number.
-          type: string
-          example: "2022.2@5"
-        status:
-          $ref: "#/components/schemas/VersionStatusEnum"
-        deletedAt:
-          description: date when package version was deleted package version
-          type: string
-          format: date-type
-          example: "2023-05-30T17:17:11.755146Z"
-        deletedBy:
-          description: user who deleted package version
-          type: string
-          example: "user1221"
     Principal:
       description: User or API key
       allOf:
@@ -11605,10 +12361,10 @@ components:
         name:
           type: string
           description: Job name
-    ReferencedPackage:
-      description: Package reference
+    PackageVersionRef:
+      description: Package version reference
       type: object
-      title: Referenced package
+      title: Referenced package version
       required:
         - refId
         - kind
@@ -11653,6 +12409,25 @@ components:
         notLatestRevision:
           type: boolean
           default: false
+    PackagesMap:
+      description: |
+        A map of referenced package versions to the package version objects.
+        The key is `packageId@version@revision` — three `@`-separated segments (note: the `version` field
+        of each value is `version@revision`, only two segments).
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/PackageVersionRef"
+      example:
+        QS.CloudQSS.CPQ.Q-TMF@2023.2@3:
+          refId: QS.CloudQSS.CPQ.Q-TMF
+          kind: package
+          name: Quote Management TMF648
+          version: "2023.2@3"
+          status: release
+          parentPackages: ["qubership", "Qubership JSS", "Sample Management"]
+          deletedAt: "2023-05-30T17:17:11.755146Z"
+          deletedBy: "user1221"
+          notLatestRevision: true
     ErrorResponse:
       description: Standard error response returned for failed requests. Includes HTTP status, internal error code, human-readable message, optional message parameters, and optional debug details (non-production only).
       type: object
@@ -11762,6 +12537,8 @@ components:
         - introspection
         - protobuf-3
         - asyncapi-3-0
+        - ddl
+        - mcp
         - unknown
     DocumentFormat:
       title: format
@@ -11774,6 +12551,7 @@ components:
         - graphql
         - gql
         - proto
+        - sql
         - unknown
     Operation:
       description: Operation object
@@ -11931,6 +12709,99 @@ components:
               example: "2022.2@5"
             status:
               $ref: "#/components/schemas/VersionStatusEnum"
+    SearchResultDDLContract:
+      description: Global search result for a DDL table or view contract; returned when `searchLevel = ddl`.
+      title: SearchResultDDLContract
+      type: object
+      required:
+        - packageId
+        - name
+        - parentPackages
+        - version
+        - status
+        - tableId
+        - kind
+      properties:
+        packageId:
+          description: Package unique string identifier (full alias)
+          type: string
+          example: "QS.CloudQSS.CPQ.Q-TMF"
+        name:
+          description: Package name
+          type: string
+          example: "Quote TMF Service"
+        parentPackages:
+          description: Array of parent package names
+          type: array
+          items:
+            type: string
+        version:
+          description: Package version name
+          type: string
+          example: "2022.2@5"
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        tableId:
+          description: DDL table/view logical identifier.
+          type: string
+          example: "public.users"
+        kind:
+          $ref: "#/components/schemas/DdlContractKind"
+        schemaName:
+          description: SQL schema name.
+          type: string
+          example: "public"
+        tableName:
+          description: Unqualified table or view name.
+          type: string
+          example: "users"
+    SearchResultMCPContract:
+      description: Global search result for an MCP contract entity; returned when `searchLevel = mcp`.
+      title: SearchResultMCPContract
+      type: object
+      required:
+        - packageId
+        - name
+        - parentPackages
+        - version
+        - status
+        - entityId
+        - kind
+        - mcpEndpoint
+      properties:
+        packageId:
+          description: Package unique string identifier (full alias)
+          type: string
+          example: "QS.CloudQSS.CPQ.Q-TMF"
+        name:
+          description: Package name
+          type: string
+          example: "Quote TMF Service"
+        parentPackages:
+          description: Array of parent package names
+          type: array
+          items:
+            type: string
+        version:
+          description: Package version name
+          type: string
+          example: "2022.2@5"
+        status:
+          $ref: "#/components/schemas/VersionStatusEnum"
+        entityId:
+          description: MCP contract logical identifier.
+          type: string
+          example: "https___api_example_com_mcp.tool.get_forecast"
+        kind:
+          $ref: "#/components/schemas/McpContractKind"
+        entityName:
+          description: MCP entity name.
+          type: string
+          example: "get_forecast"
+        mcpEndpoint:
+          description: MCP endpoint URL.
+          type: string
+          example: "https://api.example.com/mcp"
     SearchResultPackage:
       title: SearchResultPackage
       description: |
@@ -12527,12 +13398,21 @@ components:
             **changelog** - Only the changelog calculation, no API contracts version will be created.
             The ```files``` and ```refs``` objects are not required in this case.
 
-            **documentGroup** - Process to transform documents so that they will contain operations only from specific operations group.
+            **prefix-groups-changelog** - Changelog calculation for prefixed operation groups.
+
+            **documentGroup** - Deprecated. Process to transform documents so that they will contain operations only from specific operations group.
+
+            **exportGraphqlOperationsGroup** - Export GraphQL operations group.
+
+            **exportAsyncapiOperationsGroup** - Export AsyncAPI operations group.
           type: string
           enum:
             - build
             - changelog
+            - prefix-groups-changelog
             - documentGroup
+            - exportGraphqlOperationsGroup
+            - exportAsyncapiOperationsGroup
           default: build
         metadata:
           description: Common publish metadata.
@@ -12623,6 +13503,14 @@ components:
                 description: Custom x-api-kind parameter for the file. Specify if this API is backward compatible.
                 type: string
                 example: "no-BWC"
+              metadata:
+                description: |
+                  Open-ended file-level metadata.
+                  For MCP discovery files, set `mcpEndpoint` to the MCP server URL; DDL files typically omit this object.
+                type: object
+                additionalProperties: true
+                example:
+                  mcpEndpoint: "https://api.example.com/mcp"
         refs:
           description: |
             Detailed data about referenced versions for current package version.

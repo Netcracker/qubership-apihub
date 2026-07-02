@@ -299,12 +299,13 @@ paths:
           * **error** - build process will send a the list of errors.
           * **complete** - build process will send a result in a ZIP archive.
 
-          ZIP archive with build result can contain folders with sources, builded documents and JSON operation files. In addition, several config files are provided. The structure of these files is described in buildResult schema.
+          ZIP archive with build result can contain folders with sources, builded documents, JSON operation files, and contract files. In addition, several config files are provided. The structure of these files is described in buildResult schema.
           There are following build types:
             - build - build process for version publication. It consist of contract and operations build and validation, calculation of the changelog, creation of the final version of the published contracts.
             - changelog - only the changelog calculation, no API contracts version will be created. Both version and previousVersion fields *must* contain @<revision> suffix when using changelog buildType.
-            - reducedSourceSpecifications - proccess that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
-            - mergedSpecification - process the merges all operations from an operation group into one specification.
+            - prefix-groups-changelog - changelog calculation for prefixed operation groups.
+            - reducedSourceSpecifications - deprecated proccess that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
+            - mergedSpecification - deprecated process the merges all operations from an operation group into one specification.
             - exportVersion - process of exporting all documents from the package version.
             - exportRestDocument - process of exporting one OpenAPI document form the version.
             - exportRestOperationsGroup - process of exporting one operations group with apiType = rest.
@@ -1060,6 +1061,8 @@ components:
         - introspection
         - protobuf-3
         - asyncapi-3-0
+        - ddl
+        - mcp
         - unknown
     DocumentFormat:
       title: format
@@ -1072,6 +1075,7 @@ components:
         - graphql
         - gql
         - proto
+        - sql
         - unknown
     Operation:
       description: Operation object
@@ -1277,13 +1281,14 @@ components:
     BuildResult:
       description: |
         Result of build operation in ZIP archive.
-          - The archive can contain folders with sources, builded documents and JSON operation files.
+          - The archive can contain folders with sources, builded documents, JSON operation files, and contract files.
           - In addition, several config files are provided. The structure of these files is described in buildResult schema.
         There are following build types:
           - build - build process for version publication. It consist of contract and operations build and validation, calculation of the changelog, creation of the final version of the published contracts.
           - changelog - only the changelog calculation, no API contracts version will be created. Both version and previousVersion fields *must* contain @<revision> suffix when using changelog buildType.
-          - reducedSourceSpecifications - proccess that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
-          - mergedSpecification - process the merges all operations from an operation group into one specification.
+          - prefix-groups-changelog - changelog calculation for prefixed operation groups.
+          - reducedSourceSpecifications - deprecated proccess that finds source specifications for all operations from operation group and removes from these specifications operations other than those that are included into operation group.
+          - mergedSpecification - deprecated process the merges all operations from an operation group into one specification.
           - exportVersion - process of exporting all documents from the package version.
           - exportRestDocument - process of exporting one OpenAPI document form the version.
           - exportRestOperationsGroup - process of exporting one operations group with apiType = rest.
@@ -1526,6 +1531,25 @@ components:
               $ref: "#/components/schemas/BuildResultComparisons"
             comparisons/{comparisonFileId}:
               $ref: "#/components/schemas/BuildResultComparisonsData"
+            ddl.json:
+              $ref: "#/components/schemas/BuildResultDdlContracts"
+            ddl/{ddlEntityId}:
+              description: |
+                Minimal valid SQL for a single DDL entity (CREATE TABLE plus its CREATE INDEX / COMMENT ON statements).
+                The file is named by the `ddlEntityId` from ddl.json and has no file extension.
+                Content is plain SQL text, not JSON.
+              type: string
+            ddl-comparisons.json:
+              $ref: "#/components/schemas/BuildResultDdlComparisons"
+            ddl-comparisons/{comparisonFileId}:
+              $ref: "#/components/schemas/BuildResultDdlComparisonsData"
+            mcp.json:
+              $ref: "#/components/schemas/BuildResultMcpContracts"
+            mcp/{mcpEntityId}:
+              description: |
+                Original MCP discovery entity payload (the init/tool/resource/prompt JSON) for a single entity.
+                The file is named by the `mcpEntityId` from mcp.json and has no file extension.
+              type: object
             operations.json:
               description: List of operations for publish.
               type: object
@@ -1694,6 +1718,10 @@ components:
               $ref: "#/components/schemas/BuildResultComparisons"
             comparisons/{comparisonFileId}:
               $ref: "#/components/schemas/BuildResultComparisonsData"
+            ddl-comparisons.json:
+              $ref: "#/components/schemas/BuildResultDdlComparisons"
+            ddl-comparisons/{comparisonFileId}:
+              $ref: "#/components/schemas/BuildResultDdlComparisonsData"
         - title: Build result for mergedSpecification and reducedSourceSpecifications
           description: |
             Build result for the following buildType:
@@ -2065,6 +2093,16 @@ components:
                 description: Custom x-api-kind parameter.
                 type: string
                 example: "no-BWC"
+              metadata:
+                description: |
+                  Open-ended file-level metadata.
+                  For MCP discovery files, use `mcpEndpoint` and optional `mcpServerName`; DDL files typically omit this object.
+                  `mcpEndpoint` is a relative path (e.g. `/mcp`), not an absolute URL.
+                type: object
+                additionalProperties: true
+                example:
+                  mcpEndpoint: "/mcp"
+                  mcpServerName: "weather-mcp"
         refs:
           description: |
             Detailed data about referenced versions for current package version.
@@ -2421,88 +2459,97 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/InternalDocumentMetadata"
+    BuildResultComparisonData:
+      type: object
+      description: |
+        Common metadata for a single version-to-version comparison entry, shared by the operation comparison
+        index (comparisons.json) and the DDL comparison index (ddl-comparisons.json). Each index extends this
+        with its own change-summary field (`operationTypes` / `contractsChangesSummary`).
+      properties:
+        comparisonFileId:
+          type: string
+          description: Pointer to the file with changes. Optional, required only if package contains documents. Not required in case of refs only (dashboard).
+          example: "comparisonFile1.json"
+        packageId:
+          description: Package unique string identifier (full alias).
+          type: string
+          example: "QS.CloudQSS.CPQ.Q-TMF"
+        version:
+          description: Version name for publication.
+          type: string
+          example: "2022.3"
+        revision:
+          type: number
+        previousVersion:
+          description: |
+            Name of the previous published version.
+          type: string
+          example: "2022.2"
+          default: ""
+        previousVersionPackageId:
+          description: Previous release version package id.
+          type: string
+          example: "QS.CloudQSS.CPQ.Q-TMF"
+        previousVersionRevision:
+          type: number
+        fromCache:
+          description: True if the changes were retrieved from BE (not calculated).
+          type: boolean
     BuildResultComparisons:
       type: object
       properties:
         comparisons:
           type: array
           items:
-            type: object
-            required:
-              - operationTypes
-            properties:
-              comparisonFileId:
-                type: string
-                description: Pointer to the file with changes. Optional, required only if package contains documents. Not required in case of refs only (dashboard).
-                example: "comparisonFile1.json"
-              packageId:
-                description: Package unique string identifier (full alias).
-                type: string
-                example: "QS.CloudQSS.CPQ.Q-TMF"
-              version:
-                description: Version name for publication.
-                type: string
-                example: "2022.3"
-              revision:
-                type: number
-              previousVersion:
-                description: |
-                  Name of the previous published version.
-                type: string
-                example: "2022.2"
-                default: ""
-              previousVersionPackageId:
-                description: Previous release version package id.
-                type: string
-                example: "QS.CloudQSS.CPQ.Q-TMF"
-              previousVersionRevision:
-                type: number
-              operationTypes:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    apiType:
-                      type: string
-                    changesSummary:
-                      $ref: "#/components/schemas/ChangeSummary"
-                    numberOfImpactedOperations:
-                      allOf:
-                        - $ref: '#/components/schemas/ChangeSummary'
-                        - type: object
-                          description: Number of operations impacted by each severety type.
-                    apiAudienceTransitions:
+            allOf:
+              - $ref: "#/components/schemas/BuildResultComparisonData"
+              - type: object
+                required:
+                  - operationTypes
+                properties:
+                  operationTypes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        apiType:
+                          type: string
+                        changesSummary:
+                          $ref: "#/components/schemas/ChangeSummary"
+                        numberOfImpactedOperations:
+                          allOf:
+                            - $ref: '#/components/schemas/ChangeSummary'
+                            - type: object
+                              description: Number of operations impacted by each severety type.
+                        apiAudienceTransitions:
+                              type: array
+                              description: Shows transitions of operations' apiAudience value (compared to the previous release version) and number of operations in which this transition occurred. The array contains only records of transitions that actually occurred in operations.
+                              items:
+                                type: object
+                                properties:
+                                  currentAudience:
+                                    type: string
+                                    description: Current apiAudience value (currentAudience must not be equal to previousAudience)
+                                    enum:
+                                      - internal
+                                      - external
+                                      - unknown
+                                  previousAudience:
+                                    type: string
+                                    description: Previous apiAudience value
+                                    enum:
+                                      - internal
+                                      - external
+                                      - unknown
+                                  operationsCount:
+                                    type: number
+                                    description: Number of operations in which the apiAudience was changed from previousAudience to currentAudience
+                        tags:
                           type: array
-                          description: Shows transitions of operations' apiAudience value (compared to the previous release version) and number of operations in which this transition occurred. The array contains only records of transitions that actually occurred in operations.
                           items:
-                            type: object
-                            properties:
-                              currentAudience:
-                                type: string
-                                description: Current apiAudience value (currentAudience must not be equal to previousAudience)
-                                enum:
-                                  - internal
-                                  - external
-                                  - unknown
-                              previousAudience:
-                                type: string
-                                description: Previous apiAudience value
-                                enum:
-                                  - internal
-                                  - external
-                                  - unknown
-                              operationsCount:
-                                type: number
-                                description: Number of operations in which the apiAudience was changed from previousAudience to currentAudience
-                    tags:
-                      type: array
-                      items:
-                        type: string
-                      example:
-                        ["a", "b"]
-              fromCache:
-                description: True if the changes were retrieved from BE (not calculated)
-                type: boolean
+                            type: string
+                          example:
+                            ["a", "b"]
     BuildResultComparisonsData:
       type: object
       description: List of changes data.
@@ -2530,10 +2577,14 @@ components:
                 type: string
                 example: get-quoteManagement-v5-quote-id
               dataHash:
+                deprecated: true
+                x-deprecation-reason: hashes are now calculated on BE side and not available on builder during publish.
                 description: Operation hash.
                 type: string
                 example: sdfsdfsf242
               previousDataHash:
+                deprecated: true
+                x-deprecation-reason: hashes are now calculated on BE side and not available on builder during publish.
                 description: Hash of the previous published version operation.
                 type: string
                 example: sdfsdfsf24dds2
@@ -2552,6 +2603,236 @@ components:
                 type: string
                 pattern: "^[a-z0-9-]"
                 example: "qitmf-v5-11-qitmf-v5-12-merged-json"
+    DdlEntity:
+      type: object
+      description: |
+        Identified DDL entity — its stable id and descriptor (kind/name/schemaName/description). The core
+        shared by the build result and the API; each context adds its own fields via allOf.
+      required:
+        - ddlEntityId
+        - kind
+        - name
+        - schemaName
+        - description
+      properties:
+        ddlEntityId:
+          description: Stable DDL entity identifier, `{schemaName}-{kind}-{name}` slugified.
+          type: string
+          example: public-table-users
+        kind:
+          description: DDL contract entity kind. Only `table` is produced in the current version.
+          type: string
+          enum:
+            - table
+          example: table
+        name:
+          description: Table name.
+          type: string
+          example: users
+        schemaName:
+          description: Schema name the entity belongs to (the entity scope).
+          type: string
+          example: public
+        description:
+          description: Value of `COMMENT ON TABLE`, or an empty string when none is present.
+          type: string
+          example: Registered users
+    BuildResultDdlContracts:
+      type: object
+      description: |
+        DDL contract entity index (ddl.json), grouped by kind. The per-entity SQL payload is stripped from
+        this index — it lives in the separate `ddl/{ddlEntityId}` files. The current version produces only `tables`.
+      properties:
+        tables:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/DdlEntity"
+              - type: object
+                required:
+                  - search
+                  - documentId
+                  - versionInternalDocumentId
+                properties:
+                  search:
+                    $ref: "#/components/schemas/SearchUseEntityData"
+                  documentId:
+                    description: fileId of the source DDL document this entity was extracted from.
+                    type: string
+                    example: ddl/shop.sql
+                  versionInternalDocumentId:
+                    description: |
+                      Id of the version internal document holding the normalized/denormalized Realm for the
+                      source document. Corresponds to an `id` in `version-internal-documents.json`.
+                    type: string
+                    example: shop
+    SearchUseEntityData:
+      type: object
+      description: Search-indexing configuration for a contract entity (DDL or MCP).
+      properties:
+        useEntityDataAsSearchText:
+          description: When true, the entity's own data is used as the search text.
+          type: boolean
+          default: true
+    BuildResultMcpContracts:
+      type: object
+      description: |
+        MCP discovery contract entity index (mcp.json), grouped by kind. The per-entity payload is stripped
+        from this index — it lives in the separate `mcp/{mcpEntityId}` files.
+      properties:
+        inits:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/McpEntity"
+              - type: object
+                required:
+                  - search
+                properties:
+                  search:
+                    $ref: "#/components/schemas/SearchUseEntityData"
+        tools:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/McpEntity"
+              - type: object
+                required:
+                  - search
+                properties:
+                  search:
+                    $ref: "#/components/schemas/SearchUseEntityData"
+        resources:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/McpEntity"
+              - type: object
+                required:
+                  - search
+                properties:
+                  search:
+                    $ref: "#/components/schemas/SearchUseEntityData"
+        prompts:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/McpEntity"
+              - type: object
+                required:
+                  - search
+                properties:
+                  search:
+                    $ref: "#/components/schemas/SearchUseEntityData"
+    McpEntity:
+      type: object
+      description: |
+        MCP discovery contract entity. Holds the fields common to the API response and the
+        mcp.json build-result index; each context adds its own fields via allOf.
+      required:
+        - mcpEntityId
+        - kind
+        - title
+        - description
+        - mcpEndpoint
+        - documentId
+      properties:
+        mcpEntityId:
+          description: Stable MCP entity identifier, `{mcpEndpoint}-{kind}-{name}` slugified (the leading slash of the endpoint is dropped).
+          type: string
+          example: mcp-tool-get_forecast
+        kind:
+          description: MCP discovery contract entity kind.
+          type: string
+          enum:
+            - init
+            - tool
+            - prompt
+            - resource
+        title:
+          description: MCP entity title. For tools, prompts and resources this is the name from the MCP spec. For init entities the value is always "initialize".
+          type: string
+          example: get_forecast
+        description:
+          description: Entity description, or an empty string when none is present.
+          type: string
+          example: Get the weather forecast for a location
+        mcpEndpoint:
+          description: |
+            MCP endpoint the entity belongs to (the entity scope), from file-level publish metadata.
+            A relative path (e.g. `/mcp`), not an absolute URL.
+          type: string
+          example: /mcp
+        documentId:
+          description: Source document identifier.
+          type: string
+          example: tools-forecast-json
+    BuildResultDdlComparisons:
+      type: object
+      description: |
+        DDL comparison index (ddl-comparisons.json). Sibling of comparisons.json; per-pair change data is
+        stripped and lives in `ddl-comparisons/{comparisonFileId}`.
+      properties:
+        comparisons:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/BuildResultComparisonData"
+              - type: object
+                required:
+                  - contractsChangesSummary
+                properties:
+                  contractsChangesSummary:
+                    description: |
+                      Per-contract change summaries, keyed by contract type. Only `ddl` is produced today. The
+                      DDL analog of REST's `operationTypes` array — the key carries the contract type, so there
+                      is no per-entry `contractType` field.
+                    type: object
+                    properties:
+                      ddl:
+                        type: object
+                        required:
+                          - changesSummary
+                          - numberOfImpactedEntities
+                        properties:
+                          changesSummary:
+                            $ref: "#/components/schemas/ChangeSummary"
+                          numberOfImpactedEntities:
+                            allOf:
+                              - $ref: "#/components/schemas/ChangeSummary"
+                              - type: object
+                                description: Number of DDL entities impacted by each severity type.
+    BuildResultDdlComparisonsData:
+      type: object
+      description: Per-pair DDL changes (ddl-comparisons/{comparisonFileId}). The DDL analog of comparisons/{comparisonFileId}.
+      properties:
+        entities:
+          description: Collection of DDL entity changes.
+          type: array
+          items:
+            type: object
+            required:
+              - changeSummary
+            properties:
+              ddlEntityData:
+                description: Current side of the change. Omitted for a pure remove.
+                $ref: "#/components/schemas/DdlEntity"
+              previousDdlEntityData:
+                description: Previous side of the change. Omitted for a pure add.
+                $ref: "#/components/schemas/DdlEntity"
+              changeSummary:
+                $ref: "#/components/schemas/ChangeSummary"
+              comparisonInternalDocumentId:
+                description: >
+                  Unique string identifier of the internal merged document where diffs between the entity and
+                  its previous version are present. Corresponds to an `id` in `comparison-internal-documents.json`.
+                type: string
+                example: "shop_1.0.0_shop-pkg_shop_2.0.0_shop-pkg"
+              changes:
+                description: Collection of changes for the DDL entity.
+                type: array
+                items:
+                  $ref: "#/components/schemas/SingleOperationChange"
   examples:
     IncorrectInputParameters:
       description: Incorrect input parameters

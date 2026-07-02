@@ -29,6 +29,24 @@ type ExportOperationRequestView struct {
 	AsyncapiProtocol string
 }
 
+type ExportDdlEntitiesRequestView struct {
+	RefPackageId string
+	TextFilter   string
+}
+
+type ExportDdlChangesRequestView struct {
+	PreviousVersion          string
+	PreviousVersionPackageId string
+	RefPackageId             string
+	Severities               []string
+	TextFilter               string
+}
+
+type ExportMcpEntitiesRequestView struct {
+	RefPackageId string
+	TextFilter   string
+}
+
 const ExportFormatXlsx = "xlsx"
 const ExportFormatJson = "json"
 

@@ -20,6 +20,13 @@ const (
 	VersionInternalDocumentsFilePath    = "version-internal-documents.json"
 	ComparisonInternalDocumentsFilePath = "comparison-internal-documents.json"
 
+	ContractsDdlFilePath              = "ddl.json"
+	ContractsDdlComparisonsFilePath   = "ddl-comparisons.json"
+	ContractsMcpFilePath              = "mcp.json"
+	ContractsDdlRootFolder            = "ddl/"
+	ContractsMcpRootFolder            = "mcp/"
+	ContractsDdlComparisonsRootFolder = "ddl-comparisons/"
+
 	DocumentsRootFolder                   = "documents/"
 	ComparisonsRootFolder                 = "comparisons/"
 	OperationFilesRootFolder              = "operations/"
@@ -38,12 +45,18 @@ type BuildResultArchive struct {
 	ChangelogFile                   *zip.File
 	VersionInternalDocumentsFile    *zip.File
 	ComparisonInternalDocumentsFile *zip.File
+	ContractsDdlFile                *zip.File
+	ContractsDdlComparisonsFile     *zip.File
+	ContractsMcpFile                *zip.File
 
 	DocumentsHeaders                   map[string]*zip.File
 	OperationFileHeaders               map[string]*zip.File
 	ComparisonsFileHeaders             map[string]*zip.File
 	VersionInternalDocumentsHeaders    map[string]*zip.File
 	ComparisonInternalDocumentsHeaders map[string]*zip.File
+	ContractsDdlFileHeaders            map[string]*zip.File
+	ContractsMcpFileHeaders            map[string]*zip.File
+	ContractsDdlComparisonsFileHeaders map[string]*zip.File
 	UncategorizedFileHeaders           map[string]*zip.File
 
 	PackageInfo                 view.PackageInfoFile
@@ -53,6 +66,9 @@ type BuildResultArchive struct {
 	BuilderNotifications        view.BuilderNotificationsFile
 	VersionInternalDocuments    view.VersionInternalDocumentsFile
 	ComparisonInternalDocuments view.ComparisonInternalDocumentsFile
+	PackageDdlContracts         view.PackageDdlContractsFile
+	PackageDdlComparisons       view.PackageDdlComparisonsFile
+	PackageMcpContracts         view.PackageMcpContractsFile
 }
 
 func NewBuildResultArchive(zipReader *zip.Reader) *BuildResultArchive {
@@ -63,6 +79,9 @@ func NewBuildResultArchive(zipReader *zip.Reader) *BuildResultArchive {
 		ComparisonsFileHeaders:             map[string]*zip.File{},
 		VersionInternalDocumentsHeaders:    map[string]*zip.File{},
 		ComparisonInternalDocumentsHeaders: map[string]*zip.File{},
+		ContractsDdlFileHeaders:            map[string]*zip.File{},
+		ContractsMcpFileHeaders:            map[string]*zip.File{},
+		ContractsDdlComparisonsFileHeaders: map[string]*zip.File{},
 		UncategorizedFileHeaders:           map[string]*zip.File{},
 	}
 	result.splitFiles()
@@ -95,6 +114,18 @@ func (a *BuildResultArchive) ReadVersionInternalDocuments(required bool) error {
 
 func (a *BuildResultArchive) ReadComparisonInternalDocuments(required bool) error {
 	return a.readFile(ComparisonsFilePath, a.ComparisonInternalDocumentsFile, &a.ComparisonInternalDocuments, required)
+}
+
+func (a *BuildResultArchive) ReadPackageDdlContracts(required bool) error {
+	return a.readFile(ContractsDdlFilePath, a.ContractsDdlFile, &a.PackageDdlContracts, required)
+}
+
+func (a *BuildResultArchive) ReadPackageDdlContractComparisons(required bool) error {
+	return a.readFile(ContractsDdlComparisonsFilePath, a.ContractsDdlComparisonsFile, &a.PackageDdlComparisons, required)
+}
+
+func (a *BuildResultArchive) ReadPackageMcpContracts(required bool) error {
+	return a.readFile(ContractsMcpFilePath, a.ContractsMcpFile, &a.PackageMcpContracts, required)
 }
 
 func (a *BuildResultArchive) readFile(filePath string, file *zip.File, v interface{}, required bool) error {
@@ -154,6 +185,12 @@ func (a *BuildResultArchive) splitFiles() {
 			a.VersionInternalDocumentsFile = zipFile
 		case ComparisonInternalDocumentsFilePath:
 			a.ComparisonInternalDocumentsFile = zipFile
+		case ContractsDdlFilePath:
+			a.ContractsDdlFile = zipFile
+		case ContractsDdlComparisonsFilePath:
+			a.ContractsDdlComparisonsFile = zipFile
+		case ContractsMcpFilePath:
+			a.ContractsMcpFile = zipFile
 		default:
 			{
 				if strings.HasPrefix(filepath, DocumentsRootFolder) {
@@ -175,6 +212,18 @@ func (a *BuildResultArchive) splitFiles() {
 				} else if strings.HasPrefix(filepath, ComparisonInternalDocumentsRootFolder) {
 					zipFilePtr := zipFile
 					a.ComparisonInternalDocumentsHeaders[strings.TrimPrefix(filepath, ComparisonInternalDocumentsRootFolder)] = zipFilePtr
+					continue
+				} else if strings.HasPrefix(filepath, ContractsDdlRootFolder) {
+					zipFilePtr := zipFile
+					a.ContractsDdlFileHeaders[strings.TrimPrefix(filepath, ContractsDdlRootFolder)] = zipFilePtr
+					continue
+				} else if strings.HasPrefix(filepath, ContractsMcpRootFolder) {
+					zipFilePtr := zipFile
+					a.ContractsMcpFileHeaders[strings.TrimPrefix(filepath, ContractsMcpRootFolder)] = zipFilePtr
+					continue
+				} else if strings.HasPrefix(filepath, ContractsDdlComparisonsRootFolder) {
+					zipFilePtr := zipFile
+					a.ContractsDdlComparisonsFileHeaders[strings.TrimPrefix(filepath, ContractsDdlComparisonsRootFolder)] = zipFilePtr
 					continue
 				} else {
 					a.UncategorizedFileHeaders[filepath] = zipFile

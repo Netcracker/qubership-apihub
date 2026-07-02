@@ -23,18 +23,22 @@ type SearchController interface {
 	Search(w http.ResponseWriter, r *http.Request)
 }
 
-func NewSearchController(operationService service.OperationService, versionService service.VersionService, monitoringService service.MonitoringService) SearchController {
+func NewSearchController(operationService service.OperationService, versionService service.VersionService, monitoringService service.MonitoringService, ddlContractService service.DDLContractService, mcpContractService service.MCPContractService) SearchController {
 	return &searchControllerImpl{
-		operationService:  operationService,
-		versionService:    versionService,
-		monitoringService: monitoringService,
+		operationService:   operationService,
+		versionService:     versionService,
+		monitoringService:  monitoringService,
+		ddlContractService: ddlContractService,
+		mcpContractService: mcpContractService,
 	}
 }
 
 type searchControllerImpl struct {
-	operationService  service.OperationService
-	versionService    service.VersionService
-	monitoringService service.MonitoringService
+	operationService   service.OperationService
+	versionService     service.VersionService
+	monitoringService  service.MonitoringService
+	ddlContractService service.DDLContractService
+	mcpContractService service.MCPContractService
 }
 
 func (s searchControllerImpl) Search(w http.ResponseWriter, r *http.Request) {
@@ -189,6 +193,60 @@ func (s searchControllerImpl) Search(w http.ResponseWriter, r *http.Request) {
 			result, err := s.versionService.SearchForDocuments(searchQueryReq)
 			if err != nil {
 				utils.RespondWithError(w, "Failed to perform search for documents", err)
+				return
+			}
+			utils.RespondWithJson(w, http.StatusOK, result)
+		}
+	case view.SearchLevelDDL:
+		{
+			if searchQuery.SearchString == "" {
+				utils.RespondWithCustomError(w, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidSearchParameters,
+					Message: exception.InvalidSearchParametersMsg,
+					Params:  map[string]interface{}{"error": "searchString is required"},
+				})
+				return
+			}
+			if searchQuery.Status == "" {
+				utils.RespondWithCustomError(w, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidSearchParameters,
+					Message: exception.InvalidSearchParametersMsg,
+					Params:  map[string]interface{}{"error": "status is required"},
+				})
+				return
+			}
+			result, err := s.ddlContractService.GlobalSearchForDDL(searchQuery)
+			if err != nil {
+				utils.RespondWithError(w, "Failed to perform search for DDL contracts", err)
+				return
+			}
+			utils.RespondWithJson(w, http.StatusOK, result)
+		}
+	case view.SearchLevelMCP:
+		{
+			if searchQuery.SearchString == "" {
+				utils.RespondWithCustomError(w, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidSearchParameters,
+					Message: exception.InvalidSearchParametersMsg,
+					Params:  map[string]interface{}{"error": "searchString is required"},
+				})
+				return
+			}
+			if searchQuery.Status == "" {
+				utils.RespondWithCustomError(w, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidSearchParameters,
+					Message: exception.InvalidSearchParametersMsg,
+					Params:  map[string]interface{}{"error": "status is required"},
+				})
+				return
+			}
+			result, err := s.mcpContractService.GlobalSearchForMCP(searchQuery)
+			if err != nil {
+				utils.RespondWithError(w, "Failed to perform search for MCP contracts", err)
 				return
 			}
 			utils.RespondWithJson(w, http.StatusOK, result)

@@ -192,6 +192,56 @@ func (p *unreferencedDataCleanupJobProcessor) Process(ctx context.Context, jobId
 		logger.Infof(ctx, "Deleted %d items during comparison internal document data deletion", deletedItemsCount)
 	}
 
+	logger.Infof(ctx, "Starting cleanup of unreferenced DDL contract data")
+	for {
+		select {
+		case <-ctx.Done():
+			errorMessage := getContextCancellationMessage(ctx)
+			logger.Warnf(ctx, "job interrupted during DDL contract data cleanup - %s", errorMessage)
+			return processingErrors, fmt.Errorf("job interrupted - %s", errorMessage)
+		default:
+		}
+
+		deletedItemsCount, err := p.unreferencedDataCleanupRepo.DeleteUnreferencedDdlContractData(ctx, jobId, batchSize)
+		if err != nil {
+			logger.Warnf(ctx, "Failed to delete DDL contract data: %v", err)
+			processingErrors = append(processingErrors, fmt.Sprintf("failed to delete DDL contract data: %s", err.Error()))
+			continue
+		}
+
+		if deletedItemsCount == 0 {
+			logger.Debug(ctx, "No more DDL contract data to delete")
+			break
+		}
+		*deletedItems += deletedItemsCount
+		logger.Infof(ctx, "Deleted %d items during DDL contract data deletion", deletedItemsCount)
+	}
+
+	logger.Infof(ctx, "Starting cleanup of unreferenced MCP contract data")
+	for {
+		select {
+		case <-ctx.Done():
+			errorMessage := getContextCancellationMessage(ctx)
+			logger.Warnf(ctx, "job interrupted during MCP contract data cleanup - %s", errorMessage)
+			return processingErrors, fmt.Errorf("job interrupted - %s", errorMessage)
+		default:
+		}
+
+		deletedItemsCount, err := p.unreferencedDataCleanupRepo.DeleteUnreferencedMcpContractData(ctx, jobId, batchSize)
+		if err != nil {
+			logger.Warnf(ctx, "Failed to delete MCP contract data: %v", err)
+			processingErrors = append(processingErrors, fmt.Sprintf("failed to delete MCP contract data: %s", err.Error()))
+			continue
+		}
+
+		if deletedItemsCount == 0 {
+			logger.Debug(ctx, "No more MCP contract data to delete")
+			break
+		}
+		*deletedItems += deletedItemsCount
+		logger.Infof(ctx, "Deleted %d items during MCP contract data deletion", deletedItemsCount)
+	}
+
 	return processingErrors, nil
 }
 

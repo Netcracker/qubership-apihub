@@ -60,13 +60,14 @@ type BCRef struct {
 }
 
 type BCFile struct {
-	FileId   string   `json:"fileId"`
-	Slug     string   `json:"slug"`  //for migration
-	Index    int      `json:"index"` //for migration
-	Publish  *bool    `json:"publish"`
-	Labels   []string `json:"labels"`
-	BlobId   string   `json:"blobId,omitempty"`
-	XApiKind string   `json:"xApiKind,omitempty"`
+	FileId   string                 `json:"fileId"`
+	Slug     string                 `json:"slug"`  //for migration
+	Index    int                    `json:"index"` //for migration
+	Publish  *bool                  `json:"publish"`
+	Labels   []string               `json:"labels"`
+	BlobId   string                 `json:"blobId,omitempty"`
+	XApiKind string                 `json:"xApiKind,omitempty"`
+	Metadata map[string]interface{} `json:"metadata,omitempty"`
 }
 
 type BuildStatusEnum string

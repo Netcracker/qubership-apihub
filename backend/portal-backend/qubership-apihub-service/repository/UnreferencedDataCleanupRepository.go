@@ -22,6 +22,8 @@ type UnreferencedDataCleanupRepository interface {
 	DeleteUnreferencedPublishedData(ctx context.Context, runId string, batchSize int) (int, error)
 	DeleteUnreferencedVersionInternalDocumentData(ctx context.Context, runId string, batchSize int) (int, error)
 	DeleteUnreferencedComparisonInternalDocumentData(ctx context.Context, runId string, batchSize int) (int, error)
+	DeleteUnreferencedDdlContractData(ctx context.Context, runId string, batchSize int) (int, error)
+	DeleteUnreferencedMcpContractData(ctx context.Context, runId string, batchSize int) (int, error)
 	VacuumAffectedTables(ctx context.Context, runId string) error
 }
 
@@ -452,6 +454,28 @@ func (u unreferencedDataCleanupRepositoryImpl) VacuumAffectedTables(ctx context.
 				logger.Trace(ctx, "Successfully vacuumed 'comparison_internal_document_data' table")
 			}
 		}
+		if deletedItems.DdlContractData > 0 {
+			logger.Debugf(ctx, "Vacuuming 'ddl_table_data' table for %d deleted entries", deletedItems.DdlContractData)
+			_, err = u.cp.GetConnection().ExecContext(ctx, "VACUUM FULL ddl_table_data")
+			if err != nil {
+				errorMsg := fmt.Sprintf("Failed to vacuum 'ddl_table_data' table: %v", err)
+				logger.Warn(ctx, errorMsg)
+				vacuumErrors = append(vacuumErrors, errorMsg)
+			} else {
+				logger.Trace(ctx, "Successfully vacuumed 'ddl_table_data' table")
+			}
+		}
+		if deletedItems.McpContractData > 0 {
+			logger.Debugf(ctx, "Vacuuming 'mcp_entity_data' table for %d deleted entries", deletedItems.McpContractData)
+			_, err = u.cp.GetConnection().ExecContext(ctx, "VACUUM FULL mcp_entity_data")
+			if err != nil {
+				errorMsg := fmt.Sprintf("Failed to vacuum 'mcp_entity_data' table: %v", err)
+				logger.Warn(ctx, errorMsg)
+				vacuumErrors = append(vacuumErrors, errorMsg)
+			} else {
+				logger.Trace(ctx, "Successfully vacuumed 'mcp_entity_data' table")
+			}
+		}
 	} else {
 		logger.Info(ctx, "No deleted items found - skipping vacuum operations")
 	}
@@ -463,4 +487,98 @@ func (u unreferencedDataCleanupRepositoryImpl) VacuumAffectedTables(ctx context.
 	}
 
 	return nil
+}
+
+func (u unreferencedDataCleanupRepositoryImpl) DeleteUnreferencedDdlContractData(ctx context.Context, runId string, batchSize int) (int, error) {
+	var deletedCount int
+
+	err := u.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		var dataHashes []string
+		_, err := tx.QueryContext(ctx, &dataHashes, `
+			SELECT dd.data_hash
+			FROM ddl_table_data dd
+			WHERE NOT EXISTS (SELECT 1 FROM ddl_tables dt WHERE dt.data_hash = dd.data_hash)
+			ORDER BY dd.data_hash
+			LIMIT ?`, batchSize)
+		if err != nil {
+			return fmt.Errorf("failed to get unreferenced DDL contract data hashes: %w", err)
+		}
+
+		if len(dataHashes) == 0 {
+			return nil
+		}
+		logger.Debugf(ctx, "Found %d DDL contract data entries to delete in current batch", len(dataHashes))
+
+		_, err = tx.ExecContext(ctx, `DELETE FROM ddl_table_data WHERE data_hash IN (?)`, pg.In(dataHashes))
+		if err != nil {
+			return fmt.Errorf("failed to delete ddl_table_data: %w", err)
+		}
+		deletedCount = len(dataHashes)
+
+		var cleanupRun entity.UnreferencedDataCleanupEntity
+		err = tx.Model(&cleanupRun).Where("run_id = ?", runId).Select()
+		if err != nil {
+			return fmt.Errorf("failed to get current state of cleanup run: %w", err)
+		}
+		if cleanupRun.DeletedItems == nil {
+			cleanupRun.DeletedItems = &entity.DeletedItemsCounts{DdlContractData: deletedCount}
+		} else {
+			cleanupRun.DeletedItems.DdlContractData += deletedCount
+		}
+		_, err = tx.Model(&cleanupRun).Column("deleted_items").WherePK().Update()
+		if err != nil {
+			return fmt.Errorf("failed to update cleanup run state: %w", err)
+		}
+
+		return nil
+	})
+
+	return deletedCount, err
+}
+
+func (u unreferencedDataCleanupRepositoryImpl) DeleteUnreferencedMcpContractData(ctx context.Context, runId string, batchSize int) (int, error) {
+	var deletedCount int
+
+	err := u.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		var dataHashes []string
+		_, err := tx.QueryContext(ctx, &dataHashes, `
+			SELECT md.data_hash
+			FROM mcp_entity_data md
+			WHERE NOT EXISTS (SELECT 1 FROM mcp_entities me WHERE me.data_hash = md.data_hash)
+			ORDER BY md.data_hash
+			LIMIT ?`, batchSize)
+		if err != nil {
+			return fmt.Errorf("failed to get unreferenced MCP contract data hashes: %w", err)
+		}
+
+		if len(dataHashes) == 0 {
+			return nil
+		}
+		logger.Debugf(ctx, "Found %d MCP contract data entries to delete in current batch", len(dataHashes))
+
+		_, err = tx.ExecContext(ctx, `DELETE FROM mcp_entity_data WHERE data_hash IN (?)`, pg.In(dataHashes))
+		if err != nil {
+			return fmt.Errorf("failed to delete mcp_entity_data: %w", err)
+		}
+		deletedCount = len(dataHashes)
+
+		var cleanupRun entity.UnreferencedDataCleanupEntity
+		err = tx.Model(&cleanupRun).Where("run_id = ?", runId).Select()
+		if err != nil {
+			return fmt.Errorf("failed to get current state of cleanup run: %w", err)
+		}
+		if cleanupRun.DeletedItems == nil {
+			cleanupRun.DeletedItems = &entity.DeletedItemsCounts{McpContractData: deletedCount}
+		} else {
+			cleanupRun.DeletedItems.McpContractData += deletedCount
+		}
+		_, err = tx.Model(&cleanupRun).Column("deleted_items").WherePK().Update()
+		if err != nil {
+			return fmt.Errorf("failed to update cleanup run state: %w", err)
+		}
+
+		return nil
+	})
+
+	return deletedCount, err
 }

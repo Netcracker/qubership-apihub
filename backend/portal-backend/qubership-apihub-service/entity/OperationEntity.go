@@ -130,6 +130,7 @@ type VersionComparisonEntity struct {
 	PreviousRevision  int                  `pg:"previous_revision, pk, type:integer, use_zero"`
 	ComparisonId      string               `pg:"comparison_id, type:varchar"`
 	OperationTypes    []view.OperationType `pg:"operation_types, type:jsonb"`
+	ContractTypes     []view.ContractType  `pg:"contract_types, type:jsonb"`
 	Refs              []string             `pg:"refs, type:varchar[]"`
 	OpenCount         int                  `pg:"open_count, type:integer, use_zero"`
 	LastActive        time.Time            `pg:"last_active, type:timestamp without time zone, use_zero"`

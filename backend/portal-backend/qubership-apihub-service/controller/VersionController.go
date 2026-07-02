@@ -248,6 +248,28 @@ func (v versionControllerImpl) GetVersionDocuments(w http.ResponseWriter, r *htt
 		}
 	}
 
+	contractType := r.URL.Query().Get("contractType")
+	if contractType != "" {
+		if contractType != view.ContractTypeDdl && contractType != view.ContractTypeMcp {
+			utils.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidParameterValue,
+				Message: exception.InvalidParameterValueMsg,
+				Params:  map[string]interface{}{"param": "contractType", "value": contractType},
+			})
+			return
+		}
+		if apiType != "" {
+			utils.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.OverlappingQueryParameter,
+				Message: exception.OverlappingQueryParameterMsg,
+				Params:  map[string]interface{}{"param1": "apiType", "param2": "contractType"},
+			})
+			return
+		}
+	}
+
 	skipRefs := false
 	if r.URL.Query().Get("skipRefs") != "" {
 		skipRefs, err = strconv.ParseBool(r.URL.Query().Get("skipRefs"))
@@ -264,10 +286,11 @@ func (v versionControllerImpl) GetVersionDocuments(w http.ResponseWriter, r *htt
 	}
 
 	versionDocumentsFilterReq := view.DocumentsFilterReq{
-		Limit:      limit,
-		Offset:     limit * page,
-		TextFilter: textFilter,
-		ApiType:    apiType,
+		Limit:        limit,
+		Offset:       limit * page,
+		TextFilter:   textFilter,
+		ApiType:      apiType,
+		ContractType: contractType,
 	}
 
 	documents, err := v.versionService.GetLatestDocuments(packageId, versionName, skipRefs, versionDocumentsFilterReq)

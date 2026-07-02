@@ -58,6 +58,7 @@ func NewPublishedService(versionRepo repository.PublishedRepository,
 	buildRepository repository.BuildRepository,
 	favoritesRepo repository.FavoritesRepository,
 	operationRepo repository.OperationRepository,
+	ddlContractRepo repository.DDLContractRepository,
 	atService ActivityTrackingService,
 	monitoringService MonitoringService,
 	minioStorageService MinioStorageService,
@@ -68,6 +69,7 @@ func NewPublishedService(versionRepo repository.PublishedRepository,
 		buildRepository:            buildRepository,
 		favoritesRepo:              favoritesRepo,
 		operationRepo:              operationRepo,
+		ddlContractRepo:            ddlContractRepo,
 		atService:                  atService,
 		monitoringService:          monitoringService,
 		minioStorageService:        minioStorageService,
@@ -82,6 +84,7 @@ type publishedServiceImpl struct {
 	buildRepository            repository.BuildRepository
 	favoritesRepo              repository.FavoritesRepository
 	operationRepo              repository.OperationRepository
+	ddlContractRepo            repository.DDLContractRepository
 	atService                  ActivityTrackingService
 	monitoringService          MonitoringService
 	minioStorageService        MinioStorageService
@@ -378,6 +381,18 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 	if err != nil {
 		return err
 	}
+	err = buildArc.ReadPackageDdlContracts(false)
+	if err != nil {
+		return err
+	}
+	err = buildArc.ReadPackageDdlContractComparisons(false)
+	if err != nil {
+		return err
+	}
+	err = buildArc.ReadPackageMcpContracts(false)
+	if err != nil {
+		return err
+	}
 	utils.PerfLog(time.Since(start).Milliseconds(), 400, "publishPackage: zip files read")
 
 	start = time.Now()
@@ -512,6 +527,45 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 		return err
 	}
 
+	ddlContractEntities, ddlContractDataEntities, ddlContractSearchTexts, err := buildArcEntitiesReader.ReadDdlContractsToEntities()
+	if err != nil {
+		return err
+	}
+
+	// The build result's DDL comparison entries do not carry data hashes, so provide the data hashes
+	// of the version being published. ddl_comparison rows for other versions are resolved from the DB.
+	publishingDdlDataHashes := make(map[string]string, len(ddlContractEntities))
+	for _, ddlContractEntity := range ddlContractEntities {
+		if ddlContractEntity.DataHash != nil {
+			publishingDdlDataHashes[ddlContractEntity.DdlEntityId] = *ddlContractEntity.DataHash
+		}
+	}
+
+	// DDL comparisons share version_comparison with REST. Read the DDL index/per-pair files, then
+	// merge the version-comparison rows by comparison_id (REST + DDL contractTypes on the same row;
+	// DDL-only pairs are appended so the ddl_comparison FK is satisfied for pure DDL changelogs).
+	ddlVersionComparisonEntities, ddlContractComparisonEntities, ddlComparisonFileIdToKeyMap, err := buildArcEntitiesReader.ReadDdlContractComparisonsToEntities(publishingDdlDataHashes, p.ddlContractRepo)
+	if err != nil {
+		return err
+	}
+	versionComparisonByComparisonId := make(map[string]*entity.VersionComparisonEntity, len(operationsComparisonEntities))
+	for _, vc := range operationsComparisonEntities {
+		versionComparisonByComparisonId[vc.ComparisonId] = vc
+	}
+	for _, ddlVc := range ddlVersionComparisonEntities {
+		if existing, ok := versionComparisonByComparisonId[ddlVc.ComparisonId]; ok {
+			existing.ContractTypes = ddlVc.ContractTypes
+		} else {
+			operationsComparisonEntities = append(operationsComparisonEntities, ddlVc)
+			versionComparisonByComparisonId[ddlVc.ComparisonId] = ddlVc
+		}
+	}
+	for fileId, key := range ddlComparisonFileIdToKeyMap {
+		if _, ok := comparisonFileIdToKeyMap[fileId]; !ok {
+			comparisonFileIdToKeyMap[fileId] = key
+		}
+	}
+
 	builderNotificationsEntities := buildArcEntitiesReader.ReadBuilderNotificationsToEntities(buildSrcEnt.BuildId)
 
 	versionInternalDocEntities, versionInternalDocDataEntities, err := buildArcEntitiesReader.ReadVersionInternalDocumentsToEntities()
@@ -520,6 +574,11 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 	}
 
 	comparisonInternalDocEntities, comparisonInternalDocDataEntities, err := buildArcEntitiesReader.ReadComparisonInternalDocumentsToEntities(comparisonFileIdToKeyMap)
+	if err != nil {
+		return err
+	}
+
+	mcpContractEntities, mcpContractDataEntities, mcpContractSearchTexts, err := buildArcEntitiesReader.ReadMcpContractsToEntities()
 	if err != nil {
 		return err
 	}
@@ -680,6 +739,13 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 		comparisonInternalDocEntities,
 		comparisonInternalDocDataEntities,
 		operationSearchTexts,
+		ddlContractEntities,
+		ddlContractDataEntities,
+		ddlContractSearchTexts,
+		ddlContractComparisonEntities,
+		mcpContractEntities,
+		mcpContractDataEntities,
+		mcpContractSearchTexts,
 	)
 	utils.PerfLog(time.Since(start).Milliseconds(), 15000, "publishPackage: CreateVersionWithData")
 	if err != nil {
