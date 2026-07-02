@@ -23,12 +23,34 @@ import {
 } from '../../consts/validations'
 import { IModelTreeNode, isObject } from '@netcracker/qubership-apihub-api-data-model'
 
-export function stringifyItem(item: unknown | undefined): string | undefined {
+export type StringifyItemOptions = {
+  /** Show string values as-is (e.g. JSON Schema regex patterns). */
+  literal?: boolean
+}
+
+const LITERAL_STRING_ITEM_KEYS = new Set(['pattern', 'additionalPropertyNamePattern'])
+
+export function isLiteralDisplayItemKey(key: string | number): boolean {
+  return LITERAL_STRING_ITEM_KEYS.has(String(key))
+}
+
+export function stringifyItem(
+  item: unknown | undefined,
+  options?: StringifyItemOptions,
+): string | undefined {
   if (!isDefined(item)) {
     return ''
   }
   if (!isObject(item)) {
-    return typeof item === 'string' ? item : `${item}`
+    if (typeof item === 'string') {
+      if (options?.literal) {
+        return item
+      }
+      // this is a fix for special characters in string values, e.g. \r, \n, \t, etc.
+      const stringified = JSON.stringify(item)
+      return stringified.slice(1, -1)
+    }
+    return `${item}`
   }
   return JSON.stringify(item, null, 2)
 }
@@ -56,7 +78,7 @@ export function handleSeriesItem(key: string, item: unknown | undefined): string
       return `${LESS_THAN_SIGN} ${item}`
   }
 
-  return stringifyItem(item)
+  return `${item}`
 }
 
 export function isSeriesItemEmpty(item: unknown, replacedItem: unknown): boolean {

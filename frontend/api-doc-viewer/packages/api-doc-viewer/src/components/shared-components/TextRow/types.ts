@@ -3,6 +3,11 @@ import type { ChangedPropertyMetaData, NodeDescendantDiffs, NodeDiffsSeverities,
 import { TextValueVariant } from "../TextValue/types"
 import { WithPrecededByProps } from "../WithPrecededByProps"
 
+export enum TextRowUsage {
+  Default = 'default',
+  DdlApiProperty = 'ddlapi-property',
+}
+
 export type TextRowProps = WithPrecededByProps & {
   value?: string // Document Mode
   variant: TextValueVariant
@@ -11,6 +16,7 @@ export type TextRowProps = WithPrecededByProps & {
   labelFontWeight?: 'normal' | 'medium' | 'bold'
   labelColor?: string
   textColor?: string
+  usage?: TextRowUsage
   // diffs
   diff?: ChangedPropertyMetaData
   descendantDiffs?: NodeDescendantDiffs

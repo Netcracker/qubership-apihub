@@ -11,7 +11,7 @@ export abstract class AbstractNodeDescendantsDiffsAggregator {
   public abstract aggregate(
     value: object | null,
     diffsMetaKeys: DiffMetaKeys,
-    referenceNamePropertyKey: symbol
+    referenceNamePropertyKey?: symbol
   ): NodeDescendantDiffs | undefined;
 
   protected aggregateWholeNodeDiff<

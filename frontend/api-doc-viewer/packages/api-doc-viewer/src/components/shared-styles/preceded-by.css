@@ -67,7 +67,115 @@
   padding-bottom: 8px;
 }
 
+/* DDL API */
+
+.title-row-content[data-precededby="ddl-table-header-row"] {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.title-row-content[data-precededby="ddl-table-schema-row"] {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.title-row-content[data-precededby="ddl-table-description-row"] {
+  padding-top: 8px;
+}
+
+.title-row-content[data-precededby="ddl-section-header"] {
+  padding-top: 8px;
+}
+
+.title-row-content[data-precededby="ddl-column-row"] {
+  margin-top: 8px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.title-row-content[data-precededby="ddl-column-after-additional-info-row"] {
+  margin-top: 8px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.title-row-content[data-precededby="ddl-index-row"] {
+  padding-top: 8px;
+}
+
+.ddlapi-property .title-row-content {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.ddlapi-property .level-indicator-column {
+  align-self: stretch;
+}
+
+/* First column/index title — keep existing top margin from section header. */
+.ddlapi-property .title-row-content[data-precededby="ddl-section-header"] {
+  margin-top: 8px;
+  margin-bottom: 0;
+}
+
+/* .ddlapi-property .title-row-content[data-precededby="ddl-section-header"] .ddlapi-property-row-body {
+  padding-top: 8px;
+  padding-bottom: 8px;
+} */
+
+/*
+  Middle and last column/index titles: symmetric vertical padding on content only.
+  LevelIndicator spans the full row height (min 26 px) for a continuous line.
+  Use 3 px (not 4 px) top/bottom here: 26 px row − 6 px padding = 20 px content
+  area, which fits UxBadge (~19 px: 1 px pad + 12 px × 1.5 line-height on pre).
+*/
+.ddlapi-property .title-row-content[data-precededby="ddl-column-row"] .ddlapi-property-row-body,
+.ddlapi-property .title-row-content[data-precededby="ddl-column-after-additional-info-row"] .ddlapi-property-row-body,
+.ddlapi-property .title-row-content[data-precededby="ddl-index-row"] .ddlapi-property-row-body {
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+.ddlapi-property .title-row-content[data-precededby="ddl-column-row"],
+.ddlapi-property .title-row-content[data-precededby="ddl-column-after-additional-info-row"],
+.ddlapi-property .title-row-content[data-precededby="ddl-index-row"] {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* Last column/index row in list — 0 px bottom margin on TitleRow or AdditionalInfoRow. */
+.ddlapi-property .title-row-content[data-ddl-list-last-row="true"],
+.ddlapi-property .additional-info-row-content[data-ddl-list-last-row="true"] {
+  margin-bottom: 0;
+}
+
+/* DDL API End */
+
+/* ─── AdditionalInfoRowContent ─────────────────────────────────────────────── */
+
+.additional-info-row-content[data-precededby="ddl-column-row"] {
+  padding-top: 4px;
+}
+
+.additional-info-row-content[data-precededby="ddl-column-after-additional-info-row"] {
+  padding-top: 0;
+}
+
+.ddlapi-property .additional-info-row-content,
+.ddlapi-property .additional-info-row-content[data-precededby="ddl-column-row"],
+.ddlapi-property .additional-info-row-content[data-precededby="ddl-column-after-additional-info-row"] {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.ddlapi-property .additional-info-row-content[data-precededby="ddl-column-row"] .ddlapi-property-row-body,
+.ddlapi-property .additional-info-row-content[data-precededby="ddl-column-after-additional-info-row"] .ddlapi-property-row-body {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
 /* ─── TextRowContent ────────────────────────────────────────────────────────── */
+
 /* Overrides Tailwind's pt-1 (4 px) when a specific context is known.
    When data-precededby is absent the Tailwind default applies as fallback.    */
 
@@ -119,7 +227,53 @@
   padding-top: 8px;
 }
 
+/* DDL API */
+
+.text-row-content[data-precededby="ddl-table-header-row"],
+.ddl-schema-name-block-row[data-precededby="ddl-table-header-row"] {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.text-row-content[data-precededby="ddl-table-schema-row"] {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.text-row-content[data-precededby="ddl-table-description-row"] {
+  padding-top: 8px;
+}
+
+.text-row-content[data-precededby="ddl-section-header"] {
+  padding-top: 8px;
+}
+
+.text-row-content[data-precededby="ddl-column-row"] {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.text-row-content[data-precededby="ddl-index-row"] {
+  padding-top: 8px;
+}
+
+.ddlapi-property .text-row-content,
+.ddlapi-property .text-row-content[data-precededby="ddl-column-row"],
+.ddlapi-property .text-row-content[data-precededby="ddl-index-row"] {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.ddlapi-property .text-row-content[data-precededby="ddl-column-row"] .ddlapi-property-row-body,
+.ddlapi-property .text-row-content[data-precededby="ddl-index-row"] .ddlapi-property-row-body {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+/* DDL API End */
+
 /* ─── MessageSectionsSelector ───────────────────────────────────────────────── */
+
 /* Overrides py-2 (8 px each) from Tailwind when a specific context is known.  */
 
 .message-sections-selector {

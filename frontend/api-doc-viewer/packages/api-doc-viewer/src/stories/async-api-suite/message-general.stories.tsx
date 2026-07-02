@@ -69,6 +69,7 @@ const createSource = ({ message, channel = {}, operationType = 'send' }: SourceO
 
 const createStory = (
   source: ReturnType<typeof createSource>,
+  options: { noHeading?: boolean } = {},
 ): Story => ({
   args: {
     devMode: true,
@@ -78,6 +79,7 @@ const createStory = (
       messageKey: MESSAGE_KEY,
     },
     referenceNamePropertyKey: TEST_REFERENCE_NAME_PROPERTY,
+    noHeading: options.noHeading ?? false,
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
@@ -144,3 +146,13 @@ export const AddressDescriptionSummary: Story = createStory(createSource({
     address: "test.address",
   },
 }));
+
+export const NoHeadingWithName: Story = createStory(createSource({
+  message: { name: "Message Name" },
+  channel: { address: "test.address" },
+}), { noHeading: true });
+
+export const NoHeadingWithoutName: Story = createStory(createSource({
+  message: {},
+  channel: { address: "test.address" },
+}), { noHeading: true });

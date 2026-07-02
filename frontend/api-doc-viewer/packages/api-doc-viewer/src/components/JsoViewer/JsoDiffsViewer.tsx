@@ -9,6 +9,7 @@ import { isSameDiffActionForAll } from "@apihub/utils/jso/infer-node-change-from
 import { DiffMetaKeys } from "@netcracker/qubership-apihub-api-data-model"
 import { DiffType } from "@netcracker/qubership-apihub-api-diff"
 import { JsoTreeWithDiffsBuilder } from "@netcracker/qubership-apihub-next-data-model/building-service/jso/tree-with-diffs/builder"
+import { createBuildingServiceLogger } from "@netcracker/qubership-apihub-next-data-model/loggers"
 import { NODE_LEVEL_DIFF_KEY } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/tree-node.interface"
 import { FC, memo, useMemo } from "react"
 import { DisplayMode } from "../.."
@@ -23,6 +24,7 @@ type JsoDiffsViewerProps = WithPrecededByProps & {
   displayMode?: DisplayMode
   initialLevel?: number
   supportJsonSchema?: boolean
+  devMode?: boolean
   // diffs specific
   diffMetaKeys: DiffMetaKeys
   diffTypes?: ReadonlyArray<DiffType>
@@ -48,6 +50,7 @@ const JsoDiffsViewerInner: FC<JsoDiffsViewerProps> =
       displayMode = DEFAULT_DISPLAY_MODE,
       initialLevel = 0,
       supportJsonSchema = false,
+      devMode = false,
       diffMetaKeys,
       diffTypes,
     } = props
@@ -55,16 +58,21 @@ const JsoDiffsViewerInner: FC<JsoDiffsViewerProps> =
     // indent-specific
     const { [ATTRIBUTE_PRECEDED_BY]: precededBy } = props
 
-    const referenceNamePropertyKey = Symbol('referenceName')
+    const logger = useMemo(() => createBuildingServiceLogger(devMode), [devMode])
 
     const builder = useMemo(
-      () => new JsoTreeWithDiffsBuilder(source, supportJsonSchema, referenceNamePropertyKey, diffMetaKeys),
-      [source, supportJsonSchema, referenceNamePropertyKey, diffMetaKeys]
+      () => new JsoTreeWithDiffsBuilder({
+        source,
+        supportJsonSchema,
+        diffsMetaKeys: diffMetaKeys,
+        logger,
+      }),
+      [source, supportJsonSchema, diffMetaKeys, logger],
     )
     const tree = useMemo(() => builder.build(), [builder])
 
-    console.debug("[JSO Diffs] Source:", source)
-    console.debug("[JSO Diffs] Tree:", tree)
+    logger.debug("[JSO Diffs] Source:", source)
+    logger.debug("[JSO Diffs] Tree:", tree)
 
     const root = tree.root
     if (!root) {

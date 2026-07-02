@@ -1,0 +1,3 @@
+CREATE TABLE t (
+  label text NOT NULL GENERATED ALWAYS AS ('fixed') STORED
+);

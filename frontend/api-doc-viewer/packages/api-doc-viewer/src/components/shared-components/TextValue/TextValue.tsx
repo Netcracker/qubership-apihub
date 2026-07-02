@@ -1,4 +1,3 @@
-import { DescriptionFontSize } from "@apihub/components/common/annotations/Description/types/DescriptionFontSize";
 import { ChangedPropertyMetaData, DiffHighlightingApplicationMode, HighlightVariant } from "@apihub/next-data-model/model/abstract/tree-with-diffs/tree-node.interface";
 import { CHANGED_LAYOUT_SIDE, LayoutSide, ORIGIN_LAYOUT_SIDE } from "@apihub/types/internal/LayoutSide";
 import { ArrayUtils } from "@apihub/utils/common/arrays";
@@ -29,12 +28,11 @@ export type TextExpanderProps = Partial<{
   isExpandable: boolean
   expanded: boolean
   setExpanded: Dispatch<SetStateAction<boolean>>
-  fontSize?: DescriptionFontSize
+  variant: TextValueVariant
 }>
 
 const Expander: FC<TextExpanderProps> = props => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { isExpandable, expanded, setExpanded, fontSize = DescriptionFontSize.LEGACY } = props
+  const { isExpandable, expanded, setExpanded, variant } = props
 
   const onClick = useCallback(() => {
     setExpanded?.(prev => !prev)
@@ -42,8 +40,11 @@ const Expander: FC<TextExpanderProps> = props => {
 
   return <>
     {isExpandable && (
-      <div className="mt-2">
-        <a className='text-blue-600 hover:text-blue-500 hover:cursor-pointer' onClick={onClick}        >
+      <div className="mt-1">
+        <a
+          className={`text-value-expander ${getExpanderFontSizeClass(variant)} text-blue-600 hover:text-blue-500 hover:cursor-pointer`.trim()}
+          onClick={onClick}
+        >
           {!expanded ? 'Show more' : 'Show less'}
         </a>
       </div>
@@ -97,8 +98,10 @@ export const TextValue: FC<TextValueProps> = memo<TextValueProps>((props) => {
           return <h5 {...variantProps}>{content}</h5>
         case TextValueVariant.h6:
           return <h6 {...variantProps}>{content}</h6>
-        case TextValueVariant.body:
-          return <span {...variantProps}>{content}</span>
+        case TextValueVariant.body1:
+          return <span {...variantProps} className={`${className} text-value-body1`.trim()}>{content}</span>
+        case TextValueVariant.body2:
+          return <span {...variantProps} className={`${className} text-value-body2`.trim()}>{content}</span>
       }
     }
 
@@ -200,9 +203,10 @@ export const TextValue: FC<TextValueProps> = memo<TextValueProps>((props) => {
         isExpandable={isExpandable(resolvedValue)}
         expanded={expanded}
         setExpanded={setExpanded}
+        variant={variant}
       />
     )}
-  </div>, [renderElement, resolvedValue, diffsStyleClasses, isInvisible, expanded, setExpanded])
+  </div>, [renderElement, resolvedValue, diffsStyleClasses, isInvisible, expanded, setExpanded, variant])
 
   return content
 })
@@ -236,4 +240,27 @@ function shortenValue(value: string | undefined): string | undefined {
 
 function isString(value: unknown): value is string {
   return typeof value === 'string'
+}
+
+function getExpanderFontSizeClass(variant: TextValueVariant | undefined): string {
+  switch (variant) {
+    case TextValueVariant.h1:
+      return 'text-value-expander--h1'
+    case TextValueVariant.h2:
+      return 'text-value-expander--h2'
+    case TextValueVariant.h3:
+      return 'text-value-expander--h3'
+    case TextValueVariant.h4:
+      return 'text-value-expander--h4'
+    case TextValueVariant.h5:
+      return 'text-value-expander--h5'
+    case TextValueVariant.h6:
+      return 'text-value-expander--h6'
+    case TextValueVariant.body1:
+      return 'text-value-expander--body1'
+    case TextValueVariant.body2:
+      return 'text-value-expander--body2'
+    default:
+      return 'text-value-expander--body2'
+  }
 }

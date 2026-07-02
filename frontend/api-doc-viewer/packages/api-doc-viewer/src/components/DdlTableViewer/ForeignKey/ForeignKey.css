@@ -1,0 +1,13 @@
+.ddlapi-foreign-key-link {
+  color: #0068ff;
+  font-family: 'Inter Variable', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-decoration: none;
+}
+
+.ddlapi-foreign-key-link:hover {
+  color: #747bff;
+  text-decoration: underline;
+}

@@ -2,7 +2,7 @@ import { OperationKeys } from "@apihub/next-data-model/shared/async-api/types/op
 import type { v3 } from "@asyncapi/parser/esm/spec-types";
 import { isObject } from "../../../utilities";
 import { UNKNOWN_ADDRESS } from "../json-crawl-entities/transformers/constants/constants";
-import { AsyncApiLogger } from "../logging";
+import { BuildingServiceLogger } from "../../../loggers";
 
 export interface AsyncApiMessageOrientedSpecDataContent {
   headers?: unknown;
@@ -54,7 +54,7 @@ export interface AsyncApiMessageOrientedSpec {
 export class AsyncApiSpecTransformer {
   constructor(
     protected readonly referenceNamePropertyKey: symbol,
-    protected readonly logger: AsyncApiLogger,
+    protected readonly logger: BuildingServiceLogger,
   ) { }
 
   protected operationKeysOrDefaults(source: v3.AsyncAPIObject, operationKeys?: OperationKeys): OperationKeys | null {

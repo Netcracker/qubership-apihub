@@ -28,6 +28,14 @@ const preview: Preview = {
       storySort: {
         order: [
           'Debug',
+          [
+            'Json Schema Viewer',
+            'GraphQL Debug Page',
+            'Async Api Viewer',
+            'Async Api Diffs Viewer',
+            'Jso Viewer',
+            'DDL API from DDL SQL',
+          ],
           'Json Schema Viewer',
           'Json Schema Diff Viewer',
           'GraphQL Operation Viewer',
@@ -60,6 +68,10 @@ const preview: Preview = {
             'arrayAllItemTypes',
             'stringJsonSchema',
             'objectJsonSchema',
+          ],
+          'DDL API Suite',
+          [
+            'E2E Scenarios',
           ],
           '*'
         ]

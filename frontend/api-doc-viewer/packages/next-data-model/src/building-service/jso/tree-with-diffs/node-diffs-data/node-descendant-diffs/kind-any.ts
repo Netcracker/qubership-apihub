@@ -18,8 +18,6 @@ export class JsoNodeDescendantDiffsAggregatorKindAny extends AbstractNodeDescend
   public aggregate(
     crawlValue: object | null,
     diffsMetaKeys: DiffMetaKeys,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    referenceNamePropertyKey: symbol,
   ): NodeDescendantDiffs | undefined {
     if (!isObject(crawlValue) && !Array.isArray(crawlValue)) {
       return undefined;

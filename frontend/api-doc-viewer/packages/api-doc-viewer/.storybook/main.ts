@@ -15,6 +15,7 @@
  */
 
 import type {StorybookConfig} from "@storybook/react-vite";
+import { mergeConfig } from "vite";
 
 const config: StorybookConfig = {
   stories: ["../src/**/*.mdx", "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
@@ -40,6 +41,19 @@ const config: StorybookConfig = {
   },
   docs: {
     autodocs: "tag",
+  },
+  async viteFinal(config) {
+    return mergeConfig(config, {
+      optimizeDeps: {
+        // ddlapi's '/parser' resolves (browser condition) to a self-contained,
+        // WASM-inlined bundle — no libpg-query WASM plugins needed. Keep it out of
+        // esbuild pre-bundling so the ddl-suite stories' dynamic import stays a
+        // lazily-loaded chunk instead of eagerly pulling the ~1.9 MB parser.
+        exclude: [
+          "@netcracker/qubership-apihub-ddlapi",
+        ],
+      },
+    });
   },
 };
 

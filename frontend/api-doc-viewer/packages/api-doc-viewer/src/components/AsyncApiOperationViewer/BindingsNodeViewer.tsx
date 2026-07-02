@@ -162,7 +162,7 @@ export const BindingsNodeViewer: FC<BindingsNodeViewerProps> = (props) => {
         <TextRow
           data-precededby={PrecededBy.MESSAGE_SECTION_HEADER_HIGH_LEVEL}
           value={bindingVersion}
-          variant={TextValueVariant.body}
+          variant={TextValueVariant.body2}
           label="Version"
           labelFontWeight='medium'
           textFontWeight='medium'

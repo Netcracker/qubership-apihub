@@ -1,3 +1,5 @@
+/* stylelint-disable selector-class-pattern -- modifier classes shared with TS/TSX */
+
 .ux-badge {
   border-radius: 4px;
   padding: 1px 8px 0;
@@ -81,4 +83,41 @@
   background-color: rgb(245 158 11);
   box-shadow: inset 0 0 0 1px rgb(245 158 11);
   color: rgb(255 255 255);
+}
+
+/* DDL API */
+
+.ux-badge_ddlapi_primary-key {
+  background-color: #D4AF37;
+  box-shadow: inset 0 0 0 1px #D4AF37;
+  color: white;
+  text-transform: uppercase;
+}
+
+.ux-badge_ddlapi_foreign-key {
+  background-color: #0068ff;
+  box-shadow: inset 0 0 0 1px #0068ff;
+  color: white;
+  text-transform: uppercase;
+}
+
+.ux-badge_ddlapi_unique {
+  background-color: #A02AF4;
+  box-shadow: inset 0 0 0 1px #A02AF4;
+  color: white;
+  text-transform: uppercase;
+}
+
+.ux-badge_ddlapi_not-null {
+  background-color: #F96825;
+  box-shadow: inset 0 0 0 1px #F96825;
+  color: white;
+  text-transform: uppercase;
+}
+
+.ux-badge_ddlapi_generated {
+  background-color: #00BB5B;
+  box-shadow: inset 0 0 0 1px #00BB5B;
+  color: white;
+  text-transform: uppercase;
 }

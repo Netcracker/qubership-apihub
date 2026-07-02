@@ -3,6 +3,7 @@ import { DisplayModeContext } from "@apihub/contexts/DisplayModeContext"
 import { LayoutModeContext } from "@apihub/contexts/LayoutModeContext"
 import { LevelContext } from "@apihub/contexts/LevelContext"
 import { JsoTreeBuilder } from "@netcracker/qubership-apihub-next-data-model/building-service/jso/tree/builder"
+import { createBuildingServiceLogger } from "@netcracker/qubership-apihub-next-data-model/loggers"
 import { FC, memo, useMemo } from "react"
 import { DisplayMode, DOCUMENT_LAYOUT_MODE, LayoutMode } from "../.."
 import { ErrorBoundary } from "../services/ErrorBoundary"
@@ -17,6 +18,7 @@ type JsoViewerProps = WithPrecededByProps & {
   layoutMode?: LayoutMode
   initialLevel?: number
   supportJsonSchema?: boolean
+  devMode?: boolean
 }
 
 export const JsoViewer: FC<JsoViewerProps> =
@@ -38,17 +40,27 @@ const JsoViewerInner: FC<JsoViewerProps> = memo<JsoViewerProps>(props => {
     displayMode = DEFAULT_DISPLAY_MODE,
     layoutMode = DOCUMENT_LAYOUT_MODE,
     initialLevel = 0,
-    supportJsonSchema = false
+    supportJsonSchema = false,
+    devMode = false,
   } = props
 
   // indent-specific
   const { [ATTRIBUTE_PRECEDED_BY]: precededBy } = props
 
-  const builder = useMemo(() => new JsoTreeBuilder(source, supportJsonSchema), [source, supportJsonSchema])
+  const logger = useMemo(() => createBuildingServiceLogger(devMode), [devMode])
+
+  const builder = useMemo(
+    () => new JsoTreeBuilder({
+      source,
+      supportJsonSchema,
+      logger,
+    }),
+    [source, supportJsonSchema, logger],
+  )
   const tree = useMemo(() => builder.build(), [builder])
 
-  console.debug('[JSO] Source:', source)
-  console.debug('[JSO] Tree:', tree)
+  logger.debug('[JSO] Source:', source)
+  logger.debug('[JSO] Tree:', tree)
 
   const root = tree.root
   if (!root) {

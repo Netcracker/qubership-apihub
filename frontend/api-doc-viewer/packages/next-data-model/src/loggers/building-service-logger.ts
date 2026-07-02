@@ -1,15 +1,15 @@
-type AsyncApiLogMethod = (...args: unknown[]) => void
+type LogMethod = (...args: unknown[]) => void
 
-export type AsyncApiLogger = {
-  debug: AsyncApiLogMethod
-  info: AsyncApiLogMethod
-  warn: AsyncApiLogMethod
-  error: AsyncApiLogMethod
+export type BuildingServiceLogger = {
+  debug: LogMethod
+  info: LogMethod
+  warn: LogMethod
+  error: LogMethod
 }
 
-const noop: AsyncApiLogMethod = () => {}
+const noop: LogMethod = () => {}
 
-export const createAsyncApiLogger = (enabled = false): AsyncApiLogger => {
+export const createBuildingServiceLogger = (enabled = false): BuildingServiceLogger => {
   if (!enabled) {
     return {
       debug: noop,

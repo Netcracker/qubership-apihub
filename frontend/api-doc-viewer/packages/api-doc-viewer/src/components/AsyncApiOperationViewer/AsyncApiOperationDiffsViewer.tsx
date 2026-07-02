@@ -17,14 +17,15 @@ import { OperationKeys } from "@apihub/next-data-model/shared/async-api/types/op
 import { isMessageNode } from "@apihub/utils/async-api/node-type-checkers";
 import { DiffType } from "@netcracker/qubership-apihub-api-diff";
 import '../../index.css';
+import { DiffMetaKeys } from "../../types/DiffMetaKeys";
 import '../shared-styles/diffs/index.css';
-import { DiffMetaKeys } from "./types/DiffMetaKeys";
 
 export type AsyncApiOperationDiffsViewerProps = {
   mergedSource: unknown
   operationKeys?: OperationKeys
   displayMode?: DisplayMode
   devMode?: boolean
+  noHeading?: boolean
   referenceNamePropertyKey: symbol
   // diffs specific
   diffMetaKeys: DiffMetaKeys
@@ -51,6 +52,7 @@ const AsyncApiOperationDiffsViewerInner: FC<AsyncApiOperationDiffsViewerProps> =
       operationKeys,
       displayMode = DEFAULT_DISPLAY_MODE,
       devMode = false,
+      noHeading = false,
       referenceNamePropertyKey,
       diffMetaKeys,
       diffTypes,
@@ -59,7 +61,13 @@ const AsyncApiOperationDiffsViewerInner: FC<AsyncApiOperationDiffsViewerProps> =
     const logger = useMemo(() => createAsyncApiLogger(devMode), [devMode])
 
     const treeBuilder = useMemo(
-      () => new AsyncApiTreeWithDiffsBuilder(source, referenceNamePropertyKey, diffMetaKeys, operationKeys, logger),
+      () => new AsyncApiTreeWithDiffsBuilder({
+        source,
+        referenceNamePropertyKey,
+        diffsMetaKeys: diffMetaKeys,
+        operationKeys,
+        logger,
+      }),
       [source, referenceNamePropertyKey, diffMetaKeys, operationKeys, logger]
     )
     const tree = useMemo(() => treeBuilder?.build() ?? null, [treeBuilder])
@@ -81,6 +89,7 @@ const AsyncApiOperationDiffsViewerInner: FC<AsyncApiOperationDiffsViewerProps> =
                 <LevelContext.Provider value={0}>
                   <MessageNodeViewer
                     node={messageNode}
+                    noHeading={noHeading}
                   />
                 </LevelContext.Provider>
               </LayoutModeContext.Provider>

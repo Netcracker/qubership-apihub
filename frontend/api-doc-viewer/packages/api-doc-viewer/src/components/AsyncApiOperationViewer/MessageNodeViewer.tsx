@@ -19,10 +19,11 @@ import { MessageSectionsViewer } from "./MessageSectionsViewer";
 
 type MessageNodeViewerProps = {
   node: AsyncApiTreeNode<typeof AsyncApiTreeNodeKinds.MESSAGE>
+  noHeading?: boolean
 }
 
 export const MessageNodeViewer: FC<MessageNodeViewerProps> = (props) => {
-  const { node } = props
+  const { node, noHeading = false } = props
 
   const value = node.value()
   const children = useMemo(() => node.childrenNodes(), [node])
@@ -60,9 +61,13 @@ export const MessageNodeViewer: FC<MessageNodeViewerProps> = (props) => {
   const isDescriptionDisplayed = useMemo(() => shouldBeDisplayed<AsyncApiTreeNodeValueTypeMessage>(value, nodeDiffs, 'description'), [value, nodeDiffs])
   const isSummaryDisplayed = useMemo(() => shouldBeDisplayed<AsyncApiTreeNodeValueTypeMessage>(value, nodeDiffs, 'summary'), [value, nodeDiffs])
 
+  const addressRowPrecededBy = noHeading
+    ? PrecededBy.ROOT
+    : PrecededBy.MESSAGE_SECTION_HEADER_HIGH_LEVEL
+
   return (
     <div className="flex flex-col">
-      {isTitleDisplayed && (
+      {!noHeading && isTitleDisplayed && (
         <TitleRow
           data-precededby={PrecededBy.ROOT}
           value={value?.title ?? ''}
@@ -72,7 +77,7 @@ export const MessageNodeViewer: FC<MessageNodeViewerProps> = (props) => {
           {...titleRowDiffsProps}
         />
       )}
-      {!isTitleDisplayed && (
+      {!noHeading && !isTitleDisplayed && (
         <TitleRow
           data-precededby={PrecededBy.ROOT}
           value={node.key.toString()}
@@ -83,7 +88,7 @@ export const MessageNodeViewer: FC<MessageNodeViewerProps> = (props) => {
         />
       )}
       <AddressRow
-        data-precededby={PrecededBy.MESSAGE_SECTION_HEADER_HIGH_LEVEL}
+        data-precededby={addressRowPrecededBy}
         action={value?.action ?? ''}
         address={value?.address ?? ''}
         // diffs

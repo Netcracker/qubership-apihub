@@ -62,7 +62,7 @@ import {
   maxDiffTypeFromDiffs
 } from '../../utils/common/changes'
 import { isDefined } from '../../utils/common/checkers'
-import { handleSeriesItem, stringifyItem } from '../../utils/common/rows'
+import { handleSeriesItem, isLiteralDisplayItemKey, stringifyItem } from '../../utils/common/rows'
 import { getUxBadgeColorSchema } from '../kit/ux/UxBadge/consts'
 import { BADGE_KIND_DEFAULT } from '../kit/ux/UxBadge/types'
 import { UxBadge } from '../kit/ux/UxBadge/UxBadge'
@@ -176,10 +176,11 @@ export const AdditionalInfoObjectRow: FC<AdditionalInfoObjectRowProps> = (props)
               return null
             }
 
+            const stringifyOptions = isLiteralDisplayItemKey(itemKey) ? { literal: true } : undefined
             const handledItem =
-              !itemDefined ? '' : stringifyItem(handleSeriesItem(itemKey, item))
+              !itemDefined ? '' : stringifyItem(handleSeriesItem(itemKey, item), stringifyOptions)
             const handledReplacedItem =
-              !replacedItemDefined ? '' : stringifyItem(handleSeriesItem(itemKey, $itemChange.beforeValue))
+              !replacedItemDefined ? '' : stringifyItem(handleSeriesItem(itemKey, $itemChange.beforeValue), stringifyOptions)
 
             let itemView: string | ReactNode = handledItem === ''
               ? <span className={DEFAULT_SERIES_ITEM_TEXT_COLOR}>{DEFAULT_SERIES_ITEM}</span>

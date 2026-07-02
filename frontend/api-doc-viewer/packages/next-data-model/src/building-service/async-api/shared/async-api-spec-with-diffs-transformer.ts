@@ -4,7 +4,7 @@ import { OperationKeys } from "@apihub/next-data-model/shared/async-api/types/op
 import { findKeyByValue, getValueByPath, isArray, isObject, isObjective, takeIfDiffsRecord } from "@apihub/next-data-model/utilities";
 import { aggregateDiffsWithRollup, Diff, DiffType } from "@netcracker/qubership-apihub-api-diff";
 import { DiffMetaKeys } from "../../abstract/tree-with-diffs/node-diffs-data/diff-meta-keys";
-import { AsyncApiLogger } from "../logging";
+import { BuildingServiceLogger } from "../../../loggers";
 import {
   AsyncApiMessageOrientedSpec,
   AsyncApiMessageOrientedSpecData,
@@ -43,7 +43,7 @@ export interface AsyncApiMessageOrientedSpecWithDiffs extends AsyncApiMessageOri
 export class AsyncApiSpecWithDiffsTransformer extends AsyncApiSpecTransformer {
   constructor(
     referenceNamePropertyKey: symbol,
-    logger: AsyncApiLogger,
+    logger: BuildingServiceLogger,
     private readonly diffMetaKeys: DiffMetaKeys,
   ) {
     super(referenceNamePropertyKey, logger)

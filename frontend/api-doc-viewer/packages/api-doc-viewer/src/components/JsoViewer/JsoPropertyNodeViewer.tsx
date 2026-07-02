@@ -84,7 +84,7 @@ export const JsoPropertyNodeViewer: FC<JsoPropertyNodeViewerProps> = (props) => 
         expandable={expandable}
         expanded={expanded}
         onClickExpander={onClickExpander}
-        variant={TextValueVariant.body}
+        variant={TextValueVariant.body2}
         enableHeaderValue={!nodeValue?.isArrayItem}
         subheader={subheader}
         usage={TitleRowUsage.JsoProperty}

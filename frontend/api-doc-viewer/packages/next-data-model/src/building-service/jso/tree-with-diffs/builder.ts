@@ -8,13 +8,14 @@ import { JsoTreeWithDiffs } from "@apihub/next-data-model/model/jso/tree-with-di
 import { JsoTreeNodeKind, JsoTreeNodeKindsList } from "@apihub/next-data-model/model/jso/types/node-kind";
 import { JsoTreeNodeMeta } from "@apihub/next-data-model/model/jso/types/node-meta";
 import { JsoPropertyValueTypes } from "@apihub/next-data-model/model/jso/types/node-value-type";
+import { JsoTreeWithDiffsBuilderParams } from "@apihub/next-data-model/shared/jso/types/tree-builder-params";
 import { isObject } from "@apihub/next-data-model/utilities";
 import { NodeId, NodeKey } from "@apihub/next-data-model/utility-types";
 import { annotation, breaking, deprecated, DiffType, isDiffAdd, isDiffRemove, isDiffReplace, nonBreaking, risky, unclassified } from "@netcracker/qubership-apihub-api-diff";
 import { syncCrawl } from "@netcracker/qubership-apihub-json-crawl";
+import { BuildingServiceLogger, createBuildingServiceLogger } from "../../../loggers";
 import { TreeWithDiffsBuilder } from "../../abstract/tree-with-diffs/builder";
 import { DiffMetaKeys } from "../../abstract/tree-with-diffs/node-diffs-data/diff-meta-keys";
-import { AsyncApiLogger, createAsyncApiLogger } from "../../async-api/logging";
 import { getJsoWithDiffsCrawlRules } from "../json-crawl-entities/rules/rules.jso-with-diffs";
 import { JsoWithDiffsCrawlRule } from "../json-crawl-entities/rules/types";
 import { JsoTreeWithDiffsCrawlState } from "../json-crawl-entities/state/types";
@@ -34,16 +35,25 @@ export class JsoTreeWithDiffsBuilder extends TreeWithDiffsBuilder<
   JsoTreeNodeDiffsSource
 > {
   public readonly tree: JsoTreeWithDiffs;
+  private readonly source: unknown;
+  private readonly supportJsonSchema: boolean;
+  private readonly diffsMetaKeys: DiffMetaKeys;
+  private readonly logger: BuildingServiceLogger;
   private readonly nodeDataBuilder: JsoNodeDataWithDiffsBuilder;
 
-  constructor(
-    private readonly source: unknown,
-    private readonly supportJsonSchema: boolean = false,
-    private readonly referenceNamePropertyKey: symbol,
-    private readonly diffsMetaKeys: DiffMetaKeys,
-    private readonly logger: AsyncApiLogger = createAsyncApiLogger(),
-  ) {
+  constructor(params: JsoTreeWithDiffsBuilderParams) {
+    const {
+      source,
+      diffsMetaKeys,
+      supportJsonSchema = false,
+      logger = createBuildingServiceLogger(),
+    } = params
+
     super()
+    this.source = source
+    this.supportJsonSchema = supportJsonSchema
+    this.diffsMetaKeys = diffsMetaKeys
+    this.logger = logger
     this.tree = new JsoTreeWithDiffs()
     this.nodeDataBuilder = new JsoNodeDataWithDiffsBuilder()
   }
@@ -234,7 +244,7 @@ export class JsoTreeWithDiffsBuilder extends TreeWithDiffsBuilder<
     }
     return JsoNodeDescendantDiffsAggregatorFactory
       .instance(kind)
-      .aggregate(params.value, this.diffsMetaKeys, this.referenceNamePropertyKey)
+      .aggregate(params.value, this.diffsMetaKeys)
   }
 
   protected createNodeDescendantsDiffsSummary(

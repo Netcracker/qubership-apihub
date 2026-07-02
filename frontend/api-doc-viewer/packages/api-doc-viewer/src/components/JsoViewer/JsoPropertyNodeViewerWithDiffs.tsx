@@ -178,7 +178,7 @@ export const JsoPropertyNodeViewerWithDiffs: FC<JsoPropertyNodeViewerWithDiffsPr
         expandable={expandable}
         expanded={expanded}
         onClickExpander={expandable ? onClickExpander : undefined}
-        variant={TextValueVariant.body}
+        variant={TextValueVariant.body2}
         enableHeaderValue={enableHeaderValue}
         subheader={subheader}
         usage={TitleRowUsage.JsoProperty}

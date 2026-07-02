@@ -1,4 +1,4 @@
-import { X_AXIS_PADDING_ROWS_ASYNC_API, X_AXIS_PADDING_ROWS_JSO } from "@apihub/components/shared-styles/tailwind-classnames"
+import { X_AXIS_PADDING_ROWS_ASYNC_API, X_AXIS_PADDING_ROWS_DDL_API, X_AXIS_PADDING_ROWS_DDL_API_PROPERTIES, X_AXIS_PADDING_ROWS_JSO } from "@apihub/components/shared-styles/tailwind-classnames"
 import { useAsyncLevelContext } from "@apihub/contexts/AsyncLevelContext/AsyncLevelContext"
 import { useLevelContext } from "@apihub/contexts/LevelContext"
 import { CHANGED_LAYOUT_SIDE, ORIGIN_LAYOUT_SIDE } from "@apihub/types/internal/LayoutSide"
@@ -9,15 +9,18 @@ import '../../shared-styles/preceded-by.css'
 import { Expander } from "../Expander"
 import { LevelIndicator } from "../LevelIndicator"
 import { TextValue } from "../TextValue/TextValue"
-import { ATTRIBUTE_PRECEDED_BY } from "../WithPrecededByProps"
+import { ATTRIBUTE_DDL_LIST_LAST_ROW, ATTRIBUTE_PRECEDED_BY } from "../WithPrecededByProps"
 import { TitleRowContentProps, TitleRowUsage } from "./types"
 
 const TITLE_ROW_X_AXIS_PADDING_BY_USAGE: Partial<Record<TitleRowUsage, string>> = {
   [TitleRowUsage.JsoProperty]: X_AXIS_PADDING_ROWS_JSO,
+  [TitleRowUsage.DdlApiSection]: X_AXIS_PADDING_ROWS_DDL_API,
+  [TitleRowUsage.DdlApiProperty]: X_AXIS_PADDING_ROWS_DDL_API_PROPERTIES,
 }
 
 const TITLE_ROW_ADDITIONAL_CLASSES_BY_USAGE: Partial<Record<TitleRowUsage, string[]>> = {
   [TitleRowUsage.JsoProperty]: ['min-h-[26px]'],
+  [TitleRowUsage.DdlApiProperty]: ['min-h-[26px]'],
 }
 
 function getTitleRowClassesByUsage(usage: TitleRowUsage): string {
@@ -46,7 +49,7 @@ export const TitleRowContent: FC<TitleRowContentProps> = memo<TitleRowContentPro
   const { diff, descendantDiffs, diffsSeverities } = props
 
   // indents specific
-  const { [ATTRIBUTE_PRECEDED_BY]: precededBy } = props
+  const { [ATTRIBUTE_PRECEDED_BY]: precededBy, [ATTRIBUTE_DDL_LIST_LAST_ROW]: ddlListLastRow } = props
 
   const highlightingModeForKey = useMemo(() => {
     switch (usage) {
@@ -103,25 +106,29 @@ export const TitleRowContent: FC<TitleRowContentProps> = memo<TitleRowContentPro
       />
     )
   }, [enableHeaderValue, precededBy, value, variant, layoutSide, diff, usage, highlightingModeForKey, onClickExpander])
+  const isDdlApiPropertyRow = usage === TitleRowUsage.DdlApiProperty
+
   const header = useMemo(() => {
     if (!enableHeader) {
       return level > 0 && <LevelIndicator level={level} />
     }
-    return <>
-      {(expandable || level > 0) && (
-        <div data-precededby={precededBy} className="flex items-stretch self-stretch">
-          <LevelIndicator level={level} />
-          <Expander
-            expandable={expandable}
-            expanded={expanded}
-            onClick={onClickExpander}
-            level={level}
-          />
-        </div>
-      )}
-      {headerValue}
-    </>
-  }, [enableHeader, expandable, level, precededBy, expanded, onClickExpander, headerValue])
+    return (
+      <>
+        {(expandable || level > 0) && (
+          <div data-precededby={precededBy} className="level-indicator-column flex items-stretch self-stretch">
+            <LevelIndicator level={level} />
+            <Expander
+              expandable={expandable}
+              expanded={expanded}
+              onClick={onClickExpander}
+              level={level}
+            />
+          </div>
+        )}
+        {!isDdlApiPropertyRow && headerValue}
+      </>
+    )
+  }, [enableHeader, expandable, level, precededBy, expanded, onClickExpander, headerValue, isDdlApiPropertyRow])
 
   const usageDrivenClasses = useMemo(() => {
     return getTitleRowClassesByUsage(usage)
@@ -130,10 +137,16 @@ export const TitleRowContent: FC<TitleRowContentProps> = memo<TitleRowContentPro
   return (
     <div
       data-precededby={precededBy}
-      className={`title-row-content flex items-center h-full ${usageDrivenClasses} gap-2 ${diffsStyleClasses.join(' ')}`}
+      data-ddl-list-last-row={ddlListLastRow ? true : undefined}
+      className={`title-row-content flex ${isDdlApiPropertyRow ? 'items-stretch' : 'items-center'} h-full ${usageDrivenClasses} gap-2 ${diffsStyleClasses.join(' ')}`}
     >
       {header}
-      {subheader?.(layoutSide)}
+      {isDdlApiPropertyRow ? (
+        <div className="ddlapi-property-row-body flex min-w-0 flex-1 items-center gap-2">
+          {headerValue}
+          {subheader?.(layoutSide)}
+        </div>
+      ) : subheader?.(layoutSide)}
     </div>
   )
 })

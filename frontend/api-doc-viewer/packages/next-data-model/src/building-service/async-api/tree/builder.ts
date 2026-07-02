@@ -5,6 +5,7 @@ import { AsyncApiTreeNodeKind, AsyncApiTreeNodeKinds, AsyncApiTreeNodeKindsList 
 import { AsyncApiTreeNodeMeta } from "@apihub/next-data-model/model/async-api/types/node-meta";
 import { AsyncApiTreeNodeValue } from "@apihub/next-data-model/model/async-api/types/node-value";
 import { OperationKeys } from "@apihub/next-data-model/shared/async-api/types/operation-keys";
+import { AsyncApiTreeBuilderParams } from "@apihub/next-data-model/shared/async-api/types/tree-builder-params";
 import { syncCrawl } from "@netcracker/qubership-apihub-json-crawl";
 import { ComplexTreeNodeParams, ITreeNode, SimpleTreeNodeParams, TreeNodeComplexityTypes, TreeNodeParams } from "../../../model/abstract/tree/tree-node.interface";
 import { isObject } from "../../../utilities";
@@ -13,7 +14,7 @@ import { TreeBuilder } from "../../abstract/tree/builder";
 import { getAsyncApiCrawlRules } from "../json-crawl-entities/rules/rules";
 import { AsyncApiCrawlRule } from "../json-crawl-entities/rules/types";
 import { AsyncApiTreeCrawlState } from "../json-crawl-entities/state/types";
-import { AsyncApiLogger, createAsyncApiLogger } from "../logging";
+import { BuildingServiceLogger, createBuildingServiceLogger } from "../../../loggers";
 import { AsyncApiSpecTransformer } from "../shared/async-api-spec-transformer";
 import { createAsyncApiTreeBuildingHooks } from "./building-hooks";
 import { AsyncApiNodeDataBuilder } from "./node-data/builder";
@@ -36,16 +37,26 @@ export class AsyncApiTreeBuilder extends TreeBuilder<
   AsyncApiTreeNodeMeta
 > {
   public readonly tree: AsyncApiTree;
+  private readonly source: unknown;
+  private readonly referenceNamePropertyKey: symbol;
+  private readonly operationKeys?: OperationKeys;
+  private readonly logger: BuildingServiceLogger;
   private readonly specificationTransformer: AsyncApiSpecTransformer;
   private readonly nodeDataBuilder: AsyncApiNodeDataBuilder;
 
-  constructor(
-    private readonly source: unknown,
-    private readonly referenceNamePropertyKey: symbol,
-    private readonly operationKeys?: OperationKeys,
-    private readonly logger: AsyncApiLogger = createAsyncApiLogger(),
-  ) {
+  constructor(params: AsyncApiTreeBuilderParams) {
+    const {
+      source,
+      referenceNamePropertyKey,
+      operationKeys,
+      logger = createBuildingServiceLogger(),
+    } = params
+
     super()
+    this.source = source
+    this.referenceNamePropertyKey = referenceNamePropertyKey
+    this.operationKeys = operationKeys
+    this.logger = logger
     this.tree = new AsyncApiTree();
     this.specificationTransformer = new AsyncApiSpecTransformer(this.referenceNamePropertyKey, this.logger)
     this.nodeDataBuilder = new AsyncApiNodeDataBuilder()
