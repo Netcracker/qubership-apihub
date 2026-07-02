@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
@@ -30,11 +31,12 @@ type OperationGroupController interface {
 	GetOperationGroupPublishStatus(w http.ResponseWriter, r *http.Request)
 }
 
-func NewOperationGroupController(roleService service.RoleService, operationGroupService service.OperationGroupService, versionService service.VersionService, systemInfoService service.SystemInfoService) OperationGroupController {
+func NewOperationGroupController(roleService service.RoleService, operationGroupService service.OperationGroupService, versionService service.VersionService, systemInfoService service.SystemInfoService, packageService service.PackageService) OperationGroupController {
 	return &operationGroupControllerImpl{
 		roleService:           roleService,
 		operationGroupService: operationGroupService,
 		versionService:        versionService,
+		packageService:        packageService,
 		templateSizeLimit:     systemInfoService.GetTemplateSizeLimitMB(),
 	}
 }
@@ -43,6 +45,7 @@ type operationGroupControllerImpl struct {
 	roleService           service.RoleService
 	operationGroupService service.OperationGroupService
 	versionService        service.VersionService
+	packageService        service.PackageService
 	templateSizeLimit     int64
 }
 
@@ -918,6 +921,18 @@ func (o operationGroupControllerImpl) StartOperationGroupPublish(w http.Response
 			return
 		}
 	}
+
+	packageKind, err := o.packageService.GetPackageKind(req.PackageId)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to get package info", err)
+		return
+	}
+
+	if validationErr := validatePublishPackageKind(packageKind, []string{entity.KIND_PACKAGE}); validationErr != nil {
+		utils.RespondWithCustomError(w, validationErr)
+		return
+	}
+
 	_, err = view.ParseVersionStatus(req.Status)
 	if err != nil {
 		utils.RespondWithCustomError(w, &exception.CustomError{
