@@ -1,5 +1,6 @@
 import { Diff } from '../../src'
 import { CompareScope } from '../../src/types'
+import { isObject } from '../../src/utils'
 import 'jest-extended'
 import {
   TEST_SPEC_TYPE_ASYNC_API,
@@ -79,7 +80,7 @@ export function diffsMatcher(
     },
     toAsymmetricMatcher() {
       const itemStrings = compactExpected.map(item => {
-        if (item !== null && typeof item === 'object' && 'toAsymmetricMatcher' in item && typeof (item as any).toAsymmetricMatcher === 'function') {
+        if (isObject(item) && 'toAsymmetricMatcher' in item && typeof (item as any).toAsymmetricMatcher === 'function') {
           return (item as any).toAsymmetricMatcher()
         }
         try {

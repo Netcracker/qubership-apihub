@@ -6,6 +6,7 @@ import {
   allNonBreaking,
   allUnclassified,
   breaking,
+  createPropertyMappingResolver,
   deepEqualsUniqueItemsArrayMappingResolver,
   nonBreaking,
   unclassified,
@@ -15,7 +16,6 @@ import {
   START_NEW_COMPARE_SCOPE_RULE,
 } from '../types'
 import { AsyncApi3RulesOptions } from './asyncapi3.types'
-import { createPropertyMappingResolver } from './asyncapi3.mapping'
 import { schemaOrMultiFormatSchemaRules } from './asyncapi3.schema'
 import { asyncApiSpecificationExtensionRulesFunction } from './asyncapi3.compare.rules'
 import {

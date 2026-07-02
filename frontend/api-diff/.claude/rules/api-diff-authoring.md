@@ -3,6 +3,8 @@ paths:
   - "src/**/*.ts"
 ---
 
+# api-diff Authoring
+
 ## Always-on rule
 
 Do not duplicate a request rule to handle response polarity — response reversal is automatic unless a 6-tuple explicitly overrides it.

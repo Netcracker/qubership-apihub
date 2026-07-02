@@ -3,10 +3,12 @@ import { compareJsonSchema } from './jsonSchema'
 import { compareGraphApi } from './graphapi'
 import { compareAsyncApi } from './asyncapi'
 import { compareOpenApi } from './openapi'
+import { compareDdlApi } from './ddl'
 import {
   createEvaluationCacheService,
   resolveSpec,
   SPEC_TYPE_ASYNCAPI_3,
+  SPEC_TYPE_DDL_API_1,
   SPEC_TYPE_GRAPH_API,
   SPEC_TYPE_JSON_SCHEMA_04,
   SPEC_TYPE_JSON_SCHEMA_06,
@@ -44,7 +46,10 @@ function selectEngineSpecType(beforeType: SpecType, afterType: SpecType): SpecTy
   return beforeType
 }
 
-export const COMPARE_ENGINES_MAP: Record<SpecType, CompareEngine> = {
+// `Partial` is kept (defensively) even though every current `SpecType` has an engine:
+// `apiDiff` guards against a missing engine below, so a future `SpecType` member added by
+// api-unifier degrades to a clear runtime error instead of `undefined is not a function`.
+export const COMPARE_ENGINES_MAP: Partial<Record<SpecType, CompareEngine>> = {
   [SPEC_TYPE_JSON_SCHEMA_04]: compareJsonSchema(SPEC_TYPE_JSON_SCHEMA_04),
   [SPEC_TYPE_JSON_SCHEMA_06]: compareJsonSchema(SPEC_TYPE_JSON_SCHEMA_06),
   [SPEC_TYPE_JSON_SCHEMA_07]: compareJsonSchema(SPEC_TYPE_JSON_SCHEMA_07),
@@ -52,6 +57,7 @@ export const COMPARE_ENGINES_MAP: Record<SpecType, CompareEngine> = {
   [SPEC_TYPE_OPEN_API_31]: compareOpenApi(SPEC_TYPE_OPEN_API_31),
   [SPEC_TYPE_ASYNCAPI_3]: compareAsyncApi(SPEC_TYPE_ASYNCAPI_3),
   [SPEC_TYPE_GRAPH_API]: compareGraphApi,
+  [SPEC_TYPE_DDL_API_1]: compareDdlApi(SPEC_TYPE_DDL_API_1),
 }
 
 // Wrapper function. Use it!
@@ -61,7 +67,11 @@ export function apiDiff(before: unknown, after: unknown, options: CompareOptions
   if (!areSpecTypesCompatible(beforeSpec.type, afterSpec.type)) {
     throw new Error(`Specification cannot be different. Got ${beforeSpec.type} and ${afterSpec.type}`)
   }
-  const engine = COMPARE_ENGINES_MAP[selectEngineSpecType(beforeSpec.type, afterSpec.type)]
+  const engineSpecType = selectEngineSpecType(beforeSpec.type, afterSpec.type)
+  const engine = COMPARE_ENGINES_MAP[engineSpecType]
+  if (!engine) {
+    throw new Error(`No compare engine registered for specification type ${engineSpecType}`)
+  }
   return engine(before, after, {
     mode: COMPARE_MODE_DEFAULT,
     normalizedResult: DEFAULT_NORMALIZED_RESULT,
