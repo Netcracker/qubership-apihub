@@ -3,8 +3,6 @@ description: Conventions for consuming the ddlapi schema library.
 applyTo: "**/*.ts"
 ---
 
-## Skill trigger: `ddlapi-using`
-
 When writing TypeScript that imports `@netcracker/qubership-apihub-ddlapi` or
 `@netcracker/qubership-apihub-ddlapi/parser` — parsing DDL with `buildFromDdl`,
 traversing a `Realm`/`Schema`/`Table`, or constructing schema objects with its
