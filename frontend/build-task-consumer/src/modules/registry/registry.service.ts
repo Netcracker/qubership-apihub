@@ -207,9 +207,10 @@ export class RegistryService implements OnModuleInit {
     )
   }
 
-  public async getVersionDocuments(version: string, packageId: string, page: number, limit = 100, apiType?: string): Promise<ResolvedVersionDocuments | null> {
+  public async getVersionDocuments(version: string, packageId: string, page: number, limit = 100, apiType?: string, contractType?: string): Promise<ResolvedVersionDocuments | null> {
     const queryParams = new URLSearchParams()
     apiType && queryParams.append('apiType', `${apiType}`)
+    contractType && queryParams.append('contractType', `${contractType}`)
     queryParams.append('limit', `${limit}`)
     queryParams.append('page', `${page}`)
 
