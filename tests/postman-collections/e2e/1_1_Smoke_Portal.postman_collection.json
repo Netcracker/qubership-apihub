@@ -5045,19 +5045,23 @@
                             "protocolProfileBehavior": {}
                         },
                         {
-                            "name": "4.2.16 Group depend publish",
+                            "name": "4.2.16 Group depend publish (publish workspace)",
                             "event": [
                                 {
                                     "listen": "test",
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 202\", function () {\r",
-                                            "    pm.response.to.have.status(202);\r",
-                                            "});\r",
-                                            "\r",
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "pm.environment.set(\"group_publish_id\", data.publishId)"
+                                            "pm.test(\"Status code is 400\", function () {",
+                                            "    pm.response.to.have.status(400);",
+                                            "});",
+                                            "",
+                                            "pm.test(\"Invalid package kind error\", function () {",
+                                            "    const data = pm.response.json();",
+                                            "    pm.expect(data.code).to.eql(\"8400\");",
+                                            "    pm.expect(data.params.kind).to.eql(\"workspace\");",
+                                            "    pm.expect(data.params.allowedKinds).to.eql(\"package, dashboard\");",
+                                            "});"
                                         ]
                                     }
                                 },
@@ -5207,116 +5211,6 @@
                                         "{{package_1}}",
                                         "publish",
                                         "{{publish_id}}",
-                                        "status"
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.2.19 Get group build status 1",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "pm.test(\"Status is complete\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "setTimeout(function(){}, 6000)"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/QS-STATIC-TEST-2/publish/{{group_publish_id}}/status",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "QS-STATIC-TEST-2",
-                                        "publish",
-                                        "{{group_publish_id}}",
-                                        "status"
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "4.2.20 Get group build status complete",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "pm.test(\"Status is complete\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "    pm.expect(data.status).to.eql(\"complete\");\r",
-                                            "});\r",
-                                            ""
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/QS-STATIC-TEST-2/publish/{{group_publish_id}}/status",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "QS-STATIC-TEST-2",
-                                        "publish",
-                                        "{{group_publish_id}}",
                                         "status"
                                     ]
                                 },
@@ -11589,116 +11483,6 @@
                                         "{{dashboard_1}}",
                                         "publish",
                                         "{{publish_id}}",
-                                        "status"
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "5.1.19 Get group build status 1",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "pm.test(\"Status is complete\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "});\r",
-                                            "\r",
-                                            "setTimeout(function(){}, 6000)"
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/QS-STATIC-TEST-2/publish/{{group_publish_id}}/status",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "QS-STATIC-TEST-2",
-                                        "publish",
-                                        "{{group_publish_id}}",
-                                        "status"
-                                    ]
-                                },
-                                "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "api-key",
-                                        "value": "{{at-api-key}}",
-                                        "type": "default"
-                                    }
-                                ]
-                            },
-                            "response": [],
-                            "protocolProfileBehavior": {}
-                        },
-                        {
-                            "name": "5.1.20 Get group build status complete",
-                            "event": [
-                                {
-                                    "listen": "test",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            "var data = JSON.parse(responseBody);\r",
-                                            "pm.test(\"Status is complete\", function () {\r",
-                                            "    pm.response.to.have.status(200);\r",
-                                            "    pm.expect(data.status).to.eql(\"complete\");\r",
-                                            "});\r",
-                                            ""
-                                        ]
-                                    }
-                                },
-                                {
-                                    "listen": "prerequest",
-                                    "script": {
-                                        "type": "text/javascript",
-                                        "exec": [
-                                            ""
-                                        ]
-                                    }
-                                }
-                            ],
-                            "request": {
-                                "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v2/packages/QS-STATIC-TEST-2/publish/{{group_publish_id}}/status",
-                                    "host": [
-                                        "{{SERVER_HOST}}"
-                                    ],
-                                    "path": [
-                                        "api",
-                                        "v2",
-                                        "packages",
-                                        "QS-STATIC-TEST-2",
-                                        "publish",
-                                        "{{group_publish_id}}",
                                         "status"
                                     ]
                                 },
