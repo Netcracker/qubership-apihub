@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ApihubApiCompatibilityKind } from '../../consts'
+import { ApihubApiCompatibilityKind, ContractType } from '../../consts'
 import { FileFormat } from '../internal'
 import { ResolvedReferenceMap } from './references'
 import { FileId, OperationsApiType, PackageId, TemplatePath, VersionId } from './types'
@@ -34,6 +34,7 @@ export type VersionDocumentsResolver = (
   version: VersionId,
   packageId: PackageId,
   apiType?: OperationsApiType,
+  contractType?: ContractType,
 ) => Promise<ResolvedVersionDocuments | null>
 
 export type ResolvedVersionDocuments = {

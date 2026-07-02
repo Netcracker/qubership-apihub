@@ -40,9 +40,11 @@ import {
 import { unknownApiBuilder } from '../apitypes'
 import { BUILD_TYPE, FILE_FORMAT_JSON, MESSAGE_SEVERITY, PACKAGE } from '../consts'
 import { EXPORT_FORMAT_TO_FILE_FORMAT, takeIf, toPackageDocument } from '../utils'
-import { toVersionsComparisonDto } from '../utils/transformToDto'
+import { toDdlComparisonDto, toVersionsComparisonDto } from '../utils/transformToDto'
 import { groupMcpEntitiesByKind } from './mcp'
 import { McpEntityIndex } from '../types/package/mcp'
+import { groupDdlEntitiesByKind } from './ddl'
+import { DdlEntityIndex } from '../types/package/ddl'
 
 export interface ZipTool {
   // todo method should only accept Blob content, transformation is not a responsibility of this method
@@ -67,7 +69,12 @@ export const createVersionPackage = async (
     ...buildResult,
     comparisons: buildResult.comparisons.map(comparison => toVersionsComparisonDto(comparison, ctx.normalizedSpecFragmentsHashCache, logError)),
   }
-  const comparisonInternalDocuments: ComparisonInternalDocument[] = buildResult.comparisons.map(comparison => comparison.comparisonInternalDocuments).flat()
+  // comparison-internal documents are shared between operation and DDL comparisons (the merged REST docs
+  // and merged Realms land in the same index/dir)
+  const comparisonInternalDocuments: ComparisonInternalDocument[] = [
+    ...buildResult.comparisons.flatMap(comparison => comparison.comparisonInternalDocuments),
+    ...buildResult.ddlComparisons.flatMap(comparison => comparison.comparisonInternalDocuments),
+  ]
 
   const documents = buildResultDto.merged ? [buildResultDto.merged] : [...buildResultDto.documents.values()]
 
@@ -104,6 +111,10 @@ export const createVersionPackage = async (
     createMcpFiles(zip, buildResultDto.mcpEntities)
   }
 
+  if (buildResultDto.ddlEntities.size) {
+    createDdlFiles(zip, buildResultDto.ddlEntities)
+  }
+
   if (buildResultDto.comparisons.length) {
     const comparisons: PackageComparison[] = buildResultDto.comparisons.map(({ data, ...rest }) => rest)
     createComparisonsFile(zip, { comparisons })
@@ -113,10 +124,25 @@ export const createVersionPackage = async (
       if (!comparison.comparisonFileId || !comparison.data) { continue }
       createComparisonDataFile(comparisonsDir!, comparison.comparisonFileId, { operations: comparison.data })
     }
-    if (comparisonInternalDocuments.length) {
-      createComparisonInternalDocumentsFile(zip, comparisonInternalDocuments)
-      await createComparisonInternalDocumentDataFiles(zip, comparisonInternalDocuments)
+  }
+
+  // DDL comparisons go to their own sibling files (ddl-comparisons.json + ddl-comparisons/<id>),
+  // leaving the operation comparisons untouched (AD2). The per-pair wrapper key is `entities` (C2).
+  const ddlComparisonsDto = buildResult.ddlComparisons.map(comparison => toDdlComparisonDto(comparison, ctx.normalizedSpecFragmentsHashCache, logError))
+  if (ddlComparisonsDto.length) {
+    const ddlComparisonIndex = ddlComparisonsDto.map(({ data, ...rest }) => rest)
+    zip.file(PACKAGE.DDL_COMPARISONS_FILE_NAME, { comparisons: ddlComparisonIndex })
+    const ddlComparisonsDir = zip.folder(PACKAGE.DDL_COMPARISONS_DIR_NAME)
+    for (const comparison of ddlComparisonsDto) {
+      if (!comparison.comparisonFileId || !comparison.data) { continue }
+      ddlComparisonsDir!.file(comparison.comparisonFileId, { entities: comparison.data })
     }
+  }
+
+  // shared comparison-internal documents (operation merged docs + DDL merged Realms)
+  if (comparisonInternalDocuments.length) {
+    createComparisonInternalDocumentsFile(zip, comparisonInternalDocuments)
+    await createComparisonInternalDocumentDataFiles(zip, comparisonInternalDocuments)
   }
 
   createNotificationsFile(zip, { notifications: buildResultDto.notifications })
@@ -304,5 +330,14 @@ const createMcpFiles = (zip: ZipTool, mcpEntities: McpEntityIndex): void => {
   const mcpDir = zip.folder(PACKAGE.MCP_DIR_NAME)
   for (const entity of mcpEntities.values()) {
     mcpDir.file(entity.mcpEntityId, entity.data)
+  }
+}
+
+const createDdlFiles = (zip: ZipTool, ddlEntities: DdlEntityIndex): void => {
+  zip.file(PACKAGE.DDL_FILE_NAME, groupDdlEntitiesByKind(ddlEntities))
+  const ddlDir = zip.folder(PACKAGE.DDL_DIR_NAME)
+  for (const entity of ddlEntities.values()) {
+    // per-entity SQL, named by ddlEntityId, no extension (as operations/ and mcp/)
+    ddlDir.file(entity.ddlEntityId, entity.data)
   }
 }

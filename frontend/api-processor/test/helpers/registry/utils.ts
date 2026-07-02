@@ -35,6 +35,9 @@ import { PACKAGE } from '../../../src/consts'
 import { toPackageDocument } from '../../../src/utils'
 import { groupMcpEntitiesByKind } from '../../../src/components/mcp'
 import { McpEntityIndex } from '../../../src/types/package/mcp'
+import { groupDdlEntitiesByKind } from '../../../src/components/ddl'
+import { DdlEntityIndex } from '../../../src/types/package/ddl'
+import { DdlComparisonDto } from '../../../src/types/internal/compare'
 
 export async function saveComparisonsArray(
   comparisons: VersionsComparisonDto[],
@@ -89,6 +92,29 @@ export async function saveEachComparison(
     comparison.comparisonFileId && await registryFs.writeFile(
       `${basePath}/${PACKAGE.COMPARISONS_DIR_NAME}/${comparison.comparisonFileId}.${FILE_FORMAT_JSON}`,
       JSON.stringify({ operations: comparison.data }, undefined, 2),
+    )
+  }
+}
+
+export async function saveDdlComparisons(
+  comparisons: DdlComparisonDto[],
+  basePath: string,
+): Promise<void> {
+  if (!comparisons.length) {
+    return
+  }
+  // index: ddl-comparisons.json (per-pair data stripped)
+  const index = comparisons.map(({ data, ...rest }) => rest)
+  await registryFs.writeFile(
+    `${basePath}/${PACKAGE.DDL_COMPARISONS_FILE_NAME}`,
+    JSON.stringify({ comparisons: index }, undefined, 2),
+  )
+  // per-pair: ddl-comparisons/<comparisonFileId> with `entities` wrapper key (C2)
+  await registryFs.mkdir(`${basePath}/${PACKAGE.DDL_COMPARISONS_DIR_NAME}`, { recursive: true })
+  for (const comparison of comparisons) {
+    comparison.comparisonFileId && await registryFs.writeFile(
+      `${basePath}/${PACKAGE.DDL_COMPARISONS_DIR_NAME}/${comparison.comparisonFileId}.${FILE_FORMAT_JSON}`,
+      JSON.stringify({ entities: comparison.data }, undefined, 2),
     )
   }
 }
@@ -307,5 +333,22 @@ export async function saveMcpEntities(
 
   for (const entity of mcpEntities.values()) {
     await registryFs.writeFile(`${mcpDir}/${entity.mcpEntityId}`, JSON.stringify(entity.data, undefined, 2))
+  }
+}
+
+export async function saveDdlEntities(
+  ddlEntities: DdlEntityIndex | undefined,
+  basePath: string,
+): Promise<void> {
+  if (!ddlEntities?.size) { return }
+
+  await registryFs.writeFile(`${basePath}/${PACKAGE.DDL_FILE_NAME}`, JSON.stringify(groupDdlEntitiesByKind(ddlEntities), undefined, 2))
+
+  const ddlDir = `${basePath}/${PACKAGE.DDL_DIR_NAME}`
+  await registryFs.mkdir(ddlDir, { recursive: true })
+
+  for (const entity of ddlEntities.values()) {
+    // per-entity SQL, named by ddlEntityId, no extension
+    await registryFs.writeFile(`${ddlDir}/${entity.ddlEntityId}`, entity.data)
   }
 }

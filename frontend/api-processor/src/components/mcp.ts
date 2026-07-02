@@ -87,7 +87,7 @@ const KIND_TO_FIELD: Record<McpKind, keyof PackageMcpFile> = {
 export function groupMcpEntitiesByKind(entities: McpEntityIndex): PackageMcpFile {
   const grouped: PackageMcpFile = { inits: [], tools: [], resources: [], prompts: [] }
   for (const { data: _data, ...index } of entities.values()) {
-    // strip the payload (`data`) — mcp.json is the lightweight index; payloads live in mcp/{id}.json
+    // strip the payload (`data`) — mcp.json is the lightweight index; payloads live in mcp/{id}
     grouped[KIND_TO_FIELD[index.kind]].push(index)
   }
   return grouped

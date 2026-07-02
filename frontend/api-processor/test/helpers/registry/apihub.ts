@@ -37,7 +37,7 @@ import {
   textApiBuilder,
   unknownApiBuilder,
   VersionId,
-} from '../../../src'
+} from '../../../src/processor'
 import { IRegistry } from './types'
 import AdmZip from 'adm-zip'
 import { registryFs } from './fs'
@@ -51,9 +51,9 @@ import {
   saveEachOperation,
   saveInfo,
   saveNotifications,
-  saveMcpEntities, saveOperationsArray, saveSearchTextFiles, saveVersionInternalDocuments, saveVersionInternalDocumentsArray,
+  saveMcpEntities, saveDdlEntities, saveDdlComparisons, saveOperationsArray, saveSearchTextFiles, saveVersionInternalDocuments, saveVersionInternalDocumentsArray,
 } from './utils'
-import { toVersionsComparisonDto } from '../../../src/utils/transformToDto'
+import { toDdlComparisonDto, toVersionsComparisonDto } from '../../../src/utils/transformToDto'
 
 export const VERSIONS_PATH = 'test/versions'
 
@@ -100,8 +100,10 @@ export class ApihubRegistry implements IRegistry {
       operations,
       documents,
       comparisons,
+      ddlComparisons,
       notifications,
       mcpEntities,
+      ddlEntities,
     } = buildResult
 
     const basePath = `${VERSIONS_PATH}/${config.packageId}/${config.version}`
@@ -131,16 +133,22 @@ export class ApihubRegistry implements IRegistry {
     await saveEachOperation(operations, basePath)
     await saveSearchTextFiles(operations, basePath)
     const comparisonsDto = comparisons.map(comparison => toVersionsComparisonDto(comparison, builderContext.normalizedSpecFragmentsHashCache, logError))
-    const comparisonInternalDocuments: ComparisonInternalDocument[] = comparisons.map(comparison => comparison.comparisonInternalDocuments).flat()
+    const ddlComparisonsDto = ddlComparisons.map(comparison => toDdlComparisonDto(comparison, builderContext.normalizedSpecFragmentsHashCache, logError))
+    const comparisonInternalDocuments: ComparisonInternalDocument[] = [
+      ...comparisons.flatMap(comparison => comparison.comparisonInternalDocuments),
+      ...ddlComparisons.flatMap(comparison => comparison.comparisonInternalDocuments),
+    ]
 
     await saveComparisonsArray(comparisonsDto, basePath)
     await saveEachComparison(comparisonsDto, basePath)
+    await saveDdlComparisons(ddlComparisonsDto, basePath)
     await saveNotifications(notifications, basePath)
     await saveVersionInternalDocuments(documents, basePath)
     await saveComparisonInternalDocuments(comparisonInternalDocuments, basePath)
     await saveComparisonInternalDocumentsArray(comparisonInternalDocuments, basePath)
 
     await saveMcpEntities(mcpEntities, basePath)
+    await saveDdlEntities(ddlEntities, basePath)
   }
 
   get versionResolvers(): BuilderResolvers {

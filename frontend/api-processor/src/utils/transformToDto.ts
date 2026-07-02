@@ -21,6 +21,11 @@ import { AFTER_VALUE_NORMALIZED_PROPERTY, BEFORE_VALUE_NORMALIZED_PROPERTY } fro
 import {
   ChangeMessage,
   ChangeSummary,
+  DdlChanges,
+  DdlChangesDto,
+  DdlComparison,
+  DdlComparisonDto,
+  DdlContractsChangesSummary,
   DiffTypeDto,
   OperationChanges,
   OperationChangesDto,
@@ -167,6 +172,71 @@ export function toVersionsComparisonDto({
     }),
     data: data?.map(data => toOperationChangesDto(data, normalizedSpecFragmentsHashCache, logError)),
   }
+}
+
+export function toDdlChangesDto(
+  {
+    ddlEntityId,
+    previousDdlEntityId,
+    metadata,
+    previousMetadata,
+    diffs,
+    changeSummary,
+    comparisonInternalDocumentId,
+  }: DdlChanges,
+  normalizedSpecFragmentsHashCache: ObjectHashCache,
+  logError: (message: string) => void,
+): DdlChangesDto {
+  return {
+    // group each side's id + descriptor; the side is present when its table exists and
+    // omitted entirely for the absent side of a pure add/remove. The id guard narrows away `undefined`.
+    ...(ddlEntityId !== undefined && metadata && {
+      ddlEntityData: { ddlEntityId, ...metadata },
+    }),
+    ...(previousDdlEntityId !== undefined && previousMetadata && {
+      previousDdlEntityData: { ddlEntityId: previousDdlEntityId, ...previousMetadata },
+    }),
+    changeSummary: replacePropertyInChangesSummary<DiffType, DiffTypeDto>(changeSummary, {
+      origin: risky,
+      override: SEMI_BREAKING_CHANGE_TYPE,
+    }),
+    ...(comparisonInternalDocumentId !== undefined && { comparisonInternalDocumentId }),
+    changes: diffs?.map(diff => toChangeMessage(diff, normalizedSpecFragmentsHashCache, logError)),
+  }
+}
+
+export function toDdlComparisonDto({
+  data,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  comparisonInternalDocuments,
+  ...rest
+}: DdlComparison, normalizedSpecFragmentsHashCache: ObjectHashCache, logError: (message: string) => void): DdlComparisonDto {
+  return {
+    ...rest,
+    contractsChangesSummary: convertDtoFieldContractsChangesSummary<DiffType, DiffTypeDto>(rest.contractsChangesSummary, {
+      origin: risky,
+      override: SEMI_BREAKING_CHANGE_TYPE,
+    }),
+    data: data?.map(entry => toDdlChangesDto(entry, normalizedSpecFragmentsHashCache, logError)),
+  }
+}
+
+export function convertDtoFieldContractsChangesSummary<
+  T extends DiffTypeDto | DiffType = DiffTypeDto,
+  J extends DiffTypeDto | DiffType = DiffType>
+(contractsChangesSummary: DdlContractsChangesSummary<T>, {
+  origin,
+  override,
+}: OptionDiffReplacer = { origin: SEMI_BREAKING_CHANGE_TYPE, override: risky }): DdlContractsChangesSummary<J> {
+  const result: DdlContractsChangesSummary<J> = {}
+  for (const [contractType, summary] of Object.entries(contractsChangesSummary) as [keyof DdlContractsChangesSummary<T>, DdlContractsChangesSummary<T>[keyof DdlContractsChangesSummary<T>]][]) {
+    if (!summary) { continue }
+    result[contractType] = {
+      changesSummary: replacePropertyInChangesSummary<T, J>(summary.changesSummary, { origin, override }),
+      numberOfImpactedEntities: replacePropertyInChangesSummary<T, J>(summary.numberOfImpactedEntities, { origin, override }),
+    }
+  }
+  return result
 }
 
 export function convertDtoFieldOperationTypes<

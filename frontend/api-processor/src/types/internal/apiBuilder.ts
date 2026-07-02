@@ -41,14 +41,17 @@ import { TEXT_API_TYPE, UNKNOWN_API_TYPE } from '../../apitypes'
 import { SourceFile, TextFile } from './internal'
 import { ApiOperation } from './operation'
 import { McpEntity } from '../package/mcp'
+import { DdlEntity, DdlEntityId } from '../package/ddl'
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
+import { Realm } from '@netcracker/qubership-apihub-ddlapi'
 import { ResolvedPackage } from '../external/package'
 import {
   ASYNCAPI_API_TYPE,
+  DDL_CONTRACT_TYPE,
   FILE_FORMAT_JSON,
   FILE_FORMAT_YAML,
   GRAPHQL_API_TYPE,
-  MCP_API_TYPE,
+  MCP_CONTRACT_TYPE,
   REST_API_TYPE,
 } from '../../consts'
 import { OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier'
@@ -61,7 +64,8 @@ export type BuilderType =
   | typeof ASYNCAPI_API_TYPE
   | typeof TEXT_API_TYPE
   | typeof UNKNOWN_API_TYPE
-  | typeof MCP_API_TYPE
+  | typeof MCP_CONTRACT_TYPE
+  | typeof DDL_CONTRACT_TYPE
 
 export interface BuilderContext<T = any> {
   apiBuilders: ApiBuilder<T>[]
@@ -122,6 +126,7 @@ export type DocumentBuilder<T> = (parsedFile: TextFile<T>, file: BuildConfigFile
 export type OperationsBuilder<T, M = any> = (document: VersionDocument<T>, ctx: BuilderContext<T>) => Promise<ApiOperation<M>[]>
 export type DocumentDumper<T> = (document: ZippableDocument<T>, format?: typeof FILE_FORMAT_YAML | typeof FILE_FORMAT_JSON) => Blob
 export type McpEntitiesBuilder<T> = (document: VersionDocument<T>, file: BuildConfigFile) => McpEntity[]
+export type DdlEntitiesBuilder<T> = (document: VersionDocument<T>, file: BuildConfigFile) => DdlEntity[]
 export type OperationDataCompare<T> = (current: T, previous: T, ctx: CompareOperationsPairContext) => Promise<Diff[]>
 export type DocumentsCompareData = {
   operationChanges: OperationChanges[]
@@ -142,6 +147,32 @@ export type DocumentExporter = (
   addBackLink?: boolean,
 ) => Promise<ExportDocument>
 
+// ---- DDL per-document-pair compare hook ----
+// `compareVersionsDdl` (Task 9) owns resolution + ddlEntityId pairing (incl. cross-file moves) and
+// calls this once per resolved Realm pair. A one-sided pair (whole .sql added/removed) passes
+// `undefined` on the missing side; the hook builds the empty counterpart internally (analog of REST's
+// createCopyWithEmptyPathItems). The hook runs apiDiff, walks the merged Realm, and fans shared-type
+// diffs out to every referencing table (D2).
+export interface DdlComparePairContext {
+  previousVersion: VersionId
+  currentVersion: VersionId
+  previousPackageId: PackageId
+  currentPackageId: PackageId
+  notifications: NotificationMessage[]
+  normalizedSpecFragmentsHashCache: ObjectHashCache
+}
+
+export interface DdlDiffResult {
+  changesByEntityId: Map<DdlEntityId, Diff[]> // a shared-type diff appears under each referencing id (D2)
+  mergedRealm: Realm // serialized to the comparison-internal doc, REST merged form (D5)
+}
+
+export type DdlDocumentsCompare = (
+  prevRealm: Realm | undefined,
+  currRealm: Realm | undefined,
+  ctx: DdlComparePairContext,
+) => DdlDiffResult
+
 export interface ApiBuilder<T = any, O = any, M = any> {
   apiType: BuilderType
   types: string[]
@@ -150,8 +181,10 @@ export interface ApiBuilder<T = any, O = any, M = any> {
   dumpDocument: DocumentDumper<T>
   buildOperations?: OperationsBuilder<T, M>
   buildMcpEntities?: McpEntitiesBuilder<T>
+  buildDdlEntities?: DdlEntitiesBuilder<T>
   compareOperationsData?: OperationDataCompare<O>
   compareDocuments?: DocumentsCompare
+  compareDdlDocuments?: DdlDocumentsCompare
   createNormalizedOperationId?: OperationIdNormalizer
   createExportDocument?: DocumentExporter
 }

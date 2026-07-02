@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { BuildConfig, BuilderStrategy, BuildResult, BuildTypeContexts, VersionCache } from '../types'
+import { BuildConfig, BuilderStrategy, BuildResult, BuildTypeContexts, VersionCache, VersionDocument } from '../types'
 import { compareVersions } from '../components'
 import { applyBuilderVersionInfo } from '../validators'
 import { getOperationsList } from '../utils'
@@ -27,8 +27,10 @@ import {
   validateMcpInitRequired,
   validateMcpProtocolVersion,
 } from '../components/mcp'
+import { createDuplicateDdlEntityHandler, processDdlDocument } from '../components/ddl'
+import { ParsedDdlData, validateDdlDocument } from '../apitypes/ddl'
 import { calculateHistoryForDeprecatedItems } from '../components/deprecated'
-import { MCP_API_TYPE, REST_API_TYPE } from '../consts'
+import { DDL_CONTRACT_TYPE, MCP_CONTRACT_TYPE, REST_API_TYPE } from '../consts'
 
 export class BuildStrategy implements BuilderStrategy {
   async execute(config: BuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
@@ -59,13 +61,19 @@ export class BuildStrategy implements BuilderStrategy {
 
       const handleDuplicateOperation = createDuplicateOperationHandler(buildResult)
       const handleDuplicateMcp = createDuplicateMcpEntityHandler()
+      const handleDuplicateDdl = createDuplicateDdlEntityHandler()
 
       for (const { file, document, builder } of buildFilesResult) {
         buildResult.documents.set(document.fileId, document)
         if (!builder || document.publish === false) { continue }
 
-        if (builder.apiType === MCP_API_TYPE) {
+        if (builder.apiType === MCP_CONTRACT_TYPE) {
           processMcpDocument(file, document, builder, buildResult, handleDuplicateMcp)
+        } else if (builder.apiType === DDL_CONTRACT_TYPE) {
+          // map parse issues to notifications (Warning for out-of-scope/unresolved, Error for
+          // duplicate-object which throws and breaks the publish) before indexing entities (Task 12)
+          validateDdlDocument(document as VersionDocument<ParsedDdlData>, buildResult.notifications)
+          processDdlDocument(file, document, builder, buildResult, handleDuplicateDdl)
         } else {
           await processOperationDocument(document, builder, builderContextObject, buildResult, handleDuplicateOperation)
         }
@@ -95,6 +103,7 @@ export class BuildStrategy implements BuilderStrategy {
         compareContextObject,
       )
       buildResult.comparisons = compareResult.comparisons
+      buildResult.ddlComparisons = compareResult.ddlComparisons
       applyBuilderVersionInfo(config, compareResult)
     }
 

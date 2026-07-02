@@ -27,5 +27,5 @@ export const MCP_DOCUMENT_TYPE = {
 export type McpDocumentType = typeof MCP_DOCUMENT_TYPE[keyof typeof MCP_DOCUMENT_TYPE]
 
 export function isMcpDocument(document: ZippableDocument | ResolvedVersionDocument): boolean {
-  return Object.values(MCP_DOCUMENT_TYPE).includes(document.type as McpDocumentType)
+  return Object.values(MCP_DOCUMENT_TYPE).some(type => document.type === type)
 }

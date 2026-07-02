@@ -1,0 +1,28 @@
+lockfile_version: '1'
+generated_at: '2026-07-01T14:00:11.350524+00:00'
+apm_version: 0.22.0
+dependencies:
+- repo_url: Netcracker/qubership-apihub-ddlapi
+  name: ddlapi-using
+  host: github.com
+  resolved_commit: c6e3c37c28ef93728dc640404e57021f522602e2
+  resolved_ref: feature/ddl
+  version: 1.1.0
+  virtual_path: agent-packages/ddlapi-using
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/ddlapi-using
+  - .agents/skills/ddlapi-using/SKILL.md
+  - .claude/rules/ddlapi-using.md
+  - .claude/skills/ddlapi-using
+  - .claude/skills/ddlapi-using/SKILL.md
+  - .cursor/rules/ddlapi-using.mdc
+  - .github/instructions/ddlapi-using.instructions.md
+  deployed_file_hashes:
+    .agents/skills/ddlapi-using/SKILL.md: sha256:10d3258b73ec7e83a064a430d14236b86e920d33e84d1ffcc9091f653685280f
+    .claude/rules/ddlapi-using.md: sha256:6aaa86c79159406265060e4d0f3ce2d903f3e5a7054acfbaeba0f475e383d0b8
+    .claude/skills/ddlapi-using/SKILL.md: sha256:10d3258b73ec7e83a064a430d14236b86e920d33e84d1ffcc9091f653685280f
+    .cursor/rules/ddlapi-using.mdc: sha256:61d2af786a6623c3857ed87edd5cb3d212f0c6d18e98c9b71da843a3873cb27a
+    .github/instructions/ddlapi-using.instructions.md: sha256:a12f9f14d89ba48e3ef6631e1727f9f26c908d573c7ea836c3b44873672be558
+  content_hash: sha256:1dfe34653091849ca05e21b22f6356124986a1b6fd4916623f296f57bada63aa

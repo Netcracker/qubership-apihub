@@ -18,6 +18,7 @@ import { DeprecateItem, OperationsApiType } from '../external'
 import { ApiAudience } from '../package'
 import { OpenAPIV3 } from 'openapi-types'
 import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
+import { Realm } from '@netcracker/qubership-apihub-ddlapi'
 import { ApihubApiCompatibilityKind } from '../../consts'
 import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
 
@@ -61,4 +62,6 @@ export interface ApiOperation<T = any, M = any> {
   versionInternalDocumentId: string
 }
 
-export type ApiDocument = OpenAPIV3.Document | GraphApiSchema | AsyncAPIV3.AsyncAPIObject
+// `Realm` is included so the DDL version-internal / comparison documents serialize through the same
+// `serializeDocument` / `denormalize` path as REST (AD3; plan Tasks 3 & 8).
+export type ApiDocument = OpenAPIV3.Document | GraphApiSchema | AsyncAPIV3.AsyncAPIObject | Realm

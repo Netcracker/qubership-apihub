@@ -44,6 +44,14 @@ export const buildMcpEntities: McpEntitiesBuilder<ParsedMcpData> = (document, fi
   if (!isString(mcpEndpoint)) {
     throw new Error(`MCP file '${file.fileId}' is missing required metadata.mcpEndpoint`)
   }
+  // the endpoint is the entity scope and must be a relative path (e.g. `/mcp`), never an absolute URL:
+  // it feeds mcpEntityId (leading slash dropped) and the version contracts summary, both of which assume
+  // a leading-slash path. Reject absolute URLs and protocol-relative `//host` authorities up front.
+  if (!mcpEndpoint.startsWith('/') || mcpEndpoint.startsWith('//')) {
+    throw new Error(
+      `MCP file '${file.fileId}' has an invalid metadata.mcpEndpoint '${mcpEndpoint}': must be a relative path starting with '/' (e.g. '/mcp'), not an absolute URL`,
+    )
+  }
 
   const { data } = document
   if (!data?.entities) { return [] }

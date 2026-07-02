@@ -31,7 +31,7 @@ import {
   VERSION_VALIDATION_LEVEL,
   PackageVersionBuilder,
   VersionValidationLevel,
-} from '../../src'
+} from '../../src/processor'
 import { buildSchema, introspectionFromSchema } from 'graphql/utilities'
 import { LocalRegistry, VersionOverrideRegistry } from './registry'
 import { Editor } from './editor'

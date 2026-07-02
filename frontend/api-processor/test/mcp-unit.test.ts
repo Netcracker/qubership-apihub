@@ -487,4 +487,15 @@ describe('buildMcpEntities metadata requirement', () => {
     const document = makeMcpDocument('tools.json', MCP_DOCUMENT_TYPE.MCP_TOOLS, { entities: [], originalDocument: { tools: [] } })
     expect(() => buildMcpEntities(document, { fileId: 'tools.json', metadata: {} })).toThrow(/missing required metadata.mcpEndpoint/)
   })
+
+  // the endpoint must be a relative path (`/mcp`), not an absolute URL — it feeds mcpEntityId and the
+  // version contracts summary, both of which assume a leading-slash path
+  test.each([
+    'https://api.example.com/mcp', // absolute URL
+    '//api.example.com/mcp', // protocol-relative authority
+    'mcp', // missing leading slash
+  ])('should throw when mcpEndpoint is not a relative path (%s)', (mcpEndpoint) => {
+    const document = makeMcpDocument('tools.json', MCP_DOCUMENT_TYPE.MCP_TOOLS, { entities: [], originalDocument: { tools: [] } })
+    expect(() => buildMcpEntities(document, { fileId: 'tools.json', metadata: { mcpEndpoint } })).toThrow(/must be a relative path/)
+  })
 })

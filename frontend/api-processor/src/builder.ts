@@ -35,6 +35,7 @@ import {
   ResolvedVersionDocuments,
   VersionId,
   VersionsComparison,
+  DdlComparison,
 } from './types'
 import {
   ApiBuilder,
@@ -52,7 +53,7 @@ import {
   VersionCache,
   VersionDocument,
 } from './types/internal'
-import type { McpEntityIndex, NotificationMessage, PackageConfig } from './types/package'
+import type { DdlEntityIndex, McpEntityIndex, NotificationMessage, PackageConfig } from './types/package'
 import {
   asyncApiBuilder,
   graphqlApiBuilder,
@@ -61,13 +62,15 @@ import {
   textApiBuilder,
   unknownApiBuilder,
 } from './apitypes'
+import { ddlBuilder } from './apitypes/ddl/ddl.builder'
 import { filesDiff, findSharedPath, getCompositeKey, getFileExtension, getOperationsList } from './utils'
 import {
   BUILD_TYPE,
+  ContractType,
   DEFAULT_BATCH_SIZE,
   DEFAULT_VALIDATION_RULES_SEVERITY_CONFIG,
   EXPORT_BUILD_TYPES,
-  MCP_API_TYPE,
+  MCP_CONTRACT_TYPE,
   MESSAGE_SEVERITY,
   REST_API_TYPE,
   SUPPORTED_FILE_FORMATS,
@@ -110,6 +113,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
   exportFileName?: string
   operations = new Map<string, ApiOperation>()
   comparisons: VersionsComparison[] = []
+  ddlComparisons: DdlComparison[] = []
 
   versionsCache = new Map<string, VersionCache>()
   referencesCache = new Map<string, BuildConfigRef[]>()
@@ -124,12 +128,14 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
 
   mcpEntities: McpEntityIndex = new Map()
 
+  ddlEntities: DdlEntityIndex = new Map()
+
   readonly parsedFiles: Map<string, SourceFile> = new Map()
 
   private basePath: string = ''
 
   constructor(config: BuildConfig, public params: BuilderParams, fileSources?: FileSourceMap) {
-    this.apiBuilders.push(restApiBuilder, graphqlApiBuilder, asyncApiBuilder, mcpBuilder, textApiBuilder, unknownApiBuilder)
+    this.apiBuilders.push(restApiBuilder, graphqlApiBuilder, asyncApiBuilder, mcpBuilder, ddlBuilder, textApiBuilder, unknownApiBuilder)
     this.config = {
       previousVersion: '',
       previousVersionPackageId: '',
@@ -184,6 +190,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     return {
       operations: this.operations,
       comparisons: this.comparisons,
+      ddlComparisons: this.ddlComparisons,
       documents: this.documents,
       exportDocuments: this.exportDocuments,
       exportFileName: this.exportFileName,
@@ -191,18 +198,21 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
       notifications: this.notifications,
       merged: this.merged,
       mcpEntities: this.mcpEntities,
+      ddlEntities: this.ddlEntities,
     }
   }
 
   private setBuildResult(buildResult: BuildResult): void {
     this.operations = buildResult.operations
     this.comparisons = buildResult.comparisons
+    this.ddlComparisons = buildResult.ddlComparisons
     this.documents = buildResult.documents
     this.exportDocuments = buildResult.exportDocuments
     this.exportFileName = buildResult.exportFileName
     this.notifications = buildResult.notifications
     this.merged = buildResult.merged
     this.mcpEntities = buildResult.mcpEntities
+    this.ddlEntities = buildResult.ddlEntities
   }
 
   builderContext(config: BuildConfigBase): BuilderContext {
@@ -518,13 +528,16 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     version: VersionId,
     packageId: PackageId,
     apiType?: OperationsApiType,
+    contractType?: ContractType,
   ): Promise<ResolvedVersionDocuments | null> {
     packageId = packageId ?? this.config.packageId
     if (this.canBeResolvedLocally(version, packageId)) {
       // this is the case when a version has been built just now, and there's nothing to fetch yet, so
       // the only way to get the docs is to get them from buildResult, but the referenced packages map will be empty (packages: {})
-      if (apiType) {
-        const apiBuilder = this.findApiBuilderByApiType(apiType)
+      // apiType and contractType both map to a builder's apiType (e.g. 'rest', 'ddl') for local filtering
+      const filterType = apiType ?? contractType
+      if (filterType) {
+        const apiBuilder = this.findApiBuilderByApiType(filterType)
         return { documents: this.documentList.filter(({ type }) => apiBuilder.types.includes(type)), packages: {} }
       }
       return { documents: this.documentList, packages: {} }
@@ -539,9 +552,13 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
       version,
       packageId,
       apiType,
+      contractType,
     )
 
-    if (!documents?.documents.length) {
+    // Contract-type queries (e.g. DDL — AD6) are additive and resolved speculatively, so an empty result
+    // is normal and must NOT warn. apiType queries are gated upstream by the version's operationTypes, so
+    // an empty result there is still worth a warning.
+    if (!documents?.documents.length && !contractType) {
       this.notifications.push({
         severity: MESSAGE_SEVERITY.Warning,
         message: `No documents for ${packageId}/${version} that match the criteria (apiType=${apiType})`,
@@ -792,9 +809,11 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
         this.compareContext(this.config),
       )
       this.comparisons = compareResult.comparisons
+      this.ddlComparisons = compareResult.ddlComparisons
       applyBuilderVersionInfo(this.config, compareResult)
     } else if (!previousVersion) {
       this.comparisons = []
+      this.ddlComparisons = []
     }
 
     if (version !== previousConfig.version) {
@@ -908,7 +927,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
       this.documents.set(document.fileId, document)
       if (!builder || document.publish === false) { continue }
 
-      if (builder.apiType === MCP_API_TYPE) {
+      if (builder.apiType === MCP_CONTRACT_TYPE) {
         processMcpDocument(file, document, builder, mcpCtx, handleDuplicateMcp)
         hasMcpChanges = true
       } else {
@@ -937,7 +956,9 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     this.exportDocuments = []
     this.exportFileName = undefined
     this.comparisons = []
+    this.ddlComparisons = []
     this.mcpEntities = new Map()
+    this.ddlEntities = new Map()
 
     this.notifications = []
   }

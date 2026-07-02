@@ -23,7 +23,7 @@ import {
   ResolvedVersion,
   VersionId,
 } from '../external'
-import { VersionsComparison, VersionsComparisonDto } from './compare'
+import { DdlComparison, VersionsComparison, VersionsComparisonDto } from './compare'
 import { PackageConfig } from '../package/config'
 import { NotificationMessage } from '../package/notifications'
 import { ExportDocument, VersionDocument } from './documents'
@@ -31,6 +31,7 @@ import { SourceFile } from './internal'
 import { ApiOperation } from './operation'
 import { ApiBuilder } from './apiBuilder'
 import { McpEntityIndex } from '../package/mcp'
+import { DdlEntityIndex } from '../package/ddl'
 
 export type VersionCache = ResolvedVersion & {
   packageId: PackageId
@@ -40,12 +41,14 @@ export type VersionCache = ResolvedVersion & {
 export interface BuildResultDto {
   config: PackageConfig
   comparisons: VersionsComparisonDto[]
+  ddlComparisons: DdlComparison[]
   notifications: NotificationMessage[]
   documents: Map<string, VersionDocument>
   exportDocuments: ExportDocument[]
   operations: Map<string, ApiOperation>
   merged?: VersionDocument
   mcpEntities: McpEntityIndex
+  ddlEntities: DdlEntityIndex
 }
 
 export interface BuildResult {
@@ -58,6 +61,8 @@ export interface BuildResult {
   operations: Map<string, ApiOperation>
   merged?: VersionDocument
   mcpEntities: McpEntityIndex
+  ddlEntities: DdlEntityIndex
+  ddlComparisons: DdlComparison[]
 }
 
 export type BuilderConfiguration = {

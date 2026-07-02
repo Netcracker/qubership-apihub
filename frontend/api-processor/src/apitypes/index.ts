@@ -15,6 +15,7 @@
  */
 
 export * from './async'
+export * from './ddl'
 export * from './graphql'
 export * from './mcp'
 export * from './rest'

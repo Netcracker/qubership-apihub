@@ -30,19 +30,26 @@ export default defineConfig({
     minify: false,
     emptyOutDir: true,
     lib: {
-      entry: path.resolve(__dirname, 'src/index.ts'),
-      name: 'ApiHubBuilder',
-      formats: ['es', 'umd'],
-      fileName: (format) => `apihub-builder.${format}.js`,
+      // Two entries: the light root (parser-free) and the heavy '/processor'
+      // (the spec-processing engine, which pulls the ddlapi parser). Shared light
+      // code is hoisted into a common chunk; the parser/WASM graph stays only in
+      // the processor entry's chunks.
+      entry: {
+        'api-processor': path.resolve(__dirname, 'src/index.ts'),
+        'api-processor-engine': path.resolve(__dirname, 'src/processor.ts'),
+      },
+      formats: ['es'],
+      fileName: (_format, entryName) => `${entryName}.es.js`,
     },
     rollupOptions: {
-      external: ['@asyncapi/parser'],
-      output: {
-        // Map @asyncapi/parser to browser version in UMD builds
-        paths: {
-          '@asyncapi/parser': '@asyncapi/parser',
-        },
-      },
+      // Keep ddlapi external so the consuming bundler/runtime resolves it and its
+      // (self-contained) '/parser' entry — the browser gets ddlapi's WASM-inlined
+      // parser build, Node reads it from node_modules. The parser stack (libpg-query
+      // etc.) is bundled inside ddlapi/parser, so we never reference it directly here.
+      external: [
+        '@asyncapi/parser',
+        /^@netcracker\/qubership-apihub-ddlapi(\/.*)?$/,
+      ],
     },
   },
   resolve: {

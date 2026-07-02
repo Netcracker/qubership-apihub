@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { stringifyYaml } from '../../../src'
+import { stringifyYaml } from '../../../src/processor'
 
 import {
   BuildConfig,
@@ -23,7 +23,7 @@ import {
   BuilderRunOptions,
   BuildResult,
   PackageVersionBuilder,
-} from '../../../src'
+} from '../../../src/processor'
 import { loadConfig, loadFile } from '../utils'
 import { LocalRegistry } from '../registry'
 import { IRegistry } from '../registry/types'

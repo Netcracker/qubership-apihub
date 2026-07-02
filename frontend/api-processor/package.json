@@ -3,6 +3,7 @@
   "version": "5.4.4",
   "description": "",
   "license": "Apache-2.0",
+  "sideEffects": false,
   "module": "dist/esm/src/index.js",
   "main": "dist/cjs/src/index.js",
   "types": "dist/cjs/src/index.d.ts",
@@ -11,12 +12,27 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/esm/apihub-builder.es.js",
+      "types": "./dist/cjs/src/index.d.ts",
+      "import": "./dist/esm/api-processor.es.js",
       "require": "./dist/cjs/src/index.js"
+    },
+    "./processor": {
+      "types": "./dist/cjs/src/processor.d.ts",
+      "import": "./dist/esm/api-processor-engine.es.js",
+      "require": "./dist/cjs/src/processor.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "processor": [
+        "./dist/cjs/src/processor.d.ts"
+      ]
     }
   },
   "scripts": {
     "build": "tsc --module commonjs --outDir dist/cjs && vite build",
+    "postbuild": "node scripts/assert-light-entry-parser-free.mjs",
+    "assert:light-entry": "node scripts/assert-light-entry-parser-free.mjs",
     "build:web": "vite build",
     "performance:build": "vite build --sourcemap=inline -c=vite.performance.config.ts",
     "performance:run-inspect": "node --inspect dist/index.es.js",
@@ -35,6 +51,7 @@
     "@asyncapi/parser": "^3.6.0",
     "@netcracker/qubership-apihub-api-diff": "dev",
     "@netcracker/qubership-apihub-api-unifier": "dev",
+    "@netcracker/qubership-apihub-ddlapi": "dev",
     "@netcracker/qubership-apihub-graphapi": "dev",
     "@netcracker/qubership-apihub-json-crawl": "1.2.1",
     "adm-zip": "0.5.10",
