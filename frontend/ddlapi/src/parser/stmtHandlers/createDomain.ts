@@ -8,7 +8,7 @@
 // references a domain resolve to the shared 'Domain' instance rather than
 // staying as a raw UnsupportedType.
 
-import type { CreateDomainStmt, RawStmt, Node, Constraint } from '@pgsql/types'
+import type { CreateDomainStmt, RawStmt } from '@pgsql/types'
 import type { SchemaObject } from '../../schema'
 import type { SchemaType } from '../../types'
 import type { Check } from '../../attrs'
@@ -17,7 +17,8 @@ import { DdlErrorKind } from '../../constants'
 import { newCheck, unsupportedType } from '../../factories'
 import { mapTypeName } from '../typeMapper'
 import type { SchemaAccumulator } from '../schemaAccumulator'
-import { strVal, stmtRangeOf, nodeToExpr, exprToString } from '../astHelpers'
+import { strVal, stmtRangeOf, nodeToExpr, exprToString, unwrapNode } from '../astHelpers'
+import { PgNode, PgConstrType } from '../pgAst'
 import type { DdlNonFatalError } from '../buildFromDdl'
 import { PgObjectKind } from '../../postgres.constants'
 
@@ -28,7 +29,7 @@ export function handleCreateDomain(
   acc: SchemaAccumulator,
   onError: (e: DdlNonFatalError) => void,
 ): void {
-  const domainNameParts = (stmt.domainname ?? []) as Node[]
+  const domainNameParts = stmt.domainname ?? []
   const domainName = strVal(domainNameParts[domainNameParts.length - 1])
   if (!domainName) return
   const schemaName =
@@ -56,21 +57,21 @@ export function handleCreateDomain(
   let defaultExpr: Expr | undefined
   const checks: Check[] = []
 
-  const constraints = (stmt.constraints ?? []) as Node[]
+  const constraints = stmt.constraints ?? []
   for (const conNode of constraints) {
-    const con = (conNode as Record<string, unknown>)['Constraint'] as Constraint | undefined
+    const con = unwrapNode(conNode, PgNode.Constraint)
     if (!con) continue
-    const ct = con.contype as string | undefined
+    const ct = con.contype
 
-    if (ct === 'CONSTR_NOTNULL') {
+    if (ct === PgConstrType.NotNull) {
       nullability = false
-    } else if (ct === 'CONSTR_NULL') {
+    } else if (ct === PgConstrType.Null) {
       nullability = true
-    } else if (ct === 'CONSTR_DEFAULT') {
-      const re = con.raw_expr as Node | undefined
+    } else if (ct === PgConstrType.Default) {
+      const re = con.raw_expr
       if (re) defaultExpr = nodeToExpr(re)
-    } else if (ct === 'CONSTR_CHECK') {
-      const re = con.raw_expr as Node | undefined
+    } else if (ct === PgConstrType.Check) {
+      const re = con.raw_expr
       const expr = re ? exprToString(re) : ''
       checks.push(newCheck(expr, con.conname))
     }

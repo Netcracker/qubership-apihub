@@ -35,6 +35,7 @@ type MutableSchema = {
   name: string
   tables: Table[]
   objects: SchemaObject[]
+  attrs?: Attr[]
 }
 
 export class SchemaAccumulator {
@@ -62,6 +63,17 @@ export class SchemaAccumulator {
       this.schemas.set(name, s)
     }
     return s
+  }
+
+  /**
+   * Returns the existing schema's attr-bearing record, or undefined when no
+   * content (table/type/index) has been registered for that name. Unlike
+   * getOrCreateSchema this never creates a schema — COMMENT ON SCHEMA must
+   * resolve against an already-declared schema, mirroring the other COMMENT
+   * targets, and CREATE SCHEMA itself is out of scope.
+   */
+  getSchema(name: string): { attrs?: Attr[] } | undefined {
+    return this.schemas.get(name)
   }
 
   registerTable(schemaName: string, table: Table): void {
@@ -138,6 +150,7 @@ export class SchemaAccumulator {
         name: s.name,
         ...(s.tables.length > 0 && { tables: s.tables }),
         ...(s.objects.length > 0 && { objects: s.objects }),
+        ...(s.attrs && s.attrs.length > 0 && { attrs: s.attrs }),
       }
       schemasList.push(schema)
     }

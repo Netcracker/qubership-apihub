@@ -1,4 +1,4 @@
-import { buildFromDdl } from '../../src'
+import { buildFromDdl } from '../../src/parser'
 import { loadSql } from '../helpers/loadSql'
 import { AttrKind, DdlErrorKind } from '../../src/constants'
 
@@ -49,6 +49,35 @@ describe('commentOn', () => {
     expect(chk!.name).toBe('positive_price')
     const cmt = chk!.attrs!.find(a => a.kind === AttrKind.Comment) as { text: string } | undefined
     expect(cmt).toBeDefined()
+  })
+
+  test('schema: attaches Comment attr to schema', async () => {
+    const realm = await buildFromDdl(loadSql('comment-on/schema.sql'))
+    const schema = realm.schemas.find(s => s.name === 'sales')!
+    const cmt = schema.attrs!.find(a => a.kind === AttrKind.Comment) as { text: string } | undefined
+    expect(cmt).toBeDefined()
+    expect(cmt!.text).toBe('Order processing schema')
+  })
+
+  test('comment on unknown schema: emits unresolved-reference', async () => {
+    const errors: unknown[] = []
+    await buildFromDdl(`COMMENT ON SCHEMA missing_schema IS 'text'`, { onError: e => errors.push(e) })
+    expect(errors).toHaveLength(1)
+    expect((errors[0] as { kind: string }).kind).toBe(DdlErrorKind.UnresolvedReference)
+  })
+
+  test('schema remove-comment (IS NULL): removes existing Comment attr', async () => {
+    const realm = await buildFromDdl(loadSql('comment-on/schema-remove.sql'))
+    const schema = realm.schemas.find(s => s.name === 'sales')!
+    // After COMMENT ON SCHEMA sales IS NULL, the attrs key is dropped entirely
+    expect(schema.attrs).toBeUndefined()
+  })
+
+  test('comment on unknown schema with IS NULL: still emits unresolved-reference', async () => {
+    const errors: unknown[] = []
+    await buildFromDdl(`COMMENT ON SCHEMA missing_schema IS NULL`, { onError: e => errors.push(e) })
+    expect(errors).toHaveLength(1)
+    expect((errors[0] as { kind: string }).kind).toBe(DdlErrorKind.UnresolvedReference)
   })
 
   test('remove-comment (IS NULL): removes existing Comment attr', async () => {

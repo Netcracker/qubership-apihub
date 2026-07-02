@@ -1,14 +1,15 @@
 // Private module — handles CREATE TYPE (enum, composite, range).
 
-import type { CreateEnumStmt, CompositeTypeStmt, CreateRangeStmt, RawStmt, Node, ColumnDef, TypeName } from '@pgsql/types'
+import type { CreateEnumStmt, CompositeTypeStmt, CreateRangeStmt, RawStmt } from '@pgsql/types'
 import type { Column, SchemaObject } from '../../schema'
 import type { SchemaType } from '../../types'
-import { DdlErrorKind } from '../../constants'
+import { DdlErrorKind, ObjectKind } from '../../constants'
 import { PgObjectKind } from '../../postgres.constants'
 import { enumType, unsupportedType } from '../../factories'
 import { mapTypeName } from '../typeMapper'
 import type { SchemaAccumulator } from '../schemaAccumulator'
-import { strVal, stmtRangeOf } from '../astHelpers'
+import { strVal, stmtRangeOf, unwrapNode } from '../astHelpers'
+import { PgNode } from '../pgAst'
 import type { DdlNonFatalError } from '../buildFromDdl'
 
 // ── CREATE TYPE ... AS ENUM ───────────────────────────────────────────────────
@@ -20,7 +21,7 @@ export function handleCreateEnum(
   acc: SchemaAccumulator,
   onError: (e: DdlNonFatalError) => void,
 ): void {
-  const typeNameParts = (stmt.typeName ?? []) as Node[]
+  const typeNameParts = stmt.typeName ?? []
   const typeName = strVal(typeNameParts[typeNameParts.length - 1])
   if (!typeName) return
   const schemaName =
@@ -34,7 +35,7 @@ export function handleCreateEnum(
     const range = stmtRangeOf(rawStmt)
     onError({
       kind: DdlErrorKind.DuplicateObject,
-      objectKind: 'EnumType',
+      objectKind: ObjectKind.EnumType,
       qualifiedName,
       message: `Duplicate type: ${qualifiedName}`,
       ...(range && { range }),
@@ -42,7 +43,7 @@ export function handleCreateEnum(
     return
   }
 
-  const vals = (stmt.vals ?? []) as Node[]
+  const vals = stmt.vals ?? []
   const values = vals.map(v => strVal(v) ?? '').filter(Boolean)
 
   const et = enumType(values, { type: typeName })
@@ -63,7 +64,7 @@ export function handleCreateCompositeType(
   if (!typevar) return
 
   const typeName = typevar.relname ?? 'unknown'
-  const schemaName = (typevar as { schemaname?: string }).schemaname ?? defaultSchemaName
+  const schemaName = typevar.schemaname ?? defaultSchemaName
   const qualifiedName = `${schemaName}.${typeName}`
 
   // Duplicate check
@@ -79,12 +80,12 @@ export function handleCreateCompositeType(
     return
   }
 
-  const coldeflist = (stmt.coldeflist ?? []) as Node[]
+  const coldeflist = stmt.coldeflist ?? []
   const fields: Column[] = coldeflist.map(n => {
-    const cd = (n as Record<string, unknown>)['ColumnDef'] as ColumnDef | undefined
+    const cd = unwrapNode(n, PgNode.ColumnDef)
     if (!cd) return { name: 'unknown' } as Column
     const colName = cd.colname ?? 'unknown'
-    const tn = cd.typeName as TypeName | undefined
+    const tn = cd.typeName
     const type = tn ? mapTypeName(tn) : unsupportedType('unknown')
     return {
       name: colName,
@@ -110,7 +111,7 @@ export function handleCreateRangeType(
   acc: SchemaAccumulator,
   onError: (e: DdlNonFatalError) => void,
 ): void {
-  const typeNameParts = (stmt.typeName ?? []) as Node[]
+  const typeNameParts = stmt.typeName ?? []
   const typeName = strVal(typeNameParts[typeNameParts.length - 1])
   if (!typeName) return
   const schemaName =
@@ -133,19 +134,19 @@ export function handleCreateRangeType(
   }
 
   // Extract range params (subtype and others)
-  const params = (stmt.params ?? []) as Node[]
+  const params = stmt.params ?? []
   let subtype: string | undefined
   const rangeParams: Record<string, string> = {}
 
   for (const p of params) {
-    const de = (p as Record<string, unknown>)['DefElem'] as Record<string, unknown> | undefined
+    const de = unwrapNode(p, PgNode.DefElem)
     if (!de) continue
-    const name = de['defname'] as string | undefined
-    const arg = de['arg'] as Node | undefined
+    const name = de.defname
+    const arg = de.arg
     if (!name || !arg) continue
 
     if (name === 'subtype') {
-      const tn = (arg as Record<string, unknown>)['TypeName'] as { names?: Node[] } | undefined
+      const tn = unwrapNode(arg, PgNode.TypeName)
       if (tn?.names) {
         subtype = strVal(tn.names[tn.names.length - 1])
       }

@@ -68,6 +68,13 @@ about cross-statement interaction or errors, as `buildFromDdl.test.ts` does.
   *expected* non-fatal errors when the test only cares about the resulting
   Realm. Assert hard failures with `rejects.toThrow(DdlParseError)` and `strict`
   failures with `rejects.toThrow(DdlBuildError)`.
+- **For verbatim or structurally-exact string output (e.g. the table-DDL
+  extractor's `slice.sql`), assert the *exact* string, not `toContain`.** A
+  substring check silently passes on over-inclusion or wrong statement order — the
+  whole point of such a feature. Write the expected output as a literal template
+  string (and when the output should equal the whole input, assert `.toBe(ddl)` so
+  it is obvious). Writing the literal out also catches mistakes a computed oracle
+  would reproduce (it caught a wrong blank-line seam in the extractor tests).
 
 ## Extending the exhaustiveness check
 

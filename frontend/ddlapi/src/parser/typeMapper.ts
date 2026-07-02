@@ -1,4 +1,4 @@
-// Private module — maps pgsql-parser TypeName AST nodes to ddlapi SchemaType.
+// Private module — maps libpg-query TypeName AST nodes to ddlapi SchemaType.
 
 import type { TypeName, Node } from '@pgsql/types'
 import type { SchemaType } from '../types'
@@ -11,9 +11,12 @@ import {
 
 function ival(node: Node): number | undefined {
   const c = (node as Record<string, unknown>)['A_Const'] as Record<string, unknown> | undefined
-  if (!c) return undefined
-  const iv = (c['ival'] as Record<string, unknown> | undefined)?.['ival']
-  return typeof iv === 'number' ? iv : undefined
+  if (!c || !('ival' in c)) return undefined
+  // libpg-query serialises protobuf, which omits the zero-valued inner `ival`:
+  // a typmod of 0 (e.g. timestamp(0), numeric(p,0)) arrives as `ival: {}`. The
+  // wrapper's presence already proves an integer const, so a missing inner ⇒ 0.
+  const iv = (c['ival'] as Record<string, unknown>)['ival']
+  return typeof iv === 'number' ? iv : 0
 }
 
 function typmod(typmods: Node[] | undefined, i: number): number | undefined {
@@ -79,7 +82,7 @@ const SERIAL: Record<string, string> = {
   bigserial:   PgSqlTypeName.BigSerial,   serial8: PgSqlTypeName.BigSerial,
 }
 
-/** Maps a pgsql-parser TypeName AST node to a ddlapi SchemaType. */
+/** Maps a libpg-query TypeName AST node to a ddlapi SchemaType. */
 export function mapTypeName(tn: TypeName): SchemaType {
   const names = tn.names ?? []
 
@@ -94,7 +97,7 @@ export function mapTypeName(tn: TypeName): SchemaType {
   if (s0 && SERIAL[s0])          return integerType(SERIAL[s0])
   if (!s0)                        return unsupportedType('unknown')
 
-  // pgsql-parser emits some built-in types without pg_catalog prefix
+  // libpg-query emits some built-in types without pg_catalog prefix
   // (e.g. bytea, text, jsonb, uuid).  pgCatalog() returns unsupportedType
   // for unrecognised names, which is also the correct fallback for
   // unqualified user-defined types like `mood`.

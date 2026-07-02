@@ -1,4 +1,4 @@
-import { buildFromDdl } from '../../src'
+import { buildFromDdl } from '../../src/parser'
 import { loadSql } from '../helpers/loadSql'
 import { DdlErrorKind } from '../../src/constants'
 import { PgAttrKind } from '../../src/postgres.constants'
@@ -59,7 +59,7 @@ describe('createIndex', () => {
     const idx = tasks.indexes!.find(i => i.name === 'idx_active_tasks')!
     const pred = idx.attrs!.find(a => a.kind === PgAttrKind.IndexPredicate)
     expect(pred).toBeDefined()
-    expect((pred as unknown as { P: string }).P).toContain('active')
+    expect((pred as unknown as { predicate: string }).predicate).toContain('active')
   })
 
   test('covering-include: stores IndexInclude attr', async () => {
@@ -98,19 +98,19 @@ describe('createIndex', () => {
     const schema = realm.schemas[0]!
     const memberships = schema.tables!.find(t => t.name === 'memberships')!
     const idx = memberships.indexes!.find(i => i.name === 'idx_memberships_unique')!
-    const nd = idx.attrs!.find(a => a.kind === PgAttrKind.IndexNullsDistinct) as { V: boolean } | undefined
+    const nd = idx.attrs!.find(a => a.kind === PgAttrKind.IndexNullsDistinct) as { value: boolean } | undefined
     expect(nd).toBeDefined()
-    expect(nd!.V).toBe(false)
+    expect(nd!.value).toBe(false)
   })
 
-  test('gin: stores IndexType attr with T=gin', async () => {
+  test('gin: stores IndexType attr with type=gin', async () => {
     const realm = await buildFromDdl(loadSql('create-index/gin.sql'))
     const schema = realm.schemas[0]!
     const events = schema.tables!.find(t => t.name === 'events')!
     const idx = events.indexes!.find(i => i.name === 'idx_events_payload')!
-    const it = idx.attrs!.find(a => a.kind === PgAttrKind.IndexType) as { T: string } | undefined
+    const it = idx.attrs!.find(a => a.kind === PgAttrKind.IndexType) as { type: string } | undefined
     expect(it).toBeDefined()
-    expect(it!.T).toBe('gin')
+    expect(it!.type).toBe('gin')
   })
 
   test('concurrently: stores Concurrently attr', async () => {

@@ -8,6 +8,7 @@
 //   5. Index part column resolution (part.column)
 
 import { TypeKind, DdlErrorKind } from '../constants'
+import { PG_DEFAULT_SCHEMA } from '../postgres.constants'
 import type { Column } from '../schema'
 import type { SchemaAccumulator } from './schemaAccumulator'
 import type { DdlNonFatalError } from './buildFromDdl'
@@ -79,7 +80,7 @@ export function resolveReferences(
 
     // Determine the schema scope from the column key ("schema.table.column")
     const firstDot = columnKey.indexOf('.')
-    const schemaName = firstDot !== -1 ? columnKey.slice(0, firstDot) : 'public'
+    const schemaName = firstDot !== -1 ? columnKey.slice(0, firstDot) : PG_DEFAULT_SCHEMA
 
     // For qualified names (e.g. "myschema.mytype") use as-is; otherwise scope to table's schema
     const typeKey = rawName.includes('.') ? rawName : `${schemaName}.${rawName}`

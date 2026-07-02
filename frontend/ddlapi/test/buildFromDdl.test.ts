@@ -1,5 +1,6 @@
-import { buildFromDdl, DdlParseError, DdlBuildError, DDLAPI_VERSION } from '../src'
-import type { DdlNonFatalError } from '../src'
+import { DDLAPI_VERSION } from '../src'
+import { buildFromDdl, DdlParseError, DdlBuildError } from '../src/parser'
+import type { DdlNonFatalError } from '../src/parser'
 import { TypeKind, DdlErrorKind } from '../src/constants'
 
 // ── Realm shape ───────────────────────────────────────────────────────────────
@@ -43,7 +44,7 @@ describe('realm structure', () => {
 // ── Identifier normalisation ──────────────────────────────────────────────────
 
 describe('identifier normalisation', () => {
-  test('unquoted identifiers are lowercased by pgsql-parser', async () => {
+  test('unquoted identifiers are lowercased by libpg-query', async () => {
     const realm = await buildFromDdl('CREATE TABLE MyTable (MyCol BIGINT);')
     const table = realm.schemas[0]!.tables![0]!
     expect(table.name).toBe('mytable')

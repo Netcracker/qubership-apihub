@@ -1,9 +1,9 @@
-import { parse } from 'pgsql-parser'
+import { parse } from 'libpg-query'
 
 /**
  * Asserts that the given SQL string is valid PostgreSQL syntax.
  * Throws a descriptive error if parsing fails.
- * Using pgsql-parser (libpg_query WASM) as the authoritative syntax certificate.
+ * Using libpg-query (libpg_query WASM) as the authoritative syntax certificate.
  */
 export async function assertValidSql(sql: string, label?: string): Promise<void> {
   try {
