@@ -9,7 +9,8 @@ type. The AsyncAPI sections are specific to AsyncAPI specs.
 
 ## Valid specifications
 
-All test specs must be valid AsyncAPI 3.0.0 unless the test is deliberately exercising error handling. Call `parseAsyncApiAndAssertValid` on each spec before the diff assertion:
+All test specs must be valid AsyncAPI 3.0.0 unless the test is deliberately exercising error handling.
+Call `parseAsyncApiAndAssertValid` on each spec before the diff assertion:
 
 ```typescript
 await parseAsyncApiAndAssertValid(before)

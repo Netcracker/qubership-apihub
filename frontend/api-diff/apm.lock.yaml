@@ -1,12 +1,11 @@
 lockfile_version: '1'
-generated_at: '2026-06-26T13:07:19.374196+00:00'
-apm_version: 0.22.0
+generated_at: '2026-07-02T16:17:56.068841+00:00'
+apm_version: 0.23.1
 dependencies:
 - repo_url: Netcracker/qubership-apihub-ddlapi
   name: ddlapi-using
   host: github.com
-  resolved_commit: c6e3c37c28ef93728dc640404e57021f522602e2
-  resolved_ref: feature/ddl
+  resolved_commit: a6f7dcb6a0aba9fb5e235cd0817ba0e5e8937dd6
   version: 1.1.0
   virtual_path: agent-packages/ddlapi-using
   is_virtual: true
@@ -20,12 +19,33 @@ dependencies:
   - .cursor/rules/ddlapi-using.mdc
   - .github/instructions/ddlapi-using.instructions.md
   deployed_file_hashes:
-    .agents/skills/ddlapi-using/SKILL.md: sha256:10d3258b73ec7e83a064a430d14236b86e920d33e84d1ffcc9091f653685280f
-    .claude/rules/ddlapi-using.md: sha256:6aaa86c79159406265060e4d0f3ce2d903f3e5a7054acfbaeba0f475e383d0b8
-    .claude/skills/ddlapi-using/SKILL.md: sha256:10d3258b73ec7e83a064a430d14236b86e920d33e84d1ffcc9091f653685280f
-    .cursor/rules/ddlapi-using.mdc: sha256:61d2af786a6623c3857ed87edd5cb3d212f0c6d18e98c9b71da843a3873cb27a
+    .agents/skills/ddlapi-using/SKILL.md: sha256:49ee63e1b58cc1ee7a0671a2a47dc6f42611977152bea9657002d60e6cee5fbd
+    .claude/rules/ddlapi-using.md: sha256:9b01b3c3616cf72b19370930f4a306b6e29f7da146b40f35c016c861dcf1b252
+    .claude/skills/ddlapi-using/SKILL.md: sha256:49ee63e1b58cc1ee7a0671a2a47dc6f42611977152bea9657002d60e6cee5fbd
+    .cursor/rules/ddlapi-using.mdc: sha256:3af0f9e363e4d264c77c3313116a71ee5465b58600946e98615b996e6fc02f5d
     .github/instructions/ddlapi-using.instructions.md: sha256:409de3eff5720d9a91fb2e867cde7bd2718b74f8bd1218cd70bfaff07d929856
-  content_hash: sha256:1dfe34653091849ca05e21b22f6356124986a1b6fd4916623f296f57bada63aa
+  content_hash: sha256:fb5fe648b6b241c5e9aff66800a1088fc2ea528e0abd2d10b4c51a6230207645
+- repo_url: Netcracker/qubership-apihub-json-crawl
+  name: json-crawl-using
+  host: github.com
+  resolved_commit: f43d2dd69b3a5175087a9edac5aa0c04934835a3
+  version: 1.2.0
+  virtual_path: agent-packages/json-crawl-using
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/json-crawl-using
+  - .agents/skills/json-crawl-using/SKILL.md
+  - .claude/rules/json-crawl-using.md
+  - .claude/skills/json-crawl-using
+  - .claude/skills/json-crawl-using/SKILL.md
+  - .cursor/rules/json-crawl-using.mdc
+  deployed_file_hashes:
+    .agents/skills/json-crawl-using/SKILL.md: sha256:a6adfa4344f157506d304c886398577fe9b860390c4ba94cfb8405a4c547805e
+    .claude/rules/json-crawl-using.md: sha256:a8006d87bd66a3e8f883fde7e1633f243ec91320ca357a7a23d73d73946ea7af
+    .claude/skills/json-crawl-using/SKILL.md: sha256:a6adfa4344f157506d304c886398577fe9b860390c4ba94cfb8405a4c547805e
+    .cursor/rules/json-crawl-using.mdc: sha256:d671cbc5fdef3ee28814237cab31e140e3b36661cae3926e32752e01852f245f
+  content_hash: sha256:26f877265321714d07a41435817cac085f1d5aaa721b7258af4820ac0f7f0a6e
 - repo_url: _local/api-diff-authoring
   name: api-diff-authoring
   version: 1.0.0
@@ -33,28 +53,36 @@ dependencies:
   deployed_files:
   - .agents/skills/api-diff-authoring
   - .agents/skills/api-diff-authoring/SKILL.md
-  - .agents/skills/api-diff-testing
-  - .agents/skills/api-diff-testing/SKILL.md
   - .claude/rules/api-diff-authoring.md
-  - .claude/rules/api-diff-testing.md
   - .claude/skills/api-diff-authoring
   - .claude/skills/api-diff-authoring/SKILL.md
-  - .claude/skills/api-diff-testing
-  - .claude/skills/api-diff-testing/SKILL.md
   - .cursor/rules/api-diff-authoring.mdc
-  - .cursor/rules/api-diff-testing.mdc
   - .github/instructions/api-diff-authoring.instructions.md
   - .github/instructions/api-diff-testing.instructions.md
   deployed_file_hashes:
-    .agents/skills/api-diff-authoring/SKILL.md: sha256:540db8f9286bc310addba0cae1c9b8fc8e0a566c8b852157a287973d8b78a664
-    .agents/skills/api-diff-testing/SKILL.md: sha256:533d73da2e88cb0711bab6024e816e61036824b9c3f1299704d0e1a7cc22e9b1
-    .claude/rules/api-diff-authoring.md: sha256:f0a031e9d08130de429eb5b3e1cad5ad30b27003abd8dd36825e1212aee72783
-    .claude/rules/api-diff-testing.md: sha256:481d71ff0d3ea2dd0f45b41d1d8977042b70a35b21cb8e533567ea00211656dd
-    .claude/skills/api-diff-authoring/SKILL.md: sha256:540db8f9286bc310addba0cae1c9b8fc8e0a566c8b852157a287973d8b78a664
-    .claude/skills/api-diff-testing/SKILL.md: sha256:533d73da2e88cb0711bab6024e816e61036824b9c3f1299704d0e1a7cc22e9b1
-    .cursor/rules/api-diff-authoring.mdc: sha256:759c7932f57fdb385c253995c780e3a0f3183c88b73d8852ed004282125416f1
-    .cursor/rules/api-diff-testing.mdc: sha256:c2cd60421fd06788d7ce051638941280e252a735e8189201ad940957463798d7
+    .agents/skills/api-diff-authoring/SKILL.md: sha256:e4e6c962ee271518ebbf499cec1b18eb430c5676dfb75b51040d50eab48a2c4f
+    .claude/rules/api-diff-authoring.md: sha256:98e36db2fdca88da08f733844e399f02c02060b14ad9923e0d9875b6a8d154cd
+    .claude/skills/api-diff-authoring/SKILL.md: sha256:e4e6c962ee271518ebbf499cec1b18eb430c5676dfb75b51040d50eab48a2c4f
+    .cursor/rules/api-diff-authoring.mdc: sha256:9ba868c4ab32109202424b5a9582abad3f5745110432ee0f71e4678da0631538
     .github/instructions/api-diff-authoring.instructions.md: sha256:131cbb7f5e3d7305ac351689df1991966e840e54f770af6ba48de8496688372a
     .github/instructions/api-diff-testing.instructions.md: sha256:3f83cfa32e59d0d7f427361c784e937b3de543e5a74e13db4fedf574f3907da2
   source: local
   local_path: ./agent-packages/api-diff-authoring
+- repo_url: _local/api-diff-testing
+  name: api-diff-testing
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/api-diff-testing
+  - .agents/skills/api-diff-testing/SKILL.md
+  - .claude/rules/api-diff-testing.md
+  - .claude/skills/api-diff-testing
+  - .claude/skills/api-diff-testing/SKILL.md
+  - .cursor/rules/api-diff-testing.mdc
+  deployed_file_hashes:
+    .agents/skills/api-diff-testing/SKILL.md: sha256:533d73da2e88cb0711bab6024e816e61036824b9c3f1299704d0e1a7cc22e9b1
+    .claude/rules/api-diff-testing.md: sha256:b4a8825e666155a12f781263f50173e5034985ab8fd42e5a6df4e7147ede01b4
+    .claude/skills/api-diff-testing/SKILL.md: sha256:533d73da2e88cb0711bab6024e816e61036824b9c3f1299704d0e1a7cc22e9b1
+    .cursor/rules/api-diff-testing.mdc: sha256:78f9165d47549bcbb78cd1d467f645c0161d266ba278b2efa2c3c0762893c84b
+  source: local
+  local_path: ./agent-packages/api-diff-testing
