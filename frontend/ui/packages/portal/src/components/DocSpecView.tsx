@@ -16,7 +16,6 @@
 
 import type { FC } from 'react'
 import { memo } from 'react'
-import { MarkdownViewer } from './MarkdownViewer'
 import { Marker } from 'react-mark.js'
 import { JsonSchemaViewer } from '@netcracker/qubership-apihub-ui-shared/components/JsonSchemaViewer'
 import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
@@ -26,6 +25,7 @@ import { JSON_FILE_FORMAT, MD_FILE_FORMAT, YAML_FILE_FORMAT } from '@netcracker/
 import { generateSpecificationByPathItems } from '../utils/specifications'
 import { ApispecView } from '@netcracker/qubership-apihub-ui-shared/components/ApispecView'
 import { isJsonSchemaSpecType } from '../entities/spec-types'
+import { MarkdownViewer } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/MarkdownViewer'
 
 // First Order Component //
 export type DocSpecViewProps = {
