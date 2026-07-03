@@ -1,6 +1,0 @@
----
-paths:
-  - "**/*.{ts,tsx}"
----
-
-When adding or changing TypeScript source in this repository (`**/*.{ts,tsx}`), follow `docs/dev/CODING_GUIDELINES.md`.
