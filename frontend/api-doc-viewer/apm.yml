@@ -15,5 +15,5 @@ dependencies:
     - ./agent-packages/next-data-model-authoring
     - ./agent-packages/next-data-model-using
     - ./agent-packages/api-doc-viewer-testing
-    - Netcracker/qubership-apihub-ddlapi/agent-packages/ddlapi-using#feature/ddl
-    - Netcracker/qubership-apihub-json-crawl/agent-packages/json-crawl-using#feature/apm-infra
+    - Netcracker/qubership-apihub-ddlapi/agent-packages/ddlapi-using
+    - Netcracker/qubership-apihub-json-crawl/agent-packages/json-crawl-using

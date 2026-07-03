@@ -3,8 +3,6 @@ description: Conventions for consuming next-data-model inside api-doc-viewer vie
 applyTo: "packages/api-doc-viewer/src/**/*.{ts,tsx}"
 ---
 
-## Skill trigger: `next-data-model-using`
-
 When importing `@netcracker/qubership-apihub-next-data-model` in api-doc-viewer
 to build trees, traverse nodes, or wire diff styling — without changing
 `packages/next-data-model/src` — apply the `next-data-model-using` skill.

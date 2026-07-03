@@ -1,11 +1,12 @@
 lockfile_version: '1'
-generated_at: '2026-06-30T14:43:12.630732+00:00'
-apm_version: 0.20.0
+generated_at: '2026-07-02T16:50:08.659752+00:00'
+apm_version: 0.23.1
 dependencies:
 - repo_url: Netcracker/qubership-apihub-ddlapi
+  name: ddlapi-using
   host: github.com
-  resolved_commit: c6e3c37c28ef93728dc640404e57021f522602e2
-  resolved_ref: feature/ddl
+  resolved_commit: a6f7dcb6a0aba9fb5e235cd0817ba0e5e8937dd6
+  version: 1.1.0
   virtual_path: agent-packages/ddlapi-using
   is_virtual: true
   package_type: apm_package
@@ -16,19 +17,17 @@ dependencies:
   - .claude/skills/ddlapi-using
   - .claude/skills/ddlapi-using/SKILL.md
   - .cursor/rules/ddlapi-using.mdc
-  - .cursor/skills/ddlapi-using
-  - .cursor/skills/ddlapi-using/SKILL.md
   deployed_file_hashes:
-    .agents/skills/ddlapi-using/SKILL.md: sha256:10d3258b73ec7e83a064a430d14236b86e920d33e84d1ffcc9091f653685280f
-    .claude/rules/ddlapi-using.md: sha256:6aaa86c79159406265060e4d0f3ce2d903f3e5a7054acfbaeba0f475e383d0b8
-    .claude/skills/ddlapi-using/SKILL.md: sha256:10d3258b73ec7e83a064a430d14236b86e920d33e84d1ffcc9091f653685280f
-    .cursor/rules/ddlapi-using.mdc: sha256:61d2af786a6623c3857ed87edd5cb3d212f0c6d18e98c9b71da843a3873cb27a
-    .cursor/skills/ddlapi-using/SKILL.md: sha256:10d3258b73ec7e83a064a430d14236b86e920d33e84d1ffcc9091f653685280f
-  content_hash: sha256:1dfe34653091849ca05e21b22f6356124986a1b6fd4916623f296f57bada63aa
+    .agents/skills/ddlapi-using/SKILL.md: sha256:49ee63e1b58cc1ee7a0671a2a47dc6f42611977152bea9657002d60e6cee5fbd
+    .claude/rules/ddlapi-using.md: sha256:9b01b3c3616cf72b19370930f4a306b6e29f7da146b40f35c016c861dcf1b252
+    .claude/skills/ddlapi-using/SKILL.md: sha256:49ee63e1b58cc1ee7a0671a2a47dc6f42611977152bea9657002d60e6cee5fbd
+    .cursor/rules/ddlapi-using.mdc: sha256:3af0f9e363e4d264c77c3313116a71ee5465b58600946e98615b996e6fc02f5d
+  content_hash: sha256:fb5fe648b6b241c5e9aff66800a1088fc2ea528e0abd2d10b4c51a6230207645
 - repo_url: Netcracker/qubership-apihub-json-crawl
+  name: json-crawl-using
   host: github.com
-  resolved_commit: 3dc40a2f8065b0a658a592e5cb01844dbde579c9
-  resolved_ref: feature/apm-infra
+  resolved_commit: f43d2dd69b3a5175087a9edac5aa0c04934835a3
+  version: 1.2.0
   virtual_path: agent-packages/json-crawl-using
   is_virtual: true
   package_type: apm_package
@@ -39,16 +38,15 @@ dependencies:
   - .claude/skills/json-crawl-using
   - .claude/skills/json-crawl-using/SKILL.md
   - .cursor/rules/json-crawl-using.mdc
-  - .cursor/skills/json-crawl-using
-  - .cursor/skills/json-crawl-using/SKILL.md
   deployed_file_hashes:
     .agents/skills/json-crawl-using/SKILL.md: sha256:a6adfa4344f157506d304c886398577fe9b860390c4ba94cfb8405a4c547805e
-    .claude/rules/json-crawl-using.md: sha256:52b27a7f0a761dd22ad00fb950773ae9ace8f18bbbe059e58e78261325990000
+    .claude/rules/json-crawl-using.md: sha256:a8006d87bd66a3e8f883fde7e1633f243ec91320ca357a7a23d73d73946ea7af
     .claude/skills/json-crawl-using/SKILL.md: sha256:a6adfa4344f157506d304c886398577fe9b860390c4ba94cfb8405a4c547805e
-    .cursor/rules/json-crawl-using.mdc: sha256:daacbd69053020da2e83954c067a5c33b63b26959ca88ad099175f9589e6c1d2
-    .cursor/skills/json-crawl-using/SKILL.md: sha256:a6adfa4344f157506d304c886398577fe9b860390c4ba94cfb8405a4c547805e
-  content_hash: sha256:489ebb53a3225114c7349a104085daf863a1b758339d1880b607e5693d164d60
+    .cursor/rules/json-crawl-using.mdc: sha256:d671cbc5fdef3ee28814237cab31e140e3b36661cae3926e32752e01852f245f
+  content_hash: sha256:26f877265321714d07a41435817cac085f1d5aaa721b7258af4820ac0f7f0a6e
 - repo_url: _local/api-doc-viewer-authoring
+  name: api-doc-viewer-authoring
+  version: 1.0.0
   package_type: apm_package
   deployed_files:
   - .agents/skills/api-doc-viewer-authoring
@@ -57,17 +55,16 @@ dependencies:
   - .claude/skills/api-doc-viewer-authoring
   - .claude/skills/api-doc-viewer-authoring/SKILL.md
   - .cursor/rules/api-doc-viewer-authoring.mdc
-  - .cursor/skills/api-doc-viewer-authoring
-  - .cursor/skills/api-doc-viewer-authoring/SKILL.md
   deployed_file_hashes:
-    .agents/skills/api-doc-viewer-authoring/SKILL.md: sha256:7f5eed88a4792c7bcfc70840f2511deaf061797c80190b469101ad7b65046975
-    .claude/rules/api-doc-viewer-authoring.md: sha256:b54e84d87ae86790cbf34113a400456e8bcec13f12ef6480df5740615c1333ba
-    .claude/skills/api-doc-viewer-authoring/SKILL.md: sha256:7f5eed88a4792c7bcfc70840f2511deaf061797c80190b469101ad7b65046975
-    .cursor/rules/api-doc-viewer-authoring.mdc: sha256:dde9344d742c4cc25afa3763e8ad3fbefbc894f189e408adef501efbc556163c
-    .cursor/skills/api-doc-viewer-authoring/SKILL.md: sha256:7f5eed88a4792c7bcfc70840f2511deaf061797c80190b469101ad7b65046975
+    .agents/skills/api-doc-viewer-authoring/SKILL.md: sha256:bb94dc65d76ad9e395fea79dac07d6756a5f80765fe4c7c5054116cc33a893c2
+    .claude/rules/api-doc-viewer-authoring.md: sha256:1d6c2af8c876a25bc58324fb8e3ab38401857a8ed06b3812dea67327080c4718
+    .claude/skills/api-doc-viewer-authoring/SKILL.md: sha256:bb94dc65d76ad9e395fea79dac07d6756a5f80765fe4c7c5054116cc33a893c2
+    .cursor/rules/api-doc-viewer-authoring.mdc: sha256:9f0e280b03507c191c552e7d78bdb65cc1f47d56c7e5fbe37a5e87cfb1afdb8f
   source: local
   local_path: ./agent-packages/api-doc-viewer-authoring
 - repo_url: _local/api-doc-viewer-testing
+  name: api-doc-viewer-testing
+  version: 1.0.0
   package_type: apm_package
   deployed_files:
   - .agents/skills/api-doc-viewer-testing
@@ -76,17 +73,16 @@ dependencies:
   - .claude/skills/api-doc-viewer-testing
   - .claude/skills/api-doc-viewer-testing/SKILL.md
   - .cursor/rules/api-doc-viewer-testing.mdc
-  - .cursor/skills/api-doc-viewer-testing
-  - .cursor/skills/api-doc-viewer-testing/SKILL.md
   deployed_file_hashes:
-    .agents/skills/api-doc-viewer-testing/SKILL.md: sha256:6fec42d34704314e5a3c383654accfd96dfb1de3d09fe8854d086f2bb10cd24e
-    .claude/rules/api-doc-viewer-testing.md: sha256:e0ffc1973c738ad0735ca92b8083564ddafd28e6dd8bbe4d733a6a3eba8585f6
-    .claude/skills/api-doc-viewer-testing/SKILL.md: sha256:6fec42d34704314e5a3c383654accfd96dfb1de3d09fe8854d086f2bb10cd24e
-    .cursor/rules/api-doc-viewer-testing.mdc: sha256:2ea8c9d22357d726b7022c09d9a5ac911e43d99effcefb67c37bdb21e90d7692
-    .cursor/skills/api-doc-viewer-testing/SKILL.md: sha256:6fec42d34704314e5a3c383654accfd96dfb1de3d09fe8854d086f2bb10cd24e
+    .agents/skills/api-doc-viewer-testing/SKILL.md: sha256:de6c08c618a85b8dd1b76db5ea24173268f417bc26772b9e3b1d2cd8f6205d2e
+    .claude/rules/api-doc-viewer-testing.md: sha256:e8e7ba04f26795deae88177f2bdc71288ee3cdcd5ce23c90e0fc1551934278b4
+    .claude/skills/api-doc-viewer-testing/SKILL.md: sha256:de6c08c618a85b8dd1b76db5ea24173268f417bc26772b9e3b1d2cd8f6205d2e
+    .cursor/rules/api-doc-viewer-testing.mdc: sha256:6c7105db89bfb0024ec3f752a23eb4c29c7f30d223868391463cf19a431763c5
   source: local
   local_path: ./agent-packages/api-doc-viewer-testing
 - repo_url: _local/api-doc-viewer-using
+  name: api-doc-viewer-using
+  version: 1.0.0
   package_type: apm_package
   deployed_files:
   - .agents/skills/api-doc-viewer-using
@@ -95,17 +91,16 @@ dependencies:
   - .claude/skills/api-doc-viewer-using
   - .claude/skills/api-doc-viewer-using/SKILL.md
   - .cursor/rules/api-doc-viewer-using.mdc
-  - .cursor/skills/api-doc-viewer-using
-  - .cursor/skills/api-doc-viewer-using/SKILL.md
   deployed_file_hashes:
-    .agents/skills/api-doc-viewer-using/SKILL.md: sha256:e2929d2b494b3e016db0113d8e2326baecca1f034498c8d98ed52e64750622a9
-    .claude/rules/api-doc-viewer-using.md: sha256:abaa2eb43c180165dd7115ed82412856df90b106211d6272bfd01642a3a543c0
-    .claude/skills/api-doc-viewer-using/SKILL.md: sha256:7920e9e6cda0a80944a256554524051fc1044a2f8f0dbdeb6e3a849228ef7d39
-    .cursor/rules/api-doc-viewer-using.mdc: sha256:ff984f6ac45020c4859155adb78bd71166fc166bc481e6d9c6757ad73becb87d
-    .cursor/skills/api-doc-viewer-using/SKILL.md: sha256:7920e9e6cda0a80944a256554524051fc1044a2f8f0dbdeb6e3a849228ef7d39
+    .agents/skills/api-doc-viewer-using/SKILL.md: sha256:f9dfe9b1a9433fb7ae2c8f230865046fbf4bb6a4573400ebcfa3e54792ad1fbe
+    .claude/rules/api-doc-viewer-using.md: sha256:ab6db9352f029e64fa74bb2379863fbd8caaade214f00e0be4aa914f043a568c
+    .claude/skills/api-doc-viewer-using/SKILL.md: sha256:f9dfe9b1a9433fb7ae2c8f230865046fbf4bb6a4573400ebcfa3e54792ad1fbe
+    .cursor/rules/api-doc-viewer-using.mdc: sha256:153d63310476c49f206b955e67503944e542f6c2d7459a7ab9def021e89ee85b
   source: local
   local_path: ./agent-packages/api-doc-viewer-using
 - repo_url: _local/next-data-model-authoring
+  name: next-data-model-authoring
+  version: 1.0.0
   package_type: apm_package
   deployed_files:
   - .agents/skills/next-data-model-authoring
@@ -114,17 +109,16 @@ dependencies:
   - .claude/skills/next-data-model-authoring
   - .claude/skills/next-data-model-authoring/SKILL.md
   - .cursor/rules/next-data-model-authoring.mdc
-  - .cursor/skills/next-data-model-authoring
-  - .cursor/skills/next-data-model-authoring/SKILL.md
   deployed_file_hashes:
     .agents/skills/next-data-model-authoring/SKILL.md: sha256:f4975d22ffa59f520997cc765370d0805469ff5790e92e8e71e80fc961136a7d
-    .claude/rules/next-data-model-authoring.md: sha256:2058e0778ae33b36d0858839188a1f1fa83aeee1d563006827246021067a76d2
+    .claude/rules/next-data-model-authoring.md: sha256:695fc3d19f4d07683bae1da4d13a97c30d9d1f4a635b645b9ecfe6475f824f08
     .claude/skills/next-data-model-authoring/SKILL.md: sha256:f4975d22ffa59f520997cc765370d0805469ff5790e92e8e71e80fc961136a7d
-    .cursor/rules/next-data-model-authoring.mdc: sha256:5d4fc87987171d5eba75b9be3515915241ef27e1550a29a41f738ee9de8b2da1
-    .cursor/skills/next-data-model-authoring/SKILL.md: sha256:f4975d22ffa59f520997cc765370d0805469ff5790e92e8e71e80fc961136a7d
+    .cursor/rules/next-data-model-authoring.mdc: sha256:7a84b1b9d760c65656c20efef3f32c0aca7b0b94524bd0b246ff9918da103cf9
   source: local
   local_path: ./agent-packages/next-data-model-authoring
 - repo_url: _local/next-data-model-using
+  name: next-data-model-using
+  version: 1.0.0
   package_type: apm_package
   deployed_files:
   - .agents/skills/next-data-model-using
@@ -133,13 +127,10 @@ dependencies:
   - .claude/skills/next-data-model-using
   - .claude/skills/next-data-model-using/SKILL.md
   - .cursor/rules/next-data-model-using.mdc
-  - .cursor/skills/next-data-model-using
-  - .cursor/skills/next-data-model-using/SKILL.md
   deployed_file_hashes:
-    .agents/skills/next-data-model-using/SKILL.md: sha256:163afe5553b525cdd9df0e7df6083fe524e3af9c38e7e6b51430adc09287f932
-    .claude/rules/next-data-model-using.md: sha256:b35dfcd675db6a6fe582fb9463d05bcd1e0c121773fb69e1cb5d627e860f5dd5
-    .claude/skills/next-data-model-using/SKILL.md: sha256:163afe5553b525cdd9df0e7df6083fe524e3af9c38e7e6b51430adc09287f932
-    .cursor/rules/next-data-model-using.mdc: sha256:5668acc9b35a3ac6cffabd849f339b49131415b493f6bddc87144b0ce9e9933e
-    .cursor/skills/next-data-model-using/SKILL.md: sha256:163afe5553b525cdd9df0e7df6083fe524e3af9c38e7e6b51430adc09287f932
+    .agents/skills/next-data-model-using/SKILL.md: sha256:6ebdb0788d4d2296b7847546199bc6005efdc766a71a40f0cee04a20346001a2
+    .claude/rules/next-data-model-using.md: sha256:c1c2a888046fa725cace72dd4d17544c13a06f0cfa002e73d6ccb55890b1091f
+    .claude/skills/next-data-model-using/SKILL.md: sha256:6ebdb0788d4d2296b7847546199bc6005efdc766a71a40f0cee04a20346001a2
+    .cursor/rules/next-data-model-using.mdc: sha256:ebbd79d667753ced5c75acf1a00e3dd937d32a991e5e5886de8cd53eb19a4044
   source: local
   local_path: ./agent-packages/next-data-model-using

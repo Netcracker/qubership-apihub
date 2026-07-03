@@ -28,6 +28,12 @@ their repositories, file paths, or UI components — use generic terms such as
 Public exports are registered in `src/index.ts`. Keep internal helpers
 (style hooks, base renderers) out of the package API.
 
+## Always-on rule
+
+Do not modify legacy viewers (`JsonSchemaViewer`, `GraphSchemaViewer`,
+`GraphQLOperationViewer`) without explicit user approval. Prefer
+`AsyncApiOperationViewer`, `JsoViewer`, and `DdlTableViewer` for new work.
+
 ## Layout and display modes
 
 **Layout mode** (`LayoutMode` in `src/types/LayoutMode.ts`):
