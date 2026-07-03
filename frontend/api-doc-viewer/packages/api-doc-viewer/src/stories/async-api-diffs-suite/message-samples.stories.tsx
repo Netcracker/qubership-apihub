@@ -2,6 +2,8 @@ import { AsyncApiOperationDiffsViewer } from "@apihub/components/AsyncApiOperati
 import type { Meta, StoryObj } from "@storybook/react";
 import { collectSampleCases } from "../utils/diffs-samples-cases";
 import {
+  type AsyncApiCaseStoryComponentProps,
+  asyncApiDiffSampleReadonlyArgTypes,
   createAsyncApiCaseStoryFactory,
   createAsyncApiSampleById,
   createAsyncApiViewerArgs
@@ -20,24 +22,20 @@ const afterFiles = import.meta.glob(
 const sampleCases = collectSampleCases(beforeFiles, afterFiles);
 const sampleById = createAsyncApiSampleById(sampleCases);
 
-const AsyncApiMessageSamplesStory = ({ caseId }: { caseId: string }) => {
-  const selected = sampleById[caseId];
-
-  if (!selected) {
-    return <div>Sample case not found: {caseId}</div>;
-  }
-
-  return (
-    <AsyncApiOperationDiffsViewer
-      {...createViewerArgs(selected.beforeYaml, selected.afterYaml)}
-    />
-  );
-};
+const AsyncApiMessageSamplesStory = ({
+  beforeYaml,
+  afterYaml,
+}: AsyncApiCaseStoryComponentProps) => (
+  <AsyncApiOperationDiffsViewer
+    {...createViewerArgs(beforeYaml, afterYaml)}
+  />
+);
 
 // eslint-disable-next-line storybook/story-exports
 const meta = {
   title: "Async API Diffs Suite/Message Samples",
   component: AsyncApiMessageSamplesStory,
+  argTypes: asyncApiDiffSampleReadonlyArgTypes,
 } satisfies Meta<typeof AsyncApiMessageSamplesStory>;
 
 export default meta;
@@ -55,6 +53,7 @@ const createViewerArgs = (beforeSourceText: string, afterSourceText: string) =>
 
 const createCaseStoryBase = createAsyncApiCaseStoryFactory(
   AsyncApiMessageSamplesStory,
+  sampleById,
 );
 
 const createCaseStory = (caseId: string): Story => createCaseStoryBase(caseId);

@@ -2,13 +2,14 @@ import type { Meta } from "@storybook/react";
 import {
   JsoPropertySamplesStory,
   createCaseStory,
+  jsoPropertySamplesStoryMetaBase,
   type JsoPropertySamplesStoryObj,
 } from "./property-samples-common";
 
 // eslint-disable-next-line storybook/story-exports
 const meta = {
+  ...jsoPropertySamplesStoryMetaBase,
   title: "JSO Diffs Suite/arrayArrayItems",
-  component: JsoPropertySamplesStory,
 } satisfies Meta<typeof JsoPropertySamplesStory>;
 
 export default meta;

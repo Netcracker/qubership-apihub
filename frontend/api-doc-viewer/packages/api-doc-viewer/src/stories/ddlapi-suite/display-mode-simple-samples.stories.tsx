@@ -1,11 +1,15 @@
-import { DdlTableViewer } from "@apihub/components/DdlTableViewer/DdlTableViewer";
 import { SIMPLE_DISPLAY_MODE } from "@apihub/types/DisplayMode";
 import type { Meta, StoryObj } from "@storybook/react";
 import {
   collectDdlSampleCases,
   createDdlSampleById,
 } from "../utils/ddl-samples-cases";
-import { createCaseStoryFactory } from "./ddl-samples-common";
+import {
+  DdlSampleStory,
+  createCaseStoryFactory,
+  ddlSamplesStoryMetaBase,
+  type DdlSamplesStoryObj,
+} from "./ddl-samples-common";
 
 const sampleFiles = import.meta.glob(
   "../../../../samples/ddlapi/display-mode-simple/*/sample.sql",
@@ -18,14 +22,14 @@ const createCaseStory = createCaseStoryFactory(sampleById, { displayMode: SIMPLE
 
 // eslint-disable-next-line storybook/story-exports
 const meta = {
+  ...ddlSamplesStoryMetaBase,
   id: "ddlapi-suite-display-mode-simple",
   title: "DDL API Suite/Display Mode Simple",
-  component: DdlTableViewer,
-} satisfies Meta<typeof DdlTableViewer>;
+} satisfies Meta<typeof DdlSampleStory>;
 
 export default meta;
 
-type Story = StoryObj<typeof DdlTableViewer>;
+type Story = DdlSamplesStoryObj;
 
 export const DefaultValue: Story = createCaseStory("default-value");
 export const EnumValues: Story = createCaseStory("enum-values");

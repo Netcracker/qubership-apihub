@@ -1,10 +1,14 @@
-import { DdlTableViewer } from "@apihub/components/DdlTableViewer/DdlTableViewer";
 import type { Meta, StoryObj } from "@storybook/react";
 import {
   collectDdlSampleCases,
   createDdlSampleById,
 } from "../utils/ddl-samples-cases";
-import { createCaseStoryFactory } from "./ddl-samples-common";
+import {
+  DdlSampleStory,
+  createCaseStoryFactory,
+  ddlSamplesStoryMetaBase,
+  type DdlSamplesStoryObj,
+} from "./ddl-samples-common";
 
 const sampleFiles = import.meta.glob(
   "../../../../samples/ddlapi/column-types/*/sample.sql",
@@ -17,14 +21,14 @@ const createCaseStory = createCaseStoryFactory(sampleById);
 
 // eslint-disable-next-line storybook/story-exports
 const meta = {
+  ...ddlSamplesStoryMetaBase,
   id: "ddlapi-suite-column-types",
   title: "DDL API Suite/Column Types",
-  component: DdlTableViewer,
-} satisfies Meta<typeof DdlTableViewer>;
+} satisfies Meta<typeof DdlSampleStory>;
 
 export default meta;
 
-type Story = StoryObj<typeof DdlTableViewer>;
+type Story = DdlSamplesStoryObj;
 
 export const Bigint: Story = createCaseStory("bigint");
 export const Bit: Story = createCaseStory("bit");

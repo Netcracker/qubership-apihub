@@ -1,10 +1,13 @@
 import { JsoDiffsViewer } from "@apihub/components/JsoViewer/JsoDiffsViewer";
 import type { Meta, StoryObj } from "@storybook/react";
-import type { ComponentProps } from "react";
-import { prepareJsoDiffsDocument } from "../preprocess";
 import { collectSampleCases } from "../utils/diffs-samples-cases";
-import { parseYamlSource } from "../utils/parse-yaml-source";
-import { TEST_DIFF_META_KEYS } from "./shared-test-data";
+import {
+  type JsoCaseStoryComponentProps,
+  createJsoCaseStoryFactory,
+  createJsoSampleById,
+  createJsoViewerArgs,
+  jsoDiffSampleReadonlyArgTypes,
+} from "./jso-diffs-utils";
 
 const beforeFiles = import.meta.glob(
   "../../../../samples/jso-diffs/property/*/before.yaml",
@@ -17,52 +20,27 @@ const afterFiles = import.meta.glob(
 ) as Record<string, string>;
 
 const sampleCases = collectSampleCases(beforeFiles, afterFiles);
+const sampleById = createJsoSampleById(sampleCases);
 
-export const sampleById = Object.fromEntries(sampleCases.map((item) => [item.caseId, item])) as Record<
-  string,
-  (typeof sampleCases)[number]
->;
-
-type JsoDiffsViewerProps = ComponentProps<typeof JsoDiffsViewer>;
-
-export type JsoPropertySamplesStoryProps = {
-  caseId: string;
-};
-
-export const JsoPropertySamplesStory = ({ caseId }: JsoPropertySamplesStoryProps) => {
-  const selected = sampleById[caseId];
-
-  if (!selected) {
-    return <div>Sample case not found: {caseId}</div>;
-  }
-
-  return (
-    <JsoDiffsViewer
-      {...createViewerArgs(selected.beforeYaml, selected.afterYaml)}
-    />
-  );
-};
+export const JsoPropertySamplesStory = ({
+  beforeYaml,
+  afterYaml,
+}: JsoCaseStoryComponentProps) => (
+  <JsoDiffsViewer {...createJsoViewerArgs(beforeYaml, afterYaml)} />
+);
 
 export type JsoPropertySamplesStoryMeta = Meta<typeof JsoPropertySamplesStory>;
 export type JsoPropertySamplesStoryObj = StoryObj<JsoPropertySamplesStoryMeta>;
 
-const createSource = (sourceText: string): Record<string, unknown> => parseYamlSource(sourceText);
+export const jsoPropertySamplesStoryMetaBase = {
+  component: JsoPropertySamplesStory,
+  argTypes: jsoDiffSampleReadonlyArgTypes,
+} satisfies Pick<JsoPropertySamplesStoryMeta, "component" | "argTypes">;
 
-const createViewerArgs = (beforeSourceText: string, afterSourceText: string): JsoDiffsViewerProps => ({
-  mergedSource: prepareJsoDiffsDocument({
-    beforeSource: createSource(beforeSourceText),
-    afterSource: createSource(afterSourceText),
-    diffMetaKeys: TEST_DIFF_META_KEYS,
-  }),
-  initialLevel: 1,
-  supportJsonSchema: true,
-  diffMetaKeys: TEST_DIFF_META_KEYS,
-});
+const createCaseStoryBase = createJsoCaseStoryFactory(
+  JsoPropertySamplesStory,
+  sampleById,
+);
 
-export const createCaseStory = (caseId: string): JsoPropertySamplesStoryObj => ({
-  name: caseId,
-  args: {
-    caseId,
-  },
-  render: (args) => <JsoPropertySamplesStory caseId={args.caseId} />,
-});
+export const createCaseStory = (caseId: string): JsoPropertySamplesStoryObj =>
+  createCaseStoryBase(caseId);

@@ -73,13 +73,17 @@ const printStoryFile = ({ suiteId, title, displayMode }) => {
     ? `, { displayMode: ${displayMode === "simple" ? "SIMPLE" : "DETAILED"}_DISPLAY_MODE }`
     : "";
 
-  return `import { DdlTableViewer } from "@apihub/components/DdlTableViewer/DdlTableViewer";
-${displayModeImport}import type { Meta, StoryObj } from "@storybook/react";
+  return `${displayModeImport}import type { Meta, StoryObj } from "@storybook/react";
 import {
   collectDdlSampleCases,
   createDdlSampleById,
 } from "../utils/ddl-samples-cases";
-import { createCaseStoryFactory } from "./ddl-samples-common";
+import {
+  DdlSampleStory,
+  createCaseStoryFactory,
+  ddlSamplesStoryMetaBase,
+  type DdlSamplesStoryObj,
+} from "./ddl-samples-common";
 
 const sampleFiles = import.meta.glob(
   "../../../../samples/ddlapi/${suiteId}/*/sample.sql",
@@ -92,14 +96,14 @@ const createCaseStory = createCaseStoryFactory(sampleById${factoryOptions});
 
 // eslint-disable-next-line storybook/story-exports
 const meta = {
+  ...ddlSamplesStoryMetaBase,
   id: "${metaId}",
   title: "${title}",
-  component: DdlTableViewer,
-} satisfies Meta<typeof DdlTableViewer>;
+} satisfies Meta<typeof DdlSampleStory>;
 
 export default meta;
 
-type Story = StoryObj<typeof DdlTableViewer>;
+type Story = DdlSamplesStoryObj;
 
 ${exports}
 `;

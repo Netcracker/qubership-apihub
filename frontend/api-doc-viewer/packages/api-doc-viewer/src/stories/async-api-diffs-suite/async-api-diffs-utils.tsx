@@ -1,6 +1,7 @@
 import {
   type AsyncApiOperationDiffsViewerProps
 } from "@apihub/components/AsyncApiOperationViewer/AsyncApiOperationDiffsViewer";
+import type { ArgTypes } from "@storybook/react";
 import { userEvent, within } from "@storybook/test";
 import { TEST_REFERENCE_NAME_PROPERTY } from "../async-api-suite/shared-test-data";
 import { prepareAsyncApiDiffsDocument } from "../preprocess";
@@ -13,13 +14,30 @@ export type AsyncApiDiffSampleCase = {
   afterYaml: string;
 };
 
-type AsyncApiCaseStoryComponentProps = {
-  caseId: string;
-};
+export type AsyncApiCaseStoryComponentProps = Pick<
+  AsyncApiDiffSampleCase,
+  "caseId" | "beforeYaml" | "afterYaml"
+>;
+
+export const asyncApiDiffSampleReadonlyArgTypes = {
+  beforeYaml: {
+    control: { type: "text" },
+    table: { category: "Sample" },
+    description:
+      "Before sample YAML for reference. The viewer always uses the bundled fixture for the selected case.",
+  },
+  afterYaml: {
+    control: { type: "text" },
+    table: { category: "Sample" },
+    description:
+      "After sample YAML for reference. The viewer always uses the bundled fixture for the selected case.",
+  },
+} satisfies Partial<ArgTypes<AsyncApiCaseStoryComponentProps>>;
 
 type AsyncApiCaseStoryArgs = {
   name: string;
   args: AsyncApiCaseStoryComponentProps;
+  argTypes: typeof asyncApiDiffSampleReadonlyArgTypes;
   render: (args: AsyncApiCaseStoryComponentProps) => JSX.Element;
   play?: (context: { canvasElement: HTMLElement }) => Promise<void>;
 };
@@ -58,13 +76,35 @@ export const createAsyncApiSampleById = <TSample extends AsyncApiDiffSampleCase>
 
 export const createAsyncApiCaseStoryFactory = (
   StoryComponent: (props: AsyncApiCaseStoryComponentProps) => JSX.Element,
+  sampleById: Record<string, AsyncApiDiffSampleCase>,
   playTestId?: string,
 ) => {
-  const baseFactory = (caseId: string): AsyncApiCaseStoryArgs => ({
-    name: caseId,
-    args: { caseId },
-    render: (args) => <StoryComponent caseId={args.caseId} />,
-  });
+  const baseFactory = (caseId: string): AsyncApiCaseStoryArgs => {
+    const sample = sampleById[caseId];
+    if (!sample) {
+      throw new Error(`Sample case not found: ${caseId}`);
+    }
+
+    return {
+      name: caseId,
+      args: {
+        caseId,
+        beforeYaml: sample.beforeYaml,
+        afterYaml: sample.afterYaml,
+      },
+      argTypes: asyncApiDiffSampleReadonlyArgTypes,
+      render: (args) => {
+        const sample = sampleById[args.caseId];
+        return (
+          <StoryComponent
+            caseId={args.caseId}
+            beforeYaml={sample.beforeYaml}
+            afterYaml={sample.afterYaml}
+          />
+        );
+      },
+    };
+  };
 
   if (playTestId === undefined) {
     return baseFactory;

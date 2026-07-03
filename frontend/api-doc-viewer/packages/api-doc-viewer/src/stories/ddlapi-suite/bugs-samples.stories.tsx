@@ -18,6 +18,9 @@ const meta = {
   id: "ddlapi-suite-bugs",
   title: "DDL API Suite/Bugs",
   component: DdlTableViewer,
+  parameters: {
+    controls: { disable: true },
+  },
 } satisfies Meta<typeof DdlTableViewer>;
 
 export default meta;
