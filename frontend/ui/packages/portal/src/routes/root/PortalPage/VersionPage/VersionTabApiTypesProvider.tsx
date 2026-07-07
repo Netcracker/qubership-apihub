@@ -1,8 +1,6 @@
 import { createContext, type FC, memo, type PropsWithChildren, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 
-import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
-
 import { usePackageVersionContent } from '@apihub/routes/root/usePackageVersionContent'
 import { useApiQualityLinterEnabled, useApiQualityTabTooltip } from './ApiQualityValidationSummaryProvider'
 import { usePackageVersionApiTypes } from './usePackageVersionApiTypes'
@@ -15,7 +13,6 @@ export const VersionTabApiTypesContext = createContext<VersionTabsApiTypesState 
 
 export const VersionTabApiTypesProvider: FC<PropsWithChildren> = memo<PropsWithChildren>(({ children }) => {
   const { packageId, versionId } = useParams()
-  const { productionMode } = useSystemInfo()
   const { apiTypes, isLoading } = usePackageVersionApiTypes(packageId!, versionId!)
   const { versionContent } = usePackageVersionContent({
     packageKey: packageId,
@@ -30,7 +27,6 @@ export const VersionTabApiTypesProvider: FC<PropsWithChildren> = memo<PropsWithC
       buildVersionTabsApiTypesState({
         publishedApiTypes: apiTypes,
         isLoading: isLoading,
-        productionMode: productionMode,
         previousVersion: versionContent?.previousVersion,
         linterEnabled: linterEnabled,
         apiQualityTooltip: apiQualityTooltip,
@@ -40,7 +36,6 @@ export const VersionTabApiTypesProvider: FC<PropsWithChildren> = memo<PropsWithC
       apiTypes,
       isLoading,
       linterEnabled,
-      productionMode,
       versionContent?.previousVersion,
     ],
   )

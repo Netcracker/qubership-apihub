@@ -7,7 +7,6 @@ import { VERSION_TAB_IDS } from './version-tab-allowed-api-types'
 const DEFAULT_INPUT = {
   publishedApiTypes: [API_TYPE_REST, CONTRACT_TYPE_MCP] as const,
   isLoading: false,
-  productionMode: false,
   previousVersion: 'previous-version' as const,
   linterEnabled: true,
   apiQualityTooltip: undefined,

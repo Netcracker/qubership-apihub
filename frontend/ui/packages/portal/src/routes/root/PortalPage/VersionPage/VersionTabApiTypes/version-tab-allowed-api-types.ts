@@ -26,10 +26,6 @@ export const VERSION_TAB_IDS = {
 
 export type VersionTabId = (typeof VERSION_TAB_IDS)[keyof typeof VERSION_TAB_IDS]
 
-export type ResolveTabApiTypesContext = Readonly<{
-  productionMode?: boolean
-}>
-
 export const CONTRACTS_TAB_ALLOWED_API_TYPES = [
   API_TYPE_REST,
   API_TYPE_GRAPHQL,
@@ -45,20 +41,9 @@ export const API_CHANGES_TAB_ALLOWED_API_TYPES = [
   // CONTRACT_TYPE_DDL, TODO: uncomment when full API changes support for DDL is ready.
 ] as const satisfies ReadonlyArray<TabAllowedApiType>
 
-export const API_CHANGES_TAB_ALLOWED_API_TYPES_PRODUCTION = [
-  API_TYPE_REST,
-  API_TYPE_ASYNCAPI,
-  // CONTRACT_TYPE_DDL, TODO: uncomment when full API changes support for DDL is ready.
-] as const satisfies ReadonlyArray<TabAllowedApiType>
-
 export const DEPRECATED_TAB_ALLOWED_API_TYPES = [
   API_TYPE_REST,
   API_TYPE_GRAPHQL,
-  API_TYPE_ASYNCAPI,
-] as const satisfies ReadonlyArray<TabAllowedApiType>
-
-export const DEPRECATED_TAB_ALLOWED_API_TYPES_PRODUCTION = [
-  API_TYPE_REST,
   API_TYPE_ASYNCAPI,
 ] as const satisfies ReadonlyArray<TabAllowedApiType>
 
@@ -74,27 +59,11 @@ export const VERSION_TAB_ALLOWED_API_TYPES = {
   [VERSION_TAB_IDS.apiQuality]: API_QUALITY_TAB_ALLOWED_API_TYPES,
 } as const satisfies Record<VersionTabId, ReadonlyArray<TabAllowedApiType>>
 
-export function getTabAllowedApiTypes(
-  tab: VersionTabId,
-  context: ResolveTabApiTypesContext = {},
-): ReadonlyArray<TabAllowedApiType> {
-  if (context.productionMode === true) {
-    switch (tab) {
-      case VERSION_TAB_IDS.apiChanges:
-        return API_CHANGES_TAB_ALLOWED_API_TYPES_PRODUCTION
-      case VERSION_TAB_IDS.deprecated:
-        return DEPRECATED_TAB_ALLOWED_API_TYPES_PRODUCTION
-    }
-  }
-  return VERSION_TAB_ALLOWED_API_TYPES[tab]
-}
-
 export function resolveTabApiTypes(
   tab: VersionTabId,
   published: PublishedApiTypes,
-  context: ResolveTabApiTypesContext = {},
 ): Array<ApiType | ContractType> {
-  const allowedApiTypes = getTabAllowedApiTypes(tab, context)
+  const allowedApiTypes: ReadonlyArray<TabAllowedApiType> = VERSION_TAB_ALLOWED_API_TYPES[tab]
   return published.filter(type => allowedApiTypes.includes(type))
 }
 

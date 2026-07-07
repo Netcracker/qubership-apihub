@@ -8,7 +8,6 @@ import {
   isTabApiTypesEmpty,
   type PublishedApiTypes,
   resolveTabApiTypes,
-  type ResolveTabApiTypesContext,
   type TabAllowedApiType,
   VERSION_TAB_IDS,
   type VersionTabId,
@@ -24,14 +23,12 @@ export type VersionTabApiTypesState = {
 export type VersionTabsApiTypesState = {
   publishedApiTypes: PublishedApiTypes
   isLoading: IsLoading
-  productionMode: boolean
   tabs: Record<VersionTabId, VersionTabApiTypesState>
 }
 
 export type BuildVersionTabsApiTypesStateInput = {
   publishedApiTypes: PublishedApiTypes
   isLoading: IsLoading
-  productionMode: boolean
   previousVersion: Key | undefined
   linterEnabled: boolean
   apiQualityTooltip: string | undefined
@@ -42,27 +39,21 @@ const API_CHANGES_NO_PREVIOUS_VERSION_TOOLTIP = 'No API changes since there is n
 export function buildVersionTabsApiTypesState(
   input: BuildVersionTabsApiTypesStateInput,
 ): VersionTabsApiTypesState {
-  const resolveContext: ResolveTabApiTypesContext = { productionMode: input.productionMode }
-
   const contractsAllowedApiTypes = resolveTabApiTypes(
     VERSION_TAB_IDS.contracts,
     input.publishedApiTypes,
-    resolveContext,
   )
   const apiChangesAllowedApiTypes = resolveTabApiTypes(
     VERSION_TAB_IDS.apiChanges,
     input.publishedApiTypes,
-    resolveContext,
   )
   const deprecatedAllowedApiTypes = resolveTabApiTypes(
     VERSION_TAB_IDS.deprecated,
     input.publishedApiTypes,
-    resolveContext,
   )
   const apiQualityAllowedApiTypes = resolveTabApiTypes(
     VERSION_TAB_IDS.apiQuality,
     input.publishedApiTypes,
-    resolveContext,
   )
 
   const hasNoPreviousVersion = input.previousVersion === undefined
@@ -72,7 +63,6 @@ export function buildVersionTabsApiTypesState(
   return {
     publishedApiTypes: input.publishedApiTypes,
     isLoading: input.isLoading,
-    productionMode: input.productionMode,
     tabs: {
       [VERSION_TAB_IDS.contracts]: toVersionTabApiTypesState(
         contractsAllowedApiTypes,
