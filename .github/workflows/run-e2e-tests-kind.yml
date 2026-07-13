@@ -31,26 +31,10 @@ on:
         description: "Playwright test command CLI arguments"
         type: string
         default: "--project=Portal --workers=8 --grep-invert=@flaky"
-      apihub-backend-image-tag:
-        description: "APIHUB Backend Docker image tag"
+      image-tags:
+        description: "JSON object with backend, buildTaskConsumer, ui, apiLinterService, and agentsBackend image tags"
         type: string
-        default: "dev"
-      apihub-build-task-consumer-image-tag:
-        description: "APIHUB Build Task Consumer Docker image tag"
-        type: string
-        default: "dev"
-      apihub-ui-image-tag:
-        description: "APIHUB UI Docker image tag"
-        type: string
-        default: "dev"
-      apihub-api-linter-service-image-tag:
-        description: "APIHUB API Linter Service Docker image tag"
-        type: string
-        default: "dev"
-      apihub-agents-backend-image-tag:
-        description: "Agents Backend Docker image tag"
-        type: string
-        default: "dev"
+        default: '{"backend":"dev","buildTaskConsumer":"dev","ui":"dev","apiLinterService":"dev","agentsBackend":"dev"}'
 
 jobs:
   call-kind-run-and-test-ci-workflow:
@@ -63,11 +47,11 @@ jobs:
       playwright-tests-run: ${{ inputs.playwright-tests-run }}
       playwright-repository-branch: ${{ inputs.playwright-repository-branch }}
       playwright-test-args: ${{ inputs.playwright-test-args }}
-      apihub-backend-image-tag: ${{ inputs.apihub-backend-image-tag }}
-      apihub-build-task-consumer-image-tag: ${{ inputs.apihub-build-task-consumer-image-tag }}
-      apihub-ui-image-tag: ${{ inputs.apihub-ui-image-tag }}
-      apihub-api-linter-service-image-tag: ${{ inputs.apihub-api-linter-service-image-tag }}
-      apihub-agents-backend-image-tag: ${{ inputs.apihub-agents-backend-image-tag }}
+      apihub-backend-image-tag: ${{ fromJSON(inputs.image-tags).backend }}
+      apihub-build-task-consumer-image-tag: ${{ fromJSON(inputs.image-tags).buildTaskConsumer }}
+      apihub-ui-image-tag: ${{ fromJSON(inputs.image-tags).ui }}
+      apihub-api-linter-service-image-tag: ${{ fromJSON(inputs.image-tags).apiLinterService }}
+      apihub-agents-backend-image-tag: ${{ fromJSON(inputs.image-tags).agentsBackend }}
     secrets:
       APIHUB_ACCESS_TOKEN: ${{ secrets.APIHUB_ACCESS_TOKEN }}
       APIHUB_ADMIN_EMAIL: ${{ secrets.APIHUB_ADMIN_EMAIL }}
