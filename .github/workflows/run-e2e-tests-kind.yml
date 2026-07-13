@@ -1,0 +1,75 @@
+name: Manual Run E2E Tests in Kind Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      helm-repository-branch:
+        description: "Branch containing Helm templates"
+        type: string
+        default: "main"
+      postman-collections-run:
+        description: "Flag for executing Postman collections"
+        type: boolean
+        default: true
+      postman-repository-branch:
+        description: "qubership-apihub-postman-collections branch to clone"
+        type: string
+        default: "develop"
+      postman-collections-list:
+        description: "Collections to execute"
+        type: string
+        default: "./e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/1_3_Linter_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/3_2_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json"
+      playwright-tests-run:
+        description: "Flag for executing Playwright tests"
+        type: boolean
+        default: true
+      playwright-repository-branch:
+        description: "qubership-apihub-ui-tests branch to clone"
+        type: string
+        default: "develop"
+      playwright-test-args:
+        description: "Playwright test command CLI arguments"
+        type: string
+        default: "--project=Portal --workers=8 --grep-invert=@flaky"
+      apihub-backend-image-tag:
+        description: "APIHUB Backend Docker image tag"
+        type: string
+        default: "dev"
+      apihub-build-task-consumer-image-tag:
+        description: "APIHUB Build Task Consumer Docker image tag"
+        type: string
+        default: "dev"
+      apihub-ui-image-tag:
+        description: "APIHUB UI Docker image tag"
+        type: string
+        default: "dev"
+      apihub-api-linter-service-image-tag:
+        description: "APIHUB API Linter Service Docker image tag"
+        type: string
+        default: "dev"
+      apihub-agents-backend-image-tag:
+        description: "Agents Backend Docker image tag"
+        type: string
+        default: "dev"
+
+jobs:
+  call-kind-run-and-test-ci-workflow:
+    uses: netcracker/qubership-apihub-ci/.github/workflows/run-e2e-tests-kind.yaml@feature/k8s-ci
+    with:
+      helm-repository-branch: ${{ inputs.helm-repository-branch }}
+      postman-collections-run: ${{ inputs.postman-collections-run }}
+      postman-repository-branch: ${{ inputs.postman-repository-branch }}
+      postman-collections-list: ${{ inputs.postman-collections-list }}
+      playwright-tests-run: ${{ inputs.playwright-tests-run }}
+      playwright-repository-branch: ${{ inputs.playwright-repository-branch }}
+      playwright-test-args: ${{ inputs.playwright-test-args }}
+      apihub-backend-image-tag: ${{ inputs.apihub-backend-image-tag }}
+      apihub-build-task-consumer-image-tag: ${{ inputs.apihub-build-task-consumer-image-tag }}
+      apihub-ui-image-tag: ${{ inputs.apihub-ui-image-tag }}
+      apihub-api-linter-service-image-tag: ${{ inputs.apihub-api-linter-service-image-tag }}
+      apihub-agents-backend-image-tag: ${{ inputs.apihub-agents-backend-image-tag }}
+    secrets:
+      APIHUB_ACCESS_TOKEN: ${{ secrets.APIHUB_ACCESS_TOKEN }}
+      APIHUB_ADMIN_EMAIL: ${{ secrets.APIHUB_ADMIN_EMAIL }}
+      APIHUB_ADMIN_PASSWORD: ${{ secrets.APIHUB_ADMIN_PASSWORD }}
+      JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}
