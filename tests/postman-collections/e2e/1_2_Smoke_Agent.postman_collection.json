@@ -32,7 +32,7 @@
                             "        agentId = data[i].agentId;",
                             "        break;",
                             "    }",
-                            "    if (data[i].agentDeploymentCloud.includes("Kind")) {",
+                            "    if (data[i].agentDeploymentCloud.includes('Kind')) {",
                             "        agentId = data[i].agentId;",
                             "        break;",
                             "    }",
