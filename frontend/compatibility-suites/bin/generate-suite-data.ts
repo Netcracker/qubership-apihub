@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'fs'
-import { load as loadYaml } from 'js-yaml'
+import { parse as loadYaml } from 'yaml'
 import path from 'path'
 import { exit } from 'process'
 import { fileURLToPath } from 'url'
