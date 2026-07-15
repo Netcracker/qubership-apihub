@@ -18,7 +18,7 @@ test.describe('12.1.4 Prefix grouping: Viewing', () => {
 
   const testVersion = V_PKG_PPGR_REST_CHANGED_R
 
-  test('[P-AOPFI-3] Filtering operations by Group on the "Operations" tab',
+  test('[P-AOPFI-3] Filtering operations by Group on the "Contracts" tab',
     {
       tag: '@smoke',
       annotation: [
@@ -29,29 +29,29 @@ test.describe('12.1.4 Prefix grouping: Viewing', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
 
-      await test.step('Open the "Operations" tab', async () => {
+      await test.step('Open the "Contracts" tab', async () => {
         await portalPage.gotoVersion(testVersion, VERSION_OPERATIONS_TAB_REST)
 
-        await expect(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
-        await expect(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V2)).toBeVisible()
+        await expect(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
+        await expect(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V2)).toBeVisible()
       })
 
       await test.step('Filter by "v1" group', async () => {
-        await operationsTab.sidebar.groupFilterAc.click()
-        await operationsTab.sidebar.groupFilterAc.getListItem('v1').click()
+        await contractsTab.sidebar.groupFilterAc.click()
+        await contractsTab.sidebar.groupFilterAc.getListItem('v1').click()
 
-        await expect(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
-        await expect(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V2)).toBeHidden()
+        await expect(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
+        await expect(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V2)).toBeHidden()
       })
 
       await test.step('Filter by "v2" group', async () => {
-        await operationsTab.sidebar.groupFilterAc.click()
-        await operationsTab.sidebar.groupFilterAc.getListItem('v2').click()
+        await contractsTab.sidebar.groupFilterAc.click()
+        await contractsTab.sidebar.groupFilterAc.getListItem('v2').click()
 
-        await expect(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V2)).toBeVisible()
-        await expect(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeHidden()
+        await expect(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V2)).toBeVisible()
+        await expect(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeHidden()
       })
     })
 

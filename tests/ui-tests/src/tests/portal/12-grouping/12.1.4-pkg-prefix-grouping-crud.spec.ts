@@ -67,7 +67,7 @@ test.describe('12.1.4 Prefix grouping: CRUD', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
       const { packageSettingsPage } = versionPage
       const { apiSpecConfigTab } = packageSettingsPage
       const { editPrefixDialog } = apiSpecConfigTab
@@ -81,10 +81,10 @@ test.describe('12.1.4 Prefix grouping: CRUD', () => {
       await portalPage.gotoVersion(V_PKG_PPGR_SETTINGS_R, VERSION_OPERATIONS_TAB_REST)
 
       await test.step('Check initial groups', async () => {
-        await operationsTab.sidebar.groupFilterAc.click()
+        await contractsTab.sidebar.groupFilterAc.click()
 
-        await expect(operationsTab.sidebar.groupFilterAc.getListItem('v1')).toBeVisible()
-        await expect(operationsTab.sidebar.groupFilterAc.getListItem('api')).toBeHidden()
+        await expect(contractsTab.sidebar.groupFilterAc.getListItem('v1')).toBeVisible()
+        await expect(contractsTab.sidebar.groupFilterAc.getListItem('api')).toBeHidden()
       })
 
       await test.step('Set new prefix', async () => {
@@ -103,10 +103,10 @@ test.describe('12.1.4 Prefix grouping: CRUD', () => {
       })
 
       await test.step('Check new groups', async () => {
-        await operationsTab.sidebar.groupFilterAc.click()
+        await contractsTab.sidebar.groupFilterAc.click()
 
-        await expect(operationsTab.sidebar.groupFilterAc.getListItem('api')).toBeVisible()
-        await expect(operationsTab.sidebar.groupFilterAc.getListItem('v1')).toBeHidden()
+        await expect(contractsTab.sidebar.groupFilterAc.getListItem('api')).toBeVisible()
+        await expect(contractsTab.sidebar.groupFilterAc.getListItem('v1')).toBeHidden()
       })
     })
 
@@ -121,7 +121,7 @@ test.describe('12.1.4 Prefix grouping: CRUD', () => {
 
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
       const { packageSettingsPage } = versionPage
       const { apiSpecConfigTab } = packageSettingsPage
       const { editPrefixDialog } = apiSpecConfigTab
@@ -134,10 +134,10 @@ test.describe('12.1.4 Prefix grouping: CRUD', () => {
 
       await test.step('Check initial groups', async () => {
         await portalPage.gotoVersion(V_PKG_PPGR_SETTINGS_R, VERSION_OPERATIONS_TAB_REST)
-        await operationsTab.sidebar.groupFilterAc.click()
+        await contractsTab.sidebar.groupFilterAc.click()
 
-        await expect(operationsTab.sidebar.groupFilterAc.getListItem('v1')).toBeVisible()
-        await expect(operationsTab.sidebar.groupFilterAc.getListItem('v2')).toBeVisible()
+        await expect(contractsTab.sidebar.groupFilterAc.getListItem('v1')).toBeVisible()
+        await expect(contractsTab.sidebar.groupFilterAc.getListItem('v2')).toBeVisible()
       })
 
       await test.step('Delete prefix', async () => {
@@ -155,7 +155,7 @@ test.describe('12.1.4 Prefix grouping: CRUD', () => {
       await test.step('Check groups deletion', async () => {
         await portalPage.gotoVersion(V_PKG_PPGR_SETTINGS_R, VERSION_OPERATIONS_TAB_REST)
 
-        await expect(operationsTab.sidebar.groupFilterAc).toBeDisabled()
+        await expect(contractsTab.sidebar.groupFilterAc).toBeDisabled()
       })
     })
 

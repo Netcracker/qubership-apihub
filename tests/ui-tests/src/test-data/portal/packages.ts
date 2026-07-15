@@ -14,11 +14,6 @@ export const PK12 = new Package({
   alias: 'PK12',
   parent: P_WS_MAIN_R,
 })
-export const PK13 = new Package({
-  name: `${PACKAGE_PREFIX}-13`,
-  alias: 'PK13',
-  parent: P_WS_MAIN_R,
-})
 export const PK14 = new Package({
   name: `${PACKAGE_PREFIX}-14`,
   alias: 'PK14',

@@ -167,7 +167,6 @@ import {
   P_WS_UPDATE_N,
   PK11,
   PK12,
-  PK13,
   PK14,
   PK15,
   PK_GS,
@@ -224,7 +223,6 @@ import {
   V_P_DSH_HIERARCHY_NO_CHANGES_CHANGED_R,
   V_P_DSH_HIERARCHY_NON_BREAKING_BASE_R,
   V_P_DSH_HIERARCHY_NON_BREAKING_CHANGED_R,
-  V_P_DSH_NOT_EXIST_PKG_NESTED_R,
   V_P_DSH_OVERVIEW_NESTED_R,
   V_P_DSH_OVERVIEW_R,
   V_P_DSH_RELEASE_N,
@@ -282,7 +280,6 @@ import {
   V_P_PKG_EDITING_FOR_NEW_REVISION_N,
   V_P_PKG_EDITING_FOR_NEW_VERSION_N,
   V_P_PKG_EDITING_SEARCH_R,
-  V_P_PKG_FOR_DASHBOARDS_DELETED_R,
   V_P_PKG_FOR_DASHBOARDS_GQL_CHANGED_R,
   V_P_PKG_FOR_DASHBOARDS_GQL_R,
   V_P_PKG_FOR_DASHBOARDS_REST_BASE_R,
@@ -411,7 +408,6 @@ test.describe('Reusable Test Data creation', async () => {
         await tdm.createPackage([
           PK11,
           PK12,
-          PK13,
           PK14,
           PK15,
           PK_REV_IMM,
@@ -540,11 +536,9 @@ test.describe('Reusable Test Data creation', async () => {
           V_P_PKG_OVERVIEW_R,
           V_P_PKG_FOR_DASHBOARDS_REST_BASE_R,
           V_P_PKG_FOR_DASHBOARDS_REST_CHANGED_R,
-          V_P_PKG_FOR_DASHBOARDS_DELETED_R,
           V_P_PKG_FOR_DASHBOARDS_GQL_R,
           V_P_PKG_FOR_DASHBOARDS_GQL_CHANGED_R,
           V_P_DSH_CONFLICT_PKG_NESTED_R,
-          V_P_DSH_NOT_EXIST_PKG_NESTED_R,
           V_P_DSH_OVERVIEW_NESTED_R,
           V_P_DSH_OVERVIEW_R,
           V_P_DSH_CHANGELOG_REST_BASE_R,
@@ -608,10 +602,6 @@ test.describe('Reusable Test Data creation', async () => {
       await test.step('Publish 2nd revision for some versions', async () => {
         await tdm.publishVersion(V_P_PKG_OVERVIEW_R)
         await tdm.publishVersion(V_P_DSH_OVERVIEW_R)
-      })
-
-      await test.step('Delete (hide) package for dashboard overview', async () => {
-        await tdm.deletePackage(PK13)
       })
 
       await test.step('Publish by another User', async () => {

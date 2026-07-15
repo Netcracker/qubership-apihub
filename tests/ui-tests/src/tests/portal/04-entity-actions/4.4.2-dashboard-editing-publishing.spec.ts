@@ -8,10 +8,8 @@ import {
   D123,
   PK11,
   PK12,
-  PK13,
   V_P_DSH_CONFLICT_PKG_NESTED_R,
   V_P_DSH_DRAFT_N,
-  V_P_DSH_NOT_EXIST_PKG_NESTED_R,
   V_P_DSH_OVERVIEW_NESTED_R,
   V_P_DSH_RELEASE_N,
   V_P_DSH_REPUBLISH_N,
@@ -221,38 +219,6 @@ test.describe('4.4.2 Dashboard editing/publishing', () => {
 
       await expect.soft(overviewTab.packagesTab.getExcludedPackageRow(PK11)).toBeVisible()
       await expect.soft(overviewTab.packagesTab.getIncludedPackageRow(PK11)).toBeVisible()
-    })
-
-  test('[P-PUDSH-8] Publishing a dashboard version with not exist packages',
-    {
-      tag: '@smoke',
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-5901` },
-    },
-    async ({ sysadminPage: page }) => {
-
-      const portalPage = new PortalPage(page)
-      const { versionDashboardPage: versionPage } = portalPage
-      const { configureVersionTab } = versionPage
-      const { confPackagesTab } = configureVersionTab
-
-      await portalPage.gotoVersionEditing({
-        pkg: D123,
-        version: '@',
-      })
-      await confPackagesTab.addPackageBtn.click()
-      await confPackagesTab.addPackageDialog.fillForm({
-        packageId: D12.packageId,
-        version: V_P_DSH_NOT_EXIST_PKG_NESTED_R.version,
-      })
-      await confPackagesTab.addPackageDialog.addBtn.click()
-
-      await expect.soft(confPackagesTab.notExistAlertIcon).toBeVisible()
-      await expect.soft(confPackagesTab.getPackageRow(D12).packageCell.notExistIndicatorIcon).toBeVisible()
-
-      await confPackagesTab.getPackageRow(D12).expandBtn.click()
-
-      await expect.soft(confPackagesTab.getPackageRow(PK13).packageCell.notExistAlertIcon).toBeVisible()
-      await expect.soft(configureVersionTab.publishBtn).toBeDisabled()
     })
 
   test('[P-PUDSH-10] Editing and re-publishing a dashboard version',

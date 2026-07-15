@@ -133,7 +133,7 @@ test.describe('14.1 Copying Package Version', () => {
       const { retry = 0 } = testInfo
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { overviewTab, operationsTab, deprecatedTab, documentsTab, copyVersionDialog } = versionPage
+      const { overviewTab, contractsTab, deprecatedTab, documentsTab, copyVersionDialog } = versionPage
       const targetWorkspace = P_WS_MAIN_R
       const targetPackage = P_PK_CP_EMPTY
       const targetVersion = `20${retry}0.2`
@@ -182,14 +182,14 @@ test.describe('14.1 Copying Package Version', () => {
         await expect(versionPage.apiChangesTab).toBeDisabled()
       })
 
-      await test.step('Navigate to the "Operations" tab', async () => {
-        await versionPage.operationsTab.click()
+      await test.step('Navigate to the "Contracts" tab', async () => {
+        await versionPage.contractsTab.click()
 
-        await expect(operationsTab.table.getOperationRow()).toHaveCount(19)
+        await expect(contractsTab.table.getOperationRow()).toHaveCount(19)
 
-        await operationsTab.sidebar.groupFilterAc.click()
+        await contractsTab.sidebar.groupFilterAc.click()
 
-        await expect(operationsTab.sidebar.groupFilterAc.getListItem('v1')).toBeVisible()
+        await expect(contractsTab.sidebar.groupFilterAc.getListItem('v1')).toBeVisible()
       })
 
       await test.step('Navigate to the "Deprecated" tab', async () => {
@@ -229,7 +229,7 @@ test.describe('14.1 Copying Package Version', () => {
       const { retry = 0 } = testInfo
       const portalPage = new PortalPage(page)
       const { versionPackagePage: versionPage } = portalPage
-      const { overviewTab, operationsTab, apiChangesTab, deprecatedTab, documentsTab, copyVersionDialog } = versionPage
+      const { overviewTab, contractsTab, apiChangesTab, deprecatedTab, documentsTab, copyVersionDialog } = versionPage
       const targetWorkspace = P_WS_MAIN_R
       const targetPackage = P_PK_CP_RELEASE
       const targetVersion = `20${retry}0.2`
@@ -277,10 +277,10 @@ test.describe('14.1 Copying Package Version', () => {
         await expect(overviewTab.summaryTab.body.restApi.deprecatedOperations).toHaveText('2')
       })
 
-      await test.step('Navigate to the "Operations" tab', async () => {
-        await versionPage.operationsTab.click()
+      await test.step('Navigate to the "Contracts" tab', async () => {
+        await versionPage.contractsTab.click()
 
-        await expect(operationsTab.table.getOperationRow()).toHaveCount(19)
+        await expect(contractsTab.table.getOperationRow()).toHaveCount(19)
       })
 
       await test.step('Navigate to the "API Changes" tab', async () => {

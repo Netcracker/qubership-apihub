@@ -10,7 +10,7 @@ test.describe('13.1.1.2 Package revisions (Outdated revision notification)', () 
   const testPackage = PK_REV_VAR
   const testVersion = V_P_PKG_REV_1_N
 
-  test('[P-COPR-3.1] Outdated revision notification on the "Operations" tab',
+  test('[P-COPR-3.1] Outdated revision notification on the "Contracts" tab',
     {
       tag: ['@smoke', '@flaky'],
       annotation: [
@@ -31,7 +31,7 @@ test.describe('13.1.1.2 Package revisions (Outdated revision notification)', () 
           await apihubTDM.publishVersion(testVersion)
         })
 
-        await versionPage.operationsTab.click()
+        await versionPage.contractsTab.click()
 
         await expect(oldRevisionDialog.yesBtn).toBeVisible()
 
@@ -47,7 +47,7 @@ test.describe('13.1.1.2 Package revisions (Outdated revision notification)', () 
           await apihubTDM.publishVersion(testVersion)
         })
 
-        await versionPage.operationsTab.click()
+        await versionPage.contractsTab.click()
 
         await expect(oldRevisionDialog.yesBtn).toBeVisible()
 
@@ -319,7 +319,7 @@ test.describe('13.1.1.2 Package revisions (Outdated revision notification)', () 
       })
     })
 
-  test('[P-COPR-3.8-N] Outdated revision notification on the "Operations" tab (Negative)',
+  test('[P-COPR-3.8-N] Outdated revision notification on the "Contracts" tab (Negative)',
     {
       tag: '@smoke',
       annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8412` },
@@ -336,7 +336,7 @@ test.describe('13.1.1.2 Package revisions (Outdated revision notification)', () 
         await apihubTDM.publishVersion(testVersion)
       })
 
-      await versionPage.operationsTab.click()
+      await versionPage.contractsTab.click()
 
       await portalPage.waitForTimeout(SHORT_EXPECT)
 

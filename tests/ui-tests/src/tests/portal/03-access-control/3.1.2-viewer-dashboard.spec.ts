@@ -136,27 +136,27 @@ test.describe('03.1.2 Access Control. Viewer role. (Dashboard)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionDashboardPage: versionPage } = portalPage
-      const { operationsTab, apiChangesTab, deprecatedTab } = versionPage
+      const { contractsTab, apiChangesTab, deprecatedTab } = versionPage
 
       await portalPage.gotoVersion(testVersion)
 
-      await test.step('Download operations on the "Operations" tab', async () => {
-        await operationsTab.click()
-        const file = await operationsTab.toolbar.exportMenu.downloadAll()
+      await test.step('Download operations on the "Contracts" tab', async () => {
+        await contractsTab.click()
+        const file = await contractsTab.toolbar.exportMenu.downloadAll()
 
         await expectFile(file).toHaveName(`APIOperations_${testDashboard.packageId}_${testVersion.version}.xlsx`)
       })
 
       await test.step('Download operations on the "API Changes" tab', async () => {
         await apiChangesTab.click()
-        const file = await operationsTab.toolbar.exportMenu.downloadAll()
+        const file = await contractsTab.toolbar.exportMenu.downloadAll()
 
         await expectFile(file).toHaveName(`APIChanges_${testDashboard.packageId}_${testVersion.version}.xlsx`)
       })
 
       await test.step('Download operations on the "Deprecated" tab', async () => {
         await deprecatedTab.click()
-        const file = await operationsTab.toolbar.exportMenu.downloadAll()
+        const file = await contractsTab.toolbar.exportMenu.downloadAll()
 
         await expectFile(file).toHaveName(`DeprecatedOperations_${testDashboard.packageId}_${testVersion.version}.xlsx`)
       })

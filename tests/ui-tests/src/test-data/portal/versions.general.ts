@@ -17,7 +17,7 @@ import {
   FILE_P_PICTURE,
   FILE_P_PLAYGROUND,
 } from './files'
-import { P_PK_PGND, PK11, PK12, PK13, PK_GS } from './packages'
+import { P_PK_PGND, PK11, PK12, PK_GS } from './packages'
 import { D11, D12, D123, P_DSH_UPDATE } from './dashboards'
 import {
   V_P_PKG_CHANGELOG_MULTI_CHANGED_R,
@@ -143,13 +143,6 @@ export const V_P_PKG_OVERVIEW_R: Version = {
   metadata: { versionLabels: ['ATUI', 'Version', 'Package Overview'] },
 } as const
 
-export const V_P_PKG_FOR_DASHBOARDS_DELETED_R: Version = {
-  pkg: PK13,
-  version: 'pkg-for-dash-deleted',
-  status: 'draft',
-  files: [{ file: FILE_P_PETSTORE20 }],
-} as const
-
 export const V_P_PKG_PLAYGROUND_R: Version = {
   pkg: P_PK_PGND,
   version: 'playground',
@@ -164,12 +157,6 @@ export const V_P_DSH_CONFLICT_PKG_NESTED_R: Version = {
   refs: [{ refId: PK11.packageId, version: V_P_PKG_OPERATIONS_REST_R.version }],
 } as const
 
-export const V_P_DSH_NOT_EXIST_PKG_NESTED_R: Version = {
-  pkg: D12,
-  version: 'dash-not-exist-ref-nested',
-  status: 'draft',
-  refs: [{ refId: PK13.packageId, version: V_P_PKG_FOR_DASHBOARDS_DELETED_R.version }],
-} as const
 
 export const V_P_DSH_OVERVIEW_NESTED_R: Version = {
   pkg: D12,
@@ -177,7 +164,6 @@ export const V_P_DSH_OVERVIEW_NESTED_R: Version = {
   status: 'draft',
   refs: [
     { refId: PK12.packageId, version: V_P_PKG_FOR_DASHBOARDS_REST_BASE_R.version },
-    { refId: PK13.packageId, version: V_P_PKG_FOR_DASHBOARDS_DELETED_R.version },
     { refId: PK11.packageId, version: V_P_PKG_OPERATIONS_REST_R.version },
   ],
 } as const

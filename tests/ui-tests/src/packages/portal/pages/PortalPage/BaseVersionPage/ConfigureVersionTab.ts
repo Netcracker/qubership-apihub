@@ -28,7 +28,7 @@ export class ConfigureVersionTab extends Tab {
   readonly confPackagesTab = new ConfigurePackagesTab(this.page)
 
   constructor(page: Page) {
-    super(page.getByTestId('ConfigureDashboardButton'), 'Configure Version')
+    super(page.getByTestId('ConfigureVersionButton'), 'Configure Version')
   }
 
   getFileRow(fileId?: string): ConfigureVersionFileRow

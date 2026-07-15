@@ -144,7 +144,7 @@ test.describe('14.2 Copying Dashboard Version', () => {
       const { retry = 0 } = testInfo
       const portalPage = new PortalPage(page)
       const { versionDashboardPage: versionPage } = portalPage
-      const { overviewTab, operationsTab, deprecatedTab, documentsTab, copyVersionDialog } = versionPage
+      const { overviewTab, contractsTab, deprecatedTab, documentsTab, copyVersionDialog } = versionPage
       const targetWorkspace = P_WS_MAIN_R
       const targetDashboard = P_DSH_CP_EMPTY
       const targetVersion = `20${retry}0.2`
@@ -207,10 +207,10 @@ test.describe('14.2 Copying Dashboard Version', () => {
         await expect(overviewTab.packagesTab.getPackageRow(PK12)).toBeVisible()
       })
 
-      await test.step('Navigate to the "Operations" tab', async () => {
-        await versionPage.operationsTab.click()
+      await test.step('Navigate to the "Contracts" tab', async () => {
+        await versionPage.contractsTab.click()
 
-        await expect(operationsTab.table.getOperationRow()).toHaveCount(38)
+        await expect(contractsTab.table.getOperationRow()).toHaveCount(38)
       })
 
       await test.step('Navigate to the "Deprecated" tab', async () => {
@@ -256,7 +256,7 @@ test.describe('14.2 Copying Dashboard Version', () => {
       const { retry = 0 } = testInfo
       const portalPage = new PortalPage(page)
       const { versionDashboardPage: versionPage } = portalPage
-      const { overviewTab, operationsTab, apiChangesTab, deprecatedTab, documentsTab, copyVersionDialog } = versionPage
+      const { overviewTab, contractsTab, apiChangesTab, deprecatedTab, documentsTab, copyVersionDialog } = versionPage
       const targetWorkspace = P_WS_MAIN_R
       const targetDashboard = P_DSH_CP_RELEASE
       const targetVersion = `20${retry}0.2`
@@ -318,10 +318,10 @@ test.describe('14.2 Copying Dashboard Version', () => {
         await expect(overviewTab.packagesTab.getPackageRow(PK12)).toBeVisible()
       })
 
-      await test.step('Navigate to the "Operations" tab', async () => {
-        await versionPage.operationsTab.click()
+      await test.step('Navigate to the "Contracts" tab', async () => {
+        await versionPage.contractsTab.click()
 
-        await expect(operationsTab.table.getOperationRow()).toHaveCount(38)
+        await expect(contractsTab.table.getOperationRow()).toHaveCount(38)
       })
 
       await test.step('Navigate to the "API Changes" tab', async () => {

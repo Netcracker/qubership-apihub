@@ -20,29 +20,29 @@ test.describe('10.2.1 Operations tab REST API (Dashboard)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionDashboardPage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
 
       await portalPage.gotoVersion(versionOverview, VERSION_OPERATIONS_TAB_REST)
 
-      await expect.soft(operationsTab.sidebar.groupFilterAc).toBeDisabled()
-      await expect(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
-      await expect.soft(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V2_SWAGGER)).toBeVisible()
+      await expect.soft(contractsTab.sidebar.groupFilterAc).toBeDisabled()
+      await expect(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
+      await expect.soft(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V2_SWAGGER)).toBeVisible()
 
-      await operationsTab.sidebar.packageFilterAc.click()
+      await contractsTab.sidebar.packageFilterAc.click()
 
-      await expect.soft(operationsTab.sidebar.packageFilterAc.getListItem()).toHaveCount(2)
+      await expect.soft(contractsTab.sidebar.packageFilterAc.getListItem()).toHaveCount(2)
 
-      await operationsTab.sidebar.packageFilterAc.getListItem(PK11.name).click()
+      await contractsTab.sidebar.packageFilterAc.getListItem(PK11.name).click()
 
-      await expect(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
-      await expect(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V2_SWAGGER)).not.toBeVisible()
+      await expect(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).toBeVisible()
+      await expect(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V2_SWAGGER)).not.toBeVisible()
 
-      await operationsTab.sidebar.packageFilterAc.clear()
-      await operationsTab.sidebar.packageFilterAc.click()
-      await operationsTab.sidebar.packageFilterAc.getListItem(PK12.name).click()
+      await contractsTab.sidebar.packageFilterAc.clear()
+      await contractsTab.sidebar.packageFilterAc.click()
+      await contractsTab.sidebar.packageFilterAc.getListItem(PK12.name).click()
 
-      await expect(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V2_SWAGGER)).toBeVisible()
-      await expect(operationsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).not.toBeVisible()
+      await expect(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V2_SWAGGER)).toBeVisible()
+      await expect(contractsTab.table.getOperationRow(GET_PET_BY_TAG_V1)).not.toBeVisible()
     })
 
   test('[P-OTDEO-1] Exporting operations on the Operations tab',
@@ -54,23 +54,23 @@ test.describe('10.2.1 Operations tab REST API (Dashboard)', () => {
 
       const portalPage = new PortalPage(page)
       const { versionDashboardPage: versionPage } = portalPage
-      const { operationsTab } = versionPage
+      const { contractsTab } = versionPage
 
       await portalPage.gotoVersion(versionChangedRest, VERSION_OPERATIONS_TAB_REST)
 
       await test.step('Export all operations', async () => {
 
-        const file = await operationsTab.toolbar.exportMenu.downloadAll()
+        const file = await contractsTab.toolbar.exportMenu.downloadAll()
 
         await expectFile.soft(file).toHaveName(`APIOperations_${testDashboard.packageId}_${V_P_DSH_CHANGELOG_REST_CHANGED_R.version}.xlsx`)
       })
 
       await test.step('Export filtered operations', async () => {
 
-        await operationsTab.sidebar.apiKindFilterAc.click()
-        await operationsTab.sidebar.apiKindFilterAc.noBwcItm.click()
+        await contractsTab.sidebar.apiKindFilterAc.click()
+        await contractsTab.sidebar.apiKindFilterAc.noBwcItm.click()
 
-        const file = await operationsTab.toolbar.exportMenu.downloadFiltered()
+        const file = await contractsTab.toolbar.exportMenu.downloadFiltered()
 
         await expectFile.soft(file).toHaveName(`APIOperations_${testDashboard.packageId}_${V_P_DSH_CHANGELOG_REST_CHANGED_R.version}.xlsx`)
       })
