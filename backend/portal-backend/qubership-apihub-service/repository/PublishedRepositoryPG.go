@@ -4621,18 +4621,13 @@ func (p publishedRepositoryImpl) GetVersionInternalDocuments(packageId string, v
 	return docs, nil
 }
 
-func (p publishedRepositoryImpl) GetVersionInternalDocumentData(hash string) (*entity.EnrichedVersionInternalDocumentDataEntity, error) {
-	result := new(entity.EnrichedVersionInternalDocumentDataEntity)
+func (p publishedRepositoryImpl) GetVersionInternalDocumentData(hash string) (*entity.VersionInternalDocumentDataEntity, error) {
+	result := new(entity.VersionInternalDocumentDataEntity)
 
-	err := p.cp.GetConnection().Model((*entity.VersionInternalDocumentDataEntity)(nil)).
-		TableExpr("version_internal_document_data").
-		ColumnExpr("version_internal_document_data.hash").
-		ColumnExpr("version_internal_document_data.data").
-		ColumnExpr("version_internal_document.filename").
-		Join("INNER JOIN version_internal_document ON version_internal_document.hash = version_internal_document_data.hash").
-		Where("version_internal_document_data.hash = ?", hash).
-		Limit(1).
-		Select(result)
+	err := p.cp.GetConnection().Model(result).
+		Where("hash = ?", hash).
+		Where("EXISTS (SELECT 1 FROM version_internal_document WHERE hash = ?)", hash).
+		Select()
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil
@@ -4695,17 +4690,12 @@ func (p publishedRepositoryImpl) GetComparisonInternalDocumentsByComparisons(com
 	return docs, nil
 }
 
-func (p publishedRepositoryImpl) GetComparisonInternalDocumentData(hash string) (*entity.EnrichedComparisonInternalDocumentDataEntity, error) {
-	result := new(entity.EnrichedComparisonInternalDocumentDataEntity)
-	err := p.cp.GetConnection().Model((*entity.ComparisonInternalDocumentEntity)(nil)).
-		TableExpr("comparison_internal_document_data").
-		ColumnExpr("comparison_internal_document_data.hash").
-		ColumnExpr("comparison_internal_document_data.data").
-		ColumnExpr("comparison_internal_document.filename").
-		Join("INNER JOIN comparison_internal_document ON comparison_internal_document.hash = comparison_internal_document_data.hash").
-		Where("comparison_internal_document_data.hash = ?", hash).
-		Limit(1).
-		Select(result)
+func (p publishedRepositoryImpl) GetComparisonInternalDocumentData(hash string) (*entity.ComparisonInternalDocumentDataEntity, error) {
+	result := new(entity.ComparisonInternalDocumentDataEntity)
+	err := p.cp.GetConnection().Model(result).
+		Where("hash = ?", hash).
+		Where("EXISTS (SELECT 1 FROM comparison_internal_document WHERE hash = ?)", hash).
+		Select()
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil

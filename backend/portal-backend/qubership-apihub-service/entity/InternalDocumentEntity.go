@@ -22,11 +22,6 @@ type VersionInternalDocumentDataEntity struct {
 	Data []byte `pg:"data, type:bytea"`
 }
 
-type EnrichedVersionInternalDocumentDataEntity struct {
-	VersionInternalDocumentDataEntity `pg:",embed"`
-	Filename                          string `pg:"filename, type:varchar"`
-}
-
 type ComparisonInternalDocumentEntity struct {
 	tableName struct{} `pg:"comparison_internal_document"`
 
@@ -46,11 +41,6 @@ type ComparisonInternalDocumentDataEntity struct {
 
 	Hash string `pg:"hash, pk, type:varchar"`
 	Data []byte `pg:"data, type:bytea"`
-}
-
-type EnrichedComparisonInternalDocumentDataEntity struct {
-	ComparisonInternalDocumentDataEntity `pg:",embed"`
-	Filename                             string `pg:"filename, type:varchar"`
 }
 
 func MakeVersionInternalDocumentView(ent *VersionInternalDocumentEntity) *view.InternalDocument {

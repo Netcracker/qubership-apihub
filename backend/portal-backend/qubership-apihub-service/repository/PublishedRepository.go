@@ -98,9 +98,9 @@ type PublishedRepository interface {
 	GetCSVDashboardPublishReport(publishId string) (*entity.CSVDashboardPublishEntity, error)
 
 	GetVersionInternalDocuments(packageId string, version string, revision int) ([]entity.VersionInternalDocumentEntity, error)
-	GetVersionInternalDocumentData(hash string) (*entity.EnrichedVersionInternalDocumentDataEntity, error)
+	GetVersionInternalDocumentData(hash string) (*entity.VersionInternalDocumentDataEntity, error)
 	GetComparisonInternalDocumentsByComparisons(comparisons []entity.VersionComparisonEntity) ([]entity.ComparisonInternalDocumentEntity, error)
-	GetComparisonInternalDocumentData(hash string) (*entity.EnrichedComparisonInternalDocumentDataEntity, error)
+	GetComparisonInternalDocumentData(hash string) (*entity.ComparisonInternalDocumentDataEntity, error)
 
 	UpdateDocumentShareabilityBySlug(packageId string, version string, revision int, slug string, shareability string) error
 	BulkUpdateDocumentShareability(entities []*entity.PublishedContentEntity) error
