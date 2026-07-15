@@ -32,6 +32,10 @@
                             "        agentId = data[i].agentId;",
                             "        break;",
                             "    }",
+                            "    if (data[i].agentDeploymentCloud.includes('Kind')) {",
+                            "        agentId = data[i].agentId;",
+                            "        break;",
+                            "    }",
                             "}",
                             "",
                             "// Set agentId to a new environment variable",
@@ -146,7 +150,144 @@
             "protocolProfileBehavior": {}
         },
         {
-            "name": "1.2 Start discovery process",
+            "name": "1.2 Create Agent Test Workspace",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test(\"Status code is 201\", function () {\r",
+                            "    pm.response.to.have.status(201);\r",
+                            "});\r",
+                            "\r",
+                            "const workspace = pm.response.json();\r",
+                            "\r",
+                            "pm.test(\"Agent Test Workspace is created\", function () {\r",
+                            "    pm.expect(workspace.kind).to.eql(\"workspace\");\r",
+                            "    pm.expect(workspace.name).to.eql(\"Agent Test Workspace\");\r",
+                            "});\r",
+                            "\r",
+                            "if (workspace.packageId) {\r",
+                            "    pm.environment.set(\"workspace_id\", workspace.packageId);\r",
+                            "}"
+                        ]
+                    }
+                },
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.environment.unset(\"workspace_id\");"
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "url": {
+                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                    "host": [
+                        "{{SERVER_HOST}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v2",
+                        "packages"
+                    ]
+                },
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "api-key",
+                        "value": "{{at-api-key}}",
+                        "type": "default"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\r\n    \"id\": \"AGENT-TEST-WORKSPACE\",\r\n    \"alias\": \"AGENT-TEST-WORKSPACE\",\r\n    \"name\": \"Agent Test Workspace\",\r\n    \"parentId\": null,\r\n    \"kind\": \"workspace\",\r\n    \"description\": \"Workspace for Agent smoke tests\"\r\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                }
+            },
+            "response": [],
+            "protocolProfileBehavior": {}
+        },
+        {
+            "name": "1.3 Get list of workspaces",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test(\"Status code is 200\", function () {\r",
+                            "    pm.response.to.have.status(200);\r",
+                            "});\r",
+                            "\r",
+                            "const response = pm.response.json();\r",
+                            "const workspaces = response.packages;\r",
+                            "\r",
+                            "const workspace = Array.isArray(workspaces)\r",
+                            "    ? workspaces.find(item => item.name === \"Agent Test Workspace\")\r",
+                            "    : undefined;\r",
+                            "\r",
+                            "pm.test(\"Agent Test Workspace is available\", function () {\r",
+                            "    pm.expect(workspace).to.not.be.undefined;\r",
+                            "});\r",
+                            "\r",
+                            "if (workspace) {\r",
+                            "    pm.environment.set(\"workspace_id\", workspace.packageId);\r",
+                            "}"
+                        ]
+                    }
+                },
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "url": {
+                    "raw": "{{SERVER_HOST}}/api/v2/packages?kind=workspace",
+                    "host": [
+                        "{{SERVER_HOST}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v2",
+                        "packages"
+                    ],
+                    "query": [
+                        {
+                            "key": "kind",
+                            "value": "workspace"
+                        }
+                    ]
+                },
+                "method": "GET",
+                "header": [
+                    {
+                        "key": "api-key",
+                        "value": "{{at-api-key}}",
+                        "type": "default"
+                    }
+                ]
+            },
+            "response": [],
+            "protocolProfileBehavior": {}
+        },
+        {
+            "name": "1.4 Start discovery process",
             "event": [
                 {
                     "listen": "test",
@@ -173,7 +314,7 @@
             ],
             "request": {
                 "url": {
-                    "raw": "{{SERVER_HOST}}/agents-backend/api/v2/agents/{{agentId}}/namespaces/{{namespace}}/workspaces/NC/discover",
+                    "raw": "{{SERVER_HOST}}/agents-backend/api/v2/agents/{{agentId}}/namespaces/{{namespace}}/workspaces/{{workspace_id}}/discover",
                     "host": [
                         "{{SERVER_HOST}}"
                     ],
@@ -186,7 +327,7 @@
                         "namespaces",
                         "{{namespace}}",
                         "workspaces",
-                        "NC",
+                        "{{workspace_id}}",
                         "discover"
                     ]
                 },
@@ -212,7 +353,7 @@
             "protocolProfileBehavior": {}
         },
         {
-            "name": "1.3 Get list of services",
+            "name": "1.5 Get list of services",
             "event": [
                 {
                     "listen": "test",
@@ -231,12 +372,12 @@
                             "    serviceName.push(data.services[i].serviceName)\r",
                             "}\r",
                             "\r",
-                            "pm.test(\"'apihub-backend' service is present in the list\", () => {\r",
-                            "    pm.expect(serviceName).to.include(\"apihub-backend\")\r",
+                            "pm.test(\"'qubership-apihub-backend' service is present in the list\", () => {\r",
+                            "    pm.expect(serviceName).to.include(\"qubership-apihub-backend\")\r",
                             "});\r",
                             "\r",
                             "for (var i = 0; i<data.services.length; i++) {\r",
-                            "    if (data.services[i].serviceName === \"apihub-backend\"){\r",
+                            "    if (data.services[i].serviceName === \"qubership-apihub-backend\"){\r",
                             "        pm.environment.set(\"service_name\", data.services[i].id),\r",
                             "        pm.environment.set(\"spec_id\", data.services[i].specs[0].fileId)\r",
                             "    }\r",
@@ -256,7 +397,7 @@
             ],
             "request": {
                 "url": {
-                    "raw": "{{SERVER_HOST}}/agents-backend/api/v2/agents/{{agentId}}/namespaces/{{namespace}}/workspaces/NC/services",
+                    "raw": "{{SERVER_HOST}}/agents-backend/api/v2/agents/{{agentId}}/namespaces/{{namespace}}/workspaces/{{workspace_id}}/services",
                     "host": [
                         "{{SERVER_HOST}}"
                     ],
@@ -269,7 +410,7 @@
                         "namespaces",
                         "{{namespace}}",
                         "workspaces",
-                        "NC",
+                        "{{workspace_id}}",
                         "services"
                     ]
                 },
@@ -286,7 +427,7 @@
             "protocolProfileBehavior": {}
         },
         {
-            "name": "1.4 Get service specification",
+            "name": "1.6 Get service specification",
             "event": [
                 {
                     "listen": "test",
@@ -311,7 +452,7 @@
             ],
             "request": {
                 "url": {
-                    "raw": "{{SERVER_HOST}}/agents-backend/api/v2/agents/{{agentId}}/namespaces/{{namespace}}/workspaces/NC/services/{{service_name}}/specs/{{spec_id}}",
+                    "raw": "{{SERVER_HOST}}/agents-backend/api/v2/agents/{{agentId}}/namespaces/{{namespace}}/workspaces/{{workspace_id}}/services/{{service_name}}/specs/{{spec_id}}",
                     "host": [
                         "{{SERVER_HOST}}"
                     ],
@@ -324,7 +465,7 @@
                         "namespaces",
                         "{{namespace}}",
                         "workspaces",
-                        "NC",
+                        "{{workspace_id}}",
                         "services",
                         "{{service_name}}",
                         "specs",
@@ -344,7 +485,7 @@
             "protocolProfileBehavior": {}
         },
         {
-            "name": "1.5 Check non existing service specification",
+            "name": "1.7 Check non existing service specification",
             "event": [
                 {
                     "listen": "test",
@@ -369,7 +510,7 @@
             ],
             "request": {
                 "url": {
-                    "raw": "{{SERVER_HOST}}/agents-backend/api/v2/agents/{{agentId}}/namespaces/{{namespace}}/workspaces/NC/services/{{service_name}}/specs/nothing123",
+                    "raw": "{{SERVER_HOST}}/agents-backend/api/v2/agents/{{agentId}}/namespaces/{{namespace}}/workspaces/{{workspace_id}}/services/{{service_name}}/specs/nothing123",
                     "host": [
                         "{{SERVER_HOST}}"
                     ],
@@ -382,7 +523,7 @@
                         "namespaces",
                         "{{namespace}}",
                         "workspaces",
-                        "NC",
+                        "{{workspace_id}}",
                         "services",
                         "{{service_name}}",
                         "specs",
@@ -390,6 +531,57 @@
                     ]
                 },
                 "method": "GET",
+                "header": [
+                    {
+                        "key": "api-key",
+                        "value": "{{at-api-key}}",
+                        "type": "default"
+                    }
+                ]
+            },
+            "response": [],
+            "protocolProfileBehavior": {}
+        },
+        {
+            "name": "1.8 Delete Agent Test Workspace",
+            "event": [
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "pm.test(\"Status code is 204\", function () {\r",
+                            "    pm.response.to.have.status(204);\r",
+                            "});\r",
+                            "\r",
+                            "pm.environment.unset(\"workspace_id\");"
+                        ]
+                    }
+                },
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                }
+            ],
+            "request": {
+                "url": {
+                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{workspace_id}}",
+                    "host": [
+                        "{{SERVER_HOST}}"
+                    ],
+                    "path": [
+                        "api",
+                        "v2",
+                        "packages",
+                        "{{workspace_id}}"
+                    ]
+                },
+                "method": "DELETE",
                 "header": [
                     {
                         "key": "api-key",
