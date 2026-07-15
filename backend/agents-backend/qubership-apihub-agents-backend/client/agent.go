@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-agents-backend/exception"
+	"github.com/Netcracker/qubership-apihub-agents-backend/utils"
 	"github.com/Netcracker/qubership-apihub-agents-backend/secctx"
 	"github.com/Netcracker/qubership-apihub-agents-backend/view"
 	"gopkg.in/resty.v1"
@@ -26,11 +26,15 @@ type AgentClient interface {
 	SendEmptyServiceRequest(namespace string, serviceId string, agentUrl string, requestMethod string, requestPath string) (int, error)
 }
 
-func NewAgentClient(accessToken string) AgentClient {
-	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+func NewAgentClient(accessToken string) (AgentClient, error) {
+	tlsConfig, err := utils.BuildSecureTLSConfig(nil)
+	if err != nil {
+		return nil, fmt.Errorf("build TLS config: %w", err)
+	}
+	tr := http.Transport{TLSClientConfig: tlsConfig}
 	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
 	client := resty.NewWithClient(&cl)
-	return &agentClientImpl{client: client, accessToken: accessToken}
+	return &agentClientImpl{client: client, accessToken: accessToken}, nil
 }
 
 const CustomApiKeyHeader = "X-Apihub-ApiKey"

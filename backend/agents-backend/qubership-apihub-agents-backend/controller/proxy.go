@@ -1,12 +1,12 @@
 package controller
 
 import (
-	"crypto/tls"
 	"io"
 	"net/http"
 	"net/url"
 
 	"github.com/Netcracker/qubership-apihub-agents-backend/exception"
+	"github.com/Netcracker/qubership-apihub-agents-backend/utils"
 	"github.com/Netcracker/qubership-apihub-agents-backend/service"
 	"github.com/Netcracker/qubership-apihub-agents-backend/view"
 	log "github.com/sirupsen/logrus"
@@ -21,8 +21,15 @@ type AgentProxyController interface {
 	Proxy(w http.ResponseWriter, req *http.Request)
 }
 
-func NewAgentProxyController(agentService service.AgentService) AgentProxyController {
-	return &agentProxyControllerImpl{agentService: agentService, tr: http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+func NewAgentProxyController(agentService service.AgentService) (AgentProxyController, error) {
+	tlsConfig, err := utils.BuildSecureTLSConfig(nil)
+	if err != nil {
+		return nil, err
+	}
+	return &agentProxyControllerImpl{
+		agentService: agentService,
+		tr:           http.Transport{TLSClientConfig: tlsConfig},
+	}, nil
 }
 
 type agentProxyControllerImpl struct {

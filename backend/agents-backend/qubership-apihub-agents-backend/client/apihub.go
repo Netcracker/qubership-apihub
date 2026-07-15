@@ -3,7 +3,6 @@ package client
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -13,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-agents-backend/exception"
+	"github.com/Netcracker/qubership-apihub-agents-backend/utils"
 	"github.com/Netcracker/qubership-apihub-agents-backend/secctx"
 	"github.com/Netcracker/qubership-apihub-agents-backend/view"
 	log "github.com/sirupsen/logrus"
@@ -41,11 +41,15 @@ type ApihubClient interface {
 	GetSystemInfo(ctx context.Context) (*view.ApihubSystemInfo, error)
 }
 
-func NewApihubClient(apihubUrl string, accessToken string) ApihubClient {
-	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+func NewApihubClient(apihubUrl string, accessToken string) (ApihubClient, error) {
+	tlsConfig, err := utils.BuildSecureTLSConfig(nil)
+	if err != nil {
+		return nil, fmt.Errorf("build TLS config: %w", err)
+	}
+	tr := http.Transport{TLSClientConfig: tlsConfig}
 	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
 	client := resty.NewWithClient(&cl)
-	return &apihubClientImpl{client: client, apihubUrl: apihubUrl, accessToken: accessToken}
+	return &apihubClientImpl{client: client, apihubUrl: apihubUrl, accessToken: accessToken}, nil
 }
 
 type apihubClientImpl struct {
