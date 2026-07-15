@@ -1,13 +1,13 @@
 package client
 
 import (
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-agent/secctx"
+	"github.com/Netcracker/qubership-apihub-agent/utils"
 	"github.com/Netcracker/qubership-apihub-agent/view"
 	"gopkg.in/resty.v1"
 )
@@ -16,13 +16,22 @@ type AgentsBackendClient interface {
 	SendKeepaliveMessage(pathPrefix string, msg view.AgentKeepaliveMessage) (string, error)
 }
 
-func NewAgentsBackendClient(apihubUrl string, accessToken string) AgentsBackendClient {
-	return &agentsBackendClientImpl{apihubUrl: apihubUrl, accessToken: accessToken}
+func NewAgentsBackendClient(apihubUrl string, accessToken string) (AgentsBackendClient, error) {
+	httpClient, err := utils.CreateSecureHTTPClient(time.Second * 60)
+	if err != nil {
+		return nil, err
+	}
+	return &agentsBackendClientImpl{
+		apihubUrl:   apihubUrl,
+		accessToken: accessToken,
+		restyClient: resty.NewWithClient(httpClient),
+	}, nil
 }
 
 type agentsBackendClientImpl struct {
 	apihubUrl   string
 	accessToken string
+	restyClient *resty.Client
 }
 
 func (a agentsBackendClientImpl) SendKeepaliveMessage(pathPrefix string, msg view.AgentKeepaliveMessage) (string, error) {
@@ -56,11 +65,7 @@ func (a agentsBackendClientImpl) SendKeepaliveMessage(pathPrefix string, msg vie
 }
 
 func (a agentsBackendClientImpl) makeRequest(ctx secctx.SecurityContext) *resty.Request {
-	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
-
-	client := resty.NewWithClient(&cl)
-	req := client.R()
+	req := a.restyClient.R()
 	if ctx.GetUserToken() != "" {
 		req.SetHeader("Authorization", fmt.Sprintf("Bearer %s", ctx.GetUserToken()))
 	} else {

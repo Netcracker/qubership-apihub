@@ -15,6 +15,10 @@ qubershipApihubAgent:
 
   logLevel: "INFO"
 
+  customCa:
+    enabled: false
+    secretName: ''
+
   env:
     technicalParameters:
       apihub:

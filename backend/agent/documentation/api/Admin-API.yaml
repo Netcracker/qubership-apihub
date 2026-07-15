@@ -16,14 +16,21 @@ openapi: 3.0.3
 info:
   title: APIHUB Agent Admin API
   version: 1.0.0
-  description: External API contract for system administrators.
+  description: |
+    External API contract for administering APIHUB agents: managing runtime logging and other operational debug controls. Intended for system administrators with sufficient privileges; requires Bearer token, API key, or session cookie authentication.
+  contact:
+    name: Netcracker Opensource Group
+    email: opensourcegroup@netcracker.com
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
 servers:
   - url: "https://{agentUrl}/api"
-    description: Agent backend address
+    description: Agent backend base URL (hostname or environment-specific host where the agent HTTP server is reachable).
     variables:
       agentUrl:
         default: localhost
-        description: Local server
+        description: Default host for local development (for example, `localhost` or a cluster-internal service name).
 security:
   - BearerAuth: []
   - ApiKeyAuth: []
@@ -38,7 +45,7 @@ paths:
         - Debug
       summary: Check log level
       description: |
-        Check current log level.
+        Returns the current runtime log level of the agent process as plain text. Requires system administrator privileges. The response reflects the in-memory log level configured at startup or changed via `POST /api/v1/debug/logs/setLevel`; it is not read from persistent configuration. Levels follow logrus conventions; the returned value is one of `panic`, `fatal`, `error`, `warn`, `info`, `debug`, or `trace` (lowercase). The agent also emits sample log lines at each enabled level to help verify effective logging output.
       operationId: checkLogLevel
       responses:
         "200":
@@ -47,7 +54,7 @@ paths:
             text/plain:
               schema:
                 type: string
-                description: Current log level
+                description: Plain-text message reporting the current log level (one of `panic`, `fatal`, `error`, `warn`, `info`, `debug`, or `trace`).
         "401":
           $ref: "#/components/responses/unauthorized401"
         "500":
@@ -58,7 +65,7 @@ paths:
         - Debug
       summary: Set log level
       description: |
-        Set log level.
+        Sets the runtime log level for the agent process. Requires system administrator privileges. The change applies immediately to the running process and is not persisted across restarts. Level values use logrus semantics; see the request body schema for allowed values.
       operationId: setLogLevel
       requestBody:
         required: true
@@ -71,7 +78,7 @@ paths:
               properties:
                 level:
                   type: string
-                  description: Log level to set
+                  description: Log level to set. One of `panic`, `fatal`, `error`, `warn`, `info`, `debug`, or `trace` (case-sensitive, lowercase).
                   enum:
                     - panic
                     - fatal
@@ -82,15 +89,7 @@ paths:
                     - trace
       responses:
         "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  level:
-                    type: string
-                    description: Current log level
+          description: Success. Log level updated; no response body is returned.
         "400":
           $ref: "#/components/responses/badRequest400"
         "401":
@@ -101,28 +100,26 @@ paths:
 components:
   schemas:
     ErrorResponse:
-      description: An error description
+      description: Standard error response returned for failed requests. Includes HTTP status, internal error code, human-readable message, optional message parameters, and optional debug details (non-production only).
       type: object
       properties:
         status:
-          description: HTTP Status Code
-          type: number
+          description: HTTP status code as an integer; expected to match the actual HTTP response status.
+          type: integer
         code:
           description: Internal string error code. Mandatory in response.
           type: string
         message:
-          description: The attribute contains an error message.
+          description: Human-readable error message describing what went wrong; intended for diagnostics and safe client display.
           type: string
         params:
-          description: Message parameters
           type: object
+          description: Optional key/value parameters used to format or contextualize the error message (for example, identifiers or field names).
           example:
-            "id": "12345"
-            "type": "string"
+            id: "12345"
+            type: string
         debug:
-          description: |
-            The attribute contains debug details (e.g. stack-trace).
-            Presented in the error response only on Dev/Test environments if corresponding logging level is enabled.
+          description: Optional debug details (for example, stack traces). Returned only in development/test environments when verbose logging is enabled; do not rely on this field in production because it may contain sensitive data.
           type: string
       required:
         - status
@@ -130,19 +127,19 @@ components:
         - message
   responses:
     badRequest400:
-      description: Bad request
+      description: The request is invalid or cannot be processed. Typical causes include malformed JSON, missing required fields, or invalid parameter values. The response body follows the `ErrorResponse` schema and may include a machine-readable `code` and contextual `params` for validation failures.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     unauthorized401:
-      description: Unauthorized
+      description: Authentication failed or credentials were not provided. Typical causes include a missing, expired, or invalid Bearer token, API key, or session cookie. The response body follows the `ErrorResponse` schema.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     internalServerError500:
-      description: Internal server error
+      description: An unexpected server error prevented the request from completing. The response body follows the `ErrorResponse` schema. The optional `debug` field may include stack traces or other diagnostic details only in non-production environments.
       content:
         application/json:
           schema:
@@ -162,4 +159,4 @@ components:
       type: apiKey
       in: cookie
       name: apihub-access-token
-      description: Cookie-based authentication
+      description: Authentication via the `apihub-access-token` session cookie. Intended for browser-based access where the token is issued by APIHUB after login. The cookie should be transmitted only over HTTPS and is expected to be HttpOnly and Secure in production deployments.

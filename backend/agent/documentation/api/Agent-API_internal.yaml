@@ -17,26 +17,44 @@ info:
   title: APIHUB Agent Internal API
   version: 1.0.0
   description: |
-    Internal API contract for APIHUB agent. Contains operations for service discovery and namespace info retrieval.
+    **Purpose:** Internal-only API contract for the APIHUB Agent.
+
+    **Intended consumers:** APIHUB Portal and agents backend within the deployment network. Not exposed to external API consumers.
+
+    **Major capabilities:**
+    - Namespace inventory and route/ingress lookup
+    - Asynchronous service discovery and specification retrieval
+    - Service proxy for forwarding requests to discovered services
+
+    **Authentication:**
+    - Most operations: Bearer token, API key (`api-key` header), or session cookie (`apihub-access-token`)
+    - Service proxy only (`GET /v1/agents/{agentId}/namespaces/{name}/services/{serviceId}/proxy/{path}`): `ProxyJWTAuth` or `ProxyApiKeyAuth` (see `components.securitySchemes`)
+  contact:
+    name: Netcracker Opensource Group
+    email: opensourcegroup@netcracker.com
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+  x-api-kind: no-BWC
 servers:
   - url: "https://{agentUrl}/api"
-    description: Agent backend address
+    description: Base URL of the Agent backend API (replace {agentUrl} with the agent host, for example agent.local or localhost:8080).
     variables:
       agentUrl:
         default: localhost
-        description: Local server
+        description: Hostname or host:port of the agent backend (for example localhost or agent.my-cluster.svc).
 security:
   - BearerAuth: []
   - ApiKeyAuth: []
   - CookieAuth: []
 tags:
   - name: Cloud Services
-    description: Cloud Services API
+    description: Namespace management, service discovery, specification retrieval, route lookup, and service proxy endpoints.
 paths:
   /v1/namespaces:
     get:
       summary: Get Namespace list
-      description: Get Namespace list from current Cloud.
+      description: Return the list of namespaces available in the current cloud.
       operationId: getNamespaces
       tags:
         - Cloud Services
@@ -68,13 +86,9 @@ paths:
     get:
       summary: Get list of services with data
       description: |
-        Get list of discovered services. I.e. requires discovery first.
-        In addition to the service list, API checks the status of the async discovery process.
-        "none" status means that there's no discovered data for the namespace, i.e. need to start the discovery process.
-        If the "running" status is return in response, then discovery is in progress, the API will return only part of the services list. Need to repeat the request and wait for the terminal status.
-        Terminal statuses:
-        "error" means that discovery is failed in some case.
-        "complete" means that discovery is done and the list of services is ready to be used.
+        Returns discovered services and the overall discovery status for the namespace.
+        See the `status` field in the response (`none`, `running`, `complete`, `error`).
+        Deprecated: use `GET /v2/namespaces/{name}/workspaces/{workspaceId}/services`.
       operationId: getNamespaceServices
       deprecated: true
       x-deprecation-reason: New version of API is created - GET /v2/namespaces/{name}/workspaces/{workspaceId}/services
@@ -111,23 +125,14 @@ paths:
   /v2/namespaces/{name}/workspaces/{workspaceId}/services:
     parameters:
       - $ref: "#/components/parameters/Namespace"
-      - name: workspaceId
-        in: path
-        description: Workspace unique identifier. Workspace determines scope within which packages are searched by service names.
-        required: true
-        schema:
-          type: string
-        example: NC
+      - $ref: "#/components/parameters/WorkspaceId"
     get:
       summary: Get list of services with data
       description: |
-        Get list of discovered services. I.e. requires discovery first.
-        In addition to the service list, API checks the status of the async discovery process.
-        "none" status means that there's no discovered data for the namespace, i.e. need to start the discovery process.
-        If the "running" status is return in response, then discovery is in progress, the API will return only part of the services list. Need to repeat the request and wait for the terminal status.
-        Terminal statuses:
-        "error" means that discovery is failed in some case.
-        "complete" means that discovery is done and the list of services is ready to be used.
+        Returns discovered services and the overall discovery status.
+        See the `status` field in the response (`none`, `running`, `complete`, `error`).
+        Start discovery via `POST /v2/namespaces/{name}/workspaces/{workspaceId}/discover`.
+        Deprecated: migrate to `GET /v3/namespaces/{name}/workspaces/{workspaceId}/services` for per-service discovery diagnostics.
       operationId: getNamespaceServicesV2
       deprecated: true
       x-deprecation-reason: New version of API is created - GET /v3/namespaces/{name}/workspaces/{workspaceId}/services
@@ -164,25 +169,13 @@ paths:
   /v3/namespaces/{name}/workspaces/{workspaceId}/services:
     parameters:
       - $ref: "#/components/parameters/Namespace"
-      - name: workspaceId
-        in: path
-        description: Workspace unique identifier. Workspace determines scope within which packages are searched by service names.
-        required: true
-        schema:
-          type: string
-        example: NC
+      - $ref: "#/components/parameters/WorkspaceId"
     get:
       summary: Get list of services with data and diagnostic information
       description: |
-        Get list of discovered services with diagnostic information. I.e. requires discovery first.
-        In addition to the service list, API checks the status of the async discovery process.
-        "none" status means that there's no discovered data for the namespace, i.e. need to start the discovery process.
-        If the "running" status is return in response, then discovery is in progress, the API will return only part of the services list. Need to repeat the request and wait for the terminal status.
-        Terminal statuses:
-        "error" means that discovery is failed in some case.
-        "complete" means that discovery is done and the list of services is ready to be used.
-
-        This version includes diagnostic information about discovery attempts for each service.
+        Returns discovered services and the overall discovery status with per-service diagnostics.
+        See the `status` field in the response (`none`, `running`, `complete`, `error`).
+        Start discovery via `POST /v2/namespaces/{name}/workspaces/{workspaceId}/discover`.
       operationId: getNamespaceServicesV3
       tags:
         - Cloud Services
@@ -225,9 +218,9 @@ paths:
       x-deprecation-reason: New version of API is created - POST /v2/namespaces/{name}/workspaces/{workspaceId}/discover
       summary: Start discovery process
       description: |
-        Starts the asyncronous service discovery process.
-        The process status may be get by the getServices operation.
-        API doesn't return the process ID, because Agent may have only one discovery process in one moment of time.
+        Starts an asynchronous service discovery process.
+        No process ID is returned; retrieve process status via getServices.
+        At most one discovery process is active per agent.
       responses:
         "202":
           description: Success
@@ -239,22 +232,16 @@ paths:
   /v2/namespaces/{name}/workspaces/{workspaceId}/discover:
     parameters:
       - $ref: "#/components/parameters/Namespace"
-      - name: workspaceId
-        in: path
-        description: Workspace unique identifier. Workspace determines scope within which packages are searched by service names.
-        required: true
-        schema:
-          type: string
-        example: NC
+      - $ref: "#/components/parameters/WorkspaceId"
     post:
       tags:
         - Cloud Services
       operationId: postNamespaceDiscoverV2
       summary: Start discovery process
       description: |
-        Starts the asyncronous service discovery process.
-        The process status may be get by the getServices operation.
-        API doesn't return the process ID, because Agent may have only one discovery process in one moment of time.
+        Starts an asynchronous service discovery process.
+        No process ID is returned; retrieve process status via getServices.
+        At most one discovery process is active per agent.
       responses:
         "202":
           description: Success
@@ -270,7 +257,9 @@ paths:
       - $ref: "#/components/parameters/SpecificationId"
     get:
       summary: Get service specification
-      description: Get one service specification
+      description: |
+        Retrieve a service API specification by specification ID for the given namespace and service.
+        Returns the document body in JSON, YAML, or plain text depending on the stored format and Accept header.
       operationId: getNamespaceServicesIdSpecsId
       deprecated: true
       x-deprecation-reason: New version of API is created - GET /v2/namespaces/{name}/workspaces/{workspaceId}/services/{serviceId}/specs/{specId}
@@ -298,18 +287,14 @@ paths:
   /v2/namespaces/{name}/workspaces/{workspaceId}/services/{serviceId}/specs/{specId}:
     parameters:
       - $ref: "#/components/parameters/Namespace"
-      - name: workspaceId
-        in: path
-        description: Workspace unique identifier. Workspace determines scope within which packages are searched by service names.
-        required: true
-        schema:
-          type: string
-        example: NC
+      - $ref: "#/components/parameters/WorkspaceId"
       - $ref: "#/components/parameters/ServiceId"
       - $ref: "#/components/parameters/SpecificationId"
     get:
       summary: Get service specification
-      description: Get one service specification
+      description: |
+        Retrieve a service API specification by specification ID for the given namespace, workspace, and service.
+        Returns the document body in JSON, YAML, or plain text depending on the stored format and Accept header.
       operationId: getNamespaceServicesIdSpecsIdV2
       tags:
         - Cloud Services
@@ -335,7 +320,10 @@ paths:
   /v1/agents/{agentId}/namespaces/{name}/services/{serviceId}/proxy/{path}:
     get:
       summary: Proxy endpoint to service
-      description: Proxy endpoint to service
+      description: |
+        Forwards the HTTP GET request to the target cloud service through the agent proxy.
+        Request headers and query parameters are passed through; response status codes and bodies are returned unchanged from the proxied service.
+        Requires ProxyJWTAuth or ProxyApiKeyAuth (or CookieAuth). When the agent `INSECURE_PROXY` environment variable is not enabled, the X-Apihub-Authorization header must contain valid nc-service authorization.
       operationId: getAgentsIdNamespacesIdServicesProxy
       security:
         - ProxyJWTAuth: []
@@ -352,54 +340,57 @@ paths:
           required: true
           schema:
             type: string
-          description: String that includes paths and query params
+          description: |
+            Downstream resource path relative to the proxied service base URL.
+            Prefer sending query parameters as normal HTTP query parameters on the request URL rather than embedding them in this path segment.
+            Path segments must be URL-encoded when they contain special characters (see example).
           example: api/v2/escaped/te%20xt/text/text123?escaped=te%20xt
         - name: X-Apihub-Authorization
           in: header
           schema:
             type: string
           description: |
-            nc-service authorization:
-              * if system env INSECURE_PROXY is empty or false, then X-Apihub-Authorization is **required**
-              * if system env INSECURE_PROXY = true, then then X-Apihub-Authorization is optional
+            nc-service authorization token forwarded to the target service.
+            Required when the agent `INSECURE_PROXY` environment variable is empty or `false`; optional when `INSECURE_PROXY=true`.
+            Configure `INSECURE_PROXY` in the agent deployment (Helm values or container environment).
       responses:
         1XX:
-          description: Information responses
+          description: Informational response from the proxied service (rare; passed through unchanged).
           content:
             "*/*":
               schema:
-                description: Schema of any type
+                description: Response body from the proxied service; format varies by backend.
         2XX:
-          description: Successful responses
+          description: Successful response from the proxied service (for example 200 OK); passed through unchanged.
           content:
             "*/*":
               schema:
-                description: Schema of any type
+                description: Response body from the proxied service; format varies by backend.
         3XX:
-          description: Redirection messages
+          description: Redirection response from the proxied service; location headers and bodies are passed through.
           content:
             "*/*":
               schema:
-                description: Schema of any type
+                description: Optional redirect response body from the proxied service.
         4XX:
-          description: Client error responses
+          description: Client error from the agent or proxied service (for example 400 invalid path, 401 unauthorized, 404 service not found).
           content:
             "*/*":
               schema:
-                description: Schema of any type
+                description: Error payload from the agent or proxied service; may follow ErrorResponse or backend-specific format.
         5XX:
-          description: Server error responses
+          description: Server error from the agent or proxied service; proxied backend errors are returned verbatim when possible.
           content:
             "*/*":
               schema:
-                description: Schema of any type
+                description: Error payload from the agent or proxied service; may follow ErrorResponse or backend-specific format.
   /v1/namespaces/{name}/serviceNames:
     parameters:
       - $ref: "#/components/parameters/Namespace"
     get:
       summary: Get list of service names
       description: |
-        Synchronoulsy get list of service names in selected namespace without discovery.
+        Synchronously retrieve the list of service names in the specified namespace without running discovery.
       operationId: getNamespaceServicesNames
       tags:
         - Cloud Services
@@ -426,12 +417,7 @@ paths:
                           type: string
                           description: service name
         "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
+          $ref: "#/components/responses/unauthorized401"
         "500":
           $ref: "#/components/responses/internalServerError500"
         "503":
@@ -441,14 +427,17 @@ paths:
       - $ref: "#/components/parameters/Namespace"
       - name: routeName
         in: path
-        description: Route/Ingress unique identifier
+        description: |
+          Route or Ingress resource name unique within the namespace (for example public-gateway).
         required: true
         schema:
           type: string
         example: public-gateway
     get:
       summary: Get route/ingress description
-      description: Get route/ingress description
+      description: |
+        Return host and metadata for the specified Route or Ingress in the namespace.
+        Use this to resolve the public hostname exposed by a gateway or ingress controller.
       operationId: getRouteByName
       tags:
         - Cloud Services
@@ -470,12 +459,7 @@ paths:
                     description: Route/Ingress host without protocol, port and path - only domain
                     type: string
         "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
+          $ref: "#/components/responses/unauthorized401"
         "404":
           $ref: "#/components/responses/notFound404"
         "500":
@@ -488,7 +472,7 @@ paths:
     get:
       summary: Get list of service items
       description: |
-        Synchronoulsy get list of services in selected namespace without discovery.
+        Synchronously retrieve the list of service items in the specified namespace without running discovery.
       operationId: getNamespaceServicesItems
       tags:
         - Cloud Services
@@ -521,12 +505,12 @@ paths:
                           type: string
                           description: service base url
                         serviceLabels:
-                          description: List of service's labels and values as a key-value pairs.
+                          description: Service labels as key-value pairs.
                           type: object
                           additionalProperties:
                             type: string
                         serviceAnnotations:
-                          description: List of service's annotations as a key-value pairs.
+                          description: Service annotations as key-value pairs.
                           type: object
                           additionalProperties:
                             type: string
@@ -537,14 +521,9 @@ paths:
                             type: string
                         proxyServerUrl:
                           type: string
-                          description: The server used in 'Try It' component.
+                          description: Agent proxy base URL used to forward HTTP requests to the target service. May be used by interactive API clients.
         "401":
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              examples: {}
+          $ref: "#/components/responses/unauthorized401"
         "500":
           $ref: "#/components/responses/internalServerError500"
 
@@ -553,36 +532,48 @@ components:
     AgentId:
       name: agentId
       in: path
-      description: Id of Agent instance
+      description: Agent instance ID (for example k8s-apps3_api-hub-dev).
       required: true
       schema:
         type: string
       example: k8s-apps3_api-hub-dev
     Namespace:
       name: name
-      description: Cloud Namespace name
+      description: |
+        Kubernetes namespace name (DNS label format: lowercase alphanumeric characters and hyphens).
+        Must match an existing namespace in the connected cloud cluster.
       in: path
       required: true
       schema:
         type: string
+      example: api-hub-dev
+    WorkspaceId:
+      name: workspaceId
+      in: path
+      description: Unique identifier of the workspace. The workspace defines the scope for package searches by service name.
+      required: true
+      schema:
+        type: string
+      example: NC
     ServiceId:
       name: serviceId
-      description: Cloud service identifier
       in: path
+      description: Cloud service identifier (deployment service name, unique within the namespace).
       required: true
       schema:
         type: string
+      example: apihub-be
     SpecificationId:
       name: specId
-      description: Specification Id
       in: path
+      description: Specification identifier (document file ID assigned during discovery).
       required: true
       schema:
         type: string
   schemas:
     SpecificationType:
       title: type
-      description: Type of the specification notation.
+      description: Type or format of the API document specification (for example openapi-3-0, asyncapi-3-0, json-schema).
       type: string
       enum:
         - openapi-3-1
@@ -610,7 +601,7 @@ components:
         - unknown
       example: json
     ServiceV1:
-      description: Discovered service
+      description: Discovered cloud service with linked APIHUB baseline package and API documents found during discovery.
       type: object
       required:
         - id
@@ -627,9 +618,9 @@ components:
           example: apihub-be
         url:
           type: string
-          description: The URL to view this baseline package in APIHUB Portal
+          description: URL to view this service in the APIHUB Portal.
         serviceLabels:
-          description: List of service's labels and values as a key-value pairs.
+          description: Service labels as key-value pairs.
           type: object
           additionalProperties:
             type: string
@@ -650,7 +641,8 @@ components:
               - deprecated
               - archived
         baseline:
-          description: Baseline Package with serviceName equals to id
+          description: |
+            Linked APIHUB baseline package for this service, resolved in the workspace by matching the package serviceName metadata to the service `name` field (exact, case-sensitive match).
           type: object
           required:
             - packageId
@@ -666,14 +658,14 @@ components:
               type: string
             url:
               type: string
-              description: The URL to view this baseline package in APIHUB Portal
+              description: URL to view this baseline package in the APIHUB Portal.
             versions:
               description: Package release versions
               type: array
               items:
                 type: string
         specs:
-          description: List of the service's API documents, found on environment.
+          description: List of the service's API documents found in the target environment.
           type: array
           items:
             description: Service API documents
@@ -687,7 +679,7 @@ components:
             properties:
               fileId:
                 type: string
-                description: Document file id
+                description: Document file ID
               name:
                 type: string
                 description: Document display name
@@ -721,17 +713,19 @@ components:
                   - unknown
               xApiKind:
                 type: string
-                description: Api kind value from swagger/apihub config
+                description: API kind value from the Swagger/APIHUB configuration (for example BWC).
                 example: "BWC"
         proxyServerUrl:
           type: string
-          description: The server used in 'Try It' component.
+          description: Agent proxy base URL used to forward HTTP requests to the target service. May be used by interactive API clients.
           example: '/agents/k8s-apps3_api-hub-dev/namespaces/api-hub-dev/services/apihub-agent-test-service/proxy/'
         error:
           type: string
-          description: Discovery error(s)
+          description: Human-readable discovery error message(s), present when discovery failed for the service.
     Service:
-      description: Discovered service
+      description: |
+        Discovered cloud service with linked APIHUB baseline package and API documents found during discovery.
+        Deprecated: use the `ServiceV3` schema returned by `GET /v3/namespaces/{name}/workspaces/{workspaceId}/services`.
       type: object
       deprecated: true
       required:
@@ -749,9 +743,9 @@ components:
           example: apihub-be
         url:
           type: string
-          description: The URL to view this baseline package in APIHUB Portal
+          description: URL to view this service in the APIHUB Portal.
         serviceLabels:
-          description: List of service's labels and values as a key-value pairs.
+          description: Service labels as key-value pairs.
           type: object
           additionalProperties:
             type: string
@@ -772,7 +766,8 @@ components:
               - deprecated
               - archived
         baseline:
-          description: Baseline Package with serviceName equals to id
+          description: |
+            Linked APIHUB baseline package for this service, resolved in the workspace by matching the package serviceName metadata to the service `name` field (exact, case-sensitive match).
           type: object
           required:
             - packageId
@@ -788,14 +783,14 @@ components:
               type: string
             url:
               type: string
-              description: The URL to view this baseline package in APIHUB Portal
+              description: URL to view this baseline package in the APIHUB Portal.
             versions:
               description: Package release versions
               type: array
               items:
                 type: string
         specs:
-          description: List of the service's API documents, found on environment.
+          description: List of the service's API documents found in the target environment.
           type: array
           items:
             description: Service API documents
@@ -809,7 +804,7 @@ components:
             properties:
               fileId:
                 type: string
-                description: Document file id
+                description: Document file ID
               name:
                 type: string
                 description: Document display name
@@ -824,15 +819,15 @@ components:
                 $ref: "#/components/schemas/SpecificationType"
               xApiKind:
                 type: string
-                description: Api kind value from swagger/apihub config
+                description: API kind value from the Swagger/APIHUB configuration (for example BWC).
                 example: "BWC"
         proxyServerUrl:
           type: string
-          description: The server used in 'Try It' component.
+          description: Agent proxy base URL used to forward HTTP requests to the target service. May be used by interactive API clients.
           example: '/agents/k8s-apps3_api-hub-dev/namespaces/api-hub-dev/services/apihub-agent-test-service/proxy/'
         error:
           type: string
-          description: Discovery error(s)
+          description: Human-readable discovery error message(s), present when discovery failed for the service.
     ServiceV3:
       description: Discovered service with diagnostic information
       type: object
@@ -851,9 +846,9 @@ components:
           example: apihub-be
         url:
           type: string
-          description: The URL to view this baseline package in APIHUB Portal
+          description: URL to view this service in the APIHUB Portal.
         serviceLabels:
-          description: List of service's labels and values as a key-value pairs.
+          description: Service labels as key-value pairs.
           type: object
           additionalProperties:
             type: string
@@ -874,7 +869,8 @@ components:
               - deprecated
               - archived
         baseline:
-          description: Baseline Package with serviceName equals to id
+          description: |
+            Linked APIHUB baseline package for this service, resolved in the workspace by matching the package serviceName metadata to the service `name` field (exact, case-sensitive match).
           type: object
           required:
             - packageId
@@ -890,24 +886,24 @@ components:
               type: string
             url:
               type: string
-              description: The URL to view this baseline package in APIHUB Portal
+              description: URL to view this baseline package in the APIHUB Portal.
             versions:
               description: Package release versions
               type: array
               items:
                 type: string
         documents:
-          description: List of the service's API documents, found on environment.
+          description: List of the service's API documents found in the target environment.
           type: array
           items:
             $ref: "#/components/schemas/DocumentV3"
         proxyServerUrl:
           type: string
-          description: The server used in 'Try It' component.
+          description: Agent proxy base URL used to forward HTTP requests to the target service. May be used by interactive API clients.
           example: '/agents/k8s-apps3_api-hub-dev/namespaces/api-hub-dev/services/apihub-agent-test-service/proxy/'
         error:
           type: string
-          description: Discovery error(s)
+          description: Human-readable discovery error message(s), present when discovery failed for the service.
         diagnosticInfo:
           $ref: "#/components/schemas/ServiceDiagnostic"
     DocumentV3:
@@ -922,14 +918,14 @@ components:
       properties:
         fileId:
           type: string
-          description: Document file id
+          description: Document file ID
         name:
           type: string
           description: Document display name
           example: "Apihub public API"
         docPath:
           type: string
-          description: Document path on the target service
+          description: Relative path to the API document on the target service (for example /v3/api-docs).
           example: "/v3/api-docs"
         configPath:
           type: string
@@ -941,7 +937,7 @@ components:
           $ref: "#/components/schemas/SpecificationType"
         xApiKind:
           type: string
-          description: Api kind value from swagger/apihub config
+          description: API kind value from the Swagger/APIHUB configuration (for example BWC).
           example: "BWC"
     ServiceDiagnostic:
       description: Diagnostic information about service discovery
@@ -969,28 +965,27 @@ components:
           description: Brief description of the error
           example: "Not Found"
     ErrorResponse:
-      description: An error description
+      description: Standard error response envelope returned for failed requests. Includes HTTP status, internal error code, and human-readable message; params and debug are optional.
       type: object
       properties:
         status:
-          description: HTTP Status Code
-          type: number
+          description: HTTP status code (integer) returned by the response, for example 400 or 500.
+          type: integer
         code:
-          description: Internal string error code. Mandatory in response.
+          description: Internal string error code identifying the failure type (for example VALIDATION_ERROR).
           type: string
         message:
-          description: The attribute contains an error message.
+          description: Human-readable error message.
           type: string
         params:
-          description: Message parameters
+          description: Optional structured parameters providing additional context for the error (key-value pairs).
           type: object
           example:
             "id": "12345"
             "type": "string"
         debug:
           description: |
-            The attribute contains debug details (e.g. stack-trace).
-            Presented in the error response only on Dev/Test environments if corresponding logging level is enabled.
+            Debug details (for example stack trace). Returned only in non-production environments when detailed logging is enabled.
           type: string
       required:
         - status
@@ -998,25 +993,31 @@ components:
         - message
   responses:
     unauthorized401:
-      description: Unauthorized
+      description: |
+        Authentication failed or credentials were not provided.
+        Typical causes include a missing, expired, or invalid Bearer token, API key, or session cookie.
+        Re-authenticate via APIHUB (obtain a new Bearer token, API key, or session cookie) and retry the request.
+        The response body follows the ErrorResponse schema.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     notFound404:
-      description: Not found or incorrect ID
+      description: The requested resource was not found (namespace, route, service, or specification ID is invalid or missing).
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     internalServerError500:
-      description: Internal server error
+      description: |
+        Internal server error — unexpected failure on the server side. Retry may succeed; contact support if the problem persists.
+        The response body follows the ErrorResponse schema; the optional debug field may include diagnostic details only in non-production environments.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ErrorResponse"
     serviceUnavailable503:
-      description: Internal server error
+      description: Service unavailable — temporary overload or maintenance.
       content:
         application/json:
           schema:
@@ -1026,24 +1027,25 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: JWT Bearer token authentication
+      description: |
+        JWT bearer token issued by the APIHUB auth service. Include in the Authorization header as: Authorization: Bearer <token>.
     ApiKeyAuth:
       type: apiKey
       in: header
       name: api-key
-      description: APIHUB API Key authentication
+      description: APIHUB API key authentication. Send the key in the api-key request header.
     CookieAuth:
       type: apiKey
       in: cookie
       name: apihub-access-token
-      description: Cookie-based authentication
+      description: Session cookie authentication. Clients send the apihub-access-token cookie set by the APIHUB Portal UI after login.
     ProxyJWTAuth:
       type: apiKey
       in: header
       name: X-Apihub-Authorization
-      description: Custom JWT authentication for proxy endpoint
+      description: Custom JWT authentication for the proxy endpoint. Send a signed JWT in the X-Apihub-Authorization header.
     ProxyApiKeyAuth:
       type: apiKey
       in: header
       name: X-Apihub-ApiKey
-      description: Custom API Key authentication for proxy endpoint
+      description: Custom API key authentication for the proxy endpoint. Send the key in the X-Apihub-ApiKey header.

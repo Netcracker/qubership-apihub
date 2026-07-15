@@ -172,7 +172,12 @@ func getDocumentRefsFromApihubConfig(apihubConfig view.JsonMap, timeout time.Dur
 }
 
 func getApihubConfigFromUrls(baseUrl string, paths []string, timeout time.Duration) (view.JsonMap, string, []view.EndpointCallInfo) {
-	client := utils.MakeDiscoveryHttpClient(timeout)
+	client, err := utils.MakeDiscoveryHttpClient(timeout)
+	if err != nil {
+		return nil, "", []view.EndpointCallInfo{{
+			ErrorSummary: fmt.Sprintf("Failed to create discovery HTTP client: %s", err.Error()),
+		}}
+	}
 	var failedCalls []view.EndpointCallInfo
 
 	for _, path := range paths {

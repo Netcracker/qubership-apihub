@@ -9,10 +9,18 @@ import (
 	"github.com/Netcracker/qubership-apihub-agent/view"
 )
 
-func MakeDiscoveryHttpClient(timeout time.Duration) http.Client {
-	return http.Client{Timeout: timeout, CheckRedirect: func(req *http.Request, via []*http.Request) error {
-		return http.ErrUseLastResponse
-	}}
+func MakeDiscoveryHttpClient(timeout time.Duration) (http.Client, error) {
+	tlsConfig, err := BuildSecureTLSConfig(nil)
+	if err != nil {
+		return http.Client{}, err
+	}
+	return http.Client{
+		Timeout:   timeout,
+		Transport: &http.Transport{TLSClientConfig: tlsConfig},
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}, nil
 }
 
 func EscapeSpaces(s string) string {

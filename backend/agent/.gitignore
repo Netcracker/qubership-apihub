@@ -13,3 +13,6 @@ qubership-apihub-agent/config.yaml
 *.bak
 *.iml
 *.orig
+
+apm_modules/
+agent-packages/**/build/
