@@ -248,6 +248,7 @@ const useMergeFactory = (onDiff: DiffCallback, options: InternalCompareOptions):
       compare,
       mapping,
       ignoreKeyDifference,
+      ignoreDifference,
       syntheticDiffs: mappingSyntheticDiffsPostProcessor,
       newCompareScope,
     } = rules
@@ -280,6 +281,18 @@ const useMergeFactory = (onDiff: DiffCallback, options: InternalCompareOptions):
       if (!options.retainFirstReferenceKeyProperty && options.firstReferenceKeyProperty && isObject(value)) {
         delete (value as Record<PropertyKey, unknown>)[options.firstReferenceKeyProperty]
       }
+      return { done: true }
+    }
+
+    // ignoreDifference: suppress the diff for this node and its whole subtree.
+    // Done at hook entry — before any diff is created and before descending — so
+    // no child crawl happens and no add/remove/replace/rename diff is emitted for
+    // the node or anything below it. The merged document stays structurally
+    // complete by adopting the after-value (the node is mapped here, i.e. present
+    // on both sides; whole-node add/remove is decided by the parent mapping and is
+    // intentionally out of scope for this flag — see plan §9b/T0.2).
+    if (ignoreDifference) {
+      mergedJso[mergeKey] = afterJso[afterKey]
       return { done: true }
     }
 

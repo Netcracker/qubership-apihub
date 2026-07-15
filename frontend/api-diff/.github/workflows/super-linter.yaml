@@ -69,22 +69,15 @@ jobs:
       if: ${{ steps.download.outputs.download-path != '' }}
       run: |
         mkdir -p ./.github/linters
-        cp --update=none -vR /tmp/linter-config/linters/* ./.github/linters
+        cp --update=none -vR /tmp/linter-config/linters/. ./.github/linters/
 
     - name: "Load super-linter environment file"
       shell: bash
       run: |
-        # shellcheck disable=2086
-        if [ -f "${GITHUB_WORKSPACE}/.github/super-linter.env" ]; then
-          echo "Applying local linter environment:"
-          grep "\S" ${GITHUB_WORKSPACE}/.github/super-linter.env | grep -v "^#"
-          grep "\S" ${GITHUB_WORKSPACE}/.github/super-linter.env | grep -v "^#" >> $GITHUB_ENV
-        elif [ -f "/tmp/linter-config/linters/super-linter.env" ]; then
-          echo "::warning:: Local linter environment file .github/super-linter.env is not found"
-          echo "Applying common linter environment:"
-          grep "\S" /tmp/linter-config/linters/super-linter.env | grep -v "^#"
-          grep "\S" /tmp/linter-config/linters/super-linter.env | grep -v "^#" >> $GITHUB_ENV
-        fi
+        # The grep is needed here because GitHub Actions will not accept comments.
+        # We need to skip blank lines as GitHub Actions might fail to process them as well.
+        cat .github/linters/super-linter.env .github/super-linter.env \
+          | grep -v '^#' | grep -vE '^\s*$' >> "$GITHUB_ENV" || true
 
     - name: Lint Code Base
       uses: super-linter/super-linter/slim@v7.3.0

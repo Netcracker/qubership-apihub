@@ -3,12 +3,5 @@ description: Nudges and skill trigger for adding or modifying classify rules, cl
 applyTo: "src/**/*.ts"
 ---
 
-# api-diff Authoring
-
-## Always-on rule
-
-Do not duplicate a request rule to handle response polarity — response reversal is automatic unless a 6-tuple explicitly overrides it.
-
-## Skill trigger: `api-diff-authoring`
-
-When editing `src/**/*.ts` to add or modify classify rules, classifiers, response-scope handling, or adapters, apply the `api-diff-authoring` skill.
+When editing `src/**/*.ts` to add or modify classify rules, classifiers, response-scope handling,
+or adapters, apply the `api-diff-authoring` skill.

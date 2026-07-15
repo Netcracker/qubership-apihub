@@ -2,6 +2,14 @@ name: qubership-apihub-api-diff
 version: 3.2.1
 description: Diff library for comparing API specifications across OpenAPI, GraphQL, AsyncAPI, and JSON Schema.
 author: Qubership APIHUB
+
+targets:
+  - claude
+  - cursor
+
 dependencies:
   apm:
     - ./agent-packages/api-diff-authoring
+    - ./agent-packages/api-diff-testing
+    - Netcracker/qubership-apihub-ddlapi/agent-packages/ddlapi-using
+    - Netcracker/qubership-apihub-json-crawl/agent-packages/json-crawl-using
