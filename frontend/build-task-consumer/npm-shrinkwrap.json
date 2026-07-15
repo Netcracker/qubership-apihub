@@ -1,12 +1,12 @@
 {
   "name": "@netcracker/qubership-apihub-build-task-consumer",
-  "version": "3.2.1",
+  "version": "3.3.0",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@netcracker/qubership-apihub-build-task-consumer",
-      "version": "3.2.1",
+      "version": "3.3.0",
       "license": "Apache-2.0",
       "dependencies": {
         "@nestjs/axios": "^3.0.0",
@@ -14,7 +14,7 @@
         "@nestjs/config": "^3.0.0",
         "@nestjs/core": "^10.0.0",
         "@nestjs/platform-express": "^10.0.0",
-        "@netcracker/qubership-apihub-api-processor": "5.4.3",
+        "@netcracker/qubership-apihub-api-processor": "5.5.0",
         "@sinclair/typebox": "^0.32.1",
         "adm-zip": "^0.5.10",
         "dotenv": "^16.3.1",
@@ -29,12 +29,11 @@
         "@nestjs/cli": "^10.0.0",
         "@nestjs/schematics": "^10.0.0",
         "@nestjs/testing": "^10.0.0",
-        "@netcracker/qubership-apihub-api-unifier": "2.8.0",
+        "@netcracker/qubership-apihub-api-unifier": "2.9.0",
         "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
         "@types/adm-zip": "^0.5.1",
         "@types/express": "^4.17.21",
         "@types/jest": "^29.5.6",
-        "@types/js-yaml": "^4.0.5",
         "@types/multer": "^1.4.9",
         "@types/node": "^24.0.0",
         "@types/supertest": "^2.0.12",
@@ -1895,12 +1894,13 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-diff": {
-      "version": "3.3.3",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-diff/3.3.3/7497f33c787dc0f6b93d9795b3885f6422a6ff60",
-      "integrity": "sha512-4n5zZLGgCrY0mnUu9/+siMTQLM72J/+PbFsbsSdoiDHNaC90s2Z5zh7PRbREGLiLx81FWEq3chSSj4TGz9Mo2w==",
+      "version": "3.4.0",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-diff/3.4.0/9e3d4525e7f103fc17812199fbd52c0f50ff0195",
+      "integrity": "sha512-DE9AouB/EvARnmAjBTfyPp7Hjmzb41UvBMpnjuYfFZVZpcYJQdBjMCsXt5CjR3+/bkivhJqktskLO+Rau8rQOw==",
       "dependencies": {
-        "@netcracker/qubership-apihub-api-unifier": "2.8.0",
-        "@netcracker/qubership-apihub-json-crawl": "1.2.1",
+        "@netcracker/qubership-apihub-api-unifier": "2.9.0",
+        "@netcracker/qubership-apihub-ddlapi": "1.0.0",
+        "@netcracker/qubership-apihub-json-crawl": "1.2.2",
         "fast-equals": "6.0.0"
       }
     },
@@ -1914,16 +1914,17 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-processor": {
-      "version": "5.4.3",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/5.4.3/38cdc1699a5e94ee8992c6625708e441d7591887",
-      "integrity": "sha512-eguqZYJrp9iavNW8y0zfbVv50sjiMx63lxqEbatElQ//2brut+HEmN6cnTCwUhySqaZzY+GJKjEi1qTkP9CRYg==",
+      "version": "5.5.0",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/5.5.0/33dc78827fd6cf4f6fe034a520e4844e38881e84",
+      "integrity": "sha512-zrD+FqcD06dBUdXfmZkNw73Y29P4mRu3RVtOjdS4xQ/bTDN5j9ys+SFlFUPAHgspFCyDOYBvpNzeu/rbaQoXqQ==",
       "license": "Apache-2.0",
       "dependencies": {
         "@asyncapi/parser": "^3.6.0",
-        "@netcracker/qubership-apihub-api-diff": "3.3.3",
-        "@netcracker/qubership-apihub-api-unifier": "2.8.0",
-        "@netcracker/qubership-apihub-graphapi": "1.0.10",
-        "@netcracker/qubership-apihub-json-crawl": "1.2.1",
+        "@netcracker/qubership-apihub-api-diff": "3.4.0",
+        "@netcracker/qubership-apihub-api-unifier": "2.9.0",
+        "@netcracker/qubership-apihub-ddlapi": "1.0.0",
+        "@netcracker/qubership-apihub-graphapi": "1.0.11",
+        "@netcracker/qubership-apihub-json-crawl": "1.2.2",
         "adm-zip": "0.5.10",
         "ajv": "^8.12.0",
         "ajv-formats": "^2.1.1",
@@ -1931,11 +1932,11 @@
         "api-ref-bundler": "0.4.0",
         "fast-equals": "5.0.1",
         "graphql": "16.9.0",
-        "js-yaml": "^4.1.0",
         "jszip": "^3.10.1",
         "object-hash": "^3.0.0",
         "slug": "^8.2.3",
-        "swagger2openapi": "^7.0.8"
+        "swagger2openapi": "^7.0.8",
+        "yaml": "2.9.0"
       },
       "engines": {
         "node": ">=24.0.0"
@@ -1953,12 +1954,29 @@
         "node": ">=6.0"
       }
     },
+    "node_modules/@netcracker/qubership-apihub-api-processor/node_modules/yaml": {
+      "version": "2.9.0",
+      "resolved": "https://registry.npmjs.org/yaml/-/yaml-2.9.0.tgz",
+      "integrity": "sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA==",
+      "license": "ISC",
+      "bin": {
+        "yaml": "bin.mjs"
+      },
+      "engines": {
+        "node": ">= 14.6"
+      },
+      "funding": {
+        "url": "https://github.com/sponsors/eemeli"
+      }
+    },
     "node_modules/@netcracker/qubership-apihub-api-unifier": {
-      "version": "2.8.0",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-unifier/2.8.0/6269c3a05549e702265560ad3e0c400820987005",
-      "integrity": "sha512-IcpisJ9CMlrxN7YBtC3+otCFlqTj8Ld5sZwXvf4jjyoMno0SJY3PdcLg2wM+8oGTF30Rb2YrcttHE5dQbECuNA==",
+      "version": "2.9.0",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-unifier/2.9.0/ad58753f1516cf6623fb333d8f62a2bf7d0db057",
+      "integrity": "sha512-WQZd04+hkZ51WFkNkZzNlGcpolcmHJhTqqhRRNsKwqVzwK0B4e+6GVwG9DCLz88TH0l5cyzxUlHukHS7en2KDw==",
       "dependencies": {
-        "@netcracker/qubership-apihub-json-crawl": "1.2.1",
+        "@netcracker/qubership-apihub-ddlapi": "1.0.0",
+        "@netcracker/qubership-apihub-graphapi": "1.0.11",
+        "@netcracker/qubership-apihub-json-crawl": "1.2.2",
         "fast-equals": "4.0.3",
         "flatted": "^3.2.9",
         "object-hash": "3.0.0"
@@ -1970,17 +1988,28 @@
       "integrity": "sha512-G3BSX9cfKttjr+2o1O22tYMLq0DPluZnYtq1rXumE1SpL/F/SLIfHx08WYQoWSIpeMYf8sRbJ8++71+v6Pnxfg==",
       "license": "MIT"
     },
+    "node_modules/@netcracker/qubership-apihub-ddlapi": {
+      "version": "1.0.0",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-ddlapi/1.0.0/d76d6a349f426bab53388320f3683deaa81baa59",
+      "integrity": "sha512-JUo6CZoNLJLdLyIPVJu1L0D6iM1zSsp7749k6OY8mGtepP5iFmRWsXXE3QizCypr3eQSzto7xM8FHhZ7lOsK7g==",
+      "license": "Apache-2.0",
+      "dependencies": {
+        "@pgsql/types": "17.6.2",
+        "libpg-query": "17.7.3",
+        "pgsql-deparser": "17.18.3"
+      }
+    },
     "node_modules/@netcracker/qubership-apihub-graphapi": {
-      "version": "1.0.10",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-graphapi/1.0.10/5ae05732e753fa2764af008dd7a837029a7e5822",
-      "integrity": "sha512-sHGPNujgLmez2Ct/4P1HYo7Ph/w/3RluP3sJ+fn1H1z6VuDwBf9FOBk2PzwHfqIcOiO4/TuGNat0E5t6wDrqwQ==",
+      "version": "1.0.11",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-graphapi/1.0.11/76a4d01dcbfce75a9185bad412c8e31c8c057742",
+      "integrity": "sha512-5LmfEi27lm4ZhB1kq07pEf4L4rIsPGJST5KKKVzuF9X5IOrsQu10MZS00+3fhObgi44pqMmkJFy7kM837wx0Jg==",
       "hasInstallScript": true,
       "license": "Apache-2.0"
     },
     "node_modules/@netcracker/qubership-apihub-json-crawl": {
-      "version": "1.2.1",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-json-crawl/1.2.1/595c1aa8854e658679d26bcd5be4cb26b6a12cb5",
-      "integrity": "sha512-nf9flmVuEnZIU60b42JQEjMKx7d1a2shZehQp8m5OWp0TLOkRzBaG6GVmccbe9LLsTlhjIfJAKbHBLYTJdyi/w==",
+      "version": "1.2.2",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-json-crawl/1.2.2/a6f4136bcdd89228922d0647141644c085fb7543",
+      "integrity": "sha512-NhpxXP4d1i86DN0GqH8j16uRIIUBRFTYHQ7uZ/puwATwcaD3R8zReEc+9dwfkpE2mTYO72Jzo7K5ts3sNUWjtA==",
       "license": "Apache-2.0",
       "engines": {
         "node": ">=24.0.0"
@@ -2108,6 +2137,18 @@
       "dependencies": {
         "@noble/hashes": "^1.1.5"
       }
+    },
+    "node_modules/@pgsql/quotes": {
+      "version": "17.1.0",
+      "resolved": "https://registry.npmjs.org/@pgsql/quotes/-/quotes-17.1.0.tgz",
+      "integrity": "sha512-J/H+LcrENBpYgL45WW6aTjb5Yk4tX4+AmB2/k8KZa+Zh3wiCtqmNIag+HZz5HmWaF6EZK9ZGC95NBD1fs+rUvg==",
+      "license": "MIT"
+    },
+    "node_modules/@pgsql/types": {
+      "version": "17.6.2",
+      "resolved": "https://registry.npmjs.org/@pgsql/types/-/types-17.6.2.tgz",
+      "integrity": "sha512-1UtbELdbqNdyOShhrVfSz3a1gDi0s9XXiQemx+6QqtsrXe62a6zOGU+vjb2GRfG5jeEokI1zBBcfD42enRv0Rw==",
+      "license": "MIT"
     },
     "node_modules/@pkgjs/parseargs": {
       "version": "0.11.0",
@@ -2719,13 +2760,6 @@
         "expect": "^29.0.0",
         "pretty-format": "^29.0.0"
       }
-    },
-    "node_modules/@types/js-yaml": {
-      "version": "4.0.5",
-      "resolved": "https://registry.npmjs.org/@types/js-yaml/-/js-yaml-4.0.5.tgz",
-      "integrity": "sha512-FhpRzf927MNQdRZP0J5DLIdTXhjLYzeUTmLAu69mnVksLH9CJY3IuSeEgbKUki7GQZm0WqDkGzyxju2EZGD2wA==",
-      "dev": true,
-      "license": "MIT"
     },
     "node_modules/@types/json-schema": {
       "version": "7.0.15",
@@ -7994,6 +8028,7 @@
       "version": "4.1.0",
       "resolved": "https://registry.npmjs.org/js-yaml/-/js-yaml-4.1.0.tgz",
       "integrity": "sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==",
+      "dev": true,
       "license": "MIT",
       "dependencies": {
         "argparse": "^2.0.1"
@@ -8173,6 +8208,15 @@
       },
       "engines": {
         "node": ">= 0.8.0"
+      }
+    },
+    "node_modules/libpg-query": {
+      "version": "17.7.3",
+      "resolved": "https://registry.npmjs.org/libpg-query/-/libpg-query-17.7.3.tgz",
+      "integrity": "sha512-lHKBvoWRsXt/9bJxpAeFxkLu0CA6tELusqy3o1z6/DwGXSETxhKJDaNlNdrNV8msvXDLBhpg/4RE/fKKs5rYFA==",
+      "license": "MIT",
+      "dependencies": {
+        "@pgsql/types": "^17.6.2"
       }
     },
     "node_modules/lie": {
@@ -9097,6 +9141,16 @@
       "funding": {
         "type": "github",
         "url": "https://github.com/sponsors/Borewit"
+      }
+    },
+    "node_modules/pgsql-deparser": {
+      "version": "17.18.3",
+      "resolved": "https://registry.npmjs.org/pgsql-deparser/-/pgsql-deparser-17.18.3.tgz",
+      "integrity": "sha512-lD8kPWgw9KAbUbKbQKgzDGzVdtEmp25N+7qZl62I7v8Uu9Wqy7+M0EOeU96++OgPD9S1pyp9MKNGzZzPJF2C4Q==",
+      "license": "MIT",
+      "dependencies": {
+        "@pgsql/quotes": "17.1.0",
+        "@pgsql/types": "^17.6.2"
       }
     },
     "node_modules/picocolors": {
