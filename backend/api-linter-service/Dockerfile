@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Note: this uses host platform for the build, and we ask go build to target the needed platform, so we do not spend time on qemu emulation when running "go build"
-FROM --platform=$BUILDPLATFORM docker.io/golang:1.26.1-alpine3.23 as builder
+FROM --platform=$BUILDPLATFORM docker.io/golang:1.26.1-alpine3.23 AS builder
 ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
@@ -26,7 +26,7 @@ WORKDIR /workspace/qubership-api-linter-service
 
 RUN GOSUMDB=off CGO_ENABLED=0 go mod tidy && go mod download && GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build .
 
-FROM docker.io/alpine:3.23
+FROM ghcr.io/netcracker/qubership-core-base:2.3.3@sha256:1339716127a7d170ba307b89f3a933f5e09c447607c89e16bf8d5a379db4e1f6
 
 ARG GIT_BRANCH=unknown
 ARG GIT_HASH=unknown
@@ -34,19 +34,12 @@ ARG GIT_HASH=unknown
 ENV GIT_BRANCH=$GIT_BRANCH
 ENV GIT_HASH=$GIT_HASH
 
-USER root
-
-# hadolint ignore=DL3018
-RUN apk --no-cache add curl
-
 WORKDIR /app/qubership-api-linter-service
 
-COPY --from=builder /workspace/qubership-api-linter-service/qubership-api-linter-service ./qubership-api-linter-service
-COPY --from=builder /workspace/qubership-api-linter-service/resources ./resources
-COPY docs/api ./api
+COPY --chown=10001:0 --chmod=555 --from=builder /workspace/qubership-api-linter-service/qubership-api-linter-service ./qubership-api-linter-service
+COPY --chown=10001:0 --chmod=555 --from=builder /workspace/qubership-api-linter-service/resources ./resources
+COPY --chown=10001:0 --chmod=555 docs/api ./api
 
-RUN chmod -R a+rwx /app
+USER 10001:10001
 
-USER 10001
-
-ENTRYPOINT ["./qubership-api-linter-service"]
+CMD ["./qubership-api-linter-service"]

@@ -42,6 +42,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	if err := utils.ValidateTLSAtStartup(); err != nil {
+		log.Fatalf("TLS configuration failed: %v", err)
+	}
 
 	basePath := systemInfoService.GetBasePath()
 	r := mux.NewRouter().SkipClean(true).UseEncodedPath()
@@ -114,7 +117,10 @@ func main() {
 		panic("Failed to create olricProvider: " + err.Error())
 	}
 
-	apihubClient := client.NewApihubClient(systemInfoService.GetAPIHubUrl(), systemInfoService.GetApihubAccessToken())
+	apihubClient, err := client.NewApihubClient(systemInfoService.GetAPIHubUrl(), systemInfoService.GetApihubAccessToken())
+	if err != nil {
+		log.Fatalf("Failed to create APIHUB client: %v", err)
+	}
 
 	utils.SafeAsync(func() {
 		systemInfoService.SetProductionMode(apihubClient)
