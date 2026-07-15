@@ -784,7 +784,7 @@ func (p publishedRepositoryImpl) validateMigrationResult(tx *pg.Tx, packageInfo 
 	}
 
 	if !packageInfo.NoChangelog && packageInfo.PreviousVersion != "" {
-		comparisonInternalDocsChanges, err := p.getComparisonInternalDocumentsChanges(tx, packageInfo, comparisonInternalDocs, comparisonInternalDocData, &changesOverview)
+		comparisonInternalDocsChanges, err := p.getComparisonInternalDocumentsChanges(tx, packageInfo, comparisonInternalDocs, comparisonInternalDocData, versionComparisonsFromCache, &changesOverview)
 		if err != nil {
 			return err
 		}
@@ -976,9 +976,17 @@ func (p publishedRepositoryImpl) getVersionComparisonsChanges(tx *pg.Tx, package
 	return versionComparisonsChanges, versionComparisonIds, nil
 }
 
-func (p publishedRepositoryImpl) getComparisonInternalDocumentsChanges(tx *pg.Tx, packageInfo view.PackageInfoFile, comparisonInternalDocs []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocData []*entity.ComparisonInternalDocumentDataEntity, changesOverview *PublishedBuildChangesOverview) (map[string]interface{}, error) {
+func (p publishedRepositoryImpl) getComparisonInternalDocumentsChanges(tx *pg.Tx, packageInfo view.PackageInfoFile, comparisonInternalDocs []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocData []*entity.ComparisonInternalDocumentDataEntity, versionComparisonsFromCache []string, changesOverview *PublishedBuildChangesOverview) (map[string]interface{}, error) {
 	var err error
 	allChanges := make(map[string]interface{}, 0)
+
+	var fromCacheComparisonIds map[string]struct{}
+	if len(versionComparisonsFromCache) > 0 {
+		fromCacheComparisonIds = make(map[string]struct{}, len(versionComparisonsFromCache))
+		for _, comparisonId := range versionComparisonsFromCache {
+			fromCacheComparisonIds[comparisonId] = struct{}{}
+		}
+	}
 
 	currentTable := "comparison_internal_document"
 	oldComparisonInternalDocs := make([]entity.ComparisonInternalDocumentEntity, 0)
@@ -1048,6 +1056,14 @@ func (p publishedRepositoryImpl) getComparisonInternalDocumentsChanges(tx *pg.Tx
 	matchedComparisonInternalDocs := make(map[string]struct{}, 0)
 	oldComparisonInternalDocHashes := make(map[string]struct{}, 0)
 	for _, s := range oldComparisonInternalDocs {
+		if fromCacheComparisonIds != nil {
+			comparisonId := view.MakeVersionComparisonId(s.PackageId, s.Version, s.Revision, s.PreviousPackageId, s.PreviousVersion, s.PreviousRevision)
+			if _, fromCache := fromCacheComparisonIds[comparisonId]; fromCache {
+				// Cached comparisons (dashboard references) carry no internal documents in the
+				// build archive, so their documents must not be reported as missing
+				continue
+			}
+		}
 		found := false
 		oldComparisonInternalDocHashes[s.Hash] = struct{}{}
 		for _, t := range comparisonInternalDocs {
@@ -1929,7 +1945,7 @@ func (p publishedRepositoryImpl) validateChangelogMigrationResult(tx *pg.Tx, pac
 		changes["operation_comparison"] = operationComparisonsChanges
 	}
 
-	comparisonInternalDocsChanges, err := p.getComparisonInternalDocumentsChanges(tx, packageInfo, comparisonInternalDocs, comparisonInternalDocData, &changesOverview)
+	comparisonInternalDocsChanges, err := p.getComparisonInternalDocumentsChanges(tx, packageInfo, comparisonInternalDocs, comparisonInternalDocData, versionComparisonsFromCache, &changesOverview)
 	if err != nil {
 		return err
 	}
