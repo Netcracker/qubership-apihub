@@ -14,11 +14,12 @@ type ComparisonService interface {
 	GetComparisonResult(packageId string, version string, previousVersionPackageId string, previousVersion string) (*view.VersionComparisonSummary, error)
 }
 
-func NewComparisonService(publishedRepo repository.PublishedRepository, operationRepo repository.OperationRepository, packageVersionEnrichmentService PackageVersionEnrichmentService) ComparisonService {
+func NewComparisonService(publishedRepo repository.PublishedRepository, operationRepo repository.OperationRepository, packageVersionEnrichmentService PackageVersionEnrichmentService, ddlContractService DDLContractService) ComparisonService {
 	return &comparisonServiceImpl{
 		publishedRepo:                   publishedRepo,
 		operationRepo:                   operationRepo,
 		packageVersionEnrichmentService: packageVersionEnrichmentService,
+		ddlContractService:              ddlContractService,
 	}
 }
 
@@ -26,6 +27,7 @@ type comparisonServiceImpl struct {
 	publishedRepo                   repository.PublishedRepository
 	operationRepo                   repository.OperationRepository
 	packageVersionEnrichmentService PackageVersionEnrichmentService
+	ddlContractService              DDLContractService
 }
 
 func (c comparisonServiceImpl) GetComparisonResult(packageId string, version string, previousVersionPackageId string, previousVersion string) (*view.VersionComparisonSummary, error) {
@@ -110,6 +112,14 @@ func (c comparisonServiceImpl) GetComparisonResult(packageId string, version str
 	if packageEnt.Kind == entity.KIND_PACKAGE {
 		result.NoContent = comparisonEnt.NoContent
 		result.OperationTypes = &comparisonEnt.OperationTypes
+
+		ddlChangesSummary, err := c.ddlContractService.GetChangesSummary(comparisonId)
+		if err != nil {
+			return nil, err
+		}
+		if ddlChangesSummary != nil {
+			result.Contracts = &view.ContractsSummary{DDL: ddlChangesSummary}
+		}
 	}
 	if packageEnt.Kind == entity.KIND_DASHBOARD {
 		refsComparisonEnts, err := c.publishedRepo.GetVersionRefsComparisons(comparisonId)

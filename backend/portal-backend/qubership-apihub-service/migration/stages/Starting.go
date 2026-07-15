@@ -171,6 +171,28 @@ on migration."version_comparison_%s"(package_id,version,revision,previous_packag
 	if err != nil {
 		return err
 	}
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().ExecContext(d.migrationCtx,
+			fmt.Sprintf(`create table if not exists migration."fts_mcp_search_text_tmp_%s" (
+			package_id varchar, version varchar, revision integer,
+			mcp_entity_id varchar, status varchar, kind varchar,
+			search_data_hash varchar, search_text_data bytea,
+			PRIMARY KEY (package_id, version, revision, mcp_entity_id));`, d.ent.Id))
+	})
+	if err != nil {
+		return err
+	}
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().ExecContext(d.migrationCtx,
+			fmt.Sprintf(`create table if not exists migration."fts_ddl_search_text_tmp_%s" (
+			package_id varchar, version varchar, revision integer,
+			ddl_entity_id varchar, status varchar, kind varchar,
+			search_data_hash varchar, search_text_data bytea,
+			PRIMARY KEY (package_id, version, revision, ddl_entity_id));`, d.ent.Id))
+	})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

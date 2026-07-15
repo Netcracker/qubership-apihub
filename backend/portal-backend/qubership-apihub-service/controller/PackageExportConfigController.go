@@ -35,7 +35,7 @@ func (p packageExportConfigControllerImpl) GetConfig(w http.ResponseWriter, r *h
 	packageId := getStringParam(r, "packageId")
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to check user privileges", err)
+		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
@@ -49,7 +49,7 @@ func (p packageExportConfigControllerImpl) GetConfig(w http.ResponseWriter, r *h
 
 	result, err := p.expConfSvc.GetConfig(packageId)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to get package export config", err)
+		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to get package export config", err)
 		return
 	}
 
@@ -106,7 +106,7 @@ func (p packageExportConfigControllerImpl) SetConfig(w http.ResponseWriter, r *h
 
 	err = p.expConfSvc.SetConfig(packageId, req.AllowedOasExtensions)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to update package export config", err)
+		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to update package export config", err)
 		return
 	}
 

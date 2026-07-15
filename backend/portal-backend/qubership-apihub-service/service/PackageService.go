@@ -28,6 +28,7 @@ type PackageService interface {
 	DisfavorPackage(ctx context.SecurityContext, id string) error
 	GetPackageStatus(id string) (*view.Status, error)
 	GetPackageName(id string) (string, error)
+	GetPackageKind(id string) (string, error)
 	PackageExists(packageId string) (bool, error)
 	GetGroupDescendantPackages(groupId string) ([]entity.PackageEntity, error)
 	GetAvailableVersionPublishStatuses_deprecated(ctx context.SecurityContext, packageId string) (*view.Statuses_deprecated, error)
@@ -718,9 +719,24 @@ func (p packageServiceImpl) GetPackageName(id string) (string, error) {
 		Status:  http.StatusNotFound,
 		Code:    exception.PackageNotFound,
 		Message: exception.PackageNotFoundMsg,
-		Params:  map[string]interface{}{"id": id},
+		Params:  map[string]interface{}{"packageId": id},
 	}
 
+}
+func (p packageServiceImpl) GetPackageKind(id string) (string, error) {
+	ent, err := p.publishedRepo.GetPackage(id)
+	if err != nil {
+		return "", err
+	}
+	if ent != nil {
+		return ent.Kind, nil
+	}
+	return "", &exception.CustomError{
+		Status:  http.StatusNotFound,
+		Code:    exception.PackageNotFound,
+		Message: exception.PackageNotFoundMsg,
+		Params:  map[string]interface{}{"packageId": id},
+	}
 }
 
 func (p packageServiceImpl) GetGroupDescendantPackages(groupId string) ([]entity.PackageEntity, error) {

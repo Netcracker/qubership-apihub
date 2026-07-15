@@ -3,12 +3,10 @@ package service
 import (
 	"bytes"
 	"context"
-	"crypto/x509"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 	"time"
 
@@ -203,26 +201,25 @@ func createMinioClient(creds *view.MinioStorageCreds) *minioClient {
 		client.error = err
 		return client
 	}
-	crt, err := os.CreateTemp("", "minio.cert")
-	if err != nil {
-		log.Warn(err.Error())
-		client.error = err
-		return client
-	}
-	decodeSamlCert, err := base64.StdEncoding.DecodeString(creds.Crt)
-	if err != nil {
-		log.Warn(err.Error())
-		client.error = err
-		return client
+
+	// Decode custom certificate if provided
+	var decodedCert []byte
+	if creds.Crt != "" {
+		decodedCert, err = base64.StdEncoding.DecodeString(creds.Crt)
+		if err != nil {
+			log.Warn(err.Error())
+			client.error = err
+			return client
+		}
 	}
 
-	_, err = crt.WriteString(string(decodeSamlCert))
-	rootCAs := mustGetSystemCertPool()
-	data, err := os.ReadFile(crt.Name())
-	if err == nil {
-		rootCAs.AppendCertsFromPEM(data)
+	tlsConfig, err := utils.BuildSecureTLSConfig(decodedCert)
+	if err != nil {
+		log.Warn(err.Error())
+		client.error = err
+		return client
 	}
-	tr.TLSClientConfig.RootCAs = rootCAs
+	tr.TLSClientConfig = tlsConfig
 
 	minioClient, err := minio.New(creds.Endpoint, &minio.Options{
 		Creds:     credentials.NewStaticV4(creds.AccessKeyId, creds.SecretAccessKey, ""),
@@ -351,13 +348,6 @@ func bucketExists(ctx context.Context, minioClient *minio.Client, bucketName str
 		return false, err
 	}
 	return exists, nil
-}
-func mustGetSystemCertPool() *x509.CertPool {
-	pool, err := x509.SystemCertPool()
-	if err != nil {
-		return x509.NewCertPool()
-	}
-	return pool
 }
 
 func buildFileName(tableName, entityId string) string {

@@ -80,6 +80,18 @@ func (d OpsMigration) StageCleanupAfter() error {
 	if err != nil {
 		log.Errorf("ops migration %s: failed to cleanup migration tables: %v", d.ent.Id, err.Error())
 	}
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().Exec(fmt.Sprintf(`drop table if exists migration."fts_mcp_search_text_tmp_%s";`, d.ent.Id))
+	})
+	if err != nil {
+		log.Errorf("ops migration %s: failed to cleanup migration tables: %v", d.ent.Id, err.Error())
+	}
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().Exec(fmt.Sprintf(`drop table if exists migration."fts_ddl_search_text_tmp_%s";`, d.ent.Id))
+	})
+	if err != nil {
+		log.Errorf("ops migration %s: failed to cleanup migration tables: %v", d.ent.Id, err.Error())
+	}
 	return nil
 }
 

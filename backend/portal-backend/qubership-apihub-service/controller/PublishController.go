@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
@@ -31,7 +32,8 @@ func NewPublishV2Controller(buildService service.BuildService,
 	publishedService service.PublishedService,
 	buildResultService service.BuildResultService,
 	roleService service.RoleService,
-	systemInfoService service.SystemInfoService) PublishV2Controller {
+	systemInfoService service.SystemInfoService,
+	packageService service.PackageService) PublishV2Controller {
 
 	publishArchiveSizeLimit := systemInfoService.GetPublishArchiveSizeLimitMB()
 	publishFileSizeLimit := systemInfoService.GetPublishFileSizeLimitMB()
@@ -44,6 +46,7 @@ func NewPublishV2Controller(buildService service.BuildService,
 		publishArchiveSizeLimit: publishArchiveSizeLimit,
 		publishFileSizeLimit:    publishFileSizeLimit,
 		systemInfoService:       systemInfoService,
+		packageService:          packageService,
 	}
 }
 
@@ -53,6 +56,7 @@ type publishV2ControllerImpl struct {
 	buildResultService service.BuildResultService
 	roleService        service.RoleService
 	systemInfoService  service.SystemInfoService
+	packageService     service.PackageService
 
 	publishArchiveSizeLimit int64
 	publishFileSizeLimit    int64 //TODO: why is not used?
@@ -230,7 +234,19 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 				Message: exception.PackageIdMismatchMsg,
 				Params:  map[string]interface{}{"configPackageId": config.PackageId, "packageId": packageId},
 			})
+			return
 		}
+	}
+
+	packageKind, err := p.packageService.GetPackageKind(packageId)
+	if err != nil {
+		utils.RespondWithError(w, "Failed to get package info", err)
+		return
+	}
+
+	if validationErr := validatePublishPackageKind(packageKind, []string{entity.KIND_PACKAGE, entity.KIND_DASHBOARD}); validationErr != nil {
+		utils.RespondWithCustomError(w, validationErr)
+		return
 	}
 
 	config.CreatedBy = ctx.GetUserId()

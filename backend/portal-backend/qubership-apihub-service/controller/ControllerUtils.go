@@ -3,12 +3,13 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 
@@ -200,4 +201,22 @@ func getTemplatePath(r *http.Request) string {
 	}
 	templatePath, _ := route.GetPathTemplate()
 	return templatePath
+}
+
+func validatePublishPackageKind(kind string, allowedKinds []string) *exception.CustomError {
+	for _, allowedKind := range allowedKinds {
+		if kind == allowedKind {
+			return nil
+		}
+	}
+
+	return &exception.CustomError{
+		Status:  http.StatusBadRequest,
+		Code:    exception.PublishNotAllowedForPackageKind,
+		Message: exception.PublishNotAllowedForPackageKindMsg,
+		Params: map[string]interface{}{
+			"kind":         kind,
+			"allowedKinds": strings.Join(allowedKinds, ", "),
+		},
+	}
 }

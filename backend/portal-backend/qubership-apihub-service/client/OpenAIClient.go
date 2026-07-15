@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/config"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
 	"github.com/openai/openai-go/v3/shared"
@@ -28,10 +28,12 @@ type OpenAILlmClient struct {
 }
 
 func NewOpenAILlmClient(cfg config.OpenAIConfig) (LlmClient, error) {
+	tlsConfig, err := utils.BuildSecureTLSConfig(nil)
+	if err != nil {
+		return nil, fmt.Errorf("build TLS config: %w", err)
+	}
 	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
+		TLSClientConfig: tlsConfig,
 	}
 	httpClient := &http.Client{
 		Transport: transport,

@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
-	"crypto/tls"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -367,7 +366,11 @@ func (o oidcProvider) downloadAvatar(ctx context.Context, avatarURL string, toke
 		return nil
 	}
 
-	client := makeHttpClient()
+	client, err := makeHttpClient()
+	if err != nil {
+		log.Warnf("Failed to create HTTP client for avatar download: %v", err)
+		return nil
+	}
 
 	req, err := http.NewRequest(http.MethodGet, avatarURL, nil)
 	if err != nil {
@@ -408,8 +411,12 @@ func (o oidcProvider) downloadAvatar(ctx context.Context, avatarURL string, toke
 	return avatarData
 }
 
-func makeHttpClient() *http.Client {
-	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
+func makeHttpClient() (*http.Client, error) {
+	tlsConfig, err := utils.BuildSecureTLSConfig(nil)
+	if err != nil {
+		return nil, err
+	}
+	tr := http.Transport{TLSClientConfig: tlsConfig}
 	cl := http.Client{Transport: &tr, Timeout: time.Second * 60}
-	return &cl
+	return &cl, nil
 }

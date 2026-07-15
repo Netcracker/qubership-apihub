@@ -711,6 +711,331 @@ func (a *BuildResultToEntitiesReader) ReadComparisonInternalDocumentsToEntities(
 	return comparisonInternalDocEntities, comparisonInternalDocDataEntities, nil
 }
 
+func (a *BuildResultToEntitiesReader) ReadDdlContractsToEntities() ([]*entity.DDLContractEntity, []*entity.DDLContractDataEntity, []*entity.DDLContractSearchTextEntity, error) {
+	contractEntities := make([]*entity.DDLContractEntity, 0)
+	dataEntities := make([]*entity.DDLContractDataEntity, 0)
+	searchTextEntities := make([]*entity.DDLContractSearchTextEntity, 0)
+
+	for _, contract := range a.PackageDdlContracts.Tables {
+		var dataHash *string
+		if fileHeader, exists := a.ContractsDdlFileHeaders[contract.DdlEntityId]; exists {
+			fileData, err := ReadZipFile(fileHeader)
+			if err != nil {
+				return nil, nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackageArchivedFile,
+					Message: exception.InvalidPackageArchivedFileMsg,
+					Params:  map[string]interface{}{"file": contract.DdlEntityId, "error": err.Error()},
+				}
+			}
+			hash := utils.GetEncodedXXHash128(fileData)
+			dataHash = &hash
+			dataEntities = append(dataEntities, &entity.DDLContractDataEntity{
+				DataHash: hash,
+				Data:     fileData,
+			})
+			var searchText string
+			if contract.Search != nil && contract.Search.UseEntityDataAsSearchText {
+				searchText = string(fileData)
+			}
+			searchDataHash := utils.GetEncodedXXHash128([]byte(searchText))
+			searchTextEntities = append(searchTextEntities, &entity.DDLContractSearchTextEntity{
+				PackageId:      a.PackageInfo.PackageId,
+				Version:        a.PackageInfo.Version,
+				Revision:       a.PackageInfo.Revision,
+				DdlEntityId:    contract.DdlEntityId,
+				Status:         a.PackageInfo.Status,
+				Kind:           contract.Kind,
+				SearchDataHash: searchDataHash,
+				SearchTextData: []byte(searchText),
+			})
+		} else {
+			return nil, nil, nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidPackageArchivedFile,
+				Message: exception.InvalidPackageArchivedFileMsg,
+				Params:  map[string]interface{}{"file": contract.DdlEntityId, "error": "file not found"},
+			}
+		}
+		contractEntities = append(contractEntities, &entity.DDLContractEntity{
+			PackageId:                 a.PackageInfo.PackageId,
+			Version:                   a.PackageInfo.Version,
+			Revision:                  a.PackageInfo.Revision,
+			DdlEntityId:               contract.DdlEntityId,
+			Kind:                      contract.Kind,
+			SchemaName:                contract.SchemaName,
+			Name:                      contract.Name,
+			Description:               contract.Description,
+			Metadata:                  entity.Metadata(contract.Metadata),
+			DataHash:                  dataHash,
+			DocumentId:                contract.DocumentId,
+			VersionInternalDocumentId: contract.VersionInternalDocumentId,
+		})
+	}
+	return contractEntities, dataEntities, searchTextEntities, nil
+}
+
+// ReadDdlContractComparisonsToEntities reads the two-level DDL comparison structure:
+// the ddl-comparisons.json index (creating version_comparison rows carrying contractTypes) and
+// the per-pair ddl-comparisons/<comparisonFileId> files (creating ddl_comparison rows). It mirrors
+// ReadOperationComparisonsToEntities so DDL-only changelogs still produce their version_comparison row.
+func (a *BuildResultToEntitiesReader) ReadDdlContractComparisonsToEntities(publishingDdlDataHashes map[string]string, ddlRepository repository.DDLContractRepository) ([]*entity.VersionComparisonEntity, []*entity.DDLContractComparisonEntity, map[string]view.ComparisonKey, error) {
+	versionComparisonEntities := make([]*entity.VersionComparisonEntity, 0)
+	ddlComparisonEntities := make([]*entity.DDLContractComparisonEntity, 0)
+	comparisonFileIdToKeyMap := make(map[string]view.ComparisonKey)
+	var mainVersionComparison *entity.VersionComparisonEntity
+	mainVersionRefs := make([]string, 0)
+
+	// ddl_entity_id -> data_hash lookups are cached per version triple. The version being published
+	// is not yet persisted, so its current data hashes come from publishingDdlDataHashes; all other
+	// versions (refs and previous versions) are resolved from the database.
+	ddlInfoCache := make(map[string]map[string]string)
+	getDdlInfo := func(packageId, version string, revision int) (map[string]string, error) {
+		if ddlRepository == nil {
+			return nil, nil
+		}
+		key := fmt.Sprintf("%s|%s|%d", packageId, version, revision)
+		if info, ok := ddlInfoCache[key]; ok {
+			return info, nil
+		}
+		info, err := ddlRepository.GetDdlEntitiesInfo(packageId, version, revision)
+		if err != nil {
+			return nil, err
+		}
+		ddlInfoCache[key] = info
+		return info, nil
+	}
+
+	for _, comparison := range a.PackageDdlComparisons.Comparisons {
+		versionComparisonEnt := &entity.VersionComparisonEntity{}
+		mainVersion := false
+		if comparison.Version != "" {
+			if (a.PackageInfo.Revision == comparison.Revision || comparison.Revision == 0) &&
+				a.PackageInfo.Version == comparison.Version &&
+				a.PackageInfo.PackageId == comparison.PackageId {
+				mainVersion = true
+				mainVersionComparison = versionComparisonEnt
+				versionComparisonEnt.PackageId = comparison.PackageId
+				versionComparisonEnt.Version = a.PackageInfo.Version
+				versionComparisonEnt.Revision = a.PackageInfo.Revision
+			} else {
+				versionComparisonEnt.PackageId = comparison.PackageId
+				versionComparisonEnt.Version = comparison.Version
+				versionComparisonEnt.Revision = comparison.Revision
+			}
+		}
+		if comparison.PreviousVersion != "" {
+			versionComparisonEnt.PreviousPackageId = comparison.PreviousVersionPackageId
+			versionComparisonEnt.PreviousVersion = comparison.PreviousVersion
+			versionComparisonEnt.PreviousRevision = comparison.PreviousVersionRevision
+		}
+		versionComparisonEnt.NoContent = false
+		versionComparisonEnt.LastActive = time.Now()
+		versionComparisonEnt.ContractTypes = comparison.ToContractTypes()
+		versionComparisonEnt.BuilderVersion = a.PackageInfo.BuilderVersion
+		versionComparisonEnt.ComparisonId = view.MakeVersionComparisonId(
+			versionComparisonEnt.PackageId,
+			versionComparisonEnt.Version,
+			versionComparisonEnt.Revision,
+			versionComparisonEnt.PreviousPackageId,
+			versionComparisonEnt.PreviousVersion,
+			versionComparisonEnt.PreviousRevision)
+		versionComparisonEnt.Metadata = entity.Metadata{}
+		if a.PackageInfo.MigrationBuild {
+			versionComparisonEnt.Metadata.SetMigrationId(a.PackageInfo.MigrationId)
+		}
+		if !mainVersion {
+			mainVersionRefs = append(mainVersionRefs, versionComparisonEnt.ComparisonId)
+		}
+		if comparison.ComparisonFileId != "" {
+			comparisonFileIdToKeyMap[comparison.ComparisonFileId] = view.ComparisonKey{
+				PackageId:                versionComparisonEnt.PackageId,
+				Version:                  versionComparisonEnt.Version,
+				Revision:                 versionComparisonEnt.Revision,
+				PreviousVersion:          versionComparisonEnt.PreviousVersion,
+				PreviousVersionRevision:  versionComparisonEnt.PreviousRevision,
+				PreviousVersionPackageId: versionComparisonEnt.PreviousPackageId,
+			}
+		}
+		if comparison.FromCache {
+			continue
+		}
+		versionComparisonEntities = append(versionComparisonEntities, versionComparisonEnt)
+		if comparison.ComparisonFileId == "" {
+			continue
+		}
+		fileHeader, exists := a.ContractsDdlComparisonsFileHeaders[comparison.ComparisonFileId]
+		if !exists {
+			continue
+		}
+		fileData, err := ReadZipFile(fileHeader)
+		if err != nil {
+			return nil, nil, nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidPackageArchivedFile,
+				Message: exception.InvalidPackageArchivedFileMsg,
+				Params:  map[string]interface{}{"file": comparison.ComparisonFileId, "error": err.Error()},
+			}
+		}
+		var ddlChanges view.PackageDdlContractChanges
+		err = json.Unmarshal(fileData, &ddlChanges)
+		if err != nil {
+			return nil, nil, nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidPackageArchivedFile,
+				Message: exception.InvalidPackageArchivedFileMsg,
+				Params:  map[string]interface{}{"file": comparison.ComparisonFileId, "error": "failed to unmarshal ddl changes"},
+				Debug:   err.Error(),
+			}
+		}
+		for _, dto := range ddlChanges.Entities {
+			ddlComparisonEnt := &entity.DDLContractComparisonEntity{
+				PackageId:                    versionComparisonEnt.PackageId,
+				Version:                      versionComparisonEnt.Version,
+				Revision:                     versionComparisonEnt.Revision,
+				PreviousPackageId:            versionComparisonEnt.PreviousPackageId,
+				PreviousVersion:              versionComparisonEnt.PreviousVersion,
+				PreviousRevision:             versionComparisonEnt.PreviousRevision,
+				ComparisonId:                 versionComparisonEnt.ComparisonId,
+				ChangesSummary:               dto.ChangeSummary,
+				Changes:                      dto.Changes,
+				ComparisonInternalDocumentId: dto.ComparisonInternalDocumentId,
+			}
+			if dto.DdlEntityData != nil {
+				ddlComparisonEnt.DdlEntityId = dto.DdlEntityData.DdlEntityId
+				ddlComparisonEnt.Kind = dto.DdlEntityData.Kind
+				ddlComparisonEnt.Name = dto.DdlEntityData.Name
+				ddlComparisonEnt.SchemaName = dto.DdlEntityData.SchemaName
+				ddlComparisonEnt.Description = dto.DdlEntityData.Description
+			}
+			if dto.PreviousDdlEntityData != nil {
+				ddlComparisonEnt.PreviousDdlEntityId = dto.PreviousDdlEntityData.DdlEntityId
+				ddlComparisonEnt.PreviousKind = dto.PreviousDdlEntityData.Kind
+				ddlComparisonEnt.PreviousName = dto.PreviousDdlEntityData.Name
+				ddlComparisonEnt.PreviousSchemaName = dto.PreviousDdlEntityData.SchemaName
+				ddlComparisonEnt.PreviousDescription = dto.PreviousDdlEntityData.Description
+			}
+
+			// The build result's DDL entity descriptor does not carry the data hash, so resolve it
+			// from the published entities the same way operation comparisons do.
+			if ddlComparisonEnt.DdlEntityId != "" {
+				currentInfo := publishingDdlDataHashes
+				if !mainVersion {
+					currentInfo, err = getDdlInfo(versionComparisonEnt.PackageId, versionComparisonEnt.Version, versionComparisonEnt.Revision)
+					if err != nil {
+						return nil, nil, nil, &exception.CustomError{
+							Status:  http.StatusInternalServerError,
+							Message: "Failed to get ddl entities info for $packageId-$version-$revision",
+							Debug:   err.Error(),
+							Params:  map[string]interface{}{"packageId": versionComparisonEnt.PackageId, "version": versionComparisonEnt.Version, "revision": versionComparisonEnt.Revision},
+						}
+					}
+				}
+				if hash, ok := currentInfo[ddlComparisonEnt.DdlEntityId]; ok && hash != "" {
+					ddlComparisonEnt.DataHash = &hash
+				}
+			}
+			if ddlComparisonEnt.PreviousDdlEntityId != "" {
+				previousInfo, err := getDdlInfo(versionComparisonEnt.PreviousPackageId, versionComparisonEnt.PreviousVersion, versionComparisonEnt.PreviousRevision)
+				if err != nil {
+					return nil, nil, nil, &exception.CustomError{
+						Status:  http.StatusInternalServerError,
+						Message: "Failed to get ddl entities info for $packageId-$version-$revision",
+						Debug:   err.Error(),
+						Params:  map[string]interface{}{"packageId": versionComparisonEnt.PreviousPackageId, "version": versionComparisonEnt.PreviousVersion, "revision": versionComparisonEnt.PreviousRevision},
+					}
+				}
+				if hash, ok := previousInfo[ddlComparisonEnt.PreviousDdlEntityId]; ok && hash != "" {
+					ddlComparisonEnt.PreviousDataHash = &hash
+				}
+			}
+			ddlComparisonEntities = append(ddlComparisonEntities, ddlComparisonEnt)
+		}
+	}
+	if mainVersionComparison != nil {
+		mainVersionComparison.Refs = mainVersionRefs
+	}
+	return versionComparisonEntities, ddlComparisonEntities, comparisonFileIdToKeyMap, nil
+}
+
+func (a *BuildResultToEntitiesReader) ReadMcpContractsToEntities() ([]*entity.MCPContractEntity, []*entity.MCPContractDataEntity, []*entity.MCPContractSearchTextEntity, error) {
+	contractEntities := make([]*entity.MCPContractEntity, 0)
+	dataEntities := make([]*entity.MCPContractDataEntity, 0)
+	searchTextEntities := make([]*entity.MCPContractSearchTextEntity, 0)
+
+	allContracts := make([]view.PackageMcpContract, 0)
+	allContracts = append(allContracts, a.PackageMcpContracts.Inits...)
+	allContracts = append(allContracts, a.PackageMcpContracts.Tools...)
+	allContracts = append(allContracts, a.PackageMcpContracts.Resources...)
+	allContracts = append(allContracts, a.PackageMcpContracts.Prompts...)
+
+	for _, contract := range allContracts {
+		if contract.McpEndpoint == "" {
+			return nil, nil, nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidPackageArchivedFile,
+				Message: "MCP contract is missing required mcpEndpoint",
+				Params:  map[string]interface{}{"mcpEntityId": contract.McpEntityId},
+			}
+		}
+		var dataHash *string
+		if fileHeader, exists := a.ContractsMcpFileHeaders[contract.McpEntityId]; exists {
+			fileData, err := ReadZipFile(fileHeader)
+			if err != nil {
+				return nil, nil, nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackageArchivedFile,
+					Message: exception.InvalidPackageArchivedFileMsg,
+					Params:  map[string]interface{}{"file": contract.McpEntityId, "error": err.Error()},
+				}
+			}
+			hash := utils.GetEncodedXXHash128(fileData)
+			dataHash = &hash
+			dataEntities = append(dataEntities, &entity.MCPContractDataEntity{
+				DataHash: hash,
+				Data:     fileData,
+			})
+			var searchText string
+			if contract.Search != nil && contract.Search.UseEntityDataAsSearchText {
+				searchText = string(fileData)
+			}
+			searchDataHash := utils.GetEncodedXXHash128([]byte(searchText))
+			searchTextEntities = append(searchTextEntities, &entity.MCPContractSearchTextEntity{
+				PackageId:      a.PackageInfo.PackageId,
+				Version:        a.PackageInfo.Version,
+				Revision:       a.PackageInfo.Revision,
+				McpEntityId:    contract.McpEntityId,
+				Status:         a.PackageInfo.Status,
+				Kind:           contract.Kind,
+				SearchDataHash: searchDataHash,
+				SearchTextData: []byte(searchText),
+			})
+		} else {
+			return nil, nil, nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidPackageArchivedFile,
+				Message: exception.InvalidPackageArchivedFileMsg,
+				Params:  map[string]interface{}{"file": contract.McpEntityId, "error": "file not found"},
+			}
+		}
+		contractEntities = append(contractEntities, &entity.MCPContractEntity{
+			PackageId:                 a.PackageInfo.PackageId,
+			Version:                   a.PackageInfo.Version,
+			Revision:                  a.PackageInfo.Revision,
+			McpEntityId:               contract.McpEntityId,
+			Kind:                      contract.Kind,
+			Title:                     contract.Title,
+			Description:               contract.Description,
+			McpEndpoint:               contract.McpEndpoint,
+			Metadata:                  contract.Metadata,
+			DataHash:                  dataHash,
+			DocumentId:                contract.DocumentId,
+			VersionInternalDocumentId: contract.VersionInternalDocumentId,
+		})
+	}
+	return contractEntities, dataEntities, searchTextEntities, nil
+}
+
 func (a *BuildResultToEntitiesReader) calculateOperationsExternalMetadataMap() map[view.OperationExternalMetadataKey]map[string]interface{} {
 	result := map[view.OperationExternalMetadataKey]map[string]interface{}{}
 	if a.PackageInfo.ExternalMetadata == nil {
