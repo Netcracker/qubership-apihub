@@ -32,7 +32,6 @@ import { isGraphQlSpecType } from '@netcracker/qubership-apihub-ui-shared/utils/
 import {
   useGetAgentPrefix,
 } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
-import { API_V2 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 
 export type CommonSpecificationPopupProps = {
   spec: Spec

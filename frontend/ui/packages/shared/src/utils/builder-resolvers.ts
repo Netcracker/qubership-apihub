@@ -97,7 +97,7 @@ export async function versionDeprecatedResolver(): Promise<VersionDeprecatedReso
 }
 
 export async function versionDocumentsResolver(): Promise<VersionDocumentsResolver> {
-  return async (version, packageId, apiType) => {
+  return async (version, packageId, apiType, contractType) => {
     const EMPTY_DOCUMENTS_DTO = { documents: [], packages: {} }
     const limit = 100
     const result: ResolvedVersionDocuments = { documents: [], packages: {} }
@@ -106,7 +106,7 @@ export async function versionDocumentsResolver(): Promise<VersionDocumentsResolv
 
     try {
       while (page === 0 || documentsCount === limit) {
-        const { documents, packages } = await getResolvedVersionDocuments(packageId, version, apiType) ?? EMPTY_DOCUMENTS_DTO
+        const { documents, packages } = await getResolvedVersionDocuments(packageId, version, apiType, contractType) ?? EMPTY_DOCUMENTS_DTO
         result.documents = [...result.documents, ...documents]
         result.packages = { ...result.packages, ...packages }
 

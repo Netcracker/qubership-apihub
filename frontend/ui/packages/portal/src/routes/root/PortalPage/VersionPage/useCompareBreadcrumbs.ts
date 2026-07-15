@@ -156,7 +156,6 @@ export function useCompareBreadcrumbs(
     changedIsLatestRevision,
     originOperation,
     changedOperation,
-    isOperationsGroupComparison,
   ])
 }
 

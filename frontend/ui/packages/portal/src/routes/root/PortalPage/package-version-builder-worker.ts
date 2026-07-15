@@ -15,7 +15,8 @@
  */
 
 import type { BuilderResolvers, FileId, FileSourceMap, VersionValidationLevel, VersionsComparison } from '@netcracker/qubership-apihub-api-processor'
-import { BUILD_TYPE, PackageVersionBuilder, VERSION_STATUS, VERSION_VALIDATION_LEVEL } from '@netcracker/qubership-apihub-api-processor'
+import { BUILD_TYPE, VERSION_STATUS, VERSION_VALIDATION_LEVEL } from '@netcracker/qubership-apihub-api-processor'
+import { PackageVersionBuilder } from '@netcracker/qubership-apihub-api-processor/processor'
 import {
   packageVersionResolver,
   rawDocumentResolver,

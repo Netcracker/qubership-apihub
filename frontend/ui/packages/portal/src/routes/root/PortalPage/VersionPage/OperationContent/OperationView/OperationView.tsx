@@ -21,7 +21,7 @@ import type { OpenApiData } from '@apihub/entities/operation-structure'
 import { OPEN_API_SECTION_PARAMETERS, OPEN_API_SECTION_REQUESTS, OPEN_API_SECTION_RESPONSES } from '@apihub/entities/operation-structure'
 import { Box } from '@mui/material'
 import { DIFFS_AGGREGATED_META_KEY, DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
-import { AsyncApiOperationViewer, GraphQLOperationDiffViewer, SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '@netcracker/qubership-apihub-api-doc-viewer'
+import { AsyncApiOperationViewer, AsyncApiOperationDiffsViewer, GraphQLOperationDiffViewer, SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '@netcracker/qubership-apihub-api-doc-viewer'
 import { FIRST_REFERENCE_KEY_PROPERTY, GRAPHQL_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import type { VisitorNavigationDetails } from '@netcracker/qubership-apihub-ui-shared/components/SchemaGraphView/oasToClassDiagramService'
@@ -238,16 +238,30 @@ const API_TYPE_VIEWER_MAP: Record<ApiType, ApiTypeViewerCallback> = {
       height='100%'
       px={4}
     >
-      <AsyncApiOperationViewer
-        source={mergedDocument}
-        displayMode={schemaViewMode as SchemaViewMode}
-        operationKeys={
-          operationName && messageId
-            ? { operationKey: operationName, messageKey: messageId }
-            : undefined
-        }
-        referenceNamePropertyKey={FIRST_REFERENCE_KEY_PROPERTY}
-      />
+      {!comparisonMode ? (
+        <AsyncApiOperationViewer
+          source={mergedDocument}
+          displayMode={schemaViewMode as SchemaViewMode}
+          operationKeys={
+            operationName && messageId
+              ? { operationKey: operationName, messageKey: messageId }
+              : undefined
+          }
+          referenceNamePropertyKey={FIRST_REFERENCE_KEY_PROPERTY}
+        />
+      ) : (
+        <AsyncApiOperationDiffsViewer
+          mergedSource={mergedDocument}
+          displayMode={schemaViewMode as SchemaViewMode}
+          operationKeys={
+            operationName && messageId
+              ? { operationKey: operationName, messageKey: messageId }
+              : undefined
+          }
+          referenceNamePropertyKey={FIRST_REFERENCE_KEY_PROPERTY}
+          diffMetaKeys={DIFFS_META_KEYS}
+        />
+      )}
     </Box>
   ),
 }

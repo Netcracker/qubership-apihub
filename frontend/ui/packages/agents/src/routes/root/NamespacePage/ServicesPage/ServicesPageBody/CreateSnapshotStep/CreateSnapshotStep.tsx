@@ -32,13 +32,16 @@ import type { IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-share
 import { useCreateSnapshotPublicationOptions } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
 import {
   ERROR_STEP_STATUS,
-  INITIAL_STEP_STATUS, RUNNING_STEP_STATUS, SUCCESS_STEP_STATUS,
+  INITIAL_STEP_STATUS,
+  RUNNING_STEP_STATUS,
+  SUCCESS_STEP_STATUS,
   useCreateSnapshotStep,
   usePromoteVersionStep,
   useValidationResultsStep,
 } from '../../ServicesPageProvider/ServicesStepsProvider'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import type { ServiceKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import { checkVersionRestrictedSymbols } from '@netcracker/qubership-apihub-ui-shared/utils/validations'
 
 export const CreateSnapshotStep: FC = memo(() => {
   const [createSnapshot, isLoading] = useCreateSnapshot()
@@ -85,6 +88,7 @@ export const CreateSnapshotStep: FC = memo(() => {
           control={control}
           rules={{
             validate: {
+              restrictedSymbols: checkVersionRestrictedSymbols,
               notEqualToBaseline: (snapshotName) => snapshotName !== baseline || 'Snapshot name must not be the same as baseline',
             },
           }}

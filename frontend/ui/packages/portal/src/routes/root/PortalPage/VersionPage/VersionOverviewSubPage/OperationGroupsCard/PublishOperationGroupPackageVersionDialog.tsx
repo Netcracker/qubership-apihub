@@ -162,7 +162,7 @@ const PublishOperationGroupPackageVersionPopup: FC<PopupProps> = memo<PopupProps
         versionLabels: data.labels,
       },
     })
-  }, [currentPackage?.key, currentVersionId, group.groupName, publishOperationGroupPackageVersion])
+  }, [currentPackage?.key, currentVersionId, group.apiType, group.groupName, publishOperationGroupPackageVersion])
 
   return (
     <VersionDialogForm

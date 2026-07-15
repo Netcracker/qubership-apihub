@@ -59,15 +59,15 @@ export const PublishPackageVersionDialog: FC = memo(() => {
 const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpen }) => {
   const { versionId: currentVersionId } = useParams()
   const [currentPackage, isPackageLoading] = usePackage()
-  
+
   const [currentVersionConfig, isCurrentVersionLoading] = usePackageVersionConfig(currentPackage?.key, currentVersionId)
-  
+
   const isEditingVersion = !!currentVersionId && currentVersionId !== SPECIAL_VERSION_KEY
   const packageKind = currentPackage?.kind
   const isDashboard = packageKind === DASHBOARD_KIND
   const isPackage = packageKind === PACKAGE_KIND
 
-  const { filesWithLabels } = useFiles()
+  const { filesWithLabels, mcpFiles } = useFiles()
   const versionId = useMemo(() => {
     return isEditingVersion
       ? getSplittedVersionKey(currentVersionId).versionKey ?? ''
@@ -124,16 +124,26 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
       labels: data.labels,
       previousVersion: previousVersion,
       ...takeIf({
-        files: Object.entries(filesWithLabels)?.map(([key, { labels }]) => ({
-          fileId: key,
-          labels: labels,
-          publish: true,
-        })),
+        files: Object.entries(filesWithLabels)?.map(([key, { labels }]) => {
+          const mcpMeta = mcpFiles.get(key)
+          const mcpEndpoint = mcpMeta?.mcpEndpoint
+          return {
+            fileId: key,
+            labels: labels,
+            publish: true,
+            ...(mcpMeta
+              ? {
+                  type: mcpMeta.documentType,
+                  metadata: { mcpEndpoint: mcpEndpoint ?? '' },
+                }
+              : {}),
+          }
+        }),
         sources: filesRecordToArray(filesWithLabels),
       }, isPackage),
       refs: isDashboard ? dashboardRefs.map(ref => ref.packageReference) : [],
     })
-  }, [dashboardRefs, filesWithLabels, isDashboard, isPackage, publishPackage])
+  }, [dashboardRefs, filesWithLabels, isDashboard, isPackage, mcpFiles, publishPackage])
 
   return (
     <VersionDialogForm

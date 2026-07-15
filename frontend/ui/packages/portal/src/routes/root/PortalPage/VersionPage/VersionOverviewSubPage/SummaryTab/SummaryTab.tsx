@@ -22,6 +22,8 @@ import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/compone
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { PrincipalView } from '@netcracker/qubership-apihub-ui-shared/components/PrincipalView'
 import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { hasDdlContracts } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-ddl'
+import { hasMcpContracts } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
 import type { PackageKey, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import type { FC, ReactNode } from 'react'
@@ -29,6 +31,9 @@ import { memo, useMemo } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
 import { OVERVIEW_PAGE, REVISION_HISTORY_PAGE } from '../../../../../../routes'
 import { usePackageVersionContent } from '../../../../usePackageVersionContent'
+import { ContractsSummary } from './ContractsSummary'
+import { DdlSummary } from './DdlSummary'
+import { McpSummary } from './McpSummary'
 import { OperationTypeSummary } from './OperationTypeSummary'
 
 const SUMMARY_BOX_MARGIN_TOP = 4
@@ -70,6 +75,7 @@ export const SummaryTab: FC = memo(() => {
   })
   const {
     operationTypes,
+    contractsSummary,
     versionLabels,
     previousVersion,
     previousVersionPackageId,
@@ -78,6 +84,8 @@ export const SummaryTab: FC = memo(() => {
     latestRevision,
     revisionsCount,
   } = versionContent ?? {}
+  const mcpSummary = contractsSummary?.mcp
+  const ddlSummary = contractsSummary?.ddl
   const { versionKey: splittedVersionKey } = getSplittedVersionKey(versionId, latestRevision)
   const { versionKey: previousVersionKey } = getSplittedVersionKey(previousVersion)
 
@@ -179,22 +187,26 @@ export const SummaryTab: FC = memo(() => {
           </Typography>
         </Box>
       </Box>
-      {sortedOperationTypes
-        .map(({ apiType, changesSummary, numberOfImpactedOperations, operationsCount, deprecatedCount, noBwcOperationsCount, internalAudienceOperationsCount, unknownAudienceOperationsCount, apiAudienceTransitions }) =>
-          <OperationTypeSummary
-            key={apiType}
-            apiType={apiType}
-            changesSummary={changesSummary}
-            numberOfImpactedOperations={numberOfImpactedOperations}
-            operationsCount={operationsCount}
-            deprecatedOperationsCount={deprecatedCount}
-            noBwcOperationsCount={noBwcOperationsCount}
-            internalAudienceOperationsCount={internalAudienceOperationsCount}
-            unknownAudienceOperationsCount={unknownAudienceOperationsCount}
-            apiAudienceTransitions={apiAudienceTransitions}
-          />,
-        )
-      }
+      <ContractsSummary>
+        {sortedOperationTypes
+          .map(({ apiType, changesSummary, numberOfImpactedOperations, operationsCount, deprecatedCount, noBwcOperationsCount, internalAudienceOperationsCount, unknownAudienceOperationsCount, apiAudienceTransitions }) =>
+            <OperationTypeSummary
+              key={apiType}
+              apiType={apiType}
+              changesSummary={changesSummary}
+              numberOfImpactedOperations={numberOfImpactedOperations}
+              operationsCount={operationsCount}
+              deprecatedOperationsCount={deprecatedCount}
+              noBwcOperationsCount={noBwcOperationsCount}
+              internalAudienceOperationsCount={internalAudienceOperationsCount}
+              unknownAudienceOperationsCount={unknownAudienceOperationsCount}
+              apiAudienceTransitions={apiAudienceTransitions}
+            />,
+          )
+        }
+        {hasMcpContracts(mcpSummary) && <McpSummary mcpSummary={mcpSummary} />}
+        {hasDdlContracts(ddlSummary) && <DdlSummary ddlSummary={ddlSummary} />}
+      </ContractsSummary>
     </Box>
   )
 })

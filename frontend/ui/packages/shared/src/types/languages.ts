@@ -16,10 +16,12 @@
 
 import type { FileExtension } from '../utils/files'
 import {
+  DDL_FILE_EXTENSION,
   GRAPHQL_FILE_EXTENSION,
   JSON_FILE_EXTENSION,
   MD_FILE_EXTENSION,
   PROTO_FILE_EXTENSION,
+  SQL_FILE_EXTENSION,
   YAML_FILE_EXTENSION,
   YML_FILE_EXTENSION,
 } from '../utils/files'
@@ -30,6 +32,7 @@ export const LANGUAGE_TYPE_MARKDOWN = 'markdown'
 export const LANGUAGE_TYPE_TEXT = 'text'
 export const LANGUAGE_TYPE_GRAPHQL = 'graphql'
 export const LANGUAGE_TYPE_PROTO = 'proto'
+export const LANGUAGE_TYPE_SQL = 'sql'
 
 export type LanguageType =
   | typeof LANGUAGE_TYPE_YAML
@@ -38,6 +41,7 @@ export type LanguageType =
   | typeof LANGUAGE_TYPE_TEXT
   | typeof LANGUAGE_TYPE_GRAPHQL
   | typeof LANGUAGE_TYPE_PROTO
+  | typeof LANGUAGE_TYPE_SQL
 
 export const EXTENSION_TO_TYPE_LANGUAGE_MAP: Partial<Record<FileExtension, LanguageType>> = {
   [YAML_FILE_EXTENSION]: LANGUAGE_TYPE_YAML,
@@ -46,4 +50,6 @@ export const EXTENSION_TO_TYPE_LANGUAGE_MAP: Partial<Record<FileExtension, Langu
   [MD_FILE_EXTENSION]: LANGUAGE_TYPE_MARKDOWN,
   [GRAPHQL_FILE_EXTENSION]: LANGUAGE_TYPE_GRAPHQL,
   [PROTO_FILE_EXTENSION]: LANGUAGE_TYPE_PROTO,
+  [SQL_FILE_EXTENSION]: LANGUAGE_TYPE_SQL,
+  [DDL_FILE_EXTENSION]: LANGUAGE_TYPE_SQL,
 }

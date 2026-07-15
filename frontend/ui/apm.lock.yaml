@@ -1,14 +1,100 @@
 lockfile_version: '1'
-generated_at: '2026-06-02T10:05:19.273856+00:00'
-apm_version: 0.16.1
+generated_at: '2026-07-03T15:14:10.314384+00:00'
+apm_version: 0.23.1
 dependencies:
+- repo_url: Netcracker/qubership-apihub-api-doc-viewer
+  name: api-doc-viewer-using
+  host: github.com
+  resolved_commit: f31bcb650d78474e47dcf7678ac4201d977e941a
+  version: 1.0.0
+  virtual_path: agent-packages/api-doc-viewer-using
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/api-doc-viewer-using
+  - .agents/skills/api-doc-viewer-using/SKILL.md
+  - .claude/rules/api-doc-viewer-using.md
+  - .claude/skills/api-doc-viewer-using
+  - .claude/skills/api-doc-viewer-using/SKILL.md
+  - .cursor/rules/api-doc-viewer-using.mdc
+  deployed_file_hashes:
+    .agents/skills/api-doc-viewer-using/SKILL.md: sha256:f9dfe9b1a9433fb7ae2c8f230865046fbf4bb6a4573400ebcfa3e54792ad1fbe
+    .claude/rules/api-doc-viewer-using.md: sha256:ab6db9352f029e64fa74bb2379863fbd8caaade214f00e0be4aa914f043a568c
+    .claude/skills/api-doc-viewer-using/SKILL.md: sha256:f9dfe9b1a9433fb7ae2c8f230865046fbf4bb6a4573400ebcfa3e54792ad1fbe
+    .cursor/rules/api-doc-viewer-using.mdc: sha256:153d63310476c49f206b955e67503944e542f6c2d7459a7ab9def021e89ee85b
+  content_hash: sha256:c209e80ce946dc6604bc20eb5948d52a4f8a19f6443fdd37444ff102e6c046d9
+- repo_url: Netcracker/qubership-apihub-api-processor
+  name: api-processor-using
+  host: github.com
+  resolved_commit: 2f5ef172eecb967be130c59a8755ceb9ba3eb8c5
+  version: 1.0.0
+  virtual_path: agent-packages/api-processor-using
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/api-processor-using
+  - .agents/skills/api-processor-using/SKILL.md
+  - .claude/rules/api-processor-using.md
+  - .claude/skills/api-processor-using
+  - .claude/skills/api-processor-using/SKILL.md
+  - .cursor/rules/api-processor-using.mdc
+  deployed_file_hashes:
+    .agents/skills/api-processor-using/SKILL.md: sha256:eec134c80e783764f823786f86e3b9dc7dd1d2c731c1e26cf16a8e1d454ea262
+    .claude/rules/api-processor-using.md: sha256:651de4ddf14929b6ad13ab9fcbde25309e1bf8b27a60bd648663d4c323dbffbc
+    .claude/skills/api-processor-using/SKILL.md: sha256:eec134c80e783764f823786f86e3b9dc7dd1d2c731c1e26cf16a8e1d454ea262
+    .cursor/rules/api-processor-using.mdc: sha256:fee068f0a86f14037463976109b93ffbdb96682d841014f949791f2520504f7b
+  content_hash: sha256:a0a9e38a9c8bd48f5790c5c4701078b8e3fa6e4d95e664ce16bac374b741c5d5
+- repo_url: Netcracker/qubership-apihub-ddlapi
+  name: ddlapi-using
+  host: github.com
+  resolved_commit: 24ff154e7ca867c178d4004bd5540400725e0328
+  version: 1.1.0
+  virtual_path: agent-packages/ddlapi-using
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/ddlapi-using
+  - .agents/skills/ddlapi-using/SKILL.md
+  - .claude/rules/ddlapi-using.md
+  - .claude/skills/ddlapi-using
+  - .claude/skills/ddlapi-using/SKILL.md
+  - .cursor/rules/ddlapi-using.mdc
+  deployed_file_hashes:
+    .agents/skills/ddlapi-using/SKILL.md: sha256:49ee63e1b58cc1ee7a0671a2a47dc6f42611977152bea9657002d60e6cee5fbd
+    .claude/rules/ddlapi-using.md: sha256:9b01b3c3616cf72b19370930f4a306b6e29f7da146b40f35c016c861dcf1b252
+    .claude/skills/ddlapi-using/SKILL.md: sha256:49ee63e1b58cc1ee7a0671a2a47dc6f42611977152bea9657002d60e6cee5fbd
+    .cursor/rules/ddlapi-using.mdc: sha256:3af0f9e363e4d264c77c3313116a71ee5465b58600946e98615b996e6fc02f5d
+  content_hash: sha256:fb5fe648b6b241c5e9aff66800a1088fc2ea528e0abd2d10b4c51a6230207645
+- repo_url: Netcracker/qubership-apihub-json-crawl
+  name: json-crawl-using
+  host: github.com
+  resolved_commit: f43d2dd69b3a5175087a9edac5aa0c04934835a3
+  version: 1.2.0
+  virtual_path: agent-packages/json-crawl-using
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/json-crawl-using
+  - .agents/skills/json-crawl-using/SKILL.md
+  - .claude/rules/json-crawl-using.md
+  - .claude/skills/json-crawl-using
+  - .claude/skills/json-crawl-using/SKILL.md
+  - .cursor/rules/json-crawl-using.mdc
+  deployed_file_hashes:
+    .agents/skills/json-crawl-using/SKILL.md: sha256:a6adfa4344f157506d304c886398577fe9b860390c4ba94cfb8405a4c547805e
+    .claude/rules/json-crawl-using.md: sha256:a8006d87bd66a3e8f883fde7e1633f243ec91320ca357a7a23d73d73946ea7af
+    .claude/skills/json-crawl-using/SKILL.md: sha256:a6adfa4344f157506d304c886398577fe9b860390c4ba94cfb8405a4c547805e
+    .cursor/rules/json-crawl-using.mdc: sha256:d671cbc5fdef3ee28814237cab31e140e3b36661cae3926e32752e01852f245f
+  content_hash: sha256:26f877265321714d07a41435817cac085f1d5aaa721b7258af4820ac0f7f0a6e
 - repo_url: _local/apihub-ui-authoring
+  name: apihub-ui-authoring
+  version: 1.0.0
   package_type: apm_package
   deployed_files:
   - .claude/rules/apihub-ui-authoring.md
   - .cursor/rules/apihub-ui-authoring.mdc
   deployed_file_hashes:
-    .claude/rules/apihub-ui-authoring.md: sha256:7434397775474d07d05c8dcf84f742293cecb5ac466d1b484af5321b0b184438
-    .cursor/rules/apihub-ui-authoring.mdc: sha256:0e2747dfc5a58653bc305c17fd0e8cd8b64e91c7ff52e716f7d1e74128010bd4
+    .claude/rules/apihub-ui-authoring.md: sha256:e1b9575e8809fcdf98bb3f055fe22d53eceae88b889216fff198ff7401c83143
+    .cursor/rules/apihub-ui-authoring.mdc: sha256:d1f1681df63f3e354fefec57426feb813bb078714138d25d1a83ce26cccff15c
   source: local
   local_path: ./agent-packages/apihub-ui-authoring

@@ -34,12 +34,17 @@ export type PackageVersionConfigDto = Readonly<{
   refs?: VersionRefsDto
 }>
 
+type VersionFileMetadataDto = Readonly<{
+  mcpEndpoint?: string
+}>
+
 type VersionFileDto = {
   fileId: Key
   publish?: boolean
   labels: string[]
   commitId?: string
   xApiKind?: string
+  metadata?: VersionFileMetadataDto
 }
 
 type VersionFilesDto = ReadonlyArray<VersionFileDto>
@@ -73,6 +78,7 @@ type VersionFile = {
   labels: string[]
   commitKey?: string
   xApiKind?: string
+  metadata?: VersionFileMetadataDto
 }
 
 export type VersionFiles = ReadonlyArray<VersionFile>

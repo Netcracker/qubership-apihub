@@ -129,7 +129,6 @@ export const VersionCompareContent: FC = memo(() => {
     fetchNextPage,
     isFetchingNextPage: isNextPageFetching,
     hasNextPage,
-    isChangelogReady,
   } = usePagedDetailedVersionChangelog({
     packageKey: changedPackageKey!,
     versionKey: changedVersionKey!,

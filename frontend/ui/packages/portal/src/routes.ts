@@ -30,15 +30,15 @@ export const PACKAGE_PAGE_PATH_PATTERN = '/portal/packages/:packageId'
 // Package tabs
 export const OVERVIEW_PAGE = 'overview'
 export const API_CHANGES_PAGE = 'changes'
-export const OPERATIONS_PAGE = 'operations'
+export const CONTRACTS_PAGE = 'operations'
 export const DEPRECATED_PAGE = 'deprecated'
 export const API_QUALITY_PAGE = 'api-quality'
 export const DOCUMENTS_PAGE = 'documents'
 export const VERSION_PAGE_PATH_PATTERN = '/portal/packages/:packageId/:versionId/'
 export const OVERVIEW_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${OVERVIEW_PAGE}/`
 export const API_CHANGES_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${API_CHANGES_PAGE}/:apiType/`
-export const OPERATIONS_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${OPERATIONS_PAGE}/:apiType/`
-export const OPERATION_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${OPERATIONS_PAGE}/:apiType/:operationId`
+export const CONTRACTS_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${CONTRACTS_PAGE}/:apiType/`
+export const OPERATION_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${CONTRACTS_PAGE}/:apiType/:operationId`
 export const DEPRECATED_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${DEPRECATED_PAGE}/:apiType`
 export const API_QUALITY_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${API_QUALITY_PAGE}/:apiType`
 export const DOCUMENTS_PAGE_PATH_PATTERN = `/portal/packages/:packageId/:versionId/${DOCUMENTS_PAGE}/:documentId`
@@ -110,7 +110,7 @@ export type MainPageRoute =
 
 export type VersionPageRoute =
   | typeof OVERVIEW_PAGE
-  | typeof OPERATIONS_PAGE
+  | typeof CONTRACTS_PAGE
   | typeof API_CHANGES_PAGE
   | typeof DEPRECATED_PAGE
   | typeof API_QUALITY_PAGE
@@ -152,7 +152,7 @@ export const PORTAL_PATH_PATTERNS: string[] = [
   PACKAGE_PAGE_PATH_PATTERN,
   OVERVIEW_PATH_PATTERN,
   VERSION_PAGE_PATH_PATTERN,
-  OPERATIONS_PAGE_PATH_PATTERN,
+  CONTRACTS_PAGE_PATH_PATTERN,
   OPERATION_PAGE_PATH_PATTERN,
   API_CHANGES_PAGE_PATH_PATTERN,
   DEPRECATED_PAGE_PATH_PATTERN,

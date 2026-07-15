@@ -1,49 +1,10 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+import { type FC, memo, useCallback, useMemo } from 'react'
+import { type To, useNavigate, useParams } from 'react-router-dom'
 
-import type { Key } from '@apihub/entities/keys'
-import type { FC } from 'react'
-import { memo, useCallback, useMemo } from 'react'
-import type { To } from 'react-router-dom'
-import { useNavigate, useParams } from 'react-router-dom'
-import { usePackageVersionContent } from '../usePackageVersionContent'
-
-import {
-  API_CHANGES_PAGE,
-  API_QUALITY_PAGE,
-  CONFIGURATION_PAGE,
-  DEPRECATED_PAGE,
-  DOCUMENTS_PAGE,
-  OPERATIONS_PAGE,
-  OVERVIEW_PAGE,
-  PACKAGE_SETTINGS_PAGE,
-} from '../../../routes'
-
-import { usePortalPageSettingsContext } from '@apihub/routes/PortalPageSettingsProvider'
-import { getDefaultApiType } from '@apihub/utils/operation-types'
 import type { SidebarMenu } from '@netcracker/qubership-apihub-ui-shared/components/NavigationMenu'
 import { NavigationMenu } from '@netcracker/qubership-apihub-ui-shared/components/NavigationMenu'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import {
-  API_TYPE_ASYNCAPI,
-  API_TYPE_GRAPHQL,
-  API_TYPE_REST,
-} from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
-import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
+import type { ContractType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
 import {
   EXPAND_NAVIGATION_MENU,
@@ -51,7 +12,6 @@ import {
 import { ApiIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ApiIcon'
 import { CertifiedFileIcon } from '@netcracker/qubership-apihub-ui-shared/icons/CertifiedFileIcon'
 import { ComparisonIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ComparisonIcon'
-import { ConfigureIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ConfigureIcon'
 import { FileIcon } from '@netcracker/qubership-apihub-ui-shared/icons/FileIcon'
 import { ServicesIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ServicesIcon'
 import { SettingIcon } from '@netcracker/qubership-apihub-ui-shared/icons/SettingIcon'
@@ -61,6 +21,21 @@ import {
   EXPAND_NAVIGATION_MENU_SEARCH_PARAM,
   OPERATIONS_VIEW_MODE_PARAM,
 } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
+
+import type { Key } from '@apihub/entities/keys'
+import { usePortalPageSettingsContext } from '@apihub/routes/PortalPageSettingsProvider'
+import { VERSION_TAB_IDS } from './VersionPage/VersionTabApiTypes/version-tab-allowed-api-types'
+import type { VersionTabsApiTypesState } from './VersionPage/VersionTabApiTypes/buildVersionTabsApiTypesState'
+
+import {
+  API_CHANGES_PAGE,
+  API_QUALITY_PAGE,
+  CONTRACTS_PAGE,
+  DEPRECATED_PAGE,
+  DOCUMENTS_PAGE,
+  OVERVIEW_PAGE,
+  PACKAGE_SETTINGS_PAGE,
+} from '../../../routes'
 import {
   getApiChangesPath,
   getApiQualityPath,
@@ -69,17 +44,10 @@ import {
   getOperationsPath,
   getOverviewPath,
   getPackageSettingsPath,
-  getVersionPath,
 } from '../../NavigationProvider'
-import type {
-  ApiQualityTabTooltip} from './VersionPage/ApiQualityValidationSummaryProvider'
-import { NotLintedApiTypes,
-} from './VersionPage/ApiQualityValidationSummaryProvider'
-import {
-  useApiQualityLinterEnabled,
-  useApiQualityTabTooltip,
-} from './VersionPage/ApiQualityValidationSummaryProvider'
+import { useApiQualityLinterEnabled } from './VersionPage/ApiQualityValidationSummaryProvider'
 import { useOperationsView } from './VersionPage/useOperationsView'
+import { useVersionTabApiTypes } from './VersionPage/useVersionTabApiTypes'
 
 export type VersionNavigationMenuProps = {
   menuItems: string[]
@@ -91,44 +59,33 @@ export const VersionNavigationMenu: FC<VersionNavigationMenuProps> = memo<Versio
   showSettings = false,
 }) => {
   const navigate = useNavigate()
-  const { productionMode } = useSystemInfo()
-  const linterEnabled = useApiQualityLinterEnabled()
-
   const { packageId, versionId } = useParams()
-  const { versionContent } = usePackageVersionContent({
-    packageKey: packageId,
-    versionKey: versionId,
-    includeSummary: true,
-  })
-  const { previousVersion, operationTypes } = versionContent ?? {}
-  const defaultApiType = useMemo(() => getDefaultApiType(operationTypes), [operationTypes])
+  const linterEnabled = useApiQualityLinterEnabled()
+  const versionTabApiTypes = useVersionTabApiTypes()
   const { expandMainMenu, toggleExpandMainMenu, operationsViewMode } = usePortalPageSettingsContext()
   const [operationsView] = useOperationsView(operationsViewMode)
-
-  const apiQualityTabTooltip = useApiQualityTabTooltip()
-
   const [currentMenuItem] = useActiveTabs()
+
   const sidebarMenuItems = useMemo(
     () =>
-      getAvailableSidebarMenuItems(
-        previousVersion,
-        defaultApiType,
-        productionMode,
-        {
-          linterEnabled: linterEnabled,
-          tooltip: apiQualityTabTooltip,
-          tabDisabled: !NotLintedApiTypes(defaultApiType) || !!apiQualityTabTooltip,
-        },
-      ).filter(({ id }) => menuItems.includes(id)),
-    [defaultApiType, menuItems, previousVersion, productionMode, linterEnabled, apiQualityTabTooltip],
+      getAvailableSidebarMenuItems(versionTabApiTypes.tabs, linterEnabled)
+        .filter(({ id }) => menuItems.includes(id)),
+    [linterEnabled, menuItems, versionTabApiTypes.tabs],
   )
   const sidebarServiceMenuItems = useMemo(
     () => getAvailableSidebarServiceMenuItems(showSettings).filter(({ id }) => menuItems.includes(id)),
     [menuItems, showSettings],
   )
   const pagePathsMap = useMemo(
-    () => getPagePathsMap(packageId!, versionId!, defaultApiType, operationsView, expandMainMenu),
-    [defaultApiType, operationsView, expandMainMenu, packageId, versionId],
+    () =>
+      getPagePathsMap({
+        packageKey: packageId!,
+        versionKey: versionId!,
+        tabs: versionTabApiTypes.tabs,
+        defaultOperationsView: operationsView,
+        expandMenu: expandMainMenu,
+      }),
+    [expandMainMenu, operationsView, packageId, versionId, versionTabApiTypes.tabs],
   )
 
   const navigateAndSelect = useCallback((menuItemId: string): void => {
@@ -148,88 +105,103 @@ export const VersionNavigationMenu: FC<VersionNavigationMenuProps> = memo<Versio
   )
 })
 
-const getPagePathsMap = (
-  packageKey: Key,
-  versionKey: Key,
-  defaultApiType: ApiType,
-  defaultOperationsView: OperationsViewMode,
-  expandMenu: boolean,
-): Record<string, To> => {
+VersionNavigationMenu.displayName = 'VersionNavigationMenu'
+
+type VersionPagePathsInput = {
+  packageKey: Key
+  versionKey: Key
+  tabs: VersionTabsApiTypesState['tabs']
+  defaultOperationsView: OperationsViewMode
+  expandMenu: boolean
+}
+
+const getPagePathsMap = ({
+  packageKey,
+  versionKey,
+  tabs,
+  defaultOperationsView,
+  expandMenu,
+}: VersionPagePathsInput): Record<string, To> => {
   const commonSearchParams = {
     [EXPAND_NAVIGATION_MENU_SEARCH_PARAM]: { value: expandMenu ? EXPAND_NAVIGATION_MENU : undefined },
   }
+  const operationsSearchParams = {
+    ...commonSearchParams,
+    [OPERATIONS_VIEW_MODE_PARAM]: { value: defaultOperationsView },
+  }
 
-  return {
-    [CONFIGURATION_PAGE]: getVersionPath({
-      packageKey: packageKey,
-      versionKey: versionKey ?? SPECIAL_VERSION_KEY,
-      edit: true,
-    }),
+  const paths: Record<string, To> = {
     [OVERVIEW_PAGE]: getOverviewPath({
       packageKey: packageKey,
       versionKey: versionKey,
       search: commonSearchParams,
     }),
-    [OPERATIONS_PAGE]: getOperationsPath({
-      packageKey: packageKey,
-      versionKey: versionKey,
-      apiType: defaultApiType,
-      search: {
-        ...commonSearchParams,
-        [OPERATIONS_VIEW_MODE_PARAM]: { value: defaultOperationsView },
-      },
-    }),
-    [API_CHANGES_PAGE]: getApiChangesPath({
-      packageKey: packageKey,
-      versionKey: versionKey,
-      apiType: defaultApiType,
-      search: {
-        ...commonSearchParams,
-        [OPERATIONS_VIEW_MODE_PARAM]: { value: defaultOperationsView },
-      },
-    }),
-    [DEPRECATED_PAGE]: getDeprecatedPath({
-      packageKey: packageKey,
-      versionKey: versionKey,
-      apiType: defaultApiType,
-      search: {
-        ...commonSearchParams,
-        [OPERATIONS_VIEW_MODE_PARAM]: { value: defaultOperationsView },
-      },
-    }),
-    [API_QUALITY_PAGE]: getApiQualityPath({
-      packageKey: packageKey,
-      versionKey: versionKey,
-      apiType: defaultApiType,
-      search: commonSearchParams,
-    }),
     [DOCUMENTS_PAGE]: getDocumentPath({ packageKey: packageKey, versionKey: versionKey, search: commonSearchParams }),
     [PACKAGE_SETTINGS_PAGE]: getPackageSettingsPath({ packageKey }),
   }
-}
 
-type ApiQualityTabOptions = {
-  linterEnabled: boolean
-  tooltip: ApiQualityTabTooltip
-  tabDisabled: boolean
+  addApiTypePagePath(
+    paths,
+    CONTRACTS_PAGE,
+    tabs[VERSION_TAB_IDS.contracts].defaultApiType,
+    apiType =>
+      getOperationsPath({
+        packageKey: packageKey,
+        versionKey: versionKey,
+        apiType: apiType,
+        search: operationsSearchParams,
+      }),
+  )
+  addApiTypePagePath(
+    paths,
+    API_CHANGES_PAGE,
+    tabs[VERSION_TAB_IDS.apiChanges].defaultApiType,
+    apiType =>
+      getApiChangesPath({
+        packageKey: packageKey,
+        versionKey: versionKey,
+        apiType: apiType,
+        search: operationsSearchParams,
+      }),
+  )
+  addApiTypePagePath(
+    paths,
+    DEPRECATED_PAGE,
+    tabs[VERSION_TAB_IDS.deprecated].defaultApiType,
+    apiType =>
+      getDeprecatedPath({
+        packageKey: packageKey,
+        versionKey: versionKey,
+        apiType: apiType,
+        search: operationsSearchParams,
+      }),
+  )
+  addApiTypePagePath(
+    paths,
+    API_QUALITY_PAGE,
+    tabs[VERSION_TAB_IDS.apiQuality].defaultApiType,
+    apiType =>
+      getApiQualityPath({
+        packageKey: packageKey,
+        versionKey: versionKey,
+        apiType: apiType,
+        search: commonSearchParams,
+      }),
+  )
+
+  return paths
 }
 
 const getAvailableSidebarMenuItems = (
-  previousVersion: Key | undefined,
-  defaultApiType: ApiType,
-  productionMode: boolean,
-  apiQualityTabOptions: ApiQualityTabOptions,
+  tabs: VersionTabsApiTypesState['tabs'],
+  linterEnabled: boolean,
 ): SidebarMenu[] => {
-  const disableTab = API_TYPE_DISABLE_TAB_MAP[defaultApiType](productionMode)
+  const contractsTab = tabs[VERSION_TAB_IDS.contracts]
+  const apiChangesTab = tabs[VERSION_TAB_IDS.apiChanges]
+  const deprecatedTab = tabs[VERSION_TAB_IDS.deprecated]
+  const apiQualityTab = tabs[VERSION_TAB_IDS.apiQuality]
 
-  const menuItems = [
-    {
-      id: CONFIGURATION_PAGE,
-      title: 'Configuration',
-      tooltip: 'Configuration',
-      icon: <ConfigureIcon />,
-      'data-testid': 'ConfigureDashboardButton',
-    },
+  const menuItems: SidebarMenu[] = [
     {
       id: OVERVIEW_PAGE,
       title: 'Overview',
@@ -238,17 +210,18 @@ const getAvailableSidebarMenuItems = (
       'data-testid': 'OverviewButton',
     },
     {
-      id: OPERATIONS_PAGE,
-      title: 'Operations',
-      tooltip: 'Operations',
+      id: CONTRACTS_PAGE,
+      title: 'Contracts',
+      tooltip: 'Contracts',
+      disabled: contractsTab.disabled,
       icon: <ApiIcon />,
-      'data-testid': 'OperationsButton',
+      'data-testid': 'ContractsButton',
     },
     {
       id: API_CHANGES_PAGE,
       title: 'API Changes',
-      tooltip: !previousVersion ? 'No API changes since there is no previous version' : 'API Changes',
-      disabled: !previousVersion || disableTab,
+      tooltip: apiChangesTab.tooltip ?? 'API Changes',
+      disabled: apiChangesTab.disabled,
       icon: <ComparisonIcon />,
       'data-testid': 'ApiChangesButton',
     },
@@ -256,7 +229,7 @@ const getAvailableSidebarMenuItems = (
       id: DEPRECATED_PAGE,
       title: 'Deprecated',
       tooltip: 'Deprecated',
-      disabled: disableTab,
+      disabled: deprecatedTab.disabled,
       icon: <DefaultWarningIcon />,
       'data-testid': 'DeprecatedButton',
     },
@@ -269,24 +242,15 @@ const getAvailableSidebarMenuItems = (
     },
   ]
 
-  if (apiQualityTabOptions.linterEnabled) {
-    let index = -1
-    for (let i = 0; i < menuItems.length; i++) {
-      if (menuItems[i].id === DEPRECATED_PAGE) {
-        index = i
-        break
-      }
-    }
-    if (index !== -1) {
-      menuItems.splice(index + 1, 0, {
-        id: API_QUALITY_PAGE,
-        title: 'API Quality',
-        disabled: apiQualityTabOptions.tabDisabled,
-        tooltip: apiQualityTabOptions.tooltip ?? 'API Quality',
-        icon: <CertifiedFileIcon />,
-        'data-testid': 'ApiQualityButton',
-      })
-    }
+  if (linterEnabled) {
+    insertMenuItemAfter(menuItems, DEPRECATED_PAGE, {
+      id: API_QUALITY_PAGE,
+      title: 'API Quality',
+      disabled: apiQualityTab.disabled,
+      tooltip: apiQualityTab.tooltip ?? 'API Quality',
+      icon: <CertifiedFileIcon />,
+      'data-testid': 'ApiQualityButton',
+    })
   }
 
   return menuItems
@@ -310,8 +274,26 @@ const getAvailableSidebarServiceMenuItems = (
   return sidebarServiceMenu
 }
 
-const API_TYPE_DISABLE_TAB_MAP: Record<ApiType, (productionMode: boolean) => boolean> = {
-  [API_TYPE_REST]: () => false,
-  [API_TYPE_GRAPHQL]: (productionMode) => productionMode,
-  [API_TYPE_ASYNCAPI]: () => false,
+function addApiTypePagePath(
+  paths: Record<string, To>,
+  pageId: string,
+  defaultApiType: ApiType | ContractType | undefined,
+  buildPath: (apiType: ApiType) => To,
+): void {
+  if (defaultApiType === undefined) {
+    return
+  }
+  paths[pageId] = buildPath(defaultApiType as ApiType)
+}
+
+function insertMenuItemAfter(
+  menuItems: SidebarMenu[],
+  afterItemId: string,
+  menuItem: SidebarMenu,
+): void {
+  const index = menuItems.findIndex(item => item.id === afterItemId)
+  if (index === -1) {
+    return
+  }
+  menuItems.splice(index + 1, 0, menuItem)
 }

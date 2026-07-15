@@ -130,6 +130,11 @@ export const CHIP_COLOR_OVERRIDES: Record<keyof ChipPropsColorOverrides, SimpleP
     main: '#ECEDEF',
     contrastText: '#353C4E',
   },
+  // Contracts
+  ddlSchema: {
+    main: '#EAE0D5',
+    contrastText: '#0C1E36',
+  },
 }
 export const DEFAULT_PAPER_SHADOW =
   '0px 1px 1px rgba(4, 10, 21, 0.04), 0px 3px 14px rgba(4, 12, 29, 0.09), 0px 0px 1px rgba(7, 13, 26, 0.27)'

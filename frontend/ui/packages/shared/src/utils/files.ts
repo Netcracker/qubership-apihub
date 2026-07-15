@@ -28,6 +28,7 @@ import {
   OPENAPI_2_0_SPEC_TYPE,
   OPENAPI_3_0_SPEC_TYPE,
   OPENAPI_3_1_SPEC_TYPE,
+  DDL_DOCUMENT_TYPE,
   PROTOBUF_3_SPEC_TYPE,
   UNKNOWN_SPEC_TYPE,
 } from './specs'
@@ -44,6 +45,8 @@ export const GRAPHQL_FILE_EXTENSION = '.graphql'
 export const GQL_FILE_EXTENSION = '.gql'
 export const PROTO_FILE_EXTENSION = '.proto'
 export const CSV_FILE_EXTENSION = '.csv'
+export const SQL_FILE_EXTENSION = '.sql'
+export const DDL_FILE_EXTENSION = '.ddl'
 
 export type FileExtension =
   | typeof YAML_FILE_EXTENSION
@@ -55,6 +58,8 @@ export type FileExtension =
   | typeof GQL_FILE_EXTENSION
   | typeof PROTO_FILE_EXTENSION
   | typeof CSV_FILE_EXTENSION
+  | typeof SQL_FILE_EXTENSION
+  | typeof DDL_FILE_EXTENSION
 
 export function calculateSpecType(extension: Exclude<FileExtension, typeof YML_FILE_EXTENSION>, content: string): SpecType {
   if (extension === JSON_FILE_EXTENSION) {
@@ -76,6 +81,10 @@ export function calculateSpecType(extension: Exclude<FileExtension, typeof YML_F
 
   if (extension === PROTO_FILE_EXTENSION) {
     return PROTOBUF_3_SPEC_TYPE
+  }
+
+  if (extension === SQL_FILE_EXTENSION || extension === DDL_FILE_EXTENSION) {
+    return DDL_DOCUMENT_TYPE.DDL
   }
 
   if (!extension) {
@@ -166,6 +175,8 @@ export const YAML_FILE_FORMAT = 'yaml'
 export const PROTOBUF_FILE_FORMAT = 'proto'
 export const MD_FILE_FORMAT = 'md'
 export const CSV_FILE_FORMAT = 'csv'
+export const SQL_FILE_FORMAT = 'sql'
+export const DDL_FILE_FORMAT = 'ddl'
 export const UNKNOWN_FILE_FORMAT = 'unknown'
 
 export type FileFormat =
@@ -175,6 +186,8 @@ export type FileFormat =
   | typeof MD_FILE_FORMAT
   | typeof GRAPHQL_FILE_FORMAT
   | typeof CSV_FILE_FORMAT
+  | typeof SQL_FILE_FORMAT
+  | typeof DDL_FILE_FORMAT
   | typeof UNKNOWN_FILE_FORMAT
 
 export function getFileFormat(fileName: string): FileFormat {
@@ -197,6 +210,12 @@ export function getFileFormat(fileName: string): FileFormat {
   }
   if (extension === CSV_FILE_EXTENSION) {
     return CSV_FILE_FORMAT
+  }
+  if (extension === SQL_FILE_EXTENSION) {
+    return SQL_FILE_FORMAT
+  }
+  if (extension === DDL_FILE_EXTENSION) {
+    return DDL_FILE_FORMAT
   }
 
   return UNKNOWN_FILE_FORMAT

@@ -33,11 +33,12 @@ import {
   calculateTotalImpactedSummary,
   EMPTY_CHANGE_SUMMARY,
 } from '@netcracker/qubership-apihub-api-processor'
+import type { ContractType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
 export function useOrderedComparisonFiltersSummary(options: {
   isDashboardsComparison?: boolean
-  apiType: ApiType | undefined
+  apiType: ApiType | ContractType | undefined
 }): Record<ChangeSeverity, number> | undefined {
   const { isDashboardsComparison = false, apiType } = options
 
@@ -76,7 +77,7 @@ export function useOrderedComparisonFiltersSummary(options: {
 function calculateDashboardChangesSummary(
   versionChangesSummary: DashboardComparisonSummary,
   isDashboardsComparison: boolean,
-  apiType: ApiType | undefined,
+  apiType: ApiType | ContractType | undefined,
 ): ChangesSummary {
   if (isDashboardsComparison) {
     return calculateTotalImpactedSummary(

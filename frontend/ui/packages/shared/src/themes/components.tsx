@@ -466,6 +466,10 @@ export function createComponents(): Components<Theme> {
           '&:hover': {
             cursor: 'pointer',
           },
+          // Hide the default focus ring on pointer clicks; MUI still applies
+          // `.Mui-focusVisible` for keyboard Tab navigation so the outline stays visible there.
+          '&:focus': { outline: 'none' },
+          '&:focus-visible': { outline: '4px auto -webkit-focus-ring-color' },
         },
       },
     },

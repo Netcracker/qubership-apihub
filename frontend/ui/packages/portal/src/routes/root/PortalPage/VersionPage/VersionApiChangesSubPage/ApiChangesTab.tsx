@@ -17,12 +17,14 @@
 import type { FC } from 'react'
 import { memo } from 'react'
 import { useParams } from 'react-router-dom'
+
 import { ChangelogView } from './ChangelogView'
 import { useApiKindSearchFilter } from '../useApiKindSearchFilters'
 import { useTagSearchFilter } from '../useTagSearchFilter'
 import { useOperationGroupSearchFilter } from '../useOperationGroupSearchFilter'
 import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { toRouteApiType, type ContractType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import { useApiAudienceSearchFilter } from '../useApiAudienceSearchFilters'
 
 export type ApiChangesTabProps = {
@@ -30,7 +32,12 @@ export type ApiChangesTabProps = {
 }
 
 export const ApiChangesTab: FC<ApiChangesTabProps> = memo<ApiChangesTabProps>(({ searchValue }) => {
-  const { packageId, versionId, apiType = DEFAULT_API_TYPE } = useParams()
+  const { packageId, versionId, apiType = DEFAULT_API_TYPE } = useParams<{
+    packageId: string
+    versionId: string
+    apiType?: ApiType | ContractType
+  }>()
+  const routeApiType = toRouteApiType(apiType)
   const [apiKind] = useApiKindSearchFilter()
   const [apiAudienceFilter] = useApiAudienceSearchFilter()
   const [tag] = useTagSearchFilter()
@@ -42,7 +49,7 @@ export const ApiChangesTab: FC<ApiChangesTabProps> = memo<ApiChangesTabProps>(({
       versionKey={versionId!}
       tag={tag}
       searchValue={searchValue}
-      apiType={apiType as ApiType}
+      apiType={routeApiType}
       apiKind={apiKind}
       apiAudience={apiAudienceFilter}
       group={operationGroup}

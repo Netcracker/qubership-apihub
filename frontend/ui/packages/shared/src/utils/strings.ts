@@ -69,6 +69,22 @@ export function toTitleCase(value: string): string {
   )
 }
 
+/**
+ * Returns a primitive string when `value` is one; otherwise `undefined`.
+ * Use at runtime boundaries (e.g. parsed JSON) where only string primitives are valid.
+ */
+export function toOptionalString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined
+}
+
+/**
+ * Like {@link toOptionalString}, but trims whitespace and maps blank strings to `undefined`.
+ */
+export function toOptionalTrimmedString(value: unknown): string | undefined {
+  const trimmed = toOptionalString(value)?.trim()
+  return trimmed || undefined
+}
+
 export const NO_DATA_STRING = '—'
 
 export const transformStringValue = (value: string | undefined): string => {

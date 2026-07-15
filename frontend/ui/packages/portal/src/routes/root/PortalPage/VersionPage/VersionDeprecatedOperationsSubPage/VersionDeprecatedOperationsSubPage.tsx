@@ -1,19 +1,3 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import type { FC } from 'react'
 import { memo, type MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
@@ -28,7 +12,7 @@ import type { NumberSize, ResizeDirection } from 're-resizable'
 import { DeprecatedOperationsTable } from './DeprecatedOperationsTable'
 import { OperationListWithPreview } from '../OperationListWithPreview'
 import { DeprecatedItemsList } from './DeprecatedItemList'
-import { VersionOperationsPanel } from '../VersionOperationsPanel'
+import { VersionContractsPanel } from '../VersionContractsPanel'
 import { DeprecatedOperationsNavigation } from './DeprecatedOperationsNavigation'
 import type { OperationData, OperationWithDeprecations } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
@@ -37,6 +21,7 @@ import { isEmpty, isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/util
 import { NAVIGATION_MAX_WIDTH } from '@netcracker/qubership-apihub-ui-shared/utils/page-layouts'
 import type { Key } from '@apihub/entities/keys'
 import { usePortalPageSettingsContext } from '@apihub/routes/PortalPageSettingsProvider'
+import { VERSION_TAB_IDS } from '../VersionTabApiTypes/version-tab-allowed-api-types'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { useApiAudienceSearchFilter } from '../useApiAudienceSearchFilters'
 
@@ -93,7 +78,7 @@ export const VersionDeprecatedOperationsSubPage: FC = memo(() => {
       togglePreviewSize(previewSize + delta.width)
     }, [previewSize, togglePreviewSize])
 
-  //todo move to low level (VersionOperationsPanel or OperationListWithPreview)
+  //todo move to low level (VersionContractsPanel or OperationListWithPreview)
   const maxPreviewWidth = useMemo(() => {
     if (bodyRef.current?.clientWidth) {
       return bodyRef.current.clientWidth - SUBPAGE_MARGIN
@@ -110,7 +95,8 @@ export const VersionDeprecatedOperationsSubPage: FC = memo(() => {
   }, [])
 
   return (
-    <VersionOperationsPanel
+    <VersionContractsPanel
+      versionTabId={VERSION_TAB_IDS.deprecated}
       hideFiltersPanel={hideFiltersPanel}
       toggleHideFiltersPanel={toggleHideFiltersPanel}
       operationsViewMode={operationsViewMode}
@@ -158,6 +144,8 @@ export const VersionDeprecatedOperationsSubPage: FC = memo(() => {
     />
   )
 })
+
+VersionDeprecatedOperationsSubPage.displayName = 'VersionDeprecatedOperationsSubPage'
 
 const DEPRECATED_TITLE = 'Deprecated Operations'
 

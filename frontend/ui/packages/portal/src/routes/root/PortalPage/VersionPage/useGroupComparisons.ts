@@ -19,7 +19,7 @@ import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/ali
 import { onQueryUnauthorized } from '@netcracker/qubership-apihub-ui-shared/utils/security'
 import { useQuery } from '@tanstack/react-query'
 import { usePackage } from '../../usePackage'
-import { PackageVersionBuilder } from '../package-version-builder'
+import { getPackageVersionBuilder } from '../package-version-builder'
 
 const GROUPS_CHANGES_QUERY_KEY = 'groups-changes-query-key'
 
@@ -47,7 +47,7 @@ export function useGroupComparisons(options?: {
     enabled: allComparisonParamsProvided && !!restGroupingPrefix,
     retry: false,
     queryFn: async () => {
-      const [groupsComparisons] = await PackageVersionBuilder.buildGroupChangelogPackage({
+      const [groupsComparisons] = await (await getPackageVersionBuilder()).buildGroupChangelogPackage({
         packageKey: packageKey!,
         versionKey: versionKey!,
         currentGroup: currentGroup!,

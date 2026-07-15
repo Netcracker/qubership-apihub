@@ -1,68 +1,56 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-import type { FC } from 'react'
-import { memo, useMemo, useState } from 'react'
-
-import { ApiChangesCard } from './ApiChangesCard'
-import { ChangesSummaryProvider } from '../ChangesSummaryProvider'
-import { NavLink, useParams } from 'react-router-dom'
-import { usePackageVersionApiTypes } from '../usePackageVersionApiTypes'
-import { useVersionSearchParam } from '../../../useVersionSearchParam'
-import {
-  usePackageSearchParam,
-} from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
-import { useApiKindSearchFilter } from '../useApiKindSearchFilters'
-import { useTagSearchFilter } from '../useTagSearchFilter'
-import { useRefSearchParam } from '../../useRefSearchParam'
-import { useOperationGroupSearchFilter } from '../useOperationGroupSearchFilter'
 import { Link } from '@mui/material'
-import { ComparisonChangeSeverityFilters } from '../ComparisonChangeSeverityFilters'
-import { ExportChangesMenu } from '../ExportChangesMenu'
-import { useSetPathParam } from '../useSetPathParam'
-import { useCheckOperationFiltersApplied } from '../useCheckOperationFiltersApplied'
-import { usePackage } from '../../../usePackage'
-import { getVersionPath } from '../../../../NavigationProvider'
-import { ApiChangesNavigation } from './ApiChangesNavigation'
-import { isEmptyTag } from '@netcracker/qubership-apihub-ui-shared/utils/tags'
-import {
-  usePreviousReleaseVersion,
-} from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/components/PreviousReleaseOptionsProvider'
-import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
-import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { type FC, memo, useMemo, useState } from 'react'
+import { NavLink, useParams } from 'react-router-dom'
+
+import { CATEGORY_OPERATION } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
 import { RichFiltersLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/RichFiltersLayout'
 import { PageTitle } from '@netcracker/qubership-apihub-ui-shared/components/Titles/PageTitle'
-import { isApiTypeSelectorShown } from '@apihub/utils/operation-types'
-import { CHANGE_SEVERITIES } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
-import { usePortalPageSettingsContext } from '@apihub/routes/PortalPageSettingsProvider'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { CATEGORY_OPERATION } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
+import { CHANGE_SEVERITIES } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
+import { type ContractType, toRouteApiType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import { useApiAudienceSearchFilter } from '../useApiAudienceSearchFilters'
+import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import {
   useSeverityFiltersSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
+import {
+  usePackageSearchParam,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
+import { isEmptyTag } from '@netcracker/qubership-apihub-ui-shared/utils/tags'
+import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
+import {
+  usePreviousReleaseVersion,
+} from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/components/PreviousReleaseOptionsProvider'
+
+import { usePortalPageSettingsContext } from '@apihub/routes/PortalPageSettingsProvider'
+import { isApiTypeSelectorShown } from '@apihub/utils/operation-types'
+import { VERSION_TAB_IDS } from '../VersionTabApiTypes/version-tab-allowed-api-types'
+import { getVersionPath } from '../../../../NavigationProvider'
+import { usePackage } from '../../../usePackage'
+import { useVersionSearchParam } from '../../../useVersionSearchParam'
+import { useRefSearchParam } from '../../useRefSearchParam'
+import { ChangesSummaryProvider } from '../ChangesSummaryProvider'
+import { ComparisonChangeSeverityFilters } from '../ComparisonChangeSeverityFilters'
+import { ExportChangesMenu } from '../ExportChangesMenu'
+import { useApiAudienceSearchFilter } from '../useApiAudienceSearchFilters'
+import { useApiKindSearchFilter } from '../useApiKindSearchFilters'
+import { useCheckOperationFiltersApplied } from '../useCheckOperationFiltersApplied'
+import { useEnsureValidRouteApiType } from '../useEnsureValidRouteApiType'
+import { useOperationGroupSearchFilter } from '../useOperationGroupSearchFilter'
+import { useSetPathParam } from '../useSetPathParam'
+import { useTagSearchFilter } from '../useTagSearchFilter'
+import { useVersionTabApiTypes } from '../useVersionTabApiTypes'
+import { ApiChangesCard } from './ApiChangesCard'
+import { ApiChangesNavigation } from './ApiChangesNavigation'
 
 // High Order Component //
 export const VersionApiChangesSubPage: FC = memo(() => {
-  const { packageId, versionId, apiType } = useParams<{
+  const { packageId, apiType = DEFAULT_API_TYPE } = useParams<{
     packageId: string
     versionId: string
-    apiType: ApiType
+    apiType?: ApiType | ContractType
   }>()
+  const routeApiType = toRouteApiType(apiType)
   const [apiKindFilter] = useApiKindSearchFilter()
   const [apiAudienceFilter] = useApiAudienceSearchFilter()
   const [selectedTag] = useTagSearchFilter()
@@ -72,8 +60,11 @@ export const VersionApiChangesSubPage: FC = memo(() => {
   const [previousVersionPackageKey] = usePackageSearchParam()
   const [operationGroup] = useOperationGroupSearchFilter()
   const setPathParam = useSetPathParam()
+  const { tabs, isLoading } = useVersionTabApiTypes()
+  const { allowedApiTypes } = tabs[VERSION_TAB_IDS.apiChanges]
 
-  const { apiTypes } = usePackageVersionApiTypes(packageId!, versionId!)
+  useEnsureValidRouteApiType(allowedApiTypes, isLoading)
+
   const emptyTag = isEmptyTag(selectedTag)
 
   const previousReleaseVersion = usePreviousReleaseVersion()
@@ -100,18 +91,21 @@ export const VersionApiChangesSubPage: FC = memo(() => {
   return (
     <ChangesSummaryProvider>
       <RichFiltersLayout
-        title={<PageTitle
-          title={API_CHANGES_TITLE}
-          titleComponent={versionElement}
-          onApiTypeChange={setPathParam}
-          apiType={apiType}
-          withApiSelector={isApiTypeSelectorShown(apiTypes)}
-        />}
+        title={
+          <PageTitle
+            title={API_CHANGES_TITLE}
+            titleComponent={versionElement}
+            onApiTypeChange={setPathParam}
+            apiType={routeApiType}
+            allowedApiTypes={allowedApiTypes}
+            withApiSelector={isApiTypeSelectorShown(allowedApiTypes)}
+          />
+        }
         searchPlaceholder="Search Operations"
         setSearchValue={setSearchValue}
         exportButton={
           <ExportChangesMenu
-            apiType={apiType ?? DEFAULT_API_TYPE}
+            apiType={routeApiType}
             textFilter={searchValue}
             severityChanges={CHANGE_SEVERITIES}
             kind={apiKindFilter}
@@ -128,18 +122,20 @@ export const VersionApiChangesSubPage: FC = memo(() => {
         additionalActions={
           <ComparisonChangeSeverityFilters
             category={CATEGORY_OPERATION}
-            apiType={apiType ?? DEFAULT_API_TYPE}
+            apiType={routeApiType}
           />
         }
         filtersApplied={filtersApplied}
         hideFiltersPanel={hideFiltersPanel}
-        filters={<ApiChangesNavigation/>}
+        filters={<ApiChangesNavigation />}
         onClickFilterButton={toggleHideFiltersPanel}
-        body={<ApiChangesCard searchValue={searchValue}/>}
+        body={<ApiChangesCard searchValue={searchValue} />}
         data-testid="ApiChangesTab"
       />
     </ChangesSummaryProvider>
   )
 })
+
+VersionApiChangesSubPage.displayName = 'VersionApiChangesSubPage'
 
 const API_CHANGES_TITLE = 'API changes compared to '

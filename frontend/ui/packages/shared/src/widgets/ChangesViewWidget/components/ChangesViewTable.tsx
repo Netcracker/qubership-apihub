@@ -35,6 +35,7 @@ import { ColumnDelimiter } from '../../../components/ColumnDelimiter'
 import { CustomTableHeadCell } from '../../../components/CustomTableHeadCell'
 import { TextWithOverflowTooltip } from '../../../components/TextWithOverflowTooltip'
 import type { ApiType } from '../../../entities/api-types'
+import type { ContractType } from '../../../entities/contract-types'
 import {
   ACTION_TYPE_COLOR_MAP,
   NON_BREAKING_CHANGE_SEVERITY,
@@ -63,7 +64,7 @@ export type SubTableComponentProps = {
   value: Row<ChangesViewTableData>
   packageKey: Key | undefined
   versionKey: Key | undefined
-  apiType?: ApiType
+  apiType?: ApiType | ContractType
   packageKind?: PackageKind
 }
 
@@ -72,7 +73,7 @@ export type ChangeViewTableProps = {
   packageKey: Key
   versionKey: Key
   packageObject: Package | null
-  apiType?: ApiType
+  apiType?: ApiType | ContractType
   mainPackageKind?: PackageKind
   fetchNextPage?: FetchNextPage
   isNextPageFetching?: boolean

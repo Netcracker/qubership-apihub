@@ -2,7 +2,7 @@ import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined'
 import { Box } from '@mui/material'
 import type { Theme } from '@mui/material/styles'
 import type { SystemStyleObject } from '@mui/system/styleFunctionSx/styleFunctionSx'
-import { type FC, memo, useCallback, useEffect, useMemo } from 'react'
+import { type FC, memo, useCallback, useMemo } from 'react'
 import { generatePath, Outlet } from 'react-router-dom'
 
 import { AppHeader } from '@netcracker/qubership-apihub-ui-shared/components/AppHeader'
@@ -27,12 +27,10 @@ import { SystemInfoPopup, useSystemInfo } from '@netcracker/qubership-apihub-ui-
 import { useVersionInfo } from '@netcracker/qubership-apihub-ui-shared/hooks/frontend-version/useVersionInfo'
 import { useSuperAdminCheck } from '@netcracker/qubership-apihub-ui-shared/hooks/user-roles/useSuperAdminCheck'
 import { LogoIcon } from '@netcracker/qubership-apihub-ui-shared/icons/LogoIcon'
-import { SESSION_STORAGE_KEY_LAST_IDENTITY_PROVIDER_ID } from '@netcracker/qubership-apihub-ui-shared/utils/constants'
 import { cutViewPortStyleCalculator } from '@netcracker/qubership-apihub-ui-shared/utils/themes'
 import { matchPathname } from '@netcracker/qubership-apihub-ui-shared/utils/urls'
 
 import { useEventBus } from '@apihub/routes/EventBusProvider'
-import { PackageVersionBuilder } from '@apihub/routes/root/PortalPage/package-version-builder'
 import { AiAssistantButton } from '@netcracker/qubership-apihub-ui-portal/src/components/AiAssistant/AiAssistantButton'
 import { AiAssistantPanel } from '@netcracker/qubership-apihub-ui-portal/src/components/AiAssistant/AiAssistantPanel'
 import { AiAssistantProvider } from '@netcracker/qubership-apihub-ui-portal/src/components/AiAssistant/state/AiAssistantProvider'
@@ -56,10 +54,6 @@ export const BasePage: FC = memo(() => {
     },
     [systemNotification],
   )
-
-  useEffect(() => {
-    PackageVersionBuilder.init(localStorage.getItem(SESSION_STORAGE_KEY_LAST_IDENTITY_PROVIDER_ID)).then()
-  }, [])
 
   const links = useMemo(
     () => (agentEnabled

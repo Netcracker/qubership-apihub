@@ -31,6 +31,8 @@ import type { ShowDeleteFileDetail } from '@netcracker/qubership-apihub-ui-share
 import { SHOW_DELETE_FILE_DIALOG } from '@netcracker/qubership-apihub-ui-shared/components/FileTableUpload/DeleteFileDialog'
 import type { ShowEditFileLabelsDetail } from '@netcracker/qubership-apihub-ui-shared/components/FileTableUpload/EditFileLabelsDialog'
 import { SHOW_EDIT_FILE_LABELS_DIALOG } from '@netcracker/qubership-apihub-ui-shared/components/FileTableUpload/EditFileLabelsDialog'
+import type { ShowMcpEndpointDetail } from '@netcracker/qubership-apihub-ui-shared/components/FileTableUpload/McpEndpointDialog'
+import { SHOW_MCP_ENDPOINT_DIALOG } from '@netcracker/qubership-apihub-ui-shared/components/FileTableUpload/McpEndpointDialog'
 import type { SpecificationDialogDetail } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/SpecificationDialog'
 import { SHOW_SPECIFICATION_DIALOG } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/SpecificationDialog'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
@@ -243,6 +245,7 @@ type EventBus = {
   showSpecificationDialog: (detail: PortalSpecificationDialogDetail) => void
   showDeleteFileDialog: (detail: ShowDeleteFileDetail) => void
   showEditFileLabelsDialog: (detail: ShowEditFileLabelsDetail) => void
+  showMcpEndpointDialog: (detail: ShowMcpEndpointDetail) => void
   showUserRolesDialog: () => void
   // Feature "Edit Manual Operation Groups"
   showCreateOperationGroupDialog: (detail: CreateOperationGroupDetail) => void
@@ -306,6 +309,7 @@ function eventBusProvider(): EventBus {
       showSpecificationDialog: slot<SpecificationDialogDetail>(),
       showDeleteFileDialog: slot<ShowDeleteFileDetail>(),
       showEditFileLabelsDialog: slot<ShowEditFileLabelsDetail>(),
+      showMcpEndpointDialog: slot<ShowMcpEndpointDetail>(),
       showUserRolesDialog: slot(),
       // Feature "Edit Manual Operation Groups"
       showCreateOperationGroupDialog: slot<CreateOperationGroupDetail>(),
@@ -467,6 +471,9 @@ function eventBusProvider(): EventBus {
   })
   eventBus.showEditFileLabelsDialog.on((detail: ShowEditFileLabelsDetail) => {
     dispatchEvent(new CustomEvent(SHOW_EDIT_FILE_LABELS_DIALOG, { detail }))
+  })
+  eventBus.showMcpEndpointDialog.on((detail: ShowMcpEndpointDetail) => {
+    dispatchEvent(new CustomEvent(SHOW_MCP_ENDPOINT_DIALOG, { detail }))
   })
   // Playground
   eventBus.showCreateCustomServerDialog.on(() => {

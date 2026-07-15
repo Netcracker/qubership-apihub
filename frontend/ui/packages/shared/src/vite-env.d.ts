@@ -98,6 +98,8 @@ declare module '@mui/material/Chip' {
     rulesetSpecType: true
     rulesetActive: true
     rulesetInactive: true
+    // Contracts
+    ddlSchema: true
   }
 
   interface ChipPropsVariantOverrides {

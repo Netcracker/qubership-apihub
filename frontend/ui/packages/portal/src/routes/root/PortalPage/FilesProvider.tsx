@@ -1,44 +1,39 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import type { FC, PropsWithChildren } from 'react'
-import { createContext, memo, useCallback, useContext, useEffect, useMemo, useReducer, useState } from 'react'
+import { createContext, memo, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { useVersionSources } from '../useVersionSources'
-import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
-import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
-import { calculateSpecType, getFileExtension } from '@netcracker/qubership-apihub-ui-shared/utils/files'
-import { usePackageVersionConfig } from './usePackageVersionConfig'
-import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { createFilesRecord, filesRecordToArray } from '@apihub/routes/root/PortalPage/PackagePage/files'
-import type { PackageVersionConfig } from '@apihub/entities/package-version-config'
-import type { FileLabelsRecord } from '@netcracker/qubership-apihub-ui-shared/components/FileTableUpload/FileTableUpload'
 import { intersectionBy } from 'lodash-es'
 
-export const INIT_FILES_ACTION = 'InitFilesAction'
-export const ADD_FILES_ACTION = 'AddFilesAction'
-export const DELETE_FILE_ACTION = 'DeleteFileAction'
-export const EDIT_FILE_ACTION = 'EditFileAction'
-export const RESTORE_FILE_ACTION = 'RestoreFileAction'
+import type { ShowMcpEndpointDetail } from '@netcracker/qubership-apihub-ui-shared/components/FileTableUpload/McpEndpointDialog'
+import type { FileLabelsRecord } from '@netcracker/qubership-apihub-ui-shared/components/FileTableUpload/FileTableUpload'
+import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
+import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
+import type { McpDocumentType, SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
+import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { createFilesRecord, filesRecordToArray } from '@apihub/routes/root/PortalPage/PackagePage/files'
+import {
+  buildFileTypesAndLabels,
+  buildInitFileState,
+  partitionFilesByMcp,
+  pruneMcpEndpoint,
+  type McpStagedFileMeta,
+} from '@apihub/routes/root/PortalPage/PackagePage/mcpPublish'
+import { useVersionSources } from '../useVersionSources'
+import { usePackageVersionConfig } from './usePackageVersionConfig'
+
+const INIT_FILES_ACTION = 'InitFilesAction'
+const ADD_FILES_ACTION = 'AddFilesAction'
+const DELETE_FILE_ACTION = 'DeleteFileAction'
+const EDIT_FILE_ACTION = 'EditFileAction'
+const RESTORE_FILE_ACTION = 'RestoreFileAction'
+const ASSIGN_MCP_FILE_ACTION = 'AssignMcpFileAction'
 
 interface InitFilesAction {
   type: typeof INIT_FILES_ACTION
   sources: File[]
   fileTypesMap: Map<string, SpecType>
   filesWithLabels: FileLabelsRecord
+  mcpFiles: Map<string, McpStagedFileMeta>
+  mcpEndpoints: string[]
 }
 
 interface AddFilesAction {
@@ -64,7 +59,21 @@ interface RestoreFileAction {
   fileName: string
 }
 
-type StateActions = InitFilesAction | AddFilesAction | DeleteFileAction | EditFileAction | RestoreFileAction
+interface AssignMcpFileAction {
+  type: typeof ASSIGN_MCP_FILE_ACTION
+  fileName: string
+  file: File
+  meta: McpStagedFileMeta
+  fileType: McpDocumentType
+}
+
+type StateActions =
+  | InitFilesAction
+  | AddFilesAction
+  | DeleteFileAction
+  | EditFileAction
+  | RestoreFileAction
+  | AssignMcpFileAction
 
 interface State {
   sources: File[]
@@ -72,6 +81,8 @@ interface State {
   filesWithLabels: FileLabelsRecord
   replacedFiles: File[]
   isInitialized: boolean
+  mcpFiles: Map<string, McpStagedFileMeta>
+  mcpEndpoints: string[]
 }
 
 const INITIAL_STATE: State = {
@@ -80,10 +91,12 @@ const INITIAL_STATE: State = {
   filesWithLabels: {},
   replacedFiles: [],
   isInitialized: false,
+  mcpFiles: new Map(),
+  mcpEndpoints: [],
 }
 
 function reducer(state: State, action: StateActions): State {
-  const { fileTypesMap, filesWithLabels, replacedFiles, sources } = state
+  const { fileTypesMap, filesWithLabels, replacedFiles, sources, mcpFiles, mcpEndpoints } = state
 
   switch (action.type) {
     case INIT_FILES_ACTION:
@@ -92,6 +105,8 @@ function reducer(state: State, action: StateActions): State {
         sources: action.sources,
         fileTypesMap: action.fileTypesMap,
         filesWithLabels: action.filesWithLabels,
+        mcpFiles: action.mcpFiles,
+        mcpEndpoints: action.mcpEndpoints,
         isInitialized: true,
       }
     case ADD_FILES_ACTION:
@@ -112,16 +127,53 @@ function reducer(state: State, action: StateActions): State {
           ),
         ],
       }
-    case DELETE_FILE_ACTION:
+    case ASSIGN_MCP_FILE_ACTION: {
+      const nextMcpFiles = new Map(mcpFiles)
+      nextMcpFiles.set(action.fileName, action.meta)
+      const endpoint = action.meta.mcpEndpoint
+      const nextEndpoints = mcpEndpoints.includes(endpoint)
+        ? mcpEndpoints
+        : [...mcpEndpoints, endpoint]
+      const nextFileTypesMap = new Map(fileTypesMap)
+      nextFileTypesMap.set(action.fileName, action.fileType)
+      return {
+        ...state,
+        mcpFiles: nextMcpFiles,
+        mcpEndpoints: nextEndpoints,
+        filesWithLabels: {
+          ...filesWithLabels,
+          ...createFilesRecord([action.file], filesWithLabels),
+        },
+        fileTypesMap: nextFileTypesMap,
+        replacedFiles: [
+          ...replacedFiles,
+          ...intersectionBy(
+            filesRecordToArray(filesWithLabels),
+            sources,
+            [action.file],
+            'name',
+          ),
+        ],
+      }
+    }
+    case DELETE_FILE_ACTION: {
       fileTypesMap.delete(action.fileName)
       delete filesWithLabels[action.fileName]
-
+      const nextMcpFiles = new Map(mcpFiles)
+      const removedMeta = nextMcpFiles.get(action.fileName)
+      nextMcpFiles.delete(action.fileName)
+      const nextEndpoints = removedMeta
+        ? pruneMcpEndpoint(mcpEndpoints, nextMcpFiles, removedMeta.mcpEndpoint)
+        : mcpEndpoints
       return {
         ...state,
         filesWithLabels: { ...filesWithLabels },
         replacedFiles: replacedFiles.filter(file => file.name !== action.fileName),
         fileTypesMap: fileTypesMap,
+        mcpFiles: nextMcpFiles,
+        mcpEndpoints: nextEndpoints,
       }
+    }
     case EDIT_FILE_ACTION:
       state.filesWithLabels[action.fileName].labels = action.labels
       return {
@@ -150,7 +202,14 @@ export type FilesProviderProps = {
 
 export const FilesProvider: FC<FilesProviderProps> = memo<FilesProviderProps>(({ enabled, children }) => {
   const { packageId, versionId } = useParams()
+  const { showMcpEndpointDialog } = useEventBus()
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE)
+  const mcpEndpointsRef = useRef(state.mcpEndpoints)
+  const lastSelectedMcpEndpointRef = useRef<string | undefined>()
+
+  useEffect(() => {
+    mcpEndpointsRef.current = state.mcpEndpoints
+  }, [state.mcpEndpoints])
 
   const isEditingVersion = !!versionId && versionId !== SPECIAL_VERSION_KEY
   const [sources, isSourcesLoading] = useVersionSources({ enabled: enabled && isEditingVersion })
@@ -158,24 +217,70 @@ export const FilesProvider: FC<FilesProviderProps> = memo<FilesProviderProps>(({
   const [areFilesProcessing, setAreFilesProcessing] = useState(true)
 
   useEffect(() => {
-    getFileTypesAndLabels(sources, config).then(([fileTypesMap, filesWithLabels]) =>
+    buildInitFileState(sources, config).then(initData =>
       dispatch({
         type: INIT_FILES_ACTION,
         sources: sources,
-        fileTypesMap: fileTypesMap,
-        filesWithLabels: filesWithLabels,
+        fileTypesMap: initData.fileTypesMap,
+        filesWithLabels: initData.filesWithLabels,
+        mcpFiles: initData.mcpFiles,
+        mcpEndpoints: initData.mcpEndpoints,
       })).then(() => !isConfigLoading && !isSourcesLoading && setAreFilesProcessing(false))
   }, [sources, config, isConfigLoading, isSourcesLoading])
 
-  const addFiles = useCallback((files: File[]): void => {
-    getFileTypesAndLabels(files).then(([map, record]) => dispatch({
-      type: ADD_FILES_ACTION,
-      files: files,
-      fileTypesMap: new Map(map),
-      filesWithLabels: record,
-    }))
-    }, [],
-  )
+  const promptMcpEndpoint = useCallback((detail: Omit<ShowMcpEndpointDetail, 'onConfirm' | 'onCancel'>): Promise<string | undefined> => {
+    return new Promise(resolve => {
+      showMcpEndpointDialog({
+        ...detail,
+        onConfirm: (mcpEndpoint: string) => resolve(mcpEndpoint),
+        onCancel: () => resolve(undefined),
+      })
+    })
+  }, [showMcpEndpointDialog])
+
+  const addFiles = useCallback(async (files: File[]): Promise<void> => {
+    const { regularFiles, mcpCandidates } = await partitionFilesByMcp(files)
+
+    if (regularFiles.length > 0) {
+      const regularData = await buildFileTypesAndLabels(regularFiles)
+      dispatch({
+        type: ADD_FILES_ACTION,
+        files: regularFiles,
+        fileTypesMap: regularData.fileTypesMap,
+        filesWithLabels: regularData.filesWithLabels,
+      })
+    }
+
+    if (mcpCandidates.length > 0) {
+      let knownEndpoints = [...mcpEndpointsRef.current]
+      const [firstCandidate] = mcpCandidates
+      const mcpEndpoint = await promptMcpEndpoint({
+        file: firstCandidate.file,
+        documentType: firstCandidate.documentType,
+        knownEndpoints: knownEndpoints,
+        defaultEndpoint: lastSelectedMcpEndpointRef.current ?? knownEndpoints[0],
+      })
+      if (mcpEndpoint !== undefined) {
+        for (const candidate of mcpCandidates) {
+          dispatch({
+            type: ASSIGN_MCP_FILE_ACTION,
+            fileName: candidate.file.name,
+            file: candidate.file,
+            meta: {
+              documentType: candidate.documentType,
+              mcpEndpoint: mcpEndpoint,
+            },
+            fileType: candidate.documentType,
+          })
+        }
+        if (!knownEndpoints.includes(mcpEndpoint)) {
+          knownEndpoints = [...knownEndpoints, mcpEndpoint]
+          mcpEndpointsRef.current = knownEndpoints
+        }
+        lastSelectedMcpEndpointRef.current = mcpEndpoint
+      }
+    }
+  }, [promptMcpEndpoint])
 
   const deleteFile = useCallback((fileName: string): void => dispatch({
       type: DELETE_FILE_ACTION,
@@ -216,32 +321,6 @@ export const FilesProvider: FC<FilesProviderProps> = memo<FilesProviderProps>(({
     </FilesContext.Provider>
   )
 })
-
-async function getFileTypesAndLabels(files: File[], config?: PackageVersionConfig | null): Promise<[Map<string, SpecType>, FileLabelsRecord]> {
-  let fileLabelsRecord = {}
-
-  const fileTypesMap = new Map(await Promise.all(files.map(file => {
-    return file.text().then(value => {
-      return [file.name, calculateSpecType(getFileExtension(file.name), value)] as [string, SpecType]
-    })
-  })))
-
-  if (config) {
-    fileLabelsRecord = files.reduce((acc, file) => {
-      const fileLabels = config.files?.find(f => f.fileKey === file.name)?.labels ?? []
-      acc[file.name] = {
-        file: file,
-        labels: fileLabels,
-      }
-      return acc
-    }, {} as FileLabelsRecord)
-  }
-
-  return [
-    fileTypesMap,
-    fileLabelsRecord,
-  ]
-}
 
 const FilesContext = createContext<State>(INITIAL_STATE)
 const FileActionsContext = createContext<Actions>()

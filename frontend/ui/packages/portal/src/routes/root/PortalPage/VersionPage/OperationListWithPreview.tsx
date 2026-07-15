@@ -52,7 +52,7 @@ import { getOperationLink } from './useNavigateToOperation'
 import { useOperation } from './useOperation'
 import { useOperationSearchParams } from './useOperationSearchParams'
 import { useOperationViewMode } from './useOperationViewMode'
-import { OperationPreview } from './VersionOperationsSubPage/OperationPreview'
+import { OperationPreview } from './VersionContractsSubPage/OperationPreview'
 
 export type OperationListWithPreviewProps = {
   operations: OperationsData

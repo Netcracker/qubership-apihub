@@ -177,7 +177,7 @@ export const OperationGroupsCard: FC = memo(() => {
         showErrorNotification({ message: 'Export aborted. Couldn\'t determine the type of exported document.' })
     }
 
-  }, [showExportSettingsDialog, packageKey, fullVersion, showNotification])
+  }, [showExportSettingsDialog, packageKey, fullVersion, showNotification, showErrorNotification])
 
   const isPackage = useMemo(() => currentPackage?.kind === PACKAGE_KIND, [currentPackage?.kind])
   const operationGroups = useMemo(() => (
