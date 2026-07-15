@@ -118,6 +118,11 @@
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                             <tr>
+                                                <td title="ai_chat.user_id references user_data.user_id via ai_chat_user_fk"><a href='ai_chat.html'>ai_chat</a><span class='relatedKey'>.user_id</span></td>
+                                                <td class="constraint detail">ai_chat_user_fk</td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
                                                 <td title="external_identity.internal_id references user_data.user_id via FK_user_data"><a href='external_identity.html'>external_identity</a><span class='relatedKey'>.internal_id</span></td>
                                                 <td class="constraint detail">FK_user_data</td>
                                                 <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>

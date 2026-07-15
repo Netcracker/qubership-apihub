@@ -122,14 +122,14 @@
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                             <tr>
-                                                <td title="published_version_revision_content.[checksum, package_id] references published_data.[checksum, package_id] via published_version_revision_content_published_data_fk"><a href='published_data.html'>published_data</a><span class='relatedKey'>.package_id</span></td>
-                                                <td class="constraint detail">published_version_revision_content_published_data_fk</td>
-                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
-                                            <tr>
                                                 <td title="published_version_revision_content.[package_id, version, revision] references published_version.[package_id, version, revision] via FK_published_version_revision"><a href='published_version.html'>published_version</a><span class='relatedKey'>.package_id</span></td>
                                                 <td class="constraint detail">FK_published_version_revision</td>
                                                 <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="published_version_revision_content.[checksum, package_id] references published_data.[checksum, package_id] via published_version_revision_content_published_data_fk"><a href='published_data.html'>published_data</a><span class='relatedKey'>.package_id</span></td>
+                                                <td class="constraint detail">published_version_revision_content_published_data_fk</td>
+                                                <td class="constraint detail"><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
                                             </tr>
                                         </table>
                                     </td>
@@ -378,6 +378,23 @@
                                     <td title='nullable'>√</td>
                                     <td title=''></td>
                                     <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="shareability_status">shareability_status</span></td>
+                                    <td>varchar</td>
+                                    <td>2147483647</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>&#39;unknown&#39;::character varying</td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>

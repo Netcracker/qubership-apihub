@@ -80,7 +80,7 @@
                     <div class="box box-primary">
                         <div class="box-header with-border">
                             <i class="ion ion-key"></i>
-                            <h3 class="box-title">39 Foreign Key Constraints</h3>
+                            <h3 class="box-title">42 Foreign Key Constraints</h3>
                             <div class="box-tools pull-right">
                                 <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
                                 <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
@@ -176,6 +176,120 @@
                                         <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
                                     </tr>
                                     <tr>
+                                        <td>comparison_internal_document_data_fk</td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/comparison_internal_document.html'>comparison_internal_document</a><span>.hash</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/comparison_internal_document_data.html'>comparison_internal_document_data</a><span>.hash</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>Restrict delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>comparison_internal_document_version_comparison_fk</td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/comparison_internal_document.html'>comparison_internal_document</a><span>.package_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/comparison_internal_document.html'>comparison_internal_document</a><span>.version</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/comparison_internal_document.html'>comparison_internal_document</a><span>.revision</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/comparison_internal_document.html'>comparison_internal_document</a><span>.previous_package_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/comparison_internal_document.html'>comparison_internal_document</a><span>.previous_version</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/comparison_internal_document.html'>comparison_internal_document</a><span>.previous_revision</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/version_comparison.html'>version_comparison</a><span>.package_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/version_comparison.html'>version_comparison</a><span>.version</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/version_comparison.html'>version_comparison</a><span>.revision</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/version_comparison.html'>version_comparison</a><span>.previous_package_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/version_comparison.html'>version_comparison</a><span>.previous_version</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/version_comparison.html'>version_comparison</a><span>.previous_revision</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>version_internal_document_published_version_fk</td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/version_internal_document.html'>version_internal_document</a><span>.package_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/version_internal_document.html'>version_internal_document</a><span>.version</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/version_internal_document.html'>version_internal_document</a><span>.revision</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/published_version.html'>published_version</a><span>.package_id</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/published_version.html'>published_version</a><span>.version</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><a href='tables/published_version.html'>published_version</a><span>.revision</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>version_internal_document_data_fk</td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/version_internal_document.html'>version_internal_document</a><span>.hash</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/version_internal_document_data.html'>version_internal_document_data</a><span>.hash</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>Restrict delete</span></td>
+                                    </tr>
+                                    <tr>
                                         <td>published_data_package_group_id_fk</td>
                                         <td>
                                             <table border='0' cellspacing='0' cellpadding='0'>
@@ -192,42 +306,6 @@
                                             </table>
                                         </td>
                                         <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>ts_graphql_operation_data_operation_data_hash_fk</td>
-                                        <td>
-                                            <table border='0' cellspacing='0' cellpadding='0'>
-                                                <tr>
-                                                    <td><a href='tables/ts_graphql_operation_data.html'>ts_graphql_operation_data</a><span>.data_hash</span></td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                        <td>
-                                            <table border='0' cellspacing='0' cellpadding='0'>
-                                                <tr>
-                                                    <td><a href='tables/operation_data.html'>operation_data</a><span>.data_hash</span></td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                        <td><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>Restrict delete</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>published_sources_published_sources_archives_checksum_fk</td>
-                                        <td>
-                                            <table border='0' cellspacing='0' cellpadding='0'>
-                                                <tr>
-                                                    <td><a href='tables/published_sources.html'>published_sources</a><span>.archive_checksum</span></td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                        <td>
-                                            <table border='0' cellspacing='0' cellpadding='0'>
-                                                <tr>
-                                                    <td><a href='tables/published_sources_archives.html'>published_sources_archives</a><span>.checksum</span></td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                        <td><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>Restrict delete</span></td>
                                     </tr>
                                     <tr>
                                         <td>FK_published_sources_version_revision</td>
@@ -462,24 +540,6 @@
                                             </table>
                                         </td>
                                         <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>ts_rest_operation_data_operation_data_hash_fk</td>
-                                        <td>
-                                            <table border='0' cellspacing='0' cellpadding='0'>
-                                                <tr>
-                                                    <td><a href='tables/ts_rest_operation_data.html'>ts_rest_operation_data</a><span>.data_hash</span></td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                        <td>
-                                            <table border='0' cellspacing='0' cellpadding='0'>
-                                                <tr>
-                                                    <td><a href='tables/operation_data.html'>operation_data</a><span>.data_hash</span></td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                        <td><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>Restrict delete</span></td>
                                     </tr>
                                     <tr>
                                         <td>FK_version_comparison</td>
@@ -746,6 +806,24 @@
                                         <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
                                     </tr>
                                     <tr>
+                                        <td>ai_chat_user_fk</td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/ai_chat.html'>ai_chat</a><span>.user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/user_data.html'>user_data</a><span>.user_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
+                                    </tr>
+                                    <tr>
                                         <td>fts_operation_data_operation_data_hash_fk</td>
                                         <td>
                                             <table border='0' cellspacing='0' cellpadding='0'>
@@ -762,6 +840,24 @@
                                             </table>
                                         </td>
                                         <td><span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>Restrict delete</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>ai_chat_message_chat_fk</td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/ai_chat_message.html'>ai_chat_message</a><span>.chat_id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td>
+                                            <table border='0' cellspacing='0' cellpadding='0'>
+                                                <tr>
+                                                    <td><a href='tables/ai_chat.html'>ai_chat</a><span>.id</span></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td><span title='Cascade on delete:&#10;Deletion of parent deletes child'>Cascade on delete</span></td>
                                     </tr>
                                     <tr>
                                         <td>shared_url_info_package_group_id_fk</td>
