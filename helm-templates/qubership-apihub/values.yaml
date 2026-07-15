@@ -2,6 +2,7 @@
 qubershipApihubBackend:
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-backend'
+    # Pin tags from the latest product release: https://github.com/Netcracker/qubership-apihub/releases/latest
     tag: 'latest'
   replicas: 1
 
@@ -286,6 +287,7 @@ qubershipApihubBackend:
 qubershipApihubBuildTaskConsumer:
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-build-task-consumer'
+    # Pin tags from the latest product release: https://github.com/Netcracker/qubership-apihub/releases/latest
     tag: 'dev'
   replicas: 1
 
@@ -313,6 +315,7 @@ qubershipApihubBuildTaskConsumer:
 qubershipApihubUi:
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-ui'
+    # Pin tags from the latest product release: https://github.com/Netcracker/qubership-apihub/releases/latest
     tag: 'dev'
   replicas: 1
 
@@ -353,6 +356,7 @@ qubershipApihubUi:
 qubershipApiLinterService:
   image:
     repository: 'ghcr.io/netcracker/qubership-api-linter-service'
+    # Pin tags from the latest product release: https://github.com/Netcracker/qubership-apihub/releases/latest
     tag: 'dev'
   replicas: 1
 
@@ -447,6 +451,7 @@ qubershipApihubAgentsBackend:
   version: ''
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-agents-backend'
+    # Pin tags from the latest product release: https://github.com/Netcracker/qubership-apihub/releases/latest
     tag: 'dev'
 
   customCa:
