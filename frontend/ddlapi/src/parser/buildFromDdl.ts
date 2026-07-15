@@ -1,16 +1,14 @@
 // Public entry point for DDL parsing.
 // This file is re-exported from src/index.ts.
 
-import type {
-  CreateStmt, IndexStmt, CommentStmt, CreateDomainStmt,
-  CreateEnumStmt, CompositeTypeStmt, CreateRangeStmt, CreateTrigStmt,
-} from '@pgsql/types'
 import { DdlErrorKind } from '../constants'
 import { PG_DEFAULT_SCHEMA } from '../postgres.constants'
 import { DDLAPI_VERSION } from '../schema'
 import type { SourceRange } from './positions'
-import { parseStatements, stmtTypeName, stmtBody } from './pgParser'
-import { stmtRangeOf } from './astHelpers'
+import { parseStatements, stmtTypeName } from './pgParser'
+import { SUPPORTED_STMT_TYPE_SET, type SupportedStmtType } from './supportedStatements'
+import { PgNode } from './pgAst'
+import { stmtRangeOf, stmtBody } from './astHelpers'
 import { SchemaAccumulator } from './schemaAccumulator'
 import { handleCreateTable } from './stmtHandlers/createTable'
 import { handleCreateIndex } from './stmtHandlers/createIndex'
@@ -30,7 +28,7 @@ import type { Realm } from '../schema'
 export type DdlNonFatalError =
   | {
     kind: typeof DdlErrorKind.OutOfScopeStatement
-    /** AST node type name from pgsql-parser, e.g. 'AlterTableStmt', 'DropStmt'. */
+    /** AST node type name from libpg-query, e.g. 'AlterTableStmt', 'DropStmt'. */
     statementType: string
     message: string
     range?: SourceRange
@@ -116,28 +114,14 @@ export class DdlBuildError extends Error {
 
 // ── Statement dispatch ────────────────────────────────────────────────────────
 
-/** Statement type names that are out of scope — skipped with onError. */
-const OUT_OF_SCOPE_STMTS = new Set([
-  'AlterTableStmt',
-  'DropStmt',
-  'CreateSeqStmt',
-  'AlterSeqStmt',
-  'CreateSchemaStmt',
-  'CreateExtensionStmt',
-  'CreateFunctionStmt',
-  'AlterFunctionStmt',
-  'ViewStmt',
-  'SelectStmt',
-  'InsertStmt',
-  'UpdateStmt',
-  'DeleteStmt',
-  'TruncateStmt',
-  'GrantStmt',
-  'RevokeStmt',
-  'TransactionStmt',
-  'CreateRoleStmt',
-  'AlterRoleStmt',
-])
+/**
+ * Compile-time exhaustiveness sentinel: fails to type-check if `x` is not `never`.
+ * Guarantees the dispatch switch covers every SupportedStmtType — adding a name to
+ * SUPPORTED_STMT_TYPES without a handler case makes the default branch non-`never`.
+ */
+function assertNever(x: never): never {
+  throw new Error(`Unhandled supported statement type: ${String(x)}`)
+}
 
 // ── Entry point ───────────────────────────────────────────────────────────────
 
@@ -182,66 +166,63 @@ export async function buildFromDdl(ddl: string, options?: BuildFromDdlOptions): 
     const typeName = stmtTypeName(rawStmt)
     const range = stmtRangeOf(rawStmt)
 
-    if (OUT_OF_SCOPE_STMTS.has(typeName)) {
+    if (!SUPPORTED_STMT_TYPE_SET.has(typeName)) {
       onError({
         kind: DdlErrorKind.OutOfScopeStatement,
-        statementType: typeName,
-        message: `Statement type '${typeName}' is not supported`,
+        statementType: typeName || 'unknown',
+        message: `Statement type '${typeName || 'unknown'}' is not supported`,
         ...(range && { range }),
       })
       continue
     }
 
-    switch (typeName) {
-      case 'CreateStmt': {
-        const stmt = stmtBody(rawStmt, 'CreateStmt') as CreateStmt | undefined
+    const supported: SupportedStmtType = typeName as SupportedStmtType
+    switch (supported) {
+      case PgNode.CreateStmt: {
+        const stmt = stmtBody(rawStmt, PgNode.CreateStmt)
         if (stmt) handleCreateTable(stmt, rawStmt, PG_DEFAULT_SCHEMA, acc, onError)
         break
       }
-      case 'IndexStmt': {
-        const stmt = stmtBody(rawStmt, 'IndexStmt') as IndexStmt | undefined
+      case PgNode.IndexStmt: {
+        const stmt = stmtBody(rawStmt, PgNode.IndexStmt)
         if (stmt) handleCreateIndex(stmt, rawStmt, PG_DEFAULT_SCHEMA, acc, onError)
         break
       }
-      case 'CommentStmt': {
-        const stmt = stmtBody(rawStmt, 'CommentStmt') as CommentStmt | undefined
+      case PgNode.CommentStmt: {
+        const stmt = stmtBody(rawStmt, PgNode.CommentStmt)
         if (stmt) handleComment(stmt, rawStmt, PG_DEFAULT_SCHEMA, acc, onError)
         break
       }
-      case 'CreateDomainStmt': {
-        const stmt = stmtBody(rawStmt, 'CreateDomainStmt') as CreateDomainStmt | undefined
+      case PgNode.CreateDomainStmt: {
+        const stmt = stmtBody(rawStmt, PgNode.CreateDomainStmt)
         if (stmt) handleCreateDomain(stmt, rawStmt, PG_DEFAULT_SCHEMA, acc, onError)
         break
       }
-      case 'CreateEnumStmt': {
-        const stmt = stmtBody(rawStmt, 'CreateEnumStmt') as CreateEnumStmt | undefined
+      case PgNode.CreateEnumStmt: {
+        const stmt = stmtBody(rawStmt, PgNode.CreateEnumStmt)
         if (stmt) handleCreateEnum(stmt, rawStmt, PG_DEFAULT_SCHEMA, acc, onError)
         break
       }
-      case 'CompositeTypeStmt': {
-        const stmt = stmtBody(rawStmt, 'CompositeTypeStmt') as CompositeTypeStmt | undefined
+      case PgNode.CompositeTypeStmt: {
+        const stmt = stmtBody(rawStmt, PgNode.CompositeTypeStmt)
         if (stmt) handleCreateCompositeType(stmt, rawStmt, PG_DEFAULT_SCHEMA, acc, onError)
         break
       }
-      case 'CreateRangeStmt': {
-        const stmt = stmtBody(rawStmt, 'CreateRangeStmt') as CreateRangeStmt | undefined
+      case PgNode.CreateRangeStmt: {
+        const stmt = stmtBody(rawStmt, PgNode.CreateRangeStmt)
         if (stmt) handleCreateRangeType(stmt, rawStmt, PG_DEFAULT_SCHEMA, acc, onError)
         break
       }
-      case 'CreateTrigStmt': {
-        const stmt = stmtBody(rawStmt, 'CreateTrigStmt') as CreateTrigStmt | undefined
+      case PgNode.CreateTrigStmt: {
+        const stmt = stmtBody(rawStmt, PgNode.CreateTrigStmt)
         if (stmt) handleCreateTrigger(stmt, rawStmt, PG_DEFAULT_SCHEMA, acc, onError)
         break
       }
-      default: {
-        onError({
-          kind: DdlErrorKind.OutOfScopeStatement,
-          statementType: typeName || 'unknown',
-          message: `Statement type '${typeName || 'unknown'}' is not supported`,
-          ...(range && { range }),
-        })
-        break
-      }
+      default:
+        // Unreachable: the SUPPORTED_STMT_TYPE_SET guard above filters out every
+        // non-supported type. `supported` is `never` here iff every
+        // SupportedStmtType has a case — see assertNever.
+        assertNever(supported)
     }
   }
 

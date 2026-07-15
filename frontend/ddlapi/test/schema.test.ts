@@ -16,201 +16,199 @@ import {
   literal, rawExpr, namedDefault,
 } from '@netcracker/qubership-apihub-ddlapi'
 
-// ── Task 2: Constants ────────────────────────────────────────────────────────
+describe('Constants', () => {
+  describe('ReferenceOption', () => {
+    test('values match SQL keywords', () => {
+      expect(ReferenceOption.Cascade).toBe('CASCADE')
+      expect(ReferenceOption.NoAction).toBe('NO ACTION')
+      expect(ReferenceOption.Restrict).toBe('RESTRICT')
+      expect(ReferenceOption.SetNull).toBe('SET NULL')
+      expect(ReferenceOption.SetDefault).toBe('SET DEFAULT')
+    })
+  })
 
-describe('ReferenceOption', () => {
-  test('values match SQL keywords', () => {
-    expect(ReferenceOption.Cascade).toBe('CASCADE')
-    expect(ReferenceOption.NoAction).toBe('NO ACTION')
-    expect(ReferenceOption.Restrict).toBe('RESTRICT')
-    expect(ReferenceOption.SetNull).toBe('SET NULL')
-    expect(ReferenceOption.SetDefault).toBe('SET DEFAULT')
+  describe('TypeKind', () => {
+    test('BoolType value', () => {
+      expect(TypeKind.BoolType).toBe('BoolType')
+    })
+    test('all TypeKind values are strings', () => {
+      for (const v of Object.values(TypeKind)) {
+        expect(typeof v).toBe('string')
+      }
+    })
+  })
+
+  describe('ObjectKind', () => {
+    test('values', () => {
+      expect(ObjectKind.Table).toBe('Table')
+      expect(ObjectKind.View).toBe('View')
+      expect(ObjectKind.Index).toBe('Index')
+      expect(ObjectKind.ForeignKey).toBe('ForeignKey')
+      expect(ObjectKind.Check).toBe('Check')
+      expect(ObjectKind.NamedDefault).toBe('NamedDefault')
+      expect(ObjectKind.EnumType).toBe('EnumType')
+    })
+  })
+
+  describe('ExprKind', () => {
+    test('values', () => {
+      expect(ExprKind.Literal).toBe('Literal')
+      expect(ExprKind.RawExpr).toBe('RawExpr')
+    })
+  })
+
+  describe('AttrKind', () => {
+    test('values', () => {
+      expect(AttrKind.Comment).toBe('Comment')
+      expect(AttrKind.Charset).toBe('Charset')
+      expect(AttrKind.Collation).toBe('Collation')
+      expect(AttrKind.Check).toBe('Check')
+      expect(AttrKind.GeneratedExpr).toBe('GeneratedExpr')
+    })
+  })
+
+  describe('dual-role kinds', () => {
+    test('Check appears in both ObjectKind and AttrKind with same value', () => {
+      expect(ObjectKind.Check).toBe(AttrKind.Check)
+    })
+    test('EnumType appears in both ObjectKind and TypeKind with same value', () => {
+      expect(ObjectKind.EnumType).toBe(TypeKind.EnumType)
+    })
   })
 })
 
-describe('TypeKind', () => {
-  test('BoolType value', () => {
-    expect(TypeKind.BoolType).toBe('BoolType')
-  })
-  test('all TypeKind values are strings', () => {
-    for (const v of Object.values(TypeKind)) {
-      expect(typeof v).toBe('string')
-    }
-  })
-})
-
-describe('ObjectKind', () => {
-  test('values', () => {
-    expect(ObjectKind.Table).toBe('Table')
-    expect(ObjectKind.View).toBe('View')
-    expect(ObjectKind.Index).toBe('Index')
-    expect(ObjectKind.ForeignKey).toBe('ForeignKey')
-    expect(ObjectKind.Check).toBe('Check')
-    expect(ObjectKind.NamedDefault).toBe('NamedDefault')
-    expect(ObjectKind.EnumType).toBe('EnumType')
-  })
-})
-
-describe('ExprKind', () => {
-  test('values', () => {
-    expect(ExprKind.Literal).toBe('Literal')
-    expect(ExprKind.RawExpr).toBe('RawExpr')
-  })
-})
-
-describe('AttrKind', () => {
-  test('values', () => {
-    expect(AttrKind.Comment).toBe('Comment')
-    expect(AttrKind.Charset).toBe('Charset')
-    expect(AttrKind.Collation).toBe('Collation')
-    expect(AttrKind.Check).toBe('Check')
-    expect(AttrKind.GeneratedExpr).toBe('GeneratedExpr')
-  })
-})
-
-describe('dual-role kinds', () => {
-  test('Check appears in both ObjectKind and AttrKind with same value', () => {
-    expect(ObjectKind.Check).toBe(AttrKind.Check)
-  })
-  test('EnumType appears in both ObjectKind and TypeKind with same value', () => {
-    expect(ObjectKind.EnumType).toBe(TypeKind.EnumType)
-  })
-})
-
-// ── Task 3: Expr union ───────────────────────────────────────────────────────
-
-function describeExpr(e: Expr): string {
-  switch (e.kind) {
-    case ExprKind.Literal: return `literal:${(e as Literal).value}`
-    case ExprKind.RawExpr: return `raw:${(e as RawExpr).expr}`
-    case ObjectKind.NamedDefault: return `named:${(e as NamedDefault).name}`
-    default:
-      return `unknown:${(e as UnknownExpr).kind}`
-  }
-}
-
-describe('Expr', () => {
-  test('Literal has value field', () => {
-    const lit: Literal = { kind: ExprKind.Literal, value: '42' }
-    expect(lit.value).toBe('42')
-    expect(describeExpr(lit)).toBe('literal:42')
-  })
-
-  test('RawExpr has expr field', () => {
-    const raw: RawExpr = { kind: ExprKind.RawExpr, expr: 'uuid()' }
-    expect(raw.expr).toBe('uuid()')
-    expect(describeExpr(raw)).toBe('raw:uuid()')
-  })
-
-  test('NamedDefault uses ObjectKind.NamedDefault as kind', () => {
-    const lit: Literal = { kind: ExprKind.Literal, value: '0' }
-    const nd: NamedDefault = { kind: ObjectKind.NamedDefault, name: 'seq_next', expr: lit }
-    expect(nd.kind).toBe('NamedDefault')
-    expect(nd.expr).toBe(lit)
-    expect(describeExpr(nd)).toBe('named:seq_next')
-  })
-
-  test('UnknownExpr passes through', () => {
-    const unk: UnknownExpr = { kind: 'MySQLExpr', extra: true }
-    expect(describeExpr(unk)).toBe('unknown:MySQLExpr')
-  })
-
-  test('NamedDefault.expr is typed as Literal | RawExpr (not full Expr union)', () => {
-    const lit: Literal = { kind: ExprKind.Literal, value: '1' }
-    const nd: NamedDefault = { kind: ObjectKind.NamedDefault, name: 'n', expr: lit }
-    expect(nd.expr.kind).toBe(ExprKind.Literal)
-  })
-})
-
-// ── Task 4: Attr union ───────────────────────────────────────────────────────
-
-function describeAttr(a: Attr): string {
-  switch (a.kind) {
-    case AttrKind.Comment: return `comment:${a.text}`
-    case AttrKind.Charset: return `charset:${a.value}`
-    case AttrKind.Collation: return `collation:${a.value}`
-    case AttrKind.Check: return `check:${a.expr}`
-    case AttrKind.GeneratedExpr: return `gen:${a.expr}`
-    default: {
-      const unk: { kind: string } = a
-      return `unknown:${unk.kind}`
+describe('Expr union', () => {
+  function describeExpr(e: Expr): string {
+    switch (e.kind) {
+      case ExprKind.Literal: return `literal:${(e as Literal).value}`
+      case ExprKind.RawExpr: return `raw:${(e as RawExpr).expr}`
+      case ObjectKind.NamedDefault: return `named:${(e as NamedDefault).name}`
+      default:
+        return `unknown:${(e as UnknownExpr).kind}`
     }
   }
-}
 
-describe('Attr', () => {
-  test('Comment', () => {
-    const c: Comment = { kind: AttrKind.Comment, text: 'hi' }
-    expect(describeAttr(c)).toBe('comment:hi')
-  })
+  describe('Expr', () => {
+    test('Literal has value field', () => {
+      const lit: Literal = { kind: ExprKind.Literal, value: '42' }
+      expect(lit.value).toBe('42')
+      expect(describeExpr(lit)).toBe('literal:42')
+    })
 
-  test('Check (attr role)', () => {
-    const ch: Check = { kind: AttrKind.Check, expr: 'age > 0', name: 'age_check' }
-    expect(ch.name).toBe('age_check')
-    expect(describeAttr(ch)).toBe('check:age > 0')
-  })
+    test('RawExpr has expr field', () => {
+      const raw: RawExpr = { kind: ExprKind.RawExpr, expr: 'uuid()' }
+      expect(raw.expr).toBe('uuid()')
+      expect(describeExpr(raw)).toBe('raw:uuid()')
+    })
 
-  test('Check with optional name absent', () => {
-    const ch: Check = { kind: AttrKind.Check, expr: 'x > 0' }
-    expect(ch.name).toBeUndefined()
-  })
+    test('NamedDefault uses ObjectKind.NamedDefault as kind', () => {
+      const lit: Literal = { kind: ExprKind.Literal, value: '0' }
+      const nd: NamedDefault = { kind: ObjectKind.NamedDefault, name: 'seq_next', expr: lit }
+      expect(nd.kind).toBe('NamedDefault')
+      expect(nd.expr).toBe(lit)
+      expect(describeExpr(nd)).toBe('named:seq_next')
+    })
 
-  test('UnknownAttr passes through', () => {
-    const unk: Attr = { kind: 'MySQLAttr', extra: 'data' }
-    expect(describeAttr(unk)).toBe('unknown:MySQLAttr')
+    test('UnknownExpr passes through', () => {
+      const unk: UnknownExpr = { kind: 'MySQLExpr', extra: true }
+      expect(describeExpr(unk)).toBe('unknown:MySQLExpr')
+    })
+
+    test('NamedDefault.expr is typed as Literal | RawExpr (not full Expr union)', () => {
+      const lit: Literal = { kind: ExprKind.Literal, value: '1' }
+      const nd: NamedDefault = { kind: ObjectKind.NamedDefault, name: 'n', expr: lit }
+      expect(nd.expr.kind).toBe(ExprKind.Literal)
+    })
   })
 })
 
-// ── Task 5: SchemaType union ─────────────────────────────────────────────────
-
-function describeType(t: SchemaType): string {
-  switch (t.kind) {
-    case TypeKind.BoolType: return `bool:${t.type}`
-    case TypeKind.IntegerType: return `int:${t.type}`
-    case TypeKind.DecimalType: return `decimal:${t.type}`
-    case TypeKind.FloatType: return `float:${t.type}`
-    case TypeKind.StringType: return `string:${t.type}`
-    case TypeKind.BinaryType: return `binary:${t.type}`
-    case TypeKind.TimeType: return `time:${t.type}`
-    case TypeKind.JSONType: return `json:${t.type}`
-    case TypeKind.SpatialType: return `spatial:${t.type}`
-    case TypeKind.UUIDType: return `uuid:${t.type}`
-    case TypeKind.UnsupportedType: return `unsupported:${t.type}`
-    case TypeKind.EnumType: return `enum:${(t as EnumType).values.join(',')}`
-    default:
-      return `unknown:${(t as UnknownType).kind}`
+describe('Attr union', () => {
+  function describeAttr(a: Attr): string {
+    switch (a.kind) {
+      case AttrKind.Comment: return `comment:${a.text}`
+      case AttrKind.Charset: return `charset:${a.value}`
+      case AttrKind.Collation: return `collation:${a.value}`
+      case AttrKind.Check: return `check:${a.expr}`
+      case AttrKind.GeneratedExpr: return `gen:${a.expr}`
+      default: {
+        const unk: { kind: string } = a
+        return `unknown:${unk.kind}`
+      }
+    }
   }
-}
 
-describe('SchemaType', () => {
-  test('BoolType', () => {
-    const bt: BoolType = { kind: TypeKind.BoolType, type: 'boolean' }
-    expect(describeType(bt)).toBe('bool:boolean')
-  })
+  describe('Attr', () => {
+    test('Comment', () => {
+      const c: Comment = { kind: AttrKind.Comment, text: 'hi' }
+      expect(describeAttr(c)).toBe('comment:hi')
+    })
 
-  test('IntegerType with unsigned', () => {
-    const it: IntegerType = { kind: TypeKind.IntegerType, type: 'bigint', unsigned: true }
-    expect(it.unsigned).toBe(true)
-    expect(describeType(it)).toBe('int:bigint')
-  })
+    test('Check (attr role)', () => {
+      const ch: Check = { kind: AttrKind.Check, expr: 'age > 0', name: 'age_check' }
+      expect(ch.name).toBe('age_check')
+      expect(describeAttr(ch)).toBe('check:age > 0')
+    })
 
-  test('EnumType as SchemaType', () => {
-    const et: EnumType = { kind: TypeKind.EnumType, values: ['a', 'b'] }
-    expect(describeType(et)).toBe('enum:a,b')
-  })
+    test('Check with optional name absent', () => {
+      const ch: Check = { kind: AttrKind.Check, expr: 'x > 0' }
+      expect(ch.name).toBeUndefined()
+    })
 
-  test('EnumType optional type', () => {
-    const et: EnumType = { kind: TypeKind.EnumType, values: ['x'], type: 'status' }
-    expect(et.type).toBe('status')
-  })
-
-  test('UnknownType escape hatch', () => {
-    const unk: UnknownType = { kind: 'point', srid: 4326 }
-    expect(describeType(unk)).toBe('unknown:point')
+    test('UnknownAttr passes through', () => {
+      const unk: Attr = { kind: 'MySQLAttr', extra: 'data' }
+      expect(describeAttr(unk)).toBe('unknown:MySQLAttr')
+    })
   })
 })
 
-// ── Task 6: Schema interfaces ─────────────────────────────────────────────────
+describe('SchemaType union', () => {
+  function describeType(t: SchemaType): string {
+    switch (t.kind) {
+      case TypeKind.BoolType: return `bool:${t.type}`
+      case TypeKind.IntegerType: return `int:${t.type}`
+      case TypeKind.DecimalType: return `decimal:${t.type}`
+      case TypeKind.FloatType: return `float:${t.type}`
+      case TypeKind.StringType: return `string:${t.type}`
+      case TypeKind.BinaryType: return `binary:${t.type}`
+      case TypeKind.TimeType: return `time:${t.type}`
+      case TypeKind.JSONType: return `json:${t.type}`
+      case TypeKind.SpatialType: return `spatial:${t.type}`
+      case TypeKind.UUIDType: return `uuid:${t.type}`
+      case TypeKind.UnsupportedType: return `unsupported:${t.type}`
+      case TypeKind.EnumType: return `enum:${(t as EnumType).values.join(',')}`
+      default:
+        return `unknown:${(t as UnknownType).kind}`
+    }
+  }
+
+  describe('SchemaType', () => {
+    test('BoolType', () => {
+      const bt: BoolType = { kind: TypeKind.BoolType, type: 'boolean' }
+      expect(describeType(bt)).toBe('bool:boolean')
+    })
+
+    test('IntegerType with unsigned', () => {
+      const it: IntegerType = { kind: TypeKind.IntegerType, type: 'bigint', unsigned: true }
+      expect(it.unsigned).toBe(true)
+      expect(describeType(it)).toBe('int:bigint')
+    })
+
+    test('EnumType as SchemaType', () => {
+      const et: EnumType = { kind: TypeKind.EnumType, values: ['a', 'b'] }
+      expect(describeType(et)).toBe('enum:a,b')
+    })
+
+    test('EnumType optional type', () => {
+      const et: EnumType = { kind: TypeKind.EnumType, values: ['x'], type: 'status' }
+      expect(et.type).toBe('status')
+    })
+
+    test('UnknownType escape hatch', () => {
+      const unk: UnknownType = { kind: 'point', srid: 4326 }
+      expect(describeType(unk)).toBe('unknown:point')
+    })
+  })
+})
 
 describe('Schema interfaces', () => {
   test('ColumnType.null is optional boolean', () => {
@@ -289,339 +287,337 @@ describe('Schema interfaces', () => {
   })
 })
 
-// ── Task 7: Schema-structure factories ───────────────────────────────────────
-
-describe('newRealm', () => {
-  test('empty realm', () => {
-    const r = newRealm()
-    expect(r.ddlapi).toBe(DDLAPI_VERSION)
-    expect(r.schemas).toEqual([])
-    expect(r.attrs).toBeUndefined()
-    expect(r.objects).toBeUndefined()
-  })
-
-  test('realm with schemas', () => {
-    const s = newSchema('public')
-    const r = newRealm([s])
-    expect(r.ddlapi).toBe(DDLAPI_VERSION)
-    expect(r.schemas).toHaveLength(1)
-    expect(r.schemas[0].name).toBe('public')
-  })
-})
-
-describe('newSchema', () => {
-  test('name only — optional fields undefined', () => {
-    const s = newSchema('mydb')
-    expect(s.name).toBe('mydb')
-    expect(s.tables).toBeUndefined()
-    expect(s.attrs).toBeUndefined()
-    expect(s.objects).toBeUndefined()
-  })
-
-  test('schema with tables', () => {
-    const t = newTable('users')
-    const s = newSchema('pub', { tables: [t] })
-    expect(s.tables?.[0].name).toBe('users')
-  })
-})
-
-describe('newTable', () => {
-  test('name only — optional fields undefined', () => {
-    const t = newTable('orders')
-    expect(t.kind).toBe(ObjectKind.Table)
-    expect(t.name).toBe('orders')
-    expect(t.columns).toBeUndefined()
-    expect(t.indexes).toBeUndefined()
-    expect(t.primaryKey).toBeUndefined()
-    expect(t.foreignKeys).toBeUndefined()
-    expect(t.attrs).toBeUndefined()
-    expect(t.deps).toBeUndefined()
-  })
-})
-
-describe('newView', () => {
-  test('basic view', () => {
-    const v = newView('active_users', { def: 'SELECT * FROM users WHERE active = 1' })
-    expect(v.kind).toBe(ObjectKind.View)
-    expect(v.name).toBe('active_users')
-    expect(v.def).toContain('SELECT')
-    expect(v.columns).toBeUndefined()
-  })
-})
-
-// ── Task 8: Column, constraint, and index-part factories ─────────────────────
-
-describe('newColumn', () => {
-  test('name only', () => {
-    const c = newColumn('email')
-    expect(c.name).toBe('email')
-    expect(c.type).toBeUndefined()
-    expect(c.default).toBeUndefined()
-    expect(c.attrs).toBeUndefined()
-  })
-
-  test('with type', () => {
-    const c = newColumn('id', { type: columnType(integerType('int')) })
-    expect(c.type?.null).toBeUndefined()
-    expect(c.type?.type.kind).toBe(TypeKind.IntegerType)
-  })
-})
-
-describe('newNullableColumn', () => {
-  test('has null: true on columnType', () => {
-    const c = newNullableColumn('bio')
-    expect(c.name).toBe('bio')
-    expect(c.type?.null).toBe(true)
-  })
-})
-
-describe('columnType', () => {
-  test('null omitted when not specified', () => {
-    const ct = columnType(boolType('boolean'))
-    expect(ct.null).toBeUndefined()
-    expect(ct.raw).toBeUndefined()
-  })
-
-  test('explicit null: true', () => {
-    const ct = columnType(stringType('varchar'), { null: true, raw: 'varchar(255)' })
-    expect(ct.null).toBe(true)
-    expect(ct.raw).toBe('varchar(255)')
-  })
-
-  test('explicit null: false', () => {
-    const ct = columnType(integerType('int'), { null: false })
-    expect(ct.null).toBe(false)
-  })
-})
-
-describe('newPrimaryKey', () => {
-  test('seqNo auto-assigned sequentially starting at 0', () => {
-    const id = newColumn('id', { type: columnType(integerType('int')) })
-    const pk = newPrimaryKey([id])
-    expect(pk.parts).toHaveLength(1)
-    expect(pk.parts?.[0].seqNo).toBe(0)
-    expect(pk.parts?.[0].column).toBe(id)   // same reference
-  })
-
-  test('composite PK — seqNo 0,1,2', () => {
-    const a = newColumn('a')
-    const b = newColumn('b')
-    const c = newColumn('c')
-    const pk = newPrimaryKey([a, b, c])
-    expect(pk.parts?.map(p => p.seqNo)).toEqual([0, 1, 2])
-  })
-
-  test('PK parts share same Column object reference as table.columns', () => {
-    const id = newColumn('id', { type: columnType(integerType('int')) })
-    const pk = newPrimaryKey([id])
-    const tbl = newTable('users', { columns: [id], primaryKey: pk })
-    expect(tbl.primaryKey?.parts?.[0].column).toBe(tbl.columns?.[0])
-  })
-})
-
-describe('newIndexPart / newColumnPart / newExprPart', () => {
-  test('newIndexPart defaults seqNo to 0', () => {
-    const p = newIndexPart()
-    expect(p.seqNo).toBe(0)
-    expect(p.column).toBeUndefined()
-    expect(p.expr).toBeUndefined()
-  })
-
-  test('newColumnPart wraps column', () => {
-    const col = newColumn('name')
-    const p = newColumnPart(col, { seqNo: 2 })
-    expect(p.seqNo).toBe(2)
-    expect(p.column).toBe(col)
-  })
-
-  test('newExprPart wraps expr', () => {
-    const x = rawExpr('lower(email)')
-    const p = newExprPart(x)
-    expect(p.seqNo).toBe(0)
-    expect(p.expr).toBe(x)
-  })
-})
-
-describe('newForeignKey', () => {
-  test('FK column and refColumn hold same references as table columns', () => {
-    const userId = newColumn('user_id', { type: columnType(integerType('int')) })
-    const id = newColumn('id', { type: columnType(integerType('int')) })
-    const posts = newTable('posts', { columns: [userId] })
-    const users = newTable('users', { columns: [id] })
-
-    const fk = newForeignKey('fk_post_user', {
-      columns: [userId],
-      refTable: users,
-      refColumns: [id],
-      onDelete: ReferenceOption.Cascade,
+describe('Schema-structure factories', () => {
+  describe('newRealm', () => {
+    test('empty realm', () => {
+      const r = newRealm()
+      expect(r.ddlapi).toBe(DDLAPI_VERSION)
+      expect(r.schemas).toEqual([])
+      expect(r.attrs).toBeUndefined()
+      expect(r.objects).toBeUndefined()
     })
 
-    expect(fk.kind).toBe(ObjectKind.ForeignKey)
-    expect(fk.symbol).toBe('fk_post_user')
-    expect(fk.columns?.[0]).toBe(posts.columns?.[0])   // same reference
-    expect(fk.refColumns?.[0]).toBe(users.columns?.[0]) // same reference
-    expect(fk.onDelete).toBe(ReferenceOption.Cascade)
+    test('realm with schemas', () => {
+      const s = newSchema('public')
+      const r = newRealm([s])
+      expect(r.ddlapi).toBe(DDLAPI_VERSION)
+      expect(r.schemas).toHaveLength(1)
+      expect(r.schemas[0].name).toBe('public')
+    })
   })
 
-  test('newForeignKey without symbol', () => {
-    const fk = newForeignKey()
-    expect(fk.symbol).toBeUndefined()
-    expect(fk.columns).toBeUndefined()
-  })
-})
+  describe('newSchema', () => {
+    test('name only — optional fields undefined', () => {
+      const s = newSchema('mydb')
+      expect(s.name).toBe('mydb')
+      expect(s.tables).toBeUndefined()
+      expect(s.attrs).toBeUndefined()
+      expect(s.objects).toBeUndefined()
+    })
 
-describe('newCheck', () => {
-  test('with name', () => {
-    const ch = newCheck('age > 0', 'chk_age')
-    expect(ch.kind).toBe(AttrKind.Check)
-    expect(ch.expr).toBe('age > 0')
-    expect(ch.name).toBe('chk_age')
-  })
-
-  test('without name', () => {
-    const ch = newCheck('price > 0')
-    expect(ch.name).toBeUndefined()
-  })
-})
-
-describe('newIndex / newUniqueIndex', () => {
-  test('newIndex no name', () => {
-    const idx = newIndex()
-    expect(idx.kind).toBe(ObjectKind.Index)
-    expect(idx.name).toBeUndefined()
-    expect(idx.unique).toBeUndefined()
+    test('schema with tables', () => {
+      const t = newTable('users')
+      const s = newSchema('pub', { tables: [t] })
+      expect(s.tables?.[0].name).toBe('users')
+    })
   })
 
-  test('newUniqueIndex sets unique: true', () => {
-    const idx = newUniqueIndex('ux_email')
-    expect(idx.unique).toBe(true)
-    expect(idx.name).toBe('ux_email')
-  })
-})
-
-// ── Task 9: Type, attr, and expr factories ───────────────────────────────────
-
-describe('type factories', () => {
-  test('boolType', () => {
-    const t = boolType('boolean')
-    expect(t.kind).toBe(TypeKind.BoolType)
-    expect(t.type).toBe('boolean')
+  describe('newTable', () => {
+    test('name only — optional fields undefined', () => {
+      const t = newTable('orders')
+      expect(t.kind).toBe(ObjectKind.Table)
+      expect(t.name).toBe('orders')
+      expect(t.columns).toBeUndefined()
+      expect(t.indexes).toBeUndefined()
+      expect(t.primaryKey).toBeUndefined()
+      expect(t.foreignKeys).toBeUndefined()
+      expect(t.attrs).toBeUndefined()
+      expect(t.deps).toBeUndefined()
+    })
   })
 
-  test('integerType with unsigned', () => {
-    const t = integerType('bigint', { unsigned: true })
-    expect(t.kind).toBe(TypeKind.IntegerType)
-    expect(t.unsigned).toBe(true)
-  })
-
-  test('integerType without opts — unsigned undefined', () => {
-    const t = integerType('int')
-    expect(t.unsigned).toBeUndefined()
-    expect(t.attrs).toBeUndefined()
-  })
-
-  test('decimalType', () => {
-    const t = decimalType('decimal', { precision: 10, scale: 2 })
-    expect(t.precision).toBe(10)
-    expect(t.scale).toBe(2)
-    expect(t.unsigned).toBeUndefined()
-  })
-
-  test('floatType', () => {
-    const t = floatType('float', { precision: 24 })
-    expect(t.precision).toBe(24)
-  })
-
-  test('stringType — size omitted by default', () => {
-    const t = stringType('varchar', { size: 255 })
-    expect(t.size).toBe(255)
-    const t2 = stringType('text')
-    expect(t2.size).toBeUndefined()
-  })
-
-  test('binaryType — size 0 is valid', () => {
-    const t = binaryType('binary', { size: 0 })
-    expect(t.size).toBe(0)
-    const t2 = binaryType('blob')
-    expect(t2.size).toBeUndefined()
-  })
-
-  test('timeType', () => {
-    const t = timeType('timestamp', { precision: 6 })
-    expect(t.precision).toBe(6)
-  })
-
-  test('jsonType / spatialType / uuidType / unsupportedType', () => {
-    expect(jsonType('json').kind).toBe(TypeKind.JSONType)
-    expect(spatialType('point').kind).toBe(TypeKind.SpatialType)
-    expect(uuidType('uuid').kind).toBe(TypeKind.UUIDType)
-    expect(unsupportedType('custom').kind).toBe(TypeKind.UnsupportedType)
-  })
-
-  test('enumType as SchemaType and SchemaObject', () => {
-    const et = enumType(['a', 'b'], { type: 'mood' })
-    expect(et.kind).toBe(TypeKind.EnumType)
-    expect(et.type).toBe('mood')
-    const asType: SchemaType = et
-    const asObj: SchemaObject = et
-    expect(asType.kind).toBe(asObj.kind)
+  describe('newView', () => {
+    test('basic view', () => {
+      const v = newView('active_users', { def: 'SELECT * FROM users WHERE active = 1' })
+      expect(v.kind).toBe(ObjectKind.View)
+      expect(v.name).toBe('active_users')
+      expect(v.def).toContain('SELECT')
+      expect(v.columns).toBeUndefined()
+    })
   })
 })
 
-describe('attr factories', () => {
-  test('comment', () => {
-    const a = comment('hello')
-    expect(a.kind).toBe(AttrKind.Comment)
-    expect(a.text).toBe('hello')
+describe('Column, constraint, and index-part factories', () => {
+  describe('newColumn', () => {
+    test('name only', () => {
+      const c = newColumn('email')
+      expect(c.name).toBe('email')
+      expect(c.type).toBeUndefined()
+      expect(c.default).toBeUndefined()
+      expect(c.attrs).toBeUndefined()
+    })
+
+    test('with type', () => {
+      const c = newColumn('id', { type: columnType(integerType('int')) })
+      expect(c.type?.null).toBeUndefined()
+      expect(c.type?.type.kind).toBe(TypeKind.IntegerType)
+    })
   })
 
-  test('charset / collation', () => {
-    expect(charset('utf8mb4').value).toBe('utf8mb4')
-    expect(collation('utf8mb4_unicode_ci').value).toBe('utf8mb4_unicode_ci')
+  describe('newNullableColumn', () => {
+    test('has null: true on columnType', () => {
+      const c = newNullableColumn('bio')
+      expect(c.name).toBe('bio')
+      expect(c.type?.null).toBe(true)
+    })
   })
 
-  test('generatedExpr with type', () => {
-    const g = generatedExpr('first || last', 'STORED')
-    expect(g.expr).toBe('first || last')
-    expect(g.type).toBe('STORED')
+  describe('columnType', () => {
+    test('null omitted when not specified', () => {
+      const ct = columnType(boolType('boolean'))
+      expect(ct.null).toBeUndefined()
+      expect(ct.raw).toBeUndefined()
+    })
+
+    test('explicit null: true', () => {
+      const ct = columnType(stringType('varchar'), { null: true, raw: 'varchar(255)' })
+      expect(ct.null).toBe(true)
+      expect(ct.raw).toBe('varchar(255)')
+    })
+
+    test('explicit null: false', () => {
+      const ct = columnType(integerType('int'), { null: false })
+      expect(ct.null).toBe(false)
+    })
   })
 
-  test('generatedExpr without type', () => {
-    const g = generatedExpr('x * 2')
-    expect(g.type).toBeUndefined()
+  describe('newPrimaryKey', () => {
+    test('seqNo auto-assigned sequentially starting at 0', () => {
+      const id = newColumn('id', { type: columnType(integerType('int')) })
+      const pk = newPrimaryKey([id])
+      expect(pk.parts).toHaveLength(1)
+      expect(pk.parts?.[0].seqNo).toBe(0)
+      expect(pk.parts?.[0].column).toBe(id)   // same reference
+    })
+
+    test('composite PK — seqNo 0,1,2', () => {
+      const a = newColumn('a')
+      const b = newColumn('b')
+      const c = newColumn('c')
+      const pk = newPrimaryKey([a, b, c])
+      expect(pk.parts?.map(p => p.seqNo)).toEqual([0, 1, 2])
+    })
+
+    test('PK parts share same Column object reference as table.columns', () => {
+      const id = newColumn('id', { type: columnType(integerType('int')) })
+      const pk = newPrimaryKey([id])
+      const tbl = newTable('users', { columns: [id], primaryKey: pk })
+      expect(tbl.primaryKey?.parts?.[0].column).toBe(tbl.columns?.[0])
+    })
   })
 
+  describe('newIndexPart / newColumnPart / newExprPart', () => {
+    test('newIndexPart defaults seqNo to 0', () => {
+      const p = newIndexPart()
+      expect(p.seqNo).toBe(0)
+      expect(p.column).toBeUndefined()
+      expect(p.expr).toBeUndefined()
+    })
+
+    test('newColumnPart wraps column', () => {
+      const col = newColumn('name')
+      const p = newColumnPart(col, { seqNo: 2 })
+      expect(p.seqNo).toBe(2)
+      expect(p.column).toBe(col)
+    })
+
+    test('newExprPart wraps expr', () => {
+      const x = rawExpr('lower(email)')
+      const p = newExprPart(x)
+      expect(p.seqNo).toBe(0)
+      expect(p.expr).toBe(x)
+    })
+  })
+
+  describe('newForeignKey', () => {
+    test('FK column and refColumn hold same references as table columns', () => {
+      const userId = newColumn('user_id', { type: columnType(integerType('int')) })
+      const id = newColumn('id', { type: columnType(integerType('int')) })
+      const posts = newTable('posts', { columns: [userId] })
+      const users = newTable('users', { columns: [id] })
+
+      const fk = newForeignKey('fk_post_user', {
+        columns: [userId],
+        refTable: users,
+        refColumns: [id],
+        onDelete: ReferenceOption.Cascade,
+      })
+
+      expect(fk.kind).toBe(ObjectKind.ForeignKey)
+      expect(fk.symbol).toBe('fk_post_user')
+      expect(fk.columns?.[0]).toBe(posts.columns?.[0])   // same reference
+      expect(fk.refColumns?.[0]).toBe(users.columns?.[0]) // same reference
+      expect(fk.onDelete).toBe(ReferenceOption.Cascade)
+    })
+
+    test('newForeignKey without symbol', () => {
+      const fk = newForeignKey()
+      expect(fk.symbol).toBeUndefined()
+      expect(fk.columns).toBeUndefined()
+    })
+  })
+
+  describe('newCheck', () => {
+    test('with name', () => {
+      const ch = newCheck('age > 0', 'chk_age')
+      expect(ch.kind).toBe(AttrKind.Check)
+      expect(ch.expr).toBe('age > 0')
+      expect(ch.name).toBe('chk_age')
+    })
+
+    test('without name', () => {
+      const ch = newCheck('price > 0')
+      expect(ch.name).toBeUndefined()
+    })
+  })
+
+  describe('newIndex / newUniqueIndex', () => {
+    test('newIndex no name', () => {
+      const idx = newIndex()
+      expect(idx.kind).toBe(ObjectKind.Index)
+      expect(idx.name).toBeUndefined()
+      expect(idx.unique).toBeUndefined()
+    })
+
+    test('newUniqueIndex sets unique: true', () => {
+      const idx = newUniqueIndex('ux_email')
+      expect(idx.unique).toBe(true)
+      expect(idx.name).toBe('ux_email')
+    })
+  })
 })
 
-describe('expr factories', () => {
-  test('literal', () => {
-    const l = literal('42')
-    expect(l.kind).toBe(ExprKind.Literal)
-    expect(l.value).toBe('42')
+describe('Type, attr, and expr factories', () => {
+  describe('type factories', () => {
+    test('boolType', () => {
+      const t = boolType('boolean')
+      expect(t.kind).toBe(TypeKind.BoolType)
+      expect(t.type).toBe('boolean')
+    })
+
+    test('integerType with unsigned', () => {
+      const t = integerType('bigint', { unsigned: true })
+      expect(t.kind).toBe(TypeKind.IntegerType)
+      expect(t.unsigned).toBe(true)
+    })
+
+    test('integerType without opts — unsigned undefined', () => {
+      const t = integerType('int')
+      expect(t.unsigned).toBeUndefined()
+      expect(t.attrs).toBeUndefined()
+    })
+
+    test('decimalType', () => {
+      const t = decimalType('decimal', { precision: 10, scale: 2 })
+      expect(t.precision).toBe(10)
+      expect(t.scale).toBe(2)
+      expect(t.unsigned).toBeUndefined()
+    })
+
+    test('floatType', () => {
+      const t = floatType('float', { precision: 24 })
+      expect(t.precision).toBe(24)
+    })
+
+    test('stringType — size omitted by default', () => {
+      const t = stringType('varchar', { size: 255 })
+      expect(t.size).toBe(255)
+      const t2 = stringType('text')
+      expect(t2.size).toBeUndefined()
+    })
+
+    test('binaryType — size 0 is valid', () => {
+      const t = binaryType('binary', { size: 0 })
+      expect(t.size).toBe(0)
+      const t2 = binaryType('blob')
+      expect(t2.size).toBeUndefined()
+    })
+
+    test('timeType', () => {
+      const t = timeType('timestamp', { precision: 6 })
+      expect(t.precision).toBe(6)
+    })
+
+    test('jsonType / spatialType / uuidType / unsupportedType', () => {
+      expect(jsonType('json').kind).toBe(TypeKind.JSONType)
+      expect(spatialType('point').kind).toBe(TypeKind.SpatialType)
+      expect(uuidType('uuid').kind).toBe(TypeKind.UUIDType)
+      expect(unsupportedType('custom').kind).toBe(TypeKind.UnsupportedType)
+    })
+
+    test('enumType as SchemaType and SchemaObject', () => {
+      const et = enumType(['a', 'b'], { type: 'mood' })
+      expect(et.kind).toBe(TypeKind.EnumType)
+      expect(et.type).toBe('mood')
+      const asType: SchemaType = et
+      const asObj: SchemaObject = et
+      expect(asType.kind).toBe(asObj.kind)
+    })
   })
 
-  test('rawExpr', () => {
-    const r = rawExpr('uuid()')
-    expect(r.kind).toBe(ExprKind.RawExpr)
-    expect(r.expr).toBe('uuid()')
+  describe('attr factories', () => {
+    test('comment', () => {
+      const a = comment('hello')
+      expect(a.kind).toBe(AttrKind.Comment)
+      expect(a.text).toBe('hello')
+    })
+
+    test('charset / collation', () => {
+      expect(charset('utf8mb4').value).toBe('utf8mb4')
+      expect(collation('utf8mb4_unicode_ci').value).toBe('utf8mb4_unicode_ci')
+    })
+
+    test('generatedExpr with type', () => {
+      const g = generatedExpr('first || last', 'STORED')
+      expect(g.expr).toBe('first || last')
+      expect(g.type).toBe('STORED')
+    })
+
+    test('generatedExpr without type', () => {
+      const g = generatedExpr('x * 2')
+      expect(g.type).toBeUndefined()
+    })
+
   })
 
-  test('namedDefault', () => {
-    const inner = literal('0')
-    const nd = namedDefault('seq_next', inner)
-    expect(nd.kind).toBe(ObjectKind.NamedDefault)
-    expect(nd.name).toBe('seq_next')
-    expect(nd.expr).toBe(inner)
-    expect(nd.attrs).toBeUndefined()
-  })
+  describe('expr factories', () => {
+    test('literal', () => {
+      const l = literal('42')
+      expect(l.kind).toBe(ExprKind.Literal)
+      expect(l.value).toBe('42')
+    })
 
-  test('namedDefault with attrs', () => {
-    const nd = namedDefault('nd', rawExpr('NEXT VALUE FOR s'), [comment('a sequence default')])
-    expect(nd.attrs).toHaveLength(1)
+    test('rawExpr', () => {
+      const r = rawExpr('uuid()')
+      expect(r.kind).toBe(ExprKind.RawExpr)
+      expect(r.expr).toBe('uuid()')
+    })
+
+    test('namedDefault', () => {
+      const inner = literal('0')
+      const nd = namedDefault('seq_next', inner)
+      expect(nd.kind).toBe(ObjectKind.NamedDefault)
+      expect(nd.name).toBe('seq_next')
+      expect(nd.expr).toBe(inner)
+      expect(nd.attrs).toBeUndefined()
+    })
+
+    test('namedDefault with attrs', () => {
+      const nd = namedDefault('nd', rawExpr('NEXT VALUE FOR s'), [comment('a sequence default')])
+      expect(nd.attrs).toHaveLength(1)
+    })
   })
 })
-
-// ── Full Realm graph via factories only ──────────────────────────────────────
 
 describe('full Realm graph via factories', () => {
   test('build and verify', () => {
@@ -680,134 +676,134 @@ describe('full Realm graph via factories', () => {
   })
 })
 
-// ── Task 10: Attr utilities and underlyingExpr ───────────────────────────────
+describe('Attr utilities and underlyingExpr', () => {
+  describe('findAttr', () => {
+    test('finds first matching attr', () => {
+      const attrs: Attr[] = [comment('doc'), charset('utf8mb4')]
+      const found = findAttr(attrs, AttrKind.Comment)
+      expect(found?.text).toBe('doc')
+    })
 
-describe('findAttr', () => {
-  test('finds first matching attr', () => {
-    const attrs: Attr[] = [comment('doc'), charset('utf8mb4')]
-    const found = findAttr(attrs, AttrKind.Comment)
-    expect(found?.text).toBe('doc')
+    test('returns undefined when not found', () => {
+      const attrs: Attr[] = [comment('doc')]
+      expect(findAttr(attrs, AttrKind.Charset)).toBeUndefined()
+    })
+
+    test('returns undefined for undefined input', () => {
+      expect(findAttr(undefined, AttrKind.Comment)).toBeUndefined()
+    })
   })
 
-  test('returns undefined when not found', () => {
-    const attrs: Attr[] = [comment('doc')]
-    expect(findAttr(attrs, AttrKind.Charset)).toBeUndefined()
+  describe('replaceOrAppendAttr', () => {
+    test('appends when attr kind not present', () => {
+      const result = replaceOrAppendAttr([comment('old')], charset('utf8'))
+      expect(result).toHaveLength(2)
+      expect(result[1].kind).toBe(AttrKind.Charset)
+    })
+
+    test('replaces existing attr of same kind', () => {
+      const result = replaceOrAppendAttr([comment('old')], comment('new'))
+      expect(result).toHaveLength(1)
+      expect((result[0] as Comment).text).toBe('new')
+    })
+
+    test('handles undefined input — returns array with single attr', () => {
+      const result = replaceOrAppendAttr(undefined, comment('hi'))
+      expect(result).toHaveLength(1)
+    })
+
+    test('does not mutate input array', () => {
+      const original: Attr[] = [comment('a')]
+      replaceOrAppendAttr(original, comment('b'))
+      expect(original).toHaveLength(1)
+      expect((original[0] as Comment).text).toBe('a')
+    })
+
+    test('two UnknownAttr values with different kind strings coexist', () => {
+      const a1: Attr = { kind: 'DriverAttrA', data: 1 }
+      const a2: Attr = { kind: 'DriverAttrB', data: 2 }
+      const r1 = replaceOrAppendAttr(undefined, a1)
+      const r2 = replaceOrAppendAttr(r1, a2)
+      expect(r2).toHaveLength(2)
+      expect(r2[0].kind).toBe('DriverAttrA')
+      expect(r2[1].kind).toBe('DriverAttrB')
+    })
+
+    test('replacing UnknownAttr by same kind does not affect other kinds', () => {
+      const a1: Attr = { kind: 'DriverAttrA', v: 1 }
+      const a1v2: Attr = { kind: 'DriverAttrA', v: 2 }
+      const a2: Attr = { kind: 'DriverAttrB', v: 99 }
+      const base = replaceOrAppendAttr(replaceOrAppendAttr(undefined, a1), a2)
+      const result = replaceOrAppendAttr(base, a1v2)
+      expect(result).toHaveLength(2)
+      expect((result[0] as { kind: string; v: number }).v).toBe(2)
+      expect((result[1] as { kind: string; v: number }).v).toBe(99)
+    })
+
+    test('round-trip: find → replace → find', () => {
+      const attrs = replaceOrAppendAttr([comment('v1'), charset('utf8')], comment('v2'))
+      expect(findAttr(attrs, AttrKind.Comment)?.text).toBe('v2')
+      expect(findAttr(attrs, AttrKind.Charset)?.value).toBe('utf8')
+    })
   })
 
-  test('returns undefined for undefined input', () => {
-    expect(findAttr(undefined, AttrKind.Comment)).toBeUndefined()
-  })
-})
+  describe('removeAttr', () => {
+    test('removes matching attrs', () => {
+      const attrs: Attr[] = [comment('doc'), charset('utf8'), comment('extra')]
+      const result = removeAttr(attrs, AttrKind.Comment)
+      expect(result).toHaveLength(1)
+      expect(result[0].kind).toBe(AttrKind.Charset)
+    })
 
-describe('replaceOrAppendAttr', () => {
-  test('appends when attr kind not present', () => {
-    const result = replaceOrAppendAttr([comment('old')], charset('utf8'))
-    expect(result).toHaveLength(2)
-    expect(result[1].kind).toBe(AttrKind.Charset)
-  })
+    test('returns empty array for undefined input', () => {
+      expect(removeAttr(undefined, AttrKind.Comment)).toHaveLength(0)
+    })
 
-  test('replaces existing attr of same kind', () => {
-    const result = replaceOrAppendAttr([comment('old')], comment('new'))
-    expect(result).toHaveLength(1)
-    expect((result[0] as Comment).text).toBe('new')
-  })
+    test('does not mutate input', () => {
+      const original: Attr[] = [comment('a'), charset('utf8')]
+      removeAttr(original, AttrKind.Comment)
+      expect(original).toHaveLength(2)
+    })
 
-  test('handles undefined input — returns array with single attr', () => {
-    const result = replaceOrAppendAttr(undefined, comment('hi'))
-    expect(result).toHaveLength(1)
-  })
-
-  test('does not mutate input array', () => {
-    const original: Attr[] = [comment('a')]
-    replaceOrAppendAttr(original, comment('b'))
-    expect(original).toHaveLength(1)
-    expect((original[0] as Comment).text).toBe('a')
-  })
-
-  test('two UnknownAttr values with different kind strings coexist', () => {
-    const a1: Attr = { kind: 'DriverAttrA', data: 1 }
-    const a2: Attr = { kind: 'DriverAttrB', data: 2 }
-    const r1 = replaceOrAppendAttr(undefined, a1)
-    const r2 = replaceOrAppendAttr(r1, a2)
-    expect(r2).toHaveLength(2)
-    expect(r2[0].kind).toBe('DriverAttrA')
-    expect(r2[1].kind).toBe('DriverAttrB')
+    test('round-trip with replaceOrAppendAttr', () => {
+      let attrs: readonly Attr[] = []
+      attrs = replaceOrAppendAttr(attrs, comment('hello'))
+      attrs = replaceOrAppendAttr(attrs, charset('utf8'))
+      expect(findAttr(attrs, AttrKind.Comment)?.text).toBe('hello')
+      attrs = removeAttr(attrs, AttrKind.Comment)
+      expect(findAttr(attrs, AttrKind.Comment)).toBeUndefined()
+      expect(findAttr(attrs, AttrKind.Charset)?.value).toBe('utf8')
+    })
   })
 
-  test('replacing UnknownAttr by same kind does not affect other kinds', () => {
-    const a1: Attr = { kind: 'DriverAttrA', v: 1 }
-    const a1v2: Attr = { kind: 'DriverAttrA', v: 2 }
-    const a2: Attr = { kind: 'DriverAttrB', v: 99 }
-    const base = replaceOrAppendAttr(replaceOrAppendAttr(undefined, a1), a2)
-    const result = replaceOrAppendAttr(base, a1v2)
-    expect(result).toHaveLength(2)
-    expect((result[0] as { kind: string; v: number }).v).toBe(2)
-    expect((result[1] as { kind: string; v: number }).v).toBe(99)
-  })
+  describe('underlyingExpr', () => {
+    test('passes Literal through unchanged', () => {
+      const lit = literal('42')
+      expect(underlyingExpr(lit)).toBe(lit)
+    })
 
-  test('round-trip: find → replace → find', () => {
-    const attrs = replaceOrAppendAttr([comment('v1'), charset('utf8')], comment('v2'))
-    expect(findAttr(attrs, AttrKind.Comment)?.text).toBe('v2')
-    expect(findAttr(attrs, AttrKind.Charset)?.value).toBe('utf8')
-  })
-})
+    test('passes RawExpr through unchanged', () => {
+      const raw = rawExpr('uuid()')
+      expect(underlyingExpr(raw)).toBe(raw)
+    })
 
-describe('removeAttr', () => {
-  test('removes matching attrs', () => {
-    const attrs: Attr[] = [comment('doc'), charset('utf8'), comment('extra')]
-    const result = removeAttr(attrs, AttrKind.Comment)
-    expect(result).toHaveLength(1)
-    expect(result[0].kind).toBe(AttrKind.Charset)
-  })
+    test('unwraps NamedDefault to inner Literal', () => {
+      const inner = literal('0')
+      const nd = namedDefault('seq', inner)
+      const result = underlyingExpr(nd)
+      expect(result).toBe(inner)
+      expect(result.kind).toBe(ExprKind.Literal)
+    })
 
-  test('returns empty array for undefined input', () => {
-    expect(removeAttr(undefined, AttrKind.Comment)).toHaveLength(0)
-  })
+    test('unwraps NamedDefault to inner RawExpr', () => {
+      const inner = rawExpr('NEXT VALUE FOR seq')
+      const nd = namedDefault('seq', inner)
+      expect(underlyingExpr(nd)).toBe(inner)
+    })
 
-  test('does not mutate input', () => {
-    const original: Attr[] = [comment('a'), charset('utf8')]
-    removeAttr(original, AttrKind.Comment)
-    expect(original).toHaveLength(2)
-  })
-
-  test('round-trip with replaceOrAppendAttr', () => {
-    let attrs: readonly Attr[] = []
-    attrs = replaceOrAppendAttr(attrs, comment('hello'))
-    attrs = replaceOrAppendAttr(attrs, charset('utf8'))
-    expect(findAttr(attrs, AttrKind.Comment)?.text).toBe('hello')
-    attrs = removeAttr(attrs, AttrKind.Comment)
-    expect(findAttr(attrs, AttrKind.Comment)).toBeUndefined()
-    expect(findAttr(attrs, AttrKind.Charset)?.value).toBe('utf8')
-  })
-})
-
-describe('underlyingExpr', () => {
-  test('passes Literal through unchanged', () => {
-    const lit = literal('42')
-    expect(underlyingExpr(lit)).toBe(lit)
-  })
-
-  test('passes RawExpr through unchanged', () => {
-    const raw = rawExpr('uuid()')
-    expect(underlyingExpr(raw)).toBe(raw)
-  })
-
-  test('unwraps NamedDefault to inner Literal', () => {
-    const inner = literal('0')
-    const nd = namedDefault('seq', inner)
-    const result = underlyingExpr(nd)
-    expect(result).toBe(inner)
-    expect(result.kind).toBe(ExprKind.Literal)
-  })
-
-  test('unwraps NamedDefault to inner RawExpr', () => {
-    const inner = rawExpr('NEXT VALUE FOR seq')
-    const nd = namedDefault('seq', inner)
-    expect(underlyingExpr(nd)).toBe(inner)
-  })
-
-  test('throws on UnknownExpr', () => {
-    const unk: Expr = { kind: 'CustomExpr', data: 1 }
-    expect(() => underlyingExpr(unk)).toThrow("underlyingExpr: cannot unwrap UnknownExpr with kind 'CustomExpr'")
+    test('throws on UnknownExpr', () => {
+      const unk: Expr = { kind: 'CustomExpr', data: 1 }
+      expect(() => underlyingExpr(unk)).toThrow("underlyingExpr: cannot unwrap UnknownExpr with kind 'CustomExpr'")
+    })
   })
 })

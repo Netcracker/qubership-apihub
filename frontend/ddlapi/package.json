@@ -1,23 +1,39 @@
 {
   "name": "@netcracker/qubership-apihub-ddlapi",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "license": "Apache-2.0",
   "files": [
     "dist",
     "package.json"
   ],
+  "sideEffects": false,
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
+    },
+    "./parser": {
+      "types": "./dist/parser.d.ts",
+      "browser": "./dist/parser.browser.js",
+      "import": "./dist/parser.browser.js",
+      "require": "./dist/parser.cjs"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "parser": [
+        "./dist/parser.d.ts"
+      ]
     }
   },
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && vite build --config vite.browser.config.ts",
+    "postbuild": "node scripts/assert-model-entry-parser-free.mjs",
+    "assert:model-entry": "node scripts/assert-model-entry-parser-free.mjs",
     "test": "jest",
     "typecheck": "tsc --noEmit"
   },
@@ -30,7 +46,8 @@
     "vite-plugin-dts": "^3.9.1"
   },
   "dependencies": {
-    "@pgsql/types": "^17.6.2",
-    "pgsql-parser": "^17.9.15"
+    "@pgsql/types": "17.6.2",
+    "libpg-query": "17.7.3",
+    "pgsql-deparser": "17.18.3"
   }
 }

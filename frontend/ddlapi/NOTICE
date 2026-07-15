@@ -1,0 +1,6 @@
+qubership-apihub-ddlapi
+Copyright 2024-2026 NetCracker Technology Corporation
+
+Part of this product is Type Script port of the DB schema internal representation of Atlas https://github.com/ariga/atlas
+Apache-2.0 license
+Copyright 2021-present The Atlas Authors

@@ -1,4 +1,4 @@
-import { buildFromDdl } from '../../src'
+import { buildFromDdl } from '../../src/parser'
 import { loadSql } from '../helpers/loadSql'
 import { TypeKind, DdlErrorKind } from '../../src/constants'
 import { PgObjectKind, PgTypeKind } from '../../src/postgres.constants'

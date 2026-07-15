@@ -1,6 +1,6 @@
-import { buildFromDdl } from '../../src'
+import { buildFromDdl } from '../../src/parser'
 import { loadSql } from '../helpers/loadSql'
-import { TypeKind, AttrKind, DdlErrorKind } from '../../src/constants'
+import { TypeKind, AttrKind, ExprKind, DdlErrorKind } from '../../src/constants'
 import { PgAttrKind, PgObjectKind } from '../../src/postgres.constants'
 
 describe('createTable', () => {
@@ -61,6 +61,21 @@ describe('createTable', () => {
       // created_at timestamp DEFAULT now()
       expect(cols[4]!.default).toBeDefined()
     })
+
+    test('zero and false literal defaults survive protobuf zero-omission', async () => {
+      const realm = await buildFromDdl(loadSql('create-table/default-literals.sql'))
+      const cols = realm.schemas[0]!.tables![0]!.columns!
+      const defaultValue = (i: number) => {
+        const d = cols[i]!.default!
+        expect(d.kind).toBe(ExprKind.Literal)
+        return (d as { value: string }).value
+      }
+      expect(defaultValue(0)).toBe('0')      // zero_int   integer DEFAULT 0
+      expect(defaultValue(1)).toBe('5')      // pos_int    integer DEFAULT 5
+      expect(defaultValue(2)).toBe('false')  // flag_false boolean DEFAULT false
+      expect(defaultValue(3)).toBe('true')   // flag_true  boolean DEFAULT true
+      expect(defaultValue(4)).toBe('0.0')    // zero_num   numeric DEFAULT 0.0
+    })
   })
 
   describe('primary key', () => {
@@ -115,7 +130,7 @@ describe('createTable', () => {
       expect(uqIdx).toBeDefined()
       const nd = uqIdx!.attrs!.find(a => a.kind === PgAttrKind.IndexNullsDistinct)
       expect(nd).toBeDefined()
-      expect((nd as unknown as { V: boolean }).V).toBe(false)
+      expect((nd as unknown as { value: boolean }).value).toBe(false)
     })
   })
 
@@ -199,6 +214,28 @@ describe('createTable', () => {
       expect(ident!.generation).toBe('BY DEFAULT')
       expect(ident!.seqStart).toBe(100)
     })
+
+    test('START WITH 0 survives protobuf zero-omission', async () => {
+      const realm = await buildFromDdl(loadSql('create-table/zero-typmods.sql'))
+      const cols = realm.schemas[0]!.tables![0]!.columns!
+      const idCol = cols.find(c => c.name === 'id')!
+      const ident = idCol.attrs!.find(a => a.kind === PgAttrKind.Identity) as { seqStart?: number } | undefined
+      expect(ident!.seqStart).toBe(0)
+    })
+  })
+
+  describe('zero-valued type modifiers', () => {
+    test('precision 0 and scale 0 survive protobuf zero-omission', async () => {
+      const realm = await buildFromDdl(loadSql('create-table/zero-typmods.sql'))
+      const cols = realm.schemas[0]!.tables![0]!.columns!
+      // ts0 timestamp(0) — precision 0 preserved, not dropped to the default
+      expect((cols[0]!.type!.type as { precision?: number }).precision).toBe(0)
+      // t0 time(0)
+      expect((cols[1]!.type!.type as { precision?: number }).precision).toBe(0)
+      // num_scale0 numeric(10, 0) — explicit scale 0 preserved
+      expect((cols[2]!.type!.type as { precision?: number }).precision).toBe(10)
+      expect((cols[2]!.type!.type as { scale?: number }).scale).toBe(0)
+    })
   })
 
   describe('serial pseudo-types', () => {
@@ -216,9 +253,9 @@ describe('createTable', () => {
     test('partition-range: stores Partition attr', async () => {
       const realm = await buildFromDdl(loadSql('create-table/partition-range.sql'))
       const table = realm.schemas[0]!.tables![0]!
-      const part = table.attrs!.find(a => a.kind === PgAttrKind.Partition) as { T: string; parts: unknown[] } | undefined
+      const part = table.attrs!.find(a => a.kind === PgAttrKind.Partition) as { type: string; parts: unknown[] } | undefined
       expect(part).toBeDefined()
-      expect(part!.T).toBe('RANGE')
+      expect(part!.type).toBe('RANGE')
       expect(part!.parts).toHaveLength(1)
     })
 

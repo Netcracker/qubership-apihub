@@ -581,7 +581,7 @@ schema, and nothing depends on Realm-level schema ordering.
 | `PRIMARY KEY (cols)` | `Table.primaryKey = newPrimaryKey([...cols])` |
 | `UNIQUE (cols)` | Unique `Index` in `Table.indexes` |
 | `UNIQUE (cols) INCLUDE (cols)` | Unique `Index` with `UnknownAttr { kind: 'IndexInclude' }` |
-| `UNIQUE NULLS NOT DISTINCT (cols)` | Unique `Index` with `UnknownAttr { kind: 'IndexNullsDistinct', V: false }` |
+| `UNIQUE NULLS NOT DISTINCT (cols)` | Unique `Index` with `UnknownAttr { kind: 'IndexNullsDistinct', value: false }` |
 | `CHECK (expr)` | `Check` in `Table.attrs` |
 | `FOREIGN KEY (cols) REFERENCES tbl (cols)` | `ForeignKey` in `Table.foreignKeys` |
 | `EXCLUDE USING method (…)` | `UnknownObject { kind: 'ExcludeConstraint', … }` in `Table.objects` |
@@ -597,7 +597,7 @@ schema, and nothing depends on Realm-level schema ordering.
 
 | Clause | Mapping |
 |--------|---------|
-| `PARTITION BY RANGE/LIST/HASH (…)` | `UnknownAttr { kind: 'Partition', T, parts }` |
+| `PARTITION BY RANGE/LIST/HASH (…)` | `UnknownAttr { kind: 'Partition', type, parts }` |
 | `INHERITS (parent, …)` | `UnknownAttr { kind: 'Inherits', parents: string[] }` |
 | `WITH (fillfactor = …)` | `UnknownAttr { kind: 'StorageParams', params: Record<string, string> }` |
 
@@ -606,14 +606,14 @@ schema, and nothing depends on Realm-level schema ordering.
 | Clause | Mapping |
 |--------|---------|
 | `[UNIQUE]` | `Index.unique = true` |
-| `USING method` | `UnknownAttr { kind: 'IndexType', T }` |
+| `USING method` | `UnknownAttr { kind: 'IndexType', type }` |
 | `ASC`/`DESC` | `IndexPart.desc` |
 | `NULLS FIRST`/`LAST` | `UnknownAttr { kind: 'IndexColumnProp', nullsFirst, nullsLast }` on part |
 | `op_class` | `UnknownAttr { kind: 'IndexOpClass', name }` on part |
 | `INCLUDE (cols)` | `UnknownAttr { kind: 'IndexInclude', columns }` |
-| `WHERE predicate` | `UnknownAttr { kind: 'IndexPredicate', P }` |
+| `WHERE predicate` | `UnknownAttr { kind: 'IndexPredicate', predicate }` |
 | `CONCURRENTLY` | `UnknownAttr { kind: 'Concurrently' }` |
-| `NULLS [NOT] DISTINCT` | `UnknownAttr { kind: 'IndexNullsDistinct', V: bool }` |
+| `NULLS [NOT] DISTINCT` | `UnknownAttr { kind: 'IndexNullsDistinct', value: bool }` |
 | `WITH (params)` | `UnknownAttr { kind: 'StorageParams', params }` |
 
 If the target table is not defined in the same DDL, the index is stored in `Schema.objects` and
@@ -664,13 +664,13 @@ Based on Atlas Go driver (`atlas/sql/postgres/inspect.go`).
 | Atlas Go struct | ddlapi representation |
 |----------------|----------------------|
 | `Identity` | `UnknownAttr { kind: 'Identity', generation, seqStart?, seqIncrement? }` |
-| `Partition` | `UnknownAttr { kind: 'Partition', T: 'RANGE'\|'LIST'\|'HASH', parts }` |
+| `Partition` | `UnknownAttr { kind: 'Partition', type: 'RANGE'\|'LIST'\|'HASH', parts }` |
 | `Inherits` | `UnknownAttr { kind: 'Inherits', parents: string[] }` |
-| `IndexType` | `UnknownAttr { kind: 'IndexType', T }` |
-| `IndexPredicate` | `UnknownAttr { kind: 'IndexPredicate', P }` |
+| `IndexType` | `UnknownAttr { kind: 'IndexType', type }` |
+| `IndexPredicate` | `UnknownAttr { kind: 'IndexPredicate', predicate }` |
 | `IndexInclude` | `UnknownAttr { kind: 'IndexInclude', columns }` |
 | `IndexOpClass` | `UnknownAttr { kind: 'IndexOpClass', name }` |
-| `IndexNullsDistinct` | `UnknownAttr { kind: 'IndexNullsDistinct', V: bool }` |
+| `IndexNullsDistinct` | `UnknownAttr { kind: 'IndexNullsDistinct', value: bool }` |
 | `IndexColumnProperty` | `UnknownAttr { kind: 'IndexColumnProp', nullsFirst, nullsLast }` |
 | `Concurrently` | `UnknownAttr { kind: 'Concurrently' }` |
 | `CompositeType` | `UnknownObject { kind: 'CompositeType', … }` |

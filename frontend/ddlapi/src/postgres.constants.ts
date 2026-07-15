@@ -47,7 +47,7 @@ export const PgIdentityGeneration = {
 } as const
 export type PgIdentityGeneration = typeof PgIdentityGeneration[keyof typeof PgIdentityGeneration]
 
-/** Partition strategy values for the Partition attr's `T` field. */
+/** Partition strategy values for the Partition attr's `type` field. */
 export const PgPartitionStrategy = {
   Range: 'RANGE',
   List:  'LIST',

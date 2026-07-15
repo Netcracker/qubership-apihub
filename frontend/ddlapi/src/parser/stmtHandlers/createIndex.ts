@@ -1,15 +1,15 @@
 // Private module — handles IndexStmt (CREATE [UNIQUE] INDEX).
 
-import { deparseSync } from 'pgsql-parser'
-import type { IndexStmt, RawStmt, Node, IndexElem } from '@pgsql/types'
+import { deparseSync } from 'pgsql-deparser'
+import type { IndexStmt, RawStmt } from '@pgsql/types'
 import { ObjectKind, DdlErrorKind } from '../../constants'
 import { PgAttrKind } from '../../postgres.constants'
 import type { Index, IndexPart } from '../../schema'
 import type { Attr } from '../../attrs'
-import type { Expr } from '../../exprs'
 import { rawExpr } from '../../factories'
 import type { SchemaAccumulator } from '../schemaAccumulator'
-import { strVal, stmtRangeOf } from '../astHelpers'
+import { strVal, stmtRangeOf, unwrapNode } from '../astHelpers'
+import { PgNode } from '../pgAst'
 import type { DdlNonFatalError } from '../buildFromDdl'
 
 export function handleCreateIndex(
@@ -34,7 +34,7 @@ export function handleCreateIndex(
     if (acc.indexRegistry.has(indexKey)) {
       onError({
         kind: DdlErrorKind.DuplicateObject,
-        objectKind: 'Index',
+        objectKind: ObjectKind.Index,
         qualifiedName: indexKey,
         message: `Duplicate index: ${indexKey}`,
         ...(range && { range }),
@@ -44,13 +44,12 @@ export function handleCreateIndex(
   }
 
   // Build index parts
-  const indexParams = (stmt.indexParams ?? []) as Node[]
+  const indexParams = stmt.indexParams ?? []
   const parts: IndexPart[] = []
   const pendingParts: Array<{ part: IndexPart; columnKey: string }> = []
 
   for (let i = 0; i < indexParams.length; i++) {
-    const elemNode = indexParams[i] as Node
-    const elem = (elemNode as Record<string, unknown>)['IndexElem'] as IndexElem | undefined
+    const elem = unwrapNode(indexParams[i], PgNode.IndexElem)
     if (!elem) continue
 
     const partAttrs: Attr[] = []
@@ -94,13 +93,15 @@ export function handleCreateIndex(
 
   // Access method — only record if not the default btree
   if (stmt.accessMethod && stmt.accessMethod !== 'btree') {
-    indexAttrs.push({ kind: PgAttrKind.IndexType, T: stmt.accessMethod } as Attr)
+    // `type` is a descriptive rename of Atlas Go `T`; see ddlapi-authoring (escape-hatch naming).
+    indexAttrs.push({ kind: PgAttrKind.IndexType, type: stmt.accessMethod } as Attr)
   }
 
   // WHERE predicate
   if (stmt.whereClause) {
     const pred = deparseSync(stmt.whereClause as Record<string, unknown>)
-    indexAttrs.push({ kind: PgAttrKind.IndexPredicate, P: pred } as Attr)
+    // `predicate` is a descriptive rename of Atlas Go `P`; see ddlapi-authoring.
+    indexAttrs.push({ kind: PgAttrKind.IndexPredicate, predicate: pred } as Attr)
   }
 
   // CONCURRENTLY
@@ -110,14 +111,15 @@ export function handleCreateIndex(
 
   // NULLS [NOT] DISTINCT
   if (stmt.nulls_not_distinct) {
-    indexAttrs.push({ kind: PgAttrKind.IndexNullsDistinct, V: false } as Attr)
+    // `value` is a descriptive rename of Atlas Go `V`; see ddlapi-authoring.
+    indexAttrs.push({ kind: PgAttrKind.IndexNullsDistinct, value: false } as Attr)
   }
 
   // INCLUDE columns
-  const includingParams = (stmt.indexIncludingParams ?? []) as Node[]
+  const includingParams = stmt.indexIncludingParams ?? []
   if (includingParams.length > 0) {
     const includeColNames = includingParams.map(n => {
-      const elem = (n as Record<string, unknown>)['IndexElem'] as IndexElem | undefined
+      const elem = unwrapNode(n, PgNode.IndexElem)
       return elem?.name ?? ''
     }).filter(Boolean)
     if (includeColNames.length > 0) {
@@ -128,11 +130,11 @@ export function handleCreateIndex(
   // WITH storage params
   if (stmt.options && stmt.options.length > 0) {
     const params: Record<string, string> = {}
-    for (const opt of stmt.options as Node[]) {
-      const de = (opt as Record<string, unknown>)['DefElem'] as Record<string, unknown> | undefined
+    for (const opt of stmt.options) {
+      const de = unwrapNode(opt, PgNode.DefElem)
       if (!de) continue
-      const name = de['defname'] as string | undefined
-      const arg = de['arg'] as Node | undefined
+      const name = de.defname
+      const arg = de.arg
       if (name && arg) params[name] = deparseSync(arg as Record<string, unknown>)
     }
     if (Object.keys(params).length > 0) {

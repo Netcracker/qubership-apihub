@@ -1,7 +1,7 @@
 // Private module — handles CreateTrigStmt (CREATE TRIGGER).
 
-import { deparseSync } from 'pgsql-parser'
-import type { CreateTrigStmt, RawStmt, Node } from '@pgsql/types'
+import { deparseSync } from 'pgsql-deparser'
+import type { CreateTrigStmt, RawStmt } from '@pgsql/types'
 import { DdlErrorKind } from '../../constants'
 import { PgAttrKind, PgTriggerTiming, PgTriggerEvent } from '../../postgres.constants'
 import type { Attr } from '../../attrs'
@@ -30,7 +30,7 @@ export function handleCreateTrigger(
   if (!rel) return
 
   const tableName = rel.relname ?? 'unknown'
-  const tableSchema = (rel as { schemaname?: string }).schemaname ?? defaultSchemaName
+  const tableSchema = rel.schemaname ?? defaultSchemaName
   const tableKey = `${tableSchema}.${tableName}`
   const range = stmtRangeOf(rawStmt)
 
@@ -52,7 +52,7 @@ export function handleCreateTrigger(
     // For INSTEAD OF triggers, the target is a view (not a table).
     // Since CREATE VIEW is out-of-scope, views are never registered — always error.
     // For BEFORE/AFTER triggers on tables, an unregistered table is also an error.
-    const triggerKind = timing === 'INSTEAD OF' ? 'view' : 'table'
+    const triggerKind = timing === PgTriggerTiming.InsteadOf ? 'view' : 'table'
     onError({
       kind: DdlErrorKind.UnresolvedReference,
       target: tableKey,
@@ -71,7 +71,7 @@ export function handleCreateTrigger(
   if (eventsVal & EVENT_TRUNCATE) events.push(PgTriggerEvent.Truncate)
 
   // Function name — list of String nodes
-  const funcnameParts = (stmt.funcname ?? []) as Node[]
+  const funcnameParts = stmt.funcname ?? []
   const funcName = funcnameParts.map(n => strVal(n) ?? '').filter(Boolean).join('.')
 
   // WHEN clause — deparse if present
