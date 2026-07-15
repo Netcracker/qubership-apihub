@@ -11,6 +11,8 @@ export const SPEC_TYPE_ASYNCAPI_TYPE_FAMILY = 'asyncapi'
 export const SPEC_TYPE_ASYNCAPI_3 = 'asyncapi-3'
 export const SPEC_TYPE_GRAPH_API_TYPE_FAMILY = 'graphapi'
 export const SPEC_TYPE_GRAPH_API = 'graphapi'
+export const SPEC_TYPE_DDL_API_TYPE_FAMILY = 'ddlapi'
+export const SPEC_TYPE_DDL_API_1 = 'ddlapi-1.0'
 
 const JSON_SCHEMA_SPEC_VERSIONS = [
   SPEC_TYPE_JSON_SCHEMA_04,
@@ -34,12 +36,14 @@ export type SpecType =
   | OpenApiSpecVersion
   | typeof SPEC_TYPE_GRAPH_API
   | typeof SPEC_TYPE_ASYNCAPI_3
+  | typeof SPEC_TYPE_DDL_API_1
 
 export type SpecTypeFamily =
   typeof SPEC_TYPE_OPEN_API_TYPE_FAMILY
   | typeof SPEC_TYPE_JSON_SCHEMA_TYPE_FAMILY
   | typeof SPEC_TYPE_ASYNCAPI_TYPE_FAMILY
   | typeof SPEC_TYPE_GRAPH_API_TYPE_FAMILY
+  | typeof SPEC_TYPE_DDL_API_TYPE_FAMILY
 
 interface OpenApiSpec {
   openapi: string
@@ -51,6 +55,10 @@ interface AsyncApiSpec {
 
 interface GraphApiSpec {
   graphapi: string
+}
+
+interface DdlApiSpec {
+  ddlapi: string
 }
 
 export interface Spec {
@@ -84,6 +92,17 @@ export function resolveSpec(data: unknown): Spec {
     return { type: SPEC_TYPE_GRAPH_API, version: data.graphapi }
   }
 
+  // Must precede the JSON-Schema fallthrough below: a Realm has no `ddlapi`-free
+  // shape that would otherwise distinguish it, so a missed branch here would
+  // silently misclassify it as JSON Schema (irreversible Hyrum's-Law trap). Mirror
+  // OpenAPI/AsyncAPI and throw on an unsupported ddlapi version rather than fall through.
+  if (isDdlApi(data)) {
+    if (data.ddlapi.startsWith('1.0')) {
+      return { type: SPEC_TYPE_DDL_API_1, version: data.ddlapi }
+    }
+    throw new Error(`DdlApi version ${data.ddlapi} is not supported.`)
+  }
+
   return {
     type: SPEC_TYPE_JSON_SCHEMA_07,
     version: 'not-defined',
@@ -106,4 +125,10 @@ function isGraphApi(
   data: unknown,
 ): data is GraphApiSpec {
   return isObject(data) && 'graphapi' in data && typeof data.graphapi === 'string' && data.graphapi.length > 0
+}
+
+export function isDdlApi(
+  data: unknown,
+): data is DdlApiSpec {
+  return isObject(data) && 'ddlapi' in data && typeof data.ddlapi === 'string' && data.ddlapi.length > 0
 }

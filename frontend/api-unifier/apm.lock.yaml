@@ -1,0 +1,90 @@
+lockfile_version: '1'
+generated_at: '2026-07-02T15:47:07.137859+00:00'
+apm_version: 0.23.1
+dependencies:
+- repo_url: Netcracker/qubership-apihub-ddlapi
+  name: ddlapi-using
+  host: github.com
+  resolved_commit: a6f7dcb6a0aba9fb5e235cd0817ba0e5e8937dd6
+  version: 1.1.0
+  virtual_path: agent-packages/ddlapi-using
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/ddlapi-using
+  - .agents/skills/ddlapi-using/SKILL.md
+  - .claude/rules/ddlapi-using.md
+  - .claude/skills/ddlapi-using
+  - .claude/skills/ddlapi-using/SKILL.md
+  - .cursor/rules/ddlapi-using.mdc
+  - .github/instructions/ddlapi-using.instructions.md
+  deployed_file_hashes:
+    .agents/skills/ddlapi-using/SKILL.md: sha256:49ee63e1b58cc1ee7a0671a2a47dc6f42611977152bea9657002d60e6cee5fbd
+    .claude/rules/ddlapi-using.md: sha256:9b01b3c3616cf72b19370930f4a306b6e29f7da146b40f35c016c861dcf1b252
+    .claude/skills/ddlapi-using/SKILL.md: sha256:49ee63e1b58cc1ee7a0671a2a47dc6f42611977152bea9657002d60e6cee5fbd
+    .cursor/rules/ddlapi-using.mdc: sha256:3af0f9e363e4d264c77c3313116a71ee5465b58600946e98615b996e6fc02f5d
+    .github/instructions/ddlapi-using.instructions.md: sha256:a12f9f14d89ba48e3ef6631e1727f9f26c908d573c7ea836c3b44873672be558
+  content_hash: sha256:fb5fe648b6b241c5e9aff66800a1088fc2ea528e0abd2d10b4c51a6230207645
+- repo_url: Netcracker/qubership-apihub-json-crawl
+  name: json-crawl-using
+  host: github.com
+  resolved_commit: f43d2dd69b3a5175087a9edac5aa0c04934835a3
+  version: 1.2.0
+  virtual_path: agent-packages/json-crawl-using
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/json-crawl-using
+  - .agents/skills/json-crawl-using/SKILL.md
+  - .claude/rules/json-crawl-using.md
+  - .claude/skills/json-crawl-using
+  - .claude/skills/json-crawl-using/SKILL.md
+  - .cursor/rules/json-crawl-using.mdc
+  deployed_file_hashes:
+    .agents/skills/json-crawl-using/SKILL.md: sha256:a6adfa4344f157506d304c886398577fe9b860390c4ba94cfb8405a4c547805e
+    .claude/rules/json-crawl-using.md: sha256:a8006d87bd66a3e8f883fde7e1633f243ec91320ca357a7a23d73d73946ea7af
+    .claude/skills/json-crawl-using/SKILL.md: sha256:a6adfa4344f157506d304c886398577fe9b860390c4ba94cfb8405a4c547805e
+    .cursor/rules/json-crawl-using.mdc: sha256:d671cbc5fdef3ee28814237cab31e140e3b36661cae3926e32752e01852f245f
+  content_hash: sha256:26f877265321714d07a41435817cac085f1d5aaa721b7258af4820ac0f7f0a6e
+- repo_url: _local/api-unifier-authoring
+  name: api-unifier-authoring
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/api-unifier-authoring
+  - .agents/skills/api-unifier-authoring/SKILL.md
+  - .claude/rules/api-unifier-authoring.md
+  - .claude/skills/api-unifier-authoring
+  - .claude/skills/api-unifier-authoring/SKILL.md
+  - .cursor/rules/api-unifier-authoring.mdc
+  - .github/instructions/api-unifier-authoring.instructions.md
+  deployed_file_hashes:
+    .agents/skills/api-unifier-authoring/SKILL.md: sha256:025fbfd81436cdf1d99a68557869bde8f9da04e5cb457870771a2c6b4497d063
+    .claude/rules/api-unifier-authoring.md: sha256:0823795d913978ea2a4cdd96063c7a5055dd2f234507d96bd31cbac466ba11aa
+    .claude/skills/api-unifier-authoring/SKILL.md: sha256:025fbfd81436cdf1d99a68557869bde8f9da04e5cb457870771a2c6b4497d063
+    .cursor/rules/api-unifier-authoring.mdc: sha256:833260d3693c4096803a6ac549df3e442c0ee0e1c2d7a5b1aa3261ccfee2f477
+    .github/instructions/api-unifier-authoring.instructions.md: sha256:1c8f98f1d5295b8f659d46a4c6ac9e35e6642888bb5a1f5a30676d6eb14a92ad
+  source: local
+  local_path: ./agent-packages/api-unifier-authoring
+  declared_license: Apache-2.0
+- repo_url: _local/api-unifier-testing
+  name: api-unifier-testing
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/api-unifier-testing
+  - .agents/skills/api-unifier-testing/SKILL.md
+  - .claude/rules/api-unifier-testing.md
+  - .claude/skills/api-unifier-testing
+  - .claude/skills/api-unifier-testing/SKILL.md
+  - .cursor/rules/api-unifier-testing.mdc
+  - .github/instructions/api-unifier-testing.instructions.md
+  deployed_file_hashes:
+    .agents/skills/api-unifier-testing/SKILL.md: sha256:d6e3161f17f950aee397411bbc866b75b1488ad56766b2edc2f42786ea8436fa
+    .claude/rules/api-unifier-testing.md: sha256:0ee38282438d58026f0c6621432bd59b7e29d577b64535be69552a1640c8bb58
+    .claude/skills/api-unifier-testing/SKILL.md: sha256:d6e3161f17f950aee397411bbc866b75b1488ad56766b2edc2f42786ea8436fa
+    .cursor/rules/api-unifier-testing.mdc: sha256:209d5bcd4fbfe48ef6b70ee4e83d06dd4cbe6dd3db41c59ba704f87e579956ff
+    .github/instructions/api-unifier-testing.instructions.md: sha256:b1d11c70d27c782d80e1accd296a5301db642e095095ff129569697f93e1ae10
+  source: local
+  local_path: ./agent-packages/api-unifier-testing
+  declared_license: Apache-2.0
