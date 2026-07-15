@@ -1,5 +1,5 @@
 import { buildSchema as graphqlBuildSchema } from 'graphql'
-import jsyaml from 'js-yaml'
+import { stringify, parse } from 'yaml'
 import React, { FC, useEffect, useState } from 'react'
 import { buildFromIntrospection } from "../build-graph-api/of-introspection"
 import { buildFromSchema } from '../build-graph-api/of-schema'
@@ -56,7 +56,7 @@ export const GraphApiPlayground: FC<GraphApiPlaygroundProps> = ({
         if (graphApiSchema) {
           switch (resultFormat) {
             case RESULT_TYPE_YAML:
-              result = jsyaml.dump(graphApiSchema, { noRefs: true, quotingType: '"' })
+              result = stringify(graphApiSchema, { aliasDuplicateObjects: false, lineWidth: 0, singleQuote: true })
               break
             case RESULT_TYPE_JSON:
               result = JSON.stringify(graphApiSchema, null, 2)
@@ -70,7 +70,7 @@ export const GraphApiPlayground: FC<GraphApiPlaygroundProps> = ({
     }
     if (mode === GRAPHAPI_TO_GRAPHQL) {
       try {
-        const graphApiSchema = jsyaml.load(inputText) as GraphApiSchema
+        const graphApiSchema = parse(inputText) as GraphApiSchema
         result = printGraphApi(graphApiSchema)
       } catch (error) {
         if (error instanceof Error) {
