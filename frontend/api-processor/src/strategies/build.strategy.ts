@@ -14,34 +14,23 @@
  * limitations under the License.
  */
 
-import { BuildConfig, BuilderStrategy, BuildResult, BuildTypeContexts, VersionCache } from '../types'
-import { compareVersions } from '../components/compare'
+import { BuildConfig, BuilderStrategy, BuildResult, BuildTypeContexts, VersionCache, VersionDocument } from '../types'
+import { compareVersions } from '../components'
 import { applyBuilderVersionInfo } from '../validators'
-import { DuplicateOperationHandler, getOperationsList, setDocument } from '../utils'
+import { getOperationsList } from '../utils'
 import { buildFiles } from '../components/files'
+import { createDuplicateOperationHandler, processOperationDocument } from '../components/operations'
+import {
+  createDuplicateMcpEntityHandler,
+  processMcpDocument,
+  validateMcpCapabilities,
+  validateMcpInitRequired,
+  validateMcpProtocolVersion,
+} from '../components/mcp'
+import { createDuplicateDdlEntityHandler, processDdlDocument } from '../components/ddl'
+import { ParsedDdlData, validateDdlDocument } from '../apitypes/ddl'
 import { calculateHistoryForDeprecatedItems } from '../components/deprecated'
-import { ASYNCAPI_API_TYPE, MESSAGE_SEVERITY, REST_API_TYPE } from '../consts'
-
-/**
- * Handles duplicate operationIds found across different documents during build.
- * - AsyncAPI: throws an error, since duplicate operationIds across documents are not allowed.
- * - REST: adds an error notification (non-fatal), since existing published specs may already have duplicates.
- */
-const createDuplicateOperationHandler = (buildResult: BuildResult): DuplicateOperationHandler => (existing, duplicate) => {
-  if (duplicate.apiType === ASYNCAPI_API_TYPE) {
-    throw new Error(
-      `Duplicated operationId '${duplicate.operationId}' found in different documents: ` +
-      `'${existing.documentId}' and '${duplicate.documentId}'`,
-    )
-  }
-  buildResult.notifications.push({
-    severity: MESSAGE_SEVERITY.Error,
-    message: `Duplicated operationId '${duplicate.operationId}' found in different documents: ` +
-      `'${existing.documentId}' and '${duplicate.documentId}'`,
-    operationId: duplicate.operationId,
-    fileId: duplicate.documentId,
-  })
-}
+import { DDL_CONTRACT_TYPE, MCP_CONTRACT_TYPE, REST_API_TYPE } from '../consts'
 
 export class BuildStrategy implements BuilderStrategy {
   async execute(config: BuildConfig, buildResult: BuildResult, contexts: BuildTypeContexts): Promise<BuildResult> {
@@ -69,13 +58,34 @@ export class BuildStrategy implements BuilderStrategy {
 
     if (files?.length) {
       const buildFilesResult = await buildFiles(files, builderContextObject)
+
       const handleDuplicateOperation = createDuplicateOperationHandler(buildResult)
-      for (const { document, operations = [] } of buildFilesResult) {
-        setDocument(buildResult, document, operations, handleDuplicateOperation)
+      const handleDuplicateMcp = createDuplicateMcpEntityHandler()
+      const handleDuplicateDdl = createDuplicateDdlEntityHandler()
+
+      for (const { file, document, builder } of buildFilesResult) {
+        buildResult.documents.set(document.fileId, document)
+        if (!builder || document.publish === false) { continue }
+
+        if (builder.apiType === MCP_CONTRACT_TYPE) {
+          processMcpDocument(file, document, builder, buildResult, handleDuplicateMcp)
+        } else if (builder.apiType === DDL_CONTRACT_TYPE) {
+          // map parse issues to notifications (Warning for out-of-scope/unresolved, Error for
+          // duplicate-object which throws and breaks the publish) before indexing entities (Task 12)
+          validateDdlDocument(document as VersionDocument<ParsedDdlData>, buildResult.notifications)
+          processDdlDocument(file, document, builder, buildResult, handleDuplicateDdl)
+        } else {
+          await processOperationDocument(document, builder, builderContextObject, buildResult, handleDuplicateOperation)
+        }
       }
 
+      // whole-set cross-check: needs all entities collected first (init and its tools/resources/prompts
+      // may live in different files), mirroring how calculateHistoryForDeprecatedItems runs after the loop
+      validateMcpInitRequired(buildResult.mcpEntities)
+      validateMcpProtocolVersion(buildResult.documents)
+      validateMcpCapabilities(buildResult.mcpEntities, buildResult.documents, buildResult.notifications)
+
       if (!builderContextObject.builderRunOptions.withoutDeprecatedDepth && previousVersionCache) {
-        // add deprecated depth
         await calculateHistoryForDeprecatedItems(
           REST_API_TYPE,
           getOperationsList(buildResult),
@@ -93,6 +103,7 @@ export class BuildStrategy implements BuilderStrategy {
         compareContextObject,
       )
       buildResult.comparisons = compareResult.comparisons
+      buildResult.ddlComparisons = compareResult.ddlComparisons
       applyBuilderVersionInfo(config, compareResult)
     }
 

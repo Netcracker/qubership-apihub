@@ -44,6 +44,7 @@ export class ChangelogStrategy implements BuilderStrategy {
       compareContextObject,
     )
     buildResult.comparisons = compareResult.comparisons
+    buildResult.ddlComparisons = compareResult.ddlComparisons
     applyBuilderVersionInfo(config, compareResult)
 
     return buildResult

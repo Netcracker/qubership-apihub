@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { BuildConfigRef, CompareContext, CompareResult, VersionParams, VersionsComparison } from '../../types'
+import { BuildConfigRef, CompareContext, CompareResult, DdlComparison, VersionParams, VersionsComparison } from '../../types'
 import { compareVersionsOperations } from './compare.operations'
+import { compareVersionsDdl } from './compare.ddl'
 import { getSplittedVersionKey } from '../../utils'
 
 export async function compareVersions(
@@ -23,12 +24,20 @@ export async function compareVersions(
   curr: VersionParams,
   ctx: CompareContext,
 ): Promise<CompareResult> {
-  const comparisons: VersionsComparison[] = await compareVersionsReferences(prev, curr, ctx)
+  const { comparisons, ddlComparisons } = await compareVersionsReferences(prev, curr, ctx)
   const { previousVersionBuilderVersion, currentVersionBuilderVersion, ...comparison } = await compareVersionsOperations(prev, curr, ctx)
   comparisons.push(comparison)
 
+  // DDL changelog runs as a parallel step (AD1), emitting its own sibling comparisons. Ref DDL is added
+  // by compareVersionsReferences (cache-miss only — D15); here we add the root package's DDL comparison.
+  const rootDdlComparison = await compareVersionsDdl(prev, curr, ctx)
+  if (Object.keys(rootDdlComparison.contractsChangesSummary).length) {
+    ddlComparisons.push(rootDdlComparison)
+  }
+
   return {
     comparisons,
+    ddlComparisons,
     previousVersionBuilderVersion,
     currentVersionBuilderVersion,
   }
@@ -38,8 +47,9 @@ export async function compareVersionsReferences(
   prev: VersionParams,
   curr: VersionParams,
   ctx: CompareContext,
-): Promise<VersionsComparison[]> {
+): Promise<{ comparisons: VersionsComparison[]; ddlComparisons: DdlComparison[] }> {
   const comparisons: VersionsComparison[] = []
+  const ddlComparisons: DdlComparison[] = []
 
   const currentVersionRefs = curr && await ctx.versionReferencesResolver(...curr) || []
   const previousVersionRefs = prev && await ctx.versionReferencesResolver(...prev) || []
@@ -73,6 +83,9 @@ export async function compareVersionsReferences(
           fromCache: true,
           comparisonInternalDocuments: [],
         })
+        // D15: on a cache hit the cached ref comparison carries no DDL section; api-processor trusts the
+        // host to have invalidated/rebuilt it. We do NOT recompute DDL here — accept under-reporting until
+        // the host refreshes the cache. DDL for refs is computed on the cache-miss path below only.
         continue
       }
     }
@@ -81,8 +94,14 @@ export async function compareVersionsReferences(
     // builder version info is only relevant for the root package; ref-packages report it at their own root level
     const { previousVersionBuilderVersion: _, currentVersionBuilderVersion: __, ...refComparison } = await compareVersionsOperations(prevParams, currParams, ctx)
     comparisons.push(refComparison)
+
+    // cache miss: also compute this ref's DDL comparison so a DDL-bearing dashboard aggregates it (Task 11)
+    const refDdlComparison = await compareVersionsDdl(prevParams, currParams, ctx)
+    if (Object.keys(refDdlComparison.contractsChangesSummary).length) {
+      ddlComparisons.push(refDdlComparison)
+    }
   }
 
-  return comparisons
+  return { comparisons, ddlComparisons }
 }
 

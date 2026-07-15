@@ -1,4 +1,4 @@
-import * as YAML from 'js-yaml'
+import { stringifyYaml } from '../../src'
 import { API_KIND_SPECIFICATION_EXTENSION, type ApihubApiCompatibilityKind } from '../../src'
 
 function applyApiKind(obj: Record<string, unknown>, apiKind: ApihubApiCompatibilityKind): void {
@@ -23,7 +23,7 @@ export function generateAsyncApiSpec(
   }
   operationApiKind && applyApiKind(operation, operationApiKind)
 
-  return YAML.dump({
+  return stringifyYaml({
     asyncapi: '3.0.0',
     info: { title: 'Test', version: '1.0.0' },
     channels: { channel1: channel },
@@ -61,7 +61,7 @@ export function generateAsyncApiTwoOperationsSpec(
   }
   operationApiKind && applyApiKind(operation2, operationApiKind)
 
-  return YAML.dump({
+  return stringifyYaml({
     asyncapi: '3.0.0',
     info: { title: 'Test', version: '1.0.0' },
     channels: { channel1: channel },
@@ -105,7 +105,7 @@ export function generateAsyncApiTwoMessagesSpec(
   }
   operationApiKind && applyApiKind(operation, operationApiKind)
 
-  return YAML.dump({
+  return stringifyYaml({
     asyncapi: '3.0.0',
     info: { title: 'Test', version: '1.0.0' },
     channels: { channel1: channel },
@@ -136,7 +136,7 @@ export function generateAsyncApiTwoChannelsSpec(
   }
   operationApiKind && applyApiKind(operation2, operationApiKind)
 
-  return YAML.dump({
+  return stringifyYaml({
     asyncapi: '3.0.0',
     info: { title: 'Test', version: '1.0.0' },
     channels: {

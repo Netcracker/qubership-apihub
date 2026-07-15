@@ -382,7 +382,7 @@ export const matchMessageRefsByOperations = (
  * Returns empty array if the object is nullish or carries no aggregated diffs.
  */
 export function extractAggregatedDiffs(obj: unknown): Diff[] {
-  return (obj as WithAggregatedDiffs<object> | undefined)?.[DIFFS_AGGREGATED_META_KEY] ?? []
+  return [...((obj as WithAggregatedDiffs<object> | undefined)?.[DIFFS_AGGREGATED_META_KEY] ?? [])]
 }
 
 /**

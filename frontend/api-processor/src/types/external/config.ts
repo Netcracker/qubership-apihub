@@ -212,10 +212,10 @@ export interface BuildConfigFile {
   // deprecated
   publish?: boolean
 
+  metadata?: Record<string, unknown>
+
   // other params (should pass through to output config)
   [key: string]: unknown
-
-  // labels?: string[]
 }
 
 export interface BuildConfigRef {

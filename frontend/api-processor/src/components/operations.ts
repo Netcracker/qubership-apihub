@@ -14,18 +14,37 @@
  * limitations under the License.
  */
 
-import type { ApiOperation, BuilderContext, VersionDocument } from '../types'
+import type { ApiBuilder, BuilderContext, BuildResult, VersionDocument } from '../types'
+import { DuplicateOperationHandler, setReportingDuplicate } from '../utils'
+import { ASYNCAPI_API_TYPE, MESSAGE_SEVERITY } from '../consts'
 
-export const buildOperations = async (document: VersionDocument, ctx: BuilderContext): Promise<ApiOperation[]> => {
-  const builder = ctx.apiBuilders.find(({ types }) => types.includes(document.type))
-
-  if (builder) {
-    try {
-      return await builder.buildOperations?.(document, ctx) ?? []
-    } catch (error) {
-      throw new Error(`Cannot process the "${document.fileId}" document. ${error instanceof Error ? error.message : 'Unknown error'}`)
-    }
+export const createDuplicateOperationHandler = (buildResult: BuildResult): DuplicateOperationHandler => (existing, duplicate) => {
+  if (duplicate.apiType === ASYNCAPI_API_TYPE) {
+    throw new Error(
+      `Duplicated operationId '${duplicate.operationId}' found in different documents: ` +
+      `'${existing.documentId}' and '${duplicate.documentId}'`,
+    )
   }
+  buildResult.notifications.push({
+    severity: MESSAGE_SEVERITY.Error,
+    message: `Duplicated operationId '${duplicate.operationId}' found in different documents: ` +
+      `'${existing.documentId}' and '${duplicate.documentId}'`,
+    operationId: duplicate.operationId,
+    fileId: duplicate.documentId,
+  })
+}
 
-  return []
+export async function processOperationDocument(
+  document: VersionDocument,
+  builder: ApiBuilder,
+  ctx: BuilderContext,
+  buildResult: BuildResult,
+  onDuplicate?: DuplicateOperationHandler,
+): Promise<void> {
+  if (!builder.buildOperations) { return }
+  const operations = await builder.buildOperations(document, ctx)
+  document.operationIds = operations.map(({ operationId }) => operationId)
+  for (const operation of operations) {
+    setReportingDuplicate(buildResult.operations, operation.operationId, operation, onDuplicate)
+  }
 }

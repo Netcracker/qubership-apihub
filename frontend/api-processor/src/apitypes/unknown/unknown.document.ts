@@ -20,19 +20,22 @@ import {
   createVersionInternalDocument,
   getBundledFileDataWithDependencies,
   getDocumentTitle,
+  isObject,
+  isString,
 } from '../../utils'
 import { FILE_FORMAT } from '../../consts'
 
-export const buildUnknownDocument: DocumentBuilder<string> = async (parsedFile, file, ctx): Promise<VersionDocument> => {
+export const buildUnknownDocument: DocumentBuilder<unknown> = async (parsedFile, file, ctx): Promise<VersionDocument> => {
   const { fileId, slug = '', publish, ...metadata } = file
   const { type, format, source } = parsedFile
+  const parsedData = parsedFile.data
 
   let description = ''
   let dependencies: string[] = []
   let bundledFileData = undefined
 
   if (format === FILE_FORMAT.JSON || format === FILE_FORMAT.YAML) {
-    description = parsedFile.data?.description || ''
+    description = isObject(parsedData) && isString(parsedData.description) ? parsedData.description : ''
 
     if (ctx.configuration?.bundleComponents) {
       const {
@@ -48,7 +51,7 @@ export const buildUnknownDocument: DocumentBuilder<string> = async (parsedFile, 
     fileId,
     type,
     format,
-    data: bundledFileData || parsedFile.data || '',
+    data: bundledFileData || parsedData || '',
     slug,
     publish,
     filename: fileId,
@@ -85,7 +88,7 @@ export const buildBinaryDocument: (parsedFile: SourceFile, file: BuildConfigFile
   }
 }
 
-export const dumpUnknownDocument: DocumentDumper<string> = (document) => {
+export const dumpUnknownDocument: DocumentDumper<unknown> = (document) => {
   if (!document.source) {
     throw new Error(`Document with fileId = ${document.fileId} does not have source`)
   }

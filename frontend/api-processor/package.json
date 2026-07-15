@@ -1,8 +1,9 @@
 {
   "name": "@netcracker/qubership-apihub-api-processor",
-  "version": "5.4.3",
+  "version": "5.5.0",
   "description": "",
   "license": "Apache-2.0",
+  "sideEffects": false,
   "module": "dist/esm/src/index.js",
   "main": "dist/cjs/src/index.js",
   "types": "dist/cjs/src/index.d.ts",
@@ -11,12 +12,27 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/esm/apihub-builder.es.js",
+      "types": "./dist/cjs/src/index.d.ts",
+      "import": "./dist/esm/api-processor.es.js",
       "require": "./dist/cjs/src/index.js"
+    },
+    "./processor": {
+      "types": "./dist/cjs/src/processor.d.ts",
+      "import": "./dist/esm/api-processor-engine.es.js",
+      "require": "./dist/cjs/src/processor.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "processor": [
+        "./dist/cjs/src/processor.d.ts"
+      ]
     }
   },
   "scripts": {
     "build": "tsc --module commonjs --outDir dist/cjs && vite build",
+    "postbuild": "node scripts/assert-light-entry-parser-free.mjs",
+    "assert:light-entry": "node scripts/assert-light-entry-parser-free.mjs",
     "build:web": "vite build",
     "performance:build": "vite build --sourcemap=inline -c=vite.performance.config.ts",
     "performance:run-inspect": "node --inspect dist/index.es.js",
@@ -33,10 +49,11 @@
   },
   "dependencies": {
     "@asyncapi/parser": "^3.6.0",
-    "@netcracker/qubership-apihub-api-diff": "3.3.3",
-    "@netcracker/qubership-apihub-api-unifier": "2.8.0",
-    "@netcracker/qubership-apihub-graphapi": "1.0.10",
-    "@netcracker/qubership-apihub-json-crawl": "1.2.1",
+    "@netcracker/qubership-apihub-api-diff": "3.4.0",
+    "@netcracker/qubership-apihub-api-unifier": "2.9.0",
+    "@netcracker/qubership-apihub-ddlapi": "1.0.0",
+    "@netcracker/qubership-apihub-graphapi": "1.0.11",
+    "@netcracker/qubership-apihub-json-crawl": "1.2.2",
     "adm-zip": "0.5.10",
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
@@ -44,17 +61,16 @@
     "api-ref-bundler": "0.4.0",
     "fast-equals": "5.0.1",
     "graphql": "16.9.0",
-    "js-yaml": "^4.1.0",
     "jszip": "^3.10.1",
     "object-hash": "^3.0.0",
     "slug": "^8.2.3",
-    "swagger2openapi": "^7.0.8"
+    "swagger2openapi": "^7.0.8",
+    "yaml": "2.9.0"
   },
   "devDependencies": {
     "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
     "@types/adm-zip": "0.5.7",
     "@types/jest": "^29.5.12",
-    "@types/js-yaml": "^4.0.5",
     "@types/mime-types": "^3.0.0",
     "@types/node": "^24.0.0",
     "@types/object-hash": "^3.0.2",

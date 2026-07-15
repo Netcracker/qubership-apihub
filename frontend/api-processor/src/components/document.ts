@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { BuildConfigFile, BuilderContext, FILE_KIND, SourceFile, TextFile, VersionDocument } from '../types'
+import { ApiBuilder, BuildConfigFile, BuilderContext, FILE_KIND, SourceFile, TextFile, VersionDocument } from '../types'
 import {
   API_KIND_LABEL, API_KIND_SPECIFICATION_EXTENSION,
   APIHUB_API_COMPATIBILITY_KIND_BWC,
@@ -52,10 +52,15 @@ export const buildErrorDocument = (file: BuildConfigFile, parsedFile?: TextFile)
   }
 }
 
-export const buildDocument = async (parsedFile: SourceFile, file: BuildConfigFile, ctx: BuilderContext): Promise<VersionDocument> => {
+export interface BuildDocumentResult {
+  document: VersionDocument
+  builder?: ApiBuilder
+}
+
+export const buildDocument = async (parsedFile: SourceFile, file: BuildConfigFile, ctx: BuilderContext): Promise<BuildDocumentResult> => {
 
   if (parsedFile.kind === FILE_KIND.BINARY) {
-    return await buildBinaryDocument(parsedFile, file)
+    return { document: await buildBinaryDocument(parsedFile, file) }
   }
 
   const apiBuilder = ctx.apiBuilders.find(({ types }) => types.includes(parsedFile.type)) || unknownApiBuilder
@@ -63,7 +68,8 @@ export const buildDocument = async (parsedFile: SourceFile, file: BuildConfigFil
   try {
     file.apiKind = calculateApiKindFromLabels(file.labels, ctx.versionLabels)
 
-    return await apiBuilder.buildDocument(parsedFile, file, ctx)
+    const document = await apiBuilder.buildDocument(parsedFile, file, ctx)
+    return { document, builder: apiBuilder }
   } catch (error) {
     throw new Error(`Cannot process the "${file.fileId}" document. ${error instanceof Error ? error.message : 'Unknown error'}`)
   }

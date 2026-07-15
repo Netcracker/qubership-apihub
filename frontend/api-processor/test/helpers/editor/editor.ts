@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import * as YAML from 'js-yaml'
+import { stringifyYaml } from '../../../src/processor'
 
 import {
   BuildConfig,
@@ -23,7 +23,7 @@ import {
   BuilderRunOptions,
   BuildResult,
   PackageVersionBuilder,
-} from '../../../src'
+} from '../../../src/processor'
 import { loadConfig, loadFile } from '../utils'
 import { LocalRegistry } from '../registry'
 import { IRegistry } from '../registry/types'
@@ -112,7 +112,7 @@ export class Editor {
   async updateYamlFile(fileId: string, modifier: (obj: any) => any): Promise<void> {
     return this.updateTextFile(fileId, (data: string) => {
       const parsedData = loadYaml(data)
-      return YAML.dump(modifier(parsedData))
+      return stringifyYaml(modifier(parsedData))
     })
   }
 

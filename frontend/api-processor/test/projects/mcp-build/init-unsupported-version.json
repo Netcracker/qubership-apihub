@@ -1,0 +1,8 @@
+{
+  "protocolVersion": "9999-01-01",
+  "capabilities": {},
+  "serverInfo": {
+    "name": "test-mcp-server",
+    "version": "1.0.0"
+  }
+}

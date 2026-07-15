@@ -1,0 +1,14 @@
+{
+  "tools": [
+    {
+      "name": "search",
+      "description": "Another search tool",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "q": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

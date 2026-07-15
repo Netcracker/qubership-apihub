@@ -16,6 +16,8 @@ The builder produces a `BuildResult` that contains:
 - **documents** (`Map<string, VersionDocument>`)
 - **operations** (`Map<string, ApiOperation>`)
 - **comparisons** (`VersionsComparison[]`, when changelog comparison is enabled)
+- **ddlEntities** (`DdlEntityIndex`) and **ddlComparisons** (`DdlComparison[]`) — DDL contract output (see [DDL contract support](#ddl-contract-support))
+- **mcpEntities** (`McpEntityIndex`) — MCP contract output
 - **notifications** (errors/warnings/info produced during parsing/building)
 - **exportDocuments / exportFileName** (for export-related build types)
 - **merged** document (for merged outputs where applicable)
@@ -181,6 +183,36 @@ The library is structured as a pipeline with a **single public orchestrator** (`
    ↓
 5) BuildResult is produced: documents, operations, comparisons, notifications, exports
 ```
+
+## DDL contract support
+
+api-processor supports **DDL** (PostgreSQL `.sql` / `.ddl`) as a contract type, for both `build` and
+`changelog`. The **table is the contract unit** (indexes, foreign keys, comments, and types are parts of
+a table, not separate entities). api-processor never parses SQL itself — it delegates to
+`@netcracker/qubership-apihub-ddlapi` (`buildFromDdl` → `Realm`), normalizes via the unifier's
+`DDL_API_NORMALIZE_OPTIONS`, and diffs via api-diff (which dispatches `SPEC_TYPE_DDL_API_1`).
+
+DDL is **additive**: a single package/version may mix DDL with REST/async/graphql/MCP content, and
+dashboards aggregate DDL-bearing refs. Each contract type is summarized independently.
+
+**Build artifacts** (in the output package):
+
+- `documents.json` / `documents/<slug>.sql` — one entry per `.sql` file; the document holds the original SQL verbatim.
+- `version-internal-documents/<id>.json` — the normalized → denormalized → serialized `Realm`.
+- `ddl.json` — table entity index, grouped by kind (`{ tables: [...] }`), payload stripped.
+- `ddl/<ddlEntityId>` — minimal per-table SQL (no extension). The entity id is `{schemaName}-{kind}-{name}`, each segment slugified.
+
+**Changelog artifacts** (sibling to the operation comparisons, which are untouched):
+
+- `ddl-comparisons.json` — DDL comparison index; each comparison carries `contractsChangesSummary`, an object keyed by contract type (`ddl`), the analog of REST's `operationTypes` array.
+- `ddl-comparisons/<comparisonFileId>` — per-pair change data under an `entities` key; each entry groups the current/previous entity data (`ddlEntityData`/`previousDdlEntityData`) plus its `changes`.
+- The merged `Realm` per document pair lands in the **shared** `comparison-internal-documents`.
+
+**Notable behaviors:** a renamed table is a remove + add (no rename detection); a table moved between
+`.sql` files across versions is a single change, not remove + add; a shared type change (enum/domain) is
+attributed to every table that references it. Out-of-scope statements (`ALTER`/`DROP`/`VIEW`/…) and
+unresolved references are Warnings; a duplicate object or an id collision breaks the publish. DDL export
+is out of scope for v1.
 
 ## Build artifacts (this repo)
 

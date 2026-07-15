@@ -24,7 +24,7 @@ import {
   ORIGINS_SYMBOL,
 } from '../../consts'
 import { KeyOfConstType, ResolvedVersionDocument, ZippableDocument } from '../../types'
-import { TEXT_DOCUMENT_TYPE, TextDocumentType } from '../text'
+import { TEXT_DOCUMENT_TYPE } from '../text'
 import { NormalizeOptions } from '@netcracker/qubership-apihub-api-unifier'
 
 export const REST_SCOPES = {
@@ -55,11 +55,11 @@ export const REST_FILE_FORMAT = {
 export { DEPRECATED_META_KEY }
 
 export function isRestDocument(document: ZippableDocument | ResolvedVersionDocument): boolean {
-  return Object.values(REST_DOCUMENT_TYPE).includes(document.type as RestDocumentType)
+  return Object.values(REST_DOCUMENT_TYPE).some(type => document.type === type)
 }
 
 export function isTextDocument(document: ResolvedVersionDocument): boolean {
-  return Object.values(TEXT_DOCUMENT_TYPE).includes(document.type as TextDocumentType)
+  return Object.values(TEXT_DOCUMENT_TYPE).some(type => document.type === type)
 }
 
 export const REST_EFFECTIVE_NORMALIZE_OPTIONS: NormalizeOptions = {

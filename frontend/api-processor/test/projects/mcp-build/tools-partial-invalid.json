@@ -1,0 +1,12 @@
+{
+  "tools": [
+    {
+      "name": "valid_tool",
+      "description": "A tool that has a name",
+      "inputSchema": { "type": "object" }
+    },
+    {
+      "description": "This tool is missing its required name field"
+    }
+  ]
+}

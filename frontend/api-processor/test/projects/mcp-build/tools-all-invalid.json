@@ -1,0 +1,10 @@
+{
+  "tools": [
+    {
+      "description": "missing its required name field"
+    },
+    {
+      "description": "also missing its name"
+    }
+  ]
+}

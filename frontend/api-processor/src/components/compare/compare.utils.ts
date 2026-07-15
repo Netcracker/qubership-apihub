@@ -183,6 +183,31 @@ export type OperationPair = {
 
 export type OperationsMap = Record<NormalizedOperationId, OperationPair>
 
+/**
+ * Pair two `key -> item` maps into `key -> { previous?, current? }`, classifying each key as added
+ * (current only), removed (previous only), or potentially-changed (both). Contract-agnostic core of the
+ * comparison pairing (AD7): REST supplies normalized-operation-id maps; DDL supplies `ddlEntityId` maps
+ * so a table moved between `.sql` files across versions lines up by id rather than appearing as
+ * remove+add. The key derivation differs structurally per contract (REST needs builder + group context),
+ * so callers build the maps and pass them in.
+ */
+export function pairByKey<T>(
+  previousByKey: Record<string, T>,
+  currentByKey: Record<string, T>,
+): Record<string, { previous?: T; current?: T }> {
+  const previousKeys = Object.keys(previousByKey)
+  const currentKeys = Object.keys(currentByKey)
+
+  const result: Record<string, { previous?: T; current?: T }> = {}
+  difference(currentKeys, previousKeys).forEach(key => result[key] = { current: currentByKey[key] })
+  difference(previousKeys, currentKeys).forEach(key => result[key] = { previous: previousByKey[key] })
+  intersection(previousKeys, currentKeys).forEach(key => result[key] = {
+    previous: previousByKey[key],
+    current: currentByKey[key],
+  })
+  return result
+}
+
 export const createPairOperationsMap = (
   previousGroupSlug: string,
   currentGroupSlug: string,
@@ -190,22 +215,10 @@ export const createPairOperationsMap = (
   currentOperations: ResolvedOperation[],
   apiBuilder: ApiBuilder,
 ): OperationsMap => {
-  const [prevNormalizedOperationIds, prevNormalizedIdToOperation] = normalizeOperationIds(previousOperations, apiBuilder, previousGroupSlug)
-  const [currNormalizedOperationIds, currNormalizedIdToOperation] = normalizeOperationIds(currentOperations, apiBuilder, currentGroupSlug)
+  const [, prevNormalizedIdToOperation] = normalizeOperationIds(previousOperations, apiBuilder, previousGroupSlug)
+  const [, currNormalizedIdToOperation] = normalizeOperationIds(currentOperations, apiBuilder, currentGroupSlug)
 
-  const added: NormalizedOperationId[] = difference(currNormalizedOperationIds, prevNormalizedOperationIds)
-  const removed: NormalizedOperationId[] = difference(prevNormalizedOperationIds, currNormalizedOperationIds)
-  const potentiallyChanged: NormalizedOperationId[] = intersection(prevNormalizedOperationIds, currNormalizedOperationIds)
-
-  const operationsMap: OperationsMap = {}
-  added.forEach(id => operationsMap[id] = { current: currNormalizedIdToOperation[id] })
-  removed.forEach(id => operationsMap[id] = { previous: prevNormalizedIdToOperation[id] })
-  potentiallyChanged.forEach(id => operationsMap[id] = {
-    previous: prevNormalizedIdToOperation[id],
-    current: currNormalizedIdToOperation[id],
-  })
-
-  return operationsMap
+  return pairByKey(prevNormalizedIdToOperation, currNormalizedIdToOperation)
 }
 
 export const calculatePairedDocs = async (
@@ -263,6 +276,25 @@ export const comparePairedDocs = async (
   return [operationChanges, uniqueDiffsForDocPairs, Array.from(tags).sort(), comparisonDocuments]
 }
 
+/**
+ * The fields shared by every per-entity change record (AD7): the change/impacted summaries derived from
+ * a diff set, the diffs themselves (internal-only), and the comparison-internal-document back-link.
+ * `createOperationChange` and the DDL `createDdlChange` each build on this and add only their own
+ * id + metadata fields.
+ */
+export function createChangeBase(
+  diffs: Diff[],
+  comparisonInternalDocumentId: string,
+): { changeSummary: ChangeSummary; impactedSummary: ImpactedOperationSummary; diffs: Diff[]; comparisonInternalDocumentId: string } {
+  const changeSummary = calculateChangeSummary(diffs)
+  return {
+    changeSummary,
+    impactedSummary: calculateImpactedSummary([changeSummary]),
+    diffs,
+    comparisonInternalDocumentId,
+  }
+}
+
 export function createOperationChange(
   apiType: OperationsApiType,
   operationDiffs: Diff[],
@@ -272,9 +304,6 @@ export function createOperationChange(
   currentGroup?: string,
   previousGroup?: string,
 ): OperationChanges {
-  const changeSummary = calculateChangeSummary(operationDiffs)
-  const impactedSummary = calculateImpactedSummary([changeSummary])
-
   const currentOperationFields = current && {
     operationId: current.operationId,
     apiKind: current.apiKind,
@@ -288,10 +317,7 @@ export function createOperationChange(
   }
   return {
     apiType,
-    diffs: operationDiffs,
-    changeSummary: changeSummary,
-    impactedSummary: impactedSummary,
-    comparisonInternalDocumentId,
+    ...createChangeBase(operationDiffs, comparisonInternalDocumentId),
     ...currentOperationFields,
     ...previousOperationFields,
   }

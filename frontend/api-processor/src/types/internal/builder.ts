@@ -14,13 +14,24 @@
  * limitations under the License.
  */
 
-import { BuildConfig, BuilderResolvers, FileId, PackageId, ResolvedVersion, VersionId } from '../external'
-import { VersionsComparison, VersionsComparisonDto } from './compare'
+import {
+  BuildConfig,
+  BuildConfigFile,
+  BuilderResolvers,
+  FileId,
+  PackageId,
+  ResolvedVersion,
+  VersionId,
+} from '../external'
+import { DdlComparison, VersionsComparison, VersionsComparisonDto } from './compare'
 import { PackageConfig } from '../package/config'
 import { NotificationMessage } from '../package/notifications'
 import { ExportDocument, VersionDocument } from './documents'
 import { SourceFile } from './internal'
 import { ApiOperation } from './operation'
+import { ApiBuilder } from './apiBuilder'
+import { McpEntityIndex } from '../package/mcp'
+import { DdlEntityIndex } from '../package/ddl'
 
 export type VersionCache = ResolvedVersion & {
   packageId: PackageId
@@ -30,11 +41,14 @@ export type VersionCache = ResolvedVersion & {
 export interface BuildResultDto {
   config: PackageConfig
   comparisons: VersionsComparisonDto[]
+  ddlComparisons: DdlComparison[]
   notifications: NotificationMessage[]
   documents: Map<string, VersionDocument>
   exportDocuments: ExportDocument[]
   operations: Map<string, ApiOperation>
   merged?: VersionDocument
+  mcpEntities: McpEntityIndex
+  ddlEntities: DdlEntityIndex
 }
 
 export interface BuildResult {
@@ -46,6 +60,9 @@ export interface BuildResult {
   exportFileName?: string
   operations: Map<string, ApiOperation>
   merged?: VersionDocument
+  mcpEntities: McpEntityIndex
+  ddlEntities: DdlEntityIndex
+  ddlComparisons: DdlComparison[]
 }
 
 export type BuilderConfiguration = {
@@ -66,6 +83,7 @@ export interface IPackageVersionBuilder {
   readonly versionsCache: Map<string, VersionCache>
 
   run: (options?: BuilderRunOptions) => Promise<BuildResult>
+  //TODO: remove update method, since it is not used in production code after Editor was removed
   update: (config: BuildConfig, changedFiles?: FileId[], options?: BuilderRunOptions) => Promise<BuildResult>
 }
 
@@ -93,8 +111,9 @@ export type BuilderRunOptions = Partial<{
 }>
 
 export interface BuildFileResult<T = any> {
+  file: BuildConfigFile
   document: VersionDocument<T>
-  operations?: ApiOperation[]
+  builder?: ApiBuilder
 }
 
 

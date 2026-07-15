@@ -17,7 +17,7 @@ import { describe, expect, jest, test } from '@jest/globals'
 import { LocalRegistry } from './helpers/registry'
 import { BUILD_TYPE, VERSION_STATUS } from '../src/consts'
 import { Editor } from './helpers/editor'
-import { PackageVersionBuilder } from '../src'
+import { PackageVersionBuilder } from '../src/processor'
 import { prepareChangelogDashboard } from './helpers'
 
 describe('Dashboard build', () => {
@@ -130,5 +130,39 @@ describe('Dashboard build', () => {
     })
 
     await expect(editor.run()).rejects.toThrow('Can\'t build the changelog if previous version was built using an outdated api-processor.')
+  }, 100000)
+
+  test('dashboard changelog aggregates DDL comparisons from DDL-bearing refs (cache-miss path, D15)', async () => {
+    const refId = 'dashboards/ddl-ref'
+    const dashboardId = 'dashboards/ddl-dashboard'
+
+    // a DDL ref package with a table that changes between v1 and v2
+    const ref = LocalRegistry.openPackage(refId)
+    await ref.publishFromContent(
+      { 'shop.sql': 'CREATE TABLE widgets (id bigint PRIMARY KEY);' },
+      { packageId: refId, version: 'v1', buildType: BUILD_TYPE.BUILD, files: [{ fileId: 'shop.sql' }] },
+    )
+    await ref.publishFromContent(
+      { 'shop.sql': 'CREATE TABLE widgets (id bigint PRIMARY KEY, label text);' },
+      { packageId: refId, version: 'v2', buildType: BUILD_TYPE.BUILD, files: [{ fileId: 'shop.sql' }] },
+    )
+
+    // a dashboard referencing it, across two versions
+    const dashboard = LocalRegistry.openPackage(dashboardId)
+    await dashboard.publishFromContent(
+      {},
+      { packageId: dashboardId, version: 'v1', buildType: BUILD_TYPE.BUILD, refs: [{ refId, version: 'v1' }], files: [] },
+    )
+    const result = await dashboard.publishFromContent(
+      {},
+      { packageId: dashboardId, version: 'v2', previousVersion: 'v1', buildType: BUILD_TYPE.BUILD, refs: [{ refId, version: 'v2' }], files: [] },
+    )
+
+    // the ref's DDL comparison is aggregated into the dashboard changelog (versionComparisonResolver
+    // returns null in the test registry → cache-miss → fresh compareVersionsDdl for the ref)
+    const refDdl = result.ddlComparisons.find(comparison => comparison.packageId === refId)
+    expect(refDdl).toBeDefined()
+    expect(refDdl!.contractsChangesSummary).toHaveProperty('ddl')
+    expect((refDdl!.data ?? []).map(change => change.ddlEntityId)).toContain('public-table-widgets')
   }, 100000)
 })

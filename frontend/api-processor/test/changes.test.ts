@@ -30,7 +30,7 @@ import {
   PackageVersionBuilder,
   NON_BREAKING_CHANGE_TYPE,
   UNCLASSIFIED_CHANGE_TYPE,
-} from '../src'
+} from '../src/processor'
 import { VERSION_STATUS } from '../src/consts'
 import { jest } from '@jest/globals'
 
