@@ -23,7 +23,7 @@ import {
   filterChangeKeys,
   hasAfterDeclarationPaths,
   hasBeforeDeclarationPaths,
-  maxDiffType
+  maxDiffTypeFromDiffs
 } from "../../../../utils/common/changes";
 import { isDefined } from "../../../../utils/common/checkers";
 
@@ -182,8 +182,8 @@ export function useValueRangeValidation(
   const diffExclusiveMinimum = changes.exclusiveMinimum
   const diffMaximum = changes.maximum
   const diffExclusiveMaximum = changes.exclusiveMaximum
-  const [lowerDiffType] = maxDiffType(diffMinimum, diffExclusiveMinimum)!
-  const [upperDiffType] = maxDiffType(diffMaximum, diffExclusiveMaximum)!
+  const [lowerDiffType] = maxDiffTypeFromDiffs(diffMinimum, diffExclusiveMinimum)!
+  const [upperDiffType] = maxDiffTypeFromDiffs(diffMaximum, diffExclusiveMaximum)!
 
   // Changes detection flags
   const hasMinimum = isDefined(minimum)

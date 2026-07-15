@@ -17,7 +17,7 @@
 import { DiffRecord, isDiff, isDiffMetaRecord } from "@netcracker/qubership-apihub-api-data-model"
 import { DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import type { FC, ReactNode } from 'react'
-import { DEFAULT_STRIKETHROUGH_VALUE_CLASS, INLINE_CONTENT_DIFF_COLOR_SCHEMAS } from '../../../../../consts/changes'
+import { INLINE_CONTENT_DIFF_COLOR_SCHEMAS } from '../../../../../consts/changes'
 import { useChangeSeverityFilters } from '../../../../../contexts/ChangeSeverityFiltersContext'
 import { LayoutMode } from '../../../../../types/LayoutMode'
 import { LayoutSide } from '../../../../../types/internal/LayoutSide'
@@ -64,16 +64,14 @@ export const DirectivesSubtitle: FC<DirectivesSubtitleProps> = (props) => {
           removed: diffActionForDirective === DiffAction.remove,
         }
 
-        let result: ReactNode | null = <Value key={directive} value={directive}/>
+        let result: ReactNode | null = <Value key={directive} value={directive} />
 
         // TODO 23.11.23 // Attempt to de-duplicate with ArgumentsSubtitle, DirectiveLocations
         if (sideBySide) {
           if (removed) {
             if (originSide) {
-              const diffColorSchema = [
-                diffActionForDirective ? INLINE_CONTENT_DIFF_COLOR_SCHEMAS[diffActionForDirective] : '',
-                DEFAULT_STRIKETHROUGH_VALUE_CLASS
-              ].join(' ')
+              const diffColorSchema =
+                diffActionForDirective ? INLINE_CONTENT_DIFF_COLOR_SCHEMAS[diffActionForDirective] : ''
               result =
                 <Value
                   key={directive}
@@ -104,10 +102,8 @@ export const DirectivesSubtitle: FC<DirectivesSubtitleProps> = (props) => {
 
         if (inline) {
           if (added || removed) {
-            const diffColorSchema = [
-              INLINE_CONTENT_DIFF_COLOR_SCHEMAS[diffActionForDirective!],
-              removed ? DEFAULT_STRIKETHROUGH_VALUE_CLASS : ''
-            ].join(' ')
+            const diffColorSchema =
+              INLINE_CONTENT_DIFF_COLOR_SCHEMAS[diffActionForDirective!]
             result =
               <Value
                 key={directive}

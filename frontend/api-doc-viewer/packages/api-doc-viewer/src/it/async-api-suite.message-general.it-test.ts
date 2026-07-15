@@ -107,4 +107,24 @@ describe('AsyncAPI Suite 2 - Message General', () => {
     await waitForHtmlRenderingComplete()
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
+
+  it('no-heading-with-name', async () => {
+    story = await storyPage(
+      page,
+      'async-api-suite-message--no-heading-with-name'
+    )
+    component = await story.viewComponent()
+    await waitForHtmlRenderingComplete()
+    expect(await component.captureScreenshot()).toMatchImageSnapshot()
+  })
+
+  it('no-heading-without-name', async () => {
+    story = await storyPage(
+      page,
+      'async-api-suite-message--no-heading-without-name'
+    )
+    component = await story.viewComponent()
+    await waitForHtmlRenderingComplete()
+    expect(await component.captureScreenshot()).toMatchImageSnapshot()
+  })
 })

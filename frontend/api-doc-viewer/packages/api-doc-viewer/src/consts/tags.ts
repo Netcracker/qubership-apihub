@@ -19,5 +19,5 @@ export const DEPRECATED_TAG = 'deprecated'
 export const READ_ONLY_TAG = 'read-only'
 export const WRITE_ONLY_TAG = 'write-only'
 
-export const BLUE_TAG_COLOR_SCHEMA = 'bg-sky-400 text-white ring-sky-400/20'
-export const AMBER_TAG_COLOR_SCHEMA = 'bg-amber-500 text-white ring-amber-500/20'
+export const BLUE_TAG_COLOR_SCHEMA = 'ux-badge_tag-blue'
+export const AMBER_TAG_COLOR_SCHEMA = 'ux-badge_tag-amber'

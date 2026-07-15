@@ -199,6 +199,10 @@ export function isArrayValue(value?: JsonSchemaNodeValue | GraphSchemaNodeValue 
   return [primaryType, previousType].includes(NodeType.Array)
 }
 
+export function valueHasExtensions(value?: JsonSchemaNodeValue | GraphSchemaNodeValue | GraphApiNodeData | null) {
+  return !!value && 'extensions' in value && !!value.extensions
+}
+
 export function hasNoContent(node?: AnyTreeNode | null): boolean {
   const nodeValue = node?.value()
   const nodeMeta = node?.meta

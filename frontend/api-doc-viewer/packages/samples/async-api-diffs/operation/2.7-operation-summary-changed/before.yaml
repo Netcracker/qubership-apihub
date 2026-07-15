@@ -1,0 +1,29 @@
+asyncapi: 3.0.0
+info:
+  title: Sample AsyncAPI
+  version: 1.0.0
+channels:
+  testChannel:
+    address: events.default
+    messages:
+      TestMessage:
+        $ref: '#/components/messages/TestMessage'
+operations:
+  sendOperation:
+    action: send
+    channel:
+      $ref: '#/channels/testChannel'
+    messages:
+      - $ref: '#/components/messages/TestMessage'
+    summary: operation summary
+components:
+  messages:
+    TestMessage:
+      name: TestMessage
+      payload:
+        type: object
+        properties:
+          id:
+            type: string
+        required:
+          - id

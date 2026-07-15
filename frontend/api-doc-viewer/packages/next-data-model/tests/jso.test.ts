@@ -13,7 +13,7 @@ describe('JSO Tree', () => {
       isStudent: true,
     }
 
-    const builder = new JsoTreeBuilder(jso)
+    const builder = new JsoTreeBuilder({ source: jso })
     const tree: JsoTree | undefined = builder.build()
     const root = tree?.root
 
@@ -65,7 +65,7 @@ describe('JSO Tree', () => {
       }
     }
 
-    const builder = new JsoTreeBuilder(jso)
+    const builder = new JsoTreeBuilder({ source: jso })
     const tree: JsoTree | undefined = builder.build()
     const root = tree?.root
 
@@ -131,7 +131,7 @@ describe('JSO Tree', () => {
       names: ['John', 'Jane', 'Jim'],
     }
 
-    const builder = new JsoTreeBuilder(jso)
+    const builder = new JsoTreeBuilder({ source: jso })
     const tree: JsoTree | undefined = builder.build()
     const root = tree?.root
 
@@ -200,7 +200,7 @@ describe('JSO Tree', () => {
       }
     }
 
-    const builder = new JsoTreeBuilder(jso)
+    const builder = new JsoTreeBuilder({ source: jso })
     const tree: JsoTree | undefined = builder.build()
     const root = tree?.root
 
@@ -289,11 +289,11 @@ describe('JSO Tree', () => {
           type: 'string',
           format: 'email',
           description: 'Email address',
-          examples: ['john.doe@example.com'],
+          examples: ['example@example.com'],
         }
       }
 
-      const builder = new JsoTreeBuilder(jso)
+      const builder = new JsoTreeBuilder({ source: jso })
       const tree: JsoTree | undefined = builder.build()
 
       const root = tree?.root
@@ -356,7 +356,7 @@ describe('JSO Tree', () => {
       expect(examples).toBeDefined()
       expect(examples!.value()).toEqual({
         title: 'examples',
-        value: ['john.doe@example.com'],
+        value: ['example@example.com'],
         valueType: JsoPropertyValueTypes.ARRAY,
         isPrimitive: false,
         isArrayItem: false,
@@ -370,7 +370,7 @@ describe('JSO Tree', () => {
       expect(example).toBeDefined()
       expect(example!.value()).toEqual({
         title: '0',
-        value: 'john.doe@example.com',
+        value: 'example@example.com',
         valueType: JsoPropertyValueTypes.STRING,
         isPrimitive: true,
         isArrayItem: true,
@@ -390,7 +390,7 @@ describe('JSO Tree', () => {
         }
       }
 
-      const builder = new JsoTreeBuilder(jso)
+      const builder = new JsoTreeBuilder({ source: jso })
       const tree: JsoTree | undefined = builder.build()
 
       const root = tree?.root
@@ -507,7 +507,7 @@ describe('JSO Tree', () => {
         }
       }
 
-      const builder = new JsoTreeBuilder(jso)
+      const builder = new JsoTreeBuilder({ source: jso })
       const tree: JsoTree | undefined = builder.build()
 
       const root = tree?.root
@@ -613,7 +613,7 @@ describe('JSO Tree', () => {
         }
       }
 
-      const builder = new JsoTreeBuilder(jso)
+      const builder = new JsoTreeBuilder({ source: jso })
       const tree: JsoTree | undefined = builder.build()
 
       const root = tree?.root
@@ -702,7 +702,7 @@ describe('JSO Tree', () => {
         }
       }
 
-      const builder = new JsoTreeBuilder(jso)
+      const builder = new JsoTreeBuilder({ source: jso })
       const tree: JsoTree | undefined = builder.build()
 
       const root = tree?.root
@@ -837,7 +837,7 @@ describe('JSO Tree', () => {
 
   describe('Properties with kind = JSON Schema (supportJsonSchema = true)', () => {
     function testJsonSchemaProperty(jso: { schema: Record<string, unknown> }) {
-      const builder = new JsoTreeBuilder(jso, true)
+      const builder = new JsoTreeBuilder({ source: jso, supportJsonSchema: true })
       const tree: JsoTree | undefined = builder.build()
       const root = tree?.root
 
@@ -867,7 +867,7 @@ describe('JSO Tree', () => {
           type: 'string',
           format: 'email',
           description: 'Email address',
-          examples: ['john.doe@example.com'],
+          examples: ['example@example.com'],
         }
       }
 

@@ -17,7 +17,7 @@
 import { isDiff } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import type { FC, ReactNode } from 'react'
-import { DEFAULT_STRIKETHROUGH_VALUE_CLASS, INLINE_CONTENT_DIFF_COLOR_SCHEMAS } from '../../consts/changes'
+import { INLINE_CONTENT_DIFF_COLOR_SCHEMAS } from '../../consts/changes'
 import { NULLABLE_TYPE_SUFFIX_TEXT, UNKNOWN_TYPE_TEXT } from '../../consts/types'
 import { useChangeSeverityFilters } from '../../contexts/ChangeSeverityFiltersContext'
 import { useItemChangedFlags } from '../../hooks/changes'
@@ -39,7 +39,6 @@ export type NodeTypeProps = PropsWithoutChangesSummary<
   Partial<{
     layoutSide: LayoutSide
     contentChangesColorizing: boolean
-    contentChangesStrikethrough: boolean
     showNullable: boolean
   }> &
   PropsWithChanges
@@ -66,7 +65,6 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
     layoutMode,
     layoutSide,
     contentChangesColorizing = true,
-    contentChangesStrikethrough = true,
     showNullable = false,
     $changes,
   } = props
@@ -144,12 +142,8 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
         if (originSide) {
           diffStyles = classes(
             getIf(
-              diffTypeForTypeIncluded && contentChangesStrikethrough,
-              DEFAULT_STRIKETHROUGH_VALUE_CLASS
-            ),
-            getIf(
               diffTypeForTypeIncluded && contentChangesColorizing,
-              $typeChange?.action ? INLINE_CONTENT_DIFF_COLOR_SCHEMAS[$typeChange.action] : ''
+              INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
             )
           )
           actualType =
@@ -160,7 +154,7 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
         if (changedSide) {
           diffStyles = getIf(
             diffTypeForTypeIncluded && contentChangesColorizing,
-            INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.add]
+            INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
           )
           actualType =
             <div className={`inline ${diffStyles}`}>
@@ -172,12 +166,8 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
         if (originSide) {
           diffStyles = classes(
             getIf(
-              diffTypeForTypeIncluded && contentChangesStrikethrough,
-              DEFAULT_STRIKETHROUGH_VALUE_CLASS
-            ),
-            getIf(
               diffTypeForTypeIncluded && contentChangesColorizing,
-              INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove]
+              INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
             )
           )
           actualType =
@@ -188,7 +178,7 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
         if (changedSide) {
           diffStyles = getIf(
             diffTypeForTypeIncluded && contentChangesColorizing,
-            $typeChange?.action ? INLINE_CONTENT_DIFF_COLOR_SCHEMAS[$typeChange.action] : ''
+            INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
           )
           actualType =
             <div className={`inline ${diffStyles}`}>
@@ -200,12 +190,8 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
         if (originSide) {
           diffStyles = classes(
             getIf(
-              diffTypeForTypeIncluded && contentChangesStrikethrough,
-              DEFAULT_STRIKETHROUGH_VALUE_CLASS
-            ),
-            getIf(
               diffTypeForTypeIncluded && contentChangesColorizing,
-              INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove]
+              INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
             )
           )
           actualType =
@@ -216,7 +202,7 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
         if (changedSide) {
           diffStyles = getIf(
             diffTypeForTypeIncluded && contentChangesColorizing,
-            INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.add]
+            INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
           )
           actualType =
             <div className={`inline ${diffStyles}`}>
@@ -232,17 +218,13 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
       if (typeRemoved) {
         diffStylesBefore = classes(
           getIf(
-            diffTypeForTypeIncluded && contentChangesStrikethrough,
-            DEFAULT_STRIKETHROUGH_VALUE_CLASS
-          ),
-          getIf(
             diffTypeForTypeIncluded && contentChangesColorizing,
-            INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove]
+            INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
           )
         )
         diffStylesAfter = getIf(
           diffTypeForTypeIncluded && contentChangesColorizing,
-          INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.add]
+          INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
         )
         actualType = <>
           <div className={`inline ${diffStylesBefore}`}>
@@ -256,17 +238,13 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
       if (typeAdded) {
         diffStylesBefore = classes(
           getIf(
-            diffTypeForTypeIncluded && contentChangesStrikethrough,
-            DEFAULT_STRIKETHROUGH_VALUE_CLASS
-          ),
-          getIf(
             diffTypeForTypeIncluded && contentChangesColorizing,
-            INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove]
+            INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
           )
         )
         diffStylesAfter = getIf(
           diffTypeForTypeIncluded && contentChangesColorizing,
-          $typeChange?.action ? INLINE_CONTENT_DIFF_COLOR_SCHEMAS[$typeChange.action] : ''
+          INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
         )
         actualType = <>
           <div className={`inline ${diffStylesBefore}`}>
@@ -280,17 +258,13 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
       if (typeReplaced) {
         diffStylesBefore = classes(
           getIf(
-            diffTypeForTypeIncluded && contentChangesStrikethrough,
-            DEFAULT_STRIKETHROUGH_VALUE_CLASS
-          ),
-          getIf(
             diffTypeForTypeIncluded && contentChangesColorizing,
-            INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove]
+            INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
           )
         )
         diffStylesAfter = getIf(
           diffTypeForTypeIncluded && contentChangesColorizing,
-          INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.add]
+          INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
         )
         actualType = <>
           <div className={`inline ${diffStylesBefore}`}>
@@ -309,10 +283,6 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
         if (nullableRemoved) {
           if (originSide) {
             const diffStyles = classes(
-              getIf(
-                diffTypeForNullableIncluded && contentChangesStrikethrough,
-                DEFAULT_STRIKETHROUGH_VALUE_CLASS
-              ),
               getIf(
                 diffTypeForNullableIncluded && contentChangesColorizing,
                 INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove]
@@ -347,10 +317,6 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
       if (isInlineDiffsLayoutMode) {
         if (nullableRemoved) {
           const diffStylesBefore = classes(
-            getIf(
-              diffTypeForNullableIncluded && contentChangesStrikethrough,
-              DEFAULT_STRIKETHROUGH_VALUE_CLASS
-            ),
             getIf(
               diffTypeForNullableIncluded && contentChangesColorizing,
               INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove]
@@ -401,7 +367,6 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
       isInline: isInlineDiffsLayoutMode,
       originSide,
       colorizing: contentChangesColorizing,
-      strikethrough: contentChangesStrikethrough,
     })
     actualQualifier = renderScalarDiff({
       input: qualifierInput,
@@ -410,7 +375,6 @@ export const NodeType: FC<NodeTypeProps> = (props) => {
       isInline: isInlineDiffsLayoutMode,
       originSide,
       colorizing: contentChangesColorizing,
-      strikethrough: contentChangesStrikethrough,
     })
   }
 
@@ -447,14 +411,11 @@ function beforeValueOf(change?: Diff): string | undefined {
 function partStyles(
   included: boolean,
   colorizing: boolean,
-  strikethrough: boolean,
-): { removeCls: string; addCls: string } {
-  const removeCls = classes(
-    getIf(included && strikethrough, DEFAULT_STRIKETHROUGH_VALUE_CLASS),
-    getIf(included && colorizing, INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove]),
-  )
+): { removeCls: string; addCls: string; replaceCls: string } {
+  const removeCls = getIf(included && colorizing, INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove]) ?? ''
   const addCls = getIf(included && colorizing, INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.add]) ?? ''
-  return { removeCls, addCls }
+  const replaceCls = getIf(included && colorizing, INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]) ?? ''
+  return { removeCls, addCls, replaceCls }
 }
 
 function styledText(text: string, cls: string): ReactNode {
@@ -481,11 +442,10 @@ function renderScalarDiff(params: {
   isInline: boolean
   originSide: boolean
   colorizing: boolean
-  strikethrough: boolean
 }): ReactNode | null {
-  const { input, decorate, isSideBySide, isInline, originSide, colorizing, strikethrough } = params
+  const { input, decorate, isSideBySide, isInline, originSide, colorizing } = params
   const { value, beforeValue, added, removed, replaced, included } = input
-  const { removeCls, addCls } = partStyles(included, colorizing, strikethrough)
+  const { removeCls, addCls, replaceCls } = partStyles(included, colorizing)
 
   // Renders one decorated token, or null when the value is absent / blank.
   const renderToken = (raw: string | undefined, cls: string): ReactNode | null =>
@@ -501,7 +461,7 @@ function renderScalarDiff(params: {
         return renderToken(beforeValue ?? value, removeCls)
       }
       if (replaced) {
-        return renderToken(beforeValue, removeCls)
+        return renderToken(beforeValue, replaceCls)
       }
       return renderToken(value, '')
     }
@@ -509,8 +469,11 @@ function renderScalarDiff(params: {
     if (removed) {
       return null
     }
-    if (added || replaced) {
+    if (added) {
       return renderToken(value, addCls)
+    }
+    if (replaced) {
+      return renderToken(value, replaceCls)
     }
     return renderToken(value, '')
   }
@@ -528,8 +491,8 @@ function renderScalarDiff(params: {
         fragments.push(before)
       }
     } else if (replaced) {
-      const before = renderToken(beforeValue, removeCls)
-      const after = renderToken(value, addCls)
+      const before = renderToken(beforeValue, replaceCls)
+      const after = renderToken(value, replaceCls)
       if (before) {
         fragments.push(before)
       }

@@ -26,7 +26,8 @@ import {
   isObjectValue,
   isRootNode,
   onToggleExpander,
-  onToggleSort
+  onToggleSort,
+  valueHasExtensions
 } from '../../../utils/nodes'
 import { JsonPropNodePropsWithState, PropsWithOverriddenKind } from '../../../types/internal/PropsWithState'
 import { PropsWithChanges } from '../../../types/internal/PropsWithChanges'
@@ -62,6 +63,7 @@ export const JsonPropNodeViewer: FC<JsonPropNodeViewerProps> = (props) => {
   const isRoot = isRootNode(node)
   const isObjectVal = isObjectValue(nodeValue)
   const isArrayVal = isArrayValue(nodeValue)
+  const valHasExtensions = valueHasExtensions(nodeValue)
   const lastLevel = useLevelContext()
   const isNextDataLevel = state.node.newDataLevel
   const currentLevel = !isRoot && isNextDataLevel ? lastLevel + 1 : lastLevel
@@ -97,7 +99,7 @@ export const JsonPropNodeViewer: FC<JsonPropNodeViewerProps> = (props) => {
   const inferredNodeChange = takeNodeChangeIfAllChildrenChanged(nodeLeafChildren)
 
   // TODO 05.10.23 // This has been added until REST API operation is rendered by ADV
-  const disableNestingHeader = overriddenKind === 'parameters' && isRoot && (isObjectVal || isArrayVal)
+  const disableNestingHeader = overriddenKind === 'parameters' && isRoot && (isObjectVal || isArrayVal) && !valHasExtensions
 
   const nodeTypeData = buildNodeTypeData({ node, nodeValue })
   delete nodeTypeData?.combiner

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import type { CSSProperties, FC } from 'react'
-import './UxDiffMarker.css'
-import { DIFF_TYPE_COLORS, DIFF_TYPE_NAME_MAP } from '../consts'
-import { UxTooltip } from '../UxTooltip/UxTooltip'
 import { DiffType } from '@netcracker/qubership-apihub-api-diff'
+import type { CSSProperties, FC } from 'react'
+import { UxTooltip } from '../UxTooltip/UxTooltip'
+import './UxDiffMarker.css'
+import { DIFF_TYPE_COLORS, DIFF_TYPE_NAME_MAP } from './consts'
 
 type FloatingVariant = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
 
@@ -38,13 +38,13 @@ export const UxDiffMarker: FC<UxDiffMarkerProps> = (props) => {
   const markerElement = (
     <div
       className="UxDiffMarker inline-block"
-      style={{backgroundColor: DIFF_TYPE_COLORS[variant]}}
+      style={{ backgroundColor: DIFF_TYPE_COLORS[variant] }}
     ></div>
   )
 
   const wrappedMarkerElement = tooltip
     ? <UxTooltip text={DIFF_TYPE_NAME_MAP[tooltip]}
-                 floatingContainer={!!floating}>{markerElement}</UxTooltip>
+      floatingContainer={!!floating}>{markerElement}</UxTooltip>
     : markerElement
 
   if (!floating) {

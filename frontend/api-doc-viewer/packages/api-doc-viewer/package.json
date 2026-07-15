@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-doc-viewer",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "license": "Apache-2.0",
   "type": "module",
   "main": "dist/index.js",
@@ -24,8 +24,8 @@
     "build": "npm run build:dist",
     "build:dist": "tsc && vite build",
     "build:showcase": "npm run generate-stories && storybook build -o ../../dist-showcase --disable-telemetry",
-    "generate-stories": "node bin/generate-compatibility-suite-stories.mjs",
-    "generate-tests": "node bin/generate-compatibility-suite-tests.mjs",
+    "generate-stories": "node bin/generate-compatibility-suite-stories.mjs && node bin/generate-ddl-suite-stories.mjs",
+    "generate-tests": "node bin/generate-compatibility-suite-tests.mjs && node bin/generate-ddl-suite-tests.mjs",
     "development:storybook": "npm run generate-stories && storybook dev -p 9099",
     "development:local-server:static": "npm run build:showcase && ws -p 9009 -d ../../dist-showcase --spa index.html --static.maxage 3600",
     "screenshot-test": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 -c .config/it/it-test-docker.jest.config.cjs\"",
@@ -75,7 +75,7 @@
     "start-server-and-test": "2.1.3",
     "storybook": "8.1.11",
     "ts-jest": "29.1.0",
-    "typescript": "5.1.3",
+    "typescript": "5.5.4",
     "vite": "4.4.5",
     "vite-plugin-dts": "3.5.3"
   }

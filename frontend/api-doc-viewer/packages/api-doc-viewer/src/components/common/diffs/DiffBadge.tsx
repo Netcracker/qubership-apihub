@@ -16,14 +16,14 @@
 
 import { Diff, DiffAction } from "@netcracker/qubership-apihub-api-diff"
 import { FC } from 'react'
-import { BLOCK_CONTENT_DIFF_COLOR_MAP, DEFAULT_STRIKETHROUGH_VALUE_CLASS } from '../../../consts/changes'
+import { BLOCK_CONTENT_DIFF_COLOR_MAP, DEFAULT_MUTED_VALUE_CLASS } from '../../../consts/changes'
 import { useChangeSeverityFilters } from '../../../contexts/ChangeSeverityFiltersContext'
 import { LayoutSide } from '../../../types/internal/LayoutSide'
 import { LayoutMode } from '../../../types/LayoutMode'
 import { getLayoutModeFlags, getLayoutSideFlags, isDiffTypeIncluded } from '../../../utils/common/changes'
-import { COLOR_SCHEMAS } from '../../kit/ux/consts'
-import { BADGE_KIND_DEFAULT } from '../../kit/ux/types'
-import { UxBadge } from '../../kit/ux/UxBadge'
+import { getUxBadgeColorSchema } from '../../kit/ux/UxBadge/consts'
+import { BADGE_KIND_DEFAULT } from '../../kit/ux/UxBadge/types'
+import { UxBadge } from '../../kit/ux/UxBadge/UxBadge'
 
 type DiffBadgeProps = {
   label: string
@@ -38,7 +38,7 @@ type DiffBadgeProps = {
 export const DiffBadge: FC<DiffBadgeProps> = (props) => {
   const {
     label,
-    colorSchema = COLOR_SCHEMAS[BADGE_KIND_DEFAULT],
+    colorSchema = getUxBadgeColorSchema(BADGE_KIND_DEFAULT),
     layoutMode,
     layoutSide,
     isNodeChanged,
@@ -57,12 +57,12 @@ export const DiffBadge: FC<DiffBadgeProps> = (props) => {
   const propertyChanged = !isDocumentLayoutMode && isNodeOrContentChanged && !!$changes
 
   if (!propertyChanged) {
-    return <UxBadge text={label} colorSchema={colorSchema}/>
+    return <UxBadge text={label} colorSchema={colorSchema} />
   }
 
   const diffAction = $changes!.action
   const diffColorSchema = isNodeOrContentChanged
-    ? `${COLOR_SCHEMAS[BADGE_KIND_DEFAULT]} ${BLOCK_CONTENT_DIFF_COLOR_MAP[diffAction]}`
+    ? `${getUxBadgeColorSchema(BADGE_KIND_DEFAULT)} ${BLOCK_CONTENT_DIFF_COLOR_MAP[diffAction]}`
     : undefined
 
   const removedRule = diffAction === DiffAction.remove && (isInlineDiffsLayoutMode || originSide)
@@ -70,20 +70,21 @@ export const DiffBadge: FC<DiffBadgeProps> = (props) => {
 
   if (!diffTypeIncluded) {
     return removedRule || addedRule
-      ? <UxBadge text={label} colorSchema={COLOR_SCHEMAS[BADGE_KIND_DEFAULT]}/>
+      ? <UxBadge text={label} colorSchema={getUxBadgeColorSchema(BADGE_KIND_DEFAULT)} />
       : null
-  } else {
-    if (removedRule) {
-      return (
-        <UxBadge
-          text={<span className={DEFAULT_STRIKETHROUGH_VALUE_CLASS}>{label}</span>}
-          colorSchema={diffColorSchema}
-        />
-      )
-    }
-    if (addedRule) {
-      return <UxBadge text={label} colorSchema={diffColorSchema}/>
-    }
   }
+
+  if (removedRule) {
+    return (
+      <UxBadge
+        text={<span className={DEFAULT_MUTED_VALUE_CLASS}>{label}</span>}
+        colorSchema={diffColorSchema}
+      />
+    )
+  }
+  if (addedRule) {
+    return <UxBadge text={label} colorSchema={diffColorSchema} />
+  }
+
   return null
 }

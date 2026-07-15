@@ -20,6 +20,7 @@ export type AsyncApiOperationViewerProps = {
   operationKeys?: OperationKeys
   displayMode?: DisplayMode
   devMode?: boolean
+  noHeading?: boolean
   referenceNamePropertyKey: symbol
 }
 
@@ -43,13 +44,19 @@ const AsyncApiOperationViewerInner: FC<AsyncApiOperationViewerProps> =
       operationKeys,
       displayMode = DEFAULT_DISPLAY_MODE,
       devMode = false,
+      noHeading = false,
       referenceNamePropertyKey,
     } = props
 
     const logger = useMemo(() => createAsyncApiLogger(devMode), [devMode])
 
     const treeBuilder = useMemo(
-      () => new AsyncApiTreeBuilder(source, referenceNamePropertyKey, operationKeys, logger),
+      () => new AsyncApiTreeBuilder({
+        source,
+        referenceNamePropertyKey,
+        operationKeys,
+        logger,
+      }),
       [source, operationKeys, referenceNamePropertyKey, logger]
     )
     const tree = useMemo(() => treeBuilder?.build() ?? null, [treeBuilder])
@@ -69,6 +76,7 @@ const AsyncApiOperationViewerInner: FC<AsyncApiOperationViewerProps> =
             <LevelContext.Provider value={0}>
               <MessageNodeViewer
                 node={messageNode}
+                noHeading={noHeading}
               />
             </LevelContext.Provider>
           </LayoutModeContext.Provider>

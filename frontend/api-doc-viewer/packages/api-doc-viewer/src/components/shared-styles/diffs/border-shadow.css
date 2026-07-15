@@ -1,0 +1,19 @@
+.diffs-border-shadow_red {
+  border: 0 !important;
+  box-shadow: 0 0 3px 0 #FF0000 !important;
+}
+
+.diffs-border-shadow_green {
+  border: 0 !important;
+  box-shadow: 0 0 3px 0 #00D75D !important;
+}
+
+.diffs-border-shadow_yellow {
+  border: 0 !important;
+  box-shadow: 0 0 3px 0 #FFB02E !important;
+}
+
+.diffs-border-shadow_gray {
+  border: 0 !important;
+  box-shadow: 0 0 3px 0 gray !important;
+}

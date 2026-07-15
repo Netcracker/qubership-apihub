@@ -28,13 +28,51 @@ const preview: Preview = {
       storySort: {
         order: [
           'Debug',
+          [
+            'Json Schema Viewer',
+            'GraphQL Debug Page',
+            'Async Api Viewer',
+            'Async Api Diffs Viewer',
+            'Jso Viewer',
+            'DDL API from DDL SQL',
+          ],
           'Json Schema Viewer',
           'Json Schema Diff Viewer',
           'GraphQL Operation Viewer',
           'GraphQL Operation Diff Viewer',
-          'graphql-compatibility-suite',
+          'GraphQL Compatibility Suite',
           'Async API Suite',
+          'Async API Diffs Suite',
+          [
+            'Whole Apihub Operation Samples',
+            'Message Samples',
+            'Channel Samples',
+            'Operation Samples',
+            'Channel Parameters Samples',
+            'Channel Server Samples',
+          ],
           'JSO Suite',
+          'JSO Diffs Suite',
+          [
+            'stringValue',
+            'numberValue',
+            'booleanValue',
+            'nullValue',
+            'objectPrimitiveProps',
+            'objectPropsObjects',
+            'objectPropsArrays',
+            'objectAllPropTypes',
+            'arrayPrimitives',
+            'arrayObjects',
+            'arrayArrayItems',
+            'arrayAllItemTypes',
+            'stringJsonSchema',
+            'objectJsonSchema',
+          ],
+          'DDL API Suite',
+          [
+            'E2E Scenarios',
+          ],
           '*'
         ]
       }

@@ -1,142 +1,107 @@
 import { useDisplayMode } from "@apihub/contexts/DisplayModeContext"
 import { LevelContext, useLevelContext } from "@apihub/contexts/LevelContext"
-import { LayoutSide } from "@apihub/types/internal/LayoutSide"
-import { isObject } from "@netcracker/qubership-apihub-json-crawl"
-import { AsyncApiNodeJsoPropertyValueTypes } from "@netcracker/qubership-apihub-next-data-model/model/async-api/types/node-value-type"
+import { prepareJsonSchemaForJsoViewer } from "@apihub/utils/jso/prepare-json-schema-to-jso-viewers"
 import { JsoTreeNode } from "@netcracker/qubership-apihub-next-data-model/model/jso/types/aliases"
-import { JsoTreeNodeKinds } from "@netcracker/qubership-apihub-next-data-model/model/jso/types/node-kind"
-import { JsoTreeNodeValueBase } from "@netcracker/qubership-apihub-next-data-model/model/jso/types/node-value"
-import { NodeKey } from "@netcracker/qubership-apihub-next-data-model/utility-types"
-import { FC, useCallback, useState } from "react"
-import { TitleRow, TitleVariant } from "../AsyncApiOperationViewer/TitleRow"
+import { FC, useCallback, useMemo, useState } from "react"
 import { JsonSchemaViewer } from "../JsonSchemaViewer/JsonSchemaViewer"
-import { Aligner } from "./Aligner"
+import { TextValueVariant } from "../shared-components/TextValue/types"
+import { TitleRow } from "../shared-components/TitleRow/TitleRow"
+import { TitleRowUsage } from "../shared-components/TitleRow/types"
+import { ATTRIBUTE_PRECEDED_BY, PrecededBy, WithPrecededByProps } from "../shared-components/WithPrecededByProps"
+import { JsoValue } from "./JsoValue/JsoValue"
 
-type JsoPropertyNodeViewerProps = {
-  node: JsoTreeNode<typeof JsoTreeNodeKinds.PROPERTY>
-  expandable: boolean
-  expanded?: boolean
+type JsoPropertyNodeViewerProps = WithPrecededByProps & {
+  node: JsoTreeNode
   supportJsonSchema?: boolean
 }
 
 export const JsoPropertyNodeViewer: FC<JsoPropertyNodeViewerProps> = (props) => {
-  const {
-    node,
-    expandable,
-    expanded: initialExpanded,
-    supportJsonSchema = false
-  } = props
+  const { node, supportJsonSchema = false } = props
+
+  // indent-specific
+  const { [ATTRIBUTE_PRECEDED_BY]: precededBy } = props
 
   const displayMode = useDisplayMode()
   const level = useLevelContext()
 
-  const [expanded, setExpanded] = useState(initialExpanded ?? false)
+  const [expanded, setExpanded] = useState(true)
   const onClickExpander = useCallback(() => {
     setExpanded(prevExpanded => !prevExpanded)
   }, [])
 
   const nodeValue = node.value()
 
+  const expandable = useMemo(() => {
+    return !!nodeValue && !nodeValue.isPrimitive
+  }, [nodeValue])
+
   const subheader = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    (layoutSide: LayoutSide) => {
-      switch (nodeValue?.valueType) {
-        case 'string':
-        case 'number':
-        case 'boolean':
-          return (
-            <span className={`subheader text-slate-500 ${nodeValue?.isPredefinedValueSet ? 'bg-gray-100 px-2 rounded-md' : ''}`}>
-              {`${nodeValue?.value}`}
-            </span>
-          )
+    () => {
+      if (!nodeValue) {
+        return <></>
       }
-      return <></>
+
+      return (
+        <JsoValue
+          isVisible={nodeValue.isPrimitive}
+          value={nodeValue.value}
+          appearance={nodeValue.isPredefinedValueSet ? 'block' : 'text'}
+        />
+      )
     },
-    [nodeValue]
+    [nodeValue],
   )
 
-  if (supportJsonSchema && nodeValue?.valueType === AsyncApiNodeJsoPropertyValueTypes.JSON_SCHEMA) {
-    const schema = prepareJsonSchemaForJsoViewer(node.key, nodeValue)
-    return (
-      <Aligner>
-        <JsonSchemaViewer
-          schema={schema}
-          expandedDepth={2}
-          displayMode={displayMode}
-          customizationOptions={{
-            headerRowTitle: `${node.key}`,
-            // TODO 25.12.25 // Temporarily disabled
-            // headerRowFontSize: 'h3'
-          }}
-          initialLevel={level - 1}
-          overriddenKind='parameters' // This option is WA until JSON Schema Viewer is uniformed with JSO Viewer
-        />
-      </Aligner>
-    )
-  }
-
-  if (supportJsonSchema && nodeValue?.valueType === AsyncApiNodeJsoPropertyValueTypes.MULTI_SCHEMA) {
-    const schema = prepareJsonSchemaForJsoViewer(node.key, nodeValue)
-    return (
-      <Aligner>
-        <JsonSchemaViewer
-          schema={schema}
-          expandedDepth={2}
-          displayMode={displayMode}
-          customizationOptions={{
-            headerRowTitle: `${node.key}`,
-            // TODO 25.12.25 // Temporarily disabled
-            // headerRowFontSize: 'h3'
-          }}
-          initialLevel={level - 1}
-          overriddenKind='parameters' // This option is WA until JSON Schema Viewer is uniformed with JSO Viewer
-        />
-      </Aligner>
-    )
-  }
-
   const childrenProperties = node.childrenNodes()
+
+  // JSON Schema properties
+
+  const jsonSchema = useMemo(() => (
+    supportJsonSchema
+      ? prepareJsonSchemaForJsoViewer(node.key, nodeValue)
+      : undefined
+  ), [node.key, nodeValue, supportJsonSchema])
+
+  if (jsonSchema) {
+    return (
+      <JsonSchemaViewer
+        key={node.id}
+        schema={jsonSchema}
+        expandedDepth={2}
+        displayMode={displayMode}
+        overriddenKind='parameters'
+      />
+    )
+  }
+
+  // ---
 
   return (
     <div data-testid='jso-property-node-viewer' className="flex flex-col jso-property">
       <TitleRow
+        data-precededby={precededBy}
         value={`${node.key}`}
         expandable={expandable}
         expanded={expanded}
         onClickExpander={onClickExpander}
-        variant={TitleVariant.body}
-        enableMainHeader={!nodeValue?.isArrayItem}
+        variant={TextValueVariant.body2}
+        enableHeaderValue={!nodeValue?.isArrayItem}
         subheader={subheader}
+        usage={TitleRowUsage.JsoProperty}
       />
-      {expanded && childrenProperties.map(childProperty => {
-        const childNodeValue = childProperty.value()
-        const nextLevel = level + 1
-        return (
-          <LevelContext.Provider
-            key={childProperty.id}
-            value={nextLevel}
-          >
+      {expanded && (
+        <LevelContext.Provider
+          value={level + 1}
+        >
+          {childrenProperties.map(childProperty => (
             <JsoPropertyNodeViewer
+              data-precededby={PrecededBy.JSO_PROPERTY}
               node={childProperty}
-              expandable={!childNodeValue?.isPrimitive}
-              expanded={expanded}
+              supportJsonSchema={supportJsonSchema}
             />
-          </LevelContext.Provider>
-        )
-      })}
+          ))}
+        </LevelContext.Provider>
+      )}
     </div>
   )
-}
-
-function prepareJsonSchemaForJsoViewer(
-  nodeKey: NodeKey,
-  nodeValue: JsoTreeNodeValueBase,
-): object | undefined {
-  if (nodeValue.valueType !== AsyncApiNodeJsoPropertyValueTypes.JSON_SCHEMA) {
-    return undefined
-  }
-
-  return isObject(nodeValue.value)
-    ? { type: 'object', properties: { [nodeKey]: nodeValue.value } }
-    : undefined
 }

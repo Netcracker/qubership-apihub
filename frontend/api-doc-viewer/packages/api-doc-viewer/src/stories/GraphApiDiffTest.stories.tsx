@@ -884,6 +884,8 @@ export const EnumChanges: Story = {
           "Changed ORANGE description"
           ORANGE
           PINEAPPLE
+          "Small soft red-purple berry"
+          RASPBERRY
           STRAWBERRY
         }
       `),
@@ -899,6 +901,8 @@ export const EnumChanges: Story = {
           "CHANGED ORANGE description"
           ORANGE
           PEAR
+          "Blueberry is a blue berry"
+          BLUEBERRY
           STRAWBERRY
         }
       `),

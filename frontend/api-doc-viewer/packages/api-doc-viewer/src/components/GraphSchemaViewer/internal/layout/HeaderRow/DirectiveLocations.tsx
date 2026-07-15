@@ -18,7 +18,7 @@ import { DiffRecord, isDiffMetaRecord } from '@netcracker/qubership-apihub-api-d
 import { Diff, DiffAction } from "@netcracker/qubership-apihub-api-diff"
 import type { FC } from 'react'
 import { ReactNode } from 'react'
-import { DEFAULT_STRIKETHROUGH_VALUE_CLASS, INLINE_CONTENT_DIFF_COLOR_SCHEMAS } from '../../../../../consts/changes'
+import { INLINE_CONTENT_DIFF_COLOR_SCHEMAS } from '../../../../../consts/changes'
 import { useChangeSeverityFilters } from '../../../../../contexts/ChangeSeverityFiltersContext'
 import { LayoutMode } from '../../../../../types/LayoutMode'
 import { LayoutSide } from '../../../../../types/internal/LayoutSide'
@@ -93,10 +93,8 @@ export const DirectiveLocations: FC<DirectiveLocationsProps> = (props) => {
             const before: string = `${diffForLocation.beforeValue}`
 
             if (originSide) {
-              const diffColorSchema = [
-                INLINE_CONTENT_DIFF_COLOR_SCHEMAS[diffActionForLocation!],
-                DEFAULT_STRIKETHROUGH_VALUE_CLASS
-              ].join(' ')
+              const diffColorSchema =
+                INLINE_CONTENT_DIFF_COLOR_SCHEMAS[diffActionForLocation!]
               result =
                 <Value
                   key={before}
@@ -133,10 +131,8 @@ export const DirectiveLocations: FC<DirectiveLocationsProps> = (props) => {
             const after: string = `${diffForLocation.afterValue}`
 
             if (originSide) {
-              const diffColorSchema = [
-                INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove],
-                DEFAULT_STRIKETHROUGH_VALUE_CLASS
-              ].join(' ')
+              const diffColorSchema =
+                INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove]
               result =
                 <Value
                   key={before}
@@ -166,10 +162,8 @@ export const DirectiveLocations: FC<DirectiveLocationsProps> = (props) => {
             const after = `${added ? diffForLocation.afterValue : undefined}`
             const resolved = removed ? before : after
 
-            const diffColorSchema = [
-              INLINE_CONTENT_DIFF_COLOR_SCHEMAS[diffActionForLocation!],
-              removed ? DEFAULT_STRIKETHROUGH_VALUE_CLASS : ''
-            ].join(' ')
+            const diffColorSchema =
+              INLINE_CONTENT_DIFF_COLOR_SCHEMAS[diffActionForLocation!]
             result =
               <Value
                 key={resolved}
@@ -183,10 +177,8 @@ export const DirectiveLocations: FC<DirectiveLocationsProps> = (props) => {
             const before: string = `${diffForLocation.beforeValue}`
             const after: string = `${diffForLocation.afterValue}`
 
-            const diffColorSchemaBefore = [
-              INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove],
-              DEFAULT_STRIKETHROUGH_VALUE_CLASS
-            ].join(' ')
+            const diffColorSchemaBefore =
+              INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.remove]
             const diffColorSchemaAfter = INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.add]
 
             result =

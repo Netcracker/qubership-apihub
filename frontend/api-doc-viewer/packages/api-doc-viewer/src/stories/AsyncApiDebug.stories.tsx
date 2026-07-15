@@ -16,14 +16,13 @@
 
 import { AsyncApiOperationViewer } from '@apihub/components/AsyncApiOperationViewer/AsyncApiOperationViewer';
 import type { Meta, StoryObj } from '@storybook/react';
-import YAML from 'js-yaml';
+import { parse } from 'yaml';
 import type { ComponentProps } from 'react';
 import { TEST_REFERENCE_NAME_PROPERTY } from './async-api-suite/shared-test-data';
 import { prepareAsyncApiDocument } from './preprocess';
 
 type StoryArgs = ComponentProps<typeof AsyncApiOperationViewer> & {
   sourceText: string
-  operationType?: string
 }
 
 // It's necessary because storybook doesn't render nested stories without this empty story
@@ -44,11 +43,6 @@ const meta = {
       options: ['simple', 'detailed'],
       defaultValue: 'detailed'
     },
-    operationType: {
-      control: 'select',
-      options: ['send', 'receive'],
-      defaultValue: 'send'
-    }
   },
   args: {
     sourceText: `{
@@ -108,7 +102,7 @@ export const Debug: Story = {
     }
     try {
       if (!parsedSource) {
-        parsedSource = YAML.load(sourceText)
+        parsedSource = parse(sourceText)
       }
     } catch (error) {
       console.error('Cannot parse YAML:', error)

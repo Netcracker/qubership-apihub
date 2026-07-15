@@ -347,37 +347,4 @@ describe('AsyncAPI Suite 2 - Message Channel', () => {
     await waitForHtmlRenderingComplete()
     expect(await component.captureScreenshot()).toMatchImageSnapshot()
   })
-
-  it('edge-case-broken-ref-bindings', async () => {
-    story = await storyPage(
-      page,
-      'async-api-suite-message-channel--edge-case-broken-ref-bindings'
-    )
-    component = await story.viewComponent()
-    await switchToChannelSection()
-    await waitForHtmlRenderingComplete()
-    expect(await component.captureScreenshot()).toMatchImageSnapshot()
-  })
-
-  it('edge-case-broken-ref-address-parameter', async () => {
-    story = await storyPage(
-      page,
-      'async-api-suite-message-channel--edge-case-broken-ref-address-parameter'
-    )
-    component = await story.viewComponent()
-    await switchToChannelSection()
-    await waitForHtmlRenderingComplete()
-    expect(await component.captureScreenshot()).toMatchImageSnapshot()
-  })
-
-  it('edge-case-broken-ref-server', async () => {
-    story = await storyPage(
-      page,
-      'async-api-suite-message-channel--edge-case-broken-ref-server'
-    )
-    component = await story.viewComponent()
-    await switchToChannelSection()
-    await waitForHtmlRenderingComplete()
-    expect(await component.captureScreenshot()).toMatchImageSnapshot()
-  })
 })

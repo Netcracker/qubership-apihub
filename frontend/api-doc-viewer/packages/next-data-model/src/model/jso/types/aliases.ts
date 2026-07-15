@@ -1,6 +1,13 @@
+import { ITreeNodeWithDiffs } from "../../abstract/tree-with-diffs/tree-node.interface"
 import { ITreeNode } from "../../abstract/tree/tree-node.interface"
+import { JsoTreeNodeDiffsSource } from "../tree-with-diffs/node-diffs-source"
+import { JsoTreeNodeValueWithDiffs } from "../tree-with-diffs/node-value"
+import { JsoTreeNodeValue } from "../tree/node-value"
 import { JsoTreeNodeKind } from "./node-kind"
-import { JsoTreeNodeValue } from "./node-value"
 import { JsoTreeNodeMeta } from "./node-meta"
 
-export type JsoTreeNode<K extends JsoTreeNodeKind = JsoTreeNodeKind> = ITreeNode<JsoTreeNodeValue | null, K, JsoTreeNodeMeta>
+export type JsoTreeNode =
+  ITreeNode<JsoTreeNodeValue | null, JsoTreeNodeKind, JsoTreeNodeMeta>
+
+export type JsoTreeNodeWithDiffs =
+  ITreeNodeWithDiffs<JsoTreeNodeValueWithDiffs | null, JsoTreeNodeKind, JsoTreeNodeMeta, JsoTreeNodeDiffsSource>

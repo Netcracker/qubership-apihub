@@ -1,0 +1,41 @@
+asyncapi: 3.0.0
+info:
+  title: Sample AsyncAPI
+  version: 1.0.0
+channels:
+  testChannel:
+    address: events.default
+    messages:
+      TestMessage:
+        $ref: '#/components/messages/TestMessage'
+    bindings:
+      kafka:
+        bindingVersion: 1.0.0
+        topic: events-topic
+        partitions: 5
+      amqp:
+        bindingVersion: 0.3.0
+        is: routingKey
+        exchange:
+          name: events-exchange
+          type: topic
+          durable: true
+          autoDelete: false
+operations:
+  sendOperation:
+    action: send
+    channel:
+      $ref: '#/channels/testChannel'
+    messages:
+      - $ref: '#/components/messages/TestMessage'
+components:
+  messages:
+    TestMessage:
+      name: TestMessage
+      payload:
+        type: object
+        properties:
+          id:
+            type: string
+        required:
+          - id

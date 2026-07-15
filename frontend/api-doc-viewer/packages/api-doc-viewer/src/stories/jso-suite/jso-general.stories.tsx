@@ -34,6 +34,7 @@ const meta = {
   args: {
     source: {},
     supportJsonSchema: true,
+    initialLevel: 1,
   }
 } satisfies Meta<typeof JsoViewer>;
 

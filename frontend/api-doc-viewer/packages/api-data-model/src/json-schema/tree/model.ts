@@ -1,8 +1,8 @@
 import { modelTreeNodeType, UNKNOWN_TYPE } from "../../abstract/constants";
+import { LazyBuildingContext } from "../../abstract/model/model-tree-node.impl";
 import { ModelTree } from '../../abstract/model/model-tree.impl';
 import { CreateNodeResult, IModelTreeNode } from '../../abstract/model/types';
-import { isOpenApiExtensionKey } from '../../oas-extension-key';
-import { getNodeComplexityType, isObject, pick, pickByPredicate } from '../../utils';
+import { getNodeComplexityType, isObject, pick } from '../../utils';
 import { jsonSchemaNodeMetaProps, jsonSchemaNodeValueProps } from '../constants';
 import { isJsonSchemaNodeType } from '../guards';
 import { isBrokenRef, isRequired } from '../utils';
@@ -13,7 +13,6 @@ import type {
   JsonSchemaNodeValue
 } from './types';
 import { JsonSchemaNodeType } from './types';
-import { LazyBuildingContext } from "../../abstract/model/model-tree-node.impl";
 
 export class JsonSchemaModelTree<
   T = JsonSchemaNodeValue,
@@ -63,7 +62,6 @@ export class JsonSchemaModelTree<
        because of separating props to "value" and "meta" in tree
       */
       ...pick<any>(value, jsonSchemaNodeValueProps[type]),
-      ...pickByPredicate(value, isOpenApiExtensionKey),
     } as T
   }
 

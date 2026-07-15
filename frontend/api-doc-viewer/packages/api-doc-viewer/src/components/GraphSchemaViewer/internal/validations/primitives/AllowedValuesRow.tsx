@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { LevelIndicator } from '@apihub/components/AsyncApiOperationViewer/LevelIndicator'
+import { LevelIndicator } from '@apihub/components/shared-components/LevelIndicator'
 import {
   applyDiffReplaceAlias,
   IGraphSchemaEnumValueType,
@@ -33,13 +33,11 @@ import {
   isDiffReplace,
 } from '@netcracker/qubership-apihub-api-diff'
 import type { FC } from 'react'
-import { ReactNode } from 'react'
+import { ReactNode, useMemo } from 'react'
 import { NODE_DIFF_COLOR_MAP } from '../../../../../consts/changes'
 import {
   DEFAULT_LAYOUT_MODE,
   DEFAULT_ROW_DEPTH,
-  DEFAULT_ROW_PADDING_LEFT,
-  SHIFTED_ROW_PADDING_LEFT,
 } from '../../../../../consts/configuration'
 import { AMBER_TAG_COLOR_SCHEMA, DEPRECATED_TAG } from '../../../../../consts/tags'
 import { ALLOWED_VALUES_LABEL } from '../../../../../consts/validations'
@@ -57,7 +55,7 @@ import {
   getLayoutModeFlags,
   getLayoutSideFlags,
   isDiffTypeIncluded,
-  maxDiffType,
+  maxDiffTypeFromDiffs,
 } from '../../../../../utils/common/changes'
 import { isDefined } from '../../../../../utils/common/checkers'
 import { stringifyItem } from '../../../../../utils/common/rows'
@@ -68,9 +66,6 @@ import { DiffBadge } from '../../../../common/diffs/DiffBadge'
 import { EmptyContent } from '../../../../common/diffs/EmptyContent'
 import { UnsupportedContent } from '../../../../common/diffs/UnsupportedContent'
 import { DefaultWrappers, Wrapper as Deprecation } from '../../../../common/Wrapper'
-import { COLOR_SCHEMAS } from '../../../../kit/ux/consts'
-import { BADGE_KIND_DEFAULT } from '../../../../kit/ux/types'
-import { UxBadge } from '../../../../kit/ux/UxBadge'
 import { UxDiffFloatingBadge } from '../../../../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
 import { changesToChange, isDefaultDeprecationReason, isObjectWithoutPayload } from '../../../utils'
 
@@ -116,6 +111,7 @@ export const AllowedValuesRow: FC<AllowedValuesRowProps> = (props) => {
         level={level}
         $nodeChange={$nodeChange}
         $changes={$changesAsOfArray}
+        isPredefinedValuesSet={true}
       />
     )
   }
@@ -134,7 +130,7 @@ export const AllowedValuesRow: FC<AllowedValuesRowProps> = (props) => {
         layoutMode={layoutMode}
       />
       {keys.map(item => {
-        const { description = '', deprecationReason } = values[item] ?? {}
+        const { description, deprecationReason } = values[item] ?? {}
 
         let descriptionChange: Diff | undefined
         let deprecationReasonChange: Diff | undefined
@@ -190,6 +186,11 @@ const AllowedValuesHeaderRowContent: FC<AllowedValuesHeaderRowProps & ContentPro
   const { originSide, changedSide } = getLayoutSideFlags(layoutSide)
 
   const width = isSideBySideDiffsLayoutMode ? 'w-1/2' : 'w-full'
+  const rowClasses = [
+    'flex flex-row',
+    !shift && 'gap-5',
+    width,
+  ].filter(Boolean).join(' ')
 
   const change = nodeChange ?? enumChange
 
@@ -210,8 +211,9 @@ const AllowedValuesHeaderRowContent: FC<AllowedValuesHeaderRowProps & ContentPro
   }
 
   return (
-    <div className={`flex flex-row gap-5 ${shift ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
+    <div className={rowClasses}>
       <LevelIndicator level={level} />
+      {shift && <div className="w-5" />}
       {labelNode}
     </div>
   )
@@ -313,6 +315,8 @@ type AllowedValueRowProps = PropsWithShift & {
   level?: number
 }
 
+const ENUM_VALUE_TEXT_PADDING_TOP = { paddingTop: 2 }
+
 const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
   const {
     shift = false,
@@ -358,10 +362,10 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
     nodeReplaced: isEnumChanged && isDiffReplace(enumChange),
   }
 
-  const nodeDiffTypeData = maxDiffType(nodeChange)
-  const enumDiffTypeData = maxDiffType(enumChange)
+  const nodeDiffTypeData = maxDiffTypeFromDiffs(nodeChange)
+  const enumDiffTypeData = maxDiffTypeFromDiffs(enumChange)
   const contentDiffTypeData =
-    maxDiffType(
+    maxDiffTypeFromDiffs(
       valueChange,
       deprecationReasonChange,
       descriptionChange,
@@ -390,6 +394,11 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
 
   const Content: FC<ContentProps> = ({ layoutSide }) => {
     const width = isSideBySideDiffsLayoutMode ? 'w-1/2' : 'w-full'
+    const rowClasses = [
+      'flex flex-row',
+      !shift && 'gap-5',
+      width,
+    ].filter(Boolean).join(' ')
 
     const { originSide, changedSide } = getLayoutSideFlags(layoutSide)
 
@@ -397,7 +406,7 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
     const itemRemoved = diffRemove(valueChange)
     const itemDefined = isDefined(initialValue)
 
-    let renderedItem: string | ReactNode | null = itemDefined ? stringifyItem(initialValue) : ''
+    let renderedItem: string | null = itemDefined ? stringifyItem(initialValue) ?? '' : ''
 
     if (
       isSideBySideDiffsLayoutMode && (
@@ -433,53 +442,74 @@ const AllowedValueRow: FC<AllowedValueRowProps> = (props) => {
         )
       )
 
-    const componentDiffBadge = isDeprecated ? (
-      <DiffBadge
-        key="diff-badge"
-        label={DEPRECATED_TAG}
-        layoutSide={layoutSide}
-        layoutMode={layoutMode}
-        colorSchema={AMBER_TAG_COLOR_SCHEMA}
-        isNodeChanged={isNodeChanged}
-        isContentChanged={isItemSelfChanged || isItemDetailsChanged}
-        // here we provide "add", "remove", skip "replace"
-        $changes={isItemDetailsChanged ? applyDiffReplaceAlias(undefined, deprecationReasonChange) : undefined}
-      />
-    ) : null
-    const componentDeprecationReason = shouldDisplayReason ? (
-      <DeprecationReasonValue
-        key="deprecation-reason-value"
-        value={initialDeprecationReason}
-        enableDiffs={diffTypeIncluded}
-        layoutMode={layoutMode}
-        layoutSide={layoutSide}
-        $changes={isItemDetailsChanged ? deprecationReasonChange : undefined}
-      />
-    ) : null
+    const componentDiffBadge = useMemo(() => (
+      isDeprecated ? (
+        <DiffBadge
+          key="diff-badge"
+          label={DEPRECATED_TAG}
+          layoutSide={layoutSide}
+          layoutMode={layoutMode}
+          colorSchema={AMBER_TAG_COLOR_SCHEMA}
+          isNodeChanged={isNodeChanged}
+          isContentChanged={isItemSelfChanged || isItemDetailsChanged}
+          // here we provide "add", "remove", skip "replace"
+          $changes={isItemDetailsChanged ? applyDiffReplaceAlias(undefined, deprecationReasonChange) : undefined}
+        />
+      ) : null
+    ), [isDeprecated, layoutSide])
+    const componentDeprecationReason = useMemo(() => (
+      shouldDisplayReason ? (
+        <div style={ENUM_VALUE_TEXT_PADDING_TOP}>
+          <DeprecationReasonValue
+            key="deprecation-reason-value"
+            value={initialDeprecationReason}
+            enableDiffs={diffTypeIncluded}
+            layoutMode={layoutMode}
+            layoutSide={layoutSide}
+            $changes={isItemDetailsChanged ? deprecationReasonChange : undefined}
+            highlightWholeDiff={!isNodeChanged && !itemAdded && !itemRemoved}
+          />
+        </div>
+      ) : null
+    ), [itemAdded, itemRemoved, layoutSide, shouldDisplayReason])
+    const deprecationComponentsList = useMemo(
+      () => ([componentDeprecationReason, componentDiffBadge].filter(Boolean)),
+      [componentDeprecationReason, componentDiffBadge]
+    )
 
     return (
-      <div className={`flex flex-row gap-5 ${shift ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
+      <div className={rowClasses}>
         <LevelIndicator level={level} />
+        {shift && <div className="w-5" />}
         {renderedItem && (
           <div className="flex flex-row items-start gap-2 py-1">
-            <UxBadge
-              text={renderedItem}
-              colorSchema={COLOR_SCHEMAS[BADGE_KIND_DEFAULT]}
+            <DiffBadge
+              label={renderedItem}
+              layoutMode={layoutMode}
+              layoutSide={layoutSide}
+              isNodeChanged={isNodeChanged}
+              isContentChanged={isItemSelfChanged}
+              $changes={itemAdded || itemRemoved ? valueChange : undefined}
             />
-            <div className="flex flex-col text-xs text-slate-600">
-              <Deprecation
-                children={[componentDeprecationReason, componentDiffBadge]}
-                wrapper={DefaultWrappers.DivGap2}
-              />
-              {isDefined(initialDescription) && (
-                <DescriptionValue
-                  value={initialDescription!}
-                  // diffs
-                  enableDiffs={diffTypeIncluded}
-                  layoutMode={layoutMode}
-                  layoutSide={layoutSide}
-                  $changes={isItemDetailsChanged ? descriptionChange : undefined}
+            <div className="flex flex-col items-start text-xs text-slate-600 gap-1">
+              {deprecationComponentsList.length > 0 && (
+                <Deprecation
+                  children={deprecationComponentsList}
+                  wrapper={DefaultWrappers.DivGap2}
                 />
+              )}
+              {isDefined(initialDescription) && (
+                <div style={ENUM_VALUE_TEXT_PADDING_TOP}>
+                  <DescriptionValue
+                    value={initialDescription!}
+                    // diffs
+                    enableDiffs={diffTypeIncluded}
+                    layoutMode={layoutMode}
+                    layoutSide={layoutSide}
+                    $changes={isItemDetailsChanged ? descriptionChange : undefined}
+                    highlightWholeDiff={!isNodeChanged && !itemAdded && !itemRemoved}
+                  />
+                </div>
               )}
             </div>
           </div>

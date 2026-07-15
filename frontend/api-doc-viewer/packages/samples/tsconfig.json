@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@netcracker/qubership-apihub-samples": [
+        "./src"
+      ],
+      "@netcracker/qubership-apihub-samples/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ]
+}

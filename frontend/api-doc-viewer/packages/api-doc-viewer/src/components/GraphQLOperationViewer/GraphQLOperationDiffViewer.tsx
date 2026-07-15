@@ -15,6 +15,7 @@
  */
 
 import '../../index.css'
+import '../shared-styles/diffs/index.css'
 
 import { createGraphApiDiffTree, DiffMetaKeys, DiffNodeMeta, graphApiNodeKind } from '@netcracker/qubership-apihub-api-data-model'
 import { aggregateDiffsWithRollup, DiffType } from "@netcracker/qubership-apihub-api-diff"

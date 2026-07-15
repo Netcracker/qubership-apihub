@@ -15,7 +15,6 @@
  */
 
 import { DiffNodeMeta, DiffRecord, isDiff, isDiffMetaRecord, isObject, NodeChange, NodeChangesSummary } from '@netcracker/qubership-apihub-api-data-model'
-import { startFromOpenApiComponents } from '@netcracker/qubership-apihub-api-unifier'
 import {
   Diff,
   DiffAdd,
@@ -29,16 +28,17 @@ import {
   isDiffReplace
 } from '@netcracker/qubership-apihub-api-diff'
 import { IModelStateNode } from '@netcracker/qubership-apihub-api-state-model'
+import { startFromOpenApiComponents } from '@netcracker/qubership-apihub-api-unifier'
 import { CHANGE_SEVERITIES } from '../../consts/changes'
+import { CHANGED_LAYOUT_SIDE, LayoutSide, ORIGIN_LAYOUT_SIDE } from '../../types/internal/LayoutSide'
 import {
   DOCUMENT_LAYOUT_MODE,
   INLINE_DIFFS_LAYOUT_MODE,
   LayoutMode,
   SIDE_BY_SIDE_DIFFS_LAYOUT_MODE
 } from '../../types/LayoutMode'
-import { CHANGED_LAYOUT_SIDE, LayoutSide, ORIGIN_LAYOUT_SIDE } from '../../types/internal/LayoutSide'
-import { ArrayUtils } from './arrays'
 import { isDefined } from './checkers'
+import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
 
 export function diffAdd(diff?: Diff): diff is DiffAdd {
   return !!diff && isDiffAdd(diff)
@@ -56,24 +56,42 @@ export function diffRename(diff?: Diff): diff is DiffRename {
   return !!diff && isDiffRename(diff)
 }
 
+/** @deprecated Use buildDiffCauseByPathCausedAt instead */
 export function buildOpenApiDiffCause(diff: Diff | undefined): string | undefined {
   if (!diff) {
     return undefined
   }
-  const paths = []
+  const pathDiffCausedAt: JsonPath = []
   if (hasAfterDeclarationPaths(diff)) {
     let path = diff.afterDeclarationPaths?.[0]
     path = path && startFromOpenApiComponents(path) ? path : []
-    paths.push(...path)
+    pathDiffCausedAt.push(...path)
   } else if (hasBeforeDeclarationPaths(diff)) {
     let path = diff.beforeDeclarationPaths?.[0]
     path = path && startFromOpenApiComponents(path) ? path : []
-    paths.push(...path)
+    pathDiffCausedAt.push(...path)
   }
-  return paths.length ? `caused by ${paths.join('.')} change` : ''
+  return pathDiffCausedAt.length ? `caused by ${pathDiffCausedAt.join('.')} change` : ''
 }
 
-export function maxDiffType(...changes: Array<Diff | undefined>): [DiffType | undefined, string | undefined] {
+export function buildDiffCauseByPathCausedAt(path: JsonPath | undefined): string | undefined {
+  if (!path) {
+    return undefined
+  }
+  return path.length ? `caused by ${path.join('.')} change` : undefined
+}
+
+export function maxDiffType(diffTypes: Set<DiffType> | DiffType[]): DiffType | undefined {
+  let diffType: DiffType | undefined
+  for (const currentDiffType of diffTypes) {
+    if (compareDiffTypes(currentDiffType, diffType) > 0) {
+      diffType = currentDiffType
+    }
+  }
+  return diffType
+}
+
+export function maxDiffTypeFromDiffs(...changes: Array<Diff | undefined>): [DiffType | undefined, string | undefined] {
   let diff: Diff | undefined
   for (const change of changes) {
     if (change && compareDiffTypes(change.type, diff?.type) > 0) {
@@ -84,17 +102,8 @@ export function maxDiffType(...changes: Array<Diff | undefined>): [DiffType | un
 }
 
 export function maxDiffTypeFromNodeSummary(summary?: NodeChangesSummary): DiffType | undefined {
-  let diffType: DiffType | undefined
   const diffTypes = summary ? Array.from(summary).map(key => key as DiffType) : []
-  if (ArrayUtils.isEmpty(diffTypes)) {
-    return undefined
-  }
-  for (const currentDiffType of diffTypes) {
-    if (compareDiffTypes(currentDiffType, diffType) > 0) {
-      diffType = currentDiffType
-    }
-  }
-  return diffType
+  return maxDiffType(diffTypes)
 }
 
 export function maxDiffTypeFromNestedNodesSummary(summaries?: Record<string, NodeChangesSummary>): DiffType | undefined {

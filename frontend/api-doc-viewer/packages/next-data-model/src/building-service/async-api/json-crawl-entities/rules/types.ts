@@ -1,5 +1,5 @@
 import { AsyncApiTreeNodeKind } from "@apihub/next-data-model/model/async-api/types/node-kind";
-import { AsyncApiTreeCrawlState } from "../state/types";
+import { AsyncApiTreeCrawlState, AsyncApiTreeWithDiffsCrawlState } from "../state/types";
 import { SchemaTransformFunc } from "../transformers/types/types";
 
 export type SchemaCrawlRule<K extends string, S> = {
@@ -8,4 +8,8 @@ export type SchemaCrawlRule<K extends string, S> = {
   transformers?: SchemaTransformFunc<S>[];
 };
 
-export type AsyncApiCrawlRule = SchemaCrawlRule<AsyncApiTreeNodeKind, AsyncApiTreeCrawlState>;
+export type AsyncApiCrawlRule<S extends AsyncApiTreeCrawlState = AsyncApiTreeCrawlState> =
+  SchemaCrawlRule<AsyncApiTreeNodeKind, S>;
+
+export type AsyncApiTreeWithDiffsCrawlRule =
+  AsyncApiCrawlRule<AsyncApiTreeWithDiffsCrawlState>;

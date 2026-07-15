@@ -29,6 +29,15 @@
       "@netcracker/qubership-apihub-api-data-model": [
         "./../api-data-model/src"
       ],
+      "@netcracker/qubership-apihub-api-data-model/*": [
+        "./../api-data-model/src/*"
+      ],
+      "@apihub/api-data-model": [
+        "./../api-data-model/src"
+      ],
+      "@apihub/api-data-model/*": [
+        "./../api-data-model/src/*"
+      ],
       "@netcracker/qubership-apihub-next-data-model": [
         "./../next-data-model/src"
       ],
@@ -40,6 +49,12 @@
       ],
       "@apihub/next-data-model/*": [
         "./../next-data-model/src/*"
+      ],
+      "@netcracker/qubership-apihub-samples": [
+        "./../samples/src"
+      ],
+      "@netcracker/qubership-apihub-samples/*": [
+        "./../samples/src/*"
       ]
     }
   },

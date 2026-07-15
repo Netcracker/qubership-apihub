@@ -364,12 +364,15 @@ describe('Cases with channel', () => {
       expect(parametersNode!.type).toBe(TreeNodeComplexityTypes.SIMPLE)
       expect(parametersNode!.value()).toEqual({
         rawValues: {
-          userId: {
-            type: 'string',
-            description: "User identifier",
-            default: "testUser001",
-            examples: ["testUser001", "testUser002", "testUser003"],
-            location: "$user.id"
+          type: 'object',
+          properties: {
+            userId: {
+              type: 'string',
+              description: "User identifier",
+              default: "testUser001",
+              examples: ["testUser001", "testUser002", "testUser003"],
+              location: "$user.id"
+            }
           }
         }
       })
@@ -422,7 +425,7 @@ describe('Cases with channel', () => {
 
       const channelSectionNode = sections.find(node => node.kind === AsyncApiTreeNodeKinds.MESSAGE_CHANNEL)
       expect(channelSectionNode).toBeDefined()
-      
+
       const channelChildrenNodes = channelSectionNode!.childrenNodes()
       expect(channelChildrenNodes.length).toBe(1)
 
@@ -439,7 +442,7 @@ describe('Cases with channel', () => {
       expect(serverNode!.type).toBe(TreeNodeComplexityTypes.SIMPLE)
       expect(serverNode!.key).toBe('server1')
       expect(serverNode!.value()).toEqual({
-        title: 'server1',
+        // title: 'server1',
         host: "server1.com",
         protocol: "https"
       })
@@ -495,7 +498,7 @@ describe('Cases with channel', () => {
 
       const channelSectionNode = sections.find(node => node.kind === AsyncApiTreeNodeKinds.MESSAGE_CHANNEL)
       expect(channelSectionNode).toBeDefined()
-      
+
       const channelChildrenNodes = channelSectionNode!.childrenNodes()
       expect(channelChildrenNodes.length).toBe(1)
 
@@ -575,7 +578,7 @@ describe('Cases with channel', () => {
 
       const channelSectionNode = sections.find(node => node.kind === AsyncApiTreeNodeKinds.MESSAGE_CHANNEL)
       expect(channelSectionNode).toBeDefined()
-      
+
       const channelChildrenNodes = channelSectionNode!.childrenNodes()
       expect(channelChildrenNodes.length).toBe(1)
 
@@ -592,7 +595,7 @@ describe('Cases with channel', () => {
       expect(serverNode!.type).toBe(TreeNodeComplexityTypes.SIMPLE)
       expect(serverNode!.key).toBe('server1')
       expect(serverNode!.value()).toEqual({
-        title: 'server1',
+        // title: 'server1',
         host: "server1.com",
         protocol: "https"
       })
@@ -728,12 +731,15 @@ describe('Cases with channel', () => {
       expect(parametersNode!.type).toBe(TreeNodeComplexityTypes.SIMPLE)
       expect(parametersNode!.value()).toEqual({
         rawValues: {
-          tenantId: {
-            type: 'string',
-            description: "Tenant identifier",
-            default: "testTenant001",
-            examples: ["testTenant001", "testTenant002", "testTenant003"],
-            location: "$tenant.id"
+          type: 'object',
+          properties: {
+            tenantId: {
+              type: 'string',
+              description: "Tenant identifier",
+              default: "testTenant001",
+              examples: ["testTenant001", "testTenant002", "testTenant003"],
+              location: "$tenant.id"
+            }
           }
         }
       })

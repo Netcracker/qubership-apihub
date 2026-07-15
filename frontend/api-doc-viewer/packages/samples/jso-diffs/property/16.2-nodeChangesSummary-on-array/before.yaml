@@ -1,0 +1,10 @@
+changedArray:
+  - same
+  - bye
+  - before
+  - 1
+unchangedArray:
+  - one
+  - 2
+  - true
+  - null

@@ -1,0 +1,4 @@
+name: api-doc-viewer-testing
+version: 1.0.0
+description: Screenshot integration tests and Storybook fixtures for api-doc-viewer.
+author: Qubership APIHUB

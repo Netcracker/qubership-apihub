@@ -6,11 +6,11 @@ export const TreeNodeComplexityTypes = {
 } as const
 export type TreeNodeComplexityType = (typeof TreeNodeComplexityTypes)[keyof typeof TreeNodeComplexityTypes]
 
-export type TreeNodeParams<
+export interface TreeNodeParams<
   V extends object | null,
   K extends string,
   M extends object,
-> = {
+> {
   type?: TreeNodeComplexityType
   value: V | null
   meta?: M
@@ -19,19 +19,19 @@ export type TreeNodeParams<
   newDataLevel: boolean
 }
 
-export type SimpleTreeNodeParams<
+export interface SimpleTreeNodeParams<
   V extends object | null,
   K extends string,
   M extends object,
-> = TreeNodeParams<V, K, M> & {
+> extends TreeNodeParams<V, K, M> {
   type: typeof TreeNodeComplexityTypes.SIMPLE
 }
 
-export type ComplexTreeNodeParams<
+export interface ComplexTreeNodeParams<
   V extends object | null,
   K extends string,
   M extends object,
-> = TreeNodeParams<V, K, M> & {
+> extends TreeNodeParams<V, K, M> {
   type: typeof TreeNodeComplexityTypes.COMPLEX
 }
 

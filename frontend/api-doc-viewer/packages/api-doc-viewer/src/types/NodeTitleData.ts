@@ -15,7 +15,7 @@
  */
 
 import { GraphApiDiffTreeNode, GraphApiTreeNode, JsonSchemaDiffTreeNode } from '@netcracker/qubership-apihub-api-data-model'
-import { BadgeKind } from '../components/kit/ux/types'
+import { BadgeKind } from '../components/kit/ux/UxBadge/types'
 import { CustomizationOptions } from '@apihub/contexts/CustomizationOptionsContext'
 
 export type NodeTitleData = Partial<{

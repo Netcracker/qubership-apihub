@@ -25,11 +25,6 @@ export const DEFAULT_DISPLAY_MODE = DETAILED_DISPLAY_MODE
 export const DEFAULT_LAYOUT_MODE = DOCUMENT_LAYOUT_MODE
 export const DEFAULT_ROW_DEPTH = 0
 
-// Layout
-
-export const DEFAULT_ROW_PADDING_LEFT = 'pl-2'
-export const SHIFTED_ROW_PADDING_LEFT = 'pl-7'
-
 // Defaults & Placeholders
 
 export const DEFAULT_SERIES_ITEM = '<empty string>'

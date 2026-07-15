@@ -29,7 +29,7 @@ import { NodeTypeData } from '../../../types/NodeTypeData'
 import { PropsWithoutChangesSummary } from '../../../types/PropsWithoutChangesSummary'
 import { takeNodeChangeIfWholeNodeChanged } from '../../../utils/common/changes'
 import { isCombinerItemNode } from '../../../utils/nodes'
-import { SelectNestedNodeRow } from '../../common/SelectNestedNodeRow'
+import { SelectNestedNodeRow } from '../../common/SelectNestedNodeRow/SelectNestedNodeRow'
 
 export type JsonCombinerNodeViewerProps = PropsWithoutChangesSummary<
   JsonCombinerNodePropsWithState &

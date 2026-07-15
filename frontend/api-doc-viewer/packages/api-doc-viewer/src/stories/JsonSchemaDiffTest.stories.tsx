@@ -311,6 +311,38 @@ export const ObjectiveHeaderChanged: Story = {
   }
 }
 
+export const ObjectToArray: Story = {
+  args: {
+    schema: prepareJsonDiffSchema({
+      beforeSchema: {
+        title: 'ObjectiveType',
+        type: 'object',
+        description: 'Objective Type',
+        properties: {
+          id: {
+            type: 'string',
+            enum: ['1', '2', '3'],
+          },
+        },
+      },
+      afterSchema: {
+        type: 'array',
+        title: 'IterableType',
+        description: 'Iterable Type',
+        items: {
+          type: 'number',
+          minimum: 1,
+          maximum: 100,
+          exclusiveMaximum: true,
+        },
+      },
+      target: RESPONSE_200_BODY_TARGET,
+    }),
+    layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
+    metaKeys: DIFF_META_KEYS,
+  }
+}
+
 export const ExtensionsOnPrimitive: Story = {
   args: {
     schema: prepareJsonDiffSchema({
@@ -387,6 +419,491 @@ export const ExtensionsOnObject: Story = {
             'x-changed-extension': false,
           }
         }
+      },
+      target: RESPONSE_200_BODY_TARGET,
+    }),
+    layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
+    metaKeys: DIFF_META_KEYS,
+  }
+}
+
+export const ExtensionsWhollyAddedOnObject: Story = {
+  args: {
+    schema: prepareJsonDiffSchema({
+      beforeSchema: {
+        type: 'object',
+        properties: {
+          prop: {
+            type: 'string',
+          }
+        }
+      },
+      afterSchema: {
+        type: 'object',
+        properties: {
+          prop: {
+            type: 'string',
+            'x-string-extension': 'value',
+            'x-integer-extension': 1,
+            'x-boolean-extension': true,
+            'x-number-extension': 1.0,
+            'x-array-extension': [1, 2, 3],
+            'x-object-extension': {
+              key: 'value',
+            },
+            'x-added-extension': 42,
+            'x-changed-extension': false,
+          }
+        }
+      },
+      target: RESPONSE_200_BODY_TARGET,
+    }),
+    layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
+    metaKeys: DIFF_META_KEYS,
+  }
+}
+
+export const ExtensionsWhollyRemovedOnObject: Story = {
+  args: {
+    schema: prepareJsonDiffSchema({
+      beforeSchema: {
+        type: 'object',
+        properties: {
+          prop: {
+            type: 'string',
+            'x-string-extension': 'value',
+            'x-integer-extension': 1,
+            'x-boolean-extension': true,
+            'x-number-extension': 1.0,
+            'x-array-extension': [1, 2, 3],
+            'x-object-extension': {
+              key: 'value',
+            },
+            'x-added-extension': 42,
+            'x-changed-extension': false,
+          }
+        }
+      },
+      afterSchema: {
+        type: 'object',
+        properties: {
+          prop: {
+            type: 'string',
+          }
+        }
+      },
+      target: RESPONSE_200_BODY_TARGET,
+    }),
+    layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
+    metaKeys: DIFF_META_KEYS,
+  }
+}
+
+export const AddedPropertyWithExtensions: Story = {
+  args: {
+    schema: prepareJsonDiffSchema({
+      beforeSchema: {
+        type: 'object',
+        properties: {
+          prop: {
+            type: 'string',
+          }
+        }
+      },
+      afterSchema: {
+        type: 'object',
+        properties: {
+          prop: {
+            type: 'string',
+          },
+          addedProperty: {
+            type: 'string',
+            'x-string-extension': 'value',
+            'x-integer-extension': 1,
+            'x-boolean-extension': true,
+            'x-number-extension': 1.0,
+            'x-array-extension': [1, 2, 3],
+            'x-object-extension': {
+              key: 'value',
+            },
+            'x-added-extension': 42,
+            'x-changed-extension': false,
+          }
+        }
+      },
+      target: RESPONSE_200_BODY_TARGET,
+    }),
+    layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
+    metaKeys: DIFF_META_KEYS,
+  }
+}
+
+export const RemovedPropertyWithExtensions: Story = {
+  args: {
+    schema: prepareJsonDiffSchema({
+      beforeSchema: {
+        type: 'object',
+        properties: {
+          prop: {
+            type: 'string',
+          },
+          addedProperty: {
+            type: 'string',
+            'x-string-extension': 'value',
+            'x-integer-extension': 1,
+            'x-boolean-extension': true,
+            'x-number-extension': 1.0,
+            'x-array-extension': [1, 2, 3],
+            'x-object-extension': {
+              key: 'value',
+            },
+            'x-added-extension': 42,
+            'x-changed-extension': false,
+          }
+        }
+      },
+      afterSchema: {
+        type: 'object',
+        properties: {
+          prop: {
+            type: 'string',
+          }
+        }
+      },
+      target: RESPONSE_200_BODY_TARGET,
+    }),
+    layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
+    metaKeys: DIFF_META_KEYS,
+  }
+}
+
+export const ExtensionsOnCircularObject: Story = {
+  args: {
+    schema: prepareJsonDiffSchema({
+      circular: true,
+      beforeSchema: {
+        $ref: '#/components/schemas/A'
+      },
+      beforeAdditionalComponents: {
+        schemas: {
+          A: {
+            type: 'object',
+            properties: {
+              prop: { $ref: '#/components/schemas/A' }
+            },
+            'x-string-extension': 'value',
+            'x-integer-extension': 1,
+            'x-boolean-extension': true,
+            'x-number-extension': 1.0,
+            'x-array-extension': [1, 2, 3],
+            'x-object-extension': {
+              key: 'value',
+            },
+            'x-removed-extension': 'removed value',
+            'x-changed-extension': true,
+          }
+        }
+      },
+      afterSchema: {
+        $ref: '#/components/schemas/A'
+      },
+      afterAdditionalComponents: {
+        schemas: {
+          A: {
+            type: 'object',
+            properties: {
+              prop: {
+                $ref: '#/components/schemas/A'
+              }
+            },
+            'x-string-extension': 'value',
+            'x-integer-extension': 1,
+            'x-boolean-extension': true,
+            'x-number-extension': 1.0,
+            'x-array-extension': [1, 2, 3],
+            'x-object-extension': {
+              key: 'value',
+            },
+            'x-added-extension': 42,
+            'x-changed-extension': false,
+          }
+        }
+      },
+      target: RESPONSE_200_BODY_TARGET,
+    }),
+    layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
+    metaKeys: DIFF_META_KEYS,
+  }
+}
+
+export const AllConstraintsChanged: Story = {
+  args: {
+    schema: prepareJsonDiffSchema({
+      beforeSchema: {
+        type: 'object',
+        properties: {
+          stringProp: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 100,
+            pattern: '^[a-z]+$',
+            contentMediaType: 'text/plain',
+            contentEncoding: 'utf-8',
+            enum: ['foo', 'bar'],
+            const: 'foo',
+            default: 'bar',
+            examples: ['hello', 'world'],
+          },
+          numberProp: {
+            type: 'number',
+            minimum: 0,
+            maximum: 100,
+            exclusiveMinimum: true,
+            exclusiveMaximum: false,
+            multipleOf: 0.5,
+            enum: [1.5, 2.5, 3.5],
+            const: 1.5,
+            default: 2.5,
+            examples: [1.5, 2.0],
+          },
+          integerProp: {
+            type: 'integer',
+            minimum: 1,
+            maximum: 1000,
+            exclusiveMinimum: false,
+            exclusiveMaximum: true,
+            multipleOf: 2,
+            enum: [2, 4, 6],
+            const: 2,
+            default: 4,
+            examples: [2, 8],
+          },
+          booleanProp: {
+            type: 'boolean',
+            enum: [true, false],
+            const: true,
+            default: false,
+            examples: [true],
+          },
+          arrayProp: {
+            type: 'array',
+            minItems: 1,
+            maxItems: 10,
+            uniqueItems: false,
+            enum: [[1, 2], [3, 4]],
+            const: [1, 2],
+            default: [3, 4],
+            examples: [[1, 2, 3]],
+          },
+          objectProp: {
+            type: 'object',
+            minProperties: 1,
+            maxProperties: 5,
+            patternProperties: { '^x_': { type: 'string' } },
+            propertyNames: { minLength: 1, maxLength: 20 },
+            dependencies: { id: ['name'] },
+            enum: [{ id: 'a' }],
+            const: { id: 'a' },
+            default: { id: 'b' },
+            examples: [{ id: 'a', name: 'Alice' }],
+          },
+        },
+      },
+      afterSchema: {
+        type: 'object',
+        properties: {
+          stringProp: {
+            type: 'string',
+            minLength: 5,
+            maxLength: 200,
+            pattern: '^[A-Z]+$',
+            contentMediaType: 'application/json',
+            contentEncoding: 'base64',
+            enum: ['baz', 'qux'],
+            const: 'baz',
+            default: 'qux',
+            examples: ['HELLO', 'WORLD', 'EXAMPLE'],
+          },
+          numberProp: {
+            type: 'number',
+            minimum: 10,
+            maximum: 500,
+            exclusiveMinimum: false,
+            exclusiveMaximum: true,
+            multipleOf: 2.5,
+            enum: [10.5, 20.5, 30.5],
+            const: 10.5,
+            default: 20.5,
+            examples: [12.5, 25.0],
+          },
+          integerProp: {
+            type: 'integer',
+            minimum: 5,
+            maximum: 500,
+            exclusiveMinimum: true,
+            exclusiveMaximum: false,
+            multipleOf: 5,
+            enum: [5, 10, 15],
+            const: 5,
+            default: 10,
+            examples: [10, 100],
+          },
+          booleanProp: {
+            type: 'boolean',
+            enum: [false],
+            const: false,
+            default: true,
+            examples: [false],
+          },
+          arrayProp: {
+            type: 'array',
+            minItems: 2,
+            maxItems: 20,
+            uniqueItems: true,
+            enum: [[5, 6], [7, 8]],
+            const: [5, 6],
+            default: [7, 8],
+            examples: [[5, 6, 7, 8]],
+          },
+          objectProp: {
+            type: 'object',
+            minProperties: 2,
+            maxProperties: 10,
+            patternProperties: { '^s_': { type: 'integer' } },
+            propertyNames: { minLength: 2, maxLength: 30 },
+            dependencies: { id: ['name', 'email'] },
+            enum: [{ id: 'c', name: 'd' }],
+            const: { id: 'c', name: 'd' },
+            default: { id: 'e', name: 'f' },
+            examples: [{ id: 'c', name: 'Carol', email: 'example@example.com' }],
+          },
+        },
+      },
+      target: RESPONSE_200_BODY_TARGET,
+    }),
+    layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
+    metaKeys: DIFF_META_KEYS,
+  },
+}
+
+export const AppendCombinerItem: Story = {
+  args: {
+    schema: prepareJsonDiffSchema({
+      beforeSchema: {
+        type: 'object',
+        properties: {
+          prop: {
+            oneOf: [
+              { type: 'string' },
+            ]
+          },
+        },
+      },
+      afterSchema: {
+        type: 'object',
+        properties: {
+          prop: {
+            oneOf: [
+              { type: 'string' },
+              { type: 'integer' },
+            ]
+          },
+        },
+      },
+      target: RESPONSE_200_BODY_TARGET,
+    }),
+    layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
+    metaKeys: DIFF_META_KEYS,
+  }
+}
+
+export const PopCombinerItem: Story = {
+  args: {
+    schema: prepareJsonDiffSchema({
+      beforeSchema: {
+        type: 'object',
+        properties: {
+          prop: {
+            oneOf: [
+              { type: 'string' },
+              { type: 'integer' },
+            ]
+          },
+        },
+      },
+      afterSchema: {
+        type: 'object',
+        properties: {
+          prop: {
+            oneOf: [
+              { type: 'string' },
+            ]
+          },
+        },
+      },
+      target: RESPONSE_200_BODY_TARGET,
+    }),
+    layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
+    metaKeys: DIFF_META_KEYS,
+  }
+}
+
+export const ChangesInsideFirstCombinerItem: Story = {
+  args: {
+    schema: prepareJsonDiffSchema({
+      beforeSchema: {
+        type: 'object',
+        properties: {
+          prop: {
+            oneOf: [
+              { type: 'integer', description: 'Default value is 42', examples: [24] },
+              { type: 'string' },
+            ]
+          },
+        },
+      },
+      afterSchema: {
+        type: 'object',
+        properties: {
+          prop: {
+            oneOf: [
+              { type: 'integer', default: 42, examples: [42] },
+              { type: 'string' },
+            ]
+          },
+        },
+      },
+      target: RESPONSE_200_BODY_TARGET,
+    }),
+    layoutMode: SIDE_BY_SIDE_DIFFS_LAYOUT_MODE,
+    metaKeys: DIFF_META_KEYS,
+  }
+}
+
+export const ChangesInsideLastCombinerItem: Story = {
+  args: {
+    schema: prepareJsonDiffSchema({
+      beforeSchema: {
+        type: 'object',
+        properties: {
+          prop: {
+            oneOf: [
+              { type: 'string' },
+              { type: 'integer', description: 'Default value is 42', examples: [24] },
+            ]
+          },
+        },
+      },
+      afterSchema: {
+        type: 'object',
+        properties: {
+          prop: {
+            oneOf: [
+              { type: 'string' },
+              { type: 'integer', default: 42, examples: [42] },
+            ]
+          },
+        },
       },
       target: RESPONSE_200_BODY_TARGET,
     }),

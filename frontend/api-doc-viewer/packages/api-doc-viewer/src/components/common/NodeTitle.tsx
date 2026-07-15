@@ -16,16 +16,17 @@
 
 import { DiffRecord } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
+import { DiffsClassesBuilder } from '@netcracker/qubership-apihub-next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/utilities'
+import { HighlightVariant } from '@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/tree-node.interface'
 import type { FC } from 'react'
 import { CHANGED_LAYOUT_SIDE, LayoutSide, ORIGIN_LAYOUT_SIDE } from '../../types/internal/LayoutSide'
 import { LayoutMode } from '../../types/LayoutMode'
 import { NodeTitleData } from '../../types/NodeTitleData'
 import { diffRename } from '../../utils/common/changes'
-import { BADGE_KIND_INFO } from "../kit/ux/types"
-import { UxBadge } from '../kit/ux/UxBadge'
+import { BADGE_KIND_INFO } from "../kit/ux/UxBadge/types"
+import { UxBadge } from '../kit/ux/UxBadge/UxBadge'
 import { NullableAsterisk } from './NullableAsterisk'
 import { RequiredStar } from './RequiredStar'
-import { DEFAULT_STRIKETHROUGH_VALUE_CLASS } from '../../consts/changes'
 
 export type NodeTitleProps = NodeTitleData & {
   // control flags
@@ -60,11 +61,11 @@ export const NodeTitle: FC<NodeTitleProps> = (props) => {
 
   let { title } = props
 
-  let titleStrikethrough = false
+  let isRenamed = false
   if (diffRename(titleChange)) {
+    isRenamed = true
     if (layoutSide === ORIGIN_LAYOUT_SIDE) {
       title = `${titleChange.beforeKey}`
-      titleStrikethrough = true
     }
     if (layoutSide === CHANGED_LAYOUT_SIDE) {
       title = `${titleChange.afterKey}`
@@ -80,8 +81,8 @@ export const NodeTitle: FC<NodeTitleProps> = (props) => {
     title = `@${title}`
   }
   if (!titleNode) {
-    titleNode = titleStrikethrough
-      ? <span className={DEFAULT_STRIKETHROUGH_VALUE_CLASS}>{title}</span>
+    titleNode = isRenamed
+      ? <span className={DiffsClassesBuilder.highlighter(HighlightVariant.Yellow)}>{title}</span>
       : <>{title}</>
   }
 

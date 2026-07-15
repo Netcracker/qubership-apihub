@@ -19,7 +19,7 @@ import { DiffAction, DiffType } from '@netcracker/qubership-apihub-api-diff'
 import type { FC } from 'react'
 import { useCallback /*, useState */ } from 'react'
 import { NODE_DIFF_COLOR_MAP } from '../../../../consts/changes'
-import { DEFAULT_LAYOUT_MODE, DEFAULT_ROW_PADDING_LEFT, SHIFTED_ROW_PADDING_LEFT } from '../../../../consts/configuration'
+import { DEFAULT_LAYOUT_MODE } from '../../../../consts/configuration'
 // import {
 //   COLLAPSE_ALL_MENU_ITEM,
 //   EXPAND_ALL_MENU_ITEM,
@@ -43,7 +43,7 @@ import {
   getDiffTypesFromSummary,
   getLayoutModeFlags,
   isDiffTypeIncluded,
-  maxDiffType,
+  maxDiffTypeFromDiffs,
   toChangesList
 } from '../../../../utils/common/changes'
 // import { defaultOnContextMenu } from '../../../../utils/common/event-handlers'
@@ -57,12 +57,12 @@ import { Expander } from '../../../common/layout/Expander/Expander'
 import { CircularRefIcon } from '../../../kit/icons/CircularRefIcon'
 // import { UxContextMenu } from '../../../kit/ux/UxContextMenu/UxContextMenu'
 // import { ToggleContextMenuHandlerOptions } from '../../../kit/ux/UxContextMenu/types/ToggleContextMenuHandler'
-import { LevelIndicator } from '@apihub/components/AsyncApiOperationViewer/LevelIndicator'
+import { LevelIndicator } from '@apihub/components/shared-components/LevelIndicator'
+import { getUxBadgeColorSchema } from '../../../kit/ux/UxBadge/consts'
+import { BADGE_KIND_DEFAULT_OUTLINE } from '../../../kit/ux/UxBadge/types'
 import { UxDiffFloatingBadge } from '../../../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
 import { UxMarkerPanel } from '../../../kit/ux/UxMarkerPanel/UxMarkerPanel'
 import { UxTooltip } from '../../../kit/ux/UxTooltip/UxTooltip'
-import { COLOR_SCHEMAS } from '../../../kit/ux/consts'
-import { BADGE_KIND_DEFAULT_OUTLINE } from '../../../kit/ux/types'
 
 export type HeaderRowState = {
   isExpandable?: boolean
@@ -137,9 +137,9 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
   const rowContentChangesList = filterChangesList(toChangesList($changes, $metaChanges, API_TYPE_REST), filters)
   const [diffType, diffTypeCause] =
     isNodeChanged
-      ? maxDiffType($nodeChange)
+      ? maxDiffTypeFromDiffs($nodeChange)
       : isContentChanged
-        ? maxDiffType(...rowContentChangesList)
+        ? maxDiffTypeFromDiffs(...rowContentChangesList)
         : DEFAULT_DIFF_TYPE_AND_CAUSE_PAIR
   const diffTypeIncluded = isDiffTypeIncluded(diffType, filters)
 
@@ -172,6 +172,12 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
 
     const noSubHeaderSide = useNoSubHeaderSide()
     const noSubHeader = noSubHeaderSide && noSubHeaderSide === layoutSide
+    const rootPlaceholder = isRoot && !isExpandable
+    const rowClasses = [
+      'flex flex-row',
+      !rootPlaceholder && 'gap-2',
+      width,
+    ].filter(Boolean).join(' ')
 
     const SubHeader: FC = () => <>
       {nodeTypeData && (
@@ -216,7 +222,7 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
       {propMediaType && (
         <DiffBadge
           label={propMediaType}
-          colorSchema={COLOR_SCHEMAS[BADGE_KIND_DEFAULT_OUTLINE]}
+          colorSchema={getUxBadgeColorSchema(BADGE_KIND_DEFAULT_OUTLINE)}
           layoutMode={layoutMode}
           layoutSide={layoutSide}
           isNodeChanged={false}
@@ -226,19 +232,21 @@ export const HeaderRow: FC<HeaderRowProps> = (props) => {
     </>
 
     return (
-      <div className={`flex flex-row gap-2 ${isRoot && !isExpandable ? SHIFTED_ROW_PADDING_LEFT : DEFAULT_ROW_PADDING_LEFT} ${width}`}>
-        {(!isRoot || isExpandable) && (
-          <div className="flex flex-row relative">
-            <LevelIndicator level={level} />
-            <Expander
-              isRoot={isRoot}
-              isExpandable={isExpandable}
-              expanded={expanded}
-              onToggleExpander={onToggleExpander}
+      <div className={rowClasses}>
+        <div className="flex flex-row relative">
+          <LevelIndicator level={level} />
+          {rootPlaceholder
+            ? <div className="w-5" />
+            : (
+              <Expander
+                isRoot={isRoot}
+                isExpandable={isExpandable}
+                expanded={expanded}
+                onToggleExpander={onToggleExpander}
               // onToggleContextMenu={onToggleContextMenu}
-            />
-          </div>
-        )}
+              />
+            )}
+        </div>
         <div className="flex flex-row items-center gap-2 pt-2 pb-1">
           <div
             className={`text-xs text-black font-Inter-Medium ${isExpandable ? 'hover:cursor-pointer' : ''}`}

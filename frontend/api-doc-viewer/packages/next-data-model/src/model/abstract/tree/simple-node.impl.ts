@@ -1,5 +1,4 @@
 import { NodeId, NodeKey } from "../../../utility-types";
-import { ComplexTreeNode } from "./complex-node.impl";
 import { ITreeNode, TreeNodeComplexityType, TreeNodeComplexityTypes, TreeNodeParams } from "./tree-node.interface";
 
 export class SimpleTreeNode<
@@ -28,6 +27,7 @@ export class SimpleTreeNode<
   ) {
     const {
       type = TreeNodeComplexityTypes.SIMPLE,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       value = null,
       parent = null,
       container = null,
@@ -38,7 +38,6 @@ export class SimpleTreeNode<
     this.parent = parent;
     this.container = container;
     this.newDataLevel = newDataLevel;
-
     this._value = value;
     this._meta = meta!; // if you did not pass "meta", that is wrong contract
     // TODO 05.11.25 // Separate params contract for different scenarios.
@@ -99,7 +98,7 @@ export class SimpleTreeNode<
       if (nestedNode.id === nestedNodeId) {
         return nestedNode;
       }
-      if (recursive && nestedNode instanceof ComplexTreeNode) {
+      if (recursive && nestedNode.type === TreeNodeComplexityTypes.COMPLEX) {
         const node = nestedNode.findNestedNode(nestedNodeId, recursive);
         if (node) {
           return node;

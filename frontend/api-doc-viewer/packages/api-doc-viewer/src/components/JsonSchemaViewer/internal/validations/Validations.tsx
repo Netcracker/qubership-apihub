@@ -148,6 +148,7 @@ export const Validations: FC<ValidationsProps> = (props) => {
           level={level}
           $nodeChange={$appliedNodeChange}
           $changes={$nodeValue?.$changes}
+          isPredefinedValuesSet={true}
         />
       )}
 
@@ -281,6 +282,7 @@ export const Validations: FC<ValidationsProps> = (props) => {
               level={level}
               $nodeChange={$appliedNodeChange}
               $changes={$nodeValue?.$changes}
+              isPredefinedValuesSet={true}
             />
           )}
           {(isDefined(array?.minItems) || isDefined(array?.maxItems)) && (

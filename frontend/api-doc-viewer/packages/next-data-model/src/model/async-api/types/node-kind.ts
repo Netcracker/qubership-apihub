@@ -16,4 +16,6 @@ export const AsyncApiTreeNodeKinds = {
 
 export const AsyncApiTreeNodeKindsList: AsyncApiTreeNodeKind[] = Object.values(AsyncApiTreeNodeKinds)
 
+export const AsyncApiTreeNodeKindsSet: Set<AsyncApiTreeNodeKind> = new Set(AsyncApiTreeNodeKindsList)
+
 export type AsyncApiTreeNodeKind = typeof AsyncApiTreeNodeKinds[keyof typeof AsyncApiTreeNodeKinds]
