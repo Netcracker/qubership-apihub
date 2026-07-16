@@ -52,7 +52,6 @@ export interface ResolvedOperation<M = any> {
   // other params (not used in builder logic)
   // [key: string]: unknown
 
-  // searchScopes?: object
   // refPackage?: PackageRef
   // changes?: OperationChanges[]
   // changeSummary?: ChangeSummary

@@ -21,15 +21,6 @@ import {
 import { NormalizeOptions } from '@netcracker/qubership-apihub-api-unifier'
 import { ResolvedVersionDocument, ZippableDocument } from '../../types'
 
-export const ASYNC_SCOPES = {
-  all: 'all',
-  annotation: 'annotation',
-  request: 'request',
-  response: 'response',
-  properties: 'properties',
-  examples: 'examples',
-} as const
-
 // Only AsyncAPI 3.0 is supported
 export const ASYNC_DOCUMENT_TYPE = {
   AAS3: 'asyncapi-3-0',

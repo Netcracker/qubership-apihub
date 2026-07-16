@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-import { ApiOperation, NotificationMessage, VersionDocument } from '../../types'
-import { ASYNC_DOCUMENT_TYPE, ASYNC_SCOPES } from './async.consts'
+import { ApiOperation, VersionDocument } from '../../types'
+import { ASYNC_DOCUMENT_TYPE } from './async.consts'
 import { CustomTags } from '../../utils/apihubSpecificationExtensions'
 import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
 
-export type AsyncScopeType = keyof typeof ASYNC_SCOPES
 export type AsyncDocumentType = (typeof ASYNC_DOCUMENT_TYPE)[keyof typeof ASYNC_DOCUMENT_TYPE]
 export type AsyncOperationActionType = 'send' | 'receive'
 
@@ -65,20 +64,3 @@ export interface AsyncOperationData {
 
 export type VersionAsyncDocument = VersionDocument<AsyncAPIV3.AsyncAPIObject>
 export type VersionAsyncOperation = ApiOperation<AsyncOperationData, AsyncOperationMeta>
-
-// TODO Delete AsyncRefCache if not used in future
-export interface AsyncRefCache {
-  scopes: Record<AsyncScopeType, string>
-  refs: string[]
-  data: any
-}
-
-// TODO Delete AsyncOperationContext if not used in future
-export interface AsyncOperationContext {
-  operationId: string
-  scopes: Record<AsyncScopeType, string>
-  operationData: AsyncOperationData
-  document: VersionAsyncDocument
-  refsCache: Record<string, AsyncRefCache>
-  notifications: NotificationMessage[]
-}

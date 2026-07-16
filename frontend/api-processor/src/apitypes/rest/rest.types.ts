@@ -16,13 +16,12 @@
 
 import { OpenAPIV3 } from 'openapi-types'
 
-import type { ApiOperation, NotificationMessage, VersionDocument } from '../../types'
-import { REST_DOCUMENT_TYPE, REST_SCOPES } from './rest.consts'
+import type { ApiOperation, VersionDocument } from '../../types'
+import { REST_DOCUMENT_TYPE } from './rest.consts'
 import { NormalizedPath } from '../../utils'
 import { CustomTags } from '../../utils/apihubSpecificationExtensions'
 import { API_KIND_SPECIFICATION_EXTENSION } from '../../consts'
 
-export type RestScopeType = keyof typeof REST_SCOPES
 export type RestDocumentType = (typeof REST_DOCUMENT_TYPE)[keyof typeof REST_DOCUMENT_TYPE]
 export type { CustomTags }  //TODOL just use new type for REST
 
@@ -56,21 +55,6 @@ export interface RestOperationData {
   security?: OpenAPIV3.SecurityRequirementObject[]
   externalDocs?: OpenAPIV3.ExternalDocumentationObject
   tags?: OpenAPIV3.TagObject[]
-}
-
-export interface RestRefCache {
-  scopes: Record<RestScopeType, string>
-  refs: string[]
-  data: any
-}
-
-export interface RestOperationContext {
-  operationId: string
-  scopes: Record<RestScopeType, string>
-  operationData: RestOperationData
-  document: VersionRestDocument
-  refsCache: Record<string, RestRefCache>
-  notifications: NotificationMessage[]
 }
 
 export interface OperationExtension {

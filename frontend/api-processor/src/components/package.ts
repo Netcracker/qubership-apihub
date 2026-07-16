@@ -268,18 +268,8 @@ const createExportDocumentDataFiles = async (zip: ZipTool, documents: ExportDocu
 
 const createOperationsFile = (zip: ZipTool, operations: Map<string, ApiOperation>): void => {
   const data: PackageOperations = { operations: [] }
-  // TODO: remove searchScopes serialization after new search is adopted irrevocably
-  const SEARCH_SCOPES_MAP: Record<string, string> = {}
 
   for (const operation of operations.values()) {
-    const searchScopes = Object
-      .entries(operation.searchScopes)
-      .reduce((acc, next) => {
-        const [key, value] = next
-        acc[key] = [...value.values()].sort().join(' ')
-        return acc
-      }, { ...SEARCH_SCOPES_MAP })
-
     data.operations.push({
       operationId: operation.operationId,
       documentId: operation.documentId,
@@ -288,7 +278,6 @@ const createOperationsFile = (zip: ZipTool, operations: Map<string, ApiOperation
       apiKind: operation.apiKind,
       apiType: operation.apiType,
       metadata: operation.metadata,
-      searchScopes: searchScopes,
       search: operation.search,
 
       ...(takeIf({ deprecatedItems: operation.deprecatedItems }, !!operation.deprecatedItems?.length)),
