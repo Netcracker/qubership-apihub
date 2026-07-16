@@ -28,7 +28,7 @@ import type {
   SearchResultsDto,
 } from '../../../../entities/global-search'
 import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
-import { API_V3, API_V4, requestJson } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
+import { API_V4, requestJson } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { getOptionalBody } from '@netcracker/qubership-apihub-ui-shared/utils/request-bodies'
 
 export type FetchNextSearchResultList = (options?: FetchNextPageOptions) => Promise<InfiniteQueryObserverResult<SearchResults, Error>>
@@ -38,7 +38,6 @@ export async function getSearchResult(
   level: Level,
   limit: number,
   page: number,
-  useV3Search: boolean,
 ): Promise<SearchResults> {
 
   const queryParams = optionalSearchParams({
@@ -50,7 +49,7 @@ export async function getSearchResult(
     method: 'POST',
     body: JSON.stringify(getOptionalBody(criteria)),
   }, {
-    basePath: useV3Search ? API_V3 : API_V4,
+    basePath: API_V4,
   })
 
   return toSearchResults(searchResultsDto)

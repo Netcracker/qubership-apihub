@@ -121,7 +121,6 @@ export type ButtonType = {
 
 export type GlobalSearchPanelDetails = {
   filters: Omit<SearchCriteria, 'searchString'>
-  apiSearchMode?: boolean
 }
 
 export type ShowCreatePackageDetail = {

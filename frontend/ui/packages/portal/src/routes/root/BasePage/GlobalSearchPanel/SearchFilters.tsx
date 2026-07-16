@@ -26,35 +26,13 @@ import DatePicker from 'react-multi-date-picker'
 
 import { usePackages } from '@netcracker/qubership-apihub-ui-shared/hooks/packages/usePackages'
 import { useDebounce } from 'react-use'
-import type {
-  GraphQlOperationTypes,
-  OptionRestDetailedScope,
-  Scopes,
-  SearchAsyncApiParams,
-  SearchGQLParams,
-  SearchRestParams,
-} from '@apihub/entities/global-search'
-import {
-  ANNOTATION_SCOPE,
-  ARGUMENT_SCOPE,
-  detailedScopeMapping,
-  MUTATION_OPERATION_TYPES,
-  PROPERTY_SCOPE,
-  QUERY_OPERATION_TYPES,
-  REQUEST_SCOPE,
-  RESPONSE_SCOPE,
-  SUBSCRIPTION_OPERATION_TYPES,
-} from '@apihub/entities/global-search'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import {
-  ARCHIVED_VERSION_STATUS,
-  DRAFT_VERSION_STATUS,
   PUBLISH_STATUSES,
   RELEASE_VERSION_STATUS,
   VERSION_STATUSES,
 } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
-import type { MethodType } from '@netcracker/qubership-apihub-ui-shared/entities/method-types'
 import type { Package } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { GROUP_KIND, PACKAGE_KIND, WORKSPACE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { handleVersionsRevision } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
@@ -65,14 +43,11 @@ import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/Cu
 import { CalendarIcon } from '@netcracker/qubership-apihub-ui-shared/icons/CalendarIcon'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import {
-  API_TYPE_ASYNCAPI,
-  API_TYPE_GRAPHQL,
   API_TYPE_REST,
   API_TYPE_TITLE_MAP,
   API_TYPES,
 } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { DEFAULT_DEBOUNCE } from '@netcracker/qubership-apihub-ui-shared/utils/constants'
-import { useSystemInfo } from '@netcracker/qubership-apihub-ui-shared/features/system-info'
 import { usePackage } from '@apihub/routes/root/usePackage'
 import { toISODateRange } from '@netcracker/qubership-apihub-ui-shared/utils/date'
 import {
@@ -89,10 +64,6 @@ type FiltersData = Partial<{
   status: VersionStatus
   publicationDatePeriod: string[]
   apiType: ApiType
-  scope: Scopes[]
-  detailedScope: OptionRestDetailedScope[]
-  operationTypes: GraphQlOperationTypes[]
-  methods: MethodType[]
 }>
 
 type SearchFilters = {
@@ -142,14 +113,10 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
   }, [defaultPublicationDatePeriod, defaultWorkspace, reset])
 
   const {
-    operationTypes,
     apiType,
-    methods,
     version,
     status,
     publicationDatePeriod,
-    detailedScope,
-    scope,
   } = watch()
 
   const workspaceKey = watch().workspace?.key
@@ -210,8 +177,6 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
     setValue('publicationDatePeriod', toISODateRange(start, end))
   }, [setValue])
 
-  const { useV3Search } = useSystemInfo()
-
   const packageIdsDataForPackageAndGroup = useMemo(() => {
     if (packageKey) {
       return [packageKey]
@@ -233,69 +198,23 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
 
       const versionData = version ? [version] : []
 
-      const packageIdsData = (): string[] => {
-        if (packageKey || groupKey) {
-          return packageIdsDataForPackageAndGroup
-        }
-        if (workspaceKey) {
-          return [workspaceKey]
-        }
-        return []
+      const globalSearchFilter = {
+        filters: {
+          workspace: workspaceKey,
+          packageIds: packageIdsDataForPackageAndGroup,
+          versions: versionData,
+          status: status as VersionStatus,
+          creationDateInterval: {
+            startDate: publicationDatePeriod?.[0] ?? '',
+            endDate: publicationDatePeriod?.[1] ?? '',
+          },
+          apiType: apiType,
+        },
       }
-      const restDetailedScope = detailedScope?.map(scope => detailedScopeMapping[scope])
-
-      const apiTypeOperationsParams: Record<ApiType, SearchRestParams | SearchGQLParams> =
-        {
-          [API_TYPE_REST]: {
-            apiType: apiType,
-            scope: [REQUEST_SCOPE, RESPONSE_SCOPE],
-            detailedScope: restDetailedScope,
-            methods: methods,
-          } satisfies SearchRestParams,
-          [API_TYPE_GRAPHQL]: {
-            apiType: apiType,
-            scope: [ARGUMENT_SCOPE, PROPERTY_SCOPE, ANNOTATION_SCOPE],
-            operationTypes: [QUERY_OPERATION_TYPES, MUTATION_OPERATION_TYPES, SUBSCRIPTION_OPERATION_TYPES],
-          } satisfies SearchGQLParams,
-          [API_TYPE_ASYNCAPI]: {
-            apiType: apiType,
-          } as SearchAsyncApiParams,
-        }
-
-      const globalSearchFilter = useV3Search
-        ? {
-          filters: {
-            packageIds: packageIdsData(),
-            versions: versionData,
-            statuses: [DRAFT_VERSION_STATUS, RELEASE_VERSION_STATUS, ARCHIVED_VERSION_STATUS] as VersionStatus[],
-            creationDateInterval: {
-              startDate: publicationDatePeriod?.[0] ?? '',
-              endDate: publicationDatePeriod?.[1] ?? '',
-            },
-            operationParams:
-              apiType
-                ? apiTypeOperationsParams[apiType]
-                : {},
-          },
-          apiSearchMode: true,
-        }
-        : {
-          filters: {
-            workspace: workspaceKey,
-            packageIds: packageIdsDataForPackageAndGroup,
-            versions: versionData,
-            status: status as VersionStatus,
-            creationDateInterval: {
-              startDate: publicationDatePeriod?.[0] ?? '',
-              endDate: publicationDatePeriod?.[1] ?? '',
-            },
-            apiType: apiType,
-          },
-        }
 
       applyGlobalSearchFilters(globalSearchFilter)
     }),
-    [handleSubmit, detailedScope, methods, useV3Search, workspaceKey, packageIdsDataForPackageAndGroup, applyGlobalSearchFilters, packageKey, groupKey],
+    [handleSubmit, workspaceKey, packageIdsDataForPackageAndGroup, applyGlobalSearchFilters],
   )
 
   useDebounce(
@@ -304,12 +223,8 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
     [
       workspaceKey,
       groupKey,
-      operationTypes,
       packageKey,
       apiType,
-      detailedScope,
-      methods,
-      scope,
       status,
       version,
       publicationDatePeriod,
@@ -337,10 +252,6 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
             </ListItem>
           )}
           onChange={(_, type) => {
-            setValue('scope', [])
-            setValue('detailedScope', [])
-            setValue('methods', [])
-            setValue('operationTypes', [])
             onChange(type)
           }}
           renderInput={(params) => (
