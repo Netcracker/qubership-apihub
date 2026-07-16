@@ -39,7 +39,6 @@ export const OperationSchema = Type.Object({
     method: Type.Any({enum: ['get', 'post', 'put', 'delete', 'patch', 'head', 'options', 'connect', 'trace'], description: 'HTTP Method'}),
   }),
   data: Type.Any(),
-  searchScopes: Type.Optional(Type.Any()),
   changes: Type.Optional(Type.Array(Type.Any())),
   changeSummary: Type.Optional(Type.Any()),
   refPackage: Type.Optional(Type.Object({
