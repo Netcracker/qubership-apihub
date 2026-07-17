@@ -3179,6 +3179,17 @@ func (p publishedRepositoryImpl) SearchForVersions(searchQuery *entity.PackageSe
 		and pv.published_at >= ?start_date
 		and pv.published_at <= ?end_date
 		and init_rank > 0
+		and (
+			?api_type = ''
+			or exists (
+				select 1
+				from operation o
+				where o.package_id = pv.package_id
+				and o.version = pv.version
+				and o.revision = pv.revision
+				and o.type = ?api_type
+			)
+		)
 		order by rank desc, created_at desc, version
 		limit ?limit
 		offset ?offset;
@@ -3276,6 +3287,18 @@ func (p publishedRepositoryImpl) SearchForDocuments(searchQuery *entity.Document
 			?version_status_archived_weight * (v.status = ?version_status_archived)::int) version_status_tf,
 		coalesce(?open_count_weight * coalesce(oc.open_count), 0) document_open_count
 		where init_rank > 0
+		and (
+			?api_type = ''
+			or exists (
+				select 1
+				from operation o
+				where o.package_id = c.package_id
+				and o.version = c.version
+				and o.revision = c.revision
+				and o.type = ?api_type
+				and o.operation_id = any(c.operation_ids)
+			)
+		)
 		order by rank desc, v.published_at desc, c.file_id, c.index asc
 		limit ?limit
 		offset ?offset;
