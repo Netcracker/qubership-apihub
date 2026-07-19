@@ -33,6 +33,7 @@ type ApihubClient interface {
 	CheckApiKeyValid(apiKey string) (bool, error)
 	CheckAuthToken(ctx context.Context, token string) (bool, error)
 	GetApiKeyByKey(ctx context.Context, apiKey string) (*view.ApihubApiKeyView, error)
+	GetPatByPAT(ctx context.Context, pat string) (*view.PersonalAccessTokenExtAuthView, error)
 }
 
 func NewApihubClient(apihubUrl string, accessToken string, cloudName string) (ApihubClient, error) {
@@ -237,6 +238,31 @@ func (a apihubClientImpl) GetApiKeyByKey(ctx context.Context, apiKey string) (*v
 	}
 
 	return &apiKeyView, nil
+}
+
+func (a apihubClientImpl) GetPatByPAT(ctx context.Context, pat string) (*view.PersonalAccessTokenExtAuthView, error) {
+	req := a.restyClient.R()
+	req.SetContext(ctx)
+	req.SetHeader("X-Personal-Access-Token", pat)
+
+	resp, err := req.Get(fmt.Sprintf("%s/api/v2/auth/pat", a.apihubUrl))
+	if err != nil || resp.StatusCode() != http.StatusOK {
+		if resp != nil && resp.StatusCode() == http.StatusNotFound {
+			return nil, nil
+		}
+		if authErr := checkUnauthorized(resp); authErr != nil {
+			return nil, authErr
+		}
+		return nil, err
+	}
+
+	var patView view.PersonalAccessTokenExtAuthView
+	err = json.Unmarshal(resp.Body(), &patView)
+	if err != nil {
+		return nil, err
+	}
+
+	return &patView, nil
 }
 
 func (a apihubClientImpl) makeRequest(ctx secctx.SecurityContext) *resty.Request {
