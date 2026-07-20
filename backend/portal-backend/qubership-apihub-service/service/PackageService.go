@@ -629,6 +629,43 @@ func (p packageServiceImpl) DeletePackage(ctx context.SecurityContext, id string
 			}
 		}
 	}
+	referencingDashboards, err := p.publishedRepo.GetPackageReferencingDashboards(id)
+	if err != nil {
+		return err
+	}
+	if len(referencingDashboards) > 0 {
+		log.Warnf("Blocked deletion of package %s by user %s: referenced by dashboards %v",
+			id, ctx.GetUserId(), referencingDashboards)
+		if ent.Kind == entity.KIND_GROUP || ent.Kind == entity.KIND_WORKSPACE {
+			packages, err := p.formatDashboardReferencesByPackage(ctx, referencingDashboards)
+			if err != nil {
+				return err
+			}
+			return &exception.CustomError{
+				Status:  http.StatusConflict,
+				Code:    exception.ReferencedByDashboard,
+				Message: exception.GroupOrWorkspaceReferencedByDashboardMsg,
+				Params: map[string]interface{}{
+					"kind":      ent.Kind,
+					"packageId": ent.Id,
+					"packages":  packages,
+				},
+			}
+		}
+		accessible, hiddenCount, err := p.roleService.FilterVersionsByPackageReadAccess(ctx, dashboardVersionKeys(referencingDashboards))
+		if err != nil {
+			return err
+		}
+		return &exception.CustomError{
+			Status:  http.StatusConflict,
+			Code:    exception.ReferencedByDashboard,
+			Message: exception.PackageReferencedByDashboardMsg,
+			Params: map[string]interface{}{
+				"packageId":  ent.Id,
+				"dashboards": entity.FormatVersionKeysWithHidden(accessible, hiddenCount, "dashboard version"),
+			},
+		}
+	}
 	deletedReleaseCount, err := p.publishedRepo.DeletePackage(id, ctx.GetUserId())
 	if err != nil {
 		return err
@@ -649,6 +686,50 @@ func (p packageServiceImpl) DeletePackage(ctx context.SecurityContext, id string
 	})
 
 	return nil
+}
+
+func dashboardVersionKeys(refs []entity.DashboardReferenceEntity) []entity.PublishedVersionKeyEntity {
+	keys := make([]entity.PublishedVersionKeyEntity, 0, len(refs))
+	for _, ref := range refs {
+		keys = append(keys, ref.PublishedVersionKeyEntity)
+	}
+	return keys
+}
+
+func (p packageServiceImpl) formatDashboardReferencesByPackage(ctx context.SecurityContext, refs []entity.DashboardReferenceEntity) (string, error) {
+	accessible, _, err := p.roleService.FilterVersionsByPackageReadAccess(ctx, dashboardVersionKeys(refs))
+	if err != nil {
+		return "", err
+	}
+	accessibleDashboardVersions := make(map[entity.PublishedVersionKeyEntity]bool, len(accessible))
+	for _, key := range accessible {
+		accessibleDashboardVersions[key] = true
+	}
+
+	type dashboardGroup struct {
+		accessible  []entity.PublishedVersionKeyEntity
+		hiddenCount int
+	}
+	groups := make(map[string]*dashboardGroup)
+	for _, ref := range refs {
+		group := groups[ref.ReferencedPackageId]
+		if group == nil {
+			group = &dashboardGroup{}
+			groups[ref.ReferencedPackageId] = group
+		}
+		if accessibleDashboardVersions[ref.PublishedVersionKeyEntity] {
+			group.accessible = append(group.accessible, ref.PublishedVersionKeyEntity)
+		} else {
+			group.hiddenCount++
+		}
+	}
+
+	parts := make([]string, 0, len(groups))
+	for referencedPackageId, group := range groups {
+		parts = append(parts, fmt.Sprintf("%s (%s)", referencedPackageId,
+			entity.FormatVersionKeysWithHidden(group.accessible, group.hiddenCount, "dashboard version")))
+	}
+	return strings.Join(parts, ", "), nil
 }
 
 func (p packageServiceImpl) FavorPackage(ctx context.SecurityContext, id string) error {

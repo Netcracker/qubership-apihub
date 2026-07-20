@@ -23,6 +23,7 @@ type RoleService interface {
 	UpdatePackageMember(ctx context.SecurityContext, packageId string, userId string, roleId string, action string) error
 	GetPackageMembers(packageId string) (*view.PackageMembers, error)
 	GetPermissionsForPackage(ctx context.SecurityContext, packageId string) ([]string, error)
+	FilterVersionsByPackageReadAccess(ctx context.SecurityContext, keys []entity.PublishedVersionKeyEntity) (accessible []entity.PublishedVersionKeyEntity, hiddenCount int, err error)
 	GetUserPackagePromoteStatuses(packageIds []string, userId string) (*view.AvailablePackagePromoteStatuses, error)
 	GetAvailableVersionPublishStatuses(ctx context.SecurityContext, packageId string) ([]string, error)
 	HasRequiredPermissions(ctx context.SecurityContext, packageId string, requiredPermissions ...view.RolePermission) (bool, error)
@@ -570,6 +571,29 @@ func (r roleServiceImpl) getUserPermissionsForPackage(packageId string, userId s
 		return nil, err
 	}
 	return userPermissions, nil
+}
+
+func (r roleServiceImpl) FilterVersionsByPackageReadAccess(ctx context.SecurityContext, keys []entity.PublishedVersionKeyEntity) ([]entity.PublishedVersionKeyEntity, int, error) {
+	accessible := make([]entity.PublishedVersionKeyEntity, 0, len(keys))
+	hiddenCount := 0
+	checkedPackages := make(map[string]bool)
+	for _, key := range keys {
+		canRead, checked := checkedPackages[key.PackageId]
+		if !checked {
+			permissions, err := r.GetPermissionsForPackage(ctx, key.PackageId)
+			if err != nil {
+				return nil, 0, err
+			}
+			canRead = utils.SliceContains(permissions, string(view.ReadPermission))
+			checkedPackages[key.PackageId] = canRead
+		}
+		if canRead {
+			accessible = append(accessible, key)
+		} else {
+			hiddenCount++
+		}
+	}
+	return accessible, hiddenCount, nil
 }
 
 func (r roleServiceImpl) HasRequiredPermissions(ctx context.SecurityContext, packageId string, requiredPermissions ...view.RolePermission) (bool, error) {
