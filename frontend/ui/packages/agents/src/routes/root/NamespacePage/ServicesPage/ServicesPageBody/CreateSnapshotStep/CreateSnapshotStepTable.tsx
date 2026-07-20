@@ -30,7 +30,9 @@ import {
   TableRow,
   Typography,
 } from '@mui/material'
+import { styled } from '@mui/material/styles'
 import ArrowOutwardRoundedIcon from '@mui/icons-material/ArrowOutwardRounded'
+import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined'
 import type {
   ColumnSizingInfoState,
   ColumnSizingState,
@@ -53,6 +55,8 @@ import {
   PUBLISH_STATUS_TO_STATUS_DESCRIPTION_MAP,
   PUBLISH_STATUS_TO_STATUS_MARKER_VARIANT_MAP,
 } from '../../../constants'
+import { ERROR_PUBLISH_STATUS } from '@apihub/entities/statuses'
+import { useEventBus } from '../../../../../EventBusProvider'
 import { useSnapshotPublicationInfo } from '../../../useSnapshotPublicationInfo'
 import { useConfigureServiceSelection } from '../useConfigureServiceSelection'
 import { ServiceLabelsTableCell } from '../ServiceLabelsTableCell'
@@ -119,8 +123,7 @@ export const CreateSnapshotStepTable: FC<CreateSnapshotStepTableProps> = memo<Cr
       accessorFn: () => true,
       id: SELECTION_COLUMN_ID,
       header: ({ table: { getIsAllRowsSelected, getIsSomePageRowsSelected, getToggleAllRowsSelectedHandler } }) => (
-        <Checkbox
-          sx={{ py: 0 }}
+        <CompactCheckbox
           disabled={!selectable}
           checked={getIsAllRowsSelected()}
           indeterminate={getIsSomePageRowsSelected() && !getIsAllRowsSelected()}
@@ -130,8 +133,7 @@ export const CreateSnapshotStepTable: FC<CreateSnapshotStepTableProps> = memo<Cr
       cell: ({ row: { depth, getIsSelected, getIsSomeSelected, getToggleSelectedHandler } }) => {
         if (depth === 0) {
           return (
-            <Checkbox
-              sx={{ py: 0 }}
+            <CompactCheckbox
               disabled={!selectable}
               checked={getIsSelected()}
               indeterminate={getIsSomeSelected()}
@@ -164,12 +166,20 @@ export const CreateSnapshotStepTable: FC<CreateSnapshotStepTableProps> = memo<Cr
     },
     {
       id: VIEW_SNAPSHOT_URL_COLUMN_ID,
-      cell: isSnapshotPublicationInfoSuccess ? ({ row: { original: { service, viewSnapshotUrl } } }) => {
-        if (service && viewSnapshotUrl) {
+      cell: ({
+        row: {
+          original: {
+            service,
+            viewSnapshotUrl,
+            serviceConfig,
+            builderId,
+          },
+        },
+      }) => {
+        if (service && viewSnapshotUrl && isSnapshotPublicationInfoSuccess) {
           return (
-            <Button
+            <ViewSnapshotActionButton
               data-testid="ViewSnapshotButton"
-              sx={{ visibility: 'hidden', p: 0, height: 10, whiteSpace: 'nowrap' }}
               className="hoverable"
               component="a"
               variant="text"
@@ -178,12 +188,12 @@ export const CreateSnapshotStepTable: FC<CreateSnapshotStepTableProps> = memo<Cr
               startIcon={<ArrowOutwardRoundedIcon/>}
             >
               View Snapshot
-            </Button>
+            </ViewSnapshotActionButton>
           )
         }
 
-        return null
-      } : undefined,
+        return <ViewDetailsButton serviceConfig={serviceConfig} builderId={builderId} service={service}/>
+      },
     },
   ], [isSnapshotPublicationInfoSuccess, selectable])
 
@@ -247,26 +257,21 @@ export const CreateSnapshotStepTable: FC<CreateSnapshotStepTableProps> = memo<Cr
       area={CONTENT_PLACEHOLDER_AREA}
       message={NO_SEARCH_RESULTS}
     >
-      <TableContainer sx={{ mt: 1, pb: 7 }} ref={tableContainerRef}>
+      <StyledTableContainer ref={tableContainerRef}>
         <Table>
           <TableHead>
             {getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header, index) => (
-                  <TableCell
+                  <HeadTableCell
                     data-testid={`HeadCell-${header.id}`}
                     key={header.id}
                     align="left"
                     width={actualColumnSizing ? actualColumnSizing[header.id] : header.getSize()}
-                    sx={{
-                      '&:hover': {
-                        borderRight: '2px solid rgba(224, 224, 224, 1)',
-                      },
-                    }}
                   >
                     {flexRender(header.column.columnDef.header, header.getContext())}
                     {index !== headerGroup.headers.length - 1 && <ColumnDelimiter header={header} resizable={true}/>}
-                  </TableCell>
+                  </HeadTableCell>
                 ))}
               </TableRow>
             ))}
@@ -288,7 +293,7 @@ export const CreateSnapshotStepTable: FC<CreateSnapshotStepTableProps> = memo<Cr
             {isServicesLoading && <TableSkeleton/>}
           </TableBody>
         </Table>
-      </TableContainer>
+      </StyledTableContainer>
     </Placeholder>
   )
 })
@@ -340,7 +345,7 @@ const CreateSnapshotDetailsTableCell: FC<CreateSnapshotDetailsTableCellProps> = 
   }
 
   return (
-    <Box display="flex" gap={1}>
+    <StatusCell>
       <StatusMarker
         value={PUBLISH_STATUS_TO_STATUS_MARKER_VARIANT_MAP[publishDetails.status]}
         title={publishDetails.message}
@@ -348,7 +353,46 @@ const CreateSnapshotDetailsTableCell: FC<CreateSnapshotDetailsTableCellProps> = 
       <Typography noWrap variant="inherit">
         {PUBLISH_STATUS_TO_STATUS_DESCRIPTION_MAP[publishDetails.status]}
       </Typography>
-    </Box>
+    </StatusCell>
+  )
+})
+
+type ViewDetailsButtonProps = {
+  serviceConfig: ServiceConfig | undefined
+  builderId: string | undefined
+  service: Service | undefined
+}
+
+const ViewDetailsButton: FC<ViewDetailsButtonProps> = memo<ViewDetailsButtonProps>(({
+  serviceConfig,
+  builderId,
+  service,
+}) => {
+  const [publishDetails, isLoading] = useServicePublishDetails({ serviceConfig, builderId })
+  const { showPublicationErrorReportDialog } = useEventBus()
+
+  if (!serviceConfig || isLoading) {
+    return null
+  }
+
+  const hasError = publishDetails.status === ERROR_PUBLISH_STATUS && !!publishDetails.message
+  if (!hasError) {
+    return null
+  }
+
+  return (
+    <ErrorDetailsButton
+      data-testid="ViewDetailsButton"
+      variant="text"
+      color="error"
+      startIcon={<ErrorOutlinedIcon color="error"/>}
+      onClick={() => showPublicationErrorReportDialog({
+        downloadFilename: `${service?.key ?? serviceConfig.serviceId}-publication-errors.txt`,
+        errors: publishDetails.message!,
+      })}
+    >
+      Error Details
+    </ErrorDetailsButton>
   )
 })
 
@@ -379,4 +423,38 @@ const RowSkeleton: FC = memo(() => {
       <TableCell/>
     </TableRow>
   )
+})
+
+const CompactCheckbox = styled(Checkbox)({
+  paddingTop: 0,
+  paddingBottom: 0,
+})
+
+const ViewSnapshotActionButton = styled(Button)({
+  visibility: 'hidden',
+  padding: 0,
+  height: 10,
+  whiteSpace: 'nowrap',
+}) as typeof Button
+
+const ErrorDetailsButton = styled(Button)({
+  padding: 0,
+  height: 10,
+  whiteSpace: 'nowrap',
+})
+
+const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
+  marginTop: theme.spacing(1),
+  paddingBottom: theme.spacing(7),
+}))
+
+const HeadTableCell = styled(TableCell)({
+  '&:hover': {
+    borderRight: '2px solid rgba(224, 224, 224, 1)',
+  },
+})
+
+const StatusCell = styled(Box)({
+  display: 'flex',
+  gap: 8,
 })

@@ -19,7 +19,8 @@ import { memo } from 'react'
 import type { SxProps } from '@mui/material'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
-import Tooltip from '@mui/material/Tooltip'
+import Tooltip, { tooltipClasses } from '@mui/material/Tooltip'
+import { styled } from '@mui/material/styles'
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import CancelIcon from '@mui/icons-material/Cancel'
@@ -37,7 +38,10 @@ export const StatusMarker: FC<StatusMarkerProps> = memo<StatusMarkerProps>(({ va
   }
 
   return (
-    <Tooltip title={title} placement={placement}>
+    <ScrollableTooltip
+      title={<ScrollableTooltipContent>{title}</ScrollableTooltipContent>}
+      placement={placement}
+    >
       <Box
         display="flex"
         gap={0.5}
@@ -46,7 +50,7 @@ export const StatusMarker: FC<StatusMarkerProps> = memo<StatusMarkerProps>(({ va
       >
         {STATUS_MARKER_VARIANT_TO_ICON_MAP[value]}
       </Box>
-    </Tooltip>
+    </ScrollableTooltip>
   )
 })
 
@@ -76,3 +80,17 @@ const STATUS_MARKER_VARIANT_TO_ICON_MAP: Record<StatusMarkerVariant, ReactNode> 
   [WARNING_STATUS_MARKER_VARIANT]: <ErrorRoundedIcon color="warning" sx={STATUS_ICON_SX}/>,
   [ERROR_STATUS_MARKER_VARIANT]: <CancelIcon color="error" sx={STATUS_ICON_SX}/>,
 }
+
+const ScrollableTooltip = styled(({ className, ...props }: TooltipProps) => (
+  <Tooltip {...props} classes={{ popper: className }}/>
+))({
+  [`& .${tooltipClasses.tooltip}`]: {
+    padding: 0,
+  },
+})
+
+const ScrollableTooltipContent = styled(Box)({
+  maxHeight: 300,
+  overflow: 'auto',
+  padding: 8,
+})

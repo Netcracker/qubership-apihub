@@ -101,6 +101,8 @@ export const OPERATION_MOVED = 'operation-moved'
 export const SHOW_CREATE_CUSTOM_SERVER_DIALOG = 'show-create-custom-server-dialog'
 export const SHOW_DELETE_CUSTOM_SERVER_DIALOG = 'show-delete-custom-server-dialog'
 export const SELECT_CREATED_CUSTOM_SERVER = 'select-created-custom-server'
+// Feature "Publication Validation Error Report"
+export const SHOW_PUBLICATION_ERROR_REPORT_DIALOG = 'show-publication-error-report-dialog'
 
 export type NotificationDetail = {
   title?: string
@@ -205,6 +207,12 @@ export type SelectCreatedCustomServerDetail = {
 
 export type RulesetInfoPopupDetails = RulesetMetadata
 
+export type ShowPublicationErrorReportDetail = {
+  documentName: string
+  downloadFilename: string
+  errors: string
+}
+
 type EventBus = {
   // base
   showSuccessNotification: (detail: NotificationDetail) => void
@@ -265,6 +273,8 @@ type EventBus = {
   selectCreatedCustomServer: (detail: SelectCreatedCustomServerDetail) => void
   // Feature "Ruleset Info Dialog"
   showRulesetInfoDialog: (value: RulesetInfoPopupDetails) => void
+  // Feature "Publication Validation Error Report"
+  showPublicationErrorReportDialog: (detail: ShowPublicationErrorReportDetail) => void
 }
 
 function eventBusProvider(): EventBus {
@@ -329,6 +339,8 @@ function eventBusProvider(): EventBus {
       selectCreatedCustomServer: slot<SelectCreatedCustomServerDetail>(),
       // Feature "Ruleset Info Dialog"
       showRulesetInfoDialog: slot<RulesetInfoPopupDetails>(),
+      // Feature "Publication Validation Error Report"
+      showPublicationErrorReportDialog: slot<ShowPublicationErrorReportDetail>(),
     },
   })
 
@@ -461,6 +473,10 @@ function eventBusProvider(): EventBus {
   })
   eventBus.showRulesetInfoDialog.on((detail: RulesetInfoPopupDetails) => {
     dispatchEvent(new CustomEvent(SHOW_RULESET_INFO_DIALOG, { detail }))
+  })
+  // Feature "Publication Validation Error Report"
+  eventBus.showPublicationErrorReportDialog.on((detail: ShowPublicationErrorReportDetail) => {
+    dispatchEvent(new CustomEvent(SHOW_PUBLICATION_ERROR_REPORT_DIALOG, { detail }))
   })
   eventBus.showSpecificationDialog.on((detail: SpecificationDialogDetail) => {
     dispatchEvent(new CustomEvent(SHOW_SPECIFICATION_DIALOG, { detail }))

@@ -27,6 +27,12 @@ export const SHOW_SUCCESS_NOTIFICATION = 'show-success-notification'
 export const SHOW_ERROR_NOTIFICATION = 'show-error-notification'
 export const SHOW_SPECIFICATION_DIALOG = 'show-specification-dialog'
 export const RUN_ROUTING_REPORT_DIALOG = 'run-routing-report-dialog'
+export const SHOW_PUBLICATION_ERROR_REPORT_DIALOG = 'show-publication-error-report-dialog'
+
+export type ShowPublicationErrorReportDetail = {
+  downloadFilename: string
+  errors: string
+}
 
 type EventBus = {
   showSuccessNotification: (detail: NotificationDetail) => void
@@ -34,6 +40,7 @@ type EventBus = {
   showSpecificationDialog: (detail: AgentSpecificationDialogDetail) => void
   showChangeViewDialog: (detail: ChangeViewDialogDetail) => void
   showRunRoutingReportDialog: () => void
+  showPublicationErrorReportDialog: (detail: ShowPublicationErrorReportDetail) => void
 }
 
 function eventBusProvider(): EventBus {
@@ -44,6 +51,7 @@ function eventBusProvider(): EventBus {
       showSpecificationDialog: slot<AgentSpecificationDialogDetail>(),
       showChangeViewDialog: slot<ChangeViewDialogDetail>(),
       showRunRoutingReportDialog: slot(),
+      showPublicationErrorReportDialog: slot<ShowPublicationErrorReportDetail>(),
     },
   })
 
@@ -65,6 +73,10 @@ function eventBusProvider(): EventBus {
 
   eventBus.showRunRoutingReportDialog.on(() => {
     dispatchEvent(new CustomEvent(RUN_ROUTING_REPORT_DIALOG))
+  })
+
+  eventBus.showPublicationErrorReportDialog.on((detail: ShowPublicationErrorReportDetail) => {
+    dispatchEvent(new CustomEvent(SHOW_PUBLICATION_ERROR_REPORT_DIALOG, { detail }))
   })
 
   return eventBus as unknown as EventBus

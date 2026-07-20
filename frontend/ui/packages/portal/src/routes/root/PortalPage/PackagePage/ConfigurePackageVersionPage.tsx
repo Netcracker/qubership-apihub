@@ -27,6 +27,7 @@ import { ConfigureVersionNavigationMenu } from '../ConfigureVersionNavigationMen
 import { CurrentPackageProvider } from '@apihub/components/CurrentPackageProvider'
 import { FilesProvider } from '../FilesProvider'
 import { PortalSpecificationDialog } from './PortalSpecificationDialog'
+import { PortalPublicationErrorReportDialog } from './PortalPublicationErrorReportDialog'
 import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
 import { PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { LayoutWithToolbar } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithToolbar'
@@ -54,6 +55,7 @@ export const ConfigurePackageVersionPage: FC = memo(() => {
         <McpEndpointDialog/>
         <PublishPackageVersionDialog/>
         <PortalSpecificationDialog/>
+        <PortalPublicationErrorReportDialog/>
       </FilesProvider>
     </CurrentPackageProvider>
   )
