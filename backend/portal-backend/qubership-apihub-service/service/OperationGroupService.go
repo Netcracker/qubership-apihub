@@ -34,23 +34,27 @@ type OperationGroupService interface {
 }
 
 func NewOperationGroupService(operationRepository repository.OperationRepository, publishedRepo repository.PublishedRepository, exportRepository repository.ExportResultRepository,
-	packageVersionEnrichmentService PackageVersionEnrichmentService, activityTrackingService ActivityTrackingService) OperationGroupService {
+	packageVersionEnrichmentService PackageVersionEnrichmentService, activityTrackingService ActivityTrackingService, publishedService PublishedService, systemInfoService SystemInfoService) OperationGroupService {
 	return &operationGroupServiceImpl{
-		operationRepo:                   operationRepository,
-		publishedRepo:                   publishedRepo,
-		exportRepository:                exportRepository,
-		packageVersionEnrichmentService: packageVersionEnrichmentService,
-		atService:                       activityTrackingService,
+		operationRepo:                          operationRepository,
+		publishedRepo:                          publishedRepo,
+		exportRepository:                       exportRepository,
+		packageVersionEnrichmentService:        packageVersionEnrichmentService,
+		atService:                              activityTrackingService,
+		publishedService:                       publishedService,
+		previousVersionStatusValidationEnabled: systemInfoService.GetFeatureFlags().PreviousVersionStatusValidation,
 	}
 }
 
 type operationGroupServiceImpl struct {
-	operationRepo                   repository.OperationRepository
-	publishedRepo                   repository.PublishedRepository
-	exportRepository                repository.ExportResultRepository
-	packageVersionEnrichmentService PackageVersionEnrichmentService
-	atService                       ActivityTrackingService
-	buildService                    BuildService
+	operationRepo                          repository.OperationRepository
+	publishedRepo                          repository.PublishedRepository
+	exportRepository                       repository.ExportResultRepository
+	packageVersionEnrichmentService        PackageVersionEnrichmentService
+	atService                              ActivityTrackingService
+	publishedService                       PublishedService
+	previousVersionStatusValidationEnabled bool
+	buildService                           BuildService
 }
 
 func (o *operationGroupServiceImpl) SetBuildService(buildService BuildService) {
@@ -574,6 +578,37 @@ func (o operationGroupServiceImpl) StartOperationGroupPublish(ctx context.Securi
 			Code:    exception.OperationGroupNotFound,
 			Message: exception.OperationGroupNotFoundMsg,
 			Params:  map[string]interface{}{"groupName": groupName},
+		}
+	}
+	if o.previousVersionStatusValidationEnabled {
+		if req.PreviousVersion != "" {
+			previousVersionPackageId := req.PreviousVersionPackageId
+			if previousVersionPackageId == "" {
+				previousVersionPackageId = req.PackageId
+			}
+			previousVersionStatus, previousVersionFound, err := o.publishedService.GetVersionStatus(previousVersionPackageId, req.PreviousVersion)
+			if err != nil {
+				return "", err
+			}
+			if !previousVersionFound {
+				return "", &exception.CustomError{
+					Status:  http.StatusNotFound,
+					Code:    exception.PublishedPackageVersionNotFound,
+					Message: exception.PublishedPackageVersionNotFoundMsg,
+					Params:  map[string]interface{}{"packageId": previousVersionPackageId, "version": req.PreviousVersion},
+				}
+			}
+			// A release version's previous version must be a release; a draft version may reference a draft previous version.
+			if req.Status == string(view.Release) && previousVersionStatus == string(view.Draft) {
+				return "", newReleaseVersionPreviousVersionNotReleaseError(ctx, req.PackageId, req.Version, previousVersionPackageId, req.PreviousVersion)
+			}
+		}
+
+		// Publishing this version as a draft must not leave a release version that references it as its previous version.
+		if req.Status == string(view.Draft) {
+			if err := o.publishedService.CheckNoReleaseDependentVersions(ctx, req.PackageId, req.Version); err != nil {
+				return "", err
+			}
 		}
 	}
 

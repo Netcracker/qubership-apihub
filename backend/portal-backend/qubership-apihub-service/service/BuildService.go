@@ -48,22 +48,24 @@ func NewBuildService(
 	packageService PackageService,
 	refResolverService RefResolverService) BuildService {
 	return &buildServiceImpl{
-		buildRepository:    buildRepository,
-		buildProcessor:     buildProcessor,
-		publishService:     publishService,
-		systemInfoService:  systemInfoService,
-		packageService:     packageService,
-		refResolverService: refResolverService,
+		buildRepository:                        buildRepository,
+		buildProcessor:                         buildProcessor,
+		publishService:                         publishService,
+		systemInfoService:                      systemInfoService,
+		packageService:                         packageService,
+		refResolverService:                     refResolverService,
+		previousVersionStatusValidationEnabled: systemInfoService.GetFeatureFlags().PreviousVersionStatusValidation,
 	}
 }
 
 type buildServiceImpl struct {
-	buildRepository    repository.BuildRepository
-	buildProcessor     BuildProcessorService
-	publishService     PublishedService
-	systemInfoService  SystemInfoService
-	packageService     PackageService
-	refResolverService RefResolverService
+	buildRepository                        repository.BuildRepository
+	buildProcessor                         BuildProcessorService
+	publishService                         PublishedService
+	systemInfoService                      SystemInfoService
+	packageService                         PackageService
+	refResolverService                     RefResolverService
+	previousVersionStatusValidationEnabled bool
 }
 
 func (b *buildServiceImpl) PublishVersion(ctx context.SecurityContext, config view.BuildConfig, src []byte, clientBuild bool, builderId string, dependencies []string, resolveRefs bool, resolveConflicts bool) (*view.PublishV2Response, error) {
@@ -147,17 +149,22 @@ func (b *buildServiceImpl) PublishVersion(ctx context.SecurityContext, config vi
 		if config.PreviousVersionPackageId != "" {
 			previousVersionPackageId = config.PreviousVersionPackageId
 		}
-		previousVersionExists, err := b.publishService.VersionPublished(previousVersionPackageId, config.PreviousVersion)
+		previousVersionStatus, previousVersionFound, err := b.publishService.GetVersionStatus(previousVersionPackageId, config.PreviousVersion)
 		if err != nil {
 			return nil, err
 		}
-		if !previousVersionExists {
+		if !previousVersionFound {
 			return nil, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.PublishedPackageVersionNotFound,
 				Message: exception.PublishedPackageVersionNotFoundMsg,
 				Params:  map[string]interface{}{"version": config.PreviousVersion, "packageId": previousVersionPackageId},
 			}
+		}
+		// A release version's previous version must be a release; a draft version may reference a draft previous version.
+		if b.previousVersionStatusValidationEnabled &&
+			config.BuildType == view.PublishType && config.Status == string(view.Release) && previousVersionStatus == string(view.Draft) {
+			return nil, newReleaseVersionPreviousVersionNotReleaseError(ctx, config.PackageId, config.Version, previousVersionPackageId, config.PreviousVersion)
 		}
 
 		dependencyCycleExists, err := b.publishService.CheckPreviousVersionDependencyCycle(config.PackageId, config.Version, config.PreviousVersionPackageId, config.PreviousVersion, config.ComparisonRevision)
@@ -172,6 +179,14 @@ func (b *buildServiceImpl) PublishVersion(ctx context.SecurityContext, config vi
 				Message: exception.InvalidPreviousVersionMsg,
 				Params:  map[string]interface{}{"version": config.PreviousVersion, "packageId": config.PackageId},
 			}
+		}
+	}
+
+	// Publishing this version as a draft must not leave a release version that references it as its previous version.
+	if b.previousVersionStatusValidationEnabled &&
+		config.BuildType == view.PublishType && config.Status == string(view.Draft) {
+		if err := b.publishService.CheckNoReleaseDependentVersions(ctx, config.PackageId, config.Version); err != nil {
+			return nil, err
 		}
 	}
 
@@ -220,6 +235,22 @@ func (b *buildServiceImpl) PublishVersion(ctx context.SecurityContext, config vi
 		return &view.PublishV2Response{PublishId: publishId, Config: &config}, nil
 	} else {
 		return &view.PublishV2Response{PublishId: publishId}, nil
+	}
+}
+
+func newReleaseVersionPreviousVersionNotReleaseError(ctx context.SecurityContext, packageId string, version string, previousVersionPackageId string, previousVersion string) *exception.CustomError {
+	log.Debugf("Blocked publishing version %s of package %s with 'release' status by user %s: previous version %s of package %s has 'draft' status",
+		version, packageId, ctx.GetUserId(), previousVersion, previousVersionPackageId)
+	return &exception.CustomError{
+		Status:  http.StatusBadRequest,
+		Code:    exception.InvalidReleaseVersionChain,
+		Message: exception.ReleaseVersionPreviousVersionNotReleaseMsg,
+		Params: map[string]interface{}{
+			"packageId":                packageId,
+			"version":                  version,
+			"previousVersionPackageId": previousVersionPackageId,
+			"previousVersion":          previousVersion,
+		},
 	}
 }
 

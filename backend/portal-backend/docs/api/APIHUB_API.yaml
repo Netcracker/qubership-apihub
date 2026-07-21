@@ -2353,6 +2353,10 @@ paths:
               examples:
                 IncorrectInputParams:
                   $ref: "#/components/examples/IncorrectInputParameters"
+                PreviousVersionNotRelease:
+                  $ref: "#/components/examples/PreviousVersionNotRelease"
+                VersionReferencedAsPreviousByRelease:
+                  $ref: "#/components/examples/VersionReferencedAsPreviousByRelease"
         "401":
           description: Unauthorized
           content:
@@ -2547,6 +2551,10 @@ paths:
               examples:
                 IncorrectInputParams:
                   $ref: '#/components/examples/IncorrectInputParameters'
+                PreviousVersionNotRelease:
+                  $ref: '#/components/examples/PreviousVersionNotRelease'
+                VersionReferencedAsPreviousByRelease:
+                  $ref: '#/components/examples/VersionReferencedAsPreviousByRelease'
         '401':
           description: Unauthorized
           content:
@@ -2822,6 +2830,10 @@ paths:
               examples:
                 IncorrectInputParams:
                   $ref: '#/components/examples/IncorrectInputParameters'
+                PreviousVersionNotRelease:
+                  $ref: '#/components/examples/PreviousVersionNotRelease'
+                VersionReferencedAsPreviousByRelease:
+                  $ref: '#/components/examples/VersionReferencedAsPreviousByRelease'
         '401':
           description: Unauthorized
           content:
@@ -3037,6 +3049,10 @@ paths:
               examples:
                 IncorrectInputParams:
                   $ref: "#/components/examples/IncorrectInputParameters"
+                VersionStatusChangePreviousVersionNotRelease:
+                  $ref: "#/components/examples/VersionStatusChangePreviousVersionNotRelease"
+                VersionReferencedAsPreviousByRelease:
+                  $ref: "#/components/examples/VersionReferencedAsPreviousByRelease"
         "401":
           description: Unauthorized
           content:
@@ -9059,6 +9075,10 @@ paths:
               examples:
                 IncorrectInputParams:
                   $ref: "#/components/examples/IncorrectInputParameters"
+                PreviousVersionNotRelease:
+                  $ref: "#/components/examples/PreviousVersionNotRelease"
+                VersionReferencedAsPreviousByRelease:
+                  $ref: "#/components/examples/VersionReferencedAsPreviousByRelease"
         "401":
           description: Unauthorized
           content:
@@ -11257,6 +11277,10 @@ components:
               type: boolean
               default: false
               deprecated: true
+            previousVersionStatusValidation:
+              description: When true, previous version status validation is enforced on publish and patch endpoints. When false, the system runs with the legacy behaviour.
+              type: boolean
+              default: true
     ApiKey:
       title: ApiKey
       type: object
@@ -14056,6 +14080,7 @@ components:
           - Support team|https://www.example.com/support]
         featureFlags:
           useV3Search: false
+          previousVersionStatusValidation: true
     Package:
       description: Example of the package params
       value:
@@ -14123,6 +14148,38 @@ components:
         status: 400
         code: "APIHUB-COMMON-4001"
         message: "Incorrect input parameters"
+    PreviousVersionNotRelease:
+      description: A release version cannot reference a draft previous version
+      value:
+        status: 400
+        code: "8600"
+        message: "Version 2024.2 for package QS.group.my-package cannot be published with the 'release' status because previous version 2024.1 for package QS.group.previous-package is in the 'draft' status. Change the previous version to 'release', or publish this version as a draft."
+        params:
+          version: "2024.2"
+          packageId: "QS.group.my-package"
+          previousVersion: "2024.1"
+          previousVersionPackageId: "QS.group.previous-package"
+    VersionStatusChangePreviousVersionNotRelease:
+      description: Version status cannot be changed to 'release' when the previous version is a draft
+      value:
+        status: 400
+        code: "8600"
+        message: "Version 2024.2 for package QS.group.my-package cannot be changed to the 'release' status because previous version 2024.1 for package QS.group.previous-package is in the 'draft' status. Change the previous version to 'release', then retry."
+        params:
+          version: "2024.2"
+          packageId: "QS.group.my-package"
+          previousVersion: "2024.1"
+          previousVersionPackageId: "QS.group.previous-package"
+    VersionReferencedAsPreviousByRelease:
+      description: Version cannot be changed to 'draft' because a released version uses it as its previous version
+      value:
+        status: 400
+        code: "8600"
+        message: "Version 2024.1 for package QS.group.my-package cannot be changed to the 'draft' status because it is the previous version of released versions: QS.group.other-package|2024.2@1"
+        params:
+          version: "2024.1"
+          packageId: "QS.group.my-package"
+          releaseVersions: "QS.group.other-package|2024.2@1"
     Unauthorized:
       description: Unauthorized access
       value:

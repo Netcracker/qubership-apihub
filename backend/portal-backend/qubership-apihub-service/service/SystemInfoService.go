@@ -261,6 +261,7 @@ func (g *systemInfoServiceImpl) setDefaults() {
 	viper.SetDefault("businessParameters.ephemeralFileMaxSizeMb", 50)
 	viper.SetDefault("businessParameters.ephemeralFileTTLMinutes", 30)
 	viper.SetDefault("cleanup.ephemeralFiles.schedule", "*/5 * * * *")
+	viper.SetDefault("featureFlags.previousVersionStatusValidation", true)
 }
 
 func (g *systemInfoServiceImpl) GetConfigFolder() string {
@@ -673,7 +674,8 @@ func (g *systemInfoServiceImpl) GetEphemeralFilesCleanupSchedule() string {
 
 func (g *systemInfoServiceImpl) GetFeatureFlags() view.FeatureFlags {
 	return view.FeatureFlags{
-		UseV3Search: g.config.FeatureFlags.UseV3Search,
+		UseV3Search:                     g.config.FeatureFlags.UseV3Search,
+		PreviousVersionStatusValidation: g.config.FeatureFlags.PreviousVersionStatusValidation,
 	}
 }
 

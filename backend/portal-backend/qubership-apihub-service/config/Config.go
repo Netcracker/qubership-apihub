@@ -209,7 +209,8 @@ type MaintenanceVacuumCleanupConfig struct {
 }
 
 type FeatureFlagsConfig struct {
-	UseV3Search bool
+	UseV3Search                     bool
+	PreviousVersionStatusValidation bool
 }
 
 type Base64DecodedString []byte

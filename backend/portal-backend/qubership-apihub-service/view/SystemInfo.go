@@ -15,7 +15,8 @@ type SystemInfo struct {
 }
 
 type FeatureFlags struct {
-	UseV3Search bool `json:"useV3Search"`
+	UseV3Search                     bool `json:"useV3Search"`
+	PreviousVersionStatusValidation bool `json:"previousVersionStatusValidation"`
 }
 
 type SystemConfigurationInfo_deprecated struct {
