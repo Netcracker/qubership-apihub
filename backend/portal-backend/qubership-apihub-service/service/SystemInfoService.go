@@ -233,6 +233,8 @@ func (g *systemInfoServiceImpl) setDefaults() {
 	viper.SetDefault("s3Storage.storeOnlyBuildResult", false)
 	viper.SetDefault("olric.discoveryMode", "local")
 	viper.SetDefault("olric.replicaCount", 1)
+	viper.SetDefault("olric.bindPort", 47375)
+	viper.SetDefault("olric.memberlistPort", 47376)
 	viper.SetDefault("cleanup.builds.schedule", "0 1 * * 0")     // at 01:00 AM on Sunday
 	viper.SetDefault("cleanup.revisions.schedule", "0 21 * * 0") // at 9:00 PM on Sunday
 	viper.SetDefault("cleanup.revisions.deleteLastRevision", false)

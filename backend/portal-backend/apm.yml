@@ -14,3 +14,4 @@ dependencies:
     - ./agent-packages/apihub-backend-developer
     - ./agent-packages/apihub-backend-self-review
     - ./agent-packages/backend-conventions
+    - ./agent-packages/advanced-verification

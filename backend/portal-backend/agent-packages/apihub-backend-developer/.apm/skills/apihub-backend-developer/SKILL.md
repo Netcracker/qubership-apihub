@@ -18,6 +18,9 @@ Follow `AGENTS.md` and project rules. For examples and doc routing, see [referen
 5. **Related repos** — before finishing, apply `apihub-deployment-followup` and
    `postman-e2e-followup` skills when the change may affect deployment or E2E tests
    (installed from sibling repositories via APM).
+6. **End-to-end verification** — for changes with observable HTTP behavior, apply the
+   `advanced-verification` skill to build, run, and verify the change locally with a
+   Postman/Newman collection under `tests/api/` before finishing.
 
 ## Migration validation
 
@@ -45,5 +48,6 @@ In addition to the `apihub-go-developer` checklist:
 - [ ] REST changes reflected in `docs/api/*.yaml`.
 - [ ] Migrations use unique prefix (script passed).
 - [ ] **Related repositories** — deployment and Postman follow-up skills applied when applicable (`apihub-deployment-followup`, `postman-e2e-followup`).
+- [ ] End-to-end verified locally via `advanced-verification` when the change affects HTTP behavior.
 
 Suggest invoking `apihub-backend-self-review` in a **new chat** or with a **different model** for an independent pass over the diff.

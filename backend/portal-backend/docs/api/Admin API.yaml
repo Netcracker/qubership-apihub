@@ -654,6 +654,135 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+  "/api/v1/builds":
+    get:
+      tags:
+        - Admin
+      summary: List builds
+      description: |
+        Return a page of builds with persisted build configuration. If no filter is provided, the latest builds are returned first.
+      operationId: listBuilds
+      parameters:
+        - name: packageId
+          in: query
+          required: false
+          description: Filter builds by package ID.
+          schema:
+            type: string
+        - name: version
+          in: query
+          required: false
+          description: Filter builds by package version.
+          schema:
+            type: string
+        - name: buildIds
+          in: query
+          required: false
+          description: Comma-separated list of build IDs. When combined with other filters, all filters are applied.
+          schema:
+            type: string
+        - name: offset
+          in: query
+          required: false
+          description: Number of items to skip.
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of items to return.
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+            default: 100
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExtendedBuilds"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+  "/api/v1/builds/{buildId}":
+    get:
+      tags:
+        - Admin
+      summary: Get build
+      description: |
+        Return build data and persisted build configuration by build ID.
+      operationId: getBuild
+      parameters:
+        - name: buildId
+          in: path
+          required: true
+          description: Build identifier string returned by build operations.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExtendedBuild"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Build not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
   "/api/v2/admin/builds/{buildId}/result":
     get:
       tags:
@@ -1079,6 +1208,234 @@ components:
           type: integer
           format: int32
           description: Serial number of the completed transition record (internal monotonic identifier).
+    ExtendedBuilds:
+      type: object
+      properties:
+        builds:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExtendedBuild"
+      required:
+        - builds
+    ExtendedBuild:
+      type: object
+      properties:
+        buildId:
+          type: string
+          description: Build identifier.
+        status:
+          type: string
+          description: Build execution status.
+          enum:
+            - none
+            - running
+            - complete
+            - error
+        details:
+          type: string
+          description: Build status details or error text.
+        clientBuild:
+          type: boolean
+          description: Indicates whether the build was created as a client build.
+        packageId:
+          type: string
+          description: Package ID associated with the build.
+        version:
+          type: string
+          description: Package version associated with the build.
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the build was created.
+        lastActive:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the build was last updated.
+        createdBy:
+          type: string
+          description: User who created the build.
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the build started.
+        restartCount:
+          type: integer
+          format: int32
+          description: Number of builder restarts for this build.
+        builderId:
+          type: string
+          description: Builder ID that processed or is processing the build.
+        priority:
+          type: integer
+          format: int32
+          description: Build queue priority.
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Build metadata stored in the build table.
+        config:
+          $ref: "#/components/schemas/BuildConfig"
+        dependencies:
+          type: array
+          items:
+            type: string
+          description: Build IDs that this build depends on and must wait to complete before it can run.
+      required:
+        - buildId
+        - status
+        - clientBuild
+        - packageId
+        - version
+        - restartCount
+        - priority
+        - config
+    BuildConfig:
+      type: object
+      description: Build configuration persisted in build_src.config.
+      additionalProperties: true
+      properties:
+        packageId:
+          type: string
+        version:
+          type: string
+        buildType:
+          type: string
+          enum:
+            - changelog
+            - build
+            - reducedSourceSpecifications
+            - mergedSpecification
+            - exportVersion
+            - exportRestDocument
+            - exportRestOperationsGroup
+            - exportGraphqlOperationsGroup
+            - exportAsyncapiOperationsGroup
+        previousVersion:
+          type: string
+        previousVersionPackageId:
+          type: string
+        status:
+          type: string
+        refs:
+          type: array
+          items:
+            $ref: "#/components/schemas/BuildConfigRef"
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/BuildConfigFile"
+        publishId:
+          type: string
+        metadata:
+          $ref: "#/components/schemas/BuildConfigMetadata"
+        createdBy:
+          type: string
+        noChangeLog:
+          type: boolean
+        publishedAt:
+          type: string
+          format: date-time
+        migrationBuild:
+          type: boolean
+        migrationId:
+          type: string
+        comparisonRevision:
+          type: integer
+          format: int32
+        comparisonPrevRevision:
+          type: integer
+          format: int32
+        unresolvedRefs:
+          type: boolean
+        resolveRefs:
+          type: boolean
+        resolveConflicts:
+          type: boolean
+        serviceName:
+          type: string
+        apiType:
+          type: string
+        groupName:
+          type: string
+        format:
+          type: string
+        externalMetadata:
+          type: object
+          additionalProperties: true
+        validationRulesSeverity:
+          $ref: "#/components/schemas/ValidationRulesSeverity"
+        allowedOasExtensions:
+          type: array
+          items:
+            type: string
+        documentId:
+          type: string
+        operationsSpecTransformation:
+          type: string
+        allowedShareabilityStatuses:
+          type: array
+          items:
+            type: string
+    BuildConfigMetadata:
+      type: object
+      properties:
+        branchName:
+          type: string
+        repositoryUrl:
+          type: string
+        cloudName:
+          type: string
+        cloudUrl:
+          type: string
+        namespace:
+          type: string
+        versionLabels:
+          type: array
+          items:
+            type: string
+    BuildConfigRef:
+      type: object
+      properties:
+        refId:
+          type: string
+        version:
+          type: string
+        parentRefId:
+          type: string
+        parentVersion:
+          type: string
+        excluded:
+          type: boolean
+    BuildConfigFile:
+      type: object
+      properties:
+        fileId:
+          type: string
+        slug:
+          type: string
+        index:
+          type: integer
+          format: int32
+        publish:
+          type: boolean
+          nullable: true
+        labels:
+          type: array
+          items:
+            type: string
+        blobId:
+          type: string
+        xApiKind:
+          type: string
+    ValidationRulesSeverity:
+      type: object
+      properties:
+        brokenRefs:
+          type: string
     User:
       description: Represents an APIHUB user returned by administration endpoints.
       type: object

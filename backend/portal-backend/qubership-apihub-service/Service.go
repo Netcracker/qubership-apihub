@@ -544,6 +544,8 @@ func main() {
 	r.HandleFunc("/api/v2/admin/transition/activity", security.Secure(transitionController.ListActivities)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/admin/transition", security.Secure(transitionController.ListPackageTransitions)).Methods(http.MethodGet)
 
+	r.HandleFunc("/api/v1/builds", security.Secure(buildController.ListBuilds)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/builds/{buildId}", security.Secure(buildController.GetBuild)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/admin/builds/{buildId}/result", security.Secure(buildController.GetBuildResult)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/admin/builds/{buildId}/sources", security.Secure(buildController.GetBuildSources)).Methods(http.MethodGet)
 

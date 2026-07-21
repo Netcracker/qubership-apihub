@@ -1,0 +1,4 @@
+name: advanced-verification
+version: 0.1.0
+description: Build, run, and verify APIHub backend changes end-to-end with a local Postman/Newman collection
+author: Qubership

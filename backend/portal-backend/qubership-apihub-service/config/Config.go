@@ -129,6 +129,11 @@ type OlricConfig struct {
 	DiscoveryMode string
 	ReplicaCount  int
 	Namespace     string
+	// BindPort and MemberlistPort are the local-mode Olric ports; if busy, a random free port
+	// is used instead. Override to run multiple local instances of the service side by side
+	// (e.g. for manual testing).
+	BindPort       int
+	MemberlistPort int
 }
 
 type CleanupConfig struct {

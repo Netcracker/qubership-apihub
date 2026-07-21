@@ -38,6 +38,26 @@ type BuildSourceEntity struct {
 	Config  map[string]interface{} `pg:"config, type:jsonb"`
 }
 
+type ExtendedBuildEntity struct {
+	tableName struct{} `pg:"build, alias:b, discard_unknown_columns"`
+
+	BuildId      string                 `pg:"build_id, type:varchar"`
+	Status       string                 `pg:"status, type:varchar"`
+	Details      string                 `pg:"details, type:varchar"`
+	ClientBuild  bool                   `pg:"client_build, type:boolean, use_zero"`
+	PackageId    string                 `pg:"package_id, type:varchar"`
+	Version      string                 `pg:"version, type:varchar"`
+	CreatedAt    *time.Time             `pg:"created_at, type:timestamp without time zone"`
+	LastActive   *time.Time             `pg:"last_active, type:timestamp without time zone"`
+	CreatedBy    string                 `pg:"created_by, type:varchar"`
+	StartedAt    *time.Time             `pg:"started_at, type:timestamp without time zone"`
+	RestartCount int                    `pg:"restart_count, type:integer, use_zero"`
+	BuilderId    string                 `pg:"builder_id, type:varchar"`
+	Priority     int                    `pg:"priority, type:integer, use_zero"`
+	Metadata     map[string]interface{} `pg:"metadata, type:jsonb"`
+	Config       map[string]interface{} `pg:"config, type:jsonb"`
+}
+
 type BuildDependencyEntity struct {
 	tableName struct{} `pg:"build_depends"`
 
@@ -76,4 +96,28 @@ func MakeBuildView(buildEnt *BuildEntity) *view.BuildView {
 		CreatedBy:    buildEnt.CreatedBy,
 		RestartCount: buildEnt.RestartCount,
 	}
+}
+
+func MakeExtendedBuildView(buildEnt *ExtendedBuildEntity) (*view.ExtendedBuild, error) {
+	config, err := view.BuildConfigFromMap(buildEnt.Config, buildEnt.BuildId)
+	if err != nil {
+		return nil, err
+	}
+	return &view.ExtendedBuild{
+		BuildId:      buildEnt.BuildId,
+		Status:       buildEnt.Status,
+		Details:      buildEnt.Details,
+		ClientBuild:  buildEnt.ClientBuild,
+		PackageId:    buildEnt.PackageId,
+		Version:      buildEnt.Version,
+		CreatedAt:    buildEnt.CreatedAt,
+		LastActive:   buildEnt.LastActive,
+		CreatedBy:    buildEnt.CreatedBy,
+		StartedAt:    buildEnt.StartedAt,
+		RestartCount: buildEnt.RestartCount,
+		BuilderId:    buildEnt.BuilderId,
+		Priority:     buildEnt.Priority,
+		Metadata:     buildEnt.Metadata,
+		Config:       *config,
+	}, nil
 }

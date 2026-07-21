@@ -19,6 +19,9 @@ type BuildRepository interface {
 	GetBuild(buildId string) (*entity.BuildEntity, error)
 	GetBuilds(buildIds []string) ([]entity.BuildEntity, error)
 	GetBuildSrc(buildId string) (*entity.BuildSourceEntity, error)
+	GetExtendedBuild(buildId string) (*entity.ExtendedBuildEntity, error)
+	ListExtendedBuilds(filter ExtendedBuildFilter) ([]entity.ExtendedBuildEntity, error)
+	GetBuildDependencies(buildIds []string) ([]entity.BuildDependencyEntity, error)
 
 	FindAndTakeFreeBuild(builderId string) (*entity.BuildEntity, error)
 
@@ -26,6 +29,14 @@ type BuildRepository interface {
 	GetBuildByDocumentGroupSearchQuery(searchQuery entity.DocumentGroupBuildSearchQueryEntity) (*entity.BuildEntity, error)
 
 	UpdateBuildSourceConfig(buildId string, config map[string]interface{}) error
+}
+
+type ExtendedBuildFilter struct {
+	PackageId string
+	Version   string
+	BuildIds []string
+	Offset   int
+	Limit    int
 }
 
 func NewBuildRepositoryPG(cp db.ConnectionProvider) (BuildRepository, error) {
@@ -72,6 +83,83 @@ func (b buildRepositoryImpl) GetBuildSrc(buildId string) (*entity.BuildSourceEnt
 	err := b.cp.GetConnection().Model(result).
 		Where("build_id = ?", buildId).
 		First()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return result, nil
+}
+
+func (b buildRepositoryImpl) GetExtendedBuild(buildId string) (*entity.ExtendedBuildEntity, error) {
+	builds, err := b.ListExtendedBuilds(ExtendedBuildFilter{
+		BuildIds: []string{buildId},
+		Limit:    1,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(builds) == 0 {
+		return nil, nil
+	}
+	return &builds[0], nil
+}
+
+func (b buildRepositoryImpl) ListExtendedBuilds(filter ExtendedBuildFilter) ([]entity.ExtendedBuildEntity, error) {
+	var result []entity.ExtendedBuildEntity
+	query := b.cp.GetConnection().Model(&result).
+		ColumnExpr("b.build_id").
+		ColumnExpr("b.status").
+		ColumnExpr("b.details").
+		ColumnExpr("b.client_build").
+		ColumnExpr("b.package_id").
+		ColumnExpr("b.version").
+		ColumnExpr("b.created_at").
+		ColumnExpr("b.last_active").
+		ColumnExpr("b.created_by").
+		ColumnExpr("b.started_at").
+		ColumnExpr("b.restart_count").
+		ColumnExpr("b.builder_id").
+		ColumnExpr("b.priority").
+		ColumnExpr("b.metadata").
+		ColumnExpr("bs.config").
+		Join("JOIN build_src AS bs ON bs.build_id = b.build_id")
+
+	if filter.PackageId != "" {
+		query.Where("b.package_id = ?", filter.PackageId)
+	}
+	if filter.Version != "" {
+		query.Where("b.version = ?", filter.Version)
+	}
+	if len(filter.BuildIds) > 0 {
+		query.Where("b.build_id in (?)", pg.In(filter.BuildIds))
+	}
+	if filter.Limit > 0 {
+		query.Limit(filter.Limit)
+	}
+	if filter.Offset > 0 {
+		query.Offset(filter.Offset)
+	}
+
+	err := query.OrderExpr("b.created_at DESC").Select()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return result, nil
+}
+
+func (b buildRepositoryImpl) GetBuildDependencies(buildIds []string) ([]entity.BuildDependencyEntity, error) {
+	var result []entity.BuildDependencyEntity
+	if len(buildIds) == 0 {
+		return nil, nil
+	}
+	err := b.cp.GetConnection().Model(&result).
+		Where("build_id in (?)", pg.In(buildIds)).
+		Select()
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil
