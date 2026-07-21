@@ -37,7 +37,7 @@ rm -f private_key.pem
 rm -f certificate.pem
 
 envsubst < ../qubership-apihub/local-secrets.yaml.template > ../qubership-apihub/local-secrets.yaml 
-envsubst < ../qubership-apihub/with-keycloack-local-secrets.yaml.template > ../qubership-apihub/with-keycloack-local-secrets.yaml 
+envsubst < ../qubership-apihub/with-keycloak-local-secrets.yaml.template > ../qubership-apihub/with-keycloak-local-secrets.yaml 
 envsubst < ../keycloak/files/realm.json.template > ../keycloak/files/realm.json
 
 echo "APIHUB_ADMIN_EMAIL = $APIHUB_ADMIN_EMAIL"

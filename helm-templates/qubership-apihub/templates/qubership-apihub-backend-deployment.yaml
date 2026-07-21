@@ -1,3 +1,4 @@
+# yamllint disable-file
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -10,6 +11,7 @@ metadata:
         app.kubernetes.io/part-of: qubership-apihub
         app.kubernetes.io/managed-by: helm
         app.kubernetes.io/technology: 'go'
+        olric-cluster: apihub
 spec:
     replicas: {{ .Values.qubershipApihubBackend.replicas }}
     strategy:
@@ -26,6 +28,7 @@ spec:
                 app.kubernetes.io/part-of: qubership-apihub
                 app.kubernetes.io/managed-by: helm
                 app.kubernetes.io/technology: 'go'
+                olric-cluster: apihub
         spec:
             serviceAccountName: 'qubership-apihub-backend'
             hostPID: false
@@ -37,6 +40,12 @@ spec:
                     secretName: qubership-apihub-backend-config-secret
             -   name: tmp-volume
                 emptyDir: {}
+            {{- if and .Values.qubershipApihubBackend.customCa.enabled .Values.qubershipApihubBackend.customCa.secretName }}
+            -   name: qubership-apihub-backend-custom-ca
+                secret:
+                    defaultMode: 420
+                    secretName: {{ .Values.qubershipApihubBackend.customCa.secretName | quote }}
+            {{- end }}
             containers:
             -   name: 'qubership-apihub-backend'
                 image: '{{ .Values.qubershipApihubBackend.image.repository }}:{{ .Values.qubershipApihubBackend.image.tag }}'
@@ -46,6 +55,11 @@ spec:
                     readOnly: true
                 -   name: tmp-volume
                     mountPath: /tmp
+                {{- if and .Values.qubershipApihubBackend.customCa.enabled .Values.qubershipApihubBackend.customCa.secretName }}
+                -   name: qubership-apihub-backend-custom-ca
+                    mountPath: /tmp/cert
+                    readOnly: true
+                {{- end }}
                 ports:
                 -   name: web
                     containerPort: 8080
@@ -59,6 +73,8 @@ spec:
                 env:
                 -   name: LOG_LEVEL
                     value: '{{ .Values.qubershipApihubBackend.env.logLevel }}'
+                -   name: GOMEMLIMIT
+                    value: '{{ .Values.qubershipApihubBackend.goMemLimit | default "410MiB" }}'
                 -   name: APIHUB_CONFIG_FOLDER
                     value: '/app/qubership-apihub-service/etc/'
                 resources:

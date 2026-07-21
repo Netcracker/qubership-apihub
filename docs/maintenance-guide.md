@@ -1,60 +1,84 @@
-# Qubership APIHUB Maintenance Guide
+# Qubership APIHUB — maintenance guide
 
-This guide describes various Qubership APIHUB maintenance procedures, settings and principles.
+Operators use this memo for backups, housekeeping, federated authentication references, **and** pointers to granular backend runbooks.
 
-- [Data operations](#data-operations)
-  * [DB Backup & Restore](#db-backup---restore)
-  * [Data TTL](#data-ttl)
-  * [Data migration](#data-migration)
-- [Security](#security)
-  * [OIDC/SAML integration](#oidc-saml-integration)
-  * [Access Tokens Management](#access-tokens-management)
-  * [Personal Access Tokens](#personal-access-tokens)
-  * [Package roles](#package-roles)
-- [Global Settings](#global-settings)
+---
 
-# Data operations
+## Data operations
 
-## DB Backup & Restore
+### Database backup & restore
 
-No special tools required for making Qubership APIHUB Postgres database backup & restore. Just use official `pg_dump` and `pg_restore` tools.
+Use stock PostgreSQL tools. Skip heavy/ephemeral Builder tables similar to backend recommendations.
 
-The only trick is that some tables in the database contains temprary data and can be skipped during backing up.
+Substitute **`APIHUB_DB_SERVER`** (hostname), **`APIHUB_DB_USER`**, **`APIHUB_DB_PASSWORD`**, **`APIHUB_DB_NAME`** with your Registry database (Compose sample: **`apihub_backend`** / **`apihub_backend_user`**, see **`scripts/init-db/init.sql`**). Perform **parallel dumps** for `api_linter` and `agents_backend` schemas if you operate those extensions.
 
-Commands for reference:
-
-**Backup**
-
-```
-pg_dump --no-owner --format=tar --dbname=postgresql://${APIHUB_DB_USER}:${APIHUB_DB_PASSWORD}@${APIHUB_DB_SERVER}:5432/${APIHUB_DB_NAME} --file=./dbDump.tar  --exclude-table-data=build --exclude-table-data=build_src --exclude-table-data=build_depends --exclude-table-data=build_result --exclude-table-data=builder_task --exclude-table-data=builder_notifications --exclude-schema=migration
+```bash
+pg_dump --no-owner --format=tar \
+  --dbname="postgresql://${APIHUB_DB_USER}:${APIHUB_DB_PASSWORD}@${APIHUB_DB_SERVER}:5432/${APIHUB_DB_NAME}" \
+  --file=./registry-dump.tar \
+  --exclude-table-data=build \
+  --exclude-table-data=build_src \
+  --exclude-table-data=build_depends \
+  --exclude-table-data=build_result \
+  --exclude-table-data=builder_task \
+  --exclude-table-data=builder_notifications \
+  --exclude-schema=migration
 ```
 
-**Restore**
+```bash
+pg_restore --no-owner \
+  --dbname="postgresql://${APIHUB_DB_USER}:${APIHUB_DB_PASSWORD}@${APIHUB_DB_SERVER}:5432/${APIHUB_DB_NAME}" \
+  ./registry-dump.tar
 ```
-pg_restore --no-owner --dbname=postgresql://${APIHUB_DB_USER}:${APIHUB_DB_PASSWORD}@${APIHUB_DB_SERVER}:5432/${APIHUB_DB_NAME} ./dbDump.tar
+
+Destructive purge (labs only):
+
+```bash
+psql "postgresql://${APIHUB_DB_USER}:${APIHUB_DB_PASSWORD}@${APIHUB_DB_SERVER}:5432/${APIHUB_DB_NAME}" \
+  -t -c "select 'drop table \"' || tablename || '\" cascade;' from pg_tables where schemaname = 'public'" \
+  | psql "postgresql://${APIHUB_DB_USER}:${APIHUB_DB_PASSWORD}@${APIHUB_DB_SERVER}:5432/${APIHUB_DB_NAME}"
 ```
 
-## Data TTL
+### Historical admin guide overlap
 
-Please refer to [Data Maintenance guide](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/data_maintenance.md)
+Older copies of dumps lived in **`admin-guide`**; authoritative commands now live solely here — follow one source to reduce drift.
 
-## Data migration 
+### Data TTL & automated cleanup
 
-By "data migration" we call procedure which calculates internal representation of API specifications from original API specifications files.
+Backend schedules (revisions/comparisons/soft-delete/unreferenced/builds) are declared in **`config.yaml`** **`cleanup`** block (see **`config.template.yaml`**). Behaviour + operational interpretation: **[`data_maintenance.md`](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/data_maintenance.md)**.
 
-Here is a guide how to interpret data migration procedure status (logs) to understand if there are any errors or suspicios results: [Migration analysis procedure](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/ops_migration_analysis_guide.md)
+### Schema/internal migration analysis
 
+When migrating stored specs between APIHUB versions, follow **[migration analysis procedure](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/ops_migration_analysis_guide.md)** to read job logs responsibly.
 
-# Security
+---
 
-## OIDC/SAML integration
+## Security
 
-Please find auth flow description here [Qubership APIHUB authentication description](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/security/security_model.md)
+### OIDC / SAML integration
 
-## [Access Tokens Management](https://github.com/Netcracker/qubership-apihub/wiki/Access-Tokens-Management)
+Detailed protocol behaviours: **[`security/security_model.md`](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/security/security_model.md)**.
 
-## [Personal Access Tokens](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90US%E2%80%90001-Manage-Personal-Access-Tokens)
+### Access tokens lifecycle
 
-## [Package roles](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90GS%E2%80%90001-Manage-Roles)
+Operational playbook (system vs personal tokens): **[Access Tokens Management (Wiki)](https://github.com/Netcracker/qubership-apihub/wiki/Access-Tokens-Management)**.
 
-# [Global Settings](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90GS%E2%80%90006-Configuration-Parameters)
+### Personal access tokens
+
+Wiki: **[Manage Personal Access Tokens](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90US%E2%80%90001-Manage-Personal-Access-Tokens)**.
+
+### Package roles
+
+Wiki: **[Manage Roles](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90GS%E2%80%90001-Manage-Roles)**.
+
+### Global settings surface
+
+Wiki: **[Configuration Parameters](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90GS%E2%80%90006-Configuration-Parameters)** (UI-side toggles complementing backend YAML).
+
+---
+
+## Related operator docs in this repo
+
+- [Installation guide](./installation-guide.md)  
+- [Configuration reference](./configuration-reference.md)  
+- [Admin guide](./admin-guide.md)  

@@ -16,6 +16,18 @@ qubershipApihubBackend:
     memory:
      limit: "512Mi"
 
+  # Optional; Go runtime memory soft limit passed as GOMEMLIMIT (container env). Keep below resource.memory.limit; If not set, default value: 410MiB (~80% of default memory.limit 512Mi); Example: 2400MiB
+  goMemLimit: '410MiB'
+
+  # Optional; custom CA certificates for backend HTTPS outbound calls (OIDC, SAML, playground proxy, AI chat).
+  # Requires the qubership-core-base runtime image. The base image entrypoint loads .crt/.cer/.pem files from
+  # /tmp/cert into the system trust store before the application starts.
+  customCa:
+    # Optional; mount custom CA Secret when true; If not set, default value: false; Example: true
+    enabled: false
+    # Optional; Kubernetes Secret name with one or more PEM certificate files (.crt, .cer, or .pem keys); If not set, default value: ""; Example: apihub-backend-custom-ca
+    secretName: ''
+
   # Section with business and technical parameters for APIHUB.
   env:
     # Optional; Set log level on init to specified value. Values: Info, Warn, Error, etc; If not set, default value: INFO; Example: DEBUG
@@ -40,7 +52,7 @@ qubershipApihubBackend:
       productionMode: true  # set to false at your own risk
       # Section with parameters for configuring JWT tokens issued by APIHUB
       jwt:
-        # Mandatory; Self generated private PKCS#8 private key, base64 encoded. Used for siging of JWT tokens issued by APIHUB, must be unique fore each APIHUB instance; If not set, default value: ""; Example: LS0tLS1CRUdJTiBQUklWQV...
+        # Mandatory; Self generated private PKCS#8 private key, base64 encoded. The RSA key length must be at least 2048 bits and no more than 4096 bits to ensure a balance between security and performance. Used for siging of JWT tokens issued by APIHUB, must be unique fore each APIHUB instance; If not set, default value: ""; Example: LS0tLS1CRUdJTiBQUklWQV...
         privateKey: ''
         # Optional; Duration in seconds for access tokens issued by APIHUB; If not set, default value: 1800; Example: 1800
         accessTokenDurationSec:
@@ -67,15 +79,15 @@ qubershipApihubBackend:
       #   imageSvg: ''
       #   # Mandatory; Protocol for external identity provider; If not set, default value: ""; Example: SAML
       #   protocol: 'SAML'
-      #   # Optional; SAML configuration for external identity provider, required if protocol is 'SAML'; If not set, default value: ""; Example: 
+      #   # Optional; SAML configuration for external identity provider, required if protocol is 'SAML'; If not set, default value: ""; Example:
       #   samlConfiguration:
       #     # Optional; SAML metadata URL. Required for SAML configuration; If not set, default value: ""; Example: https://idp.example.com/FederationMetadata/2007-06/FederationMetadata.xml
       #     metadataUrl: ''
       #     # Optional; SAML server certificate, base64 encoded. Required for SAML configuration; If not set, default value: ""; Example: LS0tLS1CRUdJTi...
-      #     certificate: '' 
+      #     certificate: ''
       #     # Optional; SAML server private key, base64 encoded. Required for SAML configuration; If not set, default value: ""; Example: LS0tLS1CRUdJTi...
       #     privateKey: ''
-      # # Mandatory; ID for external identity provider; If not set, default value: ""; Example: external-oidc-idp   
+      # # Mandatory; ID for external identity provider; If not set, default value: ""; Example: external-oidc-idp
       # - id: 'external-oidc-idp'
       #   # Optional; Display name for external OIDC identity provider; If not set, default value: ""; Example: External Identity Provider
       #   displayName: 'test'
@@ -83,7 +95,7 @@ qubershipApihubBackend:
       #   imageSvg: ''
       #   # Mandatory; Protocol for external identity provider; If not set, default value: ""; Example: OIDC
       #   protocol: 'OIDC'
-      #   # Optional; OIDC configuration for external identity provider, required if protocol is 'OIDC'; If not set, default value: ""; Example: 
+      #   # Optional; OIDC configuration for external identity provider, required if protocol is 'OIDC'; If not set, default value: ""; Example:
       #   oidcConfiguration:
       #     # Optional; OIDC identity provider URL. Required for OIDC configuration; If not set, default value: ""; Example: https://idp.example.com/realms/apihub
       #     providerUrl: ''
@@ -110,12 +122,25 @@ qubershipApihubBackend:
 
     # Section with zero-day settings
     zeroDayConfiguration:
-      # Mandatory; Default system access token (any string). The token will be provisioned automatically during startup; If not set, default value: ""; Example: access-token-12345
+      # Mandatory; Default system access token (any string, minimum 30 characters). The token will be provisioned automatically during startup; If not set, default value: ""; Example: access-token-12345-67890-abcdef-ghijklmnop
       accessToken: ''
       # Optional; Default local admin user login. If set - this admin user will be created automatically.; If not set, default value: ""; Example: admin@example.com
       adminEmail: ''
       # Optional; Default local admin user password; If not set, default value: ""; Example: admin-password
       adminPassword: ''
+
+    # Section with technical parameters
+    technicalParameters:
+      # Optional; Base path for binary and static files, default value: .; Example: /tmp
+      basePath: '.'
+      # Optional; Listen address for APIHUB backend, can be used to avoid port conflicts in case of run on bare metall; If not set, default value: :8080; Example: :8080
+      listenAddress: ':8080'
+      # Optional; Directory containing API specifications for exposure; If not set, defaults to basePath + "/api"; Example: ./docs/api
+      apiSpecDirectory: ''
+      # Optional; Maximum wait time in minutes for lock release during migration restart; If not set, default value: 30; Example: 60
+      migrationLockMaxWaitMinutes: 30
+      # Optional; Base directory for ephemeral (temporary) file storage; If not set, default value: /tmp/apihub-ephemeral-files; Example: /var/apihub/ephemeral
+      ephemeralFileDirectory: '/tmp/apihub-ephemeral-files'
 
     # Section with various parameters related to APIHUB business logic
     businessParameters:
@@ -131,11 +156,18 @@ qubershipApihubBackend:
       publishFileSizeLimitMb: 15
       # Deprecated. Required for Editor feature. Size limit for the branch content.
       branchContentSizeLimitMb: 50
+      # Optional; Limit for uploaded operation group template file size in MB; If not set, default value: 1; Example: 2
+      templateSizeLimitMb: 1
+      # Optional; Limit for uploaded shareability report xlsx file size in MB; If not set, default value: 10; Example: 10
+      shareabilityReportSizeLimitMb: 10
       # Optional; If set - footer with this text is shown for all APIHUB users in APIHUB UI. Designed for maintenance windows notifications.; If not set, default value: ""; Example: Maintenance scheduled on 2023-10-15
       systemNotification: ''
       # Optional; Set to true to fail build on broken refs; If not set, default value: true; Example: true
       failBuildOnBrokenRefs: true
-
+      # Optional; Maximum size in MB for ephemeral (temporary) files; If not set, default value: 50; Example: 100
+      ephemeralFileMaxSizeMb: 50
+      # Optional; Time-to-live in minutes for ephemeral files before they expire; If not set, default value: 30; Example: 60
+      ephemeralFileTTLMinutes: 30
 
     # Section with monitoring configuration for APIHUB
     # APIHUB backend is using Prometheus for monitoring and Grafana for visualization
@@ -166,7 +198,7 @@ qubershipApihubBackend:
       clientId: ''
       clientSecret: ''
 
-    # Section with Olric configuration.
+    # Section with Olric(distributed cache and pub-sub) configuration.
     olric:
       # Optional; Discovery mode for Olric. If not set, default value: local; Example: local
       discoveryMode: 'lan'
@@ -174,10 +206,12 @@ qubershipApihubBackend:
       replicaCount: 1
       # Optional; Namespace for Olric discovery. If not set, default value: ""; Example: apihub
       namespace: ''
-    
+
     # Section with cleanup jobs configuration
     cleanup:
       revisions:
+        # Optional; Schedule for the revisions cleanup job. If not set, default value: "0 21 * * 0"; Example: "* * * * *"
+        schedule: '0 21 * * 0'
         # Optional; If set to true, the revisions cleanup job will delete the last revision of the version. Otherwise, such revisions are skipped; If not set, default value: false; Example: true
         deleteLastRevision: false
         # Optional; If set to true, the revisions cleanup job will delete revisions with a 'release' status. Otherwise, such revisions are skipped; If not set, default value: false; Example: true
@@ -185,14 +219,84 @@ qubershipApihubBackend:
         # Optional; Number of days to keep revisions before cleanup; If not set, default value: 365; Example: 180
         ttlDays: 365
       comparisons:
+        # Optional; Schedule for the comparisons cleanup job. If not set, default value: "0 5 * * 0"; Example: "* * * * *"
+        schedule: '0 5 * * 0'
+        # Optional; Timeout in minutes for comparisons cleanup. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination; If not set, default value: 360; Example: 60
+        timeoutMinutes: 360
         # Optional; Number of days to keep ad-hoc comparisons before cleanup; If not set, default value: 30; Example: 180
         ttlDays: 30
+      softDeletedData:
+        # Optional; Cron schedule for soft deleted data cleanup job; If not set default value: '0 22 * * 5'; Example: '0 4 * * *'
+        schedule: '0 22 * * 5'
+        # Optional; Timeout in minutes for soft deleted data cleanup. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination; If not set, default value: 600; Example: 120
+        timeoutMinutes: 600
+        # Optional; Number of days to keep soft deleted data before cleanup; If not set, default value: 730; Example: 700
+        ttlDays: 730
+      unreferencedData:
+        # Optional; Cron schedule for unreferenced data cleanup job; If not set default value: '0 15 * * 6'; Example: '0 4 * * *'
+        schedule: '0 15 * * 6'
+        # Optional; Timeout in minutes for unreferenced data cleanup. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination; If not set, default value: 360; Example: 120
+        timeoutMinutes: 360
+      maintenanceVacuum:
+        # Optional; Cron schedule for maintenance vacuum job; If not set default value: '0 2 * * 1'; Example: '0 2 * * 1'
+        schedule: '0 2 * * 1'
+        # Optional; Timeout in minutes for maintenance vacuum phase (VACUUM FULL ANALYZE); If not set, default value: 300; Example: 180
+        timeoutMinutes: 300
+      builds:
+        # Optional; Schedule for the builds cleanup job. If not set, default value: "0 1 * * 0"; Example: "* * * * *"
+        schedule: '0 1 * * 0'
+      ephemeralFiles:
+        # Optional; Cron schedule for ephemeral files cleanup job; If not set, default value: "*/5 * * * *"; Example: "*/10 * * * *"
+        schedule: '*/5 * * * *'
+
+    ai:
+      mcp:
+        # Default workspace for MCP to work with
+        workspace: ''
+      chat:
+        # Master kill-switch for the AI chat feature. When true, /api/v1/ai-chat/chats
+        # routes are registered and the periodic chat retention job is scheduled
+        enabled: false
+        retentionDays: 30
+        pinnedForeverCount: 10
+        compactAtContextPercent: 80
+        cleanupSchedule: "15 3 * * *"
+        # Section with OpenAI configuration for AI-assisted chat
+        openAI:
+          # Mandatory; OpenAI API key for chat functionality; If not set, default value: ""; Example: sk-...
+          apiKey: ''
+          # Optional; OpenAI model to use for chat; If not set, default value: gpt-4o; Example: gpt-4o
+          model: 'gpt-5'
+          # Optional; Proxy server URL for OpenAI API requests; If not set, default value: ""; Example: 'http://proxy.example.com:8080'
+          proxyURL: ''
+          # Optional; Controls randomness of the model's output. Range: 0.0 to 2.0. Lower values (0.0-0.3) = more focused and deterministic, medium values (0.7-1.0) = balanced, higher values (1.5-2.0) = more random and creative; If not set, default value: 1.0; Example: 1.0
+          temperature: 1.0
+          # Optional; Controls depth of reasoning for reasoning models (gpt-5, o-series). Values: "minimal" (fastest), "low" (quick), "medium" (balanced, default), "high" (deep analysis, default for gpt-5-pro); If not set, default value: "medium"; Example: "medium"
+          reasoningEffort: 'medium'
+          # Optional; Controls verbosity and detail level of the model's response. Values: "low" (concise), "medium" (balanced, default), "high" (detailed with examples); If not set, default value: "medium"; Example: "medium"
+          verbosity: 'medium'
+
+    # Section with feature flags for controlling feature availability
+    featureFlags:
+      # Optional; When true, signals to use v3 search API instead of v4 search API; Default: false; Example: true
+      useV3Search: false
+
+    # Optional; Section APIHUB extensions list. If not set, default value: [];
+    extensions:
+      # API Linter enabled by default. See section qubershipApiLinterService below for configuration
+      - name: api-linter
+        baseUrl: http://qubership-api-linter-service:8080
+        pathPrefix: api-linter
+      # APIHUB Agents Backend enabled by default. See section qubershipApihubAgentsBackend below for configuration
+      - name: agents-backend
+        baseUrl: http://qubership-apihub-agents-backend:8080
+        pathPrefix: agents-backend
 
 # Section with APIHUB Build Task Consumer configuration
 qubershipApihubBuildTaskConsumer:
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-build-task-consumer'
-    tag: 'latest'
+    tag: 'dev'
   replicas: 1
 
   # Section with resource limits
@@ -219,7 +323,7 @@ qubershipApihubBuildTaskConsumer:
 qubershipApihubUi:
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-ui'
-    tag: 'latest'
+    tag: 'dev'
   replicas: 1
 
   # Section with resource limits
@@ -235,7 +339,9 @@ qubershipApihubUi:
   env:
     apihubBackendAddress: 'qubership-apihub-backend:8080' # k8s local address of apihub backend service. Do not change it unless you know what you are doing
     apihubNcServiceAddress: 'qubership-apihub-backend:8080' # k8s local address of apihub custom service. Do not change it unless you know what you are doing
-    
+    apiLinterServiceAddress: 'qubership-api-linter-service:8080' # k8s local address of api linter service. Do not change it unless you know what you are doing
+    apihubAgentsBackendAddress: 'qubership-apihub-agents-backend:8080' # k8s local address of apihub agents backend service. Do not change it unless you know what you are doing
+
   # Mandatory; Factual APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
   apihubUrl: ''
 
@@ -252,3 +358,185 @@ qubershipApihubUi:
       certificate: ''
       # Private key for certificate above, base64 encoded. If not set, default value: ""; Example: LS0tLS1CRUdJTiBQUklWQV...
       certificateKey: ''
+
+# Section with APIHUB API Linter service configuration
+qubershipApiLinterService:
+  image:
+    repository: 'ghcr.io/netcracker/qubership-api-linter-service'
+    tag: 'dev'
+  replicas: 1
+
+  # Optional; custom CA certificates for linter HTTPS outbound calls (APIHUB API, OpenAI).
+  # Requires the qubership-core-base runtime image. The base image entrypoint loads .crt/.cer/.pem files from
+  # /tmp/cert into the system trust store before the application starts.
+  customCa:
+    # Optional; mount custom CA Secret when true; If not set, default value: false; Example: true
+    enabled: false
+    # Optional; Kubernetes Secret name with one or more PEM certificate files (.crt, .cer, or .pem keys); If not set, default value: ""; Example: apihub-linter-custom-ca
+    secretName: ''
+
+  # Section with resource limits
+  # Mandatory
+  # Below are the default values which are good enough for any cases including production
+  resource:
+    cpu:
+      request: "30m"
+      limit: "1.25"
+    memory:
+     request: "150Mi"
+     limit: "1000Mi"
+
+  # Optional; Go runtime memory soft limit passed as GOMEMLIMIT (container env). Keep below resource.memory.limit; If not set, default value: 800MiB (~80% of default memory.limit 1000Mi); Example: 2400MiB
+  goMemLimit: '800MiB'
+
+  env:
+    # Optional; Set log level on init to specified value. Values: Info, Warn, Error, etc; If not set, default value: INFO; Example: DEBUG
+    logLevel: 'INFO'
+
+    # Section with PostgreSQL database connection parameters
+    database:
+      # Mandatory; PostgreSQL database host ; If not set, default value: localhost; Example: postgres.example.com
+      host: ''
+      # Mandatory; PostgreSQL database port; If not set, default value: 5432; Example: 5432
+      port: null
+      # Mandatory; Logical database in PostgreSQL cluster for APIHUB. Manual pre-creation required; If not set, default value: apihub_linter; Example: apihub_backend_prod_db
+      name: ''
+      # Mandatory; User for database.name database; If not set, default value: apihub_linter; Example: apihub_api_linter_service_prod_admin
+      username: ''
+      # Mandatory; Password for database.user.; If not set, default value: apihub; Example: apihub_api_linter_service_prod_password
+      password: ''
+
+    # Section with technical parameters
+    technicalParameters:
+      # Optional; Base path for binary and static files; If not set, default value: .; Example: /app
+      basePath: '.'
+      # Optional; Listen address for Linter Service; If not set, default value: :8080; Example: :8080
+      listenAddress: ':8080'
+      # Optional; Directory containing API specifications for exposure; If not set, defaults to basePath + "/api"; Example: ./docs/api
+      apiSpecDirectory: ''
+      apihub:
+        # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: http://localhost:8090; Example: https://apihub.example.com
+        url: 'http://localhost:8090'
+        # Mandatory; APIHUB access token. In case of clean installation - must be the same as in qubershipApihubBackend.env.zeroDayConfiguration.accessToken section; If not set, default value: ""; Example: access-token-12345
+        accessToken: ''
+
+    # Security parameters.
+    security:
+      # Optional; Allows to set extra allowed origins to CORS header. Used for FE debugging. Should be empty on prod envs.; If not set, default value: []; Example: [https://localhost:5137]
+      allowedOrigins: []
+
+    # Configuration for linters
+    linters:
+      spectral:
+        # Mandatory; Path to the Spectral binary; If not set, default value: ""; Example: ./resources/spectral/linux/spectral
+        binPath: 'resources/spectral/linux/spectral'
+        # Optional; Number of Spectral linter workers; If not set, default value: 1; Example: 4
+        workers: 1
+      ai:
+        # Optional; Enable AI-powered OAS linter; If not set, default value: false; Example: true
+        enabled: false
+        # Optional; Number of AI linter workers; If not set, default value: 1; Example: 4
+        workers: 1
+        # Optional; List of package IDs to exclude from AI linting; If not set, default value: []; Example: [pkg1,pkg2]
+        excludedPackages: []
+        # Optional; List of package IDs to include for AI linting (empty = all); If not set, default value: []; Example: [pkg1,pkg2]
+        includedPackages: []
+        openAI:
+          # Mandatory when AI linter enabled; OpenAI API key; If not set, default value: ""; Example: sk-...
+          apiKey: ''
+          # Optional; Proxy URL for OpenAI API requests; If not set, default value: ""; Example: http://proxy.example.com:8080
+          apiProxy: ''
+          # Optional; OpenAI model to use; If not set, default value: ""; Example: gpt-4o
+          model: ''
+          # Optional; OpenAI API rate limit (requests per second); If not set, default value: 10; Example: 10
+          rateLimitRPS: 10
+          # Optional; OpenAI API rate limit burst; If not set, default value: 30; Example: 30
+          rateLimitBurst: 30
+
+    # Section with Olric configuration.
+    olric:
+      # Optional; Discovery mode for Olric. If not set, default value: local; Example: local
+      discoveryMode: 'lan'
+      # Optional; Replica count for Olric. If not set, default value: 1; Example: 1
+      replicaCount: 1
+      # Optional; Namespace for Olric discovery. If not set, default value: ""; Example: apihub
+      namespace: ''
+
+# Section with Qubership APIHUB Agents Backend deployment configuration
+qubershipApihubAgentsBackend:
+  # Optional; Qubership APIHUB Agents Backend release version; If not set, default value: unknown; Example: 1.0.0
+  version: ''
+  image:
+    repository: 'ghcr.io/netcracker/qubership-apihub-agents-backend'
+    tag: 'dev'
+
+  customCa:
+    # Optional; mount custom CA Secret when true; If not set, default value: false; Example: true
+    enabled: false
+    # Optional; Kubernetes Secret name with one or more PEM certificate files (.crt, .cer, or .pem keys); If not set, default value: ""; Example: apihub-agents-backend-custom-ca
+    secretName: ''
+
+  # Section with resource limits
+  # Mandatory
+  # Below are the default values which are good enough for any cases including production
+  resource:
+    memory:
+      request: "256Mi"
+      limit: "256Mi"
+    cpu:
+      request: "30m"
+      limit: "1"
+
+  # Optional; Go runtime memory soft limit passed as GOMEMLIMIT (container env). Keep below resource.memory.limit; If not set, default value: 205MiB (~80% of default memory.limit 256Mi); Example: 2400MiB
+  goMemLimit: '205MiB'
+
+  # Section with business and technical parameters for Qubership APIHUB Agents Backend.
+  env:
+    # Optional; Set log level on init to specified value. Values: Info, Warn, Error, etc; If not set, default value: INFO; Example: DEBUG
+    logLevel: ''
+    # Section with PostgreSQL database connection parameters
+    database:
+      # Mandatory; PostgreSQL database host ; If not set, default value: localhost; Example: postgres.example.com
+      host: ''
+      # Mandatory; PostgreSQL database port; If not set, default value: 5432; Example: 5432
+      port: null
+      # Mandatory; Logical database in PostgreSQL cluster for APIHUB. Manual pre-creation required; If not set, default value: apihub_agents_backend; Example: apihub_agents_backend_prod_db
+      name: ''
+      # Mandatory; User for database.name database; If not set, default value: apihub_agents_backend; Example: apihub_agents_backend_prod_admin
+      username: ''
+      # Mandatory; Password for database.username user.; If not set, default value: ""; Example: apihub_agents_backend_prod_password
+      password: ''
+
+    # Section with technical parameters
+    technicalParameters:
+      # Optional; Base path for binary and static files; If not set, default value: .; Example: /app
+      basePath: '.'
+      # Optional; Listen address for the Agents Backend, can be used to avoid port conflicts in case of run on bare metal; If not set, default value: :8080; Example: :8080
+      listenAddress: ':8080'
+      # Optional; Directory containing API specifications for exposure; If not set, defaults to basePath + "/api"; Example: ./docs/api
+      apiSpecDirectory: ''
+      apihub:
+        # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: http://localhost:8090; Example: https://apihub.example.com
+        url: ''
+        # Mandatory; APIHUB access token. In case of clean installation - must be the same as in qubershipApihubBackend.env.zeroDayConfiguration.accessToken section; If not set, default value: ""; Example: access-token-12345
+        accessToken: ''
+
+    # Section with business parameters
+    businessParameters:
+      # Optional; ID of the default workspace; when discovery targets a different workspace, the service/package structure is copied from this default workspace into the target; leave empty to disable copying; If not set, default value: ""; Example: WS
+      defaultWorkspaceId: ''
+
+    # Section with all security parameters
+    security:
+      # Optional; Allows to set extra allowed origins to CORS header. Used for FE debugging. Should be empty on prod envs.; If not set, default value: []; Example: [https://localhost:5137]
+      allowedOrigins: []
+      # Deprecated; Set to true to allow the deprecated agent proxy endpoint to work without authorization. Dangerous, not recommended; If not set, default value: false; Example: false
+      insecureProxy: false
+
+    # Section with cleanup jobs configuration
+    cleanup:
+      snapshots:
+        # Optional; Schedule for the snapshots cleanup job; If not set, default value: 0 22 * * 0 (at 10:00 PM every Sunday); Example: 0 22 * * 0
+        schedule: '0 22 * * 0'
+        # Optional; Retention period in days for snapshots; snapshots older than this are removed by the cleanup job. WARNING: a value of 0 removes ALL snapshots; If not set, default value: 30; Example: 30
+        ttlDays: 30

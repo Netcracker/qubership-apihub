@@ -1,0 +1,102 @@
+# yamllint disable-file
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: qubership-apihub-agents-backend
+  labels:
+    name: qubership-apihub-agents-backend
+    app.kubernetes.io/version: '{{.Values.qubershipApihubAgentsBackend.version}}'
+    app.kubernetes.io/component: 'backend'
+    app.kubernetes.io/technology: 'go'
+    app.kubernetes.io/part-of: qubership-apihub-agents-backend
+    app.kubernetes.io/managed-by: helm
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  template:
+    metadata:
+      labels:
+        name: qubership-apihub-agents-backend
+        app.kubernetes.io/version: '{{.Values.qubershipApihubAgentsBackend.version}}'
+        app.kubernetes.io/component: 'backend'
+        app.kubernetes.io/part-of: qubership-apihub-agents-backend
+        app.kubernetes.io/managed-by: helm
+        app.kubernetes.io/technology: 'go'
+    spec:
+      hostPID: false
+      hostIPC: false
+      volumes:
+      - name: qubership-apihub-agents-backend-config
+        secret:
+            defaultMode: 420
+            secretName: qubership-apihub-agents-backend-config-secret
+      - name: tmp-volume
+        emptyDir: {}
+      {{- if and .Values.qubershipApihubAgentsBackend.customCa.enabled .Values.qubershipApihubAgentsBackend.customCa.secretName }}
+      - name: qubership-apihub-agents-backend-custom-ca
+        secret:
+            defaultMode: 420
+            secretName: {{ .Values.qubershipApihubAgentsBackend.customCa.secretName | quote }}
+      {{- end }}
+      containers:
+      - name: qubership-apihub-agents-backend
+        image: '{{.Values.qubershipApihubAgentsBackend.image.repository}}:{{.Values.qubershipApihubAgentsBackend.image.tag}}'
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+          - name: qubership-apihub-agents-backend-config
+            mountPath: /app/qubership-apihub-agents-backend/etc/
+          - name: tmp-volume
+            mountPath: /tmp
+          {{- if and .Values.qubershipApihubAgentsBackend.customCa.enabled .Values.qubershipApihubAgentsBackend.customCa.secretName }}
+          - name: qubership-apihub-agents-backend-custom-ca
+            mountPath: /tmp/cert
+            readOnly: true
+          {{- end }}
+        ports:
+          - name: web
+            containerPort: 8080
+            protocol: TCP
+        env:
+          - name: LOG_LEVEL
+            value: '{{.Values.qubershipApihubAgentsBackend.env.logLevel}}'
+          - name: GOMEMLIMIT
+            value: '{{.Values.qubershipApihubAgentsBackend.goMemLimit | default "205MiB"}}'
+          - name: AGENTS_BACKEND_CONFIG_FOLDER
+            value: '/app/qubership-apihub-agents-backend/etc/'
+        resources:
+          requests:
+            cpu: '{{.Values.qubershipApihubAgentsBackend.resource.cpu.request}}'
+            memory: '{{.Values.qubershipApihubAgentsBackend.resource.memory.request}}'
+          limits:
+            cpu: '{{.Values.qubershipApihubAgentsBackend.resource.cpu.limit}}'
+            memory: '{{.Values.qubershipApihubAgentsBackend.resource.memory.limit}}'
+        livenessProbe:
+          httpGet:
+            path: /live
+            port: web
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: web
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+        securityContext:
+          runAsUser: 10001
+          runAsGroup: 10001
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+  selector:
+    matchLabels:
+      name: qubership-apihub-agents-backend

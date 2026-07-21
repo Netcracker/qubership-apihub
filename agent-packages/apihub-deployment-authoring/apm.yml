@@ -1,0 +1,6 @@
+name: apihub-deployment-authoring
+version: 0.1.0
+description: Helm, Docker Compose, and deployment docs for the qubership-apihub umbrella repository
+author: Qubership
+dependencies:
+  apm: []
