@@ -22,7 +22,7 @@ linters:
 technicalParameters:
   apihub:
     url: 'http://host.docker.internal:8081'
-    #Must be the same as APIHUB_ACCESS_TOKEN in BE>
+    # Must be the same as APIHUB_ACCESS_TOKEN in BE>
     accessToken: ${APIHUB_ACCESS_TOKEN}
 olric:
   discoveryMode: 'local'

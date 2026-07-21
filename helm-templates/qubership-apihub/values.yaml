@@ -15,7 +15,7 @@ qubershipApihubBackend:
       request: "100m"
       limit: "1"
     memory:
-     limit: "512Mi"
+      limit: "512Mi"
 
   # Optional; Go runtime memory soft limit passed as GOMEMLIMIT (container env). Keep below resource.memory.limit; If not set, default value: 410MiB (~80% of default memory.limit 512Mi); Example: 2400MiB
   goMemLimit: '410MiB'
@@ -39,7 +39,7 @@ qubershipApihubBackend:
       # Mandatory; PostgreSQL database host ; If not set, default value: localhost; Example: postgres.example.com
       host: ''
       # Mandatory; PostgreSQL database port; If not set, default value: 5432; Example: 5432
-      port:
+      port: null
       # Mandatory; Logical database in PostgreSQL cluster for APIHUB. Manual pre-creation required; If not set, default value: apihub; Example: apihub_backend_prod_db
       name: ''
       # Mandatory; User for database.name database; If not set, default value: apihub; Example: apihub_backend_prod_admin
@@ -56,9 +56,9 @@ qubershipApihubBackend:
         # Mandatory; Self generated private PKCS#8 private key, base64 encoded. The RSA key length must be at least 2048 bits and no more than 4096 bits to ensure a balance between security and performance. Used for siging of JWT tokens issued by APIHUB, must be unique fore each APIHUB instance; If not set, default value: ""; Example: LS0tLS1CRUdJTiBQUklWQV...
         privateKey: ''
         # Optional; Duration in seconds for access tokens issued by APIHUB; If not set, default value: 1800; Example: 1800
-        accessTokenDurationSec:
+        accessTokenDurationSec: null
         # Optional; Duration in seconds for refresh tokens issued by APIHUB; If not set, default value: 43200; Example: 43200
-        refreshTokenDurationSec:
+        refreshTokenDurationSec: null
       # Mandatory; Factual APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
       apihubExternalUrl: ''
       # Optional; Set to true to enable apihub playground work without authtorization. Dangerous. Not recommended; If not set, default value: false; Example: true

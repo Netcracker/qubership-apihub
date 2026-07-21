@@ -27,7 +27,7 @@ High-level narratives (architecture roadmap, backlog process) evolve on the [Git
 | Landscape diagram, TS processing stack matrix | Wiki — [Architecture landscape](https://github.com/Netcracker/qubership-apihub/wiki/Architecture-landscape) |
 | Feature inventory (`asyncapi`, AI scoring…) | Wiki — [Features list](https://github.com/Netcracker/qubership-apihub/wiki/Features-list) |
 | Process / ticketing / branching | Wiki — [Development Management Guide](https://github.com/Netcracker/qubership-apihub/wiki/Development-Management-Guide) |
-| **Exact chart values, Compose env keys, JWT scripts** | This repo — `docs/` + `helm-templates/` + `docker-compose/` |
+| **Exact chart values, Compose env keys, JWT scripts** | This repository — `docs/` + `helm-templates/` + `docker-compose/` |
 
 ---
 

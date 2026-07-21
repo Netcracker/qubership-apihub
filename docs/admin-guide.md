@@ -11,7 +11,7 @@ Audience: **platform owners and SRE/DevOps** wiring APIHUB into an environment. 
 | Who reads YAML vs env at runtime (+ Helm precedence) | [Configuration reference](./configuration-reference.md) — **Source of truth hierarchy** |
 | Install paths, ports | [Installation guide](./installation-guide.md) |
 | Backups, TTL, auth deep links | [Maintenance guide](./maintenance-guide.md) |
-| Architecture/features product context | [Wiki](https://github.com/Netcracker/qubership-apihub/wiki), [root README](../README.md) |
+| Architecture/features product context | [Wiki](https://github.com/Netcracker/qubership-apihub/wiki), [root readme](../README.md) |
 
 ---
 
@@ -21,7 +21,7 @@ The registry is configured through **`config.yaml`**, whose annotated super-set 
 
 **Operational routine**
 
-1. Maintain a **golden copy** separate from live secrets (git ignores or sealed secrets), diff against the template when upgrading between product versions.
+1. Maintain a **golden copy** separate from live secrets (Git ignores or sealed secrets), diff against the template when upgrading between product versions.
 2. Keep **`security.apihubExternalUrl`** truthfully matching the hostname users type; mismatches break OAuth/SAML redirects and deep links.
 3. **`extensions`** must list every sidecar the UI should hit (linter, agents-backend); `baseUrl` + `pathPrefix` pair must match what you publish (internal DNS in Kubernetes, `host.docker.internal` patterns in desktop Compose).
 4. **`zeroDayConfiguration.accessToken`** bootstraps privileged automation; pair it with **`APIHUB_API_KEY`** / **`APIHUB_ACCESS_TOKEN`** variables in workers until you adopt service accounts or PAT-based automation from the product.
@@ -48,7 +48,7 @@ Chart: **`helm-templates/qubership-apihub/`**. Values file is self-commented.
 Scripts under **`docker-compose/apihub-generic/`**:
 
 - **`generate_env_and_up_compose.sh`** randomizes JWT, admin bootstrap, token, substitutes env files, launches Podman Compose. Assume **files mutate** unless you checkpoint them first.
-- **Persistence**: follow README guidance on **`PGDATA=/pgdata`**, `./data`, and Podman/WSL metadata for Windows mounts.
+- **Persistence**: follow readme guidance on **`PGDATA=/pgdata`**, `./data`, and Podman/WSL metadata for Windows mounts.
 - **`host.docker.internal`**: unify browser URL, **`APIHUB_URL`**, **`extensions[].baseUrl`**, and SSO IdP redirects when mixing published ports vs internal DNS names.
 
 ---

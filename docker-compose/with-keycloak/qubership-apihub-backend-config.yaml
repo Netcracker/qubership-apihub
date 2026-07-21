@@ -28,7 +28,7 @@ security:
         # <Keycloak SAML metadata endpoint. Default value is fine as soon as Keycloak with 0-Day configuration is set up within current compose file>
         metadataUrl: 'http://host.docker.internal:8082/realms/apihub-1/protocol/saml/descriptor'
         # <Keycloak SAML certificate. Must be manually generated. Or provided by startup script>
-        certificate: ${SAML_CRT} 
+        certificate: ${SAML_CRT}
         # <Keycloak SAML certificate private key. Must be manually generated. Or provided by startup script>
         privateKey: ${SAML_KEY}
     - id: 'external-oidc-idp'

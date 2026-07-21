@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 generate_random_string() {
   local length=$1
   cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w $length | head -n 1
