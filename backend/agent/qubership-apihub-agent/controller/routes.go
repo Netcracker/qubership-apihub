@@ -3,9 +3,7 @@ package controller
 import (
 	"net/http"
 
-	"github.com/Netcracker/qubership-apihub-agent/exception"
 	"github.com/Netcracker/qubership-apihub-agent/service"
-	log "github.com/sirupsen/logrus"
 )
 
 type RoutesController interface {
@@ -28,15 +26,7 @@ func (c routesController) GetRouteByName(w http.ResponseWriter, r *http.Request)
 
 	result, err := c.routesSvc.GetRouteByName(namespace, routeName)
 	if err != nil {
-		log.Error("Failed to get route: ", err.Error())
-		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
-		} else {
-			RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusInternalServerError,
-				Message: "Failed to get route",
-				Debug:   err.Error()})
-		}
+		respondWithError(w, "Failed to get route", err)
 		return
 	}
 	respondWithJson(w, http.StatusOK, result)

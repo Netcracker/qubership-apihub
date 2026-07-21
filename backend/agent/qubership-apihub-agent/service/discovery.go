@@ -405,8 +405,7 @@ func (d discoveryServiceImpl) GetServiceUrl(namespace string, serviceId string) 
 	ctx := goctx.Background()
 	list, err := d.paasClient.GetServiceList(ctx, namespace, filter.Meta{})
 	if err != nil {
-		log.Errorf("Failed to get k8s services list in namespace %s: %s", namespace, err.Error())
-		return "", err
+		return "", fmt.Errorf("failed to get k8s services list in namespace %s: %w", namespace, err)
 	}
 	for _, namespaceService := range list {
 		if namespaceService.Name == serviceId {

@@ -2,6 +2,7 @@ package service
 
 import (
 	goctx "context"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -109,13 +110,11 @@ func (l listServiceImpl) ListServiceItems(namespace string) ([]view.ServiceItem,
 	wg.Wait()
 
 	if svcErr != nil {
-		log.Errorf("Failed to list k8s services in namespace %s: %s", namespace, svcErr.Error())
-		return nil, svcErr
+		return nil, fmt.Errorf("failed to list k8s services in namespace %s: %w", namespace, svcErr)
 	}
 
 	if podsErr != nil {
-		log.Errorf("Failed to list k8s pods in namespace %s: %s", namespace, podsErr.Error())
-		return nil, podsErr
+		return nil, fmt.Errorf("failed to list k8s pods in namespace %s: %w", namespace, podsErr)
 	}
 
 	agentId := utils.MakeAgentId(l.cloudName, l.agentNamespace)
