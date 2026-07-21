@@ -2,6 +2,7 @@
 qubershipApihubBackend:
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-backend'
+    # Pin tags from the latest product release: https://github.com/Netcracker/qubership-apihub/releases/latest
     tag: 'latest'
   replicas: 1
 
@@ -280,6 +281,8 @@ qubershipApihubBackend:
     featureFlags:
       # Optional; When true, signals to use v3 search API instead of v4 search API; Default: false; Example: true
       useV3Search: false
+      # Optional; When false, disables previous version status validation on publish and patch endpoints and restores the legacy check on the publish from CSV endpoint; Default: true; Example: false
+      previousVersionStatusValidation: true
 
     # Optional; Section APIHUB extensions list. If not set, default value: [];
     extensions:
@@ -296,6 +299,7 @@ qubershipApihubBackend:
 qubershipApihubBuildTaskConsumer:
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-build-task-consumer'
+    # Pin tags from the latest product release: https://github.com/Netcracker/qubership-apihub/releases/latest
     tag: 'dev'
   replicas: 1
 
@@ -323,6 +327,7 @@ qubershipApihubBuildTaskConsumer:
 qubershipApihubUi:
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-ui'
+    # Pin tags from the latest product release: https://github.com/Netcracker/qubership-apihub/releases/latest
     tag: 'dev'
   replicas: 1
 
@@ -363,6 +368,7 @@ qubershipApihubUi:
 qubershipApiLinterService:
   image:
     repository: 'ghcr.io/netcracker/qubership-api-linter-service'
+    # Pin tags from the latest product release: https://github.com/Netcracker/qubership-apihub/releases/latest
     tag: 'dev'
   replicas: 1
 
@@ -468,6 +474,7 @@ qubershipApihubAgentsBackend:
   version: ''
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-agents-backend'
+    # Pin tags from the latest product release: https://github.com/Netcracker/qubership-apihub/releases/latest
     tag: 'dev'
 
   customCa:

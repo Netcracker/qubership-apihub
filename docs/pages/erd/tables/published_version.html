@@ -147,6 +147,11 @@
                                                 <td class="constraint detail">FK_published_version_validation</td>
                                                 <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
                                             </tr>
+                                            <tr>
+                                                <td title="version_internal_document.[package_id, version, revision] references published_version.[package_id, version, revision] via version_internal_document_published_version_fk"><a href='version_internal_document.html'>version_internal_document</a><span class='relatedKey'>.package_id</span></td>
+                                                <td class="constraint detail">version_internal_document_published_version_fk</td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
                                         </table>
                                     </td>
                                     <td>
@@ -199,6 +204,11 @@
                                                 <td class="constraint detail">FK_published_version_validation</td>
                                                 <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
                                             </tr>
+                                            <tr>
+                                                <td title="version_internal_document.[package_id, version, revision] references published_version.[package_id, version, revision] via version_internal_document_published_version_fk"><a href='version_internal_document.html'>version_internal_document</a><span class='relatedKey'>.version</span></td>
+                                                <td class="constraint detail">version_internal_document_published_version_fk</td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
                                         </table>
                                     </td>
                                     <td>
@@ -244,6 +254,11 @@
                                             <tr>
                                                 <td title="published_version_validation.[package_id, version, revision] references published_version.[package_id, version, revision] via FK_published_version_validation"><a href='published_version_validation.html'>published_version_validation</a><span class='relatedKey'>.revision</span></td>
                                                 <td class="constraint detail">FK_published_version_validation</td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td title="version_internal_document.[package_id, version, revision] references published_version.[package_id, version, revision] via version_internal_document_published_version_fk"><a href='version_internal_document.html'>version_internal_document</a><span class='relatedKey'>.revision</span></td>
+                                                <td class="constraint detail">version_internal_document_published_version_fk</td>
                                                 <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
                                             </tr>
                                         </table>

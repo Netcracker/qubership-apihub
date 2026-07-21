@@ -117,6 +117,11 @@
                                     <td>null</td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
+                                            <tr>
+                                                <td title="comparison_internal_document.[package_id, version, revision, previous_package_id, previous_version, previous_revision] references version_comparison.[package_id, version, revision, previous_package_id, previous_version, previous_revision] via comparison_internal_document_version_comparison_fk"><a href='comparison_internal_document.html'>comparison_internal_document</a><span class='relatedKey'>.package_id</span></td>
+                                                <td class="constraint detail">comparison_internal_document_version_comparison_fk</td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
                                         </table>
                                     </td>
                                     <td>
@@ -134,6 +139,11 @@
                                     <td>null</td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
+                                            <tr>
+                                                <td title="comparison_internal_document.[package_id, version, revision, previous_package_id, previous_version, previous_revision] references version_comparison.[package_id, version, revision, previous_package_id, previous_version, previous_revision] via comparison_internal_document_version_comparison_fk"><a href='comparison_internal_document.html'>comparison_internal_document</a><span class='relatedKey'>.version</span></td>
+                                                <td class="constraint detail">comparison_internal_document_version_comparison_fk</td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
                                         </table>
                                     </td>
                                     <td>
@@ -151,6 +161,11 @@
                                     <td>null</td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
+                                            <tr>
+                                                <td title="comparison_internal_document.[package_id, version, revision, previous_package_id, previous_version, previous_revision] references version_comparison.[package_id, version, revision, previous_package_id, previous_version, previous_revision] via comparison_internal_document_version_comparison_fk"><a href='comparison_internal_document.html'>comparison_internal_document</a><span class='relatedKey'>.revision</span></td>
+                                                <td class="constraint detail">comparison_internal_document_version_comparison_fk</td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
                                         </table>
                                     </td>
                                     <td>
@@ -168,6 +183,11 @@
                                     <td>null</td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
+                                            <tr>
+                                                <td title="comparison_internal_document.[package_id, version, revision, previous_package_id, previous_version, previous_revision] references version_comparison.[package_id, version, revision, previous_package_id, previous_version, previous_revision] via comparison_internal_document_version_comparison_fk"><a href='comparison_internal_document.html'>comparison_internal_document</a><span class='relatedKey'>.previous_package_id</span></td>
+                                                <td class="constraint detail">comparison_internal_document_version_comparison_fk</td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
                                         </table>
                                     </td>
                                     <td>
@@ -185,6 +205,11 @@
                                     <td>null</td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
+                                            <tr>
+                                                <td title="comparison_internal_document.[package_id, version, revision, previous_package_id, previous_version, previous_revision] references version_comparison.[package_id, version, revision, previous_package_id, previous_version, previous_revision] via comparison_internal_document_version_comparison_fk"><a href='comparison_internal_document.html'>comparison_internal_document</a><span class='relatedKey'>.previous_version</span></td>
+                                                <td class="constraint detail">comparison_internal_document_version_comparison_fk</td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
                                         </table>
                                     </td>
                                     <td>
@@ -202,6 +227,11 @@
                                     <td>null</td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
+                                            <tr>
+                                                <td title="comparison_internal_document.[package_id, version, revision, previous_package_id, previous_version, previous_revision] references version_comparison.[package_id, version, revision, previous_package_id, previous_version, previous_revision] via comparison_internal_document_version_comparison_fk"><a href='comparison_internal_document.html'>comparison_internal_document</a><span class='relatedKey'>.previous_revision</span></td>
+                                                <td class="constraint detail">comparison_internal_document_version_comparison_fk</td>
+                                                <td class="constraint detail"><span title='Cascade on delete:&#10;Deletion of parent deletes child'>C</span></td>
+                                            </tr>
                                         </table>
                                     </td>
                                     <td>
@@ -411,11 +441,16 @@
                                 <h5>Close relationships within degrees of separation</h5>
                                 <ul class="nav nav-tabs pull-left ui-sortable-handle">
                                     <li class="active"><a href="#oneDegreeImg-chart" data-toggle="tab" aria-expanded="true">One</a></li>
+                                    <li class=""><a href="#twodegreesDegreeImg-chart" data-toggle="tab" aria-expanded="true">Two degrees</a></li>
                                 </ul>
                                 <div class="tab-content no-padding">
                                     <div class="chart tab-pane active" id="oneDegreeImg-chart" style="position: relative; overflow-x:auto;">
                                         
                                         <a name='diagram'><object type="image/svg+xml" id="oneDegreeImg" data="../diagrams/tables/version_comparison.1degree.svg" class="diagram" border="0" align="left"></object></a>
+                                    </div>
+                                    <div class="chart tab-pane " id="twodegreesDegreeImg-chart" style="position: relative; overflow-x:auto;">
+                                        
+                                        <a name='diagram'><object type="image/svg+xml" id="twodegreesDegreeImg" data="../diagrams/tables/version_comparison.2degrees.svg" class="diagram" border="0" align="left"></object></a>
                                     </div>
                                 </div>
                             </div>

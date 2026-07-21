@@ -301,6 +301,7 @@ All other parameters are `config.yaml` keys. Most important:
 | `ai.chat.openAI.verbosity` | No | `medium` | Response verbosity: `low` / `medium` / `high` |
 | `extensions[]` | No | see values | List of sidecar extensions. Each entry: `name`, `baseUrl`, `pathPrefix`. Defaults wire linter + agents-backend. |
 | `featureFlags.useV3Search` | No | `false` | Use v3 search API instead of v4 |
+| `featureFlags.previousVersionStatusValidation` | No | `true` | Disables previous version status validation on publish and patch endpoints and restores the legacy check on the publish from CSV endpoint. |
 
 ---
 
