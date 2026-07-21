@@ -1,5 +1,5 @@
 import { DirectiveLocation } from 'graphql'
-import { printArgDefinition } from '../../src/print-graph-api/definition-parts.printer'
+import { printArgDefinition, printValueLiteral } from '../../src/print-graph-api/definition-parts.printer'
 
 describe('printInputValue', () => {
   it('simple arg', () => {
@@ -192,12 +192,12 @@ describe('printInputValue', () => {
 
     it('array with number values default', () => {
       const actual = printArgDefinition('numbers', {
-        typeDef: { 
+        typeDef: {
           type: {
             kind: 'list',
-            items: { 
+            items: {
               typeDef: { type: { kind: 'integer' } },
-              nullable: false 
+              nullable: false
             }
           }
         } as any, // Using 'as any' for test simplicity
@@ -205,6 +205,31 @@ describe('printInputValue', () => {
       })
       const expected = 'numbers: [Int!] = [1, 2, 3]'
       expect(actual).toBe(expected)
-    })        
+    })
+  })
+})
+
+describe('printValueLiteral (default / input-object value literals)', () => {
+  it('should print scalars with string quoted and number/boolean/null bare', () => {
+    expect(printValueLiteral('x')).toBe('"x"')
+    expect(printValueLiteral(42)).toBe('42')
+    expect(printValueLiteral(true)).toBe('true')
+    expect(printValueLiteral(null)).toBe('null')
+  })
+
+  it('should print a null-prototype input-object value without throwing', () => {
+    // graphql-js coerces input-object default values into null-prototype objects
+    const nullProto = Object.assign(Object.create(null), { field: 'NAME', direction: 'ASC' })
+    expect(() => printValueLiteral(nullProto)).not.toThrow()
+    expect(printValueLiteral(nullProto)).toBe('{field: "NAME", direction: "ASC"}')
+  })
+
+  it('should print a plain input-object value with mixed scalar fields', () => {
+    expect(printValueLiteral({ x: 1, y: true, z: 'a' })).toBe('{x: 1, y: true, z: "a"}')
+  })
+
+  it('should print nested objects, arrays and null', () => {
+    expect(printValueLiteral({ list: [{ id: '1' }, { id: '2' }], n: null }))
+      .toBe('{list: [{id: "1"}, {id: "2"}], n: null}')
   })
 })

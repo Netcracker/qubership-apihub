@@ -45,7 +45,8 @@ export function printSchemaDefinition(schema: GraphApiSchema): Maybe<string> {
 
 export function printOperations(
   name: string,
-  operations?: GraphApiObjectDefinition<GraphApiObjectKind>['type']['methods']
+  operations?: GraphApiObjectDefinition<GraphApiObjectKind>['type']['methods'],
+  components: GraphApiComponents = {}
 ): string {
   if (!operations) { return "" }
   return printObject(name, {
@@ -54,7 +55,7 @@ export function printOperations(
       kind: GRAPH_API_NODE_KIND_OBJECT,
       methods: operations,
     },
-  })
+  }, components)
 }
 
 export function printTypeDefinitions(components: GraphApiComponents = {}): string[] {
@@ -67,7 +68,9 @@ export function printTypeDefinitions(components: GraphApiComponents = {}): strin
     if (!definitions) { continue }
 
     for (const [name, definition] of Object.entries(definitions)) {
-      const printed = printType(name, definition)
+      // `components` is passed so type-aware default printing can resolve `$ref`s; printers that
+      // have no default values (scalar, union, enum) simply ignore it.
+      const printed = printType(name, definition, components)
       if (printed) {
         printedTypes.push(printed)
       }
