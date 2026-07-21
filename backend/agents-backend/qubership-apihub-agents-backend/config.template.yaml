@@ -1,0 +1,46 @@
+# Section with PostgreSQL database connection parameters
+database:
+  # Mandatory; PostgreSQL database host ; If not set, default value: localhost; Example: postgres.example.com
+  host: ''
+  # Mandatory; PostgreSQL database port; If not set, default value: 5432; Example: 5432
+  port: 5432
+  # Mandatory; PostgreSQL database name. Manual pre-creation required; If not set, default value: apihub_agents_backend; Example: apihub_agents_backend
+  name: 'apihub_agents_backend'
+  # Mandatory; User for <database.name> database; If not set, default value: apihub_agents_backend; Example: apihub_agents_backend
+  username: ''
+  # Mandatory; Password for <database.username> user; If not set, default value: apihub_agents_backend; Example: strong-password
+  password: ''
+
+# Section with technical parameters
+technicalParameters:
+  # Optional; Base path for binary and static files; If not set, default value: .; Example: /app
+  basePath: '.'
+  # Optional; Listen address for the Agents Backend, can be used to avoid port conflicts in case of run on bare metal; If not set, default value: :8080; Example: :8080
+  listenAddress: ':8080'
+  # Optional; Directory containing API specifications for exposure; If not set, defaults to basePath + "/api"; Example: ./docs/api
+  apiSpecDirectory: ''
+  apihub:
+    # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: http://localhost:8090; Example: https://apihub.example.com
+    url: ''
+    # Mandatory; Admin access token for your Qubership APIHUB; If not set, default value: ""; Example: access-token-12345
+    accessToken: ''
+
+# Section with business parameters
+businessParameters:
+  # Optional; ID of the default workspace; when discovery targets a different workspace, the service/package structure is copied from this default workspace into the target; leave empty to disable copying; If not set, default value: ""; Example: WS
+  defaultWorkspaceId: ''
+
+# Section with all security parameters
+security:
+  # Optional; Allows to set extra allowed origins to CORS header. Used for FE debugging. Should be empty on prod envs.; If not set, default value: []; Example: [https://localhost:5137]
+  allowedOrigins: []
+  # Deprecated; Set to true to allow the deprecated agent proxy endpoint to work without authorization. Dangerous, not recommended; If not set, default value: false; Example: false
+  insecureProxy: false
+
+# Section with cleanup jobs configuration
+cleanup:
+  snapshots:
+    # Optional; Schedule for the snapshots cleanup job; If not set, default value: 0 22 * * 0 (at 10:00 PM every Sunday); Example: 0 22 * * 0
+    schedule: '0 22 * * 0'
+    # Optional; Retention period in days for snapshots; snapshots older than this are removed by the cleanup job. WARNING: a value of 0 removes ALL snapshots; If not set, default value: 30; Example: 30
+    ttlDays: 30

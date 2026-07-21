@@ -21,6 +21,29 @@ func getValidator() *validator.Validate {
 	return validate
 }
 
+func ValidateConfig(object interface{}) error {
+	err := getValidator().Struct(object)
+	if err == nil {
+		return nil
+	}
+
+	validationErrors, ok := err.(validator.ValidationErrors)
+	if !ok {
+		return err
+	}
+
+	errorMessages := make([]string, 0)
+	for _, e := range validationErrors {
+		errorMessages = append(errorMessages, fmt.Sprintf("field '%s' failed on validation '%s'", e.StructNamespace(), e.Tag()))
+	}
+
+	if len(errorMessages) > 0 {
+		return fmt.Errorf("configuration validation failed:\n\t- %s", strings.Join(errorMessages, "\n\t- "))
+	}
+
+	return nil
+}
+
 func ValidateObject(object interface{}) error {
 	err := getValidator().Struct(object)
 	if err == nil {
