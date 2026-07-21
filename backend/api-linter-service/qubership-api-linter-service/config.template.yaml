@@ -1,0 +1,68 @@
+# Section with PostgreSQL database connection parameters
+database:
+  # Mandatory; PostgreSQL database host ; If not set, default value: localhost; Example: postgres.example.com
+  host: 'localhost'
+  # Mandatory; PostgreSQL database port; If not set, default value: 5432; Example: 5432
+  port: 5432
+  # Mandatory; PostgreSQL database name. Manual pre-creation required; If not set, default value: apihub_linter; Example: apihub_linter
+  name: 'apihub_linter'
+  # Mandatory; User for <database.name> database; If not set, default value: apihub_linter; Example: apihub_linter
+  username: 'apihub_linter'
+  # Mandatory; Password for <database.username> user; If not set, default value: apihub_linter; Example: strong-password
+  password: ''
+
+# Section with technical parameters
+technicalParameters:
+  # Optional; Base path for binary and static files; If not set, default value: .; Example: /app
+  basePath: '.'
+  # Optional; Listen address for Linter Service; If not set, default value: :8080; Example: :8080
+  listenAddress: ':8080'
+  # Optional; Directory containing API specifications for exposure; If not set, defaults to basePath + "/api"; Example: ./docs/api
+  apiSpecDirectory: ''
+  apihub:
+    # Mandatory; Factual Qubership APIHUB server URL in your environment.; If not set, default value: http://localhost:8090; Example: https://apihub.example.com
+    url: 'http://localhost:8090'
+    # Mandatory; Admin access token for your Qubership APIHUB; If not set, default value: ""; Example: access-token-12345
+    accessToken: ''
+
+# Security parameters.
+security:
+  # Optional; Allows to set extra allowed origins to CORS header. Used for FE debugging. Should be empty on prod envs.; If not set, default value: []; Example: [https://localhost:5137]
+  allowedOrigins: []
+
+# Section with Olric configuration.
+olric:
+  # Optional; Discovery mode for Olric. If not set, default value: local; Example: local
+  discoveryMode: 'local'
+  # Optional; Replica count for Olric. If not set, default value: 1; Example: 1
+  replicaCount: 1
+  # Optional; Namespace for Olric discovery. If not set, default value: ""; Example: apihub
+  namespace: ''
+
+# Configuration for linters
+linters:
+  spectral:
+    # Mandatory; Path to the Spectral binary; If not set, default value: ""; Example: ./resources/spectral/linux/spectral
+    binPath: ''
+    # Optional; Number of Spectral linter workers; If not set, default value: 1; Example: 4
+    workers: 1
+  ai:
+    # Optional; Enable AI-powered OAS linter; If not set, default value: false; Example: true
+    enabled: false
+    # Optional; Number of AI linter workers; If not set, default value: 1; Example: 4
+    workers: 1
+    # Optional; List of package IDs to exclude from AI linting; If not set, default value: []; Example: [pkg1,pkg2]
+    excludedPackages: []
+    # Optional; List of package IDs to include for AI linting (empty = all); If not set, default value: []; Example: [pkg1,pkg2]
+    includedPackages: []
+    openAI:
+      # Mandatory when AI linter enabled; OpenAI API key; If not set, default value: ""; Example: sk-...
+      apiKey: ''
+      # Optional; Proxy URL for OpenAI API requests; If not set, default value: ""; Example: http://proxy.example.com:8080
+      apiProxy: ''
+      # Optional; OpenAI model to use; If not set, default value: ""; Example: gpt-4o
+      model: ''
+      # Optional; OpenAI API rate limit (requests per second); If not set, default value: 10; Example: 10
+      rateLimitRPS: 10
+      # Optional; OpenAI API rate limit burst; If not set, default value: 30; Example: 30
+      rateLimitBurst: 30

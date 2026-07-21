@@ -31,6 +31,7 @@ func (c cleanupControllerImpl) ClearTestData(w http.ResponseWriter, r *http.Requ
 		RespondWithCustomError(w, &exception.CustomError{
 			Status: http.StatusNotFound,
 		})
+		return
 	}
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := c.authorizationService.HasRulesetManagementPermission(ctx)

@@ -57,7 +57,7 @@ Briefly state: **root cause**, **why the change fixes it**, and confirm you did 
 
 | Repo | Relationship |
 |------|----------------|
-| **qubership-apihub-backend** | Runtime dependency — fetches packages, versions, documents, auth via `client/apihub.go` (`APIHUB_URL`, `APIHUB_ACCESS_TOKEN`). REST contract changes there may require linter client or behaviour updates. |
+| **qubership-apihub-backend** | Runtime dependency — fetches packages, versions, documents, and auth via `client/apihub.go` using `technicalParameters.apihub.url` and `technicalParameters.apihub.accessToken` from `config.yaml`. REST contract changes there may require linter client or behaviour updates. |
 | **qubership-apihub-ui** | Consumes linter REST endpoints for validation summaries and scoring in the portal. |
 | **qubership-apihub-ci** | Shared super-linter workflows and generic agent packages (`agent-packages/`). |
 
@@ -94,8 +94,8 @@ When a change affects REST contracts or integration behaviour, **remind** the de
 
 | Engine | Code | API types | Notes |
 |--------|------|-----------|-------|
-| Spectral | `view.SpectralLinter` | OpenAPI 2.0/3.0/3.1, AsyncAPI 3.0 | Subprocess via `SPECTRAL_BIN_PATH`; concurrency via worker count |
-| AI linter | `view.AiLinter` | OpenAPI 2.0/3.0/3.1 only | Opt-in via `ENABLE_AI_OAS_LINTER`; OpenAI rate limits apply |
+| Spectral | `view.SpectralLinter` | OpenAPI 2.0/3.0/3.1, AsyncAPI 3.0 | Subprocess via `linters.spectral.binPath`; concurrency via `linters.spectral.workers` |
+| AI linter | `view.AiLinter` | OpenAPI 2.0/3.0/3.1 only | Opt-in via `linters.ai.enabled`; OpenAI settings live under `linters.ai.openAI` |
 
 Registration lives in `service/linter_config.go`; selection in `service/linter_selector.go`; execution branch in `service/doc_task_processor.go`.
 
@@ -130,7 +130,7 @@ Detailed rules apply via deployed `.cursor/rules/` and `.claude/rules/` (from AP
 
 - Follow **API-first**: update `docs/api/linter_service_api.yaml` (and `admin_api.yaml` if admin endpoints change) when REST contract changes.
 - Prefer **v2** endpoints for new summary/detail behaviour; v1 paths marked deprecated in code — do not extend deprecated handlers unless fixing a bug.
-- Service exposes its own specs via api-spec-exposer from `API_SPEC_DIR` (see `service.go` discovery block).
+- Service exposes its own specs via api-spec-exposer from `technicalParameters.apiSpecDirectory`; if it is empty, the service uses `<technicalParameters.basePath>/api` (see `service.go` discovery block).
 - Avoid breaking public API changes without explicit product approval.
 
 ## Database migrations

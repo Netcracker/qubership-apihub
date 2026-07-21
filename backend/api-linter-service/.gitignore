@@ -5,6 +5,8 @@
 go.sum
 api-linter-service/*debug*.exe
 api-linter-service/tmp
+qubership-api-linter-service/qubership-api-linter-service
+qubership-api-linter-service/config.yaml
 qubership-api-linter-service/resources/spectral/linux/spectral
 qubership-api-linter-service/resources/spectral/windows/spectral.exe
 qubership-api-linter-service/resources/vacuum/linux/vacuum
