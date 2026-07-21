@@ -15264,8 +15264,13 @@
                                     "script": {
                                         "type": "text/javascript",
                                         "exec": [
-                                            "pm.test(\"Status code is 204\", function () {\r",
-                                            "    pm.response.to.have.status(204);\r",
+                                            "pm.test(\"Status code is 409\", function () {\r",
+                                            "    pm.response.to.have.status(409);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = pm.response.json();\r",
+                                            "pm.test(\"There is dependent dashboard version\", function () {\r",
+                                            "    pm.expect(\"QS-STATIC-TEST-2.DSHB|2023.3@1\").to.eql(data.params.dashboards);\r",
                                             "});\r",
                                             ""
                                         ]
@@ -16011,7 +16016,7 @@
                                             "var data = pm.response.json();\r",
                                             "\r",
                                             "pm.test(\"There are 4 operations\", function () {\r",
-                                            "    pm.expect(data.operationTypes[0].operationsCount).to.eql(4);\r",
+                                            "    pm.expect(data.operationTypes[0].operationsCount).to.eql(6);\r",
                                             "});\r",
                                             "\r",
                                             "pm.test(\"'operationTypes' = rest\", function () {\r",
