@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 generate_random_string() {
   local length=$1
   cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w $length | head -n 1
@@ -56,9 +57,13 @@ for file in ./keycloak/*.json; do
   fi
 done
 
-envsubst < qubership-apihub-backend-config.yaml > qubership-apihub-backend-config.yaml.tmp
-mv qubership-apihub-backend-config.yaml.tmp qubership-apihub-backend-config.yaml
-echo "Templating qubership-apihub-backend-config.yaml"
+for file in *config.yaml; do
+  if [ -f "$file" ]; then
+    envsubst < "$file" > "${file}.tmp"
+    mv "${file}.tmp" "$file"
+    echo "Templating $file"
+  fi
+done
 
 echo "Startup compose"
 podman compose up

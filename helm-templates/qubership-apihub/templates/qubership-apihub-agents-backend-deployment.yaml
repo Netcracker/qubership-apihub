@@ -29,35 +29,33 @@ spec:
     spec:
       hostPID: false
       hostIPC: false
+      volumes:
+      - name: qubership-apihub-agents-backend-config
+        secret:
+            defaultMode: 420
+            secretName: qubership-apihub-agents-backend-config-secret
+      - name: tmp-volume
+        emptyDir: {}
       {{- if and .Values.qubershipApihubAgentsBackend.customCa.enabled .Values.qubershipApihubAgentsBackend.customCa.secretName }}
-      volumes:
-      -   name: qubership-apihub-agents-backend-custom-ca
-          secret:
-              defaultMode: 420
-              secretName: {{ .Values.qubershipApihubAgentsBackend.customCa.secretName | quote }}
-      -   name: tmp-volume
-          emptyDir: {}
-      {{- else }}
-      volumes:
-      -   name: tmp-volume
-          emptyDir: {}
+      - name: qubership-apihub-agents-backend-custom-ca
+        secret:
+            defaultMode: 420
+            secretName: {{ .Values.qubershipApihubAgentsBackend.customCa.secretName | quote }}
       {{- end }}
       containers:
       - name: qubership-apihub-agents-backend
         image: '{{.Values.qubershipApihubAgentsBackend.image.repository}}:{{.Values.qubershipApihubAgentsBackend.image.tag}}'
         imagePullPolicy: IfNotPresent
-        {{- if and .Values.qubershipApihubAgentsBackend.customCa.enabled .Values.qubershipApihubAgentsBackend.customCa.secretName }}
         volumeMounts:
-        -   name: qubership-apihub-agents-backend-custom-ca
+          - name: qubership-apihub-agents-backend-config
+            mountPath: /app/qubership-apihub-agents-backend/etc/
+          - name: tmp-volume
+            mountPath: /tmp
+          {{- if and .Values.qubershipApihubAgentsBackend.customCa.enabled .Values.qubershipApihubAgentsBackend.customCa.secretName }}
+          - name: qubership-apihub-agents-backend-custom-ca
             mountPath: /tmp/cert
             readOnly: true
-        -   name: tmp-volume
-            mountPath: /tmp
-        {{- else }}
-        volumeMounts:
-        -   name: tmp-volume
-            mountPath: /tmp
-        {{- end }}
+          {{- end }}
         ports:
           - name: web
             containerPort: 8080
@@ -67,39 +65,8 @@ spec:
             value: '{{.Values.qubershipApihubAgentsBackend.env.logLevel}}'
           - name: GOMEMLIMIT
             value: '{{.Values.qubershipApihubAgentsBackend.goMemLimit | default "205MiB"}}'
-          - name: AGENTS_BACKEND_POSTGRESQL_HOST
-            value: '{{.Values.qubershipApihubAgentsBackend.env.database.host}}'
-          - name: AGENTS_BACKEND_POSTGRESQL_PORT
-            value: '{{.Values.qubershipApihubAgentsBackend.env.database.port}}'
-          - name: AGENTS_BACKEND_POSTGRESQL_DB_NAME
-            value: '{{.Values.qubershipApihubAgentsBackend.env.database.name}}'
-          - name: AGENTS_BACKEND_POSTGRESQL_USERNAME
-            valueFrom:
-              secretKeyRef:
-                name: qubership-apihub-agents-backend-db-secret
-                key: postgresql_username
-          - name: AGENTS_BACKEND_POSTGRESQL_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: qubership-apihub-agents-backend-db-secret
-                key: postgresql_password
-          - name: APIHUB_URL
-            value: '{{.Values.qubershipApihubAgentsBackend.env.apihub.url}}'
-          - name: APIHUB_ACCESS_TOKEN
-            valueFrom:
-              secretKeyRef:
-                name: qubership-apihub-agents-backend-api-key-secret
-                key: access_token
-          - name: DEFAULT_WORKSPACE_ID
-            value: '{{.Values.qubershipApihubAgentsBackend.env.defaultWorkspaceId}}'
-          - name: SNAPSHOTS_CLEANUP_SCHEDULE
-            value: '{{.Values.qubershipApihubAgentsBackend.env.snapshotsCleanupSchedule}}'
-          - name: SNAPSHOTS_TTL_DAYS
-            value: '{{.Values.qubershipApihubAgentsBackend.env.snapshotsTtlDays}}'
-          - name: INSECURE_PROXY
-            value: '{{.Values.qubershipApihubAgentsBackend.env.insecureProxy}}'
-          - name: ORIGIN_ALLOWED
-            value: '{{.Values.qubershipApihubAgentsBackend.env.originAllowed}}'
+          - name: AGENTS_BACKEND_CONFIG_FOLDER
+            value: '/app/qubership-apihub-agents-backend/etc/'
         resources:
           requests:
             cpu: '{{.Values.qubershipApihubAgentsBackend.resource.cpu.request}}'

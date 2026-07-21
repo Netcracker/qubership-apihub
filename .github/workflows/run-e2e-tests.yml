@@ -3,62 +3,51 @@ on:
   workflow_dispatch:
     inputs:
       compose-repository-branch:
-          description: "Compose repository branch to use"
-          type: string
-          default: "main"
+        description: "Compose repository branch to use"
+        type: string
+        default: "main"
       compose-repository-compose-folder:
-          description: "Compose repository folder with compose"
-          type: string
-          default: "docker-compose/apihub-generic"
+        description: "Compose repository folder with compose"
+        type: string
+        default: "docker-compose/apihub-generic"
       postman-collections-run:
-          description: "Flag for executing postman collections"
-          type: boolean
-          default: true
+        description: "Flag for executing postman collections"
+        type: boolean
+        default: true
       postman-repository-branch:
-          description: "qubership-apihub-postman-collections branch to clone"
-          type: string
-          default: "develop"
+        description: "qubership-apihub-postman-collections branch to clone"
+        type: string
+        default: "develop"
       postman-collections-list:
-          description: "Collections to execute"
-          type: string
-          default: "./e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/1_3_Linter_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/3_2_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json"
+        description: "Collections to execute"
+        type: string
+        default: "./e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/1_3_Linter_Portal.postman_collection.json,./e2e/2_1_Negative_Portal.postman_collection.json,./e2e/3_1_Stories_Bugs.postman_collection.json,./e2e/3_2_Stories_Bugs.postman_collection.json,./e2e/4_Access_control.postman_collection.json"
       playwright-tests-run:
-          description: "Flag for executing playwright tests"
-          type: boolean
-          default: true
+        description: "Flag for executing playwright tests"
+        type: boolean
+        default: true
       playwright-repository-branch:
-          description: "qubership-apihub-ui-tests branch to clone"
-          type: string
-          default: "develop"
+        description: "qubership-apihub-ui-tests branch to clone"
+        type: string
+        default: "develop"
       playwright-test-args:
-          description: "Playwright test command CLI arguments"
-          type: string
-          default: "--project=Portal --workers=8 --grep-invert=@flaky"
+        description: "Playwright test command CLI arguments"
+        type: string
+        default: "--project=Portal --workers=8 --grep-invert=@flaky"
       apihub-backend-image-tag:
-          description: "APIHUB Backend docker image tag"
-          type: string
-          default: "dev"
-      apihub-build-task-consumer-image-tag:
-          description: "APIHUB Build Task Consumer docker image tag"
-          type: string
-          default: "dev"
+        description: "APIHUB Backend docker image tag"
+        type: string
+        default: "dev"
       apihub-ui-image-tag:
-          description: "APIHUB UI docker image tag"
-          type: string
-          default: "dev"
-      apihub-api-linter-service-image-tag:
-          description: "APIHUB API Linter Service docker image tag"
-          type: string
-          default: "dev"
-      apihub-agents-backend-image-tag:
-          description: "Agents Backend docker image tag"
-          type: string
-          default: "dev"
+        description: "APIHUB UI docker image tag"
+        type: string
+        default: "dev"
   schedule:
     - cron: '0 0 * * *'
 
 jobs:
   call-docker-compose-run-and-test-ci-workflow:
+    # TODO: change to main after testing
     uses: netcracker/qubership-apihub-ci/.github/workflows/run-e2e-tests.yml@main
     with:
       compose-repository-branch: ${{ github.event.inputs.compose-repository-branch || 'main'}}
@@ -70,10 +59,10 @@ jobs:
       playwright-tests-run: ${{ github.event.inputs.playwright-tests-run == null || fromJson(github.event.inputs.playwright-tests-run) }}
       playwright-test-args: ${{ github.event.inputs.playwright-test-args  || '--project=Portal --workers=8 --grep-invert=@flaky' }}
       apihub-backend-image-tag: ${{ github.event.inputs.apihub-backend-image-tag  || 'dev' }}
-      apihub-build-task-consumer-image-tag: ${{ github.event.inputs.apihub-build-task-consumer-image-tag  || 'dev' }}
+      apihub-build-task-consumer-image-tag: 'dev'
       apihub-ui-image-tag: ${{ github.event.inputs.apihub-ui-image-tag  || 'dev' }}
-      apihub-api-linter-service-image-tag: ${{ github.event.inputs.apihub-api-linter-service-image-tag  || 'dev' }}
-      apihub-agents-backend-image-tag: ${{ github.event.inputs.apihub-agents-backend-image-tag  || 'dev' }}
+      apihub-api-linter-service-image-tag: 'dev'
+      apihub-agents-backend-image-tag: 'dev'
     secrets:
       APIHUB_ACCESS_TOKEN: ${{ secrets.APIHUB_ACCESS_TOKEN }}
       APIHUB_ADMIN_EMAIL: ${{ secrets.APIHUB_ADMIN_EMAIL }}

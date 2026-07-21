@@ -9,6 +9,7 @@ services:
         - "47375:47375"
         - "47376:47376"
         environment:
+            - LOG_LEVEL=INFO
             - APIHUB_CONFIG_FOLDER=/app/qubership-apihub-service/
             - GOMEMLIMIT=800MiB
         volumes:
@@ -93,10 +94,14 @@ services:
         container_name: qubership-api-linter-service
         ports:
         - "8091:8080"
-        env_file: "qubership-api-linter-service.env"
+        environment:
+            - LOG_LEVEL=INFO
+            - GOMEMLIMIT=1600MiB
+            - LINTER_CONFIG_FOLDER=/app/qubership-api-linter-service/
+        volumes:
+            - ./qubership-api-linter-service-config.yaml:/app/qubership-api-linter-service/config.yaml
         # Optional corporate CA for HTTPS outbound calls (qubership-core-base /tmp/cert contract).
         # Uncomment and place .crt/.cer/.pem files in ./certs/
-        # volumes:
         #     - ./certs:/tmp/cert:ro
         healthcheck:
             test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/ready || exit 1" ]
@@ -123,9 +128,14 @@ services:
         container_name: qubership-apihub-agents-backend
         ports:
         - "8092:8080"
-        env_file: "qubership-apihub-agents-backend.env"
+        environment:
+            - LOG_LEVEL=INFO
+            - GOMEMLIMIT=205MiB
+            - AGENTS_BACKEND_CONFIG_FOLDER=/app/qubership-apihub-agents-backend/
+        volumes:
+            - ./qubership-apihub-agents-backend-config.yaml:/app/qubership-apihub-agents-backend/config.yaml
         # Optional: corporate CA for HTTPS outbound (APIHUB, agents). Requires core-base image.
-        # volumes:
+        # Uncomment and place .crt/.cer/.pem files in ./certs/
         #     - ./certs:/tmp/cert:ro
         healthcheck:
             test: [ "CMD-SHELL", "curl --silent --fail localhost:8080/ready || exit 1" ]
