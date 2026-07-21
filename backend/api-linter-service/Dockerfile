@@ -24,7 +24,12 @@ COPY qubership-api-linter-service ./qubership-api-linter-service
 
 WORKDIR /workspace/qubership-api-linter-service
 
-RUN GOSUMDB=off CGO_ENABLED=0 go mod tidy && go mod download && GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build .
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
+
+RUN if env | grep -Eiq '^(http|https|all)_proxy=https?://https?://'; then unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy; fi; \
+    go run ./tools/download-linter-tools -os=${TARGETOS} -arch=${TARGETARCH}
+RUN if env | grep -Eiq '^(http|https|all)_proxy=https?://https?://'; then unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy; fi; \
+    GOSUMDB=off CGO_ENABLED=0 go mod tidy && go mod download && GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build .
 
 FROM ghcr.io/netcracker/qubership-core-base:2.3.3@sha256:1339716127a7d170ba307b89f3a933f5e09c447607c89e16bf8d5a379db4e1f6
 
@@ -33,6 +38,7 @@ ARG GIT_HASH=unknown
 
 ENV GIT_BRANCH=$GIT_BRANCH
 ENV GIT_HASH=$GIT_HASH
+ENV SPECTRAL_BIN_PATH=resources/spectral/linux/spectral
 
 WORKDIR /app/qubership-api-linter-service
 
