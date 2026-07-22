@@ -16,7 +16,9 @@
 
 import type { FC } from 'react'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
-import { Box, IconButton, TableCell, TableRow, Tooltip, Typography } from '@mui/material'
+import { Box, IconButton, Link, TableCell, TableRow, Tooltip, Typography } from '@mui/material'
+import { NavLink } from 'react-router-dom'
+import { getVersionPath } from '../../../NavigationProvider'
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
 import KeyboardArrowRightOutlinedIcon from '@mui/icons-material/KeyboardArrowRightOutlined'
 import {
@@ -95,6 +97,8 @@ export const ReferenceRow: FC<ReferenceRowProps> = memo<ReferenceRowProps>((
   const setRecursiveDashboardName = useSetRecursiveDashboardName()
 
   const { versionKey } = getSplittedVersionKey(version, latestRevision)
+
+  const isLinkable = !deletedAt
 
   const collapsedKeys = useDashboardCollapsedReferenceKeys()
   const setCollapsedKeys = useSetDashboardCollapsedReferenceKeys()
@@ -180,7 +184,15 @@ export const ReferenceRow: FC<ReferenceRowProps> = memo<ReferenceRowProps>((
                           {name}
                         </Box>
                       </Tooltip>
-                      : name}
+                      : isLinkable
+                        ? <Link
+                          component={NavLink}
+                          to={getVersionPath({ packageKey: key!, versionKey: versionKey })}
+                          data-testid="PackageNameLink"
+                        >
+                          {name}
+                        </Link>
+                        : name}
                     {kind === DASHBOARD_KIND && deletedReferences?.get(key!) &&
                       <Box sx={{ mr: '3px' }}>
                         <Tooltip
