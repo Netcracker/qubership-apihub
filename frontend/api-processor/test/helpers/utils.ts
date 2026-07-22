@@ -315,6 +315,25 @@ export async function buildPackageWithDefaultConfig(
   return editor.run()
 }
 
+export async function buildPackageFromContent(
+  packageId: string,
+  fileId: string,
+  content: string,
+  fileLabels?: Labels,
+  versionLabels?: Labels,
+): Promise<BuildResult> {
+  const portal = new LocalRegistry(packageId)
+  return portal.publishFromContent(
+    { [fileId]: content },
+    {
+      packageId,
+      version: 'v1',
+      metadata: { ...takeIfDefined({ versionLabels: versionLabels }) },
+      files: [{ fileId, publish: true, ...takeIfDefined({ labels: fileLabels }) }],
+    },
+  )
+}
+
 export async function buildChangelogPackageDefaultConfig(
   packageId: string,
   filesBefore: BuildConfigFile[] = [{ fileId: 'before.yaml', publish: true }],
