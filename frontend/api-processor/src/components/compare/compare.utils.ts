@@ -38,6 +38,7 @@ import {
   calculateChangeSummary,
   calculateImpactedSummary,
   difference,
+  getSplittedVersionKey,
   intersection,
   removeFirstSlash,
   serializeDocument,
@@ -345,7 +346,9 @@ export const createComparisonInternalDocumentId = (
   currentPackageId: string,
   currSlug: string | undefined,
 ): string => {
-  return createComparisonFileId([prevSlug, previousVersion, previousPackageId || currentPackageId], [currSlug, currentVersion, currentPackageId])
+  const [previousVersionKey] = getSplittedVersionKey(previousVersion)
+  const [currentVersionKey] = getSplittedVersionKey(currentVersion)
+  return createComparisonFileId([prevSlug, previousVersionKey, previousPackageId || currentPackageId], [currSlug, currentVersionKey, currentPackageId])
 }
 
 export const removeGroupPrefixFromOperationId = (operationId: string, groupPrefix: string): string => {

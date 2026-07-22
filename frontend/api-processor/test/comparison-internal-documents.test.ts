@@ -59,6 +59,16 @@ describe('Comparison Internal Documents tests', () => {
 
       expect(beforeInternalDocumentId).not.toEqual(afterInternalDocumentId)
     })
+
+    it('should ignore the revision so the id is stable regardless of when it is known', () => {
+      const withoutRevision = createComparisonInternalDocumentId('release1', 'pkgA', 'slugA', 'release2', 'pkgB', 'slugB')
+      const withCurrentRevision = createComparisonInternalDocumentId('release1', 'pkgA', 'slugA', 'release2@4', 'pkgB', 'slugB')
+      const withBothRevisions = createComparisonInternalDocumentId('release1@1', 'pkgA', 'slugA', 'release2@4', 'pkgB', 'slugB')
+
+      expect(withCurrentRevision).toEqual(withoutRevision)
+      expect(withBothRevisions).toEqual(withoutRevision)
+      expect(withoutRevision).not.toContain('@')
+    })
   })
 
   describe('OAS tests', () => {
