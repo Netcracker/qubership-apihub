@@ -133,19 +133,24 @@ const validateResult = (rules: DiffRule[], diffs: Diff[], title1: string, title2
   }
 }
 
+export function filterUsedTags<T extends { name: string }>(
+  tags: readonly T[] | undefined,
+  usedTagNames: ReadonlySet<string>,
+): T[] | undefined {
+  const usedTags = tags?.filter(({ name }) => usedTagNames.has(name))
+  return usedTags && usedTags.length ? usedTags : undefined
+}
+
 export function getUsedTags(specs: OpenAPIV3.Document[]): OpenAPIV3.TagObject[] | undefined {
   const tagsWithUsages = specs
     .map(({ tags, paths }) => {
-      const specTags: string[] = []
+      const specTags = new Set<string>()
       for (const path in paths) {
         for (const operation in paths[path]) {
-          const tags = paths[path]?.[operation as OpenAPIV3.HttpMethods]?.tags
-          if (tags) {
-            specTags.push(...tags)
-          }
+          paths[path]?.[operation as OpenAPIV3.HttpMethods]?.tags?.forEach((tag) => specTags.add(tag))
         }
       }
-      return tags?.filter(({ name }) => specTags.includes(name))
+      return filterUsedTags(tags, specTags)
     })
     .filter((tags): tags is OpenAPIV3.TagObject[] => tags !== undefined)
     .flat()
