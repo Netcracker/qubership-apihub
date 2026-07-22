@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { BuildConfigRef, CompareContext, CompareResult, DdlComparison, VersionParams, VersionsComparison } from '../../types'
+import { BuildConfigRef, CompareContext, CompareResult, DdlComparison, KIND_DASHBOARD, VersionParams, VersionsComparison } from '../../types'
 import { compareVersionsOperations } from './compare.operations'
 import { compareVersionsDdl } from './compare.ddl'
 import { getSplittedVersionKey } from '../../utils'
@@ -66,6 +66,14 @@ export async function compareVersionsReferences(
   }
 
   for (const { current, previous } of refsMap.values()) {
+    // Omit intermediate (nested) dashboard pairs: the backend stores a dashboard-pair row only when
+    // that pair is built as a root. Leaf packages under this dashboard are separate entries in the
+    // fully-flattened refsMap, so skipping here drops only the dashboard row, never its leaves. Both
+    // sides describe the same package; `??` covers added-only / removed-only pairs.
+    const kind = current?.kind ?? previous?.kind
+    if (kind === KIND_DASHBOARD) {
+      continue
+    }
     if (previous && current) {
       const comparison = await ctx.versionComparisonResolver(current.version, current.refId, previous.version, previous.refId)
       if (comparison && Array.isArray(comparison.operationTypes)) {
