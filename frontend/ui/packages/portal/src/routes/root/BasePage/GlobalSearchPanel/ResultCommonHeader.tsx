@@ -22,7 +22,7 @@ import { NavLink } from 'react-router-dom'
 import { Marker } from 'react-mark.js'
 import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { GLOBAL_SEARCH_PANEL, useSidePanel } from '../PanelManager/SidePanelManager'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
 import { SpecLogo } from '@netcracker/qubership-apihub-ui-shared/components/SpecLogo'
@@ -49,7 +49,7 @@ export const ResultCommonHeader: FC<ResultCommonHeaderProps> = memo<ResultCommon
     searchText,
   },
 ) => {
-  const { hideGlobalSearchPanel } = useEventBus()
+  const { closePanel } = useSidePanel(GLOBAL_SEARCH_PANEL)
   const breadcrumbs = parents.join(' / ')
 
   return (
@@ -74,7 +74,7 @@ export const ResultCommonHeader: FC<ResultCommonHeaderProps> = memo<ResultCommon
             <OverflowTooltip title={title}>
               <Box sx={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', width: 'inherit' }}>
                 <Link
-                  onClick={hideGlobalSearchPanel}
+                  onClick={closePanel}
                   sx={{ '&:hover': { cursor: 'pointer' } }}
                   component={NavLink}
                   to={url}

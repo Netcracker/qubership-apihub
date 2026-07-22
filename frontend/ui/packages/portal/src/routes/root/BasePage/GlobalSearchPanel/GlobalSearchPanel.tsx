@@ -15,35 +15,23 @@
  */
 
 import type { FC } from 'react'
-import { memo, useState } from 'react'
-import { Box, Divider, Drawer, Typography } from '@mui/material'
-import { useEvent } from 'react-use'
+import { memo } from 'react'
+import { Box, Divider, IconButton, Typography } from '@mui/material'
 import { SearchFilters } from './SearchFilters'
 import { SearchResults } from './SearchResults'
 import { GlobalSearchTextProvider } from './GlobalSearchTextProvider'
-import { HIDE_GLOBAL_SEARCH_PANEL, SHOW_GLOBAL_SEARCH_PANEL } from '@apihub/routes/EventBusProvider'
+import { CloseIcon } from '@netcracker/qubership-apihub-ui-shared/icons/CloseIcon'
+import { SidePanelDrawer } from '@netcracker/qubership-apihub-ui-shared/components/SidePanelDrawer'
+import { GLOBAL_SEARCH_PANEL, useSidePanel } from '../PanelManager/SidePanelManager'
 
 export const GlobalSearchPanel: FC = memo(() => {
-  const [open, setOpen] = useState(false)
-
-  useEvent(SHOW_GLOBAL_SEARCH_PANEL, (): void => {
-    setOpen(true)
-  })
-
-  // TODO: Add close listener
-  useEvent(HIDE_GLOBAL_SEARCH_PANEL, (): void => {
-    setOpen(false)
-  })
+  const { open, closePanel } = useSidePanel(GLOBAL_SEARCH_PANEL)
 
   return (
-    <Drawer
-      variant="temporary"
-      ModalProps={{
-        keepMounted: true,
-      }}
-      anchor="right"
+    <SidePanelDrawer
       open={open}
-      onClose={() => setOpen(false)}
+      onClose={closePanel}
+      keepMounted={true}
     >
       <Box sx={{ p: 2, display: 'flex', flexDirection: 'row', overflow: 'hidden', height: '100%' }}
            data-testid="GlobalSearchPanel">
@@ -53,12 +41,23 @@ export const GlobalSearchPanel: FC = memo(() => {
           </Box>
           <Divider sx={{ mt: -2, mb: -2 }} orientation="vertical"/>
           <Box sx={{ pl: 3, width: '500px' }}>
-            <Typography sx={{ mb: 2, mt: 1 }} variant="h3">Global Search</Typography>
+            <Box sx={{ display: 'flex' }}>
+              <Typography sx={{ mb: 1, mt: 1 }} variant="h3">Global Search</Typography>
+              <IconButton
+                aria-label="Close Global Search"
+                data-testid="CloseGlobalSearchButton"
+                sx={{ ml: 'auto' }}
+                onClick={closePanel}
+                color="inherit"
+              >
+                <CloseIcon fontSize="small"/>
+              </IconButton>
+            </Box>
             <SearchResults/>
           </Box>
         </GlobalSearchTextProvider>
       </Box>
-    </Drawer>
+    </SidePanelDrawer>
   )
 })
 

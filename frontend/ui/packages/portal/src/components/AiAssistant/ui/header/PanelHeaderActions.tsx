@@ -38,7 +38,7 @@ export const PanelHeaderActions: FC<PanelHeaderActionsProps> = memo(({
       </IconButton>
       <IconButton
         aria-label="Close AI Assistant"
-        data-testid="CloseButton"
+        data-testid="CloseAiAssistantButton"
         onClick={onClose}
         color="inherit"
       >
