@@ -2,12 +2,17 @@ package utils
 
 import (
 	"encoding/json"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	log "github.com/sirupsen/logrus"
+)
+
+const (
+	xForwardedForHeader = "X-Forwarded-For"
 )
 
 func DeleteCookie(w http.ResponseWriter, name string, path string, productionMode bool) {
@@ -90,15 +95,25 @@ func RedirectHandler(apihubURLStr string) http.HandlerFunc {
 }
 
 func RespondWithError(w http.ResponseWriter, msg string, err error) {
-	log.Errorf("%s: %s", msg, err.Error())
 	if customError, ok := err.(*exception.CustomError); ok {
+		logCustomError(msg, customError, err)
 		RespondWithCustomError(w, customError)
-	} else {
-		RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusInternalServerError,
-			Message: msg,
-			Debug:   err.Error()})
+		return
 	}
+
+	log.Errorf("%s: %s", msg, err.Error())
+	RespondWithCustomError(w, &exception.CustomError{
+		Status:  http.StatusInternalServerError,
+		Message: msg,
+		Debug:   err.Error()})
+}
+
+func logCustomError(msg string, customError *exception.CustomError, err error) {
+	if customError.Status == http.StatusNotFound {
+		log.Infof("%s: %s", msg, err.Error())
+		return
+	}
+	log.Errorf("%s: %s", msg, err.Error())
 }
 
 func RespondWithCustomError(w http.ResponseWriter, err *exception.CustomError) {
@@ -111,4 +126,12 @@ func RespondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	w.Write(response)
+}
+
+func RequestorIPFields(r *http.Request) (xForwardedFor string, remoteAddr string) {
+	if r == nil {
+		return "", ""
+	}
+
+	return r.Header.Get(xForwardedForHeader), r.RemoteAddr
 }

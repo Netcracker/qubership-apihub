@@ -12,7 +12,6 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
-	log "github.com/sirupsen/logrus"
 )
 
 type ActivityTrackingController interface {
@@ -120,15 +119,7 @@ func (a activityTrackingControllerImpl) GetActivityHistory(w http.ResponseWriter
 	}
 	result, err := a.activityTrackingService.GetActivityHistory(context.Create(r), activityHistoryReq)
 	if err != nil {
-		log.Error("Failed to get activity events for favourite packages: ", err.Error())
-		if customError, ok := err.(*exception.CustomError); ok {
-			utils.RespondWithCustomError(w, customError)
-		} else {
-			utils.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusInternalServerError,
-				Message: "Failed to get activity events",
-				Debug:   err.Error()})
-		}
+		utils.RespondWithError(w, "Failed to get activity events", err)
 		return
 	}
 	utils.RespondWithJson(w, http.StatusOK, result)
