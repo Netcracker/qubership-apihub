@@ -18,15 +18,25 @@ func RespondWithCustomError(w http.ResponseWriter, err *exception.CustomError) {
 }
 
 func respondWithError(w http.ResponseWriter, msg string, err error) {
-	log.Errorf("%s: %s", msg, err.Error())
 	if customError, ok := err.(*exception.CustomError); ok {
+		logCustomError(msg, customError, err)
 		RespondWithCustomError(w, customError)
-	} else {
-		RespondWithCustomError(w, &exception.CustomError{
-			Status:  http.StatusInternalServerError,
-			Message: msg,
-			Debug:   err.Error()})
+		return
 	}
+
+	log.Errorf("%s: %s", msg, err.Error())
+	RespondWithCustomError(w, &exception.CustomError{
+		Status:  http.StatusInternalServerError,
+		Message: msg,
+		Debug:   err.Error()})
+}
+
+func logCustomError(msg string, customError *exception.CustomError, err error) {
+	if customError.Status == http.StatusNotFound {
+		log.Infof("%s: %s", msg, err.Error())
+		return
+	}
+	log.Errorf("%s: %s", msg, err.Error())
 }
 
 func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {

@@ -10,7 +10,6 @@ import (
 	"github.com/Netcracker/qubership-apihub-agents-backend/secctx"
 	"github.com/Netcracker/qubership-apihub-agents-backend/service"
 	"github.com/Netcracker/qubership-apihub-agents-backend/view"
-	log "github.com/sirupsen/logrus"
 )
 
 type SnapshotController interface {
@@ -148,15 +147,7 @@ func (s snapshotControllerImpl) CreateSnapshot(w http.ResponseWriter, r *http.Re
 
 	resp, err := s.snapshotService.CreateSnapshot(secctx.MakeUserContext(r), namespace, workspaceId, req.Version, snapshotDTO)
 	if err != nil {
-		log.Error("Failed to create snapshot: ", err.Error())
-		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
-		} else {
-			RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusInternalServerError,
-				Message: "Failed to create snapshot",
-				Debug:   err.Error()})
-		}
+		respondWithError(w, "Failed to create snapshot", err)
 		return
 	}
 	respondWithJson(w, http.StatusOK, resp)
@@ -221,15 +212,7 @@ func (s snapshotControllerImpl) ListSnapshots(w http.ResponseWriter, r *http.Req
 
 	snapshots, err := s.snapshotService.ListSnapshots(secctx.MakeUserContext(r), namespace, workspaceId, page, limit, agent.AgentDeploymentCloud)
 	if err != nil {
-		log.Error("Failed to list snapshots: ", err.Error())
-		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
-		} else {
-			RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusInternalServerError,
-				Message: "Failed to list snapshots",
-				Debug:   err.Error()})
-		}
+		respondWithError(w, "Failed to list snapshots", err)
 		return
 	}
 
@@ -265,15 +248,7 @@ func (s snapshotControllerImpl) GetSnapshot(w http.ResponseWriter, r *http.Reque
 
 	sn, err := s.snapshotService.GetSnapshot(secctx.MakeUserContext(r), namespace, workspaceId, version, agent.AgentDeploymentCloud)
 	if err != nil {
-		log.Error("Failed to get snapshot: ", err.Error())
-		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
-		} else {
-			RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusInternalServerError,
-				Message: "Failed to get snapshot",
-				Debug:   err.Error()})
-		}
+		respondWithError(w, "Failed to get snapshot", err)
 		return
 	}
 
