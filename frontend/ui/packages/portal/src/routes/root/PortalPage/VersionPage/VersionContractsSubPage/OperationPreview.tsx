@@ -151,7 +151,7 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
         <Divider orientation="horizontal" variant="fullWidth" />
       </Box>
 
-      <Box>
+      <Box overflow="auto" minHeight={0}>
         {isDocViewMode && (
           <Placeholder
             invisible={hasVersionInternalDocument}

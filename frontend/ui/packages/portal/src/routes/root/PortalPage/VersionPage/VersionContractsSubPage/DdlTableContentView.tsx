@@ -128,7 +128,7 @@ const ContentContainer = styled(Box)({
   display: 'flex',
   flexDirection: 'column',
   height: '100%',
-  overflow: 'hidden',
+  overflow: 'auto',
   padding: theme.spacing(2),
 })
 
