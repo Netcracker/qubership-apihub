@@ -29,7 +29,7 @@ import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/compone
 import {
   OperationTitleWithMeta as OperationTitle,
 } from '@netcracker/qubership-apihub-ui-shared/components/Operations/OperationTitleWithMeta'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { GLOBAL_SEARCH_PANEL, useSidePanel } from '../PanelManager/SidePanelManager'
 
 export type ApiOperationsSearchListProps = {
   value: OperationSearchResult[]
@@ -45,7 +45,7 @@ export const ApiOperationsSearchList: FC<ApiOperationsSearchListProps> = memo<Ap
   const ref = useRef<HTMLDivElement>(null)
   useIntersectionObserver(ref, isNextPageFetching, hasNextPage, fetchNextPage)
 
-  const { hideGlobalSearchPanel } = useEventBus()
+  const { closePanel } = useSidePanel(GLOBAL_SEARCH_PANEL)
   return (
     <Box width={CONTENT_WIDTH} position="relative">
       {value.map((operation) => {
@@ -75,7 +75,7 @@ export const ApiOperationsSearchList: FC<ApiOperationsSearchListProps> = memo<Ap
                   operationKey: operationKey,
                   apiType: apiType,
                 })}
-                onLinkClick={hideGlobalSearchPanel}
+                onLinkClick={closePanel}
               />
             </Marker>
           </Box>

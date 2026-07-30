@@ -73,10 +73,6 @@ export const SHOW_COMPARE_REVISIONS_DIALOG = 'show-compare-revisions-dialog'
 export const SHOW_COMPARE_OPERATIONS_DIALOG = 'show-compare-operations-dialog'
 export const SHOW_COMPARE_REST_GROUPS_DIALOG = 'show-compare-rest-groups-dialog'
 export const SHOW_COMPARE_OPERATIONS_WITH_UPLOADED_FILE_DIALOG = 'show-compare-operations-with-uploaded-file-dialog'
-export const SHOW_GLOBAL_SEARCH_PANEL = 'show-global-search-panel'
-export const HIDE_GLOBAL_SEARCH_PANEL = 'hide-global-search-panel'
-export const SHOW_AI_ASSISTANT_PANEL = 'show-ai-assistant-panel'
-export const HIDE_AI_ASSISTANT_PANEL = 'hide-ai-assistant-panel'
 export const APPLY_GLOBAL_SEARCH_FILTERS = 'apply-global-search-filters'
 export const SHOW_EDIT_WORKSPACES_LIST_DIALOG = 'show-edit-workspaces-list-dialog'
 export const SHOW_EDIT_PACKAGE_VERSION_DIALOG = 'show-edit-package-version-dialog'
@@ -101,6 +97,8 @@ export const OPERATION_MOVED = 'operation-moved'
 export const SHOW_CREATE_CUSTOM_SERVER_DIALOG = 'show-create-custom-server-dialog'
 export const SHOW_DELETE_CUSTOM_SERVER_DIALOG = 'show-delete-custom-server-dialog'
 export const SELECT_CREATED_CUSTOM_SERVER = 'select-created-custom-server'
+// Feature "Publication Validation Error Report"
+export const SHOW_PUBLICATION_ERROR_REPORT_DIALOG = 'show-publication-error-report-dialog'
 
 export type NotificationDetail = {
   title?: string
@@ -121,7 +119,6 @@ export type ButtonType = {
 
 export type GlobalSearchPanelDetails = {
   filters: Omit<SearchCriteria, 'searchString'>
-  apiSearchMode?: boolean
 }
 
 export type ShowCreatePackageDetail = {
@@ -206,6 +203,12 @@ export type SelectCreatedCustomServerDetail = {
 
 export type RulesetInfoPopupDetails = RulesetMetadata
 
+export type ShowPublicationErrorReportDetail = {
+  documentName: string
+  downloadFilename: string
+  errors: string
+}
+
 type EventBus = {
   // base
   showSuccessNotification: (detail: NotificationDetail) => void
@@ -213,10 +216,6 @@ type EventBus = {
   showInfoNotification: (detail: NotificationDetail) => void
   showWarningNotification: (detail: NotificationDetail) => void
   showCreatePackageDialog: (detail: ShowCreatePackageDetail) => void
-  showGlobalSearchPanel: () => void
-  hideGlobalSearchPanel: () => void
-  showAiAssistantPanel: () => void
-  hideAiAssistantPanel: () => void
   applyGlobalSearchFilters: (details: GlobalSearchPanelDetails) => void
 
   // portal
@@ -266,6 +265,8 @@ type EventBus = {
   selectCreatedCustomServer: (detail: SelectCreatedCustomServerDetail) => void
   // Feature "Ruleset Info Dialog"
   showRulesetInfoDialog: (value: RulesetInfoPopupDetails) => void
+  // Feature "Publication Validation Error Report"
+  showPublicationErrorReportDialog: (detail: ShowPublicationErrorReportDetail) => void
 }
 
 function eventBusProvider(): EventBus {
@@ -277,10 +278,6 @@ function eventBusProvider(): EventBus {
       showInfoNotification: slot<NotificationDetail>(),
       showWarningNotification: slot<NotificationDetail>(),
       showCreatePackageDialog: slot<ShowCreatePackageDetail>(),
-      showGlobalSearchPanel: slot(),
-      hideGlobalSearchPanel: slot(),
-      showAiAssistantPanel: slot(),
-      hideAiAssistantPanel: slot(),
       applyGlobalSearchFilters: slot<GlobalSearchPanelDetails>(),
 
       // portal
@@ -330,6 +327,8 @@ function eventBusProvider(): EventBus {
       selectCreatedCustomServer: slot<SelectCreatedCustomServerDetail>(),
       // Feature "Ruleset Info Dialog"
       showRulesetInfoDialog: slot<RulesetInfoPopupDetails>(),
+      // Feature "Publication Validation Error Report"
+      showPublicationErrorReportDialog: slot<ShowPublicationErrorReportDetail>(),
     },
   })
 
@@ -348,18 +347,6 @@ function eventBusProvider(): EventBus {
   })
   eventBus.showCreatePackageDialog.on((detail: ShowCreatePackageDetail) => {
     dispatchEvent(new CustomEvent(SHOW_CREATE_PACKAGE_DIALOG, { detail }))
-  })
-  eventBus.showGlobalSearchPanel.on(() => {
-    dispatchEvent(new CustomEvent(SHOW_GLOBAL_SEARCH_PANEL))
-  })
-  eventBus.hideGlobalSearchPanel.on(() => {
-    dispatchEvent(new CustomEvent(HIDE_GLOBAL_SEARCH_PANEL))
-  })
-  eventBus.showAiAssistantPanel.on(() => {
-    dispatchEvent(new CustomEvent(SHOW_AI_ASSISTANT_PANEL))
-  })
-  eventBus.hideAiAssistantPanel.on(() => {
-    dispatchEvent(new CustomEvent(HIDE_AI_ASSISTANT_PANEL))
   })
   eventBus.applyGlobalSearchFilters.on((detail: GlobalSearchPanelDetails) => {
     dispatchEvent(new CustomEvent(APPLY_GLOBAL_SEARCH_FILTERS, { detail }))
@@ -462,6 +449,10 @@ function eventBusProvider(): EventBus {
   })
   eventBus.showRulesetInfoDialog.on((detail: RulesetInfoPopupDetails) => {
     dispatchEvent(new CustomEvent(SHOW_RULESET_INFO_DIALOG, { detail }))
+  })
+  // Feature "Publication Validation Error Report"
+  eventBus.showPublicationErrorReportDialog.on((detail: ShowPublicationErrorReportDetail) => {
+    dispatchEvent(new CustomEvent(SHOW_PUBLICATION_ERROR_REPORT_DIALOG, { detail }))
   })
   eventBus.showSpecificationDialog.on((detail: SpecificationDialogDetail) => {
     dispatchEvent(new CustomEvent(SHOW_SPECIFICATION_DIALOG, { detail }))

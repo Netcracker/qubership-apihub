@@ -75,7 +75,7 @@ export const RolesHierarchySettingsTab: FC = memo(() => {
             disabled={!isChanged}
             sx={{ width: '100px' }}
           >
-            Cancel
+            Reset
           </Button>
         </Box>
       }

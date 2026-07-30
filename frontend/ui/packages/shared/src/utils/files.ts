@@ -170,6 +170,14 @@ export function getFilePath(key: Key): string {
   return key.substring(0, key.lastIndexOf('/') + 1)
 }
 
+export function fileIdToDocumentName(fileId: string): string {
+  return getFileName(fileId)
+}
+
+export function fileIdToErrorReportFilename(fileId: string): string {
+  return `${getFileName(fileId)}-publication-errors.txt`
+}
+
 export const JSON_FILE_FORMAT = 'json'
 export const YAML_FILE_FORMAT = 'yaml'
 export const PROTOBUF_FILE_FORMAT = 'proto'

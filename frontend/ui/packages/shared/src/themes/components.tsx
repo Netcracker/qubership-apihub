@@ -21,6 +21,11 @@ import { SECONDARY_TEXT_COLOR } from './colors'
 
 export const APP_HEADER_HEIGHT = '44px'
 
+export const DRAWER_LAYOUT_STYLES = {
+  top: APP_HEADER_HEIGHT,
+  height: `calc(100% - ${APP_HEADER_HEIGHT})`,
+}
+
 const getContainedDisabledStyles = (theme: Theme): Record<string, CSSObject> => {
   const colorKeys = ['primary', 'secondary', 'success', 'error', 'warning', 'info'] as const
   const styles: Record<string, CSSObject> = {}

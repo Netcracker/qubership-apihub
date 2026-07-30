@@ -23,9 +23,6 @@ export function getInfo(router: SystemRouter): void {
       frontendVersion: '0.0.0',
       productionMode: false,
       aiChatEnabled: true,
-      featureFlags: {
-        useV3Search: false,
-      },
     })
   })
 }

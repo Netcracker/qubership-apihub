@@ -35,10 +35,13 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 import { isTokenRefreshed, onMutationUnauthorized } from '@netcracker/qubership-apihub-ui-shared/utils/security'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
+import { fileIdToDocumentName, fileIdToErrorReportFilename } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import { useMutation } from '@tanstack/react-query'
+import { useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { useNavigation } from '../../NavigationProvider'
-import { useShowErrorNotification } from '../BasePage/Notification'
+import { useEventBus } from '../../EventBusProvider'
+import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
 import { useAsyncInvalidateVersionContent } from '../usePackageVersionContent'
 import { useAsyncInvalidateVersionSources } from '../useVersionSources'
 import { getPackageVersionBuilder } from './package-version-builder'
@@ -48,10 +51,38 @@ export function usePublishPackageVersion(): [PublishPackageVersion, IsLoading, I
   const [user] = useUser()
   const { navigateToVersion } = useNavigation()
 
+  const currentPackage = useCurrentPackage()
+  const { showErrorNotification, showPublicationErrorReportDialog } = useEventBus()
+
   const invalidateVersionContent = useAsyncInvalidateVersionContent()
   const invalidatePackageVersions = useAsyncInvalidatePackageVersions()
   const invalidateVersionSources = useAsyncInvalidateVersionSources()
-  const showErrorNotification = useShowErrorNotification()
+
+  const handlePublicationError = useCallback((
+    errorMessage: string | undefined,
+    files: BuildConfigFile[] | undefined,
+  ) => {
+    const fileId = files?.[0]?.fileId
+    if (fileId) {
+      const documentName = fileIdToDocumentName(fileId)
+      const downloadFilename = fileIdToErrorReportFilename(fileId)
+      const packageName = currentPackage?.name ?? packageId ?? ''
+      showErrorNotification({
+        title: 'Publication error',
+        message: `The ${documentName} document in the ${packageName} package was published with errors.`,
+        button: {
+          title: 'View details',
+          onClick: () => showPublicationErrorReportDialog({
+            documentName,
+            downloadFilename,
+            errors: errorMessage ?? '',
+          }),
+        },
+      })
+    } else {
+      showErrorNotification({ message: errorMessage! })
+    }
+  }, [currentPackage?.name, packageId, showErrorNotification, showPublicationErrorReportDialog])
 
   const { mutate, isLoading, isSuccess } = useMutation<PublishDetails, Error, Options>({
     mutationFn: async options => {
@@ -60,7 +91,7 @@ export function usePublishPackageVersion(): [PublishPackageVersion, IsLoading, I
         toPublishOptions(packageId!, options, user!.key),
       )
     },
-    onSuccess: async ({ status, message }, { version, sources }) => {
+    onSuccess: async ({ status, message }, { version, sources, files }) => {
       await invalidatePackageVersions()
       await invalidateVersionContent({
         packageKey: packageId!,
@@ -76,7 +107,7 @@ export function usePublishPackageVersion(): [PublishPackageVersion, IsLoading, I
       if (status === COMPLETE_PUBLISH_STATUS) {
         navigateToVersion({ packageKey: packageId!, versionKey: version })
       } else if (status === ERROR_PUBLISH_STATUS) {
-        showErrorNotification({ message: message! })
+        handlePublicationError(message, files)
       }
     },
     onError: async (error, variables, context) => {
