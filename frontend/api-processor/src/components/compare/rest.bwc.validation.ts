@@ -30,6 +30,7 @@ import {
 import { getApiKindProperty } from '../document'
 import { OpenAPIV3 } from 'openapi-types'
 import { ApiCompatibilityScopeFunctionFactory } from './bwc.validation.types'
+import { toApiCompatibilityKind } from './bwc.validation.utils'
 
 export const calculateOperationApiCompatibilityKind = (
   beforeOperationObject: OpenAPIV3.OperationObject | undefined,
@@ -43,16 +44,10 @@ export const calculateOperationApiCompatibilityKind = (
 
   // Handle operation removal: compatibility depends on the removed operation's kind
   if (isOperationRemoved) {
-    return isNoBwcLike(beforeKind)
-      ? API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE
-      : API_COMPATIBILITY_KIND_BACKWARD_COMPATIBLE
+    return toApiCompatibilityKind(beforeKind)
   }
 
-  if (isNoBwcLike(beforeKind) || isNoBwcLike(afterKind)) {
-    return API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE
-  }
-
-  return API_COMPATIBILITY_KIND_BACKWARD_COMPATIBLE
+  return toApiCompatibilityKind(beforeKind, afterKind)
 }
 
 export const getMethodsApiCompatibilityKind = (pathItemObject: OpenAPIV3.PathItemObject, prevDocumentApiKind: ApihubApiCompatibilityKind): ApiCompatibilityKind => {
@@ -65,9 +60,7 @@ export const getMethodsApiCompatibilityKind = (pathItemObject: OpenAPIV3.PathIte
     return API_COMPATIBILITY_KIND_BACKWARD_COMPATIBLE
   }
 
-  return isNoBwcLike(prevDocumentApiKind)
-    ? API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE
-    : API_COMPATIBILITY_KIND_BACKWARD_COMPATIBLE
+  return toApiCompatibilityKind(prevDocumentApiKind)
 }
 
 const checkAllMethodsMatchApiKind = (obj: OpenAPIV3.PathItemObject, predicate: (kind: ApihubApiCompatibilityKind | undefined) => boolean): boolean => {
@@ -92,9 +85,7 @@ export const createRestApiCompatibilityScopeFunction: ApiCompatibilityScopeFunct
   prevDocumentApiKind = APIHUB_API_COMPATIBILITY_KIND_BWC,
   currDocumentApiKind = APIHUB_API_COMPATIBILITY_KIND_BWC,
 ) => {
-  const defaultApiCompatibilityKind = (isNoBwcLike(prevDocumentApiKind) || isNoBwcLike(currDocumentApiKind))
-    ? API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE
-    : API_COMPATIBILITY_KIND_BACKWARD_COMPATIBLE
+  const defaultApiCompatibilityKind = toApiCompatibilityKind(prevDocumentApiKind, currDocumentApiKind)
 
   return (
     path?: JsonPath,

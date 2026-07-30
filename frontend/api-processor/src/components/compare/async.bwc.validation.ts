@@ -17,17 +17,13 @@
 import {
   APIHUB_API_COMPATIBILITY_KIND_BWC,
   ApihubApiCompatibilityKind,
-  isNoBwcLike,
 } from '../../consts'
 import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
-import {
-  API_COMPATIBILITY_KIND_BACKWARD_COMPATIBLE,
-  API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE,
-  ApiCompatibilityKind,
-} from '@netcracker/qubership-apihub-api-diff'
+import { ApiCompatibilityKind } from '@netcracker/qubership-apihub-api-diff'
 import { getApiKindProperty } from '../document'
 import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
 import { ApiCompatibilityScopeFunctionFactory } from './bwc.validation.types'
+import { toApiCompatibilityKind } from './bwc.validation.utils'
 
 const ROOT_PATH_LENGTH = 0
 const ASYNC_OPERATION_PATH_LENGTH = 2 // operations/<operationId>
@@ -44,14 +40,6 @@ const resolveEffectiveApiKind = (
   return operationKind ?? channelKind ?? documentKind
 }
 
-const toApiCompatibilityKind = (
-  beforeKind: ApihubApiCompatibilityKind,
-  afterKind: ApihubApiCompatibilityKind,
-): ApiCompatibilityKind => {
-  return (isNoBwcLike(beforeKind) || isNoBwcLike(afterKind))
-    ? API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE
-    : API_COMPATIBILITY_KIND_BACKWARD_COMPATIBLE
-}
 
 /**
  * Creates an ApiCompatibilityScopeFunction for AsyncAPI documents.

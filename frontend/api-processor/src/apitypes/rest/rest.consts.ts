@@ -27,15 +27,6 @@ import { KeyOfConstType, ResolvedVersionDocument, ZippableDocument } from '../..
 import { TEXT_DOCUMENT_TYPE } from '../text'
 import { NormalizeOptions } from '@netcracker/qubership-apihub-api-unifier'
 
-export const REST_SCOPES = {
-  all: 'all',
-  annotation: 'annotation',
-  request: 'request',
-  response: 'response',
-  properties: 'properties',
-  examples: 'examples',
-} as const
-
 export const REST_DOCUMENT_TYPE = {
   OAS3: 'openapi-3-0',
   OAS31: 'openapi-3-1',

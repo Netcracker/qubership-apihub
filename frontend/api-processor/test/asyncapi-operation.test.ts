@@ -620,13 +620,6 @@ describe('AsyncAPI 3.0 Operation Tests', () => {
           expect(operation.search).toEqual({ useOperationDataAsSearchText: true })
         }
       })
-
-      // TODO: remove after new search is adopted irrevocably
-      test('should set empty searchScopes (legacy) on all operations', () => {
-        for (const operation of operations) {
-          expect(operation.searchScopes).toEqual({})
-        }
-      })
     })
 
     describe('root fields propagation', () => {

@@ -25,6 +25,7 @@ import {
 } from '../../consts'
 import { OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier'
 import { ShareabilityStatus } from './documents'
+import type { ReferencedPackageKind } from './references'
 
 export type BuildType = KeyOfConstType<typeof BUILD_TYPE>
 export type VersionStatus = KeyOfConstType<typeof VERSION_STATUS>
@@ -221,4 +222,7 @@ export interface BuildConfigFile {
 export interface BuildConfigRef {
   refId: string
   version: string
+  // Populated by versionReferencesResolver so compareVersionsReferences can omit intermediate
+  // dashboard pairs. Absent on backend-supplied config.refs (which carry only refId/version).
+  kind?: ReferencedPackageKind
 }

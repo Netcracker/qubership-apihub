@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
+import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
 import { OpenAPIV3 } from 'openapi-types'
-import { operationRules } from './rest.rules'
 import type * as TYPE from './rest.types'
 import { RestOperationData } from './rest.types'
 import {
   BuildConfig,
-  CrawlRule,
   DeprecateItem,
   NotificationMessage,
-  OperationCrawlState,
   OperationId,
-  SearchScopes,
 } from '../../types'
 import {
   _calculateRestOperationIdV1,
-  buildSearchScope,
   calculateRestOperationId,
   calculateRestOperationTitle,
   extractSymbolProperty,
@@ -96,28 +91,6 @@ export const buildRestOperation = (
   const refsOnlySingleOperationSpec = createSingleOperationSpec(refsOnlyDocument, path, method, openapi)
   const { tags = [] } = effectiveOperationObject
 
-  // TODO: remove after new search is adopted irrevocably
-  const scopes: SearchScopes = {}
-  const handledObject = new Set<unknown>()
-  syncCrawl<OperationCrawlState, CrawlRule>(
-    effectiveOperationObject,
-    ({ key, value, rules }) => {
-      if (typeof key === 'symbol') {
-        return { done: true }
-      }
-      if (handledObject.has(value)) {
-        return { done: true }
-      }
-      handledObject.add(value)
-      if (!rules) {
-        return { done: true }
-      }
-
-      buildSearchScope(key, value, rules, scopes)
-    },
-    { rules: operationRules },
-  )
-
   const deprecatedItems: DeprecateItem[] = []
   const foundedDeprecatedItems = calculateDeprecatedItems(effectiveSingleOperationSpec, ORIGINS_SYMBOL)
 
@@ -181,7 +154,6 @@ export const buildRestOperation = (
     },
     tags: Array.isArray(tags) ? tags : [tags],
     data: specWithSingleOperation,
-    searchScopes: scopes, // TODO: remove after new search is adopted irrevocably
     search: { useOperationDataAsSearchText: true },
     deprecatedItems,
     models,

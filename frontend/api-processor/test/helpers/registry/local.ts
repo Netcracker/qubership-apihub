@@ -33,6 +33,7 @@ import {
   isMcpDocument,
   isRestDocument,
   ContractType,
+  KIND_DASHBOARD,
   KIND_PACKAGE,
   Labels,
   MESSAGE_SEVERITY,
@@ -426,32 +427,50 @@ export class LocalRegistry implements IRegistry {
     packageId?: string,
   ): Promise<ResolvedReferences> {
     const references: ReferenceElement[] = []
-    const stack = [{ version, packageId }]
+    // BFS (queue.shift), so "first occurrence" of a packageId is the shallowest, declaration-order
+    // edge — deterministic and intuitive for conflict fixtures.
+    const queue = [{ version, packageId }]
     const packages: ResolvedReferenceMap = {}
+    // first-occurrence-wins: the first version seen for a packageId wins; later edges that reference
+    // the same packageId at a DIFFERENT version are conflict losers, marked excluded (same-version
+    // repeats — diamonds — are not conflicts and stay non-excluded).
+    const winnerVersionByRefId = new Map<string, string>()
 
-    while (stack.length) {
-      const { version, packageId } = stack.pop() ?? {}
+    while (queue.length) {
+      const { version, packageId } = queue.shift() ?? {}
       if (!version || !packageId) {
         continue
       }
       const { config } = await this.getVersion(packageId, version) ?? {}
 
       if (config?.refs?.length) {
+        const parentPackageRef = `${packageId}${REVISION_DELIMITER}${version}`
         for (const ref of config.refs) {
           const packageRef = `${ref.refId}${REVISION_DELIMITER}${ref.version}`
+          // a dashboard is a package that itself declares refs; ordinary (leaf) packages don't
+          const { config: refConfig } = await this.getVersion(ref.refId, ref.version) ?? {}
+          const kind = refConfig?.refs?.length ? KIND_DASHBOARD : KIND_PACKAGE
+          // packages carries every occurrence (losers included); references flags the losers.
           packages[packageRef] = {
             refId: ref.refId,
             version: ref.version,
-            kind: KIND_PACKAGE,
+            kind: kind,
             name: ref.refId,
             status: VERSION_STATUS.DRAFT,
           }
+          const winnerVersion = winnerVersionByRefId.get(ref.refId)
+          if (winnerVersion === undefined) {
+            winnerVersionByRefId.set(ref.refId, ref.version)
+          }
+          const excluded = winnerVersion !== undefined && winnerVersion !== ref.version
           references.push({
             packageRef: packageRef,
+            parentPackageRef: parentPackageRef,
+            ...(excluded ? { excluded: true } : {}),
           })
         }
         for (const ref of config.refs) {
-          stack.push({ packageId: ref.refId, version: ref.version })
+          queue.push({ packageId: ref.refId, version: ref.version })
         }
       }
     }

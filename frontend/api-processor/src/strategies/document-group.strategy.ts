@@ -28,6 +28,7 @@ import {
 import {
   calculateRestOperationId,
   EXPORT_API_TYPE_FORMATS,
+  filterUsedTags,
   fromBase64,
   isValidHttpMethod,
   normalizeGraphQL,
@@ -192,6 +193,9 @@ function transformDocumentData(versionDocument: VersionDocument): OpenAPIV3.Docu
     paths: {},
   }
 
+  // Tag names used by the group's operations (from normalized ops → $ref-safe).
+  const usedTagNames = new Set<string>()
+
   for (const path of Object.keys(normalizedPaths)) {
     const sourcePathItem = sourcePaths[path]
     const normalizedPathItem = normalizedPaths[path]
@@ -221,6 +225,8 @@ function transformDocumentData(versionDocument: VersionDocument): OpenAPIV3.Docu
       }
 
       if (versionDocument.operationIds.includes(operationId)) {
+        methodData?.tags?.forEach((tag) => usedTagNames.add(tag))
+
         const pathData = sourceDocument.paths[path]!
         const isRefPathData = !!pathData.$ref
         resultDocument.paths[path] = isRefPathData
@@ -236,6 +242,12 @@ function transformDocumentData(versionDocument: VersionDocument): OpenAPIV3.Docu
         }
       }
     }
+  }
+
+  // Keep only tags referenced by the group's operations.
+  resultDocument.tags = filterUsedTags(resultDocument.tags, usedTagNames)
+  if (!resultDocument.tags) {
+    delete resultDocument.tags
   }
 
   return resultDocument

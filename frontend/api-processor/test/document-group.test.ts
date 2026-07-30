@@ -17,6 +17,7 @@
 import { loadYaml } from '@netcracker/qubership-apihub-api-unifier'
 import {
   BUILD_TYPE,
+  BuildConfig,
   BuildConfigAggregator,
   BuildResult,
   FILE_FORMAT_GRAPHQL,
@@ -84,6 +85,21 @@ const BASE_OPERATION_PATH = 'path-operations'
 const PATH_ITEMS_OPERATION_PATH = 'pathitems-operations'
 type DOCUMENT_GROUP_PATHS = typeof BASE_OPERATION_PATH | typeof PATH_ITEMS_OPERATION_PATH
 
+async function runReducedFromContent(packageId: string, spec: string, operationIds: string[]): Promise<BuildResult> {
+  const pkg = LocalRegistry.openPackage(packageId, { [GROUP_NAME]: operationIds })
+  await pkg.publishFromContent(
+    { '1.yaml': spec },
+    { packageId, version: 'v1', files: [{ fileId: '1.yaml', publish: true }] },
+  )
+  const editor = new Editor(packageId, { packageId, version: 'v1' } as BuildConfig, {}, pkg)
+  return editor.run({
+    packageId,
+    buildType: BUILD_TYPE.REDUCED_SOURCE_SPECIFICATIONS,
+    groupName: GROUP_NAME,
+    apiType: REST_API_TYPE,
+  })
+}
+
 describe('Document Group test', () => {
   describe('Base path operations', () => {
     runCommonTests(BASE_OPERATION_PATH)
@@ -98,6 +114,75 @@ describe('Document Group test', () => {
 
     test('should have properly merged documents', async () => {
       await runMergeOperationsCase('basic-documents-for-merge')
+    })
+
+    test('should exclude tags that have no operation in the group', async () => {
+      const spec = `
+      openapi: "3.0.0"
+      info: { title: test, version: 0.1.0 }
+      paths:
+        /path1: { get: { tags: [Alpha], responses: { '200': { description: OK } } } }
+        /path2: { get: { tags: [Beta], responses: { '200': { description: OK } } } }
+      tags:
+        - { name: Alpha, description: alpha tag }
+        - { name: Beta, description: beta tag }
+      `
+      const result = await runReducedFromContent('tags-no-operation', spec, ['path1-get'])
+
+      const [document] = Array.from(result.documents.values())
+      expect(document.data.tags).toEqual([{ name: 'Alpha', description: 'alpha tag' }])
+    })
+
+    test('should drop all tags when the operation references an undeclared tag', async () => {
+      const spec = `
+      openapi: "3.0.0"
+      info: { title: test, version: 0.1.0 }
+      paths:
+        /path1: { get: { tags: [Unknown], responses: { '200': { description: OK } } } }
+      tags:
+        - { name: Alpha, description: alpha tag }
+        - { name: Beta, description: beta tag }
+      `
+      const result = await runReducedFromContent('tags-undeclared', spec, ['path1-get'])
+
+      const [document] = Array.from(result.documents.values())
+      expect(document.data).not.toHaveProperty('tags')
+    })
+
+    test('should keep the union of tags when the group has operations with different tags', async () => {
+      const spec = `
+      openapi: "3.0.0"
+      info: { title: test, version: 0.1.0 }
+      paths:
+        /path1: { get: { tags: [Alpha], responses: { '200': { description: OK } } } }
+        /path2: { get: { tags: [Beta], responses: { '200': { description: OK } } } }
+      tags:
+        - { name: Alpha, description: alpha tag }
+        - { name: Beta, description: beta tag }
+      `
+      const result = await runReducedFromContent('tags-union', spec, ['path1-get', 'path2-get'])
+
+      const [document] = Array.from(result.documents.values())
+      expect(document.data.tags).toEqual([
+        { name: 'Alpha', description: 'alpha tag' },
+        { name: 'Beta', description: 'beta tag' },
+      ])
+    })
+
+    test('should drop all tags when the group operation has no tags field', async () => {
+      const spec = `
+      openapi: "3.0.0"
+      info: { title: test, version: 0.1.0 }
+      paths:
+        /path1: { get: { responses: { '200': { description: OK } } } }
+      tags:
+        - { name: Alpha, description: alpha tag }
+        - { name: Beta, description: beta tag }
+      `
+      const result = await runReducedFromContent('tags-no-tags-field', spec, ['path1-get'])
+
+      const [document] = Array.from(result.documents.values())
+      expect(document.data).not.toHaveProperty('tags')
     })
 
     test('should have components schema object which is referenced', async () => {
@@ -165,6 +250,27 @@ describe('Document Group test', () => {
 
       test('should have properly merged documents mixed formats (operation + pathItems operation)', async () => {
         await runMergeOperationsCase('documents-pathitems-with-mixed-formats')
+      })
+
+      test('should exclude tags whose operation lives behind a $ref path item', async () => {
+        const spec = `
+        openapi: "3.1.0"
+        info: { title: test, version: 0.1.0 }
+        paths:
+          /path1: { $ref: '#/components/pathItems/pathItem1' }
+          /path2: { $ref: '#/components/pathItems/pathItem2' }
+        tags:
+          - { name: Alpha, description: alpha tag }
+          - { name: Beta, description: beta tag }
+        components:
+          pathItems:
+            pathItem1: { get: { tags: [Alpha], responses: { '200': { description: OK } } } }
+            pathItem2: { get: { tags: [Beta], responses: { '200': { description: OK } } } }
+        `
+        const result = await runReducedFromContent('tags-pathitems', spec, ['path1-get'])
+
+        const [document] = Array.from(result.documents.values())
+        expect(document.data.tags).toEqual([{ name: 'Alpha', description: 'alpha tag' }])
       })
 
       test('should have save pathItems in components', async () => {

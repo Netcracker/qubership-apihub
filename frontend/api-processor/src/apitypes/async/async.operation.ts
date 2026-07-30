@@ -127,7 +127,6 @@ export const buildAsyncApiOperation = (
     },
     tags,
     data: specWithSingleOperation,
-    searchScopes: {}, // TODO: remove after new search is adopted irrevocably
     search: { useOperationDataAsSearchText: true },
     deprecatedItems,
     models,

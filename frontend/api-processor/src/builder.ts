@@ -685,10 +685,21 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
       return []
     }
 
-    const referencesCache: BuildConfigRef[] = Object.values(versionReferences.packages ?? {}).filter(pack => !pack.deletedAt).map(pack => ({
-      refId: pack.refId,
-      version: pack.version,
-    }))
+    // A package occurrence is effective when it has at least one non-excluded reference edge.
+    // Conflict-loser occurrences (references[].excluded) must not be emitted, otherwise the same
+    // packageId leaks at two versions and compareVersionsReferences mis-pairs it (last-wins by refId).
+    const includedPackageRefs = new Set(
+      (versionReferences.references ?? [])
+        .filter(reference => !reference.excluded)
+        .map(reference => reference.packageRef),
+    )
+    const referencesCache: BuildConfigRef[] = Object.entries(versionReferences.packages ?? {})
+      .filter(([packageRef, pack]) => !pack.deletedAt && includedPackageRefs.has(packageRef))
+      .map(([, pack]) => ({
+        refId: pack.refId,
+        version: pack.version,
+        kind: pack.kind,
+      }))
     this.referencesCache.set(compositeKey, referencesCache)
 
     return referencesCache

@@ -33,13 +33,6 @@ export const GRAPHQL_FILE_FORMAT = {
 
 export const GRAPHQL_TYPE_KEYS = ['queries', 'mutations', 'subscriptions'] as const
 
-export const GRAPHQL_SCOPES = {
-  all: 'all',
-  argument: 'argument',
-  property: 'property',
-  annotation: 'annotation',
-} as const
-
 export const GRAPHQL_TYPE = {
   'queries': 'query',
   'mutations': 'mutation',

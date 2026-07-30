@@ -22,9 +22,6 @@ import { Realm } from '@netcracker/qubership-apihub-ddlapi'
 import { ApihubApiCompatibilityKind } from '../../consts'
 import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
 
-// TODO: remove after new search is adopted irrevocably
-export type SearchScopes<T extends string = string> = Record<T, Set<string>>
-
 export interface OperationSearch {
   useOperationDataAsSearchText: boolean
   searchTextFilePath?: string
@@ -50,8 +47,6 @@ export interface ApiOperation<T = any, M = any> {
   // [key: string]: unknown
 
   title: string
-  // TODO: remove after new search is adopted irrevocably
-  searchScopes: SearchScopes
   search: OperationSearch
   searchText?: string
   // refPackage?: PackageRef

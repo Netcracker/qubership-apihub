@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-import { GRAPHQL_DOCUMENT_TYPE, GRAPHQL_SCOPES, GRAPHQL_TYPE } from './graphql.consts'
+import { GRAPHQL_DOCUMENT_TYPE, GRAPHQL_TYPE } from './graphql.consts'
 import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
 
-import type { ApiOperation, NotificationMessage, VersionDocument } from '../../types'
+import type { ApiOperation, VersionDocument } from '../../types'
 
-export type GraphQLScopeType = keyof typeof GRAPHQL_SCOPES
 export type GraphQLSchemaType = keyof typeof GRAPHQL_TYPE
 export type GraphQLMethodType = (typeof GRAPHQL_TYPE)[GraphQLSchemaType]
 export type GraphQLDocumentType = (typeof GRAPHQL_DOCUMENT_TYPE)[keyof typeof GRAPHQL_DOCUMENT_TYPE]
@@ -32,18 +31,3 @@ export interface GraphQLOperationMeta {
 export type VersionGraphQLDocument = VersionDocument<GraphApiSchema>
 
 export type VersionGraphQLOperation = ApiOperation<GraphApiSchema, GraphQLOperationMeta>
-
-export interface GraphQLRefCache {
-  scopes: Record<GraphQLScopeType, string>
-  refs: string[]
-  data: any
-}
-
-export interface GraphQLOperationContext {
-  operationId: string
-  scopes: Record<GraphQLScopeType, string>
-  operationData: GraphApiSchema
-  document: VersionGraphQLDocument
-  refsCache: Record<string, GraphQLRefCache>
-  notifications: NotificationMessage[]
-}

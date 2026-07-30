@@ -50,6 +50,8 @@ import {
   getOperationTags,
   OperationsMap,
 } from '../../components'
+import { calculateApiKindFromLabels } from '../../components/document'
+import { createGraphqlApiCompatibilityScopeFunction } from '../../components/compare/graphql.bwc.validation'
 
 export const compareDocuments: DocumentsCompare = async (
   operationsMap: OperationsMap,
@@ -57,7 +59,15 @@ export const compareDocuments: DocumentsCompare = async (
   currDoc: ResolvedVersionDocument | undefined,
   ctx: CompareOperationsPairContext,
 ): Promise<DocumentsCompareData> => {
-  const { apiType, rawDocumentResolver, previousVersion, currentVersion, previousPackageId, currentPackageId } = ctx
+  const {
+    apiType,
+    rawDocumentResolver,
+    previousVersion,
+    currentVersion,
+    previousPackageId,
+    currentPackageId,
+    previousVersionLabels,
+  } = ctx
   const comparisonInternalDocumentId = createComparisonInternalDocumentId(previousVersion, previousPackageId, prevDoc?.slug, currentVersion, currentPackageId, currDoc?.slug)
   const prevFile = prevDoc && await rawDocumentResolver(previousVersion, previousPackageId, prevDoc.slug)
   const currFile = currDoc && await rawDocumentResolver(currentVersion, currentPackageId, currDoc.slug)
@@ -84,6 +94,11 @@ export const compareDocuments: DocumentsCompare = async (
     currDocData = getCopyWithEmptyOperations(prevDocData)
   }
 
+  const currDocumentApiKind = currDoc?.apiKind
+  // ApiKind is not guaranteed for the previous document: it is downloaded data and the field is optional.
+  // In this case, we calculate ApiKind by labels (file then version) in order of priority.
+  const prevDocumentApiKind = prevDoc?.apiKind || calculateApiKindFromLabels(prevDoc?.labels, previousVersionLabels)
+
   const { merged, diffs } = apiDiff(
     prevDocData,
     currDocData,
@@ -94,6 +109,7 @@ export const compareDocuments: DocumentsCompare = async (
       normalizedResult: true,
       afterValueNormalizedProperty: AFTER_VALUE_NORMALIZED_PROPERTY,
       beforeValueNormalizedProperty: BEFORE_VALUE_NORMALIZED_PROPERTY,
+      apiCompatibilityScopeFunction: createGraphqlApiCompatibilityScopeFunction(prevDocumentApiKind, currDocumentApiKind),
     },
   ) as { merged: GraphApiSchema; diffs: Diff[] }
 
