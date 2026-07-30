@@ -1,4 +1,5 @@
 import type { IntrospectionInputValue, IntrospectionInterfaceType, IntrospectionObjectType } from "graphql";
+import { parseValue, valueFromASTUntyped } from "graphql";
 import { ComponentsKind, INTROSPECTION_COMPONENT_TO_GRAPHAPI_COMPONENT_MAP } from "./declarations";
 
 export function createRef(kind: ComponentsKind, name: string): string {
@@ -10,17 +11,14 @@ export function isIntrospectionInterfaceType(
   return objectType.kind === 'INTERFACE'
 }
 
-export function getDefaultValue(arg: IntrospectionInputValue) {
-  if (!arg.defaultValue || !("name" in arg.type)) {
-    return arg.defaultValue
+export function getDefaultValue(arg: IntrospectionInputValue): unknown {
+  // Introspection stores `defaultValue` as the printed SDL literal string. Parse it into a coerced
+  // JS value (input-object → object, enum/string → string, Int/Float → number, list → array, ...),
+  // matching the of-schema representation so the printer can render defaults type-aware.
+  if (typeof arg.defaultValue !== 'string') { return undefined }
+  try {
+    return valueFromASTUntyped(parseValue(arg.defaultValue))
+  } catch {
+    return undefined
   }
-  switch (arg.type.name) {
-    case 'Int':
-    case 'Float':
-      return +arg.defaultValue
-
-    case 'Boolean':
-      return arg.defaultValue === "true"
-  }
-  return arg.defaultValue
 }

@@ -1,11 +1,15 @@
 import { GRAPH_API_NODE_KIND_OBJECT, GRAPH_API_NODE_KIND_INTERFACE, BUILT_IN_DIRECTIVES_SET } from "../constants"
-import { GraphApiDirectiveDefinition, GraphApiScalarDefinition, GraphApiObjectDefinition, GraphApiUnionDefinition, GraphApiEnumDefinition, GraphApiInputObjectDefinition } from "../types"
+import { GraphApiComponents, GraphApiDirectiveDefinition, GraphApiScalarDefinition, GraphApiObjectDefinition, GraphApiUnionDefinition, GraphApiEnumDefinition, GraphApiInputObjectDefinition } from "../types"
 import { printDescription, typeName, printBlock } from "./atomics.printer"
 import { BUILT_IN_SCALARS, GRAPH_API_DEFAULT_INDENT } from "./declarations"
 import { printArgsDefinition, printUsedDirectives, printImplementedInterfaces, printFields, printInputFields } from "./definition-parts.printer"
 import { OVERRIDDEN_BUILT_IN_DIRECTIVES } from "../build-graph-api/of-schema/declarations"
 
-export function printDirectiveDefinition(name: string, directive: GraphApiDirectiveDefinition): string {
+export function printDirectiveDefinition(
+  name: string,
+  directive: GraphApiDirectiveDefinition,
+  components: GraphApiComponents = {}
+): string {
   // Don't print built-in directives unless they're overridden
   if (BUILT_IN_DIRECTIVES_SET.has(name) && !OVERRIDDEN_BUILT_IN_DIRECTIVES.has(name)) {
     return ""
@@ -15,7 +19,7 @@ export function printDirectiveDefinition(name: string, directive: GraphApiDirect
     printDescription(directive.description) +
     'directive @' +
     name +
-    printArgsDefinition(directive.args) +
+    printArgsDefinition(directive.args, '', components) +
     (directive.repeatable ? ' repeatable' : '') +
     ' on ' +
     directive.locations.join(' | ')
@@ -32,23 +36,31 @@ export function printScalar(name: string, type: GraphApiScalarDefinition): strin
   )
 }
 
-export function printObject(name: string, type: GraphApiObjectDefinition<typeof GRAPH_API_NODE_KIND_OBJECT>): string {
+export function printObject(
+  name: string,
+  type: GraphApiObjectDefinition<typeof GRAPH_API_NODE_KIND_OBJECT>,
+  components: GraphApiComponents = {}
+): string {
   return (
     printDescription(type.description) +
     `type ${name}` +
     printUsedDirectives(type.directives) +
     printImplementedInterfaces(type.type.interfaces) +
-    printFields(type)
+    printFields(type, components)
   )
 }
 
-export function printInterface(name: string, type: GraphApiObjectDefinition<typeof GRAPH_API_NODE_KIND_INTERFACE>): string {
+export function printInterface(
+  name: string,
+  type: GraphApiObjectDefinition<typeof GRAPH_API_NODE_KIND_INTERFACE>,
+  components: GraphApiComponents = {}
+): string {
   return (
     printDescription(type.description) +
     `interface ${name}` +
     printUsedDirectives(type.directives) +
     printImplementedInterfaces(type.type.interfaces) +
-    printFields(type)
+    printFields(type, components)
   )
 }
 
@@ -81,11 +93,15 @@ export function printEnum(name: string, type: GraphApiEnumDefinition): string {
   )
 }
 
-export function printInputObject(name: string, type: GraphApiInputObjectDefinition): string {
+export function printInputObject(
+  name: string,
+  type: GraphApiInputObjectDefinition,
+  components: GraphApiComponents = {}
+): string {
   return (
     printDescription(type.description) +
     `input ${name}` +
     printUsedDirectives(type.directives) +
-    printInputFields(type)
+    printInputFields(type, components)
   )
 }
