@@ -1,0 +1,6 @@
+name: agents-backend-conventions
+version: 0.1.0
+description: Agents-backend-specific always-on rules for qubership-apihub-agents-backend
+author: Qubership
+dependencies:
+  apm: []

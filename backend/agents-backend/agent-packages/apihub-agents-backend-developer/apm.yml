@@ -1,0 +1,8 @@
+name: apihub-agents-backend-developer
+version: 0.1.0
+description: Agents-backend service specifics (agent CRUD, discovery, snapshots, proxy, env config, OpenAPI)
+author: Qubership
+dependencies:
+  apm:
+    - Netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+
