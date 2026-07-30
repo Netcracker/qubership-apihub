@@ -41,7 +41,7 @@
   ],
   "dependencies": {
     "@netcracker/qubership-apihub-ddlapi": "1.0.0",
-    "@netcracker/qubership-apihub-graphapi": "next",
+    "@netcracker/qubership-apihub-graphapi": "1.0.12",
     "@netcracker/qubership-apihub-json-crawl": "1.2.2",
     "fast-equals": "4.0.3",
     "flatted": "^3.2.9",
