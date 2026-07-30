@@ -27,7 +27,7 @@
     "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-unifier": "next",
+    "@netcracker/qubership-apihub-api-unifier": "2.9.1",
     "@netcracker/qubership-apihub-ddlapi": "1.0.0",
     "@netcracker/qubership-apihub-json-crawl": "1.2.2",
     "fast-equals": "6.0.0"
@@ -35,7 +35,7 @@
   "devDependencies": {
     "@asyncapi/parser": "3.4.0",
     "@netcracker/qubership-apihub-compatibility-suites": "2.6.1",
-    "@netcracker/qubership-apihub-graphapi": "next",
+    "@netcracker/qubership-apihub-graphapi": "1.0.12",
     "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
     "@types/jest": "30.0.0",
     "@types/node": "25.0.3",
