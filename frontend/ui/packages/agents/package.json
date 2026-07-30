@@ -6,7 +6,10 @@
     "/dist"
   ],
   "scripts": {
-    "build": "tsc && vite build",
+    "build": "npm run build:tsc && npm run build:vite",
+    "build:tsc": "tsc",
+    "build:vite": "vite build",
+    "build:analyze": "npm run build:tsc && npm run build:vite -- --mode analyze",
     "dev:backend": "nodemon server/index.ts",
     "dev:frontend": "vite --host --force",
     "proxy": "vite --host --mode=proxy",

@@ -30,12 +30,19 @@ const devServer = 'http://localhost:3003'
 
 export default defineConfig(({ mode }) => {
   const isProxyMode = mode === 'proxy'
+  // Bundle-size analysis is opt-in via `npm run build:analyze` (which passes `--mode analyze`).
+  // It is kept out of the default build because generating the report holds the full module graph
+  // in memory and renders an HTML treemap, which inflates build memory and time — the portal CI
+  // build has hit the Node heap limit during this phase.
+  // Note: a custom mode does NOT make this a non-production build. Vite derives `isProduction`
+  // from NODE_ENV, and `vite build` defaults NODE_ENV to 'production' regardless of `--mode`.
+  const analyzeBundle = mode === 'analyze'
 
   return {
     base: !isProxyMode ? '/agents' : '',
     plugins: [
       react({ fastRefresh: false }),
-      bundleVisualizer(),
+      ...(analyzeBundle ? [bundleVisualizer()] : []),
       ignoreDotsOnDevServer(),
       monacoEditor({
         languageWorkers: ['editorWorkerService', 'json'],
@@ -101,6 +108,10 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       emptyOutDir: true,
+      // Gzip-compressing every chunk just to print its size costs build time on a bundle this large,
+      // so it is skipped by default. It is genuinely useful when analyzing the bundle, so it is
+      // enabled together with the visualizer under `npm run build:analyze`.
+      reportCompressedSize: analyzeBundle,
       rollupOptions: {
         input: {
           app: resolve(__dirname, 'index.html'),
