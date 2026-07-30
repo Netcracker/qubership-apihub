@@ -3,11 +3,9 @@ package controller
 import (
 	"net/http"
 
-	"github.com/Netcracker/qubership-apihub-agent/exception"
 	"github.com/Netcracker/qubership-apihub-agent/secctx"
 	"github.com/Netcracker/qubership-apihub-agent/service"
 	"github.com/Netcracker/qubership-apihub-agent/view"
-	log "github.com/sirupsen/logrus"
 )
 
 type ServiceController interface {
@@ -75,15 +73,7 @@ func (s serviceControllerImpl) StartDiscovery(w http.ResponseWriter, r *http.Req
 
 	err := s.discoveryService.StartDiscovery(secctx.Create(r), namespace, workspaceId, failOnError)
 	if err != nil {
-		log.Error("Failed to start discovery process: ", err.Error())
-		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
-		} else {
-			RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusInternalServerError,
-				Message: "Failed to start discovery process",
-				Debug:   err.Error()})
-		}
+		respondWithError(w, "Failed to start discovery process", err)
 		return
 	}
 	w.WriteHeader(http.StatusAccepted)
@@ -94,15 +84,7 @@ func (s serviceControllerImpl) ListServiceNames(w http.ResponseWriter, r *http.R
 
 	result, err := s.listService.ListServiceNames(namespace)
 	if err != nil {
-		log.Error("Failed to list service names: ", err.Error())
-		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
-		} else {
-			RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusInternalServerError,
-				Message: "Failed to list service names",
-				Debug:   err.Error()})
-		}
+		respondWithError(w, "Failed to list service names", err)
 		return
 	}
 	respondWithJson(w, http.StatusOK, view.ServiceNamesResponse{ServiceNames: result})
@@ -113,15 +95,7 @@ func (s serviceControllerImpl) ListServiceItems(w http.ResponseWriter, r *http.R
 
 	result, err := s.listService.ListServiceItems(namespace)
 	if err != nil {
-		log.Error("Failed to list service items: ", err.Error())
-		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
-		} else {
-			RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusInternalServerError,
-				Message: "Failed to list service items",
-				Debug:   err.Error()})
-		}
+		respondWithError(w, "Failed to list service items", err)
 		return
 	}
 	respondWithJson(w, http.StatusOK, view.ServiceItemsResponse{ServiceItems: result})

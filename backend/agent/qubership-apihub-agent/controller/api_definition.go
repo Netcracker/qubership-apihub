@@ -6,7 +6,6 @@ import (
 	"github.com/Netcracker/qubership-apihub-agent/exception"
 	"github.com/Netcracker/qubership-apihub-agent/service"
 	"github.com/Netcracker/qubership-apihub-agent/view"
-	log "github.com/sirupsen/logrus"
 )
 
 type DocumentController interface {
@@ -44,15 +43,7 @@ func (d documentControllerImpl) GetServiceDocument(w http.ResponseWriter, r *htt
 	content, err := d.documentService.GetDocumentById(namespace, workspaceId, serviceId, fileId)
 
 	if err != nil {
-		log.Error("Failed to get document by id: ", err.Error())
-		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
-		} else {
-			RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusInternalServerError,
-				Message: "Failed to get document by id",
-				Debug:   err.Error()})
-		}
+		respondWithError(w, "Failed to get document by id", err)
 		return
 	}
 

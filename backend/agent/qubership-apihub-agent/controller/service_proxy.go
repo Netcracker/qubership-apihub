@@ -2,11 +2,12 @@ package controller
 
 import (
 	"fmt"
-	"github.com/Netcracker/qubership-apihub-agent/view"
 	"io"
 	"net/http"
 	"net/url"
 	"regexp"
+
+	"github.com/Netcracker/qubership-apihub-agent/view"
 
 	"github.com/Netcracker/qubership-apihub-agent/exception"
 	"github.com/Netcracker/qubership-apihub-agent/service"
@@ -39,16 +40,9 @@ func (s *serviceProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Reques
 	serviceId := getStringParam(r, "serviceId")
 	customServerUrl, err := s.discoveryService.GetServiceUrl(namespace, serviceId)
 	if err != nil {
-		log.Errorf("Failed to proxy a request to namespace %v service %v: %v", namespace, serviceId, err.Error())
+		msg := fmt.Sprintf("Failed to proxy a request to namespace %v service %v", namespace, serviceId)
 		w.Header().Add(CustomProxyErrorHeader, fmt.Sprintf("Failed to proxy a request to namespace %v service %v: %v", namespace, serviceId, err.Error()))
-		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
-		} else {
-			RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusInternalServerError,
-				Message: fmt.Sprintf("Failed to proxy a request to namespace %v service %v", namespace, serviceId),
-				Debug:   err.Error()})
-		}
+		respondWithError(w, msg, err)
 		return
 	}
 	r.Header.Del(CustomJwtAuthHeader)

@@ -3,10 +3,8 @@ package controller
 import (
 	"net/http"
 
-	"github.com/Netcracker/qubership-apihub-agent/exception"
 	"github.com/Netcracker/qubership-apihub-agent/service"
 	"github.com/Netcracker/qubership-apihub-agent/view"
-	log "github.com/sirupsen/logrus"
 )
 
 type NamespaceController interface {
@@ -25,15 +23,7 @@ func (n namespaceControllerImpl) ListNamespaces(w http.ResponseWriter, r *http.R
 
 	nss, err := n.namespaceListCache.ListNamespaces()
 	if err != nil {
-		log.Error("Failed to list namespaces: ", err.Error())
-		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
-		} else {
-			RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusInternalServerError,
-				Message: "Failed to list namespaces",
-				Debug:   err.Error()})
-		}
+		respondWithError(w, "Failed to list namespaces", err)
 		return
 	}
 
