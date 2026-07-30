@@ -22,6 +22,20 @@ Corresponding [values.yaml](https://github.com/Netcracker/qubership-apihub/blob/
 
 Presence of this plug-in in Qubership-APIHUB deployments enables `Agents` tab in Web UI.
 
+## Configuration
+
+Application parameters are loaded from `config.yaml`. The configuration format,
+defaults, and examples are documented in [the template file](qubership-apihub-agents-backend/config.template.yaml). For local development,
+use that template as a reference and create `qubership-apihub-agents-backend/config.yaml`.
+
+By default, the service looks for `config.yaml` in the current working directory. Set
+`AGENTS_BACKEND_CONFIG_FOLDER` to point to a different directory that contains the file.
+
+The remaining environment-only settings are:
+
+- `AGENTS_BACKEND_CONFIG_FOLDER` - directory containing `config.yaml`; defaults to `.`.
+- `LOG_LEVEL` - initial log level; defaults to `info` when empty or invalid and can be changed at runtime via `/api/v1/debug/logs/setLevel` by a system administrator.
+
 ## Build
 
 Just run `build_golang_binary.cmd` file.

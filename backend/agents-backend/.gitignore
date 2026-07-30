@@ -6,9 +6,4 @@
 go.sum
 qubership-apihub-agents-backend/qubership-apihub-agents-backend
 qubership-apihub-agents-backend/qubership-apihub-agents-backend.exe
-
-# APM cache (installed package sources)
-apm_modules/
-
-# apm pack output
-agent-packages/**/build/
+qubership-apihub-agents-backend/config.yaml

@@ -7,7 +7,6 @@ import (
 	"github.com/Netcracker/qubership-apihub-agents-backend/exception"
 	"github.com/Netcracker/qubership-apihub-agents-backend/secctx"
 	"github.com/Netcracker/qubership-apihub-agents-backend/service"
-	log "github.com/sirupsen/logrus"
 )
 
 type SpecificationsController interface {
@@ -73,15 +72,7 @@ func (s specificationsControllerImpl) GetServiceSpecification(w http.ResponseWri
 
 	specBytes, err := s.agentClient.GetServiceSpecification(secctx.MakeUserContext(r), namespace, workspaceId, serviceId, fileId, agent.AgentUrl)
 	if err != nil {
-		log.Error("Failed to get specification: ", err.Error())
-		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
-		} else {
-			RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusInternalServerError,
-				Message: "Failed to get specification",
-				Debug:   err.Error()})
-		}
+		respondWithError(w, "Failed to get specification", err)
 		return
 	}
 
