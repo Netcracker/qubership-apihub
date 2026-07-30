@@ -138,6 +138,7 @@ type PackageSearchWeight struct {
 type PackageSearchQuery struct {
 	PackageSearchWeight
 	VersionStatusSearchWeight
+	ApiType    string    `pg:"api_type, type:varchar, use_zero"`
 	TextFilter string    `pg:"text_filter, type:varchar, use_zero"` //for varchar
 	Packages   []string  `pg:"packages, type:varchar[], use_zero"`
 	Versions   []string  `pg:"versions, type:varchar[], use_zero"`
@@ -178,6 +179,7 @@ type PackageSearchResult struct {
 
 func MakePackageSearchQueryEntity(searchQuery *view.SearchQueryReq_deprecated) (*PackageSearchQuery, error) {
 	searchQueryEntity := &PackageSearchQuery{
+		ApiType:    searchQuery.ApiType,
 		TextFilter: searchQuery.SearchString,
 		Packages:   searchQuery.PackageIds,
 		Versions:   searchQuery.Versions,
@@ -244,6 +246,7 @@ type DocumentSearchWeight struct {
 type DocumentSearchQuery struct {
 	DocumentSearchWeight
 	VersionStatusSearchWeight
+	ApiType      string    `pg:"api_type, type:varchar, use_zero"`
 	TextFilter   string    `pg:"text_filter, type:varchar, use_zero"` //for varchar
 	Packages     []string  `pg:"packages, type:varchar[], use_zero"`
 	Versions     []string  `pg:"versions, type:varchar[], use_zero"`
@@ -281,6 +284,7 @@ type DocumentSearchResult struct {
 
 func MakeDocumentSearchQueryEntity(searchQuery *view.SearchQueryReq_deprecated, unknownTypes []string) (*DocumentSearchQuery, error) {
 	searchQueryEntity := &DocumentSearchQuery{
+		ApiType:      searchQuery.ApiType,
 		TextFilter:   searchQuery.SearchString,
 		Packages:     searchQuery.PackageIds,
 		Versions:     searchQuery.Versions,

@@ -250,10 +250,10 @@ func main() {
 	roleService := service.NewRoleService(roleRepository, userService, activityTrackingService, publishedRepository)
 	ptHandler := service.NewPackageTransitionHandler(transitionRepository)
 	publishNotificationService := service.NewPublishNotificationService(olricProvider)
-	publishedService := service.NewPublishedService(publishedRepository, buildRepository, favoritesRepository, operationRepository, ddlContractRepository, activityTrackingService, monitoringService, minioStorageService, systemInfoService, publishNotificationService)
+	publishedService := service.NewPublishedService(publishedRepository, buildRepository, favoritesRepository, operationRepository, ddlContractRepository, activityTrackingService, monitoringService, minioStorageService, systemInfoService, publishNotificationService, roleService)
 	portalService := service.NewPortalService(basePath, publishedService, publishedRepository)
 
-	operationGroupService := service.NewOperationGroupService(operationRepository, publishedRepository, exportRepository, packageVersionEnrichmentService, activityTrackingService)
+	operationGroupService := service.NewOperationGroupService(operationRepository, publishedRepository, exportRepository, packageVersionEnrichmentService, activityTrackingService, publishedService, systemInfoService)
 	ddlContractServiceForVersion := service.NewDDLContractService(ddlContractRepository, publishedRepository, packageVersionEnrichmentService)
 	mcpContractServiceForVersion := service.NewMCPContractService(mcpContractRepository, publishedRepository, packageVersionEnrichmentService)
 	versionService := service.NewVersionService(favoritesRepository, publishedRepository, publishedService, operationRepository, exportRepository, operationService, activityTrackingService, systemInfoService, packageVersionEnrichmentService, portalService, versionCleanupRepository, operationGroupService, monitoringService, roleService, ddlContractServiceForVersion, mcpContractServiceForVersion)
@@ -544,6 +544,8 @@ func main() {
 	r.HandleFunc("/api/v2/admin/transition/activity", security.Secure(transitionController.ListActivities)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/admin/transition", security.Secure(transitionController.ListPackageTransitions)).Methods(http.MethodGet)
 
+	r.HandleFunc("/api/v1/builds", security.Secure(buildController.ListBuilds)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/builds/{buildId}", security.Secure(buildController.GetBuild)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/admin/builds/{buildId}/result", security.Secure(buildController.GetBuildResult)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/admin/builds/{buildId}/sources", security.Secure(buildController.GetBuildSources)).Methods(http.MethodGet)
 
@@ -658,7 +660,14 @@ func main() {
 	for _, prefix := range knownPathPrefixes {
 		//add routing for unknown paths with known path prefixes
 		r.PathPrefix(prefix).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Warnf("Requested unknown endpoint: %v %v", r.Method, r.RequestURI)
+			xForwardedFor, remoteAddr := utils.RequestorIPFields(r)
+			log.WithFields(log.Fields{
+				"method":          r.Method,
+				"uri":             r.RequestURI,
+				"x_forwarded_for": xForwardedFor,
+				"remote_addr":     remoteAddr,
+			}).Warn("Requested unknown endpoint")
+
 			utils.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusMisdirectedRequest,
 				Message: "Requested unknown endpoint",

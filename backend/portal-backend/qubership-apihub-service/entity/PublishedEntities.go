@@ -2,6 +2,7 @@ package entity
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
@@ -131,6 +132,37 @@ type PublishedVersionKeyEntity struct {
 
 func (e PublishedVersionKeyEntity) String() string {
 	return fmt.Sprintf("{packageId:%s version:%s revision:%d}", e.PackageId, e.Version, e.Revision)
+}
+
+func FormatVersionKeys(keys []PublishedVersionKeyEntity) string {
+	items := make([]string, 0, len(keys))
+	for _, key := range keys {
+		items = append(items, fmt.Sprintf("%s|%s", key.PackageId, view.MakeVersionRefKey(key.Version, key.Revision)))
+	}
+	return strings.Join(items, ", ")
+}
+
+func FormatVersionKeysWithHidden(accessible []PublishedVersionKeyEntity, hiddenCount int, noun string) string {
+	if hiddenCount == 0 {
+		return FormatVersionKeys(accessible)
+	}
+	if hiddenCount != 1 {
+		noun += "s"
+	}
+	if len(accessible) == 0 {
+		return fmt.Sprintf("%d %s you cannot access (contact system administrator)", hiddenCount, noun)
+	}
+	return fmt.Sprintf("%s, and %d more %s you cannot access (contact system administrator)", FormatVersionKeys(accessible), hiddenCount, noun)
+}
+
+type DashboardReferenceEntity struct {
+	ReferencedPackageId string `pg:"referenced_package_id"`
+	PublishedVersionKeyEntity
+}
+
+func (e DashboardReferenceEntity) String() string {
+	return fmt.Sprintf("{packageId:%s version:%s revision:%d referencedPackageId:%s}",
+		e.PackageId, e.Version, e.Revision, e.ReferencedPackageId)
 }
 
 type PublishedContentEntity struct {

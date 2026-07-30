@@ -233,6 +233,8 @@ func (g *systemInfoServiceImpl) setDefaults() {
 	viper.SetDefault("s3Storage.storeOnlyBuildResult", false)
 	viper.SetDefault("olric.discoveryMode", "local")
 	viper.SetDefault("olric.replicaCount", 1)
+	viper.SetDefault("olric.bindPort", 47375)
+	viper.SetDefault("olric.memberlistPort", 47376)
 	viper.SetDefault("cleanup.builds.schedule", "0 1 * * 0")     // at 01:00 AM on Sunday
 	viper.SetDefault("cleanup.revisions.schedule", "0 21 * * 0") // at 9:00 PM on Sunday
 	viper.SetDefault("cleanup.revisions.deleteLastRevision", false)
@@ -261,6 +263,7 @@ func (g *systemInfoServiceImpl) setDefaults() {
 	viper.SetDefault("businessParameters.ephemeralFileMaxSizeMb", 50)
 	viper.SetDefault("businessParameters.ephemeralFileTTLMinutes", 30)
 	viper.SetDefault("cleanup.ephemeralFiles.schedule", "*/5 * * * *")
+	viper.SetDefault("featureFlags.previousVersionStatusValidation", true)
 }
 
 func (g *systemInfoServiceImpl) GetConfigFolder() string {
@@ -673,7 +676,8 @@ func (g *systemInfoServiceImpl) GetEphemeralFilesCleanupSchedule() string {
 
 func (g *systemInfoServiceImpl) GetFeatureFlags() view.FeatureFlags {
 	return view.FeatureFlags{
-		UseV3Search: g.config.FeatureFlags.UseV3Search,
+		UseV3Search:                     g.config.FeatureFlags.UseV3Search,
+		PreviousVersionStatusValidation: g.config.FeatureFlags.PreviousVersionStatusValidation,
 	}
 }
 

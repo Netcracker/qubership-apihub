@@ -37,6 +37,8 @@ type BuildService interface {
 	AwaitBuildCompletion(buildId string) error
 
 	GetBuild(buildId string) (*view.BuildView, error)
+	GetExtendedBuild(buildId string) (*view.ExtendedBuild, error)
+	ListExtendedBuilds(filter view.ExtendedBuildFilter) (*view.ExtendedBuilds, error)
 	GetBuildSourceData(buildId string) ([]byte, error)
 }
 
@@ -48,22 +50,24 @@ func NewBuildService(
 	packageService PackageService,
 	refResolverService RefResolverService) BuildService {
 	return &buildServiceImpl{
-		buildRepository:    buildRepository,
-		buildProcessor:     buildProcessor,
-		publishService:     publishService,
-		systemInfoService:  systemInfoService,
-		packageService:     packageService,
-		refResolverService: refResolverService,
+		buildRepository:                        buildRepository,
+		buildProcessor:                         buildProcessor,
+		publishService:                         publishService,
+		systemInfoService:                      systemInfoService,
+		packageService:                         packageService,
+		refResolverService:                     refResolverService,
+		previousVersionStatusValidationEnabled: systemInfoService.GetFeatureFlags().PreviousVersionStatusValidation,
 	}
 }
 
 type buildServiceImpl struct {
-	buildRepository    repository.BuildRepository
-	buildProcessor     BuildProcessorService
-	publishService     PublishedService
-	systemInfoService  SystemInfoService
-	packageService     PackageService
-	refResolverService RefResolverService
+	buildRepository                        repository.BuildRepository
+	buildProcessor                         BuildProcessorService
+	publishService                         PublishedService
+	systemInfoService                      SystemInfoService
+	packageService                         PackageService
+	refResolverService                     RefResolverService
+	previousVersionStatusValidationEnabled bool
 }
 
 func (b *buildServiceImpl) PublishVersion(ctx context.SecurityContext, config view.BuildConfig, src []byte, clientBuild bool, builderId string, dependencies []string, resolveRefs bool, resolveConflicts bool) (*view.PublishV2Response, error) {
@@ -147,17 +151,22 @@ func (b *buildServiceImpl) PublishVersion(ctx context.SecurityContext, config vi
 		if config.PreviousVersionPackageId != "" {
 			previousVersionPackageId = config.PreviousVersionPackageId
 		}
-		previousVersionExists, err := b.publishService.VersionPublished(previousVersionPackageId, config.PreviousVersion)
+		previousVersionStatus, previousVersionFound, err := b.publishService.GetVersionStatus(previousVersionPackageId, config.PreviousVersion)
 		if err != nil {
 			return nil, err
 		}
-		if !previousVersionExists {
+		if !previousVersionFound {
 			return nil, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.PublishedPackageVersionNotFound,
 				Message: exception.PublishedPackageVersionNotFoundMsg,
 				Params:  map[string]interface{}{"version": config.PreviousVersion, "packageId": previousVersionPackageId},
 			}
+		}
+		// A release version's previous version must be a release; a draft version may reference a draft previous version.
+		if b.previousVersionStatusValidationEnabled &&
+			config.BuildType == view.PublishType && config.Status == string(view.Release) && previousVersionStatus == string(view.Draft) {
+			return nil, newReleaseVersionPreviousVersionNotReleaseError(ctx, config.PackageId, config.Version, previousVersionPackageId, config.PreviousVersion)
 		}
 
 		dependencyCycleExists, err := b.publishService.CheckPreviousVersionDependencyCycle(config.PackageId, config.Version, config.PreviousVersionPackageId, config.PreviousVersion, config.ComparisonRevision)
@@ -172,6 +181,14 @@ func (b *buildServiceImpl) PublishVersion(ctx context.SecurityContext, config vi
 				Message: exception.InvalidPreviousVersionMsg,
 				Params:  map[string]interface{}{"version": config.PreviousVersion, "packageId": config.PackageId},
 			}
+		}
+	}
+
+	// Publishing this version as a draft must not leave a release version that references it as its previous version.
+	if b.previousVersionStatusValidationEnabled &&
+		config.BuildType == view.PublishType && config.Status == string(view.Draft) {
+		if err := b.publishService.CheckNoReleaseDependentVersions(ctx, config.PackageId, config.Version); err != nil {
+			return nil, err
 		}
 	}
 
@@ -220,6 +237,22 @@ func (b *buildServiceImpl) PublishVersion(ctx context.SecurityContext, config vi
 		return &view.PublishV2Response{PublishId: publishId, Config: &config}, nil
 	} else {
 		return &view.PublishV2Response{PublishId: publishId}, nil
+	}
+}
+
+func newReleaseVersionPreviousVersionNotReleaseError(ctx context.SecurityContext, packageId string, version string, previousVersionPackageId string, previousVersion string) *exception.CustomError {
+	log.Debugf("Blocked publishing version %s of package %s with 'release' status by user %s: previous version %s of package %s has 'draft' status",
+		version, packageId, ctx.GetUserId(), previousVersion, previousVersionPackageId)
+	return &exception.CustomError{
+		Status:  http.StatusBadRequest,
+		Code:    exception.InvalidReleaseVersionChain,
+		Message: exception.ReleaseVersionPreviousVersionNotReleaseMsg,
+		Params: map[string]interface{}{
+			"packageId":                packageId,
+			"version":                  version,
+			"previousVersionPackageId": previousVersionPackageId,
+			"previousVersion":          previousVersion,
+		},
 	}
 }
 
@@ -588,6 +621,65 @@ func (b *buildServiceImpl) GetBuild(buildId string) (*view.BuildView, error) {
 	}
 	result := entity.MakeBuildView(build)
 	return result, nil
+}
+
+func (b *buildServiceImpl) GetExtendedBuild(buildId string) (*view.ExtendedBuild, error) {
+	build, err := b.buildRepository.GetExtendedBuild(buildId)
+	if err != nil {
+		return nil, err
+	}
+	if build == nil {
+		return nil, nil
+	}
+	result, err := entity.MakeExtendedBuildView(build)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert build config for build %s: %w", build.BuildId, err)
+	}
+	depends, err := b.buildRepository.GetBuildDependencies([]string{buildId})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get build dependencies for build %s: %w", buildId, err)
+	}
+	result.Dependencies = make([]string, 0, len(depends))
+	for _, dep := range depends {
+		result.Dependencies = append(result.Dependencies, dep.DependId)
+	}
+	return result, nil
+}
+
+func (b *buildServiceImpl) ListExtendedBuilds(filter view.ExtendedBuildFilter) (*view.ExtendedBuilds, error) {
+	builds, err := b.buildRepository.ListExtendedBuilds(repository.ExtendedBuildFilter{
+		PackageId: filter.PackageId,
+		Version:   filter.Version,
+		BuildIds: filter.BuildIds,
+		Offset:   filter.Offset,
+		Limit:    filter.Limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+	buildIds := make([]string, 0, len(builds))
+	for _, build := range builds {
+		buildIds = append(buildIds, build.BuildId)
+	}
+	depends, err := b.buildRepository.GetBuildDependencies(buildIds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get build dependencies: %w", err)
+	}
+	dependsByBuildId := make(map[string][]string, len(buildIds))
+	for _, dep := range depends {
+		dependsByBuildId[dep.BuildId] = append(dependsByBuildId[dep.BuildId], dep.DependId)
+	}
+
+	result := make([]view.ExtendedBuild, 0, len(builds))
+	for _, build := range builds {
+		buildView, err := entity.MakeExtendedBuildView(&build)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert build config for build %s: %w", build.BuildId, err)
+		}
+		buildView.Dependencies = dependsByBuildId[build.BuildId]
+		result = append(result, *buildView)
+	}
+	return &view.ExtendedBuilds{Builds: result}, nil
 }
 
 func (b *buildServiceImpl) GetBuildSourceData(buildId string) ([]byte, error) {

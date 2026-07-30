@@ -4,12 +4,10 @@ import (
 	"net/http"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
-
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
-	log "github.com/sirupsen/logrus"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 )
 
 type PublishedController interface {
@@ -62,15 +60,7 @@ func (v publishControllerImpl) GetVersionSources(w http.ResponseWriter, r *http.
 	}
 	srcArchive, err := v.publishedService.GetVersionSources(packageId, versionName)
 	if err != nil {
-		log.Error("Failed to get package version sources: ", err.Error())
-		if customError, ok := err.(*exception.CustomError); ok {
-			utils.RespondWithCustomError(w, customError)
-		} else {
-			utils.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusInternalServerError,
-				Message: "Failed to get package version sources",
-				Debug:   err.Error()})
-		}
+		utils.RespondWithError(w, "Failed to get package version sources", err)
 		return
 	}
 
@@ -109,15 +99,7 @@ func (v publishControllerImpl) GetPublishedVersionSourceDataConfig(w http.Respon
 	}
 	publishedVersionSourceDataConfig, err := v.publishedService.GetPublishedVersionSourceDataConfig(packageId, versionName)
 	if err != nil {
-		log.Error("Failed to get package version sources: ", err.Error())
-		if customError, ok := err.(*exception.CustomError); ok {
-			utils.RespondWithCustomError(w, customError)
-		} else {
-			utils.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusInternalServerError,
-				Message: "Failed to get package version sources",
-				Debug:   err.Error()})
-		}
+		utils.RespondWithError(w, "Failed to get package version sources", err)
 		return
 	}
 
@@ -155,15 +137,7 @@ func (v publishControllerImpl) GetPublishedVersionBuildConfig(w http.ResponseWri
 
 	publishedVersionBuildConfig, err := v.publishedService.GetPublishedVersionBuildConfig(packageId, versionName)
 	if err != nil {
-		log.Error("Failed to get package version build config: ", err.Error())
-		if customError, ok := err.(*exception.CustomError); ok {
-			utils.RespondWithCustomError(w, customError)
-		} else {
-			utils.RespondWithCustomError(w, &exception.CustomError{
-				Status:  http.StatusInternalServerError,
-				Message: "Failed to get package version build config",
-				Debug:   err.Error()})
-		}
+		utils.RespondWithError(w, "Failed to get package version build config", err)
 		return
 	}
 

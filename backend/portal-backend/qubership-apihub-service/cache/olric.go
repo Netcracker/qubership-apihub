@@ -114,9 +114,9 @@ func getConfig(olricConfig sysconfig.OlricConfig) (*config.Config, error) {
 		cfg.LogVerbosity = 2
 
 		cfg.BindAddr = olricBindAddr
-		cfg.BindPort = getLocalPort()
+		cfg.BindPort = getLocalPort(olricConfig.BindPort)
 		cfg.MemberlistConfig.BindAddr = olricBindAddr
-		cfg.MemberlistConfig.BindPort = getLocalMemberlistPort()
+		cfg.MemberlistConfig.BindPort = getLocalMemberlistPort(olricConfig.MemberlistPort)
 		cfg.PartitionCount = 5
 
 		return cfg, nil
@@ -126,20 +126,18 @@ func getConfig(olricConfig sysconfig.OlricConfig) (*config.Config, error) {
 	}
 }
 
-func getLocalPort() int {
-	//try specific port first
-	port := 47375
-	if isPortFree(olricBindAddr, port) {
-		return port
+func getLocalPort(configuredPort int) int {
+	//try configured port first
+	if isPortFree(olricBindAddr, configuredPort) {
+		return configuredPort
 	}
 	//and if fails, then random
 	return getLocalRandomFreePort()
 }
-func getLocalMemberlistPort() int {
-	//try specific port first
-	port := 47376
-	if isPortFree(olricBindAddr, port) {
-		return port
+func getLocalMemberlistPort(configuredPort int) int {
+	//try configured port first
+	if isPortFree(olricBindAddr, configuredPort) {
+		return configuredPort
 	}
 	//and if fails, then random
 	return getLocalRandomFreePort()

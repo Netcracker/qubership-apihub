@@ -187,6 +187,37 @@ type BuildView struct {
 	RestartCount int       `json:"restart_count"`
 }
 
+type ExtendedBuild struct {
+	BuildId      string                 `json:"buildId"`
+	Status       string                 `json:"status"`
+	Details      string                 `json:"details"`
+	ClientBuild  bool                   `json:"clientBuild"`
+	PackageId    string                 `json:"packageId"`
+	Version      string                 `json:"version"`
+	CreatedAt    *time.Time             `json:"createdAt"`
+	LastActive   *time.Time             `json:"lastActive"`
+	CreatedBy    string                 `json:"createdBy"`
+	StartedAt    *time.Time             `json:"startedAt"`
+	RestartCount int                    `json:"restartCount"`
+	BuilderId    string                 `json:"builderId"`
+	Priority     int                    `json:"priority"`
+	Metadata     map[string]interface{} `json:"metadata"`
+	Config       BuildConfig            `json:"config"`
+	Dependencies []string               `json:"dependencies,omitempty"`
+}
+
+type ExtendedBuilds struct {
+	Builds []ExtendedBuild `json:"builds"`
+}
+
+type ExtendedBuildFilter struct {
+	PackageId string
+	Version   string
+	BuildIds []string
+	Offset   int
+	Limit    int
+}
+
 type PublishedVersionSourceDataConfig struct {
 	Sources []byte      `json:"sources"`
 	Config  BuildConfig `json:"config"`

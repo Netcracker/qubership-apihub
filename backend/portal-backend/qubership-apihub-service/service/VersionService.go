@@ -77,43 +77,45 @@ func NewVersionService(favoritesRepo repository.FavoritesRepository,
 	ddlContractService DDLContractService,
 	mcpContractService MCPContractService) VersionService {
 	return &versionServiceImpl{
-		favoritesRepo:                   favoritesRepo,
-		publishedRepo:                   publishedRepo,
-		exportRepository:                exportRepository,
-		publishedService:                publishedService,
-		operationRepo:                   operationRepo,
-		operationService:                operationService,
-		atService:                       atService,
-		systemInfoService:               systemInfoService,
-		packageVersionEnrichmentService: packageVersionEnrichmentService,
-		portalService:                   portalService,
-		versionCleanupRepository:        versionCleanupRepository,
-		operationGroupService:           operationGroupService,
-		monitoringService:               monitoringService,
-		roleService:                     roleService,
-		ddlContractService:              ddlContractService,
-		mcpContractService:              mcpContractService,
+		favoritesRepo:                          favoritesRepo,
+		publishedRepo:                          publishedRepo,
+		exportRepository:                       exportRepository,
+		publishedService:                       publishedService,
+		operationRepo:                          operationRepo,
+		operationService:                       operationService,
+		atService:                              atService,
+		systemInfoService:                      systemInfoService,
+		packageVersionEnrichmentService:        packageVersionEnrichmentService,
+		portalService:                          portalService,
+		versionCleanupRepository:               versionCleanupRepository,
+		operationGroupService:                  operationGroupService,
+		monitoringService:                      monitoringService,
+		roleService:                            roleService,
+		ddlContractService:                     ddlContractService,
+		mcpContractService:                     mcpContractService,
+		previousVersionStatusValidationEnabled: systemInfoService.GetFeatureFlags().PreviousVersionStatusValidation,
 	}
 }
 
 type versionServiceImpl struct {
-	favoritesRepo                   repository.FavoritesRepository
-	publishedRepo                   repository.PublishedRepository
-	publishedService                PublishedService
-	operationRepo                   repository.OperationRepository
-	exportRepository                repository.ExportResultRepository
-	operationService                OperationService
-	atService                       ActivityTrackingService
-	systemInfoService               SystemInfoService
-	packageVersionEnrichmentService PackageVersionEnrichmentService
-	portalService                   PortalService
-	versionCleanupRepository        repository.VersionCleanupRepository
-	buildService                    BuildService
-	operationGroupService           OperationGroupService
-	monitoringService               MonitoringService
-	roleService                     RoleService
-	ddlContractService              DDLContractService
-	mcpContractService              MCPContractService
+	favoritesRepo                          repository.FavoritesRepository
+	publishedRepo                          repository.PublishedRepository
+	publishedService                       PublishedService
+	operationRepo                          repository.OperationRepository
+	exportRepository                       repository.ExportResultRepository
+	operationService                       OperationService
+	atService                              ActivityTrackingService
+	systemInfoService                      SystemInfoService
+	packageVersionEnrichmentService        PackageVersionEnrichmentService
+	portalService                          PortalService
+	versionCleanupRepository               repository.VersionCleanupRepository
+	buildService                           BuildService
+	operationGroupService                  OperationGroupService
+	monitoringService                      MonitoringService
+	roleService                            RoleService
+	ddlContractService                     DDLContractService
+	mcpContractService                     MCPContractService
+	previousVersionStatusValidationEnabled bool
 }
 
 func (v *versionServiceImpl) SetBuildService(buildService BuildService) {
@@ -425,6 +427,28 @@ func (v versionServiceImpl) DeleteVersion(ctx context.SecurityContext, packageId
 			Message: exception.UnableToDeleteOldRevisionMsg,
 		}
 	}
+	referencingDashboards, err := v.publishedRepo.GetVersionReferencingDashboards(packageId, versionEnt.Version)
+	if err != nil {
+		return err
+	}
+	if len(referencingDashboards) > 0 {
+		log.Warnf("Blocked deletion of version %s of package %s by user %s: referenced by dashboards %v",
+			versionEnt.Version, packageId, ctx.GetUserId(), referencingDashboards)
+		accessible, hiddenCount, err := v.roleService.FilterVersionsByPackageReadAccess(ctx, referencingDashboards)
+		if err != nil {
+			return err
+		}
+		return &exception.CustomError{
+			Status:  http.StatusConflict,
+			Code:    exception.ReferencedByDashboard,
+			Message: exception.VersionReferencedByDashboardMsg,
+			Params: map[string]interface{}{
+				"packageId":  packageId,
+				"version":    versionEnt.Version,
+				"dashboards": entity.FormatVersionKeysWithHidden(accessible, hiddenCount, "dashboard version"),
+			},
+		}
+	}
 	err = v.publishedService.DeleteVersion(ctx, packageId, versionEnt.Version)
 	if err != nil {
 		return err
@@ -486,6 +510,40 @@ func (v versionServiceImpl) PatchVersion(ctx context.SecurityContext, packageId 
 			}
 			err = ReleaseVersionMatchesPattern(versionEnt.Version, pattern)
 			if err != nil {
+				return nil, err
+			}
+
+			// A release version's previous version must be a release.
+			if v.previousVersionStatusValidationEnabled && versionEnt.PreviousVersion != "" {
+				previousVersionPackageId := versionEnt.PreviousVersionPackageId
+				if previousVersionPackageId == "" {
+					previousVersionPackageId = packageId
+				}
+				previousVersionStatus, found, err := v.publishedService.GetVersionStatus(previousVersionPackageId, versionEnt.PreviousVersion)
+				if err != nil {
+					return nil, err
+				}
+				if found && previousVersionStatus == string(view.Draft) {
+					log.Debugf("Blocked changing version %s of package %s to 'release' status by user %s: previous version %s of package %s has 'draft' status",
+						versionEnt.Version, packageId, ctx.GetUserId(), versionEnt.PreviousVersion, previousVersionPackageId)
+					return nil, &exception.CustomError{
+						Status:  http.StatusBadRequest,
+						Code:    exception.InvalidReleaseVersionChain,
+						Message: exception.VersionStatusChangePreviousVersionNotReleaseMsg,
+						Params: map[string]interface{}{
+							"packageId":                packageId,
+							"version":                  versionEnt.Version,
+							"previousVersionPackageId": previousVersionPackageId,
+							"previousVersion":          versionEnt.PreviousVersion,
+						},
+					}
+				}
+			}
+		}
+
+		// Changing a release version to draft must not leave a release version that references it as its previous version.
+		if v.previousVersionStatusValidationEnabled && newStatus == string(view.Draft) && versionEnt.Status == string(view.Release) {
+			if err := v.publishedService.CheckNoReleaseDependentVersions(ctx, packageId, versionEnt.Version); err != nil {
 				return nil, err
 			}
 		}
@@ -1742,25 +1800,52 @@ func (v versionServiceImpl) StartPublishFromCSV(ctx context.SecurityContext, req
 		if req.PreviousVersionPackageId == "" {
 			previousVersionPackageId = req.PackageId
 		}
-		prevVersion, err := v.publishedRepo.GetVersion(previousVersionPackageId, req.PreviousVersion)
-		if err != nil {
+		if v.previousVersionStatusValidationEnabled {
+			previousVersionStatus, previousVersionFound, err := v.publishedService.GetVersionStatus(previousVersionPackageId, req.PreviousVersion)
+			if err != nil {
+				return "", err
+			}
+			if !previousVersionFound {
+				return "", &exception.CustomError{
+					Status:  http.StatusNotFound,
+					Code:    exception.PublishedPackageVersionNotFound,
+					Message: exception.PublishedPackageVersionNotFoundMsg,
+					Params:  map[string]interface{}{"packageId": previousVersionPackageId, "version": req.PreviousVersion},
+				}
+			}
+			// A release version's previous version must be a release; a draft version may reference a draft previous version.
+			if req.Status == string(view.Release) && previousVersionStatus == string(view.Draft) {
+				return "", newReleaseVersionPreviousVersionNotReleaseError(ctx, req.PackageId, req.Version, previousVersionPackageId, req.PreviousVersion)
+			}
+		} else {
+			prevVersion, err := v.publishedRepo.GetVersion(previousVersionPackageId, req.PreviousVersion)
+			if err != nil {
+				return "", err
+			}
+			if prevVersion == nil {
+				return "", &exception.CustomError{
+					Status:  http.StatusNotFound,
+					Code:    exception.PublishedPackageVersionNotFound,
+					Message: exception.PublishedPackageVersionNotFoundMsg,
+					Params:  map[string]interface{}{"packageId": previousVersionPackageId, "version": req.PreviousVersion},
+				}
+			}
+			if prevVersion.Status != string(view.Release) {
+				// Legacy rule: any previous version must be a release, regardless of the published version status.
+				return "", &exception.CustomError{
+					Status:  http.StatusNotFound,
+					Code:    exception.PreviousPackageVersionNotRelease,
+					Message: exception.PreviousPackageVersionNotReleaseMsg,
+					Params:  map[string]interface{}{"packageId": previousVersionPackageId, "version": req.PreviousVersion},
+				}
+			}
+		}
+	}
+
+	// Publishing this version as a draft must not leave a release version that references it as its previous version.
+	if v.previousVersionStatusValidationEnabled && req.Status == string(view.Draft) {
+		if err := v.publishedService.CheckNoReleaseDependentVersions(ctx, req.PackageId, req.Version); err != nil {
 			return "", err
-		}
-		if prevVersion == nil {
-			return "", &exception.CustomError{
-				Status:  http.StatusNotFound,
-				Code:    exception.PublishedPackageVersionNotFound,
-				Message: exception.PublishedPackageVersionNotFoundMsg,
-				Params:  map[string]interface{}{"packageId": previousVersionPackageId, "version": req.PreviousVersion},
-			}
-		}
-		if prevVersion.Status != string(view.Release) {
-			return "", &exception.CustomError{
-				Status:  http.StatusNotFound,
-				Code:    exception.PreviousPackageVersionNotRelease,
-				Message: exception.PreviousPackageVersionNotReleaseMsg,
-				Params:  map[string]interface{}{"packageId": previousVersionPackageId, "version": req.PreviousVersion},
-			}
 		}
 	}
 

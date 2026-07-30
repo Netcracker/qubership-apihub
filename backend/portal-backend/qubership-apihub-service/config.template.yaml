@@ -240,6 +240,8 @@ ai:
 featureFlags:
   # Optional; When true, signals to use v3 search API instead of v4 search API; Default: false; Example: true
   useV3Search: false
+  # Optional; When false, disables previous version status validation on publish and patch endpoints and restores the legacy check on the publish from CSV endpoint; Default: true; Example: false
+  previousVersionStatusValidation: true
 
 # List of enabled extension services
 #extensions:
