@@ -114,7 +114,7 @@ func (s *spectralExecutorImpl) GetLinterVersion() string {
 
 func detectSpectralVersion(spectralBinPath string) (string, error) {
 	if spectralBinPath == "" {
-		return "", fmt.Errorf("spectral executor path is not set (SPECTRAL_BIN_PATH env)")
+		return "", fmt.Errorf("spectral executor path is not set (configure linters.spectral.binPath in config.yaml)")
 	}
 	var spectralVersion string
 	args := []string{"--version"}

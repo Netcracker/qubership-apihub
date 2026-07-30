@@ -50,7 +50,7 @@ func main() {
 	r := mux.NewRouter().SkipClean(true).UseEncodedPath()
 	r.Use(midldleware.WriteDeadlineMiddleware)
 
-	creds := systemInfoService.GetCredsFromEnv()
+	creds := systemInfoService.GetCreds()
 	cp := db.NewConnectionProvider(creds)
 	initSrv := makeServer(systemInfoService, r)
 
@@ -108,9 +108,7 @@ func main() {
 	////
 
 	olricProvider, err := client.NewOlricProvider(
-		systemInfoService.GetOlricDiscoveryMode(),
-		systemInfoService.GetReplicaCount(),
-		systemInfoService.GetNamespace(),
+		systemInfoService.GetOlricConfig(),
 		systemInfoService.GetAPIHubUrl())
 	if err != nil {
 		log.Error("Failed to create olricProvider: " + err.Error())
@@ -252,7 +250,14 @@ func main() {
 	for _, prefix := range knownPathPrefixes {
 		//add routing for unknown paths with known path prefixes
 		r.PathPrefix(prefix).HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Warnf("Requested unknown endpoint: %v %v", r.Method, r.RequestURI)
+			xForwardedFor, remoteAddr := utils.RequestorIPFields(r)
+			log.WithFields(log.Fields{
+				"method":          r.Method,
+				"uri":             r.RequestURI,
+				"x_forwarded_for": xForwardedFor,
+				"remote_addr":     remoteAddr,
+			}).Warn("Requested unknown endpoint")
+
 			controller.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusMisdirectedRequest,
 				Message: "Requested unknown endpoint",
@@ -276,9 +281,9 @@ func makeServer(systemInfoService service.SystemInfoService, r *mux.Router) *htt
 
 	corsOptions = append(corsOptions, handlers.AllowedHeaders([]string{"Connection", "Accept-Encoding", "Content-Encoding", "X-Requested-With", "Content-Type", "Authorization"}))
 
-	allowedOrigin := systemInfoService.GetOriginAllowed()
-	if allowedOrigin != "" {
-		corsOptions = append(corsOptions, handlers.AllowedOrigins([]string{allowedOrigin}))
+	allowedOrigins := systemInfoService.GetAllowedOrigins()
+	if len(allowedOrigins) > 0 {
+		corsOptions = append(corsOptions, handlers.AllowedOrigins(allowedOrigins))
 	}
 	corsOptions = append(corsOptions, handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"}))
 

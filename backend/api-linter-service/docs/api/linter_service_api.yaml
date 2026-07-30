@@ -39,7 +39,7 @@ paths:
       summary: List available linters
       description: >
         Returns the list of available linter configurations with their supported API types and enabled status.
-        Configuration is derived from system settings (e.g., AI OAS linter visibility depends on ENABLE_AI_OAS_LINTER).
+        Configuration is derived from system settings (for example, AI OAS linter visibility depends on linters.ai.enabled).
       operationId: listLinters
       responses:
         "200":

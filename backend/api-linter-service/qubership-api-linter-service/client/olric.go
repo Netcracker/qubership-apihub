@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	sysconfig "github.com/Netcracker/qubership-api-linter-service/config"
 	"github.com/buraksezer/olric"
 	discovery "github.com/buraksezer/olric-cloud-plugin/lib"
 	"github.com/buraksezer/olric/config"
@@ -29,12 +30,12 @@ type olricProviderImpl struct {
 
 const olricBindAddr = "0.0.0.0"
 
-func NewOlricProvider(discoveryMode string, replicaCount int, namespace string, apihubUrl string) (OlricProvider, error) {
+func NewOlricProvider(olricConfig sysconfig.OlricConfig, apihubUrl string) (OlricProvider, error) {
 	prov := &olricProviderImpl{wg: sync.WaitGroup{}}
 
 	var err error
 	gob.Register(map[string]interface{}{})
-	prov.cfg, err = getConfig(discoveryMode, replicaCount, namespace, apihubUrl)
+	prov.cfg, err = getConfig(olricConfig, apihubUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -72,8 +73,8 @@ func (op *olricProviderImpl) GetBindAddr() string {
 	return op.cfg.BindAddr
 }
 
-func getConfig(discoveryMode string, replicaCount int, namespace string, apihubUrl string) (*config.Config, error) {
-	mode := getMode(discoveryMode)
+func getConfig(olricConfig sysconfig.OlricConfig, apihubUrl string) (*config.Config, error) {
+	mode := getMode(olricConfig.DiscoveryMode)
 	switch mode {
 	case "lan":
 		log.Info("Olric run in cloud mode")
@@ -82,7 +83,7 @@ func getConfig(discoveryMode string, replicaCount int, namespace string, apihubU
 		cfg.LogLevel = "WARN"
 		cfg.LogVerbosity = 2
 
-		ns, err := getNamespace(namespace)
+		ns, err := getNamespace(olricConfig.Namespace)
 		if err != nil {
 			return nil, err
 		}
@@ -95,7 +96,7 @@ func getConfig(discoveryMode string, replicaCount int, namespace string, apihubU
 		}
 
 		// TODO: try to get from replica set via kube client
-		rc := getReplicaCount(replicaCount)
+		rc := getReplicaCount(olricConfig.ReplicaCount)
 		log.Infof("replicaCount is set to %d", rc)
 
 		cfg.PartitionCount = uint64(rc * 4)
@@ -173,7 +174,7 @@ func getReplicaCount(replicaCount int) int {
 
 func getNamespace(namespace string) (string, error) {
 	if namespace == "" {
-		return "", fmt.Errorf("NAMESPACE env is not set")
+		return "", fmt.Errorf("olric namespace is not set (configure olric.namespace in config.yaml when olric.discoveryMode is lan)")
 	}
 
 	return namespace, nil
