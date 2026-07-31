@@ -76,7 +76,7 @@ export function processMcpDocument(
   document.mcpEntityIds = entityIds
 }
 
-const KIND_TO_FIELD: Record<McpKind, keyof PackageMcpFile> = {
+export const KIND_TO_FIELD: Record<McpKind, keyof PackageMcpFile> = {
   [MCP_KIND.INIT]: 'inits',
   [MCP_KIND.TOOL]: 'tools',
   [MCP_KIND.RESOURCE]: 'resources',

@@ -21,8 +21,8 @@ import {
   type BuildConfig,
   BuilderContext,
   BuilderResolvers,
-  BuildResult, ComparisonInternalDocument,
-  graphqlApiBuilder, MESSAGE_SEVERITY,
+  BuildResult,
+  graphqlApiBuilder,
   OperationId,
   OperationsApiType,
   PackageId,
@@ -41,21 +41,9 @@ import {
 import { IRegistry } from './types'
 import AdmZip from 'adm-zip'
 import { registryFs } from './fs'
-import {
-  saveComparisonInternalDocuments,
-  saveComparisonInternalDocumentsArray,
-  saveComparisonsArray,
-  saveDocumentsArray,
-  saveEachComparison,
-  saveEachDocument,
-  saveEachOperation,
-  saveInfo,
-  saveNotifications,
-  saveMcpEntities, saveDdlEntities, saveDdlComparisons, saveOperationsArray, saveSearchTextFiles, saveVersionInternalDocuments, saveVersionInternalDocumentsArray,
-} from './utils'
-import { toDdlComparisonDto, toVersionsComparisonDto } from '../../../src/utils/transformToDto'
+import { publishVersionPackage } from './utils'
 
-export const VERSIONS_PATH = 'test/versions'
+export { VERSIONS_PATH } from './utils'
 
 export interface ApihubRegistryParams {
   url?: string
@@ -90,65 +78,12 @@ export class ApihubRegistry implements IRegistry {
     await this.publishPackage(buildResult, builder.builderContext(this.config!), this.config!)
   }
 
-  //copy-paste from local registry
   async publishPackage(
     buildResult: BuildResult,
     builderContext: BuilderContext,
     config: BuildConfig,
   ): Promise<void> {
-    const {
-      operations,
-      documents,
-      comparisons,
-      ddlComparisons,
-      notifications,
-      mcpEntities,
-      ddlEntities,
-    } = buildResult
-
-    const basePath = `${VERSIONS_PATH}/${config.packageId}/${config.version}`
-    try {
-      await registryFs.rm(basePath, { recursive: true })
-    } catch (e) {
-      // do nothing
-    }
-
-    const logError = (message: string): void => {
-      notifications.push({
-        severity: MESSAGE_SEVERITY.Error,
-        message: message,
-      })
-    }
-
-    await registryFs.mkdir(basePath, { recursive: true })
-
-    await saveInfo(config, basePath)
-
-    await saveDocumentsArray(documents, basePath)
-    await saveVersionInternalDocumentsArray(documents, basePath)
-
-    await saveEachDocument(documents, basePath, builderContext)
-
-    await saveOperationsArray(operations, basePath)
-    await saveEachOperation(operations, basePath)
-    await saveSearchTextFiles(operations, basePath)
-    const comparisonsDto = comparisons.map(comparison => toVersionsComparisonDto(comparison, builderContext.normalizedSpecFragmentsHashCache, logError))
-    const ddlComparisonsDto = ddlComparisons.map(comparison => toDdlComparisonDto(comparison, builderContext.normalizedSpecFragmentsHashCache, logError))
-    const comparisonInternalDocuments: ComparisonInternalDocument[] = [
-      ...comparisons.flatMap(comparison => comparison.comparisonInternalDocuments),
-      ...ddlComparisons.flatMap(comparison => comparison.comparisonInternalDocuments),
-    ]
-
-    await saveComparisonsArray(comparisonsDto, basePath)
-    await saveEachComparison(comparisonsDto, basePath)
-    await saveDdlComparisons(ddlComparisonsDto, basePath)
-    await saveNotifications(notifications, basePath)
-    await saveVersionInternalDocuments(documents, basePath)
-    await saveComparisonInternalDocuments(comparisonInternalDocuments, basePath)
-    await saveComparisonInternalDocumentsArray(comparisonInternalDocuments, basePath)
-
-    await saveMcpEntities(mcpEntities, basePath)
-    await saveDdlEntities(ddlEntities, basePath)
+    await publishVersionPackage(buildResult, builderContext, config)
   }
 
   get versionResolvers(): BuilderResolvers {
