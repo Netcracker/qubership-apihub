@@ -1,12 +1,13 @@
-import { 
-  GRAPH_API_NODE_KIND_OBJECT, 
-  GRAPH_QL_MUTATION_TYPE_NAME_DEFAULT, 
-  GRAPH_QL_QUERY_TYPE_NAME_DEFAULT, 
-  GRAPH_QL_SUBSCRIPTION_TYPE_NAME_DEFAULT 
+import {
+  GRAPH_API_NODE_KIND_OBJECT,
+  GRAPH_QL_DEFAULT_ROOT_TYPE_NAMES,
+  GRAPH_QL_MUTATION_TYPE_NAME_DEFAULT,
+  GRAPH_QL_QUERY_TYPE_NAME_DEFAULT,
+  GRAPH_QL_SUBSCRIPTION_TYPE_NAME_DEFAULT
 } from "../constants"
 import { GraphApiSchema, GraphApiObjectDefinition, GraphApiObjectKind, GraphApiComponents } from "../types"
 import { printDescription, printBlock, typePrinter } from "./atomics.printer"
-import { GRAPH_API_COMPONENT_KINDS, Maybe } from "./declarations"
+import { GRAPH_API_COMPONENT_KINDS, NAMED_TYPE_COMPONENT_KINDS, Maybe } from "./declarations"
 import { printUsedDirectives } from "./definition-parts.printer"
 import { printObject } from "./definitions.printer"
 
@@ -22,14 +23,15 @@ export function printSchemaDefinition(schema: GraphApiSchema): Maybe<string> {
   const mutationTypeName = schema.mutationTypeName || GRAPH_QL_MUTATION_TYPE_NAME_DEFAULT
   const subscriptionTypeName = schema.subscriptionTypeName || GRAPH_QL_SUBSCRIPTION_TYPE_NAME_DEFAULT
 
-  // Determine if we need a schema definition:
-  // 1. If there's a description, or
-  // 2. If using non-standard root type names (not Query/Mutation/Subscription)
   const hasCustomRootTypes = (queriesCount && queryTypeName !== GRAPH_QL_QUERY_TYPE_NAME_DEFAULT) ||
                              (mutationionsCount && mutationTypeName !== GRAPH_QL_MUTATION_TYPE_NAME_DEFAULT) ||
                              (subscriptionsCount && subscriptionTypeName !== GRAPH_QL_SUBSCRIPTION_TYPE_NAME_DEFAULT)
 
-  if (schema.description || hasCustomRootTypes) {
+  // Emit an explicit schema definition if any of:
+  // 1. there's a description, or
+  // 2. non-standard root type names are used (not Query/Mutation/Subscription), or
+  // 3. a non-root type is named like a default root (see hasNamedTypeUsingDefaultRootName).
+  if (schema.description || hasCustomRootTypes || hasNamedTypeUsingDefaultRootName(schema.components)) {
     const block = []
     queriesCount && block.push(`  query: ${queryTypeName}`)
     mutationionsCount && block.push(`  mutation: ${mutationTypeName}`)
@@ -41,6 +43,25 @@ export function printSchemaDefinition(schema: GraphApiSchema): Maybe<string> {
       printBlock(block)
     )
   }
+}
+
+// Returns true if any component named type uses a default root name (Query/Mutation/Subscription) —
+// such a type forces an explicit schema block to stay lossless. Root operation types are stored
+// separately (queries/mutations/subscriptions), never in components, so a match here is always a
+// NON-root type that would otherwise be promoted to a root on re-parse.
+function hasNamedTypeUsingDefaultRootName(components: GraphApiComponents = {}): boolean {
+  for (const kind of NAMED_TYPE_COMPONENT_KINDS) {
+    const definitions = components[kind]
+    if (!definitions) {
+      continue
+    }
+    for (const rootName of GRAPH_QL_DEFAULT_ROOT_TYPE_NAMES) {
+      if (rootName in definitions) {
+        return true
+      }
+    }
+  }
+  return false
 }
 
 export function printOperations(
