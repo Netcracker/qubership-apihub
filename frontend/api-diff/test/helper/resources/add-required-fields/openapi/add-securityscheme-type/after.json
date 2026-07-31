@@ -1,0 +1,41 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Control REST API",
+        "description": "REST API for Control",
+        "version": "1.0.1"
+    },
+    "security": [
+        {
+            "bearerAuth": []
+        }
+    ],
+    "paths": {
+        "/api/v1/components/datasource/tableconfig/validate": {
+            "post": {
+                "summary": "Endpoint for validation of a DataSource TableConfig.",
+                "description": "Endpoint for validation of DataSource TableConfig.",
+                "operationId": "validateDataSourceV1",
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "A simple string response"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT"
+            }
+        }
+    }
+}

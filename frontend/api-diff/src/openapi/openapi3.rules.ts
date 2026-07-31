@@ -413,7 +413,7 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
   }
 
   const oAuthFlowsObjectRules: CompareRules = {
-    $: [breaking, nonBreaking, breaking],
+    $: [nonBreaking, nonBreaking, breaking],
     ...openApiSpecificationExtensionRulesFunction(),
     '/*': oAuthFlowObjectRules,
   }
@@ -474,11 +474,11 @@ export const openApi3Rules = (options: OpenApi3RulesOptions): CompareRules => {
         '/bearerFormat': { $: allAnnotation },
         '/description': { $: allAnnotation },
         '/flows': oAuthFlowsObjectRules,
-        '/in': { $: [breaking, nonBreaking, breaking] },
-        '/name': { $: [breaking, nonBreaking, breaking] },
+        '/in': { $: [nonBreaking, nonBreaking, breaking] },
+        '/name': { $: [nonBreaking, nonBreaking, breaking] },
         '/openIdConnectUrl': { $: allAnnotation },
-        '/scheme': { $: [breaking, nonBreaking, breaking] },
-        '/type': { $: [breaking, nonBreaking, breaking] },
+        '/scheme': { $: [nonBreaking, nonBreaking, breaking] },
+        '/type': { $: [nonBreaking, nonBreaking, breaking] },
         ...openApiSpecificationExtensionRulesFunction(),
       },
     },
