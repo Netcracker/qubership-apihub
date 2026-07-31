@@ -140,6 +140,8 @@ qubershipApihubBackend:
       apiSpecDirectory: ''
       # Optional; Maximum wait time in minutes for lock release during migration restart; If not set, default value: 30; Example: 60
       migrationLockMaxWaitMinutes: 30
+      # Optional; Safety-net cap in seconds on request processing time; a slow query or downstream call is cancelled once it elapses. Must stay below the nginx generic proxy_read_timeout (600s) so the app returns its own timeout error first; streaming/turn endpoints (MCP, AI chat SSE and non-streaming messages) are always exempt; Set to 0 to disable the cap (temporary escape hatch while the value is being tuned); If not set, default value: 570; Example: 300
+      requestTimeoutSec: 570
       # Optional; Base directory for ephemeral (temporary) file storage; If not set, default value: /tmp/apihub-ephemeral-files; Example: /var/apihub/ephemeral
       ephemeralFileDirectory: '/tmp/apihub-ephemeral-files'
 
