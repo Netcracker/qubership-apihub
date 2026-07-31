@@ -1,6 +1,8 @@
 # qubership-apihub-api-processor
 
-TypeScript/Node.js library that processes API source specifications (REST/OpenAPI, GraphQL, text, and unknown files) into a **package-version build result**: parsed documents, extracted operations, optional version comparisons (changelog), export artifacts, and notifications.
+TypeScript/Node.js library that processes API source specifications (REST/OpenAPI, GraphQL, text, and
+unknown files) into a **package-version build result**: parsed documents, extracted operations,
+optional version comparisons (changelog), export artifacts, and notifications.
 
 This repository is published as `@netcracker/qubership-apihub-api-processor`.
 
@@ -9,14 +11,16 @@ This repository is published as `@netcracker/qubership-apihub-api-processor`.
 The main entry point is `PackageVersionBuilder`. You provide:
 
 - **Build configuration** (`BuildConfig`) that describes *what* to build (package id/version, files/refs, build type, etc.)
-- **Resolvers** (`BuilderResolvers`) that describe *how* to fetch inputs (files, previous version data, templates, documents, etc.)
+- **Resolvers** (`BuilderResolvers`) that describe *how* to fetch inputs (files, previous version data,
+  templates, documents, etc.)
 
 The builder produces a `BuildResult` that contains:
 
 - **documents** (`Map<string, VersionDocument>`)
 - **operations** (`Map<string, ApiOperation>`)
 - **comparisons** (`VersionsComparison[]`, when changelog comparison is enabled)
-- **ddlEntities** (`DdlEntityIndex`) and **ddlComparisons** (`DdlComparison[]`) — DDL contract output (see [DDL contract support](#ddl-contract-support))
+- **ddlEntities** (`DdlEntityIndex`) and **ddlComparisons** (`DdlComparison[]`) — DDL contract output
+  (see [DDL contract support](#ddl-contract-support))
 - **mcpEntities** (`McpEntityIndex`) — MCP contract output
 - **notifications** (errors/warnings/info produced during parsing/building)
 - **exportDocuments / exportFileName** (for export-related build types)
@@ -62,7 +66,7 @@ const buildResult = await builder.run()
 `BuildConfig` includes (among other fields):
 
 - **packageId / version**: identify the package version being built
-- **status**: `release | draft | archived | release-candidate` (and `''` for some build types)
+- **status**: `release | draft | archived` (and `''` for some build types)
 - **previousVersion / previousVersionPackageId**: previous version for changelog comparisons
 - **buildType**: selects the processing strategy (see below)
 - **files**: list of `{ fileId, ... }` source inputs (YAML/JSON/GraphQL/MD/Proto/etc. depending on supported formats)
@@ -78,7 +82,8 @@ The builder selects a strategy based on `buildType`:
 - **`prefix-groups-changelog`**: changelog with group prefixing logic
 - **`exportVersion`**: export a whole version in the selected format
 - **`exportRestDocument`**: export a single REST document by `documentId`
-- **`exportRestOperationsGroup`**: export a REST operations group (`groupName`) using a transformation (`reducedSourceSpecifications` or `mergedSpecification`)
+- **`exportRestOperationsGroup`**: export a REST operations group (`groupName`) using a transformation
+  (`reducedSourceSpecifications` or `mergedSpecification`)
 
 Deprecated (still present in constants/types):
 
@@ -90,7 +95,8 @@ Deprecated (still present in constants/types):
 
 `PackageVersionBuilder` itself does not know how to fetch files or previous versions — it delegates this to resolvers.
 
-Only **`fileResolver` is required**. The rest are optional in the type system, but some build types/flows will throw if a resolver is missing.
+Only **`fileResolver` is required**. The rest are optional in the type system, but some build
+types/flows will throw if a resolver is missing.
 
 Resolvers you can provide (see `BuilderResolvers`):
 
@@ -116,9 +122,10 @@ Resolvers you can provide (see `BuilderResolvers`):
 
 ## High-level architecture (ASCII)
 
-The library is structured as a pipeline with a **single public orchestrator** (`PackageVersionBuilder`), pluggable **strategies** (by build type), reusable **components**, and per-api-type **builders**.
+The library is structured as a pipeline with a **single public orchestrator** (`PackageVersionBuilder`),
+pluggable **strategies** (by build type), reusable **components**, and per-api-type **builders**.
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                              PUBLIC API / ENTRY                             │
 │                                                                             │
@@ -172,7 +179,7 @@ The library is structured as a pipeline with a **single public orchestrator** (`
 
 ### Data flow (simplified)
 
-```
+```text
 1) BuildConfig + Resolvers
    ↓
 2) PackageVersionBuilder.run() selects strategy by buildType
@@ -200,12 +207,15 @@ dashboards aggregate DDL-bearing refs. Each contract type is summarized independ
 - `documents.json` / `documents/<slug>.sql` — one entry per `.sql` file; the document holds the original SQL verbatim.
 - `version-internal-documents/<id>.json` — the normalized → denormalized → serialized `Realm`.
 - `ddl.json` — table entity index, grouped by kind (`{ tables: [...] }`), payload stripped.
-- `ddl/<ddlEntityId>` — minimal per-table SQL (no extension). The entity id is `{schemaName}-{kind}-{name}`, each segment slugified.
+- `ddl/<ddlEntityId>` — minimal per-table SQL (no extension). The entity id is
+  `{schemaName}-{kind}-{name}`, each segment slugified.
 
 **Changelog artifacts** (sibling to the operation comparisons, which are untouched):
 
-- `ddl-comparisons.json` — DDL comparison index; each comparison carries `contractsChangesSummary`, an object keyed by contract type (`ddl`), the analog of REST's `operationTypes` array.
-- `ddl-comparisons/<comparisonFileId>` — per-pair change data under an `entities` key; each entry groups the current/previous entity data (`ddlEntityData`/`previousDdlEntityData`) plus its `changes`.
+- `ddl-comparisons.json` — DDL comparison index; each comparison carries `contractsChangesSummary`, an
+  object keyed by contract type (`ddl`), the analog of REST's `operationTypes` array.
+- `ddl-comparisons/<comparisonFileId>` — per-pair change data under an `entities` key; each entry groups
+  the current/previous entity data (`ddlEntityData`/`previousDdlEntityData`) plus its `changes`.
 - The merged `Realm` per document pair lands in the **shared** `comparison-internal-documents`.
 
 **Notable behaviors:** a renamed table is a remove + add (no rename detection); a table moved between
@@ -242,7 +252,8 @@ npm run test:coverage
 
 ## How to run & debug (repo)
 
-This is a library, so there is no `start` script. For debugging runtime behavior, the repo contains a performance harness entrypoint at `test/performance.ts` and a dedicated Vite config for it.
+This is a library, so there is no `start` script. For debugging runtime behavior, the repo contains a
+performance harness entrypoint at `test/performance.ts` and a dedicated Vite config for it.
 
 - Build the performance bundle:
 
@@ -258,8 +269,10 @@ npm run performance:run-inspect
 
 Notes:
 
-- `npm run performance:run-inspect` executes `node --inspect dist/index.es.js` (the file produced by the performance Vite build).
-- `profile:*` and `operation:test` scripts in `package.json` reference `./test/profile.js` and `./test/operation.js`, but those files are not present in this repository snapshot.
+- `npm run performance:run-inspect` executes `node --inspect dist/index.es.js` (the file produced by the
+  performance Vite build).
+- `profile:*` and `operation:test` scripts in `package.json` reference `./test/profile.js` and
+  `./test/operation.js`, but those files are not present in this repository snapshot.
 
 ## Local development tips
 

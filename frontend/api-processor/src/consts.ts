@@ -115,7 +115,6 @@ export const VERSION_STATUS = {
   RELEASE: 'release',
   DRAFT: 'draft',
   ARCHIVED: 'archived',
-  RELEASE_CANDIDATE: 'release-candidate',
   NONE: '', // non-existent status for changelog builds
 } as const
 
