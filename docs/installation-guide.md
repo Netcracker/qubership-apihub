@@ -545,7 +545,7 @@ For secrets management on production clusters use Kubernetes **ExternalSecrets**
 ```bash
 # One-liner: creates Kind cluster + installs APIHUB
 ./helm-templates/local-k8s-quickstart/apihub-quickstart.sh
-# Portal at: http://qubership-apihub.localtest.me/login
+# Portal at: https://qubership-apihub.localtest.me/login
 ```
 
 ---

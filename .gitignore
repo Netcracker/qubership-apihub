@@ -5,6 +5,10 @@ docker-compose/with-keycloak/jwt_private_key
 docker-compose/with-gitlab/gitlab/**
 helm-templates/qubership-apihub/jwt_private_key
 helm-templates/qubership-apihub/local-secrets.yaml
+helm-templates/local-k8s-quickstart/qubership-apihub/local-secrets.yaml
+helm-templates/local-k8s-quickstart/qubership-apihub/with-keycloak-local-secrets.yaml
+helm-templates/local-k8s-quickstart/qubership-apihub/certs/
+helm-templates/local-k8s-quickstart/keycloak/files/realm.json
 .idea
 
 # APM cache (installed package sources)

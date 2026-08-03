@@ -26,7 +26,7 @@ It is not a production ready deployment schema.
 
 1. Install the following tools: podman, kind, kubectl, helm
 2. Run `apihub-quickstart.sh`
-3. APIHUB is on <http://qubership-apihub.localtest.me/login>
+3. APIHUB is on <https://qubership-apihub.localtest.me/login>
 
 ## How to set up k8s cluster on your PC
 
@@ -166,68 +166,37 @@ Qubership APIHUB will be accessible on [https://qubership-apihub.localtest.me](h
 
 Credentials for login can be found in `./qubership-apihub/local-secrets.yaml` file
 
-## Optional: custom CA for backend HTTPS outbound calls
+The browser may warn about the self-signed certificate. That is expected for local Kind.
+Outbound HTTPS from backend / linter / agents-backend trusts the same local CA via
+`customCa` (Secret `apihub-local-custom-ca` mounted at `/tmp/cert`).
 
-When the backend or linter uses the [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) runtime image, mount corporate CA certificates at **`/tmp/cert`**. The base image entrypoint loads them before the application starts.
+## Local TLS for Kind (automatic)
 
-1. Create a Secret in the APIHUB namespace. **Option A — YAML manifest** (save as `apihub-backend-custom-ca-secret.yaml`, edit PEM body and namespace, then `kubectl apply -f apihub-backend-custom-ca-secret.yaml`):
+`scripts/3-generate-secrets.sh` calls `generate-local-tls.sh`, which creates:
 
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: apihub-backend-custom-ca
-  namespace: qubership-apihub
-type: Opaque
-stringData:
-  company-root-ca.pem: |
-    -----BEGIN CERTIFICATE-----
-    # paste PEM body from your corporate CA
-    -----END CERTIFICATE-----
-```
+| File | Purpose |
+|------|---------|
+| `qubership-apihub/certs/ca.crt` | Local CA; mounted into backend pods for TLS verification |
+| `qubership-apihub/certs/tls.crt` / `tls.key` | Server cert for `qubership-apihub.localtest.me` / `*.localtest.me` |
 
-Repeat with **`metadata.name`** `apihub-linter-custom-ca` and `apihub-agents-backend-custom-ca` for the linter and agents-backend pods (PEM contents may match).
+Deploy scripts create Secret `apihub-local-custom-ca` and Helm values enable `customCa` for
+backend, linter, and agents-backend. Ingress TLS material is injected via `local-secrets.yaml`
+(`APIHUB_TLS_CRT` / `APIHUB_TLS_KEY`).
 
-**Option B — kubectl** (one or more `.crt`/`.pem` files):
+## Optional: corporate custom CA for backend HTTPS outbound calls
+
+Local Kind already mounts Secret `apihub-local-custom-ca` (the CA from `generate-local-tls.sh`).
+To also trust a corporate CA, add another PEM key to the **same** Secret, for example:
 
 ```bash
-kubectl create secret generic apihub-backend-custom-ca \
+kubectl create secret generic apihub-local-custom-ca \
+  --from-file=localtest-me-ca.pem=./qubership-apihub/certs/ca.crt \
   --from-file=company-ca.pem=./company-ca.pem \
-  -n qubership-apihub
+  -n qubership-apihub \
+  --dry-run=client -o yaml | kubectl apply -f -
 ```
 
-```bash
-kubectl create secret generic apihub-linter-custom-ca \
-  --from-file=company-ca.pem=./company-ca.pem \
-  -n qubership-apihub
-```
-
-```bash
-kubectl create secret generic apihub-agents-backend-custom-ca \
-  --from-file=company-ca.pem=./company-ca.pem \
-  -n qubership-apihub
-```
-
-2. Enable the mount in `qubership-apihub/local-k8s-values.yaml` (or the Keycloak overlay):
-
-```yaml
-qubershipApihubBackend:
-  customCa:
-    enabled: true
-    secretName: apihub-backend-custom-ca
-
-qubershipApiLinterService:
-  customCa:
-    enabled: true
-    secretName: apihub-linter-custom-ca
-
-qubershipApihubAgentsBackend:
-  customCa:
-    enabled: true
-    secretName: apihub-agents-backend-custom-ca
-```
-
-3. Upgrade the release: `helm upgrade apihub ./helm-templates/qubership-apihub -n qubership-apihub -f qubership-apihub/local-k8s-values.yaml -f qubership-apihub/local-secrets.yaml`
+Then restart backend / linter / agents-backend pods so the base image reloads `/tmp/cert`.
 
 MinIO/S3 custom CA remains in **`s3Storage.crt`** inside the backend config Secret, not in `/tmp/cert`.
 

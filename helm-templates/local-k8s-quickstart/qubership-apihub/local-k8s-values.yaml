@@ -10,8 +10,8 @@ qubershipApihubBackend:
     memory:
       limit: "512Mi"
   customCa:
-    enabled: false
-    secretName: ''
+    enabled: true
+    secretName: apihub-local-custom-ca
   env:
     logLevel: ''
     database:
@@ -81,8 +81,8 @@ qubershipApihubUi:
   tlsIngress:
     enabled: true
     tlsSecret:
-      certificate: ''
-      certificateKey: ''
+      certificate: '' # filled by local-secrets.yaml from generate-local-tls.sh
+      certificateKey: '' # filled by local-secrets.yaml from generate-local-tls.sh
 
 qubershipApiLinterService:
   image:
@@ -90,8 +90,8 @@ qubershipApiLinterService:
     tag: 'dev'
   replicas: 1
   customCa:
-    enabled: false
-    secretName: ''
+    enabled: true
+    secretName: apihub-local-custom-ca
   resource:
     cpu:
       request: "30m"
@@ -133,8 +133,8 @@ qubershipApihubAgentsBackend:
     repository: 'ghcr.io/netcracker/qubership-apihub-agents-backend'
     tag: 'dev'
   customCa:
-    enabled: false
-    secretName: ''
+    enabled: true
+    secretName: apihub-local-custom-ca
   replicas: 1
   resource:
     memory:
