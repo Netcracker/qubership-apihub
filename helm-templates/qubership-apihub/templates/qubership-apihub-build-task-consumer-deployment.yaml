@@ -28,9 +28,18 @@ spec:
                 app.kubernetes.io/technology: 'node-js'
         spec:
             serviceAccountName: 'qubership-apihub-build-task-consumer'
+            volumes:
+            -   name: apihub-api-key
+                secret:
+                    defaultMode: 420
+                    secretName: 'qubership-apihub-build-task-consumer-api-key-secret'
             containers:
             -   name: 'qubership-apihub-build-task-consumer'
                 image: '{{ .Values.qubershipApihubBuildTaskConsumer.image.repository }}:{{ .Values.qubershipApihubBuildTaskConsumer.image.tag }}'
+                volumeMounts:
+                -   name: apihub-api-key
+                    mountPath: /etc/secrets/apihub
+                    readOnly: true
                 ports:
                 -   name: web
                     containerPort: 3000
@@ -44,11 +53,8 @@ spec:
                     value: '/tmp' 
                 -   name: OPERATIONS_BUILD_BATCH
                     value: '{{ .Values.qubershipApihubBuildTaskConsumer.env.operationsBuildBatch }}'
-                -   name: APIHUB_API_KEY
-                    valueFrom:
-                        secretKeyRef:
-                            name: 'qubership-apihub-build-task-consumer-api-key-secret'
-                            key: access_token
+                -   name: APIHUB_API_KEY_FILE
+                    value: '/etc/secrets/apihub/access_token'
                 resources:
                     requests:
                         cpu: {{ .Values.qubershipApihubBuildTaskConsumer.resource.cpu.request }}
