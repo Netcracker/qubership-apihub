@@ -1,0 +1,70 @@
+lockfile_version: '1'
+generated_at: '2026-06-03T14:56:20.457217+00:00'
+apm_version: 0.16.0
+dependencies:
+- repo_url: Netcracker/qubership-ai-packages
+  host: github.com
+  resolved_commit: 785ac701be71e5f09f8857970c026d5f6bbbbb1a
+  virtual_path: agent-packages/english-developer-style
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/english-developer-style
+  - .claude/rules/english-developer-style.md
+  - .claude/skills/english-developer-style
+  - .cursor/rules/english-developer-style.mdc
+  - .github/instructions/english-developer-style.instructions.md
+  deployed_file_hashes:
+    .claude/rules/english-developer-style.md: sha256:71d5921cbb7e91db77b2ad7403714cc4d8471e3af7a974b850e9831df2ca25b9
+    .cursor/rules/english-developer-style.mdc: sha256:981d72b4b97f7b5fb861ea9beb32edef5746c8ed87419abaadc999e14861a6a9
+    .github/instructions/english-developer-style.instructions.md: sha256:9bd3f0ea1da9c84677b4d7e91126208b437bc93b82ea6c684e1d76db9e42abde
+  content_hash: sha256:107dd671a330a3afcb3bcce940afa130f5576c17840cee77d9fcefeb4550c68c
+- repo_url: Netcracker/qubership-ai-packages
+  host: github.com
+  resolved_commit: 785ac701be71e5f09f8857970c026d5f6bbbbb1a
+  virtual_path: agent-packages/markdown-line-length-120
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/markdown-line-length-120
+  - .claude/rules/markdown-line-length-120.md
+  - .claude/skills/markdown-line-length-120
+  - .cursor/rules/markdown-line-length-120.mdc
+  - .github/instructions/markdown-line-length-120.instructions.md
+  deployed_file_hashes:
+    .claude/rules/markdown-line-length-120.md: sha256:17478b76774dca2ab2ae0ace590f84fa4efc0c02d39502aca8de7abb8a67c869
+    .cursor/rules/markdown-line-length-120.mdc: sha256:4eeb64d82c3f86bb228cb7d8c4a030c4091750bf87b58e39751257a80b1b6ce5
+    .github/instructions/markdown-line-length-120.instructions.md: sha256:6ba398a796f727912bbeeec70cf4203affa8b1999d715d6f11830e8703dac350
+  content_hash: sha256:a1aefd3975421bee49843021ae90295c61df1e7f9b897d2bbe38d696e40c1583
+- repo_url: _local/development-conventions
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/ci-super-linter.md
+  - .claude/rules/clarify-before-coding.md
+  - .cursor/rules/ci-super-linter.mdc
+  - .cursor/rules/clarify-before-coding.mdc
+  - .github/instructions/ci-super-linter.instructions.md
+  - .github/instructions/clarify-before-coding.instructions.md
+  deployed_file_hashes:
+    .claude/rules/ci-super-linter.md: sha256:d655a548333e52a748113632665f810e3fb6084339852306aca90f02cfb4f0c7
+    .claude/rules/clarify-before-coding.md: sha256:a3e34e5277a4a3fba12fd6f236e921a59c561e6ee82e240eec247861aa8a398c
+    .cursor/rules/ci-super-linter.mdc: sha256:2f264db238d0d7ffd9d8b830dd383233c57b20e057557d65084fe3f0e7512967
+    .cursor/rules/clarify-before-coding.mdc: sha256:ceb003b39ea330002556d10d3ca52445909bbaf23705ff27f2643705db98c0f4
+    .github/instructions/ci-super-linter.instructions.md: sha256:7e8e2395715e9bd69ec938d4e106ec16d0e9256053c1562cf915a40bf33c7fe5
+    .github/instructions/clarify-before-coding.instructions.md: sha256:f0723cdf5b2cc34bc46992a6c550842f8eb9dcc5b39540c9916835a4ee58d60d
+  source: local
+  local_path: ../qubership-apihub-ci/agent-packages/development-conventions
+- repo_url: _local/postman-e2e-authoring
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/postman-e2e-authoring
+  - .claude/rules/postman-e2e-authoring.md
+  - .claude/skills/postman-e2e-authoring
+  - .cursor/rules/postman-e2e-authoring.mdc
+  - .github/instructions/postman-e2e-authoring.instructions.md
+  deployed_file_hashes:
+    .claude/rules/postman-e2e-authoring.md: sha256:0a4bef3a4703bea9d826668f1ba73c39fb39881eba956bbe538222421922b5cf
+    .cursor/rules/postman-e2e-authoring.mdc: sha256:32b704dcf38034ad2f96f88a9d0c5bb8340f46d9fa5284f372e1b33a03567a9b
+    .github/instructions/postman-e2e-authoring.instructions.md: sha256:94cb08b768d9d0237cff136fe56591c1cb22114eafdd42c856c497a9c9d3ba0a
+  source: local
+  local_path: ./agent-packages/postman-e2e-authoring

@@ -1,1 +1,5 @@
 reports/report.html
+
+# APM
+apm_modules/
+agent-packages/**/build/
