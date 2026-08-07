@@ -31,8 +31,9 @@ type BusinessParameters struct {
 	DefaultWorkspaceId string
 }
 type SecurityConfig struct {
-	InsecureProxy  bool
-	AllowedOrigins []string
+	InsecureProxy       bool
+	AllowedOrigins      []string
+	ShowDebugInResponse bool
 }
 
 type CleanupConfig struct {

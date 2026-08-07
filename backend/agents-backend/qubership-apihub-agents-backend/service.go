@@ -35,6 +35,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	controller.SetShowDebugInResponse(systemInfoService.ShowDebugInResponse())
 	if err := utils.ValidateTLSAtStartup(); err != nil {
 		log.Fatalf("TLS configuration failed: %v", err)
 	}

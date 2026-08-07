@@ -12,8 +12,20 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var showDebugInResponse bool
+
+func SetShowDebugInResponse(value bool) {
+	showDebugInResponse = value
+}
+
 func RespondWithCustomError(w http.ResponseWriter, err *exception.CustomError) {
 	log.Debugf("Request failed. Code = %d. Message = %s. Params: %v. Debug: %s", err.Status, err.Message, err.Params, err.Debug)
+	if !showDebugInResponse && err.Debug != "" {
+		errWithoutDebug := *err
+		errWithoutDebug.Debug = ""
+		respondWithJson(w, errWithoutDebug.Status, errWithoutDebug)
+		return
+	}
 	respondWithJson(w, err.Status, err)
 }
 
