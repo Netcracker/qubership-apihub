@@ -75,10 +75,9 @@ func (l listServiceImpl) ListServiceNames(namespace string) ([]view.ServiceNameI
 		return make([]view.ServiceNameItem, 0), nil
 	}
 	for _, svc := range list {
-		annotations := getAllAnnotationsForService(svc)
 		result = append(result, view.ServiceNameItem{
 			Id:   svc.Name,
-			Name: getServiceName(svc.Name, annotations),
+			Name: getServiceName(svc.Name),
 		})
 	}
 	return result, nil
@@ -143,7 +142,7 @@ func (l listServiceImpl) ListServiceItems(namespace string) ([]view.ServiceItem,
 			continue
 		}
 		serviceId := srv.Name
-		serviceName := getServiceName(serviceId, annotations)
+		serviceName := getServiceName(serviceId)
 		baseUrl := buildBaseurl(srv)
 
 		labelsToAdd := map[string]string{}

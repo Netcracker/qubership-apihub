@@ -176,7 +176,11 @@ paths:
         Returns discovered services and the overall discovery status with per-service diagnostics.
         See the `status` field in the response (`none`, `running`, `complete`, `error`).
         Start discovery via `POST /v2/namespaces/{name}/workspaces/{workspaceId}/discover`.
+        Each distinct services list passed to the discovery request has its own stored result;
+        use the `services` query parameter to address the result of a scoped discovery.
       operationId: getNamespaceServicesV3
+      parameters:
+        - $ref: "#/components/parameters/RequestedServices"
       tags:
         - Cloud Services
       responses:
@@ -203,6 +207,18 @@ paths:
                       - running
                       - complete
                       - error
+                  debug:
+                    description: Diagnostic details for a failed discovery process. Empty when the process succeeded.
+                    type: string
+                  requestedServices:
+                    description: |
+                      The services list the addressed discovery result was started with.
+                      Absent on the default (unscoped) result, where the whole namespace was discovered.
+                      Compare it against `services[].serviceName` to find requested services that were not found in the namespace.
+                    type: array
+                    items:
+                      type: string
+                    example: ["apihub-be", "apihub-fe"]
         "500":
           $ref: "#/components/responses/internalServerError500"
         "503":
@@ -219,12 +235,26 @@ paths:
       summary: Start discovery process
       description: |
         Starts an asynchronous service discovery process.
-        No process ID is returned; retrieve process status via getServices.
-        At most one discovery process is active per agent.
+        No process ID is returned. Retrieve the result via getServices; a result limited to a services list is
+        readable only through getNamespaceServicesV3, passing the same list in its `services` parameter.
+        Accepts the same optional request body as postNamespaceDiscoverV2.
+        Each distinct services list has its own stored result: discoveries with different lists run and are stored
+        independently, and starting a discovery again with the same list resets and rebuilds that list's result.
+        An absent body, or an absent or empty services list, discovers the whole namespace and stores the result
+        as the default (unscoped) one.
+      requestBody:
+        required: false
+        description: Optional discovery scope. Omit the body entirely to discover the whole namespace.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiscoveryRequest"
       responses:
         "202":
           description: Success
           content: {}
+        "400":
+          $ref: "#/components/responses/badRequest400"
         "500":
           $ref: "#/components/responses/internalServerError500"
         "503":
@@ -240,12 +270,26 @@ paths:
       summary: Start discovery process
       description: |
         Starts an asynchronous service discovery process.
-        No process ID is returned; retrieve process status via getServices.
-        At most one discovery process is active per agent.
+        No process ID is returned. Retrieve the result via getServices; a result limited to a services list is
+        readable only through getNamespaceServicesV3, passing the same list in its `services` parameter.
+        Pass a request body to limit the discovery scope to a well-known list of services.
+        Each distinct services list has its own stored result: discoveries with different lists run and are stored
+        independently, and starting a discovery again with the same list resets and rebuilds that list's result.
+        An absent body, or an absent or empty services list, discovers the whole namespace and stores the result
+        as the default (unscoped) one.
+      requestBody:
+        required: false
+        description: Optional discovery scope. Omit the body entirely to discover the whole namespace.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DiscoveryRequest"
       responses:
         "202":
           description: Success
           content: {}
+        "400":
+          $ref: "#/components/responses/badRequest400"
         "500":
           $ref: "#/components/responses/internalServerError500"
         "503":
@@ -260,6 +304,8 @@ paths:
       description: |
         Retrieve a service API specification by specification ID for the given namespace and service.
         Returns the document body in JSON, YAML, or plain text depending on the stored format and Accept header.
+        To download a document found by a discovery limited to a services list, use
+        getNamespaceServicesIdSpecsIdV2 and pass the same list.
       operationId: getNamespaceServicesIdSpecsId
       deprecated: true
       x-deprecation-reason: New version of API is created - GET /v2/namespaces/{name}/workspaces/{workspaceId}/services/{serviceId}/specs/{specId}
@@ -298,6 +344,8 @@ paths:
       operationId: getNamespaceServicesIdSpecsIdV2
       tags:
         - Cloud Services
+      parameters:
+        - $ref: "#/components/parameters/RequestedServices"
       responses:
         "200":
           description: Successful operation
@@ -570,6 +618,24 @@ components:
       required: true
       schema:
         type: string
+    RequestedServices:
+      name: services
+      in: query
+      required: false
+      description: |
+        Comma-separated list of service names identifying which discovery result to address.
+        Pass the same list that was sent in the discovery request body to read that discovery's result;
+        documents discovered by a scoped discovery must also be downloaded with the same list.
+        The list is treated as a set: order and duplicates do not affect which result is addressed.
+        When absent or empty, the default (unscoped) discovery result is addressed.
+        A result that was never produced for the given list has status `none`.
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          type: string
+      example: ["apihub-be", "apihub-fe"]
   schemas:
     SpecificationType:
       title: type
@@ -964,6 +1030,32 @@ components:
           type: string
           description: Brief description of the error
           example: "Not Found"
+    DiscoveryRequest:
+      description: |
+        Optional body of a discovery request, used to limit the discovery scope to a well-known list of services.
+        An absent body, or an absent or empty services list, discovers every service in the namespace and stores
+        the result as the default (unscoped) one.
+        Each distinct services list has its own stored result; the list is treated as a set, so order and duplicates
+        do not affect which result the discovery writes to.
+      type: object
+      properties:
+        services:
+          description: |
+            Service names to discover. Each entry is matched, exactly and case-sensitively, against the service name
+            reported as `serviceName` in the getServices response - that is, the Kubernetes service name with any
+            trailing blue-green `-v<N>` suffix removed. It is the same name used to resolve the APIHUB baseline package.
+            One entry therefore selects every blue-green variant of that service: `apihub-be` matches both
+            `apihub-be-v1` and `apihub-be-v2`. A raw Kubernetes service name such as `apihub-be-v1` matches nothing,
+            so do not pass the `id` field of a previous response here. An entry that is empty or carries leading or
+            trailing whitespace can match no service and is rejected with 400. A requested name that is absent from the
+            namespace, or that names a service the agent excludes from discovery by label, is ignored: discovery is
+            asynchronous, so compare `requestedServices` against `services[].serviceName` in the getServices response
+            to find them.
+          type: array
+          items:
+            type: string
+            minLength: 1
+          example: ["apihub-be", "apihub-fe"]
     ErrorResponse:
       description: Standard error response envelope returned for failed requests. Includes HTTP status, internal error code, and human-readable message; params and debug are optional.
       type: object
@@ -997,6 +1089,15 @@ components:
         Authentication failed or credentials were not provided.
         Typical causes include a missing, expired, or invalid Bearer token, API key, or session cookie.
         Re-authenticate via APIHUB (obtain a new Bearer token, API key, or session cookie) and retry the request.
+        The response body follows the ErrorResponse schema.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    badRequest400:
+      description: |
+        The request could not be processed. Typical causes are a malformed JSON body, a body larger than 1 MiB, or a
+        requested service name that is empty or carries leading or trailing whitespace.
         The response body follows the ErrorResponse schema.
       content:
         application/json:
