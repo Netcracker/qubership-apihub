@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
@@ -8,7 +9,7 @@ import (
 )
 
 type BusinessMetricRepository interface {
-	GetBusinessMetrics(parentPackageId string, hierarchyLevel int) ([]entity.BusinessMetricEntity, error)
+	GetBusinessMetrics(ctx context.Context, parentPackageId string, hierarchyLevel int) ([]entity.BusinessMetricEntity, error)
 }
 
 func NewBusinessMetricRepository(cp db.ConnectionProvider) BusinessMetricRepository {
@@ -21,7 +22,7 @@ type businessMetricRepositoryImpl struct {
 	cp db.ConnectionProvider
 }
 
-func (b businessMetricRepositoryImpl) GetBusinessMetrics(parentPackageId string, hierarchyLevel int) ([]entity.BusinessMetricEntity, error) {
+func (b businessMetricRepositoryImpl) GetBusinessMetrics(ctx context.Context, parentPackageId string, hierarchyLevel int) ([]entity.BusinessMetricEntity, error) {
 	result := make([]entity.BusinessMetricEntity, 0)
 	packageGroupCol := `d.key::varchar`
 	if hierarchyLevel > 0 {
@@ -44,7 +45,7 @@ func (b businessMetricRepositoryImpl) GetBusinessMetrics(parentPackageId string,
 	order by 1, 2
 	`, packageGroupCol)
 
-	_, err := b.cp.GetConnection().Query(&result, businessMetricsQuery, parentPackageId, parentPackageId)
+	_, err := b.cp.GetConnection().WithContext(ctx).Query(&result, businessMetricsQuery, parentPackageId, parentPackageId)
 	if err != nil {
 		return nil, err
 	}

@@ -1,13 +1,14 @@
 package security
 
 import (
+	"context"
 	"crypto"
 	"errors"
 	"fmt"
 	"strconv"
 	"time"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/shaj13/go-guardian/v2/auth"
 	"github.com/shaj13/go-guardian/v2/auth/claims"
@@ -23,8 +24,8 @@ const (
 )
 
 type JWTValidator interface {
-	ValidateToken(token string, expectedTokenType string) (auth.Info, time.Time, error)
-	IsTokenRevoked(userId string, tokenCreationTimestamp int64) bool
+	ValidateToken(ctx context.Context, token string, expectedTokenType string) (auth.Info, time.Time, error)
+	IsTokenRevoked(ctx context.Context, userId string, tokenCreationTimestamp int64) (bool, error)
 }
 
 type jwtValidatorImpl struct {
@@ -39,12 +40,12 @@ func NewJWTValidator(keeper jwt.SecretsKeeper, tokenRevocationService service.To
 	}
 }
 
-func (j jwtValidatorImpl) IsTokenRevoked(userId string, tokenCreationTimestamp int64) bool {
-	return j.tokenRevocationService.IsTokenRevoked(userId, tokenCreationTimestamp)
+func (j jwtValidatorImpl) IsTokenRevoked(ctx context.Context, userId string, tokenCreationTimestamp int64) (bool, error) {
+	return j.tokenRevocationService.IsTokenRevoked(ctx, userId, tokenCreationTimestamp)
 }
 
-func (j jwtValidatorImpl) ValidateToken(token string, expectedTokenType string) (auth.Info, time.Time, error) {
-	claims, info, err := j.parseAndValidate(token)
+func (j jwtValidatorImpl) ValidateToken(ctx context.Context, token string, expectedTokenType string) (auth.Info, time.Time, error) {
+	claims, info, err := j.parseAndValidate(ctx, token)
 	if err != nil {
 		return nil, time.Time{}, err
 	}
@@ -57,7 +58,7 @@ func (j jwtValidatorImpl) ValidateToken(token string, expectedTokenType string) 
 	return info, time.Time(*claims.ExpiresAt), nil
 }
 
-func (j jwtValidatorImpl) parseAndValidate(token string) (claims.Standard, auth.Info, error) {
+func (j jwtValidatorImpl) parseAndValidate(ctx context.Context, token string) (claims.Standard, auth.Info, error) {
 	info := auth.NewUserInfo("", "", nil, make(auth.Extensions))
 	c := claims.Standard{}
 	opts := claims.VerifyOptions{
@@ -77,12 +78,16 @@ func (j jwtValidatorImpl) parseAndValidate(token string) (claims.Standard, auth.
 		return claims.Standard{}, nil, err
 	}
 
-	if j.IsTokenRevoked(info.GetID(), time.Time(*c.IssuedAt).Unix()) {
+	revoked, err := j.IsTokenRevoked(ctx, info.GetID(), time.Time(*c.IssuedAt).Unix())
+	if err != nil {
+		return claims.Standard{}, nil, fmt.Errorf("failed to check token revocation: %w", err)
+	}
+	if revoked {
 		return claims.Standard{}, nil, fmt.Errorf("token is revoked")
 	}
 
 	info.GetExtensions().Set(TokenIssuedAtExt, strconv.FormatInt(time.Time(*c.IssuedAt).Unix(), 10))
-	info.GetExtensions().Set(context.TokenExpiresAtExt, strconv.FormatInt(time.Time(*c.ExpiresAt).Unix(), 10))
+	info.GetExtensions().Set(secctx.TokenExpiresAtExt, strconv.FormatInt(time.Time(*c.ExpiresAt).Unix(), 10))
 
 	return c, info, nil
 }

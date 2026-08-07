@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
@@ -10,11 +11,11 @@ import (
 )
 
 type MCPContractRepository interface {
-	ListMcpEntities(packageId, version string, revision int, kind, mcpEndpoint, textFilter string, limit, offset int) ([]*entity.MCPContractEntity, error)
-	GetMcpEntity(packageId, version string, revision int, mcpEntityId string, includeData bool) (*entity.MCPContractEntity, []byte, error)
-	GetEntitiesCount(packageId, version string, revision int) ([]entity.MCPContractKindCountEntity, error)
-	GetEntitiesCountByEndpoint(packageId, version string, revision int) ([]entity.MCPContractEndpointCountEntity, error)
-	GlobalSearchForMCP(searchQuery *entity.GlobalContractSearchQuery) ([]entity.MCPContractSearchResult, error)
+	ListMcpEntities(ctx context.Context, packageId, version string, revision int, kind, mcpEndpoint, textFilter string, limit, offset int) ([]*entity.MCPContractEntity, error)
+	GetMcpEntity(ctx context.Context, packageId, version string, revision int, mcpEntityId string, includeData bool) (*entity.MCPContractEntity, []byte, error)
+	GetEntitiesCount(ctx context.Context, packageId, version string, revision int) ([]entity.MCPContractKindCountEntity, error)
+	GetEntitiesCountByEndpoint(ctx context.Context, packageId, version string, revision int) ([]entity.MCPContractEndpointCountEntity, error)
+	GlobalSearchForMCP(ctx context.Context, searchQuery *entity.GlobalContractSearchQuery) ([]entity.MCPContractSearchResult, error)
 }
 
 type mcpContractRepositoryImpl struct {
@@ -25,9 +26,9 @@ func NewMCPContractRepository(cp db.ConnectionProvider) MCPContractRepository {
 	return &mcpContractRepositoryImpl{cp: cp}
 }
 
-func (r *mcpContractRepositoryImpl) ListMcpEntities(packageId, version string, revision int, kind, mcpEndpoint, textFilter string, limit, offset int) ([]*entity.MCPContractEntity, error) {
+func (r *mcpContractRepositoryImpl) ListMcpEntities(ctx context.Context, packageId, version string, revision int, kind, mcpEndpoint, textFilter string, limit, offset int) ([]*entity.MCPContractEntity, error) {
 	var result []*entity.MCPContractEntity
-	query := r.cp.GetConnection().Model(&result).
+	query := r.cp.GetConnection().WithContext(ctx).Model(&result).
 		Where("package_id = ?", packageId).
 		Where("version = ?", version).
 		Where("revision = ?", revision)
@@ -61,8 +62,8 @@ func (r *mcpContractRepositoryImpl) ListMcpEntities(packageId, version string, r
 	return result, nil
 }
 
-func (r *mcpContractRepositoryImpl) GetMcpEntity(packageId, version string, revision int, mcpEntityId string, includeData bool) (*entity.MCPContractEntity, []byte, error) {
-	conn := r.cp.GetConnection()
+func (r *mcpContractRepositoryImpl) GetMcpEntity(ctx context.Context, packageId, version string, revision int, mcpEntityId string, includeData bool) (*entity.MCPContractEntity, []byte, error) {
+	conn := r.cp.GetConnection().WithContext(ctx)
 	ent := new(entity.MCPContractEntity)
 	err := conn.Model(ent).
 		Where("package_id = ?", packageId).
@@ -87,9 +88,9 @@ func (r *mcpContractRepositoryImpl) GetMcpEntity(packageId, version string, revi
 	return ent, data, nil
 }
 
-func (r *mcpContractRepositoryImpl) GetEntitiesCount(packageId, version string, revision int) ([]entity.MCPContractKindCountEntity, error) {
+func (r *mcpContractRepositoryImpl) GetEntitiesCount(ctx context.Context, packageId, version string, revision int) ([]entity.MCPContractKindCountEntity, error) {
 	var result []entity.MCPContractKindCountEntity
-	_, err := r.cp.GetConnection().Query(&result,
+	_, err := r.cp.GetConnection().WithContext(ctx).Query(&result,
 		`SELECT kind, count(*) as count FROM mcp_entities WHERE package_id=? AND version=? AND revision=? GROUP BY kind`,
 		packageId, version, revision)
 	if err != nil {
@@ -98,9 +99,9 @@ func (r *mcpContractRepositoryImpl) GetEntitiesCount(packageId, version string, 
 	return result, nil
 }
 
-func (r *mcpContractRepositoryImpl) GetEntitiesCountByEndpoint(packageId, version string, revision int) ([]entity.MCPContractEndpointCountEntity, error) {
+func (r *mcpContractRepositoryImpl) GetEntitiesCountByEndpoint(ctx context.Context, packageId, version string, revision int) ([]entity.MCPContractEndpointCountEntity, error) {
 	var result []entity.MCPContractEndpointCountEntity
-	_, err := r.cp.GetConnection().Query(&result,
+	_, err := r.cp.GetConnection().WithContext(ctx).Query(&result,
 		`SELECT mcp_endpoint, kind, count(*) as count FROM mcp_entities WHERE package_id=? AND version=? AND revision=? GROUP BY mcp_endpoint, kind`,
 		packageId, version, revision)
 	if err != nil {
@@ -109,8 +110,8 @@ func (r *mcpContractRepositoryImpl) GetEntitiesCountByEndpoint(packageId, versio
 	return result, nil
 }
 
-func (r *mcpContractRepositoryImpl) GlobalSearchForMCP(searchQuery *entity.GlobalContractSearchQuery) ([]entity.MCPContractSearchResult, error) {
-	_, err := r.cp.GetConnection().Exec("select websearch_to_tsquery(?)", searchQuery.OriginalTextInput)
+func (r *mcpContractRepositoryImpl) GlobalSearchForMCP(ctx context.Context, searchQuery *entity.GlobalContractSearchQuery) ([]entity.MCPContractSearchResult, error) {
+	_, err := r.cp.GetConnection().WithContext(ctx).Exec("select websearch_to_tsquery(?)", searchQuery.OriginalTextInput)
 	if err != nil {
 		return nil, fmt.Errorf("invalid search string: %v", err.Error())
 	}
@@ -169,7 +170,7 @@ and pv.published_at <= ?end_date
 order by all_ts.rank desc, me.mcp_entity_id
 limit ?limit;
 `
-	_, err = r.cp.GetConnection().Model(searchQuery).Query(&result, mcpSearchQuery)
+	_, err = r.cp.GetConnection().WithContext(ctx).Model(searchQuery).Query(&result, mcpSearchQuery)
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil

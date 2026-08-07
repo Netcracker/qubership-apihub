@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
@@ -8,13 +9,13 @@ import (
 )
 
 type PersonalAccessTokenRepository interface {
-	CreatePAT(ent entity.PersonaAccessTokenEntity) error
-	DeletePAT(id string, userId string) error
-	GetPAT(id string, userId string) (*entity.PersonaAccessTokenEntity, error)
-	GetPATByHash(tokenHash string) (*entity.PersonaAccessTokenEntity, error)
-	ListPATs(userId string) ([]entity.PersonaAccessTokenEntity, error)
-	CountActiveTokens(userId string) (int, error)
-	CheckNameIsFree(userId string, name string) (bool, error)
+	CreatePAT(ctx context.Context, ent entity.PersonaAccessTokenEntity) error
+	DeletePAT(ctx context.Context, id string, userId string) error
+	GetPAT(ctx context.Context, id string, userId string) (*entity.PersonaAccessTokenEntity, error)
+	GetPATByHash(ctx context.Context, tokenHash string) (*entity.PersonaAccessTokenEntity, error)
+	ListPATs(ctx context.Context, userId string) ([]entity.PersonaAccessTokenEntity, error)
+	CountActiveTokens(ctx context.Context, userId string) (int, error)
+	CheckNameIsFree(ctx context.Context, userId string, name string) (bool, error)
 }
 
 func NewPersonalAccessTokenRepository(cp db.ConnectionProvider) PersonalAccessTokenRepository {
@@ -25,17 +26,17 @@ type personalAccessTokenRepositoryImpl struct {
 	cp db.ConnectionProvider
 }
 
-func (p personalAccessTokenRepositoryImpl) CreatePAT(ent entity.PersonaAccessTokenEntity) error {
+func (p personalAccessTokenRepositoryImpl) CreatePAT(ctx context.Context, ent entity.PersonaAccessTokenEntity) error {
 	//TODO: expired_at is calculated on BE side which is not good
-	_, err := p.cp.GetConnection().Model(&ent).Insert()
+	_, err := p.cp.GetConnection().WithContext(ctx).Model(&ent).Insert()
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p personalAccessTokenRepositoryImpl) DeletePAT(id string, userId string) error {
-	_, err := p.cp.GetConnection().Model(new(entity.PersonaAccessTokenEntity)).
+func (p personalAccessTokenRepositoryImpl) DeletePAT(ctx context.Context, id string, userId string) error {
+	_, err := p.cp.GetConnection().WithContext(ctx).Model(new(entity.PersonaAccessTokenEntity)).
 		Set("deleted_at = now()").
 		Where("id = ?", id).
 		Where("user_id = ?", userId).
@@ -46,9 +47,9 @@ func (p personalAccessTokenRepositoryImpl) DeletePAT(id string, userId string) e
 	return nil
 }
 
-func (p personalAccessTokenRepositoryImpl) GetPAT(id string, userId string) (*entity.PersonaAccessTokenEntity, error) {
+func (p personalAccessTokenRepositoryImpl) GetPAT(ctx context.Context, id string, userId string) (*entity.PersonaAccessTokenEntity, error) {
 	result := new(entity.PersonaAccessTokenEntity)
-	err := p.cp.GetConnection().Model(result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("id = ?", id).
 		Where("user_id = ?", userId).
 		Where("deleted_at is null").
@@ -59,9 +60,9 @@ func (p personalAccessTokenRepositoryImpl) GetPAT(id string, userId string) (*en
 	return result, nil
 }
 
-func (p personalAccessTokenRepositoryImpl) GetPATByHash(tokenHash string) (*entity.PersonaAccessTokenEntity, error) {
+func (p personalAccessTokenRepositoryImpl) GetPATByHash(ctx context.Context, tokenHash string) (*entity.PersonaAccessTokenEntity, error) {
 	result := new(entity.PersonaAccessTokenEntity)
-	err := p.cp.GetConnection().Model(result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("token_hash = ?", tokenHash).
 		Where("deleted_at is null").
 		First()
@@ -74,12 +75,12 @@ func (p personalAccessTokenRepositoryImpl) GetPATByHash(tokenHash string) (*enti
 	return result, nil
 }
 
-func (p personalAccessTokenRepositoryImpl) ListPATs(userId string) ([]entity.PersonaAccessTokenEntity, error) {
+func (p personalAccessTokenRepositoryImpl) ListPATs(ctx context.Context, userId string) ([]entity.PersonaAccessTokenEntity, error) {
 	var pats []entity.PersonaAccessTokenEntity
 
 	//.Where("expired_at > now()")
 
-	err := p.cp.GetConnection().Model(&pats).
+	err := p.cp.GetConnection().WithContext(ctx).Model(&pats).
 		Where("user_id = ?", userId).
 		Where("deleted_at is null").
 		Order("created_at ASC").
@@ -93,16 +94,16 @@ func (p personalAccessTokenRepositoryImpl) ListPATs(userId string) ([]entity.Per
 	return pats, nil
 }
 
-func (p personalAccessTokenRepositoryImpl) CountActiveTokens(userId string) (int, error) {
-	res, err := p.cp.GetConnection().Model(&entity.PersonaAccessTokenEntity{}).
+func (p personalAccessTokenRepositoryImpl) CountActiveTokens(ctx context.Context, userId string) (int, error) {
+	res, err := p.cp.GetConnection().WithContext(ctx).Model(&entity.PersonaAccessTokenEntity{}).
 		Where("user_id = ?", userId).
 		Where("deleted_at is null").
 		Count()
 	return res, err
 }
 
-func (p personalAccessTokenRepositoryImpl) CheckNameIsFree(userId string, name string) (bool, error) {
-	res, err := p.cp.GetConnection().Model(&entity.PersonaAccessTokenEntity{}).
+func (p personalAccessTokenRepositoryImpl) CheckNameIsFree(ctx context.Context, userId string, name string) (bool, error) {
+	res, err := p.cp.GetConnection().WithContext(ctx).Model(&entity.PersonaAccessTokenEntity{}).
 		Where("user_id = ?", userId).
 		Where("deleted_at is null").
 		Where("name = ?", name).

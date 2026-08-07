@@ -1,13 +1,14 @@
 package service
 
 import (
+	"context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 )
 
 type BusinessMetricService interface {
-	GetBusinessMetrics(parentPackageId string, hierarchyLevel int) ([]view.BusinessMetric, error)
+	GetBusinessMetrics(ctx context.Context, parentPackageId string, hierarchyLevel int) ([]view.BusinessMetric, error)
 }
 
 func NewBusinessMetricService(businessMetricRepo repository.BusinessMetricRepository) BusinessMetricService {
@@ -21,8 +22,8 @@ type businessMetricServiceImpl struct {
 	businessMetricRepo repository.BusinessMetricRepository
 }
 
-func (b businessMetricServiceImpl) GetBusinessMetrics(parentPackageId string, hierarchyLevel int) ([]view.BusinessMetric, error) {
-	businessMetricEnts, err := b.businessMetricRepo.GetBusinessMetrics(parentPackageId, hierarchyLevel)
+func (b businessMetricServiceImpl) GetBusinessMetrics(ctx context.Context, parentPackageId string, hierarchyLevel int) ([]view.BusinessMetric, error) {
+	businessMetricEnts, err := b.businessMetricRepo.GetBusinessMetrics(ctx, parentPackageId, hierarchyLevel)
 	if err != nil {
 		return nil, err
 	}

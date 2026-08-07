@@ -14,29 +14,29 @@ import (
 )
 
 type BuildRepository interface {
-	StoreBuild(buildEntity entity.BuildEntity, sourceEntity entity.BuildSourceEntity, depends []entity.BuildDependencyEntity) error
-	UpdateBuildStatus(buildId string, status view.BuildStatusEnum, details string) error
-	GetBuild(buildId string) (*entity.BuildEntity, error)
-	GetBuilds(buildIds []string) ([]entity.BuildEntity, error)
-	GetBuildSrc(buildId string) (*entity.BuildSourceEntity, error)
-	GetExtendedBuild(buildId string) (*entity.ExtendedBuildEntity, error)
-	ListExtendedBuilds(filter ExtendedBuildFilter) ([]entity.ExtendedBuildEntity, error)
-	GetBuildDependencies(buildIds []string) ([]entity.BuildDependencyEntity, error)
+	StoreBuild(ctx context.Context, buildEntity entity.BuildEntity, sourceEntity entity.BuildSourceEntity, depends []entity.BuildDependencyEntity) error
+	UpdateBuildStatus(ctx context.Context, buildId string, status view.BuildStatusEnum, details string) error
+	GetBuild(ctx context.Context, buildId string) (*entity.BuildEntity, error)
+	GetBuilds(ctx context.Context, buildIds []string) ([]entity.BuildEntity, error)
+	GetBuildSrc(ctx context.Context, buildId string) (*entity.BuildSourceEntity, error)
+	GetExtendedBuild(ctx context.Context, buildId string) (*entity.ExtendedBuildEntity, error)
+	ListExtendedBuilds(ctx context.Context, filter ExtendedBuildFilter) ([]entity.ExtendedBuildEntity, error)
+	GetBuildDependencies(ctx context.Context, buildIds []string) ([]entity.BuildDependencyEntity, error)
 
-	FindAndTakeFreeBuild(builderId string) (*entity.BuildEntity, error)
+	FindAndTakeFreeBuild(ctx context.Context, builderId string) (*entity.BuildEntity, error)
 
-	GetBuildByChangelogSearchQuery(searchQuery entity.ChangelogBuildSearchQueryEntity) (*entity.BuildEntity, error)
-	GetBuildByDocumentGroupSearchQuery(searchQuery entity.DocumentGroupBuildSearchQueryEntity) (*entity.BuildEntity, error)
+	GetBuildByChangelogSearchQuery(ctx context.Context, searchQuery entity.ChangelogBuildSearchQueryEntity) (*entity.BuildEntity, error)
+	GetBuildByDocumentGroupSearchQuery(ctx context.Context, searchQuery entity.DocumentGroupBuildSearchQueryEntity) (*entity.BuildEntity, error)
 
-	UpdateBuildSourceConfig(buildId string, config map[string]interface{}) error
+	UpdateBuildSourceConfig(ctx context.Context, buildId string, config map[string]interface{}) error
 }
 
 type ExtendedBuildFilter struct {
 	PackageId string
 	Version   string
-	BuildIds []string
-	Offset   int
-	Limit    int
+	BuildIds  []string
+	Offset    int
+	Limit     int
 }
 
 func NewBuildRepositoryPG(cp db.ConnectionProvider) (BuildRepository, error) {
@@ -47,9 +47,9 @@ type buildRepositoryImpl struct {
 	cp db.ConnectionProvider
 }
 
-func (b buildRepositoryImpl) GetBuild(buildId string) (*entity.BuildEntity, error) {
+func (b buildRepositoryImpl) GetBuild(ctx context.Context, buildId string) (*entity.BuildEntity, error) {
 	result := new(entity.BuildEntity)
-	err := b.cp.GetConnection().Model(result).
+	err := b.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("build_id = ?", buildId).
 		First()
 	if err != nil {
@@ -61,12 +61,12 @@ func (b buildRepositoryImpl) GetBuild(buildId string) (*entity.BuildEntity, erro
 	return result, nil
 }
 
-func (b buildRepositoryImpl) GetBuilds(buildIds []string) ([]entity.BuildEntity, error) {
+func (b buildRepositoryImpl) GetBuilds(ctx context.Context, buildIds []string) ([]entity.BuildEntity, error) {
 	var result []entity.BuildEntity
 	if len(buildIds) == 0 {
 		return nil, nil
 	}
-	err := b.cp.GetConnection().Model(&result).
+	err := b.cp.GetConnection().WithContext(ctx).Model(&result).
 		Where("build_id in (?)", pg.In(buildIds)).
 		Select()
 	if err != nil {
@@ -78,9 +78,9 @@ func (b buildRepositoryImpl) GetBuilds(buildIds []string) ([]entity.BuildEntity,
 	return result, nil
 }
 
-func (b buildRepositoryImpl) GetBuildSrc(buildId string) (*entity.BuildSourceEntity, error) {
+func (b buildRepositoryImpl) GetBuildSrc(ctx context.Context, buildId string) (*entity.BuildSourceEntity, error) {
 	result := new(entity.BuildSourceEntity)
-	err := b.cp.GetConnection().Model(result).
+	err := b.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("build_id = ?", buildId).
 		First()
 	if err != nil {
@@ -92,8 +92,8 @@ func (b buildRepositoryImpl) GetBuildSrc(buildId string) (*entity.BuildSourceEnt
 	return result, nil
 }
 
-func (b buildRepositoryImpl) GetExtendedBuild(buildId string) (*entity.ExtendedBuildEntity, error) {
-	builds, err := b.ListExtendedBuilds(ExtendedBuildFilter{
+func (b buildRepositoryImpl) GetExtendedBuild(ctx context.Context, buildId string) (*entity.ExtendedBuildEntity, error) {
+	builds, err := b.ListExtendedBuilds(ctx, ExtendedBuildFilter{
 		BuildIds: []string{buildId},
 		Limit:    1,
 	})
@@ -106,9 +106,9 @@ func (b buildRepositoryImpl) GetExtendedBuild(buildId string) (*entity.ExtendedB
 	return &builds[0], nil
 }
 
-func (b buildRepositoryImpl) ListExtendedBuilds(filter ExtendedBuildFilter) ([]entity.ExtendedBuildEntity, error) {
+func (b buildRepositoryImpl) ListExtendedBuilds(ctx context.Context, filter ExtendedBuildFilter) ([]entity.ExtendedBuildEntity, error) {
 	var result []entity.ExtendedBuildEntity
-	query := b.cp.GetConnection().Model(&result).
+	query := b.cp.GetConnection().WithContext(ctx).Model(&result).
 		ColumnExpr("b.build_id").
 		ColumnExpr("b.status").
 		ColumnExpr("b.details").
@@ -152,12 +152,12 @@ func (b buildRepositoryImpl) ListExtendedBuilds(filter ExtendedBuildFilter) ([]e
 	return result, nil
 }
 
-func (b buildRepositoryImpl) GetBuildDependencies(buildIds []string) ([]entity.BuildDependencyEntity, error) {
+func (b buildRepositoryImpl) GetBuildDependencies(ctx context.Context, buildIds []string) ([]entity.BuildDependencyEntity, error) {
 	var result []entity.BuildDependencyEntity
 	if len(buildIds) == 0 {
 		return nil, nil
 	}
-	err := b.cp.GetConnection().Model(&result).
+	err := b.cp.GetConnection().WithContext(ctx).Model(&result).
 		Where("build_id in (?)", pg.In(buildIds)).
 		Select()
 	if err != nil {
@@ -169,8 +169,7 @@ func (b buildRepositoryImpl) GetBuildDependencies(buildIds []string) ([]entity.B
 	return result, nil
 }
 
-func (b buildRepositoryImpl) StoreBuild(buildEntity entity.BuildEntity, sourceEntity entity.BuildSourceEntity, depends []entity.BuildDependencyEntity) error {
-	ctx := context.Background()
+func (b buildRepositoryImpl) StoreBuild(ctx context.Context, buildEntity entity.BuildEntity, sourceEntity entity.BuildSourceEntity, depends []entity.BuildDependencyEntity) error {
 	return b.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		_, err := tx.Model(&buildEntity).Insert()
 		if err != nil {
@@ -195,8 +194,7 @@ func (b buildRepositoryImpl) StoreBuild(buildEntity entity.BuildEntity, sourceEn
 
 const getBuildWithLock = "select * from build where build_id = ? limit 1 for no key update"
 
-func (b buildRepositoryImpl) UpdateBuildStatus(buildId string, status view.BuildStatusEnum, details string) error {
-	ctx := context.Background()
+func (b buildRepositoryImpl) UpdateBuildStatus(ctx context.Context, buildId string, status view.BuildStatusEnum, details string) error {
 	err := b.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		var ents []entity.BuildEntity
 		_, err := tx.Query(&ents, getBuildWithLock, buildId)
@@ -248,12 +246,12 @@ var queryItemToBuild = fmt.Sprintf("select * from build b where "+
 	"(b.build_id not in (select distinct build_id from build_depends where depend_id in (select build.build_id from build where status='%s' or status='%s'))) "+
 	"order by b.priority DESC, b.created_at ASC limit 1 for no key update skip locked", view.StatusRunning, buildKeepaliveTimeoutSec, view.StatusNotStarted, view.StatusRunning)
 
-func (b buildRepositoryImpl) FindAndTakeFreeBuild(builderId string) (*entity.BuildEntity, error) {
+func (b buildRepositoryImpl) FindAndTakeFreeBuild(ctx context.Context, builderId string) (*entity.BuildEntity, error) {
 	var result *entity.BuildEntity
 	var err error
 	for {
 		buildFailed := false
-		err = b.cp.GetConnection().RunInTransaction(context.Background(), func(tx *pg.Tx) error {
+		err = b.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 			var ents []entity.BuildEntity
 
 			_, err := tx.Query(&ents, queryItemToBuild)
@@ -319,7 +317,7 @@ func (b buildRepositoryImpl) FindAndTakeFreeBuild(builderId string) (*entity.Bui
 	return result, nil
 }
 
-func (b buildRepositoryImpl) GetBuildByChangelogSearchQuery(searchQuery entity.ChangelogBuildSearchQueryEntity) (*entity.BuildEntity, error) {
+func (b buildRepositoryImpl) GetBuildByChangelogSearchQuery(ctx context.Context, searchQuery entity.ChangelogBuildSearchQueryEntity) (*entity.BuildEntity, error) {
 	var ent entity.BuildEntity
 	query := `
 		with bs as (
@@ -336,7 +334,7 @@ func (b buildRepositoryImpl) GetBuildByChangelogSearchQuery(searchQuery entity.C
 		where b.build_id = bs.build_id
 		order by created_at desc
 		limit 1`
-	_, err := b.cp.GetConnection().Model(&searchQuery).QueryOne(&ent, query)
+	_, err := b.cp.GetConnection().WithContext(ctx).Model(&searchQuery).QueryOne(&ent, query)
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil
@@ -346,7 +344,7 @@ func (b buildRepositoryImpl) GetBuildByChangelogSearchQuery(searchQuery entity.C
 	return &ent, nil
 }
 
-func (b buildRepositoryImpl) GetBuildByDocumentGroupSearchQuery(searchQuery entity.DocumentGroupBuildSearchQueryEntity) (*entity.BuildEntity, error) {
+func (b buildRepositoryImpl) GetBuildByDocumentGroupSearchQuery(ctx context.Context, searchQuery entity.DocumentGroupBuildSearchQueryEntity) (*entity.BuildEntity, error) {
 	var ent entity.BuildEntity
 	query := `
 		with bs as (
@@ -362,7 +360,7 @@ func (b buildRepositoryImpl) GetBuildByDocumentGroupSearchQuery(searchQuery enti
 		where b.build_id = bs.build_id
 		order by created_at desc
 		limit 1`
-	_, err := b.cp.GetConnection().Model(&searchQuery).QueryOne(&ent, query)
+	_, err := b.cp.GetConnection().WithContext(ctx).Model(&searchQuery).QueryOne(&ent, query)
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil
@@ -372,9 +370,9 @@ func (b buildRepositoryImpl) GetBuildByDocumentGroupSearchQuery(searchQuery enti
 	return &ent, nil
 }
 
-func (b buildRepositoryImpl) UpdateBuildSourceConfig(buildId string, config map[string]interface{}) error {
+func (b buildRepositoryImpl) UpdateBuildSourceConfig(ctx context.Context, buildId string, config map[string]interface{}) error {
 	var ent entity.BuildSourceEntity
-	_, err := b.cp.GetConnection().Model(&ent).
+	_, err := b.cp.GetConnection().WithContext(ctx).Model(&ent).
 		Where("build_id = ?", buildId).
 		Set("config = ?", config).
 		Update()

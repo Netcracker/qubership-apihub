@@ -1,12 +1,13 @@
 package service
 
 import (
+	"context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
 	log "github.com/sirupsen/logrus"
 )
 
 type PackageTransitionHandler interface {
-	HandleMissingPackageId(id string) (string, error)
+	HandleMissingPackageId(ctx context.Context, id string) (string, error)
 }
 
 func NewPackageTransitionHandler(repo repository.TransitionRepository) PackageTransitionHandler {
@@ -17,8 +18,8 @@ type packageTransitionHandlerImpl struct {
 	repo repository.TransitionRepository
 }
 
-func (p packageTransitionHandlerImpl) HandleMissingPackageId(id string) (string, error) {
-	newId, err := p.repo.GetNewPackageId(id)
+func (p packageTransitionHandlerImpl) HandleMissingPackageId(ctx context.Context, id string) (string, error) {
+	newId, err := p.repo.GetNewPackageId(ctx, id)
 	if err != nil {
 		return "", err
 	}

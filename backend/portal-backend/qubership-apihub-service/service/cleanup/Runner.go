@@ -46,7 +46,9 @@ func (r *JobRunner) Run() {
 			errorMsg := fmt.Sprintf("cleanup job failed with panic: %v", err)
 			logger.Errorf(jobCtx, "%s", errorMsg)
 			finishedAt := time.Now()
-			_ = r.processor.UpdateProgress(jobCtx, jobId, statusError, errorMsg, deletedItems, &finishedAt)
+			if updateErr := r.processor.UpdateProgress(jobCtx, jobId, statusError, errorMsg, deletedItems, &finishedAt); updateErr != nil {
+				logger.Errorf(jobCtx, "Failed to save cleanup run state after panic: %v", updateErr)
+			}
 		}
 	}()
 
@@ -68,7 +70,7 @@ func (r *JobRunner) Run() {
 
 	cleanupCtx := jobCtx
 	var cleanupCancel context.CancelFunc
-	if vacuumTimeout > 0 {
+	if vacuumTimeout > 0 && r.config.timeout > 0 {
 		cleanupCtx, cleanupCancel = context.WithTimeout(jobCtx, r.config.timeout)
 		defer cleanupCancel()
 	}
@@ -78,7 +80,7 @@ func (r *JobRunner) Run() {
 	if vacuumTimeout > 0 {
 		vacuumErr, interruptedByTimeout := r.executeVacuumPhase(jobCtx, jobId, vacuumTimeout)
 		if vacuumErr != nil {
-			processingErrors = append(processingErrors)
+			processingErrors = append(processingErrors, fmt.Sprintf("vacuum stopped: %s", vacuumErr.Error()))
 			if interruptedByTimeout {
 				isTimeout = true
 			}
@@ -90,7 +92,7 @@ func (r *JobRunner) Run() {
 
 func (r *JobRunner) isMigrationRunning(ctx context.Context) bool {
 	startTime := time.Now().Round(time.Second)
-	migrations, err := r.migrationRepository.GetRunningMigrations()
+	migrations, err := r.migrationRepository.GetRunningMigrations(ctx)
 	if err != nil {
 		logger.Error(ctx, "Failed to check for running migrations")
 		return true
@@ -203,7 +205,7 @@ func (r *JobRunner) finishCleanupRun(ctx context.Context, jobId string, processi
 
 func createContextForUpdate(parentCtx context.Context) (context.Context, context.CancelFunc) {
 	if parentCtx.Err() != nil {
-		return context.WithTimeout(context.Background(), updateContextTimeout)
+		return context.WithTimeout(context.WithoutCancel(parentCtx), updateContextTimeout)
 	}
 	return parentCtx, func() {}
 }

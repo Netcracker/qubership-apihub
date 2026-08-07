@@ -13,15 +13,15 @@ import (
 )
 
 type BuildCleanupRepository interface {
-	GetLastCleanup() (*entity.BuildCleanupEntity, error)
-	RemoveOldBuildEntities(runId int, scheduledAt time.Time) error
+	GetLastCleanup(ctx context.Context) (*entity.BuildCleanupEntity, error)
+	RemoveOldBuildEntities(ctx context.Context, runId int, scheduledAt time.Time) error
 	RemoveMigrationBuildData(ctx context.Context) (deletedRows int, err error)
-	GetRemoveCandidateOldBuildEntitiesIds() ([]string, error)
+	GetRemoveCandidateOldBuildEntitiesIds(ctx context.Context) ([]string, error)
 	RemoveOldBuildSourcesByIds(ctx context.Context, ids []string, runId int, scheduledAt time.Time) error
 	GetRemoveMigrationBuildIds(ctx context.Context) ([]string, error)
 	RemoveMigrationBuildSourceData(ctx context.Context, ids []string) (deletedRows int, err error)
-	StoreCleanup(ent *entity.BuildCleanupEntity) error
-	GetCleanup(runId int) (*entity.BuildCleanupEntity, error)
+	StoreCleanup(ctx context.Context, ent *entity.BuildCleanupEntity) error
+	GetCleanup(ctx context.Context, runId int) (*entity.BuildCleanupEntity, error)
 }
 
 func NewBuildCleanupRepository(cp db.ConnectionProvider) BuildCleanupRepository {
@@ -34,9 +34,9 @@ type buildCleanUpRepositoryImpl struct {
 	cp db.ConnectionProvider
 }
 
-func (b buildCleanUpRepositoryImpl) GetLastCleanup() (*entity.BuildCleanupEntity, error) {
+func (b buildCleanUpRepositoryImpl) GetLastCleanup(ctx context.Context) (*entity.BuildCleanupEntity, error) {
 	result := new(entity.BuildCleanupEntity)
-	err := b.cp.GetConnection().Model(result).
+	err := b.cp.GetConnection().WithContext(ctx).Model(result).
 		OrderExpr("run_id DESC").Limit(1).
 		Select()
 	if err != nil {
@@ -48,8 +48,7 @@ func (b buildCleanUpRepositoryImpl) GetLastCleanup() (*entity.BuildCleanupEntity
 	return result, nil
 }
 
-func (b buildCleanUpRepositoryImpl) RemoveOldBuildEntities(runId int, scheduledAt time.Time) error {
-	ctx := context.Background()
+func (b buildCleanUpRepositoryImpl) RemoveOldBuildEntities(ctx context.Context, runId int, scheduledAt time.Time) error {
 	var deletedBuildSources, deletedBuildResults int
 	err := b.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		cleanupEnt, err := b.getCleanupTx(tx, runId)
@@ -85,11 +84,11 @@ func (b buildCleanUpRepositoryImpl) RemoveOldBuildEntities(runId int, scheduledA
 	}
 
 	// Do not run vacuum in transaction
-	_, err = b.cp.GetConnection().Exec("vacuum full build_src")
+	_, err = b.cp.GetConnection().WithContext(ctx).Exec("vacuum full build_src")
 	if err != nil {
 		return errors.Wrap(err, "failed to run vacuum for table build_src")
 	}
-	_, err = b.cp.GetConnection().Exec("vacuum full build_result")
+	_, err = b.cp.GetConnection().WithContext(ctx).Exec("vacuum full build_result")
 	if err != nil {
 		return errors.Wrap(err, "failed to run vacuum for table build_result")
 	}
@@ -124,22 +123,22 @@ func (b buildCleanUpRepositoryImpl) RemoveOldBuildSourcesByIds(ctx context.Conte
 	if err != nil {
 		return err
 	}
-	_, err = b.cp.GetConnection().Exec("vacuum full build_src")
+	_, err = b.cp.GetConnection().WithContext(ctx).Exec("vacuum full build_src")
 	if err != nil {
 		return errors.Wrap(err, "failed to run vacuum for table build_src")
 	}
 	return err
 }
 
-func (b buildCleanUpRepositoryImpl) GetRemoveCandidateOldBuildEntitiesIds() ([]string, error) {
+func (b buildCleanUpRepositoryImpl) GetRemoveCandidateOldBuildEntitiesIds(ctx context.Context) ([]string, error) {
 	successBuildsRetention := time.Now().Add(-(time.Hour * 168)) // 1 week
 	failedBuildsRetention := time.Now().Add(-(time.Hour * 720))  // 30 days
 
-	return b.getRemoveCandidateOldBuildEntities(successBuildsRetention, failedBuildsRetention)
+	return b.getRemoveCandidateOldBuildEntities(ctx, successBuildsRetention, failedBuildsRetention)
 }
 
-func (b buildCleanUpRepositoryImpl) StoreCleanup(ent *entity.BuildCleanupEntity) error {
-	_, err := b.cp.GetConnection().Model(ent).Insert()
+func (b buildCleanUpRepositoryImpl) StoreCleanup(ctx context.Context, ent *entity.BuildCleanupEntity) error {
+	_, err := b.cp.GetConnection().WithContext(ctx).Model(ent).Insert()
 	return err
 }
 
@@ -148,14 +147,14 @@ func (b buildCleanUpRepositoryImpl) updateCleanupTx(tx *pg.Tx, ent entity.BuildC
 	return err
 }
 
-func (b buildCleanUpRepositoryImpl) updateCleanup(ent entity.BuildCleanupEntity) error {
-	_, err := b.cp.GetConnection().Model(&ent).Where("run_id = ?", ent.RunId).Update()
+func (b buildCleanUpRepositoryImpl) updateCleanup(ctx context.Context, ent entity.BuildCleanupEntity) error {
+	_, err := b.cp.GetConnection().WithContext(ctx).Model(&ent).Where("run_id = ?", ent.RunId).Update()
 	return err
 }
 
-func (b buildCleanUpRepositoryImpl) GetCleanup(runId int) (*entity.BuildCleanupEntity, error) {
+func (b buildCleanUpRepositoryImpl) GetCleanup(ctx context.Context, runId int) (*entity.BuildCleanupEntity, error) {
 	ent := new(entity.BuildCleanupEntity)
-	err := b.cp.GetConnection().Model(ent).Where("run_id = ?", runId).Select()
+	err := b.cp.GetConnection().WithContext(ctx).Model(ent).Where("run_id = ?", runId).Select()
 	return ent, err
 }
 
@@ -202,14 +201,14 @@ func (b buildCleanUpRepositoryImpl) removeOldBuildSources(tx *pg.Tx, successBuil
 	return deletedRows, err
 }
 
-func (b buildCleanUpRepositoryImpl) getRemoveCandidateOldBuildEntities(successBuildsRetention, failedBuildsRetention time.Time) ([]string, error) {
+func (b buildCleanUpRepositoryImpl) getRemoveCandidateOldBuildEntities(ctx context.Context, successBuildsRetention, failedBuildsRetention time.Time) ([]string, error) {
 	var result []string
 	var ents []entity.BuildIdEntity
 
 	query := `select build_id from build where
 		(status = ? and last_active <= ?) or
 		(status = ? and last_active <= ?)`
-	_, err := b.cp.GetConnection().Query(&ents, query, view.StatusError, failedBuildsRetention, view.StatusComplete, successBuildsRetention)
+	_, err := b.cp.GetConnection().WithContext(ctx).Query(&ents, query, view.StatusError, failedBuildsRetention, view.StatusComplete, successBuildsRetention)
 	if err != nil {
 		return nil, err
 	}

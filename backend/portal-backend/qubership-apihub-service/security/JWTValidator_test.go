@@ -1,6 +1,7 @@
 package security
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"testing"
@@ -12,17 +13,19 @@ import (
 
 type mockTokenRevocationService struct {
 	revokedUsers map[string]int64
+	lastCtx      context.Context
 }
 
-func (m *mockTokenRevocationService) RevokeUserTokens(userId string) error {
+func (m *mockTokenRevocationService) RevokeUserTokens(ctx context.Context, userId string) error {
 	return nil
 }
 
-func (m *mockTokenRevocationService) IsTokenRevoked(userId string, tokenCreationTimestamp int64) bool {
+func (m *mockTokenRevocationService) IsTokenRevoked(ctx context.Context, userId string, tokenCreationTimestamp int64) (bool, error) {
+	m.lastCtx = ctx
 	if revocationTime, ok := m.revokedUsers[userId]; ok {
-		return tokenCreationTimestamp <= revocationTime
+		return tokenCreationTimestamp <= revocationTime, nil
 	}
-	return false
+	return false, nil
 }
 
 func generateTestKeeper(t *testing.T) jwt.SecretsKeeper {
@@ -56,7 +59,7 @@ func TestValidateToken_AcceptsAccessToken(t *testing.T) {
 	validator := NewJWTValidator(k, &mockTokenRevocationService{})
 	token := issueTestToken(t, k, "user1", AccessTokenType, 5*time.Minute)
 
-	info, expTime, err := validator.ValidateToken(token, AccessTokenType)
+	info, expTime, err := validator.ValidateToken(context.Background(), token, AccessTokenType)
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}
@@ -73,7 +76,7 @@ func TestValidateToken_AcceptsRefreshToken(t *testing.T) {
 	validator := NewJWTValidator(k, &mockTokenRevocationService{})
 	token := issueTestToken(t, k, "user1", RefreshTokenType, 5*time.Minute)
 
-	info, _, err := validator.ValidateToken(token, RefreshTokenType)
+	info, _, err := validator.ValidateToken(context.Background(), token, RefreshTokenType)
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}
@@ -87,7 +90,7 @@ func TestValidateToken_RejectsRefreshAsAccess(t *testing.T) {
 	validator := NewJWTValidator(k, &mockTokenRevocationService{})
 	token := issueTestToken(t, k, "user1", RefreshTokenType, 5*time.Minute)
 
-	_, _, err := validator.ValidateToken(token, AccessTokenType)
+	_, _, err := validator.ValidateToken(context.Background(), token, AccessTokenType)
 	if err == nil {
 		t.Fatal("expected error for refresh token validated as access, got nil")
 	}
@@ -98,7 +101,7 @@ func TestValidateToken_RejectsAccessAsRefresh(t *testing.T) {
 	validator := NewJWTValidator(k, &mockTokenRevocationService{})
 	token := issueTestToken(t, k, "user1", AccessTokenType, 5*time.Minute)
 
-	_, _, err := validator.ValidateToken(token, RefreshTokenType)
+	_, _, err := validator.ValidateToken(context.Background(), token, RefreshTokenType)
 	if err == nil {
 		t.Fatal("expected error for access token validated as refresh, got nil")
 	}
@@ -109,7 +112,7 @@ func TestValidateToken_RejectsTokenWithoutType(t *testing.T) {
 	validator := NewJWTValidator(k, &mockTokenRevocationService{})
 	token := issueTestToken(t, k, "user1", "", 5*time.Minute)
 
-	_, _, err := validator.ValidateToken(token, AccessTokenType)
+	_, _, err := validator.ValidateToken(context.Background(), token, AccessTokenType)
 	if err == nil {
 		t.Fatal("expected error for token without type, got nil")
 	}
@@ -125,7 +128,7 @@ func TestValidateToken_RejectsRevokedToken(t *testing.T) {
 	validator := NewJWTValidator(k, revocationService)
 	token := issueTestToken(t, k, "user1", AccessTokenType, 5*time.Minute)
 
-	_, _, err := validator.ValidateToken(token, AccessTokenType)
+	_, _, err := validator.ValidateToken(context.Background(), token, AccessTokenType)
 	if err == nil {
 		t.Fatal("expected error for revoked token, got nil")
 	}

@@ -3,6 +3,8 @@ info:
   title: APIHUB Registry – External API
   description: |
     Public-facing API contract for APIHUB. This API is intended for external and integration clients and covers package/catalog operations, publication workflows, search, user/profile actions, and selected administration capabilities secured by APIHUB authentication schemes.
+
+    Request processing is bounded by a server-side deadline configured per deployment. When the deadline elapses, the request is terminated and the endpoint returns HTTP 500 with error code `8700`. Background work that a request has already handed off, such as publication or export, keeps running. Check the resulting state before you retry a call that is not idempotent. AI chat turn endpoints (`POST /api/v1/ai-chat/chats/{chatId}/messages` and `POST /api/v1/ai-chat/chats/{chatId}/messages/stream`) are exempt from that deadline and run under their own turn timeout, which reports error code `APIHUB-AI-5002`. Credential verification is bounded separately on every endpoint and reports error code `8700`. A request that the server cancels before it completes for any other reason returns HTTP 500 with error code `8701`.
   contact:
     name: Netcracker Opensource Group
     email: opensourcegroup@netcracker.com
@@ -97,7 +99,16 @@ paths:
                 SystemInfo:
                   $ref: "#/components/examples/SystemInfo"
         "500":
-          $ref: "#/components/examples/InternalServerError"
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/system/configuration":
     get:
       tags:
@@ -134,6 +145,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/system/configuration":
     get:
       tags:
@@ -216,6 +229,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   /api/v1/logout:
     post:
       tags:
@@ -248,6 +263,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/export":
     post:
       tags:
@@ -334,6 +351,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/export/{exportId}/status":
     parameters:
       - name: exportId
@@ -427,6 +446,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: '#/components/examples/InternalServerError'
+                RequestTimeout:
+                  $ref: '#/components/examples/RequestTimeout'
   /api/v4/activity:
     get:
       tags:
@@ -796,6 +817,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages":
     post:
       tags:
@@ -860,6 +883,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
     get:
       tags:
         - Packages
@@ -1005,6 +1030,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -1094,6 +1121,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
     patch:
       tags:
         - Packages
@@ -1191,6 +1220,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
     delete:
       tags:
         - Packages
@@ -1256,6 +1287,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/packages/{packageId}/exportConfig":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -1308,6 +1341,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
     patch:
       tags:
         - Packages
@@ -1391,6 +1426,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   /api/v4/packages/{packageId}/activity:
     get:
       tags:
@@ -1759,6 +1796,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v4/packages/{packageId}/apiKeys":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -1846,6 +1885,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
     get:
       tags:
         - Admin
@@ -1902,6 +1943,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/apiKeys/{id}":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -1964,6 +2007,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/personalAccessToken":
     post:
       tags:
@@ -2045,6 +2090,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: '#/components/examples/InternalServerError'
+                RequestTimeout:
+                  $ref: '#/components/examples/RequestTimeout'
     get:
       tags:
         - User profile
@@ -2088,6 +2135,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: '#/components/examples/InternalServerError'
+                RequestTimeout:
+                  $ref: '#/components/examples/RequestTimeout'
   "/api/v1/personalAccessToken/{id}":
     parameters:
       - name: id
@@ -2139,6 +2188,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: '#/components/examples/InternalServerError'
+                RequestTimeout:
+                  $ref: '#/components/examples/RequestTimeout'
   "/api/v2/packages/{packageId}/favor":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -2189,6 +2240,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/disfavor":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -2239,6 +2292,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/publish":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -2387,6 +2442,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/publish/{publishId}/status":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -2458,6 +2515,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/packages/{packageId}/publish/withOperationsGroup":
     parameters:
       - $ref: '#/components/parameters/packageId'
@@ -2589,6 +2648,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: '#/components/examples/InternalServerError'
+                RequestTimeout:
+                  $ref: '#/components/examples/RequestTimeout'
   "/api/v1/packages/{packageId}/publish/{publishId}/withOperationsGroup/status":
     parameters:
       - $ref: '#/components/parameters/packageId'
@@ -2666,6 +2727,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: '#/components/examples/InternalServerError'
+                RequestTimeout:
+                  $ref: '#/components/examples/RequestTimeout'
   "/api/v1/packages/{packageId}/publish/{publishId}/withOperationsGroup/status/report":
     parameters:
       - $ref: '#/components/parameters/packageId'
@@ -2728,6 +2791,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: '#/components/examples/InternalServerError'
+                RequestTimeout:
+                  $ref: '#/components/examples/RequestTimeout'
   "/api/v2/packages/{packageId}/publish/withOperationsGroup/{apiType}":
     parameters:
       - $ref: '#/components/parameters/packageId'
@@ -2868,6 +2933,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: '#/components/examples/InternalServerError'
+                RequestTimeout:
+                  $ref: '#/components/examples/RequestTimeout'
   "/api/v3/packages/{packageId}/versions":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -2990,6 +3057,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -3091,6 +3160,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
     delete:
       tags:
         - Versions
@@ -3158,6 +3229,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v3/packages/{packageId}/versions/{version}":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -3341,6 +3414,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/changes/summary":
     get:
       tags:
@@ -3488,6 +3563,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v4/packages/{packageId}/versions/{version}/{apiType}/changes":
     get:
       tags:
@@ -3683,6 +3760,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   /api/v3/packages/{packageId}/versions/{version}/{apiType}/export/changes:
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -3817,6 +3896,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   /api/v2/packages/{packageId}/versions/{version}/changes/export:
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -3899,6 +3980,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/sources":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -3955,6 +4038,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/config":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -4008,6 +4093,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/copy":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -4119,6 +4206,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/compare":
     post:
       tags:
@@ -4277,6 +4366,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v3/packages/{packageId}/versions/{version}/{apiType}/build/groups/{groupName}/buildType/{buildType}":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -4458,6 +4549,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v3/packages/{packageId}/versions/{version}/{apiType}/export/groups/{groupName}/buildType/{buildType}":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -4580,6 +4673,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/files/{slug}/raw":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -4646,6 +4741,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/files/{slug}/doc":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -4732,6 +4829,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/sourceData":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -4803,6 +4902,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/doc":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -4884,6 +4985,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/version-internal-documents/{hash}":
     parameters:
       - name: hash
@@ -4941,6 +5044,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/comparison-internal-documents/{hash}":
     parameters:
       - name: hash
@@ -4998,6 +5103,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/permissions":
     get:
       tags:
@@ -5043,6 +5150,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/roles":
     get:
       tags:
@@ -5098,6 +5210,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/availableRoles":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -5179,6 +5293,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/members":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -5260,6 +5376,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
     get:
       tags:
         - Roles
@@ -5321,6 +5439,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/members/{userId}":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -5413,6 +5533,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
     delete:
       tags:
         - Roles
@@ -5479,6 +5601,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/sharedFiles":
     post:
       tags:
@@ -5550,6 +5674,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/sharedFiles/{sharedFileId}":
     get:
       tags:
@@ -5601,6 +5727,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/user":
     get:
       tags:
@@ -5643,6 +5771,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/user":
     get:
       tags:
@@ -5684,6 +5814,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/users":
     get:
       tags:
@@ -5736,6 +5868,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/users/{userId}":
     get:
       tags:
@@ -5791,6 +5925,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations":
     get:
       tags:
@@ -5987,6 +6123,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/packages/{packageId}/versions/{version}/ddl/entities":
     get:
       tags:
@@ -6067,6 +6205,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/packages/{packageId}/versions/{version}/ddl/entities/{ddlEntityId}":
     get:
       tags:
@@ -6126,6 +6266,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/packages/{packageId}/versions/{version}/ddl/entities/{ddlEntityId}/changes":
     get:
       tags:
@@ -6194,6 +6336,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/packages/{packageId}/versions/{version}/ddl/changes":
     get:
       tags:
@@ -6301,6 +6445,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/packages/{packageId}/versions/{version}/ddl/entities/{ddlEntityId}/changes/summary":
     get:
       tags:
@@ -6364,6 +6510,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/packages/{packageId}/versions/{version}/ddl/export/entities":
     get:
       tags:
@@ -6442,6 +6590,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/packages/{packageId}/versions/{version}/ddl/export/changes":
     get:
       tags:
@@ -6529,6 +6679,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/packages/{packageId}/versions/{version}/mcp/{entity}":
     get:
       tags:
@@ -6615,6 +6767,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/packages/{packageId}/versions/{version}/mcp/{entity}/{mcpEntityId}":
     get:
       tags:
@@ -6675,6 +6829,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/packages/{packageId}/versions/{version}/mcp/export/{entity}":
     get:
       tags:
@@ -6754,6 +6910,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/deprecated/summary":
     get:
       tags:
@@ -6864,6 +7022,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/{apiType}/deprecated":
     get:
       tags:
@@ -7070,6 +7230,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}/deprecatedItems":
     get:
       tags:
@@ -7129,6 +7291,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}/models/{modelName}/usages":
     get:
       tags:
@@ -7201,6 +7365,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/{apiType}/export/operations":
     get:
       tags:
@@ -7335,6 +7501,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/{apiType}/export/operations/deprecated":
     get:
       tags:
@@ -7467,6 +7635,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}":
     get:
       tags:
@@ -7552,6 +7722,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}/changes":
     get:
       tags:
@@ -7625,6 +7797,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}/changes/summary":
     get:
       tags:
@@ -7689,6 +7863,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/{apiType}/tags":
     get:
       tags:
@@ -7802,6 +7978,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v3/packages/{packageId}/versions/{version}/{apiType}/groups":
     post:
       tags:
@@ -7884,6 +8062,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}":
     get:
         tags:
@@ -8048,6 +8228,8 @@ paths:
                 examples:
                   InternalServerError:
                     $ref: "#/components/examples/InternalServerError"
+                  RequestTimeout:
+                    $ref: "#/components/examples/RequestTimeout"
     delete:
       tags:
         - Versions
@@ -8106,6 +8288,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v3/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}":
     patch:
       tags:
@@ -8224,6 +8408,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}/template":
     get:
       tags:
@@ -8296,6 +8482,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   /api/v2/packages/{packageId}/calculateGroups:
     get:
       tags:
@@ -8362,6 +8550,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   /api/v2/packages/{packageId}/recalculateGroups:
     post:
       tags:
@@ -8409,6 +8599,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/documents":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -8510,6 +8702,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v3/packages/{packageId}/versions/{version}/documents/{slug}":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -8586,6 +8780,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/documents/{slug}/shareability":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -8640,6 +8836,17 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/export/shareability-report":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -8703,6 +8910,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/shareability/bulk-update":
     post:
       tags:
@@ -8759,6 +8968,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/packages/{packageId}/versions/{version}/version-internal-documents":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -8829,6 +9040,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/packages/{packageId}/versions/{version}/comparison-internal-documents":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -8907,6 +9120,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v3/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}/documents":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -8990,6 +9205,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v3/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}/publish":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -9111,6 +9328,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v3/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}/publish/{publishId}/status":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -9198,6 +9417,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v3/packages/{packageId}/versions/{version}/references":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -9278,6 +9499,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v3/packages/{packageId}/versions/{version}/revisions":
     get:
       tags:
@@ -9355,6 +9578,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/publish/availableStatuses":
     parameters:
       - $ref: "#/components/parameters/packageId"
@@ -9416,6 +9641,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/space":
     get:
       tags:
@@ -9455,6 +9682,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
     post:
       tags:
         - Users
@@ -9510,6 +9739,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/users/{userId}/space":
     post:
       tags:
@@ -9571,6 +9802,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/login/sso/saml":
     get:
       x-nc-api-audience: noBWC
@@ -9626,6 +9859,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/auth/saml":
     post:
       x-nc-api-audience: noBWC
@@ -9677,6 +9912,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/users/{userId}/availablePackagePromoteStatuses":
     post:
       x-nc-api-audience: noBWC
@@ -9758,6 +9995,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/users/{userId}/profile/avatar":
     get:
       x-nc-api-audience: noBWC
@@ -9818,6 +10057,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v3/search/{searchLevel}":
     parameters:
       - name: searchLevel
@@ -10022,6 +10263,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v4/search/{searchLevel}":
     parameters:
       - name: searchLevel
@@ -10173,6 +10416,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   /playground/proxy:
     get:
       summary: Proxy endpoint for try it in case of non-cloud environments.
@@ -10317,6 +10562,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/changes":
     get:
       tags:
@@ -10382,6 +10629,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/packages/{packageId}/versions/{version}/problems":
     get:
       tags:
@@ -10438,6 +10687,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/ai-chat/chats":
     get:
       tags:
@@ -10516,6 +10767,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
     post:
       tags:
         - AI Chat
@@ -10567,6 +10820,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/ai-chat/chats/{chatId}":
     parameters:
       - $ref: "#/components/parameters/chatId"
@@ -10615,6 +10870,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
     patch:
       tags:
         - AI Chat
@@ -10679,6 +10936,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
     delete:
       tags:
         - AI Chat
@@ -10717,6 +10976,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/ai-chat/chats/{chatId}/messages":
     parameters:
       - $ref: "#/components/parameters/chatId"
@@ -10806,6 +11067,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
     post:
       tags:
         - AI Chat
@@ -10859,7 +11122,7 @@ paths:
                 AiChatNotFound:
                   $ref: "#/components/examples/AiChatNotFound"
         "500":
-          description: Internal Server Error
+          description: Internal Server Error. A turn that exceeds the server-side turn timeout returns `APIHUB-AI-5002`.
           content:
             application/json:
               schema:
@@ -10867,6 +11130,10 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                AiChatTurnTimedOut:
+                  $ref: "#/components/examples/AiChatTurnTimedOut"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/ai-chat/chats/{chatId}/messages/stream":
     parameters:
       - $ref: "#/components/parameters/chatId"
@@ -10954,6 +11221,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/ephemeral-files/{fileId}":
     parameters:
       - name: fileId
@@ -11036,6 +11305,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
 components:
   parameters:
     apiAudience:
@@ -14052,7 +14323,8 @@ components:
             Stable error code for mid-turn failures (HTTP validation/auth errors use the same codes in a JSON body before any SSE frame). Known values:
               * `APIHUB-AI-5001` — upstream LLM provider error;
               * `APIHUB-AI-4001` — message validation failed mid-flight (rare);
-              * `APIHUB-AI-5000` — internal error.
+              * `APIHUB-AI-5000` — internal error;
+              * `APIHUB-AI-5002` — the turn exceeded the server-side turn timeout and was stopped.
             MCP tool failures are surfaced as `tool.completed` with `status: error` and do not terminate the stream with a dedicated error code.
           type: string
           example: "APIHUB-AI-5001"
@@ -14193,6 +14465,12 @@ components:
         code: "APIHUB-8000"
         reason: "InternalServerError"
         message: "InternalServerError"
+    RequestTimeout:
+      description: "Example: request terminated by the server processing deadline"
+      value:
+        status: 500
+        code: "8700"
+        message: "The request timed out. Please try again."
     AiChat:
       description: Single chat metadata
       value:
@@ -14296,6 +14574,12 @@ components:
         status: 404
         code: "APIHUB-AI-3001"
         message: "chat with chatId = $chatId not found"
+    AiChatTurnTimedOut:
+      description: The assistant did not finish the turn within the server-side turn timeout.
+      value:
+        status: 500
+        code: "APIHUB-AI-5002"
+        message: "The assistant did not finish this message within the allowed time. Retry, or split your request into smaller steps."
     AiChatPinLimitExceeded:
       description: User attempts to pin more chats than allowed.
       value:

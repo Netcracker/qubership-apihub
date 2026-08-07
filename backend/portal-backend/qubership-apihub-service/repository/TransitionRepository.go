@@ -1,37 +1,37 @@
 package repository
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	log "github.com/sirupsen/logrus"
 
-	context2 "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/go-pg/pg/v10"
-	"golang.org/x/net/context"
 )
 
 type TransitionRepository interface {
-	MovePackage(fromPkg, toPkg string, overwriteHistory bool) (int, error)
-	MoveGroupingPackage(fromPkg, toPkg string) (int, error)
+	MovePackage(ctx context.Context, fromPkg, toPkg string, overwriteHistory bool) (int, error)
+	MoveGroupingPackage(ctx context.Context, fromPkg, toPkg string) (int, error)
 
-	TrackTransitionStarted(userCtx context2.SecurityContext, id, trType, fromPkg, toPkg string) error
-	TrackTransitionProgress(id, progress int) error
-	TrackTransitionFailed(id, details string) error
-	TrackTransitionCompleted(id string, affectedObjects int) error
+	TrackTransitionStarted(ctx context.Context, id, trType, fromPkg, toPkg string) error
+	TrackTransitionProgress(ctx context.Context, id, progress int) error
+	TrackTransitionFailed(ctx context.Context, id, details string) error
+	TrackTransitionCompleted(ctx context.Context, id string, affectedObjects int) error
 
-	GetTransitionStatus(id string) (*entity.TransitionActivityEntity, error)
-	ListCompletedTransitions(completedSerialOffset int, limit int) ([]entity.TransitionActivityEntity, error)
+	GetTransitionStatus(ctx context.Context, id string) (*entity.TransitionActivityEntity, error)
+	ListCompletedTransitions(ctx context.Context, completedSerialOffset int, limit int) ([]entity.TransitionActivityEntity, error)
 
 	addPackageTransitionRecord(tx *pg.Tx, oldPackageId string, newPackageId string, overwriteHistory bool) error
-	GetNewPackageId(oldPackageId string) (string, error)
-	GetOldPackageIds(newPackageId string) ([]string, error)
-	ListPackageTransitions() ([]entity.PackageTransitionEntity, error)
+	GetNewPackageId(ctx context.Context, oldPackageId string) (string, error)
+	GetOldPackageIds(ctx context.Context, newPackageId string) ([]string, error)
+	ListPackageTransitions(ctx context.Context) ([]entity.PackageTransitionEntity, error)
 }
 
 func NewTransitionRepository(cp db.ConnectionProvider) TransitionRepository {
@@ -44,9 +44,9 @@ type transitionRepositoryImpl struct {
 	cp db.ConnectionProvider
 }
 
-func (t transitionRepositoryImpl) MoveGroupingPackage(fromPkg, toPkg string) (int, error) {
+func (t transitionRepositoryImpl) MoveGroupingPackage(ctx context.Context, fromPkg, toPkg string) (int, error) {
 	objAffected := 0
-	err := t.cp.GetConnection().RunInTransaction(context.Background(), func(tx *pg.Tx) error {
+	err := t.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 
 		fromPkgEnt := new(entity.PackageEntity)
 		err := tx.Model(fromPkgEnt).
@@ -72,9 +72,9 @@ func (t transitionRepositoryImpl) MoveGroupingPackage(fromPkg, toPkg string) (in
 	return objAffected, err
 }
 
-func (t transitionRepositoryImpl) MovePackage(fromPkg, toPkg string, overwriteHistory bool) (int, error) {
+func (t transitionRepositoryImpl) MovePackage(ctx context.Context, fromPkg, toPkg string, overwriteHistory bool) (int, error) {
 	objAffected := 0
-	err := t.cp.GetConnection().RunInTransaction(context.Background(), func(tx *pg.Tx) error {
+	err := t.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		fromPkgEnt := new(entity.PackageEntity)
 		err := tx.Model(fromPkgEnt).
 			Where("id = ?", fromPkg).
@@ -541,7 +541,7 @@ func deleteVersionsData(tx *pg.Tx, fromPkg string) error {
 	return nil
 }
 
-func (t transitionRepositoryImpl) TrackTransitionStarted(userCtx context2.SecurityContext, id, trType, fromPkg, toPkg string) error {
+func (t transitionRepositoryImpl) TrackTransitionStarted(ctx context.Context, id, trType, fromPkg, toPkg string) error {
 	ent := entity.TransitionActivityEntity{
 		Id:              id,
 		TrType:          trType,
@@ -549,14 +549,14 @@ func (t transitionRepositoryImpl) TrackTransitionStarted(userCtx context2.Securi
 		ToId:            toPkg,
 		Status:          string(view.StatusRunning),
 		Details:         "",
-		StartedBy:       userCtx.GetUserId(),
+		StartedBy:       secctx.GetUserId(ctx),
 		StartedAt:       time.Now(),
 		FinishedAt:      time.Time{},
 		ProgressPercent: 0,
 		AffectedObjects: 0,
 	}
 
-	_, err := t.cp.GetConnection().Model(&ent).Insert()
+	_, err := t.cp.GetConnection().WithContext(ctx).Model(&ent).Insert()
 	if err != nil {
 		return fmt.Errorf("failed to insert transition activity entity %+v: %w", ent, err)
 	}
@@ -564,21 +564,21 @@ func (t transitionRepositoryImpl) TrackTransitionStarted(userCtx context2.Securi
 	return nil
 }
 
-func (t transitionRepositoryImpl) TrackTransitionProgress(id, progress int) error {
+func (t transitionRepositoryImpl) TrackTransitionProgress(ctx context.Context, id, progress int) error {
 	ent := entity.TransitionActivityEntity{}
-	err := t.cp.GetConnection().Model(&ent).Where("id=?", id).First()
+	err := t.cp.GetConnection().WithContext(ctx).Model(&ent).Where("id=?", id).First()
 	if err != nil {
 		return err
 	}
 	ent.ProgressPercent = progress
 
-	_, err = t.cp.GetConnection().Model(&ent).Where("id=?", id).Update()
+	_, err = t.cp.GetConnection().WithContext(ctx).Model(&ent).Where("id=?", id).Update()
 	return err
 }
 
-func (t transitionRepositoryImpl) TrackTransitionFailed(id, details string) error {
+func (t transitionRepositoryImpl) TrackTransitionFailed(ctx context.Context, id, details string) error {
 	ent := entity.TransitionActivityEntity{}
-	err := t.cp.GetConnection().Model(&ent).Where("id=?", id).First()
+	err := t.cp.GetConnection().WithContext(ctx).Model(&ent).Where("id=?", id).First()
 	if err != nil {
 		return err
 	}
@@ -586,21 +586,21 @@ func (t transitionRepositoryImpl) TrackTransitionFailed(id, details string) erro
 	ent.Details = details
 	ent.FinishedAt = time.Now()
 
-	_, err = t.cp.GetConnection().Model(&ent).Where("id=?", id).Update()
+	_, err = t.cp.GetConnection().WithContext(ctx).Model(&ent).Where("id=?", id).Update()
 	return err
 }
 
-func (t transitionRepositoryImpl) TrackTransitionCompleted(id string, affectedObjects int) error {
+func (t transitionRepositoryImpl) TrackTransitionCompleted(ctx context.Context, id string, affectedObjects int) error {
 	updateQuery := `update activity_tracking_transition
 	set status = ?, affected_objects = ?, finished_at = ?, progress_percent = 100, completed_serial_number = nextval('activity_tracking_transition_completed_seq')
 	where id=?;`
-	_, err := t.cp.GetConnection().Exec(updateQuery, string(view.StatusComplete), affectedObjects, time.Now(), id)
+	_, err := t.cp.GetConnection().WithContext(ctx).Exec(updateQuery, string(view.StatusComplete), affectedObjects, time.Now(), id)
 	return err
 }
 
-func (t transitionRepositoryImpl) GetTransitionStatus(id string) (*entity.TransitionActivityEntity, error) {
+func (t transitionRepositoryImpl) GetTransitionStatus(ctx context.Context, id string) (*entity.TransitionActivityEntity, error) {
 	ent := entity.TransitionActivityEntity{}
-	err := t.cp.GetConnection().Model(&ent).Where("id=?", id).First()
+	err := t.cp.GetConnection().WithContext(ctx).Model(&ent).Where("id=?", id).First()
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil
@@ -610,9 +610,9 @@ func (t transitionRepositoryImpl) GetTransitionStatus(id string) (*entity.Transi
 	return &ent, nil
 }
 
-func (t transitionRepositoryImpl) ListCompletedTransitions(completedSerialOffset int, limit int) ([]entity.TransitionActivityEntity, error) {
+func (t transitionRepositoryImpl) ListCompletedTransitions(ctx context.Context, completedSerialOffset int, limit int) ([]entity.TransitionActivityEntity, error) {
 	var result []entity.TransitionActivityEntity
-	err := t.cp.GetConnection().Model(&result).
+	err := t.cp.GetConnection().WithContext(ctx).Model(&result).
 		Where("status = ?", string(view.StatusComplete)).
 		Order("completed_serial_number ASC").
 		Offset(completedSerialOffset).
@@ -673,9 +673,9 @@ func (t transitionRepositoryImpl) addPackageTransitionRecord(tx *pg.Tx, oldPacka
 	return nil
 }
 
-func (t transitionRepositoryImpl) GetNewPackageId(oldPackageId string) (string, error) {
+func (t transitionRepositoryImpl) GetNewPackageId(ctx context.Context, oldPackageId string) (string, error) {
 	transition := &entity.PackageTransitionEntity{}
-	err := t.cp.GetConnection().Model(transition).Where("old_package_id = ?", oldPackageId).Select()
+	err := t.cp.GetConnection().WithContext(ctx).Model(transition).Where("old_package_id = ?", oldPackageId).Select()
 	if err != nil {
 		if err != pg.ErrNoRows {
 			return "", fmt.Errorf("failed to get transition for package id = %s: %w", oldPackageId, err)
@@ -684,10 +684,10 @@ func (t transitionRepositoryImpl) GetNewPackageId(oldPackageId string) (string, 
 	return transition.NewPackageId, nil
 }
 
-func (t transitionRepositoryImpl) GetOldPackageIds(newPackageId string) ([]string, error) {
+func (t transitionRepositoryImpl) GetOldPackageIds(ctx context.Context, newPackageId string) ([]string, error) {
 	var result []string
 	var existingTransitions []entity.PackageTransitionEntity
-	err := t.cp.GetConnection().Model(&existingTransitions).Where("new_package_id = ?", newPackageId).Select()
+	err := t.cp.GetConnection().WithContext(ctx).Model(&existingTransitions).Where("new_package_id = ?", newPackageId).Select()
 	if err != nil {
 		if err != pg.ErrNoRows {
 			return nil, fmt.Errorf("failed to list existing transiotions for package id = %s: %w", newPackageId, err)
@@ -699,9 +699,9 @@ func (t transitionRepositoryImpl) GetOldPackageIds(newPackageId string) ([]strin
 	return result, nil
 }
 
-func (t transitionRepositoryImpl) ListPackageTransitions() ([]entity.PackageTransitionEntity, error) {
+func (t transitionRepositoryImpl) ListPackageTransitions(ctx context.Context) ([]entity.PackageTransitionEntity, error) {
 	var result []entity.PackageTransitionEntity
-	err := t.cp.GetConnection().Model(&result).Select()
+	err := t.cp.GetConnection().WithContext(ctx).Model(&result).Select()
 	return result, err
 }
 

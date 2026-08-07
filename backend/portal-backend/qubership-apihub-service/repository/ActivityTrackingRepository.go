@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
@@ -9,9 +10,9 @@ import (
 )
 
 type ActivityTrackingRepository interface {
-	CreateEvent(ent *entity.ActivityTrackingEntity) error
+	CreateEvent(ctx context.Context, ent *entity.ActivityTrackingEntity) error
 
-	GetEventsForPackages(packageIds []string, limit int, page int, textFilter string, types []string) ([]entity.EnrichedActivityTrackingEntity, error)
+	GetEventsForPackages(ctx context.Context, packageIds []string, limit int, page int, textFilter string, types []string) ([]entity.EnrichedActivityTrackingEntity, error)
 }
 
 func NewActivityTrackingRepository(cp db.ConnectionProvider) ActivityTrackingRepository {
@@ -24,18 +25,18 @@ type activityTrackingRepositoryImpl struct {
 	cp db.ConnectionProvider
 }
 
-func (a activityTrackingRepositoryImpl) CreateEvent(ent *entity.ActivityTrackingEntity) error {
-	_, err := a.cp.GetConnection().Model(ent).Insert()
+func (a activityTrackingRepositoryImpl) CreateEvent(ctx context.Context, ent *entity.ActivityTrackingEntity) error {
+	_, err := a.cp.GetConnection().WithContext(ctx).Model(ent).Insert()
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (a activityTrackingRepositoryImpl) GetEventsForPackages(packageIds []string, limit int, page int, textFilter string, types []string) ([]entity.EnrichedActivityTrackingEntity, error) {
+func (a activityTrackingRepositoryImpl) GetEventsForPackages(ctx context.Context, packageIds []string, limit int, page int, textFilter string, types []string) ([]entity.EnrichedActivityTrackingEntity, error) {
 	var result []entity.EnrichedActivityTrackingEntity
 
-	query := a.cp.GetConnection().Model(&result).
+	query := a.cp.GetConnection().WithContext(ctx).Model(&result).
 		ColumnExpr("at.*").
 		ColumnExpr("get_latest_revision(at.package_id, at.data #>> '{version}') != (at.data #>> '{revision}')::int as not_latest_revision").
 		ColumnExpr("pkg.name as pkg_name, pkg.kind as pkg_kind").

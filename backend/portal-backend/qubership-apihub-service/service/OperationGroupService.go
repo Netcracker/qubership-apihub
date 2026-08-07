@@ -3,34 +3,37 @@ package service
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/archive"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
+const operationGroupPublishTimeout = 30 * time.Minute
+
 type OperationGroupService interface {
 	SetBuildService(buildService BuildService)
 
-	CreateOperationGroup(ctx context.SecurityContext, packageId string, version string, apiType string, createReq view.CreateOperationGroupReq) error
-	UpdateOperationGroup(ctx context.SecurityContext, packageId string, version string, apiType string, groupName string, updateReq view.UpdateOperationGroupReq) error
-	DeleteOperationGroup(ctx context.SecurityContext, packageId string, version string, apiType string, groupName string) error
-	CalculateOperationGroups(packageId string, version string, groupingPrefix string) ([]string, error)
-	GetGroupedOperations(packageId string, version string, apiType string, groupName string, searchReq view.OperationListReq) (*view.GroupedOperations, error)
-	CheckOperationGroupExists(packageId string, version string, apiType string, groupName string) (bool, error)
-	GetOperationGroupExportTemplate(packageId string, version string, apiType string, groupName string) ([]byte, string, error)
-	StartOperationGroupPublish(ctx context.SecurityContext, packageId string, version string, apiType string, groupName string, req view.OperationGroupPublishReq) (string, error)
-	GetOperationGroupPublishStatus(publishId string) (*view.OperationGroupPublishStatusResponse, error)
+	CreateOperationGroup(ctx context.Context, packageId string, version string, apiType string, createReq view.CreateOperationGroupReq) error
+	UpdateOperationGroup(ctx context.Context, packageId string, version string, apiType string, groupName string, updateReq view.UpdateOperationGroupReq) error
+	DeleteOperationGroup(ctx context.Context, packageId string, version string, apiType string, groupName string) error
+	CalculateOperationGroups(ctx context.Context, packageId string, version string, groupingPrefix string) ([]string, error)
+	GetGroupedOperations(ctx context.Context, packageId string, version string, apiType string, groupName string, searchReq view.OperationListReq) (*view.GroupedOperations, error)
+	CheckOperationGroupExists(ctx context.Context, packageId string, version string, apiType string, groupName string) (bool, error)
+	GetOperationGroupExportTemplate(ctx context.Context, packageId string, version string, apiType string, groupName string) ([]byte, string, error)
+	StartOperationGroupPublish(ctx context.Context, packageId string, version string, apiType string, groupName string, req view.OperationGroupPublishReq) (string, error)
+	GetOperationGroupPublishStatus(ctx context.Context, publishId string) (*view.OperationGroupPublishStatusResponse, error)
 }
 
 func NewOperationGroupService(operationRepository repository.OperationRepository, publishedRepo repository.PublishedRepository, exportRepository repository.ExportResultRepository,
@@ -61,15 +64,15 @@ func (o *operationGroupServiceImpl) SetBuildService(buildService BuildService) {
 	o.buildService = buildService
 }
 
-func (o operationGroupServiceImpl) CheckOperationGroupExists(packageId string, version string, apiType string, groupName string) (bool, error) {
-	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
+func (o operationGroupServiceImpl) CheckOperationGroupExists(ctx context.Context, packageId string, version string, apiType string, groupName string) (bool, error) {
+	versionEnt, err := o.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return false, err
 	}
 	if versionEnt == nil {
 		return false, nil
 	}
-	group, err := o.operationRepo.GetOperationGroup(packageId, versionEnt.Version, versionEnt.Revision, apiType, groupName)
+	group, err := o.operationRepo.GetOperationGroup(ctx, packageId, versionEnt.Version, versionEnt.Revision, apiType, groupName)
 	if err != nil {
 		return false, err
 	}
@@ -80,8 +83,8 @@ func (o operationGroupServiceImpl) CheckOperationGroupExists(packageId string, v
 	}
 }
 
-func (o operationGroupServiceImpl) CreateOperationGroup(ctx context.SecurityContext, packageId string, version string, apiType string, createReq view.CreateOperationGroupReq) error {
-	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
+func (o operationGroupServiceImpl) CreateOperationGroup(ctx context.Context, packageId string, version string, apiType string, createReq view.CreateOperationGroupReq) error {
+	versionEnt, err := o.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return err
 	}
@@ -101,7 +104,7 @@ func (o operationGroupServiceImpl) CreateOperationGroup(ctx context.SecurityCont
 		}
 	}
 
-	existingGroup, err := o.operationRepo.GetOperationGroup(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, createReq.GroupName)
+	existingGroup, err := o.operationRepo.GetOperationGroup(ctx, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, createReq.GroupName)
 	if err != nil {
 		return err
 	}
@@ -131,11 +134,11 @@ func (o operationGroupServiceImpl) CreateOperationGroup(ctx context.SecurityCont
 		newGroupEntity.TemplateChecksum = templateEnt.Checksum
 		newGroupEntity.TemplateFilename = createReq.TemplateFilename
 	}
-	err = o.operationRepo.CreateOperationGroup(newGroupEntity, templateEnt)
+	err = o.operationRepo.CreateOperationGroup(ctx, newGroupEntity, templateEnt)
 	if err != nil {
 		return err
 	}
-	err = o.operationRepo.AddOperationGroupHistory(entity.MakeOperationGroupHistoryEntity(*newGroupEntity, view.OperationGroupActionCreate, ctx.GetUserId()))
+	err = o.operationRepo.AddOperationGroupHistory(ctx, entity.MakeOperationGroupHistoryEntity(*newGroupEntity, view.OperationGroupActionCreate, secctx.GetUserId(ctx)))
 	if err != nil {
 		log.Errorf("failed to insert operation group history: %v", err.Error())
 	}
@@ -144,18 +147,18 @@ func (o operationGroupServiceImpl) CreateOperationGroup(ctx context.SecurityCont
 	dataMap["version"] = newGroupEntity.Version
 	dataMap["revision"] = newGroupEntity.Revision
 	dataMap["apiType"] = newGroupEntity.ApiType
-	o.atService.TrackEvent(view.ActivityTrackingEvent{
+	o.atService.TrackEvent(ctx, view.ActivityTrackingEvent{
 		Type:      view.ATETCreateManualGroup,
 		Data:      dataMap,
 		PackageId: newGroupEntity.PackageId,
 		Date:      time.Now(),
-		UserId:    ctx.GetUserId(),
+		UserId:    secctx.GetUserId(ctx),
 	})
 
 	return nil
 }
 
-func (o operationGroupServiceImpl) makeGroupedOperationEntities(versionEnt *entity.PublishedVersionEntity, groupEntity *entity.OperationGroupEntity, operations []view.GroupOperations) ([]entity.GroupedOperationEntity, error) {
+func (o operationGroupServiceImpl) makeGroupedOperationEntities(ctx context.Context, versionEnt *entity.PublishedVersionEntity, groupEntity *entity.OperationGroupEntity, operations []view.GroupOperations) ([]entity.GroupedOperationEntity, error) {
 	if len(operations) > view.OperationGroupOperationsLimit {
 		return nil, &exception.CustomError{
 			Status:  http.StatusBadRequest,
@@ -166,7 +169,7 @@ func (o operationGroupServiceImpl) makeGroupedOperationEntities(versionEnt *enti
 	}
 	operationEntities := make([]entity.GroupedOperationEntity, 0)
 	allowedVersions := make(map[string]struct{}, 0)
-	refs, err := o.publishedRepo.GetVersionRefsV3(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
+	refs, err := o.publishedRepo.GetVersionRefsV3(ctx, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +204,7 @@ func (o operationGroupServiceImpl) makeGroupedOperationEntities(versionEnt *enti
 				operationEnt.Version = versionEnt.Version
 				operationEnt.Revision = versionEnt.Revision
 			} else {
-				versionEnt, err := o.publishedRepo.GetVersion(operation.PackageId, operation.Version)
+				versionEnt, err := o.publishedRepo.GetVersion(ctx, operation.PackageId, operation.Version)
 				if err != nil {
 					return nil, err
 				}
@@ -233,8 +236,8 @@ func (o operationGroupServiceImpl) makeGroupedOperationEntities(versionEnt *enti
 	return operationEntities, nil
 }
 
-func (o operationGroupServiceImpl) UpdateOperationGroup(ctx context.SecurityContext, packageId string, version string, apiType string, groupName string, updateReq view.UpdateOperationGroupReq) error {
-	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
+func (o operationGroupServiceImpl) UpdateOperationGroup(ctx context.Context, packageId string, version string, apiType string, groupName string, updateReq view.UpdateOperationGroupReq) error {
+	versionEnt, err := o.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return err
 	}
@@ -246,7 +249,7 @@ func (o operationGroupServiceImpl) UpdateOperationGroup(ctx context.SecurityCont
 			Params:  map[string]interface{}{"version": version, "packageId": packageId},
 		}
 	}
-	existingGroup, err := o.operationRepo.GetOperationGroup(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, groupName)
+	existingGroup, err := o.operationRepo.GetOperationGroup(ctx, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, groupName)
 	if err != nil {
 		return err
 	}
@@ -278,7 +281,7 @@ func (o operationGroupServiceImpl) UpdateOperationGroup(ctx context.SecurityCont
 				Message: exception.EmptyOperationGroupNameMsg,
 			}
 		}
-		existingNewGroup, err := o.operationRepo.GetOperationGroup(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, *updateReq.GroupName)
+		existingNewGroup, err := o.operationRepo.GetOperationGroup(ctx, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, *updateReq.GroupName)
 		if err != nil {
 			return err
 		}
@@ -309,35 +312,35 @@ func (o operationGroupServiceImpl) UpdateOperationGroup(ctx context.SecurityCont
 	}
 	var newGroupedOperationEntities *[]entity.GroupedOperationEntity
 	if updateReq.Operations != nil {
-		groupedOperationEntities, err := o.makeGroupedOperationEntities(versionEnt, &updatedGroup, *updateReq.Operations)
+		groupedOperationEntities, err := o.makeGroupedOperationEntities(ctx, versionEnt, &updatedGroup, *updateReq.Operations)
 		if err != nil {
 			return err
 		}
 		newGroupedOperationEntities = &groupedOperationEntities
 	}
 
-	err = o.operationRepo.UpdateOperationGroup(existingGroup, &updatedGroup, templateEnt, newGroupedOperationEntities)
+	err = o.operationRepo.UpdateOperationGroup(ctx, existingGroup, &updatedGroup, templateEnt, newGroupedOperationEntities)
 	if err != nil {
 		return err
 	}
-	err = o.clearOperationGroupCache(packageId, versionEnt.Version, versionEnt.Revision, apiType, existingGroup.GroupId)
+	err = o.clearOperationGroupCache(ctx, packageId, versionEnt.Version, versionEnt.Revision, apiType, existingGroup.GroupId)
 	if err != nil {
 		return err
 	}
 
 	groupParameters := make([]string, 0)
 	if existingGroup.GroupId != updatedGroup.GroupId {
-		err = o.operationRepo.AddOperationGroupHistory(entity.MakeOperationGroupHistoryEntity(*existingGroup, view.OperationGroupActionDelete, ctx.GetUserId()))
+		err = o.operationRepo.AddOperationGroupHistory(ctx, entity.MakeOperationGroupHistoryEntity(*existingGroup, view.OperationGroupActionDelete, secctx.GetUserId(ctx)))
 		if err != nil {
 			log.Errorf("failed to insert operation group history: %v", err.Error())
 		}
-		err = o.operationRepo.AddOperationGroupHistory(entity.MakeOperationGroupHistoryEntity(updatedGroup, view.OperationGroupActionCreate, ctx.GetUserId()))
+		err = o.operationRepo.AddOperationGroupHistory(ctx, entity.MakeOperationGroupHistoryEntity(updatedGroup, view.OperationGroupActionCreate, secctx.GetUserId(ctx)))
 		if err != nil {
 			log.Errorf("failed to insert operation group history: %v", err.Error())
 		}
 		groupParameters = append(groupParameters, "name")
 	} else {
-		err = o.operationRepo.AddOperationGroupHistory(entity.MakeOperationGroupHistoryEntity(updatedGroup, view.OperationGroupActionUpdate, ctx.GetUserId()))
+		err = o.operationRepo.AddOperationGroupHistory(ctx, entity.MakeOperationGroupHistoryEntity(updatedGroup, view.OperationGroupActionUpdate, secctx.GetUserId(ctx)))
 		if err != nil {
 			log.Errorf("failed to insert operation group history: %v", err.Error())
 		}
@@ -358,18 +361,18 @@ func (o operationGroupServiceImpl) UpdateOperationGroup(ctx context.SecurityCont
 	dataMap["apiType"] = updatedGroup.ApiType
 	dataMap["isPrefixGroup"] = updatedGroup.Autogenerated
 	dataMap["groupParameters"] = groupParameters
-	o.atService.TrackEvent(view.ActivityTrackingEvent{
+	o.atService.TrackEvent(ctx, view.ActivityTrackingEvent{
 		Type:      view.ATETOperationsGroupParameters,
 		Data:      dataMap,
 		PackageId: updatedGroup.PackageId,
 		Date:      time.Now(),
-		UserId:    ctx.GetUserId(),
+		UserId:    secctx.GetUserId(ctx),
 	})
 	return nil
 }
 
-func (o operationGroupServiceImpl) DeleteOperationGroup(ctx context.SecurityContext, packageId string, version string, apiType string, groupName string) error {
-	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
+func (o operationGroupServiceImpl) DeleteOperationGroup(ctx context.Context, packageId string, version string, apiType string, groupName string) error {
+	versionEnt, err := o.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return err
 	}
@@ -381,7 +384,7 @@ func (o operationGroupServiceImpl) DeleteOperationGroup(ctx context.SecurityCont
 			Params:  map[string]interface{}{"version": version, "packageId": packageId},
 		}
 	}
-	existingGroup, err := o.operationRepo.GetOperationGroup(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, groupName)
+	existingGroup, err := o.operationRepo.GetOperationGroup(ctx, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, groupName)
 	if err != nil {
 		return err
 	}
@@ -401,15 +404,15 @@ func (o operationGroupServiceImpl) DeleteOperationGroup(ctx context.SecurityCont
 			Params:  map[string]interface{}{"groupName": groupName},
 		}
 	}
-	err = o.operationRepo.DeleteOperationGroup(existingGroup)
+	err = o.operationRepo.DeleteOperationGroup(ctx, existingGroup)
 	if err != nil {
 		return err
 	}
-	err = o.clearOperationGroupCache(packageId, versionEnt.Version, versionEnt.Revision, apiType, existingGroup.GroupId)
+	err = o.clearOperationGroupCache(ctx, packageId, versionEnt.Version, versionEnt.Revision, apiType, existingGroup.GroupId)
 	if err != nil {
 		return err
 	}
-	err = o.operationRepo.AddOperationGroupHistory(entity.MakeOperationGroupHistoryEntity(*existingGroup, view.OperationGroupActionDelete, ctx.GetUserId()))
+	err = o.operationRepo.AddOperationGroupHistory(ctx, entity.MakeOperationGroupHistoryEntity(*existingGroup, view.OperationGroupActionDelete, secctx.GetUserId(ctx)))
 	if err != nil {
 		log.Errorf("failed to insert operation group history: %v", err.Error())
 	}
@@ -418,19 +421,19 @@ func (o operationGroupServiceImpl) DeleteOperationGroup(ctx context.SecurityCont
 	dataMap["version"] = existingGroup.Version
 	dataMap["revision"] = existingGroup.Revision
 	dataMap["apiType"] = existingGroup.ApiType
-	o.atService.TrackEvent(view.ActivityTrackingEvent{
+	o.atService.TrackEvent(ctx, view.ActivityTrackingEvent{
 		Type:      view.ATETDeleteManualGroup,
 		Data:      dataMap,
 		PackageId: existingGroup.PackageId,
 		Date:      time.Now(),
-		UserId:    ctx.GetUserId(),
+		UserId:    secctx.GetUserId(ctx),
 	})
 
 	return nil
 }
 
-func (o operationGroupServiceImpl) CalculateOperationGroups(packageId string, version string, groupingPrefix string) ([]string, error) {
-	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
+func (o operationGroupServiceImpl) CalculateOperationGroups(ctx context.Context, packageId string, version string, groupingPrefix string) ([]string, error) {
+	versionEnt, err := o.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return nil, err
 	}
@@ -442,16 +445,16 @@ func (o operationGroupServiceImpl) CalculateOperationGroups(packageId string, ve
 			Params:  map[string]interface{}{"version": version, "packageId": packageId},
 		}
 	}
-	operationGroups, err := o.operationRepo.CalculateOperationGroups(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, groupingPrefix)
+	operationGroups, err := o.operationRepo.CalculateOperationGroups(ctx, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, groupingPrefix)
 	if err != nil {
 		return nil, err
 	}
 	return operationGroups, nil
 }
 
-func (o operationGroupServiceImpl) GetGroupedOperations(packageId string, version string, apiType string, groupName string, searchReq view.OperationListReq) (*view.GroupedOperations, error) {
+func (o operationGroupServiceImpl) GetGroupedOperations(ctx context.Context, packageId string, version string, apiType string, groupName string, searchReq view.OperationListReq) (*view.GroupedOperations, error) {
 	if searchReq.RefPackageId != "" {
-		packageEnt, err := o.publishedRepo.GetPackage(packageId)
+		packageEnt, err := o.publishedRepo.GetPackage(ctx, packageId)
 		if err != nil {
 			return nil, err
 		}
@@ -471,7 +474,7 @@ func (o operationGroupServiceImpl) GetGroupedOperations(packageId string, versio
 				Params:  map[string]interface{}{"param": "refPackageId"}}
 		}
 	}
-	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
+	versionEnt, err := o.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return nil, err
 	}
@@ -483,7 +486,7 @@ func (o operationGroupServiceImpl) GetGroupedOperations(packageId string, versio
 			Params:  map[string]interface{}{"version": version, "packageId": packageId},
 		}
 	}
-	existingGroup, err := o.operationRepo.GetOperationGroup(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, groupName)
+	existingGroup, err := o.operationRepo.GetOperationGroup(ctx, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, groupName)
 	if err != nil {
 		return nil, err
 	}
@@ -502,7 +505,7 @@ func (o operationGroupServiceImpl) GetGroupedOperations(packageId string, versio
 	if err != nil {
 		return nil, err
 	}
-	operationEnts, err := o.operationRepo.GetGroupedOperations(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, groupName, searchReq)
+	operationEnts, err := o.operationRepo.GetGroupedOperations(ctx, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, groupName, searchReq)
 	if err != nil {
 		return nil, err
 	}
@@ -512,7 +515,7 @@ func (o operationGroupServiceImpl) GetGroupedOperations(packageId string, versio
 		operationList = append(operationList, entity.MakeOperationView(ent))
 		packageVersions[ent.PackageId] = append(packageVersions[ent.PackageId], view.MakeVersionRefKey(ent.Version, ent.Revision))
 	}
-	packagesRefs, err := o.packageVersionEnrichmentService.GetPackageVersionRefsMap(packageVersions)
+	packagesRefs, err := o.packageVersionEnrichmentService.GetPackageVersionRefsMap(ctx, packageVersions)
 	if err != nil {
 		return nil, err
 	}
@@ -523,12 +526,12 @@ func (o operationGroupServiceImpl) GetGroupedOperations(packageId string, versio
 	return &operations, nil
 }
 
-func (o operationGroupServiceImpl) clearOperationGroupCache(packageId string, version string, revision int, apiType string, groupId string) error {
-	return o.exportRepository.DeleteTransformedDocuments(packageId, version, revision, apiType, groupId)
+func (o operationGroupServiceImpl) clearOperationGroupCache(ctx context.Context, packageId string, version string, revision int, apiType string, groupId string) error {
+	return o.exportRepository.DeleteTransformedDocuments(ctx, packageId, version, revision, apiType, groupId)
 }
 
-func (o operationGroupServiceImpl) GetOperationGroupExportTemplate(packageId string, version string, apiType string, groupName string) ([]byte, string, error) {
-	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
+func (o operationGroupServiceImpl) GetOperationGroupExportTemplate(ctx context.Context, packageId string, version string, apiType string, groupName string) ([]byte, string, error) {
+	versionEnt, err := o.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return nil, "", err
 	}
@@ -540,7 +543,7 @@ func (o operationGroupServiceImpl) GetOperationGroupExportTemplate(packageId str
 			Params:  map[string]interface{}{"version": version, "packageId": packageId},
 		}
 	}
-	operationsGroupTemplate, err := o.operationRepo.GetOperationGroupTemplateFile(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, groupName)
+	operationsGroupTemplate, err := o.operationRepo.GetOperationGroupTemplateFile(ctx, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, groupName)
 	if err != nil {
 		return nil, "", err
 	}
@@ -555,8 +558,8 @@ func (o operationGroupServiceImpl) GetOperationGroupExportTemplate(packageId str
 	return operationsGroupTemplate.Template, operationsGroupTemplate.TemplateFilename, nil
 }
 
-func (o operationGroupServiceImpl) StartOperationGroupPublish(ctx context.SecurityContext, packageId string, version string, apiType string, groupName string, req view.OperationGroupPublishReq) (string, error) {
-	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
+func (o operationGroupServiceImpl) StartOperationGroupPublish(ctx context.Context, packageId string, version string, apiType string, groupName string, req view.OperationGroupPublishReq) (string, error) {
+	versionEnt, err := o.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return "", err
 	}
@@ -568,7 +571,7 @@ func (o operationGroupServiceImpl) StartOperationGroupPublish(ctx context.Securi
 			Params:  map[string]interface{}{"version": version},
 		}
 	}
-	exists, err := o.CheckOperationGroupExists(packageId, version, apiType, groupName)
+	exists, err := o.CheckOperationGroupExists(ctx, packageId, version, apiType, groupName)
 	if err != nil {
 		return "", err
 	}
@@ -586,7 +589,7 @@ func (o operationGroupServiceImpl) StartOperationGroupPublish(ctx context.Securi
 			if previousVersionPackageId == "" {
 				previousVersionPackageId = req.PackageId
 			}
-			previousVersionStatus, previousVersionFound, err := o.publishedService.GetVersionStatus(previousVersionPackageId, req.PreviousVersion)
+			previousVersionStatus, previousVersionFound, err := o.publishedService.GetVersionStatus(ctx, previousVersionPackageId, req.PreviousVersion)
 			if err != nil {
 				return "", err
 			}
@@ -617,24 +620,28 @@ func (o operationGroupServiceImpl) StartOperationGroupPublish(ctx context.Securi
 		PublishId: publishId,
 		Status:    string(view.StatusRunning),
 	}
-	err = o.publishedRepo.StoreOperationGroupPublishProcess(operationGroupPublishEnt)
+	err = o.publishedRepo.StoreOperationGroupPublishProcess(ctx, operationGroupPublishEnt)
 	if err != nil {
 		return "", fmt.Errorf("failed to create operation group publish process: %w", err)
 	}
+	// Detach from the request context so the async operation-group publish survives the response, but
+	// keep a safety-net bound so a runaway publish can't run forever.
+	bgCtx, cancel := context.WithTimeout(secctx.Detach(ctx), operationGroupPublishTimeout)
 	utils.SafeAsync(func() {
-		o.publishOperationGroup(ctx, versionEnt, apiType, groupName, req, operationGroupPublishEnt)
+		defer cancel()
+		o.publishOperationGroup(bgCtx, versionEnt, apiType, groupName, req, operationGroupPublishEnt)
 	})
 	return publishId, nil
 }
 
-func (o operationGroupServiceImpl) publishOperationGroup(ctx context.SecurityContext, version *entity.PublishedVersionEntity, apiType string, groupName string, req view.OperationGroupPublishReq, publishEnt *entity.OperationGroupPublishEntity) {
+func (o operationGroupServiceImpl) publishOperationGroup(ctx context.Context, version *entity.PublishedVersionEntity, apiType string, groupName string, req view.OperationGroupPublishReq, publishEnt *entity.OperationGroupPublishEntity) {
 	var buildConfig view.BuildConfig
 	if apiType == string(view.RestApiType) {
 		buildConfig = view.BuildConfig{
 			PackageId:                    version.PackageId,
 			Version:                      view.MakeVersionRefKey(version.Version, version.Revision),
 			BuildType:                    view.ExportRestOperationsGroup,
-			CreatedBy:                    ctx.GetUserId(),
+			CreatedBy:                    secctx.GetUserId(ctx),
 			ApiType:                      string(view.RestApiType),
 			GroupName:                    groupName,
 			OperationsSpecTransformation: view.TransformationReducedSource,
@@ -645,7 +652,7 @@ func (o operationGroupServiceImpl) publishOperationGroup(ctx context.SecurityCon
 			PackageId:                    version.PackageId,
 			Version:                      view.MakeVersionRefKey(version.Version, version.Revision),
 			BuildType:                    view.ExportGraphqlOperationsGroup,
-			CreatedBy:                    ctx.GetUserId(),
+			CreatedBy:                    secctx.GetUserId(ctx),
 			ApiType:                      string(view.GraphqlApiType),
 			GroupName:                    groupName,
 			OperationsSpecTransformation: view.TransformationReducedSource,
@@ -656,34 +663,34 @@ func (o operationGroupServiceImpl) publishOperationGroup(ctx context.SecurityCon
 			PackageId:                    version.PackageId,
 			Version:                      view.MakeVersionRefKey(version.Version, version.Revision),
 			BuildType:                    view.ExportAsyncapiOperationsGroup,
-			CreatedBy:                    ctx.GetUserId(),
+			CreatedBy:                    secctx.GetUserId(ctx),
 			ApiType:                      string(view.AsyncapiApiType),
 			GroupName:                    groupName,
 			OperationsSpecTransformation: view.TransformationReducedSource,
 			Format:                       view.FormatJSON,
 		}
 	} else {
-		o.updatePublishProcess(publishEnt, string(view.StatusError), fmt.Sprintf("unsupported API type: %s", apiType))
+		o.updatePublishProcess(ctx, publishEnt, string(view.StatusError), fmt.Sprintf("unsupported API type: %s", apiType))
 		return
 	}
-	exportBuildId, _, err := o.buildService.CreateBuildWithoutDependencies(buildConfig, false, "")
+	exportBuildId, _, err := o.buildService.CreateBuildWithoutDependencies(ctx, buildConfig, false, "")
 	if err != nil {
-		o.updatePublishProcess(publishEnt, string(view.StatusError), fmt.Sprintf("failed to create export build: %v", err.Error()))
+		o.updatePublishProcess(ctx, publishEnt, string(view.StatusError), fmt.Sprintf("failed to create export build: %v", utils.WrapContextError(ctx, err)))
 		return
 	}
 
-	err = o.buildService.AwaitBuildCompletion(exportBuildId)
+	err = o.buildService.AwaitBuildCompletion(ctx, exportBuildId)
 	if err != nil {
-		o.updatePublishProcess(publishEnt, string(view.StatusError), fmt.Sprintf("export build failed: %v", err.Error()))
+		o.updatePublishProcess(ctx, publishEnt, string(view.StatusError), fmt.Sprintf("export build failed: %v", utils.WrapContextError(ctx, err)))
 		return
 	}
-	exportResult, err := o.exportRepository.GetExportResult(exportBuildId)
+	exportResult, err := o.exportRepository.GetExportResult(ctx, exportBuildId)
 	if err != nil {
-		o.updatePublishProcess(publishEnt, string(view.StatusError), fmt.Sprintf("failed to get export result: %v", err.Error()))
+		o.updatePublishProcess(ctx, publishEnt, string(view.StatusError), fmt.Sprintf("failed to get export result: %v", utils.WrapContextError(ctx, err)))
 		return
 	}
 	if exportResult == nil {
-		o.updatePublishProcess(publishEnt, string(view.StatusError), "export result not found")
+		o.updatePublishProcess(ctx, publishEnt, string(view.StatusError), "export result not found")
 		return
 	}
 
@@ -693,7 +700,7 @@ func (o operationGroupServiceImpl) publishOperationGroup(ctx context.SecurityCon
 	if strings.HasSuffix(exportResult.Filename, ".zip") {
 		r, err := zip.NewReader(bytes.NewReader(exportResult.Data), int64(len(exportResult.Data)))
 		if err != nil {
-			o.updatePublishProcess(publishEnt, string(view.StatusError), "failed to read export result")
+			o.updatePublishProcess(ctx, publishEnt, string(view.StatusError), "failed to read export result")
 			return
 		}
 		for _, f := range r.File {
@@ -707,11 +714,11 @@ func (o operationGroupServiceImpl) publishOperationGroup(ctx context.SecurityCon
 		var buf bytes.Buffer
 		zw := zip.NewWriter(&buf)
 		if err := archive.AddFileToZip(zw, exportResult.Filename, exportResult.Data); err != nil {
-			o.updatePublishProcess(publishEnt, string(view.StatusError), "failed to create source archive")
+			o.updatePublishProcess(ctx, publishEnt, string(view.StatusError), "failed to create source archive")
 			return
 		}
 		if err := zw.Close(); err != nil {
-			o.updatePublishProcess(publishEnt, string(view.StatusError), "failed to create source archive")
+			o.updatePublishProcess(ctx, publishEnt, string(view.StatusError), "failed to create source archive")
 			return
 		}
 		files = append(files, view.BCFile{
@@ -729,35 +736,39 @@ func (o operationGroupServiceImpl) publishOperationGroup(ctx context.SecurityCon
 		PreviousVersionPackageId: req.PreviousVersionPackageId,
 		Status:                   req.Status,
 		Files:                    files,
-		CreatedBy:                ctx.GetUserId(),
+		CreatedBy:                secctx.GetUserId(ctx),
 		Metadata: view.BuildConfigMetadata{
 			VersionLabels: req.VersionLabels,
 		},
 	}
 	build, err := o.buildService.PublishVersion(ctx, groupPublishBuildConfig, data, false, "", nil, false, false)
 	if err != nil {
-		o.updatePublishProcess(publishEnt, string(view.StatusError), fmt.Sprintf("faield to start operation group publish: %v", err.Error()))
+		o.updatePublishProcess(ctx, publishEnt, string(view.StatusError), fmt.Sprintf("faield to start operation group publish: %v", utils.WrapContextError(ctx, err)))
 		return
 	}
-	err = o.buildService.AwaitBuildCompletion(build.PublishId)
+	err = o.buildService.AwaitBuildCompletion(ctx, build.PublishId)
 	if err != nil {
-		o.updatePublishProcess(publishEnt, string(view.StatusError), fmt.Sprintf("faield to publish operation group: %v", err.Error()))
+		o.updatePublishProcess(ctx, publishEnt, string(view.StatusError), fmt.Sprintf("faield to publish operation group: %v", utils.WrapContextError(ctx, err)))
 		return
 	}
-	o.updatePublishProcess(publishEnt, string(view.StatusComplete), "")
+	o.updatePublishProcess(ctx, publishEnt, string(view.StatusComplete), "")
 }
 
-func (o operationGroupServiceImpl) updatePublishProcess(publishEnt *entity.OperationGroupPublishEntity, status string, details string) {
+func (o operationGroupServiceImpl) updatePublishProcess(ctx context.Context, publishEnt *entity.OperationGroupPublishEntity, status string, details string) {
 	publishEnt.Status = status
 	publishEnt.Details = details
-	err := o.publishedRepo.UpdateOperationGroupPublishProcess(publishEnt)
+	// Persist the terminal status on an independent short-lived context so a timed-out work context
+	// cannot leave the publish record stuck at 'running' (see statusFinalizationTimeout).
+	finCtx, cancel := context.WithTimeout(secctx.Detach(ctx), statusFinalizationTimeout)
+	defer cancel()
+	err := o.publishedRepo.UpdateOperationGroupPublishProcess(finCtx, publishEnt)
 	if err != nil {
 		log.Errorf("failed to update operation group publish process: %v", err.Error())
 	}
 }
 
-func (o operationGroupServiceImpl) GetOperationGroupPublishStatus(publishId string) (*view.OperationGroupPublishStatusResponse, error) {
-	publishProcess, err := o.publishedRepo.GetOperationGroupPublishProcess(publishId)
+func (o operationGroupServiceImpl) GetOperationGroupPublishStatus(ctx context.Context, publishId string) (*view.OperationGroupPublishStatusResponse, error) {
+	publishProcess, err := o.publishedRepo.GetOperationGroupPublishProcess(ctx, publishId)
 	if err != nil {
 		return nil, err
 	}

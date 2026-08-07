@@ -1,6 +1,7 @@
 package security
 
 import (
+	"context"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/json"
@@ -8,7 +9,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
@@ -99,14 +100,15 @@ type UserView struct {
 }
 
 func CreateLocalUserToken_deprecated(w http.ResponseWriter, r *http.Request) {
-	user, err := authenticateUser(r)
+	ctx := r.Context()
+	user, err := authenticateUser(ctx, r)
 	if err != nil {
-		respondWithAuthFailedError(w, err)
+		respondWithAuthFailedError(w, r, err)
 		return
 	}
-	userView, err := CreateTokenForUser_deprecated(*user)
+	userView, err := CreateTokenForUser_deprecated(ctx, *user)
 	if err != nil {
-		respondWithAuthFailedError(w, err)
+		respondWithAuthFailedError(w, r, err)
 		return
 	}
 
@@ -116,8 +118,8 @@ func CreateLocalUserToken_deprecated(w http.ResponseWriter, r *http.Request) {
 	w.Write(response)
 }
 
-func CreateTokenForUser_deprecated(dbUser view.User) (*UserView, error) {
-	accessToken, refreshToken, err := issueTokenPair(dbUser, true)
+func CreateTokenForUser_deprecated(ctx context.Context, dbUser view.User) (*UserView, error) {
+	accessToken, refreshToken, err := issueTokenPair(ctx, dbUser, true)
 	if err != nil {
 		return nil, err
 	}
@@ -127,26 +129,27 @@ func CreateTokenForUser_deprecated(dbUser view.User) (*UserView, error) {
 }
 
 func CreateLocalUserToken(w http.ResponseWriter, r *http.Request) {
-	user, err := authenticateUser(r)
+	ctx := r.Context()
+	user, err := authenticateUser(ctx, r)
 	if err != nil {
-		respondWithAuthFailedError(w, err)
+		respondWithAuthFailedError(w, r, err)
 		return
 	}
 
-	if err = SetAuthTokenCookies(w, user, LocalRefreshPath); err != nil {
-		respondWithAuthFailedError(w, err)
+	if err = SetAuthTokenCookies(ctx, w, user, LocalRefreshPath); err != nil {
+		respondWithAuthFailedError(w, r, err)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
 }
 
-func authenticateUser(r *http.Request) (*view.User, error) {
+func authenticateUser(ctx context.Context, r *http.Request) (*view.User, error) {
 	email, password, ok := r.BasicAuth()
 	if !ok {
 		return nil, fmt.Errorf("user credentials are not provided")
 	}
-	user, err := userService.AuthenticateUser(email, password)
+	user, err := userService.AuthenticateUser(ctx, email, password)
 	if err != nil {
 		return nil, err
 	}
@@ -154,8 +157,8 @@ func authenticateUser(r *http.Request) (*view.User, error) {
 	return user, nil
 }
 
-func SetAuthTokenCookies(w http.ResponseWriter, user *view.User, refreshTokenPath string) error {
-	accessToken, refreshToken, err := issueTokenPair(*user, false)
+func SetAuthTokenCookies(ctx context.Context, w http.ResponseWriter, user *view.User, refreshTokenPath string) error {
+	accessToken, refreshToken, err := issueTokenPair(ctx, *user, false)
 	if err != nil {
 		return fmt.Errorf("failed to create token pair for user: %v", err.Error())
 	}
@@ -179,17 +182,17 @@ func SetAuthTokenCookies(w http.ResponseWriter, user *view.User, refreshTokenPat
 	return nil
 }
 
-func issueTokenPair(dbUser view.User, withGitIntegration bool) (accessToken string, refreshToken string, err error) {
+func issueTokenPair(ctx context.Context, dbUser view.User, withGitIntegration bool) (accessToken string, refreshToken string, err error) {
 	user := auth.NewUserInfo(dbUser.Name, dbUser.Id, []string{}, auth.Extensions{})
 	accessDuration := jwt.SetExpDuration(accessTokenDuration) // should be more than one minute!
 
 	extensions := user.GetExtensions()
-	systemRole, err := roleService.GetUserSystemRole(user.GetID())
+	systemRole, err := roleService.GetUserSystemRole(ctx, user.GetID())
 	if err != nil {
 		return "", "", fmt.Errorf("failed to check user system role: %v", err.Error())
 	}
 	if systemRole != "" {
-		extensions.Set(context.SystemRoleExt, systemRole)
+		extensions.Set(secctx.SystemRoleExt, systemRole)
 	}
 	if withGitIntegration {
 		extensions.Set(gitIntegrationExt, "false") //TODO: can we remove it ?

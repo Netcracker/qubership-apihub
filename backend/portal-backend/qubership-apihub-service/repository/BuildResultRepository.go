@@ -10,10 +10,10 @@ import (
 )
 
 type BuildResultRepository interface {
-	StoreBuildResult(ent entity.BuildResultEntity) error
-	GetBuildResult(buildId string) (*entity.BuildResultEntity, error)
-	GetBuildResultWithOffset(offset int) (*entity.BuildResultEntity, error)
-	DeleteBuildResults(buildIds []string) error
+	StoreBuildResult(ctx context.Context, ent entity.BuildResultEntity) error
+	GetBuildResult(ctx context.Context, buildId string) (*entity.BuildResultEntity, error)
+	GetBuildResultWithOffset(ctx context.Context, offset int) (*entity.BuildResultEntity, error)
+	DeleteBuildResults(ctx context.Context, buildIds []string) error
 }
 
 func NewBuildResultRepository(cp db.ConnectionProvider) BuildResultRepository {
@@ -24,9 +24,9 @@ type buildResultRepositoryImpl struct {
 	cp db.ConnectionProvider
 }
 
-func (b buildResultRepositoryImpl) GetBuildResult(buildId string) (*entity.BuildResultEntity, error) {
+func (b buildResultRepositoryImpl) GetBuildResult(ctx context.Context, buildId string) (*entity.BuildResultEntity, error) {
 	result := new(entity.BuildResultEntity)
-	err := b.cp.GetConnection().Model(result).
+	err := b.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("build_id = ?", buildId).
 		First()
 	if err != nil {
@@ -38,8 +38,8 @@ func (b buildResultRepositoryImpl) GetBuildResult(buildId string) (*entity.Build
 	return result, nil
 }
 
-func (b buildResultRepositoryImpl) StoreBuildResult(ent entity.BuildResultEntity) error {
-	_, err := b.cp.GetConnection().Model(&ent).Insert()
+func (b buildResultRepositoryImpl) StoreBuildResult(ctx context.Context, ent entity.BuildResultEntity) error {
+	_, err := b.cp.GetConnection().WithContext(ctx).Model(&ent).Insert()
 	if err != nil {
 		return err
 	}
@@ -47,9 +47,9 @@ func (b buildResultRepositoryImpl) StoreBuildResult(ent entity.BuildResultEntity
 
 }
 
-func (b buildResultRepositoryImpl) GetBuildResultWithOffset(offset int) (*entity.BuildResultEntity, error) {
+func (b buildResultRepositoryImpl) GetBuildResultWithOffset(ctx context.Context, offset int) (*entity.BuildResultEntity, error) {
 	result := new(entity.BuildResultEntity)
-	err := b.cp.GetConnection().Model(result).Offset(offset).Limit(1).
+	err := b.cp.GetConnection().WithContext(ctx).Model(result).Offset(offset).Limit(1).
 		First()
 	if err != nil {
 		if err == pg.ErrNoRows {
@@ -60,8 +60,7 @@ func (b buildResultRepositoryImpl) GetBuildResultWithOffset(offset int) (*entity
 	return result, nil
 }
 
-func (b buildResultRepositoryImpl) DeleteBuildResults(buildIds []string) error {
-	ctx := context.Background()
+func (b buildResultRepositoryImpl) DeleteBuildResults(ctx context.Context, buildIds []string) error {
 	var deletedRows int
 	err := b.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		query := `delete from build_result
@@ -73,9 +72,12 @@ func (b buildResultRepositoryImpl) DeleteBuildResults(buildIds []string) error {
 		deletedRows += result.RowsAffected()
 		return nil
 	})
+	if err != nil {
+		return errors.Wrap(err, "failed to delete rows from table build_result")
+	}
 
 	if deletedRows > 0 {
-		_, err = b.cp.GetConnection().Exec("vacuum full build_result")
+		_, err = b.cp.GetConnection().WithContext(ctx).Exec("vacuum full build_result")
 		if err != nil {
 			return errors.Wrap(err, "failed to run vacuum for table build_result")
 		}

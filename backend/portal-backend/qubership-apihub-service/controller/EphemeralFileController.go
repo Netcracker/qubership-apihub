@@ -8,8 +8,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
-	aiservice "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security"
+	aiservice "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/gorilla/mux"
 )
@@ -28,7 +28,7 @@ func (c *EphemeralFileController) Download(w http.ResponseWriter, r *http.Reques
 
 	f, err := c.svc.GetFileByID(r.Context(), fileID)
 	if err != nil {
-		utils.RespondWithError(w, "Get file", err)
+		utils.RespondWithError(w, r, "Get file", err)
 		return
 	}
 	if f == nil || f.ExpiresAt.Before(time.Now().UTC()) {
@@ -41,7 +41,7 @@ func (c *EphemeralFileController) Download(w http.ResponseWriter, r *http.Reques
 		utils.RespondWithCustomError(w, &exception.CustomError{Status: http.StatusUnauthorized, Code: exception.EphemeralFileTokenMissing, Message: exception.EphemeralFileTokenMissingMsg})
 		return
 	}
-	uid, tokFileID, err := security.ValidateEphemeralFileToken(token)
+	uid, tokFileID, err := security.ValidateEphemeralFileToken(r.Context(), token)
 	if err != nil {
 		if security.IsTokenExpiredError(err) {
 			utils.RespondWithCustomError(w, &exception.CustomError{Status: http.StatusGone, Code: exception.EphemeralFileTokenExpired, Message: exception.EphemeralFileTokenExpiredMsg, Debug: err.Error()})

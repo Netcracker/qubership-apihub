@@ -1,11 +1,12 @@
 package controller
 
 import (
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
+	"net/http"
+
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
-	"net/http"
 )
 
 type LogoutController interface {
@@ -33,10 +34,10 @@ type logoutControllerImpl struct {
 }
 
 func (l *logoutControllerImpl) Logout(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Create(r)
-	err := l.tokenRevocationService.RevokeUserTokens(ctx.GetUserId())
+	ctx := secctx.MakeUserContext(r)
+	err := l.tokenRevocationService.RevokeUserTokens(ctx, secctx.GetUserId(ctx))
 	if err != nil {
-		utils.RespondWithError(w, "Failed to perform user logout", err)
+		utils.RespondWithError(w, r, "Failed to perform user logout", err)
 		return
 	}
 

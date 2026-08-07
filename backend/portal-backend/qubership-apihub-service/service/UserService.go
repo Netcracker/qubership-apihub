@@ -1,13 +1,15 @@
 package service
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/go-ldap/ldap"
 
@@ -22,19 +24,19 @@ import (
 )
 
 type UserService interface {
-	GetUsers(usersListReq view.UsersListReq) (*view.Users, error)
-	GetUsersIdMap(userIds []string) (map[string]view.User, error)
-	GetUsersEmailMap(emails []string) (map[string]view.User, error)
-	GetUserFromDB(userId string) (*view.User, error)
-	GetUserByEmail(email string) (*view.User, error)
-	GetOrCreateUserForIntegration(user view.User, integration view.ExternalIntegration, providerId string) (*view.User, error)
-	CreateInternalUser(internalUser *view.InternalUser) (*view.User, error)
-	StoreUserAvatar(id string, avatar []byte) error
-	GetUserAvatar(userId string) (*view.UserAvatar, error)
-	AuthenticateUser(email string, password string) (*view.User, error)
-	SearchUsersInLdap(ldapSearch view.LdapSearchFilterReq, withAvatars bool) (*view.LdapUsers, error)
-	GetExtendedUser_deprecated(ctx context.SecurityContext) (*view.ExtendedUser_deprecated, error)
-	GetExtendedUser(ctx context.SecurityContext) (*view.ExtendedUser, error)
+	GetUsers(ctx context.Context, usersListReq view.UsersListReq) (*view.Users, error)
+	GetUsersIdMap(ctx context.Context, userIds []string) (map[string]view.User, error)
+	GetUsersEmailMap(ctx context.Context, emails []string) (map[string]view.User, error)
+	GetUserFromDB(ctx context.Context, userId string) (*view.User, error)
+	GetUserByEmail(ctx context.Context, email string) (*view.User, error)
+	GetOrCreateUserForIntegration(ctx context.Context, user view.User, integration view.ExternalIntegration, providerId string) (*view.User, error)
+	CreateInternalUser(ctx context.Context, internalUser *view.InternalUser) (*view.User, error)
+	StoreUserAvatar(ctx context.Context, id string, avatar []byte) error
+	GetUserAvatar(ctx context.Context, userId string) (*view.UserAvatar, error)
+	AuthenticateUser(ctx context.Context, email string, password string) (*view.User, error)
+	SearchUsersInLdap(ctx context.Context, ldapSearch view.LdapSearchFilterReq, withAvatars bool) (*view.LdapUsers, error)
+	GetExtendedUser_deprecated(ctx context.Context) (*view.ExtendedUser_deprecated, error)
+	GetExtendedUser(ctx context.Context) (*view.ExtendedUser, error)
 }
 
 func NewUserService(repo repository.UserRepository, systemInfoService SystemInfoService, privateUserPackageService PrivateUserPackageService) UserService {
@@ -51,18 +53,18 @@ type usersServiceImpl struct {
 	privateUserPackageService PrivateUserPackageService
 }
 
-func (u usersServiceImpl) saveUserAvatar(userAvatar *view.UserAvatar) error {
-	return u.repo.SaveUserAvatar(entity.MakeUserAvatarEntity(userAvatar))
+func (u usersServiceImpl) saveUserAvatar(ctx context.Context, userAvatar *view.UserAvatar) error {
+	return u.repo.SaveUserAvatar(ctx, entity.MakeUserAvatarEntity(userAvatar))
 }
 
-func (u usersServiceImpl) GetUserAvatar(userId string) (*view.UserAvatar, error) {
-	userAvatarEntity, err := u.repo.GetUserAvatar(userId)
+func (u usersServiceImpl) GetUserAvatar(ctx context.Context, userId string) (*view.UserAvatar, error) {
+	userAvatarEntity, err := u.repo.GetUserAvatar(ctx, userId)
 
 	if err != nil {
 		return nil, err
 	}
 	if userAvatarEntity == nil {
-		usersFromLdap, err := u.SearchUsersInLdap(view.LdapSearchFilterReq{FilterToValue: map[string]string{view.SAMAccountName: userId}, Limit: 1}, true)
+		usersFromLdap, err := u.SearchUsersInLdap(ctx, view.LdapSearchFilterReq{FilterToValue: map[string]string{view.SAMAccountName: userId}, Limit: 1}, true)
 		if err != nil {
 			return nil, err
 		}
@@ -79,14 +81,14 @@ func (u usersServiceImpl) GetUserAvatar(userId string) (*view.UserAvatar, error)
 	}
 }
 
-func (u usersServiceImpl) StoreUserAvatar(id string, avatar []byte) error {
+func (u usersServiceImpl) StoreUserAvatar(ctx context.Context, id string, avatar []byte) error {
 	newAvatarChecksum := sha256.Sum256(avatar)
-	avatarChanged, err := u.avatarChanged(id, newAvatarChecksum)
+	avatarChanged, err := u.avatarChanged(ctx, id, newAvatarChecksum)
 	if err != nil {
-		return fmt.Errorf("failed to get user avatar: %v", err.Error())
+		return fmt.Errorf("failed to get user avatar: %w", err)
 	}
 	if avatarChanged {
-		err = u.saveUserAvatar(&view.UserAvatar{Id: id, Avatar: avatar, Checksum: newAvatarChecksum})
+		err = u.saveUserAvatar(ctx, &view.UserAvatar{Id: id, Avatar: avatar, Checksum: newAvatarChecksum})
 		if err != nil {
 			return err
 		}
@@ -94,21 +96,22 @@ func (u usersServiceImpl) StoreUserAvatar(id string, avatar []byte) error {
 	return nil
 }
 
-func (u usersServiceImpl) avatarChanged(id string, newChecksum [32]byte) (bool, error) {
+func (u usersServiceImpl) avatarChanged(ctx context.Context, id string, newChecksum [32]byte) (bool, error) {
 	var err error
-	avatarFromDB, err := u.GetUserAvatar(id)
+	avatarFromDB, err := u.GetUserAvatar(ctx, id)
 	if err != nil {
 		return false, err
 	}
 	return avatarFromDB == nil || avatarFromDB.Checksum != newChecksum, nil
 }
 
-func (u usersServiceImpl) GetUsers(usersListReq view.UsersListReq) (*view.Users, error) {
+func (u usersServiceImpl) GetUsers(ctx context.Context, usersListReq view.UsersListReq) (*view.Users, error) {
 	result := make([]view.User, 0)
 	existingEmailsSet := map[string]struct{}{}
 
 	if usersListReq.Filter != "" {
 		searchResults, err := u.SearchUsersInLdap(
+			ctx,
 			view.LdapSearchFilterReq{
 				FilterToValue: map[string]string{view.DisplayName: usersListReq.Filter,
 					view.Surname: usersListReq.Filter,
@@ -133,7 +136,7 @@ func (u usersServiceImpl) GetUsers(usersListReq view.UsersListReq) (*view.Users,
 		}
 	}
 
-	userEntities, err := u.repo.GetUsers(usersListReq)
+	userEntities, err := u.repo.GetUsers(ctx, usersListReq)
 	if err != nil {
 		return nil, err
 	}
@@ -148,13 +151,16 @@ func (u usersServiceImpl) GetUsers(usersListReq view.UsersListReq) (*view.Users,
 	return &view.Users{Users: result}, nil
 }
 
-func (u usersServiceImpl) SearchUsersInLdap(ldapSearchFilterReq view.LdapSearchFilterReq, withAvatars bool) (*view.LdapUsers, error) {
+func (u usersServiceImpl) SearchUsersInLdap(ctx context.Context, ldapSearchFilterReq view.LdapSearchFilterReq, withAvatars bool) (*view.LdapUsers, error) {
 	if len(ldapSearchFilterReq.FilterToValue) == 0 {
 		return nil, nil
 	}
 	ldapServerUrl := u.systemInfoService.GetLdapServer()
 	if ldapServerUrl == "" {
 		return nil, nil
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, ldapContextError(ldapServerUrl, err)
 	}
 	ld, err := ldap.DialURL(ldapServerUrl)
 	if err != nil {
@@ -167,6 +173,10 @@ func (u usersServiceImpl) SearchUsersInLdap(ldapSearchFilterReq view.LdapSearchF
 		}
 	}
 	defer ld.Close()
+
+	if err := setLdapOperationTimeout(ctx, ld); err != nil {
+		return nil, ldapContextError(ldapServerUrl, err)
+	}
 	err = ld.Bind(
 		fmt.Sprintf("cn=%s,%s,%s",
 			u.systemInfoService.GetLdapUser(),
@@ -181,6 +191,9 @@ func (u usersServiceImpl) SearchUsersInLdap(ldapSearchFilterReq view.LdapSearchF
 			Message: exception.LdapConnectionIsNotAllowedMsg,
 			Params:  map[string]interface{}{"server": ldapServerUrl, "error": err.Error()},
 		}
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, ldapContextError(ldapServerUrl, err)
 	}
 
 	var subFilter string
@@ -199,6 +212,9 @@ func (u usersServiceImpl) SearchUsersInLdap(ldapSearchFilterReq view.LdapSearchF
 		attributes,
 		controls,
 	)
+	if err := setLdapOperationTimeout(ctx, ld); err != nil {
+		return nil, ldapContextError(ldapServerUrl, err)
+	}
 	result, err := ld.Search(searchReq)
 	if err != nil {
 		log.Debugf("[ld.Search() ]failed to query LDAP: %s", err.Error())
@@ -208,6 +224,9 @@ func (u usersServiceImpl) SearchUsersInLdap(ldapSearchFilterReq view.LdapSearchF
 			Message: exception.LdapSearchFailedMsg,
 			Params:  map[string]interface{}{"server": ldapServerUrl, "error": err.Error()},
 		}
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, ldapContextError(ldapServerUrl, err)
 	}
 	users := make([]view.LdapUser, 0)
 	for _, entry := range result.Entries {
@@ -234,9 +253,34 @@ func (u usersServiceImpl) SearchUsersInLdap(ldapSearchFilterReq view.LdapSearchF
 	return &view.LdapUsers{Users: users}, nil
 }
 
-func (u usersServiceImpl) GetUsersIdMap(userIds []string) (map[string]view.User, error) {
+// setLdapOperationTimeout bounds a single LDAP request by what is left of the caller's deadline. It is
+// recomputed before each operation, because ldap.Conn.SetTimeout applies per request - one value set
+// once would let Bind and Search each consume the whole budget - and because SetTimeout silently
+// ignores a non-positive value.
+func setLdapOperationTimeout(ctx context.Context, ld *ldap.Conn) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		return nil
+	}
+	budget := time.Until(deadline) - time.Second
+	if budget <= 0 {
+		return context.DeadlineExceeded
+	}
+	ld.SetTimeout(budget)
+	return nil
+}
+
+// ldapContextError keeps the context error reachable through errors.Is
+func ldapContextError(ldapServerUrl string, err error) error {
+	return fmt.Errorf("ldap request to %s aborted: %w", ldapServerUrl, err)
+}
+
+func (u usersServiceImpl) GetUsersIdMap(ctx context.Context, userIds []string) (map[string]view.User, error) {
 	result := make(map[string]view.User, 0)
-	userEntities, err := u.repo.GetUsersByIds(userIds)
+	userEntities, err := u.repo.GetUsersByIds(ctx, userIds)
 	if err != nil {
 		return nil, err
 	}
@@ -246,12 +290,12 @@ func (u usersServiceImpl) GetUsersIdMap(userIds []string) (map[string]view.User,
 	return result, nil
 }
 
-func (u usersServiceImpl) GetUsersEmailMap(emails []string) (map[string]view.User, error) {
+func (u usersServiceImpl) GetUsersEmailMap(ctx context.Context, emails []string) (map[string]view.User, error) {
 	result := make(map[string]view.User, 0)
 	for index := range emails {
 		emails[index] = strings.ToLower(emails[index])
 	}
-	userEntities, err := u.repo.GetUsersByEmails(emails)
+	userEntities, err := u.repo.GetUsersByEmails(ctx, emails)
 	if err != nil {
 		return nil, err
 	}
@@ -261,11 +305,11 @@ func (u usersServiceImpl) GetUsersEmailMap(emails []string) (map[string]view.Use
 	return result, nil
 }
 
-func (u usersServiceImpl) GetUserFromDB(userId string) (*view.User, error) {
-	userEntity, err := u.repo.GetUserById(userId)
+func (u usersServiceImpl) GetUserFromDB(ctx context.Context, userId string) (*view.User, error) {
+	userEntity, err := u.repo.GetUserById(ctx, userId)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user from DB: %v", err)
+		return nil, fmt.Errorf("failed to get user from DB: %w", err)
 	}
 	if userEntity != nil {
 		return entity.MakeUserView(userEntity), nil
@@ -274,8 +318,8 @@ func (u usersServiceImpl) GetUserFromDB(userId string) (*view.User, error) {
 
 }
 
-func (u usersServiceImpl) GetUserByEmail(email string) (*view.User, error) {
-	userEntity, err := u.repo.GetUserByEmail(email)
+func (u usersServiceImpl) GetUserByEmail(ctx context.Context, email string) (*view.User, error) {
+	userEntity, err := u.repo.GetUserByEmail(ctx, email)
 
 	if err != nil {
 		return nil, err
@@ -286,7 +330,7 @@ func (u usersServiceImpl) GetUserByEmail(email string) (*view.User, error) {
 	return nil, nil
 }
 
-func (u usersServiceImpl) GetOrCreateUserForIntegration(externalUser view.User, integration view.ExternalIntegration, providerId string) (*view.User, error) {
+func (u usersServiceImpl) GetOrCreateUserForIntegration(ctx context.Context, externalUser view.User, integration view.ExternalIntegration, providerId string) (*view.User, error) {
 	if externalUser.Email == "" {
 		return nil, &exception.CustomError{
 			Status:  http.StatusBadRequest,
@@ -299,27 +343,27 @@ func (u usersServiceImpl) GetOrCreateUserForIntegration(externalUser view.User, 
 	if externalId == "" {
 		return nil, fmt.Errorf("external id is missing for user in '%v' integration", integration)
 	}
-	externalIdentity, err := u.repo.GetUserExternalIdentity(string(integration), providerId, externalId)
+	externalIdentity, err := u.repo.GetUserExternalIdentity(ctx, string(integration), providerId, externalId)
 	if err != nil {
 		return nil, err
 	}
 	if externalIdentity == nil {
-		return u.createExternalUser(externalUser, integration, providerId)
+		return u.createExternalUser(ctx, externalUser, integration, providerId)
 	}
-	userEnt, err := u.repo.GetUserById(externalIdentity.InternalId)
+	userEnt, err := u.repo.GetUserById(ctx, externalIdentity.InternalId)
 	if err != nil {
 		return nil, err
 	}
 	if userEnt == nil {
-		return u.createExternalUser(externalUser, integration, providerId)
+		return u.createExternalUser(ctx, externalUser, integration, providerId)
 	}
 	if len(userEnt.Password) != 0 {
-		err = u.repo.ClearUserPassword(userEnt.Id)
+		err = u.repo.ClearUserPassword(ctx, userEnt.Id)
 		if err != nil {
 			return nil, err
 		}
 	}
-	userEnt, err = u.updateExternalUserInfo(userEnt, externalUser)
+	userEnt, err = u.updateExternalUserInfo(ctx, userEnt, externalUser)
 	if err != nil {
 		return nil, err
 	}
@@ -327,39 +371,39 @@ func (u usersServiceImpl) GetOrCreateUserForIntegration(externalUser view.User, 
 	return entity.MakeUserView(userEnt), nil
 }
 
-func (u usersServiceImpl) createExternalUser(externalUser view.User, integration view.ExternalIntegration, providerId string) (*view.User, error) {
+func (u usersServiceImpl) createExternalUser(ctx context.Context, externalUser view.User, integration view.ExternalIntegration, providerId string) (*view.User, error) {
 	externalId := view.GetIntegrationExternalId(externalUser, integration)
 	if externalId == "" {
 		return nil, fmt.Errorf("external id is missing for user in %v integration", integration)
 	}
-	existingUser, err := u.repo.GetUserByEmail(externalUser.Email)
+	existingUser, err := u.repo.GetUserByEmail(ctx, externalUser.Email)
 	if err != nil {
 		return nil, err
 	}
 	if existingUser != nil {
-		err = u.repo.UpdateUserExternalIdentity(string(integration), providerId, externalId, existingUser.Id)
+		err = u.repo.UpdateUserExternalIdentity(ctx, string(integration), providerId, externalId, existingUser.Id)
 		if err != nil {
 			return nil, err
 		}
 		if len(existingUser.Password) != 0 {
-			err = u.repo.ClearUserPassword(existingUser.Id)
+			err = u.repo.ClearUserPassword(ctx, existingUser.Id)
 			if err != nil {
 				return nil, err
 			}
 		}
-		existingUser, err = u.updateExternalUserInfo(existingUser, externalUser)
+		existingUser, err = u.updateExternalUserInfo(ctx, existingUser, externalUser)
 		if err != nil {
 			return nil, err
 		}
 		return entity.MakeUserView(existingUser), nil
 	}
 
-	existingUser, err = u.repo.GetUserById(externalId)
+	existingUser, err = u.repo.GetUserById(ctx, externalId)
 	if err != nil {
 		return nil, err
 	}
 	if existingUser != nil {
-		externalUser.Id, err = u.createUniqueUserId(externalUser.Email)
+		externalUser.Id, err = u.createUniqueUserId(ctx, externalUser.Email)
 		if err != nil {
 			return nil, err
 		}
@@ -368,14 +412,14 @@ func (u usersServiceImpl) createExternalUser(externalUser view.User, integration
 		externalUser.Name = externalUser.Email
 	}
 
-	err = u.saveExternalUserToDB(&externalUser, integration, providerId, externalId)
+	err = u.saveExternalUserToDB(ctx, &externalUser, integration, providerId, externalId)
 	if err != nil {
 		return nil, err
 	}
 	return &externalUser, nil
 }
 
-func (u usersServiceImpl) updateExternalUserInfo(existingUser *entity.UserEntity, externalUser view.User) (*entity.UserEntity, error) {
+func (u usersServiceImpl) updateExternalUserInfo(ctx context.Context, existingUser *entity.UserEntity, externalUser view.User) (*entity.UserEntity, error) {
 	userInfoChanged := false
 	//update name only if user was created without a display name
 	if existingUser.Username == existingUser.Email && externalUser.Name != existingUser.Username {
@@ -387,7 +431,7 @@ func (u usersServiceImpl) updateExternalUserInfo(existingUser *entity.UserEntity
 		userInfoChanged = true
 	}
 	if userInfoChanged {
-		err := u.repo.UpdateUserInfo(existingUser)
+		err := u.repo.UpdateUserInfo(ctx, existingUser)
 		if err != nil {
 			return nil, err
 		}
@@ -395,17 +439,17 @@ func (u usersServiceImpl) updateExternalUserInfo(existingUser *entity.UserEntity
 	return existingUser, nil
 }
 
-func (u usersServiceImpl) saveExternalUserToDB(user *view.User, integration view.ExternalIntegration, providerId string, externalId string) error {
-	userPrivatePackageId, err := u.privateUserPackageService.GenerateUserPrivatePackageId(user.Id)
+func (u usersServiceImpl) saveExternalUserToDB(ctx context.Context, user *view.User, integration view.ExternalIntegration, providerId string, externalId string) error {
+	userPrivatePackageId, err := u.privateUserPackageService.GenerateUserPrivatePackageId(ctx, user.Id)
 	if err != nil {
 		return err
 	}
 	userEntity := entity.MakeExternalUserEntity(user, userPrivatePackageId)
 	externalIdentityEnt := &entity.ExternalIdentityEntity{Provider: string(integration), ProviderId: providerId, InternalId: user.Id, ExternalId: externalId}
-	return u.repo.SaveExternalUser(userEntity, externalIdentityEnt)
+	return u.repo.SaveExternalUser(ctx, userEntity, externalIdentityEnt)
 }
 
-func (u usersServiceImpl) CreateInternalUser(internalUser *view.InternalUser) (*view.User, error) {
+func (u usersServiceImpl) CreateInternalUser(ctx context.Context, internalUser *view.InternalUser) (*view.User, error) {
 	//bcrypt max allowed password len
 	if len([]byte(internalUser.Password)) > 72 {
 		return nil, &exception.CustomError{
@@ -414,12 +458,12 @@ func (u usersServiceImpl) CreateInternalUser(internalUser *view.InternalUser) (*
 			Message: exception.PasswordTooLongMsg,
 		}
 	}
-	err := u.validateEmail(internalUser.Email)
+	err := u.validateEmail(ctx, internalUser.Email)
 	if err != nil {
 		return nil, err
 	}
 
-	internalUser.Id, err = u.createUniqueUserId(internalUser.Email)
+	internalUser.Id, err = u.createUniqueUserId(ctx, internalUser.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -433,12 +477,12 @@ func (u usersServiceImpl) CreateInternalUser(internalUser *view.InternalUser) (*
 	}
 	userPrivatePackageId := internalUser.PrivateWorkspaceId
 	if internalUser.PrivateWorkspaceId == "" {
-		userPrivatePackageId, err = u.privateUserPackageService.GenerateUserPrivatePackageId(internalUser.Id)
+		userPrivatePackageId, err = u.privateUserPackageService.GenerateUserPrivatePackageId(ctx, internalUser.Id)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		privatePackageIdIsTaken, err := u.privateUserPackageService.PrivatePackageIdIsTaken(internalUser.PrivateWorkspaceId)
+		privatePackageIdIsTaken, err := u.privateUserPackageService.PrivatePackageIdIsTaken(ctx, internalUser.PrivateWorkspaceId)
 		if err != nil {
 			return nil, err
 		}
@@ -453,7 +497,7 @@ func (u usersServiceImpl) CreateInternalUser(internalUser *view.InternalUser) (*
 	}
 
 	userEntity := entity.MakeInternalUserEntity(internalUser, passwordHash, userPrivatePackageId)
-	saved, err := u.repo.SaveInternalUser(userEntity)
+	saved, err := u.repo.SaveInternalUser(ctx, userEntity)
 	if err != nil {
 		return nil, err
 	}
@@ -466,7 +510,7 @@ func (u usersServiceImpl) CreateInternalUser(internalUser *view.InternalUser) (*
 	return entity.MakeUserV2View(userEntity), nil
 }
 
-func (u usersServiceImpl) validateEmail(email string) error {
+func (u usersServiceImpl) validateEmail(ctx context.Context, email string) error {
 	if email == "" {
 		return &exception.CustomError{
 			Status:  http.StatusBadRequest,
@@ -475,7 +519,7 @@ func (u usersServiceImpl) validateEmail(email string) error {
 			Params:  map[string]interface{}{"param": "email"},
 		}
 	}
-	existingUser, err := u.repo.GetUserByEmail(email)
+	existingUser, err := u.repo.GetUserByEmail(ctx, email)
 	if err != nil {
 		return err
 	}
@@ -490,9 +534,9 @@ func (u usersServiceImpl) validateEmail(email string) error {
 	return nil
 }
 
-func (u usersServiceImpl) createUniqueUserId(email string) (string, error) {
+func (u usersServiceImpl) createUniqueUserId(ctx context.Context, email string) (string, error) {
 	userId := slug.Make(email)
-	existingUser, err := u.repo.GetUserById(userId)
+	existingUser, err := u.repo.GetUserById(ctx, userId)
 	if err != nil {
 		return "", err
 	}
@@ -500,7 +544,7 @@ func (u usersServiceImpl) createUniqueUserId(email string) (string, error) {
 		i := 1
 		for existingUser != nil {
 			userId = slug.Make(email + "-" + strconv.Itoa(i))
-			existingUser, err = u.repo.GetUserById(userId)
+			existingUser, err = u.repo.GetUserById(ctx, userId)
 			if err != nil {
 				return "", err
 			}
@@ -510,8 +554,8 @@ func (u usersServiceImpl) createUniqueUserId(email string) (string, error) {
 	return userId, nil
 }
 
-func (u usersServiceImpl) AuthenticateUser(email string, password string) (*view.User, error) {
-	userEntity, err := u.repo.GetUserByEmail(email)
+func (u usersServiceImpl) AuthenticateUser(ctx context.Context, email string, password string) (*view.User, error) {
+	userEntity, err := u.repo.GetUserByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
@@ -528,36 +572,36 @@ func (u usersServiceImpl) AuthenticateUser(email string, password string) (*view
 	return entity.MakeUserView(userEntity), nil
 }
 
-func (u usersServiceImpl) GetExtendedUser_deprecated(ctx context.SecurityContext) (*view.ExtendedUser_deprecated, error) {
-	userId := ctx.GetUserId()
-	userEntity, err := u.repo.GetUserById(userId)
+func (u usersServiceImpl) GetExtendedUser_deprecated(ctx context.Context) (*view.ExtendedUser_deprecated, error) {
+	userId := secctx.GetUserId(ctx)
+	userEntity, err := u.repo.GetUserById(ctx, userId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user from DB: %v", err)
+		return nil, fmt.Errorf("failed to get user from DB: %w", err)
 	}
 	if userEntity != nil {
 		var ttlSeconds *int
-		if ctx.GetTokenExpirationTimestamp() > 0 {
-			remainingSeconds := int(utils.GetRemainingSeconds(ctx.GetTokenExpirationTimestamp()))
+		if secctx.GetTokenExpirationTimestamp(ctx) > 0 {
+			remainingSeconds := int(utils.GetRemainingSeconds(secctx.GetTokenExpirationTimestamp(ctx)))
 			ttlSeconds = &remainingSeconds
 		}
-		return entity.MakeExtendedUserView_deprecated(userEntity, false, ctx.GetUserSystemRole(), ttlSeconds), nil
+		return entity.MakeExtendedUserView_deprecated(userEntity, false, secctx.GetUserSystemRole(ctx), ttlSeconds), nil
 	}
 	return nil, nil
 }
 
-func (u usersServiceImpl) GetExtendedUser(ctx context.SecurityContext) (*view.ExtendedUser, error) {
-	userId := ctx.GetUserId()
-	userEntity, err := u.repo.GetUserById(userId)
+func (u usersServiceImpl) GetExtendedUser(ctx context.Context) (*view.ExtendedUser, error) {
+	userId := secctx.GetUserId(ctx)
+	userEntity, err := u.repo.GetUserById(ctx, userId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user from DB: %v", err)
+		return nil, fmt.Errorf("failed to get user from DB: %w", err)
 	}
 	if userEntity != nil {
 		var ttlSeconds *int
-		if ctx.GetTokenExpirationTimestamp() > 0 {
-			remainingSeconds := int(utils.GetRemainingSeconds(ctx.GetTokenExpirationTimestamp()))
+		if secctx.GetTokenExpirationTimestamp(ctx) > 0 {
+			remainingSeconds := int(utils.GetRemainingSeconds(secctx.GetTokenExpirationTimestamp(ctx)))
 			ttlSeconds = &remainingSeconds
 		}
-		return entity.MakeExtendedUserView(userEntity, ctx.GetUserSystemRole(), ttlSeconds), nil
+		return entity.MakeExtendedUserView(userEntity, secctx.GetUserSystemRole(ctx), ttlSeconds), nil
 	}
 	return nil, nil
 }

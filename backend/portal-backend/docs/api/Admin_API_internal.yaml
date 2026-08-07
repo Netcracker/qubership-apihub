@@ -3,6 +3,8 @@ info:
   title: APIHUB system administrators API – Internal
   description: |
     Internal-only API contract for system administrators. This API includes privileged technical administration endpoints for diagnostics, maintenance, and internal management operations.
+
+    Request processing is bounded by a server-side deadline configured per deployment. When the deadline elapses, the request is terminated and the endpoint returns HTTP 500 with error code `8700`. Background work that a request has already handed off keeps running. Check the resulting state before you retry a call that is not idempotent. Credential verification is bounded separately and reports the same error code. A request that the server cancels before it completes for any other reason returns HTTP 500 with error code `8701`.
   contact:
     name: Netcracker Opensource Group
     email: opensourcegroup@netcracker.com
@@ -79,6 +81,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   /api/v1/debug/logs/checkLevel:
     get:
       tags:
@@ -110,6 +114,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   /api/v1/debug/logs/setLevel:
     post:
       tags:
@@ -167,6 +176,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   /api/v1/deleted/packages:
     get:
       tags:
@@ -202,6 +216,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   /api/v1/deleted/packages/{packageId}/versions:
     get:
       tags:
@@ -250,6 +269,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   /api/v1/deleted/packages/{packageId}/versions/{version}:
     get:
       tags:
@@ -304,6 +328,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v1/publishHistory":
     get:
       tags:
@@ -397,6 +426,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/businessMetrics":
     get:
       tags:
@@ -481,6 +512,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   /api/internal/minio/download:
     post:
       tags:
@@ -518,6 +551,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
   "/api/v2/admin/packages/{packageId}/versions/{version}/sources":
     put:
       tags:
@@ -588,6 +623,8 @@ paths:
               examples:
                 InternalServerError:
                   $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
 
 components:
   schemas:
@@ -794,6 +831,12 @@ components:
         code: "APIHUB-8000"
         reason: "InternalServerError"
         message: "InternalServerError"
+    RequestTimeout:
+      description: "Example: request terminated by the server processing deadline"
+      value:
+        status: 500
+        code: "8700"
+        message: "The request timed out. Please try again."
   securitySchemes:
     BearerAuth:
       type: http

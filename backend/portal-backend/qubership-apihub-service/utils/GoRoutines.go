@@ -2,8 +2,9 @@ package utils
 
 import (
 	"errors"
-	log "github.com/sirupsen/logrus"
 	"runtime/debug"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type noPanicFunc func()

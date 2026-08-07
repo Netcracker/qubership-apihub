@@ -3,11 +3,12 @@ package controller
 import (
 	"net/http"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
+
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 )
 
 type PublishedController interface {
@@ -31,11 +32,11 @@ type publishControllerImpl struct {
 }
 
 func (v publishControllerImpl) GetVersionSources(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 	packageId := getStringParam(r, "packageId")
 	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, r, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
@@ -58,9 +59,9 @@ func (v publishControllerImpl) GetVersionSources(w http.ResponseWriter, r *http.
 		})
 		return
 	}
-	srcArchive, err := v.publishedService.GetVersionSources(packageId, versionName)
+	srcArchive, err := v.publishedService.GetVersionSources(ctx, packageId, versionName)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to get package version sources", err)
+		utils.RespondWithError(w, r, "Failed to get package version sources", err)
 		return
 	}
 
@@ -70,11 +71,11 @@ func (v publishControllerImpl) GetVersionSources(w http.ResponseWriter, r *http.
 }
 
 func (v publishControllerImpl) GetPublishedVersionSourceDataConfig(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 	packageId := getStringParam(r, "packageId")
 	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, r, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
@@ -97,9 +98,9 @@ func (v publishControllerImpl) GetPublishedVersionSourceDataConfig(w http.Respon
 		})
 		return
 	}
-	publishedVersionSourceDataConfig, err := v.publishedService.GetPublishedVersionSourceDataConfig(packageId, versionName)
+	publishedVersionSourceDataConfig, err := v.publishedService.GetPublishedVersionSourceDataConfig(ctx, packageId, versionName)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to get package version sources", err)
+		utils.RespondWithError(w, r, "Failed to get package version sources", err)
 		return
 	}
 
@@ -107,11 +108,11 @@ func (v publishControllerImpl) GetPublishedVersionSourceDataConfig(w http.Respon
 }
 
 func (v publishControllerImpl) GetPublishedVersionBuildConfig(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 	packageId := getStringParam(r, "packageId")
 	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, r, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
@@ -135,9 +136,9 @@ func (v publishControllerImpl) GetPublishedVersionBuildConfig(w http.ResponseWri
 		return
 	}
 
-	publishedVersionBuildConfig, err := v.publishedService.GetPublishedVersionBuildConfig(packageId, versionName)
+	publishedVersionBuildConfig, err := v.publishedService.GetPublishedVersionBuildConfig(ctx, packageId, versionName)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to get package version build config", err)
+		utils.RespondWithError(w, r, "Failed to get package version build config", err)
 		return
 	}
 

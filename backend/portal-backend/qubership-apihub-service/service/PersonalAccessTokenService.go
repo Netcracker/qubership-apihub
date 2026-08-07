@@ -1,23 +1,25 @@
 package service
 
 import (
+	"context"
 	"fmt"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
+	"net/http"
+	"time"
+
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/crypto"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/google/uuid"
-	"net/http"
-	"time"
 )
 
 type PersonalAccessTokenService interface {
-	CreatePAT(ctx context.SecurityContext, req view.PersonalAccessTokenCreateRequest) (*view.PersonalAccessTokenCreateResponse, error)
-	DeletePAT(ctx context.SecurityContext, id string) error
-	GetPATByToken(pat string) (*view.PersonalAccessTokenItem, *view.User, string, error)
-	ListPATs(userId string) ([]view.PersonalAccessTokenItem, error)
+	CreatePAT(ctx context.Context, req view.PersonalAccessTokenCreateRequest) (*view.PersonalAccessTokenCreateResponse, error)
+	DeletePAT(ctx context.Context, id string) error
+	GetPATByToken(ctx context.Context, pat string) (*view.PersonalAccessTokenItem, *view.User, string, error)
+	ListPATs(ctx context.Context, userId string) ([]view.PersonalAccessTokenItem, error)
 }
 
 func NewPersonalAccessTokenService(repo repository.PersonalAccessTokenRepository, userService UserService, roleService RoleService) PersonalAccessTokenService {
@@ -32,10 +34,10 @@ type personalAccessTokenServiceImpl struct {
 
 const ActivePatPerUserLimit = 100
 
-func (p personalAccessTokenServiceImpl) CreatePAT(ctx context.SecurityContext, req view.PersonalAccessTokenCreateRequest) (*view.PersonalAccessTokenCreateResponse, error) {
+func (p personalAccessTokenServiceImpl) CreatePAT(ctx context.Context, req view.PersonalAccessTokenCreateRequest) (*view.PersonalAccessTokenCreateResponse, error) {
 	//TODO: The validations are not thread-safe, but probably it's ok for now
 
-	count, err := p.repo.CountActiveTokens(ctx.GetUserId())
+	count, err := p.repo.CountActiveTokens(ctx, secctx.GetUserId(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("failed to check token limit: %w", err)
 	}
@@ -48,7 +50,7 @@ func (p personalAccessTokenServiceImpl) CreatePAT(ctx context.SecurityContext, r
 		}
 	}
 
-	free, err := p.repo.CheckNameIsFree(ctx.GetUserId(), req.Name)
+	free, err := p.repo.CheckNameIsFree(ctx, secctx.GetUserId(ctx), req.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check token name availability: %w", err)
 	}
@@ -71,7 +73,7 @@ func (p personalAccessTokenServiceImpl) CreatePAT(ctx context.SecurityContext, r
 
 	ent := entity.PersonaAccessTokenEntity{
 		Id:        uuid.New().String(),
-		UserId:    ctx.GetUserId(),
+		UserId:    secctx.GetUserId(ctx),
 		TokenHash: tokenHash,
 		Name:      req.Name,
 		CreatedAt: time.Now(),
@@ -79,7 +81,7 @@ func (p personalAccessTokenServiceImpl) CreatePAT(ctx context.SecurityContext, r
 		DeletedAt: time.Time{},
 	}
 
-	err = p.repo.CreatePAT(ent)
+	err = p.repo.CreatePAT(ctx, ent)
 	if err != nil {
 		return nil, err
 	}
@@ -108,10 +110,10 @@ func calculateExpiresAt(daysUntilExpiry int) (time.Time, error) {
 	return time.Now().Add(time.Duration(daysUntilExpiry) * 24 * time.Hour), nil
 }
 
-func (p personalAccessTokenServiceImpl) DeletePAT(ctx context.SecurityContext, id string) error {
-	pat, err := p.repo.GetPAT(id, ctx.GetUserId())
+func (p personalAccessTokenServiceImpl) DeletePAT(ctx context.Context, id string) error {
+	pat, err := p.repo.GetPAT(ctx, id, secctx.GetUserId(ctx))
 	if err != nil {
-		return fmt.Errorf("failed to get PAT: %s", err)
+		return fmt.Errorf("failed to get PAT: %w", err)
 	}
 	if pat == nil {
 		return exception.CustomError{
@@ -121,15 +123,15 @@ func (p personalAccessTokenServiceImpl) DeletePAT(ctx context.SecurityContext, i
 			Params:  map[string]interface{}{"id": id},
 		}
 	}
-	return p.repo.DeletePAT(pat.Id, ctx.GetUserId())
+	return p.repo.DeletePAT(ctx, pat.Id, secctx.GetUserId(ctx))
 }
 
-func (p personalAccessTokenServiceImpl) GetPATByToken(pat string) (*view.PersonalAccessTokenItem, *view.User, string, error) {
+func (p personalAccessTokenServiceImpl) GetPATByToken(ctx context.Context, pat string) (*view.PersonalAccessTokenItem, *view.User, string, error) {
 	tokenHash := crypto.CreateSHA256Hash([]byte(pat))
 
 	//TODO: some optimization wanted: this auth method is using 3 DB calls: get pat, get user, get system role
 
-	ent, err := p.repo.GetPATByHash(tokenHash)
+	ent, err := p.repo.GetPATByHash(ctx, tokenHash)
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -138,22 +140,22 @@ func (p personalAccessTokenServiceImpl) GetPATByToken(pat string) (*view.Persona
 	}
 	result := entity.MakePersonaAccessTokenView(*ent)
 
-	user, err := p.userService.GetUserFromDB(ent.UserId)
+	user, err := p.userService.GetUserFromDB(ctx, ent.UserId)
 	if err != nil {
-		return nil, nil, "", fmt.Errorf("failed to get user for pat: %s", err)
+		return nil, nil, "", fmt.Errorf("failed to get user for pat: %w", err)
 	}
 
-	systemRole, err := p.roleService.GetUserSystemRole(user.Id)
+	systemRole, err := p.roleService.GetUserSystemRole(ctx, user.Id)
 	if err != nil {
-		return nil, nil, "", fmt.Errorf("failed to get user system role for pat: %s", err)
+		return nil, nil, "", fmt.Errorf("failed to get user system role for pat: %w", err)
 	}
 	return &result, user, systemRole, nil
 }
 
-func (p personalAccessTokenServiceImpl) ListPATs(userId string) ([]view.PersonalAccessTokenItem, error) {
+func (p personalAccessTokenServiceImpl) ListPATs(ctx context.Context, userId string) ([]view.PersonalAccessTokenItem, error) {
 	var pats []entity.PersonaAccessTokenEntity
 
-	pats, err := p.repo.ListPATs(userId)
+	pats, err := p.repo.ListPATs(ctx, userId)
 	if err != nil {
 		return nil, err
 	}

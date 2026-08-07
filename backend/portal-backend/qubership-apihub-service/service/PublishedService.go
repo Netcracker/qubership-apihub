@@ -3,7 +3,7 @@ package service
 import (
 	"archive/zip"
 	"bytes"
-	ctx "context"
+	"context"
 	"crypto/sha512"
 	"encoding/hex"
 	"encoding/json"
@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/google/uuid"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/archive"
@@ -26,34 +27,33 @@ import (
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 )
 
 type PublishedService interface {
-	GetVersionSources(packageId string, versionName string) ([]byte, error)
-	GetPublishedVersionSourceDataConfig(packageId string, versionName string) (*view.PublishedVersionSourceDataConfig, error)
-	GetPublishedVersionBuildConfig(packageId string, versionName string) (*view.BuildConfig, error)
-	GetLatestContentDataBySlug(packageId string, versionName string, slug string) (*view.PublishedContent, *view.ContentData, error)
-	VersionPublished(packageId string, versionName string) (bool, error)
-	GetVersionStatus(packageId string, versionName string) (status string, found bool, err error)
-	CheckNoReleaseDependentVersions(ctx context.SecurityContext, packageId string, version string) error
-	DeleteVersion(ctx context.SecurityContext, packageId string, versionName string) error
+	GetVersionSources(ctx context.Context, packageId string, versionName string) ([]byte, error)
+	GetPublishedVersionSourceDataConfig(ctx context.Context, packageId string, versionName string) (*view.PublishedVersionSourceDataConfig, error)
+	GetPublishedVersionBuildConfig(ctx context.Context, packageId string, versionName string) (*view.BuildConfig, error)
+	GetLatestContentDataBySlug(ctx context.Context, packageId string, versionName string, slug string) (*view.PublishedContent, *view.ContentData, error)
+	VersionPublished(ctx context.Context, packageId string, versionName string) (bool, error)
+	DeleteVersion(ctx context.Context, packageId string, versionName string) error
+	GetVersionStatus(ctx context.Context, packageId string, versionName string) (status string, found bool, err error)
+	CheckNoReleaseDependentVersions(ctx context.Context, packageId string, version string) error
 
-	PublishPackage(buildArc *archive.BuildResultArchive, buildSrcEnt *entity.BuildSourceEntity,
+	PublishPackage(ctx context.Context, buildArc *archive.BuildResultArchive, buildSrcEnt *entity.BuildSourceEntity,
 		buildConfig *view.BuildConfig, existingPackage *entity.PackageEntity) error
-	PublishChanges(buildArc *archive.BuildResultArchive, publishId string) error
+	PublishChanges(ctx context.Context, buildArc *archive.BuildResultArchive, publishId string) error
 
-	GetVersionInternalDocuments(packageId string, version string) ([]view.InternalDocument, error)
-	GetVersionInternalDocumentData(hash string) ([]byte, string, error)
-	GetComparisonInternalDocuments(packageId string, version string, previousPackageId string, previousVersion string, refPackageId string) ([]view.InternalDocument, error)
-	GetComparisonInternalDocumentData(hash string) ([]byte, string, error)
+	GetVersionInternalDocuments(ctx context.Context, packageId string, version string) ([]view.InternalDocument, error)
+	GetVersionInternalDocumentData(ctx context.Context, hash string) ([]byte, string, error)
+	GetComparisonInternalDocuments(ctx context.Context, packageId string, version string, previousPackageId string, previousVersion string, refPackageId string) ([]view.InternalDocument, error)
+	GetComparisonInternalDocumentData(ctx context.Context, hash string) ([]byte, string, error)
 
-	ReplaceVersionSources(secCtx context.SecurityContext, packageId string, versionName string, zipData []byte) error
+	ReplaceVersionSources(ctx context.Context, packageId string, versionName string, zipData []byte) error
 
-	CheckPreviousVersionDependencyCycle(packageID string, version string, previousVersionPackageID string, prevVersion string, revision int) (bool, error)
+	CheckPreviousVersionDependencyCycle(ctx context.Context, packageID string, version string, previousVersionPackageID string, prevVersion string, revision int) (bool, error)
 }
 
 func NewPublishedService(versionRepo repository.PublishedRepository,
@@ -98,8 +98,8 @@ type publishedServiceImpl struct {
 	roleService                RoleService
 }
 
-func (p publishedServiceImpl) GetVersionSources(packageId string, versionName string) ([]byte, error) {
-	version, err := p.publishedRepo.GetVersion(packageId, versionName)
+func (p publishedServiceImpl) GetVersionSources(ctx context.Context, packageId string, versionName string) ([]byte, error) {
+	version, err := p.publishedRepo.GetVersion(ctx, packageId, versionName)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +113,7 @@ func (p publishedServiceImpl) GetVersionSources(packageId string, versionName st
 	}
 	var srcArchive []byte
 	if p.systemInfoService.IsMinioStorageActive() && !p.systemInfoService.IsMinioStoreOnlyBuildResult() {
-		publishedSrc, err := p.publishedRepo.GetPublishedSources(packageId, version.Version, version.Revision)
+		publishedSrc, err := p.publishedRepo.GetPublishedSources(ctx, packageId, version.Version, version.Revision)
 		if err != nil {
 			return nil, err
 		}
@@ -126,14 +126,14 @@ func (p publishedServiceImpl) GetVersionSources(packageId string, versionName st
 			}
 		}
 		if publishedSrc.ArchiveChecksum != "" {
-			file, err := p.minioStorageService.GetFile(ctx.Background(), view.PUBLISHED_SOURCES_ARCHIVES_TABLE, publishedSrc.ArchiveChecksum)
+			file, err := p.minioStorageService.GetFile(ctx, view.PUBLISHED_SOURCES_ARCHIVES_TABLE, publishedSrc.ArchiveChecksum)
 			if err != nil {
 				return nil, err
 			}
 			srcArchive = file
 		}
 	} else {
-		srcData, err := p.publishedRepo.GetVersionSources(packageId, version.Version, version.Revision)
+		srcData, err := p.publishedRepo.GetVersionSources(ctx, packageId, version.Version, version.Revision)
 		if err != nil {
 			return nil, err
 		}
@@ -161,8 +161,8 @@ func (p publishedServiceImpl) GetVersionSources(packageId string, versionName st
 	return srcArchive, nil
 }
 
-func (p publishedServiceImpl) GetPublishedVersionSourceDataConfig(packageId string, versionName string) (*view.PublishedVersionSourceDataConfig, error) {
-	version, err := p.publishedRepo.GetVersion(packageId, versionName)
+func (p publishedServiceImpl) GetPublishedVersionSourceDataConfig(ctx context.Context, packageId string, versionName string) (*view.PublishedVersionSourceDataConfig, error) {
+	version, err := p.publishedRepo.GetVersion(ctx, packageId, versionName)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (p publishedServiceImpl) GetPublishedVersionSourceDataConfig(packageId stri
 	}
 	srcData := new(entity.PublishedSrcDataConfigEntity)
 	if p.systemInfoService.IsMinioStorageActive() && !p.systemInfoService.IsMinioStoreOnlyBuildResult() {
-		publishedSrc, err := p.publishedRepo.GetPublishedSources(packageId, version.Version, version.Revision)
+		publishedSrc, err := p.publishedRepo.GetPublishedSources(ctx, packageId, version.Version, version.Revision)
 		if err != nil {
 			return nil, err
 		}
@@ -194,14 +194,14 @@ func (p publishedServiceImpl) GetPublishedVersionSourceDataConfig(packageId stri
 			Config:          publishedSrc.Config,
 		}
 		if publishedSrc.ArchiveChecksum != "" {
-			src, err := p.minioStorageService.GetFile(ctx.Background(), view.PUBLISHED_SOURCES_ARCHIVES_TABLE, publishedSrc.ArchiveChecksum)
+			src, err := p.minioStorageService.GetFile(ctx, view.PUBLISHED_SOURCES_ARCHIVES_TABLE, publishedSrc.ArchiveChecksum)
 			if err != nil {
 				return nil, err
 			}
 			srcData.Data = src
 		}
 	} else {
-		srcData, err = p.publishedRepo.GetPublishedVersionSourceDataConfig(packageId, version.Version, version.Revision)
+		srcData, err = p.publishedRepo.GetPublishedVersionSourceDataConfig(ctx, packageId, version.Version, version.Revision)
 		if err != nil {
 			return nil, err
 		}
@@ -237,8 +237,8 @@ func (p publishedServiceImpl) GetPublishedVersionSourceDataConfig(packageId stri
 	return &view.PublishedVersionSourceDataConfig{Config: buildConfig, Sources: srcData.Data}, nil
 }
 
-func (p publishedServiceImpl) GetPublishedVersionBuildConfig(packageId string, versionName string) (*view.BuildConfig, error) {
-	version, err := p.publishedRepo.GetVersion(packageId, versionName)
+func (p publishedServiceImpl) GetPublishedVersionBuildConfig(ctx context.Context, packageId string, versionName string) (*view.BuildConfig, error) {
+	version, err := p.publishedRepo.GetVersion(ctx, packageId, versionName)
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +250,7 @@ func (p publishedServiceImpl) GetPublishedVersionBuildConfig(packageId string, v
 			Params:  map[string]interface{}{"version": versionName},
 		}
 	}
-	publishedSrc, err := p.publishedRepo.GetPublishedSources(packageId, version.Version, version.Revision)
+	publishedSrc, err := p.publishedRepo.GetPublishedSources(ctx, packageId, version.Version, version.Revision)
 	if err != nil {
 		return nil, err
 	}
@@ -271,8 +271,8 @@ func (p publishedServiceImpl) GetPublishedVersionBuildConfig(packageId string, v
 	return &buildConfig, nil
 }
 
-func (p publishedServiceImpl) GetLatestContentDataBySlug(packageId string, versionName string, slug string) (*view.PublishedContent, *view.ContentData, error) {
-	ent, err := p.publishedRepo.GetVersion(packageId, versionName)
+func (p publishedServiceImpl) GetLatestContentDataBySlug(ctx context.Context, packageId string, versionName string, slug string) (*view.PublishedContent, *view.ContentData, error) {
+	ent, err := p.publishedRepo.GetVersion(ctx, packageId, versionName)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -285,7 +285,7 @@ func (p publishedServiceImpl) GetLatestContentDataBySlug(packageId string, versi
 		}
 	}
 
-	content, err := p.publishedRepo.GetLatestContentBySlug(packageId, versionName, slug)
+	content, err := p.publishedRepo.GetLatestContentBySlug(ctx, packageId, versionName, slug)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -298,7 +298,7 @@ func (p publishedServiceImpl) GetLatestContentDataBySlug(packageId string, versi
 		}
 	}
 
-	pce, err := p.publishedRepo.GetContentData(packageId, content.Checksum)
+	pce, err := p.publishedRepo.GetContentData(ctx, packageId, content.Checksum)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -313,21 +313,21 @@ func (p publishedServiceImpl) GetLatestContentDataBySlug(packageId string, versi
 	return entity.MakePublishedContentView(content), entity.MakeContentDataViewPub(content, pce), nil
 }
 
-func (p publishedServiceImpl) VersionPublished(packageId string, versionName string) (bool, error) {
-	ent, err := p.publishedRepo.GetVersionIncludingDeleted(packageId, versionName)
+func (p publishedServiceImpl) VersionPublished(ctx context.Context, packageId string, versionName string) (bool, error) {
+	ent, err := p.publishedRepo.GetVersionIncludingDeleted(ctx, packageId, versionName)
 	if err != nil {
 		return false, err
 	}
 	return ent != nil, nil
 }
 
-func (p publishedServiceImpl) GetVersionStatus(packageId string, versionName string) (string, bool, error) {
+func (p publishedServiceImpl) GetVersionStatus(ctx context.Context, packageId string, versionName string) (string, bool, error) {
 	version, _, err := SplitVersionRevision(versionName)
 	if err != nil {
 		return "", false, err
 	}
 
-	latestEnt, err := p.publishedRepo.GetVersion(packageId, version)
+	latestEnt, err := p.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return "", false, err
 	}
@@ -337,8 +337,8 @@ func (p publishedServiceImpl) GetVersionStatus(packageId string, versionName str
 	return latestEnt.Status, true, nil
 }
 
-func (p publishedServiceImpl) CheckNoReleaseDependentVersions(ctx context.SecurityContext, packageId string, version string) error {
-	dependents, err := p.publishedRepo.GetVersionsByPreviousVersion(packageId, version)
+func (p publishedServiceImpl) CheckNoReleaseDependentVersions(ctx context.Context, packageId string, version string) error {
+	dependents, err := p.publishedRepo.GetVersionsByPreviousVersion(ctx, packageId, version)
 	if err != nil {
 		return err
 	}
@@ -358,7 +358,7 @@ func (p publishedServiceImpl) CheckNoReleaseDependentVersions(ctx context.Securi
 			return err
 		}
 		log.Warnf("Blocked changing version %s of package %s to 'draft' status by user %s: referenced as a previous version by release versions %s",
-			version, packageId, ctx.GetUserId(), entity.FormatVersionKeys(releaseDependents))
+			version, packageId, secctx.GetUserId(ctx), entity.FormatVersionKeys(releaseDependents))
 		return &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidReleaseVersionChain,
@@ -378,14 +378,14 @@ func readZipFile(zf *zip.File) ([]byte, error) {
 	return ioutil.ReadAll(f)
 }
 
-func (p publishedServiceImpl) DeleteVersion(ctx context.SecurityContext, packageId string, versionName string) error {
-	releasedRevisionsDeleted, err := p.publishedRepo.MarkVersionDeleted(packageId, versionName, ctx.GetUserId())
+func (p publishedServiceImpl) DeleteVersion(ctx context.Context, packageId string, versionName string) error {
+	releasedRevisionsDeleted, err := p.publishedRepo.MarkVersionDeleted(ctx, packageId, versionName, secctx.GetUserId(ctx))
 	if err != nil {
 		return err
 	}
 	if releasedRevisionsDeleted > 0 {
 		for i := 0; i < releasedRevisionsDeleted; i++ {
-			p.monitoringService.IncreaseBusinessMetricCounter(ctx.GetUserId(), metrics.ReleaseVersionsDeleted, packageId)
+			p.monitoringService.IncreaseBusinessMetricCounter(secctx.GetUserId(ctx), metrics.ReleaseVersionsDeleted, packageId)
 		}
 	}
 	return nil
@@ -405,7 +405,7 @@ func validatePublishSources(filesFromSourcesArchive map[string]struct{}, filesFr
 	return nil
 }
 
-func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchive, buildSrcEnt *entity.BuildSourceEntity,
+func (p publishedServiceImpl) PublishPackage(ctx context.Context, buildArc *archive.BuildResultArchive, buildSrcEnt *entity.BuildSourceEntity,
 	buildConfig *view.BuildConfig, existingPackage *entity.PackageEntity) error {
 
 	publishStart := time.Now()
@@ -449,7 +449,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 	utils.PerfLog(time.Since(start).Milliseconds(), 400, "publishPackage: zip files read")
 
 	start = time.Now()
-	if err = p.publishedValidator.ValidatePackage(buildArc, buildConfig); err != nil {
+	if err = p.publishedValidator.ValidatePackage(ctx, buildArc, buildConfig); err != nil {
 		return err
 	}
 	log.Debugf("Publishing package with packageId: %v; version: %v", buildArc.PackageInfo.PackageId, buildArc.PackageInfo.Version)
@@ -481,7 +481,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 	}
 	if buildArc.PackageInfo.Revision == 0 {
 		buildArc.PackageInfo.Revision = 1
-		storedVersion, err := p.publishedRepo.GetVersionIncludingDeleted(buildArc.PackageInfo.PackageId, buildArc.PackageInfo.Version)
+		storedVersion, err := p.publishedRepo.GetVersionIncludingDeleted(ctx, buildArc.PackageInfo.PackageId, buildArc.PackageInfo.Version)
 		if err != nil {
 			return err
 		}
@@ -501,7 +501,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 			if buildArc.PackageInfo.PreviousVersionPackageId != "" {
 				previousVersionPackageId = buildArc.PackageInfo.PreviousVersionPackageId
 			}
-			previousVersionEnt, err := p.publishedRepo.GetVersionIncludingDeleted(previousVersionPackageId, buildArc.PackageInfo.PreviousVersion)
+			previousVersionEnt, err := p.publishedRepo.GetVersionIncludingDeleted(ctx, previousVersionPackageId, buildArc.PackageInfo.PreviousVersion)
 			if err != nil {
 				return err
 			}
@@ -517,7 +517,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 		}
 	}
 
-	refEntities, err := p.makePublishedReferencesEntities(buildArc.PackageInfo, buildArc.PackageInfo.Refs)
+	refEntities, err := p.makePublishedReferencesEntities(ctx, buildArc.PackageInfo, buildArc.PackageInfo.Refs)
 	if err != nil {
 		return err
 	}
@@ -538,14 +538,14 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 				if buildArc.PackageInfo.PreviousVersionPackageId != "" {
 					prevPkgId = buildArc.PackageInfo.PreviousVersionPackageId
 				}
-				prevContent, prevErr := p.publishedRepo.GetRevisionContent(prevPkgId, buildArc.PackageInfo.PreviousVersion, previousVersionRevision)
+				prevContent, prevErr := p.publishedRepo.GetRevisionContent(ctx, prevPkgId, buildArc.PackageInfo.PreviousVersion, previousVersionRevision)
 				if prevErr != nil {
 					return prevErr
 				}
 				propagateShareability(fileEntities, prevContent)
 			}
 		} else {
-			prevRevisionContent, prevRevErr := p.publishedRepo.GetRevisionContent(
+			prevRevisionContent, prevRevErr := p.publishedRepo.GetRevisionContent(ctx,
 				buildArc.PackageInfo.PackageId,
 				buildArc.PackageInfo.Version,
 				buildArc.PackageInfo.Revision-1,
@@ -561,7 +561,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 				if buildArc.PackageInfo.PreviousVersionPackageId != "" {
 					prevPkgId = buildArc.PackageInfo.PreviousVersionPackageId
 				}
-				prevContent, prevErr := p.publishedRepo.GetRevisionContent(prevPkgId, buildArc.PackageInfo.PreviousVersion, previousVersionRevision)
+				prevContent, prevErr := p.publishedRepo.GetRevisionContent(ctx, prevPkgId, buildArc.PackageInfo.PreviousVersion, previousVersionRevision)
 				if prevErr != nil {
 					return prevErr
 				}
@@ -575,7 +575,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 		return err
 	}
 
-	operationsComparisonEntities, changedOperationEntities, versionComparisonsFromCache, comparisonFileIdToKeyMap, err := buildArcEntitiesReader.ReadOperationComparisonsToEntities(operationsInfo, p.operationRepo)
+	operationsComparisonEntities, changedOperationEntities, versionComparisonsFromCache, comparisonFileIdToKeyMap, err := buildArcEntitiesReader.ReadOperationComparisonsToEntities(ctx, operationsInfo, p.operationRepo)
 	if err != nil {
 		return err
 	}
@@ -597,7 +597,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 	// DDL comparisons share version_comparison with REST. Read the DDL index/per-pair files, then
 	// merge the version-comparison rows by comparison_id (REST + DDL contractTypes on the same row;
 	// DDL-only pairs are appended so the ddl_comparison FK is satisfied for pure DDL changelogs).
-	ddlVersionComparisonEntities, ddlContractComparisonEntities, ddlComparisonFileIdToKeyMap, err := buildArcEntitiesReader.ReadDdlContractComparisonsToEntities(publishingDdlDataHashes, p.ddlContractRepo)
+	ddlVersionComparisonEntities, ddlContractComparisonEntities, ddlComparisonFileIdToKeyMap, err := buildArcEntitiesReader.ReadDdlContractComparisonsToEntities(ctx, publishingDdlDataHashes, p.ddlContractRepo)
 	if err != nil {
 		return err
 	}
@@ -669,7 +669,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 	}
 	if p.systemInfoService.IsMinioStorageActive() && !p.systemInfoService.IsMinioStoreOnlyBuildResult() {
 		minioUploadStart := time.Now()
-		err = p.minioStorageService.UploadFile(ctx.Background(), view.PUBLISHED_SOURCES_ARCHIVES_TABLE, archiveCSStr, buildSrcEnt.Source)
+		err = p.minioStorageService.UploadFile(ctx, view.PUBLISHED_SOURCES_ARCHIVES_TABLE, archiveCSStr, buildSrcEnt.Source)
 		if err != nil {
 			return err
 		}
@@ -748,9 +748,9 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 	newServiceName := ""
 	if buildConfig.ServiceName != "" && (existingPackage.Kind == entity.KIND_PACKAGE || existingPackage.Kind == entity.KIND_DASHBOARD) {
 		if existingPackage.ServiceName == "" {
-			serviceOwner, err := p.publishedRepo.GetServiceOwner(utils.GetPackageWorkspaceId(existingPackage.Id), buildConfig.ServiceName)
+			serviceOwner, err := p.publishedRepo.GetServiceOwner(ctx, utils.GetPackageWorkspaceId(existingPackage.Id), buildConfig.ServiceName)
 			if err != nil {
-				return fmt.Errorf("failed to check service owner: %v", err.Error())
+				return fmt.Errorf("failed to check service owner: %w", err)
 			}
 			if serviceOwner == "" {
 				newServiceName = buildConfig.ServiceName
@@ -771,6 +771,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 	start = time.Now()
 	versionCreationStart := time.Now()
 	err = p.publishedRepo.CreateVersionWithData(
+		ctx,
 		buildArc.PackageInfo,
 		buildSrcEnt.BuildId,
 		versionEnt,
@@ -809,7 +810,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 
 	start = time.Now()
 	//todo move this recalculation inside publish method to run in the same transaction (after publish method redesign)
-	err = p.publishedRepo.RecalculateOperationGroups(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, view.MakePackageGroupingPrefixRegex(existingPackage.RestGroupingPrefix), versionEnt.CreatedBy)
+	err = p.publishedRepo.RecalculateOperationGroups(ctx, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, view.MakePackageGroupingPrefixRegex(existingPackage.RestGroupingPrefix), versionEnt.CreatedBy)
 	if err != nil {
 		log.Errorf("failed to calculate operations groups for version: %+v: %v", versionEnt, err.Error())
 	}
@@ -819,7 +820,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 		if versionEnt.Status == string(view.Release) {
 			p.monitoringService.IncreaseBusinessMetricCounter(buildArc.PackageInfo.CreatedBy, metrics.ReleaseVersionsPublished, versionEnt.PackageId)
 		}
-		err = p.reCalculateChangelogs(buildArc.PackageInfo)
+		err = p.reCalculateChangelogs(ctx, buildArc.PackageInfo)
 		if err != nil {
 			return err
 		}
@@ -835,7 +836,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 		}
 		dataMap["revision"] = buildArc.PackageInfo.Revision
 
-		p.atService.TrackEvent(view.ActivityTrackingEvent{
+		p.atService.TrackEvent(ctx, view.ActivityTrackingEvent{
 			Type:      eventType,
 			Data:      dataMap,
 			PackageId: versionEnt.PackageId,
@@ -843,7 +844,7 @@ func (p publishedServiceImpl) PublishPackage(buildArc *archive.BuildResultArchiv
 			UserId:    versionEnt.CreatedBy,
 		})
 
-		err = p.publishNotificationService.SendNotification(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
+		err = p.publishNotificationService.SendNotification(ctx, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
 		if err != nil {
 			log.Errorf("failed to send published version notification: %v", err)
 		}
@@ -874,11 +875,11 @@ func hasNonUnknownShareability(content []entity.PublishedContentEntity) bool {
 	return false
 }
 
-func (p publishedServiceImpl) makePublishedReferencesEntities(packageInfo view.PackageInfoFile, packageRefs []view.BCRef) ([]*entity.PublishedReferenceEntity, error) {
+func (p publishedServiceImpl) makePublishedReferencesEntities(ctx context.Context, packageInfo view.PackageInfoFile, packageRefs []view.BCRef) ([]*entity.PublishedReferenceEntity, error) {
 	uniqueRefs := make(map[string]struct{}, 0)
 	publishedReferences := make([]*entity.PublishedReferenceEntity, 0)
 	for _, ref := range packageRefs {
-		refVersion, err := p.publishedRepo.GetVersionIncludingDeleted(ref.RefId, ref.Version)
+		refVersion, err := p.publishedRepo.GetVersionIncludingDeleted(ctx, ref.RefId, ref.Version)
 		if err != nil {
 			return nil, err
 		}
@@ -900,7 +901,7 @@ func (p publishedServiceImpl) makePublishedReferencesEntities(packageInfo view.P
 			Excluded:     ref.Excluded,
 		}
 		if ref.ParentRefId != "" {
-			parentRefVersion, err := p.publishedRepo.GetVersionIncludingDeleted(ref.ParentRefId, ref.ParentVersion)
+			parentRefVersion, err := p.publishedRepo.GetVersionIncludingDeleted(ctx, ref.ParentRefId, ref.ParentVersion)
 			if err != nil {
 				return nil, err
 			}
@@ -936,8 +937,8 @@ func makePublishedReferenceUniqueKey(entity *entity.PublishedReferenceEntity) st
 	return fmt.Sprintf(`%v|@@|%v|@@|%v|@@|%v|@@|%v|@@|%v`, entity.RefPackageId, entity.RefVersion, entity.RefRevision, entity.ParentRefPackageId, entity.ParentRefVersion, entity.ParentRefRevision)
 }
 
-func (p publishedServiceImpl) reCalculateChangelogs(packageInfo view.PackageInfoFile) error {
-	versions, err := p.publishedRepo.GetVersionsByPreviousVersion(packageInfo.PackageId, packageInfo.Version)
+func (p publishedServiceImpl) reCalculateChangelogs(ctx context.Context, packageInfo view.PackageInfoFile) error {
+	versions, err := p.publishedRepo.GetVersionsByPreviousVersion(ctx, packageInfo.PackageId, packageInfo.Version)
 	if err != nil {
 		return err
 	}
@@ -956,7 +957,7 @@ func (p publishedServiceImpl) reCalculateChangelogs(packageInfo view.PackageInfo
 			CreatedBy:                packageInfo.CreatedBy,
 			PublishedAt:              time.Now(),
 		}
-		err := p.createChangelogBuild(buildConfig)
+		err := p.createChangelogBuild(ctx, buildConfig)
 		if err != nil {
 			return err
 		}
@@ -964,7 +965,7 @@ func (p publishedServiceImpl) reCalculateChangelogs(packageInfo view.PackageInfo
 	return nil
 }
 
-func (p publishedServiceImpl) PublishChanges(buildArc *archive.BuildResultArchive, publishId string) error {
+func (p publishedServiceImpl) PublishChanges(ctx context.Context, buildArc *archive.BuildResultArchive, publishId string) error {
 	var err error
 	if err = buildArc.ReadPackageComparisons(false); err != nil {
 		return err
@@ -987,7 +988,7 @@ func (p publishedServiceImpl) PublishChanges(buildArc *archive.BuildResultArchiv
 	if err != nil {
 		return err
 	}
-	if err := p.publishedValidator.ValidateChanges(buildArc); err != nil {
+	if err := p.publishedValidator.ValidateChanges(ctx, buildArc); err != nil {
 		return err
 	}
 	if len(buildArc.PackageComparisons.Comparisons) == 0 {
@@ -995,7 +996,7 @@ func (p publishedServiceImpl) PublishChanges(buildArc *archive.BuildResultArchiv
 	}
 
 	buildArcEntitiesReader := archive.NewBuildResultToEntitiesReader(buildArc)
-	versionComparisonEntities, operationComparisonEntities, versionComparisonsFromCache, comparisonFileIdToKeyMap, err := buildArcEntitiesReader.ReadOperationComparisonsToEntities(nil, p.operationRepo)
+	versionComparisonEntities, operationComparisonEntities, versionComparisonsFromCache, comparisonFileIdToKeyMap, err := buildArcEntitiesReader.ReadOperationComparisonsToEntities(ctx, nil, p.operationRepo)
 	if err != nil {
 		return err
 	}
@@ -1004,7 +1005,7 @@ func (p publishedServiceImpl) PublishChanges(buildArc *archive.BuildResultArchiv
 		return err
 	}
 
-	err = p.publishedRepo.SaveVersionChanges(buildArc.PackageInfo, publishId, operationComparisonEntities, versionComparisonEntities, versionComparisonsFromCache, comparisonInternalDocEntities, comparisonInternalDocDataEntities)
+	err = p.publishedRepo.SaveVersionChanges(ctx, buildArc.PackageInfo, publishId, operationComparisonEntities, versionComparisonEntities, versionComparisonsFromCache, comparisonInternalDocEntities, comparisonInternalDocDataEntities)
 	if err != nil {
 		return err
 	}
@@ -1048,7 +1049,7 @@ func SplitVersionRevision(version string) (string, int, error) {
 	return versionName, versionRevision, nil
 }
 
-func (p publishedServiceImpl) createChangelogBuild(config view.BuildConfig) error { //todo folder refactoring is needed. Use buildService.CreateChangelogBuild() after it
+func (p publishedServiceImpl) createChangelogBuild(ctx context.Context, config view.BuildConfig) error { //todo folder refactoring is needed. Use buildService.CreateChangelogBuild() after it
 	status := view.StatusNotStarted
 
 	buildId := config.PublishId
@@ -1079,15 +1080,15 @@ func (p publishedServiceImpl) createChangelogBuild(config view.BuildConfig) erro
 		Config:  *confAsMap,
 	}
 
-	err = p.buildRepository.StoreBuild(buildEnt, sourceEnt, nil)
+	err = p.buildRepository.StoreBuild(ctx, buildEnt, sourceEnt, nil)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p publishedServiceImpl) GetVersionInternalDocuments(packageId string, versionName string) ([]view.InternalDocument, error) {
-	versionEnt, err := p.publishedRepo.GetVersion(packageId, versionName)
+func (p publishedServiceImpl) GetVersionInternalDocuments(ctx context.Context, packageId string, versionName string) ([]view.InternalDocument, error) {
+	versionEnt, err := p.publishedRepo.GetVersion(ctx, packageId, versionName)
 	if err != nil {
 		return nil, err
 	}
@@ -1100,7 +1101,7 @@ func (p publishedServiceImpl) GetVersionInternalDocuments(packageId string, vers
 		}
 	}
 
-	docs, err := p.publishedRepo.GetVersionInternalDocuments(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
+	docs, err := p.publishedRepo.GetVersionInternalDocuments(ctx, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
 	if err != nil {
 		return nil, err
 	}
@@ -1113,8 +1114,8 @@ func (p publishedServiceImpl) GetVersionInternalDocuments(packageId string, vers
 	return result, nil
 }
 
-func (p publishedServiceImpl) GetVersionInternalDocumentData(hash string) ([]byte, string, error) {
-	docData, err := p.publishedRepo.GetVersionInternalDocumentData(hash)
+func (p publishedServiceImpl) GetVersionInternalDocumentData(ctx context.Context, hash string) ([]byte, string, error) {
+	docData, err := p.publishedRepo.GetVersionInternalDocumentData(ctx, hash)
 	if err != nil {
 		return nil, "", err
 	}
@@ -1133,8 +1134,8 @@ func (p publishedServiceImpl) GetVersionInternalDocumentData(hash string) ([]byt
 	return docData.Data, filename, nil
 }
 
-func (p publishedServiceImpl) GetComparisonInternalDocuments(packageId string, version string, previousPackageId string, previousVersion string, refPackageId string) ([]view.InternalDocument, error) {
-	versionEnt, err := p.publishedRepo.GetVersion(packageId, version)
+func (p publishedServiceImpl) GetComparisonInternalDocuments(ctx context.Context, packageId string, version string, previousPackageId string, previousVersion string, refPackageId string) ([]view.InternalDocument, error) {
+	versionEnt, err := p.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return nil, err
 	}
@@ -1163,7 +1164,7 @@ func (p publishedServiceImpl) GetComparisonInternalDocuments(packageId string, v
 			previousPackageId = packageId
 		}
 	}
-	previousVersionEnt, err := p.publishedRepo.GetVersion(previousPackageId, previousVersion)
+	previousVersionEnt, err := p.publishedRepo.GetVersion(ctx, previousPackageId, previousVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -1181,7 +1182,7 @@ func (p publishedServiceImpl) GetComparisonInternalDocuments(packageId string, v
 		previousVersionEnt.PackageId, previousVersionEnt.Version, previousVersionEnt.Revision,
 	)
 
-	versionComparison, err := p.publishedRepo.GetVersionComparison(comparisonId)
+	versionComparison, err := p.publishedRepo.GetVersionComparison(ctx, comparisonId)
 	if err != nil {
 		return nil, err
 	}
@@ -1204,7 +1205,7 @@ func (p publishedServiceImpl) GetComparisonInternalDocuments(packageId string, v
 
 	var comparisons []entity.VersionComparisonEntity
 	if len(versionComparison.Refs) > 0 {
-		refsComparisons, err := p.publishedRepo.GetVersionRefsComparisons(comparisonId)
+		refsComparisons, err := p.publishedRepo.GetVersionRefsComparisons(ctx, comparisonId)
 		if err != nil {
 			return nil, err
 		}
@@ -1221,7 +1222,7 @@ func (p publishedServiceImpl) GetComparisonInternalDocuments(packageId string, v
 		comparisons = append(comparisons, *versionComparison)
 	}
 
-	docs, err := p.publishedRepo.GetComparisonInternalDocumentsByComparisons(comparisons)
+	docs, err := p.publishedRepo.GetComparisonInternalDocumentsByComparisons(ctx, comparisons)
 	if err != nil {
 		return nil, err
 	}
@@ -1234,8 +1235,8 @@ func (p publishedServiceImpl) GetComparisonInternalDocuments(packageId string, v
 	return result, nil
 }
 
-func (p publishedServiceImpl) GetComparisonInternalDocumentData(hash string) ([]byte, string, error) {
-	docData, err := p.publishedRepo.GetComparisonInternalDocumentData(hash)
+func (p publishedServiceImpl) GetComparisonInternalDocumentData(ctx context.Context, hash string) ([]byte, string, error) {
+	docData, err := p.publishedRepo.GetComparisonInternalDocumentData(ctx, hash)
 	if err != nil {
 		return nil, "", err
 	}
@@ -1254,7 +1255,7 @@ func (p publishedServiceImpl) GetComparisonInternalDocumentData(hash string) ([]
 	return docData.Data, filename, nil
 }
 
-func (p publishedServiceImpl) CheckPreviousVersionDependencyCycle(packageID string, version string, previousVersionPackageID string, prevVersion string, revision int) (bool, error) {
+func (p publishedServiceImpl) CheckPreviousVersionDependencyCycle(ctx context.Context, packageID string, version string, previousVersionPackageID string, prevVersion string, revision int) (bool, error) {
 	versionSearchQuery := entity.PublishedVersionSearchQueryEntity{
 		PackageId: packageID,
 		Limit:     100,
@@ -1262,7 +1263,7 @@ func (p publishedServiceImpl) CheckPreviousVersionDependencyCycle(packageID stri
 	}
 	var packageVersions []entity.PackageVersionRevisionEntity
 	for {
-		versionEnts, err := p.publishedRepo.GetReadonlyPackageVersionsWithLimit(versionSearchQuery, false, false)
+		versionEnts, err := p.publishedRepo.GetReadonlyPackageVersionsWithLimit(ctx, versionSearchQuery, false, false)
 		if err != nil {
 			return false, err
 		}
@@ -1331,8 +1332,8 @@ func detectPreviousVersionDependencyCycleWithCurrVersion(versionNodes []entity.P
 	return false
 }
 
-func (p publishedServiceImpl) ReplaceVersionSources(secCtx context.SecurityContext, packageId string, versionName string, zipData []byte) error {
-	versionEnt, err := p.publishedRepo.GetVersion(packageId, versionName)
+func (p publishedServiceImpl) ReplaceVersionSources(ctx context.Context, packageId string, versionName string, zipData []byte) error {
+	versionEnt, err := p.publishedRepo.GetVersion(ctx, packageId, versionName)
 	if err != nil {
 		return err
 	}
@@ -1347,7 +1348,7 @@ func (p publishedServiceImpl) ReplaceVersionSources(secCtx context.SecurityConte
 	version := versionEnt.Version
 	revision := versionEnt.Revision
 
-	existingSrc, err := p.publishedRepo.GetPublishedSources(packageId, version, revision)
+	existingSrc, err := p.publishedRepo.GetPublishedSources(ctx, packageId, version, revision)
 	if err != nil {
 		return err
 	}
@@ -1394,16 +1395,16 @@ func (p publishedServiceImpl) ReplaceVersionSources(secCtx context.SecurityConte
 		Revision:    revision,
 		OldChecksum: oldChecksum,
 		NewChecksum: newChecksum,
-		PerformedBy: secCtx.GetUserId(),
+		PerformedBy: secctx.GetUserId(ctx),
 		PerformedAt: time.Now(),
 	}
 
 	if p.systemInfoService.IsMinioStorageActive() && !p.systemInfoService.IsMinioStoreOnlyBuildResult() {
-		err = p.minioStorageService.UploadFile(ctx.Background(), view.PUBLISHED_SOURCES_ARCHIVES_TABLE, newChecksum, zipData)
+		err = p.minioStorageService.UploadFile(ctx, view.PUBLISHED_SOURCES_ARCHIVES_TABLE, newChecksum, zipData)
 		if err != nil {
 			return err
 		}
-		err = p.publishedRepo.UpdatePublishedSourcesChecksum(packageId, version, revision, newChecksum, trackingEntity)
+		err = p.publishedRepo.UpdatePublishedSourcesChecksum(ctx, packageId, version, revision, newChecksum, trackingEntity)
 		if err != nil {
 			return err
 		}
@@ -1412,7 +1413,7 @@ func (p publishedServiceImpl) ReplaceVersionSources(secCtx context.SecurityConte
 			Checksum: newChecksum,
 			Data:     zipData,
 		}
-		err = p.publishedRepo.UpdatePublishedSourcesArchive(packageId, version, revision, newChecksum, srcArchiveEntity, trackingEntity)
+		err = p.publishedRepo.UpdatePublishedSourcesArchive(ctx, packageId, version, revision, newChecksum, srcArchiveEntity, trackingEntity)
 		if err != nil {
 			return err
 		}

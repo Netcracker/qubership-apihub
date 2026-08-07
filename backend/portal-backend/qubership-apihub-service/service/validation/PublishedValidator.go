@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -14,9 +15,9 @@ import (
 )
 
 type PublishedValidator interface {
-	ValidatePackage(buildArc *archive.BuildResultArchive, buildConfig *view.BuildConfig) error
+	ValidatePackage(ctx context.Context, buildArc *archive.BuildResultArchive, buildConfig *view.BuildConfig) error
 	ValidateBuildResultAgainstConfig(buildArc *archive.BuildResultArchive, buildConfig *view.BuildConfig) error //TODO remove and merge logic with ValidatePackage
-	ValidateChanges(buildArc *archive.BuildResultArchive) error                                                 //TODO remove and merge logic with ValidatePackage
+	ValidateChanges(ctx context.Context, buildArc *archive.BuildResultArchive) error                            //TODO remove and merge logic with ValidatePackage
 }
 
 func NewPublishedValidator(publishedRepo repository.PublishedRepository) PublishedValidator {
@@ -29,8 +30,8 @@ type publishedValidatorImpl struct {
 	publishedRepo repository.PublishedRepository
 }
 
-func (p publishedValidatorImpl) ValidatePackage(buildArc *archive.BuildResultArchive, buildConfig *view.BuildConfig) error {
-	if err := p.validatePackageInfo(buildArc, buildConfig); err != nil {
+func (p publishedValidatorImpl) ValidatePackage(ctx context.Context, buildArc *archive.BuildResultArchive, buildConfig *view.BuildConfig) error {
+	if err := p.validatePackageInfo(ctx, buildArc, buildConfig); err != nil {
 		return err
 	}
 
@@ -42,7 +43,7 @@ func (p publishedValidatorImpl) ValidatePackage(buildArc *archive.BuildResultArc
 		return err
 	}
 
-	if err := p.validatePackageComparisons(buildArc, buildConfig); err != nil {
+	if err := p.validatePackageComparisons(ctx, buildArc, buildConfig); err != nil {
 		return err
 	}
 
@@ -185,7 +186,7 @@ func (p publishedValidatorImpl) ValidateBuildResultAgainstConfig(buildArc *archi
 	return nil
 }
 
-func (p publishedValidatorImpl) ValidateChanges(buildArc *archive.BuildResultArchive) error {
+func (p publishedValidatorImpl) ValidateChanges(ctx context.Context, buildArc *archive.BuildResultArchive) error {
 	info := view.MakeChangelogInfoFileView(buildArc.PackageInfo)
 	comparisons := buildArc.PackageComparisons
 	if err := utils.ValidateObject(info); err != nil {
@@ -234,7 +235,7 @@ func (p publishedValidatorImpl) ValidateChanges(buildArc *archive.BuildResultArc
 			if (buildArc.PackageInfo.Revision != comparison.Revision && comparison.Revision != 0) ||
 				buildArc.PackageInfo.Version != comparison.Version ||
 				buildArc.PackageInfo.PackageId != comparison.PackageId {
-				versionEnt, err := p.publishedRepo.GetVersionByRevision(comparison.PackageId, comparison.Version, comparison.Revision)
+				versionEnt, err := p.publishedRepo.GetVersionByRevision(ctx, comparison.PackageId, comparison.Version, comparison.Revision)
 				if err != nil {
 					return err
 				}
@@ -249,7 +250,7 @@ func (p publishedValidatorImpl) ValidateChanges(buildArc *archive.BuildResultArc
 			}
 		}
 		if comparison.PreviousVersion != "" {
-			previousVersionEnt, err := p.publishedRepo.GetVersionByRevision(comparison.PreviousVersionPackageId, comparison.PreviousVersion, comparison.PreviousVersionRevision)
+			previousVersionEnt, err := p.publishedRepo.GetVersionByRevision(ctx, comparison.PreviousVersionPackageId, comparison.PreviousVersion, comparison.PreviousVersionRevision)
 			if err != nil {
 				return err
 			}
@@ -270,7 +271,7 @@ func (p publishedValidatorImpl) ValidateChanges(buildArc *archive.BuildResultArc
 				comparison.PreviousVersionPackageId,
 				comparison.PreviousVersion,
 				comparison.PreviousVersionRevision)
-			comparisonEntity, err := p.publishedRepo.GetVersionComparison(comparisonId)
+			comparisonEntity, err := p.publishedRepo.GetVersionComparison(ctx, comparisonId)
 			if err != nil {
 				return err
 			}
@@ -300,7 +301,7 @@ func (p publishedValidatorImpl) ValidateChanges(buildArc *archive.BuildResultArc
 	return nil
 }
 
-func (p publishedValidatorImpl) validatePackageInfo(buildArc *archive.BuildResultArchive, buildConfig *view.BuildConfig) error {
+func (p publishedValidatorImpl) validatePackageInfo(ctx context.Context, buildArc *archive.BuildResultArchive, buildConfig *view.BuildConfig) error {
 	if err := utils.ValidateObject(buildArc.PackageInfo); err != nil {
 		return &exception.CustomError{
 			Status:  http.StatusBadRequest,
@@ -354,7 +355,7 @@ func (p publishedValidatorImpl) validatePackageInfo(buildArc *archive.BuildResul
 		}
 	}
 	if buildArc.PackageInfo.MigrationBuild {
-		ent, err := p.publishedRepo.GetVersion(buildArc.PackageInfo.PackageId, buildArc.PackageInfo.Version)
+		ent, err := p.publishedRepo.GetVersion(ctx, buildArc.PackageInfo.PackageId, buildArc.PackageInfo.Version)
 		if err != nil {
 			return err
 		}
@@ -499,7 +500,7 @@ func (p publishedValidatorImpl) validatePackageOperations(buildArc *archive.Buil
 					},
 				}
 			}
-			case view.GraphqlApiType:
+		case view.GraphqlApiType:
 			if operationMetadata.GetType() == "" {
 				return &exception.CustomError{
 					Status:  http.StatusBadRequest,
@@ -613,7 +614,7 @@ func (p publishedValidatorImpl) validatePackageOperations(buildArc *archive.Buil
 	return nil
 }
 
-func (p publishedValidatorImpl) validatePackageComparisons(buildArc *archive.BuildResultArchive, buildConfig *view.BuildConfig) error {
+func (p publishedValidatorImpl) validatePackageComparisons(ctx context.Context, buildArc *archive.BuildResultArchive, buildConfig *view.BuildConfig) error {
 	if err := utils.ValidateObject(buildArc.PackageComparisons); err != nil {
 		return &exception.CustomError{
 			Status:  http.StatusBadRequest,
@@ -640,7 +641,7 @@ func (p publishedValidatorImpl) validatePackageComparisons(buildArc *archive.Bui
 		} else {
 			prevPkgId = info.PackageId
 		}
-		pvEnt, err := p.publishedRepo.GetVersionIncludingDeleted(prevPkgId, info.PreviousVersion)
+		pvEnt, err := p.publishedRepo.GetVersionIncludingDeleted(ctx, prevPkgId, info.PreviousVersion)
 		if err != nil {
 			return fmt.Errorf("failed to get previous version in validatePackage: %w", err)
 		}
@@ -736,7 +737,7 @@ func (p publishedValidatorImpl) validatePackageComparisons(buildArc *archive.Bui
 			if (buildArc.PackageInfo.Revision != comparison.Revision && comparison.Revision != 0) ||
 				buildArc.PackageInfo.Version != comparison.Version ||
 				buildArc.PackageInfo.PackageId != comparison.PackageId {
-				versionEnt, err := p.publishedRepo.GetVersionIncludingDeleted(comparison.PackageId, view.MakeVersionRefKey(comparison.Version, comparison.Revision))
+				versionEnt, err := p.publishedRepo.GetVersionIncludingDeleted(ctx, comparison.PackageId, view.MakeVersionRefKey(comparison.Version, comparison.Revision))
 				if err != nil {
 					return err
 				}
@@ -754,7 +755,7 @@ func (p publishedValidatorImpl) validatePackageComparisons(buildArc *archive.Bui
 			}
 		}
 		if comparison.PreviousVersion != "" {
-			previousVersionEnt, err := p.publishedRepo.GetVersionIncludingDeleted(comparison.PreviousVersionPackageId, view.MakeVersionRefKey(comparison.PreviousVersion, comparison.PreviousVersionRevision))
+			previousVersionEnt, err := p.publishedRepo.GetVersionIncludingDeleted(ctx, comparison.PreviousVersionPackageId, view.MakeVersionRefKey(comparison.PreviousVersion, comparison.PreviousVersionRevision))
 			if err != nil {
 				return err
 			}
@@ -778,7 +779,7 @@ func (p publishedValidatorImpl) validatePackageComparisons(buildArc *archive.Bui
 				comparison.PreviousVersionPackageId,
 				comparison.PreviousVersion,
 				comparison.PreviousVersionRevision)
-			comparisonEntity, err := p.publishedRepo.GetVersionComparison(comparisonId)
+			comparisonEntity, err := p.publishedRepo.GetVersionComparison(ctx, comparisonId)
 			if err != nil {
 				return err
 			}

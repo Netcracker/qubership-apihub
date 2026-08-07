@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/client"
-	secctx "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/mark3labs/mcp-go/mcp"
 	mcpserver "github.com/mark3labs/mcp-go/server"
@@ -67,7 +67,8 @@ func (m mcpService) IDSAuthoringKit(userInput string) (string, error) {
 func (m mcpService) MakeMCPServer() *mcpserver.MCPServer {
 	hooks := &mcpserver.Hooks{}
 	hooks.AddAfterInitialize(func(ctx context.Context, _ any, req *mcp.InitializeRequest, _ *mcp.InitializeResult) {
-		m.monitoringService.IncreaseBusinessMetricCounter(UserIDFromMCPCtx(ctx), metrics.MCPSessionInitialized, createMCPClientLabel(req.Params.ClientInfo))
+		userID := secctx.GetUserId(ctx)
+		m.monitoringService.IncreaseBusinessMetricCounter(userID, metrics.MCPSessionInitialized, createMCPClientLabel(req.Params.ClientInfo))
 	})
 
 	s := mcpserver.NewMCPServer(
@@ -198,11 +199,10 @@ func (m mcpService) MakeLLMTools() []client.LLMTool {
 
 // GetPackagesList retrieves the list of packages from the workspace
 func (m mcpService) GetPackagesList(ctx context.Context, workspaceId string) ([]mcp.ResourceContents, error) {
+	// Resource reads do not go through the tool handlers, so they need the same per-operation bound
+	ctx, cancel := context.WithTimeout(ctx, MCPToolCallTimeout)
+	defer cancel()
 	log.Infof("Getting packages list for workspace: %s", workspaceId)
-
-	// TODO: should be retrieved from the request
-	// Create system context for service calls
-	secCtx := secctx.CreateSystemContext()
 
 	packageListReq := view.PackageListReq{
 		Kind:               []string{entity.KIND_PACKAGE}, // As specified: kind=package
@@ -213,7 +213,7 @@ func (m mcpService) GetPackagesList(ctx context.Context, workspaceId string) ([]
 	}
 
 	// Get all packages from workspace
-	packages, err := m.packageService.GetPackagesList(secCtx, packageListReq, false)
+	packages, err := m.packageService.GetPackagesList(ctx, packageListReq, false)
 	if err != nil {
 		log.Errorf("Failed to get packages list: %v", err)
 		return nil, fmt.Errorf("failed to get packages list: %w", err)
@@ -231,7 +231,7 @@ func (m mcpService) GetPackagesList(ctx context.Context, workspaceId string) ([]
 			SortBy:    view.VersionSortByVersion,
 			SortOrder: view.VersionSortOrderDesc,
 		}
-		versionsView, err := m.versionService.GetPackageVersionsView(versionsReq, false)
+		versionsView, err := m.versionService.GetPackageVersionsView(ctx, versionsReq, false)
 		if err != nil {
 			log.Errorf("Failed to get versions list for package %s: %v", packageInfo.Id, err)
 			return nil, fmt.Errorf("failed to get versions list for package %s: %w", packageInfo.Id, err)
@@ -256,28 +256,6 @@ func (m mcpService) GetPackagesList(ctx context.Context, workspaceId string) ([]
 			Text:     string(jsonData),
 		},
 	}, nil
-}
-
-func SetSecCtxOnMCPCtx(ctx context.Context, secCtx secctx.SecurityContext) context.Context {
-	return context.WithValue(ctx, "secCtx", secCtx)
-}
-
-func GetSecCtxFromMCPCtx(ctx context.Context) secctx.SecurityContext {
-	if v, ok := ctx.Value("secCtx").(secctx.SecurityContext); ok {
-		return v
-	}
-	return nil
-}
-
-func UserIDFromMCPCtx(ctx context.Context) string {
-	if v, ok := ctx.Value("secCtx").(secctx.SecurityContext); ok {
-		userID := v.GetUserId()
-		if userID == "" {
-			userID = v.GetApiKeyId()
-		}
-		return userID
-	}
-	return ""
 }
 
 const MCPClientLabelInternalAIChat = "apihub-chat/internal"

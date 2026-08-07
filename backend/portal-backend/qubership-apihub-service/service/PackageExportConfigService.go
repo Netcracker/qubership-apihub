@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
@@ -11,8 +12,8 @@ import (
 )
 
 type PackageExportConfigService interface {
-	GetConfig(packageId string) (*view.PackageExportConfig, error)
-	SetConfig(packageId string, AllowedOasExtensions []string) error
+	GetConfig(ctx context.Context, packageId string) (*view.PackageExportConfig, error)
+	SetConfig(ctx context.Context, packageId string, AllowedOasExtensions []string) error
 }
 
 func NewPackageExportConfigService(repo repository.PackageExportConfigRepository, packageService PackageService) PackageExportConfigService {
@@ -27,11 +28,11 @@ type packageExportConfigServiceImpl struct {
 	packageService PackageService
 }
 
-func (p packageExportConfigServiceImpl) GetConfig(packageId string) (*view.PackageExportConfig, error) {
-	if err := p.checkPackageExistence(packageId); err != nil {
+func (p packageExportConfigServiceImpl) GetConfig(ctx context.Context, packageId string) (*view.PackageExportConfig, error) {
+	if err := p.checkPackageExistence(ctx, packageId); err != nil {
 		return nil, err
 	}
-	ents, err := p.repo.GetConfigForHierarchy(packageId)
+	ents, err := p.repo.GetConfigForHierarchy(ctx, packageId)
 	if err != nil {
 		return nil, err
 	}
@@ -52,8 +53,8 @@ func (p packageExportConfigServiceImpl) GetConfig(packageId string) (*view.Packa
 	return &result, nil
 }
 
-func (p packageExportConfigServiceImpl) SetConfig(packageId string, AllowedOasExtensions []string) error {
-	if err := p.checkPackageExistence(packageId); err != nil {
+func (p packageExportConfigServiceImpl) SetConfig(ctx context.Context, packageId string, AllowedOasExtensions []string) error {
+	if err := p.checkPackageExistence(ctx, packageId); err != nil {
 		return err
 	}
 	var incorrectExtensions []string
@@ -95,11 +96,11 @@ func (p packageExportConfigServiceImpl) SetConfig(packageId string, AllowedOasEx
 		AllowedOasExtensions: AllowedOasExtensions,
 	}
 
-	return p.repo.SetConfig(ent)
+	return p.repo.SetConfig(ctx, ent)
 }
 
-func (p packageExportConfigServiceImpl) checkPackageExistence(packageId string) error {
-	exists, err := p.packageService.PackageExists(packageId)
+func (p packageExportConfigServiceImpl) checkPackageExistence(ctx context.Context, packageId string) error {
+	exists, err := p.packageService.PackageExists(ctx, packageId)
 	if err != nil {
 		return err
 	}

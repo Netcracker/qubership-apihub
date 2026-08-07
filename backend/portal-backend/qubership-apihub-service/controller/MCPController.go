@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	secctx "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	mcpserver "github.com/mark3labs/mcp-go/server"
@@ -25,8 +25,7 @@ func (m mcpControllerImpl) MakeMCPServer() http.Handler {
 		mcpserver.WithStreamableHTTPLogger(utils.NewMCPGoLogger()),
 		mcpserver.WithSessionIdleTTL(15*time.Minute),
 		mcpserver.WithHTTPContextFunc(func(ctx context.Context, r *http.Request) context.Context {
-			secCtx := secctx.Create(r)
-			return service.SetSecCtxOnMCPCtx(ctx, secCtx)
+			return secctx.MakeUserContextFrom(ctx, r)
 		}),
 	)
 }

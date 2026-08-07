@@ -22,14 +22,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (d *dbMigrationServiceImpl) StartMigrateOperations(req mView.MigrationRequest) (string, error) {
+func (d *dbMigrationServiceImpl) StartMigrateOperations(ctx context.Context, req mView.MigrationRequest) (string, error) {
 	migrationId := uuid.New().String()
 
 	log.Infof("Starting migration with request: %+v, generated id = %s", req, migrationId)
 
 	var om *stages.OpsMigration
 
-	err := d.cp.GetConnection().RunInTransaction(context.Background(), func(tx *pg.Tx) error {
+	err := d.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		// Allow only one migration.
 		var ents []mEntity.MigrationRunEntity
 		err := tx.Model(&ents).Where("status in (?)", pg.In([]string{mView.MigrationStatusRunning, mView.MigrationStatusCancelling})).Select()
@@ -101,8 +101,8 @@ func (d *dbMigrationServiceImpl) StartMigrateOperations(req mView.MigrationReque
 	return migrationId, err
 }
 
-func (d dbMigrationServiceImpl) GetMigrationReport(migrationId string, includeBuildSamples bool) (*mView.MigrationReport, error) {
-	mRunEnt, err := d.repo.GetMigrationRun(migrationId)
+func (d dbMigrationServiceImpl) GetMigrationReport(ctx context.Context, migrationId string, includeBuildSamples bool) (*mView.MigrationReport, error) {
+	mRunEnt, err := d.repo.GetMigrationRun(ctx, migrationId)
 	if mRunEnt == nil {
 		return nil, fmt.Errorf("migration with id=%s not found", migrationId)
 	}
@@ -125,7 +125,7 @@ func (d dbMigrationServiceImpl) GetMigrationReport(migrationId string, includeBu
 	}
 
 	var migrationBuilds []mEntity.MigrationBuildResultEntity
-	err = d.cp.GetConnection().Model(&migrationBuilds).
+	err = d.cp.GetConnection().WithContext(ctx).Model(&migrationBuilds).
 		ColumnExpr(`build.build_id, build.package_id, build.status, build.details,
 					split_part(build.version, '@', 1) as version,
 					cast(split_part(build.version, '@', 2) as integer) as revision,
@@ -158,7 +158,7 @@ func (d dbMigrationServiceImpl) GetMigrationReport(migrationId string, includeBu
 	}
 
 	migrationChanges := make(map[string]int)
-	_, err = d.cp.GetConnection().Query(pg.Scan(&migrationChanges), `select changes from migration_changes where migration_id = ?`, migrationId)
+	_, err = d.cp.GetConnection().WithContext(ctx).Query(pg.Scan(&migrationChanges), `select changes from migration_changes where migration_id = ?`, migrationId)
 
 	for change, count := range migrationChanges {
 		migrationChange := mView.MigrationChange{
@@ -167,7 +167,7 @@ func (d dbMigrationServiceImpl) GetMigrationReport(migrationId string, includeBu
 		}
 		if includeBuildSamples {
 			changedVersion := new(mEntity.MigratedVersionChangesResultEntity)
-			err = d.cp.GetConnection().Model(changedVersion).
+			err = d.cp.GetConnection().WithContext(ctx).Model(changedVersion).
 				ColumnExpr(`migrated_version_changes.*,
 						b.metadata->>'build_type' build_type,
 						b.metadata->>'previous_version' previous_version,
@@ -183,7 +183,7 @@ func (d dbMigrationServiceImpl) GetMigrationReport(migrationId string, includeBu
 		}
 		result.MigrationChanges = append(result.MigrationChanges, migrationChange)
 	}
-	_, err = d.cp.GetConnection().Query(pg.Scan(&result.SuspiciousBuildsCount),
+	_, err = d.cp.GetConnection().WithContext(ctx).Query(pg.Scan(&result.SuspiciousBuildsCount),
 		`select count(*) from migrated_version_changes where migration_id = ?`, migrationId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query migrated_version_changes: %w", err)
@@ -194,9 +194,9 @@ func (d dbMigrationServiceImpl) GetMigrationReport(migrationId string, includeBu
 	return &result, err
 }
 
-func (d *dbMigrationServiceImpl) GetSuspiciousBuilds(migrationId string, changedField string, limit int, page int) ([]mView.SuspiciousMigrationBuild, error) {
+func (d *dbMigrationServiceImpl) GetSuspiciousBuilds(ctx context.Context, migrationId string, changedField string, limit int, page int) ([]mView.SuspiciousMigrationBuild, error) {
 	changedVersions := make([]mEntity.MigratedVersionChangesResultEntity, 0)
-	err := d.cp.GetConnection().Model(&changedVersions).
+	err := d.cp.GetConnection().WithContext(ctx).Model(&changedVersions).
 		ColumnExpr(`migrated_version_changes.*,
 				b.metadata->>'build_type' build_type,
 				b.metadata->>'previous_version' previous_version,
@@ -219,7 +219,7 @@ func (d *dbMigrationServiceImpl) GetSuspiciousBuilds(migrationId string, changed
 	return suspiciousBuilds, nil
 }
 
-func (d *dbMigrationServiceImpl) GetMigrationPerfReport(migrationId string, includeHourPackageData bool, stageFilter *mView.OpsMigrationStage) (*mView.MigrPerfData, error) {
+func (d *dbMigrationServiceImpl) GetMigrationPerfReport(ctx context.Context, migrationId string, includeHourPackageData bool, stageFilter *mView.OpsMigrationStage) (*mView.MigrPerfData, error) {
 	var result = mView.MigrPerfData{
 		Stages:          nil,
 		BuildPerHour:    nil,
@@ -227,7 +227,7 @@ func (d *dbMigrationServiceImpl) GetMigrationPerfReport(migrationId string, incl
 		SlowComparisons: make([]mView.SlowComparison, 0),
 	}
 
-	mRunEnt, err := d.repo.GetMigrationRun(migrationId)
+	mRunEnt, err := d.repo.GetMigrationRun(ctx, migrationId)
 	if mRunEnt == nil {
 		return nil, fmt.Errorf("migration with id=%s not found", migrationId)
 	}
@@ -253,7 +253,7 @@ func (d *dbMigrationServiceImpl) GetMigrationPerfReport(migrationId string, incl
 	for {
 		var builds []entity.BuildEntity
 
-		query := d.cp.GetConnection().Model(&builds).Where("metadata->>'migration_id' = ?", migrationId)
+		query := d.cp.GetConnection().WithContext(ctx).Model(&builds).Where("metadata->>'migration_id' = ?", migrationId)
 		if stageFilter != nil {
 			query = query.Where("metadata->>'migration_stage' = ?", *stageFilter)
 		}

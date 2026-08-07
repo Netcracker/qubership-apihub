@@ -1,12 +1,13 @@
 package controller
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"strconv"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
@@ -36,8 +37,7 @@ type ddlContractControllerImpl struct {
 	ptHandler   service.PackageTransitionHandler
 }
 
-func (c *ddlContractControllerImpl) checkReadAccess(w http.ResponseWriter, r *http.Request, packageId string) bool {
-	ctx := context.Create(r)
+func (c *ddlContractControllerImpl) checkReadAccess(w http.ResponseWriter, r *http.Request, ctx context.Context, packageId string) bool {
 	ok, err := c.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, c.ptHandler, packageId, "Failed to check user privileges", err)
@@ -55,8 +55,9 @@ func (c *ddlContractControllerImpl) checkReadAccess(w http.ResponseWriter, r *ht
 }
 
 func (c *ddlContractControllerImpl) ListDdlEntities(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
 	packageId := getStringParam(r, "packageId")
-	if !c.checkReadAccess(w, r, packageId) {
+	if !c.checkReadAccess(w, r, ctx, packageId) {
 		return
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
@@ -80,7 +81,7 @@ func (c *ddlContractControllerImpl) ListDdlEntities(w http.ResponseWriter, r *ht
 	if r.URL.Query().Get("offset") != "" {
 		offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
 	}
-	result, svcErr := c.ddlService.ListDdlEntities(packageId, versionName, textFilter, limit, offset)
+	result, svcErr := c.ddlService.ListDdlEntities(ctx, packageId, versionName, textFilter, limit, offset)
 	if svcErr != nil {
 		handlePkgRedirectOrRespondWithError(w, r, c.ptHandler, packageId, "Failed to list DDL entities", svcErr)
 		return
@@ -89,8 +90,9 @@ func (c *ddlContractControllerImpl) ListDdlEntities(w http.ResponseWriter, r *ht
 }
 
 func (c *ddlContractControllerImpl) GetDdlEntity(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
 	packageId := getStringParam(r, "packageId")
-	if !c.checkReadAccess(w, r, packageId) {
+	if !c.checkReadAccess(w, r, ctx, packageId) {
 		return
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
@@ -131,7 +133,7 @@ func (c *ddlContractControllerImpl) GetDdlEntity(w http.ResponseWriter, r *http.
 		}
 	}
 
-	result, svcErr := c.ddlService.GetDdlEntity(packageId, versionName, ddlEntityId, includeData)
+	result, svcErr := c.ddlService.GetDdlEntity(ctx, packageId, versionName, ddlEntityId, includeData)
 	if svcErr != nil {
 		handlePkgRedirectOrRespondWithError(w, r, c.ptHandler, packageId, "Failed to get DDL entity", svcErr)
 		return
@@ -140,8 +142,9 @@ func (c *ddlContractControllerImpl) GetDdlEntity(w http.ResponseWriter, r *http.
 }
 
 func (c *ddlContractControllerImpl) GetDdlEntityChanges(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
 	packageId := getStringParam(r, "packageId")
-	if !c.checkReadAccess(w, r, packageId) {
+	if !c.checkReadAccess(w, r, ctx, packageId) {
 		return
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
@@ -184,7 +187,7 @@ func (c *ddlContractControllerImpl) GetDdlEntityChanges(w http.ResponseWriter, r
 			return
 		}
 	}
-	result, svcErr := c.ddlService.GetDdlEntityChanges(packageId, versionName, ddlEntityId, previousVersion, previousVersionPackageId, severities)
+	result, svcErr := c.ddlService.GetDdlEntityChanges(ctx, packageId, versionName, ddlEntityId, previousVersion, previousVersionPackageId, severities)
 	if svcErr != nil {
 		handlePkgRedirectOrRespondWithError(w, r, c.ptHandler, packageId, "Failed to get DDL entity changes", svcErr)
 		return
@@ -193,8 +196,9 @@ func (c *ddlContractControllerImpl) GetDdlEntityChanges(w http.ResponseWriter, r
 }
 
 func (c *ddlContractControllerImpl) GetChangedDdlEntities(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
 	packageId := getStringParam(r, "packageId")
-	if !c.checkReadAccess(w, r, packageId) {
+	if !c.checkReadAccess(w, r, ctx, packageId) {
 		return
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
@@ -237,7 +241,7 @@ func (c *ddlContractControllerImpl) GetChangedDdlEntities(w http.ResponseWriter,
 			return
 		}
 	}
-	result, svcErr := c.ddlService.GetChangedDdlEntities(packageId, versionName, view.DdlChangesReq{
+	result, svcErr := c.ddlService.GetChangedDdlEntities(ctx, packageId, versionName, view.DdlChangesReq{
 		PreviousVersion:          previousVersion,
 		PreviousVersionPackageId: previousVersionPackageId,
 		RefPackageId:             refPackageId,
@@ -254,8 +258,9 @@ func (c *ddlContractControllerImpl) GetChangedDdlEntities(w http.ResponseWriter,
 }
 
 func (c *ddlContractControllerImpl) GetDdlEntityChangesSummary(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
 	packageId := getStringParam(r, "packageId")
-	if !c.checkReadAccess(w, r, packageId) {
+	if !c.checkReadAccess(w, r, ctx, packageId) {
 		return
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
@@ -282,7 +287,7 @@ func (c *ddlContractControllerImpl) GetDdlEntityChangesSummary(w http.ResponseWr
 	}
 	previousVersion := r.URL.Query().Get("previousVersion")
 	previousVersionPackageId := r.URL.Query().Get("previousVersionPackageId")
-	result, svcErr := c.ddlService.GetDdlEntityChangesSummary(packageId, versionName, ddlEntityId, previousVersion, previousVersionPackageId)
+	result, svcErr := c.ddlService.GetDdlEntityChangesSummary(ctx, packageId, versionName, ddlEntityId, previousVersion, previousVersionPackageId)
 	if svcErr != nil {
 		handlePkgRedirectOrRespondWithError(w, r, c.ptHandler, packageId, "Failed to get DDL entity changes summary", svcErr)
 		return

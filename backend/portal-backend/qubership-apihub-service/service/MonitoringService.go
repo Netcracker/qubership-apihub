@@ -16,15 +16,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const stringSeparator = "|@@|"
+const (
+	stringSeparator = "|@@|"
+
+	monitoringFlushTimeout = 180 * time.Second
+)
 
 type MonitoringService interface {
 	AddVersionOpenCount(packageId string, version string)
 	AddDocumentOpenCount(packageId string, version string, slug string)
 	AddOperationOpenCount(packageId string, version string, operationId string)
 	IncreaseBusinessMetricCounter(userId string, metric string, key string)
-	IncreaseBusinessMetricCounterForDate(userId string, metric string, key string, date time.Time) error
-	DecreaseBusinessMetricCounterForDate(userId string, metric string, key string, date time.Time) error
+	IncreaseBusinessMetricCounterForDate(ctx context.Context, userId string, metric string, key string, date time.Time) error
+	DecreaseBusinessMetricCounterForDate(ctx context.Context, userId string, metric string, key string, date time.Time) error
 	AddEndpointCall(path string, options interface{})
 }
 
@@ -156,7 +160,8 @@ func (m *monitoringServiceImpl) flushOpenCount() error {
 	defer m.documentOCMutex.Unlock()
 	defer m.operationOCMutex.Unlock()
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), monitoringFlushTimeout)
+	defer cancel()
 	err := m.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		versionOpenCountInsertQuery := `
 		insert into published_version_open_count as pv
@@ -196,10 +201,15 @@ func (m *monitoringServiceImpl) flushOpenCount() error {
 		}
 		return nil
 	})
+	if err != nil {
+		// Keep the buffered counts so the next flush retries them; clearing on failure (or timeout)
+		// would silently drop metrics.
+		return err
+	}
 	m.versionOpenCount = make(map[string]int)
 	m.documentOpenCount = make(map[string]int)
 	m.operationOpenCount = make(map[string]int)
-	return err
+	return nil
 }
 
 func (m *monitoringServiceImpl) IncreaseBusinessMetricCounter(userId string, metric string, key string) {
@@ -244,7 +254,8 @@ func (m *monitoringServiceImpl) flushBusinessMetrics() error {
 	month := timeNow.Month()
 	day := timeNow.Day()
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), monitoringFlushTimeout)
+	defer cancel()
 	err := m.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		for userId, metrics := range m.businessMetrics {
 			if len(metrics) == 0 {
@@ -302,7 +313,8 @@ func (m *monitoringServiceImpl) flushEndpointCalls() error {
 			on conflict (path, hash) do update
 			set count = ec.count + ?;`
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), monitoringFlushTimeout)
+	defer cancel()
 	err := m.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		for path, options := range m.endpointCalls {
 			for hash, optionsObj := range options {
@@ -323,7 +335,7 @@ func (m *monitoringServiceImpl) flushEndpointCalls() error {
 	return nil
 }
 
-func (m *monitoringServiceImpl) IncreaseBusinessMetricCounterForDate(userId string, metric string, key string, date time.Time) error {
+func (m *monitoringServiceImpl) IncreaseBusinessMetricCounterForDate(ctx context.Context, userId string, metric string, key string, date time.Time) error {
 	year := date.Year()
 	month := date.Month()
 	day := date.Day()
@@ -340,7 +352,6 @@ func (m *monitoringServiceImpl) IncreaseBusinessMetricCounterForDate(userId stri
 		SET data = coalesce(business_metric.data, '{}'::jsonb) ||
 			jsonb_build_object(?, coalesce((business_metric.data ->> ?)::int, 0) + 1)`
 
-	ctx := context.Background()
 	_, err := m.cp.GetConnection().ExecContext(ctx, increaseQuery,
 		year, int(month), day, metric, fmt.Sprintf(`{"%s": 1}`, key), userId, key, key)
 	if err != nil {
@@ -350,7 +361,7 @@ func (m *monitoringServiceImpl) IncreaseBusinessMetricCounterForDate(userId stri
 	return nil
 }
 
-func (m *monitoringServiceImpl) DecreaseBusinessMetricCounterForDate(userId string, metric string, key string, date time.Time) error {
+func (m *monitoringServiceImpl) DecreaseBusinessMetricCounterForDate(ctx context.Context, userId string, metric string, key string, date time.Time) error {
 	year := date.Year()
 	month := date.Month()
 	day := date.Day()
@@ -386,7 +397,6 @@ func (m *monitoringServiceImpl) DecreaseBusinessMetricCounterForDate(userId stri
 	m.businessMetricsMutex.Unlock()
 
 	// Not found in memory, update database directly
-	ctx := context.Background()
 	err := m.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		updateQuery := `
 			UPDATE business_metric

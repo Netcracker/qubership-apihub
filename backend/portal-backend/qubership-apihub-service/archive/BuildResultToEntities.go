@@ -3,6 +3,7 @@ package archive
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -378,7 +379,7 @@ func (a *BuildResultToEntitiesReader) ReadOperationsToEntities() ([]*entity.Oper
 	return operationEntities, operationDataEntities, operationSearchTexts, operationsInfo, nil
 }
 
-func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(publishingOperationsInfo map[string]entity.OperationInfo, operationRepository repository.OperationRepository) ([]*entity.VersionComparisonEntity, []*entity.OperationComparisonEntity, []string, map[string]view.ComparisonKey, error) {
+func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(ctx context.Context, publishingOperationsInfo map[string]entity.OperationInfo, operationRepository repository.OperationRepository) ([]*entity.VersionComparisonEntity, []*entity.OperationComparisonEntity, []string, map[string]view.ComparisonKey, error) {
 	versionComparisonEntities := make([]*entity.VersionComparisonEntity, 0)
 	operationComparisonEntities := make([]*entity.OperationComparisonEntity, 0)
 	versionComparisonsFromCache := make([]string, 0)
@@ -487,6 +488,7 @@ func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(publish
 				operationsInfo = publishingOperationsInfo
 			} else if operationRepository != nil {
 				operationsInfoEntity, err := operationRepository.GetOperationsInfo(
+					ctx,
 					versionComparisonEnt.PackageId,
 					versionComparisonEnt.Version,
 					versionComparisonEnt.Revision,
@@ -505,6 +507,7 @@ func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(publish
 			var previousOperationsInfo map[string]entity.OperationInfo
 			if versionComparisonEnt.PreviousPackageId != "" && versionComparisonEnt.PreviousVersion != "" && operationRepository != nil {
 				previousOperationsInfoEntity, err := operationRepository.GetOperationsInfo(
+					ctx,
 					versionComparisonEnt.PreviousPackageId,
 					versionComparisonEnt.PreviousVersion,
 					versionComparisonEnt.PreviousRevision,
@@ -779,7 +782,7 @@ func (a *BuildResultToEntitiesReader) ReadDdlContractsToEntities() ([]*entity.DD
 // the ddl-comparisons.json index (creating version_comparison rows carrying contractTypes) and
 // the per-pair ddl-comparisons/<comparisonFileId> files (creating ddl_comparison rows). It mirrors
 // ReadOperationComparisonsToEntities so DDL-only changelogs still produce their version_comparison row.
-func (a *BuildResultToEntitiesReader) ReadDdlContractComparisonsToEntities(publishingDdlDataHashes map[string]string, ddlRepository repository.DDLContractRepository) ([]*entity.VersionComparisonEntity, []*entity.DDLContractComparisonEntity, map[string]view.ComparisonKey, error) {
+func (a *BuildResultToEntitiesReader) ReadDdlContractComparisonsToEntities(ctx context.Context, publishingDdlDataHashes map[string]string, ddlRepository repository.DDLContractRepository) ([]*entity.VersionComparisonEntity, []*entity.DDLContractComparisonEntity, map[string]view.ComparisonKey, error) {
 	versionComparisonEntities := make([]*entity.VersionComparisonEntity, 0)
 	ddlComparisonEntities := make([]*entity.DDLContractComparisonEntity, 0)
 	comparisonFileIdToKeyMap := make(map[string]view.ComparisonKey)
@@ -798,7 +801,7 @@ func (a *BuildResultToEntitiesReader) ReadDdlContractComparisonsToEntities(publi
 		if info, ok := ddlInfoCache[key]; ok {
 			return info, nil
 		}
-		info, err := ddlRepository.GetDdlEntitiesInfo(packageId, version, revision)
+		info, err := ddlRepository.GetDdlEntitiesInfo(ctx, packageId, version, revision)
 		if err != nil {
 			return nil, err
 		}

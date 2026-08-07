@@ -4,9 +4,9 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
@@ -16,23 +16,21 @@ type AdminPublishedController interface {
 	ReplaceVersionSources(w http.ResponseWriter, r *http.Request)
 }
 
-func NewAdminPublishedController(publishedService service.PublishedService, isSysadm func(ctx context.SecurityContext) bool, publishArchiveSizeLimit int64) AdminPublishedController {
+func NewAdminPublishedController(publishedService service.PublishedService, publishArchiveSizeLimit int64) AdminPublishedController {
 	return &adminPublishedControllerImpl{
 		publishedService:        publishedService,
-		isSysadm:                isSysadm,
 		publishArchiveSizeLimit: publishArchiveSizeLimit,
 	}
 }
 
 type adminPublishedControllerImpl struct {
 	publishedService        service.PublishedService
-	isSysadm                func(ctx context.SecurityContext) bool
 	publishArchiveSizeLimit int64
 }
 
 func (c adminPublishedControllerImpl) ReplaceVersionSources(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Create(r)
-	if !c.isSysadm(ctx) {
+	ctx := secctx.MakeUserContext(r)
+	if !secctx.IsSysadm(ctx) {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
@@ -89,7 +87,7 @@ func (c adminPublishedControllerImpl) ReplaceVersionSources(w http.ResponseWrite
 
 	err = c.publishedService.ReplaceVersionSources(ctx, packageId, versionName, body)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to replace version sources", err)
+		utils.RespondWithError(w, r, "Failed to replace version sources", err)
 		return
 	}
 

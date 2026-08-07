@@ -3,11 +3,12 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
@@ -20,16 +21,14 @@ type LogsController interface {
 	CheckLogLevel(w http.ResponseWriter, r *http.Request)
 }
 
-func NewLogsController(logsService service.LogsService, roleService service.RoleService) LogsController {
+func NewLogsController(logsService service.LogsService) LogsController {
 	return &logsControllerImpl{
 		logsService: logsService,
-		roleService: roleService,
 	}
 }
 
 type logsControllerImpl struct {
 	logsService service.LogsService
-	roleService service.RoleService
 }
 
 func (l logsControllerImpl) StoreLogs(w http.ResponseWriter, r *http.Request) {
@@ -61,8 +60,8 @@ func (l logsControllerImpl) StoreLogs(w http.ResponseWriter, r *http.Request) {
 
 func (l logsControllerImpl) SetLogLevel(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	ctx := context.Create(r)
-	sufficientPrivileges := l.roleService.IsSysadm(ctx)
+	ctx := secctx.MakeUserContext(r)
+	sufficientPrivileges := secctx.IsSysadm(ctx)
 	if !sufficientPrivileges {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
@@ -102,8 +101,8 @@ func (l logsControllerImpl) SetLogLevel(w http.ResponseWriter, r *http.Request) 
 }
 
 func (l logsControllerImpl) CheckLogLevel(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Create(r)
-	sufficientPrivileges := l.roleService.IsSysadm(ctx)
+	ctx := secctx.MakeUserContext(r)
+	sufficientPrivileges := secctx.IsSysadm(ctx)
 	if !sufficientPrivileges {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,

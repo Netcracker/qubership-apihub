@@ -28,13 +28,13 @@ import (
 type DBMigrationService interface {
 	Migrate(basePath string) (int, int, bool, error)
 	SoftMigrateDb(currentVersion int, newVersion int, migrationRequired bool) error
-	StartMigrateOperations(req mView.MigrationRequest) (string, error)
-	GetMigrationReport(migrationId string, includeBuildSamples bool) (*mView.MigrationReport, error)
-	CancelRunningMigrations() error
-	GetSuspiciousBuilds(migrationId string, changedField string, limit int, page int) ([]mView.SuspiciousMigrationBuild, error)
-	IsMigrationInProgress() (bool, error)
+	StartMigrateOperations(ctx context.Context, req mView.MigrationRequest) (string, error)
+	GetMigrationReport(ctx context.Context, migrationId string, includeBuildSamples bool) (*mView.MigrationReport, error)
+	CancelRunningMigrations(ctx context.Context) error
+	GetSuspiciousBuilds(ctx context.Context, migrationId string, changedField string, limit int, page int) ([]mView.SuspiciousMigrationBuild, error)
+	IsMigrationInProgress(ctx context.Context) (bool, error)
 	StartOpsMigrationRestoreProc(ctx context.Context)
-	GetMigrationPerfReport(migrationId string, includeHourPackageData bool, stageFilter *mView.OpsMigrationStage) (*mView.MigrPerfData, error)
+	GetMigrationPerfReport(ctx context.Context, migrationId string, includeHourPackageData bool, stageFilter *mView.OpsMigrationStage) (*mView.MigrPerfData, error)
 }
 
 func NewDBMigrationService(cp db.ConnectionProvider, mRRepo mRepository.MigrationRunRepository,
@@ -373,8 +373,8 @@ func (d *dbMigrationServiceImpl) getSchemaMigrationEntity(migrationNumber int) (
 	return &storedMigration, nil
 }
 
-func (d *dbMigrationServiceImpl) CancelRunningMigrations() error {
-	_, err := d.cp.GetConnection().Exec(`
+func (d *dbMigrationServiceImpl) CancelRunningMigrations(ctx context.Context) error {
+	_, err := d.cp.GetConnection().WithContext(ctx).Exec(`
 			update migration_run set status = ?
 			where status in (?) `,
 		mView.MigrationStatusCancelling, mView.MigrationStatusRunning,
@@ -385,8 +385,8 @@ func (d *dbMigrationServiceImpl) CancelRunningMigrations() error {
 	return nil
 }
 
-func (d *dbMigrationServiceImpl) IsMigrationInProgress() (bool, error) {
-	migrations, err := d.repo.GetRunningFullMigrations()
+func (d *dbMigrationServiceImpl) IsMigrationInProgress(ctx context.Context) (bool, error) {
+	migrations, err := d.repo.GetRunningFullMigrations(ctx)
 	if err != nil {
 		return false, err
 	}

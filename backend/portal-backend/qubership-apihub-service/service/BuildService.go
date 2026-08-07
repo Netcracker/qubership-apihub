@@ -3,6 +3,7 @@ package service
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,10 +12,10 @@ import (
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/archive"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service/validation"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
@@ -23,23 +24,23 @@ import (
 )
 
 type BuildService interface {
-	PublishVersion(ctx context.SecurityContext, config view.BuildConfig, src []byte, clientBuild bool, builderId string, dependencies []string, resolveRefs bool, resolveConflicts bool) (*view.PublishV2Response, error)
-	GetStatus(buildId string) (string, string, error)
-	GetStatuses(buildIds []string) ([]view.PublishStatusResponse, error)
-	UpdateBuildStatus(buildId string, status view.BuildStatusEnum, details string) error
-	GetFreeBuild(builderId string) ([]byte, error)
-	CreateChangelogBuild(config view.BuildConfig, isExternal bool, builderId string) (string, view.BuildConfig, error) //deprecated
-	GetBuildViewByChangelogSearchQuery(searchRequest view.ChangelogBuildSearchRequest) (*view.BuildView, error)
-	GetBuildViewByDocumentGroupSearchQuery(searchRequest view.DocumentGroupBuildSearchRequest) (*view.BuildView, error)
-	ValidateBuildOwnership(buildId string, builderId string) error
+	PublishVersion(ctx context.Context, config view.BuildConfig, src []byte, clientBuild bool, builderId string, dependencies []string, resolveRefs bool, resolveConflicts bool) (*view.PublishV2Response, error)
+	GetStatus(ctx context.Context, buildId string) (string, string, error)
+	GetStatuses(ctx context.Context, buildIds []string) ([]view.PublishStatusResponse, error)
+	UpdateBuildStatus(ctx context.Context, buildId string, status view.BuildStatusEnum, details string) error
+	GetFreeBuild(ctx context.Context, builderId string) ([]byte, error)
+	CreateChangelogBuild(ctx context.Context, config view.BuildConfig, isExternal bool, builderId string) (string, view.BuildConfig, error) //deprecated
+	GetBuildViewByChangelogSearchQuery(ctx context.Context, searchRequest view.ChangelogBuildSearchRequest) (*view.BuildView, error)
+	GetBuildViewByDocumentGroupSearchQuery(ctx context.Context, searchRequest view.DocumentGroupBuildSearchRequest) (*view.BuildView, error)
+	ValidateBuildOwnership(ctx context.Context, buildId string, builderId string) error
 
-	CreateBuildWithoutDependencies(config view.BuildConfig, isExternal bool, builderId string) (string, view.BuildConfig, error)
-	AwaitBuildCompletion(buildId string) error
+	CreateBuildWithoutDependencies(ctx context.Context, config view.BuildConfig, isExternal bool, builderId string) (string, view.BuildConfig, error)
+	AwaitBuildCompletion(ctx context.Context, buildId string) error
 
-	GetBuild(buildId string) (*view.BuildView, error)
-	GetExtendedBuild(buildId string) (*view.ExtendedBuild, error)
-	ListExtendedBuilds(filter view.ExtendedBuildFilter) (*view.ExtendedBuilds, error)
-	GetBuildSourceData(buildId string) ([]byte, error)
+	GetBuild(ctx context.Context, buildId string) (*view.BuildView, error)
+	GetExtendedBuild(ctx context.Context, buildId string) (*view.ExtendedBuild, error)
+	ListExtendedBuilds(ctx context.Context, filter view.ExtendedBuildFilter) (*view.ExtendedBuilds, error)
+	GetBuildSourceData(ctx context.Context, buildId string) ([]byte, error)
 }
 
 func NewBuildService(
@@ -70,8 +71,8 @@ type buildServiceImpl struct {
 	previousVersionStatusValidationEnabled bool
 }
 
-func (b *buildServiceImpl) PublishVersion(ctx context.SecurityContext, config view.BuildConfig, src []byte, clientBuild bool, builderId string, dependencies []string, resolveRefs bool, resolveConflicts bool) (*view.PublishV2Response, error) {
-	exists, err := b.packageService.PackageExists(config.PackageId)
+func (b *buildServiceImpl) PublishVersion(ctx context.Context, config view.BuildConfig, src []byte, clientBuild bool, builderId string, dependencies []string, resolveRefs bool, resolveConflicts bool) (*view.PublishV2Response, error) {
+	exists, err := b.packageService.PackageExists(ctx, config.PackageId)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +152,7 @@ func (b *buildServiceImpl) PublishVersion(ctx context.SecurityContext, config vi
 		if config.PreviousVersionPackageId != "" {
 			previousVersionPackageId = config.PreviousVersionPackageId
 		}
-		previousVersionStatus, previousVersionFound, err := b.publishService.GetVersionStatus(previousVersionPackageId, config.PreviousVersion)
+		previousVersionStatus, previousVersionFound, err := b.publishService.GetVersionStatus(ctx, previousVersionPackageId, config.PreviousVersion)
 		if err != nil {
 			return nil, err
 		}
@@ -169,7 +170,7 @@ func (b *buildServiceImpl) PublishVersion(ctx context.SecurityContext, config vi
 			return nil, newReleaseVersionPreviousVersionNotReleaseError(ctx, config.PackageId, config.Version, previousVersionPackageId, config.PreviousVersion)
 		}
 
-		dependencyCycleExists, err := b.publishService.CheckPreviousVersionDependencyCycle(config.PackageId, config.Version, config.PreviousVersionPackageId, config.PreviousVersion, config.ComparisonRevision)
+		dependencyCycleExists, err := b.publishService.CheckPreviousVersionDependencyCycle(ctx, config.PackageId, config.Version, config.PreviousVersionPackageId, config.PreviousVersion, config.ComparisonRevision)
 		if err != nil {
 			return nil, err
 		}
@@ -222,7 +223,7 @@ func (b *buildServiceImpl) PublishVersion(ctx context.SecurityContext, config vi
 		config.ResolveConflicts = resolveConflicts
 		config.ResolveRefs = resolveRefs
 	} else {
-		config.Refs, err = b.refResolverService.CalculateBuildConfigRefs(config.Refs, resolveRefs, resolveConflicts)
+		config.Refs, err = b.refResolverService.CalculateBuildConfigRefs(ctx, config.Refs, resolveRefs, resolveConflicts)
 		if err != nil {
 			return nil, err
 		}
@@ -240,9 +241,9 @@ func (b *buildServiceImpl) PublishVersion(ctx context.SecurityContext, config vi
 	}
 }
 
-func newReleaseVersionPreviousVersionNotReleaseError(ctx context.SecurityContext, packageId string, version string, previousVersionPackageId string, previousVersion string) *exception.CustomError {
+func newReleaseVersionPreviousVersionNotReleaseError(ctx context.Context, packageId string, version string, previousVersionPackageId string, previousVersion string) *exception.CustomError {
 	log.Debugf("Blocked publishing version %s of package %s with 'release' status by user %s: previous version %s of package %s has 'draft' status",
-		version, packageId, ctx.GetUserId(), previousVersion, previousVersionPackageId)
+		version, packageId, secctx.GetUserId(ctx), previousVersion, previousVersionPackageId)
 	return &exception.CustomError{
 		Status:  http.StatusBadRequest,
 		Code:    exception.InvalidReleaseVersionChain,
@@ -270,7 +271,7 @@ func (b *buildServiceImpl) setValidationRulesSeverity(config view.BuildConfig) v
 }
 
 // CreateChangelogBuild deprecated. use to CreateBuildWithoutDependencies
-func (b *buildServiceImpl) CreateChangelogBuild(config view.BuildConfig, isExternal bool, builderId string) (string, view.BuildConfig, error) {
+func (b *buildServiceImpl) CreateChangelogBuild(ctx context.Context, config view.BuildConfig, isExternal bool, builderId string) (string, view.BuildConfig, error) {
 	config = b.setValidationRulesSeverity(config)
 
 	status := view.StatusNotStarted
@@ -307,14 +308,14 @@ func (b *buildServiceImpl) CreateChangelogBuild(config view.BuildConfig, isExter
 		Config:  *confAsMap,
 	}
 
-	err = b.buildRepository.StoreBuild(buildEnt, sourceEnt, nil)
+	err = b.buildRepository.StoreBuild(ctx, buildEnt, sourceEnt, nil)
 	if err != nil {
 		return "", config, err
 	}
 	return buildEnt.BuildId, config, nil
 }
 
-func (b *buildServiceImpl) CreateBuildWithoutDependencies(config view.BuildConfig, clientBuild bool, builderId string) (string, view.BuildConfig, error) {
+func (b *buildServiceImpl) CreateBuildWithoutDependencies(ctx context.Context, config view.BuildConfig, clientBuild bool, builderId string) (string, view.BuildConfig, error) {
 	config = b.setValidationRulesSeverity(config)
 
 	status := view.StatusNotStarted
@@ -355,14 +356,14 @@ func (b *buildServiceImpl) CreateBuildWithoutDependencies(config view.BuildConfi
 		Config:  *confAsMap,
 	}
 
-	err = b.buildRepository.StoreBuild(buildEnt, sourceEnt, nil)
+	err = b.buildRepository.StoreBuild(ctx, buildEnt, sourceEnt, nil)
 	if err != nil {
 		return "", config, err
 	}
 	return buildEnt.BuildId, config, nil
 }
 
-func (b *buildServiceImpl) addBuild(ctx context.SecurityContext, config view.BuildConfig, src []byte, clientBuild bool, builderId string, dependencies []string) (string, view.BuildConfig, error) {
+func (b *buildServiceImpl) addBuild(ctx context.Context, config view.BuildConfig, src []byte, clientBuild bool, builderId string, dependencies []string) (string, view.BuildConfig, error) {
 	config = b.setValidationRulesSeverity(config)
 
 	status := view.StatusNotStarted
@@ -388,7 +389,7 @@ func (b *buildServiceImpl) addBuild(ctx context.SecurityContext, config view.Bui
 
 		StartedAt: &timeNow,
 
-		CreatedBy:    ctx.GetUserId(),
+		CreatedBy:    secctx.GetUserId(ctx),
 		RestartCount: 0,
 
 		BuilderId: builderId,
@@ -411,7 +412,7 @@ func (b *buildServiceImpl) addBuild(ctx context.SecurityContext, config view.Bui
 		depends = append(depends, entity.BuildDependencyEntity{BuildId: buildEnt.BuildId, DependId: dep})
 	}
 
-	err = b.buildRepository.StoreBuild(buildEnt, sourceEnt, depends)
+	err = b.buildRepository.StoreBuild(ctx, buildEnt, sourceEnt, depends)
 	if err != nil {
 		return "", config, err
 	}
@@ -425,8 +426,8 @@ func (b *buildServiceImpl) addBuild(ctx context.SecurityContext, config view.Bui
 	return buildEnt.BuildId, config, nil
 }
 
-func (b *buildServiceImpl) GetStatus(buildId string) (string, string, error) {
-	ent, err := b.buildRepository.GetBuild(buildId)
+func (b *buildServiceImpl) GetStatus(ctx context.Context, buildId string) (string, string, error) {
+	ent, err := b.buildRepository.GetBuild(ctx, buildId)
 	if err != nil {
 		return "", "", err
 	}
@@ -436,8 +437,8 @@ func (b *buildServiceImpl) GetStatus(buildId string) (string, string, error) {
 	return ent.Status, ent.Details, nil
 }
 
-func (b *buildServiceImpl) GetStatuses(buildIds []string) ([]view.PublishStatusResponse, error) {
-	ents, err := b.buildRepository.GetBuilds(buildIds)
+func (b *buildServiceImpl) GetStatuses(ctx context.Context, buildIds []string) ([]view.PublishStatusResponse, error) {
+	ents, err := b.buildRepository.GetBuilds(ctx, buildIds)
 	if err != nil {
 		return nil, err
 	}
@@ -452,8 +453,8 @@ func (b *buildServiceImpl) GetStatuses(buildIds []string) ([]view.PublishStatusR
 	return result, nil
 }
 
-func (b *buildServiceImpl) UpdateBuildStatus(buildId string, status view.BuildStatusEnum, details string) error {
-	err := b.buildRepository.UpdateBuildStatus(buildId, status, details)
+func (b *buildServiceImpl) UpdateBuildStatus(ctx context.Context, buildId string, status view.BuildStatusEnum, details string) error {
+	err := b.buildRepository.UpdateBuildStatus(ctx, buildId, status, details)
 	if err != nil {
 		return err
 	}
@@ -461,8 +462,8 @@ func (b *buildServiceImpl) UpdateBuildStatus(buildId string, status view.BuildSt
 	return nil
 }
 
-func (b *buildServiceImpl) GetFreeBuild(builderId string) ([]byte, error) {
-	config, src, err := b.buildProcessor.GetFreeBuild(builderId)
+func (b *buildServiceImpl) GetFreeBuild(ctx context.Context, builderId string) ([]byte, error) {
+	config, src, err := b.buildProcessor.GetFreeBuild(ctx, builderId)
 	if err != nil {
 		return nil, err
 	}
@@ -513,7 +514,7 @@ func (b *buildServiceImpl) GetFreeBuild(builderId string) ([]byte, error) {
 	return result.Bytes(), nil
 }
 
-func (b *buildServiceImpl) GetBuildViewByChangelogSearchQuery(searchRequest view.ChangelogBuildSearchRequest) (*view.BuildView, error) {
+func (b *buildServiceImpl) GetBuildViewByChangelogSearchQuery(ctx context.Context, searchRequest view.ChangelogBuildSearchRequest) (*view.BuildView, error) {
 	searchQuery := entity.ChangelogBuildSearchQueryEntity{
 		PackageId:                searchRequest.PackageId,
 		Version:                  searchRequest.Version,
@@ -524,7 +525,7 @@ func (b *buildServiceImpl) GetBuildViewByChangelogSearchQuery(searchRequest view
 		ComparisonPrevRevision:   searchRequest.ComparisonPrevRevision,
 	}
 
-	buildEnt, err := b.buildRepository.GetBuildByChangelogSearchQuery(searchQuery)
+	buildEnt, err := b.buildRepository.GetBuildByChangelogSearchQuery(ctx, searchQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -540,7 +541,7 @@ func (b *buildServiceImpl) GetBuildViewByChangelogSearchQuery(searchRequest view
 	return result, nil
 }
 
-func (b *buildServiceImpl) GetBuildViewByDocumentGroupSearchQuery(searchRequest view.DocumentGroupBuildSearchRequest) (*view.BuildView, error) {
+func (b *buildServiceImpl) GetBuildViewByDocumentGroupSearchQuery(ctx context.Context, searchRequest view.DocumentGroupBuildSearchRequest) (*view.BuildView, error) {
 	searchQuery := entity.DocumentGroupBuildSearchQueryEntity{
 		PackageId: searchRequest.PackageId,
 		Version:   searchRequest.Version,
@@ -550,7 +551,7 @@ func (b *buildServiceImpl) GetBuildViewByDocumentGroupSearchQuery(searchRequest 
 		GroupName: searchRequest.GroupName,
 	}
 
-	buildEnt, err := b.buildRepository.GetBuildByDocumentGroupSearchQuery(searchQuery)
+	buildEnt, err := b.buildRepository.GetBuildByDocumentGroupSearchQuery(ctx, searchQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -566,8 +567,8 @@ func (b *buildServiceImpl) GetBuildViewByDocumentGroupSearchQuery(searchRequest 
 	return result, nil
 }
 
-func (b *buildServiceImpl) ValidateBuildOwnership(buildId string, builderId string) error {
-	buildEnt, err := b.buildRepository.GetBuild(buildId)
+func (b *buildServiceImpl) ValidateBuildOwnership(ctx context.Context, buildId string, builderId string) error {
+	buildEnt, err := b.buildRepository.GetBuild(ctx, buildId)
 	if err != nil {
 		return err
 	}
@@ -591,12 +592,12 @@ func (b *buildServiceImpl) ValidateBuildOwnership(buildId string, builderId stri
 	return nil
 }
 
-func (b *buildServiceImpl) AwaitBuildCompletion(buildId string) error {
+func (b *buildServiceImpl) AwaitBuildCompletion(ctx context.Context, buildId string) error {
 	start := time.Now()
 	for {
-		build, err := b.buildRepository.GetBuild(buildId)
+		build, err := b.buildRepository.GetBuild(ctx, buildId)
 		if err != nil {
-			return fmt.Errorf("failed to get build status: %v", err.Error())
+			return fmt.Errorf("failed to get build status: %w", err)
 		}
 		if build.Status == string(view.StatusError) {
 			return fmt.Errorf("build failed with error: %v", build.Details)
@@ -611,8 +612,8 @@ func (b *buildServiceImpl) AwaitBuildCompletion(buildId string) error {
 	}
 }
 
-func (b *buildServiceImpl) GetBuild(buildId string) (*view.BuildView, error) {
-	build, err := b.buildRepository.GetBuild(buildId)
+func (b *buildServiceImpl) GetBuild(ctx context.Context, buildId string) (*view.BuildView, error) {
+	build, err := b.buildRepository.GetBuild(ctx, buildId)
 	if err != nil {
 		return nil, err
 	}
@@ -623,8 +624,8 @@ func (b *buildServiceImpl) GetBuild(buildId string) (*view.BuildView, error) {
 	return result, nil
 }
 
-func (b *buildServiceImpl) GetExtendedBuild(buildId string) (*view.ExtendedBuild, error) {
-	build, err := b.buildRepository.GetExtendedBuild(buildId)
+func (b *buildServiceImpl) GetExtendedBuild(ctx context.Context, buildId string) (*view.ExtendedBuild, error) {
+	build, err := b.buildRepository.GetExtendedBuild(ctx, buildId)
 	if err != nil {
 		return nil, err
 	}
@@ -635,7 +636,7 @@ func (b *buildServiceImpl) GetExtendedBuild(buildId string) (*view.ExtendedBuild
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert build config for build %s: %w", build.BuildId, err)
 	}
-	depends, err := b.buildRepository.GetBuildDependencies([]string{buildId})
+	depends, err := b.buildRepository.GetBuildDependencies(ctx, []string{buildId})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get build dependencies for build %s: %w", buildId, err)
 	}
@@ -646,13 +647,13 @@ func (b *buildServiceImpl) GetExtendedBuild(buildId string) (*view.ExtendedBuild
 	return result, nil
 }
 
-func (b *buildServiceImpl) ListExtendedBuilds(filter view.ExtendedBuildFilter) (*view.ExtendedBuilds, error) {
-	builds, err := b.buildRepository.ListExtendedBuilds(repository.ExtendedBuildFilter{
+func (b *buildServiceImpl) ListExtendedBuilds(ctx context.Context, filter view.ExtendedBuildFilter) (*view.ExtendedBuilds, error) {
+	builds, err := b.buildRepository.ListExtendedBuilds(ctx, repository.ExtendedBuildFilter{
 		PackageId: filter.PackageId,
 		Version:   filter.Version,
-		BuildIds: filter.BuildIds,
-		Offset:   filter.Offset,
-		Limit:    filter.Limit,
+		BuildIds:  filter.BuildIds,
+		Offset:    filter.Offset,
+		Limit:     filter.Limit,
 	})
 	if err != nil {
 		return nil, err
@@ -661,7 +662,7 @@ func (b *buildServiceImpl) ListExtendedBuilds(filter view.ExtendedBuildFilter) (
 	for _, build := range builds {
 		buildIds = append(buildIds, build.BuildId)
 	}
-	depends, err := b.buildRepository.GetBuildDependencies(buildIds)
+	depends, err := b.buildRepository.GetBuildDependencies(ctx, buildIds)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get build dependencies: %w", err)
 	}
@@ -682,8 +683,8 @@ func (b *buildServiceImpl) ListExtendedBuilds(filter view.ExtendedBuildFilter) (
 	return &view.ExtendedBuilds{Builds: result}, nil
 }
 
-func (b *buildServiceImpl) GetBuildSourceData(buildId string) ([]byte, error) {
-	src, err := b.buildRepository.GetBuildSrc(buildId)
+func (b *buildServiceImpl) GetBuildSourceData(ctx context.Context, buildId string) ([]byte, error) {
+	src, err := b.buildRepository.GetBuildSrc(ctx, buildId)
 	if err != nil {
 		return nil, err
 	}

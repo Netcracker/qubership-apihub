@@ -117,7 +117,7 @@ The comparisons cleanup job is configured via configuration properties:
 |--------------------------------------|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `cleanup.comparisons.ttlDays`        | `30`          | Number of days to keep ad-hoc comparisons before they become eligible for deletion                                                                                                                 |
 | `cleanup.comparisons.schedule`       | `0 5 * * 0`   | Cron schedule for the cleanup job (Sunday 5:00 AM by default)                                                                                                                                      |
-| `cleanup.comparisons.timeoutMinutes` | `360`         | Maximum execution time for the cleanup in minutes. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination. |
+| `cleanup.comparisons.timeoutMinutes` | `360`         | Maximum execution time for the cleanup in minutes. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination. Must be greater than `0`. The service fails to start if the value is zero or negative. |
 
 The job includes a vacuum phase that runs after the main cleanup to optimize affected database tables.
 
@@ -150,7 +150,7 @@ The soft deleted data cleanup job is configured via configuration properties:
 |------------------------------------------|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `cleanup.softDeletedData.ttlDays`        | `730`         | Number of days to keep soft-deleted data before permanent deletion                                                                                                                                 |
 | `cleanup.softDeletedData.schedule`       | `0 22 * * 5`  | Cron schedule for the cleanup job (Friday 10:00 PM by default)                                                                                                                                     |
-| `cleanup.softDeletedData.timeoutMinutes` | `600`         | Maximum execution time for the cleanup in minutes. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination. |
+| `cleanup.softDeletedData.timeoutMinutes` | `600`         | Maximum execution time for the cleanup in minutes. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination. Must be greater than `0`. The service fails to start if the value is zero or negative. |
 
 ### How job works
 
@@ -226,7 +226,7 @@ The unreferenced data cleanup job is configured via configuration properties:
 | Configuration property                       | Default value | Description                                                                                                                                                                                        |
 |----------------------------------------------|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `cleanup.unreferencedData.schedule`          | `0 15 * * 6`  | Cron schedule for the cleanup job (Saturday 3:00 PM by default)                                                                                                                                    |
-| `cleanup.unreferencedData.timeoutMinutes`    | `360`         | Maximum execution time for the cleanup in minutes. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination. |
+| `cleanup.unreferencedData.timeoutMinutes`    | `360`         | Maximum execution time for the cleanup in minutes. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination. Must be greater than `0`. The service fails to start if the value is zero or negative. |
 
 The job includes a vacuum phase that runs after the main cleanup to optimize affected database tables.
 
@@ -259,7 +259,7 @@ The maintenance vacuum job is configured via configuration properties:
 | Configuration property                      | Default value | Description                                                                    |
 |---------------------------------------------|---------------|--------------------------------------------------------------------------------|
 | `cleanup.maintenanceVacuum.schedule`        | `0 2 * * 1`   | Cron schedule for maintenance vacuum job (Monday 2:00 AM by default)           |
-| `cleanup.maintenanceVacuum.timeoutMinutes`  | `300`         | Maximum duration of maintenance vacuum phase (`VACUUM FULL ANALYZE`) in minutes |
+| `cleanup.maintenanceVacuum.timeoutMinutes`  | `300`         | Maximum duration of maintenance vacuum phase (`VACUUM FULL ANALYZE`) in minutes. Must be greater than `0`. The service fails to start if the value is zero or negative. |
 
 ### How job works
 
@@ -279,7 +279,7 @@ All cleanup jobs run on predefined schedules to avoid conflicts and distribute s
 | Comparisons Cleanup        | `0 5 * * 0`      | Sunday at 5:00 AM    | Every Sunday   | Configured via `cleanup.comparisons.timeoutMinutes`        | 3 hours (not configurable) |
 | Soft Deleted Data Cleanup  | `0 22 * * 5`     | Friday at 10:00 PM   | Every Friday   | Configured via `cleanup.softDeletedData.timeoutMinutes`    | 6 hours (not configurable) |
 | Unreferenced Data Cleanup  | `0 15 * * 6`     | Saturday at 3:00 PM  | Every Saturday | Configured via `cleanup.unreferencedData.timeoutMinutes`   | 3 hours (not configurable) |
-| Builds Cleanup             | `0 1 * * 0`      | Sunday at 1:00 AM    | Every Sunday   | —                                                          | —                          |
+| Builds Cleanup             | `0 1 * * 0`      | Sunday at 1:00 AM    | Every Sunday   | Configured via `cleanup.builds.timeoutMinutes`             | Shared with cleanup phase  |
 | Maintenance Vacuum         | `0 2 * * 1`      | Monday at 2:00 AM    | Every Monday   | —                                                          | Configured via `cleanup.maintenanceVacuum.timeoutMinutes` |
 
 **Note**: when scheduling `Comparisons Cleanup`, `Soft Deleted Data Cleanup`, `Unreferenced Data Cleanup` and

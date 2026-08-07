@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 )
 
 type BuildProcessorService interface {
-	GetFreeBuild(builderId string) (*view.BuildConfig, []byte, error)
+	GetFreeBuild(ctx context.Context, builderId string) (*view.BuildConfig, []byte, error)
 }
 
 func NewBuildProcessorService(buildRepository repository.BuildRepository, refResolverService RefResolverService) BuildProcessorService {
@@ -30,8 +31,8 @@ type buildProcessorServiceImpl struct {
 	refResolverService RefResolverService
 }
 
-func (b *buildProcessorServiceImpl) GetFreeBuild(builderId string) (*view.BuildConfig, []byte, error) {
-	buildSrc, err := b.findFreeBuild(builderId) // find not started build
+func (b *buildProcessorServiceImpl) GetFreeBuild(ctx context.Context, builderId string) (*view.BuildConfig, []byte, error) {
+	buildSrc, err := b.findFreeBuild(ctx, builderId) // find not started build
 	if err != nil {
 		return nil, nil, err
 	}
@@ -46,14 +47,14 @@ func (b *buildProcessorServiceImpl) GetFreeBuild(builderId string) (*view.BuildC
 	return config, buildSrc.Source, nil
 }
 
-func (b *buildProcessorServiceImpl) findFreeBuild(builderId string) (*entity.BuildSourceEntity, error) {
+func (b *buildProcessorServiceImpl) findFreeBuild(ctx context.Context, builderId string) (*entity.BuildSourceEntity, error) {
 	var buildSrc *entity.BuildSourceEntity
 	var build *entity.BuildEntity
 	var err error
 
 	for {
 		start := time.Now()
-		build, err = b.buildRepository.FindAndTakeFreeBuild(builderId)
+		build, err = b.buildRepository.FindAndTakeFreeBuild(ctx, builderId)
 		utils.PerfLog(time.Since(start).Milliseconds(), 250, "findFreeBuild: FindAndTakeFreeBuild")
 		if err != nil {
 			return nil, err
@@ -63,7 +64,7 @@ func (b *buildProcessorServiceImpl) findFreeBuild(builderId string) (*entity.Bui
 		}
 
 		start = time.Now()
-		src, err := b.buildRepository.GetBuildSrc(build.BuildId)
+		src, err := b.buildRepository.GetBuildSrc(ctx, build.BuildId)
 
 		if err != nil {
 			return nil, err
@@ -71,7 +72,7 @@ func (b *buildProcessorServiceImpl) findFreeBuild(builderId string) (*entity.Bui
 		if src == nil {
 			utils.PerfLog(time.Since(start).Milliseconds(), 200, "findFreeBuild: GetBuildSrc")
 			start = time.Now()
-			err = b.buildRepository.UpdateBuildStatus(build.BuildId, view.StatusError, "BE error: sources not found during findFreeBuild")
+			err = b.buildRepository.UpdateBuildStatus(ctx, build.BuildId, view.StatusError, "BE error: sources not found during findFreeBuild")
 			utils.PerfLog(time.Since(start).Milliseconds(), 200, "findFreeBuild: UpdateBuildStatus")
 			if err != nil {
 				return nil, err
@@ -81,7 +82,7 @@ func (b *buildProcessorServiceImpl) findFreeBuild(builderId string) (*entity.Bui
 
 		srcConfig, err := view.BuildConfigFromMap(src.Config, src.BuildId)
 		if err != nil {
-			err = b.buildRepository.UpdateBuildStatus(src.BuildId, view.StatusError, fmt.Sprintf("Build config has invalid format: %v", err.Error()))
+			err = b.buildRepository.UpdateBuildStatus(ctx, src.BuildId, view.StatusError, fmt.Sprintf("Build config has invalid format: %v", err.Error()))
 			if err != nil {
 				return nil, err
 			}
@@ -91,9 +92,9 @@ func (b *buildProcessorServiceImpl) findFreeBuild(builderId string) (*entity.Bui
 
 		if srcConfig.UnresolvedRefs {
 			start = time.Now()
-			srcConfig.Refs, err = b.refResolverService.CalculateBuildConfigRefs(srcConfig.Refs, srcConfig.ResolveRefs, srcConfig.ResolveConflicts)
+			srcConfig.Refs, err = b.refResolverService.CalculateBuildConfigRefs(ctx, srcConfig.Refs, srcConfig.ResolveRefs, srcConfig.ResolveConflicts)
 			if err != nil {
-				err = b.buildRepository.UpdateBuildStatus(src.BuildId, view.StatusError, fmt.Sprintf("Build config has invalid refs: %v", err.Error()))
+				err = b.buildRepository.UpdateBuildStatus(ctx, src.BuildId, view.StatusError, fmt.Sprintf("Build config has invalid refs: %v", err.Error()))
 				if err != nil {
 					return nil, err
 				}
@@ -102,15 +103,15 @@ func (b *buildProcessorServiceImpl) findFreeBuild(builderId string) (*entity.Bui
 			srcConfig.UnresolvedRefs = false
 			configAsMap, err := view.BuildConfigToMap(*srcConfig)
 			if err != nil {
-				err = b.buildRepository.UpdateBuildStatus(src.BuildId, view.StatusError, fmt.Sprintf("Failed to parse build src config as map: %v", err.Error()))
+				err = b.buildRepository.UpdateBuildStatus(ctx, src.BuildId, view.StatusError, fmt.Sprintf("Failed to parse build src config as map: %v", err.Error()))
 				if err != nil {
 					return nil, err
 				}
 				continue
 			}
-			err = b.buildRepository.UpdateBuildSourceConfig(src.BuildId, *configAsMap)
+			err = b.buildRepository.UpdateBuildSourceConfig(ctx, src.BuildId, *configAsMap)
 			if err != nil {
-				err = b.buildRepository.UpdateBuildStatus(src.BuildId, view.StatusError, fmt.Sprintf("Failed to update build config: %v", err.Error()))
+				err = b.buildRepository.UpdateBuildStatus(ctx, src.BuildId, view.StatusError, fmt.Sprintf("Failed to update build config: %v", err.Error()))
 				if err != nil {
 					return nil, err
 				}

@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
@@ -19,23 +19,21 @@ type BuildController interface {
 	GetBuildSources(w http.ResponseWriter, r *http.Request)
 }
 
-func NewBuildController(buildResultService service.BuildResultService, buildService service.BuildService, isSysadm func(ctx context.SecurityContext) bool) BuildController {
+func NewBuildController(buildResultService service.BuildResultService, buildService service.BuildService) BuildController {
 	return &buildControllerImpl{
 		buildResultService: buildResultService,
 		buildService:       buildService,
-		isSysadm:           isSysadm,
 	}
 }
 
 type buildControllerImpl struct {
 	buildResultService service.BuildResultService
 	buildService       service.BuildService
-	isSysadm           func(ctx context.SecurityContext) bool
 }
 
 func (c buildControllerImpl) GetBuild(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Create(r)
-	if !c.isSysadm(ctx) {
+	ctx := secctx.MakeUserContext(r)
+	if !secctx.IsSysadm(ctx) {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
@@ -44,9 +42,9 @@ func (c buildControllerImpl) GetBuild(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	buildId := getStringParam(r, "buildId")
-	build, err := c.buildService.GetExtendedBuild(buildId)
+	build, err := c.buildService.GetExtendedBuild(ctx, buildId)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to get build", err)
+		utils.RespondWithError(w, r, "Failed to get build", err)
 		return
 	}
 	if build == nil {
@@ -62,8 +60,8 @@ func (c buildControllerImpl) GetBuild(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c buildControllerImpl) ListBuilds(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Create(r)
-	if !c.isSysadm(ctx) {
+	ctx := secctx.MakeUserContext(r)
+	if !secctx.IsSysadm(ctx) {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
@@ -87,23 +85,23 @@ func (c buildControllerImpl) ListBuilds(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	builds, err := c.buildService.ListExtendedBuilds(view.ExtendedBuildFilter{
+	builds, err := c.buildService.ListExtendedBuilds(ctx, view.ExtendedBuildFilter{
 		PackageId: r.URL.Query().Get("packageId"),
 		Version:   r.URL.Query().Get("version"),
-		BuildIds: buildIds,
-		Offset:   offset,
-		Limit:    limit,
+		BuildIds:  buildIds,
+		Offset:    offset,
+		Limit:     limit,
 	})
 	if err != nil {
-		utils.RespondWithError(w, "Failed to list builds", err)
+		utils.RespondWithError(w, r, "Failed to list builds", err)
 		return
 	}
 	utils.RespondWithJson(w, http.StatusOK, builds)
 }
 
 func (c buildControllerImpl) GetBuildResult(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Create(r)
-	if !c.isSysadm(ctx) {
+	ctx := secctx.MakeUserContext(r)
+	if !secctx.IsSysadm(ctx) {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
@@ -112,9 +110,9 @@ func (c buildControllerImpl) GetBuildResult(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	buildId := getStringParam(r, "buildId")
-	data, err := c.buildResultService.GetBuildResultData(buildId)
+	data, err := c.buildResultService.GetBuildResultData(ctx, buildId)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to get build result", err)
+		utils.RespondWithError(w, r, "Failed to get build result", err)
 		return
 	}
 	if data == nil {
@@ -160,8 +158,8 @@ func getBuildOffsetQueryParam(r *http.Request) (int, *exception.CustomError) {
 }
 
 func (c buildControllerImpl) GetBuildSources(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Create(r)
-	if !c.isSysadm(ctx) {
+	ctx := secctx.MakeUserContext(r)
+	if !secctx.IsSysadm(ctx) {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
@@ -170,9 +168,9 @@ func (c buildControllerImpl) GetBuildSources(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	buildId := getStringParam(r, "buildId")
-	data, err := c.buildService.GetBuildSourceData(buildId)
+	data, err := c.buildService.GetBuildSourceData(ctx, buildId)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to get build sources", err)
+		utils.RespondWithError(w, r, "Failed to get build sources", err)
 		return
 	}
 	if data == nil {

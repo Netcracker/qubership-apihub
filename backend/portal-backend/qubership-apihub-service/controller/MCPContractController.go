@@ -1,12 +1,13 @@
 package controller
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"strconv"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
@@ -33,8 +34,7 @@ type mcpContractControllerImpl struct {
 	ptHandler          service.PackageTransitionHandler
 }
 
-func (c *mcpContractControllerImpl) checkReadAccess(w http.ResponseWriter, r *http.Request, packageId string) bool {
-	ctx := context.Create(r)
+func (c *mcpContractControllerImpl) checkReadAccess(w http.ResponseWriter, r *http.Request, ctx context.Context, packageId string) bool {
 	ok, err := c.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, c.ptHandler, packageId, "Failed to check user privileges", err)
@@ -52,8 +52,9 @@ func (c *mcpContractControllerImpl) checkReadAccess(w http.ResponseWriter, r *ht
 }
 
 func (c *mcpContractControllerImpl) ListMcpEntities(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
 	packageId := getStringParam(r, "packageId")
-	if !c.checkReadAccess(w, r, packageId) {
+	if !c.checkReadAccess(w, r, ctx, packageId) {
 		return
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
@@ -89,7 +90,7 @@ func (c *mcpContractControllerImpl) ListMcpEntities(w http.ResponseWriter, r *ht
 	if r.URL.Query().Get("offset") != "" {
 		offset, _ = strconv.Atoi(r.URL.Query().Get("offset"))
 	}
-	result, svcErr := c.mcpContractService.ListMcpEntities(packageId, versionName, kind, mcpEndpoint, textFilter, limit, offset)
+	result, svcErr := c.mcpContractService.ListMcpEntities(ctx, packageId, versionName, kind, mcpEndpoint, textFilter, limit, offset)
 	if svcErr != nil {
 		handlePkgRedirectOrRespondWithError(w, r, c.ptHandler, packageId, "Failed to list MCP entities", svcErr)
 		return
@@ -98,8 +99,9 @@ func (c *mcpContractControllerImpl) ListMcpEntities(w http.ResponseWriter, r *ht
 }
 
 func (c *mcpContractControllerImpl) GetMcpEntity(w http.ResponseWriter, r *http.Request) {
+	ctx := secctx.MakeUserContext(r)
 	packageId := getStringParam(r, "packageId")
-	if !c.checkReadAccess(w, r, packageId) {
+	if !c.checkReadAccess(w, r, ctx, packageId) {
 		return
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
@@ -140,7 +142,7 @@ func (c *mcpContractControllerImpl) GetMcpEntity(w http.ResponseWriter, r *http.
 		}
 	}
 
-	result, svcErr := c.mcpContractService.GetMcpEntity(packageId, versionName, mcpEntityId, includeData)
+	result, svcErr := c.mcpContractService.GetMcpEntity(ctx, packageId, versionName, mcpEntityId, includeData)
 	if svcErr != nil {
 		handlePkgRedirectOrRespondWithError(w, r, c.ptHandler, packageId, "Failed to get MCP entity", svcErr)
 		return

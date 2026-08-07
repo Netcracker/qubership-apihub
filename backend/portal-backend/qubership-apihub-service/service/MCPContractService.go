@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -12,10 +13,10 @@ import (
 )
 
 type MCPContractService interface {
-	ListMcpEntities(packageId, versionName, kind, mcpEndpoint, textFilter string, limit, offset int) (*view.McpEntityListView, error)
-	GetMcpEntity(packageId, versionName, mcpEntityId string, includeData bool) (interface{}, error)
-	GetVersionSummary(packageId, versionName string) (map[string]view.McpEndpointSummary, error)
-	GlobalSearchForMCP(searchReq view.SearchQueryReq) (*view.SearchResult, error)
+	ListMcpEntities(ctx context.Context, packageId, versionName, kind, mcpEndpoint, textFilter string, limit, offset int) (*view.McpEntityListView, error)
+	GetMcpEntity(ctx context.Context, packageId, versionName, mcpEntityId string, includeData bool) (interface{}, error)
+	GetVersionSummary(ctx context.Context, packageId, versionName string) (map[string]view.McpEndpointSummary, error)
+	GlobalSearchForMCP(ctx context.Context, searchReq view.SearchQueryReq) (*view.SearchResult, error)
 }
 
 func NewMCPContractService(mcpRepo repository.MCPContractRepository, publishedRepo repository.PublishedRepository, packageVersionEnrichmentService PackageVersionEnrichmentService) MCPContractService {
@@ -28,8 +29,8 @@ type mcpContractServiceImpl struct {
 	packageVersionEnrichmentService PackageVersionEnrichmentService
 }
 
-func (s *mcpContractServiceImpl) resolveRevision(packageId, versionName string) (string, int, error) {
-	version, err := s.publishedRepo.GetVersion(packageId, versionName)
+func (s *mcpContractServiceImpl) resolveRevision(ctx context.Context, packageId, versionName string) (string, int, error) {
+	version, err := s.publishedRepo.GetVersion(ctx, packageId, versionName)
 	if err != nil {
 		return "", 0, err
 	}
@@ -44,12 +45,12 @@ func (s *mcpContractServiceImpl) resolveRevision(packageId, versionName string) 
 	return version.Version, version.Revision, nil
 }
 
-func (s *mcpContractServiceImpl) ListMcpEntities(packageId, versionName, kind, mcpEndpoint, textFilter string, limit, offset int) (*view.McpEntityListView, error) {
-	version, revision, err := s.resolveRevision(packageId, versionName)
+func (s *mcpContractServiceImpl) ListMcpEntities(ctx context.Context, packageId, versionName, kind, mcpEndpoint, textFilter string, limit, offset int) (*view.McpEntityListView, error) {
+	version, revision, err := s.resolveRevision(ctx, packageId, versionName)
 	if err != nil {
 		return nil, err
 	}
-	entities, err := s.mcpRepo.ListMcpEntities(packageId, version, revision, kind, mcpEndpoint, textFilter, limit, offset)
+	entities, err := s.mcpRepo.ListMcpEntities(ctx, packageId, version, revision, kind, mcpEndpoint, textFilter, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +60,7 @@ func (s *mcpContractServiceImpl) ListMcpEntities(packageId, versionName, kind, m
 		result.Entities = append(result.Entities, makeMcpEntityView(ent, packageId, version, revision))
 		packageVersions[packageId] = append(packageVersions[packageId], view.MakeVersionRefKey(version, revision))
 	}
-	packagesRefs, err := s.packageVersionEnrichmentService.GetPackageVersionRefsMap(packageVersions)
+	packagesRefs, err := s.packageVersionEnrichmentService.GetPackageVersionRefsMap(ctx, packageVersions)
 	if err != nil {
 		return nil, err
 	}
@@ -67,12 +68,12 @@ func (s *mcpContractServiceImpl) ListMcpEntities(packageId, versionName, kind, m
 	return result, nil
 }
 
-func (s *mcpContractServiceImpl) GetMcpEntity(packageId, versionName, mcpEntityId string, includeData bool) (interface{}, error) {
-	version, revision, err := s.resolveRevision(packageId, versionName)
+func (s *mcpContractServiceImpl) GetMcpEntity(ctx context.Context, packageId, versionName, mcpEntityId string, includeData bool) (interface{}, error) {
+	version, revision, err := s.resolveRevision(ctx, packageId, versionName)
 	if err != nil {
 		return nil, err
 	}
-	ent, data, err := s.mcpRepo.GetMcpEntity(packageId, version, revision, mcpEntityId, includeData)
+	ent, data, err := s.mcpRepo.GetMcpEntity(ctx, packageId, version, revision, mcpEntityId, includeData)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +93,7 @@ func (s *mcpContractServiceImpl) GetMcpEntity(packageId, versionName, mcpEntityI
 		}
 	}
 	packageVersions := map[string][]string{packageId: {view.MakeVersionRefKey(version, revision)}}
-	packagesRefs, err := s.packageVersionEnrichmentService.GetPackageVersionRefsMap(packageVersions)
+	packagesRefs, err := s.packageVersionEnrichmentService.GetPackageVersionRefsMap(ctx, packageVersions)
 	if err != nil {
 		return nil, err
 	}
@@ -100,12 +101,12 @@ func (s *mcpContractServiceImpl) GetMcpEntity(packageId, versionName, mcpEntityI
 	return detail, nil
 }
 
-func (s *mcpContractServiceImpl) GetVersionSummary(packageId, versionName string) (map[string]view.McpEndpointSummary, error) {
-	version, revision, err := s.resolveRevision(packageId, versionName)
+func (s *mcpContractServiceImpl) GetVersionSummary(ctx context.Context, packageId, versionName string) (map[string]view.McpEndpointSummary, error) {
+	version, revision, err := s.resolveRevision(ctx, packageId, versionName)
 	if err != nil {
 		return nil, err
 	}
-	counts, err := s.mcpRepo.GetEntitiesCountByEndpoint(packageId, version, revision)
+	counts, err := s.mcpRepo.GetEntitiesCountByEndpoint(ctx, packageId, version, revision)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +132,7 @@ func (s *mcpContractServiceImpl) GetVersionSummary(packageId, versionName string
 	return summary, nil
 }
 
-func (s *mcpContractServiceImpl) GlobalSearchForMCP(searchReq view.SearchQueryReq) (*view.SearchResult, error) {
+func (s *mcpContractServiceImpl) GlobalSearchForMCP(ctx context.Context, searchReq view.SearchQueryReq) (*view.SearchResult, error) {
 	versions := searchReq.Versions
 	if versions == nil {
 		versions = make([]string, 0)
@@ -158,7 +159,7 @@ func (s *mcpContractServiceImpl) GlobalSearchForMCP(searchReq view.SearchQueryRe
 	if searchQuery.Packages == nil {
 		searchQuery.Packages = make([]string, 0)
 	}
-	entities, err := s.mcpRepo.GlobalSearchForMCP(searchQuery)
+	entities, err := s.mcpRepo.GlobalSearchForMCP(ctx, searchQuery)
 	if err != nil {
 		return nil, err
 	}

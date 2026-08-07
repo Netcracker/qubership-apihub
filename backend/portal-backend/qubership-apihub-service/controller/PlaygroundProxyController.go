@@ -2,12 +2,15 @@ package controller
 
 import (
 	"io"
+	"net"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -25,7 +28,12 @@ func NewPlaygroundProxyController(systemInfoService service.SystemInfoService) (
 		return nil, err
 	}
 	return &playgroundProxyControllerImpl{
-		tr:                http.Transport{TLSClientConfig: tlsConfig},
+		tr: http.Transport{
+			TLSClientConfig:     tlsConfig,
+			DialContext:         (&net.Dialer{Timeout: 15 * time.Second}).DialContext,
+			TLSHandshakeTimeout: 15 * time.Second,
+			IdleConnTimeout:     90 * time.Second,
+		},
 		systemInfoService: systemInfoService}, nil
 }
 
@@ -65,6 +73,8 @@ func (p *playgroundProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Req
 	}
 	r.URL = proxyURL
 	r.Host = proxyURL.Host
+	// RoundTrip honors the context of the request it is given. r is the inbound request, so the
+	// deadline set by RequestTimeoutMiddleware bounds the whole exchange: dial, TLS, header wait and body streaming.
 	resp, err := p.tr.RoundTrip(r)
 	if err != nil {
 		utils.RespondWithCustomError(w, &exception.CustomError{
@@ -82,7 +92,11 @@ func (p *playgroundProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Req
 		return
 	}
 	w.WriteHeader(resp.StatusCode)
-	io.Copy(w, resp.Body)
+	if _, err := io.Copy(w, resp.Body); err != nil {
+		// Headers/status are already sent, so we can only log; a read/write timeout or an expired
+		// request deadline surfaces here.
+		log.Warnf("playground proxy: failed to stream upstream response for %s: %v", r.URL.String(), err)
+	}
 }
 
 func copyHeader(dst, src http.Header) *exception.CustomError {

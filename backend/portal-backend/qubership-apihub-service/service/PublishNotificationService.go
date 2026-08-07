@@ -1,13 +1,13 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
-	"github.com/google/uuid"
 	"time"
 
-	"sync"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
+	"github.com/google/uuid"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/cache"
 
@@ -19,10 +19,9 @@ import (
 
 func NewPublishNotificationService(op cache.OlricProvider) PublishNotificationService {
 	trh := publishNotificationServiceImpl{
-		op:        op,
-		isReadyWg: sync.WaitGroup{},
+		op:    op,
+		ready: make(chan struct{}),
 	}
-	trh.isReadyWg.Add(1)
 	utils.SafeAsync(func() {
 		trh.initVersionPublishedDTopic()
 	})
@@ -30,20 +29,24 @@ func NewPublishNotificationService(op cache.OlricProvider) PublishNotificationSe
 }
 
 type PublishNotificationService interface {
-	SendNotification(packageId string, version string, revision int) error
+	SendNotification(ctx context.Context, packageId string, version string, revision int) error
 }
 
 type publishNotificationServiceImpl struct {
 	op                    cache.OlricProvider
 	olricC                *olric.Olric
 	versionPublishedTopic *olric.DTopic
-	isReadyWg             sync.WaitGroup
+	ready                 chan struct{}
 }
 
 const VersionPublishedTopicName = "version-published"
 
-func (t *publishNotificationServiceImpl) SendNotification(packageId string, version string, revision int) error {
-	t.isReadyWg.Wait()
+func (t *publishNotificationServiceImpl) SendNotification(ctx context.Context, packageId string, version string, revision int) error {
+	select {
+	case <-t.ready:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 
 	if t.versionPublishedTopic == nil {
 		return fmt.Errorf("failed to publish message to %s DTopic since it's not initialized", VersionPublishedTopicName)
@@ -82,5 +85,5 @@ func (t *publishNotificationServiceImpl) initVersionPublishedDTopic() {
 		}
 		break
 	}
-	t.isReadyWg.Done()
+	close(t.ready)
 }

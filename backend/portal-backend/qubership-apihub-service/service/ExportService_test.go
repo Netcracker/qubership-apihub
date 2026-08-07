@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"testing"
@@ -85,7 +86,7 @@ func TestMakeAllowedOasExtensions(t *testing.T) {
 				packageExportConfigService: mockPackageExportConfig,
 			}
 
-			allowed, err := service.makeAllowedOasExtensions(tt.removeOasExt, tt.packageId)
+			allowed, err := service.makeAllowedOasExtensions(context.Background(), tt.removeOasExt, tt.packageId)
 
 			if tt.expectedErrMsg != "" {
 				assert.ErrorContains(t, err, tt.expectedErrMsg, "Error message should match")
@@ -107,10 +108,10 @@ type mockPackageExportConfigService struct {
 	GetConfigFunc func(packageId string) (*view.PackageExportConfig, error)
 }
 
-func (m mockPackageExportConfigService) GetConfig(packageId string) (*view.PackageExportConfig, error) {
+func (m mockPackageExportConfigService) GetConfig(ctx context.Context, packageId string) (*view.PackageExportConfig, error) {
 	return m.GetConfigFunc(packageId)
 }
 
-func (m mockPackageExportConfigService) SetConfig(packageId string, AllowedOasExtensions []string) error {
+func (m mockPackageExportConfigService) SetConfig(ctx context.Context, packageId string, AllowedOasExtensions []string) error {
 	return nil
 }
