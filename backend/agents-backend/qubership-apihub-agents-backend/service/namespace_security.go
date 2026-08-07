@@ -126,7 +126,8 @@ func (n *namespaceSecurityServiceImpl) StartAuthSecurityCheckProcess(ctx context
 
 func (n *namespaceSecurityServiceImpl) startAuthSecurityCheck(securityCheck entity.NamespaceSecurityCheckEntity, agentUrl string) {
 	systemCtx := secctx.MakeSysadminContext(context.Background())
-	err := n.agentClient.StartDiscovery(systemCtx, securityCheck.Namespace, securityCheck.WorkspaceId, agentUrl, false)
+	// Security checks are namespace-wide by definition, so no discovery scope is sent.
+	err := n.agentClient.StartDiscovery(systemCtx, securityCheck.Namespace, securityCheck.WorkspaceId, agentUrl, false, view.DiscoveryRequest{})
 	if err != nil {
 		n.updateProcessStatus(&securityCheck, view.StatusError, fmt.Sprintf("failed to start service discovery: %v", err.Error()))
 		return
@@ -314,7 +315,7 @@ func (n *namespaceSecurityServiceImpl) getDiscoveryResults(ctx context.Context, 
 	var discoveryResult *view.ServiceListResponse
 	var err error
 	for {
-		discoveryResult, err = n.agentClient.ListServices(ctx, namespace, workspaceId, agentUrl)
+		discoveryResult, err = n.agentClient.ListServices(ctx, namespace, workspaceId, agentUrl, "")
 		if err != nil {
 			return nil, fmt.Errorf("failed to get service list: %v", err.Error())
 		}

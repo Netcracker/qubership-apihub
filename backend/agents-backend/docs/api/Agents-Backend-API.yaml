@@ -259,8 +259,17 @@ paths:
       description: |
         Starts an asynchronous service discovery run for the specified workspace. Returns `202`
         immediately; poll `GET .../services` to observe progress via the `status` field
-        (`none`, `running`, `complete`, `error`, `failed`). Re-running discovery replaces the
-        in-progress or previous result for the same workspace.
+        (`none`, `running`, `complete`, `error`, `failed`), passing the same services list in the
+        `services` query parameter to address this run's result.
+
+        By default the whole namespace is discovered. Send the optional request body to limit the
+        run to a well-known list of services.
+
+        Each distinct services list has its own stored result. Discoveries started with different
+        lists run and are stored independently, so a scoped run never overwrites the unscoped one;
+        starting a discovery again with the same list resets and rebuilds that list's result. An
+        absent body, or an absent or empty `services` list, discovers the whole namespace and
+        stores the result as the default (unscoped) one.
       operationId: startDiscovery
       security:
         - BearerAuth: []
@@ -270,11 +279,33 @@ paths:
         - $ref: '#/components/parameters/AgentId'
         - $ref: '#/components/parameters/Namespace'
         - $ref: '#/components/parameters/WorkspaceId'
+        - name: failOnError
+          in: query
+          required: false
+          description: |
+            If `true`, the agent marks the whole discovery run as failed when any single service
+            fails to be discovered. If `false` (default), failures are reported per service in the
+            `error` field of the services listing and the run still completes.
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: false
+        description: |
+          Optional discovery scope.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiscoveryRequest'
       responses:
         '202':
           description: Discovery process started successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services:
@@ -390,8 +421,12 @@ paths:
       description: |
         Retrieves services discovered in the specified workspace, including document metadata,
         baseline references, diagnostic information, and proxy URLs. The top-level `status` field
-        reflects the latest discovery run state. Results are scoped to the requested workspace and
-        are not paginated.
+        reflects the state of the addressed discovery run. Results are scoped to the requested
+        workspace and are not paginated.
+
+        Each distinct services list passed to the discovery request has its own stored result. Use
+        the `services` query parameter to address the result of a scoped discovery; omit it to
+        address the default (unscoped) whole-namespace result.
       operationId: listDiscoveredServicesV3
       security:
         - BearerAuth: []
@@ -401,6 +436,7 @@ paths:
         - $ref: '#/components/parameters/AgentId'
         - $ref: '#/components/parameters/Namespace'
         - $ref: '#/components/parameters/WorkspaceId'
+        - $ref: '#/components/parameters/RequestedServices'
       responses:
         '200':
           description: List of discovered services
@@ -513,6 +549,18 @@ paths:
                   debug:
                     type: string
                     description: Debug information
+                  requestedServices:
+                    type: array
+                    items:
+                      type: string
+                    description: |
+                      The services list the addressed discovery result was started with. Absent on
+                      the default (unscoped) result, where the whole namespace was discovered. Diff
+                      it against `services[].serviceName` to find requested services that were not
+                      found in the namespace.
+                    example:
+                      - apihub-be
+                      - apihub-fe
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
@@ -526,6 +574,10 @@ paths:
         Returns the raw specification file content for a discovered service document. The response
         is plain text (`text/plain`) in the original format (JSON or YAML as reported during
         discovery). Obtain `fileId` from the `documents` array in the services listing endpoint.
+
+        Documents discovered by a scoped discovery must be downloaded with the same services list:
+        pass it in the `services` query parameter, exactly as when reading the services listing.
+        Omit it to address the default (unscoped) whole-namespace result.
       operationId: getServiceSpecification
       security:
         - BearerAuth: []
@@ -536,6 +588,7 @@ paths:
         - $ref: '#/components/parameters/Namespace'
         - $ref: '#/components/parameters/WorkspaceId'
         - $ref: '#/components/parameters/ServiceId'
+        - $ref: '#/components/parameters/RequestedServices'
         - name: fileId
           in: path
           required: true
@@ -623,9 +676,30 @@ paths:
                     type: string
                   description: |
                     List of service IDs to include in the snapshot. Omit or leave empty to include
-                    all discovered services in the workspace.
+                    all services of the addressed discovery result.
                   example:
                     - service-001
+                discoveryServices:
+                  type: array
+                  items:
+                    type: string
+                  description: |
+                    Services list identifying which discovery result to build the snapshot from.
+                    Pass the same list that was sent in the discovery request body; omit or leave
+                    empty to use the default (unscoped) whole-namespace result.
+
+                    This is not the same as `services`. `discoveryServices` selects *which stored
+                    discovery result is read*, and holds blue-green normalised service names
+                    (`serviceName`), whereas `services` filters *what goes into the snapshot* and
+                    holds service IDs (`id`). Snapshotting a subset of a scoped discovery therefore
+                    still requires the full original list here - narrowing it would address a
+                    discovery result that was never produced, whose status is `none`.
+
+                    The list is treated as a set: order and duplicates do not affect which result
+                    is addressed.
+                  example:
+                    - apihub-be
+                    - apihub-fe
                 status:
                   type: string
                   description: Optional snapshot status label stored with the build metadata.
@@ -1354,6 +1428,27 @@ components:
         type: string
         format: uuid
         example: 3fa85f64-5717-4562-b3fc-2c963f66afa6
+    RequestedServices:
+      name: services
+      in: query
+      required: false
+      description: |
+        Comma-separated list of service names identifying which discovery result to address. Pass
+        the same list that was sent in the discovery request body to read that discovery's result;
+        documents discovered by a scoped discovery must also be downloaded with the same list.
+
+        The list is treated as a set: order and duplicates do not affect which result is addressed.
+        When absent or empty, the default (unscoped) discovery result is addressed. A result that
+        was never produced for the given list has status `none`.
+      style: form
+      explode: false
+      schema:
+        type: array
+        items:
+          type: string
+      example:
+        - apihub-be
+        - apihub-fe
   schemas:
     AgentInstance:
       type: object
@@ -1447,12 +1542,52 @@ components:
             Optional free-form map of contextual parameters for the error. Typical keys include
             `agentId`, `namespace`, `workspaceId`, `processId`, `param`, and `value` depending on
             the error code; values are strings or numbers.
+    DiscoveryRequest:
+      type: object
+      description: |
+        Optional body of a discovery request, used to limit the discovery scope to a well-known
+        list of services. An empty body and an empty `services` list are also accepted and both mean
+        whole-namespace discovery, stored as the default (unscoped) result.
+
+        Each distinct services list has its own stored result; the list is treated as a set, so
+        order and duplicates do not affect which result the discovery writes to. Read the result
+        back by passing the same list in the `services` query parameter of the services listing.
+
+        Agents that predate this capability ignore the body and discover the whole namespace.
+        Check `requestedServices` in the services listing to confirm the scope was applied: an
+        agent that honoured a narrowed request always echoes it back, so if the field is absent
+        once `status` is no longer `running`, the scope was not applied.
+      properties:
+        services:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          description: |
+            Service names to discover. Each entry is matched exactly and case-sensitively against
+            the name reported as `serviceName` in the services listing - that is, the Kubernetes
+            service name with any trailing blue-green `-v<N>` suffix removed.
+
+            One entry therefore selects every blue-green variant of that service: `apihub-be`
+            matches both `apihub-be-v1` and `apihub-be-v2`. A raw Kubernetes service name such as
+            `apihub-be-v1` matches nothing, so do not pass the `id` field of a previous response
+            here. An entry that is empty or carries leading or trailing whitespace can match no
+            service and is rejected with 400.
+
+            A name not present in the namespace, or one naming a service the agent excludes from
+            discovery by label, is ignored; compare `requestedServices` against
+            `services[].serviceName` in the services listing to find them.
+          example:
+            - apihub-be
+            - apihub-fe
   responses:
     BadRequest:
       description: |
         Invalid request. Typical causes include malformed JSON, missing required fields, invalid
-        query parameters, or unrecognized enum values. The response body uses the CustomError
-        schema with remediation hints in the message and debug fields.
+        query parameters, unrecognized enum values, a request body larger than 1 MiB, or a
+        requested service name that is empty or carries leading or trailing whitespace. The
+        response body uses the CustomError schema with remediation hints in the message and debug
+        fields.
       content:
         application/json:
           schema:
