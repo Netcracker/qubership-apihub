@@ -48,7 +48,6 @@ import {
   getOperationTags,
   OperationsMap,
 } from '../../components'
-import { calculateApiKindFromLabels } from '../../components/document'
 import { createGraphqlApiCompatibilityScopeFunction } from '../../components/compare/graphql.bwc.validation'
 
 export const compareDocuments: DocumentsCompare = async (
@@ -64,7 +63,6 @@ export const compareDocuments: DocumentsCompare = async (
     currentVersion,
     previousPackageId,
     currentPackageId,
-    previousVersionLabels,
   } = ctx
   const comparisonInternalDocumentId = createComparisonInternalDocumentId(previousVersion, previousPackageId, prevDoc?.slug, currentVersion, currentPackageId, currDoc?.slug)
   const prevFile = prevDoc && await rawDocumentResolver(previousVersion, previousPackageId, prevDoc.slug)
@@ -80,10 +78,9 @@ export const compareDocuments: DocumentsCompare = async (
     currDocData = getCopyWithEmptyOperations(prevDocData)
   }
 
+  // Both documents carry the api kind their own build resolved from labels and `xApiKind`
   const currDocumentApiKind = currDoc?.apiKind
-  // ApiKind is not guaranteed for the previous document: it is downloaded data and the field is optional.
-  // In this case, we calculate ApiKind by labels (file then version) in order of priority.
-  const prevDocumentApiKind = prevDoc?.apiKind || calculateApiKindFromLabels(prevDoc?.labels, previousVersionLabels)
+  const prevDocumentApiKind = prevDoc?.apiKind
 
   const { merged, diffs } = apiDiff(
     prevDocData,

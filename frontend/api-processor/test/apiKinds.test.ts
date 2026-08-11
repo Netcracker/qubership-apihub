@@ -28,7 +28,7 @@ import {
   VERSION_STATUS,
 } from '../src'
 import { jest } from '@jest/globals'
-import { changesSummaryMatcher, Editor, loadFileAsString, LocalRegistry, serializedComparisonDocumentMatcher } from './helpers'
+import { buildPackageFromContent, changesSummaryMatcher, Editor, loadFileAsString, LocalRegistry, serializedComparisonDocumentMatcher } from './helpers'
 import { DiffType } from '@netcracker/qubership-apihub-api-diff'
 import { takeIfDefined } from '../src/utils'
 import { DEFAULT_PROJECTS_PATH } from './helpers/registry/local'
@@ -101,6 +101,75 @@ describe('API Kinds test', () => {
     })
 
     expect(result.documents.get('Petstore.yaml')?.apiKind).toEqual(APIHUB_API_COMPATIBILITY_KIND_BWC)
+  })
+
+  test('document metadata must not carry xApiKind', async () => {
+    const editor = await Editor.openProject(AFTER_PACKAGE_ID, afterPackage)
+    const result = await editor.run({
+      version: AFTER_VERSION_ID,
+      packageId: AFTER_PACKAGE_ID,
+      files: [{
+        fileId: 'Petstore.yaml',
+        publish: true,
+        xApiKind: 'no-BWC',
+      }],
+    })
+
+    const document = result.documents.get('Petstore.yaml')
+    expect(document?.apiKind).toEqual(APIHUB_API_COMPATIBILITY_KIND_NO_BWC)
+    expect(document?.metadata).not.toHaveProperty('xApiKind')
+  })
+
+  test('rebuilt document must keep the api kind resolved from xApiKind', async () => {
+    const editor = await Editor.openProject(AFTER_PACKAGE_ID, afterPackage)
+    await editor.run({
+      version: AFTER_VERSION_ID,
+      packageId: AFTER_PACKAGE_ID,
+      files: [{
+        fileId: 'Petstore.yaml',
+        publish: true,
+        xApiKind: 'no-BWC',
+      }],
+    })
+
+    const result = await editor.update({}, 'Petstore.yaml')
+
+    expect(result.documents.get('Petstore.yaml')?.apiKind).toEqual(APIHUB_API_COMPATIBILITY_KIND_NO_BWC)
+  })
+
+  test('published document must carry the api kind resolved from xApiKind', async () => {
+    const packageId = 'api-kinds/no-api-kind-in-documents'
+    const portal = new LocalRegistry(packageId)
+
+    await portal.publish(packageId, {
+      packageId,
+      version: AFTER_VERSION_ID,
+      files: [{ fileId: '1.yaml', xApiKind: 'no-BWC' }],
+    })
+
+    const resolved = await portal.versionDocumentsResolver(AFTER_VERSION_ID, packageId)
+
+    expect(resolved?.documents).toEqual([
+      expect.objectContaining({ fileId: '1.yaml', apiKind: APIHUB_API_COMPATIBILITY_KIND_NO_BWC }),
+    ])
+  })
+
+  test('metadata of a document without an api type must not carry xApiKind either', async () => {
+    const result = await buildPackageFromContent('api-kinds-readme', 'readme.md', '# Readme', undefined, undefined, 'no-BWC')
+
+    expect(result.documents.get('readme.md')?.metadata).not.toHaveProperty('xApiKind')
+  })
+
+  test('metadata of a binary document must not carry xApiKind either', async () => {
+    const packageId = 'unsupported'
+    const editor = await Editor.openProject(packageId, LocalRegistry.openPackage(packageId))
+    const result = await editor.run({
+      packageId,
+      version: AFTER_VERSION_ID,
+      files: [{ fileId: 'Test.png', xApiKind: 'no-BWC' }],
+    })
+
+    expect(result.documents.get('Test.png')?.metadata).not.toHaveProperty('xApiKind')
   })
 
   test('version with label must have no-bwc api kind', async () => {
@@ -195,13 +264,15 @@ describe('Check Api Compatibility Function tests', () => {
   const EXPECT_RISKY_X2: Expected = { summary: { [RISKY_CHANGE_TYPE]: 2 }, types: [RISKY_CHANGE_TYPE] }
   const EXPECT_RISKY_AND_BREAKING: Expected = { summary: { [RISKY_CHANGE_TYPE]: 1, [BREAKING_CHANGE_TYPE]: 1 }, types: [RISKY_CHANGE_TYPE, BREAKING_CHANGE_TYPE] }
 
-  describe('Label-based apiKind tests', () => {
+  describe('Document-level apiKind tests', () => {
     test.each<{
       desc: string
       prevFileLabels?: Labels
       currFileLabels?: Labels
       prevVersionLabels?: Labels
       currVersionLabels?: Labels
+      prevXApiKind?: string
+      currXApiKind?: string
       expected: Expected
     }>([
       // Default
@@ -231,8 +302,22 @@ describe('Check Api Compatibility Function tests', () => {
       { desc: 'should prioritize file no-BWC in prev over version BWC in prev', prevFileLabels: [NB_LABEL], prevVersionLabels: [BWC_LABEL], expected: EXPECT_RISKY },
       { desc: 'should prioritize file BWC in curr over version no-BWC in curr', currFileLabels: [BWC_LABEL], currVersionLabels: [NB_LABEL], expected: EXPECT_BREAKING },
       { desc: 'should prioritize file no-BWC in curr over version BWC in curr', currFileLabels: [NB_LABEL], currVersionLabels: [BWC_LABEL], expected: EXPECT_RISKY },
-    ])('$desc', async ({ prevFileLabels, currFileLabels, prevVersionLabels, currVersionLabels, expected: { summary, types } }) => {
-      const result = await runApiKindTest('api-kinds/no-api-kind-in-documents', prevFileLabels, currFileLabels, prevVersionLabels, currVersionLabels)
+      // Build config xApiKind
+      { desc: 'should apply xApiKind BWC in prev', prevXApiKind: 'BWC', expected: EXPECT_BREAKING },
+      { desc: 'should apply xApiKind no-BWC in prev', prevXApiKind: 'no-BWC', expected: EXPECT_RISKY },
+      { desc: 'should apply xApiKind no-BWC in curr', currXApiKind: 'no-BWC', expected: EXPECT_RISKY },
+      { desc: 'should apply xApiKind experimental in curr', currXApiKind: 'experimental', expected: EXPECT_RISKY },
+      // Priority: file labels > xApiKind > version labels
+      { desc: 'should prioritize file BWC in curr over xApiKind no-BWC in curr', currFileLabels: [BWC_LABEL], currXApiKind: 'no-BWC', expected: EXPECT_BREAKING },
+      { desc: 'should prioritize file no-BWC in curr over xApiKind BWC in curr', currFileLabels: [NB_LABEL], currXApiKind: 'BWC', expected: EXPECT_RISKY },
+      { desc: 'should prioritize xApiKind BWC in curr over version no-BWC in curr', currXApiKind: 'BWC', currVersionLabels: [NB_LABEL], expected: EXPECT_BREAKING },
+      { desc: 'should prioritize xApiKind no-BWC in curr over version BWC in curr', currXApiKind: 'no-BWC', currVersionLabels: [BWC_LABEL], expected: EXPECT_RISKY },
+      { desc: 'should treat an unrecognized xApiKind in curr as BWC and ignore the version no-BWC label', currXApiKind: 'newApiKind!', currVersionLabels: [NB_LABEL], expected: EXPECT_BREAKING },
+      { desc: 'should ignore a blank xApiKind in curr and take the version no-BWC label', currXApiKind: '  ', currVersionLabels: [NB_LABEL], expected: EXPECT_RISKY },
+      // The label branch trims the value it extracts, so xApiKind has to trim as well
+      { desc: 'should apply a padded xApiKind no-BWC in curr', currXApiKind: ' no-BWC ', expected: EXPECT_RISKY },
+    ])('$desc', async ({ prevFileLabels, currFileLabels, prevVersionLabels, currVersionLabels, prevXApiKind, currXApiKind, expected: { summary, types } }) => {
+      const result = await runApiKindTest('api-kinds/no-api-kind-in-documents', prevFileLabels, currFileLabels, prevVersionLabels, currVersionLabels, prevXApiKind, currXApiKind)
       expect(result).toEqual(changesSummaryMatcher(summary))
       expect(result).toEqual(serializedComparisonDocumentMatcher(types))
     })
@@ -482,6 +567,8 @@ describe('Check Api Compatibility Function tests', () => {
     currFileLabels?: Labels,
     prevVersionLabels?: Labels,
     currVersionLabels?: Labels,
+    prevXApiKind?: string,
+    currXApiKind?: string,
   ): Promise<BuildResult> {
     const portal = new LocalRegistry(packageId)
 
@@ -489,14 +576,22 @@ describe('Check Api Compatibility Function tests', () => {
       packageId: packageId,
       version: PREV_VERSION,
       metadata: { ...takeIfDefined({ versionLabels: prevVersionLabels }) },
-      files: [{ fileId: '1.yaml', ...takeIfDefined({ labels: prevFileLabels }) }],
+      files: [{
+        fileId: '1.yaml',
+        ...takeIfDefined({ labels: prevFileLabels }),
+        ...takeIfDefined({ xApiKind: prevXApiKind }),
+      }],
     })
 
     await portal.publish(packageId, {
       packageId: packageId,
       version: CURR_VERSION,
       metadata: { ...takeIfDefined({ versionLabels: currVersionLabels }) },
-      files: [{ fileId: '2.yaml', ...takeIfDefined({ labels: currFileLabels }) }],
+      files: [{
+        fileId: '2.yaml',
+        ...takeIfDefined({ labels: currFileLabels }),
+        ...takeIfDefined({ xApiKind: currXApiKind }),
+      }],
     })
 
     const editor = new Editor(packageId, {

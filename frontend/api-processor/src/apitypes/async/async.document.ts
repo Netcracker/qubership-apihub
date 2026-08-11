@@ -50,7 +50,7 @@ const asyncApiDocumentMeta = (data: AsyncAPIV3.AsyncAPIObject): AsyncDocumentInf
 }
 
 export const buildAsyncApiDocument: DocumentBuilder<AsyncAPIV3.AsyncAPIObject> = async (parsedFile, file, ctx): Promise<VersionDocument> => {
-  const { fileId, slug = '', publish = true, ...fileMetadata } = file
+  const { fileId, slug = '', publish = true, apiKind, ...fileMetadata } = file
 
   const {
     data,
@@ -73,6 +73,7 @@ export const buildAsyncApiDocument: DocumentBuilder<AsyncAPIV3.AsyncAPIObject> =
     format: FILE_FORMAT.JSON,
     data: bundledFileData,
     slug, // unique slug should be already generated
+    apiKind,
     filename: `${slug}.${FILE_FORMAT.JSON}`,
     title: title || getDocumentTitle(fileId),
     operationIds: [],
