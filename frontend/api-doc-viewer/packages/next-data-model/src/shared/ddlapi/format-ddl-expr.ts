@@ -36,3 +36,24 @@ export function formatDdlExpr(expr: Expr): string {
     }
   }
 }
+
+/**
+ * Formats a column default {@link Expr} for viewer display.
+ * SQL string literals lose their surrounding single quotes; other shapes are unchanged.
+ */
+export function formatDefaultValueForDisplay(expr: Expr): string {
+  return unwrapSqlStringLiteral(formatDdlExpr(expr))
+}
+
+/** Normalises a preformatted default value string for viewer display. */
+export function formatDefaultValueDisplayString(value: string): string {
+  return unwrapSqlStringLiteral(value)
+}
+
+function unwrapSqlStringLiteral(value: string): string {
+  if (value.length < 2 || value[0] !== "'" || value[value.length - 1] !== "'") {
+    return value
+  }
+
+  return value.slice(1, -1).replace(/''/g, "'")
+}

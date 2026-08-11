@@ -17,6 +17,8 @@ const TEST_IDS: string[] = [
   'partial',
   'two-columns',
   'two-columns-unique',
+  'unnamed-index',
+  'unnamed-index-unique',
 ]
 
 async function waitForDdlTableViewer() {

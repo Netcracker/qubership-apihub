@@ -1,0 +1,3 @@
+CREATE SCHEMA IF NOT EXISTS public;
+
+CREATE TABLE public.t ();

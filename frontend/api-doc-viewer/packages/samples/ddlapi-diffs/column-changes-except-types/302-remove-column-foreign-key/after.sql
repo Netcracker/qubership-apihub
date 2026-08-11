@@ -1,0 +1,9 @@
+CREATE SCHEMA IF NOT EXISTS public;
+
+CREATE TABLE public.parent (
+  id integer PRIMARY KEY
+);
+
+CREATE TABLE public.t (
+  id integer
+);

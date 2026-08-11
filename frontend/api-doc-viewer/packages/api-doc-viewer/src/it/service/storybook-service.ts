@@ -20,6 +20,14 @@ import { host } from './storybook-functions'
 import { StoryPage } from './story-page'
 
 export async function storyPage(page: Page, storyName: string): Promise<StoryPage> {
+  return storyPageWithArgs(page, storyName)
+}
+
+export async function storyPageWithArgs(
+  page: Page,
+  storyName: string,
+  args?: Record<string, string>,
+): Promise<StoryPage> {
   enableConsoleLogs(page, false);
   await page.evaluateOnNewDocument(() => {
     localStorage.setItem('storybook-layout', JSON.stringify({
@@ -39,7 +47,10 @@ export async function storyPage(page: Page, storyName: string): Promise<StoryPag
     }))
   })
   await page.setViewport({ width: 1800, height: 1000 })
-  await page.goto(`${host()}/iframe.html?args=&id=${storyName}&viewMode=story`, { waitUntil: 'networkidle2' })
+  const argsQuery = args
+    ? Object.entries(args).map(([key, value]) => `${key}:${value}`).join(';')
+    : ''
+  await page.goto(`${host()}/iframe.html?args=${argsQuery}&id=${storyName}&viewMode=story`, { waitUntil: 'networkidle2' })
   // way to support screenshots of long pages
   // await page.goto(`${host()}?path=/story/${storyName}`, { waitUntil: 'networkidle2' })
   // const storyFrame = await waitStoryFrame(page)

@@ -37,6 +37,11 @@ const SUITES = [
     storyFileName: "display-mode-simple-samples.stories.tsx",
     displayMode: "simple",
   },
+  {
+    suiteId: "table-descriptions",
+    title: "DDL API Suite/Table Descriptions",
+    storyFileName: "table-descriptions-samples.stories.tsx",
+  },
 ];
 
 const toPascalCase = (caseId) =>

@@ -88,8 +88,7 @@
 }
 
 .title-row-content[data-precededby="ddl-column-row"] {
-  margin-top: 8px;
-  padding-top: 8px;
+  padding-top: 16px;
   padding-bottom: 8px;
 }
 
@@ -103,47 +102,41 @@
   padding-top: 8px;
 }
 
-.ddlapi-property .title-row-content {
+.ddlapi-property .title-row-content,
+.ddlapi-property .additional-info-row-content,
+.ddlapi-property .text-row-content {
   padding-top: 0;
   padding-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 .ddlapi-property .level-indicator-column {
   align-self: stretch;
 }
 
-/* First column/index title — keep existing top margin from section header. */
-.ddlapi-property .title-row-content[data-precededby="ddl-section-header"] {
-  margin-top: 8px;
-  margin-bottom: 0;
-}
-
-/* .ddlapi-property .title-row-content[data-precededby="ddl-section-header"] .ddlapi-property-row-body {
-  padding-top: 8px;
-  padding-bottom: 8px;
-} */
-
 /*
-  Middle and last column/index titles: symmetric vertical padding on content only.
-  LevelIndicator spans the full row height (min 26 px) for a continuous line.
-  Use 3 px (not 4 px) top/bottom here: 26 px row − 6 px padding = 20 px content
-  area, which fits UxBadge (~19 px: 1 px pad + 12 px × 1.5 line-height on pre).
+  Uniform property-row band: same min-height (26 px in TSX) and symmetric 3 px
+  row-body padding for TitleRow, TextRow, and AdditionalInfoRow.
+  Inter-row spacing = 3 px bottom + 3 px top on the next row (6 px total).
+  Section-to-first-item spacing is margin-bottom on DdlApiSection headers (6 px),
+  greater than row padding and less than the Columns→Indexes section gap (16 px).
 */
-.ddlapi-property .title-row-content[data-precededby="ddl-column-row"] .ddlapi-property-row-body,
-.ddlapi-property .title-row-content[data-precededby="ddl-column-after-additional-info-row"] .ddlapi-property-row-body,
-.ddlapi-property .title-row-content[data-precededby="ddl-index-row"] .ddlapi-property-row-body {
+
+.ddlapi-property .title-row-content .ddlapi-property-row-body,
+.ddlapi-property .additional-info-row-content .ddlapi-property-row-body,
+.ddlapi-property .text-row-content .ddlapi-property-row-body {
   padding-top: 3px;
   padding-bottom: 3px;
 }
 
-.ddlapi-property .title-row-content[data-precededby="ddl-column-row"],
-.ddlapi-property .title-row-content[data-precededby="ddl-column-after-additional-info-row"],
-.ddlapi-property .title-row-content[data-precededby="ddl-index-row"] {
-  margin-top: 0;
-  margin-bottom: 0;
+/* Columns / Indexes section titles — gap down to the first property row. */
+.ddl-columns-node-viewer .title-row-content[data-usage="ddlapi-section"],
+.ddl-indexes-node-viewer .title-row-content[data-usage="ddlapi-section"] {
+  margin-bottom: 6px;
 }
 
-/* Last column/index row in list — 0 px bottom margin on TitleRow or AdditionalInfoRow. */
+/* Last column/index row in list — no extra list tail margin here. */
 .ddlapi-property .title-row-content[data-ddl-list-last-row="true"],
 .ddlapi-property .additional-info-row-content[data-ddl-list-last-row="true"] {
   margin-bottom: 0;
@@ -166,12 +159,8 @@
 .ddlapi-property .additional-info-row-content[data-precededby="ddl-column-after-additional-info-row"] {
   padding-top: 0;
   padding-bottom: 0;
-}
-
-.ddlapi-property .additional-info-row-content[data-precededby="ddl-column-row"] .ddlapi-property-row-body,
-.ddlapi-property .additional-info-row-content[data-precededby="ddl-column-after-additional-info-row"] .ddlapi-property-row-body {
-  padding-top: 4px;
-  padding-bottom: 4px;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 /* ─── TextRowContent ────────────────────────────────────────────────────────── */
@@ -262,12 +251,8 @@
 .ddlapi-property .text-row-content[data-precededby="ddl-index-row"] {
   padding-top: 0;
   padding-bottom: 0;
-}
-
-.ddlapi-property .text-row-content[data-precededby="ddl-column-row"] .ddlapi-property-row-body,
-.ddlapi-property .text-row-content[data-precededby="ddl-index-row"] .ddlapi-property-row-body {
-  padding-top: 4px;
-  padding-bottom: 4px;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 /* DDL API End */

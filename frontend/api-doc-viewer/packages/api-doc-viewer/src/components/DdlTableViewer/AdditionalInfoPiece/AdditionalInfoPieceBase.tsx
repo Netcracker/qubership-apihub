@@ -3,19 +3,22 @@ import { FC, memo } from "react"
 export type AdditionalInfoPieceBaseProps = {
   isVisible: boolean
   value: unknown
-  className?: string
+  blockClassName?: string
+  valueClassName?: string
 }
 
 export const AdditionalInfoPieceBase: FC<AdditionalInfoPieceBaseProps> = memo<AdditionalInfoPieceBaseProps>((props) => {
-  const { isVisible, value, className } = props
+  const { isVisible, value, blockClassName, valueClassName } = props
 
   if (!isVisible) {
     return null
   }
 
   return (
-    <span className={className}>
-      {`${value}`}
+    <span className={blockClassName}>
+      <span className={valueClassName || undefined}>
+        {`${value}`}
+      </span>
     </span>
   )
 })

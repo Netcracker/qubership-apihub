@@ -7,7 +7,7 @@ import { createTreeBuildingHooks, TreeBuildingHooksFactoryParams } from "../../a
 import { AsyncApiCrawlRule } from "../json-crawl-entities/rules/types";
 import { AsyncApiTreeCrawlState } from "../json-crawl-entities/state/types";
 
-type AsyncApiTreeBuildingNodeParams = {
+export type AsyncApiTreeBuildingNodeParams = {
   value: object | null
   newDataLevel: boolean
   parent: AsyncApiTreeNode | null

@@ -1,4 +1,4 @@
 name: next-data-model-authoring
 version: 1.0.0
-description: Authoring tree builders, diff aggregators, and crawl rules in next-data-model.
+description: Authoring tree builders (plain → with-diffs inheritance), diff aggregators, and crawl rules in next-data-model.
 author: Qubership APIHUB

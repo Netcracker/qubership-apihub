@@ -1,4 +1,5 @@
 import {
+  DDL_COLUMN_GENERATED_BY,
   DdlApiColumnRowValue,
   DdlApiColumnTypeValue,
   DdlApiForeignKeyTarget,
@@ -24,7 +25,8 @@ import {
   isUUIDType,
   PgDomainSchemaType,
 } from "@apihub/next-data-model/shared/ddlapi/guards";
-import { formatDdlExpr } from "@apihub/next-data-model/shared/ddlapi/format-ddl-expr";
+import { formatDefaultValueForDisplay, formatDdlExpr } from "@apihub/next-data-model/shared/ddlapi/format-ddl-expr";
+import { resolveIndexTitle } from "@apihub/next-data-model/shared/ddlapi/index-title";
 import {
   AttrKind,
   Column,
@@ -172,37 +174,39 @@ export class DdlApiSpecTransformer {
     const identity = column.attrs?.find(attribute => attribute.kind === PgAttrKind.Identity)
     const generatedExpr = findAttr(column.attrs, AttrKind.GeneratedExpr)
     const isGenerated = identity !== undefined || generatedExpr !== undefined
-    const foreignKey = this.findForeignKeyForColumn(table, column)
-    const isForeignKey = foreignKey !== undefined
-    const foreignKeyTarget = isForeignKey && foreignKey
-      ? this.buildForeignKeyTarget(realm, foreignKey, column, owningSchemaName)
-      : undefined
+    const foreignKeys = this.findForeignKeysForColumn(table, column)
+    const foreignKeyTargets = foreignKeys
+      .map(foreignKey => this.buildForeignKeyTarget(realm, foreignKey, column, owningSchemaName))
+      .filter((target): target is DdlApiForeignKeyTarget => target !== undefined)
+    const isForeignKey = foreignKeyTargets.length > 0
 
     const columnType = this.formatColumnType(column.type)
     const schemaType = column.type?.type
     const enumValues = schemaType && isEnumType(schemaType) ? schemaType.values : undefined
 
+    const isPrimaryKey = this.isPrimaryKeyColumn(table, column)
+
     return {
       columnName: column.name,
       columnType,
       ...(enumValues ? { enumValues } : {}),
-      isPrimaryKey: this.isPrimaryKeyColumn(table, column),
-      isForeignKey,
-      ...(foreignKeyTarget ? { foreignKeyTarget } : {}),
-      isGenerated,
-      ...(identity ? { generatedBy: 'identity' as const } : {}),
-      ...(generatedExpr && !identity ? { generatedBy: 'expression' as const } : {}),
+      isPrimaryKey: isPrimaryKey,
+      isForeignKey: isForeignKey,
+      ...(foreignKeyTargets.length > 0 ? { foreignKeyTargets } : {}),
+      isGenerated: isGenerated,
+      ...(identity ? { generatedBy: DDL_COLUMN_GENERATED_BY.Identity } : {}),
+      ...(generatedExpr && !identity ? { generatedBy: DDL_COLUMN_GENERATED_BY.Expression } : {}),
       ...(generatedExpr ? { generatedExpression: generatedExpr.expr } : {}),
       isUnique: this.isUniqueColumn(table, column),
-      isNotNull: column.type?.null === false,
-      ...(column.default !== undefined ? { defaultValue: formatDdlExpr(column.default) } : {}),
+      isNotNull: !isPrimaryKey && column.type?.null === false,
+      ...(column.default !== undefined ? { defaultValue: formatDefaultValueForDisplay(column.default) } : {}),
       ...(comment ? { description: comment.text } : {}),
     }
   }
 
   private buildIndexRowValue(index: Index): DdlApiIndexRowValue {
     const partNames = (index.parts ?? [])
-      .slice()
+      .slice() // just shallow copy to avoid mutation
       .sort((left, right) => left.seqNo - right.seqNo)
       .map(part => this.formatIndexPartName(part))
       .filter(partName => partName.length > 0)
@@ -210,7 +214,7 @@ export class DdlApiSpecTransformer {
     const comment = findAttr(index.attrs, AttrKind.Comment)
 
     return {
-      ...(index.name ? { indexName: index.name } : {}),
+      indexName: resolveIndexTitle(index.name),
       partNames,
       isUnique: index.unique === true,
       ...(comment ? { description: comment.text } : {}),
@@ -226,29 +230,39 @@ export class DdlApiSpecTransformer {
     return undefined
   }
 
-  private isPrimaryKeyColumn(table: Table, column: Column): boolean {
-    return (table.primaryKey?.parts ?? []).some(part => part.column === column)
+  protected isPrimaryKeyColumn(table: Table, column: Column): boolean {
+    return (table.primaryKey?.parts ?? [])
+      .some(part => part.column?.name === column.name)
+  }
+
+  protected isSingleColumnUniqueIndexForColumn(index: Index, columnName: string): boolean {
+    return index.unique === true
+      && (index.parts ?? []).length === 1
+      && (index.parts ?? [])[0]?.column?.name === columnName
+  }
+
+  protected isSingleColumnIndexForColumn(index: Index, columnName: string): boolean {
+    return (index.parts ?? []).length === 1
+      && (index.parts ?? [])[0]?.column?.name === columnName
   }
 
   private isUniqueColumn(table: Table, column: Column): boolean {
     return (table.indexes ?? []).some(index =>
-      index.unique === true
-      && index.parts?.length === 1
-      && index.parts[0]?.column === column,
+      this.isSingleColumnUniqueIndexForColumn(index, column.name),
     )
   }
 
-  private isSameForeignKeyColumn(foreignKeyColumn: Column, column: Column): boolean {
+  protected isSameForeignKeyColumn(foreignKeyColumn: Column, column: Column): boolean {
     return foreignKeyColumn === column || foreignKeyColumn.name === column.name
   }
 
-  private findForeignKeyForColumn(table: Table, column: Column): ForeignKey | undefined {
-    return table.foreignKeys?.find(foreignKey =>
+  protected findForeignKeysForColumn(table: Table, column: Column): ForeignKey[] {
+    return (table.foreignKeys ?? []).filter(foreignKey =>
       foreignKey.columns?.some(foreignKeyColumn => this.isSameForeignKeyColumn(foreignKeyColumn, column)),
     )
   }
 
-  private buildForeignKeyTarget(
+  protected buildForeignKeyTarget(
     realm: Realm,
     foreignKey: ForeignKey,
     column: Column,
@@ -468,7 +482,7 @@ export class DdlApiSpecTransformer {
     return `${typeName} (${definedParameters.join(', ')})`
   }
 
-  private formatIndexPartName(part: { column?: { name: string }; expr?: Expr }): string {
+  protected formatIndexPartName(part: { column?: { name: string }; expr?: Expr }): string {
     if (part.column?.name) {
       return part.column.name
     }

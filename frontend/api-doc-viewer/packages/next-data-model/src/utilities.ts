@@ -2,6 +2,9 @@ import { Diff } from '@netcracker/qubership-apihub-api-diff'
 import { JsonPath } from "@netcracker/qubership-apihub-json-crawl"
 import { AbstractNodeDiffsAggregator } from "./building-service/abstract/tree-with-diffs/node-diffs-data/node-diffs-aggregator"
 
+/** Keyed crawl-time diff map attached under a diffs meta key (values are {@link Diff} or nested keyed maps). */
+export type DiffsRecord = Partial<Record<string, Diff>>
+
 export function isObject(value: unknown): value is Record<PropertyKey, unknown> {
   return isObjective(value) && !Array.isArray(value)
 }
@@ -64,7 +67,7 @@ export function findKeyByValue(object: Record<PropertyKey, unknown>, value: unkn
   return Object.keys(object).find((key) => object[key] === value)
 }
 
-export function takeIfDiffsRecord(maybeDiffsRecord: unknown): Partial<Record<string, Diff>> | undefined {
+export function takeIfDiffsRecord(maybeDiffsRecord: unknown): DiffsRecord | undefined {
   if (!AbstractNodeDiffsAggregator.isDiffsRecord(maybeDiffsRecord)) {
     return undefined
   }

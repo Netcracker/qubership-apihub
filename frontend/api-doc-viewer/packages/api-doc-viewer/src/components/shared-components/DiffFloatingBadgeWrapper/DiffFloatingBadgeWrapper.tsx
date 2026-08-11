@@ -17,7 +17,7 @@ export const DiffFloatingBadgeWrapper: FC<DiffFloatingBadgeWrapperProps> = (prop
   }
 
   return (
-    <div className="flex flex-row relative w-full">
+    <div className="flex flex-row relative w-full items-stretch">
       <UxDiffFloatingBadge variant={diffType} message={diffTypeCause} />
       {children}
     </div>

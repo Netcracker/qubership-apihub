@@ -44,7 +44,7 @@ const graphApiSchema: GraphApiSchema = buildFromSchema(
 )
 ```
 
-2. Pass the schema to the component:
+1. Pass the schema to the component:
 
 | Property      | Required | Type                     | Description                                                                                                                                                                                |
 |---------------|----------|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -94,7 +94,7 @@ const SomeComponent: FC = () => {
 
 1. Get a JSON schema.
 
-2. Pass the schema to the component:
+1. Pass the schema to the component:
 
 | Property      | Required | Type                     | Description                                                                                                                                                                                                      |
 |---------------|----------|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -150,4 +150,18 @@ const SomeComponent: FC = () => {
     
     return <JsonSchemaViewer schema={jsonSchema} />
 }
+```
+
+## AI agent configuration (APM)
+
+Agent instructions and skills for this monorepo:
+
+* **`AGENTS.md`** — generated at the repository root by `apm install`; repository orientation, view/data
+  split, cross-package DDL diffs workflow (not committed; see `.gitignore`).
+* **`apm.yml`** — APM dependency list; local packages under `agent-packages/`.
+
+Refresh deployed skills and rules after editing agent packages:
+
+```bash
+apm install --target cursor,claude --legacy-skill-paths
 ```

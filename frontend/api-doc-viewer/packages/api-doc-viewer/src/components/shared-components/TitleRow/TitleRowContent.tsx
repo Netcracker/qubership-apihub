@@ -42,6 +42,7 @@ export const TitleRowContent: FC<TitleRowContentProps> = memo<TitleRowContentPro
     subheader,
     usage = TitleRowUsage.Default,
     highlightingMode = DIFF_HIGHLIGHTING_MODES_DEFAULT,
+    hideLevelIndicatorWhenSideEmpty = false,
   } = props
 
   // diffs specific
@@ -110,6 +111,9 @@ export const TitleRowContent: FC<TitleRowContentProps> = memo<TitleRowContentPro
 
   const header = useMemo(() => {
     if (!enableHeader) {
+      if (hideLevelIndicatorWhenSideEmpty) {
+        return null
+      }
       return level > 0 && <LevelIndicator level={level} />
     }
     return (
@@ -128,7 +132,7 @@ export const TitleRowContent: FC<TitleRowContentProps> = memo<TitleRowContentPro
         {!isDdlApiPropertyRow && headerValue}
       </>
     )
-  }, [enableHeader, expandable, level, precededBy, expanded, onClickExpander, headerValue, isDdlApiPropertyRow])
+  }, [enableHeader, expandable, expanded, headerValue, hideLevelIndicatorWhenSideEmpty, isDdlApiPropertyRow, level, onClickExpander, precededBy])
 
   const usageDrivenClasses = useMemo(() => {
     return getTitleRowClassesByUsage(usage)
@@ -138,7 +142,8 @@ export const TitleRowContent: FC<TitleRowContentProps> = memo<TitleRowContentPro
     <div
       data-precededby={precededBy}
       data-ddl-list-last-row={ddlListLastRow ? true : undefined}
-      className={`title-row-content flex ${isDdlApiPropertyRow ? 'items-stretch' : 'items-center'} h-full ${usageDrivenClasses} gap-2 ${diffsStyleClasses.join(' ')}`}
+      data-usage={usage !== TitleRowUsage.Default ? usage : undefined}
+      className={`title-row-content flex w-full ${isDdlApiPropertyRow ? 'items-stretch' : 'items-center'} h-full ${usageDrivenClasses} gap-2 ${diffsStyleClasses.join(' ')}`}
     >
       {header}
       {isDdlApiPropertyRow ? (

@@ -1,6 +1,13 @@
 import type { Realm } from "@netcracker/qubership-apihub-ddlapi";
 import type { BuildFromDdlOptions } from "@netcracker/qubership-apihub-ddlapi/parser";
 
+export {
+  emptyRealmLike,
+  realmHasTables,
+  resolveDdlDiffComparePair,
+  resolveDdlDiffCompareSide,
+} from "./ddl-story-realm-utils";
+
 /**
  * Parses DDL in the browser using the real pgsql-parser / libpg-query stack.
  *
