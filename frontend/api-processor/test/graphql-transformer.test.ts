@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import { cropRawGraphQlDocumentToRawSingleOperationGraphQlDocument } from '../src'
+import { cropRawGraphQlDocumentToRawSingleOperationGraphQlDocument, GRAPHQL_DOCUMENT_TYPE, GRAPHQL_FILE_FORMAT } from '../src'
+import type { FileFormat } from '../src'
 import { buildSchema } from 'graphql'
 import { loadFileAsString } from './helpers'
+import { parseGraphQLDocument } from '../src/apitypes/graphql/graphql.document'
 
 describe('Crop raw graphql document to raw single operation document tests', () => {
   let graphql: string
@@ -143,3 +145,39 @@ describe('Crop raw graphql document to raw single operation document tests', () 
     expect(Object.keys(queryFields)).toEqual(['hello'])
   })
 })
+
+/**
+ * A published GraphQL document is stored as SDL today, so the introspection and graphapi branches are not
+ * reachable through a publish. They exist for the day the real source document is persisted instead, and
+ * these cases keep them honest.
+ */
+describe('Parse a stored GraphQL document by its persisted type and format', () => {
+  const SDL = 'type Query { book: String }'
+  const GRAPHAPI = JSON.stringify({ graphapi: '0.0.1', queries: { book: { output: { typeDef: { type: { kind: 'string' } } } } } })
+
+  test.each([
+    ['SDL', SDL, GRAPHQL_DOCUMENT_TYPE.SCHEMA, GRAPHQL_FILE_FORMAT.GRAPHQL],
+    ['SDL under the gql extension', SDL, GRAPHQL_DOCUMENT_TYPE.SCHEMA, GRAPHQL_FILE_FORMAT.GQL],
+    ['a GraphAPI document', GRAPHAPI, GRAPHQL_DOCUMENT_TYPE.GRAPHAPI, GRAPHQL_FILE_FORMAT.JSON],
+  ])('should read %s', (_, source, type, format) => {
+    const schema = parseGraphQLDocument(source, type, format)
+
+    expect(Object.keys(schema.queries ?? {})).toEqual(['book'])
+  })
+
+  test('should read an introspection response', async () => {
+    const introspection = await loadFileAsString('test/projects/', 'graphql-changes/introspection', 'before.json') as string
+
+    const schema = parseGraphQLDocument(introspection, GRAPHQL_DOCUMENT_TYPE.INTROSPECTION, GRAPHQL_FILE_FORMAT.JSON)
+
+    expect(Object.keys(schema.queries ?? {})).toEqual(['book'])
+  })
+
+  test.each([
+    ['a format it cannot read', SDL, GRAPHQL_DOCUMENT_TYPE.SCHEMA, 'md', 'Unsupported format "md" for a GraphQL document'],
+    ['an introspection document that is not an object', '42', GRAPHQL_DOCUMENT_TYPE.INTROSPECTION, GRAPHQL_FILE_FORMAT.JSON, 'A GraphQL introspection document must be an object'],
+  ])('should reject %s', (_, source, type, format, message) => {
+    expect(() => parseGraphQLDocument(source, type, format as FileFormat)).toThrow(message)
+  })
+})
+

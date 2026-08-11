@@ -15,6 +15,7 @@
  */
 
 import { calculateGraphqlOperationId, isEmpty, takeIf } from '../../utils'
+import { parseGraphQLDocument } from './graphql.document'
 import {
   aggregateDiffsWithRollup,
   apiDiff,
@@ -29,14 +30,11 @@ import {
   ORIGINS_SYMBOL,
 } from '../../consts'
 import { GraphApiOperation, GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
-import { buildSchema } from 'graphql/utilities'
-import { buildGraphQLDocument } from './graphql.document'
 import {
   CompareOperationsPairContext,
   ComparisonDocument,
   DocumentsCompare,
   DocumentsCompareData,
-  FILE_KIND,
   OperationChanges,
   ResolvedVersionDocument,
   WithAggregatedDiffs,
@@ -71,21 +69,9 @@ export const compareDocuments: DocumentsCompare = async (
   const comparisonInternalDocumentId = createComparisonInternalDocumentId(previousVersion, previousPackageId, prevDoc?.slug, currentVersion, currentPackageId, currDoc?.slug)
   const prevFile = prevDoc && await rawDocumentResolver(previousVersion, previousPackageId, prevDoc.slug)
   const currFile = currDoc && await rawDocumentResolver(currentVersion, currentPackageId, currDoc.slug)
-  const prevDocSchema = prevFile && buildSchema(await prevFile.text(), { noLocation: true })
-  const currDocSchema = currFile && buildSchema(await currFile.text(), { noLocation: true })
 
-  let prevDocData = prevDocSchema && (await buildGraphQLDocument({
-    ...prevDoc,
-    source: prevFile,
-    kind: FILE_KIND.TEXT,
-    data: prevDocSchema,
-  }, prevDoc)).data
-  let currDocData = currDocSchema && (await buildGraphQLDocument({
-    ...currDoc,
-    source: currFile,
-    kind: FILE_KIND.TEXT,
-    data: currDocSchema,
-  }, currDoc)).data
+  let prevDocData = prevFile && prevDoc && parseGraphQLDocument(await prevFile.text(), prevDoc.type, prevDoc.format)
+  let currDocData = currFile && currDoc && parseGraphQLDocument(await currFile.text(), currDoc.type, currDoc.format)
 
   if (!prevDocData && currDocData) {
     prevDocData = getCopyWithEmptyOperations(currDocData)

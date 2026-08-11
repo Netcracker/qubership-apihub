@@ -15,12 +15,20 @@
  */
 
 import {
+  buildChangelogPackage,
   buildGqlChangelogPackage,
   changesSummaryMatcher,
+  LocalRegistry,
   numberOfImpactedOperationsMatcher,
   operationChangesMatcher,
 } from './helpers'
-import { BREAKING_CHANGE_TYPE, GRAPHQL_API_TYPE, NON_BREAKING_CHANGE_TYPE } from '../src'
+import {
+  BREAKING_CHANGE_TYPE,
+  GRAPHQL_API_TYPE,
+  GRAPHQL_DOCUMENT_TYPE,
+  GRAPHQL_FILE_FORMAT,
+  NON_BREAKING_CHANGE_TYPE,
+} from '../src'
 
 describe('Graphql changes test', () => {
   describe('Added/removed/changed operations handling', () => {
@@ -41,6 +49,42 @@ describe('Graphql changes test', () => {
       expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
       expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
     })
+  })
+
+  // Both versions are published by the current builder, so their documents describe the artifact and are
+  // read back as SDL. The introspection and graphapi read paths are covered in `graphql-transformer.test.ts`.
+  test('should parse the previous document published from introspection to build a diff', async () => {
+    const result = await buildChangelogPackage(
+      'graphql-changes/introspection',
+      [{ fileId: 'before.json' }],
+      [{ fileId: 'after.json' }],
+    )
+
+    expect(result.notifications).toEqual([])
+    // after.json adds Query.author to before.json
+    expect(result).toEqual(changesSummaryMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
+    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
+  })
+
+  test.each([
+    ['an introspection response', 'graphql-changes/introspection', 'before.json'],
+    ['a GraphAPI document', 'graphql-changes/graphapi', 'source.json'],
+    ['SDL', 'graphql-changes/add-operation', 'before.gql'],
+  ])('should describe a document published from %s as the SDL it is stored as', async (_, project, fileId) => {
+    const registry = new LocalRegistry(project)
+
+    const result = await registry.publish(project, {
+      packageId: 'graphql-artifact-metadata',
+      version: 'v1',
+      files: [{ fileId: fileId, publish: true }],
+    })
+
+    const [document] = Array.from(result.documents.values())
+    expect(document).toEqual(expect.objectContaining({
+      type: GRAPHQL_DOCUMENT_TYPE.SCHEMA,
+      format: GRAPHQL_FILE_FORMAT.GRAPHQL,
+      filename: `${document.slug}.${GRAPHQL_FILE_FORMAT.GRAPHQL}`,
+    }))
   })
 
   test('Operation changes fields are correct', async () => {
