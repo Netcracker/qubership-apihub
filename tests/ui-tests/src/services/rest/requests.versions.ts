@@ -6,7 +6,7 @@ export async function rGetPackageVersion(rc: APIRequestContext, params: {
   packageId: string
   version: string
 }): Promise<APIResponse> {
-  return await rc.get(`/api/v2/packages/${params.packageId}/versions/${params.version}`)
+  return await rc.get(`/api/v3/packages/${params.packageId}/versions/${params.version}`)
 }
 
 export async function rUpdatePackageVersion(rc: APIRequestContext, params: {

@@ -560,14 +560,17 @@ Test data is categorized into two types based on reusability and lifecycle:
 - Non-reusable data (`_N`) is automatically cleaned up after each test run via `apihub-teardown.ts`
 - Reusable data (`_R`) persists unless explicitly cleared with `CLEAR_TD === 'all'`
 - Ensure all non-reusable test data includes `process.env.TEST_ID_N!` in its name/identifier for proper cleanup identification
+- **Do not** clear packages/versions from suite `afterAll` with `deletePackage` / ad-hoc REST deletes. Cleanup is global: `apihub-teardown.ts` calls `apihubTDM.deleteTestEntities(testId)`, which uses `DELETE /api/internal/clear/{testId}` (`rClearTestData`)
+- For `_N` entities, teardown uses `TEST_ID_N`; for `_R`, only when `CLEAR_TD === 'all'`, teardown uses `TEST_ID_R`
 
 ### Placement & Hooks
 
 - Start by defining data inside the spec (or its `tests/<feature>` folder). Only extract it to `src/test-data/**` when multiple suites genuinely need it.
 - Use Playwright lifecycle hooks to control data scope:
   - `beforeEach`/`afterEach` → per-test setup/cleanup
-  - `beforeAll`/`afterAll` → suite-level fixtures
+  - `beforeAll`/`afterAll` → suite-level fixtures (create data here; prefer global teardown for deletion)
 - When using API-based managers, wrap the calls in these hooks so that failures are easier to trace and cleanup always runs, even if the test fails early.
+- `createPackage` is already idempotent. Prefer `apihubTDM.publishVersionIfMissing(...)` only for **reusable** (`_R`) versions that must stay stable across runs/retries. For **non-reusable** (`_N`) data that must be fresh on each retry, do **not** reuse an existing version — give it a unique name (for example include `test.info().retry`) and call `publishVersion`.
 
 ### Hook Timeouts
 
@@ -581,7 +584,8 @@ test.beforeAll(async ({ apihubTDM }) => {
   test.setTimeout(HOOK_PUBLISH_TIMEOUT)
 
   await apihubTDM.createPackage([...])
-  await apihubTDM.publishVersion(V_OAS30_N)
+  // Reusable (_R): skip publish when the version already exists
+  await apihubTDM.publishVersionIfMissing(V_OAS30_R)
 })
 ```
 

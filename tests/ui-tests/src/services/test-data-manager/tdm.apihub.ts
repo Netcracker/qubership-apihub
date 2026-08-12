@@ -16,6 +16,7 @@ import {
   rFavorPackage,
   rGetPackageById,
   rGetPackagesList,
+  rGetPackageVersion,
   rGetPublishStatus,
   rGetSysadminsList,
   rGetUsersList,
@@ -250,6 +251,17 @@ export class ApihubTestDataManager {
     }, { box: true })
   }
 
+  /**
+   * Publishes a version only when it is not already present.
+   * Use for idempotent suite setup / retries.
+   */
+  async publishVersionIfMissing(params: TdmPublishVersion): Promise<void> {
+    if (await this.isVersionExist({ packageId: params.pkg.packageId, version: params.version })) {
+      return
+    }
+    await this.publishVersion(params)
+  }
+
   async updatePackageVersion(params: {
     pkg: {
       packageId: string
@@ -467,5 +479,13 @@ export class ApihubTestDataManager {
     const response = await this.getPackageById(packageId)
     const jsonBody = await response.json()
     return response.status() === 200 && jsonBody.packageId === packageId
+  }
+
+  private async isVersionExist(params: { packageId: string; version: string }): Promise<boolean> {
+    const response = await this.rest.send(rGetPackageVersion, [200, 404], params)
+    if (response.status() !== 200 && response.status() !== 404) {
+      throw Error(await getRestFailMsg(`Getting "${params.packageId}/${params.version}" version`, response))
+    }
+    return response.status() === 200
   }
 }
