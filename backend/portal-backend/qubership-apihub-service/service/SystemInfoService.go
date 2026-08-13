@@ -92,6 +92,7 @@ type SystemInfoService interface {
 	GetUnreferencedDataCleanupTimeout() int
 	GetMaintenanceVacuumCleanupSchedule() string
 	GetMaintenanceVacuumCleanupTimeout() int
+	GetExpiredS3FilesCleanupTimeout() int
 	GetExtensions() []view.Extension
 	GetAiChatConfig() config.ChatConfig
 	GetAiMCPConfig() config.MCPConfig
@@ -245,9 +246,10 @@ func (g *systemInfoServiceImpl) setDefaults() {
 	viper.SetDefault("olric.replicaCount", 1)
 	viper.SetDefault("olric.bindPort", 47375)
 	viper.SetDefault("olric.memberlistPort", 47376)
-	viper.SetDefault("cleanup.builds.schedule", "0 1 * * 0")     // at 01:00 AM on Sunday
-	viper.SetDefault("cleanup.builds.timeoutMinutes", 360)       // 6 hours
-	viper.SetDefault("cleanup.revisions.schedule", "0 21 * * 0") // at 9:00 PM on Sunday
+	viper.SetDefault("cleanup.builds.schedule", "0 1 * * 0")              // at 01:00 AM on Sunday
+	viper.SetDefault("cleanup.builds.timeoutMinutes", 360)                // 6 hours
+	viper.SetDefault("cleanup.builds.expiredS3Files.timeoutMinutes", 360) //6 hours
+	viper.SetDefault("cleanup.revisions.schedule", "0 21 * * 0")          // at 9:00 PM on Sunday
 	viper.SetDefault("cleanup.revisions.deleteLastRevision", false)
 	viper.SetDefault("cleanup.revisions.deleteReleaseRevisions", false)
 	viper.SetDefault("cleanup.revisions.ttlDays", 365)
@@ -652,6 +654,10 @@ func (g *systemInfoServiceImpl) GetMaintenanceVacuumCleanupSchedule() string {
 
 func (g *systemInfoServiceImpl) GetMaintenanceVacuumCleanupTimeout() int {
 	return g.config.Cleanup.MaintenanceVacuum.TimeoutMinutes
+}
+
+func (g *systemInfoServiceImpl) GetExpiredS3FilesCleanupTimeout() int {
+	return g.config.Cleanup.Builds.ExpiredS3Files.TimeoutMinutes
 }
 
 func (g *systemInfoServiceImpl) GetExtensions() []view.Extension {

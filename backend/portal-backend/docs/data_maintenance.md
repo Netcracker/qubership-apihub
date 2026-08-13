@@ -20,9 +20,12 @@ This document describes various data maintenance features available in the APIHU
 - [Unreferenced Data Cleanup](#unreferenced-data-cleanup)
     - [Configuration](#configuration-3)
     - [How job works](#how-job-works-3)
-- [Maintenance Vacuum](#maintenance-vacuum)
+- [Builds Cleanup](#builds-cleanup)
     - [Configuration](#configuration-4)
     - [How job works](#how-job-works-4)
+- [Maintenance Vacuum](#maintenance-vacuum)
+    - [Configuration](#configuration-5)
+    - [How job works](#how-job-works-5)
 - [Cleanup Job Schedules](#cleanup-job-schedules)
 
 ## Revisions TTL
@@ -246,6 +249,48 @@ The unreferenced data cleanup job performs the following steps:
 **Note**: Unlike other cleanup jobs, this job does not use a TTL (Time-To-Live) configuration. It removes all
 unreferenced data regardless of age, as unreferenced data serves no purpose in the system.
 
+## Builds Cleanup
+
+APIHUB backend implements an automatic cleanup mechanism for build data to reduce database and S3 storage size. The
+system runs a scheduled job that removes builds older than a fixed retention period: 1 week for successful builds and
+30 days for failed ones. When S3 storage is enabled, the job also removes the build results of these builds from the
+bucket, and deletes expired objects that no longer correspond to any build in the database.
+
+### Configuration
+
+The builds cleanup job is configured via configuration properties:
+
+| Configuration property                         | Default value | Description                                                                                                                                                                                                                                                                                                     |
+|------------------------------------------------|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `cleanup.builds.schedule`                      | `0 1 * * 0`   | Cron schedule for the cleanup job (Sunday 1:00 AM by default)                                                                                                                                                                                                                                                   |
+| `cleanup.builds.timeoutMinutes`                | `360`         | Maximum execution time for the removal of expired builds in minutes. After the timeout, the running database operations are cancelled. Must be greater than `0`. The service fails to start if the value is zero or negative.                                                                                    |
+| `cleanup.builds.expiredS3Files.timeoutMinutes` | `360`         | Maximum execution time for the expired S3 files phase in minutes. After the timeout, the sweep stops and resumes on the next run. Must be greater than `0`. The service fails to start if the value is zero or negative.                                                                                         |
+
+The expired S3 files phase runs only when S3 storage is enabled. The two timeouts are independent: the phase starts
+after the expired builds are removed and counts its own timeout from that moment, even when
+`cleanup.builds.timeoutMinutes` has already expired. The job therefore runs up to the sum of both values, which is 12
+hours with the default settings. Take this into account when scheduling the job, so that it does not overlap with the
+jobs that follow.
+
+### How job works
+
+The builds cleanup job performs the following steps:
+
+1. Checks if any migrations are running - if so, it skips execution to avoid conflicts.
+2. Checks the `build_cleanup_run` table - if the previous run happened within the current schedule interval, it skips
+   execution.
+3. With S3 storage disabled, deletes expired builds from `build_src` and `build_result`, then performs VACUUM FULL on
+   both tables.
+4. With S3 storage enabled, removes the build results of expired builds from the bucket, deletes the corresponding
+   `build_src` records and performs VACUUM FULL on `build_src`.
+5. With S3 storage enabled, runs the expired S3 files phase: walks the `build_result/` prefix in the bucket and removes
+   every object older than 45 days, regardless of whether it is still referenced in the database. The threshold is a
+   constant in the code, not a configuration property. It keeps a margin above the 30-day retention of failed builds,
+   otherwise the sweep would remove files of builds that are still referenced. The sweep restarts from the beginning of
+   the prefix on every run, as no progress is stored between runs.
+6. Writes the results of the phase to the `build_cleanup_run` table, into the `expired_s3_files_count` and
+   `expired_s3_files_details` columns.
+
 ## Maintenance Vacuum
 
 APIHUB backend runs a dedicated scheduled maintenance vacuum job to execute `VACUUM FULL ANALYZE` for eligible
@@ -273,16 +318,17 @@ The maintenance vacuum job performs the following steps:
 
 All cleanup jobs run on predefined schedules to avoid conflicts and distribute system load:
 
-| Job type                   | Default schedule | Description          | Day/Time       | Cleanup phase timeout                                      | Vacuum phase timeout       |
-|----------------------------|------------------|----------------------|----------------|------------------------------------------------------------|----------------------------|
-| Revisions Cleanup          | `0 21 * * 0`     | Sunday at 9:00 PM    | Every Sunday   | Interval between runs minus one hour                       | —                          |
-| Comparisons Cleanup        | `0 5 * * 0`      | Sunday at 5:00 AM    | Every Sunday   | Configured via `cleanup.comparisons.timeoutMinutes`        | 3 hours (not configurable) |
-| Soft Deleted Data Cleanup  | `0 22 * * 5`     | Friday at 10:00 PM   | Every Friday   | Configured via `cleanup.softDeletedData.timeoutMinutes`    | 6 hours (not configurable) |
-| Unreferenced Data Cleanup  | `0 15 * * 6`     | Saturday at 3:00 PM  | Every Saturday | Configured via `cleanup.unreferencedData.timeoutMinutes`   | 3 hours (not configurable) |
-| Builds Cleanup             | `0 1 * * 0`      | Sunday at 1:00 AM    | Every Sunday   | Configured via `cleanup.builds.timeoutMinutes`             | Shared with cleanup phase  |
-| Maintenance Vacuum         | `0 2 * * 1`      | Monday at 2:00 AM    | Every Monday   | —                                                          | Configured via `cleanup.maintenanceVacuum.timeoutMinutes` |
+| Job type                   | Default schedule | Description          | Day/Time       | Cleanup phase timeout                                                                                              | Vacuum phase timeout                                      |
+|----------------------------|------------------|----------------------|----------------|--------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
+| Revisions Cleanup          | `0 21 * * 0`     | Sunday at 9:00 PM    | Every Sunday   | Interval between runs minus one hour                                                                               | —                                                         |
+| Comparisons Cleanup        | `0 5 * * 0`      | Sunday at 5:00 AM    | Every Sunday   | Configured via `cleanup.comparisons.timeoutMinutes`                                                                | 3 hours (not configurable)                                |
+| Soft Deleted Data Cleanup  | `0 22 * * 5`     | Friday at 10:00 PM   | Every Friday   | Configured via `cleanup.softDeletedData.timeoutMinutes`                                                            | 6 hours (not configurable)                                |
+| Unreferenced Data Cleanup  | `0 15 * * 6`     | Saturday at 3:00 PM  | Every Saturday | Configured via `cleanup.unreferencedData.timeoutMinutes`                                                           | 3 hours (not configurable)                                |
+| Builds Cleanup             | `0 1 * * 0`      | Sunday at 1:00 AM    | Every Sunday   | Configured via `cleanup.builds.timeoutMinutes`, plus `cleanup.builds.expiredS3Files.timeoutMinutes` for the expired S3 files phase on top | Shared with cleanup phase                                 |
+| Maintenance Vacuum         | `0 2 * * 1`      | Monday at 2:00 AM    | Every Monday   | —                                                                                                                  | Configured via `cleanup.maintenanceVacuum.timeoutMinutes` |
 
 **Note**: when scheduling `Comparisons Cleanup`, `Soft Deleted Data Cleanup`, `Unreferenced Data Cleanup` and
 `Builds Cleanup` jobs, it is important to keep in mind that each job consists of two phases: cleanup and vacuuming of
-the affected tables. Both phases of a job should be completed before the next job starts in order to avoid excessive
-system load and database table locks.
+the affected tables. `Builds Cleanup` has a third phase, the expired S3 files sweep, when S3 storage is enabled. All
+phases of a job should be completed before the next job starts in order to avoid excessive system load and database
+table locks.

@@ -21,12 +21,15 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const removeObjectsBatchSize = 1000
+
 type MinioStorageService interface {
 	UploadFilesToBucket()
 	GetFile(ctx context.Context, tableName, entityId string) ([]byte, error)
 	UploadFile(ctx context.Context, tableName, entityId string, content []byte) error
 	RemoveFiles(ctx context.Context, tableName string, entityIds []string) error
 	DownloadFilesFromBucketToDatabase(ctx context.Context)
+	RemoveObjectsOlderThan(ctx context.Context, tableName string, before time.Time) (int, error)
 }
 
 func NewMinioStorageService(buildRepository repository.BuildResultRepository, publishRepo repository.PublishedRepository, creds *view.MinioStorageCreds, timeouts config.S3MigrationTimeoutsConfig) MinioStorageService {
@@ -456,10 +459,55 @@ func (m minioStorageServiceImpl) getFile(ctx context.Context, fullFileName strin
 }
 
 func (m minioStorageServiceImpl) RemoveFiles(ctx context.Context, tableName string, entityIds []string) error {
-	minioObjectsChan := make(chan minio.ObjectInfo, len(entityIds))
+	keys := make([]string, 0, len(entityIds))
+	for _, id := range entityIds {
+		keys = append(keys, buildFileName(tableName, id))
+	}
+	return m.removeObjectsByKeys(ctx, keys)
+}
+
+func (m minioStorageServiceImpl) RemoveObjectsOlderThan(ctx context.Context, tableName string, before time.Time) (int, error) {
+	prefix := fmt.Sprintf("%s/", tableName)
+	objectsChan := m.minioClient.client.ListObjects(ctx, m.creds.BucketName, minio.ListObjectsOptions{Prefix: prefix, Recursive: true})
+
+	deletedCount := 0
+	batch := make([]string, 0, removeObjectsBatchSize)
+	for object := range objectsChan {
+		if object.Err != nil {
+			return deletedCount, object.Err
+		}
+		if err := ctx.Err(); err != nil {
+			return deletedCount, err
+		}
+		if !object.LastModified.Before(before) {
+			continue
+		}
+
+		batch = append(batch, object.Key)
+		if len(batch) < removeObjectsBatchSize {
+			continue
+		}
+		if err := m.removeObjectsByKeys(ctx, batch); err != nil {
+			return deletedCount, err
+		}
+		deletedCount += len(batch)
+		batch = make([]string, 0, removeObjectsBatchSize)
+	}
+
+	if len(batch) > 0 {
+		if err := m.removeObjectsByKeys(ctx, batch); err != nil {
+			return deletedCount, err
+		}
+		deletedCount += len(batch)
+	}
+	return deletedCount, nil
+}
+
+func (m minioStorageServiceImpl) removeObjectsByKeys(ctx context.Context, keys []string) error {
+	minioObjectsChan := make(chan minio.ObjectInfo, len(keys))
 	utils.SafeAsync(func() {
-		for _, id := range entityIds {
-			minioObjectsChan <- minio.ObjectInfo{Key: buildFileName(tableName, id)}
+		for _, key := range keys {
+			minioObjectsChan <- minio.ObjectInfo{Key: key}
 		}
 		defer close(minioObjectsChan)
 	})

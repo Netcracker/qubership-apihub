@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
@@ -11,6 +12,14 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
+)
+
+const (
+	// expiredS3FilesTTLDays must stay above the 30-day retention of failed builds,
+	// otherwise the sweep removes files of builds that are still referenced in the database
+	expiredS3FilesTTLDays = 45
+	// cleanupRunUpdateTimeout bounds the write of the cleanup run result when the phase context is already cancelled
+	cleanupRunUpdateTimeout = 10 * time.Second
 )
 
 type DBCleanupService interface {
@@ -124,26 +133,11 @@ func (j BuildCleanupJob) Run() {
 			return
 		}
 		if j.systemInfoService.IsMinioStorageActive() {
-			ids, err := j.buildCleanupRepository.GetRemoveCandidateOldBuildEntitiesIds(ctx)
-			if err != nil {
-				log.Errorf("Failed to get up remove candidate old build ids: %v", err)
-				return
+			if err := j.cleanupOldBuilds(ctx, lockId, scheduledAt); err != nil {
+				log.Errorf("Failed to clean up old builds: %v", err)
 			}
-			if len(ids) == 0 {
-				log.Info("No old build entities to clean up")
-			} else {
-				err = j.minioStorageService.RemoveFiles(ctx, view.BUILD_RESULT_TABLE, ids)
-				if err != nil {
-					log.Errorf("Failed to remove old build results from minio storage: %v", err)
-					return
-				}
 
-				err = j.buildCleanupRepository.RemoveOldBuildSourcesByIds(ctx, ids, lockId, scheduledAt)
-				if err != nil {
-					log.Errorf("Failed to clean up old builds sources: %v", err)
-					return
-				}
-			}
+			j.cleanupExpiredS3Files(lockId)
 		} else {
 			err = j.buildCleanupRepository.RemoveOldBuildEntities(ctx, lockId, scheduledAt)
 			if err != nil {
@@ -160,5 +154,49 @@ func (j BuildCleanupJob) Run() {
 		log.Infof("Cleanup was performed at %s with results: %v", scheduledAt, *cleanupEnt)
 	} else {
 		log.Infof("Cleanup was skipped at %s", scheduledAt)
+	}
+}
+
+func (j BuildCleanupJob) cleanupOldBuilds(ctx context.Context, runId int, scheduledAt time.Time) error {
+	ids, err := j.buildCleanupRepository.GetRemoveCandidateOldBuildEntitiesIds(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get remove candidate old build ids: %w", err)
+	}
+
+	if len(ids) == 0 {
+		log.Info("No old build entities to clean up")
+		return nil
+	}
+
+	if err := j.minioStorageService.RemoveFiles(ctx, view.BUILD_RESULT_TABLE, ids); err != nil {
+		return fmt.Errorf("failed to remove old build results from minio storage: %w", err)
+	}
+
+	if err := j.buildCleanupRepository.RemoveOldBuildSourcesByIds(ctx, ids, runId, scheduledAt); err != nil {
+		return fmt.Errorf("failed to clean up old build sources: %w", err)
+	}
+
+	return nil
+}
+
+func (j BuildCleanupJob) cleanupExpiredS3Files(runId int) {
+	phaseCtx, cancel := context.WithTimeout(context.Background(), time.Duration(j.systemInfoService.GetExpiredS3FilesCleanupTimeout())*time.Minute)
+	defer cancel()
+
+	olderThan := time.Now().AddDate(0, 0, -expiredS3FilesTTLDays)
+	deletedCount, err := j.minioStorageService.RemoveObjectsOlderThan(phaseCtx, view.BUILD_RESULT_TABLE, olderThan)
+	details := ""
+	if err != nil {
+		log.Errorf("Failed to remove old S3 objects: %v", err)
+		details = err.Error()
+	}
+
+	updateCtx, updateCancel := context.WithTimeout(context.Background(), cleanupRunUpdateTimeout)
+	defer updateCancel()
+
+	if err := j.buildCleanupRepository.UpdateDeletedS3Files(updateCtx, runId, deletedCount, details); err != nil {
+		log.Errorf("Failed to update expired s3 files cleanup run: %v", err)
+	} else {
+		log.Infof("Deleted %d expired S3 objects", deletedCount)
 	}
 }

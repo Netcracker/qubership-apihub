@@ -217,10 +217,15 @@ type UnreferencedDataCleanupConfig struct {
 type BuildsCleanupConfig struct {
 	Schedule       string
 	TimeoutMinutes int `validate:"gt=0"`
+	ExpiredS3Files ExpiredS3FilesCleanupConfig
 }
 
 type MaintenanceVacuumCleanupConfig struct {
 	Schedule       string
+	TimeoutMinutes int `validate:"gt=0"`
+}
+
+type ExpiredS3FilesCleanupConfig struct {
 	TimeoutMinutes int `validate:"gt=0"`
 }
 

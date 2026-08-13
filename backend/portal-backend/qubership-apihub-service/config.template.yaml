@@ -219,6 +219,10 @@ cleanup:
     schedule: '0 1 * * 0'
     # Optional; Timeout in minutes for the builds cleanup job (performs VACUUM FULL on build tables); If not set, default value: 360; Example: 120
     timeoutMinutes: 360
+    expiredS3Files:
+      # Removal of expired S3 objects runs as a phase of the builds cleanup job and follows cleanup.builds.schedule. Only applies when S3 storage is enabled
+      # Optional; Timeout in minutes for the expired S3 files phase. After the timeout, the sweep stops and resumes on the next run; If not set, default value: 360; Example: 120
+      timeoutMinutes: 360
   ephemeralFiles:
     # Optional; Cron schedule for ephemeral files cleanup job; If not set, default value: "*/5 * * * *"; Example: "*/10 * * * *"
     schedule: '*/5 * * * *'
