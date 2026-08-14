@@ -48,10 +48,11 @@ export const PackageVersionsTable: FC<PackageVersionsTableProps> = memo<PackageV
     packageKey, permissions, status,
     onDelete, onEdit, searchValue,
   } = props
+  const statuses = useMemo(() => (status ? [status] : undefined), [status])
 
   const { versions, areVersionsLoading, fetchNextPage, isFetchingNextPage, hasNextPage } = usePackageVersions({
     packageKey: packageKey,
-    status: status,
+    status: statuses,
     textFilter: searchValue,
   })
 

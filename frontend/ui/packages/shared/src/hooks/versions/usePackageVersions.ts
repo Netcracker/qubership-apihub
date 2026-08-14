@@ -44,7 +44,7 @@ type FetchNextVersionsList = (options?: FetchNextPageOptions) => Promise<Infinit
 // TODO 13.07.23 // Is there any more optimal way to do paged/flatten result?
 export function usePagedPackageVersions(options?: Partial<{
   packageKey: Key
-  status: VersionStatus
+  status: VersionStatus[]
   textFilter: string
   sortBy: PackageVersionsSortBy
   sortOrder: SortOrder
@@ -77,7 +77,7 @@ export function usePagedPackageVersions(options?: Partial<{
 
 export function usePackageVersions(options?: Partial<{
   packageKey: Key
-  status: VersionStatus
+  status: VersionStatus[]
   textFilter: string
   sortBy: PackageVersionsSortBy
   sortOrder: SortOrder
@@ -131,9 +131,13 @@ export function usePackageVersions(options?: Partial<{
   }
 }
 
+function toStatusQueryValue(statuses: VersionStatus[]): string {
+  return statuses.map(value => PUBLISH_STATUSES.get(value)!.toLowerCase()).join(',')
+}
+
 export async function getPackageVersionsList(
   packageKey: Key,
-  status?: VersionStatus,
+  status?: VersionStatus[],
   textFilter?: string,
   sortBy?: PackageVersionsSortBy,
   sortOrder?: SortOrder,
@@ -145,7 +149,7 @@ export async function getPackageVersionsList(
   const packageId = encodeURIComponent(packageKey)
 
   const queryParams = optionalSearchParams({
-    status: { value: status, toStringValue: (value) => PUBLISH_STATUSES.get(value.toString())!.toLowerCase() },
+    status: { value: status, toStringValue: (value) => toStatusQueryValue(value as VersionStatus[]) },
     limit: { value: limit },
     page: { value: page },
     textFilter: { value: textFilter },

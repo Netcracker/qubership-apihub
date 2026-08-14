@@ -42,7 +42,11 @@ import type { PackagePermissions } from '../entities/package-permissions'
 import type { VersionStatus } from '../entities/version-status'
 import {
   DRAFT_VERSION_STATUS,
+  getPreviousVersionLabels,
+  getPreviousVersionStatuses,
+  isPreviousVersionStatusAllowed,
   NO_PREVIOUS_RELEASE_VERSION_OPTION,
+  RELEASE_PREVIOUS_VERSION_REQUIRED_MESSAGE,
   RELEASE_VERSION_STATUS,
   VERSION_STATUS_MANAGE_PERMISSIONS,
   VERSION_STATUSES,
@@ -58,6 +62,7 @@ import { CloudUploadIcon } from '../icons/CloudUploadIcon'
 import { getSplittedVersionKey, handleVersionsRevision } from '../utils/versions'
 import { ErrorTypography } from './Typography/ErrorTypography'
 import type { PackageVersions } from '../entities/versions'
+import { usePackageVersions } from '../hooks/versions/usePackageVersions'
 import { LabelsAutocomplete } from './LabelsAutocomplete'
 import type { Package, Packages } from '../entities/packages'
 import { OptionItem } from './OptionItem'
@@ -113,7 +118,8 @@ export type VersionDialogFormProps<T extends VersionFormData = VersionFormData> 
   packageObj?: Package
   onSetPackage?: () => void
   versions?: Key[]
-  previousVersions?: Key[]
+  previousVersionsPackageKey?: Key
+  previousVersions?: PackageVersions
   getVersionLabels?: (version: Key) => string[]
   isPublishing?: boolean
   extraValidationMassage?: string | null
@@ -130,7 +136,7 @@ export type VersionDialogFormProps<T extends VersionFormData = VersionFormData> 
   hidePreviousVersionField?: boolean
   publishButtonDisabled?: boolean
   publishFieldsDisabled?: boolean
-  currentPackageKey?: string
+  currentPackageKey?: Key
 }
 
 export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogFormProps>((props) => {
@@ -157,6 +163,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
     packages,
     packagesTitle,
     versions,
+    previousVersionsPackageKey,
     previousVersions,
     getVersionLabels,
     packagePermissions,
@@ -197,6 +204,97 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
   const onLabelsChange = useCallback((_: SyntheticEvent, value: string[]): void => onSetTargetLabels?.(value), [onSetTargetLabels])
   const onStatusChange = useCallback((_: SyntheticEvent, value: VersionStatus): void => onSetTargetStatus?.(value), [onSetTargetStatus])
   const [warningApiProcessorState, setWarningApiProcessorState] = useState(false)
+
+  const previousVersionLabels = getPreviousVersionLabels(status)
+  const getPreviousVersionOptionLabel = useCallback((value: Key): string => (
+    value === NO_PREVIOUS_RELEASE_VERSION_OPTION
+      ? previousVersionLabels.noPreviousOptionLabel
+      : getSplittedVersionKey(value).versionKey
+  ), [previousVersionLabels])
+
+  const previousVersionStatuses = useMemo(() => getPreviousVersionStatuses(status), [status])
+
+  const [previousVersionSearch, setPreviousVersionSearch] = useState('')
+  const debouncedSetPreviousVersionSearch = useMemo(
+    () => debounce(setPreviousVersionSearch, DEFAULT_DEBOUNCE),
+    [],
+  )
+
+  const { versions: queriedPreviousVersions, areVersionsLoading: arePreviousVersionsLoading } = usePackageVersions({
+    packageKey: previousVersionsPackageKey,
+    status: previousVersionStatuses,
+    textFilter: previousVersionSearch,
+    enabled: !hidePreviousVersionField && previousVersions === undefined && !!previousVersionsPackageKey,
+  })
+
+  const normalizedPreviousVersions = useMemo(
+    () => handleVersionsRevision(previousVersions ?? queriedPreviousVersions),
+    [previousVersions, queriedPreviousVersions],
+  )
+
+  const previousVersionStatusMap = useMemo(
+    () => new Map(normalizedPreviousVersions.map(({ key, status: versionStatus }) => [key, versionStatus])),
+    [normalizedPreviousVersions],
+  )
+
+  const [rememberedPreviousVersionStatus, setRememberedPreviousVersionStatus] =
+    useState<{ version: Key; status: VersionStatus } | undefined>()
+
+  useEffect(() => {
+    if (!previousVersion || previousVersion === NO_PREVIOUS_RELEASE_VERSION_OPTION) {
+      setRememberedPreviousVersionStatus(undefined)
+      return
+    }
+    const knownStatus = previousVersionStatusMap.get(previousVersion)
+    if (knownStatus) {
+      setRememberedPreviousVersionStatus({ version: previousVersion, status: knownStatus })
+      return
+    }
+    setRememberedPreviousVersionStatus(remembered => (
+      remembered?.version === previousVersion ? remembered : undefined
+    ))
+  }, [previousVersion, previousVersionStatusMap])
+
+  /**
+   * Single source for the status chip, used by the dropdown, the closed field and the validation.
+   *
+   * Order matters: the fetched list is consulted first, so a status changed on the server wins over
+   * the remembered one. The fallback applies only to the version the status was remembered for.
+   */
+  const getPreviousVersionOptionStatus = useCallback(
+    (versionKey: Key): VersionStatus | undefined =>
+      previousVersionStatusMap.get(versionKey) ??
+      (versionKey === rememberedPreviousVersionStatus?.version
+        ? rememberedPreviousVersionStatus.status
+        : undefined),
+    [previousVersionStatusMap, rememberedPreviousVersionStatus],
+  )
+
+  const previousVersionOptions = useMemo(() => {
+    const availableKeys = normalizedPreviousVersions.map(({ key }) => key)
+
+    const selectedButMissing =
+      previousVersion &&
+      previousVersion !== NO_PREVIOUS_RELEASE_VERSION_OPTION &&
+      !availableKeys.includes(previousVersion)
+
+    return [
+      NO_PREVIOUS_RELEASE_VERSION_OPTION,
+      ...(selectedButMissing ? [previousVersion] : []),
+      ...availableKeys,
+    ]
+  }, [normalizedPreviousVersions, previousVersion])
+
+  const hasInvalidPreviousVersionStatus = useMemo(() => {
+    if (!previousVersion || previousVersion === NO_PREVIOUS_RELEASE_VERSION_OPTION) {
+      return false
+    }
+    const previousStatus = getPreviousVersionOptionStatus(previousVersion)
+    if (!previousStatus) {
+      return false
+    }
+    return !isPreviousVersionStatusAllowed(status, previousStatus)
+  }, [previousVersion, getPreviousVersionOptionStatus, status])
 
   const debouncedOnWorkspacesChange = useMemo(() => debounce(onWorkspacesChange, DEFAULT_DEBOUNCE), [onWorkspacesChange])
   const debouncedOnPackagesChange = useMemo(() => debounce(onPackagesChange, DEFAULT_DEBOUNCE), [onPackagesChange])
@@ -677,22 +775,51 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                 <Autocomplete
                   disabled={isPublishFieldsDisabled}
                   value={field.value ?? null}
-                  options={previousVersions ?? []}
-                  getOptionLabel={value => getSplittedVersionKey(value).versionKey}
+                  options={previousVersionOptions}
+                  loading={arePreviousVersionsLoading}
+                  filterOptions={disableAutocompleteSearch}
+                  onInputChange={createOnInputChange((_, value) => debouncedSetPreviousVersionSearch(value))}
+                  onClose={() => debouncedSetPreviousVersionSearch('')}
+                  getOptionLabel={getPreviousVersionOptionLabel}
                   isOptionEqualToValue={(option, value) => option === getSplittedVersionKey(value).versionKey}
                   renderOption={(props, versionKey) => (
-                    <ListItem {...props} key={versionKey}>
-                      {getSplittedVersionKey(versionKey).versionKey}
-                    </ListItem>
-                  )}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      required
-                      label="Previous release version"
-                      helperText={extraValidationMassage}
+                    <OptionItem
+                      key={versionKey}
+                      props={props}
+                      title={getPreviousVersionOptionLabel(versionKey)}
+                      chipValue={getPreviousVersionOptionStatus(versionKey)}
+                      chipVariant="filled"
+                      data-testid={`Option-${versionKey}`}
                     />
                   )}
+                  renderInput={(params) => {
+                    const selectedStatus = previousVersion
+                      ? getPreviousVersionOptionStatus(previousVersion)
+                      : undefined
+
+                    return (
+                      <TextField
+                        {...params}
+                        required
+                        label={previousVersionLabels.fieldLabel}
+                        error={hasInvalidPreviousVersionStatus}
+                        helperText={hasInvalidPreviousVersionStatus
+                          ? RELEASE_PREVIOUS_VERSION_REQUIRED_MESSAGE
+                          : extraValidationMassage}
+                        InputProps={{
+                          ...params.InputProps,
+                          endAdornment: (
+                            <>
+                              {selectedStatus && (
+                                <CustomChip sx={{ mr: 0.5, height: '18px' }} value={selectedStatus}/>
+                              )}
+                              {params.InputProps.endAdornment}
+                            </>
+                          ),
+                        }}
+                      />
+                    )
+                  }}
                   onChange={(_, value) => {
                     setValue('previousVersion', value ?? NO_PREVIOUS_RELEASE_VERSION_OPTION)
                     setSelectedPreviousVersion?.(value ?? NO_PREVIOUS_RELEASE_VERSION_OPTION)
@@ -724,7 +851,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
           variant="contained"
           type="submit"
           loading={isPublishing}
-          disabled={isFileReading || publishButtonDisabled || publishFieldsDisabled || warningApiProcessorState}
+          disabled={isFileReading || publishButtonDisabled || publishFieldsDisabled || warningApiProcessorState || hasInvalidPreviousVersionStatus}
           data-testid={submitButtonTittle ? `${submitButtonTittle}Button` : 'PublishButton'}
         >
           {submitButtonTittle ?? 'Publish'}
@@ -745,15 +872,6 @@ export function replaceEmptyPreviousVersion(previousVersion: Key): Key {
   return previousVersion === NO_PREVIOUS_RELEASE_VERSION_OPTION
     ? EMPTY_VERSION_KEY
     : previousVersion
-}
-
-export function usePreviousVersionOptions(versions: PackageVersions): VersionKey[] {
-  const versionsWithoutRevision = handleVersionsRevision(versions)
-
-  return useMemo(() => ([
-    NO_PREVIOUS_RELEASE_VERSION_OPTION,
-    ...versionsWithoutRevision.filter(({ status }) => status === RELEASE_VERSION_STATUS).map(({ key }) => key),
-  ]), [versionsWithoutRevision])
 }
 
 export function getVersionOptions(versionLabelsMap: Record<string, string[]>, targetVersion: string): VersionKey[] {

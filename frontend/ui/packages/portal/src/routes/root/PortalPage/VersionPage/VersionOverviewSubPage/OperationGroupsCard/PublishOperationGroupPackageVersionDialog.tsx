@@ -25,7 +25,6 @@ import {
   getPackageOptions,
   getVersionOptions,
   replaceEmptyPreviousVersion,
-  usePreviousVersionOptions,
   VersionDialogForm,
 } from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
 import { useForm } from 'react-hook-form'
@@ -33,7 +32,6 @@ import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entit
 import {
   DRAFT_VERSION_STATUS,
   NO_PREVIOUS_RELEASE_VERSION_OPTION,
-  RELEASE_VERSION_STATUS,
 } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import type { Package } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { PACKAGE_KIND, WORKSPACE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
@@ -76,11 +74,6 @@ const PublishOperationGroupPackageVersionPopup: FC<PopupProps> = memo<PopupProps
     kind: WORKSPACE_KIND,
     textFilter: workspacesFilter,
   })
-  const { versions: targetPreviousVersions } = usePackageVersions({
-    packageKey: targetPackage?.key,
-    enabled: !!targetPackage,
-    status: RELEASE_VERSION_STATUS,
-  })
 
   const [packages, arePackagesLoading] = usePackages({
     kind: PACKAGE_KIND,
@@ -94,7 +87,6 @@ const PublishOperationGroupPackageVersionPopup: FC<PopupProps> = memo<PopupProps
     textFilter: versionsFilter,
   })
 
-  const targetPreviousVersionOptions = usePreviousVersionOptions(targetPreviousVersions)
   const {
     publishId,
     publishOperationGroupPackageVersion,
@@ -189,7 +181,7 @@ const PublishOperationGroupPackageVersionPopup: FC<PopupProps> = memo<PopupProps
       onVersionsFilter={onVersionsFilter}
       areVersionsLoading={areFilteredVersionsLoading}
       getVersionLabels={getVersionLabels}
-      previousVersions={targetPreviousVersionOptions}
+      previousVersionsPackageKey={targetPackage?.key}
       onSetTargetVersion={onSetTargetVersion}
       packagePermissions={targetPackagePermissions}
       releaseVersionPattern={targetReleaseVersionPattern}

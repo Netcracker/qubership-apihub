@@ -35,13 +35,11 @@ import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entit
 import {
   DRAFT_VERSION_STATUS,
   NO_PREVIOUS_RELEASE_VERSION_OPTION,
-  RELEASE_VERSION_STATUS,
 } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import type { VersionFormData } from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
 import {
   getVersionOptions,
   replaceEmptyPreviousVersion,
-  usePreviousVersionOptions,
   VersionDialogForm,
 } from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
 import { takeIf } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
@@ -83,8 +81,6 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
     versions: filteredVersions,
     areVersionsLoading: areFilteredVersionsLoading,
   } = usePackageVersions({ textFilter: versionsFilter })
-  const { versions: previousVersions } = usePackageVersions({ status: RELEASE_VERSION_STATUS })
-  const previousVersionOptions = usePreviousVersionOptions(previousVersions)
   const [publishPackage, isPublishLoading, isPublishSuccess] = usePublishPackageVersion()
   const dashboardRefs = useDashboardReferences()
 
@@ -158,7 +154,7 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
       versions={versionOptions}
       onVersionsFilter={onVersionsFilter}
       areVersionsLoading={areFilteredVersionsLoading}
-      previousVersions={previousVersionOptions}
+      previousVersionsPackageKey={currentPackage?.key}
       getVersionLabels={getVersionLabels}
       packagePermissions={packagePermissions}
       releaseVersionPattern={releaseVersionPattern}

@@ -17,7 +17,7 @@
 import type { FC, HTMLAttributes } from 'react'
 import * as React from 'react'
 import { memo } from 'react'
-import type { TooltipProps } from '@mui/material'
+import type { ChipProps, TooltipProps } from '@mui/material'
 import { Box, ListItem, Tooltip, Typography } from '@mui/material'
 import { OverflowTooltip } from './OverflowTooltip'
 import { CustomChip } from './CustomChip'
@@ -29,6 +29,7 @@ export type OptionItemProps = {
   disabled?: boolean
   subtitle?: string
   chipValue?: string
+  chipVariant?: ChipProps['variant']
   tooltipProps?: Omit<TooltipProps, 'children'>
 } & TestableProps
 
@@ -38,6 +39,7 @@ export const OptionItem: FC<OptionItemProps> = memo<OptionItemProps>(({
   disabled,
   subtitle,
   chipValue,
+  chipVariant = 'outlined',
   tooltipProps: { title: tooltipTitle, ...rest } = {},
   'data-testid': dataTestId,
 }) => {
@@ -66,7 +68,7 @@ export const OptionItem: FC<OptionItemProps> = memo<OptionItemProps>(({
                 </OverflowTooltip>
               )}
             </Box>
-            {chipValue && <CustomChip sx={{ marginLeft: 'auto' }} variant="outlined" value={chipValue}/>}
+            {chipValue && <CustomChip sx={{ marginLeft: 'auto' }} variant={chipVariant} value={chipValue}/>}
           </Box>
         </ListItem>
       </Box>
