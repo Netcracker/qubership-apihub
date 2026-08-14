@@ -1302,56 +1302,56 @@ func (o operationRepositoryImpl) GlobalSearchForOperations(ctx context.Context, 
 
 	operationsSearchQuery := `
 select
-    o.package_id,
-    pg.name,
-    o.version,
-    o.revision,
-    all_ts.status,
-    o.operation_id,
-    o.title,
-    o.data_hash,
-    o.deprecated,
-    o.kind,
-    o.type,
-    o.metadata,
-    o.document_id,
-    parent_package_names(o.package_id) parent_names
+	o.package_id,
+	pg.name,
+	o.version,
+	o.revision,
+	all_ts.status,
+	o.operation_id,
+	o.title,
+	o.data_hash,
+	o.deprecated,
+	o.kind,
+	o.type,
+	o.metadata,
+	o.document_id,
+	parent_package_names(o.package_id) parent_names
 from operation o
-    inner join (
-        SELECT DISTINCT ON (rank, package_id, operation_id)
-            ts_rank(ts.data_vector, search_query) as rank,
-            ts.package_id   as package_id,
-            ts.operation_id as operation_id,
-            ts.version      as version,
-            ts.revision     as revision,
-            pv.status       as status
-        FROM fts_operation_search_text ts
-            inner join published_version pv
-                on pv.package_id = ts.package_id
-                and pv.version = ts.version
-                and pv.revision = ts.revision
-            cross join websearch_to_tsquery(?original_text_input) search_query
-            /*scope_join*/
-        WHERE ts.status = ?status
-            and ts.api_type = ?api_type
-            and (?versions = '{}' or ts.version like ANY(
-                    select id from unnest(?versions::text[]) id))
-            and pv.deleted_at is null
-            and pv.published_at >= ?start_date
-            and pv.published_at <= ?end_date
-            and search_query @@ ts.data_vector
-        ORDER BY ts_rank(ts.data_vector, search_query) DESC,
-                 package_id,
-                 operation_id desc,
-                 version DESC,
-                 revision DESC
-        LIMIT ?limit OFFSET ?offset
-    ) all_ts
-        on all_ts.package_id = o.package_id
-        and all_ts.version = o.version
-        and all_ts.revision = o.revision
-        and all_ts.operation_id = o.operation_id
-    inner join package_group pg on o.package_id = pg.id
+	inner join (
+		SELECT DISTINCT ON (rank, package_id, operation_id)
+			ts_rank(ts.data_vector, search_query) as rank,
+			ts.package_id   as package_id,
+			ts.operation_id as operation_id,
+			ts.version      as version,
+			ts.revision     as revision,
+			pv.status       as status
+		FROM fts_operation_search_text ts
+			inner join published_version pv
+				on pv.package_id = ts.package_id
+				and pv.version = ts.version
+				and pv.revision = ts.revision
+			cross join websearch_to_tsquery(?original_text_input) search_query
+			/*scope_join*/
+		WHERE ts.status = ?status
+			and ts.api_type = ?api_type
+			and (?versions = '{}' or ts.version like ANY(
+					select id from unnest(?versions::text[]) id))
+			and pv.deleted_at is null
+			and pv.published_at >= ?start_date
+			and pv.published_at <= ?end_date
+			and search_query @@ ts.data_vector
+		ORDER BY ts_rank(ts.data_vector, search_query) DESC,
+					package_id,
+					operation_id desc,
+					version DESC,
+					revision DESC
+		LIMIT ?limit OFFSET ?offset
+	) all_ts
+		on all_ts.package_id = o.package_id
+		and all_ts.version = o.version
+		and all_ts.revision = o.revision
+		and all_ts.operation_id = o.operation_id
+	inner join package_group pg on o.package_id = pg.id
 where all_ts.rank > 0
 order by all_ts.rank desc, o.operation_id
 limit ?limit;
@@ -1367,9 +1367,9 @@ limit ?limit;
 		//LIKE 'parent.%' cannot be used either: its prefix-to-range index rewrite requires a plan-time constant pattern,
 		//while these bounds are computed per joined row
 		packagesSearchScopeJoin = `
-            inner join unnest(?packages::text[]) as scope_pkg(parent)
-                on ts.package_id = scope_pkg.parent
-                or (ts.package_id ~>=~ (scope_pkg.parent || '.') and ts.package_id ~<~ (scope_pkg.parent || '/'))`
+			inner join unnest(?packages::text[]) as scope_pkg(parent)
+				on ts.package_id = scope_pkg.parent
+				or (ts.package_id ~>=~ (scope_pkg.parent || '.') and ts.package_id ~<~ (scope_pkg.parent || '/'))`
 	}
 
 	err := o.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {

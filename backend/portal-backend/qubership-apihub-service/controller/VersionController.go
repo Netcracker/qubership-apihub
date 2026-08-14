@@ -450,7 +450,11 @@ func (v versionControllerImpl) GetPackageVersionsList(w http.ResponseWriter, r *
 		})
 		return
 	}
-	status := r.URL.Query().Get("status")
+	statuses, customError := parseVersionStatusQueryParam(r)
+	if customError != nil {
+		utils.RespondWithCustomError(w, customError)
+		return
+	}
 
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
@@ -501,7 +505,7 @@ func (v versionControllerImpl) GetPackageVersionsList(w http.ResponseWriter, r *
 
 	versionListReq := view.VersionListReq{
 		PackageId:      packageId,
-		Status:         status,
+		Statuses:       statuses,
 		Limit:          limit,
 		Page:           page,
 		TextFilter:     textFilter,
@@ -546,8 +550,6 @@ func (v versionControllerImpl) GetDeletedPackageVersionsList(w http.ResponseWrit
 		})
 		return
 	}
-	status := r.URL.Query().Get("status")
-
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
 		utils.RespondWithCustomError(w, customError)
@@ -571,7 +573,6 @@ func (v versionControllerImpl) GetDeletedPackageVersionsList(w http.ResponseWrit
 
 	versionListReq := view.VersionListReq{
 		PackageId: packageId,
-		Status:    status,
 		Limit:     limit,
 		Page:      page,
 	}

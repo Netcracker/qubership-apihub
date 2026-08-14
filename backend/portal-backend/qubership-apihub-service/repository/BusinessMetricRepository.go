@@ -32,14 +32,14 @@ func (b businessMetricRepositoryImpl) GetBusinessMetrics(ctx context.Context, pa
 		}
 	}
 	businessMetricsQuery := fmt.Sprintf(`
-	select 
+	select
 	to_date(year || '-' || month || '-' || day, 'YYYY-MM-DD')::varchar as date,
 	%s as package_id,
 	coalesce(u.name, b.user_id) as username,
 	metric,
 	sum(d.value::int) as value
 	from business_metric b left join user_data u on b.user_id = u.user_id,
-	jsonb_each_text(data) d 
+	jsonb_each_text(data) d
 	where (? = '' or d.key::varchar ilike ? || '.%%')
 	group by 1, 2, 3, 4
 	order by 1, 2

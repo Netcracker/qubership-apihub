@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/gorilla/mux"
 )
 
@@ -129,6 +131,29 @@ func getListFromParam(r *http.Request, param string) ([]string, *exception.Custo
 	}
 
 	return strings.Split(listStr, ","), nil
+}
+
+func parseVersionStatusQueryParam(r *http.Request) ([]string, *exception.CustomError) {
+	statusParts, customError := getListFromParam(r, "status")
+	if customError != nil {
+		return nil, customError
+	}
+	statuses, err := view.ParseVersionStatuses(statusParts)
+	if err != nil {
+		value := statusParts[0]
+		var invalidStatusErr *view.InvalidVersionStatusError
+		if errors.As(err, &invalidStatusErr) {
+			value = invalidStatusErr.Value
+		}
+		return nil, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidParameterValueMsg,
+			Params:  map[string]interface{}{"param": "status", "value": value},
+			Debug:   err.Error(),
+		}
+	}
+	return statuses, nil
 }
 
 func getLimitQueryParam(r *http.Request) (int, *exception.CustomError) {

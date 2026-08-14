@@ -118,7 +118,7 @@ type VersionPatchRequest struct {
 
 type VersionListReq struct {
 	PackageId      string
-	Status         string
+	Statuses       []string
 	Limit          int
 	Page           int
 	TextFilter     string

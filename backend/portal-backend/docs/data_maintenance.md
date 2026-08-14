@@ -3,29 +3,26 @@
 This document describes various data maintenance features available in the APIHUB backend.
 
 - [Revisions TTL](#revisions-ttl)
-    - [Configuration](#configuration)
-    - [How job works](#how-job-works)
-    - [Deletion modes](#deletion-modes)
-        - [Standard mode](#standard-mode)
-        - [Last Revision Cleanup mode](#last-revision-cleanup-mode)
-        - [Release Revisions Cleanup mode](#release-revisions-cleanup-mode)
-        - [Delete All mode](#delete-all-mode)
+  - [Configuration](#configuration)
+  - [How job works](#how-job-works)
+  - [Deletion modes](#deletion-modes)
+    - [Standard mode](#standard-mode)
+    - [Last Revision Cleanup mode](#last-revision-cleanup-mode)
+    - [Release Revisions Cleanup mode](#release-revisions-cleanup-mode)
+    - [Delete All mode](#delete-all-mode)
 - [Ad-hoc comparisons TTL](#ad-hoc-comparisons-ttl)
-    - [Configuration](#configuration-1)
-    - [How job works](#how-job-works-1)
+  - [Configuration](#comparisons-configuration)
+  - [How job works](#how-comparisons-cleanup-works)
 - [Soft Deleted Data TTL](#soft-deleted-data-ttl)
-    - [Configuration](#configuration-2)
-    - [How job works](#how-job-works-2)
-    - [Affected Tables and Handling](#affected-tables-and-handling)
+  - [Configuration](#soft-deleted-data-configuration)
+  - [How job works](#how-soft-deleted-data-cleanup-works)
+  - [Affected Tables and Handling](#affected-tables-and-handling)
 - [Unreferenced Data Cleanup](#unreferenced-data-cleanup)
-    - [Configuration](#configuration-3)
-    - [How job works](#how-job-works-3)
-- [Builds Cleanup](#builds-cleanup)
-    - [Configuration](#configuration-4)
-    - [How job works](#how-job-works-4)
+  - [Configuration](#unreferenced-data-configuration)
+  - [How job works](#how-unreferenced-data-cleanup-works)
 - [Maintenance Vacuum](#maintenance-vacuum)
-    - [Configuration](#configuration-5)
-    - [How job works](#how-job-works-5)
+  - [Configuration](#maintenance-vacuum-configuration)
+  - [How job works](#how-maintenance-vacuum-works)
 - [Cleanup Job Schedules](#cleanup-job-schedules)
 
 ## Revisions TTL
@@ -112,7 +109,7 @@ APIHUB backend implements an automatic cleanup mechanism for version/operation c
 migration size. The system runs a scheduled job that removes old and irrelevant comparisons, primarily focusing on "
 ad-hoc" comparisons that are created for temporary analysis.
 
-### Configuration
+### Comparisons configuration
 
 The comparisons cleanup job is configured via configuration properties:
 
@@ -124,7 +121,7 @@ The comparisons cleanup job is configured via configuration properties:
 
 The job includes a vacuum phase that runs after the main cleanup to optimize affected database tables.
 
-### How job works
+### How comparisons cleanup works
 
 The comparisons cleanup job performs the following steps:
 
@@ -145,7 +142,7 @@ APIHUB backend implements an automatic cleanup mechanism for soft-deleted data t
 previously marked for deletion. The system runs a scheduled job that removes soft-deleted data older than a configured
 time-to-live (TTL) period.
 
-### Configuration
+### Soft deleted data configuration
 
 The soft deleted data cleanup job is configured via configuration properties:
 
@@ -155,7 +152,7 @@ The soft deleted data cleanup job is configured via configuration properties:
 | `cleanup.softDeletedData.schedule`       | `0 22 * * 5`  | Cron schedule for the cleanup job (Friday 10:00 PM by default)                                                                                                                                     |
 | `cleanup.softDeletedData.timeoutMinutes` | `600`         | Maximum execution time for the cleanup in minutes. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination. Must be greater than `0`. The service fails to start if the value is zero or negative. |
 
-### How job works
+### How soft deleted data cleanup works
 
 The soft deleted data cleanup job performs the following steps:
 
@@ -222,7 +219,7 @@ APIHUB backend implements an automatic cleanup mechanism for unreferenced data t
 performance. The system runs a scheduled job that removes data that is no longer referenced by any active entities in
 the system.
 
-### Configuration
+### Unreferenced data configuration
 
 The unreferenced data cleanup job is configured via configuration properties:
 
@@ -233,7 +230,7 @@ The unreferenced data cleanup job is configured via configuration properties:
 
 The job includes a vacuum phase that runs after the main cleanup to optimize affected database tables.
 
-### How job works
+### How unreferenced data cleanup works
 
 The unreferenced data cleanup job performs the following steps:
 
@@ -297,7 +294,7 @@ APIHUB backend runs a dedicated scheduled maintenance vacuum job to execute `VAC
 public tables. This job is independent from migration stages and should be scheduled during low-traffic windows
 because it may lock tables.
 
-### Configuration
+### Maintenance vacuum configuration
 
 The maintenance vacuum job is configured via configuration properties:
 
@@ -306,7 +303,7 @@ The maintenance vacuum job is configured via configuration properties:
 | `cleanup.maintenanceVacuum.schedule`        | `0 2 * * 1`   | Cron schedule for maintenance vacuum job (Monday 2:00 AM by default)           |
 | `cleanup.maintenanceVacuum.timeoutMinutes`  | `300`         | Maximum duration of maintenance vacuum phase (`VACUUM FULL ANALYZE`) in minutes. Must be greater than `0`. The service fails to start if the value is zero or negative. |
 
-### How job works
+### How maintenance vacuum works
 
 The maintenance vacuum job performs the following steps:
 

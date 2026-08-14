@@ -277,47 +277,47 @@ func (r *ddlContractRepositoryImpl) GlobalSearchForDDL(ctx context.Context, sear
 	var result []entity.DDLContractSearchResult
 	ddlSearchQuery := `
 select
-    dt.package_id,
-    pg.name as package_name,
-    dt.version,
-    dt.revision,
-    pv.status,
-    dt.ddl_entity_id,
-    dt.kind,
-    dt.schema_name,
-    dt.name,
-    parent_package_names(dt.package_id) parent_names
+	dt.package_id,
+	pg.name,
+	dt.version,
+	dt.revision,
+	pv.status,
+	dt.ddl_entity_id,
+	dt.kind,
+	dt.schema_name,
+	dt.name,
+	parent_package_names(dt.package_id) parent_names
 from ddl_tables dt
-         inner join (
-    SELECT DISTINCT ON (rank, package_id, ddl_entity_id)
-        ts_rank(data_vector, search_query) as rank,
-        ts.package_id    as package_id,
-        ts.ddl_entity_id as ddl_entity_id,
-        ts.version       as version,
-        ts.revision      as revision
+			inner join (
+	SELECT DISTINCT ON (rank, package_id, ddl_entity_id)
+		ts_rank(data_vector, search_query) as rank,
+		ts.package_id    as package_id,
+		ts.ddl_entity_id as ddl_entity_id,
+		ts.version       as version,
+		ts.revision      as revision
 
-    FROM fts_ddl_search_text ts,
-         websearch_to_tsquery(?original_text_input) search_query
-    WHERE ts.status = ?status
-        and (?kinds = '{}' or ts.kind = ANY(?kinds::text[]))
-        and (?versions = '{}' or version like ANY(
+	FROM fts_ddl_search_text ts,
+			websearch_to_tsquery(?original_text_input) search_query
+	WHERE ts.status = ?status
+		and (?kinds = '{}' or ts.kind = ANY(?kinds::text[]))
+		and (?versions = '{}' or version like ANY(
 						select id from unnest(?versions::text[]) id))
-        and (package_id like ANY(
+		and (package_id like ANY(
 						select id from unnest(?packages::text[]) id
 						union
 						select id||'.%' from unnest(?packages::text[]) id))
-        and search_query @@ data_vector
-    ORDER BY ts_rank(data_vector, search_query) DESC,
-             package_id,
-             ddl_entity_id desc,
-             version DESC,
-             revision DESC
-    LIMIT ?limit OFFSET ?offset
+		and search_query @@ data_vector
+	ORDER BY ts_rank(data_vector, search_query) DESC,
+				package_id,
+				ddl_entity_id desc,
+				version DESC,
+				revision DESC
+	LIMIT ?limit OFFSET ?offset
 ) all_ts
-                   on all_ts.package_id = dt.package_id and
-                      all_ts.version = dt.version and
-                      all_ts.revision = dt.revision and
-                      all_ts.ddl_entity_id = dt.ddl_entity_id
+					on all_ts.package_id = dt.package_id and
+						all_ts.version = dt.version and
+						all_ts.revision = dt.revision and
+						all_ts.ddl_entity_id = dt.ddl_entity_id
 
 inner join published_version pv on dt.package_id=pv.package_id and dt.version=pv.version and dt.revision=pv.revision
 inner join package_group pg on dt.package_id=pg.id

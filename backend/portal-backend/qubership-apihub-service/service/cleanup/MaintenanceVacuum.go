@@ -65,10 +65,10 @@ func (p *maintenanceVacuumCleanupJobProcessor) PerformVacuum(ctx context.Context
 func (p *maintenanceVacuumCleanupJobProcessor) prepareVacuumQueries(ctx context.Context) ([]string, error) {
 	var rels []tableRelation
 	_, err := p.cp.GetConnection().QueryContext(ctx, &rels, `select schemaname, relname
-				from pg_stat_all_tables where schemaname = 'public' and relname not like 'pg_%'
-				                          and ((last_analyze is null and last_autoanalyze is null)
-				        or last_analyze < (current_date - interval '1 day')
-				        or last_autoanalyze < (current_date - interval '1 day'));`)
+		from pg_stat_all_tables where schemaname = 'public' and relname not like 'pg_%'
+		and ((last_analyze is null and last_autoanalyze is null)
+			or last_analyze < (current_date - interval '1 day')
+			or last_autoanalyze < (current_date - interval '1 day'));`)
 	if err != nil {
 		return nil, err
 	}

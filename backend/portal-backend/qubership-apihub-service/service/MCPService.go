@@ -225,7 +225,7 @@ func (m mcpService) GetPackagesList(ctx context.Context, workspaceId string) ([]
 		packageInfo := &packagesMCP.Packages[i]
 		versionsReq := view.VersionListReq{
 			PackageId: packageInfo.Id,
-			Status:    "release",
+			Statuses:  []string{string(view.Release)},
 			Limit:     100,
 			Page:      0,
 			SortBy:    view.VersionSortByVersion,

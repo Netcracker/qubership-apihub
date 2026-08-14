@@ -132,47 +132,47 @@ func (r *mcpContractRepositoryImpl) GlobalSearchForMCP(ctx context.Context, sear
 	var result []entity.MCPContractSearchResult
 	mcpSearchQuery := `
 select
-    me.package_id,
-    pg.name as package_name,
-    me.version,
-    me.revision,
-    pv.status,
-    me.mcp_entity_id,
-    me.kind,
-    me.title,
-    me.mcp_endpoint,
-    parent_package_names(me.package_id) parent_names
+	me.package_id,
+	pg.name,
+	me.version,
+	me.revision,
+	pv.status,
+	me.mcp_entity_id,
+	me.kind,
+	me.title,
+	me.mcp_endpoint,
+	parent_package_names(me.package_id) parent_names
 from mcp_entities me
-         inner join (
-    SELECT DISTINCT ON (rank, package_id, mcp_entity_id)
-        ts_rank(data_vector, search_query) as rank,
-        ts.package_id    as package_id,
-        ts.mcp_entity_id as mcp_entity_id,
-        ts.version       as version,
-        ts.revision      as revision
+			inner join (
+	SELECT DISTINCT ON (rank, package_id, mcp_entity_id)
+		ts_rank(data_vector, search_query) as rank,
+		ts.package_id    as package_id,
+		ts.mcp_entity_id as mcp_entity_id,
+		ts.version       as version,
+		ts.revision      as revision
 
-    FROM fts_mcp_search_text ts,
-         websearch_to_tsquery(?original_text_input) search_query
-    WHERE ts.status = ?status
-        and (?kinds = '{}' or ts.kind = ANY(?kinds::text[]))
-        and (?versions = '{}' or version like ANY(
+	FROM fts_mcp_search_text ts,
+			websearch_to_tsquery(?original_text_input) search_query
+	WHERE ts.status = ?status
+		and (?kinds = '{}' or ts.kind = ANY(?kinds::text[]))
+		and (?versions = '{}' or version like ANY(
 						select id from unnest(?versions::text[]) id))
-        and (package_id like ANY(
+		and (package_id like ANY(
 						select id from unnest(?packages::text[]) id
 						union
 						select id||'.%' from unnest(?packages::text[]) id))
-        and search_query @@ data_vector
-    ORDER BY ts_rank(data_vector, search_query) DESC,
-             package_id,
-             mcp_entity_id desc,
-             version DESC,
-             revision DESC
-    LIMIT ?limit OFFSET ?offset
+		and search_query @@ data_vector
+	ORDER BY ts_rank(data_vector, search_query) DESC,
+				package_id,
+				mcp_entity_id desc,
+				version DESC,
+				revision DESC
+	LIMIT ?limit OFFSET ?offset
 ) all_ts
-                   on all_ts.package_id = me.package_id and
-                      all_ts.version = me.version and
-                      all_ts.revision = me.revision and
-                      all_ts.mcp_entity_id = me.mcp_entity_id
+					on all_ts.package_id = me.package_id and
+						all_ts.version = me.version and
+						all_ts.revision = me.revision and
+						all_ts.mcp_entity_id = me.mcp_entity_id
 
 inner join published_version pv on me.package_id=pv.package_id and me.version=pv.version and me.revision=pv.revision
 inner join package_group pg on me.package_id=pg.id

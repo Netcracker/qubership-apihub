@@ -1,6 +1,9 @@
 package view
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type VersionStatus string
 
@@ -23,8 +26,16 @@ func (v VersionStatus) String() string {
 	}
 }
 
+type InvalidVersionStatusError struct {
+	Value string
+}
+
+func (e *InvalidVersionStatusError) Error() string {
+	return fmt.Sprintf("unknown version status: %v", e.Value)
+}
+
 func ParseVersionStatus(s string) (VersionStatus, error) {
-	switch s {
+	switch strings.ToLower(s) {
 	case "draft":
 		return Draft, nil
 	case "release":
@@ -32,5 +43,22 @@ func ParseVersionStatus(s string) (VersionStatus, error) {
 	case "archived":
 		return Archived, nil
 	}
-	return "", fmt.Errorf("unknown version status: %v", s)
+	return "", &InvalidVersionStatusError{Value: s}
+}
+
+// ParseVersionStatuses validates each comma-separated status value from a query parameter list.
+// An empty list means no status filter (all statuses). Values are normalised to lowercase.
+func ParseVersionStatuses(parts []string) ([]string, error) {
+	if len(parts) == 0 {
+		return nil, nil
+	}
+	statuses := make([]string, 0, len(parts))
+	for _, part := range parts {
+		status, err := ParseVersionStatus(part)
+		if err != nil {
+			return nil, err
+		}
+		statuses = append(statuses, status.String())
+	}
+	return statuses, nil
 }

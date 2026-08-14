@@ -2954,14 +2954,14 @@ paths:
             type: string
         - name: status
           in: query
-          description: Filter versions by status (start with match)
+          description: |
+            Filter versions by status. Comma-separated list of values: draft, release, archived.
+            When omitted or empty, versions of all statuses are returned.
+            Unknown values return 400 Bad Request.
           required: false
           schema:
             type: string
-            enum:
-              - draft
-              - release
-              - archived
+            example: "draft,release"
         - name: checkRevisions
           in: query
           description: |

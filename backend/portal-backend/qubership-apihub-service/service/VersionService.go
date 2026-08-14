@@ -667,7 +667,7 @@ func (v versionServiceImpl) GetPackageVersionsView(ctx context.Context, req view
 
 	searchQueryReq := entity.PublishedVersionSearchQueryEntity{
 		PackageId:  req.PackageId,
-		Status:     req.Status,
+		Statuses:   req.Statuses,
 		Label:      req.Label,
 		TextFilter: req.TextFilter,
 		SortBy:     versionSortByPG,

@@ -48,7 +48,7 @@ func (r roleRepositoryImpl) AddPackageMemberRoles(ctx context.Context, entities 
 	return r.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		_, err := tx.Model(&entities).
 			OnConflict(`
-		(package_id, user_id) do update 
+		(package_id, user_id) do update
 		set updated_by = excluded.updated_by,
 			updated_at = excluded.updated_at,
 			roles = array(select distinct unnest(package_member_role.roles || excluded.roles))`).
@@ -58,13 +58,13 @@ func (r roleRepositoryImpl) AddPackageMemberRoles(ctx context.Context, entities 
 		}
 		//user is not allowed to have the same role for parent and children package
 		removeDuplicateInheritedRolesQuery := `
-		update package_member_role 
-		set roles = 
+		update package_member_role
+		set roles =
 		(
 			SELECT array
 			(
-				SELECT unnest(roles) 
-				EXCEPT 
+				SELECT unnest(roles)
+				EXCEPT
 				select unnest(roles) from package_member_role where user_id = ? and package_id = ?
 			)
 		)
@@ -153,18 +153,18 @@ func (r roleRepositoryImpl) GetPackageRolesHierarchyForUser(ctx context.Context,
 	//using unnest to sort result by packageIds array
 	query := `
 	select pg.id package_id, pg.kind package_kind, pg.name package_name, u.user_id, u.name user_name, u.email user_email, u.avatar_url user_avatar, role.id as role_id, role.role as role
-	from 
+	from
 	package_member_role p,
 	package_group pg,
 	user_data u,
-    role,
+	role,
 	UNNEST(?::text[]) WITH ORDINALITY t(package_id, ord),
-    UNNEST(p.roles) roles(role)
+	UNNEST(p.roles) roles(role)
 	where t.package_id = p.package_id
 	and p.package_id=pg.id
 	and p.user_id = ?
 	and p.user_id = u.user_id
-    and role.id = roles.role
+	and role.id = roles.role
 	order by t.ord;
 	`
 	_, err := r.cp.GetConnection().WithContext(ctx).Query(&result, query, pg.Array(packageIds), userId)
@@ -183,17 +183,17 @@ func (r roleRepositoryImpl) GetPackageHierarchyMembers(ctx context.Context, pack
 	//using unnest to sort result by packageIds array
 	query := `
 	select pg.id package_id, pg.kind package_kind, pg.name package_name, u.user_id, u.name user_name, u.email user_email, u.avatar_url user_avatar, role.id as role_id, role.role as role
-	from 
+	from
 	package_member_role p,
 	package_group pg,
 	user_data u,
-    role,
+	role,
 	UNNEST(?::text[]) WITH ORDINALITY t(package_id, ord),
-    UNNEST(p.roles) roles(role)
+	UNNEST(p.roles) roles(role)
 	where t.package_id = p.package_id
 	and p.package_id=pg.id
 	and p.user_id = u.user_id
-    and role.id = roles.role
+	and role.id = roles.role
 	order by t.ord;
 	`
 	_, err := r.cp.GetConnection().WithContext(ctx).Query(&result, query, pg.Array(packageIds))
@@ -211,12 +211,12 @@ func (r roleRepositoryImpl) GetAvailablePackageRoles(ctx context.Context, packag
 	packageIds := utils.GetPackageHierarchy(packageId)
 	query := `
 	select distinct *
-	from role 
+	from role
 	where rank <= (
-		select max(rank) from role where id in 
+		select max(rank) from role where id in
 		(
 			select unnest(roles) as role
-			from 
+			from
 			package_member_role
 			where package_id in (?)
 			and user_id = ?
@@ -309,8 +309,8 @@ func (r roleRepositoryImpl) UpdateRolePermissions(ctx context.Context, roleId st
 func (r roleRepositoryImpl) DeleteRole(ctx context.Context, roleId string) error {
 	return r.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		shiftRoleRanksDownQuery := `
-		update role 
-		set rank = rank - 1 
+		update role
+		set rank = rank - 1
 		where rank > (select rank from role where id = ?)
 		`
 		_, err := tx.Exec(shiftRoleRanksDownQuery, roleId)
@@ -324,7 +324,7 @@ func (r roleRepositoryImpl) DeleteRole(ctx context.Context, roleId string) error
 			return err
 		}
 		removeRoleFromMembers := `
-			update package_member_role 
+			update package_member_role
 			set roles = array_remove(roles, ?)
 			`
 		_, err = tx.Exec(removeRoleFromMembers, roleId)
@@ -360,7 +360,7 @@ func (r roleRepositoryImpl) GetPermissionsForRoles(ctx context.Context, roles []
 	}
 	query := `
 	select distinct unnest(permissions) as permission
-	from role 
+	from role
 	where id in(?);`
 	_, err := r.cp.GetConnection().WithContext(ctx).Query(&permissions, query, pg.In(roles))
 	if err != nil {
@@ -381,10 +381,10 @@ func (r roleRepositoryImpl) GetUserPermissions(ctx context.Context, packageId st
 	packageIds := utils.GetPackageHierarchy(packageId)
 	query := `
 	select distinct unnest(permissions) as permission
-	from role 
+	from role
 	where id in(
 		select unnest(roles) as role
-		from 
+		from
 			package_member_role
 			where package_id in (?)
 			and user_id = ?
@@ -408,10 +408,10 @@ func (r roleRepositoryImpl) GetAllUserPermissions(ctx context.Context, userId st
 	var permissions []Permission
 	query := `
 	select distinct unnest(permissions) as permission
-	from role 
+	from role
 	where id in(
 		select unnest(roles) as role
-		from 
+		from
 			package_member_role
 			where user_id = ?
 			union

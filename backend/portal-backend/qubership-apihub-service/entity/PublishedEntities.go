@@ -81,9 +81,9 @@ type PublishedVersionEntity struct {
 }
 
 type PublishedVersionSearchQueryEntity struct {
-	PackageId  string `pg:"package_id, type:varchar, use_zero"`
-	Status     string `pg:"status, type:varchar, use_zero"`
-	Label      string `pg:"label, type:varchar, use_zero"`
+	PackageId  string   `pg:"package_id, type:varchar, use_zero"`
+	Statuses   []string `pg:"statuses, type:varchar[], use_zero"`
+	Label      string   `pg:"label, type:varchar, use_zero"`
 	TextFilter string `pg:"text_filter, type:varchar, use_zero"`
 	SortBy     string `pg:"sort_by, type:varchar, use_zero"`
 	SortOrder  string `pg:"sort_order, type:varchar, use_zero"`

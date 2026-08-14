@@ -2855,11 +2855,15 @@ components:
               - changeSummary
             properties:
               ddlEntityData:
-                description: Current side of the change. Omitted for a pure remove.
-                $ref: "#/components/schemas/DdlEntity"
+                allOf:
+                  - $ref: "#/components/schemas/DdlEntity"
+                  - type: object
+                    description: Current side of the change. Omitted for a pure remove.
               previousDdlEntityData:
-                description: Previous side of the change. Omitted for a pure add.
-                $ref: "#/components/schemas/DdlEntity"
+                allOf:
+                  - $ref: "#/components/schemas/DdlEntity"
+                  - type: object
+                    description: Previous side of the change. Omitted for a pure add.
               changeSummary:
                 $ref: "#/components/schemas/ChangeSummary"
               comparisonInternalDocumentId:

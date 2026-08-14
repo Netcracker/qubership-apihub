@@ -2800,8 +2800,8 @@ func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit(ctx context
 	if searchQuery.TextFilter != "" {
 		searchQuery.TextFilter = "%" + utils.LikeEscaped(searchQuery.TextFilter) + "%"
 	}
-	if searchQuery.Status != "" {
-		searchQuery.Status = "%" + utils.LikeEscaped(searchQuery.Status) + "%"
+	if searchQuery.Statuses == nil {
+		searchQuery.Statuses = make([]string, 0)
 	}
 	if searchQuery.SortBy == "" {
 		searchQuery.SortBy = entity.GetVersionSortByPG(view.VersionSortByCreatedAt)
@@ -2827,7 +2827,7 @@ func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit(ctx context
 			where pv.deleted_at is null
 			and (pv.package_id = ?package_id)
 			and (?text_filter = '' or pv.version ilike ?text_filter OR EXISTS(SELECT 1 FROM unnest(pv.labels) as label WHERE label ILIKE ?text_filter))
-			and (?status = '' or pv.status ilike ?status)
+			and (?statuses = '{}' or pv.status = ANY(?statuses))
 			and (?label = '' or ?label = any(pv.labels))
 			order by pv.published_at desc
 			`
@@ -2904,7 +2904,7 @@ func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit(ctx context
 			left join user_data usr on usr.user_id = pv.created_by
 			left join apihub_api_keys apikey on apikey.id = pv.created_by
 			where (?text_filter = '' or pv.version ilike ?text_filter OR EXISTS(SELECT 1 FROM unnest(pv.labels) as label WHERE label ILIKE ?text_filter))
-			and (?status = '' or pv.status ilike ?status)
+			and (?statuses = '{}' or pv.status = ANY(?statuses))
 			and (?label = '' or ?label = any(pv.labels))
 			and pv.deleted_at is %s null
 			order by pv.%s %s
@@ -3245,10 +3245,10 @@ func (p publishedRepositoryImpl) GetDescendantPackages(ctx context.Context, pare
 		select g.id from package_group g inner join children on children.id = g.parent_id)
 	select * from package_group
 	where id in (select id from children)
-	  and id != ?
-	  and kind = ?
-	  and deleted_at is null`
-	_, err := p.cp.GetConnection().WithContext(ctx).Query(&result, query, parentId, parentId, entity.KIND_PACKAGE)
+		and id != ?
+		and kind = ?
+		and deleted_at is null`
+	_, err := p.cp.GetConnection().Query(&result, query, parentId, parentId, entity.KIND_PACKAGE)
 	if err != nil {
 		return nil, err
 	}
