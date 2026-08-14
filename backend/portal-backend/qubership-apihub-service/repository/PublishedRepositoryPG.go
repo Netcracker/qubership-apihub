@@ -3265,6 +3265,51 @@ func (p publishedRepositoryImpl) updateExcludeFromSearchForAllChildPackages(tx *
 	return nil
 }
 
+func (p publishedRepositoryImpl) GetParentsForPackages(ctx context.Context, ids []string, includeDeleted bool) (map[string][]entity.PackageEntity, error) {
+	result := make(map[string][]entity.PackageEntity, len(ids))
+	if len(ids) == 0 {
+		return result, nil
+	}
+
+	parentIdSet := make(map[string]struct{})
+	for _, id := range ids {
+		for _, parentId := range utils.GetParentPackageIds(id) {
+			parentIdSet[parentId] = struct{}{}
+		}
+	}
+	if len(parentIdSet) == 0 {
+		return result, nil
+	}
+	parentIds := make([]string, 0, len(parentIdSet))
+	for parentId := range parentIdSet {
+		parentIds = append(parentIds, parentId)
+	}
+
+	var parents []entity.PackageEntity
+	query := p.cp.GetConnection().WithContext(ctx).Model(&parents).Where("id in (?)", pg.In(parentIds))
+	if !includeDeleted {
+		query.Where("deleted_at is ?", nil)
+	}
+	if err := query.Select(); err != nil {
+		return nil, err
+	}
+
+	parentsById := make(map[string]entity.PackageEntity, len(parents))
+	for _, parent := range parents {
+		parentsById[parent.Id] = parent
+	}
+	for _, id := range ids {
+		ordered := make([]entity.PackageEntity, 0)
+		for _, parentId := range utils.GetParentPackageIds(id) {
+			if parent, exists := parentsById[parentId]; exists {
+				ordered = append(ordered, parent)
+			}
+		}
+		result[id] = ordered
+	}
+	return result, nil
+}
+
 func (p publishedRepositoryImpl) GetParentsForPackage(ctx context.Context, id string, includeDeleted bool) ([]entity.PackageEntity, error) {
 	var parentIds []string
 	var result []entity.PackageEntity
@@ -3466,84 +3511,168 @@ func (p publishedRepositoryImpl) deleteGroup(tx *pg.Tx, packageId string, userId
 	return totalDeletedReleaseCount, err
 }
 
-func (p publishedRepositoryImpl) GetFilteredPackagesWithOffset(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error) {
+// GetPackages lists packages with no read authorization at all. It is for the background jobs
+// that have to walk the whole catalogue; serve authenticated callers from GetReadablePackages.
+func (p publishedRepositoryImpl) GetPackages(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error) {
+	return p.selectPackages(ctx, searchReq, userId, false)
+}
+
+// GetDeletedPackages lists deleted packages with no read authorization at all.
+func (p publishedRepositoryImpl) GetDeletedPackages(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error) {
+	return p.selectPackages(ctx, searchReq, userId, true)
+}
+
+func (p publishedRepositoryImpl) selectPackages(ctx context.Context, searchReq view.PackageListReq, userId string, deleted bool) ([]entity.PackageEntity, error) {
 	var result []entity.PackageEntity
-	query := p.cp.GetConnection().ModelContext(ctx, &result).
-		Where("deleted_at is ?", nil)
-
-	if searchReq.OnlyFavorite {
-		query.Join("INNER JOIN favorite_packages as fav").
-			JoinOn("package_group.id = fav.package_id").
-			JoinOn("fav.user_id = ?", userId)
+	var conditions []string
+	if deleted {
+		conditions = append(conditions, "deleted_at is not null")
+	} else {
+		conditions = append(conditions, "deleted_at is null")
 	}
-	if searchReq.OnlyShared {
-		query.Join("INNER JOIN package_member_role as mem").
-			JoinOn("package_group.id = mem.package_id").
-			JoinOn("mem.user_id = ?", userId)
-	}
-	query.Order("name ASC").
-		Offset(searchReq.Offset).
-		Limit(searchReq.Limit)
-
-	if searchReq.TextFilter != "" {
-		searchReq.TextFilter = "%" + utils.LikeEscaped(searchReq.TextFilter) + "%"
-		query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
-			q = q.WhereOr("name ilike ?", searchReq.TextFilter).WhereOr("package_group.id ilike ?", searchReq.TextFilter)
-			return q, nil
-		})
-	}
-	if searchReq.ParentId != "" && searchReq.ParentId != "*" {
-		if searchReq.ShowAllDescendants {
-			query.Where("package_group.id ilike ?", searchReq.ParentId+".%")
-		} else {
-			query.Where("parent_id = ?", searchReq.ParentId)
-		}
-	}
-
-	if len(searchReq.Kind) != 0 {
-		query.Where("kind in (?)", pg.In(searchReq.Kind))
-	}
-	if searchReq.ServiceName != "" {
-		query.Where("service_name = ?", searchReq.ServiceName)
-	}
-	if len(searchReq.Ids) > 0 {
-		query.Where("id in (?)", pg.In(searchReq.Ids))
-	}
-
-	err := query.Select()
-	if err != nil {
+	conditions = append(conditions, packageFilters(searchReq)...)
+	query := fmt.Sprintf(`
+	select pkg.*
+	from package_group pkg
+	%s
+	order by pkg.name asc, pkg.id asc
+	%s`,
+		utils.WhereClause(conditions), utils.PagingClause(searchReq.Limit))
+	params := packagesQueryParams(searchReq, view.PackageReadScope{}, userId)
+	if _, err := p.cp.GetConnection().ModelContext(ctx, &params).Query(&result, query); err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetFilteredDeletedPackages(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error) {
-	var result []entity.PackageEntity
+// GetReadablePackages lists the packages the caller may read, each carrying the caller's effective
+// permissions on it and whether the caller favourited it.
+func (p publishedRepositoryImpl) GetReadablePackages(ctx context.Context, searchReq view.PackageListReq, scope view.PackageReadScope, userId string) ([]entity.ReadablePackageEntity, error) {
+	result := make([]entity.ReadablePackageEntity, 0)
 
-	query := p.cp.GetConnection().ModelContext(ctx, &result).
-		Where("deleted_at is not ?", nil)
-
-	query.Order("name ASC").
-		Offset(searchReq.Offset).
-		Limit(searchReq.Limit)
-
-	if searchReq.ParentId != "" && searchReq.ParentId != "*" {
-		if searchReq.ShowAllDescendants {
-			query.Where("package_group.id ilike ?", searchReq.ParentId+".%")
-		} else {
-			query.Where("parent_id = ?", searchReq.ParentId)
-		}
-	}
-
-	if len(searchReq.Kind) != 0 {
-		query.Where("kind in (?)", pg.In(searchReq.Kind))
-	}
-
-	err := query.Select()
+	query, err := readablePackagesSQL(searchReq, scope, userId)
 	if err != nil {
 		return nil, err
 	}
+	params := packagesQueryParams(searchReq, scope, userId)
+	if _, err := p.cp.GetConnection().ModelContext(ctx, &params).Query(&result, query); err != nil {
+		return nil, err
+	}
 	return result, nil
+}
+
+// readablePackagesSQL forms a page on package_group alone so that the permissions lateral, which walks each
+// package's ancestors, runs for the page rows rather than for every row that passes the filters.
+func readablePackagesSQL(searchReq view.PackageListReq, scope view.PackageReadScope, userId string) (string, error) {
+	ctes, condition, err := convertPackageReadScopeToSQL(scope, userId, "pkg.id", "pkg")
+	if err != nil {
+		return "", err
+	}
+
+	livePackagesCondition := "pkg.deleted_at is null"
+	conditions := append([]string{livePackagesCondition}, packageFilters(searchReq)...)
+	if condition != "" {
+		conditions = append(conditions, condition)
+	}
+	page := fmt.Sprintf(`page as (
+	select pkg.id
+	from package_group pkg
+	%s
+	order by pkg.name asc, pkg.id asc
+	%s
+	)`, utils.WhereClause(conditions), utils.PagingClause(searchReq.Limit))
+
+	permissionsColumn := ""
+	userPermissionsLateral := ""
+	if scope.Kind == view.PackageReadScopeUser {
+		permissionsColumn = `,
+		perms.permissions as permissions`
+		rolesAtAncestor := `
+		select unnest(m.roles) as role_id
+		from package_member_role m
+		where m.package_id = anc.id and m.user_id = ?user_id
+		union all
+		select g.default_role as role_id
+		from package_group g
+		where g.id = anc.id`
+		userPermissionsLateral = fmt.Sprintf(`cross join lateral (
+		select coalesce(array_agg(distinct perm), array[]::character varying[]) as permissions
+		from unnest(package_ancestor_ids(%s)) as anc(id)
+		join lateral (%s
+		) rl on true
+		join role r on r.id = rl.role_id
+		cross join lateral unnest(r.permissions) as perm
+	) perms`, "pkg.id", rolesAtAncestor)
+	}
+
+	return fmt.Sprintf(`
+	%s
+	select pkg.*,
+		exists (
+			select 1 from favorite_packages fav
+			where fav.user_id = ?user_id and fav.package_id = pkg.id
+		) as is_favorite%s
+	from page
+	join package_group pkg on pkg.id = page.id
+	%s
+	order by pkg.name asc, pkg.id asc`,
+		utils.WithClause(append(ctes, page)), permissionsColumn, userPermissionsLateral), nil
+}
+
+// packageFilters renders the conditions every package listing shares
+func packageFilters(searchReq view.PackageListReq) []string {
+	conditions := make([]string, 0)
+	if searchReq.OnlyFavorite {
+		favoritePackageCondition := `exists (
+			select 1 from favorite_packages fav
+			where fav.user_id = ?user_id and fav.package_id = pkg.id
+		)`
+		conditions = append(conditions, favoritePackageCondition)
+	}
+	if searchReq.OnlyShared {
+		sharedPackageCondition := `exists (
+			select 1 from package_member_role mem
+			where mem.user_id = ?user_id and mem.package_id = pkg.id
+		)`
+		conditions = append(conditions, sharedPackageCondition)
+	}
+	if searchReq.TextFilter != "" {
+		conditions = append(conditions, "(pkg.name ilike ?text_filter or pkg.id ilike ?text_filter)")
+	}
+	if searchReq.ParentId != "" && searchReq.ParentId != view.AllPackagesParentId {
+		if searchReq.ShowAllDescendants {
+			conditions = append(conditions, utils.DescendantsCondition("pkg.id", "?parent_id"))
+		} else {
+			conditions = append(conditions, "pkg.parent_id = ?parent_id")
+		}
+	}
+	if len(searchReq.Kind) > 0 {
+		conditions = append(conditions, "pkg.kind = any(?kinds::text[])")
+	}
+	if searchReq.ServiceName != "" {
+		conditions = append(conditions, "pkg.service_name = ?service_name")
+	}
+	if len(searchReq.Ids) > 0 {
+		conditions = append(conditions, "pkg.id = any(?ids::text[])")
+	}
+	return conditions
+}
+
+func packagesQueryParams(searchReq view.PackageListReq, scope view.PackageReadScope, userId string) entity.PackagesQueryParams {
+	params := entity.PackagesQueryParams{
+		UserId:      userId,
+		SubtreeRoot: scope.SubtreeRoot,
+		ParentId:    searchReq.ParentId,
+		ServiceName: searchReq.ServiceName,
+		Kinds:       searchReq.Kind,
+		Ids:         searchReq.Ids,
+		Limit:       searchReq.Limit,
+		Offset:      searchReq.Offset,
+	}
+	if searchReq.TextFilter != "" {
+		params.TextFilter = "%" + utils.LikeEscaped(searchReq.TextFilter) + "%"
+	}
+	return params
 }
 
 func (p publishedRepositoryImpl) GetVersionValidationChanges_deprecated(ctx context.Context, packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity_deprecated, error) {

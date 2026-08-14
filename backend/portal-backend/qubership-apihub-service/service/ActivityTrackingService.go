@@ -21,8 +21,8 @@ const activityTrackingTimeout = 30 * time.Second
 type ActivityTrackingService interface {
 	TrackEvent(ctx context.Context, event view.ActivityTrackingEvent) // return no error due to async processing
 
-	GetActivityHistory(ctx context.Context, req view.ActivityHistoryReq) (*view.PkgActivityResponse, error)
-	GetEventsForPackage(ctx context.Context, packageId string, includeRefs bool, limit int, page int, textFilter string, types []string) (*view.PkgActivityResponse, error)
+	GetActivityHistory(ctx context.Context, req view.ActivityHistoryReq, scope view.PackageReadScope) (*view.PkgActivityResponse, error)
+	GetEventsForPackage(ctx context.Context, packageId string, includeRefs bool, req view.ActivityHistoryReq) (*view.PkgActivityResponse, error)
 }
 
 func NewActivityTrackingService(repo repository.ActivityTrackingRepository, publishedRepo repository.PublishedRepository, userService UserService) ActivityTrackingService {
@@ -44,45 +44,23 @@ func (a activityTrackingServiceImpl) TrackEvent(ctx context.Context, event view.
 	})
 }
 
-func (a activityTrackingServiceImpl) GetActivityHistory(ctx context.Context, req view.ActivityHistoryReq) (*view.PkgActivityResponse, error) {
-	var ids []string
-
-	if req.OnlyFavorite || req.OnlyShared || len(req.Kind) > 0 {
-		packagesFilter := view.PackageListReq{
-			OnlyFavorite: req.OnlyFavorite,
-			OnlyShared:   req.OnlyShared,
-			Kind:         req.Kind,
-		}
-		packages, err := a.publishedRepo.GetFilteredPackagesWithOffset(ctx, packagesFilter, secctx.GetUserId(ctx))
-		if err != nil {
-			return nil, fmt.Errorf("failed to get packages by filer : %v.Error - %w", packagesFilter, err)
-		}
-		if packages == nil || len(packages) == 0 {
-			return &view.PkgActivityResponse{Events: make([]view.PkgActivityResponseItem, 0)}, err
-		}
-
-		for _, pkg := range packages {
-			ids = append(ids, pkg.Id)
-		}
+func (a activityTrackingServiceImpl) GetActivityHistory(ctx context.Context, req view.ActivityHistoryReq, scope view.PackageReadScope) (*view.PkgActivityResponse, error) {
+	if scope.Kind == view.PackageReadScopeNone {
+		return &view.PkgActivityResponse{Events: make([]view.PkgActivityResponseItem, 0)}, nil
 	}
 
-	// TODO: security check! need to check view rights
+	req.Types = view.ConvertEventTypes(req.Types)
 
-	atTypes := view.ConvertEventTypes(req.Types)
-
-	ents, err := a.repo.GetEventsForPackages(ctx, ids, req.Limit, req.Page, req.TextFilter, atTypes)
+	ents, err := a.repo.GetEvents(ctx, scope, req, secctx.GetUserId(ctx))
 	if err != nil {
-		return nil, fmt.Errorf("failed to get events for packages: %w", err)
-	}
-	if ents == nil || len(ents) == 0 {
-		return &view.PkgActivityResponse{Events: make([]view.PkgActivityResponseItem, 0)}, err
+		return nil, fmt.Errorf("failed to get activity events: %w", err)
 	}
 
 	return a.makePkgActivityResponse(ents)
 }
 
-func (a activityTrackingServiceImpl) GetEventsForPackage(ctx context.Context, packageId string, includeRefs bool, limit int, page int, textFilter string, typeGroups []string) (*view.PkgActivityResponse, error) {
-	pkgEnt, err := a.publishedRepo.GetPackage(ctx, packageId)
+func (a activityTrackingServiceImpl) GetEventsForPackage(ctx context.Context, packageId string, includeRefs bool, req view.ActivityHistoryReq) (*view.PkgActivityResponse, error) {
+	pkgEnt, err := a.publishedRepo.GetPackageIncludingDeleted(ctx, packageId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get package %s for events: %w", packageId, err)
 	}
@@ -106,9 +84,11 @@ func (a activityTrackingServiceImpl) GetEventsForPackage(ctx context.Context, pa
 		ids = append(ids, packageId)
 	}
 
-	atTypes := view.ConvertEventTypes(typeGroups)
+	req.Types = view.ConvertEventTypes(req.Types)
 
-	ents, err := a.repo.GetEventsForPackages(ctx, ids, limit, page, textFilter, atTypes)
+	// The caller already enforced read access on packageId, and ids holds that package plus, optionally, its
+	// descendants, which inherit read from it
+	ents, err := a.repo.GetEventsForPackages(ctx, view.PackageReadScope{Kind: view.PackageReadScopeAll}, req, ids)
 	if err != nil {
 		return nil, err
 	}

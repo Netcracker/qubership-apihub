@@ -455,6 +455,15 @@ paths:
       summary: Get activity history
       description: |
         Get activity history. Return the last N events in descending date order.
+
+        Only events from packages the caller may read are returned. A system administrator, and an API key
+        scoped to all packages, see every package. An API key scoped to a single package sees that package
+        and its descendants only. A caller with no read access at all receives an empty `events` array rather than an error.
+
+        Deleting a package does not remove its events. The feed keeps the history of a deleted package,
+        including the `delete_package` event itself, until the package is purged. A deleted package is
+        subject to the same read access as a live one, so its events reach only the callers who could read
+        it before it was deleted.
       operationId: getActivityV4
       parameters:
         - name: onlyFavorite
@@ -889,7 +898,13 @@ paths:
       tags:
         - Packages
       summary: Get packages list
-      description: Retrieve the packages list.
+      description: |
+        Retrieve the packages list.
+
+        Only packages the caller may read are returned, and paging is applied after that filter, so a page is a
+        page of readable packages. A system administrator, and an API key scoped to all packages, see every
+        package. An API key scoped to a single package sees that package and its descendants only. A caller with
+        no read access at all receives an empty `packages` array rather than an error.
       operationId: getPackages
       parameters:
         - name: parentId
@@ -1435,6 +1450,13 @@ paths:
       summary: Get activity history for the package
       description: |
         Get activity history for specific package. Return the last N events in descending date order.
+
+        Deleting a package does not remove its events. A deleted package still returns its history through
+        this endpoint, including the `delete_package` event itself, until the package is purged. `packageId`
+        returns 404 only when no such package exists.
+
+        With `includeRefs=true` the response also includes events from referenced packages that have been
+        deleted.
       operationId: getPackageIdActivityV4
       parameters:
         - name: packageId

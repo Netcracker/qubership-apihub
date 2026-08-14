@@ -36,6 +36,26 @@ type PackageEntity struct {
 	RestGroupingPrefix    string     `pg:"rest_grouping_prefix, type:varchar"`
 }
 
+type ReadablePackageEntity struct {
+	tableName struct{} `pg:"package_group, alias:package_group, discard_unknown_columns"`
+
+	PackageEntity
+	IsFavorite  bool     `pg:"is_favorite, type:bool, use_zero"`
+	Permissions []string `pg:"permissions, type:varchar[], use_zero"`
+}
+
+type PackagesQueryParams struct {
+	UserId      string   `pg:"user_id, type:varchar, use_zero"`
+	SubtreeRoot string   `pg:"subtree_root, type:varchar, use_zero"`
+	ParentId    string   `pg:"parent_id, type:varchar, use_zero"`
+	ServiceName string   `pg:"service_name, type:varchar, use_zero"`
+	TextFilter  string   `pg:"text_filter, type:varchar, use_zero"`
+	Kinds       []string `pg:"kinds, type:varchar[], use_zero"`
+	Ids         []string `pg:"ids, type:varchar[], use_zero"`
+	Limit       int      `pg:"limit, type:integer, use_zero"`
+	Offset      int      `pg:"offset, type:integer, use_zero"`
+}
+
 type PackageVersionRichEntity struct {
 	tableName struct{} `pg:"published_version, alias:published_version"`
 

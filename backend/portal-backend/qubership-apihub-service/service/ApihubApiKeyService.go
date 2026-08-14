@@ -80,7 +80,7 @@ func (t apihubApiKeyServiceImpl) CreateApiKey(ctx context.Context, packageId, na
 
 	var resultRoles []string
 
-	if packageId != "*" {
+	if packageId != view.AllPackagesApikeyScope {
 		packageEnt, err := t.publishedRepo.GetPackage(ctx, packageId)
 		if err != nil {
 			return nil, err
@@ -111,7 +111,7 @@ func (t apihubApiKeyServiceImpl) CreateApiKey(ctx context.Context, packageId, na
 			}
 			if secctx.IsSysadm(ctx) {
 				availableRoles = allRoles
-			} else if secctx.GetApiKeyPackageId(ctx) == packageId || strings.HasPrefix(packageId, secctx.GetApiKeyPackageId(ctx)+".") || secctx.GetApiKeyPackageId(ctx) == "*" {
+			} else if secctx.GetApiKeyPackageId(ctx) == packageId || strings.HasPrefix(packageId, secctx.GetApiKeyPackageId(ctx)+".") || secctx.GetApiKeyPackageId(ctx) == view.AllPackagesApikeyScope {
 				maxRoleRank := -1
 				for _, apikeyRoleId := range secctx.GetApiKeyRoles(ctx) {
 					for _, role := range allRoles {
@@ -245,7 +245,7 @@ func (t apihubApiKeyServiceImpl) CreateApiKey(ctx context.Context, packageId, na
 		return nil, err
 	}
 
-	if packageId != "*" {
+	if packageId != view.AllPackagesApikeyScope {
 		dataMap := map[string]interface{}{}
 		dataMap["apiKeyId"] = apihubApiKeyEntity.Id
 		dataMap["apiKeyName"] = apihubApiKeyEntity.Name
@@ -292,7 +292,7 @@ func (t apihubApiKeyServiceImpl) RevokePackageApiKey(ctx context.Context, apiKey
 			Params:  map[string]interface{}{"apiKeyId": apiKeyId, "packageId": packageId},
 		}
 	}
-	if packageId != "*" {
+	if packageId != view.AllPackagesApikeyScope {
 		packageEnt, err := t.publishedRepo.GetPackage(ctx, packageId)
 		if err != nil {
 			return err
@@ -336,7 +336,7 @@ func (t apihubApiKeyServiceImpl) RevokePackageApiKey(ctx context.Context, apiKey
 }
 
 func (t apihubApiKeyServiceImpl) GetProjectApiKeys(ctx context.Context, packageId string) (*view.ApihubApiKeys, error) {
-	if packageId != "*" {
+	if packageId != view.AllPackagesApikeyScope {
 		packageEnt, err := t.publishedRepo.GetPackage(ctx, packageId)
 		if err != nil {
 			return nil, err
@@ -423,7 +423,7 @@ func (t apihubApiKeyServiceImpl) GetApiKeyById(ctx context.Context, apiKeyId str
 func (t apihubApiKeyServiceImpl) CreateSystemApiKey(ctx context.Context) error {
 	apiKey := t.systemInfoService.GetSystemApiKey()
 
-	packageId, apiKeyName := "*", "system_api_key"
+	packageId, apiKeyName := view.AllPackagesApikeyScope, "system_api_key"
 	resultRoles := []string{view.SysadmRole}
 
 	existingKey, err := t.GetApiKeyByKey(ctx, apiKey)

@@ -28,6 +28,17 @@ type EnrichedActivityTrackingEntity struct {
 	NotLatestRevision bool   `pg:"not_latest_revision, type:bool"`
 }
 
+type ActivityEventsQueryParams struct {
+	UserId      string   `pg:"user_id, type:varchar, use_zero"`
+	SubtreeRoot string   `pg:"subtree_root, type:varchar, use_zero"`
+	PackageIds  []string `pg:"package_ids, type:varchar[], use_zero"`
+	Kinds       []string `pg:"kinds, type:varchar[], use_zero"`
+	Types       []string `pg:"types, type:varchar[], use_zero"`
+	TextFilter  string   `pg:"text_filter, type:varchar, use_zero"`
+	Limit       int      `pg:"limit, type:integer, use_zero"`
+	Offset      int      `pg:"offset, type:integer, use_zero"`
+}
+
 func MakeActivityTrackingEventEntity(event view.ActivityTrackingEvent) ActivityTrackingEntity {
 	return ActivityTrackingEntity{
 		Id:        uuid.New().String(),

@@ -21,7 +21,8 @@ import (
 type PackageService interface {
 	CreatePackage(ctx context.Context, packg view.SimplePackage) (*view.SimplePackage, error)
 	GetPackage(ctx context.Context, id string, withParents bool) (*view.SimplePackage, error)
-	GetPackagesList(ctx context.Context, req view.PackageListReq, showOnlyDeleted bool) (*view.Packages, error)
+	GetPackagesList(ctx context.Context, req view.PackageListReq) (*view.Packages, error)
+	GetDeletedPackagesList(ctx context.Context, req view.PackageListReq) (*view.Packages, error)
 	UpdatePackage(ctx context.Context, packg *view.PatchPackageReq, packageId string) (*view.SimplePackage, error)
 	DeletePackage(ctx context.Context, id string) error
 	FavorPackage(ctx context.Context, id string) error
@@ -337,89 +338,131 @@ func (p packageServiceImpl) GetPackage(ctx context.Context, id string, withParen
 	return packageView, nil
 }
 
-func (p packageServiceImpl) GetPackagesList(ctx context.Context, searchReq view.PackageListReq, showOnlyDeleted bool) (*view.Packages, error) {
-	var err error
-	result := make([]view.PackagesInfo, 0)
-	var entities []entity.PackageEntity
-	skipped := 0
-	if len(searchReq.Kind) == 0 {
-		searchReq.Kind = []string{entity.KIND_WORKSPACE}
-	}
+func (p packageServiceImpl) GetPackagesList(ctx context.Context, searchReq view.PackageListReq) (*view.Packages, error) {
+	searchReq = withDefaultKind(searchReq)
 
-	if showOnlyDeleted {
-		entities, err = p.publishedRepo.GetFilteredDeletedPackages(ctx, searchReq, secctx.GetUserId(ctx))
-	} else {
-		entities, err = p.publishedRepo.GetFilteredPackagesWithOffset(ctx, searchReq, secctx.GetUserId(ctx))
-	}
-
+	scope, err := p.roleService.GetPackageReadScope(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to resolve package read scope: %w", err)
 	}
+	if scope.Kind == view.PackageReadScopeNone {
+		return &view.Packages{Packages: make([]view.PackagesInfo, 0)}, nil
+	}
+	packages, err := p.publishedRepo.GetReadablePackages(ctx, searchReq, scope, secctx.GetUserId(ctx))
 	if err != nil {
 		log.Error("Failed to get packages: ", err.Error())
 		return nil, err
 	}
 
-	for _, ent := range entities {
-		var parents []view.ParentPackageInfo = nil
-		if searchReq.ShowParents {
-			parents, err = p.getParents(ctx, ent.Id, showOnlyDeleted)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		var isFavorite = true
-		if !searchReq.OnlyFavorite {
-			isFavorite, err = p.favoritesRepo.IsFavoritePackage(ctx, secctx.GetUserId(ctx), ent.Id)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		permissions, err := p.roleService.GetPermissionsForPackage(ctx, ent.Id)
+	// A user's permissions differ per package and arrive on the row. Every other caller holds one set for
+	// everything in scope, so it is resolved once.
+	var scopePermissions []string
+	if scope.Kind != view.PackageReadScopeUser {
+		scopePermissions, err = p.roleService.GetPermissionsForReadScope(ctx, scope)
 		if err != nil {
 			return nil, err
 		}
-		//do not show private packages
-		//todo move this restriction to db query
-		if !utils.SliceContains(permissions, string(view.ReadPermission)) {
-			skipped++
-			continue
-		}
-
-		var lastReleaseVersionDetails *view.VersionDetails
-		if searchReq.LastReleaseVersionDetails {
-			defaultReleaseVersion := ent.DefaultReleaseVersion
-			if defaultReleaseVersion == "" {
-				defaultReleaseVersion, err = p.versionService.GetDefaultVersion(ctx, ent.Id)
-				if err != nil {
-					return nil, err
-				}
-			}
-			if defaultReleaseVersion != "" {
-				lastReleaseVersionDetails, err = p.versionService.GetVersionDetails(ctx, ent.Id, defaultReleaseVersion)
-				if err != nil {
-					return nil, err
-				}
-			}
-		}
-
-		packagesInfo := entity.MakePackagesInfo(&ent, lastReleaseVersionDetails, parents, isFavorite, permissions, showOnlyDeleted)
-		result = append(result, *packagesInfo)
 	}
 
-	if skipped != 0 {
-		searchReq.Offset = searchReq.Offset + searchReq.Limit
-		searchReq.Limit = skipped
-		extraPackages, err := p.GetPackagesList(ctx, searchReq, showOnlyDeleted)
+	parents, err := p.parentsByPackage(ctx, searchReq, packageIds(packages), false)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]view.PackagesInfo, 0, len(packages))
+	for _, pkg := range packages {
+		permissions := scopePermissions
+		if scope.Kind == view.PackageReadScopeUser {
+			permissions = pkg.Permissions
+		}
+		lastReleaseVersionDetails, err := p.lastReleaseVersionDetails(ctx, searchReq, pkg.PackageEntity)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, extraPackages.Packages...)
+		packageEntity := pkg.PackageEntity
+		result = append(result, *entity.MakePackagesInfo(&packageEntity, lastReleaseVersionDetails,
+			parents[pkg.Id], pkg.IsFavorite, permissions, false))
 	}
-
 	return &view.Packages{Packages: result}, nil
+}
+
+// GetDeletedPackagesList lists soft deleted packages. The endpoint behind it is system administrator only, so
+// no read scope applies, and the response carries neither permissions nor the favourite flag.
+func (p packageServiceImpl) GetDeletedPackagesList(ctx context.Context, searchReq view.PackageListReq) (*view.Packages, error) {
+	searchReq = withDefaultKind(searchReq)
+
+	packages, err := p.publishedRepo.GetDeletedPackages(ctx, searchReq, secctx.GetUserId(ctx))
+	if err != nil {
+		log.Error("Failed to get deleted packages: ", err.Error())
+		return nil, err
+	}
+
+	ids := make([]string, 0, len(packages))
+	for _, pkg := range packages {
+		ids = append(ids, pkg.Id)
+	}
+	parents, err := p.parentsByPackage(ctx, searchReq, ids, true)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]view.PackagesInfo, 0, len(packages))
+	for _, pkg := range packages {
+		result = append(result, *entity.MakePackagesInfo(&pkg, nil, parents[pkg.Id], false, nil, true))
+	}
+	return &view.Packages{Packages: result}, nil
+}
+
+func withDefaultKind(searchReq view.PackageListReq) view.PackageListReq {
+	if len(searchReq.Kind) == 0 {
+		searchReq.Kind = []string{entity.KIND_WORKSPACE}
+	}
+	return searchReq
+}
+
+func packageIds(packages []entity.ReadablePackageEntity) []string {
+	ids := make([]string, 0, len(packages))
+	for _, pkg := range packages {
+		ids = append(ids, pkg.Id)
+	}
+	return ids
+}
+
+func (p packageServiceImpl) parentsByPackage(ctx context.Context, searchReq view.PackageListReq, ids []string, deleted bool) (map[string][]view.ParentPackageInfo, error) {
+	result := make(map[string][]view.ParentPackageInfo, len(ids))
+	if !searchReq.ShowParents || len(ids) == 0 {
+		return result, nil
+	}
+	parentsByPackage, err := p.publishedRepo.GetParentsForPackages(ctx, ids, deleted)
+	if err != nil {
+		return nil, err
+	}
+	for id, parents := range parentsByPackage {
+		views := make([]view.ParentPackageInfo, 0, len(parents))
+		for _, parent := range parents {
+			views = append(views, *entity.MakePackageParentView(&parent))
+		}
+		result[id] = views
+	}
+	return result, nil
+}
+
+func (p packageServiceImpl) lastReleaseVersionDetails(ctx context.Context, searchReq view.PackageListReq, pkg entity.PackageEntity) (*view.VersionDetails, error) {
+	if !searchReq.LastReleaseVersionDetails {
+		return nil, nil
+	}
+	version := pkg.DefaultReleaseVersion
+	if version == "" {
+		defaultVersion, err := p.versionService.GetDefaultVersion(ctx, pkg.Id)
+		if err != nil {
+			return nil, err
+		}
+		version = defaultVersion
+	}
+	if version == "" {
+		return nil, nil
+	}
+	return p.versionService.GetVersionDetails(ctx, pkg.Id, version)
 }
 
 func (p packageServiceImpl) UpdatePackage(ctx context.Context, packg *view.PatchPackageReq, packageId string) (*view.SimplePackage, error) {

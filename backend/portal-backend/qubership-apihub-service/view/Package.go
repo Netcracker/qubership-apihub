@@ -86,6 +86,10 @@ type VersionDetails struct {
 	NotLatestRevision bool           `json:"notLatestRevision,omitempty"`
 	Summary           *ChangeSummary `json:"summary,omitempty"`
 }
+
+// AllPackagesParentId is the parent package id that asks for packages anywhere in the tree.
+const AllPackagesParentId = "*"
+
 type PackageListReq struct {
 	Kind                      []string
 	Limit                     int

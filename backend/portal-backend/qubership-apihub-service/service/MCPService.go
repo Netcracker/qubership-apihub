@@ -213,7 +213,7 @@ func (m mcpService) GetPackagesList(ctx context.Context, workspaceId string) ([]
 	}
 
 	// Get all packages from workspace
-	packages, err := m.packageService.GetPackagesList(ctx, packageListReq, false)
+	packages, err := m.packageService.GetPackagesList(ctx, packageListReq)
 	if err != nil {
 		log.Errorf("Failed to get packages list: %v", err)
 		return nil, fmt.Errorf("failed to get packages list: %w", err)

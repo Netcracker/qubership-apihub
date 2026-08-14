@@ -1578,7 +1578,7 @@ func (v versionServiceImpl) DeleteVersionsRecursively(ctx context.Context, packa
 				ParentId:           packageId,
 				ShowAllDescendants: true,
 			}
-			packages, err := v.publishedRepo.GetFilteredPackagesWithOffset(ctx, getPackageListReq, secctx.GetUserId(ctx))
+			packages, err := v.publishedRepo.GetPackages(ctx, getPackageListReq, secctx.GetUserId(ctx))
 			if err != nil {
 				err = utils.WrapContextError(ctx, err)
 				log.Errorf("failed to get child packages for versions cleanup %s: %s", jobId, err.Error())

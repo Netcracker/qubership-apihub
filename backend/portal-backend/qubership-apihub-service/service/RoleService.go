@@ -25,10 +25,12 @@ type RoleService interface {
 	GetPackageMembers(ctx context.Context, packageId string) (*view.PackageMembers, error)
 	GetPermissionsForPackage(ctx context.Context, packageId string) ([]string, error)
 	FilterVersionsByPackageReadAccess(ctx context.Context, keys []entity.PublishedVersionKeyEntity) (accessible []entity.PublishedVersionKeyEntity, hiddenCount int, err error)
+	GetPermissionsForReadScope(ctx context.Context, scope view.PackageReadScope) ([]string, error)
 	GetUserPackagePromoteStatuses(ctx context.Context, packageIds []string, userId string) (*view.AvailablePackagePromoteStatuses, error)
 	GetAvailableVersionPublishStatuses(ctx context.Context, packageId string) ([]string, error)
 	HasRequiredPermissions(ctx context.Context, packageId string, requiredPermissions ...view.RolePermission) (bool, error)
 	HasRequiredPermissionsAcrossAllPackages(ctx context.Context, requiredPermissions ...view.RolePermission) (bool, error)
+	GetPackageReadScope(ctx context.Context) (view.PackageReadScope, error)
 	HasManageVersionPermission(ctx context.Context, packageId string, versionStatuses ...string) (bool, error)
 	ValidateDefaultRole(ctx context.Context, packageId string, roleId string) error
 	PackageRoleExists(ctx context.Context, roleId string) (bool, error)
@@ -553,7 +555,7 @@ func (r roleServiceImpl) GetPermissionsForPackage(ctx context.Context, packageId
 	}
 	if apikeyPackageId := secctx.GetApiKeyPackageId(ctx); apikeyPackageId != "" {
 		apikeyRoles := secctx.GetApiKeyRoles(ctx)
-		if apikeyPackageId != packageId && !strings.HasPrefix(packageId, apikeyPackageId+".") && apikeyPackageId != "*" {
+		if apikeyPackageId != packageId && !strings.HasPrefix(packageId, apikeyPackageId+".") && apikeyPackageId != view.AllPackagesApikeyScope {
 			return make([]string, 0), nil
 		}
 		apikeyPermissions, err := r.roleRepository.GetPermissionsForRoles(ctx, apikeyRoles)
@@ -565,12 +567,58 @@ func (r roleServiceImpl) GetPermissionsForPackage(ctx context.Context, packageId
 	return r.getUserPermissionsForPackage(ctx, packageId, secctx.GetUserId(ctx))
 }
 
+// GetPermissionsForReadScope returns the permissions the caller holds on every package in scope alike. It is
+// defined for every scope kind but PackageReadScopeUser, whose permissions differ per package and are
+// resolved by the query that lists them.
+//
+// It mirrors the first two branches of GetPermissionsForPackage, minus the package argument those branches
+// only use to reject packages outside an api key's subtree — which is what the scope already encodes.
+func (r roleServiceImpl) GetPermissionsForReadScope(ctx context.Context, scope view.PackageReadScope) ([]string, error) {
+	if scope.Kind == view.PackageReadScopeUser {
+		return nil, fmt.Errorf("package read scope of kind %v has no permissions of its own", scope.Kind)
+	}
+	if scope.Kind == view.PackageReadScopeNone {
+		return make([]string, 0), nil
+	}
+	if secctx.IsSysadm(ctx) {
+		allPermissions := make([]string, 0)
+		for _, permission := range view.GetAllRolePermissions() {
+			allPermissions = append(allPermissions, permission.Id())
+		}
+		return allPermissions, nil
+	}
+	return r.roleRepository.GetPermissionsForRoles(ctx, secctx.GetApiKeyRoles(ctx))
+}
+
 func (r roleServiceImpl) getUserPermissionsForPackage(ctx context.Context, packageId string, userId string) ([]string, error) {
 	userPermissions, err := r.roleRepository.GetUserPermissions(ctx, packageId, userId)
 	if err != nil {
 		return nil, err
 	}
 	return userPermissions, nil
+}
+
+func (r roleServiceImpl) GetPackageReadScope(ctx context.Context) (view.PackageReadScope, error) {
+	if secctx.IsSysadm(ctx) {
+		return view.PackageReadScope{Kind: view.PackageReadScopeAll}, nil
+	}
+	if apikeyPackageId := secctx.GetApiKeyPackageId(ctx); apikeyPackageId != "" {
+		apikeyPermissions, err := r.roleRepository.GetPermissionsForRoles(ctx, secctx.GetApiKeyRoles(ctx))
+		if err != nil {
+			return view.PackageReadScope{}, err
+		}
+		if !utils.SliceContains(apikeyPermissions, string(view.ReadPermission)) {
+			return view.PackageReadScope{Kind: view.PackageReadScopeNone}, nil
+		}
+		if apikeyPackageId == view.AllPackagesApikeyScope {
+			return view.PackageReadScope{Kind: view.PackageReadScopeAll}, nil
+		}
+		return view.PackageReadScope{Kind: view.PackageReadScopeSubtree, SubtreeRoot: apikeyPackageId}, nil
+	}
+	if secctx.GetUserId(ctx) == "" {
+		return view.PackageReadScope{Kind: view.PackageReadScopeNone}, nil
+	}
+	return view.PackageReadScope{Kind: view.PackageReadScopeUser}, nil
 }
 
 func (r roleServiceImpl) FilterVersionsByPackageReadAccess(ctx context.Context, keys []entity.PublishedVersionKeyEntity) ([]entity.PublishedVersionKeyEntity, int, error) {
@@ -603,7 +651,7 @@ func (r roleServiceImpl) HasRequiredPermissions(ctx context.Context, packageId s
 
 	if apikeyPackageId := secctx.GetApiKeyPackageId(ctx); apikeyPackageId != "" {
 		apikeyRoles := secctx.GetApiKeyRoles(ctx)
-		if apikeyPackageId != packageId && !strings.HasPrefix(packageId, apikeyPackageId+".") && apikeyPackageId != "*" {
+		if apikeyPackageId != packageId && !strings.HasPrefix(packageId, apikeyPackageId+".") && apikeyPackageId != view.AllPackagesApikeyScope {
 			return false, &exception.CustomError{
 				Status:  http.StatusNotFound,
 				Code:    exception.PackageNotFound,
@@ -849,7 +897,7 @@ func (r roleServiceImpl) GetAvailablePackageRoles(ctx context.Context, packageId
 	}
 	if secctx.IsSysadm(ctx) {
 		availableRoles = allRoles
-	} else if secctx.GetApiKeyPackageId(ctx) == packageId || strings.HasPrefix(packageId, secctx.GetApiKeyPackageId(ctx)+".") || secctx.GetApiKeyPackageId(ctx) == "*" {
+	} else if secctx.GetApiKeyPackageId(ctx) == packageId || strings.HasPrefix(packageId, secctx.GetApiKeyPackageId(ctx)+".") || secctx.GetApiKeyPackageId(ctx) == view.AllPackagesApikeyScope {
 		maxRoleRank := -1
 		for _, apikeyRoleId := range secctx.GetApiKeyRoles(ctx) {
 			for _, role := range allRoles {

@@ -83,7 +83,7 @@ func (p *revisionsCleanupJobProcessor) Process(ctx context.Context, jobId string
 			ParentId:     "*",
 		}
 
-		packages, err := p.publishedRepository.GetFilteredPackagesWithOffset(ctx, getPackageListReq, "")
+		packages, err := p.publishedRepository.GetPackages(ctx, getPackageListReq, "")
 		if err != nil {
 			logger.Errorf(ctx, "Failed to get packages for revisions cleanup: %s", err.Error())
 			return nil, fmt.Errorf("failed to get packages: %s", err.Error())

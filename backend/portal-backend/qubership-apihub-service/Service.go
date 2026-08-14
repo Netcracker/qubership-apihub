@@ -515,7 +515,7 @@ func main() {
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/copy", security.Secure(versionController.CopyVersion)).Methods(http.MethodPost)
 
 	r.HandleFunc("/api/v4/packages/{packageId}/activity", security.Secure(activityTrackingController.GetActivityHistoryForPackage)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v4/activity", security.SecureUser(activityTrackingController.GetActivityHistory)).Methods(http.MethodGet) //TODO: add API key strategy after authorization fix
+	r.HandleFunc("/api/v4/activity", security.Secure(activityTrackingController.GetActivityHistory)).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/groups", security.Secure(operationGroupController.CreateOperationGroup)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/groups/{groupName}", security.Secure(operationGroupController.DeleteOperationGroup)).Methods(http.MethodDelete)
