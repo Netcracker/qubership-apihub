@@ -86,11 +86,11 @@ func (r SearchQueryReq) ToDeprecated() SearchQueryReq_deprecated {
 }
 
 type SearchResult struct {
-	Operations   *[]interface{}          `json:"operations,omitempty"`
-	Packages     *[]PackageSearchResult  `json:"packages,omitempty"`
-	Documents    *[]DocumentSearchResult `json:"documents,omitempty"`
-	DdlContracts *[]interface{}          `json:"ddlContracts,omitempty"`
-	McpContracts *[]interface{}          `json:"mcpContracts,omitempty"`
+	Operations   *[]interface{}             `json:"operations,omitempty"`
+	Packages     *[]PackageSearchResult     `json:"packages,omitempty"`
+	Documents    *[]DocumentSearchResult    `json:"documents,omitempty"`
+	DdlContracts *[]DdlContractSearchResult `json:"ddlContracts,omitempty"`
+	McpContracts *[]McpEntitySearchResult   `json:"mcpContracts,omitempty"`
 }
 
 type OperationSearchWeightsDebug struct {

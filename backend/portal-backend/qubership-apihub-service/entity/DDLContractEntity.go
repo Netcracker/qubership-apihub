@@ -3,7 +3,7 @@ package entity
 import "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 
 type DDLContractEntity struct {
-	tableName struct{} `pg:"ddl_tables"`
+	tableName struct{} `pg:"ddl_tables, alias:ddl_tables"`
 
 	PackageId                 string   `pg:"package_id, pk, type:varchar"`
 	Version                   string   `pg:"version, pk, type:varchar"`
@@ -64,6 +64,13 @@ type DDLContractSearchTextEntity struct {
 	Kind           string
 	SearchDataHash string
 	SearchTextData []byte
+}
+
+type FtsDdlSearchTextEntity struct {
+	tableName struct{} `pg:"fts_ddl_search_text"`
+
+	DdlEntityId    string `pg:"ddl_entity_id, type:varchar"`
+	SearchDataHash string `pg:"search_data_hash, type:varchar"`
 }
 
 type DDLContractKindCountEntity struct {

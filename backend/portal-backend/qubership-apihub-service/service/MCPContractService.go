@@ -13,8 +13,8 @@ import (
 )
 
 type MCPContractService interface {
-	ListMcpEntities(ctx context.Context, packageId, versionName, kind, mcpEndpoint, textFilter string, limit, offset int) (*view.McpEntityListView, error)
-	GetMcpEntity(ctx context.Context, packageId, versionName, mcpEntityId string, includeData bool) (interface{}, error)
+	ListMcpEntities(ctx context.Context, packageId, versionName, kind, mcpEndpoint, refPackageId, textFilter string, limit, offset int) (*view.McpEntityListView, error)
+	GetMcpEntity(ctx context.Context, packageId, versionName, mcpEntityId string) (interface{}, error)
 	GetVersionSummary(ctx context.Context, packageId, versionName string) (map[string]view.McpEndpointSummary, error)
 	GlobalSearchForMCP(ctx context.Context, searchReq view.SearchQueryReq) (*view.SearchResult, error)
 }
@@ -45,20 +45,23 @@ func (s *mcpContractServiceImpl) resolveRevision(ctx context.Context, packageId,
 	return version.Version, version.Revision, nil
 }
 
-func (s *mcpContractServiceImpl) ListMcpEntities(ctx context.Context, packageId, versionName, kind, mcpEndpoint, textFilter string, limit, offset int) (*view.McpEntityListView, error) {
+func (s *mcpContractServiceImpl) ListMcpEntities(ctx context.Context, packageId, versionName, kind, mcpEndpoint, refPackageId, textFilter string, limit, offset int) (*view.McpEntityListView, error) {
+	if err := checkRefPackageIdSupported(ctx, s.publishedRepo, packageId, refPackageId); err != nil {
+		return nil, err
+	}
 	version, revision, err := s.resolveRevision(ctx, packageId, versionName)
 	if err != nil {
 		return nil, err
 	}
-	entities, err := s.mcpRepo.ListMcpEntities(ctx, packageId, version, revision, kind, mcpEndpoint, textFilter, limit, offset)
+	entities, err := s.mcpRepo.ListMcpEntities(ctx, packageId, version, revision, kind, mcpEndpoint, refPackageId, textFilter, limit, offset)
 	if err != nil {
 		return nil, err
 	}
 	result := &view.McpEntityListView{Entities: make([]interface{}, 0, len(entities))}
 	packageVersions := make(map[string][]string)
 	for _, ent := range entities {
-		result.Entities = append(result.Entities, makeMcpEntityView(ent, packageId, version, revision))
-		packageVersions[packageId] = append(packageVersions[packageId], view.MakeVersionRefKey(version, revision))
+		result.Entities = append(result.Entities, entity.MakeMcpEntityView(ent))
+		packageVersions[ent.PackageId] = append(packageVersions[ent.PackageId], view.MakeVersionRefKey(ent.Version, ent.Revision))
 	}
 	packagesRefs, err := s.packageVersionEnrichmentService.GetPackageVersionRefsMap(ctx, packageVersions)
 	if err != nil {
@@ -68,36 +71,30 @@ func (s *mcpContractServiceImpl) ListMcpEntities(ctx context.Context, packageId,
 	return result, nil
 }
 
-func (s *mcpContractServiceImpl) GetMcpEntity(ctx context.Context, packageId, versionName, mcpEntityId string, includeData bool) (interface{}, error) {
+func (s *mcpContractServiceImpl) GetMcpEntity(ctx context.Context, packageId, versionName, mcpEntityId string) (interface{}, error) {
 	version, revision, err := s.resolveRevision(ctx, packageId, versionName)
 	if err != nil {
 		return nil, err
 	}
-	ent, data, err := s.mcpRepo.GetMcpEntity(ctx, packageId, version, revision, mcpEntityId, includeData)
+	ent, data, err := s.mcpRepo.GetMcpEntity(ctx, packageId, version, revision, mcpEntityId)
 	if err != nil {
 		return nil, err
 	}
 	if ent == nil {
 		return nil, &exception.CustomError{
 			Status:  http.StatusNotFound,
-			Code:    exception.PublishedVersionNotFound,
-			Message: "MCP entity not found",
+			Code:    exception.McpEntityNotFound,
+			Message: exception.McpEntityNotFoundMsg,
 			Params:  map[string]interface{}{"mcpEntityId": mcpEntityId},
 		}
 	}
-	detail := view.McpEntityDetailView{McpEntityView: *makeMcpEntityView(ent, packageId, version, revision)}
+	detail := view.McpEntityDetailView{McpEntityView: *entity.MakeMcpEntityView(ent)}
 	if len(data) > 0 {
 		var parsed interface{}
 		if err := json.Unmarshal(data, &parsed); err == nil {
 			detail.Data = parsed
 		}
 	}
-	packageVersions := map[string][]string{packageId: {view.MakeVersionRefKey(version, revision)}}
-	packagesRefs, err := s.packageVersionEnrichmentService.GetPackageVersionRefsMap(ctx, packageVersions)
-	if err != nil {
-		return nil, err
-	}
-	detail.Packages = packagesRefs
 	return detail, nil
 }
 
@@ -163,22 +160,9 @@ func (s *mcpContractServiceImpl) GlobalSearchForMCP(ctx context.Context, searchR
 	if err != nil {
 		return nil, err
 	}
-	results := make([]interface{}, 0, len(entities))
+	results := make([]view.McpEntitySearchResult, 0, len(entities))
 	for _, ent := range entities {
 		results = append(results, entity.MakeGlobalMCPSearchResultView(ent))
 	}
 	return &view.SearchResult{McpContracts: &results}, nil
-}
-
-func makeMcpEntityView(ent *entity.MCPContractEntity, packageId, version string, revision int) *view.McpEntityView {
-	return &view.McpEntityView{
-		McpEntityId:               ent.McpEntityId,
-		Kind:                      ent.Kind,
-		Title:                     ent.Title,
-		Description:               ent.Description,
-		McpEndpoint:               ent.McpEndpoint,
-		DocumentId:                ent.DocumentId,
-		VersionInternalDocumentId: ent.VersionInternalDocumentId,
-		PackageRef:                view.MakePackageRefKey(packageId, version, revision),
-	}
 }

@@ -450,3 +450,217 @@ func (s ComparisonInternalDocumentEntity) GetChanges(t ComparisonInternalDocumen
 	}
 	return changes
 }
+
+func (s DDLContractEntity) GetChanges(t DDLContractEntity) map[string]interface{} {
+	changes := make(map[string]interface{}, 0)
+	if s.Kind != t.Kind {
+		changes["Kind"] = map[string]interface{}{
+			"old": s.Kind,
+			"new": t.Kind,
+		}
+	}
+	if s.SchemaName != t.SchemaName {
+		changes["SchemaName"] = map[string]interface{}{
+			"old": s.SchemaName,
+			"new": t.SchemaName,
+		}
+	}
+	if s.Name != t.Name {
+		changes["Name"] = map[string]interface{}{
+			"old": s.Name,
+			"new": t.Name,
+		}
+	}
+	if s.Description != t.Description {
+		changes["Description"] = map[string]interface{}{
+			"old": s.Description,
+			"new": t.Description,
+		}
+	}
+	if metadataChanges := s.Metadata.GetChanges(t.Metadata); len(metadataChanges) > 0 {
+		changes["Metadata"] = metadataChanges
+	}
+	if (s.DataHash == nil && t.DataHash != nil) || (s.DataHash != nil && t.DataHash == nil) || (s.DataHash != nil && t.DataHash != nil && *s.DataHash != *t.DataHash) {
+		changes["DataHash"] = map[string]interface{}{
+			"old": s.DataHash,
+			"new": t.DataHash,
+		}
+	}
+	if s.DocumentId != t.DocumentId {
+		changes["DocumentId"] = map[string]interface{}{
+			"old": s.DocumentId,
+			"new": t.DocumentId,
+		}
+	}
+	if s.VersionInternalDocumentId != t.VersionInternalDocumentId {
+		changes["VersionInternalDocumentId"] = map[string]interface{}{
+			"old": s.VersionInternalDocumentId,
+			"new": t.VersionInternalDocumentId,
+		}
+	}
+	return changes
+}
+
+func (s DDLContractComparisonEntity) GetChanges(t DDLContractComparisonEntity) map[string]interface{} {
+	changes := make(map[string]interface{}, 0)
+	if (s.DataHash == nil && t.DataHash != nil) || (s.DataHash != nil && t.DataHash == nil) || (s.DataHash != nil && t.DataHash != nil && *s.DataHash != *t.DataHash) {
+		changes["DataHash"] = map[string]interface{}{
+			"old": s.DataHash,
+			"new": t.DataHash,
+		}
+	}
+	if (s.PreviousDataHash == nil && t.PreviousDataHash != nil) || (s.PreviousDataHash != nil && t.PreviousDataHash == nil) || (s.PreviousDataHash != nil && t.PreviousDataHash != nil && *s.PreviousDataHash != *t.PreviousDataHash) {
+		changes["PreviousDataHash"] = map[string]interface{}{
+			"old": s.PreviousDataHash,
+			"new": t.PreviousDataHash,
+		}
+	}
+	if s.Kind != t.Kind {
+		changes["Kind"] = map[string]interface{}{
+			"old": s.Kind,
+			"new": t.Kind,
+		}
+	}
+	if s.PreviousKind != t.PreviousKind {
+		changes["PreviousKind"] = map[string]interface{}{
+			"old": s.PreviousKind,
+			"new": t.PreviousKind,
+		}
+	}
+	if s.Name != t.Name {
+		changes["Name"] = map[string]interface{}{
+			"old": s.Name,
+			"new": t.Name,
+		}
+	}
+	if s.PreviousName != t.PreviousName {
+		changes["PreviousName"] = map[string]interface{}{
+			"old": s.PreviousName,
+			"new": t.PreviousName,
+		}
+	}
+	if s.SchemaName != t.SchemaName {
+		changes["SchemaName"] = map[string]interface{}{
+			"old": s.SchemaName,
+			"new": t.SchemaName,
+		}
+	}
+	if s.PreviousSchemaName != t.PreviousSchemaName {
+		changes["PreviousSchemaName"] = map[string]interface{}{
+			"old": s.PreviousSchemaName,
+			"new": t.PreviousSchemaName,
+		}
+	}
+	if s.Description != t.Description {
+		changes["Description"] = map[string]interface{}{
+			"old": s.Description,
+			"new": t.Description,
+		}
+	}
+	if s.PreviousDescription != t.PreviousDescription {
+		changes["PreviousDescription"] = map[string]interface{}{
+			"old": s.PreviousDescription,
+			"new": t.PreviousDescription,
+		}
+	}
+	if s.ChangesSummary.GetTotalSummary() != t.ChangesSummary.GetTotalSummary() {
+		changes["TotalChangesSummary"] = map[string]interface{}{
+			"old": s.ChangesSummary.GetTotalSummary(),
+			"new": t.ChangesSummary.GetTotalSummary(),
+		}
+	}
+	if !reflect.DeepEqual(s.ChangesSummary, t.ChangesSummary) {
+		changes["ChangesSummary"] = map[string]interface{}{
+			"old": s.ChangesSummary,
+			"new": t.ChangesSummary,
+		}
+	}
+	if s.Changes != nil || t.Changes != nil {
+		sChanges := s.Changes
+		var tChanges interface{}
+		inrec, _ := json.Marshal(t.Changes)
+		json.Unmarshal(inrec, &tChanges)
+		if !reflect.DeepEqual(sChanges, tChanges) {
+			changes["Changes"] = "Changes field has changed"
+		}
+	}
+	if s.ComparisonInternalDocumentId != t.ComparisonInternalDocumentId {
+		changes["ComparisonInternalDocumentId"] = map[string]interface{}{
+			"old": s.ComparisonInternalDocumentId,
+			"new": t.ComparisonInternalDocumentId,
+		}
+	}
+	return changes
+}
+
+func (s DDLContractSearchTextEntity) GetChanges(t DDLContractSearchTextEntity) map[string]interface{} {
+	changes := make(map[string]interface{}, 0)
+	if s.SearchDataHash != t.SearchDataHash {
+		changes["SearchDataHash"] = map[string]interface{}{
+			"old": s.SearchDataHash,
+			"new": t.SearchDataHash,
+		}
+	}
+	return changes
+}
+
+func (s MCPContractEntity) GetChanges(t MCPContractEntity) map[string]interface{} {
+	changes := make(map[string]interface{}, 0)
+	if s.Kind != t.Kind {
+		changes["Kind"] = map[string]interface{}{
+			"old": s.Kind,
+			"new": t.Kind,
+		}
+	}
+	if s.Title != t.Title {
+		changes["Title"] = map[string]interface{}{
+			"old": s.Title,
+			"new": t.Title,
+		}
+	}
+	if s.Description != t.Description {
+		changes["Description"] = map[string]interface{}{
+			"old": s.Description,
+			"new": t.Description,
+		}
+	}
+	if s.McpEndpoint != t.McpEndpoint {
+		changes["McpEndpoint"] = map[string]interface{}{
+			"old": s.McpEndpoint,
+			"new": t.McpEndpoint,
+		}
+	}
+	if metadataChanges := s.Metadata.GetChanges(t.Metadata); len(metadataChanges) > 0 {
+		changes["Metadata"] = metadataChanges
+	}
+	if (s.DataHash == nil && t.DataHash != nil) || (s.DataHash != nil && t.DataHash == nil) || (s.DataHash != nil && t.DataHash != nil && *s.DataHash != *t.DataHash) {
+		changes["DataHash"] = map[string]interface{}{
+			"old": s.DataHash,
+			"new": t.DataHash,
+		}
+	}
+	if s.DocumentId != t.DocumentId {
+		changes["DocumentId"] = map[string]interface{}{
+			"old": s.DocumentId,
+			"new": t.DocumentId,
+		}
+	}
+	if s.VersionInternalDocumentId != t.VersionInternalDocumentId {
+		changes["VersionInternalDocumentId"] = map[string]interface{}{
+			"old": s.VersionInternalDocumentId,
+			"new": t.VersionInternalDocumentId,
+		}
+	}
+	return changes
+}
+
+func (s MCPContractSearchTextEntity) GetChanges(t MCPContractSearchTextEntity) map[string]interface{} {
+	changes := make(map[string]interface{}, 0)
+	if s.SearchDataHash != t.SearchDataHash {
+		changes["SearchDataHash"] = map[string]interface{}{
+			"old": s.SearchDataHash,
+			"new": t.SearchDataHash,
+		}
+	}
+	return changes
+}

@@ -829,6 +829,12 @@ const ShareabilityReportSizeExceededMsg = "Shareability report file size exceede
 const PublishNotAllowedForPackageKind = "8400"
 const PublishNotAllowedForPackageKindMsg = "Publication is allowed only for the following package kinds: $allowedKinds, but target package has kind=$kind"
 
+const DdlEntityNotFound = "8401"
+const DdlEntityNotFoundMsg = "DDL entity $ddlEntityId not found"
+
+const McpEntityNotFound = "8402"
+const McpEntityNotFoundMsg = "MCP entity $mcpEntityId not found"
+
 const ReferencedByDashboard = "8500"
 const VersionReferencedByDashboardMsg = "Cannot delete version $version of package $packageId: it is referenced by these dashboard versions: $dashboards. Remove the references or delete the dashboards, then retry."
 const PackageReferencedByDashboardMsg = "Cannot delete package $packageId: it is referenced by these dashboard versions: $dashboards. Remove the references or delete the dashboards, then retry."

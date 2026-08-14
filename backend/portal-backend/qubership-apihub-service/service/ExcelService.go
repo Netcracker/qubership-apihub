@@ -129,7 +129,7 @@ func (e excelServiceImpl) ExportOperations(ctx context.Context, packageId, versi
 }
 
 func (e excelServiceImpl) ExportDdlEntities(ctx context.Context, packageId, version string, req view.ExportDdlEntitiesRequestView) (*excelize.File, string, error) {
-	entities, err := e.ddlContractService.ListDdlEntities(ctx, packageId, version, req.TextFilter, 0, 0)
+	entities, err := e.ddlContractService.ListDdlEntities(ctx, packageId, version, req.RefPackageId, req.TextFilter, 0, 0)
 	if err != nil {
 		return nil, "", err
 	}
@@ -153,7 +153,7 @@ func (e excelServiceImpl) ExportDdlEntities(ctx context.Context, packageId, vers
 }
 
 func (e excelServiceImpl) ExportMcpEntities(ctx context.Context, packageId, version, kind string, req view.ExportMcpEntitiesRequestView) (*excelize.File, string, error) {
-	entities, err := e.mcpContractService.ListMcpEntities(ctx, packageId, version, kind, "", req.TextFilter, 0, 0)
+	entities, err := e.mcpContractService.ListMcpEntities(ctx, packageId, version, kind, "", req.RefPackageId, req.TextFilter, 0, 0)
 	if err != nil {
 		return nil, "", err
 	}
@@ -256,10 +256,16 @@ func buildDdlEntitiesWorkbook(entities *view.DdlEntityListView, packageId, packa
 		if !ok {
 			continue
 		}
+		// for a dashboard the row shows the entity's owning referenced package, mirroring the
+		// operations export
+		rowPackageId, rowPackageName, rowVersionName, err := resolveEntityRowPackage(entities.Packages, entityView.PackageRef, packageId, packageName, versionName)
+		if err != nil {
+			return nil, err
+		}
 		cellsValues := map[string]interface{}{
-			fmt.Sprintf("A%d", rowIndex): packageId,
-			fmt.Sprintf("B%d", rowIndex): packageName,
-			fmt.Sprintf("C%d", rowIndex): versionName,
+			fmt.Sprintf("A%d", rowIndex): rowPackageId,
+			fmt.Sprintf("B%d", rowIndex): rowPackageName,
+			fmt.Sprintf("C%d", rowIndex): rowVersionName,
 			fmt.Sprintf("D%d", rowIndex): entityView.SchemaName,
 			fmt.Sprintf("E%d", rowIndex): entityView.Name,
 			fmt.Sprintf("F%d", rowIndex): entityView.Description,
@@ -337,10 +343,16 @@ func buildMcpEntitiesWorkbook(entities *view.McpEntityListView, packageId, packa
 		if !ok {
 			continue
 		}
+		// for a dashboard the row shows the entity's owning referenced package, mirroring the
+		// operations export
+		rowPackageId, rowPackageName, rowVersionName, err := resolveEntityRowPackage(entities.Packages, entityView.PackageRef, packageId, packageName, versionName)
+		if err != nil {
+			return nil, err
+		}
 		cellsValues := map[string]interface{}{
-			fmt.Sprintf("A%d", rowIndex): packageId,
-			fmt.Sprintf("B%d", rowIndex): packageName,
-			fmt.Sprintf("C%d", rowIndex): versionName,
+			fmt.Sprintf("A%d", rowIndex): rowPackageId,
+			fmt.Sprintf("B%d", rowIndex): rowPackageName,
+			fmt.Sprintf("C%d", rowIndex): rowVersionName,
 			fmt.Sprintf("D%d", rowIndex): entityView.Kind,
 			fmt.Sprintf("E%d", rowIndex): entityView.Title,
 			fmt.Sprintf("F%d", rowIndex): entityView.Description,
@@ -366,6 +378,12 @@ func buildMcpEntitiesWorkbook(entities *view.McpEntityListView, packageId, packa
 		return nil, err
 	}
 	return workbook, nil
+}
+
+func resolveEntityRowPackage(packages map[string]view.PackageVersionRef, PackageRef string, packageId, packageName, versionName string) (string, string, string, error) {
+	//FIXME: impl
+
+	return "", "", "", nil
 }
 
 func buildDdlChangesWorkbook(changedEntities *view.DdlChangedEntitiesView, packageName, versionName, versionStatus string) (*excelize.File, error) {

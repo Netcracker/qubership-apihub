@@ -3482,6 +3482,8 @@ paths:
                             * added package - packageRef is returned
                             * deleted package - previousPackageRef is returned returned
                             * changed package - both packageRef and previousPackageRef are returned
+
+                          A ref item is returned for DDL-only changes as well; such items carry contractsChangesSummary and an empty operationTypes list.
                         type: array
                         items:
                           type: object
@@ -6132,10 +6134,16 @@ paths:
       summary: Get DDL entities
       description: |
         Get DDL contract entities for a package version. Only `table` entities are supported now.
+        For a dashboard, the entities of all referenced package versions are aggregated at read time.
       operationId: getPackageVersionDdlEntities
       parameters:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
+        - name: refPackageId
+          description: Filter by package id of the referenced package. Supported only for dashboards.
+          in: query
+          schema:
+            type: string
         - name: textFilter
           in: query
           description: Filter by DDL entity name (case-insensitive substring match).
@@ -6274,7 +6282,10 @@ paths:
         - Contracts
         - Changes
       summary: Get DDL entity changes
-      description: Get changes of one DDL entity between current and previous published package versions. Only `table` entities are supported now.
+      description: |
+        Get changes of one DDL entity between current and previous published package versions. Only `table` entities are supported now.
+        For a dashboard, the changes of all referenced package comparisons are searched; use `refPackageId` to disambiguate
+        when the same entity id exists in several referenced packages.
       operationId: getPackageVersionDdlEntityChanges
       parameters:
         - $ref: "#/components/parameters/packageId"
@@ -6283,6 +6294,11 @@ paths:
         - $ref: "#/components/parameters/severity"
         - $ref: "#/components/parameters/previousVersion"
         - $ref: "#/components/parameters/previousVersionPackageId"
+        - name: refPackageId
+          description: Filter by package id of ref package and previous ref package. Supported only for dashboards.
+          in: query
+          schema:
+            type: string
         - in: query
           name: previousVersionDdlEntityId
           description: DDL entity identifier from previous version.\
@@ -6347,6 +6363,7 @@ paths:
       description: |
         Get DDL contract changes between two compared package versions with details by entities.
         Only `table` entities are supported now.
+        For a dashboard, the changes of all referenced package comparisons are aggregated at read time.
       operationId: getPackageVersionDdlChanges
       parameters:
         - $ref: "#/components/parameters/packageId"
@@ -6456,6 +6473,8 @@ paths:
       description: |
         Get summary of changes for one DDL entity between current and previous published package version.
         Only `table` entities are supported now.
+        For a dashboard, the summaries of every referenced package comparison matching the entity id are summed;
+        use `refPackageId` to narrow the result to a single referenced package.
       operationId: getPackageVersionDdlEntityChangesSummary
       parameters:
         - $ref: "#/components/parameters/packageId"
@@ -6686,12 +6705,19 @@ paths:
       tags:
         - Contracts
       summary: Get MCP contract entities
-      description: Get MCP discovery contract entities for a package version.
+      description: |
+        Get MCP discovery contract entities for a package version.
+        For a dashboard, the entities of all referenced package versions are aggregated at read time.
       operationId: getPackageVersionMcpEntities
       parameters:
         - $ref: "#/components/parameters/packageId"
         - $ref: "#/components/parameters/version"
         - $ref: "#/components/parameters/mcpEntity"
+        - name: refPackageId
+          description: Filter by package id of the referenced package. Supported only for dashboards.
+          in: query
+          schema:
+            type: string
         - name: mcpEndpoint
           in: query
           description: Filter entities belonging to a specific MCP endpoint (relative path, e.g. `/mcp`).
@@ -11776,6 +11802,8 @@ components:
     VersionContractsSummary:
       description: |
         Summary of contract entities published in a package version, keyed by contract type.
+        For a dashboard, counts and DDL change summaries aggregate over all referenced package versions,
+        and MCP entries of different referenced packages merge by endpoint path.
       type: object
       properties:
         ddl:
@@ -13034,7 +13062,7 @@ components:
         - parentPackages
         - version
         - status
-        - tableId
+        - entityId
         - kind
       properties:
         packageId:
@@ -13056,17 +13084,17 @@ components:
           example: "2022.2@5"
         status:
           $ref: "#/components/schemas/VersionStatusEnum"
-        tableId:
+        entityId:
           description: DDL table/view logical identifier.
           type: string
-          example: "public.users"
+          example: "public-table-users"
         kind:
           $ref: "#/components/schemas/DdlContractKind"
         schemaName:
           description: SQL schema name.
           type: string
           example: "public"
-        tableName:
+        entityName:
           description: Unqualified table or view name.
           type: string
           example: "users"

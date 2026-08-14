@@ -12,10 +12,10 @@ import (
 )
 
 type DDLContractRepository interface {
-	ListDdlEntities(ctx context.Context, packageId, version string, revision int, textFilter string, limit, offset int) ([]*entity.DDLContractEntity, error)
-	GetDdlEntity(ctx context.Context, packageId, version string, revision int, ddlEntityId string, includeData bool) (*entity.DDLContractEntity, []byte, error)
-	GetDdlEntityChanges(ctx context.Context, comparisonId, ddlEntityId string, severities []string) (*entity.DDLContractComparisonEntity, error)
-	GetDdlEntityChangesSummary(ctx context.Context, comparisonId, ddlEntityId string) (*view.ChangeSummary, error)
+	ListDdlEntities(ctx context.Context, packageId, version string, revision int, refPackageId, textFilter string, limit, offset int) ([]*entity.DDLContractEntity, error)
+	GetDdlEntity(ctx context.Context, packageId, version string, revision int, ddlEntityId string) (*entity.DDLContractEntity, []byte, error)
+	GetDdlEntityChanges(ctx context.Context, comparisonId, ddlEntityId, previousVersionDdlEntityId, refPackageId string, severities []string) (*entity.DDLContractComparisonEntity, error)
+	GetDdlEntityChangesSummary(ctx context.Context, comparisonId, ddlEntityId, refPackageId string) (*view.ChangeSummary, error)
 	ListChangedDdlEntities(ctx context.Context, comparisonId, refPackageId string, severities []string, textFilter string, limit, offset int) ([]*entity.DDLContractComparisonEntity, error)
 	GetEntitiesCount(ctx context.Context, packageId, version string, revision int) ([]entity.DDLContractKindCountEntity, error)
 	GetDdlEntitiesInfo(ctx context.Context, packageId, version string, revision int) (map[string]string, error)
@@ -31,20 +31,20 @@ func NewDDLContractRepository(cp db.ConnectionProvider) DDLContractRepository {
 	return &ddlContractRepositoryImpl{cp: cp}
 }
 
-func (r *ddlContractRepositoryImpl) ListDdlEntities(ctx context.Context, packageId, version string, revision int, textFilter string, limit, offset int) ([]*entity.DDLContractEntity, error) {
+func (r *ddlContractRepositoryImpl) ListDdlEntities(ctx context.Context, packageId, version string, revision int, refPackageId, textFilter string, limit, offset int) ([]*entity.DDLContractEntity, error) {
 	var result []*entity.DDLContractEntity
 	query := r.cp.GetConnection().WithContext(ctx).Model(&result).
-		Where("package_id = ?", packageId).
-		Where("version = ?", version).
-		Where("revision = ?", revision)
+		ColumnExpr("ddl_tables.*")
+	query = joinVersionRefs(query, "ddl_tables", packageId, version, revision, refPackageId)
 	if textFilter != "" {
 		pattern := fmt.Sprintf("%%%s%%", textFilter)
 		query = query.WhereGroup(func(q *orm.Query) (*orm.Query, error) {
-			q.WhereOr("name ILIKE ?", pattern).
-				WhereOr("description ILIKE ?", pattern)
+			q.WhereOr("ddl_tables.name ILIKE ?", pattern).
+				WhereOr("ddl_tables.description ILIKE ?", pattern)
 			return q, nil
 		})
 	}
+	query = query.Order("ddl_tables.package_id", "ddl_tables.version", "ddl_tables.revision", "ddl_tables.ddl_entity_id")
 	if limit > 0 {
 		query = query.Limit(limit)
 	}
@@ -61,7 +61,7 @@ func (r *ddlContractRepositoryImpl) ListDdlEntities(ctx context.Context, package
 	return result, nil
 }
 
-func (r *ddlContractRepositoryImpl) GetDdlEntity(ctx context.Context, packageId, version string, revision int, ddlEntityId string, includeData bool) (*entity.DDLContractEntity, []byte, error) {
+func (r *ddlContractRepositoryImpl) GetDdlEntity(ctx context.Context, packageId, version string, revision int, ddlEntityId string) (*entity.DDLContractEntity, []byte, error) {
 	conn := r.cp.GetConnection().WithContext(ctx)
 	ent := new(entity.DDLContractEntity)
 	err := conn.Model(ent).
@@ -77,7 +77,7 @@ func (r *ddlContractRepositoryImpl) GetDdlEntity(ctx context.Context, packageId,
 		return nil, nil, err
 	}
 	var data []byte
-	if includeData && ent.DataHash != nil {
+	if ent.DataHash != nil {
 		dataEnt := new(entity.DDLContractDataEntity)
 		err = conn.Model(dataEnt).Where("data_hash = ?", *ent.DataHash).First()
 		if err != nil {
@@ -91,11 +91,24 @@ func (r *ddlContractRepositoryImpl) GetDdlEntity(ctx context.Context, packageId,
 	return ent, data, nil
 }
 
-func (r *ddlContractRepositoryImpl) GetDdlEntityChanges(ctx context.Context, comparisonId, ddlEntityId string, severities []string) (*entity.DDLContractComparisonEntity, error) {
+func (r *ddlContractRepositoryImpl) GetDdlEntityChanges(ctx context.Context, comparisonId, ddlEntityId, previousVersionDdlEntityId, refPackageId string, severities []string) (*entity.DDLContractComparisonEntity, error) {
 	ent := new(entity.DDLContractComparisonEntity)
 	query := r.cp.GetConnection().WithContext(ctx).Model(ent).
-		Where("comparison_id = ?", comparisonId).
-		Where("ddl_entity_id = ?", ddlEntityId)
+		Where(comparisonIdWithRefsCondition, comparisonId, comparisonId)
+	if refPackageId != "" {
+		query.WhereGroup(func(q *orm.Query) (*orm.Query, error) {
+			return q.Where("package_id = ?", refPackageId).
+				WhereOr("previous_package_id = ?", refPackageId), nil
+		})
+	}
+	if previousVersionDdlEntityId != "" {
+		query.WhereGroup(func(q *orm.Query) (*orm.Query, error) {
+			return q.Where("ddl_entity_id = ?", ddlEntityId).
+				WhereOr("previous_ddl_entity_id = ?", previousVersionDdlEntityId), nil
+		})
+	} else {
+		query.Where("ddl_entity_id = ?", ddlEntityId)
+	}
 	if len(severities) > 0 {
 		query.WhereGroup(func(q *orm.Query) (*orm.Query, error) {
 			for _, severity := range severities {
@@ -104,7 +117,12 @@ func (r *ddlContractRepositoryImpl) GetDdlEntityChanges(ctx context.Context, com
 			return q, nil
 		})
 	}
-	err := query.First()
+	// DDLContractComparisonEntity declares no primary keys (mirroring OperationComparisonEntity),
+	// so use an explicit order + limit instead of First(), which requires declared PKs.
+	err := query.
+		OrderExpr("data_hash, previous_data_hash").
+		Limit(1).
+		Select()
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil
@@ -114,28 +132,38 @@ func (r *ddlContractRepositoryImpl) GetDdlEntityChanges(ctx context.Context, com
 	return ent, nil
 }
 
-func (r *ddlContractRepositoryImpl) GetDdlEntityChangesSummary(ctx context.Context, comparisonId, ddlEntityId string) (*view.ChangeSummary, error) {
+// GetDdlEntityChangesSummary sums the change summaries of every matched row: with refs expanded,
+// the same ddl_entity_id may legitimately exist in several referenced packages of a dashboard;
+// refPackageId narrows the result to one of them.
+func (r *ddlContractRepositoryImpl) GetDdlEntityChangesSummary(ctx context.Context, comparisonId, ddlEntityId, refPackageId string) (*view.ChangeSummary, error) {
 	type row struct {
 		ChangesSummary view.ChangeSummary `pg:"changes_summary"`
 	}
 	var rows []row
 	_, err := r.cp.GetConnection().WithContext(ctx).Query(&rows,
-		`SELECT changes_summary FROM ddl_comparison WHERE comparison_id=? AND ddl_entity_id=?`, comparisonId, ddlEntityId)
+		`SELECT changes_summary FROM ddl_comparison
+		WHERE `+comparisonIdWithRefsCondition+`
+		AND ddl_entity_id=? AND (?='' OR package_id=? OR previous_package_id=?)`,
+		comparisonId, comparisonId, ddlEntityId, refPackageId, refPackageId, refPackageId)
 	if err != nil {
 		return nil, err
 	}
-	if len(rows) == 0 {
-		return &view.ChangeSummary{}, nil
+	total := &view.ChangeSummary{}
+	for _, r := range rows {
+		total.Add(r.ChangesSummary)
 	}
-	return &rows[0].ChangesSummary, nil
+	return total, nil
 }
 
 func (r *ddlContractRepositoryImpl) ListChangedDdlEntities(ctx context.Context, comparisonId, refPackageId string, severities []string, textFilter string, limit, offset int) ([]*entity.DDLContractComparisonEntity, error) {
 	var result []*entity.DDLContractComparisonEntity
 	query := r.cp.GetConnection().WithContext(ctx).Model(&result).
-		Where("comparison_id = ?", comparisonId)
+		Where(comparisonIdWithRefsCondition, comparisonId, comparisonId)
 	if refPackageId != "" {
-		query = query.Where("package_id = ?", refPackageId)
+		query = query.WhereGroup(func(q *orm.Query) (*orm.Query, error) {
+			return q.Where("package_id = ?", refPackageId).
+				WhereOr("previous_package_id = ?", refPackageId), nil
+		})
 	}
 	if textFilter != "" {
 		pattern := fmt.Sprintf("%%%s%%", textFilter)
@@ -162,7 +190,7 @@ func (r *ddlContractRepositoryImpl) ListChangedDdlEntities(ctx context.Context, 
 		OrderExpr("(changes_summary->'non-breaking')::int > 0 DESC").
 		OrderExpr("(changes_summary->'annotation')::int > 0 DESC").
 		OrderExpr("(changes_summary->'unclassified')::int > 0 DESC").
-		Order("ddl_entity_id")
+		Order("package_id", "previous_package_id", "ddl_entity_id")
 	if limit > 0 {
 		query = query.Limit(limit)
 	}
@@ -182,8 +210,12 @@ func (r *ddlContractRepositoryImpl) ListChangedDdlEntities(ctx context.Context, 
 func (r *ddlContractRepositoryImpl) GetEntitiesCount(ctx context.Context, packageId, version string, revision int) ([]entity.DDLContractKindCountEntity, error) {
 	var result []entity.DDLContractKindCountEntity
 	_, err := r.cp.GetConnection().WithContext(ctx).Query(&result,
-		`SELECT kind, count(*) as count FROM ddl_tables WHERE package_id=? AND version=? AND revision=? GROUP BY kind`,
-		packageId, version, revision)
+		versionWithRefsCTE+`
+		select dt.kind, count(*) as count
+		from ddl_tables dt
+		inner join versions v on dt.package_id = v.package_id and dt.version = v.version and dt.revision = v.revision
+		group by dt.kind`,
+		packageId, version, revision, packageId, version, revision)
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +278,7 @@ func (r *ddlContractRepositoryImpl) GlobalSearchForDDL(ctx context.Context, sear
 	ddlSearchQuery := `
 select
     dt.package_id,
-    pg.name,
+    pg.name as package_name,
     dt.version,
     dt.revision,
     pv.status,
