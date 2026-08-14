@@ -22,6 +22,8 @@ import type { SearchCriteria, SearchResults } from '@apihub/entities/global-sear
 import { DOCUMENT_LEVEL } from '@apihub/entities/global-search'
 import type { HasNextPage, IsFetchingNextPage, IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 
+import { SEARCH_RESULTS_PAGE_SIZE } from './globalSearchConstants'
+
 const GLOBAL_DOCUMENTS_SEARCH_RESULT_QUERY_KEY = 'global-documents-search-result-query-key'
 
 export function useDocumentsGlobalSearch(options: {
@@ -30,7 +32,7 @@ export function useDocumentsGlobalSearch(options: {
   limit?: number
   page?: number
 }): [SearchResults, IsLoading, FetchNextSearchResultList, IsFetchingNextPage, HasNextPage] {
-  const { criteria, page = 1, limit = 100, enabled } = options
+  const { criteria, page = 1, limit = SEARCH_RESULTS_PAGE_SIZE, enabled } = options
 
   const {
     data,
@@ -58,6 +60,8 @@ export function useDocumentsGlobalSearch(options: {
       packages: [],
       documents: documents,
       operations: [],
+      mcpContracts: [],
+      ddlContracts: [],
     },
     isInitialLoading,
     fetchNextPage,

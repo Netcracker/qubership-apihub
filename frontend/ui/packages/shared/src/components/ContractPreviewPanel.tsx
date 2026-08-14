@@ -70,4 +70,6 @@ const PanelRoot = styled(Box)({
 
 const HeaderBox = styled(Box)({})
 
-const BodyBox = styled(Box)({})
+const BodyBox = styled(Box)({
+  minHeight: 0,
+})

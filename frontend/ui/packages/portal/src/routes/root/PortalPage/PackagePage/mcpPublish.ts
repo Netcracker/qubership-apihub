@@ -30,10 +30,10 @@ type McpFilesByEndpointGroup = Readonly<{
 }>
 
 export function groupMcpFilesByEndpoint(
-  mcpFiles: ReadonlyMap<string, McpStagedFileMeta>,
+  mcpStagedFileMetaByName: ReadonlyMap<string, McpStagedFileMeta>,
   orderedEndpoints: ReadonlyArray<string>,
 ): ReadonlyArray<McpFilesByEndpointGroup> {
-  const entries = [...mcpFiles.entries()].map(([fileName, meta]) => ({
+  const entries = [...mcpStagedFileMetaByName.entries()].map(([fileName, meta]) => ({
     fileName: fileName,
     meta: meta,
     mcpEndpoint: meta.mcpEndpoint,
@@ -57,10 +57,10 @@ export function groupMcpFilesByEndpoint(
 
 export function pruneMcpEndpoint(
   endpoints: string[],
-  mcpFiles: ReadonlyMap<string, McpStagedFileMeta>,
+  mcpStagedFileMetaByName: ReadonlyMap<string, McpStagedFileMeta>,
   endpoint: string,
 ): string[] {
-  const stillUsed = [...mcpFiles.values()].some(meta => meta.mcpEndpoint === endpoint)
+  const stillUsed = [...mcpStagedFileMetaByName.values()].some(meta => meta.mcpEndpoint === endpoint)
   return stillUsed ? endpoints : endpoints.filter(item => item !== endpoint)
 }
 
@@ -81,12 +81,12 @@ export async function buildInitFileState(
   Readonly<{
     fileTypesMap: Map<string, SpecType>
     filesWithLabels: FileLabelsRecord
-    mcpFiles: Map<string, McpStagedFileMeta>
+    mcpStagedFileMetaByName: Map<string, McpStagedFileMeta>
     mcpEndpoints: string[]
   }>
 > {
   const fileTypesMap = await buildFileTypesMap(files)
-  const mcpFiles = new Map<string, McpStagedFileMeta>()
+  const mcpStagedFileMetaByName = new Map<string, McpStagedFileMeta>()
   const mcpEndpoints: string[] = []
 
   if (config) {
@@ -95,7 +95,7 @@ export async function buildInitFileState(
       const mcpEndpoint = configFile?.metadata?.mcpEndpoint?.trim()
       const documentType = fileTypesMap.get(file.name)
       if (mcpEndpoint && documentType && isMcpDocumentSpecType(documentType)) {
-        mcpFiles.set(file.name, {
+        mcpStagedFileMetaByName.set(file.name, {
           documentType: documentType,
           mcpEndpoint: mcpEndpoint,
         })
@@ -118,10 +118,10 @@ export async function buildInitFileState(
     : {}
 
   return {
-    fileTypesMap: fileTypesMap,
-    filesWithLabels: filesWithLabels,
-    mcpFiles: mcpFiles,
-    mcpEndpoints: mcpEndpoints,
+    fileTypesMap,
+    filesWithLabels,
+    mcpStagedFileMetaByName,
+    mcpEndpoints,
   }
 }
 

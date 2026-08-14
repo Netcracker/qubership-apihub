@@ -25,7 +25,6 @@ export const ExportDdlTablesMenu: FC<ExportDdlTablesMenuProps> = memo<ExportDdlT
     downloadDdlTablesAsExcel({
       packageKey: packageId!,
       version: fullVersion!,
-      refPackageId: refPackageId,
     })
   }
 

@@ -20,13 +20,24 @@ import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entit
 import type { MethodType } from '@netcracker/qubership-apihub-ui-shared/entities/method-types'
 import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { ContractType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
+import {
+  CONTRACT_TYPE_DDL,
+  CONTRACT_TYPE_MCP,
+} from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
+import type { DdlEntityKind } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-ddl'
+import type { McpKind } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
 import type { ApiKind, Operation } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { ApiAudience } from '@netcracker/qubership-apihub-api-processor'
+
+export type ApiContract = ApiType | ContractType
 
 export type SearchResults = Readonly<{
   packages: PackageSearchResult[]
   operations: OperationSearchResult[]
   documents: DocumentSearchResult[]
+  mcpContracts: McpContractSearchResult[]
+  ddlContracts: DdlContractSearchResult[]
 }>
 
 export type PackageSearchResult = Readonly<{
@@ -72,10 +83,36 @@ export type DocumentSearchResult = Readonly<{
   createdAt: string
 }>
 
+export type McpContractSearchResult = Readonly<{
+  packageKey: Key
+  name: string
+  parentPackages: string[]
+  version: Key
+  status: VersionStatus
+  entityId: Key
+  kind: McpKind
+  mcpEndpoint: string
+  entityName?: string
+}>
+
+export type DdlContractSearchResult = Readonly<{
+  packageKey: Key
+  name: string
+  parentPackages: string[]
+  version: Key
+  status: VersionStatus
+  entityId: Key
+  kind: DdlEntityKind
+  schemaName?: string
+  entityName?: string
+}>
+
 export type SearchResultsDto = Readonly<Partial<{
   packages: PackageSearchResultDto[]
   operations: OperationSearchResultDto[]
   documents: DocumentSearchResultDto[]
+  mcpContracts: McpContractSearchResultDto[]
+  ddlContracts: DdlContractSearchResultDto[]
 }>>
 
 export type PackageSearchResultDto = Readonly<{
@@ -121,14 +158,46 @@ export type DocumentSearchResultDto = Readonly<{
   createdAt: string
 }>
 
+export type McpContractSearchResultDto = Readonly<{
+  packageId: Key
+  name: string
+  parentPackages: string[]
+  version: Key
+  status: VersionStatus
+  entityId: Key
+  kind: McpKind
+  mcpEndpoint: string
+  entityName?: string
+}>
+
+export type DdlContractSearchResultDto = Readonly<{
+  packageId: Key
+  name: string
+  parentPackages: string[]
+  version: Key
+  status: VersionStatus
+  entityId: Key
+  kind: DdlEntityKind
+  schemaName?: string
+  entityName?: string
+}>
+
 export const PACKAGE_LEVEL = 'packages'
 export const OPERATION_LEVEL = 'operations'
 export const DOCUMENT_LEVEL = 'documents'
+export const MCP_LEVEL = CONTRACT_TYPE_MCP
+export const DDL_LEVEL = CONTRACT_TYPE_DDL
+
+export type ContractElementSearchResult =
+  | { level: typeof OPERATION_LEVEL; result: OperationSearchResult }
+  | { level: typeof MCP_LEVEL; result: McpContractSearchResult }
+  | { level: typeof DDL_LEVEL; result: DdlContractSearchResult }
 
 export type Level =
   | typeof PACKAGE_LEVEL
   | typeof OPERATION_LEVEL
   | typeof DOCUMENT_LEVEL
+  | ContractType
 
 export const QUERY_OPERATION_TYPES = 'query'
 export const MUTATION_OPERATION_TYPES = 'mutation'
@@ -141,6 +210,7 @@ export type GraphQlOperationTypes =
 
 export type SearchCriteria = {
   searchString: string
+  workspace?: Key
   packageIds?: Key[]
   versions?: Key[]
   status?: VersionStatus
@@ -148,5 +218,16 @@ export type SearchCriteria = {
     startDate: string
     endDate: string
   }
+  apiContract?: ApiContract
   apiType?: ApiType
 }
+
+export const SEARCH_OPERATION_ONLY_CRITERIA = [
+  'apiContract',
+  'apiType',
+] as const satisfies ReadonlyArray<keyof SearchCriteria>
+
+export type SearchCommonCriteria = Omit<
+  SearchCriteria,
+  (typeof SEARCH_OPERATION_ONLY_CRITERIA)[number]
+>

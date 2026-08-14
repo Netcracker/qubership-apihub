@@ -182,6 +182,8 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
             value={rawContent}
             extension={extension}
             type={type}
+            // TODO: Needs a larger refactor to centralise Doc/Raw view spacing for all specification kinds.
+            sx={{ ml: -2, mr: 0 }}
           />
         )}
       </Box>

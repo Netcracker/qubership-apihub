@@ -16,14 +16,14 @@
 
 import type { FC } from 'react'
 import { memo, useCallback, useMemo } from 'react'
-import { Button, DialogActions, DialogContent, DialogTitle, IconButton } from '@mui/material'
+import { Button, DialogActions, DialogContent, DialogTitle, IconButton, Typography } from '@mui/material'
+import { styled } from '@mui/material/styles'
 import CloseOutlinedIcon from '@mui/icons-material/CloseOutlined'
 import type { PopupProps } from '../PopupDelegate'
 import { PopupDelegate } from '../PopupDelegate'
 import { DialogForm } from '../DialogForm'
 import { Controller, useForm } from 'react-hook-form'
 import { LabelsAutocomplete } from '../LabelsAutocomplete'
-import { TextWithOverflowTooltip } from '../TextWithOverflowTooltip'
 
 export const EditFileLabelsDialog: FC = memo(() => {
   return (
@@ -42,6 +42,10 @@ export type ShowEditFileLabelsDetail = {
   labels: string[] | undefined
 }
 
+type EditFileLabelsFormData = {
+  labels?: string[]
+}
+
 export const EditFileLabelsPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpen, detail }) => {
   const [file, onConfirm, labels] = useMemo(() => {
     const { file, onConfirm, labels } = detail as ShowEditFileLabelsDetail
@@ -52,38 +56,32 @@ export const EditFileLabelsPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
     labels: labels,
   }), [labels])
 
-  const { control, getValues } = useForm<{ labels?: string[] | undefined }>({ defaultValues })
+  const { control, handleSubmit } = useForm<EditFileLabelsFormData>({ defaultValues })
 
-  const onConfirmCallback = useCallback((): void => {
+  const onConfirmCallback = useCallback((data: EditFileLabelsFormData): void => {
     setOpen(false)
-    onConfirm(file, getValues().labels ?? [])
-  }, [setOpen, onConfirm, file, getValues])
+    onConfirm(file, data.labels ?? [])
+  }, [setOpen, onConfirm, file])
 
   const onClose = useCallback(() => {
     setOpen(false)
   }, [setOpen])
 
-  const dialogTitle = `Edit Labels for ${file.name}`
-
   return (
     <DialogForm
       open={open}
       onClose={onClose}
+      onSubmit={handleSubmit(onConfirmCallback)}
       width="440px"
     >
-      <DialogTitle>
-        <TextWithOverflowTooltip tooltipText={dialogTitle} variant="inherit">
-          {dialogTitle}
-        </TextWithOverflowTooltip>
-        <IconButton
-          sx={{ position: 'absolute', right: 8, top: 8, color: '#626D82' }}
-          onClick={onClose}
-        >
+      <StyledDialogTitle>
+        Edit Labels
+        <CloseDialogButton onClick={onClose}>
           <CloseOutlinedIcon fontSize="small"/>
-        </IconButton>
-      </DialogTitle>
+        </CloseDialogButton>
+      </StyledDialogTitle>
 
-      <DialogContent sx={{ width: 'inherit' }}>
+      <StyledDialogContent>
         <Controller
           name="labels"
           control={control}
@@ -96,18 +94,22 @@ export const EditFileLabelsPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
             )
           }}
         />
-      </DialogContent>
+        <FileNameCaption variant="body2">
+          {`Edit Labels for ${file.name}.`}
+        </FileNameCaption>
+      </StyledDialogContent>
 
       <DialogActions>
         <Button
           variant="contained"
-          onClick={onConfirmCallback}
+          type="submit"
           data-testid="SaveButton"
         >
           Save
         </Button>
         <Button
           variant="outlined"
+          type="button"
           onClick={onClose}
           data-testid="CancelButton"
         >
@@ -117,3 +119,25 @@ export const EditFileLabelsPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
     </DialogForm>
   )
 })
+
+const StyledDialogTitle = styled(DialogTitle)(({ theme }) => ({
+  color: theme.palette.text.primary,
+}))
+
+const CloseDialogButton = styled(IconButton)(({ theme }) => ({
+  position: 'absolute',
+  right: 8,
+  top: 8,
+  color: theme.palette.text.secondary,
+}))
+
+const StyledDialogContent = styled(DialogContent)({
+  width: 'inherit',
+  minWidth: 'unset',
+  lineHeight: 'normal',
+})
+
+const FileNameCaption = styled(Typography)(({ theme }) => ({
+  marginTop: theme.spacing(1),
+  color: theme.palette.text.primary,
+}))

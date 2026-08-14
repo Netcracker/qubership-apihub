@@ -24,11 +24,12 @@ import { useDocumentSearchParam } from '../useDocumentSearchParam'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { Document } from '@apihub/entities/documents'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { ContractType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 
 export type OperationsFilterPanelProps = {
   packageKey: Key
   versionKey: Key
-  apiTypeFilter: ApiType
+  apiType?: ApiType | ContractType
   comparisonPage?: boolean
 }
 
@@ -38,7 +39,7 @@ const ACCORDION_SUMMARY_STYLE = {
 }
 
 export const OperationsFilterPanel: FC<OperationsFilterPanelProps> = (props) => {
-  const { packageKey, versionKey, apiTypeFilter } = props
+  const { packageKey, versionKey, apiType } = props
 
   const [refKey] = useRefSearchParam()
   const [documentSlug, setDocument] = useDocumentSearchParam()
@@ -64,7 +65,7 @@ export const OperationsFilterPanel: FC<OperationsFilterPanelProps> = (props) => 
         <OperationsFilterByDocument
           packageKey={packageKey}
           versionKey={versionKey}
-          apiTypeFilter={apiTypeFilter}
+          apiType={apiType}
           defaultDocumentSlug={documentSlug}
           onDocumentSelect={onDocumentSelect}
         />

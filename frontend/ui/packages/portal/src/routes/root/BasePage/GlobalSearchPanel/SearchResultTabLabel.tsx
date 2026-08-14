@@ -17,11 +17,15 @@
 import type { FC } from 'react'
 import { memo } from 'react'
 import { Box, CircularProgress } from '@mui/material'
-import type { DocumentSearchResult, OperationSearchResult, PackageSearchResult } from '@apihub/entities/global-search'
+import type {
+  ContractElementSearchResult,
+  DocumentSearchResult,
+  PackageSearchResult,
+} from '@apihub/entities/global-search'
 
 export type SearchResultTabLabelProps = {
   label: string
-  results: Array<PackageSearchResult | DocumentSearchResult | OperationSearchResult>
+  results: Array<PackageSearchResult | DocumentSearchResult | ContractElementSearchResult>
   isLoading: boolean
 }
 
@@ -41,7 +45,7 @@ export const SearchResultTabLabel: FC<SearchResultTabLabelProps> = memo<SearchRe
 })
 
 function countSearchResult(
-  value: Array<PackageSearchResult | DocumentSearchResult | OperationSearchResult>,
+  value: Array<PackageSearchResult | DocumentSearchResult | ContractElementSearchResult>,
 ): string | number | undefined {
   const { length } = value
   if (length === 0) {

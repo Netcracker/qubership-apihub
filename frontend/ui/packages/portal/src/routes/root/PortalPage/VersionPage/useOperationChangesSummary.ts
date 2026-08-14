@@ -59,13 +59,31 @@ export function useOperationChangesSummary(options: Options): Result {
       refPackageId: options.packageId,
     }
   }
-  const { packageId, versionId, previousPackageId, previousVersionId, apiType, operationId, enabled } = options
+  const {
+    packageId,
+    versionId,
+    previousPackageId,
+    previousVersionId,
+    apiType,
+    operationId,
+    enabled,
+    refPackageId,
+  } = options
   const {
     data: operationChangesSummary,
     isLoading: loadingOperationChangesSummary,
     error: errorOperationChangesSummary,
   } = useQuery<ChangesSummaryDto, Error, ChangesSummary>({
-    queryKey: [QUERY_KEY_OPERATION_CHANGES_SUMMARY, packageId, versionId, previousPackageId, previousVersionId, apiType, operationId],
+    queryKey: [
+      QUERY_KEY_OPERATION_CHANGES_SUMMARY,
+      packageId,
+      versionId,
+      previousPackageId,
+      previousVersionId,
+      apiType,
+      operationId,
+      refPackageId,
+    ],
     queryFn: () => getOperationChangesSummary(options),
     enabled: enabled && !!packageId && !!versionId && !!apiType && !!operationId,
     select: toOperationChangesSummary,

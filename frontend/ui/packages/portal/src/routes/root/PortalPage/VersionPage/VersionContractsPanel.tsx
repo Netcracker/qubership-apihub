@@ -44,7 +44,7 @@ import { useSetSelectedPreviewOperation } from '../SelectedPreviewOperationProvi
 import { useCheckOperationFiltersApplied } from './useCheckOperationFiltersApplied'
 import { useEnsureValidRouteApiType } from './useEnsureValidRouteApiType'
 import { MCP_ENDPOINT_SEARCH_PARAM } from './useMcpEndpointSearchParam'
-import { MCP_ENTITY_SEARCH_PARAM } from './useMcpEntitySearchParam'
+import { MCP_COLLECTION_SEARCH_PARAM } from './useMcpCollectionSearchParam'
 import { useOperationsView } from './useOperationsView'
 import { useSetPathParam } from './useSetPathParam'
 import { useVersionTabApiTypes } from './useVersionTabApiTypes'
@@ -64,7 +64,7 @@ export type VersionContractsProps = {
   toggleOperationsViewMode: (value: string) => void
   additionalSelectors?: ReactNode
   hideSearch?: boolean
-  hideFilter?: boolean
+  hideFilterButton?: boolean
   hideViewToggle?: boolean
   hideExport?: boolean
   searchPlaceholder?: string
@@ -86,7 +86,7 @@ export const VersionContractsPanel: FC<VersionContractsProps> = memo<VersionCont
   hideFiltersPanel,
   additionalSelectors,
   hideSearch = false,
-  hideFilter = false,
+  hideFilterButton = false,
   hideViewToggle = false,
   hideExport = false,
   searchPlaceholder = 'Search Operations',
@@ -120,7 +120,7 @@ export const VersionContractsPanel: FC<VersionContractsProps> = memo<VersionCont
     if (routeApiType === CONTRACT_TYPE_MCP && nextApiType !== CONTRACT_TYPE_MCP) {
       setSearchParams({
         [MCP_ENDPOINT_SEARCH_PARAM]: '',
-        [MCP_ENTITY_SEARCH_PARAM]: '',
+        [MCP_COLLECTION_SEARCH_PARAM]: '',
       }, { replace: true })
     }
     setPathParam?.(nextApiType)
@@ -141,7 +141,7 @@ export const VersionContractsPanel: FC<VersionContractsProps> = memo<VersionCont
       searchPlaceholder={searchPlaceholder}
       setSearchValue={onContextSearch}
       hideSearch={hideSearch}
-      hideFilter={hideFilter}
+      hideFilterButton={hideFilterButton}
       hideViewToggle={hideViewToggle}
       hideExport={hideExport}
       viewMode={operationsView}

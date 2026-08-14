@@ -1,7 +1,7 @@
 import type { SelectChangeEvent } from '@mui/material'
 import { MenuItem } from '@mui/material'
 import type { ChangeEvent, FC } from 'react'
-import { memo, useEffect, useMemo } from 'react'
+import { memo, useMemo } from 'react'
 
 import { FilledSelectField } from '@netcracker/qubership-apihub-ui-shared/components/FilledSelectField'
 import {
@@ -15,8 +15,8 @@ import {
   type McpContractsSummary,
 } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
 
+import { useMcpCollectionSearchParam } from './useMcpCollectionSearchParam'
 import { useMcpEndpointSearchParam } from './useMcpEndpointSearchParam'
-import { useMcpEntitySearchParam } from './useMcpEntitySearchParam'
 
 export type McpContractsSelectorsProps = Readonly<{
   endpointOptions: ReadonlyArray<string>
@@ -28,9 +28,14 @@ export const McpContractsSelectors: FC<McpContractsSelectorsProps> = memo<McpCon
   mcpSummary,
 }) => {
   const [mcpEndpoint, setMcpEndpoint] = useMcpEndpointSearchParam()
-  const [mcpEntity, setMcpEntity] = useMcpEntitySearchParam()
+  const [mcpCollection, setMcpCollection] = useMcpCollectionSearchParam()
 
-  const endpointSummary = mcpEndpoint ? mcpSummary?.byEndpoint[mcpEndpoint] : undefined
+  // Prefer URL value when it is still in options; otherwise first option (URL syncs in layout effect).
+  const endpointValue = endpointOptions.find(endpoint => endpoint === mcpEndpoint) ??
+    endpointOptions[0] ?? ''
+  const hasMcpEndpoints = endpointOptions.length > 0
+
+  const endpointSummary = endpointValue ? mcpSummary?.byEndpoint[endpointValue] : undefined
 
   const entityCounts = useMemo<Record<McpCollection, number>>(() => ({
     [MCP_COLLECTION_INIT]: 0,
@@ -39,17 +44,17 @@ export const McpContractsSelectors: FC<McpContractsSelectorsProps> = memo<McpCon
     [MCP_COLLECTION_RESOURCES]: endpointSummary?.resourcesCount ?? 0,
   }), [endpointSummary])
 
-  const visibleCollections = useMemo(
-    () => MCP_COLLECTIONS.filter(collection => collection === MCP_COLLECTION_INIT || entityCounts[collection] > 0),
-    [entityCounts],
-  )
-
-  useEffect(() => {
-    const currentEntity = mcpEntity ?? MCP_COLLECTION_INIT
-    if (currentEntity !== MCP_COLLECTION_INIT && !visibleCollections.includes(currentEntity)) {
-      setMcpEntity(MCP_COLLECTION_INIT)
+  const visibleCollections = useMemo(() => {
+    if (!hasMcpEndpoints) {
+      return []
     }
-  }, [mcpEntity, setMcpEntity, visibleCollections])
+    return MCP_COLLECTIONS.filter(collection => collection === MCP_COLLECTION_INIT || entityCounts[collection] > 0)
+  }, [entityCounts, hasMcpEndpoints])
+
+  const collectionValue = visibleCollections.find(collection =>
+    collection === (mcpCollection ?? MCP_COLLECTION_INIT),
+  ) ??
+    visibleCollections[0] ?? ''
 
   const handleEndpointChange = (
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent,
@@ -57,16 +62,16 @@ export const McpContractsSelectors: FC<McpContractsSelectorsProps> = memo<McpCon
     setMcpEndpoint(event.target.value)
   }
 
-  const handleEntityChange = (
+  const handleCollectionChange = (
     event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent,
   ): void => {
-    setMcpEntity(event.target.value as McpCollection)
+    setMcpCollection(event.target.value as McpCollection)
   }
 
   return (
     <>
       <FilledSelectField
-        value={mcpEndpoint ?? ''}
+        value={endpointValue}
         onChange={handleEndpointChange}
         data-testid="McpEndpointSelector"
       >
@@ -78,9 +83,9 @@ export const McpContractsSelectors: FC<McpContractsSelectorsProps> = memo<McpCon
       </FilledSelectField>
 
       <FilledSelectField
-        value={mcpEntity ?? MCP_COLLECTION_INIT}
-        onChange={handleEntityChange}
-        data-testid="McpEntitySelector"
+        value={collectionValue}
+        onChange={handleCollectionChange}
+        data-testid="McpCollectionSelector"
       >
         {visibleCollections.map(collection => (
           <MenuItem key={collection} value={collection} data-testid={`MenuItem-${collection}`}>

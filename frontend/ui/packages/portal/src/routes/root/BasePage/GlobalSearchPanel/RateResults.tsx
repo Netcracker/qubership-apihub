@@ -21,7 +21,7 @@ import { Box, Typography } from '@mui/material'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
 
-export type RateResultsProps = {
+type RateResultsProps = {
   searchText: string
   serviceName?: string | undefined
   packageKey?: string | undefined

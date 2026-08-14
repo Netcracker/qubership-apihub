@@ -1,12 +1,12 @@
-import {InputAdornment, TextField, type TextFieldProps} from '@mui/material'
-import type {ControllerFieldState, ControllerRenderProps, FieldPath, FieldValues} from 'react-hook-form'
-import {ErrorIcon} from '@netcracker/qubership-apihub-ui-shared/icons/ErrorIcon'
+import { InputAdornment, styled, TextField, type TextFieldProps } from '@mui/material'
+import type { ControllerFieldState, ControllerRenderProps, FieldPath, FieldValues } from 'react-hook-form'
+
+import { ErrorIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ErrorIcon'
 
 interface ErrorTextFieldProps<
   TFieldValues extends FieldValues,
-  TName extends FieldPath<TFieldValues>
-> extends Omit<TextFieldProps, 'error' | 'helperText' | 'onChange'>
-{
+  TName extends FieldPath<TFieldValues>,
+> extends Omit<TextFieldProps, 'error' | 'onChange'> {
   field: ControllerRenderProps<TFieldValues, TName>
   fieldState: ControllerFieldState
   clearErrors?: (
@@ -16,17 +16,18 @@ interface ErrorTextFieldProps<
 
 export const ErrorTextField = <
   TFieldValues extends FieldValues,
-  TName extends FieldPath<TFieldValues>
+  TName extends FieldPath<TFieldValues>,
 >({
   field,
   fieldState,
   clearErrors,
   InputProps,
   inputProps,
+  helperText,
   ...textFieldProps
 }: ErrorTextFieldProps<TFieldValues, TName>): JSX.Element => {
   return (
-    <TextField
+    <StyledTextField
       {...field}
       {...textFieldProps}
       inputProps={{
@@ -34,7 +35,7 @@ export const ErrorTextField = <
         ...inputProps,
       }}
       error={!!fieldState.error}
-      helperText={fieldState.error?.message}
+      helperText={helperText ?? fieldState.error?.message}
       onChange={(event) => {
         field.onChange(event)
         clearErrors?.(field.name)
@@ -54,3 +55,10 @@ export const ErrorTextField = <
 }
 
 ErrorTextField.displayName = 'ErrorTextField'
+
+// Theme uses 2px error vs 1px focus; keep 1px so the field does not jump.
+const StyledTextField = styled(TextField)({
+  '& .MuiFilledInput-root.Mui-error': {
+    borderWidth: 1,
+  },
+})

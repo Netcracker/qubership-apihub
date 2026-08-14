@@ -69,7 +69,7 @@ export const OperationsSidebarOnComparison: FC<OperationsSidebarOnComparisonProp
             <OperationsFilterPanel
               packageKey={operationPackageKey}
               versionKey={operationPackageVersion}
-              apiTypeFilter={apiType}
+              apiType={apiType}
               comparisonPage={true}
             />
             <Divider flexItem sx={DIVIDER_STYLES}/>

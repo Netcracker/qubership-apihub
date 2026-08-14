@@ -23,6 +23,8 @@ import { useApiTypeSearchParam } from './useApiTypeSearchParam'
 import type { Package } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import type { Key, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { ContractType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
+import { toRouteApiType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 
 export type ComparisonParams = Partial<{
   originPackage: Package | null
@@ -31,7 +33,7 @@ export type ComparisonParams = Partial<{
   changedPackage: Package | null
   changedPackageKey: Key
   changedVersionKey: VersionKey
-  apiType?: ApiType
+  apiType?: ApiType | ContractType
 }>
 
 export function useComparisonParams(): ComparisonParams {
@@ -52,7 +54,7 @@ export function useComparisonParams(): ComparisonParams {
       changedPackage: changedPackage,
       changedPackageKey: changedPackageKey,
       changedVersionKey: changedVersionKey,
-      apiType: (apiType ?? apiTypeAsSearchParam) as ApiType,
+      apiType: toRouteApiType(apiType ?? apiTypeAsSearchParam),
     }), [apiType, apiTypeAsSearchParam, changedPackage, changedPackageKey, changedVersionKey, originPackage, originPackageKey, originVersionKey],
   )
 }

@@ -1,3 +1,4 @@
+import type { SxProps } from '@mui/material'
 import { type FC, memo, useMemo } from 'react'
 
 import { JSON_FILE_EXTENSION } from '../../utils/files'
@@ -7,9 +8,10 @@ import { RawSpecView } from './RawSpecView'
 
 export type JsonRawSpecViewProps = Readonly<{
   data?: Record<string, unknown>
+  sx?: SxProps
 }>
 
-export const JsonRawSpecView: FC<JsonRawSpecViewProps> = memo<JsonRawSpecViewProps>(({ data }) => {
+export const JsonRawSpecView: FC<JsonRawSpecViewProps> = memo<JsonRawSpecViewProps>(({ data, sx }) => {
   const value = useMemo(
     () => (data ? toFormattedJsonString(data) : ''),
     [data],
@@ -20,6 +22,7 @@ export const JsonRawSpecView: FC<JsonRawSpecViewProps> = memo<JsonRawSpecViewPro
       value={value}
       extension={JSON_FILE_EXTENSION}
       type={JSON_SCHEMA_SPEC_TYPE}
+      sx={sx}
     />
   )
 })

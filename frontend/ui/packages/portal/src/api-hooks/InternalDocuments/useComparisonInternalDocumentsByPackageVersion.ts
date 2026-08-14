@@ -41,13 +41,20 @@ export function useComparisonInternalDocumentsByPackageVersion(
     }
   }
 
-  const { currentPackageId, currentVersionId, previousPackageId, previousVersionId } = options
+  const { currentPackageId, currentVersionId, previousPackageId, previousVersionId, refPackageId } = options
   const currentPackageKey = encodeURIComponent(currentPackageId ?? '')
   const currentPackageVersion = encodeURIComponent(currentVersionId ?? '')
   const enabled = !!currentPackageKey && !!currentPackageVersion && !!previousPackageId
 
   const { data, isFetching, error } = useQuery<InternalDocuments, Error, InternalDocuments>({
-    queryKey: [QUERY_KEY, currentPackageKey, currentPackageVersion, previousPackageId, previousVersionId],
+    queryKey: [
+      QUERY_KEY,
+      currentPackageKey,
+      currentPackageVersion,
+      previousPackageId,
+      previousVersionId,
+      refPackageId,
+    ],
     queryFn: () => (
       enabled
         ? getComparisonInternalDocumentsByPackageVersion(options)

@@ -62,6 +62,7 @@ export function useTags(options?: Partial<{
   apiType: ApiType
   page: number
   limit: number
+  enabled?: boolean
 }>): TagsQueryState {
   const {
     packageKey: providedPackageKey,
@@ -72,6 +73,7 @@ export function useTags(options?: Partial<{
     apiType,
     page,
     limit,
+    enabled: enabledOption = true,
   } = options ?? {}
   const [parsedPackageKey, parsedVersionKey] = usePackageParamsWithRef()
 
@@ -103,7 +105,7 @@ export function useTags(options?: Partial<{
       limit: limit,
       signal: signal,
     }),
-    enabled: !!packageKey && !!fullVersion,
+    enabled: enabledOption && !!packageKey && !!fullVersion,
     refetchOnWindowFocus: false,
     getNextPageParam: (lastPage, allPages) => {
       if (!limit) {

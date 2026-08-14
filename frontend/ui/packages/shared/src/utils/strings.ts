@@ -85,6 +85,23 @@ export function toOptionalTrimmedString(value: unknown): string | undefined {
   return trimmed || undefined
 }
 
+/** Default max length for description strings kept after DTO mapping in the UI. */
+const DESCRIPTION_MAX_LENGTH = 500
+
+/** Truncates a description for list/changelog mapping. Appends "..." when shortened. */
+export function truncateDescription(
+  description: string | undefined,
+  maxLength: number = DESCRIPTION_MAX_LENGTH,
+): string | undefined {
+  if (typeof description !== 'string') {
+    return undefined
+  }
+  if (description.length <= maxLength) {
+    return description
+  }
+  return `${description.slice(0, maxLength)}...`
+}
+
 export const NO_DATA_STRING = '—'
 
 export const transformStringValue = (value: string | undefined): string => {
@@ -92,7 +109,6 @@ export const transformStringValue = (value: string | undefined): string => {
     return NO_DATA_STRING
   }
   return value
-
 }
 
 /**

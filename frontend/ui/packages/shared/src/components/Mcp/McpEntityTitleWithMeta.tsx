@@ -5,14 +5,14 @@ import type { FC } from 'react'
 import { memo } from 'react'
 import { NavLink } from 'react-router-dom'
 
-import type { McpEntity } from '../../entities/contracts-mcp'
-import { getMcpEntityDescription, getMcpEntityDisplayName } from '../../entities/contracts-mcp'
+import type { McpContractEntity } from '../../entities/contracts-mcp'
+import { getMcpContractEntityDescription, getMcpContractEntityDisplayName } from '../../entities/contracts-mcp'
 import { EMPTY_SUBTITLE_PLACEHOLDER } from '../../utils/placeholders'
 import { OverflowTooltip } from '../OverflowTooltip'
 import { TextWithOverflowTooltip } from '../TextWithOverflowTooltip'
 
 export type McpEntityTitleWithMetaProps = {
-  entity: McpEntity
+  entity: McpContractEntity
   link?: Partial<Path>
   onLinkClick?: () => void
   onlyTitle?: boolean
@@ -24,8 +24,8 @@ export const McpEntityTitleWithMeta: FC<McpEntityTitleWithMetaProps> = memo<McpE
   onLinkClick,
   onlyTitle = false,
 }) => {
-  const displayName = getMcpEntityDisplayName(entity)
-  const description = getMcpEntityDescription(entity)
+  const displayName = getMcpContractEntityDisplayName(entity)
+  const description = getMcpContractEntityDescription(entity)
 
   const titleNode = link
     ? (

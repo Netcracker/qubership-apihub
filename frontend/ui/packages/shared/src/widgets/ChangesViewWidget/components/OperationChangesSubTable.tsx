@@ -130,3 +130,5 @@ export const OperationChangesSubTable: FC<OperationChangesSubTableProps> = memo<
     </>
   )
 })
+
+OperationChangesSubTable.displayName = 'OperationChangesSubTable'

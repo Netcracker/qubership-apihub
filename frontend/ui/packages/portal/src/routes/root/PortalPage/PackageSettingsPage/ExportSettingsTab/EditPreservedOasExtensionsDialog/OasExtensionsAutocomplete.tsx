@@ -123,7 +123,7 @@ export const OasExtensionsAutocomplete: FC<OasExtensionsAutocompleteProps> = ({
             ...params.InputProps,
             startAdornment: (
               <>
-                {params.InputProps.startAdornment} {/* Standard MUI pattern for displaying existing data as chips */}
+                {params.InputProps.startAdornment}
                 {prefixText && (
                   <Box component="span" sx={{ opacity: 0.5 }}>
                     {prefixText}

@@ -34,6 +34,7 @@ export const DdlTableSelector: FC<DdlTableSelectorProps> = memo<DdlTableSelector
       <Button
         sx={{ minWidth: 4, height: 20, p: 0, boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}
         variant="text"
+        aria-label={`Open ${sectionTitle}`}
         onClick={({ currentTarget }) => setAnchor(currentTarget)}
         endIcon={<KeyboardArrowDownOutlinedIcon />}
       >

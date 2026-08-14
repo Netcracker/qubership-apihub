@@ -19,6 +19,7 @@ import { useEventBus } from '@apihub/routes/EventBusProvider'
 import { isRevisionCompare } from '@apihub/routes/root/PortalPage/VersionPage/VersionComparePage/VersionCompareContent'
 import { getDefaultApiType } from '@apihub/utils/operation-types'
 import { Box, Card, CardContent, Grid, ListItem, ListItemText, Typography } from '@mui/material'
+import { styled } from '@mui/material/styles'
 import type { OperationType } from '@netcracker/qubership-apihub-api-processor'
 import { calculateTotalChangeSummary, EMPTY_CHANGE_SUMMARY } from '@netcracker/qubership-apihub-api-processor'
 import { ChangeSeverityIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ChangeSeverityIndicator'
@@ -27,14 +28,21 @@ import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/Cu
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { WarningApiProcessorVersion } from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
 import { API_TYPE_TITLE_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import type { ChangeSeverity } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import {
   ACTION_TYPE_COLOR_MAP,
   ADD_ACTION_TYPE,
+  type ChangeSeverity,
+  type ChangesSummary,
   REMOVE_ACTION_TYPE,
 } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
+import {
+  CONTRACT_TYPE_DDL,
+  CONTRACT_TYPE_TITLE_MAP,
+} from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
+import { getComparisonApiTypesFromSummary, type VersionComparisonContractsSummary } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-changes-summary'
+import { hasDdlComparisonChanges } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-ddl'
 import { calculateAction } from '@netcracker/qubership-apihub-ui-shared/entities/version-changelog'
 import type { DashboardComparisonSummary } from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
@@ -56,6 +64,7 @@ import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/ut
 import type { FC } from 'react'
 import { memo, useCallback, useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
+
 import { useNavigation } from '../../../../NavigationProvider'
 import { useBackwardLocation } from '../../../useBackwardLocation'
 import { useIsPackageFromDashboard } from '../../useIsPackageFromDashboard'
@@ -63,12 +72,11 @@ import { useChangesLoadingStatus, useSetChangesLoadingStatus } from '../ChangesL
 import { useChangesSummaryFromContext } from '../ChangesSummaryProvider'
 import { useBreadcrumbsData } from '../ComparedPackagesBreadcrumbsProvider'
 import { ComparisonSwapper } from '../ComparisonSwapper'
-import { useVersionsComparisonGlobalParams } from '../VersionsComparisonGlobalParams'
 import { VERSION_SWAPPER_HEIGHT } from '../shared-styles'
-import { useFilteredDashboardChanges } from './useFilteredDashboardChanges'
-import { toComparedApiTypeFilter } from './compareApiTypeFilter'
 import { useApiTypeSearchParam } from '../useApiTypeSearchParam'
-import { WarningApiProcessorVersion } from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
+import { useVersionsComparisonGlobalParams } from '../VersionsComparisonGlobalParams'
+import { toComparedApiTypeFilter } from './compareApiTypeFilter'
+import { useFilteredDashboardChanges } from './useFilteredDashboardChanges'
 
 export const DashboardsCompareContent: FC = memo(() => {
   const location = useBackwardLocation()
@@ -83,7 +91,6 @@ export const DashboardsCompareContent: FC = memo(() => {
     originVersionKey,
     changedPackageKey,
     changedVersionKey,
-    apiType,
   } = useVersionsComparisonGlobalParams()
 
   const { showCompareVersionsDialog, showCompareRevisionsDialog } = useEventBus()
@@ -102,7 +109,7 @@ export const DashboardsCompareContent: FC = memo(() => {
   }, [changesSummary, setChangesLoadingStatus])
 
   const [filters] = useSeverityFiltersSearchParam()
-  const apiTypeFilter = toComparedApiTypeFilter(apiTypeSearchParam) as ApiType | undefined
+  const apiTypeFilter = toComparedApiTypeFilter(apiTypeSearchParam)
   const filteredDashboardChanges = useFilteredDashboardChanges(changesSummary, filters, apiTypeFilter)
 
   const onPackageChangeClick = (): void => {
@@ -116,7 +123,7 @@ export const DashboardsCompareContent: FC = memo(() => {
       [VERSION_SEARCH_PARAM]: { value: changedVersionKey },
       [PACKAGE_SEARCH_PARAM]: { value: originPackageKey !== changedPackageKey ? encodeURIComponent(changedPackageKey!) : '' },
       [REF_SEARCH_PARAM]: { value: isPackageFromDashboard ? refPackageKey : undefined },
-      [API_TYPE_SEARCH_PARAM]: { value: apiType },
+      [API_TYPE_SEARCH_PARAM]: { value: apiTypeSearchParam },
       [FILTERS_SEARCH_PARAM]: { value: filters.join() },
     }
 
@@ -125,7 +132,7 @@ export const DashboardsCompareContent: FC = memo(() => {
       versionKey: originVersionKey!,
       search: searchParams,
     })
-  }, [apiType, changedPackageKey, changedVersionKey, filters, isPackageFromDashboard, navigateToComparison, originPackageKey, originVersionKey, refPackageKey])
+  }, [apiTypeSearchParam, changedPackageKey, changedVersionKey, filters, isPackageFromDashboard, navigateToComparison, originPackageKey, originVersionKey, refPackageKey])
 
   if (isLoading) {
     return (
@@ -168,18 +175,23 @@ export const DashboardsCompareContent: FC = memo(() => {
                   previousStatus,
                   name: title,
                   operationTypes,
+                  contractsChangesSummary,
                   parentPackages = [],
                   latestRevision,
                 } = refChangesSummary
 
-                const changeSummary = calculateTotalChangeSummary(operationTypes.map(type => type.changesSummary ?? EMPTY_CHANGE_SUMMARY))
+                const changeSummary = calculateRefChangeSummary(operationTypes, contractsChangesSummary)
                 const path = parentPackages.join(' / ')
                 const currentAction = calculateAction(version, previousVersion)
                 const severity = getMajorSeverity(changeSummary)
                 const comparingSearchParams = optionalSearchParams({
                   [PACKAGE_SEARCH_PARAM]: { value: changedPackageKey === originPackageKey ? '' : originPackageKey! },
                   [VERSION_SEARCH_PARAM]: { value: originVersionKey! },
-                  [API_TYPE_SEARCH_PARAM]: { value: getDefaultApiType(operationTypes.map(type => type.apiType)) },
+                  [API_TYPE_SEARCH_PARAM]: {
+                    value: getDefaultApiType(
+                      getComparisonApiTypesFromSummary(operationTypes, contractsChangesSummary),
+                    ),
+                  },
                   [REF_SEARCH_PARAM]: { value: refKey },
                 })
 
@@ -256,6 +268,7 @@ export const DashboardsCompareContent: FC = memo(() => {
                           path: path,
                         } : undefined}
                         operationTypes={operationTypes}
+                        contractsChangesSummary={contractsChangesSummary}
                       />
                     </Grid>
                   </Grid>
@@ -269,6 +282,8 @@ export const DashboardsCompareContent: FC = memo(() => {
   )
 })
 
+DashboardsCompareContent.displayName = 'DashboardsCompareContent'
+
 type PackageProps = {
   value?: {
     title?: string
@@ -278,11 +293,17 @@ type PackageProps = {
     status?: VersionStatus
   }
   operationTypes?: ReadonlyArray<OperationType>
+  contractsChangesSummary?: VersionComparisonContractsSummary
 }
 
-const Package: FC<PackageProps> = memo<PackageProps>(({ value, operationTypes }) => {
+const Package: FC<PackageProps> = memo<PackageProps>(({
+  value,
+  operationTypes,
+  contractsChangesSummary,
+}) => {
   const { version, path, title, status, latestRevision } = value ?? {}
   const { versionKey } = getSplittedVersionKey(version, latestRevision)
+  const showChangeLines = !!operationTypes || hasDdlComparisonChanges(contractsChangesSummary?.ddl)
 
   const primary = (
     <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
@@ -292,16 +313,9 @@ const Package: FC<PackageProps> = memo<PackageProps>(({ value, operationTypes })
     </Box>
   )
   return (
-    <ListItem
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        padding: operationTypes ? '2px 16px' : '8px 16px',
-        paddingTop: value ? 0 : '44px',
-        overflow: 'hidden',
-        gap: '2px',
-      }}
+    <PackageListItem
+      $showChangeLines={showChangeLines}
+      $hasValue={!!value}
     >
       <Box>
         {path && (
@@ -316,15 +330,64 @@ const Package: FC<PackageProps> = memo<PackageProps>(({ value, operationTypes })
         />
       </Box>
       {operationTypes?.map(operationTypeChange =>
-        <Box component="span" gap={1} sx={{ display: 'flex', alignItems: 'center' }}
-          data-testid={`ChangesApiType-${operationTypeChange.apiType}`}>
+        <ApiTypeChangeLine
+          key={operationTypeChange.apiType}
+          component="span"
+          data-testid={`ChangesApiType-${operationTypeChange.apiType}`}
+        >
           <Typography component="span" noWrap variant="subtitle2">
             {API_TYPE_TITLE_MAP[operationTypeChange.apiType]}:
           </Typography>
           <Changes value={operationTypeChange.changesSummary} mode="compact" />
-        </Box>,
+        </ApiTypeChangeLine>,
       )}
-    </ListItem>
+      {hasDdlComparisonChanges(contractsChangesSummary?.ddl) && (
+        <ApiTypeChangeLine component="span" data-testid={`ChangesApiType-${CONTRACT_TYPE_DDL}`}>
+          <Typography component="span" noWrap variant="subtitle2">
+            {CONTRACT_TYPE_TITLE_MAP[CONTRACT_TYPE_DDL]}:
+          </Typography>
+          <Changes
+            value={contractsChangesSummary!.ddl!.changesSummary ?? EMPTY_CHANGE_SUMMARY}
+            mode="compact"
+          />
+        </ApiTypeChangeLine>
+      )}
+    </PackageListItem>
   )
 })
 
+Package.displayName = 'Package'
+
+const ApiTypeChangeLine = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+}))
+
+type PackageListItemProps = {
+  $showChangeLines?: boolean
+  $hasValue?: boolean
+}
+
+const PackageListItem = styled(ListItem, {
+  shouldForwardProp: (prop) => prop !== '$showChangeLines' && prop !== '$hasValue',
+})<PackageListItemProps>(({ $showChangeLines, $hasValue }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'flex-start',
+  padding: $showChangeLines ? '2px 16px' : '8px 16px',
+  paddingTop: $hasValue ? 0 : '44px',
+  overflow: 'hidden',
+  gap: '2px',
+}))
+
+function calculateRefChangeSummary(
+  operationTypes: ReadonlyArray<OperationType>,
+  contractsChangesSummary?: VersionComparisonContractsSummary,
+): ChangesSummary {
+  const summaries = operationTypes.map(type => type.changesSummary ?? EMPTY_CHANGE_SUMMARY)
+  if (hasDdlComparisonChanges(contractsChangesSummary?.ddl)) {
+    summaries.push(contractsChangesSummary!.ddl!.changesSummary ?? EMPTY_CHANGE_SUMMARY)
+  }
+  return calculateTotalChangeSummary(summaries)
+}

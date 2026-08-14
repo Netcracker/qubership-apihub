@@ -16,6 +16,7 @@
 
 import type { ApiType } from './api-types'
 import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from './api-types'
+import { CONTRACT_TYPE_DDL } from './contract-types'
 
 export const DOC_OPERATION_VIEW_MODE = 'doc'
 export const SIMPLE_OPERATION_VIEW_MODE = 'simple'
@@ -51,6 +52,12 @@ export const ASYNCAPI_OPERATION_VIEW_MODES: ReadonlyArray<OperationViewMode> = [
   RAW_OPERATION_VIEW_MODE,
 ]
 
+const DDL_OPERATION_VIEW_MODES: ReadonlyArray<OperationViewMode> = [
+  DOC_OPERATION_VIEW_MODE,
+  SIMPLE_OPERATION_VIEW_MODE,
+  RAW_OPERATION_VIEW_MODE,
+]
+
 export const OPERATION_VIEW_MODES = new Map<ApiType, ReadonlyArray<OperationViewMode>>([
   [API_TYPE_GRAPHQL, GQL_OPERATION_VIEW_MODES],
   [API_TYPE_REST, REST_OPERATION_VIEW_MODES],
@@ -73,21 +80,37 @@ export const ASYNCAPI_OPERATION_COMPARE_VIEW_MODES: ReadonlyArray<OperationViewM
 ]
 
 export const OPERATION_COMPARE_VIEW_MODES = new Map<ApiType, ReadonlyArray<OperationViewMode>>([
-  [API_TYPE_GRAPHQL, REST_OPERATION_COMPARE_VIEW_MODES],
-  [API_TYPE_REST, GQL_OPERATION_COMPARE_VIEW_MODES],
+  [API_TYPE_GRAPHQL, GQL_OPERATION_COMPARE_VIEW_MODES],
+  [API_TYPE_REST, REST_OPERATION_COMPARE_VIEW_MODES],
   [API_TYPE_ASYNCAPI, ASYNCAPI_OPERATION_COMPARE_VIEW_MODES],
 ])
 
-export const OPERATION_PREVIEW_VIEW_MODES_BY_API_TYPE = new Map<ApiType, ReadonlyArray<OperationViewMode>>([
+const DDL_COMPARE_VIEW_MODES: ReadonlyArray<OperationViewMode> = [
+  DOC_OPERATION_VIEW_MODE,
+  RAW_OPERATION_VIEW_MODE,
+]
+
+export type CompareViewModeApiType = ApiType | typeof CONTRACT_TYPE_DDL
+
+export const COMPARE_VIEW_MODES_BY_API_TYPE: Record<CompareViewModeApiType, ReadonlyArray<OperationViewMode>> = {
+  [API_TYPE_REST]: REST_OPERATION_COMPARE_VIEW_MODES,
+  [API_TYPE_GRAPHQL]: GQL_OPERATION_COMPARE_VIEW_MODES,
+  [API_TYPE_ASYNCAPI]: ASYNCAPI_OPERATION_COMPARE_VIEW_MODES,
+  [CONTRACT_TYPE_DDL]: DDL_COMPARE_VIEW_MODES,
+}
+
+export const OPERATION_PREVIEW_VIEW_MODES_BY_API_TYPE = new Map<ApiType | typeof CONTRACT_TYPE_DDL, ReadonlyArray<OperationViewMode>>([
   [API_TYPE_GRAPHQL, GQL_OPERATION_VIEW_MODES],
   [API_TYPE_REST, REST_OPERATION_VIEW_MODES.filter(mode => mode !== GRAPH_VIEW_MODE)],
   [API_TYPE_ASYNCAPI, ASYNCAPI_OPERATION_VIEW_MODES],
+  [CONTRACT_TYPE_DDL, DDL_OPERATION_VIEW_MODES],
 ])
 
-export const DEFAULT_OPERATION_PREVIEW_VIEW_MODE_BY_API_TYPE = new Map<ApiType, OperationViewMode>([
+export const DEFAULT_OPERATION_PREVIEW_VIEW_MODE_BY_API_TYPE = new Map<ApiType | typeof CONTRACT_TYPE_DDL, OperationViewMode>([
   [API_TYPE_GRAPHQL, DOC_OPERATION_VIEW_MODE],
   [API_TYPE_REST, DOC_OPERATION_VIEW_MODE],
   [API_TYPE_ASYNCAPI, DOC_OPERATION_VIEW_MODE],
+  [CONTRACT_TYPE_DDL, DOC_OPERATION_VIEW_MODE],
 ])
 
 type DefaultViewModeInComparisonMode = (condition?: boolean) => typeof DOC_OPERATION_VIEW_MODE | typeof RAW_OPERATION_VIEW_MODE
@@ -100,12 +123,17 @@ function getGraphQlDefaultViewMode(): typeof DOC_OPERATION_VIEW_MODE | typeof RA
   return DOC_OPERATION_VIEW_MODE
 }
 
-const getAsyncApiDefaultViewMode = (): typeof DOC_OPERATION_VIEW_MODE | typeof RAW_OPERATION_VIEW_MODE => {
+function getAsyncApiDefaultViewMode(): typeof DOC_OPERATION_VIEW_MODE | typeof RAW_OPERATION_VIEW_MODE {
   return DOC_OPERATION_VIEW_MODE
 }
 
-export const DEFAULT_VIEW_MODE_MAP_BY_API_TYPE: Record<ApiType, DefaultViewModeInComparisonMode> = {
+function getDdlDefaultCompareViewMode(): typeof DOC_OPERATION_VIEW_MODE | typeof RAW_OPERATION_VIEW_MODE {
+  return DOC_OPERATION_VIEW_MODE
+}
+
+export const DEFAULT_VIEW_MODE_MAP_BY_API_TYPE: Record<CompareViewModeApiType, DefaultViewModeInComparisonMode> = {
   [API_TYPE_REST]: getRestApiDefaultViewMode,
   [API_TYPE_GRAPHQL]: getGraphQlDefaultViewMode,
   [API_TYPE_ASYNCAPI]: getAsyncApiDefaultViewMode,
+  [CONTRACT_TYPE_DDL]: getDdlDefaultCompareViewMode,
 }

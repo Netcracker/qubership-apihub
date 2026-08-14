@@ -7,15 +7,15 @@ import { MenuButtonItems } from '@netcracker/qubership-apihub-ui-shared/componen
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import { McpEntityWithMetaList } from '@netcracker/qubership-apihub-ui-shared/components/Mcp/McpEntityWithMetaList'
 import { NAVIGATION_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import type { McpEntity } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
+import type { McpContractEntity } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 
 export type McpEntitySelectorProps = {
-  entities: ReadonlyArray<McpEntity>
+  entities: ReadonlyArray<McpContractEntity>
   isLoading?: boolean
   sectionTitle: string
   emptyMessage: string
-  prepareLinkFn: (entity: McpEntity) => Partial<Path>
+  prepareLinkFn: (entity: McpContractEntity) => Partial<Path>
 }
 
 export const McpEntitySelector: FC<McpEntitySelectorProps> = memo<McpEntitySelectorProps>(({
@@ -33,6 +33,7 @@ export const McpEntitySelector: FC<McpEntitySelectorProps> = memo<McpEntitySelec
       <Button
         sx={{ minWidth: 4, height: 20, p: 0, boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}
         variant="text"
+        aria-label={`Open ${sectionTitle}`}
         onClick={({ currentTarget }) => setAnchor(currentTarget)}
         endIcon={<KeyboardArrowDownOutlinedIcon />}
       >

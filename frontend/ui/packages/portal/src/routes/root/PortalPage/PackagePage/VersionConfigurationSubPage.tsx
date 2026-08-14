@@ -21,7 +21,7 @@ import { InfoContextIcon } from '@netcracker/qubership-apihub-ui-shared/icons/In
 import { useEventBus } from '../../../EventBusProvider'
 import { useFileActions, useFiles, useFilesLoading } from '../FilesProvider'
 import { specTypeViewers } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/useSpecViewer'
-import { isEmpty, isNotEmpty, isNotEmptyRecord } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+import { isEmpty, isNotEmptyRecord } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { SpecLogo } from '@netcracker/qubership-apihub-ui-shared/components/SpecLogo'
 import { getFileExtension, transformFileListToFileArray } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import {
@@ -31,9 +31,9 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/components/FileTableUpload/FileTableUpload'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
-import { filesRecordToArray, sortFilesRecord } from '@apihub/routes/root/PortalPage/PackagePage/files'
+import { sortFilesRecord } from '@apihub/routes/root/PortalPage/PackagePage/files'
 import { ConfigureFileTableTree } from '@apihub/routes/root/PortalPage/PackagePage/ConfigureFileTableTree'
-import { find, xorBy } from 'lodash-es'
+import { find } from 'lodash-es'
 import { UploadButton } from '@netcracker/qubership-apihub-ui-shared/components/UploadButton'
 
 const PREVIEWABLE_FILE_TYPES = Object.keys(specTypeViewers)
@@ -42,13 +42,17 @@ export const VersionConfigurationSubPage: FC = memo(() => {
   const { showSpecificationDialog, showDeleteFileDialog, showEditFileLabelsDialog } = useEventBus()
   const [searchValue, setSearchValue] = useState('')
 
-  const { fileTypesMap, filesWithLabels, mcpFiles, mcpEndpoints, replacedFiles, sources } = useFiles()
+  const {
+    fileTypesMap,
+    filesWithLabels,
+    mcpStagedFileMetaByName,
+    mcpEndpoints,
+    replacedFiles,
+    hasUnsavedChanges,
+  } = useFiles()
   const isFilesLoading = useFilesLoading()
 
   const { addFiles, deleteFile, editFile, restoreFile } = useFileActions()
-
-  const filesWithLabelsArray = filesRecordToArray(filesWithLabels)
-  const hasChanges = isNotEmpty(replacedFiles) || isNotEmpty(xorBy(sources, filesWithLabelsArray, 'name'))
 
   const sortedFiles = sortFilesRecord(filesWithLabels, searchValue)
 
@@ -117,13 +121,13 @@ export const VersionConfigurationSubPage: FC = memo(() => {
   }, [replacedFiles])
 
   useEffect(() => {
-    if (!hasChanges) {
+    if (!hasUnsavedChanges) {
       return
     }
     const handleOnBeforeUnload = (event: BeforeUnloadEvent): void => event.preventDefault()
     window.addEventListener('beforeunload', handleOnBeforeUnload)
     return () => window.removeEventListener('beforeunload', handleOnBeforeUnload)
-  }, [hasChanges])
+  }, [hasUnsavedChanges])
 
   return (
     <BodyCard
@@ -175,7 +179,8 @@ export const VersionConfigurationSubPage: FC = memo(() => {
           customFilesTable={
             <ConfigureFileTableTree
               filesMap={{ ...sortedFiles }}
-              mcpFiles={mcpFiles}
+              filesWithLabels={filesWithLabels}
+              mcpStagedFileMetaByName={mcpStagedFileMetaByName}
               mcpEndpoints={mcpEndpoints}
               isLoading={isFilesLoading}
               showPlaceholder={isNotEmptyRecord(filesWithLabels) && isEmpty(sortedFiles)}

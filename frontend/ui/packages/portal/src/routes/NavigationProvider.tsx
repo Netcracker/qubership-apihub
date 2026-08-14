@@ -70,8 +70,8 @@ import {
   VERSION_PAGE_PATH_PATTERN,
   WORKSPACES_PAGE_PATH_PATTERN,
 } from '../routes'
+import type { MCP_COLLECTION_SEARCH_PARAM } from './root/PortalPage/VersionPage/useMcpCollectionSearchParam'
 import type { MCP_ENDPOINT_SEARCH_PARAM } from './root/PortalPage/VersionPage/useMcpEndpointSearchParam'
-import type { MCP_ENTITY_SEARCH_PARAM } from './root/PortalPage/VersionPage/useMcpEntitySearchParam'
 
 export const NAVIGATE_TO_OVERVIEW = 'navigate-to-overview'
 export const NAVIGATE_TO_OPERATIONS = 'navigate-to-operations'
@@ -128,7 +128,7 @@ export type OperationsDetail = {
     [OPERATIONS_VIEW_MODE_PARAM]?: SearchParam
     [OPERATION_SEARCH_PARAM]?: SearchParam
     [MCP_ENDPOINT_SEARCH_PARAM]?: SearchParam
-    [MCP_ENTITY_SEARCH_PARAM]?: SearchParam
+    [MCP_COLLECTION_SEARCH_PARAM]?: SearchParam
   }
 }
 

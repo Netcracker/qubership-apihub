@@ -2,13 +2,20 @@ import { Box } from '@mui/material'
 import { createElement } from 'react'
 
 import { Changes } from '@netcracker/qubership-apihub-ui-shared/components/Changes'
-import { CATEGORY_OPERATION } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
+import {
+  CATEGORY_OPERATION,
+  CATEGORY_TABLE,
+  type ChangesTooltipCategory,
+} from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
 import {
   BREAKING_CHANGE_SEVERITY,
   type ChangesSummary,
 } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 
-import { type SummaryImpactedEntity } from './entities'
+import {
+  SUMMARY_IMPACTED_ENTITY_TABLES,
+  type SummaryImpactedEntity,
+} from './entities'
 import type { SummaryMetric } from './SummaryPanel'
 
 type BwcValidationMetricsOptions = Readonly<{
@@ -44,10 +51,17 @@ export function buildBwcValidationMetrics({
         createElement(Changes, {
           value: numberOfImpacted,
           mode: 'compact',
-          category: CATEGORY_OPERATION,
+          category: toChangesTooltipCategory(impactedEntity),
           zeroView: true,
         }),
       ),
     },
   ]
+}
+
+function toChangesTooltipCategory(impactedEntity: SummaryImpactedEntity): ChangesTooltipCategory {
+  if (impactedEntity === SUMMARY_IMPACTED_ENTITY_TABLES) {
+    return CATEGORY_TABLE
+  }
+  return CATEGORY_OPERATION
 }

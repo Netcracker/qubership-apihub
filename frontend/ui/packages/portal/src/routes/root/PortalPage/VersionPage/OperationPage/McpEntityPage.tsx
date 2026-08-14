@@ -3,30 +3,35 @@ import { Box, IconButton, Skeleton, Typography } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { type FC, memo, useCallback, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useAutoFetchInfinitePages } from '../useAutoFetchInfinitePages'
 
+import type { Key } from '@apihub/entities/keys'
+import { useBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
 import { JsonRawSpecView } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/JsonRawSpecView'
 import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
 import { CONTRACT_TYPE_MCP } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import {
-  getMcpEntityDisplayName,
+  getMcpContractEntityToolbarTitle,
   MCP_COLLECTION_EMPTY_MESSAGES,
-  MCP_COLLECTION_INIT,
   MCP_COLLECTION_LABELS,
-  type McpEntity,
+  MCP_COLLECTION_TOOLS,
+  type McpContractEntity,
+  parseMcpListCollectionParam,
 } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
-
-import type { Key } from '@apihub/entities/keys'
-import { useBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
+import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { REF_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useNavigation } from '../../../../NavigationProvider'
 import { PackageBreadcrumbs } from '../../../PackageBreadcrumbs'
 import { usePackage } from '../../../usePackage'
+import { usePackageKind } from '../../usePackageKind'
+import { usePackageParamsWithRef } from '../../usePackageParamsWithRef'
+import { useRefSearchParam } from '../../useRefSearchParam'
 import { useMcpEntities } from '../api/useMcpEntities'
 import { useMcpEntityDetails } from '../api/useMcpEntityDetails'
+import { useAutoFetchInfinitePages } from '../useAutoFetchInfinitePages'
+import { MCP_COLLECTION_SEARCH_PARAM, useMcpCollectionSearchParam } from '../useMcpCollectionSearchParam'
 import { MCP_ENDPOINT_SEARCH_PARAM, useMcpEndpointSearchParam } from '../useMcpEndpointSearchParam'
-import { MCP_ENTITY_SEARCH_PARAM, useMcpEntitySearchParam } from '../useMcpEntitySearchParam'
 import { getMcpEntityLink } from '../useNavigateToOperation'
 import { McpEntitySelector } from './McpEntitySelector'
 
@@ -38,23 +43,28 @@ export const McpEntityPage: FC = memo(() => {
   }>()
 
   const [mcpEndpoint] = useMcpEndpointSearchParam()
-  const [mcpEntityParam] = useMcpEntitySearchParam()
-  const mcpCollection = mcpEntityParam ?? MCP_COLLECTION_INIT
+  const [mcpCollectionParam] = useMcpCollectionSearchParam()
+  const [refKey] = useRefSearchParam()
+  const [packageKind] = usePackageKind()
+  const isDashboard = packageKind === DASHBOARD_KIND
+  const [detailsPackageKey, detailsVersionKey] = usePackageParamsWithRef()
+  const mcpListCollection = parseMcpListCollectionParam(mcpCollectionParam) ?? MCP_COLLECTION_TOOLS
 
   const [packageObject] = usePackage({ showParents: true })
 
   const { data: entityDetails, isInitialLoading } = useMcpEntityDetails({
-    packageKey: packageId,
-    versionKey: versionId,
-    collection: mcpCollection,
+    packageKey: detailsPackageKey,
+    versionKey: detailsVersionKey,
+    collection: mcpListCollection,
     mcpEntityId: mcpEntityId,
   })
 
   const [siblingEntities, isSiblingsLoading, fetchNextPage, isFetchingNextPage, hasNextPage] = useMcpEntities({
     packageKey: packageId,
     versionKey: versionId,
-    collection: mcpCollection,
+    collection: mcpListCollection,
     mcpEndpoint: mcpEndpoint ?? entityDetails?.mcpEndpoint,
+    refPackageKey: refKey,
     limit: 100,
   })
 
@@ -87,38 +97,41 @@ export const McpEntityPage: FC = memo(() => {
       apiType: CONTRACT_TYPE_MCP,
       search: {
         [MCP_ENDPOINT_SEARCH_PARAM]: { value: mcpEndpoint ?? entityDetails?.mcpEndpoint ?? '' },
-        [MCP_ENTITY_SEARCH_PARAM]: { value: mcpCollection },
+        [MCP_COLLECTION_SEARCH_PARAM]: { value: mcpListCollection },
+        [REF_SEARCH_PARAM]: { value: refKey ?? '' },
       },
     })
   }, [
     backwardLocation,
     entityDetails?.mcpEndpoint,
-    mcpCollection,
+    mcpListCollection,
     mcpEndpoint,
     navigate,
     navigateToOperations,
     packageId,
+    refKey,
     versionId,
   ])
 
-  const prepareLinkFn = useCallback((entity: McpEntity) =>
+  const prepareLinkFn = useCallback((entity: McpContractEntity) =>
     getMcpEntityLink({
       packageKey: packageId!,
       versionKey: versionId!,
       mcpEntityId: entity.mcpEntityId,
       mcpEndpoint: mcpEndpoint ?? entity.mcpEndpoint,
-      mcpEntity: mcpCollection,
-    }), [mcpCollection, mcpEndpoint, packageId, versionId])
+      mcpCollection: mcpListCollection,
+      ref: isDashboard ? entity.packageRef?.key ?? refKey : undefined,
+    }), [isDashboard, mcpListCollection, mcpEndpoint, packageId, refKey, versionId])
 
   const title = useMemo(() => {
     if (!entityDetails) {
       return ''
     }
-    return getMcpEntityDisplayName(entityDetails)
+    return getMcpContractEntityToolbarTitle(entityDetails)
   }, [entityDetails])
 
-  const sectionTitle = MCP_COLLECTION_LABELS[mcpCollection]
-  const emptyMessage = MCP_COLLECTION_EMPTY_MESSAGES[mcpCollection]
+  const sectionTitle = MCP_COLLECTION_LABELS[mcpListCollection]
+  const emptyMessage = MCP_COLLECTION_EMPTY_MESSAGES[mcpListCollection]
 
   return (
     <PageLayout
@@ -164,7 +177,13 @@ export const McpEntityPage: FC = memo(() => {
         <BodyBox>
           {isInitialLoading
             ? <Skeleton variant="rectangular" height="100%" />
-            : <JsonRawSpecView data={entityDetails?.data} />}
+            : (
+              <JsonRawSpecView
+                data={entityDetails?.data}
+                // TODO: Needs a larger refactor to centralise Doc/Raw view spacing for all specification kinds.
+                sx={{ ml: -2, mr: 0, py: 2, pl: 2 }}
+              />
+            )}
         </BodyBox>
       }
     />

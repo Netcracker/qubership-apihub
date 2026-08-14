@@ -18,6 +18,7 @@ import type { FC } from 'react'
 import { memo } from 'react'
 
 import { usePackageKind } from '../../usePackageKind'
+import { useOperationsComparisonBrowseLinkHandlers } from '../useOperationsComparisonBrowseLinkHandlers'
 import { OperationChangesSubTableWrapper } from './OperationChangesSubTableWrapper'
 import {
   usePagedVersionChangelog,
@@ -71,6 +72,7 @@ export const ChangelogView: FC<ChangelogViewProps> = memo<ChangelogViewProps>(pr
   const [severityFilters] = useSeverityFiltersSearchParam()
   const changes = useOrderedComparisonFiltersSummary({ apiType: apiType })
   const [refKey] = useRefSearchParam()
+  const onLinkClick = useOperationsComparisonBrowseLinkHandlers()
 
   const {
     data: versionChangelog,
@@ -117,6 +119,7 @@ export const ChangelogView: FC<ChangelogViewProps> = memo<ChangelogViewProps>(pr
         hasNextPage={hasNextPage}
         SubTableComponent={OperationChangesSubTableWrapper}
         isLoading={isLoading}
+        onLinkClick={onLinkClick}
       />
     </Placeholder>
   )

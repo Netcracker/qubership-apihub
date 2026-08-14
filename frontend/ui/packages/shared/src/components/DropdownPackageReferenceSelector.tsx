@@ -54,13 +54,16 @@ export const DropdownPackageReferenceSelector: FC<DropdownPackageReferenceSelect
         sx={{
           minWidth: 4,
           maxWidth: '200px',
-          width: '200px',
           height: 20,
           p: 0,
           textOverflow: 'ellipsis',
           boxShadow: 'none',
           '&:hover': {
             boxShadow: 'none',
+          },
+          '& .MuiButton-endIcon': {
+            flexShrink: 0,
+            ml: 0.5,
           },
         }}
         variant="text"
@@ -71,7 +74,7 @@ export const DropdownPackageReferenceSelector: FC<DropdownPackageReferenceSelect
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
-          width: '100%',
+          minWidth: 0,
         }}>
           {`${selectedPackage?.name ?? ''}`}
         </span>
