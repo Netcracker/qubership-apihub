@@ -8088,6 +8088,78 @@
                             "protocolProfileBehavior": {}
                         },
                         {
+                            "name": "4.4.33 Filter package versions by multiple 'status' query parameter values",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = pm.response.json();\r",
+                                            "\r",
+                                            "pm.test(\"At least 2 versions found\", function () {\r",
+                                            "    pm.expect(data.versions.length).to.be.at.least(2);\r",
+                                            "});\r",
+                                            "\r",
+                                            "pm.test(\"Each version has draft or release status\", function () {\r",
+                                            "    data.versions.forEach(function (version) {\r",
+                                            "        pm.expect(version.status).to.be.oneOf([\"draft\", \"release\"]);\r",
+                                            "    });\r",
+                                            "});\r",
+                                            "\r",
+                                            "pm.test(\"Includes at least one release version\", function () {\r",
+                                            "    pm.expect(data.versions.some(function (version) { return version.status === \"release\"; })).to.be.true;\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_1}}/versions?status=draft,release",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v3",
+                                        "packages",
+                                        "{{package_1}}",
+                                        "versions"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "status",
+                                            "value": "draft,release"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
                             "name": "4.4.34 Get package version content with 'includeOperations' query parameter",
                             "event": [
                                 {
