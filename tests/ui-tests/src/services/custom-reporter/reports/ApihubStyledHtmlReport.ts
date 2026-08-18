@@ -1,22 +1,44 @@
-import type { ReportRunResult, ReportTemplateContext, ReportTestInfo } from '../types'
+/**
+ * Builds the CI summary HTML artefact (`summary-report.html`).
+ *
+ * Markup and styling intentionally use legacy email-safe patterns (nested tables,
+ * inline `style` attributes, limited selectors) so the report renders correctly
+ * when opened in older desktop Outlook, which uses the Word HTML engine and
+ * strips or ignores much of `<head>` CSS. Do not modernise layout or CSS without
+ * re-testing in that client.
+ */
 import { getSysInfo } from '@test-data/props'
-import BaseReport from './BaseReport'
-import { formatTemplate, getAffectRatio, loadFileForReport } from '../utils'
 import process from 'node:process'
+import type { ReportRunResult, ReportTemplateContext, ReportTestInfo } from '../types'
+import { escapeHtml, formatHtmlLink, formatHtmlTestRow, formatTemplate, getAffectRatio, loadFileForReport } from '../utils'
 
-export default class ApihubStyledHtmlReport extends BaseReport {
+type SectionTone = 'red' | 'orange' | 'purple' | 'blue'
 
-  constructor(readonly runResult: ReportRunResult) {
-    super()
-  }
+const STATUS_HTML: Record<ReportRunResult['status'], string> = {
+  Passed: '<span class="type-green">●</span> Passed',
+  Failed: '<span class="type-red">●</span> Failed',
+  'Timed out': '<span class="type-orange">●</span> Timed out',
+  Interrupted: '<span class="type-orange">●</span> Interrupted',
+  Unknown: 'Undefined',
+}
+
+const SECTION_TITLES: Record<SectionTone, string> = {
+  red: 'Failed tests',
+  orange: 'Flaky tests',
+  purple: 'Affected tests',
+  blue: 'Skipped tests',
+}
+
+export default class ApihubStyledHtmlReport {
+  constructor(readonly runResult: ReportRunResult) {}
 
   async getReport(): Promise<string> {
     const sysInfo = await getSysInfo()
     const htmlTemplate = loadFileForReport('html-apihub-styled/template.html')
     const templateKeys: ReportTemplateContext = {
-      status: this.getStatus(),
-      startTime: this.runResult.startTime,
-      duration: this.runResult.duration,
+      status: STATUS_HTML[this.runResult.status],
+      startTime: escapeHtml(this.runResult.startTime),
+      duration: escapeHtml(this.runResult.duration),
       workers: this.runResult.workers,
       allTests: this.runResult.counts.allTests,
       executedTests: this.runResult.counts.executedTests,
@@ -26,130 +48,52 @@ export default class ApihubStyledHtmlReport extends BaseReport {
       affectedTests: this.runResult.counts.affectedTests,
       skippedTests: this.runResult.counts.skippedTests,
       style: `<style>${loadFileForReport('html-apihub-styled/style.css')}</style>`,
-      ratio: this.getRatio(),
-      envName: sysInfo.environment,
-      backendVersion: sysInfo.build.backendVersion,
-      frontendVersion: '-', // there is no more information about FE version on the backend
-      pwBranch: process.env.CI_PW_BRANCH || '-',
-      ciJobLink: process.env.CI_JOB_LINK ? `<a class="link" href="${process.env.CI_JOB_LINK}">#${process.env.CI_JOB_NUMBER}</a>` : '-',
-      ciUser: process.env.CI_USER || '-',
-      failedTable: this.failedTable() || '',
-      flakyTable: this.flakyTable() || '',
-      affectedTable: this.affectedTable() || '',
-      skippedTable: this.skippedTable() || '',
+      ratio: this.formatRatio(),
+      envName: formatHtmlLink(sysInfo.environment, sysInfo.environment),
+      backendVersion: escapeHtml(sysInfo.build.backendVersion),
+      frontendVersion: '-',
+      pwBranch: escapeHtml(process.env.CI_PW_BRANCH || '-'),
+      ciJobLink: process.env.CI_JOB_LINK
+        ? formatHtmlLink(process.env.CI_JOB_LINK, `#${process.env.CI_JOB_NUMBER ?? ''} (Detailed report)`)
+        : '-',
+      ciUser: escapeHtml(process.env.CI_USER || '-'),
+      failedTable: this.sectionTable('red', this.runResult.lists.failedList),
+      flakyTable: this.sectionTable('orange', this.runResult.lists.flakyList),
+      affectedTable: this.sectionTable('purple', this.runResult.lists.affectedList),
+      skippedTable: this.sectionTable('blue', this.runResult.lists.skippedList),
     }
     return formatTemplate(htmlTemplate, templateKeys)
   }
 
-  protected getStatus(): string {
-    let statusHtml: string = 'Undefined'
-    switch (this.runResult.status) {
-      case 'Passed': {
-        statusHtml = '<span class="type-green">●</span> Passed'
-        break
-      }
-      case 'Failed': {
-        statusHtml = '<span class="type-red">●</span> Failed'
-        break
-      }
-      case 'Timed out': {
-        statusHtml = '<span class="type-orange">●</span> Timed out'
-        break
-      }
-      case 'Interrupted': {
-        statusHtml = '<span class="type-orange">●</span> Interrupted'
-        break
-      }
+  private formatRatio(): string {
+    const ratio = getAffectRatio(this.runResult)
+    if (ratio <= 20) {
+      return `<span class="type-green">●</span> ${ratio}%`
     }
-    return statusHtml
+    if (ratio <= 30) {
+      return `<span class="type-orange">●</span> ${ratio}%`
+    }
+    return `<span class="type-red">●</span> ${ratio}%`
   }
 
-  protected getRatio(): string {
-    const _ratio = getAffectRatio(this.runResult)
-    let ratio: string
-    if (_ratio <= 20) {
-      ratio = `<span class="type-green">●</span> ${_ratio}%`
-    } else if (_ratio <= 30) {
-      ratio = `<span class="type-orange">●</span> ${_ratio}%`
-    } else {
-      ratio = `<span class="type-red">●</span> ${_ratio}%`
+  private sectionTable(tone: SectionTone, list: Map<string, ReportTestInfo>): string {
+    if (list.size === 0) {
+      return ''
     }
-
-    return ratio
-  }
-
-  protected failedTable(): string | undefined {
-    if (this.runResult.lists.failedList.size !== 0) {
-      return (
-        `<tr>
+    // Inline padding: Outlook does not reliably apply class rules from <head> styles.
+    return `<tr>
           <td colspan="2" style="padding: 20px 0px 10px 0px" class="result-type-title">
-            <span class="type-red">●</span> Failed tests
+            <span class="type-${tone}">●</span> ${SECTION_TITLES[tone]}
           </td>
         </tr>
-        ${this.getTestsList(this.runResult.lists.failedList)}`
-      )
-    }
-    return
+        ${this.renderTestRows(list)}`
   }
 
-  protected flakyTable(): string | undefined {
-    if (this.runResult.lists.flakyList.size !== 0) {
-      return (
-        `<tr>
-          <td colspan="2" style="padding: 20px 0px 10px 0px" class="result-type-title">
-            <span class="type-orange">●</span> Flaky tests
-          </td>
-        </tr>
-        ${this.getTestsList(this.runResult.lists.flakyList)}`
-      )
-    }
-    return
-  }
-
-  protected affectedTable(): string | undefined {
-    if (this.runResult.lists.affectedList.size !== 0) {
-      return (
-        `<tr>
-          <td colspan="2" style="padding: 20px 0px 10px 0px" class="result-type-title">
-            <span class="type-purple">●</span> Affected tests
-          </td>
-        </tr>
-        ${this.getTestsList(this.runResult.lists.affectedList)}`
-      )
-    }
-    return
-  }
-
-  protected skippedTable(): string | undefined {
-    if (this.runResult.lists.skippedList.size !== 0) {
-      return (
-        `<tr>
-          <td colspan="2" style="padding: 20px 0px 10px 0px" class="result-type-title">
-            <span class="type-blue">●</span> Skipped tests
-          </td>
-        </tr>
-        ${this.getTestsList(this.runResult.lists.skippedList)}`
-      )
-    }
-    return
-  }
-
-  protected getTestsList(list: Map<string, ReportTestInfo>): string {
+  private renderTestRows(list: Map<string, ReportTestInfo>): string {
     let rows = ''
-
     list.forEach(test => {
-      const testTitle = test.testCaseUrl ? `<a class="link" href="${test.testCaseUrl}">${test.fullTitle}</a>` : test.fullTitle
-
-      let issues = ''
-      test.issues?.forEach(issue => {
-        issues = issue.url ? `${issues}, <a class="link" href="${issue.url}">${issue.key}</a>` : `${issues}, ${issue.key}`
-      })
-
-      issues = issues.replace(', ', '')
-      rows = `${rows}
-      <tr><td class="test-cell">${testTitle}</td><td class="bugs-cell">${issues}</td></tr>`
+      rows += formatHtmlTestRow(test)
     })
-
     return rows
   }
 }

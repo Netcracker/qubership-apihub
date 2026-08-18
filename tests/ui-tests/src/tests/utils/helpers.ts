@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { millisecondsToMinuteSeconds } from '@services/custom-reporter/utils'
+import { millisecondsToMmSs } from '@services/utils'
 
 export const formatNamespaceData = (namespaceData: {
   name: string
@@ -23,7 +23,7 @@ export const formatNamespaceData = (namespaceData: {
   const { services } = namespaceData.jsonData
   return {
     name: namespaceData.name,
-    time: millisecondsToMinuteSeconds(namespaceData.time),
+    time: millisecondsToMmSs(namespaceData.time),
     services: services.length,
     servicesWithSpec: countServicesWithSpec(services),
     noTestService: isServiceExist(services, 'apihub-agent-test-service') ? undefined : true,

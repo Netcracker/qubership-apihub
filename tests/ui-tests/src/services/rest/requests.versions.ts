@@ -42,8 +42,6 @@ export async function rUpdateOperationGroup(rc: APIRequestContext, params: RestO
   formData.append('operations', JSON.stringify(params.operations) || '')
   if (params.template) {
     formData.append('template', await params.template.blob(), params.template.name)
-  } else {
-    formData.append('template', '')
   }
   return await rc.patch(`/api/v3/packages/${params.packageId}/versions/${params.version}/${params.apiType}/groups/${params.groupName}`, {
     multipart: formData,

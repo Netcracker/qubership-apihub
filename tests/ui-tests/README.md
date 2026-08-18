@@ -45,6 +45,7 @@ npx playwright test --project=Portal
 - [docs/CODING_GUIDELINES.md](docs/CODING_GUIDELINES.md) — canonical conventions (test structure, assertions, TDM, POM, locator strategy)
 - [docs/pom-in-practice.md](docs/pom-in-practice.md) — real POM patterns + examples
 - [docs/localhost-run.md](docs/localhost-run.md) — localhost/proxy specifics
+- [docs/custom-reporter.md](docs/custom-reporter.md) — custom Playwright reporter (summary HTML, GitHub Step Summary, CI status)
 
 The project uses **ESLint** for code quality and style.
 
@@ -114,6 +115,12 @@ npx playwright test --project=Portal --headed --trace=on
 npx playwright show-report reports/playwright
 ```
 
+### Custom summary report
+
+`CustomReporter` writes `reports/summary/status` (CI gate) and, for non-unit runs, `reports/summary/summary-report.html`. In GitHub Actions it also appends a Markdown summary to the job page.
+
+See [docs/custom-reporter.md](docs/custom-reporter.md) for configuration and behavior.
+
 More options:
 
 - [Playwright test CLI](https://playwright.dev/docs/test-cli)
@@ -127,3 +134,13 @@ More options:
 - `--trace <mode>` — `on`, `off`, `on-first-retry`, `on-all-retries`, `retain-on-failure`
 - `--grep <regex>` — run only matching tests (matches project + file + describe + test title + tags)
 - `--repeat-each <n>` — run each test `n` times (useful for checking stability)
+
+### Filtering with `--grep` in shell and CI
+
+When the pattern contains alternation (`|`), pass `--grep` with **single quotes**:
+
+```shell
+npx playwright test --project=Portal --grep='P-GEN-1.2\]|P-GEN-1.1\]|P-ODPPG-1\]'
+```
+
+In bash scripts (including GitHub Actions steps that `echo` CLI arguments into `$GITHUB_STEP_SUMMARY`), do not place `--grep="..."` inside an outer double-quoted string. The inner `"` closes the string early and bash treats `|` as a pipe (`command not found`, exit code 127) even when Playwright would run the tests correctly.
