@@ -397,11 +397,12 @@
             ],
             "request": {
                 "url": {
-                    "raw": "{{SERVER_HOST}}/api/v2/agents",
+                    "raw": "{{SERVER_HOST}}/agents-backend/api/v2/agents",
                     "host": [
                         "{{SERVER_HOST}}"
                     ],
                     "path": [
+                        "agents-backend",
                         "api",
                         "v2",
                         "agents"
