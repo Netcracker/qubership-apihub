@@ -1,6 +1,6 @@
 module github.com/Netcracker/qubership-apihub-test-service
 
-go 1.17
+go 1.26.6
 
 require (
 	github.com/gorilla/handlers v1.5.2
