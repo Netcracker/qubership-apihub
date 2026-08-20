@@ -486,6 +486,21 @@ qubershipApiLinterService:
       # Optional; Namespace for Olric discovery. If not set, default value: ""; Example: apihub
       namespace: ''
 
+    # Section with configuration for retry of failed validation
+    validationRetry:
+      # Optional; Enable automatic retry of failed validations; If not set, default value: true; Example: true
+      enabled: true
+      # Optional; How often failed validations are looked up; If not set, default value: 15m; Example: 15m
+      interval: '15m'
+      # Optional; Maximum number of automatic retries per version; If not set, default value: 3; Example: 3
+      maxAttempts: 3
+      # Optional; Failed validations older than this are not retried; If not set, default value: 168h; Example: 168h
+      maxAge: '168h'
+      # Optional; Delay before the first retry, doubled for every next attempt; If not set, default value: 5m; Example: 5m
+      retryDelay: '5m'
+      # Optional; Maximum number of retries scheduled by a single run; If not set, default value: 50; Example: 50
+      batchSize: 50
+
 # Section with Qubership APIHUB Agents Backend deployment configuration
 qubershipApihubAgentsBackend:
   # Optional; Qubership APIHUB Agents Backend release version; If not set, default value: unknown; Example: 1.0.0
