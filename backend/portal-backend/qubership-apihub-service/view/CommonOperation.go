@@ -324,8 +324,14 @@ type ApiKind string
 
 const BwcApiKind ApiKind = "bwc"
 const NoBwcApiKind ApiKind = "no-bwc"
-const DebugApiKind ApiKind = "debug"
 const ExperimentalApiKind ApiKind = "experimental"
+
+func ApiKindOrDefault(apiKind string) string {
+	if apiKind == "" {
+		return string(BwcApiKind)
+	}
+	return apiKind
+}
 
 type Severity string
 

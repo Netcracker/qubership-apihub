@@ -161,6 +161,12 @@ func (s PublishedContentEntity) GetChanges(t PublishedContentEntity) map[string]
 			"new": t.Title,
 		}
 	}
+	if s.ApiKind != t.ApiKind {
+		changes["ApiKind"] = map[string]interface{}{
+			"old": s.ApiKind,
+			"new": t.ApiKind,
+		}
+	}
 	if metadataChanges := s.Metadata.GetChanges(t.Metadata); len(metadataChanges) > 0 {
 		changes["Metadata"] = metadataChanges
 	}

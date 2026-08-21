@@ -1649,7 +1649,8 @@ func (p publishedRepositoryImpl) CreateVersionWithData(ctx context.Context, pack
 					"title" = EXCLUDED."title",
 					"metadata" = EXCLUDED."metadata",
 					"operation_ids" = EXCLUDED."operation_ids",
-					"filename" = EXCLUDED."filename"`).Insert()
+					"filename" = EXCLUDED."filename",
+					"api_kind" = EXCLUDED."api_kind"`).Insert()
 			} else {
 				_, err = tx.Model(c).OnConflict("(package_id, version, revision, file_id) DO UPDATE").Insert()
 			}
