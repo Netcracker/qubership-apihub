@@ -3622,15 +3622,7 @@ paths:
           in: query
           schema:
             type: string
-        - name: apiKind
-          description: Filter by api kind
-          in: query
-          schema:
-            type: string
-            enum:
-              - bwc
-              - no-bwc
-              - experimental
+        - $ref: "#/components/parameters/apiKindQueryParam"
         - name: documentSlug
           in: query
           description: Document unique string identifier
@@ -3802,15 +3794,7 @@ paths:
         in: query
         schema:
           type: string
-      - name: apiKind
-        description: Filter by api kind
-        in: query
-        schema:
-          type: string
-          enum:
-            - bwc
-            - no-bwc
-            - experimental
+      - $ref: "#/components/parameters/apiKindQueryParam"
       - name: tag
         in: query
         schema:
@@ -7121,15 +7105,7 @@ paths:
             For AsyncAPI: searches by message title(or messageId), channel title(or channelId) or operation action.
           schema:
             type: string
-        - name: apiKind
-          description: Filter by API kind
-          in: query
-          schema:
-            type: string
-            enum:
-              - bwc
-              - no-bwc
-              - experimental
+        - $ref: "#/components/parameters/apiKindQueryParam"
         - name: documentSlug
           in: query
           description: Document unique string identifier
@@ -7202,12 +7178,7 @@ paths:
                               description: Operation summary/title.
                               type: string
                             apiKind:
-                              description: Operation API kind
-                              type: string
-                              enum:
-                                - bwc
-                                - no-bwc
-                                - experimental
+                              $ref: "#/components/schemas/ApiKind"
                             deprecated:
                               description: True if the operation itself is deprecated.
                               type: boolean
@@ -11413,6 +11384,12 @@ components:
           - graphql
           - protobuf
           - asyncapi
+    apiKindQueryParam:
+      name: apiKind
+      in: query
+      description: Filter by API kind
+      schema:
+        $ref: "#/components/schemas/ApiKind"
     mcpEntity:
       name: entity
       in: path
@@ -12615,6 +12592,8 @@ components:
             - unknown
           default: unknown
           example: "unknown"
+        apiKind:
+          $ref: "#/components/schemas/ApiKind"
     PackageTransformationFile:
       description: Parameters of published file in package version
       type: object
@@ -12679,6 +12658,8 @@ components:
             - unknown
           default: unknown
           example: "unknown"
+        apiKind:
+          $ref: "#/components/schemas/ApiKind"
     Principal:
       description: User or API key
       allOf:
@@ -12918,6 +12899,19 @@ components:
         - proto
         - sql
         - unknown
+    ApiKind:
+      title: apiKind
+      description: |
+        API compatibility kind.
+        * bwc - API with backward compatibility support (a.k.a. public).
+        * no-bwc - API without backward compatibility support (a.k.a. internal).
+        * experimental - APIs for feature testing. Usage is not recommended.
+      type: string
+      enum:
+        - bwc
+        - no-bwc
+        - experimental
+      default: bwc
     Operation:
       description: Operation object
       title: Operation
@@ -12982,19 +12976,7 @@ components:
             - external
             - unknown
         apiKind:
-          description: |
-            Operation API kind.
-            * bwc - API with backward compatibility support (a.k.a. public).
-            * no-bwc - API without backward compatibility support (a.k.a. internal).
-            * experimental - APIs for feature testing. Usage is not recommended.
-            For AsyncAPI 3.0: derived from x-api-kind extension. Channel-level is the default;
-            operation-level overrides when present. If neither defines the extension, API Kind is bwc.
-          type: string
-          enum:
-            - bwc
-            - no-bwc
-            - experimental
-          default: bwc
+          $ref: "#/components/schemas/ApiKind"
         tags:
           description: |
             List of operation tags.
@@ -13444,11 +13426,7 @@ components:
           description: Operation summary/title.
           type: string
         apiKind:
-          type: string
-          enum:
-            - bwc
-            - no-bwc
-            - experimental
+          $ref: "#/components/schemas/ApiKind"
         apiAudience:
           description: |
             Operation's target audience:

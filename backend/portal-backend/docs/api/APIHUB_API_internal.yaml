@@ -1125,6 +1125,19 @@ components:
         - proto
         - sql
         - unknown
+    ApiKind:
+      title: apiKind
+      description: |
+        API compatibility kind.
+        * bwc - API with backward compatibility support (a.k.a. public).
+        * no-bwc - API without backward compatibility support (a.k.a. internal).
+        * experimental - APIs for feature testing. Usage is not recommended.
+      type: string
+      enum:
+        - bwc
+        - no-bwc
+        - experimental
+      default: bwc
     Operation:
       description: Operation object
       title: Operation
@@ -1178,17 +1191,7 @@ components:
             - external
             - unknown
         apiKind:
-          description: |
-            Operation API kind.
-            * bwc - API with backward compatibility support (a.k.a. public).
-            * no-bwc - API without backward compatibility support (a.k.a. internal).
-            * experimental - APIs for feature testing. Usage is not recommended.
-          type: string
-          enum:
-            - bwc
-            - no-bwc
-            - experimental
-          default: bwc
+          $ref: "#/components/schemas/ApiKind"
         tags:
           description: |
             List of operation tags.
@@ -1523,6 +1526,8 @@ components:
                         items:
                           type: string
                         example: ["get-quoteManagement-v5-quote"]
+                      apiKind:
+                        $ref: "#/components/schemas/ApiKind"
                       metadata:
                         description: Meta parameters from config file.
                         type: object
@@ -1873,6 +1878,8 @@ components:
                         items:
                           type: string
                         example: ["get-quoteManagement-v5-quote"]
+                      apiKind:
+                        $ref: "#/components/schemas/ApiKind"
       discriminator:
         propertyName: buildType
     SingleOperationChange:
