@@ -1,6 +1,6 @@
 import { buildPointer } from '@netcracker/qubership-apihub-api-unifier';
 import { SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl';
-import { modelTreeNodeType } from '../../../abstract/constants';
+import { modelTreeNodeType, TRANSFORMED_FROM } from '../../../abstract/constants';
 import { LazyBuildingContext } from '../../../abstract/model/model-tree-node.impl';
 import { jsonSchemaNodeKinds } from '../../constants';
 import { isJsonSchemaTreeNode } from '../../utils';
@@ -71,6 +71,11 @@ export function createJsonSchemaTreeCrawlHook(
     if (nodeCreationResult.value) {
       const stack = new Map(state.alreadyConvertedMappingStack);
       stack.set(value, nodeCreationResult.node);
+      // transformers may replace the crawled value with a copy, cycle detection has to know both
+      const transformedFrom = (value as Record<PropertyKey, unknown>)[TRANSFORMED_FROM]
+      if (transformedFrom !== undefined) {
+        stack.set(transformedFrom, nodeCreationResult.node);
+      }
       let newState: JsonSchemaCrawlState;
       if (isJsonSchemaTreeNode(nodeCreationResult.node)) {
         newState = {
