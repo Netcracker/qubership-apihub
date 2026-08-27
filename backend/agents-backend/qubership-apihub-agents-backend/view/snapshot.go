@@ -9,22 +9,24 @@ import (
 const DefaultSnapshotsGroupAlias = "RUNENV"
 
 type CreateSnapshotRequest struct {
-	Version         string   `json:"version"`
-	PreviousVersion string   `json:"previousVersion"`
-	Services        []string `json:"services"`
-	Status          string   `json:"status"`
-	BuilderId       string   `json:"builderId"`
+	Version           string   `json:"version"`
+	PreviousVersion   string   `json:"previousVersion"`
+	Services          []string `json:"services"`          //service ids selecting what goes into the snapshot
+	DiscoveryServices []string `json:"discoveryServices"` //service names selecting which discovery result is read, empty means the unscoped one
+	Status            string   `json:"status"`
+	BuilderId         string   `json:"builderId"`
 }
 
 type CreateSnapshotDTO struct {
-	PreviousVersion string
-	Services        []string
-	ClientBuild     bool
-	BuilderId       string
-	Promote         bool
-	VersionStatus   string
-	AgentUrl        string
-	CloudName       string
+	PreviousVersion   string
+	Services          []string
+	DiscoveryServices string //comma-separated, as sent to the agent
+	ClientBuild       bool
+	BuilderId         string
+	Promote           bool
+	VersionStatus     string
+	AgentUrl          string
+	CloudName         string
 }
 
 type CreateSnapshotResponse struct {

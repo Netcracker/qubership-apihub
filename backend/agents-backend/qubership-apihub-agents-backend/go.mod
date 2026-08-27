@@ -1,6 +1,6 @@
 module github.com/Netcracker/qubership-apihub-agents-backend
 
-go 1.26.1
+go 1.26.5
 
 require (
 	github.com/Netcracker/qubership-apihub-commons-go v0.0.1
@@ -12,7 +12,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/shaj13/go-guardian/v2 v2.11.6
 	github.com/shaj13/libcache v1.0.0
-	github.com/sirupsen/logrus v1.9.4
+	github.com/sirupsen/logrus v1.10.1
 	github.com/spf13/viper v1.20.1
 	github.com/xuri/excelize/v2 v2.11.0
 	golang.org/x/sync v0.22.0

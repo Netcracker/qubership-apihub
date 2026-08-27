@@ -217,7 +217,7 @@ func (s *snapshotServiceImpl) CreateSnapshot(ctx context.Context, namespace stri
 		return nil, versionNameValidationError
 	}
 
-	serviceListResponse, err := s.agentClient.ListServices(ctx, namespace, workspaceId, snapshotDTO.AgentUrl)
+	serviceListResponse, err := s.agentClient.ListServices(ctx, namespace, workspaceId, snapshotDTO.AgentUrl, snapshotDTO.DiscoveryServices)
 	if err != nil {
 		return nil, err
 	}
@@ -444,7 +444,7 @@ func (s *snapshotServiceImpl) startSnapshot(ctx context.Context, namespace strin
 				zw := zip.NewWriter(&zipBuf)
 
 				for specInd, spec := range svc.Documents {
-					specBytes, err := s.agentClient.GetServiceSpecification(ctx, namespace, workspaceId, svc.Id, spec.FileId, snapshotDTO.AgentUrl)
+					specBytes, err := s.agentClient.GetServiceSpecification(ctx, namespace, workspaceId, svc.Id, spec.FileId, snapshotDTO.AgentUrl, snapshotDTO.DiscoveryServices)
 					if err != nil {
 						log.Errorf("error: unable to get specification %s: %s", svc.Id, err.Error())
 						return
