@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
@@ -10,8 +11,8 @@ import (
 )
 
 type ComparisonService interface {
-	ValidComparisonResultExists(packageId string, version string, previousVersionPackageId string, previousVersion string) (bool, error)
-	GetComparisonResult(packageId string, version string, previousVersionPackageId string, previousVersion string) (*view.VersionComparisonSummary, error)
+	ValidComparisonResultExists(ctx context.Context, packageId string, version string, previousVersionPackageId string, previousVersion string) (bool, error)
+	GetComparisonResult(ctx context.Context, packageId string, version string, previousVersionPackageId string, previousVersion string) (*view.VersionComparisonSummary, error)
 }
 
 func NewComparisonService(publishedRepo repository.PublishedRepository, operationRepo repository.OperationRepository, packageVersionEnrichmentService PackageVersionEnrichmentService, ddlContractService DDLContractService) ComparisonService {
@@ -30,8 +31,8 @@ type comparisonServiceImpl struct {
 	ddlContractService              DDLContractService
 }
 
-func (c comparisonServiceImpl) GetComparisonResult(packageId string, version string, previousVersionPackageId string, previousVersion string) (*view.VersionComparisonSummary, error) {
-	packageEnt, err := c.publishedRepo.GetPackage(packageId)
+func (c comparisonServiceImpl) GetComparisonResult(ctx context.Context, packageId string, version string, previousVersionPackageId string, previousVersion string) (*view.VersionComparisonSummary, error) {
+	packageEnt, err := c.publishedRepo.GetPackage(ctx, packageId)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +44,7 @@ func (c comparisonServiceImpl) GetComparisonResult(packageId string, version str
 			Params:  map[string]interface{}{"packageId": packageId},
 		}
 	}
-	versionEnt, err := c.publishedRepo.GetVersion(packageId, version)
+	versionEnt, err := c.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +72,7 @@ func (c comparisonServiceImpl) GetComparisonResult(packageId string, version str
 			previousVersionPackageId = packageId
 		}
 	}
-	previousVersionEnt, err := c.publishedRepo.GetVersion(previousVersionPackageId, previousVersion)
+	previousVersionEnt, err := c.publishedRepo.GetVersion(ctx, previousVersionPackageId, previousVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +88,7 @@ func (c comparisonServiceImpl) GetComparisonResult(packageId string, version str
 		versionEnt.PackageId, versionEnt.Version, versionEnt.Revision,
 		previousVersionEnt.PackageId, previousVersionEnt.Version, previousVersionEnt.Revision,
 	)
-	comparisonEnt, err := c.publishedRepo.GetVersionComparison(comparisonId)
+	comparisonEnt, err := c.publishedRepo.GetVersionComparison(ctx, comparisonId)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +114,7 @@ func (c comparisonServiceImpl) GetComparisonResult(packageId string, version str
 		result.NoContent = comparisonEnt.NoContent
 		result.OperationTypes = &comparisonEnt.OperationTypes
 
-		ddlChangesSummary, err := c.ddlContractService.GetChangesSummary(comparisonId)
+		ddlChangesSummary, err := c.ddlContractService.GetChangesSummary(ctx, comparisonId)
 		if err != nil {
 			return nil, err
 		}
@@ -122,7 +123,7 @@ func (c comparisonServiceImpl) GetComparisonResult(packageId string, version str
 		}
 	}
 	if packageEnt.Kind == entity.KIND_DASHBOARD {
-		refsComparisonEnts, err := c.publishedRepo.GetVersionRefsComparisons(comparisonId)
+		refsComparisonEnts, err := c.publishedRepo.GetVersionRefsComparisons(ctx, comparisonId)
 		if err != nil {
 			return nil, err
 		}
@@ -138,7 +139,7 @@ func (c comparisonServiceImpl) GetComparisonResult(packageId string, version str
 			}
 			refComparisons = append(refComparisons, *refView)
 		}
-		packagesRefs, err := c.packageVersionEnrichmentService.GetPackageVersionRefsMap(packageVersions)
+		packagesRefs, err := c.packageVersionEnrichmentService.GetPackageVersionRefsMap(ctx, packageVersions)
 		if err != nil {
 			return nil, err
 		}
@@ -149,8 +150,8 @@ func (c comparisonServiceImpl) GetComparisonResult(packageId string, version str
 	return result, nil
 }
 
-func (c comparisonServiceImpl) ValidComparisonResultExists(packageId string, version string, previousVersionPackageId string, previousVersion string) (bool, error) {
-	versionEnt, err := c.publishedRepo.GetVersion(packageId, version)
+func (c comparisonServiceImpl) ValidComparisonResultExists(ctx context.Context, packageId string, version string, previousVersionPackageId string, previousVersion string) (bool, error) {
+	versionEnt, err := c.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return false, err
 	}
@@ -178,7 +179,7 @@ func (c comparisonServiceImpl) ValidComparisonResultExists(packageId string, ver
 			previousVersionPackageId = packageId
 		}
 	}
-	previousVersionEnt, err := c.publishedRepo.GetVersion(previousVersionPackageId, previousVersion)
+	previousVersionEnt, err := c.publishedRepo.GetVersion(ctx, previousVersionPackageId, previousVersion)
 	if err != nil {
 		return false, err
 	}
@@ -194,7 +195,7 @@ func (c comparisonServiceImpl) ValidComparisonResultExists(packageId string, ver
 		versionEnt.PackageId, versionEnt.Version, versionEnt.Revision,
 		previousVersionEnt.PackageId, previousVersionEnt.Version, previousVersionEnt.Revision,
 	)
-	comparisonEnt, err := c.publishedRepo.GetVersionComparison(comparisonId)
+	comparisonEnt, err := c.publishedRepo.GetVersionComparison(ctx, comparisonId)
 	if err != nil {
 		return false, err
 	}
@@ -202,7 +203,7 @@ func (c comparisonServiceImpl) ValidComparisonResultExists(packageId string, ver
 		return false, nil
 	}
 	if len(comparisonEnt.Refs) != 0 {
-		comparisonRefs, err := c.publishedRepo.GetVersionRefsComparisons(comparisonId)
+		comparisonRefs, err := c.publishedRepo.GetVersionRefsComparisons(ctx, comparisonId)
 		if err != nil {
 			return false, err
 		}

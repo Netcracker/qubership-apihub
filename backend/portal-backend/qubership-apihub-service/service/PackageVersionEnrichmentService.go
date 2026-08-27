@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
@@ -8,7 +9,7 @@ import (
 )
 
 type PackageVersionEnrichmentService interface {
-	GetPackageVersionRefsMap(packageRefs map[string][]string) (map[string]view.PackageVersionRef, error)
+	GetPackageVersionRefsMap(ctx context.Context, packageRefs map[string][]string) (map[string]view.PackageVersionRef, error)
 }
 
 func NewPackageVersionEnrichmentService(publishedRepo repository.PublishedRepository) PackageVersionEnrichmentService {
@@ -19,12 +20,12 @@ type packageVersionEnrichmentServiceImpl struct {
 	publishedRepo repository.PublishedRepository
 }
 
-func (p packageVersionEnrichmentServiceImpl) GetPackageVersionRefsMap(packageRefs map[string][]string) (map[string]view.PackageVersionRef, error) {
+func (p packageVersionEnrichmentServiceImpl) GetPackageVersionRefsMap(ctx context.Context, packageRefs map[string][]string) (map[string]view.PackageVersionRef, error) {
 	packageVersionRefs := make(map[string]view.PackageVersionRef)
 	for packageId, versions := range packageRefs {
 		uniqueVersions := utils.UniqueSet(versions)
 		for _, version := range uniqueVersions {
-			richPackageVersion, err := p.publishedRepo.GetRichPackageVersion(packageId, version)
+			richPackageVersion, err := p.publishedRepo.GetRichPackageVersion(ctx, packageId, version)
 			if err != nil {
 				return nil, err
 			}

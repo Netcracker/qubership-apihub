@@ -3,6 +3,7 @@ package service
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"html"
@@ -19,9 +20,9 @@ import (
 )
 
 type PortalService interface {
-	GenerateInteractivePageForPublishedFile(packageId string, versionName string, fileId string) ([]byte, string, error)
-	GenerateInteractivePageForPublishedVersion(packageId string, versionName string) ([]byte, string, error)
-	GenerateInteractivePageForTransformedDocuments(packageId, version string, transformedDocuments entity.TransformedContentDataEntity) ([]byte, error)
+	GenerateInteractivePageForPublishedFile(ctx context.Context, packageId string, versionName string, fileId string) ([]byte, string, error)
+	GenerateInteractivePageForPublishedVersion(ctx context.Context, packageId string, versionName string) ([]byte, string, error)
+	GenerateInteractivePageForTransformedDocuments(ctx context.Context, packageId, version string, transformedDocuments entity.TransformedContentDataEntity) ([]byte, error)
 }
 
 func NewPortalService(basePath string, publishedService PublishedService, publishedRepository repository.PublishedRepository) PortalService {
@@ -44,13 +45,13 @@ const logoAssetPath = "/static/templates/resources/corporatelogo.png"
 const stylesAssetPath = "/static/templates/resources/styles.css"
 const mdLibPath = "/static/templates/scripts/markdown-it.min.js"
 
-func (p portalServiceImpl) GenerateInteractivePageForPublishedFile(packageId string, versionName string, slug string) ([]byte, string, error) {
-	packageEnt, err := p.publishedRepository.GetPackage(packageId)
+func (p portalServiceImpl) GenerateInteractivePageForPublishedFile(ctx context.Context, packageId string, versionName string, slug string) ([]byte, string, error) {
+	packageEnt, err := p.publishedRepository.GetPackage(ctx, packageId)
 	if err != nil {
 		return nil, "", err
 	}
 
-	file, data, err := p.publishedService.GetLatestContentDataBySlug(packageId, versionName, slug)
+	file, data, err := p.publishedService.GetLatestContentDataBySlug(ctx, packageId, versionName, slug)
 	if err != nil {
 		return nil, "", err
 	}
@@ -129,8 +130,8 @@ func (p portalServiceImpl) GenerateInteractivePageForPublishedFile(packageId str
 	return zipBuf.Bytes(), slug + ".zip", nil
 }
 
-func (p portalServiceImpl) GenerateInteractivePageForPublishedVersion(packageId string, versionName string) ([]byte, string, error) {
-	packageEnt, err := p.publishedRepository.GetPackage(packageId)
+func (p portalServiceImpl) GenerateInteractivePageForPublishedVersion(ctx context.Context, packageId string, versionName string) ([]byte, string, error) {
+	packageEnt, err := p.publishedRepository.GetPackage(ctx, packageId)
 	if err != nil {
 		return nil, "", err
 	}
@@ -152,7 +153,7 @@ func (p portalServiceImpl) GenerateInteractivePageForPublishedVersion(packageId 
 
 	repoUrl := "" //TODO: deprecate it
 
-	version, err := p.publishedRepository.GetVersion(packageId, versionName)
+	version, err := p.publishedRepository.GetVersion(ctx, packageId, versionName)
 	if err != nil {
 		return nil, "", err
 	}
@@ -165,7 +166,7 @@ func (p portalServiceImpl) GenerateInteractivePageForPublishedVersion(packageId 
 		}
 	}
 
-	versionFiles, err := p.publishedRepository.GetRevisionContent(packageId, version.Version, version.Revision)
+	versionFiles, err := p.publishedRepository.GetRevisionContent(ctx, packageId, version.Version, version.Revision)
 	if err != nil {
 		return nil, "", err
 	}
@@ -221,7 +222,7 @@ func (p portalServiceImpl) GenerateInteractivePageForPublishedVersion(packageId 
 	var fileList []view.FileMetadata
 	generatedHtmls := map[string]bool{}
 	for _, file := range versionFiles {
-		cd, err := p.publishedRepository.GetContentData(packageId, file.Checksum)
+		cd, err := p.publishedRepository.GetContentData(ctx, packageId, file.Checksum)
 		if err != nil {
 			return nil, "", err
 		}
@@ -298,7 +299,7 @@ func (p portalServiceImpl) GenerateInteractivePageForPublishedVersion(packageId 
 		return nil, "", err
 	}
 
-	attachmentVersionName, err := p.getVersionNameForAttachmentName(packageId, versionName)
+	attachmentVersionName, err := p.getVersionNameForAttachmentName(ctx, packageId, versionName)
 	if err != nil {
 		return nil, "", err
 	}
@@ -307,8 +308,8 @@ func (p portalServiceImpl) GenerateInteractivePageForPublishedVersion(packageId 
 	return zipBuf.Bytes(), filename, nil
 }
 
-func (p portalServiceImpl) GenerateInteractivePageForTransformedDocuments(packageId, version string, transformedDocuments entity.TransformedContentDataEntity) ([]byte, error) {
-	packageEnt, err := p.publishedRepository.GetPackage(packageId)
+func (p portalServiceImpl) GenerateInteractivePageForTransformedDocuments(ctx context.Context, packageId, version string, transformedDocuments entity.TransformedContentDataEntity) ([]byte, error) {
+	packageEnt, err := p.publishedRepository.GetPackage(ctx, packageId)
 	if err != nil {
 		return nil, err
 	}
@@ -546,8 +547,8 @@ func makeProjectTitle(projectName string, version string) string {
 	return projectName + " " + version
 }
 
-func (p portalServiceImpl) getVersionNameForAttachmentName(packageId, version string) (string, error) {
-	latestRevision, err := p.publishedRepository.GetLatestRevision(packageId, version)
+func (p portalServiceImpl) getVersionNameForAttachmentName(ctx context.Context, packageId, version string) (string, error) {
+	latestRevision, err := p.publishedRepository.GetLatestRevision(ctx, packageId, version)
 	if err != nil {
 		return "", err
 	}

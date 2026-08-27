@@ -18,8 +18,9 @@ type DDLContractsSummary struct {
 }
 
 type RefComparison struct {
-	PackageRef         string          `json:"packageRef,omitempty"`
-	PreviousPackageRef string          `json:"previousPackageRef,omitempty"`
-	OperationTypes     []OperationType `json:"operationTypes"`
-	NoContent          bool            `json:"noContent,omitempty"`
+	PackageRef         string            `json:"packageRef,omitempty"`
+	PreviousPackageRef string            `json:"previousPackageRef,omitempty"`
+	OperationTypes     []OperationType   `json:"operationTypes"`
+	NoContent          bool              `json:"noContent,omitempty"`
+	Contracts          *ContractsSummary `json:"contractsChangesSummary,omitempty"`
 }

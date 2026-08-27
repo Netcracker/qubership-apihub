@@ -161,6 +161,14 @@ func MakeRefComparisonView(entity VersionComparisonEntity) *view.RefComparison {
 		PackageRef:         view.MakePackageRefKey(entity.PackageId, entity.Version, entity.Revision),
 		PreviousPackageRef: view.MakePackageRefKey(entity.PreviousPackageId, entity.PreviousVersion, entity.PreviousRevision),
 	}
+	for _, contractType := range entity.ContractTypes {
+		if contractType.ContractType == view.ContractTypeDdl {
+			refComparisonView.Contracts = &view.ContractsSummary{DDL: &view.DDLContractsSummary{
+				ChangesSummary:           contractType.ChangesSummary,
+				NumberOfImpactedEntities: contractType.NumberOfImpactedEntities,
+			}}
+		}
+	}
 	return refComparisonView
 }
 

@@ -1,7 +1,9 @@
 package repository
 
+import "context"
+
 type FavoritesRepository interface {
-	AddPackageToFavorites(userId string, id string) error
-	RemovePackageFromFavorites(userId string, id string) error
-	IsFavoritePackage(userId string, id string) (bool, error)
+	AddPackageToFavorites(ctx context.Context, userId string, id string) error
+	RemovePackageFromFavorites(ctx context.Context, userId string, id string) error
+	IsFavoritePackage(ctx context.Context, userId string, id string) (bool, error)
 }

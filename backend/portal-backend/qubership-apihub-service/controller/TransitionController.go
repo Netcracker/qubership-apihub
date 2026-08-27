@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
@@ -20,21 +20,19 @@ type TransitionController interface {
 	ListPackageTransitions(w http.ResponseWriter, r *http.Request)
 }
 
-func NewTransitionController(tService service.TransitionService, isSysadmFunc func(context.SecurityContext) bool) TransitionController {
+func NewTransitionController(tService service.TransitionService) TransitionController {
 	return &transitionControllerImpl{
-		tService:     tService,
-		isSysadmFunc: isSysadmFunc,
+		tService: tService,
 	}
 }
 
 type transitionControllerImpl struct {
-	tService     service.TransitionService
-	isSysadmFunc func(context.SecurityContext) bool
+	tService service.TransitionService
 }
 
 func (t transitionControllerImpl) MoveOrRenamePackage(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Create(r)
-	if !t.isSysadmFunc(ctx) {
+	ctx := secctx.MakeUserContext(r)
+	if !secctx.IsSysadm(ctx) {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
@@ -75,7 +73,7 @@ func (t transitionControllerImpl) MoveOrRenamePackage(w http.ResponseWriter, r *
 
 	id, err := t.tService.MoveOrRenamePackage(ctx, transitionReq.From, transitionReq.To, transitionReq.OverwriteHistory)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to move or rename package", err)
+		utils.RespondWithError(w, r, "Failed to move or rename package", err)
 		return
 	}
 	result := map[string]interface{}{}
@@ -84,8 +82,8 @@ func (t transitionControllerImpl) MoveOrRenamePackage(w http.ResponseWriter, r *
 }
 
 func (t transitionControllerImpl) GetMoveStatus(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Create(r)
-	if !t.isSysadmFunc(ctx) {
+	ctx := secctx.MakeUserContext(r)
+	if !secctx.IsSysadm(ctx) {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
@@ -96,17 +94,17 @@ func (t transitionControllerImpl) GetMoveStatus(w http.ResponseWriter, r *http.R
 
 	id := getStringParam(r, "id")
 
-	status, err := t.tService.GetMoveStatus(id)
+	status, err := t.tService.GetMoveStatus(ctx, id)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to get transition status", err)
+		utils.RespondWithError(w, r, "Failed to get transition status", err)
 		return
 	}
 	utils.RespondWithJson(w, http.StatusOK, status)
 }
 
 func (t transitionControllerImpl) ListActivities(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Create(r)
-	if !t.isSysadmFunc(ctx) {
+	ctx := secctx.MakeUserContext(r)
+	if !secctx.IsSysadm(ctx) {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
@@ -143,17 +141,17 @@ func (t transitionControllerImpl) ListActivities(w http.ResponseWriter, r *http.
 		return
 	}
 
-	list, err := t.tService.ListCompletedActivities(offset, limit)
+	list, err := t.tService.ListCompletedActivities(ctx, offset, limit)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to list transition activities", err)
+		utils.RespondWithError(w, r, "Failed to list transition activities", err)
 		return
 	}
 	utils.RespondWithJson(w, http.StatusOK, list)
 }
 
 func (t transitionControllerImpl) ListPackageTransitions(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Create(r)
-	if !t.isSysadmFunc(ctx) {
+	ctx := secctx.MakeUserContext(r)
+	if !secctx.IsSysadm(ctx) {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
@@ -161,9 +159,9 @@ func (t transitionControllerImpl) ListPackageTransitions(w http.ResponseWriter, 
 		})
 		return
 	}
-	list, err := t.tService.ListPackageTransitions()
+	list, err := t.tService.ListPackageTransitions(ctx)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to list package transitions", err)
+		utils.RespondWithError(w, r, "Failed to list package transitions", err)
 		return
 	}
 	utils.RespondWithJson(w, http.StatusOK, list)

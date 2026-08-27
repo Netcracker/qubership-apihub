@@ -1,6 +1,7 @@
 package security
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -25,11 +26,11 @@ func MintEphemeralFileToken(userID, fileID string, ttl time.Duration) (string, e
 	return jwt.IssueAccessToken(user, keeper, jwt.SetExpDuration(ttl))
 }
 
-func ValidateEphemeralFileToken(token string) (userID, fileID string, err error) {
+func ValidateEphemeralFileToken(ctx context.Context, token string) (userID, fileID string, err error) {
 	if defaultJWTValidator == nil {
 		return "", "", fmt.Errorf("security not initialized")
 	}
-	info, exp, err := defaultJWTValidator.ValidateToken(token, EphemeralFileDownloadTokenType)
+	info, exp, err := defaultJWTValidator.ValidateToken(ctx, token, EphemeralFileDownloadTokenType)
 	if err != nil {
 		return "", "", err
 	}

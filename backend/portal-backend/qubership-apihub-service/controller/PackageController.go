@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
@@ -59,7 +59,7 @@ type packageControllerImpl struct {
 
 func (p packageControllerImpl) DeletePackage(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.DeletePackagePermission)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to check user privileges", err)
@@ -83,7 +83,7 @@ func (p packageControllerImpl) DeletePackage(w http.ResponseWriter, r *http.Requ
 
 func (p packageControllerImpl) DisfavorPackage(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to check user privileges", err)
@@ -107,7 +107,7 @@ func (p packageControllerImpl) DisfavorPackage(w http.ResponseWriter, r *http.Re
 
 func (p packageControllerImpl) FavorPackage(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to check user privileges", err)
@@ -132,7 +132,7 @@ func (p packageControllerImpl) FavorPackage(w http.ResponseWriter, r *http.Reque
 
 func (p packageControllerImpl) GetPackage(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
@@ -160,7 +160,7 @@ func (p packageControllerImpl) GetPackage(w http.ResponseWriter, r *http.Request
 
 func (p packageControllerImpl) GetPackageStatus(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to check user privileges", err)
@@ -174,7 +174,7 @@ func (p packageControllerImpl) GetPackageStatus(w http.ResponseWriter, r *http.R
 		})
 		return
 	}
-	packageStatus, err := p.packageService.GetPackageStatus(packageId)
+	packageStatus, err := p.packageService.GetPackageStatus(ctx, packageId)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to get package status", err)
 		return
@@ -302,18 +302,18 @@ func (p packageControllerImpl) GetPackagesList(w http.ResponseWriter, r *http.Re
 		ShowAllDescendants:        showAllDescendants,
 	}
 
-	packages, err := p.packageService.GetPackagesList(context.Create(r), packageListReq, false)
+	packages, err := p.packageService.GetPackagesList(secctx.MakeUserContext(r), packageListReq)
 
 	if err != nil {
-		utils.RespondWithError(w, "Failed to get packages", err)
+		utils.RespondWithError(w, r, "Failed to get packages", err)
 		return
 	}
 	utils.RespondWithJson(w, http.StatusOK, packages)
 }
 
 func (p packageControllerImpl) GetDeletedPackagesList(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Create(r)
-	sufficientPrivileges := p.roleService.IsSysadm(ctx)
+	ctx := secctx.MakeUserContext(r)
+	sufficientPrivileges := secctx.IsSysadm(ctx)
 	if !sufficientPrivileges {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
@@ -390,11 +390,11 @@ func (p packageControllerImpl) GetDeletedPackagesList(w http.ResponseWriter, r *
 		ShowParents:        showParents,
 		ShowAllDescendants: showAllDescendants,
 	}
-
-	packages, err := p.packageService.GetPackagesList(context.Create(r), packageListReq, true)
+	
+	packages, err := p.packageService.GetDeletedPackagesList(ctx, packageListReq)
 
 	if err != nil {
-		utils.RespondWithError(w, "Failed to get packages", err)
+		utils.RespondWithError(w, r, "Failed to get packages", err)
 		return
 	}
 	utils.RespondWithJson(w, http.StatusOK, packages)
@@ -431,14 +431,14 @@ func (p packageControllerImpl) CreatePackage(w http.ResponseWriter, r *http.Requ
 		}
 	}
 
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 	var sufficientPrivileges bool
 	if packg.ParentId == "" {
-		sufficientPrivileges = p.roleService.IsSysadm(ctx)
+		sufficientPrivileges = secctx.IsSysadm(ctx)
 	} else {
 		sufficientPrivileges, err = p.roleService.HasRequiredPermissions(ctx, packg.ParentId, view.CreateAndUpdatePackagePermission)
 		if err != nil {
-			utils.RespondWithError(w, "Failed to check user privileges", err)
+			utils.RespondWithError(w, r, "Failed to check user privileges", err)
 			return
 		}
 	}
@@ -460,7 +460,7 @@ func (p packageControllerImpl) CreatePackage(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if !strings.Contains(packg.ParentId, ".") && strings.ToLower(packg.Alias) == "runenv" && !p.roleService.IsSysadm(ctx) {
+	if !strings.Contains(packg.ParentId, ".") && strings.ToLower(packg.Alias) == "runenv" && !secctx.IsSysadm(ctx) {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.AliasContainsRunenvChars,
@@ -471,11 +471,11 @@ func (p packageControllerImpl) CreatePackage(w http.ResponseWriter, r *http.Requ
 
 	newPackage, err := p.packageService.CreatePackage(ctx, packg)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to create package", err)
+		utils.RespondWithError(w, r, "Failed to create package", err)
 		return
 	}
 	if newPackage.ParentId != "" && (newPackage.Kind == entity.KIND_PACKAGE || newPackage.Kind == entity.KIND_DASHBOARD) {
-		p.monitoringService.IncreaseBusinessMetricCounter(ctx.GetUserId(), metrics.PackagesAndDashboardsCreated, newPackage.ParentId)
+		p.monitoringService.IncreaseBusinessMetricCounter(secctx.GetUserId(ctx), metrics.PackagesAndDashboardsCreated, newPackage.ParentId)
 	}
 
 	utils.RespondWithJson(w, http.StatusCreated, newPackage)
@@ -483,7 +483,7 @@ func (p packageControllerImpl) CreatePackage(w http.ResponseWriter, r *http.Requ
 
 func (p packageControllerImpl) UpdatePackage(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.CreateAndUpdatePackagePermission)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to check user privileges", err)
@@ -532,7 +532,7 @@ func (p packageControllerImpl) UpdatePackage(w http.ResponseWriter, r *http.Requ
 
 func (p packageControllerImpl) GetAvailableVersionStatusesForPublish_deprecated(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to check user privileges", err)
@@ -556,7 +556,7 @@ func (p packageControllerImpl) GetAvailableVersionStatusesForPublish_deprecated(
 
 func (p packageControllerImpl) RecalculateOperationGroups(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.CreateAndUpdatePackagePermission)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to check user privileges", err)
@@ -581,7 +581,7 @@ func (p packageControllerImpl) RecalculateOperationGroups(w http.ResponseWriter,
 
 func (p packageControllerImpl) CalculateOperationGroups(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to check user privileges", err)
@@ -607,7 +607,7 @@ func (p packageControllerImpl) CalculateOperationGroups(w http.ResponseWriter, r
 		return
 	}
 
-	groups, err := p.packageService.CalculateOperationGroups(packageId, groupingPrefix)
+	groups, err := p.packageService.CalculateOperationGroups(ctx, packageId, groupingPrefix)
 	if err != nil {
 		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to calculate operation groups", err)
 		return

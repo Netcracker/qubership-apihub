@@ -63,14 +63,14 @@ func (r *lockRepositoryImpl) findExistingLock(ctx context.Context, lockName stri
 	err := r.cp.GetConnection().ModelContext(ctx, &existingLock).
 		Where("name = ?", lockName).
 		Select()
-		
+
 	if err != nil {
 		if errors.Is(err, pg.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to check existing lock: %w", err)
 	}
-	
+
 	return &existingLock, nil
 }
 
@@ -126,11 +126,11 @@ func (r *lockRepositoryImpl) RefreshLock(ctx context.Context, lockName string, i
 		if err != nil {
 			return err
 		}
-	
+
 		if lock.ExpiresAt.Before(safeNow) {
 			return ErrLockExpired
 		}
-	
+
 		if lock.Version != expectedVersion {
 			return ErrVersionMismatch
 		}
@@ -161,11 +161,11 @@ func (r *lockRepositoryImpl) ReleaseLock(ctx context.Context, lockName string, i
 			}
 			return err
 		}
-	
+
 		if lock.Version != expectedVersion {
 			return ErrVersionMismatch
 		}
-	
+
 		if lock.InstanceId != instanceId {
 			return ErrLockAlreadyAcquired
 		}

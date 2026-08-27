@@ -2,6 +2,61 @@
 
 Instructions for AI assistants working on this repository (Cursor, Claude Code, and compatible tools).
 
+## Traps worth knowing before you start
+
+### Run Go commands from `qubership-apihub-service/`, after generating the lockfile
+
+`go.mod` lives in `qubership-apihub-service/`, not at the repository root. A `go` command run from the root finds
+nothing and says so in a way that reads like an empty result rather than a wrong directory.
+
+`go.sum` is gitignored, so a fresh checkout fails every Go command with `missing go.sum entry` until you run
+`go mod tidy` once. Do that first in any new checkout or worktree; it takes seconds warm and minutes cold.
+
+Two consequences worth carrying: the regenerated `go.sum` is invisible to `git status`, and a dependency scan run on
+two different days can resolve different patch versions — so date any claim that depends on it.
+
+### Never take a build or test result from the end of a pipe
+
+`go build ./... 2>&1 | tail` reports the exit status of `tail`. This exact shape once reported a green build over a
+page of `missing go.sum entry` errors. Redirect to a file and check the status of the Go command itself.
+
+### The tree is already red, and know what CI actually covers
+
+`go test ./...` and `go vet ./...` both exit non-zero on the default branch. That is the baseline, not damage you
+caused. Capture a baseline run before you change anything and compare against it, rather than attributing a failure
+to your work.
+
+What CI does and does not catch:
+
+- **Compilation is covered.** The image build runs `go build`, so a broken build fails the pipeline.
+- **Behaviour is covered end to end.** A pull request runs an API-level suite against a deployed stack of several
+  services. Collections and charts live in other repositories.
+- **The Go unit suite, `go vet`, and Go linting are not run anywhere.** Super-linter has Go validation switched off,
+  and no workflow invokes them. So a stale unit test or a vet finding can sit on the branch indefinitely, and your own
+  passing pipeline is not evidence that the unit tests pass.
+
+Green CI is weaker than it looks in a second way: at least one job reports success while the tool inside it exits
+non-zero, because the reusable workflow sets `continue-on-error`. When a check matters to your conclusion, read the
+step log rather than the badge. Those reusable workflows come from another repository at a moving ref, so what gates
+a pull request can change without a commit here.
+
+### Registration is not implementation
+
+This codebase has several places where a name promises behaviour that nothing performs: a Prometheus metric that is
+registered and never incremented, a collector marked as unused, a configuration key read by a different subsystem
+than its name suggests, a documented fallback whose probe tests a different address than the bind, a doc comment
+describing a fail-closed path that returns the open value. Before you cite a metric, a config key, a helper name, or
+a comment as evidence that something works, find the code that writes it or reads it.
+
+The same caution applies in reverse: check `docs/api/` and the nearest correct sibling implementation before patching
+something that looks wrong, because several plausible-looking defects here are deliberate and specified.
+
+### Know which repository owns the answer
+
+The OpenAPI documents under `docs/api/` are normative for the HTTP contract. Helm charts, deployment values, and the
+end-to-end suite live in other repositories, so any conclusion about replica counts, resource limits, or E2E coverage
+has to be checked there rather than inferred from this tree.
+
 ## Clarification before coding
 
 - Do **not** generate or modify code until the task requirements are clear.

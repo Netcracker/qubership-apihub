@@ -5,9 +5,9 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
@@ -32,10 +32,10 @@ type transformationControllerImpl struct {
 
 func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := t.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, r, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
@@ -109,13 +109,13 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 
 	err = view.ValidateFormatForBuildType(buildType, format)
 	if err != nil {
-		utils.RespondWithError(w, "buildType format validation failed", err)
+		utils.RespondWithError(w, r, "buildType format validation failed", err)
 		return
 	}
 
-	exists, err := t.operationGroupService.CheckOperationGroupExists(packageId, versionName, apiType, groupName)
+	exists, err := t.operationGroupService.CheckOperationGroupExists(ctx, packageId, versionName, apiType, groupName)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to check if operation group exists", err)
+		utils.RespondWithError(w, r, "Failed to check if operation group exists", err)
 		return
 	}
 	if !exists {
@@ -180,13 +180,13 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 
 	_, revision, err := service.SplitVersionRevision(versionName)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to split version revision", err)
+		utils.RespondWithError(w, r, "Failed to split version revision", err)
 		return
 	}
 	if revision == 0 {
-		latestRevision, err := t.versionService.GetLatestRevision(packageId, versionName)
+		latestRevision, err := t.versionService.GetLatestRevision(ctx, packageId, versionName)
 		if err != nil {
-			utils.RespondWithError(w, "Failed to get version", err)
+			utils.RespondWithError(w, r, "Failed to get version", err)
 			return
 		}
 		versionName = view.MakeVersionRefKey(versionName, latestRevision)
@@ -196,15 +196,15 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 		Version:   versionName,
 		BuildType: view.BuildType(buildType),
 		Format:    format,
-		CreatedBy: ctx.GetUserId(),
+		CreatedBy: secctx.GetUserId(ctx),
 		ApiType:   apiType,
 		GroupName: groupName,
 	}
 
 	if reCalculate {
-		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
+		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(ctx, buildConfig, clientBuild, builderId)
 		if err != nil {
-			utils.RespondWithError(w, "Failed to create documentGroup type build", err)
+			utils.RespondWithError(w, r, "Failed to create documentGroup type build", err)
 			return
 		}
 		utils.RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
@@ -220,9 +220,9 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 		return
 	}
 
-	content, err := t.versionService.GetTransformedDocuments(packageId, versionName, apiType, groupName, buildType, format)
+	content, err := t.versionService.GetTransformedDocuments(ctx, packageId, versionName, apiType, groupName, buildType, format)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to get transformed documents", err)
+		utils.RespondWithError(w, r, "Failed to get transformed documents", err)
 		return
 	}
 	if content != nil {
@@ -239,14 +239,14 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 		GroupName: groupName,
 	}
 	var calculationProcessStatus view.CalculationProcessStatus
-	buildView, err := t.buildService.GetBuildViewByDocumentGroupSearchQuery(searchRequest)
+	buildView, err := t.buildService.GetBuildViewByDocumentGroupSearchQuery(ctx, searchRequest)
 	if err != nil {
 		if customError, ok := err.(*exception.CustomError); ok {
 			if customError.Status == http.StatusNotFound {
 
-				buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
+				buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(ctx, buildConfig, clientBuild, builderId)
 				if err != nil {
-					utils.RespondWithError(w, "Failed to create documentGroup type build", err)
+					utils.RespondWithError(w, r, "Failed to create documentGroup type build", err)
 					return
 				}
 				utils.RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
@@ -262,7 +262,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 				return
 			}
 		}
-		utils.RespondWithError(w, "Failed to get buildStatus", err)
+		utils.RespondWithError(w, r, "Failed to get buildStatus", err)
 		return
 	}
 	switch buildView.Status {
@@ -276,18 +276,18 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	case string(view.StatusComplete):
 		//this case is possible only if we have an old finished build for which we don't have a transformed documents (rebuild required)
 		//or if this build completed during this method execution (rebuild is not requried)
-		content, err := t.versionService.GetTransformedDocuments(packageId, versionName, apiType, groupName, buildType, format)
+		content, err := t.versionService.GetTransformedDocuments(ctx, packageId, versionName, apiType, groupName, buildType, format)
 		if err != nil {
-			utils.RespondWithError(w, "Failed to get transformed documents", err)
+			utils.RespondWithError(w, r, "Failed to get transformed documents", err)
 			return
 		}
 		if content != nil {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(buildConfig, clientBuild, builderId)
+		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(ctx, buildConfig, clientBuild, builderId)
 		if err != nil {
-			utils.RespondWithError(w, "Failed to create documentGroup type build", err)
+			utils.RespondWithError(w, r, "Failed to create documentGroup type build", err)
 			return
 		}
 		utils.RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
@@ -312,10 +312,10 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 
 func (t transformationControllerImpl) GetDataForDocumentsTransformation(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := t.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, r, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
@@ -397,9 +397,9 @@ func (t transformationControllerImpl) GetDataForDocumentsTransformation(w http.R
 		ApiType:                apiType,
 	}
 
-	data, err := t.transformationService.GetDataForDocumentsTransformation(packageId, versionName, documentsForTransformationFilterReq)
+	data, err := t.transformationService.GetDataForDocumentsTransformation(ctx, packageId, versionName, documentsForTransformationFilterReq)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to get version documents", err)
+		utils.RespondWithError(w, r, "Failed to get version documents", err)
 		return
 	}
 	utils.RespondWithJson(w, http.StatusOK, data)

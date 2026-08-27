@@ -40,7 +40,7 @@ type DDLContractSearchResult struct {
 	tableName struct{} `pg:",discard_unknown_columns"`
 
 	DDLContractEntity
-	PackageName   string   `pg:"name, type:varchar"`
+	PackageName   string   `pg:"package_name, type:varchar"`
 	VersionStatus string   `pg:"status, type:varchar"`
 	ParentNames   []string `pg:"parent_names, type:varchar[]"`
 }
@@ -49,12 +49,12 @@ type MCPContractSearchResult struct {
 	tableName struct{} `pg:",discard_unknown_columns"`
 
 	MCPContractEntity
-	PackageName   string   `pg:"name, type:varchar"`
+	PackageName   string   `pg:"package_name, type:varchar"`
 	VersionStatus string   `pg:"status, type:varchar"`
 	ParentNames   []string `pg:"parent_names, type:varchar[]"`
 }
 
-func MakeGlobalDDLSearchResultView(ent DDLContractSearchResult) interface{} {
+func MakeGlobalDDLSearchResultView(ent DDLContractSearchResult) view.DdlContractSearchResult {
 	return view.DdlContractSearchResult{
 		PackageId:      ent.PackageId,
 		PackageName:    ent.PackageName,
@@ -64,11 +64,11 @@ func MakeGlobalDDLSearchResultView(ent DDLContractSearchResult) interface{} {
 		EntityId:       ent.DdlEntityId,
 		Kind:           ent.Kind,
 		SchemaName:     ent.SchemaName,
-		TableName:      ent.Name,
+		EntityName:     ent.Name,
 	}
 }
 
-func MakeGlobalMCPSearchResultView(ent MCPContractSearchResult) interface{} {
+func MakeGlobalMCPSearchResultView(ent MCPContractSearchResult) view.McpEntitySearchResult {
 	return view.McpEntitySearchResult{
 		PackageId:      ent.PackageId,
 		PackageName:    ent.PackageName,

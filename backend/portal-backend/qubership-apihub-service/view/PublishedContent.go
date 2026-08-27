@@ -31,6 +31,7 @@ type PublishedDocument struct {
 	Description  string        `json:"description,omitempty"`
 	Version      string        `json:"version,omitempty"`
 	Shareability string        `json:"shareabilityStatus"`
+	ApiKind      string        `json:"apiKind"`
 	Info         interface{}   `json:"info,omitempty"`
 	ExternalDocs interface{}   `json:"externalDocs,omitempty"`
 	Operations   []interface{} `json:"operations,omitempty"`
@@ -48,6 +49,7 @@ type PublishedDocumentRefView struct {
 	Description          string   `json:"description,omitempty"`
 	Version              string   `json:"version,omitempty"`
 	Shareability         string   `json:"shareabilityStatus"`
+	ApiKind              string   `json:"apiKind"`
 	Filename             string   `json:"filename"`
 	PackageRef           string   `json:"packageRef"`
 	IncludedOperationIds []string `json:"includedOperationIds"`
@@ -68,6 +70,7 @@ type DocumentForTransformationView struct {
 	Description          string   `json:"description,omitempty"`
 	Version              string   `json:"version,omitempty"`
 	Shareability         string   `json:"shareabilityStatus"`
+	ApiKind              string   `json:"apiKind"`
 	Filename             string   `json:"filename"`
 	IncludedOperationIds []string `json:"includedOperationIds,omitempty"`
 	Data                 []byte   `json:"data"`

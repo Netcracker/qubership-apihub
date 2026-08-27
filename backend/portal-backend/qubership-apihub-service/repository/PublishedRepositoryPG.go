@@ -41,8 +41,7 @@ func (p publishedRepositoryImpl) updateVersion(tx *pg.Tx, version *entity.Publis
 	return nil
 }
 
-func (p publishedRepositoryImpl) MarkVersionDeleted(packageId string, versionName string, userId string) (int, error) {
-	ctx := context.Background()
+func (p publishedRepositoryImpl) MarkVersionDeleted(ctx context.Context, packageId string, versionName string, userId string) (int, error) {
 
 	releasedRevisionsDeleted := 0
 	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
@@ -104,8 +103,8 @@ func (p publishedRepositoryImpl) clearPreviousVersion(tx *pg.Tx, packageId strin
 	return err
 }
 
-func (p publishedRepositoryImpl) PatchVersion(packageId string, versionName string, status *string, versionLabels *[]string) (*entity.PublishedVersionEntity, error) {
-	getPackage, errGetPackage := p.GetPackage(packageId)
+func (p publishedRepositoryImpl) PatchVersion(ctx context.Context, packageId string, versionName string, status *string, versionLabels *[]string) (*entity.PublishedVersionEntity, error) {
+	getPackage, errGetPackage := p.GetPackage(ctx, packageId)
 	if errGetPackage != nil {
 		return nil, errGetPackage
 	}
@@ -114,20 +113,22 @@ func (p publishedRepositoryImpl) PatchVersion(packageId string, versionName stri
 	}
 
 	ent := new(entity.PublishedVersionEntity)
+	found := false
 
-	p.cp.GetConnection().RunInTransaction(context.Background(), func(tx *pg.Tx) error {
-		err := p.cp.GetConnection().Model(ent).
+	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		err := tx.Model(ent).
 			Where("package_id = ?", packageId).
 			Where("version = ?", versionName).
 			Where("deleted_at is ?", nil).
 			Order("revision DESC").
 			First()
 		if err != nil {
-			if err == pg.ErrNoRows {
+			if errors.Is(err, pg.ErrNoRows) {
 				return nil
 			}
 			return err
 		}
+		found = true
 
 		statusChanged := false
 		if status != nil {
@@ -157,6 +158,12 @@ func (p publishedRepositoryImpl) PatchVersion(packageId string, versionName stri
 
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, nil
+	}
 
 	return ent, nil
 }
@@ -203,8 +210,8 @@ func (p publishedRepositoryImpl) markAllVersionsDeletedByPackageId(tx *pg.Tx, pa
 	return releasedRevisionsDeleted, nil
 }
 
-func (p publishedRepositoryImpl) GetVersion(packageId string, versionName string) (*entity.PublishedVersionEntity, error) {
-	getPackage, errGetPackage := p.GetPackage(packageId)
+func (p publishedRepositoryImpl) GetVersion(ctx context.Context, packageId string, versionName string) (*entity.PublishedVersionEntity, error) {
+	getPackage, errGetPackage := p.GetPackage(ctx, packageId)
 	if errGetPackage != nil {
 		return nil, errGetPackage
 	}
@@ -218,7 +225,7 @@ func (p publishedRepositoryImpl) GetVersion(packageId string, versionName string
 	if err != nil {
 		return nil, err
 	}
-	query := p.cp.GetConnection().Model(result).
+	query := p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("package_id = ?", packageId).
 		Where("deleted_at is ?", nil).
 		Where("version = ?", version)
@@ -240,13 +247,13 @@ func (p publishedRepositoryImpl) GetVersion(packageId string, versionName string
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetLatestRevision(packageId, versionName string) (int, error) {
+func (p publishedRepositoryImpl) GetLatestRevision(ctx context.Context, packageId, versionName string) (int, error) {
 	result := new(entity.PublishedVersionEntity)
 	version, _, err := SplitVersionRevision(versionName)
 	if err != nil {
 		return -1, err
 	}
-	query := p.cp.GetConnection().Model(result).
+	query := p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("package_id = ?", packageId).
 		Where("deleted_at is ?", nil).
 		Where("version = ?", version).
@@ -262,13 +269,13 @@ func (p publishedRepositoryImpl) GetLatestRevision(packageId, versionName string
 	return result.Revision, nil
 }
 
-func (p publishedRepositoryImpl) GetDeletedPackageLatestRevision(packageId, versionName string) (int, error) {
+func (p publishedRepositoryImpl) GetDeletedPackageLatestRevision(ctx context.Context, packageId, versionName string) (int, error) {
 	result := new(entity.PublishedVersionEntity)
 	version, _, err := SplitVersionRevision(versionName)
 	if err != nil {
 		return -1, err
 	}
-	query := p.cp.GetConnection().Model(result).
+	query := p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("package_id = ?", packageId).
 		Where("deleted_at is not ?", nil).
 		Where("version = ?", version).
@@ -284,16 +291,16 @@ func (p publishedRepositoryImpl) GetDeletedPackageLatestRevision(packageId, vers
 	return result.Revision, nil
 }
 
-func (p publishedRepositoryImpl) GetReadonlyVersion(packageId string, versionName string, showOnlyDeleted bool) (*entity.PackageVersionRevisionEntity, error) {
+func (p publishedRepositoryImpl) GetReadonlyVersion(ctx context.Context, packageId string, versionName string, showOnlyDeleted bool) (*entity.PackageVersionRevisionEntity, error) {
 	var getPackage *entity.PackageEntity
 	var errGetPackage error
 	notCondition := ""
 
 	if showOnlyDeleted {
-		getPackage, errGetPackage = p.GetPackageIncludingDeleted(packageId)
+		getPackage, errGetPackage = p.GetPackageIncludingDeleted(ctx, packageId)
 		notCondition = "not"
 	} else {
-		getPackage, errGetPackage = p.GetPackage(packageId)
+		getPackage, errGetPackage = p.GetPackage(ctx, packageId)
 	}
 
 	if errGetPackage != nil {
@@ -323,7 +330,7 @@ func (p publishedRepositoryImpl) GetReadonlyVersion(packageId string, versionNam
 		and pv.deleted_at is %s null
 	limit 1
 	`
-	_, err = p.cp.GetConnection().QueryOne(result, fmt.Sprintf(query, notCondition), packageId, version, revision, packageId, version, revision, revision)
+	_, err = p.cp.GetConnection().WithContext(ctx).QueryOne(result, fmt.Sprintf(query, notCondition), packageId, version, revision, packageId, version, revision, revision)
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil
@@ -333,7 +340,7 @@ func (p publishedRepositoryImpl) GetReadonlyVersion(packageId string, versionNam
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetRichPackageVersion(packageId string, version string) (*entity.PackageVersionRichEntity, error) {
+func (p publishedRepositoryImpl) GetRichPackageVersion(ctx context.Context, packageId string, version string) (*entity.PackageVersionRichEntity, error) {
 	result := new(entity.PackageVersionRichEntity)
 	version, revision, err := SplitVersionRevision(version)
 	if err != nil {
@@ -350,7 +357,7 @@ where pv.package_id = ?
 	and pv.package_id = pg.id
 limit 1
 `
-	_, err = p.cp.GetConnection().QueryOne(result, query, packageId, version, revision, revision, revision)
+	_, err = p.cp.GetConnection().WithContext(ctx).QueryOne(result, query, packageId, version, revision, revision, revision)
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil
@@ -360,7 +367,7 @@ limit 1
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetVersionRevisionsList(searchQuery entity.PackageVersionSearchQueryEntity) ([]entity.PackageVersionRevisionEntity, error) {
+func (p publishedRepositoryImpl) GetVersionRevisionsList(ctx context.Context, searchQuery entity.PackageVersionSearchQueryEntity) ([]entity.PackageVersionRevisionEntity, error) {
 	var ents []entity.PackageVersionRevisionEntity
 	if searchQuery.TextFilter != "" {
 		searchQuery.TextFilter = "%" + utils.LikeEscaped(searchQuery.TextFilter) + "%"
@@ -384,16 +391,16 @@ func (p publishedRepositoryImpl) GetVersionRevisionsList(searchQuery entity.Pack
 			limit ?limit
 			offset ?offset;
 	`
-	_, err := p.cp.GetConnection().Model(&searchQuery).Query(&ents, query)
+	_, err := p.cp.GetConnection().WithContext(ctx).Model(&searchQuery).Query(&ents, query)
 	if err != nil {
 		return nil, err
 	}
 	return ents, nil
 }
 
-func (p publishedRepositoryImpl) GetVersionByRevision(packageId string, versionName string, revision int) (*entity.PublishedVersionEntity, error) {
+func (p publishedRepositoryImpl) GetVersionByRevision(ctx context.Context, packageId string, versionName string, revision int) (*entity.PublishedVersionEntity, error) {
 	result := new(entity.PublishedVersionEntity)
-	err := p.cp.GetConnection().Model(result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("package_id = ?", packageId).
 		Where("version = ?", versionName).
 		Where("revision = ?", revision).
@@ -409,13 +416,13 @@ func (p publishedRepositoryImpl) GetVersionByRevision(packageId string, versionN
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetVersionIncludingDeleted(packageId string, versionName string) (*entity.PublishedVersionEntity, error) {
+func (p publishedRepositoryImpl) GetVersionIncludingDeleted(ctx context.Context, packageId string, versionName string) (*entity.PublishedVersionEntity, error) {
 	result := new(entity.PublishedVersionEntity)
 	version, revision, err := SplitVersionRevision(versionName)
 	if err != nil {
 		return nil, err
 	}
-	query := p.cp.GetConnection().Model(result).
+	query := p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("package_id = ?", packageId).
 		Where("version = ?", version)
 
@@ -434,10 +441,10 @@ func (p publishedRepositoryImpl) GetVersionIncludingDeleted(packageId string, ve
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetServiceOwner(workspaceId string, serviceName string) (string, error) {
+func (p publishedRepositoryImpl) GetServiceOwner(ctx context.Context, workspaceId string, serviceName string) (string, error) {
 	var packageId string
 	serviceOwnerQuery := `SELECT package_id FROM package_service WHERE workspace_id = ? and service_name = ?`
-	_, err := p.cp.GetConnection().QueryOne(pg.Scan(&packageId), serviceOwnerQuery, workspaceId, serviceName)
+	_, err := p.cp.GetConnection().WithContext(ctx).QueryOne(pg.Scan(&packageId), serviceOwnerQuery, workspaceId, serviceName)
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return "", nil
@@ -449,8 +456,13 @@ func (p publishedRepositoryImpl) GetServiceOwner(workspaceId string, serviceName
 
 func (p publishedRepositoryImpl) validateMigrationResult(tx *pg.Tx, packageInfo view.PackageInfoFile, publishId string, version *entity.PublishedVersionEntity, content []*entity.PublishedContentEntity, contentData []*entity.PublishedContentDataEntity,
 	refs []*entity.PublishedReferenceEntity, src *entity.PublishedSrcEntity, operations []*entity.OperationEntity, operationData []*entity.OperationDataEntity, versionComparisons []*entity.VersionComparisonEntity, operationComparisons []*entity.OperationComparisonEntity, versionComparisonsFromCache []string,
+	operationComparisonIdsToRebuild []string,
 	versionInternalDocs []*entity.VersionInternalDocumentEntity, versionInternalDocData []*entity.VersionInternalDocumentDataEntity, comparisonInternalDocs []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocData []*entity.ComparisonInternalDocumentDataEntity,
-	operationSearchTexts []*entity.OperationSearchTextEntity, maxRevision int, excludeFromSearch bool) error {
+	operationSearchTexts []*entity.OperationSearchTextEntity, maxRevision int, excludeFromSearch bool,
+	ddlContractEntities []*entity.DDLContractEntity, ddlContractDataEntities []*entity.DDLContractDataEntity,
+	ddlContractSearchTexts []*entity.DDLContractSearchTextEntity, ddlContractComparisonEntities []*entity.DDLContractComparisonEntity, ddlComparisonIdsToRebuild []string,
+	mcpContractEntities []*entity.MCPContractEntity, mcpContractDataEntities []*entity.MCPContractDataEntity,
+	mcpContractSearchTexts []*entity.MCPContractSearchTextEntity) error {
 	migrationRun := new(mEntity.MigrationRunEntity)
 
 	err := tx.Model(migrationRun).Where("id = ?", packageInfo.MigrationId).First()
@@ -698,6 +710,162 @@ func (p publishedRepositoryImpl) validateMigrationResult(tx *pg.Tx, packageInfo 
 		changes["operation_data"] = operationDataChanges
 	}
 
+	currentTable = "ddl_tables"
+	oldDdlEntities := make([]entity.DDLContractEntity, 0)
+	err = tx.Model(&oldDdlEntities).
+		Where("package_id = ?", version.PackageId).
+		Where("version = ?", version.Version).
+		Where("revision = ?", version.Revision).
+		Select()
+	if err != nil {
+		return err
+	}
+	ddlEntitiesChanges := make(map[string]interface{}, 0)
+	matchedDdlEntities := make(map[string]struct{}, 0)
+	for _, s := range oldDdlEntities {
+		found := false
+		for _, t := range ddlContractEntities {
+			if s.DdlEntityId == t.DdlEntityId {
+				found = true
+				matchedDdlEntities[s.DdlEntityId] = struct{}{}
+				if ddlEntityChanges := s.GetChanges(*t); len(ddlEntityChanges) > 0 {
+					ddlEntitiesChanges[s.DdlEntityId] = ddlEntityChanges
+					changesOverview.setTableChanges(currentTable, ddlEntityChanges)
+					continue
+				}
+			}
+		}
+		if !found {
+			ddlEntitiesChanges[s.DdlEntityId] = "ddl entity not found in build archive"
+			changesOverview.setNotFoundEntry(currentTable)
+		}
+	}
+	for _, t := range ddlContractEntities {
+		if _, matched := matchedDdlEntities[t.DdlEntityId]; !matched {
+			ddlEntitiesChanges[t.DdlEntityId] = "unexpected ddl entity (not found in database)"
+			changesOverview.setUnexpectedEntry(currentTable)
+		}
+	}
+	if len(ddlEntitiesChanges) > 0 {
+		changes[currentTable] = ddlEntitiesChanges
+	}
+
+	currentTable = "ddl_table_data"
+	oldDdlEntityData := make([]entity.DDLContractDataEntity, 0)
+	err = tx.Model(&oldDdlEntityData).
+		ColumnExpr("ddl_table_data.data_hash").
+		Join("inner join ddl_tables d").
+		JoinOn("d.data_hash = ddl_table_data.data_hash").
+		JoinOn("d.package_id = ?", version.PackageId).
+		JoinOn("d.version = ?", version.Version).
+		JoinOn("d.revision = ?", version.Revision).
+		Select()
+	if err != nil {
+		return err
+	}
+	ddlEntityDataChanges := make(map[string]interface{}, 0)
+	matchedDdlEntityData := make(map[string]struct{}, 0)
+	for _, s := range oldDdlEntityData {
+		found := false
+		for _, t := range ddlContractDataEntities {
+			if s.DataHash == t.DataHash {
+				found = true
+				matchedDdlEntityData[s.DataHash] = struct{}{}
+			}
+		}
+		if !found {
+			ddlEntityDataChanges[s.DataHash] = "ddl entity data not found in build archive"
+			changesOverview.setNotFoundEntry(currentTable)
+		}
+	}
+	for _, t := range ddlContractDataEntities {
+		if _, matched := matchedDdlEntityData[t.DataHash]; !matched {
+			ddlEntityDataChanges[t.DataHash] = "unexpected ddl entity data (not found in database)"
+			changesOverview.setUnexpectedEntry(currentTable)
+		}
+	}
+	if len(ddlEntityDataChanges) > 0 {
+		changes[currentTable] = ddlEntityDataChanges
+	}
+
+	currentTable = "mcp_entities"
+	oldMcpEntities := make([]entity.MCPContractEntity, 0)
+	err = tx.Model(&oldMcpEntities).
+		Where("package_id = ?", version.PackageId).
+		Where("version = ?", version.Version).
+		Where("revision = ?", version.Revision).
+		Select()
+	if err != nil {
+		return err
+	}
+	mcpEntitiesChanges := make(map[string]interface{}, 0)
+	matchedMcpEntities := make(map[string]struct{}, 0)
+	for _, s := range oldMcpEntities {
+		found := false
+		for _, t := range mcpContractEntities {
+			if s.McpEntityId == t.McpEntityId {
+				found = true
+				matchedMcpEntities[s.McpEntityId] = struct{}{}
+				if mcpEntityChanges := s.GetChanges(*t); len(mcpEntityChanges) > 0 {
+					mcpEntitiesChanges[s.McpEntityId] = mcpEntityChanges
+					changesOverview.setTableChanges(currentTable, mcpEntityChanges)
+					continue
+				}
+			}
+		}
+		if !found {
+			mcpEntitiesChanges[s.McpEntityId] = "mcp entity not found in build archive"
+			changesOverview.setNotFoundEntry(currentTable)
+		}
+	}
+	for _, t := range mcpContractEntities {
+		if _, matched := matchedMcpEntities[t.McpEntityId]; !matched {
+			mcpEntitiesChanges[t.McpEntityId] = "unexpected mcp entity (not found in database)"
+			changesOverview.setUnexpectedEntry(currentTable)
+		}
+	}
+	if len(mcpEntitiesChanges) > 0 {
+		changes[currentTable] = mcpEntitiesChanges
+	}
+
+	currentTable = "mcp_entity_data"
+	oldMcpEntityData := make([]entity.MCPContractDataEntity, 0)
+	err = tx.Model(&oldMcpEntityData).
+		ColumnExpr("mcp_entity_data.data_hash").
+		Join("inner join mcp_entities m").
+		JoinOn("m.data_hash = mcp_entity_data.data_hash").
+		JoinOn("m.package_id = ?", version.PackageId).
+		JoinOn("m.version = ?", version.Version).
+		JoinOn("m.revision = ?", version.Revision).
+		Select()
+	if err != nil {
+		return err
+	}
+	mcpEntityDataChanges := make(map[string]interface{}, 0)
+	matchedMcpEntityData := make(map[string]struct{}, 0)
+	for _, s := range oldMcpEntityData {
+		found := false
+		for _, t := range mcpContractDataEntities {
+			if s.DataHash == t.DataHash {
+				found = true
+				matchedMcpEntityData[s.DataHash] = struct{}{}
+			}
+		}
+		if !found {
+			mcpEntityDataChanges[s.DataHash] = "mcp entity data not found in build archive"
+			changesOverview.setNotFoundEntry(currentTable)
+		}
+	}
+	for _, t := range mcpContractDataEntities {
+		if _, matched := matchedMcpEntityData[t.DataHash]; !matched {
+			mcpEntityDataChanges[t.DataHash] = "unexpected mcp entity data (not found in database)"
+			changesOverview.setUnexpectedEntry(currentTable)
+		}
+	}
+	if len(mcpEntityDataChanges) > 0 {
+		changes[currentTable] = mcpEntityDataChanges
+	}
+
 	if !packageInfo.NoChangelog && packageInfo.PreviousVersion != "" {
 		versionComparisonsChanges, versionComparisonIds, err := p.getVersionComparisonsChanges(tx, packageInfo, versionComparisons, versionComparisonsFromCache, &changesOverview)
 		if err != nil {
@@ -706,12 +874,19 @@ func (p publishedRepositoryImpl) validateMigrationResult(tx *pg.Tx, packageInfo 
 		if len(versionComparisonsChanges) > 0 {
 			changes["version_comparison"] = versionComparisonsChanges
 		}
-		operationComparisonsChanges, err := p.getOperationComparisonsChanges(tx, packageInfo, operationComparisons, versionComparisonIds, &changesOverview)
+		operationComparisonsChanges, err := p.getOperationComparisonsChanges(tx, packageInfo, operationComparisons, intersectComparisonIds(versionComparisonIds, operationComparisonIdsToRebuild), &changesOverview)
 		if err != nil {
 			return err
 		}
 		if len(operationComparisonsChanges) > 0 {
 			changes["operation_comparison"] = operationComparisonsChanges
+		}
+		ddlComparisonsChanges, err := p.getDdlComparisonsChanges(tx, packageInfo, ddlContractComparisonEntities, intersectComparisonIds(versionComparisonIds, ddlComparisonIdsToRebuild), &changesOverview)
+		if err != nil {
+			return err
+		}
+		if len(ddlComparisonsChanges) > 0 {
+			changes["ddl_comparison"] = ddlComparisonsChanges
 		}
 	}
 
@@ -839,6 +1014,92 @@ func (p publishedRepositoryImpl) validateMigrationResult(tx *pg.Tx, packageInfo 
 		}
 	}
 
+	// fts_ddl_search_text and fts_mcp_search_text share the same search-exclusion and
+	// latest-revision-only constraints as fts_operation_search_text above.
+	if !excludeFromSearch && version.Revision == maxRevision {
+		currentTable = "fts_ddl_search_text"
+		oldDdlSearchTexts := make([]entity.FtsDdlSearchTextEntity, 0)
+		err = tx.Model(&oldDdlSearchTexts).
+			Where("package_id = ?", version.PackageId).
+			Where("version = ?", version.Version).
+			Where("revision = ?", version.Revision).
+			Select()
+		if err != nil {
+			return err
+		}
+		ddlSearchTextChanges := make(map[string]interface{}, 0)
+		matchedDdlSearchTexts := make(map[string]struct{}, 0)
+		for _, s := range oldDdlSearchTexts {
+			found := false
+			for _, t := range ddlContractSearchTexts {
+				if s.DdlEntityId == t.DdlEntityId {
+					found = true
+					matchedDdlSearchTexts[s.DdlEntityId] = struct{}{}
+					oldSt := entity.DDLContractSearchTextEntity{SearchDataHash: s.SearchDataHash}
+					if stChanges := oldSt.GetChanges(entity.DDLContractSearchTextEntity{SearchDataHash: t.SearchDataHash}); len(stChanges) > 0 {
+						ddlSearchTextChanges[s.DdlEntityId] = stChanges
+						changesOverview.setTableChanges(currentTable, stChanges)
+						continue
+					}
+				}
+			}
+			if !found {
+				ddlSearchTextChanges[s.DdlEntityId] = "search text not found in build archive"
+				changesOverview.setNotFoundEntry(currentTable)
+			}
+		}
+		for _, t := range ddlContractSearchTexts {
+			if _, matched := matchedDdlSearchTexts[t.DdlEntityId]; !matched {
+				ddlSearchTextChanges[t.DdlEntityId] = "unexpected search text (not found in database)"
+				changesOverview.setUnexpectedEntry(currentTable)
+			}
+		}
+		if len(ddlSearchTextChanges) > 0 {
+			changes[currentTable] = ddlSearchTextChanges
+		}
+
+		currentTable = "fts_mcp_search_text"
+		oldMcpSearchTexts := make([]entity.FtsMcpSearchTextEntity, 0)
+		err = tx.Model(&oldMcpSearchTexts).
+			Where("package_id = ?", version.PackageId).
+			Where("version = ?", version.Version).
+			Where("revision = ?", version.Revision).
+			Select()
+		if err != nil {
+			return err
+		}
+		mcpSearchTextChanges := make(map[string]interface{}, 0)
+		matchedMcpSearchTexts := make(map[string]struct{}, 0)
+		for _, s := range oldMcpSearchTexts {
+			found := false
+			for _, t := range mcpContractSearchTexts {
+				if s.McpEntityId == t.McpEntityId {
+					found = true
+					matchedMcpSearchTexts[s.McpEntityId] = struct{}{}
+					oldSt := entity.MCPContractSearchTextEntity{SearchDataHash: s.SearchDataHash}
+					if stChanges := oldSt.GetChanges(entity.MCPContractSearchTextEntity{SearchDataHash: t.SearchDataHash}); len(stChanges) > 0 {
+						mcpSearchTextChanges[s.McpEntityId] = stChanges
+						changesOverview.setTableChanges(currentTable, stChanges)
+						continue
+					}
+				}
+			}
+			if !found {
+				mcpSearchTextChanges[s.McpEntityId] = "search text not found in build archive"
+				changesOverview.setNotFoundEntry(currentTable)
+			}
+		}
+		for _, t := range mcpContractSearchTexts {
+			if _, matched := matchedMcpSearchTexts[t.McpEntityId]; !matched {
+				mcpSearchTextChanges[t.McpEntityId] = "unexpected search text (not found in database)"
+				changesOverview.setUnexpectedEntry(currentTable)
+			}
+		}
+		if len(mcpSearchTextChanges) > 0 {
+			changes[currentTable] = mcpSearchTextChanges
+		}
+	}
+
 	if len(changes) > 0 {
 		ent := mEntity.MigratedVersionChangesEntity{
 			PackageId:     version.PackageId,
@@ -870,6 +1131,21 @@ func (p publishedRepositoryImpl) validateMigrationResult(tx *pg.Tx, packageInfo 
 	return nil
 }
 
+// intersectComparisonIds returns the ids present in both lists, preserving the order of the first.
+func intersectComparisonIds(ids []string, allowedIds []string) []string {
+	allowed := make(map[string]struct{}, len(allowedIds))
+	for _, id := range allowedIds {
+		allowed[id] = struct{}{}
+	}
+	result := make([]string, 0, len(ids))
+	for _, id := range ids {
+		if _, ok := allowed[id]; ok {
+			result = append(result, id)
+		}
+	}
+	return result
+}
+
 func (p publishedRepositoryImpl) getVersionComparisonsChanges(tx *pg.Tx, packageInfo view.PackageInfoFile, versionComparisonEntities []*entity.VersionComparisonEntity, versionComparisonsFromCache []string, changesOverview *PublishedBuildChangesOverview) (map[string]interface{}, []string, error) {
 	var err error
 	currentTable := "version_comparison"
@@ -894,7 +1170,7 @@ func (p publishedRepositoryImpl) getVersionComparisonsChanges(tx *pg.Tx, package
 			where package_id = ?
 			and version = ?`, packageInfo.PreviousVersionPackageId, packageInfo.PreviousVersion)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to calculate previous version revision: %v", err.Error())
+			return nil, nil, fmt.Errorf("failed to calculate previous version revision: %w", err)
 		}
 	}
 	versionComparisonsChanges := make(map[string]interface{}, 0)
@@ -936,7 +1212,7 @@ func (p publishedRepositoryImpl) getVersionComparisonsChanges(tx *pg.Tx, package
 		packageInfo.PreviousVersionRevision,
 	)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get version comparisons from db: %v", err.Error())
+		return nil, nil, fmt.Errorf("failed to get version comparisons from db: %w", err)
 	}
 	matchedComparisons := make(map[string]struct{}, 0)
 	versionComparisonIds := make([]string, 0)
@@ -999,7 +1275,7 @@ func (p publishedRepositoryImpl) getComparisonInternalDocumentsChanges(tx *pg.Tx
 			where package_id = ?
 			and version = ?`, packageInfo.PreviousVersionPackageId, packageInfo.PreviousVersion)
 		if err != nil {
-			return nil, fmt.Errorf("failed to calculate previous version revision for comparison internal docs: %v", err.Error())
+			return nil, fmt.Errorf("failed to calculate previous version revision for comparison internal docs: %w", err)
 		}
 	}
 	// Fetch comparison internal documents for main comparison and refs
@@ -1050,7 +1326,7 @@ func (p publishedRepositoryImpl) getComparisonInternalDocumentsChanges(tx *pg.Tx
 		packageInfo.PreviousVersionRevision,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get comparison internal documents from db: %v", err.Error())
+		return nil, fmt.Errorf("failed to get comparison internal documents from db: %w", err)
 	}
 	comparisonInternalDocsChanges := make(map[string]interface{}, 0)
 	matchedComparisonInternalDocs := make(map[string]struct{}, 0)
@@ -1148,7 +1424,7 @@ func (p publishedRepositoryImpl) getOperationComparisonsChanges(tx *pg.Tx, packa
 			where package_id = ?
 			and version = ?`, packageInfo.PreviousVersionPackageId, packageInfo.PreviousVersion)
 		if err != nil {
-			return nil, fmt.Errorf("failed to calculate previous version revision: %v", err.Error())
+			return nil, fmt.Errorf("failed to calculate previous version revision: %w", err)
 		}
 	}
 	operationComparisonsChanges := make(map[string]interface{}, 0)
@@ -1164,7 +1440,7 @@ func (p publishedRepositoryImpl) getOperationComparisonsChanges(tx *pg.Tx, packa
 			pg.In(versionComparisonIds),
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get operation comparisons from db: %v", err.Error())
+			return nil, fmt.Errorf("failed to get operation comparisons from db: %w", err)
 		}
 		for _, oldComp := range oldOperationComparisons {
 			key := fmt.Sprintf(`ComparisonId:%s;OperationId:%s;PreviousOperationId:%s`, oldComp.ComparisonId, oldComp.OperationId, oldComp.PreviousOperationId)
@@ -1197,11 +1473,93 @@ func (p publishedRepositoryImpl) getOperationComparisonsChanges(tx *pg.Tx, packa
 	return operationComparisonsChanges, nil
 }
 
-func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageInfoFile, buildId string, version *entity.PublishedVersionEntity, content []*entity.PublishedContentEntity,
+// getDdlComparisonsChanges mirrors getOperationComparisonsChanges: it diffs the freshly generated
+// ddl_comparison rows against a point-in-time snapshot (migration."ddl_comparison_{migrationId}",
+// created in migration/stages/Starting.go) rather than the live table, because ddl_comparison rows
+// can be shared across builds via package refs and the live table may already reflect a later
+// build's migrated state by the time an earlier-queued build's ref is validated.
+func (p publishedRepositoryImpl) getDdlComparisonsChanges(tx *pg.Tx, packageInfo view.PackageInfoFile, ddlContractComparisonEntities []*entity.DDLContractComparisonEntity, versionComparisonIds []string, changesOverview *PublishedBuildChangesOverview) (map[string]interface{}, error) {
+	var err error
+	currentTable := "ddl_comparison"
+	if len(versionComparisonIds) == 0 && len(ddlContractComparisonEntities) == 0 {
+		return nil, nil
+	}
+	if packageInfo.PreviousVersionPackageId == "" {
+		packageInfo.PreviousVersionPackageId = packageInfo.PackageId
+	}
+	if strings.Contains(packageInfo.Version, `@`) {
+		packageInfo.Version, packageInfo.Revision, err = SplitVersionRevision(packageInfo.Version)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if strings.Contains(packageInfo.PreviousVersion, `@`) {
+		packageInfo.PreviousVersion, packageInfo.PreviousVersionRevision, err = SplitVersionRevision(packageInfo.PreviousVersion)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if packageInfo.PreviousVersionRevision == 0 {
+		_, err = tx.QueryOne(pg.Scan(&packageInfo.PreviousVersionRevision), `
+		select max(revision) from published_version
+			where package_id = ?
+			and version = ?`, packageInfo.PreviousVersionPackageId, packageInfo.PreviousVersion)
+		if err != nil {
+			return nil, fmt.Errorf("failed to calculate previous version revision: %v", err.Error())
+		}
+	}
+	ddlComparisonsChanges := make(map[string]interface{}, 0)
+	oldDdlComparisons := make([]entity.DDLContractComparisonEntity, 0)
+	matchedDdlComparisons := make(map[string]struct{}, 0)
+	if len(versionComparisonIds) > 0 {
+		ddlComparisonSnapshotTable := fmt.Sprintf(`migration."ddl_comparison_%s"`, packageInfo.MigrationId)
+		getDdlComparisonsQuery := fmt.Sprintf(`
+			select * from %s
+				where comparison_id in (?)
+			`, ddlComparisonSnapshotTable)
+		_, err = tx.Query(&oldDdlComparisons, getDdlComparisonsQuery,
+			pg.In(versionComparisonIds),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get ddl comparisons from db: %v", err.Error())
+		}
+		for _, oldComp := range oldDdlComparisons {
+			key := fmt.Sprintf(`ComparisonId:%s;DdlEntityId:%s;PreviousDdlEntityId:%s`, oldComp.ComparisonId, oldComp.DdlEntityId, oldComp.PreviousDdlEntityId)
+			found := false
+			for _, newComp := range ddlContractComparisonEntities {
+				if oldComp.ComparisonId == newComp.ComparisonId &&
+					oldComp.DdlEntityId == newComp.DdlEntityId &&
+					oldComp.PreviousDdlEntityId == newComp.PreviousDdlEntityId {
+					found = true
+					matchedDdlComparisons[key] = struct{}{}
+					if ddlComparisonChanges := oldComp.GetChanges(*newComp); len(ddlComparisonChanges) > 0 {
+						ddlComparisonsChanges[key] = ddlComparisonChanges
+						changesOverview.setTableChanges(currentTable, ddlComparisonChanges)
+					}
+				}
+			}
+			if !found {
+				ddlComparisonsChanges[key] = "ddl comparison not found in build archive"
+				changesOverview.setNotFoundEntry(currentTable)
+			}
+		}
+	}
+	for _, newComp := range ddlContractComparisonEntities {
+		key := fmt.Sprintf(`ComparisonId:%s;DdlEntityId:%s;PreviousDdlEntityId:%s`, newComp.ComparisonId, newComp.DdlEntityId, newComp.PreviousDdlEntityId)
+		if _, matched := matchedDdlComparisons[key]; !matched {
+			ddlComparisonsChanges[key] = "unexpected ddl comparison (not found in database)"
+			changesOverview.setUnexpectedEntry(currentTable)
+		}
+	}
+	return ddlComparisonsChanges, nil
+}
+
+func (p publishedRepositoryImpl) CreateVersionWithData(ctx context.Context, packageInfo view.PackageInfoFile, buildId string, version *entity.PublishedVersionEntity, content []*entity.PublishedContentEntity,
 	data []*entity.PublishedContentDataEntity, refs []*entity.PublishedReferenceEntity, src *entity.PublishedSrcEntity, srcArchive *entity.PublishedSrcArchiveEntity,
 	operations []*entity.OperationEntity, operationsData []*entity.OperationDataEntity,
 	operationComparisons []*entity.OperationComparisonEntity, builderNotifications []*entity.BuilderNotificationsEntity,
 	versionComparisons []*entity.VersionComparisonEntity, serviceName string, pkg *entity.PackageEntity, versionComparisonsFromCache []string,
+	operationComparisonIdsToRebuild []string, ddlComparisonIdsToRebuild []string,
 	versionInternalDocEntities []*entity.VersionInternalDocumentEntity, versionInternalDocDataEntities []*entity.VersionInternalDocumentDataEntity,
 	comparisonInternalDocEntities []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocDataEntities []*entity.ComparisonInternalDocumentDataEntity,
 	operationSearchTexts []*entity.OperationSearchTextEntity,
@@ -1214,7 +1572,6 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 	}
 
 	var err error
-	ctx := context.Background()
 	err = p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		start := time.Now()
 		var ents []entity.BuildEntity
@@ -1251,7 +1608,9 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 			}
 
 			start = time.Now()
-			err := p.validateMigrationResult(tx, packageInfo, buildId, version, content, data, refs, src, operations, operationsData, versionComparisons, operationComparisons, versionComparisonsFromCache, versionInternalDocEntities, versionInternalDocDataEntities, comparisonInternalDocEntities, comparisonInternalDocDataEntities, operationSearchTexts, maxRevision, pkg.ExcludeFromSearch)
+			err := p.validateMigrationResult(tx, packageInfo, buildId, version, content, data, refs, src, operations, operationsData, versionComparisons, operationComparisons, versionComparisonsFromCache, operationComparisonIdsToRebuild, versionInternalDocEntities, versionInternalDocDataEntities, comparisonInternalDocEntities, comparisonInternalDocDataEntities, operationSearchTexts, maxRevision, pkg.ExcludeFromSearch,
+				ddlContractEntities, ddlContractDataEntities, ddlContractSearchTexts, ddlContractComparisonEntities, ddlComparisonIdsToRebuild,
+				mcpContractEntities, mcpContractDataEntities, mcpContractSearchTexts)
 			if err != nil {
 				return fmt.Errorf("migration result validation failed: %v", err.Error())
 			}
@@ -1290,7 +1649,8 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 					"title" = EXCLUDED."title",
 					"metadata" = EXCLUDED."metadata",
 					"operation_ids" = EXCLUDED."operation_ids",
-					"filename" = EXCLUDED."filename"`).Insert()
+					"filename" = EXCLUDED."filename",
+					"api_kind" = EXCLUDED."api_kind"`).Insert()
 			} else {
 				_, err = tx.Model(c).OnConflict("(package_id, version, revision, file_id) DO UPDATE").Insert()
 			}
@@ -1474,7 +1834,7 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 
 		if len(versionComparisons) != 0 {
 			start = time.Now()
-			err = p.saveVersionChangesTx(tx, operationComparisons, versionComparisons)
+			err = p.saveVersionChangesTx(tx, operationComparisons, versionComparisons, operationComparisonIdsToRebuild)
 			if err != nil {
 				return err
 			}
@@ -1605,6 +1965,19 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 			}
 			utils.PerfLog(time.Since(start).Milliseconds(), 100, "CreateVersionWithData: ddl_table_data insert")
 		}
+		if packageInfo.MigrationBuild {
+			// In case of migration list of DDL entities may change due to new builder implementation, so need to cleanup existing list before insert
+			start = time.Now()
+			_, err = tx.Model(&entity.DDLContractEntity{}).
+				Where("package_id = ?", version.PackageId).
+				Where("version = ?", version.Version).
+				Where("revision = ?", version.Revision).
+				Delete()
+			utils.PerfLog(time.Since(start).Milliseconds(), 50+int64(len(ddlContractEntities)*10), "CreateVersionWithData: old ddl_tables delete")
+			if err != nil {
+				return fmt.Errorf("failed to cleanup ddl_tables for migration: %w", err)
+			}
+		}
 		if len(ddlContractEntities) > 0 {
 			start = time.Now()
 			_, err = tx.Model(&ddlContractEntities).OnConflict("(package_id, version, revision, ddl_entity_id) DO UPDATE").Insert()
@@ -1612,6 +1985,23 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 				return fmt.Errorf("failed to insert ddl_tables: %w", err)
 			}
 			utils.PerfLog(time.Since(start).Milliseconds(), 100, "CreateVersionWithData: ddl_tables insert")
+		}
+
+		if packageInfo.MigrationBuild && !pkg.ExcludeFromSearch && version.Revision == maxRevision {
+			deleteStaleFtsDdlSearchTextQuery := `
+				DELETE FROM fts_ddl_search_text fts
+				WHERE fts.package_id = ? AND fts.version = ? AND fts.revision = ?
+					AND NOT EXISTS (
+						SELECT 1 FROM ddl_tables t
+						WHERE t.package_id = fts.package_id
+							AND t.version = fts.version
+							AND t.revision = fts.revision
+							AND t.ddl_entity_id = fts.ddl_entity_id
+					)`
+			_, err = tx.Exec(deleteStaleFtsDdlSearchTextQuery, version.PackageId, version.Version, version.Revision)
+			if err != nil {
+				return fmt.Errorf("failed to delete stale fts_ddl_search_text during migration rebuild: %w", err)
+			}
 		}
 		if len(ddlContractSearchTexts) > 0 && !pkg.ExcludeFromSearch {
 			if !packageInfo.MigrationBuild {
@@ -1674,12 +2064,11 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 				}
 			}
 		}
-		if len(ddlContractComparisonEntities) > 0 {
+		if len(versionComparisons) != 0 {
 			start = time.Now()
-			_, err = tx.Model(&ddlContractComparisonEntities).OnConflict(
-				"(package_id, version, revision, previous_package_id, previous_version, previous_revision, ddl_entity_id, previous_ddl_entity_id) DO UPDATE").Insert()
+			err = p.saveDdlComparisonsTx(tx, ddlContractComparisonEntities, versionComparisons, ddlComparisonIdsToRebuild)
 			if err != nil {
-				return fmt.Errorf("failed to insert ddl_comparison: %w", err)
+				return err
 			}
 			utils.PerfLog(time.Since(start).Milliseconds(), 100, "CreateVersionWithData: ddl_comparison insert")
 		}
@@ -1702,6 +2091,19 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 			}
 			utils.PerfLog(time.Since(start).Milliseconds(), 100, "CreateVersionWithData: mcp_entity_data insert")
 		}
+		if packageInfo.MigrationBuild {
+			// In case of migration list of MCP entities may change due to new builder implementation, so need to cleanup existing list before insert
+			start = time.Now()
+			_, err = tx.Model(&entity.MCPContractEntity{}).
+				Where("package_id = ?", version.PackageId).
+				Where("version = ?", version.Version).
+				Where("revision = ?", version.Revision).
+				Delete()
+			utils.PerfLog(time.Since(start).Milliseconds(), 50+int64(len(mcpContractEntities)*10), "CreateVersionWithData: old mcp_entities delete")
+			if err != nil {
+				return fmt.Errorf("failed to cleanup mcp_entities for migration: %w", err)
+			}
+		}
 		if len(mcpContractEntities) > 0 {
 			start = time.Now()
 			_, err = tx.Model(&mcpContractEntities).OnConflict("(package_id, version, revision, mcp_entity_id) DO UPDATE").Insert()
@@ -1711,6 +2113,22 @@ func (p publishedRepositoryImpl) CreateVersionWithData(packageInfo view.PackageI
 			utils.PerfLog(time.Since(start).Milliseconds(), 100, "CreateVersionWithData: mcp_entities insert")
 		}
 
+		if packageInfo.MigrationBuild && !pkg.ExcludeFromSearch && version.Revision == maxRevision {
+			deleteStaleFtsMcpSearchTextQuery := `
+				DELETE FROM fts_mcp_search_text fts
+				WHERE fts.package_id = ? AND fts.version = ? AND fts.revision = ?
+					AND NOT EXISTS (
+						SELECT 1 FROM mcp_entities me
+						WHERE me.package_id = fts.package_id
+							AND me.version = fts.version
+							AND me.revision = fts.revision
+							AND me.mcp_entity_id = fts.mcp_entity_id
+					)`
+			_, err = tx.Exec(deleteStaleFtsMcpSearchTextQuery, version.PackageId, version.Version, version.Revision)
+			if err != nil {
+				return fmt.Errorf("failed to delete stale fts_mcp_search_text during migration rebuild: %w", err)
+			}
+		}
 		if len(mcpContractSearchTexts) > 0 && !pkg.ExcludeFromSearch {
 			if !packageInfo.MigrationBuild {
 				start = time.Now()
@@ -1916,7 +2334,7 @@ func (p publishedRepositoryImpl) propagatePreviousOperationGroups(tx *pg.Tx, ver
 	return err
 }
 
-func (p publishedRepositoryImpl) validateChangelogMigrationResult(tx *pg.Tx, packageInfo view.PackageInfoFile, publishId string, versionComparisons []*entity.VersionComparisonEntity, operationComparisons []*entity.OperationComparisonEntity, versionComparisonsFromCache []string, comparisonInternalDocs []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocData []*entity.ComparisonInternalDocumentDataEntity) error {
+func (p publishedRepositoryImpl) validateChangelogMigrationResult(tx *pg.Tx, packageInfo view.PackageInfoFile, publishId string, versionComparisons []*entity.VersionComparisonEntity, operationComparisons []*entity.OperationComparisonEntity, versionComparisonsFromCache []string, operationComparisonIdsToRebuild []string, comparisonInternalDocs []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocData []*entity.ComparisonInternalDocumentDataEntity, ddlContractComparisons []*entity.DDLContractComparisonEntity, ddlComparisonIdsToRebuild []string) error {
 	migrationRun := new(mEntity.MigrationRunEntity)
 	err := tx.Model(migrationRun).Where("id = ?", packageInfo.MigrationId).First()
 	if err != nil {
@@ -1937,12 +2355,19 @@ func (p publishedRepositoryImpl) validateChangelogMigrationResult(tx *pg.Tx, pac
 	if len(versionComparisonsChanges) > 0 {
 		changes["version_comparison"] = versionComparisonsChanges
 	}
-	operationComparisonsChanges, err := p.getOperationComparisonsChanges(tx, packageInfo, operationComparisons, versionComparisonIds, &changesOverview)
+	operationComparisonsChanges, err := p.getOperationComparisonsChanges(tx, packageInfo, operationComparisons, intersectComparisonIds(versionComparisonIds, operationComparisonIdsToRebuild), &changesOverview)
 	if err != nil {
 		return err
 	}
 	if len(operationComparisonsChanges) > 0 {
 		changes["operation_comparison"] = operationComparisonsChanges
+	}
+	ddlComparisonsChanges, err := p.getDdlComparisonsChanges(tx, packageInfo, ddlContractComparisons, intersectComparisonIds(versionComparisonIds, ddlComparisonIdsToRebuild), &changesOverview)
+	if err != nil {
+		return err
+	}
+	if len(ddlComparisonsChanges) > 0 {
+		changes["ddl_comparison"] = ddlComparisonsChanges
 	}
 
 	comparisonInternalDocsChanges, err := p.getComparisonInternalDocumentsChanges(tx, packageInfo, comparisonInternalDocs, comparisonInternalDocData, versionComparisonsFromCache, &changesOverview)
@@ -1984,8 +2409,7 @@ func (p publishedRepositoryImpl) validateChangelogMigrationResult(tx *pg.Tx, pac
 	return nil
 }
 
-func (p publishedRepositoryImpl) SaveVersionChanges(packageInfo view.PackageInfoFile, publishId string, operationComparisons []*entity.OperationComparisonEntity, versionComparisons []*entity.VersionComparisonEntity, versionComparisonsFromCache []string, comparisonInternalDocEntities []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocDataEntities []*entity.ComparisonInternalDocumentDataEntity) error {
-	ctx := context.Background()
+func (p publishedRepositoryImpl) SaveVersionChanges(ctx context.Context, packageInfo view.PackageInfoFile, publishId string, operationComparisons []*entity.OperationComparisonEntity, versionComparisons []*entity.VersionComparisonEntity, versionComparisonsFromCache []string, operationComparisonIdsToRebuild []string, ddlComparisonIdsToRebuild []string, comparisonInternalDocEntities []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocDataEntities []*entity.ComparisonInternalDocumentDataEntity, ddlContractComparisons []*entity.DDLContractComparisonEntity) error {
 	return p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		var ents []entity.BuildEntity
 		_, err := tx.Query(&ents, getBuildWithLock, publishId)
@@ -2004,13 +2428,18 @@ func (p publishedRepositoryImpl) SaveVersionChanges(packageInfo view.PackageInfo
 		}
 		if packageInfo.MigrationBuild && !packageInfo.NoChangelog {
 			start := time.Now()
-			err := p.validateChangelogMigrationResult(tx, packageInfo, publishId, versionComparisons, operationComparisons, versionComparisonsFromCache, comparisonInternalDocEntities, comparisonInternalDocDataEntities)
+			err := p.validateChangelogMigrationResult(tx, packageInfo, publishId, versionComparisons, operationComparisons, versionComparisonsFromCache, operationComparisonIdsToRebuild, comparisonInternalDocEntities, comparisonInternalDocDataEntities, ddlContractComparisons, ddlComparisonIdsToRebuild)
 			if err != nil {
 				return err
 			}
 			utils.PerfLog(time.Since(start).Milliseconds(), 500, "SaveVersionChanges: validateChangelogMigrationResult")
 		}
-		err = p.saveVersionChangesTx(tx, operationComparisons, versionComparisons)
+		err = p.saveVersionChangesTx(tx, operationComparisons, versionComparisons, operationComparisonIdsToRebuild)
+		if err != nil {
+			return err
+		}
+
+		err = p.saveDdlComparisonsTx(tx, ddlContractComparisons, versionComparisons, ddlComparisonIdsToRebuild)
 		if err != nil {
 			return err
 		}
@@ -2034,12 +2463,17 @@ func (p publishedRepositoryImpl) SaveVersionChanges(packageInfo view.PackageInfo
 	})
 }
 
-func (p publishedRepositoryImpl) saveVersionChangesTx(tx *pg.Tx, operationComparisons []*entity.OperationComparisonEntity, versionComparisons []*entity.VersionComparisonEntity) error {
+// saveVersionChangesTx upserts the merged version_comparison rows and replaces the operation
+// changelog. operation_types and contract_types are refreshed by separate, independently-scoped
+// writes (this function's operation_types update, saveDdlComparisonsTx's contract_types update) so
+// that a row saved because only one side changed does not overwrite the other side's stored value
+// with an absent one. Stale operation_comparison rows are deleted only for comparisons whose
+// operation side was rebuilt in this publish: a row saved because only its DDL side changed keeps
+// the cached operation changelog.
+func (p publishedRepositoryImpl) saveVersionChangesTx(tx *pg.Tx, operationComparisons []*entity.OperationComparisonEntity, versionComparisons []*entity.VersionComparisonEntity, operationComparisonIdsToRebuild []string) error {
 	_, err := tx.Model(&versionComparisons).
 		OnConflict(`(comparison_id) DO UPDATE
-		SET operation_types=EXCLUDED.operation_types,
-			contract_types=EXCLUDED.contract_types,
-			refs =			EXCLUDED.refs,
+		SET refs =			EXCLUDED.refs,
 			last_active =	EXCLUDED.last_active,
 			no_content =	EXCLUDED.no_content,
 			open_count =	version_comparison.open_count+1,
@@ -2048,20 +2482,77 @@ func (p publishedRepositoryImpl) saveVersionChangesTx(tx *pg.Tx, operationCompar
 	if err != nil {
 		return fmt.Errorf("failed to insert version comparisons %+v: %w", versionComparisons, err)
 	}
-	deleteChangelogForComparisonQuery := `
-		delete from operation_comparison
-		where comparison_id = ?comparison_id
-		`
-	for _, comparisonEnt := range versionComparisons {
-		_, err := tx.Model(comparisonEnt).Exec(deleteChangelogForComparisonQuery)
+
+	rebuiltOperationComparisons := filterVersionComparisonsByComparisonId(versionComparisons, operationComparisonIdsToRebuild)
+	if len(rebuiltOperationComparisons) != 0 {
+		_, err = tx.Model(&rebuiltOperationComparisons).
+			OnConflict(`(comparison_id) DO UPDATE SET operation_types=EXCLUDED.operation_types`).Insert()
 		if err != nil {
-			return fmt.Errorf("failed to delete old operation changes for comparison %+v: %w", *comparisonEnt, err)
+			return fmt.Errorf("failed to update operation types for version comparisons %+v: %w", rebuiltOperationComparisons, err)
+		}
+	}
+
+	for _, comparisonId := range operationComparisonIdsToRebuild {
+		_, err := tx.Exec(`delete from operation_comparison where comparison_id = ?`, comparisonId)
+		if err != nil {
+			return fmt.Errorf("failed to delete old operation changes for comparison %s: %w", comparisonId, err)
 		}
 	}
 	if len(operationComparisons) != 0 {
 		_, err = tx.Model(&operationComparisons).Insert()
 		if err != nil {
 			return fmt.Errorf("failed to insert operation changes %+v: %w", operationComparisons, err)
+		}
+	}
+	return nil
+}
+
+// filterVersionComparisonsByComparisonId returns the entries of versionComparisons whose
+// ComparisonId is in ids.
+func filterVersionComparisonsByComparisonId(versionComparisons []*entity.VersionComparisonEntity, ids []string) []*entity.VersionComparisonEntity {
+	if len(ids) == 0 {
+		return nil
+	}
+	idSet := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		idSet[id] = struct{}{}
+	}
+	filtered := make([]*entity.VersionComparisonEntity, 0, len(ids))
+	for _, comparison := range versionComparisons {
+		if _, ok := idSet[comparison.ComparisonId]; ok {
+			filtered = append(filtered, comparison)
+		}
+	}
+	return filtered
+}
+
+// saveDdlComparisonsTx persists the DDL changelog for the given comparisons. DDL comparisons share the
+// version_comparison rows saved by saveVersionChangesTx, so it must run after it. contract_types is
+// refreshed only for comparisons whose DDL side was rebuilt in this publish, so a row saved because
+// only its operation side changed keeps its stored contract_types. Stale rows are removed before
+// insert only for the same rebuilt set (mirroring the operation_comparison handling), so a comparison
+// saved for its operation side keeps the cached DDL changelog.
+func (p publishedRepositoryImpl) saveDdlComparisonsTx(tx *pg.Tx, ddlContractComparisons []*entity.DDLContractComparisonEntity, versionComparisons []*entity.VersionComparisonEntity, ddlComparisonIdsToRebuild []string) error {
+	rebuiltDdlComparisons := filterVersionComparisonsByComparisonId(versionComparisons, ddlComparisonIdsToRebuild)
+	if len(rebuiltDdlComparisons) != 0 {
+		_, err := tx.Model(&rebuiltDdlComparisons).
+			OnConflict(`(comparison_id) DO UPDATE SET contract_types=EXCLUDED.contract_types`).Insert()
+		if err != nil {
+			return fmt.Errorf("failed to update contract types for version comparisons %+v: %w", rebuiltDdlComparisons, err)
+		}
+	}
+
+	for _, comparisonId := range ddlComparisonIdsToRebuild {
+		_, err := tx.Exec(`delete from ddl_comparison where comparison_id = ?`, comparisonId)
+		if err != nil {
+			return fmt.Errorf("failed to delete old ddl changes for comparison %s: %w", comparisonId, err)
+		}
+	}
+	if len(ddlContractComparisons) != 0 {
+		_, err := tx.Model(&ddlContractComparisons).OnConflict(
+			"(package_id, version, revision, previous_package_id, previous_version, previous_revision, ddl_entity_id, previous_ddl_entity_id) DO UPDATE").Insert()
+		if err != nil {
+			return fmt.Errorf("failed to insert ddl_comparison %+v: %w", ddlContractComparisons, err)
 		}
 	}
 	return nil
@@ -2116,13 +2607,13 @@ func (p publishedRepositoryImpl) saveComparisonInternalDocumentsTx(tx *pg.Tx, co
 	return nil
 }
 
-func (p publishedRepositoryImpl) GetRevisionContent(packageId string, versionName string, revision int) ([]entity.PublishedContentEntity, error) {
+func (p publishedRepositoryImpl) GetRevisionContent(ctx context.Context, packageId string, versionName string, revision int) ([]entity.PublishedContentEntity, error) {
 	var ents []entity.PublishedContentEntity
 	version, _, err := SplitVersionRevision(versionName)
 	if err != nil {
 		return nil, err
 	}
-	err = p.cp.GetConnection().Model(&ents).
+	err = p.cp.GetConnection().WithContext(ctx).Model(&ents).
 		Where("package_id = ?", packageId).
 		Where("version = ?", version).
 		Where("revision = ?", revision).
@@ -2138,14 +2629,14 @@ func (p publishedRepositoryImpl) GetRevisionContent(packageId string, versionNam
 	return ents, err
 }
 
-func (p publishedRepositoryImpl) GetLatestContentBySlug(packageId string, versionName string, slug string) (*entity.PublishedContentEntity, error) {
+func (p publishedRepositoryImpl) GetLatestContentBySlug(ctx context.Context, packageId string, versionName string, slug string) (*entity.PublishedContentEntity, error) {
 	result := new(entity.PublishedContentEntity)
 	version, revision, err := SplitVersionRevision(versionName)
 	if err != nil {
 		return nil, err
 	}
 
-	query := p.cp.GetConnection().Model(result).
+	query := p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("package_id = ?", packageId).
 		Where("version = ?", version).
 		Where("slug = ?", slug)
@@ -2165,9 +2656,9 @@ func (p publishedRepositoryImpl) GetLatestContentBySlug(packageId string, versio
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetRevisionContentBySlug(packageId string, versionName string, slug string, revision int) (*entity.PublishedContentEntity, error) {
+func (p publishedRepositoryImpl) GetRevisionContentBySlug(ctx context.Context, packageId string, versionName string, slug string, revision int) (*entity.PublishedContentEntity, error) {
 	result := new(entity.PublishedContentEntity)
-	err := p.cp.GetConnection().Model(result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("package_id = ?", packageId).
 		Where("version = ?", versionName).
 		Where("slug = ?", slug).
@@ -2183,9 +2674,9 @@ func (p publishedRepositoryImpl) GetRevisionContentBySlug(packageId string, vers
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetContentData(packageId string, checksum string) (*entity.PublishedContentDataEntity, error) {
+func (p publishedRepositoryImpl) GetContentData(ctx context.Context, packageId string, checksum string) (*entity.PublishedContentDataEntity, error) {
 	result := new(entity.PublishedContentDataEntity)
-	err := p.cp.GetConnection().Model(result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("package_id = ?", packageId).
 		Where("checksum = ?", checksum).
 		First()
@@ -2198,7 +2689,7 @@ func (p publishedRepositoryImpl) GetContentData(packageId string, checksum strin
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetVersionSources(packageId string, versionName string, revision int) (*entity.PublishedSrcArchiveEntity, error) {
+func (p publishedRepositoryImpl) GetVersionSources(ctx context.Context, packageId string, versionName string, revision int) (*entity.PublishedSrcArchiveEntity, error) {
 	query := `
 		select psa.*
 		from published_sources_archives psa, published_sources ps
@@ -2209,7 +2700,7 @@ func (p publishedRepositoryImpl) GetVersionSources(packageId string, versionName
 		limit 1
 	`
 	savedSources := new(entity.PublishedSrcArchiveEntity)
-	_, err := p.cp.GetConnection().QueryOne(savedSources, query, packageId, versionName, revision)
+	_, err := p.cp.GetConnection().WithContext(ctx).QueryOne(savedSources, query, packageId, versionName, revision)
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil
@@ -2219,7 +2710,7 @@ func (p publishedRepositoryImpl) GetVersionSources(packageId string, versionName
 	return savedSources, nil
 }
 
-func (p publishedRepositoryImpl) GetPublishedVersionSourceDataConfig(packageId string, versionName string, revision int) (*entity.PublishedSrcDataConfigEntity, error) {
+func (p publishedRepositoryImpl) GetPublishedVersionSourceDataConfig(ctx context.Context, packageId string, versionName string, revision int) (*entity.PublishedSrcDataConfigEntity, error) {
 	query := `
 		select psa.checksum as archive_checksum, psa.data, ps.config, ps.package_id
 		from published_sources_archives psa, published_sources ps
@@ -2230,7 +2721,7 @@ func (p publishedRepositoryImpl) GetPublishedVersionSourceDataConfig(packageId s
 		limit 1
 	`
 	savedSources := new(entity.PublishedSrcDataConfigEntity)
-	_, err := p.cp.GetConnection().QueryOne(savedSources, query, packageId, versionName, revision)
+	_, err := p.cp.GetConnection().WithContext(ctx).QueryOne(savedSources, query, packageId, versionName, revision)
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil
@@ -2240,9 +2731,9 @@ func (p publishedRepositoryImpl) GetPublishedVersionSourceDataConfig(packageId s
 	return savedSources, nil
 }
 
-func (p publishedRepositoryImpl) GetPublishedSources(packageId string, versionName string, revision int) (*entity.PublishedSrcEntity, error) {
+func (p publishedRepositoryImpl) GetPublishedSources(ctx context.Context, packageId string, versionName string, revision int) (*entity.PublishedSrcEntity, error) {
 	src := new(entity.PublishedSrcEntity)
-	err := p.cp.GetConnection().Model(src).
+	err := p.cp.GetConnection().WithContext(ctx).Model(src).
 		Where("package_id = ?", packageId).
 		Where("version = ?", versionName).
 		Where("revision = ?", revision).
@@ -2272,7 +2763,7 @@ func (p publishedRepositoryImpl) contentDataExists(tx *pg.Tx, packageId string, 
 	return true, nil
 }
 
-func (p publishedRepositoryImpl) GetVersionsByPreviousVersion(previousPackageId string, previousVersionName string) ([]entity.PublishedVersionEntity, error) {
+func (p publishedRepositoryImpl) GetVersionsByPreviousVersion(ctx context.Context, previousPackageId string, previousVersionName string) ([]entity.PublishedVersionEntity, error) {
 	var ents []entity.PublishedVersionEntity
 	previousVersion, _, err := SplitVersionRevision(previousVersionName)
 	if err != nil {
@@ -2294,7 +2785,7 @@ func (p publishedRepositoryImpl) GetVersionsByPreviousVersion(previousPackageId 
 			and pv.deleted_at is null
 			order by pv.published_at desc
 	`
-	_, err = p.cp.GetConnection().Query(&ents, query, previousPackageId, previousPackageId, previousVersion)
+	_, err = p.cp.GetConnection().WithContext(ctx).Query(&ents, query, previousPackageId, previousPackageId, previousVersion)
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil
@@ -2305,13 +2796,13 @@ func (p publishedRepositoryImpl) GetVersionsByPreviousVersion(previousPackageId 
 	return ents, err
 }
 
-func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit(searchQuery entity.PublishedVersionSearchQueryEntity, checkRevisions bool, showOnlyDeleted bool) ([]entity.PackageVersionRevisionEntity, error) {
+func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit(ctx context.Context, searchQuery entity.PublishedVersionSearchQueryEntity, checkRevisions bool, showOnlyDeleted bool) ([]entity.PackageVersionRevisionEntity, error) {
 	var ents []entity.PackageVersionRevisionEntity
 	if searchQuery.TextFilter != "" {
 		searchQuery.TextFilter = "%" + utils.LikeEscaped(searchQuery.TextFilter) + "%"
 	}
-	if searchQuery.Status != "" {
-		searchQuery.Status = "%" + utils.LikeEscaped(searchQuery.Status) + "%"
+	if searchQuery.Statuses == nil {
+		searchQuery.Statuses = make([]string, 0)
 	}
 	if searchQuery.SortBy == "" {
 		searchQuery.SortBy = entity.GetVersionSortByPG(view.VersionSortByCreatedAt)
@@ -2337,11 +2828,11 @@ func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit(searchQuery
 			where pv.deleted_at is null
 			and (pv.package_id = ?package_id)
 			and (?text_filter = '' or pv.version ilike ?text_filter OR EXISTS(SELECT 1 FROM unnest(pv.labels) as label WHERE label ILIKE ?text_filter))
-			and (?status = '' or pv.status ilike ?status)
+			and (?statuses = '{}' or pv.status = ANY(?statuses))
 			and (?label = '' or ?label = any(pv.labels))
 			order by pv.published_at desc
 			`
-		_, err := p.cp.GetConnection().Model(&searchQuery).Query(&ents, query)
+		_, err := p.cp.GetConnection().WithContext(ctx).Model(&searchQuery).Query(&ents, query)
 		if err != nil {
 			if err == pg.ErrNoRows {
 				return nil, nil
@@ -2414,14 +2905,14 @@ func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit(searchQuery
 			left join user_data usr on usr.user_id = pv.created_by
 			left join apihub_api_keys apikey on apikey.id = pv.created_by
 			where (?text_filter = '' or pv.version ilike ?text_filter OR EXISTS(SELECT 1 FROM unnest(pv.labels) as label WHERE label ILIKE ?text_filter))
-			and (?status = '' or pv.status ilike ?status)
+			and (?statuses = '{}' or pv.status = ANY(?statuses))
 			and (?label = '' or ?label = any(pv.labels))
 			and pv.deleted_at is %s null
 			order by pv.%s %s
 			limit ?limit
 			offset ?offset
 	`
-		_, err := p.cp.GetConnection().Model(&searchQuery).
+		_, err := p.cp.GetConnection().WithContext(ctx).Model(&searchQuery).
 			Query(&ents, fmt.Sprintf(query, notCondition, searchQuery.SortBy, searchQuery.SortOrder))
 		if err != nil {
 			if err == pg.ErrNoRows {
@@ -2434,9 +2925,9 @@ func (p publishedRepositoryImpl) GetReadonlyPackageVersionsWithLimit(searchQuery
 	return ents, nil
 }
 
-func (p publishedRepositoryImpl) GetVersionRefsV3(packageId string, version string, revision int) ([]entity.PublishedReferenceEntity, error) {
+func (p publishedRepositoryImpl) GetVersionRefsV3(ctx context.Context, packageId string, version string, revision int) ([]entity.PublishedReferenceEntity, error) {
 	var result []entity.PublishedReferenceEntity
-	err := p.cp.GetConnection().Model(&result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(&result).
 		ColumnExpr("published_version_reference.*").
 		Where("package_id = ?", packageId).
 		Where("version = ?", version).
@@ -2458,55 +2949,9 @@ func (p publishedRepositoryImpl) GetVersionRefsV3(packageId string, version stri
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetVersionReferencingDashboards(packageId string, version string) ([]entity.PublishedVersionKeyEntity, error) {
-	result := make([]entity.PublishedVersionKeyEntity, 0)
-	query := `
-		SELECT DISTINCT ref.package_id, ref.version, ref.revision
-		FROM published_version_reference ref
-		INNER JOIN published_version dash
-			ON dash.package_id = ref.package_id AND dash.version = ref.version AND dash.revision = ref.revision
-		INNER JOIN package_group pkg ON pkg.id = ref.package_id
-		WHERE ref.reference_id = ? AND ref.reference_version = ?
-			AND dash.deleted_at IS NULL
-			AND pkg.deleted_at IS NULL
-		ORDER BY ref.package_id, ref.version, ref.revision`
-	_, err := p.cp.GetConnection().Query(&result, query, packageId, version)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (p publishedRepositoryImpl) GetPackageReferencingDashboards(packageId string) ([]entity.DashboardReferenceEntity, error) {
-	result := make([]entity.DashboardReferenceEntity, 0)
-	query := `
-		WITH RECURSIVE subtree AS (
-			SELECT id FROM package_group WHERE id = ? AND deleted_at IS NULL
-			UNION ALL
-			SELECT c.id FROM package_group c
-			INNER JOIN subtree s ON c.parent_id = s.id
-			WHERE c.deleted_at IS NULL
-		)
-		SELECT DISTINCT ref.reference_id AS referenced_package_id, ref.package_id, ref.version, ref.revision
-		FROM published_version_reference ref
-		INNER JOIN published_version dash
-			ON dash.package_id = ref.package_id AND dash.version = ref.version AND dash.revision = ref.revision
-		INNER JOIN package_group pkg ON pkg.id = ref.package_id
-		WHERE ref.reference_id IN (SELECT id FROM subtree)
-			AND ref.package_id NOT IN (SELECT id FROM subtree)
-			AND dash.deleted_at IS NULL
-			AND pkg.deleted_at IS NULL
-		ORDER BY ref.reference_id, ref.package_id, ref.version, ref.revision`
-	_, err := p.cp.GetConnection().Query(&result, query, packageId)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
-func (p publishedRepositoryImpl) GetRevisionContentWithLimit(packageId string, versionName string, revision int, skipRefs bool, searchQuery entity.PublishedContentSearchQueryEntity) ([]entity.PublishedContentEntity, error) {
+func (p publishedRepositoryImpl) GetRevisionContentWithLimit(ctx context.Context, packageId string, versionName string, revision int, skipRefs bool, searchQuery entity.PublishedContentSearchQueryEntity) ([]entity.PublishedContentEntity, error) {
 	var ents []entity.PublishedContentEntity
-	query := p.cp.GetConnection().Model(&ents).
+	query := p.cp.GetConnection().WithContext(ctx).Model(&ents).
 		ColumnExpr("published_version_revision_content.*")
 	if !skipRefs {
 		query.Join(`inner join
@@ -2562,7 +3007,7 @@ func (p publishedRepositoryImpl) GetRevisionContentWithLimit(packageId string, v
 	return ents, err
 }
 
-func (p publishedRepositoryImpl) GetDefaultVersion(packageId string, status string) (*entity.PublishedVersionEntity, error) {
+func (p publishedRepositoryImpl) GetDefaultVersion(ctx context.Context, packageId string, status string) (*entity.PublishedVersionEntity, error) {
 	result := new(entity.PublishedVersionEntity)
 	query := `with maxrev as
 		(
@@ -2583,7 +3028,7 @@ func (p publishedRepositoryImpl) GetDefaultVersion(packageId string, status stri
 		query += ` order by pv.published_at desc`
 	}
 	query += ` limit 1;`
-	_, err := p.cp.GetConnection().QueryOne(result, query, packageId, status)
+	_, err := p.cp.GetConnection().WithContext(ctx).QueryOne(result, query, packageId, status)
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil
@@ -2593,14 +3038,60 @@ func (p publishedRepositoryImpl) GetDefaultVersion(packageId string, status stri
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetFileSharedInfo(packageId string, slug string, versionName string) (*entity.SharedUrlInfoEntity, error) {
+func (p publishedRepositoryImpl) GetVersionReferencingDashboards(ctx context.Context, packageId string, version string) ([]entity.PublishedVersionKeyEntity, error) {
+	result := make([]entity.PublishedVersionKeyEntity, 0)
+	query := `
+		SELECT DISTINCT ref.package_id, ref.version, ref.revision
+		FROM published_version_reference ref
+		INNER JOIN published_version dash
+			ON dash.package_id = ref.package_id AND dash.version = ref.version AND dash.revision = ref.revision
+		INNER JOIN package_group pkg ON pkg.id = ref.package_id
+		WHERE ref.reference_id = ? AND ref.reference_version = ?
+			AND dash.deleted_at IS NULL
+			AND pkg.deleted_at IS NULL
+		ORDER BY ref.package_id, ref.version, ref.revision`
+	_, err := p.cp.GetConnection().WithContext(ctx).Query(&result, query, packageId, version)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (p publishedRepositoryImpl) GetPackageReferencingDashboards(ctx context.Context, packageId string) ([]entity.DashboardReferenceEntity, error) {
+	result := make([]entity.DashboardReferenceEntity, 0)
+	query := `
+		WITH RECURSIVE subtree AS (
+			SELECT id FROM package_group WHERE id = ? AND deleted_at IS NULL
+			UNION ALL
+			SELECT c.id FROM package_group c
+			INNER JOIN subtree s ON c.parent_id = s.id
+			WHERE c.deleted_at IS NULL
+		)
+		SELECT DISTINCT ref.reference_id AS referenced_package_id, ref.package_id, ref.version, ref.revision
+		FROM published_version_reference ref
+		INNER JOIN published_version dash
+			ON dash.package_id = ref.package_id AND dash.version = ref.version AND dash.revision = ref.revision
+		INNER JOIN package_group pkg ON pkg.id = ref.package_id
+		WHERE ref.reference_id IN (SELECT id FROM subtree)
+			AND ref.package_id NOT IN (SELECT id FROM subtree)
+			AND dash.deleted_at IS NULL
+			AND pkg.deleted_at IS NULL
+		ORDER BY ref.reference_id, ref.package_id, ref.version, ref.revision`
+	_, err := p.cp.GetConnection().WithContext(ctx).Query(&result, query, packageId)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (p publishedRepositoryImpl) GetFileSharedInfo(ctx context.Context, packageId string, slug string, versionName string) (*entity.SharedUrlInfoEntity, error) {
 	result := new(entity.SharedUrlInfoEntity)
 	version, _, err := SplitVersionRevision(versionName)
 	if err != nil {
 		return nil, err
 	}
 
-	err = p.cp.GetConnection().Model(result).
+	err = p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("package_id = ?", packageId).
 		Where("version = ?", version).
 		Where("file_id = ?", slug).
@@ -2614,9 +3105,9 @@ func (p publishedRepositoryImpl) GetFileSharedInfo(packageId string, slug string
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetFileSharedInfoById(sharedId string) (*entity.SharedUrlInfoEntity, error) {
+func (p publishedRepositoryImpl) GetFileSharedInfoById(ctx context.Context, sharedId string) (*entity.SharedUrlInfoEntity, error) {
 	result := entity.SharedUrlInfoEntity{SharedId: sharedId}
-	err := p.cp.GetConnection().Model(&result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(&result).
 		WherePK().
 		First()
 	if err != nil {
@@ -2628,8 +3119,8 @@ func (p publishedRepositoryImpl) GetFileSharedInfoById(sharedId string) (*entity
 	return &result, nil
 }
 
-func (p publishedRepositoryImpl) CreateFileSharedInfo(newSharedUrlInfo *entity.SharedUrlInfoEntity) error {
-	_, err := p.cp.GetConnection().Model(newSharedUrlInfo).Insert()
+func (p publishedRepositoryImpl) CreateFileSharedInfo(ctx context.Context, newSharedUrlInfo *entity.SharedUrlInfoEntity) error {
+	_, err := p.cp.GetConnection().WithContext(ctx).Model(newSharedUrlInfo).Insert()
 	if err != nil {
 		if pgErr, ok := err.(pg.Error); ok {
 			if pgErr.IntegrityViolation() {
@@ -2645,8 +3136,7 @@ func (p publishedRepositoryImpl) CreateFileSharedInfo(newSharedUrlInfo *entity.S
 	return nil
 }
 
-func (p publishedRepositoryImpl) CreatePackage(packageEntity *entity.PackageEntity) error {
-	ctx := context.Background()
+func (p publishedRepositoryImpl) CreatePackage(ctx context.Context, packageEntity *entity.PackageEntity) error {
 	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		_, err := tx.Model(packageEntity).OnConflict("(id) DO NOTHING").Insert()
 		if err != nil {
@@ -2670,8 +3160,7 @@ func (p publishedRepositoryImpl) CreatePackage(packageEntity *entity.PackageEnti
 	return nil
 }
 
-func (p publishedRepositoryImpl) CreatePrivatePackageForUser(packageEntity *entity.PackageEntity, userRoleEntity *entity.PackageMemberRoleEntity) error {
-	ctx := context.Background()
+func (p publishedRepositoryImpl) CreatePrivatePackageForUser(ctx context.Context, packageEntity *entity.PackageEntity, userRoleEntity *entity.PackageMemberRoleEntity) error {
 	return p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		_, err := tx.Model(packageEntity).Insert()
 		if err != nil {
@@ -2685,9 +3174,9 @@ func (p publishedRepositoryImpl) CreatePrivatePackageForUser(packageEntity *enti
 	})
 }
 
-func (p publishedRepositoryImpl) GetPackage(id string) (*entity.PackageEntity, error) {
+func (p publishedRepositoryImpl) GetPackage(ctx context.Context, id string) (*entity.PackageEntity, error) {
 	result := new(entity.PackageEntity)
-	err := p.cp.GetConnection().Model(result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("id = ?", id).
 		Where("deleted_at is ?", nil).
 		First()
@@ -2700,9 +3189,9 @@ func (p publishedRepositoryImpl) GetPackage(id string) (*entity.PackageEntity, e
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetDeletedPackage(id string) (*entity.PackageEntity, error) {
+func (p publishedRepositoryImpl) GetDeletedPackage(ctx context.Context, id string) (*entity.PackageEntity, error) {
 	result := new(entity.PackageEntity)
-	err := p.cp.GetConnection().Model(result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("id = ?", id).
 		Where("deleted_at is not ?", nil).
 		First()
@@ -2715,9 +3204,9 @@ func (p publishedRepositoryImpl) GetDeletedPackage(id string) (*entity.PackageEn
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetPackageIncludingDeleted(id string) (*entity.PackageEntity, error) {
+func (p publishedRepositoryImpl) GetPackageIncludingDeleted(ctx context.Context, id string) (*entity.PackageEntity, error) {
 	result := new(entity.PackageEntity)
-	err := p.cp.GetConnection().Model(result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("id = ?", id).
 		First()
 	if err != nil {
@@ -2729,7 +3218,7 @@ func (p publishedRepositoryImpl) GetPackageIncludingDeleted(id string) (*entity.
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetAllChildPackageIdsIncludingParent(parentId string) ([]string, error) {
+func (p publishedRepositoryImpl) GetAllChildPackageIdsIncludingParent(ctx context.Context, parentId string) ([]string, error) {
 	var result []string
 	var ents []entity.PackageIdEntity
 
@@ -2738,7 +3227,7 @@ func (p publishedRepositoryImpl) GetAllChildPackageIdsIncludingParent(parentId s
 		UNION ALL
 		select g.id from package_group g inner join children on children.id = g.parent_id)
 	select id from children`
-	_, err := p.cp.GetConnection().Query(&ents, query, parentId)
+	_, err := p.cp.GetConnection().WithContext(ctx).Query(&ents, query, parentId)
 	if err != nil {
 		return nil, err
 	}
@@ -2748,7 +3237,7 @@ func (p publishedRepositoryImpl) GetAllChildPackageIdsIncludingParent(parentId s
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetDescendantPackages(parentId string) ([]entity.PackageEntity, error) {
+func (p publishedRepositoryImpl) GetDescendantPackages(ctx context.Context, parentId string) ([]entity.PackageEntity, error) {
 	var result []entity.PackageEntity
 
 	query := `with recursive children as (
@@ -2757,9 +3246,9 @@ func (p publishedRepositoryImpl) GetDescendantPackages(parentId string) ([]entit
 		select g.id from package_group g inner join children on children.id = g.parent_id)
 	select * from package_group
 	where id in (select id from children)
-	  and id != ?
-	  and kind = ?
-	  and deleted_at is null`
+		and id != ?
+		and kind = ?
+		and deleted_at is null`
 	_, err := p.cp.GetConnection().Query(&result, query, parentId, parentId, entity.KIND_PACKAGE)
 	if err != nil {
 		return nil, err
@@ -2777,7 +3266,52 @@ func (p publishedRepositoryImpl) updateExcludeFromSearchForAllChildPackages(tx *
 	return nil
 }
 
-func (p publishedRepositoryImpl) GetParentsForPackage(id string, includeDeleted bool) ([]entity.PackageEntity, error) {
+func (p publishedRepositoryImpl) GetParentsForPackages(ctx context.Context, ids []string, includeDeleted bool) (map[string][]entity.PackageEntity, error) {
+	result := make(map[string][]entity.PackageEntity, len(ids))
+	if len(ids) == 0 {
+		return result, nil
+	}
+
+	parentIdSet := make(map[string]struct{})
+	for _, id := range ids {
+		for _, parentId := range utils.GetParentPackageIds(id) {
+			parentIdSet[parentId] = struct{}{}
+		}
+	}
+	if len(parentIdSet) == 0 {
+		return result, nil
+	}
+	parentIds := make([]string, 0, len(parentIdSet))
+	for parentId := range parentIdSet {
+		parentIds = append(parentIds, parentId)
+	}
+
+	var parents []entity.PackageEntity
+	query := p.cp.GetConnection().WithContext(ctx).Model(&parents).Where("id in (?)", pg.In(parentIds))
+	if !includeDeleted {
+		query.Where("deleted_at is ?", nil)
+	}
+	if err := query.Select(); err != nil {
+		return nil, err
+	}
+
+	parentsById := make(map[string]entity.PackageEntity, len(parents))
+	for _, parent := range parents {
+		parentsById[parent.Id] = parent
+	}
+	for _, id := range ids {
+		ordered := make([]entity.PackageEntity, 0)
+		for _, parentId := range utils.GetParentPackageIds(id) {
+			if parent, exists := parentsById[parentId]; exists {
+				ordered = append(ordered, parent)
+			}
+		}
+		result[id] = ordered
+	}
+	return result, nil
+}
+
+func (p publishedRepositoryImpl) GetParentsForPackage(ctx context.Context, id string, includeDeleted bool) ([]entity.PackageEntity, error) {
 	var parentIds []string
 	var result []entity.PackageEntity
 
@@ -2786,7 +3320,7 @@ func (p publishedRepositoryImpl) GetParentsForPackage(id string, includeDeleted 
 		return result, nil
 	}
 
-	query := p.cp.GetConnection().Model(&result)
+	query := p.cp.GetConnection().WithContext(ctx).Model(&result)
 	if !includeDeleted {
 		query.Where("deleted_at is ?", nil)
 	}
@@ -2803,8 +3337,7 @@ func (p publishedRepositoryImpl) GetParentsForPackage(id string, includeDeleted 
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) UpdatePackage(ent *entity.PackageEntity, excludeFromSearchChanged bool) (*entity.PackageEntity, error) {
-	ctx := context.Background()
+func (p publishedRepositoryImpl) UpdatePackage(ctx context.Context, ent *entity.PackageEntity, excludeFromSearchChanged bool) (*entity.PackageEntity, error) {
 
 	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		_, err := p.updatePackage(tx, ent, excludeFromSearchChanged)
@@ -2902,8 +3435,7 @@ func (p publishedRepositoryImpl) deletePackageServiceOwnership(tx *pg.Tx, packag
 	return nil
 }
 
-func (p publishedRepositoryImpl) DeletePackage(id string, userId string) (int, error) {
-	ctx := context.Background()
+func (p publishedRepositoryImpl) DeletePackage(ctx context.Context, id string, userId string) (int, error) {
 	var deletedReleaseCount int
 	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		count, err := p.deleteGroup(tx, id, userId)
@@ -2980,89 +3512,173 @@ func (p publishedRepositoryImpl) deleteGroup(tx *pg.Tx, packageId string, userId
 	return totalDeletedReleaseCount, err
 }
 
-func (p publishedRepositoryImpl) GetFilteredPackagesWithOffset(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error) {
-	var result []entity.PackageEntity
-	query := p.cp.GetConnection().ModelContext(ctx, &result).
-		Where("deleted_at is ?", nil)
+// GetPackages lists packages with no read authorization at all. It is for the background jobs
+// that have to walk the whole catalogue; serve authenticated callers from GetReadablePackages.
+func (p publishedRepositoryImpl) GetPackages(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error) {
+	return p.selectPackages(ctx, searchReq, userId, false)
+}
 
+// GetDeletedPackages lists deleted packages with no read authorization at all.
+func (p publishedRepositoryImpl) GetDeletedPackages(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error) {
+	return p.selectPackages(ctx, searchReq, userId, true)
+}
+
+func (p publishedRepositoryImpl) selectPackages(ctx context.Context, searchReq view.PackageListReq, userId string, deleted bool) ([]entity.PackageEntity, error) {
+	var result []entity.PackageEntity
+	var conditions []string
+	if deleted {
+		conditions = append(conditions, "deleted_at is not null")
+	} else {
+		conditions = append(conditions, "deleted_at is null")
+	}
+	conditions = append(conditions, packageFilters(searchReq)...)
+	query := fmt.Sprintf(`
+	select pkg.*
+	from package_group pkg
+	%s
+	order by pkg.name asc, pkg.id asc
+	%s`,
+		utils.WhereClause(conditions), utils.PagingClause(searchReq.Limit))
+	params := packagesQueryParams(searchReq, view.PackageReadScope{}, userId)
+	if _, err := p.cp.GetConnection().ModelContext(ctx, &params).Query(&result, query); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// GetReadablePackages lists the packages the caller may read, each carrying the caller's effective
+// permissions on it and whether the caller favourited it.
+func (p publishedRepositoryImpl) GetReadablePackages(ctx context.Context, searchReq view.PackageListReq, scope view.PackageReadScope, userId string) ([]entity.ReadablePackageEntity, error) {
+	result := make([]entity.ReadablePackageEntity, 0)
+
+	query, err := readablePackagesSQL(searchReq, scope, userId)
+	if err != nil {
+		return nil, err
+	}
+	params := packagesQueryParams(searchReq, scope, userId)
+	if _, err := p.cp.GetConnection().ModelContext(ctx, &params).Query(&result, query); err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// readablePackagesSQL forms a page on package_group alone so that the permissions lateral, which walks each
+// package's ancestors, runs for the page rows rather than for every row that passes the filters.
+func readablePackagesSQL(searchReq view.PackageListReq, scope view.PackageReadScope, userId string) (string, error) {
+	ctes, condition, err := convertPackageReadScopeToSQL(scope, userId, "pkg.id", "pkg")
+	if err != nil {
+		return "", err
+	}
+
+	livePackagesCondition := "pkg.deleted_at is null"
+	conditions := append([]string{livePackagesCondition}, packageFilters(searchReq)...)
+	if condition != "" {
+		conditions = append(conditions, condition)
+	}
+	page := fmt.Sprintf(`page as (
+	select pkg.id
+	from package_group pkg
+	%s
+	order by pkg.name asc, pkg.id asc
+	%s
+	)`, utils.WhereClause(conditions), utils.PagingClause(searchReq.Limit))
+
+	permissionsColumn := ""
+	userPermissionsLateral := ""
+	if scope.Kind == view.PackageReadScopeUser {
+		permissionsColumn = `,
+		perms.permissions as permissions`
+		rolesAtAncestor := `
+		select unnest(m.roles) as role_id
+		from package_member_role m
+		where m.package_id = anc.id and m.user_id = ?user_id
+		union all
+		select g.default_role as role_id
+		from package_group g
+		where g.id = anc.id`
+		userPermissionsLateral = fmt.Sprintf(`cross join lateral (
+		select coalesce(array_agg(distinct perm), array[]::character varying[]) as permissions
+		from unnest(package_ancestor_ids(%s)) as anc(id)
+		join lateral (%s
+		) rl on true
+		join role r on r.id = rl.role_id
+		cross join lateral unnest(r.permissions) as perm
+	) perms`, "pkg.id", rolesAtAncestor)
+	}
+
+	return fmt.Sprintf(`
+	%s
+	select pkg.*,
+		exists (
+			select 1 from favorite_packages fav
+			where fav.user_id = ?user_id and fav.package_id = pkg.id
+		) as is_favorite%s
+	from page
+	join package_group pkg on pkg.id = page.id
+	%s
+	order by pkg.name asc, pkg.id asc`,
+		utils.WithClause(append(ctes, page)), permissionsColumn, userPermissionsLateral), nil
+}
+
+// packageFilters renders the conditions every package listing shares
+func packageFilters(searchReq view.PackageListReq) []string {
+	conditions := make([]string, 0)
 	if searchReq.OnlyFavorite {
-		query.Join("INNER JOIN favorite_packages as fav").
-			JoinOn("package_group.id = fav.package_id").
-			JoinOn("fav.user_id = ?", userId)
+		favoritePackageCondition := `exists (
+			select 1 from favorite_packages fav
+			where fav.user_id = ?user_id and fav.package_id = pkg.id
+		)`
+		conditions = append(conditions, favoritePackageCondition)
 	}
 	if searchReq.OnlyShared {
-		query.Join("INNER JOIN package_member_role as mem").
-			JoinOn("package_group.id = mem.package_id").
-			JoinOn("mem.user_id = ?", userId)
+		sharedPackageCondition := `exists (
+			select 1 from package_member_role mem
+			where mem.user_id = ?user_id and mem.package_id = pkg.id
+		)`
+		conditions = append(conditions, sharedPackageCondition)
 	}
-	query.Order("name ASC").
-		Offset(searchReq.Offset).
-		Limit(searchReq.Limit)
-
 	if searchReq.TextFilter != "" {
-		searchReq.TextFilter = "%" + utils.LikeEscaped(searchReq.TextFilter) + "%"
-		query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
-			q = q.WhereOr("name ilike ?", searchReq.TextFilter).WhereOr("package_group.id ilike ?", searchReq.TextFilter)
-			return q, nil
-		})
+		conditions = append(conditions, "(pkg.name ilike ?text_filter or pkg.id ilike ?text_filter)")
 	}
-	if searchReq.ParentId != "" && searchReq.ParentId != "*" {
+	if searchReq.ParentId != "" && searchReq.ParentId != view.AllPackagesParentId {
 		if searchReq.ShowAllDescendants {
-			query.Where("package_group.id ilike ?", searchReq.ParentId+".%")
+			conditions = append(conditions, utils.DescendantsCondition("pkg.id", "?parent_id"))
 		} else {
-			query.Where("parent_id = ?", searchReq.ParentId)
+			conditions = append(conditions, "pkg.parent_id = ?parent_id")
 		}
 	}
-
-	if len(searchReq.Kind) != 0 {
-		query.Where("kind in (?)", pg.In(searchReq.Kind))
+	if len(searchReq.Kind) > 0 {
+		conditions = append(conditions, "pkg.kind = any(?kinds::text[])")
 	}
 	if searchReq.ServiceName != "" {
-		query.Where("service_name = ?", searchReq.ServiceName)
+		conditions = append(conditions, "pkg.service_name = ?service_name")
 	}
 	if len(searchReq.Ids) > 0 {
-		query.Where("id in (?)", pg.In(searchReq.Ids))
+		conditions = append(conditions, "pkg.id = any(?ids::text[])")
 	}
-
-	err := query.Select()
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return conditions
 }
 
-func (p publishedRepositoryImpl) GetFilteredDeletedPackages(ctx context.Context, searchReq view.PackageListReq, userId string) ([]entity.PackageEntity, error) {
-	var result []entity.PackageEntity
-
-	query := p.cp.GetConnection().ModelContext(ctx, &result).
-		Where("deleted_at is not ?", nil)
-
-	query.Order("name ASC").
-		Offset(searchReq.Offset).
-		Limit(searchReq.Limit)
-
-	if searchReq.ParentId != "" && searchReq.ParentId != "*" {
-		if searchReq.ShowAllDescendants {
-			query.Where("package_group.id ilike ?", searchReq.ParentId+".%")
-		} else {
-			query.Where("parent_id = ?", searchReq.ParentId)
-		}
+func packagesQueryParams(searchReq view.PackageListReq, scope view.PackageReadScope, userId string) entity.PackagesQueryParams {
+	params := entity.PackagesQueryParams{
+		UserId:      userId,
+		SubtreeRoot: scope.SubtreeRoot,
+		ParentId:    searchReq.ParentId,
+		ServiceName: searchReq.ServiceName,
+		Kinds:       searchReq.Kind,
+		Ids:         searchReq.Ids,
+		Limit:       searchReq.Limit,
+		Offset:      searchReq.Offset,
 	}
-
-	if len(searchReq.Kind) != 0 {
-		query.Where("kind in (?)", pg.In(searchReq.Kind))
+	if searchReq.TextFilter != "" {
+		params.TextFilter = "%" + utils.LikeEscaped(searchReq.TextFilter) + "%"
 	}
-
-	err := query.Select()
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
+	return params
 }
 
-func (p publishedRepositoryImpl) GetVersionValidationChanges_deprecated(packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity_deprecated, error) {
+func (p publishedRepositoryImpl) GetVersionValidationChanges_deprecated(ctx context.Context, packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity_deprecated, error) {
 	result := new(entity.PublishedVersionValidationEntity_deprecated)
-	err := p.cp.GetConnection().Model(result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(result).
 		ExcludeColumn("spectral").
 		Where("package_id = ?", packageId).
 		Where("version = ?", versionName).
@@ -3077,9 +3693,9 @@ func (p publishedRepositoryImpl) GetVersionValidationChanges_deprecated(packageI
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetVersionValidationProblems_deprecated(packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity_deprecated, error) {
+func (p publishedRepositoryImpl) GetVersionValidationProblems_deprecated(ctx context.Context, packageId string, versionName string, revision int) (*entity.PublishedVersionValidationEntity_deprecated, error) {
 	result := new(entity.PublishedVersionValidationEntity_deprecated)
-	err := p.cp.GetConnection().Model(result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(result).
 		ExcludeColumn("changelog", "bwc").
 		Where("package_id = ?", packageId).
 		Where("version = ?", versionName).
@@ -3130,7 +3746,7 @@ func SplitVersionRevision(version string) (string, int, error) {
 	return versionName, versionRevision, nil
 }
 
-func (p publishedRepositoryImpl) SearchForVersions(searchQuery *entity.PackageSearchQuery) ([]entity.PackageSearchResult, error) {
+func (p publishedRepositoryImpl) SearchForVersions(ctx context.Context, searchQuery *entity.PackageSearchQuery) ([]entity.PackageSearchResult, error) {
 	searchQuery.TextFilter = "%" + utils.LikeEscaped(searchQuery.TextFilter) + "%"
 	var result []entity.PackageSearchResult
 	versionsSearchQuery := `
@@ -3240,7 +3856,7 @@ func (p publishedRepositoryImpl) SearchForVersions(searchQuery *entity.PackageSe
 		limit ?limit
 		offset ?offset;
 	`
-	_, err := p.cp.GetConnection().Model(searchQuery).Query(&result, versionsSearchQuery)
+	_, err := p.cp.GetConnection().WithContext(ctx).Model(searchQuery).Query(&result, versionsSearchQuery)
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil
@@ -3251,7 +3867,7 @@ func (p publishedRepositoryImpl) SearchForVersions(searchQuery *entity.PackageSe
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) SearchForDocuments(searchQuery *entity.DocumentSearchQuery) ([]entity.DocumentSearchResult, error) {
+func (p publishedRepositoryImpl) SearchForDocuments(ctx context.Context, searchQuery *entity.DocumentSearchQuery) ([]entity.DocumentSearchResult, error) {
 	searchQuery.TextFilter = "%" + utils.LikeEscaped(searchQuery.TextFilter) + "%"
 	var result []entity.DocumentSearchResult
 	documentsSearchQuery := `
@@ -3349,7 +3965,7 @@ func (p publishedRepositoryImpl) SearchForDocuments(searchQuery *entity.Document
 		limit ?limit
 		offset ?offset;
 	`
-	_, err := p.cp.GetConnection().Model(searchQuery).Query(&result, documentsSearchQuery)
+	_, err := p.cp.GetConnection().WithContext(ctx).Model(searchQuery).Query(&result, documentsSearchQuery)
 	if err != nil {
 		if err == pg.ErrNoRows {
 			return nil, nil
@@ -3360,8 +3976,7 @@ func (p publishedRepositoryImpl) SearchForDocuments(searchQuery *entity.Document
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) RecalculatePackageOperationGroups(packageId string, restGroupingPrefixRegex string, userId string) error {
-	ctx := context.Background()
+func (p publishedRepositoryImpl) RecalculatePackageOperationGroups(ctx context.Context, packageId string, restGroupingPrefixRegex string, userId string) error {
 
 	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		_, err := tx.Exec(`delete from operation_group where package_id = ? and autogenerated = true`, packageId)
@@ -3380,8 +3995,7 @@ func (p publishedRepositoryImpl) RecalculatePackageOperationGroups(packageId str
 	return nil
 }
 
-func (p publishedRepositoryImpl) RecalculateOperationGroups(packageId string, version string, revision int, restGroupingPrefixRegex string, userId string) error {
-	ctx := context.Background()
+func (p publishedRepositoryImpl) RecalculateOperationGroups(ctx context.Context, packageId string, version string, revision int, restGroupingPrefixRegex string, userId string) error {
 
 	return p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		return p.recalculateOperationsGroupsTx(tx, packageId, version, revision, restGroupingPrefixRegex, userId)
@@ -3510,9 +4124,9 @@ func (p publishedRepositoryImpl) recalculateOperationsGroupsTx(tx *pg.Tx, packag
 	return nil
 }
 
-func (p publishedRepositoryImpl) GetVersionComparison(comparisonId string) (*entity.VersionComparisonEntity, error) {
+func (p publishedRepositoryImpl) GetVersionComparison(ctx context.Context, comparisonId string) (*entity.VersionComparisonEntity, error) {
 	comparison := new(entity.VersionComparisonEntity)
-	err := p.cp.GetConnection().
+	err := p.cp.GetConnection().WithContext(ctx).
 		Model(comparison).
 		Where("comparison_id = ?", comparisonId).
 		First()
@@ -3525,9 +4139,9 @@ func (p publishedRepositoryImpl) GetVersionComparison(comparisonId string) (*ent
 	return comparison, nil
 }
 
-func (p publishedRepositoryImpl) GetVersionRefsComparisons(comparisonId string) ([]entity.VersionComparisonEntity, error) {
+func (p publishedRepositoryImpl) GetVersionRefsComparisons(ctx context.Context, comparisonId string) ([]entity.VersionComparisonEntity, error) {
 	comparisons := make([]entity.VersionComparisonEntity, 0)
-	err := p.cp.GetConnection().
+	err := p.cp.GetConnection().WithContext(ctx).
 		Model(&comparisons).
 		Where("comparison_id in (select unnest(refs) from version_comparison where comparison_id = ?)", comparisonId).
 		Select()
@@ -3537,9 +4151,9 @@ func (p publishedRepositoryImpl) GetVersionRefsComparisons(comparisonId string) 
 	return comparisons, nil
 }
 
-func (p publishedRepositoryImpl) GetVersionRevisionContentForDocumentsTransformation(packageId string, versionName string, revision int, searchQuery entity.ContentForDocumentsTransformationSearchQueryEntity) ([]entity.PublishedContentWithDataEntity, error) {
+func (p publishedRepositoryImpl) GetVersionRevisionContentForDocumentsTransformation(ctx context.Context, packageId string, versionName string, revision int, searchQuery entity.ContentForDocumentsTransformationSearchQueryEntity) ([]entity.PublishedContentWithDataEntity, error) {
 	var ents []entity.PublishedContentWithDataEntity
-	query := p.cp.GetConnection().Model(&ents).Distinct().
+	query := p.cp.GetConnection().WithContext(ctx).Model(&ents).Distinct().
 		ColumnExpr("published_version_revision_content.*").ColumnExpr("pd.*").ColumnExpr("published_version_revision_content.package_id as content_package_id")
 	query.Join(`inner join
 			(with refs as(
@@ -3599,9 +4213,9 @@ func (p publishedRepositoryImpl) GetVersionRevisionContentForDocumentsTransforma
 	return ents, err
 }
 
-func (p publishedRepositoryImpl) GetPublishedSourcesArchives(offset int) (*entity.PublishedSrcArchiveEntity, error) {
+func (p publishedRepositoryImpl) GetPublishedSourcesArchives(ctx context.Context, offset int) (*entity.PublishedSrcArchiveEntity, error) {
 	result := new(entity.PublishedSrcArchiveEntity)
-	err := p.cp.GetConnection().Model(result).Offset(offset).Limit(1).
+	err := p.cp.GetConnection().WithContext(ctx).Model(result).Offset(offset).Limit(1).
 		First()
 	if err != nil {
 		if err == pg.ErrNoRows {
@@ -3612,8 +4226,7 @@ func (p publishedRepositoryImpl) GetPublishedSourcesArchives(offset int) (*entit
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) DeletePublishedSourcesArchives(checksums []string) error {
-	ctx := context.Background()
+func (p publishedRepositoryImpl) DeletePublishedSourcesArchives(ctx context.Context, checksums []string) error {
 	var deletedRows int
 	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		query := `delete from published_sources_archives
@@ -3625,9 +4238,12 @@ func (p publishedRepositoryImpl) DeletePublishedSourcesArchives(checksums []stri
 		deletedRows += result.RowsAffected()
 		return nil
 	})
+	if err != nil {
+		return errors.Wrap(err, "failed to delete rows from table published_sources_archives")
+	}
 
 	if deletedRows > 0 {
-		_, err = p.cp.GetConnection().Exec("vacuum full published_sources_archives")
+		_, err = p.cp.GetConnection().WithContext(ctx).Exec("vacuum full published_sources_archives")
 		if err != nil {
 			return errors.Wrap(err, "failed to run vacuum for table published_sources_archives")
 		}
@@ -3635,8 +4251,7 @@ func (p publishedRepositoryImpl) DeletePublishedSourcesArchives(checksums []stri
 	return nil
 }
 
-func (p publishedRepositoryImpl) SavePublishedSourcesArchive(ent *entity.PublishedSrcArchiveEntity) error {
-	ctx := context.Background()
+func (p publishedRepositoryImpl) SavePublishedSourcesArchive(ctx context.Context, ent *entity.PublishedSrcArchiveEntity) error {
 	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		_, err := tx.Model(ent).OnConflict("(checksum) DO NOTHING").Insert()
 		if err != nil {
@@ -3647,8 +4262,7 @@ func (p publishedRepositoryImpl) SavePublishedSourcesArchive(ent *entity.Publish
 	return err
 }
 
-func (p publishedRepositoryImpl) UpdatePublishedSourcesArchive(packageId string, version string, revision int, newChecksum string, srcArchive *entity.PublishedSrcArchiveEntity, trackingEntity *entity.SourcesUpdateTrackingEntity) error {
-	ctx := context.Background()
+func (p publishedRepositoryImpl) UpdatePublishedSourcesArchive(ctx context.Context, packageId string, version string, revision int, newChecksum string, srcArchive *entity.PublishedSrcArchiveEntity, trackingEntity *entity.SourcesUpdateTrackingEntity) error {
 	return p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		_, err := tx.Model(srcArchive).OnConflict("(checksum) DO NOTHING").Insert()
 		if err != nil {
@@ -3671,8 +4285,7 @@ func (p publishedRepositoryImpl) UpdatePublishedSourcesArchive(packageId string,
 	})
 }
 
-func (p publishedRepositoryImpl) UpdatePublishedSourcesChecksum(packageId string, version string, revision int, newChecksum string, trackingEntity *entity.SourcesUpdateTrackingEntity) error {
-	ctx := context.Background()
+func (p publishedRepositoryImpl) UpdatePublishedSourcesChecksum(ctx context.Context, packageId string, version string, revision int, newChecksum string, trackingEntity *entity.SourcesUpdateTrackingEntity) error {
 	return p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		_, err := tx.Model((*entity.PublishedSrcEntity)(nil)).
 			Set("archive_checksum = ?", newChecksum).
@@ -3715,10 +4328,10 @@ func (p PublishedBuildChangesOverview) getUniqueChanges() []string {
 	return keys
 }
 
-func (p publishedRepositoryImpl) GetPublishedVersionsHistory(filter view.PublishedVersionHistoryFilter) ([]entity.PackageVersionHistoryEntity, error) {
+func (p publishedRepositoryImpl) GetPublishedVersionsHistory(ctx context.Context, filter view.PublishedVersionHistoryFilter) ([]entity.PackageVersionHistoryEntity, error) {
 	result := make([]entity.PackageVersionHistoryEntity, 0)
 
-	// query := p.cp.GetConnection().Model(&result)
+	// query := p.cp.GetConnection().WithContext(ctx).Model(&result)
 	// if filter.PublishedAfter != nil {
 	// 	query.Where("published_version.published_at >= ?", *filter.PublishedAfter)
 	// }
@@ -3741,7 +4354,7 @@ func (p publishedRepositoryImpl) GetPublishedVersionsHistory(filter view.Publish
 	// 	Order("published_version.published_at asc", "published_version.package_id", "published_version.version", "published_version.revision").
 	// 	Limit(filter.Limit).
 	// 	Offset(filter.Limit * filter.Page)
-	_, err := p.cp.GetConnection().Query(&result, `
+	_, err := p.cp.GetConnection().WithContext(ctx).Query(&result, `
 			with publications as(
 				select published_version.package_id,
 						published_version.version,
@@ -3786,16 +4399,16 @@ func (p publishedRepositoryImpl) GetPublishedVersionsHistory(filter view.Publish
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) StoreOperationGroupPublishProcess(ent *entity.OperationGroupPublishEntity) error {
-	_, err := p.cp.GetConnection().Model(ent).Insert()
+func (p publishedRepositoryImpl) StoreOperationGroupPublishProcess(ctx context.Context, ent *entity.OperationGroupPublishEntity) error {
+	_, err := p.cp.GetConnection().WithContext(ctx).Model(ent).Insert()
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p publishedRepositoryImpl) UpdateOperationGroupPublishProcess(ent *entity.OperationGroupPublishEntity) error {
-	_, err := p.cp.GetConnection().Model(ent).
+func (p publishedRepositoryImpl) UpdateOperationGroupPublishProcess(ctx context.Context, ent *entity.OperationGroupPublishEntity) error {
+	_, err := p.cp.GetConnection().WithContext(ctx).Model(ent).
 		WherePK().
 		Set("details = ?details").
 		Set("status = ?status").
@@ -3806,9 +4419,9 @@ func (p publishedRepositoryImpl) UpdateOperationGroupPublishProcess(ent *entity.
 	return nil
 }
 
-func (p publishedRepositoryImpl) GetOperationGroupPublishProcess(publishId string) (*entity.OperationGroupPublishEntity, error) {
+func (p publishedRepositoryImpl) GetOperationGroupPublishProcess(ctx context.Context, publishId string) (*entity.OperationGroupPublishEntity, error) {
 	result := new(entity.OperationGroupPublishEntity)
-	err := p.cp.GetConnection().Model(result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("publish_id = ?", publishId).
 		First()
 	if err != nil {
@@ -3820,16 +4433,16 @@ func (p publishedRepositoryImpl) GetOperationGroupPublishProcess(publishId strin
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) StoreCSVDashboardPublishProcess(ent *entity.CSVDashboardPublishEntity) error {
-	_, err := p.cp.GetConnection().Model(ent).Insert()
+func (p publishedRepositoryImpl) StoreCSVDashboardPublishProcess(ctx context.Context, ent *entity.CSVDashboardPublishEntity) error {
+	_, err := p.cp.GetConnection().WithContext(ctx).Model(ent).Insert()
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p publishedRepositoryImpl) UpdateCSVDashboardPublishProcess(ent *entity.CSVDashboardPublishEntity) error {
-	_, err := p.cp.GetConnection().Model(ent).
+func (p publishedRepositoryImpl) UpdateCSVDashboardPublishProcess(ctx context.Context, ent *entity.CSVDashboardPublishEntity) error {
+	_, err := p.cp.GetConnection().WithContext(ctx).Model(ent).
 		WherePK().
 		Set("message = ?message").
 		Set("status = ?status").
@@ -3841,9 +4454,9 @@ func (p publishedRepositoryImpl) UpdateCSVDashboardPublishProcess(ent *entity.CS
 	return nil
 }
 
-func (p publishedRepositoryImpl) GetCSVDashboardPublishProcess(publishId string) (*entity.CSVDashboardPublishEntity, error) {
+func (p publishedRepositoryImpl) GetCSVDashboardPublishProcess(ctx context.Context, publishId string) (*entity.CSVDashboardPublishEntity, error) {
 	result := new(entity.CSVDashboardPublishEntity)
-	err := p.cp.GetConnection().Model(result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(result).
 		ExcludeColumn("csv_report").
 		Where("publish_id = ?", publishId).
 		First()
@@ -3856,9 +4469,9 @@ func (p publishedRepositoryImpl) GetCSVDashboardPublishProcess(publishId string)
 	return result, nil
 }
 
-func (p publishedRepositoryImpl) GetCSVDashboardPublishReport(publishId string) (*entity.CSVDashboardPublishEntity, error) {
+func (p publishedRepositoryImpl) GetCSVDashboardPublishReport(ctx context.Context, publishId string) (*entity.CSVDashboardPublishEntity, error) {
 	result := new(entity.CSVDashboardPublishEntity)
-	err := p.cp.GetConnection().Model(result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("publish_id = ?", publishId).
 		First()
 	if err != nil {
@@ -4674,9 +5287,9 @@ func (p publishedRepositoryImpl) countRelatedDataForPackageRevisionsTx(ctx conte
 	return nil
 }
 
-func (p publishedRepositoryImpl) GetVersionInternalDocuments(packageId string, version string, revision int) ([]entity.VersionInternalDocumentEntity, error) {
+func (p publishedRepositoryImpl) GetVersionInternalDocuments(ctx context.Context, packageId string, version string, revision int) ([]entity.VersionInternalDocumentEntity, error) {
 	var docs []entity.VersionInternalDocumentEntity
-	err := p.cp.GetConnection().Model(&docs).
+	err := p.cp.GetConnection().WithContext(ctx).Model(&docs).
 		Where("package_id = ?", packageId).
 		Where("version = ?", version).
 		Where("revision = ?", revision).
@@ -4690,10 +5303,10 @@ func (p publishedRepositoryImpl) GetVersionInternalDocuments(packageId string, v
 	return docs, nil
 }
 
-func (p publishedRepositoryImpl) GetVersionInternalDocumentData(hash string) (*entity.VersionInternalDocumentDataEntity, error) {
+func (p publishedRepositoryImpl) GetVersionInternalDocumentData(ctx context.Context, hash string) (*entity.VersionInternalDocumentDataEntity, error) {
 	result := new(entity.VersionInternalDocumentDataEntity)
 
-	err := p.cp.GetConnection().Model(result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("hash = ?", hash).
 		Where("EXISTS (SELECT 1 FROM version_internal_document WHERE hash = ?)", hash).
 		Select()
@@ -4719,13 +5332,13 @@ func (p publishedRepositoryImpl) versionInternalDocumentDataExists(tx *pg.Tx, ha
 	return true, nil
 }
 
-func (p publishedRepositoryImpl) GetComparisonInternalDocumentsByComparisons(comparisons []entity.VersionComparisonEntity) ([]entity.ComparisonInternalDocumentEntity, error) {
+func (p publishedRepositoryImpl) GetComparisonInternalDocumentsByComparisons(ctx context.Context, comparisons []entity.VersionComparisonEntity) ([]entity.ComparisonInternalDocumentEntity, error) {
 	if len(comparisons) == 0 {
 		return []entity.ComparisonInternalDocumentEntity{}, nil
 	}
 
 	var docs []entity.ComparisonInternalDocumentEntity
-	query := p.cp.GetConnection().Model(&docs)
+	query := p.cp.GetConnection().WithContext(ctx).Model(&docs)
 
 	for i, comparison := range comparisons {
 		if i == 0 {
@@ -4759,9 +5372,9 @@ func (p publishedRepositoryImpl) GetComparisonInternalDocumentsByComparisons(com
 	return docs, nil
 }
 
-func (p publishedRepositoryImpl) GetComparisonInternalDocumentData(hash string) (*entity.ComparisonInternalDocumentDataEntity, error) {
+func (p publishedRepositoryImpl) GetComparisonInternalDocumentData(ctx context.Context, hash string) (*entity.ComparisonInternalDocumentDataEntity, error) {
 	result := new(entity.ComparisonInternalDocumentDataEntity)
-	err := p.cp.GetConnection().Model(result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("hash = ?", hash).
 		Where("EXISTS (SELECT 1 FROM comparison_internal_document WHERE hash = ?)", hash).
 		Select()
@@ -4787,8 +5400,8 @@ func (p publishedRepositoryImpl) comparisonInternalDocumentDataExists(tx *pg.Tx,
 	return true, nil
 }
 
-func (p publishedRepositoryImpl) UpdateDocumentShareabilityBySlug(packageId string, version string, revision int, slug string, shareability string) error {
-	_, err := p.cp.GetConnection().Model((*entity.PublishedContentEntity)(nil)).
+func (p publishedRepositoryImpl) UpdateDocumentShareabilityBySlug(ctx context.Context, packageId string, version string, revision int, slug string, shareability string) error {
+	_, err := p.cp.GetConnection().WithContext(ctx).Model((*entity.PublishedContentEntity)(nil)).
 		Set("shareability_status = ?", shareability).
 		Where("package_id = ?", packageId).
 		Where("version = ?", version).
@@ -4798,11 +5411,11 @@ func (p publishedRepositoryImpl) UpdateDocumentShareabilityBySlug(packageId stri
 	return err
 }
 
-func (p publishedRepositoryImpl) BulkUpdateDocumentShareability(entities []*entity.PublishedContentEntity) error {
+func (p publishedRepositoryImpl) BulkUpdateDocumentShareability(ctx context.Context, entities []*entity.PublishedContentEntity) error {
 	if len(entities) == 0 {
 		return nil
 	}
-	return p.cp.GetConnection().RunInTransaction(context.Background(), func(tx *pg.Tx) error {
+	return p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		for _, e := range entities {
 			_, err := tx.Model(e).Column("shareability_status").WherePK().Update()
 			if err != nil {

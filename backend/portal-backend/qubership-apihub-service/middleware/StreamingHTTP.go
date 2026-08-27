@@ -10,6 +10,7 @@ const (
 	mcpPathPrefix              = "/api/v1/mcp/"
 	aiChatChatsPathPrefix      = "/api/v1/ai-chat/chats/"
 	aiChatMessagesStreamSuffix = "/messages/stream"
+	aiChatMessagesSuffix       = "/messages"
 )
 
 // StreamingResponseWriteDeadline is the write deadline for AI chat SSE (long model turns, tool loops).
@@ -22,6 +23,13 @@ func isMCPPath(path string) bool {
 
 func isAiChatSSEPath(path string) bool {
 	return strings.HasPrefix(path, aiChatChatsPathPrefix) && strings.HasSuffix(path, aiChatMessagesStreamSuffix)
+}
+
+func isAiChatTurnPath(path string) bool {
+	if !strings.HasPrefix(path, aiChatChatsPathPrefix) {
+		return false
+	}
+	return strings.HasSuffix(path, aiChatMessagesSuffix) || strings.HasSuffix(path, aiChatMessagesStreamSuffix)
 }
 
 // SkipResponseCompression is true for routes that must not use handlers.CompressHandler, to avoid

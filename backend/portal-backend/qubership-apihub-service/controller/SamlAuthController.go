@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
@@ -58,11 +59,12 @@ func (a *authenticationControllerImpl) StartSamlAuthentication_deprecated(w http
 
 // AssertionConsumerHandler_deprecated This endpoint is called by ADFS when auth procedure is complete on it's side. ADFS posts the response here. (legacy auth)
 func (a *authenticationControllerImpl) AssertionConsumerHandler_deprecated(w http.ResponseWriter, r *http.Request) {
-	providers.HandleAssertion(w, r, a.userService, a.samlInstance, "", a.apihubHost, a.setUserViewCookie)
+	ctx := r.Context()
+	providers.HandleAssertion(ctx, w, r, a.userService, a.samlInstance, "", a.apihubHost, a.setUserViewCookie)
 }
 
-func (a *authenticationControllerImpl) setUserViewCookie(w http.ResponseWriter, user *view.User, idpId string) error {
-	userView, err := security.CreateTokenForUser_deprecated(*user)
+func (a *authenticationControllerImpl) setUserViewCookie(ctx context.Context, w http.ResponseWriter, user *view.User, idpId string) error {
+	userView, err := security.CreateTokenForUser_deprecated(ctx, *user)
 	if err != nil {
 		return &exception.CustomError{
 			Status:  http.StatusInternalServerError,
@@ -84,7 +86,7 @@ func (a *authenticationControllerImpl) setUserViewCookie(w http.ResponseWriter, 
 	})
 	//TODO: remove after IDP reconfiguration
 	if a.systemInfoService.IsLegacySAML() {
-		security.SetAuthTokenCookies(w, user, "/login/sso/saml")
+		security.SetAuthTokenCookies(ctx, w, user, "/login/sso/saml")
 	}
 	log.Debugf("Auth user result object: %+v", userView)
 

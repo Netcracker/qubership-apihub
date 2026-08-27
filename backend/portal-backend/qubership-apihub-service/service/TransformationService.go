@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
@@ -10,7 +11,7 @@ import (
 )
 
 type TransformationService interface {
-	GetDataForDocumentsTransformation(packageId, version string, filterReq view.DocumentsForTransformationFilterReq) (interface{}, error)
+	GetDataForDocumentsTransformation(ctx context.Context, packageId, version string, filterReq view.DocumentsForTransformationFilterReq) (interface{}, error)
 }
 
 func NewTransformationService(publishedRepo repository.PublishedRepository, operationRepo repository.OperationRepository,
@@ -28,8 +29,8 @@ type transformationServiceImpl struct {
 	packageVersionEnrichmentService PackageVersionEnrichmentService
 }
 
-func (t transformationServiceImpl) GetDataForDocumentsTransformation(packageId, version string, filterReq view.DocumentsForTransformationFilterReq) (interface{}, error) {
-	versionEnt, err := t.publishedRepo.GetVersion(packageId, version)
+func (t transformationServiceImpl) GetDataForDocumentsTransformation(ctx context.Context, packageId, version string, filterReq view.DocumentsForTransformationFilterReq) (interface{}, error) {
+	versionEnt, err := t.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +49,7 @@ func (t transformationServiceImpl) GetDataForDocumentsTransformation(packageId, 
 		DocumentTypesFilter: view.GetDocumentTypesForApiType(filterReq.ApiType),
 		OperationGroup:      view.MakeOperationGroupId(packageId, versionEnt.Version, versionEnt.Revision, filterReq.ApiType, filterReq.FilterByOperationGroup),
 	}
-	existingGroup, err := t.operationRepo.GetOperationGroup(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, filterReq.ApiType, filterReq.FilterByOperationGroup)
+	existingGroup, err := t.operationRepo.GetOperationGroup(ctx, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, filterReq.ApiType, filterReq.FilterByOperationGroup)
 	if err != nil {
 		return nil, err
 	}
@@ -61,13 +62,13 @@ func (t transformationServiceImpl) GetDataForDocumentsTransformation(packageId, 
 		}
 	}
 
-	operationByGroupEnts, err := t.operationRepo.GetGroupedOperations(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, filterReq.ApiType, filterReq.FilterByOperationGroup, view.OperationListReq{})
+	operationByGroupEnts, err := t.operationRepo.GetGroupedOperations(ctx, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, filterReq.ApiType, filterReq.FilterByOperationGroup, view.OperationListReq{})
 	if err != nil {
 		return nil, err
 	}
 	operationIdsByGroupName := entity.MakeOperationIdsSlice(operationByGroupEnts)
 	versionDocuments := make([]view.DocumentForTransformationView, 0)
-	content, err := t.publishedRepo.GetVersionRevisionContentForDocumentsTransformation(packageId, versionEnt.Version, versionEnt.Revision, searchQuery)
+	content, err := t.publishedRepo.GetVersionRevisionContentForDocumentsTransformation(ctx, packageId, versionEnt.Version, versionEnt.Revision, searchQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +84,7 @@ func (t transformationServiceImpl) GetDataForDocumentsTransformation(packageId, 
 			append(packageVersions[versionDocumentEnt.ContentPackageId], view.MakeVersionRefKey(versionDocumentEnt.Version, versionDocumentEnt.Revision))
 	}
 
-	packagesRefs, err := t.packageVersionEnrichmentService.GetPackageVersionRefsMap(packageVersions)
+	packagesRefs, err := t.packageVersionEnrichmentService.GetPackageVersionRefsMap(ctx, packageVersions)
 	if err != nil {
 		return nil, err
 	}

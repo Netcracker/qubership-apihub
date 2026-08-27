@@ -400,12 +400,13 @@ func (d OpsMigration) makeBuildSourceEntityFromPublishedFiles(migrationId string
 			}
 			publish := true
 			configFiles = append(configFiles, view.BCFile{
-				FileId:  fileEnt.FileId,
-				Slug:    fileEnt.Slug,
-				Index:   fileEnt.Index,
-				Labels:  fileEnt.Metadata.GetLabels(),
-				Publish: &publish,
-				BlobId:  fileEnt.Metadata.GetBlobId(),
+				FileId:   fileEnt.FileId,
+				Slug:     fileEnt.Slug,
+				Index:    fileEnt.Index,
+				Labels:   fileEnt.Metadata.GetLabels(),
+				Publish:  &publish,
+				BlobId:   fileEnt.Metadata.GetBlobId(),
+				XApiKind: fileEnt.ApiKind,
 			})
 		}
 		err = zw.Close()

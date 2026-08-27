@@ -1,39 +1,40 @@
 package service
 
 import (
-	stdctx "context"
+	"context"
 	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	log "github.com/sirupsen/logrus"
 )
 
 type PackageService interface {
-	CreatePackage(ctx context.SecurityContext, packg view.SimplePackage) (*view.SimplePackage, error)
-	GetPackage(ctx context.SecurityContext, id string, withParents bool) (*view.SimplePackage, error)
-	GetPackagesList(ctx context.SecurityContext, req view.PackageListReq, showOnlyDeleted bool) (*view.Packages, error)
-	UpdatePackage(ctx context.SecurityContext, packg *view.PatchPackageReq, packageId string) (*view.SimplePackage, error)
-	DeletePackage(ctx context.SecurityContext, id string) error
-	FavorPackage(ctx context.SecurityContext, id string) error
-	DisfavorPackage(ctx context.SecurityContext, id string) error
-	GetPackageStatus(id string) (*view.Status, error)
-	GetPackageName(id string) (string, error)
-	GetPackageKind(id string) (string, error)
-	PackageExists(packageId string) (bool, error)
-	GetGroupDescendantPackages(groupId string) ([]entity.PackageEntity, error)
-	GetAvailableVersionPublishStatuses_deprecated(ctx context.SecurityContext, packageId string) (*view.Statuses_deprecated, error)
-	RecalculateOperationGroups(ctx context.SecurityContext, packageId string) error
-	CalculateOperationGroups(packageId string, groupingPrefix string) (*view.CalculatedOperationGroups, error)
+	CreatePackage(ctx context.Context, packg view.SimplePackage) (*view.SimplePackage, error)
+	GetPackage(ctx context.Context, id string, withParents bool) (*view.SimplePackage, error)
+	GetPackagesList(ctx context.Context, req view.PackageListReq) (*view.Packages, error)
+	GetDeletedPackagesList(ctx context.Context, req view.PackageListReq) (*view.Packages, error)
+	UpdatePackage(ctx context.Context, packg *view.PatchPackageReq, packageId string) (*view.SimplePackage, error)
+	DeletePackage(ctx context.Context, id string) error
+	FavorPackage(ctx context.Context, id string) error
+	DisfavorPackage(ctx context.Context, id string) error
+	GetPackageStatus(ctx context.Context, id string) (*view.Status, error)
+	GetPackageName(ctx context.Context, id string) (string, error)
+	GetPackageKind(ctx context.Context, id string) (string, error)
+	PackageExists(ctx context.Context, packageId string) (bool, error)
+	GetGroupDescendantPackages(ctx context.Context, groupId string) ([]entity.PackageEntity, error)
+	GetAvailableVersionPublishStatuses_deprecated(ctx context.Context, packageId string) (*view.Statuses_deprecated, error)
+	RecalculateOperationGroups(ctx context.Context, packageId string) error
+	CalculateOperationGroups(ctx context.Context, packageId string, groupingPrefix string) (*view.CalculatedOperationGroups, error)
 }
 
 func NewPackageService(favoritesRepo repository.FavoritesRepository,
@@ -73,7 +74,7 @@ type packageServiceImpl struct {
 	systemInfoService     SystemInfoService
 }
 
-func (p packageServiceImpl) CreatePackage(ctx context.SecurityContext, packg view.SimplePackage) (*view.SimplePackage, error) {
+func (p packageServiceImpl) CreatePackage(ctx context.Context, packg view.SimplePackage) (*view.SimplePackage, error) {
 	if !validPackageKind(packg.Kind) {
 		return nil, &exception.CustomError{
 			Status:  http.StatusBadRequest,
@@ -86,7 +87,7 @@ func (p packageServiceImpl) CreatePackage(ctx context.SecurityContext, packg vie
 		packg.ParentId = ""
 	}
 	if packg.ParentId != "" {
-		existingEnt, err := p.publishedRepo.GetPackage(packg.ParentId)
+		existingEnt, err := p.publishedRepo.GetPackage(ctx, packg.ParentId)
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +126,7 @@ func (p packageServiceImpl) CreatePackage(ctx context.SecurityContext, packg vie
 			packg.ExcludeFromSearch = &excludeFromSearchDefaultValue
 		}
 	}
-	existingPackage, err := p.publishedRepo.GetPackageIncludingDeleted(packg.Id)
+	existingPackage, err := p.publishedRepo.GetPackageIncludingDeleted(ctx, packg.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +138,7 @@ func (p packageServiceImpl) CreatePackage(ctx context.SecurityContext, packg vie
 			Params:  map[string]interface{}{"id": packg.Id},
 		}
 	}
-	packageIdReserved, err := p.userRepo.PrivatePackageIdExists(packg.Id)
+	packageIdReserved, err := p.userRepo.PrivatePackageIdExists(ctx, packg.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +150,7 @@ func (p packageServiceImpl) CreatePackage(ctx context.SecurityContext, packg vie
 			Params:  map[string]interface{}{"id": packg.Id},
 		}
 	}
-	transitionId, err := p.ptHandler.HandleMissingPackageId(packg.Id)
+	transitionId, err := p.ptHandler.HandleMissingPackageId(ctx, packg.Id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check if package id %s transition exists during creation: %w", packg.Id, err)
 	}
@@ -166,7 +167,7 @@ func (p packageServiceImpl) CreatePackage(ctx context.SecurityContext, packg vie
 		packg.ServiceName = ""
 	}
 	if packg.ServiceName != "" {
-		err := p.checkServiceNameAvailability(packg.Id, packg.ServiceName)
+		err := p.checkServiceNameAvailability(ctx, packg.Id, packg.ServiceName)
 		if err != nil {
 			return nil, err
 		}
@@ -179,7 +180,7 @@ func (p packageServiceImpl) CreatePackage(ctx context.SecurityContext, packg vie
 	}
 
 	packg.CreatedAt = time.Now()
-	packg.CreatedBy = ctx.GetUserId()
+	packg.CreatedBy = secctx.GetUserId(ctx)
 	if packg.DefaultRole == "" {
 		packg.DefaultRole = view.ViewerRoleId
 	}
@@ -189,7 +190,7 @@ func (p packageServiceImpl) CreatePackage(ctx context.SecurityContext, packg vie
 			return nil, err
 		}
 	} else {
-		roleExists, err := p.roleService.PackageRoleExists(packg.DefaultRole)
+		roleExists, err := p.roleService.PackageRoleExists(ctx, packg.DefaultRole)
 		if err != nil {
 			return nil, err
 		}
@@ -216,12 +217,12 @@ func (p packageServiceImpl) CreatePackage(ctx context.SecurityContext, packg vie
 	} else {
 		packg.ReleaseVersionPattern = p.systemInfoService.GetReleaseVersionPattern()
 	}
-	err = p.publishedRepo.CreatePackage(entity.MakePackageEntity(&packg))
+	err = p.publishedRepo.CreatePackage(ctx, entity.MakePackageEntity(&packg))
 	if err != nil {
 		return nil, err
 	}
 
-	p.atService.TrackEvent(view.ActivityTrackingEvent{
+	p.atService.TrackEvent(ctx, view.ActivityTrackingEvent{
 		Type:      view.ATETCreatePackage,
 		Data:      nil,
 		PackageId: packg.Id,
@@ -229,13 +230,13 @@ func (p packageServiceImpl) CreatePackage(ctx context.SecurityContext, packg vie
 		UserId:    packg.CreatedBy,
 	})
 
-	parents, err := p.getParents(packg.Id, false)
+	parents, err := p.getParents(ctx, packg.Id, false)
 	if err != nil {
 		return nil, err
 	}
 	packg.Parents = parents
 
-	isFavorite, err := p.favoritesRepo.IsFavoritePackage(ctx.GetUserId(), packg.Id)
+	isFavorite, err := p.favoritesRepo.IsFavoritePackage(ctx, secctx.GetUserId(ctx), packg.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -248,8 +249,8 @@ func (p packageServiceImpl) CreatePackage(ctx context.SecurityContext, packg vie
 	return &packg, err
 }
 
-func (p packageServiceImpl) checkServiceNameAvailability(packageId string, serviceName string) error {
-	serviceOwnerPackageId, err := p.publishedRepo.GetServiceOwner(utils.GetPackageWorkspaceId(packageId), serviceName)
+func (p packageServiceImpl) checkServiceNameAvailability(ctx context.Context, packageId string, serviceName string) error {
+	serviceOwnerPackageId, err := p.publishedRepo.GetServiceOwner(ctx, utils.GetPackageWorkspaceId(packageId), serviceName)
 	if err != nil {
 		return err
 	}
@@ -263,8 +264,8 @@ func (p packageServiceImpl) checkServiceNameAvailability(packageId string, servi
 	}
 	return nil
 }
-func (p packageServiceImpl) PackageExists(packageId string) (bool, error) {
-	ent, err := p.publishedRepo.GetPackage(packageId)
+func (p packageServiceImpl) PackageExists(ctx context.Context, packageId string) (bool, error) {
+	ent, err := p.publishedRepo.GetPackage(ctx, packageId)
 	if err != nil {
 		return false, err
 	}
@@ -275,8 +276,8 @@ func (p packageServiceImpl) PackageExists(packageId string) (bool, error) {
 	}
 }
 
-func (p packageServiceImpl) GetPackage(ctx context.SecurityContext, id string, withParents bool) (*view.SimplePackage, error) {
-	ent, err := p.publishedRepo.GetPackage(id)
+func (p packageServiceImpl) GetPackage(ctx context.Context, id string, withParents bool) (*view.SimplePackage, error) {
+	ent, err := p.publishedRepo.GetPackage(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -290,7 +291,7 @@ func (p packageServiceImpl) GetPackage(ctx context.SecurityContext, id string, w
 	}
 	var parentPackages []view.ParentPackageInfo
 	if withParents {
-		parents, err := p.publishedRepo.GetParentsForPackage(id, false)
+		parents, err := p.publishedRepo.GetParentsForPackage(ctx, id, false)
 		if err != nil {
 			return nil, err
 		}
@@ -311,7 +312,7 @@ func (p packageServiceImpl) GetPackage(ctx context.SecurityContext, id string, w
 		parentPackages = nil
 	}
 
-	isFavorite, err := p.favoritesRepo.IsFavoritePackage(ctx.GetUserId(), id)
+	isFavorite, err := p.favoritesRepo.IsFavoritePackage(ctx, secctx.GetUserId(ctx), id)
 	if err != nil {
 		return nil, err
 	}
@@ -322,13 +323,13 @@ func (p packageServiceImpl) GetPackage(ctx context.SecurityContext, id string, w
 	}
 	packageView := entity.MakeSimplePackageView(ent, parentPackages, isFavorite, userPermissions)
 	if packageView.DefaultReleaseVersion != "" {
-		latestRevision, err := p.publishedRepo.GetLatestRevision(ent.Id, packageView.DefaultReleaseVersion)
+		latestRevision, err := p.publishedRepo.GetLatestRevision(ctx, ent.Id, packageView.DefaultReleaseVersion)
 		if err != nil {
 			return nil, err
 		}
 		packageView.DefaultVersion = view.MakeVersionRefKey(packageView.DefaultReleaseVersion, latestRevision)
 	} else {
-		packageView.DefaultVersion, err = p.versionService.GetDefaultVersion(packageView.Id)
+		packageView.DefaultVersion, err = p.versionService.GetDefaultVersion(ctx, packageView.Id)
 		if err != nil {
 			return nil, err
 		}
@@ -337,93 +338,135 @@ func (p packageServiceImpl) GetPackage(ctx context.SecurityContext, id string, w
 	return packageView, nil
 }
 
-func (p packageServiceImpl) GetPackagesList(ctx context.SecurityContext, searchReq view.PackageListReq, showOnlyDeleted bool) (*view.Packages, error) {
-	var err error
-	result := make([]view.PackagesInfo, 0)
-	var entities []entity.PackageEntity
-	skipped := 0
-	if len(searchReq.Kind) == 0 {
-		searchReq.Kind = []string{entity.KIND_WORKSPACE}
-	}
+func (p packageServiceImpl) GetPackagesList(ctx context.Context, searchReq view.PackageListReq) (*view.Packages, error) {
+	searchReq = withDefaultKind(searchReq)
 
-	if showOnlyDeleted {
-		entities, err = p.publishedRepo.GetFilteredDeletedPackages(stdctx.Background(), searchReq, ctx.GetUserId())
-	} else {
-		entities, err = p.publishedRepo.GetFilteredPackagesWithOffset(stdctx.Background(), searchReq, ctx.GetUserId())
-	}
-
+	scope, err := p.roleService.GetPackageReadScope(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to resolve package read scope: %w", err)
 	}
+	if scope.Kind == view.PackageReadScopeNone {
+		return &view.Packages{Packages: make([]view.PackagesInfo, 0)}, nil
+	}
+	packages, err := p.publishedRepo.GetReadablePackages(ctx, searchReq, scope, secctx.GetUserId(ctx))
 	if err != nil {
 		log.Error("Failed to get packages: ", err.Error())
 		return nil, err
 	}
 
-	for _, ent := range entities {
-		var parents []view.ParentPackageInfo = nil
-		if searchReq.ShowParents {
-			parents, err = p.getParents(ent.Id, showOnlyDeleted)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		var isFavorite = true
-		if !searchReq.OnlyFavorite {
-			isFavorite, err = p.favoritesRepo.IsFavoritePackage(ctx.GetUserId(), ent.Id)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		permissions, err := p.roleService.GetPermissionsForPackage(ctx, ent.Id)
+	// A user's permissions differ per package and arrive on the row. Every other caller holds one set for
+	// everything in scope, so it is resolved once.
+	var scopePermissions []string
+	if scope.Kind != view.PackageReadScopeUser {
+		scopePermissions, err = p.roleService.GetPermissionsForReadScope(ctx, scope)
 		if err != nil {
 			return nil, err
 		}
-		//do not show private packages
-		//todo move this restriction to db query
-		if !utils.SliceContains(permissions, string(view.ReadPermission)) {
-			skipped++
-			continue
-		}
-
-		var lastReleaseVersionDetails *view.VersionDetails
-		if searchReq.LastReleaseVersionDetails {
-			defaultReleaseVersion := ent.DefaultReleaseVersion
-			if defaultReleaseVersion == "" {
-				defaultReleaseVersion, err = p.versionService.GetDefaultVersion(ent.Id)
-				if err != nil {
-					return nil, err
-				}
-			}
-			if defaultReleaseVersion != "" {
-				lastReleaseVersionDetails, err = p.versionService.GetVersionDetails(ent.Id, defaultReleaseVersion)
-				if err != nil {
-					return nil, err
-				}
-			}
-		}
-
-		packagesInfo := entity.MakePackagesInfo(&ent, lastReleaseVersionDetails, parents, isFavorite, permissions, showOnlyDeleted)
-		result = append(result, *packagesInfo)
 	}
 
-	if skipped != 0 {
-		searchReq.Offset = searchReq.Offset + searchReq.Limit
-		searchReq.Limit = skipped
-		extraPackages, err := p.GetPackagesList(ctx, searchReq, showOnlyDeleted)
+	parents, err := p.parentsByPackage(ctx, searchReq, packageIds(packages), false)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]view.PackagesInfo, 0, len(packages))
+	for _, pkg := range packages {
+		permissions := scopePermissions
+		if scope.Kind == view.PackageReadScopeUser {
+			permissions = pkg.Permissions
+		}
+		lastReleaseVersionDetails, err := p.lastReleaseVersionDetails(ctx, searchReq, pkg.PackageEntity)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, extraPackages.Packages...)
+		packageEntity := pkg.PackageEntity
+		result = append(result, *entity.MakePackagesInfo(&packageEntity, lastReleaseVersionDetails,
+			parents[pkg.Id], pkg.IsFavorite, permissions, false))
 	}
-
 	return &view.Packages{Packages: result}, nil
 }
 
-func (p packageServiceImpl) UpdatePackage(ctx context.SecurityContext, packg *view.PatchPackageReq, packageId string) (*view.SimplePackage, error) {
-	existingEnt, err := p.publishedRepo.GetPackage(packageId)
+// GetDeletedPackagesList lists soft deleted packages. The endpoint behind it is system administrator only, so
+// no read scope applies, and the response carries neither permissions nor the favourite flag.
+func (p packageServiceImpl) GetDeletedPackagesList(ctx context.Context, searchReq view.PackageListReq) (*view.Packages, error) {
+	searchReq = withDefaultKind(searchReq)
+
+	packages, err := p.publishedRepo.GetDeletedPackages(ctx, searchReq, secctx.GetUserId(ctx))
+	if err != nil {
+		log.Error("Failed to get deleted packages: ", err.Error())
+		return nil, err
+	}
+
+	ids := make([]string, 0, len(packages))
+	for _, pkg := range packages {
+		ids = append(ids, pkg.Id)
+	}
+	parents, err := p.parentsByPackage(ctx, searchReq, ids, true)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]view.PackagesInfo, 0, len(packages))
+	for _, pkg := range packages {
+		result = append(result, *entity.MakePackagesInfo(&pkg, nil, parents[pkg.Id], false, nil, true))
+	}
+	return &view.Packages{Packages: result}, nil
+}
+
+func withDefaultKind(searchReq view.PackageListReq) view.PackageListReq {
+	if len(searchReq.Kind) == 0 {
+		searchReq.Kind = []string{entity.KIND_WORKSPACE}
+	}
+	return searchReq
+}
+
+func packageIds(packages []entity.ReadablePackageEntity) []string {
+	ids := make([]string, 0, len(packages))
+	for _, pkg := range packages {
+		ids = append(ids, pkg.Id)
+	}
+	return ids
+}
+
+func (p packageServiceImpl) parentsByPackage(ctx context.Context, searchReq view.PackageListReq, ids []string, deleted bool) (map[string][]view.ParentPackageInfo, error) {
+	result := make(map[string][]view.ParentPackageInfo, len(ids))
+	if !searchReq.ShowParents || len(ids) == 0 {
+		return result, nil
+	}
+	parentsByPackage, err := p.publishedRepo.GetParentsForPackages(ctx, ids, deleted)
+	if err != nil {
+		return nil, err
+	}
+	for id, parents := range parentsByPackage {
+		views := make([]view.ParentPackageInfo, 0, len(parents))
+		for _, parent := range parents {
+			views = append(views, *entity.MakePackageParentView(&parent))
+		}
+		result[id] = views
+	}
+	return result, nil
+}
+
+func (p packageServiceImpl) lastReleaseVersionDetails(ctx context.Context, searchReq view.PackageListReq, pkg entity.PackageEntity) (*view.VersionDetails, error) {
+	if !searchReq.LastReleaseVersionDetails {
+		return nil, nil
+	}
+	version := pkg.DefaultReleaseVersion
+	if version == "" {
+		defaultVersion, err := p.versionService.GetDefaultVersion(ctx, pkg.Id)
+		if err != nil {
+			return nil, err
+		}
+		version = defaultVersion
+	}
+	if version == "" {
+		return nil, nil
+	}
+	return p.versionService.GetVersionDetails(ctx, pkg.Id, version)
+}
+
+func (p packageServiceImpl) UpdatePackage(ctx context.Context, packg *view.PatchPackageReq, packageId string) (*view.SimplePackage, error) {
+	existingEnt, err := p.publishedRepo.GetPackage(ctx, packageId)
 	if err != nil {
 		return nil, err
 	}
@@ -437,7 +480,7 @@ func (p packageServiceImpl) UpdatePackage(ctx context.SecurityContext, packg *vi
 	}
 
 	if existingEnt.DefaultRole == view.NoneRoleId && existingEnt.ParentId == "" {
-		if !p.roleService.IsSysadm(ctx) {
+		if !secctx.IsSysadm(ctx) {
 			return nil, &exception.CustomError{
 				Status:  http.StatusForbidden,
 				Code:    exception.InsufficientPrivileges,
@@ -459,7 +502,7 @@ func (p packageServiceImpl) UpdatePackage(ctx context.SecurityContext, packg *vi
 		if err != nil {
 			return nil, err
 		}
-		version, err := p.publishedRepo.GetVersion(packageId, versionName)
+		version, err := p.publishedRepo.GetVersion(ctx, packageId, versionName)
 		if err != nil {
 			return nil, err
 		}
@@ -497,7 +540,7 @@ func (p packageServiceImpl) UpdatePackage(ctx context.SecurityContext, packg *vi
 			}
 		}
 		if *packg.ServiceName != "" {
-			err := p.checkServiceNameAvailability(existingEnt.Id, *packg.ServiceName)
+			err := p.checkServiceNameAvailability(ctx, existingEnt.Id, *packg.ServiceName)
 			if err != nil {
 				return nil, err
 			}
@@ -520,7 +563,7 @@ func (p packageServiceImpl) UpdatePackage(ctx context.SecurityContext, packg *vi
 		if *packg.ExcludeFromSearch != existingEnt.ExcludeFromSearch {
 			excludeFromSearchChanged = true
 			if existingEnt.ParentId != "" {
-				parentEnt, err := p.publishedRepo.GetPackage(existingEnt.ParentId)
+				parentEnt, err := p.publishedRepo.GetPackage(ctx, existingEnt.ParentId)
 				if err != nil {
 					return nil, err
 				}
@@ -551,7 +594,7 @@ func (p packageServiceImpl) UpdatePackage(ctx context.SecurityContext, packg *vi
 
 	ent := entity.MakeSimplePackageUpdateEntity(existingEnt, packg)
 
-	res, err := p.publishedRepo.UpdatePackage(ent, excludeFromSearchChanged)
+	res, err := p.publishedRepo.UpdatePackage(ctx, ent, excludeFromSearchChanged)
 	if err != nil {
 		return nil, err
 	}
@@ -582,20 +625,20 @@ func (p packageServiceImpl) UpdatePackage(ctx context.SecurityContext, packg *vi
 	}
 	dataMap["packageMeta"] = meta
 
-	p.atService.TrackEvent(view.ActivityTrackingEvent{
+	p.atService.TrackEvent(ctx, view.ActivityTrackingEvent{
 		Type:      view.ATETPatchPackageMeta,
 		Data:      dataMap,
 		PackageId: packageId,
 		Date:      time.Now(),
-		UserId:    ctx.GetUserId(),
+		UserId:    secctx.GetUserId(ctx),
 	})
 
-	parents, err := p.getParents(res.Id, false)
+	parents, err := p.getParents(ctx, res.Id, false)
 	if err != nil {
 		return nil, err
 	}
 
-	isFavorite, err := p.favoritesRepo.IsFavoritePackage(ctx.GetUserId(), res.Id)
+	isFavorite, err := p.favoritesRepo.IsFavoritePackage(ctx, secctx.GetUserId(ctx), res.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -606,8 +649,8 @@ func (p packageServiceImpl) UpdatePackage(ctx context.SecurityContext, packg *vi
 	return entity.MakeSimplePackageView(res, parents, isFavorite, userRole), err
 }
 
-func (p packageServiceImpl) DeletePackage(ctx context.SecurityContext, id string) error {
-	ent, err := p.publishedRepo.GetPackage(id)
+func (p packageServiceImpl) DeletePackage(ctx context.Context, id string) error {
+	ent, err := p.publishedRepo.GetPackage(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -620,7 +663,7 @@ func (p packageServiceImpl) DeletePackage(ctx context.SecurityContext, id string
 		}
 	}
 	if ent.DefaultRole == view.NoneRoleId && ent.ParentId == "" {
-		if !p.roleService.IsSysadm(ctx) {
+		if !secctx.IsSysadm(ctx) {
 			return &exception.CustomError{
 				Status:  http.StatusForbidden,
 				Code:    exception.InsufficientPrivileges,
@@ -629,13 +672,13 @@ func (p packageServiceImpl) DeletePackage(ctx context.SecurityContext, id string
 			}
 		}
 	}
-	referencingDashboards, err := p.publishedRepo.GetPackageReferencingDashboards(id)
+	referencingDashboards, err := p.publishedRepo.GetPackageReferencingDashboards(ctx, id)
 	if err != nil {
 		return err
 	}
 	if len(referencingDashboards) > 0 {
 		log.Warnf("Blocked deletion of package %s by user %s: referenced by dashboards %v",
-			id, ctx.GetUserId(), referencingDashboards)
+			id, secctx.GetUserId(ctx), referencingDashboards)
 		if ent.Kind == entity.KIND_GROUP || ent.Kind == entity.KIND_WORKSPACE {
 			packages, err := p.formatDashboardReferencesByPackage(ctx, referencingDashboards)
 			if err != nil {
@@ -666,23 +709,23 @@ func (p packageServiceImpl) DeletePackage(ctx context.SecurityContext, id string
 			},
 		}
 	}
-	deletedReleaseCount, err := p.publishedRepo.DeletePackage(id, ctx.GetUserId())
+	deletedReleaseCount, err := p.publishedRepo.DeletePackage(ctx, id, secctx.GetUserId(ctx))
 	if err != nil {
 		return err
 	}
 
 	if deletedReleaseCount > 0 {
 		for i := 0; i < deletedReleaseCount; i++ {
-			p.monitoringService.IncreaseBusinessMetricCounter(ctx.GetUserId(), metrics.ReleaseVersionsDeleted, id)
+			p.monitoringService.IncreaseBusinessMetricCounter(secctx.GetUserId(ctx), metrics.ReleaseVersionsDeleted, id)
 		}
 	}
 
-	p.atService.TrackEvent(view.ActivityTrackingEvent{
+	p.atService.TrackEvent(ctx, view.ActivityTrackingEvent{
 		Type:      view.ATETDeletePackage,
 		Data:      nil,
 		PackageId: id,
 		Date:      time.Now(),
-		UserId:    ctx.GetUserId(),
+		UserId:    secctx.GetUserId(ctx),
 	})
 
 	return nil
@@ -696,7 +739,7 @@ func dashboardVersionKeys(refs []entity.DashboardReferenceEntity) []entity.Publi
 	return keys
 }
 
-func (p packageServiceImpl) formatDashboardReferencesByPackage(ctx context.SecurityContext, refs []entity.DashboardReferenceEntity) (string, error) {
+func (p packageServiceImpl) formatDashboardReferencesByPackage(ctx context.Context, refs []entity.DashboardReferenceEntity) (string, error) {
 	accessible, _, err := p.roleService.FilterVersionsByPackageReadAccess(ctx, dashboardVersionKeys(refs))
 	if err != nil {
 		return "", err
@@ -732,9 +775,9 @@ func (p packageServiceImpl) formatDashboardReferencesByPackage(ctx context.Secur
 	return strings.Join(parts, ", "), nil
 }
 
-func (p packageServiceImpl) FavorPackage(ctx context.SecurityContext, id string) error {
-	userId := ctx.GetUserId()
-	ent, err := p.publishedRepo.GetPackage(id)
+func (p packageServiceImpl) FavorPackage(ctx context.Context, id string) error {
+	userId := secctx.GetUserId(ctx)
+	ent, err := p.publishedRepo.GetPackage(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -746,23 +789,23 @@ func (p packageServiceImpl) FavorPackage(ctx context.SecurityContext, id string)
 			Params:  map[string]interface{}{"packageId": id},
 		}
 	}
-	favorite, err := p.favoritesRepo.IsFavoritePackage(userId, id)
+	favorite, err := p.favoritesRepo.IsFavoritePackage(ctx, userId, id)
 	if err != nil {
 		return err
 	}
 	if favorite {
 		return nil
 	}
-	err = p.favoritesRepo.AddPackageToFavorites(userId, id)
+	err = p.favoritesRepo.AddPackageToFavorites(ctx, userId, id)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p packageServiceImpl) DisfavorPackage(ctx context.SecurityContext, id string) error {
-	userId := ctx.GetUserId()
-	ent, err := p.publishedRepo.GetPackage(id)
+func (p packageServiceImpl) DisfavorPackage(ctx context.Context, id string) error {
+	userId := secctx.GetUserId(ctx)
+	ent, err := p.publishedRepo.GetPackage(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -774,22 +817,22 @@ func (p packageServiceImpl) DisfavorPackage(ctx context.SecurityContext, id stri
 			Params:  map[string]interface{}{"packageId": id},
 		}
 	}
-	favorite, err := p.favoritesRepo.IsFavoritePackage(userId, id)
+	favorite, err := p.favoritesRepo.IsFavoritePackage(ctx, userId, id)
 	if err != nil {
 		return err
 	}
 	if !favorite {
 		return nil
 	}
-	err = p.favoritesRepo.RemovePackageFromFavorites(userId, id)
+	err = p.favoritesRepo.RemovePackageFromFavorites(ctx, userId, id)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p packageServiceImpl) GetPackageName(id string) (string, error) {
-	ent, err := p.publishedRepo.GetPackage(id)
+func (p packageServiceImpl) GetPackageName(ctx context.Context, id string) (string, error) {
+	ent, err := p.publishedRepo.GetPackage(ctx, id)
 	if err != nil {
 		return "", err
 	}
@@ -804,8 +847,8 @@ func (p packageServiceImpl) GetPackageName(id string) (string, error) {
 	}
 
 }
-func (p packageServiceImpl) GetPackageKind(id string) (string, error) {
-	ent, err := p.publishedRepo.GetPackage(id)
+func (p packageServiceImpl) GetPackageKind(ctx context.Context, id string) (string, error) {
+	ent, err := p.publishedRepo.GetPackage(ctx, id)
 	if err != nil {
 		return "", err
 	}
@@ -820,8 +863,8 @@ func (p packageServiceImpl) GetPackageKind(id string) (string, error) {
 	}
 }
 
-func (p packageServiceImpl) GetGroupDescendantPackages(groupId string) ([]entity.PackageEntity, error) {
-	groupEnt, err := p.publishedRepo.GetPackage(groupId)
+func (p packageServiceImpl) GetGroupDescendantPackages(ctx context.Context, groupId string) ([]entity.PackageEntity, error) {
+	groupEnt, err := p.publishedRepo.GetPackage(ctx, groupId)
 	if err != nil {
 		return nil, err
 	}
@@ -841,18 +884,18 @@ func (p packageServiceImpl) GetGroupDescendantPackages(groupId string) ([]entity
 			Params:  map[string]interface{}{"kind": groupEnt.Kind, "allowedKind": entity.KIND_GROUP},
 		}
 	}
-	return p.publishedRepo.GetDescendantPackages(groupId)
+	return p.publishedRepo.GetDescendantPackages(ctx, groupId)
 }
 
-func (p packageServiceImpl) GetPackageStatus(id string) (*view.Status, error) {
-	ent, err := p.publishedRepo.GetPackage(id)
+func (p packageServiceImpl) GetPackageStatus(ctx context.Context, id string) (*view.Status, error) {
+	ent, err := p.publishedRepo.GetPackage(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 	if ent != nil {
 		return &view.Status{Status: "exists"}, nil
 	}
-	deletedEnt, err := p.publishedRepo.GetDeletedPackage(id)
+	deletedEnt, err := p.publishedRepo.GetDeletedPackage(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -867,8 +910,8 @@ func (p packageServiceImpl) GetPackageStatus(id string) (*view.Status, error) {
 	}
 }
 
-func (p packageServiceImpl) getParents(packageId string, includeDeleted bool) ([]view.ParentPackageInfo, error) {
-	parents, err := p.publishedRepo.GetParentsForPackage(packageId, includeDeleted)
+func (p packageServiceImpl) getParents(ctx context.Context, packageId string, includeDeleted bool) ([]view.ParentPackageInfo, error) {
+	parents, err := p.publishedRepo.GetParentsForPackage(ctx, packageId, includeDeleted)
 	if err != nil {
 		return nil, err
 	}
@@ -911,7 +954,7 @@ func validatePackageGroupingPrefix(groupingPrefix string) error {
 	return nil
 }
 
-func (p packageServiceImpl) GetAvailableVersionPublishStatuses_deprecated(ctx context.SecurityContext, packageId string) (*view.Statuses_deprecated, error) {
+func (p packageServiceImpl) GetAvailableVersionPublishStatuses_deprecated(ctx context.Context, packageId string) (*view.Statuses_deprecated, error) {
 	statusesForPublish, err := p.roleService.GetAvailableVersionPublishStatuses(ctx, packageId)
 	if err != nil {
 		return nil, err
@@ -919,8 +962,8 @@ func (p packageServiceImpl) GetAvailableVersionPublishStatuses_deprecated(ctx co
 	return &view.Statuses_deprecated{Statuses: statusesForPublish}, err
 }
 
-func (p packageServiceImpl) RecalculateOperationGroups(ctx context.SecurityContext, packageId string) error {
-	packageEnt, err := p.publishedRepo.GetPackage(packageId)
+func (p packageServiceImpl) RecalculateOperationGroups(ctx context.Context, packageId string) error {
+	packageEnt, err := p.publishedRepo.GetPackage(ctx, packageId)
 	if err != nil {
 		return err
 	}
@@ -932,15 +975,15 @@ func (p packageServiceImpl) RecalculateOperationGroups(ctx context.SecurityConte
 			Params:  map[string]interface{}{"packageId": packageId},
 		}
 	}
-	err = p.publishedRepo.RecalculatePackageOperationGroups(packageEnt.Id, view.MakePackageGroupingPrefixRegex(packageEnt.RestGroupingPrefix), ctx.GetUserId())
+	err = p.publishedRepo.RecalculatePackageOperationGroups(ctx, packageEnt.Id, view.MakePackageGroupingPrefixRegex(packageEnt.RestGroupingPrefix), secctx.GetUserId(ctx))
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p packageServiceImpl) CalculateOperationGroups(packageId string, groupingPrefix string) (*view.CalculatedOperationGroups, error) {
-	packageEnt, err := p.publishedRepo.GetPackage(packageId)
+func (p packageServiceImpl) CalculateOperationGroups(ctx context.Context, packageId string, groupingPrefix string) (*view.CalculatedOperationGroups, error) {
+	packageEnt, err := p.publishedRepo.GetPackage(ctx, packageId)
 	if err != nil {
 		return nil, err
 	}
@@ -952,7 +995,7 @@ func (p packageServiceImpl) CalculateOperationGroups(packageId string, groupingP
 			Params:  map[string]interface{}{"packageId": packageId},
 		}
 	}
-	defaultVersion, err := p.versionService.GetDefaultVersion(packageId)
+	defaultVersion, err := p.versionService.GetDefaultVersion(ctx, packageId)
 	if err != nil {
 		return nil, err
 	}
@@ -969,7 +1012,7 @@ func (p packageServiceImpl) CalculateOperationGroups(packageId string, groupingP
 		return nil, err
 	}
 	groupingPrefix = view.MakePackageGroupingPrefixRegex(groupingPrefix)
-	groups, err := p.operationGroupService.CalculateOperationGroups(packageId, defaultVersion, groupingPrefix)
+	groups, err := p.operationGroupService.CalculateOperationGroups(ctx, packageId, defaultVersion, groupingPrefix)
 	if err != nil {
 		return nil, err
 	}

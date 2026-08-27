@@ -1,0 +1,1169 @@
+{
+  "info": {
+    "_postman_id": "7a273390-34ea-4a2f-8f18-811a19c516bb",
+    "name": "Dashboard DDL and MCP contracts E2E",
+    "description": "Creates an isolated workspace, two referenced packages, and a dashboard; publishes v1 and v2 of every package; verifies dashboard DDL and MCP aggregation, scoping, exports, and DDL changelog behaviour; then removes all created packages.\n\nPrerequisites: the backend and build-task-consumer must be running, and apiKey must permit package creation and publication.\n\nRun from the repository root so multipart fixtures resolve:\nnewman run tests/api/DashboardContractsE2E.postman_collection.json --working-dir .\n\nA unique suffix is generated once per run. All package aliases remain within the API's 10-character limit.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "api-key",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{apiKey}}",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.collectionVariables.get('runSuffix')) {",
+          "    var suffix = (Date.now().toString(36) + Math.random().toString(36).slice(2)).slice(-7);",
+          "    pm.collectionVariables.set('runSuffix', suffix);",
+          "    pm.collectionVariables.set('workspaceAlias', 'dcw' + suffix);",
+          "    pm.collectionVariables.set('alphaAlias', 'dca' + suffix);",
+          "    pm.collectionVariables.set('betaAlias', 'dcb' + suffix);",
+          "    pm.collectionVariables.set('dashboardAlias', 'dcd' + suffix);",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8090",
+      "type": "string"
+    },
+    {
+      "key": "apiKey",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "runSuffix",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "workspaceAlias",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "alphaAlias",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "betaAlias",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dashboardAlias",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "workspaceId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "alphaPackageId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "betaPackageId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "dashboardPackageId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "version1",
+      "value": "v1",
+      "type": "string"
+    },
+    {
+      "key": "version2",
+      "value": "v2",
+      "type": "string"
+    },
+    {
+      "key": "versionStatus",
+      "value": "release",
+      "type": "string"
+    },
+    {
+      "key": "maxPollAttempts",
+      "value": "60",
+      "type": "string"
+    },
+    {
+      "key": "pollDelayMs",
+      "value": "1000",
+      "type": "string"
+    },
+    {
+      "key": "pollAttempts",
+      "value": "0",
+      "type": "string"
+    },
+    {
+      "key": "publishId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "expectedAlphaDdlEntityId",
+      "value": "public-table-alpha_items",
+      "type": "string"
+    },
+    {
+      "key": "expectedBetaDdlEntityId",
+      "value": "public-table-beta_items",
+      "type": "string"
+    },
+    {
+      "key": "expectedAlphaMcpEntityId",
+      "value": "mcp-tool-alpha_lookup",
+      "type": "string"
+    },
+    {
+      "key": "expectedBetaMcpEntityId",
+      "value": "mcp-tool-beta_search",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Create packages",
+      "item": [
+        {
+          "name": "Create workspace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Workspace created', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.expect(json.packageId).to.be.a('string').and.not.empty;",
+                  "pm.collectionVariables.set('workspaceId', json.packageId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alias\": \"{{workspaceAlias}}\",\n  \"kind\": \"workspace\",\n  \"name\": \"Dashboard contracts E2E {{runSuffix}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v2/packages"
+          },
+          "response": []
+        },
+        {
+          "name": "Create alpha package",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Alpha package created', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('alphaPackageId', json.packageId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alias\": \"{{alphaAlias}}\",\n  \"parentId\": \"{{workspaceId}}\",\n  \"kind\": \"package\",\n  \"name\": \"Dashboard alpha contracts\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v2/packages"
+          },
+          "response": []
+        },
+        {
+          "name": "Create beta package",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Beta package created', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('betaPackageId', json.packageId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alias\": \"{{betaAlias}}\",\n  \"parentId\": \"{{workspaceId}}\",\n  \"kind\": \"package\",\n  \"name\": \"Dashboard beta contracts\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v2/packages"
+          },
+          "response": []
+        },
+        {
+          "name": "Create dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Dashboard created', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('dashboardPackageId', json.packageId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alias\": \"{{dashboardAlias}}\",\n  \"parentId\": \"{{workspaceId}}\",\n  \"kind\": \"dashboard\",\n  \"name\": \"Dashboard contracts aggregation\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v2/packages"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Publish referenced packages",
+      "item": [
+        {
+          "name": "Publish alpha v1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Alpha v1 publish accepted', function () { pm.response.to.have.status(202); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('publishId', json.publishId);",
+                  "pm.collectionVariables.set('pollAttempts', '0');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "config",
+                  "value": "{\"packageId\":\"{{alphaPackageId}}\",\"version\":\"{{version1}}\",\"status\":\"{{versionStatus}}\",\"files\":[{\"fileId\":\"schema.sql\",\"publish\":true},{\"fileId\":\"init.json\",\"publish\":true,\"metadata\":{\"mcpEndpoint\":\"/mcp\"}},{\"fileId\":\"tools.json\",\"publish\":true,\"metadata\":{\"mcpEndpoint\":\"/mcp\"}}]}",
+                  "type": "text"
+                },
+                {
+                  "key": "sources",
+                  "type": "file",
+                  "src": "tests/api/fixtures/dashboard-contracts/alpha-v1.zip"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/v2/packages/{{alphaPackageId}}/publish"
+          },
+          "response": []
+        },
+        {
+          "name": "Wait for alpha v1",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+                  "if (attempts > 0) {",
+                  "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+                  "    while (Date.now() < until) {}",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Alpha v1 status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "if (json.status === 'complete') {",
+                  "    pm.collectionVariables.set('pollAttempts', '0');",
+                  "} else if (json.status === 'error') {",
+                  "    pm.test('Alpha v1 build succeeds', function () { pm.expect.fail(json.message || 'build failed'); });",
+                  "} else {",
+                  "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+                  "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+                  "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) { pm.execution.setNextRequest(pm.info.requestName); }",
+                  "    else { pm.test('Alpha v1 completes before timeout', function () { pm.expect.fail('publish timeout'); }); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v2/packages/{{alphaPackageId}}/publish/{{publishId}}/status"
+          },
+          "response": []
+        },
+        {
+          "name": "Publish alpha v2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Alpha v2 publish accepted', function () { pm.response.to.have.status(202); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('publishId', json.publishId);",
+                  "pm.collectionVariables.set('pollAttempts', '0');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "config",
+                  "value": "{\"packageId\":\"{{alphaPackageId}}\",\"version\":\"{{version2}}\",\"previousVersion\":\"{{version1}}\",\"status\":\"{{versionStatus}}\",\"files\":[{\"fileId\":\"schema.sql\",\"publish\":true},{\"fileId\":\"init.json\",\"publish\":true,\"metadata\":{\"mcpEndpoint\":\"/mcp\"}},{\"fileId\":\"tools.json\",\"publish\":true,\"metadata\":{\"mcpEndpoint\":\"/mcp\"}}]}",
+                  "type": "text"
+                },
+                {
+                  "key": "sources",
+                  "type": "file",
+                  "src": "tests/api/fixtures/dashboard-contracts/alpha-v2.zip"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/v2/packages/{{alphaPackageId}}/publish"
+          },
+          "response": []
+        },
+        {
+          "name": "Wait for alpha v2",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+                  "if (attempts > 0) { var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10); while (Date.now() < until) {} }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Alpha v2 status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "if (json.status === 'complete') { pm.collectionVariables.set('pollAttempts', '0'); }",
+                  "else if (json.status === 'error') { pm.test('Alpha v2 build succeeds', function () { pm.expect.fail(json.message || 'build failed'); }); }",
+                  "else {",
+                  "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+                  "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+                  "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) { pm.execution.setNextRequest(pm.info.requestName); }",
+                  "    else { pm.test('Alpha v2 completes before timeout', function () { pm.expect.fail('publish timeout'); }); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v2/packages/{{alphaPackageId}}/publish/{{publishId}}/status"
+          },
+          "response": []
+        },
+        {
+          "name": "Publish beta v1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Beta v1 publish accepted', function () { pm.response.to.have.status(202); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('publishId', json.publishId);",
+                  "pm.collectionVariables.set('pollAttempts', '0');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "config",
+                  "value": "{\"packageId\":\"{{betaPackageId}}\",\"version\":\"{{version1}}\",\"status\":\"{{versionStatus}}\",\"files\":[{\"fileId\":\"schema.sql\",\"publish\":true},{\"fileId\":\"init.json\",\"publish\":true,\"metadata\":{\"mcpEndpoint\":\"/mcp\"}},{\"fileId\":\"tools.json\",\"publish\":true,\"metadata\":{\"mcpEndpoint\":\"/mcp\"}}]}",
+                  "type": "text"
+                },
+                {
+                  "key": "sources",
+                  "type": "file",
+                  "src": "tests/api/fixtures/dashboard-contracts/beta-v1.zip"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/v2/packages/{{betaPackageId}}/publish"
+          },
+          "response": []
+        },
+        {
+          "name": "Wait for beta v1",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+                  "if (attempts > 0) { var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10); while (Date.now() < until) {} }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Beta v1 status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "if (json.status === 'complete') { pm.collectionVariables.set('pollAttempts', '0'); }",
+                  "else if (json.status === 'error') { pm.test('Beta v1 build succeeds', function () { pm.expect.fail(json.message || 'build failed'); }); }",
+                  "else {",
+                  "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+                  "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+                  "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) { pm.execution.setNextRequest(pm.info.requestName); }",
+                  "    else { pm.test('Beta v1 completes before timeout', function () { pm.expect.fail('publish timeout'); }); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v2/packages/{{betaPackageId}}/publish/{{publishId}}/status"
+          },
+          "response": []
+        },
+        {
+          "name": "Publish beta v2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Beta v2 publish accepted', function () { pm.response.to.have.status(202); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('publishId', json.publishId);",
+                  "pm.collectionVariables.set('pollAttempts', '0');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "config",
+                  "value": "{\"packageId\":\"{{betaPackageId}}\",\"version\":\"{{version2}}\",\"previousVersion\":\"{{version1}}\",\"status\":\"{{versionStatus}}\",\"files\":[{\"fileId\":\"schema.sql\",\"publish\":true},{\"fileId\":\"init.json\",\"publish\":true,\"metadata\":{\"mcpEndpoint\":\"/mcp\"}},{\"fileId\":\"tools.json\",\"publish\":true,\"metadata\":{\"mcpEndpoint\":\"/mcp\"}}]}",
+                  "type": "text"
+                },
+                {
+                  "key": "sources",
+                  "type": "file",
+                  "src": "tests/api/fixtures/dashboard-contracts/beta-v2.zip"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/v2/packages/{{betaPackageId}}/publish"
+          },
+          "response": []
+        },
+        {
+          "name": "Wait for beta v2",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+                  "if (attempts > 0) { var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10); while (Date.now() < until) {} }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Beta v2 status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "if (json.status === 'complete') { pm.collectionVariables.set('pollAttempts', '0'); }",
+                  "else if (json.status === 'error') { pm.test('Beta v2 build succeeds', function () { pm.expect.fail(json.message || 'build failed'); }); }",
+                  "else {",
+                  "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+                  "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+                  "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) { pm.execution.setNextRequest(pm.info.requestName); }",
+                  "    else { pm.test('Beta v2 completes before timeout', function () { pm.expect.fail('publish timeout'); }); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v2/packages/{{betaPackageId}}/publish/{{publishId}}/status"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 - Publish dashboard",
+      "item": [
+        {
+          "name": "Publish dashboard v1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Dashboard v1 publish accepted', function () { pm.response.to.have.status(202); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('publishId', json.publishId);",
+                  "pm.collectionVariables.set('pollAttempts', '0');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "config",
+                  "value": "{\"packageId\":\"{{dashboardPackageId}}\",\"version\":\"{{version1}}\",\"status\":\"{{versionStatus}}\",\"refs\":[{\"refId\":\"{{alphaPackageId}}\",\"version\":\"{{version1}}\"},{\"refId\":\"{{betaPackageId}}\",\"version\":\"{{version1}}\"}]}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/v2/packages/{{dashboardPackageId}}/publish"
+          },
+          "response": []
+        },
+        {
+          "name": "Wait for dashboard v1",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+                  "if (attempts > 0) { var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10); while (Date.now() < until) {} }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Dashboard v1 status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "if (json.status === 'complete') { pm.collectionVariables.set('pollAttempts', '0'); }",
+                  "else if (json.status === 'error') { pm.test('Dashboard v1 build succeeds', function () { pm.expect.fail(json.message || 'build failed'); }); }",
+                  "else {",
+                  "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+                  "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+                  "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) { pm.execution.setNextRequest(pm.info.requestName); }",
+                  "    else { pm.test('Dashboard v1 completes before timeout', function () { pm.expect.fail('publish timeout'); }); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v2/packages/{{dashboardPackageId}}/publish/{{publishId}}/status"
+          },
+          "response": []
+        },
+        {
+          "name": "Publish dashboard v2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Dashboard v2 publish accepted', function () { pm.response.to.have.status(202); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('publishId', json.publishId);",
+                  "pm.collectionVariables.set('pollAttempts', '0');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "config",
+                  "value": "{\"packageId\":\"{{dashboardPackageId}}\",\"version\":\"{{version2}}\",\"previousVersion\":\"{{version1}}\",\"status\":\"{{versionStatus}}\",\"refs\":[{\"refId\":\"{{alphaPackageId}}\",\"version\":\"{{version2}}\"},{\"refId\":\"{{betaPackageId}}\",\"version\":\"{{version2}}\"}]}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/v2/packages/{{dashboardPackageId}}/publish"
+          },
+          "response": []
+        },
+        {
+          "name": "Wait for dashboard v2",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+                  "if (attempts > 0) { var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10); while (Date.now() < until) {} }"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Dashboard v2 status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "if (json.status === 'complete') { pm.collectionVariables.set('pollAttempts', '0'); }",
+                  "else if (json.status === 'error') { pm.test('Dashboard v2 build succeeds', function () { pm.expect.fail(json.message || 'build failed'); }); }",
+                  "else {",
+                  "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+                  "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+                  "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) { pm.execution.setNextRequest(pm.info.requestName); }",
+                  "    else { pm.test('Dashboard v2 completes before timeout', function () { pm.expect.fail('publish timeout'); }); }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v2/packages/{{dashboardPackageId}}/publish/{{publishId}}/status"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 - Verify dashboard contracts",
+      "item": [
+        {
+          "name": "Dashboard version summary aggregates contracts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Dashboard version is returned', function () { pm.response.to.have.status(200); });",
+                  "var json = pm.response.json();",
+                  "pm.test('DDL summary aggregates two tables', function () {",
+                  "    pm.expect(json.contractsSummary.ddl.tablesCount).to.eql(2);",
+                  "});",
+                  "pm.test('MCP summary merges both tools under /mcp', function () {",
+                  "    pm.expect(json.contractsSummary.mcp).to.have.property('/mcp');",
+                  "    pm.expect(json.contractsSummary.mcp['/mcp'].toolsCount).to.eql(2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v3/packages/{{dashboardPackageId}}/versions/{{version2}}?includeSummary=true"
+          },
+          "response": []
+        },
+        {
+          "name": "List all dashboard DDL entities",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unscoped DDL list succeeds', function () { pm.response.to.have.status(200); });",
+                  "var ids = pm.response.json().entities.map(function (entity) { return entity.ddlEntityId; });",
+                  "pm.test('Unscoped DDL list contains both tables', function () {",
+                  "    pm.expect(ids).to.have.members([pm.collectionVariables.get('expectedAlphaDdlEntityId'), pm.collectionVariables.get('expectedBetaDdlEntityId')]);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{dashboardPackageId}}/versions/{{version2}}/ddl/entities"
+          },
+          "response": []
+        },
+        {
+          "name": "List alpha dashboard DDL entities",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Scoped DDL list succeeds', function () { pm.response.to.have.status(200); });",
+                  "var entities = pm.response.json().entities;",
+                  "pm.test('Scoped DDL list contains only alpha', function () {",
+                  "    pm.expect(entities).to.have.lengthOf(1);",
+                  "    pm.expect(entities[0].ddlEntityId).to.eql(pm.collectionVariables.get('expectedAlphaDdlEntityId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{dashboardPackageId}}/versions/{{version2}}/ddl/entities?refPackageId={{alphaPackageId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "List all dashboard MCP tools",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Unscoped MCP list succeeds', function () { pm.response.to.have.status(200); });",
+                  "var ids = pm.response.json().entities.map(function (entity) { return entity.mcpEntityId; });",
+                  "pm.test('Unscoped MCP list contains both tools', function () {",
+                  "    pm.expect(ids).to.have.members([pm.collectionVariables.get('expectedAlphaMcpEntityId'), pm.collectionVariables.get('expectedBetaMcpEntityId')]);",
+                  "});",
+                  "pm.test('Both tools use the shared endpoint', function () {",
+                  "    pm.response.json().entities.forEach(function (entity) { pm.expect(entity.mcpEndpoint).to.eql('/mcp'); });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{dashboardPackageId}}/versions/{{version2}}/mcp/tools"
+          },
+          "response": []
+        },
+        {
+          "name": "List beta dashboard MCP tools",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Scoped MCP list succeeds', function () { pm.response.to.have.status(200); });",
+                  "var entities = pm.response.json().entities;",
+                  "pm.test('Scoped MCP list contains only beta', function () {",
+                  "    pm.expect(entities).to.have.lengthOf(1);",
+                  "    pm.expect(entities[0].mcpEntityId).to.eql(pm.collectionVariables.get('expectedBetaMcpEntityId'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{dashboardPackageId}}/versions/{{version2}}/mcp/tools?refPackageId={{betaPackageId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Export scoped dashboard DDL entities",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Scoped DDL XLSX export succeeds', function () { pm.response.to.have.status(200); });",
+                  "pm.test('DDL export is an attachment', function () { pm.expect(pm.response.headers.get('Content-Disposition')).to.include('attachment'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{dashboardPackageId}}/versions/{{version2}}/ddl/export/entities?refPackageId={{alphaPackageId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Export scoped dashboard MCP tools",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Scoped MCP XLSX export succeeds', function () { pm.response.to.have.status(200); });",
+                  "pm.test('MCP export is an attachment', function () { pm.expect(pm.response.headers.get('Content-Disposition')).to.include('attachment'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{dashboardPackageId}}/versions/{{version2}}/mcp/export/tools?refPackageId={{betaPackageId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Ordinary package rejects refPackageId",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('refPackageId on an ordinary package returns 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{alphaPackageId}}/versions/{{version2}}/ddl/entities?refPackageId={{alphaPackageId}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 - Verify dashboard DDL changes",
+      "item": [
+        {
+          "name": "Dashboard changes summary includes DDL refs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Dashboard changes summary succeeds', function () { pm.response.to.have.status(200); });",
+                  "var refs = pm.response.json().refs;",
+                  "pm.test('Both changed refs are returned', function () { pm.expect(refs).to.have.lengthOf(2); });",
+                  "pm.test('Every DDL-only ref has a DDL summary and no operation types', function () {",
+                  "    refs.forEach(function (ref) {",
+                  "        pm.expect(ref.contractsChangesSummary).to.have.property('ddl');",
+                  "        pm.expect(ref.operationTypes).to.be.an('array').that.is.empty;",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v2/packages/{{dashboardPackageId}}/versions/{{version2}}/changes/summary"
+          },
+          "response": []
+        },
+        {
+          "name": "List alpha changed DDL entities",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Scoped changed DDL list succeeds', function () { pm.response.to.have.status(200); });",
+                  "var entities = pm.response.json().entities;",
+                  "pm.test('Alpha table has a detected change', function () {",
+                  "    pm.expect(entities.length).to.be.above(0);",
+                  "    var expected = pm.collectionVariables.get('expectedAlphaDdlEntityId');",
+                  "    var found = entities.some(function (entity) {",
+                  "        return (entity.ddlEntityData && entity.ddlEntityData.ddlEntityId === expected) || (entity.previousDdlEntityData && entity.previousDdlEntityData.ddlEntityId === expected);",
+                  "    });",
+                  "    pm.expect(found).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{dashboardPackageId}}/versions/{{version2}}/ddl/changes?refPackageId={{alphaPackageId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Get alpha DDL entity changes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Scoped per-entity DDL changes succeed', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Per-entity changes are present', function () { pm.expect(pm.response.json().changes.length).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{dashboardPackageId}}/versions/{{version2}}/ddl/entities/{{expectedAlphaDdlEntityId}}/changes?refPackageId={{alphaPackageId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Get alpha DDL entity changes summary",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Scoped per-entity DDL summary succeeds', function () { pm.response.to.have.status(200); });",
+                  "var summary = pm.response.json();",
+                  "var keys = ['breaking', 'semi-breaking', 'deprecated', 'non-breaking', 'annotation', 'unclassified'];",
+                  "var total = keys.reduce(function (sum, key) { return sum + (parseInt(summary[key] || 0, 10) || 0); }, 0);",
+                  "pm.test('Per-entity DDL summary counts a change', function () { pm.expect(total).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/v1/packages/{{dashboardPackageId}}/versions/{{version2}}/ddl/entities/{{expectedAlphaDdlEntityId}}/changes/summary?refPackageId={{alphaPackageId}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "99 - Cleanup",
+      "item": [
+        {
+          "name": "Delete dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Dashboard is removed', function () { pm.expect(pm.response.code).to.be.oneOf([204, 404]); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v2/packages/{{dashboardPackageId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete alpha package",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Alpha package is removed', function () { pm.expect(pm.response.code).to.be.oneOf([204, 404]); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v2/packages/{{alphaPackageId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete beta package",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Beta package is removed', function () { pm.expect(pm.response.code).to.be.oneOf([204, 404]); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v2/packages/{{betaPackageId}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete workspace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Workspace is removed', function () { pm.expect(pm.response.code).to.be.oneOf([204, 404]); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/v2/packages/{{workspaceId}}"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

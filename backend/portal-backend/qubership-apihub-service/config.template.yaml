@@ -105,6 +105,10 @@ technicalParameters:
   apiSpecDirectory: ''
   # Optional; Maximum wait time in minutes for lock release during migration restart; If not set, default value: 30; Example: 60
   migrationLockMaxWaitMinutes: 30
+  # Optional; Safety-net cap in seconds on request processing time; a slow query or downstream call is cancelled once it elapses. Must stay below the nginx generic proxy_read_timeout (600s) so the app returns its own timeout error first; streaming/turn endpoints (MCP, AI chat SSE and non-streaming messages) are always exempt; Set to 0 to disable the cap; If not set, default value: 570; Example: 300
+  requestTimeoutSec: 570
+  # Optional; Maximum execution time in minutes for an asynchronous package move job; If not set, default value: 30; Example: 60
+  transitionMoveTimeoutMinutes: 30
   # Optional; Base directory for ephemeral (temporary) file storage; If not set, default value: /tmp/apihub-ephemeral-files; Example: /var/apihub/ephemeral
   ephemeralFileDirectory: '/tmp/apihub-ephemeral-files'
 
@@ -157,6 +161,14 @@ s3Storage:
   bucketName: 'apihub-bucket'
   # Optional; Set to true to store only build results (less data amout) in S3 storage; If not set, default value: false; Example: true
   storeOnlyBuildResult: false
+  # Timeouts for the individual steps of the data migration between S3 storage and the database. There is no timeout for a migration run as a whole, because its duration depends on the number of objects to transfer.
+  migrationTimeouts:
+    # Optional; Timeout in seconds for a single S3 call; If not set, default value: 600; Example: 900
+    s3OperationSec: 600
+    # Optional; Timeout in seconds for a single-row database read or insert during the migration; If not set, default value: 120; Example: 300
+    databaseOperationSec: 120
+    # Optional; Timeout in minutes for the bulk delete of migrated rows, including the 'VACUUM FULL' that follows it; If not set, default value: 180; Example: 360
+    bulkDeleteMinutes: 180
 
 # Section with Olric(distributed cache and pub-sub) configuration.
 olric:
@@ -205,6 +217,12 @@ cleanup:
   builds:
     # Optional; Schedule for the builds cleanup job. If not set, default value: "0 1 * * 0"; Example: "* * * * *"
     schedule: '0 1 * * 0'
+    # Optional; Timeout in minutes for the builds cleanup job (performs VACUUM FULL on build tables); If not set, default value: 360; Example: 120
+    timeoutMinutes: 360
+    expiredS3Files:
+      # Removal of expired S3 objects runs as a phase of the builds cleanup job and follows cleanup.builds.schedule. Only applies when S3 storage is enabled
+      # Optional; Timeout in minutes for the expired S3 files phase. After the timeout, the sweep stops and resumes on the next run; If not set, default value: 360; Example: 120
+      timeoutMinutes: 360
   ephemeralFiles:
     # Optional; Cron schedule for ephemeral files cleanup job; If not set, default value: "*/5 * * * *"; Example: "*/10 * * * *"
     schedule: '*/5 * * * *'

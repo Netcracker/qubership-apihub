@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
@@ -10,9 +11,9 @@ import (
 )
 
 type MigrationRunRepository interface {
-	GetMigrationRun(migrationId string) (*mEntity.MigrationRunEntity, error)
-	GetRunningMigrations() ([]*mEntity.MigrationRunEntity, error)
-	GetRunningFullMigrations() ([]*mEntity.MigrationRunEntity, error)
+	GetMigrationRun(ctx context.Context, migrationId string) (*mEntity.MigrationRunEntity, error)
+	GetRunningMigrations(ctx context.Context) ([]*mEntity.MigrationRunEntity, error)
+	GetRunningFullMigrations(ctx context.Context) ([]*mEntity.MigrationRunEntity, error)
 }
 
 func NewMigrationRunRepository(cp db.ConnectionProvider) MigrationRunRepository {
@@ -23,9 +24,9 @@ type migrationRunRepositoryImpl struct {
 	cp db.ConnectionProvider
 }
 
-func (m migrationRunRepositoryImpl) GetMigrationRun(migrationId string) (*mEntity.MigrationRunEntity, error) {
+func (m migrationRunRepositoryImpl) GetMigrationRun(ctx context.Context, migrationId string) (*mEntity.MigrationRunEntity, error) {
 	mRunEnt := new(mEntity.MigrationRunEntity)
-	err := m.cp.GetConnection().Model(mRunEnt).
+	err := m.cp.GetConnection().WithContext(ctx).Model(mRunEnt).
 		Where("id = ?", migrationId).
 		First()
 	if err != nil {
@@ -37,9 +38,9 @@ func (m migrationRunRepositoryImpl) GetMigrationRun(migrationId string) (*mEntit
 	return mRunEnt, nil
 }
 
-func (m migrationRunRepositoryImpl) GetRunningMigrations() ([]*mEntity.MigrationRunEntity, error) {
+func (m migrationRunRepositoryImpl) GetRunningMigrations(ctx context.Context) ([]*mEntity.MigrationRunEntity, error) {
 	ents := make([]*mEntity.MigrationRunEntity, 0)
-	err := m.cp.GetConnection().Model(&ents).
+	err := m.cp.GetConnection().WithContext(ctx).Model(&ents).
 		Where("status = ?", view.MigrationStatusRunning).
 		Where("started_at > ?", time.Now().Add(-7*24*time.Hour)).
 		Select()
@@ -51,9 +52,9 @@ func (m migrationRunRepositoryImpl) GetRunningMigrations() ([]*mEntity.Migration
 	return ents, nil
 }
 
-func (m migrationRunRepositoryImpl) GetRunningFullMigrations() ([]*mEntity.MigrationRunEntity, error) {
+func (m migrationRunRepositoryImpl) GetRunningFullMigrations(ctx context.Context) ([]*mEntity.MigrationRunEntity, error) {
 	ents := make([]*mEntity.MigrationRunEntity, 0)
-	err := m.cp.GetConnection().Model(&ents).
+	err := m.cp.GetConnection().WithContext(ctx).Model(&ents).
 		Where("status = ?", view.MigrationStatusRunning).
 		Where("started_at > ?", time.Now().Add(-7*24*time.Hour)).
 		Where("(package_ids IS NULL OR package_ids = '{}')").

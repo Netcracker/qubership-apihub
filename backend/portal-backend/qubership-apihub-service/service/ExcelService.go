@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -20,14 +21,14 @@ import (
 const ExcelTemplatePath = "static/templates/resources/ExcelExportTemplate.xlsx"
 
 type ExcelService interface {
-	ExportDeprecatedOperations(packageId, version, apiType string, req view.ExportOperationRequestView) (*excelize.File, string, error)
-	ExportApiChanges(packageId, version, apiType string, severities []string, req view.ExportApiChangesRequestView) (*excelize.File, string, error)
-	ExportOperations(packageId, version, apiType string, req view.ExportOperationRequestView) (*excelize.File, string, error)
-	ExportDdlEntities(packageId, version string, req view.ExportDdlEntitiesRequestView) (*excelize.File, string, error)
-	ExportDdlChanges(packageId, version string, req view.ExportDdlChangesRequestView) (*excelize.File, string, error)
-	ExportMcpEntities(packageId, version, kind string, req view.ExportMcpEntitiesRequestView) (*excelize.File, string, error)
+	ExportDeprecatedOperations(ctx context.Context, packageId, version, apiType string, req view.ExportOperationRequestView) (*excelize.File, string, error)
+	ExportApiChanges(ctx context.Context, packageId, version, apiType string, severities []string, req view.ExportApiChangesRequestView) (*excelize.File, string, error)
+	ExportOperations(ctx context.Context, packageId, version, apiType string, req view.ExportOperationRequestView) (*excelize.File, string, error)
+	ExportDdlEntities(ctx context.Context, packageId, version string, req view.ExportDdlEntitiesRequestView) (*excelize.File, string, error)
+	ExportDdlChanges(ctx context.Context, packageId, version string, req view.ExportDdlChangesRequestView) (*excelize.File, string, error)
+	ExportMcpEntities(ctx context.Context, packageId, version, kind string, req view.ExportMcpEntitiesRequestView) (*excelize.File, string, error)
 	ExportBusinessMetrics(businessMetrics []view.BusinessMetric) (*excelize.File, string, error)
-	BuildShareabilityReport(groupId, versionName string) (*excelize.File, string, error)
+	BuildShareabilityReport(ctx context.Context, groupId, versionName string) (*excelize.File, string, error)
 	ParseShareabilityReport(in io.Reader) ([]view.ShareabilityReportRow, error)
 }
 
@@ -44,7 +45,7 @@ type excelServiceImpl struct {
 	mcpContractService MCPContractService
 }
 
-func (e excelServiceImpl) ExportApiChanges(packageId, version, apiType string, severities []string, req view.ExportApiChangesRequestView) (*excelize.File, string, error) {
+func (e excelServiceImpl) ExportApiChanges(ctx context.Context, packageId, version, apiType string, severities []string, req view.ExportApiChangesRequestView) (*excelize.File, string, error) {
 	versionChangesSearchReq := view.VersionChangesReq{
 		PreviousVersion:          req.PreviousVersion,
 		PreviousVersionPackageId: req.PreviousVersionPackageId,
@@ -59,22 +60,22 @@ func (e excelServiceImpl) ExportApiChanges(packageId, version, apiType string, s
 		AsyncapiChannel:          req.AsyncapiChannel,
 		AsyncapiProtocol:         req.AsyncapiProtocol,
 	}
-	changelog, err := e.versionService.GetVersionChanges(packageId, version, apiType, severities, versionChangesSearchReq)
+	changelog, err := e.versionService.GetVersionChanges(ctx, packageId, version, apiType, severities, versionChangesSearchReq)
 	if err != nil {
 		return nil, "", err
 	}
 	if changelog == nil || len(changelog.Operations) == 0 {
 		return nil, "", nil
 	}
-	versionName, err := e.getVersionNameForAttachmentName(packageId, version)
+	versionName, err := e.getVersionNameForAttachmentName(ctx, packageId, version)
 	if err != nil {
 		return nil, "", err
 	}
-	versionStatus, err := e.versionService.GetVersionStatus(packageId, version)
+	versionStatus, err := e.versionService.GetVersionStatus(ctx, packageId, version)
 	if err != nil {
 		return nil, "", err
 	}
-	packageName, err := e.packageService.GetPackageName(packageId)
+	packageName, err := e.packageService.GetPackageName(ctx, packageId)
 	if err != nil {
 		return nil, "", err
 	}
@@ -90,7 +91,7 @@ type OperationsReport struct {
 	columnDefaultWidth float64
 }
 
-func (e excelServiceImpl) ExportOperations(packageId, version, apiType string, req view.ExportOperationRequestView) (*excelize.File, string, error) {
+func (e excelServiceImpl) ExportOperations(ctx context.Context, packageId, version, apiType string, req view.ExportOperationRequestView) (*excelize.File, string, error) {
 	restOperationListReq := view.OperationListReq{
 		Kind:             req.Kind,
 		EmptyTag:         req.EmptyTag,
@@ -104,22 +105,22 @@ func (e excelServiceImpl) ExportOperations(packageId, version, apiType string, r
 		AsyncapiChannel:  req.AsyncapiChannel,
 		AsyncapiProtocol: req.AsyncapiProtocol,
 	}
-	operations, err := e.operationService.GetOperations(packageId, version, false, restOperationListReq)
+	operations, err := e.operationService.GetOperations(ctx, packageId, version, false, restOperationListReq)
 	if err != nil {
 		return nil, "", err
 	}
 	if operations == nil || len(operations.Operations) == 0 {
 		return nil, "", nil
 	}
-	versionName, err := e.getVersionNameForAttachmentName(packageId, version)
+	versionName, err := e.getVersionNameForAttachmentName(ctx, packageId, version)
 	if err != nil {
 		return nil, "", err
 	}
-	versionStatus, err := e.versionService.GetVersionStatus(packageId, version)
+	versionStatus, err := e.versionService.GetVersionStatus(ctx, packageId, version)
 	if err != nil {
 		return nil, "", err
 	}
-	packageName, err := e.packageService.GetPackageName(packageId)
+	packageName, err := e.packageService.GetPackageName(ctx, packageId)
 	if err != nil {
 		return nil, "", err
 	}
@@ -127,23 +128,23 @@ func (e excelServiceImpl) ExportOperations(packageId, version, apiType string, r
 	return file, versionName, err
 }
 
-func (e excelServiceImpl) ExportDdlEntities(packageId, version string, req view.ExportDdlEntitiesRequestView) (*excelize.File, string, error) {
-	entities, err := e.ddlContractService.ListDdlEntities(packageId, version, req.TextFilter, 0, 0)
+func (e excelServiceImpl) ExportDdlEntities(ctx context.Context, packageId, version string, req view.ExportDdlEntitiesRequestView) (*excelize.File, string, error) {
+	entities, err := e.ddlContractService.ListDdlEntities(ctx, packageId, version, req.RefPackageId, req.TextFilter, 0, 0)
 	if err != nil {
 		return nil, "", err
 	}
 	if entities == nil || len(entities.Entities) == 0 {
 		return nil, "", nil
 	}
-	versionName, err := e.getVersionNameForAttachmentName(packageId, version)
+	versionName, err := e.getVersionNameForAttachmentName(ctx, packageId, version)
 	if err != nil {
 		return nil, "", err
 	}
-	versionStatus, err := e.versionService.GetVersionStatus(packageId, version)
+	versionStatus, err := e.versionService.GetVersionStatus(ctx, packageId, version)
 	if err != nil {
 		return nil, "", err
 	}
-	packageName, err := e.packageService.GetPackageName(packageId)
+	packageName, err := e.packageService.GetPackageName(ctx, packageId)
 	if err != nil {
 		return nil, "", err
 	}
@@ -151,23 +152,23 @@ func (e excelServiceImpl) ExportDdlEntities(packageId, version string, req view.
 	return file, versionName, err
 }
 
-func (e excelServiceImpl) ExportMcpEntities(packageId, version, kind string, req view.ExportMcpEntitiesRequestView) (*excelize.File, string, error) {
-	entities, err := e.mcpContractService.ListMcpEntities(packageId, version, kind, "", req.TextFilter, 0, 0)
+func (e excelServiceImpl) ExportMcpEntities(ctx context.Context, packageId, version, kind string, req view.ExportMcpEntitiesRequestView) (*excelize.File, string, error) {
+	entities, err := e.mcpContractService.ListMcpEntities(ctx, packageId, version, kind, "", req.RefPackageId, req.TextFilter, 0, 0)
 	if err != nil {
 		return nil, "", err
 	}
 	if entities == nil || len(entities.Entities) == 0 {
 		return nil, "", nil
 	}
-	versionName, err := e.getVersionNameForAttachmentName(packageId, version)
+	versionName, err := e.getVersionNameForAttachmentName(ctx, packageId, version)
 	if err != nil {
 		return nil, "", err
 	}
-	versionStatus, err := e.versionService.GetVersionStatus(packageId, version)
+	versionStatus, err := e.versionService.GetVersionStatus(ctx, packageId, version)
 	if err != nil {
 		return nil, "", err
 	}
-	packageName, err := e.packageService.GetPackageName(packageId)
+	packageName, err := e.packageService.GetPackageName(ctx, packageId)
 	if err != nil {
 		return nil, "", err
 	}
@@ -175,8 +176,8 @@ func (e excelServiceImpl) ExportMcpEntities(packageId, version, kind string, req
 	return file, versionName, err
 }
 
-func (e excelServiceImpl) ExportDdlChanges(packageId, version string, req view.ExportDdlChangesRequestView) (*excelize.File, string, error) {
-	changedEntities, err := e.ddlContractService.GetChangedDdlEntities(packageId, version, view.DdlChangesReq{
+func (e excelServiceImpl) ExportDdlChanges(ctx context.Context, packageId, version string, req view.ExportDdlChangesRequestView) (*excelize.File, string, error) {
+	changedEntities, err := e.ddlContractService.GetChangedDdlEntities(ctx, packageId, version, view.DdlChangesReq{
 		PreviousVersion:          req.PreviousVersion,
 		PreviousVersionPackageId: req.PreviousVersionPackageId,
 		RefPackageId:             req.RefPackageId,
@@ -189,15 +190,15 @@ func (e excelServiceImpl) ExportDdlChanges(packageId, version string, req view.E
 	if changedEntities == nil || len(changedEntities.Entities) == 0 {
 		return nil, "", nil
 	}
-	versionName, err := e.getVersionNameForAttachmentName(packageId, version)
+	versionName, err := e.getVersionNameForAttachmentName(ctx, packageId, version)
 	if err != nil {
 		return nil, "", err
 	}
-	versionStatus, err := e.versionService.GetVersionStatus(packageId, version)
+	versionStatus, err := e.versionService.GetVersionStatus(ctx, packageId, version)
 	if err != nil {
 		return nil, "", err
 	}
-	packageName, err := e.packageService.GetPackageName(packageId)
+	packageName, err := e.packageService.GetPackageName(ctx, packageId)
 	if err != nil {
 		return nil, "", err
 	}
@@ -255,10 +256,16 @@ func buildDdlEntitiesWorkbook(entities *view.DdlEntityListView, packageId, packa
 		if !ok {
 			continue
 		}
+		// for a dashboard the row shows the entity's owning referenced package, mirroring the
+		// operations export
+		rowPackageId, rowPackageName, rowVersionName, err := resolveEntityRowPackage(entities.Packages, entityView.PackageRef, packageId, packageName, versionName)
+		if err != nil {
+			return nil, err
+		}
 		cellsValues := map[string]interface{}{
-			fmt.Sprintf("A%d", rowIndex): packageId,
-			fmt.Sprintf("B%d", rowIndex): packageName,
-			fmt.Sprintf("C%d", rowIndex): versionName,
+			fmt.Sprintf("A%d", rowIndex): rowPackageId,
+			fmt.Sprintf("B%d", rowIndex): rowPackageName,
+			fmt.Sprintf("C%d", rowIndex): rowVersionName,
 			fmt.Sprintf("D%d", rowIndex): entityView.SchemaName,
 			fmt.Sprintf("E%d", rowIndex): entityView.Name,
 			fmt.Sprintf("F%d", rowIndex): entityView.Description,
@@ -336,10 +343,16 @@ func buildMcpEntitiesWorkbook(entities *view.McpEntityListView, packageId, packa
 		if !ok {
 			continue
 		}
+		// for a dashboard the row shows the entity's owning referenced package, mirroring the
+		// operations export
+		rowPackageId, rowPackageName, rowVersionName, err := resolveEntityRowPackage(entities.Packages, entityView.PackageRef, packageId, packageName, versionName)
+		if err != nil {
+			return nil, err
+		}
 		cellsValues := map[string]interface{}{
-			fmt.Sprintf("A%d", rowIndex): packageId,
-			fmt.Sprintf("B%d", rowIndex): packageName,
-			fmt.Sprintf("C%d", rowIndex): versionName,
+			fmt.Sprintf("A%d", rowIndex): rowPackageId,
+			fmt.Sprintf("B%d", rowIndex): rowPackageName,
+			fmt.Sprintf("C%d", rowIndex): rowVersionName,
 			fmt.Sprintf("D%d", rowIndex): entityView.Kind,
 			fmt.Sprintf("E%d", rowIndex): entityView.Title,
 			fmt.Sprintf("F%d", rowIndex): entityView.Description,
@@ -365,6 +378,12 @@ func buildMcpEntitiesWorkbook(entities *view.McpEntityListView, packageId, packa
 		return nil, err
 	}
 	return workbook, nil
+}
+
+func resolveEntityRowPackage(packages map[string]view.PackageVersionRef, PackageRef string, packageId, packageName, versionName string) (string, string, string, error) {
+	//FIXME: impl
+
+	return "", "", "", nil
 }
 
 func buildDdlChangesWorkbook(changedEntities *view.DdlChangedEntitiesView, packageName, versionName, versionStatus string) (*excelize.File, error) {
@@ -474,7 +493,7 @@ type DeprecatedOperationsReport struct {
 	columnDefaultWidth float64
 }
 
-func (e excelServiceImpl) ExportDeprecatedOperations(packageId, version, apiType string, req view.ExportOperationRequestView) (*excelize.File, string, error) {
+func (e excelServiceImpl) ExportDeprecatedOperations(ctx context.Context, packageId, version, apiType string, req view.ExportOperationRequestView) (*excelize.File, string, error) {
 	deprecatedOperationListReq := view.DeprecatedOperationListReq{
 		Kind:                   req.Kind,
 		Tags:                   req.Tags,
@@ -489,7 +508,7 @@ func (e excelServiceImpl) ExportDeprecatedOperations(packageId, version, apiType
 		AsyncapiChannel:        req.AsyncapiChannel,
 		AsyncapiProtocol:       req.AsyncapiProtocol,
 	}
-	deprecatedOperations, err := e.operationService.GetDeprecatedOperations(packageId, version, deprecatedOperationListReq)
+	deprecatedOperations, err := e.operationService.GetDeprecatedOperations(ctx, packageId, version, deprecatedOperationListReq)
 	if err != nil {
 		return nil, "", err
 	}
@@ -497,16 +516,16 @@ func (e excelServiceImpl) ExportDeprecatedOperations(packageId, version, apiType
 		return nil, "", nil
 	}
 
-	versionName, err := e.getVersionNameForAttachmentName(packageId, version)
+	versionName, err := e.getVersionNameForAttachmentName(ctx, packageId, version)
 	if err != nil {
 		return nil, "", err
 	}
 
-	versionStatus, err := e.versionService.GetVersionStatus(packageId, version)
+	versionStatus, err := e.versionService.GetVersionStatus(ctx, packageId, version)
 	if err != nil {
 		return nil, "", err
 	}
-	packageName, err := e.packageService.GetPackageName(packageId)
+	packageName, err := e.packageService.GetPackageName(ctx, packageId)
 	if err != nil {
 		return nil, "", err
 	}
@@ -2334,8 +2353,8 @@ func (o *DeprecatedOperationsReport) createAsyncAPISheet() error {
 	return nil
 }
 
-func (e excelServiceImpl) getVersionNameForAttachmentName(packageId, version string) (string, error) {
-	latestRevision, err := e.publishedRepo.GetLatestRevision(packageId, version)
+func (e excelServiceImpl) getVersionNameForAttachmentName(ctx context.Context, packageId, version string) (string, error) {
+	latestRevision, err := e.publishedRepo.GetLatestRevision(ctx, packageId, version)
 	if err != nil {
 		return "", err
 	}
@@ -2428,17 +2447,17 @@ func (b *businessMetricsReport) createResultSheet(businessMetrics []view.Busines
 	return nil
 }
 
-func (e excelServiceImpl) BuildShareabilityReport(groupId, versionName string) (*excelize.File, string, error) {
+func (e excelServiceImpl) BuildShareabilityReport(ctx context.Context, groupId, versionName string) (*excelize.File, string, error) {
 	if err := ValidateVersionName(versionName); err != nil {
 		return nil, "", err
 	}
 
-	packages, err := e.packageService.GetGroupDescendantPackages(groupId)
+	packages, err := e.packageService.GetGroupDescendantPackages(ctx, groupId)
 	if err != nil {
 		return nil, "", err
 	}
 
-	rows, err := e.collectShareabilityRows(packages, versionName)
+	rows, err := e.collectShareabilityRows(ctx, packages, versionName)
 	if err != nil {
 		return nil, "", err
 	}
@@ -2457,10 +2476,10 @@ func (e excelServiceImpl) BuildShareabilityReport(groupId, versionName string) (
 	return report.workbook, filename, nil
 }
 
-func (e excelServiceImpl) collectShareabilityRows(packages []entity.PackageEntity, versionName string) ([]view.ShareabilityReportRow, error) {
+func (e excelServiceImpl) collectShareabilityRows(ctx context.Context, packages []entity.PackageEntity, versionName string) ([]view.ShareabilityReportRow, error) {
 	rows := make([]view.ShareabilityReportRow, 0)
 	for _, pkg := range packages {
-		docs, found, err := e.versionService.GetVersionDocumentsMetadata(pkg.Id, versionName)
+		docs, found, err := e.versionService.GetVersionDocumentsMetadata(ctx, pkg.Id, versionName)
 		if err != nil {
 			return nil, err
 		}

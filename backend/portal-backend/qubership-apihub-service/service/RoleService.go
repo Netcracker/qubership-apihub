@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -8,42 +9,43 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/gosimple/slug"
 )
 
 type RoleService interface {
-	AddPackageMembers(ctx context.SecurityContext, packageId string, emails []string, roleIds []string) (*view.PackageMembers, error)
-	DeletePackageMember(ctx context.SecurityContext, packageId string, userId string) (*view.PackageMember, error)
-	UpdatePackageMember(ctx context.SecurityContext, packageId string, userId string, roleId string, action string) error
-	GetPackageMembers(packageId string) (*view.PackageMembers, error)
-	GetPermissionsForPackage(ctx context.SecurityContext, packageId string) ([]string, error)
-	FilterVersionsByPackageReadAccess(ctx context.SecurityContext, keys []entity.PublishedVersionKeyEntity) (accessible []entity.PublishedVersionKeyEntity, hiddenCount int, err error)
-	GetUserPackagePromoteStatuses(packageIds []string, userId string) (*view.AvailablePackagePromoteStatuses, error)
-	GetAvailableVersionPublishStatuses(ctx context.SecurityContext, packageId string) ([]string, error)
-	HasRequiredPermissions(ctx context.SecurityContext, packageId string, requiredPermissions ...view.RolePermission) (bool, error)
-	HasRequiredPermissionsAcrossAllPackages(ctx context.SecurityContext, requiredPermissions ...view.RolePermission) (bool, error)
-	HasManageVersionPermission(ctx context.SecurityContext, packageId string, versionStatuses ...string) (bool, error)
-	ValidateDefaultRole(ctx context.SecurityContext, packageId string, roleId string) error
-	PackageRoleExists(roleId string) (bool, error)
-	CreateRole(role string, permissions []string) (*view.PackageRole, error)
-	DeleteRole(roleId string) error
-	GetAvailablePackageRoles(ctx context.SecurityContext, packageId string, excludeNone bool) (*view.PackageRoles, error)
-	GetExistingRolesExcludingNone() (*view.PackageRoles, error)
+	AddPackageMembers(ctx context.Context, packageId string, emails []string, roleIds []string) (*view.PackageMembers, error)
+	DeletePackageMember(ctx context.Context, packageId string, userId string) (*view.PackageMember, error)
+	UpdatePackageMember(ctx context.Context, packageId string, userId string, roleId string, action string) error
+	GetPackageMembers(ctx context.Context, packageId string) (*view.PackageMembers, error)
+	GetPermissionsForPackage(ctx context.Context, packageId string) ([]string, error)
+	FilterVersionsByPackageReadAccess(ctx context.Context, keys []entity.PublishedVersionKeyEntity) (accessible []entity.PublishedVersionKeyEntity, hiddenCount int, err error)
+	GetPermissionsForReadScope(ctx context.Context, scope view.PackageReadScope) ([]string, error)
+	GetUserPackagePromoteStatuses(ctx context.Context, packageIds []string, userId string) (*view.AvailablePackagePromoteStatuses, error)
+	GetAvailableVersionPublishStatuses(ctx context.Context, packageId string) ([]string, error)
+	HasRequiredPermissions(ctx context.Context, packageId string, requiredPermissions ...view.RolePermission) (bool, error)
+	HasRequiredPermissionsAcrossAllPackages(ctx context.Context, requiredPermissions ...view.RolePermission) (bool, error)
+	GetPackageReadScope(ctx context.Context) (view.PackageReadScope, error)
+	HasManageVersionPermission(ctx context.Context, packageId string, versionStatuses ...string) (bool, error)
+	ValidateDefaultRole(ctx context.Context, packageId string, roleId string) error
+	PackageRoleExists(ctx context.Context, roleId string) (bool, error)
+	CreateRole(ctx context.Context, role string, permissions []string) (*view.PackageRole, error)
+	DeleteRole(ctx context.Context, roleId string) error
+	GetAvailablePackageRoles(ctx context.Context, packageId string, excludeNone bool) (*view.PackageRoles, error)
+	GetExistingRolesExcludingNone(ctx context.Context) (*view.PackageRoles, error)
 	GetExistingPermissions() (*view.Permissions, error)
-	SetRolePermissions(roleId string, permissions []string) error
-	SetRoleOrder(roles []string) error
-	GetUserSystemRole(userId string) (string, error)
-	SetUserSystemRole(userId string, roleId string) error
-	IsSysadm(ctx context.SecurityContext) bool
-	GetSystemAdministrators() (*view.Admins, error)
-	AddSystemAdministrator(userId string) (*view.Admins, error)
-	DeleteSystemAdministrator(userId string) error
+	SetRolePermissions(ctx context.Context, roleId string, permissions []string) error
+	SetRoleOrder(ctx context.Context, roles []string) error
+	GetUserSystemRole(ctx context.Context, userId string) (string, error)
+	SetUserSystemRole(ctx context.Context, userId string, roleId string) error
+	GetSystemAdministrators(ctx context.Context) (*view.Admins, error)
+	AddSystemAdministrator(ctx context.Context, userId string) (*view.Admins, error)
+	DeleteSystemAdministrator(ctx context.Context, userId string) error
 }
 
 func NewRoleService(roleRepository repository.RoleRepository, userService UserService, atService ActivityTrackingService, publishedRepo repository.PublishedRepository) RoleService {
@@ -57,8 +59,8 @@ type roleServiceImpl struct {
 	publishedRepo  repository.PublishedRepository
 }
 
-func (r roleServiceImpl) AddPackageMembers(ctx context.SecurityContext, packageId string, emails []string, roleIds []string) (*view.PackageMembers, error) {
-	packageEnt, err := r.publishedRepo.GetPackage(packageId)
+func (r roleServiceImpl) AddPackageMembers(ctx context.Context, packageId string, emails []string, roleIds []string) (*view.PackageMembers, error) {
+	packageEnt, err := r.publishedRepo.GetPackage(ctx, packageId)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +73,7 @@ func (r roleServiceImpl) AddPackageMembers(ctx context.SecurityContext, packageI
 		}
 	}
 	if packageEnt.DefaultRole == view.NoneRoleId && packageEnt.ParentId == "" {
-		if !r.IsSysadm(ctx) {
+		if !secctx.IsSysadm(ctx) {
 			return nil, &exception.CustomError{
 				Status:  http.StatusForbidden,
 				Code:    exception.InsufficientPrivileges,
@@ -86,7 +88,7 @@ func (r roleServiceImpl) AddPackageMembers(ctx context.SecurityContext, packageI
 		return nil, err
 	}
 
-	usersEmailMap, err := r.userService.GetUsersEmailMap(emails)
+	usersEmailMap, err := r.userService.GetUsersEmailMap(ctx, emails)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +104,7 @@ func (r roleServiceImpl) AddPackageMembers(ctx context.SecurityContext, packageI
 	}
 
 	for _, nonExistentEmail := range nonExistentEmails {
-		ldapUsers, err := r.userService.SearchUsersInLdap(view.LdapSearchFilterReq{FilterToValue: map[string]string{view.Mail: nonExistentEmail}, Limit: 1}, true)
+		ldapUsers, err := r.userService.SearchUsersInLdap(ctx, view.LdapSearchFilterReq{FilterToValue: map[string]string{view.Mail: nonExistentEmail}, Limit: 1}, true)
 		if err != nil {
 			return nil, err
 		}
@@ -120,7 +122,7 @@ func (r roleServiceImpl) AddPackageMembers(ctx context.SecurityContext, packageI
 		}
 		user := ldapUsers.Users[0]
 
-		err = r.userService.StoreUserAvatar(user.Id, user.Avatar)
+		err = r.userService.StoreUserAvatar(ctx, user.Id, user.Avatar)
 		if err != nil {
 			return nil, err
 		}
@@ -130,7 +132,7 @@ func (r roleServiceImpl) AddPackageMembers(ctx context.SecurityContext, packageI
 			Email:     user.Email,
 			AvatarUrl: fmt.Sprintf("/api/v2/users/%s/profile/avatar", user.Id),
 		}
-		createdUser, err := r.userService.GetOrCreateUserForIntegration(externalUser, view.ExternalLdapIntegration, "")
+		createdUser, err := r.userService.GetOrCreateUserForIntegration(ctx, externalUser, view.ExternalLdapIntegration, "")
 		if err != nil {
 			return nil, err
 		}
@@ -142,7 +144,7 @@ func (r roleServiceImpl) AddPackageMembers(ctx context.SecurityContext, packageI
 		return nil, err
 	}
 
-	usersMap, err := r.userService.GetUsersIdMap(userIds)
+	usersMap, err := r.userService.GetUsersIdMap(ctx, userIds)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +155,7 @@ func (r roleServiceImpl) AddPackageMembers(ctx context.SecurityContext, packageI
 		dataMap["memberName"] = usersMap[addedUsrId].Name
 		var roleViews []view.EventRoleView
 		for _, roleId := range roleIds {
-			roleEnt, err := r.roleRepository.GetRole(roleId)
+			roleEnt, err := r.roleRepository.GetRole(ctx, roleId)
 			if err != nil {
 				return nil, err
 			}
@@ -163,20 +165,20 @@ func (r roleServiceImpl) AddPackageMembers(ctx context.SecurityContext, packageI
 			})
 		}
 		dataMap["roles"] = roleViews
-		r.atService.TrackEvent(view.ActivityTrackingEvent{
+		r.atService.TrackEvent(ctx, view.ActivityTrackingEvent{
 			Type:      view.ATETGrantRole,
 			Data:      dataMap,
 			PackageId: packageId,
 			Date:      time.Now(),
-			UserId:    ctx.GetUserId(),
+			UserId:    secctx.GetUserId(ctx),
 		})
 	}
 
-	return r.GetPackageMembers(packageId)
+	return r.GetPackageMembers(ctx, packageId)
 }
 
-func (r roleServiceImpl) UpdatePackageMember(ctx context.SecurityContext, packageId string, userIdToUpdate string, roleId string, action string) error {
-	packageEnt, err := r.publishedRepo.GetPackage(packageId)
+func (r roleServiceImpl) UpdatePackageMember(ctx context.Context, packageId string, userIdToUpdate string, roleId string, action string) error {
+	packageEnt, err := r.publishedRepo.GetPackage(ctx, packageId)
 	if err != nil {
 		return err
 	}
@@ -189,7 +191,7 @@ func (r roleServiceImpl) UpdatePackageMember(ctx context.SecurityContext, packag
 		}
 	}
 	if packageEnt.DefaultRole == view.NoneRoleId && packageEnt.ParentId == "" {
-		if !r.IsSysadm(ctx) {
+		if !secctx.IsSysadm(ctx) {
 			return &exception.CustomError{
 				Status:  http.StatusForbidden,
 				Code:    exception.InsufficientPrivileges,
@@ -219,7 +221,7 @@ func (r roleServiceImpl) UpdatePackageMember(ctx context.SecurityContext, packag
 		return err
 	}
 
-	user, err := r.userService.GetUserFromDB(userIdToUpdate)
+	user, err := r.userService.GetUserFromDB(ctx, userIdToUpdate)
 	if err != nil {
 		return err
 	}
@@ -228,19 +230,19 @@ func (r roleServiceImpl) UpdatePackageMember(ctx context.SecurityContext, packag
 	dataMap["memberName"] = user.Name
 	dataMap["roleId"] = roleId
 	dataMap["action"] = action
-	r.atService.TrackEvent(view.ActivityTrackingEvent{
+	r.atService.TrackEvent(ctx, view.ActivityTrackingEvent{
 		Type:      view.ATETUpdateRole,
 		Data:      dataMap,
 		PackageId: packageId,
 		Date:      time.Now(),
-		UserId:    ctx.GetUserId(),
+		UserId:    secctx.GetUserId(ctx),
 	})
 
 	return nil
 }
 
-func (r roleServiceImpl) DeletePackageMember(ctx context.SecurityContext, packageId string, userId string) (*view.PackageMember, error) {
-	packageEnt, err := r.publishedRepo.GetPackage(packageId)
+func (r roleServiceImpl) DeletePackageMember(ctx context.Context, packageId string, userId string) (*view.PackageMember, error) {
+	packageEnt, err := r.publishedRepo.GetPackage(ctx, packageId)
 	if err != nil {
 		return nil, err
 	}
@@ -253,7 +255,7 @@ func (r roleServiceImpl) DeletePackageMember(ctx context.SecurityContext, packag
 		}
 	}
 	if packageEnt.DefaultRole == view.NoneRoleId && packageEnt.ParentId == "" {
-		if !r.IsSysadm(ctx) {
+		if !secctx.IsSysadm(ctx) {
 			return nil, &exception.CustomError{
 				Status:  http.StatusForbidden,
 				Code:    exception.InsufficientPrivileges,
@@ -262,12 +264,12 @@ func (r roleServiceImpl) DeletePackageMember(ctx context.SecurityContext, packag
 			}
 		}
 	}
-	packageMember, err := r.roleRepository.GetDirectPackageMember(packageId, userId)
+	packageMember, err := r.roleRepository.GetDirectPackageMember(ctx, packageId, userId)
 	if err != nil {
 		return nil, err
 	}
 	if packageMember == nil {
-		user, err := r.userService.GetUserFromDB(userId)
+		user, err := r.userService.GetUserFromDB(ctx, userId)
 		if err != nil {
 			return nil, err
 		}
@@ -292,12 +294,12 @@ func (r roleServiceImpl) DeletePackageMember(ctx context.SecurityContext, packag
 		return nil, err
 	}
 
-	err = r.roleRepository.DeleteDirectPackageMember(packageId, userId)
+	err = r.roleRepository.DeleteDirectPackageMember(ctx, packageId, userId)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := r.userService.GetUserFromDB(userId)
+	user, err := r.userService.GetUserFromDB(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +309,7 @@ func (r roleServiceImpl) DeletePackageMember(ctx context.SecurityContext, packag
 	dataMap["memberName"] = user.Name
 	var roleViews []view.EventRoleView
 	for _, roleId := range packageMember.Roles {
-		roleEnt, err := r.roleRepository.GetRole(roleId)
+		roleEnt, err := r.roleRepository.GetRole(ctx, roleId)
 		if err != nil {
 			return nil, err
 		}
@@ -318,15 +320,15 @@ func (r roleServiceImpl) DeletePackageMember(ctx context.SecurityContext, packag
 	}
 	dataMap["roles"] = roleViews
 
-	r.atService.TrackEvent(view.ActivityTrackingEvent{
+	r.atService.TrackEvent(ctx, view.ActivityTrackingEvent{
 		Type:      view.ATETDeleteRole,
 		Data:      dataMap,
 		PackageId: packageId,
 		Date:      time.Now(),
-		UserId:    ctx.GetUserId(),
+		UserId:    secctx.GetUserId(ctx),
 	})
 
-	effectiveMemberRoles, err := r.roleRepository.GetPackageRolesHierarchyForUser(packageId, userId)
+	effectiveMemberRoles, err := r.roleRepository.GetPackageRolesHierarchyForUser(ctx, packageId, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -338,8 +340,8 @@ func (r roleServiceImpl) DeletePackageMember(ctx context.SecurityContext, packag
 	return nil, nil
 }
 
-func (r roleServiceImpl) deleteRoleForPackageMember(ctx context.SecurityContext, packageId string, userId string, roleId string) error {
-	packageMember, err := r.roleRepository.GetDirectPackageMember(packageId, userId)
+func (r roleServiceImpl) deleteRoleForPackageMember(ctx context.Context, packageId string, userId string, roleId string) error {
+	packageMember, err := r.roleRepository.GetDirectPackageMember(ctx, packageId, userId)
 	if err != nil {
 		return err
 	}
@@ -351,15 +353,15 @@ func (r roleServiceImpl) deleteRoleForPackageMember(ctx context.SecurityContext,
 			Params:  map[string]interface{}{"userId": userId, "packageId": packageId, "roleId": roleId},
 		}
 	}
-	return r.roleRepository.RemoveRoleFromPackageMember(packageId, userId, roleId)
+	return r.roleRepository.RemoveRoleFromPackageMember(ctx, packageId, userId, roleId)
 }
 
-func (r roleServiceImpl) addRoleForPackageMember(ctx context.SecurityContext, packageId string, userId string, roleId string) error {
+func (r roleServiceImpl) addRoleForPackageMember(ctx context.Context, packageId string, userId string, roleId string) error {
 	return r.addRolesForPackageMembers(ctx, packageId, []string{userId}, []string{roleId})
 }
 
-func (r roleServiceImpl) addRolesForPackageMembers(ctx context.SecurityContext, packageId string, userIds []string, roleIds []string) error {
-	usersMap, err := r.userService.GetUsersIdMap(userIds)
+func (r roleServiceImpl) addRolesForPackageMembers(ctx context.Context, packageId string, userIds []string, roleIds []string) error {
+	usersMap, err := r.userService.GetUsersIdMap(ctx, userIds)
 	if err != nil {
 		return err
 	}
@@ -379,11 +381,11 @@ func (r roleServiceImpl) addRolesForPackageMembers(ctx context.SecurityContext, 
 			}
 		}
 	}
-	packageMembers, err := r.getEffectivePackageMembersMap(packageId)
+	packageMembers, err := r.getEffectivePackageMembersMap(ctx, packageId)
 	if err != nil {
 		return err
 	}
-	packageDirectMembers, err := r.getDirectPackageMembersMap(packageId)
+	packageDirectMembers, err := r.getDirectPackageMembersMap(ctx, packageId)
 	if err != nil {
 		return err
 	}
@@ -413,16 +415,16 @@ func (r roleServiceImpl) addRolesForPackageMembers(ctx context.SecurityContext, 
 				UserId:    userId,
 				Roles:     rolesToSet,
 				CreatedAt: timeNow,
-				CreatedBy: ctx.GetUserId(),
+				CreatedBy: secctx.GetUserId(ctx),
 			})
 			continue
 		}
 		directMember.Roles = rolesToSet
 		directMember.UpdatedAt = &timeNow
-		directMember.UpdatedBy = ctx.GetUserId()
+		directMember.UpdatedBy = secctx.GetUserId(ctx)
 		directMemberEntites = append(directMemberEntites, directMember)
 	}
-	err = r.roleRepository.AddPackageMemberRoles(directMemberEntites)
+	err = r.roleRepository.AddPackageMemberRoles(ctx, directMemberEntites)
 	if err != nil {
 		return err
 	}
@@ -438,8 +440,8 @@ func roleExists(roles []entity.PackageMemberRoleRichEntity, roleId string) bool 
 	return false
 }
 
-func (r roleServiceImpl) GetPackageMembers(packageId string) (*view.PackageMembers, error) {
-	packageEnt, err := r.publishedRepo.GetPackage(packageId)
+func (r roleServiceImpl) GetPackageMembers(ctx context.Context, packageId string) (*view.PackageMembers, error) {
+	packageEnt, err := r.publishedRepo.GetPackage(ctx, packageId)
 	if err != nil {
 		return nil, err
 	}
@@ -451,7 +453,7 @@ func (r roleServiceImpl) GetPackageMembers(packageId string) (*view.PackageMembe
 			Params:  map[string]interface{}{"packageId": packageId},
 		}
 	}
-	packageMembers, err := r.getEffectivePackageMembersMap(packageId)
+	packageMembers, err := r.getEffectivePackageMembersMap(ctx, packageId)
 	if err != nil {
 		return nil, err
 	}
@@ -466,8 +468,8 @@ func (r roleServiceImpl) GetPackageMembers(packageId string) (*view.PackageMembe
 	return &view.PackageMembers{Members: packageMembersView}, nil
 }
 
-func (r roleServiceImpl) getEffectivePackageMembersMap(packageId string) (map[string][]entity.PackageMemberRoleRichEntity, error) {
-	packageMembers, err := r.roleRepository.GetPackageHierarchyMembers(packageId)
+func (r roleServiceImpl) getEffectivePackageMembersMap(ctx context.Context, packageId string) (map[string][]entity.PackageMemberRoleRichEntity, error) {
+	packageMembers, err := r.roleRepository.GetPackageHierarchyMembers(ctx, packageId)
 	if err != nil {
 		return nil, err
 	}
@@ -482,8 +484,8 @@ func (r roleServiceImpl) getEffectivePackageMembersMap(packageId string) (map[st
 	return membersMap, nil
 }
 
-func (r roleServiceImpl) getDirectPackageMembersMap(packageId string) (map[string]entity.PackageMemberRoleEntity, error) {
-	packageMembers, err := r.roleRepository.GetDirectPackageMembers(packageId)
+func (r roleServiceImpl) getDirectPackageMembersMap(ctx context.Context, packageId string) (map[string]entity.PackageMemberRoleEntity, error) {
+	packageMembers, err := r.roleRepository.GetDirectPackageMembers(ctx, packageId)
 	if err != nil {
 		return nil, err
 	}
@@ -495,8 +497,8 @@ func (r roleServiceImpl) getDirectPackageMembersMap(packageId string) (map[strin
 }
 
 // for agent
-func (r roleServiceImpl) GetUserPackagePromoteStatuses(packageIds []string, userId string) (*view.AvailablePackagePromoteStatuses, error) {
-	userSystemRole, err := r.GetUserSystemRole(userId)
+func (r roleServiceImpl) GetUserPackagePromoteStatuses(ctx context.Context, packageIds []string, userId string) (*view.AvailablePackagePromoteStatuses, error) {
+	userSystemRole, err := r.GetUserSystemRole(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -512,7 +514,7 @@ func (r roleServiceImpl) GetUserPackagePromoteStatuses(packageIds []string, user
 			}
 			continue
 		}
-		userPermissions, err := r.getUserPermissionsForPackage(packageId, userId)
+		userPermissions, err := r.getUserPermissionsForPackage(ctx, packageId, userId)
 		if err != nil {
 			return nil, err
 		}
@@ -535,7 +537,7 @@ func getAvailablePublishStatuses(userPermissions []string) []string {
 	return availablePublishStatuses
 }
 
-func (r roleServiceImpl) GetAvailableVersionPublishStatuses(ctx context.SecurityContext, packageId string) ([]string, error) {
+func (r roleServiceImpl) GetAvailableVersionPublishStatuses(ctx context.Context, packageId string) ([]string, error) {
 	userPackagePermissions, err := r.GetPermissionsForPackage(ctx, packageId)
 	if err != nil {
 		return nil, err
@@ -543,37 +545,83 @@ func (r roleServiceImpl) GetAvailableVersionPublishStatuses(ctx context.Security
 	return getAvailablePublishStatuses(userPackagePermissions), nil
 }
 
-func (r roleServiceImpl) GetPermissionsForPackage(ctx context.SecurityContext, packageId string) ([]string, error) {
-	if r.IsSysadm(ctx) {
+func (r roleServiceImpl) GetPermissionsForPackage(ctx context.Context, packageId string) ([]string, error) {
+	if secctx.IsSysadm(ctx) {
 		allPermissions := make([]string, 0)
 		for _, permission := range view.GetAllRolePermissions() {
 			allPermissions = append(allPermissions, permission.Id())
 		}
 		return allPermissions, nil
 	}
-	if apikeyPackageId := ctx.GetApikeyPackageId(); apikeyPackageId != "" {
-		apikeyRoles := ctx.GetApikeyRoles()
-		if apikeyPackageId != packageId && !strings.HasPrefix(packageId, apikeyPackageId+".") && apikeyPackageId != "*" {
+	if apikeyPackageId := secctx.GetApiKeyPackageId(ctx); apikeyPackageId != "" {
+		apikeyRoles := secctx.GetApiKeyRoles(ctx)
+		if apikeyPackageId != packageId && !strings.HasPrefix(packageId, apikeyPackageId+".") && apikeyPackageId != view.AllPackagesApikeyScope {
 			return make([]string, 0), nil
 		}
-		apikeyPermissions, err := r.roleRepository.GetPermissionsForRoles(apikeyRoles)
+		apikeyPermissions, err := r.roleRepository.GetPermissionsForRoles(ctx, apikeyRoles)
 		if err != nil {
 			return nil, err
 		}
 		return apikeyPermissions, nil
 	}
-	return r.getUserPermissionsForPackage(packageId, ctx.GetUserId())
+	return r.getUserPermissionsForPackage(ctx, packageId, secctx.GetUserId(ctx))
 }
 
-func (r roleServiceImpl) getUserPermissionsForPackage(packageId string, userId string) ([]string, error) {
-	userPermissions, err := r.roleRepository.GetUserPermissions(packageId, userId)
+// GetPermissionsForReadScope returns the permissions the caller holds on every package in scope alike. It is
+// defined for every scope kind but PackageReadScopeUser, whose permissions differ per package and are
+// resolved by the query that lists them.
+//
+// It mirrors the first two branches of GetPermissionsForPackage, minus the package argument those branches
+// only use to reject packages outside an api key's subtree — which is what the scope already encodes.
+func (r roleServiceImpl) GetPermissionsForReadScope(ctx context.Context, scope view.PackageReadScope) ([]string, error) {
+	if scope.Kind == view.PackageReadScopeUser {
+		return nil, fmt.Errorf("package read scope of kind %v has no permissions of its own", scope.Kind)
+	}
+	if scope.Kind == view.PackageReadScopeNone {
+		return make([]string, 0), nil
+	}
+	if secctx.IsSysadm(ctx) {
+		allPermissions := make([]string, 0)
+		for _, permission := range view.GetAllRolePermissions() {
+			allPermissions = append(allPermissions, permission.Id())
+		}
+		return allPermissions, nil
+	}
+	return r.roleRepository.GetPermissionsForRoles(ctx, secctx.GetApiKeyRoles(ctx))
+}
+
+func (r roleServiceImpl) getUserPermissionsForPackage(ctx context.Context, packageId string, userId string) ([]string, error) {
+	userPermissions, err := r.roleRepository.GetUserPermissions(ctx, packageId, userId)
 	if err != nil {
 		return nil, err
 	}
 	return userPermissions, nil
 }
 
-func (r roleServiceImpl) FilterVersionsByPackageReadAccess(ctx context.SecurityContext, keys []entity.PublishedVersionKeyEntity) ([]entity.PublishedVersionKeyEntity, int, error) {
+func (r roleServiceImpl) GetPackageReadScope(ctx context.Context) (view.PackageReadScope, error) {
+	if secctx.IsSysadm(ctx) {
+		return view.PackageReadScope{Kind: view.PackageReadScopeAll}, nil
+	}
+	if apikeyPackageId := secctx.GetApiKeyPackageId(ctx); apikeyPackageId != "" {
+		apikeyPermissions, err := r.roleRepository.GetPermissionsForRoles(ctx, secctx.GetApiKeyRoles(ctx))
+		if err != nil {
+			return view.PackageReadScope{}, err
+		}
+		if !utils.SliceContains(apikeyPermissions, string(view.ReadPermission)) {
+			return view.PackageReadScope{Kind: view.PackageReadScopeNone}, nil
+		}
+		if apikeyPackageId == view.AllPackagesApikeyScope {
+			return view.PackageReadScope{Kind: view.PackageReadScopeAll}, nil
+		}
+		return view.PackageReadScope{Kind: view.PackageReadScopeSubtree, SubtreeRoot: apikeyPackageId}, nil
+	}
+	if secctx.GetUserId(ctx) == "" {
+		return view.PackageReadScope{Kind: view.PackageReadScopeNone}, nil
+	}
+	return view.PackageReadScope{Kind: view.PackageReadScopeUser}, nil
+}
+
+func (r roleServiceImpl) FilterVersionsByPackageReadAccess(ctx context.Context, keys []entity.PublishedVersionKeyEntity) ([]entity.PublishedVersionKeyEntity, int, error) {
 	accessible := make([]entity.PublishedVersionKeyEntity, 0, len(keys))
 	hiddenCount := 0
 	checkedPackages := make(map[string]bool)
@@ -596,14 +644,14 @@ func (r roleServiceImpl) FilterVersionsByPackageReadAccess(ctx context.SecurityC
 	return accessible, hiddenCount, nil
 }
 
-func (r roleServiceImpl) HasRequiredPermissions(ctx context.SecurityContext, packageId string, requiredPermissions ...view.RolePermission) (bool, error) {
-	if r.IsSysadm(ctx) {
+func (r roleServiceImpl) HasRequiredPermissions(ctx context.Context, packageId string, requiredPermissions ...view.RolePermission) (bool, error) {
+	if secctx.IsSysadm(ctx) {
 		return true, nil
 	}
 
-	if apikeyPackageId := ctx.GetApikeyPackageId(); apikeyPackageId != "" {
-		apikeyRoles := ctx.GetApikeyRoles()
-		if apikeyPackageId != packageId && !strings.HasPrefix(packageId, apikeyPackageId+".") && apikeyPackageId != "*" {
+	if apikeyPackageId := secctx.GetApiKeyPackageId(ctx); apikeyPackageId != "" {
+		apikeyRoles := secctx.GetApiKeyRoles(ctx)
+		if apikeyPackageId != packageId && !strings.HasPrefix(packageId, apikeyPackageId+".") && apikeyPackageId != view.AllPackagesApikeyScope {
 			return false, &exception.CustomError{
 				Status:  http.StatusNotFound,
 				Code:    exception.PackageNotFound,
@@ -612,7 +660,7 @@ func (r roleServiceImpl) HasRequiredPermissions(ctx context.SecurityContext, pac
 				Debug:   fmt.Sprintf("Package %s is out of (package) scope for the api key", packageId),
 			}
 		}
-		apikeyPermissions, err := r.roleRepository.GetPermissionsForRoles(apikeyRoles)
+		apikeyPermissions, err := r.roleRepository.GetPermissionsForRoles(ctx, apikeyRoles)
 		if err != nil {
 			return false, err
 		}
@@ -624,7 +672,7 @@ func (r roleServiceImpl) HasRequiredPermissions(ctx context.SecurityContext, pac
 		return true, nil
 	}
 
-	userPermissions, err := r.getUserPermissionsForPackage(packageId, ctx.GetUserId())
+	userPermissions, err := r.getUserPermissionsForPackage(ctx, packageId, secctx.GetUserId(ctx))
 	if err != nil {
 		return false, err
 	}
@@ -645,13 +693,13 @@ func (r roleServiceImpl) HasRequiredPermissions(ctx context.SecurityContext, pac
 	return true, nil
 }
 
-func (r roleServiceImpl) HasRequiredPermissionsAcrossAllPackages(ctx context.SecurityContext, requiredPermissions ...view.RolePermission) (bool, error) {
-	if r.IsSysadm(ctx) {
+func (r roleServiceImpl) HasRequiredPermissionsAcrossAllPackages(ctx context.Context, requiredPermissions ...view.RolePermission) (bool, error) {
+	if secctx.IsSysadm(ctx) {
 		return true, nil
 	}
 
-	if apikeyRoles := ctx.GetApikeyRoles(); len(apikeyRoles) > 0 {
-		apikeyPermissions, err := r.roleRepository.GetPermissionsForRoles(apikeyRoles)
+	if apikeyRoles := secctx.GetApiKeyRoles(ctx); len(apikeyRoles) > 0 {
+		apikeyPermissions, err := r.roleRepository.GetPermissionsForRoles(ctx, apikeyRoles)
 		if err != nil {
 			return false, err
 		}
@@ -663,7 +711,7 @@ func (r roleServiceImpl) HasRequiredPermissionsAcrossAllPackages(ctx context.Sec
 		return true, nil
 	}
 
-	userPermissions, err := r.roleRepository.GetAllUserPermissions(ctx.GetUserId())
+	userPermissions, err := r.roleRepository.GetAllUserPermissions(ctx, secctx.GetUserId(ctx))
 	if err != nil {
 		return false, err
 	}
@@ -676,8 +724,8 @@ func (r roleServiceImpl) HasRequiredPermissionsAcrossAllPackages(ctx context.Sec
 	return true, nil
 }
 
-func (r roleServiceImpl) HasManageVersionPermission(ctx context.SecurityContext, packageId string, versionStatuses ...string) (bool, error) {
-	if r.IsSysadm(ctx) {
+func (r roleServiceImpl) HasManageVersionPermission(ctx context.Context, packageId string, versionStatuses ...string) (bool, error) {
+	if secctx.IsSysadm(ctx) {
 		return true, nil
 	}
 	requiredPermissions := make([]view.RolePermission, 0)
@@ -708,20 +756,11 @@ func getRequiredPermissionForVersionStatus(versionStatus string) view.RolePermis
 	}
 }
 
-// todo move this method to utils or context package?
-func (r roleServiceImpl) IsSysadm(ctx context.SecurityContext) bool {
-	apikeyRoles := ctx.GetApikeyRoles()
-	if utils.SliceContains(apikeyRoles, view.SysadmRole) {
-		return true
-	}
-	return ctx.GetUserSystemRole() == view.SysadmRole
-}
-
-func (r roleServiceImpl) ValidateDefaultRole(ctx context.SecurityContext, packageId string, roleId string) error {
+func (r roleServiceImpl) ValidateDefaultRole(ctx context.Context, packageId string, roleId string) error {
 	return r.validatePackageMemberRoles(ctx, packageId, []string{roleId})
 }
 
-func (r roleServiceImpl) validatePackageMemberRoles(ctx context.SecurityContext, packageId string, roleIds []string) error {
+func (r roleServiceImpl) validatePackageMemberRoles(ctx context.Context, packageId string, roleIds []string) error {
 	availableRoles, err := r.GetAvailablePackageRoles(ctx, packageId, false)
 	if err != nil {
 		return err
@@ -732,7 +771,7 @@ func (r roleServiceImpl) validatePackageMemberRoles(ctx context.SecurityContext,
 	}
 	for _, roleId := range roleIds {
 		if exists := availableRolesMap[roleId]; !exists {
-			roleEnt, err := r.roleRepository.GetRole(roleId)
+			roleEnt, err := r.roleRepository.GetRole(ctx, roleId)
 			if err != nil {
 				return err
 			}
@@ -756,8 +795,8 @@ func (r roleServiceImpl) validatePackageMemberRoles(ctx context.SecurityContext,
 	return nil
 }
 
-func (r roleServiceImpl) PackageRoleExists(roleId string) (bool, error) {
-	role, err := r.roleRepository.GetRole(roleId)
+func (r roleServiceImpl) PackageRoleExists(ctx context.Context, roleId string) (bool, error) {
+	role, err := r.roleRepository.GetRole(ctx, roleId)
 	if err != nil {
 		return false, err
 	}
@@ -767,7 +806,7 @@ func (r roleServiceImpl) PackageRoleExists(roleId string) (bool, error) {
 	return true, nil
 }
 
-func (r roleServiceImpl) CreateRole(role string, permissions []string) (*view.PackageRole, error) {
+func (r roleServiceImpl) CreateRole(ctx context.Context, role string, permissions []string) (*view.PackageRole, error) {
 	err := validateRolePermissionsEnum(permissions)
 	if err != nil {
 		return nil, err
@@ -776,7 +815,7 @@ func (r roleServiceImpl) CreateRole(role string, permissions []string) (*view.Pa
 	if err != nil {
 		return nil, err
 	}
-	allRoles, err := r.roleRepository.GetAllRoles()
+	allRoles, err := r.roleRepository.GetAllRoles(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -805,7 +844,7 @@ func (r roleServiceImpl) CreateRole(role string, permissions []string) (*view.Pa
 		Rank:        viewerRoleRank + 1,
 		ReadOnly:    false,
 	}
-	err = r.roleRepository.CreateRole(newRoleEntity)
+	err = r.roleRepository.CreateRole(ctx, newRoleEntity)
 	if err != nil {
 		return nil, err
 	}
@@ -813,8 +852,8 @@ func (r roleServiceImpl) CreateRole(role string, permissions []string) (*view.Pa
 	return &roleView, nil
 }
 
-func (r roleServiceImpl) DeleteRole(roleId string) error {
-	role, err := r.roleRepository.GetRole(roleId)
+func (r roleServiceImpl) DeleteRole(ctx context.Context, roleId string) error {
+	role, err := r.roleRepository.GetRole(ctx, roleId)
 	if err != nil {
 		return err
 	}
@@ -834,11 +873,11 @@ func (r roleServiceImpl) DeleteRole(roleId string) error {
 			Params:  map[string]interface{}{"roleId": roleId},
 		}
 	}
-	return r.roleRepository.DeleteRole(roleId)
+	return r.roleRepository.DeleteRole(ctx, roleId)
 }
 
-func (r roleServiceImpl) GetAvailablePackageRoles(ctx context.SecurityContext, packageId string, excludeNone bool) (*view.PackageRoles, error) {
-	packageEnt, err := r.publishedRepo.GetPackage(packageId)
+func (r roleServiceImpl) GetAvailablePackageRoles(ctx context.Context, packageId string, excludeNone bool) (*view.PackageRoles, error) {
+	packageEnt, err := r.publishedRepo.GetPackage(ctx, packageId)
 	if err != nil {
 		return nil, err
 	}
@@ -850,17 +889,17 @@ func (r roleServiceImpl) GetAvailablePackageRoles(ctx context.SecurityContext, p
 			Params:  map[string]interface{}{"packageId": packageId},
 		}
 	}
-	userId := ctx.GetUserId()
+	userId := secctx.GetUserId(ctx)
 	var availableRoles []entity.RoleEntity
-	allRoles, err := r.roleRepository.GetAllRoles()
+	allRoles, err := r.roleRepository.GetAllRoles(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if r.IsSysadm(ctx) {
+	if secctx.IsSysadm(ctx) {
 		availableRoles = allRoles
-	} else if ctx.GetApikeyPackageId() == packageId || strings.HasPrefix(packageId, ctx.GetApikeyPackageId()+".") || ctx.GetApikeyPackageId() == "*" {
+	} else if secctx.GetApiKeyPackageId(ctx) == packageId || strings.HasPrefix(packageId, secctx.GetApiKeyPackageId(ctx)+".") || secctx.GetApiKeyPackageId(ctx) == view.AllPackagesApikeyScope {
 		maxRoleRank := -1
-		for _, apikeyRoleId := range ctx.GetApikeyRoles() {
+		for _, apikeyRoleId := range secctx.GetApiKeyRoles(ctx) {
 			for _, role := range allRoles {
 				if apikeyRoleId == role.Id {
 					if maxRoleRank < role.Rank {
@@ -875,7 +914,7 @@ func (r roleServiceImpl) GetAvailablePackageRoles(ctx context.SecurityContext, p
 			}
 		}
 	} else {
-		availableRoles, err = r.roleRepository.GetAvailablePackageRoles(packageId, userId)
+		availableRoles, err = r.roleRepository.GetAvailablePackageRoles(ctx, packageId, userId)
 		if err != nil {
 			return nil, err
 		}
@@ -890,9 +929,9 @@ func (r roleServiceImpl) GetAvailablePackageRoles(ctx context.SecurityContext, p
 	return &view.PackageRoles{Roles: result}, nil
 }
 
-func (r roleServiceImpl) GetExistingRolesExcludingNone() (*view.PackageRoles, error) {
+func (r roleServiceImpl) GetExistingRolesExcludingNone(ctx context.Context) (*view.PackageRoles, error) {
 	existingRoles := make([]view.PackageRole, 0)
-	allRoles, err := r.roleRepository.GetAllRoles()
+	allRoles, err := r.roleRepository.GetAllRoles(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -918,12 +957,12 @@ func (r roleServiceImpl) GetExistingPermissions() (*view.Permissions, error) {
 	return &view.Permissions{Permissions: existingPermissions}, nil
 }
 
-func (r roleServiceImpl) SetRolePermissions(roleId string, permissions []string) error {
+func (r roleServiceImpl) SetRolePermissions(ctx context.Context, roleId string, permissions []string) error {
 	err := validateRolePermissionsEnum(permissions)
 	if err != nil {
 		return err
 	}
-	role, err := r.roleRepository.GetRole(roleId)
+	role, err := r.roleRepository.GetRole(ctx, roleId)
 	if err != nil {
 		return err
 	}
@@ -946,11 +985,11 @@ func (r roleServiceImpl) SetRolePermissions(roleId string, permissions []string)
 	if !utils.SliceContains(permissions, string(view.ReadPermission)) {
 		permissions = append(permissions, string(view.ReadPermission))
 	}
-	return r.roleRepository.UpdateRolePermissions(roleId, permissions)
+	return r.roleRepository.UpdateRolePermissions(ctx, roleId, permissions)
 }
 
-func (r roleServiceImpl) SetRoleOrder(roles []string) error {
-	roleEntities, err := r.roleRepository.GetAllRoles()
+func (r roleServiceImpl) SetRoleOrder(ctx context.Context, roles []string) error {
+	roleEntities, err := r.roleRepository.GetAllRoles(ctx)
 	if err != nil {
 		return err
 	}
@@ -997,7 +1036,7 @@ func (r roleServiceImpl) SetRoleOrder(roles []string) error {
 		}
 		rolesToUpdate = append(rolesToUpdate, entity.RoleEntity{Id: roleId, Rank: rank - index})
 	}
-	err = r.roleRepository.SetRoleRanks(rolesToUpdate)
+	err = r.roleRepository.SetRoleRanks(ctx, rolesToUpdate)
 	if err != nil {
 		return err
 	}
@@ -1033,8 +1072,8 @@ func validateRole(role string) error {
 	return nil
 }
 
-func (r roleServiceImpl) GetUserSystemRole(userId string) (string, error) {
-	systemRoleEnt, err := r.roleRepository.GetUserSystemRole(userId)
+func (r roleServiceImpl) GetUserSystemRole(ctx context.Context, userId string) (string, error) {
+	systemRoleEnt, err := r.roleRepository.GetUserSystemRole(ctx, userId)
 	if err != nil {
 		return "", err
 	}
@@ -1044,12 +1083,12 @@ func (r roleServiceImpl) GetUserSystemRole(userId string) (string, error) {
 	return systemRoleEnt.Role, nil
 }
 
-func (r roleServiceImpl) SetUserSystemRole(userId string, roleId string) error {
-	return r.roleRepository.SetUserSystemRole(userId, roleId)
+func (r roleServiceImpl) SetUserSystemRole(ctx context.Context, userId string, roleId string) error {
+	return r.roleRepository.SetUserSystemRole(ctx, userId, roleId)
 }
 
-func (r roleServiceImpl) GetSystemAdministrators() (*view.Admins, error) {
-	userEnts, err := r.roleRepository.GetUsersBySystemRole(view.SysadmRole)
+func (r roleServiceImpl) GetSystemAdministrators(ctx context.Context) (*view.Admins, error) {
+	userEnts, err := r.roleRepository.GetUsersBySystemRole(ctx, view.SysadmRole)
 	if err != nil {
 		return nil, err
 	}
@@ -1060,8 +1099,8 @@ func (r roleServiceImpl) GetSystemAdministrators() (*view.Admins, error) {
 	return &view.Admins{Admins: users}, nil
 }
 
-func (r roleServiceImpl) AddSystemAdministrator(userId string) (*view.Admins, error) {
-	userEnt, err := r.userService.GetUserFromDB(userId)
+func (r roleServiceImpl) AddSystemAdministrator(ctx context.Context, userId string) (*view.Admins, error) {
+	userEnt, err := r.userService.GetUserFromDB(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -1073,15 +1112,15 @@ func (r roleServiceImpl) AddSystemAdministrator(userId string) (*view.Admins, er
 			Params:  map[string]interface{}{"userId": userId},
 		}
 	}
-	err = r.SetUserSystemRole(userId, view.SysadmRole)
+	err = r.SetUserSystemRole(ctx, userId, view.SysadmRole)
 	if err != nil {
 		return nil, err
 	}
-	return r.GetSystemAdministrators()
+	return r.GetSystemAdministrators(ctx)
 }
 
-func (r roleServiceImpl) DeleteSystemAdministrator(userId string) error {
-	userEnt, err := r.userService.GetUserFromDB(userId)
+func (r roleServiceImpl) DeleteSystemAdministrator(ctx context.Context, userId string) error {
+	userEnt, err := r.userService.GetUserFromDB(ctx, userId)
 	if err != nil {
 		return err
 	}
@@ -1093,7 +1132,7 @@ func (r roleServiceImpl) DeleteSystemAdministrator(userId string) error {
 			Params:  map[string]interface{}{"userId": userId},
 		}
 	}
-	userSystemRole, err := r.GetUserSystemRole(userId)
+	userSystemRole, err := r.GetUserSystemRole(ctx, userId)
 	if err != nil {
 		return err
 	}
@@ -1105,7 +1144,7 @@ func (r roleServiceImpl) DeleteSystemAdministrator(userId string) error {
 			Params:  map[string]interface{}{"userId": userId},
 		}
 	}
-	err = r.roleRepository.DeleteUserSystemRole(userId)
+	err = r.roleRepository.DeleteUserSystemRole(ctx, userId)
 	if err != nil {
 		return err
 	}

@@ -48,6 +48,7 @@ func ValidatePublishSources(srcArc *archive.SourcesArchive) error {
 
 func ValidatePublishBuildResult(buildArc *archive.BuildResultArchive) error {
 	var documentsFileIds, operationsFileIds, comparisonsFileIds, versionInternalDocumentsFileIds, comparisonInternalDocumentsFileIds []string
+	var ddlFileIds, mcpFileIds, ddlComparisonsFileIds []string
 	for _, configFile := range buildArc.PackageDocuments.Documents {
 		documentsFileIds = append(documentsFileIds, configFile.Filename)
 	}
@@ -71,6 +72,24 @@ func ValidatePublishBuildResult(buildArc *archive.BuildResultArchive) error {
 	}
 	for _, configFile := range buildArc.ComparisonInternalDocuments.Documents {
 		comparisonInternalDocumentsFileIds = append(comparisonInternalDocumentsFileIds, configFile.Filename)
+	}
+
+	for _, table := range buildArc.PackageDdlContracts.Tables {
+		ddlFileIds = append(ddlFileIds, table.DdlEntityId)
+	}
+	mcpContracts := buildArc.PackageMcpContracts
+	allMcpContracts := make([]view.PackageMcpContract, 0, len(mcpContracts.Inits)+len(mcpContracts.Tools)+len(mcpContracts.Resources)+len(mcpContracts.Prompts))
+	allMcpContracts = append(allMcpContracts, mcpContracts.Inits...)
+	allMcpContracts = append(allMcpContracts, mcpContracts.Tools...)
+	allMcpContracts = append(allMcpContracts, mcpContracts.Resources...)
+	allMcpContracts = append(allMcpContracts, mcpContracts.Prompts...)
+	for _, contract := range allMcpContracts {
+		mcpFileIds = append(mcpFileIds, contract.McpEntityId)
+	}
+	for _, comparison := range buildArc.PackageDdlComparisons.Comparisons {
+		if comparison.ComparisonFileId != "" {
+			ddlComparisonsFileIds = append(ddlComparisonsFileIds, comparison.ComparisonFileId)
+		}
 	}
 
 	for path := range searchTextFilePaths {
@@ -204,6 +223,75 @@ func ValidatePublishBuildResult(buildArc *archive.BuildResultArchive) error {
 
 	for _, u := range unknown {
 		fullUnknownList = append(fullUnknownList, archive.ComparisonInternalDocumentsRootFolder+u)
+	}
+
+	duplicates, missing, unknown = validateFiles(buildArc.ContractsDdlFileHeaders, ddlFileIds)
+	if len(duplicates) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileDuplicate,
+			Message: exception.FileDuplicateMsg,
+			Params:  map[string]interface{}{"fileIds": duplicates, "configName": archive.ContractsDdlFilePath + " config"},
+		}
+	}
+
+	if len(missing) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileMissing,
+			Message: exception.FileMissingMsg,
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ContractsDdlRootFolder + " folder in achive"},
+		}
+	}
+
+	for _, u := range unknown {
+		fullUnknownList = append(fullUnknownList, archive.ContractsDdlRootFolder+u)
+	}
+
+	duplicates, missing, unknown = validateFiles(buildArc.ContractsMcpFileHeaders, mcpFileIds)
+	if len(duplicates) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileDuplicate,
+			Message: exception.FileDuplicateMsg,
+			Params:  map[string]interface{}{"fileIds": duplicates, "configName": archive.ContractsMcpFilePath + " config"},
+		}
+	}
+
+	if len(missing) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileMissing,
+			Message: exception.FileMissingMsg,
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ContractsMcpRootFolder + " folder in achive"},
+		}
+	}
+
+	for _, u := range unknown {
+		fullUnknownList = append(fullUnknownList, archive.ContractsMcpRootFolder+u)
+	}
+
+	duplicates, missing, unknown = validateFiles(buildArc.ContractsDdlComparisonsFileHeaders, ddlComparisonsFileIds)
+	if len(duplicates) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileDuplicate,
+			Message: exception.FileDuplicateMsg,
+			Params:  map[string]interface{}{"fileIds": duplicates, "configName": archive.ContractsDdlComparisonsFilePath + " config"},
+		}
+	}
+
+	if len(missing) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileMissing,
+			Message: exception.FileMissingMsg,
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ContractsDdlComparisonsRootFolder + " folder in achive"},
+		}
+	}
+
+	for _, u := range unknown {
+		fullUnknownList = append(fullUnknownList, archive.ContractsDdlComparisonsRootFolder+u)
 	}
 
 	if len(fullUnknownList) != 0 {

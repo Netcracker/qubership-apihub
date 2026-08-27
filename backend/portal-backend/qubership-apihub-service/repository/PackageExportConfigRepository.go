@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
@@ -9,8 +10,8 @@ import (
 )
 
 type PackageExportConfigRepository interface {
-	GetConfigForHierarchy(packageId string) ([]entity.PackageExportConfigExtEntity, error)
-	SetConfig(ent entity.PackageExportConfigEntity) error
+	GetConfigForHierarchy(ctx context.Context, packageId string) ([]entity.PackageExportConfigExtEntity, error)
+	SetConfig(ctx context.Context, ent entity.PackageExportConfigEntity) error
 }
 
 func NewPackageExportConfigRepository(cp db.ConnectionProvider) PackageExportConfigRepository {
@@ -23,13 +24,13 @@ type packageExportConfigRepositoryImpl struct {
 	cp db.ConnectionProvider
 }
 
-func (p packageExportConfigRepositoryImpl) GetConfigForHierarchy(packageId string) ([]entity.PackageExportConfigExtEntity, error) {
+func (p packageExportConfigRepositoryImpl) GetConfigForHierarchy(ctx context.Context, packageId string) ([]entity.PackageExportConfigExtEntity, error) {
 	packageIds := utils.GetPackageHierarchy(packageId)
 	if len(packageIds) == 0 {
 		return nil, nil
 	}
 	var result []entity.PackageExportConfigExtEntity
-	err := p.cp.GetConnection().Model(&result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(&result).
 		ColumnExpr("package_export_config.package_id as package_id").
 		ColumnExpr("p.name as package_name").
 		ColumnExpr("p.kind as package_kind").
@@ -47,8 +48,8 @@ func (p packageExportConfigRepositoryImpl) GetConfigForHierarchy(packageId strin
 	return result, nil
 }
 
-func (p packageExportConfigRepositoryImpl) SetConfig(ent entity.PackageExportConfigEntity) error {
-	_, err := p.cp.GetConnection().Model(&ent).
+func (p packageExportConfigRepositoryImpl) SetConfig(ctx context.Context, ent entity.PackageExportConfigEntity) error {
+	_, err := p.cp.GetConnection().WithContext(ctx).Model(&ent).
 		OnConflict("(package_id) DO UPDATE").
 		Insert()
 	if err != nil {

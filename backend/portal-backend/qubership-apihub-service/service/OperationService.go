@@ -18,17 +18,17 @@ import (
 )
 
 type OperationService interface {
-	GetOperations(packageId string, version string, skipRefs bool, searchReq view.OperationListReq) (*view.Operations, error)
-	GetOperation(searchReq view.OperationBasicSearchReq) (interface{}, error)
-	GetOperationsTags(searchReq view.OperationBasicSearchReq, skipRefs bool) (*view.OperationTags, error)
-	GetOperationChanges(packageId string, version string, operationId string, previousPackageId string, previousVersion string, severities []string) (*view.OperationChangesView, error)
-	GetVersionChanges(packageId string, version string, apiType string, searchReq view.VersionChangesReq) (*view.VersionChangesView, error)
+	GetOperations(ctx context.Context, packageId string, version string, skipRefs bool, searchReq view.OperationListReq) (*view.Operations, error)
+	GetOperation(ctx context.Context, searchReq view.OperationBasicSearchReq) (interface{}, error)
+	GetOperationsTags(ctx context.Context, searchReq view.OperationBasicSearchReq, skipRefs bool) (*view.OperationTags, error)
+	GetOperationChanges(ctx context.Context, packageId string, version string, operationId string, previousPackageId string, previousVersion string, severities []string) (*view.OperationChangesView, error)
+	GetVersionChanges(ctx context.Context, packageId string, version string, apiType string, searchReq view.VersionChangesReq) (*view.VersionChangesView, error)
 	GlobalSearchForOperations(ctx context.Context, searchReq view.SearchQueryReq) (*view.SearchResult, error)
-	GetDeprecatedOperations(packageId string, version string, searchReq view.DeprecatedOperationListReq) (*view.Operations, error)
-	GetOperationDeprecatedItems(searchReq view.OperationBasicSearchReq) (*view.DeprecatedItems, error)
-	GetDeprecatedOperationsSummary(packageId string, version string) (*view.DeprecatedOperationsSummary, error)
-	GetOperationModelUsages(packageId string, version string, apiType string, operationId string, modelName string) (*view.OperationModelUsages, error)
-	GetOperationChangesSummary(packageId string, version string, operationId string, previousPackageId string, previousVersion string, refPackageId string) (*view.ChangeSummary, error)
+	GetDeprecatedOperations(ctx context.Context, packageId string, version string, searchReq view.DeprecatedOperationListReq) (*view.Operations, error)
+	GetOperationDeprecatedItems(ctx context.Context, searchReq view.OperationBasicSearchReq) (*view.DeprecatedItems, error)
+	GetDeprecatedOperationsSummary(ctx context.Context, packageId string, version string) (*view.DeprecatedOperationsSummary, error)
+	GetOperationModelUsages(ctx context.Context, packageId string, version string, apiType string, operationId string, modelName string) (*view.OperationModelUsages, error)
+	GetOperationChangesSummary(ctx context.Context, packageId string, version string, operationId string, previousPackageId string, previousVersion string, refPackageId string) (*view.ChangeSummary, error)
 }
 
 func NewOperationService(
@@ -48,8 +48,8 @@ type operationServiceImpl struct {
 	packageVersionEnrichmentService PackageVersionEnrichmentService
 }
 
-func (o operationServiceImpl) GetDeprecatedOperationsSummary(packageId string, version string) (*view.DeprecatedOperationsSummary, error) {
-	packageEnt, err := o.publishedRepo.GetPackage(packageId)
+func (o operationServiceImpl) GetDeprecatedOperationsSummary(ctx context.Context, packageId string, version string) (*view.DeprecatedOperationsSummary, error) {
+	packageEnt, err := o.publishedRepo.GetPackage(ctx, packageId)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (o operationServiceImpl) GetDeprecatedOperationsSummary(packageId string, v
 			Params:  map[string]interface{}{"packageId": packageId},
 		}
 	}
-	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
+	versionEnt, err := o.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func (o operationServiceImpl) GetDeprecatedOperationsSummary(packageId string, v
 	result := new(view.DeprecatedOperationsSummary)
 
 	if packageEnt.Kind == entity.KIND_PACKAGE {
-		deprecatedOperationsSummaryEnts, err := o.operationRepository.GetDeprecatedOperationsSummary(packageId, versionEnt.Version, versionEnt.Revision)
+		deprecatedOperationsSummaryEnts, err := o.operationRepository.GetDeprecatedOperationsSummary(ctx, packageId, versionEnt.Version, versionEnt.Revision)
 		if err != nil {
 			return nil, err
 		}
@@ -87,7 +87,7 @@ func (o operationServiceImpl) GetDeprecatedOperationsSummary(packageId string, v
 		result.OperationTypes = &deprecatedOperationTypes
 	}
 	if packageEnt.Kind == entity.KIND_DASHBOARD {
-		deprecatedOperationsRefsSummaryEnts, err := o.operationRepository.GetDeprecatedOperationsRefsSummary(packageId, versionEnt.Version, versionEnt.Revision)
+		deprecatedOperationsRefsSummaryEnts, err := o.operationRepository.GetDeprecatedOperationsRefsSummary(ctx, packageId, versionEnt.Version, versionEnt.Revision)
 		if err != nil {
 			return nil, err
 		}
@@ -107,7 +107,7 @@ func (o operationServiceImpl) GetDeprecatedOperationsSummary(packageId string, v
 		for packageRefKey, operationTypes := range deprecatedOperationTypesMap {
 			deprecatedOperationTypesRef = append(deprecatedOperationTypesRef, entity.MakeDeprecatedOperationTypesRef(packageRefKey, operationTypes))
 		}
-		packagesRefs, err := o.packageVersionEnrichmentService.GetPackageVersionRefsMap(packageVersions)
+		packagesRefs, err := o.packageVersionEnrichmentService.GetPackageVersionRefsMap(ctx, packageVersions)
 		if err != nil {
 			return nil, err
 		}
@@ -118,9 +118,9 @@ func (o operationServiceImpl) GetDeprecatedOperationsSummary(packageId string, v
 	return result, nil
 }
 
-func (o operationServiceImpl) GetDeprecatedOperations(packageId string, version string, searchReq view.DeprecatedOperationListReq) (*view.Operations, error) {
+func (o operationServiceImpl) GetDeprecatedOperations(ctx context.Context, packageId string, version string, searchReq view.DeprecatedOperationListReq) (*view.Operations, error) {
 	if searchReq.RefPackageId != "" {
-		packageEnt, err := o.publishedRepo.GetPackage(packageId)
+		packageEnt, err := o.publishedRepo.GetPackage(ctx, packageId)
 		if err != nil {
 			return nil, err
 		}
@@ -140,7 +140,7 @@ func (o operationServiceImpl) GetDeprecatedOperations(packageId string, version 
 				Params:  map[string]interface{}{"param": "refPackageId"}}
 		}
 	}
-	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
+	versionEnt, err := o.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func (o operationServiceImpl) GetDeprecatedOperations(packageId string, version 
 	if searchReq.Kind == "all" {
 		searchReq.Kind = ""
 	}
-	deprecatedOperationEnts, err := o.operationRepository.GetDeprecatedOperations(packageId, versionEnt.Version, versionEnt.Revision, searchReq.ApiType, searchReq)
+	deprecatedOperationEnts, err := o.operationRepository.GetDeprecatedOperations(ctx, packageId, versionEnt.Version, versionEnt.Revision, searchReq.ApiType, searchReq)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +165,7 @@ func (o operationServiceImpl) GetDeprecatedOperations(packageId string, version 
 		deprecatedOperationList = append(deprecatedOperationList, entity.MakeDeprecatedOperationView(ent, searchReq.IncludeDeprecatedItems))
 		packageVersions[ent.PackageId] = append(packageVersions[ent.PackageId], fmt.Sprintf("%v@%v", ent.Version, ent.Revision))
 	}
-	packagesRefs, err := o.packageVersionEnrichmentService.GetPackageVersionRefsMap(packageVersions)
+	packagesRefs, err := o.packageVersionEnrichmentService.GetPackageVersionRefsMap(ctx, packageVersions)
 	if err != nil {
 		return nil, err
 	}
@@ -176,9 +176,9 @@ func (o operationServiceImpl) GetDeprecatedOperations(packageId string, version 
 	return &operations, nil
 }
 
-func (o operationServiceImpl) GetOperations(packageId string, version string, skipRefs bool, searchReq view.OperationListReq) (*view.Operations, error) {
+func (o operationServiceImpl) GetOperations(ctx context.Context, packageId string, version string, skipRefs bool, searchReq view.OperationListReq) (*view.Operations, error) {
 	if searchReq.RefPackageId != "" {
-		packageEnt, err := o.publishedRepo.GetPackage(packageId)
+		packageEnt, err := o.publishedRepo.GetPackage(ctx, packageId)
 		if err != nil {
 			return nil, err
 		}
@@ -198,7 +198,7 @@ func (o operationServiceImpl) GetOperations(packageId string, version string, sk
 				Params:  map[string]interface{}{"param": "refPackageId"}}
 		}
 	}
-	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
+	versionEnt, err := o.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +218,7 @@ func (o operationServiceImpl) GetOperations(packageId string, version string, sk
 	if err != nil {
 		return nil, err
 	}
-	operationEnts, err := o.operationRepository.GetOperations(packageId, versionEnt.Version, versionEnt.Revision, searchReq.ApiType, skipRefs, searchReq)
+	operationEnts, err := o.operationRepository.GetOperations(ctx, packageId, versionEnt.Version, versionEnt.Revision, searchReq.ApiType, skipRefs, searchReq)
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +228,7 @@ func (o operationServiceImpl) GetOperations(packageId string, version string, sk
 		operationList = append(operationList, entity.MakeOperationView(ent))
 		packageVersions[ent.PackageId] = append(packageVersions[ent.PackageId], view.MakeVersionRefKey(ent.Version, ent.Revision))
 	}
-	packagesRefs, err := o.packageVersionEnrichmentService.GetPackageVersionRefsMap(packageVersions)
+	packagesRefs, err := o.packageVersionEnrichmentService.GetPackageVersionRefsMap(ctx, packageVersions)
 	if err != nil {
 		return nil, err
 	}
@@ -260,8 +260,8 @@ func parseTextFilterToCustomTagKeyValue(textFilter string) (string, string, erro
 	return "", "", nil
 }
 
-func (o operationServiceImpl) GetOperation(searchReq view.OperationBasicSearchReq) (interface{}, error) {
-	versionEnt, err := o.publishedRepo.GetVersion(searchReq.PackageId, searchReq.Version)
+func (o operationServiceImpl) GetOperation(ctx context.Context, searchReq view.OperationBasicSearchReq) (interface{}, error) {
+	versionEnt, err := o.publishedRepo.GetVersion(ctx, searchReq.PackageId, searchReq.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +273,7 @@ func (o operationServiceImpl) GetOperation(searchReq view.OperationBasicSearchRe
 			Params:  map[string]interface{}{"version": searchReq.Version, "packageId": searchReq.PackageId},
 		}
 	}
-	operationEnt, err := o.operationRepository.GetOperationById(searchReq.PackageId, versionEnt.Version, versionEnt.Revision, searchReq.ApiType, searchReq.OperationId, searchReq.IncludeData)
+	operationEnt, err := o.operationRepository.GetOperationById(ctx, searchReq.PackageId, versionEnt.Version, versionEnt.Revision, searchReq.ApiType, searchReq.OperationId, searchReq.IncludeData)
 	if err != nil {
 		return nil, err
 	}
@@ -290,8 +290,8 @@ func (o operationServiceImpl) GetOperation(searchReq view.OperationBasicSearchRe
 	return &operationView, nil
 }
 
-func (o operationServiceImpl) GetOperationDeprecatedItems(searchReq view.OperationBasicSearchReq) (*view.DeprecatedItems, error) {
-	versionEnt, err := o.publishedRepo.GetVersion(searchReq.PackageId, searchReq.Version)
+func (o operationServiceImpl) GetOperationDeprecatedItems(ctx context.Context, searchReq view.OperationBasicSearchReq) (*view.DeprecatedItems, error) {
+	versionEnt, err := o.publishedRepo.GetVersion(ctx, searchReq.PackageId, searchReq.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -303,7 +303,7 @@ func (o operationServiceImpl) GetOperationDeprecatedItems(searchReq view.Operati
 			Params:  map[string]interface{}{"version": searchReq.Version, "packageId": searchReq.PackageId},
 		}
 	}
-	operationEnt, err := o.operationRepository.GetOperationDeprecatedItems(searchReq.PackageId, versionEnt.Version, versionEnt.Revision, searchReq.ApiType, searchReq.OperationId)
+	operationEnt, err := o.operationRepository.GetOperationDeprecatedItems(ctx, searchReq.PackageId, versionEnt.Version, versionEnt.Revision, searchReq.ApiType, searchReq.OperationId)
 	if err != nil {
 		return nil, err
 	}
@@ -323,8 +323,8 @@ func (o operationServiceImpl) GetOperationDeprecatedItems(searchReq view.Operati
 	return &operationView, nil
 }
 
-func (o operationServiceImpl) GetOperationsTags(searchReq view.OperationBasicSearchReq, skipRefs bool) (*view.OperationTags, error) {
-	versionEnt, err := o.publishedRepo.GetVersion(searchReq.PackageId, searchReq.Version)
+func (o operationServiceImpl) GetOperationsTags(ctx context.Context, searchReq view.OperationBasicSearchReq, skipRefs bool) (*view.OperationTags, error) {
+	versionEnt, err := o.publishedRepo.GetVersion(ctx, searchReq.PackageId, searchReq.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -348,7 +348,7 @@ func (o operationServiceImpl) GetOperationsTags(searchReq view.OperationBasicSea
 		Limit:       searchReq.Limit,
 		Offset:      searchReq.Offset,
 	}
-	tags, err := o.operationRepository.GetOperationsTags(searchQuery, skipRefs)
+	tags, err := o.operationRepository.GetOperationsTags(ctx, searchQuery, skipRefs)
 	if err != nil {
 		return nil, err
 	}
@@ -356,8 +356,8 @@ func (o operationServiceImpl) GetOperationsTags(searchReq view.OperationBasicSea
 	return &view.OperationTags{Tags: tags}, nil
 }
 
-func (o operationServiceImpl) GetOperationChanges(packageId string, version string, operationId string, previousPackageId string, previousVersion string, severities []string) (*view.OperationChangesView, error) {
-	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
+func (o operationServiceImpl) GetOperationChanges(ctx context.Context, packageId string, version string, operationId string, previousPackageId string, previousVersion string, severities []string) (*view.OperationChangesView, error) {
+	versionEnt, err := o.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return nil, err
 	}
@@ -386,7 +386,7 @@ func (o operationServiceImpl) GetOperationChanges(packageId string, version stri
 			previousPackageId = packageId
 		}
 	}
-	previousVersionEnt, err := o.publishedRepo.GetVersion(previousPackageId, previousVersion)
+	previousVersionEnt, err := o.publishedRepo.GetVersion(ctx, previousPackageId, previousVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -403,7 +403,7 @@ func (o operationServiceImpl) GetOperationChanges(packageId string, version stri
 		versionEnt.PackageId, versionEnt.Version, versionEnt.Revision,
 		previousVersionEnt.PackageId, previousVersionEnt.Version, previousVersionEnt.Revision,
 	)
-	versionComparison, err := o.publishedRepo.GetVersionComparison(comparisonId)
+	versionComparison, err := o.publishedRepo.GetVersionComparison(ctx, comparisonId)
 	if err != nil {
 		return nil, err
 	}
@@ -425,7 +425,7 @@ func (o operationServiceImpl) GetOperationChanges(packageId string, version stri
 	}
 
 	changes := make([]interface{}, 0)
-	changedOperationEnt, err := o.operationRepository.GetOperationChanges(comparisonId, operationId, severities)
+	changedOperationEnt, err := o.operationRepository.GetOperationChanges(ctx, comparisonId, operationId, severities)
 	if err != nil {
 		return nil, err
 	}
@@ -445,8 +445,8 @@ func (o operationServiceImpl) GetOperationChanges(packageId string, version stri
 	return &view.OperationChangesView{Changes: changes}, nil
 }
 
-func (o operationServiceImpl) GetVersionChanges(packageId string, version string, apiType string, searchReq view.VersionChangesReq) (*view.VersionChangesView, error) {
-	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
+func (o operationServiceImpl) GetVersionChanges(ctx context.Context, packageId string, version string, apiType string, searchReq view.VersionChangesReq) (*view.VersionChangesView, error) {
+	versionEnt, err := o.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return nil, err
 	}
@@ -475,7 +475,7 @@ func (o operationServiceImpl) GetVersionChanges(packageId string, version string
 			searchReq.PreviousVersionPackageId = packageId
 		}
 	}
-	previousVersionEnt, err := o.publishedRepo.GetVersion(searchReq.PreviousVersionPackageId, searchReq.PreviousVersion)
+	previousVersionEnt, err := o.publishedRepo.GetVersion(ctx, searchReq.PreviousVersionPackageId, searchReq.PreviousVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -493,7 +493,7 @@ func (o operationServiceImpl) GetVersionChanges(packageId string, version string
 		previousVersionEnt.PackageId, previousVersionEnt.Version, previousVersionEnt.Revision,
 	)
 
-	versionComparison, err := o.publishedRepo.GetVersionComparison(comparisonId)
+	versionComparison, err := o.publishedRepo.GetVersionComparison(ctx, comparisonId)
 	if err != nil {
 		return nil, err
 	}
@@ -535,7 +535,7 @@ func (o operationServiceImpl) GetVersionChanges(packageId string, version string
 		AsyncapiProtocol: searchReq.AsyncapiProtocol,
 	}
 	operationComparisons := make([]interface{}, 0)
-	changelogOperationEnts, err := o.operationRepository.GetChangelog(searchQuery)
+	changelogOperationEnts, err := o.operationRepository.GetChangelog(ctx, searchQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -550,7 +550,7 @@ func (o operationServiceImpl) GetVersionChanges(packageId string, version string
 			packageVersions[changelogOperationEnt.PreviousPackageId] = append(packageVersions[changelogOperationEnt.PreviousPackageId], view.MakeVersionRefKey(changelogOperationEnt.PreviousVersion, changelogOperationEnt.PreviousRevision))
 		}
 	}
-	packagesRefs, err := o.packageVersionEnrichmentService.GetPackageVersionRefsMap(packageVersions)
+	packagesRefs, err := o.packageVersionEnrichmentService.GetPackageVersionRefsMap(ctx, packageVersions)
 	if err != nil {
 		return nil, err
 	}
@@ -624,8 +624,8 @@ func (o operationServiceImpl) GlobalSearchForOperations(ctx context.Context, sea
 	return &view.SearchResult{Operations: &operations}, nil
 }
 
-func (o operationServiceImpl) GetOperationModelUsages(packageId string, version string, apiType string, operationId string, modelName string) (*view.OperationModelUsages, error) {
-	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
+func (o operationServiceImpl) GetOperationModelUsages(ctx context.Context, packageId string, version string, apiType string, operationId string, modelName string) (*view.OperationModelUsages, error) {
+	versionEnt, err := o.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return nil, err
 	}
@@ -637,7 +637,7 @@ func (o operationServiceImpl) GetOperationModelUsages(packageId string, version 
 			Params:  map[string]interface{}{"version": version, "packageId": packageId},
 		}
 	}
-	operationEnt, err := o.operationRepository.GetOperationById(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, operationId, false)
+	operationEnt, err := o.operationRepository.GetOperationById(ctx, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, operationId, false)
 	if err != nil {
 		return nil, err
 	}
@@ -658,7 +658,7 @@ func (o operationServiceImpl) GetOperationModelUsages(packageId string, version 
 			Params:  map[string]interface{}{"operationId": operationId, "modelName": modelName},
 		}
 	}
-	operationsWithModel, err := o.operationRepository.GetOperationsByModelHash(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, modelHash)
+	operationsWithModel, err := o.operationRepository.GetOperationsByModelHash(ctx, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision, apiType, modelHash)
 	if err != nil {
 		return nil, err
 	}
@@ -672,8 +672,8 @@ func (o operationServiceImpl) GetOperationModelUsages(packageId string, version 
 	return &view.OperationModelUsages{ModelUsages: modelUsages}, nil
 }
 
-func (o operationServiceImpl) GetOperationChangesSummary(packageId string, version string, operationId string, previousPackageId string, previousVersion string, refPackageId string) (*view.ChangeSummary, error) {
-	versionEnt, err := o.publishedRepo.GetVersion(packageId, version)
+func (o operationServiceImpl) GetOperationChangesSummary(ctx context.Context, packageId string, version string, operationId string, previousPackageId string, previousVersion string, refPackageId string) (*view.ChangeSummary, error) {
+	versionEnt, err := o.publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
 		return nil, err
 	}
@@ -702,7 +702,7 @@ func (o operationServiceImpl) GetOperationChangesSummary(packageId string, versi
 			previousPackageId = packageId
 		}
 	}
-	previousVersionEnt, err := o.publishedRepo.GetVersion(previousPackageId, previousVersion)
+	previousVersionEnt, err := o.publishedRepo.GetVersion(ctx, previousPackageId, previousVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -720,7 +720,7 @@ func (o operationServiceImpl) GetOperationChangesSummary(packageId string, versi
 		previousVersionEnt.PackageId, previousVersionEnt.Version, previousVersionEnt.Revision,
 	)
 
-	changedOperationSummaryEnt, err := o.operationRepository.GetOperationChangesSummary(comparisonId, operationId, refPackageId)
+	changedOperationSummaryEnt, err := o.operationRepository.GetOperationChangesSummary(ctx, comparisonId, operationId, refPackageId)
 	if err != nil {
 		return nil, err
 	}

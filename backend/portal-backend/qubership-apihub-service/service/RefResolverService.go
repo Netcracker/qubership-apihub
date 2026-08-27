@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -10,7 +11,7 @@ import (
 )
 
 type RefResolverService interface {
-	CalculateBuildConfigRefs(refs []view.BCRef, resolveRefs bool, resolveConflicts bool) ([]view.BCRef, error)
+	CalculateBuildConfigRefs(ctx context.Context, refs []view.BCRef, resolveRefs bool, resolveConflicts bool) ([]view.BCRef, error)
 }
 
 func NewRefResolverService(publishedRepo repository.PublishedRepository) RefResolverService {
@@ -23,13 +24,13 @@ type refResolverServiceImpl struct {
 	publishedRepo repository.PublishedRepository
 }
 
-func (r *refResolverServiceImpl) CalculateBuildConfigRefs(refs []view.BCRef, resolveRefs bool, resolveConflicts bool) ([]view.BCRef, error) {
+func (r *refResolverServiceImpl) CalculateBuildConfigRefs(ctx context.Context, refs []view.BCRef, resolveRefs bool, resolveConflicts bool) ([]view.BCRef, error) {
 	validRefs := make(map[string]struct{}, 0)
 	if resolveRefs {
 		uniqueRefs := make(map[string]struct{}, 0)
 		for i := range refs {
 			ref := &refs[i]
-			versionEnt, err := r.publishedRepo.GetVersion(ref.RefId, ref.Version)
+			versionEnt, err := r.publishedRepo.GetVersion(ctx, ref.RefId, ref.Version)
 			if err != nil {
 				return nil, err
 			}
@@ -42,7 +43,7 @@ func (r *refResolverServiceImpl) CalculateBuildConfigRefs(refs []view.BCRef, res
 				}
 			}
 			if ref.ParentRefId != "" {
-				parentVersionEnt, err := r.publishedRepo.GetVersion(ref.ParentRefId, ref.ParentVersion)
+				parentVersionEnt, err := r.publishedRepo.GetVersion(ctx, ref.ParentRefId, ref.ParentVersion)
 				if err != nil {
 					return nil, err
 				}
@@ -60,7 +61,7 @@ func (r *refResolverServiceImpl) CalculateBuildConfigRefs(refs []view.BCRef, res
 			//add revision to version name
 			ref.Version = view.MakeVersionRefKey(versionEnt.Version, versionEnt.Revision)
 			validRefs[makeConfigRefUniqueKey(*ref)] = struct{}{}
-			childRefs, err := r.publishedRepo.GetVersionRefsV3(versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
+			childRefs, err := r.publishedRepo.GetVersionRefsV3(ctx, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
 			if err != nil {
 				return nil, err
 			}
@@ -91,7 +92,7 @@ func (r *refResolverServiceImpl) CalculateBuildConfigRefs(refs []view.BCRef, res
 	uniquePackageRefs := make(map[string]struct{}, 0)
 	for i := range refs {
 		ref := &refs[i]
-		versionEnt, err := r.publishedRepo.GetVersion(ref.RefId, ref.Version)
+		versionEnt, err := r.publishedRepo.GetVersion(ctx, ref.RefId, ref.Version)
 		if err != nil {
 			return nil, err
 		}
@@ -104,7 +105,7 @@ func (r *refResolverServiceImpl) CalculateBuildConfigRefs(refs []view.BCRef, res
 			}
 		}
 		if ref.ParentRefId != "" {
-			parentVersionEnt, err := r.publishedRepo.GetVersion(ref.ParentRefId, ref.ParentVersion)
+			parentVersionEnt, err := r.publishedRepo.GetVersion(ctx, ref.ParentRefId, ref.ParentVersion)
 			if err != nil {
 				return nil, err
 			}

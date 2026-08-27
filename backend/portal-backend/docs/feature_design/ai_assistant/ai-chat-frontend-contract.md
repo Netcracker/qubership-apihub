@@ -200,6 +200,7 @@ Errors are returned as the standard APIHUB `ErrorResponse` body (`status`, `code
 | `APIHUB-AI-4003` | Pinned-chats limit exceeded (3). |
 | `APIHUB-AI-5000` | Generic internal server error while processing the chat. |
 | `APIHUB-AI-5001` | Upstream LLM provider failure (SSE `error` event mid-turn). |
+| `APIHUB-AI-5002` | The turn ran out of its server-side turn timeout. Delivered as the terminal SSE `error` event on the streaming endpoint, and in the response body on the non-streaming one. |
 
 MCP tool failures are reported as `tool.completed` events with `status: error` and in persisted `toolInvocations`; they do not emit a dedicated stream error code.
 
@@ -212,7 +213,7 @@ Ephemeral file download errors (`GET /api/v1/ephemeral-files/{fileId}`) use a se
 | `APIHUB-EF-3003` | Download token query parameter missing. |
 | `APIHUB-EF-4101` | Signed download token expired (`410 Gone`). |
 
-Non-streaming endpoints return the error in the response body. The streaming endpoint returns validation/authz errors as a regular HTTP error *before* any SSE frame is written (same `APIHUB-AI-*` codes), and returns mid-turn failures via a single terminal `error` SSE event (see §4.3) with `APIHUB-AI-5001` or `APIHUB-AI-5000`.
+Non-streaming endpoints return the error in the response body. The streaming endpoint returns validation/authz errors as a regular HTTP error *before* any SSE frame is written (same `APIHUB-AI-*` codes), and returns mid-turn failures via a single terminal `error` SSE event (see §4.3) with `APIHUB-AI-5001`, `APIHUB-AI-5002`, or `APIHUB-AI-5000`.
 
 ## 8. Client implementation checklist
 

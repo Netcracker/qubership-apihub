@@ -12,14 +12,14 @@ import (
 )
 
 type ExportResultRepository interface {
-	SaveExportResult(ent entity.ExportResultEntity) error
-	GetExportResult(exportId string) (*entity.ExportResultEntity, error)
-	CleanupExportResults(ttl time.Duration) error
+	SaveExportResult(ctx context.Context, ent entity.ExportResultEntity) error
+	GetExportResult(ctx context.Context, exportId string) (*entity.ExportResultEntity, error)
+	CleanupExportResults(ctx context.Context, ttl time.Duration) error
 
 	// deprecated??
-	SaveTransformedDocument(data *entity.TransformedContentDataEntity, publishId string) error
-	GetTransformedDocuments(packageId string, version string, apiType string, groupId string, buildType view.BuildType, format string) (*entity.TransformedContentDataEntity, error)
-	DeleteTransformedDocuments(packageId string, version string, revision int, apiType string, groupId string) error
+	SaveTransformedDocument(ctx context.Context, data *entity.TransformedContentDataEntity, publishId string) error
+	GetTransformedDocuments(ctx context.Context, packageId string, version string, apiType string, groupId string, buildType view.BuildType, format string) (*entity.TransformedContentDataEntity, error)
+	DeleteTransformedDocuments(ctx context.Context, packageId string, version string, revision int, apiType string, groupId string) error
 }
 
 func NewExportRepository(cp db.ConnectionProvider) ExportResultRepository {
@@ -30,16 +30,15 @@ type exportRepositoryImpl struct {
 	cp db.ConnectionProvider
 }
 
-func (p exportRepositoryImpl) CleanupExportResults(ttl time.Duration) error {
+func (p exportRepositoryImpl) CleanupExportResults(ctx context.Context, ttl time.Duration) error {
 	var ent entity.ExportResultEntity
-	_, err := p.cp.GetConnection().Model(&ent).
+	_, err := p.cp.GetConnection().WithContext(ctx).Model(&ent).
 		Where("created_at < (now() - interval '? seconds')", int(ttl.Seconds())).
 		Delete()
 	return err
 }
 
-func (p exportRepositoryImpl) SaveExportResult(exportResEnt entity.ExportResultEntity) error {
-	ctx := context.Background()
+func (p exportRepositoryImpl) SaveExportResult(ctx context.Context, exportResEnt entity.ExportResultEntity) error {
 	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		var ents []entity.BuildEntity
 		_, err := tx.Query(&ents, getBuildWithLock, exportResEnt.ExportId)
@@ -58,7 +57,7 @@ func (p exportRepositoryImpl) SaveExportResult(exportResEnt entity.ExportResultE
 		}
 
 		// no "on conflict" statements since multiple exports with the same id or update cases are not expected
-		_, err = p.cp.GetConnection().Model(&exportResEnt).Insert()
+		_, err = tx.Model(&exportResEnt).Insert()
 		if err != nil {
 			return err
 		}
@@ -78,9 +77,9 @@ func (p exportRepositoryImpl) SaveExportResult(exportResEnt entity.ExportResultE
 	return err
 }
 
-func (p exportRepositoryImpl) GetExportResult(exportId string) (*entity.ExportResultEntity, error) {
+func (p exportRepositoryImpl) GetExportResult(ctx context.Context, exportId string) (*entity.ExportResultEntity, error) {
 	result := new(entity.ExportResultEntity)
-	err := p.cp.GetConnection().Model(result).
+	err := p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("export_id = ?", exportId).
 		First()
 	if err != nil {
@@ -92,8 +91,7 @@ func (p exportRepositoryImpl) GetExportResult(exportId string) (*entity.ExportRe
 	return result, err
 }
 
-func (p exportRepositoryImpl) SaveTransformedDocument(data *entity.TransformedContentDataEntity, publishId string) error {
-	ctx := context.Background()
+func (p exportRepositoryImpl) SaveTransformedDocument(ctx context.Context, data *entity.TransformedContentDataEntity, publishId string) error {
 	err := p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		var ents []entity.BuildEntity
 		_, err := tx.Query(&ents, getBuildWithLock, publishId)
@@ -130,13 +128,13 @@ func (p exportRepositoryImpl) SaveTransformedDocument(data *entity.TransformedCo
 	return err
 }
 
-func (p exportRepositoryImpl) GetTransformedDocuments(packageId string, version string, apiType string, groupId string, buildType view.BuildType, format string) (*entity.TransformedContentDataEntity, error) {
+func (p exportRepositoryImpl) GetTransformedDocuments(ctx context.Context, packageId string, version string, apiType string, groupId string, buildType view.BuildType, format string) (*entity.TransformedContentDataEntity, error) {
 	result := new(entity.TransformedContentDataEntity)
 	version, revision, err := SplitVersionRevision(version)
 	if err != nil {
 		return nil, err
 	}
-	err = p.cp.GetConnection().Model(result).
+	err = p.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("package_id = ?", packageId).
 		Where("version = ?", version).
 		Where("revision = ?", revision).
@@ -154,8 +152,7 @@ func (p exportRepositoryImpl) GetTransformedDocuments(packageId string, version 
 	return result, err
 }
 
-func (p exportRepositoryImpl) DeleteTransformedDocuments(packageId string, version string, revision int, apiType string, groupId string) error {
-	ctx := context.Background()
+func (p exportRepositoryImpl) DeleteTransformedDocuments(ctx context.Context, packageId string, version string, revision int, apiType string, groupId string) error {
 	return p.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		query := `
 		delete from transformed_content_data

@@ -44,7 +44,7 @@ func (p *maintenanceVacuumCleanupJobProcessor) GetVacuumTimeout() time.Duration 
 
 func (p *maintenanceVacuumCleanupJobProcessor) PerformVacuum(ctx context.Context, jobId string) error {
 	logger.Infof(ctx, "Starting maintenance vacuum for all eligible public tables")
-	vacuumQueries, err := p.prepareVacuumQueries()
+	vacuumQueries, err := p.prepareVacuumQueries(ctx)
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (p *maintenanceVacuumCleanupJobProcessor) PerformVacuum(ctx context.Context
 			return ctx.Err()
 		default:
 		}
-		if _, err = p.cp.GetConnection().Exec(query); err != nil {
+		if _, err = p.cp.GetConnection().ExecContext(ctx, query); err != nil {
 			return err
 		}
 	}
@@ -62,13 +62,13 @@ func (p *maintenanceVacuumCleanupJobProcessor) PerformVacuum(ctx context.Context
 	return nil
 }
 
-func (p *maintenanceVacuumCleanupJobProcessor) prepareVacuumQueries() ([]string, error) {
+func (p *maintenanceVacuumCleanupJobProcessor) prepareVacuumQueries(ctx context.Context) ([]string, error) {
 	var rels []tableRelation
-	_, err := p.cp.GetConnection().Query(&rels, `select schemaname, relname
-				from pg_stat_all_tables where schemaname = 'public' and relname not like 'pg_%'
-				                          and ((last_analyze is null and last_autoanalyze is null)
-				        or last_analyze < (current_date - interval '1 day')
-				        or last_autoanalyze < (current_date - interval '1 day'));`)
+	_, err := p.cp.GetConnection().QueryContext(ctx, &rels, `select schemaname, relname
+		from pg_stat_all_tables where schemaname = 'public' and relname not like 'pg_%'
+		and ((last_analyze is null and last_autoanalyze is null)
+			or last_analyze < (current_date - interval '1 day')
+			or last_autoanalyze < (current_date - interval '1 day'));`)
 	if err != nil {
 		return nil, err
 	}

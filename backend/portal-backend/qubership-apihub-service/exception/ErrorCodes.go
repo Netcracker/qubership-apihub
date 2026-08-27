@@ -829,6 +829,12 @@ const ShareabilityReportSizeExceededMsg = "Shareability report file size exceede
 const PublishNotAllowedForPackageKind = "8400"
 const PublishNotAllowedForPackageKindMsg = "Publication is allowed only for the following package kinds: $allowedKinds, but target package has kind=$kind"
 
+const DdlEntityNotFound = "8401"
+const DdlEntityNotFoundMsg = "DDL entity $ddlEntityId not found"
+
+const McpEntityNotFound = "8402"
+const McpEntityNotFoundMsg = "MCP entity $mcpEntityId not found"
+
 const ReferencedByDashboard = "8500"
 const VersionReferencedByDashboardMsg = "Cannot delete version $version of package $packageId: it is referenced by these dashboard versions: $dashboards. Remove the references or delete the dashboards, then retry."
 const PackageReferencedByDashboardMsg = "Cannot delete package $packageId: it is referenced by these dashboard versions: $dashboards. Remove the references or delete the dashboards, then retry."
@@ -838,6 +844,12 @@ const InvalidReleaseVersionChain = "8600"
 const ReleaseVersionPreviousVersionNotReleaseMsg = "Version $version for package $packageId cannot be published with the 'release' status because previous version $previousVersion for package $previousVersionPackageId is in the 'draft' status. Change the previous version to 'release', or publish this version as a draft."
 const VersionStatusChangePreviousVersionNotReleaseMsg = "Version $version for package $packageId cannot be changed to the 'release' status because previous version $previousVersion for package $previousVersionPackageId is in the 'draft' status. Change the previous version to 'release', then retry."
 const VersionReferencedAsPreviousByReleaseMsg = "Version $version for package $packageId cannot be changed to the 'draft' status because it is the previous version of: $releaseVersions"
+
+const RequestTimeout = "8700"
+const RequestTimeoutMsg = "The request timed out. Please try again."
+
+const RequestCancelled = "8701"
+const RequestCancelledMsg = "The request was cancelled before it completed. Retry the request."
 
 // AI Chat error codes (APIHUB-AI-*). Each public error has a Code constant; variant
 // messages reuse the parent Code (same pattern as InvalidParameterValue + InvalidLimitMsg).
@@ -862,6 +874,9 @@ const AiChatStreamingNotSupportedMsg = "Streaming not supported"
 
 const AiChatLLMError = "APIHUB-AI-5001"
 const AiChatLLMErrorMsg = "LLM provider error"
+
+const AiChatTurnTimedOut = "APIHUB-AI-5002"
+const AiChatTurnTimedOutMsg = "The assistant did not finish this message within the allowed time. Retry, or split your request into smaller steps."
 
 // Ephemeral file error codes (APIHUB-EF-*). Each public error has a Code constant; variant
 // messages reuse the parent Code (same pattern as InvalidParameterValue + InvalidLimitMsg).

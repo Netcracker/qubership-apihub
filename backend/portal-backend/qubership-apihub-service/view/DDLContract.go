@@ -7,10 +7,10 @@ type DdlEntityListView struct {
 
 type DdlContractEntityView struct {
 	DdlEntityId               string `json:"ddlEntityId"`
-	Kind                      string `json:"kind,omitempty"`
+	Kind                      string `json:"kind"`
 	SchemaName                string `json:"schemaName"`
 	Name                      string `json:"name"`
-	Description               string `json:"description,omitempty"`
+	Description               string `json:"description"`
 	DocumentId                string `json:"documentId"`
 	VersionInternalDocumentId string `json:"versionInternalDocumentId"`
 	PackageRef                string `json:"packageRef,omitempty"`
@@ -19,7 +19,6 @@ type DdlContractEntityView struct {
 
 type DdlEntityDetailView struct {
 	DdlContractEntityView
-	Packages map[string]PackageVersionRef `json:"packages,omitempty"`
 }
 
 type DdlEntityChangesView struct {
@@ -30,10 +29,10 @@ type DdlEntityChangesView struct {
 // used in the changed-DDL-entities response.
 type DdlEntityData struct {
 	DdlEntityId string `json:"ddlEntityId"`
-	Kind        string `json:"kind,omitempty"`
-	Name        string `json:"name,omitempty"`
-	SchemaName  string `json:"schemaName,omitempty"`
-	Description string `json:"description,omitempty"`
+	Kind        string `json:"kind"`
+	Name        string `json:"name"`
+	SchemaName  string `json:"schemaName"`
+	Description string `json:"description"`
 	PackageRef  string `json:"packageRef,omitempty"`
 }
 
@@ -73,5 +72,5 @@ type DdlContractSearchResult struct {
 	EntityId       string   `json:"entityId"`
 	Kind           string   `json:"kind"`
 	SchemaName     string   `json:"schemaName,omitempty"`
-	TableName      string   `json:"tableName,omitempty"`
+	EntityName     string   `json:"entityName,omitempty"`
 }

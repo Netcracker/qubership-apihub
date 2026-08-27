@@ -36,6 +36,26 @@ type PackageEntity struct {
 	RestGroupingPrefix    string     `pg:"rest_grouping_prefix, type:varchar"`
 }
 
+type ReadablePackageEntity struct {
+	tableName struct{} `pg:"package_group, alias:package_group, discard_unknown_columns"`
+
+	PackageEntity
+	IsFavorite  bool     `pg:"is_favorite, type:bool, use_zero"`
+	Permissions []string `pg:"permissions, type:varchar[], use_zero"`
+}
+
+type PackagesQueryParams struct {
+	UserId      string   `pg:"user_id, type:varchar, use_zero"`
+	SubtreeRoot string   `pg:"subtree_root, type:varchar, use_zero"`
+	ParentId    string   `pg:"parent_id, type:varchar, use_zero"`
+	ServiceName string   `pg:"service_name, type:varchar, use_zero"`
+	TextFilter  string   `pg:"text_filter, type:varchar, use_zero"`
+	Kinds       []string `pg:"kinds, type:varchar[], use_zero"`
+	Ids         []string `pg:"ids, type:varchar[], use_zero"`
+	Limit       int      `pg:"limit, type:integer, use_zero"`
+	Offset      int      `pg:"offset, type:integer, use_zero"`
+}
+
 type PackageVersionRichEntity struct {
 	tableName struct{} `pg:"published_version, alias:published_version"`
 
@@ -81,9 +101,9 @@ type PublishedVersionEntity struct {
 }
 
 type PublishedVersionSearchQueryEntity struct {
-	PackageId  string `pg:"package_id, type:varchar, use_zero"`
-	Status     string `pg:"status, type:varchar, use_zero"`
-	Label      string `pg:"label, type:varchar, use_zero"`
+	PackageId  string   `pg:"package_id, type:varchar, use_zero"`
+	Statuses   []string `pg:"statuses, type:varchar[], use_zero"`
+	Label      string   `pg:"label, type:varchar, use_zero"`
 	TextFilter string `pg:"text_filter, type:varchar, use_zero"`
 	SortBy     string `pg:"sort_by, type:varchar, use_zero"`
 	SortOrder  string `pg:"sort_order, type:varchar, use_zero"`
@@ -185,6 +205,7 @@ type PublishedContentEntity struct {
 	OperationIds []string `pg:"operation_ids, type:varchar[], array"`
 	Filename     string   `pg:"filename, type:varchar"`
 	Shareability string   `pg:"shareability_status, type:varchar"`
+	ApiKind      string   `pg:"api_kind, type:varchar"`
 }
 
 type PublishedContentWithDataEntity struct {
@@ -358,6 +379,7 @@ func MakePublishedDocumentView(ent *PublishedContentEntity) *view.PublishedDocum
 		Description:  ent.Metadata.GetDescription(),
 		Version:      ent.Metadata.GetVersion(),
 		Shareability: ent.Shareability,
+		ApiKind:      view.ApiKindOrDefault(ent.ApiKind),
 		Info:         ent.Metadata.GetInfo(),
 		ExternalDocs: ent.Metadata.GetExternalDocs(),
 		Title:        ent.Title,
@@ -376,6 +398,7 @@ func MakeDocumentForTransformationView(ent *PublishedContentWithDataEntity) *vie
 		Description:          ent.Metadata.GetDescription(),
 		Version:              ent.Metadata.GetVersion(),
 		Shareability:         ent.Shareability,
+		ApiKind:              view.ApiKindOrDefault(ent.ApiKind),
 		Title:                ent.Title,
 		Filename:             ent.Filename,
 		IncludedOperationIds: ent.OperationIds,
@@ -394,6 +417,7 @@ func MakePublishedDocumentRefView2(ent *PublishedContentEntity) *view.PublishedD
 		Description:  ent.Metadata.GetDescription(),
 		Version:      ent.Metadata.GetVersion(),
 		Shareability: ent.Shareability,
+		ApiKind:      view.ApiKindOrDefault(ent.ApiKind),
 		Title:        ent.Title,
 		Filename:     ent.Filename,
 		PackageRef:   view.MakePackageRefKey(ent.PackageId, ent.Version, ent.Revision),

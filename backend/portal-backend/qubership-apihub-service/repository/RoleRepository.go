@@ -10,27 +10,27 @@ import (
 )
 
 type RoleRepository interface {
-	AddPackageMemberRoles(entities []entity.PackageMemberRoleEntity) error
-	DeleteDirectPackageMember(packageId string, userId string) error
-	GetDirectPackageMembers(packageId string) ([]entity.PackageMemberRoleEntity, error)
-	GetDirectPackageMember(packageId string, userId string) (*entity.PackageMemberRoleEntity, error)
-	RemoveRoleFromPackageMember(packageId string, userId string, roleId string) error
-	GetPackageRolesHierarchyForUser(packageId string, userId string) ([]entity.PackageMemberRoleRichEntity, error)
-	GetPackageHierarchyMembers(packageId string) ([]entity.PackageMemberRoleRichEntity, error)
-	GetAvailablePackageRoles(packageId string, userId string) ([]entity.RoleEntity, error)
-	GetUserSystemRole(userId string) (*entity.SystemRoleEntity, error)
-	SetUserSystemRole(userId string, role string) error
-	DeleteUserSystemRole(userId string) error
-	GetAllRoles() ([]entity.RoleEntity, error)
-	CreateRole(roleEntity entity.RoleEntity) error
-	UpdateRolePermissions(roleId string, permissions []string) error
-	DeleteRole(roleId string) error
-	GetRole(roleId string) (*entity.RoleEntity, error)
-	GetPermissionsForRoles(roles []string) ([]string, error)
-	GetUserPermissions(packageId string, userId string) ([]string, error)
-	GetAllUserPermissions(userId string) ([]string, error)
-	SetRoleRanks(entities []entity.RoleEntity) error
-	GetUsersBySystemRole(systemRole string) ([]entity.UserEntity, error)
+	AddPackageMemberRoles(ctx context.Context, entities []entity.PackageMemberRoleEntity) error
+	DeleteDirectPackageMember(ctx context.Context, packageId string, userId string) error
+	GetDirectPackageMembers(ctx context.Context, packageId string) ([]entity.PackageMemberRoleEntity, error)
+	GetDirectPackageMember(ctx context.Context, packageId string, userId string) (*entity.PackageMemberRoleEntity, error)
+	RemoveRoleFromPackageMember(ctx context.Context, packageId string, userId string, roleId string) error
+	GetPackageRolesHierarchyForUser(ctx context.Context, packageId string, userId string) ([]entity.PackageMemberRoleRichEntity, error)
+	GetPackageHierarchyMembers(ctx context.Context, packageId string) ([]entity.PackageMemberRoleRichEntity, error)
+	GetAvailablePackageRoles(ctx context.Context, packageId string, userId string) ([]entity.RoleEntity, error)
+	GetUserSystemRole(ctx context.Context, userId string) (*entity.SystemRoleEntity, error)
+	SetUserSystemRole(ctx context.Context, userId string, role string) error
+	DeleteUserSystemRole(ctx context.Context, userId string) error
+	GetAllRoles(ctx context.Context) ([]entity.RoleEntity, error)
+	CreateRole(ctx context.Context, roleEntity entity.RoleEntity) error
+	UpdateRolePermissions(ctx context.Context, roleId string, permissions []string) error
+	DeleteRole(ctx context.Context, roleId string) error
+	GetRole(ctx context.Context, roleId string) (*entity.RoleEntity, error)
+	GetPermissionsForRoles(ctx context.Context, roles []string) ([]string, error)
+	GetUserPermissions(ctx context.Context, packageId string, userId string) ([]string, error)
+	GetAllUserPermissions(ctx context.Context, userId string) ([]string, error)
+	SetRoleRanks(ctx context.Context, entities []entity.RoleEntity) error
+	GetUsersBySystemRole(ctx context.Context, systemRole string) ([]entity.UserEntity, error)
 }
 
 func NewRoleRepository(cp db.ConnectionProvider) RoleRepository {
@@ -41,15 +41,14 @@ type roleRepositoryImpl struct {
 	cp db.ConnectionProvider
 }
 
-func (r roleRepositoryImpl) AddPackageMemberRoles(entities []entity.PackageMemberRoleEntity) error {
+func (r roleRepositoryImpl) AddPackageMemberRoles(ctx context.Context, entities []entity.PackageMemberRoleEntity) error {
 	if len(entities) == 0 {
 		return nil
 	}
-	ctx := context.Background()
 	return r.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		_, err := tx.Model(&entities).
 			OnConflict(`
-		(package_id, user_id) do update 
+		(package_id, user_id) do update
 		set updated_by = excluded.updated_by,
 			updated_at = excluded.updated_at,
 			roles = array(select distinct unnest(package_member_role.roles || excluded.roles))`).
@@ -59,13 +58,13 @@ func (r roleRepositoryImpl) AddPackageMemberRoles(entities []entity.PackageMembe
 		}
 		//user is not allowed to have the same role for parent and children package
 		removeDuplicateInheritedRolesQuery := `
-		update package_member_role 
-		set roles = 
+		update package_member_role
+		set roles =
 		(
 			SELECT array
 			(
-				SELECT unnest(roles) 
-				EXCEPT 
+				SELECT unnest(roles)
+				EXCEPT
 				select unnest(roles) from package_member_role where user_id = ? and package_id = ?
 			)
 		)
@@ -82,9 +81,9 @@ func (r roleRepositoryImpl) AddPackageMemberRoles(entities []entity.PackageMembe
 	})
 }
 
-func (r roleRepositoryImpl) DeleteDirectPackageMember(packageId string, userId string) error {
+func (r roleRepositoryImpl) DeleteDirectPackageMember(ctx context.Context, packageId string, userId string) error {
 	ent := new(entity.PackageMemberRoleEntity)
-	_, err := r.cp.GetConnection().Model(ent).
+	_, err := r.cp.GetConnection().WithContext(ctx).Model(ent).
 		Where("package_id = ?", packageId).
 		Where("user_id = ?", userId).
 		Delete()
@@ -94,9 +93,9 @@ func (r roleRepositoryImpl) DeleteDirectPackageMember(packageId string, userId s
 	return nil
 }
 
-func (r roleRepositoryImpl) GetDirectPackageMember(packageId string, userId string) (*entity.PackageMemberRoleEntity, error) {
+func (r roleRepositoryImpl) GetDirectPackageMember(ctx context.Context, packageId string, userId string) (*entity.PackageMemberRoleEntity, error) {
 	result := new(entity.PackageMemberRoleEntity)
-	err := r.cp.GetConnection().Model(result).
+	err := r.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("package_id = ?", packageId).
 		Where("user_id = ?", userId).
 		First()
@@ -109,8 +108,7 @@ func (r roleRepositoryImpl) GetDirectPackageMember(packageId string, userId stri
 	return result, nil
 }
 
-func (r roleRepositoryImpl) RemoveRoleFromPackageMember(packageId string, userId string, roleId string) error {
-	ctx := context.Background()
+func (r roleRepositoryImpl) RemoveRoleFromPackageMember(ctx context.Context, packageId string, userId string, roleId string) error {
 	return r.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		removeRoleFromPackageMemberQuery := `
 		update package_member_role set roles = array_remove(roles, ?)
@@ -124,9 +122,9 @@ func (r roleRepositoryImpl) RemoveRoleFromPackageMember(packageId string, userId
 	})
 }
 
-func (r roleRepositoryImpl) GetDirectPackageMembers(packageId string) ([]entity.PackageMemberRoleEntity, error) {
+func (r roleRepositoryImpl) GetDirectPackageMembers(ctx context.Context, packageId string) ([]entity.PackageMemberRoleEntity, error) {
 	var result []entity.PackageMemberRoleEntity
-	err := r.cp.GetConnection().Model(&result).
+	err := r.cp.GetConnection().WithContext(ctx).Model(&result).
 		Where("package_id = ?", packageId).
 		Select()
 	if err != nil {
@@ -144,7 +142,7 @@ func (r roleRepositoryImpl) deleteMembersWithEmptyRoles(tx *pg.Tx) error {
 	return nil
 }
 
-func (r roleRepositoryImpl) GetPackageRolesHierarchyForUser(packageId string, userId string) ([]entity.PackageMemberRoleRichEntity, error) {
+func (r roleRepositoryImpl) GetPackageRolesHierarchyForUser(ctx context.Context, packageId string, userId string) ([]entity.PackageMemberRoleRichEntity, error) {
 	var result []entity.PackageMemberRoleRichEntity
 	if packageId == "" {
 		return nil, nil
@@ -155,28 +153,28 @@ func (r roleRepositoryImpl) GetPackageRolesHierarchyForUser(packageId string, us
 	//using unnest to sort result by packageIds array
 	query := `
 	select pg.id package_id, pg.kind package_kind, pg.name package_name, u.user_id, u.name user_name, u.email user_email, u.avatar_url user_avatar, role.id as role_id, role.role as role
-	from 
+	from
 	package_member_role p,
 	package_group pg,
 	user_data u,
-    role,
+	role,
 	UNNEST(?::text[]) WITH ORDINALITY t(package_id, ord),
-    UNNEST(p.roles) roles(role)
+	UNNEST(p.roles) roles(role)
 	where t.package_id = p.package_id
 	and p.package_id=pg.id
 	and p.user_id = ?
 	and p.user_id = u.user_id
-    and role.id = roles.role
+	and role.id = roles.role
 	order by t.ord;
 	`
-	_, err := r.cp.GetConnection().Query(&result, query, pg.Array(packageIds), userId)
+	_, err := r.cp.GetConnection().WithContext(ctx).Query(&result, query, pg.Array(packageIds), userId)
 	if err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func (r roleRepositoryImpl) GetPackageHierarchyMembers(packageId string) ([]entity.PackageMemberRoleRichEntity, error) {
+func (r roleRepositoryImpl) GetPackageHierarchyMembers(ctx context.Context, packageId string) ([]entity.PackageMemberRoleRichEntity, error) {
 	var result []entity.PackageMemberRoleRichEntity
 	if packageId == "" {
 		return nil, nil
@@ -185,27 +183,27 @@ func (r roleRepositoryImpl) GetPackageHierarchyMembers(packageId string) ([]enti
 	//using unnest to sort result by packageIds array
 	query := `
 	select pg.id package_id, pg.kind package_kind, pg.name package_name, u.user_id, u.name user_name, u.email user_email, u.avatar_url user_avatar, role.id as role_id, role.role as role
-	from 
+	from
 	package_member_role p,
 	package_group pg,
 	user_data u,
-    role,
+	role,
 	UNNEST(?::text[]) WITH ORDINALITY t(package_id, ord),
-    UNNEST(p.roles) roles(role)
+	UNNEST(p.roles) roles(role)
 	where t.package_id = p.package_id
 	and p.package_id=pg.id
 	and p.user_id = u.user_id
-    and role.id = roles.role
+	and role.id = roles.role
 	order by t.ord;
 	`
-	_, err := r.cp.GetConnection().Query(&result, query, pg.Array(packageIds))
+	_, err := r.cp.GetConnection().WithContext(ctx).Query(&result, query, pg.Array(packageIds))
 	if err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func (r roleRepositoryImpl) GetAvailablePackageRoles(packageId string, userId string) ([]entity.RoleEntity, error) {
+func (r roleRepositoryImpl) GetAvailablePackageRoles(ctx context.Context, packageId string, userId string) ([]entity.RoleEntity, error) {
 	var result []entity.RoleEntity
 	if packageId == "" {
 		return nil, nil
@@ -213,12 +211,12 @@ func (r roleRepositoryImpl) GetAvailablePackageRoles(packageId string, userId st
 	packageIds := utils.GetPackageHierarchy(packageId)
 	query := `
 	select distinct *
-	from role 
+	from role
 	where rank <= (
-		select max(rank) from role where id in 
+		select max(rank) from role where id in
 		(
 			select unnest(roles) as role
-			from 
+			from
 			package_member_role
 			where package_id in (?)
 			and user_id = ?
@@ -230,16 +228,16 @@ func (r roleRepositoryImpl) GetAvailablePackageRoles(packageId string, userId st
 	)
 	order by rank desc;
 	`
-	_, err := r.cp.GetConnection().Query(&result, query, pg.In(packageIds), userId, pg.In(packageIds))
+	_, err := r.cp.GetConnection().WithContext(ctx).Query(&result, query, pg.In(packageIds), userId, pg.In(packageIds))
 	if err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
-func (r roleRepositoryImpl) GetUserSystemRole(userId string) (*entity.SystemRoleEntity, error) {
+func (r roleRepositoryImpl) GetUserSystemRole(ctx context.Context, userId string) (*entity.SystemRoleEntity, error) {
 	systemRole := new(entity.SystemRoleEntity)
-	err := r.cp.GetConnection().Model(systemRole).
+	err := r.cp.GetConnection().WithContext(ctx).Model(systemRole).
 		Where("user_id = ?", userId).
 		First()
 	if err != nil {
@@ -251,16 +249,16 @@ func (r roleRepositoryImpl) GetUserSystemRole(userId string) (*entity.SystemRole
 	return systemRole, nil
 }
 
-func (r roleRepositoryImpl) SetUserSystemRole(userId string, role string) error {
-	_, err := r.cp.GetConnection().Model(&entity.SystemRoleEntity{UserId: userId, Role: role}).OnConflict("(user_id) DO UPDATE").Insert()
+func (r roleRepositoryImpl) SetUserSystemRole(ctx context.Context, userId string, role string) error {
+	_, err := r.cp.GetConnection().WithContext(ctx).Model(&entity.SystemRoleEntity{UserId: userId, Role: role}).OnConflict("(user_id) DO UPDATE").Insert()
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r roleRepositoryImpl) DeleteUserSystemRole(userId string) error {
-	_, err := r.cp.GetConnection().
+func (r roleRepositoryImpl) DeleteUserSystemRole(ctx context.Context, userId string) error {
+	_, err := r.cp.GetConnection().WithContext(ctx).
 		Model(&entity.SystemRoleEntity{UserId: userId}).
 		WherePK().
 		ForceDelete()
@@ -270,9 +268,9 @@ func (r roleRepositoryImpl) DeleteUserSystemRole(userId string) error {
 	return nil
 }
 
-func (r roleRepositoryImpl) GetAllRoles() ([]entity.RoleEntity, error) {
+func (r roleRepositoryImpl) GetAllRoles(ctx context.Context) ([]entity.RoleEntity, error) {
 	var result []entity.RoleEntity
-	err := r.cp.GetConnection().Model(&result).
+	err := r.cp.GetConnection().WithContext(ctx).Model(&result).
 		Order("rank desc").
 		Select()
 	if err != nil {
@@ -281,8 +279,7 @@ func (r roleRepositoryImpl) GetAllRoles() ([]entity.RoleEntity, error) {
 	return result, nil
 }
 
-func (r roleRepositoryImpl) CreateRole(roleEntity entity.RoleEntity) error {
-	ctx := context.Background()
+func (r roleRepositoryImpl) CreateRole(ctx context.Context, roleEntity entity.RoleEntity) error {
 	return r.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		shiftRoleRanksUpQuery := `update role set rank = rank + 1 where rank >= ?`
 		_, err := tx.Exec(shiftRoleRanksUpQuery, roleEntity.Rank)
@@ -298,8 +295,8 @@ func (r roleRepositoryImpl) CreateRole(roleEntity entity.RoleEntity) error {
 	})
 }
 
-func (r roleRepositoryImpl) UpdateRolePermissions(roleId string, permissions []string) error {
-	_, err := r.cp.GetConnection().Model(&entity.RoleEntity{}).
+func (r roleRepositoryImpl) UpdateRolePermissions(ctx context.Context, roleId string, permissions []string) error {
+	_, err := r.cp.GetConnection().WithContext(ctx).Model(&entity.RoleEntity{}).
 		Where("id = ?", roleId).
 		Set("permissions = ?", pg.Array(permissions)).
 		Update()
@@ -309,12 +306,11 @@ func (r roleRepositoryImpl) UpdateRolePermissions(roleId string, permissions []s
 	return nil
 }
 
-func (r roleRepositoryImpl) DeleteRole(roleId string) error {
-	ctx := context.Background()
+func (r roleRepositoryImpl) DeleteRole(ctx context.Context, roleId string) error {
 	return r.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		shiftRoleRanksDownQuery := `
-		update role 
-		set rank = rank - 1 
+		update role
+		set rank = rank - 1
 		where rank > (select rank from role where id = ?)
 		`
 		_, err := tx.Exec(shiftRoleRanksDownQuery, roleId)
@@ -328,7 +324,7 @@ func (r roleRepositoryImpl) DeleteRole(roleId string) error {
 			return err
 		}
 		removeRoleFromMembers := `
-			update package_member_role 
+			update package_member_role
 			set roles = array_remove(roles, ?)
 			`
 		_, err = tx.Exec(removeRoleFromMembers, roleId)
@@ -339,9 +335,9 @@ func (r roleRepositoryImpl) DeleteRole(roleId string) error {
 	})
 }
 
-func (r roleRepositoryImpl) GetRole(roleId string) (*entity.RoleEntity, error) {
+func (r roleRepositoryImpl) GetRole(ctx context.Context, roleId string) (*entity.RoleEntity, error) {
 	result := new(entity.RoleEntity)
-	err := r.cp.GetConnection().Model(result).
+	err := r.cp.GetConnection().WithContext(ctx).Model(result).
 		Where("id = ?", roleId).
 		First()
 	if err != nil {
@@ -357,16 +353,16 @@ type Permission struct {
 	Permission string `pg:"permission"`
 }
 
-func (r roleRepositoryImpl) GetPermissionsForRoles(roles []string) ([]string, error) {
+func (r roleRepositoryImpl) GetPermissionsForRoles(ctx context.Context, roles []string) ([]string, error) {
 	var permissions []Permission
 	if len(roles) == 0 {
 		return make([]string, 0), nil
 	}
 	query := `
 	select distinct unnest(permissions) as permission
-	from role 
+	from role
 	where id in(?);`
-	_, err := r.cp.GetConnection().Query(&permissions, query, pg.In(roles))
+	_, err := r.cp.GetConnection().WithContext(ctx).Query(&permissions, query, pg.In(roles))
 	if err != nil {
 		return nil, err
 	}
@@ -377,7 +373,7 @@ func (r roleRepositoryImpl) GetPermissionsForRoles(roles []string) ([]string, er
 	return result, nil
 }
 
-func (r roleRepositoryImpl) GetUserPermissions(packageId string, userId string) ([]string, error) {
+func (r roleRepositoryImpl) GetUserPermissions(ctx context.Context, packageId string, userId string) ([]string, error) {
 	var permissions []Permission
 	if packageId == "" {
 		return make([]string, 0), nil
@@ -385,10 +381,10 @@ func (r roleRepositoryImpl) GetUserPermissions(packageId string, userId string) 
 	packageIds := utils.GetPackageHierarchy(packageId)
 	query := `
 	select distinct unnest(permissions) as permission
-	from role 
+	from role
 	where id in(
 		select unnest(roles) as role
-		from 
+		from
 			package_member_role
 			where package_id in (?)
 			and user_id = ?
@@ -397,7 +393,7 @@ func (r roleRepositoryImpl) GetUserPermissions(packageId string, userId string) 
 			from package_group
 			where id in (?)
 	);`
-	_, err := r.cp.GetConnection().Query(&permissions, query, pg.In(packageIds), userId, pg.In(packageIds))
+	_, err := r.cp.GetConnection().WithContext(ctx).Query(&permissions, query, pg.In(packageIds), userId, pg.In(packageIds))
 	if err != nil {
 		return nil, err
 	}
@@ -408,14 +404,14 @@ func (r roleRepositoryImpl) GetUserPermissions(packageId string, userId string) 
 	return result, nil
 }
 
-func (r roleRepositoryImpl) GetAllUserPermissions(userId string) ([]string, error) {
+func (r roleRepositoryImpl) GetAllUserPermissions(ctx context.Context, userId string) ([]string, error) {
 	var permissions []Permission
 	query := `
 	select distinct unnest(permissions) as permission
-	from role 
+	from role
 	where id in(
 		select unnest(roles) as role
-		from 
+		from
 			package_member_role
 			where user_id = ?
 			union
@@ -425,7 +421,7 @@ func (r roleRepositoryImpl) GetAllUserPermissions(userId string) ([]string, erro
 				select package_id from package_member_role where user_id = ?
 			)
 	);`
-	_, err := r.cp.GetConnection().Query(&permissions, query, userId, userId)
+	_, err := r.cp.GetConnection().WithContext(ctx).Query(&permissions, query, userId, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -436,8 +432,7 @@ func (r roleRepositoryImpl) GetAllUserPermissions(userId string) ([]string, erro
 	return result, nil
 }
 
-func (r roleRepositoryImpl) SetRoleRanks(entities []entity.RoleEntity) error {
-	ctx := context.Background()
+func (r roleRepositoryImpl) SetRoleRanks(ctx context.Context, entities []entity.RoleEntity) error {
 	return r.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		for _, ent := range entities {
 			_, err := tx.Model(&ent).
@@ -453,9 +448,9 @@ func (r roleRepositoryImpl) SetRoleRanks(entities []entity.RoleEntity) error {
 	})
 }
 
-func (r roleRepositoryImpl) GetUsersBySystemRole(systemRole string) ([]entity.UserEntity, error) {
+func (r roleRepositoryImpl) GetUsersBySystemRole(ctx context.Context, systemRole string) ([]entity.UserEntity, error) {
 	var result []entity.UserEntity
-	err := r.cp.GetConnection().Model(&result).
+	err := r.cp.GetConnection().WithContext(ctx).Model(&result).
 		ColumnExpr("user_data.*").
 		Join("inner join system_role sr").
 		JoinOn("sr.user_id = user_data.user_id").

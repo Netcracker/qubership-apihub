@@ -3,10 +3,11 @@ package security
 import (
 	goctx "context"
 	"fmt"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"net/http"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
+
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/shaj13/go-guardian/v2/auth"
 )
@@ -26,7 +27,7 @@ func (a apihubPATStrategyImpl) Authenticate(ctx goctx.Context, r *http.Request) 
 	if pat == "" {
 		return nil, fmt.Errorf("authentication failed: '%v' header is empty", PATHeader)
 	}
-	token, user, systemRole, err := a.svc.GetPATByToken(pat)
+	token, user, systemRole, err := a.svc.GetPATByToken(ctx, pat)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +43,7 @@ func (a apihubPATStrategyImpl) Authenticate(ctx goctx.Context, r *http.Request) 
 
 	userExtensions := auth.Extensions{}
 	if systemRole != "" {
-		userExtensions.Set(context.SystemRoleExt, systemRole)
+		userExtensions.Set(secctx.SystemRoleExt, systemRole)
 	}
 	return auth.NewDefaultUser(user.Name, user.Id, []string{}, userExtensions), nil
 }

@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -47,7 +48,7 @@ func (s samlProvider) StartAuthentication(w http.ResponseWriter, r *http.Request
 }
 
 func (s samlProvider) CallbackHandler(w http.ResponseWriter, r *http.Request) {
-	HandleAssertion(w, r, s.userService, s.samlInstance, s.config.Id, s.apihubHost, security.SetAuthTokenCookies)
+	HandleAssertion(r.Context(), w, r, s.userService, s.samlInstance, s.config.Id, s.apihubHost, security.SetAuthTokenCookies)
 }
 
 func (s samlProvider) ServeMetadata(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +102,7 @@ func StartSAMLAuthentication(w http.ResponseWriter, r *http.Request, samlInstanc
 	samlInstance.HandleStartAuthFlow(w, r)
 }
 
-func HandleAssertion(w http.ResponseWriter, r *http.Request, userService service.UserService, samlInstance *samlsp.Middleware, providerId string, apihubHost string, setAuthCookie func(w http.ResponseWriter, user *view.User, refreshTokenPath string) error) {
+func HandleAssertion(ctx context.Context, w http.ResponseWriter, r *http.Request, userService service.UserService, samlInstance *samlsp.Middleware, providerId string, apihubHost string, setAuthCookie func(ctx context.Context, w http.ResponseWriter, user *view.User, refreshTokenPath string) error) {
 	if samlInstance == nil {
 		log.Errorf("Cannot run AssertionConsumerHandler with nill samlInstanse")
 		utils.RespondWithCustomError(w, &exception.CustomError{
@@ -153,15 +154,15 @@ func HandleAssertion(w http.ResponseWriter, r *http.Request, userService service
 
 	assertionAttributes := getAssertionAttributes(assertion)
 
-	user, err := getOrCreateUser(userService, assertionAttributes, providerId)
+	user, err := getOrCreateUser(ctx, userService, assertionAttributes, providerId)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to get or create SSO user", err)
+		utils.RespondWithError(w, r, "Failed to get or create SSO user", err)
 		return
 	}
 
 	// Add Apihub auth info cookie
-	if err = setAuthCookie(w, user, fmt.Sprintf(SSOLoginRefreshPathTemplate, providerId)); err != nil {
-		utils.RespondWithError(w, "Failed to set auth cookie", err)
+	if err = setAuthCookie(ctx, w, user, fmt.Sprintf(SSOLoginRefreshPathTemplate, providerId)); err != nil {
+		utils.RespondWithError(w, r, "Failed to set auth cookie", err)
 		return
 	}
 
@@ -197,7 +198,7 @@ func HandleAssertion(w http.ResponseWriter, r *http.Request, userService service
 				redirectURI = uri
 				log.Debugf("IDP-initiated flow: redirectURI is set from RelayState to: %s", redirectURI)
 			} else {
-				utils.RespondWithError(w, "Unable to retrieve redirect URL: failed to get tracked request", err)
+				utils.RespondWithError(w, r, "Unable to retrieve redirect URL: failed to get tracked request", err)
 				return
 			}
 		} else {
@@ -230,7 +231,7 @@ func getAssertionAttributes(assertion *saml.Assertion) map[string][]string {
 	return assertionAttributes
 }
 
-func getOrCreateUser(userService service.UserService, assertionAttributes map[string][]string, providerId string) (*view.User, error) {
+func getOrCreateUser(ctx context.Context, userService service.UserService, assertionAttributes map[string][]string, providerId string) (*view.User, error) {
 	samlUser := view.User{}
 	if len(assertionAttributes[samlAttributeUserId]) != 0 {
 		userLogin := assertionAttributes[samlAttributeUserId][0]
@@ -283,13 +284,13 @@ func getOrCreateUser(userService service.UserService, assertionAttributes map[st
 				Debug:   "Failed to decode user avatar",
 			}
 		}
-		err = userService.StoreUserAvatar(samlUser.Id, decodedAvatar)
+		err = userService.StoreUserAvatar(ctx, samlUser.Id, decodedAvatar)
 		if err != nil {
 			return nil, fmt.Errorf("failed to store user avatar: %w", err)
 		}
 	}
 
-	user, err := userService.GetOrCreateUserForIntegration(samlUser, view.ExternalIdpIntegration, providerId)
+	user, err := userService.GetOrCreateUserForIntegration(ctx, samlUser, view.ExternalIdpIntegration, providerId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user for SSO integration: %w", err)
 	}

@@ -10,8 +10,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/config"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/minio/minio-go/v7"
@@ -19,28 +21,37 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const removeObjectsBatchSize = 1000
+
 type MinioStorageService interface {
-	UploadFilesToBucket() error
+	UploadFilesToBucket()
 	GetFile(ctx context.Context, tableName, entityId string) ([]byte, error)
 	UploadFile(ctx context.Context, tableName, entityId string, content []byte) error
 	RemoveFiles(ctx context.Context, tableName string, entityIds []string) error
-	DownloadFilesFromBucketToDatabase() error
+	DownloadFilesFromBucketToDatabase(ctx context.Context)
+	RemoveObjectsOlderThan(ctx context.Context, tableName string, before time.Time) (int, error)
 }
 
-func NewMinioStorageService(buildRepository repository.BuildResultRepository, publishRepo repository.PublishedRepository, creds *view.MinioStorageCreds) MinioStorageService {
+func NewMinioStorageService(buildRepository repository.BuildResultRepository, publishRepo repository.PublishedRepository, creds *view.MinioStorageCreds, timeouts config.S3MigrationTimeoutsConfig) MinioStorageService {
 	return &minioStorageServiceImpl{
-		buildRepository: buildRepository,
-		minioClient:     createMinioClient(creds),
-		publishRepo:     publishRepo,
-		creds:           creds,
+		buildRepository:          buildRepository,
+		minioClient:              createMinioClient(creds),
+		publishRepo:              publishRepo,
+		creds:                    creds,
+		s3OperationTimeout:       time.Duration(timeouts.S3OperationSec) * time.Second,
+		databaseOperationTimeout: time.Duration(timeouts.DatabaseOperationSec) * time.Second,
+		bulkDeleteTimeout:        time.Duration(timeouts.BulkDeleteMinutes) * time.Minute,
 	}
 }
 
 type minioStorageServiceImpl struct {
-	buildRepository repository.BuildResultRepository
-	minioClient     *minioClient
-	publishRepo     repository.PublishedRepository
-	creds           *view.MinioStorageCreds
+	buildRepository          repository.BuildResultRepository
+	minioClient              *minioClient
+	publishRepo              repository.PublishedRepository
+	creds                    *view.MinioStorageCreds
+	s3OperationTimeout       time.Duration
+	databaseOperationTimeout time.Duration
+	bulkDeleteTimeout        time.Duration
 }
 
 type minioClient struct {
@@ -49,21 +60,36 @@ type minioClient struct {
 }
 
 // todo add more logs for ex - [15 / 100] entities were stored to database....
-func (m minioStorageServiceImpl) DownloadFilesFromBucketToDatabase() error {
-	ctx := context.Background()
+func (m minioStorageServiceImpl) DownloadFilesFromBucketToDatabase(ctx context.Context) {
+	bgCtx := secctx.Detach(ctx)
+	utils.SafeAsync(func() {
+		if err := m.migrateBucketToDatabase(bgCtx); err != nil {
+			log.Errorf("MINIO. Migration from bucket to database failed: %s", err.Error())
+		}
+	})
+}
+
+func (m minioStorageServiceImpl) migrateBucketToDatabase(ctx context.Context) error {
 	buildResultFileKeys := make([]string, 0)
 	publishedSourceArchiveFileKeys := make([]string, 0)
-	foldersChan := m.minioClient.client.ListObjects(ctx, m.creds.BucketName, minio.ListObjectsOptions{})
-	for folder := range foldersChan {
-		objectsChan := m.minioClient.client.ListObjects(ctx, m.creds.BucketName, minio.ListObjectsOptions{Prefix: folder.Key})
-		switch folder.Key {
-		case fmt.Sprintf("%s/", view.BUILD_RESULT_TABLE):
-			for buildResult := range objectsChan {
-				buildResultFileKeys = append(buildResultFileKeys, buildResult.Key)
+	buildResultFolder := fmt.Sprintf("%s/", view.BUILD_RESULT_TABLE)
+	publishedSourcesFolder := fmt.Sprintf("%s/", view.PUBLISHED_SOURCES_ARCHIVES_TABLE)
+
+	folderKeys, err := m.listObjectKeys(ctx, "")
+	if err != nil {
+		return fmt.Errorf("failed to list minio folders: %w", err)
+	}
+	for _, folderKey := range folderKeys {
+		switch folderKey {
+		case buildResultFolder:
+			buildResultFileKeys, err = m.listObjectKeys(ctx, folderKey)
+			if err != nil {
+				return fmt.Errorf("failed to list '%s' files: %w", folderKey, err)
 			}
-		case fmt.Sprintf("%s/", view.PUBLISHED_SOURCES_ARCHIVES_TABLE):
-			for publishedSourceArchive := range objectsChan {
-				publishedSourceArchiveFileKeys = append(publishedSourceArchiveFileKeys, publishedSourceArchive.Key)
+		case publishedSourcesFolder:
+			publishedSourceArchiveFileKeys, err = m.listObjectKeys(ctx, folderKey)
+			if err != nil {
+				return fmt.Errorf("failed to list '%s' files: %w", folderKey, err)
 			}
 		}
 	}
@@ -72,116 +98,152 @@ func (m minioStorageServiceImpl) DownloadFilesFromBucketToDatabase() error {
 
 	if len(buildResultFileKeys) > 0 {
 		utils.SafeAsync(func() {
+			total := len(buildResultFileKeys)
 			entitiesCount := 0
 			for _, key := range buildResultFileKeys {
-				buildId := getEntityId(fmt.Sprintf("%s/", view.BUILD_RESULT_TABLE), key)
+				buildId := getEntityId(buildResultFolder, key)
 				if buildId == "" {
-					log.Errorf("unsupported file key format. folder - '%s', file - '%s'", fmt.Sprintf("%s/", view.BUILD_RESULT_TABLE), key)
+					log.Errorf("MINIO. Skipping '%s': unsupported file key format for folder '%s'", key, buildResultFolder)
 					continue
 				}
-				data, err := m.getFile(ctx, key)
+				data, err := m.downloadObject(ctx, key)
 				if err != nil {
-					log.Errorf("failed to get file from minio by key -%s. Error - %s", key, err.Error())
+					log.Errorf("MINIO. Skipping '%s': failed to get file from minio: %s", key, err.Error())
 					continue
 				}
-				err = m.buildRepository.StoreBuildResult(entity.BuildResultEntity{BuildId: buildId, Data: data})
-				if err != nil {
-					log.Infof("%d build_result entities were stored from minio to database", entitiesCount)
-					log.Errorf("StoreBuildResults() produce error -%s", err.Error())
+				if err := m.storeBuildResult(ctx, entity.BuildResultEntity{BuildId: buildId, Data: data}); err != nil {
+					log.Errorf("MINIO. build_result migration stopped after %d of %d files, StoreBuildResult failed for '%s': %s", entitiesCount, total, key, err.Error())
 					return
 				}
 				entitiesCount++
 			}
-			log.Infof("%d build_result entities were stored from minio to database", entitiesCount)
+			log.Infof("MINIO. %d of %d build_result entities were stored from minio to database", entitiesCount, total)
 		})
 	}
 
 	if len(publishedSourceArchiveFileKeys) > 0 {
 		utils.SafeAsync(func() {
+			total := len(publishedSourceArchiveFileKeys)
 			entitiesCount := 0
 			for _, key := range publishedSourceArchiveFileKeys {
-				checksum := getEntityId(fmt.Sprintf("%s/", view.PUBLISHED_SOURCES_ARCHIVES_TABLE), key)
+				checksum := getEntityId(publishedSourcesFolder, key)
 				if checksum == "" {
-					log.Errorf("unsupported file key format. folder - '%s', file - '%s'", fmt.Sprintf("%s/", view.PUBLISHED_SOURCES_ARCHIVES_TABLE), key)
+					log.Errorf("MINIO. Skipping '%s': unsupported file key format for folder '%s'", key, publishedSourcesFolder)
 					continue
 				}
-				data, err := m.getFile(ctx, key)
+				data, err := m.downloadObject(ctx, key)
 				if err != nil {
-					log.Errorf("failed to get file from minio by key -%s. Error - %s", key, err.Error())
+					log.Errorf("MINIO. Skipping '%s': failed to get file from minio: %s", key, err.Error())
 					continue
 				}
-				err = m.publishRepo.SavePublishedSourcesArchive(&entity.PublishedSrcArchiveEntity{Checksum: checksum, Data: data})
-				if err != nil {
-					log.Infof("%d published_sources_archives entities were stored from minio to database", entitiesCount)
-					log.Infof("SavePublishedSourcesArchives() produce error -%s", err.Error())
+				if err := m.savePublishedSourcesArchive(ctx, &entity.PublishedSrcArchiveEntity{Checksum: checksum, Data: data}); err != nil {
+					log.Errorf("MINIO. published_sources_archives migration stopped after %d of %d files, SavePublishedSourcesArchive failed for '%s': %s", entitiesCount, total, key, err.Error())
 					return
 				}
 				entitiesCount++
 			}
-			log.Infof("%d published_sources_archives entities were stored from minio to database", entitiesCount)
+			log.Infof("MINIO. %d of %d published_sources_archives entities were stored from minio to database", entitiesCount, total)
 		})
 	}
 
 	return nil
 }
 
-func (m minioStorageServiceImpl) UploadFilesToBucket() error {
-	ctx := context.Background()
-	err := m.createBucketIfNotExists(ctx)
-	if err != nil {
-		return err
+// listObjectKeys collects the keys under prefix. Listing takes as long as the bucket is large, so
+// s3OperationTimeout bounds the wait for the next object instead of the call as a whole
+func (m minioStorageServiceImpl) listObjectKeys(ctx context.Context, prefix string) ([]string, error) {
+	listCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	objects := m.minioClient.client.ListObjects(listCtx, m.creds.BucketName, minio.ListObjectsOptions{Prefix: prefix})
+	// minio-go requires the channel to be drained to closure, otherwise its producer goroutine leaks on the
+	// final send. Cancelling alone is not enough.
+	cancelAndDrain := func() {
+		cancel()
+		for range objects {
+		}
 	}
 
-	log.Info("Uploading files to MINIO")
+	nextObjectTimer := time.NewTimer(m.s3OperationTimeout)
+	defer nextObjectTimer.Stop()
+
+	keys := make([]string, 0)
+	for {
+		select {
+		case object, ok := <-objects:
+			if !ok {
+				return keys, nil
+			}
+			if object.Err != nil {
+				cancelAndDrain()
+				return nil, object.Err
+			}
+			keys = append(keys, object.Key)
+			nextObjectTimer.Reset(m.s3OperationTimeout)
+		case <-nextObjectTimer.C:
+			cancelAndDrain()
+			return nil, fmt.Errorf("no object received for %v while listing prefix '%s'", m.s3OperationTimeout, prefix)
+		}
+	}
+}
+
+func (m minioStorageServiceImpl) UploadFilesToBucket() {
+	ctx := context.Background()
+	if err := m.createBucketIfNotExists(ctx); err != nil {
+		log.Errorf("MINIO. Migration from database to bucket failed: %s", err.Error())
+		return
+	}
+
+	log.Info("MINIO. Uploading files to bucket")
 	utils.SafeAsync(func() {
 		uploadedIds, err := m.uploadBuildResults(ctx)
 		if err != nil {
-			log.Errorf("uploadBuildResults produces an error - %s", err.Error())
+			log.Errorf("MINIO. Failed to upload build results: %s", err.Error())
+		} else {
+			log.Infof("MINIO. %d build results were uploaded to MINIO", len(uploadedIds))
 		}
-		log.Info("Build results were uploaded to MINIO")
 
 		if len(uploadedIds) > 0 {
-			err = m.buildRepository.DeleteBuildResults(uploadedIds)
-			if err != nil {
-				log.Errorf("DeleteBuildResults produces an error - %s", err.Error())
+			if err := m.deleteBuildResults(ctx, uploadedIds); err != nil {
+				log.Errorf("MINIO. Failed to delete %d uploaded build results from database: %s", len(uploadedIds), err.Error())
+				return
 			}
-			log.Info("Build results were deleted from database")
+			log.Infof("MINIO. %d build results were deleted from database", len(uploadedIds))
 		}
 	})
 	if !m.creds.IsOnlyForBuildResult {
 		utils.SafeAsync(func() {
 			uploadedChecksums, err := m.uploadPublishedSourcesArchives(ctx)
 			if err != nil {
-				log.Errorf("uploadPublishedSourcesArchives produces an error - %s", err.Error())
+				log.Errorf("MINIO. Failed to upload published source archives: %s", err.Error())
+			} else {
+				log.Infof("MINIO. %d published source archives were uploaded to MINIO", len(uploadedChecksums))
 			}
-			log.Info("Published source archives were uploaded to MINIO")
 
 			if len(uploadedChecksums) > 0 {
-				err = m.publishRepo.DeletePublishedSourcesArchives(uploadedChecksums)
-				if err != nil {
-					log.Errorf("DeletePublishedSourcesArchives produces an error - %s", err.Error())
+				if err := m.deletePublishedSourcesArchives(ctx, uploadedChecksums); err != nil {
+					log.Errorf("MINIO. Failed to delete %d uploaded published source archives from database: %s", len(uploadedChecksums), err.Error())
+					return
 				}
-				log.Info("Published source archives were deleted from database")
+				log.Infof("MINIO. %d published source archives were deleted from database", len(uploadedChecksums))
 			}
 		})
 	}
-
-	return nil
 }
 
 func (m minioStorageServiceImpl) createBucketIfNotExists(ctx context.Context) error {
-	exists, err := bucketExists(ctx, m.minioClient.client, m.creds.BucketName)
+	exists, err := m.bucketExists(ctx)
 	if err != nil {
 		return err
 	}
 	if exists {
 		log.Infof("Minio bucket - %s exists", m.creds.BucketName)
 	} else {
-		err = m.minioClient.client.MakeBucket(ctx, m.creds.BucketName, minio.MakeBucketOptions{})
+		err = m.makeBucket(ctx)
 		if err != nil {
 			return err
 		}
-		exists, err = bucketExists(ctx, m.minioClient.client, m.creds.BucketName)
+		exists, err = m.bucketExists(ctx)
 		if err != nil {
 			return err
 		}
@@ -245,7 +307,7 @@ func (m minioStorageServiceImpl) uploadBuildResults(ctx context.Context) ([]stri
 	var buildResult *entity.BuildResultEntity
 	var err error
 	for {
-		buildResult, err = m.buildRepository.GetBuildResultWithOffset(offset)
+		buildResult, err = m.getBuildResultWithOffset(ctx, offset)
 		if err != nil {
 			log.Infof("%d build_results were ulpoaded to minio storage, until got error", offset)
 			break
@@ -254,7 +316,7 @@ func (m minioStorageServiceImpl) uploadBuildResults(ctx context.Context) ([]stri
 			log.Infof("%d build_results were ulpoaded to minio storage, until buildResult is null", offset)
 			break
 		}
-		err = m.putObject(ctx, buildFileName(view.BUILD_RESULT_TABLE, buildResult.BuildId), buildResult.Data)
+		err = m.uploadObject(ctx, buildFileName(view.BUILD_RESULT_TABLE, buildResult.BuildId), buildResult.Data)
 		if err != nil {
 			log.Infof("%d build_results were ulpoaded to minio storage, until got error", offset)
 			break
@@ -269,8 +331,10 @@ func (m minioStorageServiceImpl) uploadBuildResults(ctx context.Context) ([]stri
 func (m minioStorageServiceImpl) uploadPublishedSourcesArchives(ctx context.Context) ([]string, error) {
 	offset := 0
 	checksums := make([]string, 0)
+	var publishedSourceArchive *entity.PublishedSrcArchiveEntity
+	var err error
 	for {
-		publishedSourceArchive, err := m.publishRepo.GetPublishedSourcesArchives(offset)
+		publishedSourceArchive, err = m.getPublishedSourcesArchives(ctx, offset)
 		if err != nil {
 			log.Infof("%d published_sources_archives were uploaded to minio storage, before error was received", offset)
 			break
@@ -279,7 +343,7 @@ func (m minioStorageServiceImpl) uploadPublishedSourcesArchives(ctx context.Cont
 			log.Infof("%d published_sources_archives were uploaded to minio storage, before publishedSourceArchive became null", offset)
 			break
 		}
-		err = m.putObject(ctx, buildFileName(view.PUBLISHED_SOURCES_ARCHIVES_TABLE, publishedSourceArchive.Checksum), publishedSourceArchive.Data)
+		err = m.uploadObject(ctx, buildFileName(view.PUBLISHED_SOURCES_ARCHIVES_TABLE, publishedSourceArchive.Checksum), publishedSourceArchive.Data)
 		if err != nil {
 			log.Infof("%d published_sources_archives were uploaded to minio storage, before error was received", offset)
 			break
@@ -287,7 +351,76 @@ func (m minioStorageServiceImpl) uploadPublishedSourcesArchives(ctx context.Cont
 		checksums = append(checksums, publishedSourceArchive.Checksum)
 		offset++
 	}
-	return checksums, nil
+	return checksums, err
+}
+
+// Migration operations: one deadline per call to S3 or the database, so a failure identifies the call that ran out of time
+
+func (m minioStorageServiceImpl) downloadObject(ctx context.Context, fullFileName string) ([]byte, error) {
+	opCtx, cancel := context.WithTimeout(ctx, m.s3OperationTimeout)
+	defer cancel()
+	data, err := m.getFile(opCtx, fullFileName)
+	return data, utils.WrapContextError(opCtx, err)
+}
+
+func (m minioStorageServiceImpl) uploadObject(ctx context.Context, fileName string, content []byte) error {
+	opCtx, cancel := context.WithTimeout(ctx, m.s3OperationTimeout)
+	defer cancel()
+	return utils.WrapContextError(opCtx, m.putObject(opCtx, fileName, content))
+}
+
+func (m minioStorageServiceImpl) bucketExists(ctx context.Context) (bool, error) {
+	opCtx, cancel := context.WithTimeout(ctx, m.s3OperationTimeout)
+	defer cancel()
+	exists, err := m.minioClient.client.BucketExists(opCtx, m.creds.BucketName)
+	return exists, utils.WrapContextError(opCtx, err)
+}
+
+func (m minioStorageServiceImpl) makeBucket(ctx context.Context) error {
+	opCtx, cancel := context.WithTimeout(ctx, m.s3OperationTimeout)
+	defer cancel()
+	return utils.WrapContextError(opCtx, m.minioClient.client.MakeBucket(opCtx, m.creds.BucketName, minio.MakeBucketOptions{}))
+}
+
+func (m minioStorageServiceImpl) storeBuildResult(ctx context.Context, ent entity.BuildResultEntity) error {
+	opCtx, cancel := context.WithTimeout(ctx, m.databaseOperationTimeout)
+	defer cancel()
+	return utils.WrapContextError(opCtx, m.buildRepository.StoreBuildResult(opCtx, ent))
+}
+
+func (m minioStorageServiceImpl) savePublishedSourcesArchive(ctx context.Context, ent *entity.PublishedSrcArchiveEntity) error {
+	opCtx, cancel := context.WithTimeout(ctx, m.databaseOperationTimeout)
+	defer cancel()
+	return utils.WrapContextError(opCtx, m.publishRepo.SavePublishedSourcesArchive(opCtx, ent))
+}
+
+func (m minioStorageServiceImpl) getBuildResultWithOffset(ctx context.Context, offset int) (*entity.BuildResultEntity, error) {
+	opCtx, cancel := context.WithTimeout(ctx, m.databaseOperationTimeout)
+	defer cancel()
+	ent, err := m.buildRepository.GetBuildResultWithOffset(opCtx, offset)
+	return ent, utils.WrapContextError(opCtx, err)
+}
+
+func (m minioStorageServiceImpl) getPublishedSourcesArchives(ctx context.Context, offset int) (*entity.PublishedSrcArchiveEntity, error) {
+	opCtx, cancel := context.WithTimeout(ctx, m.databaseOperationTimeout)
+	defer cancel()
+	ent, err := m.publishRepo.GetPublishedSourcesArchives(opCtx, offset)
+	return ent, utils.WrapContextError(opCtx, err)
+}
+
+// The bulk deletes run VACUUM FULL on the affected table, which scales with the table size rather than with
+// the number of deleted rows, so they use bulkDeleteTimeout instead of databaseOperationTimeout.
+
+func (m minioStorageServiceImpl) deleteBuildResults(ctx context.Context, buildIds []string) error {
+	opCtx, cancel := context.WithTimeout(ctx, m.bulkDeleteTimeout)
+	defer cancel()
+	return utils.WrapContextError(opCtx, m.buildRepository.DeleteBuildResults(opCtx, buildIds))
+}
+
+func (m minioStorageServiceImpl) deletePublishedSourcesArchives(ctx context.Context, checksums []string) error {
+	opCtx, cancel := context.WithTimeout(ctx, m.bulkDeleteTimeout)
+	defer cancel()
+	return utils.WrapContextError(opCtx, m.publishRepo.DeletePublishedSourcesArchives(opCtx, checksums))
 }
 
 func (m minioStorageServiceImpl) UploadFile(ctx context.Context, tableName, entityId string, content []byte) error {
@@ -319,15 +452,62 @@ func (m minioStorageServiceImpl) getFile(ctx context.Context, fullFileName strin
 		log.Warn(err)
 		return nil, err
 	}
+	// GetObject owns a goroutine that is released only by Close
+	defer minioObject.Close()
 	minioObjectContent, err := io.ReadAll(minioObject)
 	return minioObjectContent, err
 }
 
 func (m minioStorageServiceImpl) RemoveFiles(ctx context.Context, tableName string, entityIds []string) error {
-	minioObjectsChan := make(chan minio.ObjectInfo, len(entityIds))
+	keys := make([]string, 0, len(entityIds))
+	for _, id := range entityIds {
+		keys = append(keys, buildFileName(tableName, id))
+	}
+	return m.removeObjectsByKeys(ctx, keys)
+}
+
+func (m minioStorageServiceImpl) RemoveObjectsOlderThan(ctx context.Context, tableName string, before time.Time) (int, error) {
+	prefix := fmt.Sprintf("%s/", tableName)
+	objectsChan := m.minioClient.client.ListObjects(ctx, m.creds.BucketName, minio.ListObjectsOptions{Prefix: prefix, Recursive: true})
+
+	deletedCount := 0
+	batch := make([]string, 0, removeObjectsBatchSize)
+	for object := range objectsChan {
+		if object.Err != nil {
+			return deletedCount, object.Err
+		}
+		if err := ctx.Err(); err != nil {
+			return deletedCount, err
+		}
+		if !object.LastModified.Before(before) {
+			continue
+		}
+
+		batch = append(batch, object.Key)
+		if len(batch) < removeObjectsBatchSize {
+			continue
+		}
+		if err := m.removeObjectsByKeys(ctx, batch); err != nil {
+			return deletedCount, err
+		}
+		deletedCount += len(batch)
+		batch = make([]string, 0, removeObjectsBatchSize)
+	}
+
+	if len(batch) > 0 {
+		if err := m.removeObjectsByKeys(ctx, batch); err != nil {
+			return deletedCount, err
+		}
+		deletedCount += len(batch)
+	}
+	return deletedCount, nil
+}
+
+func (m minioStorageServiceImpl) removeObjectsByKeys(ctx context.Context, keys []string) error {
+	minioObjectsChan := make(chan minio.ObjectInfo, len(keys))
 	utils.SafeAsync(func() {
-		for _, id := range entityIds {
-			minioObjectsChan <- minio.ObjectInfo{Key: buildFileName(tableName, id)}
+		for _, key := range keys {
+			minioObjectsChan <- minio.ObjectInfo{Key: key}
 		}
 		defer close(minioObjectsChan)
 	})
@@ -340,14 +520,6 @@ func (m minioStorageServiceImpl) RemoveFiles(ctx context.Context, tableName stri
 		return errors.New(strings.Join(errMsg, ". "))
 	}
 	return nil
-}
-
-func bucketExists(ctx context.Context, minioClient *minio.Client, bucketName string) (bool, error) {
-	exists, err := minioClient.BucketExists(ctx, bucketName)
-	if err != nil {
-		return false, err
-	}
-	return exists, nil
 }
 
 func buildFileName(tableName, entityId string) string {

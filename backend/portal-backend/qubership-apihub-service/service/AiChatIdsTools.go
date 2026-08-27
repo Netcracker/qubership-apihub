@@ -95,6 +95,9 @@ func (s *aiChatTurnServiceImpl) executeStartIDSGeneration(_ context.Context, arg
 }
 
 func (s *aiChatTurnServiceImpl) executeSaveGeneratedFile(ctx context.Context, args map[string]interface{}) (*mcpgo.CallToolResult, error) {
+	// Bound the storage write and the row insert so a stuck save cannot hold up the rest of the turn.
+	ctx, cancel := context.WithTimeout(ctx, SaveGeneratedFileTimeout)
+	defer cancel()
 	if s.generatedFiles == nil || s.mintFileToken == nil {
 		return mcpgo.NewToolResultError("generated file service is not configured"), nil
 	}
@@ -182,4 +185,3 @@ func sanitizeChatToolFilename(name string) string {
 	}
 	return cleaned
 }
-

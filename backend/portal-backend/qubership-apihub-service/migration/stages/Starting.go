@@ -160,6 +160,38 @@ on migration."version_comparison_%s"(package_id,version,revision,previous_packag
 		return err
 	}
 
+	if isPartialMigration {
+		dcQuery := fmt.Sprintf(
+			`create table if not exists migration."ddl_comparison_%s" as select dc.* from ddl_comparison dc where dc.comparison_id in (select comparison_id from migration."version_comparison_%s");`,
+			d.ent.Id, d.ent.Id)
+		_, err = withDBRetry(d, func() (orm.Result, error) {
+			return d.cp.GetConnection().ExecContext(d.migrationCtx, dcQuery)
+		})
+	} else if d.restartStage != "" {
+		// The version_comparison temp table may have been created in a prior run; need to have consistent data in the ddl_comparison temp table
+		dcQuery := fmt.Sprintf(
+			`create table if not exists migration."ddl_comparison_%s" as select dc.* from ddl_comparison dc where dc.comparison_id in (select comparison_id from migration."version_comparison_%s");`,
+			d.ent.Id, d.ent.Id)
+		_, err = withDBRetry(d, func() (orm.Result, error) {
+			return d.cp.GetConnection().ExecContext(d.migrationCtx, dcQuery)
+		})
+	} else {
+		_, err = withDBRetry(d, func() (orm.Result, error) {
+			return d.cp.GetConnection().ExecContext(d.migrationCtx,
+				fmt.Sprintf(`create table if not exists migration."ddl_comparison_%s" as select * from ddl_comparison;`, d.ent.Id))
+		})
+	}
+	if err != nil {
+		return err
+	}
+
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().ExecContext(d.migrationCtx, fmt.Sprintf(`create index if not exists "ddl_comparison_%s_comparison_id_index" on migration."ddl_comparison_%s" (comparison_id);`, d.ent.Id, d.ent.Id))
+	})
+	if err != nil {
+		return err
+	}
+
 	_, err = withDBRetry(d, func() (orm.Result, error) {
 		return d.cp.GetConnection().ExecContext(d.migrationCtx,
 			fmt.Sprintf(`create table if not exists migration."fts_operation_search_text_tmp_%s" (

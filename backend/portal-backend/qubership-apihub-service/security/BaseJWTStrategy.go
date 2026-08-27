@@ -43,12 +43,16 @@ func (b baseJWTStrategyImpl) Authenticate(ctx goctx.Context, r *http.Request) (a
 			return nil, auth.NewTypeError("authentication failed:", (*auth.Info)(nil), v)
 		}
 		tokenCreationTimestamp, _ := strconv.ParseInt(info.GetExtensions().Get(TokenIssuedAtExt), 0, 64)
-		if b.jwtValidator.IsTokenRevoked(info.GetID(), tokenCreationTimestamp) {
+		revoked, err := b.jwtValidator.IsTokenRevoked(ctx, info.GetID(), tokenCreationTimestamp)
+		if err != nil {
+			return nil, fmt.Errorf("failed to check access token revocation: %w", err)
+		}
+		if revoked {
 			return nil, fmt.Errorf("authentication failed: access token is revoked")
 		}
 	} else {
 		var expirationTime time.Time
-		info, expirationTime, err = b.jwtValidator.ValidateToken(token, AccessTokenType)
+		info, expirationTime, err = b.jwtValidator.ValidateToken(ctx, token, AccessTokenType)
 		if err != nil {
 			return nil, fmt.Errorf("authentication failed: %w", err)
 		}

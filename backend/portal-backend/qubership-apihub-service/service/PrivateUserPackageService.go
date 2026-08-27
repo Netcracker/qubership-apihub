@@ -1,24 +1,25 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/gosimple/slug"
 )
 
 type PrivateUserPackageService interface {
-	GenerateUserPrivatePackageId(userId string) (string, error)
-	CreatePrivateUserPackage(ctx context.SecurityContext, userId string) (*view.SimplePackage, error)
-	GetPrivateUserPackage(userId string) (*view.SimplePackage, error)
-	PrivatePackageIdIsTaken(packageId string) (bool, error)
+	GenerateUserPrivatePackageId(ctx context.Context, userId string) (string, error)
+	CreatePrivateUserPackage(ctx context.Context, userId string) (*view.SimplePackage, error)
+	GetPrivateUserPackage(ctx context.Context, userId string) (*view.SimplePackage, error)
+	PrivatePackageIdIsTaken(ctx context.Context, packageId string) (bool, error)
 }
 
 func NewPrivateUserPackageService(
@@ -42,30 +43,30 @@ type privateUserPackageServiceImpl struct {
 	favoritesRepo  repository.FavoritesRepository
 }
 
-func (p privateUserPackageServiceImpl) GenerateUserPrivatePackageId(userId string) (string, error) {
+func (p privateUserPackageServiceImpl) GenerateUserPrivatePackageId(ctx context.Context, userId string) (string, error) {
 	userIdSlug := slug.Make(userId)
 	privatePackageId := userIdSlug
-	privatePackageIdTaken, err := p.userRepo.PrivatePackageIdExists(privatePackageId)
+	privatePackageIdTaken, err := p.userRepo.PrivatePackageIdExists(ctx, privatePackageId)
 	if err != nil {
 		return "", err
 	}
 	i := 1
 	for privatePackageIdTaken {
 		privatePackageId = userIdSlug + "-" + strconv.Itoa(i)
-		privatePackageIdTaken, err = p.userRepo.PrivatePackageIdExists(privatePackageId)
+		privatePackageIdTaken, err = p.userRepo.PrivatePackageIdExists(ctx, privatePackageId)
 		if err != nil {
 			return "", err
 		}
 		i++
 	}
-	packageEnt, err := p.publishedRepo.GetPackageIncludingDeleted(privatePackageId)
+	packageEnt, err := p.publishedRepo.GetPackageIncludingDeleted(ctx, privatePackageId)
 	if err != nil {
 		return "", err
 	}
 	for packageEnt != nil {
 		i++
 		privatePackageId = userIdSlug + "-" + strconv.Itoa(i)
-		packageEnt, err = p.publishedRepo.GetPackageIncludingDeleted(privatePackageId)
+		packageEnt, err = p.publishedRepo.GetPackageIncludingDeleted(ctx, privatePackageId)
 		if err != nil {
 			return "", err
 		}
@@ -73,8 +74,8 @@ func (p privateUserPackageServiceImpl) GenerateUserPrivatePackageId(userId strin
 	return privatePackageId, nil
 }
 
-func (p privateUserPackageServiceImpl) CreatePrivateUserPackage(ctx context.SecurityContext, userId string) (*view.SimplePackage, error) {
-	userEnt, err := p.userRepo.GetUserById(userId)
+func (p privateUserPackageServiceImpl) CreatePrivateUserPackage(ctx context.Context, userId string) (*view.SimplePackage, error) {
+	userEnt, err := p.userRepo.GetUserById(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +87,7 @@ func (p privateUserPackageServiceImpl) CreatePrivateUserPackage(ctx context.Secu
 			Params:  map[string]interface{}{"userId": userId},
 		}
 	}
-	packageEnt, err := p.publishedRepo.GetPackageIncludingDeleted(userEnt.PrivatePackageId)
+	packageEnt, err := p.publishedRepo.GetPackageIncludingDeleted(ctx, userEnt.PrivatePackageId)
 	if err != nil {
 		return nil, err
 	}
@@ -95,11 +96,11 @@ func (p privateUserPackageServiceImpl) CreatePrivateUserPackage(ctx context.Secu
 			// restore workspace package
 			packageEnt.DeletedAt = nil
 			packageEnt.DeletedBy = ""
-			resEnt, err := p.publishedRepo.UpdatePackage(packageEnt, false)
+			resEnt, err := p.publishedRepo.UpdatePackage(ctx, packageEnt, false)
 			if err != nil {
 				return nil, err
 			}
-			userPermissions, err := p.roleRepository.GetUserPermissions(packageEnt.Id, userId)
+			userPermissions, err := p.roleRepository.GetUserPermissions(ctx, packageEnt.Id, userId)
 			if err != nil {
 				return nil, err
 			}
@@ -121,7 +122,7 @@ func (p privateUserPackageServiceImpl) CreatePrivateUserPackage(ctx context.Secu
 		DefaultRole:       view.NoneRoleId,
 		ExcludeFromSearch: true,
 		CreatedAt:         time.Now(),
-		CreatedBy:         ctx.GetUserId(),
+		CreatedBy:         secctx.GetUserId(ctx),
 	}
 	userRoleIds := []string{view.AdminRoleId}
 	userPackageMemberEnt := &entity.PackageMemberRoleEntity{
@@ -129,14 +130,14 @@ func (p privateUserPackageServiceImpl) CreatePrivateUserPackage(ctx context.Secu
 		UserId:    userEnt.Id,
 		Roles:     userRoleIds,
 		CreatedAt: time.Now(),
-		CreatedBy: ctx.GetUserId(),
+		CreatedBy: secctx.GetUserId(ctx),
 	}
-	err = p.publishedRepo.CreatePrivatePackageForUser(newPrivatePackageEnt, userPackageMemberEnt)
+	err = p.publishedRepo.CreatePrivatePackageForUser(ctx, newPrivatePackageEnt, userPackageMemberEnt)
 	if err != nil {
 		return nil, err
 	}
 
-	userPermissions, err := p.roleRepository.GetUserPermissions(newPrivatePackageEnt.Id, userId)
+	userPermissions, err := p.roleRepository.GetUserPermissions(ctx, newPrivatePackageEnt.Id, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -144,8 +145,8 @@ func (p privateUserPackageServiceImpl) CreatePrivateUserPackage(ctx context.Secu
 	return entity.MakeSimplePackageView(newPrivatePackageEnt, nil, false, userPermissions), nil
 }
 
-func (p privateUserPackageServiceImpl) GetPrivateUserPackage(userId string) (*view.SimplePackage, error) {
-	userEnt, err := p.userRepo.GetUserById(userId)
+func (p privateUserPackageServiceImpl) GetPrivateUserPackage(ctx context.Context, userId string) (*view.SimplePackage, error) {
+	userEnt, err := p.userRepo.GetUserById(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +158,7 @@ func (p privateUserPackageServiceImpl) GetPrivateUserPackage(userId string) (*vi
 			Params:  map[string]interface{}{"userId": userId},
 		}
 	}
-	packageEnt, err := p.publishedRepo.GetPackage(userEnt.PrivatePackageId)
+	packageEnt, err := p.publishedRepo.GetPackage(ctx, userEnt.PrivatePackageId)
 	if err != nil {
 		return nil, err
 	}
@@ -169,26 +170,26 @@ func (p privateUserPackageServiceImpl) GetPrivateUserPackage(userId string) (*vi
 			Params:  map[string]interface{}{"userId": userId},
 		}
 	}
-	userPermissions, err := p.roleRepository.GetUserPermissions(packageEnt.Id, userId)
+	userPermissions, err := p.roleRepository.GetUserPermissions(ctx, packageEnt.Id, userId)
 	if err != nil {
 		return nil, err
 	}
-	isFavorite, err := p.favoritesRepo.IsFavoritePackage(userId, packageEnt.Id)
+	isFavorite, err := p.favoritesRepo.IsFavoritePackage(ctx, userId, packageEnt.Id)
 	if err != nil {
 		return nil, err
 	}
 	return entity.MakeSimplePackageView(packageEnt, nil, isFavorite, userPermissions), nil
 }
 
-func (p privateUserPackageServiceImpl) PrivatePackageIdIsTaken(packageId string) (bool, error) {
-	privatePackageIdReserved, err := p.userRepo.PrivatePackageIdExists(packageId)
+func (p privateUserPackageServiceImpl) PrivatePackageIdIsTaken(ctx context.Context, packageId string) (bool, error) {
+	privatePackageIdReserved, err := p.userRepo.PrivatePackageIdExists(ctx, packageId)
 	if err != nil {
 		return false, err
 	}
 	if privatePackageIdReserved {
 		return true, nil
 	}
-	packageEnt, err := p.publishedRepo.GetPackageIncludingDeleted(packageId)
+	packageEnt, err := p.publishedRepo.GetPackageIncludingDeleted(ctx, packageId)
 	if err != nil {
 		return false, err
 	}

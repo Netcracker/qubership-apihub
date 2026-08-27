@@ -1,29 +1,30 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/crypto"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
 type ApihubApiKeyService interface {
-	CreateApiKey(ctx context.SecurityContext, packageId, name string, createdFor string, requestRoles []string) (*view.ApihubApiKey, error)
-	RevokePackageApiKey(ctx context.SecurityContext, apiKeyId string, packageId string) error
-	GetProjectApiKeys(packageId string) (*view.ApihubApiKeys, error)
-	GetApiKeyStatus(apiKey string) (bool, *view.ApihubApiKey, error)
-	GetApiKeyByKey(apiKey string) (*view.ApihubApiKeyExtAuthView, error)
-	GetApiKeyById(apiKeyId string) (*view.ApihubApiKeyExtAuthView, error)
-	CreateSystemApiKey() error
+	CreateApiKey(ctx context.Context, packageId, name string, createdFor string, requestRoles []string) (*view.ApihubApiKey, error)
+	RevokePackageApiKey(ctx context.Context, apiKeyId string, packageId string) error
+	GetProjectApiKeys(ctx context.Context, packageId string) (*view.ApihubApiKeys, error)
+	GetApiKeyStatus(ctx context.Context, apiKey string) (bool, *view.ApihubApiKey, error)
+	GetApiKeyByKey(ctx context.Context, apiKey string) (*view.ApihubApiKeyExtAuthView, error)
+	GetApiKeyById(ctx context.Context, apiKeyId string) (*view.ApihubApiKeyExtAuthView, error)
+	CreateSystemApiKey(ctx context.Context) error
 }
 
 func NewApihubApiKeyService(apihubApiKeyRepository repository.ApihubApiKeyRepository,
@@ -31,7 +32,6 @@ func NewApihubApiKeyService(apihubApiKeyRepository repository.ApihubApiKeyReposi
 	atService ActivityTrackingService,
 	userService UserService,
 	roleRepository repository.RoleRepository,
-	isSysadm func(context.SecurityContext) bool,
 	systemInfoService SystemInfoService) ApihubApiKeyService {
 
 	return &apihubApiKeyServiceImpl{
@@ -40,7 +40,6 @@ func NewApihubApiKeyService(apihubApiKeyRepository repository.ApihubApiKeyReposi
 		atService:         atService,
 		userService:       userService,
 		roleRepository:    roleRepository,
-		isSysadm:          isSysadm,
 		systemInfoService: systemInfoService,
 	}
 }
@@ -51,16 +50,15 @@ type apihubApiKeyServiceImpl struct {
 	atService         ActivityTrackingService
 	userService       UserService
 	roleRepository    repository.RoleRepository
-	isSysadm          func(context.SecurityContext) bool
 	systemInfoService SystemInfoService
 }
 
 const API_KEY_PREFIX = "api-key_"
 
-func (t apihubApiKeyServiceImpl) CreateApiKey(ctx context.SecurityContext, packageId, name string, createdFor string, requestRoles []string) (*view.ApihubApiKey, error) {
+func (t apihubApiKeyServiceImpl) CreateApiKey(ctx context.Context, packageId, name string, createdFor string, requestRoles []string) (*view.ApihubApiKey, error) {
 	// validate request roles first
 	if len(requestRoles) > 0 {
-		allRoles, err := t.roleRepository.GetAllRoles()
+		allRoles, err := t.roleRepository.GetAllRoles(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -82,8 +80,8 @@ func (t apihubApiKeyServiceImpl) CreateApiKey(ctx context.SecurityContext, packa
 
 	var resultRoles []string
 
-	if packageId != "*" {
-		packageEnt, err := t.publishedRepo.GetPackage(packageId)
+	if packageId != view.AllPackagesApikeyScope {
+		packageEnt, err := t.publishedRepo.GetPackage(ctx, packageId)
 		if err != nil {
 			return nil, err
 		}
@@ -96,7 +94,7 @@ func (t apihubApiKeyServiceImpl) CreateApiKey(ctx context.SecurityContext, packa
 			}
 		}
 		if packageEnt.DefaultRole == view.NoneRoleId && packageEnt.ParentId == "" {
-			if !t.isSysadm(ctx) {
+			if !secctx.IsSysadm(ctx) {
 				return nil, &exception.CustomError{
 					Status:  http.StatusForbidden,
 					Code:    exception.InsufficientPrivileges,
@@ -107,15 +105,15 @@ func (t apihubApiKeyServiceImpl) CreateApiKey(ctx context.SecurityContext, packa
 		}
 		if len(requestRoles) > 0 {
 			var availableRoles []entity.RoleEntity
-			allRoles, err := t.roleRepository.GetAllRoles()
+			allRoles, err := t.roleRepository.GetAllRoles(ctx)
 			if err != nil {
 				return nil, err
 			}
-			if t.isSysadm(ctx) {
+			if secctx.IsSysadm(ctx) {
 				availableRoles = allRoles
-			} else if ctx.GetApikeyPackageId() == packageId || strings.HasPrefix(packageId, ctx.GetApikeyPackageId()+".") || ctx.GetApikeyPackageId() == "*" {
+			} else if secctx.GetApiKeyPackageId(ctx) == packageId || strings.HasPrefix(packageId, secctx.GetApiKeyPackageId(ctx)+".") || secctx.GetApiKeyPackageId(ctx) == view.AllPackagesApikeyScope {
 				maxRoleRank := -1
-				for _, apikeyRoleId := range ctx.GetApikeyRoles() {
+				for _, apikeyRoleId := range secctx.GetApiKeyRoles(ctx) {
 					for _, role := range allRoles {
 						if apikeyRoleId == role.Id {
 							if maxRoleRank < role.Rank {
@@ -130,7 +128,7 @@ func (t apihubApiKeyServiceImpl) CreateApiKey(ctx context.SecurityContext, packa
 					}
 				}
 			} else {
-				availableRoles, err = t.roleRepository.GetAvailablePackageRoles(packageId, ctx.GetUserId())
+				availableRoles, err = t.roleRepository.GetAvailablePackageRoles(ctx, packageId, secctx.GetUserId(ctx))
 				if err != nil {
 					return nil, err
 				}
@@ -154,10 +152,10 @@ func (t apihubApiKeyServiceImpl) CreateApiKey(ctx context.SecurityContext, packa
 			// all request roles passed the check, so now we can add it to result
 			resultRoles = append(resultRoles, requestRoles...)
 		} else {
-			if t.isSysadm(ctx) {
+			if secctx.IsSysadm(ctx) {
 				resultRoles = append(resultRoles, view.SysadmRole)
 			} else {
-				userRoles, err := t.roleRepository.GetPackageRolesHierarchyForUser(packageId, ctx.GetUserId())
+				userRoles, err := t.roleRepository.GetPackageRolesHierarchyForUser(ctx, packageId, secctx.GetUserId(ctx))
 				if err != nil {
 					return nil, err
 				}
@@ -177,7 +175,7 @@ func (t apihubApiKeyServiceImpl) CreateApiKey(ctx context.SecurityContext, packa
 		}
 	}
 
-	existingApiKeyEntities, err := t.apiKeyRepository.GetPackageApiKeys(packageId)
+	existingApiKeyEntities, err := t.apiKeyRepository.GetPackageApiKeys(ctx, packageId)
 	if err != nil {
 		return nil, err
 	}
@@ -194,12 +192,12 @@ func (t apihubApiKeyServiceImpl) CreateApiKey(ctx context.SecurityContext, packa
 
 	var createdForUser *view.User
 	if createdFor != "" {
-		createdForUser, err = t.userService.GetUserFromDB(createdFor)
+		createdForUser, err = t.userService.GetUserFromDB(ctx, createdFor)
 		if err != nil {
 			return nil, err
 		}
 		if createdForUser == nil {
-			usersFromLdap, err := t.userService.SearchUsersInLdap(view.LdapSearchFilterReq{FilterToValue: map[string]string{view.SAMAccountName: createdFor}, Limit: 1}, true)
+			usersFromLdap, err := t.userService.SearchUsersInLdap(ctx, view.LdapSearchFilterReq{FilterToValue: map[string]string{view.SAMAccountName: createdFor}, Limit: 1}, true)
 			if err != nil {
 				return nil, err
 			}
@@ -212,7 +210,7 @@ func (t apihubApiKeyServiceImpl) CreateApiKey(ctx context.SecurityContext, packa
 				}
 			}
 			user := usersFromLdap.Users[0]
-			err = t.userService.StoreUserAvatar(user.Id, user.Avatar)
+			err = t.userService.StoreUserAvatar(ctx, user.Id, user.Avatar)
 			if err != nil {
 				return nil, err
 			}
@@ -222,7 +220,7 @@ func (t apihubApiKeyServiceImpl) CreateApiKey(ctx context.SecurityContext, packa
 				Email:     user.Email,
 				AvatarUrl: fmt.Sprintf("/api/v2/users/%s/profile/avatar", user.Id),
 			}
-			createdForUser, err = t.userService.GetOrCreateUserForIntegration(externalUser, view.ExternalLdapIntegration, "")
+			createdForUser, err = t.userService.GetOrCreateUserForIntegration(ctx, externalUser, view.ExternalLdapIntegration, "")
 			if err != nil {
 				return nil, err
 			}
@@ -234,7 +232,7 @@ func (t apihubApiKeyServiceImpl) CreateApiKey(ctx context.SecurityContext, packa
 		Id:         t.makeApiKeyId(),
 		PackageId:  packageId,
 		Name:       name,
-		CreatedBy:  view.User{Id: ctx.GetUserId()},
+		CreatedBy:  view.User{Id: secctx.GetUserId(ctx)},
 		CreatedFor: createdForUser,
 		CreatedAt:  time.Now(),
 		ApiKey:     apiKey,
@@ -242,25 +240,25 @@ func (t apihubApiKeyServiceImpl) CreateApiKey(ctx context.SecurityContext, packa
 	}
 	apiKeyHash := crypto.CreateSHA256Hash([]byte(apiKey))
 	apihubApiKeyEntity := entity.MakeApihubApiKeyEntity(keyToCreate, apiKeyHash)
-	err = t.apiKeyRepository.SaveApiKey(apihubApiKeyEntity)
+	err = t.apiKeyRepository.SaveApiKey(ctx, apihubApiKeyEntity)
 	if err != nil {
 		return nil, err
 	}
 
-	if packageId != "*" {
+	if packageId != view.AllPackagesApikeyScope {
 		dataMap := map[string]interface{}{}
 		dataMap["apiKeyId"] = apihubApiKeyEntity.Id
 		dataMap["apiKeyName"] = apihubApiKeyEntity.Name
 		dataMap["apiKeyRoleIds"] = apihubApiKeyEntity.Roles
-		t.atService.TrackEvent(view.ActivityTrackingEvent{
+		t.atService.TrackEvent(ctx, view.ActivityTrackingEvent{
 			Type:      view.ATETGenerateApiKey,
 			Data:      dataMap,
 			PackageId: packageId, // Will not work for * case due to constraint in DB
 			Date:      time.Now(),
-			UserId:    ctx.GetUserId(),
+			UserId:    secctx.GetUserId(ctx),
 		})
 	}
-	createdEnt, err := t.apiKeyRepository.GetPackageApiKey(keyToCreate.Id, packageId)
+	createdEnt, err := t.apiKeyRepository.GetPackageApiKey(ctx, keyToCreate.Id, packageId)
 	if err != nil {
 		return nil, err
 	}
@@ -273,8 +271,8 @@ func (t apihubApiKeyServiceImpl) CreateApiKey(ctx context.SecurityContext, packa
 	return apiKeyView, nil
 }
 
-func (t apihubApiKeyServiceImpl) RevokePackageApiKey(ctx context.SecurityContext, apiKeyId string, packageId string) error {
-	apiKeyEntity, err := t.apiKeyRepository.GetPackageApiKey(apiKeyId, packageId)
+func (t apihubApiKeyServiceImpl) RevokePackageApiKey(ctx context.Context, apiKeyId string, packageId string) error {
+	apiKeyEntity, err := t.apiKeyRepository.GetPackageApiKey(ctx, apiKeyId, packageId)
 	if err != nil {
 		return err
 	}
@@ -294,8 +292,8 @@ func (t apihubApiKeyServiceImpl) RevokePackageApiKey(ctx context.SecurityContext
 			Params:  map[string]interface{}{"apiKeyId": apiKeyId, "packageId": packageId},
 		}
 	}
-	if packageId != "*" {
-		packageEnt, err := t.publishedRepo.GetPackage(packageId)
+	if packageId != view.AllPackagesApikeyScope {
+		packageEnt, err := t.publishedRepo.GetPackage(ctx, packageId)
 		if err != nil {
 			return err
 		}
@@ -308,7 +306,7 @@ func (t apihubApiKeyServiceImpl) RevokePackageApiKey(ctx context.SecurityContext
 			}
 		}
 		if packageEnt.DefaultRole == view.NoneRoleId && packageEnt.ParentId == "" {
-			if !t.isSysadm(ctx) {
+			if !secctx.IsSysadm(ctx) {
 				return &exception.CustomError{
 					Status:  http.StatusForbidden,
 					Code:    exception.InsufficientPrivileges,
@@ -319,7 +317,7 @@ func (t apihubApiKeyServiceImpl) RevokePackageApiKey(ctx context.SecurityContext
 		}
 	}
 
-	err = t.apiKeyRepository.RevokeApiKey(apiKeyId, ctx.GetUserId())
+	err = t.apiKeyRepository.RevokeApiKey(ctx, apiKeyId, secctx.GetUserId(ctx))
 	if err != nil {
 		return err
 	}
@@ -327,19 +325,19 @@ func (t apihubApiKeyServiceImpl) RevokePackageApiKey(ctx context.SecurityContext
 	dataMap["apiKeyId"] = apiKeyEntity.Id
 	dataMap["apiKeyName"] = apiKeyEntity.Name
 	dataMap["apiKeyRoleIds"] = apiKeyEntity.Roles
-	t.atService.TrackEvent(view.ActivityTrackingEvent{
+	t.atService.TrackEvent(ctx, view.ActivityTrackingEvent{
 		Type:      view.ATETRevokeApiKey,
 		Data:      dataMap,
 		PackageId: apiKeyEntity.PackageId,
 		Date:      time.Now(),
-		UserId:    ctx.GetUserId(),
+		UserId:    secctx.GetUserId(ctx),
 	})
 	return nil
 }
 
-func (t apihubApiKeyServiceImpl) GetProjectApiKeys(packageId string) (*view.ApihubApiKeys, error) {
-	if packageId != "*" {
-		packageEnt, err := t.publishedRepo.GetPackage(packageId)
+func (t apihubApiKeyServiceImpl) GetProjectApiKeys(ctx context.Context, packageId string) (*view.ApihubApiKeys, error) {
+	if packageId != view.AllPackagesApikeyScope {
+		packageEnt, err := t.publishedRepo.GetPackage(ctx, packageId)
 		if err != nil {
 			return nil, err
 		}
@@ -353,7 +351,7 @@ func (t apihubApiKeyServiceImpl) GetProjectApiKeys(packageId string) (*view.Apih
 		}
 	}
 	apiKeys := make([]view.ApihubApiKey, 0)
-	apiKeyEntities, err := t.apiKeyRepository.GetPackageApiKeys(packageId)
+	apiKeyEntities, err := t.apiKeyRepository.GetPackageApiKeys(ctx, packageId)
 	if err != nil {
 		return nil, err
 	}
@@ -365,9 +363,9 @@ func (t apihubApiKeyServiceImpl) GetProjectApiKeys(packageId string) (*view.Apih
 	return &view.ApihubApiKeys{ApiKeys: apiKeys}, nil
 }
 
-func (t apihubApiKeyServiceImpl) GetApiKeyStatus(apiKey string) (bool, *view.ApihubApiKey, error) {
+func (t apihubApiKeyServiceImpl) GetApiKeyStatus(ctx context.Context, apiKey string) (bool, *view.ApihubApiKey, error) {
 	apiKeyHash := crypto.CreateSHA256Hash([]byte(apiKey))
-	apiKeyEnt, err := t.apiKeyRepository.GetApiKeyByHash(apiKeyHash)
+	apiKeyEnt, err := t.apiKeyRepository.GetApiKeyByHash(ctx, apiKeyHash)
 	if err != nil {
 		return false, nil, err
 	}
@@ -385,9 +383,9 @@ func (t apihubApiKeyServiceImpl) GetApiKeyStatus(apiKey string) (bool, *view.Api
 	return false, entity.MakeApihubApiKeyView(apiKeyUserEnt), nil
 }
 
-func (t apihubApiKeyServiceImpl) GetApiKeyByKey(apiKey string) (*view.ApihubApiKeyExtAuthView, error) {
+func (t apihubApiKeyServiceImpl) GetApiKeyByKey(ctx context.Context, apiKey string) (*view.ApihubApiKeyExtAuthView, error) {
 	apiKeyHash := crypto.CreateSHA256Hash([]byte(apiKey))
-	apiKeyEnt, err := t.apiKeyRepository.GetApiKeyByHash(apiKeyHash)
+	apiKeyEnt, err := t.apiKeyRepository.GetApiKeyByHash(ctx, apiKeyHash)
 	if err != nil {
 		return nil, err
 	}
@@ -404,8 +402,8 @@ func (t apihubApiKeyServiceImpl) GetApiKeyByKey(apiKey string) (*view.ApihubApiK
 	}, nil
 }
 
-func (t apihubApiKeyServiceImpl) GetApiKeyById(apiKeyId string) (*view.ApihubApiKeyExtAuthView, error) {
-	apiKeyEnt, err := t.apiKeyRepository.GetApiKey(apiKeyId)
+func (t apihubApiKeyServiceImpl) GetApiKeyById(ctx context.Context, apiKeyId string) (*view.ApihubApiKeyExtAuthView, error) {
+	apiKeyEnt, err := t.apiKeyRepository.GetApiKey(ctx, apiKeyId)
 	if err != nil {
 		return nil, err
 	}
@@ -422,13 +420,13 @@ func (t apihubApiKeyServiceImpl) GetApiKeyById(apiKeyId string) (*view.ApihubApi
 	}, nil
 }
 
-func (t apihubApiKeyServiceImpl) CreateSystemApiKey() error {
+func (t apihubApiKeyServiceImpl) CreateSystemApiKey(ctx context.Context) error {
 	apiKey := t.systemInfoService.GetSystemApiKey()
 
-	packageId, apiKeyName := "*", "system_api_key"
+	packageId, apiKeyName := view.AllPackagesApikeyScope, "system_api_key"
 	resultRoles := []string{view.SysadmRole}
 
-	existingKey, err := t.GetApiKeyByKey(apiKey)
+	existingKey, err := t.GetApiKeyByKey(ctx, apiKey)
 	if err != nil {
 		return err
 	}
@@ -439,7 +437,7 @@ func (t apihubApiKeyServiceImpl) CreateSystemApiKey() error {
 		log.Debug("System api key not found, creating new")
 
 		email, _ := t.systemInfoService.GetZeroDayAdminCreds()
-		adminUser, err := t.userService.GetUserByEmail(email)
+		adminUser, err := t.userService.GetUserByEmail(ctx, email)
 		if err != nil {
 			return err
 		}
@@ -459,13 +457,13 @@ func (t apihubApiKeyServiceImpl) CreateSystemApiKey() error {
 		}
 		apiKeyHash := crypto.CreateSHA256Hash([]byte(apiKey))
 		apihubApiKeyEntity := entity.MakeApihubApiKeyEntity(keyToCreate, apiKeyHash)
-		err = t.apiKeyRepository.SaveApiKey(apihubApiKeyEntity)
+		err = t.apiKeyRepository.SaveApiKey(ctx, apihubApiKeyEntity)
 		if err != nil {
 			return err
 		}
 		log.Info("New system api key has been created")
 
-		existingApiKeyEntities, err := t.apiKeyRepository.GetPackageApiKeys(packageId)
+		existingApiKeyEntities, err := t.apiKeyRepository.GetPackageApiKeys(ctx, packageId)
 		if err != nil {
 			return err
 		}
@@ -473,7 +471,7 @@ func (t apihubApiKeyServiceImpl) CreateSystemApiKey() error {
 			if existingApiKeyEntity.DeletedAt == nil &&
 				existingApiKeyEntity.ApihubApiKeyEntity.Name == apiKeyName &&
 				existingApiKeyEntity.Id != apihubApiKeyEntity.Id {
-				err = t.RevokePackageApiKey(context.CreateFromId(adminUser.Id), existingApiKeyEntity.Id, packageId)
+				err = t.RevokePackageApiKey(secctx.CreateFromId(ctx, adminUser.Id), existingApiKeyEntity.Id, packageId)
 				if err != nil {
 					return err
 				}

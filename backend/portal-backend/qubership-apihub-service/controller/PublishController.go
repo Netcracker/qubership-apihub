@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/context"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
@@ -64,7 +64,7 @@ type publishV2ControllerImpl struct {
 
 func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 	r.Body = http.MaxBytesReader(w, r.Body, p.publishArchiveSizeLimit)
 
 	if r.ContentLength > p.publishArchiveSizeLimit {
@@ -238,9 +238,9 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	packageKind, err := p.packageService.GetPackageKind(packageId)
+	packageKind, err := p.packageService.GetPackageKind(ctx, packageId)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to get package info", err)
+		utils.RespondWithError(w, r, "Failed to get package info", err)
 		return
 	}
 
@@ -249,7 +249,7 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	config.CreatedBy = ctx.GetUserId()
+	config.CreatedBy = secctx.GetUserId(ctx)
 	config.BuildType = view.PublishType
 
 	for i, file := range config.Files {
@@ -271,7 +271,7 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 
 	sufficientPrivileges, err := p.roleService.HasManageVersionPermission(ctx, packageId, config.Status)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, r, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
@@ -309,7 +309,7 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 	}
 	result, err := p.buildService.PublishVersion(ctx, config, sourcesData, clientBuild, builderId, dependencies, resolveRefs, resolveConflicts)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to publish package", err)
+		utils.RespondWithError(w, r, "Failed to publish package", err)
 		return
 	}
 	if result.PublishId == "" {
@@ -321,10 +321,10 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 
 func (p publishV2ControllerImpl) GetPublishStatus(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, r, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
@@ -337,9 +337,9 @@ func (p publishV2ControllerImpl) GetPublishStatus(w http.ResponseWriter, r *http
 	}
 	publishId := getStringParam(r, "publishId")
 
-	status, details, err := p.buildService.GetStatus(publishId)
+	status, details, err := p.buildService.GetStatus(ctx, publishId)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to get publish status", err)
+		utils.RespondWithError(w, r, "Failed to get publish status", err)
 		return
 	}
 
@@ -360,10 +360,10 @@ func (p publishV2ControllerImpl) GetPublishStatus(w http.ResponseWriter, r *http
 
 func (p publishV2ControllerImpl) GetPublishStatuses(w http.ResponseWriter, r *http.Request) {
 	packageId := getStringParam(r, "packageId")
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, r, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
@@ -398,9 +398,9 @@ func (p publishV2ControllerImpl) GetPublishStatuses(w http.ResponseWriter, r *ht
 		return
 	}
 
-	result, err := p.buildService.GetStatuses(req.PublishIds)
+	result, err := p.buildService.GetStatuses(ctx, req.PublishIds)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to get publish statuses", err)
+		utils.RespondWithError(w, r, "Failed to get publish statuses", err)
 		return
 	}
 
@@ -419,10 +419,10 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 	packageId := getStringParam(r, "packageId")
 	buildId := getStringParam(r, "publishId") //buildId
 
-	ctx := context.Create(r)
+	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to check user privileges", err)
+		utils.RespondWithError(w, r, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
@@ -489,9 +489,9 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 		})
 		return
 	}
-	err = p.buildService.ValidateBuildOwnership(buildId, builderId)
+	err = p.buildService.ValidateBuildOwnership(ctx, buildId, builderId)
 	if err != nil {
-		utils.RespondWithError(w, "Failed to validate build ownership", err)
+		utils.RespondWithError(w, r, "Failed to validate build ownership", err)
 		return
 	}
 
@@ -499,9 +499,9 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 	switch status {
 	case view.StatusError:
 		details = r.FormValue("errors")
-		err = p.buildService.UpdateBuildStatus(buildId, status, details)
+		err = p.buildService.UpdateBuildStatus(ctx, buildId, status, details)
 		if err != nil {
-			utils.RespondWithError(w, "Failed to update build status", err)
+			utils.RespondWithError(w, r, "Failed to update build status", err)
 			return
 		}
 	case view.StatusComplete:
@@ -551,12 +551,12 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 		}
 		availableVersionStatuses, err := p.roleService.GetAvailableVersionPublishStatuses(ctx, packageId)
 		if err != nil {
-			utils.RespondWithError(w, "Failed to check user privileges", err)
+			utils.RespondWithError(w, r, "Failed to check user privileges", err)
 			return
 		}
-		err = p.buildResultService.SaveBuildResult(packageId, data, fileHeader.Filename, buildId, availableVersionStatuses)
+		err = p.buildResultService.SaveBuildResult(ctx, packageId, data, fileHeader.Filename, buildId, availableVersionStatuses)
 		if err != nil {
-			utils.RespondWithError(w, "Failed to publish build package", err)
+			utils.RespondWithError(w, r, "Failed to publish build package", err)
 			return
 		}
 	case view.StatusNotStarted:
@@ -566,9 +566,9 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 		})
 		return
 	case view.StatusRunning:
-		err = p.buildService.UpdateBuildStatus(buildId, status, details)
+		err = p.buildService.UpdateBuildStatus(ctx, buildId, status, details)
 		if err != nil {
-			utils.RespondWithError(w, "Failed to update build status", err)
+			utils.RespondWithError(w, r, "Failed to update build status", err)
 			return
 		}
 	}
@@ -577,8 +577,8 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 }
 
 func (p publishV2ControllerImpl) GetFreeBuild(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Create(r)
-	sufficientPrivileges := p.roleService.IsSysadm(ctx)
+	ctx := secctx.MakeUserContext(r)
+	sufficientPrivileges := secctx.IsSysadm(ctx)
 	if !sufficientPrivileges {
 		utils.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
@@ -590,10 +590,10 @@ func (p publishV2ControllerImpl) GetFreeBuild(w http.ResponseWriter, r *http.Req
 	builderId := getStringParam(r, "builderId")
 	start := time.Now()
 
-	src, err := p.buildService.GetFreeBuild(builderId)
+	src, err := p.buildService.GetFreeBuild(ctx, builderId)
 
 	if err != nil {
-		utils.RespondWithError(w, "Failed to get free build", err)
+		utils.RespondWithError(w, r, "Failed to get free build", err)
 		return
 	}
 

@@ -302,6 +302,16 @@ type ChangeSummary struct {
 	Unclassified int `json:"unclassified"`
 }
 
+// Add accumulates the counts of another summary into this one.
+func (c *ChangeSummary) Add(other ChangeSummary) {
+	c.Breaking += other.Breaking
+	c.SemiBreaking += other.SemiBreaking
+	c.Deprecated += other.Deprecated
+	c.NonBreaking += other.NonBreaking
+	c.Annotation += other.Annotation
+	c.Unclassified += other.Unclassified
+}
+
 func (c ChangeSummary) GetTotalSummary() int {
 	return c.Breaking + c.SemiBreaking + c.Deprecated + c.NonBreaking + c.Annotation + c.Unclassified
 }
@@ -314,8 +324,14 @@ type ApiKind string
 
 const BwcApiKind ApiKind = "bwc"
 const NoBwcApiKind ApiKind = "no-bwc"
-const DebugApiKind ApiKind = "debug"
 const ExperimentalApiKind ApiKind = "experimental"
+
+func ApiKindOrDefault(apiKind string) string {
+	if apiKind == "" {
+		return string(BwcApiKind)
+	}
+	return apiKind
+}
 
 type Severity string
 
