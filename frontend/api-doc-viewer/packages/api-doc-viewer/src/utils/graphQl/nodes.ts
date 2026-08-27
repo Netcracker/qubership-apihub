@@ -15,6 +15,7 @@
  */
 
 import { IModelStatePropNode } from "@netcracker/qubership-apihub-api-state-model"
+import { safePropertyIn } from '../common/objects'
 
 const OBSERVED_VISIBLE_ANNOTATIONS_AND_VALIDATIONS: Record<'openapi' | 'graphapi', string[]> = {
   // unused now
@@ -53,7 +54,10 @@ export function hasAnnotationsOrValidations(
     return false
   }
   for (const field of OBSERVED_VISIBLE_ANNOTATIONS_AND_VALIDATIONS[kind]) {
-    if (field in nodeValue || field in nodeMeta) {
+    if (
+      safePropertyIn(nodeValue, field, 'hasAnnotationsOrValidations') ||
+      safePropertyIn(nodeMeta, field, 'hasAnnotationsOrValidations')
+    ) {
       return true
     }
   }

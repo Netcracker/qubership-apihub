@@ -1,9 +1,9 @@
+import { isObject } from '@netcracker/qubership-apihub-json-crawl';
 import type { Meta, StoryObj } from '@storybook/react';
-import { JsonSchemaViewer } from '../components/JsonSchemaViewer/JsonSchemaViewer';
-import { prepareJsonSchema, REQUEST_BODY_TARGET } from './preprocess';
 import { ComponentProps } from 'react';
 import { parse } from 'yaml';
-import { isObject } from '@netcracker/qubership-apihub-json-crawl';
+import { JsonSchemaViewer } from '../components/JsonSchemaViewer/JsonSchemaViewer';
+import { prepareJsonSchema, REQUEST_BODY_TARGET } from './preprocess';
 
 type StoryArgs = ComponentProps<typeof JsonSchemaViewer> & {
   schemaText: string

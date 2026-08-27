@@ -50,6 +50,7 @@ import { CHANGED_LAYOUT_SIDE, LayoutSide, ORIGIN_LAYOUT_SIDE } from '../types/in
 import { NodeType } from '../types/internal/NodeType'
 import { ArrayUtils } from './common/arrays'
 import { diffAdd, diffRemove, diffReplace } from './common/changes'
+import { safePropertyIn } from './common/objects'
 
 // State checkers
 
@@ -200,7 +201,10 @@ export function isArrayValue(value?: JsonSchemaNodeValue | GraphSchemaNodeValue 
 }
 
 export function valueHasExtensions(value?: JsonSchemaNodeValue | GraphSchemaNodeValue | GraphApiNodeData | null) {
-  return !!value && 'extensions' in value && !!value.extensions
+  return (
+    safePropertyIn(value, 'extensions', 'valueHasExtensions') &&
+    !!(value as { extensions?: unknown }).extensions
+  )
 }
 
 export function hasNoContent(node?: AnyTreeNode | null): boolean {

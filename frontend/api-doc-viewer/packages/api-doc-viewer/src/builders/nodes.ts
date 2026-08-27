@@ -108,7 +108,9 @@ export function buildNodeTypeData(options: JsonNodeTypeDataOptions | GraphNodeTy
   const nodeValue = originalValue ?? node?.value()
   const $nodeValue = nodeValue as JsonSchemaDiffNodeValue | GraphSchemaDiffNodeValue
 
-  const brokenRef = isRefNode(node) && node?.meta && 'brokenRef' in node.meta ? `${node.meta.brokenRef}` : undefined
+  const brokenRef = isRefNode(node)
+    ? `${(node!.meta as { brokenRef: string }).brokenRef}`
+    : undefined
   const type = brokenRef ? `$ref: ${brokenRef}` : $nodeValue?.type ?? UNKNOWN_TYPE_TEXT
   const nullable = nodeValue?.nullable
   const title = $nodeValue?.title

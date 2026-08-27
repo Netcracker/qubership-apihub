@@ -41,6 +41,7 @@ import {
   getLayoutSideFlags,
   isDiffTypeIncluded
 } from '../../../utils/common/changes'
+import { safePropertyIn } from '../../../utils/common/objects'
 import { UxDiffFloatingBadge } from '../../kit/ux/UxFloatingBadge/UxDiffFloatingBadge'
 import { EmptyContent } from '../diffs/EmptyContent'
 import { UnsupportedContent } from '../diffs/UnsupportedContent'
@@ -200,16 +201,16 @@ const Value: FC<ValueProps> = props => {
       valueAdded || (
         valueReplaced &&
         isObject($changes.afterValue) &&
-        'reason' in $changes.afterValue &&
-        typeof $changes.afterValue.reason === 'string'
+        safePropertyIn($changes.afterValue, 'reason', 'DeprecationReasonRow.added') &&
+        typeof ($changes.afterValue as { reason?: unknown }).reason === 'string'
       )
     ),
     removed: valueChanged && (
       valueRemoved || (
         valueReplaced &&
         isObject($changes.beforeValue) &&
-        'reason' in $changes.beforeValue &&
-        typeof $changes.beforeValue.reason === 'string'
+        safePropertyIn($changes.beforeValue, 'reason', 'DeprecationReasonRow.removed') &&
+        typeof ($changes.beforeValue as { reason?: unknown }).reason === 'string'
       )
     ),
     replaced: valueChanged && (
@@ -227,8 +228,8 @@ const Value: FC<ValueProps> = props => {
       if (valueReplaced) {
         diffColorSchema = INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
         value = (
-          isObject($changes.beforeValue) && 'reason' in $changes.beforeValue
-            ? `${$changes.beforeValue.reason}`
+          safePropertyIn($changes.beforeValue, 'reason', 'DeprecationReasonRow.originSide')
+            ? `${($changes.beforeValue as { reason: string }).reason}`
             : `${$changes.beforeValue}`
         )
       }
@@ -240,9 +241,9 @@ const Value: FC<ValueProps> = props => {
       if (valueReplaced) {
         diffColorSchema = INLINE_CONTENT_DIFF_COLOR_SCHEMAS[DiffAction.replace]
         value = (
-          isObject($changes.afterValue) && 'reason' in $changes.afterValue &&
-          typeof $changes.afterValue.reason === 'string'
-          ? `${$changes.afterValue.reason}`
+          safePropertyIn($changes.afterValue, 'reason', 'DeprecationReasonRow.changedSide') &&
+          typeof ($changes.afterValue as { reason?: unknown }).reason === 'string'
+          ? `${($changes.afterValue as { reason: string }).reason}`
           : `${$changes.afterValue}`
         )
       }

@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import { isDiff, isObject } from "@netcracker/qubership-apihub-api-data-model";
+import { isDiff } from "@netcracker/qubership-apihub-api-data-model";
 import { Diff, DiffMetaRecord } from "@netcracker/qubership-apihub-api-diff";
 import { diffReplace } from "../../utils/common/changes";
+import { safePropertyIn } from "../../utils/common/objects";
 
 type DeprecatedWithReason = {
   reason: string
@@ -33,9 +34,8 @@ export function hasDeprecationReason(
   return (
     typeof deprecated !== 'boolean' && !!deprecated?.reason || (
       diffReplace(deprecatedChanges) &&
-      isObject(deprecatedChanges.beforeValue) &&
-      'reason' in deprecatedChanges.beforeValue &&
-      !!deprecatedChanges.beforeValue.reason
+      safePropertyIn(deprecatedChanges.beforeValue, 'reason', 'hasDeprecationReason') &&
+      !!(deprecatedChanges.beforeValue as { reason?: string }).reason
     )
   )
 }

@@ -29,13 +29,14 @@ import {
   IModelStatePropNode,
   modelStateNodeType
 } from '@netcracker/qubership-apihub-api-state-model'
+import { safePropertyIn } from '../../utils/common/objects'
 import { AnyTreeNode, AnyTreeNodeMeta, AnyTreeNodeValue } from '../aliases/nodes'
 
 export function isRefNode(
   node: AnyTreeNode | null
 ): boolean {
   const nodeMeta = node?.meta
-  return !!nodeMeta && typeof nodeMeta === 'object' && 'brokenRef' in nodeMeta
+  return safePropertyIn(nodeMeta, 'brokenRef', 'isRefNode')
 }
 
 export function isDiffNodeValue(
