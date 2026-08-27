@@ -9,6 +9,7 @@ qubership-apihub-agent/apihub-agent.exe
 qubership-apihub-agent/apihub-agent
 qubership-apihub-agent/bin/**
 qubership-apihub-agent/config.yaml
+qubership-apihub-agent/qubership-apihub-agent
 
 *.bak
 *.iml

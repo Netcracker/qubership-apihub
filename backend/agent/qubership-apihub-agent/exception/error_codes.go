@@ -47,6 +47,9 @@ const InsufficientPrivilegesMsg = "You don't have enough privileges to perform t
 const BadRequestBody = "801"
 const BadRequestBodyMsg = "Failed to decode body"
 
+const InvalidServiceName = "900"
+const InvalidServiceNameMsg = "Requested services list contains an invalid service name '$name'. Service names must not be empty or contain leading or trailing whitespace."
+
 const HeadersLimitExceeded = "7401"
 const HeadersLimitExceededMsg = "HTTP headers limit exceeded. Maximum allowed number of headers is $maxHeaders"
 

@@ -77,12 +77,12 @@ func (c *cloudServiceImpl) runAllDiscoveryOneByOne(ctx secctx.SecurityContext, w
 
 	log.Infof("Clearing services cache")
 	for _, ns := range namespaces {
-		c.serviceListCache.clearResultsForNamespace(ns, workspaceId)
+		c.serviceListCache.clearResultsForNamespace(ns, workspaceId, nil)
 	}
 
 	log.Infof("Namespaces to discover: %+v", namespaces)
 	for _, ns := range namespaces {
-		err := c.discoveryService.StartDiscovery(ctx, ns, workspaceId, false)
+		err := c.discoveryService.StartDiscovery(ctx, ns, workspaceId, false, view.DiscoveryRequest{})
 		if err != nil {
 			log.Errorf("Failed to start discovery for namespace %s: %s", ns, err)
 			c.errors = append(c.errors, fmt.Sprintf("failed to start discovery for namespace %s: %s", ns, err))
@@ -108,14 +108,15 @@ func (c *cloudServiceImpl) waitForNamespace(ns string, workspaceId string) {
 		select {
 		case <-ticker.C:
 			log.Debugf("waitForNamespace %s check", ns)
-			_, status, details := c.serviceListCache.GetServicesList(ns, workspaceId)
+			servicesList := c.serviceListCache.GetServicesList(ns, workspaceId, nil)
+			status := servicesList.Status
 			if status == view.StatusRunning || status == view.StatusNone {
 				log.Debugf("waitForNamespace %s running", ns)
 				continue
 			}
 			if status == view.StatusError {
 				log.Debugf("waitForNamespace %s error", ns)
-				c.errors = append(c.errors, fmt.Sprintf("failed discovery for namespace %s: %s", ns, details))
+				c.errors = append(c.errors, fmt.Sprintf("failed discovery for namespace %s: %s", ns, servicesList.Details))
 				utils.SafeAsync(func() {
 					stop <- struct{}{}
 				})
@@ -152,12 +153,12 @@ func (c *cloudServiceImpl) GetAllServicesList_deprecated(workspaceId string) vie
 	}
 	namespacesData := map[string]view.ServiceListResponse_deprecated{}
 	for _, ns := range namespaces {
-		services, status, details := c.serviceListCache.GetServicesList(ns, workspaceId)
-		servicesDeprecated := make([]view.Service_deprecated, len(services))
-		for i, svc := range services {
+		servicesList := c.serviceListCache.GetServicesList(ns, workspaceId, nil)
+		servicesDeprecated := make([]view.Service_deprecated, len(servicesList.Services))
+		for i, svc := range servicesList.Services {
 			servicesDeprecated[i] = svc.ToDeprecated()
 		}
-		namespacesData[ns] = view.ServiceListResponse_deprecated{Services: servicesDeprecated, Status: status, Debug: details}
+		namespacesData[ns] = view.ServiceListResponse_deprecated{Services: servicesDeprecated, Status: servicesList.Status, Debug: servicesList.Details}
 	}
 	result.NamespaceData = namespacesData
 
