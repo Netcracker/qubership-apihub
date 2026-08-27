@@ -1148,8 +1148,16 @@
                                             "    pm.expect(data.documents.length).to.eql(2);\r",
                                             "});\r",
                                             "\r",
-                                            "pm.environment.set(\"document_slug_2\", data.documents[0].slug);\r",
-                                            "pm.environment.set(\"document_slug_1\", data.documents[1].slug)"
+                                            "var iotDoc = data.documents.find(d => d.fileId === \"iot.yaml\");\r",
+                                            "var petDoc = data.documents.find(d => d.fileId === \"petstore.yaml\");\r",
+                                            "\r",
+                                            "pm.test(\"Documents iot.yaml and petstore.yaml are present\", function () {\r",
+                                            "    pm.expect(iotDoc).to.be.ok;\r",
+                                            "    pm.expect(petDoc).to.be.ok;\r",
+                                            "});\r",
+                                            "\r",
+                                            "pm.environment.set(\"document_slug_1\", iotDoc.slug);\r",
+                                            "pm.environment.set(\"document_slug_2\", petDoc.slug);"
                                         ]
                                     }
                                 },
