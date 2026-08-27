@@ -1,7 +1,7 @@
 import { test } from '@fixtures'
 import { PortalPage } from '@portal/pages/PortalPage'
 import { expect } from '@services/expect-decorator'
-import { DRAFT_VERSION_STATUS, NO_PREV_RELEASE_VERSION, RELEASE_VERSION_STATUS } from '@shared/entities'
+import { DRAFT_VERSION_STATUS, NO_PREV_RELEASE_VERSION, NO_PREV_VERSION, RELEASE_VERSION_STATUS } from '@shared/entities'
 import { P_PK_CP_EMPTY, P_PK_CP_PATTERN, P_PK_CP_RELEASE, P_WS_MAIN_R, RV_PATTERN_NEW, V_P_PKG_COPYING_RELEASE_N, V_P_PKG_COPYING_SOURCE_R, VERSION_COPIED_MSG } from '@test-data/portal'
 import { PUBLISH_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
 import { SYSADMIN } from '@test-data'
@@ -103,7 +103,7 @@ test.describe('14.1 Copying Package Version', () => {
           version: '2000.2',
           status: DRAFT_VERSION_STATUS,
           labels: ['label-1', 'label-2'],
-          previousVersion: NO_PREV_RELEASE_VERSION,
+          previousVersion: NO_PREV_VERSION,
         })
 
         await expect(copyVersionDialog.workspaceAc).toHaveValue(targetWorkspace.name)
@@ -158,7 +158,7 @@ test.describe('14.1 Copying Package Version', () => {
           version: targetVersion,
           status: DRAFT_VERSION_STATUS,
           labels: ['label-1', 'label-2'],
-          previousVersion: NO_PREV_RELEASE_VERSION,
+          previousVersion: NO_PREV_VERSION,
         })
         await copyVersionDialog.copyBtn.click()
 
@@ -247,7 +247,7 @@ test.describe('14.1 Copying Package Version', () => {
         })
 
         await expect(copyVersionDialog.packageAc).toHaveValue(targetPackage.name)
-        await expect(copyVersionDialog.previousVersionAc).toHaveValue(NO_PREV_RELEASE_VERSION)
+        await expect(copyVersionDialog.previousVersionAc).toHaveValue(NO_PREV_VERSION)
       })
 
       await test.step('Set target Version Info and copy Version', async () => {
@@ -255,7 +255,7 @@ test.describe('14.1 Copying Package Version', () => {
           version: targetVersion,
           status: RELEASE_VERSION_STATUS,
           labels: ['label-1', 'label-2'],
-          previousVersion: V_P_PKG_COPYING_RELEASE_N.version,
+          previousVersion: `${V_P_PKG_COPYING_RELEASE_N.version} ${V_P_PKG_COPYING_RELEASE_N.status}`,
         })
         await copyVersionDialog.copyBtn.click()
 

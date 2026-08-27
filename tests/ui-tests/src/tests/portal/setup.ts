@@ -355,7 +355,7 @@ import {
   WSP_P_UAC_GENERAL_N,
 } from '@test-data/portal'
 import { isReusableTestDataExist } from '@test-data/utils'
-import { CREATE_TD } from '@test-setup'
+import { CREATE_TD, MSG_CREATE_TD_SKIPPED } from '@test-setup'
 
 test.describe.configure({ mode: 'serial' })
 
@@ -369,7 +369,7 @@ test.describe('Users', async () => {
 })
 
 test.describe('Reusable Test Data creation', async () => {
-  test.skip(CREATE_TD === 'skip', 'Test Data creation is skipped')
+  test.skip(CREATE_TD === 'skip', MSG_CREATE_TD_SKIPPED)
 
   let isReusableTdExist!: boolean
 
@@ -693,7 +693,7 @@ test.describe('Reusable Test Data creation', async () => {
 })
 
 test.describe('Non-Reusable Test Data creation', async () => {
-  test.skip(CREATE_TD === 'skip', 'Test Data creation is skipped')
+  test.skip(CREATE_TD === 'skip', MSG_CREATE_TD_SKIPPED)
 
   test.describe('General', async () => {
     test('Test Entities creation', async ({ apihubTDM: tdm }) => {

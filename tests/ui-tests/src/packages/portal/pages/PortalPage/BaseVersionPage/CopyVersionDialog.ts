@@ -7,7 +7,7 @@ export class CopyVersionDialog extends BasePublishDialog {
 
   readonly workspaceAc = new Autocomplete(this.rootLocator.getByTestId('WorkspaceAutocomplete'), 'Workspace')
   readonly packageAc = new Autocomplete(this.rootLocator.getByTestId('PackageAutocomplete'), 'Package')
-  readonly previousVersionAc = new Autocomplete(this.rootLocator.getByTestId('PreviousReleaseVersionAutocomplete'), 'Previous release version')
+  readonly previousVersionAc = new Autocomplete(this.rootLocator.getByTestId('PreviousReleaseVersionAutocomplete'), 'Previous version')
   readonly copyBtn = new Button(this.rootLocator.getByTestId('CopyButton'), 'Copy')
 
   constructor(protected readonly page: Page) {
@@ -29,7 +29,7 @@ export class CopyVersionDialog extends BasePublishDialog {
     }
     await super.fillForm(params)
     if (params.previousVersion) {
-      await report.step('Set "Previous release version"', async () => {
+      await report.step('Set "Previous version"', async () => {
         await this.previousVersionAc.click()
         await this.previousVersionAc.getListItem(params.previousVersion).click()
       })

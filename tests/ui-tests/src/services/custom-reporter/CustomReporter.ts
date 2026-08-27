@@ -1,145 +1,81 @@
-import type { FullConfig, Reporter, Suite, TestCase, TestResult } from '@playwright/test/reporter'
-import type { ReportRunResult, ReportType } from './types'
+import type { FullConfig, FullResult, Reporter, Suite } from '@playwright/test/reporter'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { buildRunResult } from './build-run-result'
 import ApihubStyledHtmlReport from './reports/ApihubStyledHtmlReport'
-import { formatDate, getTestInfo, millisecondsToMinuteSeconds } from './utils'
-import { SETUP_PROJECTS } from './consts'
-import { mkdirSync, writeFileSync } from 'fs'
-import type { FullResult } from 'playwright/types/testReporter'
-
-const initialRunResult = (): ReportRunResult => ({
-  status: '',
-  startTime: '',
-  duration: '',
-  workers: 0,
-  counts: {
-    allTests: 0,
-    executedTests: 0,
-    passedTests: 0,
-    failedTests: 0,
-    flakyTests: 0,
-    affectedTests: 0,
-    skippedTests: 0,
-  },
-  lists: {
-    failedList: new Map(),
-    flakyList: new Map(),
-    affectedList: new Map(),
-    skippedList: new Map(),
-  },
-})
+import GitHubActionsReport from './reports/GitHubActionsReport'
+import { resolveCustomReporterOptions } from './resolve-options'
+import { isUnitTestSuite } from './suite-utils'
+import type { CustomReporterOptions, ReportRunResult, ResolvedCustomReporterOptions } from './types'
 
 class CustomReporter implements Reporter {
+  private suite!: Suite
+  private workers = 0
+  private readonly resolvedOptions = resolveCustomReporterOptions(this.options)
 
-  readonly reportType = this.options.reportType
-  readonly outputFolder = this.options.outputFolder
+  constructor(readonly options: CustomReporterOptions = {}) {}
 
-  private setupTests = 0
-
-  private runResult!: ReportRunResult
-
-  constructor(readonly options: { reportType: ReportType; outputFolder?: string }) { }
-
-  async onBegin(config: FullConfig, suite: Suite): Promise<void> {
-    this.runResult = initialRunResult()
-    this.runResult.counts.allTests = suite.allTests().length
-    this.runResult.workers = config.workers
-  }
-
-  async onTestEnd(test: TestCase, result: TestResult): Promise<void> {
-    const outcome = test.outcome()
-    const { retry } = result
-    const testInfo = getTestInfo(test)
-    const isSetupTest = SETUP_PROJECTS.includes(testInfo.project)
-
-    const removeFromFailedList = (): void => {
-      this.runResult.lists.failedList.delete(testInfo.fullTitle)
-      if (!isSetupTest) {
-        this.runResult.counts.failedTests--
-      }
-    }
-
-    switch (outcome) {
-      case 'expected': {
-        if (isSetupTest) {
-          this.setupTests++
-        } else if (testInfo.issues.size > 0) {
-          this.runResult.counts.affectedTests++
-          this.runResult.lists.affectedList.set(testInfo.fullTitle, testInfo)
-        } else {
-          this.runResult.counts.passedTests++
-        }
-        break
-      }
-      case 'skipped': {
-        if (isSetupTest) {
-          this.setupTests++
-        } else {
-          this.runResult.counts.skippedTests++
-          this.runResult.lists.skippedList.set(testInfo.fullTitle, testInfo)
-        }
-        break
-      }
-      case 'flaky': {
-        removeFromFailedList()
-        this.runResult.lists.flakyList.set(testInfo.fullTitle, testInfo)
-        isSetupTest ? this.setupTests++ : this.runResult.counts.flakyTests++
-        break
-      }
-      case 'unexpected':
-        if (retry === 0) {
-          this.runResult.lists.failedList.set(testInfo.fullTitle, testInfo)
-          isSetupTest ? this.setupTests++ : this.runResult.counts.failedTests++
-        }
-        break
-    }
-
-    if (retry === 0 && outcome !== 'skipped' && !isSetupTest) {
-      this.runResult.counts.executedTests++
-    }
+  onBegin(config: FullConfig, suite: Suite): void {
+    this.suite = suite
+    this.workers = config.workers
   }
 
   async onEnd(result: FullResult): Promise<void> {
-    this.runResult.startTime = formatDate(result.startTime)
-    this.runResult.duration = millisecondsToMinuteSeconds(result.duration) //since playwright v1.38.0
-    this.runResult.counts.allTests -= this.setupTests
-    switch (result.status) {
-      case 'passed': {
-        this.runResult.status = 'Passed'
-        break
-      }
-      case 'failed': {
-        this.runResult.status = 'Failed'
-        break
-      }
-      case 'timedout': {
-        this.runResult.status = 'Timed out'
-        break
-      }
-      case 'interrupted': {
-        this.runResult.status = 'Interrupted'
-        break
-      }
+    const runResult = buildRunResult(this.suite, result, this.workers)
+    await emitReports(runResult, this.getEffectiveOptions())
+  }
+
+  printsToStdio(): boolean {
+    return false
+  }
+
+  private getEffectiveOptions(): ResolvedCustomReporterOptions {
+    // ApihubStyledHtmlReport fetches backend metadata; skip HTML for unit-only suites.
+    if (!this.resolvedOptions.html || !isUnitTestSuite(this.suite)) {
+      return this.resolvedOptions
     }
-    await outputReport(this.runResult, this.reportType, this.outputFolder)
+    return { ...this.resolvedOptions, html: false }
   }
 }
 
-async function outputReport(runResult: ReportRunResult, reportType: ReportType, outputFolder = 'reports/summary'): Promise<void> {
+async function emitReports(
+  runResult: ReportRunResult,
+  options: ResolvedCustomReporterOptions,
+): Promise<void> {
+  mkdirSync(options.outputFolder, { recursive: true })
+  // Status is the CI gate artifact - write it before optional sinks so a sink failure cannot skip it.
+  writeFileSync(join(options.outputFolder, 'status'), runResult.status)
 
-  const getReportByType = async (_reportType: ReportType): Promise<string> => {
-    switch (_reportType) {
-      case 'apihub-styled-html': {
-        return new ApihubStyledHtmlReport(runResult).getReport()
-      }
-      default: {
-        throw new Error(`Invalid report type: "${reportType}" `)
-      }
+  const failures: Error[] = []
+
+  if (options.html) {
+    try {
+      const html = await new ApihubStyledHtmlReport(runResult).getReport()
+      writeFileSync(join(options.outputFolder, 'summary-report.html'), html)
+    } catch (error) {
+      failures.push(toError(error, 'HTML report'))
     }
   }
 
-  mkdirSync(outputFolder, { recursive: true })
-  writeFileSync(`${outputFolder}/summary-report.html`, await getReportByType(reportType))
-  writeFileSync(`${outputFolder}/status`, runResult.status)
+  if (options.github) {
+    try {
+      await new GitHubActionsReport(runResult, options.github).write()
+    } catch (error) {
+      failures.push(toError(error, 'GitHub Actions report'))
+    }
+  }
+
+  if (failures.length === 1) {
+    throw failures[0]
+  }
+  if (failures.length > 1) {
+    throw new AggregateError(failures, 'Custom reporter failed to emit one or more outputs')
+  }
+}
+
+function toError(error: unknown, sink: string): Error {
+  const message = error instanceof Error ? error.message : String(error)
+  return new Error(`${sink}: ${message}`, { cause: error })
 }
 
 export default CustomReporter

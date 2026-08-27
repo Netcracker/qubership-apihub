@@ -166,7 +166,7 @@ test.describe('4.4.2 Dashboard editing/publishing', () => {
       await publishVersionDialog.fillForm({
         version: 'with-prev-version',
         status: 'draft',
-        previousVersion: V_P_DSH_RELEASE_N.version,
+        previousVersion: `${V_P_DSH_RELEASE_N.version} ${V_P_DSH_RELEASE_N.status}`,
       })
       await publishVersionDialog.publishBtn.click()
 

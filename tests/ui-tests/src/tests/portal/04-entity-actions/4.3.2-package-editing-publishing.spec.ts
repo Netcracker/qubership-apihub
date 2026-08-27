@@ -391,7 +391,7 @@ test.describe('4.3.2 Package publishing via Portal', () => {
         await configureVersionTab.publishVersionDialog.fillForm({
           version: '2000.3',
           status: 'release',
-          previousVersion: testVersion.version,
+          previousVersion: `${testVersion.version} ${testVersion.status}`,
         })
         await configureVersionTab.publishVersionDialog.publishBtn.click()
 

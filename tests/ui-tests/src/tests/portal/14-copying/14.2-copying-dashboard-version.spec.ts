@@ -1,7 +1,7 @@
 import { test } from '@fixtures'
 import { PortalPage } from '@portal/pages/PortalPage'
 import { expect } from '@services/expect-decorator'
-import { DRAFT_VERSION_STATUS, NO_PREV_RELEASE_VERSION, RELEASE_VERSION_STATUS } from '@shared/entities'
+import { DRAFT_VERSION_STATUS, NO_PREV_RELEASE_VERSION, NO_PREV_VERSION, RELEASE_VERSION_STATUS } from '@shared/entities'
 import {
   P_DSH_CP_EMPTY,
   P_DSH_CP_PATTERN,
@@ -114,7 +114,7 @@ test.describe('14.2 Copying Dashboard Version', () => {
           version: '2000.2',
           status: DRAFT_VERSION_STATUS,
           labels: ['label-1', 'label-2'],
-          previousVersion: NO_PREV_RELEASE_VERSION,
+          previousVersion: NO_PREV_VERSION,
         })
 
         await expect(copyVersionDialog.workspaceAc).toHaveValue(targetWorkspace.name)
@@ -169,7 +169,7 @@ test.describe('14.2 Copying Dashboard Version', () => {
           version: targetVersion,
           status: DRAFT_VERSION_STATUS,
           labels: ['label-1', 'label-2'],
-          previousVersion: NO_PREV_RELEASE_VERSION,
+          previousVersion: NO_PREV_VERSION,
         })
         await copyVersionDialog.copyBtn.click()
 
@@ -274,7 +274,7 @@ test.describe('14.2 Copying Dashboard Version', () => {
         })
 
         await expect(copyVersionDialog.packageAc).toHaveValue(targetDashboard.name)
-        await expect(copyVersionDialog.previousVersionAc).toHaveValue(NO_PREV_RELEASE_VERSION)
+        await expect(copyVersionDialog.previousVersionAc).toHaveValue(NO_PREV_VERSION)
       })
 
       await test.step('Set target Version Info and copy Version', async () => {
@@ -282,7 +282,7 @@ test.describe('14.2 Copying Dashboard Version', () => {
           version: targetVersion,
           status: RELEASE_VERSION_STATUS,
           labels: ['label-1', 'label-2'],
-          previousVersion: V_P_DSH_COPYING_RELEASE_N.version,
+          previousVersion: `${V_P_DSH_COPYING_RELEASE_N.version} ${V_P_DSH_COPYING_RELEASE_N.status}`,
         })
         await copyVersionDialog.copyBtn.click()
 
