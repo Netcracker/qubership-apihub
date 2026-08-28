@@ -30,7 +30,7 @@ on:
       playwright-test-args:
         description: "Playwright test command CLI arguments"
         type: string
-        default: "--project=Portal --workers=8 --grep-invert=@flaky"
+        default: "--project=Portal --project=Agent --workers=8 --grep-invert='@flaky|@specific'"
       image-tags:
         description: "JSON object with backend, buildTaskConsumer, ui, apiLinterService, agentsBackend, and agent tags"
         type: string
