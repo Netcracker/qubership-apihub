@@ -1,0 +1,15 @@
+# Build artifacts
+target/
+*.iml
+.idea/
+.vscode/
+.classpath
+.project
+.settings/
+
+# Local Maven repo cache in work dir
+.work/
+
+# Env overrides
+.env
+*.local.env

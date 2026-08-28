@@ -1,0 +1,6 @@
+apiVersion: v2
+name: qubership-apihub-java-task-consumer
+description: APIHUB Java build task worker
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

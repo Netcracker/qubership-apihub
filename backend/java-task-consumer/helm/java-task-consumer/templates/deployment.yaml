@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "java-task-consumer.fullname" . }}
+  labels:
+    {{- include "java-task-consumer.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "java-task-consumer.name" . }}
+  template:
+    metadata:
+      labels:
+        {{- include "java-task-consumer.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "java-task-consumer.fullname" . }}
+      {{- if .Values.apihub.accessToken }}
+      volumes:
+        - name: apihub-api-key
+          secret:
+            secretName: {{ include "java-task-consumer.fullname" . }}-api-key
+      {{- end }}
+      containers:
+        - name: java-task-consumer
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: web
+              containerPort: {{ .Values.service.port }}
+          env:
+            - name: LOG_LEVEL
+              value: {{ .Values.env.logLevel | default "INFO" | quote }}
+            - name: APIHUB_BACKEND_ADDRESS
+              value: {{ .Values.apihub.backendAddress | quote }}
+            - name: JOB_REQUEST_INTERVAL
+              value: {{ .Values.env.requestIntervalMs | quote }}
+            - name: JOB_STATUS_INTERVAL
+              value: {{ .Values.env.statusIntervalMs | quote }}
+            - name: JDIFF_THREADS
+              value: {{ .Values.env.jdiffThreads | quote }}
+            - name: WORK_DIR
+              value: /tmp/java-task-consumer
+            - name: JDIFF_JAPICMP_JAR
+              value: /opt/jdiff/japicmp.jar
+            {{- if .Values.apihub.accessToken }}
+            - name: APIHUB_API_KEY_FILE
+              value: /etc/secrets/apihub/access_token
+            {{- end }}
+          {{- if .Values.apihub.accessToken }}
+          volumeMounts:
+            - name: apihub-api-key
+              mountPath: /etc/secrets/apihub
+              readOnly: true
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /live
+              port: web
+            initialDelaySeconds: 20
+            periodSeconds: 60
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /live
+              port: web
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          securityContext:
+            runAsUser: 10001
+            runAsGroup: 10001
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]

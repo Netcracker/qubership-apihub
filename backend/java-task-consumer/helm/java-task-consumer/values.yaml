@@ -1,0 +1,30 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/netcracker/qubership-apihub-java-task-consumer
+  tag: dev
+  pullPolicy: IfNotPresent
+
+service:
+  port: 3000
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    cpu: "2"
+    memory: 4Gi
+
+env:
+  logLevel: ""
+  requestIntervalMs: "3000"
+  statusIntervalMs: "5000"
+  jdiffThreads: "4"
+
+apihub:
+  backendAddress: qubership-apihub-backend:8080
+  accessToken: ""
+
+serviceAccount:
+  create: true
