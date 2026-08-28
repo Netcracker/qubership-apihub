@@ -131,7 +131,7 @@ describe('DDL changelog end-to-end (build with previousVersion)', () => {
     // ddl-comparisons/<comparisonFileId> per-pair data, wrapper key `entities` (C2)
     type SideData = { ddlEntityId?: string; kind?: string; name?: string; schemaName?: string; description?: string }
     type Entry = { ddlEntityData?: SideData; previousDdlEntityData?: SideData; changes?: unknown[]; comparisonInternalDocumentId?: string }
-    const perPair = JSON.parse((await loadFileAsStringFromRegistry(VERSIONS_PATH, `${PACKAGE_ID}/v2/ddl-comparisons`, `${comparisonFileId}.json`))!)
+    const perPair = JSON.parse((await loadFileAsStringFromRegistry(VERSIONS_PATH, `${PACKAGE_ID}/v2/ddl-comparisons`, comparisonFileId))!)
     expect(Array.isArray(perPair.entities)).toBe(true)
     const byId = Object.fromEntries(perPair.entities.map((e: Entry) => [e.ddlEntityData?.ddlEntityId ?? e.previousDdlEntityData?.ddlEntityId, e]))
 

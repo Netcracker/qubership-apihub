@@ -65,7 +65,7 @@ export function processDdlDocument(
   }
 }
 
-const KIND_TO_FIELD: Record<DdlKind, keyof PackageDdlFile> = {
+export const KIND_TO_FIELD: Record<DdlKind, keyof PackageDdlFile> = {
   [DDL_KIND.TABLE]: 'tables',
 }
 

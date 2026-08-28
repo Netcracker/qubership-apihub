@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-07-02T15:47:07.137859+00:00'
+generated_at: '2026-07-30T14:14:04.898039+00:00'
 apm_version: 0.23.1
 dependencies:
 - repo_url: Netcracker/qubership-apihub-ddlapi
@@ -46,3 +46,21 @@ dependencies:
     .claude/skills/json-crawl-using/SKILL.md: sha256:a6adfa4344f157506d304c886398577fe9b860390c4ba94cfb8405a4c547805e
     .cursor/rules/json-crawl-using.mdc: sha256:d671cbc5fdef3ee28814237cab31e140e3b36661cae3926e32752e01852f245f
   content_hash: sha256:26f877265321714d07a41435817cac085f1d5aaa721b7258af4820ac0f7f0a6e
+- repo_url: _local/api-processor-authoring
+  name: api-processor-authoring
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/api-processor-authoring
+  - .agents/skills/api-processor-authoring/SKILL.md
+  - .claude/rules/api-processor-authoring.md
+  - .claude/skills/api-processor-authoring
+  - .claude/skills/api-processor-authoring/SKILL.md
+  - .cursor/rules/api-processor-authoring.mdc
+  deployed_file_hashes:
+    .agents/skills/api-processor-authoring/SKILL.md: sha256:43a0c19f6e49246ccb0f674508b2f6c77c2f77c546e995b7385717291eb68689
+    .claude/rules/api-processor-authoring.md: sha256:23ab79bdba8c9489f803a786cfe872979f9bfe37f324ab116d1c6bcbac869178
+    .claude/skills/api-processor-authoring/SKILL.md: sha256:43a0c19f6e49246ccb0f674508b2f6c77c2f77c546e995b7385717291eb68689
+    .cursor/rules/api-processor-authoring.mdc: sha256:7927344372310800fb378fe0202909a9b5a68e567a91e2509010f1f6fec482d3
+  source: local
+  local_path: ./agent-packages/api-processor-authoring

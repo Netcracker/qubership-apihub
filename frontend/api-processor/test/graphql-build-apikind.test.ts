@@ -35,12 +35,12 @@ const SPEC = `type Query {
 
 // Difference from `apiKinds.test.ts`:
 //   - `apiKinds.test.ts` covers REST and asserts only the DOCUMENT apiKind, exhaustively
-//     exercising the shared `calculateApiKindFromLabels` resolution (uppercase / experimental /
-//     invalid / file-vs-version priority).
+//     exercising the shared `calculateFileApiKind` resolution (uppercase / experimental / invalid /
+//     priority between the sources).
 //   - This file covers the GraphQL-specific bit that resolution does NOT: every OPERATION of the
-//     document inherits the document apiKind (`graphql.operation.ts`). It therefore keeps only the
-//     representative label channels (default / file / version) and checks document + all operations,
-//     instead of re-testing the shared resolver.
+//     document inherits the document apiKind (`graphql.operation.ts`). It therefore keeps one
+//     representative of each source (default / file label / version label / build config) and checks
+//     document + all operations, instead of re-testing the shared resolver.
 describe('GraphQL build api-kind', () => {
   // Document apiKind + apiKind of every operation — they must all match.
   const documentAndOperationsApiKind = (result: BuildResult): (ApihubApiCompatibilityKind | undefined)[] => {
@@ -49,12 +49,13 @@ describe('GraphQL build api-kind', () => {
     return [document?.apiKind, ...operations.map(operation => operation.apiKind)]
   }
 
-  it.each<{ id: string; desc: string; fileLabels?: Labels; versionLabels?: Labels; expected: ApihubApiCompatibilityKind }>([
+  it.each<{ id: string; desc: string; fileLabels?: Labels; versionLabels?: Labels; xApiKind?: string; expected: ApihubApiCompatibilityKind }>([
     { id: 'default', desc: 'no labels → BWC by default', expected: BWC },
     { id: 'file-nb', desc: 'file label no-BWC', fileLabels: ['apihub/x-api-kind: no-BWC'], expected: NO_BWC },
     { id: 'version-nb', desc: 'version label no-BWC', versionLabels: ['apihub/x-api-kind: no-BWC'], expected: NO_BWC },
-  ])('should apply $desc to the document and all its operations', async ({ id, fileLabels, versionLabels, expected }) => {
-    const result = await buildPackageFromContent(`gql-build-apikind/${id}`, FILE_ID, SPEC, fileLabels, versionLabels)
+    { id: 'config-nb', desc: 'build config xApiKind no-BWC', xApiKind: 'no-BWC', expected: NO_BWC },
+  ])('should apply $desc to the document and all its operations', async ({ id, fileLabels, versionLabels, xApiKind, expected }) => {
+    const result = await buildPackageFromContent(`gql-build-apikind/${id}`, FILE_ID, SPEC, fileLabels, versionLabels, xApiKind)
 
     const apiKinds = documentAndOperationsApiKind(result)
     expect(apiKinds).toHaveLength(3) // document + 2 operations

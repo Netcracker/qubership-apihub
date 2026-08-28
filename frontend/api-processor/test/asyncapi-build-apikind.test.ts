@@ -4,6 +4,7 @@ import {
   APIHUB_API_COMPATIBILITY_KIND_NO_BWC,
   ApihubApiCompatibilityKind,
   ApiOperation,
+  Labels,
 } from '../src'
 import { calculateAsyncApiKind } from '../src/apitypes/async/async.utils'
 import { buildPackageWithDefaultConfig } from './helpers'
@@ -114,19 +115,30 @@ describe('AsyncAPI apiKind calculation', () => {
     expect(operations.every(operation => operation.apiKind === APIHUB_API_COMPATIBILITY_KIND_NO_BWC)).toBeTrue()
   })
 
-  describe('Labels should not redefine AsyncAPI apiKind', () => {
-    it('should not override default BWC apiKind with no-BWC label', async () => {
-      const result = await buildPackageWithDefaultConfig('asyncapi/api-kind/base', ['apihub/x-api-kind: no-BWC'])
-      const operations = Array.from(result.operations.values())
-      // First operation has no x-api-kind on operation or channel — should stay BWC despite label
-      expect(operations[0].apiKind).toEqual(APIHUB_API_COMPATIBILITY_KIND_BWC)
+  describe('Document apiKind from the build config', () => {
+    it.each<{ source: string; fileLabels?: Labels; versionLabels?: Labels; xApiKind?: string }>([
+      { source: 'file label', fileLabels: ['apihub/x-api-kind: no-BWC'] },
+      { source: 'version label', versionLabels: ['apihub/x-api-kind: no-BWC'] },
+      { source: 'xApiKind', xApiKind: 'no-BWC' },
+    ])('should apply a no-BWC $source to an operation with no api kind of its own', async ({ fileLabels, versionLabels, xApiKind }) => {
+      const result = await buildPackageWithDefaultConfig('asyncapi/api-kind/base', fileLabels, versionLabels, xApiKind)
+      const [operationNoKindChannelNoKind] = Array.from(result.operations.values())
+
+      expect(operationNoKindChannelNoKind.apiKind).toEqual(APIHUB_API_COMPATIBILITY_KIND_NO_BWC)
     })
 
-    it('should not override channel NO_BWC apiKind with BWC label', async () => {
+    it('should not override channel no-BWC apiKind with a BWC file label', async () => {
       const result = await buildPackageWithDefaultConfig('asyncapi/api-kind/base', ['apihub/x-api-kind: BWC'])
-      const operations = Array.from(result.operations.values())
-      // Third operation uses channel-no-bwc — should stay NO_BWC despite BWC label
-      expect(operations[2].apiKind).toEqual(APIHUB_API_COMPATIBILITY_KIND_NO_BWC)
+      const [, , operationNoKindChannelNoBWC] = Array.from(result.operations.values())
+
+      expect(operationNoKindChannelNoBWC.apiKind).toEqual(APIHUB_API_COMPATIBILITY_KIND_NO_BWC)
+    })
+
+    it('should not override operation BWC apiKind with a no-BWC file label', async () => {
+      const result = await buildPackageWithDefaultConfig('asyncapi/api-kind/base', ['apihub/x-api-kind: no-BWC'])
+      const [, , , operationBWCChannelNoKind] = Array.from(result.operations.values())
+
+      expect(operationBWCChannelNoKind.apiKind).toEqual(APIHUB_API_COMPATIBILITY_KIND_BWC)
     })
   })
 })

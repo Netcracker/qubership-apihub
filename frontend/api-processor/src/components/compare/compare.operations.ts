@@ -126,15 +126,13 @@ async function compareCurrentApiType(
   const apiBuilder = ctx.apiBuilders.find((builder) => apiType === builder.apiType)
   if (!apiBuilder) { return null }
 
-  const { version: prevVersion, packageId: prevPackageId, versionLabels: prevVersionLabels } = prev ?? {
+  const { version: prevVersion, packageId: prevPackageId } = prev ?? {
     version: '',
     packageId: '',
-    versionLabels: [],
   }
-  const { version: currVersion, packageId: currPackageId, versionLabels: currVersionLabels } = curr ?? {
+  const { version: currVersion, packageId: currPackageId } = curr ?? {
     version: '',
     packageId: '',
-    versionLabels: [],
   }
 
   const { operations: prevOperations = [] } = prev && await versionOperationsResolver(apiType, prevVersion, prevPackageId, undefined, false) || {}
@@ -161,8 +159,6 @@ async function compareCurrentApiType(
     previousGroupSlug: previousGroupSlug,
     currentGroupSlug: currentGroupSlug,
     normalizedSpecFragmentsHashCache: normalizedSpecFragmentsHashCache,
-    previousVersionLabels: prevVersionLabels,
-    currentVersionLabels: currVersionLabels,
   }
 
   const operationsMap = createPairOperationsMap(previousGroupSlug, currentGroupSlug, prevOperationsWithPrefix, currOperationsWithPrefix, apiBuilder)

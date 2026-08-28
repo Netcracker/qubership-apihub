@@ -208,7 +208,10 @@ export type OperationsSpecTransformation =
 export interface BuildConfigFile {
   fileId: FileId
   slug?: string // for rebuild
+  /** Resolved compatibility kind of the document. */
   apiKind?: ApihubApiCompatibilityKind
+  /** Raw api kind of the document as it arrives in the build config; resolved into `apiKind` above. */
+  xApiKind?: string
 
   // deprecated
   publish?: boolean

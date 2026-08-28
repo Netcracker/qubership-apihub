@@ -119,8 +119,9 @@ export function toExternalDocumentationObject(
 export const calculateAsyncApiKind = (
   operationApiKind: ApihubApiCompatibilityKind | undefined,
   channelApiKind: ApihubApiCompatibilityKind | undefined,
+  documentApiKind?: ApihubApiCompatibilityKind,
 ): ApihubApiCompatibilityKind => {
-  return operationApiKind || channelApiKind || APIHUB_API_COMPATIBILITY_KIND_BWC
+  return operationApiKind || channelApiKind || documentApiKind || APIHUB_API_COMPATIBILITY_KIND_BWC
 }
 
 const getAsyncObjectId = (item: AsyncAPIV3.ChannelObject | AsyncAPIV3.MessageObject): string => {

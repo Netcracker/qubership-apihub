@@ -86,6 +86,10 @@ export const compareDocuments: DocumentsCompare = async (
     currDocData = createCopyWithEmptyOperations(prevDocData)
   }
 
+  // Both documents carry the api kind their own build resolved from labels and `xApiKind`
+  const currDocumentApiKind = currDoc?.apiKind
+  const prevDocumentApiKind = prevDoc?.apiKind
+
   const { merged, diffs } = apiDiff(
     prevDocData,
     currDocData,
@@ -97,7 +101,7 @@ export const compareDocuments: DocumentsCompare = async (
       afterValueNormalizedProperty: AFTER_VALUE_NORMALIZED_PROPERTY,
       beforeValueNormalizedProperty: BEFORE_VALUE_NORMALIZED_PROPERTY,
       firstReferenceKeyProperty: FIRST_REFERENCE_KEY_PROPERTY,
-      apiCompatibilityScopeFunction: createAsyncApiCompatibilityScopeFunction(),
+      apiCompatibilityScopeFunction: createAsyncApiCompatibilityScopeFunction(prevDocumentApiKind, currDocumentApiKind),
     },
   ) as { merged: AsyncAPIV3.AsyncAPIObject; diffs: Diff[] }
 

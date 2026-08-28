@@ -1,0 +1,20 @@
+{
+    "errors": [],
+    "data": {
+        "__schema": {
+            "queryType": { "name": "Query" },
+            "types": [
+                {
+                    "kind": "OBJECT",
+                    "name": "Query",
+                    "fields": [
+                        { "name": "book", "args": [], "type": { "kind": "SCALAR", "name": "String" } },
+                        { "name": "author", "args": [], "type": { "kind": "SCALAR", "name": "String" } }
+                    ]
+                }
+            ]
+        }
+    },
+    "extensions": {},
+    "dataPresent": true
+}

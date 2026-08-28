@@ -294,14 +294,20 @@ export async function buildPackageWithDefaultConfig(
   packageId: string,
   fileLabels?: Labels,
   versionLabels?: Labels,
+  xApiKind?: string,
 ): Promise<BuildResult> {
   const portal = new LocalRegistry(packageId)
+  const file = {
+    fileId: 'spec.yaml',
+    ...takeIfDefined({ labels: fileLabels }),
+    ...takeIfDefined({ xApiKind: xApiKind }),
+  }
 
   await portal.publish(packageId, {
     packageId: packageId,
     version: 'v1',
     metadata: { ...takeIfDefined({ versionLabels: versionLabels }) },
-    files: [{ fileId: 'spec.yaml', ...takeIfDefined({ labels: fileLabels }), publish: true }],
+    files: [{ ...file, publish: true }],
   })
 
   const editor = new Editor(packageId, {
@@ -309,7 +315,8 @@ export async function buildPackageWithDefaultConfig(
     version: 'v1',
     status: VERSION_STATUS.RELEASE,
     buildType: BUILD_TYPE.BUILD,
-    files: [{ fileId: 'spec.yaml'}],
+    metadata: { ...takeIfDefined({ versionLabels: versionLabels }) },
+    files: [file],
   }, {}, portal)
 
   return editor.run()
@@ -321,6 +328,7 @@ export async function buildPackageFromContent(
   content: string,
   fileLabels?: Labels,
   versionLabels?: Labels,
+  xApiKind?: string,
 ): Promise<BuildResult> {
   const portal = new LocalRegistry(packageId)
   return portal.publishFromContent(
@@ -329,7 +337,12 @@ export async function buildPackageFromContent(
       packageId,
       version: 'v1',
       metadata: { ...takeIfDefined({ versionLabels: versionLabels }) },
-      files: [{ fileId, publish: true, ...takeIfDefined({ labels: fileLabels }) }],
+      files: [{
+        fileId,
+        publish: true,
+        ...takeIfDefined({ labels: fileLabels }),
+        ...takeIfDefined({ xApiKind: xApiKind }),
+      }],
     },
   )
 }
@@ -368,6 +381,7 @@ export async function buildChangelogFromContent(
   packageId: string,
   beforeContent: string,
   afterContent: string,
+  fileLabels?: Labels,
 ): Promise<BuildResult> {
   const portal = new LocalRegistry(packageId)
 
@@ -376,7 +390,7 @@ export async function buildChangelogFromContent(
     {
       packageId: packageId,
       version: BEFORE_VERSION_ID,
-      files: [{ fileId: 'before.yaml', publish: true }],
+      files: [{ fileId: 'before.yaml', publish: true, ...takeIfDefined({ labels: fileLabels }) }],
     },
   )
   await portal.publishFromContent(
@@ -384,7 +398,7 @@ export async function buildChangelogFromContent(
     {
       packageId: packageId,
       version: AFTER_VERSION_ID,
-      files: [{ fileId: 'after.yaml' }],
+      files: [{ fileId: 'after.yaml', ...takeIfDefined({ labels: fileLabels }) }],
     },
   )
 

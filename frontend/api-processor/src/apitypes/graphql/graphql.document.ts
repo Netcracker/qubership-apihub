@@ -20,35 +20,66 @@ import {
   GraphApiSchema,
   printGraphApi,
 } from '@netcracker/qubership-apihub-graphapi'
-import type { GraphQLSchema, IntrospectionQuery } from 'graphql'
+import { buildSchema, type GraphQLSchema, type IntrospectionQuery } from 'graphql'
+import { loadYaml } from '@netcracker/qubership-apihub-api-unifier'
 
-import { BuildConfigFile, DocumentDumper, ExportDocument, ExportFormat, TextFile, VersionDocument } from '../../types'
-import { GRAPHQL_DOCUMENT_TYPE } from './graphql.consts'
-import { createVersionInternalDocument, getDocumentTitle } from '../../utils'
-import { GRAPHQL_API_TYPE } from '../../consts'
+import { BuildConfigFile, DocumentDumper, FileFormat, TextFile, VersionDocument } from '../../types'
+import { GRAPHQL_DOCUMENT_TYPE, GRAPHQL_FILE_FORMAT } from './graphql.consts'
+import { FILE_FORMAT } from '../../consts'
+import { createVersionInternalDocument, isObject } from '../../utils'
+
+function toGraphApiSchema(data: unknown, type: string): GraphApiSchema {
+  switch (type) {
+    case GRAPHQL_DOCUMENT_TYPE.INTROSPECTION: {
+      if (!isObject(data)) {
+        throw new Error('A GraphQL introspection document must be an object')
+      }
+      const introspection = ('__schema' in data ? data : data.data) as IntrospectionQuery
+      return buildFromIntrospection(introspection)
+    }
+    case GRAPHQL_DOCUMENT_TYPE.SCHEMA:
+      return buildFromSchema(data as GraphQLSchema)
+    case GRAPHQL_DOCUMENT_TYPE.GRAPHAPI:
+      return data as GraphApiSchema
+    default:
+      throw new Error(`Unsupported type "${type}" for a GraphQL document`)
+  }
+}
+
+/** Read a stored document back into a GraphAPI schema using the type and format persisted alongside it. */
+export function parseGraphQLDocument(source: string, type: string, format: FileFormat): GraphApiSchema {
+  return toGraphApiSchema(parseDocumentSource(source, format), type)
+}
+
+function parseDocumentSource(source: string, format: FileFormat): unknown {
+  switch (format) {
+    case GRAPHQL_FILE_FORMAT.GRAPHQL:
+    case GRAPHQL_FILE_FORMAT.GQL:
+      return buildSchema(source, { noLocation: true })
+    case GRAPHQL_FILE_FORMAT.JSON:
+      return JSON.parse(source)
+    case GRAPHQL_FILE_FORMAT.YAML:
+    case FILE_FORMAT.YML:
+      return loadYaml(source)
+    default:
+      throw new Error(`Unsupported format "${format}" for a GraphQL document`)
+  }
+}
 
 export const buildGraphQLDocument = async (parsedFile: TextFile, file: BuildConfigFile): Promise<VersionDocument<GraphApiSchema>> => {
-  let graphapi: GraphApiSchema
-  if (parsedFile.type === GRAPHQL_DOCUMENT_TYPE.INTROSPECTION) {
-    const introspection = (parsedFile?.data && '__schema' in parsedFile.data ? parsedFile?.data : parsedFile.data?.data) as IntrospectionQuery
-    graphapi = buildFromIntrospection(introspection)
-  } else if (parsedFile.type === GRAPHQL_DOCUMENT_TYPE.SCHEMA) {
-    graphapi = buildFromSchema(parsedFile.data as GraphQLSchema)
-  } else {
-    graphapi = parsedFile.data as GraphApiSchema
-  }
+  const graphapi = toGraphApiSchema(parsedFile.data, parsedFile.type)
 
   const { fileId, slug = '', publish = true, apiKind, ...metadata } = file
-  const { format, type, source } = parsedFile
+  const { source } = parsedFile
   return {
     fileId,
-    type,
-    format,
+    type: GRAPHQL_DOCUMENT_TYPE.SCHEMA,
+    format: GRAPHQL_FILE_FORMAT.GRAPHQL,
     data: graphapi,
     publish,
     apiKind,
     slug, // unique slug should be already generated
-    filename: `${slug}.graphql`,
+    filename: `${slug}.${GRAPHQL_FILE_FORMAT.GRAPHQL}`,
     title: fileId.split('/').pop()!.replace(/\.[^/.]+$/, ''),
     dependencies: [],
     description: graphapi.description || '',

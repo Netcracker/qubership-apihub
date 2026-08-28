@@ -33,14 +33,4 @@ describe.skip('Publish Package Test', () => {
       previousVersionPackageId: PREVIOUS_VERSION_PACKAGE_ID || PACKAGE_ID,
     })
   })
-
-  test('Update package operations dataHash', async () => {
-    await packageToPublish.updateOperationsHash(PACKAGE_ID, {
-      packageId: PACKAGE_ID,
-      version: PACKAGE_VERSION,
-      previousVersion: PREVIOUS_VERSION,
-      previousVersionPackageId: PREVIOUS_VERSION_PACKAGE_ID || PACKAGE_ID,
-    })
-  })
-
 })

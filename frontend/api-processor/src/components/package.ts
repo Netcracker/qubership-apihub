@@ -23,28 +23,34 @@ import {
   BuildResult,
   BuildResultDto,
   ComparisonInternalDocument,
-  ComparisonInternalDocumentMetadata,
   ExportDocument,
-  InternalDocumentMetadata,
-  PackageComparison,
-  PackageComparisonOperations,
-  PackageComparisons,
   PackageConfig,
-  PackageDocuments,
   PackageNotifications,
   PackageOperation,
-  PackageOperations,
   VersionDocument,
   ZippableDocument,
 } from '../types'
 import { unknownApiBuilder } from '../apitypes'
-import { BUILD_TYPE, FILE_FORMAT_JSON, MESSAGE_SEVERITY, PACKAGE } from '../consts'
-import { EXPORT_FORMAT_TO_FILE_FORMAT, takeIf, toPackageDocument } from '../utils'
+import { BUILD_TYPE, MESSAGE_SEVERITY, PACKAGE } from '../consts'
+import { EXPORT_FORMAT_TO_FILE_FORMAT } from '../utils'
 import { toDdlComparisonDto, toVersionsComparisonDto } from '../utils/transformToDto'
-import { groupMcpEntitiesByKind } from './mcp'
 import { McpEntityIndex } from '../types/package/mcp'
-import { groupDdlEntitiesByKind } from './ddl'
 import { DdlEntityIndex } from '../types/package/ddl'
+import {
+  buildComparisonInternalDocumentsIndex,
+  buildComparisonOperations,
+  buildComparisonsIndex,
+  buildDdlComparisonEntities,
+  buildDdlComparisonsIndex,
+  buildDdlFile,
+  buildMcpFile,
+  buildNotifications,
+  buildPackageDocuments,
+  buildPackageOperations,
+  buildVersionInternalDocumentsIndex,
+  takeComparisonInternalDocumentEntry,
+  takeVersionInternalDocumentEntry,
+} from './build-result-index'
 
 export interface ZipTool {
   // todo method should only accept Blob content, transformation is not a responsibility of this method
@@ -116,13 +122,12 @@ export const createVersionPackage = async (
   }
 
   if (buildResultDto.comparisons.length) {
-    const comparisons: PackageComparison[] = buildResultDto.comparisons.map(({ data, ...rest }) => rest)
-    createComparisonsFile(zip, { comparisons })
+    zip.file(PACKAGE.COMPARISONS_FILE_NAME, buildComparisonsIndex(buildResultDto.comparisons))
     const comparisonsDir = zip.folder(PACKAGE.COMPARISONS_DIR_NAME)
 
     for (const comparison of buildResultDto.comparisons) {
       if (!comparison.comparisonFileId || !comparison.data) { continue }
-      createComparisonDataFile(comparisonsDir!, comparison.comparisonFileId, { operations: comparison.data })
+      comparisonsDir!.file(comparison.comparisonFileId, buildComparisonOperations(comparison.data))
     }
   }
 
@@ -130,12 +135,11 @@ export const createVersionPackage = async (
   // leaving the operation comparisons untouched (AD2). The per-pair wrapper key is `entities` (C2).
   const ddlComparisonsDto = buildResult.ddlComparisons.map(comparison => toDdlComparisonDto(comparison, ctx.normalizedSpecFragmentsHashCache, logError))
   if (ddlComparisonsDto.length) {
-    const ddlComparisonIndex = ddlComparisonsDto.map(({ data, ...rest }) => rest)
-    zip.file(PACKAGE.DDL_COMPARISONS_FILE_NAME, { comparisons: ddlComparisonIndex })
+    zip.file(PACKAGE.DDL_COMPARISONS_FILE_NAME, buildDdlComparisonsIndex(ddlComparisonsDto))
     const ddlComparisonsDir = zip.folder(PACKAGE.DDL_COMPARISONS_DIR_NAME)
     for (const comparison of ddlComparisonsDto) {
       if (!comparison.comparisonFileId || !comparison.data) { continue }
-      ddlComparisonsDir!.file(comparison.comparisonFileId, { entities: comparison.data })
+      ddlComparisonsDir!.file(comparison.comparisonFileId, buildDdlComparisonEntities(comparison.data))
     }
   }
 
@@ -155,19 +159,11 @@ const createInfoFile = async (zip: ZipTool, config: PackageConfig): Promise<void
 }
 
 const createNotificationsFile = (zip: ZipTool, notifications: PackageNotifications): void => {
-  zip.file(PACKAGE.NOTIFICATIONS_FILE_NAME, notifications)
+  zip.file(PACKAGE.NOTIFICATIONS_FILE_NAME, buildNotifications(notifications.notifications))
 }
 
 const createDocumentsFile = (zip: ZipTool, documents: VersionDocument[]): void => {
-  const result: PackageDocuments = { documents: [] }
-
-  for (const document of documents) {
-    if (!document.publish) { continue }
-
-    result.documents.push(toPackageDocument(document))
-  }
-
-  zip.file(PACKAGE.DOCUMENTS_FILE_NAME, result)
+  zip.file(PACKAGE.DOCUMENTS_FILE_NAME, buildPackageDocuments(documents))
 }
 
 const createVersionInternalDocumentDataFiles = async (zip: ZipTool, documents: VersionDocument[]): Promise<void> => {
@@ -176,20 +172,7 @@ const createVersionInternalDocumentDataFiles = async (zip: ZipTool, documents: V
 }
 
 const createVersionInternalDocumentsFile = (zip: ZipTool, documents: VersionDocument[]): void => {
-  const result: { documents: InternalDocumentMetadata[] } = { documents: [] }
-
-  for (const document of documents.values()) {
-    const { publish, versionInternalDocument } = document
-    if (!versionInternalDocument) { continue }
-    const { versionDocumentId: versionInternalDocumentId, serializedVersionDocument } = versionInternalDocument
-    if (!publish || !versionInternalDocumentId || !serializedVersionDocument) { continue }
-    result.documents.push({
-      id: versionInternalDocumentId,
-      filename: `${versionInternalDocumentId}.${FILE_FORMAT_JSON}`,
-    })
-  }
-
-  zip.file(PACKAGE.VERSION_INTERNAL_FILE_NAME, result)
+  zip.file(PACKAGE.VERSION_INTERNAL_FILE_NAME, buildVersionInternalDocumentsIndex(documents))
 }
 
 const createComparisonInternalDocumentDataFiles = async (zip: ZipTool, comparisonDocument: ComparisonInternalDocument[]): Promise<void> => {
@@ -198,21 +181,7 @@ const createComparisonInternalDocumentDataFiles = async (zip: ZipTool, compariso
 }
 
 const createComparisonInternalDocumentsFile = (zip: ZipTool, comparisonDocument: ComparisonInternalDocument[]): void => {
-  const result: { documents: ComparisonInternalDocumentMetadata[] } = { documents: [] }
-  for (const comparisonInternalDocument of comparisonDocument) {
-    if (!comparisonInternalDocument) {
-      continue
-    }
-    const { comparisonDocumentId: comparisonInternalDocumentId, comparisonFileId } = comparisonInternalDocument
-    if (!comparisonInternalDocumentId || !comparisonFileId) {
-      continue
-    }
-    result.documents.push({
-      id: comparisonInternalDocumentId,
-      filename: `${comparisonInternalDocumentId}.${FILE_FORMAT_JSON}`,
-      comparisonFileId,
-    })
-  }
+  const result = buildComparisonInternalDocumentsIndex(comparisonDocument)
   if (!result.documents.length) {
     return
   }
@@ -234,24 +203,19 @@ const writeDocumentsToZip = async (zip: ZipTool, documents: ZippableDocument[], 
   }
 }
 
+// Both writers share their filter with the matching index builder (take*InternalDocumentEntry), so a
+// document is either in the index AND on disk, or in neither.
 const writeVersionInternalDocumentsToZip = async (zip: ZipTool, documents: VersionDocument[]): Promise<void> => {
   for (const document of documents) {
-    const { publish, versionInternalDocument } = document
-    const { versionDocumentId: versionInternalDocumentId, serializedVersionDocument } = versionInternalDocument
-    if (!publish || !serializedVersionDocument || !versionInternalDocumentId) { continue }
-    await zip.file(`${versionInternalDocumentId}.${FILE_FORMAT_JSON}`, serializedVersionDocument)
+    const entry = takeVersionInternalDocumentEntry(document)
+    if (entry) { await zip.file(entry.filename, entry.content) }
   }
 }
 
 const writeComparisonInternalDocumentsToZip = async (zip: ZipTool, comparisonDocument: ComparisonInternalDocument[]): Promise<void> => {
-  for (const comparisonInternalDocument of comparisonDocument) {
-    if (!comparisonInternalDocument) {continue}
-    const {
-      comparisonDocumentId: comparisonInternalDocumentId,
-      serializedComparisonDocument,
-    } = comparisonInternalDocument
-    if (!comparisonInternalDocumentId || !serializedComparisonDocument) {continue}
-    await zip.file(`${comparisonInternalDocumentId}.${FILE_FORMAT_JSON}`, serializedComparisonDocument)
+  for (const document of comparisonDocument) {
+    const entry = takeComparisonInternalDocumentEntry(document)
+    if (entry) { await zip.file(entry.filename, entry.content) }
   }
 }
 
@@ -267,31 +231,7 @@ const createExportDocumentDataFiles = async (zip: ZipTool, documents: ExportDocu
 }
 
 const createOperationsFile = (zip: ZipTool, operations: Map<string, ApiOperation>): void => {
-  const data: PackageOperations = { operations: [] }
-
-  for (const operation of operations.values()) {
-    data.operations.push({
-      operationId: operation.operationId,
-      documentId: operation.documentId,
-      title: operation.title,
-      deprecated: operation.deprecated,
-      apiKind: operation.apiKind,
-      apiType: operation.apiType,
-      metadata: operation.metadata,
-      search: operation.search,
-
-      ...(takeIf({ deprecatedItems: operation.deprecatedItems }, !!operation.deprecatedItems?.length)),
-      deprecatedInfo: operation.deprecatedInfo,
-      deprecatedInPreviousVersions: operation.deprecatedInPreviousVersions,
-
-      models: operation.models,
-      tags: operation.tags,
-      apiAudience: operation.apiAudience,
-      versionInternalDocumentId: operation.versionInternalDocumentId,
-    })
-  }
-
-  zip.file(PACKAGE.OPERATIONS_FILE_NAME, data)
+  zip.file(PACKAGE.OPERATIONS_FILE_NAME, buildPackageOperations(operations))
 }
 
 const createSearchTextFiles = (zip: ZipTool, operations: Map<string, ApiOperation>): void => {
@@ -306,16 +246,8 @@ const createOperationDataFile = (zipFolder: ZipTool, operationId: string, operat
   zipFolder.file(operationId, operation)
 }
 
-const createComparisonsFile = (zip: ZipTool, comparisons: PackageComparisons): void => {
-  zip.file(PACKAGE.COMPARISONS_FILE_NAME, comparisons)
-}
-
-const createComparisonDataFile = (zipFolder: ZipTool, comparisonFileId: string, comparison: PackageComparisonOperations): void => {
-  zipFolder.file(comparisonFileId, comparison)
-}
-
 const createMcpFiles = (zip: ZipTool, mcpEntities: McpEntityIndex): void => {
-  zip.file(PACKAGE.MCP_FILE_NAME, groupMcpEntitiesByKind(mcpEntities))
+  zip.file(PACKAGE.MCP_FILE_NAME, buildMcpFile(mcpEntities))
   const mcpDir = zip.folder(PACKAGE.MCP_DIR_NAME)
   for (const entity of mcpEntities.values()) {
     mcpDir.file(entity.mcpEntityId, entity.data)
@@ -323,7 +255,7 @@ const createMcpFiles = (zip: ZipTool, mcpEntities: McpEntityIndex): void => {
 }
 
 const createDdlFiles = (zip: ZipTool, ddlEntities: DdlEntityIndex): void => {
-  zip.file(PACKAGE.DDL_FILE_NAME, groupDdlEntitiesByKind(ddlEntities))
+  zip.file(PACKAGE.DDL_FILE_NAME, buildDdlFile(ddlEntities))
   const ddlDir = zip.folder(PACKAGE.DDL_DIR_NAME)
   for (const entity of ddlEntities.values()) {
     // per-entity SQL, named by ddlEntityId, no extension (as operations/ and mcp/)

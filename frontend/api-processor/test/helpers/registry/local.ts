@@ -23,7 +23,6 @@ import {
   BuilderResolvers,
   BuildResult,
   ChangeSummary,
-  ComparisonInternalDocument,
   EMPTY_CHANGE_SUMMARY,
   FILE_FORMAT,
   graphqlApiBuilder,
@@ -36,7 +35,6 @@ import {
   KIND_DASHBOARD,
   KIND_PACKAGE,
   Labels,
-  MESSAGE_SEVERITY,
   NotificationMessage,
   OperationId,
   OperationsApiType,
@@ -67,28 +65,10 @@ import {
   VersionDocuments,
   VersionId,
   VersionsComparison,
-  VersionsComparisonDto,
   ZippableDocument,
 } from '../../../src/processor'
-import {
-  getOperationsFileContent,
-  saveComparisonInternalDocuments,
-  saveComparisonInternalDocumentsArray,
-  saveComparisonsArray,
-  saveDocumentsArray,
-  saveEachComparison,
-  saveDdlEntities,
-  saveDdlComparisons,
-  saveEachDocument,
-  saveEachOperation,
-  saveInfo,
-  saveMcpEntities,
-  saveNotifications,
-  saveOperationsArray,
-  saveSearchTextFiles,
-  saveVersionInternalDocuments,
-  saveVersionInternalDocumentsArray,
-} from './utils'
+import { publishVersionPackage, VERSIONS_PATH } from './utils'
+
 import {
   getCompositeKey,
   getDocumentTitle,
@@ -100,12 +80,10 @@ import {
 } from '../../../src/utils'
 import { IRegistry } from './types'
 import { calculateTotalChangeSummary } from '../../../src/components/compare'
-import { toDdlComparisonDto, toVersionsComparisonDto } from '../../../src/utils/transformToDto'
 import path from 'path'
 import { ResolvedPackage } from '../../../src/types/external/package'
 import { version as apiProcessorVersion } from '../../../package.json'
 
-const VERSIONS_PATH = 'test/versions'
 export const DEFAULT_PROJECTS_PATH = 'test/projects'
 
 export interface PackageVersionCache {
@@ -538,79 +516,7 @@ export class LocalRegistry implements IRegistry {
     builderContext: BuilderContext,
     config: BuildConfig,
   ): Promise<void> {
-    const {
-      operations,
-      documents,
-      comparisons,
-      ddlComparisons,
-      notifications,
-      mcpEntities,
-      ddlEntities,
-    } = buildResult
-
-    const basePath = `${VERSIONS_PATH}/${config.packageId}/${config.version}`
-    try {
-      await registryFs.rm(basePath, { recursive: true })
-    } catch (e) {
-      // do nothing
-    }
-    await registryFs.mkdir(basePath, { recursive: true })
-
-    await saveInfo(config, basePath)
-
-    await saveDocumentsArray(documents, basePath)
-    await saveVersionInternalDocumentsArray(documents, basePath)
-    await saveEachDocument(documents, basePath, builderContext)
-
-    await saveOperationsArray(operations, basePath)
-    await saveEachOperation(operations, basePath)
-    await saveSearchTextFiles(operations, basePath)
-
-    const logError = (message: string): void => {
-      notifications.push({
-        severity: MESSAGE_SEVERITY.Error,
-        message: message,
-      })
-    }
-    const comparisonsDto: VersionsComparisonDto[] = comparisons.map(comparison => toVersionsComparisonDto(comparison, builderContext.normalizedSpecFragmentsHashCache, logError))
-    const ddlComparisonsDto = ddlComparisons.map(comparison => toDdlComparisonDto(comparison, builderContext.normalizedSpecFragmentsHashCache, logError))
-    // comparison-internal documents are shared (operation merged docs + DDL merged Realms)
-    const comparisonInternalDocuments: ComparisonInternalDocument[] = [
-      ...comparisons.flatMap(comparison => comparison.comparisonInternalDocuments),
-      ...ddlComparisons.flatMap(comparison => comparison.comparisonInternalDocuments),
-    ]
-
-    await saveComparisonsArray(comparisonsDto, basePath)
-    await saveEachComparison(comparisonsDto, basePath)
-    await saveDdlComparisons(ddlComparisonsDto, basePath)
-    await saveNotifications(notifications, basePath)
-    await saveVersionInternalDocuments(documents, basePath)
-
-    await saveComparisonInternalDocumentsArray(comparisonInternalDocuments, basePath)
-    await saveComparisonInternalDocuments(comparisonInternalDocuments, basePath)
-
-    await saveMcpEntities(mcpEntities, basePath)
-    await saveDdlEntities(ddlEntities, basePath)
-  }
-
-  async updateOperationsHash(packageId: string, publishParams?: Partial<BuildConfig>): Promise<void> {
-    const loadedConfig = await loadConfig(this.projectsDir, packageId) as BuildConfig
-    const versionConfig = { ...loadedConfig, ...publishParams }
-    const builder = new PackageVersionBuilder(versionConfig, {
-      resolvers: {
-        fileResolver: (fileId) => loadFile(this.projectsDir, loadedConfig.packageId, fileId),
-        ...this.versionResolvers,
-      },
-    })
-
-    const { operations } = await builder.run()
-
-    const basePath = `${VERSIONS_PATH}/${loadedConfig.packageId}/${versionConfig.version}`
-
-    await registryFs.writeFile(
-      `${basePath}/${PACKAGE.OPERATIONS_FILE_NAME}`,
-      getOperationsFileContent(operations, true),
-    )
+    await publishVersionPackage(buildResult, builderContext, config)
   }
 
   async getVersion(packageId: string, versionKey: string): Promise<PackageVersionCache | undefined> {
@@ -672,7 +578,7 @@ export class LocalRegistry implements IRegistry {
       const data = await loadFileAsStringFromRegistry(
         VERSIONS_PATH,
         `${packageId}/${versionKey}/${PACKAGE.OPERATIONS_DIR_NAME}`,
-        `${operation.operationId}.json`,
+        operation.operationId,
       )
       versionCache.operations.set(
         operation.operationId,

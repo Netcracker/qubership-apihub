@@ -9,5 +9,6 @@ targets:
 
 dependencies:
   apm:
+    - ./agent-packages/api-processor-authoring
     - Netcracker/qubership-apihub-ddlapi/agent-packages/ddlapi-using
     - Netcracker/qubership-apihub-json-crawl/agent-packages/json-crawl-using

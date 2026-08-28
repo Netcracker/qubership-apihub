@@ -14,331 +14,88 @@
  * limitations under the License.
  */
 
+import { createVersionPackage, ZipTool } from '../../../src/components/package'
 import { registryFs } from './fs'
+import { BuildConfig, BuilderContext, BuildResult, PackageConfig } from '../../../src'
+import { EXPORT_BUILD_TYPES } from '../../../src/consts'
 
-import {
-  ApiOperation,
-  BuildConfig,
-  BuilderContext,
-  ComparisonInternalDocumentMetadata,
-  ComparisonInternalDocument,
-  FILE_FORMAT_JSON,
-  InternalDocumentMetadata,
-  NotificationMessage,
-  PackageDocuments,
-  PackageOperations,
-  unknownApiBuilder,
-  VersionDocument,
-  VersionsComparisonDto,
-} from '../../../src'
-import { PACKAGE } from '../../../src/consts'
-import { toPackageDocument } from '../../../src/utils'
-import { groupMcpEntitiesByKind } from '../../../src/components/mcp'
-import { McpEntityIndex } from '../../../src/types/package/mcp'
-import { groupDdlEntitiesByKind } from '../../../src/components/ddl'
-import { DdlEntityIndex } from '../../../src/types/package/ddl'
-import { DdlComparisonDto } from '../../../src/types/internal/compare'
+export const VERSIONS_PATH = 'test/versions'
 
-export async function saveComparisonsArray(
-  comparisons: VersionsComparisonDto[],
-  basePath: string,
-): Promise<void> {
-  await registryFs.writeFile(
-    `${basePath}/${PACKAGE.COMPARISONS_FILE_NAME}`,
-    JSON.stringify({ comparisons }, undefined, 2),
-  )
-}
-
-export async function saveVersionInternalDocuments(
-  documents: Map<string, VersionDocument>,
-  basePath: string,
-): Promise<void> {
-  await registryFs.mkdir(`${basePath}/${PACKAGE.VERSION_INTERNAL_DOCUMENTS_DIR_NAME}`, { recursive: true })
-  for (const document of documents.values()) {
-    const {publish, versionInternalDocument } = document as VersionDocument
-    if(!versionInternalDocument) { continue }
-    const {serializedVersionDocument, versionDocumentId: versionInternalDocumentId} = versionInternalDocument
-    if (!publish || !versionInternalDocumentId || !serializedVersionDocument) { continue }
-    await registryFs.writeFile(
-      `${basePath}/${PACKAGE.VERSION_INTERNAL_DOCUMENTS_DIR_NAME}/${versionInternalDocumentId}.${FILE_FORMAT_JSON}`,
-      serializedVersionDocument,
-    )
+// Publishing an EXPORT_* build would leave an empty version directory: createVersionPackage returns
+// the export documents and writes no package. Fail here, not later on a missing operations.json.
+export function assertPublishableBuildType({ buildType }: PackageConfig): void {
+  if (EXPORT_BUILD_TYPES.some(exportBuildType => exportBuildType === buildType)) {
+    throw new Error(`Cannot publish a '${buildType}' build: it produces export documents, not a version package`)
   }
 }
 
-export async function saveComparisonInternalDocuments(
-  comparisons: ComparisonInternalDocument[],
-  basePath: string,
-): Promise<void> {
-  if (!comparisons.length) {
-    return
-  }
-  await registryFs.mkdir(`${basePath}/${PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME}`, { recursive: true })
-  for (const document of comparisons) {
-    const {comparisonDocumentId: comparisonInternalDocumentId, serializedComparisonDocument} = document
-    await registryFs.writeFile(
-      `${basePath}/${PACKAGE.COMPARISON_INTERNAL_DOCUMENTS_DIR_NAME}/${comparisonInternalDocumentId}.${FILE_FORMAT_JSON}`,
-      serializedComparisonDocument,
-    )
-  }
-}
-
-export async function saveEachComparison(
-  comparisons: VersionsComparisonDto[],
-  basePath: string,
-): Promise<void> {
-  await registryFs.mkdir(`${basePath}/${PACKAGE.COMPARISONS_DIR_NAME}`, { recursive: true })
-  for (const comparison of comparisons.values()) {
-    comparison.comparisonFileId && await registryFs.writeFile(
-      `${basePath}/${PACKAGE.COMPARISONS_DIR_NAME}/${comparison.comparisonFileId}.${FILE_FORMAT_JSON}`,
-      JSON.stringify({ operations: comparison.data }, undefined, 2),
-    )
-  }
-}
-
-export async function saveDdlComparisons(
-  comparisons: DdlComparisonDto[],
-  basePath: string,
-): Promise<void> {
-  if (!comparisons.length) {
-    return
-  }
-  // index: ddl-comparisons.json (per-pair data stripped)
-  const index = comparisons.map(({ data, ...rest }) => rest)
-  await registryFs.writeFile(
-    `${basePath}/${PACKAGE.DDL_COMPARISONS_FILE_NAME}`,
-    JSON.stringify({ comparisons: index }, undefined, 2),
-  )
-  // per-pair: ddl-comparisons/<comparisonFileId> with `entities` wrapper key (C2)
-  await registryFs.mkdir(`${basePath}/${PACKAGE.DDL_COMPARISONS_DIR_NAME}`, { recursive: true })
-  for (const comparison of comparisons) {
-    comparison.comparisonFileId && await registryFs.writeFile(
-      `${basePath}/${PACKAGE.DDL_COMPARISONS_DIR_NAME}/${comparison.comparisonFileId}.${FILE_FORMAT_JSON}`,
-      JSON.stringify({ entities: comparison.data }, undefined, 2),
-    )
-  }
-}
-
-export async function saveNotifications(
-  notifications: NotificationMessage[],
-  basePath: string,
-): Promise<void> {
-  await registryFs.writeFile(
-    `${basePath}/${PACKAGE.NOTIFICATIONS_FILE_NAME}`,
-    JSON.stringify({ notifications }, undefined, 2),
-  )
-}
-
-export async function saveOperationsArray(
-  operations: Map<string, ApiOperation>,
-  basePath: string,
-): Promise<void> {
-  await registryFs.writeFile(
-    `${basePath}/${PACKAGE.OPERATIONS_FILE_NAME}`,
-    getOperationsFileContent(operations),
-  )
-}
-
-export async function saveEachOperation(
-  operations: Map<string, ApiOperation>,
-  basePath: string,
-): Promise<void> {
-  await registryFs.mkdir(`${basePath}/${PACKAGE.OPERATIONS_DIR_NAME}`, { recursive: true })
-  for (const operation of operations.values()) {
-    if (!operation.data) { continue }
-    await registryFs.writeFile(
-      `${basePath}/${PACKAGE.OPERATIONS_DIR_NAME}/${operation.operationId}.json`,
-      JSON.stringify(operation.data, undefined, 2),
-    )
-  }
-}
-
-export async function saveSearchTextFiles(
-  operations: Map<string, ApiOperation>,
-  basePath: string,
-): Promise<void> {
-  for (const operation of Array.from(operations.values())) {
-    if (!operation.searchText || !operation.search.searchTextFilePath) { continue }
-    const filePath = `${basePath}/${operation.search.searchTextFilePath}`
-    const dir = filePath.substring(0, filePath.lastIndexOf('/'))
-    await registryFs.mkdir(dir, { recursive: true })
-    await registryFs.writeFile(filePath, operation.searchText)
-  }
-}
-
-export async function saveInfo(
+// Shared by both test registries: serialize a build result into the version directory through the
+// production serializer, so the on-disk layout is whatever createVersionPackage produces.
+export async function publishVersionPackage(
+  buildResult: BuildResult,
+  builderContext: BuilderContext,
   config: BuildConfig,
-  basePath: string,
 ): Promise<void> {
-  await registryFs.writeFile(
-    `${basePath}/${PACKAGE.INFO_FILE_NAME}`,
-    JSON.stringify(config, undefined, 2),
-    {},
-  )
+  assertPublishableBuildType(buildResult.config)
+  const basePath = `${VERSIONS_PATH}/${config.packageId}/${config.version}`
+  try {
+    await registryFs.rm(basePath, { recursive: true })
+  } catch (e) {
+    // do nothing
+  }
+  await registryFs.mkdir(basePath, { recursive: true })
+
+  await createVersionPackage(buildResult, createDiskZipTool(basePath), builderContext)
 }
 
-export async function saveDocumentsArray(
-  documents: Map<string, VersionDocument>,
-  basePath: string,
-): Promise<void> {
-  await registryFs.writeFile(
-    `${basePath}/${PACKAGE.DOCUMENTS_FILE_NAME}`,
-    getDocumentsFileContent(documents),
-  )
-}
+// Mirrors JSZip: objects → pretty JSON, strings → raw, Blobs → binary. Since callers fire `file()`
+// without awaiting, writes are tracked in `pending` and drained by the always-awaited `buildResult()`.
+export function createDiskZipTool(basePath: string): ZipTool {
+  const pending: Promise<void>[] = []
+  const dirPromises = new Map<string, Promise<unknown>>()
+  const writeChains = new Map<string, Promise<void>>()
 
-export async function saveVersionInternalDocumentsArray(
-  documents: Map<string, VersionDocument>,
-  basePath: string,
-): Promise<void> {
-  const result: { documents: InternalDocumentMetadata[] } = { documents: [] }
-
-  for (const document of documents.values()) {
-    const {publish, versionInternalDocument} = document as VersionDocument
-    if(!versionInternalDocument) { continue }
-    const {versionDocumentId: versionInternalDocumentId, serializedVersionDocument} = versionInternalDocument
-    if (!publish || !versionInternalDocumentId || !serializedVersionDocument) { continue }
-
-    result.documents.push({
-      id: versionInternalDocumentId,
-      filename: `${versionInternalDocumentId}.${FILE_FORMAT_JSON}`,
-    })
-  }
-  if (!result.documents.length) {
-    return
-  }
-  await registryFs.writeFile(
-    `${basePath}/${PACKAGE.VERSION_INTERNAL_FILE_NAME}`,
-    JSON.stringify(result, undefined, 2),
-  )
-}
-
-export async function saveComparisonInternalDocumentsArray(
-  comparisons: ComparisonInternalDocument[],
-  basePath: string,
-): Promise<void> {
-  if (!comparisons.length) {
-    return
-  }
-  const result: { documents: ComparisonInternalDocumentMetadata[] } = { documents: [] }
-  for (const document of comparisons) {
-    const { comparisonFileId, comparisonDocumentId: comparisonInternalDocumentId } = document
-    result.documents.push({
-      id: comparisonInternalDocumentId,
-      filename: `${comparisonInternalDocumentId}.${FILE_FORMAT_JSON}`,
-      comparisonFileId,
-    })
-  }
-  if (!result.documents.length) {
-    return
-  }
-  await registryFs.writeFile(
-    `${basePath}/${PACKAGE.COMPARISON_INTERNAL_FILE_NAME}`,
-    JSON.stringify(result, undefined, 2),
-  )
-}
-
-export function getDocumentsFileContent(
-  documentsMap: Map<string, VersionDocument>,
-): string {
-  const result: PackageDocuments = { documents: [] }
-
-  for (const document of documentsMap.values()) {
-    if (!document.publish) { continue }
-
-    result.documents.push(toPackageDocument(document))
-  }
-
-  return JSON.stringify(result, undefined, 2)
-}
-
-export function getOperationsFileContent(
-  operationsMap: Map<string, ApiOperation>,
-  updateHash = false,
-): string {
-  const result: PackageOperations = { operations: [] }
-
-  for (const operation of operationsMap.values()) {
-    result.operations.push({
-      operationId: operation.operationId,
-      documentId: operation.documentId,
-      title: operation.title,
-      deprecated: operation.deprecated,
-      apiKind: operation.apiKind,
-      apiType: operation.apiType,
-      metadata: operation.metadata,
-      search: operation.search,
-      deprecatedItems: operation.deprecatedItems,
-      deprecatedInfo: operation.deprecatedInfo,
-      deprecatedInPreviousVersions: operation.deprecatedInPreviousVersions,
-      models: operation.models,
-      tags: operation.tags,
-      apiAudience: operation.apiAudience,
-      versionInternalDocumentId: operation.versionInternalDocumentId,
-    })
-  }
-
-  return JSON.stringify(result, undefined, 2)
-}
-
-export async function saveEachDocument(
-  documents: Map<string, VersionDocument>,
-  basePath: string,
-  ctx: BuilderContext,
-): Promise<void> {
-  await registryFs.mkdir(`${basePath}/${PACKAGE.DOCUMENTS_DIR_NAME}`, { recursive: true })
-  for (const document of documents.values()) {
-    // skip components
-    if (!document.publish) { continue }
-
-    const filePath = `${basePath}/${PACKAGE.DOCUMENTS_DIR_NAME}/${document.filename}`
-    const fileContent = getDocumentFileContent(document, ctx)
-
-    if (fileContent instanceof Blob) {
-      await registryFs.writeFile(filePath, Buffer.from(await fileContent.arrayBuffer()))
-      continue
+  // mkdir each directory once: every write awaits the same shared promise, so the dir is created a
+  // single time and no concurrent (un-awaited) write races ahead of it.
+  const ensureDir = (dir: string): Promise<unknown> => {
+    let created = dirPromises.get(dir)
+    if (!created) {
+      created = registryFs.mkdir(dir, { recursive: true })
+      dirPromises.set(dir, created)
     }
-    await registryFs.writeFile(filePath, fileContent)
+    return created
   }
-}
 
-export function getDocumentFileContent(
-  document: VersionDocument,
-  ctx: BuilderContext,
-): Blob {
-  const builder = ctx.apiBuilders.find(({ types }) => types.includes(document.type)) || unknownApiBuilder
-  return builder.dumpDocument(document, FILE_FORMAT_JSON)
-}
+  const writeEntry = async (path: string, content: object | string | Blob): Promise<void> => {
+    const dir = path.substring(0, path.lastIndexOf('/'))
+    await ensureDir(dir)
 
-export async function saveMcpEntities(
-  mcpEntities: McpEntityIndex | undefined,
-  basePath: string,
-): Promise<void> {
-  if (!mcpEntities?.size) { return }
-
-  await registryFs.writeFile(`${basePath}/${PACKAGE.MCP_FILE_NAME}`, JSON.stringify(groupMcpEntitiesByKind(mcpEntities), undefined, 2))
-
-  const mcpDir = `${basePath}/${PACKAGE.MCP_DIR_NAME}`
-  await registryFs.mkdir(mcpDir, { recursive: true })
-
-  for (const entity of mcpEntities.values()) {
-    await registryFs.writeFile(`${mcpDir}/${entity.mcpEntityId}`, JSON.stringify(entity.data, undefined, 2))
+    if (content instanceof Blob) {
+      await registryFs.writeFile(path, Buffer.from(await content.arrayBuffer()))
+    } else if (typeof content === 'string') {
+      await registryFs.writeFile(path, content)
+    } else {
+      await registryFs.writeFile(path, JSON.stringify(content, undefined, 2))
+    }
   }
-}
 
-export async function saveDdlEntities(
-  ddlEntities: DdlEntityIndex | undefined,
-  basePath: string,
-): Promise<void> {
-  if (!ddlEntities?.size) { return }
+  const at = (base: string): ZipTool => ({
+    file(name: string, content: object | string | Blob): Promise<void> {
+      // Chain writes to the same path: JSZip resolves duplicates last-write-wins by call order, so
+      // the sink must too — firing them concurrently would let the scheduler pick the winner.
+      const path = `${base}/${name}`
+      const promise = (writeChains.get(path) ?? Promise.resolve()).then(() => writeEntry(path, content))
+      writeChains.set(path, promise)
+      pending.push(promise)
+      return promise
+    },
+    folder(name: string): ZipTool {
+      return at(`${base}/${name}`)
+    },
+    async buildResult(): Promise<void> {
+      await Promise.all(pending)
+    },
+  })
 
-  await registryFs.writeFile(`${basePath}/${PACKAGE.DDL_FILE_NAME}`, JSON.stringify(groupDdlEntitiesByKind(ddlEntities), undefined, 2))
-
-  const ddlDir = `${basePath}/${PACKAGE.DDL_DIR_NAME}`
-  await registryFs.mkdir(ddlDir, { recursive: true })
-
-  for (const entity of ddlEntities.values()) {
-    // per-entity SQL, named by ddlEntityId, no extension
-    await registryFs.writeFile(`${ddlDir}/${entity.ddlEntityId}`, entity.data)
-  }
+  return at(basePath)
 }

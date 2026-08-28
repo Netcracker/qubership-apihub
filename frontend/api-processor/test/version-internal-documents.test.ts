@@ -90,7 +90,7 @@ describe('Version Internal Documents tests', () => {
     })
 
     test('should operations from file have versionInternalDocumentId', async () => {
-      await buildPackage(packageId)
+      const result = await buildPackage(packageId)
       const operationsFile = await loadFileAsStringFromRegistry(
         VERSIONS_PATH,
         `${packageId}/v1`,
@@ -100,10 +100,24 @@ describe('Version Internal Documents tests', () => {
         throw new Error(`Cannot load ${PACKAGE.OPERATIONS_FILE_NAME}`)
       }
       const packageOperations: PackageOperations = JSON.parse(operationsFile)
-      Array.from(packageOperations.operations).forEach((operation, i) => {
-        expect(operation).toHaveProperty('versionInternalDocumentId')
-        expect(operation['versionInternalDocumentId']).toEqual(files[i])
-      })
+
+      type InternalDocumentPair = Pick<ApiOperation, 'operationId' | 'versionInternalDocumentId'>
+
+      const toInternalDocumentPair = ({ operationId, versionInternalDocumentId }: InternalDocumentPair): InternalDocumentPair =>
+        ({ operationId, versionInternalDocumentId })
+
+      const byOperationId = (left: InternalDocumentPair, right: InternalDocumentPair): number => {
+        if (left.operationId === right.operationId) { return 0 }
+        return left.operationId < right.operationId ? -1 : 1
+      }
+      // Serialized operations are sorted by operationId; the operation -> document pairing must survive the sort.
+      const expected = Array.from(result.operations.values())
+        .map(toInternalDocumentPair)
+        .sort(byOperationId)
+
+      expect(packageOperations.operations.map(toInternalDocumentPair)).toEqual(expected)
+      // Anchor to the source files too, so a wrong-but-consistent id on both sides can't pass.
+      expect(expected.map(pair => pair.versionInternalDocumentId)).toEqual([...files].sort())
     })
 
     test('should internal document had serialize data', async () => {

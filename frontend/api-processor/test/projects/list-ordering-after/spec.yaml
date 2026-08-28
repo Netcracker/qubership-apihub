@@ -1,0 +1,19 @@
+openapi: 3.0.0
+info:
+  title: Comparison ordering
+  version: 1.0.0
+paths:
+  /zebra:
+    get:
+      responses:
+        '200':
+          description: ok
+        '400':
+          description: bad request
+  /apple:
+    get:
+      responses:
+        '200':
+          description: ok
+        '400':
+          description: bad request

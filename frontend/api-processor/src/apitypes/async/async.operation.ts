@@ -80,6 +80,7 @@ export const buildAsyncApiOperation = (
     slug: documentSlug,
     versionInternalDocument,
     metadata: documentMetadata,
+    apiKind: documentApiKind,
   } = document
   const effectiveOperationObject: AsyncAPIV3.OperationObject = effectiveDocument.operations?.[asyncOperationId] as AsyncAPIV3.OperationObject || {}
   const effectiveSingleOperationSpec = createOperationSpec(effectiveDocument, operationId)
@@ -114,7 +115,7 @@ export const buildAsyncApiOperation = (
     operationId,
     documentId: documentSlug,
     apiType: ASYNCAPI_API_TYPE,
-    apiKind: calculateAsyncApiKind(operationApiKind, channelApiKind),
+    apiKind: calculateAsyncApiKind(operationApiKind, channelApiKind, documentApiKind),
     deprecated: !!message[DEPRECATED_SPECIFICATION_EXTENSION],
     title: message.title || messageId,
     metadata: {
