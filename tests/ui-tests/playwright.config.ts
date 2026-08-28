@@ -84,6 +84,15 @@ export default defineConfig<Fixtures>({
       dependencies: ['Portal-Setup'],
     },
     {
+      name: 'Agent',
+      testDir: './src/tests/agent',
+      timeout: 100_000,
+      use: {
+        ...devices['Desktop Chrome'],
+      },
+      dependencies: ['Agent-Setup'],
+    },
+    {
       name: 'Apihub-Setup',
       testDir: './src/tests',
       testMatch: /apihub-setup\.ts/,
@@ -101,6 +110,16 @@ export default defineConfig<Fixtures>({
       testMatch: /setup\.ts/,
       timeout: 1200_000,
       retries: 0,
+      dependencies: ['Apihub-Setup'],
+    },
+    {
+      name: 'Agent-Setup',
+      testDir: './src/tests/agent',
+      testMatch: /setup\.ts/,
+      timeout: 140_000,
+      use: {
+        ...devices['Desktop Chrome'],
+      },
       dependencies: ['Apihub-Setup'],
     },
     {

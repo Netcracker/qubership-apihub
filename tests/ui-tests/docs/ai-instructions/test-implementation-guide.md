@@ -123,6 +123,12 @@ await createRulesetDialog.fillForm({
 
 **Prevention:** remember `object-shorthand: consistent` (see `.eslintrc.json`); assign props to local variables when mixing shorthand and explicit keys.
 
+### Importing Agent POM or Agent test-data barrel from Portal
+
+`@test-data/agent` reexports `TEST_CLOUD`, which calls `requireEnv('AGENT_TEST_CLOUD')` at module load. Portal-only runs (`--project=Portal`) still execute Portal-Setup, so a Portal spec or shared helper that imports `@agent/pages` or `@test-data/agent` will fail even if the Agent test is skipped.
+
+Keep Agent navigation/UI assertions in `src/tests/agent/**`. Shared helpers must import specific Agent modules (e.g. `./agent/packages`), not the Agent barrel. Portal specs may assert that an Agent entry point exists (button visible), but must not import Agent page objects.
+
 ### Using Non-Existent POM APIs
 
 ```typescript
@@ -560,10 +566,19 @@ Follow the evidence workflow defined in `AGENTS.md`, with these test-specific no
 
 ## File Structure Reference
 
+Portal:
+
 - Tests: `src/tests/portal/<feature>/<feature>.spec.ts`
 - Test data: `src/test-data/portal/<category>.ts`
 - Resources (files, fixtures): `resources/portal/<category>/<sub>/<file>`
 - POM files: `src/packages/portal/pages/<Page>/<Component>/<Component>.ts`
+
+Agent:
+
+- Tests: `src/tests/agent/<nn>-<name>.spec.ts` (project setup in `src/tests/agent/setup.ts`)
+- Test data: `src/test-data/agent/<category>.ts`
+- Resources (files, fixtures): `resources/agent/<file>`
+- POM files: `src/packages/agent/pages/<Page>/<Component>/<Component>.ts`
 
 ## Golden Rules
 

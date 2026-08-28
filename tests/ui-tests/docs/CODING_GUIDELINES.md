@@ -26,7 +26,7 @@ This document provides a comprehensive guide to the coding standards and best pr
 - **Constants:** `UPPER_SNAKE_CASE`
 - **Variables/methods:** `camelCase`
 - **Classes:** `PascalCase`
-- **Test IDs:** `P-FEATURE-1` format (note: when adding new tests, always ensure the test ID is unique)
+- **Test IDs:** Portal `P-FEATURE-1`, Agent `A-FEATURE-1` (when adding new tests, always ensure the test ID is unique)
 
 ### Test Entity Constant Naming Pattern
 
@@ -43,6 +43,8 @@ Constants for test entities must start with a **prefix indicating the entity typ
 | Version            | `V_`    | `V_OAS30_N`, `V_MULTI_SPEC_N`                       |
 | Workspace          | `WSP_`  | `WSP_MAIN_R`, `WSP_CREATE_N`                        |
 | Dashboard          | `DSH_`  | `DSH_OVERVIEW_R`, `DSH_CRUD_N`                      |
+| Agent workspace    | `A_WS_` | `A_WS_R`, `A_WS_N`, `A_WS_DEFAULT`                  |
+| Agent group        | `A_GR_` | `A_GR_APIHUB`, `A_GR_APIHUB_R`                      |
 
 ```typescript
 // ❌ Incorrect: suffix-based naming

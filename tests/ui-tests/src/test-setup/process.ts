@@ -1,4 +1,18 @@
 /**
+ * Returns the value of a required environment variable.
+ * Throws if it is missing or blank.
+ */
+export const requireEnv = (name: string): string => {
+  const value = process.env[name]?.trim()
+  if (!value) {
+    throw new Error(
+      `Required environment variable "${name}" is missing or empty. Set it before running tests.`,
+    )
+  }
+  return value
+}
+
+/**
  * **undefined** (*default*) - create only Non-Reusable test data
  *
  * **all** - create both reusable and Non-Reusable test data

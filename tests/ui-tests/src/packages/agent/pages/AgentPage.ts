@@ -7,6 +7,7 @@ import { AgentServicesTab } from './AgentPage/AgentServicesTab'
 import { AgentSnapshotsTab } from './AgentPage/AgentSnapshotsTab'
 import { AgentReportsTab } from './AgentPage/AgentReportsTab'
 import type { AgentConfig } from '@agent/entities'
+import { TEST_CLOUD, TEST_NAMESPACE_1, A_WS_R } from '@test-data/agent'
 
 export class AgentPage extends MainPage {
 
@@ -78,9 +79,9 @@ export class AgentPage extends MainPage {
   }
 
   private getAgentRoute(config?: AgentConfig): string {
-    const cloud = config?.cloud // || TEST_CLOUD
-    const namespace = config?.namespace // || TEST_NAMESPACE_1
-    const workspaceId = config?.workspaceId // || A_WS_IMM.packageId
+    const cloud = config?.cloud || TEST_CLOUD
+    const namespace = config?.namespace || TEST_NAMESPACE_1
+    const workspaceId = config?.workspaceId || A_WS_R.packageId
     const tab = config?.tab || 'services'
     return `/agents/${cloud}/${namespace}/${tab}?workspace=${workspaceId}`
   }

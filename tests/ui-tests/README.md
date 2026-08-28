@@ -3,6 +3,7 @@
 Playwright-based test project for APIHUB UI:
 
 - Portal UI end-to-end tests (`--project=Portal`)
+- Agent UI end-to-end tests (`--project=Agent`)
 - ADV smoke-style checks (`ADV-operations`, `ADV-comparisons`)
 - Cleanup project (`--project=Cleanup`)
 
@@ -31,11 +32,20 @@ Minimum required variables:
 
 - `BASE_URL`
 - `TEST_USER_PASSWORD`
+- `AGENT_TEST_CLOUD` (Agent tests only)
 
 ### Run Portal end-to-end tests
 
 ```Shell
 npx playwright test --project=Portal
+```
+
+### Run Agent end-to-end tests
+
+Requires a running Agent and a Kubernetes cloud the Agent can discover. Set `AGENT_TEST_CLOUD` (see [Environment variables](#environment-variables)).
+
+```Shell
+npx playwright test --project=Agent
 ```
 
 ## Documentation map (project-local)
@@ -74,6 +84,17 @@ Example (API Quality suite folder):
 | BASE_URL           | Test environment base URL   |
 | TEST_USER_PASSWORD | Password used by test users |
 
+### Required for Agent (`--project=Agent`)
+
+| Variable         | Meaning                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------- |
+| AGENT_TEST_CLOUD | Cloud name shown in the Agent UI selector. Example for kind: `kind_qubership-apihub`. |
+
+Hardcoded cluster objects (see `src/test-data/agent/other.ts`):
+
+- Namespaces: `api-hub-ci` (full end-to-end / discovery running), `api-hub-preprod` (other Agent scopes)
+- Services: `apihub-agent-test-service`, `apihub-backend`
+
 ### Required only for localhost modes
 
 | Variable                | Meaning                                                                                                        |
@@ -83,30 +104,36 @@ Example (API Quality suite folder):
 
 ### Optional
 
-| Variable          | Meaning                                                                                        |
-| ----------------- | ---------------------------------------------------------------------------------------------- |
-| TICKET_SYSTEM_URL | Adds interactivity to links to test cases and issues                                           |
-| AUTH (deprecated) | Deprecated legacy auth toggle. Not required; kept temporarily until old auth logic is removed. |
-| CREATE_TD         | Test data creation (`all`, `skip`, or default behavior)                                        |
-| CLEAR_TD          | Test data deletion (`all`, `skip`, or default behavior)                                        |
-| TEST_ID_R         | Reusable test data ID (4 chars); auto-generated if unset                                       |
-| TEST_ID_N         | Non-reusable test data ID (4 chars); auto-generated if unset                                   |
-| ADV_FILE          | Filename with URLs for `ADV-operations` and `ADV-comparisons` projects                         |
+| Variable                     | Meaning                                                                                        |
+| ---------------------------- | ---------------------------------------------------------------------------------------------- |
+| TICKET_SYSTEM_URL            | Adds interactivity to links to test cases and issues                                           |
+| AUTH (deprecated)            | Deprecated legacy auth toggle. Not required; kept temporarily until old auth logic is removed. |
+| CREATE_TD                    | Test data creation (`all`, `skip`, or default behavior)                                        |
+| CLEAR_TD                     | Test data deletion (`all`, `skip`, or default behavior)                                        |
+| TEST_ID_R                    | Reusable test data ID (4 chars); auto-generated if unset                                       |
+| TEST_ID_N                    | Non-reusable test data ID (4 chars); auto-generated if unset                                   |
+| ADV_FILE                     | Filename with URLs for `ADV-operations` and `ADV-comparisons` projects                         |
+| TEST_DEFAULT_WORKSPACE_NAME  | Agent default workspace name (default `Qubership`)                                             |
+| TEST_DEFAULT_WORKSPACE_ALIAS | Agent default workspace alias (default `QS`)                                                   |
+| TEST_PRODUCT_GROUP_NAME      | Agent product group name (default `QS Product`)                                                |
+| TEST_PRODUCT_GROUP_ALIAS     | Agent product group alias (default `QS`)                                                       |
+| TEST_SUB_GROUP_NAME          | Agent sub-group name (default `Sub Group`)                                                     |
+| TEST_SUB_GROUP_ALIAS         | Agent sub-group alias (default `SG`)                                                           |
 
 ## Running tests
 
 ### Common commands
 
 ```Shell
-npx playwright test --project=Portal
+npx playwright test --project=Portal --project=Agent
 ```
 
 ```Shell
-npx playwright test --project=Portal --last-failed
+npx playwright test --project=Portal --project=Agent --last-failed
 ```
 
 ```Shell
-npx playwright test --project=Portal --headed --trace=on
+npx playwright test --project=Portal --project=Agent --headed --trace=on
 ```
 
 ### HTML report
