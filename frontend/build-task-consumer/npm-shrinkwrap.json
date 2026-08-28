@@ -16,7 +16,7 @@
         "@nestjs/platform-express": "^11.0.0",
         "@netcracker/qubership-apihub-api-processor": "5.7.0",
         "@sinclair/typebox": "^0.32.1",
-        "adm-zip": "^0.5.10",
+        "adm-zip": "^0.6.0",
         "axios": "^1.6.2",
         "dotenv": "^16.3.1",
         "form-data": "^4.0.0",
@@ -32,7 +32,6 @@
         "@nestjs/testing": "^11.0.0",
         "@netcracker/qubership-apihub-api-unifier": "2.9.2",
         "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
-        "@types/adm-zip": "^0.5.1",
         "@types/express": "^5.0.0",
         "@types/jest": "^29.5.6",
         "@types/multer": "^2.0.0",
@@ -2362,7 +2361,7 @@
         "@netcracker/qubership-apihub-ddlapi": "1.0.0",
         "@netcracker/qubership-apihub-graphapi": "1.0.13",
         "@netcracker/qubership-apihub-json-crawl": "1.2.2",
-        "adm-zip": "0.5.10",
+        "adm-zip": "^0.6.0",
         "ajv": "^8.12.0",
         "ajv-formats": "^2.1.1",
         "allof-merge": "0.5.1",
@@ -2380,15 +2379,6 @@
       },
       "optionalDependencies": {
         "@rollup/rollup-linux-x64-gnu": "4.30.1"
-      }
-    },
-    "node_modules/@netcracker/qubership-apihub-api-processor/node_modules/adm-zip": {
-      "version": "0.5.10",
-      "resolved": "https://registry.npmjs.org/adm-zip/-/adm-zip-0.5.10.tgz",
-      "integrity": "sha512-x0HvcHqVJNTPk/Bw8JbLWlWoo6Wwnsug0fnYYro1HBrjxZ3G7/AZk7Ahv8JwDe1uIcz8eBqvu86FuF1POiG7vQ==",
-      "license": "MIT",
-      "engines": {
-        "node": ">=6.0"
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-processor/node_modules/ajv-formats": {
@@ -3045,16 +3035,6 @@
       "integrity": "sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==",
       "dev": true,
       "license": "MIT"
-    },
-    "node_modules/@types/adm-zip": {
-      "version": "0.5.8",
-      "resolved": "https://registry.npmjs.org/@types/adm-zip/-/adm-zip-0.5.8.tgz",
-      "integrity": "sha512-RVVH7QvZYbN+ihqZ4kX/dMiowf6o+Jk1fNwiSdx0NahBJLU787zkULhGhJM8mf/obmLGmgdMM0bXsQTmyfbR7Q==",
-      "dev": true,
-      "license": "MIT",
-      "dependencies": {
-        "@types/node": "*"
-      }
     },
     "node_modules/@types/babel__core": {
       "version": "7.20.5",
@@ -3882,12 +3862,24 @@
       }
     },
     "node_modules/adm-zip": {
-      "version": "0.5.18",
-      "resolved": "https://registry.npmjs.org/adm-zip/-/adm-zip-0.5.18.tgz",
-      "integrity": "sha512-ufJnssQGbxzLNS1Ho9bCtX4rQKCCvoVuDLHoJyc3F9dOGDB4BkWs2Ci0kv53lqocAEQ/Cbi+I2XCsNYGqVYqng==",
+      "version": "0.6.0",
+      "resolved": "https://registry.npmjs.org/adm-zip/-/adm-zip-0.6.0.tgz",
+      "integrity": "sha512-XleryMhbuksdKtofnWZ9Sk+4CUTbms4Mb/EU32SZwToAyZ5RgVos/ki8n+yr0LWHOGKuakbXTuuYNHLQjhddgg==",
       "license": "MIT",
       "engines": {
-        "node": ">=12.0"
+        "node": ">=14.0"
+      }
+    },
+    "node_modules/agent-base": {
+      "version": "6.0.2",
+      "resolved": "https://registry.npmjs.org/agent-base/-/agent-base-6.0.2.tgz",
+      "integrity": "sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==",
+      "license": "MIT",
+      "dependencies": {
+        "debug": "4"
+      },
+      "engines": {
+        "node": ">= 6.0.0"
       }
     },
     "node_modules/agent-base": {
