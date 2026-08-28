@@ -14,7 +14,7 @@
         "@nestjs/config": "^3.0.0",
         "@nestjs/core": "^10.0.0",
         "@nestjs/platform-express": "^10.0.0",
-        "@netcracker/qubership-apihub-api-processor": "5.6.0",
+        "@netcracker/qubership-apihub-api-processor": "5.7.0",
         "@sinclair/typebox": "^0.32.1",
         "adm-zip": "^0.5.10",
         "dotenv": "^16.3.1",
@@ -29,7 +29,7 @@
         "@nestjs/cli": "^10.0.0",
         "@nestjs/schematics": "^10.0.0",
         "@nestjs/testing": "^10.0.0",
-        "@netcracker/qubership-apihub-api-unifier": "2.9.1",
+        "@netcracker/qubership-apihub-api-unifier": "2.9.2",
         "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
         "@types/adm-zip": "^0.5.1",
         "@types/express": "^4.17.21",
@@ -1894,11 +1894,11 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-diff": {
-      "version": "3.4.1",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-diff/3.4.1/466c3a949682b2c7d245ca53080e18c522d401b9",
-      "integrity": "sha512-e7jhKBqE+jhIHfnsqVC00WWM4UIRdncU/piNK1sJ70QLZa54gz2uMvMmuE3HUcIzyDKXwH8JrIXE5yf/+RTreg==",
+      "version": "3.4.2",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-diff/3.4.2/3065f678f344e51ea9ff4afd71aa1eef31216b64",
+      "integrity": "sha512-OR7DDQK4SIbhuddFc63g30OPOVCRWeW97jNzfLPgCRREdr++R3yrw3RmxLU1OnX27wDAcszizwvw5RKZfR9Ssg==",
       "dependencies": {
-        "@netcracker/qubership-apihub-api-unifier": "2.9.1",
+        "@netcracker/qubership-apihub-api-unifier": "2.9.2",
         "@netcracker/qubership-apihub-ddlapi": "1.0.0",
         "@netcracker/qubership-apihub-json-crawl": "1.2.2",
         "fast-equals": "6.0.0"
@@ -1914,16 +1914,16 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-processor": {
-      "version": "5.6.0",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/5.6.0/37d80aa5193c45d8bd841dfad8507d785a411920",
-      "integrity": "sha512-kzvUbKW5sjT9b6IY40KonzShpaKu/84U+LvHODiTQyvzhbvAimH/j1/fNtYliknptgjG3Nrma3Ilnq0Llvq6tg==",
+      "version": "5.7.0",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/5.7.0/8092546075dd065cc04b4d3826690b8f6a782ace",
+      "integrity": "sha512-oOcWiZEh6+D2CZxj9vR/qYAvGAp5ZoGzefacJm8RemC8hgxcqOUQXW6c6YwfNwJLYShRWA+3ah2kxLz1Ro22tw==",
       "license": "Apache-2.0",
       "dependencies": {
         "@asyncapi/parser": "^3.6.0",
-        "@netcracker/qubership-apihub-api-diff": "3.4.1",
-        "@netcracker/qubership-apihub-api-unifier": "2.9.1",
+        "@netcracker/qubership-apihub-api-diff": "3.4.2",
+        "@netcracker/qubership-apihub-api-unifier": "2.9.2",
         "@netcracker/qubership-apihub-ddlapi": "1.0.0",
-        "@netcracker/qubership-apihub-graphapi": "1.0.12",
+        "@netcracker/qubership-apihub-graphapi": "1.0.13",
         "@netcracker/qubership-apihub-json-crawl": "1.2.2",
         "adm-zip": "0.5.10",
         "ajv": "^8.12.0",
@@ -1970,12 +1970,12 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-unifier": {
-      "version": "2.9.1",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-unifier/2.9.1/4d29352ab0fa99e15fdc44f5d545ab03846347a5",
-      "integrity": "sha512-LQIUfyp0wCKYSSX11s3PcEdJT6UjMW3Vaps7bGCa4h5QgSi93IZLZhHdFer0j/9p6sTLkguN+IgktHAEYVREtg==",
+      "version": "2.9.2",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-unifier/2.9.2/d452609d47f8375cf4ca36b61fad3669683fc720",
+      "integrity": "sha512-KdejMNTxO7HcomVel/YU/hpPcamnaLBDqz8R44JpenEnRqnxroNPG+5gGXGKg8xxxICWxP/iTGLgdGPfKUTQOg==",
       "dependencies": {
         "@netcracker/qubership-apihub-ddlapi": "1.0.0",
-        "@netcracker/qubership-apihub-graphapi": "1.0.12",
+        "@netcracker/qubership-apihub-graphapi": "1.0.13",
         "@netcracker/qubership-apihub-json-crawl": "1.2.2",
         "fast-equals": "4.0.3",
         "flatted": "^3.2.9",
@@ -2000,9 +2000,9 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-graphapi": {
-      "version": "1.0.12",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-graphapi/1.0.12/7a5de3858dd78484ffc12d50cffeb3d8751bfc93",
-      "integrity": "sha512-HrqgnUHGG1QakF2z5WGsCMNnJXC+GiXh1vWoehtlEl25GqCAbydoMJBnbUnC+liiv8eUKqCSszolMNiHdeu/qA==",
+      "version": "1.0.13",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-graphapi/1.0.13/0651a3b21fabe56193188b99b81a61cafeff06e2",
+      "integrity": "sha512-YUgHqsPakKmRK7Wt4Iq4b0PFwf+D4Wq6CG+iskd0p080O2ZmnQTqeRnjUIHC0LAGZX4HmTNRH1goYSws++kqYQ==",
       "hasInstallScript": true,
       "license": "Apache-2.0"
     },
