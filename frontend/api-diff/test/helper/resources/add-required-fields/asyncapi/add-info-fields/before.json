@@ -1,0 +1,22 @@
+{
+    "asyncapi": "3.0.0",
+    "info": {
+        "description": "Example"
+    },
+    "channels": {
+        "userSignup": {
+            "address": "/api/v1/users/{userId}/signup",
+            "description": "Channel for user signup events"
+        }
+    },
+    "operations": {
+        "handleUserSignup": {
+            "action": "receive",
+            "summary": "Handle user signup",
+            "description": "Process user signup requests",
+            "channel": {
+                "$ref": "#/channels/userSignup"
+            }
+        }
+    }
+}

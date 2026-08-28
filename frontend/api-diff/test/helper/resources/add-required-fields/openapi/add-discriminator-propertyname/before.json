@@ -1,0 +1,83 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Vehicle API",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/vehicles": {
+            "post": {
+                "operationId": "creaveVehicleV1",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "discriminator": {},
+                                "oneOf": [
+                                    {
+                                        "$ref": "#/components/schemas/Electric"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/Gas"
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Created"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Electric": {
+                "type": "object",
+                "properties": {
+                    "powerSource": {
+                        "type": "string",
+                        "enum": [
+                            "electric"
+                        ]
+                    },
+                    "topSpeed": {
+                        "type": "integer"
+                    },
+                    "range": {
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "powerSource",
+                    "topSpeed"
+                ]
+            },
+            "Gas": {
+                "type": "object",
+                "properties": {
+                    "powerSource": {
+                        "type": "string",
+                        "enum": [
+                            "gas"
+                        ]
+                    },
+                    "topSpeed": {
+                        "type": "integer"
+                    },
+                    "fuelEfficiency": {
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "powerSource",
+                    "topSpeed"
+                ]
+            }
+        }
+    }
+}

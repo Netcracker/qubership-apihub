@@ -1,0 +1,47 @@
+{
+    "asyncapi": "3.0.0",
+    "info": {
+        "title": "AsyncAPI Example",
+        "description": "Example",
+        "version": "1.0.0"
+    },
+    "channels": {
+        "userSignup": {
+            "address": "/api/v1/users/{userId}/signup",
+            "description": "Channel for user signup events"
+        }
+    },
+    "operations": {
+        "handleUserSignup": {
+            "action": "receive",
+            "summary": "Handle user signup",
+            "description": "Process user signup requests",
+            "security": [
+                {
+                    "$ref": "#/components/securitySchemes/oauth2Auth"
+                }
+            ],
+            "channel": {
+                "$ref": "#/channels/userSignup"
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "oauth2Auth": {
+                "type": "oauth2",
+                "flows": {
+                    "authorizationCode": {
+                        "authorizationUrl": "https://auth.example.com/oauth/authorize",
+                        "tokenUrl": "https://auth.example.com/oauth/token",
+                        "refreshUrl": "https://auth.example.com/oauth/refresh",
+                        "availableScopes": {
+                            "read:users": "Read user data",
+                            "write:users": "Write user data"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
