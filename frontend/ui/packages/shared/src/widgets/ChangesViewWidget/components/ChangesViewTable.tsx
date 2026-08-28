@@ -80,6 +80,7 @@ export type ChangeViewTableProps = {
   hasNextPage?: boolean
   SubTableComponent: FC<SubTableComponentProps>
   isLoading: boolean
+  onLinkClick?: () => void
 }
 
 export const ChangesViewTable: FC<ChangeViewTableProps> = memo<ChangeViewTableProps>((
@@ -95,6 +96,7 @@ export const ChangesViewTable: FC<ChangeViewTableProps> = memo<ChangeViewTablePr
     hasNextPage,
     SubTableComponent,
     isLoading,
+    onLinkClick,
   }) => {
   const isDashboardType = useMemo(() => packageObject?.kind === DASHBOARD_KIND, [packageObject?.kind])
 
@@ -119,7 +121,7 @@ export const ChangesViewTable: FC<ChangeViewTableProps> = memo<ChangeViewTablePr
         header: () => <CustomTableHeadCell title="Endpoint / Path" />,
         cell: ({ row }) => (
           <TextWithOverflowTooltip>
-            <OperationChangeCell value={row} mainPackageKind={mainPackageKind} />
+            <OperationChangeCell value={row} mainPackageKind={mainPackageKind} onLinkClick={onLinkClick} />
           </TextWithOverflowTooltip>
         ),
       },
@@ -192,7 +194,7 @@ export const ChangesViewTable: FC<ChangeViewTableProps> = memo<ChangeViewTablePr
     }
 
     return result
-  }, [isDashboardType, mainPackageKind])
+  }, [isDashboardType, mainPackageKind, onLinkClick])
 
   const data: ChangesViewTableData[] = useMemo(() => value.map(change => {
     const {

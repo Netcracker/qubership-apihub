@@ -1,11 +1,14 @@
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { type ContractType, toRouteApiType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
+import { isApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { CONTRACT_TYPE_DDL, toRouteApiType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 
 export const COMPARE_API_TYPE_ALL = 'all' as const
 
-export type CompareApiTypeFilterOption = typeof COMPARE_API_TYPE_ALL | ApiType
+export type CompareSupportedApiType = ApiType | typeof CONTRACT_TYPE_DDL
 
-export type CompareApiTypeSearchParam = ApiType | ContractType | typeof COMPARE_API_TYPE_ALL
+export type CompareApiTypeFilterOption = typeof COMPARE_API_TYPE_ALL | CompareSupportedApiType
+
+export type CompareApiTypeSearchParam = CompareApiTypeFilterOption
 
 export function isCompareApiTypeAll(value: string | undefined): value is typeof COMPARE_API_TYPE_ALL {
   return value === COMPARE_API_TYPE_ALL
@@ -13,23 +16,29 @@ export function isCompareApiTypeAll(value: string | undefined): value is typeof 
 
 export function parseCompareApiTypeSearchParam(
   searchParamValue: string | undefined,
-  fallback: ApiType | ContractType,
+  fallback: CompareSupportedApiType,
 ): CompareApiTypeSearchParam {
   if (isCompareApiTypeAll(searchParamValue)) {
     return COMPARE_API_TYPE_ALL
   }
-  return toRouteApiType(searchParamValue, fallback)
+
+  const routeApiType = toRouteApiType(searchParamValue, fallback)
+  if (isApiType(routeApiType) || routeApiType === CONTRACT_TYPE_DDL) {
+    return routeApiType
+  }
+
+  return fallback
 }
 
 export function toComparedApiTypeFilter(
   searchParam: CompareApiTypeSearchParam,
-): ApiType | ContractType | undefined {
+): CompareSupportedApiType | undefined {
   return isCompareApiTypeAll(searchParam) ? undefined : searchParam
 }
 
 export function toComparedApiType(
   searchParam: CompareApiTypeSearchParam,
-  fallback: ApiType | ContractType,
-): ApiType | ContractType {
+  fallback: CompareSupportedApiType,
+): CompareSupportedApiType {
   return isCompareApiTypeAll(searchParam) ? fallback : searchParam
 }

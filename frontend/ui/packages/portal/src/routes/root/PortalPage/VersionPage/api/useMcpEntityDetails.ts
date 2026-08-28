@@ -4,10 +4,10 @@ import { generatePath } from 'react-router-dom'
 
 import type {
   McpCollection,
+  McpContractEntityDetails,
   McpContractEntityDetailsDto,
-  McpEntityDetails,
 } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
-import { mcpCollectionToApiSegment, toMcpEntity } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
+import { mcpCollectionToApiSegment, toMcpContractEntity } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { IsInitialLoading, IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { API_V1, requestJson } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
@@ -17,9 +17,11 @@ import { useVersionWithRevision } from '../../../useVersionWithRevision'
 export const MCP_ENTITY_DETAILS_QUERY_KEY = 'mcp-entity-details-query-key'
 
 type McpEntityDetailsQueryState = {
-  data: McpEntityDetails | undefined
+  data: McpContractEntityDetails | undefined
   isLoading: IsLoading
   isInitialLoading: IsInitialLoading
+  /** True while keepPreviousData is showing a prior query-key payload. */
+  isPreviousData: boolean
 }
 
 type UseMcpEntityDetailsOptions = Readonly<{
@@ -41,19 +43,25 @@ export function useMcpEntityDetails(options: UseMcpEntityDetailsOptions): McpEnt
 
   const { fullVersion } = useVersionWithRevision(versionKey, packageKey)
 
-  const { data, isLoading, isInitialLoading } = useQuery<McpContractEntityDetailsDto, Error, McpEntityDetails>({
+  const { data, isLoading, isInitialLoading, isPreviousData } = useQuery<
+    McpContractEntityDetailsDto,
+    Error,
+    McpContractEntityDetails
+  >({
     queryKey: [MCP_ENTITY_DETAILS_QUERY_KEY, packageKey, fullVersion, collection, mcpEntityId],
     queryFn: () => getMcpEntityDetails(packageKey!, fullVersion!, collection, mcpEntityId!),
     enabled: !!packageKey && !!fullVersion && !!mcpEntityId && enabled,
+    // Same-key refetch stays painted; callers must ignore isPreviousData across key changes.
     keepPreviousData: true,
-    select: dto => ({ ...toMcpEntity(dto), data: dto.data }),
+    select: dto => ({ ...toMcpContractEntity(dto), data: dto.data }),
   })
 
   return useMemo(() => ({
     data,
     isLoading,
     isInitialLoading,
-  }), [data, isInitialLoading, isLoading])
+    isPreviousData,
+  }), [data, isInitialLoading, isLoading, isPreviousData])
 }
 
 async function getMcpEntityDetails(

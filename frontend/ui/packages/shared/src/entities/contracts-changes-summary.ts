@@ -40,3 +40,24 @@ export function getComparisonApiTypesFromSummary(
 
   return apiTypes
 }
+
+export function getDashboardComparisonApiTypes(
+  refs: ReadonlyArray<{
+    operationTypes: ReadonlyArray<OperationType>
+    contractsChangesSummary?: VersionComparisonContractsSummary
+  }>,
+): Array<typeof CONTRACT_TYPE_DDL | OperationType['apiType']> {
+  const apiTypes: Array<typeof CONTRACT_TYPE_DDL | OperationType['apiType']> = []
+  const seen = new Set<string>()
+
+  for (const ref of refs) {
+    for (const apiType of getComparisonApiTypesFromSummary(ref.operationTypes, ref.contractsChangesSummary)) {
+      if (!seen.has(apiType)) {
+        seen.add(apiType)
+        apiTypes.push(apiType)
+      }
+    }
+  }
+
+  return apiTypes
+}

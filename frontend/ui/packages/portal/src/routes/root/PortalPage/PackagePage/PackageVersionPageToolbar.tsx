@@ -20,6 +20,7 @@ import { Box, Button } from '@mui/material'
 import { useNavigate, useParams } from 'react-router-dom'
 import { PackageBreadcrumbs } from '../../PackageBreadcrumbs'
 import { useFiles } from '../FilesProvider'
+import { useMcpPublishValidation } from '@apihub/routes/root/PortalPage/PackagePage/useMcpPublishValidation'
 import { useBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
 import { useEventBus } from '@apihub/routes/EventBusProvider'
 import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
@@ -38,8 +39,15 @@ export const PackageVersionPageToolbar: FC = memo(() => {
   const navigate = useNavigate()
   const backwardLocation = useBackwardLocationContext()
   const { showPublishPackageVersionDialog } = useEventBus()
-  const { filesWithLabels } = useFiles()
+  const { filesWithLabels, mcpStagedFileMetaByName } = useFiles()
+  const { hasBlockingIssues, publishDisabledHint } = useMcpPublishValidation(mcpStagedFileMetaByName, filesWithLabels)
   const hasFilesToPublish = isNotEmptyRecord(filesWithLabels)
+  const isPublishDisabled = !hasFilesToPublish || hasBlockingIssues
+  const publishHint = !hasFilesToPublish
+    ? 'Add at least one file to publish package version'
+    : hasBlockingIssues
+      ? publishDisabledHint
+      : undefined
 
   const previousPageLocation = useMemo(() => {
     return backwardLocation.fromPackage ?? { pathname: '/portal' }
@@ -82,9 +90,9 @@ export const PackageVersionPageToolbar: FC = memo(() => {
         <Box display="flex" gap={2}>
           <ButtonWithHint
             variant="contained"
-            disabled={!hasFilesToPublish}
-            disableHint={hasFilesToPublish}
-            hint="Add at least one file to publish package version"
+            disabled={isPublishDisabled}
+            disableHint={!isPublishDisabled}
+            hint={publishHint}
             onClick={showPublishPackageVersionDialog}
             title="Publish"
             tooltipMaxWidth="unset"

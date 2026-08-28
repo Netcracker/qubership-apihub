@@ -1,5 +1,4 @@
 import type { VersionKey } from '@apihub/entities/keys'
-import { filterRealmForDdlContract } from '@apihub/utils/internal-documents/filter-realm-for-ddl-contract'
 import { INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING } from '@apihub/utils/internal-documents/constants'
 import { isDdlApiSpecification } from '@apihub/utils/internal-documents/type-guards'
 import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
@@ -51,22 +50,23 @@ export function useNormalizedDdlContract(
     return deserialize(internalDocumentContent, INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING)
   }, [internalDocumentContent])
 
-  const filteredInternalDocumentForDdlContract = useMemo(() => {
-    if (!isDdlApiSpecification(deserializedInternalDocument) || !ddlContract) {
+  const normalizedInternalDocumentForDdlContract = useMemo(() => {
+    if (!isDdlApiSpecification(deserializedInternalDocument)) {
       return undefined
     }
-    return filterRealmForDdlContract(deserializedInternalDocument, ddlContract)
-  }, [deserializedInternalDocument, ddlContract])
+    // DDL tables should be returned as is, because truncating is on ADV layer
+    return deserializedInternalDocument
+  }, [deserializedInternalDocument])
 
   return useMemo(
     () => ({
-      data: filteredInternalDocumentForDdlContract,
+      data: normalizedInternalDocumentForDdlContract,
       isLoading: isInternalDocumentsLoading || isInternalDocumentContentLoading,
       error: internalDocumentsError || internalDocumentContentError,
       hasInternalDocument: hasVersionInternalDocument,
     }),
     [
-      filteredInternalDocumentForDdlContract,
+      normalizedInternalDocumentForDdlContract,
       internalDocumentContentError,
       internalDocumentsError,
       isInternalDocumentContentLoading,

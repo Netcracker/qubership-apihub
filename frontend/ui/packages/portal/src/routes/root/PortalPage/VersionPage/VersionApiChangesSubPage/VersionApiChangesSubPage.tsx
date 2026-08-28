@@ -7,7 +7,7 @@ import { RichFiltersLayout } from '@netcracker/qubership-apihub-ui-shared/compon
 import { PageTitle } from '@netcracker/qubership-apihub-ui-shared/components/Titles/PageTitle'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { CHANGE_SEVERITIES } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
-import { type ContractType, toRouteApiType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
+import { CONTRACT_TYPE_DDL, type ContractType, toRouteApiType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import {
@@ -74,7 +74,9 @@ export const VersionApiChangesSubPage: FC = memo(() => {
 
   const [packageObject] = usePackage({ showParents: true })
   const isDashboard = packageObject?.kind === DASHBOARD_KIND
-  const filtersApplied = useCheckOperationFiltersApplied(isDashboard)
+  const isDdl = routeApiType === CONTRACT_TYPE_DDL
+  const hideDdlFiltersOnPackage = isDdl && !isDashboard
+  const filtersApplied = useCheckOperationFiltersApplied(isDashboard) && !hideDdlFiltersOnPackage
 
   const { hideFiltersPanel, toggleHideFiltersPanel } = usePortalPageSettingsContext()
 
@@ -101,7 +103,7 @@ export const VersionApiChangesSubPage: FC = memo(() => {
             withApiSelector={isApiTypeSelectorShown(allowedApiTypes)}
           />
         }
-        searchPlaceholder="Search Operations"
+        searchPlaceholder="Search"
         setSearchValue={setSearchValue}
         exportButton={
           <ExportChangesMenu
@@ -126,7 +128,8 @@ export const VersionApiChangesSubPage: FC = memo(() => {
           />
         }
         filtersApplied={filtersApplied}
-        hideFiltersPanel={hideFiltersPanel}
+        hideFilterButton={hideDdlFiltersOnPackage}
+        hideFiltersPanel={hideDdlFiltersOnPackage || hideFiltersPanel}
         filters={<ApiChangesNavigation />}
         onClickFilterButton={toggleHideFiltersPanel}
         body={<ApiChangesCard searchValue={searchValue} />}

@@ -47,7 +47,7 @@ export type VersionOperationsLayoutProps = {
   onOperationsViewChange?: (newViewMode: Key | undefined) => void
   onClickFilterButton?: (value: boolean) => void
   hideSearch?: boolean
-  hideFilter?: boolean
+  hideFilterButton?: boolean
   hideViewToggle?: boolean
   hideExport?: boolean
   filters: ReactNode
@@ -69,7 +69,7 @@ export const RichFiltersLayout: FC<VersionOperationsLayoutProps> = memo<VersionO
   searchPlaceholder = 'Search',
   setSearchValue,
   hideSearch = false,
-  hideFilter = false,
+  hideFilterButton = false,
   hideViewToggle = false,
   hideExport = false,
   filters,
@@ -111,7 +111,7 @@ export const RichFiltersLayout: FC<VersionOperationsLayoutProps> = memo<VersionO
         />
       )}
 
-      {!hideFilter && (
+      {!hideFilterButton && (
         <FilterButton
           selected={hiddenFiltersPanel}
           onSelect={() => setHiddenFiltersPanel(!hiddenFiltersPanel)}
@@ -123,7 +123,7 @@ export const RichFiltersLayout: FC<VersionOperationsLayoutProps> = memo<VersionO
 
       {!hideExport && exportButton}
     </Box>
-  ), [additionalActions, exportButton, filtersApplied, hiddenFiltersPanel, hideExport, hideFilter, hideSearch, hideViewToggle, searchPlaceholder, setHiddenFiltersPanel, setSearchValue, viewSelector])
+  ), [additionalActions, exportButton, filtersApplied, hiddenFiltersPanel, hideExport, hideFilterButton, hideSearch, hideViewToggle, searchPlaceholder, setHiddenFiltersPanel, setSearchValue, viewSelector])
 
   return (
     <LayoutWithSidebar

@@ -50,6 +50,8 @@ export const PublishedDocumentRawView: FC<PublishedDocumentRawViewProps> = memo<
         value={rawContent}
         extension={`.${format}` as FileExtension}
         type={type}
+        // TODO: Needs a larger refactor to centralise Doc/Raw view spacing for all specification kinds.
+        sx={{ ml: -2, mr: 0 }}
       />
     </ContentContainer>
   )

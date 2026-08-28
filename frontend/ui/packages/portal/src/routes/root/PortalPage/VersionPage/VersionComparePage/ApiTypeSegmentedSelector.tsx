@@ -15,10 +15,18 @@
  */
 
 import type { FC } from 'react'
-import { memo } from 'react'
-import { useApiTypeSearchParam } from '../useApiTypeSearchParam'
+import { memo, useMemo } from 'react'
+
 import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
-import { API_TYPE_TITLE_MAP, API_TYPES } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { API_TYPE_TITLE_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { CONTRACT_TYPE_DDL, CONTRACT_TYPE_TITLE_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
+import { getDashboardComparisonApiTypes } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-changes-summary'
+import {
+  isDashboardComparisonSummary,
+} from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
+
+import { useChangesSummaryFromContext } from '../ChangesSummaryProvider'
+import { useApiTypeSearchParam } from '../useApiTypeSearchParam'
 import {
   COMPARE_API_TYPE_ALL,
   type CompareApiTypeFilterOption,
@@ -26,19 +34,30 @@ import {
 
 export const ApiTypeSegmentedSelector: FC = memo(() => {
   const { apiType, setApiTypeSearchParam } = useApiTypeSearchParam()
+  const changesSummary = useChangesSummaryFromContext()
+
+  const selectorOptions = useMemo((): readonly CompareApiTypeFilterOption[] => {
+    if (!changesSummary || !isDashboardComparisonSummary(changesSummary)) {
+      return [COMPARE_API_TYPE_ALL]
+    }
+
+    return [COMPARE_API_TYPE_ALL, ...getDashboardComparisonApiTypes(changesSummary)]
+  }, [changesSummary])
 
   return (
     <Toggler<CompareApiTypeFilterOption>
       mode={apiType as CompareApiTypeFilterOption}
-      modes={SELECTOR_OPTIONS}
+      modes={selectorOptions}
       onChange={setApiTypeSearchParam}
       modeToText={OPTION_DISPLAYS}
     />
   )
 })
 
-const SELECTOR_OPTIONS: readonly CompareApiTypeFilterOption[] = [COMPARE_API_TYPE_ALL, ...API_TYPES]
-const OPTION_DISPLAYS = {
+ApiTypeSegmentedSelector.displayName = 'ApiTypeSegmentedSelector'
+
+const OPTION_DISPLAYS: Record<string, string> = {
   ...API_TYPE_TITLE_MAP,
+  [CONTRACT_TYPE_DDL]: CONTRACT_TYPE_TITLE_MAP[CONTRACT_TYPE_DDL],
   [COMPARE_API_TYPE_ALL]: 'All',
 }

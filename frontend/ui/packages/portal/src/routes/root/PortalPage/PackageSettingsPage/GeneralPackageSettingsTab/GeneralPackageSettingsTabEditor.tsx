@@ -74,7 +74,7 @@ export const GeneralPackageSettingsTabEditor: FC<PackageSettingsTabProps> = memo
   const [updatePackage, isUpdateLoading, isSuccess] = useUpdatePackage()
   const { versions: previousReleaseVersions } = usePackageVersions({
     packageKey: key,
-    status: RELEASE_VERSION_STATUS,
+    status: [RELEASE_VERSION_STATUS],
   })
 
   const defaultReleaseVersion = useMemo(

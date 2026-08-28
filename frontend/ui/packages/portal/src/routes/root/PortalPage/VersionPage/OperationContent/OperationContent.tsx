@@ -426,6 +426,8 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
                   value={changedValueForRawSpecView}
                   extension={extension}
                   type={type}
+                  // TODO: Needs a larger refactor to centralise Doc/Raw view spacing for all specification kinds.
+                  sx={{ ml: -2, mr: 0, py: 2, pl: 2 }}
                 />
               </Box>
             )}

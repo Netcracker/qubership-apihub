@@ -14,22 +14,27 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo, useRef } from 'react'
+import { type FC, memo, useRef } from 'react'
 import { Box, Typography } from '@mui/material'
-import { ResultCommonHeader } from './ResultCommonHeader'
-import { CONTENT_WIDTH } from './GlobalSearchPanel'
-import { RateResults } from './RateResults'
 import { Marker } from 'react-mark.js'
-import type { FetchNextSearchResultList } from './global-search'
-import { getOverviewPath } from '../../../NavigationProvider'
-import { useIntersectionObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useIntersectionObserver'
-import type { PackageSearchResult } from '@apihub/entities/global-search'
-import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
-import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
-import { FormattedDate } from '@netcracker/qubership-apihub-ui-shared/components/FormattedDate'
 
-export type PackageSearchListProps = {
+import { FormattedDate } from '@netcracker/qubership-apihub-ui-shared/components/FormattedDate'
+import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
+import { useIntersectionObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useIntersectionObserver'
+import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
+
+import type { PackageSearchResult } from '@apihub/entities/global-search'
+import { getOverviewPath } from '../../../NavigationProvider'
+import type { FetchNextSearchResultList } from './global-search'
+import { RateResults } from './RateResults'
+import { ResultCommonHeader } from './ResultCommonHeader'
+import {
+  SearchResultListRoot,
+  SearchResultListSentinel,
+  SearchResultRowRoot,
+} from './SearchResultRowLayout'
+
+type PackageSearchListProps = {
   value: PackageSearchResult[]
   searchText: string
   fetchNextPage?: FetchNextSearchResultList
@@ -44,11 +49,11 @@ export const PackageSearchList: FC<PackageSearchListProps> = memo<PackageSearchL
   useIntersectionObserver(ref, isNextPageFetching, hasNextPage, fetchNextPage)
 
   return (
-    <Box width={CONTENT_WIDTH} position="relative">
+    <SearchResultListRoot>
       {value.map(({ packageKey, name, parentPackages, createdAt, serviceName, labels, version, status }) => {
         const { versionKey } = getSplittedVersionKey(version)
         return (
-          <Box mb={2} key={`package-search-list-box-${packageKey}-${versionKey}`} data-testid="SearchResultRow">
+          <SearchResultRowRoot key={`package-search-list-box-${packageKey}-${versionKey}`} data-testid="SearchResultRow">
             <ResultCommonHeader
               url={getOverviewPath({ packageKey: packageKey, versionKey: versionKey })}
               title={`${name} / ${versionKey}`}
@@ -75,19 +80,16 @@ export const PackageSearchList: FC<PackageSearchListProps> = memo<PackageSearchL
                 labels={labels}
               />
             </Marker>
-          </Box>
+          </SearchResultRowRoot>
         )
       })}
 
       {hasNextPage && (
-        <Box
-          ref={ref}
-          height="100px"
-        >
+        <SearchResultListSentinel ref={ref}>
           <LoadingIndicator/>
-        </Box>
+        </SearchResultListSentinel>
       )}
-    </Box>
+    </SearchResultListRoot>
   )
 })
 

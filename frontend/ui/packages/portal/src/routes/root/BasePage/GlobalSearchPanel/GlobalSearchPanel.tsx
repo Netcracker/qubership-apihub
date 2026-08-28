@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo } from 'react'
-import { Box, Divider, IconButton, Typography } from '@mui/material'
+import { type FC, memo } from 'react'
+import { Box, Divider, IconButton, Typography, styled } from '@mui/material'
+
+import { SidePanelDrawer } from '@netcracker/qubership-apihub-ui-shared/components/SidePanelDrawer'
+import { CloseIcon } from '@netcracker/qubership-apihub-ui-shared/icons/CloseIcon'
+
+import { GLOBAL_SEARCH_PANEL, useSidePanel } from '../PanelManager/SidePanelManager'
+import { FILTERS_COLUMN_WIDTH, RESULTS_COLUMN_WIDTH } from './globalSearchConstants'
+import { GlobalSearchTextProvider } from './GlobalSearchTextProvider'
 import { SearchFilters } from './SearchFilters'
 import { SearchResults } from './SearchResults'
-import { GlobalSearchTextProvider } from './GlobalSearchTextProvider'
-import { CloseIcon } from '@netcracker/qubership-apihub-ui-shared/icons/CloseIcon'
-import { SidePanelDrawer } from '@netcracker/qubership-apihub-ui-shared/components/SidePanelDrawer'
-import { GLOBAL_SEARCH_PANEL, useSidePanel } from '../PanelManager/SidePanelManager'
 
 export const GlobalSearchPanel: FC = memo(() => {
   const { open, closePanel } = useSidePanel(GLOBAL_SEARCH_PANEL)
@@ -33,32 +35,65 @@ export const GlobalSearchPanel: FC = memo(() => {
       onClose={closePanel}
       keepMounted={true}
     >
-      <Box sx={{ p: 2, display: 'flex', flexDirection: 'row', overflow: 'hidden', height: '100%' }}
-           data-testid="GlobalSearchPanel">
+      <GlobalSearchPanelRoot data-testid="GlobalSearchPanel">
         <GlobalSearchTextProvider>
-          <Box sx={{ width: '330px' }}>
+          <GlobalSearchFiltersColumn>
             <SearchFilters enabledFilters={open}/>
-          </Box>
-          <Divider sx={{ mt: -2, mb: -2 }} orientation="vertical"/>
-          <Box sx={{ pl: 3, width: '500px' }}>
-            <Box sx={{ display: 'flex' }}>
-              <Typography sx={{ mb: 1, mt: 1 }} variant="h3">Global Search</Typography>
-              <IconButton
+          </GlobalSearchFiltersColumn>
+          <GlobalSearchPanelDivider orientation="vertical"/>
+          <GlobalSearchResultsColumn>
+            <GlobalSearchTitleRow>
+              <GlobalSearchTitle variant="h3">Global Search</GlobalSearchTitle>
+              <GlobalSearchCloseButton
                 aria-label="Close Global Search"
                 data-testid="CloseGlobalSearchButton"
-                sx={{ ml: 'auto' }}
                 onClick={closePanel}
                 color="inherit"
               >
                 <CloseIcon fontSize="small"/>
-              </IconButton>
-            </Box>
+              </GlobalSearchCloseButton>
+            </GlobalSearchTitleRow>
             <SearchResults/>
-          </Box>
+          </GlobalSearchResultsColumn>
         </GlobalSearchTextProvider>
-      </Box>
+      </GlobalSearchPanelRoot>
     </SidePanelDrawer>
   )
 })
 
-export const CONTENT_WIDTH = '460px'
+GlobalSearchPanel.displayName = 'GlobalSearchPanel'
+
+const GlobalSearchPanelRoot = styled(Box)(({ theme }) => ({
+  padding: theme.spacing(2),
+  display: 'flex',
+  flexDirection: 'row',
+  overflow: 'hidden',
+  height: '100%',
+}))
+
+const GlobalSearchFiltersColumn = styled(Box)({
+  width: FILTERS_COLUMN_WIDTH,
+})
+
+const GlobalSearchPanelDivider = styled(Divider)(({ theme }) => ({
+  marginTop: theme.spacing(-2),
+  marginBottom: theme.spacing(-2),
+}))
+
+const GlobalSearchResultsColumn = styled(Box)(({ theme }) => ({
+  paddingLeft: theme.spacing(3),
+  width: RESULTS_COLUMN_WIDTH,
+}))
+
+const GlobalSearchTitleRow = styled(Box)({
+  display: 'flex',
+})
+
+const GlobalSearchTitle = styled(Typography)(({ theme }) => ({
+  marginBottom: theme.spacing(1),
+  marginTop: theme.spacing(1),
+}))
+
+const GlobalSearchCloseButton = styled(IconButton)({
+  marginLeft: 'auto',
+})

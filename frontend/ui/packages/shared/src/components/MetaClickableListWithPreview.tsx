@@ -125,6 +125,11 @@ function MetaClickableListWithPreviewComponent<TItem>({
             bottomLeft: false,
             topLeft: false,
           }}
+          handleStyles={{
+            left: {
+              cursor: 'ew-resize',
+            },
+          }}
           boundsByDirection={true}
           size={{ width: initialSize, height: '100%' }}
           maxWidth={maxWidth}

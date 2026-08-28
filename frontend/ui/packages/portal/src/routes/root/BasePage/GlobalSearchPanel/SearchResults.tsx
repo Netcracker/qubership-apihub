@@ -33,7 +33,7 @@ import { SearchResultTabLabel } from './SearchResultTabLabel'
 import { useOperationsGlobalSearch } from './useOperationsGlobalSearch'
 import { useDocumentsGlobalSearch } from './useDocumentsGlobalSearch'
 import { usePackagesGlobalSearch } from './usePackagesGlobalSearch'
-import { ApiOperationsSearchList } from './ApiOperationsSearchList'
+import { ContractElementSearchList } from './ContractElementSearchList'
 import { DocumentSearchList } from './DocumentSearchList'
 import { PackageSearchList } from './PackageSearchList'
 import { SearchResultSkeleton } from './SearchResultSkeleton'
@@ -68,7 +68,7 @@ export const SearchResults: FC = memo(() => {
 
   const currentLevel = useMemo(() => SEARCH_LEVEL_MAP[activeTab], [activeTab])
 
-  const [{ operations }, isInitialOperationsLoading, fetchNextOperationsPage, isNextOperationsPageFetching, hasNextOperationsPage] = useOperationsGlobalSearch(
+  const [{ contractElements }, isInitialOperationsLoading, fetchNextOperationsPage, isNextOperationsPageFetching, hasNextOperationsPage] = useOperationsGlobalSearch(
     filters
       ? { criteria: { ...filters, searchString: searchText }, enabled: currentLevel === OPERATION_LEVEL }
       : { criteria: { searchString: searchText }, enabled: currentLevel === OPERATION_LEVEL },
@@ -120,8 +120,8 @@ export const SearchResults: FC = memo(() => {
             label={
               <SearchResultTabLabel
                 key={OPERATION_LEVEL}
-                label="API Operations"
-                results={operations}
+                label="Contract Elements"
+                results={contractElements}
                 isLoading={isInitialOperationsLoading}
               />
             }
@@ -159,18 +159,18 @@ export const SearchResults: FC = memo(() => {
           {
             isInitialOperationsLoading
               ? <SearchResultSkeleton/>
-              : isNotEmpty(operations)
-                ? <ApiOperationsSearchList
-                  value={operations}
+              : isNotEmpty(contractElements)
+                ? <ContractElementSearchList
+                  value={contractElements}
                   searchText={searchText}
                   fetchNextPage={fetchNextOperationsPage}
                   isNextPageFetching={isNextOperationsPageFetching}
                   hasNextPage={hasNextOperationsPage}
                 />
                 : <Placeholder
-                  invisible={isNotEmpty(operations)}
+                  invisible={isNotEmpty(contractElements)}
                   area={CONTENT_PLACEHOLDER_AREA}
-                  message={searchText ? NO_SEARCH_RESULTS : 'No operations to display'}
+                  message={searchText ? NO_SEARCH_RESULTS : 'No contract elements to display'}
                   data-testid="NoOperationsPlaceholder"
                 />
           }

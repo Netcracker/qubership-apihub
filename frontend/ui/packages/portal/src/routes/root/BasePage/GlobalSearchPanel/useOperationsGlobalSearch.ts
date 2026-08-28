@@ -14,23 +14,43 @@
  * limitations under the License.
  */
 
-import { useInfiniteQuery } from '@tanstack/react-query'
-import type { FetchNextSearchResultList } from './global-search'
-import { getSearchResult } from './global-search'
 import { useMemo } from 'react'
-import type { SearchCriteria, SearchResults } from '@apihub/entities/global-search'
-import { OPERATION_LEVEL } from '@apihub/entities/global-search'
+import { useInfiniteQuery } from '@tanstack/react-query'
+
+import {
+  CONTRACT_TYPE_DDL,
+  CONTRACT_TYPE_MCP,
+} from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import type { HasNextPage, IsFetchingNextPage, IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 
+import {
+  type ApiContract,
+  type ContractElementSearchResult,
+  DDL_LEVEL,
+  type Level,
+  MCP_LEVEL,
+  OPERATION_LEVEL,
+  type SearchCriteria,
+  type SearchResults,
+} from '@apihub/entities/global-search'
+import { getSearchResult, type FetchNextSearchResultList } from './global-search'
+import { SEARCH_RESULTS_PAGE_SIZE } from './globalSearchConstants'
+
 const GLOBAL_OPERATIONS_SEARCH_RESULT_QUERY_KEY = 'global-operations-search-result-query-key'
+
+type ContractElementsSearchResults = Readonly<{
+  contractElements: ContractElementSearchResult[]
+}>
 
 export function useOperationsGlobalSearch(options: {
   criteria: SearchCriteria
   enabled: boolean
   limit?: number
   page?: number
-}): [SearchResults, IsLoading, FetchNextSearchResultList, IsFetchingNextPage, HasNextPage] {
-  const { criteria, enabled, page = 1, limit = 100 } = options
+}): [ContractElementsSearchResults, IsLoading, FetchNextSearchResultList, IsFetchingNextPage, HasNextPage] {
+  const { criteria, enabled, page = 1, limit = SEARCH_RESULTS_PAGE_SIZE } = options
+  const apiContract = criteria.apiContract ?? criteria.apiType
+  const level = getContractElementsSearchLevel(apiContract)
 
   const {
     data,
@@ -39,25 +59,26 @@ export function useOperationsGlobalSearch(options: {
     isFetchingNextPage,
     hasNextPage,
   } = useInfiniteQuery<SearchResults, Error, SearchResults>({
-    queryKey: [GLOBAL_OPERATIONS_SEARCH_RESULT_QUERY_KEY, criteria, OPERATION_LEVEL],
-    queryFn: ({ pageParam = page }) => getSearchResult(criteria, OPERATION_LEVEL, limit, pageParam - 1),
+    queryKey: [GLOBAL_OPERATIONS_SEARCH_RESULT_QUERY_KEY, criteria, level, apiContract],
+    queryFn: ({ pageParam = page }) => getSearchResult(criteria, level, limit, pageParam - 1),
     enabled: enabled && !!criteria.searchString,
     getNextPageParam: (lastPage, allPages) => {
       if (limit && enabled) {
-        return lastPage.operations.length === limit ? allPages.length + 1 : undefined
+        return getActiveSearchResultsCount(lastPage, level) === limit ? allPages.length + 1 : undefined
       }
 
       return undefined
     },
   })
 
-  const operations = useMemo(() => data?.pages.flatMap(page => page.operations) ?? [], [data?.pages])
+  const contractElements = useMemo(
+    () => data?.pages.flatMap(page => getActiveSearchResults(page, level)) ?? [],
+    [data?.pages, level],
+  )
 
   return [
     {
-      packages: [],
-      documents: [],
-      operations: operations,
+      contractElements,
     },
     isInitialLoading,
     fetchNextPage,
@@ -66,3 +87,26 @@ export function useOperationsGlobalSearch(options: {
   ]
 }
 
+function getContractElementsSearchLevel(apiContract?: ApiContract): Level {
+  if (apiContract === CONTRACT_TYPE_MCP) {
+    return MCP_LEVEL
+  }
+  if (apiContract === CONTRACT_TYPE_DDL) {
+    return DDL_LEVEL
+  }
+  return OPERATION_LEVEL
+}
+
+function getActiveSearchResults(page: SearchResults, level: Level): ContractElementSearchResult[] {
+  if (level === MCP_LEVEL) {
+    return page.mcpContracts.map(result => ({ level: MCP_LEVEL, result: result }))
+  }
+  if (level === DDL_LEVEL) {
+    return page.ddlContracts.map(result => ({ level: DDL_LEVEL, result: result }))
+  }
+  return page.operations.map(result => ({ level: OPERATION_LEVEL, result: result }))
+}
+
+function getActiveSearchResultsCount(page: SearchResults, level: Level): number {
+  return getActiveSearchResults(page, level).length
+}

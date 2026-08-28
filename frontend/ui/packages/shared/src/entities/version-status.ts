@@ -52,3 +52,42 @@ export const VERSION_STATUSES: VersionStatuses = [
 ]
 
 export const NO_PREVIOUS_RELEASE_VERSION_OPTION: Key = 'No previous release version'
+
+export const RELEASE_PREVIOUS_VERSION_REQUIRED_MESSAGE = 'A release version must have a release previous version'
+
+export type PreviousVersionLabels = {
+  fieldLabel: string
+  noPreviousOptionLabel: string
+}
+
+const DRAFT_PREVIOUS_VERSION_LABELS: PreviousVersionLabels = {
+  fieldLabel: 'Previous version',
+  noPreviousOptionLabel: 'No previous version',
+}
+
+const RELEASE_PREVIOUS_VERSION_LABELS: PreviousVersionLabels = {
+  fieldLabel: 'Previous release version',
+  noPreviousOptionLabel: 'No previous release version',
+}
+
+export function getPreviousVersionLabels(status: VersionStatus | undefined): PreviousVersionLabels {
+  return status === DRAFT_VERSION_STATUS
+    ? DRAFT_PREVIOUS_VERSION_LABELS
+    : RELEASE_PREVIOUS_VERSION_LABELS
+}
+
+export function getPreviousVersionStatuses(status: VersionStatus | undefined): VersionStatus[] {
+  return status === DRAFT_VERSION_STATUS
+    ? [RELEASE_VERSION_STATUS, DRAFT_VERSION_STATUS]
+    : [RELEASE_VERSION_STATUS]
+}
+
+export function isPreviousVersionStatusAllowed(
+  status: VersionStatus | undefined,
+  previousStatus: VersionStatus,
+): boolean {
+  if (status === DRAFT_VERSION_STATUS) {
+    return previousStatus === DRAFT_VERSION_STATUS || previousStatus === RELEASE_VERSION_STATUS
+  }
+  return previousStatus === RELEASE_VERSION_STATUS
+}

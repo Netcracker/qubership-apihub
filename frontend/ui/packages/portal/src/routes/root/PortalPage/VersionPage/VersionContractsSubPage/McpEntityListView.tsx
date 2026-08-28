@@ -1,25 +1,48 @@
-import { Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
-import type { FC } from 'react'
-import { memo, useRef } from 'react'
+import type { ColumnDef } from '@tanstack/table-core'
+import { type FC, memo, useCallback, useMemo } from 'react'
 
+import { CustomTableHeadCell } from '@netcracker/qubership-apihub-ui-shared/components/CustomTableHeadCell'
 import { McpEntityTitleWithMeta } from '@netcracker/qubership-apihub-ui-shared/components/Mcp/McpEntityTitleWithMeta'
 import type { FetchNextMetaList } from '@netcracker/qubership-apihub-ui-shared/components/MetaClickableListWithPreview'
-import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import type { McpCollection, McpEntity } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
-import { MCP_COLLECTION_EMPTY_MESSAGES } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
+import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
+import {
+  MCP_COLLECTION_EMPTY_MESSAGES,
+  getMcpContractEntityListKey,
+  type McpListCollection,
+  type McpContractEntity,
+} from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import { useIntersectionObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useIntersectionObserver'
-import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import type { ColumnModel } from '@netcracker/qubership-apihub-ui-shared/hooks/table-resizing/useColumnResizing'
 
+import { usePackageKind } from '../../usePackageKind'
+import { useRefSearchParam } from '../../useRefSearchParam'
+import { useContractBrowseLinkHandlers } from '../useContractBrowseLinkHandlers'
 import { useMcpEndpointSearchParam } from '../useMcpEndpointSearchParam'
-import { useMcpEntitySearchParam } from '../useMcpEntitySearchParam'
 import { getMcpEntityLink } from '../useNavigateToOperation'
+import { ContractsEntityListTable } from './ContractsEntityListTable'
+
+const NAME_COLUMN_ID = 'name'
+const PACKAGE_COLUMN_ID = 'package'
+
+const PACKAGE_COLUMNS_MODELS: ColumnModel[] = [
+  { name: NAME_COLUMN_ID },
+]
+
+const DASHBOARD_COLUMNS_MODELS: ColumnModel[] = [
+  { name: NAME_COLUMN_ID },
+  { name: PACKAGE_COLUMN_ID, width: 226 },
+]
+
+type McpEntityListViewRow = {
+  entity: McpContractEntity
+}
 
 export type McpEntityListViewProps = {
-  entities: ReadonlyArray<McpEntity>
+  entities: ReadonlyArray<McpContractEntity>
   packageKey: Key
   versionKey: Key
-  collection: McpCollection
+  collection: McpListCollection
   fetchNextPage?: FetchNextMetaList
   isNextPageFetching?: boolean
   hasNextPage?: boolean
@@ -37,59 +60,72 @@ export const McpEntityListView: FC<McpEntityListViewProps> = memo<McpEntityListV
   isLoading = false,
 }) => {
   const [mcpEndpoint] = useMcpEndpointSearchParam()
-  const [mcpEntity] = useMcpEntitySearchParam()
-  const ref = useRef<HTMLTableRowElement>(null)
-  useIntersectionObserver(ref, isNextPageFetching, hasNextPage, fetchNextPage)
+  const [refKey] = useRefSearchParam()
+  const [packageKind] = usePackageKind()
+  const isDashboard = packageKind === DASHBOARD_KIND
+  const onLinkClick = useContractBrowseLinkHandlers()
+
+  const columns: ColumnDef<McpEntityListViewRow>[] = useMemo(() => {
+    const result: ColumnDef<McpEntityListViewRow>[] = [
+      {
+        id: NAME_COLUMN_ID,
+        header: () => <CustomTableHeadCell title="Name" />,
+        cell: ({ row: { original: { entity } } }) => (
+          <McpEntityTitleWithMeta
+            entity={entity}
+            link={getMcpEntityLink({
+              packageKey: packageKey,
+              versionKey: versionKey,
+              mcpEntityId: entity.mcpEntityId,
+              mcpEndpoint: mcpEndpoint ?? entity.mcpEndpoint,
+              mcpCollection: collection,
+              ref: isDashboard ? entity.packageRef?.key ?? refKey : undefined,
+            })}
+            onLinkClick={onLinkClick}
+          />
+        ),
+      },
+    ]
+
+    if (isDashboard) {
+      result.push({
+        id: PACKAGE_COLUMN_ID,
+        header: () => <CustomTableHeadCell title="Package" />,
+        cell: ({ row: { original: { entity } } }) => {
+          if (entity.packageRef?.name) {
+            return (
+              <TextWithOverflowTooltip tooltipText={entity.packageRef.name}>
+                {entity.packageRef.name}
+              </TextWithOverflowTooltip>
+            )
+          }
+        },
+      })
+    }
+
+    return result
+  }, [collection, isDashboard, mcpEndpoint, onLinkClick, packageKey, refKey, versionKey])
+
+  const data: McpEntityListViewRow[] = useMemo(
+    () => entities.map(entity => ({ entity })),
+    [entities],
+  )
+
+  const columnModels = isDashboard ? DASHBOARD_COLUMNS_MODELS : PACKAGE_COLUMNS_MODELS
+  const resolveRowId = useCallback((row: McpEntityListViewRow) => getMcpContractEntityListKey(row.entity), [])
 
   return (
-    <Placeholder
-      invisible={isNotEmpty(entities) || isLoading}
-      area={CONTENT_PLACEHOLDER_AREA}
-      message={MCP_COLLECTION_EMPTY_MESSAGES[collection]}
-      data-testid="NoItemsPlaceholder"
-    >
-      <TableContainer>
-        <Table stickyHeader>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {entities.map(entity => (
-              <TableRow key={entity.mcpEntityId} hover>
-                <TableCell data-testid="Cell-name">
-                  <McpEntityTitleWithMeta
-                    entity={entity}
-                    link={getMcpEntityLink({
-                      packageKey: packageKey,
-                      versionKey: versionKey,
-                      mcpEntityId: entity.mcpEntityId,
-                      mcpEndpoint: mcpEndpoint ?? entity.mcpEndpoint,
-                      mcpEntity: mcpEntity ?? collection,
-                    })}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-            {isLoading && (
-              <TableRow>
-                <TableCell>
-                  <Skeleton variant="rectangular" height={20} />
-                </TableCell>
-              </TableRow>
-            )}
-            {hasNextPage && (
-              <TableRow ref={ref}>
-                <TableCell>
-                  <Skeleton variant="rectangular" height={20} />
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Placeholder>
+    <ContractsEntityListTable
+      columns={columns}
+      data={data}
+      getRowId={resolveRowId}
+      columnModels={columnModels}
+      emptyMessage={MCP_COLLECTION_EMPTY_MESSAGES[collection]}
+      fetchNextPage={fetchNextPage}
+      isNextPageFetching={isNextPageFetching}
+      hasNextPage={hasNextPage}
+      isLoading={isLoading}
+    />
   )
 })
 

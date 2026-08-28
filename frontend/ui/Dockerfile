@@ -7,7 +7,7 @@ WORKDIR /workspace
 RUN --mount=type=secret,id=npmrc,target=.npmrc mv "$(npm pack @netcracker/qubership-apihub-ui-agents@"$TAG")" qubership-apihub-ui-agents.tgz
 RUN --mount=type=secret,id=npmrc,target=.npmrc mv "$(npm pack @netcracker/qubership-apihub-ui-portal@"$TAG")" qubership-apihub-ui-portal.tgz
 
-FROM docker.io/nginx:1.30.1-alpine3.23
+FROM docker.io/nginx:1.31.3-alpine3.24
 
 WORKDIR /tmp/build
 

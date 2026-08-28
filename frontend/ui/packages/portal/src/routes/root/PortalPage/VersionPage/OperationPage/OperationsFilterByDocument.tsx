@@ -23,12 +23,13 @@ import type { Document } from '@apihub/entities/documents'
 import { EMPTY_DOC } from '@apihub/entities/documents'
 import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/OptionItem'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { ContractType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 
 export type OperationsFilterByDocumentProps = {
   labelText?: string
   packageKey: Key
   versionKey: Key
-  apiTypeFilter: ApiType
+  apiType?: ApiType | ContractType
   defaultDocumentSlug?: Key
   onDocumentSelect: (document: Document | null) => void
 }
@@ -43,13 +44,13 @@ export const OperationsFilterByDocument: FC<OperationsFilterByDocumentProps> =
       packageKey,
       versionKey,
       defaultDocumentSlug,
-      apiTypeFilter,
+      apiType,
       onDocumentSelect,
     } = props
     const { documents, isLoading: isDocumentsLoading } = useDocuments({
-      packageKey: packageKey,
-      versionKey: versionKey,
-      apiType: apiTypeFilter,
+      packageKey,
+      versionKey,
+      apiType,
     })
 
     const [selectedDocument, setSelectedDocument] = useState<Document>(EMPTY_DOC)

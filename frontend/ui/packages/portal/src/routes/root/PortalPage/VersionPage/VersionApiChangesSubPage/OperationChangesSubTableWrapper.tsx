@@ -22,6 +22,7 @@ import type { SubTableComponentProps } from '@netcracker/qubership-apihub-ui-sha
 import { OperationChangesSubTable } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget'
 import { usePackageVersionContent } from '@apihub/routes/root/usePackageVersionContent'
 import { sortChanges } from '@netcracker/qubership-apihub-ui-shared/utils/api-changes'
+import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 
 export type OperationChangesSubTableWrapper = SubTableComponentProps
 
@@ -30,16 +31,33 @@ export const OperationChangesSubTableWrapper: FC<OperationChangesSubTableWrapper
     const { currentOperation, previousOperation } = value.original.change
     const operationKey = currentOperation?.operationKey ?? previousOperation!.operationKey
 
-    const { versionContent, isLoading: isVersionLoading } = usePackageVersionContent({ packageKey, versionKey })
+    const isDashboard = packageKind === DASHBOARD_KIND
+
+    // TODO(Operations/backend): The operations API lacks dashboard `refPackageId` support (unlike DDL).
+    // We use the referenced package's version from the dashboard config as a workaround.
+    // Refactor this to use the dashboard's own version once backend support is added.
+    const { versionContent, isLoading: isVersionLoading } = usePackageVersionContent({
+      packageKey: packageKey,
+      versionKey: versionKey,
+      enabled: !isDashboard,
+    })
+
+    const previousVersion = isDashboard
+      ? previousOperation?.packageRef?.version
+      : versionContent?.previousVersion
+
+    const previousVersionPackageId = isDashboard
+      ? (previousOperation?.packageRef?.key ?? packageKey)
+      : (versionContent?.previousVersionPackageId ?? packageKey)
 
     const [changes, isLoading] = useOperationChangelog({
       versionKey: versionKey!,
       packageKey: packageKey!,
       operationKey: operationKey!,
       apiType: apiType,
-      previousVersion: versionContent?.previousVersion,
-      previousVersionPackageId: versionContent?.previousVersionPackageId ?? packageKey,
-      enable: true,
+      previousVersion: previousVersion,
+      previousVersionPackageId: previousVersionPackageId,
+      enable: !!previousVersion,
     })
 
     const sortedChanges = useMemo(() => sortChanges(changes), [changes])
@@ -47,7 +65,7 @@ export const OperationChangesSubTableWrapper: FC<OperationChangesSubTableWrapper
     return (
       <OperationChangesSubTable
         changes={sortedChanges}
-        isLoading={isLoading || isVersionLoading}
+        isLoading={isLoading || (!isDashboard && isVersionLoading)}
         packageKind={packageKind}
       />
     )

@@ -9,6 +9,7 @@ import type {
   DdlContractEntity,
   DdlContractEntityDetails,
 } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-ddl'
+import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 
 import { DdlTableContentView } from './DdlTableContentView'
 
@@ -18,6 +19,8 @@ export type DdlTablePreviewProps = {
   isLoading: boolean
   maxWidthHeaderToolbar?: number
   noHeading?: boolean
+  entityPackageKey?: Key
+  entityVersionKey?: Key
 }
 
 export const DdlTablePreview: FC<DdlTablePreviewProps> = memo<DdlTablePreviewProps>((props) => {
@@ -27,6 +30,8 @@ export const DdlTablePreview: FC<DdlTablePreviewProps> = memo<DdlTablePreviewPro
     isLoading,
     maxWidthHeaderToolbar,
     noHeading = false,
+    entityPackageKey,
+    entityVersionKey,
   } = props
 
   const [viewMode, setViewMode] = useState<SpecViewMode>(DOC_SPEC_VIEW_MODE)
@@ -44,6 +49,8 @@ export const DdlTablePreview: FC<DdlTablePreviewProps> = memo<DdlTablePreviewPro
         data={tableDetails}
         viewMode={viewMode}
         noHeading={noHeading}
+        entityPackageKey={entityPackageKey}
+        entityVersionKey={entityVersionKey}
       />
     </ContractPreviewPanel>
   )

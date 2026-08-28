@@ -18,13 +18,12 @@ const ALL_PUBLISHED = [
 describe('resolveTabApiTypes', () => {
   test('intersects published types with tab allow-list and preserves order', () => {
     expect(resolveTabApiTypes(VERSION_TAB_IDS.contracts, ALL_PUBLISHED)).toEqual([...ALL_PUBLISHED])
-    // TODO(DDL): uncomment when CONTRACT_TYPE_DDL is restored in API_CHANGES_TAB_ALLOWED_API_TYPES.
-    // expect(resolveTabApiTypes(VERSION_TAB_IDS.apiChanges, ALL_PUBLISHED)).toEqual([
-    //   API_TYPE_REST,
-    //   API_TYPE_GRAPHQL,
-    //   API_TYPE_ASYNCAPI,
-    //   CONTRACT_TYPE_DDL,
-    // ])
+    expect(resolveTabApiTypes(VERSION_TAB_IDS.apiChanges, ALL_PUBLISHED)).toEqual([
+      API_TYPE_REST,
+      API_TYPE_GRAPHQL,
+      API_TYPE_ASYNCAPI,
+      CONTRACT_TYPE_DDL,
+    ])
     expect(resolveTabApiTypes(VERSION_TAB_IDS.apiQuality, ALL_PUBLISHED)).toEqual([
       API_TYPE_REST,
       API_TYPE_ASYNCAPI,

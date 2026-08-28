@@ -35,17 +35,16 @@ import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entit
 import {
   DRAFT_VERSION_STATUS,
   NO_PREVIOUS_RELEASE_VERSION_OPTION,
-  RELEASE_VERSION_STATUS,
 } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import type { VersionFormData } from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
 import {
   getVersionOptions,
   replaceEmptyPreviousVersion,
-  usePreviousVersionOptions,
   VersionDialogForm,
 } from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
 import { takeIf } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
 import { usePackageVersionConfig } from '@apihub/routes/root/PortalPage/usePackageVersionConfig'
+import { useMcpPublishValidation } from '@apihub/routes/root/PortalPage/PackagePage/useMcpPublishValidation'
 
 export const PublishPackageVersionDialog: FC = memo(() => {
   return (
@@ -67,7 +66,8 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
   const isDashboard = packageKind === DASHBOARD_KIND
   const isPackage = packageKind === PACKAGE_KIND
 
-  const { filesWithLabels, mcpFiles } = useFiles()
+  const { filesWithLabels, mcpStagedFileMetaByName } = useFiles()
+  const { hasBlockingIssues } = useMcpPublishValidation(mcpStagedFileMetaByName, filesWithLabels)
   const versionId = useMemo(() => {
     return isEditingVersion
       ? getSplittedVersionKey(currentVersionId).versionKey ?? ''
@@ -81,8 +81,6 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
     versions: filteredVersions,
     areVersionsLoading: areFilteredVersionsLoading,
   } = usePackageVersions({ textFilter: versionsFilter })
-  const { versions: previousVersions } = usePackageVersions({ status: RELEASE_VERSION_STATUS })
-  const previousVersionOptions = usePreviousVersionOptions(previousVersions)
   const [publishPackage, isPublishLoading, isPublishSuccess] = usePublishPackageVersion()
   const dashboardRefs = useDashboardReferences()
 
@@ -125,7 +123,7 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
       previousVersion: previousVersion,
       ...takeIf({
         files: Object.entries(filesWithLabels)?.map(([key, { labels }]) => {
-          const mcpMeta = mcpFiles.get(key)
+          const mcpMeta = mcpStagedFileMetaByName.get(key)
           const mcpEndpoint = mcpMeta?.mcpEndpoint
           return {
             fileId: key,
@@ -143,7 +141,7 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
       }, isPackage),
       refs: isDashboard ? dashboardRefs.map(ref => ref.packageReference) : [],
     })
-  }, [dashboardRefs, filesWithLabels, isDashboard, isPackage, mcpFiles, publishPackage])
+  }, [dashboardRefs, filesWithLabels, isDashboard, isPackage, mcpStagedFileMetaByName, publishPackage])
 
   return (
     <VersionDialogForm
@@ -156,7 +154,7 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
       versions={versionOptions}
       onVersionsFilter={onVersionsFilter}
       areVersionsLoading={areFilteredVersionsLoading}
-      previousVersions={previousVersionOptions}
+      previousVersionsPackageKey={currentPackage?.key}
       getVersionLabels={getVersionLabels}
       packagePermissions={packagePermissions}
       releaseVersionPattern={releaseVersionPattern}
@@ -166,7 +164,7 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
       hideCopyPackageFields
       hideDescriptorVersionField
       hideSaveMessageField
-      publishButtonDisabled={isPackageLoading}
+      publishButtonDisabled={isPackageLoading || hasBlockingIssues}
       publishFieldsDisabled={isPackageLoading || isCurrentVersionLoading}
       currentPackageKey={currentPackage?.key}
     />

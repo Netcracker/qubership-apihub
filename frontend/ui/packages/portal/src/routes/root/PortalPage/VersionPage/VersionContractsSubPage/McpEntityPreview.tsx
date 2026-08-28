@@ -4,11 +4,11 @@ import { ContractPreviewPanel } from '@netcracker/qubership-apihub-ui-shared/com
 import { McpEntityTitleWithMeta } from '@netcracker/qubership-apihub-ui-shared/components/Mcp/McpEntityTitleWithMeta'
 import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
 import { JsonRawSpecView } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/JsonRawSpecView'
-import type { McpEntity, McpEntityDetails } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
+import type { McpContractEntity, McpContractEntityDetails } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
 
 export type McpEntityPreviewProps = Readonly<{
-  entity: McpEntity | undefined
-  entityDetails: McpEntityDetails | undefined
+  entity: McpContractEntity | undefined
+  entityDetails: McpContractEntityDetails | undefined
   isLoading: boolean
   maxWidthHeaderToolbar?: number
 }>
@@ -35,7 +35,11 @@ export const McpEntityPreview: FC<McpEntityPreviewProps> = memo<McpEntityPreview
         message="No content"
         data-testid="NoContentPlaceholder"
       >
-        <JsonRawSpecView data={entityDetails?.data} />
+        <JsonRawSpecView
+          data={entityDetails?.data}
+          // TODO: Needs a larger refactor to centralise Doc/Raw view spacing for all specification kinds.
+          sx={{ ml: -2, mr: 0, pb: 2 }}
+        />
       </Placeholder>
     </ContractPreviewPanel>
   )

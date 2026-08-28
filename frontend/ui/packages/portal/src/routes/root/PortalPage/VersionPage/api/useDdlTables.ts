@@ -3,12 +3,9 @@ import { useMemo } from 'react'
 import { generatePath } from 'react-router-dom'
 
 import type { FetchNextMetaList } from '@netcracker/qubership-apihub-ui-shared/components/MetaClickableListWithPreview'
-import type {
-  DdlContractEntity,
-  DdlContractEntityDto,
-} from '@netcracker/qubership-apihub-ui-shared/entities/contracts-ddl'
-import { toDdlContractEntity } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-ddl'
-import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import type { DdlContractEntity, DdlEntitiesDto } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-ddl'
+import { toDdlContractEntities } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-ddl'
+import type { Key, PackageKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { HasNextPage, IsFetchingNextPage, IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { API_V1, requestJson } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
@@ -17,14 +14,11 @@ import { useVersionWithRevision } from '../../../useVersionWithRevision'
 
 export const DDL_TABLES_QUERY_KEY = 'ddl-tables-query-key'
 
-type DdlEntitiesDto = Readonly<{
-  entities: ReadonlyArray<DdlContractEntityDto>
-}>
-
 type UseDdlTablesOptions = Readonly<{
   packageKey?: Key
   versionKey?: Key
   textFilter?: string
+  refPackageKey?: PackageKey
   limit?: number
   enabled?: boolean
 }>
@@ -40,6 +34,7 @@ export function useDdlTables(options?: UseDdlTablesOptions): [
     packageKey,
     versionKey,
     textFilter,
+    refPackageKey,
     limit = 100,
     enabled = true,
   } = options ?? {}
@@ -53,12 +48,13 @@ export function useDdlTables(options?: UseDdlTablesOptions): [
     isFetchingNextPage,
     hasNextPage,
   } = useInfiniteQuery<ReadonlyArray<DdlContractEntity>, Error>({
-    queryKey: [DDL_TABLES_QUERY_KEY, packageKey, fullVersion, textFilter],
+    queryKey: [DDL_TABLES_QUERY_KEY, packageKey, fullVersion, textFilter, refPackageKey],
     queryFn: ({ pageParam = 0, signal }) =>
       getDdlTables({
         packageKey: packageKey!,
         versionKey: fullVersion!,
         textFilter: textFilter,
+        refPackageKey: refPackageKey,
         limit: limit,
         offset: pageParam,
       }, signal),
@@ -69,7 +65,6 @@ export function useDdlTables(options?: UseDdlTablesOptions): [
       return lastPage.length === limit ? allPages.length * limit : undefined
     },
     enabled: !!packageKey && !!fullVersion && enabled,
-    keepPreviousData: true,
   })
 
   return [
@@ -86,6 +81,7 @@ async function getDdlTables(
     packageKey: Key
     versionKey: Key
     textFilter?: string
+    refPackageKey?: PackageKey
     limit?: number
     offset?: number
   },
@@ -95,6 +91,7 @@ async function getDdlTables(
     packageKey,
     versionKey,
     textFilter,
+    refPackageKey,
     limit,
     offset,
   } = options
@@ -104,6 +101,7 @@ async function getDdlTables(
 
   const queryParams = optionalSearchParams({
     textFilter: { value: textFilter },
+    refPackageId: { value: refPackageKey },
     limit: { value: limit },
     offset: { value: offset, toStringValue: value => `${value}` },
   })
@@ -115,5 +113,5 @@ async function getDdlTables(
     { basePath: API_V1 },
   )
 
-  return response.entities.map(toDdlContractEntity)
+  return toDdlContractEntities(response)
 }

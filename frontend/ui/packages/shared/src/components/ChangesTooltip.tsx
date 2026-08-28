@@ -55,12 +55,15 @@ export const ChangesTooltip: FC<ChangesTooltipProps> = memo<ChangesTooltipProps>
 
 export const CATEGORY_OPERATION = 'operation'
 export const CATEGORY_PACKAGE = 'packages'
+export const CATEGORY_TABLE = 'table'
 
 const TOOLTIP_TITLE_BY_CATEGORY = {
   [CATEGORY_OPERATION]: 'Operations',
   [CATEGORY_PACKAGE]: 'Packages',
+  [CATEGORY_TABLE]: 'Tables',
 }
 
 export type ChangesTooltipCategory =
   | typeof CATEGORY_OPERATION
   | typeof CATEGORY_PACKAGE
+  | typeof CATEGORY_TABLE

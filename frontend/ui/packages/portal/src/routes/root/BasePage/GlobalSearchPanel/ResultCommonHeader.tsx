@@ -14,21 +14,26 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo } from 'react'
-import { Box, Link, Typography } from '@mui/material'
-import type { To } from 'react-router-dom'
-import { NavLink } from 'react-router-dom'
+import { Box, styled } from '@mui/material'
+import { type FC, memo } from 'react'
 import { Marker } from 'react-mark.js'
-import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
-import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
-import { GLOBAL_SEARCH_PANEL, useSidePanel } from '../PanelManager/SidePanelManager'
-import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
+import type { To } from 'react-router-dom'
+
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
 import { SpecLogo } from '@netcracker/qubership-apihub-ui-shared/components/SpecLogo'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
+import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 
-export type ResultCommonHeaderProps = {
+import { GLOBAL_SEARCH_PANEL, useSidePanel } from '../PanelManager/SidePanelManager'
+import { RESULT_TITLE_WIDTH } from './globalSearchConstants'
+import {
+  SearchResultBreadcrumbs,
+  SearchResultPrimaryTitle,
+  SearchResultRowSection,
+} from './SearchResultRowLayout'
+
+type ResultCommonHeaderProps = {
   url: To
   title: string
   parents: string[]
@@ -54,39 +59,38 @@ export const ResultCommonHeader: FC<ResultCommonHeaderProps> = memo<ResultCommon
 
   return (
     <Box width="inherit">
-      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-        <OverflowTooltip title={breadcrumbs}>
-          <Typography
-            variant="subtitle2"
-            noWrap
-            data-testid="PathToSearchResultItem"
-          >
-            {breadcrumbs}
-          </Typography>
-        </OverflowTooltip>
-        {breadCrumbsStatus && <CustomChip value={breadCrumbsStatus} data-testid="VersionStatusChip"/>}
-      </Box>
+      <SearchResultRowSection>
+        <SearchResultBreadcrumbs breadcrumbs={breadcrumbs} />
+        {breadCrumbsStatus && <CustomChip value={breadCrumbsStatus} data-testid="VersionStatusChip" />}
+      </SearchResultRowSection>
 
       <Marker mark={searchText}>
-        <Box display="flex" gap={1}>
-          {icon && <SpecLogo value={icon}/>}
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', width: '450px' }}>
-            <OverflowTooltip title={title}>
-              <Box sx={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', width: 'inherit' }}>
-                <Link
-                  onClick={closePanel}
-                  sx={{ '&:hover': { cursor: 'pointer' } }}
-                  component={NavLink}
-                  to={url}
-                >
-                  {title}
-                </Link>
-              </Box>
-            </OverflowTooltip>
-            {status && <CustomChip value={status} data-testid="VersionStatusChip"/>}
-          </Box>
-        </Box>
+        <SearchResultTitleRow>
+          {icon && <SpecLogo value={icon} />}
+          <SearchResultTitleContent>
+            <SearchResultPrimaryTitle
+              url={url}
+              title={title}
+              onLinkClick={closePanel}
+            />
+            {status && <CustomChip value={status} data-testid="VersionStatusChip" />}
+          </SearchResultTitleContent>
+        </SearchResultTitleRow>
       </Marker>
     </Box>
   )
 })
+
+ResultCommonHeader.displayName = 'ResultCommonHeader'
+
+const SearchResultTitleRow = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  gap: theme.spacing(1),
+}))
+
+const SearchResultTitleContent = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+  width: RESULT_TITLE_WIDTH,
+}))

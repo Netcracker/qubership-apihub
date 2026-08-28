@@ -29,14 +29,12 @@ import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entit
 import {
   DRAFT_VERSION_STATUS,
   NO_PREVIOUS_RELEASE_VERSION_OPTION,
-  RELEASE_VERSION_STATUS,
 } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import type { VersionFormData } from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
 import {
   getPackageOptions,
   getVersionOptions,
   replaceEmptyPreviousVersion,
-  usePreviousVersionOptions,
   VersionDialogForm,
 } from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
 import { usePackages } from '@apihub/routes/root/usePackages'
@@ -90,13 +88,6 @@ const CopyPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpe
     enabled: !!targetPackage,
     textFilter: versionsFilter,
   })
-  const { versions: targetPreviousVersions } = usePackageVersions({
-    packageKey: targetPackage?.key,
-    enabled: !!targetPackage,
-    status: RELEASE_VERSION_STATUS,
-  })
-
-  const targetPreviousVersionOptions = usePreviousVersionOptions(targetPreviousVersions)
   const [copyPackage, publishId, isCopyStarting, isCopyingStartedSuccessfully] = useCopyPackageVersion()
   const [isPublishing, isPublished] = usePublicationStatuses(targetPackage?.key ?? '', publishId, targetVersion)
 
@@ -190,7 +181,7 @@ const CopyPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpe
       onSetTargetVersion={onSetTargetVersion}
       packagesTitle={kindTitle}
       versions={versionOptions}
-      previousVersions={targetPreviousVersionOptions}
+      previousVersionsPackageKey={targetPackage?.key}
       getVersionLabels={getVersionLabels}
       packagePermissions={targetPackagePermissions}
       releaseVersionPattern={targetReleaseVersionPattern}

@@ -16,6 +16,7 @@
 
 // eslint-disable-next-line filenames/no-index
 export { ChangesViewTable } from './components/ChangesViewTable'
+export { DdlChangesViewTable } from './components/DdlChangesViewTable'
 export { OperationChangesSubTable } from './components/OperationChangesSubTable'
 export { PreviousReleaseOptionsProvider } from './components/PreviousReleaseOptionsProvider'
 export type { SubTableComponentProps } from './components/ChangesViewTable'

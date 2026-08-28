@@ -30,14 +30,12 @@ import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entit
 import {
   DRAFT_VERSION_STATUS,
   NO_PREVIOUS_RELEASE_VERSION_OPTION,
-  RELEASE_VERSION_STATUS,
 } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import type { VersionFormData } from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
 import {
   getPackageOptions,
   getVersionOptions,
   replaceEmptyPreviousVersion,
-  usePreviousVersionOptions,
   VersionDialogForm,
 } from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
 import { useDashboardVersionFromCSVPublicationStatuses } from '@apihub/routes/root/PortalPage/usePublicationStatus'
@@ -86,10 +84,6 @@ const PublishDashboardVersionFromCSVPopup: FC<PopupProps> = memo<PopupProps>(({ 
   const { versions: filteredVersions, areVersionsLoading: areFilteredVersionsLoading } = usePackageVersions({
     textFilter: versionsFilter,
   })
-  const { versions: targetPreviousVersions } = usePackageVersions({
-    status: RELEASE_VERSION_STATUS,
-  })
-  const previousVersionOptions = usePreviousVersionOptions(targetPreviousVersions)
   const versionLabelsMap = useMemo(() => getVersionLabelsMap(filteredVersions), [filteredVersions])
   const versionOptions = useMemo(() => getVersionOptions(versionLabelsMap, targetVersion), [targetVersion, versionLabelsMap])
   const workspaceOptions = useMemo(() => getPackageOptions(workspaces, targetWorkspace, !!workspacesFilter), [targetWorkspace, workspaces, workspacesFilter])
@@ -169,7 +163,7 @@ const PublishDashboardVersionFromCSVPopup: FC<PopupProps> = memo<PopupProps>(({ 
       versions={versionOptions}
       onVersionsFilter={onVersionsFilter}
       areVersionsLoading={areFilteredVersionsLoading}
-      previousVersions={previousVersionOptions}
+      previousVersionsPackageKey={currentPackage?.key}
       getVersionLabels={getVersionLabels}
       onSetTargetVersion={onSetTargetVersion}
       packagePermissions={packagePermissions}

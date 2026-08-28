@@ -36,6 +36,7 @@ import { usePreviousReleasePackageKey, usePreviousReleaseVersion } from './Previ
 export type OperationChangeCellProps = {
   value: Row<ChangesViewTableData>
   mainPackageKind?: PackageKind
+  onLinkClick?: () => void
 }
 
 export const OperationChangeCell: FC<OperationChangeCellProps> = memo<OperationChangeCellProps>((
@@ -47,6 +48,7 @@ export const OperationChangeCell: FC<OperationChangeCellProps> = memo<OperationC
       getToggleExpandedHandler,
     },
     mainPackageKind,
+    onLinkClick,
   }) => {
   const { packageId, versionId, apiType } = useParams()
 
@@ -84,8 +86,11 @@ export const OperationChangeCell: FC<OperationChangeCellProps> = memo<OperationC
         <OperationTitleWithMeta
           operation={currentOperation ?? previousOperation!}
           link={link}
+          onLinkClick={onLinkClick}
         />
       </ExpandableItem>
     </Box>
   )
 })
+
+OperationChangeCell.displayName = 'OperationChangeCell'

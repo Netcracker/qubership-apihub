@@ -41,12 +41,15 @@ import { disableAutocompleteSearch } from '@netcracker/qubership-apihub-ui-share
 import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/OptionItem'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
 import { CalendarIcon } from '@netcracker/qubership-apihub-ui-shared/icons/CalendarIcon'
-import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import {
   API_TYPE_REST,
-  API_TYPE_TITLE_MAP,
   API_TYPES,
 } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { ApiContract } from '@apihub/entities/global-search'
+import {
+  CONTRACT_TYPES,
+  getRouteApiTypeTitle,
+} from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import { DEFAULT_DEBOUNCE } from '@netcracker/qubership-apihub-ui-shared/utils/constants'
 import { usePackage } from '@apihub/routes/root/usePackage'
 import { toISODateRange } from '@netcracker/qubership-apihub-ui-shared/utils/date'
@@ -56,6 +59,8 @@ import {
 
 const DEFAULT_WORKSPACE_ID = ''
 
+const API_CONTRACT_OPTIONS = [...API_TYPES, ...CONTRACT_TYPES]
+
 type FiltersData = Partial<{
   workspace: Package | null
   group: Package | null
@@ -63,7 +68,7 @@ type FiltersData = Partial<{
   version: Key
   status: VersionStatus
   publicationDatePeriod: string[]
-  apiType: ApiType
+  apiContract: ApiContract
 }>
 
 type SearchFilters = {
@@ -96,7 +101,7 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
       group: null,
       pkg: null,
       status: RELEASE_VERSION_STATUS,
-      apiType: API_TYPE_REST,
+      apiContract: API_TYPE_REST,
       publicationDatePeriod: defaultPublicationDatePeriod,
     },
   })
@@ -107,13 +112,13 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
       group: null,
       pkg: null,
       status: RELEASE_VERSION_STATUS,
-      apiType: API_TYPE_REST,
+      apiContract: API_TYPE_REST,
       publicationDatePeriod: defaultPublicationDatePeriod,
     })
   }, [defaultPublicationDatePeriod, defaultWorkspace, reset])
 
   const {
-    apiType,
+    apiContract,
     version,
     status,
     publicationDatePeriod,
@@ -193,7 +198,7 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
         version,
         status,
         publicationDatePeriod,
-        apiType,
+        apiContract,
       } = value
 
       const versionData = version ? [version] : []
@@ -208,7 +213,7 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
             startDate: publicationDatePeriod?.[0] ?? '',
             endDate: publicationDatePeriod?.[1] ?? '',
           },
-          apiType: apiType,
+          apiContract: apiContract,
         },
       }
 
@@ -224,7 +229,7 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
       workspaceKey,
       groupKey,
       packageKey,
-      apiType,
+      apiContract,
       status,
       version,
       publicationDatePeriod,
@@ -235,12 +240,12 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
     <Typography sx={{ mb: 2, mt: 1 }} variant="h3">Filters</Typography>
     <Box component="form" sx={{ overflow: 'scroll', height: 'calc(100% - 60px)', pr: 1 }}>
       <Controller
-        name="apiType"
+        name="apiContract"
         control={control}
         render={({ field: { value, onChange } }) => <Autocomplete
           value={value ?? null}
-          options={API_TYPES}
-          getOptionLabel={(option) => API_TYPE_TITLE_MAP[option]!}
+          options={API_CONTRACT_OPTIONS}
+          getOptionLabel={(option) => getRouteApiTypeTitle(option)}
           isOptionEqualToValue={(option, value) => option === value}
           renderOption={(props, option) => (
             <ListItem
@@ -248,7 +253,7 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
               key={option}
               data-testid={`Option-${option}`}
             >
-              {API_TYPE_TITLE_MAP[option]!}
+              {getRouteApiTypeTitle(option)}
             </ListItem>
           )}
           onChange={(_, type) => {
@@ -258,9 +263,9 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
             <TextField
               required
               {...params}
-              label="API type"
+              label="API Contract"
               sx={{ mt: 0 }}
-              error={!!errors.apiType}
+              error={!!errors.apiContract}
             />
           )}
           data-testid="ApiTypeAutocomplete"

@@ -1,34 +1,19 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-import type { FC } from 'react'
-import { memo } from 'react'
+import { type FC, memo } from 'react'
 import { useParams } from 'react-router-dom'
-import { useFilteredPackageRefs } from '../../useRefPackage'
-import { usePackageVersionContent } from '../../usePackageVersionContent'
+
+import { OperationFilters } from '@netcracker/qubership-apihub-ui-shared/components/OperationFilters/OperationFilters'
+import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { OperationGroupName } from '@netcracker/qubership-apihub-ui-shared/entities/operation-groups'
 import type { ApiAudience, ApiKind, Tags } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import type { PackageReference } from '@netcracker/qubership-apihub-ui-shared/entities/version-references'
-import type { OperationGroupName } from '@netcracker/qubership-apihub-ui-shared/entities/operation-groups'
 import { PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { OperationFilters } from '@netcracker/qubership-apihub-ui-shared/components/OperationFilters/OperationFilters'
+import type { PackageReference } from '@netcracker/qubership-apihub-ui-shared/entities/version-references'
+import type { HasNextPage, IsFetchingNextPage } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
+
 import { usePortalPageSettingsContext } from '@apihub/routes/PortalPageSettingsProvider'
 import { useFullMainVersion } from '@apihub/routes/root/PortalPage/FullMainVersionProvider'
-import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import type { HasNextPage, IsFetchingNextPage } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
+import { usePackageVersionContent } from '../../usePackageVersionContent'
+import { useFilteredPackageRefs } from '../../useRefPackage'
 
 export type OperationsFilterControllers = {
   selectedPackageKey?: string
@@ -49,7 +34,8 @@ export type SelfManagedOperationFiltersProps = OperationsFilterControllers & {
   hasNextTagsPage?: HasNextPage
   onTagSearch?: (value: string) => void
   selectedTag?: string
-  onSelectTag: (value?: string) => void
+  onSelectTag?: (value?: string) => void
+  packageFilterOnly?: boolean
 }
 
 // High Order Component //
@@ -71,6 +57,7 @@ export const SelfManagedOperationFilters: FC<SelfManagedOperationFiltersProps> =
     onTagSearch,
     selectedTag,
     onSelectTag,
+    packageFilterOnly = false,
   } = props
 
   const { hideGeneralFilters, toggleHideGeneralFilters } = usePortalPageSettingsContext()
@@ -89,7 +76,18 @@ export const SelfManagedOperationFilters: FC<SelfManagedOperationFiltersProps> =
     packageKey: rootPackageKey,
     versionKey: fullVersion,
     includeGroups: true,
+    enabled: !packageFilterOnly,
   })
+
+  const operationFilters = packageFilterOnly
+    ? undefined
+    : {
+      onSelectTag,
+      onTagSearch,
+      onSelectApiAudience,
+      onSelectApiKind,
+      onSelectOperationGroup,
+    }
 
   return (
     <OperationFilters
@@ -98,11 +96,6 @@ export const SelfManagedOperationFilters: FC<SelfManagedOperationFiltersProps> =
       fetchNextTagsPage={fetchNextTagsPage}
       isNextTagsPageFetching={isNextTagsPageFetching}
       hasNextTagsPage={hasNextTagsPage}
-      onSelectTag={onSelectTag}
-      onTagSearch={onTagSearch}
-      onSelectApiAudience={onSelectApiAudience}
-      onSelectApiKind={onSelectApiKind}
-      onSelectOperationGroup={onSelectOperationGroup}
       onSelectPackage={onSelectPackage}
       hiddenGeneralFilters={hideGeneralFilters}
       onClickExpandCollapseButton={toggleHideGeneralFilters}
@@ -116,6 +109,9 @@ export const SelfManagedOperationFilters: FC<SelfManagedOperationFiltersProps> =
       selectedOperationGroupName={selectedOperationGroupName}
       selectedPackageKey={selectedPackageKey}
       selectedTag={selectedTag}
+      {...operationFilters}
     />
   )
 })
+
+SelfManagedOperationFilters.displayName = 'SelfManagedOperationFilters'

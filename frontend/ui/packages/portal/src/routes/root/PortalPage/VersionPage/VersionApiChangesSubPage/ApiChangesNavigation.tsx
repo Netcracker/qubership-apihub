@@ -14,21 +14,27 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { useState } from 'react'
-import { useChangesSummaryFromContext } from '../ChangesSummaryProvider'
+import { type FC, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { useTagsFromChangesSummary } from '../useTagsFromChangesSummary'
+
+import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import {
+  CONTRACT_TYPE_DDL,
+  toRouteApiType,
+} from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
+import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { isAppliedSearchValueForTag } from '@netcracker/qubership-apihub-ui-shared/utils/tags'
+
+import { usePackageKind } from '../../usePackageKind'
+import { useChangesSummaryFromContext } from '../ChangesSummaryProvider'
 import { SelfManagedOperationFilters } from '../SelfManagedOperationFilters'
 import { useDefaultOperationFilterControllers } from '../useDefaultOperationFilterControllers'
-import { usePackageKind } from '../../usePackageKind'
 import { useTagSearchFilter } from '../useTagSearchFilter'
-import { isAppliedSearchValueForTag } from '@netcracker/qubership-apihub-ui-shared/utils/tags'
-import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { useTagsFromChangesSummary } from '../useTagsFromChangesSummary'
 
 export const ApiChangesNavigation: FC = () => {
   const { apiType } = useParams()
+  const routeApiType = toRouteApiType(apiType)
   const [selectedTag, setSelectedTag] = useTagSearchFilter()
 
   const [searchValue, setSearchValue] = useState('')
@@ -42,6 +48,7 @@ export const ApiChangesNavigation: FC = () => {
 
   const [packageKind] = usePackageKind()
   const isDashboard = packageKind === DASHBOARD_KIND
+  const packageFilterOnly = isDashboard && routeApiType === CONTRACT_TYPE_DDL
 
   const {
     selectedPackageKey,
@@ -69,8 +76,9 @@ export const ApiChangesNavigation: FC = () => {
       onTagSearch={setSearchValue}
       selectedTag={selectedTag}
       onSelectTag={setSelectedTag}
+      packageFilterOnly={packageFilterOnly}
     />
   )
 }
 
-
+ApiChangesNavigation.displayName = 'ApiChangesNavigation'

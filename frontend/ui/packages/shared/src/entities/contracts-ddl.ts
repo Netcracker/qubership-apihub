@@ -1,16 +1,25 @@
 import type { DiffType } from '@netcracker/qubership-apihub-api-diff'
-import { type DiffTypeDto, replacePropertyInChangesSummary } from '@netcracker/qubership-apihub-api-processor'
+import {
+  DDL_KIND,
+  type DdlKind,
+  type DiffTypeDto,
+  replacePropertyInChangesSummary,
+} from '@netcracker/qubership-apihub-api-processor'
 
 import { hasNoChangesInSummary } from '../utils/change-severities'
+import { toOptionalTrimmedString, truncateDescription } from '../utils/strings'
 import type { ChangesSummary } from './change-severities'
+import { getContractListKey } from './contracts'
+import { type PackageRef, type PackagesRefs, toPackageRef } from './operations'
 import { EMPTY_CHANGE_SUMMARY } from './version-changelog'
 
-// TODO(DDL/api-processor): import DDL_ENTITY_KIND_* from api-processor when the DDL plugin ships.
-// 'view' is reserved for forward compatibility; v1 emits tables only.
-export const DDL_ENTITY_KIND_TABLE = 'table'
+export { type DdlKind, DDL_KIND }
+
+export const DDL_ENTITY_KIND_TABLE = DDL_KIND.TABLE
+// Backend/OpenAPI wire value; api-processor DDL_KIND.VIEW not shipped yet (v1 is table-only).
 export const DDL_ENTITY_KIND_VIEW = 'view'
 
-export type DdlEntityKind = typeof DDL_ENTITY_KIND_TABLE | typeof DDL_ENTITY_KIND_VIEW
+export type DdlEntityKind = DdlKind | typeof DDL_ENTITY_KIND_VIEW
 
 export type DdlContractEntityDto = Readonly<{
   ddlEntityId: string
@@ -29,9 +38,26 @@ export type DdlContractEntityDetailsDto =
     data?: string
   }>
 
-export type DdlContractEntity = DdlContractEntityDto
+export type DdlEntitiesDto = Readonly<{
+  entities: ReadonlyArray<DdlContractEntityDto>
+  packages?: PackagesRefs
+}>
 
-export type DdlContractEntityDetails = DdlContractEntityDetailsDto
+export type DdlContractEntity = Readonly<{
+  ddlEntityId: string
+  kind: DdlEntityKind
+  name: string
+  schemaName: string
+  description?: string
+  versionInternalDocumentId: string
+  packageRef?: PackageRef
+}>
+
+export type DdlContractEntityDetails =
+  & DdlContractEntity
+  & Readonly<{
+    data?: string
+  }>
 
 export type DdlContractsSummaryDto = Readonly<{
   tablesCount: number
@@ -67,8 +93,27 @@ export function toDdlContractsSummary(dto: DdlContractsSummaryDto | undefined): 
   }
 }
 
-export function toDdlContractEntity(dto: DdlContractEntityDto): DdlContractEntity {
-  return dto
+export function toDdlContractEntity(
+  dto: DdlContractEntityDto,
+  packagesRefs?: PackagesRefs,
+): DdlContractEntity {
+  return {
+    ddlEntityId: dto.ddlEntityId,
+    kind: dto.kind,
+    name: dto.name,
+    schemaName: dto.schemaName,
+    description: truncateDescription(dto.description),
+    versionInternalDocumentId: dto.versionInternalDocumentId,
+    packageRef: toPackageRef(dto.packageRef, packagesRefs),
+  }
+}
+
+export function toDdlContractEntities(dto: DdlEntitiesDto): ReadonlyArray<DdlContractEntity> {
+  return dto.entities?.map(entity => toDdlContractEntity(entity, dto.packages)) ?? []
+}
+
+export function getDdlTableListKey(table: Readonly<Pick<DdlContractEntity, 'ddlEntityId' | 'packageRef'>>): string {
+  return getContractListKey(table.packageRef, table.ddlEntityId)
 }
 
 export function getDdlTableDisplayName(
@@ -77,21 +122,10 @@ export function getDdlTableDisplayName(
   return table.name || table.ddlEntityId
 }
 
-export function getDdlTableSchemaName(
-  table: Readonly<Pick<DdlContractEntity, 'schemaName'>>,
-): string | undefined {
-  return table.schemaName
-}
-
 export function getDdlTableDescription(
   table: Readonly<Pick<DdlContractEntity, 'description'>>,
 ): string | undefined {
-  const { description } = table
-  if (typeof description !== 'string') {
-    return undefined
-  }
-  const trimmed = description.trim()
-  return trimmed === '' ? undefined : trimmed
+  return toOptionalTrimmedString(table.description)
 }
 
 export type DdlComparisonSummaryDto = Readonly<{

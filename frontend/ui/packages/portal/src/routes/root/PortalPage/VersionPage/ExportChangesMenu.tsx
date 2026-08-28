@@ -18,9 +18,11 @@ import type { FC } from 'react'
 import { memo } from 'react'
 import { useParams } from 'react-router-dom'
 import { useDownloadChangesAsExcel } from './useDownloadChangesAsExcel'
+import { useDownloadDdlChangesAsExcel } from './useDownloadDdlChangesAsExcel'
 import { useOrderedComparisonFiltersSummary } from './useOrderedComparisonFiltersSummary'
 import type { ChangeSeverity } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import type { ApiAudience, ApiKind } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import { CONTRACT_TYPE_DDL } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import {
   useResolvedOperationGroupParameters,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/operation-groups/useResolvedOperationGroupParameters'
@@ -68,6 +70,8 @@ export const ExportChangesMenu: FC<ExportChangesMenuProps> = memo(({
   const { resolvedGroupName, resolvedEmptyGroup } = useResolvedOperationGroupParameters(group)
 
   const [downloadChangesAsExcel] = useDownloadChangesAsExcel()
+  const [downloadDdlChangesAsExcel] = useDownloadDdlChangesAsExcel()
+  const isDdl = apiType === CONTRACT_TYPE_DDL
 
   const changesSummaryFromContext = useOrderedComparisonFiltersSummary({ apiType })
   const isDownloadButtonDisabled = isEmptyChangesSummary(severityChanges, changesSummaryFromContext)
@@ -75,6 +79,15 @@ export const ExportChangesMenu: FC<ExportChangesMenuProps> = memo(({
   const onDownloadAllChanges = (): void => {
     if (onDownloadAllChangesProps) {
       onDownloadAllChangesProps()
+      return
+    }
+    if (isDdl) {
+      downloadDdlChangesAsExcel({
+        packageKey: packageId!,
+        version: versionId!,
+        previousVersion: previousVersion,
+        previousVersionPackageId: previousVersionPackageId,
+      })
       return
     }
     downloadChangesAsExcel({
@@ -85,6 +98,18 @@ export const ExportChangesMenu: FC<ExportChangesMenuProps> = memo(({
   }
 
   const onDownloadFilteredChanges = (): void => {
+    if (isDdl) {
+      downloadDdlChangesAsExcel({
+        packageKey: packageId!,
+        version: versionId!,
+        textFilter: textFilter,
+        refPackageId: refPackageId,
+        severityFilter: severityFilter,
+        previousVersion: previousVersion,
+        previousVersionPackageId: previousVersionPackageId,
+      })
+      return
+    }
     downloadChangesAsExcel({
       packageKey: packageId!,
       version: versionId!,

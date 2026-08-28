@@ -53,7 +53,7 @@ export type OperationFiltersProps = {
   versionContent: PackageVersionContent | null
   onTagSearch?: (value: string) => void
   selectedTag?: string
-  onSelectTag: (value?: string) => void
+  onSelectTag?: (value?: string) => void
 }
 
 // First Order Component //
@@ -133,16 +133,20 @@ export const OperationFilters: FC<OperationFiltersProps> = memo<OperationFilters
           </AccordionDetails>
         </Accordion>
       </Box>
-      <SidebarWithTags
-        tags={tags}
-        areTagsLoading={areTagsLoading}
-        fetchNextTagsPage={fetchNextTagsPage}
-        isNextTagsPageFetching={isNextTagsPageFetching}
-        hasNextTagsPage={hasNextTagsPage}
-        onSearch={onTagSearch}
-        selectedTag={selectedTag}
-        onSelectTag={onSelectTag}
-      />
+      {onSelectTag && (
+        <SidebarWithTags
+          tags={tags}
+          areTagsLoading={areTagsLoading}
+          fetchNextTagsPage={fetchNextTagsPage}
+          isNextTagsPageFetching={isNextTagsPageFetching}
+          hasNextTagsPage={hasNextTagsPage}
+          onSearch={onTagSearch}
+          selectedTag={selectedTag}
+          onSelectTag={onSelectTag}
+        />
+      )}
     </>
   )
 })
+
+OperationFilters.displayName = 'OperationFilters'
