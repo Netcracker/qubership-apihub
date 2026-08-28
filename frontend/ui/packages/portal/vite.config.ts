@@ -104,6 +104,7 @@ export default defineConfig(({ mode }) => {
         '@apihub/utils': path.resolve(__dirname, './src/utils/'),
         '@netcracker/qubership-apihub-ui-shared': path.resolve(__dirname, './../shared/src'),
         'buffer': require.resolve('buffer/'),
+        'process': require.resolve('process/browser'),
         '@asyncapi/parser': '@asyncapi/parser/browser', // Use browser-compatible version of AsyncAPI parser
       },
     },
@@ -118,7 +119,16 @@ export default defineConfig(({ mode }) => {
         input: {
           app: resolve(__dirname, 'index.html'),
         },
-        plugins: [inject({ Buffer: ['buffer', 'Buffer'] })],
+        // `optimizeDeps.esbuildOptions` above only covers the dev server's dependency pre-bundling,
+        // so the Node globals that browser-unaware dependencies expect have to be injected again
+        // for the production build.
+        //
+        // `process` is needed because adm-zip 0.6.0 reads `process?.versions?.node` at module scope
+        // (methods/inflater.js), and `methods/index.js` requires that file unconditionally. Optional
+        // chaining does not guard an undeclared binding, so merely importing adm-zip throws
+        // `ReferenceError: process is not defined`. It reaches the bundle through api-processor and
+        // lands in the lazily-loaded build-worker chunk, which is why only publishing broke.
+        plugins: [inject({ Buffer: ['buffer', 'Buffer'], process: 'process' })],
       },
     },
     server: {

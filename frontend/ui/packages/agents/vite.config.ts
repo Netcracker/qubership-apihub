@@ -23,6 +23,7 @@ import NodeGlobalsPolyfill from '@esbuild-plugins/node-globals-polyfill'
 import ignoreDotsOnDevServer from 'vite-plugin-rewrite-all'
 import { VitePluginFonts } from 'vite-plugin-fonts'
 import { visualizer as bundleVisualizer } from 'rollup-plugin-visualizer'
+import inject from '@rollup/plugin-inject'
 import createVersionJsonFilePlugin from '../../vite-create-version-json'
 
 const proxyServer = 'http://host.docker.internal:8081'
@@ -94,6 +95,8 @@ export default defineConfig(({ mode }) => {
         '@apihub/entities': path.resolve(__dirname, './src/entities/'),
         '@apihub/utils': path.resolve(__dirname, './src/utils/'),
         '@netcracker/qubership-apihub-ui-shared': path.resolve(__dirname, './../shared/src'),
+        'buffer': require.resolve('buffer/'),
+        'process': require.resolve('process/browser'),
         '@asyncapi/parser': '@asyncapi/parser/browser', // Use browser-compatible version of AsyncAPI parser
       },
     },
@@ -110,6 +113,16 @@ export default defineConfig(({ mode }) => {
         input: {
           app: resolve(__dirname, 'index.html'),
         },
+        // Kept in step with the portal config: `optimizeDeps.esbuildOptions` above only covers the
+        // dev server's dependency pre-bundling, so the Node globals that browser-unaware
+        // dependencies expect have to be injected again for the production build.
+        //
+        // `process` is needed because adm-zip 0.6.0 reads `process?.versions?.node` at module scope
+        // (methods/inflater.js), and `methods/index.js` requires that file unconditionally. Optional
+        // chaining does not guard an undeclared binding, so merely importing adm-zip throws
+        // `ReferenceError: process is not defined`. It reaches the bundle through api-processor and
+        // lands in the lazily-loaded build-worker chunk, which is why only publishing broke.
+        plugins: [inject({ Buffer: ['buffer', 'Buffer'], process: 'process' })],
       },
     },
     server: {
