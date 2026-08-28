@@ -1,4 +1,12 @@
 /**
+ * Optional path to a Chrome/Chromium binary (`CHROME_EXECUTABLE_PATH`).
+ * When unset or blank, Playwright uses the bundled Chromium.
+ */
+export const getChromeExecutablePath = (): string | undefined => {
+  return process.env.CHROME_EXECUTABLE_PATH?.trim() || undefined
+}
+
+/**
  * Returns the value of a required environment variable.
  * Throws if it is missing or blank.
  */

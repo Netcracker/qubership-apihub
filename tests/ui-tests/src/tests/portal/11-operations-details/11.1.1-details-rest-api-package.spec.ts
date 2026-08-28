@@ -253,7 +253,7 @@ test.describe('11.1.1 Operations details REST API (Package)', () => {
 
       await test.step('Add Custom servers', async () => {
 
-        //Skipped because Agent is needed
+        //Skipped because adaptation to a new UI is needed
         await test.step.skip('Add server with wrong namespace (negative)', async () => {
           await operationPage.playgroundPanel.serverSlt.addCustomServerBtn.click()
           await operationPage.playgroundPanel.addServerDialog.cloudAc.click()

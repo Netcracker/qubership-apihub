@@ -21,9 +21,6 @@ test.describe('General', () => {
 
       await expect(portalPage.header.userMenu).toBeVisible()
       await expect.soft(portalPage.header.portalBtn).toBeVisible()
-      /*TODO: Fix it after migrating tests for the agent and configuring tests*/
-
-      // await expect.soft(portalPage.header.agentBtn).toBeVisible()
       await expect.soft(portalPage.header.vsCodeExtensionBtn).toBeVisible()
       await expect.soft(portalPage.header.appHeaderDivider).toBeVisible()
       await expect.soft(portalPage.header.globalSearchBtn).toBeVisible()

@@ -122,13 +122,14 @@ test.describe('08. Security Reports', () => {
 
   test.skip('[A-GRR-1.1] Create Gateway Routing report',
     {
-      tag: '@smoke',
+      tag: ['@smoke', '@specific'],
       annotation: [
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8458` },
         { type: 'Skip', description: 'URL does not set automatically' },
       ],
     },
     async ({ sysadminPage: page }) => {
+      test.skip(!process.env.TEST_CLOUD_ADMIN_NAME, 'Test environment is not configured for Gateway Routing report testing')
 
       const agentPage = new AgentPage(page)
       const { reportsTab } = agentPage
@@ -161,12 +162,14 @@ test.describe('08. Security Reports', () => {
 
   test.skip('[A-GRR-1.2-N] Start Gateway Routing check process with missing fields (Negative)',
     {
+      tag: '@specific',
       annotation: [
         { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-8458` },
         { type: 'Skip', description: 'URL does not set automatically' },
       ],
     },
     async ({ sysadminPage: page }) => {
+      test.skip(!process.env.TEST_CLOUD_ADMIN_NAME, 'Test environment is not configured for Gateway Routing report testing')
 
       const agentPage = new AgentPage(page)
       const { reportsTab } = agentPage

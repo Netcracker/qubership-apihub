@@ -7,6 +7,13 @@ export const TEST_CLOUD_ADMIN = {
   password: process.env.TEST_CLOUD_ADMIN_PASSWORD as string,
 } as const
 
+export const TEST_SSO_USER = {
+  id: 'x_APIHUB',
+  email: process.env.TEST_SSO_USER_EMAIL as string,
+  name: 'x_APIHUB',
+  password: process.env.TEST_SSO_USER_PASSWORD as string,
+} as const
+
 export const TEST_SYSADMIN_LOCAL = {
   id: 'x_atui_sysadminatqa-at',
   email: 'x_atui_sysadmin@qa.at',
