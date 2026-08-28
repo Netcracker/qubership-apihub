@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-unifier",
-  "version": "2.9.1",
+  "version": "2.9.2",
   "description": "Tools for JsonSchema/Openapi/GraphQL spec for unified processing",
   "module": "./dist/index.es.js",
   "main": "./dist/index.cjs.js",
@@ -41,7 +41,7 @@
   ],
   "dependencies": {
     "@netcracker/qubership-apihub-ddlapi": "1.0.0",
-    "@netcracker/qubership-apihub-graphapi": "1.0.12",
+    "@netcracker/qubership-apihub-graphapi": "1.0.13",
     "@netcracker/qubership-apihub-json-crawl": "1.2.2",
     "fast-equals": "4.0.3",
     "flatted": "^3.2.9",
