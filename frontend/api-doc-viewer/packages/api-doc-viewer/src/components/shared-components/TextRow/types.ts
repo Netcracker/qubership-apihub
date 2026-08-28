@@ -22,6 +22,7 @@ export type TextRowProps = WithPrecededByProps & {
   descendantDiffs?: NodeDescendantDiffs
   diffsSeverities?: NodeDiffsSeverities
   diffsSeverityPlacement?: NodeDiffsSeverityPlacemennt
+  hideLevelIndicatorWhenSideEmpty?: boolean
 }
 
 export type TextRowContentProps = TextRowProps & {

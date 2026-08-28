@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-export const ORIGIN_LAYOUT_SIDE = 'origin'
-export const CHANGED_LAYOUT_SIDE = 'changed'
-export type LayoutSide =
-  | typeof ORIGIN_LAYOUT_SIDE
-  | typeof CHANGED_LAYOUT_SIDE
+export {
+  CHANGED_LAYOUT_SIDE,
+  ORIGIN_LAYOUT_SIDE,
+  type LayoutSide,
+} from "@netcracker/qubership-apihub-next-data-model/model/abstract/layout-side"

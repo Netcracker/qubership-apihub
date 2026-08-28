@@ -36,6 +36,11 @@ const SUITES = [
     title: "DDL API Suite/Display Mode Simple",
     testFileName: "display-mode-simple-samples.it-test.ts",
   },
+  {
+    suiteId: "table-descriptions",
+    title: "DDL API Suite/Table Descriptions",
+    testFileName: "table-descriptions-samples.it-test.ts",
+  },
 ];
 
 const makeMetaId = (suiteId) => `ddlapi-suite-${suiteId}`;

@@ -1,7 +1,7 @@
 import { DdlTableViewer } from "@apihub/components/DdlTableViewer/DdlTableViewer";
 import type { Realm } from "@netcracker/qubership-apihub-ddlapi";
 import { FC, useEffect, useState } from "react";
-import { buildFromDdlInBrowser } from "./build-from-ddl-browser";
+import { buildFromDdlInBrowser, realmHasTables } from "./build-from-ddl-browser";
 
 export const DEFAULT_DDL = `CREATE TABLE users (
   id bigint PRIMARY KEY,
@@ -74,6 +74,15 @@ export const BuildFromDdlDebug: FC<BuildFromDdlDebugProps> = ({ ddlText }) => {
 
   if (!realm) {
     return null;
+  }
+
+  if (!realmHasTables(realm)) {
+    return (
+      <p>
+        Parsed DDL contains no tables. Statements such as <code>CREATE SCHEMA</code> are ignored
+        by ddlapi — add a <code>CREATE TABLE</code> (or use the diffs suite for before/after pairs).
+      </p>
+    );
   }
 
   const schema = realm.schemas[0];

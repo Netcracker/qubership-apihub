@@ -14,5 +14,5 @@ export type DdlApiTreeNodeWithDiffs<
   DdlApiTreeNodeValue<K> | null,
   K,
   DdlApiTreeNodeMeta,
-  DdlApiTreeNodeValue<K>
+  DdlApiTreeNodeValue<K> | null
 >

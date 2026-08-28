@@ -1,6 +1,6 @@
 {
   "name": "@netcracker/qubership-apihub-api-doc-viewer",
-  "version": "3.3.1",
+  "version": "3.4.0",
   "license": "Apache-2.0",
   "type": "module",
   "main": "dist/index.js",
@@ -31,7 +31,9 @@
     "screenshot-test": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 -c .config/it/it-test-docker.jest.config.cjs\"",
     "screenshot-test:ci-legacy": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 -c .config/it/it-test.jest.config.cjs\"",
     "regenerate-screenshots": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test-docker.jest.config.cjs\"",
-    "regenerate-screenshots:ci-legacy": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test.jest.config.cjs\""
+    "regenerate-screenshots:ci-legacy": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test.jest.config.cjs\"",
+    "screenshot-test-single-suite": "node bin/run-screenshot-test-suite.mjs test",
+    "regenerate-screenshots-single-suite": "node bin/run-screenshot-test-suite.mjs regenerate"
   },
   "dependencies": {
     "postcss": "8.4.29",
@@ -42,6 +44,7 @@
   },
   "devDependencies": {
     "@asyncapi/parser": "^3.4.0",
+    "@clack/prompts": "^0.9.1",
     "@monaco-editor/react": "^4.7.0",
     "@storybook/addon-essentials": "8.1.11",
     "@storybook/addon-interactions": "8.1.11",

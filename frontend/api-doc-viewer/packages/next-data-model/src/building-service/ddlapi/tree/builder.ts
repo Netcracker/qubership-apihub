@@ -1,13 +1,13 @@
-import { DdlApiComplexTreeNode } from "@apihub/next-data-model/model/ddlapi/tree/complex-node.impl";
 import { DdlApiTreeNodeValue } from "@apihub/next-data-model/model/ddlapi/tree/node-value";
-import { DdlApiSimpleTreeNode } from "@apihub/next-data-model/model/ddlapi/tree/simple-node.impl";
 import { DdlApiTree } from "@apihub/next-data-model/model/ddlapi/tree/tree.impl";
+import { DdlApiTreeNode } from "@apihub/next-data-model/model/ddlapi/types/aliases";
 import { DdlApiTreeNodeKind, DdlApiTreeNodeKindsList } from "@apihub/next-data-model/model/ddlapi/types/node-kind";
 import { DdlApiTreeNodeMeta } from "@apihub/next-data-model/model/ddlapi/types/node-meta";
 import { TableKey } from "@apihub/next-data-model/shared/ddlapi/types/table-key";
 import { DdlApiTreeBuilderParams } from "@apihub/next-data-model/shared/ddlapi/types/tree-builder-params";
+import { resolveDdlApiIndexNodeKey } from "@apihub/next-data-model/shared/ddlapi/index-title";
 import { syncCrawl } from "@netcracker/qubership-apihub-json-crawl";
-import { ComplexTreeNodeParams, ITreeNode, SimpleTreeNodeParams, TreeNodeComplexityTypes, TreeNodeParams } from "../../../model/abstract/tree/tree-node.interface";
+import { ComplexTreeNodeParams, SimpleTreeNodeParams, TreeNodeComplexityTypes } from "../../../model/abstract/tree/tree-node.interface";
 import { isObject } from "../../../utilities";
 import { NodeId, NodeKey } from "../../../utility-types";
 import { TreeBuilder } from "../../abstract/tree/builder";
@@ -16,8 +16,8 @@ import { getDdlApiCrawlRules } from "../json-crawl-entities/rules/rules";
 import { DdlApiCrawlRule } from "../json-crawl-entities/rules/types";
 import { DdlApiTreeCrawlState } from "../json-crawl-entities/state/types";
 import { BuildingServiceLogger, createBuildingServiceLogger } from "../../../loggers";
-import { DdlApiSpecTransformer } from "../shared/ddlapi-spec-transformer";
-import { createDdlApiTreeBuildingHooks } from "./building-hooks";
+import { DdlApiSpecTransformer, DdlApiTableOrientedSpec } from "../shared/ddlapi-spec-transformer";
+import { createDdlApiTreeBuildingHooks, DdlApiTreeBuildingNodeParams } from "./building-hooks";
 import { DdlApiNodeDataBuilder } from "./node-data/builder";
 
 type SimpleDdlApiTreeNodeParams = SimpleTreeNodeParams<
@@ -32,16 +32,17 @@ type ComplexDdlApiTreeNodeParams = ComplexTreeNodeParams<
   DdlApiTreeNodeMeta
 >
 
+const DDL_API_LOG_PREFIX = '[DDL API]'
+
 export class DdlApiTreeBuilder extends TreeBuilder<
   DdlApiTreeNodeValue<DdlApiTreeNodeKind> | null,
   DdlApiTreeNodeKind,
   DdlApiTreeNodeMeta
 > {
   public readonly tree: DdlApiTree;
-  private readonly source: unknown;
-  private readonly tableKey: TableKey;
-  private readonly logger: BuildingServiceLogger;
-  private readonly specificationTransformer: DdlApiSpecTransformer;
+  protected readonly source: unknown;
+  protected readonly tableKey: TableKey;
+  protected readonly logger: BuildingServiceLogger;
   private readonly nodeDataBuilder: DdlApiNodeDataBuilder;
 
   constructor(params: DdlApiTreeBuilderParams) {
@@ -55,20 +56,22 @@ export class DdlApiTreeBuilder extends TreeBuilder<
     this.source = source
     this.tableKey = tableKey
     this.logger = logger
-    this.tree = new DdlApiTree();
-    this.specificationTransformer = new DdlApiSpecTransformer(this.logger)
-    this.nodeDataBuilder = new DdlApiNodeDataBuilder()
+    this.tree = this.createTree()
+    this.nodeDataBuilder = this.createNodeDataBuilder()
   }
 
   public build(): DdlApiTree {
-    const preparedSource = this.specificationTransformer.transformSourceToTableOrientedSpec(
-      this.source,
-      this.tableKey,
-    )
+    if (!isObject(this.source) && !Array.isArray(this.source)) {
+      return this.tree
+    }
+
+    const preparedSource = this.prepareSource()
 
     if (!preparedSource) {
       return this.tree;
     }
+
+    this.logger.debug(`${this.logPrefix} Prepared Source:`, preparedSource)
 
     const initialState: DdlApiTreeCrawlState = {
       parent: null,
@@ -77,8 +80,6 @@ export class DdlApiTreeBuilder extends TreeBuilder<
     }
 
     const initialRules: DdlApiCrawlRule = getDdlApiCrawlRules()
-
-    this.logger.debug('[DDL API] Prepared Source:', preparedSource)
 
     const hooks = createDdlApiTreeBuildingHooks({
       source: preparedSource,
@@ -101,8 +102,8 @@ export class DdlApiTreeBuilder extends TreeBuilder<
         container: node,
         alreadyConvertedValuesCache: cache,
       }),
-      isSimpleNode: (node): node is DdlApiSimpleTreeNode => this.isDdlApiSimpleTreeNode(node),
-      isComplexNode: (node): node is DdlApiComplexTreeNode => this.isDdlApiComplexTreeNode(node),
+      isSimpleNode: (node) => this.isSimpleTreeNode(node),
+      isComplexNode: (node) => this.isComplexTreeNode(node),
       resolveNodeKey: (key, value) => this.resolveNodeKey(key, value),
     })
 
@@ -118,34 +119,42 @@ export class DdlApiTreeBuilder extends TreeBuilder<
     return this.tree;
   }
 
-  private resolveNodeKey(key: NodeKey, value: unknown): NodeKey {
-    if (!isObject(value)) {
-      return key
-    }
-    if ('columnName' in value && typeof value.columnName === 'string') {
-      return value.columnName
-    }
-    if ('indexName' in value && typeof value.indexName === 'string') {
-      return value.indexName
-    }
-    return key
+  /* Extension points for descendant builders */
+
+  protected get logPrefix(): string {
+    return DDL_API_LOG_PREFIX
   }
+
+  protected createTree(): DdlApiTree {
+    return new DdlApiTree()
+  }
+
+  protected createNodeDataBuilder(): DdlApiNodeDataBuilder {
+    return new DdlApiNodeDataBuilder()
+  }
+
+  protected prepareSource(): DdlApiTableOrientedSpec | null {
+    const specificationTransformer = new DdlApiSpecTransformer(this.logger)
+    return specificationTransformer.transformSourceToTableOrientedSpec(this.source, this.tableKey)
+  }
+
+  /* Atomic builders */
 
   protected createNodeFromRaw(
     id: NodeId,
     key: NodeKey,
     kind: DdlApiTreeNodeKind,
     complex: boolean,
-    params: TreeNodeParams<object | null, string, object>
-  ): DdlApiSimpleTreeNode | DdlApiComplexTreeNode | undefined {
+    params: DdlApiTreeBuildingNodeParams,
+  ): DdlApiTreeNode | undefined {
     const { parent, container, newDataLevel } = params
 
     if (complex) {
       const nodeMeta = this.createNodeMeta(key, params)
       const extendedParams: ComplexDdlApiTreeNodeParams = {
         type: TreeNodeComplexityTypes.COMPLEX,
-        parent: parent && this.isDdlApiSimpleTreeNode(parent) ? parent : null,
-        container: container && this.isDdlApiComplexTreeNode(container) ? container : null,
+        parent: this.takeSimpleTreeNode(parent),
+        container: this.takeComplexTreeNode(container),
         value: null,
         meta: nodeMeta,
         newDataLevel: newDataLevel,
@@ -153,16 +162,12 @@ export class DdlApiTreeBuilder extends TreeBuilder<
       return this.tree.createComplexNode(id, key, kind, false, extendedParams)
     }
 
-    const nodeValue = this.createNodeValue(key, kind, {
-      ...params,
-      parent: parent,
-      container: container,
-    })
+    const nodeValue = this.createNodeValue(key, kind, params)
     const nodeMeta = this.createNodeMeta(key, params)
     const extendedParams: SimpleDdlApiTreeNodeParams = {
       type: TreeNodeComplexityTypes.SIMPLE,
-      parent: parent && this.isDdlApiSimpleTreeNode(parent) ? parent : null,
-      container: container && this.isDdlApiComplexTreeNode(container) ? container : null,
+      parent: this.takeSimpleTreeNode(parent),
+      container: this.takeComplexTreeNode(container),
       value: nodeValue,
       meta: nodeMeta,
       newDataLevel: newDataLevel,
@@ -172,7 +177,7 @@ export class DdlApiTreeBuilder extends TreeBuilder<
 
   protected createNodeMeta(
     key: NodeKey,
-    params: TreeNodeParams<object | null, string, object>,
+    params: DdlApiTreeBuildingNodeParams,
   ): DdlApiTreeNodeMeta {
     const { value } = params
     return this.nodeDataBuilder.createNodeMeta(value)
@@ -181,7 +186,7 @@ export class DdlApiTreeBuilder extends TreeBuilder<
   protected createNodeValue(
     key: NodeKey,
     kind: DdlApiTreeNodeKind,
-    params: TreeNodeParams<object | null, string, object>,
+    params: DdlApiTreeBuildingNodeParams,
   ): DdlApiTreeNodeValue<DdlApiTreeNodeKind> | null {
     const { value } = params
 
@@ -193,11 +198,34 @@ export class DdlApiTreeBuilder extends TreeBuilder<
     )
   }
 
-  private isDdlApiSimpleTreeNode(node: ITreeNode<object | null, string, object>): node is DdlApiSimpleTreeNode {
+  protected resolveNodeKey(key: NodeKey, value: unknown): NodeKey {
+    if (!isObject(value)) {
+      return key
+    }
+    if ('columnName' in value && typeof value.columnName === 'string') {
+      return value.columnName
+    }
+    if ('indexName' in value && typeof value.indexName === 'string') {
+      return resolveDdlApiIndexNodeKey(key, value)
+    }
+    return key
+  }
+
+  /* Node complexity checks */
+
+  protected isSimpleTreeNode(node: DdlApiTreeNode): boolean {
     return node.type === TreeNodeComplexityTypes.SIMPLE
   }
 
-  private isDdlApiComplexTreeNode(node: ITreeNode<object | null, string, object>): node is DdlApiComplexTreeNode {
-    return !this.isDdlApiSimpleTreeNode(node)
+  protected isComplexTreeNode(node: DdlApiTreeNode): boolean {
+    return node.type === TreeNodeComplexityTypes.COMPLEX
+  }
+
+  private takeSimpleTreeNode(node: DdlApiTreeNode | null): DdlApiTreeNode | null {
+    return node && this.isSimpleTreeNode(node) ? node : null
+  }
+
+  private takeComplexTreeNode(node: DdlApiTreeNode | null): DdlApiTreeNode | null {
+    return node && this.isComplexTreeNode(node) ? node : null
   }
 }

@@ -84,7 +84,7 @@ export class DdlApiNodeDataBuilder extends AbstractNodeDataBuilder<
           'enumValues',
           'isPrimaryKey',
           'isForeignKey',
-          'foreignKeyTarget',
+          'foreignKeyTargets',
           'isGenerated',
           'generatedBy',
           'isUnique',

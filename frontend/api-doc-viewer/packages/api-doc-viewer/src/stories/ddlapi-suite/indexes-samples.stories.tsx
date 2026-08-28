@@ -38,3 +38,5 @@ export const OneColumnUnique: Story = createCaseStory("one-column-unique");
 export const Partial: Story = createCaseStory("partial");
 export const TwoColumns: Story = createCaseStory("two-columns");
 export const TwoColumnsUnique: Story = createCaseStory("two-columns-unique");
+export const UnnamedIndex: Story = createCaseStory("unnamed-index");
+export const UnnamedIndexUnique: Story = createCaseStory("unnamed-index-unique");

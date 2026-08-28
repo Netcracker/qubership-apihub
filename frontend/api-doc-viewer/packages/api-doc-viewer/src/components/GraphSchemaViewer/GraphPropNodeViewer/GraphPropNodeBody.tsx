@@ -33,6 +33,7 @@ import { ExpandingMode } from '../../../types/internal/ExpandingMode'
 import { PropsWithChanges } from '../../../types/internal/PropsWithChanges'
 import { GraphPropNodePropsWithState } from '../../../types/internal/PropsWithState'
 import { PropsWithoutChangesSummary } from '../../../types/PropsWithoutChangesSummary'
+import { safePropertyIn } from '../../../utils/common/objects'
 import { listContainsNodeKind, listContainsNodeParentKind } from '../../../utils/common/rows'
 import {
   hasNoContent,
@@ -191,5 +192,6 @@ export const GraphPropNodeBody: FC<GraphPropNodeBodyProps> = (props) => {
 }
 
 function isNullableValue(value: unknown): boolean {
-  return isObject(value) && (!('nullable' in value) || value.nullable === true)
+  return isObject(value)
+    && (!safePropertyIn(value, 'nullable', 'isNullableValue') || (value as { nullable?: boolean }).nullable === true)
 }

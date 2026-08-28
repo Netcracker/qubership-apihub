@@ -2,20 +2,20 @@ import { DEFAULT_DISPLAY_MODE } from "@apihub/constants/configuration"
 import { DisplayModeContext } from "@apihub/contexts/DisplayModeContext"
 import { LayoutModeContext } from "@apihub/contexts/LayoutModeContext"
 import { LevelContext } from "@apihub/contexts/LevelContext"
-import { isTableNode } from "@apihub/utils/ddlapi/node-type-checkers"
 import { DisplayMode } from "@apihub/types/DisplayMode"
 import { DOCUMENT_LAYOUT_MODE } from "@apihub/types/LayoutMode"
+import { isTableNode } from "@apihub/utils/ddlapi/node-type-checkers"
 import { DdlApiTreeBuilder, createBuildingServiceLogger } from "@netcracker/qubership-apihub-next-data-model"
 import { NavigationLinkBuilder } from "@netcracker/qubership-apihub-next-data-model/shared/ddlapi/types/navigation-link-builder"
 import { TableKey } from "@netcracker/qubership-apihub-next-data-model/shared/ddlapi/types/table-key"
 import { FC, memo, useMemo } from "react"
+import '../../index.css'
 import { ErrorBoundary } from "../services/ErrorBoundary"
 import { ErrorBoundaryFallback } from "../services/ErrorBoundaryFallback"
 import { DdlTableViewerContext } from "./DdlTableViewerContext"
 import { DefaultNavigationLink, type NavigationLinkComponent } from "./DefaultNavigationLink"
-import { TableNodeViewer } from "./TableNodeViewer"
-import '../../index.css'
 import './styles/index.css'
+import { TableNodeViewer } from "./TableNodeViewer"
 
 export type DdlTableViewerProps = {
   source: unknown

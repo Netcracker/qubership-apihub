@@ -71,12 +71,12 @@ export class AsyncApiNodeDiffsAggregatorKindBindings extends AsyncApiNodeDiffsAg
           styles: {
             before: {
               isContentVisible: styles.before.isContentVisible,
-              isHeaderVisible: styles.before.isHeaderVisible,
+              isHeaderVisible: true,
               backgroundColor: HighlightVariant.Yellow,
             },
             after: {
               isContentVisible: styles.after.isContentVisible,
-              isHeaderVisible: styles.after.isHeaderVisible,
+              isHeaderVisible: true,
               backgroundColor: HighlightVariant.Yellow,
             },
           },

@@ -1,22 +1,22 @@
-import { AsyncApiComplexTreeNode } from "@apihub/next-data-model/model/async-api/tree/complex-node.impl";
-import { AsyncApiSimpleTreeNode } from "@apihub/next-data-model/model/async-api/tree/simple-node.impl";
 import { AsyncApiTree } from "@apihub/next-data-model/model/async-api/tree/tree.impl";
+import { AsyncApiTreeNode } from "@apihub/next-data-model/model/async-api/types/aliases";
 import { AsyncApiTreeNodeKind, AsyncApiTreeNodeKinds, AsyncApiTreeNodeKindsList } from "@apihub/next-data-model/model/async-api/types/node-kind";
 import { AsyncApiTreeNodeMeta } from "@apihub/next-data-model/model/async-api/types/node-meta";
 import { AsyncApiTreeNodeValue } from "@apihub/next-data-model/model/async-api/types/node-value";
 import { OperationKeys } from "@apihub/next-data-model/shared/async-api/types/operation-keys";
 import { AsyncApiTreeBuilderParams } from "@apihub/next-data-model/shared/async-api/types/tree-builder-params";
 import { syncCrawl } from "@netcracker/qubership-apihub-json-crawl";
-import { ComplexTreeNodeParams, ITreeNode, SimpleTreeNodeParams, TreeNodeComplexityTypes, TreeNodeParams } from "../../../model/abstract/tree/tree-node.interface";
+import { ComplexTreeNodeParams, SimpleTreeNodeParams, TreeNodeComplexityTypes } from "../../../model/abstract/tree/tree-node.interface";
 import { isObject } from "../../../utilities";
 import { NodeId, NodeKey } from "../../../utility-types";
 import { TreeBuilder } from "../../abstract/tree/builder";
+import { NodeDataPickFunction } from "../../abstract/tree/node-data/builder";
 import { getAsyncApiCrawlRules } from "../json-crawl-entities/rules/rules";
 import { AsyncApiCrawlRule } from "../json-crawl-entities/rules/types";
 import { AsyncApiTreeCrawlState } from "../json-crawl-entities/state/types";
 import { BuildingServiceLogger, createBuildingServiceLogger } from "../../../loggers";
-import { AsyncApiSpecTransformer } from "../shared/async-api-spec-transformer";
-import { createAsyncApiTreeBuildingHooks } from "./building-hooks";
+import { AsyncApiMessageOrientedSpec, AsyncApiSpecTransformer } from "../shared/async-api-spec-transformer";
+import { AsyncApiTreeBuildingNodeParams, createAsyncApiTreeBuildingHooks } from "./building-hooks";
 import { AsyncApiNodeDataBuilder } from "./node-data/builder";
 
 type SimpleAsyncApiTreeNodeParams = SimpleTreeNodeParams<
@@ -31,17 +31,18 @@ type ComplexAsyncApiTreeNodeParams = ComplexTreeNodeParams<
   AsyncApiTreeNodeMeta
 >
 
+const ASYNC_API_LOG_PREFIX = '[AsyncAPI]'
+
 export class AsyncApiTreeBuilder extends TreeBuilder<
   AsyncApiTreeNodeValue<AsyncApiTreeNodeKind> | null,
   AsyncApiTreeNodeKind,
   AsyncApiTreeNodeMeta
 > {
   public readonly tree: AsyncApiTree;
-  private readonly source: unknown;
-  private readonly referenceNamePropertyKey: symbol;
-  private readonly operationKeys?: OperationKeys;
-  private readonly logger: BuildingServiceLogger;
-  private readonly specificationTransformer: AsyncApiSpecTransformer;
+  protected readonly source: unknown;
+  protected readonly referenceNamePropertyKey: symbol;
+  protected readonly operationKeys?: OperationKeys;
+  protected readonly logger: BuildingServiceLogger;
   private readonly nodeDataBuilder: AsyncApiNodeDataBuilder;
 
   constructor(params: AsyncApiTreeBuilderParams) {
@@ -57,15 +58,18 @@ export class AsyncApiTreeBuilder extends TreeBuilder<
     this.referenceNamePropertyKey = referenceNamePropertyKey
     this.operationKeys = operationKeys
     this.logger = logger
-    this.tree = new AsyncApiTree();
-    this.specificationTransformer = new AsyncApiSpecTransformer(this.referenceNamePropertyKey, this.logger)
-    this.nodeDataBuilder = new AsyncApiNodeDataBuilder()
+    this.tree = this.createTree()
+    this.nodeDataBuilder = this.createNodeDataBuilder()
   }
 
   public build(): AsyncApiTree {
     if (!isObject(this.source)) {
       return this.tree;
     }
+
+    const preparedSource = this.prepareSource()
+
+    this.logger.debug(`${this.logPrefix} Prepared Source:`, preparedSource)
 
     const initialState: AsyncApiTreeCrawlState = {
       parent: null,
@@ -76,18 +80,13 @@ export class AsyncApiTreeBuilder extends TreeBuilder<
     // TODO: Encapsulate this
     const initialRules: AsyncApiCrawlRule = getAsyncApiCrawlRules(AsyncApiTreeNodeKinds.MESSAGE)
 
-    // TODO: Encapsulate this
-    const preparedSource = this.specificationTransformer.transformOperationOrientedSpecToMessageOrientedSpec(this.source, this.operationKeys)
-
-    this.logger.debug('[AsyncAPI] Prepared Source:', preparedSource)
-
     const hooks = createAsyncApiTreeBuildingHooks({
       source: preparedSource,
       tree: this.tree,
       supportedNodeKinds: AsyncApiTreeNodeKindsList,
       createNodeFromRaw: (id, key, kind, complex, params) => this.createNodeFromRaw(id, key, kind, complex, params),
       createNodeParams: (value, parent, container) => ({
-        value: isObject(value) && !Array.isArray(value) ? value : null,
+        value: this.takeCrawlValue(value),
         newDataLevel: true,
         parent,
         container,
@@ -102,8 +101,8 @@ export class AsyncApiTreeBuilder extends TreeBuilder<
         container: node,
         alreadyConvertedValuesCache: cache,
       }),
-      isSimpleNode: (node): node is AsyncApiSimpleTreeNode => this.isAsyncApiSimpleTreeNode(node),
-      isComplexNode: (node): node is AsyncApiComplexTreeNode => this.isAsyncApiComplexTreeNode(node),
+      isSimpleNode: (node) => this.isSimpleTreeNode(node),
+      isComplexNode: (node) => this.isComplexTreeNode(node),
       resolveNodeKey: (key, value) => this.resolveNodeKey(key, value),
       shouldStopAfterNodeCreation: (_, value) => isObject(value) && Boolean(value.isPrimitive),
     })
@@ -120,6 +119,34 @@ export class AsyncApiTreeBuilder extends TreeBuilder<
     return this.tree;
   }
 
+  /* Extension points for descendant builders */
+
+  protected get logPrefix(): string {
+    return ASYNC_API_LOG_PREFIX
+  }
+
+  protected createTree(): AsyncApiTree {
+    return new AsyncApiTree()
+  }
+
+  protected createNodeDataBuilder(): AsyncApiNodeDataBuilder {
+    return new AsyncApiNodeDataBuilder()
+  }
+
+  protected prepareSource(): AsyncApiMessageOrientedSpec | null {
+    const specificationTransformer = new AsyncApiSpecTransformer(this.referenceNamePropertyKey, this.logger)
+    return specificationTransformer.transformOperationOrientedSpecToMessageOrientedSpec(this.source, this.operationKeys)
+  }
+
+  /**
+   * Narrows a raw crawl value down to the value carried by node building params.
+   * @param value - crawl hook value.
+   * @returns value kept on the node building params.
+   */
+  protected takeCrawlValue(value: unknown): object | null {
+    return isObject(value) ? value : null
+  }
+
   /**
    * Picks up the node key found in the reference if mapping is provided.
    * Otherwise, returns the original key.
@@ -127,7 +154,7 @@ export class AsyncApiTreeBuilder extends TreeBuilder<
    * @param value - crawl hook value.
    * @returns resolved node key.
    */
-  private resolveNodeKey(key: NodeKey, value: unknown): NodeKey {
+  protected resolveNodeKey(key: NodeKey, value: unknown): NodeKey {
     if (!isObject(value)) {
       return key
     }
@@ -150,16 +177,16 @@ export class AsyncApiTreeBuilder extends TreeBuilder<
     key: NodeKey,
     kind: AsyncApiTreeNodeKind,
     complex: boolean,
-    params: TreeNodeParams<object | null, string, object>
-  ): AsyncApiSimpleTreeNode | AsyncApiComplexTreeNode | undefined {
+    params: AsyncApiTreeBuildingNodeParams,
+  ): AsyncApiTreeNode | undefined {
     const { parent, container, newDataLevel } = params
 
     if (complex) {
       const nodeMeta = this.createNodeMeta(key, params)
       const extendedParams: ComplexAsyncApiTreeNodeParams = {
         type: TreeNodeComplexityTypes.COMPLEX,
-        parent: parent && this.isAsyncApiSimpleTreeNode(parent) ? parent : null, // just type guard
-        container: container && this.isAsyncApiComplexTreeNode(container) ? container : null,
+        parent: this.takeSimpleTreeNode(parent),
+        container: this.takeComplexTreeNode(container),
         value: null,
         meta: nodeMeta,
         newDataLevel: newDataLevel,
@@ -167,16 +194,12 @@ export class AsyncApiTreeBuilder extends TreeBuilder<
       return this.tree.createComplexNode(id, key, kind, false, extendedParams)
     }
 
-    const nodeValue = this.createNodeValue(key, kind, {
-      ...params,
-      parent: parent,
-      container: container,
-    })
+    const nodeValue = this.createNodeValue(key, kind, params)
     const nodeMeta = this.createNodeMeta(key, params)
     const extendedParams: SimpleAsyncApiTreeNodeParams = {
       type: TreeNodeComplexityTypes.SIMPLE,
-      parent: parent && this.isAsyncApiSimpleTreeNode(parent) ? parent : null, // just type guard
-      container: container && this.isAsyncApiComplexTreeNode(container) ? container : null,
+      parent: this.takeSimpleTreeNode(parent),
+      container: this.takeComplexTreeNode(container),
       value: nodeValue,
       meta: nodeMeta,
       newDataLevel: newDataLevel,
@@ -186,17 +209,16 @@ export class AsyncApiTreeBuilder extends TreeBuilder<
 
   protected createNodeMeta(
     key: NodeKey,
-    params: TreeNodeParams<object | null, string, object>,
+    params: AsyncApiTreeBuildingNodeParams,
   ): AsyncApiTreeNodeMeta {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { value, parent = null } = params
+    const { value } = params
     return this.nodeDataBuilder.createNodeMeta(value)
   }
 
   protected createNodeValue(
     key: NodeKey,
     kind: AsyncApiTreeNodeKind,
-    params: TreeNodeParams<object | null, string, object>,
+    params: AsyncApiTreeBuildingNodeParams,
   ): AsyncApiTreeNodeValue<AsyncApiTreeNodeKind> | null {
     const { value } = params
 
@@ -204,18 +226,25 @@ export class AsyncApiTreeBuilder extends TreeBuilder<
       kind,
       key,
       value,
-      (source, keys) => this.pick(source, keys),
+      ((source, keys) => this.pick(source, keys)) satisfies NodeDataPickFunction,
     )
   }
 
-  /* Type guards */
+  /* Node complexity checks */
 
-  private isAsyncApiSimpleTreeNode(node: ITreeNode<object | null, string, object>): node is AsyncApiSimpleTreeNode {
+  protected isSimpleTreeNode(node: AsyncApiTreeNode): boolean {
     return node.type === TreeNodeComplexityTypes.SIMPLE
   }
 
-  private isAsyncApiComplexTreeNode(node: ITreeNode<object | null, string, object>): node is AsyncApiComplexTreeNode {
-    return !this.isAsyncApiSimpleTreeNode(node)
+  protected isComplexTreeNode(node: AsyncApiTreeNode): boolean {
+    return node.type === TreeNodeComplexityTypes.COMPLEX
   }
 
+  private takeSimpleTreeNode(node: AsyncApiTreeNode | null): AsyncApiTreeNode | null {
+    return node && this.isSimpleTreeNode(node) ? node : null
+  }
+
+  private takeComplexTreeNode(node: AsyncApiTreeNode | null): AsyncApiTreeNode | null {
+    return node && this.isComplexTreeNode(node) ? node : null
+  }
 }

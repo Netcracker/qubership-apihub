@@ -23,10 +23,12 @@ what is omitted on purpose, and how to classify gaps when planning work or writi
 Realm / merged diff document
   → DdlApiSpecTransformer (next-data-model)
   → DdlApiTableOrientedSpec + tree (DdlApiTreeBuilder)
-  → DdlTableViewer → TableNodeViewer → Columns / Indexes sections
+  → DdlTableViewer / DdlTableDiffsViewer → TableNodeViewer → Columns / Indexes sections
 ```
 
-`DdlTableDiffsViewer` is a stub — no ddlapi fields are diff-rendered yet.
+`DdlTableDiffsViewer` renders column and index title-row diffs (badges, type, names) via
+next-data-model aggregators and `*WithDiffs` node viewers. Additional-info rows, table-level
+chrome, and some field diffs may still be **`ndm-future`** — see section G below.
 
 ---
 
@@ -276,12 +278,14 @@ statements are skipped (`DdlErrorKind.OutOfScopeStatement`). Absence in the view
 
 ---
 
-### G. Diffs and infrastructure (`out-of-scope` for display coverage)
+### G. Diffs and infrastructure
 
-| Item | Notes |
+| Item | Tag / status |
 | --- | --- |
-| `DdlTableDiffsViewer` UI | placeholder only |
-| Diff metadata on `DdlApiTableOrientedSpecWithDiffs` | transformer TODO |
+| Column / index title-row diffs (badges, type, names) | **Implemented** — `DdlTableDiffsViewer`, property-row aggregators |
+| `AdditionalInfoRow` diffs (default, generated expression) | `ndm-future` |
+| Table-level / section-header diff chrome | `ndm-future` |
+| Diff metadata on all `DdlApiTableOrientedSpecWithDiffs` fields | partial — extend transformer + aggregators per field |
 | `Realm` wrapper objects in merged source | extraction only |
 | Tree node kinds `TABLE`, `COLUMNS`, `COLUMN`, `INDEXES`, `INDEX` | structure, not ddlapi |
 

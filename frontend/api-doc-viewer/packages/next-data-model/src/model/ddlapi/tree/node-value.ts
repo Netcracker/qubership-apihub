@@ -67,7 +67,7 @@ export interface DdlApiForeignKeyTarget {
  * Pre-rendered column type token for the row (`column_name` **type** …).
  *
  * Mirrors every member of ddlapi `SchemaType` from `types.d.ts`, plus fallbacks.
- * Always includes {@link DdlApiColumnTypeValue.label} — the exact string the viewer
+ * Always includes {@link DdlApiColumnTypeValue["label"]} — the exact string the viewer
  * prints between column name and chips (e.g. `character varying (30)`, `numeric (10, 2)`).
  *
  * Builder formatting rules (one variant per `SchemaType.kind`):
@@ -221,6 +221,15 @@ export interface DdlApiColumnTypeRaw extends DdlApiColumnTypeBase {
   readonly raw: string
 }
 
+/** ddlapi generated-column mechanism on {@link DdlApiColumnRowValue.generatedBy}. */
+export const DDL_COLUMN_GENERATED_BY = {
+  Identity: 'identity',
+  Expression: 'expression',
+} as const
+
+export type DdlApiColumnGeneratedBy =
+  (typeof DDL_COLUMN_GENERATED_BY)[keyof typeof DDL_COLUMN_GENERATED_BY]
+
 /**
  * One column line:
  * `columnName columnType.label [PK] [FK (schema.table.column)] [generated] [unique] [not null]`
@@ -231,13 +240,13 @@ export interface DdlApiColumnTypeRaw extends DdlApiColumnTypeBase {
  * | `columnType` | always | `Column.type` → {@link DdlApiColumnTypeValue} |
  * | `isPrimaryKey` | column ∈ PK | `Table.primaryKey.parts[*].column === column` |
  * | `isForeignKey` | column ∈ FK | `Table.foreignKeys[*].columns` contains column |
- * | `foreignKeyTarget` | `isForeignKey` | resolved from matching `ForeignKey` |
+ * | `foreignKeyTargets` | `isForeignKey` | one entry per matching `ForeignKey` |
  * | `isGenerated` | IDENTITY or GENERATED AS | `column.attrs`: `Identity` or `GeneratedExpr` |
- * | `generatedBy` | `isGenerated` | `'identity'` → `PgAttrKind.Identity`; `'expression'` → `AttrKind.GeneratedExpr`. Stored for API consumers; api-doc-viewer always shows badge **generated** and does not surface identity vs expression in the UI. |
+ * | `generatedBy` | `isGenerated` | {@link DDL_COLUMN_GENERATED_BY.Identity} → `PgAttrKind.Identity`; {@link DDL_COLUMN_GENERATED_BY.Expression} → `AttrKind.GeneratedExpr`. Stored for API consumers; api-doc-viewer always shows badge **generated** and does not surface identity vs expression in the UI. |
  * | `isUnique` | single-column unique index/constraint | `Table.indexes[*].unique && parts.length === 1 && parts[0].column === column` |
  * | `isNotNull` | explicit NOT NULL | `ColumnType.null === false` (`undefined` → false; explicit `NULL` → false) |
  * | `description` | COMMENT ON COLUMN | `findAttr(column.attrs, Comment)?.text` |
- * | `defaultValue` | `Column.default` present | `Column.default` → {@link formatDdlExpr} |
+ * | `defaultValue` | `Column.default` present | `Column.default` → {@link formatDefaultValueForDisplay} |
  * | `generatedExpression` | `GeneratedExpr` attr (not IDENTITY) | `findAttr(column.attrs, GeneratedExpr).expr` |
  * | `enumValues` | `columnType.kind === EnumType` | `Column.type.type.values` (same list as {@link DdlApiColumnTypeEnum.values}) |
  */
@@ -248,10 +257,10 @@ export interface DdlApiColumnRowValue extends DdlApiRowDescription {
   readonly enumValues?: readonly string[]
   readonly isPrimaryKey: boolean
   readonly isForeignKey: boolean
-  readonly foreignKeyTarget?: DdlApiForeignKeyTarget
+  readonly foreignKeyTargets?: readonly DdlApiForeignKeyTarget[]
   readonly isGenerated: boolean
   /** ddlapi source kind when {@link isGenerated}; not reflected in column badge text (viewer uses **generated** for both). */
-  readonly generatedBy?: 'identity' | 'expression'
+  readonly generatedBy?: DdlApiColumnGeneratedBy
   readonly isUnique: boolean
   readonly isNotNull: boolean
   readonly defaultValue?: string

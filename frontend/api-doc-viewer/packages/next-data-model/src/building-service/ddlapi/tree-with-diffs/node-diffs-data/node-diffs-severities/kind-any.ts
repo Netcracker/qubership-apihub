@@ -12,42 +12,27 @@ export class DdlApiNodeDiffsSeveritiesAggregatorKindAny
   ): NodeDiffsSeverities | undefined {
     const wholeNodeDiff = nodeDiffs[NODE_LEVEL_DIFF_KEY]
     if (wholeNodeDiff) {
-      const diff = wholeNodeDiff.data
-      const nodeDiffsSeverity: NodeDiffsSeverity = {
-        type: diff.type,
-        causedAt: [],
-      }
-      if (isDiffReplace(diff) || isDiffRemove(diff)) {
-        nodeDiffsSeverity.causedAt = diff.beforeDeclarationPaths[0]
-      } else if (isDiffAdd(diff)) {
-        nodeDiffsSeverity.causedAt = diff.afterDeclarationPaths[0]
-      }
       return {
-        [NodeDiffsSeverityPlacemennt.TitleRow]: nodeDiffsSeverity,
+        [NodeDiffsSeverityPlacemennt.TitleRow]: this.buildNodeDiffsSeverity(wholeNodeDiff),
       }
     }
 
     const diffsSeverities: NodeDiffsSeverities = {}
 
-    this.applyRowSeverity(nodeDiffs, 'tableName', NodeDiffsSeverityPlacemennt.TitleRow, diffsSeverities)
-    this.applyRowSeverity(nodeDiffs, 'columnName', NodeDiffsSeverityPlacemennt.TitleRow, diffsSeverities)
-    this.applyRowSeverity(nodeDiffs, 'indexName', NodeDiffsSeverityPlacemennt.TitleRow, diffsSeverities)
-    this.applyRowSeverity(nodeDiffs, 'title', NodeDiffsSeverityPlacemennt.TitleRow, diffsSeverities)
+    this.applyMaxRowSeverityFromPropertyDiffs(
+      nodeDiffs,
+      ['tableName', 'columnName', 'indexName', 'title'],
+      NodeDiffsSeverityPlacemennt.TitleRow,
+      diffsSeverities,
+    )
     this.applyRowSeverity(nodeDiffs, 'description', NodeDiffsSeverityPlacemennt.DescriptionRow, diffsSeverities)
 
     return Object.keys(diffsSeverities).length > 0 ? diffsSeverities : undefined
   }
 
-  private applyRowSeverity(
-    nodeDiffs: NodeDiffs<DdlApiTreeNodeValue<DdlApiTreeNodeKind> | null>,
-    propertyKey: string,
-    placement: NodeDiffsSeverityPlacemennt,
-    diffsSeverities: NodeDiffsSeverities,
-  ): void {
-    const propertyDiff = (nodeDiffs as Record<string, ChangedPropertyMetaData | undefined>)[propertyKey]
-    if (!propertyDiff) {
-      return
-    }
+  protected buildNodeDiffsSeverity(
+    propertyDiff: ChangedPropertyMetaData,
+  ): NodeDiffsSeverity {
     const diff = propertyDiff.data
     const nodeDiffsSeverity: NodeDiffsSeverity = {
       type: diff.type,
@@ -58,6 +43,37 @@ export class DdlApiNodeDiffsSeveritiesAggregatorKindAny
     } else if (isDiffAdd(diff)) {
       nodeDiffsSeverity.causedAt = diff.afterDeclarationPaths[0]
     }
-    diffsSeverities[placement] = nodeDiffsSeverity
+    return nodeDiffsSeverity
+  }
+
+  protected applyMaxRowSeverityFromPropertyDiffs(
+    nodeDiffs: NodeDiffs<DdlApiTreeNodeValue<DdlApiTreeNodeKind> | null>,
+    propertyKeys: readonly string[],
+    placement: NodeDiffsSeverityPlacemennt,
+    diffsSeverities: NodeDiffsSeverities,
+  ): void {
+    const propertyDiffs = propertyKeys.map(
+      (propertyKey) => (nodeDiffs as Record<string, ChangedPropertyMetaData | undefined>)[propertyKey],
+    )
+    const maxPropertyDiff = AbstractNodeDiffsSeveritiesAggregator.maxChangedPropertyMetaDataByDiffType(
+      ...propertyDiffs,
+    )
+    if (!maxPropertyDiff) {
+      return
+    }
+    diffsSeverities[placement] = this.buildNodeDiffsSeverity(maxPropertyDiff)
+  }
+
+  protected applyRowSeverity(
+    nodeDiffs: NodeDiffs<DdlApiTreeNodeValue<DdlApiTreeNodeKind> | null>,
+    propertyKey: string,
+    placement: NodeDiffsSeverityPlacemennt,
+    diffsSeverities: NodeDiffsSeverities,
+  ): void {
+    const propertyDiff = (nodeDiffs as Record<string, ChangedPropertyMetaData | undefined>)[propertyKey]
+    if (!propertyDiff) {
+      return
+    }
+    diffsSeverities[placement] = this.buildNodeDiffsSeverity(propertyDiff)
   }
 }

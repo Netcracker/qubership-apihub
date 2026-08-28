@@ -1,7 +1,8 @@
 import { literal, rawExpr, TypeKind } from '@netcracker/qubership-apihub-ddlapi'
 import { buildFromDdl } from '@netcracker/qubership-apihub-ddlapi/parser'
 import { DdlApiSpecTransformer } from '../../src/building-service/ddlapi/shared/ddlapi-spec-transformer'
-import { formatDdlExpr } from '../../src/shared/ddlapi/format-ddl-expr'
+import { DDL_COLUMN_GENERATED_BY } from '../../src/model/ddlapi/tree/node-value'
+import { formatDefaultValueDisplayString, formatDefaultValueForDisplay, formatDdlExpr } from '../../src/shared/ddlapi/format-ddl-expr'
 import { createBuildingServiceLogger } from '../../src/loggers'
 
 describe('formatDdlExpr', () => {
@@ -11,6 +12,20 @@ describe('formatDdlExpr', () => {
 
   it('formats raw expressions', () => {
     expect(formatDdlExpr(rawExpr('gen_random_uuid()'))).toBe('gen_random_uuid()')
+  })
+
+  it('unwraps SQL string literals for default value display', () => {
+    expect(formatDefaultValueDisplayString("'draft'")).toBe('draft')
+    expect(formatDefaultValueDisplayString("'1 day'")).toBe('1 day')
+    expect(formatDefaultValueDisplayString("'\\x0102'")).toBe('\\x0102')
+    expect(formatDefaultValueDisplayString("b'101'")).toBe("b'101'")
+    expect(formatDefaultValueDisplayString('0')).toBe('0')
+    expect(formatDefaultValueDisplayString("it''s fine")).toBe("it''s fine")
+    expect(formatDefaultValueDisplayString("'it''s'")).toBe("it's")
+  })
+
+  it('formats default expr literals without surrounding quotes', () => {
+    expect(formatDefaultValueForDisplay(literal("'pending'"))).toBe('pending')
   })
 })
 
@@ -31,6 +46,20 @@ describe('DdlApiSpecTransformer column row value', () => {
     expect(spec?.columns.items[0]?.defaultValue).toBe('true')
   })
 
+  it('unwraps single quotes from text column defaults', async () => {
+    const realm = await buildFromDdl(`
+      CREATE TABLE public.t (
+        sample_col text DEFAULT 'draft'
+      );
+    `)
+    const spec = transformer.transformSourceToTableOrientedSpec(realm, {
+      schemaName: 'public',
+      name: 't',
+    })
+
+    expect(spec?.columns.items[0]?.defaultValue).toBe('draft')
+  })
+
   it('extracts generatedExpression from GENERATED ALWAYS AS columns', async () => {
     const realm = await buildFromDdl(`
       CREATE TABLE public.employees (
@@ -45,7 +74,7 @@ describe('DdlApiSpecTransformer column row value', () => {
     })
 
     const fullNameColumn = spec?.columns.items.find(column => column.columnName === 'full_name')
-    expect(fullNameColumn?.generatedBy).toBe('expression')
+    expect(fullNameColumn?.generatedBy).toBe(DDL_COLUMN_GENERATED_BY.Expression)
     expect(fullNameColumn?.generatedExpression).toBe("(first_name || ' ') || last_name")
     expect(fullNameColumn?.defaultValue).toBeUndefined()
   })
@@ -125,11 +154,11 @@ describe('DdlApiSpecTransformer column row value', () => {
 
     const refIdColumn = spec?.columns.items.find(column => column.columnName === 'ref_id')
     expect(refIdColumn?.isForeignKey).toBe(true)
-    expect(refIdColumn?.foreignKeyTarget).toEqual({
+    expect(refIdColumn?.foreignKeyTargets).toEqual([{
       schemaName: 'public',
       tableName: 'parent',
       columnName: 'id',
-    })
+    }])
   })
 
   it('resolves foreignKeyTarget in a single-table partial realm with embedded refTable', async () => {
@@ -159,11 +188,11 @@ describe('DdlApiSpecTransformer column row value', () => {
 
     const userIdColumn = spec?.columns.items.find(column => column.columnName === 'user_id')
     expect(userIdColumn?.isForeignKey).toBe(true)
-    expect(userIdColumn?.foreignKeyTarget).toEqual({
+    expect(userIdColumn?.foreignKeyTargets).toEqual([{
       schemaName: 'public',
       tableName: 'user_data',
       columnName: 'user_id',
-    })
+    }])
   })
 
   it('resolves foreignKeyTarget when FK column objects differ from table.columns by reference', async () => {
@@ -203,11 +232,11 @@ describe('DdlApiSpecTransformer column row value', () => {
 
     const refIdColumn = spec?.columns.items.find(column => column.columnName === 'ref_id')
     expect(refIdColumn?.isForeignKey).toBe(true)
-    expect(refIdColumn?.foreignKeyTarget).toEqual({
+    expect(refIdColumn?.foreignKeyTargets).toEqual([{
       schemaName: 'public',
       tableName: 'parent',
       columnName: 'id',
-    })
+    }])
   })
 
   it('resolves foreignKeyTarget schema via refTable reference across schemas', async () => {
@@ -228,11 +257,11 @@ describe('DdlApiSpecTransformer column row value', () => {
     })
 
     const refIdColumn = spec?.columns.items.find(column => column.columnName === 'ref_id')
-    expect(refIdColumn?.foreignKeyTarget).toEqual({
+    expect(refIdColumn?.foreignKeyTargets).toEqual([{
       schemaName: 'custom',
       tableName: 'parent',
       columnName: 'id',
-    })
+    }])
   })
 })
 

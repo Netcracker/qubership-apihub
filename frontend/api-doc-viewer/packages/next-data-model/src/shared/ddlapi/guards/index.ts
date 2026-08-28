@@ -1,2 +1,5 @@
+export * from './column-type-name'
 export * from './expr'
+export * from './property-row-diffs'
 export * from './schema-type'
+export * from './tree-node'
