@@ -18,7 +18,7 @@ require (
 	github.com/iancoleman/orderedmap v0.3.0
 	github.com/mark3labs/mcp-go v0.58.0
 	github.com/minio/minio-go/v7 v7.1.0
-	github.com/openai/openai-go/v3 v3.52.0
+	github.com/openai/openai-go/v3 v3.54.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.24.1
 	github.com/robfig/cron/v3 v3.0.1
