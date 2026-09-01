@@ -7,7 +7,6 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"path"
-	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -695,8 +694,6 @@ func main() {
 			portalFs.ServeHTTP(w, r) // portal is default app
 		}
 	})
-
-	debug.SetGCPercent(30)
 
 	err = security.SetupGoGuardian(userService, roleService, apihubApiKeyService, personalAccessTokenService, systemInfoService, tokenRevocationService)
 	if err != nil {
