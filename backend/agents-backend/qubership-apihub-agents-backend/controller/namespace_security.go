@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/Netcracker/qubership-apihub-agents-backend/exception"
+	"github.com/Netcracker/qubership-apihub-agents-backend/responder"
 	"github.com/Netcracker/qubership-apihub-agents-backend/secctx"
 	"github.com/Netcracker/qubership-apihub-agents-backend/service"
 	"github.com/Netcracker/qubership-apihub-agents-backend/utils"
@@ -20,23 +21,25 @@ type NamespaceSecurityController interface {
 	GetAuthSecurityCheckResult(w http.ResponseWriter, r *http.Request)
 }
 
-func NewNamespaceSecurityController(namespaceSecurityService service.NamespaceSecurityService, excelService service.ExcelService) NamespaceSecurityController {
+func NewNamespaceSecurityController(namespaceSecurityService service.NamespaceSecurityService, excelService service.ExcelService, resp *responder.Responder) NamespaceSecurityController {
 	return &namespaceSecurityControllerImpl{
 		namespaceSecurityService: namespaceSecurityService,
 		excelService:             excelService,
+		responder:                resp,
 	}
 }
 
 type namespaceSecurityControllerImpl struct {
 	namespaceSecurityService service.NamespaceSecurityService
 	excelService             service.ExcelService
+	responder                *responder.Responder
 }
 
 func (n namespaceSecurityControllerImpl) StartAuthSecurityCheck(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		n.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -47,7 +50,7 @@ func (n namespaceSecurityControllerImpl) StartAuthSecurityCheck(w http.ResponseW
 	var requestView view.StartNamespaceSecurityCheckReq
 	err = json.Unmarshal(body, &requestView)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		n.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -58,17 +61,17 @@ func (n namespaceSecurityControllerImpl) StartAuthSecurityCheck(w http.ResponseW
 	validationErr := utils.ValidateObject(requestView)
 	if validationErr != nil {
 		if customError, ok := validationErr.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			n.responder.RespondWithCustomError(w, customError)
 			return
 		}
 	}
 
 	processId, err := n.namespaceSecurityService.StartAuthSecurityCheckProcess(secctx.MakeUserContext(r), requestView)
 	if err != nil {
-		respondWithError(w, "Failed to start auth security check process", err)
+		n.responder.RespondWithError(w, "Failed to start auth security check process", err)
 		return
 	}
-	respondWithJson(w, http.StatusAccepted, view.ProcessId{ProcessId: processId})
+	n.responder.RespondWithJson(w, http.StatusAccepted, view.ProcessId{ProcessId: processId})
 }
 
 func (n namespaceSecurityControllerImpl) GetAuthSecurityCheckReports(w http.ResponseWriter, r *http.Request) {
@@ -77,12 +80,12 @@ func (n namespaceSecurityControllerImpl) GetAuthSecurityCheckReports(w http.Resp
 	workspaceId := r.URL.Query().Get("workspaceId")
 	limit, cErr := getLimitQueryParam(r)
 	if cErr != nil {
-		respondWithError(w, cErr.Error(), cErr)
+		n.responder.RespondWithError(w, cErr.Error(), cErr)
 		return
 	}
 	page, cErr := getPageQueryParam(r)
 	if cErr != nil {
-		respondWithError(w, cErr.Error(), cErr)
+		n.responder.RespondWithError(w, cErr.Error(), cErr)
 		return
 	}
 	requestView := view.GetNamespaceSecurityCheckReq{
@@ -94,27 +97,27 @@ func (n namespaceSecurityControllerImpl) GetAuthSecurityCheckReports(w http.Resp
 	}
 	reports, err := n.namespaceSecurityService.GetAuthSecurityCheckReports(requestView)
 	if err != nil {
-		respondWithError(w, "Failed to list auth security check reports", err)
+		n.responder.RespondWithError(w, "Failed to list auth security check reports", err)
 		return
 	}
-	respondWithJson(w, http.StatusOK, reports)
+	n.responder.RespondWithJson(w, http.StatusOK, reports)
 }
 
 func (n namespaceSecurityControllerImpl) GetAuthSecurityCheckStatus(w http.ResponseWriter, r *http.Request) {
 	processId := getStringParam(r, "processId")
 	status, err := n.namespaceSecurityService.GetAuthSecurityCheckStatus(processId)
 	if err != nil {
-		respondWithError(w, "Failed to get auth security check status", err)
+		n.responder.RespondWithError(w, "Failed to get auth security check status", err)
 		return
 	}
-	respondWithJson(w, http.StatusOK, status)
+	n.responder.RespondWithJson(w, http.StatusOK, status)
 }
 
 func (n namespaceSecurityControllerImpl) GetAuthSecurityCheckResult(w http.ResponseWriter, r *http.Request) {
 	processId := getStringParam(r, "processId")
 	report, filename, err := n.excelService.GetNamespaceSecurityAuthCheckReport(processId)
 	if err != nil {
-		respondWithError(w, "Failed to get auth security check results", err)
+		n.responder.RespondWithError(w, "Failed to get auth security check results", err)
 		return
 	}
 

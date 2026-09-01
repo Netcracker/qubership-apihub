@@ -4,29 +4,36 @@ import (
 	"fmt"
 
 	"github.com/Netcracker/qubership-apihub-agents-backend/client"
+	"github.com/Netcracker/qubership-apihub-agents-backend/responder"
 	"github.com/shaj13/go-guardian/v2/auth"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/union"
-	_ "github.com/shaj13/libcache/fifo"
-	_ "github.com/shaj13/libcache/lru"
 )
-
-var strategy union.Union
-var proxyStrategy auth.Strategy
 
 const CustomJwtAuthHeader = "X-Apihub-Authorization"
 
-func SetupGoGuardian(apihubClient client.ApihubClient) error {
+type AuthHandler struct {
+	responder     *responder.Responder
+	strategy      union.Union
+	proxyStrategy auth.Strategy
+}
+
+func NewAuthHandler(apihubClient client.ApihubClient, r *responder.Responder) (*AuthHandler, error) {
 	if apihubClient == nil {
-		return fmt.Errorf("apihubClient is nil")
+		return nil, fmt.Errorf("apihubClient is nil")
 	}
 
 	bearerTokenStrategy := NewBearerTokenStrategy(apihubClient)
 	cookieTokenStrategy := NewCookieTokenStrategy(apihubClient)
 	apihubApiKeyStrategy := NewApihubApiKeyStrategy(apihubClient)
 	patStrategy := NewApihubPATStrategy(apihubClient)
-	strategy = union.New(bearerTokenStrategy, cookieTokenStrategy, apihubApiKeyStrategy, patStrategy)
+	strategy := union.New(bearerTokenStrategy, cookieTokenStrategy, apihubApiKeyStrategy, patStrategy)
 
 	customJwtStrategy := NewCustomJWTStrategy(apihubClient)
-	proxyStrategy = union.New(customJwtStrategy, cookieTokenStrategy)
-	return nil
+	proxyStrategy := union.New(customJwtStrategy, cookieTokenStrategy)
+
+	return &AuthHandler{
+		responder:     r,
+		strategy:      strategy,
+		proxyStrategy: proxyStrategy,
+	}, nil
 }

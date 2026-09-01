@@ -5,6 +5,7 @@ import (
 
 	"github.com/Netcracker/qubership-apihub-agents-backend/client"
 	"github.com/Netcracker/qubership-apihub-agents-backend/exception"
+	"github.com/Netcracker/qubership-apihub-agents-backend/responder"
 	"github.com/Netcracker/qubership-apihub-agents-backend/secctx"
 	"github.com/Netcracker/qubership-apihub-agents-backend/service"
 )
@@ -13,13 +14,14 @@ type SpecificationsController interface {
 	GetServiceSpecification(w http.ResponseWriter, r *http.Request)
 }
 
-func NewSpecificationsController(agentClient client.AgentClient, agentService service.AgentService) SpecificationsController {
-	return specificationsControllerImpl{agentClient: agentClient, agentService: agentService}
+func NewSpecificationsController(agentClient client.AgentClient, agentService service.AgentService, resp *responder.Responder) SpecificationsController {
+	return specificationsControllerImpl{agentClient: agentClient, agentService: agentService, responder: resp}
 }
 
 type specificationsControllerImpl struct {
 	agentClient  client.AgentClient
 	agentService service.AgentService
+	responder    *responder.Responder
 }
 
 func (s specificationsControllerImpl) GetServiceSpecification(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +30,7 @@ func (s specificationsControllerImpl) GetServiceSpecification(w http.ResponseWri
 	workspaceId := getStringParam(r, "workspaceId")
 	serviceId, err := getUnescapedStringParam(r, "serviceId")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		s.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -39,7 +41,7 @@ func (s specificationsControllerImpl) GetServiceSpecification(w http.ResponseWri
 	}
 	fileId, err := getUnescapedStringParam(r, "fileId")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		s.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -51,9 +53,9 @@ func (s specificationsControllerImpl) GetServiceSpecification(w http.ResponseWri
 	agent, err := s.agentService.GetAgent(agentId)
 	if err != nil {
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			s.responder.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			s.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get agent by id - '$id'",
 				Debug:   err.Error(),
@@ -62,7 +64,7 @@ func (s specificationsControllerImpl) GetServiceSpecification(w http.ResponseWri
 		return
 	}
 	if agent == nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		s.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.AgentNotFound,
 			Message: exception.AgentNotFoundMsg,
@@ -72,7 +74,7 @@ func (s specificationsControllerImpl) GetServiceSpecification(w http.ResponseWri
 
 	specBytes, err := s.agentClient.GetServiceSpecification(secctx.MakeUserContext(r), namespace, workspaceId, serviceId, fileId, agent.AgentUrl)
 	if err != nil {
-		respondWithError(w, "Failed to get specification", err)
+		s.responder.RespondWithError(w, "Failed to get specification", err)
 		return
 	}
 

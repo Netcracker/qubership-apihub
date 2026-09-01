@@ -6,8 +6,9 @@ import (
 	"net/url"
 
 	"github.com/Netcracker/qubership-apihub-agents-backend/exception"
-	"github.com/Netcracker/qubership-apihub-agents-backend/utils"
+	"github.com/Netcracker/qubership-apihub-agents-backend/responder"
 	"github.com/Netcracker/qubership-apihub-agents-backend/service"
+	"github.com/Netcracker/qubership-apihub-agents-backend/utils"
 	"github.com/Netcracker/qubership-apihub-agents-backend/view"
 	log "github.com/sirupsen/logrus"
 )
@@ -21,7 +22,7 @@ type AgentProxyController interface {
 	Proxy(w http.ResponseWriter, req *http.Request)
 }
 
-func NewAgentProxyController(agentService service.AgentService) (AgentProxyController, error) {
+func NewAgentProxyController(agentService service.AgentService, resp *responder.Responder) (AgentProxyController, error) {
 	tlsConfig, err := utils.BuildSecureTLSConfig(nil)
 	if err != nil {
 		return nil, err
@@ -29,12 +30,14 @@ func NewAgentProxyController(agentService service.AgentService) (AgentProxyContr
 	return &agentProxyControllerImpl{
 		agentService: agentService,
 		tr:           http.Transport{TLSClientConfig: tlsConfig},
+		responder:    resp,
 	}, nil
 }
 
 type agentProxyControllerImpl struct {
 	agentService service.AgentService
 	tr           http.Transport
+	responder    *responder.Responder
 }
 
 func (a *agentProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Request) {
@@ -42,9 +45,9 @@ func (a *agentProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Request)
 	agent, err := a.agentService.GetAgent(agentId)
 	if err != nil {
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			a.responder.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			a.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get agent by id - '$id'",
 				Debug:   err.Error(),
@@ -53,7 +56,7 @@ func (a *agentProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if agent == nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		a.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.AgentNotFound,
 			Message: exception.AgentNotFoundMsg,
@@ -61,7 +64,7 @@ func (a *agentProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if agent.Status != view.AgentStatusActive {
-		RespondWithCustomError(w, &exception.CustomError{
+		a.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusFailedDependency,
 			Code:    exception.InactiveAgent,
 			Message: exception.InactiveAgentMsg,
@@ -69,7 +72,7 @@ func (a *agentProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if agent.AgentVersion == "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		a.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusFailedDependency,
 			Code:    exception.IncompatibleAgentVersion,
 			Message: exception.IncompatibleAgentVersionMsg,
@@ -77,7 +80,7 @@ func (a *agentProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Request)
 		})
 	}
 	if agent.CompatibilityError != nil && agent.CompatibilityError.Severity == view.SeverityError {
-		RespondWithCustomError(w, &exception.CustomError{
+		a.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusFailedDependency,
 			Message: agent.CompatibilityError.Message,
 		})
@@ -90,7 +93,7 @@ func (a *agentProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Request)
 	log.Debugf("Sending proxy request to %s", r.URL)
 	resp, err := a.tr.RoundTrip(r)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		a.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusFailedDependency,
 			Code:    exception.ProxyFailed,
 			Message: exception.ProxyFailedMsg,
@@ -101,7 +104,7 @@ func (a *agentProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Request)
 	}
 	defer resp.Body.Close()
 	if err := copyHeader(w.Header(), resp.Header); err != nil {
-		RespondWithCustomError(w, err)
+		a.responder.RespondWithCustomError(w, err)
 		return
 	}
 	w.WriteHeader(resp.StatusCode)

@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/Netcracker/qubership-apihub-agents-backend/exception"
+	"github.com/Netcracker/qubership-apihub-agents-backend/responder"
 	"github.com/Netcracker/qubership-apihub-agents-backend/secctx"
 	"github.com/Netcracker/qubership-apihub-agents-backend/service"
 	"github.com/Netcracker/qubership-apihub-agents-backend/view"
@@ -18,13 +19,14 @@ type SnapshotController interface {
 	GetSnapshot(w http.ResponseWriter, r *http.Request)
 }
 
-func NewSnapshotController(snapshotService service.SnapshotService, agentService service.AgentService) SnapshotController {
-	return snapshotControllerImpl{snapshotService: snapshotService, agentService: agentService}
+func NewSnapshotController(snapshotService service.SnapshotService, agentService service.AgentService, resp *responder.Responder) SnapshotController {
+	return snapshotControllerImpl{snapshotService: snapshotService, agentService: agentService, responder: resp}
 }
 
 type snapshotControllerImpl struct {
 	snapshotService service.SnapshotService
 	agentService    service.AgentService
+	responder       *responder.Responder
 }
 
 func (s snapshotControllerImpl) CreateSnapshot(w http.ResponseWriter, r *http.Request) {
@@ -35,9 +37,9 @@ func (s snapshotControllerImpl) CreateSnapshot(w http.ResponseWriter, r *http.Re
 	agent, err := s.agentService.GetAgent(agentId)
 	if err != nil {
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			s.responder.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			s.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get agent by id - '$id'",
 				Debug:   err.Error(),
@@ -46,7 +48,7 @@ func (s snapshotControllerImpl) CreateSnapshot(w http.ResponseWriter, r *http.Re
 		return
 	}
 	if agent == nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		s.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.AgentNotFound,
 			Message: exception.AgentNotFoundMsg,
@@ -59,7 +61,7 @@ func (s snapshotControllerImpl) CreateSnapshot(w http.ResponseWriter, r *http.Re
 	if clientBuildStr != "" {
 		clientBuild, err = strconv.ParseBool(clientBuildStr)
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			s.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.InvalidParameter,
 				Message: exception.InvalidParameterMsg,
@@ -75,7 +77,7 @@ func (s snapshotControllerImpl) CreateSnapshot(w http.ResponseWriter, r *http.Re
 	if promoteStr != "" {
 		promote, err = strconv.ParseBool(promoteStr)
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			s.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.InvalidParameter,
 				Message: exception.InvalidParameterMsg,
@@ -89,7 +91,7 @@ func (s snapshotControllerImpl) CreateSnapshot(w http.ResponseWriter, r *http.Re
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		s.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -100,7 +102,7 @@ func (s snapshotControllerImpl) CreateSnapshot(w http.ResponseWriter, r *http.Re
 	var req view.CreateSnapshotRequest
 	err = json.Unmarshal(body, &req)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		s.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -110,7 +112,7 @@ func (s snapshotControllerImpl) CreateSnapshot(w http.ResponseWriter, r *http.Re
 	}
 
 	if clientBuild && req.BuilderId == "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		s.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.RequiredParamsMissing,
 			Message: exception.RequiredParamsMissingMsg,
@@ -120,7 +122,7 @@ func (s snapshotControllerImpl) CreateSnapshot(w http.ResponseWriter, r *http.Re
 	}
 
 	if req.Version == "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		s.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.RequiredParamsMissing,
 			Message: exception.RequiredParamsMissingMsg,
@@ -147,10 +149,10 @@ func (s snapshotControllerImpl) CreateSnapshot(w http.ResponseWriter, r *http.Re
 
 	resp, err := s.snapshotService.CreateSnapshot(secctx.MakeUserContext(r), namespace, workspaceId, req.Version, snapshotDTO)
 	if err != nil {
-		respondWithError(w, "Failed to create snapshot", err)
+		s.responder.RespondWithError(w, "Failed to create snapshot", err)
 		return
 	}
-	respondWithJson(w, http.StatusOK, resp)
+	s.responder.RespondWithJson(w, http.StatusOK, resp)
 }
 
 func (s snapshotControllerImpl) ListSnapshots(w http.ResponseWriter, r *http.Request) {
@@ -161,7 +163,7 @@ func (s snapshotControllerImpl) ListSnapshots(w http.ResponseWriter, r *http.Req
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			s.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -176,7 +178,7 @@ func (s snapshotControllerImpl) ListSnapshots(w http.ResponseWriter, r *http.Req
 	if r.URL.Query().Get("limit") != "" {
 		limit, err = strconv.Atoi(r.URL.Query().Get("limit"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			s.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -191,9 +193,9 @@ func (s snapshotControllerImpl) ListSnapshots(w http.ResponseWriter, r *http.Req
 	agent, err := s.agentService.GetAgent(agentId)
 	if err != nil {
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			s.responder.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			s.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get agent by id - '$id'",
 				Debug:   err.Error(),
@@ -202,7 +204,7 @@ func (s snapshotControllerImpl) ListSnapshots(w http.ResponseWriter, r *http.Req
 		return
 	}
 	if agent == nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		s.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.AgentNotFound,
 			Message: exception.AgentNotFoundMsg,
@@ -212,11 +214,11 @@ func (s snapshotControllerImpl) ListSnapshots(w http.ResponseWriter, r *http.Req
 
 	snapshots, err := s.snapshotService.ListSnapshots(secctx.MakeUserContext(r), namespace, workspaceId, page, limit, agent.AgentDeploymentCloud)
 	if err != nil {
-		respondWithError(w, "Failed to list snapshots", err)
+		s.responder.RespondWithError(w, "Failed to list snapshots", err)
 		return
 	}
 
-	respondWithJson(w, http.StatusOK, snapshots)
+	s.responder.RespondWithJson(w, http.StatusOK, snapshots)
 }
 
 func (s snapshotControllerImpl) GetSnapshot(w http.ResponseWriter, r *http.Request) {
@@ -227,9 +229,9 @@ func (s snapshotControllerImpl) GetSnapshot(w http.ResponseWriter, r *http.Reque
 	agent, err := s.agentService.GetAgent(agentId)
 	if err != nil {
 		if customError, ok := err.(*exception.CustomError); ok {
-			RespondWithCustomError(w, customError)
+			s.responder.RespondWithCustomError(w, customError)
 		} else {
-			RespondWithCustomError(w, &exception.CustomError{
+			s.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusInternalServerError,
 				Message: "Failed to get agent by id - '$id'",
 				Debug:   err.Error(),
@@ -238,7 +240,7 @@ func (s snapshotControllerImpl) GetSnapshot(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	if agent == nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		s.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.AgentNotFound,
 			Message: exception.AgentNotFoundMsg,
@@ -248,7 +250,7 @@ func (s snapshotControllerImpl) GetSnapshot(w http.ResponseWriter, r *http.Reque
 
 	sn, err := s.snapshotService.GetSnapshot(secctx.MakeUserContext(r), namespace, workspaceId, version, agent.AgentDeploymentCloud)
 	if err != nil {
-		respondWithError(w, "Failed to get snapshot", err)
+		s.responder.RespondWithError(w, "Failed to get snapshot", err)
 		return
 	}
 
@@ -257,5 +259,5 @@ func (s snapshotControllerImpl) GetSnapshot(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	respondWithJson(w, http.StatusOK, sn)
+	s.responder.RespondWithJson(w, http.StatusOK, sn)
 }

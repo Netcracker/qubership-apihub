@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/Netcracker/qubership-apihub-agents-backend/exception"
+	"github.com/Netcracker/qubership-apihub-agents-backend/responder"
 	"github.com/Netcracker/qubership-apihub-agents-backend/secctx"
 
 	log "github.com/sirupsen/logrus"
@@ -17,11 +18,12 @@ type LogsController interface {
 	CheckLogLevel(w http.ResponseWriter, r *http.Request)
 }
 
-func NewLogsController() LogsController {
-	return &logsControllerImpl{}
+func NewLogsController(resp *responder.Responder) LogsController {
+	return &logsControllerImpl{responder: resp}
 }
 
 type logsControllerImpl struct {
+	responder *responder.Responder
 }
 
 func (l logsControllerImpl) SetLogLevel(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +31,7 @@ func (l logsControllerImpl) SetLogLevel(w http.ResponseWriter, r *http.Request) 
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges := secctx.IsSysadm(ctx)
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		l.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -38,7 +40,7 @@ func (l logsControllerImpl) SetLogLevel(w http.ResponseWriter, r *http.Request) 
 	}
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		l.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -52,7 +54,7 @@ func (l logsControllerImpl) SetLogLevel(w http.ResponseWriter, r *http.Request) 
 	var req SetLevelReq
 	err = json.Unmarshal(body, &req)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		l.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -70,7 +72,7 @@ func (l logsControllerImpl) CheckLogLevel(w http.ResponseWriter, r *http.Request
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges := secctx.IsSysadm(ctx)
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		l.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
