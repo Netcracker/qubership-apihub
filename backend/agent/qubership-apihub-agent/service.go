@@ -6,7 +6,6 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"runtime/debug"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-agent/exception"
@@ -199,8 +198,6 @@ func main() {
 			})
 		})
 	}
-
-	debug.SetGCPercent(30)
 
 	err = security.SetupGoGuardian(apihubClient)
 	if err != nil {
