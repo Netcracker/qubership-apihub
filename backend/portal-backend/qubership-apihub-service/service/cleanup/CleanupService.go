@@ -10,6 +10,7 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
+	"github.com/go-pg/pg/v10"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 )
@@ -39,107 +40,130 @@ type cleanupServiceImpl struct {
 }
 
 func (c cleanupServiceImpl) ClearTestData(ctx context.Context, testId string) error {
-	idFilter := "QS%-" + utils.LikeEscaped(testId) + "%"
-	//clear tables: package_group
-	_, err := c.cp.GetConnection().WithContext(ctx).Model(&entity.PackageEntity{}).
-		Where("id like ?", idFilter).
-		ForceDelete()
-	if err != nil {
-		return err
-	}
-	//clear tables: published_version, published_version_references, published_version_revision_content, published_sources
-	_, err = c.cp.GetConnection().WithContext(ctx).Model(&entity.PublishedVersionEntity{}).
-		Where("package_id like ?", idFilter).
-		ForceDelete()
-	if err != nil {
-		return err
-	}
-	//clear table: published_sources
-	_, err = c.cp.GetConnection().WithContext(ctx).Model(&entity.PublishedSrcEntity{}).
-		Where("package_id like ?", idFilter).
-		ForceDelete()
-	if err != nil {
-		return err
-	}
-	//clear table: published_sources_archives
-	_, err = c.cp.GetConnection().ExecContext(ctx, `delete from published_sources_archives where checksum not in (select distinct archive_checksum from published_sources)`)
-	if err != nil {
-		return err
-	}
-	//clear table published_data
-	_, err = c.cp.GetConnection().WithContext(ctx).Model(&entity.PublishedContentDataEntity{}).
-		Where("package_id like ?", idFilter).
-		ForceDelete()
-	if err != nil {
-		return err
-	}
-	//clear table shared_url_info
-	_, err = c.cp.GetConnection().WithContext(ctx).Model(&entity.SharedUrlInfoEntity{}).
-		Where("package_id like ?", idFilter).
-		ForceDelete()
-	if err != nil {
-		return err
-	}
-	//clear table package_member_role
-	_, err = c.cp.GetConnection().WithContext(ctx).Model(&entity.PackageMemberRoleEntity{}).
-		Where("user_id ilike ?", "%"+utils.LikeEscaped(testId)+"%").
-		ForceDelete()
-	if err != nil {
-		return err
-	}
+	idFilter := testPackageIdLikeFilter(testId)
+	userFilter := testUserIdLikeFilter(testId)
 
-	//clear personal access tokens
-	_, err = c.cp.GetConnection().WithContext(ctx).Model(&entity.PersonaAccessTokenEntity{}).
-		Where("user_id ilike ?", "%"+utils.LikeEscaped(testId)+"%").
-		ForceDelete()
-	if err != nil {
-		return err
-	}
-	//clear table user_data
-	_, err = c.cp.GetConnection().WithContext(ctx).Model(&entity.UserEntity{}).
-		Where("user_id ilike ?", "%"+utils.LikeEscaped(testId)+"%").
-		ForceDelete()
-	if err != nil {
-		return err
-	}
-	//clear open_count tables
-	_, err = c.cp.GetConnection().ExecContext(ctx, `delete from published_version_open_count where package_id ilike ?`, idFilter)
-	if err != nil {
-		return err
-	}
-	_, err = c.cp.GetConnection().ExecContext(ctx, `delete from published_document_open_count where package_id ilike ?`, idFilter)
-	if err != nil {
-		return err
-	}
-	_, err = c.cp.GetConnection().ExecContext(ctx, `delete from operation_open_count where package_id ilike ?`, idFilter)
-	if err != nil {
-		return err
-	}
-	//clear table version_comparison
-	_, err = c.cp.GetConnection().WithContext(ctx).Model(&entity.VersionComparisonEntity{}).
-		Where("(package_id like ? or previous_package_id like ?)", idFilter, idFilter).
-		ForceDelete()
-	if err != nil {
-		return err
-	}
-	//clear table operation_comparison
-	_, err = c.cp.GetConnection().WithContext(ctx).Model(&entity.OperationComparisonEntity{}).
-		Where("(package_id like ? or previous_package_id like ?)", idFilter, idFilter).
-		ForceDelete()
-	if err != nil {
-		return err
-	}
-	//clear table apihub_api_keys
-	_, err = c.cp.GetConnection().WithContext(ctx).Model(&entity.ApihubApiKeyEntity{}).
-		Where("package_id like ?", idFilter).
-		ForceDelete()
-	if err != nil {
-		return err
-	}
+	return c.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		started := time.Now()
+		logStep := func(step string) {
+			log.Debugf("ClearTestData testId=%s step=%s duration=%s", testId, step, time.Since(started))
+			started = time.Now()
+		}
 
-	// TODO: need to clear business metrics as well
+		var packageIds []string
+		_, err := tx.QueryContext(ctx, &packageIds, `
+			WITH RECURSIVE pkgs AS (
+				SELECT id FROM package_group WHERE id LIKE ?
+				UNION
+				SELECT pg.id FROM package_group pg
+				INNER JOIN pkgs ON pg.parent_id = pkgs.id
+			)
+			SELECT id FROM pkgs`, idFilter)
+		if err != nil {
+			return err
+		}
+		logStep("select package ids")
 
-	return nil
+		if len(packageIds) > 0 {
+			var checksums []string
+			_, err = tx.QueryContext(ctx, &checksums, `
+				SELECT DISTINCT archive_checksum
+				FROM published_sources
+				WHERE package_id IN (?) AND archive_checksum IS NOT NULL AND archive_checksum <> ''`, pg.In(packageIds))
+			if err != nil {
+				return err
+			}
+			checksums = nonemptyStrings(checksums)
+			logStep("select archive checksums")
+
+			_, err = tx.ExecContext(ctx, `DELETE FROM version_comparison WHERE package_id IN (?)`, pg.In(packageIds))
+			if err != nil {
+				return err
+			}
+			logStep("delete version_comparison by package_id")
+
+			_, err = tx.ExecContext(ctx, `DELETE FROM version_comparison WHERE previous_package_id IN (?)`, pg.In(packageIds))
+			if err != nil {
+				return err
+			}
+			logStep("delete version_comparison by previous_package_id")
+
+			_, err = tx.ModelContext(ctx, (*entity.ApihubApiKeyEntity)(nil)).
+				Where("package_id IN (?)", pg.In(packageIds)).
+				ForceDelete()
+			if err != nil {
+				return err
+			}
+			logStep("delete apihub_api_keys")
+
+			_, err = tx.ExecContext(ctx, `DELETE FROM package_group WHERE id IN (?)`, pg.In(packageIds))
+			if err != nil {
+				return err
+			}
+			logStep("delete package_group")
+
+			// Delete only archives that belonged to the removed test packages and are no longer referenced.
+			// Global orphan GC belongs to the unreferenced-data cleanup job, not this test endpoint.
+			if len(checksums) > 0 {
+				_, err = tx.ExecContext(ctx, `
+					DELETE FROM published_sources_archives psa
+					WHERE psa.checksum IN (?)
+					AND NOT EXISTS (
+						SELECT 1 FROM published_sources ps WHERE ps.archive_checksum = psa.checksum
+					)`, pg.In(checksums))
+				if err != nil {
+					return err
+				}
+				logStep("delete unreferenced test archives")
+			}
+		}
+
+		_, err = tx.ModelContext(ctx, (*entity.PackageMemberRoleEntity)(nil)).
+			Where("user_id ILIKE ?", userFilter).
+			ForceDelete()
+		if err != nil {
+			return err
+		}
+		logStep("delete package_member_role")
+
+		_, err = tx.ModelContext(ctx, (*entity.PersonaAccessTokenEntity)(nil)).
+			Where("user_id ILIKE ?", userFilter).
+			ForceDelete()
+		if err != nil {
+			return err
+		}
+		logStep("delete personal_access_tokens")
+
+		_, err = tx.ModelContext(ctx, (*entity.UserEntity)(nil)).
+			Where("user_id ILIKE ?", userFilter).
+			ForceDelete()
+		if err != nil {
+			return err
+		}
+		logStep("delete user_data")
+
+		// TODO: need to clear business metrics as well
+
+		return nil
+	})
+}
+
+func testPackageIdLikeFilter(testId string) string {
+	return "QS%-" + utils.LikeEscaped(testId) + "%"
+}
+
+func testUserIdLikeFilter(testId string) string {
+	return "%" + utils.LikeEscaped(testId) + "%"
+}
+
+func nonemptyStrings(values []string) []string {
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		if value != "" {
+			out = append(out, value)
+		}
+	}
+	return out
 }
 
 func (c cleanupServiceImpl) CreateRevisionsCleanupJob(publishedRepository repository.PublishedRepository, migrationRepository mRepository.MigrationRunRepository, versionCleanupRepository repository.VersionCleanupRepository, monitoringService service.MonitoringService, lockService service.LockService, instanceId string, schedule string, deleteLastRevision bool, deleteReleaseRevision bool, ttl int) error {
