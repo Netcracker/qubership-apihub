@@ -48,9 +48,14 @@ type ServiceListResponse_deprecated struct {
 }
 
 type ServiceListResponse struct {
-	Services []Service `json:"services"`
-	Status   Status    `json:"status"`
-	Debug    string    `json:"debug"`
+	Services          []Service `json:"services"`
+	Status            Status    `json:"status"`
+	Debug             string    `json:"debug"`
+	RequestedServices []string  `json:"requestedServices,omitempty"`
+}
+
+type DiscoveryRequest struct {
+	Services []string `json:"services,omitempty"` //empty list means the whole namespace is discovered
 }
 
 type ServiceNameItem struct {

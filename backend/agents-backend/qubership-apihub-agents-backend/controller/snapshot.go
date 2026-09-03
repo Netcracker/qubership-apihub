@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/Netcracker/qubership-apihub-agents-backend/exception"
 	"github.com/Netcracker/qubership-apihub-agents-backend/responder"
@@ -137,14 +138,15 @@ func (s snapshotControllerImpl) CreateSnapshot(w http.ResponseWriter, r *http.Re
 	}
 
 	snapshotDTO := view.CreateSnapshotDTO{
-		PreviousVersion: req.PreviousVersion,
-		Services:        req.Services,
-		ClientBuild:     clientBuild,
-		BuilderId:       req.BuilderId,
-		Promote:         promote,
-		VersionStatus:   status,
-		AgentUrl:        agent.AgentUrl,
-		CloudName:       agent.AgentDeploymentCloud,
+		PreviousVersion:   req.PreviousVersion,
+		Services:          req.Services,
+		DiscoveryServices: strings.Join(req.DiscoveryServices, ","),
+		ClientBuild:       clientBuild,
+		BuilderId:         req.BuilderId,
+		Promote:           promote,
+		VersionStatus:     status,
+		AgentUrl:          agent.AgentUrl,
+		CloudName:         agent.AgentDeploymentCloud,
 	}
 
 	resp, err := s.snapshotService.CreateSnapshot(secctx.MakeUserContext(r), namespace, workspaceId, req.Version, snapshotDTO)

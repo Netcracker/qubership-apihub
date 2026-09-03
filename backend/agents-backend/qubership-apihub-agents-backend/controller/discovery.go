@@ -34,9 +34,16 @@ func (d discoveryControllerImpl) StartDiscovery(w http.ResponseWriter, r *http.R
 	failOnError, queryParamErr := getFailOnErrorQueryParam(r)
 	if queryParamErr != nil {
 		d.responder.RespondWithError(w, "failed to parse failOnError query param", queryParamErr)
+		return
 	}
 
-	err := d.discoveryService.StartDiscovery(secctx.MakeUserContext(r), agentId, namespace, workspaceId, failOnError)
+	req, bodyErr := getDiscoveryRequestBody(w, r)
+	if bodyErr != nil {
+		d.responder.RespondWithError(w, "failed to parse discovery request body", bodyErr)
+		return
+	}
+
+	err := d.discoveryService.StartDiscovery(secctx.MakeUserContext(r), agentId, namespace, workspaceId, failOnError, req)
 	if err != nil {
 		d.responder.RespondWithError(w, "failed to start discovery process", err)
 		return
@@ -61,8 +68,9 @@ func (d discoveryControllerImpl) ListDiscoveredServices(w http.ResponseWriter, r
 	namespace := getStringParam(r, "namespace")
 	agentId := getStringParam(r, "agentId")
 	workspaceId := getStringParam(r, "workspaceId")
+	services := r.URL.Query().Get("services")
 
-	serviceList, err := d.discoveryService.GetDiscoveredServices(secctx.MakeUserContext(r), agentId, namespace, workspaceId)
+	serviceList, err := d.discoveryService.GetDiscoveredServices(secctx.MakeUserContext(r), agentId, namespace, workspaceId, services)
 	if err != nil {
 		d.responder.RespondWithError(w, "failed to list discovered services", err)
 		return

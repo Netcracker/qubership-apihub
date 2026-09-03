@@ -5,7 +5,6 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"runtime/debug"
 	"sync"
 	"time"
 
@@ -231,8 +230,6 @@ func main() {
 			})
 		})
 	}
-
-	debug.SetGCPercent(30)
 
 	srv := makeServer(systemInfoService, r)
 
