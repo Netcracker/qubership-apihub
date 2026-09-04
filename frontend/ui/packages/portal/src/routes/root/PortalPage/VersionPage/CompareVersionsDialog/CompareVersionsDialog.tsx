@@ -19,8 +19,8 @@ import * as React from 'react'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useParams } from 'react-router-dom'
-import { useEffectOnce, useLocation } from 'react-use'
-import { useInvalidatePackageVersions, usePackageVersions } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
+import { useLocation } from 'react-use'
+import { usePackageVersions } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
 import { usePackage } from '../../../usePackage'
 import { usePackages } from '../../../usePackages'
 import { usePackageVersionContent } from '../../../usePackageVersionContent'
@@ -130,10 +130,6 @@ function useDialogData(
   const { navigateToVersionsComparison } = useNavigation()
   const backwardLocation = useBackwardLocationContext()
   const setBackwardLocation = useSetBackwardLocationContext()
-
-  // TODO: Need to move it outside
-  const invalidatePackageVersions = useInvalidatePackageVersions()
-  useEffectOnce(() => invalidatePackageVersions())
 
   const { packageId: defaultPackageKey, versionId: defaultVersionKey } = useParams()
   const searchPackageKey = useSearchParam(PACKAGE_SEARCH_PARAM) ?? defaultPackageKey
