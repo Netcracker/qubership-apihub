@@ -87,7 +87,7 @@ export const OperationWithMetaClickableList: FC<OperationWithMetaClickableListPr
       const title = <OperationTitle
         operation={operation}
         link={link}
-        badgeText={deprecated ? 'Deprecated' : undefined}
+        deprecated={deprecated}
         onLinkClick={onLinkClick}
       />
 

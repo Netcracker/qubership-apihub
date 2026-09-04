@@ -39,7 +39,7 @@ import { DEFAULT_DEBOUNCE } from '../utils/constants'
 import type { PackageVersion } from '../entities/versions'
 import { disableAutocompleteSearch } from '../utils/mui'
 import { getSplittedVersionKey } from '../utils/versions'
-import { CustomChip } from './CustomChip'
+import { VersionStatusChip } from './VersionStatusChip'
 import { VersionTitle } from './Titles/VersionTitle'
 import { Swapper } from './Swapper'
 import { WARNING_API_PROCESSOR_TEXT, WarningApiProcessorVersion } from './WarningApiProcessorVersion'
@@ -220,7 +220,7 @@ export const CompareVersionsDialogForm: FC<CompareVersionsDialogFormProps> = mem
                           showTooltip={false}
                         />
                       </ListItemText>
-                      <CustomChip value={status}/>
+                      <VersionStatusChip status={status}/>
                     </ListItem>
                   )
                 }}
@@ -329,7 +329,7 @@ export const CompareVersionsDialogForm: FC<CompareVersionsDialogFormProps> = mem
                           showTooltip={false}
                         />
                       </ListItemText>
-                      <CustomChip value={status}/>
+                      <VersionStatusChip status={status}/>
                     </ListItem>
                   )
                 }}

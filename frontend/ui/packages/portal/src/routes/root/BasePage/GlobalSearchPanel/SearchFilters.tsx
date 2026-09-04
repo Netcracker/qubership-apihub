@@ -39,7 +39,7 @@ import { handleVersionsRevision } from '@netcracker/qubership-apihub-ui-shared/u
 import { useEventBus } from '@apihub/routes/EventBusProvider'
 import { disableAutocompleteSearch } from '@netcracker/qubership-apihub-ui-shared/utils/mui'
 import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/OptionItem'
-import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
+import { VersionStatusChip } from '@netcracker/qubership-apihub-ui-shared/components/VersionStatusChip'
 import { CalendarIcon } from '@netcracker/qubership-apihub-ui-shared/icons/CalendarIcon'
 import {
   API_TYPE_REST,
@@ -412,8 +412,8 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
             key={option}
             data-testid={`${PUBLISH_STATUSES.get(option)}Option`}
           >
-            <CustomChip
-              value={option}
+            <VersionStatusChip
+              status={option}
               data-testid={`${PUBLISH_STATUSES.get(option)}Chip`}
             />
           </ListItem>}
@@ -441,9 +441,9 @@ export const SearchFilters: FC<SearchFilters> = memo(({ enabledFilters }) => {
                   },
                 },
                 startAdornment: status
-                  ? <CustomChip
+                  ? <VersionStatusChip
                     sx={{ height: 16, mb: 1 }}
-                    value={status}
+                    status={status}
                     data-testid={`${PUBLISH_STATUSES.get(status)}Chip`}/>
                   : null,
               }}

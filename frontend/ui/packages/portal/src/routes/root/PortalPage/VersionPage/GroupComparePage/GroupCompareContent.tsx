@@ -33,10 +33,6 @@ import { useTagSearchFilter } from '../useTagSearchFilter'
 import { ComparisonSwapper } from '../ComparisonSwapper'
 import { useComparisonParams } from '../useComparisonParams'
 import { useNavigation } from '../../../../NavigationProvider'
-import type {
-  GraphQLChangesMetadata,
-  RestChangesMetadata,
-} from '@netcracker/qubership-apihub-api-processor/dist/cjs/src/types/internal/compare'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import {
   FILTERS_SEARCH_PARAM,
@@ -69,7 +65,9 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import { format } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
 import { ChangeSeverityIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ChangeSeverityIndicator'
-import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
+import { HttpMethodChip } from '@netcracker/qubership-apihub-ui-shared/components/Operations/HttpMethodChip'
+import type { MethodType } from '@netcracker/qubership-apihub-ui-shared/entities/method-types'
+import { isMethodType } from '@netcracker/qubership-apihub-ui-shared/entities/method-types'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { Changes } from '@netcracker/qubership-apihub-ui-shared/components/Changes'
 import type { ComparedPackagesBreadcrumbsData } from '../breadcrumbs'
@@ -178,19 +176,11 @@ export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupCh
                   previousMetadata: previousMetadataObject,
                 } = change
 
-                const metadata = metadataObject as OperationChangesMetadata & Partial<RestChangesMetadata> & Partial<GraphQLChangesMetadata>
-                const previousMetadata = previousMetadataObject as OperationChangesMetadata & Partial<RestChangesMetadata> & Partial<GraphQLChangesMetadata>
-
                 const operationAction = getActionForRestOperation(change, REPLACE_ACTION_TYPE)
                 const severity = getMajorSeverity(changeSummary!)
 
-                const isMetaDataPresent = !!(
-                  metadata?.title && metadata?.path && metadata?.method
-                )
-
-                const isPreviousMetaDataPresent = !!(
-                  previousMetadata?.title && previousMetadata?.path && previousMetadata?.method
-                )
+                const specValue = toSpecValue(metadataObject, operationId)
+                const previousSpecValue = toSpecValue(previousMetadataObject, previousOperationId)
 
                 const comparingSearchParams = optionalSearchParams({
                   [PACKAGE_SEARCH_PARAM]: { value: changedPackageKey === originPackageKey ? '' : encodeURIComponent(originPackageKey!) },
@@ -257,12 +247,7 @@ export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupCh
                         />
                         <Spec
                           key={previousOperationId}
-                          value={isPreviousMetaDataPresent ? {
-                            title: previousMetadata.title,
-                            operationId: previousOperationId,
-                            method: previousMetadata.method,
-                            path: previousMetadata.path as string,
-                          } : undefined}
+                          value={previousSpecValue}
                         />
                       </Box>
                     </Grid>
@@ -275,12 +260,7 @@ export const GroupCompareContent: FC<GroupCompareContentProps> = memo(({ groupCh
                     >
                       <Spec
                         key={`changed-${operationId}`}
-                        value={isMetaDataPresent ? {
-                          title: metadata.title,
-                          operationId: operationId,
-                          method: metadata.method,
-                          path: metadata.path as string,
-                        } : undefined}
+                        value={specValue}
                         changes={changeSummary}
                       />
                     </Grid>
@@ -300,9 +280,25 @@ type SpecProps = {
     operationId: string
     title: string
     path: string
-    method: string
+    method: MethodType
   }>
   changes?: ChangeSummary
+}
+
+function toSpecValue(
+  metadata: OperationChangesMetadata | undefined,
+  operationId: string | undefined,
+): SpecProps['value'] {
+  const { title, path, method } = metadata ?? {}
+  if (!title || !path || !method) {
+    return undefined
+  }
+  return {
+    title: title,
+    operationId: operationId,
+    path: path,
+    method: isMethodType(method) ? method : undefined,
+  }
 }
 
 const Spec: FC<SpecProps> = memo<SpecProps>(({ value, changes }) => {
@@ -310,7 +306,7 @@ const Spec: FC<SpecProps> = memo<SpecProps>(({ value, changes }) => {
 
   const secondary = (
     <Box component="span" sx={{ display: 'flex', alignItems: 'center' }} data-testid="OperationPath">
-      {method && <CustomChip component="span" sx={{ mr: 1 }} value={method} variant={'outlined'} />}
+      {method && <HttpMethodChip component="span" sx={{ mr: 1 }} method={method} />}
       {path && (
         <OverflowTooltip title={path}>
           <Typography component="span" noWrap variant="inherit">{path}</Typography>

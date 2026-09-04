@@ -46,7 +46,7 @@ export const OperationWithMetaList: FC<OperationWithMetaListProps> = memo<Operat
                 operation={operation}
                 link={link}
                 onLinkClick={onClick}
-                badgeText={operation.deprecated ? 'Deprecated' : undefined}
+                deprecated={operation.deprecated}
                 openLinkInNewTab={openLinkInNewTab}
               />
             </Box>

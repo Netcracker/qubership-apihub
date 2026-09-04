@@ -32,7 +32,7 @@ import { REVISION_DELIMITER } from '@apihub/entities/versions'
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import { format } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
-import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
+import { VersionStatusChip } from '@netcracker/qubership-apihub-ui-shared/components/VersionStatusChip'
 import { ColumnDelimiter } from '@netcracker/qubership-apihub-ui-shared/components/ColumnDelimiter'
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import { DEFAULT_NUMBER_SKELETON_ROWS } from '@netcracker/qubership-apihub-ui-shared/utils/constants'
@@ -108,7 +108,7 @@ export const VersionHistoryTable: FC<VersionHistoryTableProps> = memo<VersionHis
     {
       id: VERSION_STATUS_COLUMN_ID,
       header: () => <CustomTableHeadCell title="Status"/>,
-      cell: ({ row: { original: { status } } }) => <CustomChip value={status}/>,
+      cell: ({ row: { original: { status } } }) => <VersionStatusChip status={status}/>,
     },
     {
       id: LABELS_COLUMN_ID,

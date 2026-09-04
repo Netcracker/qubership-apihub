@@ -29,7 +29,7 @@ import type { FC } from 'react'
 import { memo, useCallback, useMemo, useState } from 'react'
 import ExpandMoreOutlinedIcon from '@mui/icons-material/ExpandMoreOutlined'
 import { useMount } from 'react-use'
-import { CustomChip } from '../CustomChip'
+import { HttpMethodChip } from '../Operations/HttpMethodChip'
 import type { OpenapiSchema, SpecItemPath, SpecItemUri } from '../../utils/specifications'
 import {
   decodeKey,
@@ -89,10 +89,9 @@ export const SpecNavigation: FC<SpecNavigationProps> = /* @__PURE__ */ memo<Spec
                 <ListItemText primary={toFormattedOpenApiPathName(path)} primaryTypographyProps={{ sx: { mt: 0.25 } }}/>
                 <Box display="flex" gap={0.5} mb={0.5} px={0}>
                   {value.filter(({ method }) => METHOD_TYPES.has(method)).map(({ method }, index) => (
-                    <CustomChip
-                      variant="outlined"
+                    <HttpMethodChip
                       key={index}
-                      value={method}
+                      method={method}
                       onClick={event => {
                         event.stopPropagation()
                         navigateAndSelect([PATHS_SECTION, path, method], path)

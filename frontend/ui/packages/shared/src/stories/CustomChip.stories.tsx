@@ -34,9 +34,9 @@ export const DefaultStory: Story = {
   },
 }
 
-export const MethodType: Story = {
+export const OutlinedChip: Story = {
   args: {
-    value: 'post',
+    value: 'Some text',
     isExtraSmall: false,
     variant: 'outlined',
     onDelete: undefined,

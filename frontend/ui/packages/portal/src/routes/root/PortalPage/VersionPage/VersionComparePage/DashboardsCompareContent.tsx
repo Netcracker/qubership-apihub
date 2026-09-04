@@ -24,7 +24,7 @@ import type { OperationType } from '@netcracker/qubership-apihub-api-processor'
 import { calculateTotalChangeSummary, EMPTY_CHANGE_SUMMARY } from '@netcracker/qubership-apihub-api-processor'
 import { ChangeSeverityIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ChangeSeverityIndicator'
 import { Changes } from '@netcracker/qubership-apihub-ui-shared/components/Changes'
-import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
+import { VersionStatusChip } from '@netcracker/qubership-apihub-ui-shared/components/VersionStatusChip'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
@@ -309,7 +309,7 @@ const Package: FC<PackageProps> = memo<PackageProps>(({
     <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
       {title && <Typography component="span" noWrap variant="inherit"
         data-testid="PackageVersionTitle">{title} / {versionKey}</Typography>}
-      {status && <CustomChip sx={{ ml: 1 }} value={status} data-testid="PackageVersionStatus" />}
+      {status && <VersionStatusChip sx={{ ml: 1 }} status={status} data-testid="PackageVersionStatus" />}
     </Box>
   )
   return (

@@ -73,7 +73,7 @@ export const EndpointTableCell: FC<EndpointTableCellProps> = memo<EndpointTableC
           operation={operation}
           link={link}
           onLinkClick={onClickLink}
-          badgeText={operation.deprecated ? 'Deprecated' : undefined}
+          deprecated={operation.deprecated}
         />
       </ExpandableItem>
     </Box>

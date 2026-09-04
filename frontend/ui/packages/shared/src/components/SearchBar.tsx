@@ -22,6 +22,8 @@ import { memo, useEffect, useState } from 'react'
 import type { StandardTextFieldProps } from '@mui/material/TextField/TextField'
 import { useDebounce } from 'react-use'
 
+export type SearchValue = string
+
 export type SearchBarProps = StandardTextFieldProps & {
   value?: string
   onValueChange?: (value: string) => void

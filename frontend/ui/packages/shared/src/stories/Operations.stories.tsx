@@ -53,6 +53,6 @@ const OperationTitleWithMetaFn: StoryFn<OperationTitleWithMetaProps> = (args) =>
 export const OperationTitleWithMetaStory = OperationTitleWithMetaFn.bind({})
 OperationTitleWithMetaStory.args = {
   operation: restDeprecatedOperations[1],
-  badgeText: 'Some barge text',
+  deprecated: true,
 }
 OperationTitleWithMetaStory.storyName = 'Operation Title With Meta'

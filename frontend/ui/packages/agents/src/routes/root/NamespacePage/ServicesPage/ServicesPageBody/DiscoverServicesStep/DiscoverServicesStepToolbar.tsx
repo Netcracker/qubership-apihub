@@ -31,8 +31,8 @@ import {
 } from '../../ServicesPageProvider/ServicesStepsProvider'
 import { useServices } from '../../../useServices'
 import { useRunDiscovery } from './useRunDiscovery'
-import type { SearchValue } from '@netcracker/qubership-apihub-ui-shared/components/Selector'
 import { useCreateSnapshotPublicationOptions } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
+import type { SearchValue } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
 import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
 import type { DiscoveryStatus } from '@apihub/entities/statuses'
 import {

@@ -8,7 +8,7 @@ import { NavLink } from 'react-router-dom'
 import type { DdlContractEntity } from '../../entities/contracts-ddl'
 import { getDdlTableDescription, getDdlTableDisplayName } from '../../entities/contracts-ddl'
 import { EMPTY_SUBTITLE_PLACEHOLDER } from '../../utils/placeholders'
-import { CustomChip } from '../CustomChip'
+import { DdlSchemaChip } from './DdlSchemaChip'
 import { OverflowTooltip } from '../OverflowTooltip'
 import { TextWithOverflowTooltip } from '../TextWithOverflowTooltip'
 
@@ -56,8 +56,7 @@ export const DdlTableTitleWithMeta: FC<DdlTableTitleWithMetaProps> = memo<DdlTab
       {!onlyTitle && (
         <SubtitleRow data-testid="DdlTableSubtitle">
           {schemaName && (
-            <CustomChip
-              value="ddlSchema"
+            <DdlSchemaChip
               label={schemaName}
               data-testid="DdlTableSchemaChip"
             />

@@ -136,7 +136,7 @@ export const OperationPreview: FC<OperationPreviewProps> = memo<OperationPreview
                 <OperationTitleWithMeta
                   onlyTitle
                   operation={changedOperation}
-                  badgeText={changedOperation.deprecated ? 'Deprecated' : undefined}
+                  deprecated={changedOperation.deprecated}
                 />
               }
             />
