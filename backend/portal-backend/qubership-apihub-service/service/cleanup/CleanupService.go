@@ -22,7 +22,7 @@ const (
 )
 
 type CleanupService interface {
-	ClearTestData(ctx context.Context, testId string) error
+	ClearTestData(ctx context.Context, testId string, testEnv string) error
 	CreateRevisionsCleanupJob(publishedRepo repository.PublishedRepository, migrationRepository mRepository.MigrationRunRepository, versionCleanupRepo repository.VersionCleanupRepository, monitoringService service.MonitoringService, lockService service.LockService, instanceId string, schedule string, deleteLastRevision bool, deleteReleaseRevision bool, ttl int) error
 	CreateComparisonsCleanupJob(publishedRepo repository.PublishedRepository, migrationRepository mRepository.MigrationRunRepository, comparisonCleanupRepo repository.ComparisonCleanupRepository, lockService service.LockService, instanceId string, schedule string, timeoutMinutes int, ttl int) error
 	CreateSoftDeletedDataCleanupJob(publishedRepo repository.PublishedRepository, migrationRepository mRepository.MigrationRunRepository, deletedDataCleanupRepo repository.SoftDeletedDataCleanupRepository, lockService service.LockService, instanceId string, schedule string, timeoutMinutes int, ttl int) error
@@ -39,8 +39,8 @@ type cleanupServiceImpl struct {
 	cron *cron.Cron
 }
 
-func (c cleanupServiceImpl) ClearTestData(ctx context.Context, testId string) error {
-	idFilter := testPackageIdLikeFilter(testId)
+func (c cleanupServiceImpl) ClearTestData(ctx context.Context, testId string, testEnv string) error {
+	idFilter := testPackageIdLikeFilter(testId, testEnv)
 	userFilter := testUserIdLikeFilter(testId)
 
 	return c.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
@@ -148,8 +148,12 @@ func (c cleanupServiceImpl) ClearTestData(ctx context.Context, testId string) er
 	})
 }
 
-func testPackageIdLikeFilter(testId string) string {
-	return "QS%-" + utils.LikeEscaped(testId) + "%"
+func testPackageIdLikeFilter(testId string, testEnv string) string {
+	prefix := "QS%-"
+	if testEnv != "" {
+		prefix = testEnv + "%-"
+	}
+	return prefix + utils.LikeEscaped(testId) + "%"
 }
 
 func testUserIdLikeFilter(testId string) string {

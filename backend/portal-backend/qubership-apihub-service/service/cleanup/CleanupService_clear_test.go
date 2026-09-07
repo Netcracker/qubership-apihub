@@ -7,8 +7,9 @@ import (
 )
 
 func TestTestPackageIdLikeFilter(t *testing.T) {
-	assert.Equal(t, "QS%-STATIC-TEST-1%", testPackageIdLikeFilter("STATIC-TEST-1"))
-	assert.Equal(t, `QS%-100\_percent%`, testPackageIdLikeFilter("100_percent"))
+	assert.Equal(t, "QS%-STATIC-TEST-1%", testPackageIdLikeFilter("STATIC-TEST-1", ""))
+	assert.Equal(t, `QS%-100\_percent%`, testPackageIdLikeFilter("100_percent", ""))
+	assert.Equal(t, "MY%-STATIC-TEST-1%", testPackageIdLikeFilter("STATIC-TEST-1", "MY"))
 }
 
 func TestTestUserIdLikeFilter(t *testing.T) {
