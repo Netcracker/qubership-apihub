@@ -151,7 +151,7 @@ func (c cleanupServiceImpl) ClearTestData(ctx context.Context, testId string, te
 func testPackageIdLikeFilter(testId string, testEnv string) string {
 	prefix := "QS%-"
 	if testEnv != "" {
-		prefix = testEnv + "%-"
+		prefix = testEnv + ".%"
 	}
 	return prefix + utils.LikeEscaped(testId) + "%"
 }
