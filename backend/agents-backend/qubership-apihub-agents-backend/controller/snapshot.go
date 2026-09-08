@@ -20,14 +20,14 @@ type SnapshotController interface {
 	GetSnapshot(w http.ResponseWriter, r *http.Request)
 }
 
-func NewSnapshotController(snapshotService service.SnapshotService, agentService service.AgentService, resp *responder.Responder) SnapshotController {
+func NewSnapshotController(snapshotService service.SnapshotService, agentService service.AgentService, resp responder.Responder) SnapshotController {
 	return snapshotControllerImpl{snapshotService: snapshotService, agentService: agentService, responder: resp}
 }
 
 type snapshotControllerImpl struct {
 	snapshotService service.SnapshotService
 	agentService    service.AgentService
-	responder       *responder.Responder
+	responder       responder.Responder
 }
 
 func (s snapshotControllerImpl) CreateSnapshot(w http.ResponseWriter, r *http.Request) {

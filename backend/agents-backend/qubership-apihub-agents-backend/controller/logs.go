@@ -18,12 +18,12 @@ type LogsController interface {
 	CheckLogLevel(w http.ResponseWriter, r *http.Request)
 }
 
-func NewLogsController(resp *responder.Responder) LogsController {
+func NewLogsController(resp responder.Responder) LogsController {
 	return &logsControllerImpl{responder: resp}
 }
 
 type logsControllerImpl struct {
-	responder *responder.Responder
+	responder responder.Responder
 }
 
 func (l logsControllerImpl) SetLogLevel(w http.ResponseWriter, r *http.Request) {

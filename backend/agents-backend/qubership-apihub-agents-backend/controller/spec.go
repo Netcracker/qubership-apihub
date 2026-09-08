@@ -14,14 +14,14 @@ type SpecificationsController interface {
 	GetServiceSpecification(w http.ResponseWriter, r *http.Request)
 }
 
-func NewSpecificationsController(agentClient client.AgentClient, agentService service.AgentService, resp *responder.Responder) SpecificationsController {
+func NewSpecificationsController(agentClient client.AgentClient, agentService service.AgentService, resp responder.Responder) SpecificationsController {
 	return specificationsControllerImpl{agentClient: agentClient, agentService: agentService, responder: resp}
 }
 
 type specificationsControllerImpl struct {
 	agentClient  client.AgentClient
 	agentService service.AgentService
-	responder    *responder.Responder
+	responder    responder.Responder
 }
 
 func (s specificationsControllerImpl) GetServiceSpecification(w http.ResponseWriter, r *http.Request) {

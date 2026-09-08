@@ -24,7 +24,7 @@ type AgentController interface {
 	ListServiceNames(w http.ResponseWriter, r *http.Request)
 }
 
-func NewAgentController(agentService service.AgentService, agentClient client.AgentClient, resp *responder.Responder) AgentController {
+func NewAgentController(agentService service.AgentService, agentClient client.AgentClient, resp responder.Responder) AgentController {
 	return &agentControllerImpl{
 		agentService: agentService,
 		agentClient:  agentClient,
@@ -35,7 +35,7 @@ func NewAgentController(agentService service.AgentService, agentClient client.Ag
 type agentControllerImpl struct {
 	agentService service.AgentService
 	agentClient  client.AgentClient
-	responder    *responder.Responder
+	responder    responder.Responder
 }
 
 func (a agentControllerImpl) ProcessAgentSignal(w http.ResponseWriter, r *http.Request) {

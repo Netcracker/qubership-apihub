@@ -21,7 +21,7 @@ type NamespaceSecurityController interface {
 	GetAuthSecurityCheckResult(w http.ResponseWriter, r *http.Request)
 }
 
-func NewNamespaceSecurityController(namespaceSecurityService service.NamespaceSecurityService, excelService service.ExcelService, resp *responder.Responder) NamespaceSecurityController {
+func NewNamespaceSecurityController(namespaceSecurityService service.NamespaceSecurityService, excelService service.ExcelService, resp responder.Responder) NamespaceSecurityController {
 	return &namespaceSecurityControllerImpl{
 		namespaceSecurityService: namespaceSecurityService,
 		excelService:             excelService,
@@ -32,7 +32,7 @@ func NewNamespaceSecurityController(namespaceSecurityService service.NamespaceSe
 type namespaceSecurityControllerImpl struct {
 	namespaceSecurityService service.NamespaceSecurityService
 	excelService             service.ExcelService
-	responder                *responder.Responder
+	responder                responder.Responder
 }
 
 func (n namespaceSecurityControllerImpl) StartAuthSecurityCheck(w http.ResponseWriter, r *http.Request) {

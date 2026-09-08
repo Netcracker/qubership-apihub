@@ -12,12 +12,12 @@ import (
 const CustomJwtAuthHeader = "X-Apihub-Authorization"
 
 type AuthHandler struct {
-	responder     *responder.Responder
+	responder     responder.Responder
 	strategy      union.Union
 	proxyStrategy auth.Strategy
 }
 
-func NewAuthHandler(apihubClient client.ApihubClient, r *responder.Responder) (*AuthHandler, error) {
+func NewAuthHandler(apihubClient client.ApihubClient, r responder.Responder) (*AuthHandler, error) {
 	if apihubClient == nil {
 		return nil, fmt.Errorf("apihubClient is nil")
 	}

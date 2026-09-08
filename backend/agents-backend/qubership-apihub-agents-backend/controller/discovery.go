@@ -14,7 +14,7 @@ type DiscoveryController interface {
 	ListDiscoveredServices(w http.ResponseWriter, r *http.Request)
 }
 
-func NewDiscoveryController(discoveryService service.DiscoveryService, resp *responder.Responder) DiscoveryController {
+func NewDiscoveryController(discoveryService service.DiscoveryService, resp responder.Responder) DiscoveryController {
 	return &discoveryControllerImpl{
 		discoveryService: discoveryService,
 		responder:        resp,
@@ -23,7 +23,7 @@ func NewDiscoveryController(discoveryService service.DiscoveryService, resp *res
 
 type discoveryControllerImpl struct {
 	discoveryService service.DiscoveryService
-	responder        *responder.Responder
+	responder        responder.Responder
 }
 
 func (d discoveryControllerImpl) StartDiscovery(w http.ResponseWriter, r *http.Request) {

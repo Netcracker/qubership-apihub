@@ -22,7 +22,7 @@ type AgentProxyController interface {
 	Proxy(w http.ResponseWriter, req *http.Request)
 }
 
-func NewAgentProxyController(agentService service.AgentService, resp *responder.Responder) (AgentProxyController, error) {
+func NewAgentProxyController(agentService service.AgentService, resp responder.Responder) (AgentProxyController, error) {
 	tlsConfig, err := utils.BuildSecureTLSConfig(nil)
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func NewAgentProxyController(agentService service.AgentService, resp *responder.
 type agentProxyControllerImpl struct {
 	agentService service.AgentService
 	tr           http.Transport
-	responder    *responder.Responder
+	responder    responder.Responder
 }
 
 func (a *agentProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Request) {
