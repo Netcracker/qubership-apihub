@@ -11,15 +11,15 @@ import (
 
 const CustomJwtAuthHeader = "X-Apihub-Authorization"
 
-type AuthHandler struct {
+type Authenticator struct {
 	responder     responder.Responder
 	strategy      union.Union
 	proxyStrategy auth.Strategy
 }
 
-func NewAuthHandler(apihubClient client.ApihubClient, r responder.Responder) (*AuthHandler, error) {
+func NewAuthenticator(apihubClient client.ApihubClient, r responder.Responder) (Authenticator, error) {
 	if apihubClient == nil {
-		return nil, fmt.Errorf("apihubClient is nil")
+		return Authenticator{}, fmt.Errorf("apihubClient is nil")
 	}
 
 	bearerTokenStrategy := NewBearerTokenStrategy(apihubClient)
@@ -31,7 +31,7 @@ func NewAuthHandler(apihubClient client.ApihubClient, r responder.Responder) (*A
 	customJwtStrategy := NewCustomJWTStrategy(apihubClient)
 	proxyStrategy := union.New(customJwtStrategy, cookieTokenStrategy)
 
-	return &AuthHandler{
+	return Authenticator{
 		responder:     r,
 		strategy:      strategy,
 		proxyStrategy: proxyStrategy,

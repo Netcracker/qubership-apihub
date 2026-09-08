@@ -110,7 +110,7 @@ func main() {
 		log.Fatalf("Failed to create ApihubClient: %v", err)
 	}
 
-	authHandler, err := security.NewAuthHandler(apihubClient, resp)
+	authenticator, err := security.NewAuthenticator(apihubClient, resp)
 	if err != nil {
 		log.Fatalf("Failed to setup go guardian: %s", err.Error())
 	}
@@ -147,40 +147,40 @@ func main() {
 	healthController := controller.NewHealthController(readyChan)
 
 	//TODO: it is necessary to add a new permission for the entire agent’s functionality after adding the ability to extend permissions in qubership-apihub-backend
-	r.HandleFunc("/api/v2/agents", authHandler.Secure(agentController.ListAgents)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/agents", authHandler.Secure(agentController.ProcessAgentSignal)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v2/agents/{id}", authHandler.Secure(agentController.GetAgent)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/agents/{agentId}/namespaces", authHandler.Secure(agentController.GetAgentNamespaces)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v1/agents/{agentId}/namespaces", authHandler.Secure(agentController.GetAgentNamespaces)).Methods(http.MethodGet) //deprecated
-	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/serviceNames", authHandler.Secure(agentController.ListServiceNames)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/agents", authenticator.Secure(agentController.ListAgents)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/agents", authenticator.Secure(agentController.ProcessAgentSignal)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v2/agents/{id}", authenticator.Secure(agentController.GetAgent)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/agents/{agentId}/namespaces", authenticator.Secure(agentController.GetAgentNamespaces)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/agents/{agentId}/namespaces", authenticator.Secure(agentController.GetAgentNamespaces)).Methods(http.MethodGet) //deprecated
+	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/serviceNames", authenticator.Secure(agentController.ListServiceNames)).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/discover", authHandler.Secure(discoveryController.StartDiscovery)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services", authHandler.Secure(discoveryController.ListDiscoveredServices_deprecated)).Methods(http.MethodGet) //deprecated
+	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/discover", authenticator.Secure(discoveryController.StartDiscovery)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services", authenticator.Secure(discoveryController.ListDiscoveredServices_deprecated)).Methods(http.MethodGet) //deprecated
 
-	r.HandleFunc("/api/v3/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services", authHandler.Secure(discoveryController.ListDiscoveredServices)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v3/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services", authenticator.Secure(discoveryController.ListDiscoveredServices)).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services/{serviceId}/specs/{fileId}", authHandler.Secure(specificationsController.GetServiceSpecification)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/services/{serviceId}/specs/{fileId}", authenticator.Secure(specificationsController.GetServiceSpecification)).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/snapshots", authHandler.Secure(snapshotsController.CreateSnapshot)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/snapshots", authHandler.Secure(snapshotsController.ListSnapshots)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/snapshots/{version}", authHandler.Secure(snapshotsController.GetSnapshot)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/snapshots", authenticator.Secure(snapshotsController.CreateSnapshot)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/snapshots", authenticator.Secure(snapshotsController.ListSnapshots)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/agents/{agentId}/namespaces/{namespace}/workspaces/{workspaceId}/snapshots/{version}", authenticator.Secure(snapshotsController.GetSnapshot)).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v2/security/authCheck", authHandler.Secure(namespaceSecurityController.StartAuthSecurityCheck)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v3/security/authCheck", authHandler.Secure(namespaceSecurityController.GetAuthSecurityCheckReports)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/security/authCheck/{processId}/status", authHandler.Secure(namespaceSecurityController.GetAuthSecurityCheckStatus)).Methods(http.MethodGet)
-	r.HandleFunc("/api/v2/security/authCheck/{processId}/report", authHandler.Secure(namespaceSecurityController.GetAuthSecurityCheckResult)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/security/authCheck", authenticator.Secure(namespaceSecurityController.StartAuthSecurityCheck)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v3/security/authCheck", authenticator.Secure(namespaceSecurityController.GetAuthSecurityCheckReports)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/security/authCheck/{processId}/status", authenticator.Secure(namespaceSecurityController.GetAuthSecurityCheckStatus)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/security/authCheck/{processId}/report", authenticator.Secure(namespaceSecurityController.GetAuthSecurityCheckResult)).Methods(http.MethodGet)
 
-	r.HandleFunc("/api/v1/debug/logs/setLevel", authHandler.Secure(logsController.SetLogLevel)).Methods(http.MethodPost)
-	r.HandleFunc("/api/v1/debug/logs/checkLevel", authHandler.Secure(logsController.CheckLogLevel)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/debug/logs/setLevel", authenticator.Secure(logsController.SetLogLevel)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/debug/logs/checkLevel", authenticator.Secure(logsController.CheckLogLevel)).Methods(http.MethodGet)
 
 	const proxyPath = "/agents/{agentId}/namespaces/{namespace}/services/{serviceId}/proxy/" //deprecated
 	if systemInfoService.InsecureProxyEnabled() {
 		r.PathPrefix(proxyPath).HandlerFunc(agentProxyController.Proxy)
 	} else {
-		r.PathPrefix(proxyPath).HandlerFunc(authHandler.SecureProxy(agentProxyController.Proxy))
+		r.PathPrefix(proxyPath).HandlerFunc(authenticator.SecureProxy(agentProxyController.Proxy))
 	}
 
-	r.PathPrefix("/api/v2/agents/{agentId}/namespaces/{namespace}/services/{serviceId}/proxy/").HandlerFunc(authHandler.SecureProxy(agentProxyController.Proxy))
+	r.PathPrefix("/api/v2/agents/{agentId}/namespaces/{namespace}/services/{serviceId}/proxy/").HandlerFunc(authenticator.SecureProxy(agentProxyController.Proxy))
 
 	discoveryConfig := config.DiscoveryConfig{
 		ScanDirectory: systemInfoService.GetApiSpecDir(),

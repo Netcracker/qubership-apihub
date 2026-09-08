@@ -10,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (a *AuthHandler) Secure(next http.HandlerFunc) http.HandlerFunc {
+func (a Authenticator) Secure(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -41,7 +41,7 @@ func (a *AuthHandler) Secure(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func (a *AuthHandler) SecureProxy(next http.HandlerFunc) http.HandlerFunc {
+func (a Authenticator) SecureProxy(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
