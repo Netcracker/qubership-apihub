@@ -17,7 +17,6 @@
 import type { FetchNextPageOptions, InfiniteQueryObserverResult } from '@tanstack/react-query'
 import omit from 'lodash-es/omit'
 
-import { isApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { getOptionalBody } from '@netcracker/qubership-apihub-ui-shared/utils/request-bodies'
 import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { API_V4, requestJson } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
@@ -34,12 +33,11 @@ import type {
   OperationSearchResultDto,
   PackageSearchResult,
   PackageSearchResultDto,
-  SearchCommonCriteria,
   SearchCriteria,
   SearchResults,
   SearchResultsDto,
 } from '../../../../entities/global-search'
-import { OPERATION_LEVEL, SEARCH_OPERATION_ONLY_CRITERIA } from '../../../../entities/global-search'
+import { DDL_LEVEL, MCP_LEVEL, toApiTypeFilter } from '../../../../entities/global-search'
 
 export type FetchNextSearchResultList = (options?: FetchNextPageOptions) => Promise<InfiniteQueryObserverResult<SearchResults, Error>>
 
@@ -69,20 +67,15 @@ function buildSearchRequestBody(
   criteria: SearchCriteria,
   level: Level,
 ): object {
-  const common = pickSearchCommonCriteria(criteria)
+  const common = omit(criteria, ['apiContract'])
 
-  if (level !== OPERATION_LEVEL) {
+  // For mcp and ddl the level already *is* the contract type: those endpoints build a
+  // GlobalContractSearchQuery, which has no api_type field.
+  if (level === MCP_LEVEL || level === DDL_LEVEL) {
     return getOptionalBody(common) ?? {}
   }
 
-  const apiContract = criteria.apiContract ?? criteria.apiType
-  const apiType = apiContract && isApiType(apiContract) ? apiContract : criteria.apiType
-
-  return getOptionalBody({ ...common, apiType }) ?? {}
-}
-
-function pickSearchCommonCriteria(criteria: SearchCriteria): SearchCommonCriteria {
-  return omit(criteria, SEARCH_OPERATION_ONLY_CRITERIA)
+  return getOptionalBody({ ...common, apiType: toApiTypeFilter(criteria) }) ?? {}
 }
 
 function toSearchResults(value: SearchResultsDto): SearchResults {

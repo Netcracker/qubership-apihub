@@ -20,6 +20,7 @@ import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entit
 import type { MethodType } from '@netcracker/qubership-apihub-ui-shared/entities/method-types'
 import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import { isApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { ContractType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import {
   CONTRACT_TYPE_DDL,
@@ -219,15 +220,9 @@ export type SearchCriteria = {
     endDate: string
   }
   apiContract?: ApiContract
-  apiType?: ApiType
 }
 
-export const SEARCH_OPERATION_ONLY_CRITERIA = [
-  'apiContract',
-  'apiType',
-] as const satisfies ReadonlyArray<keyof SearchCriteria>
-
-export type SearchCommonCriteria = Omit<
-  SearchCriteria,
-  (typeof SEARCH_OPERATION_ONLY_CRITERIA)[number]
->
+export function toApiTypeFilter(criteria: SearchCriteria): ApiType | undefined {
+  const { apiContract } = criteria
+  return apiContract && isApiType(apiContract) ? apiContract : undefined
+}
