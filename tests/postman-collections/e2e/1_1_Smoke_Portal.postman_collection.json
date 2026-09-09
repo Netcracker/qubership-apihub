@@ -17434,7 +17434,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": " {\r\n    \"searchString\": \"123\"\r\n}",
+                            "raw": " {\r\n    \"searchString\": \"123\",\r\n    \"packageIds\": [\"{{package_1}}\"]\r\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -17536,7 +17536,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\r\n    \"searchString\" : \"api\",\r\n    \"statuses\": [\"release\"]\r\n}",
+                            "raw": "{\r\n    \"searchString\" : \"api\",\r\n    \"statuses\": [\"release\"],\r\n    \"packageIds\": [\"{{package_1}}\"]\r\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
