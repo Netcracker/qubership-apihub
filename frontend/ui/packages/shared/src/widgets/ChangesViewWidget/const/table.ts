@@ -25,11 +25,33 @@ export type ChangesViewTableData = {
 
 export const CHANGES_COLUMN_ID = 'changes-column'
 
-export const COLUMNS_MODELS: ColumnModel[] = [
-  { name: ENDPOINT_COLUMN_ID },
-  { name: TAGS_COLUMN_ID, width: 167 },
-  { name: PACKAGE_COLUMN_ID, width: 245 },
-  { name: CHANGES_COLUMN_ID, fixedWidth: 218 },
-  { name: API_KIND_COLUMN_ID, fixedWidth: 96 },
-  { name: API_AUDIENCE_COLUMN_ID, fixedWidth: 110 },
-]
+const ENDPOINT_COLUMN_PERCENTAGE = 0.4
+const CHANGES_COLUMN_MIN_WIDTH = 218
+
+const API_KIND_COLUMN_WIDTH = 96
+const API_AUDIENCE_COLUMN_WIDTH = 110
+
+function buildColumnsModels(shareableColumnIds: string[]): ColumnModel[] {
+  const remainingPercentage = (1 - ENDPOINT_COLUMN_PERCENTAGE) / shareableColumnIds.length
+  return [
+    { name: ENDPOINT_COLUMN_ID, percentage: ENDPOINT_COLUMN_PERCENTAGE },
+    ...shareableColumnIds.map(name => ({
+      name: name,
+      percentage: remainingPercentage,
+      ...(name === CHANGES_COLUMN_ID ? { minWidth: CHANGES_COLUMN_MIN_WIDTH } : {}),
+    })),
+    { name: API_KIND_COLUMN_ID, fixedWidth: API_KIND_COLUMN_WIDTH },
+    { name: API_AUDIENCE_COLUMN_ID, fixedWidth: API_AUDIENCE_COLUMN_WIDTH },
+  ]
+}
+
+export const PACKAGE_COLUMNS_MODELS: ColumnModel[] = buildColumnsModels([
+  TAGS_COLUMN_ID,
+  CHANGES_COLUMN_ID,
+])
+
+export const DASHBOARD_COLUMNS_MODELS: ColumnModel[] = buildColumnsModels([
+  TAGS_COLUMN_ID,
+  PACKAGE_COLUMN_ID,
+  CHANGES_COLUMN_ID,
+])
