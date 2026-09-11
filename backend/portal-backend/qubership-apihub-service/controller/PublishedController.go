@@ -3,8 +3,8 @@ package controller
 import (
 	"net/http"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/responder"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
@@ -17,11 +17,12 @@ type PublishedController interface {
 	GetPublishedVersionBuildConfig(w http.ResponseWriter, r *http.Request)
 }
 
-func NewPublishedController(versionService service.PublishedService, portalService service.PortalService, roleService service.RoleService) PublishedController {
+func NewPublishedController(versionService service.PublishedService, portalService service.PortalService, roleService service.RoleService, responder responder.Responder) PublishedController {
 	return &publishControllerImpl{
 		publishedService: versionService,
 		portalService:    portalService,
 		roleService:      roleService,
+		responder:        responder,
 	}
 }
 
@@ -29,6 +30,7 @@ type publishControllerImpl struct {
 	publishedService service.PublishedService
 	portalService    service.PortalService
 	roleService      service.RoleService
+	responder        responder.Responder
 }
 
 func (v publishControllerImpl) GetVersionSources(w http.ResponseWriter, r *http.Request) {
@@ -36,11 +38,11 @@ func (v publishControllerImpl) GetVersionSources(w http.ResponseWriter, r *http.
 	packageId := getStringParam(r, "packageId")
 	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to check user privileges", err)
+		v.responder.RespondWithError(w, r, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -50,7 +52,7 @@ func (v publishControllerImpl) GetVersionSources(w http.ResponseWriter, r *http.
 
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -61,7 +63,7 @@ func (v publishControllerImpl) GetVersionSources(w http.ResponseWriter, r *http.
 	}
 	srcArchive, err := v.publishedService.GetVersionSources(ctx, packageId, versionName)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to get package version sources", err)
+		v.responder.RespondWithError(w, r, "Failed to get package version sources", err)
 		return
 	}
 
@@ -75,11 +77,11 @@ func (v publishControllerImpl) GetPublishedVersionSourceDataConfig(w http.Respon
 	packageId := getStringParam(r, "packageId")
 	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to check user privileges", err)
+		v.responder.RespondWithError(w, r, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -89,7 +91,7 @@ func (v publishControllerImpl) GetPublishedVersionSourceDataConfig(w http.Respon
 
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -100,11 +102,11 @@ func (v publishControllerImpl) GetPublishedVersionSourceDataConfig(w http.Respon
 	}
 	publishedVersionSourceDataConfig, err := v.publishedService.GetPublishedVersionSourceDataConfig(ctx, packageId, versionName)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to get package version sources", err)
+		v.responder.RespondWithError(w, r, "Failed to get package version sources", err)
 		return
 	}
 
-	utils.RespondWithJson(w, http.StatusOK, publishedVersionSourceDataConfig)
+	v.responder.RespondWithJson(w, http.StatusOK, publishedVersionSourceDataConfig)
 }
 
 func (v publishControllerImpl) GetPublishedVersionBuildConfig(w http.ResponseWriter, r *http.Request) {
@@ -112,11 +114,11 @@ func (v publishControllerImpl) GetPublishedVersionBuildConfig(w http.ResponseWri
 	packageId := getStringParam(r, "packageId")
 	sufficientPrivileges, err := v.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to check user privileges", err)
+		v.responder.RespondWithError(w, r, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -126,7 +128,7 @@ func (v publishControllerImpl) GetPublishedVersionBuildConfig(w http.ResponseWri
 
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -138,9 +140,9 @@ func (v publishControllerImpl) GetPublishedVersionBuildConfig(w http.ResponseWri
 
 	publishedVersionBuildConfig, err := v.publishedService.GetPublishedVersionBuildConfig(ctx, packageId, versionName)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to get package version build config", err)
+		v.responder.RespondWithError(w, r, "Failed to get package version build config", err)
 		return
 	}
 
-	utils.RespondWithJson(w, http.StatusOK, publishedVersionBuildConfig)
+	v.responder.RespondWithJson(w, http.StatusOK, publishedVersionBuildConfig)
 }

@@ -8,19 +8,21 @@ import (
 	"unicode/utf8"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/responder"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security"
 	aiservice "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/gorilla/mux"
 )
 
 // Download: resolve file row (404 if missing/expired) before JWT check, then ownership.
 type EphemeralFileController struct {
-	svc aiservice.EphemeralFileService
+	svc           aiservice.EphemeralFileService
+	responder     responder.Responder
+	authenticator security.Authenticator
 }
 
-func NewEphemeralFileController(svc aiservice.EphemeralFileService) *EphemeralFileController {
-	return &EphemeralFileController{svc: svc}
+func NewEphemeralFileController(svc aiservice.EphemeralFileService, responder responder.Responder, authenticator security.Authenticator) *EphemeralFileController {
+	return &EphemeralFileController{svc: svc, responder: responder, authenticator: authenticator}
 }
 
 func (c *EphemeralFileController) Download(w http.ResponseWriter, r *http.Request) {
@@ -28,47 +30,47 @@ func (c *EphemeralFileController) Download(w http.ResponseWriter, r *http.Reques
 
 	f, err := c.svc.GetFileByID(r.Context(), fileID)
 	if err != nil {
-		utils.RespondWithError(w, r, "Get file", err)
+		c.responder.RespondWithError(w, r, "Get file", err)
 		return
 	}
 	if f == nil || f.ExpiresAt.Before(time.Now().UTC()) {
-		utils.RespondWithCustomError(w, errEphemeralFileNotFound(fileID))
+		c.responder.RespondWithCustomError(w, errEphemeralFileNotFound(fileID))
 		return
 	}
 
 	token := r.URL.Query().Get("token")
 	if token == "" {
-		utils.RespondWithCustomError(w, &exception.CustomError{Status: http.StatusUnauthorized, Code: exception.EphemeralFileTokenMissing, Message: exception.EphemeralFileTokenMissingMsg})
+		c.responder.RespondWithCustomError(w, &exception.CustomError{Status: http.StatusUnauthorized, Code: exception.EphemeralFileTokenMissing, Message: exception.EphemeralFileTokenMissingMsg})
 		return
 	}
-	uid, tokFileID, err := security.ValidateEphemeralFileToken(r.Context(), token)
+	uid, tokFileID, err := c.authenticator.ValidateEphemeralFileToken(r.Context(), token)
 	if err != nil {
 		if security.IsTokenExpiredError(err) {
-			utils.RespondWithCustomError(w, &exception.CustomError{Status: http.StatusGone, Code: exception.EphemeralFileTokenExpired, Message: exception.EphemeralFileTokenExpiredMsg, Debug: err.Error()})
+			c.responder.RespondWithCustomError(w, &exception.CustomError{Status: http.StatusGone, Code: exception.EphemeralFileTokenExpired, Message: exception.EphemeralFileTokenExpiredMsg, Debug: err.Error()})
 			return
 		}
-		utils.RespondWithCustomError(w, &exception.CustomError{Status: http.StatusUnauthorized, Code: exception.EphemeralFileTokenInvalid, Message: exception.EphemeralFileTokenInvalidMsg, Debug: err.Error()})
+		c.responder.RespondWithCustomError(w, &exception.CustomError{Status: http.StatusUnauthorized, Code: exception.EphemeralFileTokenInvalid, Message: exception.EphemeralFileTokenInvalidMsg, Debug: err.Error()})
 		return
 	}
 	if tokFileID != fileID {
-		utils.RespondWithCustomError(w, &exception.CustomError{Status: http.StatusUnauthorized, Code: exception.EphemeralFileTokenInvalid, Message: exception.EphemeralFileTokenFileMismatchMsg})
+		c.responder.RespondWithCustomError(w, &exception.CustomError{Status: http.StatusUnauthorized, Code: exception.EphemeralFileTokenInvalid, Message: exception.EphemeralFileTokenFileMismatchMsg})
 		return
 	}
 
 	if uid != f.UserID {
-		utils.RespondWithCustomError(w, &exception.CustomError{Status: http.StatusUnauthorized, Code: exception.EphemeralFileTokenInvalid, Message: exception.EphemeralFileTokenFileMismatchMsg})
+		c.responder.RespondWithCustomError(w, &exception.CustomError{Status: http.StatusUnauthorized, Code: exception.EphemeralFileTokenInvalid, Message: exception.EphemeralFileTokenFileMismatchMsg})
 		return
 	}
 
 	file, err := os.Open(f.StoragePath)
 	if err != nil {
-		utils.RespondWithCustomError(w, errEphemeralFileNotFound(fileID))
+		c.responder.RespondWithCustomError(w, errEphemeralFileNotFound(fileID))
 		return
 	}
 	defer file.Close()
 	st, err := file.Stat()
 	if err != nil || st.IsDir() {
-		utils.RespondWithCustomError(w, errEphemeralFileNotFound(fileID))
+		c.responder.RespondWithCustomError(w, errEphemeralFileNotFound(fileID))
 		return
 	}
 

@@ -28,14 +28,14 @@ func authenticate(strategy auth.Strategy, r *http.Request) (auth.Info, error) {
 	return info, utils.WrapContextError(ctx, err)
 }
 
-func Secure(next http.HandlerFunc) http.HandlerFunc {
+func (a Authenticator) Secure(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Errorf("Request failed with panic: %v", err)
 				log.Tracef("Stacktrace: %v", string(debug.Stack()))
 				debug.PrintStack()
-				utils.RespondWithCustomError(w, &exception.CustomError{
+				a.responder.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusInternalServerError,
 					Message: http.StatusText(http.StatusInternalServerError),
 					Debug:   fmt.Sprintf("%v", err),
@@ -43,19 +43,19 @@ func Secure(next http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 		}()
-		user, err := authenticate(fullAuthStrategy, r)
+		user, err := authenticate(a.fullAuthStrategy, r)
 		if err != nil {
 			if multiError, ok := err.(union.MultiError); ok {
 				for _, e := range multiError {
 					if customError, ok := e.(*exception.CustomError); ok {
 						if customError.Status == http.StatusForbidden {
-							utils.RespondWithCustomError(w, customError)
+							a.responder.RespondWithCustomError(w, customError)
 							return
 						}
 					}
 				}
 			}
-			respondWithAuthFailedError(w, r, err)
+			a.respondWithAuthFailedError(w, r, err)
 			return
 		}
 
@@ -64,14 +64,14 @@ func Secure(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func SecureUser(next http.HandlerFunc) http.HandlerFunc {
+func (a Authenticator) SecureUser(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Errorf("Request failed with panic: %v", err)
 				log.Tracef("Stacktrace: %v", string(debug.Stack()))
 				debug.PrintStack()
-				utils.RespondWithCustomError(w, &exception.CustomError{
+				a.responder.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusInternalServerError,
 					Message: http.StatusText(http.StatusInternalServerError),
 					Debug:   fmt.Sprintf("%v", err),
@@ -79,9 +79,9 @@ func SecureUser(next http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 		}()
-		user, err := authenticate(userAuthStrategy, r)
+		user, err := authenticate(a.userAuthStrategy, r)
 		if err != nil {
-			respondWithAuthFailedError(w, r, err)
+			a.respondWithAuthFailedError(w, r, err)
 			return
 		}
 
@@ -90,14 +90,14 @@ func SecureUser(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func SecureJWT(next http.HandlerFunc) http.HandlerFunc {
+func (a Authenticator) SecureJWT(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Errorf("Request failed with panic: %v", err)
 				log.Tracef("Stacktrace: %v", string(debug.Stack()))
 				debug.PrintStack()
-				utils.RespondWithCustomError(w, &exception.CustomError{
+				a.responder.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusInternalServerError,
 					Message: http.StatusText(http.StatusInternalServerError),
 					Debug:   fmt.Sprintf("%v", err),
@@ -105,9 +105,9 @@ func SecureJWT(next http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 		}()
-		user, err := authenticate(jwtAuthStrategy, r)
+		user, err := authenticate(a.jwtAuthStrategy, r)
 		if err != nil {
-			respondWithAuthFailedError(w, r, err)
+			a.respondWithAuthFailedError(w, r, err)
 			return
 		}
 
@@ -116,14 +116,14 @@ func SecureJWT(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func NoSecure(next http.HandlerFunc) http.HandlerFunc {
+func (a Authenticator) NoSecure(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Errorf("Request failed with panic: %v", err)
 				log.Tracef("Stacktrace: %v", string(debug.Stack()))
 				debug.PrintStack()
-				utils.RespondWithCustomError(w, &exception.CustomError{
+				a.responder.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusInternalServerError,
 					Message: http.StatusText(http.StatusInternalServerError),
 					Debug:   fmt.Sprintf("%v", err),
@@ -135,14 +135,14 @@ func NoSecure(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func SecureProxy(next http.HandlerFunc) http.HandlerFunc {
+func (a Authenticator) SecureProxy(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Errorf("Request failed with panic: %v", err)
 				log.Tracef("Stacktrace: %v", string(debug.Stack()))
 				debug.PrintStack()
-				utils.RespondWithCustomError(w, &exception.CustomError{
+				a.responder.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusInternalServerError,
 					Message: http.StatusText(http.StatusInternalServerError),
 					Debug:   fmt.Sprintf("%v", err),
@@ -151,9 +151,9 @@ func SecureProxy(next http.HandlerFunc) http.HandlerFunc {
 			}
 		}()
 		//TODO: need to remove customJwtStrategy and use sessionCookie strategy only
-		user, err := authenticate(proxyAuthStrategy, r)
+		user, err := authenticate(a.proxyAuthStrategy, r)
 		if err != nil {
-			respondWithAuthFailedError(w, r, err)
+			a.respondWithAuthFailedError(w, r, err)
 			return
 		}
 		r = auth.RequestWithUser(user, r)
@@ -171,14 +171,14 @@ func SecureProxy(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func RefreshToken(next http.HandlerFunc) http.HandlerFunc {
+func (a Authenticator) RefreshToken(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Errorf("Request failed with panic: %v", err)
 				log.Tracef("Stacktrace: %v", string(debug.Stack()))
 				debug.PrintStack()
-				utils.RespondWithCustomError(w, &exception.CustomError{
+				a.responder.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusInternalServerError,
 					Message: http.StatusText(http.StatusInternalServerError),
 					Debug:   fmt.Sprintf("%v", err),
@@ -186,13 +186,13 @@ func RefreshToken(next http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 		}()
-		user, err := authenticate(refreshTokenStrategy, r)
+		user, err := authenticate(a.refreshTokenStrategy, r)
 		if user != nil && user.GetExtensions().Get(SetAccessTokenCookieExt) != "" {
 			http.SetCookie(w, &http.Cookie{
 				Name:     AccessTokenCookieName,
 				Value:    user.GetExtensions().Get(SetAccessTokenCookieExt),
-				MaxAge:   int(accessTokenDuration.Seconds()),
-				Secure:   productionMode,
+				MaxAge:   int(a.accessTokenDuration.Seconds()),
+				Secure:   a.productionMode,
 				HttpOnly: true,
 				Path:     "/",
 			})
@@ -201,8 +201,8 @@ func RefreshToken(next http.HandlerFunc) http.HandlerFunc {
 			// Falling through belongs to a missing, expired, or invalid refresh token. A refresh that
 			// ran out of time says nothing about the session, so sending a valid one to the identity
 			// provider would loop while the database or the cache is degraded.
-			if cause := contextErrorCause(err); cause != nil {
-				utils.RespondWithContextError(w, r, "Token refresh aborted", cause, err)
+			if cause := a.contextErrorCause(err); cause != nil {
+				a.responder.RespondWithContextError(w, r, "Token refresh aborted", cause, err)
 				return
 			}
 			if err != nil {
@@ -213,14 +213,14 @@ func RefreshToken(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func SecureMCP(next http.Handler) http.Handler {
+func (a Authenticator) SecureMCP(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Errorf("Request failed with panic: %v", err)
 				log.Tracef("Stacktrace: %v", string(debug.Stack()))
 				debug.PrintStack()
-				utils.RespondWithCustomError(w, &exception.CustomError{
+				a.responder.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusInternalServerError,
 					Message: http.StatusText(http.StatusInternalServerError),
 					Debug:   fmt.Sprintf("%v", err),
@@ -228,9 +228,9 @@ func SecureMCP(next http.Handler) http.Handler {
 				return
 			}
 		}()
-		user, err := authenticate(mcpAuthStrategy, r)
+		user, err := authenticate(a.mcpAuthStrategy, r)
 		if err != nil {
-			respondWithAuthFailedError(w, r, err)
+			a.respondWithAuthFailedError(w, r, err)
 			return
 		}
 
@@ -239,33 +239,17 @@ func SecureMCP(next http.Handler) http.Handler {
 	})
 }
 
-func contextErrorCause(err error) error {
+func (a Authenticator) contextErrorCause(err error) error {
 	if multiError, ok := err.(union.MultiError); ok {
 		for _, e := range multiError {
-			if cause := contextErrorCause(e); cause != nil {
+			if cause := a.contextErrorCause(e); cause != nil {
 				return cause
 			}
 		}
 		return nil
 	}
-	if utils.IsRequestTimeout(err) || utils.IsContextCancelled(err) {
+	if a.responder.IsRequestTimeout(err) || a.responder.IsContextCancelled(err) {
 		return err
 	}
 	return nil
-}
-
-func respondWithAuthFailedError(w http.ResponseWriter, r *http.Request, err error) {
-	if cause := contextErrorCause(err); cause != nil {
-		// A request that gave up while authenticating is not an authentication failure, and reporting it
-		// as 401 sends the user off to fix credentials that can be perfectly valid.
-		utils.RespondWithContextError(w, r, "Authentication aborted", cause, err)
-		return
-	}
-	log.Tracef("Authentication failed: %+v", err)
-	customErr := &exception.CustomError{
-		Status:  http.StatusUnauthorized,
-		Message: http.StatusText(http.StatusUnauthorized),
-		Debug:   fmt.Sprintf("%v", err),
-	}
-	utils.RespondWithJson(w, customErr.Status, customErr)
 }

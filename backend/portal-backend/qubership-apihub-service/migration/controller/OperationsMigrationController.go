@@ -9,8 +9,8 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/migration/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/migration/view"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/responder"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/gorilla/mux"
 )
 
@@ -22,21 +22,23 @@ type OperationsMigrationController interface {
 	GetMigrationPerfReport(w http.ResponseWriter, r *http.Request)
 }
 
-func NewTempMigrationController(migrationService service.DBMigrationService) OperationsMigrationController {
+func NewTempMigrationController(migrationService service.DBMigrationService, responder responder.Responder) OperationsMigrationController {
 	return &operationsMigrationControllerImpl{
 		migrationService: migrationService,
+		responder:        responder,
 	}
 }
 
 type operationsMigrationControllerImpl struct {
 	migrationService service.DBMigrationService
+	responder        responder.Responder
 }
 
 func (t operationsMigrationControllerImpl) StartOpsMigration(w http.ResponseWriter, r *http.Request) {
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges := secctx.IsSysadm(ctx)
 	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -47,7 +49,7 @@ func (t operationsMigrationControllerImpl) StartOpsMigration(w http.ResponseWrit
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -59,7 +61,7 @@ func (t operationsMigrationControllerImpl) StartOpsMigration(w http.ResponseWrit
 
 	err = json.Unmarshal(body, &req)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -70,14 +72,14 @@ func (t operationsMigrationControllerImpl) StartOpsMigration(w http.ResponseWrit
 
 	id, err := t.migrationService.StartMigrateOperations(ctx, req)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to start operations migration", err)
+		t.responder.RespondWithError(w, r, "Failed to start operations migration", err)
 		return
 	}
 
 	result := map[string]interface{}{}
 	result["id"] = id
 
-	utils.RespondWithJson(w, http.StatusCreated, result)
+	t.responder.RespondWithJson(w, http.StatusCreated, result)
 }
 
 func (t operationsMigrationControllerImpl) GetMigrationReport(w http.ResponseWriter, r *http.Request) {
@@ -85,7 +87,7 @@ func (t operationsMigrationControllerImpl) GetMigrationReport(w http.ResponseWri
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges := secctx.IsSysadm(ctx)
 	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -100,7 +102,7 @@ func (t operationsMigrationControllerImpl) GetMigrationReport(w http.ResponseWri
 	if r.URL.Query().Get("includeBuildSamples") != "" {
 		includeBuildSamples, err = strconv.ParseBool(r.URL.Query().Get("includeBuildSamples"))
 		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			t.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -112,7 +114,7 @@ func (t operationsMigrationControllerImpl) GetMigrationReport(w http.ResponseWri
 	}
 	report, err := t.migrationService.GetMigrationReport(ctx, migrationId, includeBuildSamples)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    "999",
 			Message: "Failed to get migration result",
@@ -121,7 +123,7 @@ func (t operationsMigrationControllerImpl) GetMigrationReport(w http.ResponseWri
 		return
 	}
 	if report == nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    "998",
 			Message: "Migration not found",
@@ -129,14 +131,14 @@ func (t operationsMigrationControllerImpl) GetMigrationReport(w http.ResponseWri
 		return
 	}
 
-	utils.RespondWithJson(w, http.StatusOK, report)
+	t.responder.RespondWithJson(w, http.StatusOK, report)
 }
 
 func (t operationsMigrationControllerImpl) CancelRunningMigrations(w http.ResponseWriter, r *http.Request) {
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges := secctx.IsSysadm(ctx)
 	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -145,7 +147,7 @@ func (t operationsMigrationControllerImpl) CancelRunningMigrations(w http.Respon
 	}
 	err := t.migrationService.CancelRunningMigrations(ctx)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to cancel running migrations", err)
+		t.responder.RespondWithError(w, r, "Failed to cancel running migrations", err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -156,7 +158,7 @@ func (t operationsMigrationControllerImpl) GetSuspiciousBuilds(w http.ResponseWr
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges := secctx.IsSysadm(ctx)
 	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -172,7 +174,7 @@ func (t operationsMigrationControllerImpl) GetSuspiciousBuilds(w http.ResponseWr
 	if r.URL.Query().Get("limit") != "" {
 		limit, err = strconv.Atoi(r.URL.Query().Get("limit"))
 		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			t.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -182,7 +184,7 @@ func (t operationsMigrationControllerImpl) GetSuspiciousBuilds(w http.ResponseWr
 			return
 		}
 		if limit < 1 || limit > maxLimit {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			t.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.InvalidParameterValue,
 				Message: exception.InvalidLimitMsg,
@@ -195,7 +197,7 @@ func (t operationsMigrationControllerImpl) GetSuspiciousBuilds(w http.ResponseWr
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			t.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -208,7 +210,7 @@ func (t operationsMigrationControllerImpl) GetSuspiciousBuilds(w http.ResponseWr
 
 	suspiciousBuilds, err := t.migrationService.GetSuspiciousBuilds(ctx, migrationId, changedField, limit, page)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Message: "Failed to get migration result",
 			Debug:   err.Error(),
@@ -216,7 +218,7 @@ func (t operationsMigrationControllerImpl) GetSuspiciousBuilds(w http.ResponseWr
 		return
 	}
 
-	utils.RespondWithJson(w, http.StatusOK, suspiciousBuilds)
+	t.responder.RespondWithJson(w, http.StatusOK, suspiciousBuilds)
 }
 
 func (t operationsMigrationControllerImpl) GetMigrationPerfReport(w http.ResponseWriter, r *http.Request) {
@@ -224,7 +226,7 @@ func (t operationsMigrationControllerImpl) GetMigrationPerfReport(w http.Respons
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges := secctx.IsSysadm(ctx)
 	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -251,7 +253,7 @@ func (t operationsMigrationControllerImpl) GetMigrationPerfReport(w http.Respons
 
 	report, err := t.migrationService.GetMigrationPerfReport(ctx, migrationId, includeHourPackageData, stageFilter)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to get migration perf report", err)
+		t.responder.RespondWithError(w, r, "Failed to get migration perf report", err)
 		return
 	}
 

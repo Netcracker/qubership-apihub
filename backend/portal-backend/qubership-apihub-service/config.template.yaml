@@ -15,6 +15,8 @@ database:
 security:
   # Optional; Enables production mode - login under local apihub users is prohibited in this mode. In this mode only external IdP auth is possible; If not set, default value: true; Example: true
   productionMode: true  # set to false at your own risk
+  # Optional; Enables the 'debug' field with internal error details in API error responses. Should be disabled on prod envs; If not set, default value: false; Example: false
+  showDebugInResponse: false
   # Section with parameters for configuring JWT tokens issued by APIHUB
   jwt:
     # Mandatory; Self generated private PKCS#8 private key, base64 encoded. The RSA key length must be at least 2048 bits and no more than 4096 bits to ensure a balance between security and performance. Used for siging of JWT tokens issued by APIHUB, must be unique fore each APIHUB instance; If not set, default value: ""; Example: LS0tLS1CRUdJTiBQUklWQV...

@@ -12,9 +12,9 @@ import (
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/responder"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	log "github.com/sirupsen/logrus"
@@ -33,7 +33,7 @@ func NewPublishV2Controller(buildService service.BuildService,
 	buildResultService service.BuildResultService,
 	roleService service.RoleService,
 	systemInfoService service.SystemInfoService,
-	packageService service.PackageService) PublishV2Controller {
+	packageService service.PackageService, responder responder.Responder) PublishV2Controller {
 
 	publishArchiveSizeLimit := systemInfoService.GetPublishArchiveSizeLimitMB()
 	publishFileSizeLimit := systemInfoService.GetPublishFileSizeLimitMB()
@@ -47,6 +47,7 @@ func NewPublishV2Controller(buildService service.BuildService,
 		publishFileSizeLimit:    publishFileSizeLimit,
 		systemInfoService:       systemInfoService,
 		packageService:          packageService,
+		responder:               responder,
 	}
 }
 
@@ -60,6 +61,7 @@ type publishV2ControllerImpl struct {
 
 	publishArchiveSizeLimit int64
 	publishFileSizeLimit    int64 //TODO: why is not used?
+	responder               responder.Responder
 }
 
 func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +70,7 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 	r.Body = http.MaxBytesReader(w, r.Body, p.publishArchiveSizeLimit)
 
 	if r.ContentLength > p.publishArchiveSizeLimit {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.ArchiveSizeExceeded,
 			Message: exception.ArchiveSizeExceededMsg,
@@ -80,14 +82,14 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 	err := r.ParseMultipartForm(0)
 	if err != nil {
 		if strings.Contains(err.Error(), "http: request body too large") {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			p.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.ArchiveSizeExceeded,
 				Message: exception.ArchiveSizeExceededMsg,
 				Params:  map[string]interface{}{"size": p.publishArchiveSizeLimit},
 			})
 		} else {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			p.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.BadRequestBody,
 				Message: exception.BadRequestBodyMsg,
@@ -108,7 +110,7 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 	if clientBuildStr != "" {
 		clientBuild, err = strconv.ParseBool(clientBuildStr)
 		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			p.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.InvalidParameter,
 				Message: exception.InvalidParameterMsg,
@@ -124,7 +126,7 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 	if resolveRefsStr != "" {
 		resolveRefs, err = strconv.ParseBool(resolveRefsStr)
 		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			p.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.InvalidParameter,
 				Message: exception.InvalidParameterMsg,
@@ -140,7 +142,7 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 	if resolveConflictsStr != "" {
 		resolveConflicts, err = strconv.ParseBool(resolveConflictsStr)
 		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			p.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.InvalidParameter,
 				Message: exception.InvalidParameterMsg,
@@ -156,7 +158,7 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 	if srcExists {
 		sourcesFile, archiveFileHeader, err := r.FormFile("sources")
 		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			p.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectMultipartFile,
 				Message: exception.IncorrectMultipartFileMsg,
@@ -170,7 +172,7 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 			log.Debugf("failed to close temporal file: %+v", err)
 		}
 		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			p.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectMultipartFile,
 				Message: exception.IncorrectMultipartFileMsg,
@@ -179,7 +181,7 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 		}
 
 		if !strings.HasSuffix(archiveFileHeader.Filename, ".zip") {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			p.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.InvalidParameter,
 				Message: exception.InvalidParameterMsg,
@@ -191,7 +193,7 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 		if strings.EqualFold(encoding, "base64") {
 			_, err := base64.StdEncoding.Decode(sourcesData, sourcesData)
 			if err != nil {
-				utils.RespondWithCustomError(w, &exception.CustomError{
+				p.responder.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusBadRequest,
 					Code:    exception.IncorrectMultipartFile,
 					Message: exception.IncorrectMultipartFileMsg,
@@ -203,7 +205,7 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 
 	configStr := r.FormValue("config")
 	if configStr == "" {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.EmptyParameter,
 			Message: exception.EmptyParameterMsg,
@@ -215,7 +217,7 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 	var config view.BuildConfig
 	err = json.Unmarshal([]byte(configStr), &config)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameter,
 			Message: exception.InvalidParameterMsg,
@@ -228,7 +230,7 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 		config.PackageId = packageId
 	} else {
 		if packageId != config.PackageId {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			p.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.PackageIdMismatch,
 				Message: exception.PackageIdMismatchMsg,
@@ -240,12 +242,12 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 
 	packageKind, err := p.packageService.GetPackageKind(ctx, packageId)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to get package info", err)
+		p.responder.RespondWithError(w, r, "Failed to get package info", err)
 		return
 	}
 
 	if validationErr := validatePublishPackageKind(packageKind, []string{entity.KIND_PACKAGE, entity.KIND_DASHBOARD}); validationErr != nil {
-		utils.RespondWithCustomError(w, validationErr)
+		p.responder.RespondWithCustomError(w, validationErr)
 		return
 	}
 
@@ -261,7 +263,7 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 
 	_, err = view.ParseVersionStatus(config.Status)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameter,
 			Message: err.Error(),
@@ -271,11 +273,11 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 
 	sufficientPrivileges, err := p.roleService.HasManageVersionPermission(ctx, packageId, config.Status)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to check user privileges", err)
+		p.responder.RespondWithError(w, r, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -287,7 +289,7 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 	if dependenciesStr != "" {
 		err = json.Unmarshal([]byte(dependenciesStr), &dependencies)
 		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			p.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.InvalidParameter,
 				Message: exception.InvalidParameterMsg,
@@ -299,7 +301,7 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 	}
 	builderId := r.FormValue("builderId")
 	if clientBuild && builderId == "" {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.RequiredParamsMissing,
 			Message: exception.RequiredParamsMissingMsg,
@@ -309,13 +311,13 @@ func (p publishV2ControllerImpl) Publish(w http.ResponseWriter, r *http.Request)
 	}
 	result, err := p.buildService.PublishVersion(ctx, config, sourcesData, clientBuild, builderId, dependencies, resolveRefs, resolveConflicts)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to publish package", err)
+		p.responder.RespondWithError(w, r, "Failed to publish package", err)
 		return
 	}
 	if result.PublishId == "" {
 		w.WriteHeader(http.StatusNoContent)
 	} else {
-		utils.RespondWithJson(w, http.StatusAccepted, result)
+		p.responder.RespondWithJson(w, http.StatusAccepted, result)
 	}
 }
 
@@ -324,11 +326,11 @@ func (p publishV2ControllerImpl) GetPublishStatus(w http.ResponseWriter, r *http
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to check user privileges", err)
+		p.responder.RespondWithError(w, r, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -339,19 +341,19 @@ func (p publishV2ControllerImpl) GetPublishStatus(w http.ResponseWriter, r *http
 
 	status, details, err := p.buildService.GetStatus(ctx, publishId)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to get publish status", err)
+		p.responder.RespondWithError(w, r, "Failed to get publish status", err)
 		return
 	}
 
 	if status == "" && details == "" {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Message: "build not found",
 		})
 		return
 	}
 
-	utils.RespondWithJson(w, http.StatusOK, view.PublishStatusResponse{
+	p.responder.RespondWithJson(w, http.StatusOK, view.PublishStatusResponse{
 		PublishId: publishId,
 		Status:    status,
 		Message:   details,
@@ -363,11 +365,11 @@ func (p publishV2ControllerImpl) GetPublishStatuses(w http.ResponseWriter, r *ht
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to check user privileges", err)
+		p.responder.RespondWithError(w, r, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -378,7 +380,7 @@ func (p publishV2ControllerImpl) GetPublishStatuses(w http.ResponseWriter, r *ht
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -389,7 +391,7 @@ func (p publishV2ControllerImpl) GetPublishStatuses(w http.ResponseWriter, r *ht
 	var req view.BuildsStatusRequest
 	err = json.Unmarshal(body, &req)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -400,19 +402,19 @@ func (p publishV2ControllerImpl) GetPublishStatuses(w http.ResponseWriter, r *ht
 
 	result, err := p.buildService.GetStatuses(ctx, req.PublishIds)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to get publish statuses", err)
+		p.responder.RespondWithError(w, r, "Failed to get publish statuses", err)
 		return
 	}
 
 	if result == nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Message: "builds not found",
 		})
 		return
 	}
 
-	utils.RespondWithJson(w, http.StatusOK, result)
+	p.responder.RespondWithJson(w, http.StatusOK, result)
 }
 
 func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http.Request) {
@@ -422,11 +424,11 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to check user privileges", err)
+		p.responder.RespondWithError(w, r, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -439,7 +441,7 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 	r.Body = http.MaxBytesReader(w, r.Body, limit)
 
 	if r.ContentLength > limit {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.ArchiveSizeExceeded,
 			Message: exception.ArchiveSizeExceededMsg,
@@ -450,7 +452,7 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 
 	err = r.ParseMultipartForm(64 << 20) // 64mb
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -469,7 +471,7 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 	statusStr := r.FormValue("status")
 	status, err = view.BuildStatusFromString(statusStr)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameter,
 			Message: exception.InvalidParameterMsg,
@@ -481,7 +483,7 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 
 	builderId := r.FormValue("builderId")
 	if builderId == "" {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.RequiredParamsMissing,
 			Message: exception.RequiredParamsMissingMsg,
@@ -491,7 +493,7 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 	}
 	err = p.buildService.ValidateBuildOwnership(ctx, buildId, builderId)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to validate build ownership", err)
+		p.responder.RespondWithError(w, r, "Failed to validate build ownership", err)
 		return
 	}
 
@@ -501,7 +503,7 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 		details = r.FormValue("errors")
 		err = p.buildService.UpdateBuildStatus(ctx, buildId, status, details)
 		if err != nil {
-			utils.RespondWithError(w, r, "Failed to update build status", err)
+			p.responder.RespondWithError(w, r, "Failed to update build status", err)
 			return
 		}
 	case view.StatusComplete:
@@ -509,7 +511,7 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 		sourcesFile, fileHeader, err := r.FormFile("data")
 		if err != nil {
 			if err == http.ErrMissingFile {
-				utils.RespondWithCustomError(w, &exception.CustomError{
+				p.responder.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusBadRequest,
 					Code:    exception.RequiredParamsMissing,
 					Message: exception.RequiredParamsMissingMsg,
@@ -517,7 +519,7 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 				})
 				return
 			}
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			p.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectMultipartFile,
 				Message: exception.IncorrectMultipartFileMsg,
@@ -530,7 +532,7 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 			log.Debugf("failed to close temporal file: %+v", err)
 		}
 		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			p.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectMultipartFile,
 				Message: exception.IncorrectMultipartFileMsg,
@@ -541,7 +543,7 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 		if strings.EqualFold(encoding, "base64") {
 			_, err := base64.StdEncoding.Decode(data, data)
 			if err != nil {
-				utils.RespondWithCustomError(w, &exception.CustomError{
+				p.responder.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusBadRequest,
 					Code:    exception.IncorrectMultipartFile,
 					Message: exception.IncorrectMultipartFileMsg,
@@ -551,16 +553,16 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 		}
 		availableVersionStatuses, err := p.roleService.GetAvailableVersionPublishStatuses(ctx, packageId)
 		if err != nil {
-			utils.RespondWithError(w, r, "Failed to check user privileges", err)
+			p.responder.RespondWithError(w, r, "Failed to check user privileges", err)
 			return
 		}
 		err = p.buildResultService.SaveBuildResult(ctx, packageId, data, fileHeader.Filename, buildId, availableVersionStatuses)
 		if err != nil {
-			utils.RespondWithError(w, r, "Failed to publish build package", err)
+			p.responder.RespondWithError(w, r, "Failed to publish build package", err)
 			return
 		}
 	case view.StatusNotStarted:
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Message: fmt.Sprintf("Value '%v' is not acceptable for status", status),
 		})
@@ -568,7 +570,7 @@ func (p publishV2ControllerImpl) SetPublishStatus(w http.ResponseWriter, r *http
 	case view.StatusRunning:
 		err = p.buildService.UpdateBuildStatus(ctx, buildId, status, details)
 		if err != nil {
-			utils.RespondWithError(w, r, "Failed to update build status", err)
+			p.responder.RespondWithError(w, r, "Failed to update build status", err)
 			return
 		}
 	}
@@ -580,7 +582,7 @@ func (p publishV2ControllerImpl) GetFreeBuild(w http.ResponseWriter, r *http.Req
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges := secctx.IsSysadm(ctx)
 	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -593,7 +595,7 @@ func (p publishV2ControllerImpl) GetFreeBuild(w http.ResponseWriter, r *http.Req
 	src, err := p.buildService.GetFreeBuild(ctx, builderId)
 
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to get free build", err)
+		p.responder.RespondWithError(w, r, "Failed to get free build", err)
 		return
 	}
 

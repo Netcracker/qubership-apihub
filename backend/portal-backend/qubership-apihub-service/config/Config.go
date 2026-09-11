@@ -34,6 +34,7 @@ type DatabaseConfig struct {
 
 type SecurityConfig struct {
 	ProductionMode            bool
+	ShowDebugInResponse       bool
 	Jwt                       JwtConfig
 	ApihubExternalUrl         string `validate:"required"`
 	AllowedHostsForProxy      []string

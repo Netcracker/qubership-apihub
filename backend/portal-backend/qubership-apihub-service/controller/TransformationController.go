@@ -5,10 +5,9 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
-
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/responder"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 )
@@ -18,8 +17,8 @@ type TransformationController interface {
 	GetDataForDocumentsTransformation(w http.ResponseWriter, r *http.Request)
 }
 
-func NewTransformationController(roleService service.RoleService, buildService service.BuildService, versionService service.VersionService, transformationService service.TransformationService, operationGroupService service.OperationGroupService) TransformationController {
-	return transformationControllerImpl{roleService: roleService, buildService: buildService, versionService: versionService, transformationService: transformationService, operationGroupService: operationGroupService}
+func NewTransformationController(roleService service.RoleService, buildService service.BuildService, versionService service.VersionService, transformationService service.TransformationService, operationGroupService service.OperationGroupService, responder responder.Responder) TransformationController {
+	return transformationControllerImpl{roleService: roleService, buildService: buildService, versionService: versionService, transformationService: transformationService, operationGroupService: operationGroupService, responder: responder}
 }
 
 type transformationControllerImpl struct {
@@ -28,6 +27,7 @@ type transformationControllerImpl struct {
 	versionService        service.VersionService
 	transformationService service.TransformationService
 	operationGroupService service.OperationGroupService
+	responder             responder.Responder
 }
 
 func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.ResponseWriter, r *http.Request) {
@@ -35,11 +35,11 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := t.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to check user privileges", err)
+		t.responder.RespondWithError(w, r, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -48,7 +48,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -59,7 +59,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	}
 	apiType, err := getUnescapedStringParam(r, "apiType")
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -70,7 +70,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	}
 	_, err = view.ParseApiType(apiType)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
 			Message: exception.InvalidParameterValueMsg,
@@ -81,7 +81,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	}
 	groupName, err := getUnescapedStringParam(r, "groupName")
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -92,7 +92,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	}
 	buildType, err := getUnescapedStringParam(r, "buildType")
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -109,17 +109,17 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 
 	err = view.ValidateFormatForBuildType(buildType, format)
 	if err != nil {
-		utils.RespondWithError(w, r, "buildType format validation failed", err)
+		t.responder.RespondWithError(w, r, "buildType format validation failed", err)
 		return
 	}
 
 	exists, err := t.operationGroupService.CheckOperationGroupExists(ctx, packageId, versionName, apiType, groupName)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to check if operation group exists", err)
+		t.responder.RespondWithError(w, r, "Failed to check if operation group exists", err)
 		return
 	}
 	if !exists {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.OperationGroupNotFound,
 			Message: exception.OperationGroupNotFoundMsg,
@@ -130,7 +130,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 
 	builderId, err := url.QueryUnescape(r.URL.Query().Get("builderId"))
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -143,7 +143,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	if r.URL.Query().Get("clientBuild") != "" {
 		clientBuild, err = strconv.ParseBool(r.URL.Query().Get("clientBuild"))
 		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			t.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -154,7 +154,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 		}
 	}
 	if clientBuild && builderId == "" {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.RequiredParamsMissing,
 			Message: exception.RequiredParamsMissingMsg,
@@ -167,7 +167,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	if r.URL.Query().Get("reCalculate") != "" {
 		reCalculate, err = strconv.ParseBool(r.URL.Query().Get("reCalculate"))
 		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			t.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -180,13 +180,13 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 
 	_, revision, err := service.SplitVersionRevision(versionName)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to split version revision", err)
+		t.responder.RespondWithError(w, r, "Failed to split version revision", err)
 		return
 	}
 	if revision == 0 {
 		latestRevision, err := t.versionService.GetLatestRevision(ctx, packageId, versionName)
 		if err != nil {
-			utils.RespondWithError(w, r, "Failed to get version", err)
+			t.responder.RespondWithError(w, r, "Failed to get version", err)
 			return
 		}
 		versionName = view.MakeVersionRefKey(versionName, latestRevision)
@@ -204,10 +204,10 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 	if reCalculate {
 		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(ctx, buildConfig, clientBuild, builderId)
 		if err != nil {
-			utils.RespondWithError(w, r, "Failed to create documentGroup type build", err)
+			t.responder.RespondWithError(w, r, "Failed to create documentGroup type build", err)
 			return
 		}
-		utils.RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
+		t.responder.RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
 			PackageId: buildConfig.PackageId,
 			Version:   buildConfig.Version,
 			ApiType:   buildConfig.ApiType,
@@ -222,7 +222,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 
 	content, err := t.versionService.GetTransformedDocuments(ctx, packageId, versionName, apiType, groupName, buildType, format)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to get transformed documents", err)
+		t.responder.RespondWithError(w, r, "Failed to get transformed documents", err)
 		return
 	}
 	if content != nil {
@@ -246,10 +246,10 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 
 				buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(ctx, buildConfig, clientBuild, builderId)
 				if err != nil {
-					utils.RespondWithError(w, r, "Failed to create documentGroup type build", err)
+					t.responder.RespondWithError(w, r, "Failed to create documentGroup type build", err)
 					return
 				}
-				utils.RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
+				t.responder.RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
 					PackageId: buildConfig.PackageId,
 					Version:   buildConfig.Version,
 					ApiType:   buildConfig.ApiType,
@@ -262,7 +262,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 				return
 			}
 		}
-		utils.RespondWithError(w, r, "Failed to get buildStatus", err)
+		t.responder.RespondWithError(w, r, "Failed to get buildStatus", err)
 		return
 	}
 	switch buildView.Status {
@@ -271,14 +271,14 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 			Status:  string(view.StatusError),
 			Message: buildView.Details,
 		}
-		utils.RespondWithJson(w, http.StatusAccepted, calculationProcessStatus)
+		t.responder.RespondWithJson(w, http.StatusAccepted, calculationProcessStatus)
 		return
 	case string(view.StatusComplete):
 		//this case is possible only if we have an old finished build for which we don't have a transformed documents (rebuild required)
 		//or if this build completed during this method execution (rebuild is not requried)
 		content, err := t.versionService.GetTransformedDocuments(ctx, packageId, versionName, apiType, groupName, buildType, format)
 		if err != nil {
-			utils.RespondWithError(w, r, "Failed to get transformed documents", err)
+			t.responder.RespondWithError(w, r, "Failed to get transformed documents", err)
 			return
 		}
 		if content != nil {
@@ -287,10 +287,10 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 		}
 		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(ctx, buildConfig, clientBuild, builderId)
 		if err != nil {
-			utils.RespondWithError(w, r, "Failed to create documentGroup type build", err)
+			t.responder.RespondWithError(w, r, "Failed to create documentGroup type build", err)
 			return
 		}
-		utils.RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
+		t.responder.RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
 			PackageId: buildConfig.PackageId,
 			Version:   buildConfig.Version,
 			ApiType:   buildConfig.ApiType,
@@ -305,7 +305,7 @@ func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.Res
 		calculationProcessStatus = view.CalculationProcessStatus{
 			Status: string(view.StatusRunning),
 		}
-		utils.RespondWithJson(w, http.StatusAccepted, calculationProcessStatus)
+		t.responder.RespondWithJson(w, http.StatusAccepted, calculationProcessStatus)
 		return
 	}
 }
@@ -315,11 +315,11 @@ func (t transformationControllerImpl) GetDataForDocumentsTransformation(w http.R
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := t.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to check user privileges", err)
+		t.responder.RespondWithError(w, r, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -328,7 +328,7 @@ func (t transformationControllerImpl) GetDataForDocumentsTransformation(w http.R
 	}
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -339,14 +339,14 @@ func (t transformationControllerImpl) GetDataForDocumentsTransformation(w http.R
 	}
 	limit, customError := getLimitQueryParam(r)
 	if customError != nil {
-		utils.RespondWithCustomError(w, customError)
+		t.responder.RespondWithCustomError(w, customError)
 		return
 	}
 	page := 0
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			t.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -358,7 +358,7 @@ func (t transformationControllerImpl) GetDataForDocumentsTransformation(w http.R
 	}
 	apiType, err := getUnescapedStringParam(r, "apiType")
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -369,7 +369,7 @@ func (t transformationControllerImpl) GetDataForDocumentsTransformation(w http.R
 	}
 	_, err = view.ParseApiType(apiType)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
 			Message: exception.InvalidParameterValueMsg,
@@ -380,7 +380,7 @@ func (t transformationControllerImpl) GetDataForDocumentsTransformation(w http.R
 	}
 	groupName, err := getUnescapedStringParam(r, "groupName")
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -399,8 +399,8 @@ func (t transformationControllerImpl) GetDataForDocumentsTransformation(w http.R
 
 	data, err := t.transformationService.GetDataForDocumentsTransformation(ctx, packageId, versionName, documentsForTransformationFilterReq)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to get version documents", err)
+		t.responder.RespondWithError(w, r, "Failed to get version documents", err)
 		return
 	}
-	utils.RespondWithJson(w, http.StatusOK, data)
+	t.responder.RespondWithJson(w, http.StatusOK, data)
 }

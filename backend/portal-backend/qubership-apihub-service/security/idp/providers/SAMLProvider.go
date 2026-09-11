@@ -5,18 +5,19 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/responder"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security/idp"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
 	log "github.com/sirupsen/logrus"
-	"net/http"
-	"net/url"
-	"strings"
 )
 
 const (
@@ -28,37 +29,41 @@ const (
 )
 
 type samlProvider struct {
-	samlInstance *samlsp.Middleware
-	config       idp.IDP
-	userService  service.UserService
-	apihubHost   string
+	samlInstance  *samlsp.Middleware
+	config        idp.IDP
+	userService   service.UserService
+	apihubHost    string
+	responder     responder.Responder
+	authenticator security.Authenticator
 }
 
-func newSAMLProvider(samlInstance *samlsp.Middleware, config idp.IDP, userService service.UserService, apihubHost string) idp.Provider {
+func newSAMLProvider(samlInstance *samlsp.Middleware, config idp.IDP, userService service.UserService, apihubHost string, responder responder.Responder, authenticator security.Authenticator) idp.Provider {
 	return &samlProvider{
-		samlInstance: samlInstance,
-		config:       config,
-		userService:  userService,
-		apihubHost:   apihubHost,
+		samlInstance:  samlInstance,
+		config:        config,
+		userService:   userService,
+		apihubHost:    apihubHost,
+		responder:     responder,
+		authenticator: authenticator,
 	}
 }
 
 func (s samlProvider) StartAuthentication(w http.ResponseWriter, r *http.Request) {
-	StartSAMLAuthentication(w, r, s.samlInstance, s.apihubHost)
+	StartSAMLAuthentication(w, r, s.responder, s.samlInstance, s.apihubHost)
 }
 
 func (s samlProvider) CallbackHandler(w http.ResponseWriter, r *http.Request) {
-	HandleAssertion(r.Context(), w, r, s.userService, s.samlInstance, s.config.Id, s.apihubHost, security.SetAuthTokenCookies)
+	HandleAssertion(r.Context(), w, r, s.responder, s.userService, s.samlInstance, s.config.Id, s.apihubHost, s.authenticator.SetAuthTokenCookies)
 }
 
 func (s samlProvider) ServeMetadata(w http.ResponseWriter, r *http.Request) {
-	ServeMetadata(w, r, s.samlInstance)
+	ServeMetadata(w, r, s.responder, s.samlInstance)
 }
 
-func StartSAMLAuthentication(w http.ResponseWriter, r *http.Request, samlInstance *samlsp.Middleware, apihubHost string) {
+func StartSAMLAuthentication(w http.ResponseWriter, r *http.Request, responder responder.Responder, samlInstance *samlsp.Middleware, apihubHost string) {
 	if samlInstance == nil {
 		log.Errorf("Cannot StartSamlAuthentication with nil samlInstance")
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.SamlInstanceIsNull,
 			Message: exception.SamlInstanceIsNullMsg,
@@ -72,7 +77,7 @@ func StartSAMLAuthentication(w http.ResponseWriter, r *http.Request, samlInstanc
 
 	redirectUrl, err := url.Parse(redirectUrlStr)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.IncorrectRedirectUrlError,
 			Message: exception.IncorrectRedirectUrlErrorMsg,
@@ -82,7 +87,7 @@ func StartSAMLAuthentication(w http.ResponseWriter, r *http.Request, samlInstanc
 	}
 
 	if redirectUrl.Hostname() != apihubHost {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.HostNotAllowed,
 			Message: exception.HostNotAllowedMsg,
@@ -102,10 +107,10 @@ func StartSAMLAuthentication(w http.ResponseWriter, r *http.Request, samlInstanc
 	samlInstance.HandleStartAuthFlow(w, r)
 }
 
-func HandleAssertion(ctx context.Context, w http.ResponseWriter, r *http.Request, userService service.UserService, samlInstance *samlsp.Middleware, providerId string, apihubHost string, setAuthCookie func(ctx context.Context, w http.ResponseWriter, user *view.User, refreshTokenPath string) error) {
+func HandleAssertion(ctx context.Context, w http.ResponseWriter, r *http.Request, responder responder.Responder, userService service.UserService, samlInstance *samlsp.Middleware, providerId string, apihubHost string, setAuthCookie func(ctx context.Context, w http.ResponseWriter, user *view.User, refreshTokenPath string) error) {
 	if samlInstance == nil {
 		log.Errorf("Cannot run AssertionConsumerHandler with nill samlInstanse")
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.SamlInstanceIsNull,
 			Message: exception.SamlInstanceIsNullMsg,
@@ -134,7 +139,7 @@ func HandleAssertion(ctx context.Context, w http.ResponseWriter, r *http.Request
 			log.Errorf("Parsing SAML response process private error: %s", ire.PrivateErr.Error())
 			log.Debugf("ACS response data: %s", ire.Response)
 		}
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.SamlResponseHasParsingError,
 			Message: exception.SamlResponseHasParsingErrorMsg,
@@ -144,7 +149,7 @@ func HandleAssertion(ctx context.Context, w http.ResponseWriter, r *http.Request
 	}
 	if assertion == nil {
 		log.Errorf("Assertion from SAML response is nil")
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.AssertionIsNull,
 			Message: exception.AssertionIsNullMsg,
@@ -156,13 +161,13 @@ func HandleAssertion(ctx context.Context, w http.ResponseWriter, r *http.Request
 
 	user, err := getOrCreateUser(ctx, userService, assertionAttributes, providerId)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to get or create SSO user", err)
+		responder.RespondWithError(w, r, "Failed to get or create SSO user", err)
 		return
 	}
 
 	// Add Apihub auth info cookie
 	if err = setAuthCookie(ctx, w, user, fmt.Sprintf(SSOLoginRefreshPathTemplate, providerId)); err != nil {
-		utils.RespondWithError(w, r, "Failed to set auth cookie", err)
+		responder.RespondWithError(w, r, "Failed to set auth cookie", err)
 		return
 	}
 
@@ -177,7 +182,7 @@ func HandleAssertion(ctx context.Context, w http.ResponseWriter, r *http.Request
 				uri := trackedRequestIndex
 				redirectUrl, err := url.Parse(uri)
 				if err != nil {
-					utils.RespondWithCustomError(w, &exception.CustomError{
+					responder.RespondWithCustomError(w, &exception.CustomError{
 						Status:  http.StatusBadRequest,
 						Code:    exception.IncorrectRedirectUrlError,
 						Message: exception.IncorrectRedirectUrlErrorMsg,
@@ -187,7 +192,7 @@ func HandleAssertion(ctx context.Context, w http.ResponseWriter, r *http.Request
 				}
 
 				if redirectUrl.Hostname() != apihubHost {
-					utils.RespondWithCustomError(w, &exception.CustomError{
+					responder.RespondWithCustomError(w, &exception.CustomError{
 						Status:  http.StatusBadRequest,
 						Code:    exception.HostNotAllowed,
 						Message: exception.HostNotAllowedMsg,
@@ -198,7 +203,7 @@ func HandleAssertion(ctx context.Context, w http.ResponseWriter, r *http.Request
 				redirectURI = uri
 				log.Debugf("IDP-initiated flow: redirectURI is set from RelayState to: %s", redirectURI)
 			} else {
-				utils.RespondWithError(w, r, "Unable to retrieve redirect URL: failed to get tracked request", err)
+				responder.RespondWithError(w, r, "Unable to retrieve redirect URL: failed to get tracked request", err)
 				return
 			}
 		} else {
@@ -298,10 +303,10 @@ func getOrCreateUser(ctx context.Context, userService service.UserService, asser
 	return user, nil
 }
 
-func ServeMetadata(w http.ResponseWriter, r *http.Request, samlInstance *samlsp.Middleware) {
+func ServeMetadata(w http.ResponseWriter, r *http.Request, responder responder.Responder, samlInstance *samlsp.Middleware) {
 	if samlInstance == nil {
 		log.Errorf("Cannot serveMetadata with nil samlInstanse")
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.SamlInstanceIsNull,
 			Message: exception.SamlInstanceIsNullMsg,
