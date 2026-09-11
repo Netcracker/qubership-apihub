@@ -14,7 +14,7 @@ Screenshots of the Portal live in the [root README](../README.md).
 | **Group** | Folder-like organization inside a workspace. |
 | **Package** | Container for APIs belonging to one service/application; owns documents and builds. |
 | **Dashboard / virtual package** | Aggregates links to packages or nested dashboards rather than owning raw specs. |
-| **Version / revision** | Published evolution of a package; revision is the granular publish artifact processed by Builder. Typical statuses include release, draft, archived. |
+| **Version / revision** | Published evolution of a package; revision is the granular publish artifact processed by Builder. Typical statuses include release and draft. |
 | **Document** | Uploaded spec or supporting file normalized by Builder (OpenAPI, AsyncAPI, GraphQL schema or introspection, Markdown, JSON Schema, etc.). |
 | **Operation** | Atomic contract surfaced from specs (REST path/method, GraphQL field lineage, messaging channels… depending on API type). |
 
