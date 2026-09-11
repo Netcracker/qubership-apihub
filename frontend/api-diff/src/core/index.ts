@@ -1,6 +1,6 @@
 export * from './compare'
 export * from './constants'
-export * from './constants'
+export * from './customScope'
 export * from './mapping'
 export * from './diff'
 export * from './rules'

@@ -12,9 +12,10 @@ import {
   DiffReplace,
   DiffType,
   NodeContext,
-  API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE,
+  ReclassificationRule,
 } from '../types'
-import { allUnclassified, breaking, DiffAction, risky, unclassified } from './constants'
+import { allUnclassified, DiffAction, unclassified } from './constants'
+import { EMPTY_CUSTOM_SCOPE } from './customScope'
 import { getKeyValue, isFunc } from '../utils'
 import { calculateDefaultDiffDescription } from './description'
 
@@ -23,6 +24,10 @@ export const NEVER_KEY = Symbol('never-key')
 export const createDiff = <D extends Diff>(diff: Omit<D, 'type'>, ctx: CompareContext): D => {
   const classifierRule = ctx.rules?.$ ?? {}//todo. rules should be evaluated, like in json-crawl
   const mutableDiffCopy = { ...diff, type: unclassified } as D
+  // Identity comparison: the interner never mints an empty record, so anything else has elements to carry
+  if (ctx.customScope !== EMPTY_CUSTOM_SCOPE) {
+    mutableDiffCopy.customScope = ctx.customScope
+  }
 
   if (classifierRule) {
     const classifier = Array.isArray(classifierRule) ? classifierRule : allUnclassified
@@ -31,10 +36,14 @@ export const createDiff = <D extends Diff>(diff: Omit<D, 'type'>, ctx: CompareCo
     const changeType = classifier[index]
 
     try {
-      const type = isFunc(changeType) ? changeType(ctx) : changeType
-      mutableDiffCopy.type = reclassifyBreakingToRisky(type, ctx)
+      mutableDiffCopy.type = isFunc(changeType) ? changeType(ctx) : changeType
     } catch (error) {
       ctx.options.onCreateDiffError?.(`Unable to find diff type. ${error instanceof Error ? error.message : ''}`, mutableDiffCopy, ctx)
+    }
+
+    const reclassificationRules = ctx.options.reclassificationRules
+    if (reclassificationRules?.length) {
+      mutableDiffCopy.type = runReclassificationPipeline(reclassificationRules, mutableDiffCopy, ctx)
     }
   }
   try {
@@ -45,8 +54,27 @@ export const createDiff = <D extends Diff>(diff: Omit<D, 'type'>, ctx: CompareCo
   return mutableDiffCopy
 }
 
-export const reclassifyBreakingToRisky = (type: DiffType, ctx: CompareContext): DiffType => {
-  return type === breaking && ctx.apiCompatibilityScope === API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE ? risky : type
+/**
+ * Runs the reclassification rules in order, keeping the computed type when one declines or throws. Each
+ * rule is guarded on its own, and each is handed its own copy of the difference carrying the verdict so
+ * far, so no rule can reassign a field of the difference under construction or of the next rule's input.
+ * The copy is shallow: `beforeValue`, `afterValue` and the declaration path arrays are the objects the
+ * merged document itself holds, which is why a rule has to be pure rather than merely careful.
+ */
+const runReclassificationPipeline = <D extends Diff>(
+  reclassificationRules: readonly ReclassificationRule[],
+  diff: D,
+  ctx: CompareContext,
+): DiffType => {
+  let type = diff.type
+  for (const rule of reclassificationRules) {
+    try {
+      type = rule({ ...diff, type } as Diff) ?? type
+    } catch (error) {
+      ctx.options.onCreateDiffError?.(`Unable to reclassify diff. ${error instanceof Error ? error.message : ''}`, diff, ctx)
+    }
+  }
+  return type
 }
 
 export function createDiffEntry(ctx: CompareContext, diff: Diff): DiffEntry<Diff> {
