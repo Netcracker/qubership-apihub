@@ -26,8 +26,9 @@ type ApihubConfig struct {
 }
 
 type SecurityConfig struct {
-	AllowedOrigins []string
-	InsecureProxy  bool
+	AllowedOrigins      []string
+	InsecureProxy       bool
+	ShowDebugInResponse bool
 }
 
 type DiscoveryConfig struct {

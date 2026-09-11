@@ -7,15 +7,15 @@ import (
 	"net/url"
 	"regexp"
 
-	"github.com/Netcracker/qubership-apihub-agent/view"
-
 	"github.com/Netcracker/qubership-apihub-agent/exception"
+	"github.com/Netcracker/qubership-apihub-agent/responder"
 	"github.com/Netcracker/qubership-apihub-agent/service"
 	"github.com/Netcracker/qubership-apihub-agent/utils"
+	"github.com/Netcracker/qubership-apihub-agent/view"
 	log "github.com/sirupsen/logrus"
 )
 
-func NewServiceProxyController(discoveryService service.DiscoveryService) (ProxyController, error) {
+func NewServiceProxyController(discoveryService service.DiscoveryService, resp responder.Responder) (ProxyController, error) {
 	tlsConfig, err := utils.BuildSecureTLSConfig(nil)
 	if err != nil {
 		return nil, err
@@ -23,12 +23,14 @@ func NewServiceProxyController(discoveryService service.DiscoveryService) (Proxy
 	return &serviceProxyControllerImpl{
 		tr:               http.Transport{TLSClientConfig: tlsConfig},
 		discoveryService: discoveryService,
+		responder:        resp,
 	}, nil
 }
 
 type serviceProxyControllerImpl struct {
 	tr               http.Transport
 	discoveryService service.DiscoveryService
+	responder        responder.Responder
 }
 
 const CustomJwtAuthHeader = "X-Apihub-Authorization"
@@ -42,7 +44,7 @@ func (s *serviceProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		msg := fmt.Sprintf("Failed to proxy a request to namespace %v service %v", namespace, serviceId)
 		w.Header().Add(CustomProxyErrorHeader, fmt.Sprintf("Failed to proxy a request to namespace %v service %v: %v", namespace, serviceId, err.Error()))
-		respondWithError(w, msg, err)
+		s.responder.RespondWithError(w, msg, err)
 		return
 	}
 	r.Header.Del(CustomJwtAuthHeader)
@@ -61,7 +63,7 @@ func (s *serviceProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Reques
 	proxyURL, err := url.Parse(fullTargetUrl)
 	if err != nil {
 		w.Header().Add(CustomProxyErrorHeader, fmt.Sprintf("Failed to proxy a request to namespace %v service %v: %v", namespace, serviceId, err.Error()))
-		RespondWithCustomError(w, &exception.CustomError{
+		s.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURL,
 			Message: exception.InvalidURLMsg,
@@ -79,7 +81,7 @@ func (s *serviceProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Reques
 	resp, err := s.tr.RoundTrip(r)
 	if err != nil {
 		w.Header().Add(CustomProxyErrorHeader, fmt.Sprintf("Failed to proxy a request to namespace %v service %v: %v", namespace, serviceId, err.Error()))
-		RespondWithCustomError(w, &exception.CustomError{
+		s.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusFailedDependency,
 			Code:    exception.ProxyFailed,
 			Message: exception.ProxyFailedMsg,
@@ -90,7 +92,7 @@ func (s *serviceProxyControllerImpl) Proxy(w http.ResponseWriter, r *http.Reques
 	}
 	defer resp.Body.Close()
 	if err := copyHeader(w.Header(), resp.Header); err != nil {
-		RespondWithCustomError(w, err)
+		s.responder.RespondWithCustomError(w, err)
 		return
 	}
 	w.WriteHeader(resp.StatusCode)

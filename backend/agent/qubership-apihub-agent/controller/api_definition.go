@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Netcracker/qubership-apihub-agent/exception"
+	"github.com/Netcracker/qubership-apihub-agent/responder"
 	"github.com/Netcracker/qubership-apihub-agent/service"
 	"github.com/Netcracker/qubership-apihub-agent/view"
 )
@@ -12,12 +13,13 @@ type DocumentController interface {
 	GetServiceDocument(w http.ResponseWriter, r *http.Request)
 }
 
-func NewDocumentController(documentService service.DocumentService) DocumentController {
-	return documentControllerImpl{documentService: documentService}
+func NewDocumentController(documentService service.DocumentService, resp responder.Responder) DocumentController {
+	return documentControllerImpl{documentService: documentService, responder: resp}
 }
 
 type documentControllerImpl struct {
 	documentService service.DocumentService
+	responder       responder.Responder
 }
 
 func (d documentControllerImpl) GetServiceDocument(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +32,7 @@ func (d documentControllerImpl) GetServiceDocument(w http.ResponseWriter, r *htt
 	serviceId := getStringParam(r, "serviceId")
 	fileId, err := getUnescapedStringParam(r, "fileId")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		d.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -44,7 +46,7 @@ func (d documentControllerImpl) GetServiceDocument(w http.ResponseWriter, r *htt
 	content, err := d.documentService.GetDocumentById(namespace, workspaceId, serviceId, fileId, requestedServices)
 
 	if err != nil {
-		respondWithError(w, "Failed to get document by id", err)
+		d.responder.RespondWithError(w, "Failed to get document by id", err)
 		return
 	}
 

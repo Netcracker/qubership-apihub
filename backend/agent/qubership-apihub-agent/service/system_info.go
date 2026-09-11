@@ -23,6 +23,7 @@ type SystemInfoService interface {
 	GetAgentName() string
 	GetDiscoveryTimeout() time.Duration
 	InsecureProxyEnabled() bool //TODO: remove this after deprecated proxy path is removed
+	ShowDebugInResponse() bool
 	GetBasePath() string
 	GetPaasPlatform() string
 	GetDiscoveryUrls() config.ApiTypeUrlsConfig
@@ -62,6 +63,7 @@ func setDefaults() {
 	viper.SetDefault("technicalParameters.servicesCacheTTLMin", 480)
 	viper.SetDefault("security.allowedOrigins", []string{})
 	viper.SetDefault("security.insecureProxy", false)
+	viper.SetDefault("security.showDebugInResponse", false)
 	viper.SetDefault("discovery.excludeLabels", []string{})
 	viper.SetDefault("discovery.groupingLabels", []string{})
 	viper.SetDefault("discovery.timeoutSec", 15)
@@ -125,6 +127,10 @@ func (g systemInfoServiceImpl) GetDiscoveryTimeout() time.Duration {
 
 func (g systemInfoServiceImpl) InsecureProxyEnabled() bool {
 	return g.config.Security.InsecureProxy
+}
+
+func (g systemInfoServiceImpl) ShowDebugInResponse() bool {
+	return g.config.Security.ShowDebugInResponse
 }
 
 func (g systemInfoServiceImpl) GetNamespacesCacheTTL() time.Duration {

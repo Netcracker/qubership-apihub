@@ -3,6 +3,7 @@ package controller
 import (
 	"net/http"
 
+	"github.com/Netcracker/qubership-apihub-agent/responder"
 	"github.com/Netcracker/qubership-apihub-agent/secctx"
 	"github.com/Netcracker/qubership-apihub-agent/service"
 	"github.com/Netcracker/qubership-apihub-agent/view"
@@ -13,12 +14,13 @@ type CloudController interface {
 	StartAllDiscovery_deprecated(w http.ResponseWriter, r *http.Request)
 }
 
-func NewCloudController(cloudService service.CloudService) CloudController {
-	return &cloudControllerImpl{cloudService: cloudService}
+func NewCloudController(cloudService service.CloudService, resp responder.Responder) CloudController {
+	return &cloudControllerImpl{cloudService: cloudService, responder: resp}
 }
 
 type cloudControllerImpl struct {
 	cloudService service.CloudService
+	responder    responder.Responder
 }
 
 func (c cloudControllerImpl) ListAllServices_deprecated(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +30,7 @@ func (c cloudControllerImpl) ListAllServices_deprecated(w http.ResponseWriter, r
 		workspaceId = view.DefaultWorkspaceId
 	}
 	result := c.cloudService.GetAllServicesList_deprecated(workspaceId)
-	respondWithJson(w, http.StatusOK, result)
+	c.responder.RespondWithJson(w, http.StatusOK, result)
 }
 
 func (c cloudControllerImpl) StartAllDiscovery_deprecated(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +41,7 @@ func (c cloudControllerImpl) StartAllDiscovery_deprecated(w http.ResponseWriter,
 	}
 	err := c.cloudService.StartAllDiscovery_deprecated(secctx.Create(r), workspaceId)
 	if err != nil {
-		respondWithError(w, "Failed to start discovery all process", err)
+		c.responder.RespondWithError(w, "Failed to start discovery all process", err)
 		return
 	}
 	w.WriteHeader(http.StatusAccepted)
