@@ -18,12 +18,10 @@ import type { DiscoveryStatus } from '../../../types'
 
 const DRAFT_VERSION_STATUS = 'draft'
 const RELEASE_VERSION_STATUS = 'release'
-const ARCHIVED_VERSION_STATUS = 'archived'
 
 type VersionStatus =
   | typeof DRAFT_VERSION_STATUS
   | typeof RELEASE_VERSION_STATUS
-  | typeof ARCHIVED_VERSION_STATUS
 
 type VersionStatuses = ReadonlyArray<VersionStatus>
 

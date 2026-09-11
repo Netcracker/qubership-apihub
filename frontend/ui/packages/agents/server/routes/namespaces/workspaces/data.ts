@@ -32,7 +32,6 @@ export const WORKSPACES_DTO = {
         'delete_package',
         'manage_draft_version',
         'manage_release_version',
-        'manage_archived_version',
         'user_access_management',
         'access_token_management',
       ],

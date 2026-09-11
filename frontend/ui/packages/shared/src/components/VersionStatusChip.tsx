@@ -21,7 +21,7 @@ import { CustomChip } from './CustomChip'
 import type { SemanticChipColor } from './semantic-chip-styles'
 import { mergeChipSx, semanticChipSx } from './semantic-chip-styles'
 import type { VersionStatus } from '../entities/version-status'
-import { ARCHIVED_VERSION_STATUS, DRAFT_VERSION_STATUS, RELEASE_VERSION_STATUS } from '../entities/version-status'
+import { DRAFT_VERSION_STATUS, RELEASE_VERSION_STATUS } from '../entities/version-status'
 
 export const VERSION_STATUS_CHIP_COLORS: Record<VersionStatus, SemanticChipColor> = {
   [DRAFT_VERSION_STATUS]: {
@@ -31,10 +31,6 @@ export const VERSION_STATUS_CHIP_COLORS: Record<VersionStatus, SemanticChipColor
   [RELEASE_VERSION_STATUS]: {
     main: '#D0FAD4',
     contrastText: '#026104',
-  },
-  [ARCHIVED_VERSION_STATUS]: {
-    main: '#F2F3F5',
-    contrastText: '#0C1E36',
   },
 }
 

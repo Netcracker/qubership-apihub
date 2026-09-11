@@ -40,9 +40,8 @@ import { ColumnDelimiter } from './ColumnDelimiter'
 import { createComponents } from '../utils/components'
 import { DEFAULT_NUMBER_SKELETON_ROWS } from '../utils/constants'
 import type { VersionStatus } from '../entities/version-status'
-import { ARCHIVED_VERSION_STATUS, DRAFT_VERSION_STATUS, RELEASE_VERSION_STATUS } from '../entities/version-status'
+import { DRAFT_VERSION_STATUS, RELEASE_VERSION_STATUS } from '../entities/version-status'
 import { ArrowDown } from '../icons/ArrowDown'
-import { ArrowUp } from '../icons/ArrowUp'
 
 type VersionsTableProps = {
   value: ReadonlyArray<PackageVersion>
@@ -77,7 +76,6 @@ export const VersionsTable: FC<VersionsTableProps> = memo<VersionsTableProps>(({
       header: () => <Box display="flex" gap="4px">
         <CustomTableHeadCell title="Version" />
         {versionStatus === RELEASE_VERSION_STATUS && <ArrowDown />}
-        {versionStatus === ARCHIVED_VERSION_STATUS && <ArrowUp />}
       </Box>,
       cell: ({ row: { original: { version } } }) => {
         const { versionKey } = getSplittedVersionKey(version?.key)

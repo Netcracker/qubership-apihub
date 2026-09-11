@@ -16,7 +16,6 @@
 
 import type { PackagePermission } from './package-permissions'
 import {
-  MANAGE_ARCHIVED_VERSION_PERMISSION,
   MANAGE_DRAFT_VERSION_PERMISSION,
   MANAGE_RELEASE_VERSION_PERMISSION,
 } from './package-permissions'
@@ -24,31 +23,26 @@ import type { Key } from './keys'
 
 export const DRAFT_VERSION_STATUS = 'draft'
 export const RELEASE_VERSION_STATUS = 'release'
-export const ARCHIVED_VERSION_STATUS = 'archived'
 
 export type VersionStatus =
   | typeof DRAFT_VERSION_STATUS
   | typeof RELEASE_VERSION_STATUS
-  | typeof ARCHIVED_VERSION_STATUS
 
 export type VersionStatuses = ReadonlyArray<VersionStatus>
 
 export const PUBLISH_STATUSES = new Map([
   [DRAFT_VERSION_STATUS, 'Draft'],
   [RELEASE_VERSION_STATUS, 'Release'],
-  [ARCHIVED_VERSION_STATUS, 'Archived'],
 ])
 
 export const VERSION_STATUS_MANAGE_PERMISSIONS: Record<VersionStatus, PackagePermission> = {
   [DRAFT_VERSION_STATUS]: MANAGE_DRAFT_VERSION_PERMISSION,
   [RELEASE_VERSION_STATUS]: MANAGE_RELEASE_VERSION_PERMISSION,
-  [ARCHIVED_VERSION_STATUS]: MANAGE_ARCHIVED_VERSION_PERMISSION,
 }
 
 export const VERSION_STATUSES: VersionStatuses = [
   DRAFT_VERSION_STATUS,
   RELEASE_VERSION_STATUS,
-  ARCHIVED_VERSION_STATUS,
 ]
 
 export const NO_PREVIOUS_RELEASE_VERSION_OPTION: Key = 'No previous release version'

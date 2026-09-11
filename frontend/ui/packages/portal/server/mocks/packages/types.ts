@@ -45,7 +45,6 @@ export const DELETE_PACKAGE_PERMISSION = 'delete_package'
 export const MANAGE_DRAFT_VERSION_PERMISSION = 'manage_draft_version'
 export const MANAGE_RELEASE_VERSION_PERMISSION = 'manage_release_version'
 export const MANAGE_DEPRECATED_VERSION_PERMISSION = 'manage_deprecated_version'
-export const MANAGE_ARCHIVED_VERSION_PERMISSION = 'manage_archived_version'
 export const USER_ACCESS_MANAGEMENT_PERMISSION = 'user_access_management'
 export const ACCESS_TOKEN_MANAGEMENT_PERMISSION = 'access_token_management'
 
@@ -56,7 +55,6 @@ export type PackagePermission =
   | typeof MANAGE_DRAFT_VERSION_PERMISSION
   | typeof MANAGE_RELEASE_VERSION_PERMISSION
   | typeof MANAGE_DEPRECATED_VERSION_PERMISSION
-  | typeof MANAGE_ARCHIVED_VERSION_PERMISSION
   | typeof USER_ACCESS_MANAGEMENT_PERMISSION
   | typeof ACCESS_TOKEN_MANAGEMENT_PERMISSION
 

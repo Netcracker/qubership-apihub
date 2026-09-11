@@ -17,7 +17,6 @@
 import type { Writeable } from '../../types'
 import type { PackageVersionsDto } from './types'
 import {
-  VERSION_0_0,
   VERSION_1_0,
   VERSION_1_4,
   VERSION_2_2,
@@ -25,7 +24,7 @@ import {
   VERSION_2_6_2,
   VERSION_2_6_3,
 } from './version-contents'
-import { ARCHIVED_VERSION_STATUS, DRAFT_VERSION_STATUS, RELEASE_VERSION_STATUS } from './version-statuses'
+import { DRAFT_VERSION_STATUS, RELEASE_VERSION_STATUS } from './version-statuses'
 import { TOKEN_SAMPLE, USER_SAMPLE } from './principal'
 
 export const VERSIONS: Writeable<PackageVersionsDto> = {
@@ -106,12 +105,6 @@ export const VERSIONS: Writeable<PackageVersionsDto> = {
     {
       version: VERSION_1_0,
       status: DRAFT_VERSION_STATUS,
-      createdBy: TOKEN_SAMPLE,
-      createdAt: '2022-03-24T11:12:19Z',
-    },
-    {
-      version: VERSION_0_0,
-      status: ARCHIVED_VERSION_STATUS,
       createdBy: TOKEN_SAMPLE,
       createdAt: '2022-03-24T11:12:19Z',
     },
