@@ -30,13 +30,6 @@ export const V_P_PKG_UAC_OWNER_EDITING_DRAFT_N: Version = {
   status: 'draft',
 } as const
 
-export const V_P_PKG_UAC_OWNER_EDITING_ARCHIVED_N: Version = {
-  ...V_P_PKG_UAC_OWNER_BASE_N,
-  pkg: PKG_P_OWNER_N,
-  version: 'editing-archived',
-  status: 'archived',
-} as const
-
 export const V_P_PKG_UAC_OWNER_DELETING_N: Version = {
   ...V_P_PKG_UAC_OWNER_EDITING_DRAFT_N,
   pkg: PKG_P_OWNER_N,
@@ -78,13 +71,6 @@ export const V_P_DSH_UAC_OWNER_EDITING_DRAFT_N: Version = {
   pkg: DSH_P_OWNER_N,
   version: 'editing-draft',
   status: 'draft',
-} as const
-
-export const V_P_DSH_UAC_OWNER_EDITING_ARCHIVED_N: Version = {
-  ...V_P_DSH_UAC_OWNER_BASE_N,
-  pkg: DSH_P_OWNER_N,
-  version: 'editing-archived',
-  status: 'archived',
 } as const
 
 export const V_P_DSH_UAC_OWNER_DELETING_N: Version = {

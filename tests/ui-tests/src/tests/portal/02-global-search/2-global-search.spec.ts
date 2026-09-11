@@ -1,7 +1,6 @@
 import { test } from '@fixtures'
 import { expect } from '@services/expect-decorator'
 import {
-  ARCHIVED_VERSION_STATUS,
   DRAFT_VERSION_STATUS,
   GRAPHQL_API_TYPE_TITLE,
   GRAPHQL_ICON,
@@ -278,7 +277,6 @@ test.describe('02 Global Search', () => {
 
         await expect(globalSearchPanel.filters.acVersionStatus.chipDraft).toBeVisible()
         await expect(globalSearchPanel.filters.acVersionStatus.chipRelease).not.toBeVisible()
-        await expect(globalSearchPanel.filters.acVersionStatus.chipArchived).not.toBeVisible()
         await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).toBeVisible()
       })
 
@@ -289,18 +287,6 @@ test.describe('02 Global Search', () => {
 
         await expect(globalSearchPanel.filters.acVersionStatus.chipDraft).not.toBeVisible()
         await expect(globalSearchPanel.filters.acVersionStatus.chipRelease).toBeVisible()
-        await expect(globalSearchPanel.filters.acVersionStatus.chipArchived).not.toBeVisible()
-        await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).not.toBeVisible()
-      })
-
-      await test.step(`Set "${ARCHIVED_VERSION_STATUS}" status`, async () => {
-        await globalSearchPanel.filters.acVersionStatus.click()
-        await globalSearchPanel.filters.acVersionStatus.archivedItm.click()
-        await portalPage.waitForTimeout(SEARCH_TIMEOUT.short)
-
-        await expect(globalSearchPanel.filters.acVersionStatus.chipDraft).not.toBeVisible()
-        await expect(globalSearchPanel.filters.acVersionStatus.chipRelease).not.toBeVisible()
-        await expect(globalSearchPanel.filters.acVersionStatus.chipArchived).toBeVisible()
         await expect(globalSearchPanel.searchResults.searchResultRow(GS_OPERATION_REST)).not.toBeVisible()
       })
     })

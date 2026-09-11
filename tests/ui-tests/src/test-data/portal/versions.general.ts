@@ -33,14 +33,6 @@ export const V_P_PKG_DRAFT_R: Version = {
   metadata: { versionLabels: ['ATUI', 'Version', 'Package Draft'] },
 } as const
 
-export const V_P_PKG_ARCHIVED_R: Version = {
-  pkg: PK11,
-  version: '2200.1',
-  status: 'release',
-  files: [{ file: FILE_P_PETSTORE30 }],
-  metadata: { versionLabels: ['ATUI', 'Version', 'Package Archived'] },
-} as const
-
 export const V_P_PKG_WITHOUT_LABELS_R: Version = {
   pkg: PK11,
   version: 'without-labels',

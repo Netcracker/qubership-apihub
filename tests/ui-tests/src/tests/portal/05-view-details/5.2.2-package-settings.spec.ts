@@ -10,7 +10,6 @@ import {
   PK_SETTINGS_1,
   PK_SETTINGS_2,
   PK_SETTINGS_3,
-  V_P_PKG_ARCHIVED_R,
   V_P_PKG_DRAFT_R,
   V_P_PKG_OVERVIEW_R,
   V_P_PKG_SET_FOR_DEF_RELEASE_N,
@@ -272,19 +271,11 @@ test.describe('5.2.2 Package settings', () => {
         await expect(versionsTab.getVersionRow(V_P_PKG_OVERVIEW_R.version)).toBeVisible()
       })
 
-      await test.step('Archived versions', async () => {
-        await versionsTab.archivedBtn.click()
-
-        await expect(versionsTab.getVersionRow()).toHaveCount(1)
-        await expect(versionsTab.getVersionRow(V_P_PKG_ARCHIVED_R.version)).toBeVisible()
-      })
-
       await test.step('All versions', async () => {
         await versionsTab.allBtn.click()
 
         await expect(versionsTab.getVersionRow(V_P_PKG_OVERVIEW_R.version)).toBeVisible()
         await expect(versionsTab.getVersionRow(V_P_PKG_DRAFT_R.version)).toBeVisible()
-        await expect(versionsTab.getVersionRow(V_P_PKG_ARCHIVED_R.version)).toBeVisible()
       })
     })
 

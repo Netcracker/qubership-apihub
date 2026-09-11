@@ -6,7 +6,6 @@ export class VersionSelect extends BaseComponent {
   private content = this.page.getByRole('menu')
   readonly releaseBtn = new Button(this.content.getByTestId('ReleaseButton'), 'Release')
   readonly draftBtn = new Button(this.content.getByTestId('DraftButton'), 'Draft')
-  readonly archivedBtn = new Button(this.content.getByTestId('ArchivedButton'), 'Archived')
   readonly searchbar = new SearchBar(this.content.getByTestId('VersionSearchBar'), 'Version')
   readonly createVersionBtn = new Button(this.content.getByTestId('CreateVersionButton'), 'Create version')
 
