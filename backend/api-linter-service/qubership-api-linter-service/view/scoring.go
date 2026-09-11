@@ -36,6 +36,7 @@ type BackwardCompatibilityDetails struct {
 type QualityCheckDetails struct {
 	Linter        Linter        `json:"linter"`
 	Status        ScoringStatus `json:"status"`
+	Optional      bool          `json:"optional"`
 	Reason        string        `json:"reason"`
 	ErrorsCount   int           `json:"errorsCount"`
 	WarningsCount int           `json:"warningsCount"`

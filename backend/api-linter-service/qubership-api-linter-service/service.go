@@ -142,11 +142,11 @@ func main() {
 
 	linterConfigService := service.NewLinterConfigService(systemInfoService)
 	linterSelectorService := service.NewLinterSelectorService(ruleSetRepository, linterConfigService)
-	scoringService := service.NewScoringService(versionResultRepository, lintResultRepository, ruleSetRepository, scoringRepository, apihubClient)
+	scoringService := service.NewScoringService(versionResultRepository, lintResultRepository, ruleSetRepository, scoringRepository, linterConfigService, apihubClient)
 
 	docTaskNotify := make(chan struct{}, 1)
 	versionTaskNotify := make(chan struct{}, 1)
-	versionTaskProcessor := service.NewVersionTaskProcessor(versionLintTaskRepository, docLintTaskRepository, versionResultRepository, apihubClient, linterSelectorService, scoringService, executorId, docTaskNotify, versionTaskNotify)
+	versionTaskProcessor := service.NewVersionTaskProcessor(versionLintTaskRepository, docLintTaskRepository, versionResultRepository, apihubClient, linterSelectorService, linterConfigService, scoringService, executorId, docTaskNotify, versionTaskNotify)
 	spectralExecutor, err := service.NewSpectralExecutor(systemInfoService.GetSpectralBinPath()) // TODO: use linters config
 	if err != nil {
 		log.Fatalf("Failed to create Spectral executor: %s", err.Error())

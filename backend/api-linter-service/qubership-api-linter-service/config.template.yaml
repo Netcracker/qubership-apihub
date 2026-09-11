@@ -46,9 +46,13 @@ linters:
     binPath: ''
     # Optional; Number of Spectral linter workers; If not set, default value: 1; Example: 4
     workers: 1
+    # Optional; Treat this linter as non-blocking: its execution failures do not affect the validation result or scoring (failure details are still stored); If not set, default value: false; Example: true
+    optional: false
   ai:
     # Optional; Enable AI-powered OAS linter; If not set, default value: false; Example: true
     enabled: false
+    # Optional; Treat this linter as non-blocking: its execution failures do not affect the validation result or scoring (failure details are still stored); If not set, default value: false; Example: true
+    optional: true
     # Optional; Number of AI linter workers; If not set, default value: 1; Example: 4
     workers: 1
     # Optional; List of package IDs to exclude from AI linting; If not set, default value: []; Example: [pkg1,pkg2]
@@ -66,3 +70,14 @@ linters:
       rateLimitRPS: 10
       # Optional; OpenAI API rate limit burst; If not set, default value: 30; Example: 30
       rateLimitBurst: 30
+    # Mandatory when AI linter enabled; System prompt used by the AI linter to deduplicate issues
+    deduplicationPrompt: |-
+      You filter a JSON array of OpenAPI lint issues. Return only the issues that remain.
+      Two issues are duplicates if they describe the same underlying problem in the 'message' field, even if the wording differs. When comparing messages, use the problem statement only; ignore any suggested fix or action text in the same message.
+      Keep issues that are the same kind of finding but at different 'path' values. Those are not duplicates.
+      Rules:
+      1. Do not rewrite any field. Copy the kept object byte-for-byte from the input.
+      2. Do not add issues.
+      3. Do not drop an issue unless it is a duplicate of one you keep.
+      4. If several issues are duplicates, keep the first one in input order and discard the rest.
+      5. If there are no duplicates, return the input list unchanged and in the same order.

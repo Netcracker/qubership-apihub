@@ -662,6 +662,12 @@ components:
         enabled:
           description: Whether the linter is enabled in the current configuration.
           type: boolean
+        optional:
+          description: >
+            Whether the linter is non-blocking. When true, an execution failure of this linter does
+            not affect the version validation result or scoring (its failure details are still stored);
+            issues it reports on a successful run still count.
+          type: boolean
     ErrorResponse:
       description: >
         Standard error response body returned for non-2xx responses. Includes HTTP status, internal
@@ -1117,6 +1123,12 @@ components:
             - passed
             - passed_with_defects
             - not_passed
+        optional:
+          description: >
+            Whether this linter is non-blocking. When true, an internal/execution failure of the linter
+            (see internalErrors) does not push the overall score to not_passed; issues found on a
+            successful run still count.
+          type: boolean
         reason:
           type: string
           description: Summary reason for this linter's result.

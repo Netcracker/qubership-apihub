@@ -19,12 +19,17 @@ func TestValidateConfigAILinter(t *testing.T) {
 		},
 		{
 			name:    "enabled without API key fails",
-			cfg:     config.AILinterConfig{Enabled: true, Workers: 1, OpenAI: config.OpenAIConfig{RateLimitRPS: 10, RateLimitBurst: 30}},
+			cfg:     config.AILinterConfig{Enabled: true, Workers: 1, OpenAI: config.OpenAIConfig{RateLimitRPS: 10, RateLimitBurst: 30}, DeduplicationPrompt: "test prompt"},
 			wantErr: true,
 		},
 		{
-			name:    "enabled with API key passes",
+			name:    "enabled without deduplication prompt fails",
 			cfg:     config.AILinterConfig{Enabled: true, Workers: 1, OpenAI: config.OpenAIConfig{APIKey: "sk-test", RateLimitRPS: 10, RateLimitBurst: 30}},
+			wantErr: true,
+		},
+		{
+			name:    "enabled with API key and deduplication prompt passes",
+			cfg:     config.AILinterConfig{Enabled: true, Workers: 1, OpenAI: config.OpenAIConfig{APIKey: "sk-test", RateLimitRPS: 10, RateLimitBurst: 30}, DeduplicationPrompt: "test prompt"},
 			wantErr: false,
 		},
 	}

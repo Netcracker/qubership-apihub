@@ -44,10 +44,13 @@ type SystemInfoService interface {
 	GetOpenAIRateLimitRPS() float64
 	GetOpenAIRateLimitBurst() int
 	IsAiOasLinterEnabled() bool
+	IsAiLinterOptional() bool
 	GetAiLinterWorkers() int
 	GetAiLinterExcludedPackages() []string
 	GetAiLinterIncludedPackages() []string
+	GetAiLinterDeduplicationPrompt() string
 	GetSpectralLinterWorkers() int
+	IsSpectralLinterOptional() bool
 
 	SetProductionMode(apihubClient client.ApihubClient)
 	IsProductionMode() bool
@@ -98,7 +101,9 @@ func setDefaults() {
 	viper.SetDefault("olric.discoveryMode", "local")
 	viper.SetDefault("olric.replicaCount", 1)
 	viper.SetDefault("linters.spectral.workers", 1)
+	viper.SetDefault("linters.spectral.optional", false)
 	viper.SetDefault("linters.ai.enabled", false)
+	viper.SetDefault("linters.ai.optional", false)
 	viper.SetDefault("linters.ai.workers", 1)
 	viper.SetDefault("linters.ai.openAI.rateLimitRPS", 10.0)
 	viper.SetDefault("linters.ai.openAI.rateLimitBurst", 30)
@@ -203,6 +208,10 @@ func (s *systemInfoServiceImpl) IsAiOasLinterEnabled() bool {
 	return s.config.Linters.AI.Enabled
 }
 
+func (s *systemInfoServiceImpl) IsAiLinterOptional() bool {
+	return s.config.Linters.AI.Optional
+}
+
 func (s *systemInfoServiceImpl) GetAiLinterWorkers() int {
 	return s.config.Linters.AI.Workers
 }
@@ -215,8 +224,16 @@ func (s *systemInfoServiceImpl) GetAiLinterIncludedPackages() []string {
 	return s.config.Linters.AI.IncludedPackages
 }
 
+func (s *systemInfoServiceImpl) GetAiLinterDeduplicationPrompt() string {
+	return s.config.Linters.AI.DeduplicationPrompt
+}
+
 func (s *systemInfoServiceImpl) GetSpectralLinterWorkers() int {
 	return s.config.Linters.Spectral.Workers
+}
+
+func (s *systemInfoServiceImpl) IsSpectralLinterOptional() bool {
+	return s.config.Linters.Spectral.Optional
 }
 
 func (s *systemInfoServiceImpl) SetProductionMode(apihubClient client.ApihubClient) {
