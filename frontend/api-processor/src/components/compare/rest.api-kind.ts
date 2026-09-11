@@ -16,51 +16,46 @@
 
 import {
   APIHUB_API_COMPATIBILITY_KIND_BWC,
+  APIHUB_API_COMPATIBILITY_KIND_NO_BWC,
   ApihubApiCompatibilityKind,
   isNoBwcLike,
   SPECIFICATION_EXTENSION_PREFIX,
 } from '../../consts'
 import { isObject, isValidHttpMethod } from '../../utils'
-import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
-import {
-  API_COMPATIBILITY_KIND_BACKWARD_COMPATIBLE,
-  API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE,
-  ApiCompatibilityKind,
-} from '@netcracker/qubership-apihub-api-diff'
 import { getApiKindProperty } from '../document'
 import { OpenAPIV3 } from 'openapi-types'
-import { ApiCompatibilityScopeFunctionFactory } from './bwc.validation.types'
-import { toApiCompatibilityKind } from './bwc.validation.utils'
+import { ApiKindValueAtFactory } from './api-kind.types'
+import { toApiKind } from './api-kind.utils'
 
 export const calculateOperationApiCompatibilityKind = (
   beforeOperationObject: OpenAPIV3.OperationObject | undefined,
   afterOperationObject: OpenAPIV3.OperationObject | undefined,
   beforeDefaultApiKind: ApihubApiCompatibilityKind,
   afterDefaultApiKind: ApihubApiCompatibilityKind,
-): ApiCompatibilityKind => {
+): ApihubApiCompatibilityKind => {
   const beforeKind = getApiKindProperty(beforeOperationObject, beforeDefaultApiKind)
   const afterKind = getApiKindProperty(afterOperationObject, afterDefaultApiKind)
   const isOperationRemoved = isObject(beforeOperationObject) && !isObject(afterOperationObject)
 
   // Handle operation removal: compatibility depends on the removed operation's kind
   if (isOperationRemoved) {
-    return toApiCompatibilityKind(beforeKind)
+    return toApiKind(beforeKind)
   }
 
-  return toApiCompatibilityKind(beforeKind, afterKind)
+  return toApiKind(beforeKind, afterKind)
 }
 
-export const getMethodsApiCompatibilityKind = (pathItemObject: OpenAPIV3.PathItemObject, prevDocumentApiKind: ApihubApiCompatibilityKind): ApiCompatibilityKind => {
+export const getMethodsApiCompatibilityKind = (pathItemObject: OpenAPIV3.PathItemObject, prevDocumentApiKind: ApihubApiCompatibilityKind): ApihubApiCompatibilityKind => {
   // Predicate-based: covers mixed apiKinds in one pathItem (e.g. GET=no-BWC, POST=experimental)
   if (checkAllMethodsMatchApiKind(pathItemObject, isNoBwcLike)) {
-    return API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE
+    return APIHUB_API_COMPATIBILITY_KIND_NO_BWC
   }
 
   if (checkAllMethodsMatchApiKind(pathItemObject, (kind) => kind === APIHUB_API_COMPATIBILITY_KIND_BWC)) {
-    return API_COMPATIBILITY_KIND_BACKWARD_COMPATIBLE
+    return APIHUB_API_COMPATIBILITY_KIND_BWC
   }
 
-  return toApiCompatibilityKind(prevDocumentApiKind)
+  return toApiKind(prevDocumentApiKind)
 }
 
 const checkAllMethodsMatchApiKind = (obj: OpenAPIV3.PathItemObject, predicate: (kind: ApihubApiCompatibilityKind | undefined) => boolean): boolean => {
@@ -81,18 +76,14 @@ const ROOT_PATH_LENGTH = 0
 const PATH_ITEM_PATH_LENGTH = 2
 const OPERATION_OBJECT_PATH_LENGTH = 3
 
-export const createRestApiCompatibilityScopeFunction: ApiCompatibilityScopeFunctionFactory = (
+export const createRestApiKindValueAt: ApiKindValueAtFactory = (
   prevDocumentApiKind = APIHUB_API_COMPATIBILITY_KIND_BWC,
   currDocumentApiKind = APIHUB_API_COMPATIBILITY_KIND_BWC,
 ) => {
-  const defaultApiCompatibilityKind = toApiCompatibilityKind(prevDocumentApiKind, currDocumentApiKind)
+  const documentApiKind = toApiKind(prevDocumentApiKind, currDocumentApiKind)
 
-  return (
-    path?: JsonPath,
-    beforeJson?: unknown,
-    afterJson?: unknown,
-  ): ApiCompatibilityKind | undefined => {
-    const pathLength = path?.length ?? 0
+  return ({ path, beforeJso, afterJso }): ApihubApiCompatibilityKind | undefined => {
+    const pathLength = path.length
     /*
      * Calculating Api Kind for the entire document as the default
      * If there is a NO_BWC or experimental marker on:
@@ -100,19 +91,19 @@ export const createRestApiCompatibilityScopeFunction: ApiCompatibilityScopeFunct
      * - Document API info section
      */
     if (pathLength === ROOT_PATH_LENGTH) {
-      return defaultApiCompatibilityKind
+      return documentApiKind
     }
     /*
     * We check paths at level 2: paths/<path> and operation level 3: paths/<path>/<method>
     * Level 2: When an entire path item is deleted/added
     * Level 3: When individual operations are deleted/added
      */
-    const isFirstPathSegmentPaths = path?.[0] === 'paths'
+    const isFirstPathSegmentPaths = path[0] === 'paths'
     if (!isFirstPathSegmentPaths) {
       return undefined
     }
-    const beforeExists = isObject(beforeJson)
-    const afterExists = isObject(afterJson)
+    const beforeExists = isObject(beforeJso)
+    const afterExists = isObject(afterJso)
 
     if (!beforeExists && !afterExists) {
       return undefined
@@ -123,19 +114,19 @@ export const createRestApiCompatibilityScopeFunction: ApiCompatibilityScopeFunct
       // operation. We only mark the deletion as NO_BWC/experimental if all removed methods were
       // explicitly flagged NO_BWC or experimental, keeping deletions consistent with declared scope.
       if (beforeExists && !afterExists) {
-        const pathItemObject = beforeJson as OpenAPIV3.PathItemObject
+        const pathItemObject = beforeJso as OpenAPIV3.PathItemObject
         return getMethodsApiCompatibilityKind(pathItemObject, prevDocumentApiKind)
       }
     }
 
     if (pathLength === OPERATION_OBJECT_PATH_LENGTH) {
-      const propertyKey = path?.at(-1)
+      const propertyKey = path.at(-1)
       if (isSpecificationExtension(propertyKey)) {
         return undefined
       }
 
-      const beforeOperationObject = beforeJson as OpenAPIV3.OperationObject | undefined
-      const afterOperationObject = afterJson as OpenAPIV3.OperationObject | undefined
+      const beforeOperationObject = beforeJso as OpenAPIV3.OperationObject | undefined
+      const afterOperationObject = afterJso as OpenAPIV3.OperationObject | undefined
 
       return calculateOperationApiCompatibilityKind(beforeOperationObject, afterOperationObject, prevDocumentApiKind, currDocumentApiKind)
     }

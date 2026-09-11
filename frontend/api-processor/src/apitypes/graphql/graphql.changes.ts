@@ -48,7 +48,8 @@ import {
   getOperationTags,
   OperationsMap,
 } from '../../components'
-import { createGraphqlApiCompatibilityScopeFunction } from '../../components/compare/graphql.bwc.validation'
+import { createGraphqlApiKindValueAt } from '../../components/compare/graphql.api-kind'
+import { apiKindReclassificationRule, CUSTOM_SCOPE_ELEMENT_API_KIND } from '../../components/compare/custom-scope'
 
 export const compareDocuments: DocumentsCompare = async (
   operationsMap: OperationsMap,
@@ -92,7 +93,11 @@ export const compareDocuments: DocumentsCompare = async (
       normalizedResult: true,
       afterValueNormalizedProperty: AFTER_VALUE_NORMALIZED_PROPERTY,
       beforeValueNormalizedProperty: BEFORE_VALUE_NORMALIZED_PROPERTY,
-      apiCompatibilityScopeFunction: createGraphqlApiCompatibilityScopeFunction(prevDocumentApiKind, currDocumentApiKind),
+      customScopeElementProviders: [{
+        name: CUSTOM_SCOPE_ELEMENT_API_KIND,
+        valueAt: createGraphqlApiKindValueAt(prevDocumentApiKind, currDocumentApiKind),
+      }],
+      reclassificationRules: [apiKindReclassificationRule],
     },
   ) as { merged: GraphApiSchema; diffs: Diff[] }
 

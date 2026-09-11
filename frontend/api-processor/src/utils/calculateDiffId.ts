@@ -16,6 +16,7 @@
 
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
 import { calculateHash } from './hashes'
+import { declarationPathsIdentifier } from './path'
 import { ChangeMessage } from '../types'
 import { AFTER_VALUE_NORMALIZED_PROPERTY, BEFORE_VALUE_NORMALIZED_PROPERTY } from '../consts'
 
@@ -60,8 +61,8 @@ export function calculateChangeId(change: ChangeMessage): string {
     severity,
   } = { ...change }
 
-  const previousPaths = `[${previousDeclarationJsonPaths.map(path => `[${path.join()}]`).sort().join()}]`
-  const currentPaths = `[${currentDeclarationJsonPaths.map(path => `[${path.join()}]`).sort().join()}]`
+  const previousPaths = declarationPathsIdentifier(previousDeclarationJsonPaths)
+  const currentPaths = declarationPathsIdentifier(currentDeclarationJsonPaths)
 
   return `${previousPaths}-${currentPaths}-${previousValueHash}-${currentValueHash}-${scope}-${previousKey}-${currentKey}-${severity}`
 }

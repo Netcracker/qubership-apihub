@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Editor, LocalRegistry } from './helpers'
+import { Editor, expectSummariesMatchDiffs, LocalRegistry } from './helpers'
 import { BREAKING_CHANGE_TYPE, BUILD_TYPE, RISKY_CHANGE_TYPE, VERSION_STATUS } from '../src'
 
 const portal = new LocalRegistry('deprecated')
@@ -97,6 +97,9 @@ describe('Deprecated Items test', () => {
     const result = await editor.run()
     expect(result.comparisons[0].operationTypes[0].changesSummary?.[RISKY_CHANGE_TYPE]).toBe(1)
     expect(result.comparisons[0].operationTypes[0].changesSummary?.[BREAKING_CHANGE_TYPE]).toBe(0)
+    // The version-level summary above counts distinct changes; this checks that each operation's own
+    // summary still accounts for the changes it carries, which is where the two used to drift apart
+    expectSummariesMatchDiffs(result)
   })
 
   test('should have 4 semi-breaking changes for removed operations', async () => {
@@ -110,5 +113,6 @@ describe('Deprecated Items test', () => {
 
     const result = await editor.run()
     expect(result.comparisons[0].operationTypes[0].changesSummary?.[RISKY_CHANGE_TYPE]).toBe(4)
+    expectSummariesMatchDiffs(result)
   })
 })

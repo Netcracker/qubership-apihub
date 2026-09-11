@@ -46,7 +46,7 @@ import {
   REST_API_TYPE,
 } from '../consts'
 import { normalize } from '@netcracker/qubership-apihub-api-unifier'
-import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
+import { resolveOperationBasePath } from '../apitypes/rest/rest.utils'
 import { calculateSpecRefs, extractCommonPathItemProperties } from '../apitypes/rest/rest.operation'
 import { GraphApiSchema, printGraphApi } from '@netcracker/qubership-apihub-graphapi'
 import { createOperationSpec } from '../apitypes/graphql/graphql.operation'
@@ -211,12 +211,7 @@ function transformDocumentData(versionDocument: VersionDocument): OpenAPIV3.Docu
       if (!isValidHttpMethod(httpMethod)) continue
 
       const methodData = normalizedPathItem[httpMethod]
-      const basePath = extractOperationBasePath(
-        methodData?.servers ||
-        sourcePathItem?.servers ||
-        sourceDocument?.servers ||
-        [],
-      )
+      const basePath = resolveOperationBasePath(methodData, sourcePathItem, sourceDocument)
 
       const operationId = calculateRestOperationId(basePath, path, method)
 

@@ -17,6 +17,8 @@
 import fs from 'fs/promises'
 import path from 'path'
 import mime from 'mime-types'
+import type { CustomScopeElementContext } from '@netcracker/qubership-apihub-api-diff'
+import type { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
 
 import {
   ApiDocument,
@@ -26,6 +28,7 @@ import {
   BuildResult,
   ChangeSummary,
   EMPTY_CHANGE_SUMMARY, Labels,
+  OperationChanges,
   SERIALIZE_SYMBOL_STRING_MAPPING,
   VERSION_STATUS,
   VERSION_VALIDATION_LEVEL,
@@ -130,6 +133,20 @@ export const getConfigFilesForDir = async (folder: string): Promise<Pick<BuildCo
   } catch (error) {
     return null
   }
+}
+
+/**
+ * The changes one operation carries in the first comparison of a build. Throws rather than returning
+ * `undefined`, and names the operations that are there, because a lookup missing here usually means the
+ * fixture produced different ids, not that the operation has no changes.
+ */
+export function operationChangesOf(result: BuildResult, operationId: string): OperationChanges {
+  const changes = result.comparisons[0]?.data?.find(item => item.operationId === operationId)
+  if (!changes) {
+    const available = result.comparisons[0]?.data?.map(item => item.operationId).join(', ')
+    throw new Error(`Comparison has no changes for operation ${operationId}. Operations: ${available}`)
+  }
+  return changes
 }
 
 export const getVersionChanges = (result: BuildResult): { [key: string]: ChangeSummary } => {
@@ -484,3 +501,14 @@ export async function buildChangelogWithVersionOverrides(
   })
   return builder.run({ apiProcessorVersionValidationLevel: validationLevel })
 }
+
+/**
+ * Builds what api-diff hands a custom scope element provider when it asks about one node. The single
+ * place tests construct it, so a property added to the context later is a change here rather than at
+ * every call site.
+ */
+export const customScopeElementContext = (
+  path: JsonPath,
+  beforeJso?: unknown,
+  afterJso?: unknown,
+): CustomScopeElementContext => ({ path, beforeJso, afterJso })

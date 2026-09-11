@@ -19,11 +19,15 @@ import {
   buildChangelogPackage,
   buildGqlChangelogPackage,
   DEFAULT_PROJECTS_PATH,
+  deserializeDocument,
   Editor,
   loadFileAsString,
   LocalRegistry,
 } from './helpers'
+import { DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import type { Diff } from '@netcracker/qubership-apihub-api-diff'
 import {
+  APIHUB_API_COMPATIBILITY_KIND_BWC,
   BUILD_TYPE,
   BuildConfigFile,
   BuildResult,
@@ -31,6 +35,7 @@ import {
   OperationChanges,
   VERSION_STATUS,
 } from '../src'
+import { CUSTOM_SCOPE_ELEMENT_API_KIND } from '../src/components/compare/custom-scope'
 
 describe('Comparison Internal Documents tests', () => {
 
@@ -291,6 +296,35 @@ describe('Comparison Internal Documents tests', () => {
         expect(JSON.parse(document.serializedComparisonDocument)).toEqual(JSON.parse(expectedComparisonFile as string))
         expect(document).toHaveProperty('comparisonFileId')
       })
+    })
+
+    it('should record the custom scope every stored difference was reached under', async () => {
+      const result = isGraphql
+        ? await buildGqlChangelogPackage(packageId)
+        : await buildChangelogPackage(packageId)
+
+      // The custom scope is not only an in-process affordance for the rules: it is serialized with the
+      // difference and stored, so other services read it. Named here rather than left to the golden file,
+      // where a change of shape would look like noise.
+      // Every difference carries it because each of these api types declares a provider that answers at the
+      // document root; an api type that declares none, as DDL deliberately does, would not.
+      let inspected = 0
+      for (const comparison of result.comparisons) {
+        for (const document of comparison.comparisonInternalDocuments) {
+          const stored: unknown = deserializeDocument(document.serializedComparisonDocument)
+          const differences = (stored as Record<symbol, unknown>)[DIFFS_AGGREGATED_META_KEY]
+          expect(differences).toBeInstanceOf(Set)
+
+          for (const difference of differences as Set<Diff>) {
+            expect(difference.customScope?.[CUSTOM_SCOPE_ELEMENT_API_KIND]).toBe(APIHUB_API_COMPATIBILITY_KIND_BWC)
+            inspected += 1
+          }
+        }
+      }
+
+      // Outside both loops: a regression that left no comparison, no stored document or no difference in
+      // one would otherwise pass this test having asserted nothing at all
+      expect(inspected).toBeGreaterThan(0)
     })
 
     it('should comparisons have comparisonInternalDocumentId', async () => {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Editor, LocalRegistry } from './helpers'
+import { Editor, expectSummariesMatchDiffs, LocalRegistry } from './helpers'
 import { ANNOTATION_CHANGE_TYPE, BREAKING_CHANGE_TYPE, BUILD_TYPE, NON_BREAKING_CHANGE_TYPE } from '../src'
 
 const packageId = 'classification-bugs'
@@ -138,6 +138,7 @@ describe('Classification bugs test', () => {
 
     expect(result.comparisons?.[0]?.data?.[0]?.changeSummary?.[BREAKING_CHANGE_TYPE]).toBe(0)
     expect(result.comparisons?.[0]?.data?.[0]?.changeSummary?.[NON_BREAKING_CHANGE_TYPE]).toBe(1)
+    expectSummariesMatchDiffs(result)
   })
 
   test('[Servers] Changing servers must be a non-breaking change', async () => {
@@ -150,5 +151,6 @@ describe('Classification bugs test', () => {
 
     expect(result.comparisons?.[0]?.data?.[0]?.changeSummary?.[BREAKING_CHANGE_TYPE]).toBe(0)
     expect(result.comparisons?.[0]?.data?.[0]?.changeSummary?.[ANNOTATION_CHANGE_TYPE]).toBe(1)
+    expectSummariesMatchDiffs(result)
   })
 })

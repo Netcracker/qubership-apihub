@@ -44,6 +44,26 @@ export function pathStartsWith(path: JsonPath, pathTemplate: JsonPath): boolean 
   return pathTemplate.every((pathItem, i) => path[i] === pathItem || pathItem === ANY_PATH_SEGMENT)
 }
 
+/**
+ * Canonical string form of a set of declaration paths, sorted so their order does not matter.
+ * The shape is frozen: `calculateChangeId` builds change identities on it and those identities order the
+ * `changes` of a build result, so changing it here reorders published content. Known consequence: a comma
+ * inside a segment reads like a segment boundary, so `['a,b']` and `['a', 'b']` produce the same string.
+ */
+export function declarationPathsIdentifier(declarationPaths: JsonPath[]): string {
+  return `[${declarationPaths.map(path => `[${path.join()}]`).sort().join()}]`
+}
+
+/**
+ * Declaration paths as a map key, for when they cannot be compared pairwise.
+ * Unlike `declarationPathsIdentifier` each segment is quoted, so a segment containing the separator
+ * cannot be read as two, which here would mistake one deprecated element for another. Order does not
+ * matter, as in `areDeclarationPathsEqual`, but multiplicity does; origins never repeat a path.
+ */
+export function declarationPathsKey(declarationPaths: JsonPath[]): string {
+  return declarationPaths.map(path => JSON.stringify(path)).sort().join()
+}
+
 export function areDeclarationPathsEqual(firstItemDeclarationPaths: JsonPath[], secondItemDeclarationPaths: JsonPath[]): boolean {
   if (firstItemDeclarationPaths.length !== secondItemDeclarationPaths.length) {
     return false

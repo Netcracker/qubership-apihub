@@ -40,6 +40,7 @@ import {
   setValueByPath,
   takeIf,
   takeIfDefined,
+  deprecatedDeclarationPaths,
 } from '../../utils'
 import { getUsedTags } from '../../utils/mergeOpenapiDocuments'
 import {
@@ -49,22 +50,18 @@ import {
   REST_API_TYPE,
   VERSION_STATUS,
 } from '../../consts'
-import { extractSecuritySchemesNames, getCustomTags, resolveApiAudience } from './rest.utils'
+import { extractSecuritySchemesNames, getCustomTags, resolveApiAudience, resolveOperationBasePath } from './rest.utils'
 import {
   calculateDeprecatedItems,
   grepValue,
-  JSON_SCHEMA_PROPERTY_DEPRECATED,
   matchPaths,
   OPEN_API_PROPERTY_COMPONENTS,
   OPEN_API_PROPERTY_PATHS,
   OPEN_API_PROPERTY_SCHEMAS,
   parseRef,
-  pathItemToFullPath,
   PREDICATE_ANY_VALUE,
   PREDICATE_UNCLOSED_END,
-  resolveOrigins,
 } from '@netcracker/qubership-apihub-api-unifier'
-import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
 import { calculateHash, ObjectHashCache } from '../../utils/hashes'
 import { calculateTolerantHash } from '../../components/deprecated'
 import { getValueByPath } from '../../utils/path'
@@ -97,7 +94,7 @@ export const buildRestOperation = (
   for (const item of foundedDeprecatedItems) {
     const { description, deprecatedReason, value } = item
 
-    const declarationJsonPaths = resolveOrigins(value, JSON_SCHEMA_PROPERTY_DEPRECATED, ORIGINS_SYMBOL)?.map(pathItemToFullPath) ?? []
+    const declarationJsonPaths = deprecatedDeclarationPaths(value)
     const isOperation = isOperationPaths(declarationJsonPaths)
     const [version] = getSplittedVersionKey(config.version)
 
@@ -228,11 +225,7 @@ function reduceComponentPathItemsToOperations(
       .filter(httpMethod => {
         const methodData = sourcePathItem[httpMethod as OpenAPIV3.HttpMethods]
         if (!methodData) return false
-        const basePath = extractOperationBasePath(
-          methodData?.servers ||
-          sourcePathItem?.servers ||
-          [],
-        )
+        const basePath = resolveOperationBasePath(methodData, sourcePathItem)
         const operationId = calculateRestOperationId(basePath, path, httpMethod)
         return operations.includes(operationId)
       })

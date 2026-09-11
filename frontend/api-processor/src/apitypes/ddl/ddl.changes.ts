@@ -67,8 +67,8 @@ export const compareDdlDocuments: DdlDocumentsCompare = (prevRealm, currRealm): 
   const before = prevRealm ?? emptyRealmLike(present)
   const after = currRealm ?? emptyRealmLike(present)
 
-  // No apiCompatibilityScopeFunction: DDL changes are classified with default severity. apiKind-driven
-  // bwc-mode reclassification (softening breaking → risky for no-bwc documents) is not applied to DDL.
+  // No custom scope elements and no reclassification rules: DDL changes are classified with default severity.
+  // apiKind-driven reclassification (softening breaking → risky for no-bwc documents) is not applied to DDL.
   const { merged, diffs } = apiDiff(before, after, {
     ...DDL_EFFECTIVE_NORMALIZE_OPTIONS,
     metaKey: DIFF_META_KEY,

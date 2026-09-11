@@ -24,6 +24,7 @@ import {
   setValueByPath,
   takeIf,
   takeIfDefined,
+  deprecatedDeclarationPaths,
 } from '../../utils'
 import {
   APIHUB_API_COMPATIBILITY_KIND_BWC,
@@ -40,14 +41,11 @@ import { toTitleCase } from '../../utils/strings'
 import {
   calculateDeprecatedItems,
   GRAPH_API_PROPERTY_COMPONENTS,
-  JSON_SCHEMA_PROPERTY_DEPRECATED,
   matchPaths,
   OPEN_API_PROPERTY_PATHS,
   parseRef,
-  pathItemToFullPath,
   PREDICATE_ANY_VALUE,
   PREDICATE_UNCLOSED_END,
-  resolveOrigins,
 } from '@netcracker/qubership-apihub-api-unifier'
 import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
 import { calculateHash, ObjectHashCache } from '../../utils/hashes'
@@ -71,7 +69,7 @@ export const buildGraphQLOperation = (
   const deprecatedItems: DeprecateItem[] = []
   for (const item of foundedDeprecatedItems) {
     const { description, value, deprecatedReason } = item
-    const declarationJsonPaths = resolveOrigins(value, JSON_SCHEMA_PROPERTY_DEPRECATED, ORIGINS_SYMBOL)?.map(pathItemToFullPath) ?? []
+    const declarationJsonPaths = deprecatedDeclarationPaths(value)
 
     const isOperation = isOperationPaths(declarationJsonPaths)
     const [version] = getSplittedVersionKey(config.version)

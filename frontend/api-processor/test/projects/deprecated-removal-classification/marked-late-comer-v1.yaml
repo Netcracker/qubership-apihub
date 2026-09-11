@@ -1,0 +1,30 @@
+openapi: 3.0.3
+info:
+  title: Deprecated removal, minimal
+  version: 1.0.0
+paths:
+  # Only the long-lived operation exists here, so its deprecation history starts one version earlier
+  # than the history of the one added in the second version.
+  /long-lived:
+    post:
+      operationId: longLived
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shared'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared'
+components:
+  schemas:
+    Shared:
+      type: object
+      properties:
+        legacy:
+          type: string
+          deprecated: true

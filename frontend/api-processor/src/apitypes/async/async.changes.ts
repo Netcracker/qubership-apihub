@@ -45,7 +45,8 @@ import {
   getOperationTags,
   OperationsMap,
 } from '../../components'
-import { createAsyncApiCompatibilityScopeFunction } from '../../components/compare/async.bwc.validation'
+import { createAsyncApiKindValueAt } from '../../components/compare/async.api-kind'
+import { apiKindReclassificationRule, CUSTOM_SCOPE_ELEMENT_API_KIND } from '../../components/compare/custom-scope'
 import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
 import {
   extractAggregatedDiffs,
@@ -101,7 +102,11 @@ export const compareDocuments: DocumentsCompare = async (
       afterValueNormalizedProperty: AFTER_VALUE_NORMALIZED_PROPERTY,
       beforeValueNormalizedProperty: BEFORE_VALUE_NORMALIZED_PROPERTY,
       firstReferenceKeyProperty: FIRST_REFERENCE_KEY_PROPERTY,
-      apiCompatibilityScopeFunction: createAsyncApiCompatibilityScopeFunction(prevDocumentApiKind, currDocumentApiKind),
+      customScopeElementProviders: [{
+        name: CUSTOM_SCOPE_ELEMENT_API_KIND,
+        valueAt: createAsyncApiKindValueAt(prevDocumentApiKind, currDocumentApiKind),
+      }],
+      reclassificationRules: [apiKindReclassificationRule],
     },
   ) as { merged: AsyncAPIV3.AsyncAPIObject; diffs: Diff[] }
 

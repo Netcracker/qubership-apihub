@@ -39,8 +39,8 @@ export const createFileSlugs = (files: BuildConfigFile[], basePath: string): Bui
 }
 
 export const buildFile = async (configFile: BuildConfigFile, ctx: BuilderContext): Promise<BuildFileResult> => {
-  // Built on a copy: the entry of the build config outlives the build, and an incremental rebuild
-  // hands the very same one over again, so what the build writes must not stay on it
+  // Built on a copy: the entry belongs to the build config, which outlives the build and is handed over
+  // again by an incremental rebuild, so nothing the build writes may be left on it
   const file = { ...configFile }
   const data = await ctx.parsedFileResolver(file.fileId)
 
