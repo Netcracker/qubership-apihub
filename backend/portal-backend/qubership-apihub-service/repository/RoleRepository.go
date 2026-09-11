@@ -29,6 +29,7 @@ type RoleRepository interface {
 	GetPermissionsForRoles(ctx context.Context, roles []string) ([]string, error)
 	GetUserPermissions(ctx context.Context, packageId string, userId string) ([]string, error)
 	GetAllUserPermissions(ctx context.Context, userId string) ([]string, error)
+	GetWorkspacePackageReadAccess(ctx context.Context, workspaceId string, principal entity.VisibilityPrincipal) ([]entity.PackageReadAccessEntity, error)
 	SetRoleRanks(ctx context.Context, entities []entity.RoleEntity) error
 	GetUsersBySystemRole(ctx context.Context, systemRole string) ([]entity.UserEntity, error)
 }
@@ -457,6 +458,73 @@ func (r roleRepositoryImpl) GetUsersBySystemRole(ctx context.Context, systemRole
 		JoinOn("sr.role = ?", systemRole).
 		Select()
 	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (r roleRepositoryImpl) GetWorkspacePackageReadAccess(ctx context.Context, workspaceId string, principal entity.VisibilityPrincipal) ([]entity.PackageReadAccessEntity, error) {
+	if workspaceId == "" {
+		return nil, nil
+	}
+	var result []entity.PackageReadAccessEntity
+	var query string
+	var err error
+	if principal.ApiKeyScopeId != "" {
+		query = `
+		SELECT wp.id, wp.parent_id,
+			(
+				(? = '*' OR wp.id = ? OR (wp.id ~>=~ (? || '.') AND wp.id ~<~ (? || '/')))
+				AND EXISTS (
+					SELECT 1 FROM role r
+					WHERE r.id = ANY(?::varchar[])
+					  AND 'read' = ANY(r.permissions)
+				)
+			) AS can_read,
+			wp.exclude_from_search
+		FROM package_group wp
+		WHERE wp.deleted_at IS NULL
+		  AND (wp.id = ? OR (wp.id ~>=~ (? || '.') AND wp.id ~<~ (? || '/')))
+		`
+		_, err = r.cp.GetConnection().WithContext(ctx).Query(&result, query,
+			principal.ApiKeyScopeId, principal.ApiKeyScopeId, principal.ApiKeyScopeId, principal.ApiKeyScopeId,
+			pg.Array(principal.ApiKeyRoleIds),
+			workspaceId, workspaceId, workspaceId)
+	} else {
+		query = `
+		SELECT wp.id, wp.parent_id,
+			EXISTS (
+				SELECT 1 FROM role r
+				WHERE 'read' = ANY(r.permissions)
+				  AND r.id IN (
+					SELECT unnest(pmr.roles)
+					FROM package_member_role pmr
+					WHERE pmr.user_id = ?
+					  AND (
+						pmr.package_id = wp.id
+						OR (wp.id ~>=~ (pmr.package_id || '.') AND wp.id ~<~ (pmr.package_id || '/'))
+					  )
+					UNION
+					SELECT pg2.default_role
+					FROM package_group pg2
+					WHERE pg2.deleted_at IS NULL
+					  AND (
+						pg2.id = wp.id
+						OR (wp.id ~>=~ (pg2.id || '.') AND wp.id ~<~ (pg2.id || '/'))
+					  )
+				  )
+			) AS can_read,
+			wp.exclude_from_search
+		FROM package_group wp
+		WHERE wp.deleted_at IS NULL
+		  AND (wp.id = ? OR (wp.id ~>=~ (? || '.') AND wp.id ~<~ (? || '/')))
+		`
+		_, err = r.cp.GetConnection().WithContext(ctx).Query(&result, query, principal.UserId, workspaceId, workspaceId, workspaceId)
+	}
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return result, nil

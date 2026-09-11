@@ -30,6 +30,8 @@ type SearchQueryReq_deprecated struct {
 	OperationSearchParams   *OperationSearchParams  `json:"operationParams"`
 	Limit                   int                     `json:"-"`
 	Page                    int                     `json:"-"`
+	Workspace               string                  `json:"-"`
+	VisiblePackageRoots     []string                `json:"-"`
 }
 
 func MakeSearchQueryReq(deprecated SearchQueryReq_deprecated) SearchQueryReq {
@@ -54,6 +56,8 @@ func MakeSearchQueryReq(deprecated SearchQueryReq_deprecated) SearchQueryReq {
 		PublicationDateInterval: deprecated.PublicationDateInterval,
 		Limit:                   deprecated.Limit,
 		Page:                    deprecated.Page,
+		Workspace:               deprecated.Workspace,
+		VisiblePackageRoots:     deprecated.VisiblePackageRoots,
 	}
 }
 
@@ -67,6 +71,7 @@ type SearchQueryReq struct {
 	PublicationDateInterval PublicationDateInterval `json:"creationDateInterval"`
 	Limit                   int                     `json:"-"`
 	Page                    int                     `json:"-"`
+	VisiblePackageRoots     []string                `json:"-"`
 }
 
 func (r SearchQueryReq) ToDeprecated() SearchQueryReq_deprecated {
@@ -78,6 +83,8 @@ func (r SearchQueryReq) ToDeprecated() SearchQueryReq_deprecated {
 		PublicationDateInterval: r.PublicationDateInterval,
 		Limit:                   r.Limit,
 		Page:                    r.Page,
+		Workspace:               r.Workspace,
+		VisiblePackageRoots:     r.VisiblePackageRoots,
 	}
 	if r.Status != "" {
 		req.Statuses = []string{r.Status}

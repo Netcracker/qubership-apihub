@@ -270,11 +270,16 @@ func (r *ddlContractRepositoryImpl) GetComparisonSummary(ctx context.Context, co
 }
 
 func (r *ddlContractRepositoryImpl) GlobalSearchForDDL(ctx context.Context, searchQuery *entity.GlobalContractSearchQuery) ([]entity.DDLContractSearchResult, error) {
+	if len(searchQuery.VisibleRoots) == 0 {
+		return nil, nil
+	}
 	_, err := r.cp.GetConnection().WithContext(ctx).Exec("select websearch_to_tsquery(?)", searchQuery.OriginalTextInput)
 	if err != nil {
 		return nil, fmt.Errorf("invalid search string: %v", err.Error())
 	}
 	var result []entity.DDLContractSearchResult
+	// Privacy-aware search against global_search.fts_ddl_search_text.
+	// Deprecated: public.fts_ddl_search_text is dual-written but no longer used for global search reads.
 	ddlSearchQuery := `
 select
 	dt.package_id,
@@ -296,23 +301,28 @@ from ddl_tables dt
 		ts.version       as version,
 		ts.revision      as revision
 
-	FROM fts_ddl_search_text ts,
-			websearch_to_tsquery(?original_text_input) search_query
-	WHERE ts.status = ?status
-		and (?kinds = '{}' or ts.kind = ANY(?kinds::text[]))
-		and (?versions = '{}' or version like ANY(
+    FROM global_search.fts_ddl_search_text ts,
+         websearch_to_tsquery(?original_text_input) search_query
+    WHERE ts.workspace_id = ?workspace_id
+        and ts.status = ?status
+        and (?kinds = '{}' or ts.kind = ANY(?kinds::text[]))
+        and (?versions = '{}' or version like ANY(
 						select id from unnest(?versions::text[]) id))
 		and (package_id like ANY(
 						select id from unnest(?packages::text[]) id
 						union
 						select id||'.%' from unnest(?packages::text[]) id))
-		and search_query @@ data_vector
-	ORDER BY ts_rank(data_vector, search_query) DESC,
-				package_id,
-				ddl_entity_id desc,
-				version DESC,
-				revision DESC
-	LIMIT ?limit OFFSET ?offset
+        and (package_id like ANY(
+						select id from unnest(?visible_roots::text[]) id
+						union
+						select id||'.%' from unnest(?visible_roots::text[]) id))
+        and search_query @@ data_vector
+    ORDER BY ts_rank(data_vector, search_query) DESC,
+             package_id,
+             ddl_entity_id desc,
+             version DESC,
+             revision DESC
+    LIMIT ?limit OFFSET ?offset
 ) all_ts
 					on all_ts.package_id = dt.package_id and
 						all_ts.version = dt.version and

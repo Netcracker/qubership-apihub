@@ -12,6 +12,7 @@ import (
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/db"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/go-pg/pg/v10"
 )
@@ -243,6 +244,42 @@ func copyVersions(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 	res, err = tx.Exec(copyFTSSearchText, toPkg, fromPkg)
 	if err != nil {
 		return 0, fmt.Errorf("failed to copy fts_operation_search_text from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+
+	toWorkspaceId := utils.GetPackageWorkspaceId(toPkg)
+	fromWorkspaceId := utils.GetPackageWorkspaceId(fromPkg)
+	if err := EnsureGlobalSearchPartitionsTx(tx, toWorkspaceId); err != nil {
+		return 0, fmt.Errorf("failed to ensure global_search partitions for %s: %w", toWorkspaceId, err)
+	}
+	copyGsOps := `insert into global_search.fts_operation_search_text
+		(workspace_id, package_id, version, revision, operation_id, api_type, status, search_data_hash, data_vector)
+		(select ?, ?, version, revision, operation_id, api_type, status, search_data_hash, data_vector
+		 from global_search.fts_operation_search_text orig
+		 where orig.workspace_id = ? and orig.package_id = ?) on conflict do nothing`
+	res, err = tx.Exec(copyGsOps, toWorkspaceId, toPkg, fromWorkspaceId, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy global_search.fts_operation_search_text from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+	copyGsDdl := `insert into global_search.fts_ddl_search_text
+		(workspace_id, package_id, version, revision, ddl_entity_id, status, kind, search_data_hash, data_vector)
+		(select ?, ?, version, revision, ddl_entity_id, status, kind, search_data_hash, data_vector
+		 from global_search.fts_ddl_search_text orig
+		 where orig.workspace_id = ? and orig.package_id = ?) on conflict do nothing`
+	res, err = tx.Exec(copyGsDdl, toWorkspaceId, toPkg, fromWorkspaceId, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy global_search.fts_ddl_search_text from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+	copyGsMcp := `insert into global_search.fts_mcp_search_text
+		(workspace_id, package_id, version, revision, mcp_entity_id, status, kind, search_data_hash, data_vector)
+		(select ?, ?, version, revision, mcp_entity_id, status, kind, search_data_hash, data_vector
+		 from global_search.fts_mcp_search_text orig
+		 where orig.workspace_id = ? and orig.package_id = ?) on conflict do nothing`
+	res, err = tx.Exec(copyGsMcp, toWorkspaceId, toPkg, fromWorkspaceId, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy global_search.fts_mcp_search_text from %s to %s: %w", fromPkg, toPkg, err)
 	}
 	objAffected += res.RowsAffected()
 
@@ -506,6 +543,19 @@ func deleteVersionsData(tx *pg.Tx, fromPkg string) error {
 	_, err = tx.Exec(query, fromPkg)
 	if err != nil {
 		return fmt.Errorf("failed to delete orig(%s) from fts_operation_search_text: %w", fromPkg, err)
+	}
+	fromWorkspaceId := utils.GetPackageWorkspaceId(fromPkg)
+	_, err = tx.Exec(`delete from global_search.fts_operation_search_text where workspace_id = ? and package_id = ?`, fromWorkspaceId, fromPkg)
+	if err != nil {
+		return fmt.Errorf("failed to delete orig(%s) from global_search.fts_operation_search_text: %w", fromPkg, err)
+	}
+	_, err = tx.Exec(`delete from global_search.fts_ddl_search_text where workspace_id = ? and package_id = ?`, fromWorkspaceId, fromPkg)
+	if err != nil {
+		return fmt.Errorf("failed to delete orig(%s) from global_search.fts_ddl_search_text: %w", fromPkg, err)
+	}
+	_, err = tx.Exec(`delete from global_search.fts_mcp_search_text where workspace_id = ? and package_id = ?`, fromWorkspaceId, fromPkg)
+	if err != nil {
+		return fmt.Errorf("failed to delete orig(%s) from global_search.fts_mcp_search_text: %w", fromPkg, err)
 	}
 
 	query = "delete from operation_comparison where package_id = ?"

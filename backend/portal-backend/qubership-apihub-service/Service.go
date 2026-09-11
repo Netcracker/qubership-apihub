@@ -361,7 +361,7 @@ func main() {
 	logoutController := controller.NewLogoutController(tokenRevocationService, systemInfoService)
 	operationController := controller.NewOperationController(roleService, operationService, buildService, monitoringService, ptHandler)
 	operationGroupController := controller.NewOperationGroupController(roleService, operationGroupService, versionService, systemInfoService, packageService)
-	searchController := controller.NewSearchController(operationService, versionService, monitoringService, ddlContractService, mcpContractService)
+	searchController := controller.NewSearchController(operationService, versionService, monitoringService, ddlContractService, mcpContractService, roleService)
 	dataMigrationController := mController.NewTempMigrationController(dbMigrationService)
 	activityTrackingController := controller.NewActivityTrackingController(activityTrackingService, roleService, ptHandler)
 	comparisonController := controller.NewComparisonController(operationService, versionService, buildService, roleService, comparisonService, monitoringService, ptHandler)
@@ -389,8 +389,8 @@ func main() {
 	r.HandleFunc("/api/v1/debug/logs/checkLevel", security.Secure(logsController.CheckLogLevel)).Methods(http.MethodGet)
 
 	//Search
-	r.HandleFunc("/api/v3/search/{searchLevel}", security.SecureUser(searchController.Search_deprecated)).Methods(http.MethodPost) //TODO: add API key strategy after authorization fix
-	r.HandleFunc("/api/v4/search/{searchLevel}", security.SecureUser(searchController.Search)).Methods(http.MethodPost)            //TODO: add API key strategy after authorization fix
+	r.HandleFunc("/api/v3/search/{searchLevel}", security.Secure(searchController.Search_deprecated)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v4/search/{searchLevel}", security.Secure(searchController.Search)).Methods(http.MethodPost)
 
 	r.HandleFunc("/api/v2/builders/{builderId}/tasks", security.Secure(publishV2Controller.GetFreeBuild)).Methods(http.MethodPost)
 

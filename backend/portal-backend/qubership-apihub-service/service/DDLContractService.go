@@ -377,7 +377,9 @@ func (s *ddlContractServiceImpl) GlobalSearchForDDL(ctx context.Context, searchR
 	searchQuery := &entity.GlobalContractSearchQuery{
 		OriginalTextInput: searchReq.SearchString,
 		Kinds:             make([]string, 0),
+		WorkspaceId:       searchReq.Workspace,
 		Packages:          searchReq.PackageIds,
+		VisibleRoots:      searchReq.VisiblePackageRoots,
 		Versions:          versions,
 		Status:            searchReq.Status,
 		StartDate:         startDate,
@@ -387,6 +389,9 @@ func (s *ddlContractServiceImpl) GlobalSearchForDDL(ctx context.Context, searchR
 	}
 	if searchQuery.Packages == nil {
 		searchQuery.Packages = make([]string, 0)
+	}
+	if searchQuery.VisibleRoots == nil {
+		searchQuery.VisibleRoots = make([]string, 0)
 	}
 	entities, err := s.ddlRepo.GlobalSearchForDDL(ctx, searchQuery)
 	if err != nil {

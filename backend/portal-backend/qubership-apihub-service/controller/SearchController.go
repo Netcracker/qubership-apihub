@@ -23,13 +23,14 @@ type SearchController interface {
 	Search(w http.ResponseWriter, r *http.Request)
 }
 
-func NewSearchController(operationService service.OperationService, versionService service.VersionService, monitoringService service.MonitoringService, ddlContractService service.DDLContractService, mcpContractService service.MCPContractService) SearchController {
+func NewSearchController(operationService service.OperationService, versionService service.VersionService, monitoringService service.MonitoringService, ddlContractService service.DDLContractService, mcpContractService service.MCPContractService, roleService service.RoleService) SearchController {
 	return &searchControllerImpl{
 		operationService:   operationService,
 		versionService:     versionService,
 		monitoringService:  monitoringService,
 		ddlContractService: ddlContractService,
 		mcpContractService: mcpContractService,
+		roleService:        roleService,
 	}
 }
 
@@ -39,6 +40,7 @@ type searchControllerImpl struct {
 	monitoringService  service.MonitoringService
 	ddlContractService service.DDLContractService
 	mcpContractService service.MCPContractService
+	roleService        service.RoleService
 }
 
 func (s searchControllerImpl) Search(w http.ResponseWriter, r *http.Request) {
@@ -139,6 +141,13 @@ func (s searchControllerImpl) Search(w http.ResponseWriter, r *http.Request) {
 		s.monitoringService.IncreaseBusinessMetricCounter(user, metrics.GlobalSearchDefaultPublicationDateModified, searchLevel)
 	}
 	////
+
+	visible, err := s.roleService.GetWorkspacePackageVisibilityRoots(ctx, searchQuery.Workspace)
+	if err != nil {
+		utils.RespondWithError(w, r, "Failed to resolve package visibility for search", err)
+		return
+	}
+	searchQuery.VisiblePackageRoots = visible
 
 	switch searchLevel {
 	case view.SearchLevelOperations:
@@ -312,6 +321,17 @@ func (s searchControllerImpl) Search_deprecated(w http.ResponseWriter, r *http.R
 	searchQuery.Limit = limit
 	searchQuery.Page = page
 
+	if len(searchQuery.PackageIds) == 0 {
+		utils.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidSearchParameters,
+			Message: exception.InvalidSearchParametersMsg,
+			Params:  map[string]interface{}{"error": "packageIds is required for deprecated search"},
+		})
+		return
+	}
+	searchQuery.Workspace = utils.GetPackageWorkspaceId(searchQuery.PackageIds[0])
+
 	//// metrics
 	s.monitoringService.AddEndpointCall(getTemplatePath(r), view.MakeSearchEndpointOptions(searchLevel, searchQuery.OperationSearchParams))
 
@@ -332,6 +352,13 @@ func (s searchControllerImpl) Search_deprecated(w http.ResponseWriter, r *http.R
 		s.monitoringService.IncreaseBusinessMetricCounter(user, metrics.GlobalSearchDefaultPublicationDateModified, searchLevel)
 	}
 	////
+
+	visible, err := s.roleService.GetWorkspacePackageVisibilityRoots(ctx, searchQuery.Workspace)
+	if err != nil {
+		utils.RespondWithError(w, r, "Failed to resolve package visibility for search", err)
+		return
+	}
+	searchQuery.VisiblePackageRoots = visible
 
 	switch searchLevel {
 	case view.SearchLevelOperations:

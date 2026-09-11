@@ -148,11 +148,30 @@ func (p publishedRepositoryImpl) PatchVersion(ctx context.Context, packageId str
 		}
 
 		if statusChanged {
+			// Deprecated: public.fts_operation_search_text dual-write; prefer global_search.fts_operation_search_text.
 			updateFtsSearchTextStatusQuery := `UPDATE fts_operation_search_text SET status = ? WHERE package_id = ? AND version = ? AND revision = ?`
 			_, err = tx.Exec(updateFtsSearchTextStatusQuery,
 				ent.Status, ent.PackageId, ent.Version, ent.Revision)
 			if err != nil {
 				return fmt.Errorf("failed to update fts_operation_search_text status: %w", err)
+			}
+			updateGsFtsStatusQuery := `UPDATE global_search.fts_operation_search_text SET status = ? WHERE workspace_id = ? AND package_id = ? AND version = ? AND revision = ?`
+			_, err = tx.Exec(updateGsFtsStatusQuery,
+				ent.Status, utils.GetPackageWorkspaceId(ent.PackageId), ent.PackageId, ent.Version, ent.Revision)
+			if err != nil {
+				return fmt.Errorf("failed to update global_search.fts_operation_search_text status: %w", err)
+			}
+			updateGsDdlStatusQuery := `UPDATE global_search.fts_ddl_search_text SET status = ? WHERE workspace_id = ? AND package_id = ? AND version = ? AND revision = ?`
+			_, err = tx.Exec(updateGsDdlStatusQuery,
+				ent.Status, utils.GetPackageWorkspaceId(ent.PackageId), ent.PackageId, ent.Version, ent.Revision)
+			if err != nil {
+				return fmt.Errorf("failed to update global_search.fts_ddl_search_text status: %w", err)
+			}
+			updateGsMcpStatusQuery := `UPDATE global_search.fts_mcp_search_text SET status = ? WHERE workspace_id = ? AND package_id = ? AND version = ? AND revision = ?`
+			_, err = tx.Exec(updateGsMcpStatusQuery,
+				ent.Status, utils.GetPackageWorkspaceId(ent.PackageId), ent.PackageId, ent.Version, ent.Revision)
+			if err != nil {
+				return fmt.Errorf("failed to update global_search.fts_mcp_search_text status: %w", err)
 			}
 		}
 
@@ -1777,16 +1796,28 @@ func (p publishedRepositoryImpl) CreateVersionWithData(ctx context.Context, pack
 		if len(operationSearchTexts) > 0 && !pkg.ExcludeFromSearch {
 			if !packageInfo.MigrationBuild {
 				start = time.Now()
+				workspaceId := utils.GetPackageWorkspaceId(version.PackageId)
+				if err := EnsureGlobalSearchPartitionsTx(tx, workspaceId); err != nil {
+					return fmt.Errorf("failed to ensure global_search partitions for workspace %s: %w", workspaceId, err)
+				}
 				if version.Revision > 1 {
+					// Deprecated: public.fts_operation_search_text dual-write; prefer global_search.fts_operation_search_text.
 					cleanOldFtsSearchTextQuery := `delete from fts_operation_search_text where package_id = ? and version = ? and revision = ?`
 					_, err = tx.Exec(cleanOldFtsSearchTextQuery,
 						version.PackageId, version.Version, version.Revision-1)
 					if err != nil {
 						return fmt.Errorf("failed to cleanup old revision fts_operation_search_text: %w", err)
 					}
+					cleanOldGsFtsQuery := `delete from global_search.fts_operation_search_text where workspace_id = ? and package_id = ? and version = ? and revision = ?`
+					_, err = tx.Exec(cleanOldGsFtsQuery,
+						workspaceId, version.PackageId, version.Version, version.Revision-1)
+					if err != nil {
+						return fmt.Errorf("failed to cleanup old revision global_search.fts_operation_search_text: %w", err)
+					}
 				}
 
 				for _, st := range operationSearchTexts {
+					// Deprecated: public.fts_operation_search_text dual-write; prefer global_search.fts_operation_search_text.
 					insertFtsSearchTextQuery := `
 						INSERT INTO fts_operation_search_text (package_id, version, revision, operation_id, api_type, status, search_data_hash, data_vector)
 						VALUES (?, ?, ?, ?, ?, ?, ?, to_tsvector(convert_from(?, 'UTF-8') || ' ' || coalesce(?, '')))
@@ -1798,6 +1829,20 @@ func (p publishedRepositoryImpl) CreateVersionWithData(ctx context.Context, pack
 						st.ApiType, version.Status, st.SearchDataHash, st.SearchTextData, st.Title)
 					if err != nil {
 						return fmt.Errorf("failed to insert fts_operation_search_text for operation %s: %w", st.OperationId, err)
+					}
+					insertGsFtsQuery := `
+						INSERT INTO global_search.fts_operation_search_text (workspace_id, package_id, version, revision, operation_id, api_type, status, search_data_hash, data_vector)
+						VALUES (?, ?, ?, ?, ?, ?, ?, ?, to_tsvector(convert_from(?, 'UTF-8') || ' ' || coalesce(?, '')))
+						ON CONFLICT (workspace_id, package_id, version, revision, operation_id) DO UPDATE
+							SET search_data_hash = EXCLUDED.search_data_hash,
+								data_vector = EXCLUDED.data_vector,
+								status = EXCLUDED.status,
+								api_type = EXCLUDED.api_type`
+					_, err = tx.Exec(insertGsFtsQuery,
+						workspaceId, version.PackageId, version.Version, version.Revision, st.OperationId,
+						st.ApiType, version.Status, st.SearchDataHash, st.SearchTextData, st.Title)
+					if err != nil {
+						return fmt.Errorf("failed to insert global_search.fts_operation_search_text for operation %s: %w", st.OperationId, err)
 					}
 				}
 				utils.PerfLog(time.Since(start).Milliseconds(), 1000, "CreateVersionWithData: fts_operation_search_text insert")
@@ -2006,15 +2051,26 @@ func (p publishedRepositoryImpl) CreateVersionWithData(ctx context.Context, pack
 		if len(ddlContractSearchTexts) > 0 && !pkg.ExcludeFromSearch {
 			if !packageInfo.MigrationBuild {
 				start = time.Now()
+				workspaceId := utils.GetPackageWorkspaceId(version.PackageId)
+				if err := EnsureGlobalSearchPartitionsTx(tx, workspaceId); err != nil {
+					return fmt.Errorf("failed to ensure global_search partitions for workspace %s: %w", workspaceId, err)
+				}
 				if version.Revision > 1 {
+					// Deprecated: public.fts_ddl_search_text dual-write; prefer global_search.fts_ddl_search_text.
 					cleanOldFtsSearchTextQuery := `delete from fts_ddl_search_text where package_id = ? and version = ? and revision = ?`
 					_, err = tx.Exec(cleanOldFtsSearchTextQuery,
 						version.PackageId, version.Version, version.Revision-1)
 					if err != nil {
 						return fmt.Errorf("failed to cleanup old revision fts_ddl_search_text: %w", err)
 					}
+					_, err = tx.Exec(`delete from global_search.fts_ddl_search_text where workspace_id = ? and package_id = ? and version = ? and revision = ?`,
+						workspaceId, version.PackageId, version.Version, version.Revision-1)
+					if err != nil {
+						return fmt.Errorf("failed to cleanup old revision global_search.fts_ddl_search_text: %w", err)
+					}
 				}
 				for _, st := range ddlContractSearchTexts {
+					// Deprecated: public.fts_ddl_search_text dual-write; prefer global_search.fts_ddl_search_text.
 					_, err = tx.Exec(`
 						INSERT INTO fts_ddl_search_text (package_id, version, revision, ddl_entity_id, status, kind, search_data_hash, data_vector)
 						VALUES (?, ?, ?, ?, ?, ?, ?, to_tsvector(convert_from(?, 'UTF-8')))
@@ -2025,6 +2081,19 @@ func (p publishedRepositoryImpl) CreateVersionWithData(ctx context.Context, pack
 						version.Status, st.Kind, st.SearchDataHash, st.SearchTextData)
 					if err != nil {
 						return fmt.Errorf("failed to insert fts_ddl_search_text for %s: %w", st.DdlEntityId, err)
+					}
+					_, err = tx.Exec(`
+						INSERT INTO global_search.fts_ddl_search_text (workspace_id, package_id, version, revision, ddl_entity_id, status, kind, search_data_hash, data_vector)
+						VALUES (?, ?, ?, ?, ?, ?, ?, ?, to_tsvector(convert_from(?, 'UTF-8')))
+						ON CONFLICT (workspace_id, package_id, version, revision, ddl_entity_id) DO UPDATE
+							SET search_data_hash = EXCLUDED.search_data_hash,
+								data_vector = EXCLUDED.data_vector,
+								status = EXCLUDED.status,
+								kind = EXCLUDED.kind`,
+						workspaceId, version.PackageId, version.Version, version.Revision, st.DdlEntityId,
+						version.Status, st.Kind, st.SearchDataHash, st.SearchTextData)
+					if err != nil {
+						return fmt.Errorf("failed to insert global_search.fts_ddl_search_text for %s: %w", st.DdlEntityId, err)
 					}
 				}
 				utils.PerfLog(time.Since(start).Milliseconds(), 100, "CreateVersionWithData: fts_ddl_search_text insert")
@@ -2132,15 +2201,26 @@ func (p publishedRepositoryImpl) CreateVersionWithData(ctx context.Context, pack
 		if len(mcpContractSearchTexts) > 0 && !pkg.ExcludeFromSearch {
 			if !packageInfo.MigrationBuild {
 				start = time.Now()
+				workspaceId := utils.GetPackageWorkspaceId(version.PackageId)
+				if err := EnsureGlobalSearchPartitionsTx(tx, workspaceId); err != nil {
+					return fmt.Errorf("failed to ensure global_search partitions for workspace %s: %w", workspaceId, err)
+				}
 				if version.Revision > 1 {
+					// Deprecated: public.fts_mcp_search_text dual-write; prefer global_search.fts_mcp_search_text.
 					cleanOldFtsSearchTextQuery := `delete from fts_mcp_search_text where package_id = ? and version = ? and revision = ?`
 					_, err = tx.Exec(cleanOldFtsSearchTextQuery,
 						version.PackageId, version.Version, version.Revision-1)
 					if err != nil {
 						return fmt.Errorf("failed to cleanup old revision fts_mcp_search_text: %w", err)
 					}
+					_, err = tx.Exec(`delete from global_search.fts_mcp_search_text where workspace_id = ? and package_id = ? and version = ? and revision = ?`,
+						workspaceId, version.PackageId, version.Version, version.Revision-1)
+					if err != nil {
+						return fmt.Errorf("failed to cleanup old revision global_search.fts_mcp_search_text: %w", err)
+					}
 				}
 				for _, st := range mcpContractSearchTexts {
+					// Deprecated: public.fts_mcp_search_text dual-write; prefer global_search.fts_mcp_search_text.
 					insertFtsSearchTextQuery := `
 						INSERT INTO fts_mcp_search_text (package_id, version, revision, mcp_entity_id, status, kind, search_data_hash, data_vector)
 						VALUES (?, ?, ?, ?, ?, ?, ?, to_tsvector(convert_from(?, 'UTF-8') || ' '))
@@ -2151,6 +2231,18 @@ func (p publishedRepositoryImpl) CreateVersionWithData(ctx context.Context, pack
 						version.PackageId, version.Version, version.Revision, st.McpEntityId, version.Status, st.Kind, st.SearchDataHash, st.SearchTextData)
 					if err != nil {
 						return fmt.Errorf("failed to insert fts_mcp_search_text for entity %s: %w", st.McpEntityId, err)
+					}
+					_, err = tx.Exec(`
+						INSERT INTO global_search.fts_mcp_search_text (workspace_id, package_id, version, revision, mcp_entity_id, status, kind, search_data_hash, data_vector)
+						VALUES (?, ?, ?, ?, ?, ?, ?, ?, to_tsvector(convert_from(?, 'UTF-8') || ' '))
+						ON CONFLICT (workspace_id, package_id, version, revision, mcp_entity_id) DO UPDATE
+							SET search_data_hash = EXCLUDED.search_data_hash,
+								data_vector = EXCLUDED.data_vector,
+								status = EXCLUDED.status,
+								kind = EXCLUDED.kind`,
+						workspaceId, version.PackageId, version.Version, version.Revision, st.McpEntityId, version.Status, st.Kind, st.SearchDataHash, st.SearchTextData)
+					if err != nil {
+						return fmt.Errorf("failed to insert global_search.fts_mcp_search_text for entity %s: %w", st.McpEntityId, err)
 					}
 				}
 				utils.PerfLog(time.Since(start).Milliseconds(), 1000, "CreateVersionWithData: fts_mcp_search_text insert")
@@ -3152,6 +3244,11 @@ func (p publishedRepositoryImpl) CreatePackage(ctx context.Context, packageEntit
 				return err
 			}
 		}
+		if packageEntity.Kind == entity.KIND_WORKSPACE {
+			if err := EnsureGlobalSearchPartitionsTx(tx, packageEntity.Id); err != nil {
+				return fmt.Errorf("failed to ensure global search partitions for workspace %s: %w", packageEntity.Id, err)
+			}
+		}
 		return err
 	})
 	if err != nil {
@@ -3169,6 +3266,11 @@ func (p publishedRepositoryImpl) CreatePrivatePackageForUser(ctx context.Context
 		_, err = tx.Model(userRoleEntity).Insert()
 		if err != nil {
 			return err
+		}
+		if packageEntity.Kind == entity.KIND_WORKSPACE {
+			if err := EnsureGlobalSearchPartitionsTx(tx, packageEntity.Id); err != nil {
+				return fmt.Errorf("failed to ensure global search partitions for workspace %s: %w", packageEntity.Id, err)
+			}
 		}
 		return nil
 	})
@@ -3344,6 +3446,11 @@ func (p publishedRepositoryImpl) UpdatePackage(ctx context.Context, ent *entity.
 		if err != nil {
 			return err
 		}
+		if ent.Kind == entity.KIND_WORKSPACE {
+			if err := EnsureGlobalSearchPartitionsTx(tx, ent.Id); err != nil {
+				return fmt.Errorf("failed to ensure global search partitions for workspace %s: %w", ent.Id, err)
+			}
+		}
 		return nil
 	})
 	if err != nil {
@@ -3382,10 +3489,27 @@ func (p publishedRepositoryImpl) updatePackage(tx *pg.Tx, ent *entity.PackageEnt
 
 func (p publishedRepositoryImpl) updateFtsIndexForExcludeFromSearchChange(tx *pg.Tx, packageId string, excludeFromSearch bool) error {
 	if excludeFromSearch {
+		// Deprecated: public.fts_operation_search_text dual-write; prefer global_search.fts_*.
 		_, err := tx.Exec(`DELETE FROM fts_operation_search_text WHERE package_id = ? OR package_id LIKE ? || '.%'`,
 			packageId, packageId)
 		if err != nil {
 			return fmt.Errorf("failed to delete fts_operation_search_text on exclude_from_search change: %w", err)
+		}
+		workspaceId := utils.GetPackageWorkspaceId(packageId)
+		_, err = tx.Exec(`DELETE FROM global_search.fts_operation_search_text WHERE workspace_id = ? AND (package_id = ? OR package_id LIKE ? || '.%')`,
+			workspaceId, packageId, packageId)
+		if err != nil {
+			return fmt.Errorf("failed to delete global_search.fts_operation_search_text on exclude_from_search change: %w", err)
+		}
+		_, err = tx.Exec(`DELETE FROM global_search.fts_ddl_search_text WHERE workspace_id = ? AND (package_id = ? OR package_id LIKE ? || '.%')`,
+			workspaceId, packageId, packageId)
+		if err != nil {
+			return fmt.Errorf("failed to delete global_search.fts_ddl_search_text on exclude_from_search change: %w", err)
+		}
+		_, err = tx.Exec(`DELETE FROM global_search.fts_mcp_search_text WHERE workspace_id = ? AND (package_id = ? OR package_id LIKE ? || '.%')`,
+			workspaceId, packageId, packageId)
+		if err != nil {
+			return fmt.Errorf("failed to delete global_search.fts_mcp_search_text on exclude_from_search change: %w", err)
 		}
 	}
 	return nil
@@ -3747,6 +3871,9 @@ func SplitVersionRevision(version string) (string, int, error) {
 }
 
 func (p publishedRepositoryImpl) SearchForVersions(ctx context.Context, searchQuery *entity.PackageSearchQuery) ([]entity.PackageSearchResult, error) {
+	if len(searchQuery.VisibleRoots) == 0 {
+		return nil, nil
+	}
 	searchQuery.TextFilter = "%" + utils.LikeEscaped(searchQuery.TextFilter) + "%"
 	var result []entity.PackageSearchResult
 	versionsSearchQuery := `
@@ -3769,6 +3896,10 @@ func (p publishedRepositoryImpl) SearchForVersions(ctx context.Context, searchQu
 						select id from unnest(?packages::text[]) id
 						union
 						select id||'.%' from unnest(?packages::text[]) id))
+					and (?visible_roots = '{}' or pv.package_id like ANY(
+						select id from unnest(?visible_roots::text[]) id
+						union
+						select id||'.%' from unnest(?visible_roots::text[]) id))
 					and (?versions = '{}' or pv.version = ANY(?versions))
 					group by pv.package_id, pv.version
 					union
@@ -3778,6 +3909,10 @@ func (p publishedRepositoryImpl) SearchForVersions(ctx context.Context, searchQu
 							on pg.id = pv.package_id
 							and pg.exclude_from_search = false
 					where (?packages = '{}' or pv.package_id = ANY(?packages))
+					and (?visible_roots = '{}' or pv.package_id like ANY(
+						select id from unnest(?visible_roots::text[]) id
+						union
+						select id||'.%' from unnest(?visible_roots::text[]) id))
 					and (?versions = '{}' or pv.version = ANY(?versions))
 					and array_to_string(pv.labels,',') ilike ?text_filter
 					group by pv.package_id, pv.version
@@ -3868,6 +4003,9 @@ func (p publishedRepositoryImpl) SearchForVersions(ctx context.Context, searchQu
 }
 
 func (p publishedRepositoryImpl) SearchForDocuments(ctx context.Context, searchQuery *entity.DocumentSearchQuery) ([]entity.DocumentSearchResult, error) {
+	if len(searchQuery.VisibleRoots) == 0 {
+		return nil, nil
+	}
 	searchQuery.TextFilter = "%" + utils.LikeEscaped(searchQuery.TextFilter) + "%"
 	var result []entity.DocumentSearchResult
 	documentsSearchQuery := `
@@ -3887,6 +4025,10 @@ func (p publishedRepositoryImpl) SearchForDocuments(ctx context.Context, searchQ
 							select id from unnest(?packages::text[]) id
 							union
 							select id||'.%' from unnest(?packages::text[]) id))
+						and (?visible_roots = '{}' or pv.package_id like ANY(
+							select id from unnest(?visible_roots::text[]) id
+							union
+							select id||'.%' from unnest(?visible_roots::text[]) id))
 						and (?versions = '{}' or pv.version = ANY(?versions))
 						group by pv.package_id, pv.version
 				),
@@ -4865,11 +5007,20 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackagesBeforeDate(ctx context
 		if err != nil {
 			return fmt.Errorf("failed to delete fts_operation_search_text: %w", err)
 		}
+		// Parallel cleanup for privacy-aware indexes (public.fts_* remain dual-written/deprecated).
+		_, err = tx.ExecContext(ctx, `DELETE FROM global_search.fts_operation_search_text WHERE package_id IN (?)`, pg.In(packageIds))
+		if err != nil {
+			return fmt.Errorf("failed to delete global_search.fts_operation_search_text: %w", err)
+		}
 
 		logger.Trace(ctx, "Deleting DDL contract data for packages")
 		_, err = tx.ExecContext(ctx, `DELETE FROM fts_ddl_search_text WHERE package_id IN (?)`, pg.In(packageIds))
 		if err != nil {
 			return fmt.Errorf("failed to delete fts_ddl_search_text: %w", err)
+		}
+		_, err = tx.ExecContext(ctx, `DELETE FROM global_search.fts_ddl_search_text WHERE package_id IN (?)`, pg.In(packageIds))
+		if err != nil {
+			return fmt.Errorf("failed to delete global_search.fts_ddl_search_text: %w", err)
 		}
 		_, err = tx.ExecContext(ctx, `DELETE FROM ddl_comparison WHERE package_id IN (?)`, pg.In(packageIds))
 		if err != nil {
@@ -4884,6 +5035,10 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackagesBeforeDate(ctx context
 		_, err = tx.ExecContext(ctx, `DELETE FROM fts_mcp_search_text WHERE package_id IN (?)`, pg.In(packageIds))
 		if err != nil {
 			return fmt.Errorf("failed to delete fts_mcp_search_text: %w", err)
+		}
+		_, err = tx.ExecContext(ctx, `DELETE FROM global_search.fts_mcp_search_text WHERE package_id IN (?)`, pg.In(packageIds))
+		if err != nil {
+			return fmt.Errorf("failed to delete global_search.fts_mcp_search_text: %w", err)
 		}
 		_, err = tx.ExecContext(ctx, `DELETE FROM mcp_entities WHERE package_id IN (?)`, pg.In(packageIds))
 		if err != nil {
@@ -4959,15 +5114,22 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackageRevisionsBeforeDate(ctx
 			return fmt.Errorf("failed to count related data: %w", err)
 		}
 
-		deleteFtsSearchTextQuery := `DELETE FROM fts_operation_search_text WHERE (package_id, version, revision) IN (` + valuesClause + `)`
-		_, err = tx.ExecContext(ctx, deleteFtsSearchTextQuery, args...)
+		_, err = tx.ExecContext(ctx, `DELETE FROM fts_operation_search_text WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
 		if err != nil {
 			return fmt.Errorf("failed to delete fts_operation_search_text: %w", err)
+		}
+		_, err = tx.ExecContext(ctx, `DELETE FROM global_search.fts_operation_search_text WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
+		if err != nil {
+			return fmt.Errorf("failed to delete global_search.fts_operation_search_text: %w", err)
 		}
 
 		_, err = tx.ExecContext(ctx, `DELETE FROM fts_ddl_search_text WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
 		if err != nil {
 			return fmt.Errorf("failed to delete fts_ddl_search_text: %w", err)
+		}
+		_, err = tx.ExecContext(ctx, `DELETE FROM global_search.fts_ddl_search_text WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
+		if err != nil {
+			return fmt.Errorf("failed to delete global_search.fts_ddl_search_text: %w", err)
 		}
 		_, err = tx.ExecContext(ctx, `DELETE FROM ddl_comparison WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
 		if err != nil {
@@ -4980,6 +5142,10 @@ func (p publishedRepositoryImpl) DeleteSoftDeletedPackageRevisionsBeforeDate(ctx
 		_, err = tx.ExecContext(ctx, `DELETE FROM fts_mcp_search_text WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
 		if err != nil {
 			return fmt.Errorf("failed to delete fts_mcp_search_text: %w", err)
+		}
+		_, err = tx.ExecContext(ctx, `DELETE FROM global_search.fts_mcp_search_text WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
+		if err != nil {
+			return fmt.Errorf("failed to delete global_search.fts_mcp_search_text: %w", err)
 		}
 		_, err = tx.ExecContext(ctx, `DELETE FROM mcp_entities WHERE (package_id, version, revision) IN (`+valuesClause+`)`, args...)
 		if err != nil {
