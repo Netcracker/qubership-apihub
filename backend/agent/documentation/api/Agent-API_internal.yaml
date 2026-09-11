@@ -705,7 +705,6 @@ components:
               - release
               - release candidate
               - deprecated
-              - archived
         baseline:
           description: |
             Linked APIHUB baseline package for this service, resolved in the workspace by matching the package serviceName metadata to the service `name` field (exact, case-sensitive match).
@@ -830,7 +829,6 @@ components:
               - release
               - release candidate
               - deprecated
-              - archived
         baseline:
           description: |
             Linked APIHUB baseline package for this service, resolved in the workspace by matching the package serviceName metadata to the service `name` field (exact, case-sensitive match).
@@ -933,7 +931,6 @@ components:
               - release
               - release candidate
               - deprecated
-              - archived
         baseline:
           description: |
             Linked APIHUB baseline package for this service, resolved in the workspace by matching the package serviceName metadata to the service `name` field (exact, case-sensitive match).

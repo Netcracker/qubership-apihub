@@ -328,7 +328,6 @@ components:
               - release
               - release candidate
               - deprecated
-              - archived
         baseline:
           description: Baseline package whose serviceName equals the service id.
           type: object
@@ -450,7 +449,6 @@ components:
               - release
               - release candidate
               - deprecated
-              - archived
         baseline:
           description: Baseline package whose serviceName equals the service id.
           type: object
