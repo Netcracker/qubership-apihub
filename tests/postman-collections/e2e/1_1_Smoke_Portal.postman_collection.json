@@ -5299,7 +5299,6 @@
                                             "pm.test(\"List of available statuses is correct\", function () {\r",
                                             "    pm.expect(responseBody).to.include(\"draft\");\r",
                                             "    pm.expect(responseBody).to.include(\"release\");\r",
-                                            "    pm.expect(responseBody).to.include(\"archived\");\r",
                                             "});\r",
                                             "\r",
                                             "setTimeout(() => { }, 300);"
@@ -11643,7 +11642,6 @@
                                             "pm.test(\"List of available statuses is correct\", function () {\r",
                                             "    pm.expect(responseBody).to.include(\"draft\");\r",
                                             "    pm.expect(responseBody).to.include(\"release\");\r",
-                                            "    pm.expect(responseBody).to.include(\"archived\");\r",
                                             "});\r",
                                             "\r",
                                             "setTimeout(() => { }, 300);"
@@ -12552,7 +12550,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": " {\r\n     \"status\": \"archived\",\r\n     \"versionLabels\": [\r\n         \"API_Smoke\"\r\n        ]\r\n }",
+                                    "raw": " {\r\n     \"status\": \"draft\",\r\n     \"versionLabels\": [\r\n         \"API_Smoke\"\r\n        ]\r\n }",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -16178,7 +16176,6 @@
                                     "        'delete_package',\r",
                                     "        'manage_draft_version',\r",
                                     "        'manage_release_version',\r",
-                                    "        'manage_archived_version',\r",
                                     "        'user_access_management',\r",
                                     "        'access_token_management',\r",
                                     "        'document_shareability_management'\r",
@@ -17330,7 +17327,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": " {\r\n    \"searchString\" : \"pet\",\r\n    \"packageIds\": [\"{{package_1}}\"],\r\n    \"statuses\": [\"archived\"]\r\n}",
+                            "raw": " {\r\n    \"searchString\" : \"zzz-no-such-operation-zzz\",\r\n    \"packageIds\": [\"{{package_1}}\"]\r\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
