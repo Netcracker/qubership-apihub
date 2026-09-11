@@ -1917,7 +1917,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"searchString\": \"ExcludeSearch\"\r\n}",
+                                    "raw": "{\r\n    \"searchString\": \"ExcludeSearch\",\r\n    \"packageIds\": [\"{{package_1}}\"]\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -7108,8 +7108,8 @@
                                             "    pm.expect(data.kind).to.eql('workspace');\r",
                                             "});\r",
                                             "\r",
-                                            "pm.test(\"'excludeFromSearch' = true\", function () {\r",
-                                            "    pm.expect(data.excludeFromSearch).to.eql(true);\r",
+                                            "pm.test(\"'excludeFromSearch' = false\", function () {\r",
+                                            "    pm.expect(data.excludeFromSearch).to.eql(false);\r",
                                             "});\r",
                                             "\r",
                                             "pm.environment.set(\"pr_workspace\", data.packageId)"
