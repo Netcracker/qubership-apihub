@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/Netcracker/qubership-api-linter-service/exception"
+	"github.com/Netcracker/qubership-api-linter-service/responder"
 	"github.com/Netcracker/qubership-api-linter-service/secctx"
 	"github.com/Netcracker/qubership-api-linter-service/service"
 	"github.com/Netcracker/qubership-api-linter-service/view"
@@ -29,12 +30,14 @@ type RulesetController interface {
 type rulesetControllerImpl struct {
 	rulesetService       service.RulesetService
 	authorizationService service.AuthorizationService
+	responder            responder.Responder
 }
 
-func NewRulesetController(rulesetService service.RulesetService, authorizationService service.AuthorizationService) RulesetController {
+func NewRulesetController(rulesetService service.RulesetService, authorizationService service.AuthorizationService, resp responder.Responder) RulesetController {
 	return &rulesetControllerImpl{
 		rulesetService:       rulesetService,
 		authorizationService: authorizationService,
+		responder:            resp,
 	}
 }
 
@@ -42,11 +45,11 @@ func (c rulesetControllerImpl) CreateRuleset(w http.ResponseWriter, r *http.Requ
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := c.authorizationService.HasRulesetManagementPermission(ctx)
 	if err != nil {
-		respondWithError(w, "Failed to check permissions", err)
+		c.responder.RespondWithError(w, "Failed to check permissions", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -56,7 +59,7 @@ func (c rulesetControllerImpl) CreateRuleset(w http.ResponseWriter, r *http.Requ
 
 	err = r.ParseMultipartForm(1024 * 1024)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -73,7 +76,7 @@ func (c rulesetControllerImpl) CreateRuleset(w http.ResponseWriter, r *http.Requ
 
 	name := r.FormValue("rulesetName")
 	if name == "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.RequiredParamsMissing,
 			Message: exception.RequiredParamsMissingMsg,
@@ -84,7 +87,7 @@ func (c rulesetControllerImpl) CreateRuleset(w http.ResponseWriter, r *http.Requ
 
 	apiTypeStr := r.FormValue("apiType")
 	if apiTypeStr == "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.RequiredParamsMissing,
 			Message: exception.RequiredParamsMissingMsg,
@@ -96,13 +99,13 @@ func (c rulesetControllerImpl) CreateRuleset(w http.ResponseWriter, r *http.Requ
 	apiType := view.ApiType(apiTypeStr)
 	err = validateApiType(apiType)
 	if err != nil {
-		respondWithError(w, "incorrect api type", err)
+		c.responder.RespondWithError(w, "incorrect api type", err)
 		return
 	}
 
 	linterStr := r.FormValue("linter")
 	if linterStr == "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.RequiredParamsMissing,
 			Message: exception.RequiredParamsMissingMsg,
@@ -113,7 +116,7 @@ func (c rulesetControllerImpl) CreateRuleset(w http.ResponseWriter, r *http.Requ
 	linter := view.Linter(linterStr)
 	err = validateLinter(linter)
 	if err != nil {
-		respondWithError(w, "incorrect linter", err)
+		c.responder.RespondWithError(w, "incorrect linter", err)
 		return
 	}
 
@@ -121,7 +124,7 @@ func (c rulesetControllerImpl) CreateRuleset(w http.ResponseWriter, r *http.Requ
 	sourcesFile, fileHeader, err := r.FormFile("rulesetFile")
 	if err != nil {
 		if err == http.ErrMissingFile {
-			RespondWithCustomError(w, &exception.CustomError{
+			c.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.RequiredParamsMissing,
 				Message: exception.RequiredParamsMissingMsg,
@@ -129,7 +132,7 @@ func (c rulesetControllerImpl) CreateRuleset(w http.ResponseWriter, r *http.Requ
 			})
 			return
 		}
-		RespondWithCustomError(w, &exception.CustomError{
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.IncorrectMultipartFile,
 			Message: exception.IncorrectMultipartFileMsg,
@@ -142,7 +145,7 @@ func (c rulesetControllerImpl) CreateRuleset(w http.ResponseWriter, r *http.Requ
 		log.Debugf("failed to close temporal file: %+v", err)
 	}
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.IncorrectMultipartFile,
 			Message: exception.IncorrectMultipartFileMsg,
@@ -154,7 +157,7 @@ func (c rulesetControllerImpl) CreateRuleset(w http.ResponseWriter, r *http.Requ
 	if strings.EqualFold(encoding, "base64") {
 		len, err := base64.StdEncoding.Decode(data, data)
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			c.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectMultipartFile,
 				Message: exception.IncorrectMultipartFileMsg,
@@ -166,10 +169,10 @@ func (c rulesetControllerImpl) CreateRuleset(w http.ResponseWriter, r *http.Requ
 
 	result, err := c.rulesetService.CreateRuleset(ctx, name, apiType, linter, fileHeader.Filename, data)
 	if err != nil {
-		respondWithError(w, "Failed to create ruleset", err)
+		c.responder.RespondWithError(w, "Failed to create ruleset", err)
 		return
 	}
-	respondWithJson(w, http.StatusCreated, result)
+	c.responder.RespondWithJson(w, http.StatusCreated, result)
 }
 
 func (c rulesetControllerImpl) ActivateRuleset(w http.ResponseWriter, r *http.Request) {
@@ -178,11 +181,11 @@ func (c rulesetControllerImpl) ActivateRuleset(w http.ResponseWriter, r *http.Re
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := c.authorizationService.HasRulesetManagementPermission(ctx)
 	if err != nil {
-		respondWithError(w, "Failed to check permissions", err)
+		c.responder.RespondWithError(w, "Failed to check permissions", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -192,7 +195,7 @@ func (c rulesetControllerImpl) ActivateRuleset(w http.ResponseWriter, r *http.Re
 
 	err = c.rulesetService.ActivateRuleset(ctx, rulesetId)
 	if err != nil {
-		respondWithError(w, "Failed to activate ruleset", err)
+		c.responder.RespondWithError(w, "Failed to activate ruleset", err)
 		return
 	}
 
@@ -203,11 +206,11 @@ func (c rulesetControllerImpl) ListRulesets(w http.ResponseWriter, r *http.Reque
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := c.authorizationService.HasRulesetListPermission(ctx)
 	if err != nil {
-		respondWithError(w, "Failed to check permissions", err)
+		c.responder.RespondWithError(w, "Failed to check permissions", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -219,7 +222,7 @@ func (c rulesetControllerImpl) ListRulesets(w http.ResponseWriter, r *http.Reque
 	if r.URL.Query().Get("page") != "" {
 		page, err = strconv.Atoi(r.URL.Query().Get("page"))
 		if err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			c.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -232,16 +235,16 @@ func (c rulesetControllerImpl) ListRulesets(w http.ResponseWriter, r *http.Reque
 
 	limit, customErr := getLimitQueryParam(r)
 	if customErr != nil {
-		RespondWithCustomError(w, customErr)
+		c.responder.RespondWithCustomError(w, customErr)
 		return
 	}
 
 	result, err := c.rulesetService.ListRulesets(ctx, limit, page)
 	if err != nil {
-		respondWithError(w, "Failed to list rulesets", err)
+		c.responder.RespondWithError(w, "Failed to list rulesets", err)
 		return
 	}
-	respondWithJson(w, http.StatusOK, result)
+	c.responder.RespondWithJson(w, http.StatusOK, result)
 }
 
 func (c rulesetControllerImpl) GetRuleset(w http.ResponseWriter, r *http.Request) {
@@ -250,11 +253,11 @@ func (c rulesetControllerImpl) GetRuleset(w http.ResponseWriter, r *http.Request
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := c.authorizationService.HasRulesetReadPermission(ctx)
 	if err != nil {
-		respondWithError(w, "Failed to check permissions", err)
+		c.responder.RespondWithError(w, "Failed to check permissions", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -264,11 +267,11 @@ func (c rulesetControllerImpl) GetRuleset(w http.ResponseWriter, r *http.Request
 
 	result, err := c.rulesetService.GetRuleset(ctx, rulesetId)
 	if err != nil {
-		respondWithError(w, "Failed to get ruleset", err)
+		c.responder.RespondWithError(w, "Failed to get ruleset", err)
 		return
 	}
 	if result == nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.EntityNotFound,
 			Message: exception.EntityNotFoundMsg,
@@ -276,7 +279,7 @@ func (c rulesetControllerImpl) GetRuleset(w http.ResponseWriter, r *http.Request
 		})
 		return
 	}
-	respondWithJson(w, http.StatusOK, result)
+	c.responder.RespondWithJson(w, http.StatusOK, result)
 }
 
 func (c rulesetControllerImpl) GetRulesetData(w http.ResponseWriter, r *http.Request) {
@@ -288,7 +291,7 @@ func (c rulesetControllerImpl) GetRulesetData(w http.ResponseWriter, r *http.Req
 	}
 
 	if disposition != "attachment" && disposition != "inline" {
-		RespondWithCustomError(w, &exception.CustomError{
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidParameterValue,
 			Message: exception.InvalidParameterValueMsg,
@@ -299,11 +302,11 @@ func (c rulesetControllerImpl) GetRulesetData(w http.ResponseWriter, r *http.Req
 
 	data, filename, err := c.rulesetService.GetRulesetData(r.Context(), rulesetId)
 	if err != nil {
-		respondWithError(w, "Failed to get ruleset data", err)
+		c.responder.RespondWithError(w, "Failed to get ruleset data", err)
 		return
 	}
 	if data == nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.EntityNotFound,
 			Message: exception.EntityNotFoundMsg,
@@ -335,11 +338,11 @@ func (c rulesetControllerImpl) GetRulesetActivationHistory(w http.ResponseWriter
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := c.authorizationService.HasRulesetReadPermission(ctx)
 	if err != nil {
-		respondWithError(w, "Failed to check permissions", err)
+		c.responder.RespondWithError(w, "Failed to check permissions", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -349,7 +352,7 @@ func (c rulesetControllerImpl) GetRulesetActivationHistory(w http.ResponseWriter
 
 	records, err := c.rulesetService.GetActivationHistory(ctx, rulesetId)
 	if err != nil {
-		respondWithError(w, "Failed to get activation history", err)
+		c.responder.RespondWithError(w, "Failed to get activation history", err)
 		return
 	}
 
@@ -358,7 +361,7 @@ func (c rulesetControllerImpl) GetRulesetActivationHistory(w http.ResponseWriter
 		ActivationHistory: records,
 	}
 
-	respondWithJson(w, http.StatusOK, result)
+	c.responder.RespondWithJson(w, http.StatusOK, result)
 }
 
 func (c rulesetControllerImpl) DeleteRuleset(w http.ResponseWriter, r *http.Request) {
@@ -368,11 +371,11 @@ func (c rulesetControllerImpl) DeleteRuleset(w http.ResponseWriter, r *http.Requ
 
 	sufficientPrivileges, err := c.authorizationService.HasRulesetManagementPermission(ctx)
 	if err != nil {
-		respondWithError(w, "Failed to check permissions", err)
+		c.responder.RespondWithError(w, "Failed to check permissions", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		c.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -382,7 +385,7 @@ func (c rulesetControllerImpl) DeleteRuleset(w http.ResponseWriter, r *http.Requ
 
 	err = c.rulesetService.DeleteRuleset(ctx, rulesetId)
 	if err != nil {
-		respondWithError(w, "Failed to delete ruleset", err)
+		c.responder.RespondWithError(w, "Failed to delete ruleset", err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

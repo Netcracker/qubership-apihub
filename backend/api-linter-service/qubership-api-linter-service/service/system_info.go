@@ -33,6 +33,7 @@ type SystemInfoService interface {
 
 	GetListenAddress() string
 	GetAllowedOrigins() []string
+	ShowDebugInResponse() bool
 
 	GetSpectralBinPath() string
 
@@ -98,6 +99,7 @@ func setDefaults() {
 	viper.SetDefault("technicalParameters.listenAddress", ":8080")
 	viper.SetDefault("technicalParameters.apihub.url", "http://localhost:8090")
 	viper.SetDefault("security.allowedOrigins", []string{})
+	viper.SetDefault("security.showDebugInResponse", false)
 	viper.SetDefault("olric.discoveryMode", "local")
 	viper.SetDefault("olric.replicaCount", 1)
 	viper.SetDefault("linters.spectral.workers", 1)
@@ -174,6 +176,10 @@ func (s *systemInfoServiceImpl) GetListenAddress() string {
 
 func (s *systemInfoServiceImpl) GetAllowedOrigins() []string {
 	return s.config.Security.AllowedOrigins
+}
+
+func (s *systemInfoServiceImpl) ShowDebugInResponse() bool {
+	return s.config.Security.ShowDebugInResponse
 }
 
 func (s *systemInfoServiceImpl) GetSpectralBinPath() string {

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Netcracker/qubership-api-linter-service/exception"
+	"github.com/Netcracker/qubership-api-linter-service/responder"
 	"github.com/Netcracker/qubership-api-linter-service/secctx"
 	"github.com/Netcracker/qubership-api-linter-service/service"
 	"github.com/Netcracker/qubership-api-linter-service/view"
@@ -18,13 +19,18 @@ type ValidationController interface {
 	GetBulkValidationStatus(w http.ResponseWriter, r *http.Request)
 }
 
-func NewValidationController(validationService service.ValidationService, authorizationService service.AuthorizationService) ValidationController {
-	return &validationControllerImpl{validationService: validationService, authorizationService: authorizationService}
+func NewValidationController(validationService service.ValidationService, authorizationService service.AuthorizationService, resp responder.Responder) ValidationController {
+	return &validationControllerImpl{
+		validationService:    validationService,
+		authorizationService: authorizationService,
+		responder:            resp,
+	}
 }
 
 type validationControllerImpl struct {
 	validationService    service.ValidationService
 	authorizationService service.AuthorizationService
+	responder            responder.Responder
 }
 
 func (v *validationControllerImpl) ValidateVersion(w http.ResponseWriter, r *http.Request) {
@@ -33,11 +39,11 @@ func (v *validationControllerImpl) ValidateVersion(w http.ResponseWriter, r *htt
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := v.authorizationService.HasPublishPackagePermission(ctx, packageId)
 	if err != nil {
-		respondWithError(w, "Failed to check permissions", err)
+		v.responder.RespondWithError(w, "Failed to check permissions", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -47,7 +53,7 @@ func (v *validationControllerImpl) ValidateVersion(w http.ResponseWriter, r *htt
 
 	version, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -60,7 +66,7 @@ func (v *validationControllerImpl) ValidateVersion(w http.ResponseWriter, r *htt
 	recalculate := r.URL.Query().Get("recalculate") == "true"
 	taskId, err := v.validationService.ValidateVersion(ctx, packageId, version, "", recalculate)
 	if err != nil {
-		respondWithError(w, "Failed to start version validation", err)
+		v.responder.RespondWithError(w, "Failed to start version validation", err)
 		return
 	}
 
@@ -76,7 +82,7 @@ func (v *validationControllerImpl) StartBulkValidation(w http.ResponseWriter, r 
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -87,7 +93,7 @@ func (v *validationControllerImpl) StartBulkValidation(w http.ResponseWriter, r 
 
 	if len(body) > 0 {
 		if err := json.Unmarshal(body, &req); err != nil {
-			RespondWithCustomError(w, &exception.CustomError{
+			v.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.BadRequestBody,
 				Message: exception.BadRequestBodyMsg,
@@ -98,7 +104,7 @@ func (v *validationControllerImpl) StartBulkValidation(w http.ResponseWriter, r 
 	}
 
 	if req.PackageId == "" {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.RequiredParamsMissing,
 			Message: exception.RequiredParamsMissingMsg,
@@ -110,11 +116,11 @@ func (v *validationControllerImpl) StartBulkValidation(w http.ResponseWriter, r 
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := v.authorizationService.HasPublishPackagePermission(ctx, req.PackageId)
 	if err != nil {
-		respondWithError(w, "Failed to check permissions", err)
+		v.responder.RespondWithError(w, "Failed to check permissions", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -124,11 +130,11 @@ func (v *validationControllerImpl) StartBulkValidation(w http.ResponseWriter, r 
 
 	jobId, err := v.validationService.StartBulkValidation(ctx, req)
 	if err != nil {
-		respondWithError(w, "Failed to start bulk validation", err)
+		v.responder.RespondWithError(w, "Failed to start bulk validation", err)
 		return
 	}
 
-	respondWithJson(w, http.StatusAccepted, view.BulkValidationStartResponse{JobId: jobId})
+	v.responder.RespondWithJson(w, http.StatusAccepted, view.BulkValidationStartResponse{JobId: jobId})
 }
 
 func (v *validationControllerImpl) GetBulkValidationStatus(w http.ResponseWriter, r *http.Request) {
@@ -138,9 +144,9 @@ func (v *validationControllerImpl) GetBulkValidationStatus(w http.ResponseWriter
 
 	result, err := v.validationService.GetBulkValidationStatus(ctx, jobId)
 	if err != nil {
-		respondWithError(w, "Failed to get bulk validation status", err)
+		v.responder.RespondWithError(w, "Failed to get bulk validation status", err)
 		return
 	}
 
-	respondWithJson(w, http.StatusOK, result)
+	v.responder.RespondWithJson(w, http.StatusOK, result)
 }

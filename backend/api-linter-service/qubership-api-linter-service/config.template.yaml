@@ -29,6 +29,8 @@ technicalParameters:
 security:
   # Optional; Allows to set extra allowed origins to CORS header. Used for FE debugging. Should be empty on prod envs.; If not set, default value: []; Example: [https://localhost:5137]
   allowedOrigins: []
+  # Optional; Enables the 'debug' field with internal error details in API error responses. Should be disabled on prod envs; If not set, default value: false; Example: false
+  showDebugInResponse: false
 
 # Section with Olric configuration.
 olric:

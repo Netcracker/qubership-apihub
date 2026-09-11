@@ -30,7 +30,8 @@ type ApihubConfig struct {
 }
 
 type SecurityConfig struct {
-	AllowedOrigins []string
+	AllowedOrigins      []string
+	ShowDebugInResponse bool
 }
 type OlricConfig struct {
 	DiscoveryMode string
