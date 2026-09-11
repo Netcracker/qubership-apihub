@@ -114,7 +114,6 @@ export type ExportBuildType = typeof EXPORT_BUILD_TYPES[number]
 export const VERSION_STATUS = {
   RELEASE: 'release',
   DRAFT: 'draft',
-  ARCHIVED: 'archived',
   NONE: '', // non-existent status for changelog builds
 } as const
 

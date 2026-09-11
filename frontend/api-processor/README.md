@@ -66,7 +66,7 @@ const buildResult = await builder.run()
 `BuildConfig` includes (among other fields):
 
 - **packageId / version**: identify the package version being built
-- **status**: `release | draft | archived` (and `''` for some build types)
+- **status**: `release | draft` (and `''` for some build types)
 - **previousVersion / previousVersionPackageId**: previous version for changelog comparisons
 - **buildType**: selects the processing strategy (see below)
 - **files**: list of `{ fileId, ... }` source inputs (YAML/JSON/GraphQL/MD/Proto/etc. depending on supported formats)
