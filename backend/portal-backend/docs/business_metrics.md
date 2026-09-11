@@ -63,13 +63,20 @@ The following table lists constants (values stored in `metric`), their meaning, 
 | `mcp_search_rest_operations_tool_called` | Deprecated REST-only MCP search alias invocation; key is `<MCP client label>\|<group or packageId>`. Useful for tracking remaining legacy clients. |
 | `mcp_get_rest_operation_spec_tool_called` | Deprecated REST-only MCP operation specification alias invocation; key is `<MCP client label>\|<package_id>`. Useful for tracking remaining legacy clients. |
 | `mcp_get_rest_operation_diff_tool_called` | Deprecated REST-only MCP operation diff alias invocation; key is `<MCP client label>\|<package_id>`. Useful for tracking remaining legacy clients. |
-| `mcp_search_operations_tool_called` | MCP search-operations tool invocation; key is `<apiType>\|<MCP client label>\|<group or packageId>`. |
+| `mcp_search_operations_tool_called` | MCP search-operations tool invocation; key is `<apiType>\|<MCP client label>\|<group or packageId>`. `apiType` may also be `ddl` or `mcp` for contract search. |
 | `mcp_get_operation_spec_tool_called` | MCP operation specification tool; key is `<apiType>\|<MCP client label>\|<package_id>`. |
 | `mcp_get_operation_diff_tool_called` | MCP operation diff tool; key is `<apiType>\|<MCP client label>\|<package_id>`. |
 | `mcp_get_document_tool_called` | MCP document tool; key is `<apiType>\|<MCP client label>\|<package_id>`. |
-| `mcp_search_operations_v2_tool_called` | MCP workspace-aware search tool (`search_api_operations_v2`) invocation; key is `<apiType>\|<MCP client label>\|<group or packageId>`. |
+| `mcp_search_operations_v2_tool_called` | MCP workspace-aware search tool (`search_api_operations_v2`) invocation; key is `<apiType>\|<MCP client label>\|<group or packageId>`. `apiType` may also be `ddl` or `mcp` for contract search. |
+| `mcp_list_workspaces_tool_called` | MCP/AI Chat `list_workspaces` tool invocation; key is the fixed label `workspaces`. |
 | `mcp_list_workspace_packages_tool_called` | MCP `list_workspace_packages` tool invocation; key is `workspace`. |
 | `mcp_list_package_versions_tool_called` | MCP `list_package_versions` tool invocation; key is `package_id`. |
+| `mcp_list_api_operations_tool_called` | MCP/AI Chat `list_api_operations` tool invocation; key is `<apiType>\|<MCP client label>\|<package_id>`. |
+| `mcp_list_ddl_entities_tool_called` | MCP `list_ddl_entities` tool invocation; key is `<contractType>\|<MCP client label>\|<package_id>`. |
+| `mcp_get_ddl_entity_tool_called` | MCP `get_ddl_entity` tool invocation; key is `<contractType>\|<MCP client label>\|<package_id>`. |
+| `mcp_get_ddl_entity_diff_tool_called` | MCP `get_ddl_entity_diff` tool invocation; key is `<contractType>\|<MCP client label>\|<package_id>`. |
+| `mcp_list_mcp_contract_entities_tool_called` | MCP `list_mcp_contract_entities` tool invocation; key is `<contractType>\|<MCP client label>\|<package_id>`. |
+| `mcp_get_mcp_contract_entity_tool_called` | MCP `get_mcp_contract_entity` tool invocation; key is `<contractType>\|<MCP client label>\|<package_id>`. |
 | `ai_chat_called` | AI chat messages; aggregated under the key `"chat messages"`; user identity is taken from chat/MCP context when tools run. |
 
 Authoritative constant definitions remain in `metrics/BusinessMetrics.go`.

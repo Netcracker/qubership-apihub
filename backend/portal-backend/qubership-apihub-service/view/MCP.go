@@ -28,6 +28,20 @@ type TransformedOperation struct {
 	MessageId            string `json:"messageId,omitempty"`
 }
 
+// TransformedContractEntity represents a transformed DDL/MCP contract entity for MCP search response
+type TransformedContractEntity struct {
+	EntityId     string `json:"entityId"`
+	ContractType string `json:"contractType"`
+	Kind         string `json:"kind"`
+	PackageId    string `json:"packageId"`
+	PackageName  string `json:"packageName"`
+	Version      string `json:"version"`
+	SchemaName   string `json:"schemaName,omitempty"`
+	TableName    string `json:"tableName,omitempty"`
+	EntityName   string `json:"entityName,omitempty"`
+	McpEndpoint  string `json:"mcpEndpoint,omitempty"`
+}
+
 // ToolMetadata Tool metadata structure
 type ToolMetadata struct {
 	Name              string

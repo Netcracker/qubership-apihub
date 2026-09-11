@@ -157,8 +157,8 @@ sequenceDiagram
 
     note over Svc: append assistant+tool messages;<br/>next LLM round-trip
     Svc->>LLM: ExecuteStreaming(...)
-    OAI-->>Svc: search_api_operations / get_api_operation_specification
-    Svc->>MCP: ExecuteSearchTool / ExecuteGetSpecTool
+    OAI-->>Svc: search_api_operations_v2 / get_api_operation_specification
+    Svc->>MCP: ExecuteSearchToolV2 / ExecuteGetSpecTool
     Svc-->>FE: SSE tool.started / tool.completed * N
 
     OAI-->>Svc: tool_call: save_generated_file

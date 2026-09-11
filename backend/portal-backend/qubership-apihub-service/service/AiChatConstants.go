@@ -25,7 +25,6 @@ const (
 
 	MimeTypeMarkdown = "text/markdown"
 
-	PackagesListCacheTTL       = 24 * time.Hour
 	AutoTitleGenerationTimeout = 30 * time.Second
 
 	// SaveGeneratedFileTimeout is a safety net for one save_generated_file call: a local write plus one row insert.

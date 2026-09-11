@@ -13,7 +13,7 @@ import (
 
 type DDLContractRepository interface {
 	ListDdlEntities(ctx context.Context, packageId, version string, revision int, refPackageId, textFilter string, limit, offset int) ([]*entity.DDLContractEntity, error)
-	GetDdlEntity(ctx context.Context, packageId, version string, revision int, ddlEntityId string) (*entity.DDLContractEntity, []byte, error)
+	GetDdlEntity(ctx context.Context, packageId, version string, revision int, ddlEntityId string, includeData bool) (*entity.DDLContractEntity, []byte, error)
 	GetDdlEntityChanges(ctx context.Context, comparisonId, ddlEntityId, previousVersionDdlEntityId, refPackageId string, severities []string) (*entity.DDLContractComparisonEntity, error)
 	GetDdlEntityChangesSummary(ctx context.Context, comparisonId, ddlEntityId, refPackageId string) (*view.ChangeSummary, error)
 	ListChangedDdlEntities(ctx context.Context, comparisonId, refPackageId string, severities []string, textFilter string, limit, offset int) ([]*entity.DDLContractComparisonEntity, error)
@@ -61,7 +61,7 @@ func (r *ddlContractRepositoryImpl) ListDdlEntities(ctx context.Context, package
 	return result, nil
 }
 
-func (r *ddlContractRepositoryImpl) GetDdlEntity(ctx context.Context, packageId, version string, revision int, ddlEntityId string) (*entity.DDLContractEntity, []byte, error) {
+func (r *ddlContractRepositoryImpl) GetDdlEntity(ctx context.Context, packageId, version string, revision int, ddlEntityId string, includeData bool) (*entity.DDLContractEntity, []byte, error) {
 	conn := r.cp.GetConnection().WithContext(ctx)
 	ent := new(entity.DDLContractEntity)
 	err := conn.Model(ent).
@@ -77,7 +77,7 @@ func (r *ddlContractRepositoryImpl) GetDdlEntity(ctx context.Context, packageId,
 		return nil, nil, err
 	}
 	var data []byte
-	if ent.DataHash != nil {
+	if includeData && ent.DataHash != nil {
 		dataEnt := new(entity.DDLContractDataEntity)
 		err = conn.Model(dataEnt).Where("data_hash = ?", *ent.DataHash).First()
 		if err != nil {
@@ -282,16 +282,16 @@ func (r *ddlContractRepositoryImpl) GlobalSearchForDDL(ctx context.Context, sear
 	// Deprecated: public.fts_ddl_search_text is dual-written but no longer used for global search reads.
 	ddlSearchQuery := `
 select
-	dt.package_id,
-	pg.name,
-	dt.version,
-	dt.revision,
-	pv.status,
-	dt.ddl_entity_id,
-	dt.kind,
-	dt.schema_name,
-	dt.name,
-	parent_package_names(dt.package_id) parent_names
+    dt.package_id,
+    pg.name as package_display_name,
+    dt.version,
+    dt.revision,
+    pv.status,
+    dt.ddl_entity_id,
+    dt.kind,
+    dt.schema_name,
+    dt.name,
+    parent_package_names(dt.package_id) parent_names
 from ddl_tables dt
 			inner join (
 	SELECT DISTINCT ON (rank, package_id, ddl_entity_id)

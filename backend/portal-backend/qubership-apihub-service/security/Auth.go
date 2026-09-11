@@ -30,7 +30,7 @@ var userAuthStrategy union.Union
 var proxyAuthStrategy union.Union
 var jwtAuthStrategy union.Union
 var refreshTokenStrategy auth.Strategy
-var apiKeyStrategy auth.Strategy
+var mcpAuthStrategy union.Union
 
 var keeper jwt.SecretsKeeper
 var defaultJWTValidator JWTValidator
@@ -89,7 +89,7 @@ func SetupGoGuardian(userServiceLocal service.UserService, roleServiceLocal serv
 	jwtAuthStrategy = union.New(bearerTokenStrategy, cookieTokenStrategy)
 	customJwtStrategy := NewCustomJWTStrategy(cache, jwtValidator)
 	proxyAuthStrategy = union.New(customJwtStrategy, cookieTokenStrategy)
-	apiKeyStrategy = apihubApiKeyStrategy
+	mcpAuthStrategy = union.New(apihubApiKeyStrategy, personalAccessTokenStrategy)
 	return nil
 }
 

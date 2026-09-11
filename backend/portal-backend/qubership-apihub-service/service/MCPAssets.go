@@ -196,7 +196,7 @@ func (a *mcpAssets) IDSAuthoringKit(userInput string) (string, error) {
 	}
 	var b strings.Builder
 	b.WriteString("You are now generating an Integration Design Specification (IDS) document for the user.\n")
-	b.WriteString("Follow the rules below precisely. Use the apihub MCP tools (search_api_operations, get_api_operation_specification, get_document) to look up real API specs whenever the rules tell you to. When the document is complete, call the save_generated_file tool with the full markdown content; the tool returns a Markdown link of the form `[<filename>](<url>)` which you MUST embed verbatim in your final reply so the user can download the file.\n\n")
+	b.WriteString("Follow the rules below precisely. Use the apihub MCP tools (search_api_operations_v2, get_api_operation_specification, get_document) to look up real API specs whenever the rules tell you to. When the document is complete, call the save_generated_file tool with the full markdown content; the tool returns a Markdown link of the form `[<filename>](<url>)` which you MUST embed verbatim in your final reply so the user can download the file.\n\n")
 	b.WriteString("## USER REQUEST (verbatim)\n\n")
 	b.WriteString(strings.TrimSpace(userInput))
 	b.WriteString("\n\n## TEMPLATE TO FILL (markdown)\n\nThis is the canonical IDS template. Keep its section structure and headings; populate placeholders according to the rules in the next section.\n\n")

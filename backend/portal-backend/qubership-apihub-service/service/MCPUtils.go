@@ -6,30 +6,10 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/mark3labs/mcp-go/mcp"
 )
-
-// CalculateNearestCompletedReleaseVersion calculates the nearest completed release version
-func CalculateNearestCompletedReleaseVersion() string {
-	t := time.Now()
-	year := t.Year()
-	month := int(t.Month())
-
-	// Calculate current quarter (1..4)
-	currentQuarter := (month-1)/3 + 1
-
-	// Move to previous quarter
-	prevQuarter := currentQuarter - 1
-	if prevQuarter == 0 {
-		prevQuarter = 4
-		year -= 1
-	}
-
-	return fmt.Sprintf("%d.%d", year, prevQuarter)
-}
 
 // convertPackagesToMCP filters and converts Packages to PackagesMCP
 // Removes packages with packageId containing ".RUNENV." and excludes defaultRole, permissions, releaseVersionPattern, createdAt, IsFavorite, ImageUrl, DeletedAt fields
@@ -102,24 +82,26 @@ func projectPublishedVersionsForMCP(versions []view.PublishedVersionListView) []
 	return projected
 }
 
-func requireMCPApiType(req mcp.CallToolRequest, allowed ...view.ApiType) (string, error) {
+// requireMCPTypeParam validates the "apiType" request parameter against a set of allowed string values.
+// It underlies requireMCPApiType and is used directly by tools that also accept contract types (ddl, mcp),
+// which are untyped string constants rather than view.ApiType values.
+func requireMCPTypeParam(req mcp.CallToolRequest, allowed ...string) (string, error) {
 	apiType, err := req.RequireString("apiType")
 	if err != nil {
 		return "", err
 	}
-	if !isMCPApiTypeAllowed(apiType, allowed...) {
+	if !slices.Contains(allowed, apiType) {
 		return "", fmt.Errorf("apiType must be one of: %v", allowed)
 	}
 	return apiType, nil
 }
 
-func isMCPApiTypeAllowed(apiType string, allowed ...view.ApiType) bool {
-	for _, allowedApiType := range allowed {
-		if apiType == string(allowedApiType) {
-			return true
-		}
+func requireMCPApiType(req mcp.CallToolRequest, allowed ...view.ApiType) (string, error) {
+	allowedStrs := make([]string, len(allowed))
+	for i, allowedApiType := range allowed {
+		allowedStrs[i] = string(allowedApiType)
 	}
-	return false
+	return requireMCPTypeParam(req, allowedStrs...)
 }
 
 // transformOperations projects generic operation search results to the compact MCP response shape.
@@ -179,6 +161,46 @@ func transformCommonOperation(search view.CommonOperationSearchResult, operation
 	}
 }
 
+// transformContractSearchResults projects generic DDL/MCP contract search results to the compact MCP response shape.
+func transformContractSearchResults(items []interface{}) []view.TransformedContractEntity {
+	transformed := make([]view.TransformedContractEntity, 0, len(items))
+	for _, item := range items {
+		if e, ok := transformContractEntity(item); ok {
+			transformed = append(transformed, e)
+		}
+	}
+	return transformed
+}
+
+func transformContractEntity(item interface{}) (view.TransformedContractEntity, bool) {
+	switch e := item.(type) {
+	case view.DdlContractSearchResult:
+		return view.TransformedContractEntity{
+			EntityId:     e.EntityId,
+			ContractType: view.ContractTypeDdl,
+			Kind:         e.Kind,
+			PackageId:    e.PackageId,
+			PackageName:  e.PackageName,
+			Version:      e.Version,
+			SchemaName:   e.SchemaName,
+			TableName:    e.EntityName,
+		}, true
+	case view.McpEntitySearchResult:
+		return view.TransformedContractEntity{
+			EntityId:     e.EntityId,
+			ContractType: view.ContractTypeMcp,
+			Kind:         e.Kind,
+			PackageId:    e.PackageId,
+			PackageName:  e.PackageName,
+			Version:      e.Version,
+			EntityName:   e.Name,
+			McpEndpoint:  e.McpEndpoint,
+		}, true
+	default:
+		return view.TransformedContractEntity{}, false
+	}
+}
+
 func extractOperationData(operationViewInterface interface{}) (interface{}, error) {
 	ptr, ok := operationViewInterface.(*interface{})
 	if !ok || ptr == nil {
@@ -210,7 +232,10 @@ func makeMCPDocumentPayload(apiType string, document *view.PublishedContent, doc
 }
 
 func isDocumentTypeAllowedForAPIType(documentType string, apiType string) bool {
-	return slices.Contains(view.GetDocumentTypesForApiType(apiType), documentType)
+	if slices.Contains(view.GetDocumentTypesForApiType(apiType), documentType) {
+		return true
+	}
+	return slices.Contains(view.GetDocumentTypesForContractType(apiType), documentType)
 }
 
 func makeMCPDocumentData(data []byte) any {

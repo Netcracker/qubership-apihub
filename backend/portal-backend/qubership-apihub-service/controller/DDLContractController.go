@@ -119,7 +119,7 @@ func (c *ddlContractControllerImpl) GetDdlEntity(w http.ResponseWriter, r *http.
 		return
 	}
 
-	result, svcErr := c.ddlService.GetDdlEntity(ctx, packageId, versionName, ddlEntityId)
+	result, svcErr := c.ddlService.GetDdlEntity(ctx, packageId, versionName, ddlEntityId, true)
 	if svcErr != nil {
 		handlePkgRedirectOrRespondWithError(w, r, c.ptHandler, packageId, "Failed to get DDL entity", svcErr)
 		return

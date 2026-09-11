@@ -128,7 +128,7 @@ func (c *mcpContractControllerImpl) GetMcpEntity(w http.ResponseWriter, r *http.
 		return
 	}
 
-	result, svcErr := c.mcpContractService.GetMcpEntity(ctx, packageId, versionName, mcpEntityId)
+	result, svcErr := c.mcpContractService.GetMcpEntity(ctx, packageId, versionName, mcpEntityId, true)
 	if svcErr != nil {
 		handlePkgRedirectOrRespondWithError(w, r, c.ptHandler, packageId, "Failed to get MCP entity", svcErr)
 		return

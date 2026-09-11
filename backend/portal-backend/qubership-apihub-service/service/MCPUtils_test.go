@@ -60,6 +60,54 @@ func TestRequireMCPApiType(t *testing.T) {
 	}
 }
 
+func TestRequireMCPTypeParam(t *testing.T) {
+	tests := []struct {
+		name        string
+		arguments   map[string]any
+		allowed     []string
+		expected    string
+		expectedErr string
+	}{
+		{
+			name:      "accepts ddl contract type",
+			arguments: map[string]any{"apiType": "ddl"},
+			allowed:   []string{string(view.RestApiType), view.ContractTypeDdl, view.ContractTypeMcp},
+			expected:  "ddl",
+		},
+		{
+			name:      "accepts mcp contract type",
+			arguments: map[string]any{"apiType": "mcp"},
+			allowed:   []string{string(view.RestApiType), view.ContractTypeDdl, view.ContractTypeMcp},
+			expected:  "mcp",
+		},
+		{
+			name:        "rejects unsupported type",
+			arguments:   map[string]any{"apiType": "protobuf"},
+			allowed:     []string{string(view.RestApiType), view.ContractTypeDdl, view.ContractTypeMcp},
+			expectedErr: "apiType must be one of: [rest ddl mcp]",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := mcp.CallToolRequest{
+				Params: mcp.CallToolParams{
+					Arguments: tt.arguments,
+				},
+			}
+
+			actual, err := requireMCPTypeParam(req, tt.allowed...)
+			if tt.expectedErr != "" {
+				require.EqualError(t, err, tt.expectedErr)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
 func TestTransformOperations(t *testing.T) {
 	operations := []interface{}{
 		view.RestOperationSearchResult{
@@ -170,6 +218,57 @@ func TestIsDocumentTypeAllowedForAPIType(t *testing.T) {
 	require.True(t, isDocumentTypeAllowedForAPIType(view.Asyncapi30Type, string(view.AsyncapiApiType)))
 	require.False(t, isDocumentTypeAllowedForAPIType(view.GraphQLSchemaType, string(view.RestApiType)))
 	require.False(t, isDocumentTypeAllowedForAPIType(view.Protobuf3Type, string(view.AsyncapiApiType)))
+	require.True(t, isDocumentTypeAllowedForAPIType(view.DDLType, view.ContractTypeDdl))
+	require.True(t, isDocumentTypeAllowedForAPIType(view.MCPToolsType, view.ContractTypeMcp))
+	require.False(t, isDocumentTypeAllowedForAPIType(view.DDLType, string(view.RestApiType)))
+}
+
+func TestTransformContractSearchResults(t *testing.T) {
+	items := []interface{}{
+		view.DdlContractSearchResult{
+			PackageId:   "pkg.ddl",
+			PackageName: "DDL Package",
+			Version:     "2026.1",
+			EntityId:    "ddl-entity",
+			Kind:        view.DdlKindTable,
+			SchemaName:  "public",
+			EntityName:  "customers",
+		},
+		view.McpEntitySearchResult{
+			PackageId:   "pkg.mcp",
+			PackageName: "MCP Package",
+			Version:     "2026.1",
+			EntityId:    "mcp-entity",
+			Kind:        view.McpKindTool,
+			Name:        "create_customer",
+			McpEndpoint: "/mcp",
+		},
+		view.CommonOperationSearchResult{PackageId: "pkg.unrelated"},
+	}
+
+	actual := transformContractSearchResults(items)
+
+	require.Len(t, actual, 2)
+	require.Equal(t, view.TransformedContractEntity{
+		EntityId:     "ddl-entity",
+		ContractType: view.ContractTypeDdl,
+		Kind:         view.DdlKindTable,
+		PackageId:    "pkg.ddl",
+		PackageName:  "DDL Package",
+		Version:      "2026.1",
+		SchemaName:   "public",
+		TableName:    "customers",
+	}, actual[0])
+	require.Equal(t, view.TransformedContractEntity{
+		EntityId:     "mcp-entity",
+		ContractType: view.ContractTypeMcp,
+		Kind:         view.McpKindTool,
+		PackageId:    "pkg.mcp",
+		PackageName:  "MCP Package",
+		Version:      "2026.1",
+		EntityName:   "create_customer",
+		McpEndpoint:  "/mcp",
+	}, actual[1])
 }
 
 func TestMakeMCPDocumentPayloadReturnsDocumentData(t *testing.T) {
@@ -238,9 +337,19 @@ func TestGetToolMetadataUsesGenericToolNames(t *testing.T) {
 
 	require.ElementsMatch(t, []string{
 		ToolNameSearchOperations,
+		ToolNameSearchOperationsV2,
 		ToolNameGetOperationSpec,
 		ToolNameGetOperationDiff,
 		ToolNameGetDocument,
+		ToolNameListWorkspaces,
+		ToolNameListWorkspacePackages,
+		ToolNameListPackageVersions,
+		ToolNameListApiOperations,
+		ToolNameListDdlEntities,
+		ToolNameGetDdlEntity,
+		ToolNameGetDdlEntityDiff,
+		ToolNameListMcpContractEntities,
+		ToolNameGetMcpContractEntity,
 	}, names)
 }
 
@@ -251,11 +360,15 @@ func TestGetMCPServerToolMetadataIncludesV2AndNavigationTools(t *testing.T) {
 		names = append(names, item.Name)
 	}
 
+	require.Contains(t, names, ToolNameListWorkspaces)
 	require.Contains(t, names, ToolNameSearchOperationsV2)
 	require.Contains(t, names, ToolNameListWorkspacePackages)
 	require.Contains(t, names, ToolNameListPackageVersions)
-	// getToolMetadata (used by AI-chat) must stay unchanged: only the MCP server surface grows.
-	require.NotContains(t, getToolMetadataNames(t), ToolNameSearchOperationsV2)
+	// Workspace-aware search and navigation tools are now shared with AI Chat, not MCP-server-only.
+	require.Contains(t, getToolMetadataNames(t), ToolNameListWorkspaces)
+	require.Contains(t, getToolMetadataNames(t), ToolNameSearchOperationsV2)
+	require.Contains(t, getToolMetadataNames(t), ToolNameListWorkspacePackages)
+	require.Contains(t, getToolMetadataNames(t), ToolNameListPackageVersions)
 }
 
 func getToolMetadataNames(t *testing.T) []string {
@@ -340,18 +453,28 @@ func TestConvertPackagesToWorkspacesMCP(t *testing.T) {
 	}, result.Workspaces)
 }
 
+func TestValidateMCPGroup(t *testing.T) {
+	require.NoError(t, validateMCPGroup("", "SECRET"))
+	require.NoError(t, validateMCPGroup("SECRET", "SECRET"))
+	require.NoError(t, validateMCPGroup("SECRET.pkg2", "SECRET"))
+	require.Error(t, validateMCPGroup("OTHER.pkg", "SECRET"))
+	require.Error(t, validateMCPGroup("SECRETARY", "SECRET"))
+}
+
+func TestResolveMCPSearchPackageIds(t *testing.T) {
+	require.Equal(t, []string{"SECRET"}, resolveMCPSearchPackageIds("", "SECRET"))
+	require.Equal(t, []string{"SECRET.pkg2"}, resolveMCPSearchPackageIds("SECRET.pkg2", "SECRET"))
+}
+
+func TestResolveMCPSearchVersions(t *testing.T) {
+	require.Empty(t, resolveMCPSearchVersions(""))
+	require.Equal(t, []string{"linter@2"}, resolveMCPSearchVersions("linter@2"))
+}
+
 func TestGetPackagesListFailsClosedWithoutSecurityContext(t *testing.T) {
 	m := mcpService{}
 
 	_, err := m.GetPackagesList(context.Background(), "WORKSPACE")
-
-	require.Error(t, err)
-}
-
-func TestGetWorkspacesListFailsClosedWithoutSecurityContext(t *testing.T) {
-	m := mcpService{}
-
-	_, err := m.GetWorkspacesList(context.Background())
 
 	require.Error(t, err)
 }

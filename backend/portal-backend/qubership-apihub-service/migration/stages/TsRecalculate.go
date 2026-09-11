@@ -17,7 +17,7 @@ func (d OpsMigration) StageTSRecalculate() error {
 	INSERT INTO fts_operation_search_text (package_id, version, revision, operation_id, api_type, status, search_data_hash, data_vector)
 		SELECT tmp.package_id, tmp.version, tmp.revision, tmp.operation_id,
 			tmp.api_type, tmp.status, tmp.search_data_hash,
-			to_tsvector(convert_from(tmp.search_text_data, 'UTF-8') || ' ' || coalesce(tmp.title, ''))
+			to_tsvector(convert_from(tmp.search_text_data, 'UTF-8'))
 		FROM migration."fts_operation_search_text_tmp_%s" tmp
 	ON CONFLICT (package_id, version, revision, operation_id) DO UPDATE
 		SET search_data_hash = EXCLUDED.search_data_hash,
@@ -41,7 +41,7 @@ func (d OpsMigration) StageTSRecalculate() error {
 	INSERT INTO global_search.fts_operation_search_text (workspace_id, package_id, version, revision, operation_id, api_type, status, search_data_hash, data_vector)
 		SELECT split_part(tmp.package_id, '.', 1), tmp.package_id, tmp.version, tmp.revision, tmp.operation_id,
 			tmp.api_type, tmp.status, tmp.search_data_hash,
-			to_tsvector(convert_from(tmp.search_text_data, 'UTF-8') || ' ' || coalesce(tmp.title, ''))
+			to_tsvector(convert_from(tmp.search_text_data, 'UTF-8'))
 		FROM migration."fts_operation_search_text_tmp_%s" tmp
 	ON CONFLICT (workspace_id, package_id, version, revision, operation_id) DO UPDATE
 		SET search_data_hash = EXCLUDED.search_data_hash,
@@ -60,7 +60,7 @@ func (d OpsMigration) StageTSRecalculate() error {
 	INSERT INTO fts_mcp_search_text (package_id, version, revision, mcp_entity_id, status, kind, search_data_hash, data_vector)
 		SELECT tmp.package_id, tmp.version, tmp.revision, tmp.mcp_entity_id,
 			tmp.status, tmp.kind, tmp.search_data_hash,
-			to_tsvector(convert_from(tmp.search_text_data, 'UTF-8') || ' ')
+			to_tsvector(convert_from(tmp.search_text_data, 'UTF-8'))
 		FROM migration."fts_mcp_search_text_tmp_%s" tmp
 	ON CONFLICT (package_id, version, revision, mcp_entity_id) DO UPDATE
 		SET search_data_hash = EXCLUDED.search_data_hash,
@@ -76,7 +76,7 @@ func (d OpsMigration) StageTSRecalculate() error {
 	INSERT INTO global_search.fts_mcp_search_text (workspace_id, package_id, version, revision, mcp_entity_id, status, kind, search_data_hash, data_vector)
 		SELECT split_part(tmp.package_id, '.', 1), tmp.package_id, tmp.version, tmp.revision, tmp.mcp_entity_id,
 			tmp.status, tmp.kind, tmp.search_data_hash,
-			to_tsvector(convert_from(tmp.search_text_data, 'UTF-8') || ' ')
+			to_tsvector(convert_from(tmp.search_text_data, 'UTF-8'))
 		FROM migration."fts_mcp_search_text_tmp_%s" tmp
 	ON CONFLICT (workspace_id, package_id, version, revision, mcp_entity_id) DO UPDATE
 		SET search_data_hash = EXCLUDED.search_data_hash,

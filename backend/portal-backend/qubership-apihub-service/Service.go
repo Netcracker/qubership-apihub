@@ -298,7 +298,7 @@ func main() {
 	ddlContractService := ddlContractServiceForVersion
 	mcpContractService := mcpContractServiceForVersion
 
-	mcpService := service.NewMCPService(systemInfoService, operationService, packageService, versionService, monitoringService, roleService)
+	mcpService := service.NewMCPService(systemInfoService, operationService, packageService, versionService, monitoringService, roleService, ddlContractService, mcpContractService)
 
 	ephemeralFileRepository := repository.NewEphemeralFileRepositoryPG(cp)
 	ephemeralFileService := service.NewEphemeralFileService(systemInfoService, ephemeralFileRepository)

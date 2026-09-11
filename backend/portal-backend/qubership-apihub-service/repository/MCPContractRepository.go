@@ -12,7 +12,7 @@ import (
 
 type MCPContractRepository interface {
 	ListMcpEntities(ctx context.Context, packageId, version string, revision int, kind, mcpEndpoint, refPackageId, textFilter string, limit, offset int) ([]*entity.MCPContractEntity, error)
-	GetMcpEntity(ctx context.Context, packageId, version string, revision int, mcpEntityId string) (*entity.MCPContractEntity, []byte, error)
+	GetMcpEntity(ctx context.Context, packageId, version string, revision int, mcpEntityId string, includeData bool) (*entity.MCPContractEntity, []byte, error)
 	GetEntitiesCount(ctx context.Context, packageId, version string, revision int) ([]entity.MCPContractKindCountEntity, error)
 	GetEntitiesCountByEndpoint(ctx context.Context, packageId, version string, revision int) ([]entity.MCPContractEndpointCountEntity, error)
 	GlobalSearchForMCP(ctx context.Context, searchQuery *entity.GlobalContractSearchQuery) ([]entity.MCPContractSearchResult, error)
@@ -62,7 +62,7 @@ func (r *mcpContractRepositoryImpl) ListMcpEntities(ctx context.Context, package
 	return result, nil
 }
 
-func (r *mcpContractRepositoryImpl) GetMcpEntity(ctx context.Context, packageId, version string, revision int, mcpEntityId string) (*entity.MCPContractEntity, []byte, error) {
+func (r *mcpContractRepositoryImpl) GetMcpEntity(ctx context.Context, packageId, version string, revision int, mcpEntityId string, includeData bool) (*entity.MCPContractEntity, []byte, error) {
 	conn := r.cp.GetConnection().WithContext(ctx)
 	ent := new(entity.MCPContractEntity)
 	err := conn.Model(ent).
@@ -78,7 +78,7 @@ func (r *mcpContractRepositoryImpl) GetMcpEntity(ctx context.Context, packageId,
 		return nil, nil, err
 	}
 	var data []byte
-	if ent.DataHash != nil {
+	if includeData && ent.DataHash != nil {
 		dataEnt := new(entity.MCPContractDataEntity)
 		err = conn.Model(dataEnt).Where("data_hash = ?", *ent.DataHash).First()
 		if err != nil {
