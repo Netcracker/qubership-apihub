@@ -66,6 +66,26 @@ func convertPackagesToMCP(packages *view.Packages) *view.PackagesMCP {
 	return &view.PackagesMCP{Packages: converted}
 }
 
+// convertPackagesToWorkspacesMCP converts Packages (kind=workspace) to WorkspacesListMCP
+func convertPackagesToWorkspacesMCP(packages *view.Packages) *view.WorkspacesListMCP {
+	if packages == nil {
+		return &view.WorkspacesListMCP{Workspaces: []view.WorkspaceInfoMCP{}}
+	}
+
+	converted := make([]view.WorkspaceInfoMCP, len(packages.Packages))
+	for i, pkg := range packages.Packages {
+		converted[i] = view.WorkspaceInfoMCP{
+			Id:          pkg.Id,
+			Alias:       pkg.Alias,
+			Kind:        pkg.Kind,
+			Name:        pkg.Name,
+			Description: pkg.Description,
+		}
+	}
+
+	return &view.WorkspacesListMCP{Workspaces: converted}
+}
+
 func projectPublishedVersionsForMCP(versions []view.PublishedVersionListView) []view.PublishedVersionListMCPView {
 	if len(versions) == 0 {
 		return nil

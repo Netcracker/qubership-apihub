@@ -67,6 +67,9 @@ The following table lists constants (values stored in `metric`), their meaning, 
 | `mcp_get_operation_spec_tool_called` | MCP operation specification tool; key is `<apiType>\|<MCP client label>\|<package_id>`. |
 | `mcp_get_operation_diff_tool_called` | MCP operation diff tool; key is `<apiType>\|<MCP client label>\|<package_id>`. |
 | `mcp_get_document_tool_called` | MCP document tool; key is `<apiType>\|<MCP client label>\|<package_id>`. |
+| `mcp_search_operations_v2_tool_called` | MCP workspace-aware search tool (`search_api_operations_v2`) invocation; key is `<apiType>\|<MCP client label>\|<group or packageId>`. |
+| `mcp_list_workspace_packages_tool_called` | MCP `list_workspace_packages` tool invocation; key is `workspace`. |
+| `mcp_list_package_versions_tool_called` | MCP `list_package_versions` tool invocation; key is `package_id`. |
 | `ai_chat_called` | AI chat messages; aggregated under the key `"chat messages"`; user identity is taken from chat/MCP context when tools run. |
 
 Authoritative constant definitions remain in `metrics/BusinessMetrics.go`.

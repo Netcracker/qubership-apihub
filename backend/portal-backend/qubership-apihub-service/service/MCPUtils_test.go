@@ -1,9 +1,11 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/iancoleman/orderedmap"
 	"github.com/mark3labs/mcp-go/mcp"
@@ -240,4 +242,116 @@ func TestGetToolMetadataUsesGenericToolNames(t *testing.T) {
 		ToolNameGetOperationDiff,
 		ToolNameGetDocument,
 	}, names)
+}
+
+func TestGetMCPServerToolMetadataIncludesV2AndNavigationTools(t *testing.T) {
+	metadata := getMCPServerToolMetadata()
+	names := make([]string, 0, len(metadata))
+	for _, item := range metadata {
+		names = append(names, item.Name)
+	}
+
+	require.Contains(t, names, ToolNameSearchOperationsV2)
+	require.Contains(t, names, ToolNameListWorkspacePackages)
+	require.Contains(t, names, ToolNameListPackageVersions)
+	// getToolMetadata (used by AI-chat) must stay unchanged: only the MCP server surface grows.
+	require.NotContains(t, getToolMetadataNames(t), ToolNameSearchOperationsV2)
+}
+
+func getToolMetadataNames(t *testing.T) []string {
+	t.Helper()
+	metadata := getToolMetadata()
+	names := make([]string, 0, len(metadata))
+	for _, item := range metadata {
+		names = append(names, item.Name)
+	}
+	return names
+}
+
+func TestExecuteSearchToolV2RequiresWorkspace(t *testing.T) {
+	m := mcpService{}
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Arguments: map[string]any{"apiType": "rest", "query": "pets"},
+		},
+	}
+
+	result, err := m.ExecuteSearchToolV2(context.Background(), req)
+
+	require.NoError(t, err)
+	require.True(t, result.IsError)
+	text, ok := result.Content[0].(mcp.TextContent)
+	require.True(t, ok)
+	require.Contains(t, text.Text, "workspace")
+}
+
+// fakeRoleServiceForVersionsTest embeds the (nil) RoleService interface and overrides only
+// HasRequiredPermissions, since ExecuteListPackageVersionsTool checks permissions before
+// touching any other dependency.
+type fakeRoleServiceForVersionsTest struct {
+	RoleService
+	hasPermission bool
+}
+
+func (f fakeRoleServiceForVersionsTest) HasRequiredPermissions(ctx context.Context, packageId string, requiredPermissions ...view.RolePermission) (bool, error) {
+	return f.hasPermission, nil
+}
+
+func TestExecuteListPackageVersionsToolDeniesWithoutReadPermission(t *testing.T) {
+	m := mcpService{roleService: fakeRoleServiceForVersionsTest{hasPermission: false}}
+	req := mcp.CallToolRequest{
+		Params: mcp.CallToolParams{
+			Arguments: map[string]any{"packageId": "PKG.private"},
+		},
+	}
+
+	result, err := m.ExecuteListPackageVersionsTool(context.Background(), req)
+
+	require.NoError(t, err)
+	require.True(t, result.IsError)
+	text, ok := result.Content[0].(mcp.TextContent)
+	require.True(t, ok)
+	require.Contains(t, text.Text, "privileges")
+}
+
+func TestConvertPackagesToWorkspacesMCP(t *testing.T) {
+	packages := &view.Packages{
+		Packages: []view.PackagesInfo{
+			{
+				Id:          "ws1",
+				Alias:       "ws1-alias",
+				Kind:        entity.KIND_WORKSPACE,
+				Name:        "Workspace One",
+				Description: "First workspace",
+			},
+		},
+	}
+
+	result := convertPackagesToWorkspacesMCP(packages)
+
+	require.Equal(t, []view.WorkspaceInfoMCP{
+		{
+			Id:          "ws1",
+			Alias:       "ws1-alias",
+			Kind:        entity.KIND_WORKSPACE,
+			Name:        "Workspace One",
+			Description: "First workspace",
+		},
+	}, result.Workspaces)
+}
+
+func TestGetPackagesListFailsClosedWithoutSecurityContext(t *testing.T) {
+	m := mcpService{}
+
+	_, err := m.GetPackagesList(context.Background(), "WORKSPACE")
+
+	require.Error(t, err)
+}
+
+func TestGetWorkspacesListFailsClosedWithoutSecurityContext(t *testing.T) {
+	m := mcpService{}
+
+	_, err := m.GetWorkspacesList(context.Background())
+
+	require.Error(t, err)
 }

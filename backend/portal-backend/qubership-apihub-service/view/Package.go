@@ -72,6 +72,18 @@ type PackagesInfoMCP struct {
 	Versions                  []PublishedVersionListMCPView `json:"versions,omitempty"`
 }
 
+type WorkspacesListMCP struct {
+	Workspaces []WorkspaceInfoMCP `json:"workspaces"`
+}
+
+type WorkspaceInfoMCP struct {
+	Id          string `json:"workspaceId"`
+	Alias       string `json:"alias"`
+	Kind        string `json:"kind"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+}
+
 type ParentPackageInfo struct {
 	Id                string `json:"packageId"`
 	Alias             string `json:"alias"`

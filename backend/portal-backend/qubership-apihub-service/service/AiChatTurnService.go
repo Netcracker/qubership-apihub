@@ -16,6 +16,7 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/google/uuid"
@@ -150,10 +151,17 @@ type aiChatTurnServiceImpl struct {
 	mcpTools       []client.LLMTool
 
 	packagesListCache struct {
-		mu        sync.RWMutex
-		data      string
-		expiresAt time.Time
+		mu      sync.RWMutex
+		entries map[string]packagesListCacheEntry
 	}
+}
+
+// packagesListCacheEntry holds one user's cached api-packages-list resource text.
+// The cache is keyed per caller (see buildSystemMessage) so the AI-chat system prompt
+// never leaks one user's package visibility to another user's chat session.
+type packagesListCacheEntry struct {
+	data      string
+	expiresAt time.Time
 }
 
 func NewAiChatTurnService(
@@ -790,23 +798,25 @@ func (s *aiChatTurnServiceImpl) buildSystemMessage(ctx context.Context) string {
 		return systemMessageBaseContent
 	}
 
-	s.packagesListCache.mu.RLock()
-	cachedData := s.packagesListCache.data
-	cacheExpired := time.Now().After(s.packagesListCache.expiresAt)
-	s.packagesListCache.mu.RUnlock()
+	cacheKey := secctx.GetUserId(ctx)
 
-	if cachedData != "" && !cacheExpired {
-		log.Debugf("Using cached api-packages-list resource (expires at: %v)", s.packagesListCache.expiresAt)
-		return systemMessageBaseContent + "\n\nCURRENT WORKSPACE PACKAGES (from api-packages-list resource):\n" + cachedData
+	s.packagesListCache.mu.RLock()
+	entry, cached := s.packagesListCache.entries[cacheKey]
+	s.packagesListCache.mu.RUnlock()
+	cacheExpired := !cached || time.Now().After(entry.expiresAt)
+
+	if cached && entry.data != "" && !cacheExpired {
+		log.Debugf("Using cached api-packages-list resource (expires at: %v)", entry.expiresAt)
+		return systemMessageBaseContent + "\n\nCURRENT WORKSPACE PACKAGES (from api-packages-list resource):\n" + entry.data
 	}
 
 	log.Debugf("Cache expired or empty, fetching fresh api-packages-list resource")
 	resourceContents, err := s.mcpService.GetPackagesList(ctx, mcpWorkspace)
 	if err != nil {
 		log.Warnf("Failed to read api-packages-list resource: %v", err)
-		if cachedData != "" {
+		if cached && entry.data != "" {
 			log.Debugf("Using expired cache as fallback")
-			return systemMessageBaseContent + "\n\nCURRENT WORKSPACE PACKAGES (from api-packages-list resource):\n" + cachedData
+			return systemMessageBaseContent + "\n\nCURRENT WORKSPACE PACKAGES (from api-packages-list resource):\n" + entry.data
 		}
 		return systemMessageBaseContent
 	}
@@ -819,11 +829,14 @@ func (s *aiChatTurnServiceImpl) buildSystemMessage(ctx context.Context) string {
 	}
 
 	if resourceData != "" {
+		newEntry := packagesListCacheEntry{data: resourceData, expiresAt: time.Now().Add(PackagesListCacheTTL)}
 		s.packagesListCache.mu.Lock()
-		s.packagesListCache.data = resourceData
-		s.packagesListCache.expiresAt = time.Now().Add(PackagesListCacheTTL)
+		if s.packagesListCache.entries == nil {
+			s.packagesListCache.entries = make(map[string]packagesListCacheEntry)
+		}
+		s.packagesListCache.entries[cacheKey] = newEntry
 		s.packagesListCache.mu.Unlock()
-		log.Debugf("Updated api-packages-list cache (expires at: %v)", s.packagesListCache.expiresAt)
+		log.Debugf("Updated api-packages-list cache (expires at: %v)", newEntry.expiresAt)
 		return systemMessageBaseContent + "\n\nCURRENT WORKSPACE PACKAGES (from api-packages-list resource):\n" + resourceData
 	}
 	return systemMessageBaseContent

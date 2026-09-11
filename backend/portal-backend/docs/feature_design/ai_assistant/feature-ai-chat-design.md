@@ -249,7 +249,9 @@ ContextWindowSize() → int
 
 `LLMRequest` carries:
 
-* `SystemMessage` — static instructions + optional `api-packages-list` injection;
+* `SystemMessage` — static instructions + optional `api-packages-list` injection, cached per caller
+  (keyed by user ID or API key ID) so the system prompt never leaks one user's package visibility
+  into another user's chat;
 * `Messages[]` — full conversation for this round-trip (user / assistant / tool roles);
 * `Tools[]` — MCP tool descriptors for the model;
 * `CorrelationID` — forwarded as `X-Request-ID` to the OpenAI API for observability.
