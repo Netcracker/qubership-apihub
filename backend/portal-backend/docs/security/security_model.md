@@ -158,7 +158,6 @@ Available permissions:
 * delete group/package
 * manage version in draft status
 * manage version in release status
-* manage version in archived status
 * user access management
 * access token management
 

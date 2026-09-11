@@ -10,7 +10,6 @@ const (
 	DeletePackagePermission          RolePermission = "delete_package"
 	ManageDraftVersionPermission     RolePermission = "manage_draft_version"
 	ManageReleaseVersionPermission   RolePermission = "manage_release_version"
-	ManageArchivedVersionPermission  RolePermission = "manage_archived_version"
 	UserAccessManagementPermission   RolePermission = "user_access_management"
 	AccessTokenManagementPermission             RolePermission = "access_token_management"
 	DocumentShareabilityManagementPermission    RolePermission = "document_shareability_management"
@@ -23,7 +22,6 @@ func GetAllRolePermissions() []RolePermission {
 		DeletePackagePermission,
 		ManageDraftVersionPermission,
 		ManageReleaseVersionPermission,
-		ManageArchivedVersionPermission,
 		UserAccessManagementPermission,
 		AccessTokenManagementPermission,
 		DocumentShareabilityManagementPermission,
@@ -46,8 +44,6 @@ func (r RolePermission) Name() string {
 		return "manage version in draft status"
 	case ManageReleaseVersionPermission:
 		return "manage version in release status"
-	case ManageArchivedVersionPermission:
-		return "manage version in archived status"
 	case UserAccessManagementPermission:
 		return "user access management"
 	case AccessTokenManagementPermission:
@@ -71,8 +67,6 @@ func ParseRolePermission(permissionId string) (RolePermission, error) {
 		return ManageDraftVersionPermission, nil
 	case "manage_release_version":
 		return ManageReleaseVersionPermission, nil
-	case "manage_archived_version":
-		return ManageArchivedVersionPermission, nil
 	case "user_access_management":
 		return UserAccessManagementPermission, nil
 	case "access_token_management":

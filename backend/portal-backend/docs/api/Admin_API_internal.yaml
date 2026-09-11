@@ -808,7 +808,6 @@ components:
       enum:
         - draft
         - release
-        - archived
     ApiType:
       title: apiType
       type: string

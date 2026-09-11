@@ -2977,7 +2977,7 @@ paths:
         - name: status
           in: query
           description: |
-            Filter versions by status. Comma-separated list of values: draft, release, archived.
+            Filter versions by status. Comma-separated list of values: draft, release.
             When omitted or empty, versions of all statuses are returned.
             Unknown values return 400 Bad Request.
           required: false
@@ -12308,7 +12308,6 @@ components:
       enum:
         - draft
         - release
-        - archived
     User:
       description: Represents an APIHUB user with identity and profile information returned by API endpoints.
       type: object
@@ -12392,7 +12391,6 @@ components:
         - delete_package
         - manage_draft_version
         - manage_release_version
-        - manage_archived_version
         - user_access_management
         - access_token_management
       example: read

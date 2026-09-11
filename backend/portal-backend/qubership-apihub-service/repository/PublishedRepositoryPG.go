@@ -3967,8 +3967,7 @@ func (p publishedRepositoryImpl) SearchForVersions(ctx context.Context, searchQu
 		coalesce(pkg_name_tf + pkg_description_tf + pkg_id_tf + pkg_service_name_tf + version_tf + version_labels_tf, 0) init_rank,
 		coalesce(
 			?version_status_release_weight * (pv.status = ?version_status_release)::int +
-			?version_status_draft_weight * (pv.status = ?version_status_draft)::int +
-			?version_status_archived_weight * (pv.status = ?version_status_archived)::int) version_status_tf,
+			?version_status_draft_weight * (pv.status = ?version_status_draft)::int) version_status_tf,
 		coalesce(?open_count_weight * coalesce(oc.open_count), 0) version_open_count
 		where pv.deleted_at is null
 		and (?statuses = '{}' or pv.status = ANY(?statuses))
@@ -4086,8 +4085,7 @@ func (p publishedRepositoryImpl) SearchForDocuments(ctx context.Context, searchQ
 		coalesce(content_tf + title_tf + labels_tf, 0) init_rank,
 		coalesce(
 			?version_status_release_weight * (v.status = ?version_status_release)::int +
-			?version_status_draft_weight * (v.status = ?version_status_draft)::int +
-			?version_status_archived_weight * (v.status = ?version_status_archived)::int) version_status_tf,
+			?version_status_draft_weight * (v.status = ?version_status_draft)::int) version_status_tf,
 		coalesce(?open_count_weight * coalesce(oc.open_count), 0) document_open_count
 		where init_rank > 0
 		and (

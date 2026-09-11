@@ -511,7 +511,6 @@ func (r roleServiceImpl) GetUserPackagePromoteStatuses(ctx context.Context, pack
 			result[packageId] = []string{
 				string(view.Draft),
 				string(view.Release),
-				string(view.Archived),
 			}
 			continue
 		}
@@ -531,9 +530,6 @@ func getAvailablePublishStatuses(userPermissions []string) []string {
 	}
 	if utils.SliceContains(userPermissions, string(view.ManageReleaseVersionPermission)) {
 		availablePublishStatuses = append(availablePublishStatuses, string(view.Release))
-	}
-	if utils.SliceContains(userPermissions, string(view.ManageArchivedVersionPermission)) {
-		availablePublishStatuses = append(availablePublishStatuses, string(view.Archived))
 	}
 	return availablePublishStatuses
 }
@@ -818,8 +814,6 @@ func getRequiredPermissionForVersionStatus(versionStatus string) view.RolePermis
 		return view.ManageDraftVersionPermission
 	case string(view.Release):
 		return view.ManageReleaseVersionPermission
-	case string(view.Archived):
-		return view.ManageArchivedVersionPermission
 	default:
 		return ""
 	}

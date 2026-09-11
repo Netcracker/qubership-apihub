@@ -7,12 +7,10 @@ import (
 )
 
 type VersionStatusSearchWeight struct {
-	VersionReleaseStatus        string  `pg:"version_status_release, type:varchar, use_zero"`
-	VersionReleaseStatusWeight  float64 `pg:"version_status_release_weight, type:real, use_zero"`
-	VersionDraftStatus          string  `pg:"version_status_draft, type:varchar, use_zero"`
-	VersionDraftStatusWeight    float64 `pg:"version_status_draft_weight, type:real, use_zero"`
-	VersionArchivedStatus       string  `pg:"version_status_archived, type:varchar, use_zero"`
-	VersionArchivedStatusWeight float64 `pg:"version_status_archived_weight, type:real, use_zero"`
+	VersionReleaseStatus       string  `pg:"version_status_release, type:varchar, use_zero"`
+	VersionReleaseStatusWeight float64 `pg:"version_status_release_weight, type:real, use_zero"`
+	VersionDraftStatus         string  `pg:"version_status_draft, type:varchar, use_zero"`
+	VersionDraftStatusWeight   float64 `pg:"version_status_draft_weight, type:real, use_zero"`
 }
 
 type OperationSearchResult struct {

@@ -8,9 +8,8 @@ import (
 type VersionStatus string
 
 const (
-	Draft    VersionStatus = "draft"
-	Release  VersionStatus = "release"
-	Archived VersionStatus = "archived"
+	Draft   VersionStatus = "draft"
+	Release VersionStatus = "release"
 )
 
 func (v VersionStatus) String() string {
@@ -19,8 +18,6 @@ func (v VersionStatus) String() string {
 		return "draft"
 	case Release:
 		return "release"
-	case Archived:
-		return "archived"
 	default:
 		return ""
 	}
@@ -40,8 +37,6 @@ func ParseVersionStatus(s string) (VersionStatus, error) {
 		return Draft, nil
 	case "release":
 		return Release, nil
-	case "archived":
-		return Archived, nil
 	}
 	return "", &InvalidVersionStatusError{Value: s}
 }
