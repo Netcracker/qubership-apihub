@@ -72,7 +72,7 @@ linters:
       rateLimitRPS: 10
       # Optional; OpenAI API rate limit burst; If not set, default value: 30; Example: 30
       rateLimitBurst: 30
-    # Mandatory when AI linter enabled; System prompt used by the AI linter to deduplicate issues
+    # Optional; System prompt used by the AI linter to deduplicate issues; If not set, uses the built-in default prompt shown below
     deduplicationPrompt: |-
       You filter a JSON array of OpenAPI lint issues. Return only the issues that remain.
       Two issues are duplicates if they describe the same underlying problem in the 'message' field, even if the wording differs. When comparing messages, use the problem statement only; ignore any suggested fix or action text in the same message.

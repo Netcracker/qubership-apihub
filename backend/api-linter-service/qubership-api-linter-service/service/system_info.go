@@ -88,6 +88,16 @@ func getConfigFolder() string {
 	return folder
 }
 
+const defaultAiDeduplicationPrompt = `You filter a JSON array of OpenAPI lint issues. Return only the issues that remain.
+Two issues are duplicates if they describe the same underlying problem in the 'message' field, even if the wording differs. When comparing messages, use the problem statement only; ignore any suggested fix or action text in the same message.
+Keep issues that are the same kind of finding but at different 'path' values. Those are not duplicates.
+Rules:
+1. Do not rewrite any field. Copy the kept object byte-for-byte from the input.
+2. Do not add issues.
+3. Do not drop an issue unless it is a duplicate of one you keep.
+4. If several issues are duplicates, keep the first one in input order and discard the rest.
+5. If there are no duplicates, return the input list unchanged and in the same order.`
+
 func setDefaults() {
 	viper.SetDefault("database.host", "localhost")
 	viper.SetDefault("database.port", 5432)
@@ -109,6 +119,7 @@ func setDefaults() {
 	viper.SetDefault("linters.ai.workers", 1)
 	viper.SetDefault("linters.ai.openAI.rateLimitRPS", 10.0)
 	viper.SetDefault("linters.ai.openAI.rateLimitBurst", 30)
+	viper.SetDefault("linters.ai.deduplicationPrompt", defaultAiDeduplicationPrompt)
 }
 
 type systemInfoServiceImpl struct {
