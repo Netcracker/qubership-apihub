@@ -12,7 +12,9 @@ import org.qubership.jdiff.pipeline.JapicmpJarComparator;
 import org.qubership.jdiff.pipeline.JarComparator;
 import org.qubership.jdiff.pipeline.UpgradeImpactPipeline;
 import org.qubership.jdiff.resolve.ArtifactResolver;
+import org.qubership.jdiff.resolve.ContainerImageJarExtractor;
 import org.qubership.jdiff.resolve.EffectivePomBuilder;
+import org.qubership.jdiff.resolve.JarSourceResolver;
 import org.qubership.jdiff.resolve.MavenArtifactResolver;
 import org.qubership.jdiff.resolve.ProjectScanner;
 import org.qubership.jdiff.resolve.RepositoryConfig;
@@ -25,6 +27,7 @@ public final class JdiffEngineFactory {
 
     private final JdiffEngineConfig config;
     private final ArtifactResolver resolver;
+    private final JarSourceResolver jarSourceResolver;
     private final JarComparator comparator;
     private final Path japicmpWorkDir;
 
@@ -35,9 +38,16 @@ public final class JdiffEngineFactory {
         }
         RepositoryConfig repositoryConfig = RepositoryConfig.of(config.repositoryTokens(), config.settingsXml());
         this.resolver = new MavenArtifactResolver(repositoryConfig);
+        Path containerExtractDir = createWorkDir(config.workDir().resolve("container-extract"));
+        this.jarSourceResolver = new JarSourceResolver(
+                resolver, new ContainerImageJarExtractor(containerExtractDir));
         JapicmpRunner japicmpRunner = new JapicmpRunner(new ExternalToolRunner(), config.japicmpJar());
         this.japicmpWorkDir = createWorkDir(config.workDir());
         this.comparator = new JapicmpJarComparator(japicmpRunner, japicmpWorkDir);
+    }
+
+    public JarSourceResolver jarSourceResolver() {
+        return jarSourceResolver;
     }
 
     public ApiReportPipeline apiReportPipeline() {

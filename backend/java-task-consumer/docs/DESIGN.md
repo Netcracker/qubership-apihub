@@ -10,7 +10,6 @@ Productize Java API analysis as an APIHUB worker microservice, reusing logic fro
 ## Non-goals (v1)
 
 - Backend implementation (contract spec only)
-- Docker image JAR extraction (`DockerImageJarSource` stub)
 - HTML/CSV/XLSX renderers (JSON `report.json` only)
 - MCP / CLI surfaces
 
@@ -32,13 +31,14 @@ java-task-consumer/
 
 jdiff-engine/
   pipeline.*          — ApiReport, ApiDiff, UpgradeImpact (from PoC)
-  resolve.JarSource   — GavJarSource | DockerImageJarSource (stub)
+  resolve.JarSource   — GavJarSource | DockerImageJarSource (daemonless OCI registry pull, /app)
   japicmp / jdeps     — subprocess runners (from PoC)
   model.DiffReport    — canonical JSON output
 ```
 
 ## Backend contract
 
+Provider is **libraries-backend**. Executable Pact: [pact-libraries-backend.md](pact-libraries-backend.md).
 Mirrors `build-task-consumer` with a **separate Java task queue**:
 
 | Call | Endpoint | Notes |
@@ -85,7 +85,8 @@ Mirrors `build-task-consumer` with a **separate Java task queue**:
 }
 ```
 
-`subject.type = docker` is accepted in schema but returns `not implemented` until a later story.
+`subject.type = docker` pulls the subject JAR from `/app` via daemonless OCI registry extract; Maven
+coordinates in the subject are still required for dependency-tree resolution.
 
 ### Result
 
@@ -94,7 +95,8 @@ ZIP with single file `report.json` — PoC `DiffReport` envelope.
 ## Deployment
 
 - **Docker**: `ghcr.io/netcracker/qubership-java-base:21-alpine-*` (Corretto JDK 21), UID 10001, japicmp 0.26.1 at `/opt/jdiff/japicmp.jar`
-- **Helm**: `helm/java-task-consumer/` (standalone chart; integrate into `qubership-apihub` umbrella later)
+- **Helm**: `helm/java-task-consumer/` (standalone chart; integrate into `qubership-apihub` umbrella later).
+  Optional `registryAuth` mounts Docker `config.json` for private subject image registries.
 - **Compose**: `docker-compose.yml` + `java-task-consumer.env`
 
 ## Scaling

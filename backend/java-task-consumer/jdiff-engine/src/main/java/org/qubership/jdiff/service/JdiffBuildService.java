@@ -1,6 +1,7 @@
 package org.qubership.jdiff.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import org.qubership.jdiff.config.JdiffEngineConfig;
@@ -9,6 +10,8 @@ import org.qubership.jdiff.model.Gav;
 import org.qubership.jdiff.model.JsonSupport;
 import org.qubership.jdiff.pipeline.UpgradeRequest;
 import org.qubership.jdiff.resolve.DockerImageJarSource;
+import org.qubership.jdiff.resolve.GavJarSource;
+import org.qubership.jdiff.resolve.JarResolutionException;
 import org.qubership.jdiff.resolve.JarSource;
 import org.qubership.jdiff.upgrade.UpgradeSpec;
 
@@ -44,15 +47,26 @@ public final class JdiffBuildService {
         if (upgrades.isEmpty()) {
             throw new IllegalArgumentException("metadata.upgrades must not be empty");
         }
-        UpgradeRequest request = switch (subject) {
-            case org.qubership.jdiff.resolve.GavJarSource gavSource ->
-                    new UpgradeRequest(null, gavSource.gav(), upgrades);
-            case DockerImageJarSource dockerSource ->
-                    throw new UnsupportedOperationException(
-                            "Docker subject is not implemented yet (image=" + dockerSource.imageReference() + ")");
-        };
+        UpgradeRequest request = toUpgradeRequest(subject, upgrades);
         DiffReport report = factory.upgradeImpactPipeline().run(request);
         return JsonSupport.toJsonBytes(report);
+    }
+
+    private UpgradeRequest toUpgradeRequest(JarSource subject, List<UpgradeSpec> upgrades) {
+        return switch (subject) {
+            case GavJarSource gavSource -> new UpgradeRequest(null, gavSource.gav(), upgrades);
+            case DockerImageJarSource docker -> {
+                Gav gav = docker.coordinateForPom().orElseThrow(() -> new IllegalArgumentException(
+                        "docker subject requires groupId, artifactId, and version for dependency resolution"));
+                try {
+                    Path jar = factory.jarSourceResolver().resolve(docker);
+                    yield new UpgradeRequest(null, gav, jar, upgrades);
+                } catch (JarResolutionException e) {
+                    throw new IllegalStateException(
+                            "Failed to extract jar from image " + docker.imageReference(), e);
+                }
+            }
+        };
     }
 
     private static Gav parseGav(JsonNode metadata) {
@@ -66,19 +80,24 @@ public final class JdiffBuildService {
                 optionalText(metadata, "classifier"));
     }
 
-    private static JarSource parseSubject(JsonNode node) {
+    static JarSource parseSubject(JsonNode node) {
         if (node == null || node.isNull()) {
             throw new IllegalArgumentException("metadata.subject is required");
         }
         String type = requiredText(node, "type");
         return switch (type) {
-            case "gav" -> new org.qubership.jdiff.resolve.GavJarSource(
+            case "gav" -> new GavJarSource(
                     requiredText(node, "groupId"),
                     requiredText(node, "artifactId"),
                     requiredText(node, "version"));
             case "docker" -> new DockerImageJarSource(
                     requiredText(node, "imageReference"),
-                    optionalText(node, "jarPathInImage"));
+                    optionalText(node, "jarPathInImage"),
+                    new Gav(
+                            requiredText(node, "groupId"),
+                            requiredText(node, "artifactId"),
+                            requiredText(node, "version"),
+                            optionalText(node, "classifier")));
             default -> throw new IllegalArgumentException("Unsupported subject type: " + type);
         };
     }

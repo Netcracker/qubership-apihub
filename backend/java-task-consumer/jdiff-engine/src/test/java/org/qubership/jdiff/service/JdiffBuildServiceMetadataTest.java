@@ -36,10 +36,29 @@ class JdiffBuildServiceMetadataTest {
     }
 
     @Test
-    void dockerSubjectIsRejectedBeforeEngineStart() throws Exception {
+    void dockerSubjectRequiresMavenCoordinates() throws Exception {
         var node = mapper.readTree("""
                 {
                   "subject": {"type":"docker","imageReference":"ghcr.io/org/app:1.0"},
+                  "upgrades": [{"groupId":"org.lib","artifactId":"core","version":"2.0"}]
+                }
+                """);
+        assertThatThrownBy(() -> JdiffBuildService.parseSubject(node.get("subject")))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("groupId");
+    }
+
+    @Test
+    void dockerSubjectReachesEngineWhenCoordinatesPresent() throws Exception {
+        var node = mapper.readTree("""
+                {
+                  "subject": {
+                    "type":"docker",
+                    "imageReference":"ghcr.io/org/app:1.0",
+                    "groupId":"com.app",
+                    "artifactId":"svc",
+                    "version":"1.0"
+                  },
                   "upgrades": [{"groupId":"org.lib","artifactId":"core","version":"2.0"}]
                 }
                 """);

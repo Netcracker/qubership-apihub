@@ -184,10 +184,13 @@ public class UpgradeImpactPipeline {
             }
             return targets;
         }
-        return List.of(new ModuleTarget(request.targetGav(), null, null));
+        return List.of(new ModuleTarget(request.targetGav(), null, null, request.targetJarOverride()));
     }
 
     private Path resolveModuleJar(ModuleTarget moduleTarget) {
+        if (moduleTarget.subjectJar() != null) {
+            return moduleTarget.subjectJar();
+        }
         try {
             return resolver.resolveJar(moduleTarget.gav());
         } catch (ArtifactResolutionException e) {
@@ -411,7 +414,11 @@ public class UpgradeImpactPipeline {
         return spec.groupId() + ":" + spec.artifactId() + "=" + spec.newVersion();
     }
 
-    private record ModuleTarget(Gav gav, Path pomFile, Path targetJarFallback) {
+    private record ModuleTarget(Gav gav, Path pomFile, Path targetJarFallback, Path subjectJar) {
+
+        private ModuleTarget(Gav gav, Path pomFile, Path targetJarFallback) {
+            this(gav, pomFile, targetJarFallback, null);
+        }
     }
 
     private record AnalyzedModule(Gav gav, Path jar, List<ResolvedDependency> treeDeps) {

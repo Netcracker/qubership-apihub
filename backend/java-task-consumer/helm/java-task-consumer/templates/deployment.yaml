@@ -15,11 +15,18 @@ spec:
         {{- include "java-task-consumer.labels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "java-task-consumer.fullname" . }}
-      {{- if .Values.apihub.accessToken }}
+      {{- if or .Values.apihub.accessToken (include "java-task-consumer.registryAuthEnabled" .) }}
       volumes:
+        {{- if .Values.apihub.accessToken }}
         - name: apihub-api-key
           secret:
             secretName: {{ include "java-task-consumer.fullname" . }}-api-key
+        {{- end }}
+        {{- if (include "java-task-consumer.registryAuthEnabled" .) }}
+        - name: docker-config
+          secret:
+            secretName: {{ include "java-task-consumer.registryAuthSecretName" . }}
+        {{- end }}
       {{- end }}
       containers:
         - name: java-task-consumer
@@ -47,11 +54,22 @@ spec:
             - name: APIHUB_API_KEY_FILE
               value: /etc/secrets/apihub/access_token
             {{- end }}
-          {{- if .Values.apihub.accessToken }}
+            {{- if (include "java-task-consumer.registryAuthEnabled" .) }}
+            - name: DOCKER_CONFIG
+              value: /etc/secrets/docker
+            {{- end }}
+          {{- if or .Values.apihub.accessToken (include "java-task-consumer.registryAuthEnabled" .) }}
           volumeMounts:
+            {{- if .Values.apihub.accessToken }}
             - name: apihub-api-key
               mountPath: /etc/secrets/apihub
               readOnly: true
+            {{- end }}
+            {{- if (include "java-task-consumer.registryAuthEnabled" .) }}
+            - name: docker-config
+              mountPath: /etc/secrets/docker
+              readOnly: true
+            {{- end }}
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

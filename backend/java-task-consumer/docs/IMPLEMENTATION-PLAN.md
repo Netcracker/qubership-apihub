@@ -13,7 +13,7 @@
 
 - [x] Parent POM + `jdiff-engine` + `java-task-consumer` modules
 - [x] Worker poll loop, registry client, health server, build dispatch stubs
-- [x] `JarSource` interface + Docker stub
+- [x] `JarSource` interface + daemonless OCI image extraction
 - [x] Dockerfile, docker-compose, Helm chart, README, DESIGN.md
 
 ## Phase 1 — Vendored engine core (done)
@@ -35,7 +35,10 @@
 
 - [x] Document OpenAPI fragment for Java builder endpoints (`docs/backend-api.md`)
 - [x] WireMock tests: poll ZIP → run → multipart status
+- [x] Pact consumer tests for libraries-backend (`RegistryClientPactTest`, `pacts/`)
+- [x] Provider verification guide (`docs/pact-libraries-backend.md`)
 - [x] GitHub Actions CI (`mvn verify` + Docker build smoke)
+- [ ] Provider verification in libraries-backend CI
 - [ ] Manual test against real backend when Java builder API lands
 
 ## Phase 4 — Container & ops
@@ -48,7 +51,7 @@
 
 ## Phase 5 — Hardening (post-MVP)
 
-- [ ] `DockerImageJarSource` implementation (skopeo/crane + extract)
+- [x] `DockerImageJarSource` via daemonless OCI registry pull (JAR under `/app`)
 - [ ] Partial failure handling for upgrade-impact (per-module errors)
 - [ ] Metrics endpoint or Micrometer agent (optional)
 - [ ] Async publish status (`result_ready`) when backend supports it

@@ -26,5 +26,13 @@ apihub:
   backendAddress: qubership-apihub-backend:8080
   accessToken: ""
 
+# OCI registry credentials for daemonless subject image pull (java-upgrade-impact, subject.type=docker).
+# Mounts config.json and sets DOCKER_CONFIG=/etc/secrets/docker.
+registryAuth:
+  # Use an existing Secret that contains key config.json (recommended in production).
+  existingSecret: ""
+  # Or let the chart create a Secret from inline Docker config JSON (dev/CI only).
+  configJson: ""
+
 serviceAccount:
   create: true

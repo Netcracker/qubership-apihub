@@ -7,7 +7,7 @@ Vendored analysis engine copied from `qubership-java-diff-service/jdiff-core` (P
 | Package | Role |
 |---------|------|
 | `model` | `DiffReport`, `Gav`, `JsonSupport` |
-| `resolve` | Maven resolver, `JarSource` (+ Docker stub) |
+| `resolve` | Maven resolver, `JarSource` (GAV + daemonless OCI image pull) |
 | `japicmp` / `jdeps` | External tool runners |
 | `pipeline` | `ApiReport`, `ApiDiff`, `UpgradeImpact` |
 | `upgrade` | BOM expansion, impact analysis |

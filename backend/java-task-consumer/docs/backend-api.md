@@ -1,7 +1,8 @@
 # Java build API contract (backend specification)
 
-This document describes the HTTP contract between **apihub-backend** and
-**java-task-consumer** (JTC). Backend implementation is a separate work track.
+This document describes the HTTP contract between **java-task-consumer** (JTC) and
+**libraries-backend**. The executable Pact file and provider-verification guide are in
+[pact-libraries-backend.md](pact-libraries-backend.md).
 
 JTC mirrors the existing **build-task-consumer** pull-worker pattern with a dedicated Java
 build queue.
@@ -90,17 +91,23 @@ Or separate fields: `groupId`, `artifactId`, `version`, optional `classifier`.
 }
 ```
 
-Future `subject.type = docker`:
+Future `subject.type = docker` (qubership-java-base layout: JAR under `/app`):
 
 ```json
 {
   "type": "docker",
   "imageReference": "ghcr.io/org/app:1.0.0",
-  "jarPathInImage": "BOOT-INF/lib/app.jar"
+  "groupId": "com.app",
+  "artifactId": "service",
+  "version": "1.0.0",
+  "jarPathInImage": "service.jar"
 }
 ```
 
-Not implemented in JTC v1; backend may accept the schema but JTC returns `error`.
+`groupId` / `artifactId` / `version` are required for Maven dependency-tree resolution; the module
+JAR is extracted from `/app` by pulling OCI image layers over HTTPS (no container runtime).
+Private registries: configure credentials in Docker config (`DOCKER_CONFIG` or `~/.docker/config.json`).
+In Kubernetes, use Helm `registryAuth.existingSecret` or `registryAuth.configJson` (see JTC README).
 
 ## Result ZIP
 

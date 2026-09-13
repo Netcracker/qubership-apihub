@@ -1,0 +1,200 @@
+{
+  "consumer": {
+    "name": "java-task-consumer"
+  },
+  "interactions": [
+    {
+      "description": "a poll that takes a java-api-report task",
+      "providerStates": [
+        {
+          "name": "a java-api-report task is queued for builder builder-test-1"
+        }
+      ],
+      "request": {
+        "headers": {
+          "api-key": "test-api-key"
+        },
+        "method": "POST",
+        "path": "/api/v2/java-builders/builder-test-1/tasks"
+      },
+      "response": {
+        "body": "UEsDBBQACAgIAIiNK10AAAAAAAAAAAAAAAALAAAAY29uZmlnLmpzb24lykEOgyAQRuE9pzCzLsQu5Qbd9wI/MqFUCBOLxsZ491ZZvnxvV11HsrgUP6+HJ3uFHga6XYBxQuAGnnPRMoVGbonJP7/CJ72xQkOinlnKXNuRucKj4j/sFLCe41iy4Q1ZEtsUnb2b3vR0qEP9AFBLBwgYED+HbgAAAIkAAABQSwECFAAUAAgICACIjStdGBA/h24AAACJAAAACwAAAAAAAAAAAAAAAAAAAAAAY29uZmlnLmpzb25QSwUGAAAAAAEAAQA5AAAApwAAAAAA",
+        "headers": {
+          "Content-Type": "application/zip"
+        },
+        "matchingRules": {
+          "body": {
+            "$": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "contentType",
+                  "value": "application/zip"
+                }
+              ]
+            }
+          }
+        },
+        "status": 200
+      }
+    },
+    {
+      "description": "a complete status with a result ZIP",
+      "providerStates": [
+        {
+          "name": "java publish pub-99 exists for package demo-pkg"
+        }
+      ],
+      "request": {
+        "body": "LS0tLS0tSmF2YVRhc2tDb25zdW1lclBhY3RFeGFtcGxlDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9InN0YXR1cyINCkNvbnRlbnQtVHlwZTogdGV4dC9wbGFpbjsgY2hhcnNldD1JU08tODg1OS0xDQoNCmNvbXBsZXRlDQotLS0tLS1KYXZhVGFza0NvbnN1bWVyUGFjdEV4YW1wbGUNCkNvbnRlbnQtRGlzcG9zaXRpb246IGZvcm0tZGF0YTsgbmFtZT0iYnVpbGRlcklkIg0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PUlTTy04ODU5LTENCg0KYnVpbGRlci10ZXN0LTENCi0tLS0tLUphdmFUYXNrQ29uc3VtZXJQYWN0RXhhbXBsZQ0KQ29udGVudC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJkYXRhIjsgZmlsZW5hbWU9InBhY2thZ2UuemlwIg0KQ29udGVudC1UeXBlOiBhcHBsaWNhdGlvbi96aXANCg0KUEsDBBQACAgIAImNK10AAAAAAAAAAAAAAAALAAAAcmVwb3J0Lmpzb26rVsrNT0lVslJKLMjULUotyC8qUaoFAFBLBwi7eJtMFwAAABUAAABQSwECFAAUAAgICACJjStdu3ibTBcAAAAVAAAACwAAAAAAAAAAAAAAAAAAAAAAcmVwb3J0Lmpzb25QSwUGAAAAAAEAAQA5AAAAUAAAAAAADQotLS0tLS1KYXZhVGFza0NvbnN1bWVyUGFjdEV4YW1wbGUtLQ0K",
+        "headers": {
+          "Content-Type": "multipart/form-data; boundary=----JavaTaskConsumerPactExample",
+          "api-key": "test-api-key"
+        },
+        "matchingRules": {
+          "body": {
+            "$": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "multipart/form-data;\\s*boundary=.+"
+                }
+              ]
+            }
+          }
+        },
+        "method": "POST",
+        "path": "/api/v3/packages/demo-pkg/java-publish/pub-99/status"
+      },
+      "response": {
+        "status": 204
+      }
+    },
+    {
+      "description": "a running heartbeat for a java publish",
+      "providerStates": [
+        {
+          "name": "java publish pub-99 exists for package demo-pkg"
+        }
+      ],
+      "request": {
+        "body": "LS0tLS0tSmF2YVRhc2tDb25zdW1lclBhY3RFeGFtcGxlDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9InN0YXR1cyINCkNvbnRlbnQtVHlwZTogdGV4dC9wbGFpbjsgY2hhcnNldD1JU08tODg1OS0xDQoNCnJ1bm5pbmcNCi0tLS0tLUphdmFUYXNrQ29uc3VtZXJQYWN0RXhhbXBsZQ0KQ29udGVudC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJidWlsZGVySWQiDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW47IGNoYXJzZXQ9SVNPLTg4NTktMQ0KDQpidWlsZGVyLXRlc3QtMQ0KLS0tLS0tSmF2YVRhc2tDb25zdW1lclBhY3RFeGFtcGxlLS0NCg==",
+        "headers": {
+          "Content-Type": "multipart/form-data; boundary=----JavaTaskConsumerPactExample",
+          "api-key": "test-api-key"
+        },
+        "matchingRules": {
+          "body": {
+            "$": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "multipart/form-data;\\s*boundary=.+"
+                }
+              ]
+            }
+          }
+        },
+        "method": "POST",
+        "path": "/api/v3/packages/demo-pkg/java-publish/pub-99/status"
+      },
+      "response": {
+        "status": 204
+      }
+    },
+    {
+      "description": "an error status with a human-readable message",
+      "providerStates": [
+        {
+          "name": "java publish pub-99 exists for package demo-pkg"
+        }
+      ],
+      "request": {
+        "body": "LS0tLS0tSmF2YVRhc2tDb25zdW1lclBhY3RFeGFtcGxlDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9InN0YXR1cyINCkNvbnRlbnQtVHlwZTogdGV4dC9wbGFpbjsgY2hhcnNldD1JU08tODg1OS0xDQoNCmVycm9yDQotLS0tLS1KYXZhVGFza0NvbnN1bWVyUGFjdEV4YW1wbGUNCkNvbnRlbnQtRGlzcG9zaXRpb246IGZvcm0tZGF0YTsgbmFtZT0iYnVpbGRlcklkIg0KQ29udGVudC1UeXBlOiB0ZXh0L3BsYWluOyBjaGFyc2V0PUlTTy04ODU5LTENCg0KYnVpbGRlci10ZXN0LTENCi0tLS0tLUphdmFUYXNrQ29uc3VtZXJQYWN0RXhhbXBsZQ0KQ29udGVudC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJlcnJvcnMiDQpDb250ZW50LVR5cGU6IHRleHQvcGxhaW47IGNoYXJzZXQ9SVNPLTg4NTktMQ0KDQplbmdpbmUgZmFpbGVkDQotLS0tLS1KYXZhVGFza0NvbnN1bWVyUGFjdEV4YW1wbGUtLQ0K",
+        "headers": {
+          "Content-Type": "multipart/form-data; boundary=----JavaTaskConsumerPactExample",
+          "api-key": "test-api-key"
+        },
+        "matchingRules": {
+          "body": {
+            "$": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "type"
+                }
+              ]
+            }
+          },
+          "header": {
+            "Content-Type": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "regex",
+                  "regex": "multipart/form-data;\\s*boundary=.+"
+                }
+              ]
+            }
+          }
+        },
+        "method": "POST",
+        "path": "/api/v3/packages/demo-pkg/java-publish/pub-99/status"
+      },
+      "response": {
+        "status": 204
+      }
+    },
+    {
+      "description": "a poll when the java build queue is empty",
+      "providerStates": [
+        {
+          "name": "no java build tasks are available"
+        }
+      ],
+      "request": {
+        "headers": {
+          "api-key": "test-api-key"
+        },
+        "method": "POST",
+        "path": "/api/v2/java-builders/builder-test-1/tasks"
+      },
+      "response": {
+        "status": 204
+      }
+    }
+  ],
+  "metadata": {
+    "pact-jvm": {
+      "version": "4.6.17"
+    },
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  },
+  "provider": {
+    "name": "libraries-backend"
+  }
+}

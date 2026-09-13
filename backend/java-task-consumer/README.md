@@ -7,8 +7,8 @@ with **plain Java** (no application framework), **japicmp**, and **jdeps**.
 ## Architecture
 
 ```
-apihub-backend (future)  ←── HTTP poll + status ──→  java-task-consumer
-                                                          └── jdiff-engine
+libraries-backend  ←── HTTP poll + status ──→  java-task-consumer
+                                                      └── jdiff-engine
 ```
 
 | Build type | Engine pipeline | Tools |
@@ -17,8 +17,9 @@ apihub-backend (future)  ←── HTTP poll + status ──→  java-task-consu
 | `java-api-diff` | `ApiDiffPipeline` | japicmp |
 | `java-upgrade-impact` | `UpgradeImpactPipeline` | japicmp + jdeps |
 
-See [docs/DESIGN.md](docs/DESIGN.md), [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md), and
-[docs/backend-api.md](docs/backend-api.md) (backend contract).
+See [docs/DESIGN.md](docs/DESIGN.md), [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md),
+[docs/backend-api.md](docs/backend-api.md) (HTTP contract), and
+[docs/pact-libraries-backend.md](docs/pact-libraries-backend.md) (Pact provider handoff).
 
 ## Modules
 
@@ -67,6 +68,33 @@ helm upgrade --install jtc ./helm/java-task-consumer \
   --set apihub.accessToken=<token>
 ```
 
+### Private OCI registries (docker subject)
+
+For `java-upgrade-impact` with `subject.type = docker`, mount a Docker `config.json` so the worker
+can pull subject images from private registries (daemonless HTTPS pull).
+
+**Option A — existing Secret (recommended):**
+
+```bash
+kubectl create secret generic jtc-registry-auth \
+  --from-file=config.json=$HOME/.docker/config.json
+
+helm upgrade --install jtc ./helm/java-task-consumer \
+  --set apihub.backendAddress=qubership-apihub-backend:8080 \
+  --set apihub.accessToken=<token> \
+  --set registryAuth.existingSecret=jtc-registry-auth
+```
+
+**Option B — inline config (dev/CI only):**
+
+```bash
+helm upgrade --install jtc ./helm/java-task-consumer \
+  --set apihub.accessToken=<token> \
+  --set-file registryAuth.configJson=$HOME/.docker/config.json
+```
+
+The chart sets `DOCKER_CONFIG=/etc/secrets/docker` and mounts the secret read-only.
+
 Integrate templates into the umbrella `qubership-apihub` chart in a follow-up step.
 
 ## Configuration
@@ -83,6 +111,12 @@ Integrate templates into the umbrella `qubership-apihub` chart in a follow-up st
 | `JDIFF_JAPICMP_JAR` | `/opt/jdiff/japicmp.jar` | japicmp fat jar path |
 | `JDIFF_THREADS` | `4` | Parallelism for upgrade-impact |
 
+For `java-upgrade-impact` with `subject.type = docker`, the worker pulls image layers directly from
+the OCI registry (Docker Registry HTTP API V2, no `podman`/`docker` CLI). Images are expected to
+follow [qubership-java-base](https://github.com/Netcracker/qubership-core-base-images/pkgs/container/qubership-java-base)
+layout (`/app/*.jar`). Private registries: mount Docker config (`DOCKER_CONFIG` or
+`~/.docker/config.json`) with registry credentials.
+
 ## Container runtime (local)
 
 This workspace uses **Podman** instead of Docker on the developer machine. Use `podman` for
@@ -96,7 +130,11 @@ podman compose up --build
 
 Health check: `curl http://localhost:3001/live` (compose maps host `3001` → container `3000`).
 
-## Backend API contract (spec only)
+## Backend API contract
+
+The worker talks to **libraries-backend** (not the main APIHUB backend). HTTP notes:
+[docs/backend-api.md](docs/backend-api.md). Pact file and provider verification:
+[docs/pact-libraries-backend.md](docs/pact-libraries-backend.md).
 
 | Operation | Method / path |
 |-----------|---------------|
@@ -104,6 +142,12 @@ Health check: `curl http://localhost:3001/live` (compose maps host `3001` → co
 | Status | `POST /api/v3/packages/{packageId}/java-publish/{publishId}/status` |
 
 Task ZIP contains `config.json`. Result ZIP contains `report.json` (`DiffReport` from PoC).
+
+Regenerate the pact file:
+
+```bash
+mvn -pl java-task-consumer -am test -Dtest=RegistryClientPactTest -Dsurefire.failIfNoSpecifiedTests=false
+```
 
 ## Image
 
