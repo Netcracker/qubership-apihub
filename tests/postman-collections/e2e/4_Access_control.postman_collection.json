@@ -30748,7 +30748,7 @@
                                     "",
                                     "    var data = pm.response.json();",
                                     "    pm.test(\"Limit of 100 tokens exceeded\", function () {",
-                                    "        pm.expect(data.debug).to.eql('Unable to create personal access token since the limit 100 is exceeded');",
+                                    "        pm.expect(data.message).to.eql('Failed to create personal access token');",
                                     "    });",
                                     "}"
                                 ]
