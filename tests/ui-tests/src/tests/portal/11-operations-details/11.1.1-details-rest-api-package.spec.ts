@@ -290,7 +290,7 @@ test.describe('11.1.1 Operations details REST API (Package)', () => {
       await test.step('Send request without token (negative)', async () => {
         await operationPage.playgroundPanel.sendBtn.click()
 
-        await expect(operationPage.playgroundPanel).toContainText('"message": "Unauthorized",')
+        await expect(operationPage.playgroundPanel).toContainText('"message": "Unauthorized"')
       })
 
       await test.step('Send request with token', async () => {
