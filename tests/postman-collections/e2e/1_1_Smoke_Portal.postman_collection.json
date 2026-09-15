@@ -17202,13 +17202,13 @@
                     ],
                     "request": {
                         "url": {
-                            "raw": "{{SERVER_HOST}}/api/v3/search/operations?limit=20",
+                            "raw": "{{SERVER_HOST}}/api/v4/search/operations?limit=20",
                             "host": [
                                 "{{SERVER_HOST}}"
                             ],
                             "path": [
                                 "api",
-                                "v3",
+                                "v4",
                                 "search",
                                 "operations"
                             ],
@@ -17229,7 +17229,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\r\n    \"searchString\" : \"pet\",\r\n    \"packageIds\": [\"{{package_1}}\"]\r\n}",
+                            "raw": "{\r\n    \"searchString\": \"pet\",\r\n    \"workspace\": \"QS-STATIC-TEST-2\",\r\n    \"status\": \"release\",\r\n    \"apiType\": \"rest\",\r\n    \"packageIds\": [\"{{package_1}}\"]\r\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -17300,13 +17300,13 @@
                     ],
                     "request": {
                         "url": {
-                            "raw": "{{SERVER_HOST}}/api/v3/search/operations?limit=20",
+                            "raw": "{{SERVER_HOST}}/api/v4/search/operations?limit=20",
                             "host": [
                                 "{{SERVER_HOST}}"
                             ],
                             "path": [
                                 "api",
-                                "v3",
+                                "v4",
                                 "search",
                                 "operations"
                             ],
@@ -17327,7 +17327,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": " {\r\n    \"searchString\" : \"zzz-no-such-operation-zzz\",\r\n    \"packageIds\": [\"{{package_1}}\"]\r\n}",
+                            "raw": "{\r\n    \"searchString\": \"zzz-no-such-operation-zzz\",\r\n    \"workspace\": \"QS-STATIC-TEST-2\",\r\n    \"status\": \"release\",\r\n    \"apiType\": \"rest\",\r\n    \"packageIds\": [\"{{package_1}}\"]\r\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -17400,13 +17400,13 @@
                     ],
                     "request": {
                         "url": {
-                            "raw": "{{SERVER_HOST}}/api/v3/search/documents?limit=7&page=0",
+                            "raw": "{{SERVER_HOST}}/api/v4/search/documents?limit=7&page=0",
                             "host": [
                                 "{{SERVER_HOST}}"
                             ],
                             "path": [
                                 "api",
-                                "v3",
+                                "v4",
                                 "search",
                                 "documents"
                             ],
@@ -17431,7 +17431,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": " {\r\n    \"searchString\": \"123\",\r\n    \"packageIds\": [\"{{package_1}}\"]\r\n}",
+                            "raw": "{\r\n    \"searchString\": \"123\",\r\n    \"workspace\": \"QS-STATIC-TEST-2\",\r\n    \"status\": \"release\",\r\n    \"packageIds\": [\"{{package_1}}\"]\r\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -17512,13 +17512,13 @@
                     ],
                     "request": {
                         "url": {
-                            "raw": "{{SERVER_HOST}}/api/v3/search/documents",
+                            "raw": "{{SERVER_HOST}}/api/v4/search/documents",
                             "host": [
                                 "{{SERVER_HOST}}"
                             ],
                             "path": [
                                 "api",
-                                "v3",
+                                "v4",
                                 "search",
                                 "documents"
                             ]
@@ -17533,7 +17533,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\r\n    \"searchString\" : \"api\",\r\n    \"statuses\": [\"release\"],\r\n    \"packageIds\": [\"{{package_1}}\"]\r\n}",
+                            "raw": "{\r\n    \"searchString\": \"api\",\r\n    \"workspace\": \"QS-STATIC-TEST-2\",\r\n    \"status\": \"release\",\r\n    \"packageIds\": [\"{{package_1}}\"]\r\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"
@@ -17604,13 +17604,13 @@
                     ],
                     "request": {
                         "url": {
-                            "raw": "{{SERVER_HOST}}/api/v3/search/packages?limit=10",
+                            "raw": "{{SERVER_HOST}}/api/v4/search/packages?limit=10",
                             "host": [
                                 "{{SERVER_HOST}}"
                             ],
                             "path": [
                                 "api",
-                                "v3",
+                                "v4",
                                 "search",
                                 "packages"
                             ],
@@ -17631,7 +17631,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\r\n    \"searchString\": \"Test static dashboard\",\r\n    \"packageIds\": [\"QS-STATIC-TEST-2.DSHB\"]\r\n}",
+                            "raw": "{\r\n    \"searchString\": \"Test static dashboard\",\r\n    \"workspace\": \"QS-STATIC-TEST-2\",\r\n    \"status\": \"release\",\r\n    \"packageIds\": [\"QS-STATIC-TEST-2.DSHB\"]\r\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"

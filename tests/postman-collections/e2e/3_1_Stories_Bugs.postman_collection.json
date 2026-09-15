@@ -1896,13 +1896,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/search/packages",
+                                    "raw": "{{SERVER_HOST}}/api/v4/search/packages",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v3",
+                                        "v4",
                                         "search",
                                         "packages"
                                     ]
@@ -1917,7 +1917,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\r\n    \"searchString\": \"ExcludeSearch\",\r\n    \"packageIds\": [\"{{package_1}}\"]\r\n}",
+                                    "raw": "{\r\n    \"searchString\": \"ExcludeSearch\",\r\n    \"workspace\": \"QS-STATIC-TEST-1\",\r\n    \"status\": \"draft\",\r\n    \"packageIds\": [\"{{package_1}}\"]\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"

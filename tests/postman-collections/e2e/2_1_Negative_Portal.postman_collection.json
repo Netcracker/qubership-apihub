@@ -3917,13 +3917,13 @@
                             ],
                             "request": {
                                 "url": {
-                                    "raw": "{{SERVER_HOST}}/api/v3/search/operations",
+                                    "raw": "{{SERVER_HOST}}/api/v4/search/operations",
                                     "host": [
                                         "{{SERVER_HOST}}"
                                     ],
                                     "path": [
                                         "api",
-                                        "v3",
+                                        "v4",
                                         "search",
                                         "operations"
                                     ]
@@ -3939,7 +3939,7 @@
                                 ],
                                 "body": {
                                     "mode": "raw",
-                                    "raw": " {\r\n    \"searchString\": \"access-control\"\r\n}",
+                                    "raw": "{\r\n    \"searchString\": \"access-control\",\r\n    \"workspace\": \"QS-STATIC-TEST-1\",\r\n    \"status\": \"release\",\r\n    \"apiType\": \"rest\"\r\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"
@@ -10960,13 +10960,13 @@
                     ],
                     "request": {
                         "url": {
-                            "raw": "{{SERVER_HOST}}/api/v3/search/operations",
+                            "raw": "{{SERVER_HOST}}/api/v4/search/operations",
                             "host": [
                                 "{{SERVER_HOST}}"
                             ],
                             "path": [
                                 "api",
-                                "v3",
+                                "v4",
                                 "search",
                                 "operations"
                             ]
