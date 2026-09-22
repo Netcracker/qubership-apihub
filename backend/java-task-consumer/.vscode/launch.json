@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Debug JTC scenarios",
+      "request": "launch",
+      "mainClass": "com.netcracker.qubership.apihub.javataskconsumer.debug.DebugHarnessMain",
+      "projectName": "java-task-consumer",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "env": {
+        "GHCR_TOKEN": "${env:GHCR_TOKEN}"
+      }
+    }
+  ]
+}

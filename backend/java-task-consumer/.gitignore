@@ -2,10 +2,15 @@
 target/
 *.iml
 .idea/
-.vscode/
+.vscode/*
+!.vscode/launch.json
 .classpath
 .project
 .settings/
+
+# Downloaded japicmp CLI used by the local debug harness
+japicmp/*.jar
+japicmp/*.jar.part
 
 # Local Maven repo cache in work dir
 .work/

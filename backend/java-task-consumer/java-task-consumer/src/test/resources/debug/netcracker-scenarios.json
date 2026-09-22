@@ -1,0 +1,132 @@
+{
+  "packageId": "debug-pkg",
+  "tasks": [
+    {
+      "id": "report",
+      "buildType": "java-api-report",
+      "metadata": {
+        "gav": "org.qubership:qip-catalog-library:2025.1.1.15"
+      }
+    },
+    {
+      "id": "diff",
+      "buildType": "java-api-diff",
+      "metadata": {
+        "groupId": "org.qubership",
+        "artifactId": "qip-catalog-library",
+        "oldVersion": "2025.1.1.13",
+        "newVersion": "2025.1.1.15"
+      }
+    },
+    {
+      "id": "upgrade-impact",
+      "buildType": "java-upgrade-impact",
+      "metadata": {
+        "subject": {
+          "type": "gav",
+          "groupId": "org.qubership.atp",
+          "artifactId": "atp-itf-core",
+          "version": "4.4.115"
+        },
+        "upgrades": [
+          {
+            "groupId": "org.qubership.atp.auth",
+            "artifactId": "atp-auth-models",
+            "version": "1.2.80"
+          }
+        ]
+      }
+    },
+    {
+      "id": "upgrade-impact-docker",
+      "buildType": "java-upgrade-impact",
+      "metadata": {
+        "subject": {
+          "type": "docker",
+          "imageReference": "ghcr.io/netcracker/qubership-integration-micro-engine:0.2.5",
+          "jarPathInImage": "quarkus-run.jar",
+          "groupId": "org.qubership.integration.platform",
+          "artifactId": "qip-micro-engine",
+          "version": "0.2.5"
+        },
+        "upgrades": [
+          {
+            "groupId": "com.netcracker.cloud.quarkus",
+            "artifactId": "cloud-core-quarkus-bom-publish",
+            "version": "10.1.10"
+          },
+          {
+            "groupId": "com.netcracker.cloud.maas.client",
+            "artifactId": "maas-client-bom",
+            "version": "12.3.2"
+          },
+          {
+            "groupId": "com.netcracker.cloud.quarkus",
+            "artifactId": "maas-client-quarkus-bom",
+            "version": "11.1.2"
+          },
+          {
+            "groupId": "com.netcracker.cloud.quarkus",
+            "artifactId": "blue-green-state-monitor-quarkus",
+            "version": "4.1.2"
+          },
+          {
+            "groupId": "com.netcracker.cloud.quarkus",
+            "artifactId": "maas-client-quarkus-kafka",
+            "version": "11.1.2"
+          },
+          {
+            "groupId": "com.netcracker.cloud.quarkus",
+            "artifactId": "maas-client-quarkus-rabbit",
+            "version": "11.1.2"
+          },
+          {
+            "groupId": "com.netcracker.cloud.quarkus",
+            "artifactId": "routes-registrator",
+            "version": "10.2.2"
+          },
+          {
+            "groupId": "com.netcracker.cloud.quarkus",
+            "artifactId": "consul-config-source",
+            "version": "10.2.2"
+          },
+          {
+            "groupId": "com.netcracker.cloud.quarkus",
+            "artifactId": "framework-contexts",
+            "version": "9.2.2"
+          },
+          {
+            "groupId": "com.netcracker.cloud.quarkus",
+            "artifactId": "context-propagation",
+            "version": "9.2.2"
+          },
+          {
+            "groupId": "com.netcracker.cloud.maas.client",
+            "artifactId": "rabbit-context-propagation",
+            "version": "12.3.2"
+          },
+          {
+            "groupId": "com.netcracker.cloud.maas.client",
+            "artifactId": "kafka-blue-green-consumer",
+            "version": "12.3.2"
+          },
+          {
+            "groupId": "com.netcracker.cloud.quarkus",
+            "artifactId": "dbaas-common",
+            "version": "10.2.2"
+          },
+          {
+            "groupId": "com.netcracker.cloud.quarkus",
+            "artifactId": "dbaas-opensearch-client",
+            "version": "10.2.2"
+          },
+          {
+            "groupId": "com.netcracker.cloud.quarkus",
+            "artifactId": "dbaas-datasource-postgresql",
+            "version": "10.2.2"
+          }
+        ]
+      }
+    }
+  ]
+}

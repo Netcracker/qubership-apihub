@@ -13,6 +13,7 @@ import java.util.Optional;
 
 /**
  * Reads registry credentials from Docker config ({@code ~/.docker/config.json} or {@code DOCKER_CONFIG}).
+ * For {@code ghcr.io}, also accepts {@code GHCR_TOKEN} / {@code GITHUB_TOKEN}.
  */
 final class DockerConfigCredentials {
 
@@ -22,7 +23,40 @@ final class DockerConfigCredentials {
     }
 
     static Optional<BasicAuth> forRegistry(String registryHost) {
-        Path configPath = dockerConfigPath();
+        Optional<BasicAuth> fromFile = fromDockerConfig(registryHost, dockerConfigPath());
+        if (fromFile.isPresent()) {
+            return fromFile;
+        }
+        if (isGhcr(registryHost)) {
+            return fromGhcrEnv(System.getenv());
+        }
+        return Optional.empty();
+    }
+
+    static Optional<BasicAuth> fromGhcrEnv(Map<String, String> env) {
+        String token = firstNonBlank(env.get("GHCR_TOKEN"), env.get("GITHUB_TOKEN"));
+        if (token == null) {
+            return Optional.empty();
+        }
+        String username = firstNonBlank(
+                env.get("GHCR_USERNAME"), env.get("GITHUB_ACTOR"), "x-access-token");
+        return Optional.of(new BasicAuth(username, token));
+    }
+
+    private static boolean isGhcr(String registryHost) {
+        return "ghcr.io".equalsIgnoreCase(registryHost);
+    }
+
+    private static String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value.trim();
+            }
+        }
+        return null;
+    }
+
+    private static Optional<BasicAuth> fromDockerConfig(String registryHost, Path configPath) {
         if (!Files.isRegularFile(configPath)) {
             return Optional.empty();
         }

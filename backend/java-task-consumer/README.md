@@ -18,8 +18,9 @@ libraries-backend  ←── HTTP poll + status ──→  java-task-consumer
 | `java-upgrade-impact` | `UpgradeImpactPipeline` | japicmp + jdeps |
 
 See [docs/DESIGN.md](docs/DESIGN.md), [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md),
-[docs/backend-api.md](docs/backend-api.md) (HTTP contract), and
-[docs/pact-libraries-backend.md](docs/pact-libraries-backend.md) (Pact provider handoff).
+[docs/backend-api.md](docs/backend-api.md) (HTTP contract),
+[docs/pact-libraries-backend.md](docs/pact-libraries-backend.md) (Pact provider handoff),
+and [docs/local-debug.md](docs/local-debug.md) (Cursor debug harness).
 
 ## Modules
 
@@ -45,6 +46,12 @@ java -jar java-task-consumer/target/java-task-consumer-*.jar
 ```
 
 Health: `GET http://localhost:3000/live`
+
+## Debug from Cursor
+
+Use **Debug JTC scenarios** (see [docs/local-debug.md](docs/local-debug.md)). That launch
+starts the real poll loop plus an in-process queue and feeds the GAV and docker build types in
+sequence. Docker images still run `WorkerMain` with no harness.
 
 ## Docker
 
