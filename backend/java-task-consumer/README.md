@@ -121,8 +121,10 @@ Integrate templates into the umbrella `qubership-apihub` chart in a follow-up st
 For `java-upgrade-impact` with `subject.type = docker`, the worker pulls image layers directly from
 the OCI registry (Docker Registry HTTP API V2, no `podman`/`docker` CLI). Images are expected to
 follow [qubership-java-base](https://github.com/Netcracker/qubership-core-base-images/pkgs/container/qubership-java-base)
-layout (`/app/*.jar`). Private registries: mount Docker config (`DOCKER_CONFIG` or
-`~/.docker/config.json`) with registry credentials.
+layout (`/app/*.jar`) or Quarkus fast-jar (`/app/app`, `/app/lib`). Library versions come from
+`pom.properties` in the image; Maven is used for the upgrade-target JARs, not the subject's POM.
+Private registries: mount Docker config (`DOCKER_CONFIG` or `~/.docker/config.json`) with registry
+credentials.
 
 ## Container runtime (local)
 

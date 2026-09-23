@@ -5,10 +5,11 @@ import java.util.Optional;
 import org.qubership.jdiff.model.Gav;
 
 /**
- * Subject JAR taken from a container image (qubership-java-base layout: {@code /app/*.jar}).
+ * Subject JAR taken from a container image (qubership-java-base layout: {@code /app/*.jar}, or
+ * Quarkus fast-jar under {@code /app/app} plus {@code /app/lib}).
  *
- * <p>For upgrade-impact, {@link #coordinateForPom()} must be present so Maven can resolve the
- * dependency tree while the module JAR comes from the image.
+ * <p>Upgrade-impact inventories library versions from {@code pom.properties} in the image. Optional
+ * {@link #coordinateForPom()} is only a report label; Maven is not used to resolve the subject's POM.
  */
 public final class DockerImageJarSource implements JarSource {
 
@@ -46,5 +47,9 @@ public final class DockerImageJarSource implements JarSource {
 
     Path resolve(ContainerImageJarExtractor extractor) throws JarResolutionException {
         return extractor.extractJar(imageReference, jarPathInImage);
+    }
+
+    ImageClasspath resolveClasspath(ContainerImageJarExtractor extractor) throws JarResolutionException {
+        return extractor.extractClasspath(imageReference, jarPathInImage, coordinateForPom);
     }
 }

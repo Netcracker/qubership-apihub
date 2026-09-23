@@ -91,23 +91,25 @@ Or separate fields: `groupId`, `artifactId`, `version`, optional `classifier`.
 }
 ```
 
-Future `subject.type = docker` (qubership-java-base layout: JAR under `/app`):
+`subject.type = docker` (qubership-java-base or Quarkus fast-jar under `/app`):
 
 ```json
 {
   "type": "docker",
   "imageReference": "ghcr.io/org/app:1.0.0",
-  "groupId": "com.app",
-  "artifactId": "service",
-  "version": "1.0.0",
   "jarPathInImage": "service.jar"
 }
 ```
 
-`groupId` / `artifactId` / `version` are required for Maven dependency-tree resolution; the module
-JAR is extracted from `/app` by pulling OCI image layers over HTTPS (no container runtime).
-Private registries: configure credentials in Docker config (`DOCKER_CONFIG` or `~/.docker/config.json`).
-In Kubernetes, use Helm `registryAuth.existingSecret` or `registryAuth.configJson` (see JTC README).
+The worker inventories library versions from `pom.properties` inside JARs in the image. Maven is
+used only for the upgrade targets (old version as found in the image, new version from `upgrades`)
+and for expanding a requested BOM. `groupId` / `artifactId` / `version` on the subject are optional
+report labels. Quarkus images use `/app/app/*.jar` for jdeps; `quarkus-run.jar` is skipped.
+
+The module JAR is extracted from `/app` by pulling OCI image layers over HTTPS (no container
+runtime). Private registries: configure credentials in Docker config (`DOCKER_CONFIG` or
+`~/.docker/config.json`). In Kubernetes, use Helm `registryAuth.existingSecret` or
+`registryAuth.configJson` (see JTC README).
 
 ## Result ZIP
 

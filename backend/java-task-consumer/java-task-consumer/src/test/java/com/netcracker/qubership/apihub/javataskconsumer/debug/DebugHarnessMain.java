@@ -33,8 +33,6 @@ public final class DebugHarnessMain {
         Path workDir = repoRoot.resolve("java-task-consumer").resolve("target").resolve("jtc-debug");
         Path inbox = workDir.resolve("inbox");
         Files.createDirectories(workDir);
-        SubjectPomSeeder.ensure(SubjectPomSeeder.defaultLocalMavenRepo());
-
         Path settingsXml = null;
         List<String> mavenRepos = List.of();
         String githubToken = GithubPackageSettings.githubToken();

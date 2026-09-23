@@ -32,9 +32,9 @@ finished.
 
 Fixtures: `java-task-consumer/src/test/resources/debug/netcracker-scenarios.json`.
 
-The docker subject uses Quarkus fast-jar layout (`jarPathInImage`: `quarkus-run.jar`). The matching
-POM is not on Maven Central; the harness seeds `qip-micro-engine:0.2.5` into `~/.m2` from git tag
-`micro-engine-v0.2.5`. Cloud libraries resolve from GitHub Packages.
+The docker subject uses Quarkus fast-jar layout. The worker reads library versions from
+`pom.properties` in `/app/lib` and runs jdeps on `/app/app/*.jar` (`quarkus-run.jar` is skipped).
+Cloud-library JARs (old and new versions) resolve from GitHub Packages.
 
 ## Registry token
 

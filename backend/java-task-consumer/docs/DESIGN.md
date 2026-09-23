@@ -85,8 +85,9 @@ Mirrors `build-task-consumer` with a **separate Java task queue**:
 }
 ```
 
-`subject.type = docker` pulls the subject JAR from `/app` via daemonless OCI registry extract; Maven
-coordinates in the subject are still required for dependency-tree resolution.
+`subject.type = docker` pulls the application JAR from `/app` (Quarkus: `/app/app/*.jar`, not
+`quarkus-run.jar`). Library versions come from `pom.properties` in the image; Maven supplies the
+old and new JARs of the requested upgrades, not the subject's POM.
 
 ### Result
 

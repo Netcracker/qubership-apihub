@@ -1,7 +1,6 @@
 package org.qubership.jdiff.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import org.qubership.jdiff.config.JdiffEngineConfig;
@@ -11,6 +10,7 @@ import org.qubership.jdiff.model.JsonSupport;
 import org.qubership.jdiff.pipeline.UpgradeRequest;
 import org.qubership.jdiff.resolve.DockerImageJarSource;
 import org.qubership.jdiff.resolve.GavJarSource;
+import org.qubership.jdiff.resolve.ImageClasspath;
 import org.qubership.jdiff.resolve.JarResolutionException;
 import org.qubership.jdiff.resolve.JarSource;
 import org.qubership.jdiff.upgrade.UpgradeSpec;
@@ -56,11 +56,19 @@ public final class JdiffBuildService {
         return switch (subject) {
             case GavJarSource gavSource -> new UpgradeRequest(null, gavSource.gav(), upgrades);
             case DockerImageJarSource docker -> {
-                Gav gav = docker.coordinateForPom().orElseThrow(() -> new IllegalArgumentException(
-                        "docker subject requires groupId, artifactId, and version for dependency resolution"));
                 try {
-                    Path jar = factory.jarSourceResolver().resolve(docker);
-                    yield new UpgradeRequest(null, gav, jar, upgrades);
+                    ImageClasspath classpath = factory.jarSourceResolver().resolveClasspath(docker);
+                    Gav gav = docker.coordinateForPom()
+                            .orElse(classpath.applicationGav());
+                    if (gav == null) {
+                        gav = new Gav("image", "app", sanitizeImageVersion(docker.imageReference()), null);
+                    }
+                    yield new UpgradeRequest(
+                            null,
+                            gav,
+                            classpath.applicationJar(),
+                            upgrades,
+                            classpath.packagedLibraries());
                 } catch (JarResolutionException e) {
                     throw new IllegalStateException(
                             "Failed to extract jar from image " + docker.imageReference(), e);
@@ -93,11 +101,7 @@ public final class JdiffBuildService {
             case "docker" -> new DockerImageJarSource(
                     requiredText(node, "imageReference"),
                     optionalText(node, "jarPathInImage"),
-                    new Gav(
-                            requiredText(node, "groupId"),
-                            requiredText(node, "artifactId"),
-                            requiredText(node, "version"),
-                            optionalText(node, "classifier")));
+                    optionalGav(node));
             default -> throw new IllegalArgumentException("Unsupported subject type: " + type);
         };
     }
@@ -114,6 +118,30 @@ public final class JdiffBuildService {
                     requiredText(item, "version")));
         }
         return upgrades;
+    }
+
+    private static Gav optionalGav(JsonNode node) {
+        String groupId = optionalText(node, "groupId");
+        String artifactId = optionalText(node, "artifactId");
+        String version = optionalText(node, "version");
+        if (groupId == null && artifactId == null && version == null) {
+            return null;
+        }
+        if (groupId == null || artifactId == null || version == null) {
+            throw new IllegalArgumentException(
+                    "docker subject groupId, artifactId, and version must be set together");
+        }
+        return new Gav(groupId, artifactId, version, optionalText(node, "classifier"));
+    }
+
+    private static String sanitizeImageVersion(String imageReference) {
+        String tag = imageReference;
+        int slash = Math.max(tag.lastIndexOf('/'), 0);
+        int colon = tag.lastIndexOf(':');
+        if (colon > slash) {
+            tag = tag.substring(colon + 1);
+        }
+        return tag.isBlank() ? "unknown" : tag.replace('/', '-');
     }
 
     private static String requiredText(JsonNode node, String field) {

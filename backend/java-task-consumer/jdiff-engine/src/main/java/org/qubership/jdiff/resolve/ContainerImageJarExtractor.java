@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import org.qubership.jdiff.model.Gav;
 import org.qubership.jdiff.resolve.oci.OciImagePuller;
 import org.qubership.jdiff.resolve.oci.OciLayerMerger;
 import org.qubership.jdiff.resolve.oci.RegistryOciImagePuller;
@@ -13,7 +14,8 @@ import org.slf4j.LoggerFactory;
 /**
  * Extracts an application JAR from an OCI image by pulling registry layers (daemonless).
  *
- * <p>Images are expected to follow the qubership-java-base layout: application JAR under {@code /app}.
+ * <p>Images follow the qubership-java-base layout (JAR under {@code /app}) or Quarkus fast-jar
+ * ({@code /app/app}, {@code /app/lib}).
  */
 public final class ContainerImageJarExtractor {
 
@@ -35,6 +37,16 @@ public final class ContainerImageJarExtractor {
      * Pulls image layers, materializes {@code /app}, and returns a stable path to the subject JAR.
      */
     public Path extractJar(String imageReference, String jarPathInImage) throws JarResolutionException {
+        return extractClasspath(imageReference, jarPathInImage, null).applicationJar();
+    }
+
+    /**
+     * Pulls image layers, materializes {@code /app}, and inventories packaged library coordinates
+     * from {@code pom.properties}. The application JAR is the Quarkus {@code app/*.jar} when
+     * present; {@code quarkus-run.jar} is not used for analysis.
+     */
+    public ImageClasspath extractClasspath(String imageReference, String jarPathInImage, Gav declaredApplication)
+            throws JarResolutionException {
         if (imageReference == null || imageReference.isBlank()) {
             throw new JarResolutionException("imageReference must not be blank");
         }
@@ -51,11 +63,12 @@ public final class ContainerImageJarExtractor {
             OciLayerMerger merged = imagePuller.pullImage(imageReference);
             Path localApp = extractRoot.resolve("app");
             merged.writeAppDirectory(localApp);
-            Path jar = AppJarLocator.locate(localApp, jarPathInImage);
+            ImageClasspath classpath = ImageClasspathScanner.scan(localApp, jarPathInImage, declaredApplication);
             Path stableJar = extractRoot.resolve("subject.jar");
-            Files.copy(jar, stableJar, StandardCopyOption.REPLACE_EXISTING);
-            LOG.info("Extracted {} from image {} to {}", jar.getFileName(), imageReference, stableJar);
-            return stableJar;
+            Files.copy(classpath.applicationJar(), stableJar, StandardCopyOption.REPLACE_EXISTING);
+            LOG.info("Extracted {} from image {} to {}", classpath.applicationJar().getFileName(),
+                    imageReference, stableJar);
+            return new ImageClasspath(stableJar, classpath.applicationGav(), classpath.packagedLibraries());
         } catch (IOException e) {
             throw new JarResolutionException("Failed to extract jar from image " + imageReference, e);
         }

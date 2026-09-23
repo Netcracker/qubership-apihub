@@ -188,6 +188,85 @@ class UpgradeImpactPipelineTest {
     }
 
     @Test
+    void usesPackagedImageDependenciesInsteadOfMavenSubjectTree(@TempDir Path tempDir) throws IOException {
+        Path moduleJar = Files.createFile(tempDir.resolve("app-from-image.jar"));
+        Path oldDepJar = Files.createFile(tempDir.resolve("api-1.0.0.jar"));
+        Path newDepJar = Files.createFile(tempDir.resolve("api-2.0.0.jar"));
+        Gav imageApp = new Gav("org.example", "not-in-maven", "1.0", null);
+
+        ResolvedDependency packaged = new ResolvedDependency(OLD_DEP_GAV, "runtime", false, 0);
+        FakeArtifactResolver resolver = new FakeArtifactResolver()
+                .withJar(OLD_DEP_GAV, oldDepJar)
+                .withJar(NEW_DEP_GAV, newDepJar)
+                .withDependencyTree(List.of());
+        EffectivePomBuilder pomBuilder = new FakeEffectivePomBuilder(resolver);
+        FakeProjectScanner scanner = new FakeProjectScanner(pomBuilder, List.of());
+
+        List<ApiChange> changes = List.of(new ApiChange("com.dep.Api", "METHOD", "void doStuff()", "REMOVED",
+                List.of("METHOD_REMOVED"), null, false, false, true, "MAJOR", null));
+        FakeJarComparator comparator = new FakeJarComparator(new JapicmpResult("1.0.0", "2.0.0", "MAJOR", changes));
+        FakeJdepsRunner jdeps = new FakeJdepsRunner(Set.of(
+                new ClassUsage("com.example.Main", "com.dep.Api", "api-1.0.0.jar")));
+
+        UpgradeImpactPipeline pipeline = new UpgradeImpactPipeline(resolver, pomBuilder, scanner, jdeps,
+                comparator, 2);
+        DiffReport report = pipeline.run(new UpgradeRequest(
+                null,
+                imageApp,
+                moduleJar,
+                List.of(UpgradeSpec.parse("com.dep:api=2.0.0")),
+                List.of(packaged)));
+
+        assertThat(report.input()).containsEntry("unmatchedUpgrades", List.of());
+        assertThat(report.artifacts()).hasSize(1);
+        assertThat(report.artifacts().get(0).oldVersion()).isEqualTo("1.0.0");
+        assertThat(report.artifacts().get(0).newVersion()).isEqualTo("2.0.0");
+        assertThat(jdeps.lastTargetJar()).isEqualTo(moduleJar);
+        assertThat(jdeps.lastClasspath()).containsExactly(oldDepJar);
+    }
+
+    @Test
+    void expandsNewBomAgainstPackagedImageDependenciesWithoutSubjectPom(@TempDir Path tempDir)
+            throws IOException, URISyntaxException {
+        Path fixturesDir = Path.of(getClass().getResource("/upgrade").toURI());
+        Gav imageApp = new Gav("org.example", "not-in-maven", "1.0", null);
+        Gav oldManagedGav = new Gav("org.example", "lib-a", "2.5", null);
+        Gav newManagedGav = new Gav("org.example", "lib-a", "2.6", null);
+
+        Path moduleJar = Files.createFile(tempDir.resolve("app-from-image.jar"));
+        Path oldDepJar = Files.createFile(tempDir.resolve("lib-a-2.5.jar"));
+        Path newDepJar = Files.createFile(tempDir.resolve("lib-a-2.6.jar"));
+
+        FakeArtifactResolver resolver = new FakeArtifactResolver(fixturesDir)
+                .withJar(oldManagedGav, oldDepJar)
+                .withJar(newManagedGav, newDepJar)
+                .withDependencyTree(List.of());
+        EffectivePomBuilder pomBuilder = new EffectivePomBuilder(resolver);
+        FakeProjectScanner scanner = new FakeProjectScanner(pomBuilder, List.of());
+
+        List<ApiChange> changes = List.of(new ApiChange("org.example.LibA", "METHOD", "void doStuff()",
+                "REMOVED", List.of("METHOD_REMOVED"), null, false, false, true, "MAJOR", null));
+        FakeJarComparator comparator = new FakeJarComparator(new JapicmpResult("2.5", "2.6", "MAJOR", changes));
+        FakeJdepsRunner jdeps = new FakeJdepsRunner(Set.of(
+                new ClassUsage("org.example.Main", "org.example.LibA", "lib-a-2.5.jar")));
+
+        UpgradeImpactPipeline pipeline = new UpgradeImpactPipeline(resolver, pomBuilder, scanner, jdeps,
+                comparator, 2);
+        DiffReport report = pipeline.run(new UpgradeRequest(
+                null,
+                imageApp,
+                moduleJar,
+                List.of(UpgradeSpec.parse("org.example:bom=new")),
+                List.of(new ResolvedDependency(oldManagedGav, "runtime", false, 0))));
+
+        assertThat(report.input()).containsEntry("unmatchedUpgrades", List.of());
+        assertThat(report.artifacts()).hasSize(1);
+        assertThat(report.artifacts().get(0).artifactId()).isEqualTo("lib-a");
+        assertThat(report.artifacts().get(0).oldVersion()).isEqualTo("2.5");
+        assertThat(report.artifacts().get(0).newVersion()).isEqualTo("2.6");
+    }
+
+    @Test
     void bomUpgradeDeclaredInParentPomFlowsThroughFullPipelineWithRealEffectivePomBuilder(@TempDir Path tempDir)
             throws IOException, URISyntaxException {
         Path fixturesDir = Path.of(getClass().getResource("/upgrade/lineage").toURI());

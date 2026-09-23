@@ -92,14 +92,18 @@ public class UpgradeImpactPipeline {
         Set<String> matchedSpecGas = new HashSet<>();
         List<String> modulesAnalyzed = new ArrayList<>();
 
+        boolean imageClasspath = request.packagedDependencies() != null;
+
         for (ModuleTarget moduleTarget : moduleTargets) {
             Path moduleJar = resolveModuleJar(moduleTarget);
             if (moduleJar == null) {
                 continue;
             }
 
-            BuildOutcome outcome = buildOutcome(moduleTarget);
-            List<ResolvedDependency> treeDeps = resolver.resolveDependencyTree(moduleTarget.gav(), outcome.effective());
+            BuildOutcome outcome = imageClasspath ? null : buildOutcome(moduleTarget);
+            List<ResolvedDependency> treeDeps = imageClasspath
+                    ? request.packagedDependencies()
+                    : resolver.resolveDependencyTree(moduleTarget.gav(), outcome.effective());
             LOG.debug("Module {} resolved dependency tree: {}", moduleTarget.gav(), treeDeps);
 
             UpgradeMatcher.MatchResult matchResult = matcher.match(request.upgrades(), treeDeps);
@@ -213,7 +217,9 @@ public class UpgradeImpactPipeline {
 
     private BomExpandOutcome tryExpandBom(UpgradeSpec spec, BuildOutcome outcome, Gav moduleGav,
             List<ResolvedDependency> treeDeps) {
-        Dependency bomDependency = findImportBom(outcome.rawLineage(), spec.groupId(), spec.artifactId());
+        Dependency bomDependency = outcome == null
+                ? null
+                : findImportBom(outcome.rawLineage(), spec.groupId(), spec.artifactId());
         if (bomDependency != null) {
             String oldVersion = interpolate(bomDependency.getVersion(), outcome.effective());
             if (oldVersion == null) {

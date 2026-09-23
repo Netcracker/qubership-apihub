@@ -36,16 +36,16 @@ class JdiffBuildServiceMetadataTest {
     }
 
     @Test
-    void dockerSubjectRequiresMavenCoordinates() throws Exception {
+    void dockerSubjectDoesNotRequireMavenCoordinates() throws Exception {
         var node = mapper.readTree("""
                 {
                   "subject": {"type":"docker","imageReference":"ghcr.io/org/app:1.0"},
                   "upgrades": [{"groupId":"org.lib","artifactId":"core","version":"2.0"}]
                 }
                 """);
-        assertThatThrownBy(() -> JdiffBuildService.parseSubject(node.get("subject")))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("groupId");
+        var source = JdiffBuildService.parseSubject(node.get("subject"));
+        assertThat(source).isInstanceOf(org.qubership.jdiff.resolve.DockerImageJarSource.class);
+        assertThat(((org.qubership.jdiff.resolve.DockerImageJarSource) source).coordinateForPom()).isEmpty();
     }
 
     @Test

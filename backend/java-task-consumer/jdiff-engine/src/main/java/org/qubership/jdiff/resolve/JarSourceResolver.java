@@ -21,4 +21,8 @@ public final class JarSourceResolver {
             case DockerImageJarSource docker -> docker.resolve(imageExtractor);
         };
     }
+
+    public ImageClasspath resolveClasspath(DockerImageJarSource docker) throws JarResolutionException {
+        return docker.resolveClasspath(imageExtractor);
+    }
 }
