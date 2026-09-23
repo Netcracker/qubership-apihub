@@ -7,18 +7,20 @@ import (
 )
 
 type MigrationReport struct {
-	Status                string            `json:"status"`
-	StartedAt             time.Time         `json:"startedAt"`
-	FinishedAt            *time.Time        `json:"finishedAt,omitempty"`
-	ElapsedTime           string            `json:"elapsedTime"`
-	SuccessBuildsCount    int               `json:"successBuildsCount,omitempty"`
-	ErrorBuildsCount      int               `json:"errorBuildsCount,omitempty"`
-	SuspiciousBuildsCount int               `json:"suspiciousBuildsCount,omitempty"`
-	ErrorDetails          string            `json:"errorDetails,omitempty"`
-	Stages                []StageExecution  `json:"stages,omitempty"`
-	ErrorBuilds           []MigrationError  `json:"errorBuilds,omitempty"`
-	MigrationChanges      []MigrationChange `json:"migrationChanges,omitempty"`
-	PostCheckResult       *PostCheckResult  `json:"postCheckResult,omitempty"`
+	Status                      string            `json:"status"`
+	StartedAt                   time.Time         `json:"startedAt"`
+	FinishedAt                  *time.Time        `json:"finishedAt,omitempty"`
+	ElapsedTime                 string            `json:"elapsedTime"`
+	SuccessBuildsCount          int               `json:"successBuildsCount,omitempty"`
+	ErrorBuildsCount            int               `json:"errorBuildsCount,omitempty"`
+	SuspiciousBuildsCount       int               `json:"suspiciousBuildsCount,omitempty"`
+	NotMigratedVersionsCount    int               `json:"notMigratedVersionsCount,omitempty"`
+	NotMigratedComparisonsCount int               `json:"notMigratedComparisonsCount,omitempty"`
+	ErrorDetails                string            `json:"errorDetails,omitempty"`
+	Stages                      []StageExecution  `json:"stages,omitempty"`
+	ErrorBuilds                 []MigrationError  `json:"errorBuilds,omitempty"`
+	MigrationChanges            []MigrationChange `json:"migrationChanges,omitempty"`
+	PostCheckResult             *PostCheckResult  `json:"postCheckResult,omitempty"`
 }
 
 type MigrationError struct {
