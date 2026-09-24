@@ -96,7 +96,7 @@ You can reduce search scope using filters. There are two sections with filters:
   - Group - allows selecting one group from the specified workspace.
   - Package - allows selecting one package from the specified group.
   - Package version - allows specifying required package version or select version from the specified package.
-  - Version status - allows selecting one or more statuses from Draft, Release, and Archived to filter package versions.
+  - Version status - allows selecting one or more statuses from Draft and Release to filter package versions.
   - Version publication date - allow specifying period of time when package version was published.
 
 - API specific parameters - if you need find API operation of specific type then you can use this filter:
@@ -157,7 +157,7 @@ After all required files are added in the package, you can publish package versi
 
 1. Click **Publish**. In the opened popup fill the required parameters:
    - Version - name of the version to publish, in case of the release status, the version must match the mask, which is defined in the package settings.
-   - Status - status for version to publish, available values are draft, release and archived.
+   - Status - status for version to publish, available values are draft and release.
    - Labels - multiple value can be specified in the field. You need to click **Enter** to finish adding label.
    - Previous release version - name of the previous release version.\
      If previous release version is specified, then APIHUB automatically compares two versions. The result of comparison will be displayed on the summary page of the published package version and in API Changes page. See more in **API Changes of Package Version** section and XXX.

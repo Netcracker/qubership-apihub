@@ -1,7 +1,7 @@
 import { type FC, memo, useRef } from 'react'
 import { Marker } from 'react-mark.js'
 
-import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
+import { DdlSchemaChip } from '@netcracker/qubership-apihub-ui-shared/components/Ddl/DdlSchemaChip'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import {
   OperationPathMeta,
@@ -108,7 +108,7 @@ const OperationSearchResultRow: FC<OperationSearchResultRowProps> = memo<Operati
 }) => {
   const { version, operationKey, packageKey, apiType, parentPackages, name, title } = result
   const { versionKey, parents } = getSearchResultParents(parentPackages, name, version)
-  const { subtitle, type } = useOperationTitleMeta(result)
+  const { subtitle, operationType } = useOperationTitleMeta(result)
 
   return (
     <SearchResultRowRoot data-testid="SearchResultRow">
@@ -119,7 +119,7 @@ const OperationSearchResultRow: FC<OperationSearchResultRowProps> = memo<Operati
         searchText={searchText}
       />
       <Marker mark={searchText}>
-        <OperationPathMeta subtitle={subtitle} type={type} />
+        <OperationPathMeta subtitle={subtitle} operationType={operationType} />
       </Marker>
     </SearchResultRowRoot>
   )
@@ -222,8 +222,7 @@ const DdlContractSearchResultRow: FC<DdlContractSearchResultRowProps> = memo<Ddl
       />
       {schemaName && (
         <SearchResultRowSection>
-          <CustomChip
-            value="ddlSchema"
+          <DdlSchemaChip
             label={schemaName}
             data-testid="DdlSchemaNameChip"
           />

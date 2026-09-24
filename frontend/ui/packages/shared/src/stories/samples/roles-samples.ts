@@ -28,7 +28,6 @@ export const ROLES_LIST: Role[] = [
       'delete_package',
       'manage_draft_version',
       'manage_release_version',
-      'manage_archived_version',
       'manage_deprecated_version',
       'user_access_management',
       'access_token_management',
@@ -51,7 +50,6 @@ export const ROLES_LIST: Role[] = [
       'delete_package',
       'manage_draft_version',
       'manage_release_version',
-      'manage_archived_version',
       'manage_deprecated_version',
     ],
   },
@@ -62,7 +60,6 @@ export const ROLES_LIST: Role[] = [
       'read',
       'manage_draft_version',
       'manage_release_version',
-      'manage_archived_version',
       'manage_deprecated_version',
     ],
   },
@@ -102,10 +99,6 @@ export const PERMISSIONS_LIST: Permission[] = [
   {
     permission: 'manage_release_version',
     name: 'manage version in release status',
-  },
-  {
-    permission: 'manage_archived_version',
-    name: 'manage version in archived status',
   },
   {
     permission: 'manage_deprecated_version',

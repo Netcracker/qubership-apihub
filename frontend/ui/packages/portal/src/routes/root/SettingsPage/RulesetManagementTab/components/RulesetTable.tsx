@@ -1,5 +1,6 @@
-import { Box, capitalize, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
-import { type Ruleset, RulesetStatuses } from '@netcracker/qubership-apihub-ui-portal/src/entities/api-quality/rulesets'
+import { Box, capitalize, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
+import type { Ruleset } from '@netcracker/qubership-apihub-ui-portal/src/entities/api-quality/rulesets'
+import { RulesetStatusChip } from '@apihub/components/ApiQuality/RulesetChips'
 import { CustomTableHeadCell } from '@netcracker/qubership-apihub-ui-shared/components/CustomTableHeadCell'
 import { FormattedDate } from '@netcracker/qubership-apihub-ui-shared/components/FormattedDate'
 import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
@@ -73,10 +74,9 @@ const COLUMNS: ColumnDef<Ruleset>[] = [
     id: STATUS_COLUMN_ID,
     header: () => <CustomTableHeadCell title="Status" />,
     cell: ({ row: { original: { status } } }) => (
-      <Chip
+      <RulesetStatusChip
+        status={status}
         label={capitalize(status)}
-        size="small"
-        color={status === RulesetStatuses.ACTIVE ? 'release' : 'default'}
         sx={{ fontWeight: 500 }}
       />
     ),

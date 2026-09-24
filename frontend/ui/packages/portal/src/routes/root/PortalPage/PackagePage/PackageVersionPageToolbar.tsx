@@ -29,7 +29,7 @@ import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolb
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
 import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
 import { ExitIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ExitIcon'
-import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
+import { VersionStatusChip } from '@netcracker/qubership-apihub-ui-shared/components/VersionStatusChip'
 import { usePackageVersionContent } from '@apihub/routes/root/usePackageVersionContent'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import { VersionTitle } from '@netcracker/qubership-apihub-ui-shared/components/Titles/VersionTitle'
@@ -81,7 +81,7 @@ export const PackageVersionPageToolbar: FC = memo(() => {
                 latestRevision={latestRevision}
                 subtitleVariant
               />
-              <CustomChip value={status!}/>
+              <VersionStatusChip status={status!}/>
             </Box>
           }
         </>

@@ -25,7 +25,7 @@ import { CopyPackageVersionButton } from '@apihub/routes/root/PortalPage/Version
 import { getDefaultApiType } from '@apihub/utils/operation-types'
 import { Box, Button, Divider, Typography } from '@mui/material'
 import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
-import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
+import { VersionStatusChip } from '@netcracker/qubership-apihub-ui-shared/components/VersionStatusChip'
 import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
@@ -148,7 +148,7 @@ export const VersionPageToolbar: FC = memo(() => {
             </Typography>
             <VersionSelector />
             {versionContent &&
-              <CustomChip value={versionContent!.status} sx={{ height: 20 }} data-testid="VersionStatusChip"/>}
+              <VersionStatusChip status={versionContent!.status} sx={{ height: 20 }} data-testid="VersionStatusChip"/>}
             <WarningApiProcessorVersion packageKey={packageId} versionKey={versionId} />
             <Divider orientation="vertical" sx={{ height: '20px', mt: '6px' }}/>
             {isDashboard && <CreateDashboardVersionButton

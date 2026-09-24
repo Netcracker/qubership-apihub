@@ -22,7 +22,7 @@ import type {
   PackageVersionContentDto,
 } from './types'
 import { GRAPHQL_API_TYPE, REST_API_TYPE } from './types'
-import { ARCHIVED_VERSION_STATUS, DRAFT_VERSION_STATUS, RELEASE_VERSION_STATUS } from './version-statuses'
+import { DRAFT_VERSION_STATUS, RELEASE_VERSION_STATUS } from './version-statuses'
 import { TOKEN_SAMPLE, USER_SAMPLE } from './principal'
 
 export const RELEASE_VERSION_2022_1 = '2022.1@1'
@@ -35,7 +35,6 @@ export const VERSION_2_6 = '2.6'
 export const VERSION_2_2 = '2.2@1'
 export const VERSION_1_4 = '1.4@1'
 export const VERSION_1_0 = '1.0@1'
-export const VERSION_0_0 = '0.0@1'
 
 export function getChangesSummary(): ChangesSummaryDto {
   return {
@@ -192,22 +191,6 @@ export const PUBLISHED_VERSION_CONTENT_1_0: PackageVersionContentDto = {
   operationGroups: OPERATION_GROUPS,
 }
 
-export const PUBLISHED_VERSION_CONTENT_0_0: PackageVersionContentDto = {
-  version: VERSION_0_0,
-  packageId: 'package-0',
-  status: ARCHIVED_VERSION_STATUS,
-  createdAt: '2022-03-25T07:02:00.943324181+03:00',
-  previousVersion: RELEASE_VERSION_2022_1,
-  createdBy: TOKEN_SAMPLE,
-  versionLabels: [
-    'version-label-1',
-    'version-label-2',
-  ],
-  operationTypes: OPERATION_TYPES,
-  operationGroups: OPERATION_GROUPS,
-  revisionsCount: 0,
-}
-
 export const PUBLISHED_VERSION_CONTENTS: Record<string, PackageVersionContentDto> = {
   [VERSION_2_6_1]: PUBLISHED_VERSION_CONTENT_2_6_1,
   [VERSION_2_6_2]: PUBLISHED_VERSION_CONTENT_2_6_2,
@@ -216,5 +199,4 @@ export const PUBLISHED_VERSION_CONTENTS: Record<string, PackageVersionContentDto
   [VERSION_2_2]: PUBLISHED_VERSION_CONTENT_2_2,
   [VERSION_1_4]: PUBLISHED_VERSION_CONTENT_1_4,
   [VERSION_1_0]: PUBLISHED_VERSION_CONTENT_1_0,
-  [VERSION_0_0]: PUBLISHED_VERSION_CONTENT_0_0,
 }

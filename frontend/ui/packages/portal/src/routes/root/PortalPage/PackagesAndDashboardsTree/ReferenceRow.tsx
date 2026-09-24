@@ -46,7 +46,7 @@ import {
   YellowWarningCircleIcon,
 } from '@netcracker/qubership-apihub-ui-shared/icons/WarningCircleIcon'
 import { RedWarningIcon, YellowWarningIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningIcon'
-import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
+import { VersionStatusChip } from '@netcracker/qubership-apihub-ui-shared/components/VersionStatusChip'
 import { DeleteIcon } from '@netcracker/qubership-apihub-ui-shared/icons/DeleteIcon'
 import type {
   PackageReference,
@@ -244,7 +244,7 @@ export const ReferenceRow: FC<ReferenceRowProps> = memo<ReferenceRowProps>((
           </TextWithOverflowTooltip>
         </TableCell>
         <TableCell key="status" data-testid="StatusCell">
-          {status && <CustomChip value={status}/>}
+          {status && <VersionStatusChip status={status}/>}
         </TableCell>
         <TableCell key="remove" data-testid="RemoveCell">
           {onRemove && (

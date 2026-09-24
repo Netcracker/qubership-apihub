@@ -32,7 +32,7 @@ import type { Control, UseFormSetValue } from 'react-hook-form'
 import { Controller, useWatch } from 'react-hook-form'
 import { LoadingButton } from '@mui/lab'
 import { DialogForm } from './DialogForm'
-import { CustomChip } from './CustomChip'
+import { VersionStatusChip } from './VersionStatusChip'
 import { Swapper } from './Swapper'
 import { LatestRevisionMark } from './LatestRevisionMark'
 import type { Revision, Revisions } from '../entities/revisions'
@@ -243,7 +243,7 @@ const AutocompleteOption: FC<AutocompleteOptionProps> = memo<AutocompleteOptionP
           {`${REVISION_DELIMITER}${revision.revision}`}
           <LatestRevisionMark latest={revision.latestRevision}/>
         </Box>
-        <CustomChip value={revision.status}/>
+        <VersionStatusChip status={revision.status}/>
       </Box>
     </ListItem>
   )

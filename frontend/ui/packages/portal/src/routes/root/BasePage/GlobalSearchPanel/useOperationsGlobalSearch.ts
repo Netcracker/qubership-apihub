@@ -49,7 +49,7 @@ export function useOperationsGlobalSearch(options: {
   page?: number
 }): [ContractElementsSearchResults, IsLoading, FetchNextSearchResultList, IsFetchingNextPage, HasNextPage] {
   const { criteria, enabled, page = 1, limit = SEARCH_RESULTS_PAGE_SIZE } = options
-  const apiContract = criteria.apiContract ?? criteria.apiType
+  const { apiContract } = criteria
   const level = getContractElementsSearchLevel(apiContract)
 
   const {

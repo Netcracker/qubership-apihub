@@ -1,8 +1,8 @@
-import { RulesetStatuses, type RulesetMetadata } from '@apihub/entities/api-quality/rulesets'
+import { type RulesetMetadata } from '@apihub/entities/api-quality/rulesets'
 import { LINTER_API_TYPE_TITLE_MAP } from '@apihub/entities/api-quality/linter-api-types'
 import { useEventBus } from '@apihub/routes/EventBusProvider'
 import { Box, Link, Skeleton } from '@mui/material'
-import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
+import { RulesetSpecTypeChip, RulesetStatusChip } from '@apihub/components/ApiQuality/RulesetChips'
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import capitalize from 'lodash-es/capitalize'
@@ -71,16 +71,15 @@ export const ValidationRulesetLink: FC<ValidationRulesetLinkProps> = memo<Valida
         </TextWithOverflowTooltip>
       </Box>
       <Box display='flex' gap={1} flexShrink={0}>
-        <CustomChip
+        <RulesetSpecTypeChip
           key={`validation-ruleset-link-api-type-${data.apiType}`}
-          value='rulesetSpecType'
           sx={{ m: 0 }}
           label={LINTER_API_TYPE_TITLE_MAP[data.apiType]}
           data-testid="ValidationRulesetApiTypeChip"
         />
-        <CustomChip
+        <RulesetStatusChip
           key='validation-ruleset-link-status'
-          value={data.status === RulesetStatuses.ACTIVE ? 'rulesetActive' : 'rulesetInactive'}
+          status={data.status}
           sx={{ m: 0 }}
           label={capitalize(data.status)}
           data-testid="ValidationRulesetStatusChip"

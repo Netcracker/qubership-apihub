@@ -19,7 +19,7 @@ import { type FC, memo } from 'react'
 import { Marker } from 'react-mark.js'
 import type { To } from 'react-router-dom'
 
-import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
+import { VersionStatusChip } from '@netcracker/qubership-apihub-ui-shared/components/VersionStatusChip'
 import { SpecLogo } from '@netcracker/qubership-apihub-ui-shared/components/SpecLogo'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
@@ -61,7 +61,7 @@ export const ResultCommonHeader: FC<ResultCommonHeaderProps> = memo<ResultCommon
     <Box width="inherit">
       <SearchResultRowSection>
         <SearchResultBreadcrumbs breadcrumbs={breadcrumbs} />
-        {breadCrumbsStatus && <CustomChip value={breadCrumbsStatus} data-testid="VersionStatusChip" />}
+        {breadCrumbsStatus && <VersionStatusChip status={breadCrumbsStatus} data-testid="VersionStatusChip" />}
       </SearchResultRowSection>
 
       <Marker mark={searchText}>
@@ -73,7 +73,7 @@ export const ResultCommonHeader: FC<ResultCommonHeaderProps> = memo<ResultCommon
               title={title}
               onLinkClick={closePanel}
             />
-            {status && <CustomChip value={status} data-testid="VersionStatusChip" />}
+            {status && <VersionStatusChip status={status} data-testid="VersionStatusChip" />}
           </SearchResultTitleContent>
         </SearchResultTitleRow>
       </Marker>

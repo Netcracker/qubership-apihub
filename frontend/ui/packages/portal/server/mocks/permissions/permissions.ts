@@ -40,10 +40,6 @@ export const PERMISSIONS_LIST: Writeable<PermissionsDto> = {
       name: 'manage version in release status',
     },
     {
-      permission: 'manage_archived_version',
-      name: 'manage version in archived status',
-    },
-    {
       permission: 'manage_deprecated_version',
       name: 'manage version in deprecated status',
     },

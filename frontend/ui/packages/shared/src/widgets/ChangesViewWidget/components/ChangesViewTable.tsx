@@ -56,9 +56,11 @@ import { insertIntoArrayByIndex } from '../../../utils/arrays'
 import { createComponents } from '../../../utils/components'
 import { DEFAULT_NUMBER_SKELETON_ROWS } from '../../../utils/constants'
 import type { ChangesViewTableData } from '../const/table'
-import { CHANGES_COLUMN_ID, COLUMNS_MODELS } from '../const/table'
+import { CHANGES_COLUMN_ID, DASHBOARD_COLUMNS_MODELS, PACKAGE_COLUMNS_MODELS } from '../const/table'
 
 export type FetchNextPage = (options?: FetchNextPageOptions) => Promise<InfiniteQueryObserverResult<VersionChangesData, Error>>
+
+const MIN_TABLE_WIDTH = 700
 
 export type SubTableComponentProps = {
   value: Row<ChangesViewTableData>
@@ -99,6 +101,7 @@ export const ChangesViewTable: FC<ChangeViewTableProps> = memo<ChangeViewTablePr
     onLinkClick,
   }) => {
   const isDashboardType = useMemo(() => packageObject?.kind === DASHBOARD_KIND, [packageObject?.kind])
+  const columnModels = isDashboardType ? DASHBOARD_COLUMNS_MODELS : PACKAGE_COLUMNS_MODELS
 
   const [containerWidth, setContainerWidth] = useState(DEFAULT_CONTAINER_WIDTH)
   const [columnSizingInfo, setColumnSizingInfo] = useState<ColumnSizingInfoState>()
@@ -109,10 +112,18 @@ export const ChangesViewTable: FC<ChangeViewTableProps> = memo<ChangeViewTablePr
 
   const actualColumnSizing = useColumnsSizing({
     containerWidth: containerWidth,
-    columnModels: COLUMNS_MODELS,
+    columnModels: columnModels,
     columnSizingInfo: columnSizingInfo,
     defaultMinColumnSize: 60,
   })
+
+  const tableMinWidth = useMemo(
+    () => Math.max(
+      Object.values(actualColumnSizing).reduce((result, current) => result + current, 0),
+      MIN_TABLE_WIDTH,
+    ),
+    [actualColumnSizing],
+  )
 
   const columns: ColumnDef<ChangesViewTableData>[] = useMemo(() => {
     const result: ColumnDef<ChangesViewTableData>[] = [
@@ -248,7 +259,7 @@ export const ChangesViewTable: FC<ChangeViewTableProps> = memo<ChangeViewTablePr
 
   return (
     <TableContainer ref={tableContainerRef} sx={{ mt: 1 }}>
-      <Table sx={{ minWidth: 700 }}>
+      <Table sx={{ minWidth: tableMinWidth }}>
         <TableHead>
           {getHeaderGroups().map(headerGroup => (
             <TableRow key={headerGroup.id}>

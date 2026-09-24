@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import type { FC, HTMLAttributes } from 'react'
+import type { FC, HTMLAttributes, ReactNode } from 'react'
 import * as React from 'react'
 import { memo } from 'react'
-import type { ChipProps, TooltipProps } from '@mui/material'
+import type { TooltipProps } from '@mui/material'
 import { Box, ListItem, Tooltip, Typography } from '@mui/material'
 import { OverflowTooltip } from './OverflowTooltip'
-import { CustomChip } from './CustomChip'
 import type { TestableProps } from './Testable'
 
 export type OptionItemProps = {
@@ -28,8 +27,7 @@ export type OptionItemProps = {
   title: string
   disabled?: boolean
   subtitle?: string
-  chipValue?: string
-  chipVariant?: ChipProps['variant']
+  chip?: ReactNode
   tooltipProps?: Omit<TooltipProps, 'children'>
 } & TestableProps
 
@@ -38,8 +36,7 @@ export const OptionItem: FC<OptionItemProps> = memo<OptionItemProps>(({
   title,
   disabled,
   subtitle,
-  chipValue,
-  chipVariant = 'outlined',
+  chip,
   tooltipProps: { title: tooltipTitle, ...rest } = {},
   'data-testid': dataTestId,
 }) => {
@@ -68,7 +65,7 @@ export const OptionItem: FC<OptionItemProps> = memo<OptionItemProps>(({
                 </OverflowTooltip>
               )}
             </Box>
-            {chipValue && <CustomChip sx={{ marginLeft: 'auto' }} variant={chipVariant} value={chipValue}/>}
+            {chip && <Box sx={{ marginLeft: 'auto' }}>{chip}</Box>}
           </Box>
         </ListItem>
       </Box>

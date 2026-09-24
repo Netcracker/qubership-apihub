@@ -29,14 +29,13 @@ import { VersionTitle } from '@netcracker/qubership-apihub-ui-shared/components/
 import { VersionsTable } from '@netcracker/qubership-apihub-ui-shared/components/VersionsTable'
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import {
-  ARCHIVED_VERSION_STATUS,
   DRAFT_VERSION_STATUS,
   RELEASE_VERSION_STATUS,
 } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import type { PackageVersion } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import { usePackageVersions } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
 import type { PackageVersionsSortBy, SortOrder } from '@netcracker/qubership-apihub-ui-shared/types/sorting'
-import { ASC_ORDER, DESC_ORDER, SORT_BY_CREATED_AT, SORT_BY_VERSION } from '@netcracker/qubership-apihub-ui-shared/types/sorting'
+import { DESC_ORDER, SORT_BY_CREATED_AT, SORT_BY_VERSION } from '@netcracker/qubership-apihub-ui-shared/types/sorting'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import type { FC, ReactNode } from 'react'
@@ -138,7 +137,6 @@ export const VersionSelector: FC = memo(() => {
               >
                 <Tab label="Release" value={RELEASE_TAB} data-testid="ReleaseButton" />
                 <Tab label="Draft" value={DRAFT_TAB} data-testid="DraftButton" />
-                <Tab label="Archived" value={ARCHIVED_TAB} data-testid="ArchivedButton" />
               </TabList>
               {ACTIVE_TAB_CONTENT_MAP[activeTab](selectorContent)}
             </TabContext>
@@ -162,17 +160,14 @@ export const VersionSelector: FC = memo(() => {
 
 const RELEASE_TAB = 'release'
 const DRAFT_TAB = 'draft'
-const ARCHIVED_TAB = 'archived'
 
 type VersionTab =
   | typeof RELEASE_TAB
   | typeof DRAFT_TAB
-  | typeof ARCHIVED_TAB
 
 export const VERSION_STATUS_MAP: Record<VersionTab, VersionStatus> = {
   [RELEASE_TAB]: RELEASE_VERSION_STATUS,
   [DRAFT_TAB]: DRAFT_VERSION_STATUS,
-  [ARCHIVED_TAB]: ARCHIVED_VERSION_STATUS,
 }
 
 type VersionSort = {
@@ -183,7 +178,6 @@ type VersionSort = {
 export const VERSION_SORT_MAP: Record<VersionTab, VersionSort> = {
   [RELEASE_TAB]: { sortBy: SORT_BY_VERSION, sortOrder: DESC_ORDER },
   [DRAFT_TAB]: { sortBy: SORT_BY_CREATED_AT, sortOrder: DESC_ORDER },
-  [ARCHIVED_TAB]: { sortBy: SORT_BY_VERSION, sortOrder: ASC_ORDER },
 }
 
 const tabContentStyle = { maxHeight: '300px', width: '100%', pr: 1, gridArea: 'content' }
@@ -196,11 +190,6 @@ const ACTIVE_TAB_CONTENT_MAP: Record<VersionTab, (content: ReactNode) => ReactNo
   ),
   [DRAFT_TAB]: (content) => (
     <TabPanel sx={tabContentStyle} value={DRAFT_TAB}>
-      {content}
-    </TabPanel>
-  ),
-  [ARCHIVED_TAB]: (content) => (
-    <TabPanel sx={tabContentStyle} value={ARCHIVED_TAB}>
       {content}
     </TabPanel>
   ),

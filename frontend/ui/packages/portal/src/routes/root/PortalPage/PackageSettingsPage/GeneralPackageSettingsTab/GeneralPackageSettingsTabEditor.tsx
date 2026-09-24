@@ -54,7 +54,7 @@ import { transformStringValue } from '@netcracker/qubership-apihub-ui-shared/uti
 import type { Package } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { DASHBOARD_KIND, GROUP_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import type { PackageVersion } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
-import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
+import { VersionStatusChip } from '@netcracker/qubership-apihub-ui-shared/components/VersionStatusChip'
 import { filterChangedFormFields } from '@netcracker/qubership-apihub-ui-shared/utils/react-hook-form'
 
 export const GeneralPackageSettingsTabEditor: FC<PackageSettingsTabProps> = memo<PackageSettingsTabProps>(({
@@ -263,7 +263,7 @@ export const GeneralPackageSettingsTabEditor: FC<PackageSettingsTabProps> = memo
                           renderOption={(props, { key, status }) => (
                             <ListItem {...props}>
                               <ListItemText>{getSplittedVersionKey(key).versionKey}</ListItemText>
-                              <CustomChip value={status}/>
+                              <VersionStatusChip status={status}/>
                             </ListItem>
                           )}
                           renderInput={(params) => (

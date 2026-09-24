@@ -75,7 +75,7 @@ export const OperationListItem: FC<{
           operation={operation}
           link={link}
           onLinkClick={onClickLink}
-          badgeText={operation.deprecated ? 'Deprecated' : undefined}
+          deprecated={operation.deprecated}
         />
       </Box>
     </ListItem>

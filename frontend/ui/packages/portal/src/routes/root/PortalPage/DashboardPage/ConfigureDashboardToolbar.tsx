@@ -30,7 +30,7 @@ import { useEventBus } from '@apihub/routes/EventBusProvider'
 import { isEmpty, isNotEmptyMap } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
-import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
+import { VersionStatusChip } from '@netcracker/qubership-apihub-ui-shared/components/VersionStatusChip'
 import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
 import { ExitIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ExitIcon'
 import { useDeletedReferences } from '@apihub/routes/root/PortalPage/useDeletedReferences'
@@ -91,7 +91,7 @@ export const ConfigureDashboardToolbar: FC<ConfigureDashboardToolbarProps> = mem
                   latestRevision={latestRevision}
                   subtitleVariant
                 />
-                <CustomChip value={status!} data-testid="VersionStatusChip"/>
+                <VersionStatusChip status={status!} data-testid="VersionStatusChip"/>
               </Box>
             )}
           </>

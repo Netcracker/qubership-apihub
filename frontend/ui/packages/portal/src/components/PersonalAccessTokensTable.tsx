@@ -3,7 +3,7 @@ import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/component
 import {
   ConfirmationDialog,
 } from '@netcracker/qubership-apihub-ui-shared/components/ConfirmationDialog/ConfirmationDialog'
-import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
+import { PersonalAccessTokenStatusChip } from '@netcracker/qubership-apihub-ui-shared/components/PersonalAccessTokenStatusChip'
 import { FormattedDate } from '@netcracker/qubership-apihub-ui-shared/components/FormattedDate'
 import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
 import { TableCellSkeleton } from '@netcracker/qubership-apihub-ui-shared/components/TableCellSkeleton'
@@ -122,7 +122,7 @@ export const PersonalAccessTokensTable: FC<TokensTableTableProps> = memo(props =
           id: STATUS_COLUMN_ID,
           header: 'Status',
           cell: ({ row: { original: { status } } }) => (
-            <CustomChip value={status} label={status} />
+            <PersonalAccessTokenStatusChip status={status} label={status} />
           ),
         },
         {

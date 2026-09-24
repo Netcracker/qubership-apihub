@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-export const NORMAL_CLOSURE_CODE = 1000
+import type { FC } from 'react'
+import { memo } from 'react'
+import type { CustomChipProps } from '../CustomChip'
+import { HttpMethodChip } from './HttpMethodChip'
+import type { RestOperation } from '../../entities/operations'
 
-export const DEFAULT_RECONNECT_INTERVAL = 1000
+export type RestOperationChipProps = {
+  operation: RestOperation
+} & Omit<CustomChipProps, 'value' | 'color'>
 
-export function isSocketClosed(socket: WebSocket | null): boolean {
-  return !socket || socket.readyState === WebSocket.CLOSED
-}
-
-// Use it for waiting snapshot event before publish
-export async function waitForSocketEvent(): Promise<void> {
-  await new Promise((resolve) => {
-    setTimeout(() => resolve(null), 1000)
-  })
-}
+export const RestOperationChip: FC<RestOperationChipProps> = memo<RestOperationChipProps>(({
+  operation,
+  ...props
+}) => (
+  <HttpMethodChip {...props} method={operation.method}/>
+))

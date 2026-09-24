@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-import { useMemo } from 'react'
-import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
-import { calculateSpecType, getFileExtension } from '@netcracker/qubership-apihub-ui-shared/utils/files'
+import type { FC } from 'react'
+import { memo } from 'react'
+import type { CustomChipProps } from '../CustomChip'
+import { CustomChip } from '../CustomChip'
+import type { GraphQlOperation } from '../../entities/operations'
 
-// TODO: Check usages.
-//  Seems most places can use 'type' from branch cache instead of calculation
-export function useSpecType(
-  filename?: string | null,
-  content?: string | null,
-): SpecType {
-  return useMemo(
-    () => calculateSpecType(getFileExtension(filename ?? ''), content ?? ''),
-    [filename, content],
-  )
-}
+export type GraphQlOperationChipProps = {
+  operation: GraphQlOperation
+} & Omit<CustomChipProps, 'value' | 'color'>
+
+export const GraphQlOperationChip: FC<GraphQlOperationChipProps> = memo<GraphQlOperationChipProps>(({
+  operation,
+  variant = 'outlined',
+  ...props
+}) => (
+  <CustomChip {...props} variant={variant} value={operation.method}/>
+))

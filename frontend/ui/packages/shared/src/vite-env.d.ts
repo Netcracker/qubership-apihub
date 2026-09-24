@@ -23,7 +23,6 @@ import '@mui/material/Chip'
 import { ComponentsProps } from '@mui/material/styles/props'
 import { ComponentsOverrides } from '@mui/material/styles/overrides'
 import { ComponentsVariants } from '@mui/material/styles/variants'
-import { SimplePaletteColorOptions } from '@mui/material/styles/createPalette'
 import { CSSProperties } from '@mui/material/styles/createTypography'
 import { Theme } from '@mui/material'
 import { Context } from 'react'
@@ -35,22 +34,6 @@ declare module 'react' {
 }
 
 declare module '@mui/material/styles' {
-  interface PaletteOptions {
-    draft: SimplePaletteColorOptions
-    release: SimplePaletteColorOptions
-    deprecated: SimplePaletteColorOptions
-    archived: SimplePaletteColorOptions
-    get: SimplePaletteColorOptions
-    post: SimplePaletteColorOptions
-    put: SimplePaletteColorOptions
-    patch: SimplePaletteColorOptions
-    send: SimplePaletteColorOptions
-    receive: SimplePaletteColorOptions
-    query: SimplePaletteColorOptions
-    mutation: SimplePaletteColorOptions
-    subscription: SimplePaletteColorOptions
-  }
-
   interface Components {
     MuiTabPanel?: {
       defaultProps?: ComponentsProps['MuiTabPanel'];
@@ -76,32 +59,6 @@ declare module '@mui/material/Button' {
 }
 
 declare module '@mui/material/Chip' {
-  interface ChipPropsColorOverrides {
-    draft: true
-    release: true
-    deprecated: true
-    archived: true
-    get: true
-    put: true
-    post: true
-    patch: true
-    delete: true
-    send: true
-    receive: true
-    query: true
-    mutation: true
-    subscription: true
-    // Personal Access Tokens
-    active: true
-    expired: true
-    // Validation Ruleset Status
-    rulesetSpecType: true
-    rulesetActive: true
-    rulesetInactive: true
-    // Contracts
-    ddlSchema: true
-  }
-
   interface ChipPropsVariantOverrides {
     readonly: true
   }

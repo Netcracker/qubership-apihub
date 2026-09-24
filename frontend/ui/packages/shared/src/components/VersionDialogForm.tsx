@@ -15,7 +15,7 @@
  */
 
 import * as React from 'react'
-import type { ChangeEvent, FC, SyntheticEvent } from 'react'
+import type { ChangeEvent, FC, ReactNode, SyntheticEvent } from 'react'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import type { Control, FormState, UseFormSetValue } from 'react-hook-form'
 import { Controller, useWatch } from 'react-hook-form'
@@ -36,7 +36,7 @@ import {
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded'
 import { LoadingButton } from '@mui/lab'
 import { DialogForm } from './DialogForm'
-import { CustomChip } from './CustomChip'
+import { VersionStatusChip } from './VersionStatusChip'
 import type { Key, VersionKey } from '../entities/keys'
 import type { PackagePermissions } from '../entities/package-permissions'
 import type { VersionStatus } from '../entities/version-status'
@@ -268,6 +268,16 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
         ? rememberedPreviousVersionStatus.status
         : undefined),
     [previousVersionStatusMap, rememberedPreviousVersionStatus],
+  )
+
+  const renderPreviousVersionStatusChip = useCallback(
+    (versionKey: Key): ReactNode => {
+      const previousVersionStatus = getPreviousVersionOptionStatus(versionKey)
+      return previousVersionStatus
+        ? <VersionStatusChip status={previousVersionStatus}/>
+        : null
+    },
+    [getPreviousVersionOptionStatus],
   )
 
   const previousVersionOptions = useMemo(() => {
@@ -713,7 +723,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                   key={option}
                   data-testid={`Option-${option}`}
                 >
-                  <CustomChip value={option}/>
+                  <VersionStatusChip status={option}/>
                 </ListItem>
               }
               onChange={(_, value) => {
@@ -741,7 +751,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                         WebkitTextFillColor: 'transparent',
                       },
                     },
-                    startAdornment: status ? <CustomChip sx={{ height: 16, mb: 1 }} value={status}/> : null,
+                    startAdornment: status ? <VersionStatusChip sx={{ height: 16, mb: 1 }} status={status}/> : null,
                   }}
                 />
               )}
@@ -787,8 +797,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                       key={versionKey}
                       props={props}
                       title={getPreviousVersionOptionLabel(versionKey)}
-                      chipValue={getPreviousVersionOptionStatus(versionKey)}
-                      chipVariant="filled"
+                      chip={renderPreviousVersionStatusChip(versionKey)}
                       data-testid={`Option-${versionKey}`}
                     />
                   )}
@@ -811,7 +820,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                           endAdornment: (
                             <>
                               {selectedStatus && (
-                                <CustomChip sx={{ mr: 0.5, height: '18px' }} value={selectedStatus}/>
+                                <VersionStatusChip sx={{ mr: 0.5, height: '18px' }} status={selectedStatus}/>
                               )}
                               {params.InputProps.endAdornment}
                             </>
