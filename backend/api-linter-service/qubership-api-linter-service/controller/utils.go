@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -9,42 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/Netcracker/qubership-api-linter-service/exception"
-	log "github.com/sirupsen/logrus"
 )
-
-func RespondWithCustomError(w http.ResponseWriter, err *exception.CustomError) {
-	log.Debugf("Request failed. Code = %d. Message = %s. Params: %v. Debug: %s", err.Status, err.Message, err.Params, err.Debug)
-	respondWithJson(w, err.Status, err)
-}
-
-func respondWithError(w http.ResponseWriter, msg string, err error) {
-	if customError, ok := err.(*exception.CustomError); ok {
-		logCustomError(msg, customError, err)
-		RespondWithCustomError(w, customError)
-		return
-	}
-
-	log.Errorf("%s: %s", msg, err.Error())
-	RespondWithCustomError(w, &exception.CustomError{
-		Status:  http.StatusInternalServerError,
-		Message: msg,
-		Debug:   err.Error()})
-}
-
-func logCustomError(msg string, customError *exception.CustomError, err error) {
-	if customError.Status == http.StatusNotFound {
-		log.Infof("%s: %s", msg, err.Error())
-		return
-	}
-	log.Errorf("%s: %s", msg, err.Error())
-}
-
-func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
-	response, _ := json.Marshal(payload)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	w.Write(response)
-}
 
 func getStringParam(r *http.Request, p string) string {
 	params := mux.Vars(r)

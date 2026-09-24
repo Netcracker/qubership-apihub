@@ -20,6 +20,7 @@ type InternalLinterConfig struct {
 	ApiTypes             []ApiType
 	DisplayName          string
 	Enabled              bool
+	Optional             bool
 	Workers              int
 	IncludePackages      []string
 	ExcludePackages      []string
@@ -31,4 +32,5 @@ type ExternalLinterConfig struct {
 	ApiTypes    []ApiType `json:"apiTypes"`
 	DisplayName string    `json:"displayName"`
 	Enabled     bool      `json:"enabled"`
+	Optional    bool      `json:"optional"`
 }

@@ -20,13 +20,14 @@ type VersionTaskProcessor interface {
 	StartVersionLintTask(taskId string) error
 }
 
-func NewVersionTaskProcessor(verRepo repository.VersionLintTaskRepository, docRepo repository.DocLintTaskRepository, verResRepo repository.VersionResultRepository, cl client.ApihubClient, linterSelectorService LinterSelectorService, scoringService ScoringService, executorId string, docTaskNotify chan<- struct{}, versionTaskNotify <-chan struct{}) VersionTaskProcessor {
+func NewVersionTaskProcessor(verRepo repository.VersionLintTaskRepository, docRepo repository.DocLintTaskRepository, verResRepo repository.VersionResultRepository, cl client.ApihubClient, linterSelectorService LinterSelectorService, linterConfigService LinterConfigService, scoringService ScoringService, executorId string, docTaskNotify chan<- struct{}, versionTaskNotify <-chan struct{}) VersionTaskProcessor {
 	svc := &versionTaskProcessorImpl{
 		verRepo:               verRepo,
 		docRepo:               docRepo,
 		verResRepo:            verResRepo,
 		cl:                    cl,
 		linterSelectorService: linterSelectorService,
+		linterConfigService:   linterConfigService,
 		scoringService:        scoringService,
 		executorId:            executorId,
 		docTaskNotify:         docTaskNotify,
@@ -50,6 +51,7 @@ type versionTaskProcessorImpl struct {
 	verResRepo            repository.VersionResultRepository
 	cl                    client.ApihubClient
 	linterSelectorService LinterSelectorService
+	linterConfigService   LinterConfigService
 	scoringService        ScoringService
 	executorId            string
 	docTaskNotify         chan<- struct{}
@@ -267,6 +269,7 @@ func (v versionTaskProcessorImpl) checkDocReady() {
 		for _, verLintTask := range verLintTasks {
 			var numSucceed int
 			var numFailed int
+			var numFailedOptional int
 			var numNotReady int
 			for _, docLintTask := range docLintTasks {
 				if docLintTask.VersionLintTaskId != verLintTask.Id {
@@ -277,7 +280,13 @@ func (v versionTaskProcessorImpl) checkDocReady() {
 					numSucceed++
 					break
 				case view.TaskStatusError:
-					numFailed++
+					// Optional linters are non-blocking: their execution failures are recorded (see
+					// linted_document) but must not fail the version validation result.
+					if v.linterConfigService.IsLinterOptional(docLintTask.Linter) {
+						numFailedOptional++
+					} else {
+						numFailed++
+					}
 					break
 				case view.TaskStatusNotStarted, view.TaskStatusProcessing:
 					numNotReady++
@@ -300,6 +309,10 @@ func (v versionTaskProcessorImpl) checkDocReady() {
 				if err != nil {
 					v.handleProcessingFailed(ctx, verLintTask, err)
 					continue
+				}
+
+				if numFailedOptional > 0 {
+					log.Infof("Version lint (task = %s) has %d optional linter doc task(s) failed; not affecting validation result", verLintTask.Id, numFailedOptional)
 				}
 
 				var score view.VersionScore

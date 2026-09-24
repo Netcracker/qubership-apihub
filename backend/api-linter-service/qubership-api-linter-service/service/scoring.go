@@ -17,11 +17,12 @@ type ScoringService interface {
 }
 
 type scoringServiceImpl struct {
-	versionResultRepo repository.VersionResultRepository
-	lintResultRepo    repository.LintResultRepository
-	rulesetRepo       repository.RulesetRepository
-	scoringRepository repository.ScoringRepository
-	apihubClient      client.ApihubClient
+	versionResultRepo   repository.VersionResultRepository
+	lintResultRepo      repository.LintResultRepository
+	rulesetRepo         repository.RulesetRepository
+	scoringRepository   repository.ScoringRepository
+	linterConfigService LinterConfigService
+	apihubClient        client.ApihubClient
 }
 
 func NewScoringService(
@@ -29,14 +30,16 @@ func NewScoringService(
 	lintResultRepo repository.LintResultRepository,
 	rulesetRepo repository.RulesetRepository,
 	scoringRepository repository.ScoringRepository,
+	linterConfigService LinterConfigService,
 	apihubClient client.ApihubClient,
 ) ScoringService {
 	return &scoringServiceImpl{
-		versionResultRepo: versionResultRepo,
-		lintResultRepo:    lintResultRepo,
-		rulesetRepo:       rulesetRepo,
-		scoringRepository: scoringRepository,
-		apihubClient:      apihubClient,
+		versionResultRepo:   versionResultRepo,
+		lintResultRepo:      lintResultRepo,
+		rulesetRepo:         rulesetRepo,
+		scoringRepository:   scoringRepository,
+		linterConfigService: linterConfigService,
+		apihubClient:        apihubClient,
 	}
 }
 
@@ -154,9 +157,15 @@ func (s *scoringServiceImpl) buildValidationDetails(ctx context.Context, doc ent
 		return nil
 	}
 
+	// Optional linters are non-blocking: their internal/execution failures are recorded in
+	// InternalError for visibility but must not push the score to not_passed. Issues found by an
+	// optional linter that ran successfully still count (see the errors/warnings branch below).
+	optional := s.linterConfigService.IsLinterOptional(ruleset.Linter)
+
 	vd := &view.QualityCheckDetails{
 		Linter:        ruleset.Linter,
 		Status:        view.ScoringPassed,
+		Optional:      optional,
 		Reason:        "",
 		ErrorsCount:   0,
 		WarningsCount: 0,
@@ -164,17 +173,21 @@ func (s *scoringServiceImpl) buildValidationDetails(ctx context.Context, doc ent
 	}
 
 	if doc.LintStatus == view.StatusError {
-		vd.Status = view.ScoringNotPassed
 		vd.InternalError = doc.LintDetails
-		vd.Reason = fmt.Sprintf("Validation internal error for linter %s.", ruleset.Linter)
+		if !optional {
+			vd.Status = view.ScoringNotPassed
+			vd.Reason = fmt.Sprintf("Validation internal error for linter %s.", ruleset.Linter)
+		}
 		return vd
 	}
 
 	summary, err := s.lintResultRepo.GetLintResultSummary(ctx, doc.DataHash, doc.RulesetId)
 	if err != nil {
-		vd.Status = view.ScoringNotPassed
 		vd.InternalError = fmt.Sprintf("failed to get lint result: %s", err)
-		vd.Reason = fmt.Sprintf("Validation internal error")
+		if !optional {
+			vd.Status = view.ScoringNotPassed
+			vd.Reason = fmt.Sprintf("Validation internal error")
+		}
 		return vd
 	}
 	if summary == nil {
@@ -183,9 +196,11 @@ func (s *scoringServiceImpl) buildValidationDetails(ctx context.Context, doc ent
 
 	issues, err := makeSpectralSummary(summary.Summary)
 	if err != nil {
-		vd.Status = view.ScoringNotPassed
 		vd.InternalError = fmt.Sprintf("failed to parse lint summary: %s", err)
-		vd.Reason = fmt.Sprintf("Validation internal error")
+		if !optional {
+			vd.Status = view.ScoringNotPassed
+			vd.Reason = fmt.Sprintf("Validation internal error")
+		}
 		return vd
 	}
 

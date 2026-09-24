@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Netcracker/qubership-api-linter-service/exception"
+	"github.com/Netcracker/qubership-api-linter-service/responder"
 	"github.com/Netcracker/qubership-api-linter-service/secctx"
 	"github.com/Netcracker/qubership-api-linter-service/service"
 )
@@ -12,16 +13,18 @@ type ScoringController interface {
 	GetScoringForVersion(w http.ResponseWriter, r *http.Request)
 }
 
-func NewScoringController(scoringService service.ScoringService, authorizationService service.AuthorizationService) ScoringController {
+func NewScoringController(scoringService service.ScoringService, authorizationService service.AuthorizationService, resp responder.Responder) ScoringController {
 	return &scoringControllerImpl{
-		scoringService:        scoringService,
-		authorizationService:  authorizationService,
+		scoringService:       scoringService,
+		authorizationService: authorizationService,
+		responder:            resp,
 	}
 }
 
 type scoringControllerImpl struct {
 	scoringService       service.ScoringService
 	authorizationService service.AuthorizationService
+	responder            responder.Responder
 }
 
 func (s scoringControllerImpl) GetScoringForVersion(w http.ResponseWriter, r *http.Request) {
@@ -30,11 +33,11 @@ func (s scoringControllerImpl) GetScoringForVersion(w http.ResponseWriter, r *ht
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := s.authorizationService.HasReadPackagePermission(ctx, packageId)
 	if err != nil {
-		respondWithError(w, "Failed to check permissions", err)
+		s.responder.RespondWithError(w, "Failed to check permissions", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		s.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -44,7 +47,7 @@ func (s scoringControllerImpl) GetScoringForVersion(w http.ResponseWriter, r *ht
 
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		s.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -56,11 +59,11 @@ func (s scoringControllerImpl) GetScoringForVersion(w http.ResponseWriter, r *ht
 
 	result, err := s.scoringService.GetScoringForVersion(ctx, packageId, versionName)
 	if err != nil {
-		respondWithError(w, "Failed to get scoring", err)
+		s.responder.RespondWithError(w, "Failed to get scoring", err)
 		return
 	}
 	if result == nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		s.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.LintResultNotFound,
 			Message: exception.LintResultNotFoundMsg,
@@ -68,5 +71,5 @@ func (s scoringControllerImpl) GetScoringForVersion(w http.ResponseWriter, r *ht
 		})
 		return
 	}
-	respondWithJson(w, http.StatusOK, result)
+	s.responder.RespondWithJson(w, http.StatusOK, result)
 }

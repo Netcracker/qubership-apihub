@@ -28,7 +28,7 @@ func dialTimeout(network, addr string) (net.Conn, error) {
 	return net.DialTimeout(network, addr, 1800*time.Second)
 }
 
-func NewOpenaiClient(apiKey string, model string, proxy string, rateLimitRPS float64, rateLimitBurst int) (LLMClient, error) {
+func NewOpenaiClient(apiKey string, model string, proxy string, rateLimitRPS float64, rateLimitBurst int, deduplicationPrompt string) (LLMClient, error) {
 	var opts []option.RequestOption
 	if apiKey != "" {
 		opts = append(opts, option.WithAPIKey(apiKey))
@@ -80,9 +80,10 @@ func NewOpenaiClient(apiKey string, model string, proxy string, rateLimitRPS flo
 	limiter := rate.NewLimiter(rate.Limit(rateLimitRPS), rateLimitBurst)
 
 	return &OAIClientImpl{
-		client:  openai.NewClient(opts...),
-		model:   openAIModel,
-		limiter: limiter,
+		client:              openai.NewClient(opts...),
+		model:               openAIModel,
+		limiter:             limiter,
+		deduplicationPrompt: deduplicationPrompt,
 	}, nil
 }
 
@@ -93,6 +94,7 @@ type OAIClientImpl struct {
 
 	generateProblemsPrompt string
 	fixProblemsPrompt      string
+	deduplicationPrompt    string
 }
 
 var AiValidationIssuesOutputResponseSchema = generateSchema[view.AiValidationIssuesOutput]()
@@ -153,7 +155,7 @@ func (o OAIClientImpl) DeduplicateIssues(ctx context.Context, issues []view.Vali
 	}
 
 	messages := []openai.ChatCompletionMessageParamUnion{
-		openai.SystemMessage("Remove duplicates(same sense) from the list of issues. Do not modify issue content. Do not add new entries."),
+		openai.SystemMessage(o.deduplicationPrompt),
 		openai.UserMessage(string(issuesStr)),
 	}
 

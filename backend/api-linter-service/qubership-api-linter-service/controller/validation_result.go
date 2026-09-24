@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Netcracker/qubership-api-linter-service/exception"
+	"github.com/Netcracker/qubership-api-linter-service/responder"
 	"github.com/Netcracker/qubership-api-linter-service/secctx"
 	"github.com/Netcracker/qubership-api-linter-service/service"
 )
@@ -15,16 +16,18 @@ type ValidationResultController interface {
 	GetValidationResultForDocument_deprecated(w http.ResponseWriter, r *http.Request)
 }
 
-func NewValidationResultController(validationService service.ValidationService, authorizationService service.AuthorizationService) ValidationResultController {
+func NewValidationResultController(validationService service.ValidationService, authorizationService service.AuthorizationService, resp responder.Responder) ValidationResultController {
 	return &validationResultControllerImpl{
 		validationService:    validationService,
 		authorizationService: authorizationService,
+		responder:            resp,
 	}
 }
 
 type validationResultControllerImpl struct {
 	validationService    service.ValidationService
 	authorizationService service.AuthorizationService
+	responder            responder.Responder
 }
 
 func (v validationResultControllerImpl) GetValidationSummaryForVersion(w http.ResponseWriter, r *http.Request) {
@@ -33,11 +36,11 @@ func (v validationResultControllerImpl) GetValidationSummaryForVersion(w http.Re
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := v.authorizationService.HasReadPackagePermission(ctx, packageId)
 	if err != nil {
-		respondWithError(w, "Failed to check permissions", err)
+		v.responder.RespondWithError(w, "Failed to check permissions", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -47,7 +50,7 @@ func (v validationResultControllerImpl) GetValidationSummaryForVersion(w http.Re
 
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -59,10 +62,10 @@ func (v validationResultControllerImpl) GetValidationSummaryForVersion(w http.Re
 
 	result, err := v.validationService.GetVersionSummary(ctx, packageId, versionName)
 	if err != nil {
-		respondWithError(w, "Failed to get version summary", err)
+		v.responder.RespondWithError(w, "Failed to get version summary", err)
 	}
 	if result == nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.LintResultNotFound,
 			Message: exception.LintResultNotFoundMsg,
@@ -70,7 +73,7 @@ func (v validationResultControllerImpl) GetValidationSummaryForVersion(w http.Re
 		})
 		return
 	}
-	respondWithJson(w, http.StatusOK, result)
+	v.responder.RespondWithJson(w, http.StatusOK, result)
 }
 
 func (v validationResultControllerImpl) GetValidationSummaryForVersion_deprecated(w http.ResponseWriter, r *http.Request) {
@@ -79,11 +82,11 @@ func (v validationResultControllerImpl) GetValidationSummaryForVersion_deprecate
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := v.authorizationService.HasReadPackagePermission(ctx, packageId)
 	if err != nil {
-		respondWithError(w, "Failed to check permissions", err)
+		v.responder.RespondWithError(w, "Failed to check permissions", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -93,7 +96,7 @@ func (v validationResultControllerImpl) GetValidationSummaryForVersion_deprecate
 
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -105,10 +108,10 @@ func (v validationResultControllerImpl) GetValidationSummaryForVersion_deprecate
 
 	result, err := v.validationService.GetVersionSummary_deprecated(ctx, packageId, versionName)
 	if err != nil {
-		respondWithError(w, "Failed to get version summary", err)
+		v.responder.RespondWithError(w, "Failed to get version summary", err)
 	}
 	if result == nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.LintResultNotFound,
 			Message: exception.LintResultNotFoundMsg,
@@ -116,7 +119,7 @@ func (v validationResultControllerImpl) GetValidationSummaryForVersion_deprecate
 		})
 		return
 	}
-	respondWithJson(w, http.StatusOK, result)
+	v.responder.RespondWithJson(w, http.StatusOK, result)
 }
 
 func (v validationResultControllerImpl) GetValidationResultForDocument_deprecated(w http.ResponseWriter, r *http.Request) {
@@ -125,11 +128,11 @@ func (v validationResultControllerImpl) GetValidationResultForDocument_deprecate
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := v.authorizationService.HasReadPackagePermission(ctx, packageId)
 	if err != nil {
-		respondWithError(w, "Failed to check permissions", err)
+		v.responder.RespondWithError(w, "Failed to check permissions", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -139,7 +142,7 @@ func (v validationResultControllerImpl) GetValidationResultForDocument_deprecate
 
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -151,7 +154,7 @@ func (v validationResultControllerImpl) GetValidationResultForDocument_deprecate
 
 	slug, err := getUnescapedStringParam(r, "slug")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -163,10 +166,10 @@ func (v validationResultControllerImpl) GetValidationResultForDocument_deprecate
 
 	result, err := v.validationService.GetValidationResult_deprecated(secctx.MakeUserContext(r), packageId, versionName, slug)
 	if err != nil {
-		respondWithError(w, "Failed to get validation result for document", err)
+		v.responder.RespondWithError(w, "Failed to get validation result for document", err)
 	}
 	if result == nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.LintResultNotFound,
 			Message: exception.LintResultNotFoundMsg,
@@ -174,7 +177,7 @@ func (v validationResultControllerImpl) GetValidationResultForDocument_deprecate
 		})
 		return
 	}
-	respondWithJson(w, http.StatusOK, result)
+	v.responder.RespondWithJson(w, http.StatusOK, result)
 }
 
 func (v validationResultControllerImpl) GetValidationResultForDocument(w http.ResponseWriter, r *http.Request) {
@@ -183,11 +186,11 @@ func (v validationResultControllerImpl) GetValidationResultForDocument(w http.Re
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := v.authorizationService.HasReadPackagePermission(ctx, packageId)
 	if err != nil {
-		respondWithError(w, "Failed to check permissions", err)
+		v.responder.RespondWithError(w, "Failed to check permissions", err)
 		return
 	}
 	if !sufficientPrivileges {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -197,7 +200,7 @@ func (v validationResultControllerImpl) GetValidationResultForDocument(w http.Re
 
 	versionName, err := getUnescapedStringParam(r, "version")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -209,7 +212,7 @@ func (v validationResultControllerImpl) GetValidationResultForDocument(w http.Re
 
 	slug, err := getUnescapedStringParam(r, "slug")
 	if err != nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidURLEscape,
 			Message: exception.InvalidURLEscapeMsg,
@@ -221,10 +224,10 @@ func (v validationResultControllerImpl) GetValidationResultForDocument(w http.Re
 
 	result, err := v.validationService.GetValidationResult(secctx.MakeUserContext(r), packageId, versionName, slug)
 	if err != nil {
-		respondWithError(w, "Failed to get validation result for document", err)
+		v.responder.RespondWithError(w, "Failed to get validation result for document", err)
 	}
 	if result == nil {
-		RespondWithCustomError(w, &exception.CustomError{
+		v.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.LintResultNotFound,
 			Message: exception.LintResultNotFoundMsg,
@@ -232,5 +235,5 @@ func (v validationResultControllerImpl) GetValidationResultForDocument(w http.Re
 		})
 		return
 	}
-	respondWithJson(w, http.StatusOK, result)
+	v.responder.RespondWithJson(w, http.StatusOK, result)
 }

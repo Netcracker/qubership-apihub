@@ -26,6 +26,9 @@ func validateAILinterConfig(sl validator.StructLevel) {
 	if ai.Enabled && ai.OpenAI.APIKey == "" {
 		sl.ReportError(ai.OpenAI.APIKey, "OpenAI.APIKey", "APIKey", "required_if_enabled", "")
 	}
+	if ai.Enabled && ai.DeduplicationPrompt == "" {
+		sl.ReportError(ai.DeduplicationPrompt, "DeduplicationPrompt", "DeduplicationPrompt", "required_if_enabled", "")
+	}
 }
 
 func ValidateConfig(object interface{}) error {

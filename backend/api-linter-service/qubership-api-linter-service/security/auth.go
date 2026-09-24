@@ -4,42 +4,43 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
-	"github.com/Netcracker/qubership-api-linter-service/client"
-	"github.com/Netcracker/qubership-api-linter-service/secctx"
+	"time"
 
+	"github.com/Netcracker/qubership-api-linter-service/client"
+	"github.com/Netcracker/qubership-api-linter-service/responder"
+	"github.com/Netcracker/qubership-api-linter-service/secctx"
 	"github.com/shaj13/go-guardian/v2/auth"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/jwt"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/union"
 	"github.com/shaj13/libcache"
 	_ "github.com/shaj13/libcache/fifo"
 	_ "github.com/shaj13/libcache/lru"
-
-	"time"
 )
 
-var strategy union.Union
+type Authenticator struct {
+	responder      responder.Responder
+	strategy       union.Union
+	apiKeyStrategy auth.Strategy
+}
 
-// apiKeyStrategy is used by SecureMCP (API key only), aligned with qubership-apihub-backend.
-var apiKeyStrategy auth.Strategy
-
-func SetupGoGuardian(apihubClient client.ApihubClient) error {
+func NewAuthenticator(apihubClient client.ApihubClient, r responder.Responder) (Authenticator, error) {
 	if apihubClient == nil {
-		return fmt.Errorf("apihubClient is nil")
+		return Authenticator{}, fmt.Errorf("apihubClient is nil")
 	}
 
 	ctx := secctx.MakeSysadminContext(context.Background())
 
 	rsaPublicKeyView, err := apihubClient.GetRsaPublicKey(ctx)
 	if err != nil {
-		return fmt.Errorf("rsa public key error - %s", err.Error())
+		return Authenticator{}, fmt.Errorf("rsa public key error - %s", err.Error())
 	}
 	if rsaPublicKeyView == nil {
-		return fmt.Errorf("rsa public key is empty")
+		return Authenticator{}, fmt.Errorf("rsa public key is empty")
 	}
 
 	rsaPublicKey, err := x509.ParsePKCS1PublicKey(rsaPublicKeyView.Value)
 	if err != nil {
-		return fmt.Errorf("ParsePKCS1PublicKey has error - %s", err.Error())
+		return Authenticator{}, fmt.Errorf("ParsePKCS1PublicKey has error - %s", err.Error())
 	}
 
 	keeper := jwt.StaticSecret{
@@ -56,10 +57,13 @@ func SetupGoGuardian(apihubClient client.ApihubClient) error {
 
 	jwtStrategy := jwt.New(cache, keeper) // TODO: replace with custom strategy to support logout
 	apihubApiKeyStrategy := NewApihubApiKeyStrategy(apihubClient)
-	apiKeyStrategy = apihubApiKeyStrategy
 	cookieTokenStrategy := NewCookieTokenStrategy(apihubClient)
 	patStrategy := NewApihubPATStrategy(apihubClient)
-	strategy = union.New(jwtStrategy, apihubApiKeyStrategy, cookieTokenStrategy, patStrategy)
+	strategy := union.New(jwtStrategy, apihubApiKeyStrategy, cookieTokenStrategy, patStrategy)
 
-	return nil
+	return Authenticator{
+		responder:      r,
+		strategy:       strategy,
+		apiKeyStrategy: apihubApiKeyStrategy,
+	}, nil
 }

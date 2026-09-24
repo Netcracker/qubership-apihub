@@ -33,6 +33,7 @@ type SystemInfoService interface {
 
 	GetListenAddress() string
 	GetAllowedOrigins() []string
+	ShowDebugInResponse() bool
 
 	GetSpectralBinPath() string
 
@@ -44,10 +45,13 @@ type SystemInfoService interface {
 	GetOpenAIRateLimitRPS() float64
 	GetOpenAIRateLimitBurst() int
 	IsAiOasLinterEnabled() bool
+	IsAiLinterOptional() bool
 	GetAiLinterWorkers() int
 	GetAiLinterExcludedPackages() []string
 	GetAiLinterIncludedPackages() []string
+	GetAiLinterDeduplicationPrompt() string
 	GetSpectralLinterWorkers() int
+	IsSpectralLinterOptional() bool
 
 	SetProductionMode(apihubClient client.ApihubClient)
 	IsProductionMode() bool
@@ -84,6 +88,16 @@ func getConfigFolder() string {
 	return folder
 }
 
+const defaultAiDeduplicationPrompt = `You filter a JSON array of OpenAPI lint issues. Return only the issues that remain.
+Two issues are duplicates if they describe the same underlying problem in the 'message' field, even if the wording differs. When comparing messages, use the problem statement only; ignore any suggested fix or action text in the same message.
+Keep issues that are the same kind of finding but at different 'path' values. Those are not duplicates.
+Rules:
+1. Do not rewrite any field. Copy the kept object byte-for-byte from the input.
+2. Do not add issues.
+3. Do not drop an issue unless it is a duplicate of one you keep.
+4. If several issues are duplicates, keep the first one in input order and discard the rest.
+5. If there are no duplicates, return the input list unchanged and in the same order.`
+
 func setDefaults() {
 	viper.SetDefault("database.host", "localhost")
 	viper.SetDefault("database.port", 5432)
@@ -95,13 +109,17 @@ func setDefaults() {
 	viper.SetDefault("technicalParameters.listenAddress", ":8080")
 	viper.SetDefault("technicalParameters.apihub.url", "http://localhost:8090")
 	viper.SetDefault("security.allowedOrigins", []string{})
+	viper.SetDefault("security.showDebugInResponse", false)
 	viper.SetDefault("olric.discoveryMode", "local")
 	viper.SetDefault("olric.replicaCount", 1)
 	viper.SetDefault("linters.spectral.workers", 1)
+	viper.SetDefault("linters.spectral.optional", false)
 	viper.SetDefault("linters.ai.enabled", false)
+	viper.SetDefault("linters.ai.optional", false)
 	viper.SetDefault("linters.ai.workers", 1)
 	viper.SetDefault("linters.ai.openAI.rateLimitRPS", 10.0)
 	viper.SetDefault("linters.ai.openAI.rateLimitBurst", 30)
+	viper.SetDefault("linters.ai.deduplicationPrompt", defaultAiDeduplicationPrompt)
 }
 
 type systemInfoServiceImpl struct {
@@ -171,6 +189,10 @@ func (s *systemInfoServiceImpl) GetAllowedOrigins() []string {
 	return s.config.Security.AllowedOrigins
 }
 
+func (s *systemInfoServiceImpl) ShowDebugInResponse() bool {
+	return s.config.Security.ShowDebugInResponse
+}
+
 func (s *systemInfoServiceImpl) GetSpectralBinPath() string {
 	return s.config.Linters.Spectral.BinPath
 }
@@ -203,6 +225,10 @@ func (s *systemInfoServiceImpl) IsAiOasLinterEnabled() bool {
 	return s.config.Linters.AI.Enabled
 }
 
+func (s *systemInfoServiceImpl) IsAiLinterOptional() bool {
+	return s.config.Linters.AI.Optional
+}
+
 func (s *systemInfoServiceImpl) GetAiLinterWorkers() int {
 	return s.config.Linters.AI.Workers
 }
@@ -215,8 +241,16 @@ func (s *systemInfoServiceImpl) GetAiLinterIncludedPackages() []string {
 	return s.config.Linters.AI.IncludedPackages
 }
 
+func (s *systemInfoServiceImpl) GetAiLinterDeduplicationPrompt() string {
+	return s.config.Linters.AI.DeduplicationPrompt
+}
+
 func (s *systemInfoServiceImpl) GetSpectralLinterWorkers() int {
 	return s.config.Linters.Spectral.Workers
+}
+
+func (s *systemInfoServiceImpl) IsSpectralLinterOptional() bool {
+	return s.config.Linters.Spectral.Optional
 }
 
 func (s *systemInfoServiceImpl) SetProductionMode(apihubClient client.ApihubClient) {
