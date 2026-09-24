@@ -1,12 +1,19 @@
 import { CrawlRules, JsonPath } from '@netcracker/qubership-apihub-json-crawl'
 
 import type { CompareResult, Diff, DiffType } from './compare'
-import { ApiCompatibilityKind, CompareScope, InternalCompareOptions } from './compare'
+import { CompareScope, CustomScope, InternalCompareOptions } from './compare'
 import { DiffAction } from '../core'
 import { OriginLeafs } from '@netcracker/qubership-apihub-api-unifier'
 
 export type DiffTypeClassifier = (ctx: CompareContext) => DiffType
 
+/**
+ * Verdict the specification gives a difference at one node, by action: what an addition, a removal and a
+ * replacement mean there, optionally followed by the three verdicts of the reversed comparison. A
+ * `DiffTypeClassifier` in a slot decides from the compared values instead of naming one type.
+ * Use a classify rule for what the specification settles on its own, and a `ReclassificationRule` for a
+ * verdict that also depends on what the caller knows.
+ */
 export type ClassifyRule =
   [AddDiffType, RemoveDiffType, ReplaceDiffType] |
   [AddDiffType, RemoveDiffType, ReplaceDiffType, ReversedAddDiffType, ReversedRemoveDiffType, ReversedReplaceDiffType]
@@ -21,6 +28,25 @@ export type ReversedRemoveDiffType = RuleDiffType
 export type ReversedReplaceDiffType = RuleDiffType
 
 export type RuleDiffType = DiffType | DiffTypeClassifier
+
+/**
+ * Revisits the verdict a difference already carries, for knowledge the specification does not hold: which
+ * operations reach a shared schema, how long an element has been announced as deprecated. Declared through
+ * `CompareOptions.reclassificationRules` and consulted in the order the rules are given, once the classify
+ * rules have produced a verdict.
+ *
+ * The rule is handed the difference under construction, so `type` is the verdict the rule before it left
+ * and `description` is not computed yet. `customScope` carries the scope elements of the route the
+ * difference was reached through: routes that disagree about an element reach separate difference
+ * instances, which is what lets a rule answer for one route and leave the other alone.
+ * The difference is whatever its action makes it, so narrow on `action` before reading a field: a rename
+ * carries `beforeKey` and `afterKey` but no `beforeValue`, and an addition carries no declaration paths on
+ * the before side.
+ * Returns
+ * a diff type to replace that verdict with.
+ * `undefined` to leave it as it stands, which is also what a rule that throws leaves behind.
+ */
+export type ReclassificationRule = (diff: Diff) => DiffType | undefined
 
 export interface NodeContext {
   //todo replace to PathChain and move it to crawl. For performance reason
@@ -44,7 +70,15 @@ export interface CompareContext {
   mergeKey: PropertyKey
   rules: CompareRules
   options: InternalCompareOptions
-  apiCompatibilityScope: ApiCompatibilityKind
+  customScope: CustomScope
+  /**
+   * Path of the node in the document being traversed, in the form `CustomScopeElementContext.path` hands a
+   * provider. Kept on the context so that a resolver can ask the providers about a node no crawl enters: an
+   * added or removed combiner option. A child is keyed by the before key where the before document has the
+   * node and by the after key otherwise, never by `mergeKey`. Inside a combiner option it is relative to the
+   * option.
+   */
+  path: JsonPath
 }
 
 export interface AdapterContext<T> {

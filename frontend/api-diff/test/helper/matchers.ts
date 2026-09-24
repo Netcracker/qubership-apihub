@@ -131,8 +131,7 @@ export const expectSpecVersionChange = (
 }
 
 /**
- * Backward-compatible thin wrapper for OpenAPI version change matching.
- * Non-schema tests can continue using this without changes.
+ * Thin wrapper for OpenAPI version change matching, kept for the call shape the non-schema tests use.
  */
 export const expectOpenApiVersionChange = (fromVersion: string = '3.0.4', toVersion: string = '3.1.0') => {
   return expectSpecVersionChange(TEST_SPEC_TYPE_OPEN_API, fromVersion, toVersion)

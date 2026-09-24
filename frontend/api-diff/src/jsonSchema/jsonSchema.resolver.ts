@@ -10,6 +10,7 @@ import {
   getOrCreateChildDiffRemove,
   nestedCompare,
   createDiffEntry,
+  resolveCustomScopeProviders,
   risky,
 } from '../core'
 import type { CompareResolver, Diff, DiffEntry } from '../types'
@@ -24,8 +25,9 @@ const haveSameLastRef = (a: string[], b: string[]): boolean => {
 }
 
 export const combinersCompareResolver: CompareResolver = (ctx) => {
-  const { before, after, options, scope } = ctx
+  const { before, after, options, scope, rules: ctxRules, customScope: ctxCustomScope, path } = ctx
   const { metaKey } = options
+  const { patchAt, interner } = resolveCustomScopeProviders(options)
   if (!before || !after) {
     return { diffs: [], ownerDiffEntry: undefined, merged: undefined }
   }
@@ -45,12 +47,12 @@ export const combinersCompareResolver: CompareResolver = (ctx) => {
   const mergedCombinerJsoArray: unknown[] = []
   const diffs: Set<Diff> = new Set()
 
-  const rules = getNodeRules(ctx.rules, ANY_COMBINER_INDEX, ANY_COMBINER_PATH, before.value) || {}
+  const rules = getNodeRules(ctxRules, ANY_COMBINER_INDEX, ANY_COMBINER_PATH, before.value) || {}
 
   const compareCombinerItems = (beforeItem: unknown, afterItem: unknown) =>
-    ctx.options.mergedJsoCache.cacheEvaluationResultByFootprint(
-      [beforeItem, afterItem, scope],
-      ([b, a]) => nestedCompare(b, a, { ...options, rules, compareScope: ctx.scope }),
+    options.mergedJsoCache.cacheEvaluationResultByFootprint(
+      [beforeItem, afterItem, scope, ctxCustomScope],
+      ([b, a]) => nestedCompare(b, a, ctxCustomScope, { ...options, rules, compareScope: scope }),
       { diffs: [], ownerDiffEntry: undefined, merged: {} },
       (result, guard) => {
         guard.diffs.push(...result.diffs)
@@ -138,7 +140,8 @@ export const combinersCompareResolver: CompareResolver = (ctx) => {
   const arrayMetaDiffEntries: DiffEntry<Diff>[] = []
   for (const j of afterUnmatchedIndexes.values()) {
     mergedCombinerJsoArray[j] = after.value[j]
-    const childCtx = createChildContext(ctx, j, undefined, j)
+    const additionCustomScope = interner.mergeOrReuse(ctxCustomScope, patchAt?.({ path: [...path, j], afterJso: after.value[j] }))
+    const childCtx = createChildContext(ctx, j, undefined, j, additionCustomScope)
     const diffEntry = getOrCreateChildDiffAdd(options.diffUniquenessCache, childCtx)
     arrayMetaDiffEntries.push(diffEntry)
     diffs.add(diffEntry.diff)
@@ -158,7 +161,8 @@ export const combinersCompareResolver: CompareResolver = (ctx) => {
   for (const i of beforeUnmatchedIndexes.values()) {
     const safeInsertIndex = freeIndexesArray.shift()!/*length enough*/
     mergedCombinerJsoArray[safeInsertIndex] = before.value[i]
-    const childCtx = createChildContext(ctx, safeInsertIndex, i, undefined)
+    const removalCustomScope = interner.mergeOrReuse(ctxCustomScope, patchAt?.({ path: [...path, i], beforeJso: before.value[i] }))
+    const childCtx = createChildContext(ctx, safeInsertIndex, i, undefined, removalCustomScope)
     const diffEntry = getOrCreateChildDiffRemove(options.diffUniquenessCache, childCtx)
     arrayMetaDiffEntries.push(diffEntry)
     diffs.add(diffEntry.diff)

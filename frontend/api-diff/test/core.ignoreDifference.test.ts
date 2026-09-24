@@ -1,5 +1,5 @@
 import { createEvaluationCacheService } from '@netcracker/qubership-apihub-api-unifier'
-import { allNonBreaking, nestedCompare } from '../src/core'
+import { allNonBreaking, EMPTY_CUSTOM_SCOPE, nestedCompare } from '../src/core'
 import { isObject } from '../src/utils'
 import {
   COMPARE_MODE_DEFAULT,
@@ -63,7 +63,7 @@ describe('ignoreDifference rule (T0.2)', () => {
       },
     }
 
-    const { diffs, merged } = nestedCompare(BEFORE, AFTER, baseOptions(rules))
+    const { diffs, merged } = nestedCompare(BEFORE, AFTER, EMPTY_CUSTOM_SCOPE, baseOptions(rules))
     const mergedObj = merged as Record<PropertyKey, any>
 
     // Only the unrelated `kept` change is reported.
@@ -83,7 +83,7 @@ describe('ignoreDifference rule (T0.2)', () => {
   })
 
   it('without the flag, the same subtree changes are reported (control)', () => {
-    const { diffs } = nestedCompare(BEFORE, AFTER, baseOptions(childRules))
+    const { diffs } = nestedCompare(BEFORE, AFTER, EMPTY_CUSTOM_SCOPE, baseOptions(childRules))
 
     // kept + suppressed.inner + suppressed.deep.leaf
     expect(diffs).toHaveLength(3)
