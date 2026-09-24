@@ -148,6 +148,8 @@ qubershipApihubBackend:
       transitionMoveTimeoutMinutes: 30
       # Optional; Base directory for ephemeral (temporary) file storage; If not set, default value: /tmp/apihub-ephemeral-files; Example: /var/apihub/ephemeral
       ephemeralFileDirectory: '/tmp/apihub-ephemeral-files'
+      # Optional; Cron schedule for refreshing build queue Prometheus gauges; used only when monitoring.enabled is true; If not set, default value: '* * * * *' (every minute); Example: '*/5 * * * *'
+      metricsGetterSchedule: '* * * * *'
 
     # Section with various parameters related to APIHUB business logic
     businessParameters:
