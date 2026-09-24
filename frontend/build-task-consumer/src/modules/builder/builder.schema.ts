@@ -63,7 +63,7 @@ export const PublishFilesConfigSchema = Type.Object({
   }),
   packageId: Type.String(),
   version: Type.String(),
-  status: Type.Any({enum: ['release', 'draft', 'archived'], description: 'Version status'}),
+  status: Type.Any({enum: ['release', 'draft'], description: 'Version status'}),
   publishId: Type.String(),
   versionFolder: Type.Optional(Type.String()),
   previousVersion: Type.Optional(Type.String()),

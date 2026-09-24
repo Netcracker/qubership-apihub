@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ConfigFactory } from '@nestjs/config/dist/interfaces'
+import { ConfigFactory } from '@nestjs/config'
 import { config } from 'dotenv'
 import { existsSync, readFileSync } from 'node:fs'
 import * as process from 'node:process'

@@ -347,8 +347,9 @@ export class RegistryService implements OnModuleInit {
       .pipe(
         retry({ delay: this.requestRetryHandler(logTag) }),
         map((response) => {
-          const contentType = response.headers['content-type']
-          const filename = response.headers['content-disposition'].split('filename=')[1].slice(1, -1)
+          const contentType = String(response.headers['content-type'] ?? '')
+          const contentDisposition = String(response.headers['content-disposition'] ?? '')
+          const filename = contentDisposition.split('filename=')[1]?.slice(1, -1) || slug
           return new File([response.data], filename, { type: contentType })
         }),
         catchError(err => {

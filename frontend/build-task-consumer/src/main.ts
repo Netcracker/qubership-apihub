@@ -15,16 +15,18 @@
  */
 
 import { NestFactory } from '@nestjs/core'
-import * as bodyParser from 'body-parser'
+import type { NestExpressApplication } from '@nestjs/platform-express'
 
 import { AppModule } from './app.module'
 
+const BODY_LIMIT = '50mb'
+
 async function bootstrap() {
   const port = process.env.port || 3000
-  const app = await NestFactory.create(AppModule)
+  const app = await NestFactory.create<NestExpressApplication>(AppModule)
 
-  app.use(bodyParser.json({limit: '50mb'}));
-  app.use(bodyParser.urlencoded({limit: '50mb', extended: true}))
+  app.useBodyParser('json', { limit: BODY_LIMIT })
+  app.useBodyParser('urlencoded', { limit: BODY_LIMIT, extended: true })
   app.enableCors()
 
   await app.listen(port)
