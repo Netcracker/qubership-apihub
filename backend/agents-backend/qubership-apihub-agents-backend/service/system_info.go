@@ -26,6 +26,7 @@ type SystemInfoService interface {
 	GetSnapshotsCleanupSchedule() string
 	GetSnapshotsTTLDays() int
 	InsecureProxyEnabled() bool //TODO: remove this after deprecated proxy path is removed
+	ShowDebugInResponse() bool
 	GetListenAddress() string
 	GetAllowedOrigins() []string
 }
@@ -69,6 +70,7 @@ func setDefaults() {
 	viper.SetDefault("technicalParameters.apihub.url", "http://localhost:8090")
 	viper.SetDefault("security.insecureProxy", false)
 	viper.SetDefault("security.allowedOrigins", []string{})
+	viper.SetDefault("security.showDebugInResponse", false)
 	viper.SetDefault("cleanup.snapshots.schedule", "0 22 * * 0") // at 10:00 PM on Sunday
 	viper.SetDefault("cleanup.snapshots.ttlDays", 30)
 }
@@ -140,6 +142,10 @@ func (s systemInfoServiceImpl) GetSnapshotsTTLDays() int {
 
 func (s systemInfoServiceImpl) InsecureProxyEnabled() bool {
 	return s.config.Security.InsecureProxy
+}
+
+func (s systemInfoServiceImpl) ShowDebugInResponse() bool {
+	return s.config.Security.ShowDebugInResponse
 }
 
 func (s systemInfoServiceImpl) GetListenAddress() string {

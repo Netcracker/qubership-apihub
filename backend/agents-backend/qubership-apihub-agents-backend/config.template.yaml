@@ -36,6 +36,8 @@ security:
   allowedOrigins: []
   # Deprecated; Set to true to allow the deprecated agent proxy endpoint to work without authorization. Dangerous, not recommended; If not set, default value: false; Example: false
   insecureProxy: false
+  # Optional; Enables the 'debug' field with internal error details in API error responses. Should be disabled on prod envs; If not set, default value: false; Example: false
+  showDebugInResponse: false
 
 # Section with cleanup jobs configuration
 cleanup:

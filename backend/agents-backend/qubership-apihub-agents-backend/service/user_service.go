@@ -8,6 +8,7 @@ import (
 	"github.com/Netcracker/qubership-apihub-agents-backend/secctx"
 	"github.com/Netcracker/qubership-apihub-agents-backend/view"
 	"github.com/shaj13/libcache"
+	_ "github.com/shaj13/libcache/lru"
 	log "github.com/sirupsen/logrus"
 )
 
