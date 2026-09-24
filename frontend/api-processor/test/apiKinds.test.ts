@@ -32,7 +32,7 @@ import { buildPackageFromContent, changesSummaryMatcher, Editor, loadFileAsStrin
 import { DiffType } from '@netcracker/qubership-apihub-api-diff'
 import { takeIfDefined } from '../src/utils'
 import { DEFAULT_PROJECTS_PATH } from './helpers/registry/local'
-import * as bwcValidation from '../src/components/compare/rest.bwc.validation'
+import * as bwcValidation from '../src/components/compare/rest.api-kind'
 
 let afterPackage: LocalRegistry
 const AFTER_PACKAGE_ID = 'api-kinds'

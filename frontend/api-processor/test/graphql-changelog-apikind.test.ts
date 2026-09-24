@@ -28,86 +28,79 @@ import {
   RISKY_CHANGE_TYPE,
   VERSION_STATUS,
 } from '../src'
-import { createGraphqlApiCompatibilityScopeFunction } from '../src/components/compare/graphql.bwc.validation'
-import {
-  API_COMPATIBILITY_KIND_BACKWARD_COMPATIBLE,
-  API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE,
-} from '@netcracker/qubership-apihub-api-diff'
-import { changesSummaryMatcher, Editor, LocalRegistry } from './helpers'
+import { createGraphqlApiKindValueAt } from '../src/components/compare/graphql.api-kind'
+import { changesSummaryMatcher, Editor, LocalRegistry, customScopeElementContext } from './helpers'
 import { takeIfDefined } from '../src/utils'
 
 const BWC = APIHUB_API_COMPATIBILITY_KIND_BWC
 const NO_BWC = APIHUB_API_COMPATIBILITY_KIND_NO_BWC
 const EXPERIMENTAL = APIHUB_API_COMPATIBILITY_KIND_EXPERIMENTAL
 
-const BACKWARD_COMPATIBLE = API_COMPATIBILITY_KIND_BACKWARD_COMPATIBLE
-const NOT_BACKWARD_COMPATIBLE = API_COMPATIBILITY_KIND_NOT_BACKWARD_COMPATIBLE
-
-describe('GraphQL api-compatibility scope function', () => {
+describe('GraphQL api kind scope element', () => {
   const OP = ['queries', 'q1']
   const OBJ = {} // "exists"
 
   describe('Root scope (document-level, either side)', () => {
     it.each([
       // prev    | curr    | expected
-      [BWC, BWC, BACKWARD_COMPATIBLE],
-      [BWC, NO_BWC, NOT_BACKWARD_COMPATIBLE],
-      [NO_BWC, BWC, NOT_BACKWARD_COMPATIBLE], // either side no-bwc → risky
-      [NO_BWC, NO_BWC, NOT_BACKWARD_COMPATIBLE],
-      [BWC, EXPERIMENTAL, NOT_BACKWARD_COMPATIBLE],
-      [EXPERIMENTAL, BWC, NOT_BACKWARD_COMPATIBLE],
+      [BWC, BWC, BWC],
+      [BWC, NO_BWC, NO_BWC],
+      [NO_BWC, BWC, NO_BWC], // either side no-bwc → risky
+      [NO_BWC, NO_BWC, NO_BWC],
+      [BWC, EXPERIMENTAL, NO_BWC],
+      [EXPERIMENTAL, BWC, NO_BWC],
     ] as const)('should classify root scope prev(%s) curr(%s) as %s', (prev, curr, expected) => {
-      expect(createGraphqlApiCompatibilityScopeFunction(prev, curr)([], OBJ, OBJ)).toBe(expected)
+      expect(createGraphqlApiKindValueAt(prev, curr)(customScopeElementContext([], OBJ, OBJ))).toBe(expected)
     })
   })
 
   describe('Operation scope — modification (both sides present, either side)', () => {
     it.each([
-      [BWC, BWC, BACKWARD_COMPATIBLE],
-      [BWC, NO_BWC, NOT_BACKWARD_COMPATIBLE],
-      [NO_BWC, BWC, NOT_BACKWARD_COMPATIBLE], // either side no-bwc → risky
-      [NO_BWC, NO_BWC, NOT_BACKWARD_COMPATIBLE],
-      [NO_BWC, EXPERIMENTAL, NOT_BACKWARD_COMPATIBLE],
-      [EXPERIMENTAL, BWC, NOT_BACKWARD_COMPATIBLE],
+      [BWC, BWC, BWC],
+      [BWC, NO_BWC, NO_BWC],
+      [NO_BWC, BWC, NO_BWC], // either side no-bwc → risky
+      [NO_BWC, NO_BWC, NO_BWC],
+      [NO_BWC, EXPERIMENTAL, NO_BWC],
+      [EXPERIMENTAL, BWC, NO_BWC],
     ] as const)('should classify operation modification prev(%s) curr(%s) as %s', (prev, curr, expected) => {
-      expect(createGraphqlApiCompatibilityScopeFunction(prev, curr)(OP, OBJ, OBJ)).toBe(expected)
+      expect(createGraphqlApiKindValueAt(prev, curr)(customScopeElementContext(OP, OBJ, OBJ))).toBe(expected)
     })
   })
 
   describe('Operation scope — removal (before only, keyed on previous)', () => {
     it.each([
-      [BWC, BWC, BACKWARD_COMPATIBLE],
-      [BWC, NO_BWC, BACKWARD_COMPATIBLE],
-      [NO_BWC, BWC, NOT_BACKWARD_COMPATIBLE],
-      [NO_BWC, NO_BWC, NOT_BACKWARD_COMPATIBLE],
-      [EXPERIMENTAL, BWC, NOT_BACKWARD_COMPATIBLE],
+      [BWC, BWC, BWC],
+      [BWC, NO_BWC, BWC],
+      [NO_BWC, BWC, NO_BWC],
+      [NO_BWC, NO_BWC, NO_BWC],
+      [EXPERIMENTAL, BWC, NO_BWC],
     ] as const)('should classify operation removal prev(%s) curr(%s) as %s', (prev, curr, expected) => {
-      expect(createGraphqlApiCompatibilityScopeFunction(prev, curr)(OP, OBJ, undefined)).toBe(expected)
+      expect(createGraphqlApiKindValueAt(prev, curr)(customScopeElementContext(OP, OBJ, undefined))).toBe(expected)
     })
   })
 
   describe('Operation scope — addition (after only, either side)', () => {
     it.each([
-      [BWC, BWC, BACKWARD_COMPATIBLE],
-      [BWC, NO_BWC, NOT_BACKWARD_COMPATIBLE],
-      [NO_BWC, BWC, NOT_BACKWARD_COMPATIBLE], // either side no-bwc → risky
-      [EXPERIMENTAL, BWC, NOT_BACKWARD_COMPATIBLE],
+      [BWC, BWC, BWC],
+      [BWC, NO_BWC, NO_BWC],
+      [NO_BWC, BWC, NO_BWC], // either side no-bwc → risky
+      [EXPERIMENTAL, BWC, NO_BWC],
     ] as const)('should classify operation addition prev(%s) curr(%s) as %s', (prev, curr, expected) => {
-      expect(createGraphqlApiCompatibilityScopeFunction(prev, curr)(OP, undefined, OBJ)).toBe(expected)
+      expect(createGraphqlApiKindValueAt(prev, curr)(customScopeElementContext(OP, undefined, OBJ))).toBe(expected)
     })
   })
 
-  // The blocks above exercise the classification rules on `queries`. GraphQL has two more
-  // operation root types — `mutations` and `subscriptions` — which the scope function recognises
+  // The blocks above exercise the reclassification rules on `queries`. GraphQL has two more
+  // operation root types — `mutations` and `subscriptions` — which the scope element recognises
   // by their root path segment and must treat identically. Here we only assert that same behaviour;
-  // the classification rules themselves are already covered via `queries` above.
+  // the reclassification rules themselves are already covered via `queries` above.
   describe('Mutations and subscriptions behave like queries', () => {
     it.each([
       ['mutations', 'm1'],
       ['subscriptions', 's1'],
     ] as const)('should classify %s modification by either side', (segment, name) => {
-      const fn = createGraphqlApiCompatibilityScopeFunction(NO_BWC, BWC)
-      expect(fn([segment, name], OBJ, OBJ)).toBe(NOT_BACKWARD_COMPATIBLE) // either side no-bwc → risky
+      const fn = createGraphqlApiKindValueAt(NO_BWC, BWC)
+      expect(fn(customScopeElementContext([segment, name], OBJ, OBJ))).toBe(NO_BWC) // either side no-bwc → risky
     })
   })
 
@@ -119,8 +112,8 @@ describe('GraphQL api-compatibility scope function', () => {
 
     it.each(docs)('should produce the same root scope result as no-BWC (document=%s)', (prev) => {
       for (const curr of docs) {
-        const noBwc = createGraphqlApiCompatibilityScopeFunction(prev, curr)([], OBJ, OBJ)
-        const exp = createGraphqlApiCompatibilityScopeFunction(replace(prev), replace(curr))([], OBJ, OBJ)
+        const noBwc = createGraphqlApiKindValueAt(prev, curr)(customScopeElementContext([], OBJ, OBJ))
+        const exp = createGraphqlApiKindValueAt(replace(prev), replace(curr))(customScopeElementContext([], OBJ, OBJ))
         expect(exp).toBe(noBwc)
       }
     })
@@ -128,8 +121,8 @@ describe('GraphQL api-compatibility scope function', () => {
     it.each(docs)('should produce the same operation scope result as no-BWC (document=%s)', (prev) => {
       for (const curr of docs) {
         for (const [before, after] of beforeAfter) {
-          const noBwc = createGraphqlApiCompatibilityScopeFunction(prev, curr)(OP, before, after)
-          const exp = createGraphqlApiCompatibilityScopeFunction(replace(prev), replace(curr))(OP, before, after)
+          const noBwc = createGraphqlApiKindValueAt(prev, curr)(customScopeElementContext(OP, before, after))
+          const exp = createGraphqlApiKindValueAt(replace(prev), replace(curr))(customScopeElementContext(OP, before, after))
           expect(exp).toBe(noBwc)
         }
       }
@@ -137,16 +130,16 @@ describe('GraphQL api-compatibility scope function', () => {
   })
 
   describe('paths outside the classification scope return undefined', () => {
-    const fn = createGraphqlApiCompatibilityScopeFunction(NO_BWC, NO_BWC)
+    const fn = createGraphqlApiKindValueAt(NO_BWC, NO_BWC)
 
     it('should return undefined when the operation is absent on both sides', () => {
-      expect(fn(OP, undefined, undefined)).toBeUndefined()
+      expect(fn(customScopeElementContext(OP, undefined, undefined))).toBeUndefined()
     })
     it('should return undefined for a non-operation top-level segment', () => {
-      expect(fn(['components', 'Foo'], OBJ, OBJ)).toBeUndefined()
+      expect(fn(customScopeElementContext(['components', 'Foo'], OBJ, OBJ))).toBeUndefined()
     })
     it('should return undefined for a deeper-than-operation path', () => {
-      expect(fn(['queries', 'q1', 'args'], OBJ, OBJ)).toBeUndefined()
+      expect(fn(customScopeElementContext(['queries', 'q1', 'args'], OBJ, OBJ))).toBeUndefined()
     })
   })
 })
@@ -219,7 +212,7 @@ describe('GraphQL changelog api-kind (e2e)', () => {
   }
 
   // Representative cases only — the exhaustive (prev, curr) × {BWC, no-BWC, experimental}
-  // classification is covered by the unit block above. Here e2e just proves the scope function is
+  // classification is covered by the unit block above. Here e2e just proves the scope element is
   // wired into graphql.changes and api-diff applies it. ER is hardcoded and guard-checked per row.
   const modifyCases: [ApihubApiCompatibilityKind, ApihubApiCompatibilityKind, ChangeType][] = [
     [BWC, BWC, BREAKING_CHANGE_TYPE],

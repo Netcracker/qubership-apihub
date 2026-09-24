@@ -19,13 +19,25 @@ import {
   WithAggregatedDiffs,
   WithDiffMetaRecord,
 } from '../../types'
-import { Diff, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
+import { Diff, DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY, extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
 import { isPathParamRenameDiff } from '../../utils'
 
 import { dump, getCustomTags, resolveApiAudience } from '../../utils/apihubSpecificationExtensions'
 
 // Re-export shared utilities for backward compatibility
 export { dump, getCustomTags, resolveApiAudience } //TODO: just use new utilities for REST
+
+/**
+ * The base path an operation is served under. Servers can be declared on the operation, on its path item
+ * or on the document, and the nearest declaration wins.
+ */
+export const resolveOperationBasePath = (
+  operation: OpenAPIV3.OperationObject | undefined,
+  pathItem: OpenAPIV3.PathItemObject | undefined,
+  document?: OpenAPIV3.Document,
+): string => {
+  return extractOperationBasePath(operation?.servers || pathItem?.servers || document?.servers || [])
+}
 
 export const extractOpenapiVersionDiff = (doc: OpenAPIV3.Document): Diff[] => {
   const diff = (doc as WithDiffMetaRecord<OpenAPIV3.Document>)[DIFF_META_KEY]?.openapi

@@ -26,6 +26,7 @@ import {
   isOperationDeprecated,
   normalizeOperationIds,
   takeIf,
+  deprecatedDeclarationPaths,
 } from '../../utils'
 import {
   ASYNCAPI_API_TYPE,
@@ -38,7 +39,6 @@ import { getCustomTags, resolveApiAudience } from '../../utils/apihubSpecificati
 import {
   calculateDeprecatedItems,
   Jso,
-  JSON_SCHEMA_PROPERTY_DEPRECATED,
   pathItemToFullPath,
   resolveOrigins,
 } from '@netcracker/qubership-apihub-api-unifier'
@@ -202,7 +202,7 @@ const collectDeprecatedItems = (
   const foundDeprecatedItems = calculateDeprecatedItems(effectiveSingleOperationSpec, ORIGINS_SYMBOL)
   for (const item of foundDeprecatedItems) {
     const { description, value } = item
-    const declarationJsonPaths = resolveOrigins(value, JSON_SCHEMA_PROPERTY_DEPRECATED, ORIGINS_SYMBOL)?.map(pathItemToFullPath) ?? []
+    const declarationJsonPaths = deprecatedDeclarationPaths(value)
 
     deprecatedItems.push({
       declarationJsonPaths,

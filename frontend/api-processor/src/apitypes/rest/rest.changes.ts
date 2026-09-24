@@ -16,10 +16,8 @@
 
 import { RestOperationData } from './rest.types'
 import {
-  areDeprecatedOriginsNotEmpty,
   calculateNormalizedRestOperationId,
   isEmpty,
-  isOperationRemove,
   isValidHttpMethod,
   removeFirstSlash,
   trimSlashes,
@@ -27,42 +25,27 @@ import {
 import {
   aggregateDiffsWithRollup,
   apiDiff,
-  breaking,
   Diff,
   DIFF_META_KEY,
-  DiffAction,
   DIFFS_AGGREGATED_META_KEY,
   extractOperationBasePath,
-  risky,
 } from '@netcracker/qubership-apihub-api-diff'
 import {
   AFTER_VALUE_NORMALIZED_PROPERTY,
   BEFORE_VALUE_NORMALIZED_PROPERTY,
-  MESSAGE_SEVERITY,
   NORMALIZE_OPTIONS,
-  ORIGINS_SYMBOL, REST_API_TYPE,
+  ORIGINS_SYMBOL,
 } from '../../consts'
 import {
-  BREAKING_CHANGE_TYPE,
   CompareOperationsPairContext,
   ComparisonDocument,
   DocumentsCompare,
   DocumentsCompareData,
   OperationChanges,
   ResolvedVersionDocument,
-  RISKY_CHANGE_TYPE,
   WithAggregatedDiffs,
   WithDiffMetaRecord,
 } from '../../types'
-import { isObject } from '@netcracker/qubership-apihub-json-crawl'
-import { areDeclarationPathsEqual } from '../../utils/path'
-import {
-  JSON_SCHEMA_PROPERTY_DEPRECATED,
-  pathItemToFullPath,
-  resolveOrigins,
-} from '@netcracker/qubership-apihub-api-unifier'
-import { findRequiredRemovedProperties } from './rest.required'
-import { calculateHash } from '../../utils/hashes'
 import { OpenAPIV3 } from 'openapi-types'
 import {
   extractOpenapiVersionDiff,
@@ -72,6 +55,7 @@ import {
   extractRootServersDiffs,
   extractSecuritySchemesDiffs,
   extractSecuritySchemesNames,
+  resolveOperationBasePath,
   validateGroupPrefix,
 } from './rest.utils'
 import {
@@ -81,7 +65,9 @@ import {
   getOperationTags,
   OperationsMap,
 } from '../../components'
-import { createRestApiCompatibilityScopeFunction } from '../../components/compare/rest.bwc.validation'
+import { createRestApiKindValueAt } from '../../components/compare/rest.api-kind'
+import { apiKindReclassificationRule, CUSTOM_SCOPE_ELEMENT_API_KIND } from '../../components/compare/custom-scope'
+import { createDeprecatedRemovalRules } from './rest.deprecated.classification'
 
 export const compareDocuments: DocumentsCompare = async (
   operationsMap: OperationsMap,
@@ -125,6 +111,8 @@ export const compareDocuments: DocumentsCompare = async (
   const currDocumentApiKind = currDoc?.apiKind
   const prevDocumentApiKind = prevDoc?.apiKind
 
+  const deprecatedRemovalRules = await createDeprecatedRemovalRules(operationsMap, prevDoc, prevDocData, ctx)
+
   const { merged, diffs } = apiDiff(
     prevDocData,
     currDocData,
@@ -136,7 +124,14 @@ export const compareDocuments: DocumentsCompare = async (
       normalizedResult: false,
       afterValueNormalizedProperty: AFTER_VALUE_NORMALIZED_PROPERTY,
       beforeValueNormalizedProperty: BEFORE_VALUE_NORMALIZED_PROPERTY,
-      apiCompatibilityScopeFunction: createRestApiCompatibilityScopeFunction(prevDocumentApiKind, currDocumentApiKind),
+      customScopeElementProviders: [
+        {
+          name: CUSTOM_SCOPE_ELEMENT_API_KIND,
+          valueAt: createRestApiKindValueAt(prevDocumentApiKind, currDocumentApiKind),
+        },
+        ...deprecatedRemovalRules.customScopeElementProviders,
+      ],
+      reclassificationRules: [apiKindReclassificationRule, ...deprecatedRemovalRules.reclassificationRules],
       openApiPathItemPerOperationDiffs: true,
     },
   ) as { merged: OpenAPIV3.Document; diffs: Diff[] }
@@ -162,8 +157,8 @@ export const compareDocuments: DocumentsCompare = async (
 
       const methodData = pathData[inferredMethod]
       // todo if there were actually servers here, we wouldn't have handle it, add a test
-      const previousBasePath = extractOperationBasePath(methodData?.servers || pathData?.servers || prevDocData.servers || [])
-      const currentBasePath = extractOperationBasePath(methodData?.servers || pathData?.servers || currDocData.servers || [])
+      const previousBasePath = resolveOperationBasePath(methodData, pathData, prevDocData)
+      const currentBasePath = resolveOperationBasePath(methodData, pathData, currDocData)
       const prevNormalizedOperationId = calculateNormalizedRestOperationId(previousBasePath, path, inferredMethod)
       const currNormalizedOperationId = calculateNormalizedRestOperationId(currentBasePath, path, inferredMethod)
 
@@ -205,8 +200,6 @@ export const compareDocuments: DocumentsCompare = async (
         continue
       }
 
-      await reclassifyBreakingChanges(previous?.operationId, merged, operationDiffs, ctx)
-
       operationChanges.push(createOperationChange(apiType, operationDiffs, comparisonInternalDocumentId, previous, current, currentGroup, previousGroup))
       getOperationTags(current ?? previous).forEach(tag => tags.add(tag))
     }
@@ -222,90 +215,6 @@ export const compareDocuments: DocumentsCompare = async (
     tags,
     ...(comparisonDocument) ? { comparisonDocument } : {},
   }
-}
-
-async function reclassifyBreakingChanges(
-  previousOperationId: string | undefined,
-  mergedJso: unknown,
-  diffs: Diff[],
-  ctx: CompareOperationsPairContext,
-): Promise<void> {
-  if (!previousOperationId || !ctx.previousVersion || !ctx.previousPackageId) {
-    return
-  }
-
-  const onlyBreaking = diffs.filter((diff) => diff.type === breaking)
-  if (isEmpty(onlyBreaking)) {
-    return
-  }
-
-  const previousVersionDeprecations = await ctx.versionDeprecatedResolver(REST_API_TYPE, ctx.previousVersion, ctx.previousPackageId, [previousOperationId])
-  if (!previousVersionDeprecations) {
-    return
-  }
-
-  const [previousOperation] = previousVersionDeprecations.operations
-
-  if (!previousOperation?.deprecatedItems) { return }
-
-  for (const diff of onlyBreaking) {
-    const deprecatedInVersionsCount = previousOperation?.deprecatedInPreviousVersions?.length ?? 0
-    if (isOperationRemove(diff) && deprecatedInVersionsCount > 1) {
-      diff.type = risky
-      continue
-    }
-
-    if (diff.action !== DiffAction.remove) {
-      continue
-    }
-
-    const beforeValueNormalized = (diff as Record<symbol, unknown>)[BEFORE_VALUE_NORMALIZED_PROPERTY]
-    if (!isObject(beforeValueNormalized)) {
-      ctx.notifications.push({
-        severity: MESSAGE_SEVERITY.Error,
-        message: '[Risky validation] Something wrong with beforeNormalizedValue from diff',
-      })
-      continue
-    }
-    if (!beforeValueNormalized[JSON_SCHEMA_PROPERTY_DEPRECATED]) { continue }
-
-    if (!areDeprecatedOriginsNotEmpty(beforeValueNormalized)) {
-      ctx.notifications.push({
-        severity: MESSAGE_SEVERITY.Error,
-        message: '[Risky validation] Something wrong with origins',
-      })
-      continue
-    }
-
-    const beforeHash = calculateHash(beforeValueNormalized, ctx.normalizedSpecFragmentsHashCache)
-
-    const deprecatedItems = previousOperation?.deprecatedItems ?? []
-    let deprecatedItem
-
-    for (let i = 0; i < deprecatedItems.length; i++) {
-      const item = deprecatedItems[i]
-      if (beforeHash !== item.hash) { continue }
-      if (areDeclarationPathsEqual(
-        item.declarationJsonPaths,
-        resolveOrigins(beforeValueNormalized, JSON_SCHEMA_PROPERTY_DEPRECATED, ORIGINS_SYMBOL)?.map(pathItemToFullPath) ?? [],
-      )) {
-        deprecatedItem = item
-        break
-      }
-    }
-
-    if (deprecatedItem && deprecatedItem?.deprecatedInPreviousVersions?.length > 1) {
-      diff.type = risky
-    }
-  }
-  // mark removed required status of the property as risky
-  const requiredProperties = findRequiredRemovedProperties(mergedJso, onlyBreaking)
-
-  requiredProperties?.forEach(prop => {
-    if (prop.propDiff.type === RISKY_CHANGE_TYPE && prop.requiredDiff?.type === BREAKING_CHANGE_TYPE) {
-      prop.requiredDiff.type = risky
-    }
-  })
 }
 
 export function createCopyWithEmptyPathItems(template: RestOperationData): RestOperationData {

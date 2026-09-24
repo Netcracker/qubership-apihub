@@ -172,11 +172,10 @@ async function compareCurrentApiType(
       (item) => `${item.apiType}:${item.operationId ?? ''}:${item.previousOperationId ?? ''}`,
     )
 
-  // We only need to additionally deduplicate diffs if there are multiple document pairs
-  // because diffs coming from the same apiDiff call are already deduplicated in comparePairedDocs
-  // This is performance optimization for common case when there is only one document pair
-  const uniqueDiffs = uniqueDiffsForDocPairs.length === 1 ? Array.from(uniqueDiffsForDocPairs[0])
-    : removeObjectDuplicates(uniqueDiffsForDocPairs.flatMap(set => Array.from(set)), calculateDiffId)
+  // Deduplicate by content, not by instance: one apiDiff call no longer guarantees one instance per
+  // change, since a difference two operations judge differently is split per partition. Copies that
+  // agree share an id and collapse, copies that disagree differ in severity and are counted apart
+  const uniqueDiffs = removeObjectDuplicates(uniqueDiffsForDocPairs.flatMap(set => Array.from(set)), calculateDiffId)
   const changesSummary = calculateChangeSummary(uniqueDiffs)
   const numberOfImpactedOperations = calculateTotalImpactedSummary(
     uniqueOperationChanges.map(({ impactedSummary }) => impactedSummary),

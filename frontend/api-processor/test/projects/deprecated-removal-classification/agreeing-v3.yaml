@@ -1,0 +1,36 @@
+openapi: 3.0.3
+info:
+  title: Deprecated removal, agreeing operations
+  version: 1.0.0
+paths:
+  /first:
+    post:
+      operationId: first
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shared'
+      responses:
+        '200':
+          description: OK
+  /second:
+    post:
+      operationId: second
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shared'
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    Shared:
+      type: object
+      properties:
+        # Removed with both operations equally entitled to the downgrade, so the two of them stay in
+        # one partition and the removal stays one difference.
+        keep:
+          type: string

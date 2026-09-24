@@ -91,11 +91,6 @@ function isGraphApiComponents(components: OpenAPIV3.ComponentsObject | GraphApiC
   return 'directives' in components
 }
 
-export function isOperationRemove(operationDiff: Diff): boolean {
-  // length is 2 because json path has view like ['paths', '/test/element']
-  return operationDiff.action === DiffAction.remove && !!matchPaths(operationDiff.beforeDeclarationPaths, [[OPEN_API_PROPERTY_PATHS, PREDICATE_ANY_VALUE, PREDICATE_ANY_VALUE]])
-}
-
 export function isPathParamRenameDiff(diff: Diff): boolean {
   return diff.action === DiffAction.rename && !!matchPaths(diff.beforeDeclarationPaths, [[OPEN_API_PROPERTY_PATHS, PREDICATE_ANY_VALUE]])
 }

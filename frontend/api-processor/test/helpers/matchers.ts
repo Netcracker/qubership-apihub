@@ -40,7 +40,7 @@ import {
   RecursiveMatcher,
 } from '../../.jest/jasmin'
 import { extractSecuritySchemesNames } from '../../src/apitypes/rest/rest.utils'
-import { isObject } from '../../src/utils'
+import { calculateChangeSummary, isObject } from '../../src/utils'
 import type { OpenAPIV3 } from 'openapi-types'
 import { deserializeDocument } from './utils'
 
@@ -290,4 +290,23 @@ export function serializedComparisonDocumentMatcher(
       },
     },
   })
+}
+
+/**
+ * A summary that contradicts the changes it counts is the symptom users report: an operation shown as
+ * breaking while none of its changes is breaking. The two are computed at different moments, so any change
+ * to how a verdict is decided can pull them apart. Assert this wherever a build reclassifies anything.
+ */
+export function expectSummariesMatchDiffs(result: BuildResult): void {
+  let checked = 0
+  for (const comparison of result.comparisons) {
+    for (const changes of comparison.data ?? []) {
+      expect(changes.changeSummary).toEqual(calculateChangeSummary(changes.diffs ?? []))
+      checked += 1
+    }
+  }
+
+  // Outside both loops: a build that produced no comparison, or none carrying operation changes, would
+  // otherwise pass this having asserted nothing
+  expect(checked).toBeGreaterThan(0)
 }

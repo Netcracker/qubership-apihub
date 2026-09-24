@@ -1,0 +1,41 @@
+openapi: 3.0.3
+info:
+  title: Deprecated removal, an operation deprecated in its own right
+  version: 1.0.0
+paths:
+  # `/retired` is deprecated as a whole from the first version, and nothing else here is announced long
+  # enough. The record standing for an operation's own deprecation carries no hash and can never match a
+  # removed element, so counting it would buy `/retired` a partition that answers nothing and split a
+  # removal it agrees about with `/current`.
+  /retired:
+    post:
+      operationId: retired
+      deprecated: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shared'
+      responses:
+        '200':
+          description: OK
+  /current:
+    post:
+      operationId: current
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shared'
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    Shared:
+      type: object
+      properties:
+        legacy:
+          type: string
+        keep:
+          type: string

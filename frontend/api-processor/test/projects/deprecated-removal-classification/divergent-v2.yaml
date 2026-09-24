@@ -1,0 +1,68 @@
+openapi: 3.0.3
+info:
+  title: Deprecated removal, divergent histories
+  version: 1.0.0
+paths:
+  # Unchanged from the first version: every notice has to be carried by more than one released version
+  # before the removal in the third one qualifies.
+  /first:
+    post:
+      operationId: first
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                shared:
+                  $ref: '#/components/schemas/Shared'
+                own:
+                  $ref: '#/components/schemas/AlphaBox'
+      responses:
+        '200':
+          description: OK
+  /second:
+    post:
+      operationId: second
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                shared:
+                  $ref: '#/components/schemas/Shared'
+                own:
+                  $ref: '#/components/schemas/BetaBox'
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    # Reached by both operations, so both accumulate the same history for it
+    Shared:
+      type: object
+      properties:
+        common:
+          type: string
+          deprecated: true
+        keep:
+          type: string
+    # Reached by /first alone
+    AlphaBox:
+      type: object
+      properties:
+        alpha:
+          type: string
+          deprecated: true
+        keep:
+          type: string
+    # Reached by /second alone
+    BetaBox:
+      type: object
+      properties:
+        beta:
+          type: string
+          deprecated: true
+        keep:
+          type: string

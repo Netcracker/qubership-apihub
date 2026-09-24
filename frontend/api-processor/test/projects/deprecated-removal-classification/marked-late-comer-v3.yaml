@@ -1,0 +1,45 @@
+openapi: 3.0.3
+info:
+  title: Deprecated removal, the late comer marked no-BWC
+  version: 1.0.0
+paths:
+  /late-comer:
+    post:
+      operationId: lateComer
+      x-api-kind: no-BWC
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shared'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared'
+  /long-lived:
+    post:
+      operationId: longLived
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shared'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared'
+components:
+  schemas:
+    Shared:
+      type: object
+      properties:
+        # `legacy` is gone and `replacement` takes its place. Both operations reach the two changes, in
+        # the request and in the response, so each of them ends up with four differences.
+        replacement:
+          type: string

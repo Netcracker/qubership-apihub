@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: Deprecated removal, reworded notice
+  version: 1.0.0
+paths:
+  /thing:
+    post:
+      operationId: thing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shared'
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    Shared:
+      type: object
+      properties:
+        legacy:
+          type: string
+          deprecated: true
+          description: first wording
+        keep:
+          type: string

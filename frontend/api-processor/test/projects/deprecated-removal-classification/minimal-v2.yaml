@@ -1,0 +1,46 @@
+openapi: 3.0.3
+info:
+  title: Deprecated removal, minimal
+  version: 1.0.0
+paths:
+  # Declared first so it is visited first: the comparison walks `paths` in document order, and this is
+  # the operation whose summary used to be frozen before the shared difference was reclassified on
+  # behalf of the other one.
+  /late-comer:
+    post:
+      operationId: lateComer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shared'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared'
+  /long-lived:
+    post:
+      operationId: longLived
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shared'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shared'
+components:
+  schemas:
+    Shared:
+      type: object
+      properties:
+        legacy:
+          type: string
+          deprecated: true

@@ -1,0 +1,39 @@
+openapi: 3.0.3
+info:
+  title: Deprecated removal, agreeing operations
+  version: 1.0.0
+paths:
+  # Unchanged from the first version: the deprecation notice has to be carried by more than one
+  # released version before the removal in the third one qualifies.
+  /first:
+    post:
+      operationId: first
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shared'
+      responses:
+        '200':
+          description: OK
+  /second:
+    post:
+      operationId: second
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shared'
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    Shared:
+      type: object
+      properties:
+        legacy:
+          type: string
+          deprecated: true
+        keep:
+          type: string
