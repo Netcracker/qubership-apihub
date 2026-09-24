@@ -113,6 +113,8 @@ technicalParameters:
   transitionMoveTimeoutMinutes: 30
   # Optional; Base directory for ephemeral (temporary) file storage; If not set, default value: /tmp/apihub-ephemeral-files; Example: /var/apihub/ephemeral
   ephemeralFileDirectory: '/tmp/apihub-ephemeral-files'
+  # Optional; Cron schedule for refreshing build queue Prometheus gauges; used only when monitoring.enabled is true; If not set, default value: '* * * * *' (every minute); Example: '*/5 * * * *'
+  metricsGetterSchedule: '* * * * *'
 
 # Section with various parameters related to APIHUB business logic
 businessParameters:
@@ -140,11 +142,10 @@ businessParameters:
   # Optional; Time-to-live in minutes for ephemeral files before they expire; If not set, default value: 30; Example: 60
   ephemeralFileTTLMinutes: 30
 
-
 # Section with monitoring configuration for APIHUB
 # APIHUB backend is using Prometheus for monitoring and Grafana for visualization
 monitoring:
-  # Optional; Enables creation of Service Monitor. If not set, default value: false; Example: true
+  # Optional; Enables application Prometheus metrics on /metrics (HTTP request counters and durations, build queue gauges, AI chat metrics) and the build metrics collection job. If not set, default value: false; Example: true
   enabled: false
 
 # Section with S3 storage integration parameters.

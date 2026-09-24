@@ -3,46 +3,56 @@ package midldleware
 import (
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
 	"github.com/gorilla/mux"
 )
 
-type loggingResponseWriter struct {
+const unknownRoutePathLabel = "unknown"
+
+// metricsResponseWriter records the status code while forwarding Unwrap and Flush,
+// so http.ResponseController (write deadlines) and streaming handlers (SSE, MCP) keep working.
+type metricsResponseWriter struct {
 	http.ResponseWriter
 	statusCode int
 }
 
-func newLoggingResponseWriter(w http.ResponseWriter) *loggingResponseWriter {
-	return &loggingResponseWriter{w, http.StatusOK}
+func newMetricsResponseWriter(w http.ResponseWriter) *metricsResponseWriter {
+	return &metricsResponseWriter{ResponseWriter: w, statusCode: http.StatusOK}
 }
 
-func (lrw *loggingResponseWriter) WriteHeader(code int) {
-	lrw.statusCode = code
-	lrw.ResponseWriter.WriteHeader(code)
+func (w *metricsResponseWriter) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
 }
 
-// TODO: if PrometheusMiddleware is re-enabled, its loggingResponseWriter must implement Unwrap() for SetWriteDeadline to reach the underlying connection
+func (w *metricsResponseWriter) WriteHeader(code int) {
+	w.statusCode = code
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func (w *metricsResponseWriter) Flush() {
+	if flusher, ok := w.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
+}
+
 func PrometheusMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		route := mux.CurrentRoute(r)
-		path, _ := route.GetPathTemplate()
-		statusCode := 200
-		now := time.Now()
-
-		if strings.Contains(path, "/ws/") {
-			next.ServeHTTP(w, r)
-		} else {
-			lrw := newLoggingResponseWriter(w)
-			next.ServeHTTP(lrw, r)
-			statusCode = lrw.statusCode
+		path := unknownRoutePathLabel
+		if route := mux.CurrentRoute(r); route != nil {
+			if template, err := route.GetPathTemplate(); err == nil {
+				path = template
+			}
 		}
+		start := time.Now()
 
-		elapsedSeconds := time.Since(now).Seconds()
+		mrw := newMetricsResponseWriter(w)
+		next.ServeHTTP(mrw, r)
 
-		metrics.TotalRequests.WithLabelValues(path, strconv.Itoa(statusCode), r.Method).Inc()
-		metrics.HttpDuration.WithLabelValues(path, strconv.Itoa(statusCode), r.Method).Observe(elapsedSeconds)
+		elapsedSeconds := time.Since(start).Seconds()
+		code := strconv.Itoa(mrw.statusCode)
+		metrics.TotalRequests.WithLabelValues(path, code, r.Method).Inc()
+		metrics.HttpDuration.WithLabelValues(path, code, r.Method).Observe(elapsedSeconds)
 	})
 }

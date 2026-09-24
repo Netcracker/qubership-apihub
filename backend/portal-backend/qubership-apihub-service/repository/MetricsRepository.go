@@ -7,7 +7,6 @@ import (
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 )
 
-// FIXME: not used!!!
 type MetricsRepository interface {
 	StartGetMetricsProcess() error
 }
