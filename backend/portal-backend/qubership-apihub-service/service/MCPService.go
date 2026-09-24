@@ -82,7 +82,9 @@ func (m mcpService) MakeMCPServer() *mcpserver.MCPServer {
 	hooks := &mcpserver.Hooks{}
 	hooks.AddAfterInitialize(func(ctx context.Context, _ any, req *mcp.InitializeRequest, _ *mcp.InitializeResult) {
 		userID := secctx.GetUserId(ctx)
-		m.monitoringService.IncreaseBusinessMetricCounter(userID, metrics.MCPSessionInitialized, createMCPClientLabel(req.Params.ClientInfo))
+		clientLabel := createMCPClientLabel(req.Params.ClientInfo)
+		m.monitoringService.IncreaseBusinessMetricCounter(userID, metrics.MCPSessionInitialized, clientLabel)
+		metrics.MCPSessionsTotal.WithLabelValues(clientLabel).Inc()
 	})
 
 	s := mcpserver.NewMCPServer(

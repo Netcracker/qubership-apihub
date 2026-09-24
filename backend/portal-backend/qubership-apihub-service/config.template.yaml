@@ -147,6 +147,28 @@ businessParameters:
 monitoring:
   # Optional; Enables application Prometheus metrics on /metrics (HTTP request counters and durations, build queue gauges, AI chat metrics) and the build metrics collection job. If not set, default value: false; Example: true
   enabled: false
+  # Section with OpenTelemetry metrics export configuration. Pushes the AI-related application metrics from /metrics to an OTLP/HTTP endpoint.
+  # Requires monitoring.enabled=true
+  otel:
+    # Optional; Enables the periodic OTLP/HTTP push; If not set, default value: false; Example: true
+    enabled: false
+    # Mandatory when otel.enabled=true; OpenTelemetry server URL (scheme, host and port, no path); If not set, default value: ""; Example: https://otel-collector.example.com:4318
+    serverUrl: ''
+    # Optional; Path of the OTLP/HTTP metrics endpoint on the server; If not set, default value: /v1/metrics; Example: /v1/metrics
+    metricsPath: /v1/metrics
+    # Optional; Token sent as "Authorization: Bearer <token>" with every export request; If not set, default value: ""; Example: my-collector-token
+    token: ''
+    # Optional; Kubernetes namespace sent as the k8s.namespace.name resource attribute; If not set, default value: ""; Example: apihub
+    namespace: ''
+    # Optional; Export interval in seconds; If not set, default value: 60; Example: 30
+    exportIntervalSec: 60
+    # Optional; Timeout of one export request in seconds; If not set, default value: 10; Example: 15
+    timeoutSec: 10
+    # Optional; Only metric families whose name starts with one of these prefixes are pushed; If not set, default value: [apihub_ai_, apihub_mcp_, apihub_ephemeral_]; Example: [apihub_]
+    metricPrefixes:
+      - apihub_ai_
+      - apihub_mcp_
+      - apihub_ephemeral_
 
 # Section with S3 storage integration parameters.
 s3Storage:

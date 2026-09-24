@@ -153,6 +153,42 @@ var EphemeralFileCleanupDeleted = prometheus.NewCounterVec(
 	[]string{"kind"},
 )
 
+const (
+	LabelTool    = "tool"
+	LabelClient  = "client"
+	LabelApiType = "api_type"
+)
+
+var MCPToolCallsTotal = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "apihub_mcp_tool_calls_total",
+		Help: "Number of MCP tool invocations, partitioned by tool name, MCP client label and API type.",
+	},
+	[]string{LabelTool, LabelClient, LabelApiType},
+)
+
+var MCPSessionsTotal = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "apihub_mcp_sessions_total",
+		Help: "Number of MCP sessions initialised, partitioned by MCP client label.",
+	},
+	[]string{LabelClient},
+)
+
+var AiChatMessagesSentTotal = prometheus.NewCounter(
+	prometheus.CounterOpts{
+		Name: "apihub_ai_chat_messages_sent_total",
+		Help: "Number of user messages accepted by the AI chat endpoints.",
+	},
+)
+
+var AiChatsCreatedTotal = prometheus.NewCounter(
+	prometheus.CounterOpts{
+		Name: "apihub_ai_chats_created_total",
+		Help: "Number of AI chats created.",
+	},
+)
+
 func RegisterAllPrometheusApplicationMetrics() {
 	prometheus.Register(TotalRequests)
 	prometheus.Register(HttpDuration)
@@ -172,4 +208,9 @@ func RegisterAllPrometheusApplicationMetrics() {
 	prometheus.Register(EphemeralFileBytes)
 	prometheus.Register(AiChatCleanupDeleted)
 	prometheus.Register(EphemeralFileCleanupDeleted)
+
+	prometheus.Register(MCPToolCallsTotal)
+	prometheus.Register(MCPSessionsTotal)
+	prometheus.Register(AiChatMessagesSentTotal)
+	prometheus.Register(AiChatsCreatedTotal)
 }

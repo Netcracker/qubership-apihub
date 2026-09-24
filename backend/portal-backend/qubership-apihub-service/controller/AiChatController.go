@@ -149,6 +149,7 @@ func (c *AiChatController) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	c.monitoringSvc.IncreaseBusinessMetricCounter(uid, metrics.AIChatCalled, "chat messages")
+	metrics.AiChatMessagesSentTotal.Inc()
 
 	ctx = service.SetMCPClientLabel(ctx, service.MCPClientLabelInternalAIChat)
 	res, err := c.aiSvc.SendMessage(ctx, uid, chatID, &body)
@@ -184,6 +185,7 @@ func (c *AiChatController) SendMessageStream(w http.ResponseWriter, r *http.Requ
 	}
 
 	c.monitoringSvc.IncreaseBusinessMetricCounter(uid, metrics.AIChatCalled, "chat messages")
+	metrics.AiChatMessagesSentTotal.Inc()
 
 	ctx = service.SetMCPClientLabel(ctx, service.MCPClientLabelInternalAIChat)
 	ch, err := c.aiSvc.SendMessageStream(ctx, uid, chatID, &body)

@@ -91,6 +91,40 @@ Authoritative constant definitions remain in `metrics/BusinessMetrics.go`.
 
 ---
 
+## Prometheus counters and OpenTelemetry push
+
+The MCP and AI chat business metrics are also counted in process as Prometheus metrics, next to the existing AI chat series in `qubership-apihub-service/metrics/Metrics.go`. They appear on `/metrics` when `monitoring.enabled` is `true`.
+
+| Prometheus metric | Labels | Mirrors |
+|-------------------|--------|---------|
+| `apihub_mcp_tool_calls_total` | `tool` (registered MCP tool name), `client` (MCP client label), `api_type` (`rest`, `graphql`, `protobuf`, `asyncapi`, `ddl`, `mcp`; empty for the `list_workspaces`, `list_workspace_packages`, and `list_package_versions` tools) | every `mcp_*_tool_called` metric, without the package dimension |
+| `apihub_mcp_sessions_total` | `client` | `mcp_session_initialized` |
+| `apihub_ai_chat_messages_sent_total` | none | `ai_chat_called` |
+| `apihub_ai_chats_created_total` | none | none; counts `POST` chat creations |
+
+The counters are incremented at the same call sites as the business metric writes, so both views agree. They are per instance and reset on restart, as any Prometheus counter.
+
+### OpenTelemetry push
+
+When `monitoring.otel.enabled` is `true`, the service pushes a subset of `/metrics` to an OTLP/HTTP endpoint (`/v1/metrics`, usually port 4318) on a fixed interval. The subset is selected by name prefix; the default prefixes `apihub_ai_`, `apihub_mcp_`, and `apihub_ephemeral_` cover the counters above and the existing AI chat and ephemeral file series.
+
+The push uses the OpenTelemetry Prometheus bridge, so the metric names and label names are the same as on `/metrics`. Each export carries the resource attributes `service.name` (`apihub-backend`), `service.instance.id` (the instance identifier of the pod), and, when configured, `k8s.namespace.name`.
+
+| Key | Default | Meaning |
+|-----|---------|---------|
+| `monitoring.otel.enabled` | `false` | Enables the push. Requires `monitoring.enabled=true`; the service refuses to start otherwise. |
+| `monitoring.otel.serverUrl` | `""` | OpenTelemetry server URL without a path, for example `https://otel-collector.example.com:4318`. Mandatory when the push is enabled. |
+| `monitoring.otel.metricsPath` | `/v1/metrics` | Path of the OTLP/HTTP metrics endpoint, appended to the server URL. |
+| `monitoring.otel.token` | `""` | Sent as `Authorization: Bearer <token>`. Masked in the startup configuration log. |
+| `monitoring.otel.namespace` | `""` | Kubernetes namespace, sent as `k8s.namespace.name`. |
+| `monitoring.otel.exportIntervalSec` | `60` | Export interval in seconds. |
+| `monitoring.otel.timeoutSec` | `10` | Timeout of one export request in seconds. |
+| `monitoring.otel.metricPrefixes` | `[apihub_ai_, apihub_mcp_, apihub_ephemeral_]` | Metric families whose name starts with one of the prefixes are pushed. |
+
+A failed export is logged by the OpenTelemetry SDK and retried on the next interval; `/metrics` keeps serving regardless. The process has no graceful shutdown, so the last interval of samples before a pod stops is not flushed. Counters are cumulative, so the next export after a restart carries the full totals.
+
+---
+
 ## Implementation notes
 
 1. **Two write paths**
@@ -123,3 +157,5 @@ Authoritative constant definitions remain in `metrics/BusinessMetrics.go`.
 | Persistence and flush | `qubership-apihub-service/service/MonitoringService.go`. |
 | Instrumentation call sites | Search for `IncreaseBusinessMetricCounter`. |
 | Report and export | `BusinessMetricRepository`, `BusinessMetricController`. |
+| Prometheus counters | `qubership-apihub-service/metrics/Metrics.go`, incremented in `MCPHandlers.go`, `MCPService.go`, `AiChatController.go`, `AiChatsService.go`. |
+| OpenTelemetry push | `qubership-apihub-service/metrics/PrefixGatherer.go`, `qubership-apihub-service/service/OTelMetricsExportService.go`. |

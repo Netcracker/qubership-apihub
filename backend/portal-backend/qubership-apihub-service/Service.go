@@ -19,6 +19,7 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
@@ -729,6 +730,14 @@ func main() {
 		})
 		if err := metricsService.CreateJob(systemInfoService.GetMetricsGetterSchedule()); err != nil {
 			log.Errorf("Failed to start metrics getter job: %s", err)
+		}
+		oTelCfg := systemInfoService.GetOTelMetricsConfig()
+		if oTelCfg.Enabled {
+			gatherer := metrics.NewPrefixGatherer(prometheus.DefaultGatherer, oTelCfg.MetricPrefixes)
+			oTelExport := service.NewOTelMetricsExportService(oTelCfg, gatherer, systemInfoService.GetInstanceId())
+			if err := oTelExport.Start(context.Background()); err != nil {
+				log.Fatalf("Failed to start OpenTelemetry metrics export: %v", err)
+			}
 		}
 	}
 
