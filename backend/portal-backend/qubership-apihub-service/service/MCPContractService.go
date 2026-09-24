@@ -14,7 +14,7 @@ import (
 
 type MCPContractService interface {
 	ListMcpEntities(ctx context.Context, packageId, versionName, kind, mcpEndpoint, refPackageId, textFilter string, limit, offset int) (*view.McpEntityListView, error)
-	GetMcpEntity(ctx context.Context, packageId, versionName, mcpEntityId string) (interface{}, error)
+	GetMcpEntity(ctx context.Context, packageId, versionName, mcpEntityId string, includeData bool) (interface{}, error)
 	GetVersionSummary(ctx context.Context, packageId, versionName string) (map[string]view.McpEndpointSummary, error)
 	GlobalSearchForMCP(ctx context.Context, searchReq view.SearchQueryReq) (*view.SearchResult, error)
 }
@@ -71,12 +71,12 @@ func (s *mcpContractServiceImpl) ListMcpEntities(ctx context.Context, packageId,
 	return result, nil
 }
 
-func (s *mcpContractServiceImpl) GetMcpEntity(ctx context.Context, packageId, versionName, mcpEntityId string) (interface{}, error) {
+func (s *mcpContractServiceImpl) GetMcpEntity(ctx context.Context, packageId, versionName, mcpEntityId string, includeData bool) (interface{}, error) {
 	version, revision, err := s.resolveRevision(ctx, packageId, versionName)
 	if err != nil {
 		return nil, err
 	}
-	ent, data, err := s.mcpRepo.GetMcpEntity(ctx, packageId, version, revision, mcpEntityId)
+	ent, data, err := s.mcpRepo.GetMcpEntity(ctx, packageId, version, revision, mcpEntityId, includeData)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,9 @@ func (s *mcpContractServiceImpl) GlobalSearchForMCP(ctx context.Context, searchR
 	searchQuery := &entity.GlobalContractSearchQuery{
 		OriginalTextInput: searchReq.SearchString,
 		Kinds:             make([]string, 0),
+		WorkspaceId:       searchReq.Workspace,
 		Packages:          searchReq.PackageIds,
+		VisibleRoots:      searchReq.VisiblePackageRoots,
 		Versions:          versions,
 		Status:            searchReq.Status,
 		StartDate:         startDate,
@@ -155,6 +157,9 @@ func (s *mcpContractServiceImpl) GlobalSearchForMCP(ctx context.Context, searchR
 	}
 	if searchQuery.Packages == nil {
 		searchQuery.Packages = make([]string, 0)
+	}
+	if searchQuery.VisibleRoots == nil {
+		searchQuery.VisibleRoots = make([]string, 0)
 	}
 	entities, err := s.mcpRepo.GlobalSearchForMCP(ctx, searchQuery)
 	if err != nil {

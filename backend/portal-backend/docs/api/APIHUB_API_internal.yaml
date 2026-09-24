@@ -1044,7 +1044,6 @@ components:
       enum:
         - draft
         - release
-        - archived
     User:
       description: Represents an APIHUB user with identity and profile information returned by internal API endpoints.
       type: object

@@ -12,7 +12,7 @@ import (
 
 type MCPContractRepository interface {
 	ListMcpEntities(ctx context.Context, packageId, version string, revision int, kind, mcpEndpoint, refPackageId, textFilter string, limit, offset int) ([]*entity.MCPContractEntity, error)
-	GetMcpEntity(ctx context.Context, packageId, version string, revision int, mcpEntityId string) (*entity.MCPContractEntity, []byte, error)
+	GetMcpEntity(ctx context.Context, packageId, version string, revision int, mcpEntityId string, includeData bool) (*entity.MCPContractEntity, []byte, error)
 	GetEntitiesCount(ctx context.Context, packageId, version string, revision int) ([]entity.MCPContractKindCountEntity, error)
 	GetEntitiesCountByEndpoint(ctx context.Context, packageId, version string, revision int) ([]entity.MCPContractEndpointCountEntity, error)
 	GlobalSearchForMCP(ctx context.Context, searchQuery *entity.GlobalContractSearchQuery) ([]entity.MCPContractSearchResult, error)
@@ -62,7 +62,7 @@ func (r *mcpContractRepositoryImpl) ListMcpEntities(ctx context.Context, package
 	return result, nil
 }
 
-func (r *mcpContractRepositoryImpl) GetMcpEntity(ctx context.Context, packageId, version string, revision int, mcpEntityId string) (*entity.MCPContractEntity, []byte, error) {
+func (r *mcpContractRepositoryImpl) GetMcpEntity(ctx context.Context, packageId, version string, revision int, mcpEntityId string, includeData bool) (*entity.MCPContractEntity, []byte, error) {
 	conn := r.cp.GetConnection().WithContext(ctx)
 	ent := new(entity.MCPContractEntity)
 	err := conn.Model(ent).
@@ -78,7 +78,7 @@ func (r *mcpContractRepositoryImpl) GetMcpEntity(ctx context.Context, packageId,
 		return nil, nil, err
 	}
 	var data []byte
-	if ent.DataHash != nil {
+	if includeData && ent.DataHash != nil {
 		dataEnt := new(entity.MCPContractDataEntity)
 		err = conn.Model(dataEnt).Where("data_hash = ?", *ent.DataHash).First()
 		if err != nil {
@@ -125,11 +125,16 @@ func (r *mcpContractRepositoryImpl) GetEntitiesCountByEndpoint(ctx context.Conte
 }
 
 func (r *mcpContractRepositoryImpl) GlobalSearchForMCP(ctx context.Context, searchQuery *entity.GlobalContractSearchQuery) ([]entity.MCPContractSearchResult, error) {
+	if len(searchQuery.VisibleRoots) == 0 {
+		return nil, nil
+	}
 	_, err := r.cp.GetConnection().WithContext(ctx).Exec("select websearch_to_tsquery(?)", searchQuery.OriginalTextInput)
 	if err != nil {
 		return nil, fmt.Errorf("invalid search string: %v", err.Error())
 	}
 	var result []entity.MCPContractSearchResult
+	// Privacy-aware search against global_search.fts_mcp_search_text.
+	// Deprecated: public.fts_mcp_search_text is dual-written but no longer used for global search reads.
 	mcpSearchQuery := `
 select
 	me.package_id,
@@ -151,23 +156,28 @@ from mcp_entities me
 		ts.version       as version,
 		ts.revision      as revision
 
-	FROM fts_mcp_search_text ts,
-			websearch_to_tsquery(?original_text_input) search_query
-	WHERE ts.status = ?status
-		and (?kinds = '{}' or ts.kind = ANY(?kinds::text[]))
-		and (?versions = '{}' or version like ANY(
+    FROM global_search.fts_mcp_search_text ts,
+         websearch_to_tsquery(?original_text_input) search_query
+    WHERE ts.workspace_id = ?workspace_id
+        and ts.status = ?status
+        and (?kinds = '{}' or ts.kind = ANY(?kinds::text[]))
+        and (?versions = '{}' or version like ANY(
 						select id from unnest(?versions::text[]) id))
 		and (package_id like ANY(
 						select id from unnest(?packages::text[]) id
 						union
 						select id||'.%' from unnest(?packages::text[]) id))
-		and search_query @@ data_vector
-	ORDER BY ts_rank(data_vector, search_query) DESC,
-				package_id,
-				mcp_entity_id desc,
-				version DESC,
-				revision DESC
-	LIMIT ?limit OFFSET ?offset
+        and (package_id like ANY(
+						select id from unnest(?visible_roots::text[]) id
+						union
+						select id||'.%' from unnest(?visible_roots::text[]) id))
+        and search_query @@ data_vector
+    ORDER BY ts_rank(data_vector, search_query) DESC,
+             package_id,
+             mcp_entity_id desc,
+             version DESC,
+             revision DESC
+    LIMIT ?limit OFFSET ?offset
 ) all_ts
 					on all_ts.package_id = me.package_id and
 						all_ts.version = me.version and

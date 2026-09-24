@@ -26,6 +26,7 @@ type RoleService interface {
 	GetPermissionsForPackage(ctx context.Context, packageId string) ([]string, error)
 	FilterVersionsByPackageReadAccess(ctx context.Context, keys []entity.PublishedVersionKeyEntity) (accessible []entity.PublishedVersionKeyEntity, hiddenCount int, err error)
 	GetPermissionsForReadScope(ctx context.Context, scope view.PackageReadScope) ([]string, error)
+	GetWorkspacePackageVisibilityRoots(ctx context.Context, workspaceId string) ([]string, error)
 	GetUserPackagePromoteStatuses(ctx context.Context, packageIds []string, userId string) (*view.AvailablePackagePromoteStatuses, error)
 	GetAvailableVersionPublishStatuses(ctx context.Context, packageId string) ([]string, error)
 	HasRequiredPermissions(ctx context.Context, packageId string, requiredPermissions ...view.RolePermission) (bool, error)
@@ -510,7 +511,6 @@ func (r roleServiceImpl) GetUserPackagePromoteStatuses(ctx context.Context, pack
 			result[packageId] = []string{
 				string(view.Draft),
 				string(view.Release),
-				string(view.Archived),
 			}
 			continue
 		}
@@ -530,9 +530,6 @@ func getAvailablePublishStatuses(userPermissions []string) []string {
 	}
 	if utils.SliceContains(userPermissions, string(view.ManageReleaseVersionPermission)) {
 		availablePublishStatuses = append(availablePublishStatuses, string(view.Release))
-	}
-	if utils.SliceContains(userPermissions, string(view.ManageArchivedVersionPermission)) {
-		availablePublishStatuses = append(availablePublishStatuses, string(view.Archived))
 	}
 	return availablePublishStatuses
 }
@@ -644,6 +641,74 @@ func (r roleServiceImpl) FilterVersionsByPackageReadAccess(ctx context.Context, 
 	return accessible, hiddenCount, nil
 }
 
+func (r roleServiceImpl) GetWorkspacePackageVisibilityRoots(ctx context.Context, workspaceId string) ([]string, error) {
+	if workspaceId == "" {
+		return nil, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidParameterValueMsg,
+			Params:  map[string]interface{}{"param": "workspace", "value": workspaceId},
+		}
+	}
+	workspace, err := r.publishedRepo.GetPackage(ctx, workspaceId)
+	if err != nil {
+		return nil, err
+	}
+	if workspace == nil {
+		return nil, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.PackageNotFound,
+			Message: exception.PackageNotFoundMsg,
+			Params:  map[string]interface{}{"packageId": workspaceId},
+		}
+	}
+
+	if secctx.IsSysadm(ctx) {
+		return []string{workspaceId}, nil
+	}
+
+	principal, err := r.resolveVisibilityPrincipal(ctx, workspaceId)
+	if err != nil {
+		return nil, err
+	}
+
+	accessRows, err := r.roleRepository.GetWorkspacePackageReadAccess(ctx, workspaceId, principal)
+	if err != nil {
+		return nil, err
+	}
+	readableIds := make([]string, 0, len(accessRows))
+	for _, row := range accessRows {
+		if row.CanRead {
+			readableIds = append(readableIds, row.PackageId)
+		}
+	}
+	return utils.CompressVisibleRoots(readableIds), nil
+}
+
+func (r roleServiceImpl) resolveVisibilityPrincipal(ctx context.Context, workspaceId string) (entity.VisibilityPrincipal, error) {
+	if apikeyPackageId := secctx.GetApiKeyPackageId(ctx); apikeyPackageId != "" {
+		inWorkspace := apikeyPackageId == "*" ||
+			apikeyPackageId == workspaceId ||
+			strings.HasPrefix(apikeyPackageId, workspaceId+".")
+		if !inWorkspace {
+			return entity.VisibilityPrincipal{}, &exception.CustomError{
+				Status:  http.StatusNotFound,
+				Code:    exception.PackageNotFound,
+				Message: exception.PackageNotFoundMsg,
+				Params:  map[string]interface{}{"packageId": workspaceId},
+				Debug:   fmt.Sprintf("Workspace %s is out of scope for the api key", workspaceId),
+			}
+		}
+		return entity.VisibilityPrincipal{
+			ApiKeyScopeId: apikeyPackageId,
+			ApiKeyRoleIds: secctx.GetApiKeyRoles(ctx),
+		}, nil
+	}
+	return entity.VisibilityPrincipal{
+		UserId: secctx.GetUserId(ctx),
+	}, nil
+}
+
 func (r roleServiceImpl) HasRequiredPermissions(ctx context.Context, packageId string, requiredPermissions ...view.RolePermission) (bool, error) {
 	if secctx.IsSysadm(ctx) {
 		return true, nil
@@ -749,8 +814,6 @@ func getRequiredPermissionForVersionStatus(versionStatus string) view.RolePermis
 		return view.ManageDraftVersionPermission
 	case string(view.Release):
 		return view.ManageReleaseVersionPermission
-	case string(view.Archived):
-		return view.ManageArchivedVersionPermission
 	default:
 		return ""
 	}

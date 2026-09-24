@@ -1299,7 +1299,12 @@ func (o operationRepositoryImpl) GetOperationsByModelHash(ctx context.Context, p
 
 func (o operationRepositoryImpl) GlobalSearchForOperations(ctx context.Context, searchQuery *entity.GlobalOperationSearchQuery) ([]entity.OperationSearchResult, error) {
 	var result []entity.OperationSearchResult
+	if len(searchQuery.VisibleRoots) == 0 {
+		return nil, nil
+	}
 
+	// Privacy-aware search against global_search.fts_operation_search_text.
+	// Deprecated: public.fts_operation_search_text is dual-written but no longer used for global search reads.
 	operationsSearchQuery := `
 select
 	o.package_id,
@@ -1317,41 +1322,45 @@ select
 	o.document_id,
 	parent_package_names(o.package_id) parent_names
 from operation o
-	inner join (
-		SELECT DISTINCT ON (rank, package_id, operation_id)
-			ts_rank(ts.data_vector, search_query) as rank,
-			ts.package_id   as package_id,
-			ts.operation_id as operation_id,
-			ts.version      as version,
-			ts.revision     as revision,
-			pv.status       as status
-		FROM fts_operation_search_text ts
-			inner join published_version pv
-				on pv.package_id = ts.package_id
-				and pv.version = ts.version
-				and pv.revision = ts.revision
-			cross join websearch_to_tsquery(?original_text_input) search_query
-			/*scope_join*/
-		WHERE ts.status = ?status
-			and ts.api_type = ?api_type
-			and (?versions = '{}' or ts.version like ANY(
-					select id from unnest(?versions::text[]) id))
-			and pv.deleted_at is null
-			and pv.published_at >= ?start_date
-			and pv.published_at <= ?end_date
-			and search_query @@ ts.data_vector
-		ORDER BY ts_rank(ts.data_vector, search_query) DESC,
-					package_id,
-					operation_id desc,
-					version DESC,
-					revision DESC
-		LIMIT ?limit OFFSET ?offset
-	) all_ts
-		on all_ts.package_id = o.package_id
-		and all_ts.version = o.version
-		and all_ts.revision = o.revision
-		and all_ts.operation_id = o.operation_id
-	inner join package_group pg on o.package_id = pg.id
+    inner join (
+        SELECT DISTINCT ON (rank, package_id, operation_id)
+            ts_rank(ts.data_vector, search_query) as rank,
+            ts.package_id   as package_id,
+            ts.operation_id as operation_id,
+            ts.version      as version,
+            ts.revision     as revision,
+            pv.status       as status
+        FROM global_search.fts_operation_search_text ts
+            inner join published_version pv
+                on pv.package_id = ts.package_id
+                and pv.version = ts.version
+                and pv.revision = ts.revision
+            cross join websearch_to_tsquery(?original_text_input) search_query
+            /*scope_join*/
+            inner join unnest(?visible_roots::text[]) as vis(parent)
+                on ts.package_id = vis.parent
+                or (ts.package_id ~>=~ (vis.parent || '.') and ts.package_id ~<~ (vis.parent || '/'))
+        WHERE ts.workspace_id = ?workspace_id
+            and ts.status = ?status
+            and ts.api_type = ?api_type
+            and (?versions = '{}' or ts.version like ANY(
+                    select id from unnest(?versions::text[]) id))
+            and pv.deleted_at is null
+            and pv.published_at >= ?start_date
+            and pv.published_at <= ?end_date
+            and search_query @@ ts.data_vector
+        ORDER BY ts_rank(ts.data_vector, search_query) DESC,
+                 package_id,
+                 operation_id desc,
+                 version DESC,
+                 revision DESC
+        LIMIT ?limit OFFSET ?offset
+    ) all_ts
+        on all_ts.package_id = o.package_id
+        and all_ts.version = o.version
+        and all_ts.revision = o.revision
+        and all_ts.operation_id = o.operation_id
+    inner join package_group pg on o.package_id = pg.id
 where all_ts.rank > 0
 order by all_ts.rank desc, o.operation_id
 limit ?limit;

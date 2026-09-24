@@ -7,7 +7,13 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"time"
+
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/responder"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/security/idp"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
@@ -16,10 +22,6 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
-	"io"
-	"net/http"
-	"net/url"
-	"time"
 )
 
 const SSOLoginRefreshPathTemplate = "/api/v1/login/sso/%s"
@@ -33,9 +35,11 @@ type oidcProvider struct {
 	allowedHosts   []string
 	apihubHost     string
 	productionMode bool
+	responder      responder.Responder
+	authenticator  security.Authenticator
 }
 
-func newOIDCProvider(config idp.IDP, provider *oidc.Provider, verifier *oidc.IDTokenVerifier, oAuth2Config oauth2.Config, userService service.UserService, allowedHosts []string, apihubHost string, productionMode bool) idp.Provider {
+func newOIDCProvider(config idp.IDP, provider *oidc.Provider, verifier *oidc.IDTokenVerifier, oAuth2Config oauth2.Config, userService service.UserService, allowedHosts []string, apihubHost string, productionMode bool, responder responder.Responder, authenticator security.Authenticator) idp.Provider {
 	return &oidcProvider{
 		config:         config,
 		provider:       provider,
@@ -45,6 +49,8 @@ func newOIDCProvider(config idp.IDP, provider *oidc.Provider, verifier *oidc.IDT
 		allowedHosts:   allowedHosts,
 		apihubHost:     apihubHost,
 		productionMode: productionMode,
+		responder:      responder,
+		authenticator:  authenticator,
 	}
 }
 
@@ -55,7 +61,7 @@ func (o oidcProvider) StartAuthentication(w http.ResponseWriter, r *http.Request
 
 	redirectUrl, err := url.Parse(redirectUrlStr)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		o.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.IncorrectRedirectUrlError,
 			Message: exception.IncorrectRedirectUrlErrorMsg,
@@ -65,7 +71,7 @@ func (o oidcProvider) StartAuthentication(w http.ResponseWriter, r *http.Request
 	}
 
 	if redirectUrl.Hostname() != o.apihubHost {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		o.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.HostNotAllowed,
 			Message: exception.HostNotAllowedMsg,
@@ -76,7 +82,7 @@ func (o oidcProvider) StartAuthentication(w http.ResponseWriter, r *http.Request
 
 	state, err := o.generateState()
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		o.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.OIDCAuthenticationFailed,
 			Message: exception.OIDCAuthenticationFailedMsg,
@@ -86,7 +92,7 @@ func (o oidcProvider) StartAuthentication(w http.ResponseWriter, r *http.Request
 	}
 	nonce, err := o.generateNonce()
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		o.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.OIDCAuthenticationFailed,
 			Message: exception.OIDCAuthenticationFailedMsg,
@@ -96,7 +102,7 @@ func (o oidcProvider) StartAuthentication(w http.ResponseWriter, r *http.Request
 	}
 	codeVerifier, err := o.generateCodeVerifier()
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		o.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.OIDCAuthenticationFailed,
 			Message: exception.OIDCAuthenticationFailedMsg,
@@ -127,7 +133,7 @@ func (o oidcProvider) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	stateCookie, err := r.Cookie("oidc_state_" + o.config.Id)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		o.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.OIDCCallbackFailed,
 			Message: exception.OIDCCallbackFailedMsg,
@@ -136,7 +142,7 @@ func (o oidcProvider) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.URL.Query().Get("state") != stateCookie.Value {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		o.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.OIDCCallbackFailed,
 			Message: exception.OIDCCallbackFailedMsg,
@@ -147,7 +153,7 @@ func (o oidcProvider) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	nonceCookie, err := r.Cookie("oidc_nonce_" + o.config.Id)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		o.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.OIDCCallbackFailed,
 			Message: exception.OIDCCallbackFailedMsg,
@@ -158,7 +164,7 @@ func (o oidcProvider) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	codeVerifierCookie, err := r.Cookie("oidc_code_verifier_" + o.config.Id)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		o.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.OIDCCallbackFailed,
 			Message: exception.OIDCCallbackFailedMsg,
@@ -182,7 +188,7 @@ func (o oidcProvider) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	oauth2Token, err := o.oAuth2Config.Exchange(r.Context(), r.URL.Query().Get("code"), oauth2.VerifierOption(codeVerifier))
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		o.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.OIDCTokenProcessingFailed,
 			Message: exception.OIDCTokenProcessingFailedMsg,
@@ -193,7 +199,7 @@ func (o oidcProvider) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	rawIDToken, ok := oauth2Token.Extra("id_token").(string)
 	if !ok {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		o.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.OIDCTokenProcessingFailed,
 			Message: exception.OIDCTokenProcessingFailedMsg,
@@ -204,7 +210,7 @@ func (o oidcProvider) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	idToken, err := o.verifier.Verify(r.Context(), rawIDToken)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		o.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.OIDCTokenProcessingFailed,
 			Message: exception.OIDCTokenProcessingFailedMsg,
@@ -214,7 +220,7 @@ func (o oidcProvider) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if idToken.Nonce != nonceCookie.Value {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		o.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.OIDCTokenProcessingFailed,
 			Message: exception.OIDCTokenProcessingFailedMsg,
@@ -225,7 +231,7 @@ func (o oidcProvider) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	var claims idp.OIDCClaims
 	if err := idToken.Claims(&claims); err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		o.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.OIDCTokenProcessingFailed,
 			Message: exception.OIDCTokenProcessingFailedMsg,
@@ -235,7 +241,7 @@ func (o oidcProvider) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if claims.UserId == "" {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		o.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.OIDCUserProcessingFailed,
 			Message: exception.OIDCUserProcessingFailedMsg,
@@ -245,7 +251,7 @@ func (o oidcProvider) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if claims.Email == "" {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		o.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusInternalServerError,
 			Code:    exception.OIDCUserProcessingFailed,
 			Message: exception.OIDCUserProcessingFailedMsg,
@@ -291,13 +297,13 @@ func (o oidcProvider) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := o.userService.GetOrCreateUserForIntegration(ctx, oidcUser, view.ExternalIdpIntegration, o.config.Id)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to create user for OIDC integration", err)
+		o.responder.RespondWithError(w, r, "Failed to create user for OIDC integration", err)
 		return
 	}
 
 	// Add authentication cookies
-	if err = security.SetAuthTokenCookies(r.Context(), w, user, fmt.Sprintf(SSOLoginRefreshPathTemplate, o.config.Id)); err != nil {
-		utils.RespondWithError(w, r, "Failed to set auth cookie", err)
+	if err = o.authenticator.SetAuthTokenCookies(r.Context(), w, user, fmt.Sprintf(SSOLoginRefreshPathTemplate, o.config.Id)); err != nil {
+		o.responder.RespondWithError(w, r, "Failed to set auth cookie", err)
 		return
 	}
 
@@ -306,7 +312,7 @@ func (o oidcProvider) CallbackHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (o oidcProvider) ServeMetadata(w http.ResponseWriter, r *http.Request) {
-	utils.RespondWithError(w, r, "Not implemented", errors.New("not implemented"))
+	o.responder.RespondWithError(w, r, "Not implemented", errors.New("not implemented"))
 }
 
 func (o oidcProvider) generateState() (string, error) {

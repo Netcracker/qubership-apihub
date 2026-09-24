@@ -15,22 +15,16 @@ const (
 	fileIDExt                      = "fileId"
 )
 
-func MintEphemeralFileToken(userID, fileID string, ttl time.Duration) (string, error) {
-	if defaultJWTValidator == nil {
-		return "", fmt.Errorf("security not initialized: JWT validator is nil")
-	}
+func (a Authenticator) MintEphemeralFileToken(userID, fileID string, ttl time.Duration) (string, error) {
 	user := auth.NewUserInfo("", userID, nil, auth.Extensions{})
 	ext := user.GetExtensions()
 	ext.Set(TokenTypeExt, EphemeralFileDownloadTokenType)
 	ext.Set(fileIDExt, fileID)
-	return jwt.IssueAccessToken(user, keeper, jwt.SetExpDuration(ttl))
+	return jwt.IssueAccessToken(user, a.keeper, jwt.SetExpDuration(ttl))
 }
 
-func ValidateEphemeralFileToken(ctx context.Context, token string) (userID, fileID string, err error) {
-	if defaultJWTValidator == nil {
-		return "", "", fmt.Errorf("security not initialized")
-	}
-	info, exp, err := defaultJWTValidator.ValidateToken(ctx, token, EphemeralFileDownloadTokenType)
+func (a Authenticator) ValidateEphemeralFileToken(ctx context.Context, token string) (userID, fileID string, err error) {
+	info, exp, err := a.jwtValidator.ValidateToken(ctx, token, EphemeralFileDownloadTokenType)
 	if err != nil {
 		return "", "", err
 	}

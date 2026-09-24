@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -148,12 +147,6 @@ type aiChatTurnServiceImpl struct {
 	mintFileToken  FileTokenMinter
 	llm            client.LlmClient
 	mcpTools       []client.LLMTool
-
-	packagesListCache struct {
-		mu        sync.RWMutex
-		data      string
-		expiresAt time.Time
-	}
 }
 
 func NewAiChatTurnService(
@@ -490,7 +483,7 @@ func (s *aiChatTurnServiceImpl) serveCachedPair(ctx context.Context, u, a *entit
 }
 
 func (s *aiChatTurnServiceImpl) runToolLoop(ctx context.Context, history []client.ChatMessage, streaming bool, hooks chatStreamHooks) (*chatTurnResult, error) {
-	systemMsg := s.buildSystemMessage(ctx)
+	systemMsg := systemMessageBaseContent
 	messages := append([]client.ChatMessage(nil), history...)
 
 	var totalUsage client.ChatUsage
@@ -629,12 +622,30 @@ func (s *aiChatTurnServiceImpl) executeToolCalls(ctx context.Context, toolCalls 
 		switch toolCall.Name {
 		case ToolNameSearchOperations:
 			result, err = s.mcpService.ExecuteSearchTool(ctx, mcpReq)
+		case ToolNameSearchOperationsV2:
+			result, err = s.mcpService.ExecuteSearchToolV2(ctx, mcpReq)
+		case ToolNameListWorkspacePackages:
+			result, err = s.mcpService.ExecuteListWorkspacePackagesTool(ctx, mcpReq)
+		case ToolNameListPackageVersions:
+			result, err = s.mcpService.ExecuteListPackageVersionsTool(ctx, mcpReq)
 		case ToolNameGetOperationSpec:
 			result, err = s.mcpService.ExecuteGetSpecTool(ctx, mcpReq)
 		case ToolNameGetOperationDiff:
 			result, err = s.mcpService.ExecuteGetOperationDiffTool(ctx, mcpReq)
 		case ToolNameGetDocument:
 			result, err = s.mcpService.ExecuteGetDocumentTool(ctx, mcpReq)
+		case ToolNameListWorkspaces:
+			result, err = s.mcpService.ExecuteListWorkspacesTool(ctx, mcpReq)
+		case ToolNameListDdlEntities:
+			result, err = s.mcpService.ExecuteListDdlEntitiesTool(ctx, mcpReq)
+		case ToolNameGetDdlEntity:
+			result, err = s.mcpService.ExecuteGetDdlEntityTool(ctx, mcpReq)
+		case ToolNameGetDdlEntityDiff:
+			result, err = s.mcpService.ExecuteGetDdlEntityDiffTool(ctx, mcpReq)
+		case ToolNameListMcpContractEntities:
+			result, err = s.mcpService.ExecuteListMcpContractEntitiesTool(ctx, mcpReq)
+		case ToolNameGetMcpContractEntity:
+			result, err = s.mcpService.ExecuteGetMcpContractEntityTool(ctx, mcpReq)
 		case toolNameStartIDSGeneration:
 			result, err = s.executeStartIDSGeneration(ctx, args)
 		case toolNameSaveGeneratedFile:
@@ -782,51 +793,6 @@ func (s *aiChatTurnServiceImpl) maybeCompactBefore(ctx context.Context, chat *en
 		"messagesBefore":   len(hist),
 		"messagesKeptRaw":  keep,
 	}
-}
-
-func (s *aiChatTurnServiceImpl) buildSystemMessage(ctx context.Context) string {
-	mcpWorkspace := s.sis.GetAiMCPConfig().Workspace
-	if mcpWorkspace == "" {
-		return systemMessageBaseContent
-	}
-
-	s.packagesListCache.mu.RLock()
-	cachedData := s.packagesListCache.data
-	cacheExpired := time.Now().After(s.packagesListCache.expiresAt)
-	s.packagesListCache.mu.RUnlock()
-
-	if cachedData != "" && !cacheExpired {
-		log.Debugf("Using cached api-packages-list resource (expires at: %v)", s.packagesListCache.expiresAt)
-		return systemMessageBaseContent + "\n\nCURRENT WORKSPACE PACKAGES (from api-packages-list resource):\n" + cachedData
-	}
-
-	log.Debugf("Cache expired or empty, fetching fresh api-packages-list resource")
-	resourceContents, err := s.mcpService.GetPackagesList(ctx, mcpWorkspace)
-	if err != nil {
-		log.Warnf("Failed to read api-packages-list resource: %v", err)
-		if cachedData != "" {
-			log.Debugf("Using expired cache as fallback")
-			return systemMessageBaseContent + "\n\nCURRENT WORKSPACE PACKAGES (from api-packages-list resource):\n" + cachedData
-		}
-		return systemMessageBaseContent
-	}
-
-	var resourceData string
-	if len(resourceContents) > 0 {
-		if textContent, ok := resourceContents[0].(*mcpgo.TextResourceContents); ok {
-			resourceData = textContent.Text
-		}
-	}
-
-	if resourceData != "" {
-		s.packagesListCache.mu.Lock()
-		s.packagesListCache.data = resourceData
-		s.packagesListCache.expiresAt = time.Now().Add(PackagesListCacheTTL)
-		s.packagesListCache.mu.Unlock()
-		log.Debugf("Updated api-packages-list cache (expires at: %v)", s.packagesListCache.expiresAt)
-		return systemMessageBaseContent + "\n\nCURRENT WORKSPACE PACKAGES (from api-packages-list resource):\n" + resourceData
-	}
-	return systemMessageBaseContent
 }
 
 func (s *aiChatTurnServiceImpl) generateChatTitle(ctx context.Context, userText, assistantText string) string {

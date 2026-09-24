@@ -52,7 +52,7 @@ plugs into this chat via bundled MCP assets and two chat-side tools.
 │  service/AiChatTurnService.go            ── turn pipeline, compaction, SSE │
 │  client/OpenAIClient.go                  ── LlmClient → OpenAI             │
 │                                             Chat Completions API             │
-│  service/MCPService.go                   ── MCP tools + api-packages-list  │
+│  service/MCPService.go                   ── MCP tools (workspace-first)    │
 │  service/EphemeralFileService.go         ── temp files + ephemeral_file    │
 │  service/ChatCleanupService.go           ── chat retention job             │
 │  service/EphemeralFileCleanupService.go  ── ephemeral file GC job          │
@@ -249,7 +249,9 @@ ContextWindowSize() → int
 
 `LLMRequest` carries:
 
-* `SystemMessage` — static instructions + optional `api-packages-list` injection;
+* `SystemMessage` — static instructions only (`systemMessageBaseContent`); the assistant discovers
+  workspaces and packages by calling `list_workspaces` / `list_workspace_packages` / `list_package_versions`
+  itself instead of relying on a pre-injected package list;
 * `Messages[]` — full conversation for this round-trip (user / assistant / tool roles);
 * `Tools[]` — MCP tool descriptors for the model;
 * `CorrelationID` — forwarded as `X-Request-ID` to the OpenAI API for observability.

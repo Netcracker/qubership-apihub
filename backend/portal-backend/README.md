@@ -132,7 +132,7 @@ Notable sections:
 | `s3Storage` | Optional S3 / MinIO for build artefacts |
 | `olric` | Distributed in-process cache; `local` mode for single-node |
 | `ai.chat` | AI assistant kill-switch, OpenAI key/model, retention settings |
-| `monitoring` | Prometheus ServiceMonitor toggle |
+| `monitoring` | Prometheus application metrics (HTTP, build queue, AI chat) |
 | `cleanup` | Cron schedules for revision, comparison, and soft-deleted data GC |
 
 ## Debug

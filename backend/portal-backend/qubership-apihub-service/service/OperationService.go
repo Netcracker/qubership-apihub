@@ -599,13 +599,18 @@ func (o operationServiceImpl) GlobalSearchForOperations(ctx context.Context, sea
 	searchQuery := &entity.GlobalOperationSearchQuery{
 		OriginalTextInput: searchReq.SearchString,
 		ApiType:           searchReq.ApiType,
+		WorkspaceId:       searchReq.Workspace,
 		Packages:          packages,
+		VisibleRoots:      searchReq.VisiblePackageRoots,
 		Versions:          versions,
 		Status:            searchReq.Status,
 		StartDate:         startDate,
 		EndDate:           endDate,
 		Limit:             searchReq.Limit,
 		Offset:            searchReq.Limit * searchReq.Page,
+	}
+	if searchQuery.VisibleRoots == nil {
+		searchQuery.VisibleRoots = make([]string, 0)
 	}
 
 	repoSearchStart := time.Now()

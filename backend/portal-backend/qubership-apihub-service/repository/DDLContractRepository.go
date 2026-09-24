@@ -13,7 +13,7 @@ import (
 
 type DDLContractRepository interface {
 	ListDdlEntities(ctx context.Context, packageId, version string, revision int, refPackageId, textFilter string, limit, offset int) ([]*entity.DDLContractEntity, error)
-	GetDdlEntity(ctx context.Context, packageId, version string, revision int, ddlEntityId string) (*entity.DDLContractEntity, []byte, error)
+	GetDdlEntity(ctx context.Context, packageId, version string, revision int, ddlEntityId string, includeData bool) (*entity.DDLContractEntity, []byte, error)
 	GetDdlEntityChanges(ctx context.Context, comparisonId, ddlEntityId, previousVersionDdlEntityId, refPackageId string, severities []string) (*entity.DDLContractComparisonEntity, error)
 	GetDdlEntityChangesSummary(ctx context.Context, comparisonId, ddlEntityId, refPackageId string) (*view.ChangeSummary, error)
 	ListChangedDdlEntities(ctx context.Context, comparisonId, refPackageId string, severities []string, textFilter string, limit, offset int) ([]*entity.DDLContractComparisonEntity, error)
@@ -61,7 +61,7 @@ func (r *ddlContractRepositoryImpl) ListDdlEntities(ctx context.Context, package
 	return result, nil
 }
 
-func (r *ddlContractRepositoryImpl) GetDdlEntity(ctx context.Context, packageId, version string, revision int, ddlEntityId string) (*entity.DDLContractEntity, []byte, error) {
+func (r *ddlContractRepositoryImpl) GetDdlEntity(ctx context.Context, packageId, version string, revision int, ddlEntityId string, includeData bool) (*entity.DDLContractEntity, []byte, error) {
 	conn := r.cp.GetConnection().WithContext(ctx)
 	ent := new(entity.DDLContractEntity)
 	err := conn.Model(ent).
@@ -77,7 +77,7 @@ func (r *ddlContractRepositoryImpl) GetDdlEntity(ctx context.Context, packageId,
 		return nil, nil, err
 	}
 	var data []byte
-	if ent.DataHash != nil {
+	if includeData && ent.DataHash != nil {
 		dataEnt := new(entity.DDLContractDataEntity)
 		err = conn.Model(dataEnt).Where("data_hash = ?", *ent.DataHash).First()
 		if err != nil {
@@ -270,23 +270,28 @@ func (r *ddlContractRepositoryImpl) GetComparisonSummary(ctx context.Context, co
 }
 
 func (r *ddlContractRepositoryImpl) GlobalSearchForDDL(ctx context.Context, searchQuery *entity.GlobalContractSearchQuery) ([]entity.DDLContractSearchResult, error) {
+	if len(searchQuery.VisibleRoots) == 0 {
+		return nil, nil
+	}
 	_, err := r.cp.GetConnection().WithContext(ctx).Exec("select websearch_to_tsquery(?)", searchQuery.OriginalTextInput)
 	if err != nil {
 		return nil, fmt.Errorf("invalid search string: %v", err.Error())
 	}
 	var result []entity.DDLContractSearchResult
+	// Privacy-aware search against global_search.fts_ddl_search_text.
+	// Deprecated: public.fts_ddl_search_text is dual-written but no longer used for global search reads.
 	ddlSearchQuery := `
 select
-	dt.package_id,
-	pg.name,
-	dt.version,
-	dt.revision,
-	pv.status,
-	dt.ddl_entity_id,
-	dt.kind,
-	dt.schema_name,
-	dt.name,
-	parent_package_names(dt.package_id) parent_names
+    dt.package_id,
+    pg.name as package_display_name,
+    dt.version,
+    dt.revision,
+    pv.status,
+    dt.ddl_entity_id,
+    dt.kind,
+    dt.schema_name,
+    dt.name,
+    parent_package_names(dt.package_id) parent_names
 from ddl_tables dt
 			inner join (
 	SELECT DISTINCT ON (rank, package_id, ddl_entity_id)
@@ -296,23 +301,28 @@ from ddl_tables dt
 		ts.version       as version,
 		ts.revision      as revision
 
-	FROM fts_ddl_search_text ts,
-			websearch_to_tsquery(?original_text_input) search_query
-	WHERE ts.status = ?status
-		and (?kinds = '{}' or ts.kind = ANY(?kinds::text[]))
-		and (?versions = '{}' or version like ANY(
+    FROM global_search.fts_ddl_search_text ts,
+         websearch_to_tsquery(?original_text_input) search_query
+    WHERE ts.workspace_id = ?workspace_id
+        and ts.status = ?status
+        and (?kinds = '{}' or ts.kind = ANY(?kinds::text[]))
+        and (?versions = '{}' or version like ANY(
 						select id from unnest(?versions::text[]) id))
 		and (package_id like ANY(
 						select id from unnest(?packages::text[]) id
 						union
 						select id||'.%' from unnest(?packages::text[]) id))
-		and search_query @@ data_vector
-	ORDER BY ts_rank(data_vector, search_query) DESC,
-				package_id,
-				ddl_entity_id desc,
-				version DESC,
-				revision DESC
-	LIMIT ?limit OFFSET ?offset
+        and (package_id like ANY(
+						select id from unnest(?visible_roots::text[]) id
+						union
+						select id||'.%' from unnest(?visible_roots::text[]) id))
+        and search_query @@ data_vector
+    ORDER BY ts_rank(data_vector, search_query) DESC,
+             package_id,
+             ddl_entity_id desc,
+             version DESC,
+             revision DESC
+    LIMIT ?limit OFFSET ?offset
 ) all_ts
 					on all_ts.package_id = dt.package_id and
 						all_ts.version = dt.version and

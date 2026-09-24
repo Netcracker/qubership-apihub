@@ -29,14 +29,14 @@ type DDLContractDataEntity struct {
 type DDLContractComparisonEntity struct {
 	tableName struct{} `pg:"ddl_comparison"`
 
-	PackageId                    string             `pg:"package_id, type:varchar, use_zero"`
-	Version                      string             `pg:"version, type:varchar, use_zero"`
-	Revision                     int                `pg:"revision, type:integer, use_zero"`
-	PreviousPackageId            string             `pg:"previous_package_id, type:varchar, use_zero"`
-	PreviousVersion              string             `pg:"previous_version, type:varchar, use_zero"`
-	PreviousRevision             int                `pg:"previous_revision, type:integer, use_zero"`
-	DdlEntityId                  string             `pg:"ddl_entity_id, type:varchar, use_zero"`
-	PreviousDdlEntityId          string             `pg:"previous_ddl_entity_id, type:varchar, use_zero"`
+	PackageId                    string             `pg:"package_id, pk, type:varchar, use_zero"`
+	Version                      string             `pg:"version, pk, type:varchar, use_zero"`
+	Revision                     int                `pg:"revision, pk, type:integer, use_zero"`
+	PreviousPackageId            string             `pg:"previous_package_id, pk, type:varchar, use_zero"`
+	PreviousVersion              string             `pg:"previous_version, pk, type:varchar, use_zero"`
+	PreviousRevision             int                `pg:"previous_revision, pk, type:integer, use_zero"`
+	DdlEntityId                  string             `pg:"ddl_entity_id, pk, type:varchar, use_zero"`
+	PreviousDdlEntityId          string             `pg:"previous_ddl_entity_id, pk, type:varchar, use_zero"`
 	ComparisonId                 string             `pg:"comparison_id, type:varchar"`
 	DataHash                     *string            `pg:"data_hash, type:varchar"`
 	PreviousDataHash             *string            `pg:"previous_data_hash, type:varchar"`

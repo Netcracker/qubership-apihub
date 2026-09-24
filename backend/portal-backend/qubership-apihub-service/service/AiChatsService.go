@@ -7,6 +7,7 @@ import (
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/metrics"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 	"github.com/google/uuid"
@@ -70,6 +71,7 @@ func (s *aiChatsServiceImpl) CreateChat(ctx context.Context, userID string, titl
 	if err := s.repo.CreateChat(ctx, row); err != nil {
 		return nil, err
 	}
+	metrics.AiChatsCreatedTotal.Inc()
 	return entity.MakeAiChatView(row), nil
 }
 

@@ -33,6 +33,7 @@ type SystemInfoService interface {
 	GetBasePath() string
 	GetJwtPrivateKey() []byte
 	IsProductionMode() bool
+	ShowDebugInResponse() bool
 	GetBackendVersion() string
 	GetListenAddress() string
 	GetAllowedOrigins() []string
@@ -107,6 +108,7 @@ type SystemInfoService interface {
 	GetEphemeralFileTTLMinutes() int
 	GetEphemeralFilesCleanupSchedule() string
 	GetMinioMigrationTimeouts() config.S3MigrationTimeoutsConfig
+	GetOTelMetricsConfig() config.OTelMetricsConfig
 }
 
 func (g *systemInfoServiceImpl) GetCredsFromEnv() *view.DbCredentials {
@@ -216,6 +218,7 @@ func (g *systemInfoServiceImpl) setDefaults() {
 	viper.SetDefault("database.username", "apihub")
 	viper.SetDefault("database.password", "apihub")
 	viper.SetDefault("security.productionMode", true)
+	viper.SetDefault("security.showDebugInResponse", false)
 	viper.SetDefault("security.jwt.accessTokenDurationSec", 1800)
 	viper.SetDefault("security.jwt.refreshTokenDurationSec", 43200)
 	viper.SetDefault("security.insecureProxy", false)
@@ -237,6 +240,14 @@ func (g *systemInfoServiceImpl) setDefaults() {
 	viper.SetDefault("businessParameters.externalLinks", []string{})
 	viper.SetDefault("businessParameters.failBuildOnBrokenRefs", true)
 	viper.SetDefault("monitoring.enabled", false)
+	viper.SetDefault("monitoring.otel.enabled", false)
+	viper.SetDefault("monitoring.otel.serverUrl", "")
+	viper.SetDefault("monitoring.otel.metricsPath", "/v1/metrics")
+	viper.SetDefault("monitoring.otel.token", "")
+	viper.SetDefault("monitoring.otel.namespace", "")
+	viper.SetDefault("monitoring.otel.exportIntervalSec", 60)
+	viper.SetDefault("monitoring.otel.timeoutSec", 10)
+	viper.SetDefault("monitoring.otel.metricPrefixes", []string{"apihub_ai_", "apihub_mcp_", "apihub_ephemeral_"})
 	viper.SetDefault("s3Storage.enabled", false)
 	viper.SetDefault("s3Storage.storeOnlyBuildResult", false)
 	viper.SetDefault("s3Storage.migrationTimeouts.s3OperationSec", 600)       // 10 minutes
@@ -345,6 +356,10 @@ func (g *systemInfoServiceImpl) GetJwtPrivateKey() []byte {
 
 func (g *systemInfoServiceImpl) IsProductionMode() bool {
 	return g.config.Security.ProductionMode
+}
+
+func (g *systemInfoServiceImpl) ShowDebugInResponse() bool {
+	return g.config.Security.ShowDebugInResponse
 }
 
 func (g *systemInfoServiceImpl) GetBackendVersion() string {
@@ -669,6 +684,10 @@ func (g *systemInfoServiceImpl) GetExtensions() []view.Extension {
 
 func (g *systemInfoServiceImpl) GetAiChatConfig() config.ChatConfig {
 	return g.config.Ai.Chat
+}
+
+func (g *systemInfoServiceImpl) GetOTelMetricsConfig() config.OTelMetricsConfig {
+	return g.config.Monitoring.OTel
 }
 
 func (g *systemInfoServiceImpl) GetMinioMigrationTimeouts() config.S3MigrationTimeoutsConfig {

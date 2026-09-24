@@ -13,6 +13,11 @@ const (
 	GraphQLSchema ShortcutType = "graphql-schema"
 	GraphAPI      ShortcutType = "graphapi"
 	Introspection ShortcutType = "introspection"
+	DDL           ShortcutType = "ddl"
+	MCPInit       ShortcutType = "mcp-init"
+	MCPTools      ShortcutType = "mcp-tools"
+	MCPResources  ShortcutType = "mcp-resources"
+	MCPPrompts    ShortcutType = "mcp-prompts"
 	Unknown       ShortcutType = "unknown"
 )
 
@@ -42,6 +47,16 @@ func ParseTypeFromString(s string) ShortcutType {
 		return GraphAPI
 	case "introspection":
 		return Introspection
+	case "ddl":
+		return DDL
+	case "mcp-init":
+		return MCPInit
+	case "mcp-tools":
+		return MCPTools
+	case "mcp-resources":
+		return MCPResources
+	case "mcp-prompts":
+		return MCPPrompts
 	default:
 		return Unknown
 	}

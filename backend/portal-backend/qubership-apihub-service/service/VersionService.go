@@ -1221,12 +1221,10 @@ func (v versionServiceImpl) SearchForPackages(ctx context.Context, searchReq vie
 		OpenCountWeight:          0.2,
 	}
 	searchQuery.VersionStatusSearchWeight = entity.VersionStatusSearchWeight{
-		VersionReleaseStatus:        string(view.Release),
-		VersionReleaseStatusWeight:  4,
-		VersionDraftStatus:          string(view.Draft),
-		VersionDraftStatusWeight:    0.6,
-		VersionArchivedStatus:       string(view.Archived),
-		VersionArchivedStatusWeight: 0.1,
+		VersionReleaseStatus:       string(view.Release),
+		VersionReleaseStatusWeight: 4,
+		VersionDraftStatus:         string(view.Draft),
+		VersionDraftStatusWeight:   0.6,
 	}
 	versionEntities, err := v.publishedRepo.SearchForVersions(ctx, searchQuery)
 	if err != nil {
@@ -1266,12 +1264,10 @@ func (v versionServiceImpl) SearchForDocuments(ctx context.Context, searchReq vi
 		OpenCountWeight: 0.2,
 	}
 	searchQuery.VersionStatusSearchWeight = entity.VersionStatusSearchWeight{
-		VersionReleaseStatus:        string(view.Release),
-		VersionReleaseStatusWeight:  4,
-		VersionDraftStatus:          string(view.Draft),
-		VersionDraftStatusWeight:    0.6,
-		VersionArchivedStatus:       string(view.Archived),
-		VersionArchivedStatusWeight: 0.1,
+		VersionReleaseStatus:       string(view.Release),
+		VersionReleaseStatusWeight: 4,
+		VersionDraftStatus:         string(view.Draft),
+		VersionDraftStatusWeight:   0.6,
 	}
 	documentEntities, err := v.publishedRepo.SearchForDocuments(ctx, searchQuery)
 	if err != nil {

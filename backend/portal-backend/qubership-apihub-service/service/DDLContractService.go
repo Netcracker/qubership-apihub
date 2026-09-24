@@ -13,7 +13,7 @@ import (
 
 type DDLContractService interface {
 	ListDdlEntities(ctx context.Context, packageId, versionName, refPackageId, textFilter string, limit, offset int) (*view.DdlEntityListView, error)
-	GetDdlEntity(ctx context.Context, packageId, versionName, ddlEntityId string) (*view.DdlEntityDetailView, error)
+	GetDdlEntity(ctx context.Context, packageId, versionName, ddlEntityId string, includeData bool) (*view.DdlEntityDetailView, error)
 	GetDdlEntityChanges(ctx context.Context, packageId, versionName, ddlEntityId, previousVersionDdlEntityId, previousVersion, previousVersionPackageId, refPackageId string, severities []string) (*view.DdlEntityChangesView, error)
 	GetDdlEntityChangesSummary(ctx context.Context, packageId, versionName, ddlEntityId, previousVersion, previousVersionPackageId, refPackageId string) (*view.ChangeSummary, error)
 	GetChangedDdlEntities(ctx context.Context, packageId, versionName string, req view.DdlChangesReq) (*view.DdlChangedEntitiesView, error)
@@ -154,12 +154,12 @@ func (s *ddlContractServiceImpl) ListDdlEntities(ctx context.Context, packageId,
 	return result, nil
 }
 
-func (s *ddlContractServiceImpl) GetDdlEntity(ctx context.Context, packageId, versionName, ddlEntityId string) (*view.DdlEntityDetailView, error) {
+func (s *ddlContractServiceImpl) GetDdlEntity(ctx context.Context, packageId, versionName, ddlEntityId string, includeData bool) (*view.DdlEntityDetailView, error) {
 	version, revision, err := s.resolveRevision(ctx, packageId, versionName)
 	if err != nil {
 		return nil, err
 	}
-	ent, data, err := s.ddlRepo.GetDdlEntity(ctx, packageId, version, revision, ddlEntityId)
+	ent, data, err := s.ddlRepo.GetDdlEntity(ctx, packageId, version, revision, ddlEntityId, includeData)
 	if err != nil {
 		return nil, err
 	}
@@ -377,7 +377,9 @@ func (s *ddlContractServiceImpl) GlobalSearchForDDL(ctx context.Context, searchR
 	searchQuery := &entity.GlobalContractSearchQuery{
 		OriginalTextInput: searchReq.SearchString,
 		Kinds:             make([]string, 0),
+		WorkspaceId:       searchReq.Workspace,
 		Packages:          searchReq.PackageIds,
+		VisibleRoots:      searchReq.VisiblePackageRoots,
 		Versions:          versions,
 		Status:            searchReq.Status,
 		StartDate:         startDate,
@@ -387,6 +389,9 @@ func (s *ddlContractServiceImpl) GlobalSearchForDDL(ctx context.Context, searchR
 	}
 	if searchQuery.Packages == nil {
 		searchQuery.Packages = make([]string, 0)
+	}
+	if searchQuery.VisibleRoots == nil {
+		searchQuery.VisibleRoots = make([]string, 0)
 	}
 	entities, err := s.ddlRepo.GlobalSearchForDDL(ctx, searchQuery)
 	if err != nil {

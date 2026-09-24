@@ -138,7 +138,7 @@ workspace - is a first-level group. Provide a logical separation for different p
 
 group -  is an entity that allows you to logically group packages in a hierarchical view. Within a workspace, groups help further categorize APIs based on functional domains or specific areas of focus. Groups provide a flexible way to organize APIs and make them easily discoverable within the API Management portal.
 
-package - is an entity that contains published API documents related to specific Service/Application. Packages are versioned, and package version can be in one of the following statuses: Draft, Release and Archived.
+package - is an entity that contains published API documents related to specific Service/Application. Packages are versioned, and package version can be in one of the following statuses: Draft and Release.
 
 dashboard - is a virtual package which can contain only links to another packages/dashboards. Dashboard cannot contain its own documents. Dashboards serve as a higher level of abstraction and can group APIs from complex applications that consist of multiple services.
 

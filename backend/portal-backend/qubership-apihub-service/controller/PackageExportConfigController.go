@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/responder"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
@@ -20,14 +21,15 @@ type PackageExportConfigController interface {
 
 func NewPackageExportConfigController(roleService service.RoleService,
 	expConfSvc service.PackageExportConfigService,
-	ptHandler service.PackageTransitionHandler) PackageExportConfigController {
-	return packageExportConfigControllerImpl{roleService: roleService, expConfSvc: expConfSvc, ptHandler: ptHandler}
+	ptHandler service.PackageTransitionHandler, responder responder.Responder) PackageExportConfigController {
+	return packageExportConfigControllerImpl{roleService: roleService, expConfSvc: expConfSvc, ptHandler: ptHandler, responder: responder}
 }
 
 type packageExportConfigControllerImpl struct {
 	roleService service.RoleService
 	expConfSvc  service.PackageExportConfigService
 	ptHandler   service.PackageTransitionHandler
+	responder   responder.Responder
 }
 
 func (p packageExportConfigControllerImpl) GetConfig(w http.ResponseWriter, r *http.Request) {
@@ -35,11 +37,11 @@ func (p packageExportConfigControllerImpl) GetConfig(w http.ResponseWriter, r *h
 	packageId := getStringParam(r, "packageId")
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
 	if err != nil {
-		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to check user privileges", err)
+		handlePkgRedirectOrRespondWithError(w, r, p.responder, p.ptHandler, packageId, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -49,11 +51,11 @@ func (p packageExportConfigControllerImpl) GetConfig(w http.ResponseWriter, r *h
 
 	result, err := p.expConfSvc.GetConfig(ctx, packageId)
 	if err != nil {
-		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to get package export config", err)
+		handlePkgRedirectOrRespondWithError(w, r, p.responder, p.ptHandler, packageId, "Failed to get package export config", err)
 		return
 	}
 
-	utils.RespondWithJson(w, http.StatusOK, result)
+	p.responder.RespondWithJson(w, http.StatusOK, result)
 }
 
 func (p packageExportConfigControllerImpl) SetConfig(w http.ResponseWriter, r *http.Request) {
@@ -61,11 +63,11 @@ func (p packageExportConfigControllerImpl) SetConfig(w http.ResponseWriter, r *h
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges, err := p.roleService.HasRequiredPermissions(ctx, packageId, view.CreateAndUpdatePackagePermission)
 	if err != nil {
-		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to check user privileges", err)
+		handlePkgRedirectOrRespondWithError(w, r, p.responder, p.ptHandler, packageId, "Failed to check user privileges", err)
 		return
 	}
 	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -76,7 +78,7 @@ func (p packageExportConfigControllerImpl) SetConfig(w http.ResponseWriter, r *h
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -87,7 +89,7 @@ func (p packageExportConfigControllerImpl) SetConfig(w http.ResponseWriter, r *h
 	var req view.PackageExportConfigUpdate
 	err = json.Unmarshal(body, &req)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		p.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -99,22 +101,22 @@ func (p packageExportConfigControllerImpl) SetConfig(w http.ResponseWriter, r *h
 	if validationErr != nil {
 		var customError *exception.CustomError
 		if errors.As(validationErr, &customError) {
-			utils.RespondWithCustomError(w, customError)
+			p.responder.RespondWithCustomError(w, customError)
 			return
 		}
 	}
 
 	err = p.expConfSvc.SetConfig(ctx, packageId, req.AllowedOasExtensions)
 	if err != nil {
-		handlePkgRedirectOrRespondWithError(w, r, p.ptHandler, packageId, "Failed to update package export config", err)
+		handlePkgRedirectOrRespondWithError(w, r, p.responder, p.ptHandler, packageId, "Failed to update package export config", err)
 		return
 	}
 
 	result, err := p.expConfSvc.GetConfig(ctx, packageId)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to get package export config after update", err)
+		p.responder.RespondWithError(w, r, "Failed to get package export config after update", err)
 		return
 	}
 
-	utils.RespondWithJson(w, http.StatusOK, result)
+	p.responder.RespondWithJson(w, http.StatusOK, result)
 }

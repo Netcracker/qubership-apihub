@@ -34,13 +34,12 @@ func TestBaseJWTStrategy_RejectsRefreshToken(t *testing.T) {
 
 func TestBaseJWTStrategy_RejectsCachedRefreshToken(t *testing.T) {
 	k := generateTestKeeper(t)
-	keeper = k
-	accessTokenDuration = 5 * time.Minute
+	accessTokenDuration := 5 * time.Minute
 
 	cache := libcache.LRU.New(100)
 	validator := NewJWTValidator(k, &mockTokenRevocationService{})
 
-	refreshStrategy := NewRefreshTokenStrategy(cache, validator)
+	refreshStrategy := NewRefreshTokenStrategy(cache, validator, accessTokenDuration, k)
 	accessStrategy := NewBaseJWTStrategy(cache, validator, func(r *http.Request) (string, error) {
 		cookie, _ := r.Cookie(AccessTokenCookieName)
 		return cookie.Value, nil

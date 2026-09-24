@@ -7,12 +7,10 @@ import (
 )
 
 type VersionStatusSearchWeight struct {
-	VersionReleaseStatus        string  `pg:"version_status_release, type:varchar, use_zero"`
-	VersionReleaseStatusWeight  float64 `pg:"version_status_release_weight, type:real, use_zero"`
-	VersionDraftStatus          string  `pg:"version_status_draft, type:varchar, use_zero"`
-	VersionDraftStatusWeight    float64 `pg:"version_status_draft_weight, type:real, use_zero"`
-	VersionArchivedStatus       string  `pg:"version_status_archived, type:varchar, use_zero"`
-	VersionArchivedStatusWeight float64 `pg:"version_status_archived_weight, type:real, use_zero"`
+	VersionReleaseStatus       string  `pg:"version_status_release, type:varchar, use_zero"`
+	VersionReleaseStatusWeight float64 `pg:"version_status_release_weight, type:real, use_zero"`
+	VersionDraftStatus         string  `pg:"version_status_draft, type:varchar, use_zero"`
+	VersionDraftStatusWeight   float64 `pg:"version_status_draft_weight, type:real, use_zero"`
 }
 
 type OperationSearchResult struct {
@@ -27,7 +25,9 @@ type OperationSearchResult struct {
 type GlobalContractSearchQuery struct {
 	OriginalTextInput string    `pg:"original_text_input, type:varchar, use_zero"`
 	Kinds             []string  `pg:"kinds, type:varchar[], use_zero"`
+	WorkspaceId       string    `pg:"workspace_id, type:varchar, use_zero"`
 	Packages          []string  `pg:"packages, type:varchar[], use_zero"`
+	VisibleRoots      []string  `pg:"visible_roots, type:varchar[], use_zero"`
 	Versions          []string  `pg:"versions, type:varchar[], use_zero"`
 	Status            string    `pg:"status, type:varchar, use_zero"`
 	StartDate         time.Time `pg:"start_date, type:timestamp without time zone, use_zero"`
@@ -40,7 +40,11 @@ type DDLContractSearchResult struct {
 	tableName struct{} `pg:",discard_unknown_columns"`
 
 	DDLContractEntity
-	PackageName   string   `pg:"package_name, type:varchar"`
+	// PackageName is tagged package_display_name, not name: DDLContractEntity already has a
+	// "name" column (the DDL entity's own name), and go-pg silently drops one of two fields
+	// mapped to the same column name instead of erroring, so a shared "name" tag here would
+	// make this field come back empty and the ddl entity's own name overwritten by the package's.
+	PackageName   string   `pg:"package_display_name, type:varchar"`
 	VersionStatus string   `pg:"status, type:varchar"`
 	ParentNames   []string `pg:"parent_names, type:varchar[]"`
 }
@@ -85,7 +89,9 @@ func MakeGlobalMCPSearchResultView(ent MCPContractSearchResult) view.McpEntitySe
 type GlobalOperationSearchQuery struct {
 	OriginalTextInput string    `pg:"original_text_input, type:varchar, use_zero"`
 	ApiType           string    `pg:"api_type, type:varchar, use_zero"`
+	WorkspaceId       string    `pg:"workspace_id, type:varchar, use_zero"`
 	Packages          []string  `pg:"packages, type:varchar[], use_zero"`
+	VisibleRoots      []string  `pg:"visible_roots, type:varchar[], use_zero"`
 	Versions          []string  `pg:"versions, type:varchar[], use_zero"`
 	Status            string    `pg:"status, type:varchar, use_zero"`
 	StartDate         time.Time `pg:"start_date, type:timestamp without time zone, use_zero"`
@@ -138,15 +144,16 @@ type PackageSearchWeight struct {
 type PackageSearchQuery struct {
 	PackageSearchWeight
 	VersionStatusSearchWeight
-	ApiType    string    `pg:"api_type, type:varchar, use_zero"`
-	TextFilter string    `pg:"text_filter, type:varchar, use_zero"` //for varchar
-	Packages   []string  `pg:"packages, type:varchar[], use_zero"`
-	Versions   []string  `pg:"versions, type:varchar[], use_zero"`
-	Statuses   []string  `pg:"statuses, type:varchar[], use_zero"`
-	StartDate  time.Time `pg:"start_date, type:timestamp without time zone, use_zero"`
-	EndDate    time.Time `pg:"end_date, type:timestamp without time zone, use_zero"`
-	Limit      int       `pg:"limit, type:integer, use_zero"`
-	Offset     int       `pg:"offset, type:integer, use_zero"`
+	ApiType      string    `pg:"api_type, type:varchar, use_zero"`
+	TextFilter   string    `pg:"text_filter, type:varchar, use_zero"` //for varchar
+	Packages     []string  `pg:"packages, type:varchar[], use_zero"`
+	VisibleRoots []string  `pg:"visible_roots, type:varchar[], use_zero"`
+	Versions     []string  `pg:"versions, type:varchar[], use_zero"`
+	Statuses     []string  `pg:"statuses, type:varchar[], use_zero"`
+	StartDate    time.Time `pg:"start_date, type:timestamp without time zone, use_zero"`
+	EndDate      time.Time `pg:"end_date, type:timestamp without time zone, use_zero"`
+	Limit        int       `pg:"limit, type:integer, use_zero"`
+	Offset       int       `pg:"offset, type:integer, use_zero"`
 }
 
 type PackageSearchResult struct {
@@ -179,18 +186,22 @@ type PackageSearchResult struct {
 
 func MakePackageSearchQueryEntity(searchQuery *view.SearchQueryReq_deprecated) (*PackageSearchQuery, error) {
 	searchQueryEntity := &PackageSearchQuery{
-		ApiType:    searchQuery.ApiType,
-		TextFilter: searchQuery.SearchString,
-		Packages:   searchQuery.PackageIds,
-		Versions:   searchQuery.Versions,
-		Statuses:   searchQuery.Statuses,
-		StartDate:  searchQuery.PublicationDateInterval.StartDate,
-		EndDate:    searchQuery.PublicationDateInterval.EndDate,
-		Limit:      searchQuery.Limit,
-		Offset:     searchQuery.Limit * searchQuery.Page,
+		ApiType:      searchQuery.ApiType,
+		TextFilter:   searchQuery.SearchString,
+		Packages:     searchQuery.PackageIds,
+		VisibleRoots: searchQuery.VisiblePackageRoots,
+		Versions:     searchQuery.Versions,
+		Statuses:     searchQuery.Statuses,
+		StartDate:    searchQuery.PublicationDateInterval.StartDate,
+		EndDate:      searchQuery.PublicationDateInterval.EndDate,
+		Limit:        searchQuery.Limit,
+		Offset:       searchQuery.Limit * searchQuery.Page,
 	}
 	if searchQueryEntity.Packages == nil {
 		searchQueryEntity.Packages = make([]string, 0)
+	}
+	if searchQueryEntity.VisibleRoots == nil {
+		searchQueryEntity.VisibleRoots = make([]string, 0)
 	}
 	if searchQueryEntity.Versions == nil {
 		searchQueryEntity.Versions = make([]string, 0)
@@ -249,6 +260,7 @@ type DocumentSearchQuery struct {
 	ApiType      string    `pg:"api_type, type:varchar, use_zero"`
 	TextFilter   string    `pg:"text_filter, type:varchar, use_zero"` //for varchar
 	Packages     []string  `pg:"packages, type:varchar[], use_zero"`
+	VisibleRoots []string  `pg:"visible_roots, type:varchar[], use_zero"`
 	Versions     []string  `pg:"versions, type:varchar[], use_zero"`
 	Statuses     []string  `pg:"statuses, type:varchar[], use_zero"`
 	StartDate    time.Time `pg:"start_date, type:timestamp without time zone, use_zero"`
@@ -287,6 +299,7 @@ func MakeDocumentSearchQueryEntity(searchQuery *view.SearchQueryReq_deprecated, 
 		ApiType:      searchQuery.ApiType,
 		TextFilter:   searchQuery.SearchString,
 		Packages:     searchQuery.PackageIds,
+		VisibleRoots: searchQuery.VisiblePackageRoots,
 		Versions:     searchQuery.Versions,
 		Statuses:     searchQuery.Statuses,
 		StartDate:    searchQuery.PublicationDateInterval.StartDate,
@@ -297,6 +310,9 @@ func MakeDocumentSearchQueryEntity(searchQuery *view.SearchQueryReq_deprecated, 
 	}
 	if searchQueryEntity.Packages == nil {
 		searchQueryEntity.Packages = make([]string, 0)
+	}
+	if searchQueryEntity.VisibleRoots == nil {
+		searchQueryEntity.VisibleRoots = make([]string, 0)
 	}
 	if searchQueryEntity.Versions == nil {
 		searchQueryEntity.Versions = make([]string, 0)

@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/responder"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 
@@ -194,7 +194,7 @@ func getLimitQueryParamBase(r *http.Request, defaultLimit, maxLimit int) (int, *
 }
 
 // TODO: duplicate in v2
-func handlePkgRedirectOrRespondWithError(w http.ResponseWriter, r *http.Request, ptHandler service.PackageTransitionHandler, packageId, msg string, err error) {
+func handlePkgRedirectOrRespondWithError(w http.ResponseWriter, r *http.Request, responder responder.Responder, ptHandler service.PackageTransitionHandler, packageId, msg string, err error) {
 	ctx := r.Context()
 	if customError, ok := err.(*exception.CustomError); ok {
 		if strings.Contains(r.URL.Path, packageId) &&
@@ -203,7 +203,7 @@ func handlePkgRedirectOrRespondWithError(w http.ResponseWriter, r *http.Request,
 				customError.Code == exception.PublishedVersionNotFound) {
 			newPkg, err := ptHandler.HandleMissingPackageId(ctx, packageId)
 			if err != nil {
-				utils.RespondWithError(w, r, "Package not found, failed to check package move", err)
+				responder.RespondWithError(w, r, "Package not found, failed to check package move", err)
 				return
 			}
 			if newPkg != "" {
@@ -217,7 +217,7 @@ func handlePkgRedirectOrRespondWithError(w http.ResponseWriter, r *http.Request,
 			}
 		}
 	}
-	utils.RespondWithError(w, r, msg, err)
+	responder.RespondWithError(w, r, msg, err)
 }
 
 func getTemplatePath(r *http.Request) string {

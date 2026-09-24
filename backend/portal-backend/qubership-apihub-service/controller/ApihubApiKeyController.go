@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/responder"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
@@ -20,16 +21,18 @@ type ApihubApiKeyController interface {
 	GetApiKeyById(w http.ResponseWriter, r *http.Request)
 }
 
-func NewApihubApiKeyController(apihubApiKeyService service.ApihubApiKeyService, roleService service.RoleService) ApihubApiKeyController {
+func NewApihubApiKeyController(apihubApiKeyService service.ApihubApiKeyService, roleService service.RoleService, responder responder.Responder) ApihubApiKeyController {
 	return &ApihubApiKeyControllerImpl{
 		apihubApiKeyService: apihubApiKeyService,
 		roleService:         roleService,
+		responder:           responder,
 	}
 }
 
 type ApihubApiKeyControllerImpl struct {
 	apihubApiKeyService service.ApihubApiKeyService
 	roleService         service.RoleService
+	responder           responder.Responder
 }
 
 func (a ApihubApiKeyControllerImpl) CreateApiKey(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +41,7 @@ func (a ApihubApiKeyControllerImpl) CreateApiKey(w http.ResponseWriter, r *http.
 
 	if packageId == view.AllPackagesApikeyScope {
 		if !secctx.IsSysadm(ctx) {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			a.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusForbidden,
 				Code:    exception.InsufficientPrivileges,
 				Message: exception.InsufficientPrivilegesMsg,
@@ -49,11 +52,11 @@ func (a ApihubApiKeyControllerImpl) CreateApiKey(w http.ResponseWriter, r *http.
 	} else {
 		sufficientPrivileges, err := a.roleService.HasRequiredPermissions(ctx, packageId, view.AccessTokenManagementPermission)
 		if err != nil {
-			utils.RespondWithError(w, r, "Failed to check user privileges", err)
+			a.responder.RespondWithError(w, r, "Failed to check user privileges", err)
 			return
 		}
 		if !sufficientPrivileges {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			a.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusForbidden,
 				Code:    exception.InsufficientPrivileges,
 				Message: exception.InsufficientPrivilegesMsg,
@@ -66,7 +69,7 @@ func (a ApihubApiKeyControllerImpl) CreateApiKey(w http.ResponseWriter, r *http.
 	defer r.Body.Close()
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		a.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -77,7 +80,7 @@ func (a ApihubApiKeyControllerImpl) CreateApiKey(w http.ResponseWriter, r *http.
 	var createApiKeyReq view.ApihubApiKeyCreateReq
 	err = json.Unmarshal(body, &createApiKeyReq)
 	if err != nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		a.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.BadRequestBody,
 			Message: exception.BadRequestBodyMsg,
@@ -88,17 +91,17 @@ func (a ApihubApiKeyControllerImpl) CreateApiKey(w http.ResponseWriter, r *http.
 	validationErr := utils.ValidateObject(createApiKeyReq)
 	if validationErr != nil {
 		if customError, ok := validationErr.(*exception.CustomError); ok {
-			utils.RespondWithCustomError(w, customError)
+			a.responder.RespondWithCustomError(w, customError)
 			return
 		}
 	}
 
 	apiKey, err := a.apihubApiKeyService.CreateApiKey(ctx, packageId, createApiKeyReq.Name, createApiKeyReq.CreatedFor, createApiKeyReq.Roles)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to create apihub api key", err)
+		a.responder.RespondWithError(w, r, "Failed to create apihub api key", err)
 		return
 	}
-	utils.RespondWithJson(w, http.StatusOK, apiKey)
+	a.responder.RespondWithJson(w, http.StatusOK, apiKey)
 }
 
 func (a ApihubApiKeyControllerImpl) RevokeApiKey(w http.ResponseWriter, r *http.Request) {
@@ -108,7 +111,7 @@ func (a ApihubApiKeyControllerImpl) RevokeApiKey(w http.ResponseWriter, r *http.
 
 	if packageId == view.AllPackagesApikeyScope {
 		if !secctx.IsSysadm(ctx) {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			a.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusForbidden,
 				Code:    exception.InsufficientPrivileges,
 				Message: exception.InsufficientPrivilegesMsg,
@@ -119,11 +122,11 @@ func (a ApihubApiKeyControllerImpl) RevokeApiKey(w http.ResponseWriter, r *http.
 	} else {
 		sufficientPrivileges, err := a.roleService.HasRequiredPermissions(ctx, packageId, view.AccessTokenManagementPermission)
 		if err != nil {
-			utils.RespondWithError(w, r, "Failed to check user privileges", err)
+			a.responder.RespondWithError(w, r, "Failed to check user privileges", err)
 			return
 		}
 		if !sufficientPrivileges {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			a.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusForbidden,
 				Code:    exception.InsufficientPrivileges,
 				Message: exception.InsufficientPrivilegesMsg,
@@ -134,7 +137,7 @@ func (a ApihubApiKeyControllerImpl) RevokeApiKey(w http.ResponseWriter, r *http.
 	}
 	err := a.apihubApiKeyService.RevokePackageApiKey(ctx, apiKeyId, packageId)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to revoke apihub api key", err)
+		a.responder.RespondWithError(w, r, "Failed to revoke apihub api key", err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -145,7 +148,7 @@ func (a ApihubApiKeyControllerImpl) GetApiKeys(w http.ResponseWriter, r *http.Re
 	ctx := secctx.MakeUserContext(r)
 	if packageId == view.AllPackagesApikeyScope {
 		if !secctx.IsSysadm(ctx) {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			a.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusForbidden,
 				Code:    exception.InsufficientPrivileges,
 				Message: exception.InsufficientPrivilegesMsg,
@@ -156,11 +159,11 @@ func (a ApihubApiKeyControllerImpl) GetApiKeys(w http.ResponseWriter, r *http.Re
 	} else {
 		sufficientPrivileges, err := a.roleService.HasRequiredPermissions(ctx, packageId, view.AccessTokenManagementPermission)
 		if err != nil {
-			utils.RespondWithError(w, r, "Failed to check user privileges", err)
+			a.responder.RespondWithError(w, r, "Failed to check user privileges", err)
 			return
 		}
 		if !sufficientPrivileges {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			a.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusForbidden,
 				Code:    exception.InsufficientPrivileges,
 				Message: exception.InsufficientPrivilegesMsg,
@@ -171,17 +174,17 @@ func (a ApihubApiKeyControllerImpl) GetApiKeys(w http.ResponseWriter, r *http.Re
 	}
 	apiKeys, err := a.apihubApiKeyService.GetProjectApiKeys(ctx, packageId)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to get all apihub api keys", err)
+		a.responder.RespondWithError(w, r, "Failed to get all apihub api keys", err)
 		return
 	}
-	utils.RespondWithJson(w, http.StatusOK, apiKeys)
+	a.responder.RespondWithJson(w, http.StatusOK, apiKeys)
 }
 
 func (a ApihubApiKeyControllerImpl) GetApiKeyByKey(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	apiKeyHeader := r.Header.Get("api-key")
 	if apiKeyHeader == "" {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		a.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.ApiKeyHeaderIsEmpty,
 			Message: exception.ApiKeyHeaderIsEmptyMsg,
@@ -190,18 +193,18 @@ func (a ApihubApiKeyControllerImpl) GetApiKeyByKey(w http.ResponseWriter, r *htt
 	}
 	apiKey, err := a.apihubApiKeyService.GetApiKeyByKey(ctx, apiKeyHeader)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to get apihub api key", err)
+		a.responder.RespondWithError(w, r, "Failed to get apihub api key", err)
 		return
 	}
 	if apiKey == nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		a.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.ApiKeyNotFoundByKey,
 			Message: exception.ApiKeyNotFoundByKeyMsg,
 		})
 		return
 	}
-	utils.RespondWithJson(w, http.StatusOK, apiKey)
+	a.responder.RespondWithJson(w, http.StatusOK, apiKey)
 }
 
 func (a ApihubApiKeyControllerImpl) GetApiKeyById(w http.ResponseWriter, r *http.Request) {
@@ -210,11 +213,11 @@ func (a ApihubApiKeyControllerImpl) GetApiKeyById(w http.ResponseWriter, r *http
 
 	apiKey, err := a.apihubApiKeyService.GetApiKeyById(ctx, apiKeyId)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to get apihub api key by id", err)
+		a.responder.RespondWithError(w, r, "Failed to get apihub api key by id", err)
 		return
 	}
 	if apiKey == nil {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		a.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.ApiKeyNotFoundById,
 			Message: exception.ApiKeyNotFoundByIdMsg,
@@ -222,5 +225,5 @@ func (a ApihubApiKeyControllerImpl) GetApiKeyById(w http.ResponseWriter, r *http
 		})
 		return
 	}
-	utils.RespondWithJson(w, http.StatusOK, apiKey)
+	a.responder.RespondWithJson(w, http.StatusOK, apiKey)
 }

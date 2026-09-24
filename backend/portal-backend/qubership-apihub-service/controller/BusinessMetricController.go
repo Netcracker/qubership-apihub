@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/responder"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
-	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 
@@ -18,16 +18,18 @@ type BusinessMetricController interface {
 	GetBusinessMetrics(w http.ResponseWriter, r *http.Request)
 }
 
-func NewBusinessMetricController(businessMetricService service.BusinessMetricService, excelService service.ExcelService) BusinessMetricController {
+func NewBusinessMetricController(businessMetricService service.BusinessMetricService, excelService service.ExcelService, responder responder.Responder) BusinessMetricController {
 	return businessMetricControllerImpl{
 		businessMetricService: businessMetricService,
 		excelService:          excelService,
+		responder:             responder,
 	}
 }
 
 type businessMetricControllerImpl struct {
 	businessMetricService service.BusinessMetricService
 	excelService          service.ExcelService
+	responder             responder.Responder
 }
 
 func (b businessMetricControllerImpl) GetBusinessMetrics(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +37,7 @@ func (b businessMetricControllerImpl) GetBusinessMetrics(w http.ResponseWriter, 
 	ctx := secctx.MakeUserContext(r)
 	sufficientPrivileges := secctx.IsSysadm(ctx)
 	if !sufficientPrivileges {
-		utils.RespondWithCustomError(w, &exception.CustomError{
+		b.responder.RespondWithCustomError(w, &exception.CustomError{
 			Status:  http.StatusForbidden,
 			Code:    exception.InsufficientPrivileges,
 			Message: exception.InsufficientPrivilegesMsg,
@@ -48,7 +50,7 @@ func (b businessMetricControllerImpl) GetBusinessMetrics(w http.ResponseWriter, 
 	if r.URL.Query().Get("hierarchyLevel") != "" {
 		hierarchyLevel, err = strconv.Atoi(r.URL.Query().Get("hierarchyLevel"))
 		if err != nil {
-			utils.RespondWithCustomError(w, &exception.CustomError{
+			b.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.IncorrectParamType,
 				Message: exception.IncorrectParamTypeMsg,
@@ -64,17 +66,17 @@ func (b businessMetricControllerImpl) GetBusinessMetrics(w http.ResponseWriter, 
 	}
 	businessMetrics, err := b.businessMetricService.GetBusinessMetrics(ctx, parentPackageId, hierarchyLevel)
 	if err != nil {
-		utils.RespondWithError(w, r, "Failed to get business metrics", err)
+		b.responder.RespondWithError(w, r, "Failed to get business metrics", err)
 		return
 	}
 	switch format {
 	case view.ExportFormatJson:
-		utils.RespondWithJson(w, http.StatusOK, businessMetrics)
+		b.responder.RespondWithJson(w, http.StatusOK, businessMetrics)
 		return
 	case view.ExportFormatXlsx:
 		report, filename, err := b.excelService.ExportBusinessMetrics(businessMetrics)
 		if err != nil {
-			utils.RespondWithError(w, r, "Failed to export business metrics as xlsx", err)
+			b.responder.RespondWithError(w, r, "Failed to export business metrics as xlsx", err)
 			return
 		}
 		w.Header().Set("Content-Type", "application/octet-stream")

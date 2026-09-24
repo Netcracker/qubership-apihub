@@ -12,12 +12,11 @@ import (
 
 func TestRefreshTokenStrategy_RejectsAccessToken(t *testing.T) {
 	k := generateTestKeeper(t)
-	keeper = k
-	accessTokenDuration = 5 * time.Minute
+	accessTokenDuration := 5 * time.Minute
 
 	cache := libcache.LRU.New(100)
 	validator := NewJWTValidator(k, &mockTokenRevocationService{})
-	strategy := NewRefreshTokenStrategy(cache, validator)
+	strategy := NewRefreshTokenStrategy(cache, validator, accessTokenDuration, k)
 
 	accessToken := issueTestToken(t, k, "user1", AccessTokenType, 5*time.Minute)
 	req, _ := http.NewRequestWithContext(context.Background(), "GET", "/", nil)
@@ -34,8 +33,7 @@ func TestRefreshTokenStrategy_RejectsAccessToken(t *testing.T) {
 
 func TestRefreshTokenStrategy_RejectsCachedAccessToken(t *testing.T) {
 	k := generateTestKeeper(t)
-	keeper = k
-	accessTokenDuration = 5 * time.Minute
+	accessTokenDuration := 5 * time.Minute
 
 	cache := libcache.LRU.New(100)
 	validator := NewJWTValidator(k, &mockTokenRevocationService{})
@@ -44,7 +42,7 @@ func TestRefreshTokenStrategy_RejectsCachedAccessToken(t *testing.T) {
 		cookie, _ := r.Cookie(AccessTokenCookieName)
 		return cookie.Value, nil
 	})
-	refreshStrategy := NewRefreshTokenStrategy(cache, validator)
+	refreshStrategy := NewRefreshTokenStrategy(cache, validator, accessTokenDuration, k)
 
 	// First, authenticate an access token via BaseJWTStrategy to cache it
 	accessToken := issueTestToken(t, k, "user1", AccessTokenType, 5*time.Minute)

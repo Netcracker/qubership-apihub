@@ -82,7 +82,6 @@ type OperationDataEntity struct {
 type OperationSearchTextEntity struct {
 	OperationId    string
 	ApiType        string
-	Title          string
 	SearchTextData []byte
 	SearchDataHash string
 }

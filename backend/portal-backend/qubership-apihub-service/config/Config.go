@@ -34,6 +34,7 @@ type DatabaseConfig struct {
 
 type SecurityConfig struct {
 	ProductionMode            bool
+	ShowDebugInResponse       bool
 	Jwt                       JwtConfig
 	ApihubExternalUrl         string `validate:"required"`
 	AllowedHostsForProxy      []string
@@ -114,7 +115,19 @@ type BusinessParameters struct {
 }
 
 type MonitoringConfig struct {
-	Enabled bool
+	Enabled bool `validate:"required_if=OTel.Enabled true"` // OTLP export reads the application metrics that are registered only when monitoring is enabled
+	OTel    OTelMetricsConfig
+}
+
+type OTelMetricsConfig struct {
+	Enabled           bool
+	ServerUrl         string `validate:"required_if=Enabled true,omitempty,url"`
+	MetricsPath       string `validate:"required,startswith=/"`
+	Token             string `sensitive:"true"`
+	Namespace         string
+	ExportIntervalSec int      `validate:"gt=0,lte=86400"` // 86400 = one day; a longer interval would leave gauges stale for over a day
+	TimeoutSec        int      `validate:"gt=0,lte=3600"`  // 3600 = one hour; an OTLP request that takes longer is not going to succeed
+	MetricPrefixes    []string `validate:"min=1,dive,required"`
 }
 
 type S3Config struct {
