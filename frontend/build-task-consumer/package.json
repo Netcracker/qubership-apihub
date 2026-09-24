@@ -30,7 +30,7 @@
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
-    "@netcracker/qubership-apihub-api-processor": "dev",
+    "@netcracker/qubership-apihub-api-processor": "5.7.1",
     "@sinclair/typebox": "^0.32.1",
     "adm-zip": "0.6.0",
     "axios": "^1.6.2",
