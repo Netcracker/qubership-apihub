@@ -18,7 +18,6 @@ import {
   V_P_DSH_UAC_OWNER_CHANGED_N,
   V_P_DSH_UAC_OWNER_DELETING_N,
   V_P_DSH_UAC_OWNER_EDIT_DSH_DEF_RELEASE_N,
-  V_P_DSH_UAC_OWNER_EDITING_ARCHIVED_N,
   V_P_DSH_UAC_OWNER_EDITING_DRAFT_N,
   V_P_DSH_UAC_OWNER_EDITING_RELEASE_N,
   VERSION_DELETED_MSG,
@@ -33,7 +32,6 @@ import {
 import type { VersionStatuses } from '@shared/entities'
 import {
   API_TITLES_MAP,
-  ARCHIVED_VERSION_STATUS,
   DRAFT_VERSION_STATUS,
   RELEASE_VERSION_STATUS,
   REST_API_TYPE,
@@ -264,10 +262,6 @@ test.describe('03.3.2 Access Control. Owner role. (Dashboard)', () => {
           version: 'published-draft',
           status: DRAFT_VERSION_STATUS,
         },
-        {
-          version: 'published-archived',
-          status: ARCHIVED_VERSION_STATUS,
-        },
       ]
 
       for (const step of stepsProps) {
@@ -333,9 +327,8 @@ test.describe('03.3.2 Access Control. Owner role. (Dashboard)', () => {
       const testVersions = [
         V_P_DSH_UAC_OWNER_EDITING_RELEASE_N,
         V_P_DSH_UAC_OWNER_EDITING_DRAFT_N,
-        V_P_DSH_UAC_OWNER_EDITING_ARCHIVED_N,
       ]
-      const testStatus = ARCHIVED_VERSION_STATUS
+      const testStatus = DRAFT_VERSION_STATUS
       const testLabel = 'new-label'
 
       await portalPage.gotoDashboard(testDashboard, SETTINGS_TAB_VERSIONS)

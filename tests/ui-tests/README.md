@@ -3,6 +3,7 @@
 Playwright-based test project for APIHUB UI:
 
 - Portal UI end-to-end tests (`--project=Portal`)
+- Agent UI end-to-end tests (`--project=Agent`)
 - ADV smoke-style checks (`ADV-operations`, `ADV-comparisons`)
 - Cleanup project (`--project=Cleanup`)
 
@@ -31,11 +32,24 @@ Minimum required variables:
 
 - `BASE_URL`
 - `TEST_USER_PASSWORD`
+- `AGENT_TEST_CLOUD` (Agent tests only)
+- `ADV_FILE` (`ADV-operations` / `ADV-comparisons` projects only)
+- `PLAYGROUND_BACKEND_HOST` (localhost / Docker Compose; see [docs/localhost-run.md](docs/localhost-run.md))
+
+See [Environment variables](#environment-variables) for the full list.
 
 ### Run Portal end-to-end tests
 
 ```Shell
 npx playwright test --project=Portal
+```
+
+### Run Agent end-to-end tests
+
+Requires a running Agent and a Kubernetes cloud the Agent can discover. Set `AGENT_TEST_CLOUD` (see [Environment variables](#environment-variables)).
+
+```Shell
+npx playwright test --project=Agent
 ```
 
 ## Documentation map (project-local)
@@ -67,46 +81,110 @@ Example (API Quality suite folder):
 
 ## Environment variables
 
+`.env` is loaded via `dotenv` in `playwright.config.ts`. Global setup prints a subset of variables at run start (`src/tests/apihub-setup.ts`).
+
 ### Required
 
-| Variable           | Meaning                     |
-| ------------------ | --------------------------- |
-| BASE_URL           | Test environment base URL   |
-| TEST_USER_PASSWORD | Password used by test users |
+| Variable           | Meaning                                                                 |
+| ------------------ | ----------------------------------------------------------------------- |
+| BASE_URL           | Test environment base URL                                               |
+| TEST_USER_PASSWORD | Password for local test users (`TEST_SYSADMIN_LOCAL`, `TEST_USER_1`..4) |
 
-### Required only for localhost modes
+### Required for Agent (`--project=Agent`)
 
-| Variable                | Meaning                                                                                                        |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------- |
-| PLAYGROUND_BACKEND_HOST | Backend host used for localhost Playground tests (see [docs/localhost-run.md](docs/localhost-run.md))          |
-| DEV_PROXY_MODE          | When `true`, skip tests that cannot run in dev proxy mode (see [docs/localhost-run.md](docs/localhost-run.md)) |
+| Variable         | Meaning                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------- |
+| AGENT_TEST_CLOUD | Cloud name shown in the Agent UI selector. Example for kind: `kind_qubership-apihub`. |
 
-### Optional
+Hardcoded cluster objects (see `src/test-data/agent/other.ts`):
 
-| Variable          | Meaning                                                                                        |
-| ----------------- | ---------------------------------------------------------------------------------------------- |
-| TICKET_SYSTEM_URL | Adds interactivity to links to test cases and issues                                           |
-| AUTH (deprecated) | Deprecated legacy auth toggle. Not required; kept temporarily until old auth logic is removed. |
-| CREATE_TD         | Test data creation (`all`, `skip`, or default behavior)                                        |
-| CLEAR_TD          | Test data deletion (`all`, `skip`, or default behavior)                                        |
-| TEST_ID_R         | Reusable test data ID (4 chars); auto-generated if unset                                       |
-| TEST_ID_N         | Non-reusable test data ID (4 chars); auto-generated if unset                                   |
-| ADV_FILE          | Filename with URLs for `ADV-operations` and `ADV-comparisons` projects                         |
+- Namespaces: `api-hub-ci` (full end-to-end / discovery running), `api-hub-preprod` (other Agent scopes)
+- Services: `apihub-agent-test-service`, `apihub-backend`
+
+### Required for ADV (`--project=ADV-operations`, `--project=ADV-comparisons`)
+
+| Variable | Meaning                                                                                             |
+| -------- | --------------------------------------------------------------------------------------------------- |
+| ADV_FILE | Basename of a JSON file under `src/tests/adv/urls/` (without `.json`). Example: `adv-operations-01` |
+
+### Required for localhost / Docker Compose
+
+| Variable                | Meaning                                                                                                                                                                     |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PLAYGROUND_BACKEND_HOST | Backend host for Playground API calls when `BASE_URL` points to localhost (see [docs/localhost-run.md](docs/localhost-run.md)). Example: `http://host.docker.internal:8081` |
+
+### Optional - localhost behavior
+
+| Variable       | Meaning                                                                                                        |
+| -------------- | -------------------------------------------------------------------------------------------------------------- |
+| DEV_PROXY_MODE | When `true`, skip tests that cannot run in dev proxy mode (see [docs/localhost-run.md](docs/localhost-run.md)) |
+
+### Optional - test data lifecycle
+
+| Variable  | Values                         | Meaning                                                                                                 |
+| --------- | ------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| CREATE_TD | unset (default), `all`, `skip` | unset: create non-reusable data only; `all`: also create reusable data; `skip`: skip test data creation |
+| CLEAR_TD  | unset (default), `all`, `skip` | unset: clear non-reusable data only; `all`: also clear reusable data; `skip`: skip teardown cleanup     |
+| TEST_ID_R | 4-5 uppercase alnum            | Reusable test data suffix; default `0000` unless `CREATE_TD=all` (then random). Auto-generated if unset |
+| TEST_ID_N | 4-5 uppercase alnum            | Non-reusable test data suffix; auto-generated if unset                                                  |
+
+### Optional - Agent workspace / group names
+
+Override defaults used in `src/test-data/agent/` when the target environment uses different naming.
+
+| Variable                     | Default      | Meaning                       |
+| ---------------------------- | ------------ | ----------------------------- |
+| TEST_DEFAULT_WORKSPACE_NAME  | `Qubership`  | Agent default workspace       |
+| TEST_DEFAULT_WORKSPACE_ALIAS | `QS`         | Agent default workspace alias |
+| TEST_PRODUCT_GROUP_NAME      | `QS Product` | Agent product group name      |
+| TEST_PRODUCT_GROUP_ALIAS     | `QS`         | Agent product group alias     |
+| TEST_SUB_GROUP_NAME          | `Sub Group`  | Agent sub-group name          |
+| TEST_SUB_GROUP_ALIAS         | `SG`         | Agent sub-group alias         |
+
+### Optional - conditional test suites
+
+Tests are skipped when the corresponding variable is unset.
+
+| Variable                  | Enables                                                                      |
+| ------------------------- | ---------------------------------------------------------------------------- |
+| TEST_SSO_USER_EMAIL       | SSO authentication tests (`1.1-authentication.spec.ts`, `@specific`)         |
+| TEST_SSO_USER_PASSWORD    | Password for `TEST_SSO_USER` (used together with `TEST_SSO_USER_EMAIL`)      |
+| TEST_CLOUD_ADMIN_NAME     | Agent Gateway Routing report tests (`01-with-discovery.spec.ts`)             |
+| TEST_CLOUD_ADMIN_PASSWORD | Password for `TEST_CLOUD_ADMIN` (used together with `TEST_CLOUD_ADMIN_NAME`) |
+
+### Optional - tooling and reports
+
+| Variable               | Meaning                                                                                                                    |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| CHROME_EXECUTABLE_PATH | Path to a Chrome/Chromium binary. Unset = Playwright bundled Chromium. Custom-Chrome CI example: `./chrome-linux64/chrome` |
+| TICKET_SYSTEM_URL      | Base URL for clickable Test Case / issue links in test annotations (origin only is used)                                   |
+
+### CI / pipeline (usually set by the runner, not `.env`)
+
+| Variable            | Meaning                                                                                                               |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| CI                  | Standard CI flag. Enables headless browsers, more workers/retries, `forbidOnly`, `maxFailures`                        |
+| GITHUB_ACTIONS      | When `true`, enables GitHub Step Summary in `CustomReporter` (see [docs/custom-reporter.md](docs/custom-reporter.md)) |
+| GITHUB_STEP_SUMMARY | GitHub Actions file path for the job summary (set by Actions; used by `@actions/core`)                                |
+| CI_PW_BRANCH        | Branch name shown in `summary-report.html` (default `-`)                                                              |
+| CI_JOB_LINK         | Link to the CI job in `summary-report.html`                                                                           |
+| CI_JOB_NUMBER       | Job number appended to `CI_JOB_LINK` label in `summary-report.html`                                                   |
+| CI_USER             | Triggering user shown in `summary-report.html` (default `-`)                                                          |
 
 ## Running tests
 
 ### Common commands
 
 ```Shell
-npx playwright test --project=Portal
+npx playwright test --project=Portal --project=Agent
 ```
 
 ```Shell
-npx playwright test --project=Portal --last-failed
+npx playwright test --project=Portal --project=Agent --last-failed
 ```
 
 ```Shell
-npx playwright test --project=Portal --headed --trace=on
+npx playwright test --project=Portal --project=Agent --headed --trace=on
 ```
 
 ### HTML report

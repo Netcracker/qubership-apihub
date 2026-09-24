@@ -2,6 +2,18 @@ export const INVALID_LOGIN = 'APIHUB99'
 
 export const INVALID_PASSWORD = '1'
 
+export const TEST_CLOUD_ADMIN = {
+  name: process.env.TEST_CLOUD_ADMIN_NAME as string,
+  password: process.env.TEST_CLOUD_ADMIN_PASSWORD as string,
+} as const
+
+export const TEST_SSO_USER = {
+  id: 'x_APIHUB',
+  email: process.env.TEST_SSO_USER_EMAIL as string,
+  name: 'x_APIHUB',
+  password: process.env.TEST_SSO_USER_PASSWORD as string,
+} as const
+
 export const TEST_SYSADMIN_LOCAL = {
   id: 'x_atui_sysadminatqa-at',
   email: 'x_atui_sysadmin@qa.at',

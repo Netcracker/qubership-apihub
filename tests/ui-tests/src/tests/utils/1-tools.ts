@@ -1,5 +1,9 @@
 import { test } from '@fixtures'
 import { createUsersTDM } from '@services/test-data-manager'
+import { DRAFT_VERSION_STATUS } from '@shared/entities'
+import { TEST_CLOUD, TEST_NAMESPACE_1, TEST_SERVICE, TEST_SERVICE2 } from '@test-data/agent'
+import { readFileSync, writeFileSync } from 'fs'
+import { formatNamespaceData, removeObjectsWithField, sortByField } from './helpers'
 import { SYSADMIN } from '@test-data'
 import { FILE_P_GQL_SMALL, FILE_P_PETSTORE30 } from '@test-data/portal'
 
@@ -84,5 +88,49 @@ test.describe('Users', () => {
   test('Create Sysadmin', async () => {
     const tdm = await createUsersTDM()
     await tdm.createSysadmin(SYSADMIN)
+  })
+})
+
+test.describe('Agent', () => {
+
+  test('Promote version for two services', async ({ agentTDM: tdm }) => {
+    await tdm.createSnapshot({
+      agentId: TEST_CLOUD,
+      namespace: TEST_NAMESPACE_1,
+      promote: true,
+      version: 'ATUI_two-services',
+      previousVersion: '',
+      services: [TEST_SERVICE, TEST_SERVICE2],
+      status: DRAFT_VERSION_STATUS,
+    })
+  })
+
+  test('Discover namespace', async ({ agentTDM: tdm }) => {
+    test.setTimeout(7200_000)
+    const namespaces = await tdm.getNamespaces({ cloud: '' })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result: any[] = []
+    for (const namespace of namespaces) {
+      const formattedItem = formatNamespaceData(await tdm.discoverNamespaceWithData({
+        cloud: '',
+        namespace: namespace,
+        workspaceId: '',
+      }))
+      result.push(formattedItem)
+      writeFileSync('./temp/namespaces.json', JSON.stringify(result, null, 2))
+    }
+    console.log(result)
+    console.log(namespaces)
+  })
+
+  test('Sort namespaces', async () => {
+    const namespaces = JSON.parse(readFileSync('./temp/namespaces.json', 'utf-8'))
+    namespaces.sort(sortByField('time'))
+    let result
+    result = removeObjectsWithField(namespaces, 'noTestService')
+    result = removeObjectsWithField(result, 'noBackEndService')
+
+    writeFileSync('./temp/namespaces-sorted.json', JSON.stringify(result, null, 2))
+    console.log(result)
   })
 })

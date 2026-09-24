@@ -24,12 +24,11 @@ import {
   rRecalculateGroups,
   rUpdateOperationGroup,
   rUpdatePackage,
-  rUpdatePackageVersion,
 } from '@services/rest'
 import type { RestPublishConfig, RestPublishFile } from '@services/rest/rest.types'
 import { asyncTimeout, getResponseDebugMsg, getRestFailMsg, getTestIdFromName } from '@services/utils'
 import { packToZip } from '@services/utils/files'
-import type { Credentials, PackageApiKey, TestFile, VersionStatuses } from '@shared/entities'
+import type { Credentials, PackageApiKey, TestFile } from '@shared/entities'
 import { TEST_PREFIX } from '@test-data'
 import { BASE_URL } from '@test-setup'
 import type {
@@ -260,30 +259,6 @@ export class ApihubTestDataManager {
       return
     }
     await this.publishVersion(params)
-  }
-
-  async updatePackageVersion(params: {
-    pkg: {
-      packageId: string
-      name?: string
-    }
-    version: string
-    status?: VersionStatuses
-    versionLabels?: string[]
-  }): Promise<void> {
-    const message = `Updating the "${params.version}" version in the "${
-      params.pkg.name || params.pkg.packageId
-    }" package`
-
-    await test.step(message, async () => {
-      const response = await this.rest.send(rUpdatePackageVersion, [200], {
-        ...params,
-        packageId: params.pkg.packageId,
-      })
-      if (response.status() !== 200) {
-        throw Error(await getRestFailMsg(message, response))
-      }
-    }, { box: true })
   }
 
   async createOperationGroup(params: TdmOperationGroup): Promise<void> {

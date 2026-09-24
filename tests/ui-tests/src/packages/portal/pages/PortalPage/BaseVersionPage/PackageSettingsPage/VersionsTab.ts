@@ -11,7 +11,6 @@ export class VersionsTab extends BaseSettingsTab {
   readonly allBtn = new Button(this.page.locator('button[value=All]'), 'All')
   readonly draftBtn = new Button(this.page.locator('button[value=draft]'), 'Draft')
   readonly releaseBtn = new Button(this.page.locator('button[value=release]'), 'Release')
-  readonly archivedBtn = new Button(this.page.locator('button[value=archived]'), 'Archived')
   readonly searchbar = new SearchBar(this.page.getByTestId('SearchVersions'), 'Versions')
   readonly editVersionDialog = new EditVersionDialog(this.page)
   readonly deleteVersionDialog = new DeleteVersionDialog(this.page)

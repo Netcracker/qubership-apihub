@@ -8,7 +8,6 @@ import {
   P_WS_MAIN_R,
   PK11,
   PKG_P_HIERARCHY_BREAKING_R,
-  V_P_PKG_ARCHIVED_R,
   V_P_PKG_CHANGELOG_MULTI_DEL_GQL_R,
   V_P_PKG_CHANGELOG_REST_ANNOTUNCLAS_R,
   V_P_PKG_DRAFT_R,
@@ -255,19 +254,12 @@ test.describe('5.2.1 Package details', () => {
         result += label
         return result
       }, '')
-      const archivedLabels = V_P_PKG_ARCHIVED_R.metadata!.versionLabels!.reduce((result, label) => {
-        result += label
-        return result
-      }, '')
 
       await portalPage.gotoPackage(PK11)
       await versionSlt.click()
 
       await expect.soft(versionSlt.releaseBtn).toBeVisible()
-      // await expect.soft(versionSlt.releaseCandidateBtn).toBeVisible()
       await expect.soft(versionSlt.draftBtn).toBeVisible()
-      // await expect.soft(versionSlt.deprecatedBtn).toBeVisible()
-      await expect.soft(versionSlt.archivedBtn).toBeVisible()
       await expect.soft(versionSlt.getVersionRow(V_P_PKG_OPERATIONS_REST_R.version).publicationDateCell).not.toBeEmpty()
       await expect.soft(versionSlt.getVersionRow(V_P_PKG_OPERATIONS_REST_R.version).labelsCell).toHaveText(standardLabels)
 
@@ -275,10 +267,6 @@ test.describe('5.2.1 Package details', () => {
       await expect.soft(versionSlt.getVersionRow(V_P_PKG_DRAFT_R.version).publicationDateCell).not.toBeEmpty()
       await expect.soft(versionSlt.getVersionRow(V_P_PKG_DRAFT_R.version).labelsCell).toHaveText(draftLabels)
       await expect.soft(versionSlt.getVersionRow(V_P_PKG_WITHOUT_LABELS_R.version).labelsCell).toBeEmpty()
-
-      await versionPage.toolbar.versionSlt.archivedBtn.click()
-      await expect.soft(versionSlt.getVersionRow(V_P_PKG_ARCHIVED_R.version).publicationDateCell).not.toBeEmpty()
-      await expect.soft(versionSlt.getVersionRow(V_P_PKG_ARCHIVED_R.version).labelsCell).toHaveText(archivedLabels)
     })
 
   test('[P-PKDTV-2] Search Version in the Versions selector',

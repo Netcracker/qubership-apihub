@@ -1,10 +1,8 @@
 import { test } from '@fixtures'
 import { expect } from '@services/expect-decorator'
 import { getSysInfo } from '@test-data/props'
-import { AgentPage } from '@agent/pages'
 import { PortalPage } from '@portal/pages'
-import { MIDDLE_EXPECT, TICKET_BASE_URL } from '@test-setup'
-import { isDevProxyMode } from '@services/utils'
+import { TICKET_BASE_URL } from '@test-setup'
 import { VS_CODE_EXTENSION_TOOLTIP } from '@test-data/portal'
 import { SYSADMIN } from '@test-data'
 
@@ -23,9 +21,6 @@ test.describe('General', () => {
 
       await expect(portalPage.header.userMenu).toBeVisible()
       await expect.soft(portalPage.header.portalBtn).toBeVisible()
-      /*TODO: Fix it after migrating tests for the agent and configuring tests*/
-
-      // await expect.soft(portalPage.header.agentBtn).toBeVisible()
       await expect.soft(portalPage.header.vsCodeExtensionBtn).toBeVisible()
       await expect.soft(portalPage.header.appHeaderDivider).toBeVisible()
       await expect.soft(portalPage.header.globalSearchBtn).toBeVisible()
@@ -55,25 +50,6 @@ test.describe('General', () => {
 
       await expect(portalPage.tooltip).toHaveCount(1)
       await expect(portalPage.tooltip).toHaveText(SYSADMIN.name)
-    })
-
-  /*TODO: Fix it after migrating tests for the agent and configuring tests*/
-  test('[P-GEN-2] Navigation to the Agent page',
-    {
-      tag: '@smoke',
-      annotation: { type: 'Test Case', description: `${TICKET_BASE_URL}TestCase-A-4279` },
-    },
-    async ({ sysadminPage: page }) => {
-      test.skip(true,'Fix it after migrating tests for the agent and configuring tests')
-      test.skip(isDevProxyMode(), 'Does not support dev proxy mode')
-      const portalPage = new PortalPage(page)
-      const agentPage = new AgentPage(page)
-
-      await portalPage.goto()
-      await portalPage.header.agentBtn.click()
-
-      await expect(agentPage.header.userMenu).toBeVisible({ timeout: MIDDLE_EXPECT })
-      await expect.soft(agentPage.cloudAc).toBeVisible()
     })
 
   test('[P-GEN-4] Check System Information about APIHUB',

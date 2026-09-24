@@ -1,5 +1,4 @@
 import type { APIRequestContext, APIResponse } from '@playwright/test'
-import type { VersionStatuses } from '@shared/entities'
 import type { RestOperationGroup, RestOperationGroupUpdate } from '@services/rest/rest.types'
 
 export async function rGetPackageVersion(rc: APIRequestContext, params: {
@@ -7,20 +6,6 @@ export async function rGetPackageVersion(rc: APIRequestContext, params: {
   version: string
 }): Promise<APIResponse> {
   return await rc.get(`/api/v3/packages/${params.packageId}/versions/${params.version}`)
-}
-
-export async function rUpdatePackageVersion(rc: APIRequestContext, params: {
-  packageId: string
-  version: string
-  status?: VersionStatuses
-  versionLabels?: string[]
-}): Promise<APIResponse> {
-  return await rc.patch(`/api/v2/packages/${params.packageId}/versions/${params.version}`, {
-    data: {
-      status: params.status,
-      versionLabels: params.versionLabels || undefined,
-    },
-  })
 }
 
 export async function rCreateOperationGroup(rc: APIRequestContext, params: RestOperationGroup): Promise<APIResponse> {

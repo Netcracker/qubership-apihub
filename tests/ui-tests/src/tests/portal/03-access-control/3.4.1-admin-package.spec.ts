@@ -19,14 +19,13 @@ import {
   V_P_PKG_UAC_ADMIN_CHANGED_N,
   V_P_PKG_UAC_ADMIN_DELETING_N,
   V_P_PKG_UAC_ADMIN_EDIT_PKG_DEF_RELEASE_N,
-  V_P_PKG_UAC_ADMIN_EDITING_ARCHIVED_N,
   V_P_PKG_UAC_ADMIN_EDITING_DRAFT_N,
   V_P_PKG_UAC_ADMIN_EDITING_RELEASE_N,
   VERSION_DELETED_MSG,
 } from '@test-data/portal'
 import { SETTINGS_TAB_API_CONFIG, SETTINGS_TAB_GENERAL, SETTINGS_TAB_TOKENS, SETTINGS_TAB_USERS, SETTINGS_TAB_VERSIONS, VERSION_OVERVIEW_TAB_GROUPS } from '@portal/entities'
 import type { VersionStatuses } from '@shared/entities'
-import { API_TITLES_MAP, ARCHIVED_VERSION_STATUS, DRAFT_VERSION_STATUS, RELEASE_VERSION_STATUS, REST_API_TYPE } from '@shared/entities'
+import { API_TITLES_MAP, DRAFT_VERSION_STATUS, RELEASE_VERSION_STATUS, REST_API_TYPE } from '@shared/entities'
 import { PUBLISH_TIMEOUT, SNAPSHOT_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
 import { EMPTY_VALUE } from '@test-data/shared'
 import { TEST_USER_1, TEST_USER_2, TEST_USER_3, TEST_USER_4 } from '@test-data'
@@ -294,10 +293,6 @@ test.describe('03.4.1 Access Control. Admin role. (Package)', () => {
           version: 'published-draft',
           status: DRAFT_VERSION_STATUS,
         },
-        {
-          version: 'published-archived',
-          status: ARCHIVED_VERSION_STATUS,
-        },
       ]
 
       for (const step of stepsProps) {
@@ -330,9 +325,8 @@ test.describe('03.4.1 Access Control. Admin role. (Package)', () => {
       const testVersions = [
         V_P_PKG_UAC_ADMIN_EDITING_RELEASE_N,
         V_P_PKG_UAC_ADMIN_EDITING_DRAFT_N,
-        V_P_PKG_UAC_ADMIN_EDITING_ARCHIVED_N,
       ]
-      const testStatus = ARCHIVED_VERSION_STATUS
+      const testStatus = DRAFT_VERSION_STATUS
       const testLabel = 'new-label'
 
       await portalPage.gotoPackage(testPackage, SETTINGS_TAB_VERSIONS)

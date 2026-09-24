@@ -4,12 +4,21 @@ import type { ApihubApps } from '@shared/entities'
 import { GRP_P_HIERARCHY_R } from '@test-data/portal'
 import { SYSADMIN } from '@test-data/users'
 import { BASE_URL } from '@test-setup'
+import { TEST_SERVICE_1, TEST_SERVICE_1_IMM } from './agent/packages'
 
-export const isReusableTestDataExist = async (app: ApihubApps): Promise<boolean> => {
+export async function isReusableTestDataExist(app: ApihubApps | 'default'): Promise<boolean> {
   let id!: string
   switch (app) {
     case 'portal': {
       id = GRP_P_HIERARCHY_R.packageId
+      break
+    }
+    case 'agent': {
+      id = TEST_SERVICE_1_IMM.packageId
+      break
+    }
+    case 'default': {
+      id = TEST_SERVICE_1.packageId
       break
     }
   }

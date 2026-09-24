@@ -1,4 +1,3 @@
-import { AgentPage } from '@agent/pages'
 import { test } from '@fixtures'
 import { PortalPage } from '@portal/pages/PortalPage'
 import { expect } from '@services/expect-decorator'
@@ -25,7 +24,6 @@ import {
   V_P_PKG_EDITING_SEARCH_R,
 } from '@test-data/portal'
 import { PUBLISH_TIMEOUT, TICKET_BASE_URL } from '@test-setup'
-import { isDevProxyMode } from '@services/utils'
 
 test.describe('4.3.2 Package publishing via Portal', () => {
 
@@ -37,7 +35,6 @@ test.describe('4.3.2 Package publishing via Portal', () => {
     async ({ sysadminPage: page }) => {
 
       const portalPage = new PortalPage(page)
-      const agentPage = new AgentPage(page)
       const { versionPackagePage: versionPage } = portalPage
       const { methodsForUploadDialog, configureVersionTab } = versionPage
       const testPackage = PK_PUB_IMM_3
@@ -50,16 +47,7 @@ test.describe('4.3.2 Package publishing via Portal', () => {
         await expect(configureVersionTab.filesUploader).toBeVisible()
       })
 
-      //Does not support dev proxy mode
-      if (!isDevProxyMode()) {
-        await test.step('Agent option', async () => {
-          await portalPage.gotoPackage(testPackage)
-          await versionPage.howToUploadBtn.click()
-          await methodsForUploadDialog.toAgentBtn.click()
-
-          await expect(agentPage.cloudAc).toBeVisible()
-        })
-      }
+      // Agent option: covered by [A-GEN-5] Navigation from the Upload options (Agent project).
 
       await test.step('VS Code Extension option', async () => {
         await portalPage.gotoPackage(testPackage)

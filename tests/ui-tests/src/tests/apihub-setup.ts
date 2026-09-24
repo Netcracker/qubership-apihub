@@ -9,17 +9,25 @@ import path from 'path'
 test('APIHUB Global Setup', async () => {
   await test.step('Print environment variables', async () => {
     logEnvVars([
+      'CHROME_EXECUTABLE_PATH',
       'BASE_URL',
       'PLAYGROUND_BACKEND_HOST',
       'DEV_PROXY_MODE',
       'TICKET_SYSTEM_URL',
-      // AUTH is deprecated: legacy auth toggle kept temporarily until old auth logic is removed.
-      'AUTH',
       'CREATE_TD',
       'CLEAR_TD',
       'TEST_ID_R',
       'TEST_ID_N',
       'ADV_FILE',
+      'TEST_SSO_USER_EMAIL',
+      'TEST_CLOUD_ADMIN_NAME',
+      'AGENT_TEST_CLOUD',
+      'TEST_DEFAULT_WORKSPACE_NAME',
+      'TEST_DEFAULT_WORKSPACE_ALIAS',
+      'TEST_PRODUCT_GROUP_NAME',
+      'TEST_PRODUCT_GROUP_ALIAS',
+      'TEST_SUB_GROUP_NAME',
+      'TEST_SUB_GROUP_ALIAS',
     ])
   })
 

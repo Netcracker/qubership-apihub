@@ -1,6 +1,6 @@
 import { test as report, type Page } from '@playwright/test'
 import { Autocomplete, Button, Content } from '@shared/components/base'
-import { ARCHIVED_VERSION_STATUS, DRAFT_VERSION_STATUS, RELEASE_VERSION_STATUS, type VersionStatuses } from '@shared/entities'
+import { DRAFT_VERSION_STATUS, RELEASE_VERSION_STATUS, type VersionStatuses } from '@shared/entities'
 import { BaseDialog } from './BaseDialog'
 import { VersionStatusAutocomplete } from './BasePublishDialog/VersionStatusAutocomplete'
 
@@ -24,9 +24,10 @@ export abstract class BasePublishDialog extends BaseDialog {
       })
     }
     if (params.status) {
+      const { status } = params
       await report.step('Set "Status"', async () => {
         await this.statusAc.click()
-        switch (params.status) {
+        switch (status) {
           case RELEASE_VERSION_STATUS: {
             await this.statusAc.releaseItm.click()
             break
@@ -35,9 +36,9 @@ export abstract class BasePublishDialog extends BaseDialog {
             await this.statusAc.draftItm.click()
             break
           }
-          case ARCHIVED_VERSION_STATUS: {
-            await this.statusAc.archivedItm.click()
-            break
+          default: {
+            const unsupportedStatus: never = status
+            throw new Error(`Unsupported version status: ${unsupportedStatus}`)
           }
         }
       })

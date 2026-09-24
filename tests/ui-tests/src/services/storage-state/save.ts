@@ -3,7 +3,7 @@ import { getStorageStatePath } from '@services/storage-state/entities'
 import { writeFile } from 'fs/promises'
 import { type AuthData, getAuthDataFromApi } from '@services/auth'
 import type { Credentials } from '@shared/entities'
-import { BASE_URL, PAGE_LOADING } from '@test-setup'
+import { BASE_URL, getChromeExecutablePath, PAGE_LOADING } from '@test-setup'
 import { chromium, type Page } from '@playwright/test'
 import process from 'process'
 import { LoginPage } from '@shared/pages'
@@ -35,8 +35,7 @@ export const saveUserStorageStateWithLocalStorageFromApi = async (credentials: C
 export const saveUserStorageStateFromBrowserLocal = async (credentials: Credentials): Promise<void> => {
 
   const browser = await chromium.launch(({
-    channel: process.env.CI ? 'chrome' : undefined,
-    executablePath: process.env.CI ? './chrome-linux/chrome' : undefined,
+    executablePath: getChromeExecutablePath(),
     headless: !!process.env.CI,
   }))
   const page = await browser.newPage()
@@ -55,9 +54,8 @@ export const saveUserStorageStateFromBrowserLocal = async (credentials: Credenti
 export const saveUserStorageStateFromBrowserSso = async (credentials: Credentials): Promise<void> => {
 
   const browser = await chromium.launch({
-    channel: process.env.CI ? 'chrome' : undefined,
     chromiumSandbox: true,
-    executablePath: process.env.CI ? './chrome-linux/chrome' : undefined,
+    executablePath: getChromeExecutablePath(),
     headless: !!process.env.CI,
   })
   const page = await newPage(browser, credentials)
