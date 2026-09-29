@@ -158,6 +158,11 @@ func main() {
 	r.HandleFunc("/api/v1/debug/logs/setLevel", authenticator.Secure(logsController.SetLogLevel)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/debug/logs/checkLevel", authenticator.Secure(logsController.CheckLogLevel)).Methods(http.MethodGet)
 
+	if systemInfoService.DebugEnabled() {
+		r.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
+		log.Info("pprof endpoints enabled at /debug/pprof/")
+	}
+
 	healthController := controller.NewHealthController()
 	healthController.AddStartupCheck(func() bool {
 		if stubPm != "" {
@@ -210,6 +215,9 @@ func main() {
 	}
 
 	regService.RunAgentRegistrationProcess()
+	if systemInfoService.AgentStatusReportEnabled() {
+		service.RunAgentStatusReporter(systemInfoService.GetAgentStatusReportInterval())
+	}
 
 	listenAddr := os.Getenv("LISTEN_ADDRESS")
 	if listenAddr == "" {

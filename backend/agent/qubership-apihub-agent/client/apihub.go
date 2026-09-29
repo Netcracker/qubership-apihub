@@ -37,7 +37,7 @@ type ApihubClient interface {
 }
 
 func NewApihubClient(apihubUrl string, accessToken string, cloudName string) (ApihubClient, error) {
-	httpClient, err := utils.CreateSecureHTTPClient(time.Second * 60)
+	httpClient, err := utils.CreateSecureHTTPClient(time.Second*60, "apihub")
 	if err != nil {
 		return nil, err
 	}

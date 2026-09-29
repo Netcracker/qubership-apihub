@@ -21,14 +21,14 @@ func NewServiceProxyController(discoveryService service.DiscoveryService, resp r
 		return nil, err
 	}
 	return &serviceProxyControllerImpl{
-		tr:               http.Transport{TLSClientConfig: tlsConfig},
+		tr:               utils.RegisterPoolStats("proxy", utils.NewPooledTransport(tlsConfig)),
 		discoveryService: discoveryService,
 		responder:        resp,
 	}, nil
 }
 
 type serviceProxyControllerImpl struct {
-	tr               http.Transport
+	tr               http.RoundTripper
 	discoveryService service.DiscoveryService
 	responder        responder.Responder
 }

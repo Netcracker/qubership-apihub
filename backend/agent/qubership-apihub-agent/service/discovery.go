@@ -100,6 +100,7 @@ func (d discoveryServiceImpl) StartDiscovery(ctx secctx.SecurityContext, namespa
 
 func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namespace string, workspaceId string, failOnError bool, requestedServices []string) {
 	log.Infof("Starting discovery for namespace %s", namespace)
+	utils.RecordDiscoveryStart(namespace)
 	start := time.Now()
 
 	ctx := goctx.Background()
@@ -135,18 +136,21 @@ func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namesp
 	if svcErr != nil {
 		d.serviceListCache.setResultStatus(namespace, workspaceId, requestedServices, view.StatusError, svcErr.Error())
 		log.Errorf("Failed to list k8s services in namespace %s: %s", namespace, svcErr.Error())
+		utils.RecordDiscoveryError()
 		return
 	}
 
 	if podsErr != nil {
 		d.serviceListCache.setResultStatus(namespace, workspaceId, requestedServices, view.StatusError, podsErr.Error())
 		log.Errorf("Failed to list k8s pods in namespace %s: %s", namespace, podsErr.Error())
+		utils.RecordDiscoveryError()
 		return
 	}
 
 	if deploymentsErr != nil {
 		d.serviceListCache.setResultStatus(namespace, workspaceId, requestedServices, view.StatusError, deploymentsErr.Error())
 		log.Errorf("Failed to list k8s deployments in namespace %s: %s", namespace, deploymentsErr.Error())
+		utils.RecordDiscoveryError()
 		return
 	}
 
@@ -202,6 +206,7 @@ func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namesp
 					errMsg := fmt.Sprintf("no pod is up yet for service: %s", srv.Name)
 					d.serviceListCache.setResultStatus(namespace, workspaceId, requestedServices, view.StatusError, errMsg)
 					log.Error(errMsg)
+					utils.RecordDiscoveryError()
 					return
 				}
 			}
@@ -295,6 +300,7 @@ func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namesp
 			documents := []view.Document{}
 			if discoveryResult != nil {
 				documents = discoveryResult.Documents
+				utils.RecordDocumentsDownloaded(len(documents))
 				if len(discoveryResult.Documents) == 0 && len(discoveryResult.EndpointCalls) > 0 {
 					diagnostic = &view.ServiceDiagnostic{
 						EndpointCalls: discoveryResult.EndpointCalls,
@@ -313,6 +319,7 @@ func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namesp
 				Error:          errorStr,
 				DiagnosticInfo: diagnostic,
 			}
+			utils.RecordServiceProcessed()
 			d.serviceListCache.addService(namespace, workspaceId, requestedServices, srvToAdd)
 		})
 	}
