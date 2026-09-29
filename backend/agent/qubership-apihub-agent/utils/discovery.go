@@ -4,19 +4,36 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Netcracker/qubership-apihub-agent/view"
 )
 
+var (
+	discoveryTransportOnce sync.Once
+	discoveryTransport     http.RoundTripper
+	discoveryTransportErr  error
+)
+
+// MakeDiscoveryHttpClient returns an HTTP client for discovery calls. The underlying
+// transport is a shared singleton so that connections are pooled and reused across
+// calls, while each client still gets its own per-call timeout.
 func MakeDiscoveryHttpClient(timeout time.Duration) (http.Client, error) {
-	tlsConfig, err := BuildSecureTLSConfig(nil)
-	if err != nil {
-		return http.Client{}, err
+	discoveryTransportOnce.Do(func() {
+		tlsConfig, err := BuildSecureTLSConfig(nil)
+		if err != nil {
+			discoveryTransportErr = err
+			return
+		}
+		discoveryTransport = RegisterPoolStats("discovery", NewPooledTransport(tlsConfig))
+	})
+	if discoveryTransportErr != nil {
+		return http.Client{}, discoveryTransportErr
 	}
 	return http.Client{
 		Timeout:   timeout,
-		Transport: &http.Transport{TLSClientConfig: tlsConfig},
+		Transport: discoveryTransport,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},

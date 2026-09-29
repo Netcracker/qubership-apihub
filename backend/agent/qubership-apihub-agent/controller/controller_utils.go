@@ -12,7 +12,6 @@ import (
 	"github.com/Netcracker/qubership-apihub-agent/exception"
 	"github.com/Netcracker/qubership-apihub-agent/view"
 	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
 )
 
 const maxDiscoveryRequestBodySize = 1 << 20 // 1 MiB: the requested services list is otherwise unbounded
@@ -25,39 +24,6 @@ func getStringParam(r *http.Request, p string) string {
 func getUnescapedStringParam(r *http.Request, p string) (string, error) {
 	params := mux.Vars(r)
 	return url.PathUnescape(params[p])
-}
-func RespondWithCustomError(w http.ResponseWriter, err *exception.CustomError) {
-	log.Debugf("Request failed. Code = %d. Message = %s. Params: %v. Debug: %s", err.Status, err.Message, err.Params, err.Debug)
-	respondWithJson(w, err.Status, err)
-}
-
-func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
-	response, _ := json.Marshal(payload)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	w.Write(response)
-}
-
-func respondWithError(w http.ResponseWriter, msg string, err error) {
-	if customError, ok := err.(*exception.CustomError); ok {
-		logCustomError(msg, customError, err)
-		RespondWithCustomError(w, customError)
-		return
-	}
-
-	log.Errorf("%s: %s", msg, err.Error())
-	RespondWithCustomError(w, &exception.CustomError{
-		Status:  http.StatusInternalServerError,
-		Message: msg,
-		Debug:   err.Error()})
-}
-
-func logCustomError(msg string, customError *exception.CustomError, err error) {
-	if customError.Status == http.StatusNotFound {
-		log.Infof("%s: %s", msg, err.Error())
-		return
-	}
-	log.Errorf("%s: %s", msg, err.Error())
 }
 
 func getFailOnErrorQueryParam(r *http.Request) (bool, *exception.CustomError) {

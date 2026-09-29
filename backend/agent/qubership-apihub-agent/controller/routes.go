@@ -3,6 +3,7 @@ package controller
 import (
 	"net/http"
 
+	"github.com/Netcracker/qubership-apihub-agent/responder"
 	"github.com/Netcracker/qubership-apihub-agent/service"
 )
 
@@ -10,14 +11,16 @@ type RoutesController interface {
 	GetRouteByName(w http.ResponseWriter, r *http.Request)
 }
 
-func NewRoutesController(routesSvc service.RoutesService) RoutesController {
+func NewRoutesController(routesSvc service.RoutesService, resp responder.Responder) RoutesController {
 	return &routesController{
 		routesSvc: routesSvc,
+		responder: resp,
 	}
 }
 
 type routesController struct {
 	routesSvc service.RoutesService
+	responder responder.Responder
 }
 
 func (c routesController) GetRouteByName(w http.ResponseWriter, r *http.Request) {
@@ -26,8 +29,8 @@ func (c routesController) GetRouteByName(w http.ResponseWriter, r *http.Request)
 
 	result, err := c.routesSvc.GetRouteByName(namespace, routeName)
 	if err != nil {
-		respondWithError(w, "Failed to get route", err)
+		c.responder.RespondWithError(w, "Failed to get route", err)
 		return
 	}
-	respondWithJson(w, http.StatusOK, result)
+	c.responder.RespondWithJson(w, http.StatusOK, result)
 }

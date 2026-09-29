@@ -23,11 +23,15 @@ type SystemInfoService interface {
 	GetAgentName() string
 	GetDiscoveryTimeout() time.Duration
 	InsecureProxyEnabled() bool //TODO: remove this after deprecated proxy path is removed
+	ShowDebugInResponse() bool
+	DebugEnabled() bool
 	GetBasePath() string
 	GetPaasPlatform() string
 	GetDiscoveryUrls() config.ApiTypeUrlsConfig
 	GetNamespacesCacheTTL() time.Duration
 	GetServicesCacheTTL() time.Duration
+	AgentStatusReportEnabled() bool
+	GetAgentStatusReportInterval() time.Duration
 }
 
 func NewSystemInfoService() (SystemInfoService, error) {
@@ -60,8 +64,12 @@ func setDefaults() {
 	viper.SetDefault("technicalParameters.paasPlatform", "KUBERNETES")
 	viper.SetDefault("technicalParameters.namespacesCacheTTLMin", 1440)
 	viper.SetDefault("technicalParameters.servicesCacheTTLMin", 480)
+	viper.SetDefault("technicalParameters.debugEnabled", true)
+	viper.SetDefault("technicalParameters.agentStatusReportEnabled", true)
+	viper.SetDefault("technicalParameters.agentStatusReportIntervalMin", 1440)
 	viper.SetDefault("security.allowedOrigins", []string{})
 	viper.SetDefault("security.insecureProxy", false)
+	viper.SetDefault("security.showDebugInResponse", false)
 	viper.SetDefault("discovery.excludeLabels", []string{})
 	viper.SetDefault("discovery.groupingLabels", []string{})
 	viper.SetDefault("discovery.timeoutSec", 15)
@@ -127,12 +135,28 @@ func (g systemInfoServiceImpl) InsecureProxyEnabled() bool {
 	return g.config.Security.InsecureProxy
 }
 
+func (g systemInfoServiceImpl) ShowDebugInResponse() bool {
+	return g.config.Security.ShowDebugInResponse
+}
+
+func (g systemInfoServiceImpl) DebugEnabled() bool {
+	return g.config.TechnicalParameters.DebugEnabled
+}
+
 func (g systemInfoServiceImpl) GetNamespacesCacheTTL() time.Duration {
 	return time.Duration(g.config.TechnicalParameters.NamespacesCacheTTLMin) * time.Minute
 }
 
 func (g systemInfoServiceImpl) GetServicesCacheTTL() time.Duration {
 	return time.Duration(g.config.TechnicalParameters.ServicesCacheTTLMin) * time.Minute
+}
+
+func (g systemInfoServiceImpl) AgentStatusReportEnabled() bool {
+	return g.config.TechnicalParameters.AgentStatusReportEnabled
+}
+
+func (g systemInfoServiceImpl) GetAgentStatusReportInterval() time.Duration {
+	return time.Duration(g.config.TechnicalParameters.AgentStatusReportIntervalMin) * time.Minute
 }
 
 func (g systemInfoServiceImpl) GetBasePath() string {

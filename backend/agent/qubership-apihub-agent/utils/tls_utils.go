@@ -29,6 +29,30 @@ var (
 	baseTLSErr  error
 )
 
+const (
+	// pooledTransportMaxIdleConns caps the total number of idle keep-alive connections kept
+	// open across all hosts, mirroring net/http.DefaultTransport. Without a cap, a transport
+	// that talks to many distinct hosts (e.g. one per-namespace service DNS name) accumulates
+	// idle connections without bound.
+	pooledTransportMaxIdleConns = 100
+	// pooledTransportIdleConnTimeout is how long an idle keep-alive connection is kept before
+	// being closed, mirroring net/http.DefaultTransport. The zero value disables this timeout,
+	// which leaves idle connections to hosts that are never revisited (e.g. after a namespace's
+	// services change) open for the lifetime of the process.
+	pooledTransportIdleConnTimeout = 90 * time.Second
+)
+
+// NewPooledTransport returns an http.Transport using tlsConfig with bounded idle-connection
+// limits, so pools that talk to many distinct hosts don't accumulate idle TCP connections
+// indefinitely.
+func NewPooledTransport(tlsConfig *tls.Config) *http.Transport {
+	return &http.Transport{
+		TLSClientConfig: tlsConfig,
+		MaxIdleConns:    pooledTransportMaxIdleConns,
+		IdleConnTimeout: pooledTransportIdleConnTimeout,
+	}
+}
+
 // ValidateTLSAtStartup validates the default TLS configuration at process startup.
 func ValidateTLSAtStartup() error {
 	_, err := BuildSecureTLSConfig(nil)
@@ -79,11 +103,12 @@ func buildRootCertPool(customPEM []byte) (*x509.CertPool, error) {
 }
 
 // CreateSecureHTTPClient returns an HTTP client with secure TLS configuration.
-func CreateSecureHTTPClient(timeout time.Duration) (*http.Client, error) {
+// name identifies the client's connection pool in the periodic diagnostic logs.
+func CreateSecureHTTPClient(timeout time.Duration, name string) (*http.Client, error) {
 	tlsConfig, err := BuildSecureTLSConfig(nil)
 	if err != nil {
 		return nil, err
 	}
-	tr := http.Transport{TLSClientConfig: tlsConfig}
-	return &http.Client{Transport: &tr, Timeout: timeout}, nil
+	tr := NewPooledTransport(tlsConfig)
+	return &http.Client{Transport: RegisterPoolStats(name, tr), Timeout: timeout}, nil
 }

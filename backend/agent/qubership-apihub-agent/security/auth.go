@@ -3,42 +3,42 @@ package security
 import (
 	"crypto/x509"
 	"fmt"
+	"time"
 
 	"github.com/Netcracker/qubership-apihub-agent/client"
 	"github.com/Netcracker/qubership-apihub-agent/controller"
+	"github.com/Netcracker/qubership-apihub-agent/responder"
 	"github.com/Netcracker/qubership-apihub-agent/secctx"
-	"github.com/shaj13/go-guardian/v2/auth"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/jwt"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/token"
 	"github.com/shaj13/go-guardian/v2/auth/strategies/union"
 	"github.com/shaj13/libcache"
 	_ "github.com/shaj13/libcache/fifo"
 	_ "github.com/shaj13/libcache/lru"
-
-	"time"
 )
 
-var strategy union.Union
-var customJwtStrategy auth.Strategy
+type Authenticator struct {
+	responder     responder.Responder
+	strategy      union.Union
+	proxyStrategy union.Union
+}
 
-var proxyAuthStrategy union.Union
-
-func SetupGoGuardian(apihubClient client.ApihubClient) error {
+func NewAuthenticator(apihubClient client.ApihubClient, resp responder.Responder) (Authenticator, error) {
 	if apihubClient == nil {
-		return fmt.Errorf("apihubClient is nil")
+		return Authenticator{}, fmt.Errorf("apihubClient is nil")
 	}
 
 	rsaPublicKeyView, err := apihubClient.GetRsaPublicKey(secctx.CreateSystemContext())
 	if err != nil {
-		return fmt.Errorf("rsa public key error - %s", err.Error())
+		return Authenticator{}, fmt.Errorf("rsa public key error - %s", err.Error())
 	}
 	if rsaPublicKeyView == nil {
-		return fmt.Errorf("rsa public key is empty")
+		return Authenticator{}, fmt.Errorf("rsa public key is empty")
 	}
 
 	rsaPublicKey, err := x509.ParsePKCS1PublicKey(rsaPublicKeyView.Value)
 	if err != nil {
-		return fmt.Errorf("ParsePKCS1PublicKey has error - %s", err.Error())
+		return Authenticator{}, fmt.Errorf("ParsePKCS1PublicKey has error - %s", err.Error())
 	}
 
 	keeper := jwt.StaticSecret{
@@ -58,10 +58,15 @@ func SetupGoGuardian(apihubClient client.ApihubClient) error {
 	cookieTokenStrategy := NewCookieTokenStrategy(apihubClient)
 	patStrategy := NewApihubPATStrategy(apihubClient)
 
-	strategy = union.New(jwtStrategy, apihubApiKeyStrategy, cookieTokenStrategy, patStrategy)
+	strategy := union.New(jwtStrategy, apihubApiKeyStrategy, cookieTokenStrategy, patStrategy)
 
 	customApihubApiKeyStrategy := NewCustomApihubApiKeyStrategy(apihubClient, controller.CustomApiKeyHeader)
-	customJwtStrategy = jwt.New(cache, keeper, token.SetParser(token.XHeaderParser(controller.CustomJwtAuthHeader)))
-	proxyAuthStrategy = union.New(customJwtStrategy, customApihubApiKeyStrategy, cookieTokenStrategy)
-	return nil
+	customJwtStrategy := jwt.New(cache, keeper, token.SetParser(token.XHeaderParser(controller.CustomJwtAuthHeader)))
+	proxyStrategy := union.New(customJwtStrategy, customApihubApiKeyStrategy, cookieTokenStrategy)
+
+	return Authenticator{
+		responder:     resp,
+		strategy:      strategy,
+		proxyStrategy: proxyStrategy,
+	}, nil
 }

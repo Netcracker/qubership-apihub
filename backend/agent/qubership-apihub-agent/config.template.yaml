@@ -25,6 +25,12 @@ technicalParameters:
   namespacesCacheTTLMin: 1440
   # Optional; TTL value for services cache; If not set, default value: 480; Example: 600
   servicesCacheTTLMin: 480
+  # Optional; Enables pprof profiling endpoints under /debug/pprof/, unauthenticated. Should be disabled on prod envs; If not set, default value: true; Example: false
+  debugEnabled: true
+  # Optional; Enables the periodic agent status report (discovery/document counters and connection stats) in the logs; If not set, default value: true; Example: false
+  agentStatusReportEnabled: true
+  # Optional; Interval in minutes between agent status reports; If not set, default value: 1440; Example: 60
+  agentStatusReportIntervalMin: 1440
 
 # Section with all security parameters
 security:
@@ -33,6 +39,8 @@ security:
     - https://localhost:5137
   # Deprecated; Set to true to enable apihub playground work without authtorization. Dangerous. Not recommended; If not set, default value: false; Example: false
   insecureProxy: false
+  # Optional; Enables the 'debug' field with internal error details in API error responses. Should be disabled on prod envs; If not set, default value: false; Example: false
+  showDebugInResponse: false
 
 discovery:
   # Optional; List of k8s labels keys which will be a mark to skip this service during discovery; If not set, default value: []; Example: [gateway,cronJob]

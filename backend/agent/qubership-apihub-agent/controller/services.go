@@ -3,6 +3,7 @@ package controller
 import (
 	"net/http"
 
+	"github.com/Netcracker/qubership-apihub-agent/responder"
 	"github.com/Netcracker/qubership-apihub-agent/secctx"
 	"github.com/Netcracker/qubership-apihub-agent/service"
 	"github.com/Netcracker/qubership-apihub-agent/view"
@@ -18,11 +19,13 @@ type ServiceController interface {
 
 func NewServiceController(serviceListCache service.ServiceListCache,
 	discoveryService service.DiscoveryService,
-	listNamesService service.ListService) ServiceController {
+	listNamesService service.ListService,
+	resp responder.Responder) ServiceController {
 	return serviceControllerImpl{
 		serviceListCache: serviceListCache,
 		discoveryService: discoveryService,
 		listService:      listNamesService,
+		responder:        resp,
 	}
 }
 
@@ -30,6 +33,7 @@ type serviceControllerImpl struct {
 	serviceListCache service.ServiceListCache
 	discoveryService service.DiscoveryService
 	listService      service.ListService
+	responder        responder.Responder
 }
 
 func (s serviceControllerImpl) ListServices_deprecated(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +48,9 @@ func (s serviceControllerImpl) ListServices_deprecated(w http.ResponseWriter, r 
 	for i, svc := range servicesList.Services {
 		servicesDeprecated[i] = svc.ToDeprecated()
 	}
-	respondWithJson(w, http.StatusOK, view.ServiceListResponse_deprecated{Services: servicesDeprecated, Status: servicesList.Status, Debug: servicesList.Details})
+
+	s.responder.RespondWithJson(w, http.StatusOK, view.ServiceListResponse_deprecated{Services: servicesDeprecated, Status: servicesList.Status, Debug: servicesList.Details})
+
 }
 
 func (s serviceControllerImpl) ListServices(w http.ResponseWriter, r *http.Request) {
@@ -53,9 +59,10 @@ func (s serviceControllerImpl) ListServices(w http.ResponseWriter, r *http.Reque
 	if workspaceId == "" {
 		workspaceId = view.DefaultWorkspaceId
 	}
+
 	requestedServices := getRequestedServicesQueryParam(r)
 	servicesList := s.serviceListCache.GetServicesList(namespace, workspaceId, requestedServices)
-	respondWithJson(w, http.StatusOK, view.ServiceListResponse{
+	s.responder.RespondWithJson(w, http.StatusOK, view.ServiceListResponse{
 		Services:          servicesList.Services,
 		Status:            servicesList.Status,
 		Debug:             servicesList.Details,
@@ -73,19 +80,19 @@ func (s serviceControllerImpl) StartDiscovery(w http.ResponseWriter, r *http.Req
 
 	failOnError, paramErr := getFailOnErrorQueryParam(r)
 	if paramErr != nil {
-		respondWithError(w, "failed to parse failOnError param", paramErr)
+		s.responder.RespondWithError(w, "failed to parse failOnError param", paramErr)
 		return
 	}
 
 	req, bodyErr := getDiscoveryRequestBody(w, r)
 	if bodyErr != nil {
-		respondWithError(w, "Failed to parse discovery request body", bodyErr)
+		s.responder.RespondWithError(w, "Failed to parse discovery request body", bodyErr)
 		return
 	}
 
 	err := s.discoveryService.StartDiscovery(secctx.Create(r), namespace, workspaceId, failOnError, req)
 	if err != nil {
-		respondWithError(w, "Failed to start discovery process", err)
+		s.responder.RespondWithError(w, "Failed to start discovery process", err)
 		return
 	}
 	w.WriteHeader(http.StatusAccepted)
@@ -96,10 +103,10 @@ func (s serviceControllerImpl) ListServiceNames(w http.ResponseWriter, r *http.R
 
 	result, err := s.listService.ListServiceNames(namespace)
 	if err != nil {
-		respondWithError(w, "Failed to list service names", err)
+		s.responder.RespondWithError(w, "Failed to list service names", err)
 		return
 	}
-	respondWithJson(w, http.StatusOK, view.ServiceNamesResponse{ServiceNames: result})
+	s.responder.RespondWithJson(w, http.StatusOK, view.ServiceNamesResponse{ServiceNames: result})
 }
 
 func (s serviceControllerImpl) ListServiceItems(w http.ResponseWriter, r *http.Request) {
@@ -107,8 +114,8 @@ func (s serviceControllerImpl) ListServiceItems(w http.ResponseWriter, r *http.R
 
 	result, err := s.listService.ListServiceItems(namespace)
 	if err != nil {
-		respondWithError(w, "Failed to list service items", err)
+		s.responder.RespondWithError(w, "Failed to list service items", err)
 		return
 	}
-	respondWithJson(w, http.StatusOK, view.ServiceItemsResponse{ServiceItems: result})
+	s.responder.RespondWithJson(w, http.StatusOK, view.ServiceItemsResponse{ServiceItems: result})
 }

@@ -65,6 +65,8 @@ qubershipApihubAgent:
       allowedOrigins: []
       # Deprecated; Set to true to enable apihub playground work without authtorization. Dangerous. Not recommended; If not set, default value: false; Example: false
       insecureProxy: false
+      # Optional; Enables the 'debug' field with internal error details in API error responses. Should be disabled on prod envs; If not set, default value: false; Example: false
+      showDebugInResponse: false
 
     discovery:
       # Optional; List of k8s labels keys which will be a mark to skip this service during discovery; If not set, default value: []; Example: [gateway,cronJob]

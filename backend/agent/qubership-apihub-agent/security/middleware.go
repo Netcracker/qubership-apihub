@@ -11,14 +11,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func Secure(next http.HandlerFunc) http.HandlerFunc {
+func (a Authenticator) Secure(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Errorf("Request failed with panic: %v", err)
 				log.Tracef("Stacktrace: %v", string(debug.Stack()))
 				debug.PrintStack()
-				controller.RespondWithCustomError(w, &exception.CustomError{
+				a.responder.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusInternalServerError,
 					Message: http.StatusText(http.StatusInternalServerError),
 					Debug:   fmt.Sprintf("%v", err),
@@ -26,10 +26,10 @@ func Secure(next http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 		}()
-		_, user, err := strategy.AuthenticateRequest(r)
+		_, user, err := a.strategy.AuthenticateRequest(r)
 		if err != nil {
 			log.Debugf("Authorization failed(401): %+v", err)
-			controller.RespondWithCustomError(w, &exception.CustomError{
+			a.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusUnauthorized,
 				Message: http.StatusText(http.StatusUnauthorized),
 				Debug:   fmt.Sprintf("%v", err),
@@ -42,14 +42,14 @@ func Secure(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func SecureProxy(next http.HandlerFunc) http.HandlerFunc {
+func (a Authenticator) SecureProxy(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Errorf("Request failed with panic: %v", err)
 				log.Tracef("Stacktrace: %v", string(debug.Stack()))
 				debug.PrintStack()
-				controller.RespondWithCustomError(w, &exception.CustomError{
+				a.responder.RespondWithCustomError(w, &exception.CustomError{
 					Status:  http.StatusInternalServerError,
 					Message: http.StatusText(http.StatusInternalServerError),
 					Debug:   fmt.Sprintf("%v", err),
@@ -57,11 +57,11 @@ func SecureProxy(next http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 		}()
-		_, _, err := proxyAuthStrategy.AuthenticateRequest(r)
+		_, _, err := a.proxyStrategy.AuthenticateRequest(r)
 		if err != nil {
 			log.Debugf("Authorization failed(401): %+v", err)
 			w.Header().Add(controller.CustomProxyErrorHeader, fmt.Sprintf("Proxy authentication failed: %v", err.Error()))
-			controller.RespondWithCustomError(w, &exception.CustomError{
+			a.responder.RespondWithCustomError(w, &exception.CustomError{
 				Status:  http.StatusUnauthorized,
 				Message: http.StatusText(http.StatusUnauthorized),
 				Debug:   fmt.Sprintf("%v", err),

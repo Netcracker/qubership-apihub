@@ -7,17 +7,20 @@ type Config struct {
 }
 
 type TechnicalParameters struct {
-	BasePath              string
-	ListenAddress         string `validate:"required"`
-	Version               string
-	Apihub                ApihubConfig
-	AgentUrl              string `validate:"required"`
-	CloudName             string `validate:"required,slug_only_characters"`
-	Namespace             string `validate:"required,slug_only_characters"`
-	AgentName             string `validate:"slug_only_characters"`
-	PaasPlatform          string `validate:"required"`
-	NamespacesCacheTTLMin int
-	ServicesCacheTTLMin   int
+	BasePath                     string
+	ListenAddress                string `validate:"required"`
+	Version                      string
+	Apihub                       ApihubConfig
+	AgentUrl                     string `validate:"required"`
+	CloudName                    string `validate:"required,slug_only_characters"`
+	Namespace                    string `validate:"required,slug_only_characters"`
+	AgentName                    string `validate:"slug_only_characters"`
+	PaasPlatform                 string `validate:"required"`
+	NamespacesCacheTTLMin        int
+	ServicesCacheTTLMin          int
+	DebugEnabled                 bool
+	AgentStatusReportEnabled     bool
+	AgentStatusReportIntervalMin int
 }
 
 type ApihubConfig struct {
@@ -26,8 +29,9 @@ type ApihubConfig struct {
 }
 
 type SecurityConfig struct {
-	AllowedOrigins []string
-	InsecureProxy  bool
+	AllowedOrigins      []string
+	InsecureProxy       bool
+	ShowDebugInResponse bool
 }
 
 type DiscoveryConfig struct {
