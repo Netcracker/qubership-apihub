@@ -35,11 +35,22 @@ import { sortFilesRecord } from '@apihub/routes/root/PortalPage/PackagePage/file
 import { ConfigureFileTableTree } from '@apihub/routes/root/PortalPage/PackagePage/ConfigureFileTableTree'
 import { find } from 'lodash-es'
 import { UploadButton } from '@netcracker/qubership-apihub-ui-shared/components/UploadButton'
+import {
+  ACCEPTABLE_VERSION_FILE_EXTENSIONS,
+  createUnsupportedFilesMessage,
+  partitionFilesByExtension,
+  toAllowedFormatsEnumeration,
+} from '@netcracker/qubership-apihub-ui-shared/utils/acceptable-files'
 
 const PREVIEWABLE_FILE_TYPES = Object.keys(specTypeViewers)
 
 export const VersionConfigurationSubPage: FC = memo(() => {
-  const { showSpecificationDialog, showDeleteFileDialog, showEditFileLabelsDialog } = useEventBus()
+  const {
+    showSpecificationDialog,
+    showDeleteFileDialog,
+    showEditFileLabelsDialog,
+    showErrorNotification,
+  } = useEventBus()
   const [searchValue, setSearchValue] = useState('')
 
   const {
@@ -57,8 +68,17 @@ export const VersionConfigurationSubPage: FC = memo(() => {
   const sortedFiles = sortFilesRecord(filesWithLabels, searchValue)
 
   const handleAdd = useCallback((files: File[]): void => {
-    addFiles(files)
-  }, [addFiles])
+    const { accepted, rejected } = partitionFilesByExtension(files, ACCEPTABLE_VERSION_FILE_EXTENSIONS)
+    if (!isEmpty(rejected)) {
+      showErrorNotification({
+        title: 'Unsupported file type',
+        message: createUnsupportedFilesMessage(rejected, ACCEPTABLE_VERSION_FILE_EXTENSIONS),
+      })
+    }
+    if (!isEmpty(accepted)) {
+      addFiles(accepted)
+    }
+  }, [addFiles, showErrorNotification])
 
   const handleOnChange = useCallback(({ target: { files } }: ChangeEvent<HTMLInputElement>) => {
     if (files !== null) {
@@ -139,9 +159,16 @@ export const VersionConfigurationSubPage: FC = memo(() => {
         }}>
           Configure Package Version
           <Tooltip
-            title="Drag and drop files onto the page or click Browse Files button"
+            title={
+              <>
+                Drag and drop files onto the page or click Browse Files button
+                <br/>
+                <br/>
+                Allowed formats: {toAllowedFormatsEnumeration(ACCEPTABLE_VERSION_FILE_EXTENSIONS)}
+              </>
+            }
             PopperProps={{
-              sx: { '.MuiTooltip-tooltip': { maxWidth: 'unset' } },
+              sx: { '.MuiTooltip-tooltip': { maxWidth: '600px' } },
             }}
           >
             <InfoContextIcon/>
@@ -159,6 +186,7 @@ export const VersionConfigurationSubPage: FC = memo(() => {
           />}
           <UploadButton
             multiple
+            acceptableFileTypes={ACCEPTABLE_VERSION_FILE_EXTENSIONS}
             onUpload={handleOnChange}
             variant="contained"
             title="Browse Files"
@@ -168,6 +196,7 @@ export const VersionConfigurationSubPage: FC = memo(() => {
       }
       body={
         <FileTableUpload
+          acceptableFileTypes={ACCEPTABLE_VERSION_FILE_EXTENSIONS}
           uploadFilesMap={{ ...sortedFiles }}
           onAddFiles={handleAdd}
           getFileClickHandler={getFileClickHandler}

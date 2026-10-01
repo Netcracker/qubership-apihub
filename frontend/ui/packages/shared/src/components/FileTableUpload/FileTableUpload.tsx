@@ -30,7 +30,7 @@ import { EditIcon } from '../../icons/EditIcon'
 export type FileLabelsRecord = Record<string, { file: File; labels: string[] }>
 
 export type FileTableUploadProps = PropsWithChildren<{
-  acceptableFileTypes?: string[]
+  acceptableFileTypes?: readonly string[]
   uploadFilesMap: FileLabelsRecord
   onAddFiles: (files: File[]) => void
   getFileClickHandler: (file: File) => ((file: File) => void) | null
