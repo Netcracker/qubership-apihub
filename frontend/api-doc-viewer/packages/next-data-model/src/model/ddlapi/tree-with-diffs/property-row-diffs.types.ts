@@ -70,7 +70,6 @@ export type DdlApiTablePropertyRowDiffs = Partial<
 export const DDL_TABLE_CHANGED_PROPERTY_KEYS = [
   NODE_LEVEL_DIFF_KEY,
   DDL_PROPERTY_TITLE_ROW_DIFF_KEY,
-  "tableName",
   "schemaName",
   "description",
 ] as const satisfies ReadonlyArray<keyof DdlApiTablePropertyRowDiffs>
@@ -106,7 +105,6 @@ export type DdlApiIndexPropertyRowDiffs = Partial<
 export const DDL_COLUMN_CHANGED_PROPERTY_KEYS = [
   NODE_LEVEL_DIFF_KEY,
   DDL_PROPERTY_TITLE_ROW_DIFF_KEY,
-  "columnName",
   "description",
   "generatedExpression",
   ...DDL_COLUMN_FLAG_DIFF_KEYS,
@@ -115,7 +113,6 @@ export const DDL_COLUMN_CHANGED_PROPERTY_KEYS = [
 export const DDL_INDEX_CHANGED_PROPERTY_KEYS = [
   NODE_LEVEL_DIFF_KEY,
   DDL_PROPERTY_TITLE_ROW_DIFF_KEY,
-  "indexName",
   "description",
   ...DDL_INDEX_FLAG_DIFF_KEYS,
 ] as const satisfies ReadonlyArray<keyof DdlApiIndexPropertyRowDiffs>

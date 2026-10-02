@@ -31,10 +31,10 @@ import {
   AttrKind,
   Column,
   ColumnType,
-  Expr,
   findAttr,
   ForeignKey,
   Index,
+  IndexPart,
   PgAttrKind,
   PgObjectKind,
   Realm,
@@ -56,6 +56,9 @@ export interface DdlApiTableOrientedSpecColumnsSection extends DdlApiSectionHead
 export interface DdlApiTableOrientedSpecIndexesSection extends DdlApiSectionHeaderRowValue {
   readonly items: readonly DdlApiIndexRowValue[];
 }
+
+/** The fields of an index part that make up its display name. */
+export type DdlApiIndexPartNameSource = Pick<IndexPart, 'column' | 'expr'>
 
 /** Crawl-ready table document produced from a normalized or merged DDL source. */
 export interface DdlApiTableOrientedSpec extends DdlApiTableRowValue {
@@ -110,7 +113,7 @@ export class DdlApiSpecTransformer {
       columns: {
         title: DDL_API_COLUMNS_SECTION_TITLE,
         items: (table.columns ?? []).map(column =>
-          this.buildColumnRowValue(realm, table, column, tableKey.schemaName),
+          this.buildColumnRowValue(table, column),
         ),
       },
       indexes: {
@@ -164,19 +167,14 @@ export class DdlApiSpecTransformer {
     return true
   }
 
-  private buildColumnRowValue(
-    realm: Realm,
-    table: Table,
-    column: Column,
-    owningSchemaName: string,
-  ): DdlApiColumnRowValue {
+  private buildColumnRowValue(table: Table, column: Column): DdlApiColumnRowValue {
     const comment = findAttr(column.attrs, AttrKind.Comment)
     const identity = column.attrs?.find(attribute => attribute.kind === PgAttrKind.Identity)
     const generatedExpr = findAttr(column.attrs, AttrKind.GeneratedExpr)
     const isGenerated = identity !== undefined || generatedExpr !== undefined
     const foreignKeys = this.findForeignKeysForColumn(table, column)
     const foreignKeyTargets = foreignKeys
-      .map(foreignKey => this.buildForeignKeyTarget(realm, foreignKey, column, owningSchemaName))
+      .map(foreignKey => this.buildForeignKeyTarget(foreignKey, column))
       .filter((target): target is DdlApiForeignKeyTarget => target !== undefined)
     const isForeignKey = foreignKeyTargets.length > 0
 
@@ -221,29 +219,18 @@ export class DdlApiSpecTransformer {
     }
   }
 
-  private findSchemaNameForTable(realm: Realm, table: Table): string | undefined {
-    for (const schema of realm.schemas) {
-      if (schema.tables?.some(currentTable => currentTable === table)) {
-        return schema.name
-      }
-    }
-    return undefined
-  }
-
   protected isPrimaryKeyColumn(table: Table, column: Column): boolean {
     return (table.primaryKey?.parts ?? [])
-      .some(part => part.column?.name === column.name)
+      .some(part => part.column === column.name)
   }
 
   protected isSingleColumnUniqueIndexForColumn(index: Index, columnName: string): boolean {
-    return index.unique === true
-      && (index.parts ?? []).length === 1
-      && (index.parts ?? [])[0]?.column?.name === columnName
+    return index.unique === true && this.isSingleColumnIndexForColumn(index, columnName)
   }
 
   protected isSingleColumnIndexForColumn(index: Index, columnName: string): boolean {
-    return (index.parts ?? []).length === 1
-      && (index.parts ?? [])[0]?.column?.name === columnName
+    const parts = index.parts ?? []
+    return parts.length === 1 && parts[0].column === columnName
   }
 
   private isUniqueColumn(table: Table, column: Column): boolean {
@@ -252,25 +239,12 @@ export class DdlApiSpecTransformer {
     )
   }
 
-  protected isSameForeignKeyColumn(foreignKeyColumn: Column, column: Column): boolean {
-    return foreignKeyColumn === column || foreignKeyColumn.name === column.name
-  }
-
   protected findForeignKeysForColumn(table: Table, column: Column): ForeignKey[] {
-    return (table.foreignKeys ?? []).filter(foreignKey =>
-      foreignKey.columns?.some(foreignKeyColumn => this.isSameForeignKeyColumn(foreignKeyColumn, column)),
-    )
+    return (table.foreignKeys ?? []).filter(foreignKey => foreignKey.columns?.includes(column.name))
   }
 
-  protected buildForeignKeyTarget(
-    realm: Realm,
-    foreignKey: ForeignKey,
-    column: Column,
-    owningSchemaName: string,
-  ): DdlApiForeignKeyTarget | undefined {
-    const columnIndex = foreignKey.columns?.findIndex(foreignKeyColumn =>
-      this.isSameForeignKeyColumn(foreignKeyColumn, column),
-    ) ?? -1
+  protected buildForeignKeyTarget(foreignKey: ForeignKey, column: Column): DdlApiForeignKeyTarget | undefined {
+    const columnIndex = foreignKey.columns?.indexOf(column.name) ?? -1
     if (columnIndex < 0) {
       return undefined
     }
@@ -281,52 +255,11 @@ export class DdlApiSpecTransformer {
       return undefined
     }
 
-    const schemaName = this.resolveForeignKeyTargetSchemaName(realm, refTable, owningSchemaName)
-    if (!schemaName) {
-      return undefined
-    }
-
     return {
-      schemaName,
+      schemaName: refTable.schema,
       tableName: refTable.name,
-      columnName: refColumn.name,
+      columnName: refColumn,
     }
-  }
-
-  /**
-   * Resolves the schema that owns `refTable`. Prefer referential lookup in the realm
-   * (canonical after `buildFromDdl`); fall back to a unique name match, then the
-   * owning table's schema for single-table / partial realms where `refTable` is
-   * embedded but omitted from `schema.tables`.
-   */
-  private resolveForeignKeyTargetSchemaName(
-    realm: Realm,
-    refTable: Table,
-    owningSchemaName: string,
-  ): string | undefined {
-    const schemaByReference = this.findSchemaNameForTable(realm, refTable)
-    if (schemaByReference) {
-      return schemaByReference
-    }
-
-    const schemaByUniqueTableName = this.findUniqueSchemaNameForTableName(realm, refTable.name)
-    if (schemaByUniqueTableName) {
-      return schemaByUniqueTableName
-    }
-
-    return owningSchemaName
-  }
-
-  private findUniqueSchemaNameForTableName(realm: Realm, tableName: string): string | undefined {
-    const matchingSchemaNames = realm.schemas
-      .filter(schema => schema.tables?.some(currentTable => currentTable.name === tableName))
-      .map(schema => schema.name)
-
-    if (matchingSchemaNames.length === 1) {
-      return matchingSchemaNames[0]
-    }
-
-    return undefined
   }
 
   private formatColumnType(columnType: ColumnType | undefined): DdlApiColumnTypeValue {
@@ -482,9 +415,9 @@ export class DdlApiSpecTransformer {
     return `${typeName} (${definedParameters.join(', ')})`
   }
 
-  protected formatIndexPartName(part: { column?: { name: string }; expr?: Expr }): string {
-    if (part.column?.name) {
-      return part.column.name
+  protected formatIndexPartName(part: DdlApiIndexPartNameSource): string {
+    if (part.column) {
+      return part.column
     }
 
     if (!part.expr) {

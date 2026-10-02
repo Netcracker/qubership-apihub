@@ -52,10 +52,9 @@ export interface DdlApiSectionHeaderRowValue {
  *
  * | Field | ddlapi source |
  * |-------|---------------|
- * | `schemaName` | `Schema.name` of the schema that owns `ForeignKey.refTable`, or the
- *                owning table's schema when `refTable` is embedded in a partial realm |
+ * | `schemaName` | `ForeignKey.refTable.schema` |
  * | `tableName` | `ForeignKey.refTable.name` |
- * | `columnName` | `ForeignKey.refColumns[j].name` where `j` is the index of the column inside `ForeignKey.columns` |
+ * | `columnName` | `ForeignKey.refColumns[j]` where `j` is the index of the column name inside `ForeignKey.columns` |
  */
 export interface DdlApiForeignKeyTarget {
   readonly schemaName: string
@@ -238,12 +237,12 @@ export type DdlApiColumnGeneratedBy =
  * |-------|-----------|---------------|
  * | `columnName` | always | `Column.name` |
  * | `columnType` | always | `Column.type` → {@link DdlApiColumnTypeValue} |
- * | `isPrimaryKey` | column ∈ PK | `Table.primaryKey.parts[*].column === column` |
- * | `isForeignKey` | column ∈ FK | `Table.foreignKeys[*].columns` contains column |
+ * | `isPrimaryKey` | column ∈ PK | `Table.primaryKey.parts[*].column === column.name` |
+ * | `isForeignKey` | column ∈ FK | `Table.foreignKeys[*].columns` contains `column.name` |
  * | `foreignKeyTargets` | `isForeignKey` | one entry per matching `ForeignKey` |
  * | `isGenerated` | IDENTITY or GENERATED AS | `column.attrs`: `Identity` or `GeneratedExpr` |
  * | `generatedBy` | `isGenerated` | {@link DDL_COLUMN_GENERATED_BY.Identity} → `PgAttrKind.Identity`; {@link DDL_COLUMN_GENERATED_BY.Expression} → `AttrKind.GeneratedExpr`. Stored for API consumers; api-doc-viewer always shows badge **generated** and does not surface identity vs expression in the UI. |
- * | `isUnique` | single-column unique index/constraint | `Table.indexes[*].unique && parts.length === 1 && parts[0].column === column` |
+ * | `isUnique` | single-column unique index/constraint | `Table.indexes[*].unique && parts.length === 1 && parts[0].column === column.name` |
  * | `isNotNull` | explicit NOT NULL | `ColumnType.null === false` (`undefined` → false; explicit `NULL` → false) |
  * | `description` | COMMENT ON COLUMN | `findAttr(column.attrs, Comment)?.text` |
  * | `defaultValue` | `Column.default` present | `Column.default` → {@link formatDefaultValueForDisplay} |
@@ -276,7 +275,7 @@ export interface DdlApiColumnRowValue extends DdlApiRowDescription {
  * | Field | ddlapi source |
  * |-------|---------------|
  * | `indexName` | `Index.name` (may be absent for unnamed inline UNIQUE) |
- * | `partNames` | ordered display for each `IndexPart`: `part.column.name` or formatted `part.expr` |
+ * | `partNames` | ordered display for each `IndexPart`: `part.column` or formatted `part.expr` |
  * | `isUnique` | `Index.unique === true` |
  * | `description` | COMMENT ON INDEX | `findAttr(index.attrs, Comment)?.text` |
  */

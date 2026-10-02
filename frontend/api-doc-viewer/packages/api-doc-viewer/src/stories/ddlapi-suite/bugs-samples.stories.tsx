@@ -151,15 +151,7 @@ const BUG_FOREIGN_KEY_REALM: Realm = {
             "parts": [
               {
                 "seqNo": 0,
-                "column": {
-                  "name": "id",
-                  "type": {
-                    "type": {
-                      "kind": "UUIDType",
-                      "type": "uuid"
-                    }
-                  }
-                }
+                "column": "id"
               }
             ],
             "name": "ai_chat_pkey"
@@ -169,156 +161,15 @@ const BUG_FOREIGN_KEY_REALM: Realm = {
               "kind": "ForeignKey",
               "symbol": "ai_chat_user_fk",
               "columns": [
-                {
-                  "name": "user_id",
-                  "type": {
-                    "type": {
-                      "kind": "StringType",
-                      "type": "varchar"
-                    },
-                    "null": false
-                  }
-                }
+                "user_id"
               ],
               "onDelete": "CASCADE",
               "refTable": {
-                "kind": "Table",
-                "name": "user_data",
-                "columns": [
-                  {
-                    "name": "user_id",
-                    "type": {
-                      "type": {
-                        "kind": "StringType",
-                        "type": "varchar"
-                      }
-                    }
-                  },
-                  {
-                    "name": "email",
-                    "type": {
-                      "type": {
-                        "kind": "StringType",
-                        "type": "varchar"
-                      }
-                    }
-                  },
-                  {
-                    "name": "name",
-                    "type": {
-                      "type": {
-                        "kind": "StringType",
-                        "type": "varchar"
-                      }
-                    }
-                  },
-                  {
-                    "name": "avatar_url",
-                    "type": {
-                      "type": {
-                        "kind": "StringType",
-                        "type": "varchar"
-                      }
-                    }
-                  },
-                  {
-                    "name": "password",
-                    "type": {
-                      "type": {
-                        "kind": "BinaryType",
-                        "type": "bytea"
-                      }
-                    }
-                  },
-                  {
-                    "name": "private_package_id",
-                    "type": {
-                      "type": {
-                        "kind": "StringType",
-                        "type": "varchar"
-                      },
-                      "null": false
-                    },
-                    "default": {
-                      "kind": "RawExpr",
-                      "expr": "''::varchar"
-                    }
-                  }
-                ],
-                "indexes": [
-                  {
-                    "kind": "Index",
-                    "name": "email_unique",
-                    "unique": true,
-                    "parts": [
-                      {
-                        "seqNo": 0,
-                        "column": {
-                          "name": "email",
-                          "type": {
-                            "type": {
-                              "kind": "StringType",
-                              "type": "varchar"
-                            }
-                          }
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "kind": "Index",
-                    "name": "private_package_id_unique",
-                    "unique": true,
-                    "parts": [
-                      {
-                        "seqNo": 0,
-                        "column": {
-                          "name": "private_package_id",
-                          "type": {
-                            "type": {
-                              "kind": "StringType",
-                              "type": "varchar"
-                            },
-                            "null": false
-                          },
-                          "default": {
-                            "kind": "RawExpr",
-                            "expr": "''::varchar"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                ],
-                "primaryKey": {
-                  "kind": "Index",
-                  "parts": [
-                    {
-                      "seqNo": 0,
-                      "column": {
-                        "name": "user_id",
-                        "type": {
-                          "type": {
-                            "kind": "StringType",
-                            "type": "varchar"
-                          }
-                        }
-                      }
-                    }
-                  ],
-                  "name": "PK_user_data"
-                }
+                "schema": "public",
+                "name": "user_data"
               },
               "refColumns": [
-                {
-                  "name": "user_id",
-                  "type": {
-                    "type": {
-                      "kind": "StringType",
-                      "type": "varchar"
-                    }
-                  }
-                }
+                "user_id"
               ]
             }
           ],
@@ -329,46 +180,15 @@ const BUG_FOREIGN_KEY_REALM: Realm = {
               "parts": [
                 {
                   "seqNo": 0,
-                  "column": {
-                    "name": "user_id",
-                    "type": {
-                      "type": {
-                        "kind": "StringType",
-                        "type": "varchar"
-                      },
-                      "null": false
-                    }
-                  }
+                  "column": "user_id"
                 },
                 {
                   "seqNo": 1,
-                  "column": {
-                    "name": "pinned",
-                    "type": {
-                      "type": {
-                        "kind": "BoolType",
-                        "type": "boolean"
-                      },
-                      "null": false
-                    },
-                    "default": {
-                      "kind": "Literal",
-                      "value": "false"
-                    }
-                  }
+                  "column": "pinned"
                 },
                 {
                   "seqNo": 2,
-                  "column": {
-                    "name": "last_message_at",
-                    "type": {
-                      "type": {
-                        "kind": "TimeType",
-                        "type": "timestamp"
-                      },
-                      "null": false
-                    }
-                  }
+                  "column": "last_message_at"
                 }
               ]
             },
@@ -378,48 +198,17 @@ const BUG_FOREIGN_KEY_REALM: Realm = {
               "parts": [
                 {
                   "seqNo": 0,
-                  "column": {
-                    "name": "user_id",
-                    "type": {
-                      "type": {
-                        "kind": "StringType",
-                        "type": "varchar"
-                      },
-                      "null": false
-                    }
-                  }
+                  "column": "user_id"
                 },
                 {
                   "seqNo": 1,
                   "desc": true,
-                  "column": {
-                    "name": "pinned",
-                    "type": {
-                      "type": {
-                        "kind": "BoolType",
-                        "type": "boolean"
-                      },
-                      "null": false
-                    },
-                    "default": {
-                      "kind": "Literal",
-                      "value": "false"
-                    }
-                  }
+                  "column": "pinned"
                 },
                 {
                   "seqNo": 2,
                   "desc": true,
-                  "column": {
-                    "name": "last_message_at",
-                    "type": {
-                      "type": {
-                        "kind": "TimeType",
-                        "type": "timestamp"
-                      },
-                      "null": false
-                    }
-                  }
+                  "column": "last_message_at"
                 }
               ]
             }

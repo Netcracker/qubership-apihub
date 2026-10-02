@@ -35,24 +35,53 @@ const navigationLinkBuilder = (schema: string, table: string, column: string) =>
   return `#${schema}.${table}.${column}`;
 };
 
-const resolveTableKeyFromRealm = (realm: Realm): TableKey | null => {
-  for (const schema of realm.schemas ?? []) {
-    const table = schema.tables?.[0];
-    if (table) {
-      return {
-        schemaName: schema.name,
-        name: table.name,
-      };
-    }
-  }
+type TablePresence = "both" | "before" | "after";
 
-  return null;
+type TableOption = {
+  id: string;
+  tableKey: TableKey;
+  presence: TablePresence;
+};
+
+type PreparedMergedSource = {
+  mergedSource: Realm;
+  tableOptions: TableOption[];
+};
+
+const PRESENCE_LABELS: Record<TablePresence, string> = {
+  both: "",
+  before: " (before only)",
+  after: " (after only)",
+};
+
+const tableId = ({ schemaName, name }: TableKey): string => `${schemaName}.${name}`;
+
+const tableIds = (realm: Realm): Set<string> =>
+  new Set(
+    (realm.schemas ?? []).flatMap((schema) =>
+      (schema.tables ?? []).map((table) => tableId({ schemaName: schema.name, name: table.name })),
+    ),
+  );
+
+// Every table of the merged realm, which holds the tables of both sides, marked with the side
+// it comes from.
+const resolveTableOptions = (merged: Realm, before: Realm, after: Realm): TableOption[] => {
+  const beforeIds = tableIds(before);
+  const afterIds = tableIds(after);
+  return (merged.schemas ?? []).flatMap((schema) =>
+    (schema.tables ?? []).map((table) => {
+      const tableKey = { schemaName: schema.name, name: table.name };
+      const id = tableId(tableKey);
+      const presence: TablePresence = !afterIds.has(id) ? "before" : !beforeIds.has(id) ? "after" : "both";
+      return { id, tableKey, presence };
+    }),
+  );
 };
 
 const prepareMergedSource = async (
   beforeSql: string,
   afterSql: string,
-): Promise<{ mergedSource: Realm; tableKey: TableKey }> => {
+): Promise<PreparedMergedSource> => {
   const [beforeRealm, afterRealm] = await Promise.all([
     buildFromDdlInBrowser(beforeSql),
     buildFromDdlInBrowser(afterSql),
@@ -72,12 +101,12 @@ const prepareMergedSource = async (
   console.debug("Merged diffs realm:", merged);
   console.log("TEST_DIFF_META_KEYS", TEST_DIFF_META_KEYS);
 
-  const tableKey = resolveTableKeyFromRealm(merged);
-  if (!tableKey) {
+  const tableOptions = resolveTableOptions(merged, before, after);
+  if (tableOptions.length === 0) {
     throw new Error("Merged DDL contains no tables — add a CREATE TABLE to before and/or after SQL.");
   }
 
-  return { mergedSource: merged, tableKey };
+  return { mergedSource: merged, tableOptions };
 };
 
 export const BuildFromDdlDiffsDebug: FC<BuildFromDdlDiffsDebugProps> = ({
@@ -86,7 +115,9 @@ export const BuildFromDdlDiffsDebug: FC<BuildFromDdlDiffsDebugProps> = ({
   displayMode,
 }) => {
   const [mergedSource, setMergedSource] = useState<Realm | null>(null);
-  const [tableKey, setTableKey] = useState<TableKey | null>(null);
+  const [tableOptions, setTableOptions] = useState<TableOption[]>([]);
+  // Kept across SQL edits, so the viewer stays on the chosen table while it still exists.
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -96,13 +127,13 @@ export const BuildFromDdlDiffsDebug: FC<BuildFromDdlDiffsDebugProps> = ({
     setLoading(true);
     setError(null);
     setMergedSource(null);
-    setTableKey(null);
+    setTableOptions([]);
 
     prepareMergedSource(beforeSql, afterSql)
       .then((result) => {
         if (!cancelled) {
           setMergedSource(result.mergedSource);
-          setTableKey(result.tableKey);
+          setTableOptions(result.tableOptions);
         }
       })
       .catch((cause: unknown) => {
@@ -141,7 +172,10 @@ export const BuildFromDdlDiffsDebug: FC<BuildFromDdlDiffsDebugProps> = ({
     );
   }
 
-  if (!mergedSource || !tableKey) {
+  const selectedTable =
+    tableOptions.find((option) => option.id === selectedTableId) ?? tableOptions[0];
+
+  if (!mergedSource || !selectedTable) {
     return null;
   }
 
@@ -155,14 +189,30 @@ export const BuildFromDdlDiffsDebug: FC<BuildFromDdlDiffsDebugProps> = ({
   }
 
   return (
-    <DdlTableDiffsViewer
-      key={`${btoa(beforeSql)}-${btoa(afterSql)}`}
-      mergedSource={mergedSource}
-      tableKey={tableKey}
-      navigationLinkBuilder={navigationLinkBuilder}
-      diffMetaKeys={TEST_DIFF_META_KEYS}
-      displayMode={displayMode}
-      devMode={true}
-    />
+    <>
+      <label style={{ display: "inline-flex", gap: 8, alignItems: "center", marginBottom: 12 }}>
+        Table
+        <select
+          value={selectedTable.id}
+          onChange={(event) => setSelectedTableId(event.target.value)}
+        >
+          {tableOptions.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.id}
+              {PRESENCE_LABELS[option.presence]}
+            </option>
+          ))}
+        </select>
+      </label>
+      <DdlTableDiffsViewer
+        key={`${btoa(beforeSql)}-${btoa(afterSql)}-${selectedTable.id}`}
+        mergedSource={mergedSource}
+        tableKey={selectedTable.tableKey}
+        navigationLinkBuilder={navigationLinkBuilder}
+        diffMetaKeys={TEST_DIFF_META_KEYS}
+        displayMode={displayMode}
+        devMode={true}
+      />
+    </>
   );
 };

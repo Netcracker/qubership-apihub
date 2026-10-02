@@ -10,7 +10,7 @@ import {
 exitIfInsideNodeModules(import.meta.url)
 
 // Dynamic import: must run after exitIfInsideNodeModules because static import breaks the UI component build
-const { getCompatibilitySuites, TEST_SPEC_TYPE_GRAPH_QL } = await import(
+const { getCompatibilitySuites, TEST_SPEC_TYPE_GRAPH_QL, TEST_SPEC_TYPE_DDL_API } = await import(
   '@netcracker/qubership-apihub-compatibility-suites'
 )
 
@@ -25,6 +25,14 @@ const STORY_GENERATION_CONFIGS = [
     storyComponentName: 'GraphQLStoryComponent',
     storyArgsTypeName: 'GraphQLCompatibilitySuiteStoryArgs',
     storyArgsGetter: 'getGraphQLStoryArgs',
+  },
+  {
+    specType: TEST_SPEC_TYPE_DDL_API,
+    specTypeConst: 'TEST_SPEC_TYPE_DDL_API',
+    displayName: 'DDL API',
+    storyComponentName: 'DdlStoryComponent',
+    storyArgsTypeName: 'DdlCompatibilitySuiteStoryArgs',
+    storyArgsGetter: 'getDdlStoryArgs',
   },
 ]
 

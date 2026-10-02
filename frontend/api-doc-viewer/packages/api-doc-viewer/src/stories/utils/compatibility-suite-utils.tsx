@@ -19,13 +19,22 @@ import { DiffMetaKeys } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff, DIFF_META_KEY, DiffReplace, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier'
 import { getCompatibilitySuite, TestSpecType } from '@netcracker/qubership-apihub-compatibility-suites'
+import type { Realm } from '@netcracker/qubership-apihub-ddlapi'
+import type { NavigationLinkBuilder } from '@netcracker/qubership-apihub-next-data-model/shared/ddlapi/types/navigation-link-builder'
+import type { TableKey } from '@netcracker/qubership-apihub-next-data-model/shared/ddlapi/types/table-key'
 import FontFaceObserver from 'fontfaceobserver'
 import { buildSchema, findBreakingChanges, findDangerousChanges } from 'graphql'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { DdlTableDiffsViewer } from '../../components/DdlTableViewer/DdlTableDiffsViewer'
 import { GraphQLOperationDiffViewer } from '../../components/GraphQLOperationViewer/GraphQLOperationDiffViewer'
 import { buildGraphApiSchema } from '../../mocks/utils/graph-api-transformers'
 import { SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '../../types/LayoutMode'
 import { ArrayUtils } from '../../utils/common/arrays'
+import { TEST_DIFF_META_KEYS } from '../ddlapi-diffs-suite/shared-test-data'
+import {
+  prepareDdlCompatibilitySuiteMergedSource,
+  resolveDdlCompatibilitySuiteTableKey,
+} from './compatibility-suite-utils-ddl'
 import { getCompareResult } from './merged-document'
 
 const FONT_FAMILIES: string[] = ['Inter']
@@ -74,6 +83,67 @@ export function getGraphQLStoryArgs(
   suiteId: string,
   testId: string,
 ): GraphQLCompatibilitySuiteStoryArgs {
+  const [before, after] = getCompatibilitySuite(suiteType, suiteId, testId)
+  return { before, after }
+}
+
+// DDL API
+
+export type DdlCompatibilitySuiteStoryArgs = {
+  before: string
+  after: string
+}
+
+const navigationLinkBuilder: NavigationLinkBuilder = (schema, table, column) =>
+  `#${schema}.${table}.${column}`
+
+export function DdlStoryComponent({ before, after }: DdlCompatibilitySuiteStoryArgs) {
+  const [mergedSource, setMergedSource] = useState<Realm | undefined>(undefined)
+  const [tableKey, setTableKey] = useState<TableKey | undefined>(undefined)
+
+  useEffect(() => {
+    let cancelled = false
+    setMergedSource(undefined)
+    setTableKey(undefined)
+
+    void prepareDdlCompatibilitySuiteMergedSource(before, after)
+      .then(merged => {
+        if (!cancelled) {
+          setMergedSource(merged)
+          setTableKey(resolveDdlCompatibilitySuiteTableKey(merged))
+        }
+      })
+      .catch((cause: unknown) => {
+        if (!cancelled) {
+          console.error(cause)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [before, after])
+
+  if (!mergedSource || !tableKey) {
+    return <></>
+  }
+
+  return (
+    <DdlTableDiffsViewer
+      mergedSource={mergedSource}
+      tableKey={tableKey}
+      navigationLinkBuilder={navigationLinkBuilder}
+      diffMetaKeys={TEST_DIFF_META_KEYS}
+      devMode
+    />
+  )
+}
+
+export function getDdlStoryArgs(
+  suiteType: TestSpecType,
+  suiteId: string,
+  testId: string,
+): DdlCompatibilitySuiteStoryArgs {
   const [before, after] = getCompatibilitySuite(suiteType, suiteId, testId)
   return { before, after }
 }

@@ -785,6 +785,27 @@ describe("DDL property row diff aggregators", () => {
     expect(titleRowDiff?.styles.after.textHighlighterColor).toBeUndefined()
   })
 
+  it("keeps type names off the title row when only the column type name changes", async () => {
+    const before = await buildFromDdl("create table public.t(v bigint);")
+    const after = await buildFromDdl("create table public.t(v smallint);")
+    const merged = apiDiff(before, after, { metaKey: TEST_DIFFS_META_KEY, normalizedResult: false }).merged
+    const tree = new DdlApiTreeWithDiffsBuilder({
+      source: merged,
+      tableKey: { schemaName: "public", name: "t" },
+      diffsMetaKeys,
+    }).build()
+    const column = Array.from(tree.nodes.values()).find(node => node.kind === DdlApiTreeNodeKinds.COLUMN)!
+
+    // In the default highlighting mode, TextValue renders a string value of a replace diff in
+    // place of the column name. The title row diff uses the immutable mode, which keeps the name.
+    const titleRowDiff = takeDdlPropertyTitleRowDiff(column)
+    expect(titleRowDiff?.data.action).toBe(DiffAction.replace)
+    expect(titleRowDiff?.highlightingMode.get(DiffHiglightingApplicationArea.Default))
+      .toBe(DiffHighlightingApplicationMode.Immutable)
+    expect(column.diffs.columnTypeFieldDiffs?.typeName?.data).toMatchObject({ beforeValue: "bigint", afterValue: "smallint" })
+    expect(column.value()?.columnName).toBe("v")
+  })
+
   it("prefers flag diffs over column type diffs for the title row", () => {
     const aggregator = new DdlApiNodeDiffsAggregatorKindColumn()
     const crawlValue = {

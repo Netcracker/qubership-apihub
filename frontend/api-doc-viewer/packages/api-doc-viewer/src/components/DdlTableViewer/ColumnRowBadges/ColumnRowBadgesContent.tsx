@@ -1,12 +1,15 @@
 import { DiffBadge } from "@apihub/components/common/diffs/DiffBadge"
 import { useLayoutMode } from "@apihub/contexts/LayoutModeContext"
 import { LayoutSide, ORIGIN_LAYOUT_SIDE } from "@apihub/types/internal/LayoutSide"
-import { Diff } from "@netcracker/qubership-apihub-api-diff"
+import { Diff, isDiffReplace } from "@netcracker/qubership-apihub-api-diff"
 import { takeDiffSideTextHighlighterColor } from "@apihub/utils/diffs/take-diff-side-text-highlighter-color"
 import { ChangedPropertyMetaData } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/tree-node.interface"
 import { isDdlFlagBadgeDiffHighlighted } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs"
 import { DdlApiForeignKeyTarget } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree/node-value"
-import { formatForeignKeyTargetKey } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs"
+import {
+  formatForeignKeyTargetKey,
+  resolveForeignKeyTargetSideDisplay,
+} from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs"
 import { FC, memo, ReactNode, useMemo } from "react"
 import {
   DDL_API_FOREIGN_KEY_BADGE_COLOR_SCHEMA,
@@ -105,6 +108,18 @@ function renderForeignKeyTargetBadge(options: {
 
   if (!targetDiff) {
     return <ForeignKey key={badgeKey} target={target} />
+  }
+
+  // The column keeps its key and only the referenced column or table changes: the FK badge stays
+  // plain, and each side shows its own target, highlighted as changed.
+  if (isDiffReplace(targetDiff.data)) {
+    return (
+      <ForeignKey
+        key={badgeKey}
+        target={resolveForeignKeyTargetSideDisplay(target, targetDiff, layoutSide)}
+        textHighlighterColor={textHighlighterColor}
+      />
+    )
   }
 
   const $changes = targetDiff.data as Diff

@@ -10,7 +10,7 @@ import {
 exitIfInsideNodeModules(import.meta.url)
 
 // Dynamic import: must run after exitIfInsideNodeModules because static import breaks the UI component build
-const { getCompatibilitySuites, TEST_SPEC_TYPE_GRAPH_QL } = await import(
+const { getCompatibilitySuites, TEST_SPEC_TYPE_GRAPH_QL, TEST_SPEC_TYPE_DDL_API } = await import(
   '@netcracker/qubership-apihub-compatibility-suites'
 )
 
@@ -25,15 +25,21 @@ const TEST_GENERATION_CONFIGS = [
       'apply-schema-directive-to-union',
     ]),
   },
+  {
+    specType: TEST_SPEC_TYPE_DDL_API,
+    visibleSelector: '[data-testid="ddl-table-diffs-viewer"]',
+  },
 ]
 
 // Storybook sanitizes PascalCase export names to kebab-case story IDs.
 // We pre-compute kebab-case at generation time (like apispec-view).
-const printTestFile = (metaId, testIds) => {
+const printTestFile = (metaId, testIds, visibleSelector) => {
   const testIdsLiteral = testIds.map(id => `  '${kebabCase(id)}',`).join('\n')
+  const visibleSelectorLiteral = visibleSelector === undefined ? 'undefined' : JSON.stringify(visibleSelector)
 
   return `import path from 'path'
 import { storyPage } from '../service/storybook-service'
+import { waitForVisibleSelector } from '../service/wait-for-visible-selector'
 
 const META_ID = '${metaId}'
 const SNAPSHOTS_DIR = path.resolve(__dirname, '..', '__image_snapshots__')
@@ -49,6 +55,7 @@ beforeEach(async () => {
 for (const testId of TEST_IDS) {
   it(testId, async () => {
     const story = await storyPage(page, \`\${META_ID}--\${testId}\`)
+    await waitForVisibleSelector(page, ${visibleSelectorLiteral})
     const component = await story.viewComponent()
     expect(await component.captureScreenshot()).toMatchImageSnapshot({
       customSnapshotsDir: SNAPSHOTS_DIR,
@@ -69,7 +76,7 @@ for (const config of TEST_GENERATION_CONFIGS) {
     const metaId = makeMetaId(config.specType, suiteId)
     const filtered = testIds.filter(id => !config.skipTestIds || !config.skipTestIds.has(id))
     const filePath = `${TESTS_OUT_DIR}/${makeFilePrefix(config.specType)}-${suiteId}.generated.it-test.ts`
-    writeFileSync(filePath, printTestFile(metaId, filtered))
+    writeFileSync(filePath, printTestFile(metaId, filtered, config.visibleSelector))
     generated++
   }
   console.log(`Generated ${generated}/${suites.size} test file(s) for ${config.specType}`)

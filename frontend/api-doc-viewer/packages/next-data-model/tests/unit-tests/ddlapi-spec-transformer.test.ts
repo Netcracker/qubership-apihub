@@ -137,7 +137,7 @@ describe('DdlApiSpecTransformer column row value', () => {
     expect(variableColumn?.columnType.label).toBe('bit varying (16)')
   })
 
-  it('resolves foreignKeyTarget when refTable is present in the full realm', async () => {
+  it('reads foreignKeyTarget from the names the foreign key holds', async () => {
     const realm = await buildFromDdl(`
       CREATE TABLE public.parent (
         id bigint PRIMARY KEY
@@ -161,7 +161,7 @@ describe('DdlApiSpecTransformer column row value', () => {
     }])
   })
 
-  it('resolves foreignKeyTarget in a single-table partial realm with embedded refTable', async () => {
+  it('reads foreignKeyTarget in a partial realm that lacks the referenced table', async () => {
     const fullRealm = await buildFromDdl(`
       CREATE TABLE public.user_data (
         user_id character varying PRIMARY KEY
@@ -195,51 +195,46 @@ describe('DdlApiSpecTransformer column row value', () => {
     }])
   })
 
-  it('resolves foreignKeyTarget when FK column objects differ from table.columns by reference', async () => {
+  it('reads the target schema from refTable when another schema has a table with the same name', async () => {
     const fullRealm = await buildFromDdl(`
       CREATE TABLE public.parent (
         id bigint PRIMARY KEY
       );
 
-      CREATE TABLE public.t (
-        ref_id bigint REFERENCES public.parent (id)
+      CREATE TABLE custom.parent (
+        id bigint PRIMARY KEY
+      );
+
+      CREATE TABLE custom.t (
+        ref_id bigint REFERENCES custom.parent (id)
       );
     `)
-    const tTable = fullRealm.schemas
-      .find(schema => schema.name === 'public')
+    const publicSchema = fullRealm.schemas.find(schema => schema.name === 'public')!
+    const customT = fullRealm.schemas
+      .find(schema => schema.name === 'custom')
       ?.tables?.find(table => table.name === 't')
-    expect(tTable?.foreignKeys?.[0]).toBeDefined()
+    expect(customT).toBeDefined()
 
-    const foreignKey = tTable!.foreignKeys![0]!
-    const duplicatedForeignKey = {
-      ...foreignKey,
-      columns: foreignKey.columns?.map(column => ({ ...column })),
-    }
-    const tableWithDuplicatedForeignKeyColumns = {
-      ...tTable!,
-      foreignKeys: [duplicatedForeignKey],
-    }
-
+    // custom.parent is absent, and the only table named `parent` is in another schema.
     const partialRealm = {
       ddlapi: fullRealm.ddlapi,
-      schemas: [{ name: 'public', tables: [tableWithDuplicatedForeignKeyColumns] }],
+      schemas: [publicSchema, { name: 'custom', tables: [customT!] }],
     }
 
     const spec = transformer.transformSourceToTableOrientedSpec(partialRealm, {
-      schemaName: 'public',
+      schemaName: 'custom',
       name: 't',
     })
 
     const refIdColumn = spec?.columns.items.find(column => column.columnName === 'ref_id')
-    expect(refIdColumn?.isForeignKey).toBe(true)
     expect(refIdColumn?.foreignKeyTargets).toEqual([{
-      schemaName: 'public',
+      schemaName: 'custom',
       tableName: 'parent',
       columnName: 'id',
     }])
   })
 
-  it('resolves foreignKeyTarget schema via refTable reference across schemas', async () => {
+  it('reads the target schema from refTable across schemas', async () => {
     const realm = await buildFromDdl(`
       CREATE SCHEMA custom;
 
