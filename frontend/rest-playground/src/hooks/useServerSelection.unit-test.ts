@@ -162,4 +162,49 @@ describe('useServerSelection', () => {
       expect(mockSetChosenServerUrl).not.toHaveBeenCalled()
     })
   })
+
+  describe('when two servers share a url', () => {
+    const duplicateServers: IServer[] = [
+      { url: 'https://api.example.com', description: 'Primary' },
+      { url: 'https://api.example.com', description: 'Secondary - duplicate url on purpose' },
+      { url: 'https://staging.example.com', description: 'Staging API' },
+    ]
+
+    it('should keep the second of two identical urls selected', () => {
+      // Setup: the stored selection records which occurrence was picked
+      useAtomMock.mockReturnValue([{ url: 'https://api.example.com', position: 1 }, mockSetChosenServerUrl])
+
+      const { result } = renderHook(() => useServerSelection(duplicateServers))
+
+      // Expectation: the second entry stays selected instead of collapsing onto the first
+      expect(result.current.chosenServer).toBe(duplicateServers[1])
+      expect(mockSetChosenServerUrl).not.toHaveBeenCalled()
+    })
+
+    it('should record the position when selectServer is given one', () => {
+      // Setup: only a url is stored, so the first matching server is selected
+      useAtomMock.mockReturnValue(['https://api.example.com', mockSetChosenServerUrl])
+
+      const { result } = renderHook(() => useServerSelection(duplicateServers))
+
+      // Action: pick the second server with the same url
+      act(() => {
+        result.current.selectServer('https://api.example.com', 1)
+      })
+
+      // Expectation: the position is stored alongside the url
+      expect(mockSetChosenServerUrl).toHaveBeenCalledWith({ url: 'https://api.example.com', position: 1 })
+    })
+
+    it('should fall back to the url when the stored position no longer points at that server', () => {
+      // Setup: the document changed, so the stored position now points at a different server
+      useAtomMock.mockReturnValue([{ url: 'https://staging.example.com', position: 1 }, mockSetChosenServerUrl])
+
+      const { result } = renderHook(() => useServerSelection(duplicateServers))
+
+      // Expectation: the url still resolves, so the selection is preserved rather than reset
+      expect(result.current.chosenServer).toBe(duplicateServers[2])
+      expect(mockSetChosenServerUrl).not.toHaveBeenCalled()
+    })
+  })
 })

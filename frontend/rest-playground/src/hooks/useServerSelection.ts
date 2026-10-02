@@ -4,47 +4,56 @@ import { useCallback, useEffect } from 'react'
 import type { IServer } from '../utils/http-spec/IServer'
 import { persistAtom } from '../utils/jotai/persistAtom'
 
-const chosenServerUrlAtom = persistAtom<string | undefined>(
+type ChosenServerRef = string | { url: string; position: number };
+
+const chosenServerRefAtom = persistAtom<ChosenServerRef | undefined>(
   'playground-chosen-sever-url',
-  atom<string | undefined>(undefined),
+  atom<ChosenServerRef | undefined>(undefined),
 )
 
 /**
  * Custom hook for managing server selection state with automatic fallback logic.
  *
  * Features:
- * - Persists selected server URL in global state
+ * - Persists the selected server in global state
  * - Automatically falls back to first available server when current selection becomes invalid
  * - Handles empty server lists and removed servers
  */
 export const useServerSelection = (availableServers: IServer[]) => {
-  const [chosenServerUrl, setChosenServerUrl] = useAtom(chosenServerUrlAtom)
+  const [chosenServerRef, setChosenServerRef] = useAtom(chosenServerRefAtom)
+
+  const chosenUrl = typeof chosenServerRef === 'string' ? chosenServerRef : chosenServerRef?.url
+  const chosenPosition = typeof chosenServerRef === 'object' ? chosenServerRef.position : -1
 
   const fallbackServer = availableServers[0] ?? null
-  const chosenServer = availableServers.find(server => server.url === chosenServerUrl) ?? null
+  const chosenServer =
+    (availableServers[chosenPosition]?.url === chosenUrl
+      ? availableServers[chosenPosition]
+      : availableServers.find(server => server.url === chosenUrl)) ?? null
 
-  const hasValidSelection = Boolean(chosenServerUrl && chosenServer)
+  const hasValidSelection = Boolean(chosenUrl && chosenServer)
   const hasFallbackAvailable = Boolean(fallbackServer?.url)
   const shouldApplyFallback = !hasValidSelection && hasFallbackAvailable
-  const shouldClearSelection = !hasFallbackAvailable && Boolean(chosenServerUrl)
+  const shouldClearSelection = !hasFallbackAvailable && Boolean(chosenUrl)
 
   useEffect(() => {
     if (shouldApplyFallback) {
-      setChosenServerUrl(fallbackServer!.url)
+      setChosenServerRef(fallbackServer!.url)
       return
     }
 
     if (shouldClearSelection) {
-      setChosenServerUrl('')
+      setChosenServerRef('')
     }
-  }, [shouldApplyFallback, shouldClearSelection, fallbackServer, setChosenServerUrl])
+  }, [shouldApplyFallback, shouldClearSelection, fallbackServer, setChosenServerRef])
 
-  const selectServer = useCallback((url: string) => {
-    // Only update if the URL actually changed
-    if (url !== chosenServerUrl) {
-      setChosenServerUrl(url)
+  const selectServer = useCallback((url: string, position?: number) => {
+    // Only update if the selection actually changed
+    if (url !== chosenUrl || (position ?? -1) !== chosenPosition) {
+      // Without a position the url is all the caller knows, so it is stored on its own.
+      setChosenServerRef(position === undefined ? url : { url, position })
     }
-  }, [chosenServerUrl, setChosenServerUrl])
+  }, [chosenUrl, chosenPosition, setChosenServerRef])
 
   return {
     chosenServer,

@@ -1,13 +1,16 @@
+import { MenuItem } from '@mui/material'
+import Select from '@mui/material/Select'
 import { safeStringify } from '@stoplight/json'
 import { Panel } from '@stoplight/mosaic'
 import { CodeEditor } from '@stoplight/mosaic-code-editor'
 import { INodeExample, INodeExternalExample } from '@stoplight/types'
 import * as React from 'react'
 import { useState } from 'react'
-import Select from '@mui/material/Select'
-import { MenuItem } from '@mui/material'
+
+import { useExampleMenuItems } from '../../../hooks/useExampleMenuItems'
 import { MenuItemContent } from '../../MenuItemContent'
-import { nanoid } from 'nanoid'
+
+const STYLE_MENU_ITEM = { width: '100%', display: 'flex', alignItems: 'center' }
 
 interface RequestBodyProps {
   examples: ReadonlyArray<INodeExample | INodeExternalExample>;
@@ -45,32 +48,23 @@ export const RequestBody: React.FC<RequestBodyProps> = ({ examples, requestBody,
 }
 
 function ExampleMenu({ examples, requestBody, onChange }: RequestBodyProps) {
-  const firstExampleKey = examples.length ? examples[0].key : ''
-  const [selectedExample, setSelectedExample] = useState<INodeExample | INodeExternalExample | undefined>()
+  const { menuItems, findMenuItem, renderMenuItemTitle } = useExampleMenuItems(examples)
+
+  const [selectedId, setSelectedId] = useState<string | undefined>()
+  const selectedItem = findMenuItem(selectedId) ?? menuItems[0]
 
   const handleClick = React.useCallback(
     event => {
-      const targetExampleKey = event.target.value
-      const example = examples.find(({ key }) => key === targetExampleKey)
+      const item = findMenuItem(event.target.value)
 
       onChange(
-        example
-          ? safeStringify('value' in example ? example?.value : example?.externalValue, undefined, 2) ?? ''
+        item
+          ? safeStringify('value' in item.example ? item.example.value : item.example.externalValue, undefined, 2) ?? ''
           : requestBody,
       )
-      setSelectedExample(example)
+      setSelectedId(item?.id)
     },
-    [onChange, requestBody],
-  )
-
-  const menuItems = React.useMemo(
-    () =>
-      examples.map(example => ({
-        id: `request-example-${example.key}`,
-        title: example.key,
-        description: example.summary,
-      })),
-    [examples],
+    [findMenuItem, onChange, requestBody],
   )
 
   return (
@@ -78,21 +72,14 @@ function ExampleMenu({ examples, requestBody, onChange }: RequestBodyProps) {
       variant="standard"
       disableUnderline
       onChange={handleClick}
-      value={selectedExample?.key}
-      defaultValue={firstExampleKey}
-      renderValue={p => p}
+      value={selectedItem?.id ?? ''}
+      renderValue={renderMenuItemTitle}
       className="MuiInputBase-root examples MuiList-root custom"
     >
-      {menuItems.map((menuItem, index) => {
-        const { title, description } = menuItem
+      {menuItems.map(({ id, title, subtitle }) => {
         return (
-          <MenuItem
-            key={nanoid(8)}
-            style={{ width: '100%', display: 'flex', alignItems: 'center' }}
-            value={title}
-            disableRipple
-          >
-            <MenuItemContent title={title} subtitle={description}/>
+          <MenuItem key={id} style={STYLE_MENU_ITEM} value={id} disableRipple>
+            <MenuItemContent title={title} subtitle={subtitle}/>
           </MenuItem>
         )
       })}

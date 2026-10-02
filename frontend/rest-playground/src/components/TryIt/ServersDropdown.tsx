@@ -39,6 +39,8 @@ const STYLE_DELETE_BUTTON = {
   p: 0,
 }
 
+const STYLE_OPERATION_PATH = { color: COLOR_TEXT_SECONDARY }
+
 const selectInputProps = { sx: { py: '1px' } } // align input and button height
 
 export type ServersDropdownProps = {
@@ -50,11 +52,25 @@ export const ServersDropdown = ({ servers, operationPath }: ServersDropdownProps
   const { chosenServer, selectServer } = useServerSelection(servers)
   const [open, setOpen] = useState(false)
 
+  const selectedIndex = chosenServer ? servers.indexOf(chosenServer) : -1
+
+  const positionAt = useCallback(
+    (value: string) => {
+      const position = Number.parseInt(value, 10)
+      return Number.isInteger(position) && position >= 0 && position < servers.length ? position : -1
+    },
+    [servers],
+  )
+
   const handleServerChange = useCallback(
     (event) => {
-      selectServer(event.target.value || '')
+      const position = positionAt(event.target.value)
+      if (position < 0) {
+        return
+      }
+      selectServer(servers[position].url, position)
     },
-    [selectServer],
+    [positionAt, servers, selectServer],
   )
 
   const handleServerAdd = useCallback(() => {
@@ -77,6 +93,24 @@ export const ServersDropdown = ({ servers, operationPath }: ServersDropdownProps
     setOpen(true)
   }
 
+  const renderServerValue = useCallback(
+    (index: string) => {
+      const position = positionAt(index)
+      const cleanUrl = (position >= 0 ? servers[position].url : '').replace(/\/$/, '')
+      return (
+        <OverflowTooltip title={cleanUrl + operationPath}>
+          <Box sx={STYLE_SELECT_VALUE}>
+            {cleanUrl}
+            <Box component="span" sx={STYLE_OPERATION_PATH}>
+              {operationPath}
+            </Box>
+          </Box>
+        </OverflowTooltip>
+      )
+    },
+    [positionAt, servers, operationPath],
+  )
+
   return (
     <FormControl size="small" fullWidth>
       <Select
@@ -84,31 +118,18 @@ export const ServersDropdown = ({ servers, operationPath }: ServersDropdownProps
         onClose={handleClose}
         onOpen={handleOpen}
         onChange={handleServerChange}
-        value={chosenServer?.url ?? ''}
-        renderValue={(url) => {
-          const cleanUrl = url.replace(/\/$/, '')
-          return (
-            <OverflowTooltip title={cleanUrl + operationPath}>
-              <Box sx={STYLE_SELECT_VALUE}>
-                {cleanUrl}
-                <Box component="span" sx={{ color: COLOR_TEXT_SECONDARY }}>
-                  {operationPath}
-                </Box>
-              </Box>
-            </OverflowTooltip>
-          )
-        }}
+        value={selectedIndex >= 0 ? String(selectedIndex) : ''}
+        renderValue={renderServerValue}
         inputProps={selectInputProps}
         aria-label="Server"
         data-testid="ServerSelect"
       >
-        {servers.map((server) => {
+        {servers.map((server, index) => {
           const { url, description, custom } = server
           return (
             <MenuItem
-              key={server.url}
-              value={server.url}
-              selected={server.url === chosenServer?.url}
+              key={`${server.url}-${index}`}
+              value={String(index)}
               sx={STYLE_MENU_ITEM}
             >
               <MenuItemContent title={url} subtitle={description} maxWidth={MENU_ITEM_MAX_WIDTH} />

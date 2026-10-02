@@ -1,11 +1,14 @@
-import * as React from 'react'
-import { FC, memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { MenuItem } from '@mui/material'
 import FormControl from '@mui/material/FormControl'
 import Select from '@mui/material/Select'
-import { MenuItem } from '@mui/material'
-import { INodeExample, INodeExternalExample } from '@stoplight/types'
 import { safeStringify } from '@stoplight/json'
+import { INodeExample, INodeExternalExample } from '@stoplight/types'
+import { FC, memo, useCallback, useEffect, useState } from 'react'
+
+import { useExampleMenuItems } from '../../hooks/useExampleMenuItems'
 import { MenuItemContent } from '../MenuItemContent'
+
+const STYLE_MENU_ITEM = { width: '100%', display: 'flex', alignItems: 'center' }
 
 export type ExamplesDropdownProps = {
   examples: ReadonlyArray<INodeExample | INodeExternalExample>;
@@ -16,9 +19,12 @@ export type ExamplesDropdownProps = {
 
 export const ExamplesDropdown: FC<ExamplesDropdownProps> = memo<ExamplesDropdownProps>(
   ({ examples, requestResponseBody, onChange, onSelectExample }) => {
-    const [selectedExample, setSelectedExample] = useState<INodeExample | INodeExternalExample | undefined>()
+    const { menuItems, findMenuItem, renderMenuItemTitle } = useExampleMenuItems(examples)
 
-    useEffect(() => setSelectedExample(examples.length ? examples[0] : undefined), [examples])
+    const [selectedId, setSelectedId] = useState<string | undefined>()
+    const selectedItem = findMenuItem(selectedId) ?? menuItems[0]
+
+    useEffect(() => setSelectedId(menuItems.length ? menuItems[0].id : undefined), [menuItems])
 
     const [open, setOpen] = useState(false)
     const handleClose = () => {
@@ -30,34 +36,23 @@ export const ExamplesDropdown: FC<ExamplesDropdownProps> = memo<ExamplesDropdown
 
     const handleClick = useCallback(
       event => {
-        const targetExampleKey = event.target.value
-        const example = examples.find(({ key }) => key === targetExampleKey)
+        const item = findMenuItem(event.target.value)
 
         onChange(
-          example
-            ? safeStringify('value' in example ? example?.value : example?.externalValue, undefined, 2) ?? ''
+          item
+            ? safeStringify('value' in item.example ? item.example.value : item.example.externalValue, undefined, 2) ??
+                ''
             : requestResponseBody,
         )
-        setSelectedExample(example)
+        setSelectedId(item?.id)
         setOpen(false)
       },
-      [onChange, requestResponseBody],
+      [findMenuItem, onChange, requestResponseBody],
     )
 
     useEffect(() => {
-      onSelectExample?.(selectedExample)
-    }, [selectedExample])
-
-    const menuItems = useMemo(
-      () =>
-        examples.map(example => ({
-          id: `request-example-${example.key}`,
-          title: example.key,
-          summary: example.summary,
-          description: ((example as INodeExample)?.value as INodeExample)?.description ?? '',
-        })),
-      [examples],
-    )
+      onSelectExample?.(selectedItem?.example)
+    }, [onSelectExample, selectedItem])
 
     return (
       <FormControl size="small" fullWidth>
@@ -66,19 +61,14 @@ export const ExamplesDropdown: FC<ExamplesDropdownProps> = memo<ExamplesDropdown
           onClose={handleClose}
           onOpen={handleOpen}
           onChange={handleClick}
-          value={selectedExample?.key ?? ''}
-          renderValue={p => p}
+          value={selectedItem?.id ?? ''}
+          renderValue={renderMenuItemTitle}
           className="MuiInputBase-root MuiSelect-select custom"
         >
-          {menuItems.map(({ id, title, summary }) => {
+          {menuItems.map(({ id, title, subtitle }) => {
             return (
-              <MenuItem
-                key={id}
-                style={{ width: '100%', display: 'flex', alignItems: 'center' }}
-                value={title}
-                disableRipple
-              >
-                <MenuItemContent title={title} subtitle={summary} maxWidth="400px"/>
+              <MenuItem key={id} style={STYLE_MENU_ITEM} value={id} disableRipple>
+                <MenuItemContent title={title} subtitle={subtitle} maxWidth="400px"/>
               </MenuItem>
             )
           })}
