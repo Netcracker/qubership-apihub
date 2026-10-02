@@ -45,6 +45,12 @@ export interface Schema {
   objects?: SchemaObject[]
 }
 
+/** A schema-qualified table identity, using normalized model identifiers. */
+export interface TableRef {
+  schema: string
+  name: string
+}
+
 /** A Table represents a table definition. */
 export interface Table {
   kind: typeof ObjectKind.Table
@@ -116,6 +122,9 @@ export interface Index {
 
 /**
  * An IndexPart represents an index part that can be either an expression or a column.
+ *
+ * NOTE: Atlas Go holds the column as a `*Column` pointer. Here `column` is the column name,
+ * for the reason given on ForeignKey.
  */
 export interface IndexPart {
   /** SeqNo represents the sequence number of the key part in the index. */
@@ -123,7 +132,8 @@ export interface IndexPart {
   /** Desc indicates if the key part is stored in descending order. All databases use ascending order as default. */
   desc?: boolean
   expr?: Expr              // Atlas Go: X Expr
-  column?: Column          // Atlas Go: C *Column
+  /** Name of the indexed column in the owning table. */
+  column?: string          // Atlas Go: C *Column
   attrs?: Attr[]
 }
 
@@ -134,15 +144,21 @@ export interface IndexPart {
  * this is a known copy-paste error in the upstream code; the intent is foreign-key.
  *
  * NOTE: `kind` is not present in the Go model — same reasoning as Index above.
+ *
+ * NOTE: Atlas Go holds the referenced table and every key column as a pointer. Here they
+ * are names, so a key keeps the names of a table that is missing from the Realm. The
+ * library does not check the names against the Realm.
  */
 export interface ForeignKey {
   kind: typeof ObjectKind.ForeignKey
   /** Constraint name, if exists. */
   symbol?: string
   // table?: Table          // back-ref to owning Table — omitted; navigate top-down
-  columns?: Column[]
-  refTable?: Table
-  refColumns?: Column[]
+  /** Names of the referencing columns in the owning table. */
+  columns?: string[]       // Atlas Go: Columns []*Column
+  refTable?: TableRef      // Atlas Go: RefTable *Table
+  /** Names of the referenced columns in `refTable`. */
+  refColumns?: string[]    // Atlas Go: RefColumns []*Column
   onUpdate?: ReferenceOption
   onDelete?: ReferenceOption
   attrs?: Attr[]

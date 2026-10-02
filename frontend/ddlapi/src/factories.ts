@@ -8,7 +8,7 @@ import type {
 } from './types'
 import type {
   Realm, Schema, Table, View, Column, ColumnType, Index, IndexPart,
-  ForeignKey, SchemaObject,
+  ForeignKey, SchemaObject, TableRef,
 } from './schema'
 import { DDLAPI_VERSION } from './schema'
 
@@ -150,10 +150,10 @@ export function newUniqueIndex(
 }
 
 /**
- * Creates a primary key index. Parts are auto-assigned sequential seqNo starting at 0.
- * Back-references on columns are NOT wired — see design decision §3.
+ * Creates a primary key index over the named columns. Parts are auto-assigned sequential
+ * seqNo starting at 0.
  */
-export function newPrimaryKey(columns: Column[]): Index {
+export function newPrimaryKey(columns: string[]): Index {
   const parts: IndexPart[] = columns.map((column, i) => ({ seqNo: i, column }))
   return {
     kind: ObjectKind.Index,
@@ -165,7 +165,7 @@ export function newIndexPart(props?: {
   seqNo?: number
   desc?: boolean
   expr?: Expr
-  column?: Column
+  column?: string
   attrs?: Attr[]
 }): IndexPart {
   return {
@@ -178,7 +178,7 @@ export function newIndexPart(props?: {
 }
 
 /** Mirrors Go's NewColumnPart. seqNo defaults to 0. */
-export function newColumnPart(column: Column, props?: { seqNo?: number; desc?: boolean; attrs?: Attr[] }): IndexPart {
+export function newColumnPart(column: string, props?: { seqNo?: number; desc?: boolean; attrs?: Attr[] }): IndexPart {
   return newIndexPart({ seqNo: props?.seqNo ?? 0, column, desc: props?.desc, attrs: props?.attrs })
 }
 
@@ -190,9 +190,9 @@ export function newExprPart(expr: Expr, props?: { seqNo?: number; desc?: boolean
 export function newForeignKey(
   symbol?: string,
   props?: {
-    columns?: Column[]
-    refTable?: Table
-    refColumns?: Column[]
+    columns?: string[]
+    refTable?: TableRef
+    refColumns?: string[]
     onUpdate?: ReferenceOption
     onDelete?: ReferenceOption
     attrs?: Attr[]

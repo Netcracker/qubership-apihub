@@ -4,14 +4,14 @@ import { deparseSync } from 'pgsql-deparser'
 import type { CreateStmt, RawStmt, Node, ColumnDef, Constraint, TableLikeClause } from '@pgsql/types'
 import { ObjectKind, ReferenceOption, DdlErrorKind } from '../../constants'
 import { PgAttrKind, PgObjectKind, PgGeneratedExprType, PgIdentityGeneration, PgPartitionStrategy } from '../../postgres.constants'
-import type { Table, Column, ColumnType, Index, IndexPart, ForeignKey, SchemaObject } from '../../schema'
+import type { Table, Column, ColumnType, Index, IndexPart, ForeignKey, SchemaObject, TableRef } from '../../schema'
 import type { Attr } from '../../attrs'
 import type { Expr } from '../../exprs'
 import {
   newColumn, newCheck, newForeignKey, newPrimaryKey,
   collation, generatedExpr, unsupportedType,
 } from '../../factories'
-import type { SchemaAccumulator } from '../schemaAccumulator'
+import type { SchemaAccumulator, PendingIndexPart } from '../schemaAccumulator'
 import { mapTypeName } from '../typeMapper'
 import { strVal, stmtRangeOf, nodeToExpr, exprToString, unwrapNode } from '../astHelpers'
 import { PgNode, PgConstrType } from '../pgAst'
@@ -52,9 +52,9 @@ function fkAction(ch: string): ReferenceOption {
 
 type PendingFKInfo = {
   symbol?: string
-  columns: Column[]       // FK columns (same table)
-  refTableKey: string
-  refColumnNames: string[]
+  columns: string[]       // FK columns (same table)
+  refTable: TableRef
+  refColumns: string[]
   onUpdate?: ReferenceOption
   onDelete?: ReferenceOption
 }
@@ -62,10 +62,8 @@ type PendingFKInfo = {
 function buildColumn(
   cd: ColumnDef,
   schemaName: string,
-  tableName: string,
   primaryKeyColNames: string[],
   pendingFKInfos: PendingFKInfo[],
-  pendingIndexParts: Array<{ part: IndexPart; columnKey: string }>,
   tableInlineIndexes: Index[],
 ): Column {
   const colName = cd.colname ?? 'unknown'
@@ -101,25 +99,22 @@ function buildColumn(
         kind: ObjectKind.Index,
         ...(con.conname ? { name: con.conname } : {}),
         unique: true,
-        parts: [{ seqNo: 0 }],  // part.c resolved in pass 2
+        parts: [{ seqNo: 0, column: colName }],
       }
-      pendingIndexParts.push({ part: idx.parts![0] as IndexPart, columnKey: `${schemaName}.${tableName}.${colName}` })
       tableInlineIndexes.push(idx)
     } else if (ct === PgConstrType.ForeignKey) {
       const pktable = con.pktable
       const refTable = pktable?.relname ?? ''
       const refSchema = pktable?.schemaname ?? schemaName
-      const fkAttrs = con.fk_attrs ?? []
       const pkAttrs = con.pk_attrs ?? []
       const refColNames = pkAttrs.map(n => strVal(n) ?? '').filter(Boolean)
       const onDelete = con.fk_del_action ? fkAction(con.fk_del_action) : undefined
       const onUpdate = con.fk_upd_action ? fkAction(con.fk_upd_action) : undefined
-      // Build FK with empty columns[] — will add this column after creation
       pendingFKInfos.push({
         symbol: con.conname,
-        columns: [],    // filled after column is created
-        refTableKey: `${refSchema}.${refTable}`,
-        refColumnNames: refColNames,
+        columns: [colName],
+        refTable: { schema: refSchema, name: refTable },
+        refColumns: refColNames,
         onUpdate,
         onDelete,
       })
@@ -241,27 +236,13 @@ export function handleCreateTable(
 
   const primaryKeyColNames: string[] = []
   const pendingFKInfos: PendingFKInfo[] = []
-  const inlinePendingIndexParts: Array<{ part: IndexPart; columnKey: string }> = []
+  const pendingIndexParts: PendingIndexPart[] = []
   const inlineIndexes: Index[] = []
 
   // Build columns
   const columns: Column[] = []
   for (const cd of columnDefs) {
-    const col = buildColumn(
-      cd,
-      tableSchema,
-      tableName,
-      primaryKeyColNames,
-      pendingFKInfos,
-      inlinePendingIndexParts,
-      inlineIndexes,
-    )
-    // Attach inline FK columns reference
-    const lastFKInfo = pendingFKInfos[pendingFKInfos.length - 1]
-    if (lastFKInfo && lastFKInfo.columns.length === 0) {
-      lastFKInfo.columns.push(col)
-    }
-    columns.push(col)
+    columns.push(buildColumn(cd, tableSchema, primaryKeyColNames, pendingFKInfos, inlineIndexes))
   }
 
   // Table-level constraints
@@ -277,8 +258,7 @@ export function handleCreateTable(
     if (ct === PgConstrType.PrimaryKey) {
       const keys = con.keys ?? []
       const pkColNames = keys.map(n => strVal(n) ?? '').filter(Boolean)
-      const pkCols = pkColNames.map(name => columns.find(c => c.name === name)).filter(Boolean) as Column[]
-      tablePrimaryKey = newPrimaryKey(pkCols)
+      tablePrimaryKey = newPrimaryKey(pkColNames)
       if (con.conname) {
         // Named PK — store as attrs on the index
         const namedPk: Index = { ...tablePrimaryKey, name: con.conname }
@@ -297,7 +277,7 @@ export function handleCreateTable(
         // `value` is a descriptive rename of Atlas Go `V`; see ddlapi-authoring.
         attrs.push({ kind: PgAttrKind.IndexNullsDistinct, value: false } as Attr)
       }
-      const idxParts: IndexPart[] = colNames.map((_, i) => ({ seqNo: i }))
+      const idxParts: IndexPart[] = colNames.map((column, i) => ({ seqNo: i, column }))
       const idx: Index = {
         kind: ObjectKind.Index,
         ...(con.conname ? { name: con.conname } : {}),
@@ -305,9 +285,9 @@ export function handleCreateTable(
         ...(attrs.length > 0 && { attrs }),
         parts: idxParts,
       }
-      // Register parts for column resolution
-      for (let i = 0; i < colNames.length; i++) {
-        inlinePendingIndexParts.push({ part: idxParts[i], columnKey: `${tableSchema}.${tableName}.${colNames[i]}` })
+      // Pass 2 reports a column that the table does not define
+      for (const column of colNames) {
+        pendingIndexParts.push({ index: idx, tableKey, column })
       }
       tableIndexes.push(idx)
     } else if (ct === PgConstrType.ForeignKey) {
@@ -320,12 +300,11 @@ export function handleCreateTable(
       const refColNames = pkAttrs.map(n => strVal(n) ?? '').filter(Boolean)
       const onDelete = con.fk_del_action ? fkAction(con.fk_del_action) : undefined
       const onUpdate = con.fk_upd_action ? fkAction(con.fk_upd_action) : undefined
-      const fkCols = fkColNames.map(name => columns.find(c => c.name === name)).filter(Boolean) as Column[]
       tableFKInfos.push({
         symbol: con.conname,
-        columns: fkCols,
-        refTableKey: `${refSchema}.${refTable}`,
-        refColumnNames: refColNames,
+        columns: fkColNames,
+        refTable: { schema: refSchema, name: refTable },
+        refColumns: refColNames,
         onUpdate,
         onDelete,
       })
@@ -345,8 +324,7 @@ export function handleCreateTable(
 
   // Handle inline primary key columns
   if (primaryKeyColNames.length > 0 && !tablePrimaryKey) {
-    const pkCols = primaryKeyColNames.map(name => columns.find(c => c.name === name)).filter(Boolean) as Column[]
-    tablePrimaryKey = newPrimaryKey(pkCols)
+    tablePrimaryKey = newPrimaryKey(primaryKeyColNames)
   }
 
   // Table-level storage/partition/inherit attrs
@@ -388,11 +366,11 @@ export function handleCreateTable(
     }
   }
 
-  // Build all ForeignKey objects (no refTable/refColumns yet)
-  const allFKInfos = [...pendingFKInfos, ...tableFKInfos]
-  const foreignKeys: ForeignKey[] = allFKInfos.map(info =>
+  const foreignKeys: ForeignKey[] = [...pendingFKInfos, ...tableFKInfos].map(info =>
     newForeignKey(info.symbol, {
       columns: info.columns,
+      refTable: info.refTable,
+      ...(info.refColumns.length > 0 && { refColumns: info.refColumns }),
       onUpdate: info.onUpdate,
       onDelete: info.onDelete,
     })
@@ -423,22 +401,18 @@ export function handleCreateTable(
     }
   }
 
-  // Register pending FK resolutions
-  for (let i = 0; i < allFKInfos.length; i++) {
-    const info = allFKInfos[i]
-    const fk = foreignKeys[i]
-    acc.pendingFKs.push({
-      fk,
-      tableKey,
-      refTableKey: info.refTableKey,
-      refColumnNames: info.refColumnNames,
-    })
+  // Pass 2 reports the names that the DDL does not define
+  for (const fk of foreignKeys) {
+    acc.pendingFKs.push({ fk, tableKey })
   }
-
-  // Register pending index part resolutions
-  for (const pip of inlinePendingIndexParts) {
-    acc.pendingIndexParts.push(pip)
+  if (tablePrimaryKey) {
+    for (const part of tablePrimaryKey.parts ?? []) {
+      if (part.column !== undefined) {
+        pendingIndexParts.push({ index: tablePrimaryKey, tableKey, column: part.column })
+      }
+    }
   }
+  acc.pendingIndexParts.push(...pendingIndexParts)
 
   // Handle LIKE
   if (likeSources.length > 0) {

@@ -4,11 +4,14 @@
 //   1. LIKE expansion
 //   2. Column type upgrade (UnsupportedType → registered type)
 //   3. Index re-attachment (orphan → Table.indexes)
-//   4. ForeignKey resolution (refTable + refColumns)
-//   5. Index part column resolution (part.column)
+//   4. ForeignKey check (columns, refTable, refColumns)
+//   5. Index part column check (part.column of indexes and the primary key)
+//
+// Steps 4 and 5 only report names that the DDL does not define: a ForeignKey and an
+// IndexPart hold names, which pass 1 has already set.
 
 import { TypeKind, DdlErrorKind } from '../constants'
-import { PG_DEFAULT_SCHEMA } from '../postgres.constants'
+import { PG_DEFAULT_SCHEMA, PgAttrKind } from '../postgres.constants'
 import type { Column } from '../schema'
 import type { SchemaAccumulator } from './schemaAccumulator'
 import type { DdlNonFatalError } from './buildFromDdl'
@@ -109,50 +112,71 @@ export function resolveReferences(
     acc.appendTableIndex(tableKey, index)
   }
 
-  // ── Step 4: ForeignKey resolution ─────────────────────────────────────────
+  // Steps 4 and 5 check column names only against a registered table without INHERITS. A
+  // table with INHERITS also has the columns of its parents, which the parser does not copy.
+  // An unregistered table has been reported already, by the step that dropped or missed it.
+  const hasCheckableColumns = (tableKey: string): boolean => {
+    const table = acc.tableRegistry.get(tableKey)
+    return table !== undefined && !table.attrs?.some(a => a.kind === PgAttrKind.Inherits)
+  }
 
-  for (const { fk, refTableKey, refColumnNames } of acc.pendingFKs) {
-    const refTable = acc.tableRegistry.get(refTableKey)
-    if (!refTable) {
+  // ── Step 4: ForeignKey check ──────────────────────────────────────────────
+  // An unresolved key keeps its names — partial-realm guarantee.
+
+  for (const { fk, tableKey } of acc.pendingFKs) {
+    if (hasCheckableColumns(tableKey)) {
+      for (const colName of fk.columns ?? []) {
+        const colKey = `${tableKey}.${colName}`
+        if (!acc.columnRegistry.has(colKey)) {
+          onError({
+            kind: DdlErrorKind.UnresolvedReference,
+            target: colKey,
+            message: `Foreign key lists unknown column '${colName}' of table '${tableKey}'`,
+          })
+        }
+      }
+    }
+
+    if (!fk.refTable) continue
+    const refTableKey = `${fk.refTable.schema}.${fk.refTable.name}`
+    if (!acc.tableRegistry.has(refTableKey)) {
       onError({
         kind: DdlErrorKind.UnresolvedReference,
         target: refTableKey,
         message: `Foreign key references unknown table '${refTableKey}'`,
       })
-      // Leave fk.refTable undefined — partial-realm guarantee
       continue
     }
+    if (!hasCheckableColumns(refTableKey)) continue
 
-    fk.refTable = refTable
-
-    if (refColumnNames.length > 0) {
-      const refColumns: Column[] = []
-      for (const colName of refColumnNames) {
-        const colKey = `${refTableKey}.${colName}`
-        const col = acc.columnRegistry.get(colKey)
-        if (col) {
-          refColumns.push(col)
-        } else {
-          onError({
-            kind: DdlErrorKind.UnresolvedReference,
-            target: colKey,
-            message: `Foreign key references unknown column '${colName}' in table '${refTableKey}'`,
-          })
-        }
-      }
-      if (refColumns.length > 0) {
-        fk.refColumns = refColumns
+    for (const colName of fk.refColumns ?? []) {
+      const colKey = `${refTableKey}.${colName}`
+      if (!acc.columnRegistry.has(colKey)) {
+        onError({
+          kind: DdlErrorKind.UnresolvedReference,
+          target: colKey,
+          message: `Foreign key references unknown column '${colName}' in table '${refTableKey}'`,
+        })
       }
     }
   }
 
-  // ── Step 5: Index part column resolution ──────────────────────────────────
+  // ── Step 5: Index part column check ───────────────────────────────────────
+  // An unresolved part keeps its column name. An index on an unknown table is
+  // reported by step 3.
 
-  for (const { part, columnKey } of acc.pendingIndexParts) {
-    const col = acc.columnRegistry.get(columnKey)
-    if (col) {
-      part.column = col
+  for (const { index, tableKey, column } of acc.pendingIndexParts) {
+    if (!hasCheckableColumns(tableKey)) continue
+    const columnKey = `${tableKey}.${column}`
+    if (!acc.columnRegistry.has(columnKey)) {
+      const owner = acc.tableRegistry.get(tableKey)?.primaryKey === index
+        ? 'Primary key'
+        : `Index '${index.name ?? '(unnamed)'}'`
+      onError({
+        kind: DdlErrorKind.UnresolvedReference,
+        target: columnKey,
+        message: `${owner} references unknown column '${column}' in table '${tableKey}'`,
+      })
     }
-    // Missing column is not reported — the index part stays without a column ref
   }
 }

@@ -259,14 +259,14 @@ describe('Schema interfaces', () => {
 
   test('minimal object graph with plain object literals', () => {
     const col: Column = { name: 'id', type: { type: { kind: TypeKind.IntegerType, type: 'int' }, null: false } }
-    const pk: Index = { kind: ObjectKind.Index, name: 'PRIMARY', unique: true, parts: [{ seqNo: 0, column: col }] }
+    const pk: Index = { kind: ObjectKind.Index, name: 'PRIMARY', unique: true, parts: [{ seqNo: 0, column: 'id' }] }
     const tbl: Table = { kind: ObjectKind.Table, name: 'users', columns: [col], primaryKey: pk }
     const schema: Schema = { name: 'public', tables: [tbl] }
     const realm: Realm = { ddlapi: DDLAPI_VERSION, schemas: [schema] }
 
     expect(realm.schemas[0].name).toBe('public')
     expect(realm.schemas[0].tables?.[0].name).toBe('users')
-    expect(realm.schemas[0].tables?.[0].primaryKey?.parts?.[0].column).toBe(col)
+    expect(realm.schemas[0].tables?.[0].primaryKey?.parts?.[0].column).toBe('id')
   })
 
   test('Index.kind is ObjectKind.Index', () => {
@@ -393,26 +393,16 @@ describe('Column, constraint, and index-part factories', () => {
 
   describe('newPrimaryKey', () => {
     test('seqNo auto-assigned sequentially starting at 0', () => {
-      const id = newColumn('id', { type: columnType(integerType('int')) })
-      const pk = newPrimaryKey([id])
+      const pk = newPrimaryKey(['id'])
       expect(pk.parts).toHaveLength(1)
       expect(pk.parts?.[0].seqNo).toBe(0)
-      expect(pk.parts?.[0].column).toBe(id)   // same reference
+      expect(pk.parts?.[0].column).toBe('id')
     })
 
     test('composite PK — seqNo 0,1,2', () => {
-      const a = newColumn('a')
-      const b = newColumn('b')
-      const c = newColumn('c')
-      const pk = newPrimaryKey([a, b, c])
+      const pk = newPrimaryKey(['a', 'b', 'c'])
       expect(pk.parts?.map(p => p.seqNo)).toEqual([0, 1, 2])
-    })
-
-    test('PK parts share same Column object reference as table.columns', () => {
-      const id = newColumn('id', { type: columnType(integerType('int')) })
-      const pk = newPrimaryKey([id])
-      const tbl = newTable('users', { columns: [id], primaryKey: pk })
-      expect(tbl.primaryKey?.parts?.[0].column).toBe(tbl.columns?.[0])
+      expect(pk.parts?.map(p => p.column)).toEqual(['a', 'b', 'c'])
     })
   })
 
@@ -424,11 +414,10 @@ describe('Column, constraint, and index-part factories', () => {
       expect(p.expr).toBeUndefined()
     })
 
-    test('newColumnPart wraps column', () => {
-      const col = newColumn('name')
-      const p = newColumnPart(col, { seqNo: 2 })
+    test('newColumnPart wraps column name', () => {
+      const p = newColumnPart('name', { seqNo: 2 })
       expect(p.seqNo).toBe(2)
-      expect(p.column).toBe(col)
+      expect(p.column).toBe('name')
     })
 
     test('newExprPart wraps expr', () => {
@@ -440,23 +429,19 @@ describe('Column, constraint, and index-part factories', () => {
   })
 
   describe('newForeignKey', () => {
-    test('FK column and refColumn hold same references as table columns', () => {
-      const userId = newColumn('user_id', { type: columnType(integerType('int')) })
-      const id = newColumn('id', { type: columnType(integerType('int')) })
-      const posts = newTable('posts', { columns: [userId] })
-      const users = newTable('users', { columns: [id] })
-
+    test('FK holds column names and a schema-qualified target table', () => {
       const fk = newForeignKey('fk_post_user', {
-        columns: [userId],
-        refTable: users,
-        refColumns: [id],
+        columns: ['user_id'],
+        refTable: { schema: 'public', name: 'users' },
+        refColumns: ['id'],
         onDelete: ReferenceOption.Cascade,
       })
 
       expect(fk.kind).toBe(ObjectKind.ForeignKey)
       expect(fk.symbol).toBe('fk_post_user')
-      expect(fk.columns?.[0]).toBe(posts.columns?.[0])   // same reference
-      expect(fk.refColumns?.[0]).toBe(users.columns?.[0]) // same reference
+      expect(fk.columns).toEqual(['user_id'])
+      expect(fk.refTable).toEqual({ schema: 'public', name: 'users' })
+      expect(fk.refColumns).toEqual(['id'])
       expect(fk.onDelete).toBe(ReferenceOption.Cascade)
     })
 
@@ -624,12 +609,13 @@ describe('full Realm graph via factories', () => {
     const id = newColumn('id', { type: columnType(integerType('int')) })
     const name = newColumn('name', { type: columnType(stringType('varchar', { size: 255 })) })
     const bio = newNullableColumn('bio')
-    const pk = newPrimaryKey([id])
-    const uxName = newUniqueIndex('ux_name', { parts: [newColumnPart(name, { seqNo: 0 })] })
+    const pk = newPrimaryKey(['id'])
+    const uxName = newUniqueIndex('ux_name', { parts: [newColumnPart('name', { seqNo: 0 })] })
 
     const userId = newColumn('user_id', { type: columnType(integerType('int')) })
     const content = newColumn('content', { type: columnType(stringType('text')) })
-    const postPk = newPrimaryKey([newColumn('id', { type: columnType(integerType('int')) })])
+    const postId = newColumn('id', { type: columnType(integerType('int')) })
+    const postPk = newPrimaryKey(['id'])
 
     const users = newTable('users', {
       columns: [id, name, bio],
@@ -639,13 +625,13 @@ describe('full Realm graph via factories', () => {
     })
 
     const posts = newTable('posts', {
-      columns: [userId, content],
+      columns: [postId, userId, content],
       primaryKey: postPk,
       foreignKeys: [
         newForeignKey('fk_posts_user', {
-          columns: [userId],
-          refTable: users,
-          refColumns: [id],
+          columns: ['user_id'],
+          refTable: { schema: 'public', name: 'users' },
+          refColumns: ['id'],
           onDelete: ReferenceOption.Cascade,
         }),
       ],
@@ -657,16 +643,16 @@ describe('full Realm graph via factories', () => {
     // structure
     expect(realm.schemas[0].tables).toHaveLength(2)
 
-    // PK part references same Column as table.columns
-    expect(users.primaryKey?.parts?.[0].column).toBe(users.columns?.[0])
+    // PK part names a column of table.columns
+    expect(users.primaryKey?.parts?.[0].column).toBe(users.columns?.[0].name)
 
-    // FK references same Column objects
+    // FK names columns of both tables
     const fk = posts.foreignKeys?.[0]
-    expect(fk?.columns?.[0]).toBe(posts.columns?.[0])
-    expect(fk?.refColumns?.[0]).toBe(users.columns?.[0])
+    expect(fk?.columns?.[0]).toBe(posts.columns?.[1].name)
+    expect(fk?.refColumns?.[0]).toBe(users.columns?.[0].name)
 
-    // index part references same Column
-    expect(users.indexes?.[0].parts?.[0].column).toBe(users.columns?.[1])
+    // index part names a column of table.columns
+    expect(users.indexes?.[0].parts?.[0].column).toBe(users.columns?.[1].name)
 
     // nullable column
     expect(bio.type?.null).toBe(true)

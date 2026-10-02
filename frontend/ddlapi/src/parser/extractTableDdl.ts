@@ -20,14 +20,9 @@ import { rawTypeName } from './typeMapper'
 import { isKnownTypeName } from './knownTypeNames'
 import { DdlParseError } from './buildFromDdl'
 import { resolveSpans, detectNewline, assembleSlice, type ResolvedSpan } from './spanEngine'
+import type { TableRef } from '../schema'
 
 // ── Public types ────────────────────────────────────────────────────────────────
-
-/** A schema-qualified table identity, using normalized model identifiers. */
-export interface TableRef {
-  schema: string
-  name: string
-}
 
 /** Discriminant values for DdlExtractorWarning. */
 export const DdlExtractorWarningKind = {

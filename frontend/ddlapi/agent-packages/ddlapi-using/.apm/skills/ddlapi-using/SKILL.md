@@ -58,6 +58,20 @@ Realm
 A `Table` has no `.schema`; a `Column` has no `.table`. If you need the owning
 table while iterating columns, track it in your own loop variable.
 
+Foreign keys and index parts reference tables and columns **by name**:
+`IndexPart.column`, `ForeignKey.columns`, and `ForeignKey.refColumns` are column
+names, and `ForeignKey.refTable` is a `TableRef` (`{ schema, name }`, `schema`
+always set). To reach the target, look it up in the realm:
+
+```typescript
+const target = realm.schemas
+  .find(s => s.name === fk.refTable?.schema)
+  ?.tables?.find(t => t.name === fk.refTable?.name)
+// undefined when the DDL references a table it does not define
+```
+
+Nothing checks that a referenced column exists in the referenced table.
+
 ## Discriminate on `kind` with the exported constants
 
 Every node in a union carries a `kind` string. Switch on it using the constant
@@ -249,31 +263,30 @@ Contract details that the signatures do not make obvious:
 
 ## Referential equality after a build
 
-After a successful build the model shares object references rather than
-duplicating them, so you can correlate with `===`:
+After a successful build a column whose type is an enum or a domain points at the
+same instance held in `schema.objects`, so you can correlate them with `===`.
+Copied columns of `CREATE TABLE … (LIKE source)` are **fresh `Column` objects**
+that still share those type instances.
 
-- `foreignKey.refTable` is the exact `Table` instance in `schema.tables`.
-- `foreignKey.columns[i]` / `refColumns[i]` are the exact `Column` instances.
-- A column whose type is an enum points at the same `EnumType` instance held in
-  `schema.objects`.
-- An index part's `.column` is the same `Column` object as in `table.columns`.
-
-The one exception is `CREATE TABLE … (LIKE source)`: copied columns are **fresh
-`Column` objects**, though they still share the underlying type instances.
+A foreign key or an index part that names a table or column the DDL does not
+define keeps the name, and `buildFromDdl` reports `unresolved-reference`.
 
 ## Building schemas by hand
 
 The `new*` and type/attr/expr factories construct the model without parsing
 (`newRealm`, `newSchema`, `newTable`, `newColumn`, `columnType`, `integerType`,
 `newForeignKey`, `comment`, `rawExpr`, …). They are pure constructors: **no
-validation, no graph wiring, no deduplication.** Identity is your
-responsibility — pass the *same* `Column` reference to `table.columns` and to
-the index part / foreign key that should point at it:
+validation, no graph wiring, no deduplication.** Keys and index parts take
+names, and nothing checks them against the tables:
 
 ```typescript
 const id = newColumn('id', { type: columnType(integerType('bigint'), { null: false }) })
-const users = newTable('users', { columns: [id], primaryKey: newPrimaryKey([id]) })
-// users.primaryKey.parts[0].column === users.columns[0]
+const users = newTable('users', { columns: [id], primaryKey: newPrimaryKey(['id']) })
+const fk = newForeignKey('posts_author_fk', {
+  columns: ['author_id'],
+  refTable: { schema: 'public', name: 'users' },
+  refColumns: ['id'],
+})
 ```
 
 To read or edit attribute lists, use the helpers in the public API:

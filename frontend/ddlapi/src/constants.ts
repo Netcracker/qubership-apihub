@@ -7,6 +7,9 @@ export const DdlapiProperties = {
   // Schema
   Tables:      'tables',
 
+  // TableRef
+  Schema:      'schema',
+
   // Table / View / shared collections
   Columns:     'columns',
   Indexes:     'indexes',
