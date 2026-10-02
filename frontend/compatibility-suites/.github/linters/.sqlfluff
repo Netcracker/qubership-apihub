@@ -1,0 +1,8 @@
+## SQLFluff configuration for super-linter.
+## DDL compatibility suite samples use PostgreSQL dialect.
+## https://docs.sqlfluff.com/en/stable/configuration/index.html
+
+[sqlfluff]
+dialect = postgres
+# Minimal DDL fixtures intentionally use compact formatting and short identifiers.
+exclude_rules = LT01, LT05, RF04

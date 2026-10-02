@@ -2,6 +2,7 @@ import {
   TEST_SPEC_TYPE_ASYNC_API,
   TEST_SPEC_TYPE_GRAPH_QL,
   TEST_SPEC_TYPE_OPEN_API,
+  TEST_SPEC_TYPE_DDL_API,
   type TestSpecType,
 } from '../suite-types'
 
@@ -27,6 +28,7 @@ const SCHEMA_SUITE_IDS_BY_SPEC_TYPE: Record<TestSpecType, readonly string[]> = {
   [TEST_SPEC_TYPE_OPEN_API]: OPENAPI_SCHEMA_SUITE_IDS,
   [TEST_SPEC_TYPE_GRAPH_QL]: [],
   [TEST_SPEC_TYPE_ASYNC_API]: ASYNCAPI_SCHEMA_SUITE_IDS,
+  [TEST_SPEC_TYPE_DDL_API]: [],
 }
 
 export const isKnownSchemaSuiteId = (specType: TestSpecType, suiteId: string): boolean =>

@@ -1,0 +1,3 @@
+CREATE TABLE b (
+    id INT
+);

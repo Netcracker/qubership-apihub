@@ -1,0 +1,8 @@
+CREATE TABLE t (
+    id INT PRIMARY KEY
+);
+
+CREATE TABLE u (
+    ref INT,
+    CONSTRAINT fk_u_t FOREIGN KEY (ref) REFERENCES t (id)
+);
