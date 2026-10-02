@@ -1,3 +1,3 @@
 CREATE TABLE t (
-    v NUMERIC(12, 4)
+    v NUMERIC(10, 4)
 );
