@@ -51,8 +51,8 @@ function ExampleMenu({ examples, requestBody, onChange }: RequestBodyProps) {
   const data = React.useMemo(() => {
     const items: MenuItems = [];
     const mapping = new Map<string, INodeExample | INodeExternalExample>();
-    examples.forEach(example => {
-      const id = `request-example-${example.key}`;
+    examples.forEach((example, index) => {
+      const id = `request-example-${index}-${example.key}`;
       items.push({ id, title: example.key });
       mapping.set(id, example);
     });

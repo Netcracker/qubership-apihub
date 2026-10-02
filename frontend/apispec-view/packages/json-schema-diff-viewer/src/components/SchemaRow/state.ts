@@ -1,7 +1,7 @@
 import { extractPointerFromRef, pointerToPath } from '@stoplight/json';
 import { isMirroredNode, isReferenceNode, isRegularNode, SchemaNode } from '@stoplight/json-schema-tree';
 import { schemaIdKey } from 'diff-block';
-import { atom, PrimitiveAtom, WritableAtom } from 'jotai';
+import { Atom, atom, PrimitiveAtom, WritableAtom } from 'jotai';
 import { atomFamily } from 'jotai/utils';
 import { isEqual, last } from 'lodash';
 
@@ -24,7 +24,7 @@ export const isChildNodeHoveredAtom = atomFamily((parent: SchemaNode) =>
   }),
 );
 
-export const choicesAtom = atomFamily<SchemaNode, Choice[]>(
+export const choicesAtom = atomFamily<SchemaNode, Atom<Choice[]>>(
   (node: SchemaNode) => {
     // handle flattening of arrays that contain oneOfs, same logic as below
     if (isComplexArray(node) && isNonEmptyParentNode(node.children[0]) && shouldShowChildSelector(node.children[0])) {
@@ -48,11 +48,7 @@ export const selectedChoiceAtom = atomFamily<SchemaNode, WritableAtom<Choice, Ch
       get => get(innerAtom) ?? get(choicesAtom(schemaNode))[0],
       (get, set, update) => {
         const choices = get(choicesAtom(schemaNode));
-        if (choices.find(choice => choice.title === update.title)) {
-          set(innerAtom, update);
-        } else {
-          set(innerAtom, choices[0]);
-        }
+        set(innerAtom, choices.includes(update) ? update : choices[0]);
       },
     );
   },

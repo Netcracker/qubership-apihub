@@ -1,6 +1,5 @@
 import { DiffBlock, useValueFromObjWithDiff } from 'diff-block';
 import { keys } from 'lodash';
-import { nanoid } from 'nanoid';
 import React, { FC } from 'react';
 
 import { Extension, ExtensionMeta, Extensions } from './Extensions';
@@ -35,7 +34,7 @@ export const ExtensionsDiffBlock: FC<ExtensionsDiffBlockProps> = ({ idPrefix, va
       action={firstDiff?.action}
       cause={buildOpenApiDiffCause(firstDiff)}
     >
-      <Extensions key={nanoid(8)} value={content} />
+      <Extensions value={content} />
     </DiffBlock>
   );
 };

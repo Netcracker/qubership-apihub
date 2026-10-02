@@ -4,7 +4,6 @@ import { Box, Flex, isArray, isObject, Panel } from '@stoplight/mosaic';
 import { useAtom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 import { keys } from 'lodash';
-import { nanoid } from 'nanoid';
 import React, { FC, ReactElement } from 'react';
 
 interface ExtensionsProps {
@@ -25,7 +24,7 @@ export const Extensions: FC<ExtensionsProps> = ({ value }) => {
         const isLongValue = value[key] && value[key].toString().length > 50;
         return (
           <Panel
-            key={`${key}-${nanoid(8)}`}
+            key={key}
             title={key}
             isCollapsible={isExtension || isLongValue}
             defaultIsOpen={expanded[key]}
@@ -60,11 +59,11 @@ function renderContent(
   const extension = value[key];
 
   if (isArray(extension)) {
-    return extension.map((child: any) =>
+    return extension.map((child: any, index: number) =>
       isObject(child) ? (
-        <Extensions key={nanoid(8)} value={child} />
+        <Extensions key={index} value={child} />
       ) : (
-        <MarkdownViewer key={nanoid(8)} style={{ fontSize: 12 }} markdown={safeStringify(child) ?? 'null'} />
+        <MarkdownViewer key={index} style={{ fontSize: 12 }} markdown={safeStringify(child) ?? 'null'} />
       ),
     );
   } else if (isObject(extension)) {

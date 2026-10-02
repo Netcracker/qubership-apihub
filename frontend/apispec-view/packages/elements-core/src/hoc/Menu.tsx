@@ -1,6 +1,7 @@
-import { MenuActionItem, MenuItems } from '@stoplight/mosaic';
-import { nanoid } from 'nanoid';
+import { MenuItems } from '@stoplight/mosaic';
 import * as React from 'react';
+
+import { isSelectableMenuItem } from './menu-items';
 
 export type MenuProps = {
   title: string;
@@ -23,10 +24,13 @@ export const NativeMenu: React.FC<MenuProps> = React.memo(props => {
       <option disabled value="default" style={{ display: 'none' }}>
         {title}
       </option>
-      {menuItems.map(item => {
-        const { id, title } = item as MenuActionItem;
+      {menuItems.map((item, index) => {
+        if (!isSelectableMenuItem(item)) {
+          return null;
+        }
+        const { id, title } = item;
         return (
-          <option key={nanoid(8)} value={id}>
+          <option key={`${id}-${index}`} value={id}>
             {title}
           </option>
         );

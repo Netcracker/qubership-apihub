@@ -123,13 +123,15 @@ export const TryIt: React.FC<TryItProps> = ({
   React.useEffect(() => {
     const currentUrl = chosenServer?.url;
 
-    // simple attempt to preserve / sync up active server if the URLs are the same between re-renders / navigation
-    const exists = currentUrl && servers.find(s => s.url === currentUrl);
-    if (!exists) {
-      setChosenServer(firstServer);
-    } else if (exists !== chosenServer) {
-      setChosenServer(exists);
+    // Keep the exact object while it is still in the list. Server urls are not guaranteed to be
+    // unique, so a url lookup resolves the second of two equal urls back to the first and undoes
+    // the selection the user just made.
+    if (chosenServer && servers.includes(chosenServer)) {
+      return;
     }
+
+    const sameUrl = currentUrl ? servers.find(s => s.url === currentUrl) : undefined;
+    setChosenServer(sameUrl ?? firstServer);
   }, [servers, firstServer, chosenServer, setChosenServer]);
 
   React.useEffect(() => {
