@@ -84,4 +84,24 @@ describe("DDL API Diffs Suite - Foreign Key Reference Changes Samples", () => {
   it("12-replaced-foreign-key-schema-custom-1-to-custom-2-table-and-column", async () => {
     await expectCaseScreenshot("12-replaced-foreign-key-schema-custom-1-to-custom-2-table-and-column");
   });
+
+  it("13-renamed-foreign-key", async () => {
+    await expectCaseScreenshot("13-renamed-foreign-key");
+  });
+
+  it("14-unnamed-foreign-key-became-named", async () => {
+    await expectCaseScreenshot("14-unnamed-foreign-key-became-named");
+  });
+
+  it("15-removed-foreign-key-next-to-kept-one-with-same-target", async () => {
+    await expectCaseScreenshot("15-removed-foreign-key-next-to-kept-one-with-same-target");
+  });
+
+  it("16-foreign-key-moved-off-column-next-to-kept-one-with-same-target", async () => {
+    await expectCaseScreenshot("16-foreign-key-moved-off-column-next-to-kept-one-with-same-target");
+  });
+
+  it("17-unchanged-unnamed-foreign-key-with-index-description-added", async () => {
+    await expectCaseScreenshot("17-unchanged-unnamed-foreign-key-with-index-description-added");
+  });
 });

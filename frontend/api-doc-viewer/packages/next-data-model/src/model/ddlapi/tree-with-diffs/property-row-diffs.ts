@@ -75,7 +75,7 @@ export type {
   DdlListSideSegment,
 } from "./list-side-display"
 
-export { formatForeignKeyTargetKey } from "../../../shared/ddlapi/foreign-key-target-key"
+export { formatForeignKeyTargetKey, formatForeignKeyTargetKeys } from "../../../shared/ddlapi/foreign-key-target-key"
 
 export type DdlApiPropertyNodeWithDiffs =
   | DdlApiTreeNodeWithDiffs<typeof DdlApiTreeNodeKinds.COLUMN>

@@ -45,3 +45,8 @@ export const Case_09_replaced_foreign_key_schema_custom1_to_custom2_and_table: S
 export const Case_10_replaced_foreign_key_schema_public_to_custom_table_and_column: Story = createCaseStory("10-replaced-foreign-key-schema-public-to-custom-table-and-column");
 export const Case_11_replaced_foreign_key_schema_custom_to_public_table_and_column: Story = createCaseStory("11-replaced-foreign-key-schema-custom-to-public-table-and-column");
 export const Case_12_replaced_foreign_key_schema_custom1_to_custom2_table_and_column: Story = createCaseStory("12-replaced-foreign-key-schema-custom1-to-custom2-table-and-column");
+export const Case_13_renamed_foreign_key: Story = createCaseStory("13-renamed-foreign-key");
+export const Case_14_unnamed_foreign_key_became_named: Story = createCaseStory("14-unnamed-foreign-key-became-named");
+export const Case_15_removed_foreign_key_next_to_kept_one_with_same_target: Story = createCaseStory("15-removed-foreign-key-next-to-kept-one-with-same-target");
+export const Case_16_foreign_key_moved_off_column_next_to_kept_one_with_same_target: Story = createCaseStory("16-foreign-key-moved-off-column-next-to-kept-one-with-same-target");
+export const Case_17_unchanged_unnamed_foreign_key_with_index_description_added: Story = createCaseStory("17-unchanged-unnamed-foreign-key-with-index-description-added");

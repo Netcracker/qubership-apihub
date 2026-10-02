@@ -7,7 +7,7 @@ import { ChangedPropertyMetaData } from "@netcracker/qubership-apihub-next-data-
 import { isDdlFlagBadgeDiffHighlighted } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs"
 import { DdlApiForeignKeyTarget } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree/node-value"
 import {
-  formatForeignKeyTargetKey,
+  formatForeignKeyTargetKeys,
   resolveForeignKeyTargetSideDisplay,
 } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs"
 import { FC, memo, ReactNode, useMemo } from "react"
@@ -19,7 +19,6 @@ import {
   DDL_API_UNIQUE_BADGE_COLOR_SCHEMA,
 } from "../consts"
 import { ForeignKey } from "../ForeignKey/ForeignKey"
-import { formatForeignKeyTarget } from "../formatters"
 import { ColumnRowBadgesContentProps, ColumnRowBadgesFlagDiffs } from "./types"
 
 /** Keeps side-by-side columns aligned when a flag badge is hidden on one side. */
@@ -94,12 +93,13 @@ function renderFlagBadge(options: {
 function renderForeignKeyTargetBadge(options: {
   columnId: string
   target: DdlApiForeignKeyTarget
+  targetKey: string
   targetDiff: ChangedPropertyMetaData | undefined
   layoutMode: ReturnType<typeof useLayoutMode>
   layoutSide: LayoutSide
 }): ReactNode {
-  const { columnId, target, targetDiff, layoutMode, layoutSide } = options
-  const badgeKey = buildForeignKeyBadgeKey(columnId, target)
+  const { columnId, target, targetKey, targetDiff, layoutMode, layoutSide } = options
+  const badgeKey = buildForeignKeyBadgeKey(columnId, targetKey)
   const textHighlighterColor = takeDiffSideTextHighlighterColor(targetDiff, layoutSide)
 
   if (targetDiff && !isContentVisibleOnSide(targetDiff, layoutSide)) {
@@ -220,13 +220,19 @@ export const ColumnRowBadgesContent: FC<ColumnRowBadgesContentProps> = memo<Colu
       return []
     }
 
-    return targets.map(target => renderForeignKeyTargetBadge({
-      columnId,
-      target,
-      targetDiff: targetDiffs[formatForeignKeyTargetKey(target)],
-      layoutMode,
-      layoutSide,
-    }))
+    // One badge per foreign key: two keys of the column can show the same target.
+    const targetKeys = formatForeignKeyTargetKeys(targets)
+    return targets.map((target, index) => {
+      const targetKey = targetKeys[index]
+      return renderForeignKeyTargetBadge({
+        columnId,
+        target,
+        targetKey,
+        targetDiff: targetDiffs[targetKey],
+        layoutMode,
+        layoutSide,
+      })
+    })
   }, [columnId, layoutMode, layoutSide, targetDiffs, value.foreignKeyTargets])
 
   const badges = useMemo(
@@ -249,6 +255,6 @@ function buildBadgeKey(columnId: string, label: string): string {
   return `${columnId}-${label}`
 }
 
-function buildForeignKeyBadgeKey(columnId: string, target: DdlApiForeignKeyTarget): string {
-  return `${columnId}-FK-${formatForeignKeyTarget(target)}`
+function buildForeignKeyBadgeKey(columnId: string, targetKey: string): string {
+  return `${columnId}-FK-${targetKey}`
 }

@@ -2,6 +2,7 @@ import { CHANGED_LAYOUT_SIDE, ORIGIN_LAYOUT_SIDE } from '@apihub/next-data-model
 import { HighlightVariant, NodeDiffsSeverityPlacemennt } from '@apihub/next-data-model/model/abstract/tree-with-diffs/tree-node.interface'
 import {
   formatForeignKeyTargetKey,
+  formatForeignKeyTargetKeys,
   resolveForeignKeyTargetSideDisplay,
 } from '@apihub/next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs'
 import { DdlApiForeignKeyTarget } from '@apihub/next-data-model/model/ddlapi/tree/node-value'
@@ -104,5 +105,80 @@ describe('foreign key target diffs when a key changes in place', () => {
     expect(resolveForeignKeyTargetSideDisplay(afterTarget, targetDiff, ORIGIN_LAYOUT_SIDE)).toEqual(beforeTarget)
     expect(resolveForeignKeyTargetSideDisplay(afterTarget, targetDiff, CHANGED_LAYOUT_SIDE)).toEqual(afterTarget)
     expect(column.diffsSeverities?.[NodeDiffsSeverityPlacemennt.TitleRow]?.causedAt?.at(-1)).toBe(causedAt)
+  })
+})
+
+// Two foreign keys of one column can show the same target. Each badge carries the diff of its own
+// key, so a removed key shows on the before side only and an added key on the after side only.
+describe('foreign key target diffs when two keys of a column show the same target', () => {
+  const parentId = target('parent', 'id')
+
+  function targetDiffActions(column: ReturnType<typeof findColumn>): Array<string | undefined> {
+    const targets = column.value()?.foreignKeyTargets ?? []
+    return formatForeignKeyTargetKeys(targets).map(key => column.diffs.foreignKeyTargetDiffs?.[key]?.data.action)
+  }
+
+  it('renamed key: the old key is removed and the new one added, one per side', async () => {
+    const tree = await buildTree(
+      `create table parent (id int primary key);
+       create table child (a int, constraint fk_old foreign key (a) references parent (id));`,
+      `create table parent (id int primary key);
+       create table child (a int, constraint fk_new foreign key (a) references parent (id));`,
+      'child',
+    )
+    const column = findColumn(tree, 'a')
+    const keys = formatForeignKeyTargetKeys(column.value()?.foreignKeyTargets ?? [])
+    const [removed, added] = keys.map(key => column.diffs.foreignKeyTargetDiffs?.[key])
+
+    // The merged document keeps the removed key in its place and appends the added one.
+    expect(column.value()?.foreignKeyTargets).toEqual([parentId, parentId])
+    expect(targetDiffActions(column)).toEqual([DiffAction.remove, DiffAction.add])
+    expect(removed?.styles.before.isContentVisible).toBe(true)
+    expect(removed?.styles.after.isContentVisible).toBe(false)
+    expect(added?.styles.before.isContentVisible).toBe(false)
+    expect(added?.styles.after.isContentVisible).toBe(true)
+  })
+
+  it('removed key next to an unchanged one: only the removed key is marked', async () => {
+    const tree = await buildTree(
+      `create table parent (id int primary key);
+       create table child (
+         a int,
+         constraint fk_kept foreign key (a) references parent (id),
+         constraint fk_gone foreign key (a) references parent (id)
+       );`,
+      `create table parent (id int primary key);
+       create table child (a int, constraint fk_kept foreign key (a) references parent (id));`,
+      'child',
+    )
+    const column = findColumn(tree, 'a')
+
+    expect(column.value()?.foreignKeyTargets).toEqual([parentId, parentId])
+    expect(targetDiffActions(column)).toEqual([undefined, DiffAction.remove])
+  })
+
+  it('key moved off the column next to an unchanged one: the moved key is a second, removed badge', async () => {
+    const tree = await buildTree(
+      `create table parent (id int primary key);
+       create table child (
+         a int,
+         b int,
+         constraint fk_kept foreign key (a) references parent (id),
+         constraint fk_moved foreign key (a) references parent (id)
+       );`,
+      `create table parent (id int primary key);
+       create table child (
+         a int,
+         b int,
+         constraint fk_kept foreign key (a) references parent (id),
+         constraint fk_moved foreign key (b) references parent (id)
+       );`,
+      'child',
+    )
+    const column = findColumn(tree, 'a')
+
+    expect(column.value()?.foreignKeyTargets).toEqual([parentId, parentId])
+    expect(targetDiffActions(column)).toEqual([undefined, DiffAction.remove])
+    expect(targetDiffActions(findColumn(tree, 'b'))).toEqual([DiffAction.add])
   })
 })
