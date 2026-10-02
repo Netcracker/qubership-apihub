@@ -11,6 +11,7 @@ import {
   DiffTemplateParamsCalculator,
   DynamicParams,
   FAILED_PARAMS_CALCULATION,
+  NodeContext,
   PrimitiveType,
 } from '../types'
 import {
@@ -38,6 +39,7 @@ import {
   TEMPLATE_PARAM_COLUMNS_CLAUSE,
   TEMPLATE_PARAM_ENUM_TYPE_NAME,
   TEMPLATE_PARAM_ENUM_VALUE,
+  TEMPLATE_PARAM_ENUM_VALUES_CLAUSE,
   TEMPLATE_PARAM_FACET,
   TEMPLATE_PARAM_FK_ACTION,
   TEMPLATE_PARAM_FK_NAME,
@@ -81,6 +83,15 @@ export const COLUMN_FACET_TEMPLATES = [
   "[{{action}}] {{facet}} for column '{{columnName}}' of table '{{tableName}}' in schema '{{schemaName}}' from '{{oldValue}}' to '{{newValue}}'",
 ]
 
+// A whole enum type add/delete carries its values inline; an enum with no values degrades to
+// the name-only rows.
+export const ENUM_TYPE_TEMPLATES = [
+  "[{{action}}] enum '{{enumTypeName}}'",
+  "[{{action}}] enum '{{enumTypeName}}' in schema '{{schemaName}}'",
+  "[{{action}}] enum '{{enumTypeName}}' with {{enumValuesClause}}",
+  "[{{action}}] enum '{{enumTypeName}}' in schema '{{schemaName}}' with {{enumValuesClause}}",
+]
+
 export const ENUM_VALUE_TEMPLATES = [
   "[{{action}}] value '{{enumValue}}' {{preposition}} enum '{{enumTypeName}}'",
   "[{{action}}] value '{{enumValue}}' {{preposition}} enum '{{enumTypeName}}' in schema '{{schemaName}}'",
@@ -120,6 +131,17 @@ export const INDEX_TEMPLATES = [
   "[{{action}}] primary key on table '{{tableName}}' in schema '{{schemaName}}'",
   "[{{action}}] primary key on {{columnsClause}} of table '{{tableName}}'",
   "[{{action}}] primary key on {{columnsClause}} of table '{{tableName}}' in schema '{{schemaName}}'",
+  // a key column added to or removed from the primary key
+  "[{{action}}] {{partClause}} {{preposition}} primary key of table '{{tableName}}'",
+  "[{{action}}] {{partClause}} {{preposition}} primary key of table '{{tableName}}' in schema '{{schemaName}}'",
+  // a primary key column moved to another position (1-based position change)
+  "[{{action}}] position of {{partClause}} in primary key of table '{{tableName}}' from '{{oldValue}}' to '{{newValue}}'",
+  "[{{action}}] position of {{partClause}} in primary key of table '{{tableName}}' in schema '{{schemaName}}' from '{{oldValue}}' to '{{newValue}}'",
+  // an unnamed index (an inline UNIQUE column constraint has no name to quote). Listed before the
+  // named rows so that on a tie — `findTemplate` keeps the later of two equally rich templates —
+  // a named index still selects the row that quotes its name.
+  "[{{action}}] {{indexKind}} on {{columnsClause}} of table '{{tableName}}'",
+  "[{{action}}] {{indexKind}} on {{columnsClause}} of table '{{tableName}}' in schema '{{schemaName}}'",
   // index name-only fallback (also serves an unrecognised index change)
   "[{{action}}] index '{{indexName}}' on table '{{tableName}}'",
   "[{{action}}] index '{{indexName}}' on table '{{tableName}}' in schema '{{schemaName}}'",
@@ -129,6 +151,9 @@ export const INDEX_TEMPLATES = [
   // unique flag flip (name only + from/to)
   "[{{action}}] index '{{indexName}}' on table '{{tableName}}' from '{{oldValue}}' to '{{newValue}}'",
   "[{{action}}] index '{{indexName}}' on table '{{tableName}}' in schema '{{schemaName}}' from '{{oldValue}}' to '{{newValue}}'",
+  // unique flag flip of an unnamed index, identified by its key columns
+  "[{{action}}] index on {{columnsClause}} of table '{{tableName}}' from '{{oldValue}}' to '{{newValue}}'",
+  "[{{action}}] index on {{columnsClause}} of table '{{tableName}}' in schema '{{schemaName}}' from '{{oldValue}}' to '{{newValue}}'",
   // a key part (column / expression) added to or removed from an existing index
   "[{{action}}] {{partClause}} {{preposition}} index '{{indexName}}' of table '{{tableName}}'",
   "[{{action}}] {{partClause}} {{preposition}} index '{{indexName}}' of table '{{tableName}}' in schema '{{schemaName}}'",
@@ -138,10 +163,15 @@ export const INDEX_TEMPLATES = [
 ]
 
 // Add/remove carry the full identity via precomposed local/ref clauses (each clause bakes in its
-// own `in schema` suffix when its table is not in the default schema). A referential-action
-// change (onDelete/onUpdate) is name-only with from/to (Principle B).
+// own `in schema` suffix when its table is not in the default schema). A change to one part of
+// the key — its columns, its referenced columns, its referenced table, or a referential action —
+// names that part in `{{fkAction}}` and is otherwise name-only with from/to (Principle B). A key
+// with no name (an inline `REFERENCES`) is identified by its local clause instead; the named rows
+// carry more params, so a named key never selects an unnamed row.
 export const FOREIGN_KEY_TEMPLATES = [
+  "[{{action}}] foreign key {{localClause}} {{refClause}}",
   "[{{action}}] foreign key '{{fkName}}' {{localClause}} {{refClause}}",
+  "[{{action}}] {{fkAction}} of foreign key {{localClause}} from '{{oldValue}}' to '{{newValue}}'",
   "[{{action}}] {{fkAction}} of foreign key '{{fkName}}' on table '{{tableName}}' from '{{oldValue}}' to '{{newValue}}'",
   "[{{action}}] {{fkAction}} of foreign key '{{fkName}}' on table '{{tableName}}' in schema '{{schemaName}}' from '{{oldValue}}' to '{{newValue}}'",
 ]
@@ -160,6 +190,7 @@ export const CHECK_TEMPLATES = [
 export const tableDescription: DiffDescriptionRule = diffDescription(TABLE_TEMPLATES)
 export const columnDescription: DiffDescriptionRule = diffDescription(COLUMN_TEMPLATES)
 export const columnFacetDescription: DiffDescriptionRule = diffDescription(COLUMN_FACET_TEMPLATES)
+export const enumTypeDescription: DiffDescriptionRule = diffDescription(ENUM_TYPE_TEMPLATES)
 export const enumValueDescription: DiffDescriptionRule = diffDescription(ENUM_VALUE_TEMPLATES)
 export const commentDescription: DiffDescriptionRule = diffDescription(COMMENT_TEMPLATES)
 export const indexDescription: DiffDescriptionRule = diffDescription(INDEX_TEMPLATES)
@@ -226,7 +257,7 @@ const columnNoun = (count: number): string => (count === 1 ? 'column' : 'columns
 
 // Bare label of one index part: a column name, or (expression part) its expression text.
 const partLabel = (part: unknown): PrimitiveType | undefined => {
-  const columnName = nameOf(isObject(part) ? part[DdlapiProperties.Column] : undefined)
+  const columnName = nameOf(part, DdlapiProperties.Column)
   return columnName ?? renderExprText(isObject(part) ? part[DdlapiProperties.Expr] : undefined)
 }
 
@@ -240,29 +271,23 @@ const renderColumnsClause = (indexNode: unknown): string | undefined => {
 
 // `column 'b'` / `expression 'lower(a)'` for a single part add / remove / reorder.
 const renderPartClause = (part: unknown): string | undefined => {
-  const columnName = nameOf(isObject(part) ? part[DdlapiProperties.Column] : undefined)
+  const columnName = nameOf(part, DdlapiProperties.Column)
   if (columnName !== undefined) { return `column '${columnName}'` }
   const expr = renderExprText(isObject(part) ? part[DdlapiProperties.Expr] : undefined)
   return expr === undefined ? undefined : `expression '${expr}'`
 }
 
+// Column names held in `property` of a foreign key node.
 const columnNames = (node: unknown, property: PropertyKey): PrimitiveType[] => {
   const columns = isObject(node) ? node[property] : undefined
-  return isArray(columns) ? columns.map(column => nameOf(column)).filter((name): name is PrimitiveType => name !== undefined) : []
+  return isArray(columns) ? columns.map(checkPrimitiveType).filter((name): name is PrimitiveType => name !== undefined) : []
 }
 
-// A Table node has no back-reference to its schema; locate the owning schema by identity. After a
-// build/normalization `foreignKey.refTable` is the exact `Table` instance held in `schema.tables`
-// (the shared-instance contract), so an `===` scan resolves the referenced table's schema name.
-const schemaNameOfTableNode = (root: unknown, tableNode: unknown): PrimitiveType | undefined => {
-  if (!isObject(tableNode)) { return undefined }
-  const schemas = getKeyValue(root, DdlapiProperties.Schemas)
-  if (!isArray(schemas)) { return undefined }
-  for (const schema of schemas) {
-    const tables = isObject(schema) ? schema[DdlapiProperties.Tables] : undefined
-    if (isArray(tables) && tables.some(table => table === tableNode)) { return nameOf(schema) }
-  }
-  return undefined
+// `a` / `a, b` for a foreign key's column list, whose diff carries the array itself.
+const joinNames = (value: unknown): PrimitiveType | undefined => {
+  if (!isArray(value)) { return undefined }
+  const names = value.map(checkPrimitiveType).filter((name): name is PrimitiveType => name !== undefined)
+  return names.length === 0 ? undefined : names.join(', ')
 }
 
 // `beforeValue`/`afterValue` live on specific Diff union members; read them safely.
@@ -282,6 +307,20 @@ const orderedDeclarationPaths = (diff: Diff): JsonPath[] => {
   }
 }
 
+// The route the crawl actually took to a node, as a path from the realm root — the same shape as
+// a declaration path, so it feeds `pc.nodeAt` / `pc.schemaOf` unchanged. The root wrapper (whose
+// context has no parent) is dropped, and a synthetic key (the absent side of an add/remove) ends
+// the path, leaving the valid ancestor prefix. `buildParamContext` offers this only after the
+// declaration paths, which remain the better source wherever they lead to the changed node.
+const crawlPath = (node: NodeContext | undefined): JsonPath => {
+  const path: JsonPath = []
+  for (let n = node; n?.parentContext; n = n.parentContext) {
+    if (!isString(n.key) && typeof n.key !== 'number') { path.length = 0; continue }
+    path.unshift(n.key)
+  }
+  return path
+}
+
 const SCHEMA_DEPTH = 2 // ['schemas', si]
 const TABLE_DEPTH = 4 // ['schemas', si, 'tables', ti]
 const COLUMN_DEPTH = 6 // ['schemas', si, 'tables', ti, 'columns', ci]
@@ -297,21 +336,22 @@ const COLUMN_ATTR_FACETS: Record<string, string> = {
 // The ddlapi rule tree resolves the nearest `descriptionParamCalculator` up from each rendered
 // node, so a calculator attached at a subtree root serves every description in that subtree.
 // Each calculator below owns one family; `ddlRules` wires it onto the matching node. They share
-// the context built by `buildParamContext` and resolve entity names by slicing the diff's
-// canonical declaration path against the diff side's realm root — robust for shared nodes, where
-// a shared enum/column resolves from its own origin, not the crawl route that reached it.
+// the context built by `buildParamContext` and resolve entity names by slicing a path against the
+// diff side's realm root: the diff's canonical declaration path first — robust for shared nodes,
+// where a shared enum/column resolves from its own origin rather than the route that reached it —
+// and the crawl route only where no declaration path leads to the changed node.
 
 interface DdlParamContext {
   /** Action + preposition params present on every description. */
   readonly base: DynamicParams
-  /** First candidate declaration path matching `predicate`. */
+  /** First candidate path matching `predicate` — declaration paths first, then the crawl route. */
   pathWhere(predicate: (p: JsonPath) => boolean): JsonPath | undefined
   /** Node `depth` segments down the realm root along `path`. */
   nodeAt(path: JsonPath, depth: number): unknown
   /** Owning schema name for a declaration path, dropped when it is the default schema. */
   schemaOf(path: JsonPath): PrimitiveType | undefined
-  /** Owning schema name for a Table node (located by identity), dropped when default. */
-  schemaOfTable(tableNode: unknown): PrimitiveType | undefined
+  /** The given schema name, dropped when it is the default schema. */
+  nonDefaultSchema(name: PrimitiveType | undefined): PrimitiveType | undefined
 }
 
 const buildParamContext = (dialect: DdlDiffDialect, diff: Diff, ctx: CompareContext): DdlParamContext | undefined => {
@@ -322,8 +362,15 @@ const buildParamContext = (dialect: DdlDiffDialect, diff: Diff, ctx: CompareCont
   // `unique:false`) yields a synthetic `#defaults` after-path; it never matches the structural
   // predicates below, so the real (before) path is selected instead — and for a value/leaf
   // replace the ancestors are identical on both sides, so a before-origin path still resolves.
-  const root = (isDiffRemove(diff) ? ctx.before : ctx.after).root
-  const sidePaths = orderedDeclarationPaths(diff)
+  //
+  // The crawl route is appended as a last-resort candidate. `pathWhere` returns the first match,
+  // so a declaration path always wins and the shared-node behaviour above is untouched; the route
+  // is consulted only where no declaration path leads to the changed node. One case reaches it: a
+  // value materialized from a default, whose only origin is the synthetic `#defaults`, and which
+  // would otherwise fall back to printing that origin as a raw path.
+  const side = isDiffRemove(diff) ? ctx.before : ctx.after
+  const root = side.root
+  const sidePaths = [...orderedDeclarationPaths(diff), crawlPath(side)]
   if (sidePaths.length === 0) { return undefined }
   const dropDefaultSchema = (name: PrimitiveType | undefined): PrimitiveType | undefined =>
     (name === dialect.defaultSchemaName ? undefined : name)
@@ -335,7 +382,7 @@ const buildParamContext = (dialect: DdlDiffDialect, diff: Diff, ctx: CompareCont
     pathWhere: predicate => sidePaths.find(predicate),
     nodeAt: (path, depth) => getKeyValue(root, ...path.slice(0, depth)),
     schemaOf: path => dropDefaultSchema(nameOf(getKeyValue(root, ...path.slice(0, SCHEMA_DEPTH)))),
-    schemaOfTable: tableNode => dropDefaultSchema(schemaNameOfTableNode(root, tableNode)),
+    nonDefaultSchema: dropDefaultSchema,
   }
 }
 
@@ -440,18 +487,33 @@ const columnParams: DdlParamHandler = (pc, diff, ctx) => {
 // reorder (1-based position), or a unique-flag flip. The primary key reuses the index rule, so a
 // pk diff lands here too; the branch is picked by the path tail.
 const indexParams: DdlParamHandler = (pc, diff) => {
-  // primary key — whole add/remove lists its key columns; a sub-change (part reorder) falls back
-  // to the name-only variant (no columnsClause supplied).
+  // primary key — whole add/remove lists its key columns, a key column added or removed names
+  // that column, and anything else falls back to the name-only variant.
   const pkPath = pc.pathWhere(p => p.includes(DdlapiProperties.PrimaryKey))
   if (pkPath) {
-    const pkIdx = pkPath.indexOf(DdlapiProperties.PrimaryKey)
-    const wholePk = pkPath[pkPath.length - 1] === DdlapiProperties.PrimaryKey
-    return {
+    const pkCommon = {
       ...pc.base,
-      ...(wholePk ? { [TEMPLATE_PARAM_COLUMNS_CLAUSE]: renderColumnsClause(pc.nodeAt(pkPath, pkIdx + 1)) } : {}),
       [TEMPLATE_PARAM_TABLE_NAME]: nameOf(pc.nodeAt(pkPath, TABLE_DEPTH)),
       [TEMPLATE_PARAM_SCHEMA_NAME]: pc.schemaOf(pkPath),
     }
+    if (pkPath[pkPath.length - 1] === DdlapiProperties.PrimaryKey) {
+      const pkIdx = pkPath.indexOf(DdlapiProperties.PrimaryKey)
+      return { ...pkCommon, [TEMPLATE_PARAM_COLUMNS_CLAUSE]: renderColumnsClause(pc.nodeAt(pkPath, pkIdx + 1)) }
+    }
+    const pkPartsIdx = pkPath.indexOf(DdlapiProperties.Parts)
+    if (lastSegments(pkPath)[0] === DdlapiProperties.Parts && typeof pkPath[pkPath.length - 1] === 'number') {
+      return { ...pkCommon, [TEMPLATE_PARAM_PART_CLAUSE]: renderPartClause(pc.nodeAt(pkPath, pkPartsIdx + 2)) }
+    }
+    if (pkPartsIdx >= 0 && pkPath[pkPath.length - 1] === DdlapiProperties.SeqNo) {
+      // key column moved — `seqNo` is 0-based in the model, rendered 1-based.
+      return {
+        ...pkCommon,
+        [TEMPLATE_PARAM_PART_CLAUSE]: renderPartClause(pc.nodeAt(pkPath, pkPartsIdx + 2)),
+        [TEMPLATE_PARAM_OLD_VALUE]: oneBased(beforeValueOf(diff)),
+        [TEMPLATE_PARAM_NEW_VALUE]: oneBased(afterValueOf(diff)),
+      }
+    }
+    return pkCommon
   }
 
   const indexPath = pc.pathWhere(p => p.includes(DdlapiProperties.Indexes))
@@ -476,8 +538,13 @@ const indexParams: DdlParamHandler = (pc, diff) => {
     }
   }
   if (last === DdlapiProperties.Unique) {
+    // An unnamed index has no name to quote, so its key columns identify it. A named index
+    // gets no columns clause, which keeps it on the row that quotes its name.
     return {
       ...common,
+      ...(common[TEMPLATE_PARAM_INDEX_NAME] === undefined && {
+        [TEMPLATE_PARAM_COLUMNS_CLAUSE]: renderColumnsClause(indexNode),
+      }),
       [TEMPLATE_PARAM_OLD_VALUE]: renderUnique(beforeValueOf(diff)),
       [TEMPLATE_PARAM_NEW_VALUE]: renderUnique(afterValueOf(diff)),
     }
@@ -494,36 +561,64 @@ const indexParams: DdlParamHandler = (pc, diff) => {
   }
 }
 
-// Foreign key: add/remove (and any non referential-action change) renders the full identity via
-// local/ref clauses; an onDelete/onUpdate change is name-only with from/to.
+// Foreign key: add/remove renders the full identity via local/ref clauses; a change to one part
+// of the key names that part and renders from/to. The part is read off the path tail, so the
+// branches below cover the key's columns, its referenced columns, its referenced table and its
+// referential actions alike.
 const foreignKeyParams: DdlParamHandler = (pc, diff) => {
+  // `users`, or `sales.users` outside the default schema.
+  const renderTableRef = (tableRef: unknown): PrimitiveType | undefined => {
+    const name = nameOf(tableRef)
+    const schema = pc.nonDefaultSchema(nameOf(tableRef, DdlapiProperties.Schema))
+    return name === undefined || schema === undefined ? name : `${schema}.${name}`
+  }
   const fkPath = pc.pathWhere(p => p.includes(DdlapiProperties.ForeignKeys))
   if (!fkPath) { return undefined }
   const fkIdx = fkPath.indexOf(DdlapiProperties.ForeignKeys)
   const fkNode = pc.nodeAt(fkPath, fkIdx + 2)
   const fkName = nameOf(fkNode, DdlapiProperties.Symbol) ?? nameOf(fkNode)
   const last = fkPath[fkPath.length - 1]
-  if (last === DdlapiProperties.OnDelete || last === DdlapiProperties.OnUpdate) {
-    return {
-      ...pc.base,
-      [TEMPLATE_PARAM_FK_NAME]: fkName,
-      [TEMPLATE_PARAM_FK_ACTION]: last === DdlapiProperties.OnDelete ? 'on-delete action' : 'on-update action',
-      [TEMPLATE_PARAM_TABLE_NAME]: nameOf(pc.nodeAt(fkPath, TABLE_DEPTH)),
-      [TEMPLATE_PARAM_SCHEMA_NAME]: pc.schemaOf(fkPath),
-      [TEMPLATE_PARAM_OLD_VALUE]: checkPrimitiveType(beforeValueOf(diff)),
-      [TEMPLATE_PARAM_NEW_VALUE]: checkPrimitiveType(afterValueOf(diff)),
-    }
-  }
   const localColumns = columnNames(fkNode, DdlapiProperties.Columns)
   const localTable = nameOf(pc.nodeAt(fkPath, TABLE_DEPTH))
   const localSchema = pc.schemaOf(fkPath)
+  const localClause = `on ${columnNoun(localColumns.length)} ${quoteJoin(localColumns)} of table '${localTable}'${localSchema ? ` in schema '${localSchema}'` : ''}`
+  const partOfKey = (part: string, oldValue: PrimitiveType | undefined, newValue: PrimitiveType | undefined): DynamicParams => ({
+    ...pc.base,
+    [TEMPLATE_PARAM_FK_NAME]: fkName,
+    [TEMPLATE_PARAM_FK_ACTION]: part,
+    [TEMPLATE_PARAM_TABLE_NAME]: localTable,
+    [TEMPLATE_PARAM_SCHEMA_NAME]: localSchema,
+    // An unnamed key is identified by its columns; a named key keeps the row that quotes its name.
+    ...(fkName === undefined && { [TEMPLATE_PARAM_LOCAL_CLAUSE]: localClause }),
+    [TEMPLATE_PARAM_OLD_VALUE]: oldValue,
+    [TEMPLATE_PARAM_NEW_VALUE]: newValue,
+  })
+  if (last === DdlapiProperties.OnDelete || last === DdlapiProperties.OnUpdate) {
+    return partOfKey(
+      last === DdlapiProperties.OnDelete ? 'on-delete action' : 'on-update action',
+      checkPrimitiveType(beforeValueOf(diff)),
+      checkPrimitiveType(afterValueOf(diff)),
+    )
+  }
+  // The key's covered columns, compared as one value at the slot they are declared on.
+  if (last === DdlapiProperties.Columns || last === DdlapiProperties.RefColumns) {
+    return partOfKey(
+      last === DdlapiProperties.RefColumns ? 'referenced columns' : 'columns',
+      joinNames(beforeValueOf(diff)),
+      joinNames(afterValueOf(diff)),
+    )
+  }
+  // The referenced table, compared as one value at the slot, like the column lists above.
+  if (last === DdlapiProperties.RefTable) {
+    return partOfKey('referenced table', renderTableRef(beforeValueOf(diff)), renderTableRef(afterValueOf(diff)))
+  }
   const refTable = isObject(fkNode) ? fkNode[DdlapiProperties.RefTable] : undefined
   const refColumns = columnNames(fkNode, DdlapiProperties.RefColumns)
-  const refSchema = pc.schemaOfTable(refTable)
+  const refSchema = pc.nonDefaultSchema(nameOf(refTable, DdlapiProperties.Schema))
   return {
     ...pc.base,
     [TEMPLATE_PARAM_FK_NAME]: fkName,
-    [TEMPLATE_PARAM_LOCAL_CLAUSE]: `on ${columnNoun(localColumns.length)} ${quoteJoin(localColumns)} of table '${localTable}'${localSchema ? ` in schema '${localSchema}'` : ''}`,
+    [TEMPLATE_PARAM_LOCAL_CLAUSE]: localClause,
     [TEMPLATE_PARAM_REF_CLAUSE]: `referencing ${columnNoun(refColumns.length)} ${quoteJoin(refColumns)} of table '${nameOf(refTable)}'${refSchema ? ` in schema '${refSchema}'` : ''}`,
   }
 }
@@ -613,6 +708,27 @@ const attrMemberParams: DdlParamHandler = (pc, diff) => {
   return undefined
 }
 
+// `value 'a'` / `values 'a', 'b'` for a whole enum's value list.
+const renderEnumValuesClause = (enumNode: unknown): string | undefined => {
+  const values = isObject(enumNode) ? enumNode[DdlapiProperties.Values] : undefined
+  if (!isArray(values)) { return undefined }
+  const labels = values.map(checkPrimitiveType).filter((value): value is PrimitiveType => value !== undefined)
+  return labels.length === 0 ? undefined : `${labels.length === 1 ? 'value' : 'values'} ${quoteJoin(labels)}`
+}
+
+// Enum type add / remove — the EnumType member of `objects[*]`.
+const enumTypeParams: DdlParamHandler = pc => {
+  const enumPath = pc.pathWhere(p => lastSegments(p)[0] === DdlapiProperties.Objects && typeof lastSegments(p)[1] === 'number')
+  if (!enumPath) { return undefined }
+  const enumNode = pc.nodeAt(enumPath, enumPath.length)
+  return {
+    ...pc.base,
+    [TEMPLATE_PARAM_ENUM_TYPE_NAME]: nameOf(enumNode, DdlapiProperties.Type),
+    [TEMPLATE_PARAM_ENUM_VALUES_CLAUSE]: renderEnumValuesClause(enumNode),
+    [TEMPLATE_PARAM_SCHEMA_NAME]: enumPath[0] === DdlapiProperties.Schemas ? pc.schemaOf(enumPath) : undefined,
+  }
+}
+
 // Enum value add / remove — EnumType.values[*].
 const enumValueParams: DdlParamHandler = (pc, diff) => {
   const enumValuePath = pc.pathWhere(p => lastSegments(p)[0] === DdlapiProperties.Values && typeof lastSegments(p)[1] === 'number')
@@ -632,4 +748,5 @@ export const createColumnParamsCalculator = (dialect: DdlDiffDialect): DiffTempl
 export const createIndexParamsCalculator = (dialect: DdlDiffDialect): DiffTemplateParamsCalculator => paramsCalculator(dialect, indexParams)
 export const createForeignKeyParamsCalculator = (dialect: DdlDiffDialect): DiffTemplateParamsCalculator => paramsCalculator(dialect, foreignKeyParams)
 export const createAttrMemberParamsCalculator = (dialect: DdlDiffDialect): DiffTemplateParamsCalculator => paramsCalculator(dialect, attrMemberParams)
+export const createEnumTypeParamsCalculator = (dialect: DdlDiffDialect): DiffTemplateParamsCalculator => paramsCalculator(dialect, enumTypeParams)
 export const createEnumValueParamsCalculator = (dialect: DdlDiffDialect): DiffTemplateParamsCalculator => paramsCalculator(dialect, enumValueParams)

@@ -40,6 +40,8 @@ export const TEMPLATE_PARAM_INDEX_KIND = 'indexKind'
 export const TEMPLATE_PARAM_COLUMNS_CLAUSE = 'columnsClause'
 // Precomposed single index-part clause: `column 'b'` or `expression 'lower(a)'`.
 export const TEMPLATE_PARAM_PART_CLAUSE = 'partClause'
+// Precomposed enum value list for a whole enum add/delete: `value 'a'` or `values 'a', 'b'`.
+export const TEMPLATE_PARAM_ENUM_VALUES_CLAUSE = 'enumValuesClause'
 // Precomposed foreign-key clauses (each carries its own `in schema` suffix when non-default):
 // local = `on column 'a' of table 'u'`, ref = `referencing column 'x' of table 't'`.
 export const TEMPLATE_PARAM_LOCAL_CLAUSE = 'localClause'
@@ -73,7 +75,12 @@ export const DESCRIPTION_VALUE_MAX_LENGTH = 40
 export const TypeConsumptionFamily = {
   Numeric: 'numeric',
   Textual: 'textual',
-  Temporal: 'temporal',
+  // Temporal types are each their own family: a DATE, a TIME and a TIMESTAMP carry different
+  // components, so swapping one for another changes what a reader gets back rather than
+  // widening it. The agreed DDL catalog classifies every such swap as breaking.
+  Date: 'date',
+  Time: 'time',
+  Timestamp: 'timestamp',
   Boolean: 'boolean',
   Binary: 'binary',
   Uuid: 'uuid',

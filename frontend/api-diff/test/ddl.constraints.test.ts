@@ -131,7 +131,7 @@ describe('indexes / primary key / unique', () => {
       expect.objectContaining({
         action: DiffAction.add,
         type: nonBreaking,
-        afterValue: expect.objectContaining({ column: expect.objectContaining({ name: 'b' }) }),
+        afterValue: expect.objectContaining({ column: 'b' }),
         afterDeclarationPaths: [['schemas', 0, 'tables', 0, 'indexes', 0, 'parts', 1]],
       }),
     ]))
@@ -198,6 +198,58 @@ describe('foreign keys', () => {
         afterValue: 'CASCADE',
         beforeDeclarationPaths: [['schemas', 0, 'tables', 1, 'foreignKeys', 0, 'onDelete']],
         afterDeclarationPaths: [['schemas', 0, 'tables', 1, 'foreignKeys', 0, 'onDelete']],
+      }),
+    ]))
+  })
+
+  it('repoint a key at a same-named table in another schema ⇒ one non-breaking diff on the key', async () => {
+    const beforeSql = `
+      create table a.t(id int, primary key (id));
+      create table b.t(id int, primary key (id));
+      create table u(ref int, constraint fk_u foreign key (ref) references a.t(id));
+    `
+    const afterSql = `
+      create table a.t(id int, primary key (id));
+      create table b.t(id int, primary key (id));
+      create table u(ref int, constraint fk_u foreign key (ref) references b.t(id));
+    `
+    const { diffs } = await diffSql(beforeSql, afterSql)
+    const refTablePath = ['schemas', 2, 'tables', 0, 'foreignKeys', 0, 'refTable']
+    expect(diffs).toHaveLength(1) // the refTable change
+    expect(diffs).toEqual(diffsMatcher([
+      expect.objectContaining({
+        action: DiffAction.replace,
+        type: nonBreaking,
+        beforeValue: expect.objectContaining({ schema: 'a', name: 't' }),
+        afterValue: expect.objectContaining({ schema: 'b', name: 't' }),
+        beforeDeclarationPaths: [refTablePath],
+        afterDeclarationPaths: [refTablePath],
+      }),
+    ]))
+  })
+
+  it('repoint a key at a table with another schema and name ⇒ one non-breaking diff on the key', async () => {
+    const beforeSql = `
+      create table a.users(id int, primary key (id));
+      create table b.orders(id int, primary key (id));
+      create table u(ref int, constraint fk_u foreign key (ref) references a.users(id));
+    `
+    const afterSql = `
+      create table a.users(id int, primary key (id));
+      create table b.orders(id int, primary key (id));
+      create table u(ref int, constraint fk_u foreign key (ref) references b.orders(id));
+    `
+    const { diffs } = await diffSql(beforeSql, afterSql)
+    const refTablePath = ['schemas', 2, 'tables', 0, 'foreignKeys', 0, 'refTable']
+    expect(diffs).toHaveLength(1) // one diff for both the schema and the name
+    expect(diffs).toEqual(diffsMatcher([
+      expect.objectContaining({
+        action: DiffAction.replace,
+        type: nonBreaking,
+        beforeValue: expect.objectContaining({ schema: 'a', name: 'users' }),
+        afterValue: expect.objectContaining({ schema: 'b', name: 'orders' }),
+        beforeDeclarationPaths: [refTablePath],
+        afterDeclarationPaths: [refTablePath],
       }),
     ]))
   })

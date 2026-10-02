@@ -62,10 +62,12 @@ Arrays default to positional matching (`arrayMappingResolver`), which reports a 
 
 Element add/remove is decided by the *parent* mapping and classified by the element rule's `$`; a field change inside the element is classified at the field's own node.
 
-## Suppressing a node: `ignoreDifference`
+## Suppressing diffs: `ignoreDifference` and `ignoreAddRemove`
 
-`ignoreDifference: true` on a rule node suppresses add/remove/replace diffs for that node **and its whole subtree** (implemented at hook entry in `useMergeFactory`), while still merging the after-value. Use it for technical discriminants a user must never see (e.g. ddlapi `/kind`, redundant `/raw`).
-Scope boundary: it suppresses *mapped/replace* changes only — add/remove of a **whole** node is decided by the parent mapping and is **not** intercepted, so only use it for keys always present on both sides. Contrast `ignoreKeyDifference`, which silences only key-rename diffs.
+`ignoreDifference: true` on a rule node suppresses every diff at and below a node that is present on both sides: a replace or rename of the node, and any add, remove, or replace in its subtree. `useMergeFactory` checks it on entering the node, copies the after-value into the merged document, and does not descend. Use it for technical discriminants a user must never see (e.g. ddlapi `/kind`, redundant `/raw`).
+It does **not** suppress the add or remove of the node itself. The parent's exit hook creates that diff from the parent mapping's `added` / `removed` lists without entering the node, so use `ignoreDifference` only for keys present on both sides. Contrast `ignoreKeyDifference`, which silences only key-rename diffs.
+
+`ignoreAddRemove: true` suppresses only that add or remove: the parent's exit hook skips the add/remove diff for a child whose rule carries it, and still merges the child. Changes inside the child, when it is present on both sides, are reported as usual. ddlapi sets it on a SchemaType's `/values`, whose add/remove only comes with a column type change to or from an enum. The child rule is resolved from the parent's rules, and a kind-dispatched parent resolves its rules from the before-side value, so set the flag in every rule set the parent can resolve to.
 
 ## Custom node comparison: the `compare` resolver
 

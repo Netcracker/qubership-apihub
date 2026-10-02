@@ -21,20 +21,20 @@
     "performance:run-inspect": "vite build --sourcemap=inline -c=vite.performance.config.ts && node --inspect dist/index.es.mjs",
     "development:link": "npm link && npm link @netcracker/qubership-apihub-json-crawl && npm link @netcracker/qubership-apihub-graphapi && npm link @netcracker/qubership-apihub-api-unifier && npm link @netcracker/qubership-apihub-compatibility-suites",
     "development:unlink": "npm unlink && npm unlink @netcracker/qubership-apihub-json-crawl && npm unlink @netcracker/qubership-apihub-graphapi && npm unlink @netcracker/qubership-apihub-api-unifier && npm unlink @netcracker/qubership-apihub-compatibility-suites",
-    "test": "jest --maxWorkers 3 --verbose",
+    "test": "jest --maxWorkers 3",
     "test:compatibility-suites": "jest --detectOpenHandles test/compatibility-suites",
     "test:human-readable": "jest --detectOpenHandles test/human-readable",
     "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-unifier": "2.9.2",
-    "@netcracker/qubership-apihub-ddlapi": "1.0.0",
+    "@netcracker/qubership-apihub-api-unifier": "dev",
+    "@netcracker/qubership-apihub-ddlapi": "dev",
     "@netcracker/qubership-apihub-json-crawl": "1.2.2",
     "fast-equals": "6.0.0"
   },
   "devDependencies": {
     "@asyncapi/parser": "3.4.0",
-    "@netcracker/qubership-apihub-compatibility-suites": "2.6.1",
+    "@netcracker/qubership-apihub-compatibility-suites": "dev",
     "@netcracker/qubership-apihub-graphapi": "1.0.13",
     "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
     "@types/jest": "30.0.0",
