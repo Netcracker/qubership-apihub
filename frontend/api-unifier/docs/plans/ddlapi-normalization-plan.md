@@ -590,6 +590,16 @@ These refine, not reverse, the decisions above. Marked **[UPDATE]** for traceabi
   `tsconfig.test.json` disables `importHelpers` so transforming that source needs no `tslib`.
   Production stays unaffected (ddlapi external via `vite.config.ts`). Documented in
   `docs/ddlapi-dependency.md`.
+- **[UPDATE D2/D9] ddlapi 2.0.0 references foreign key targets and index columns by name.**
+  `ForeignKey.refTable` is a `TableRef` (`{ schema, name }`), and `ForeignKey.columns`,
+  `ForeignKey.refColumns`, and `IndexPart.column` are column names. The Realm has no cycles, so
+  `defineDdlApiOrigins` keeps only the named-type reference edge (`ColumnType.type`), and each
+  name is homed at its own slot. The rules validate the names as strings, with no check that a
+  referenced column exists in the referenced table. The primary-key nullability default matches
+  columns by name. `reportDanglingForeignKey` and `ErrorMessage.ddlApiDanglingForeignKey` are
+  removed: an unresolved key keeps its names, and ddlapi's `unresolved-reference` is the only
+  report of it. The entries above that describe FK and index-part reference edges, the cyclic
+  FK graph, and the dangling-FK reporter predate this change.
 
 ### Risks & mitigations
 
@@ -605,10 +615,8 @@ These refine, not reverse, the decisions above. Marked **[UPDATE]** for traceabi
 ### Deferred follow-ups (not v1 tasks)
 
 - **Structured `cause` on error callbacks (D9):** v1 ships string messages with stable
-  prefixes (the dangling-FK reporter emits `'ddlapi: dangling foreign key …'`; invalid values are
-  reported by `validate`); a structured `cause` for ddlapi-specific cases (dangling `refTable` vs
-  invalid `onDelete`) is a separate additive follow-up. Also extend the dangling-edge reporter to
-  unresolved FK `columns`/`refColumns` if a producer surfaces that partial shape.
+  prefixes (invalid values are reported by `validate`); a structured `cause` for ddlapi-specific
+  cases is a separate additive follow-up.
 - **Upstream type/expression canonicalization** — see the final section.
 
 ---

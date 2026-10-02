@@ -80,11 +80,11 @@ describe('ddlapi validate', () => {
   it('strips a malformed-but-known value (bad onDelete) and reports it', () => {
     // intentionally invalid: 'BOGUS' is not a ReferenceOption
     const id = newColumn('id', { type: columnType(integerType('bigint'), { null: false }) })
-    const users = newTable('users', { columns: [id], primaryKey: newPrimaryKey([id]) })
+    const users = newTable('users', { columns: [id], primaryKey: newPrimaryKey(['id']) })
     const fk = newForeignKey('fk', {
-      columns: [id],
-      refTable: users,
-      refColumns: [id],
+      columns: ['id'],
+      refTable: { schema: 'public', name: 'users' },
+      refColumns: ['id'],
       onDelete: 'BOGUS' as ReferenceOption,
     })
     const orders = newTable('orders', { columns: [id], foreignKeys: [fk] })
@@ -95,6 +95,26 @@ describe('ddlapi validate', () => {
 
     expect(errors).not.toBeEmpty()
     expect(result.schemas[0].tables![1].foreignKeys![0]).not.toHaveProperty('onDelete')
+  })
+
+  it('strips a wrong-typed FK reference name and reports it', () => {
+    // intentionally invalid: TableRef.name and FK column names must be strings
+    const id = newColumn('id', { type: columnType(integerType('bigint')) })
+    const fk = newForeignKey('fk', {
+      columns: [42 as never],
+      refTable: { schema: 'public', name: 42 as never },
+      refColumns: ['id'],
+    })
+    const realm = newRealm([newSchema('public', { tables: [newTable('t', { columns: [id], foreignKeys: [fk] })] })])
+
+    const errors: string[] = []
+    const result = normalize(realm, { ...baseOptions, onValidateError: (m) => errors.push(m) }) as typeof realm
+
+    expect(errors).toBeArrayOfSize(2)
+    const normalizedFk = result.schemas[0].tables![0].foreignKeys![0]
+    expect(normalizedFk.columns).toEqual([])
+    expect(normalizedFk.refTable).toEqual({ schema: 'public' })
+    expect(normalizedFk.refColumns).toEqual(['id'])
   })
 
   it('strips a wrong-typed sub-field under a known kind (Comment.text) and reports it', () => {

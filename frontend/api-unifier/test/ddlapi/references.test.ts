@@ -3,8 +3,8 @@ import { normalize, DDL_API_NORMALIZE_OPTIONS } from '../../src'
 import { buildRealmAndAssertValid } from '../helpers/ddlapi'
 import { commonOriginsCheck, TEST_ORIGINS_FLAG } from '../helpers'
 
-// reference edges & cycles. Shared instances must stay ===, cyclic FKs
-// must not infinite-loop, and reference-edge origins must point at the definition site.
+// References between nodes. Foreign keys and index parts hold names; the only shared
+// instances are named types, which must stay ===.
 describe('ddlapi references', () => {
   const baseOptions = {
     ...DDL_API_NORMALIZE_OPTIONS,
@@ -15,7 +15,7 @@ describe('ddlapi references', () => {
   const tableByName = (realm: Realm, name: string): Table =>
     (realm.schemas[0] as Schema).tables!.find((t) => t.name === name)!
 
-  it('handles a cyclic FK graph without infinite recursion and keeps shared refs ===', async () => {
+  it('keeps the names of two tables that reference each other', async () => {
     const realm = await buildRealmAndAssertValid(`
       CREATE TABLE a (id bigint PRIMARY KEY, b_id bigint REFERENCES b (id));
       CREATE TABLE b (id bigint PRIMARY KEY, a_id bigint REFERENCES a (id));
@@ -23,37 +23,28 @@ describe('ddlapi references', () => {
 
     const result = normalize(realm, baseOptions) as Realm
 
-    const a = tableByName(result, 'a')
-    const b = tableByName(result, 'b')
-    const aFk = a.foreignKeys![0] as ForeignKey
-    const bFk = b.foreignKeys![0] as ForeignKey
-
-    // cycle preserved on the clone: a → b → a are the cloned table instances
-    expect(aFk.refTable).toBe(b)
-    expect(bFk.refTable).toBe(a)
-    // FK column lists reuse the actual table column instances
-    expect(aFk.columns![0]).toBe(a.columns!.find((c) => c.name === 'b_id'))
-    expect(aFk.refColumns![0]).toBe(b.columns!.find((c) => c.name === 'id'))
+    const aFk = tableByName(result, 'a').foreignKeys![0] as ForeignKey
+    const bFk = tableByName(result, 'b').foreignKeys![0] as ForeignKey
+    // the normalized nodes carry an origins record under a symbol key
+    expect(Array.from(aFk.columns!)).toEqual(['b_id'])
+    expect(aFk.refTable).toMatchObject({ schema: 'public', name: 'b' })
+    expect(Array.from(aFk.refColumns!)).toEqual(['id'])
+    expect(bFk.refTable).toMatchObject({ schema: 'public', name: 'a' })
 
     commonOriginsCheck(result, { originsFlag: TEST_ORIGINS_FLAG })
   })
 
-  it('points a reference-edge origin at the target definition site, not the referrer', async () => {
+  it('homes the refTable origin at the foreign key, not at the referenced table', async () => {
     const realm = await buildRealmAndAssertValid(`
       CREATE TABLE a (id bigint PRIMARY KEY, b_id bigint REFERENCES b (id));
       CREATE TABLE b (id bigint PRIMARY KEY);
     `)
     const result = normalize(realm, baseOptions) as Realm
 
-    const tablesArr = result.schemas[0].tables as Table[]
-    const bIndex = tablesArr.findIndex((t) => t.name === 'b')
-    const a = tableByName(result, 'a')
-    const aFk = a.foreignKeys![0] as ForeignKey
-
-    // fk.refTable's origin is the very ChainItem interned for schemas[0].tables[bIndex].
-    const refTableOrigin = (aFk as any)[TEST_ORIGINS_FLAG].refTable[0]
-    const homeOrigin = (tablesArr as any)[TEST_ORIGINS_FLAG][bIndex][0]
-    expect(refTableOrigin).toBe(homeOrigin)
+    const foreignKeys = tableByName(result, 'a').foreignKeys!
+    const refTableOrigin = (foreignKeys[0] as any)[TEST_ORIGINS_FLAG].refTable[0]
+    expect(refTableOrigin.value).toBe('refTable')
+    expect(refTableOrigin.parent).toBe((foreignKeys as any)[TEST_ORIGINS_FLAG][0][0])
   })
 
   it('shares the enum type instance between schema.objects and the column type', async () => {
@@ -71,18 +62,15 @@ describe('ddlapi references', () => {
     commonOriginsCheck(result, { originsFlag: TEST_ORIGINS_FLAG })
   })
 
-  it('handles a composite index whose parts reuse table column instances', async () => {
+  it('keeps the column names of a composite index', async () => {
     const realm = await buildRealmAndAssertValid(`
       CREATE TABLE t (id bigint, name text);
       CREATE INDEX idx ON t (id, name);
     `)
     const result = normalize(realm, baseOptions) as Realm
 
-    const t = tableByName(result, 't')
-    const index = t.indexes![0]
-    expect(index.parts).toHaveLength(2)
-    expect(index.parts![0].column).toBe(t.columns!.find((c) => c.name === 'id'))
-    expect(index.parts![1].column).toBe(t.columns!.find((c) => c.name === 'name'))
+    const index = tableByName(result, 't').indexes![0]
+    expect(index.parts!.map((part) => part.column)).toEqual(['id', 'name'])
 
     commonOriginsCheck(result, { originsFlag: TEST_ORIGINS_FLAG })
   })

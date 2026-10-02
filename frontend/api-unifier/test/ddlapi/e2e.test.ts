@@ -82,11 +82,10 @@ describe('ddlapi e2e', () => {
     const normalized = normalize(realm, baseOptions)
     const back = denormalize(normalized, baseOptions) as Realm
 
-    // intra-document sharing preserved (FK columns are the same instances as table columns)
-    const orders = tableNamed(back, 'orders')
-    const fk = orders.foreignKeys![0]
-    expect(fk.columns![0]).toBe(orders.columns!.find((c) => c.name === 'user_id'))
-    expect(fk.refTable).toBe(tableNamed(back, 'users'))
+    // the FK keeps the names of its columns and target
+    const fk = tableNamed(back, 'orders').foreignKeys![0]
+    expect(fk.columns).toEqual(['user_id'])
+    expect(fk.refTable).toEqual({ schema: 'public', name: 'users' })
 
     // canonical form is stable
     const canonical = (r: unknown) => normalize(r, DDL_API_NORMALIZE_OPTIONS)

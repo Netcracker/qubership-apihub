@@ -14,7 +14,7 @@ import {
 import { AttrKind, DdlapiProperties, ExprKind, ObjectKind, ReferenceOption, TypeKind } from '@netcracker/qubership-apihub-ddlapi'
 import { DefaultValueMapping, valueDefaults } from '../unifies/defaults'
 import { EMPTY_MARKER, ReplaceMapping, TO_EMPTY_ARRAY_MAPPING, valueReplaces } from '../unifies/replaces'
-import { ddlApiNullabilityDefault, reportDanglingForeignKey } from '../unifies/ddlapi'
+import { ddlApiNullabilityDefault } from '../unifies/ddlapi'
 import { DdlApiDialect } from './ddlapi.dialect'
 
 export type DdlApiSpecVersion = typeof SPEC_TYPE_DDL_API_1
@@ -22,7 +22,7 @@ export type DdlApiSpecVersion = typeof SPEC_TYPE_DDL_API_1
 /**
  * Canonical option bundle for normalizing ddlapi documents. ddlapi documents have
  * no `allOf` / traits / `$ref`, so those stages are turned off; leaving them at their
- * `true` defaults would do wasteful (and on the cyclic Realm graph, meaningless) work.
+ * `true` defaults would do wasteful work.
  * Exported as one constant so api-diff imports a stable contract instead of six flags.
  */
 export const DDL_API_NORMALIZE_OPTIONS: Readonly<NormalizeOptions> = {
@@ -66,8 +66,8 @@ const emptyArrayUnify = (...keys: string[]): UnifyFunction[] => collectionUnify(
  * the seam for future stamps) and a `DdlApiDialect` that supplies dialect-specific rules
  * for the four open `kind`-unions. All rule nodes are declared inside this closure so
  * they capture `dialect`; the kind-dispatchers (`schemaTypeRules`, `attrRules`,
- * `exprRules`, `objectRules`) and the cyclic edge (`fk.refTable`) are resolved lazily
- * at crawl time, so declaration order only matters for eager references.
+ * `exprRules`, `objectRules`) are resolved lazily at crawl time, so declaration order
+ * only matters for eager references.
  *
  * Covers structural + value validation (`checkType`/`checkContains`) and empty-collection
  * and primitive defaults (`unify`). Dialect-specific kinds and primitive defaults come from
@@ -299,12 +299,23 @@ export const ddlApiRules = (_version: DdlApiSpecVersion, dialect: DdlApiDialect)
     unify: emptyArrayUnify(DdlapiProperties.Attrs),
   }
 
+  // --- Column and table references (names, not checked against the realm) ---
+  const columnNamesRules: NormalizationRules = {
+    '/*': { validate: checkType(TYPE_STRING) },
+    validate: checkType(TYPE_ARRAY),
+  }
+  const tableRefRules: NormalizationRules = {
+    '/schema': { validate: checkType(TYPE_STRING) },
+    '/name': { validate: checkType(TYPE_STRING) },
+    validate: checkType(TYPE_OBJECT),
+  }
+
   // --- Index / IndexPart ---
   const indexPartRules: NormalizationRules = {
     '/seqNo': { validate: checkType(TYPE_NUMBER) },
     '/desc': { validate: checkType(TYPE_BOOLEAN) },
     '/expr': exprRules,
-    '/column': columnRules, // reference edge to a table column (same instance)
+    '/column': { validate: checkType(TYPE_STRING) },
     '/attrs': attrsArrayRule,
     validate: checkType(TYPE_OBJECT),
     // desc:false — ascending is the SQL default.
@@ -325,22 +336,18 @@ export const ddlApiRules = (_version: DdlApiSpecVersion, dialect: DdlApiDialect)
   const foreignKeyRules: NormalizationRules = {
     '/kind': kindRule(ObjectKind.ForeignKey),
     '/symbol': { validate: checkType(TYPE_STRING) },
-    '/columns': { '/*': columnRules, validate: checkType(TYPE_ARRAY) },
-    // refTable resolved lazily: tableRules is declared after foreignKeyRules.
-    '/refTable': () => tableRules,
-    '/refColumns': { '/*': columnRules, validate: checkType(TYPE_ARRAY) },
+    '/columns': columnNamesRules,
+    '/refTable': tableRefRules,
+    '/refColumns': columnNamesRules,
     '/onUpdate': { validate: [checkType(TYPE_STRING), checkContains(...REFERENCE_OPTION_VALUES)] },
     '/onDelete': { validate: [checkType(TYPE_STRING), checkContains(...REFERENCE_OPTION_VALUES)] },
     '/attrs': attrsArrayRule,
     validate: checkType(TYPE_OBJECT),
-    // onUpdate/onDelete default to ANSI 'NO ACTION'; dangling-refTable reporter.
-    unify: [
-      ...collectionUnify([DdlapiProperties.Attrs], {
-        [DdlapiProperties.OnUpdate]: ReferenceOption.NoAction,
-        [DdlapiProperties.OnDelete]: ReferenceOption.NoAction,
-      }),
-      reportDanglingForeignKey,
-    ],
+    // onUpdate/onDelete default to ANSI 'NO ACTION'.
+    unify: collectionUnify([DdlapiProperties.Attrs], {
+      [DdlapiProperties.OnUpdate]: ReferenceOption.NoAction,
+      [DdlapiProperties.OnDelete]: ReferenceOption.NoAction,
+    }),
   }
 
   // --- View: minimal defensive rule until a producer emits views ---

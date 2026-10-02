@@ -145,14 +145,12 @@ describe('ddlapi PK-aware nullability', () => {
     expect(result).toEqual(realm)
   })
 
-  it('keeps a primary-key columns shared instance consistent (one ColumnType mutated)', async () => {
-    // The PK part and the table column are the same Column instance; setting null:false once
-    // must be visible through both views.
-    const realm = await buildRealmAndAssertValid('CREATE TABLE t (id bigint PRIMARY KEY);')
+  it('matches primary-key members to table columns by name', async () => {
+    const realm = await buildRealmAndAssertValid('CREATE TABLE t (name text, id bigint, PRIMARY KEY (id));')
     const result = normalize(realm, baseOptions) as Realm
     const table = result.schemas[0].tables![0]
-    const pkColumn = table.primaryKey!.parts![0].column!
-    expect(pkColumn).toBe(table.columns![0])
-    expect(pkColumn.type!.null).toBe(false)
+    expect(table.primaryKey!.parts![0].column).toBe('id')
+    expect(colNamed(result, 'id').type!.null).toBe(false)
+    expect(colNamed(result, 'name').type!.null).toBe(true)
   })
 })

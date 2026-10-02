@@ -27,26 +27,18 @@ describe('ddlapi partial realm', () => {
     commonOriginsCheck(result, { originsFlag: TEST_ORIGINS_FLAG })
   })
 
-  it('reports the dangling FK via onUnifyError, left partial, no throw', async () => {
-    const realm = await buildFromDdl(danglingFkDdl)
+  it('keeps the names of the dangling FK target, with no unify error', async () => {
+    // ddlapi alone reports the unresolved reference; normalization does not repeat it.
+    const realm = await buildFromDdl(danglingFkDdl, { onError: () => {} })
     const unifyErrors: string[] = []
 
     const result = normalize(realm, { ...baseOptions, onUnifyError: (m) => unifyErrors.push(m) }) as Realm
 
-    expect(unifyErrors.some((m) => m.startsWith('ddlapi: dangling foreign key'))).toBe(true)
-    // left partial: the FK still has its source columns, refTable stays unresolved
-    const fk = result.schemas[0].tables!.find((t) => t.name === 'orders')!.foreignKeys![0]
-    expect(fk.columns).toBeArrayOfSize(1)
-    expect(fk.refTable).toBeUndefined()
-  })
-
-  it('does not report a well-formed FK', async () => {
-    const realm = await buildFromDdl(`
-      CREATE TABLE users (id bigint PRIMARY KEY);
-      CREATE TABLE orders (id bigint PRIMARY KEY, user_id bigint REFERENCES users (id));
-    `)
-    const unifyErrors: string[] = []
-    normalize(realm, { ...baseOptions, onUnifyError: (m) => unifyErrors.push(m) })
     expect(unifyErrors).toBeEmpty()
+    const fk = result.schemas[0].tables!.find((t) => t.name === 'orders')!.foreignKeys![0]
+    // the normalized nodes carry an origins record under a symbol key
+    expect(Array.from(fk.columns!)).toEqual(['user_id'])
+    expect(fk.refTable).toMatchObject({ schema: 'public', name: 'users' })
+    expect(Array.from(fk.refColumns!)).toEqual(['id'])
   })
 })
