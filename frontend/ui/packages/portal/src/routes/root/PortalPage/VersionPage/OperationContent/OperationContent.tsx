@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-import type { OpenApiData } from '@apihub/entities/operation-structure'
+import type { OpenApiData } from '@portal/entities/operation-structure'
 import {
   useApiDiffResult,
   useHasComparisonInternalDocument,
   useIsApiDiffResultLoading,
   useSetApiDiffResult,
-} from '@apihub/routes/root/ApiDiffResultProvider'
-import { OperationView } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationView/OperationView'
+} from '@portal/routes/root/ApiDiffResultProvider'
+import { OperationView } from '@portal/routes/root/PortalPage/VersionPage/OperationContent/OperationView/OperationView'
 import {
   useCustomServersContext,
-} from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/Playground/CustomServersProvider'
-import { getFileDetails } from '@apihub/utils/file-details'
-import { isAsyncApiSpecification } from '@apihub/utils/internal-documents/type-guards'
+} from '@portal/routes/root/PortalPage/VersionPage/OperationContent/Playground/CustomServersProvider'
+import { getFileDetails } from '@portal/utils/file-details'
+import { isAsyncApiSpecification } from '@portal/utils/internal-documents/type-guards'
 import { Box } from '@mui/material'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import {

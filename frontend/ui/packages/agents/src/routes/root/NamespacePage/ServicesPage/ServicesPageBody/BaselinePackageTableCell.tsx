@@ -18,7 +18,7 @@ import type { FC } from 'react'
 import { memo } from 'react'
 import type { Row } from '@tanstack/react-table'
 import { Box, Typography } from '@mui/material'
-import type { Service } from '@apihub/entities/services'
+import type { Service } from '@agents/entities/services'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 
 export type BaselinePackageTableCellProps = {

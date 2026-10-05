@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { useBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
-import { useShowSuccessNotification } from '@apihub/routes/root/BasePage/Notification'
-import { usePackageVersionContent } from '@apihub/routes/root/usePackageVersionContent'
+import { useBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
+import { useEventBus } from '@portal/routes/EventBusProvider'
+import { useShowSuccessNotification } from '@portal/routes/root/BasePage/Notification'
+import { usePackageVersionContent } from '@portal/routes/root/usePackageVersionContent'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
 import { Box, IconButton, MenuItem } from '@mui/material'

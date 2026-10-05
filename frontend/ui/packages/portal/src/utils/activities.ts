@@ -29,13 +29,13 @@ import type {
   UpdateOperationsGroupParametersEventDetails,
   UpdateRoleActivityDetails,
   UpdateDocumentShareabilityEventDetails,
-} from '@apihub/entities/activities'
+} from '@portal/entities/activities'
 import {
   GROUP_PARAMETER_DESCRIPTION,
   GROUP_PARAMETER_NAME,
   GROUP_PARAMETER_OPERATIONS,
   GROUP_PARAMETER_TEMPLATE,
-} from '@apihub/entities/activities'
+} from '@portal/entities/activities'
 import { format } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
 import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'

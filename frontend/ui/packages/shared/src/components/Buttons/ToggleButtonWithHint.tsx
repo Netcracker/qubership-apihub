@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { FC, ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import * as React from 'react'
 import { forwardRef } from 'react'
 import type { ToggleButtonProps } from '@mui/material'
@@ -25,7 +25,11 @@ type TooltipToggleButtonProps = ToggleButtonProps & {
   disableHint?: boolean
 }
 
-export const ToggleButtonWithHint: FC<TooltipToggleButtonProps> = forwardRef(
+/* Typed through forwardRef's own generics rather than annotated as FC. A
+   ForwardRefExoticComponent is not an FC, and @types/react 18.3 is the first version whose
+   propTypes are precise enough to say so: FC's propTypes admit a string ref (LegacyRef) and
+   forwardRef's do not. The FC annotation was always wrong; it was silently accepted before. */
+export const ToggleButtonWithHint = forwardRef<HTMLButtonElement, TooltipToggleButtonProps>(
   ({ hint, disableHint, ...props }, ref) => {
     return disableHint
       ? <ToggleButton ref={ref} {...props} />

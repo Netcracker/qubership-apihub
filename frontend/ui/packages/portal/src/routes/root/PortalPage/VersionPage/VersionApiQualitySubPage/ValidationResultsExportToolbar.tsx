@@ -1,5 +1,5 @@
-import type { Issue } from '@apihub/entities/api-quality/issues'
-import { useShowSuccessNotification } from '@apihub/routes/root/BasePage/Notification'
+import type { Issue } from '@portal/entities/api-quality/issues'
+import { useShowSuccessNotification } from '@portal/routes/root/BasePage/Notification'
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined'
 import { Button } from '@mui/material'
 import { DownloadIcon } from '@netcracker/qubership-apihub-ui-shared/icons/DownloadIcon'

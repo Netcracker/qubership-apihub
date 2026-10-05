@@ -19,12 +19,12 @@ import * as React from 'react'
 import { memo, useCallback, useEffect, useMemo } from 'react'
 import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
-import type { ShowEditPackageVersionDetail } from '@apihub/routes/EventBusProvider'
-import { SHOW_EDIT_PACKAGE_VERSION_DIALOG } from '@apihub/routes/EventBusProvider'
+import type { ShowEditPackageVersionDetail } from '@portal/routes/EventBusProvider'
+import { SHOW_EDIT_PACKAGE_VERSION_DIALOG } from '@portal/routes/EventBusProvider'
 import { useForm } from 'react-hook-form'
 import type { VersionFormData } from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
 import { VersionDialogForm } from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
-import { useEditPackageVersion } from '@apihub/routes/root/usePackageVersions'
+import { useEditPackageVersion } from '@portal/routes/root/usePackageVersions'
 
 export const EditPackageVersionDialog: FC = memo(() => {
   return (

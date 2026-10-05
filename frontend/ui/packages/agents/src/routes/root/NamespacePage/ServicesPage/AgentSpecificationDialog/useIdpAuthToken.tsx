@@ -15,7 +15,7 @@
  */
 
 import { useMutation } from '@tanstack/react-query'
-import type { Key } from '@apihub/entities/keys'
+import type { Key } from '@agents/entities/keys'
 import type { HttpError } from '@netcracker/qubership-apihub-ui-shared/utils/responses'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { generatePath } from 'react-router-dom'

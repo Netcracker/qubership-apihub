@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { useBackwardLocationContext, useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
+import { useEventBus } from '@portal/routes/EventBusProvider'
 import { Box, Card, CardContent } from '@mui/material'
 import { DdlTableTitleWithMeta } from '@netcracker/qubership-apihub-ui-shared/components/Ddl/DdlTableTitleWithMeta'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'

@@ -1,4 +1,4 @@
-import type { RulesetMetadata } from '@apihub/entities/api-quality/rulesets'
+import type { RulesetMetadata } from '@portal/entities/api-quality/rulesets'
 import { Check } from '@mui/icons-material'
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
 import KeyboardArrowUpOutlinedIcon from '@mui/icons-material/KeyboardArrowUpOutlined'

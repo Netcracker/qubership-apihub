@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Service } from '@apihub/entities/services'
+import type { Service } from '@agents/entities/services'
 import type { FilterFn } from '@tanstack/react-table'
 
 type TableData = Partial<{

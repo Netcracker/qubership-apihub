@@ -19,15 +19,15 @@ import { useInvalidateSnapshotPublicationInfo } from '../../useSnapshotPublicati
 import { useCreateSnapshotPublicationOptions } from '../ServicesPageProvider/ServicesPublicationOptionsProvider'
 import { useInvalidateSnapshots, useSnapshots } from '../../useSnapshots'
 import { useMemo } from 'react'
-import { EMPTY_ALL_PUBLISH_DETAILS, getPublishDetails } from '@apihub/entities/publish-details'
+import { EMPTY_ALL_PUBLISH_DETAILS, getPublishDetails } from '@agents/entities/publish-details'
 import {
   COMPLETE_PUBLISH_STATUS,
   ERROR_PUBLISH_STATUS,
   NONE_PUBLISH_STATUS,
   RUNNING_PUBLISH_STATUS,
-} from '@apihub/entities/statuses'
+} from '@agents/entities/statuses'
 import type { PublishDetails, PublishDetailsDto, PublishStatus } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
-import type { PublishConfig } from '@apihub/entities/publish-config'
+import type { PublishConfig } from '@agents/entities/publish-config'
 import { STATUS_REFETCH_INTERVAL } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 
 const ALL_PUBLISH_DETAILS_QUERY_KEY = 'all-publish-details-query-key'

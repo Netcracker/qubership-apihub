@@ -18,8 +18,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import type { InvalidateQuery, IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
-import type { Snapshots, SnapshotsDto } from '@apihub/entities/snapshots'
-import { EMPTY_SNAPSHOTS, getSnapshots, toSnapshots } from '@apihub/entities/snapshots'
+import type { Snapshots, SnapshotsDto } from '@agents/entities/snapshots'
+import { EMPTY_SNAPSHOTS, getSnapshots, toSnapshots } from '@agents/entities/snapshots'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import {
   useGetAgentPrefix,

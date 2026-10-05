@@ -1,4 +1,4 @@
-import { ISSUE_SEVERITY_COLOR_MAP, IssueSeverities, type IssueSeverity } from '@apihub/entities/api-quality/issue-severities'
+import { ISSUE_SEVERITY_COLOR_MAP, IssueSeverities, type IssueSeverity } from '@portal/entities/api-quality/issue-severities'
 import { MarkerTooltip } from '@netcracker/qubership-apihub-ui-shared/components/MarkerTooltip'
 import type { FC, PropsWithChildren } from 'react'
 import { memo } from 'react'

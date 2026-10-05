@@ -21,7 +21,7 @@ import type { ServiceKey, SpecKey } from '@netcracker/qubership-apihub-ui-shared
 import type { SpecRaw } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { toFormattedJsonString } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
-import type { AgentKey, NamespaceKey, WorkspaceKey } from '@apihub/entities/keys'
+import type { AgentKey, NamespaceKey, WorkspaceKey } from '@agents/entities/keys'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useMemo } from 'react'

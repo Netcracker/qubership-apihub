@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { TitledValue } from '@apihub/components/TitledValue'
+import { TitledValue } from '@portal/components/TitledValue'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { Accordion, AccordionDetails, AccordionSummary, Box, Grid, Typography } from '@mui/material'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'

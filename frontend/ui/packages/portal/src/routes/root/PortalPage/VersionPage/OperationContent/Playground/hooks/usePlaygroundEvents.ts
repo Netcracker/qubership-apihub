@@ -15,7 +15,7 @@
  */
 
 import { useEvent } from 'react-use'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { useEventBus } from '@portal/routes/EventBusProvider'
 
 const CREATE_CUSTOM_SERVER_EVENT = 'create-custom-server'
 const DELETE_CUSTOM_SERVER_EVENT = 'delete-custom-server'

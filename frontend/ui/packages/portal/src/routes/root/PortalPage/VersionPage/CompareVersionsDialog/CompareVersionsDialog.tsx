@@ -29,18 +29,18 @@ import { useVersionCandidate } from './useVersionCandidate'
 import { useNavigation } from '../../../../NavigationProvider'
 import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
-import { SHOW_COMPARE_VERSIONS_DIALOG } from '@apihub/routes/EventBusProvider'
+import { SHOW_COMPARE_VERSIONS_DIALOG } from '@portal/routes/EventBusProvider'
 import type { PackageKind } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { DASHBOARD_KIND, PACKAGE_KIND, WORKSPACE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { getSplittedVersionKey, handleVersionsRevision } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
-import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
+import { useBackwardLocationContext, useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import {
   API_TYPE_SEARCH_PARAM,
   PACKAGE_SEARCH_PARAM,
   VERSION_SEARCH_PARAM,
 } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
-import { getDefaultApiType } from '@apihub/utils/operation-types'
+import { getDefaultApiType } from '@portal/utils/operation-types'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type {
   CompareVersionsDialogData,

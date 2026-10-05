@@ -1,5 +1,5 @@
-import { IssueSeverities } from '@apihub/entities/api-quality/issue-severities'
-import type { IssuesSummary, ValidationSummary } from '@apihub/entities/api-quality/package-version-validation-summary'
+import { IssueSeverities } from '@portal/entities/api-quality/issue-severities'
+import type { IssuesSummary, ValidationSummary } from '@portal/entities/api-quality/package-version-validation-summary'
 import { useMemo } from 'react'
 
 export function useAggregatedValidationSummaryByPackageVersion(

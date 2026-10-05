@@ -2,7 +2,7 @@ import { Box, Typography } from '@mui/material'
 import type { FC } from 'react'
 import { memo, useCallback, useMemo, useState } from 'react'
 
-import type { DocumentValidationSummary } from '@apihub/entities/api-quality/package-version-validation-summary'
+import type { DocumentValidationSummary } from '@portal/entities/api-quality/package-version-validation-summary'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import { LayoutWithSidebar } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithSidebar'
 import {

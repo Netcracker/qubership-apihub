@@ -26,7 +26,7 @@ import { CompareOperationPathsDialog } from './CompareOperationPathsDialog'
 import { CompareRestGroupsDialog } from './CompareRestGroupsDialog'
 import { useOperationGroupComparison } from './useOperationGroupComparison'
 import { MenuButton } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButton'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { useEventBus } from '@portal/routes/EventBusProvider'
 
 type ComparisonSelectorButtonProps = {
   showCompareGroups: boolean

@@ -17,7 +17,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { portalRequestJson } from '@apihub/utils/requests'
+import { portalRequestJson } from '@portal/utils/requests'
 
 export const SPACE_QUERY_KEY = 'space-query-key'
 

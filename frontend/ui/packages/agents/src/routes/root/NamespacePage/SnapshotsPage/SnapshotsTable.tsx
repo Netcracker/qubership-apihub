@@ -51,8 +51,8 @@ import {
   WARNING_STATUS_MARKER_VARIANT,
 } from '@netcracker/qubership-apihub-ui-shared/components/StatusMarker'
 import { Changes } from '@netcracker/qubership-apihub-ui-shared/components/Changes'
-import type { Snapshot } from '@apihub/entities/snapshots'
-import type { ServicePublishInfo } from '@apihub/entities/service-publish-info'
+import type { Snapshot } from '@agents/entities/snapshots'
+import type { ServicePublishInfo } from '@agents/entities/service-publish-info'
 import type { ChangesSummary } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 
 export const SnapshotsTable: FC = memo(() => {

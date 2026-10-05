@@ -15,7 +15,7 @@
  */
 
 import { useCallback } from 'react'
-import type { Key } from '@apihub/entities/keys'
+import type { Key } from '@portal/entities/keys'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useHash } from 'react-use'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'

@@ -16,8 +16,8 @@
 
 import { useQuery } from '@tanstack/react-query'
 
-import type { Documents } from '@apihub/entities/documents'
-import { toDocuments } from '@apihub/entities/documents'
+import type { Documents } from '@portal/entities/documents'
+import { toDocuments } from '@portal/entities/documents'
 import { useVersionWithRevision } from '../../useVersionWithRevision'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import {

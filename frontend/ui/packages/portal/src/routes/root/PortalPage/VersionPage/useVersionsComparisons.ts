@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { Key, VersionKey } from '@apihub/entities/keys'
-import { portalRequestJson } from '@apihub/utils/requests'
+import type { Key, VersionKey } from '@portal/entities/keys'
+import { portalRequestJson } from '@portal/utils/requests'
 import type { BuildType, VersionsComparison } from '@netcracker/qubership-apihub-api-processor'
 import type { IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import type { PublishStatus } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'

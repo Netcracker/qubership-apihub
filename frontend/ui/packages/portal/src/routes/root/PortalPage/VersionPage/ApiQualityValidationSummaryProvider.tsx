@@ -1,4 +1,4 @@
-import { type ValidationSummary } from '@apihub/entities/api-quality/package-version-validation-summary'
+import { type ValidationSummary } from '@portal/entities/api-quality/package-version-validation-summary'
 import { Link } from '@mui/material'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { API_TYPE_GRAPHQL } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
@@ -10,10 +10,10 @@ import {
 import type { FC, PropsWithChildren, ReactNode} from 'react'
 import { useMemo } from 'react'
 import { createContext, memo, useContext } from 'react'
-import { usePackageKind } from '@apihub/routes/root/PortalPage/usePackageKind'
+import { usePackageKind } from '@portal/routes/root/PortalPage/usePackageKind'
 import { PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { ASYNCAPI_API_TYPE, REST_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
-import { isAsyncApiLinterType, isOasLinterType } from '@apihub/entities/api-quality/linter-api-types'
+import { isAsyncApiLinterType, isOasLinterType } from '@portal/entities/api-quality/linter-api-types'
 
 export const ClientValidationStatuses = {
   CHECKING: 'checking',

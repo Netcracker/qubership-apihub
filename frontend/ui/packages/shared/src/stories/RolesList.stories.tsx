@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Box, ThemeProvider } from '@mui/material'
 import { theme } from '../themes/theme'
 import { RolesList } from '../components/RolesList'

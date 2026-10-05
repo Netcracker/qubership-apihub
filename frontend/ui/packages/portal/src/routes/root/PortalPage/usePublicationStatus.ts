@@ -28,9 +28,9 @@ import {
   useShowErrorNotification,
   useShowInfoNotification,
   useShowWarningNotification,
-} from '@apihub/routes/root/BasePage/Notification'
+} from '@portal/routes/root/BasePage/Notification'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
-import { getVersionPath, useNavigation } from '@apihub/routes/NavigationProvider'
+import { getVersionPath, useNavigation } from '@portal/routes/NavigationProvider'
 import type { IsError, IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { useMemo } from 'react'
 import { useDownloadPublicationReport } from './useDownloadPublicationReport'

@@ -32,7 +32,7 @@ import {
 import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { Action, NavigationState, ViewPortCenter } from '@netcracker/qubership-apihub-ui-shared/components/SchemaGraphView'
 import { FIT_TO_SCREEN_ACTION, SchemaGraphView } from '@netcracker/qubership-apihub-ui-shared/components/SchemaGraphView'
-import { CONTEXT_PANEL_DEFAULT_WIDTH, SchemaContextPanel } from '@apihub/components/SchemaContextPanel'
+import { CONTEXT_PANEL_DEFAULT_WIDTH, SchemaContextPanel } from '@portal/components/SchemaContextPanel'
 import { ZoomPanel } from '@netcracker/qubership-apihub-ui-shared/components/ZoomPanel'
 import { ResizableSidebar } from '@netcracker/qubership-apihub-ui-shared/components/ResizableSidebar'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'

@@ -5,7 +5,7 @@ import { SidebarWithTags } from '@netcracker/qubership-apihub-ui-shared/componen
 import { type ApiType, isApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { ContractType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 
-import { isApiTypeSelectorShown } from '@apihub/utils/operation-types'
+import { isApiTypeSelectorShown } from '@portal/utils/operation-types'
 import { ApiTypeListSelector } from './ApiTypeListSelector'
 import type { CompareApiTypeSearchParam } from './compareApiTypeFilter'
 

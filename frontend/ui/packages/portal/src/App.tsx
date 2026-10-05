@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { ErrorHandler } from '@apihub/components/ErrorHandler'
-import { EventBusProvider } from '@apihub/routes/EventBusProvider'
-import { router } from '@apihub/routes/Router'
+import { ErrorHandler } from '@portal/components/ErrorHandler'
+import { EventBusProvider } from '@portal/routes/EventBusProvider'
+import { router } from '@portal/routes/Router'
 import { CssBaseline, ThemeProvider } from '@mui/material'
 import { AppPlaceholder } from '@netcracker/qubership-apihub-ui-shared/components/AppPlaceholder'
 import { useUser } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization'

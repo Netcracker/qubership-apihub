@@ -20,10 +20,10 @@ import { SPACE_QUERY_KEY } from './usePrivateWorkspaceUser'
 import { useRefetchPackage } from '../../../usePackage'
 import { useRefetchPackages } from '../../../usePackages'
 import type { IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { WORKSPACES_PAGE_REFERER } from '@apihub/entities/referer-pages-names'
+import { WORKSPACES_PAGE_REFERER } from '@portal/entities/referer-pages-names'
 import type { PackageDto } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import { portalRequestJson } from '@apihub/utils/requests'
+import { portalRequestJson } from '@portal/utils/requests'
 
 export function useCreatePersonalPackage(): [CreatePersonalPackage, IsLoading, IsSuccess, Error | null] {
   const showErrorNotification = useShowErrorNotification()

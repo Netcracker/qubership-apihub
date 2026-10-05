@@ -19,7 +19,7 @@ import type { FC, MutableRefObject, ReactNode } from 'react'
 import { memo, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 
-import { isApiTypeSelectorShown } from '@apihub/utils/operation-types'
+import { isApiTypeSelectorShown } from '@portal/utils/operation-types'
 import { RichFiltersLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/RichFiltersLayout'
 import { ListBox } from '@netcracker/qubership-apihub-ui-shared/components/Panels/ListBox'
 import type { TestableProps } from '@netcracker/qubership-apihub-ui-shared/components/Testable'

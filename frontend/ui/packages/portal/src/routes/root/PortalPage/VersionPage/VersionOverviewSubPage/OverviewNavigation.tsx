@@ -35,7 +35,7 @@ import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/path
 import type { SidebarMenu } from '@netcracker/qubership-apihub-ui-shared/components/NavigationMenu'
 import type { PackageKind } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { useVersionReferences } from '@apihub/routes/root/useVersionReferences'
+import { useVersionReferences } from '@portal/routes/root/useVersionReferences'
 
 export const OverviewNavigation: FC = memo(() => {
   const { packageId, versionId } = useParams()

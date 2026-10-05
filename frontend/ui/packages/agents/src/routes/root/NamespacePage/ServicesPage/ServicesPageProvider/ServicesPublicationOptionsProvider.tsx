@@ -17,7 +17,7 @@
 import type { Dispatch, FC, PropsWithChildren, SetStateAction } from 'react'
 import { createContext, memo, useCallback, useContext, useState } from 'react'
 import type { ServiceKey, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import type { PublishConfig } from '@apihub/entities/publish-config'
+import type { PublishConfig } from '@agents/entities/publish-config'
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 
 export const ServicesPublicationOptionsProvider: FC<PropsWithChildren> = memo(({ children }) => {

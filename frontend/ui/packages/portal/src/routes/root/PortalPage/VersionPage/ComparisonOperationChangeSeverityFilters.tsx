@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { useComparedOperations } from '@apihub/api-hooks/InternalDocuments/useComparedOperations'
+import { useComparedOperations } from '@portal/api-hooks/InternalDocuments/useComparedOperations'
 import {
   useIsApiDiffResultLoading,
   useSetApiDiffResult,
   useSetHasComparisonInternalDocument,
   useSetIsApiDiffResultLoading,
-} from '@apihub/routes/root/ApiDiffResultProvider'
+} from '@portal/routes/root/ApiDiffResultProvider'
 import type { Diff } from '@netcracker/qubership-apihub-api-diff'
 import { DIFF_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { ChangeSeverityFilters } from '@netcracker/qubership-apihub-ui-shared/components/ChangeSeverityFilters'

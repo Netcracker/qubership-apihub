@@ -3,18 +3,18 @@ import { styled } from '@mui/material/styles'
 import { type FC, memo, useCallback, useEffect, useMemo } from 'react'
 import { createPath, useParams } from 'react-router-dom'
 
-import type { DiffMetaKeys } from '@apihub/entities/diff-meta-keys'
+import type { DiffMetaKeys } from '@portal/entities/diff-meta-keys'
 import {
   useApiDiffResult,
   useHasComparisonInternalDocument,
   useIsApiDiffResultLoading,
   useSetApiDiffResult,
-} from '@apihub/routes/root/ApiDiffResultProvider'
-import { useComparedDdlContractsPair } from '@apihub/routes/root/PortalPage/VersionPage/ComparedDdlContractsContext'
-import { useBreadcrumbsData } from '@apihub/routes/root/PortalPage/VersionPage/ComparedPackagesBreadcrumbsProvider'
-import { OperationsSwapper } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationsSwapper'
-import type { OperationDisplayMode } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationView/OperationDisplayMode'
-import { useOperationViewMode } from '@apihub/routes/root/PortalPage/VersionPage/useOperationViewMode'
+} from '@portal/routes/root/ApiDiffResultProvider'
+import { useComparedDdlContractsPair } from '@portal/routes/root/PortalPage/VersionPage/ComparedDdlContractsContext'
+import { useBreadcrumbsData } from '@portal/routes/root/PortalPage/VersionPage/ComparedPackagesBreadcrumbsProvider'
+import { OperationsSwapper } from '@portal/routes/root/PortalPage/VersionPage/OperationContent/OperationsSwapper'
+import type { OperationDisplayMode } from '@portal/routes/root/PortalPage/VersionPage/OperationContent/OperationView/OperationDisplayMode'
+import { useOperationViewMode } from '@portal/routes/root/PortalPage/VersionPage/useOperationViewMode'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import {
   CONTENT_PLACEHOLDER_AREA,
@@ -54,7 +54,7 @@ import { theme } from '@netcracker/qubership-apihub-ui-shared/themes/theme'
 import { SQL_FILE_EXTENSION } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import { DDL_DOCUMENT_TYPE } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 
-import { useNormalizedDdlContract } from '@apihub/api-hooks/InternalDocuments/useNormalizedDdlContract'
+import { useNormalizedDdlContract } from '@portal/api-hooks/InternalDocuments/useNormalizedDdlContract'
 import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import {
   DdlTableDiffsViewer,

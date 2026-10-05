@@ -16,11 +16,11 @@
 
 import type { FC } from 'react'
 import { memo } from 'react'
-import type { ActivityType } from '@apihub/entities/activity-enums'
+import type { ActivityType } from '@portal/entities/activity-enums'
 import { CollapsedPanel } from '@netcracker/qubership-apihub-ui-shared/components/CollapsedPanel'
-import { ActivityHistoryPanel } from '@apihub/components/ActivityList/ActivityHistoryPanel'
-import type { ActivityHistoryQueryResult } from '@apihub/routes/root/useActivityHistory'
-import { usePortalPageSettingsContext } from '@apihub/routes/PortalPageSettingsProvider'
+import { ActivityHistoryPanel } from '@portal/components/ActivityList/ActivityHistoryPanel'
+import type { ActivityHistoryQueryResult } from '@portal/routes/root/useActivityHistory'
+import { usePortalPageSettingsContext } from '@portal/routes/PortalPageSettingsProvider'
 
 export type ActivityHistoryCardProps = {
   useActivity: (enabled: boolean) => ActivityHistoryQueryResult

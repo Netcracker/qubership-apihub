@@ -55,7 +55,7 @@ import {
   PUBLISH_STATUS_TO_STATUS_DESCRIPTION_MAP,
   PUBLISH_STATUS_TO_STATUS_MARKER_VARIANT_MAP,
 } from '../../../constants'
-import { ERROR_PUBLISH_STATUS } from '@apihub/entities/statuses'
+import { ERROR_PUBLISH_STATUS } from '@agents/entities/statuses'
 import { useEventBus } from '../../../../../EventBusProvider'
 import { useSnapshotPublicationInfo } from '../../../useSnapshotPublicationInfo'
 import { useConfigureServiceSelection } from '../useConfigureServiceSelection'
@@ -76,8 +76,8 @@ import {
   Placeholder,
 } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
 import { ColumnDelimiter } from '@netcracker/qubership-apihub-ui-shared/components/ColumnDelimiter'
-import type { Service } from '@apihub/entities/services'
-import type { ServiceConfig } from '@apihub/entities/publish-config'
+import type { Service } from '@agents/entities/services'
+import type { ServiceConfig } from '@agents/entities/publish-config'
 import type { Spec } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
 import {
   LOADING_STATUS_MARKER_VARIANT,

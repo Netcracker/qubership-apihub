@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { getFileDetails } from '@apihub/utils/file-details'
+import { getFileDetails } from '@portal/utils/file-details'
 import { Box, Divider } from '@mui/material'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import {

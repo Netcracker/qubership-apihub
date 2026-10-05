@@ -18,8 +18,8 @@ import {
   usePreviousReleaseVersion,
 } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/components/PreviousReleaseOptionsProvider'
 
-import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
-import { useRefSearchParam } from '@apihub/routes/root/PortalPage/useRefSearchParam'
+import { useCurrentPackage } from '@portal/components/CurrentPackageProvider'
+import { useRefSearchParam } from '@portal/routes/root/PortalPage/useRefSearchParam'
 
 import { useDdlChanges } from '../api/useDdlChanges'
 import { useFlatDdlChanges } from '../api/useFlatDdlChanges'

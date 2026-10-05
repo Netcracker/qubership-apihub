@@ -51,7 +51,7 @@ import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-api
 import { createComponents } from '@netcracker/qubership-apihub-ui-shared/utils/components'
 import { DEFAULT_NUMBER_SKELETON_ROWS } from '@netcracker/qubership-apihub-ui-shared/utils/constants'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
+import { useCurrentPackage } from '@portal/components/CurrentPackageProvider'
 import { useResizeObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useResizeObserver'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import {

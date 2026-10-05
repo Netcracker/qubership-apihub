@@ -4,14 +4,14 @@ import { generatePath } from 'react-router-dom'
 
 import type { DiffType } from '@netcracker/qubership-apihub-api-diff'
 
-import type { Key } from '@apihub/entities/keys'
+import type { Key } from '@portal/entities/keys'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 import { API_V1 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { replaceStringDiffTypeForDTO } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/api/getOperationChangelog'
 
-import { portalRequestBlob } from '@apihub/utils/requests'
+import { portalRequestBlob } from '@portal/utils/requests'
 import { useShowErrorNotification } from '../../BasePage/Notification'
 
 export function useDownloadDdlChangesAsExcel(): [DownloadDdlChangesAsExcelFunction, IsLoading] {

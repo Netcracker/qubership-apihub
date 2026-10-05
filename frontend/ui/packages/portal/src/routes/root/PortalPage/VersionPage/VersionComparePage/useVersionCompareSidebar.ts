@@ -5,7 +5,7 @@ import type { ContractType } from '@netcracker/qubership-apihub-ui-shared/entiti
 import { isDashboardComparisonSummary } from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
 import { isAppliedSearchValueForTag } from '@netcracker/qubership-apihub-ui-shared/utils/tags'
 
-import { getDefaultApiType, isApiTypeSelectorShown } from '@apihub/utils/operation-types'
+import { getDefaultApiType, isApiTypeSelectorShown } from '@portal/utils/operation-types'
 import { useRefSearchParam } from '../../useRefSearchParam'
 import { useChangesSummaryFromContext } from '../ChangesSummaryProvider'
 import { useApiTypeSearchParam } from '../useApiTypeSearchParam'

@@ -11,8 +11,8 @@ import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-share
 import { API_V1 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 
-import type { Key } from '@apihub/entities/keys'
-import { portalRequestBlob } from '@apihub/utils/requests'
+import type { Key } from '@portal/entities/keys'
+import { portalRequestBlob } from '@portal/utils/requests'
 import { useShowErrorNotification } from '../../BasePage/Notification'
 
 type DownloadMcpEntitiesAsExcelOptions = Readonly<{

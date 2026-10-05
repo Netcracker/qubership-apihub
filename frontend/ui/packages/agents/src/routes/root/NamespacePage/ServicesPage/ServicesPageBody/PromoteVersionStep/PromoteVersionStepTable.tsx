@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Service } from '@apihub/entities/services'
+import type { Service } from '@agents/entities/services'
 import type { FC } from 'react'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
@@ -74,7 +74,7 @@ import { ColumnDelimiter } from '@netcracker/qubership-apihub-ui-shared/componen
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import type { ChangesSummary } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import type { Spec } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
-import type { ServiceConfig } from '@apihub/entities/publish-config'
+import type { ServiceConfig } from '@agents/entities/publish-config'
 import {
   LOADING_STATUS_MARKER_VARIANT,
   StatusMarker,

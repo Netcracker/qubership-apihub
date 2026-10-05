@@ -17,7 +17,7 @@
 import { useHash } from 'react-use'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useCallback, useEffect } from 'react'
-import type { Key } from '@apihub/entities/keys'
+import type { Key } from '@portal/entities/keys'
 import type { OperationViewMode } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
 import {
   DOC_OPERATION_VIEW_MODE,

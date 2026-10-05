@@ -31,8 +31,8 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/components/FileTableUpload/FileTableUpload'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
-import { sortFilesRecord } from '@apihub/routes/root/PortalPage/PackagePage/files'
-import { ConfigureFileTableTree } from '@apihub/routes/root/PortalPage/PackagePage/ConfigureFileTableTree'
+import { sortFilesRecord } from '@portal/routes/root/PortalPage/PackagePage/files'
+import { ConfigureFileTableTree } from '@portal/routes/root/PortalPage/PackagePage/ConfigureFileTableTree'
 import { find } from 'lodash-es'
 import { UploadButton } from '@netcracker/qubership-apihub-ui-shared/components/UploadButton'
 import {

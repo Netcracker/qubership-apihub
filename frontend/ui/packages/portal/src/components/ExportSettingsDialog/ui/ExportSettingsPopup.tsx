@@ -1,8 +1,8 @@
 import { type FC, useCallback, useEffect, useMemo, useState } from 'react'
 
-import type { Documents } from '@apihub/entities/documents'
-import type { ExportSettingsPopupDetail } from '@apihub/routes/EventBusProvider'
-import { useShowErrorNotification } from '@apihub/routes/root/BasePage/Notification'
+import type { Documents } from '@portal/entities/documents'
+import type { ExportSettingsPopupDetail } from '@portal/routes/EventBusProvider'
+import { useShowErrorNotification } from '@portal/routes/root/BasePage/Notification'
 import { SHAREABILITY_STATUS_UNKNOWN } from '@netcracker/qubership-apihub-api-processor'
 import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import { isExportableSpecType, isOpenApiSpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'

@@ -10,7 +10,7 @@ import {
 import { isObject } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
 import { MCP_DOCUMENT_TYPE, type McpDocumentType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 
-import type { McpStagedFileMeta } from '@apihub/routes/root/PortalPage/PackagePage/mcpPublish'
+import type { McpStagedFileMeta } from '@portal/routes/root/PortalPage/PackagePage/mcpPublish'
 
 export type McpUploadCandidate = Readonly<{
   documentType: McpDocumentType

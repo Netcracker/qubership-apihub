@@ -22,10 +22,10 @@ import { useDashboardReferences, useSetDashboardReferences } from './DashboardRe
 import { useHandleRemovedReferences } from '../useHandleReferences'
 import { useSetRecursiveDashboardName } from './RecursiveDashboardNameContextProvider'
 import type { ReferenceKind } from '@netcracker/qubership-apihub-ui-shared/entities/version-references'
-import { useSetReferences } from '@apihub/routes/root/PortalPage/PackagesAndDashboardsTree/useSetReferences'
+import { useSetReferences } from '@portal/routes/root/PortalPage/PackagesAndDashboardsTree/useSetReferences'
 import {
   PackagesAndDashboardsTree,
-} from '@apihub/routes/root/PortalPage/PackagesAndDashboardsTree/PackagesAndDashboardsTree'
+} from '@portal/routes/root/PortalPage/PackagesAndDashboardsTree/PackagesAndDashboardsTree'
 
 export const ConfigureDashboardTree: FC = memo(() => {
   const { packageId: packageKey, versionId: versionKey } = useParams()

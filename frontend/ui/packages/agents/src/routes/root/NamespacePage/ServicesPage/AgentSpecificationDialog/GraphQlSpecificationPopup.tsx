@@ -33,7 +33,7 @@ import { GRAPHQL_SCHEMA_SPEC_TYPE, isGraphQlSpecType } from '@netcracker/qubersh
 import { useMergedGraphQlSpec } from './useMergedGraphQlSpec'
 import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/OptionItem'
 import { GRAPHQL_FILE_EXTENSION } from '@netcracker/qubership-apihub-ui-shared/utils/files'
-import type { Service } from '@apihub/entities/services'
+import type { Service } from '@agents/entities/services'
 import { CommonSpecificationPopup } from './CommonSpecificationPopup'
 import { sortBy } from 'lodash-es'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'

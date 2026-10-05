@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ReactNode } from 'react'
 import { FileActions, FileInfoIcon, FileTableUpload } from '../../components/FileTableUpload/FileTableUpload'
 import { fullHeight } from '../commons/decorators'

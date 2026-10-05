@@ -34,13 +34,13 @@ import { useRunDiscovery } from './useRunDiscovery'
 import { useCreateSnapshotPublicationOptions } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
 import type { SearchValue } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
 import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
-import type { DiscoveryStatus } from '@apihub/entities/statuses'
+import type { DiscoveryStatus } from '@agents/entities/statuses'
 import {
   COMPLETE_DISCOVERY_STATUS,
   ERROR_DISCOVERY_STATUS,
   NONE_DISCOVERY_STATUS,
   RUNNING_DISCOVERY_STATUS,
-} from '@apihub/entities/statuses'
+} from '@agents/entities/statuses'
 import type { IsError, IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 
 export type DiscoverServicesStepToolbarProps = {

@@ -22,8 +22,8 @@ import {
   OPERATIONS_VIEW_MODE_PARAM,
 } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 
-import type { Key } from '@apihub/entities/keys'
-import { usePortalPageSettingsContext } from '@apihub/routes/PortalPageSettingsProvider'
+import type { Key } from '@portal/entities/keys'
+import { usePortalPageSettingsContext } from '@portal/routes/PortalPageSettingsProvider'
 import { VERSION_TAB_IDS } from './VersionPage/VersionTabApiTypes/version-tab-allowed-api-types'
 import type { VersionTabsApiTypesState } from './VersionPage/VersionTabApiTypes/buildVersionTabsApiTypesState'
 

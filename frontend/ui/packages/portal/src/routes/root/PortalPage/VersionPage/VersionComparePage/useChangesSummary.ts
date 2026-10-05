@@ -25,7 +25,7 @@ import { generatePath } from 'react-router-dom'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { InvalidateQuery, IsFetching, IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
-import { portalRequestJson } from '@apihub/utils/requests'
+import { portalRequestJson } from '@portal/utils/requests'
 import { useCallback } from 'react'
 
 const CHANGES_SUMMARY_QUERY_KEY = 'changes-summary-query-key'

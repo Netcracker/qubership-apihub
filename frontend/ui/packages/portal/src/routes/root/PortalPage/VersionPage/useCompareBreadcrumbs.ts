@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { REVISION_DELIMITER } from '@apihub/entities/versions'
-import type { OperationOptions } from '@apihub/routes/root/PortalPage/VersionPage/useOperation'
-import { useOperation } from '@apihub/routes/root/PortalPage/VersionPage/useOperation'
-import { usePackage } from '@apihub/routes/root/usePackage'
+import { REVISION_DELIMITER } from '@portal/entities/versions'
+import type { OperationOptions } from '@portal/routes/root/PortalPage/VersionPage/useOperation'
+import { useOperation } from '@portal/routes/root/PortalPage/VersionPage/useOperation'
+import { usePackage } from '@portal/routes/root/usePackage'
 import type { OperationsApiType } from '@netcracker/qubership-apihub-api-processor'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { useMemo } from 'react'

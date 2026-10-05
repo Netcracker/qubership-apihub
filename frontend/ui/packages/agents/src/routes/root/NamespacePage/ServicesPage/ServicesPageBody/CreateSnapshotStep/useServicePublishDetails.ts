@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import type { ServiceConfig } from '@apihub/entities/publish-config'
-import type { PublishDetails, PublishDetailsDto } from '@apihub/entities/publish-details'
-import { EMPTY_PUBLISH_DETAILS } from '@apihub/entities/publish-details'
-import { calculatePreviousVersion } from '@apihub/entities/snapshots'
+import type { ServiceConfig } from '@agents/entities/publish-config'
+import type { PublishDetails, PublishDetailsDto } from '@agents/entities/publish-details'
+import { EMPTY_PUBLISH_DETAILS } from '@agents/entities/publish-details'
+import { calculatePreviousVersion } from '@agents/entities/snapshots'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'

@@ -33,7 +33,7 @@ import { useRearrangedOperationsByDelta } from '../hooks/useRearrangedOperations
 import { useGroupOperationsActualCount } from '../hooks/useGroupOperationsActualCount'
 import { useClearExcessivePagedGroupOperations, usePagedGroupOperations } from './usePagedGroupOperations'
 import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
-import type { EditOperationGroupContentDetails } from '@apihub/routes/EventBusProvider'
+import type { EditOperationGroupContentDetails } from '@portal/routes/EventBusProvider'
 import {
   API_AUDIENCE_SELECTED,
   API_KIND_SELECTED,
@@ -41,7 +41,7 @@ import {
   OPERATIONS_REMOVE_FROM_GROUP_ACTION,
   REF_PACKAGE_SELECTED,
   TAG_SELECTED,
-} from '@apihub/routes/EventBusProvider'
+} from '@portal/routes/EventBusProvider'
 import type { PackageReference } from '@netcracker/qubership-apihub-ui-shared/entities/version-references'
 import type {
   ApiAudience,

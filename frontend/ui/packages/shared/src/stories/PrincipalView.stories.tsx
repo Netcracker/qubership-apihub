@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryFn } from '@storybook/react'
+import type { Meta, StoryFn } from '@storybook/react-vite'
 import type { PrincipalViewProps } from '../components/PrincipalView'
 import { PrincipalView } from '../components/PrincipalView'
 import type { Principal } from '../entities/principals'

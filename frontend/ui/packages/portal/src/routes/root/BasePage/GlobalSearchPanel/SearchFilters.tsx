@@ -36,7 +36,7 @@ import {
 import type { Package } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { GROUP_KIND, PACKAGE_KIND, WORKSPACE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { handleVersionsRevision } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { useEventBus } from '@portal/routes/EventBusProvider'
 import { disableAutocompleteSearch } from '@netcracker/qubership-apihub-ui-shared/utils/mui'
 import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/OptionItem'
 import { VersionStatusChip } from '@netcracker/qubership-apihub-ui-shared/components/VersionStatusChip'
@@ -45,13 +45,13 @@ import {
   API_TYPE_REST,
   API_TYPES,
 } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import type { ApiContract } from '@apihub/entities/global-search'
+import type { ApiContract } from '@portal/entities/global-search'
 import {
   CONTRACT_TYPES,
   getRouteApiTypeTitle,
 } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import { DEFAULT_DEBOUNCE } from '@netcracker/qubership-apihub-ui-shared/utils/constants'
-import { usePackage } from '@apihub/routes/root/usePackage'
+import { usePackage } from '@portal/routes/root/usePackage'
 import { toISODateRange } from '@netcracker/qubership-apihub-ui-shared/utils/date'
 import {
   useSystemConfiguration,

@@ -166,6 +166,23 @@
     },
     {
       "files": [
+        "tsconfig*.json",
+        "**/tsconfig*.json"
+      ],
+      "plugins": [
+        "json"
+      ],
+      "rules": {
+        "json/*": [
+          "error",
+          {
+            "allowComments": true
+          }
+        ]
+      }
+    },
+    {
+      "files": [
         "index.ts"
       ],
       "plugins": [

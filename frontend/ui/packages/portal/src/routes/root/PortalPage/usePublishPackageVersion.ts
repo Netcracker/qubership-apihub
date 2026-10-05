@@ -40,7 +40,7 @@ import { useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { useNavigation } from '../../NavigationProvider'
 import { useEventBus } from '../../EventBusProvider'
-import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
+import { useCurrentPackage } from '@portal/components/CurrentPackageProvider'
 import { useAsyncInvalidateVersionContent } from '../usePackageVersionContent'
 import { useAsyncInvalidateVersionSources } from '../useVersionSources'
 import { getPackageVersionBuilder } from './package-version-builder'
@@ -64,6 +64,7 @@ export function usePublishPackageVersion(): [PublishPackageVersion, IsLoading, I
     const filesListLength = files?.length
     if (filesListLength) {
       const packageName = currentPackage?.name ?? packageId ?? ''
+      const errors = errorMessage ?? ''
       showErrorNotification({
         title: 'Publication error',
         message: `There was an error while publishing package ${packageName}`,
@@ -71,7 +72,7 @@ export function usePublishPackageVersion(): [PublishPackageVersion, IsLoading, I
           title: 'View details',
           onClick: () => showPublicationErrorReportDialog({
             downloadFilename: `Error report for the package ${packageName}`,
-            errors: errorMessage ?? '',
+            errors,
           }),
         },
       })

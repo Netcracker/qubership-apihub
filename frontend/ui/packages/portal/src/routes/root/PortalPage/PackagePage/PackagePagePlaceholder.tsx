@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { useBackwardLocationContext, useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
+import { useEventBus } from '@portal/routes/EventBusProvider'
 import { Box, Button, capitalize, Link } from '@mui/material'
 import { EmptyPackageDialog } from '@netcracker/qubership-apihub-ui-shared/components/EmptyPackageDialog'
 import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'

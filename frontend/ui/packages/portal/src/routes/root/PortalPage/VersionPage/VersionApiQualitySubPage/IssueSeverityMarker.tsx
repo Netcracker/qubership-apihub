@@ -1,6 +1,6 @@
 import ErrorIcon from '@mui/icons-material/Error'
 import type { FC } from 'react'
-import { IssueSeverities, type IssueSeverity } from '@apihub/entities/api-quality/issue-severities'
+import { IssueSeverities, type IssueSeverity } from '@portal/entities/api-quality/issue-severities'
 
 const Size = {
   SMALL: 'small',

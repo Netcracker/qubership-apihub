@@ -11,7 +11,7 @@ import {
   type SpecType,
 } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 
-import { EMPTY_DOC } from '@apihub/entities/documents'
+import { EMPTY_DOC } from '@portal/entities/documents'
 import { OpenApiViewer } from '../OpenApiViewer/OpenApiViewer'
 import { FormatViewer } from './FormatViewer'
 import { PublishedDocumentRawView } from './PublishedDocumentRawView'

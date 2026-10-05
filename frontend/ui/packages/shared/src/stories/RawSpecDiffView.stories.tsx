@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { RawSpecDiffView } from '../components/RawSpecDiffView'
 import { toYaml } from '../utils/specifications'
 import { openapiChangedSample, openapiSample } from './samples/openapi-samples'

@@ -19,7 +19,7 @@ import type { VersionsComparison } from '@netcracker/qubership-apihub-api-proces
 import { useVersionWithRevision } from '../useVersionWithRevision'
 import type { Key, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { useChangesSummaryContext } from '@apihub/routes/root/PortalPage/VersionPage/ChangesSummaryProvider'
+import { useChangesSummaryContext } from '@portal/routes/root/PortalPage/VersionPage/ChangesSummaryProvider'
 import type { VersionChangesSummary } from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
 
 export type UseCompareGroupsOptions = Partial<{

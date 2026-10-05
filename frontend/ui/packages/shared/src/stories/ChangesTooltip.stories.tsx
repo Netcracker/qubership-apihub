@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryFn } from '@storybook/react'
+import type { Meta, StoryFn } from '@storybook/react-vite'
 import type { ChangesTooltipProps } from '../components/ChangesTooltip'
 import { ChangesTooltip } from '../components/ChangesTooltip'
 import { Box, Button } from '@mui/material'

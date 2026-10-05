@@ -19,7 +19,7 @@ import { usePackage } from '../../usePackage'
 import type { VersionChangesSummary } from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
 import { isDashboardComparisonSummary } from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import type { PackagesComparisonParams } from '@apihub/entities/breadcrumbs'
+import type { PackagesComparisonParams } from '@portal/entities/breadcrumbs'
 
 export function usePackagesFromDashboardsComparisonParams(
   changesSummary?: VersionChangesSummary,

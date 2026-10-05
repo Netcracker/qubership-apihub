@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import { buildOperationPairKey, HandledOperationPairsProvider } from '@apihub/components/HandledOperationPairsProvider'
-import { OperationContent } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationContent'
+import { buildOperationPairKey, HandledOperationPairsProvider } from '@portal/components/HandledOperationPairsProvider'
+import { OperationContent } from '@portal/routes/root/PortalPage/VersionPage/OperationContent/OperationContent'
 import {
   COMPARE_SAME_OPERATIONS_MODE,
-} from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationView/OperationDisplayMode'
-import { useCompareBreadcrumbs } from '@apihub/routes/root/PortalPage/VersionPage/useCompareBreadcrumbs'
-import { useComparisonObjects } from '@apihub/routes/root/PortalPage/VersionPage/useComparisonObjects'
-import { useComparisonParams } from '@apihub/routes/root/PortalPage/VersionPage/useComparisonParams'
-import { groupOperationPairsByTags } from '@apihub/utils/operations'
+} from '@portal/routes/root/PortalPage/VersionPage/OperationContent/OperationView/OperationDisplayMode'
+import { useCompareBreadcrumbs } from '@portal/routes/root/PortalPage/VersionPage/useCompareBreadcrumbs'
+import { useComparisonObjects } from '@portal/routes/root/PortalPage/VersionPage/useComparisonObjects'
+import { useComparisonParams } from '@portal/routes/root/PortalPage/VersionPage/useComparisonParams'
+import { groupOperationPairsByTags } from '@portal/utils/operations'
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { CONTRACT_TYPE_DDL, getRouteApiTypeTitle, toRouteApiType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'

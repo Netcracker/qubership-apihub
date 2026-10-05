@@ -1,4 +1,4 @@
-import { useBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
+import { useBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
 import { Button } from '@mui/material'
 import { LARGE_TOOLBAR_SIZE, Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'

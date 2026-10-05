@@ -23,7 +23,7 @@ import { SwapperBreadcrumbs } from '../SwapperBreadcrumbs'
 import { useVersionsComparisonGlobalParams } from '../VersionsComparisonGlobalParams'
 import { VERSION_SWAPPER_HEIGHT } from '../shared-styles'
 import { useNavigation } from '../../../../NavigationProvider'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { useEventBus } from '@portal/routes/EventBusProvider'
 import {
   API_TYPE_SEARCH_PARAM,
   PACKAGE_SEARCH_PARAM,

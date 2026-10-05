@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-import type { Documents } from '@apihub/entities/documents'
+import type { Documents } from '@portal/entities/documents'
 import {
   SHAREABILITY_STATUS_NON_SHAREABLE,
   SHAREABILITY_STATUS_SHAREABLE,

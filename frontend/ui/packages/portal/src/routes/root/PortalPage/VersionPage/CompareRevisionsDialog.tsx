@@ -24,9 +24,9 @@ import { usePackageVersionContent } from '../../usePackageVersionContent'
 import { useVersionWithRevision } from '../../useVersionWithRevision'
 import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
-import { SHOW_COMPARE_REVISIONS_DIALOG } from '@apihub/routes/EventBusProvider'
-import { REVISION_DELIMITER } from '@apihub/entities/versions'
-import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
+import { SHOW_COMPARE_REVISIONS_DIALOG } from '@portal/routes/EventBusProvider'
+import { REVISION_DELIMITER } from '@portal/entities/versions'
+import { useBackwardLocationContext, useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
 import {
   API_TYPE_SEARCH_PARAM,
   PACKAGE_SEARCH_PARAM,
@@ -34,16 +34,16 @@ import {
   VERSION_SEARCH_PARAM,
 } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
-import { getDefaultApiType } from '@apihub/utils/operation-types'
+import { getDefaultApiType } from '@portal/utils/operation-types'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import { useAllRevisions } from '@apihub/routes/root/PortalPage/VersionPage/usePagedRevisions'
+import { useAllRevisions } from '@portal/routes/root/PortalPage/VersionPage/usePagedRevisions'
 import type {
   CompareRevisionsDialogData,
   CompareRevisionsDialogFormData,
 } from '@netcracker/qubership-apihub-ui-shared/components/CompareRevisionsDialogForm'
 import { CompareRevisionsDialogForm } from '@netcracker/qubership-apihub-ui-shared/components/CompareRevisionsDialogForm'
-import { useNavigation } from '@apihub/routes/NavigationProvider'
-import { useRefSearchParam } from '@apihub/routes/root/PortalPage/useRefSearchParam'
+import { useNavigation } from '@portal/routes/NavigationProvider'
+import { useRefSearchParam } from '@portal/routes/root/PortalPage/useRefSearchParam'
 
 export const CompareRevisionsDialog: FC = memo(() => {
   return (

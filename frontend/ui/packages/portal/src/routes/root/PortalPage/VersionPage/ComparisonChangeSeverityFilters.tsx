@@ -22,7 +22,7 @@ import {
   useSeverityFiltersSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
 import { ChangeSeverityFilters } from '@netcracker/qubership-apihub-ui-shared/components/ChangeSeverityFilters'
-import type { ComparisonChangeSeverityFiltersProps } from '@apihub/routes/root/PortalPage/VersionPage/common-props'
+import type { ComparisonChangeSeverityFiltersProps } from '@portal/routes/root/PortalPage/VersionPage/common-props'
 import { CATEGORY_PACKAGE } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
 
 export const ComparisonChangeSeverityFilters: FC<ComparisonChangeSeverityFiltersProps> =

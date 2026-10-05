@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { DiffMetaKeys } from '@apihub/entities/diff-meta-keys'
+import type { DiffMetaKeys } from '@portal/entities/diff-meta-keys'
 import '@netcracker/qubership-apihub-apispec-view'
 import type { DiffOperationView } from '@netcracker/qubership-apihub-apispec-view'
 import type { ChangeSeverity } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'

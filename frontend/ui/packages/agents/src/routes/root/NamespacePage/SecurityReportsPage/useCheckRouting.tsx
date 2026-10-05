@@ -16,7 +16,7 @@
 
 import { useInvalidateSecurityReports } from './useSecurityReports'
 import { useMutation } from '@tanstack/react-query'
-import type { Key } from '@apihub/entities/keys'
+import type { Key } from '@agents/entities/keys'
 import type { HttpError } from '@netcracker/qubership-apihub-ui-shared/utils/responses'
 import { API_V3, requestVoid } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'

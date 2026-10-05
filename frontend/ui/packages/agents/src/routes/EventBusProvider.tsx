@@ -21,7 +21,7 @@ import type { NotificationDetail } from '@netcracker/qubership-apihub-ui-shared/
 import type { ChangeViewDialogDetail } from '../widgets/ChangeViewDialog/ChangeViewDialog'
 import { SHOW_CHANGE_VIEW_DIALOG } from '../widgets/ChangeViewDialog/ChangeViewDialog'
 import type { Spec } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
-import type { Service } from '@apihub/entities/services'
+import type { Service } from '@agents/entities/services'
 
 export const SHOW_SUCCESS_NOTIFICATION = 'show-success-notification'
 export const SHOW_ERROR_NOTIFICATION = 'show-error-notification'

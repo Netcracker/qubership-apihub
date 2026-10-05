@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryFn } from '@storybook/react'
+import type { Meta, StoryFn } from '@storybook/react-vite'
 import React from 'react'
 import type { NotificationProps } from '../components/Notifications/Notification'
 import { Notification } from '../components/Notifications/Notification'

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { Examples } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/Playground/Examples/Examples'
-import { Playground } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/Playground/Playground'
+import { Examples } from '@portal/routes/root/PortalPage/VersionPage/OperationContent/Playground/Examples/Examples'
+import { Playground } from '@portal/routes/root/PortalPage/VersionPage/OperationContent/Playground/Playground'
 import {
   usePlaygroundEvents,
 } from './Playground/hooks/usePlaygroundEvents'

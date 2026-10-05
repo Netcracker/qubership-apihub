@@ -22,8 +22,8 @@ import {
   usePreviousReleaseVersion,
 } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/components/PreviousReleaseOptionsProvider'
 
-import { usePortalPageSettingsContext } from '@apihub/routes/PortalPageSettingsProvider'
-import { isApiTypeSelectorShown } from '@apihub/utils/operation-types'
+import { usePortalPageSettingsContext } from '@portal/routes/PortalPageSettingsProvider'
+import { isApiTypeSelectorShown } from '@portal/utils/operation-types'
 import { VERSION_TAB_IDS } from '../VersionTabApiTypes/version-tab-allowed-api-types'
 import { getVersionPath } from '../../../../NavigationProvider'
 import { usePackage } from '../../../usePackage'

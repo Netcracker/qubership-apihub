@@ -20,7 +20,7 @@ import { useVersionWithRevision } from '../../useVersionWithRevision'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { Operation, OperationsGroupedByTag } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { groupOperationsByTags } from '@apihub/utils/operations'
+import { groupOperationsByTags } from '@portal/utils/operations'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
 export function useOperationsGroupedByTags(options?: Partial<{

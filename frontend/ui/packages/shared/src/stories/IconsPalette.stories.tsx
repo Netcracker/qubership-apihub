@@ -1,5 +1,5 @@
 import { Box, Grid, Paper, type SvgIconProps, Typography, useTheme } from '@mui/material'
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import React, { memo, useMemo } from 'react'
 
 import { SECONDARY_TEXT_COLOR } from '../themes/colors'

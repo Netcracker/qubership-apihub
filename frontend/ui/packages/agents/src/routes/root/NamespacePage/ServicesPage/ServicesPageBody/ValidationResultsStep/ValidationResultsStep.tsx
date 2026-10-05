@@ -21,7 +21,7 @@ import { useServices } from '../../../useServices'
 import { filterServices } from '../../services'
 import { useSnapshotPublicationInfo } from '../../../useSnapshotPublicationInfo'
 import { Box } from '@mui/material'
-import type { ServicePublishInfo } from '@apihub/entities/service-publish-info'
+import type { ServicePublishInfo } from '@agents/entities/service-publish-info'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import {
   ERROR_STEP_STATUS,

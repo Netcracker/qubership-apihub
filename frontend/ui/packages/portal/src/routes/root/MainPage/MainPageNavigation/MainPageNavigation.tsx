@@ -31,7 +31,7 @@ import type { MainPageRoute } from '../../../../routes'
 import { FAVORITE_PAGE, PRIVATE_PAGE, SHARED_PAGE, WORKSPACES_PAGE } from '../../../../routes'
 import { useParams } from 'react-router'
 import { WORKSPACE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { WORKSPACES_PAGE_REFERER } from '@apihub/entities/referer-pages-names'
+import { WORKSPACES_PAGE_REFERER } from '@portal/entities/referer-pages-names'
 
 const DIVIDER_STYLES = {
   borderWidth: 0,

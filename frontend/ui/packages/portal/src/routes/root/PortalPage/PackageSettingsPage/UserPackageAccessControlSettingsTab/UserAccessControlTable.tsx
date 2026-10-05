@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import type { Key } from '@apihub/entities/keys'
-import type { PackageMember, PackageMembers } from '@apihub/routes/root/PortalPage/PackageSettingsPage/package-settings'
+import type { Key } from '@portal/entities/keys'
+import type { PackageMember, PackageMembers } from '@portal/routes/root/PortalPage/PackageSettingsPage/package-settings'
 import {
   ADD_CHANGE_ROLE_ACTION,
   REMOVE_CHANGE_ROLE_ACTION,
-} from '@apihub/routes/root/PortalPage/PackageSettingsPage/package-settings'
+} from '@portal/routes/root/PortalPage/PackageSettingsPage/package-settings'
 import {
   useChangePackageMemberRole,
   useDeletePackageMember,
-} from '@apihub/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/useUserPackageAccess'
+} from '@portal/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/useUserPackageAccess'
 import { Box, Checkbox, TableCell, Tooltip, Typography } from '@mui/material'
 import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
 import {

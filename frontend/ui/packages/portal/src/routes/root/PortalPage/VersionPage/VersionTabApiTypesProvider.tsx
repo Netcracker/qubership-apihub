@@ -1,7 +1,7 @@
 import { createContext, type FC, memo, type PropsWithChildren, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 
-import { usePackageVersionContent } from '@apihub/routes/root/usePackageVersionContent'
+import { usePackageVersionContent } from '@portal/routes/root/usePackageVersionContent'
 import { useApiQualityLinterEnabled, useApiQualityTabTooltip } from './ApiQualityValidationSummaryProvider'
 import { usePackageVersionApiTypes } from './usePackageVersionApiTypes'
 import {

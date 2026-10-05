@@ -24,7 +24,7 @@ import KeyboardArrowRightOutlinedIcon from '@mui/icons-material/KeyboardArrowRig
 import { SubOpenApiTable } from './SubOpenApiTable'
 import { COLUMNS_SIZES_MAP } from './operation-table'
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
-import { groupOperationsByTags } from '@apihub/utils/operations'
+import { groupOperationsByTags } from '@portal/utils/operations'
 import type { OperationData, OperationsData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { API_AUDIENCE_COLUMN_ID, API_KIND_COLUMN_ID, ENDPOINT_COLUMN_ID } from '@netcracker/qubership-apihub-ui-shared/entities/table-columns'
 

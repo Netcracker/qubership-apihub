@@ -18,7 +18,7 @@ import type { OperationListsDelta } from '../types'
 import { deepIncludes, isOperationMovedWithAction } from '../utils'
 import { useMemo } from 'react'
 import type { Operations } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
-import type { OperationsMovementDetails } from '@apihub/routes/EventBusProvider'
+import type { OperationsMovementDetails } from '@portal/routes/EventBusProvider'
 
 export type RearrangeOperationsOptions = {
   sourceOperations: Operations | undefined

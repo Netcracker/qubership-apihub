@@ -1,10 +1,10 @@
-import { useComparedDdlContracts } from '@apihub/api-hooks/InternalDocuments/useComparedDdlContracts'
+import { useComparedDdlContracts } from '@portal/api-hooks/InternalDocuments/useComparedDdlContracts'
 import {
   useIsApiDiffResultLoading,
   useSetApiDiffResult,
   useSetHasComparisonInternalDocument,
   useSetIsApiDiffResultLoading,
-} from '@apihub/routes/root/ApiDiffResultProvider'
+} from '@portal/routes/root/ApiDiffResultProvider'
 import type { Diff } from '@netcracker/qubership-apihub-api-diff'
 import { ChangeSeverityFilters } from '@netcracker/qubership-apihub-ui-shared/components/ChangeSeverityFilters'
 import type { ChangesSummary } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'

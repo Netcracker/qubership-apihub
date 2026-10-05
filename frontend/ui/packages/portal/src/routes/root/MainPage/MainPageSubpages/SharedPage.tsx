@@ -25,8 +25,8 @@ import { useActivityHistory } from '../../useActivityHistory'
 import { ActivityHistoryCard } from './ActivityHistoryCard'
 import { Box } from '@mui/material'
 import { DASHBOARD_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { MainPageCard } from '@apihub/routes/root/MainPage/MainPageCard'
-import { SHARED_PAGE_REFERER } from '@apihub/entities/referer-pages-names'
+import { MainPageCard } from '@portal/routes/root/MainPage/MainPageCard'
+import { SHARED_PAGE_REFERER } from '@portal/entities/referer-pages-names'
 
 export const SharedPage: FC = memo(() => {
   const { textFilter, types } = useActivityHistoryFiltersContext()

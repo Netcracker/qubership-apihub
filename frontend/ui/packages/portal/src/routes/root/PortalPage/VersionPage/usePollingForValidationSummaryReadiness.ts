@@ -1,4 +1,4 @@
-import type { RefetchValidationSummary } from '@apihub/api-hooks/ApiQuality/useValidationSummaryByPackageVersion'
+import type { RefetchValidationSummary } from '@portal/api-hooks/ApiQuality/useValidationSummaryByPackageVersion'
 import type { Dispatch, SetStateAction } from 'react'
 import { useEffect, useRef } from 'react'
 import type { ClientValidationStatus } from './ApiQualityValidationSummaryProvider'

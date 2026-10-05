@@ -45,11 +45,11 @@ import {
   VERSION_SEARCH_PARAM,
 } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { useEventBus } from '@portal/routes/EventBusProvider'
 import { DOC_OPERATION_VIEW_MODE } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
 import { Swapper } from '@netcracker/qubership-apihub-ui-shared/components/Swapper'
 import { EditIcon } from '@netcracker/qubership-apihub-ui-shared/icons/EditIcon'
-import type { ComparedPackagesBreadcrumbsData } from '@apihub/routes/root/PortalPage/VersionPage/breadcrumbs'
+import type { ComparedPackagesBreadcrumbsData } from '@portal/routes/root/PortalPage/VersionPage/breadcrumbs'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 
 export type OperationsSwapperProps = {

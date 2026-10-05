@@ -22,14 +22,14 @@ import type {
   ActivityDto,
   ActivityHistoryDto,
   EventDetails,
-} from '@apihub/entities/activities'
+} from '@portal/entities/activities'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import type { PackageKind } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import type { ActivityEventType, ActivityType } from '@apihub/entities/activity-enums'
+import type { ActivityEventType, ActivityType } from '@portal/entities/activity-enums'
 import { useQuery } from '@tanstack/react-query'
 import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
-import { portalRequestJson } from '@apihub/utils/requests'
+import { portalRequestJson } from '@portal/utils/requests'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 import { API_V4 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'

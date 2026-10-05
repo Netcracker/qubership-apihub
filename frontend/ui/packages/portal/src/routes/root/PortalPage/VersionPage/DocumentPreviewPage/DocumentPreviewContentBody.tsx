@@ -30,7 +30,7 @@ import {
   DOC_OPERATION_VIEW_MODE,
   RAW_OPERATION_VIEW_MODE,
 } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
-import { DocSpecView } from '@apihub/components/DocSpecView'
+import { DocSpecView } from '@portal/components/DocSpecView'
 import { JSON_FILE_FORMAT } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import { toFormattedJsonString } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useAsyncInvalidatePackageVersionContentByVersion } from '@apihub/routes/root/usePackageVersionContent'
+import { useAsyncInvalidatePackageVersionContentByVersion } from '@portal/routes/root/usePackageVersionContent'
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
 import { TabContext, TabList, TabPanel } from '@mui/lab'
 import { Box, Button, Tab } from '@mui/material'

@@ -31,7 +31,7 @@ import { useEffectOnce } from 'react-use'
 import type { ColumnDef, ColumnSizingInfoState, ColumnSizingState, OnChangeFn } from '@tanstack/react-table'
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import type { PackageReferenceWithStatus } from '@apihub/routes/root/PortalPage/DashboardPage/configure-dashboard'
+import type { PackageReferenceWithStatus } from '@portal/routes/root/PortalPage/DashboardPage/configure-dashboard'
 import type { ReferenceKind } from '@netcracker/qubership-apihub-ui-shared/entities/version-references'
 import type { ColumnModel } from '@netcracker/qubership-apihub-ui-shared/hooks/table-resizing/useColumnResizing'
 import {

@@ -17,7 +17,7 @@
 import type { InfiniteData } from '@tanstack/react-query'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 
-import { portalRequestJson } from '@apihub/utils/requests'
+import { portalRequestJson } from '@portal/utils/requests'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { Key, PackageKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { OperationGroupName } from '@netcracker/qubership-apihub-ui-shared/entities/operation-groups'

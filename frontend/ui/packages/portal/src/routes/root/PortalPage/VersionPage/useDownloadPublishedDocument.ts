@@ -22,7 +22,7 @@ import { useVersionWithRevision } from '../../useVersionWithRevision'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
-import { portalRequestBlob } from '@apihub/utils/requests'
+import { portalRequestBlob } from '@portal/utils/requests'
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 import type { FileExtension, YML_FILE_EXTENSION } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import {
@@ -31,7 +31,7 @@ import {
   JSON_FILE_EXTENSION,
   YAML_FILE_EXTENSION,
 } from '@netcracker/qubership-apihub-ui-shared/utils/files'
-import { resolveRefs } from '@apihub/utils/specifications'
+import { resolveRefs } from '@portal/utils/specifications'
 import { toFormattedJsonString } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
 import { toJsonSchema, toYaml } from '@netcracker/qubership-apihub-ui-shared/utils/specifications'
 

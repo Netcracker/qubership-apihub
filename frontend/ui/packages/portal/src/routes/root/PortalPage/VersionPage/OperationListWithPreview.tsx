@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { useNormalizedOperation } from '@apihub/api-hooks/InternalDocuments/useNormalizedOperation'
-import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
+import { useNormalizedOperation } from '@portal/api-hooks/InternalDocuments/useNormalizedOperation'
+import { useBackwardLocationContext, useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
 import {
   useRawGraphQlCroppedToSingleOperationRawGraphQl,
-} from '@apihub/routes/root/PortalPage/VersionPage/useRawGraphQlCroppedToSingleOperationRawGraphQl'
+} from '@portal/routes/root/PortalPage/VersionPage/useRawGraphQlCroppedToSingleOperationRawGraphQl'
 import type {
   OperationListSubComponentProps,
 } from '@netcracker/qubership-apihub-ui-shared/components/Operations/OperationWithMetaClickableList'

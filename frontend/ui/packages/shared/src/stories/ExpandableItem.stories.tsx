@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Box } from '@mui/material'
 import { RED_SECTION_COLOR } from './commons/placeholder-colors'
 import { ExpandableItem } from '../components/ExpandableItem'

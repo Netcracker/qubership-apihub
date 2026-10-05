@@ -43,11 +43,11 @@ import { WarningIconMui } from '@netcracker/qubership-apihub-ui-shared/icons/War
 import { isNotEmptyRecord } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { createComponents } from '@netcracker/qubership-apihub-ui-shared/utils/components'
 import { DEFAULT_NUMBER_SKELETON_ROWS } from '@netcracker/qubership-apihub-ui-shared/utils/constants'
-import type { McpEndpointValidation } from '@apihub/routes/root/PortalPage/PackagePage/mcpValidation'
-import { useMcpPublishValidation } from '@apihub/routes/root/PortalPage/PackagePage/useMcpPublishValidation'
+import type { McpEndpointValidation } from '@portal/routes/root/PortalPage/PackagePage/mcpValidation'
+import { useMcpPublishValidation } from '@portal/routes/root/PortalPage/PackagePage/useMcpPublishValidation'
 
-import { groupMcpFilesByEndpoint, type McpStagedFileMeta } from '@apihub/routes/root/PortalPage/PackagePage/mcpPublish'
-import { McpEndpointActions } from '@apihub/routes/root/PortalPage/PackagePage/McpEndpointActions'
+import { groupMcpFilesByEndpoint, type McpStagedFileMeta } from '@portal/routes/root/PortalPage/PackagePage/mcpPublish'
+import { McpEndpointActions } from '@portal/routes/root/PortalPage/PackagePage/McpEndpointActions'
 
 const FILE_COLUMN_ID = 'file-column'
 const LABELS_COLUMN_ID = 'labels-column'

@@ -16,7 +16,7 @@
 
 import type { RowModel, RowSelectionState } from '@tanstack/react-table'
 import type { Updater } from '@tanstack/table-core'
-import type { Service } from '@apihub/entities/services'
+import type { Service } from '@agents/entities/services'
 import { useEffectOnce } from 'react-use'
 import { useEffect, useMemo } from 'react'
 import type { ServiceKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'

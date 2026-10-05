@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { PackageDialogForm } from '../components/Forms/PackageDialogForm'
 import { PACKAGE_KIND } from '../entities/packages'
 import { GROUPS, WORKSPACES } from './samples/packages-sample'

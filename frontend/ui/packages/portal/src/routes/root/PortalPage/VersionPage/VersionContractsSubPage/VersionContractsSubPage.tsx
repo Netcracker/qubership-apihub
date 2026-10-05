@@ -3,8 +3,8 @@ import type { FC, MutableRefObject } from 'react'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
-import type { Key } from '@apihub/entities/keys'
-import { usePortalPageSettingsContext } from '@apihub/routes/PortalPageSettingsProvider'
+import type { Key } from '@portal/entities/keys'
+import { usePortalPageSettingsContext } from '@portal/routes/PortalPageSettingsProvider'
 import { type ApiType, isApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import {
   CONTRACT_TYPE_DDL,

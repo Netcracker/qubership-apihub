@@ -1,4 +1,4 @@
-import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
+import { useBackwardLocationContext, useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
 import { useCallback } from 'react'
 
 import { useBackwardLocation } from '../../useBackwardLocation'

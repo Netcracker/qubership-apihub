@@ -15,7 +15,7 @@
  */
 
 import { useMemo } from 'react'
-import type { Key } from '@apihub/entities/keys'
+import type { Key } from '@portal/entities/keys'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { VERSION_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useSetSearchParams } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSetSearchParams'

@@ -23,7 +23,7 @@ import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/compone
 import { useIntersectionObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useIntersectionObserver'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 
-import type { PackageSearchResult } from '@apihub/entities/global-search'
+import type { PackageSearchResult } from '@portal/entities/global-search'
 import { getOverviewPath } from '../../../NavigationProvider'
 import type { FetchNextSearchResultList } from './global-search'
 import { RateResults } from './RateResults'

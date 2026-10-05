@@ -3,13 +3,13 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FileLabelsRecord } from '@netcracker/qubership-apihub-ui-shared/components/FileTableUpload/FileTableUpload'
 import { MCP_DOCUMENT_TYPE } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 
-import type { McpStagedFileMeta } from '@apihub/routes/root/PortalPage/PackagePage/mcpPublish'
+import type { McpStagedFileMeta } from '@portal/routes/root/PortalPage/PackagePage/mcpPublish'
 import {
   collectMcpEndpointValidations,
   getPublishDisabledHint,
   hasBlockingMcpValidations,
   type McpEndpointValidation,
-} from '@apihub/routes/root/PortalPage/PackagePage/mcpValidation'
+} from '@portal/routes/root/PortalPage/PackagePage/mcpValidation'
 
 type UseMcpPublishValidationResult = Readonly<{
   endpointValidations: ReadonlyMap<string, McpEndpointValidation>

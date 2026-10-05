@@ -23,12 +23,12 @@ import type {
   OpenApiData,
   OpenApiVisitorData,
   OpenApiVisitorDataWithSection,
-} from '@apihub/entities/operation-structure'
+} from '@portal/entities/operation-structure'
 import {
   OPEN_API_SECTION_PARAMETERS,
   OPEN_API_SECTION_REQUESTS,
   OPEN_API_SECTION_RESPONSES,
-} from '@apihub/entities/operation-structure'
+} from '@portal/entities/operation-structure'
 import type { DenormalizeOptions, NormalizeOptions } from '@netcracker/qubership-apihub-api-unifier'
 import {
   denormalize,

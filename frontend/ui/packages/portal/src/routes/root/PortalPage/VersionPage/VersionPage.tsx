@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { useAutoSetClientValidationStatusBySummary, useValidationSummaryByPackageVersion } from '@apihub/api-hooks/ApiQuality/useValidationSummaryByPackageVersion'
-import { CurrentPackageProvider } from '@apihub/components/CurrentPackageProvider'
-import { ExportSettingsDialog } from '@apihub/components/ExportSettingsDialog/ui/ExportSettingsDialog'
-import { PublishDashboardVersionFromCSVDialog } from '@apihub/routes/root/PortalPage/DashboardPage/PublishDashboardVersionFromCSVDialog'
+import { useAutoSetClientValidationStatusBySummary, useValidationSummaryByPackageVersion } from '@portal/api-hooks/ApiQuality/useValidationSummaryByPackageVersion'
+import { CurrentPackageProvider } from '@portal/components/CurrentPackageProvider'
+import { ExportSettingsDialog } from '@portal/components/ExportSettingsDialog/ui/ExportSettingsDialog'
+import { PublishDashboardVersionFromCSVDialog } from '@portal/routes/root/PortalPage/DashboardPage/PublishDashboardVersionFromCSVDialog'
 import { TOGGLE_SIDEBAR_BUTTON } from '@netcracker/qubership-apihub-ui-shared/components/NavigationMenu'
 import { LayoutWithTabs } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithTabs'
 import { LayoutWithToolbar } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithToolbar'

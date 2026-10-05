@@ -24,7 +24,7 @@ import type {
 } from '@netcracker/qubership-apihub-ui-shared/entities/version-contents'
 import { isDashboardDeprecatedSummaryDto } from '@netcracker/qubership-apihub-ui-shared/entities/version-contents'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { portalRequestJson } from '@apihub/utils/requests'
+import { portalRequestJson } from '@portal/utils/requests'
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 import { toPackageRef } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { toApiTypeMap } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'

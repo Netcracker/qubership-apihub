@@ -18,12 +18,12 @@ import type { FC } from 'react'
 import { memo } from 'react'
 import 'github-markdown-css/github-markdown-light.css'
 import { Box } from '@mui/material'
-import type { Document } from '@apihub/entities/documents'
+import type { Document } from '@portal/entities/documents'
 import { OpenApiTableTree } from './OpenApiTableTree'
 import { OpenApiOverview } from './OpenApiOverview'
 import {
   useSelectedSubPage,
-} from '@apihub/routes/root/PortalPage/VersionPage/VersionDocumentsSubPage/SelectedSubPageProvider'
+} from '@portal/routes/root/PortalPage/VersionPage/VersionDocumentsSubPage/SelectedSubPageProvider'
 
 export type OpenApiViewerProps = {
   value: Document

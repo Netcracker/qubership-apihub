@@ -26,7 +26,7 @@ import { useDashboardReferences } from './DashboardReferencesProvider'
 import { filesRecordToArray } from '../PackagePage/files'
 import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
-import { SHOW_PUBLISH_PACKAGE_VERSION_DIALOG } from '@apihub/routes/EventBusProvider'
+import { SHOW_PUBLISH_PACKAGE_VERSION_DIALOG } from '@portal/routes/EventBusProvider'
 import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import { DASHBOARD_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { getSplittedVersionKey, getVersionLabelsMap } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
@@ -43,8 +43,8 @@ import {
   VersionDialogForm,
 } from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
 import { takeIf } from '@netcracker/qubership-apihub-ui-shared/utils/objects'
-import { usePackageVersionConfig } from '@apihub/routes/root/PortalPage/usePackageVersionConfig'
-import { useMcpPublishValidation } from '@apihub/routes/root/PortalPage/PackagePage/useMcpPublishValidation'
+import { usePackageVersionConfig } from '@portal/routes/root/PortalPage/usePackageVersionConfig'
+import { useMcpPublishValidation } from '@portal/routes/root/PortalPage/PackagePage/useMcpPublishValidation'
 
 export const PublishPackageVersionDialog: FC = memo(() => {
   return (

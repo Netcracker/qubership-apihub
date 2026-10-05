@@ -51,7 +51,7 @@ import {
 import { CustomTableHeadCell } from '@netcracker/qubership-apihub-ui-shared/components/CustomTableHeadCell'
 import { PackageKindLogo } from '@netcracker/qubership-apihub-ui-shared/components/PackageKindLogo'
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
-import { PackageSettingsButton } from '@apihub/components/PackageSettingsButton'
+import { PackageSettingsButton } from '@portal/components/PackageSettingsButton'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import { StatusMarker } from '@netcracker/qubership-apihub-ui-shared/components/StatusMarker'
 import {

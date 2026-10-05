@@ -11,8 +11,8 @@ import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/sea
 import { isEmpty, isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { optionalSearchParams, REF_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 
-import type { Document } from '@apihub/entities/documents'
-import { usePackageVersionConfig } from '@apihub/routes/root/PortalPage/usePackageVersionConfig'
+import type { Document } from '@portal/entities/documents'
+import { usePackageVersionConfig } from '@portal/routes/root/PortalPage/usePackageVersionConfig'
 import { DocumentActionsButton } from './DocumentActionsButton'
 import { buildMcpEndpointByFileKey, groupDocumentsForSidebar, isMcpSidebarGroup } from './documentGrouping'
 import { ShareabilityMarker } from './ShareabilityMarker'

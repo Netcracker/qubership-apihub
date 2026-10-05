@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { PublishStatus } from '@apihub/entities/statuses'
+import type { PublishStatus } from '@agents/entities/statuses'
 import type {
   StatusMarkerVariant} from '@netcracker/qubership-apihub-ui-shared/components/StatusMarker'
 import {

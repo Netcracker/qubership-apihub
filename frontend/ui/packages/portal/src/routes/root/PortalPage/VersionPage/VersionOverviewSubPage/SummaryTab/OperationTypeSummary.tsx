@@ -35,15 +35,15 @@ import { useParams } from 'react-router-dom'
 
 import {
   useAggregatedValidationSummaryByPackageVersion,
-} from '@apihub/api-hooks/ApiQuality/useAggregatedValidationSummaryByPackageVersion'
-import { useManualRunApiQualityValidation } from '@apihub/api-hooks/ApiQuality/useManualRunApiQualityValidation'
-import { ValidationRulesetLink } from '@apihub/components/ApiQuality/ValidatationRulesetLink'
-import { ValidationIssuesTooltip } from '@apihub/components/ApiQuality/ValidationIssuesTooltip'
-import { ISSUE_SEVERITIES_LIST, ISSUE_SEVERITY_COLOR_MAP } from '@apihub/entities/api-quality/issue-severities'
-import type { IssuesSummary } from '@apihub/entities/api-quality/package-version-validation-summary'
-import type { RulesetMetadataDto } from '@apihub/entities/api-quality/rulesets'
-import { RulesetStatuses } from '@apihub/entities/api-quality/rulesets'
-import { ValidationStatuses } from '@apihub/entities/api-quality/validation-statuses'
+} from '@portal/api-hooks/ApiQuality/useAggregatedValidationSummaryByPackageVersion'
+import { useManualRunApiQualityValidation } from '@portal/api-hooks/ApiQuality/useManualRunApiQualityValidation'
+import { ValidationRulesetLink } from '@portal/components/ApiQuality/ValidatationRulesetLink'
+import { ValidationIssuesTooltip } from '@portal/components/ApiQuality/ValidationIssuesTooltip'
+import { ISSUE_SEVERITIES_LIST, ISSUE_SEVERITY_COLOR_MAP } from '@portal/entities/api-quality/issue-severities'
+import type { IssuesSummary } from '@portal/entities/api-quality/package-version-validation-summary'
+import type { RulesetMetadataDto } from '@portal/entities/api-quality/rulesets'
+import { RulesetStatuses } from '@portal/entities/api-quality/rulesets'
+import { ValidationStatuses } from '@portal/entities/api-quality/validation-statuses'
 import {
   ClientValidationStatuses,
   getApiQualitySummaryPlaceholder,

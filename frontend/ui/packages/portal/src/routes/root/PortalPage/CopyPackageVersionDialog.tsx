@@ -20,7 +20,7 @@ import { useForm } from 'react-hook-form'
 import { usePackageVersions } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
 import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
-import { SHOW_COPY_PACKAGE_VERSION_DIALOG } from '@apihub/routes/EventBusProvider'
+import { SHOW_COPY_PACKAGE_VERSION_DIALOG } from '@portal/routes/EventBusProvider'
 import type { Package } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { DASHBOARD_KIND, PACKAGE_KIND, WORKSPACE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { getSplittedVersionKey, getVersionLabelsMap } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
@@ -37,12 +37,12 @@ import {
   replaceEmptyPreviousVersion,
   VersionDialogForm,
 } from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
-import { usePackages } from '@apihub/routes/root/usePackages'
-import { useCopyPackageVersion } from '@apihub/routes/root/PortalPage/useCopyPackageVersion'
-import { usePublicationStatuses } from '@apihub/routes/root/PortalPage/usePublicationStatus'
-import { useFullMainVersion } from '@apihub/routes/root/PortalPage/FullMainVersionProvider'
-import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
-import { usePackageVersionConfig } from '@apihub/routes/root/PortalPage/usePackageVersionConfig'
+import { usePackages } from '@portal/routes/root/usePackages'
+import { useCopyPackageVersion } from '@portal/routes/root/PortalPage/useCopyPackageVersion'
+import { usePublicationStatuses } from '@portal/routes/root/PortalPage/usePublicationStatus'
+import { useFullMainVersion } from '@portal/routes/root/PortalPage/FullMainVersionProvider'
+import { useCurrentPackage } from '@portal/components/CurrentPackageProvider'
+import { usePackageVersionConfig } from '@portal/routes/root/PortalPage/usePackageVersionConfig'
 
 export const CopyPackageVersionDialog: FC = memo(() => {
   return (

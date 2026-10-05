@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
-import { isRevisionCompare } from '@apihub/routes/root/PortalPage/VersionPage/VersionComparePage/VersionCompareContent'
-import { getDefaultApiType } from '@apihub/utils/operation-types'
+import { useBackwardLocationContext, useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
+import { useEventBus } from '@portal/routes/EventBusProvider'
+import { isRevisionCompare } from '@portal/routes/root/PortalPage/VersionPage/VersionComparePage/VersionCompareContent'
+import { getDefaultApiType } from '@portal/utils/operation-types'
 import { Box, Card, CardContent, Grid, ListItem, ListItemText, Typography } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import type { OperationType } from '@netcracker/qubership-apihub-api-processor'

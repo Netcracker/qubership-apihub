@@ -28,7 +28,7 @@ import {
   useColumnsSizing,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/table-resizing/useColumnResizing'
 import { CustomTableHeadCell } from '@netcracker/qubership-apihub-ui-shared/components/CustomTableHeadCell'
-import { REVISION_DELIMITER } from '@apihub/entities/versions'
+import { REVISION_DELIMITER } from '@portal/entities/versions'
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import { format } from '@netcracker/qubership-apihub-ui-shared/utils/strings'

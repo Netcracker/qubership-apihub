@@ -43,7 +43,7 @@ import type {
 } from '@netcracker/qubership-apihub-ui-shared/components/SchemaGraphView/oasToClassDiagramService'
 import { isEmpty, isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import { useShowInfoNotification } from '@apihub/routes/root/BasePage/Notification'
+import { useShowInfoNotification } from '@portal/routes/root/BasePage/Notification'
 import { NavigationFailReason } from '@netcracker/qubership-apihub-ui-shared/components/SchemaGraphView/SchemaGraphView'
 
 // First Order Component //

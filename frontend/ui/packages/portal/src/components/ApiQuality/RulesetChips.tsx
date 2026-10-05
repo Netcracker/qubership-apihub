@@ -20,8 +20,8 @@ import type { CustomChipProps } from '@netcracker/qubership-apihub-ui-shared/com
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
 import type { SemanticChipColor } from '@netcracker/qubership-apihub-ui-shared/components/semantic-chip-styles'
 import { mergeChipSx, semanticChipSx } from '@netcracker/qubership-apihub-ui-shared/components/semantic-chip-styles'
-import type { RulesetStatus } from '@apihub/entities/api-quality/rulesets'
-import { RulesetStatuses } from '@apihub/entities/api-quality/rulesets'
+import type { RulesetStatus } from '@portal/entities/api-quality/rulesets'
+import { RulesetStatuses } from '@portal/entities/api-quality/rulesets'
 
 export const RULESET_SPEC_TYPE_CHIP_COLOR: SemanticChipColor = {
   main: '#D6EDFF',

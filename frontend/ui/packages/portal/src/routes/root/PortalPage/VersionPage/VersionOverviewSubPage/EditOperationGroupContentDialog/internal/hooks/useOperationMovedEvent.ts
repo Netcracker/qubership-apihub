@@ -23,7 +23,7 @@ import {
   OPERATION_MOVED,
   OPERATIONS_ADD_TO_GROUP_ACTION,
   OPERATIONS_REMOVE_FROM_GROUP_ACTION,
-} from '@apihub/routes/EventBusProvider'
+} from '@portal/routes/EventBusProvider'
 
 export function useOperationMovedEvent(options: {
   checkedOperations: Operations

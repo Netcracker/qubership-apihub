@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryFn } from '@storybook/react'
-import { useArgs } from '@storybook/preview-api'
+import type { Meta, StoryFn } from '@storybook/react-vite'
+import { useArgs } from 'storybook/preview-api'
 import { useCallback } from 'react'
 import type { OperationFiltersProps } from '../components/OperationFilters/OperationFilters'
 import { OperationFilters } from '../components/OperationFilters/OperationFilters'

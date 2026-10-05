@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryFn } from '@storybook/react'
+import type { Meta, StoryFn } from '@storybook/react-vite'
 import React from 'react'
 import type { UploadButtonProps } from '../components/UploadButton'
 import { UploadButton } from '../components/UploadButton'

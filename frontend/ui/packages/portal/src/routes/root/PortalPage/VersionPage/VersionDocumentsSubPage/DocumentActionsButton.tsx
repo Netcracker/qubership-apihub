@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { useEventBus } from '@apihub/routes/EventBusProvider'
-import { useFullMainVersion } from '@apihub/routes/root/PortalPage/FullMainVersionProvider'
+import { useEventBus } from '@portal/routes/EventBusProvider'
+import { useFullMainVersion } from '@portal/routes/root/PortalPage/FullMainVersionProvider'
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
 import KeyboardArrowUpOutlinedIcon from '@mui/icons-material/KeyboardArrowUpOutlined'
 import type { SxProps } from '@mui/material'

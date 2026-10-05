@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import type { AgentKey, NamespaceKey, WorkspaceKey } from '@apihub/entities/keys'
-import type { ServiceConfig } from '@apihub/entities/publish-config'
-import type { PublishDetails } from '@apihub/entities/publish-details'
-import { setPublicationDetails } from '@apihub/entities/publish-details'
-import type { PublishStatus } from '@apihub/entities/statuses'
-import { COMPLETE_PUBLISH_STATUS, ERROR_PUBLISH_STATUS } from '@apihub/entities/statuses'
+import type { AgentKey, NamespaceKey, WorkspaceKey } from '@agents/entities/keys'
+import type { ServiceConfig } from '@agents/entities/publish-config'
+import type { PublishDetails } from '@agents/entities/publish-details'
+import { setPublicationDetails } from '@agents/entities/publish-details'
+import type { PublishStatus } from '@agents/entities/statuses'
+import { COMPLETE_PUBLISH_STATUS, ERROR_PUBLISH_STATUS } from '@agents/entities/statuses'
 import type { VersionValidationLevel } from '@netcracker/qubership-apihub-api-processor'
 import { BUILD_TYPE, VERSION_VALIDATION_LEVEL } from '@netcracker/qubership-apihub-api-processor'
 import { PackageVersionBuilder } from '@netcracker/qubership-apihub-api-processor/processor'

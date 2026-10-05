@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { OperationContent } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationContent'
+import { OperationContent } from '@portal/routes/root/PortalPage/VersionPage/OperationContent/OperationContent'
 import {
   COMPARE_DIFFERENT_OPERATIONS_MODE,
-} from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationView/OperationDisplayMode'
-import { VERSION_SWAPPER_HEIGHT } from '@apihub/routes/root/PortalPage/VersionPage/shared-styles'
-import { useCompareBreadcrumbs } from '@apihub/routes/root/PortalPage/VersionPage/useCompareBreadcrumbs'
-import { useComparisonObjects } from '@apihub/routes/root/PortalPage/VersionPage/useComparisonObjects'
-import { useComparisonParams } from '@apihub/routes/root/PortalPage/VersionPage/useComparisonParams'
+} from '@portal/routes/root/PortalPage/VersionPage/OperationContent/OperationView/OperationDisplayMode'
+import { VERSION_SWAPPER_HEIGHT } from '@portal/routes/root/PortalPage/VersionPage/shared-styles'
+import { useCompareBreadcrumbs } from '@portal/routes/root/PortalPage/VersionPage/useCompareBreadcrumbs'
+import { useComparisonObjects } from '@portal/routes/root/PortalPage/VersionPage/useComparisonObjects'
+import { useComparisonParams } from '@portal/routes/root/PortalPage/VersionPage/useComparisonParams'
 import { LayoutWithToolbar } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithToolbar'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { OperationData, OptionalOperationPair } from '@netcracker/qubership-apihub-ui-shared/entities/operations'

@@ -30,7 +30,7 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
-import { MetaDataContent } from '@apihub/components/MetaDataContent'
+import { MetaDataContent } from '@portal/components/MetaDataContent'
 import { InfoContextIcon } from '@netcracker/qubership-apihub-ui-shared/icons/InfoContextIcon'
 import type { Revision } from '@netcracker/qubership-apihub-ui-shared/entities/revisions'
 

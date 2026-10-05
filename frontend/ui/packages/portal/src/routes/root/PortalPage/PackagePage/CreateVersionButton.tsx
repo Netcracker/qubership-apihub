@@ -20,12 +20,12 @@ import { memo, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { useNavigation } from '../../../NavigationProvider'
 import { useBackwardLocation } from '../../useBackwardLocation'
-import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
+import { useBackwardLocationContext, useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
 import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
 import type { PackageKind } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { CreateDashboardVersionButton } from '@apihub/routes/root/PortalPage/DashboardPage/CreateDashboardVersionButton'
+import { CreateDashboardVersionButton } from '@portal/routes/root/PortalPage/DashboardPage/CreateDashboardVersionButton'
 
 export type CreateVersionButtonProps = {
   disabled: boolean

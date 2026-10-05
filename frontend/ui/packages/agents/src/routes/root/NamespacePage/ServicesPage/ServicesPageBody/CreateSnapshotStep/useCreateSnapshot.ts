@@ -24,9 +24,9 @@ import type {
 import {
   useCreateSnapshotPublicationOptions,
 } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
-import { publishSnapshot } from '@apihub/entities/snapshots'
-import type { PublishConfig } from '@apihub/entities/publish-config'
-import { toPublishConfig } from '@apihub/entities/publish-config'
+import { publishSnapshot } from '@agents/entities/snapshots'
+import type { PublishConfig } from '@agents/entities/publish-config'
+import { toPublishConfig } from '@agents/entities/publish-config'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { v4 as uuidv4 } from 'uuid'

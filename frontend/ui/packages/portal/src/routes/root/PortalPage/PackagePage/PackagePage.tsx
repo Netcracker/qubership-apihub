@@ -26,7 +26,7 @@ import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/compone
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
 import {
   PublishDashboardVersionFromCSVDialog,
-} from '@apihub/routes/root/PortalPage/DashboardPage/PublishDashboardVersionFromCSVDialog'
+} from '@portal/routes/root/PortalPage/DashboardPage/PublishDashboardVersionFromCSVDialog'
 
 export const PackagePage: FC = memo(() => {
   const [packageObject, isPackageLoading] = usePackage({ showParents: true })

@@ -26,14 +26,14 @@ import { useRecursiveDashboardName } from './RecursiveDashboardNameContextProvid
 import type { Package } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { useEventBus } from '@portal/routes/EventBusProvider'
 import { isEmpty, isNotEmptyMap } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
 import { VersionStatusChip } from '@netcracker/qubership-apihub-ui-shared/components/VersionStatusChip'
 import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
 import { ExitIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ExitIcon'
-import { useDeletedReferences } from '@apihub/routes/root/PortalPage/useDeletedReferences'
+import { useDeletedReferences } from '@portal/routes/root/PortalPage/useDeletedReferences'
 import { VersionTitle } from '@netcracker/qubership-apihub-ui-shared/components/Titles/VersionTitle'
 
 type ConfigureDashboardToolbarProps = {

@@ -21,8 +21,10 @@ import { NavLink, useParams } from 'react-router-dom'
 
 import type {
   ChangeSummary,
+  GraphQLChangesMetadata,
   OperationChanges,
   OperationChangesMetadata,
+  RestChangesMetadata,
 } from '@netcracker/qubership-apihub-api-processor'
 import { useBackwardLocation } from '../../../useBackwardLocation'
 import { useChangesLoadingStatus, useSetChangesLoadingStatus } from '../ChangesLoadingStatusProvider'
@@ -44,8 +46,8 @@ import {
   TAG_SEARCH_PARAM,
   VERSION_SEARCH_PARAM,
 } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
-import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
+import { useEventBus } from '@portal/routes/EventBusProvider'
+import { useBackwardLocationContext, useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
 import {
   useSeverityFiltersSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
@@ -56,7 +58,7 @@ import {
 import { isEmpty, isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-import { getActionForRestOperation } from '@apihub/utils/operations'
+import { getActionForRestOperation } from '@portal/utils/operations'
 import type { ChangeSeverity } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import {
   ACTION_TYPE_COLOR_MAP,

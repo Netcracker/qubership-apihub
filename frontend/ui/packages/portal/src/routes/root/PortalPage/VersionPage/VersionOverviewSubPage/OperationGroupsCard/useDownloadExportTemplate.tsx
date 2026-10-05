@@ -16,9 +16,9 @@
 
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { useMutation } from '@tanstack/react-query'
-import type { Key } from '@apihub/entities/keys'
+import type { Key } from '@portal/entities/keys'
 import fileDownload from 'js-file-download'
-import { useShowErrorNotification } from '@apihub/routes/root/BasePage/Notification'
+import { useShowErrorNotification } from '@portal/routes/root/BasePage/Notification'
 import { fetchExportTemplate } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 

@@ -16,7 +16,7 @@
 
 import { useMutation } from '@tanstack/react-query'
 import fileDownload from 'js-file-download'
-import type { Key } from '@apihub/entities/keys'
+import type { Key } from '@agents/entities/keys'
 import type { SecurityReportType } from './useSecurityReports'
 import { SECURITY_REPORT_TYPE_AUTH_CHECK, SECURITY_REPORT_TYPE_GATEWAY_ROUTING } from './useSecurityReports'
 import { generatePath } from 'react-router-dom'

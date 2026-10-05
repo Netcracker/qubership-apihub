@@ -3,7 +3,7 @@ import {
   LINTER_API_TYPE_TITLE_MAP,
   type LinterApiType,
   LinterApiTypes,
-} from '@apihub/entities/api-quality/linter-api-types'
+} from '@portal/entities/api-quality/linter-api-types'
 import { type FC, memo } from 'react'
 
 const STYLE = {

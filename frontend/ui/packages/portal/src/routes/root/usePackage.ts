@@ -19,7 +19,7 @@ import { useShowErrorNotification, useShowSuccessNotification } from './BasePage
 import { useRefetchAllPackages, useRefetchPackages } from './usePackages'
 import { generatePath, useParams } from 'react-router-dom'
 import { useNavigation } from '../NavigationProvider'
-import { portalRequestJson, portalRequestVoid } from '@apihub/utils/requests'
+import { portalRequestJson, portalRequestVoid } from '@portal/utils/requests'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type {
   CreatePackageProps,
@@ -45,7 +45,7 @@ import type {
 import { toPackage } from '@netcracker/qubership-apihub-ui-shared/hooks/packages/usePackage'
 
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
-import { MAIN_PAGE_REFERER } from '@apihub/entities/referer-pages-names'
+import { MAIN_PAGE_REFERER } from '@portal/entities/referer-pages-names'
 
 const PACKAGE_QUERY_KEY = 'package-query-key'
 

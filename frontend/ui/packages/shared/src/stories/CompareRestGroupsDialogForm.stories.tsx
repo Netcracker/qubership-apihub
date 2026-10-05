@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ReactElement } from 'react'
 import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'

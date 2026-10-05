@@ -20,7 +20,7 @@ import { memo, useCallback } from 'react'
 import { Dialog, DialogContent, DialogTitle, IconButton } from '@mui/material'
 import { Examples } from './Examples'
 import { CloseOutlined as CloseOutlinedIcon } from '@mui/icons-material'
-import { SHOW_EXAMPLES_DIALOG } from '@apihub/routes/EventBusProvider'
+import { SHOW_EXAMPLES_DIALOG } from '@portal/routes/EventBusProvider'
 import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 

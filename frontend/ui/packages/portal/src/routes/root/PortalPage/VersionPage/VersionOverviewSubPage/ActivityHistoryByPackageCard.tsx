@@ -19,14 +19,14 @@ import React, { memo } from 'react'
 import { usePackageActivityHistory } from '../../../useActivityHistory'
 import { useParams } from 'react-router-dom'
 import { Box, Typography } from '@mui/material'
-import { ActivityListBody } from '@apihub/components/ActivityList/ActivityListBody'
+import { ActivityListBody } from '@portal/components/ActivityList/ActivityListBody'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import {
   useActivityHistoryFiltersContext,
   useSetActivityHistoryFiltersContext,
-} from '@apihub/routes/root/MainPage/ActivityHistoryFiltersProvider'
-import type { ActivityType } from '@apihub/entities/activity-enums'
-import { ActivityListFilters } from '@apihub/components/ActivityList/ActivityListFilters'
+} from '@portal/routes/root/MainPage/ActivityHistoryFiltersProvider'
+import type { ActivityType } from '@portal/entities/activity-enums'
+import { ActivityListFilters } from '@portal/components/ActivityList/ActivityListFilters'
 
 export const ActivityHistoryByPackageCard: FC = memo(() => {
   const { packageId: packageKey } = useParams()

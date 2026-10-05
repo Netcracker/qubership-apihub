@@ -19,10 +19,10 @@ import { createContext, memo, useContext, useState } from 'react'
 import { ActivityHistoryFiltersProvider } from './ActivityHistoryFiltersProvider'
 import { RecentOperationsProvider } from '../RecentOperationsProvider'
 import { OperationNavigationDataProvider } from '../OperationNavigationDataProvider'
-import { BackwardLocationProvider } from '@apihub/routes/BackwardLocationProvider'
+import { BackwardLocationProvider } from '@portal/routes/BackwardLocationProvider'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { Package, Packages } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { PortalPageSettingsProvider } from '@apihub/routes/PortalPageSettingsProvider'
+import { PortalPageSettingsProvider } from '@portal/routes/PortalPageSettingsProvider'
 import { ApiDiffResultProvider } from '../ApiDiffResultProvider'
 
 export const MainPageProvider: FC<PropsWithChildren> = memo<PropsWithChildren>(({ children }) => {

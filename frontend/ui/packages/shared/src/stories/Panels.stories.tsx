@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryFn } from '@storybook/react'
+import type { Meta, StoryFn } from '@storybook/react-vite'
 import type { PropsWithChildren } from 'react'
 import React from 'react'
 import Box from '@mui/material/Box'

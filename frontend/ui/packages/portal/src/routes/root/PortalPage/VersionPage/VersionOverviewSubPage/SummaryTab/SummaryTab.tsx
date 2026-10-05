@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { getOverviewPath } from '@apihub/routes/NavigationProvider'
+import { getOverviewPath } from '@portal/routes/NavigationProvider'
 import { Box, Link, Typography } from '@mui/material'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
 import { FormattedDate } from '@netcracker/qubership-apihub-ui-shared/components/FormattedDate'

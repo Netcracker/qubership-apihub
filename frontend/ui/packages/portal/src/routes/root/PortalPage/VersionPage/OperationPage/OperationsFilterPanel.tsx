@@ -22,7 +22,7 @@ import { OperationsFilterByDocument } from './OperationsFilterByDocument'
 import { useRefSearchParam } from '../../useRefSearchParam'
 import { useDocumentSearchParam } from '../useDocumentSearchParam'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import type { Document } from '@apihub/entities/documents'
+import type { Document } from '@portal/entities/documents'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { ContractType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 
