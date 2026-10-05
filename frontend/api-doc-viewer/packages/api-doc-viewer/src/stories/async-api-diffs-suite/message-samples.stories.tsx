@@ -1,5 +1,5 @@
 import { AsyncApiOperationDiffsViewer } from "@apihub/components/AsyncApiOperationViewer/AsyncApiOperationDiffsViewer";
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { collectSampleCases } from "../utils/diffs-samples-cases";
 import {
   type AsyncApiCaseStoryComponentProps,
@@ -11,12 +11,12 @@ import {
 
 const beforeFiles = import.meta.glob(
   "../../../../samples/async-api-diffs/message/*/before.yaml",
-  { as: "raw", eager: true },
+  { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
 const afterFiles = import.meta.glob(
   "../../../../samples/async-api-diffs/message/*/after.yaml",
-  { as: "raw", eager: true },
+  { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
 const sampleCases = collectSampleCases(beforeFiles, afterFiles);

@@ -242,7 +242,7 @@ const storyExports = cases
   .map((caseId) => `export const ${toExportName(caseId)}: Story = createCaseStory("${caseId}");`)
   .join("\n");
 
-const storiesSource = `import type { Meta } from "@storybook/react";
+const storiesSource = `import type { Meta } from "@storybook/react-vite";
 import {
   DdlDiffSampleStory,
   collectDdlDiffSampleCases,
@@ -254,12 +254,12 @@ import {
 
 const beforeFiles = import.meta.glob(
   "../../../../samples/ddlapi-diffs/${groupId}/*/before.sql",
-  { as: "raw", eager: true },
+  { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
 const afterFiles = import.meta.glob(
   "../../../../samples/ddlapi-diffs/${groupId}/*/after.sql",
-  { as: "raw", eager: true },
+  { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
 const sampleCases = collectDdlDiffSampleCases(beforeFiles, afterFiles);

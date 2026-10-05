@@ -1,5 +1,5 @@
 import { JsoDiffsViewer } from "@apihub/components/JsoViewer/JsoDiffsViewer";
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { collectSampleCases } from "../utils/diffs-samples-cases";
 import {
   type JsoCaseStoryComponentProps,
@@ -11,12 +11,12 @@ import {
 
 const beforeFiles = import.meta.glob(
   "../../../../samples/jso-diffs/property/*/before.yaml",
-  { as: "raw", eager: true },
+  { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
 const afterFiles = import.meta.glob(
   "../../../../samples/jso-diffs/property/*/after.yaml",
-  { as: "raw", eager: true },
+  { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
 const sampleCases = collectSampleCases(beforeFiles, afterFiles);

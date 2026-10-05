@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { TableKey } from "@netcracker/qubership-apihub-next-data-model/shared/ddlapi/types/table-key";
 import type { DdlSampleCase } from "../utils/ddl-samples-cases";
 import { createDdlSampleById } from "../utils/ddl-samples-cases";
@@ -11,7 +11,7 @@ import {
 
 const SAMPLE_FILES = import.meta.glob(
   "../../../../samples/ddlapi/e2e-scenarios/*/sample.sql",
-  { as: "raw", eager: true },
+  { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
 const SAMPLE_TABLE_KEYS: Record<string, TableKey> = {

@@ -1,6 +1,14 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    /* ts-jest emits regardless of the inherited noEmit, so TypeScript 6 demands an
+      explicit rootDir (TS5011). The screenshot suites load this config via
+      `tsconfig: "<rootDir>/tsconfig.json"` and pull in .jest/setup.tests.ts, which
+      otherwise drags the inferred root down to ./.jest and fails every suite.
+      It must be the packages directory rather than this package: the "paths" aliases
+      below reach ../api-data-model/src and ../next-data-model/src, which a narrower
+      root rejects as outside it (TS6059). */
+    "rootDir": "../",
     "paths": {
       "@apihub/builders/*": [
         "./src/builders/*"

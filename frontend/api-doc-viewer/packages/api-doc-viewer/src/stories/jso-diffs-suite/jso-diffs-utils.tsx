@@ -1,5 +1,5 @@
 import { JsoDiffsViewer } from "@apihub/components/JsoViewer/JsoDiffsViewer";
-import type { ArgTypes } from "@storybook/react";
+import type { ArgTypes } from "@storybook/react-vite";
 import type { ComponentProps } from "react";
 import { prepareJsoDiffsDocument } from "../preprocess";
 import { parseYamlSource } from "../utils/parse-yaml-source";

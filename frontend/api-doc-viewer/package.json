@@ -1,5 +1,5 @@
 {
-  "name": "root",
+  "name": "@netcracker/qubership-apihub-api-doc-viewer-workspace",
   "license": "Apache-2.0",
   "private": true,
   "workspaces": [
@@ -25,26 +25,35 @@
     "@netcracker/qubership-apihub-api-diff": "dev",
     "@netcracker/qubership-apihub-api-unifier": "dev",
     "@netcracker/qubership-apihub-ddlapi": "dev",
-    "@netcracker/qubership-apihub-graphapi": "1.0.13",
-    "@netcracker/qubership-apihub-json-crawl": "1.2.2"
+    "@netcracker/qubership-apihub-graphapi": "dev",
+    "@netcracker/qubership-apihub-json-crawl": "dev"
   },
   "devDependencies": {
     "@netcracker/qubership-apihub-compatibility-suites": "dev",
-    "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "2.0.1",
+    "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "dev",
     "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
-    "@types/lodash-es": "4.17.12",
+    "@types/jest": "30.0.0",
+    "@types/jest-image-snapshot": "6.1.0",
+    "@types/lodash-es": "^4.17.12",
+    "@types/node": "^24.0.0",
+    "@types/react": "^18.3.31",
     "@typescript-eslint/eslint-plugin": "6.0.0",
     "@typescript-eslint/parser": "6.0.0",
     "dpdm": "3.14.0",
     "eslint": "8.48.0",
     "eslint-plugin-react-hooks": "4.6.0",
     "eslint-plugin-react-refresh": "0.4.3",
-    "eslint-plugin-storybook": "0.6.13",
+    "eslint-plugin-storybook": "10.5.10",
     "lerna": "^8.2.2",
-    "lodash-es": "4.17.23",
+    "lodash-es": "^4.17.21",
+    "typescript": "6.0.3",
     "yaml": "2.9.0"
   },
   "eslintConfig": {
     "extends": ".eslintrc.json"
+  },
+  "overrides": {
+    "jest-environment-node": "30.4.1",
+    "jest-mock": "30.4.1"
   }
 }

@@ -1,5 +1,5 @@
 import { isObject } from '@netcracker/qubership-apihub-json-crawl';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ComponentProps } from 'react';
 import { parse } from 'yaml';
 import { JsonSchemaViewer } from '../components/JsonSchemaViewer/JsonSchemaViewer';

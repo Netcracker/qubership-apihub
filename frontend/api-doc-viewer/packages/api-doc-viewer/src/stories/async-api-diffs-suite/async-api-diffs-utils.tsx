@@ -1,8 +1,8 @@
 import {
   type AsyncApiOperationDiffsViewerProps
 } from "@apihub/components/AsyncApiOperationViewer/AsyncApiOperationDiffsViewer";
-import type { ArgTypes } from "@storybook/react";
-import { userEvent, within } from "@storybook/test";
+import type { ArgTypes } from "@storybook/react-vite";
+import { userEvent, within } from "storybook/test";
 import { TEST_REFERENCE_NAME_PROPERTY } from "../async-api-suite/shared-test-data";
 import { prepareAsyncApiDiffsDocument } from "../preprocess";
 import { parseYamlSource } from "../utils/parse-yaml-source";

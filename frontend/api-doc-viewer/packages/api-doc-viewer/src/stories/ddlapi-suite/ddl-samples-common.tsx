@@ -1,7 +1,7 @@
 import { DdlTableViewer } from "@apihub/components/DdlTableViewer/DdlTableViewer";
 import type { DisplayMode } from "@apihub/types/DisplayMode";
 import type { Realm } from "@netcracker/qubership-apihub-ddlapi";
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { NavigationLinkBuilder } from "@netcracker/qubership-apihub-next-data-model/shared/ddlapi/types/navigation-link-builder";
 import type { DdlSampleCase } from "../utils/ddl-samples-cases";
 import { buildFromDdlInBrowser } from "./build-from-ddl-browser";

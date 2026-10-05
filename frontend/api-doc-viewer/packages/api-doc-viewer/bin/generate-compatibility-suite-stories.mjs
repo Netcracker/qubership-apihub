@@ -48,7 +48,7 @@ const printStoryFile = (config, suiteId, testIds) => {
     .join('\n\n')
 
   return `import '../../index'
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { ${config.storyArgsGetter}, ${config.storyArgsTypeName}, ${config.storyComponentName} } from '${UTILS_IMPORT_PATH}'
 import { ${config.specTypeConst} } from '@netcracker/qubership-apihub-compatibility-suites'
 

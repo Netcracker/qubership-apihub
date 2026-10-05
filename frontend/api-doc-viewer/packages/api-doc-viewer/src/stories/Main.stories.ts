@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta } from '@storybook/react'
+import type { Meta } from '@storybook/react-vite'
 import { JsonSchemaViewer } from '../components/JsonSchemaViewer/JsonSchemaViewer'
 
 // It's necessary because storybook doesn't render nested stories without this empty story

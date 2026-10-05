@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
   collectDdlSampleCases,
   createDdlSampleById,
@@ -12,7 +12,7 @@ import {
 
 const sampleFiles = import.meta.glob(
   "../../../../samples/ddlapi/escaping-spec-chars/*/sample.sql",
-  { as: "raw", eager: true },
+  { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
 const sampleCases = collectDdlSampleCases(sampleFiles);

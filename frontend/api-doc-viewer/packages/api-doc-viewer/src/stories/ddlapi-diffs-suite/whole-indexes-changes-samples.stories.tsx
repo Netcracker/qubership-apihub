@@ -1,4 +1,4 @@
-import type { Meta } from "@storybook/react";
+import type { Meta } from "@storybook/react-vite";
 import {
   DdlDiffSampleStory,
   collectDdlDiffSampleCases,
@@ -10,12 +10,12 @@ import {
 
 const beforeFiles = import.meta.glob(
   "../../../../samples/ddlapi-diffs/whole-indexes-changes/*/before.sql",
-  { as: "raw", eager: true },
+  { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
 const afterFiles = import.meta.glob(
   "../../../../samples/ddlapi-diffs/whole-indexes-changes/*/after.sql",
-  { as: "raw", eager: true },
+  { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
 const sampleCases = collectDdlDiffSampleCases(beforeFiles, afterFiles);
