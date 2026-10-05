@@ -21,7 +21,7 @@ describe('Merge openapi schemas', () => {
     // 1: [[../should-throw-on-different-openapi/1.yaml]]
     // 2: [[../should-throw-on-different-openapi/2.yaml]]
     const testId = 'should-throw-on-different-openapi'
-    await expect(getTestData(testId)).rejects.toThrowError(/different.*versions/)
+    await expect(getTestData(testId)).rejects.toThrow(/different.*versions/)
   })
 
   test('Should remove unused tags', async () => {
@@ -82,7 +82,7 @@ describe('Merge openapi schemas', () => {
     // 1: [[../should-throw-on-different-servers/1.yaml]]
     // 2: [[../should-throw-on-different-servers/2.yaml]]
     const testId = 'should-throw-on-different-servers'
-    await expect(getTestData(testId)).rejects.toThrowError(/servers.0/)
+    await expect(getTestData(testId)).rejects.toThrow(/servers.0/)
   })
 
   test('Should have security from template', async () => {
@@ -108,7 +108,7 @@ describe('Merge openapi schemas', () => {
     // 1: [[../should-throw-on-different-security/1.yaml]]
     // 2: [[../should-throw-on-different-security/2.yaml]]
     const testId = 'should-throw-on-different-security'
-    await expect(getTestData(testId)).rejects.toThrowError(/security.0/)
+    await expect(getTestData(testId)).rejects.toThrow(/security.0/)
   })
 
   test('Should have components.schemas from specs', async () => {
@@ -124,7 +124,7 @@ describe('Merge openapi schemas', () => {
     // 1: [[../should-throw-on-different-components-schemas/1.yaml]]
     // 2: [[../should-throw-on-different-components-schemas/2.yaml]]
     const testId = 'should-throw-on-different-components-schemas'
-    await expect(getTestData(testId)).rejects.toThrowError(/components.schemas.UpgradeRequest/)
+    await expect(getTestData(testId)).rejects.toThrow(/components.schemas.UpgradeRequest/)
   })
 
   test('Should have components.responses from specs', async () => {
@@ -140,7 +140,7 @@ describe('Merge openapi schemas', () => {
     // 1: [[../should-throw-on-different-components-responses/1.yaml]]
     // 2: [[../should-throw-on-different-components-responses/2.yaml]]
     const testId = 'should-throw-on-different-components-responses'
-    await expect(getTestData(testId)).rejects.toThrowError(/paths.\/pet/)
+    await expect(getTestData(testId)).rejects.toThrow(/paths.\/pet/)
   })
 
   test('Should have components.examples from specs', async () => {
@@ -156,7 +156,7 @@ describe('Merge openapi schemas', () => {
     // 1: [[../should-throw-on-different-components-examples/1.yaml]]
     // 2: [[../should-throw-on-different-components-examples/2.yaml]]
     const testId = 'should-throw-on-different-components-examples'
-    await expect(getTestData(testId)).rejects.toThrowError(/components.examples.example/)
+    await expect(getTestData(testId)).rejects.toThrow(/components.examples.example/)
   })
 
   test('Should have components.headers from specs', async () => {
@@ -172,7 +172,7 @@ describe('Merge openapi schemas', () => {
     // 1: [[../should-throw-on-different-components-headers/1.yaml]]
     // 2: [[../should-throw-on-different-components-headers/2.yaml]]
     const testId = 'should-throw-on-different-components-headers'
-    await expect(getTestData(testId)).rejects.toThrowError(/components.headers.content-range/)
+    await expect(getTestData(testId)).rejects.toThrow(/components.headers.content-range/)
   })
 
   test('Should have components.links from specs', async () => {
@@ -188,7 +188,7 @@ describe('Merge openapi schemas', () => {
     // 1: [[../should-throw-on-different-components-links/1.yaml]]
     // 2: [[../should-throw-on-different-components-links/2.yaml]]
     const testId = 'should-throw-on-different-components-links'
-    await expect(getTestData(testId)).rejects.toThrowError(/components.links.link/)
+    await expect(getTestData(testId)).rejects.toThrow(/components.links.link/)
   })
 
   test('Should have components.securitySchemes from template', async () => {
@@ -213,7 +213,7 @@ describe('Merge openapi schemas', () => {
     // template: [[../should-throw-on-different-components-security-schemes/template.yaml]]
     // 1: [[../should-throw-on-different-components-security-schemes/1.yaml]]
     const testId = 'should-throw-on-different-components-security-schemes'
-    await expect(getTestData(testId)).rejects.toThrowError(/components.securitySchemes.token/)
+    await expect(getTestData(testId)).rejects.toThrow(/components.securitySchemes.token/)
   })
 
   test('Should have components.parameters from specs', async () => {
@@ -229,7 +229,7 @@ describe('Merge openapi schemas', () => {
     // 1: [[../should-throw-on-different-components-parameters/1.yaml]]
     // 2: [[../should-throw-on-different-components-parameters/2.yaml]]
     const testId = 'should-throw-on-different-components-parameters'
-    await expect(getTestData(testId)).rejects.toThrowError(/components.parameters.x-request-id/)
+    await expect(getTestData(testId)).rejects.toThrow(/components.parameters.x-request-id/)
   })
 
   test('Should have components.requestBodies from specs', async () => {
@@ -245,7 +245,7 @@ describe('Merge openapi schemas', () => {
     // 1: [[../should-throw-on-different-components-request-bodies/1.yaml]]
     // 2: [[../should-throw-on-different-components-request-bodies/2.yaml]]
     const testId = 'should-throw-on-different-components-request-bodies'
-    await expect(getTestData(testId)).rejects.toThrowError(/components.requestBodies.PetBody/)
+    await expect(getTestData(testId)).rejects.toThrow(/components.requestBodies.PetBody/)
   })
 
   test('Should have paths from specs', async () => {
@@ -261,14 +261,14 @@ describe('Merge openapi schemas', () => {
     // 1: [[../should-throw-on-different-methods/should-throw-on-different-methods-in-path/1.yaml]]
     // 2: [[../should-throw-on-different-methods/should-throw-on-different-methods-in-path/2.yaml]]
     const testId = 'should-throw-on-different-methods/should-throw-on-different-methods-in-path'
-    await expect(getTestData(testId)).rejects.toThrowError(/paths.\/path1/)
+    await expect(getTestData(testId)).rejects.toThrow(/paths.\/path1/)
   })
 
   test('Should throw on different pathItems methods content', async () => {
     // 1: [[../should-throw-on-different-methods/should-throw-on-different-methods-in-pathItem-component/1.yaml]]
     // 2: [[../should-throw-on-different-methods/should-throw-on-different-methods-in-pathItem-component/2.yaml]]
     const testId = 'should-throw-on-different-methods/should-throw-on-different-methods-in-pathItem-component'
-    await expect(getTestData(testId)).rejects.toThrowError(/components.pathItems.path1/)
+    await expect(getTestData(testId)).rejects.toThrow(/components.pathItems.path1/)
   })
 
   test('Should merge with empty template', async () => {

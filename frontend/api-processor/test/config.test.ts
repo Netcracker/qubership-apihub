@@ -52,7 +52,7 @@ describe('Config validation', () => {
       const editor = await Editor.openProject('basic', basicPackage)
       await expect(
         editor.run({packageId: undefined, version: 'v3'}),
-      ).rejects.toThrowError('builder config: packageId required')
+      ).rejects.toThrow('builder config: packageId required')
 
     })
 
@@ -60,7 +60,7 @@ describe('Config validation', () => {
       const editor = await Editor.openProject('basic', basicPackage)
       await expect(
         editor.run({version: undefined}),
-      ).rejects.toThrowError('builder config: version required')
+      ).rejects.toThrow('builder config: version required')
     })
 
     test('fileId is empty', async () => {

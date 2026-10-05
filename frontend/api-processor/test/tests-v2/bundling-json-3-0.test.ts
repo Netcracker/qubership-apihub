@@ -73,7 +73,7 @@ describe.skip('Bundling - JSON files OpenAPI 3.0', () => {
     // const er = await registry.getVersion(packageId, version)
     await expect(
       async () => await editor.run({ files: [{ fileId: 'openapi-missing-bracket.json', publish: true, labels: [] }] }),
-    ).rejects.toThrowError('Cannot parse file openapi-missing-bracket.json.')
+    ).rejects.toThrow('Cannot parse file openapi-missing-bracket.json.')
   })
 
   test('B-BN-J30-P-03 Spec with external reference', async () => {

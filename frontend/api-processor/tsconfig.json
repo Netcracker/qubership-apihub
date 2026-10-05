@@ -45,7 +45,14 @@
     // "noFallthroughCasesInSwitch": true,    /* Report errors for fallthrough cases in switch statement. */
 
     /* Module Resolution Options */
-    "moduleResolution": "node",            /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */
+    /* 'bundler': vite produces the ESM half of this package and ui bundles it. Was 'node',
+       which TypeScript 7 removed (TS5108); ignoreDeprecations does not cover a removed
+       option, so this is a prerequisite for TS 7 rather than part of it. Kept compatible
+       with "module": "commonjs" and the --module commonjs the cjs build passes on the CLI,
+       which 'nodenext' would conflict with (TS5110). */
+    "moduleResolution": "bundler",
+    "rootDir": "./",                       /* TS 6 requires rootDir to be explicit alongside outDir (TS5011). */
+    "types": ["node", "jest"],             /* TS 6 defaults 'types' to [] rather than every package under typeRoots. */
     // "baseUrl": "./",                       /* Base directory to resolve non-absolute module names. */
     // "paths": {},                           /* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */
     // "rootDirs": [],                        /* List of root folders whose combined content represents the structure of the project at runtime. */

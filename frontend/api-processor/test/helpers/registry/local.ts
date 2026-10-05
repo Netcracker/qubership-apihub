@@ -568,7 +568,7 @@ export class LocalRegistry implements IRegistry {
       PACKAGE.OPERATIONS_FILE_NAME,
     )
 
-    const { operations } = operationsFile ? JSON.parse(operationsFile) : null as ResolvedOperations | null ?? { operations: [] }
+    const { operations } = operationsFile ? JSON.parse(operationsFile) : { operations: [] } as ResolvedOperations
 
     for (const operation of operations) {
       if (!operation) {
@@ -594,7 +594,7 @@ export class LocalRegistry implements IRegistry {
       `${packageId}/${versionKey}`,
       PACKAGE.DOCUMENTS_FILE_NAME,
     )
-    const { documents } = documentsFile ? JSON.parse(documentsFile) : null as VersionDocuments | null ?? { documents: [] }
+    const { documents } = documentsFile ? JSON.parse(documentsFile) : { documents: [] } as VersionDocuments
     for (const document of documents) {
       const data = await loadFileAsStringFromRegistry(
         VERSIONS_PATH,

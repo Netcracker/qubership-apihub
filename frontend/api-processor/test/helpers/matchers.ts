@@ -30,7 +30,7 @@ import {
   VersionsComparison,
   ZippableDocument,
 } from '../../src'
-import { JsonPath } from 'json-crawl'
+import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
 import { ActionType, Diff, DIFFS_AGGREGATED_META_KEY, DiffType } from '@netcracker/qubership-apihub-api-diff'
 import {
   ArrayContaining,

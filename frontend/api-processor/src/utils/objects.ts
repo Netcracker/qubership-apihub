@@ -86,3 +86,35 @@ export const extractSymbolProperty = <T extends object>(
   const value = getSymbolValueIfDefined(obj, symbol)
   return value !== undefined ? { [symbol]: value } : {}
 }
+
+/**
+ * A view of a discriminated union in which every member also declares the keys it lacks,
+ * as optional and `undefined`. That makes it safe to destructure a field only some
+ * members carry - which is otherwise TS2339, because TypeScript 5 onward preserves the
+ * union across a spread instead of collapsing it to one object type.
+ *
+ * Unlike flattening the union into a single all-optional object, this keeps the union
+ * intact, so narrowing still works downstream: after `if (diff.action === 'add')`,
+ * `afterDeclarationPaths` is `JsonPath[]` rather than `JsonPath[] | undefined`.
+ *
+ * Annotating with this type is a plain assignment and is fully checked, unlike an
+ * assertion, which would equally accept a misspelled key or a wrong type.
+ *
+ * Community utility, known as `FillKeys`:
+ * https://dev.to/suin/introducing-fillkeys-utility-type-for-easier-destructuring-of-discriminated-unions-in-typescript-1h46
+ * The underlying language limitation is microsoft/TypeScript#46318.
+ *
+ * Symbol keys are intentionally not filled - the api-diff types carry a
+ * `[key: symbol]: unknown` metadata index signature, read via `getSymbolValueIfDefined`.
+ */
+export type FillKeys<T> = (
+  (T extends T ? keyof T : never) extends infer AllKeys
+    ? T extends T
+      ? { [K in keyof T]: T[K] } & {
+          [K in AllKeys extends keyof T ? never : AllKeys extends string ? AllKeys : never]?: undefined
+        }
+      : never
+    : never
+) extends infer U
+  ? { [K in keyof U]: U[K] }
+  : never
