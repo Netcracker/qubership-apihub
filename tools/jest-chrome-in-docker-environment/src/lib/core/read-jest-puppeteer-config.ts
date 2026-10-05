@@ -73,7 +73,7 @@ function setChromeArgs(mergedConfig: JestPuppeteerConfig, targetProperty: "conne
     console.log(black(bgYellow(`${CONSOLE_PREFIX} Default chrome arguments`)))
     console.log(DEFAULT_CHROME_FLAGS, "\n")
 
-    const customFlags = [...(mergedConfig?.launch?.args ?? [])] ?? []
+    const customFlags = [...(mergedConfig?.launch?.args ?? [])]
     console.log(black(bgYellow(`${CONSOLE_PREFIX} Custom chrome arguments`)))
     console.log(customFlags, "\n")
 

@@ -1,6 +1,13 @@
 {
   "compileOnSave": true,
   "compilerOptions": {
+    /* TypeScript 6 defaults "types" to [] rather than every package under typeRoots. */
+    "types": ["node"],
+    /* TypeScript 6 requires rootDir to be explicit alongside outDir (TS5011). */
+    /* Must be ./src/lib, matching "include" below: outDir is dist/lib and package.json
+      main is dist/lib/index.js, so src/lib/index.ts has to land at dist/lib/index.js.
+      A rootDir of ./ emits dist/lib/src/lib/index.js and the package entry point 404s. */
+    "rootDir": "./src/lib",
     "alwaysStrict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -9,8 +16,12 @@
       "ESNext",
       "DOM"
     ],
-    "module": "commonjs",
-    "moduleResolution": "Node",
+    /* Node executes this jest environment directly - nothing bundles it - so NodeNext is
+       what describes it. The package has no "type": "module", so NodeNext still emits
+       CommonJS require() calls; this changes resolution, not output. Was "Node", which
+       TypeScript 7 removed (TS5108). */
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "noImplicitOverride": true,
     "noImplicitReturns": true,
     "noUnusedLocals": false,
@@ -18,7 +29,10 @@
     "pretty": true,
     "removeComments": true,
     "strict": true,
-    "target": "ES2015",
+    /* Raised from ES2015: the dotAll (/s) flag used in read-jest-puppeteer-config.ts
+       requires es2018 or later (TS1501). TypeScript 5.5 added regular-expression syntax
+       checking, so this was never reported by the previous compiler. */
+    "target": "ES2018",
     "outDir": "dist/lib",
     "declaration": true
   },

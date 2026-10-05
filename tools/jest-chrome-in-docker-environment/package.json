@@ -13,10 +13,11 @@
     "release-finish": "release-finish"
   },
   "devDependencies": {
+    "@jest/types": "30.4.1",
     "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
     "@types/find-node-modules": "2.1.2",
-    "@types/jest-environment-puppeteer": "5.0.6",
-    "typescript": "5.3.3"
+    "@types/node": "^24.0.0",
+    "typescript": "6.0.3"
   },
   "dependencies": {
     "colors": "1.4.0",
