@@ -1,6 +1,6 @@
 import { parse, stringify } from 'flatted'
 import { isArray, isObject } from '@netcracker/qubership-apihub-json-crawl'
-import { isSymbol } from '../test/helpers'
+import { isSymbol } from './utils'
 
 const isSet = (value: unknown): value is Set<unknown> =>
   value instanceof Set

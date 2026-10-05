@@ -1,6 +1,16 @@
 {
   "compilerOptions": {
     "resolveJsonModule": true,
+    /* TypeScript 6 defaults "types" to [] rather than every package under typeRoots. */
+    "types": ["node", "jest"],
+    /* Pins the declaration output layout. The published package has always emitted
+       declarations under dist/src/ with dist/index.d.ts re-exporting ./src/index,
+       because a production file imported a test helper and so dragged test/ into the
+       program, making the package root the common source directory. That import is
+       gone, which would otherwise flatten the layout and change the published shape
+       for every consumer. Setting rootDir explicitly keeps it as published.
+       Note TS5011 does not apply here - tsc emits without complaint either way. */
+    "rootDir": "./",
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
 
     /* Basic Options */
@@ -21,7 +31,6 @@
     // "tsBuildInfoFile": "./",               /* Specify file to store incremental compilation information */
     // "removeComments": true,                /* Do not emit comments to output. */
     // "noEmit": true,                        /* Do not emit outputs. */
-    "importHelpers": true,                 /* Import emit helpers from 'tslib'. */
     // "downlevelIteration": true,            /* Provide full support for iterables in 'for-of', spread, and destructuring when targeting 'ES5' or 'ES3'. */
     // "isolatedModules": true,               /* Transpile each file as a separate module (similar to 'ts.transpileModule'). */
 

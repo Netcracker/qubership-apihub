@@ -84,7 +84,9 @@ function matchPath(path: JsonPath, predicates: PathPredicate[]): MatchResult | u
 
   return {
     path: path,
-    predicate: predicates[state.predicateMap.keys().next().value],
+    // The size check above guarantees a first key exists. Newer lib.d.ts types
+    // IteratorResult['value'] as T | undefined, which cannot be used to index (TS2538).
+    predicate: predicates[state.predicateMap.keys().next().value!],
     grepValues: state.result
   }
 }

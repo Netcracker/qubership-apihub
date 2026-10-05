@@ -1,5 +1,6 @@
 import { anyArrayKeys, isArray, isObject, JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
 import { ChainItem, Hash, JsonSchema, loadYaml, OriginLeafs, OriginsMetaRecord } from '../../src'
+import { isSymbol } from '../../src/utils'
 import { OpenAPIV3 } from 'openapi-types'
 import 'jest-extended'
 import { deepEqual } from 'fast-equals'
@@ -215,9 +216,7 @@ export const TEST_HASH_FLAG = Symbol('test-hash')
 export const TEST_LAST_REFERENCE_KEY_PROPERTY = Symbol('test-reference-name')
 export const TEST_FIRST_REFERENCE_KEY_PROPERTY = Symbol('test-first-reference-key')
 
-export const isSymbol = (value: unknown): value is symbol => {
-  return typeof value === 'symbol'
-}
+export { isSymbol }
 
 export const resolveValueByPath = (obj: unknown, path: JsonPath): unknown | undefined => {
   let value: unknown = obj

@@ -595,7 +595,9 @@ describe('merge origins basic', () => {
     commonOriginsCheck(result, { source })
 
     expect(result).toHaveProperty(['components', 'schemas', 'Single', 'enum'], expect.toIncludeSameMembers([
-      expect.objectContaining([1]),
+      // jest 30 no longer accepts an array in objectContaining; arrayContaining is the
+      // array analogue and keeps the intent - match [1] while tolerating the origin symbol.
+      expect.arrayContaining([1]),
       expect.objectContaining({ description: 'object' }),
       'foo',
     ]))
