@@ -19,14 +19,13 @@
     // "sourceMap": true,                     /* Generates corresponding '.map' file. */
     // "outFile": "./",                       /* Concatenate and emit output to single file. */
     "outDir": "dist",
+    "rootDir": "./src",
     /* Redirect output structure to the directory. */
     // "rootDir": "./",                       /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
     // "composite": true,                     /* Enable project compilation */
     // "tsBuildInfoFile": "./",               /* Specify file to store incremental compilation information */
     // "removeComments": true,                /* Do not emit comments to output. */
     // "noEmit": true,                        /* Do not emit outputs. */
-    "importHelpers": true,
-    /* Import emit helpers from 'tslib'. */
     // "downlevelIteration": true,            /* Provide full support for iterables in 'for-of', spread, and destructuring when targeting 'ES5' or 'ES3'. */
     // "isolatedModules": true,               /* Transpile each file as a separate module (similar to 'ts.transpileModule'). */
 
@@ -48,8 +47,12 @@
     // "noFallthroughCasesInSwitch": true,    /* Report errors for fallthrough cases in switch statement. */
 
     /* Module Resolution Options */
-    "moduleResolution": "node",
-    /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */
+    "moduleResolution": "bundler",
+    /* This package is bundled by vite, so 'bundler' describes what actually resolves it.
+       Was 'node' with an "ignoreDeprecations" silencer and a note deferring the change to
+       the TypeScript 7 migration. That had it backwards: TypeScript 7 REMOVED node10
+       (TS5108, and ignoreDeprecations does not apply to a removed option), so this is a
+       prerequisite for TS 7 rather than part of it. See §12 item 1.10. */
     // "baseUrl": "./",                       /* Base directory to resolve non-absolute module names. */
     // "paths": {},                           /* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */
     // "rootDirs": [],                        /* List of root folders whose combined content represents the structure of the project at runtime. */
@@ -58,7 +61,12 @@
       "node_modules/@types"
     ],
     /* List of folders to include type definitions from. */
-    // "types": [],                           /* Type declaration files to be included in compilation. */
+    "types": [
+      "node",
+      "jest"
+    ],
+    /* TypeScript 6 defaults 'types' to [] instead of "every package under typeRoots".
+       Listed explicitly to keep the jest and node ambient globals the tests rely on. */
     // "allowSyntheticDefaultImports": true,  /* Allow default imports from modules with no default export. This does not affect code emit, just typechecking. */
     "esModuleInterop": true,
     /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
