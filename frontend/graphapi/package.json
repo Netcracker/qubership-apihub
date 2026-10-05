@@ -7,7 +7,8 @@
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
-    "bin"
+    "bin",
+    "src"
   ],
   "exports": {
     ".": {
@@ -18,7 +19,6 @@
   },
   "scripts": {
     "lint:check": "eslint -c .eslintrc.json . --ext .js,.cjs,.ts,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
-    "postinstall": "node ./bin/monky-patchng-storybook.mjs",
     "storybook": "storybook dev -p 6006",
     "build:showcase": "storybook build -o dist-showcase",
     "lint:fix": "npm run lint:check -- --fix",
@@ -45,34 +45,36 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
-    "@storybook/addon-essentials": "7.5.1",
-    "@storybook/addon-interactions": "7.5.1",
-    "@storybook/addon-links": "7.5.1",
-    "@storybook/addon-onboarding": "1.0.8",
-    "@storybook/blocks": "7.5.1",
-    "@storybook/react": "7.5.1",
-    "@storybook/react-vite": "7.5.1",
-    "@types/jest": "^26.0.0",
+    "@storybook/addon-docs": "10.5.10",
+    "@storybook/addon-links": "10.5.10",
+    "@storybook/addon-onboarding": "10.5.10",
+    "@storybook/react-vite": "10.5.10",
+    "@types/jest": "30.0.0",
     "@types/json-schema": "^7.0.11",
+    "@types/node": "^24.0.0",
     "@typescript-eslint/eslint-plugin": "6.0.0",
     "@typescript-eslint/parser": "6.0.0",
     "eslint": "8.48.0",
-    "eslint-plugin-storybook": "^0.8.0",
+    "eslint-plugin-storybook": "10.5.10",
     "fast-json-patch": "^3.1.1",
-    "graphql": "16.9.0",
-    "jest": "^26.0.1",
-    "yaml": "2.9.0",
+    "graphql": "16.12.0",
+    "jest": "30.4.2",
+    "jest-util": "^30.4.1",
     "json-schema": "^0.4.0",
-    "storybook": "7.5.1",
-    "ts-jest": "^26.1.0",
+    "@types/react": "^18.3.31",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "rimraf": "3.0.2",
+    "storybook": "10.5.10",
+    "ts-jest": "29.4.12",
     "ts-loader": "^8.0.8",
     "ts-node": "^10.7.0",
     "tslint": "^6.1.2",
-    "typescript": "^4.6.2",
-    "vite": "5.2.6",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "vite-plugin-dts": "3.6.4"
+    "typescript": "6.0.3",
+    "vite": "^8.2.2",
+    "vite-plugin-dts": "^4.5.4",
+    "webpack": "5.97.1",
+    "yaml": "2.9.0"
   },
   "jest": {
     "transform": {
@@ -92,12 +94,7 @@
       "<rootDir>/test/helpers/",
       "<rootDir>/test/resources/"
     ],
-    "collectCoverage": true,
-    "resolutions": {
-      "strip-ansi": "6.0.1",
-      "string-width": "4.2.2",
-      "wrap-ansi": "7.0.0"
-    }
+    "collectCoverage": true
   },
   "eslintConfig": {
     "extends": ".eslintrc.json"
