@@ -1,5 +1,9 @@
 {
   "compilerOptions": {
+    /* TypeScript 6 defaults "types" to [] rather than every package under typeRoots. */
+    "types": ["node"],
+    /* TypeScript 6 requires rootDir to be explicit alongside outDir (TS5011). */
+    "rootDir": "./",
     "target": "es2022",
     "module": "ESNext",
     "allowJs": false,
