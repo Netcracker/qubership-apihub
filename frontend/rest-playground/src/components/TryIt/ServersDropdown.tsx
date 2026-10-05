@@ -1,5 +1,5 @@
 import AddIcon from '@mui/icons-material/Add'
-import { Box, Button, MenuItem } from '@mui/material'
+import { Box, Button, MenuItem, SelectChangeEvent } from '@mui/material'
 import FormControl from '@mui/material/FormControl'
 import Select from '@mui/material/Select'
 import React, { useCallback, useState } from 'react'
@@ -63,7 +63,7 @@ export const ServersDropdown = ({ servers, operationPath }: ServersDropdownProps
   )
 
   const handleServerChange = useCallback(
-    (event) => {
+    (event: SelectChangeEvent) => {
       const position = positionAt(event.target.value)
       if (position < 0) {
         return

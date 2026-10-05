@@ -9,7 +9,34 @@
     "**/*.spec.*"
   ],
   "compilerOptions": {
-    "baseUrl": "./",
+    /* TypeScript 6 requires rootDir to be explicit alongside the outDir inherited from
+       @stoplight/scripts (TS5011). The webpack build resolves this config, not
+       tsconfig.build.json, so it is needed in both. It is the repository root rather
+       than ./src because openapi3-ts ships raw .ts sources that ts-loader pulls into
+       the program from node_modules, which ./src would reject (TS6059). */
+    "rootDir": "./",
+    /* @stoplight/scripts/tsconfig.json sets "suppressImplicitAnyIndexErrors": true, which
+       TypeScript 5.5 removed and TypeScript 6 rejects (TS5102 - a removal, so
+       "ignoreDeprecations" does not cover it). The base config is in node_modules and
+       cannot be edited; overriding to false is accepted, as TS only errors when true. */
+    "suppressImplicitAnyIndexErrors": false,
+    /* The base config sets "moduleResolution": "node", which TypeScript 7 removed (TS5108).
+       Like suppressImplicitAnyIndexErrors above, node_modules cannot be edited, so it is
+       overridden here. 'bundler' because webpack bundles this package. "baseUrl" is gone
+       rather than silenced - TS 7 removed it too (TS5102) and nothing here declared paths. */
+    "moduleResolution": "bundler",
+    /* @stoplight/markdown-viewer 5.6.0 ships index.d.ts and names it in "types", but its
+       "exports" is { require, import } with no "types" condition. Once exports is honoured
+       the top-level "types" is ignored, so the declarations it publishes become unreachable
+       and every import of it degrades to TS7016 / implicit any. The same defect this branch
+       fixed in class-view and apispec-view, in a package we do not control. Pointing at the
+       shipped file keeps the real types rather than shimming the module to any. Remove this
+       when upstream adds a "types" condition. */
+    "paths": {
+      "@stoplight/markdown-viewer": ["./node_modules/@stoplight/markdown-viewer/index.d.ts"]
+    },
+    /* TypeScript 6 defaults "types" to [] rather than every package under typeRoots. */
+    "types": ["node", "jest", "react"],
     "esModuleInterop": true,
     "allowJs": true,
     "jsx": "react-jsx"

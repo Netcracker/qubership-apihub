@@ -34,7 +34,7 @@ export const NativeMenuAdapter: React.FC<NativeMenuAdapterProps> = ({
           }
           const { id, title } = item
           return (
-            <option key={`${id}-${index}`} value={id}>
+            <option key={`${id}-${index}`} value={String(id)}>
               {title}
             </option>
           )

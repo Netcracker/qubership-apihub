@@ -2,6 +2,13 @@ const path = require('path')
 const webpack = require('webpack')
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin')
 
+// Where monaco-editor actually is, rather than where a flat npm install would put it.
+// path.resolve(__dirname, 'node_modules/monaco-editor') is only correct while nothing
+// dedupes the package to a parent - it breaks under pnpm's isolated linker and under
+// any workspace that hoists. Anchored on package.json because monaco-editor declares
+// no "main", only "module": require.resolve('monaco-editor') throws MODULE_NOT_FOUND.
+const monacoEditorDir = path.dirname(require.resolve('monaco-editor/package.json'))
+
 module.exports = {
   mode: 'production',
   entry: './src/web-components/index.ts',
@@ -51,14 +58,14 @@ module.exports = {
         test: /\.css$/,
         use: ['style-loader', 'css-loader'],
         include: [
-          path.resolve(__dirname, 'node_modules/monaco-editor'),
+          monacoEditorDir,
         ],
       },
       {
         test: /\.(ttf|woff|woff2|eot|otf)$/i,
         type: 'asset/inline',
         include: [
-          path.resolve(__dirname, 'node_modules/monaco-editor'),
+          monacoEditorDir,
         ],
       },
     ],

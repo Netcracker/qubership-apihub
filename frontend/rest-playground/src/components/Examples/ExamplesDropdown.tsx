@@ -1,4 +1,4 @@
-import { MenuItem } from '@mui/material'
+import { MenuItem, SelectChangeEvent } from '@mui/material'
 import FormControl from '@mui/material/FormControl'
 import Select from '@mui/material/Select'
 import { safeStringify } from '@stoplight/json'
@@ -35,7 +35,7 @@ export const ExamplesDropdown: FC<ExamplesDropdownProps> = memo<ExamplesDropdown
     }
 
     const handleClick = useCallback(
-      event => {
+      (event: SelectChangeEvent) => {
         const item = findMenuItem(event.target.value)
 
         onChange(

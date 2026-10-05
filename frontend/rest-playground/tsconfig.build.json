@@ -8,8 +8,22 @@
   ],
   "compilerOptions": {
     "outDir": "./dist",
+    /* TypeScript 6 requires rootDir to be explicit alongside outDir (TS5011). The value
+       must be the package root, not ./src: that is what TypeScript inferred before, as the
+       emitted layout shows (dist/src/... and dist/node_modules/openapi3-ts/...), and it is
+       what the package's own exports map expects at ./dist/src/hooks/index.d.ts. ./src
+       would both relocate every declaration and reject openapi3-ts, which ships raw .ts
+       sources that this build type-checks with transpileOnly: false (TS6059). */
+    "rootDir": "./",
     "declarationDir": "./dist",
     "declaration": true,
-    "types": ["react"]
+    "types": ["react"],
+    /* Nothing this project compiles is JavaScript, so do not admit any. Measured before
+       changing it: the build program is 501 files and none of them is a .js, and the emitted
+       output is byte-identical either way - this is a tightening, not a fix for anything
+       failing today. It matters because allowJs is a standing invitation for a dependency to
+       pull untyped JavaScript into a program whose rootDir is the package directory, which is
+       the shape of defect item 1.18 exists to remove. */
+    "allowJs": false
   }
 }

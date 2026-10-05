@@ -1,4 +1,4 @@
-import { MenuItem } from '@mui/material'
+import { MenuItem, SelectChangeEvent } from '@mui/material'
 import Select from '@mui/material/Select'
 import { safeStringify } from '@stoplight/json'
 import { Panel } from '@stoplight/mosaic'
@@ -54,7 +54,7 @@ function ExampleMenu({ examples, requestBody, onChange }: RequestBodyProps) {
   const selectedItem = findMenuItem(selectedId) ?? menuItems[0]
 
   const handleClick = React.useCallback(
-    event => {
+    (event: SelectChangeEvent) => {
       const item = findMenuItem(event.target.value)
 
       onChange(
