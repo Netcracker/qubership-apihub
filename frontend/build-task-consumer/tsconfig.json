@@ -1,6 +1,18 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    /* TypeScript 6 defaults "types" to [] rather than every package under typeRoots. */
+    "types": ["node", "jest"],
+    /* TypeScript 6 requires rootDir to be explicit alongside outDir (TS5011). It must be
+      ./src, matching nest-cli.json's "sourceRoot": the Dockerfile runs `node dist/main`,
+      so src/main.ts has to emit to dist/main.js. A rootDir of ./ emits dist/src/main.js
+      instead and the container dies on startup. */
+    "rootDir": "./src",
+    /* Node runs this service directly - the Dockerfile executes `node dist/main` - so
+      NodeNext is what describes it, and it makes the previously-implied resolution
+      explicit. The package has no "type": "module", so NodeNext still emits CommonJS
+      require() calls: this changes resolution, not output. */
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -9,7 +21,6 @@
     "target": "es2017",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
     "strict": true,
     "incremental": true,
     "esModuleInterop": true,
