@@ -131,7 +131,7 @@ function transformParamsBody<T extends FormParam | QueryParam>(
     schema: {
       type: 'object',
       properties: paramsList.reduce((props, param) => {
-        props[param.name] = param.schema;
+        (props as any)[param.name] = param.schema;
         return props;
       }, {}),
     },
@@ -140,7 +140,7 @@ function transformParamsBody<T extends FormParam | QueryParam>(
         id: generateId(),
         key: 'default',
         value: paramsList.reduce((values, param) => {
-          values[param.name] = param.value;
+          (values as any)[param.name] = param.value;
           return values;
         }, {}),
       },

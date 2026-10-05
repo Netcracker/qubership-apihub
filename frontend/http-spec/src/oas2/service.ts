@@ -43,6 +43,13 @@ export const bundleOas2Service: Oas2HttpServiceBundle = ({ document: _document }
       securityDefinitions: translateSecurityScheme,
     }),
     ...translateToSharedParameters.call(ctx, document),
+    // Both are empty here because Swagger 2 has neither, not to satisfy the type.
+    // The specification has no callbacks at all, and this bundler produces no
+    // unresolvable parameter references: `#/parameters/*` entries are sorted into
+    // query/path/header by their own `in`, and formData and body are skipped as kinds
+    // the model does not carry rather than as references it could not follow.
+    unknownParameters: [],
+    callbacks: [],
   };
 
   const operations = transformOas2Operations(document, ctx) as unknown as IHttpOperation<true>[];
@@ -88,8 +95,8 @@ export const transformOas2Service: Oas2HttpServiceTransformer = ({ document, ctx
             if (ss && ss.type === 'oauth2') {
               const flows = {};
               for (const flowKey in ss.flows) {
-                const flow = ss.flows[flowKey];
-                flows[flowKey] = {
+                const flow = (ss.flows as any)[flowKey];
+                (flows as any)[flowKey] = {
                   ...flow,
                   scopes: pickBy(flow.scopes, (_val: string, scopeKey: string) => {
                     const secKey = sec[key];

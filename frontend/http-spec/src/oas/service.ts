@@ -10,11 +10,12 @@ import { pickKeptProperties } from '../utils';
 import { hasXLogo } from './guards';
 import { translateTagDefinition } from './tags';
 import { translateLogo } from './transformers/translateLogo';
+import type { WithExtensions } from '../types';
 
 export const transformOasService: TranslateFunction<DeepPartial<OpenAPIObject> | DeepPartial<Spec>, [], IHttpService> =
   function () {
     const document = this.document;
-    const id = String(document['x-stoplight']?.id);
+    const id = String((document as WithExtensions<typeof document>)['x-stoplight']?.id);
     this.ids.service = id;
     this.parentId = id;
 
@@ -41,7 +42,7 @@ export const transformOasService: TranslateFunction<DeepPartial<OpenAPIObject> |
 
       ...pickBy(
         {
-          internal: document['x-internal'],
+          internal: (document as WithExtensions<typeof document>)['x-internal'],
         },
         isBoolean,
       ),

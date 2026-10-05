@@ -10,7 +10,10 @@ import { Oas3TranslateFunction } from '../types';
 import { translateHeaderObject } from './headers';
 import { translateParameterObject } from './request';
 
-type ParameterComponents = Pick<IBundledHttpService['components'], 'query' | 'header' | 'path' | 'cookie'>;
+type ParameterComponents = Pick<
+  IBundledHttpService['components'],
+  'query' | 'header' | 'path' | 'cookie' | 'unknownParameters'
+>;
 
 export const translateToSharedParameters = withContext<
   Oas3TranslateFunction<[components: unknown], ParameterComponents>
@@ -20,6 +23,7 @@ export const translateToSharedParameters = withContext<
     query: [],
     cookie: [],
     path: [],
+    unknownParameters: [],
   };
 
   if (!isPlainObject(components)) return sharedParameters;
@@ -82,9 +86,24 @@ export const translateToSharedParameters = withContext<
 
   for (const resolvable of resolvables) {
     const kind = getComponentName(this.references, resolvable.$ref);
-    if (kind === void 0 || !(kind in sharedParameters)) continue;
+    // A component parameter that is only a $ref to a definition this document does not
+    // contain cannot be sorted into path/query/header/cookie, because the kind is a
+    // property of the target and the target is not here. Until @stoplight/types 13.9
+    // there was nowhere to put it and it was dropped on the floor - a silent loss of a
+    // declared component. `unknownParameters` is exactly that bucket:
+    //
+    //   "component parameters that are only references to external/unavailable parameter
+    //    definitions; parameters whose definitions are available will always be found in
+    //    path, query, header, or cookie."
+    //
+    // The reference entry recorded above stays `resolved: false` with the original $ref,
+    // so a pointer at this parameter still resolves the way it did before.
+    if (kind === void 0 || !(kind in sharedParameters)) {
+      sharedParameters.unknownParameters.push(resolvable);
+      continue;
+    }
 
-    sharedParameters[kind].push(resolvable);
+    (sharedParameters as any)[kind].push(resolvable);
   }
 
   return sharedParameters;

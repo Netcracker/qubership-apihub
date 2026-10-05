@@ -62,3 +62,20 @@ export type TranslateFunction<T extends Fragment, P extends unknown[], R extends
   this: TransformerContext<T>,
   ...params: P
 ) => R;
+
+/**
+ * Specification extensions this codebase reads. None of them are declared by the
+ * OpenAPI/AsyncAPI types from @stoplight/types, so reading one needs the object widened.
+ *
+ * Widening to `WithExtensions<T>` rather than `any` keeps the read checked: the value has
+ * a real type, and a misspelled extension name is a compile error rather than `any`.
+ */
+export type SpecExtensions = {
+  'x-stoplight'?: { id?: string };
+  'x-internal'?: boolean;
+  'x-logo'?: unknown;
+  'x-examples'?: unknown;
+  'x-deprecated'?: boolean;
+};
+
+export type WithExtensions<T> = T & SpecExtensions;

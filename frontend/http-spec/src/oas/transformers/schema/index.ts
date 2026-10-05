@@ -10,11 +10,15 @@ import { isReferenceObject } from '../../guards';
 import { getSharedKey, syncReferenceObject } from '../../resolver';
 // import keywords from './keywords';
 import type { OASSchemaObject } from './types';
+import type { WithExtensions } from '../../../types';
 
 // const keywordsKeys = Object.keys(keywords);
 
+/** The sub-schema keywords _convertSchema recurses into. */
+type SchemaStruct = 'allOf' | 'anyOf' | 'oneOf' | 'not' | 'items' | 'additionalProperties' | 'additionalItems';
+
 type InternalOptions = {
-  structs: string[];
+  structs: readonly SchemaStruct[];
   references: Record<string, { resolved: boolean; value: string }>;
 };
 
@@ -49,7 +53,7 @@ export const translateSchemaObjectFromPair = withContext<
     if (!isReferenceObject(schema)) return {};
 
     const converted = convertSchema(this.document, schema, this.references);
-    converted['x-stoplight'] = {
+    (converted as WithExtensions<typeof converted>)['x-stoplight'] = {
       id: this.generateId.schema({ key: key ?? '' }),
     };
     return converted;
@@ -65,8 +69,8 @@ export const translateSchemaObjectFromPair = withContext<
   const id = this.generateId.schema({ key: key ?? '' });
 
   cached = convertSchema(this.document, maybeSchemaObject, this.references);
-  cached['x-stoplight'] = {
-    ...(isPlainObject(cached['x-stoplight']) && cached['x-stoplight']),
+  (cached as WithExtensions<typeof cached>)['x-stoplight'] = {
+    ...(isPlainObject((cached as WithExtensions<typeof cached>)['x-stoplight']) && (cached as WithExtensions<typeof cached>)['x-stoplight']),
     id,
   };
 
@@ -109,20 +113,32 @@ function _convertSchema(schema: OASSchemaObject, options: InternalOptions): JSON
   const clonedSchema: OASSchemaObject | JSONSchema7 = { ...schema };
   PROCESSED_SCHEMAS.set(schema, clonedSchema as JSONSchema7);
 
-  for (const struct of options.structs) {
-    if (Array.isArray(clonedSchema[struct])) {
-      clonedSchema[struct] = clonedSchema[struct].slice();
+  // Neither JSONSchema7 nor OASSchemaObject declares a string index signature, so the
+  // sub-schema keys cannot be read off them directly. Widening once here - to `unknown`
+  // values rather than `any` - keeps the Array.isArray/typeof guards below doing real
+  // narrowing, which thirteen separate `as any` reads did not.
+  const structs: Partial<Record<SchemaStruct, unknown>> = clonedSchema;
 
-      for (let i = 0; i < clonedSchema[struct].length; i++) {
-        if (typeof clonedSchema[struct][i] === 'object' && clonedSchema[struct][i] !== null) {
-          clonedSchema[struct][i] = _convertSchema(clonedSchema[struct][i], options);
+  for (const struct of options.structs) {
+    const value = structs[struct];
+
+    if (Array.isArray(value)) {
+      // Publish the copy before converting its items: _convertSchema recurses, and
+      // clonedSchema is already in PROCESSED_SCHEMAS, so a recursive call must observe
+      // the same array this loop is mutating.
+      const items = value.slice();
+      structs[struct] = items;
+
+      for (let i = 0; i < items.length; i++) {
+        if (typeof items[i] === 'object' && items[i] !== null) {
+          items[i] = _convertSchema(items[i], options);
         } else {
-          clonedSchema[struct].splice(i, 1);
+          items.splice(i, 1);
           i--;
         }
       }
-    } else if (clonedSchema[struct] !== null && typeof clonedSchema[struct] === 'object') {
-      clonedSchema[struct] = _convertSchema(clonedSchema[struct], options);
+    } else if (value !== null && typeof value === 'object') {
+      structs[struct] = _convertSchema(value, options);
     }
   }
 
@@ -148,10 +164,10 @@ function convertProperties(schema: OASSchemaObject, options: InternalOptions): v
   schema.properties = props;
 
   for (const key of Object.keys(props)) {
-    const property = props[key];
+    const property = (props as any)[key];
 
     if (isPlainObject(property)) {
-      props[key] = _convertSchema(property, options);
+      (props as any)[key] = _convertSchema(property, options);
     }
   }
 }

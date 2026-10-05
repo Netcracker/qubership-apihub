@@ -20,7 +20,7 @@ function wrapGenerateId<T extends Record<string, unknown>>(
   };
 
   for (const [name, fn] of Object.entries(idGenerators)) {
-    gn[name] = (props: Parameters<typeof fn>[0]) => {
+    (gn as any)[name] = (props: Parameters<typeof fn>[0]) => {
       return gn(fn(Object.assign({ parentId: this.parentId }, props) as any));
     };
   }

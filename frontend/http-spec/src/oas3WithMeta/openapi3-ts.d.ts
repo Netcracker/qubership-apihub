@@ -1,5 +1,4 @@
-import { HeadersObject, ResponseObject } from 'openapi3-ts'
-import { ContentObject, RequestBodyObject } from 'openapi3-ts/src/model/OpenApi'
+import { ContentObject, HeadersObject, RequestBodyObject, ResponseObject } from 'openapi3-ts'
 
 declare module 'openapi3-ts' {
   export interface CustomResponseObject extends ResponseObject {

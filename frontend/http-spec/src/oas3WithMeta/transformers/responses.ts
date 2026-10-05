@@ -53,7 +53,7 @@ export const translateToResponses: Oas3WithMetaTranslateFunction<
     .filter(isNonNullable)
     .map(response => ({
       ...response,
-      ...{ [mirrorSelfDiffMetaKey]: diffMeta?.[response.code] },
+      ...{ [mirrorSelfDiffMetaKey]: (diffMeta as any)?.[response.code] },
     }))
 }
 
@@ -110,7 +110,7 @@ const transformHeaders = withContext<
     switch (mode) {
       case WHOLE_HEADER_CHANGED:
         if (result?.name && isObject(headersDiffMeta)) {
-          result[mirrorSelfDiffMetaKey] = headersDiffMeta
+          (result as any)[mirrorSelfDiffMetaKey] = headersDiffMeta
         }
         break
       case PARTICULAR_HEADER_CHANGED:
@@ -119,7 +119,7 @@ const transformHeaders = withContext<
           isObject(headersDiffMeta) &&
           result.name in headersDiffMeta
         ) {
-          result[mirrorSelfDiffMetaKey] = headersDiffMeta[result.name]
+          (result as any)[mirrorSelfDiffMetaKey] = headersDiffMeta[result.name]
         }
         break
     }
@@ -157,7 +157,7 @@ const transformContents = withContext<
         typeof contentDiffMeta === 'object' &&
         result.mediaType in contentDiffMeta
       ) {
-        result[contentDiffMetaKey] = contentDiffMeta[result.mediaType]
+        (result as any)[contentDiffMetaKey] = (contentDiffMeta as any)[result.mediaType]
       }
       return result
     })
