@@ -1,6 +1,6 @@
 import type { Locator } from '@playwright/test'
 import { Button, TableCell, TableRow } from '@shared/components/base'
-import { test as report } from 'playwright/test'
+import { test as report } from '@playwright/test'
 import { GroupNameCell } from './OverviewGroupRow/GroupNameCell'
 
 export class OverviewGroupRow extends TableRow {
