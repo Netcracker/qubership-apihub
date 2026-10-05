@@ -24,15 +24,15 @@ import {
 // import renameMediaTypeAndADeeperChangeInResponseHeaderBefore from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-response-header/before.yaml'
 // import renameMediaTypeAndADeeperChangeInResponseHeaderAfter from '@netcracker/qubership-apihub-apispec-view-samples/media-type-samples/rename-media-type-and-a-deeper-change-in-response-header/after.yaml'
 
-import { COMPARE_DISPLAY_MODE } from '@stoplight/elements'
-import { DiffOperationAPI } from '@stoplight/elements/containers/DiffOperationAPI'
+import { COMPARE_DISPLAY_MODE } from '../../index'
+import { DiffOperationAPI } from '../../containers/DiffOperationAPI'
 import {
   getCompareResult,
   getMergedDocument,
-} from '@stoplight/elements/web-components/__stories__/helpers/getMergedDocument'
-import { stringifyDiffs } from '@stoplight/elements/web-components/__stories__/helpers/stringifyDiffs'
+} from './helpers/getMergedDocument'
+import { stringifyDiffs } from './helpers/stringifyDiffs'
 import { Meta, StoryObj } from '@storybook/react/*'
-import { aggregatedDiffsMetaKey, diffsMetaKey } from 'diff-block'
+import { aggregatedDiffsMetaKey, diffsMetaKey } from '@netcracker/qubership-apihub-apispec-view-diff-block'
 import React from 'react'
 import '../index'
 

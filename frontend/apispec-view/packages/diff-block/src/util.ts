@@ -19,7 +19,7 @@ import {
   unclassified,
 } from '@netcracker/qubership-apihub-api-diff'
 import { clone, mapValues, values } from 'lodash';
-import { isObject } from "@stoplight/diff-elements-core/utils/guards";
+import { isObject } from "@netcracker/qubership-apihub-apispec-view-diff-elements-core/utils/guards";
 
 export function isDiff(diffRecordItem?: DiffMetaRecord | Diff): diffRecordItem is Diff {
   const maybeDiff = diffRecordItem as Diff

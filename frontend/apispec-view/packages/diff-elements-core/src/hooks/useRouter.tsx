@@ -4,7 +4,10 @@ import { BrowserRouter, HashRouter, MemoryRouter, StaticRouter } from 'react-rou
 
 import { RouterType } from '../types';
 
-const RouterComponent: Dictionary<React.ComponentType, RouterType> = {
+/* React.ComponentType with no type argument is ComponentType<{}>, which under
+   @types/react 18 accepts no children - React 17's types supplied them implicitly.
+   These four are all router components whose whole purpose is to wrap children. */
+const RouterComponent: Dictionary<React.ComponentType<React.PropsWithChildren>, RouterType> = {
   history: BrowserRouter,
   memory: MemoryRouter,
   hash: HashRouter,

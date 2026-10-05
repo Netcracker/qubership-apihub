@@ -67,8 +67,12 @@ export const FormDataBody: React.FC<FormDataBodyProps> = ({
               parameter={parameter}
               value={typeof value === 'string' ? value : undefined}
               // TODO 20.04.23 weird type compatibility
-              onChange={(value: string | number | null) =>
-                onChangeValues({ ...values, [parameter.name]: typeof value === 'number' ? String(value!) : value! })
+              onChange={(value: React.Key | null) =>
+                onChangeValues({
+                  ...values,
+                  [parameter.name]:
+                    typeof value === 'number' || typeof value === 'bigint' ? String(value) : value!,
+                })
               }
               onChangeOptional={value => onChangeParameterAllow({ ...isAllowedEmptyValues, [parameter.name]: value })}
               canChangeOptional={true}

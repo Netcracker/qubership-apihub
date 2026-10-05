@@ -1,4 +1,4 @@
-import { COMPARE_DISPLAY_MODE, useOperationDisplayMode } from '@stoplight/elements';
+import { COMPARE_DISPLAY_MODE, useOperationDisplayMode } from '@netcracker/qubership-apihub-apispec-view';
 import { Box, Flex } from '@stoplight/mosaic';
 import React from 'react';
 

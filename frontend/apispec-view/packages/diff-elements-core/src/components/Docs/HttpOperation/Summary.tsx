@@ -1,9 +1,9 @@
 import * as React from "react";
 import { FC } from "react";
 import { Heading, HStack } from "@stoplight/mosaic";
-import { DeprecatedBadge } from "@stoplight/diff-elements-core";
-import { InternalBadge } from "@stoplight/diff-elements-core/components/Docs/HttpOperation/Badges";
-import { DiffBlock, useValueFromObjWithDiff, WithDiffMetaKey } from "diff-block";
+import { DeprecatedBadge } from "@netcracker/qubership-apihub-apispec-view-diff-elements-core";
+import { InternalBadge } from "@netcracker/qubership-apihub-apispec-view-diff-elements-core/components/Docs/HttpOperation/Badges";
+import { DiffBlock, useValueFromObjWithDiff, WithDiffMetaKey } from "@netcracker/qubership-apihub-apispec-view-diff-block";
 import { Diff } from "@netcracker/qubership-apihub-api-diff";
 import { buildOpenApiDiffCause } from "@netcracker/qubership-apihub-api-doc-viewer";
 

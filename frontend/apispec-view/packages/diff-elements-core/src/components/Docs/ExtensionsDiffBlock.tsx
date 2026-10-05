@@ -1,9 +1,9 @@
-import { DiffBlock, useValueFromObjWithDiff } from 'diff-block';
+import { DiffBlock, useValueFromObjWithDiff } from '@netcracker/qubership-apihub-apispec-view-diff-block';
 import { keys } from 'lodash';
 import React, { FC } from 'react';
 
 import { Extension, ExtensionMeta, Extensions } from './Extensions';
-import { useDiffsMetaKey } from "@stoplight/elements/containers/DiffsMetaKeyContext";
+import { useDiffsMetaKey } from "@netcracker/qubership-apihub-apispec-view/containers/DiffsMetaKeyContext";
 import { buildOpenApiDiffCause } from "@netcracker/qubership-apihub-api-doc-viewer";
 
 interface ExtensionsDiffBlockProps {

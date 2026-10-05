@@ -1,8 +1,8 @@
 import { JsonSchemaViewer } from '@netcracker/qubership-apihub-api-doc-viewer';
-import { useOperationSchemaOptionsMode } from '@stoplight/elements-core';
+import { useOperationSchemaOptionsMode } from '../../../index';
 import { Box, Flex, VStack } from '@stoplight/mosaic';
 import { IHttpOperationRequestBody } from '@stoplight/types';
-import { JsonSchemaViewer as OldJsonSchemaViewer } from 'json-schema-viewer';
+import { JsonSchemaViewer as OldJsonSchemaViewer } from '@netcracker/qubership-apihub-apispec-view-json-schema-viewer';
 import * as React from 'react';
 
 import { useInlineRefResolver } from '../../../context/InlineRefResolver';

@@ -1,7 +1,7 @@
 import '../index';
 
-import { OperationAPIImpl } from "@stoplight/elements/containers/OperationAPI";
-import { getMergedDocument } from "@stoplight/elements/web-components/__stories__/helpers/getMergedDocument";
+import { OperationAPIImpl } from "@netcracker/qubership-apihub-apispec-view/containers/OperationAPI";
+import { getMergedDocument } from "@netcracker/qubership-apihub-apispec-view/web-components/__stories__/helpers/getMergedDocument";
 import * as React from 'react';
 
 declare global {

@@ -1,4 +1,4 @@
-import { NativeMenuAdapter } from '@stoplight/diff-elements-core/hoc/NativeMenuAdapter';
+import { NativeMenuAdapter } from '../../hoc/NativeMenuAdapter';
 import { Box, CopyButton, MenuItems, Panel } from '@stoplight/mosaic';
 import { CodeViewer } from '@stoplight/mosaic-code-viewer';
 import { Request } from 'har-format';
@@ -72,7 +72,7 @@ export const RequestSamples = React.memo<RequestSamplesProps>(({ request, embedd
   }, [selectedLanguage, selectedLibrary, setSelectedLanguage, setSelectedLibrary]);
 
   const onChange = useCallback(
-    event => {
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
       setSelectedLanguage(event.target.value);
       event.target.value = 'default';
     },

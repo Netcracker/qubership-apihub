@@ -1,4 +1,4 @@
-import { NativeMenuAdapter } from '@stoplight/elements-core/hoc/NativeMenuAdapter';
+import { NativeMenuAdapter } from '../../../hoc/NativeMenuAdapter';
 import { Box, MenuActionItem, MenuItems } from '@stoplight/mosaic';
 import * as React from 'react';
 import { useCallback } from 'react';
@@ -21,7 +21,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({ original, bundled })
   }, [original, bundled]);
 
   const onChange = useCallback(
-    event => {
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
       (
         menuItems?.find(item => {
           const { id } = item as MenuActionItem;

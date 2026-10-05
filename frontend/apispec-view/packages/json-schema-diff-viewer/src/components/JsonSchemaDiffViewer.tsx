@@ -11,7 +11,7 @@ import { Box, Provider as MosaicProvider } from '@stoplight/mosaic';
 import { FallbackProps, withErrorBoundary } from '@stoplight/react-error-boundary';
 import { ErrorBoundaryProps } from '@stoplight/react-error-boundary/types';
 import cn from 'classnames';
-import { childrenDiffCountMetaKey, DiffBlock, DiffContainer, schemaIdKey, syntheticTitleFlag, } from 'diff-block';
+import { childrenDiffCountMetaKey, DiffBlock, DiffContainer, schemaIdKey, syntheticTitleFlag, } from '@netcracker/qubership-apihub-apispec-view-diff-block';
 import { useUpdateAtom } from 'jotai/utils';
 import { entries, keys, values } from 'lodash';
 import React from 'react';
@@ -22,7 +22,7 @@ import { PathCrumbs } from './PathCrumbs';
 import { TopLevelSchemaRow } from './SchemaRow';
 import { hoveredNodeAtom } from './SchemaRow/state';
 import { defaultErrorHandler } from "../../../system";
-import { useDiffMetaKey } from "@stoplight/elements/containers/DIffMetaKeyContext";
+import { useDiffMetaKey } from "@netcracker/qubership-apihub-apispec-view/containers/DIffMetaKeyContext";
 
 type JsonSchemaDiffViewerComponentProps = Partial<JSVOptions> & {
   schema: JSONSchema;

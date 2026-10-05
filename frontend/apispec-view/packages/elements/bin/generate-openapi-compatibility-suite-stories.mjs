@@ -26,7 +26,7 @@ const toPascalCase = (str) => upperFirst(camelCase(str))
 const printFileHeader = (suiteId, group) => {
   return `import '../../index'
 import { Meta, StoryObj } from '@storybook/react/*'
-import { StoryComponent, getStoryArgs, OpenapiCompatibilitySuiteStoryArgs } from '@stoplight/elements/web-components/__stories__/helpers/compatibility-suite-utils'
+import { StoryComponent, getStoryArgs, OpenapiCompatibilitySuiteStoryArgs } from '../helpers/compatibility-suite-utils'
 import { TEST_SPEC_TYPE_OPEN_API } from '@netcracker/qubership-apihub-compatibility-suites'
 
 const meta: Meta<OpenapiCompatibilitySuiteStoryArgs> = {

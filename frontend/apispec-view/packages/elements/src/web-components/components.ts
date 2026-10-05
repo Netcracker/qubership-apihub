@@ -1,14 +1,14 @@
-import { createElementClass } from '@stoplight/elements-core';
-import { OperationAPI } from '@stoplight/elements/containers/OperationAPI';
+import { createElementClass } from '@netcracker/qubership-apihub-apispec-view-elements-core';
+import { OperationAPI } from '../containers/OperationAPI';
 
 import fontAwesomeStyles from '!!raw-loader!@fortawesome/fontawesome-svg-core/styles.css';
 import apihubDocViewerStyles from '!!raw-loader!@netcracker/qubership-apihub-api-doc-viewer/dist/style.css';
-import elementsDiffCoreStyles from '!!raw-loader!@stoplight/diff-elements-core/core.css';
-import elementsCoreStyles from '!!raw-loader!@stoplight/elements-core/core.css';
+import elementsDiffCoreStyles from '!!raw-loader!@netcracker/qubership-apihub-apispec-view-diff-elements-core/core.css';
+import elementsCoreStyles from '!!raw-loader!@netcracker/qubership-apihub-apispec-view-elements-core/core.css';
 import mosaicStyles from '!!raw-loader!@stoplight/mosaic/styles.css';
 import mosaicThemeStyles from '!!raw-loader!@stoplight/mosaic/themes/default.css';
 
-import { DiffOperationAPI } from "@stoplight/elements/containers/DiffOperationAPI";
+import { DiffOperationAPI } from "@netcracker/qubership-apihub-apispec-view/containers/DiffOperationAPI";
 import { API } from '../index';
 
 const mosaicStyle = document.createElement('style');

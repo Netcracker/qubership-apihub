@@ -1,7 +1,7 @@
 import { apiDiff, COMPARE_MODE_DEFAULT, CompareResult } from '@netcracker/qubership-apihub-api-diff';
 import { denormalize, normalize, NormalizeOptions, RefErrorType, stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier';
 import { safeStringify } from '@stoplight/json';
-import { diffsMetaKey } from 'diff-block';
+import { diffsMetaKey } from '@netcracker/qubership-apihub-apispec-view-diff-block';
 
 const SYNTHETIC_TITLE_FLAG = Symbol('synthetic-title');
 const NORMALIZE_OPTIONS: NormalizeOptions = {

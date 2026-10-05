@@ -1,4 +1,4 @@
-import { NativeMenuAdapter } from '@stoplight/elements-core/hoc/NativeMenuAdapter';
+import { NativeMenuAdapter } from '../../../hoc/NativeMenuAdapter';
 import { MenuItem } from '@stoplight/mosaic';
 import { useAtom } from 'jotai';
 import * as React from 'react';
@@ -21,7 +21,7 @@ export const ServersDropdown = ({ servers }: ServersDropdownProps) => {
   })) as MenuItem[];
 
   const onChange = useCallback(
-    event => {
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
       const index = Number.parseInt(event.target.value, 10);
       const server = Number.isInteger(index) ? servers[index] : undefined;
       if (server !== undefined) {

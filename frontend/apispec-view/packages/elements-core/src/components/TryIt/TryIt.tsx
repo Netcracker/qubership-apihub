@@ -1,4 +1,4 @@
-import { isValidUrl } from '@stoplight/elements-core/utils/urls';
+import { isValidUrl } from '../../utils/urls';
 import { Box, Button, HStack, Icon, Panel, useThemeIsDark } from '@stoplight/mosaic';
 import { IHttpOperation } from '@stoplight/types';
 import { Request as HarRequest } from 'har-format';

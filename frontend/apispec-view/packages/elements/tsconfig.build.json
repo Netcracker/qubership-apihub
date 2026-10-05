@@ -7,14 +7,13 @@
     "**/__*__/**"
   ],
   "compilerOptions": {
-    "baseUrl": "./",
     "outDir": "dist",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "paths": {
-      "@stoplight/elements-core": [
+      "@netcracker/qubership-apihub-apispec-view-elements-core": [
         "../elements-core/dist"
       ],
-      "@stoplight/elements-core/*": [
+      "@netcracker/qubership-apihub-apispec-view-elements-core/*": [
         "../elements-core/dist/*"
       ]
     }

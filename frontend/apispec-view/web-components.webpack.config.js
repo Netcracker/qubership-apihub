@@ -12,6 +12,17 @@ module.exports = {
       stream: false,
       path: false,
       process: require.resolve('process/browser'),
+      // httpsnippet 1.25.0 does require('querystring'), and webpack 5 does not polyfill
+      // Node builtins. The build worked without this entry only because the querystring
+      // npm shim arrived transitively and was flat-hoisted where webpack could see it;
+      // under a workspace or an isolated linker it is not there and the build fails with
+      // "Can't resolve 'querystring' in .../httpsnippet/src". Declared in package.json
+      // and named here, so it no longer depends on what happens to be hoisted.
+      //
+      // The subpath is deliberate: 'querystring' alone resolves to Node's builtin and
+      // hands webpack back the same name it could not resolve. 'process/browser' above
+      // is the same trick.
+      querystring: require.resolve('querystring/index.js'),
     },
   },
   performance: {

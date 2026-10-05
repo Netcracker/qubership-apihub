@@ -30,7 +30,7 @@ export const NativeMenu: React.FC<MenuProps> = React.memo(props => {
         }
         const { id, title } = item;
         return (
-          <option key={`${id}-${index}`} value={id}>
+          <option key={`${id}-${index}`} value={String(id)}>
             {title}
           </option>
         );

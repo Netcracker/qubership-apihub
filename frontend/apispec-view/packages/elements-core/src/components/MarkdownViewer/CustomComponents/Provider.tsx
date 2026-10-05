@@ -1,4 +1,4 @@
-import { BlockquoteComponent } from '@stoplight/elements-core/components/MarkdownViewer/CustomComponents/BlockquoteComponent';
+import { BlockquoteComponent } from './BlockquoteComponent';
 import {
   CustomComponentMapping as MDVCustomComponentMapping,
   MarkdownViewerProvider,
@@ -16,7 +16,10 @@ interface MarkdownComponentsProviderProps {
 /**
  * Provides components to markdown-viewer.
  */
-export const MarkdownComponentsProvider: React.FC<MarkdownComponentsProviderProps> = ({ value, children }) => {
+export const MarkdownComponentsProvider: React.FC<React.PropsWithChildren<MarkdownComponentsProviderProps>> = ({
+  value,
+  children,
+}) => {
   return (
     <MarkdownViewerProvider components={{ code: CodeComponent!, blockquote: BlockquoteComponent!, ...value }}>
       {children}

@@ -9,11 +9,11 @@ import {
   SchemaNodeKind,
 } from '@stoplight/json-schema-tree';
 import { Box } from '@stoplight/mosaic';
-import { applyReplacedFromMeta, useDiffContext } from 'diff-block';
+import { applyReplacedFromMeta, useDiffContext } from '@netcracker/qubership-apihub-apispec-view-diff-block';
 import * as React from 'react';
 
 import { printName } from '../../utils';
-import { useDiffMetaKey } from "@stoplight/elements/containers/DIffMetaKeyContext";
+import { useDiffMetaKey } from "@netcracker/qubership-apihub-apispec-view/containers/DIffMetaKeyContext";
 
 function shouldRenderName(type: SchemaNodeKind | SchemaCombinerName | '$ref'): boolean {
   return type === SchemaNodeKind.Array || type === SchemaNodeKind.Object || type === '$ref';

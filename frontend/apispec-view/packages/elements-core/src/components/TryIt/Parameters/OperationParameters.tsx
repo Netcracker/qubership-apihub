@@ -27,7 +27,7 @@ export const OperationParameters: React.FC<OperationParametersProps> = ({
             parameter={parameter}
             value={values[parameter.name]}
             // TODO 20.04.23 weird type compatibility
-            onChange={(value: string | number | null) => onChangeValue(parameter.name, String(value))}
+            onChange={(value: React.Key | null) => onChangeValue(parameter.name, String(value))}
             validate={validate}
             isOptional={false}
             canChangeOptional={false}

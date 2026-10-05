@@ -1,4 +1,4 @@
-import { useDocument } from '@stoplight/elements-core';
+import { useDocument } from '@netcracker/qubership-apihub-apispec-view-elements-core';
 import { isPlainObject, safeStringify } from '@stoplight/json';
 import * as Sampler from '@stoplight/json-schema-sampler';
 import { IMediaTypeContent } from '@stoplight/types';

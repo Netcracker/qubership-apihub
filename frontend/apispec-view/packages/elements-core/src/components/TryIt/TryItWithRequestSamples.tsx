@@ -1,4 +1,4 @@
-import { IServer } from '@stoplight/elements-core/utils/http-spec/IServer';
+import { IServer } from '../../utils/http-spec/IServer';
 import { Box, InvertTheme, VStack } from '@stoplight/mosaic';
 import { Request as HarRequest } from 'har-format';
 import * as React from 'react';

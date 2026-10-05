@@ -1,4 +1,4 @@
-import { NativeMenu } from '@stoplight/elements-core/hoc/Menu';
+import { NativeMenu } from '../../../hoc/Menu';
 import { safeStringify } from '@stoplight/json';
 import { MenuItems, Panel } from '@stoplight/mosaic';
 import { CodeEditor } from '@stoplight/mosaic-code-editor';

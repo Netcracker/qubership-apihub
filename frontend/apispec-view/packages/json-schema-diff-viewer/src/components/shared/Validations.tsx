@@ -12,11 +12,11 @@ import {
   DiffSide,
   isDiffMetaRecord,
   useDiffContext,
-} from 'diff-block';
+} from '@netcracker/qubership-apihub-apispec-view-diff-block';
 import { capitalize, entries, keys, omit, pick, uniq } from 'lodash';
 import * as React from 'react';
 import { useMemo } from 'react';
-import { useDiffMetaKey } from "@stoplight/elements/containers/DIffMetaKeyContext";
+import { useDiffMetaKey } from "@netcracker/qubership-apihub-apispec-view/containers/DIffMetaKeyContext";
 
 type ValidationFormat = {
   name: string;

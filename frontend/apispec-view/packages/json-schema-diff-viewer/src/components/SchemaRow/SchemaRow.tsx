@@ -1,9 +1,9 @@
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { Diff } from '@netcracker/qubership-apihub-api-diff';
-import { useExtensionsWithDiff } from '@stoplight/elements';
+import { useExtensionsWithDiff } from '@netcracker/qubership-apihub-apispec-view';
 import { isReferenceNode, isRegularNode, ReferenceNode, SchemaNode, SchemaNodeKind } from '@stoplight/json-schema-tree';
 import { Box, Flex, Icon, SpaceVals, VStack } from '@stoplight/mosaic';
-import { childrenDiffCountMetaKey, DiffBlock } from 'diff-block';
+import { childrenDiffCountMetaKey, DiffBlock } from '@netcracker/qubership-apihub-apispec-view-diff-block';
 import { useAtom } from 'jotai';
 import { useAtomValue, useUpdateAtom } from 'jotai/utils';
 import { entries, get, includes, isEmpty } from 'lodash';
@@ -17,8 +17,8 @@ import { ChildStack } from '../shared/ChildStack';
 import { SchemaNameAndProperties } from '../shared/SchemaNameAndProperties';
 import { SchemaRowDiffBlock } from './SchemaRowDiffBlock';
 import { hoveredNodeAtom, isExpandedAtom, rowCollapsedAtom, selectedChoiceAtom } from './state';
-import { useDiffMetaKey } from "@stoplight/elements/containers/DIffMetaKeyContext";
-import { useChangeSeverityFilters } from "@stoplight/elements/containers/ChangeSeverityFiltersContext";
+import { useDiffMetaKey } from "@netcracker/qubership-apihub-apispec-view/containers/DIffMetaKeyContext";
+import { useChangeSeverityFilters } from "@netcracker/qubership-apihub-apispec-view/containers/ChangeSeverityFiltersContext";
 
 export interface SchemaRowProps {
   schemaNode: SchemaNode;

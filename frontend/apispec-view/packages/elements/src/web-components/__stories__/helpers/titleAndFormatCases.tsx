@@ -1,7 +1,7 @@
-import { DiffOperationAPI } from '@stoplight/elements/containers/DiffOperationAPI'
-import { getCompareResult } from '@stoplight/elements/web-components/__stories__/helpers/getMergedDocument'
-import { stringifyDiffs } from '@stoplight/elements/web-components/__stories__/helpers/stringifyDiffs'
-import { aggregatedDiffsMetaKey, diffsMetaKey } from 'diff-block'
+import { DiffOperationAPI } from '../../../containers/DiffOperationAPI'
+import { getCompareResult } from './getMergedDocument'
+import { stringifyDiffs } from './stringifyDiffs'
+import { aggregatedDiffsMetaKey, diffsMetaKey } from '@netcracker/qubership-apihub-apispec-view-diff-block'
 import React from 'react'
 
 /**

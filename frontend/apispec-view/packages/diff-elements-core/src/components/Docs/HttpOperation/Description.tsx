@@ -1,7 +1,7 @@
-import { DiffBlock } from "diff-block";
+import { DiffBlock } from "@netcracker/qubership-apihub-apispec-view-diff-block";
 import * as React from "react";
-import { useDescriptionWithMeta } from "@stoplight/diff-elements-core/hooks/useDescriptionWithMeta";
-import { MarkdownViewer } from "@stoplight/diff-elements-core/components/MarkdownViewer";
+import { useDescriptionWithMeta } from "@netcracker/qubership-apihub-apispec-view-diff-elements-core/hooks/useDescriptionWithMeta";
+import { MarkdownViewer } from "@netcracker/qubership-apihub-apispec-view-diff-elements-core/components/MarkdownViewer";
 import { buildOpenApiDiffCause } from "@netcracker/qubership-apihub-api-doc-viewer";
 
 export type DescriptionProps = {

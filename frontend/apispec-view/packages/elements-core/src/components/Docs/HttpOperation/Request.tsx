@@ -1,4 +1,4 @@
-import { Extension, Extensions } from '@stoplight/elements-core/components/Docs/Extensions';
+import { Extension, Extensions } from '../Extensions';
 import { Box, VStack } from '@stoplight/mosaic';
 import { HttpSecurityScheme, IHttpOperation } from '@stoplight/types';
 import { useAtom } from 'jotai';

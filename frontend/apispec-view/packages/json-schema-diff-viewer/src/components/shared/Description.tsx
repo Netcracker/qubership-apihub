@@ -1,10 +1,10 @@
 import { isRegularNode, SchemaNode } from '@stoplight/json-schema-tree';
 import { MarkdownViewer } from '@stoplight/markdown-viewer';
 import { Box, Link, Text } from '@stoplight/mosaic';
-import { DiffBlock, useDiffContext } from 'diff-block';
+import { DiffBlock, useDiffContext } from '@netcracker/qubership-apihub-apispec-view-diff-block';
 import { isNil } from 'lodash';
 import * as React from 'react';
-import { useDiffMetaKey } from "@stoplight/elements/containers/DIffMetaKeyContext";
+import { useDiffMetaKey } from "@netcracker/qubership-apihub-apispec-view/containers/DIffMetaKeyContext";
 import { Diff, isDiffReplace } from "@netcracker/qubership-apihub-api-diff";
 
 export const Description: React.FunctionComponent<{ schemaNode: SchemaNode }> = ({ schemaNode }) => {
