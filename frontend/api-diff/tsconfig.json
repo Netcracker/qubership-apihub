@@ -1,5 +1,13 @@
 {
   "compilerOptions": {
+    /* TypeScript 6 defaults "types" to [] rather than every package under typeRoots. */
+    /* TypeScript 6 defaults "types" to [] rather than every package under typeRoots.
+       "jest-wrappers" is this repo's own ambient package at types/jest-wrappers, which
+       augments jest's It interface with test.caseForSpecVersionPairs and friends. It has
+       to be listed explicitly or every compatibility-suite template fails to compile. */
+    "types": ["node", "jest", "jest-wrappers"],
+    /* TypeScript 6 requires rootDir to be explicit alongside outDir (TS5011). */
+    "rootDir": "./",
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
     "resolveJsonModule": true,
     /* Basic Options */
@@ -25,8 +33,6 @@
     // "tsBuildInfoFile": "./",               /* Specify file to store incremental compilation information */
     // "removeComments": true,                /* Do not emit comments to output. */
     // "noEmit": true,                        /* Do not emit outputs. */
-    "importHelpers": true,
-    /* Import emit helpers from 'tslib'. */
     // "downlevelIteration": true,            /* Provide full support for iterables in 'for-of', spread, and destructuring when targeting 'ES5' or 'ES3'. */
     // "isolatedModules": true,               /* Transpile each file as a separate module (similar to 'ts.transpileModule'). */
 
