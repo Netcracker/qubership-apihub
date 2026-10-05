@@ -14,6 +14,16 @@
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": false,
     "resolveJsonModule": true,
+    /* The package root, not ./src/main. Narrower values put src/it and src/stories
+       outside the rootDir and produce TS6059 for every file in them, which is why they
+       used to be excluded. The published declaration layout is preserved by
+       vite-plugin-dts's entryRoot instead - see vite.config.ts. */
+    "rootDir": "./",
+    "types": [
+      "node",
+      "jest",
+      "jest-image-snapshot"
+    ],
     "isolatedModules": true,
     "noEmit": true,
     /* Linting */
