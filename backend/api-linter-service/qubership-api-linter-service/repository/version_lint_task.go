@@ -9,6 +9,7 @@ import (
 	"github.com/Netcracker/qubership-api-linter-service/exception"
 	"github.com/Netcracker/qubership-api-linter-service/view"
 	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
 	"net/http"
 	"strings"
 	"time"
@@ -217,14 +218,8 @@ func (r *versionLintTaskRepositoryImpl) GetTaskById(ctx context.Context, taskId 
 
 func (r *versionLintTaskRepositoryImpl) GetRunningTaskForVersion(ctx context.Context, packageId, version string, revision int) ([]entity.VersionLintTask, error) {
 	var tasks []entity.VersionLintTask
-	err := r.cp.GetConnection().ModelContext(ctx, &tasks).
-		Where("package_id = ?", packageId).
-		Where("version = ?", version).
-		Where("revision = ?", revision).
-		WhereOr("status = ?", view.TaskStatusNotStarted).
-		WhereOr("status = ?", view.TaskStatusProcessing).
-		WhereOr("status = ?", view.TaskStatusWaitingForDocs).
-		Select()
+	q := r.cp.GetConnection().ModelContext(ctx, &tasks)
+	err := applyRunningTaskFilter(q, packageId, version, revision).Select()
 	if err != nil {
 		if errors.Is(err, pg.ErrNoRows) {
 			return nil, nil
@@ -232,6 +227,22 @@ func (r *versionLintTaskRepositoryImpl) GetRunningTaskForVersion(ctx context.Con
 		return nil, err
 	}
 	return tasks, nil
+}
+
+// applyRunningTaskFilter restricts the query to the given package/version/revision and groups the
+// status predicates with WhereGroup so they render as a single parenthesised OR clause ANDed onto
+// the package/version/revision filter, instead of escaping it as bare OR conditions.
+func applyRunningTaskFilter(q *orm.Query, packageId, version string, revision int) *orm.Query {
+	return q.
+		Where("package_id = ?", packageId).
+		Where("version = ?", version).
+		Where("revision = ?", revision).
+		WhereGroup(func(q *orm.Query) (*orm.Query, error) {
+			return q.
+				WhereOr("status = ?", view.TaskStatusNotStarted).
+				WhereOr("status = ?", view.TaskStatusProcessing).
+				WhereOr("status = ?", view.TaskStatusWaitingForDocs), nil
+		})
 }
 
 var queryVersionTask = fmt.Sprintf("select * from version_lint_task b where "+
