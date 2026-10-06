@@ -1,0 +1,5 @@
+type: 'string'
+x-value-schema:
+  type: 'integer'
+  minimum: 0
+x-internal: true

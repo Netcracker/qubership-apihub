@@ -1,0 +1,4 @@
+type: 'string'
+x-metadata:
+  type: 'integer'
+  minimum: 0

@@ -1,0 +1,3 @@
+type: 'string'
+x-value-schema:
+  type: 'boolean'

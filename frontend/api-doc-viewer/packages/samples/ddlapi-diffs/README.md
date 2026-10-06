@@ -2,16 +2,15 @@
 
 These fixtures feed screenshot-diff scenarios for DDL table changes.
 
-- Total cases: 295
+- Total cases: 292
 - Layout: `ddlapi-diffs/<group>/<case-id>/before.sql` and `.../after.sql`
 - Case ids are numbered from `01` (or `001` in groups with 100+ cases) within each group.
 - **`column-changes-except-types`** uses semantic hundred blocks (`101`–`102`, `201`–`206`, …)
   — see the `api-doc-viewer-testing` skill.
 - **`column-default-changes`** uses semantic hundred blocks (`101`–`125` add, `201`–`225` remove,
-  `301`–`325` replace) — regenerate fixtures, stories, and IT files with
-  `packages/api-doc-viewer/bin/generate-column-default-changes-samples.mjs`.
+  `301`–`325` replace).
 
-## Groups
+## Categories
 
 | Group | Cases | Description |
 | --- | ---: | --- |
@@ -20,12 +19,12 @@ These fixtures feed screenshot-diff scenarios for DDL table changes.
 | `whole-indexes-changes` | 2 | All indexes added when none present or removed when two were present |
 | `column-changes-except-types` | 34 | Column add/remove, constraint/badge, and description changes |
 | `foreign-key-reference-changes` | 17 | Referenced schema, table, and column changes; renamed keys and keys sharing a target |
-| `index-changes` | 26 | Index add/remove, uniqueness, column list, unnamed index, and description changes |
+| `index-changes` | 23 | Index add/remove, uniqueness, column list, unnamed index, and description changes |
 | `table-description-changes` | 8 | Table `COMMENT ON TABLE` add/remove/replace (short, long, and cross-length) |
 | `column-type-changes` | 127 | Base type matrix (`001`–`090`), parameter changes (`091`–`103`), enum-to-enum (`104`–`107`), scalar-to-enum (`108`–`117`), enum-to-scalar (`118`–`127`) |
 | `column-default-changes` | 75 | Column `DEFAULT` add/remove/replace per PostgreSQL scalar storage type |
 
-### `column-default-changes` — type coverage
+## `column-default-changes` type coverage
 
 Cases use one canonical name per PostgreSQL storage family from the ddlapi scalar guard list. Each
 type has three cases: **add** (`101`–`125`), **remove** (`201`–`225`), **replace** (`301`–`325`).
@@ -44,20 +43,26 @@ Hand-written suites live under `packages/api-doc-viewer/src/stories/ddlapi-diffs
 
 | Group | Story title | Story / IT files |
 | --- | --- | --- |
-| `whole-table-changes` | `DDL API Diffs Suite/Whole Table Changes Samples` | `whole-table-changes-samples.*` |
-| `whole-columns-changes` | `DDL API Diffs Suite/Whole Columns Changes Samples` | `whole-columns-changes-samples.*` |
-| `whole-indexes-changes` | `DDL API Diffs Suite/Whole Indexes Changes Samples` | `whole-indexes-changes-samples.*` |
-| `column-changes-except-types` | `DDL API Diffs Suite/Column Changes Except Types Samples` | `column-changes-except-types-samples.*` |
-| `foreign-key-reference-changes` | `DDL API Diffs Suite/Foreign Key Reference Changes Samples` | `foreign-key-reference-changes-samples.*` |
-| `index-changes` | `DDL API Diffs Suite/Index Changes Samples` | `index-changes-samples.*` |
-| `column-type-changes` | `DDL API Diffs Suite/Column Type Changes Samples` | `column-type-changes-samples.*` |
-| `column-default-changes` | `DDL API Diffs Suite/Column Default Changes Samples` | `column-default-changes-samples.*` |
-| `table-description-changes` | `DDL API Diffs Suite/Table Description Changes Samples` | `table-description-changes-samples.*` |
+| `whole-table-changes` | `DDL API Diffs Suite/Whole Table Changes Samples` | `whole-table-changes.*` |
+| `whole-columns-changes` | `DDL API Diffs Suite/Whole Columns Changes Samples` | `whole-columns-changes.*` |
+| `whole-indexes-changes` | `DDL API Diffs Suite/Whole Indexes Changes Samples` | `whole-indexes-changes.*` |
+| `column-changes-except-types` | `DDL API Diffs Suite/Column Changes Except Types Samples` | `column-changes-except-types.*` |
+| `foreign-key-reference-changes` | `DDL API Diffs Suite/Foreign Key Reference Changes Samples` | `foreign-key-reference-changes.*` |
+| `index-changes` | `DDL API Diffs Suite/Index Changes Samples` | `index-changes.*` |
+| `column-type-changes` | `DDL API Diffs Suite/Column Type Changes Samples` | `column-type-changes.*` |
+| `column-default-changes` | `DDL API Diffs Suite/Column Default Changes Samples` | `column-default-changes.*` |
+| `table-description-changes` | `DDL API Diffs Suite/Table Description Changes Samples` | `table-description-changes.*` |
 
 Story id pattern: `{meta-id}--case-{case-id}` (for example
 `ddl-api-diffs-suite-whole-table-changes-samples--case-01-wholly-added-table`). When adding a
 case, append matching exports to the group story file and an `it(...)` to the paired IT file.
 
+
+## Regenerate
+
+Hand-written fixtures, except `column-default-changes`. From `packages/api-doc-viewer/`:
+
 ```bash
-npm run regenerate-screenshots
+node bin/generate-column-default-changes-samples.mjs   # column-default-changes fixtures, stories, ITs
+npm run regenerate-screenshots                          # after visual changes
 ```

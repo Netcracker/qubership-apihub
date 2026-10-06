@@ -1,0 +1,13 @@
+type: object
+description: Sample object schema with all object validations
+properties:
+  name:
+    type: string
+  id:
+    type: integer
+default:
+  name: sample
+  id: 1
+minProperties: 1
+maxProperties: 5
+

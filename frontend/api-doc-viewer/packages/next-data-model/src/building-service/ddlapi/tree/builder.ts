@@ -11,6 +11,7 @@ import { ComplexTreeNodeParams, SimpleTreeNodeParams, TreeNodeComplexityTypes } 
 import { isObject } from "../../../utilities";
 import { NodeId, NodeKey } from "../../../utility-types";
 import { TreeBuilder } from "../../abstract/tree/builder";
+import { AncestorsRegistry } from "../../abstract/json-crawl-entities/state/ancestors-registry";
 import { NodeDataPickFunction } from "../../abstract/tree/node-data/builder";
 import { getDdlApiCrawlRules } from "../json-crawl-entities/rules/rules";
 import { DdlApiCrawlRule } from "../json-crawl-entities/rules/types";
@@ -76,7 +77,7 @@ export class DdlApiTreeBuilder extends TreeBuilder<
     const initialState: DdlApiTreeCrawlState = {
       parent: null,
       container: null,
-      alreadyConvertedValuesCache: new Map(),
+      ancestors: new AncestorsRegistry(),
     }
 
     const initialRules: DdlApiCrawlRule = getDdlApiCrawlRules()
@@ -92,15 +93,15 @@ export class DdlApiTreeBuilder extends TreeBuilder<
         parent,
         container,
       }),
-      createStateForSimpleNode: (_state, node, cache) => ({
+      createStateForSimpleNode: (state, node) => ({
         parent: node,
         container: null,
-        alreadyConvertedValuesCache: cache,
+        ancestors: state.ancestors,
       }),
-      createStateForComplexNode: (state, node, cache) => ({
+      createStateForComplexNode: (state, node) => ({
         parent: state.parent,
         container: node,
-        alreadyConvertedValuesCache: cache,
+        ancestors: state.ancestors,
       }),
       isSimpleNode: (node) => this.isSimpleTreeNode(node),
       isComplexNode: (node) => this.isComplexTreeNode(node),

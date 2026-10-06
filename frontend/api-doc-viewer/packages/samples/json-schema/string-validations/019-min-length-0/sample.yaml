@@ -1,0 +1,4 @@
+type: string
+minLength: 0
+title: "[value-length] minLength = 0"
+

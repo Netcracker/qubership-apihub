@@ -37,7 +37,7 @@ import {
   onToggleSort
 } from '../../../utils/nodes'
 import { isOperationNode } from '../../GraphQLOperationViewer/utils/nodes'
-import { isCombinerNodeState } from '../../JsonSchemaViewer/types/nodes.guards'
+import { isCombinerNodeState } from '../../../types/guards/nodes'
 import { GraphPropNodeBody } from './GraphPropNodeBody'
 import { GraphPropNodeChildren } from './GraphPropNodeChildren'
 

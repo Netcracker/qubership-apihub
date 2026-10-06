@@ -17,14 +17,12 @@
 import {
   GraphApiDiffNodeMeta,
   GraphSchemaDiffNodeValue,
-  IJsonSchemaStringType,
-  JsonSchemaDiffNodeMeta,
-  JsonSchemaDiffNodeValue
+  ISchemaStringType,
 } from '@netcracker/qubership-apihub-api-data-model'
 import { BADGE_KIND_ALTERNATIVE_INFO, BADGE_KIND_INFO } from '../components/kit/ux/UxBadge/types'
 import { UNKNOWN_TYPE_TEXT } from '../consts/types'
-import { GraphNodeTitleDataOptions, JsonNodeTitleDataOptions, NodeTitleData, } from '../types/NodeTitleData'
-import { GraphNodeTypeDataOptions, JsonNodeTypeDataOptions, NodeTypeData } from '../types/NodeTypeData'
+import { GraphNodeTitleDataOptions, NodeTitleData, } from '../types/NodeTitleData'
+import { GraphNodeTypeDataOptions, NodeTypeData } from '../types/NodeTypeData'
 import { isRefNode } from '../types/guards/nodes'
 import {
   isAdditionalItemsNode,
@@ -40,7 +38,7 @@ import {
 // TODO 01.12.23 // Is there the same function in "allof-merge" lib?
 
 export function buildNodeTitleData(
-  options: JsonNodeTitleDataOptions | GraphNodeTitleDataOptions
+  options: GraphNodeTitleDataOptions
 ): NodeTitleData {
   const { node, nodeValue, nodeMeta, titleMappings, customizationOptions = {} } = options
 
@@ -49,8 +47,8 @@ export function buildNodeTitleData(
   }
 
   const nodeKey = node.key
-  const $nodeValue = nodeValue as JsonSchemaDiffNodeValue | GraphSchemaDiffNodeValue
-  const $nodeMeta = nodeMeta as JsonSchemaDiffNodeMeta | GraphApiDiffNodeMeta
+  const $nodeValue = nodeValue as GraphSchemaDiffNodeValue
+  const $nodeMeta = nodeMeta as GraphApiDiffNodeMeta
 
   const { root, additionalProperty, items, additionalItem, item, directive } = {
     root: isRootNode(node),
@@ -63,7 +61,7 @@ export function buildNodeTitleData(
 
   const data: NodeTitleData = {
     title: nodeKey ?? $nodeValue?.title,
-    required: ($nodeMeta as JsonSchemaDiffNodeMeta)?.required,
+    required: ($nodeMeta as { required?: boolean })?.required,
     nullable: ($nodeValue as GraphSchemaDiffNodeValue)?.nullable,
     isBadge: additionalProperty || items || additionalItem,
     badgeKind: BADGE_KIND_INFO,
@@ -96,25 +94,25 @@ export function buildNodeTitleData(
   return data
 }
 
-export function buildNodeTypeData(options: JsonNodeTypeDataOptions | GraphNodeTypeDataOptions): NodeTypeData | null {
+export function buildNodeTypeData(options: GraphNodeTypeDataOptions): NodeTypeData | null {
   const { state, node: originalNode, nodeValue: originalValue } = options
 
-  if (originalNode?.kind === 'additionalProperties' && typeof originalValue === 'boolean') {
+  if ((originalNode?.kind as string) === 'additionalProperties' && typeof originalValue === 'boolean') {
     return null
   }
 
   const isCombiner = isCombinerNode(originalNode)
   const node = isCombiner && originalNode ? originalNode.nestedNode(state?.selected) : originalNode
   const nodeValue = originalValue ?? node?.value()
-  const $nodeValue = nodeValue as JsonSchemaDiffNodeValue | GraphSchemaDiffNodeValue
+  const $nodeValue = nodeValue as GraphSchemaDiffNodeValue
 
   const brokenRef = isRefNode(node)
     ? `${(node!.meta as { brokenRef: string }).brokenRef}`
     : undefined
   const type = brokenRef ? `$ref: ${brokenRef}` : $nodeValue?.type ?? UNKNOWN_TYPE_TEXT
-  const nullable = nodeValue?.nullable
+  const nullable = $nodeValue?.nullable
   const title = $nodeValue?.title
-  const qualifier = (nodeValue as IJsonSchemaStringType)?.format
+  const qualifier = (nodeValue as ISchemaStringType)?.format
   const combiner = isCombiner ? originalNode?.type : ''
 
   return { brokenRef, type, nullable, title, qualifier, combiner }

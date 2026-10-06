@@ -1,0 +1,9 @@
+type: object
+properties:
+  name:
+    type: string
+  id:
+    type: integer
+minProperties: 1
+title: "[properties-count] minProperties = 1"
+

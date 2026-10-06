@@ -8,9 +8,7 @@ import {
 import { CHANGED_LAYOUT_SIDE, ORIGIN_LAYOUT_SIDE } from '../../src/model/abstract/layout-side'
 import {
   DDL_PROPERTY_TITLE_ROW_DIFF_KEY,
-  isDdlPropertyListSectionUniformWholeNodeChange,
-  isDdlPropertyRowContentVisible,
-  isDdlPropertySubheaderVisible,
+  DdlApiRowDiffs,
 } from '../../src/model/ddlapi/tree-with-diffs/property-row-diffs'
 import { buildFromDdl } from '@netcracker/qubership-apihub-ddlapi/parser'
 import { apiDiff, breaking, Diff, DiffAction, DiffType, nonBreaking } from '@netcracker/qubership-apihub-api-diff'
@@ -108,7 +106,7 @@ describe('DDL property-list section pseudo-diffs', () => {
     const tree = await buildTreeFromSample('column-changes-except-types', '203-add-column-unique')
     const columnsSection = findNode(tree, DdlApiTreeNodeKinds.COLUMNS)
 
-    expect(isDdlPropertyListSectionUniformWholeNodeChange(columnsSection!)).toBe(false)
+    expect(DdlApiRowDiffs.PropertyRow.isListSectionUniformWholeNodeChange(columnsSection!)).toBe(false)
 
     expect(columnsSection?.descendantDiffs.code?.data.action).toBe(DiffAction.add)
     expect(columnsSection?.diffs[NODE_LEVEL_DIFF_KEY]).toBeUndefined()
@@ -129,7 +127,7 @@ describe('DDL property-list section pseudo-diffs', () => {
     const tree = await buildTreeFromSample('whole-columns-changes', '01-add-two-columns-to-empty-table')
     const columnsSection = findNode(tree, DdlApiTreeNodeKinds.COLUMNS)
 
-    expect(isDdlPropertyListSectionUniformWholeNodeChange(columnsSection!)).toBe(true)
+    expect(DdlApiRowDiffs.PropertyRow.isListSectionUniformWholeNodeChange(columnsSection!)).toBe(true)
 
     expect(columnsSection?.descendantDiffs.c1?.data.action).toBe(DiffAction.add)
     expect(columnsSection?.descendantDiffs.c2?.data.action).toBe(DiffAction.add)
@@ -180,10 +178,10 @@ describe('DDL property-list section pseudo-diffs', () => {
       expect(nodeLevelDiff?.styles.before.isContentVisible).toBe(false)
       expect(nodeLevelDiff?.styles.after.isContentVisible).toBe(true)
       expect(column?.diffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY]).toBe(nodeLevelDiff)
-      expect(isDdlPropertySubheaderVisible(nodeLevelDiff, ORIGIN_LAYOUT_SIDE)).toBe(false)
-      expect(isDdlPropertySubheaderVisible(nodeLevelDiff, CHANGED_LAYOUT_SIDE)).toBe(true)
-      expect(isDdlPropertyRowContentVisible(nodeLevelDiff, ORIGIN_LAYOUT_SIDE)).toBe(false)
-      expect(isDdlPropertyRowContentVisible(nodeLevelDiff, CHANGED_LAYOUT_SIDE)).toBe(true)
+      expect(DdlApiRowDiffs.PropertyRow.isSubheaderVisible(nodeLevelDiff, ORIGIN_LAYOUT_SIDE)).toBe(false)
+      expect(DdlApiRowDiffs.PropertyRow.isSubheaderVisible(nodeLevelDiff, CHANGED_LAYOUT_SIDE)).toBe(true)
+      expect(DdlApiRowDiffs.PropertyRow.isContentVisible(nodeLevelDiff, ORIGIN_LAYOUT_SIDE)).toBe(false)
+      expect(DdlApiRowDiffs.PropertyRow.isContentVisible(nodeLevelDiff, CHANGED_LAYOUT_SIDE)).toBe(true)
     }
   })
 
@@ -199,8 +197,8 @@ describe('DDL property-list section pseudo-diffs', () => {
       expect(nodeLevelDiff?.styles.after.isHeaderVisible).toBe(false)
       expect(nodeLevelDiff?.styles.before.isContentVisible).toBe(true)
       expect(nodeLevelDiff?.styles.after.isContentVisible).toBe(false)
-      expect(isDdlPropertySubheaderVisible(nodeLevelDiff, ORIGIN_LAYOUT_SIDE)).toBe(true)
-      expect(isDdlPropertySubheaderVisible(nodeLevelDiff, CHANGED_LAYOUT_SIDE)).toBe(false)
+      expect(DdlApiRowDiffs.PropertyRow.isSubheaderVisible(nodeLevelDiff, ORIGIN_LAYOUT_SIDE)).toBe(true)
+      expect(DdlApiRowDiffs.PropertyRow.isSubheaderVisible(nodeLevelDiff, CHANGED_LAYOUT_SIDE)).toBe(false)
     }
   })
 
@@ -214,8 +212,8 @@ describe('DDL property-list section pseudo-diffs', () => {
       expect(nodeLevelDiff?.data.action).toBe(DiffAction.add)
       expect(nodeLevelDiff?.styles.before.isHeaderVisible).toBe(false)
       expect(nodeLevelDiff?.styles.after.isHeaderVisible).toBe(true)
-      expect(isDdlPropertySubheaderVisible(nodeLevelDiff, ORIGIN_LAYOUT_SIDE)).toBe(false)
-      expect(isDdlPropertySubheaderVisible(nodeLevelDiff, CHANGED_LAYOUT_SIDE)).toBe(true)
+      expect(DdlApiRowDiffs.PropertyRow.isSubheaderVisible(nodeLevelDiff, ORIGIN_LAYOUT_SIDE)).toBe(false)
+      expect(DdlApiRowDiffs.PropertyRow.isSubheaderVisible(nodeLevelDiff, CHANGED_LAYOUT_SIDE)).toBe(true)
     }
   })
 
@@ -228,11 +226,11 @@ describe('DDL property-list section pseudo-diffs', () => {
     expect(addedNodeLevelDiff?.data.action).toBe(DiffAction.add)
     expect(addedNodeLevelDiff?.styles.before.isHeaderVisible).toBe(false)
     expect(addedNodeLevelDiff?.styles.after.isHeaderVisible).toBe(true)
-    expect(isDdlPropertySubheaderVisible(addedNodeLevelDiff, ORIGIN_LAYOUT_SIDE)).toBe(false)
-    expect(isDdlPropertySubheaderVisible(addedNodeLevelDiff, CHANGED_LAYOUT_SIDE)).toBe(true)
+    expect(DdlApiRowDiffs.PropertyRow.isSubheaderVisible(addedNodeLevelDiff, ORIGIN_LAYOUT_SIDE)).toBe(false)
+    expect(DdlApiRowDiffs.PropertyRow.isSubheaderVisible(addedNodeLevelDiff, CHANGED_LAYOUT_SIDE)).toBe(true)
 
     expect(unchangedColumn?.diffs[NODE_LEVEL_DIFF_KEY]).toBeUndefined()
-    expect(isDdlPropertySubheaderVisible(undefined, ORIGIN_LAYOUT_SIDE)).toBe(true)
-    expect(isDdlPropertySubheaderVisible(undefined, CHANGED_LAYOUT_SIDE)).toBe(true)
+    expect(DdlApiRowDiffs.PropertyRow.isSubheaderVisible(undefined, ORIGIN_LAYOUT_SIDE)).toBe(true)
+    expect(DdlApiRowDiffs.PropertyRow.isSubheaderVisible(undefined, CHANGED_LAYOUT_SIDE)).toBe(true)
   })
 })

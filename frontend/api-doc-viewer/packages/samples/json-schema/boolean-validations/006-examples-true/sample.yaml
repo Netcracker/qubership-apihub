@@ -1,0 +1,5 @@
+type: boolean
+examples:
+  - true
+title: "[examples] examples = [true]"
+

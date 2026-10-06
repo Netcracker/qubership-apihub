@@ -4,7 +4,7 @@ import { NodeDescendantDiffsSummary, NodeDiffs } from "@apihub/next-data-model/m
 export abstract class AbstractNodeDiffsSummaryAggregator {
   public abstract aggregate(
     nodeDiffs?: NodeDiffs,
-    crawlValue?: object | null,
+    crawlValue?: object | boolean | null,
     diffsMetaKeys?: DiffMetaKeys,
   ): NodeDescendantDiffsSummary | undefined;
 }

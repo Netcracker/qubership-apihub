@@ -5,13 +5,13 @@ import { Diff, isDiffAdd, isDiffRemove, isDiffRename, isDiffReplace } from '@net
 import { DiffMetaKeys } from "./diff-meta-keys";
 
 export abstract class AbstractNodeDiffsAggregator<
-  V extends object | null,
+  V extends object | boolean | null,
   K extends string,
   M extends object,
-  D extends object | null,
+  D extends object | boolean | null,
 > {
   public abstract aggregate(
-    crawlValue: object | null,
+    crawlValue: object | boolean | null,
     diffsMetaKeys: DiffMetaKeys,
     nodeKey: NodeKey,
     parentNode?: ITreeNodeWithDiffs<V, K, M, D>,
@@ -20,7 +20,7 @@ export abstract class AbstractNodeDiffsAggregator<
 
   public aggregateByDescendantDiffs(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    crawlValue: object | null,
+    crawlValue: object | boolean | null,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     nodeDiffs: NodeDiffs<D>,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

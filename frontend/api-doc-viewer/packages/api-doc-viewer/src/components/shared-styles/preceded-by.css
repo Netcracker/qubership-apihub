@@ -19,6 +19,11 @@
   padding-bottom: 0;
 }
 
+.json-schema-property .title-row-content {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 .title-row-content[data-precededby="root"] {
   padding-top: 8px;
   padding-bottom: 8px;
@@ -143,6 +148,67 @@
 }
 
 /* DDL API End */
+
+/* JSON Schema — vertical band on row body only (LevelIndicator stays full-height) */
+
+.json-schema-property .title-row-content,
+.json-schema-property .markdown-text-row-content,
+.json-schema-property .additional-info-row-content,
+.json-schema-property .nesting-indicator-title-row-content,
+.json-schema-property .json-schema-combiner-selector-row-content,
+.json-schema-property .show-unchanged-row-content {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.json-schema-property .markdown-text-row-content,
+.json-schema-property .additional-info-row-content,
+.json-schema-property .nesting-indicator-title-row-content,
+.json-schema-property .json-schema-combiner-selector-row-content,
+.json-schema-property .show-unchanged-row-content {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.json-schema-property .json-schema-property-row-body {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.json-schema-property .title-row-content > .json-schema-property-row-body {
+  padding-top: 8px;
+  padding-bottom: 4px;
+}
+
+.json-schema-property .title-row-content[data-precededby="json-schema-viewer"] > .json-schema-property-row-body {
+  padding-top: 16px;
+}
+
+/* CombinerSelectorControlsRow's row body needs more breathing room than the 4px default
+   (line 173-176) — same override technique as the title-row rule above, just scoped through
+   .json-schema-combiner-selector-row-content instead of .title-row-content. */
+.json-schema-property .json-schema-combiner-selector-row-content > .json-schema-property-row-body {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+/* Legacy parity (AdditionalInfoArrayRow.tsx / AdditionalInfoObjectRow.tsx): the label
+   ("Default:", "Examples:", ...) is top-aligned against the value chip(s), not vertically
+   centered — matters once a chip can be multi-line (pretty-printed object/array default).
+   Scoped to the additional-info row's own row-body only — title/nesting-indicator rows reuse
+   the same .json-schema-property-row-body class and stay items-center (short, single-line
+   content). The description row (MarkdownTextRowContent) also reuses this class but sets its
+   own items-start directly in its JSX instead, since markdown content is often multi-line. */
+.json-schema-property .additional-info-row-content .json-schema-property-row-body {
+  align-items: flex-start;
+}
+
+.json-schema-property .additional-info-row-content .additional-info-row-label {
+  padding-top: 3px;
+  /* Legacy parity: label uses Tailwind text-xs (line-height: 1rem); .additional-info-row-label
+     only sets font-size, so it fell back to inherited/default line-height, drifting row height. */
+  line-height: 1rem;
+}
 
 /* ─── AdditionalInfoRowContent ─────────────────────────────────────────────── */
 

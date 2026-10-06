@@ -1,0 +1,27 @@
+.show-unchanged-trigger {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 6px 6px 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  min-height: 26px;
+}
+
+.show-unchanged-trigger:hover {
+  background-color: #ECEDEF;
+}
+
+.show-unchanged-trigger:hover .three-dots-icon path {
+  fill: #3286FF;
+}
+
+.show-unchanged-trigger:focus {
+  outline: none;
+}
+
+/* Match the vertical LevelIndicator line color (#9e9e9e) instead of the
+   NestingHorizontalIndicator default (Tailwind bg-slate-400). */
+.show-unchanged-connector > div {
+  background-color: #9e9e9e;
+}

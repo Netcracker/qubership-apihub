@@ -1,0 +1,12 @@
+{
+  "generatedAt": "2026-08-24T23:26:13.150Z",
+  "sampleFormat": "yaml",
+  "counts": {
+    "array-validations": 10,
+    "boolean-validations": 7,
+    "integer-validations": 13,
+    "object-validations": 10,
+    "string-validations": 24
+  },
+  "total": 64
+}

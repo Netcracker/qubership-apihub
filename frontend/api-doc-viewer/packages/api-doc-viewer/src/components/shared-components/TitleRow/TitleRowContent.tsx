@@ -7,6 +7,7 @@ import { DiffHiglightingApplicationArea, DIFF_HIGHLIGHTING_MODES_DEFAULT } from 
 import { FC, memo, useMemo } from "react"
 import '../../shared-styles/preceded-by.css'
 import { Expander } from "../Expander"
+import { JsonSchemaExpanderColumn } from "../JsonSchemaExpanderColumn/JsonSchemaExpanderColumn"
 import { LevelIndicator } from "../LevelIndicator"
 import { TextValue } from "../TextValue/TextValue"
 import { ATTRIBUTE_DDL_LIST_LAST_ROW, ATTRIBUTE_PRECEDED_BY } from "../WithPrecededByProps"
@@ -16,6 +17,7 @@ const TITLE_ROW_X_AXIS_PADDING_BY_USAGE: Partial<Record<TitleRowUsage, string>> 
   [TitleRowUsage.JsoProperty]: X_AXIS_PADDING_ROWS_JSO,
   [TitleRowUsage.DdlApiSection]: X_AXIS_PADDING_ROWS_DDL_API,
   [TitleRowUsage.DdlApiProperty]: X_AXIS_PADDING_ROWS_DDL_API_PROPERTIES,
+  [TitleRowUsage.JsonSchemaProperty]: X_AXIS_PADDING_ROWS_JSO,
 }
 
 const TITLE_ROW_ADDITIONAL_CLASSES_BY_USAGE: Partial<Record<TitleRowUsage, string[]>> = {
@@ -33,8 +35,10 @@ export const TitleRowContent: FC<TitleRowContentProps> = memo<TitleRowContentPro
   const {
     expandable,
     expanded,
+    isRoot = false,
     onClickExpander,
     value,
+    titleContent,
     variant,
     layoutSide,
     enableHeader = true,
@@ -91,6 +95,12 @@ export const TitleRowContent: FC<TitleRowContentProps> = memo<TitleRowContentPro
   }, [diff, layoutSide])
 
   const headerValue = useMemo(() => {
+    if (typeof titleContent === "function") {
+      return titleContent(layoutSide)
+    }
+    if (titleContent) {
+      return titleContent
+    }
     if (!enableHeaderValue) {
       return null
     }
@@ -107,8 +117,10 @@ export const TitleRowContent: FC<TitleRowContentProps> = memo<TitleRowContentPro
         onClick={onClickExpander}
       />
     )
-  }, [enableHeaderValue, precededBy, value, variant, layoutSide, diff, usage, highlightingModeForKey, onClickExpander])
+  }, [titleContent, enableHeaderValue, precededBy, value, variant, layoutSide, diff, usage, highlightingModeForKey, onClickExpander])
   const isDdlApiPropertyRow = usage === TitleRowUsage.DdlApiProperty
+  const isJsonSchemaPropertyRow = usage === TitleRowUsage.JsonSchemaProperty
+  const jsonSchemaIsRoot = isRoot || level === 0
 
   const header = useMemo(() => {
     if (!enableHeader) {
@@ -117,6 +129,21 @@ export const TitleRowContent: FC<TitleRowContentProps> = memo<TitleRowContentPro
       }
       return level > 0 && <LevelIndicator level={level} />
     }
+
+    if (isJsonSchemaPropertyRow) {
+      return (
+        <div data-precededby={precededBy} className="level-indicator-column flex shrink-0 items-stretch self-stretch">
+          <LevelIndicator level={level} />
+          <JsonSchemaExpanderColumn
+            isRoot={jsonSchemaIsRoot}
+            expandable={expandable}
+            expanded={expanded}
+            onClick={onClickExpander}
+          />
+        </div>
+      )
+    }
+
     return (
       <>
         {(expandable || level > 0) && (
@@ -133,7 +160,7 @@ export const TitleRowContent: FC<TitleRowContentProps> = memo<TitleRowContentPro
         {!isDdlApiPropertyRow && headerValue}
       </>
     )
-  }, [enableHeader, expandable, expanded, headerValue, hideLevelIndicatorWhenSideEmpty, isDdlApiPropertyRow, level, onClickExpander, precededBy])
+  }, [enableHeader, expandable, expanded, hideLevelIndicatorWhenSideEmpty, isDdlApiPropertyRow, isJsonSchemaPropertyRow, jsonSchemaIsRoot, level, onClickExpander, precededBy])
 
   const usageDrivenClasses = useMemo(() => {
     return getTitleRowClassesByUsage(usage)
@@ -144,7 +171,7 @@ export const TitleRowContent: FC<TitleRowContentProps> = memo<TitleRowContentPro
       data-precededby={precededBy}
       data-ddl-list-last-row={ddlListLastRow ? true : undefined}
       data-usage={usage !== TitleRowUsage.Default ? usage : undefined}
-      className={`title-row-content flex w-full ${isDdlApiPropertyRow ? 'items-stretch' : 'items-center'} h-full ${usageDrivenClasses} gap-2 ${diffsStyleClasses.join(' ')}`}
+      className={`title-row-content flex w-full ${isDdlApiPropertyRow || isJsonSchemaPropertyRow ? 'items-stretch' : 'items-center'} h-full ${usageDrivenClasses} gap-2 ${diffsStyleClasses.join(' ')}`}
     >
       {header}
       {isDdlApiPropertyRow ? (
@@ -152,7 +179,14 @@ export const TitleRowContent: FC<TitleRowContentProps> = memo<TitleRowContentPro
           {headerValue}
           {subheader?.(layoutSide)}
         </div>
-      ) : subheader?.(layoutSide)}
+      ) : isJsonSchemaPropertyRow ? (
+        <div className="json-schema-property-row-body flex min-h-[26px] min-w-0 flex-1 items-center gap-2">
+          {headerValue}
+          {subheader?.(layoutSide)}
+        </div>
+      ) : (
+        subheader?.(layoutSide)
+      )}
     </div>
   )
 })

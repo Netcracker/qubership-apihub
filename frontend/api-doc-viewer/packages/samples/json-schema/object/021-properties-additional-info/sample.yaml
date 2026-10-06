@@ -1,0 +1,22 @@
+type: object
+properties:
+  name:
+    type: string
+  id:
+    type: integer
+required:
+  - name
+minProperties: 1
+maxProperties: 10
+propertyNames:
+  enum:
+    - name
+    - id
+enum:
+  - name: first
+  - name: second
+default:
+  name: default
+examples:
+  - name: example
+

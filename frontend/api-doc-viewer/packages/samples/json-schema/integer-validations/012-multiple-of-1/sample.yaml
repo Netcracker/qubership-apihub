@@ -1,0 +1,4 @@
+type: integer
+multipleOf: 1
+title: "[multiple-of] multipleOf = 1"
+

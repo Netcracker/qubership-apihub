@@ -1,0 +1,6 @@
+type: array
+items:
+  type: string
+uniqueItems: true
+title: "[unique-items] uniqueItems = true"
+

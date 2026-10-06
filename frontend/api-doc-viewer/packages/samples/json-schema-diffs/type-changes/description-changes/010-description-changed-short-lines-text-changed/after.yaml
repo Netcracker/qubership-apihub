@@ -1,0 +1,6 @@
+type: string
+description: |-
+  Describes the resource state at the time of the request.
+  Captures ownership, visibility, and lifecycle information.
+  Consumers should treat unknown fields as reserved.
+

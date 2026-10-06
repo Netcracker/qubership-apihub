@@ -21,7 +21,7 @@ import {
 } from '@netcracker/qubership-apihub-api-diff'
 import { denormalize, normalize, NormalizeOptions, RefErrorType, stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier'
 import { ObjectUtils } from '../utils/common/objects'
-import { TEST_DIFF_META_KEYS } from './async-api-diffs-suite/shared-test-data'
+import { TEST_DIFF_META_KEYS } from './shared/test-diff-meta-keys'
 import { TEST_REFERENCE_NAME_PROPERTY } from './async-api-suite/shared-test-data'
 
 const JSO_DIFFS_OPERATION_KEY = 'test-operation'
@@ -45,9 +45,9 @@ const DEFAULT_NORMALIZE_OPTIONS: NormalizeOptions = {
   allowNotValidSyntheticChanges: true,
 }
 
-function oas3TemplateInstance(): any {
+function oas31TemplateInstance(): any {
   return {
-    openapi: '3.0.2',
+    openapi: '3.1.0',
     paths: {
       '/test': {
         post: {
@@ -132,6 +132,108 @@ function oas3TemplateInstance(): any {
         __Substitution__: null as unknown,
       },
     },
+  }
+}
+
+function createOas3PathsPostOperation(schema: unknown): any {
+  return {
+    '/test': {
+      post: {
+        summary: 'Test Operation',
+        description: 'Description for Test Operation',
+        parameters: [
+          {
+            name: 'TestRequestHeader',
+            in: 'header',
+            schema,
+          },
+          {
+            name: 'TestRequestCookie',
+            in: 'cookie',
+            schema,
+          },
+          {
+            name: 'TestPathParam',
+            in: 'path',
+            schema,
+          },
+          {
+            name: 'TestQueryParam',
+            in: 'query',
+            schema,
+          },
+        ],
+        requestBody: {
+          content: {
+            'application/json': {
+              schema,
+            },
+          },
+        },
+        responses: {
+          200: {
+            headers: {
+              testResponseHeader: {
+                schema,
+              },
+            },
+            content: {
+              'application/json': {
+                schema,
+              },
+            },
+          },
+          401: {
+            content: {
+              'application/json': {
+                schema,
+              },
+            },
+          },
+          403: {
+            content: {
+              'application/json': {
+                schema,
+              },
+            },
+          },
+          404: {
+            content: {
+              'application/json': {
+                schema,
+              },
+            },
+          },
+          500: {
+            content: {
+              'application/json': {
+                schema,
+              },
+            },
+          },
+        },
+      },
+    },
+  }
+}
+
+function oas3TemplateInstance(): any {
+  const substitutionRef = { $ref: '#/components/schemas/__Substitution__' }
+  return {
+    openapi: '3.0.2',
+    paths: createOas3PathsPostOperation(substitutionRef),
+    components: {
+      schemas: {
+        __Substitution__: null as unknown,
+      },
+    },
+  }
+}
+
+function oas3InlineTemplateInstance(schema: unknown): any {
+  return {
+    openapi: '3.0.2',
+    paths: createOas3PathsPostOperation(schema),
   }
 }
 
@@ -318,6 +420,16 @@ export function prepareJsonDiffSchemaFromOAS(options: JsonDiffSchemaFromOASOptio
   return mergedSchema
 }
 
+/** Merged `apiDiff` document of two whole OpenAPI documents, diffs stored under `DIFF_META_KEY`. */
+export function mergeOpenApiDocuments(beforeDocument: unknown, afterDocument: unknown): unknown {
+  return apiDiff(beforeDocument, afterDocument, {
+    ...DEFAULT_NORMALIZE_OPTIONS,
+    beforeSource: beforeDocument,
+    afterSource: afterDocument,
+    metaKey: DIFF_META_KEY,
+  }).merged
+}
+
 function removeComponents(source: unknown): unknown {
   if (source && isObject(source) && 'components' in source) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -335,9 +447,25 @@ export type JsonDiffSchemaOptions = {
   afterAdditionalComponents?: Record<PropertyKey, unknown>
   target: OASTarget,
   circular?: boolean
+  /** When true, inline schemas in the OAS template instead of $ref to __Substitution__. */
+  disableSubstitutionTitle?: boolean
 }
 
 export function prepareJsonDiffSchema(options: JsonDiffSchemaOptions): unknown {
+  if (options.disableSubstitutionTitle) {
+    return prepareJsonDiffSchemaWithInlineTemplate(options, oas3InlineTemplateInstance)
+  }
+  return prepareJsonDiffSchemaWithTemplate(options, oas3TemplateInstance)
+}
+
+export function prepareJsonDiffSchemaOas31(options: JsonDiffSchemaOptions): unknown {
+  return prepareJsonDiffSchemaWithTemplate(options, oas31TemplateInstance)
+}
+
+function prepareJsonDiffSchemaWithTemplate(
+  options: JsonDiffSchemaOptions,
+  templateFactory: () => any,
+): unknown {
   const {
     beforeSchema,
     afterSchema,
@@ -347,12 +475,48 @@ export function prepareJsonDiffSchema(options: JsonDiffSchemaOptions): unknown {
     circular = false,
   } = options
 
-  const beforeDocument = oas3TemplateInstance()
+  const beforeDocument = templateFactory()
   beforeDocument.components.schemas.__Substitution__ = beforeSchema
   beforeDocument.components = mergeComponents(beforeDocument.components, beforeAdditionalComponents)
-  const afterDocument = oas3TemplateInstance()
+  const afterDocument = templateFactory()
   afterDocument.components.schemas.__Substitution__ = afterSchema
   afterDocument.components = mergeComponents(afterDocument.components, afterAdditionalComponents)
+
+  const mergedDocument = apiDiff(beforeDocument, afterDocument, {
+    ...DEFAULT_NORMALIZE_OPTIONS,
+    beforeSource: beforeDocument,
+    afterSource: afterDocument,
+    metaKey: DIFF_META_KEY,
+  }).merged as any
+
+  const mergedSchema = getSchemaByTarget(mergedDocument, target)
+  if (circular && isObject(mergedSchema)) {
+    mergedSchema.toJSON = () => stringifyCyclicJso(mergedSchema)
+  }
+  return mergedSchema
+}
+
+function prepareJsonDiffSchemaWithInlineTemplate(
+  options: JsonDiffSchemaOptions,
+  inlineTemplateFactory: (schema: unknown) => any,
+): unknown {
+  const {
+    beforeSchema,
+    afterSchema,
+    beforeAdditionalComponents = {},
+    afterAdditionalComponents = {},
+    target,
+    circular = false,
+  } = options
+
+  const beforeDocument = inlineTemplateFactory(beforeSchema)
+  if (Object.keys(beforeAdditionalComponents).length > 0) {
+    beforeDocument.components = mergeComponents(beforeDocument.components ?? {}, beforeAdditionalComponents)
+  }
+  const afterDocument = inlineTemplateFactory(afterSchema)
+  if (Object.keys(afterAdditionalComponents).length > 0) {
+    afterDocument.components = mergeComponents(afterDocument.components ?? {}, afterAdditionalComponents)
+  }
 
   const mergedDocument = apiDiff(beforeDocument, afterDocument, {
     ...DEFAULT_NORMALIZE_OPTIONS,

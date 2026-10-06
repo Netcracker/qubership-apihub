@@ -1,0 +1,6 @@
+type: object
+description: Object with no declared properties
+minProperties: 0
+maxProperties: 10
+additionalProperties: false
+

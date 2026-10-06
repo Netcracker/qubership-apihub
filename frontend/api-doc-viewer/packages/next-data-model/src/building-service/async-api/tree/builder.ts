@@ -10,6 +10,7 @@ import { ComplexTreeNodeParams, SimpleTreeNodeParams, TreeNodeComplexityTypes } 
 import { isObject } from "../../../utilities";
 import { NodeId, NodeKey } from "../../../utility-types";
 import { TreeBuilder } from "../../abstract/tree/builder";
+import { AncestorsRegistry } from "../../abstract/json-crawl-entities/state/ancestors-registry";
 import { NodeDataPickFunction } from "../../abstract/tree/node-data/builder";
 import { getAsyncApiCrawlRules } from "../json-crawl-entities/rules/rules";
 import { AsyncApiCrawlRule } from "../json-crawl-entities/rules/types";
@@ -74,7 +75,7 @@ export class AsyncApiTreeBuilder extends TreeBuilder<
     const initialState: AsyncApiTreeCrawlState = {
       parent: null,
       container: null,
-      alreadyConvertedValuesCache: new Map(),
+      ancestors: new AncestorsRegistry(),
     }
 
     // TODO: Encapsulate this
@@ -91,15 +92,15 @@ export class AsyncApiTreeBuilder extends TreeBuilder<
         parent,
         container,
       }),
-      createStateForSimpleNode: (_state, node, cache) => ({
+      createStateForSimpleNode: (state, node) => ({
         parent: node,
         container: null,
-        alreadyConvertedValuesCache: cache,
+        ancestors: state.ancestors,
       }),
-      createStateForComplexNode: (state, node, cache) => ({
+      createStateForComplexNode: (state, node) => ({
         parent: state.parent,
         container: node,
-        alreadyConvertedValuesCache: cache,
+        ancestors: state.ancestors,
       }),
       isSimpleNode: (node) => this.isSimpleTreeNode(node),
       isComplexNode: (node) => this.isComplexTreeNode(node),

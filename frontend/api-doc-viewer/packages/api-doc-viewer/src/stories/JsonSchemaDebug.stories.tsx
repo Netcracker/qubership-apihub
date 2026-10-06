@@ -1,9 +1,9 @@
+import { JsonSchemaViewer } from '@apihub/components/JsonSchemaViewer/JsonSchemaViewer';
 import { isObject } from '@netcracker/qubership-apihub-json-crawl';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { ComponentProps } from 'react';
-import { parse } from 'yaml';
-import { JsonSchemaViewer } from '../components/JsonSchemaViewer/JsonSchemaViewer';
 import { prepareJsonSchema, REQUEST_BODY_TARGET } from './preprocess';
+import { parseYamlSource } from './utils/parse-yaml-source';
 
 type StoryArgs = ComponentProps<typeof JsonSchemaViewer> & {
   schemaText: string
@@ -46,8 +46,8 @@ export const Debug: Story = {
   render: (args) => {
     const { schemaText, componentsText, ...viewerArgs } = args
 
-    const parsedSchema = parseJsonOrYaml(schemaText)
-    const parsedComponents = componentsText ? parseJsonOrYaml(componentsText) : undefined
+    const parsedSchema = parseYamlSource(schemaText)
+    const parsedComponents = componentsText ? parseYamlSource(componentsText) : undefined
 
     const schema = prepareJsonSchema({
       schema: parsedSchema,
@@ -62,25 +62,3 @@ export const Debug: Story = {
   }
 }
 
-function parseJsonOrYaml(text: string): unknown {
-  let parsed: unknown = undefined
-  try {
-    parsed = JSON.parse(text)
-  } catch (error) {
-    console.error('Cannot parse JSON:', error)
-    parsed = undefined
-  }
-  try {
-    if (!parsed) {
-      parsed = parse(text)
-    }
-  } catch (error) {
-    console.error('Cannot parse YAML:', error)
-    parsed = undefined
-  }
-  if (!parsed || typeof parsed !== 'object') {
-    parsed = {}
-  }
-  console.debug('Parsed source:', parsed)
-  return parsed
-}

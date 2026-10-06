@@ -1,0 +1,32 @@
+type: object
+description: Root schema with oneOf object variant property
+properties:
+  plainProp:
+    type: string
+    description: Arbitrary plain property
+  oneOfProp:
+    oneOf:
+      - type: string
+        description: String oneOf variant (unchanged)
+      - type: number
+        description: Number oneOf variant (unchanged)
+      - type: object
+        description: Object with 1 number property schema(s)
+        properties:
+          prop0:
+            type: number
+            description: Sample number schema with all number validations
+            default: 1.5
+            minimum: 0
+            maximum: 100
+            multipleOf: 0.5
+        minProperties: 0
+        maxProperties: 10
+        additionalProperties:
+          type: number
+          description: Sample number schema with all number validations
+          default: 1.5
+          minimum: 0
+          maximum: 100
+          multipleOf: 0.5
+

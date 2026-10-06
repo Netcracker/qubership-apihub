@@ -13,10 +13,14 @@ module paths are not part of the public contract.
 or integrator. Do **not** name or reference consuming applications, their
 repositories, file paths, or UI components in this skill.
 
+This skill derives from the authoring and testing skills and the design in
+`docs/design/`; what each viewer displays is listed in
+`docs/design/<api-type>/display-coverage.md`.
+
 ```typescript
 import {
   JsonSchemaViewer,
-  JsonSchemaDiffViewer,
+  JsonSchemaDiffsViewer,
   GraphQLOperationViewer,
   GraphQLOperationDiffViewer,
   AsyncApiOperationViewer,
@@ -48,17 +52,17 @@ build/normalisation pipeline — do not hand-merge before/after specs in UI code
 
 | API type | Plain | Diffs | Document prop |
 | --- | --- | --- | --- |
-| JSON Schema | `JsonSchemaViewer` | `JsonSchemaDiffViewer` | `schema` |
-| GraphQL operation | `GraphQLOperationViewer` | `GraphQLOperationDiffViewer` | `source` |
+| JSON Schema | `JsonSchemaViewer` | `JsonSchemaDiffsViewer` | `schema` (merged document for diffs) |
+| GraphQL operation (legacy) | `GraphQLOperationViewer` | `GraphQLOperationDiffViewer` | `source` |
 | AsyncAPI operation | `AsyncApiOperationViewer` | `AsyncApiOperationDiffsViewer` | `source` / `mergedSource` |
-| DDL table | `DdlTableViewer` | `DdlTableDiffsViewer` | `source` |
+| DDL table | `DdlTableViewer` | `DdlTableDiffsViewer` | `source` / `mergedSource` |
 
 Shared optional props: `displayMode` (`'simple' | 'detailed'`, default
-`'detailed'`), `expandedDepth` (legacy viewers, default `2`).
+`'detailed'`); `expandedDepth` on JSON Schema and GraphQL viewers.
 
-Diffs viewers add `layoutMode` (legacy GraphQL/JSON Schema) or fixed
-side-by-side layout (AsyncAPI diffs viewer), plus severity `filters` where
-supported.
+Layout: the legacy `GraphQLOperationDiffViewer` accepts `layoutMode` and severity
+`filters`; JSON Schema, AsyncAPI, and DDL diffs viewers always render side by
+side and accept `diffTypes`.
 
 ## Diff meta keys
 
@@ -74,8 +78,8 @@ const diffMetaKeys: DiffMetaKeys = {
 }
 ```
 
-- **GraphQL / JSON Schema diffs** — prop name `metaKeys`.
-- **AsyncAPI diffs** — prop name `diffMetaKeys`.
+- **GraphQL diffs (legacy)** — prop name `metaKeys`.
+- **JSON Schema, AsyncAPI, and DDL diffs** — prop name `diffMetaKeys`.
 
 Mismatch between merged-document keys and viewer props produces empty diff
 highlights with no runtime error.
@@ -100,16 +104,35 @@ same `FIRST_REFERENCE_KEY_PROPERTY` and `DiffMetaKeys` as the build pipeline.
 
 ## GraphQL-specific wiring
 
-Build a GraphAPI schema with `@netcracker/qubership-apihub-graphapi` before
-passing to `GraphQLOperationViewer`. Select the operation via
-`operationPath` (e.g. `#/queries/getEntity`) or legacy `operationType` +
-`operationName` on the diff viewer.
+Legacy viewers. Build a GraphAPI schema with `@netcracker/qubership-apihub-graphapi`
+before passing it as `source`. Select the operation with `operationType`
+(`query`, `mutation`, `subscription`) and `operationName`.
 
 ## JSON Schema-specific wiring
 
-`JsonSchemaViewer` accepts `schema` plus optional `source` when definitions
-live outside the root schema object. The `overridenKind: 'parameters'` flag is
-a legacy workaround for parameter-list layout only.
+`JsonSchemaViewer` takes `schema` plus optional `expandedDepth`, `displayMode`,
+`initialLevel`, and `customizationOptions` (`headerRowTitle` replaces the root title;
+`suppressRootNestingIndicator` renders a wrapper object's properties as a flat
+top-level list). `JsonSchemaDiffsViewer` takes the merged document as `schema`,
+plus `diffMetaKeys`, optional `diffTypes` (placeholder: accepted but ignored — no diff-type
+filtering yet), and `hideUnchangedNodes` (default `true`:
+runs of unchanged nodes collapse behind a "Show N unchanged nodes" row).
+
+**Synthesized schemas — renamed keys.** When the host builds a schema itself (for example one
+property per API parameter) and a property's key changed between versions, it can express the
+change as a rename instead of a removed plus an added property: in the parent's `properties` diff
+record (`properties[diffsMetaKey]`), key the diff by the property's **after** key with
+`action: 'rename'`, `beforeKey`, and `afterKey`. `JsonSchemaDiffsViewer` then shows the old key on
+the origin side and the new key on the changed side, highlighted, and keeps the property's own diffs.
+`apiDiff` never produces such a diff for plain JSON Schema documents. Design:
+`docs/design/json-schema/features/node-key-rename.md`.
+
+**Synthesized schemas — media types of top-level properties.** `JsonSchemaViewer` (plain only)
+accepts `topLevelPropsMediaTypes: Record<string, string>` — root's direct property key → media type
+(for example an API parameter described with `content` rather than `schema`). Each listed property
+gets an outline badge with the media type after its type label and tags; nested properties with the
+same key are not matched. `JsonSchemaDiffsViewer` does not support it. Design:
+`docs/design/json-schema/features/top-level-props-media-types.md`.
 
 ## DDL table-specific wiring
 
@@ -168,8 +191,8 @@ Replace `RouterLink` with whatever link primitive the host router exposes
 ## Layout modes
 
 Exported constants: `DOCUMENT_LAYOUT_MODE`, `SIDE_BY_SIDE_DIFFS_LAYOUT_MODE`,
-`INLINE_DIFFS_LAYOUT_MODE`. Legacy diff viewers accept `layoutMode`; new
-AsyncAPI diffs viewer always uses side-by-side internally.
+`INLINE_DIFFS_LAYOUT_MODE`. Only the legacy GraphQL diff viewer accepts
+`layoutMode`; the other diffs viewers always use side-by-side internally.
 
 ## Document preparation
 
@@ -178,8 +201,11 @@ Viewers expect documents already normalised/merged before they reach the UI:
 - **Plain AsyncAPI** — normalised AsyncAPI object (often passed as
   `mergedDocument` even when not comparing versions).
 - **AsyncAPI diffs** — output of `apiDiff(before, after, { metaKey, firstReferenceKeyProperty, unify, … }).merged`.
-- **GraphQL / OpenAPI diffs** — merged document from the builder pipeline with
-  diff meta properties attached.
+- **JSON Schema diffs** — `apiDiff` merged document of the schemas (or of their
+  enclosing OpenAPI documents), with diff meta properties attached.
+- **DDL diffs** — merged ddlapi `Realm` produced by the ddlapi diff pipeline.
+- **GraphQL diffs** — merged document from the builder pipeline with diff meta
+  properties attached.
 
 Replicate Storybook helpers (`prepareAsyncApiDocument`,
 `prepareAsyncApiDiffsDocument` in the library's `stories/preprocess.ts`) only

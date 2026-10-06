@@ -1,9 +1,10 @@
+import { JsonSchemaDiffsViewer } from "@apihub/components/JsonSchemaViewer/JsonSchemaDiffsViewer";
 import { JsoDiffsViewer } from "@apihub/components/JsoViewer/JsoDiffsViewer";
 import type { ArgTypes } from "@storybook/react-vite";
 import type { ComponentProps } from "react";
 import { prepareJsoDiffsDocument } from "../preprocess";
 import { parseYamlSource } from "../utils/parse-yaml-source";
-import { TEST_DIFF_META_KEYS } from "./shared-test-data";
+import { TEST_DIFF_META_KEYS } from "../shared/test-diff-meta-keys";
 
 export type JsoDiffSampleCase = {
   caseId: string;
@@ -53,16 +54,9 @@ export const createJsoViewerArgs = (
   }),
   initialLevel: 1,
   supportJsonSchema: true,
+  embeddedSchemaDiffsComponent: JsonSchemaDiffsViewer,
   diffMetaKeys: TEST_DIFF_META_KEYS,
 });
-
-export const createJsoSampleById = <TSample extends JsoDiffSampleCase>(
-  sampleCases: readonly TSample[],
-): Record<string, TSample> =>
-  sampleCases.reduce<Record<string, TSample>>((accumulator, sampleCase) => {
-    accumulator[sampleCase.caseId] = sampleCase;
-    return accumulator;
-  }, {});
 
 export const createJsoCaseStoryFactory = (
   StoryComponent: (props: JsoCaseStoryComponentProps) => JSX.Element,

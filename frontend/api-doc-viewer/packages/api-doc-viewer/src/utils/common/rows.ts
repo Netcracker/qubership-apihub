@@ -56,9 +56,17 @@ export function stringifyItem(
 }
 
 // TODO 15.11.23 // Think of implementing all logic in view model
-export function handleSeriesItem(key: string, item: unknown | undefined): string | undefined {
+export function handleSeriesItem(key: string, item: unknown | undefined): unknown {
   if (!isDefined(item)) {
     return undefined
+  }
+
+  // Object/array values (e.g. a complex `default`) must reach `stringifyItem` untouched so
+  // its own JSON.stringify(item, null, 2) branch can pretty-print them — the comparison-operator
+  // prefixing below only makes sense for scalar bound values, and the blind `${item}` coercion
+  // at the end would otherwise collapse them to "[object Object]" / a comma-joined array string.
+  if (isObject(item)) {
+    return item
   }
 
   switch (key) {

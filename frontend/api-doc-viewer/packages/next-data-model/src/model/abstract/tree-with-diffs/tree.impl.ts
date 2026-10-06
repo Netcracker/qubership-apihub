@@ -5,10 +5,10 @@ import { ComplexTreeNodeWithDiffsParams, ITreeNodeWithDiffs, SimpleTreeNodeWithD
 import { ITreeWithDiffs } from "./tree.interface";
 
 export class TreeWithDiffs<
-  V extends object | null,
+  V extends object | boolean | null,
   K extends string,
   M extends object,
-  D extends object | null,
+  D extends object | boolean | null,
 >
   implements ITreeWithDiffs<V, K, M, D> {
   public readonly nodes: Map<NodeId, ITreeNodeWithDiffs<V, K, M, D>> = new Map()

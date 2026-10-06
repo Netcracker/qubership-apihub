@@ -1,0 +1,13 @@
+type: string
+enum:
+  - alpha
+  - beta
+  - gamma
+default: alpha
+examples:
+  - alpha
+  - sample
+minLength: 1
+maxLength: 128
+pattern: ^[a-z]+$
+

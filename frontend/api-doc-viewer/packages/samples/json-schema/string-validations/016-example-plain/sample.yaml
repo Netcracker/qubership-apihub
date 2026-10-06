@@ -1,0 +1,4 @@
+type: string
+example: just a value
+title: '[example] example = "just a value"'
+

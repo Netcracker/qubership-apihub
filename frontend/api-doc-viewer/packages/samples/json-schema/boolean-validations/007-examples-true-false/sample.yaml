@@ -1,0 +1,6 @@
+type: boolean
+examples:
+  - true
+  - false
+title: "[examples] examples = [true, false]"
+

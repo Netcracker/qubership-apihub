@@ -1,0 +1,7 @@
+type: array
+items:
+  type: string
+minItems: 2
+maxItems: 5
+title: "[items-count] minItems = 2, maxItems = 5"
+

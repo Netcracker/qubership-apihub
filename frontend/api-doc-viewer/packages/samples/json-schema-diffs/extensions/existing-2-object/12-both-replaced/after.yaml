@@ -1,0 +1,7 @@
+type: 'string'
+x-metadata:
+  - 'beta'
+  - 'internal'
+x-labels:
+  type: 'integer'
+  minimum: 0

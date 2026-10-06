@@ -1,0 +1,12 @@
+type: object
+description: Root with nested combiner property
+properties:
+  payload:
+    oneOf:
+      - type: string
+        description: String variant
+      - type: array
+        description: Array variant
+        items:
+          type: string
+

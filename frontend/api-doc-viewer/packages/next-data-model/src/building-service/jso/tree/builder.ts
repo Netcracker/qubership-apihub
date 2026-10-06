@@ -12,11 +12,18 @@ import { ComplexTreeNodeParams, ITreeNode, SimpleTreeNodeParams, TreeNodeComplex
 import { isObject } from "../../../utilities";
 import { NodeId, NodeKey } from "../../../utility-types";
 import { TreeBuilder } from "../../abstract/tree/builder";
+import { AncestorsRegistry } from "../../abstract/json-crawl-entities/state/ancestors-registry";
+import {
+  collectAncestorsFromTree,
+  defaultObjectTreeHasOwnChildren,
+  LazyMaterializationState,
+} from "../../abstract/tree/lazy-materialization";
 import { getJsoCrawlRules } from "../json-crawl-entities/rules/rules.jso";
 import { JsoCrawlRule } from "../json-crawl-entities/rules/types";
 import { JsoTreeCrawlState } from "../json-crawl-entities/state/types";
 import { createJsoTreeBuildingHooks } from "./building-hooks";
 import { JsoNodeDataBuilder } from "./node-data/builder";
+import { JsoTreeNode } from "@apihub/next-data-model/model/jso/types/aliases";
 
 type SimpleJsoTreeNodeParams = SimpleTreeNodeParams<
   JsoTreeNodeValue | null,
@@ -38,19 +45,24 @@ export class JsoTreeBuilder extends TreeBuilder<
   public readonly tree: JsoTree;
   private readonly source: unknown;
   private readonly supportJsonSchema: boolean;
+  private readonly materializeDepth: number | undefined;
   private readonly logger: BuildingServiceLogger;
   private readonly nodeDataBuilder: JsoNodeDataBuilder;
+  private readonly lazyState = new LazyMaterializationState<JsoCrawlRule>();
+  private crawlHooks: ReturnType<typeof createJsoTreeBuildingHooks> | null = null;
 
   constructor(params: JsoTreeBuilderParams) {
     const {
       source,
       supportJsonSchema = false,
+      materializeDepth,
       logger = createBuildingServiceLogger(),
     } = params
 
     super()
     this.source = source
     this.supportJsonSchema = supportJsonSchema
+    this.materializeDepth = materializeDepth
     this.logger = logger
     this.tree = new JsoTree();
     this.nodeDataBuilder = new JsoNodeDataBuilder()
@@ -64,12 +76,15 @@ export class JsoTreeBuilder extends TreeBuilder<
     const initialState: JsoTreeCrawlState = {
       parent: null,
       container: null,
-      alreadyConvertedValuesCache: new Map(),
+      ancestors: new AncestorsRegistry(),
+      depth: 0,
+      materializeDepth: this.materializeDepth,
+      pathPrefix: [],
     }
 
     const initialRules: JsoCrawlRule = getJsoCrawlRules()
 
-    const hooks = createJsoTreeBuildingHooks({
+    this.crawlHooks = createJsoTreeBuildingHooks({
       source: this.source,
       tree: this.tree,
       supportedNodeKinds: JsoTreeNodeKindsList,
@@ -80,15 +95,21 @@ export class JsoTreeBuilder extends TreeBuilder<
         container,
         parent,
       }),
-      createStateForSimpleNode: (_state, node, cache) => ({
+      createStateForSimpleNode: (state, node) => ({
         parent: node,
         container: null,
-        alreadyConvertedValuesCache: cache,
+        ancestors: state.ancestors,
+        depth: state.depth,
+        materializeDepth: state.materializeDepth,
+        pathPrefix: state.pathPrefix,
       }),
-      createStateForComplexNode: (state, node, cache) => ({
+      createStateForComplexNode: (state, node) => ({
         parent: state.parent,
         container: node,
-        alreadyConvertedValuesCache: cache,
+        ancestors: state.ancestors,
+        depth: state.depth,
+        materializeDepth: state.materializeDepth,
+        pathPrefix: state.pathPrefix,
       }),
       isSimpleNode: (node): node is JsoSimpleTreeNode => this.isJsoSimpleTreeNode(node),
       isComplexNode: (node): node is JsoComplexTreeNode => this.isJsoComplexTreeNode(node),
@@ -110,11 +131,17 @@ export class JsoTreeBuilder extends TreeBuilder<
           nodeValue.valueType === JsoPropertyValueTypes.MULTI_SCHEMA
         )
       },
+      lazy: this.materializeDepth === undefined
+        ? undefined
+        : {
+          state: this.lazyState,
+          resolveHasOwnChildren: defaultObjectTreeHasOwnChildren,
+        },
     })
 
     syncCrawl<JsoTreeCrawlState, JsoCrawlRule>(
       this.source,
-      hooks,
+      this.crawlHooks,
       {
         state: initialState,
         rules: initialRules,
@@ -122,6 +149,37 @@ export class JsoTreeBuilder extends TreeBuilder<
     )
 
     return this.tree;
+  }
+
+  /**
+   * Idempotent: materializes deferred children of `node` one data-depth level (or `depth`).
+   * No-op when the node was never deferred or was already materialized.
+   */
+  public materializeChildren(node: JsoTreeNode, depth = 1): void {
+    const work = this.lazyState.pending.get(node.id)
+    if (!work || !this.crawlHooks) {
+      return
+    }
+    this.lazyState.pending.delete(work.nodeId)
+
+    const rematerializeState: JsoTreeCrawlState = {
+      parent: node,
+      container: null,
+      ancestors: collectAncestorsFromTree(node, this.lazyState.fragments),
+      depth: 0,
+      materializeDepth: depth,
+      pathPrefix: work.path,
+    }
+
+    syncCrawl<JsoTreeCrawlState, JsoCrawlRule>(
+      work.fragment,
+      this.crawlHooks,
+      {
+        state: rematerializeState,
+        rules: work.rules,
+      },
+      true, // skip root — node already exists
+    )
   }
 
   private resolveNodeKey(key: NodeKey, value: unknown): NodeKey {

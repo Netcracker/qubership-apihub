@@ -1,0 +1,9 @@
+type: 'string'
+x-metadata:
+  owner: 'platform-team'
+x-labels:
+  - 'beta'
+  - 'internal'
+x-value-schema:
+  type: 'integer'
+  minimum: 0

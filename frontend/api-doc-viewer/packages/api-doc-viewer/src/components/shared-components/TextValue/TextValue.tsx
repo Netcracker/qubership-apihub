@@ -1,10 +1,10 @@
 import { ChangedPropertyMetaData, DiffHighlightingApplicationMode, HighlightVariant } from "@apihub/next-data-model/model/abstract/tree-with-diffs/tree-node.interface";
 import { CHANGED_LAYOUT_SIDE, LayoutSide, ORIGIN_LAYOUT_SIDE } from "@apihub/types/internal/LayoutSide";
-import { ArrayUtils } from "@apihub/utils/common/arrays";
 import { isDiffAdd, isDiffRemove, isDiffRename, isDiffReplace } from "@netcracker/qubership-apihub-api-diff";
 import { DiffsClassesBuilder } from "@netcracker/qubership-apihub-next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/utilities";
 import { Dispatch, FC, memo, ReactNode, SetStateAction, useCallback, useMemo, useState } from "react";
 import { TitleRowUsage } from "../TitleRow/types";
+import { getExpanderFontSizeClass, isExpandable, shortenValue } from "./shorten-text-value";
 import './TextValue.css';
 import { TextValueVariant } from "./types";
 
@@ -211,56 +211,6 @@ export const TextValue: FC<TextValueProps> = memo<TextValueProps>((props) => {
   return content
 })
 
-const OVERFLOW_LINES_AMOUNT = 5
-const OVERFLOW_CHARACTERS_AMOUNT = 300
-
-function isExpandable(value: string | undefined): boolean {
-  if (!value) {
-    return false
-  }
-  return (
-    value.length > OVERFLOW_CHARACTERS_AMOUNT ||
-    ArrayUtils.trim(value.split('\n')).length > OVERFLOW_LINES_AMOUNT
-  )
-}
-
-function shortenValue(value: string | undefined): string | undefined {
-  if (!value) {
-    return undefined
-  }
-  if (value.length > OVERFLOW_CHARACTERS_AMOUNT) {
-    return value.slice(0, OVERFLOW_CHARACTERS_AMOUNT) + '...'
-  }
-  const lines = ArrayUtils.trim(value.split('\n'))
-  if (lines.length > OVERFLOW_LINES_AMOUNT) {
-    return lines.slice(0, OVERFLOW_LINES_AMOUNT).join('\n') + '...'
-  }
-  return value
-}
-
 function isString(value: unknown): value is string {
   return typeof value === 'string'
-}
-
-function getExpanderFontSizeClass(variant: TextValueVariant | undefined): string {
-  switch (variant) {
-    case TextValueVariant.h1:
-      return 'text-value-expander--h1'
-    case TextValueVariant.h2:
-      return 'text-value-expander--h2'
-    case TextValueVariant.h3:
-      return 'text-value-expander--h3'
-    case TextValueVariant.h4:
-      return 'text-value-expander--h4'
-    case TextValueVariant.h5:
-      return 'text-value-expander--h5'
-    case TextValueVariant.h6:
-      return 'text-value-expander--h6'
-    case TextValueVariant.body1:
-      return 'text-value-expander--body1'
-    case TextValueVariant.body2:
-      return 'text-value-expander--body2'
-    default:
-      return 'text-value-expander--body2'
-  }
 }

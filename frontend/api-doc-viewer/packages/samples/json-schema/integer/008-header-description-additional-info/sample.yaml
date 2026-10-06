@@ -1,0 +1,19 @@
+type: integer
+title: Sample Integer
+readOnly: true
+writeOnly: true
+deprecated: true
+format: int32
+description: Sample integer description
+enum:
+  - 1
+  - 2
+  - 3
+default: 42
+examples:
+  - 1
+  - 42
+multipleOf: 2
+minimum: 0
+maximum: 100
+

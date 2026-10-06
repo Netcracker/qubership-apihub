@@ -2,14 +2,19 @@ import { DdlTableDiffsViewer } from "@apihub/components/DdlTableViewer/DdlTableD
 import { DisplayMode } from "@apihub/types/DisplayMode";
 import { apiDiff } from "@netcracker/qubership-apihub-api-diff";
 import type { Realm } from "@netcracker/qubership-apihub-ddlapi";
-import { TableKey } from "@netcracker/qubership-apihub-next-data-model/shared/ddlapi/types/table-key";
+import type { TableKey } from "@netcracker/qubership-apihub-next-data-model/shared/ddlapi/types/table-key";
 import { FC, useEffect, useState } from "react";
 import {
   buildFromDdlInBrowser,
   realmHasTables,
   resolveDdlDiffComparePair,
 } from "../ddlapi-suite/build-from-ddl-browser";
-import { TEST_DIFF_META_KEYS } from "./shared-test-data";
+import {
+  type DebugTableKeyControls,
+  resolveDebugTableKey,
+} from "../ddlapi-suite/resolve-debug-table-key";
+import { TEST_DIFF_META_KEYS } from "../shared/test-diff-meta-keys";
+import { ddlStoryNavigationLinkBuilder } from "../ddlapi-suite/ddl-story-navigation";
 
 export const DEFAULT_BEFORE_DDL = `CREATE SCHEMA IF NOT EXISTS public;
 
@@ -28,12 +33,7 @@ export type BuildFromDdlDiffsDebugProps = {
   beforeSql: string;
   afterSql: string;
   displayMode?: DisplayMode;
-};
-
-const navigationLinkBuilder = (schema: string, table: string, column: string) => {
-  console.log(`Navigating to ${schema}.${table}.${column}`);
-  return `#${schema}.${table}.${column}`;
-};
+} & DebugTableKeyControls;
 
 type TablePresence = "both" | "before" | "after";
 
@@ -113,6 +113,9 @@ export const BuildFromDdlDiffsDebug: FC<BuildFromDdlDiffsDebugProps> = ({
   beforeSql,
   afterSql,
   displayMode,
+  useCustomTableKey,
+  tableSchemaName,
+  tableName,
 }) => {
   const [mergedSource, setMergedSource] = useState<Realm | null>(null);
   const [tableOptions, setTableOptions] = useState<TableOption[]>([]);
@@ -179,6 +182,11 @@ export const BuildFromDdlDiffsDebug: FC<BuildFromDdlDiffsDebugProps> = ({
     return null;
   }
 
+  // The custom table key controls (Storybook args) take precedence over the Table drop-down.
+  const tableKey =
+    resolveDebugTableKey({ useCustomTableKey, tableSchemaName, tableName }, selectedTable.tableKey) ??
+    selectedTable.tableKey;
+
   if (!realmHasTables(mergedSource)) {
     return (
       <p>
@@ -194,6 +202,7 @@ export const BuildFromDdlDiffsDebug: FC<BuildFromDdlDiffsDebugProps> = ({
         Table
         <select
           value={selectedTable.id}
+          disabled={tableKey !== selectedTable.tableKey}
           onChange={(event) => setSelectedTableId(event.target.value)}
         >
           {tableOptions.map((option) => (
@@ -205,10 +214,10 @@ export const BuildFromDdlDiffsDebug: FC<BuildFromDdlDiffsDebugProps> = ({
         </select>
       </label>
       <DdlTableDiffsViewer
-        key={`${btoa(beforeSql)}-${btoa(afterSql)}-${selectedTable.id}`}
+        key={`${btoa(beforeSql)}-${btoa(afterSql)}-${tableId(tableKey)}`}
         mergedSource={mergedSource}
-        tableKey={selectedTable.tableKey}
-        navigationLinkBuilder={navigationLinkBuilder}
+        tableKey={tableKey}
+        navigationLinkBuilder={ddlStoryNavigationLinkBuilder}
         diffMetaKeys={TEST_DIFF_META_KEYS}
         displayMode={displayMode}
         devMode={true}

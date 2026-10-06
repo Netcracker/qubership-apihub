@@ -1,0 +1,10 @@
+type: boolean
+description: Sample boolean description
+enum:
+  - true
+  - false
+default: true
+examples:
+  - true
+  - false
+

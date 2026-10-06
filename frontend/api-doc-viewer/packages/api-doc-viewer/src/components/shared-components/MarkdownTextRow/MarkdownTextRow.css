@@ -1,0 +1,101 @@
+.markdown-text-row .markdown > * {
+  all: revert;
+}
+
+.markdown-text-row .markdown p {
+  /* `anywhere` (not `break-word`): an unbroken run of characters (no spaces/hyphens, e.g. a
+     long token) has no break opportunity under the default `overflow-wrap: normal`, so the
+     browser lets it overflow visually instead of wrapping. `break-word` only affects actual
+     line-breaking and is ignored when browsers compute this flex item's min-content size, so
+     the overflow persists even though lines visually looked wrapped; `anywhere` is counted in
+     that min-content calculation (paired with the `min-w-0` Tailwind class on the
+     `.markdown-text-row` wrapper in MarkdownTextValue.tsx) and still prefers breaking at
+     spaces first, so normal prose is unaffected. */
+  overflow-wrap: anywhere;
+}
+
+.markdown-text-row .markdown > p:first-of-type {
+  margin-top: 0;
+}
+
+.markdown-text-row .markdown > p:last-of-type {
+  margin-bottom: 0;
+}
+
+.markdown-text-row .markdown > h1,
+.markdown-text-row .markdown > h2,
+.markdown-text-row .markdown > h3,
+.markdown-text-row .markdown > h4,
+.markdown-text-row .markdown > h5,
+.markdown-text-row .markdown > h6 {
+  font-family: "Inter Semi Bold", sans-serif;
+  font-weight: normal;
+}
+
+.markdown-text-row .markdown table {
+  border-spacing: 0;
+}
+
+.markdown-text-row .markdown td {
+  font-family: Inter, sans-serif;
+  padding: 10px;
+  border: 1px solid rgb(218, 224, 236);
+  color: rgb(125, 125, 131);
+}
+
+.markdown-text-row .markdown td:not(:first-child) {
+  border-left: none;
+}
+
+.markdown-text-row .markdown td:not(:last-child) {
+  border-right: none;
+}
+
+.markdown-text-row .markdown tr:not(:last-child) td {
+  border-bottom: none;
+}
+
+.markdown-text-row .markdown th {
+  font-family: Inter, sans-serif;
+  font-weight: normal;
+  text-transform: uppercase;
+  color: rgb(103, 103, 123);
+  padding: 10px 10px 5px 10px;
+  text-align: left;
+}
+
+.markdown-text-row .markdown tr:nth-child(2n) td {
+  background-color: rgb(249, 250, 252);
+}
+
+.markdown-text-row .markdown tr:first-child td:first-child {
+  border-top-left-radius: 5px;
+}
+
+.markdown-text-row .markdown tr:last-child td:first-child {
+  border-bottom-left-radius: 5px;
+}
+
+.markdown-text-row .markdown tr:first-child td:last-child {
+  border-top-right-radius: 5px;
+}
+
+.markdown-text-row .markdown tr:last-child td:last-child {
+  border-bottom-right-radius: 5px;
+}
+
+/* JsonSchemaViewer description / deprecation-reason rows */
+.markdown-text-row .markdown.markdown-text-row__json-schema-description {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgb(51 65 85);
+  /* Legacy parity: legacy's .markdown wrapper uses Tailwind text-xs (line-height: 1rem),
+     inherited by its <p> child. `.markdown-text-row .markdown > * { all: revert }` above can
+     drop that inherited line-height on the <p>, so restore it explicitly here. */
+  line-height: 1rem;
+}
+
+.markdown-text-row__json-schema-expander {
+  font-size: 12px;
+  font-weight: 400;
+}

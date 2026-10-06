@@ -4,7 +4,7 @@ export type NodeDataPickFunction = <TargetType extends object>(
 ) => TargetType | null
 
 export abstract class AbstractNodeDataBuilder<
-  V extends object | null,
+  V extends object | boolean | null,
   M extends object
 > {
   public abstract createNodeMeta(value: unknown): M;

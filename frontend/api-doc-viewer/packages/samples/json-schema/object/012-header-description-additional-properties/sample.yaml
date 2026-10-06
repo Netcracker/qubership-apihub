@@ -1,0 +1,18 @@
+type: object
+title: Sample Object
+readOnly: true
+writeOnly: true
+deprecated: true
+description: Sample object description
+additionalProperties:
+  type: string
+  description: Sample string schema with all string validations
+  default: alpha
+  enum:
+    - alpha
+    - beta
+    - gamma
+  minLength: 1
+  maxLength: 128
+  pattern: ^[a-z]+$
+

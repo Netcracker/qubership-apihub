@@ -5,10 +5,10 @@ import { DiffMetaKeys } from "./node-diffs-data/diff-meta-keys";
 import { TreeBuilder } from "../tree/builder";
 
 export abstract class TreeWithDiffsBuilder<
-  V extends object | null,
+  V extends object | boolean | null,
   K extends string,
   M extends object,
-  D extends object | null,
+  D extends object | boolean | null,
 > extends TreeBuilder<V, K, M> {
   public readonly treeWithDiffs: ITreeWithDiffs<V, K, M, D> | null = null;
 
@@ -44,7 +44,7 @@ export abstract class TreeWithDiffsBuilder<
   protected abstract createNodeDiffsSummary(
     kind: string,
     nodeDiffs: NodeDiffs<D> | undefined,
-    crawlValue: object | null | undefined,
+    crawlValue: object | boolean | null | undefined,
     diffsMetaKeys: DiffMetaKeys | undefined,
   ): NodeDiffsSummary | undefined;
 
@@ -57,7 +57,7 @@ export abstract class TreeWithDiffsBuilder<
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     kind: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    crawlValue: object | null | undefined,
+    crawlValue: object | boolean | null | undefined,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     nodeDiffs: NodeDiffs<D> | undefined,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -70,7 +70,7 @@ export abstract class TreeWithDiffsBuilder<
     kind: string,
     nodeDiffs: NodeDiffs<D> | undefined,
     nodeDescendantDiffs: NodeDescendantDiffs | undefined,
-    crawlValue: object | null | undefined,
+    crawlValue: object | boolean | null | undefined,
     diffsMetaKeys: DiffMetaKeys | undefined,
   ): NodeDescendantDiffsSummary | undefined;
 

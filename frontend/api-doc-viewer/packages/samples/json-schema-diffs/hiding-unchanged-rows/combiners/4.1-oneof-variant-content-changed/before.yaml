@@ -1,0 +1,18 @@
+type: object
+properties:
+  value:
+    oneOf:
+      - type: object
+        description: Object variant (before)
+        properties:
+          nestedChanged:
+            type: string
+            description: Before
+          nestedUnchanged:
+            type: string
+            description: Unchanged
+      - type: number
+        description: Number variant unchanged
+  otherProp:
+    type: string
+    description: Unchanged

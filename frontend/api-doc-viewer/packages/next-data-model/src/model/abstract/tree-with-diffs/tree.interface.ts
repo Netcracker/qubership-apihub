@@ -3,10 +3,10 @@ import { ITree } from "../tree/tree.interface"
 import { ComplexTreeNodeWithDiffsParams, ITreeNodeWithDiffs, SimpleTreeNodeWithDiffsParams } from "./tree-node.interface"
 
 export interface ITreeWithDiffs<
-  V extends object | null,
+  V extends object | boolean | null,
   K extends string,
   M extends object,
-  D extends object | null,
+  D extends object | boolean | null,
 > extends ITree<V, K, M> {
   root: ITreeNodeWithDiffs<V, K, M, D> | null
   nodes: Map<NodeId, ITreeNodeWithDiffs<V, K, M, D>>

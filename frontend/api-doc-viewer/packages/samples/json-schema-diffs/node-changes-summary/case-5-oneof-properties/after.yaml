@@ -1,0 +1,15 @@
+type: object
+description: Node changes summary sample (object with oneOf properties)
+properties:
+  oneOfAdded:
+    oneOf:
+      - type: string
+      - type: number
+  oneOfNumberAdded:
+    oneOf:
+      - type: string
+      - type: number
+  oneOfNumberRemoved:
+    oneOf:
+      - type: string
+

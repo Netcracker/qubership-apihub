@@ -20,7 +20,6 @@ import { Diff, DIFF_META_KEY, DiffReplace, DIFFS_AGGREGATED_META_KEY } from '@ne
 import { stringifyCyclicJso } from '@netcracker/qubership-apihub-api-unifier'
 import { getCompatibilitySuite, TestSpecType } from '@netcracker/qubership-apihub-compatibility-suites'
 import type { Realm } from '@netcracker/qubership-apihub-ddlapi'
-import type { NavigationLinkBuilder } from '@netcracker/qubership-apihub-next-data-model/shared/ddlapi/types/navigation-link-builder'
 import type { TableKey } from '@netcracker/qubership-apihub-next-data-model/shared/ddlapi/types/table-key'
 import FontFaceObserver from 'fontfaceobserver'
 import { buildSchema, findBreakingChanges, findDangerousChanges } from 'graphql'
@@ -30,7 +29,8 @@ import { GraphQLOperationDiffViewer } from '../../components/GraphQLOperationVie
 import { buildGraphApiSchema } from '../../mocks/utils/graph-api-transformers'
 import { SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '../../types/LayoutMode'
 import { ArrayUtils } from '../../utils/common/arrays'
-import { TEST_DIFF_META_KEYS } from '../ddlapi-diffs-suite/shared-test-data'
+import { ddlStoryNavigationLinkBuilder } from '../ddlapi-suite/ddl-story-navigation'
+import { TEST_DIFF_META_KEYS } from '../shared/test-diff-meta-keys'
 import {
   prepareDdlCompatibilitySuiteMergedSource,
   resolveDdlCompatibilitySuiteTableKey,
@@ -94,9 +94,6 @@ export type DdlCompatibilitySuiteStoryArgs = {
   after: string
 }
 
-const navigationLinkBuilder: NavigationLinkBuilder = (schema, table, column) =>
-  `#${schema}.${table}.${column}`
-
 export function DdlStoryComponent({ before, after }: DdlCompatibilitySuiteStoryArgs) {
   const [mergedSource, setMergedSource] = useState<Realm | undefined>(undefined)
   const [tableKey, setTableKey] = useState<TableKey | undefined>(undefined)
@@ -132,7 +129,7 @@ export function DdlStoryComponent({ before, after }: DdlCompatibilitySuiteStoryA
     <DdlTableDiffsViewer
       mergedSource={mergedSource}
       tableKey={tableKey}
-      navigationLinkBuilder={navigationLinkBuilder}
+      navigationLinkBuilder={ddlStoryNavigationLinkBuilder}
       diffMetaKeys={TEST_DIFF_META_KEYS}
       devMode
     />

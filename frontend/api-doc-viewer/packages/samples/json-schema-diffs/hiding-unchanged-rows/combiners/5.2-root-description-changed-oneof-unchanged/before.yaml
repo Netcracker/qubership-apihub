@@ -1,0 +1,18 @@
+type: object
+description: Root description before change
+properties:
+  status:
+    oneOf:
+      - type: string
+        description: String variant
+      - type: number
+        description: Number variant
+      - type: object
+        description: Object variant
+        properties:
+          nestedField:
+            type: string
+            description: Nested property inside object variant
+  unchangedProp:
+    type: string
+    description: Unchanged sibling property

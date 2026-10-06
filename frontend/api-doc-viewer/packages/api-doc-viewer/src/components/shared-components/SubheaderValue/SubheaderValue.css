@@ -1,0 +1,19 @@
+.title-row-subheader-value {
+  font-size: 12px;
+}
+
+.title-row-subheader-value.text {
+  font-size: 12px;
+  color: rgb(100 116 139);
+  /* Legacy parity: subheader uses Tailwind text-xs (line-height: 1rem). Previous "line-height: 1"
+     here was itself an incorrect guess — 1rem (Tailwind's actual paired value) is correct. */
+  line-height: 1rem;
+}
+
+.title-row-subheader-value.block {
+  padding: 0 8px;
+  color: rgb(100 116 139);
+  background-color: rgb(243 244 246);
+  border-radius: 4px;
+  border: 1px solid #D5DCE3;
+}

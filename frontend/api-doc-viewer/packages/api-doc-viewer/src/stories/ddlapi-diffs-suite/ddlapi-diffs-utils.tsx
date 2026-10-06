@@ -5,7 +5,9 @@ import type { ArgTypes, Meta, StoryObj } from "@storybook/react-vite";
 import { NavigationLinkBuilder } from "@netcracker/qubership-apihub-next-data-model/shared/ddlapi/types/navigation-link-builder";
 import { TableKey } from "@netcracker/qubership-apihub-next-data-model/shared/ddlapi/types/table-key";
 import { buildFromDdlInBrowser, resolveDdlDiffComparePair } from "../ddlapi-suite/build-from-ddl-browser";
-import { TEST_DIFF_META_KEYS } from "./shared-test-data";
+import { TEST_DIFF_META_KEYS } from "../shared/test-diff-meta-keys";
+import { collectBeforeAfterSampleSources, type RawSampleSources } from "../utils/sample-cases";
+import { ddlStoryNavigationLinkBuilder } from "../ddlapi-suite/ddl-story-navigation";
 
 export type DdlDiffSampleCase = {
   caseId: string;
@@ -48,10 +50,7 @@ export const ddlDiffsSamplesStoryMetaBase = {
   argTypes: ddlDiffSampleReadonlyArgTypes,
 } satisfies Pick<DdlDiffsSamplesStoryMeta, "component" | "argTypes">;
 
-export type RawSqlSources = Record<string, string>;
-
-const BEFORE_SUFFIX = "/before.sql";
-const AFTER_SUFFIX = "/after.sql";
+export type RawSqlSources = RawSampleSources;
 
 const DEFAULT_TABLE_KEY: TableKey = {
   schemaName: "public",
@@ -60,53 +59,15 @@ const DEFAULT_TABLE_KEY: TableKey = {
 
 const TABLE_KEYS_BY_CASE_ID: Record<string, TableKey> = {};
 
-const navigationLinkBuilder: NavigationLinkBuilder = (schema, table, column) =>
-  `#${schema}.${table}.${column}`;
-
-const extractCaseId = (beforePath: string): string | undefined => {
-  const normalized = beforePath.replaceAll("\\", "/");
-  if (!normalized.endsWith(BEFORE_SUFFIX)) {
-    return undefined;
-  }
-
-  const trimmed = normalized.slice(0, -BEFORE_SUFFIX.length);
-  const parts = trimmed.split("/");
-  return parts[parts.length - 1];
-};
-
 export const collectDdlDiffSampleCases = (
   beforeFiles: RawSqlSources,
   afterFiles: RawSqlSources,
-): DdlDiffSampleCase[] => {
-  const cases: DdlDiffSampleCase[] = [];
-
-  for (const [beforePath, beforeSql] of Object.entries(beforeFiles)) {
-    const caseId = extractCaseId(beforePath);
-    if (!caseId) {
-      continue;
-    }
-
-    const afterPath = beforePath.replace(BEFORE_SUFFIX, AFTER_SUFFIX);
-    const afterSql = afterFiles[afterPath];
-    if (!afterSql) {
-      continue;
-    }
-
-    cases.push({ caseId, beforeSql, afterSql });
-  }
-
-  return cases.sort((left, right) =>
-    left.caseId.localeCompare(right.caseId, undefined, { numeric: true }),
-  );
-};
-
-export const createDdlDiffSampleById = <TSample extends DdlDiffSampleCase>(
-  sampleCases: readonly TSample[],
-): Record<string, TSample> =>
-  sampleCases.reduce<Record<string, TSample>>((accumulator, sampleCase) => {
-    accumulator[sampleCase.caseId] = sampleCase;
-    return accumulator;
-  }, {});
+): DdlDiffSampleCase[] =>
+  collectBeforeAfterSampleSources(beforeFiles, afterFiles, "sql").map(({ caseId, before, after }) => ({
+    caseId,
+    beforeSql: before,
+    afterSql: after,
+  }));
 
 export const resolveTableKey = (caseId: string): TableKey =>
   TABLE_KEYS_BY_CASE_ID[caseId] ?? DEFAULT_TABLE_KEY;
@@ -162,7 +123,7 @@ export const createDdlDiffCaseStoryFactory = (
       <DdlTableDiffsViewer
         mergedSource={loaded!.mergedSource}
         tableKey={loaded!.tableKey}
-        navigationLinkBuilder={navigationLinkBuilder}
+        navigationLinkBuilder={ddlStoryNavigationLinkBuilder}
         diffMetaKeys={TEST_DIFF_META_KEYS}
         devMode
       />

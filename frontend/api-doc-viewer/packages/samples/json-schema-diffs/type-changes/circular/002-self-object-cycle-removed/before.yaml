@@ -1,0 +1,13 @@
+beforeSchema:
+  $ref: "#/components/schemas/SelfObject"
+beforeAdditionalComponents:
+  schemas:
+    SelfObject:
+      type: object
+      description: Self-referencing object
+      properties:
+        label:
+          type: string
+        child:
+          $ref: "#/components/schemas/SelfObject"
+

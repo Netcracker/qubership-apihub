@@ -3,7 +3,7 @@ import { SimpleTreeNode } from "./simple-node.impl";
 import { ComplexTreeNodeParams, ITreeNode, TreeNodeComplexityTypes } from "./tree-node.interface";
 
 export class ComplexTreeNode<
-  V extends object | null,
+  V extends object | boolean | null,
   K extends string,
   M extends object,
 > extends SimpleTreeNode<V, K, M> {
@@ -31,11 +31,14 @@ export class ComplexTreeNode<
       parent: parent,
       container: null,
       newDataLevel: this.newDataLevel,
-      value: this._value !== null ? { ...this._value } : null,
+      value: this._value !== null
+        ? (typeof this._value === "object" ? { ...(this._value as object) } as V : this._value)
+        : null,
       meta: { ...this._meta },
     });
-    result.setChildrenNodes(this._childrenNodes);
-    result.setNestedNodes(this._nestedNodes);
+    // Share the same children/nested arrays so later additions to the source are visible on the clone.
+    result._childrenNodes = this._childrenNodes;
+    result._nestedNodes = this._nestedNodes;
     return result;
   }
 

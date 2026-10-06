@@ -1,0 +1,22 @@
+openapi: 3.0.3
+info:
+  title: Property rename sample
+  version: 1.0.0
+paths:
+  '/users/{userId}':
+    get:
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: User identifier.
+          schema:
+            type: string
+        - name: verbose
+          in: query
+          description: Include optional fields.
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: OK

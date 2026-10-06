@@ -1,0 +1,7 @@
+type: boolean
+title: Sample Boolean
+readOnly: true
+writeOnly: true
+deprecated: true
+description: Sample boolean description
+

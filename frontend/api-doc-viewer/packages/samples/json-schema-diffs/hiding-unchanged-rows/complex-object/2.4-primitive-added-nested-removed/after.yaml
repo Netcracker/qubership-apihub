@@ -1,0 +1,12 @@
+type: object
+description: Complex object for hiding-unchanged-rows samples
+properties:
+  prop1:
+    type: string
+    description: First primitive property
+  prop3:
+    type: integer
+    description: Third primitive property
+  prop5:
+    type: boolean
+    description: Fifth primitive property

@@ -1,0 +1,4 @@
+type: number
+description: Sample number
+multipleOf: 2
+

@@ -1,0 +1,2 @@
+type: string
+description: Returns the current status of the requested resource, including any associated metadata that downstream consumers may find useful.

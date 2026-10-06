@@ -1,0 +1,38 @@
+.additional-info-piece {
+  font-size: 12px;
+  /* Legacy parity: .ux-badge pre { line-height: 1.5 }. Row content height is padding-driven
+     rhythm plus this line-height — dropping it silently shrinks the chip's natural height and
+     drifts the gap to adjacent rows even though padding numbers match. */
+  line-height: 1.5;
+}
+
+.additional-info-piece.block {
+  padding: 1px 8px 0;
+  color: rgb(100 116 139);
+  background-color: rgb(243 244 246);
+  border-radius: 4px;
+  /* Legacy parity: .ux-badge_default uses an inset box-shadow, not a real border. A real
+     border adds to the box's rendered size (2px height/width even under content-box sizing
+     if not otherwise compensated); an inset box-shadow paints inside the box with zero
+     layout/size impact — this was silently inflating the chip's height vs legacy. */
+  box-shadow: inset 0 0 0 1px #D5DCE3;
+}
+
+/* TEMPORARY: legacy parity — .ux-badge pre { margin: 0 }. The value element is now a <pre>
+   (see AdditionalInfoPieceBase.tsx), which carries a real browser default margin. */
+.additional-info-piece pre {
+  margin: 0;
+}
+
+/* additional-info-piece_json-schema-validation previously forced white-space: pre-wrap here to
+   preserve newlines on a <span>. Now that the value renders in a <pre> (legacy parity), that's
+   redundant — <pre>'s own UA default already preserves whitespace/newlines with no wrap, matching
+   legacy exactly, and pre-wrap on this ancestor class wouldn't even apply: a UA rule that targets
+   an element directly (pre { white-space: pre }) wins over an inherited value from an ancestor's
+   class. Rule intentionally removed rather than left as dead/misleading CSS. */
+
+/* Legacy parity (DEFAULT_SERIES_ITEM_TEXT_COLOR = 'text-gray-400/[.8]'): the `<empty string>`
+   placeholder is shown in muted text, distinct from the diff-replace "font muted" color. */
+.additional-info-piece_empty-string-placeholder {
+  color: rgb(156 163 175 / 0.8);
+}

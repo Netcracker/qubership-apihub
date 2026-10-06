@@ -16,7 +16,7 @@
 
 import type { FC } from 'react'
 import { useMemo, useState } from 'react'
-import { DiffNodeMeta } from '@netcracker/qubership-apihub-api-data-model'
+import { DiffNodeMeta, GraphApiDiffTreeNode, GraphApiTreeNode } from '@netcracker/qubership-apihub-api-data-model'
 import { isCombinerItemNode } from '../../../utils/nodes'
 import { GraphCombinerNodePropsWithState } from '../../../types/internal/PropsWithState'
 import { PropsWithChanges } from '../../../types/internal/PropsWithChanges'
@@ -68,7 +68,7 @@ export const GraphCombinerNodeViewer: FC<GraphCombinerNodeViewerProps> = (props)
     const result: Record<string, NodeTypeData> = {}
     nested.forEach(nestedNode => {
       if (nestedNode?.id) {
-        const nodeTypeData = buildNodeTypeData({ node: nestedNode })
+        const nodeTypeData = buildNodeTypeData({ node: nestedNode as GraphApiDiffTreeNode | GraphApiTreeNode })
         // Just guard, but null is impossible
         nodeTypeData && (result[nestedNode.id] = nodeTypeData)
       }

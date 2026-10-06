@@ -7,7 +7,7 @@ export const TreeNodeComplexityTypes = {
 export type TreeNodeComplexityType = (typeof TreeNodeComplexityTypes)[keyof typeof TreeNodeComplexityTypes]
 
 export interface TreeNodeParams<
-  V extends object | null,
+  V extends object | boolean | null,
   K extends string,
   M extends object,
 > {
@@ -20,7 +20,7 @@ export interface TreeNodeParams<
 }
 
 export interface SimpleTreeNodeParams<
-  V extends object | null,
+  V extends object | boolean | null,
   K extends string,
   M extends object,
 > extends TreeNodeParams<V, K, M> {
@@ -28,7 +28,7 @@ export interface SimpleTreeNodeParams<
 }
 
 export interface ComplexTreeNodeParams<
-  V extends object | null,
+  V extends object | boolean | null,
   K extends string,
   M extends object,
 > extends TreeNodeParams<V, K, M> {
@@ -36,7 +36,7 @@ export interface ComplexTreeNodeParams<
 }
 
 export interface ITreeNode<
-  V extends object | null = object | null,
+  V extends object | boolean | null = object | boolean | null,
   K extends string = string,
   M extends object = object,
 > {

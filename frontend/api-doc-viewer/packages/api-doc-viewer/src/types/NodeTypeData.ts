@@ -19,10 +19,8 @@ import {
   GraphApiNodeData,
   GraphApiTreeNode,
   GraphSchemaDiffNodeValue,
-  JsonSchemaDiffNodeValue,
-  JsonSchemaDiffTreeNode,
 } from '@netcracker/qubership-apihub-api-data-model'
-import { GraphPropNodePropsWithState, JsonPropNodePropsWithState } from './internal/PropsWithState'
+import { GraphPropNodePropsWithState } from './internal/PropsWithState'
 import { CustomizationOptions } from '@apihub/contexts/CustomizationOptionsContext'
 
 export type NodeTypeData = Partial<{
@@ -39,12 +37,6 @@ export type NodeTypeDataOptions<S, N, V> = Partial<S> & {
   nodeValue?: V | null
   customizationOptions?: CustomizationOptions
 }
-
-export type JsonNodeTypeDataOptions = NodeTypeDataOptions<
-  JsonPropNodePropsWithState,
-  JsonSchemaDiffTreeNode,
-  JsonSchemaDiffNodeValue | any
->
 
 export type GraphNodeTypeDataOptions = NodeTypeDataOptions<
   GraphPropNodePropsWithState,

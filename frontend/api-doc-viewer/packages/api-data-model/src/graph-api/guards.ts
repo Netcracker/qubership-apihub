@@ -1,5 +1,14 @@
 import { isObject, isString } from '../utils'
+import { schemaNodeTypes } from './constants'
 import { GraphSchemaNodeType, graphSchemaNodeTypes, GraphSchemaNodeValue, IGraphSchemaEnumType } from './tree/types'
+import { SchemaNodeType } from './tree/schema-types'
+
+export function isSchemaNodeType(type: unknown): type is SchemaNodeType {
+  if (!type || !isString(type)) {
+    return false
+  }
+  return schemaNodeTypes.some(schemaNodeType => schemaNodeType === type)
+}
 
 export function isGraphApiNodeType(type: unknown): type is GraphSchemaNodeType {
   if (!type || !isString(type)) {

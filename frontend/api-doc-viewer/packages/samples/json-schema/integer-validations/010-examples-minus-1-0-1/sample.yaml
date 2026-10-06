@@ -1,0 +1,7 @@
+type: integer
+examples:
+  - -1
+  - 0
+  - 1
+title: "[examples] examples = [-1, 0, 1]"
+

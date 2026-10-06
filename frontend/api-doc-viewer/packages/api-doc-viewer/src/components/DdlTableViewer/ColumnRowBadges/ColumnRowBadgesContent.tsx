@@ -1,15 +1,12 @@
-import { DiffBadge } from "@apihub/components/common/diffs/DiffBadge"
+import { BadgeWithDiffs } from "@apihub/components/shared-components/diffs/BadgeWithDiffs"
 import { useLayoutMode } from "@apihub/contexts/LayoutModeContext"
 import { LayoutSide, ORIGIN_LAYOUT_SIDE } from "@apihub/types/internal/LayoutSide"
 import { Diff, isDiffReplace } from "@netcracker/qubership-apihub-api-diff"
-import { takeDiffSideTextHighlighterColor } from "@apihub/utils/diffs/take-diff-side-text-highlighter-color"
+import { resolveDiffSideStyle } from "@apihub/utils/diffs/resolve-diff-side-style"
 import { ChangedPropertyMetaData } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/tree-node.interface"
-import { isDdlFlagBadgeDiffHighlighted } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs"
+import { DdlApiRowDiffs } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs"
 import { DdlApiForeignKeyTarget } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree/node-value"
-import {
-  formatForeignKeyTargetKeys,
-  resolveForeignKeyTargetSideDisplay,
-} from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs"
+import { formatForeignKeyTargetKeys } from "@netcracker/qubership-apihub-next-data-model/shared/ddlapi/foreign-key-target-key"
 import { FC, memo, ReactNode, useMemo } from "react"
 import {
   DDL_API_FOREIGN_KEY_BADGE_COLOR_SCHEMA,
@@ -72,20 +69,18 @@ function renderFlagBadge(options: {
     return emptyBadgePlaceholder()
   }
 
-  const $changes = isDdlFlagBadgeDiffHighlighted(flagDiff)
+  const changes = DdlApiRowDiffs.Column.isFlagBadgeHighlighted(flagDiff)
     ? flagDiff?.data as Diff | undefined
     : undefined
 
   return (
-    <DiffBadge
+    <BadgeWithDiffs
       key={buildBadgeKey(columnId, label)}
       label={label}
       colorSchema={colorSchema}
       layoutMode={layoutMode}
       layoutSide={layoutSide}
-      isNodeChanged={false}
-      isContentChanged={!!$changes}
-      $changes={$changes}
+      diff={changes}
     />
   )
 }
@@ -100,7 +95,8 @@ function renderForeignKeyTargetBadge(options: {
 }): ReactNode {
   const { columnId, target, targetKey, targetDiff, layoutMode, layoutSide } = options
   const badgeKey = buildForeignKeyBadgeKey(columnId, targetKey)
-  const textHighlighterColor = takeDiffSideTextHighlighterColor(targetDiff, layoutSide)
+  const style = resolveDiffSideStyle(targetDiff, layoutSide)
+  const textHighlighterColor = style.textHighlighterColor
 
   if (targetDiff && !isContentVisibleOnSide(targetDiff, layoutSide)) {
     return <span key={badgeKey} className="inline-block min-h-[19px]" aria-hidden="true" />
@@ -116,24 +112,22 @@ function renderForeignKeyTargetBadge(options: {
     return (
       <ForeignKey
         key={badgeKey}
-        target={resolveForeignKeyTargetSideDisplay(target, targetDiff, layoutSide)}
+        target={DdlApiRowDiffs.ForeignKey.resolveTargetSideDisplay(target, targetDiff, layoutSide)}
         textHighlighterColor={textHighlighterColor}
       />
     )
   }
 
-  const $changes = targetDiff.data as Diff
+  const diff = targetDiff.data
 
   return (
     <div key={badgeKey} className="ddlapi-foreign-key inline-flex flex-row items-center gap-1">
-      <DiffBadge
+      <BadgeWithDiffs
         label="FK"
         colorSchema={DDL_API_FOREIGN_KEY_BADGE_COLOR_SCHEMA}
         layoutMode={layoutMode}
         layoutSide={layoutSide}
-        isNodeChanged={false}
-        isContentChanged={true}
-        $changes={$changes}
+        diff={diff}
       />
       <ForeignKey target={target} hideBadge textHighlighterColor={textHighlighterColor} />
     </div>

@@ -17,8 +17,8 @@ import { isMessageSectionNodeWithDiffs, isMessageSectionSelectorNodeWithDiffs } 
 import '../shared-styles/preceded-by.css';
 import { X_AXIS_PADDING_ROWS_ASYNC_API } from "../shared-styles/tailwind-classnames";
 import { MessageSectionViewer } from "./MessageSectionViewer";
-import { Selector, SelectorOption } from "./Selector/Selector";
-import { SizeVariant } from "./types/SizeVariant";
+import { Selector, SelectorOption } from "@apihub/components/shared-components/Selector/Selector"
+import { SelectorVariant } from "@apihub/components/shared-components/Selector/types"
 
 type MessageSectionsViewerProps = WithPrecededByProps & {
   node:
@@ -33,7 +33,7 @@ export const MessageSectionsViewer: FC<MessageSectionsViewerProps> = (props) => 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const displayMode = useDisplayMode()
 
-  const [selectedSection, setSelectedSection] = useState<SelectorOption | null>(null)
+  const [selectedSection, setSelectedSection] = useState<SelectorOption<AsyncApiTreeNode> | null>(null)
   const sectionNodes: AsyncApiTreeNode[] | AsyncApiTreeNodeWithDiffs[] = node.nestedNodes()
   const sectionSelectorOptions = useMemo(
     () => sectionNodes.map(node => {
@@ -114,7 +114,7 @@ export const MessageSectionsViewer: FC<MessageSectionsViewerProps> = (props) => 
           options={sectionSelectorOptions}
           selectedOption={selectedSection}
           onSelectOption={setSelectedSection}
-          variant={SizeVariant.SECONDARY}
+          variant={SelectorVariant.Secondary}
           // diffs
           layoutSide={layoutSide}
         />

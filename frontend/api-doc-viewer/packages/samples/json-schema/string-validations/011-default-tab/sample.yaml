@@ -1,0 +1,4 @@
+type: string
+default: "\t"
+title: '[default] default = "\t"'
+

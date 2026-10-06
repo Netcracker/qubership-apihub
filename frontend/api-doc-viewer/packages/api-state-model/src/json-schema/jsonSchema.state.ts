@@ -16,10 +16,9 @@
 
 import {
   IModelTreeNode,
-  JsonSchemaModelTree,
-  JsonSchemaNode,
-  JsonSchemaTreeNode,
-  NodeChangesSummary
+  NodeChangesSummary,
+  SchemaModelTree,
+  SchemaTreeNode,
 } from '@netcracker/qubership-apihub-api-data-model'
 import { NodesChangesSummary } from '../../../api-doc-viewer/src/types/aliases/changes'
 import { NodeId } from '../../../api-doc-viewer/src/types/aliases/nodes'
@@ -27,7 +26,7 @@ import { modelStateNodeType } from '../consts'
 import { IModelStateCombinaryNode, IModelStateNode, IModelStatePropNode, ModelStateNodeType, } from '../types'
 import { isExpandableTreeNode, isModelStatePropNode } from '../utils'
 
-export class JsonSchemaStateCombinaryNode<T extends IModelTreeNode<any, any, any> = JsonSchemaTreeNode>
+export class JsonSchemaStateCombinaryNode<T extends IModelTreeNode<any, any, any> = SchemaTreeNode>
   implements IModelStateCombinaryNode<T> {
 
   public readonly type = modelStateNodeType.combinary
@@ -81,7 +80,7 @@ export class JsonSchemaStateCombinaryNode<T extends IModelTreeNode<any, any, any
   }
 }
 
-export class JsonSchemaStatePropNode<T extends IModelTreeNode<any, any, any> = JsonSchemaTreeNode>
+export class JsonSchemaStatePropNode<T extends IModelTreeNode<any, any, any> = SchemaTreeNode>
   implements IModelStatePropNode<T> {
 
   protected _combinaryNodes: IModelStateCombinaryNode<T>[] = []
@@ -231,7 +230,7 @@ export class JsonSchemaStatePropNode<T extends IModelTreeNode<any, any, any> = J
   }
 }
 
-export class JsonSchemaState<T extends IModelTreeNode<any, any, any> = JsonSchemaNode> {
+export class JsonSchemaState<T extends IModelTreeNode<any, any, any> = SchemaTreeNode> {
   public readonly root: IModelStatePropNode<T> | null
 
   protected createStatePropNode(node: T): IModelStatePropNode<T> {
@@ -239,7 +238,7 @@ export class JsonSchemaState<T extends IModelTreeNode<any, any, any> = JsonSchem
   }
 
   constructor(
-    public tree: JsonSchemaModelTree<ReturnType<T['value']>, T['kind'], T['meta']>,
+    public tree: SchemaModelTree<ReturnType<T['value']>, T['kind'], T['meta']>,
     expandDepth = 1,
   ) {
     this.root = tree.root ? this.createStatePropNode(tree.root as T) : null

@@ -1,0 +1,12 @@
+type: string
+examples:
+  - ""
+  - "     "
+  - "\r\n"
+  - "\r"
+  - "\n"
+  - "\t"
+  - "    value with whitespaces around     "
+  - just a value
+title: "[examples] examples = all sample strings"
+

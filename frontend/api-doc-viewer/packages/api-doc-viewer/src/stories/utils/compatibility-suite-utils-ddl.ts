@@ -2,8 +2,9 @@ import { apiDiff } from '@netcracker/qubership-apihub-api-diff'
 import type { Realm, Table } from '@netcracker/qubership-apihub-ddlapi'
 import type { TableKey } from '@netcracker/qubership-apihub-next-data-model/shared/ddlapi/types/table-key'
 
-import { TEST_DIFF_META_KEYS } from '../ddlapi-diffs-suite/shared-test-data'
 import { buildFromDdlInBrowser, resolveDdlDiffComparePair } from '../ddlapi-suite/build-from-ddl-browser'
+import { resolveTableKeyFromRealm } from '../ddlapi-suite/resolve-debug-table-key'
+import { TEST_DIFF_META_KEYS } from '../shared/test-diff-meta-keys'
 
 /** Used only if the merged realm has no tables at all. */
 const DEFAULT_TABLE_KEY: TableKey = {
@@ -51,21 +52,7 @@ export function resolveDdlCompatibilitySuiteTableKey(merged: Realm): TableKey {
     }
   }
 
-  return firstTableKey(merged) ?? DEFAULT_TABLE_KEY
-}
-
-function firstTableKey(merged: Realm): TableKey | undefined {
-  for (const schema of merged.schemas ?? []) {
-    const table = schema.tables?.[0]
-    if (table) {
-      return {
-        schemaName: schema.name,
-        name: table.name,
-      }
-    }
-  }
-
-  return undefined
+  return resolveTableKeyFromRealm(merged) ?? DEFAULT_TABLE_KEY
 }
 
 /** apiDiff stores add/remove of array items on the parent array, keyed by index. */

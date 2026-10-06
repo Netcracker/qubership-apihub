@@ -1,9 +1,9 @@
 import { useAsyncLevelContext } from "@apihub/contexts/AsyncLevelContext/AsyncLevelContext"
 import { AsyncLevelContextProvider } from "@apihub/contexts/AsyncLevelContext/AsyncLevelContextProvider"
+import { SUPPRESS_ROOT_NESTING_INDICATOR_CUSTOMIZATION_OPTIONS } from "@apihub/contexts/CustomizationOptionsContext"
 import { useDiffMetaKeys } from "@apihub/contexts/DiffMetaKeysContext"
 import { useDisplayMode } from "@apihub/contexts/DisplayModeContext"
 import { CHANGED_LAYOUT_SIDE, LayoutSide, ORIGIN_LAYOUT_SIDE } from "@apihub/types/internal/LayoutSide"
-import { SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from "@apihub/types/LayoutMode"
 import { isSameDiffActionForAll } from "@apihub/utils/jso/infer-node-change-from-children-changes"
 import { prepareJsonSchemaForJsoDiffsViewer } from "@apihub/utils/jso/prepare-json-schema-to-jso-viewers"
 import { NODE_LEVEL_DIFF_KEY } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/tree-node.interface"
@@ -11,7 +11,7 @@ import { JsoTreeNodeDiffsSource } from "@netcracker/qubership-apihub-next-data-m
 import { JsoTreeNodeWithDiffs } from "@netcracker/qubership-apihub-next-data-model/model/jso/types/aliases"
 import { JsoPropertyValueTypes } from "@netcracker/qubership-apihub-next-data-model/model/jso/types/node-value-type"
 import { FC, useCallback, useMemo, useState } from "react"
-import { JsonSchemaDiffViewer } from "../JsonSchemaViewer/JsonSchemaDiffViewer"
+import { useJsoEmbeddingContext } from "./embedding/JsoEmbeddingContext"
 import { UxMarkerPanel } from "../kit/ux/UxMarkerPanel/UxMarkerPanel"
 import { buildRowDiffProps, toNodeDiffState } from "../shared-components/diffs/node-diff-props"
 import { TextValueVariant } from "../shared-components/TextValue/types"
@@ -34,6 +34,7 @@ export const JsoPropertyNodeViewerWithDiffs: FC<JsoPropertyNodeViewerWithDiffsPr
   const displayMode = useDisplayMode()
   const diffMetaKeys = useDiffMetaKeys()
   const { beforeLevel, afterLevel } = useAsyncLevelContext()!
+  const { EmbeddedSchemaDiffsComponent } = useJsoEmbeddingContext()
 
   const [expanded, setExpanded] = useState(true)
   const onClickExpander = useCallback(() => {
@@ -139,16 +140,29 @@ export const JsoPropertyNodeViewerWithDiffs: FC<JsoPropertyNodeViewerWithDiffsPr
       console.error('diffMetaKeys is not defined, but JSON Schema node is defined', node)
       return null
     }
+    if (!EmbeddedSchemaDiffsComponent) {
+      console.error('supportJsonSchema is set but no embeddedSchemaDiffsComponent was provided to JsoDiffsViewer', node)
+      return null
+    }
+    // The embedded schema's own root row is suppressed (`suppressRootNestingIndicator`), but
+    // `SchemaNodeViewerWithDiffs` still unconditionally increments the level for its children.
+    // Since that root row never renders, its children would otherwise inherit our `beforeLevel`/
+    // `afterLevel` (this property's own level) plus that extra increment - one level too deep
+    // relative to this property's JSO siblings. Pre-decrementing here cancels that increment out.
     return (
-      <JsonSchemaDiffViewer
-        key={node.id}
-        schema={jsonSchema}
-        expandedDepth={2}
-        displayMode={displayMode}
-        layoutMode={SIDE_BY_SIDE_DIFFS_LAYOUT_MODE}
-        metaKeys={diffMetaKeys}
-        overriddenKind='parameters'
-      />
+      <AsyncLevelContextProvider
+        beforeLevel={Math.max(beforeLevel - 1, 0)}
+        afterLevel={Math.max(afterLevel - 1, 0)}
+      >
+        <EmbeddedSchemaDiffsComponent
+          key={node.id}
+          schema={jsonSchema}
+          expandedDepth={2}
+          displayMode={displayMode}
+          diffMetaKeys={diffMetaKeys}
+          customizationOptions={SUPPRESS_ROOT_NESTING_INDICATOR_CUSTOMIZATION_OPTIONS}
+        />
+      </AsyncLevelContextProvider>
     )
   }
 

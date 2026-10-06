@@ -1,0 +1,15 @@
+type: object
+description: Simple object with five primitive properties
+properties:
+  prop1:
+    type: string
+    description: First property
+  prop2:
+    type: string
+    description: Second property
+  prop6:
+    type: string
+    description: Sixth property (added)
+  prop7:
+    type: integer
+    description: Seventh property (added)

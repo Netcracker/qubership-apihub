@@ -1,0 +1,20 @@
+type: object
+description: Object with 2 number property schema(s)
+properties:
+  prop0:
+    type: number
+    description: Sample number schema with all number validations
+    default: 1.5
+    minimum: 0
+    maximum: 100
+    multipleOf: 0.5
+  prop1:
+    type: number
+    description: Sample number schema with all number validations
+    default: 1.5
+    minimum: 0
+    maximum: 100
+    multipleOf: 0.5
+minProperties: 0
+maxProperties: 10
+

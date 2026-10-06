@@ -1,0 +1,4 @@
+type: string
+maxLength: 1
+title: "[value-length] maxLength = 1"
+

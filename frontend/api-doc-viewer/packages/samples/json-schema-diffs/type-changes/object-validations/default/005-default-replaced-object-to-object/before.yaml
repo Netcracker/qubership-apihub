@@ -1,0 +1,5 @@
+type: object
+default:
+  id: alpha
+  count: 1
+

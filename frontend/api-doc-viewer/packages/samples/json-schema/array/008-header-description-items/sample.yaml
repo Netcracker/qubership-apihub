@@ -1,0 +1,9 @@
+type: array
+title: Sample Array
+readOnly: true
+writeOnly: true
+deprecated: true
+description: Sample array description
+items:
+  type: string
+

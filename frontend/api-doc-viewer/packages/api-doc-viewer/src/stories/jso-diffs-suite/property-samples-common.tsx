@@ -4,10 +4,10 @@ import { collectSampleCases } from "../utils/diffs-samples-cases";
 import {
   type JsoCaseStoryComponentProps,
   createJsoCaseStoryFactory,
-  createJsoSampleById,
   createJsoViewerArgs,
   jsoDiffSampleReadonlyArgTypes,
 } from "./jso-diffs-utils";
+import { createSampleById } from "../utils/sample-cases";
 
 const beforeFiles = import.meta.glob(
   "../../../../samples/jso-diffs/property/*/before.yaml",
@@ -20,7 +20,7 @@ const afterFiles = import.meta.glob(
 ) as Record<string, string>;
 
 const sampleCases = collectSampleCases(beforeFiles, afterFiles);
-const sampleById = createJsoSampleById(sampleCases);
+const sampleById = createSampleById(sampleCases);
 
 export const JsoPropertySamplesStory = ({
   beforeYaml,

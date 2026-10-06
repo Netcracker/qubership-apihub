@@ -1,7 +1,5 @@
 import { useDisplayMode } from "@apihub/contexts/DisplayModeContext"
-import { takeDiffSideBorderShadowColor } from "@apihub/utils/diffs/take-diff-side-border-shadow-color"
-import { takeDiffSideIsFontMuted } from "@apihub/utils/diffs/take-diff-side-is-font-muted"
-import { takeDiffSideTextHighlighterColor } from "@apihub/utils/diffs/take-diff-side-text-highlighter-color"
+import { resolveDiffSideStyle } from "@apihub/utils/diffs/resolve-diff-side-style"
 import { takeColumnFlagDiffs, takeColumnForeignKeyTargetDiffs } from "@apihub/utils/ddlapi/column-row-badges"
 import {
   buildDdlPropertyTitleRowDiffProps,
@@ -10,15 +8,7 @@ import {
 import { LayoutSide } from "@apihub/types/internal/LayoutSide"
 import { NODE_LEVEL_DIFF_KEY } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/tree-node.interface"
 import {
-  isDdlPropertySubheaderVisible,
-  resolveColumnDefaultValueSideDisplay,
-  resolveColumnEnumValueSideItems,
-  takeColumnDescriptionDiff,
-  takeColumnEnumValueDiffs,
-  takeColumnEnumValuesRowColorizingDiff,
-  takeColumnDefaultValueDiff,
-  takeColumnDefaultValueRowColorizingDiff,
-  takeColumnGeneratedExpressionDiff,
+  DdlApiRowDiffs,
 } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs"
 import {
   resolveColumnAdditionalInfoRowUsesAfterRowPrecededBy,
@@ -43,8 +33,10 @@ import {
   ADDITIONAL_INFO_LABEL_VALUES,
 } from "./consts"
 import { ColumnTypeLabelWithDiffs } from "./ColumnTypeLabelWithDiffs/ColumnTypeLabelWithDiffs"
-import { AdditionalInfoRow } from "./AdditionalInfoRow/AdditionalInfoRow"
-import { AdditionalInfoPiece } from "./AdditionalInfoPiece/AdditionalInfoPiece"
+import { AdditionalInfoRow } from "@apihub/components/shared-components/AdditionalInfoRow/AdditionalInfoRow"
+import { AdditionalInfoRowUsage } from "@apihub/components/shared-components/AdditionalInfoRow/types"
+import { AdditionalInfoPiece } from "@apihub/components/shared-components/AdditionalInfoPiece/AdditionalInfoPiece"
+import { AdditionalInfoPieceUsage } from "@apihub/components/shared-components/AdditionalInfoPiece/types"
 
 type ColumnNodeViewerWithDiffsProps = WithPrecededByProps & {
   node: DdlApiTreeNodeWithDiffs<typeof DdlApiTreeNodeKinds.COLUMN>
@@ -73,27 +65,27 @@ export const ColumnNodeViewerWithDiffs: FC<ColumnNodeViewerWithDiffsProps> = (pr
   const flagDiffs = useMemo(() => takeColumnFlagDiffs(node), [node])
   const foreignKeyTargetDiffs = useMemo(() => takeColumnForeignKeyTargetDiffs(node), [node])
   const descriptionDiff = useMemo(
-    () => takeColumnDescriptionDiff(node),
+    () => DdlApiRowDiffs.Column.takeDescriptionDiff(node),
     [node],
   )
   const generatedExpressionDiff = useMemo(
-    () => takeColumnGeneratedExpressionDiff(node),
+    () => DdlApiRowDiffs.Column.takeGeneratedExpressionDiff(node),
     [node],
   )
   const enumValueDiffs = useMemo(
-    () => takeColumnEnumValueDiffs(node),
+    () => DdlApiRowDiffs.ColumnEnumValues.takeDiffs(node),
     [node],
   )
   const enumValuesRowColorizingDiff = useMemo(
-    () => takeColumnEnumValuesRowColorizingDiff(node),
+    () => DdlApiRowDiffs.ColumnEnumValues.takeRowColorizingDiff(node),
     [node],
   )
   const defaultValueDiff = useMemo(
-    () => takeColumnDefaultValueDiff(node),
+    () => DdlApiRowDiffs.ColumnDefaultValue.takeDiff(node),
     [node],
   )
   const defaultValueRowColorizingDiff = useMemo(
-    () => takeColumnDefaultValueRowColorizingDiff(node),
+    () => DdlApiRowDiffs.ColumnDefaultValue.takeRowColorizingDiff(node),
     [node],
   )
 
@@ -112,7 +104,7 @@ export const ColumnNodeViewerWithDiffs: FC<ColumnNodeViewerWithDiffsProps> = (pr
         return <></>
       }
 
-      if (!isDdlPropertySubheaderVisible(nodeDiff, layoutSide)) {
+      if (!DdlApiRowDiffs.PropertyRow.isSubheaderVisible(nodeDiff, layoutSide)) {
         return <></>
       }
 
@@ -137,17 +129,18 @@ export const ColumnNodeViewerWithDiffs: FC<ColumnNodeViewerWithDiffsProps> = (pr
 
   const defaultAdditionalInfoSubheader = useCallback(
     (layoutSide: LayoutSide) => {
-      const defaultValue = resolveColumnDefaultValueSideDisplay(node, layoutSide)
+      const defaultValue = DdlApiRowDiffs.ColumnDefaultValue.resolveSideDisplay(node, layoutSide)
       if (defaultValue === undefined) {
         return <></>
       }
 
+      const style = resolveDiffSideStyle(defaultValueDiff, layoutSide)
       return (
         <AdditionalInfoPiece
           isVisible={true}
           value={defaultValue}
-          textHighlighterColor={takeDiffSideTextHighlighterColor(defaultValueDiff, layoutSide)}
-          borderShadowColor={takeDiffSideBorderShadowColor(defaultValueDiff, layoutSide)}
+          textHighlighterColor={style.textHighlighterColor}
+          borderShadowColor={style.borderShadowColor}
         />
       )
     },
@@ -161,11 +154,12 @@ export const ColumnNodeViewerWithDiffs: FC<ColumnNodeViewerWithDiffsProps> = (pr
         return <></>
       }
 
+      const style = resolveDiffSideStyle(generatedExpressionDiff, layoutSide)
       return (
         <AdditionalInfoPiece
           isVisible={true}
           value={generatedExpression}
-          textHighlighterColor={takeDiffSideTextHighlighterColor(generatedExpressionDiff, layoutSide)}
+          textHighlighterColor={style.textHighlighterColor}
         />
       )
     },
@@ -174,23 +168,26 @@ export const ColumnNodeViewerWithDiffs: FC<ColumnNodeViewerWithDiffsProps> = (pr
 
   const enumValuesAdditionalInfoSubheader = useCallback(
     (layoutSide: LayoutSide) => {
-      const sideItems = resolveColumnEnumValueSideItems(node, layoutSide)
+      const sideItems = DdlApiRowDiffs.ColumnEnumValues.resolveSideItems(node, layoutSide)
       if (sideItems.length === 0) {
         return <></>
       }
 
       return (
         <div className="flex flex-wrap items-center gap-2">
-          {sideItems.map((sideItem, index) => (
-            <AdditionalInfoPiece
-              key={`${sideItem.literal}-${index}`}
-              isVisible={true}
-              value={sideItem.literal}
-              textHighlighterColor={takeDiffSideTextHighlighterColor(sideItem.diff, layoutSide)}
-              borderShadowColor={takeDiffSideBorderShadowColor(sideItem.diff, layoutSide)}
-              isFontMuted={takeDiffSideIsFontMuted(sideItem.diff, layoutSide)}
-            />
-          ))}
+          {sideItems.map((sideItem, index) => {
+            const style = resolveDiffSideStyle(sideItem.diff, layoutSide)
+            return (
+              <AdditionalInfoPiece
+                key={`${sideItem.literal}-${index}`}
+                isVisible={true}
+                value={sideItem.literal}
+                textHighlighterColor={style.textHighlighterColor}
+                borderShadowColor={style.borderShadowColor}
+                isFontMuted={style.isFontMuted}
+              />
+            )
+          })}
         </div>
       )
     },
@@ -231,6 +228,7 @@ export const ColumnNodeViewerWithDiffs: FC<ColumnNodeViewerWithDiffsProps> = (pr
       )}
       {visibility.showEnumValuesRow && (
         <AdditionalInfoRow
+          usage={AdditionalInfoRowUsage.DdlApiProperty}
           data-precededby={additionalInfoPrecededBy}
           {...{ [ATTRIBUTE_DDL_LIST_LAST_ROW]: listLastRowFlags.isEnumAdditionalInfoListLastRow || undefined }}
           label={ADDITIONAL_INFO_LABEL_VALUES}
@@ -242,6 +240,7 @@ export const ColumnNodeViewerWithDiffs: FC<ColumnNodeViewerWithDiffsProps> = (pr
       )}
       {visibility.showDefaultRow && (
         <AdditionalInfoRow
+          usage={AdditionalInfoRowUsage.DdlApiProperty}
           data-precededby={
             resolveColumnAdditionalInfoRowUsesAfterRowPrecededBy(visibility, "default")
               ? PrecededBy.DDL_COLUMN_AFTER_ADDITIONAL_INFO_ROW
@@ -257,6 +256,7 @@ export const ColumnNodeViewerWithDiffs: FC<ColumnNodeViewerWithDiffsProps> = (pr
       )}
       {visibility.showGeneratedRow && (
         <AdditionalInfoRow
+          usage={AdditionalInfoRowUsage.DdlApiProperty}
           data-precededby={
             resolveColumnAdditionalInfoRowUsesAfterRowPrecededBy(visibility, "generated")
               ? PrecededBy.DDL_COLUMN_AFTER_ADDITIONAL_INFO_ROW

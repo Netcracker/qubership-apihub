@@ -1,0 +1,1696 @@
+description: a warning indacateds that the given payload is valide, however take notice of the warning this might ifluence behavour.
+properties:
+  currentPage:
+    description: Current page returned in the response
+    example: 2
+    type: integer
+  pageSize:
+    description: Number of records in the response
+    example: 250
+    type: integer
+  totalPages:
+    description: Number of pages available
+    example: 3
+    type: integer
+  totalSize:
+    description: Total number of records, taking into account the given filter.
+    example: 650
+    type: integer
+  version:
+    properties:
+      obsoleteDate:
+        description: The date (can be null) on which the `resourceVersion` is no longer supported/available
+        format: date
+        nullable: true
+        type: string
+      resourceVersion:
+        description: The resource version of the object in the response
+        example: 2018-12-31
+        format: date
+        type: string
+    type: object
+  messages:
+    items:
+      properties:
+        code:
+          description: Identifying code for the message
+          example: 12
+          format: int32
+          type: integer
+        description:
+          description: Describes the message
+          example: <some warning>
+          type: string
+        id:
+          description: "In some cases when the message may relate to a specific entity, or specific group of entities, this field provides the identifier of that entity "
+          example: 904d6856-6034-4624-bcbc-886188c115c5
+          format: uuid
+          nullable: true
+          type: string
+        properties:
+          description: An array that can contain additional information
+          items:
+            type: string
+          minimum: 0
+          type: array
+        type:
+          description: |-
+            Indication of the type of message.
+            See [the general documentation for more information](./#section/Response/Messages)
+          example: Warning
+          type: string
+    type: array
+  _embedded:
+    items:
+      properties:
+        creationDate:
+          description: The date time on which the record was added (ISO-8601)
+          example: 2018-05-08
+          format: date-time
+          nullable: false
+          readOnly: true
+          type: string
+        employeeData:
+          nullable: true
+          properties:
+            address:
+              description: The address of the employee
+              nullable: true
+              properties:
+                city:
+                  description: City of the address
+                  example: Leiden
+                  maxLength: 24
+                  nullable: true
+                  readOnly: false
+                  type: string
+                country:
+                  description: The country of residence of the employee
+                  format: metadata
+                  nullable: true
+                  properties:
+                    isoCode:
+                      example: NL
+                      maxLength: 2
+                      nullable: false
+                      readOnly: true
+                      type: string
+                    key:
+                      example: 1
+                      format: int32
+                      nullable: false
+                      readOnly: false
+                      type: integer
+                    value:
+                      example: Netherlands
+                      maxLength: 50
+                      nullable: false
+                      readOnly: true
+                      type: string
+                  type: object
+                furtherIndication:
+                  description: Futher indication of the address for example onboard (a ship) or living in a trailer
+                  format: metadata
+                  nullable: true
+                  properties:
+                    key:
+                      example: 1
+                      format: int32
+                      nullable: false
+                      readOnly: false
+                      type: integer
+                    value:
+                      example: WW
+                      nullable: false
+                      readOnly: true
+                      type: string
+                  type: object
+                houseNumber:
+                  description: House number of the address
+                  example: 12
+                  format: int32
+                  nullable: true
+                  readOnly: false
+                  type: integer
+                houseNumberAddition:
+                  description: An addition to further specify the house/door/postbox. For example used to specifty a room of floor number in addition to the house number.
+                  example: D
+                  maxLength: 4
+                  nullable: true
+                  readOnly: false
+                  type: string
+                location:
+                  description: The location like to further specify the address
+                  example: Fourth floor or building C
+                  maxLength: 35
+                  nullable: true
+                  readOnly: false
+                  type: string
+                postalCode:
+                  description: The postal code of the address
+                  example: 1234 AA
+                  maxLength: 9
+                  nullable: true
+                  readOnly: false
+                  type: string
+                street:
+                  description: Streetname of the address
+                  example: Voordijk
+                  maxLength: 24
+                  nullable: true
+                  readOnly: false
+                  type: string
+              type: object
+            contactInformation:
+              description: Contact information for the employee
+              nullable: true
+              properties:
+                businessEmailAddress:
+                  description: The business e-mail address of the employee.
+                  example: info@loket.nl
+                  maxLength: 255
+                  nullable: true
+                  pattern: ^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-||_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+([a-z]+|\d|-|\.{0,1}|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])?([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))$
+                  readOnly: false
+                  type: string
+                businessMobilePhoneNumber:
+                  description: The business mobile phone number of the employee.
+                  example: +31 6-1231456
+                  maxLength: 15
+                  nullable: true
+                  readOnly: false
+                  type: string
+                businessPhoneNumber:
+                  description: The business phone number of the employee.
+                  example: +31 13-1234567
+                  maxLength: 15
+                  nullable: true
+                  readOnly: false
+                  type: string
+                emailAddress:
+                  description: The e-mail address of the employee.
+                  example: info@loket.nl
+                  maxLength: 255
+                  nullable: true
+                  readOnly: false
+                  type: string
+                faxNumber:
+                  description: The fax number to contact this individual
+                  example: +31 13-1234561
+                  maxLength: 15
+                  nullable: true
+                  readOnly: false
+                  type: string
+                mobilePhoneNumber:
+                  description: The mobile phone number of the employee.
+                  example: +31 6-1231456
+                  maxLength: 15
+                  nullable: true
+                  readOnly: false
+                  type: string
+                phoneNumber:
+                  description: The phone number of the employee.
+                  example: +31 13-1234567
+                  maxLength: 15
+                  nullable: true
+                  readOnly: false
+                  type: string
+              type: object
+            deviatingPostalAddress:
+              description: The deviating address of the employee (used as a postal address)
+              nullable: true
+              properties:
+                city:
+                  description: City of the address
+                  example: Leiden
+                  maxLength: 24
+                  nullable: true
+                  readOnly: false
+                  type: string
+                country:
+                  description: The country of residence of the employee
+                  format: metadata
+                  nullable: true
+                  properties:
+                    isoCode:
+                      example: NL
+                      maxLength: 2
+                      nullable: false
+                      readOnly: true
+                      type: string
+                    key:
+                      example: 1
+                      format: int32
+                      nullable: false
+                      readOnly: false
+                      type: integer
+                    value:
+                      example: Netherlands
+                      maxLength: 50
+                      nullable: false
+                      readOnly: true
+                      type: string
+                  type: object
+                furtherIndication:
+                  description: Futher indication of the address for example onboard (a ship) or living in a trailer
+                  format: metadata
+                  nullable: true
+                  properties:
+                    key:
+                      example: 1
+                      format: int32
+                      nullable: false
+                      readOnly: false
+                      type: integer
+                    value:
+                      example: WW
+                      nullable: false
+                      readOnly: true
+                      type: string
+                  type: object
+                houseNumber:
+                  description: House number of the address
+                  example: 12
+                  format: int32
+                  nullable: true
+                  readOnly: false
+                  type: integer
+                houseNumberAddition:
+                  description: An addition to further specify the house/door/postbox. For example used to specifty a room of floor number in addition to the house number.
+                  example: D
+                  maxLength: 4
+                  nullable: true
+                  readOnly: false
+                  type: string
+                location:
+                  description: The location like to further specify the address
+                  example: Fourth floor or building C
+                  maxLength: 35
+                  nullable: true
+                  readOnly: false
+                  type: string
+                postalCode:
+                  description: The postal code of the address
+                  example: 1234 AA
+                  maxLength: 9
+                  nullable: true
+                  readOnly: false
+                  type: string
+                street:
+                  description: Streetname of the address
+                  example: Voordijk
+                  maxLength: 24
+                  nullable: true
+                  readOnly: false
+                  type: string
+              type: object
+            employeeNumber:
+              description: The employee number to uniquely identify an employee within an employer.
+              example: 156
+              format: int32
+              nullable: true
+              readOnly: false
+              type: integer
+            iban:
+              description: International Bank Account Number. Only IBAN without spaces are accepted.
+              example: NL52ABNA0424968264
+              maxLength: 35
+              nullable: true
+              readOnly: false
+              type: string
+            identityDocument:
+              description: The identification document of the employee
+              nullable: true
+              properties:
+                documentIdentification:
+                  description: Description of the type of document
+                  example: CRE45553433
+                  maxLength: 20
+                  nullable: true
+                  readOnly: false
+                  type: string
+                typeOfDocument:
+                  format: metadata
+                  nullable: true
+                  properties:
+                    key:
+                      description: The key for the type of document. Possible values can be acquired via the metadata endpoint
+                      example: 2
+                      format: int32
+                      nullable: false
+                      readOnly: false
+                      type: integer
+                    value:
+                      description: Description of the type of document
+                      example: Passport
+                      maxLength: 50
+                      nullable: false
+                      readOnly: true
+                      type: string
+                  type: object
+              type: object
+            personalDetails:
+              description: The personal details of the employee. e.g. Name, civil status en gender
+              nullable: true
+              properties:
+                civilStatus:
+                  description: The civil status of the employee
+                  format: metadata
+                  nullable: true
+                  properties:
+                    key:
+                      example: 2
+                      format: int32
+                      nullable: false
+                      readOnly: false
+                      type: integer
+                    value:
+                      example: Married
+                      maxLength: 50
+                      nullable: false
+                      readOnly: true
+                      type: string
+                  type: object
+                dateOfBirth:
+                  description: The date of birth of the employee.
+                  example: 1995-05-21
+                  format: date
+                  nullable: true
+                  readOnly: false
+                  type: string
+                firstName:
+                  description: The first name of the employee.
+                  example: Susan
+                  maxLength: 28
+                  nullable: true
+                  readOnly: false
+                  type: string
+                formattedName:
+                  description: Formatted name of the employee based on the value of `howToFormatLastName`
+                  example: Wiel - van Bergen S.L. van de
+                  maxLength: 82
+                  nullable: true
+                  readOnly: true
+                  type: string
+                gender:
+                  description: The gender of the employee
+                  format: metadata
+                  nullable: true
+                  properties:
+                    key:
+                      example: 2
+                      format: int32
+                      nullable: false
+                      readOnly: false
+                      type: integer
+                    value:
+                      example: female
+                      maxLength: 50
+                      nullable: false
+                      readOnly: true
+                      type: string
+                  type: object
+                howToFormatLastName:
+                  description: "Indicates how the system will format `formattedName`. "
+                  format: metadata
+                  nullable: true
+                  properties:
+                    key:
+                      example: 2
+                      format: int32
+                      nullable: false
+                      readOnly: false
+                      type: integer
+                    value:
+                      example: last name + last name partner
+                      maxLength: 50
+                      nullable: false
+                      readOnly: true
+                      type: string
+                  type: object
+                initials:
+                  description: The initials of the employee.
+                  example: S.L.
+                  maxLength: 6
+                  nullable: true
+                  readOnly: false
+                  type: string
+                lastName:
+                  description: The last name of the employee.
+                  example: Bergen
+                  maxLength: 25
+                  nullable: false
+                  readOnly: false
+                  type: string
+                lastNamePartner:
+                  description: The last name of the employee`s partner.
+                  example: Wiel
+                  maxLength: 25
+                  nullable: true
+                  readOnly: false
+                  type: string
+                nationality:
+                  description: The nationality of the employee
+                  format: metadata
+                  nullable: true
+                  properties:
+                    key:
+                      example: 2
+                      format: int32
+                      nullable: false
+                      readOnly: false
+                      type: integer
+                    value:
+                      example: Dutch
+                      maxLength: 50
+                      nullable: false
+                      readOnly: true
+                      type: string
+                  type: object
+                placeOfBirth:
+                  description: Place of birth of the employee
+                  example: Amsterdam
+                  maxLength: 24
+                  nullable: true
+                  readOnly: false
+                  type: string
+                prefix:
+                  description: The prefix to the last name of the employee.
+                  example: van
+                  maxLength: 10
+                  nullable: true
+                  readOnly: false
+                  type: string
+                prefixPartner:
+                  description: The prefix to the last name of the employee"s partner.
+                  example: van de
+                  maxLength: 10
+                  nullable: true
+                  readOnly: false
+                  type: string
+                title:
+                  description: The title to be used (if any).
+                  format: metadata
+                  nullable: true
+                  properties:
+                    key:
+                      example: 2
+                      format: int32
+                      nullable: false
+                      readOnly: false
+                      type: integer
+                    value:
+                      example: e.g. Msc, PHD or Baron
+                      maxLength: 50
+                      nullable: false
+                      readOnly: true
+                      type: string
+                  type: object
+              type: object
+          type: object
+        employmentData:
+          nullable: true
+          properties:
+            calculateWorkingHours:
+              description: Automatically calculate working hours for the employment if the option automatically calculate hours is selected for a given period.
+              example: true
+              nullable: true
+              readOnly: false
+              type: boolean
+            cancellationNoticeDate:
+              description: The date on which the notice was given by either the employee or the employer.
+              example: 2019-05-31
+              format: date
+              nullable: true
+              readOnly: false
+              type: string
+            cancellationPeriodEmployee:
+              description: The notice period an employee is required to give the employer when resigning. The unit of time that applies to this field is described in the noticePeriodTimeUnit property.
+              example: 1
+              format: int32
+              maximum: 1000
+              minimum: 1
+              nullable: true
+              readOnly: false
+              type: integer
+            cancellationPeriodEmployer:
+              description: The notice period an employer is required to give the employee when terminating the contract. The unit of time that applies to this field is described in the noticePeriodTimeUnit property.
+              example: 1
+              format: int32
+              maximum: 1000
+              minimum: 1
+              nullable: true
+              readOnly: false
+              type: integer
+            cancellationPeriodTimeUnit:
+              description: The unit of time used for the noticePeriodeEmployee and noticePeriodEmployer properties.
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 4
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: Maand(en)
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            commissionUntilDate:
+              description: The date on which the employment will end.
+              example: 2019-01-01
+              format: date
+              nullable: true
+              readOnly: false
+              type: string
+            deviatingCLATaxReturn:
+              description: CLA (CAO) code in case of a deviating CLA for tax returns .
+              example: 2
+              format: int32
+              nullable: true
+              readOnly: false
+              type: integer
+            emailLeaveRequest:
+              description: Recipient e-mail adress for notification in case of leave requests.
+              example: api@loket.nl
+              maxLength: 255
+              nullable: true
+              readOnly: false
+              type: string
+            employeeProfileId:
+              description: |-
+                References to an employeeprofile that is specified in the payroll administration level
+
+                `employeeProfileId` is a metadata field within the payroll administration context. Possible values can be managed by the user.
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 1
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: Profiel full-timers
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            employmentContractType:
+              description: The type of employment applicable for the employment.
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 1
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: Labor agreement
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            employmentDurationType:
+              description: A selection of pre defined durations for the employment.
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 1
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: Contract of indefinite duration
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            essMutationSet:
+              description: |-
+                References to a specified set of payrollcomponents that are to accessible via ESS for employee mutations
+
+                `essMutationSet` is a metadata field within the werkgever/provider context. Possible values can be managed by the user.
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 1
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: Standaard
+                  nullable: false
+                  readOnly: true
+                  type: string
+              readOnly: true
+              type: object
+            exemptionInsuranceObligation:
+              description: Indicates whether an exemption applies for the insurance obligation. If NULL than there is no exemption, thus insurance obligation applies in that case (verzekingsplicht)
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 0
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: Geen uitzondering.
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            firstDayNotification:
+              description: Indicates whether first-day notification (EersteDagsMelding) is applicable for the employment
+              example: false
+              nullable: true
+              readOnly: true
+              type: boolean
+            hasOnCallAppearanceObligation:
+              description: In the case of an on-call employment this field indicates whether the employment has an appearance obligation. This field can be `null` in cases where it is unknown whether the employment has an appearance obligation.
+              example: true
+              nullable: true
+              readOnly: false
+              type: boolean
+            historicalStartDate:
+              description: The historical date on which the employee was first employed. This field is used when an employee has multiple employments in time. In most cases this field should be used as the date on which the employee started working for the company.
+              example: 2012-05-01
+              format: date
+              nullable: true
+              readOnly: false
+              type: string
+            incomeRelationshipNumber:
+              description: The income relationship number that is required in the tax return. Together with the citizen service number (burgerservicenummer, BSN) and wage tax number, the income relationship number uniquely identifies an employment.
+              example: 12
+              format: int32
+              maximum: 9999
+              nullable: true
+              readOnly: false
+              type: integer
+            isAnonymousEmployee:
+              description: "Indicates whether employee is anonymous "
+              example: true
+              nullable: true
+              readOnly: false
+              type: boolean
+            isDirectorAndMajorShareholder:
+              description: Indicates whether the employment can be classiefied as a director and major shareholder (Dutch --> directeur-grootaandeelhouder or DGA). This field can be `null` in cases where it is unknown whether the employment can be classified as a director and major shareholder.
+              example: false
+              nullable: true
+              readOnly: false
+              type: boolean
+            isFamilyOfOwner:
+              description: Indicates whether the employment can be classified as a previous owner. This field can be `null` in cases where it is unknown whether the employment can be classified as a director and major shareholder.
+              example: false
+              nullable: true
+              readOnly: false
+              type: boolean
+            isGemoedsbezwaardEmployeeInsurance:
+              description: Gemoedsbezwaard Werknemerverzekering
+              example: true
+              nullable: true
+              readOnly: false
+              type: boolean
+            isGemoedsbezwaardNationalInsurance:
+              description: Gemoedsbezwaard Volksverzekering
+              example: true
+              nullable: true
+              readOnly: false
+              type: boolean
+            isOnCallEmployment:
+              description: Indicates whether the employment is an on-call employment.
+              example: true
+              nullable: true
+              readOnly: false
+              type: boolean
+            isPreviousOwner:
+              description: Indicates whether the employment can be classified as a previous owner. This field can be `null` in cases where it is unknown whether the employment can be classified as a director and major shareholder.
+              example: false
+              nullable: true
+              readOnly: false
+              type: boolean
+            namePayslip:
+              description: Name that is visible on payslips for the employment
+              example: Steve Jobs
+              maxLength: 34
+              nullable: true
+              readOnly: false
+              type: string
+            nonPayrollAdministration:
+              description: |-
+                An administration that can not be used for payrolling. This field can not have a value at the same time as `payrollAdministration`
+
+                `nonPayrollAdministration` is a metadata field within the employer context. Possible values can be managed by the user.
+              format: metadata
+              nullable: true
+              properties:
+                description:
+                  description: Description of the administration
+                  example: Bakker
+                  maxLength: 50
+                  nullable: false
+                  readOnly: true
+                  type: string
+                id:
+                  description: The unique identifier of an object (GUID/UUID)
+                  example: b14acd0d-75d7-4fc8-8b22-4a3924585cab
+                  format: uuid
+                  nullable: false
+                  pattern: ^[{(]?[0-9A-F]{8}[-]?([0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$
+                  readOnly: false
+                  type: string
+                name:
+                  description: Name of the administration
+                  example: ABC accountants
+                  maxLength: 70
+                  nullable: true
+                  readOnly: true
+                  type: string
+              type: object
+            participation55plusRegulationUWV:
+              description: Indicates whether the 55 plus regulation (55 plus regeling) is applicable for the employment
+              example: false
+              nullable: true
+              readOnly: false
+              type: boolean
+            payrollAdministration:
+              description: |-
+                An administration used for payrolling. This field can not have a value at the same time as `nonPayrollAdministration`
+
+                `payrollAdministration` is a metadata field within the employer context. Possible values can be managed by the user.
+              format: metadata
+              nullable: true
+              properties:
+                clientNumber:
+                  description: The client number is a unique number for administrations that are used for payrolling. This field has no value if the administration is not used for payrolling.
+                  example: 1234
+                  format: int32
+                  nullable: false
+                  readOnly: true
+                  type: integer
+                description:
+                  description: Description of the administration
+                  example: Bakker
+                  maxLength: 50
+                  nullable: false
+                  readOnly: true
+                  type: string
+                id:
+                  description: The unique identifier of an object (GUID/UUID)
+                  example: b14acd0d-75d7-4fc8-8b22-4a3924585cab
+                  format: uuid
+                  nullable: false
+                  pattern: ^[{(]?[0-9A-F]{8}[-]?([0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$
+                  readOnly: false
+                  type: string
+                name:
+                  description: Name of the administration
+                  example: ABC accountants
+                  maxLength: 70
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            periodPayGradeAdjustment:
+              description: The values is used for two processes. First off, a message can be configured to notify the user(s) of a upcoming wage raise/negotiation based on the value of this field. Second, the value, in combination with `signalSalaryScaleAdjustment`, is used to signal a wage raises based on the `payScale` and ‘payGrade’.
+              example: 2
+              format: int32
+              nullable: true
+              readOnly: false
+              type: integer
+            professionCode:
+              description: A code field for a profession.
+              example: 4
+              format: int32
+              nullable: true
+              readOnly: false
+              type: integer
+            sendMdvNotification:
+              description: Indicate if a Mdv (melding dienstverband) should be send.
+              example: true
+              nullable: true
+              readOnly: false
+              type: boolean
+            signalPayGradeAdjustment:
+              description: Indicates whether signaling regarding salary scale adjustments are enabled for the employment
+              example: false
+              nullable: true
+              readOnly: false
+              type: boolean
+            specialIncomeRatio:
+              description: Indicates the special income ratio
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 0
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: n.v.t.
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            startCancellationNoticePeriod:
+              description: The date on which the  term of notice period starts. If the agrement states that a notice periode always starts on the first day of the month and the notice was given on the 15th the start notice periode will be the first day of the next month.
+              example: 2019-06-01
+              format: date
+              nullable: true
+              readOnly: false
+              type: string
+            startDate:
+              description: The date on which this employment starts.
+              example: 2019-01-01
+              format: date
+              nullable: true
+              readOnly: false
+              type: string
+            startDateContractOfIndefiniteDuration:
+              description: When did the value of `employmentDurationType` change for definite to indefinite. This value should be te samen as the `startDate` if the contract was indefinite from the start.
+              example: 2018-05-08
+              format: date
+              nullable: true
+              readOnly: false
+              type: string
+            typeOfEmployee:
+              description: A selection of pre defined employee-types for the employment.
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 1
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: Werknemer
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            typeOfParticipation:
+              description: The type of participation (aard van deelnemerschap) is only applicable in case the person related to this employment is eligible for pension
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 0
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: n.v.t.
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            vacationCoupons:
+              description: Indication for vacation coupons (vakantiebonnen). This is only applies to a limited set of CLA`s.
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 1
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: n.v.t.
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            valueOfParticipation:
+              description: The value of participation (waarde van deelnemerschap) is only applicable in case the person related to this employment is eligible for pension
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 0
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: n.v.t.
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            writtenEmploymentContract:
+              description: Dit the employment and employer make a written contract?
+              example: true
+              nullable: true
+              readOnly: false
+              type: boolean
+          type: object
+        fiscalData:
+          nullable: true
+          properties:
+            annualSalary:
+              description: The fiscal annual salary
+              example: 60000
+              format: double
+              maximum: 1000000000
+              minimum: 0
+              nullable: true
+              readOnly: false
+              type: number
+            applyDayTables:
+              description: Indicates whether the value of the day table is used for the calculation of payroll tax
+              example: false
+              nullable: true
+              readOnly: false
+              type: boolean
+            applyDeviatingPayrollTaxPercentageOn:
+              description: Indicates on what type of payroll calculation the deviating payroll tax percentage is applicable
+              format: metadata
+              nullable: false
+              properties:
+                key:
+                  example: 2
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: Afwijkend voor tabel- en tariefloon
+                  maxLength: 50
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            applyPayrollTaxDeduction:
+              description: Indicates whether payroll tax deduction is appliclable (loonheffingskorting)
+              example: false
+              nullable: true
+              readOnly: false
+              type: boolean
+            applyStudentDeduction:
+              description: Apply the "Scholierenregeling"
+              example: false
+              nullable: true
+              readOnly: false
+              type: boolean
+            deviatingCalculationRulePayrollTax:
+              description: Indicates if, while calculating payroll taxes and social security contributions, certain deviations are applicable. NL; Herleidingsregel
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 2
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: Werknemer belastingpl. en niet premiepl. WLZ
+                  maxLength: 50
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            deviatingPayrollTaxPercentage:
+              description: Indicates a deviating payroll tax percentage is to be applied
+              example: 27.45
+              format: double
+              nullable: true
+              readOnly: true
+              type: number
+            deviatingPayrollTaxTableColour:
+              description: Indicates if there is a deviating payroll tax table is applicable (green vs white table)
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 2
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: Werknemer belastingpl. en niet premiepl. WLZ
+                  maxLength: 50
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            residentOf:
+              description: |
+                Related to the fiscal country of residence of the employee. This might affect the calculation of any applicable loonheffingskortingen.
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 2
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                value:
+                  description: Description of the type of document
+                  example: Andere EU-lidstaat,EER-land,Zwitserland of BES-eilanden
+                  maxLength: 80
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+          type: object
+        id:
+          description: The unique identifier of an object (GUID/UUID)
+          example: b14acd0d-75d7-4fc8-8b22-4a3924585cab
+          format: uuid
+          nullable: false
+          pattern: ^[{(]?[0-9A-F]{8}[-]?([0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$
+          readOnly: true
+          type: string
+        organizationalEntityData:
+          nullable: true
+          properties:
+            department:
+              description: |-
+                The department of the employment.
+
+                `department` is a metadata field within the employer context. Possible values can be managed by the user.
+              format: metadata
+              nullable: true
+              properties:
+                code:
+                  example: 2
+                  format: int32
+                  nullable: false
+                  readOnly: true
+                  type: integer
+                description:
+                  example: Verkoop
+                  nullable: false
+                  readOnly: true
+                  type: string
+                key:
+                  example: b14acd0d-75d7-4fc8-8b22-4a3924585cab
+                  format: uuid
+                  nullable: false
+                  pattern: ^[{(]?[0-9A-F]{8}[-]?([0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$
+                  readOnly: false
+                  type: string
+              type: object
+            deviatingFunctionDescription:
+              description: The deviating function description of the employment. This description deviates from the value of the `function` field.
+              example: Directeur
+              nullable: true
+              readOnly: false
+              type: string
+            deviatingFunctionGroup:
+              description: The deviating functiongroup description of the employment.
+              example: 9A
+              nullable: true
+              readOnly: false
+              type: string
+            distributionUnit:
+              description: |
+                Distribution unit, used in several reports and the "basic wage journal" functionality. Commonly used as a cost center.
+
+                `distributionUnit` is a metadata field within the employer context. Possible values can be managed by the user.
+              format: metadata
+              nullable: true
+              properties:
+                code:
+                  example: 2
+                  format: int32
+                  nullable: false
+                  readOnly: true
+                  type: integer
+                description:
+                  example: Sales
+                  nullable: false
+                  readOnly: true
+                  type: string
+                key:
+                  example: b14acd0d-75d7-4fc8-8b22-4a3924585cab
+                  format: uuid
+                  nullable: false
+                  pattern: ^[{(]?[0-9A-F]{8}[-]?([0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$
+                  readOnly: false
+                  type: string
+              type: object
+            function:
+              description: |-
+                The function of the employment.
+
+                `function` is a metadata field within the employer context. Possible values can be managed by the user.
+              format: metadata
+              nullable: true
+              properties:
+                description:
+                  example: Directeur
+                  nullable: false
+                  readOnly: true
+                  type: string
+                group:
+                  example: internal
+                  nullable: false
+                  readOnly: true
+                  type: string
+                key:
+                  description: |
+                    The unique identifier of an object (GUID/UUID)
+                  example: b14acd0d-75d7-4fc8-8b22-4a3924585cab
+                  format: uuid
+                  nullable: false
+                  pattern: ^[{(]?[0-9A-F]{8}[-]?([0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$
+                  readOnly: false
+                  type: string
+              type: object
+            internalTelephoneExtensionNumber:
+              description: The phone extention number for the employment.
+              example: "0133031600"
+              nullable: true
+              readOnly: false
+              type: string
+            placeOfEmployment:
+              description: The place of employment (standplaats) for the employment.
+              example: Amsterdam office
+              nullable: true
+              readOnly: false
+              type: string
+            standardFunction:
+              description: |-
+                The standard (cao)function of the employment.
+
+                `standardFunction` is a metadata field within the payroll administration context. Possible values can be managed by the user.
+              format: metadata
+              nullable: true
+              properties:
+                category:
+                  example: 1
+                  format: int32
+                  nullable: true
+                  readOnly: true
+                  type: integer
+                code:
+                  example: A21
+                  maxLength: 6
+                  minLength: 1
+                  nullable: true
+                  readOnly: true
+                  type: string
+                key:
+                  example: 1
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: Administrateur
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+          type: object
+        otherPayrollVariablesData:
+          nullable: true
+          properties:
+            deviatingPremiumGroup:
+              description: Indicates what deviating premie sector fonds should apply for the employment. Do not specify if there is no deviation from the premium group for the payroll administration the employment is linked to.
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 2
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: (12) Metaal- en technische bedrijfstakken
+                  maxLength: 50
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+          type: object
+        socialSecurityData:
+          nullable: true
+          properties:
+            healthCareInsuranceActType:
+              description: Indicates what type of Health Care Insurance Act (Zvw) is applicable for this employment
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 2
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: (C/K) Wel verzekeringsplichtig, normaal tarief
+                  maxLength: 50
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            isInsuredForOccupationalDisabilityInsuranceAct:
+              description: Will contributions for the Occupational Disability Insurance Act (WAO) be payed for this employment
+              example: false
+              nullable: true
+              readOnly: false
+              type: boolean
+            isInsuredForSicknessBenefitsAct:
+              description: Will contributions for the  Sickness Benefits Act (ZW) be payed for this employment
+              example: false
+              nullable: true
+              readOnly: false
+              type: boolean
+            isInsuredForUnemploymentInsuranceAct:
+              description: Will contributions for the  Unemployment Insurance Act (WW) be payed for this employment
+              example: false
+              nullable: true
+              readOnly: false
+              type: boolean
+          type: object
+        uniqueName:
+          description: The unique name for this concept employment. It is commonly used as a displayname in the user interface to select this entry in a dropdown box.
+          example: Sollicitant 013
+          maxLength: 255
+          minLength: 1
+          nullable: false
+          readOnly: false
+          type: string
+        wageData:
+          nullable: true
+          properties:
+            applyPayGrade:
+              description: |
+                Apply pay grade indicates that after submitting the record the server will replace the value of `grossWage` with the value represented by the selected `payGrade`. A pay grade contains time based values, the value that is active on the `start date` of the record will be selected.
+              example: true
+              nullable: true
+              readOnly: false
+              type: boolean
+            grossWage:
+              description: |
+                The gross wage for the employee
+              example: 23
+              format: double
+              maximum: 1000000
+              minimum: 1
+              nullable: true
+              readOnly: false
+              type: number
+            grossWageType:
+              description: |
+                Indicates whether the `grossWage` is an hourly wage or a periodic wage. Periodic can represent a week, four weeks or a month. Which period is active for the employment can be found in wagePeriodType.
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 2
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: hourly
+                  maxLength: 50
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            netWage:
+              description: |
+                Net wage for the employment
+              format: double
+              maximum: 1000000
+              minimum: 1
+              nullable: true
+              readOnly: false
+              type: number
+            netWageType:
+              description: |
+                Indicates whether the net wage is an hourly wage or a periodic wage. Periodic can represent a week, four weeks or a month. Which period is active for the employment can be found in the payroll administration resource.
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 1
+                  format: int32
+                  nullable: false
+                  readOnly: true
+                  type: integer
+                value:
+                  example: hourly
+                  maxLength: 50
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            payGrade:
+              description: |
+                The pay grade indicates on what level (cel) of the paygrade the employment is.  The level is multi dimensional where the description indicates both the level and for example the number of years of service within the given level.
+
+                `payGrade` is a metadata field within the payroll administration/payScale context. Possible values can be managed by the user.
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 1
+                  format: int32
+                  nullable: false
+                  readOnly: true
+                  type: integer
+                value:
+                  example: Schaal B1, 15 jaar
+                  maxLength: 50
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            payScale:
+              description: |
+                A pay scale (also known as a salary structure) is a system that determines how much an employee is to be paid as a wage or salary, based on one or more factors such as the employee"s level, rank or status within the employer"s organization, the length of time that the employee has been employed, and the difficulty of the specific work performed.  After selecting a pay scale a pay grade needs to be selected to determine the actual wage. Only works with `grossWage`. The value of `grossWage` will be updated server side after the submit.
+
+                `payScale` is a metadata field within the payroll administration/payScale context. Possible values can be managed by the user.
+              format: metadata
+              nullable: true
+              properties:
+                key:
+                  example: 1
+                  format: int32
+                  nullable: false
+                  readOnly: true
+                  type: integer
+                value:
+                  example: Glastuinbouw maand, Loongebouw A
+                  maxLength: 50
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+          type: object
+        workingHoursData:
+          nullable: true
+          properties:
+            averageParttimeFactor:
+              description: This field is used to register the deviating value of the parttimefactor. The parttimefactor is normally calculated by workinghours dividing by shifthours multplied by 100
+              example: 37.5
+              format: double
+              maximum: 999.99
+              minimum: 0.01
+              nullable: true
+              pattern: ^(\d{1,2})(\.\d{1,2})?$
+              readOnly: false
+              type: number
+            calculateUsingWorkPattern:
+              description: Indications in this objects determine whether specific values should be calculated based on the bi-weekly workPattern (specified in the `workPattern` object).
+              nullable: false
+              properties:
+                daysDailyRate:
+                  description: "Indicates whether the number of days of dailyrate should be calculated based on the workpattern. The number of days are normally calculated by the working hours.       "
+                  example: false
+                  nullable: true
+                  readOnly: false
+                  type: boolean
+                deviatingDaysAndHours:
+                  description: Indication whether  the deviating hours per week and deviating SV-days per period are to be automatically calculated based on the workpattern. Please note (!) that any values in the deviatingHoursPerWeek and deviatingSvDaysPerPeriod fields (of this workingHours record) will be overwritten based on this calculation if true (and endDate=NULL)!
+                  example: false
+                  nullable: true
+                  readOnly: false
+                  type: boolean
+                hoursBrokenPeriod:
+                  description: Indicates whether the hours for the payrolling should be calculated based on the workpattern in broken periods. These are periods of in or out of service.
+                  example: false
+                  nullable: true
+                  readOnly: false
+                  type: boolean
+                hoursPeriod:
+                  description: "Indicates whether the hours for the payrolling should be calculated based on the workpattern for regular periods.         "
+                  example: false
+                  nullable: true
+                  readOnly: false
+                  type: boolean
+                leaveHours:
+                  description: Indicates whether then leave balances (verlof) are to be calculated based on the workpattern.
+                  example: true
+                  nullable: true
+                  readOnly: false
+                  type: boolean
+              type: object
+            contractCode:
+              description: |-
+                This field is specialy made for convenience stores. The field is the type of contract.
+
+                `contractCode` is a metadata field within the employer context. Possible values can be managed by the user.
+              format: metadata
+              nullable: true
+              properties:
+                code:
+                  example: 1022
+                  format: int32
+                  nullable: false
+                  readOnly: true
+                  type: integer
+                description:
+                  example: SLA-PT-met toeslagen ATW (88)
+                  nullable: false
+                  readOnly: true
+                  type: string
+                key:
+                  description: |
+                    The unique identifier of an object (GUID/UUID)
+                  example: b14acd0d-75d7-4fc8-8b22-4a3924585cab
+                  format: uuid
+                  nullable: false
+                  pattern: ^[{(]?[0-9A-F]{8}[-]?([0-9A-F]{4}[-]?){3}[0-9A-F]{12}[)}]?$
+                  readOnly: false
+                  type: string
+              type: object
+            deviatingHoursPerWeek:
+              description: Fulltime hours are normally based as defined by the shift, this optional field is used to register a deviating value. The value can be less or more then the fulltime hours a week.
+              example: 32
+              format: double
+              maximum: 99
+              minimum: 0.01
+              nullable: true
+              pattern: ^(\d{1,2})(\.\d{1,2})?$
+              readOnly: false
+              type: number
+            deviatingSvDaysPerPeriod:
+              description: "Sv (social insurance) days are normally calculated by hours per shift, this optional field is used to register a deviating value. "
+              example: 32
+              maximum: 23
+              minimum: 1
+              nullable: true
+              readOnly: false
+              type: number
+            flexibleHoursContract:
+              description: The field indicates the type of flexible contract. If not applicable, please set to NULL.
+              nullable: true
+              properties:
+                key:
+                  example: 0
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+                value:
+                  example: n.v.t.
+                  maxLength: 50
+                  nullable: false
+                  readOnly: true
+                  type: string
+              type: object
+            regularWorkPattern:
+              description: "When the employee works the same amount of hours per day every week, then the workpattern is regular.  "
+              example: true
+              nullable: true
+              readOnly: false
+              type: boolean
+            shift:
+              description: |-
+                The shift determines the full-time hours and bonus percentage.
+
+                `shift` is a metadata field within the payroll administration context. Possible values can be managed by the user.
+              format: metadata
+              nullable: true
+              properties:
+                bonusPercentage:
+                  description: "The bonus percentage used in wage calculations for the hours made in this shift. "
+                  example: 12
+                  maximum: 99
+                  minimum: 0.01
+                  readOnly: true
+                  type: number
+                fullTimeHoursPerWeek:
+                  description: The full time hours for an employment that is linked to this shift.
+                  example: 40
+                  maximum: 99
+                  minimum: 0.01
+                  readOnly: true
+                  type: number
+                shiftNumber:
+                  description: "The number for the shift. "
+                  example: 1
+                  format: int32
+                  nullable: false
+                  readOnly: false
+                  type: integer
+              type: object
+            workPattern:
+              description: |
+                The applicable work pattern for a period of 2 weeks can be stored in this object. Each field contains the number of work hours for that day in the 2-week period. <br /> Please note that the workPattern should be left NULL if no data is present (as opposed to filling all fields with 0) <br /> Each field represent the number of hours the employee normally works on that day.
+              nullable: true
+              properties:
+                evenWeeks:
+                  properties:
+                    friday:
+                      example: 2
+                      format: double
+                      maximum: 24
+                      minimum: 0
+                      nullable: false
+                      pattern: ^(\d{1,2})(\.\d{1,2})?$
+                      readOnly: false
+                      type: number
+                    monday:
+                      example: 0
+                      format: double
+                      maximum: 24
+                      minimum: 0
+                      nullable: false
+                      pattern: ^(\d{1,2})(\.\d{1,2})?$
+                      readOnly: false
+                      type: number
+                    saturday:
+                      example: 0
+                      format: double
+                      maximum: 24
+                      minimum: 0
+                      nullable: false
+                      pattern: ^(\d{1,2})(\.\d{1,2})?$
+                      readOnly: false
+                      type: number
+                    sunday:
+                      example: 0
+                      format: double
+                      maximum: 24
+                      minimum: 0
+                      nullable: false
+                      pattern: ^(\d{1,2})(\.\d{1,2})?$
+                      readOnly: false
+                      type: number
+                    thursday:
+                      example: 8
+                      format: double
+                      maximum: 24
+                      minimum: 0
+                      pattern: ^(\d{1,2})(\.\d{1,2})?$
+                      type: number
+                    tuesday:
+                      example: 8
+                      format: double
+                      maximum: 24
+                      minimum: 0
+                      nullable: false
+                      pattern: ^(\d{1,2})(\.\d{1,2})?$
+                      readOnly: false
+                      type: number
+                    wednesday:
+                      example: 8
+                      format: double
+                      maximum: 24
+                      minimum: 0
+                      nullable: false
+                      pattern: ^(\d{1,2})(\.\d{1,2})?$
+                      readOnly: false
+                      type: number
+                  type: object
+                oddWeeks:
+                  properties:
+                    friday:
+                      example: 4
+                      format: double
+                      maximum: 24
+                      minimum: 0
+                      nullable: false
+                      pattern: ^(\d{1,2})(\.\d{1,2})?$
+                      readOnly: false
+                      type: number
+                    monday:
+                      example: 8
+                      format: double
+                      maximum: 24
+                      minimum: 0
+                      nullable: false
+                      pattern: ^(\d{1,2})(\.\d{1,2})?$
+                      readOnly: false
+                      type: number
+                    saturday:
+                      example: 0
+                      format: double
+                      maximum: 24
+                      minimum: 0
+                      nullable: false
+                      pattern: ^(\d{1,2})(\.\d{1,2})?$
+                      readOnly: false
+                      type: number
+                    sunday:
+                      example: 0
+                      format: double
+                      maximum: 24
+                      minimum: 0
+                      nullable: false
+                      pattern: ^(\d{1,2})(\.\d{1,2})?$
+                      readOnly: false
+                      type: number
+                    thursday:
+                      example: 7.5
+                      format: double
+                      maximum: 24
+                      minimum: 0
+                      nullable: false
+                      pattern: ^(\d{1,2})(\.\d{1,2})?$
+                      readOnly: false
+                      type: number
+                    tuesday:
+                      example: 8
+                      format: double
+                      maximum: 24
+                      minimum: 0
+                      nullable: false
+                      pattern: ^(\d{1,2})(\.\d{1,2})?$
+                      readOnly: false
+                      type: number
+                    wednesday:
+                      example: 4
+                      format: double
+                      maximum: 24
+                      minimum: 0
+                      nullable: false
+                      pattern: ^(\d{1,2})(\.\d{1,2})?$
+                      readOnly: false
+                      type: number
+                  type: object
+              type: object
+          type: object
+      type: object
+    type: array
+type: object
+minimum: 0
+

@@ -1,0 +1,18 @@
+type: array
+items:
+  - type: string
+additionalItems:
+  type: integer
+enum:
+  - - a
+  - - a
+    - b
+default:
+  - item
+examples:
+  - - alpha
+    - beta
+minItems: 1
+maxItems: 10
+uniqueItems: true
+

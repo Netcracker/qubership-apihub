@@ -6,7 +6,7 @@ import { userEvent, within } from "storybook/test";
 import { TEST_REFERENCE_NAME_PROPERTY } from "../async-api-suite/shared-test-data";
 import { prepareAsyncApiDiffsDocument } from "../preprocess";
 import { parseYamlSource } from "../utils/parse-yaml-source";
-import { TEST_DIFF_META_KEYS } from "./shared-test-data";
+import { TEST_DIFF_META_KEYS } from "../shared/test-diff-meta-keys";
 
 export type AsyncApiDiffSampleCase = {
   caseId: string;
@@ -45,13 +45,21 @@ type AsyncApiCaseStoryArgs = {
 export const createAsyncApiSource = (sourceText: string): Record<string, unknown> =>
   parseYamlSource(sourceText);
 
+export type AsyncApiDiffsSuiteOperationKeys = {
+  operationKey: string;
+  messageKey: string;
+};
+
+/** Operation/message every synthetic AsyncAPI diff fixture declares (all suites but whole-apihub-operation). */
+export const ASYNC_API_DIFFS_SUITE_OPERATION_KEYS: AsyncApiDiffsSuiteOperationKeys = {
+  operationKey: "sendOperation",
+  messageKey: "TestMessage",
+};
+
 export const createAsyncApiViewerArgs = (
   beforeSourceText: string,
   afterSourceText: string,
-  options: {
-    operationKey: string;
-    messageKey: string;
-  },
+  options: AsyncApiDiffsSuiteOperationKeys = ASYNC_API_DIFFS_SUITE_OPERATION_KEYS,
 ): AsyncApiOperationDiffsViewerProps => ({
   devMode: true,
   mergedSource: prepareAsyncApiDiffsDocument({
@@ -65,14 +73,6 @@ export const createAsyncApiViewerArgs = (
   referenceNamePropertyKey: TEST_REFERENCE_NAME_PROPERTY,
   diffMetaKeys: TEST_DIFF_META_KEYS,
 });
-
-export const createAsyncApiSampleById = <TSample extends AsyncApiDiffSampleCase>(
-  sampleCases: readonly TSample[],
-): Record<string, TSample> =>
-  sampleCases.reduce<Record<string, TSample>>((accumulator, sampleCase) => {
-    accumulator[sampleCase.caseId] = sampleCase;
-    return accumulator;
-  }, {});
 
 export const createAsyncApiCaseStoryFactory = (
   StoryComponent: (props: AsyncApiCaseStoryComponentProps) => JSX.Element,

@@ -1,0 +1,17 @@
+type: object
+description: Object with 1 string property schema(s)
+properties:
+  prop0:
+    type: string
+    description: Sample string schema with all string validations
+    default: alpha
+    enum:
+      - alpha
+      - beta
+      - gamma
+    minLength: 1
+    maxLength: 128
+    pattern: ^[a-z]+$
+minProperties: 0
+maxProperties: 10
+

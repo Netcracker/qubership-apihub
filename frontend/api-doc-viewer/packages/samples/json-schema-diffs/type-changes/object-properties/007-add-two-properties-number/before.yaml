@@ -1,0 +1,6 @@
+type: object
+description: Object with 0 number property schema(s)
+properties: {}
+minProperties: 0
+maxProperties: 10
+

@@ -1,9 +1,7 @@
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import {
-  isDdlFlagBadgeDiffHighlighted,
-  takeColumnFlagDiffs,
-  takeIndexFlagDiffs,
+  DdlApiRowDiffs,
 } from '@apihub/next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs'
 import { buildFromDdl } from '@netcracker/qubership-apihub-ddlapi/parser'
 import { apiDiff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
@@ -56,11 +54,11 @@ describe('whole-node unique flag diffs', () => {
 
     expect(codeColumn?.value()?.isUnique).toBe(true)
 
-    const flagDiffs = takeColumnFlagDiffs(codeColumn!)
+    const flagDiffs = DdlApiRowDiffs.Column.takeFlagDiffs(codeColumn!)
     expect(flagDiffs?.isUnique?.data.action).toBe(DiffAction.add)
     expect(flagDiffs?.isUnique?.styles.before.isContentVisible).toBe(false)
     expect(flagDiffs?.isUnique?.styles.after.isContentVisible).toBe(true)
-    expect(isDdlFlagBadgeDiffHighlighted(flagDiffs?.isUnique)).toBe(false)
+    expect(DdlApiRowDiffs.Column.isFlagBadgeHighlighted(flagDiffs?.isUnique)).toBe(false)
   })
 
   it('case 303: unique badge is side-visible on origin only and not diff-highlighted', async () => {
@@ -69,11 +67,11 @@ describe('whole-node unique flag diffs', () => {
 
     expect(codeColumn?.value()?.isUnique).toBe(true)
 
-    const flagDiffs = takeColumnFlagDiffs(codeColumn!)
+    const flagDiffs = DdlApiRowDiffs.Column.takeFlagDiffs(codeColumn!)
     expect(flagDiffs?.isUnique?.data.action).toBe(DiffAction.remove)
     expect(flagDiffs?.isUnique?.styles.before.isContentVisible).toBe(true)
     expect(flagDiffs?.isUnique?.styles.after.isContentVisible).toBe(false)
-    expect(isDdlFlagBadgeDiffHighlighted(flagDiffs?.isUnique)).toBe(false)
+    expect(DdlApiRowDiffs.Column.isFlagBadgeHighlighted(flagDiffs?.isUnique)).toBe(false)
   })
 
   it('case 403: column unique badge stays diff-highlighted; index unique badge is side-only', async () => {
@@ -81,14 +79,14 @@ describe('whole-node unique flag diffs', () => {
     const codeColumn = findColumn(tree, 'code')
     const uniqueIndex = findUniqueIndex(tree, 'code')
 
-    const columnFlagDiffs = takeColumnFlagDiffs(codeColumn!)
-    expect(isDdlFlagBadgeDiffHighlighted(columnFlagDiffs?.isUnique)).toBe(true)
+    const columnFlagDiffs = DdlApiRowDiffs.Column.takeFlagDiffs(codeColumn!)
+    expect(DdlApiRowDiffs.Column.isFlagBadgeHighlighted(columnFlagDiffs?.isUnique)).toBe(true)
 
-    const indexFlagDiffs = takeIndexFlagDiffs(uniqueIndex!)
+    const indexFlagDiffs = DdlApiRowDiffs.Index.takeFlagDiffs(uniqueIndex!)
     expect(indexFlagDiffs?.isUnique?.data.action).toBe(DiffAction.add)
     expect(indexFlagDiffs?.isUnique?.styles.before.isContentVisible).toBe(false)
     expect(indexFlagDiffs?.isUnique?.styles.after.isContentVisible).toBe(true)
-    expect(isDdlFlagBadgeDiffHighlighted(indexFlagDiffs?.isUnique)).toBe(false)
+    expect(DdlApiRowDiffs.Column.isFlagBadgeHighlighted(indexFlagDiffs?.isUnique)).toBe(false)
   })
 
   it('case 503: column unique badge stays diff-highlighted; index unique badge is side-only', async () => {
@@ -96,13 +94,13 @@ describe('whole-node unique flag diffs', () => {
     const codeColumn = findColumn(tree, 'code')
     const uniqueIndex = findUniqueIndex(tree, 'code')
 
-    const columnFlagDiffs = takeColumnFlagDiffs(codeColumn!)
-    expect(isDdlFlagBadgeDiffHighlighted(columnFlagDiffs?.isUnique)).toBe(true)
+    const columnFlagDiffs = DdlApiRowDiffs.Column.takeFlagDiffs(codeColumn!)
+    expect(DdlApiRowDiffs.Column.isFlagBadgeHighlighted(columnFlagDiffs?.isUnique)).toBe(true)
 
-    const indexFlagDiffs = takeIndexFlagDiffs(uniqueIndex!)
+    const indexFlagDiffs = DdlApiRowDiffs.Index.takeFlagDiffs(uniqueIndex!)
     expect(indexFlagDiffs?.isUnique?.data.action).toBe(DiffAction.remove)
     expect(indexFlagDiffs?.isUnique?.styles.before.isContentVisible).toBe(true)
     expect(indexFlagDiffs?.isUnique?.styles.after.isContentVisible).toBe(false)
-    expect(isDdlFlagBadgeDiffHighlighted(indexFlagDiffs?.isUnique)).toBe(false)
+    expect(DdlApiRowDiffs.Column.isFlagBadgeHighlighted(indexFlagDiffs?.isUnique)).toBe(false)
   })
 })

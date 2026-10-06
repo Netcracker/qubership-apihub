@@ -9,6 +9,8 @@ import { DisplayMode, DOCUMENT_LAYOUT_MODE, LayoutMode } from "../.."
 import { ErrorBoundary } from "../services/ErrorBoundary"
 import { ErrorBoundaryFallback } from "../services/ErrorBoundaryFallback"
 import { ATTRIBUTE_PRECEDED_BY, PrecededBy, WithPrecededByProps } from "../shared-components/WithPrecededByProps"
+import { JsoEmbeddingContext } from "./embedding/JsoEmbeddingContext"
+import { JsoEmbeddedSchemaComponent } from "./embedding/jso-embedding-types"
 import { JsoPropertyNodeViewer } from "./JsoPropertyNodeViewer"
 import './styles/index.css'
 
@@ -19,6 +21,7 @@ type JsoViewerProps = WithPrecededByProps & {
   initialLevel?: number
   supportJsonSchema?: boolean
   devMode?: boolean
+  embeddedSchemaComponent?: JsoEmbeddedSchemaComponent
 }
 
 export const JsoViewer: FC<JsoViewerProps> =
@@ -42,6 +45,7 @@ const JsoViewerInner: FC<JsoViewerProps> = memo<JsoViewerProps>(props => {
     initialLevel = 0,
     supportJsonSchema = false,
     devMode = false,
+    embeddedSchemaComponent,
   } = props
 
   // indent-specific
@@ -59,6 +63,11 @@ const JsoViewerInner: FC<JsoViewerProps> = memo<JsoViewerProps>(props => {
   )
   const tree = useMemo(() => builder.build(), [builder])
 
+  const embeddingContext = useMemo(
+    () => ({ EmbeddedSchemaComponent: embeddedSchemaComponent }),
+    [embeddedSchemaComponent],
+  )
+
   logger.debug('[JSO] Source:', source)
   logger.debug('[JSO] Tree:', tree)
 
@@ -73,25 +82,27 @@ const JsoViewerInner: FC<JsoViewerProps> = memo<JsoViewerProps>(props => {
   }
 
   return (
-    <DisplayModeContext.Provider value={displayMode}>
-      <LayoutModeContext.Provider value={layoutMode}> {/* Now only 1 layout mode is supported */}
-        <LevelContext.Provider value={initialLevel}>
-          <div data-testid='jso-viewer'>
-            {jsoProperties.map((jsoProperty, index) => (
-              <JsoPropertyNodeViewer
-                data-precededby={
-                  index === 0
-                    ? precededBy
-                    : PrecededBy.JSO_PROPERTY
-                }
-                key={jsoProperty.id}
-                node={jsoProperty}
-                supportJsonSchema={supportJsonSchema}
-              />
-            ))}
-          </div>
-        </LevelContext.Provider>
-      </LayoutModeContext.Provider>
-    </DisplayModeContext.Provider>
+    <JsoEmbeddingContext.Provider value={embeddingContext}>
+      <DisplayModeContext.Provider value={displayMode}>
+        <LayoutModeContext.Provider value={layoutMode}> {/* Now only 1 layout mode is supported */}
+          <LevelContext.Provider value={initialLevel}>
+            <div data-testid='jso-viewer'>
+              {jsoProperties.map((jsoProperty, index) => (
+                <JsoPropertyNodeViewer
+                  data-precededby={
+                    index === 0
+                      ? precededBy
+                      : PrecededBy.JSO_PROPERTY
+                  }
+                  key={jsoProperty.id}
+                  node={jsoProperty}
+                  supportJsonSchema={supportJsonSchema}
+                />
+              ))}
+            </div>
+          </LevelContext.Provider>
+        </LayoutModeContext.Provider>
+      </DisplayModeContext.Provider>
+    </JsoEmbeddingContext.Provider>
   )
 })

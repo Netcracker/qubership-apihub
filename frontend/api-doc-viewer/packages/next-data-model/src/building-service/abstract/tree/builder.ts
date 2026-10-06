@@ -4,7 +4,7 @@ import { isObject } from "../../../utilities";
 import { NodeId, NodeKey, UnknownObject } from "../../../utility-types";
 
 export abstract class TreeBuilder<
-  V extends object | null,
+  V extends object | boolean | null,
   K extends string,
   M extends object,
 > {

@@ -26,7 +26,7 @@ import { diffRename } from '../../utils/common/changes'
 import { BADGE_KIND_INFO } from "../kit/ux/UxBadge/types"
 import { UxBadge } from '../kit/ux/UxBadge/UxBadge'
 import { NullableAsterisk } from './NullableAsterisk'
-import { RequiredStar } from './RequiredStar'
+import { RequiredStar } from "@apihub/components/shared-components/RequiredStar/RequiredStar"
 
 export type NodeTitleProps = NodeTitleData & {
   // control flags

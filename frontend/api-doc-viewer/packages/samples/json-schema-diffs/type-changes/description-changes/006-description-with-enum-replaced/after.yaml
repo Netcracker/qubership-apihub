@@ -1,0 +1,6 @@
+type: string
+description: Updated enum string description
+enum:
+  - alpha
+  - beta
+

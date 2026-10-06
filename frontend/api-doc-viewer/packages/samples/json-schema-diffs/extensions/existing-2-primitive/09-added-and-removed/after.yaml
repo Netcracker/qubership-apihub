@@ -1,0 +1,4 @@
+type: 'string'
+x-internal: true
+x-metadata:
+  owner: 'platform-team'

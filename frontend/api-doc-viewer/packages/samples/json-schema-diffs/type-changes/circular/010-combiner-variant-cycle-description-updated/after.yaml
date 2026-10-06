@@ -1,0 +1,17 @@
+afterSchema:
+  type: object
+  description: Updated cyclic schema description
+  properties:
+    value:
+      $ref: "#/components/schemas/CyclicValue"
+afterAdditionalComponents:
+  schemas:
+    CyclicValue:
+      oneOf:
+        - type: string
+        - type: object
+          description: Cyclic object variant
+          properties:
+            nested:
+              $ref: "#/components/schemas/CyclicValue"
+

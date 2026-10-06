@@ -1,0 +1,13 @@
+oneOf:
+  - type: object
+    description: Object variant
+    properties:
+      id:
+        type: string
+      count:
+        type: integer
+  - type: array
+    description: Array variant
+    items:
+      type: string
+

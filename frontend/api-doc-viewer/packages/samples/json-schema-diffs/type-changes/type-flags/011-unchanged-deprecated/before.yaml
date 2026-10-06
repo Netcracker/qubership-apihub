@@ -1,0 +1,4 @@
+type: string
+description: Sample string description
+deprecated: true
+

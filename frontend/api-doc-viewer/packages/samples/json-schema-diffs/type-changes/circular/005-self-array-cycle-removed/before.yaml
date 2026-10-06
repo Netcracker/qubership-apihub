@@ -1,0 +1,10 @@
+beforeSchema:
+  $ref: "#/components/schemas/SelfArray"
+beforeAdditionalComponents:
+  schemas:
+    SelfArray:
+      type: array
+      description: Self-referencing array
+      items:
+        $ref: "#/components/schemas/SelfArray"
+

@@ -17,6 +17,8 @@ import { ErrorBoundary } from "../services/ErrorBoundary"
 import { ErrorBoundaryFallback } from "../services/ErrorBoundaryFallback"
 import { ATTRIBUTE_PRECEDED_BY, PrecededBy, WithPrecededByProps } from "../shared-components/WithPrecededByProps"
 import '../shared-styles/diffs/index.css'
+import { JsoEmbeddingContext } from "./embedding/JsoEmbeddingContext"
+import { JsoEmbeddedSchemaDiffsComponent } from "./embedding/jso-embedding-types"
 import { JsoPropertyNodeViewerWithDiffs } from "./JsoPropertyNodeViewerWithDiffs"
 
 type JsoDiffsViewerProps = WithPrecededByProps & {
@@ -28,6 +30,7 @@ type JsoDiffsViewerProps = WithPrecededByProps & {
   // diffs specific
   diffMetaKeys: DiffMetaKeys
   diffTypes?: ReadonlyArray<DiffType>
+  embeddedSchemaDiffsComponent?: JsoEmbeddedSchemaDiffsComponent
 }
 
 export const JsoDiffsViewer: FC<JsoDiffsViewerProps> =
@@ -53,6 +56,7 @@ const JsoDiffsViewerInner: FC<JsoDiffsViewerProps> =
       devMode = false,
       diffMetaKeys,
       diffTypes,
+      embeddedSchemaDiffsComponent,
     } = props
 
     // indent-specific
@@ -70,6 +74,11 @@ const JsoDiffsViewerInner: FC<JsoDiffsViewerProps> =
       [source, supportJsonSchema, diffMetaKeys, logger],
     )
     const tree = useMemo(() => builder.build(), [builder])
+
+    const embeddingContext = useMemo(
+      () => ({ EmbeddedSchemaDiffsComponent: embeddedSchemaDiffsComponent }),
+      [embeddedSchemaDiffsComponent],
+    )
 
     logger.debug("[JSO Diffs] Source:", source)
     logger.debug("[JSO Diffs] Tree:", tree)
@@ -101,29 +110,31 @@ const JsoDiffsViewerInner: FC<JsoDiffsViewerProps> =
     })()
 
     return (
-      <DiffMetaKeysContext.Provider value={diffMetaKeys}>
-        <DiffTypesContext.Provider value={diffTypes}>
-          <DisplayModeContext.Provider value={displayMode}>
-            <LayoutModeContext.Provider value={SIDE_BY_SIDE_DIFFS_LAYOUT_MODE}>
-              <AsyncLevelContextProvider beforeLevel={nextBeforeLevel} afterLevel={nextAfterLevel}>
-                <div data-testid='jso-diffs-viewer'>
-                  {jsoProperties.map((jsoProperty, index) => (
-                    <JsoPropertyNodeViewerWithDiffs
-                      data-precededby={
-                        index === 0
-                          ? precededBy
-                          : PrecededBy.JSO_PROPERTY
-                      }
-                      key={jsoProperty.id}
-                      node={jsoProperty}
-                      supportJsonSchema={supportJsonSchema}
-                    />
-                  ))}
-                </div>
-              </AsyncLevelContextProvider>
-            </LayoutModeContext.Provider>
-          </DisplayModeContext.Provider>
-        </DiffTypesContext.Provider>
-      </DiffMetaKeysContext.Provider>
+      <JsoEmbeddingContext.Provider value={embeddingContext}>
+        <DiffMetaKeysContext.Provider value={diffMetaKeys}>
+          <DiffTypesContext.Provider value={diffTypes}>
+            <DisplayModeContext.Provider value={displayMode}>
+              <LayoutModeContext.Provider value={SIDE_BY_SIDE_DIFFS_LAYOUT_MODE}>
+                <AsyncLevelContextProvider beforeLevel={nextBeforeLevel} afterLevel={nextAfterLevel}>
+                  <div data-testid='jso-diffs-viewer'>
+                    {jsoProperties.map((jsoProperty, index) => (
+                      <JsoPropertyNodeViewerWithDiffs
+                        data-precededby={
+                          index === 0
+                            ? precededBy
+                            : PrecededBy.JSO_PROPERTY
+                        }
+                        key={jsoProperty.id}
+                        node={jsoProperty}
+                        supportJsonSchema={supportJsonSchema}
+                      />
+                    ))}
+                  </div>
+                </AsyncLevelContextProvider>
+              </LayoutModeContext.Provider>
+            </DisplayModeContext.Provider>
+          </DiffTypesContext.Provider>
+        </DiffMetaKeysContext.Provider>
+      </JsoEmbeddingContext.Provider>
     )
   })

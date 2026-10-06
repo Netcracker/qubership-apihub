@@ -1,0 +1,6 @@
+type: 'string'
+x-internal:
+  owner: 'platform-team'
+x-version:
+  - 'beta'
+  - 'internal'

@@ -1,10 +1,10 @@
 import { CHANGED_LAYOUT_SIDE, ORIGIN_LAYOUT_SIDE } from '@apihub/next-data-model/model/abstract/layout-side'
 import { HighlightVariant, NodeDiffsSeverityPlacemennt } from '@apihub/next-data-model/model/abstract/tree-with-diffs/tree-node.interface'
+import { DdlApiRowDiffs } from '@apihub/next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs'
 import {
   formatForeignKeyTargetKey,
   formatForeignKeyTargetKeys,
-  resolveForeignKeyTargetSideDisplay,
-} from '@apihub/next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs'
+} from '@apihub/next-data-model/shared/ddlapi/foreign-key-target-key'
 import { DdlApiForeignKeyTarget } from '@apihub/next-data-model/model/ddlapi/tree/node-value'
 import { buildFromDdl } from '@netcracker/qubership-apihub-ddlapi/parser'
 import { apiDiff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
@@ -102,8 +102,8 @@ describe('foreign key target diffs when a key changes in place', () => {
     expect(targetDiff?.data.action).toBe(DiffAction.replace)
     expect(targetDiff?.styles.before).toMatchObject({ isContentVisible: true, textHighlighterColor: HighlightVariant.Yellow })
     expect(targetDiff?.styles.after).toMatchObject({ isContentVisible: true, textHighlighterColor: HighlightVariant.Yellow })
-    expect(resolveForeignKeyTargetSideDisplay(afterTarget, targetDiff, ORIGIN_LAYOUT_SIDE)).toEqual(beforeTarget)
-    expect(resolveForeignKeyTargetSideDisplay(afterTarget, targetDiff, CHANGED_LAYOUT_SIDE)).toEqual(afterTarget)
+    expect(DdlApiRowDiffs.ForeignKey.resolveTargetSideDisplay(afterTarget, targetDiff, ORIGIN_LAYOUT_SIDE)).toEqual(beforeTarget)
+    expect(DdlApiRowDiffs.ForeignKey.resolveTargetSideDisplay(afterTarget, targetDiff, CHANGED_LAYOUT_SIDE)).toEqual(afterTarget)
     expect(column.diffsSeverities?.[NodeDiffsSeverityPlacemennt.TitleRow]?.causedAt?.at(-1)).toBe(causedAt)
   })
 })

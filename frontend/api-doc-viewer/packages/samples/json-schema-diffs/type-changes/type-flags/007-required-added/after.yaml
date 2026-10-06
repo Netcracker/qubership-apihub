@@ -1,0 +1,9 @@
+type: object
+description: Object with one string property
+properties:
+  name:
+    type: string
+    description: Name property
+required:
+  - name
+

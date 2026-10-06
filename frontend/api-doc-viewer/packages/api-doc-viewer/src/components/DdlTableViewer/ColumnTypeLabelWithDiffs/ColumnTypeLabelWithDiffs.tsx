@@ -1,15 +1,17 @@
-import { takeDiffSideTextHighlighterColor } from "@apihub/utils/diffs/take-diff-side-text-highlighter-color"
+import { resolveDiffSideStyle } from "@apihub/utils/diffs/resolve-diff-side-style"
 import { LayoutSide } from "@apihub/types/internal/LayoutSide"
 import {
+  DdlApiRowDiffs,
   DdlColumnTypeLabelSideSegment,
-  resolveColumnTypeLabelSideDisplay,
 } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs"
+import { SideListDisplayKinds } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/list-side-display"
 import { DdlApiTreeNodeWithDiffs } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/types/aliases"
 import { DdlApiTreeNodeKinds } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/types/node-kind"
 import { FC, memo } from "react"
-import { DdlApiPropertyValue } from "../DdlApiPropertyValue/DdlApiPropertyValue"
-import { DdlApiPropertyValueWithDiffs } from "../DdlApiPropertyValue/DdlApiPropertyValueWithDiffs"
-import { DdlCommaSeparatedListWithDiffs } from "../DdlCommaSeparatedListWithDiffs/DdlCommaSeparatedListWithDiffs"
+import { CommaSeparatedListWithDiffs } from "../../shared-components/CommaSeparatedList/CommaSeparatedListWithDiffs"
+import { SubheaderValue } from "../../shared-components/SubheaderValue/SubheaderValue"
+import { SubheaderValueAppearance } from "../../shared-components/SubheaderValue/types"
+import { SubheaderValueWithDiffs } from "../../shared-components/SubheaderValue/SubheaderValueWithDiffs"
 
 type ColumnTypeLabelWithDiffsProps = {
   node: DdlApiTreeNodeWithDiffs<typeof DdlApiTreeNodeKinds.COLUMN>
@@ -44,34 +46,35 @@ function renderColumnTypeLabelSegment(
   layoutSide: LayoutSide,
 ) {
   if (segment.diff) {
+    const style = resolveDiffSideStyle(segment.diff, layoutSide)
     return (
-      <DdlApiPropertyValueWithDiffs
+      <SubheaderValueWithDiffs
         key={`${segment.text}-${index}`}
         isVisible={true}
         value={segment.text}
-        appearance="text"
-        textHighlighterColor={takeDiffSideTextHighlighterColor(segment.diff, layoutSide)}
+        appearance={SubheaderValueAppearance.Text}
+        textHighlighterColor={style.textHighlighterColor}
       />
     )
   }
 
   return (
-    <DdlApiPropertyValue
+    <SubheaderValue
       key={`${segment.text}-${index}`}
       isVisible={true}
       value={segment.text}
-      appearance="text"
+      appearance={SubheaderValueAppearance.Text}
     />
   )
 }
 
 export const ColumnTypeLabelWithDiffs: FC<ColumnTypeLabelWithDiffsProps> = memo<ColumnTypeLabelWithDiffsProps>((props) => {
   const { node, layoutSide } = props
-  const display = resolveColumnTypeLabelSideDisplay(node, layoutSide)
+  const display = DdlApiRowDiffs.ColumnTypeLabel.resolveSideDisplay(node, layoutSide)
 
-  if (display.kind === "plain" || display.kind === "monolithic") {
+  if (display.kind === SideListDisplayKinds.NO_DIFFS || display.kind === SideListDisplayKinds.WHOLE_DIFFS) {
     return (
-      <DdlCommaSeparatedListWithDiffs
+      <CommaSeparatedListWithDiffs
         layoutSide={layoutSide}
         display={display}
       />
@@ -84,10 +87,10 @@ export const ColumnTypeLabelWithDiffs: FC<ColumnTypeLabelWithDiffsProps> = memo<
     <span className="inline-flex items-center gap-1">
       {typeNameSegments.map((segment, index) => renderColumnTypeLabelSegment(segment, index, layoutSide))}
       {parameterSegments.length > 0 && (
-        <DdlCommaSeparatedListWithDiffs
+        <CommaSeparatedListWithDiffs
           layoutSide={layoutSide}
           display={{
-            kind: "segmented",
+            kind: SideListDisplayKinds.PARTIAL_DIFFS,
             segments: parameterSegments,
           }}
         />

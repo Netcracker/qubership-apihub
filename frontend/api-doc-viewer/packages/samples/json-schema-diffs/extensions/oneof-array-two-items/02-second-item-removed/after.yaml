@@ -1,0 +1,5 @@
+oneOf:
+  - type: array
+    items:
+      - type: string
+  - type: boolean

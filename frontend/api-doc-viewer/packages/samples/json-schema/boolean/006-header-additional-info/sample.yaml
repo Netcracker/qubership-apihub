@@ -1,0 +1,13 @@
+type: boolean
+title: Sample Boolean
+readOnly: true
+writeOnly: true
+deprecated: true
+enum:
+  - true
+  - false
+default: true
+examples:
+  - true
+  - false
+

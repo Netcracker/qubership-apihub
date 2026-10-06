@@ -1,6 +1,6 @@
 import { NODE_LEVEL_DIFF_KEY, NodeDiffsSeverityPlacemennt } from '@apihub/next-data-model/model/abstract/tree-with-diffs/tree-node.interface'
 import { CHANGED_LAYOUT_SIDE, ORIGIN_LAYOUT_SIDE } from '@apihub/next-data-model/model/abstract/layout-side'
-import { DDL_PROPERTY_TITLE_ROW_DIFF_KEY, isDdlPropertySubheaderVisible } from '@apihub/next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs'
+import { DDL_PROPERTY_TITLE_ROW_DIFF_KEY, DdlApiRowDiffs } from '@apihub/next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs'
 import { DdlApiTreeNodeKinds } from '@apihub/next-data-model/model/ddlapi/types/node-kind'
 import { buildFromDdl } from '@netcracker/qubership-apihub-ddlapi/parser'
 import { apiDiff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
@@ -167,8 +167,8 @@ describe('DDL whole-table node diffs', () => {
     expect(idColumn?.diffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY]).toBe(idColumn?.diffs[NODE_LEVEL_DIFF_KEY])
     expect(idColumn?.diffs[NODE_LEVEL_DIFF_KEY]?.styles.before.isHeaderVisible).toBe(false)
     expect(idColumn?.diffs[NODE_LEVEL_DIFF_KEY]?.styles.after.isHeaderVisible).toBe(true)
-    expect(isDdlPropertySubheaderVisible(idColumn?.diffs[NODE_LEVEL_DIFF_KEY], ORIGIN_LAYOUT_SIDE)).toBe(false)
-    expect(isDdlPropertySubheaderVisible(idColumn?.diffs[NODE_LEVEL_DIFF_KEY], CHANGED_LAYOUT_SIDE)).toBe(true)
+    expect(DdlApiRowDiffs.PropertyRow.isSubheaderVisible(idColumn?.diffs[NODE_LEVEL_DIFF_KEY], ORIGIN_LAYOUT_SIDE)).toBe(false)
+    expect(DdlApiRowDiffs.PropertyRow.isSubheaderVisible(idColumn?.diffs[NODE_LEVEL_DIFF_KEY], CHANGED_LAYOUT_SIDE)).toBe(true)
 
     const columnsSection = findNode(tree, DdlApiTreeNodeKinds.COLUMNS)
     expect(columnsSection?.diffs[NODE_LEVEL_DIFF_KEY]?.data.action).toBe(DiffAction.add)
@@ -186,8 +186,8 @@ describe('DDL whole-table node diffs', () => {
     expect(idColumn?.diffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY]).toBe(idColumn?.diffs[NODE_LEVEL_DIFF_KEY])
     expect(idColumn?.diffs[NODE_LEVEL_DIFF_KEY]?.styles.before.isHeaderVisible).toBe(true)
     expect(idColumn?.diffs[NODE_LEVEL_DIFF_KEY]?.styles.after.isHeaderVisible).toBe(false)
-    expect(isDdlPropertySubheaderVisible(idColumn?.diffs[NODE_LEVEL_DIFF_KEY], ORIGIN_LAYOUT_SIDE)).toBe(true)
-    expect(isDdlPropertySubheaderVisible(idColumn?.diffs[NODE_LEVEL_DIFF_KEY], CHANGED_LAYOUT_SIDE)).toBe(false)
+    expect(DdlApiRowDiffs.PropertyRow.isSubheaderVisible(idColumn?.diffs[NODE_LEVEL_DIFF_KEY], ORIGIN_LAYOUT_SIDE)).toBe(true)
+    expect(DdlApiRowDiffs.PropertyRow.isSubheaderVisible(idColumn?.diffs[NODE_LEVEL_DIFF_KEY], CHANGED_LAYOUT_SIDE)).toBe(false)
   })
 
   it('inherits whole-table add onto index descendants', async () => {

@@ -1,0 +1,18 @@
+type: string
+title: Sample String
+readOnly: true
+writeOnly: true
+deprecated: true
+format: email
+enum:
+  - alpha
+  - beta
+  - gamma
+default: alpha
+examples:
+  - alpha
+  - sample
+minLength: 1
+maxLength: 128
+pattern: ^[a-z]+$
+

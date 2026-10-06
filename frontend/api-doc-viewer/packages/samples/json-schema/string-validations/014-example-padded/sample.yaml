@@ -1,0 +1,4 @@
+type: string
+example: "    value with whitespaces around     "
+title: '[example] example = "    value with whitespaces around     "'
+

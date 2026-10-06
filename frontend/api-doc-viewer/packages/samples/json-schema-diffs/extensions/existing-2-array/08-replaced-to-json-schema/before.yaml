@@ -1,0 +1,7 @@
+type: 'string'
+x-tags:
+  - 'beta'
+  - 'internal'
+x-owners:
+  - 'team-a'
+  - 'team-b'

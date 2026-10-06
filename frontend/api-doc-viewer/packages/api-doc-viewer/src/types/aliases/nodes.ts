@@ -23,26 +23,15 @@ import {
   GraphSchemaDiffNodeValue,
   GraphSchemaNodeValue,
   IModelTreeNode,
-  JsonSchemaDiffNodeMeta,
-  JsonSchemaDiffNodeValue,
-  JsonSchemaNodeKind,
-  JsonSchemaNodeMeta,
-  JsonSchemaNodeValue,
 } from '@netcracker/qubership-apihub-api-data-model'
 
 export type NodeId = string
 export type AnyTreeNode =
-  | IModelTreeNode<JsonSchemaNodeValue, JsonSchemaNodeKind, JsonSchemaNodeMeta>
-  | IModelTreeNode<JsonSchemaDiffNodeValue, JsonSchemaNodeKind, JsonSchemaDiffNodeMeta>
   | IModelTreeNode<GraphApiNodeData, GraphApiNodeKind, GraphApiNodeMeta>
   | IModelTreeNode<GraphApiDiffNodeData, GraphApiNodeKind, GraphApiDiffNodeMeta>
 export type AnyTreeNodeValue =
-  | JsonSchemaDiffNodeValue
-  | JsonSchemaNodeValue
   | GraphSchemaDiffNodeValue
   | GraphSchemaNodeValue
 export type AnyTreeNodeMeta =
-  | JsonSchemaDiffNodeMeta
-  | JsonSchemaNodeMeta
   | GraphApiDiffNodeMeta
   | GraphApiNodeMeta

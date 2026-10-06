@@ -1,0 +1,9 @@
+type: array
+items:
+  type: string
+example:
+  - alpha
+  - beta
+  - gamma
+title: "[example] One arbitrary array as example"
+

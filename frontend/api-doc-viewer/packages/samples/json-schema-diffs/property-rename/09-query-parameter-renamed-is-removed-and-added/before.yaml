@@ -1,0 +1,16 @@
+openapi: 3.0.3
+info:
+  title: Property rename sample
+  version: 1.0.0
+paths:
+  '/users':
+    get:
+      parameters:
+        - name: q
+          in: query
+          description: Search query.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK

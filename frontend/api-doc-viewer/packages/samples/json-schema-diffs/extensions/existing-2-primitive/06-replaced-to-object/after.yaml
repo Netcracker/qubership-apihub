@@ -1,0 +1,4 @@
+type: 'string'
+x-internal: true
+x-version:
+  owner: 'platform-team'

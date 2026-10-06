@@ -42,6 +42,8 @@ apm_modules/
 .cursor/
 .github/instructions/
 AGENTS.md
+# root AGENTS.md is hand-written and committed (do not run `apm compile` at the root)
+!/AGENTS.md
 CLAUDE.md
 packages/**/AGENTS.md
 packages/**/CLAUDE.md

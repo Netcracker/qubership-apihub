@@ -1,0 +1,14 @@
+type: object
+description: Object with 2 boolean property schema(s)
+properties:
+  prop0:
+    type: boolean
+    description: Sample boolean schema
+    default: false
+  prop1:
+    type: boolean
+    description: Sample boolean schema
+    default: false
+minProperties: 0
+maxProperties: 10
+

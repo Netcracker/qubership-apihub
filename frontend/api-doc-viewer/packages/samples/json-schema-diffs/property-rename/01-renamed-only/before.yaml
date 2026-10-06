@@ -1,0 +1,23 @@
+openapi: 3.0.3
+info:
+  title: Property rename sample
+  version: 1.0.0
+paths:
+  '/users/{id}/orders/{orderId}':
+    get:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User identifier.
+          schema:
+            type: string
+        - name: orderId
+          in: path
+          required: true
+          description: Order identifier.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK

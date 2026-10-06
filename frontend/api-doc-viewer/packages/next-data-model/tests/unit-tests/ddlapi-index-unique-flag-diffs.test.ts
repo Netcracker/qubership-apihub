@@ -3,9 +3,7 @@ import { join } from 'path'
 import { HighlightVariant } from '@apihub/next-data-model/model/abstract/tree-with-diffs/tree-node.interface'
 import { DDL_PROPERTY_TITLE_ROW_DIFF_KEY } from '@apihub/next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs.types'
 import {
-  isDdlFlagBadgeDiffHighlighted,
-  takeColumnFlagDiffs,
-  takeIndexFlagDiffs,
+  DdlApiRowDiffs,
 } from '@apihub/next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs'
 import { buildFromDdl } from '@netcracker/qubership-apihub-ddlapi/parser'
 import { apiDiff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
@@ -58,12 +56,12 @@ describe('index unique toggle badge contract (cases 12/13, 22/23)', () => {
     async (caseId, indexKey, expectedAction, visibleBefore, visibleAfter) => {
       const tree = await buildTree(caseId)
       const index = findNode(tree, DdlApiTreeNodeKinds.INDEX, indexKey)
-      const flagDiffs = takeIndexFlagDiffs(index)
+      const flagDiffs = DdlApiRowDiffs.Index.takeFlagDiffs(index)
 
       expect(flagDiffs?.isUnique?.data.action).toBe(expectedAction)
       expect(flagDiffs?.isUnique?.styles.before.isContentVisible).toBe(visibleBefore)
       expect(flagDiffs?.isUnique?.styles.after.isContentVisible).toBe(visibleAfter)
-      expect(isDdlFlagBadgeDiffHighlighted(flagDiffs?.isUnique)).toBe(true)
+      expect(DdlApiRowDiffs.Column.isFlagBadgeHighlighted(flagDiffs?.isUnique)).toBe(true)
 
       const titleRowDiff = index.diffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY]
       expect(titleRowDiff?.data.action).toBe(DiffAction.replace)
@@ -82,12 +80,12 @@ describe('index unique toggle badge contract (cases 12/13, 22/23)', () => {
     async (caseId, expectedAction, visibleBefore, visibleAfter) => {
       const tree = await buildTree(caseId)
       const column = findNode(tree, DdlApiTreeNodeKinds.COLUMN, 'c1')
-      const flagDiffs = takeColumnFlagDiffs(column)
+      const flagDiffs = DdlApiRowDiffs.Column.takeFlagDiffs(column)
 
       expect(flagDiffs?.isUnique?.data.action).toBe(expectedAction)
       expect(flagDiffs?.isUnique?.styles.before.isContentVisible).toBe(visibleBefore)
       expect(flagDiffs?.isUnique?.styles.after.isContentVisible).toBe(visibleAfter)
-      expect(isDdlFlagBadgeDiffHighlighted(flagDiffs?.isUnique)).toBe(true)
+      expect(DdlApiRowDiffs.Column.isFlagBadgeHighlighted(flagDiffs?.isUnique)).toBe(true)
 
       const titleRowDiff = column.diffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY]
       expect(titleRowDiff?.data.action).toBe(DiffAction.replace)

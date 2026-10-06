@@ -1,0 +1,8 @@
+type: object
+examples:
+  - id: alpha
+    count: 1
+  - id: beta
+    count: 2
+    active: true
+

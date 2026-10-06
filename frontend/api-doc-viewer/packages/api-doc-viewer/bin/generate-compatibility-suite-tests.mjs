@@ -39,7 +39,7 @@ const printTestFile = (metaId, testIds, visibleSelector) => {
 
   return `import path from 'path'
 import { storyPage } from '../service/storybook-service'
-import { waitForVisibleSelector } from '../service/wait-for-visible-selector'
+import { waitForVisibleSelector } from '../service/viewer-waits'
 
 const META_ID = '${metaId}'
 const SNAPSHOTS_DIR = path.resolve(__dirname, '..', '__image_snapshots__')

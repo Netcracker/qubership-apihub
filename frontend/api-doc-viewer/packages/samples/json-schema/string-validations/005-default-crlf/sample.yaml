@@ -1,0 +1,4 @@
+type: string
+default: "\r\n"
+title: '[default] default = "\r\n"'
+

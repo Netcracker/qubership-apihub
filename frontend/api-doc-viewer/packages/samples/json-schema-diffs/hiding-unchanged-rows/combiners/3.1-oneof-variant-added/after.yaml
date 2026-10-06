@@ -1,0 +1,13 @@
+type: object
+properties:
+  status:
+    oneOf:
+      - type: string
+        description: String variant
+      - type: number
+        description: Number variant
+      - type: boolean
+        description: Added variant
+  unchangedProp:
+    type: string
+    description: Unchanged

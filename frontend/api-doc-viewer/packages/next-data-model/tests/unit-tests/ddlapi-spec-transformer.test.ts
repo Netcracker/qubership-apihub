@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs'
+import path from 'path'
 import { literal, rawExpr, TypeKind } from '@netcracker/qubership-apihub-ddlapi'
 import { buildFromDdl } from '@netcracker/qubership-apihub-ddlapi/parser'
 import { DdlApiSpecTransformer } from '../../src/building-service/ddlapi/shared/ddlapi-spec-transformer'
@@ -26,6 +28,60 @@ describe('formatDdlExpr', () => {
 
   it('formats default expr literals without surrounding quotes', () => {
     expect(formatDefaultValueForDisplay(literal("'pending'"))).toBe('pending')
+  })
+
+  // Regression for packages/samples/ddlapi/escaping-spec-chars: a column default's `E'...'`
+  // literal has its named escapes (`\n`/`\r`/`\t`) resolved into real control-character bytes by
+  // ddlapi's parser before this layer ever sees the value (confirmed empirically - see
+  // escapeControlCharsForDisplay's doc comment in format-ddl-expr.ts). Rendering those bytes as-is
+  // either breaks the single-line `Default` row (a real newline) or is invisible (CR/TAB) - the
+  // row must show the same escape notation a person would type/read, matching the literal's
+  // original SQL content, not the resolved byte.
+  it('re-escapes resolved control-character bytes for display, matching the original SQL literal', () => {
+    expect(formatDefaultValueDisplayString("'before\nafter'")).toBe('before\\nafter')
+    expect(formatDefaultValueDisplayString("'before\rafter'")).toBe('before\\rafter')
+    expect(formatDefaultValueDisplayString("'before\r\nafter'")).toBe('before\\r\\nafter')
+    expect(formatDefaultValueDisplayString("'column-one\tcolumn-two'")).toBe('column-one\\tcolumn-two')
+  })
+
+  // ddlapi never resolves a `\\` escape into a real single-backslash byte - it always leaves the
+  // literal two-character `\\` sequence untouched, prefix and quotes included (even when a
+  // `\n`/`\r`/`\t` escape elsewhere in the same literal IS resolved). `unwrapSqlStringLiteral`
+  // therefore treats an `E`-prefixed value exactly like a `b'...'` bit literal: since `value[0]`
+  // is `E`, not the opening quote, it is left completely untouched - the row shows the literal SQL
+  // source text verbatim, the same way it appears in the DDL, rather than a partially-stripped
+  // value that would misleadingly look like a resolved one.
+  it('leaves an unresolved E-string literal completely verbatim, prefix and quotes included', () => {
+    expect(formatDefaultValueDisplayString("E'path\\\\to\\\\file'")).toBe("E'path\\\\to\\\\file'")
+  })
+
+  it('leaves unicode content and quote-only literals unaffected', () => {
+    expect(formatDefaultValueDisplayString("'café — 日本語 — Ω — 🚀'")).toBe('café — 日本語 — Ω — 🚀')
+    expect(formatDefaultValueDisplayString("'it''s fine'")).toBe("it's fine")
+    expect(formatDefaultValueDisplayString("'''fixed'''")).toBe("'fixed'")
+  })
+})
+
+describe('escaping-spec-chars samples: Default row display matches the original SQL literal', () => {
+  const samplesRoot = path.join(__dirname, '../../../samples/ddlapi/escaping-spec-chars')
+
+  const expectedDisplayByCase: Record<string, string> = {
+    'default-value-backslash': "E'path\\\\to\\\\file'",
+    'default-value-cr': 'before\\rafter',
+    'default-value-crlf': 'before\\r\\nafter',
+    'default-value-embedded-single-quotes': "it's fine",
+    'default-value-lf': 'before\\nafter',
+    'default-value-quoted': "'fixed'",
+    'default-value-tab': 'column-one\\tcolumn-two',
+    'default-value-unicode': 'café — 日本語 — Ω — 🚀',
+  }
+
+  it.each(Object.keys(expectedDisplayByCase))('case %s', async (caseId) => {
+    const sql = readFileSync(path.join(samplesRoot, caseId, 'sample.sql'), 'utf8')
+    const realm = await buildFromDdl(sql)
+    const column = realm.schemas[0]?.tables?.[0]?.columns?.find((c) => c.name === 'label')
+    expect(column?.default).toBeDefined()
+    expect(formatDefaultValueForDisplay(column!.default!)).toBe(expectedDisplayByCase[caseId])
   })
 })
 

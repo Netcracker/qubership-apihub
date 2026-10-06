@@ -15,7 +15,8 @@ import { TitleRow } from "../shared-components/TitleRow/TitleRow"
 import { TitleRowUsage } from "../shared-components/TitleRow/types"
 import { ATTRIBUTE_DDL_LIST_LAST_ROW, ATTRIBUTE_PRECEDED_BY, PrecededBy, WithPrecededByProps } from "../shared-components/WithPrecededByProps"
 import { ColumnRowBadgesContent } from "./ColumnRowBadges/ColumnRowBadgesContent"
-import { DdlApiPropertyValue } from "./DdlApiPropertyValue/DdlApiPropertyValue"
+import { SubheaderValue } from "@apihub/components/shared-components/SubheaderValue/SubheaderValue"
+import { SubheaderValueAppearance } from "@apihub/components/shared-components/SubheaderValue/types"
 import { formatIndexPartNames } from "./formatters"
 
 export type IndexNodeViewerProps = WithPrecededByProps & {
@@ -51,10 +52,10 @@ export const IndexNodeViewer: FC<IndexNodeViewerProps> = (props) => {
       return (
         <div className="flex flex-wrap items-center gap-2">
           {value.partNames.length > 0 && (
-            <DdlApiPropertyValue
+            <SubheaderValue
               isVisible={true}
               value={`(${partNamesText})`}
-              appearance="text"
+              appearance={SubheaderValueAppearance.Text}
             />
           )}
           <ColumnRowBadgesContent

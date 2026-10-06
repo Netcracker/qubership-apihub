@@ -1,0 +1,13 @@
+type: array
+description: Tuple array with 2 indexed boolean item schema(s)
+items:
+  - type: boolean
+    description: Sample boolean schema
+    default: false
+  - type: boolean
+    description: Sample boolean schema
+    default: false
+minItems: 0
+maxItems: 10
+uniqueItems: true
+

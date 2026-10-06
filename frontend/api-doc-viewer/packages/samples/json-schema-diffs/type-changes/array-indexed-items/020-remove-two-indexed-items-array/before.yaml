@@ -1,0 +1,27 @@
+type: array
+description: Tuple array with 2 indexed array item schema(s)
+items:
+  - type: array
+    description: Sample array schema with all array validations
+    items:
+      type: string
+    default:
+      - alpha
+      - beta
+    minItems: 1
+    maxItems: 10
+    uniqueItems: true
+  - type: array
+    description: Sample array schema with all array validations
+    items:
+      type: string
+    default:
+      - alpha
+      - beta
+    minItems: 1
+    maxItems: 10
+    uniqueItems: true
+minItems: 0
+maxItems: 10
+uniqueItems: true
+

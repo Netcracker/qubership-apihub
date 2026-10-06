@@ -4,29 +4,29 @@ import { JsonPath } from "@netcracker/qubership-apihub-json-crawl";
 import { ITreeNode, TreeNodeComplexityTypes, TreeNodeParams } from "../tree/tree-node.interface";
 
 export interface TreeNodeWithDiffsParams<
-  V extends object | null,
+  V extends object | boolean | null,
   K extends string,
   M extends object,
-  D extends object | null,
+  D extends object | boolean | null,
 > extends TreeNodeParams<V, K, M> {
   parent: ITreeNodeWithDiffs<V, K, M, D> | null
   container: ITreeNodeWithDiffs<V, K, M, D> | null
 }
 
 export interface SimpleTreeNodeWithDiffsParams<
-  V extends object | null,
+  V extends object | boolean | null,
   K extends string,
   M extends object,
-  D extends object | null,
+  D extends object | boolean | null,
 > extends TreeNodeWithDiffsParams<V, K, M, D> {
   type: typeof TreeNodeComplexityTypes.SIMPLE
 }
 
 export interface ComplexTreeNodeWithDiffsParams<
-  V extends object | null,
+  V extends object | boolean | null,
   K extends string,
   M extends object,
-  D extends object | null,
+  D extends object | boolean | null,
 > extends TreeNodeWithDiffsParams<V, K, M, D> {
   type: typeof TreeNodeComplexityTypes.COMPLEX
 }
@@ -82,9 +82,9 @@ export const DIFF_HIGHLIGHTING_MODES_DDL_TITLE_ROW: DiffHighlightingModesByArea 
 
 export const NODE_LEVEL_DIFF_KEY = "" as const
 
-export type ChangedPropertyKey<V extends object | null = object | null> =
+export type ChangedPropertyKey<V extends object | boolean | null = object | boolean | null> =
   | typeof NODE_LEVEL_DIFF_KEY
-  | (V extends null ? never : keyof V)
+  | (V extends object ? keyof V : never)
 export type ChangedPropertyMetaData = {
   data: Diff<DiffType>
   styles: {
@@ -98,16 +98,48 @@ export type ChangedPropertyMetaData = {
   highlightingMode: Map<DiffHiglightingApplicationArea, DiffHighlightingApplicationMode>
   inherited?: boolean
 }
-export type NodeDiffs<V extends object | null = object | null> = Partial<Record<ChangedPropertyKey<V>, ChangedPropertyMetaData>>
+export type NodeDiffs<V extends object | boolean | null = object | boolean | null> = Partial<Record<ChangedPropertyKey<V>, ChangedPropertyMetaData>>
 
 export enum NodeDiffsSeverityPlacemennt {
   TitleRow = 'title-row',
   DescriptionRow = 'description-row',
+  /** @deprecated Shared placement used when a node renders at most one `AdditionalInfoRow`. Nodes with several such rows (e.g. JSON Schema's Default/Examples/Allowed values/validation-constraint rows) must use a dedicated placement per row instead - see the `*Row` members below. */
   AdditionalInfoRow = 'additional-info-row',
   SummaryRow = 'summary-row',
   AddressRow = 'address-row',
   BindingVersionRow = 'binding-version-row',
   ServerAddressRow = 'server-address-row',
+  NestingIndicatorRow = 'nesting-indicator-row',
+  /** JSON Schema `Extensions` nesting-indicator row (the `x-*` sub-tree header). */
+  ExtensionsRow = 'extensions-row',
+  /** JSON Schema `Default` additional-info row. */
+  DefaultRow = 'default-row',
+  /** JSON Schema `Allowed values` (enum) additional-info row. */
+  EnumRow = 'enum-row',
+  /** JSON Schema `Examples` additional-info row. */
+  ExamplesRow = 'examples-row',
+  /** JSON Schema `Allowed additional property names` row (parent `propertyNames`, shown on the `additionalProperties` child). */
+  AllowedAdditionalPropertyNamesRow = 'allowed-additional-property-names-row',
+  /** JSON Schema `Value length` validation row. */
+  ValueLengthRow = 'value-length-row',
+  /** JSON Schema `Value pattern` validation row. */
+  ValuePatternRow = 'value-pattern-row',
+  /** JSON Schema `Value range` validation row. */
+  ValueRangeRow = 'value-range-row',
+  /** JSON Schema `Multiple of` validation row. */
+  ValueMultipleOfRow = 'value-multiple-of-row',
+  /** JSON Schema `Properties count` validation row. */
+  PropertiesCountRow = 'properties-count-row',
+  /** JSON Schema `Items count` validation row. */
+  ItemsCountRow = 'items-count-row',
+  /** JSON Schema `Unique items` validation row. */
+  UniqueItemsRow = 'unique-items-row',
+  /**
+   * JSON Schema generic custom-annotation additional-info row (a spec-agnostic extension point -
+   * e.g. AsyncAPI's "Location"). Shared across every `customAnnotations` entry on a node; see the
+   * accepted v1 limitation on multiple simultaneous entries in `JsonSchemaKindAnyNodeDiffs.customAnnotationDiffs`.
+   */
+  CustomAnnotationRow = 'custom-annotation-row',
 }
 export type NodeDiffsSeverity = {
   type: DiffType
@@ -122,10 +154,10 @@ export type NodeDescendantDiffsSummary = Set<DiffType>
 export type NodeDiffsSummary = Set<DiffType>
 
 export interface ITreeNodeWithDiffs<
-  V extends object | null = object | null,
+  V extends object | boolean | null = object | boolean | null,
   K extends string = string,
   M extends object = object,
-  D extends object | null = object | null
+  D extends object | boolean | null = object | boolean | null
 > extends ITreeNode<V, K, M> {
   parent: ITreeNodeWithDiffs | null
   container: ITreeNodeWithDiffs | null

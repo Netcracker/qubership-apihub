@@ -146,7 +146,7 @@ const AddressRowContent: FC<AddressRowContentProps> = (props) => {
   return (
     <div
       data-precededby={precededBy}
-      className={`address-row address-row-content font-Inter-Medium h-full ${X_AXIS_PADDING_ROWS_ASYNC_API} ${diffStyles.join(' ')}`}
+      className={`address-row address-row-content font-Inter-Medium flex w-full h-full ${X_AXIS_PADDING_ROWS_ASYNC_API} ${diffStyles.join(' ')}`}
     >
       <div
         className='flex flex-row items-center w-max py-2 bg-slate-100 rounded-md gap-3'

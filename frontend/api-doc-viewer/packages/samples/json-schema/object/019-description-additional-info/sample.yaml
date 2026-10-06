@@ -1,0 +1,18 @@
+type: object
+description: Sample object description
+required:
+  - name
+minProperties: 1
+maxProperties: 10
+propertyNames:
+  enum:
+    - name
+    - id
+enum:
+  - name: first
+  - name: second
+default:
+  name: default
+examples:
+  - name: example
+

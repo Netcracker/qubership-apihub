@@ -286,6 +286,7 @@ const DiffButton: FC<DiffButtonProps> = (props) => {
         key={`nested-${currentNodeId}`}
         className={classes}
         onClick={() => onSelect(currentNodeId)}
+        data-testid={`legacy-combiner-option-${currentNodeId}`}
       >
         <NodeType
           {...data}

@@ -5,9 +5,7 @@ import {
   takeNodeDiffIfPresent,
 } from "@apihub/utils/ddlapi/node-level-diff"
 import {
-  isDdlPropertySubheaderVisible,
-  resolveIndexPartNamesSideDisplay,
-  takeIndexDescriptionDiff,
+  DdlApiRowDiffs,
 } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs"
 import {
   resolveIndexListLastRowFlags,
@@ -25,7 +23,7 @@ import { TitleRow } from "../shared-components/TitleRow/TitleRow"
 import { TitleRowProps, TitleRowUsage } from "../shared-components/TitleRow/types"
 import { ATTRIBUTE_DDL_LIST_LAST_ROW, ATTRIBUTE_PRECEDED_BY, PrecededBy, WithPrecededByProps } from "../shared-components/WithPrecededByProps"
 import { ColumnRowBadgesContent } from "./ColumnRowBadges/ColumnRowBadgesContent"
-import { DdlCommaSeparatedListWithDiffs } from "./DdlCommaSeparatedListWithDiffs/DdlCommaSeparatedListWithDiffs"
+import { CommaSeparatedListWithDiffs } from "../shared-components/CommaSeparatedList/CommaSeparatedListWithDiffs"
 
 type IndexNodeViewerWithDiffsProps = WithPrecededByProps & {
   node: DdlApiTreeNodeWithDiffs<typeof DdlApiTreeNodeKinds.INDEX>
@@ -60,7 +58,7 @@ export const IndexNodeViewerWithDiffs: FC<IndexNodeViewerWithDiffsProps> = (prop
 
   const flagDiffs = useMemo(() => takeIndexFlagDiffs(node), [node])
   const descriptionDiff = useMemo(
-    () => takeIndexDescriptionDiff(node),
+    () => DdlApiRowDiffs.Index.takeDescriptionDiff(node),
     [node],
   )
 
@@ -68,9 +66,9 @@ export const IndexNodeViewerWithDiffs: FC<IndexNodeViewerWithDiffsProps> = (prop
 
   const renderPartNames = useCallback(
     (layoutSide: LayoutSide) => {
-      const display = resolveIndexPartNamesSideDisplay(node, layoutSide)
+      const display = DdlApiRowDiffs.IndexPartNames.resolveSideDisplay(node, layoutSide)
       return (
-        <DdlCommaSeparatedListWithDiffs
+        <CommaSeparatedListWithDiffs
           layoutSide={layoutSide}
           display={display}
         />
@@ -85,7 +83,7 @@ export const IndexNodeViewerWithDiffs: FC<IndexNodeViewerWithDiffsProps> = (prop
         return <></>
       }
 
-      if (!isDdlPropertySubheaderVisible(nodeDiff, layoutSide)) {
+      if (!DdlApiRowDiffs.PropertyRow.isSubheaderVisible(nodeDiff, layoutSide)) {
         return <></>
       }
 

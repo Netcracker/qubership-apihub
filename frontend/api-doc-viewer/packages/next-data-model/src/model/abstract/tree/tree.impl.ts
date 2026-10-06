@@ -5,7 +5,7 @@ import { ComplexTreeNodeParams, ITreeNode, SimpleTreeNodeParams } from "./tree-n
 import { ITree } from "./tree.interface";
 
 export class Tree<
-  V extends object | null,
+  V extends object | boolean | null,
   K extends string,
   M extends object,
 >

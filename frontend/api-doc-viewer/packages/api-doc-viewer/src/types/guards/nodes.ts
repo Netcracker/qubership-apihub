@@ -19,9 +19,6 @@ import {
   GraphApiDiffTreeNode,
   GraphApiTreeNode,
   GraphSchemaDiffNodeValue,
-  JsonSchemaDiffNodeMeta,
-  JsonSchemaDiffNodeValue,
-  JsonSchemaDiffTreeNode,
 } from '@netcracker/qubership-apihub-api-data-model'
 import {
   IModelStateCombinaryNode,
@@ -41,23 +38,23 @@ export function isRefNode(
 
 export function isDiffNodeValue(
   value?: AnyTreeNodeValue
-): value is JsonSchemaDiffNodeValue | GraphSchemaDiffNodeValue {
+): value is GraphSchemaDiffNodeValue {
   if (!value) {
     return false
   }
 
-  const castedValue = value as JsonSchemaDiffNodeValue | GraphSchemaDiffNodeValue
+  const castedValue = value as GraphSchemaDiffNodeValue
   return !!castedValue.$changes
 }
 
 export function isDiffNodeMeta(
   meta?: AnyTreeNodeMeta
-): meta is JsonSchemaDiffNodeMeta | GraphApiDiffNodeMeta {
+): meta is GraphApiDiffNodeMeta {
   if (!meta) {
     return false
   }
 
-  const castedMeta = meta as JsonSchemaDiffNodeMeta | GraphApiDiffNodeMeta
+  const castedMeta = meta as GraphApiDiffNodeMeta
   return !!(/* castedMeta.$nodeChangesSummary || */
     castedMeta.$nodeChange || castedMeta.$metaChanges
     || castedMeta.$childrenChanges || castedMeta.$nestedChanges)
@@ -65,12 +62,10 @@ export function isDiffNodeMeta(
 
 export function isPropNodeState(
   state:
-    | IModelStateNode<JsonSchemaDiffTreeNode>
     | IModelStateNode<GraphApiDiffTreeNode>
     | IModelStateNode<GraphApiTreeNode>
     | null
 ): state is
-  | IModelStatePropNode<JsonSchemaDiffTreeNode>
   | IModelStatePropNode<GraphApiDiffTreeNode>
   | IModelStatePropNode<GraphApiTreeNode> {
 
@@ -80,12 +75,10 @@ export function isPropNodeState(
 
 export function isCombinerNodeState(
   state:
-    | IModelStateNode<JsonSchemaDiffTreeNode>
     | IModelStateNode<GraphApiDiffTreeNode>
     | IModelStateNode<GraphApiTreeNode>
     | null
 ): state is
-  | IModelStateCombinaryNode<JsonSchemaDiffTreeNode>
   | IModelStateCombinaryNode<GraphApiDiffTreeNode>
   | IModelStateCombinaryNode<GraphApiTreeNode> {
 

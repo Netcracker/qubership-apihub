@@ -1,0 +1,10 @@
+anyOf:
+  - type: object
+    properties:
+      name:
+        type: string
+      count:
+        type: integer
+        x-internal: true
+        x-version: '1.0.0'
+  - type: boolean

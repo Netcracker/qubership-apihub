@@ -1,11 +1,7 @@
-import { FC, PropsWithChildren } from 'react';
+import { FC, PropsWithChildren } from "react"
+import { NestingIndicatorTitleLabel } from "@apihub/components/shared-components/NestingIndicatorTitleRow/NestingIndicatorTitleLabel"
 
+/** @deprecated Prefer `NestingIndicatorTitleRow` for layout-aware rows. */
 export const NestingIndicatorTitle: FC<PropsWithChildren> = ({ children }) => {
-  return (
-    <div className="text-xs text-slate-400 border-b border-slate-400 w-max pt-1"
-      style={{ marginLeft: '-1px' }}
-    >
-      {children}
-    </div>
-  );
-};
+  return <NestingIndicatorTitleLabel title={String(children ?? "")} />
+}

@@ -2,6 +2,7 @@ import { JsoViewer } from '@apihub/components/JsoViewer/JsoViewer';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { parse } from 'yaml';
 import { ComponentProps } from 'react';
+import { parseYamlSource } from './utils/parse-yaml-source';
 
 type StoryArgs = ComponentProps<typeof JsoViewer> & {
   jsoText: string
@@ -42,7 +43,7 @@ export const Debug: Story = {
   render: (args) => {
     const { jsoText, ...viewerArgs } = args
 
-    const parsedJso = parseJsonOrYaml(jsoText)
+    const parsedJso = parseYamlSource(jsoText)
 
     console.log(jsoText)
     console.debug('Prepared JSO:', parsedJso)
@@ -51,25 +52,3 @@ export const Debug: Story = {
   }
 }
 
-function parseJsonOrYaml(text: string): unknown {
-  let parsed: unknown = undefined
-  try {
-    parsed = JSON.parse(text)
-  } catch (error) {
-    console.error('Cannot parse JSON:', error)
-    parsed = undefined
-  }
-  try {
-    if (!parsed) {
-      parsed = parse(text)
-    }
-  } catch (error) {
-    console.error('Cannot parse YAML:', error)
-    parsed = undefined
-  }
-  if (!parsed || typeof parsed !== 'object') {
-    parsed = {}
-  }
-  console.debug('Parsed source:', parsed)
-  return parsed
-}

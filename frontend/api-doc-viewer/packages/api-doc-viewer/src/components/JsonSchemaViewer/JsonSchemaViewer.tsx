@@ -1,114 +1,135 @@
-/**
- * Copyright 2024-2025 NetCracker Technology Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+import { DEFAULT_DISPLAY_MODE, DEFAULT_EXPANDED_DEPTH } from '@apihub/constants/configuration'
+import { CustomizationOptions, CustomizationOptionsContext } from '@apihub/contexts/CustomizationOptionsContext'
+import { DisplayModeContext } from '@apihub/contexts/DisplayModeContext'
+import { LayoutModeContext } from '@apihub/contexts/LayoutModeContext'
+import { LevelContext } from '@apihub/contexts/LevelContext'
+import { DisplayMode } from '@apihub/types/DisplayMode'
+import { DOCUMENT_LAYOUT_MODE } from '@apihub/types/LayoutMode'
+import { JsonSchemaTreeBuilder, createBuildingServiceLogger } from '@netcracker/qubership-apihub-next-data-model'
+import { JsonSchemaTreeNode } from '@netcracker/qubership-apihub-next-data-model/model/json-schema/types/aliases'
+import { FC, memo, useCallback, useMemo, useReducer } from 'react'
 import '../../index.css'
-
-import { CustomizationOptionsContext, CustomizationOptions } from '@apihub/contexts/CustomizationOptionsContext'
-import { createJsonSchemaTree, JsonSchemaTreeNode } from '@netcracker/qubership-apihub-api-data-model'
-import { JsonSchemaState } from '@netcracker/qubership-apihub-api-state-model'
-import { FC, useMemo } from 'react'
-import { DEFAULT_DISPLAY_MODE, DEFAULT_EXPANDED_DEPTH } from '../../consts/configuration'
-import { DisplayModeContext } from '../../contexts/DisplayModeContext'
-import { LevelContext } from '../../contexts/LevelContext'
-import { TopLevelPropsMediaTypesContext } from '../../contexts/TopLevelPropsMediaTypesContext'
-import { DisplayMode } from '../../types/DisplayMode'
-import { PropsWithOverriddenKind } from '../../types/internal/PropsWithState'
-import { PropsWithTopLevelPropsMediaTypesMap } from '../../types/internal/PropsWithTopLevelPropsMediaTypesMap'
 import { ErrorBoundary } from '../services/ErrorBoundary'
 import { ErrorBoundaryFallback } from '../services/ErrorBoundaryFallback'
-import { JsonCombinerNodeViewer } from './JsonCombinerNodeViewer/JsonCombinerNodeViewer'
-import { JsonPropNodeViewer } from './JsonPropNodeViewer/JsonPropNodeViewer'
-import { isCombinerNodeState, isPropNodeState } from './types/nodes.guards'
+import {
+  DefaultExtensionsJsoComponent,
+  DefaultExtensionsJsoDiffsComponent,
+} from './embedding/DefaultJsonSchemaEmbedding'
+import { JsonSchemaEmbeddingContext, JsonSchemaEmbeddingContextValue } from './embedding/JsonSchemaEmbeddingContext'
+import { JsonSchemaNodeViewer } from './JsonSchemaNodeViewer'
+import { JsonSchemaViewerContext } from './JsonSchemaViewerContext'
+import { TopLevelPropsMediaTypesMap } from './utils/top-level-props-media-types'
 
 export type JsonSchemaViewerProps = {
-  schema: unknown,
+  schema: unknown
   expandedDepth?: number
   displayMode?: DisplayMode
-} & PropsWithOverriddenKind & PropsWithTopLevelPropsMediaTypesMap & {
-  customizationOptions?: CustomizationOptions
+  devMode?: boolean
   initialLevel?: number
+  customizationOptions?: CustomizationOptions
+  /**
+   * Root's direct property key -> media type, shown as a badge next to the property name (e.g.
+   * OpenAPI parameters described with `content`). Not supported by `JsonSchemaDiffsViewer`.
+   */
+  topLevelPropsMediaTypes?: TopLevelPropsMediaTypesMap
 }
 
-export const JsonSchemaViewer: FC<JsonSchemaViewerProps> = (props) => {
+export const JsonSchemaViewer: FC<JsonSchemaViewerProps> = memo((props) => {
+  if (props.schema === null || props.schema === undefined) {
+    return null
+  }
+
   return (
-    <ErrorBoundary fallback={<ErrorBoundaryFallback componentName="JSON Schema Viewer" />}>
+    <ErrorBoundary fallback={(caught) => (
+      <ErrorBoundaryFallback
+        componentName="JSON Schema Viewer"
+        caught={caught}
+      />
+    )}>
       <JsonSchemaViewerInner {...props} />
     </ErrorBoundary>
   )
-}
+})
 
 const JsonSchemaViewerInner: FC<JsonSchemaViewerProps> = (props) => {
   const {
     schema,
     expandedDepth = DEFAULT_EXPANDED_DEPTH,
     displayMode = DEFAULT_DISPLAY_MODE,
-    overriddenKind,
-    // FIXME 18.06.24 // Get rid of it when future wonderful AMT+ADV are ready!
-    topLevelPropsMediaTypes,
-    // Integration with AsyncAPI (and OpenAPI in future)
-    customizationOptions = {},
+    devMode = false,
     initialLevel = 0,
+    customizationOptions,
+    topLevelPropsMediaTypes,
   } = props
 
-  const tree = useMemo(
-    () => createJsonSchemaTree(schema),
-    [schema]
+  const logger = useMemo(() => createBuildingServiceLogger(devMode), [devMode])
+
+  const builder = useMemo(
+    () => new JsonSchemaTreeBuilder({
+      source: schema,
+      // `materializeDepth` counts the crawled node's OWN 1-indexed depth (root = 1), while
+      // `expandedDepth`/`initialLevel` are 0-indexed UI levels (root level = `initialLevel`). A
+      // node at UI level L is expanded when L < expandedDepth, and its children (UI level L + 1)
+      // must exist for that expansion to render - i.e. materialized while crawl depth
+      // (L - initialLevel + 1) < expandedDepth - initialLevel + 1. Passing `expandedDepth` as-is
+      // here under-materializes by one level, forcing every initially-expanded node collapsed
+      // because its children array comes back empty.
+      materializeDepth: expandedDepth - initialLevel + 1,
+      logger,
+    }),
+    [schema, expandedDepth, initialLevel, logger],
   )
-  const state = useMemo(
-    // FIXME 07.10.25 // Get rid of "any"
-    () => new JsonSchemaState<JsonSchemaTreeNode>(tree as any, expandedDepth),
-    [expandedDepth, tree]
+
+  const tree = useMemo(() => builder.build(), [builder])
+
+  const [treeRevision, bumpTreeRevision] = useReducer((revision: number) => revision + 1, 0)
+
+  const materializeChildren = useCallback((node: JsonSchemaTreeNode) => {
+    builder.materializeChildren(node)
+    bumpTreeRevision()
+  }, [builder])
+
+  const viewerContext = useMemo(
+    () => ({
+      expandedDepth,
+      materializeChildren,
+      treeRevision,
+      topLevelPropsMediaTypes,
+    }),
+    [expandedDepth, materializeChildren, treeRevision, topLevelPropsMediaTypes],
   )
 
-  // console.debug('Schema: ', schema)
-  // console.debug('Tree Model: ', tree)
-  // console.debug('State Model: ', state)
+  const embeddingContext: JsonSchemaEmbeddingContextValue = useMemo(
+    () => ({
+      ExtensionsJsoComponent: DefaultExtensionsJsoComponent,
+      ExtensionsJsoDiffsComponent: DefaultExtensionsJsoDiffsComponent,
+    }),
+    [],
+  )
 
-  const root = state.root
-  let content = null
+  console.debug('[JSON Schema] Schema:', schema)
+  console.debug('[JSON Schema] Tree:', tree)
 
-  if (isPropNodeState(root)) {
-    content = (
-      <JsonPropNodeViewer
-        // @ts-expect-error // TODO 14.10.25 // Fix this later
-        state={root}
-        overriddenKind={overriddenKind}
-      />
-    )
-  }
-
-  if (isCombinerNodeState(root)) {
-    content = (
-      <JsonCombinerNodeViewer
-        // @ts-expect-error // TODO 14.10.25 // Fix this later
-        state={root}
-        onGlobalSelectNestedNode={() => null}
-      />
-    )
+  const root = tree.root
+  if (!root) {
+    return null
   }
 
   return (
-    <CustomizationOptionsContext.Provider value={customizationOptions}>
-      <TopLevelPropsMediaTypesContext.Provider value={topLevelPropsMediaTypes}>
-        <DisplayModeContext.Provider value={displayMode}>
-          <LevelContext.Provider value={initialLevel}>
-            {content}
-          </LevelContext.Provider>
-        </DisplayModeContext.Provider>
-      </TopLevelPropsMediaTypesContext.Provider>
-    </CustomizationOptionsContext.Provider>
+    <JsonSchemaEmbeddingContext.Provider value={embeddingContext}>
+      <JsonSchemaViewerContext.Provider value={viewerContext}>
+        <CustomizationOptionsContext.Provider value={customizationOptions}>
+          <DisplayModeContext.Provider value={displayMode}>
+            <LayoutModeContext.Provider value={DOCUMENT_LAYOUT_MODE}>
+              <LevelContext.Provider value={initialLevel}>
+                <div data-testid="json-schema-viewer">
+                  <JsonSchemaNodeViewer node={root}/>
+                </div>
+              </LevelContext.Provider>
+            </LayoutModeContext.Provider>
+          </DisplayModeContext.Provider>
+        </CustomizationOptionsContext.Provider>
+      </JsonSchemaViewerContext.Provider>
+    </JsonSchemaEmbeddingContext.Provider>
   )
 }

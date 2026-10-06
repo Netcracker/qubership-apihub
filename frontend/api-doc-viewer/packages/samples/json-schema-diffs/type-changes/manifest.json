@@ -1,0 +1,122 @@
+{
+  "generatedAt": "2026-09-18T10:02:23.966Z",
+  "totalCases": 507,
+  "suites": [
+    {
+      "globPath": "type-flags",
+      "caseCount": 13
+    },
+    {
+      "globPath": "description-changes",
+      "caseCount": 26
+    },
+    {
+      "globPath": "string-validation/enum",
+      "caseCount": 5
+    },
+    {
+      "globPath": "string-validation/examples",
+      "caseCount": 5
+    },
+    {
+      "globPath": "string-validation/value-length",
+      "caseCount": 16
+    },
+    {
+      "globPath": "string-validation/pattern",
+      "caseCount": 3
+    },
+    {
+      "globPath": "number-validation/multiple-of",
+      "caseCount": 3
+    },
+    {
+      "globPath": "extended/default",
+      "caseCount": 4
+    },
+    {
+      "globPath": "extended/object",
+      "caseCount": 6
+    },
+    {
+      "globPath": "extended/array",
+      "caseCount": 7
+    },
+    {
+      "globPath": "object-validations/default",
+      "caseCount": 5
+    },
+    {
+      "globPath": "object-validations/example",
+      "caseCount": 7
+    },
+    {
+      "globPath": "object-validations/examples",
+      "caseCount": 23
+    },
+    {
+      "globPath": "object-validations/properties-count",
+      "caseCount": 21
+    },
+    {
+      "globPath": "array-validations/default",
+      "caseCount": 5
+    },
+    {
+      "globPath": "array-validations/example",
+      "caseCount": 7
+    },
+    {
+      "globPath": "array-validations/examples",
+      "caseCount": 23
+    },
+    {
+      "globPath": "array-validations/items-count",
+      "caseCount": 27
+    },
+    {
+      "globPath": "extended/combiners-one-level",
+      "caseCount": 11
+    },
+    {
+      "globPath": "extended/combiners-two-level",
+      "caseCount": 11
+    },
+    {
+      "globPath": "circular",
+      "caseCount": 12
+    },
+    {
+      "globPath": "type-value-changes",
+      "caseCount": 30
+    },
+    {
+      "globPath": "type-annotations-changes",
+      "caseCount": 18
+    },
+    {
+      "globPath": "object-properties",
+      "caseCount": 36
+    },
+    {
+      "globPath": "object-additional-properties",
+      "caseCount": 52
+    },
+    {
+      "globPath": "object-additional-properties",
+      "caseCount": 11
+    },
+    {
+      "globPath": "array-indexed-items",
+      "caseCount": 24
+    },
+    {
+      "globPath": "one-of-object-variant",
+      "caseCount": 48
+    },
+    {
+      "globPath": "one-of-array-variant",
+      "caseCount": 48
+    }
+  ]
+}

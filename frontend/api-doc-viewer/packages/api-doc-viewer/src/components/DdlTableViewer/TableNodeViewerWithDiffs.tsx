@@ -5,9 +5,7 @@ import {
 } from "@apihub/utils/ddlapi/node-level-diff"
 import { getDdlApiChildNodes, isColumnsNode, isIndexesNode } from "@apihub/utils/ddlapi/node-type-checkers"
 import {
-  resolveTableSchemaNameSideDisplay,
-  takeTableDescriptionDiff,
-  takeTableSchemaNameDiff,
+  DdlApiRowDiffs,
 } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs"
 import { DdlApiTreeNodeWithDiffs } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/types/aliases"
 import { DdlApiTreeNodeKinds } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/types/node-kind"
@@ -43,11 +41,11 @@ export const TableNodeViewerWithDiffs: FC<TableNodeViewerWithDiffsProps> = (prop
   const nodeDiff = useMemo(() => takeTableNodeDiffIfPresent(node), [node])
   const titleRowDiffProps: Pick<TitleRowProps, "diff" | "descendantDiffs" | "diffsSeverities" | "highlightingMode"> =
     useMemo(() => buildDdlTableTitleRowDiffProps(node), [node])
-  const schemaNameDiff = useMemo(() => takeTableSchemaNameDiff(node), [node])
-  const descriptionDiff = useMemo(() => takeTableDescriptionDiff(node), [node])
+  const schemaNameDiff = useMemo(() => DdlApiRowDiffs.Table.takeSchemaNameDiff(node), [node])
+  const descriptionDiff = useMemo(() => DdlApiRowDiffs.Table.takeDescriptionDiff(node), [node])
 
   const resolveSchemaName = useCallback(
-    (layoutSide: LayoutSide) => resolveTableSchemaNameSideDisplay(node, layoutSide),
+    (layoutSide: LayoutSide) => DdlApiRowDiffs.Table.resolveSchemaNameSideDisplay(node, layoutSide),
     [node],
   )
 

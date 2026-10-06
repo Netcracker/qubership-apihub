@@ -1,0 +1,21 @@
+type: object
+title: Sample Object
+readOnly: true
+writeOnly: true
+deprecated: true
+required:
+  - name
+minProperties: 1
+maxProperties: 10
+propertyNames:
+  enum:
+    - name
+    - id
+enum:
+  - name: first
+  - name: second
+default:
+  name: default
+examples:
+  - name: example
+

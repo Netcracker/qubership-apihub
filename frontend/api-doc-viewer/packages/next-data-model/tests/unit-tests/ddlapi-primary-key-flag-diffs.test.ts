@@ -1,5 +1,5 @@
 import { NodeDiffsSeverityPlacemennt } from '@apihub/next-data-model/model/abstract/tree-with-diffs/tree-node.interface'
-import { takeColumnFlagDiffs } from '@apihub/next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs'
+import { DdlApiRowDiffs } from '@apihub/next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs'
 import { buildFromDdl } from '@netcracker/qubership-apihub-ddlapi/parser'
 import { apiDiff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import { DdlApiTreeWithDiffsBuilder } from '../../src/building-service/ddlapi/tree-with-diffs/builder'
@@ -58,8 +58,8 @@ describe('primary key flag diff when a column joins or leaves the key', () => {
     const tree = await buildTree(beforeSql, afterSql)
     const tenantId = findColumn(tree, 'tenant_id')
 
-    expect(takeColumnFlagDiffs(tenantId)?.isPrimaryKey?.data.action).toBe(expectedAction)
+    expect(DdlApiRowDiffs.Column.takeFlagDiffs(tenantId)?.isPrimaryKey?.data.action).toBe(expectedAction)
     expect(tenantId.diffsSeverities?.[NodeDiffsSeverityPlacemennt.TitleRow]?.causedAt).toEqual(PRIMARY_KEY_PART_PATH)
-    expect(takeColumnFlagDiffs(findColumn(tree, 'id'))?.isPrimaryKey).toBeUndefined()
+    expect(DdlApiRowDiffs.Column.takeFlagDiffs(findColumn(tree, 'id'))?.isPrimaryKey).toBeUndefined()
   })
 })

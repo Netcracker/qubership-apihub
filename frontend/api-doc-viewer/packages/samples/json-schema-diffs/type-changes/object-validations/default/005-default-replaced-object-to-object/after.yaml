@@ -1,0 +1,7 @@
+type: object
+default:
+  id: beta
+  count: 2
+  active: true
+  label: gamma
+

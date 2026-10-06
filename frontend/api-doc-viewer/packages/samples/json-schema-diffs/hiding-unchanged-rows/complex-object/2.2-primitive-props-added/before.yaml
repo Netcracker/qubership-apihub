@@ -1,0 +1,26 @@
+type: object
+description: Complex object for hiding-unchanged-rows samples
+properties:
+  prop2:
+    type: object
+    description: Second property — nested object
+    properties:
+      nested1:
+        type: string
+        description: First nested property of prop2
+      nested2:
+        type: integer
+        description: Second nested property of prop2
+      nested3:
+        type: boolean
+        description: Third nested property of prop2
+  prop4:
+    type: object
+    description: Fourth property — nested object
+    properties:
+      nested1:
+        type: string
+        description: First nested property of prop4
+      nested2:
+        type: number
+        description: Second nested property of prop4

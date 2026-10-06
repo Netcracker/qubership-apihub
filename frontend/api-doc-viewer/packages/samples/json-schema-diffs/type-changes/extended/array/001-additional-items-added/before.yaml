@@ -1,0 +1,6 @@
+type: array
+description: Tuple array
+items:
+  - type: string
+  - type: integer
+
