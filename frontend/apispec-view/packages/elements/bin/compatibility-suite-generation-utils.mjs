@@ -7,7 +7,8 @@ import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'fs'
 import path from 'path'
 
 const DEFAULT_EXCLUDED_SUITE_IDS = ['human-readable']
-const SKIPPED_OUT_DIR_NAMES = ['__image_snapshots__', 'service']
+// Hand-written content living next to the generated files (e.g. `src/it/legacy` screenshot tests)
+const SKIPPED_OUT_DIR_NAMES = ['__image_snapshots__', 'service', 'legacy']
 
 const ELEMENTS_PACKAGE_ROOT = path.resolve(import.meta.dirname, '..')
 

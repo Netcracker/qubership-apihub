@@ -26,7 +26,8 @@ export namespace WhollyChangedRequestBodyOrResponse {
                   schema: {
                     type: 'array',
                     items: {
-                      type: 'boolean'
+                      type: 'boolean',
+                      description: 'Boolean array item',
                     }
                   }
                 }

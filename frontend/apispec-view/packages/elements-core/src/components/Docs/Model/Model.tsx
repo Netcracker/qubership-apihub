@@ -11,6 +11,7 @@ import { JsonSchemaViewer as OldJsonSchemaViewer } from '@netcracker/qubership-a
 import * as React from 'react';
 import { Marker } from 'react-mark.js';
 
+import { JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS } from '../../../constants';
 import { useInlineRefResolver, useResolvedObject } from '../../../context/InlineRefResolver';
 import { useIsCompact } from '../../../hooks/useIsCompact';
 import { exceedsSize, generateExamplesFromJsonSchema } from '../../../utils/exampleGeneration/exampleGeneration';
@@ -91,7 +92,7 @@ const ModelComponent: React.FC<ModelProps> = ({
             schema={getOriginalObject(data)}
             displayMode={schemaViewMode}
             expandedDepth={defaultSchemaDepth}
-            overriddenKind="parameters"
+            customizationOptions={JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS}
           />
         )}
       </Marker>

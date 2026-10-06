@@ -8,6 +8,7 @@ import { isEmpty, sortBy, uniqBy } from 'lodash';
 import * as React from 'react';
 import { Marker } from 'react-mark.js';
 
+import { JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS } from '../../../constants';
 import { useInlineRefResolver } from '../../../context/InlineRefResolver';
 import { getOriginalObject } from '../../../utils/ref-resolving/resolvedObject';
 import { MarkdownViewer } from '../../MarkdownViewer';
@@ -147,7 +148,7 @@ const Response = ({ response, onMediaTypeChange, extensions }: ResponseProps) =>
                   schema={getOriginalObject(schema!)}
                   displayMode={schemaViewMode}
                   expandedDepth={defaultSchemaDepth}
-                  overriddenKind="parameters"
+                  customizationOptions={JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS}
                 />
               ))}
           </>

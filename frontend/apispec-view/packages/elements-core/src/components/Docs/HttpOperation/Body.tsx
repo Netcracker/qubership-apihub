@@ -5,6 +5,7 @@ import { IHttpOperationRequestBody } from '@stoplight/types';
 import { JsonSchemaViewer as OldJsonSchemaViewer } from '@netcracker/qubership-apihub-apispec-view-json-schema-viewer';
 import * as React from 'react';
 
+import { JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS } from '../../../constants';
 import { useInlineRefResolver } from '../../../context/InlineRefResolver';
 import { isJSONSchema } from '../../../utils/guards';
 import { getOriginalObject } from '../../../utils/ref-resolving/resolvedObject';
@@ -86,7 +87,7 @@ export const Body = ({ body, onChange }: BodyProps) => {
             schema={getOriginalObject(schema!)}
             displayMode={schemaViewMode}
             expandedDepth={defaultSchemaDepth}
-            overriddenKind="parameters"
+            customizationOptions={JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS}
           />
         ))}
     </VStack>

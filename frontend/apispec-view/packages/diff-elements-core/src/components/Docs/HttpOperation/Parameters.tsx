@@ -1,4 +1,4 @@
-import { JsonSchemaDiffViewer } from '@netcracker/qubership-apihub-api-doc-viewer'
+import { JsonSchemaDiffsViewer, JsonSchemaViewer } from '@netcracker/qubership-apihub-api-doc-viewer'
 import { mirrorDiffMetaKey, mirrorSelfDiffMetaKey } from '@netcracker/qubership-apihub-http-spec/oas3WithMeta'
 import { useOperationSchemaOptionsMode } from '@netcracker/qubership-apihub-apispec-view'
 import { HttpParamStyles, IHttpContent, IHttpParam } from '@stoplight/types'
@@ -7,11 +7,19 @@ import type { JSONSchema7Object } from 'json-schema'
 import { sortBy } from 'lodash'
 import * as React from 'react'
 import { useMemo } from 'react'
-import { DiffAction, DiffMetaRecord } from '@netcracker/qubership-apihub-api-diff'
+import {
+  Diff,
+  DiffAction,
+  DiffMetaRecord,
+  isDiffAdd,
+  isDiffRemove,
+  isDiffReplace,
+} from '@netcracker/qubership-apihub-api-diff'
 import { isObject } from '../../../utils/guards'
 import { useAggregatedDiffsMetaKey } from '@netcracker/qubership-apihub-apispec-view/containers/AggregatedDiffsMetaKeyContext'
 import { useChangeSeverityFilters } from '@netcracker/qubership-apihub-apispec-view/containers/ChangeSeverityFiltersContext'
 import { useDiffsMetaKey } from '@netcracker/qubership-apihub-apispec-view/containers/DiffsMetaKeyContext'
+import { JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS } from '../../../constants'
 import { isNodeExample } from '../../../utils/http-spec/examples'
 
 type ParameterKey = string
@@ -55,7 +63,8 @@ export const Parameters: React.FunctionComponent<ParametersProps> = ({ parameter
   }), [diffsMetaKey, aggregatedDiffsMetaKey])
 
   // FIXME 18.06.24 // Get rid of "parametersMediaTypes" when future wonderful AMT+ADV are ready!
-  const [schema, parametersMediaTypes] = useMemo(
+  // TODO: Pass parameters media types (2nd tuple item) to JsonSchemaDiffsViewer once it supports them again
+  const [schema] = useMemo(
     () => httpOperationParamsToSchema({ parameters, parameterType }, diffsMetaKey),
     [parameters, parameterType, diffsMetaKey],
   )
@@ -67,16 +76,28 @@ export const Parameters: React.FunctionComponent<ParametersProps> = ({ parameter
     return null
   }
 
+  // Whole operation was added/removed, so there is nothing to compare side-by-side
+  if (notSplitSchemaViewer) {
+    return (
+      <JsonSchemaViewer
+        schema={schema}
+        displayMode={schemaViewMode}
+        expandedDepth={defaultSchemaDepth}
+        customizationOptions={JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS}
+      />
+    )
+  }
+
   return (
-    <JsonSchemaDiffViewer
+    <JsonSchemaDiffsViewer
       schema={schema}
       displayMode={schemaViewMode}
       expandedDepth={defaultSchemaDepth}
-      overriddenKind="parameters"
-      metaKeys={diffMetaKeys}
-      layoutMode={notSplitSchemaViewer ? 'document' : 'side-by-side-diffs'}
-      filters={filters}
-      topLevelPropsMediaTypes={parametersMediaTypes}
+      customizationOptions={JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS}
+      diffMetaKeys={diffMetaKeys}
+      // TODO: Temporarily disabled, restore once hiding unchanged nodes is supported
+      hideUnchangedNodes={false}
+      diffTypes={filters}
     />
   )
 }
@@ -104,6 +125,7 @@ const httpOperationParamsToSchema = (
     required: [] as string[],
   }
   let parametersMediaTypesMap: ParametersMediaTypeMap = undefined
+  const requiredArrayDiffs: DiffMetaRecord = {}
 
   const sortedParams = sortBy(parameters, ['required', 'name'])
 
@@ -142,8 +164,13 @@ const httpOperationParamsToSchema = (
 
     mergeMirrorSymbolsForDiffMeta(p, diffMetaKey)
 
+    // Parameter-level diffs which aren't diffs of the property schema itself:
+    // - `required` is moved to the synthetic schema's `required` array (see `toRequiredArrayItemDiff`),
+    // - `name` becomes a rename of the property key (see `nameDiff` below).
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { required: parameterRequiredDiff, name: _parameterNameDiff, ...parameterDiffMeta } = p[diffMetaKey] ?? {}
     const paramPropsDiffMeta = {
-      ...p[diffMetaKey] ?? {},
+      ...parameterDiffMeta,
       ...paramSchema?.[diffMetaKey] ?? {},
     }
 
@@ -185,7 +212,7 @@ const httpOperationParamsToSchema = (
         : deprecatedDiff
     }
 
-    // Here we need to extend `schema.properties` by diff meta if exists to correct work of `JsonSchemaDiffViewer`
+    // Here we need to extend `schema.properties` by diff meta if exists to correct work of `JsonSchemaDiffsViewer`
     if (p[selfDiffMetaKey]) {
       schema.properties![diffMetaKey] = {
         ...schema.properties![diffMetaKey],
@@ -193,13 +220,15 @@ const httpOperationParamsToSchema = (
       }
     }
 
-    const requiredChanged = !!schema.properties?.[p.name]?.[diffMetaKey]?.required
-    if (required || requiredChanged) {
+    const requiredDiff = toRequiredArrayItemDiff(parameterRequiredDiff, name)
+    if (required || requiredDiff) {
+      if (requiredDiff) {
+        requiredArrayDiffs[schema.required.length] = requiredDiff
+      }
       schema.required.push(name)
     }
   }
 
-  const requiredArrayDiffs: DiffMetaRecord = rearrangeRequiredDiffs(sortedParams, schema.required, diffMetaKey)
   if (Object.keys(requiredArrayDiffs).length > 0 && isObject(schema.required)) {
     schema.required[diffMetaKey] = requiredArrayDiffs
   }
@@ -207,20 +236,43 @@ const httpOperationParamsToSchema = (
   return [schema, parametersMediaTypesMap]
 }
 
-// TODO 01.08.24 // Remove it later
-function rearrangeRequiredDiffs(
-  parameters: IExtendedHttpParam[],
-  required: string[],
-  diffMetaKey: symbol,
-): DiffMetaRecord {
-  const diffRecord: DiffMetaRecord = {}
-  for (const parameter of parameters) {
-    const parameterDiff = parameter[diffMetaKey]
-    const requiredIndex = required.indexOf(parameter.name)
-    if (requiredIndex !== -1 && parameterDiff) {
-      diffRecord[requiredIndex] = parameterDiff?.required
-      delete parameterDiff?.required
+/**
+ * Converts a parameter's boolean `required` diff into a JSON Schema `required` array item diff,
+ * as `JsonSchemaDiffsViewer` expects: parameter name added to the array (became required) or
+ * removed from it (became optional). A raw boolean diff doesn't fit these semantics, e.g.
+ * `false -> true` is a replace, which the viewer treats as "required on both sides".
+ * Changes without effect (absent <-> `false`) are dropped.
+ */
+function toRequiredArrayItemDiff(diff: Diff | undefined, parameterName: string): Diff | undefined {
+  if (!diff) {
+    return undefined
+  }
+
+  const beforeRequired = (isDiffRemove(diff) || isDiffReplace(diff)) && diff.beforeValue === true
+  const afterRequired = (isDiffAdd(diff) || isDiffReplace(diff)) && diff.afterValue === true
+  if (beforeRequired === afterRequired) {
+    return undefined
+  }
+
+  const { type, scope, customScope, description } = diff
+  if (afterRequired) {
+    return {
+      type,
+      scope,
+      customScope,
+      description,
+      action: DiffAction.add,
+      afterValue: parameterName,
+      afterDeclarationPaths: isDiffAdd(diff) || isDiffReplace(diff) ? diff.afterDeclarationPaths : [],
     }
   }
-  return diffRecord
+  return {
+    type,
+    scope,
+    customScope,
+    description,
+    action: DiffAction.remove,
+    beforeValue: parameterName,
+    beforeDeclarationPaths: isDiffRemove(diff) || isDiffReplace(diff) ? diff.beforeDeclarationPaths : [],
+  }
 }

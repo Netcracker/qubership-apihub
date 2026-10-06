@@ -6,6 +6,7 @@ import { JsonSchemaViewer as OldJsonSchemaViewer } from '@netcracker/qubership-a
 import { isObject, sortBy } from 'lodash';
 import * as React from 'react';
 
+import { JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS } from '../../../constants';
 import { isNodeExample } from '../../../utils/http-spec/examples';
 import {useMemo} from "react";
 
@@ -63,7 +64,7 @@ export const Parameters: React.FunctionComponent<ParametersProps> = ({ parameter
       schema={schema}
       displayMode={schemaViewMode}
       expandedDepth={defaultSchemaDepth}
-      overriddenKind="parameters"
+      customizationOptions={JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS}
       topLevelPropsMediaTypes={parametersMediaTypes}
     />
   );

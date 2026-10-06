@@ -35,6 +35,8 @@
     "screenshot-test:ci-legacy": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 -c .config/it/it-test.jest.config.js\"",
     "regenerate-screenshots": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test-docker.jest.config.js\"",
     "regenerate-screenshots:ci-legacy": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test.jest.config.js\"",
+    "screenshot-test-single-suite": "node bin/run-screenshot-test-suite.mjs test",
+    "regenerate-screenshots-single-suite": "node bin/run-screenshot-test-suite.mjs regenerate",
     "type-check": "tsc --noEmit"
   },
   "rollup": {
