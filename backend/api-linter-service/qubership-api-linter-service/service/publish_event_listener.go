@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sync"
+
 	"github.com/Netcracker/qubership-api-linter-service/client"
 	"github.com/Netcracker/qubership-api-linter-service/exception"
 	"github.com/Netcracker/qubership-api-linter-service/secctx"
@@ -12,7 +14,6 @@ import (
 	"github.com/Netcracker/qubership-api-linter-service/view"
 	"github.com/buraksezer/olric"
 	log "github.com/sirupsen/logrus"
-	"sync"
 )
 
 type PublishEventListener interface {
@@ -92,12 +93,11 @@ func (p *publishEventListenerImpl) initVersionPublishedDTopic() {
 	p.versionPublishedTopic, err = p.op.Get().NewDTopic(topicName, 10000, olric.UnorderedDelivery)
 	if err != nil {
 		log.Errorf("Failed to create DTopic %s: %s", VersionPublishedTopicName, err.Error())
+	} else {
+		_, err = p.versionPublishedTopic.AddListener(p.listen)
+		if err != nil {
+			log.Errorf("Failed to add listener to DTopic %s: %s", VersionPublishedTopicName, err.Error())
+		}
 	}
-
-	_, err = p.versionPublishedTopic.AddListener(p.listen)
-	if err != nil {
-		log.Errorf("Failed to add listener to DTopic %s: %s", VersionPublishedTopicName, err.Error())
-	}
-
 	p.isReadyWg.Done()
 }
