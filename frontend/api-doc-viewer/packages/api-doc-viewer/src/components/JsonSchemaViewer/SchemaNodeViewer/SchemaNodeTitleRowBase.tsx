@@ -50,6 +50,8 @@ export const SchemaNodeTitleRowBase: FC<SchemaNodeTitleRowBaseProps> = (props) =
     [ATTRIBUTE_PRECEDED_BY]: precededBy,
   } = props
 
+  const effectiveOnClickExpander = expandable ? onClickExpander : undefined
+
   const {
     displayValueResolved,
     displayMeta,
@@ -65,6 +67,7 @@ export const SchemaNodeTitleRowBase: FC<SchemaNodeTitleRowBaseProps> = (props) =
     requiredDiff,
     withRequiredDiffIndicator,
     titleRowDiff: titleRowDiffProps?.diff,
+    onClickTitle: effectiveOnClickExpander,
   })
 
   return (
@@ -75,7 +78,7 @@ export const SchemaNodeTitleRowBase: FC<SchemaNodeTitleRowBaseProps> = (props) =
       expandable={expandable}
       expanded={expanded}
       isRoot={JsonSchemaNodeTypeCheckers.isRootNode(ownerNode)}
-      onClickExpander={expandable ? onClickExpander : undefined}
+      onClickExpander={effectiveOnClickExpander}
       variant={TextValueVariant.body2}
       subheader={(layoutSide) => renderSubheader({
         layoutSide,

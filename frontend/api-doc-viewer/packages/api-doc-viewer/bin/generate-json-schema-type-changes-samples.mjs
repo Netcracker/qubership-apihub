@@ -182,7 +182,7 @@ const buildReadme = (cases) => {
     "cd packages/api-doc-viewer",
     "node bin/generate-json-schema-type-changes-samples.mjs",
     "npm run build:showcase",
-    "npm run regenerate-screenshots -- --testPathPattern=type-changes",
+    "npm run regenerate-screenshots -- --testPathPatterns=type-changes",
     "```",
     "",
   );

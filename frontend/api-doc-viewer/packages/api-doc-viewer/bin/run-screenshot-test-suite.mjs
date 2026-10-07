@@ -269,7 +269,7 @@ function discoverSuites(testRun) {
 }
 
 /**
- * Regex path segment that Jest's `--testPathPattern` needs to select every IT file
+ * Regex path segment that Jest's `--testPathPatterns` needs to select every IT file
  * belonging to one test run, regardless of its on-disk layout.
  *
  * @param {{ layout: 'folder' | 'flat', itSuiteId: string, prefix?: string }} testRun
@@ -337,7 +337,7 @@ function resolveJestTarget(testRun, suiteChoice) {
     if (testRun.layout === 'folder') {
       return `src/it/${testRun.itSuiteId}`;
     }
-    return `--testPathPattern=${testRun.prefix.replace('.', '\\.')}.+\\.it-test\\.ts$`;
+    return `--testPathPatterns=${testRun.prefix.replace('.', '\\.')}.+\\.it-test\\.ts$`;
   }
 
   if (testRun.layout === 'folder') {

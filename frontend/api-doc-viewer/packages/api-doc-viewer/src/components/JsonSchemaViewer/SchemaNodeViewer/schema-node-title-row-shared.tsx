@@ -24,6 +24,8 @@ export type SchemaNodeTitleRowSharedInput = {
   requiredDiff?: Diff
   withRequiredDiffIndicator?: boolean
   titleRowDiff?: ChangedPropertyMetaData
+  /** Same handler as the row's expander; the title toggles expansion when it is set. */
+  onClickTitle?: () => void
 }
 
 export function useSchemaNodeTitleRowShared(input: SchemaNodeTitleRowSharedInput) {
@@ -36,6 +38,7 @@ export function useSchemaNodeTitleRowShared(input: SchemaNodeTitleRowSharedInput
     requiredDiff,
     withRequiredDiffIndicator = false,
     titleRowDiff,
+    onClickTitle,
   } = input
 
   const customizationOptions = useCustomizationOptions()
@@ -87,16 +90,18 @@ export function useSchemaNodeTitleRowShared(input: SchemaNodeTitleRowSharedInput
             requiredDiff={requiredDiff}
             layoutSide={layoutSide}
             textDiff={renameDiff}
+            onClick={onClickTitle}
           />
         )
         : (
           <JsonSchemaNodeTitlePlain
             display={titleDisplay}
             required={ownerMeta?.required}
+            onClick={onClickTitle}
           />
         )
     },
-    [ownerMeta?.required, ownerNode, renameDiff, requiredDiff, titleDisplay, titleRowDiff, withRequiredDiffIndicator],
+    [onClickTitle, ownerMeta?.required, ownerNode, renameDiff, requiredDiff, titleDisplay, titleRowDiff, withRequiredDiffIndicator],
   )
 
   const showTypeSubheader = useMemo(

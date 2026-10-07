@@ -36,7 +36,7 @@ export const JsonSchemaExpanderColumn: FC<JsonSchemaExpanderColumnProps> = (prop
 
   if (isRoot && expandable) {
     return (
-      <div className={`flex flex-row items-center justify-center pt-1.5`}>
+      <div className={`flex flex-row items-center justify-center pt-1`}>
         {expanded !== undefined && (
           <ExpandingCaret onToggle={onClick ?? (() => {})} expanded={expanded} />
         )}
@@ -46,14 +46,14 @@ export const JsonSchemaExpanderColumn: FC<JsonSchemaExpanderColumnProps> = (prop
 
   if (!expandable) {
     return (
-      <div className={`flex flex-row items-center justify-center pt-1.5 ${JSON_SCHEMA_EXPANDER_COLUMN_WIDTH_CLASS}`}>
+      <div className={`flex flex-row items-center justify-center pt-1 ${JSON_SCHEMA_EXPANDER_COLUMN_WIDTH_CLASS}`}>
         <NestingHorizontalIndicator />
       </div>
     )
   }
 
   return (
-    <div className={`flex flex-row items-center justify-center pt-1.5 gap-0.5 ${JSON_SCHEMA_EXPANDER_COLUMN_WIDTH_CLASS}`}>
+    <div className={`flex flex-row items-center justify-center pt-1 gap-0.5 ${JSON_SCHEMA_EXPANDER_COLUMN_WIDTH_CLASS}`}>
       <NestingHorizontalIndicator short />
       {expanded !== undefined && (
         <ExpandingCaret onToggle={onClick ?? (() => {})} expanded={expanded} />
