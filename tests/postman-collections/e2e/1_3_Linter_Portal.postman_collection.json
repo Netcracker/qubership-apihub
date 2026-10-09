@@ -951,14 +951,14 @@
                     ],
                     "request": {
                         "url": {
-                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/packages/{{project_lt}}/versions/0000.1/validation/summary",
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v2/packages/{{project_lt}}/versions/0000.1/validation/summary",
                             "host": [
                                 "{{SERVER_HOST}}"
                             ],
                             "path": [
                                 "api-linter",
                                 "api",
-                                "v1",
+                                "v2",
                                 "packages",
                                 "{{project_lt}}",
                                 "versions",
@@ -1017,14 +1017,14 @@
                     ],
                     "request": {
                         "url": {
-                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/packages/{{project_lt}}/versions/0000.1/validation/summary",
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v2/packages/{{project_lt}}/versions/0000.1/validation/summary",
                             "host": [
                                 "{{SERVER_HOST}}"
                             ],
                             "path": [
                                 "api-linter",
                                 "api",
-                                "v1",
+                                "v2",
                                 "packages",
                                 "{{project_lt}}",
                                 "versions",
@@ -1121,9 +1121,13 @@
                                     "pm.test(\"Status code is 200\", function () {",
                                     "    pm.response.to.have.status(200);",
                                     "});",
-                                    "var data = JSON.parse(responseBody);",
-                                    "pm.test(\"Details include issues\", function () {",
-                                    "    pm.expect(data).to.have.property('issues');",
+                                    "const data = pm.response.json();",
+                                    "pm.test(\"Details include linter results\", function () {",
+                                    "    pm.expect(data).to.have.property('results').that.is.an('array').that.is.not.empty;",
+                                    "    data.results.forEach(function (result) {",
+                                    "        pm.expect(result).to.have.property('linter');",
+                                    "        pm.expect(result).to.have.property('issues').that.is.an('array');",
+                                    "    });",
                                     "});"
                                 ]
                             }
@@ -1140,14 +1144,14 @@
                     ],
                     "request": {
                         "url": {
-                            "raw": "{{SERVER_HOST}}/api-linter/api/v1/packages/{{project_lt}}/versions/0000.1/validation/documents/{{document_slug}}/details",
+                            "raw": "{{SERVER_HOST}}/api-linter/api/v2/packages/{{project_lt}}/versions/0000.1/validation/documents/{{document_slug}}/details",
                             "host": [
                                 "{{SERVER_HOST}}"
                             ],
                             "path": [
                                 "api-linter",
                                 "api",
-                                "v1",
+                                "v2",
                                 "packages",
                                 "{{project_lt}}",
                                 "versions",
