@@ -4,6 +4,7 @@ import type { IdRestParams, TestIdRestParams } from '@services/rest/rest.types'
 import type { TestFile } from '@shared/entities'
 
 const API_LINTER_API_V1 = '/api-linter/api/v1'
+const API_LINTER_API_V2 = '/api-linter/api/v2'
 
 export type LintRulesetRestDto = Readonly<{
   id: string
@@ -81,5 +82,5 @@ export async function rGetValidationStatus(
   rc: APIRequestContext,
   { packageId, version }: RunValidationRestParams,
 ): Promise<APIResponse> {
-  return await rc.get(`${API_LINTER_API_V1}/packages/${packageId}/versions/${version}/validation/summary`)
+  return await rc.get(`${API_LINTER_API_V2}/packages/${packageId}/versions/${version}/validation/summary`)
 }
