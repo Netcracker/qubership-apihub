@@ -49,6 +49,7 @@ Use existing patterns for parameter placeholders (`$id`, `$param`, etc.). Do not
 ## Migration files
 
 Naming: `{N}_{description}.up.sql` and `{N}_{description}.down.sql` where `N` is the next free integer.
+Provide the down file unless the migration is a data fix that cannot be reverted.
 
 Directory: `qubership-apihub-service/resources/migrations/`
 
