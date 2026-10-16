@@ -39,7 +39,7 @@ type cleanupServiceImpl struct {
 	cron *cron.Cron
 }
 
-func (c cleanupServiceImpl) ClearTestData(ctx context.Context, testId string, testEnv string) error {
+func (c *cleanupServiceImpl) ClearTestData(ctx context.Context, testId string, testEnv string) error {
 	idFilter := testPackageIdLikeFilter(testId, testEnv)
 	userFilter := testUserIdLikeFilter(testId)
 
@@ -170,7 +170,7 @@ func nonemptyStrings(values []string) []string {
 	return out
 }
 
-func (c cleanupServiceImpl) CreateRevisionsCleanupJob(publishedRepository repository.PublishedRepository, migrationRepository mRepository.MigrationRunRepository, versionCleanupRepository repository.VersionCleanupRepository, monitoringService service.MonitoringService, lockService service.LockService, instanceId string, schedule string, deleteLastRevision bool, deleteReleaseRevision bool, ttl int) error {
+func (c *cleanupServiceImpl) CreateRevisionsCleanupJob(publishedRepository repository.PublishedRepository, migrationRepository mRepository.MigrationRunRepository, versionCleanupRepository repository.VersionCleanupRepository, monitoringService service.MonitoringService, lockService service.LockService, instanceId string, schedule string, deleteLastRevision bool, deleteReleaseRevision bool, ttl int) error {
 	timeout := c.calculateCleanupJobTimeout(schedule, revisionsCleanup)
 	config := jobConfig{
 		jobType:    revisionsCleanup,
@@ -195,7 +195,7 @@ func (c cleanupServiceImpl) CreateRevisionsCleanupJob(publishedRepository reposi
 	return c.addCleanupJob(runner, schedule, revisionsCleanup)
 }
 
-func (c cleanupServiceImpl) calculateCleanupJobTimeout(schedule string, jobType jobType) time.Duration {
+func (c *cleanupServiceImpl) calculateCleanupJobTimeout(schedule string, jobType jobType) time.Duration {
 	parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
 
 	sched, err := parser.Parse(schedule)
@@ -222,7 +222,7 @@ func (c cleanupServiceImpl) calculateCleanupJobTimeout(schedule string, jobType 
 	return c.limitCleanupJobTimeout(jobType, timeout)
 }
 
-func (c cleanupServiceImpl) limitCleanupJobTimeout(jobType jobType, timeout time.Duration) time.Duration {
+func (c *cleanupServiceImpl) limitCleanupJobTimeout(jobType jobType, timeout time.Duration) time.Duration {
 	if jobType == revisionsCleanup && timeout > maxRevisionsJobTimeout {
 		log.Infof("Capping timeout for %s cleanup job from %v to %v", jobType, timeout, maxRevisionsJobTimeout)
 		return maxRevisionsJobTimeout
@@ -230,7 +230,7 @@ func (c cleanupServiceImpl) limitCleanupJobTimeout(jobType jobType, timeout time
 	return timeout
 }
 
-func (c cleanupServiceImpl) CreateComparisonsCleanupJob(publishedRepo repository.PublishedRepository, migrationRepository mRepository.MigrationRunRepository, comparisonCleanupRepo repository.ComparisonCleanupRepository, lockService service.LockService, instanceId string, schedule string, timeoutMinutes int, ttl int) error {
+func (c *cleanupServiceImpl) CreateComparisonsCleanupJob(publishedRepo repository.PublishedRepository, migrationRepository mRepository.MigrationRunRepository, comparisonCleanupRepo repository.ComparisonCleanupRepository, lockService service.LockService, instanceId string, schedule string, timeoutMinutes int, ttl int) error {
 	timeout := time.Duration(timeoutMinutes) * time.Minute
 	config := jobConfig{
 		jobType:    comparisonsCleanup,
@@ -252,7 +252,7 @@ func (c cleanupServiceImpl) CreateComparisonsCleanupJob(publishedRepo repository
 	return c.addCleanupJob(runner, schedule, comparisonsCleanup)
 }
 
-func (c cleanupServiceImpl) CreateSoftDeletedDataCleanupJob(publishedRepo repository.PublishedRepository, migrationRepository mRepository.MigrationRunRepository, deletedDataCleanupRepo repository.SoftDeletedDataCleanupRepository, lockService service.LockService, instanceId string, schedule string, timeoutMinutes int, ttl int) error {
+func (c *cleanupServiceImpl) CreateSoftDeletedDataCleanupJob(publishedRepo repository.PublishedRepository, migrationRepository mRepository.MigrationRunRepository, deletedDataCleanupRepo repository.SoftDeletedDataCleanupRepository, lockService service.LockService, instanceId string, schedule string, timeoutMinutes int, ttl int) error {
 	timeout := time.Duration(timeoutMinutes) * time.Minute
 	config := jobConfig{
 		jobType:    deletedDataCleanup,
@@ -274,7 +274,7 @@ func (c cleanupServiceImpl) CreateSoftDeletedDataCleanupJob(publishedRepo reposi
 	return c.addCleanupJob(runner, schedule, deletedDataCleanup)
 }
 
-func (c cleanupServiceImpl) CreateUnreferencedDataCleanupJob(migrationRepository mRepository.MigrationRunRepository, unreferencedDataCleanupRepo repository.UnreferencedDataCleanupRepository, lockService service.LockService, instanceId string, schedule string, timeoutMinutes int) error {
+func (c *cleanupServiceImpl) CreateUnreferencedDataCleanupJob(migrationRepository mRepository.MigrationRunRepository, unreferencedDataCleanupRepo repository.UnreferencedDataCleanupRepository, lockService service.LockService, instanceId string, schedule string, timeoutMinutes int) error {
 	timeout := time.Duration(timeoutMinutes) * time.Minute
 	config := jobConfig{
 		jobType:    unreferencedDataCleanup,
@@ -295,7 +295,7 @@ func (c cleanupServiceImpl) CreateUnreferencedDataCleanupJob(migrationRepository
 	return c.addCleanupJob(runner, schedule, unreferencedDataCleanup)
 }
 
-func (c cleanupServiceImpl) CreateMaintenanceVacuumCleanupJob(migrationRepository mRepository.MigrationRunRepository, lockService service.LockService, instanceId string, schedule string, timeoutMinutes int) error {
+func (c *cleanupServiceImpl) CreateMaintenanceVacuumCleanupJob(migrationRepository mRepository.MigrationRunRepository, lockService service.LockService, instanceId string, schedule string, timeoutMinutes int) error {
 	config := jobConfig{
 		jobType:    maintenanceVacuum,
 		instanceId: instanceId,
@@ -313,7 +313,7 @@ func (c cleanupServiceImpl) CreateMaintenanceVacuumCleanupJob(migrationRepositor
 	return c.addCleanupJob(runner, schedule, maintenanceVacuum)
 }
 
-func (c cleanupServiceImpl) addCleanupJob(job cron.Job, schedule string, jobType jobType) error {
+func (c *cleanupServiceImpl) addCleanupJob(job cron.Job, schedule string, jobType jobType) error {
 	if len(c.cron.Entries()) == 0 {
 		location, err := time.LoadLocation("")
 		if err != nil {

@@ -1,84 +1,111 @@
 package tests
 
 import (
+	"errors"
+	"fmt"
+	"slices"
+	"strings"
 	"testing"
 
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
 )
 
 func TestValidateObjectErrors(t *testing.T) {
-	var updateOperationGroupReqNil view.UpdateOperationGroupReq
-	var groupOperationsNil *[]view.GroupOperations = nil
-	updateOperationGroupReqNil.Operations = groupOperationsNil
-	updateOperationGroupReqExpectedErrorNil := "Required parameters are missing: [0]operations.operationId, [1]operations.operationId"
-	if err := utils.ValidateObject(updateOperationGroupReqNil); err != nil {
-		if updateOperationGroupReqExpectedErrorNil != err.Error() {
-			t.Fatalf("UpdateOperationGroupReq Validation errors test is failed. Actual error: %v", err.Error())
+	t.Run("UpdateOperationGroupReq with nil operations", func(t *testing.T) {
+		var req view.UpdateOperationGroupReq
+		assertMissingParams(t, req, nil)
+	})
+
+	t.Run("UpdateOperationGroupReq", func(t *testing.T) {
+		var req view.UpdateOperationGroupReq
+		groupOperations := make([]view.GroupOperations, 2)
+		req.Operations = &groupOperations
+		assertMissingParams(t, req, indexedParams("operations", 2, "operationId"))
+	})
+
+	t.Run("PackageOperationsFile", func(t *testing.T) {
+		var file view.PackageOperationsFile
+		file.Operations = make([]view.Operation, 2)
+		assertMissingParams(t, file, indexedParams("operations", 2,
+			"operationId", "title", "apiType", "apiKind", "metadata", "apiAudience", "documentId", "versionInternalDocumentId"))
+	})
+
+	t.Run("ChangelogInfoFile", func(t *testing.T) {
+		info := view.MakeChangelogInfoFileView(view.PackageInfoFile{})
+		assertMissingParams(t, info, []string{"packageId", "version", "previousVersionPackageId", "previousVersion"})
+	})
+
+	t.Run("PackageComparisonsFile", func(t *testing.T) {
+		var file view.PackageComparisonsFile
+		comparisons := make([]view.VersionComparison, 2)
+		for i := range comparisons {
+			comparisons[i].OperationTypes = make([]view.OperationType, 2)
+		}
+		file.Comparisons = comparisons
+		var expected []string
+		for i := range comparisons {
+			expected = append(expected, indexedParams(fmt.Sprintf("comparisons[%d].operationTypes", i), 2, "apiType")...)
+		}
+		assertMissingParams(t, file, expected)
+	})
+
+	t.Run("BuilderNotificationsFile has no required fields", func(t *testing.T) {
+		var file view.BuilderNotificationsFile
+		file.Notifications = make([]view.BuilderNotification, 2)
+		assertMissingParams(t, file, nil)
+	})
+
+	t.Run("PackageDocumentsFile", func(t *testing.T) {
+		var file view.PackageDocumentsFile
+		file.Documents = make([]view.PackageDocument, 2)
+		assertMissingParams(t, file, indexedParams("documents", 2,
+			"fileId", "type", "slug", "title", "operationIds", "filename"))
+	})
+}
+
+func indexedParams(prefix string, count int, fields ...string) []string {
+	result := make([]string, 0, count*len(fields))
+	for i := 0; i < count; i++ {
+		for _, field := range fields {
+			result = append(result, fmt.Sprintf("%s[%d].%s", prefix, i, field))
 		}
 	}
+	return result
+}
 
-	var updateOperationGroupReq view.UpdateOperationGroupReq
-	var groupOperations = make([]view.GroupOperations, 2)
-	updateOperationGroupReq.Operations = &groupOperations
-	updateOperationGroupReqExpectedError := "Required parameters are missing: operations[0].operationId, operations[1].operationId"
-	if err := utils.ValidateObject(updateOperationGroupReq); err != nil {
-		if updateOperationGroupReqExpectedError != err.Error() {
-			t.Fatalf("UpdateOperationGroupReq Validation errors test is failed. Actual error: %v", err.Error())
+func assertMissingParams(t *testing.T, object interface{}, expected []string) {
+	t.Helper()
+	err := utils.ValidateObject(object)
+	if len(expected) == 0 {
+		if err != nil {
+			t.Fatalf("expected no validation error, got: %v", err)
+		}
+		return
+	}
+	if err == nil {
+		t.Fatalf("expected missing params %v, got no error", expected)
+	}
+	var customErr *exception.CustomError
+	if !errors.As(err, &customErr) || customErr.Code != exception.RequiredParamsMissing {
+		t.Fatalf("expected %s error, got: %v", exception.RequiredParamsMissing, err)
+	}
+	params, _ := customErr.Params["params"].(string)
+	actual := strings.Split(params, ", ")
+
+	var missing, unexpected []string
+	for _, p := range expected {
+		if !slices.Contains(actual, p) {
+			missing = append(missing, p)
 		}
 	}
-
-	var packageOperationsFile view.PackageOperationsFile
-	var operations = make([]view.Operation, 2)
-	packageOperationsFile.Operations = operations
-	packageOperationsFileExpectedError := "Required parameters are missing: operations[0].operationId, operations[0].title, operations[0].apiType, operations[0].dataHash, operations[0].apiKind, operations[0].metadata, operations[0].searchScopes, operations[0].apiAudience, operations[1].operationId, operations[1].title, operations[1].apiType, operations[1].dataHash, operations[1].apiKind, operations[1].metadata, operations[1].searchScopes, operations[1].apiAudience"
-	if err := utils.ValidateObject(packageOperationsFile); err != nil {
-		if packageOperationsFileExpectedError != err.Error() {
-			t.Fatalf("Package Operations File Validation errors test is failed. Actual error: %v", err.Error())
+	for _, p := range actual {
+		if !slices.Contains(expected, p) {
+			unexpected = append(unexpected, p)
 		}
 	}
-
-	var packageInfoFile view.PackageInfoFile
-	info := view.MakeChangelogInfoFileView(packageInfoFile)
-	packageInfoFileExpectedError := "Required parameters are missing: packageId, version, previousVersionPackageId, previousVersion"
-	if err := utils.ValidateObject(info); err != nil {
-		if packageInfoFileExpectedError != err.Error() {
-			t.Fatalf("Package Info File Validation errors test is failed. Actual error: %v", err.Error())
-		}
+	if len(missing) > 0 || len(unexpected) > 0 {
+		t.Fatalf("missing params mismatch\n  expected but not reported: %v\n  reported but not expected: %v", missing, unexpected)
 	}
-
-	var packageComparisonsFile view.PackageComparisonsFile
-	var versionComparison = make([]view.VersionComparison, 2)
-	var operationTypes = make([]view.OperationType, 2)
-	versionComparison[0].OperationTypes = operationTypes
-	versionComparison[1].OperationTypes = operationTypes
-	packageComparisonsFile.Comparisons = versionComparison
-	packageComparisonsFileExpectedError := "Required parameters are missing: comparisons[0].operationTypes[0].apiType, comparisons[0].operationTypes[1].apiType, comparisons[1].operationTypes[0].apiType, comparisons[1].operationTypes[1].apiType"
-	if err := utils.ValidateObject(packageComparisonsFile); err != nil {
-		if packageComparisonsFileExpectedError != err.Error() {
-			t.Fatalf("Package Comparisons File Validation errors test is failed. Actual error: %v", err.Error())
-		}
-	}
-
-	var builderNotificationsFile view.BuilderNotificationsFile
-	var builderNotification = make([]view.BuilderNotification, 2)
-	builderNotificationsFile.Notifications = builderNotification
-	//no required params. empty error expected
-	builderNotificationsFileExpectedError := ""
-	if err := utils.ValidateObject(builderNotificationsFile); err != nil {
-		if builderNotificationsFileExpectedError != err.Error() {
-			t.Fatalf("Builder Notifications File Validation errors test is failed. Actual error: %v", err.Error())
-		}
-	}
-
-	var packageDocumentsFile view.PackageDocumentsFile
-	var packageDocument = make([]view.PackageDocument, 2)
-	packageDocumentsFile.Documents = packageDocument
-	packageDocumentsFileExpectedError := "Required parameters are missing: documents[0].fileId, documents[0].type, documents[0].slug, documents[0].title, documents[0].operationIds, documents[0].filename, documents[1].fileId, documents[1].type, documents[1].slug, documents[1].title, documents[1].operationIds, documents[1].filename"
-	if err := utils.ValidateObject(packageDocumentsFile); err != nil {
-		if packageDocumentsFileExpectedError != err.Error() {
-			t.Fatalf("Package Documents File Validation errors test is failed. Actual error: %v", err.Error())
-		}
-	}
-
 }
