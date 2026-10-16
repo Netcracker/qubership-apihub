@@ -14,7 +14,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/invopop/jsonschema v0.14.0
 	github.com/mark3labs/mcp-go v0.58.0
-	github.com/openai/openai-go/v3 v3.66.0
+	github.com/openai/openai-go/v3 v3.77.0
 	github.com/shaj13/go-guardian/v2 v2.11.6
 	github.com/shaj13/libcache v1.0.0
 	github.com/sirupsen/logrus v1.10.2
@@ -138,7 +138,7 @@ require (
 	go.uber.org/multierr v1.9.0 // indirect
 	go.yaml.in/yaml/v4 v4.0.0-rc.2 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
-	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/net v0.60.0 // indirect
 	golang.org/x/oauth2 v0.25.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/term v0.46.0 // indirect
