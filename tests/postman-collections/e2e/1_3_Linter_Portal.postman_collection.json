@@ -267,6 +267,11 @@
                                 "key": "Content-Type",
                                 "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
                                 "type": "default"
+                            },
+                            {
+                                "key": "Content-Transfer-Encoding",
+                                "value": "base64",
+                                "type": "default"
                             }
                         ],
                         "body": {
@@ -470,6 +475,11 @@
                             {
                                 "key": "Content-Type",
                                 "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                "type": "default"
+                            },
+                            {
+                                "key": "Content-Transfer-Encoding",
+                                "value": "base64",
                                 "type": "default"
                             }
                         ],
