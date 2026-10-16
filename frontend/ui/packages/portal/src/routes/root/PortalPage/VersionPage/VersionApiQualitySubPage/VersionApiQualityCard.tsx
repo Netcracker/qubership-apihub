@@ -193,6 +193,7 @@ export const VersionApiQualityCard: FC<VersionApiQualityCardProps> = memo((props
           display='flex'
           justifyContent='space-between'
           alignItems='center'
+          flexWrap='wrap'
           gap={1}
           width="100%"
         >

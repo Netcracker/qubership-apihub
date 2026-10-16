@@ -4,6 +4,7 @@ import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDown
 import KeyboardArrowUpOutlinedIcon from '@mui/icons-material/KeyboardArrowUpOutlined'
 import { Box, Button, List, ListItemButton, Skeleton, Typography } from '@mui/material'
 import { MenuButtonItems } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButton'
+import { DEFAULT_TEXT_COLOR } from '@netcracker/qubership-apihub-ui-shared/themes/colors'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import type { FC } from 'react'
 import { memo, useCallback, useEffect, useState } from 'react'
@@ -48,6 +49,10 @@ const Dropdown: FC<ValidationRulesetsDropdownProps> = (props) => {
     return <Skeleton variant="text" width={100} height={20} />
   }
 
+  const arrowIcon = anchor
+    ? <KeyboardArrowUpOutlinedIcon htmlColor={DEFAULT_TEXT_COLOR} fontSize='small' />
+    : <KeyboardArrowDownOutlinedIcon htmlColor={DEFAULT_TEXT_COLOR} fontSize='small' />
+
   return (
     <Box flex='1 1 auto' maxWidth='400px' minWidth={0}>
       <Button
@@ -67,20 +72,21 @@ const Dropdown: FC<ValidationRulesetsDropdownProps> = (props) => {
         data-testid="ValidatedByLinterSelectorButton"
       >
         <Box display="flex" alignItems="center" gap={1} width="100%" minWidth={0}>
-          <Box display="flex" alignItems="center" minWidth={0} flexGrow={1}>
-            {selectedValues.size === 0 && (
-              <Typography variant="body2" fontWeight={500}>No linters selected</Typography>
-            )}
-            {selectedValues.size === 1 && (
-              <ValidationRulesetLink data={Array.from(selectedValues.values())[0]} loading={loading} />
-            )}
-            {selectedValues.size > 1 && (
-              <Typography variant="body2" fontWeight={500}>{selectedValues.size} linters</Typography>
-            )}
-          </Box>
-          {anchor
-            ? <KeyboardArrowUpOutlinedIcon htmlColor='#353C4E' fontSize='small' />
-            : <KeyboardArrowDownOutlinedIcon htmlColor='#353C4E' fontSize='small' />}
+          {selectedValues.size === 0 && (
+            <Typography variant="body2" fontWeight={500}>No linters selected</Typography>
+          )}
+          {selectedValues.size === 1 && (
+            <ValidationRulesetLink
+              data={Array.from(selectedValues.values())[0]}
+              loading={loading}
+              hideChipsOnOverflow
+              endAdornment={arrowIcon}
+            />
+          )}
+          {selectedValues.size > 1 && (
+            <Typography variant="body2" fontWeight={500}>{selectedValues.size} linters</Typography>
+          )}
+          {selectedValues.size !== 1 && arrowIcon}
         </Box>
         <MenuButtonItems
           anchorEl={anchor}
@@ -105,7 +111,7 @@ const Dropdown: FC<ValidationRulesetsDropdownProps> = (props) => {
                     minWidth: 0,
                   }}
                 >
-                  <Check htmlColor={isSelected ? '#353C4E' : 'transparent'} fontSize='small' />
+                  <Check htmlColor={isSelected ? DEFAULT_TEXT_COLOR : 'transparent'} fontSize='small' />
                   <ValidationRulesetLink
                     data={option}
                     loading={loading}
@@ -121,8 +127,9 @@ const Dropdown: FC<ValidationRulesetsDropdownProps> = (props) => {
 }
 
 export const ValidationRulesetsDropdown: FC<ValidationRulesetsDropdownProps> = memo<ValidationRulesetsDropdownProps>((props) => {
+  // With the min-content basis, the header wraps only after the selected ruleset has shrunk to its shortest form.
   return (
-    <Box display="flex" alignItems="center" gap={1} minWidth={0}>
+    <Box display="flex" alignItems="center" gap={1} minWidth={0} flex='1 1 min-content'>
       <DropdownLabel />
       <Dropdown {...props} />
     </Box>
