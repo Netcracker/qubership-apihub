@@ -66,7 +66,7 @@ export const PackagePagePlaceholder: FC<PackagePagePlaceholderProps> = memo<Pack
       'data-testid': 'ToPortalButton',
     },
     {
-      label: 'Go to Agent',
+      label: 'Go to the Agent',
       navigate: navigateToAgent,
       description: 'Discover the API documentation in your environment, and promote it to the package in Portal.',
       'data-testid': 'ToAgentButton',
