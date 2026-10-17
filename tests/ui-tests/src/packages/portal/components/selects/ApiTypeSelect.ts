@@ -5,6 +5,7 @@ export class ApiTypeSelect extends Select {
 
   readonly restApiItm = new ListItem(this.page.getByTestId('MenuItem-rest'), 'REST API')
   readonly graphQlItm = new ListItem(this.page.getByTestId('MenuItem-graphql'), 'GraphQL')
+  readonly allItm = new ListItem(this.page.getByTestId('MenuItem-all'), 'All')
 
   constructor(page: Page) {
     super(page.getByTestId('ApiTypeSelector'), 'API Type')
