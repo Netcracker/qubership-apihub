@@ -57,6 +57,7 @@ export function useCompareGroups(options: UseCompareGroupsOptions): [VersionsCom
 }
 
 export const EMPTY_VERSIONS_COMPARISON: VersionsComparison = {
+  notifications: [],
   comparisonFileId: '',
   comparisonInternalDocuments: [],
   packageId: '',

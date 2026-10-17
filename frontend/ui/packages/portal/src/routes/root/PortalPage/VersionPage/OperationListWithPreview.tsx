@@ -68,6 +68,7 @@ export type OperationListWithPreviewProps = {
   maxPreviewWidth: number
   isExpandableItem?: (operation: OperationData) => boolean
   SubComponent?: FC<OperationListSubComponentProps>
+  emptyMessage?: string
 }
 
 // High Order Component //
@@ -79,6 +80,7 @@ export const OperationListWithPreview: FC<OperationListWithPreviewProps> = memo<
     initialSize, handleResize, maxPreviewWidth,
     isExpandableItem,
     SubComponent,
+    emptyMessage,
   } = props
 
   const operationSearchParams = useOperationSearchParams()
@@ -177,6 +179,7 @@ export const OperationListWithPreview: FC<OperationListWithPreviewProps> = memo<
       onLinkClick={onClickLink}
       isExpandableItem={isExpandableItem}
       SubComponent={SubComponent}
+      emptyMessage={emptyMessage}
       previewComponent={
         <OperationPreview
           apiType={apiType}

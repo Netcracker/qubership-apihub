@@ -41,6 +41,7 @@ export type DocumentDto = Readonly<{
   packages?: PackagesRefs // For operations
   packageRef?: string // For dashboards
   shareabilityStatus?: ShareabilityStatus
+  hasErrors?: boolean
 }>
 
 export type DocumentInfo = {

@@ -40,7 +40,9 @@ export type PackageVersionContent = Readonly<{
   operationTypes?: Record<ApiType, OperationTypeSummary>
   contractsSummary?: VersionContractsSummary
   revisionsCount: number
-  apiProcessorVersion: string
+  apiProcessorVersion?: string
+  hasErrors?: boolean
+  changelogHasErrors?: boolean
 }>
 
 export type PackageVersionContentDto = Readonly<{
@@ -57,7 +59,9 @@ export type PackageVersionContentDto = Readonly<{
   contractsSummary?: VersionContractsSummaryDto
   notLatestRevision?: boolean
   revisionsCount?: number
-  apiProcessorVersion: string
+  apiProcessorVersion?: string
+  hasErrors?: boolean
+  changelogHasErrors?: boolean
 }>
 
 export type VersionContractsSummaryDto = Readonly<{
@@ -101,6 +105,7 @@ export type OperationTypeSummary<T extends DiffType | DiffTypeDto = DiffType> = 
   unknownAudienceOperationsCount: number
   apiAudienceTransitions: ApiAudienceTransition[]
   operations?: object
+  hasErrors?: boolean
 }>
 
 export type OperationTypeSummaryDto = OperationTypeSummary<DiffTypeDto>

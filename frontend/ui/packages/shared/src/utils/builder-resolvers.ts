@@ -17,14 +17,13 @@
 import {
   fetchDeprecatedItems,
   fetchOperations,
+  getAllResolvedVersionDocuments,
   getPackageVersionContent,
-  getResolvedVersionDocuments,
   getVersionReferences,
   toVersionOperation,
 } from './packages-builder'
 import type {
   RawDocumentResolver,
-  ResolvedVersionDocuments,
   VersionDeprecatedResolver,
   VersionDocumentsResolver,
   VersionOperationsResolver,
@@ -99,21 +98,9 @@ export async function versionDeprecatedResolver(): Promise<VersionDeprecatedReso
 export async function versionDocumentsResolver(): Promise<VersionDocumentsResolver> {
   return async (version, packageId, apiType, contractType) => {
     const EMPTY_DOCUMENTS_DTO = { documents: [], packages: {} }
-    const limit = 100
-    const result: ResolvedVersionDocuments = { documents: [], packages: {} }
-    let page = 0
-    let documentsCount = 0
 
     try {
-      while (page === 0 || documentsCount === limit) {
-        const { documents, packages } = await getResolvedVersionDocuments(packageId, version, apiType, contractType) ?? EMPTY_DOCUMENTS_DTO
-        result.documents = [...result.documents, ...documents]
-        result.packages = { ...result.packages, ...packages }
-
-        page += 1
-        documentsCount = documents.length
-      }
-      return result
+      return await getAllResolvedVersionDocuments(packageId, version, apiType, contractType) ?? EMPTY_DOCUMENTS_DTO
     } catch (error) {
       console.error(error)
       return EMPTY_DOCUMENTS_DTO

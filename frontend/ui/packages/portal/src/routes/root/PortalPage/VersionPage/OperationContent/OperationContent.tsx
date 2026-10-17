@@ -40,9 +40,6 @@ import {
 import { RawSpecDiffView } from '@netcracker/qubership-apihub-ui-shared/components/RawSpecDiffView'
 import { RawSpecView } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/RawSpecView'
 import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
-import {
-  WarningApiProcessorVersion,
-} from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import {
   API_TYPE_ASYNCAPI,
@@ -74,7 +71,7 @@ import {
 import type { FC, ReactNode } from 'react'
 import { memo, useCallback, useEffect, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
-import { useVersionsComparisonGlobalParams } from '../../..//PortalPage/VersionPage/VersionsComparisonGlobalParams'
+import { useVersionsComparisonGlobalParams } from '../../../PortalPage/VersionPage/VersionsComparisonGlobalParams'
 import { useOperationNavigationDetails } from '../../../OperationNavigationDataProvider'
 import { useSetChangesLoadingStatus } from '../ChangesLoadingStatusProvider'
 import { useBreadcrumbsData } from '../ComparedPackagesBreadcrumbsProvider'
@@ -342,18 +339,6 @@ export const OperationContent: FC<OperationContentProps> = wrapOperationContentE
             displayMode={displayMode}
             breadcrumbsData={breadcrumbsData}
             actions={isRawViewMode && rawViewActions}
-            swapperBreadcrumbsBeforeComponent={
-              <WarningApiProcessorVersion
-                packageKey={originPackageKey}
-                versionKey={originVersionKey}
-              />
-            }
-            swapperBreadcrumbsAfterComponent={
-              <WarningApiProcessorVersion
-                packageKey={changedPackageKey}
-                versionKey={changedVersionKey}
-              />
-            }
           />
           {isDocViewMode && !!mergedDocument && (
             <OperationView

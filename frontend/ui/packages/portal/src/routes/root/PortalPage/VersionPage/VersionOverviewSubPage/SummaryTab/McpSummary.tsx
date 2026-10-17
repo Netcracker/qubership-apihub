@@ -1,24 +1,38 @@
 import { type FC, memo } from 'react'
 
+import { ApiTypeErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/ApiTypeErrorIndicator'
 import {
   CONTRACT_TYPE_MCP,
   CONTRACT_TYPE_TITLE_MAP,
 } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import type { McpContractsSummary } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
+import type { ApiTypeProblemDetails } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/apiTypeProblemDetails'
 
 import { SummaryPanels } from './SummaryPanel'
 import { SummarySection } from './SummarySection'
 
 type McpSummaryProps = Readonly<{
   mcpSummary: McpContractsSummary
+  problem?: ApiTypeProblemDetails
 }>
 
-export const McpSummary: FC<McpSummaryProps> = memo(({ mcpSummary }) => {
+export const McpSummary: FC<McpSummaryProps> = memo(({ mcpSummary, problem }) => {
   const { totals } = mcpSummary
   const showEndpoints = totals.endpoints > 1
 
   return (
-    <SummarySection title={CONTRACT_TYPE_TITLE_MAP[CONTRACT_TYPE_MCP]} data-testid="McpContractSummary">
+    <SummarySection
+      title={
+        <>
+          {CONTRACT_TYPE_TITLE_MAP[CONTRACT_TYPE_MCP]}
+          <ApiTypeErrorIndicator
+            problem={problem}
+            data-testid={`OverviewSummaryErrorIndicator-${CONTRACT_TYPE_MCP}`}
+          />
+        </>
+      }
+      data-testid="McpContractSummary"
+    >
       <SummaryPanels
         numbers={{
           metrics: [

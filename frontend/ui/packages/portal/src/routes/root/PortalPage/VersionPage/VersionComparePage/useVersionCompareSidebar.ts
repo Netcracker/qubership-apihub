@@ -1,11 +1,10 @@
 import { createElement, type ReactNode, useEffect, useMemo, useState } from 'react'
 
-import { type ApiType, isApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import type { ContractType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
+import { isApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { isDashboardComparisonSummary } from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
 import { isAppliedSearchValueForTag } from '@netcracker/qubership-apihub-ui-shared/utils/tags'
 
-import { getDefaultApiType, isApiTypeSelectorShown } from '@portal/utils/operation-types'
+import { getDefaultApiType } from '@portal/utils/operation-types'
 import { useRefSearchParam } from '../../useRefSearchParam'
 import { useChangesSummaryFromContext } from '../ChangesSummaryProvider'
 import { useApiTypeSearchParam } from '../useApiTypeSearchParam'
@@ -67,9 +66,7 @@ function useVersionCompareSidebarProps(): VersionCompareSidebarHookResult {
   const selectedApiType = toComparedApiTypeFilter(apiType)
 
   return {
-    isVisible: isVersionCompareSidebarVisible(apiTypes, selectedApiType),
-    apiType: apiType,
-    apiTypes: apiTypes,
+    isVisible: isVersionCompareSidebarVisible(selectedApiType),
     filteredTags: filteredTags,
     isLoading: isLoading,
     selectedTag: selectedTag,
@@ -79,9 +76,7 @@ function useVersionCompareSidebarProps(): VersionCompareSidebarHookResult {
 }
 
 function isVersionCompareSidebarVisible(
-  allowedApiTypes: ReadonlyArray<ApiType | ContractType>,
-  selectedApiType: ApiType | ContractType | undefined,
+  selectedApiType: ReturnType<typeof toComparedApiTypeFilter>,
 ): boolean {
-  return isApiTypeSelectorShown(allowedApiTypes) ||
-    (selectedApiType !== undefined && isApiType(selectedApiType))
+  return selectedApiType !== undefined && isApiType(selectedApiType)
 }

@@ -563,6 +563,22 @@ export function createComponents(): Components<Theme> {
         },
       },
     },
+    MuiSelect: {
+      defaultProps: {
+        MenuProps: {
+          // Skip auto-focus on the selected item to avoid the redundant focus outline on first open.
+          disableAutoFocusItem: true,
+        },
+      },
+      styleOverrides: {
+        select: {
+          // MUI default: gray background + borderRadius 0 on focus - looks like a tall rectangle inside rounded inputs.
+          '&:focus': {
+            backgroundColor: 'transparent',
+          },
+        },
+      },
+    },
     MuiSnackbarContent: {
       styleOverrides: {
         root: {

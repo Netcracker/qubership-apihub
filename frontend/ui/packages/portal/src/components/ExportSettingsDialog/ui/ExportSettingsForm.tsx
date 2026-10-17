@@ -24,7 +24,7 @@ import { DialogForm } from '@netcracker/qubership-apihub-ui-shared/components/Di
 import { RadioCustom } from '@netcracker/qubership-apihub-ui-shared/components/RadioCustom'
 import type { Key, PackageKey, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { InfoContextIcon } from '@netcracker/qubership-apihub-ui-shared/icons/InfoContextIcon'
-import { isExportableSpecType, type SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
+import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import type { ExportConfig } from '../../../routes/root/PortalPage/useExportConfig'
 import {
   ExportedEntityKind,
@@ -138,6 +138,7 @@ interface ExportSettingsFormProps {
   isStartingExport: boolean
   // Action props
   setRequestDataExport: (requestData: IRequestDataExport) => void
+  isDownloadOnly?: boolean
   onDownloadPublishedDocument?: () => void
 }
 
@@ -159,11 +160,12 @@ export const ExportSettingsForm: FC<ExportSettingsFormProps> = memo(props => {
     hasRestApi,
     shareabilityStatus,
     shareabilitySummary,
+    isDownloadOnly = false,
     onDownloadPublishedDocument,
   } = props
 
   const fields = useMemo(() => {
-    if (exportedEntity === ExportedEntityKind.SINGLE_DOCUMENT && !isExportableSpecType(specType)) {
+    if (isDownloadOnly) {
       return []
     }
     if (exportedEntity === ExportedEntityKind.VERSION && !hasRestApi) {
@@ -180,7 +182,7 @@ export const ExportSettingsForm: FC<ExportSettingsFormProps> = memo(props => {
       ...field,
       options: [...intersectionBy(field.options, allowedOptions, 'value')],
     }))
-  }, [exportedEntity, specType, hasRestApi])
+  }, [isDownloadOnly, exportedEntity, specType, hasRestApi])
 
   const fieldsDefaultValues = useMemo(
     () => fields.reduce((acc, field) => ({ ...acc, [field.kind]: field.defaultValue }), {}),
@@ -215,7 +217,7 @@ export const ExportSettingsForm: FC<ExportSettingsFormProps> = memo(props => {
 
   // Handle form submission
   const onSubmit = (data: ExportSettingsFormData): void => {
-    if (exportedEntity === ExportedEntityKind.SINGLE_DOCUMENT && !isExportableSpecType(specType)) {
+    if (isDownloadOnly) {
       onDownloadPublishedDocument?.()
       return
     }
@@ -282,9 +284,9 @@ export const ExportSettingsForm: FC<ExportSettingsFormProps> = memo(props => {
       </DialogTitle>
       <DialogContent>
         {singleDocExportAlert && (
-          isExportableSpecType(specType)
-            ? <ShareabilitySingleDocAlert {...singleDocExportAlert} />
-            : <AlertCustom {...singleDocExportAlert} />
+          isDownloadOnly
+            ? <AlertCustom {...singleDocExportAlert} />
+            : <ShareabilitySingleDocAlert {...singleDocExportAlert} />
         )}
         <ExportSettingsFormFields
           disabled={initializing || exporting}

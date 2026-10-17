@@ -37,7 +37,7 @@ import { getVersionInfoOptions } from '../../utils/version-info'
 // pattern, so the rule was aimed at the spelling rather than at the boundary. It now covers
 // the traversal form too.
 //
-// The real values come from the version.json that ui/vite-create-version-json.ts generates per
+// The real values come from the version.json that vite-plugins/create-version-json.ts generates per
 // app, fetched by the query below. The fallback is what the hook returns before that resolves,
 // or when the fetch fails. Each app passes its own package.json version as the fallback:
 // BasePage shows the "APIHUB UI is out of date" dialog when its version differs from
@@ -54,4 +54,14 @@ export function useVersionInfo(
   )
 
   return data ?? { frontendVersion: fallbackFrontendVersion, apiProcessorVersion: UNKNOWN_VERSION }
+}
+
+// Returns `undefined` until version.json loads, or when the fetch fails. A version comparison has to skip that case,
+// while `useVersionInfo` reports `UNKNOWN_VERSION`, which differs from every real version.
+export function useAppApiProcessorVersion(appType: AppTypeApiHub = portal): string | undefined {
+  const { data } = useQuery<VersionInfoDto, Error, VersionInfo>(
+    getVersionInfoOptions(appType),
+  )
+
+  return data?.apiProcessorVersion
 }

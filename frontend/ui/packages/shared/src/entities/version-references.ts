@@ -51,6 +51,9 @@ export type PackageReference = Partial<Readonly<{
   deletedBy: string
   parentPackages: ReadonlyArray<Key>
   latestRevision: boolean
+  hasErrors: boolean
+  changelogHasErrors: boolean
+  apiProcessorVersion: string
 }>>
 
 export type PackageReferenceDto = Partial<Readonly<{
@@ -63,6 +66,9 @@ export type PackageReferenceDto = Partial<Readonly<{
   deletedBy: string
   parentPackages: ReadonlyArray<Key>
   notLatestRevision: boolean
+  hasErrors: boolean
+  changelogHasErrors: boolean
+  apiProcessorVersion: string
 }>>
 
 export function toVersionReferences(value: VersionReferencesDto): VersionReferences {

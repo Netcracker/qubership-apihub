@@ -103,6 +103,8 @@ export const SHOW_DELETE_CUSTOM_SERVER_DIALOG = 'show-delete-custom-server-dialo
 export const SELECT_CREATED_CUSTOM_SERVER = 'select-created-custom-server'
 // Feature "Publication Validation Error Report"
 export const SHOW_PUBLICATION_ERROR_REPORT_DIALOG = 'show-publication-error-report-dialog'
+// Feature "Document Errors Dialog"
+export const SHOW_DOCUMENT_ERRORS_DIALOG = 'show-document-errors-dialog'
 
 export type NotificationDetail = {
   title?: string
@@ -137,6 +139,10 @@ export type ShowEditPackageVersionDetail = {
   version: VersionKey
   status?: VersionStatus
   versionLabels?: string[]
+  hasErrors?: boolean
+  changelogHasErrors?: boolean
+  apiProcessorVersion?: string
+  kind?: PackageKind
 }
 
 export type CreateOperationGroupDetail = {
@@ -195,6 +201,7 @@ export type ExportSettingsPopupDetail = {
   groupName?: string
   specType?: SpecType
   shareabilityStatus?: ShareabilityStatus
+  hasErrors?: boolean
 }
 
 export type ShowDeleteCustomServerDetail = {
@@ -210,6 +217,13 @@ export type RulesetInfoPopupDetails = RulesetMetadata
 export type ShowPublicationErrorReportDetail = {
   downloadFilename: string
   errors: string
+}
+
+export type ShowDocumentErrorsDetail = {
+  packageKey: PackageKey
+  versionKey: VersionKey
+  documentId: Key
+  documentTitle: string
 }
 
 type EventBus = {
@@ -272,6 +286,8 @@ type EventBus = {
   showRulesetInfoDialog: (value: RulesetInfoPopupDetails) => void
   // Feature "Publication Validation Error Report"
   showPublicationErrorReportDialog: (detail: ShowPublicationErrorReportDetail) => void
+  // Feature "Document Errors Dialog"
+  showDocumentErrorsDialog: (detail: ShowDocumentErrorsDetail) => void
 }
 
 function eventBusProvider(): EventBus {
@@ -336,6 +352,8 @@ function eventBusProvider(): EventBus {
       showRulesetInfoDialog: slot<RulesetInfoPopupDetails>(),
       // Feature "Publication Validation Error Report"
       showPublicationErrorReportDialog: slot<ShowPublicationErrorReportDetail>(),
+      // Feature "Document Errors Dialog"
+      showDocumentErrorsDialog: slot<ShowDocumentErrorsDetail>(),
     },
   })
 
@@ -460,6 +478,10 @@ function eventBusProvider(): EventBus {
   // Feature "Publication Validation Error Report"
   eventBus.showPublicationErrorReportDialog.on((detail: ShowPublicationErrorReportDetail) => {
     dispatchEvent(new CustomEvent(SHOW_PUBLICATION_ERROR_REPORT_DIALOG, { detail }))
+  })
+  // Feature "Document Errors Dialog"
+  eventBus.showDocumentErrorsDialog.on((detail: ShowDocumentErrorsDetail) => {
+    dispatchEvent(new CustomEvent(SHOW_DOCUMENT_ERRORS_DIALOG, { detail }))
   })
   eventBus.showSpecificationDialog.on((detail: SpecificationDialogDetail) => {
     dispatchEvent(new CustomEvent(SHOW_SPECIFICATION_DIALOG, { detail }))

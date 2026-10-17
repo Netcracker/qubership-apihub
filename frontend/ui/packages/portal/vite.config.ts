@@ -7,8 +7,9 @@ import copy from 'rollup-plugin-copy'
 import Unfonts from 'unplugin-fonts/vite'
 import { visualizer as bundleVisualizer } from 'rollup-plugin-visualizer'
 import inject from '@rollup/plugin-inject'
-import monacoWorkerHashPlugin from '../../vite-monaco-worker-hash'
-import createVersionJsonFilePlugin from '../../vite-create-version-json'
+import monacoWorkerHashPlugin from '../../vite-plugins/monaco-worker-hash'
+import createVersionJsonFilePlugin from '../../vite-plugins/create-version-json'
+import removeMswFromDistPlugin from '../../vite-plugins/remove-msw-from-dist'
 import { createRequire } from 'module'
 
 // The three apispec-view assets copied below were addressed by the literal path
@@ -92,6 +93,7 @@ export default defineConfig(({ mode }) => {
         },
       }),
       createVersionJsonFilePlugin(),
+      removeMswFromDistPlugin(),
     ],
     optimizeDeps: {
       // npm link creates a symlink that points outside node_modules and by default such packages are not optimized.

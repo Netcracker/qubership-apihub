@@ -47,18 +47,20 @@ export const DocumentPreviewContentBody: FC<DocumentPreviewContentBodyProps> = m
 
   const { documentId } = useParams()
   const [docPackageKey, docPackageVersion] = usePackageParamsWithRef()
-  const [{ type }] = useDocument(docPackageKey, docPackageVersion, documentId)
+  const [document, isDocumentLoading] = useDocument(docPackageKey, docPackageVersion, documentId)
+  const { type, hasErrors } = document
   const [mode] = useSpecViewMode()
   const [schemaViewMode = DETAILED_SCHEMA_VIEW_MODE] = useSchemaViewMode()
   const [specItemUri] = useSpecItemUriHashParam()
+  const effectiveMode = hasErrors ? RAW_OPERATION_VIEW_MODE : mode
 
   let operationContentElement
-  if (isLoading) {
+  if (isLoading || isDocumentLoading) {
     operationContentElement = <LoadingIndicator/>
   } else {
     operationContentElement = (
       <>
-        {mode === DOC_OPERATION_VIEW_MODE && (
+        {effectiveMode === DOC_OPERATION_VIEW_MODE && (
           <DocSpecView
             value={apiDescriptionDocument}
             type={type}
@@ -68,7 +70,7 @@ export const DocumentPreviewContentBody: FC<DocumentPreviewContentBodyProps> = m
             selectedUri={specItemUri}
           />
         )}
-        {mode === RAW_OPERATION_VIEW_MODE && (
+        {effectiveMode === RAW_OPERATION_VIEW_MODE && (
           <RawSpecView
             value={toFormattedJsonString(apiDescriptionDocument)}
             extension=".json"

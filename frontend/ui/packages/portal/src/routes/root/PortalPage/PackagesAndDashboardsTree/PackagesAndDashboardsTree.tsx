@@ -18,6 +18,7 @@ import type { FC } from 'react'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
 import { ReferenceRow } from './ReferenceRow'
+import { getDeletedDescendantRefs } from './referenceProblems'
 import {
   DashboardCollapsedReferenceKeysContext,
   SetDashboardCollapsedReferenceKeysContext,
@@ -66,6 +67,11 @@ export const PackagesAndDashboardsTree: FC<PackagesAndDashboardsTreeProps> = mem
     version: versionId!,
     enabled: true,
   })
+
+  const deletedDescendantRefs = useMemo(
+    () => getDeletedDescendantRefs(versionReferences),
+    [versionReferences],
+  )
 
   const addedDashboardReferences = useMemo(() => {
     return currentDashboardReferences?.filter(({ added }) => added)
@@ -191,6 +197,7 @@ export const PackagesAndDashboardsTree: FC<PackagesAndDashboardsTreeProps> = mem
                         reference={ref}
                         pack={packageByRef}
                         versionReferences={versionReferences}
+                        deletedDescendantRefs={deletedDescendantRefs}
                         level={0}
                         onRemove={onRemove}
                         added={false}
@@ -206,6 +213,7 @@ export const PackagesAndDashboardsTree: FC<PackagesAndDashboardsTreeProps> = mem
                       reference={{}}
                       pack={packageReference}
                       versionReferences={{}}
+                      deletedDescendantRefs={deletedDescendantRefs}
                       level={0}
                       onRemove={onRemove}
                       added={true}

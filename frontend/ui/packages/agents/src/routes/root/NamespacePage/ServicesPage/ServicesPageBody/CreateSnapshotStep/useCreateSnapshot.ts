@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import { useInvalidateSnapshots } from '../../../useSnapshots'
 import type { IsError, IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
@@ -24,7 +24,7 @@ import type {
 import {
   useCreateSnapshotPublicationOptions,
 } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
-import { publishSnapshot } from '@agents/entities/snapshots'
+import { publishSnapshot, toSnapshotVersionKey } from '@agents/entities/snapshots'
 import type { PublishConfig } from '@agents/entities/publish-config'
 import { toPublishConfig } from '@agents/entities/publish-config'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
@@ -33,6 +33,7 @@ import { v4 as uuidv4 } from 'uuid'
 import {
   useGetAgentPrefix,
 } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'
+import { removeDocumentErrorFileKeys } from '../useDocumentErrorFileKeys'
 
 export function useCreateSnapshot(): [CreateSnapshot, IsLoading, IsSuccess, IsError, Error | null] {
   const { agentId, namespaceKey } = useParams()
@@ -40,6 +41,7 @@ export function useCreateSnapshot(): [CreateSnapshot, IsLoading, IsSuccess, IsEr
   const { setCreateSnapshotPublicationOptions } = useCreateSnapshotPublicationOptions()
   const invalidateSnapshots = useInvalidateSnapshots()
   const prefix = useGetAgentPrefix()
+  const client = useQueryClient()
   const {
     mutate,
     isLoading,
@@ -56,7 +58,7 @@ export function useCreateSnapshot(): [CreateSnapshot, IsLoading, IsSuccess, IsEr
         workspaceKey!,
         true,
         false,
-        encodeURI(name),
+        toSnapshotVersionKey(name),
         baseline,
         serviceKeys,
         builderId,
@@ -67,6 +69,7 @@ export function useCreateSnapshot(): [CreateSnapshot, IsLoading, IsSuccess, IsEr
     },
     onSuccess: (config, { name, baseline, serviceKeys }) => {
       setCreateSnapshotPublicationOptions({ name, baseline, serviceKeys, config })
+      removeDocumentErrorFileKeys(client, toSnapshotVersionKey(name))
       invalidateSnapshots()
     },
   })

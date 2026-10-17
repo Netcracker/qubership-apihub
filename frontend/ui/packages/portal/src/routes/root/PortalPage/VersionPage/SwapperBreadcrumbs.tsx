@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import type { FC, ReactElement } from 'react'
-import React, { memo } from 'react'
-import { ComparedPackagesBreadcrumbs } from '../../ComparedPackagesBreadcrumbs'
 import { Box, Typography } from '@mui/material'
-import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
+import { type FC, memo, type ReactElement } from 'react'
+
+import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
+
+import { ComparedPackagesBreadcrumbs } from '../../ComparedPackagesBreadcrumbs'
 import type { ComparedPackagesBreadcrumbsData } from './breadcrumbs'
 import { isLinkedComparedBreadcrumbPathItem } from './breadcrumbs'
 
@@ -43,13 +44,19 @@ export const SwapperBreadcrumbs: FC<SwapperBreadcrumbsProps> = memo<SwapperBread
   return (
     <>
       <ComparedPackagesBreadcrumbs data={linkedBreadcrumbs}/>
-      <OverflowTooltip title={textBreadcrumb?.name}>
-        <Box sx={SWAPPER_TEXT_STYLES} data-testid="SwapperTitle">
-          <Typography fontWeight="600">{textBreadcrumb?.name}</Typography>
-          <Typography variant="subtitle2" fontSize={13}>{textBreadcrumb?.description}</Typography>
-          {customComponentAfterContent}
-        </Box>
-      </OverflowTooltip>
+      <Box sx={SWAPPER_TEXT_STYLES} data-testid="SwapperTitle">
+        <TextWithOverflowTooltip
+          tooltipText={textBreadcrumb?.name}
+          variant="body1"
+          sx={{ fontWeight: 600 }}
+        >
+          {textBreadcrumb?.name}
+        </TextWithOverflowTooltip>
+        <Typography variant="subtitle2" fontSize={13}>{textBreadcrumb?.description}</Typography>
+        {customComponentAfterContent}
+      </Box>
     </>
   )
 })
+
+SwapperBreadcrumbs.displayName = 'SwapperBreadcrumbs'

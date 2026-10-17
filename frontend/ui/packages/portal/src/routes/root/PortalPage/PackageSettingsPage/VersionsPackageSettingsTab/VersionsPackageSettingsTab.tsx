@@ -52,6 +52,10 @@ export const VersionsPackageSettingsTab: FC<PackageSettingsTabProps> = memo<Pack
       version: version?.key,
       status: version?.status,
       versionLabels: version?.versionLabels,
+      hasErrors: version?.hasErrors,
+      changelogHasErrors: version?.changelogHasErrors,
+      apiProcessorVersion: version?.apiProcessorVersion,
+      kind: packageObject.kind,
     })
   }, [packageObject, showEditPackageVersionDialog])
 
@@ -77,6 +81,7 @@ export const VersionsPackageSettingsTab: FC<PackageSettingsTabProps> = memo<Pack
         body={
           <PackageVersionsTable
             packageKey={packageObject.key}
+            kind={packageObject.kind}
             permissions={packageObject.permissions}
             onDelete={onDeletePackageVersion}
             onEdit={onEditPackageVersion}

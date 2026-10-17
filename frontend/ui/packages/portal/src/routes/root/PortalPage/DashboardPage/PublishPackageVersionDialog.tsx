@@ -167,6 +167,7 @@ const PublishPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, set
       publishButtonDisabled={isPackageLoading || hasBlockingIssues}
       publishFieldsDisabled={isPackageLoading || isCurrentVersionLoading}
       currentPackageKey={currentPackage?.key}
+      kind={packageKind}
     />
   )
 })

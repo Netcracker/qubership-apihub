@@ -30,6 +30,9 @@ export type PackageVersion = Readonly<{
   versionLabels: string[]
   previousVersion?: string
   latestRevision: boolean
+  apiProcessorVersion?: string
+  hasErrors?: boolean
+  changelogHasErrors?: boolean
 }>
 
 export type PackageVersionDto = Readonly<{
@@ -40,6 +43,9 @@ export type PackageVersionDto = Readonly<{
   versionLabels?: string[]
   previousVersion?: string
   notLatestRevision?: boolean
+  apiProcessorVersion?: string
+  hasErrors?: boolean
+  changelogHasErrors?: boolean
 }>
 
 export type PackageVersionsDto = Readonly<{

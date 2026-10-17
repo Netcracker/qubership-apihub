@@ -21,10 +21,8 @@ import { NavLink, useParams } from 'react-router-dom'
 
 import type {
   ChangeSummary,
-  GraphQLChangesMetadata,
   OperationChanges,
   OperationChangesMetadata,
-  RestChangesMetadata,
 } from '@netcracker/qubership-apihub-api-processor'
 import { useBackwardLocation } from '../../../useBackwardLocation'
 import { useChangesLoadingStatus, useSetChangesLoadingStatus } from '../ChangesLoadingStatusProvider'
@@ -342,4 +340,3 @@ const Spec: FC<SpecProps> = memo<SpecProps>(({ value, changes }) => {
     </ListItem>
   )
 })
-

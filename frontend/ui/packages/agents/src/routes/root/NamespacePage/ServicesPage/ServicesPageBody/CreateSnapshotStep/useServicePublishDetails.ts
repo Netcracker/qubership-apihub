@@ -15,7 +15,7 @@
  */
 
 import type { ServiceConfig } from '@agents/entities/publish-config'
-import type { PublishDetails, PublishDetailsDto } from '@agents/entities/publish-details'
+import type { PublishDetails, PublishDetailsDto } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 import { EMPTY_PUBLISH_DETAILS } from '@agents/entities/publish-details'
 import { calculatePreviousVersion } from '@agents/entities/snapshots'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'

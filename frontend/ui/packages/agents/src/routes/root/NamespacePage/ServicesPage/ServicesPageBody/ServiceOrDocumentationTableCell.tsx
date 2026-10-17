@@ -18,6 +18,7 @@ import type { FC } from 'react'
 import { memo, useMemo } from 'react'
 import type { Row } from '@tanstack/react-table'
 import { Box, IconButton, Link, Tooltip, Typography } from '@mui/material'
+import { styled } from '@mui/material/styles'
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
 import KeyboardArrowRightOutlinedIcon from '@mui/icons-material/KeyboardArrowRightOutlined'
 import type { Service } from '@agents/entities/services'
@@ -29,6 +30,9 @@ import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { LockIcon } from '@netcracker/qubership-apihub-ui-shared/icons/LockIcon'
 import { SpecLogo } from '@netcracker/qubership-apihub-ui-shared/components/SpecLogo'
+import { DotIndicator } from '@netcracker/qubership-apihub-ui-shared/components/DotIndicator'
+import type { PackageKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import { SnapshotDocumentErrorIndicator } from './SnapshotDocumentErrorIndicator'
 
 export type ServiceOrDocumentationTableCellProps = {
   value: Row<CellData>
@@ -39,6 +43,8 @@ export type ServiceOrDocumentationTableCellProps = {
 type CellData = Partial<{
   service: Service
   spec: Spec
+  snapshotHasErrors: boolean
+  snapshotPackageKey: PackageKey
 }>
 
 export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCellProps> = memo<ServiceOrDocumentationTableCellProps>((
@@ -49,7 +55,7 @@ export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCell
       getToggleExpandedHandler,
       getIsExpanded,
       parentRow,
-      original: { service, spec },
+      original: { service, spec, snapshotHasErrors },
     },
     isPromoteStep,
     promoteStatus,
@@ -71,6 +77,10 @@ export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCell
     )
   }
 
+  const documentErrorsPackageKey = parentRow?.original.snapshotHasErrors
+    ? parentRow.original.snapshotPackageKey
+    : undefined
+
   return (
     <Box display="flex" alignItems="center" gap={1} pl={3 + depth * 2} height={19}>
       {getCanExpand() && (
@@ -85,6 +95,9 @@ export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCell
             <Typography noWrap color={isPromoteStep && !promotable ? '#8F9EB4' : 'inherit'}
                         variant="inherit">{service.key}</Typography>
           </OverflowTooltip>
+          {snapshotHasErrors && (
+            <ServiceDocumentErrorsDot color="error" data-testid="ServiceDocumentErrorsIndicator"/>
+          )}
           {isPromoteStep && !promotable && (
             <Tooltip title="No grants to publish the service">
               <Box><LockIcon/></Box>
@@ -107,7 +120,14 @@ export const ServiceOrDocumentationTableCell: FC<ServiceOrDocumentationTableCell
             {spec.name}
           </Link>
         </OverflowTooltip>
+        {documentErrorsPackageKey && (
+          <SnapshotDocumentErrorIndicator specKey={spec.key} snapshotPackageKey={documentErrorsPackageKey}/>
+        )}
       </>}
     </Box>
   )
+})
+
+const ServiceDocumentErrorsDot = styled(DotIndicator)({
+  alignSelf: 'flex-start',
 })

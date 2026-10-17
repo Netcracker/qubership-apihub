@@ -1,7 +1,7 @@
-import type { Plugin } from 'vite'
-import * as path from 'path'
 import * as fs from 'fs'
 import { createHash } from 'node:crypto'
+import * as path from 'path'
+import type { Plugin } from 'vite'
 
 const ENCODING: BufferEncoding = 'utf-8'
 

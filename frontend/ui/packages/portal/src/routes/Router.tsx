@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-import type { RouteObject } from 'react-router-dom'
-import { createBrowserRouter, createRoutesFromElements, Navigate, Route } from 'react-router-dom'
-
 import type { ReactNode } from 'react'
+import { type RouteObject, createBrowserRouter, createRoutesFromElements, Navigate, Route } from 'react-router-dom'
+
+import { ErrorPage, NOT_FOUND_TITLE } from '@netcracker/qubership-apihub-ui-shared/components/ErrorPage'
+import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
+import { LoginPage } from '@netcracker/qubership-apihub-ui-shared/pages/login'
+
 import {
   API_CHANGES_PAGE,
   COMPARE_PAGE,
@@ -48,7 +51,6 @@ import { WorkspacePage } from '@portal/routes/root/MainPage/MainPageSubpages/Wor
 import { GroupPage } from '@portal/routes/root/MainPage/MainPageSubpages/GroupPage'
 import { PackagePage } from '@portal/routes/root/PortalPage/PackagePage/PackagePage'
 import { PackageSettingsPage } from '@portal/routes/root/PortalPage/PackageSettingsPage/PackageSettingsPage'
-import { SPECIAL_VERSION_KEY } from '@portal/entities/versions'
 import { VersionPage } from '@portal/routes/root/PortalPage/VersionPage/VersionPage'
 import { ContractDetailPage } from '@portal/routes/root/PortalPage/VersionPage/ContractDetailPage'
 import { DocumentPreviewPage } from '@portal/routes/root/PortalPage/VersionPage/DocumentPreviewPage/DocumentPreviewPage'
@@ -61,8 +63,6 @@ import { GroupComparePage } from '@portal/routes/root/PortalPage/VersionPage/Gro
 import {
   DifferentOperationGroupsComparisonPage,
 } from '@portal/routes/root/PortalPage/VersionPage/OperationsComparisonPage/DifferentOperationGroupsComparisonPage'
-import { ErrorPage, NOT_FOUND_TITLE } from '@netcracker/qubership-apihub-ui-shared/components/ErrorPage'
-import { LoginPage } from '@netcracker/qubership-apihub-ui-shared/pages/login'
 import { ProfilePage } from './root/ProfilePage/ProfilePage'
 
 export const router = createBrowserRouter(

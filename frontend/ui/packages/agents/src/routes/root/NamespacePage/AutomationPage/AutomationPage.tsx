@@ -40,10 +40,18 @@ import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
 import { LoadingButton } from '@mui/lab'
 import { EmailNotificationList } from './EmailNotificationList'
+import type { BaselineOptions } from '../baselineOptions'
 import { useBaselineOptions } from '../useBaselineOptions'
 import { useVersionOptions } from './useVersionOptions'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import { RadioCustom } from '@netcracker/qubership-apihub-ui-shared/components/RadioCustom'
+import { VersionSelectorAutocomplete } from '@netcracker/qubership-apihub-ui-shared/components/Autocompletes/VersionSelectorAutocomplete'
+import { VersionErrorFormMessage } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorFormMessage'
+import { VersionErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorIndicator'
+import { agent } from '@netcracker/qubership-apihub-ui-shared/utils/version-info'
+import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/OptionItem'
+import { useVersionProblemDetails } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/useVersionProblemDetails'
+import { VERSION_PROBLEM_DIALOG_SURFACE } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/versionProblemDetails'
 import type {
   AutodiscoveryStatus} from '../../../../entities/statuses'
 import {
@@ -60,10 +68,34 @@ dayjs.extend(timezone)
 export const AutomationPage: FC = memo(() => {
   const [, isSettingsLoading] = useSettings()
   const [updateSettings, areUpdateSettingsLoading, isSuccess, isError] = useUpdateSettings()
-  const [control, versionOptions, previousVersionOptions, autoDiscoveryStatus, emailNotificationsEnabled, onSubmit, formChanges] = useDialogData(updateSettings)
+  const [
+    control,
+    versionOptions,
+    previousVersionOptions,
+    previousVersionKey,
+    autoDiscoveryStatus,
+    emailNotificationsEnabled,
+    onSubmit,
+    formChanges,
+  ] = useDialogData(updateSettings)
+
+  const previousVersionFlags = previousVersionKey ? previousVersionOptions.flagsByVersionKey.get(previousVersionKey) : undefined
+  const {
+    hasProblems: previousVersionHasProblems,
+    isBlocking: isPreviousVersionProblemBlocking,
+    formHelperText: previousVersionErrorMessage,
+  } = useVersionProblemDetails({
+    versionKey: previousVersionKey ?? undefined,
+    hasErrors: previousVersionFlags?.hasErrors,
+    changelogHasErrors: previousVersionFlags?.changelogHasErrors,
+    apiProcessorVersion: previousVersionFlags?.apiProcessorVersion,
+    surface: VERSION_PROBLEM_DIALOG_SURFACE.PUBLISH_PREVIOUS_VERSION,
+  })
 
   const isLoading = isSettingsLoading || areUpdateSettingsLoading
   const isFormDisabled = isLoading || autoDiscoveryStatus !== SCHEDULE_AUTODISCOVERY_STATUS
+  // The baseline is used only by scheduled runs, so a version with problems must not stop switching the schedule off.
+  const isPreviousVersionBlocking = isPreviousVersionProblemBlocking && autoDiscoveryStatus === SCHEDULE_AUTODISCOVERY_STATUS
   const isSaveAvailable = formChanges.autodiscoveryStatus || autoDiscoveryStatus === SCHEDULE_AUTODISCOVERY_STATUS &&
     (formChanges.previousVersionKey || formChanges.versionKey || formChanges.discoveryTime || formChanges.emailNotificationsEnabled || formChanges.emailNotificationList)
 
@@ -75,7 +107,7 @@ export const AutomationPage: FC = memo(() => {
           <Box display="flex" gap={2} mr={1} mt={0.5} alignItems="center">
             <LoadingButton
               variant="contained"
-              disabled={isLoading || !isSaveAvailable}
+              disabled={isLoading || !isSaveAvailable || isPreviousVersionBlocking}
               type="submit"
               loading={areUpdateSettingsLoading}
             >
@@ -139,22 +171,57 @@ export const AutomationPage: FC = memo(() => {
                 name="previousVersionKey"
                 control={control}
                 render={({ field: { value, onChange } }) => (
-                  <Autocomplete
+                  <VersionSelectorAutocomplete
                     freeSolo
                     disabled={isFormDisabled}
                     value={value}
-                    options={previousVersionOptions}
+                    options={previousVersionOptions.versionKeys}
+                    inputIndicator={previousVersionHasProblems && previousVersionFlags && (
+                      <VersionErrorIndicator
+                        app={agent}
+                        versionKey={previousVersionKey ?? undefined}
+                        hasErrors={previousVersionFlags.hasErrors}
+                        changelogHasErrors={previousVersionFlags.changelogHasErrors}
+                        apiProcessorVersion={previousVersionFlags.apiProcessorVersion}
+                      />
+                    )}
+                    renderOption={(props, versionKey) => {
+                      const flags = previousVersionOptions.flagsByVersionKey.get(versionKey)
+                      return (
+                        <OptionItem
+                          key={versionKey}
+                          props={props}
+                          title={versionKey}
+                          indicator={flags && (
+                            <VersionErrorIndicator
+                              app={agent}
+                              versionKey={versionKey}
+                              hasErrors={flags.hasErrors}
+                              changelogHasErrors={flags.changelogHasErrors}
+                              apiProcessorVersion={flags.apiProcessorVersion}
+                              fontSize="extra-small"
+                              showTooltip={false}
+                            />
+                          )}
+                        />
+                      )
+                    }}
                     renderInput={(params) => <TextField
                       {...params}
                       onChange={onChange}
                       required
                       label="Baseline (Release Version)"
+                      error={isPreviousVersionBlocking}
                     />}
                     onChange={(_, value) => onChange(value)}
                   />
                 )}
               />
             </Box>
+            <VersionErrorFormMessage
+              message={isPreviousVersionBlocking ? previousVersionErrorMessage : undefined}
+              data-testid="BaselineErrorMessage"
+            />
             <Box width="300px">
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <Controller
@@ -234,7 +301,6 @@ export type FormData = {
 
 type DiscoveryTime = Dayjs
 type NameOptions = string[]
-type BaselineOptions = string[]
 type OnSubmit = () => void
 type EmailNotificationEnablement = boolean
 
@@ -244,6 +310,7 @@ function useDialogData(
   Control<FormData>,
   NameOptions,
   BaselineOptions,
+  FormData['previousVersionKey'],
   AutodiscoveryStatus,
   EmailNotificationEnablement,
   OnSubmit,
@@ -292,6 +359,7 @@ function useDialogData(
     form.control,
     versionOptions,
     baselineOptions,
+    form.watch().previousVersionKey,
     form.watch().autodiscoveryStatus!,
     form.watch().emailNotificationsEnabled,
     onSubmit,

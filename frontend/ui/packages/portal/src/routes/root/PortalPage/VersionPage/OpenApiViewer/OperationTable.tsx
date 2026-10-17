@@ -42,7 +42,7 @@ import {
   DEFAULT_CONTAINER_WIDTH,
   useColumnsSizing,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/table-resizing/useColumnResizing'
-import { insertIntoArrayByIndex, isEmpty, isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
+import { insertIntoArrayByIndex, isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { CustomTableHeadCell } from '@netcracker/qubership-apihub-ui-shared/components/CustomTableHeadCell'
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 import { useIntersectionObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useIntersectionObserver'
@@ -116,6 +116,7 @@ export type OperationTableProps = {
   isLoading: boolean
   textFilter?: string
   apiType?: ApiType
+  emptyMessage?: string
 }
 
 export const OperationTable: FC<OperationTableProps> = memo<OperationTableProps>((
@@ -132,6 +133,7 @@ export const OperationTable: FC<OperationTableProps> = memo<OperationTableProps>
     isLoading,
     textFilter,
     apiType,
+    emptyMessage,
   },
 ) => {
 
@@ -313,12 +315,12 @@ export const OperationTable: FC<OperationTableProps> = memo<OperationTableProps>
           {hasNextPage && rowSkeleton}
         </TableBody>
       </Table>
-      {isLoading || isEmpty(value) && (
+      {!isLoading && isEmpty(value) && (
         <Placeholder
           sx={{ width: 'inherit' }}
-          invisible={isNotEmpty(value)}
+          invisible={false}
           area={CONTENT_PLACEHOLDER_AREA}
-          message="No operations"
+          message={emptyMessage ?? 'No operations'}
           data-testid="NoOperationsPlaceholder"
         />
       )}

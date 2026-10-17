@@ -44,6 +44,7 @@ export type DdlTableListViewProps = {
   isNextPageFetching?: boolean
   hasNextPage?: boolean
   isLoading?: boolean
+  emptyMessage?: string
 }
 
 export const DdlTableListView: FC<DdlTableListViewProps> = memo<DdlTableListViewProps>(({
@@ -54,6 +55,7 @@ export const DdlTableListView: FC<DdlTableListViewProps> = memo<DdlTableListView
   isNextPageFetching,
   hasNextPage,
   isLoading = false,
+  emptyMessage,
 }) => {
   const [refKey] = useRefSearchParam()
   const [packageKind] = usePackageKind()
@@ -113,7 +115,7 @@ export const DdlTableListView: FC<DdlTableListViewProps> = memo<DdlTableListView
       data={data}
       getRowId={resolveRowId}
       columnModels={columnModels}
-      emptyMessage={DDL_TABLES_EMPTY_MESSAGE}
+      emptyMessage={emptyMessage ?? DDL_TABLES_EMPTY_MESSAGE}
       fetchNextPage={fetchNextPage}
       isNextPageFetching={isNextPageFetching}
       hasNextPage={hasNextPage}

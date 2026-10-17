@@ -43,7 +43,9 @@ import { DragIcon } from '../icons/DragIcon'
 import { EditIcon } from '../icons/EditIcon'
 import { EmptyUserIcon } from '../icons/EmptyUserIcon'
 import { ErrorIcon } from '../icons/ErrorIcon'
+import { ErrorOutlineIcon } from '../icons/ErrorOutlineIcon'
 import { ExitIcon } from '../icons/ExitIcon'
+import { ExportIcon } from '../icons/ExportIcon'
 import { ExtLinkIcon } from '../icons/ExtLinkIcon'
 import { FileIcon } from '../icons/FileIcon'
 import { FilterIcon } from '../icons/FilterIcon'
@@ -205,6 +207,8 @@ const MUI_ICONS_REGISTRY: readonly IconItem<MuiIconComponent>[] = [
   { name: 'DeleteIconMui', component: DeleteIconMui },
   { name: 'DownloadIconMui', component: DownloadIconMui },
   { name: 'ErrorIcon', component: ErrorIcon },
+  { name: 'ErrorOutlineIcon', component: ErrorOutlineIcon },
+  { name: 'ExportIcon', component: ExportIcon },
   { name: 'ExtLinkIcon', component: ExtLinkIcon },
   { name: 'InfoContextIcon', component: InfoContextIcon },
   { name: 'InfoFilledIcon', component: InfoFilledIcon },

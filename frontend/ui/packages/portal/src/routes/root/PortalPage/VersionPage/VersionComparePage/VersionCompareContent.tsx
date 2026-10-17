@@ -52,7 +52,6 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { format } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/utils/types'
-import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import {
   usePagedDetailedVersionChangelog,
 } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/api/useCommonPagedVersionChangelog'
@@ -72,26 +71,12 @@ import { ComparisonSwapper } from '../ComparisonSwapper'
 import { useVersionsComparisonGlobalParams } from '../VersionsComparisonGlobalParams'
 import { VERSION_SWAPPER_HEIGHT } from '../shared-styles'
 import { useTagSearchFilter } from '../useTagSearchFilter'
-import {
-  WarningApiProcessorVersion,
-} from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
+import { VersionErrorIndicatorWithFetch } from '../VersionErrorIndicatorWithFetch'
 import { useDdlChanges } from '../api/useDdlChanges'
 import { useFlatDdlChanges } from '../api/useFlatDdlChanges'
 import { useAutoFetchInfinitePages } from '../useAutoFetchInfinitePages'
+import { isRevisionCompare } from '../isRevisionCompare'
 import { ComparedEntitySplitRow, EntityChangesSummary } from './ComparedEntitySplitRow'
-
-export function isRevisionCompare(originVersion: Key, changedVersion: Key): boolean {
-  const {
-    versionKey: originVersionKey,
-    revisionKey: originRevisionKey,
-  } = getSplittedVersionKey(originVersion)
-  const {
-    versionKey: changedVersionKey,
-    revisionKey: changedRevisionKey,
-  } = getSplittedVersionKey(changedVersion)
-
-  return originVersionKey === changedVersionKey && originRevisionKey !== changedRevisionKey
-}
 
 export const VersionCompareContent: FC = memo(() => {
   const location = useBackwardLocation()
@@ -101,8 +86,10 @@ export const VersionCompareContent: FC = memo(() => {
   const { isPackageFromDashboard } = useIsPackageFromDashboard()
 
   const {
+    originPackage,
     originPackageKey,
     originVersionKey,
+    changedPackage,
     changedPackageKey,
     changedVersionKey,
     apiType,
@@ -234,8 +221,20 @@ export const VersionCompareContent: FC = memo(() => {
         breadcrumbsData={breadcrumbsData}
         handleSwap={handleSwap}
         showCompareDialog={showCompareDialog}
-        customComponentBeforeSwapperBreadcrumbs={<WarningApiProcessorVersion packageKey={originPackageKey} versionKey={originVersionKey} />}
-        customComponentAfterSwapperBreadcrumbs={<WarningApiProcessorVersion packageKey={changedPackageKey} versionKey={changedVersionKey} />}
+        customComponentBeforeSwapperBreadcrumbs={
+          <VersionErrorIndicatorWithFetch
+            packageKey={originPackageKey}
+            versionKey={originVersionKey}
+            kind={originPackage?.kind}
+          />
+        }
+        customComponentAfterSwapperBreadcrumbs={
+          <VersionErrorIndicatorWithFetch
+            packageKey={changedPackageKey}
+            versionKey={changedVersionKey}
+            kind={changedPackage?.kind}
+          />
+        }
       />
       <Placeholder
         invisible={hasFilteredChanges}

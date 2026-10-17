@@ -43,6 +43,9 @@ import { usePublicationStatuses } from '@portal/routes/root/PortalPage/usePublic
 import { useFullMainVersion } from '@portal/routes/root/PortalPage/FullMainVersionProvider'
 import { useCurrentPackage } from '@portal/components/CurrentPackageProvider'
 import { usePackageVersionConfig } from '@portal/routes/root/PortalPage/usePackageVersionConfig'
+import { usePackageVersionContent } from '@portal/routes/root/usePackageVersionContent'
+import { useVersionProblemDetails } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/useVersionProblemDetails'
+import { VERSION_PROBLEM_DIALOG_SURFACE } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/versionProblemDetails'
 
 export const CopyPackageVersionDialog: FC = memo(() => {
   return (
@@ -62,6 +65,22 @@ const CopyPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpe
   const kindTitle = isPackage ? 'Package' : 'Dashboard'
 
   const [currentVersionConfig, isCurrentVersionLoading] = usePackageVersionConfig(currentPackage?.key, currentVersionId)
+  const { versionContent, isLoading: isPackageVersionContentLoading } = usePackageVersionContent({
+    packageKey: currentPackage?.key,
+    versionKey: currentVersionId,
+  })
+  const {
+    isBlocking: isSourceVersionBlocking,
+    formHelperText: sourceVersionFormHelperText,
+  } = useVersionProblemDetails({
+    packageKey: currentPackage?.key,
+    versionKey: currentVersionId,
+    hasErrors: versionContent?.hasErrors,
+    changelogHasErrors: versionContent?.changelogHasErrors,
+    apiProcessorVersion: versionContent?.apiProcessorVersion,
+    kind: currentPackage?.kind,
+    surface: VERSION_PROBLEM_DIALOG_SURFACE.COPY_SOURCE_VERSION,
+  })
   const [currentWorkspace] = useState(currentPackage?.parents?.[0] ?? null)
 
   const [targetWorkspace, setTargetWorkspace] = useState<Package | null>(currentWorkspace)
@@ -191,7 +210,10 @@ const CopyPackageVersionPopup: FC<PopupProps> = memo<PopupProps>(({ open, setOpe
       hideDescriptorVersionField
       hideSaveMessageField
       publishButtonDisabled={!currentPackage}
-      publishFieldsDisabled={isCurrentVersionLoading}
+      publishFieldsDisabled={isCurrentVersionLoading || isPackageVersionContentLoading}
+      kind={currentPackage?.kind}
+      formHelperText={sourceVersionFormHelperText}
+      isBlocking={isSourceVersionBlocking}
     />
   )
 })

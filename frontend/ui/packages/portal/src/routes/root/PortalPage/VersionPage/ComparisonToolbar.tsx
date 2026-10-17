@@ -24,13 +24,17 @@ import {
   COMPARE_SAME_OPERATIONS_MODE,
 } from '@portal/routes/root/PortalPage/VersionPage/OperationContent/OperationView/OperationDisplayMode'
 import { useApiTypeSearchParam } from '@portal/routes/root/PortalPage/VersionPage/useApiTypeSearchParam'
+import { useComparisonApiTypeProblems } from '@portal/routes/root/PortalPage/VersionPage/useComparisonApiTypeProblems'
+import { useComparisonParams } from '@portal/routes/root/PortalPage/VersionPage/useComparisonParams'
 import { useDownloadChangesAsExcel } from '@portal/routes/root/PortalPage/VersionPage/useDownloadChangesAsExcel'
 import { useDownloadDdlChangesAsExcel } from '@portal/routes/root/PortalPage/VersionPage/useDownloadDdlChangesAsExcel'
 import { useTagSearchFilter } from '@portal/routes/root/PortalPage/VersionPage/useTagSearchFilter'
 import { useVersionSearchParam } from '@portal/routes/root/useVersionSearchParam'
-import { isApiTypeSelectorShown } from '@portal/utils/operation-types'
+import { getDefaultApiType, isApiTypeSelectorShown } from '@portal/utils/operation-types'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { Box, IconButton, Typography } from '@mui/material'
+import { ApiTypeSelector } from '@netcracker/qubership-apihub-ui-shared/components/ApiTypeSelector'
+import { ComparisonErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/ComparisonErrorIndicator'
 import type { ChangesTooltipCategory } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
 import { CATEGORY_OPERATION, CATEGORY_PACKAGE } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
@@ -39,6 +43,7 @@ import { CHANGE_SEVERITIES, type ChangesSummary } from '@netcracker/qubership-ap
 import { CONTRACT_TYPE_DDL, getRouteApiTypeTitle, isApiContract } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import { getDashboardComparisonApiTypes } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-changes-summary'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import { DASHBOARD_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import {
   COMPARE_VIEW_MODES_BY_API_TYPE,
   type CompareViewModeApiType,
@@ -49,7 +54,11 @@ import {
 import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { DdlEntityChangeEntry } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-ddl-changelog'
 import type { VersionChanges } from '@netcracker/qubership-apihub-ui-shared/entities/version-changelog'
-import { isDashboardComparisonSummary } from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
+import {
+  isDashboardComparisonSummary,
+  type VersionChangesSummary,
+} from '@netcracker/qubership-apihub-ui-shared/entities/version-changes-summary'
+import { resolveComparisonHeaderProblemDetails } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/comparisonProblemDetails'
 import {
   useSeverityFiltersSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/change-severities/useSeverityFiltersSearchParam'
@@ -57,7 +66,7 @@ import {
   usePackageSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'
 import type { FC, ReactNode } from 'react'
-import { memo, useCallback, useMemo } from 'react'
+import { memo, useCallback, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getOverviewPath } from '../../../NavigationProvider'
 import { ComparedPackagesBreadcrumbs } from '../../ComparedPackagesBreadcrumbs'
@@ -72,8 +81,13 @@ import { ComparisonOperationChangeSeverityFilters } from './ComparisonOperationC
 import { OperationViewModeSelector } from './OperationViewModeSelector'
 import { PackageSelector } from './PackageSelector'
 import { useOperationViewMode } from './useOperationViewMode'
-import { ApiTypeSegmentedSelector } from './VersionComparePage/ApiTypeSegmentedSelector'
-import { toComparedApiType, toComparedApiTypeFilter } from './VersionComparePage/compareApiTypeFilter'
+import {
+  COMPARE_API_TYPE_ALL,
+  isCompareApiTypeAll,
+  toComparedApiType,
+  toComparedApiTypeFilter,
+} from './VersionComparePage/compareApiTypeFilter'
+import { useApiTypesFromChangesSummary } from './VersionComparePage/useApiTypesFromChangesSummary'
 
 export type InternalDocumentOptions = {
   versionChanges: VersionChanges | undefined
@@ -100,7 +114,13 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
     ddlEntityChangeSummary,
     title: titleOverride,
   } = props
-  const { apiType: apiTypeSearchParam } = useApiTypeSearchParam()
+  const { apiType: apiTypeSearchParam, setApiTypeSearchParam } = useApiTypeSearchParam()
+  const {
+    originPackageKey,
+    originVersionKey,
+    changedPackageKey,
+    changedVersionKey,
+  } = useComparisonParams()
   const [packageSearchParam] = usePackageSearchParam()// in case of package/dashboard comparison we don't hase apiType in url, we have it in searchParams
   const {
     packageId: mainPackageId,
@@ -177,16 +197,61 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
 
   const isDashboardsComparison = compareToolbarMode === COMPARE_DASHBOARDS_MODE
   const changesSummary = useChangesSummaryFromContext()
-  const showApiTypeSelector = useMemo(
-    () => {
-      if (!changesSummary || !isDashboardComparisonSummary(changesSummary)) {
-        return false
-      }
-
-      return isApiTypeSelectorShown(getDashboardComparisonApiTypes(changesSummary))
-    },
-    [changesSummary],
+  const packageComparisonApiTypes = useApiTypesFromChangesSummary(
+    isPackagesComparison ? changesSummary : undefined,
+    refPackageId,
   )
+  const dashboardComparisonApiTypes = useMemo(() => {
+    if (!isDashboardsComparison || !changesSummary || !isDashboardComparisonSummary(changesSummary)) {
+      return []
+    }
+    return getDashboardComparisonApiTypes(changesSummary)
+  }, [changesSummary, isDashboardsComparison])
+
+  const comparisonApiTypes = useMemo(
+    () => (isDashboardsComparison
+      ? [COMPARE_API_TYPE_ALL, ...dashboardComparisonApiTypes]
+      : packageComparisonApiTypes),
+    [dashboardComparisonApiTypes, isDashboardsComparison, packageComparisonApiTypes],
+  )
+  const showApiTypeSelector = isDashboardsComparison
+    ? isApiTypeSelectorShown(dashboardComparisonApiTypes)
+    : isPackagesComparison && isApiTypeSelectorShown(packageComparisonApiTypes)
+  const showPackageSelector = isPackageFromDashboard &&
+    compareToolbarMode !== COMPARE_DIFFERENT_OPERATIONS_MODE
+
+  const apiTypeProblems = useComparisonApiTypeProblems({
+    originPackageKey: originPackageKey,
+    originVersionKey: originVersionKey,
+    changedPackageKey: changedPackageKey,
+    changedVersionKey: changedVersionKey,
+    allowedApiTypes: isDashboardsComparison ? dashboardComparisonApiTypes : packageComparisonApiTypes,
+    enabled: isPackagesComparison || isDashboardsComparison,
+  })
+
+  const isAdHocComparison = isPackagesComparison || isDashboardsComparison
+
+  const comparisonHeaderProblem = useMemo(
+    () => (isAdHocComparison
+      ? resolveComparisonHeaderProblemDetails({
+        comparisonHasErrors: getComparisonHasErrors(changesSummary, refPackageId),
+        kind: isDashboardsComparison ? DASHBOARD_KIND : PACKAGE_KIND,
+      })
+      : undefined),
+    [changesSummary, isAdHocComparison, isDashboardsComparison, refPackageId],
+  )
+
+  const showComparisonIndicator = comparisonHeaderProblem?.hasProblems ?? false
+  const showSelectorsContainer = showPackageSelector || showApiTypeSelector || showComparisonIndicator
+
+  useEffect(() => {
+    if (!isPackagesComparison) {
+      return
+    }
+    if (isCompareApiTypeAll(apiTypeSearchParam) && packageComparisonApiTypes.length > 0) {
+      setApiTypeSearchParam(getDefaultApiType(packageComparisonApiTypes))
+    }
+  }, [apiTypeSearchParam, isPackagesComparison, packageComparisonApiTypes, setApiTypeSearchParam])
 
   const handleBackClick = useCallback(() => {
     let target = getOverviewPath({ packageKey: mainPackageId!, versionKey: mainVersionId! })
@@ -225,7 +290,24 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
               {defaultTitle}
             </Typography>
           )}
-          {isPackageFromDashboard && compareToolbarMode !== COMPARE_DIFFERENT_OPERATIONS_MODE && <PackageSelector />}
+          {showSelectorsContainer && (
+            <Box display="flex" alignItems="center" gap={1.5}>
+              {showPackageSelector && <PackageSelector />}
+              {showApiTypeSelector && (
+                <ApiTypeSelector
+                  apiType={apiTypeSearchParam}
+                  allowedApiTypes={comparisonApiTypes}
+                  apiTypeProblems={apiTypeProblems}
+                  onChange={setApiTypeSearchParam}
+                />
+              )}
+              {showComparisonIndicator && (
+                <ComparisonErrorIndicator
+                  problem={comparisonHeaderProblem}
+                />
+              )}
+            </Box>
+          )}
         </Box>
       </Box>
       <Box sx={COMPARISON_PAGE_TOOLBAR_ACTIONS_STYLES}>
@@ -254,7 +336,6 @@ export const ComparisonToolbar: FC<ComparisonPageToolbarProps> = memo<Comparison
                 category={getChangeSeverityCategory(isDashboardsComparison, isPackagesComparison)}
                 apiType={comparedApiTypeFilter}
               />
-              {isDashboardsComparison && showApiTypeSelector && <ApiTypeSegmentedSelector/>}
             </>
         )}
       </Box>
@@ -281,6 +362,16 @@ function getChangeSeverityCategory(
   if (isDashboardsComparison) return CATEGORY_PACKAGE
   if (isPackagesComparison) return CATEGORY_OPERATION
   return undefined
+}
+
+function getComparisonHasErrors(
+  changesSummary: VersionChangesSummary | undefined,
+  refPackageKey: Key | undefined,
+): boolean {
+  if (refPackageKey && changesSummary && isDashboardComparisonSummary(changesSummary)) {
+    return changesSummary.find(({ refKey }) => refKey === refPackageKey)?.hasErrors ?? false
+  }
+  return changesSummary?.hasErrors ?? false
 }
 
 const COMPARISON_PAGE_TOOLBAR_STYLES = {

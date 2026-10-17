@@ -19,6 +19,7 @@ import { memo } from 'react'
 import { Box, Tooltip, Typography } from '@mui/material'
 import type { Key } from '../../entities/keys'
 import { REVISION_DELIMITER } from '../../entities/versions'
+import { NON_LATEST_REVISION_TEXT_COLOR } from '../../themes/colors'
 
 export type VersionTitleProps = {
   version: Key | undefined
@@ -55,9 +56,12 @@ export const VersionTitle: FC<VersionTitleProps> = memo<VersionTitleProps>(({
       title={showTooltip ? `You are viewing the old revision ${REVISION_DELIMITER}${revision} of the version` : ''}>
       <Box display="flex">
         {versionKeyElement}
-        {revision && <Typography variant="inherit" color="#FB8A22">{`${REVISION_DELIMITER}${revision}`}</Typography>}
+        {revision && (
+          <Typography variant="inherit" color={NON_LATEST_REVISION_TEXT_COLOR}>
+            {`${REVISION_DELIMITER}${revision}`}
+          </Typography>
+        )}
       </Box>
     </Tooltip>
   )
 })
-

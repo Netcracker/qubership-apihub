@@ -22,7 +22,7 @@ export type SummaryMetric =
   & TestableProps
 
 type SummaryPanelConfig = Readonly<{
-  title?: string
+  title?: ReactNode
   metrics?: ReadonlyArray<SummaryMetric>
 }>
 
@@ -81,9 +81,12 @@ const SummaryPanelContents = styled(Box)({
   display: 'contents',
 })
 
-const NumbersPanelTitle = styled(Typography)({
+const NumbersPanelTitle = styled(Typography)(({ theme }) => ({
   gridColumn: 1,
-})
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+}))
 
 const ValidationsPanelTitle = styled(Typography)({
   gridColumn: 4,

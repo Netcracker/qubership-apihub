@@ -7,7 +7,7 @@ import { SUMMARY_SECTION_SPACING } from './consts'
 
 type SummarySectionProps =
   & Readonly<{
-    title?: string
+    title?: ReactNode
     children: ReactNode
   }>
   & TestableProps
@@ -19,7 +19,7 @@ export const SummarySection: FC<SummarySectionProps> = memo(({
 }) => (
   <SummarySectionContents data-testid={dataTestId}>
     <SummarySectionOffset>
-      {title && <Typography variant="subtitle1">{title}</Typography>}
+      {title && <SummarySectionTitle variant="subtitle1">{title}</SummarySectionTitle>}
     </SummarySectionOffset>
     {children}
   </SummarySectionContents>
@@ -34,4 +34,10 @@ const SummarySectionContents = styled(Box)({
 const SummarySectionOffset = styled(Box)(({ theme }) => ({
   gridColumn: '1 / -1',
   marginTop: theme.spacing(SUMMARY_SECTION_SPACING),
+}))
+
+const SummarySectionTitle = styled(Typography)(({ theme }) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
 }))

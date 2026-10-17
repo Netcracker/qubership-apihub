@@ -100,7 +100,7 @@ export const VersionContractsPanel: FC<VersionContractsProps> = memo<VersionCont
   const setSearchParams = useSetSearchParams()
   const setPreviewOperation = useSetSelectedPreviewOperation()
   const { tabs, isLoading } = useVersionTabApiTypes()
-  const { allowedApiTypes } = tabs[versionTabId]
+  const { allowedApiTypes, apiTypeProblems } = tabs[versionTabId]
 
   const isDashboard = packageObject?.kind === DASHBOARD_KIND
   const showFilterBadge = useCheckOperationFiltersApplied(isDashboard)
@@ -132,6 +132,7 @@ export const VersionContractsPanel: FC<VersionContractsProps> = memo<VersionCont
         <PageTitle
           apiType={routeApiType}
           allowedApiTypes={allowedApiTypes}
+          apiTypeProblems={apiTypeProblems}
           title={title}
           withApiSelector={isApiTypeSelectorShown(allowedApiTypes)}
           onApiTypeChange={onApiTypeChange}

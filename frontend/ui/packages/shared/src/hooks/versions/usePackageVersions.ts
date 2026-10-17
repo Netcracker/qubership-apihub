@@ -243,5 +243,8 @@ function toPackageVersion(value: PackageVersionDto): PackageVersion {
     previousVersion: value?.previousVersion,
     createdBy: value.createdBy,
     latestRevision: !value.notLatestRevision,
+    apiProcessorVersion: value.apiProcessorVersion,
+    hasErrors: value.hasErrors,
+    changelogHasErrors: value.changelogHasErrors,
   }
 }

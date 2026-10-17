@@ -99,6 +99,7 @@ export const DocumentsCard: FC = memo(() => {
             <DocumentsTab
               format={format}
               type={type}
+              hasErrors={document.hasErrors}
               isDocumentLoading={isLoading}
             />
           }
@@ -107,3 +108,5 @@ export const DocumentsCard: FC = memo(() => {
     </SelectedDocumentContext.Provider>
   )
 })
+
+DocumentsCard.displayName = 'DocumentsCard'

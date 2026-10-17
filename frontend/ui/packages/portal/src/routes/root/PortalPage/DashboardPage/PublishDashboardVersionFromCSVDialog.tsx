@@ -23,7 +23,7 @@ import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/componen
 import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import { SHOW_PUBLISH_PACKAGE_VERSION_DIALOG } from '@portal/routes/EventBusProvider'
 import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
-import { type Package, WORKSPACE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { DASHBOARD_KIND, type Package, WORKSPACE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { getSplittedVersionKey, getVersionLabelsMap } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
@@ -176,6 +176,7 @@ const PublishDashboardVersionFromCSVPopup: FC<PopupProps> = memo<PopupProps>(({ 
       hideSaveMessageField
       publishButtonDisabled={isPackageLoading}
       publishFieldsDisabled={isPackageLoading || isCurrentVersionLoading}
+      kind={DASHBOARD_KIND}
     />
   )
 })

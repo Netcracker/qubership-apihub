@@ -1,11 +1,13 @@
+import { useCallback } from 'react'
+
+import type { ShareabilityStatus } from '@netcracker/qubership-apihub-api-processor'
+import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import { REF_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
+import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
+
 import { ExportedEntityKind } from '@portal/components/ExportSettingsDialog/api/useExport'
 import type { ExportSettingsPopupDetail, NotificationDetail } from '@portal/routes/EventBusProvider'
 import type { DocumentPreviewDetail } from '@portal/routes/NavigationProvider'
-import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import type { ShareabilityStatus } from '@netcracker/qubership-apihub-api-processor'
-import { REF_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
-import { useCallback } from 'react'
-import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 
 export type DocumentActionParams = {
   packageKey: Key
@@ -16,7 +18,6 @@ export type DocumentActionParams = {
   protocol: string | undefined
   host: string | undefined
   navigateToDocumentPreview: ((detail?: DocumentPreviewDetail) => void) | null
-  downloadPublishedDocument: () => void
   showExportSettingsDialog: (detail: ExportSettingsPopupDetail) => void
   getSharedKey: () => Promise<{ data?: Key }>
   copyToClipboard: (text: string) => void
@@ -24,6 +25,7 @@ export type DocumentActionParams = {
   createTemplate: (key?: Key) => string
   specType?: SpecType
   shareabilityStatus: ShareabilityStatus
+  hasErrors?: boolean
 }
 
 export type MenuItemConfig = {
@@ -38,6 +40,38 @@ export type MenuItemConfig = {
   action: (params: DocumentActionParams) => void
   'data-testid'?: string
 }
+
+const EXPORT_DOCUMENT_MENU_ITEM: MenuItemConfig = {
+  id: 'export',
+  label: 'Export',
+  condition: () => true,
+  action: ({
+    showExportSettingsDialog,
+    packageKey,
+    fullVersion,
+    refPackageKey,
+    refFullVersion,
+    slug,
+    specType,
+    shareabilityStatus,
+    hasErrors,
+  }) => {
+    showExportSettingsDialog({
+      specType: specType,
+      exportedEntity: ExportedEntityKind.SINGLE_DOCUMENT,
+      packageId: refPackageKey ?? packageKey!,
+      version: refFullVersion ?? fullVersion!,
+      documentId: slug,
+      shareabilityStatus: shareabilityStatus,
+      hasErrors: hasErrors,
+    })
+  },
+  'data-testid': 'ExportMenuItem',
+}
+
+const INVALID_DOCUMENT_MENU_CONFIG: ReadonlyArray<MenuItemConfig> = [
+  EXPORT_DOCUMENT_MENU_ITEM,
+]
 
 export const DOCUMENT_MENU_CONFIG: MenuItemConfig[] = [
   {
@@ -56,31 +90,7 @@ export const DOCUMENT_MENU_CONFIG: MenuItemConfig[] = [
     },
     'data-testid': 'PreviewMenuItem',
   },
-  {
-    id: 'export',
-    label: 'Export',
-    condition: () => true,
-    action: ({ showExportSettingsDialog, packageKey, fullVersion, refPackageKey, refFullVersion, slug, specType, shareabilityStatus }) => {
-      showExportSettingsDialog({
-        specType: specType,
-        exportedEntity: ExportedEntityKind.SINGLE_DOCUMENT,
-        packageId: refPackageKey ?? packageKey!,
-        version: refFullVersion ?? fullVersion!,
-        documentId: slug,
-        shareabilityStatus: shareabilityStatus,
-      })
-    },
-    'data-testid': 'ExportMenuItem',
-  },
-  {
-    id: 'download',
-    label: 'Download',
-    condition: () => false,
-    action: ({ downloadPublishedDocument }) => {
-      downloadPublishedDocument()
-    },
-    'data-testid': 'DownloadMenuItem',
-  },
+  EXPORT_DOCUMENT_MENU_ITEM,
   {
     id: 'copy-public-link',
     label: 'Copy public link to source',
@@ -113,6 +123,13 @@ export const DOCUMENT_MENU_CONFIG: MenuItemConfig[] = [
 
 export const DOCUMENT_MENU_CONFIG_ON_PREVIEW_PAGE: MenuItemConfig[] =
   DOCUMENT_MENU_CONFIG.filter(item => item.id !== 'preview')
+
+export function getDocumentMenuConfig(hasErrors?: boolean): ReadonlyArray<MenuItemConfig> {
+  if (hasErrors) {
+    return INVALID_DOCUMENT_MENU_CONFIG
+  }
+  return DOCUMENT_MENU_CONFIG
+}
 
 type CreateTemplateCallback = (key?: Key) => string
 export function useCreateTemplate(protocol: string | undefined, host: string | undefined): CreateTemplateCallback {

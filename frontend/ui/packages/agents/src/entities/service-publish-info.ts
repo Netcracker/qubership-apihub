@@ -31,6 +31,8 @@ export type ServicePublishInfo = Readonly<{
   viewBaselineUrl?: string
   baselineFound: boolean
   baselineVersionFound: boolean
+  hasErrors: boolean
+  changelogHasErrors: boolean
 }>
 
 export type ServicePublishInfoDto = Readonly<{
@@ -44,6 +46,8 @@ export type ServicePublishInfoDto = Readonly<{
   viewBaselineUrl?: string
   baselineFound: boolean
   baselineVersionFound: boolean
+  hasErrors?: boolean
+  changelogHasErrors?: boolean
 }>
 
 export function toServicePublishInfo(value: ServicePublishInfoDto): ServicePublishInfo {
@@ -58,5 +62,7 @@ export function toServicePublishInfo(value: ServicePublishInfoDto): ServicePubli
     viewBaselineUrl: value.viewBaselineUrl,
     baselineFound: value?.baselineFound ?? false,
     baselineVersionFound: value?.baselineVersionFound ?? false,
+    hasErrors: value.hasErrors ?? false,
+    changelogHasErrors: value.changelogHasErrors ?? false,
   }
 }

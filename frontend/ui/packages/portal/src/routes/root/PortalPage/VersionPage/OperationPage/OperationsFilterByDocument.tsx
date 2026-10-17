@@ -16,11 +16,13 @@
 
 import type { FC } from 'react'
 import React, { memo, useEffect, useState } from 'react'
-import { Autocomplete, Box, InputLabel, TextField } from '@mui/material'
+import { Box, InputLabel, styled, TextField } from '@mui/material'
 import { useDocuments } from '../useDocuments'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { Document } from '@portal/entities/documents'
 import { EMPTY_DOC } from '@portal/entities/documents'
+import { VersionSelectorAutocomplete } from '@netcracker/qubership-apihub-ui-shared/components/Autocompletes/VersionSelectorAutocomplete'
+import { DocumentErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/DocumentErrorIndicator'
 import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/OptionItem'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { ContractType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
@@ -68,16 +70,23 @@ export const OperationsFilterByDocument: FC<OperationsFilterByDocumentProps> =
         <InputLabel htmlFor={INPUT_FIELD_ID}>
           {labelText ?? DEFAULT_FILTER_BY_DOCUMENT_LABEL}
         </InputLabel>
-        <Autocomplete
+        <VersionSelectorAutocomplete
           autoSelect
           loading={isDocumentsLoading}
           options={documents}
           value={selectedDocument}
-          renderOption={(props, { key, title }: Document) => {
-            return (
-              <OptionItem key={key} props={props} title={title!}/>
-            )
-          }}
+          sx={inputPaddingSx}
+          inputIndicator={selectedDocument.hasErrors && (
+            <DocumentErrorIndicator hasErrors/>
+          )}
+          renderOption={(props, { key, title, hasErrors }: Document) => (
+            <OptionItem
+              key={key}
+              props={props}
+              title={title}
+              chip={hasErrors && <OptionErrorIndicator hasErrors fontSize="extra-small" showTooltip={false}/>}
+            />
+          )}
           getOptionLabel={(option) => (option as Document).title ?? ''}
           isOptionEqualToValue={(option, value) => option.key === value.key}
           onChange={(_, option) => onDocumentSelect(option)}
@@ -86,7 +95,6 @@ export const OperationsFilterByDocument: FC<OperationsFilterByDocumentProps> =
               {...params}
               id={INPUT_FIELD_ID}
               placeholder="Document"
-              sx={{ '& .MuiInputBase-root': { pt: '1px', pb: '1px' } }}
             />
           )}
           data-testid="DocumentFilter"
@@ -94,3 +102,19 @@ export const OperationsFilterByDocument: FC<OperationsFilterByDocumentProps> =
       </Box>
     )
   })
+
+// The padding is set on the autocomplete, not on the text field. A rule on the text field and one on the autocomplete
+// match the same MUI selector, and the rule that emotion inserts later wins. The autocomplete inserts its styles
+// again when the error icon appears, so a rule on the text field would lose to them.
+const inputPaddingSx = {
+  '& .MuiInputBase-root': {
+    pt: '1px',
+    pb: '1px',
+  },
+}
+
+// With display flex, the box that OptionItem puts around the icon is as high as the icon, and the icon stays centered
+// on the title line.
+const OptionErrorIndicator = styled(DocumentErrorIndicator)({
+  display: 'flex',
+})

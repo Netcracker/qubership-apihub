@@ -22,6 +22,7 @@ import type { Spec, SpecDto } from '@netcracker/qubership-apihub-ui-shared/entit
 import { toSpec } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { API_V2, requestJson, requestVoid } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
+import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 
 export type Services = {
   status: DiscoveryStatus
@@ -39,8 +40,15 @@ export type Service = Readonly<{
 type Baseline = Readonly<{
   packageKey: PackageKey
   name: string
-  versions: ReadonlyArray<VersionKey>
+  versions: ReadonlyArray<BaselineVersion>
   url: string
+}>
+
+export type BaselineVersion = Readonly<{
+  versionKey: VersionKey
+  hasErrors: boolean
+  changelogHasErrors: boolean
+  apiProcessorVersion?: string
 }>
 
 export type ServiceDto = Readonly<{
@@ -55,9 +63,19 @@ export type ServiceDto = Readonly<{
 type BaselineDto = Readonly<{
   packageId: PackageKey
   name: string
-  versions: ReadonlyArray<VersionKey>
+  versions: ReadonlyArray<BaselineVersionDto>
   url: string
 }>
+
+// The agents-backend sends a plain version key until it passes the error flags from the agent.
+type BaselineVersionDto =
+  | VersionKey
+  | Readonly<{
+    version: VersionKey
+    hasErrors?: boolean
+    changelogHasErrors?: boolean
+    apiProcessorVersion?: string
+  }>
 
 export type ServicesDto = Readonly<{
   status: DiscoveryStatus
@@ -84,7 +102,7 @@ export function toServices(value: ServicesDto): Services {
       baseline: service.baseline && {
         packageKey: service.baseline.packageId,
         name: service.baseline.name,
-        versions: service.baseline.versions,
+        versions: service.baseline.versions.map(toBaselineVersion),
         url: service.baseline.url,
       },
       labels: service.serviceLabels,
@@ -132,4 +150,20 @@ export async function runServiceDiscovery(
     },
     { basePath: `${prefix}${API_V2}` },
   )
+}
+
+function toBaselineVersion(value: BaselineVersionDto): BaselineVersion {
+  if (typeof value === 'string') {
+    return {
+      versionKey: getSplittedVersionKey(value).versionKey,
+      hasErrors: false,
+      changelogHasErrors: false,
+    }
+  }
+  return {
+    versionKey: getSplittedVersionKey(value.version).versionKey,
+    hasErrors: value.hasErrors ?? false,
+    changelogHasErrors: value.changelogHasErrors ?? false,
+    apiProcessorVersion: value.apiProcessorVersion,
+  }
 }

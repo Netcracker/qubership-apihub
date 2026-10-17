@@ -20,11 +20,12 @@ import { useSelectedDocument } from './SelectedDocumentProvider'
 export type DocumentsTabProps = Readonly<{
   format: FileFormat
   type: SpecType
+  hasErrors?: boolean
   isDocumentLoading?: boolean
 }>
 
 export const DocumentsTab: FC<DocumentsTabProps> = memo<DocumentsTabProps>((props) => {
-  const { format, type, isDocumentLoading } = props
+  const { format, type, hasErrors, isDocumentLoading } = props
 
   if (isDocumentLoading) {
     return (
@@ -36,7 +37,7 @@ export const DocumentsTab: FC<DocumentsTabProps> = memo<DocumentsTabProps>((prop
     )
   }
 
-  if (isMcpDocumentSpecType(type) || isDdlDocumentSpecType(type)) {
+  if (hasErrors || isMcpDocumentSpecType(type) || isDdlDocumentSpecType(type)) {
     return <PublishedDocumentRawView type={type} format={format} />
   }
 

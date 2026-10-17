@@ -21,8 +21,10 @@ import {
   API_AUDIENCE_UNKNOWN,
   type ApiAudienceTransition,
 } from '@netcracker/qubership-apihub-api-processor'
+import { ApiTypeErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/ApiTypeErrorIndicator'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { API_TYPE_TITLE_MAP } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { ApiTypeProblemDetails } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/apiTypeProblemDetails'
 import type { ChangesSummary } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import {
   DEFAULT_CHANGE_SEVERITY_MAP,
@@ -58,6 +60,7 @@ import { SummarySection } from './SummarySection'
 
 export type OperationTypeSummaryProps = Readonly<{
   apiType: ApiType
+  problem?: ApiTypeProblemDetails
   operationsCount: number
   deprecatedOperationsCount: number
   noBwcOperationsCount: number
@@ -70,6 +73,7 @@ export type OperationTypeSummaryProps = Readonly<{
 
 export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<OperationTypeSummaryProps>(({
   apiType,
+  problem,
   changesSummary,
   numberOfImpactedOperations,
   operationsCount,
@@ -210,7 +214,15 @@ export const OperationTypeSummary: FC<OperationTypeSummaryProps> = memo<Operatio
     <SummarySection data-testid={`ValidationsContent-${apiType}`}>
       <SummaryPanels
         numbers={{
-          title: `${API_TYPE_TITLE_MAP[apiType]} Operations`,
+          title: (
+            <>
+              {`${API_TYPE_TITLE_MAP[apiType]} Operations`}
+              <ApiTypeErrorIndicator
+                problem={problem}
+                data-testid={`OverviewSummaryErrorIndicator-${apiType}`}
+              />
+            </>
+          ),
           metrics: operationsMetrics,
         }}
         validations={{
