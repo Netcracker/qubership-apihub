@@ -81,10 +81,17 @@ type DiscoveryRequest struct {
 }
 
 type Baseline struct {
-	PackageId string   `json:"packageId"`
-	Name      string   `json:"name"`
-	Url       string   `json:"url"`
-	Versions  []string `json:"versions"`
+	PackageId string            `json:"packageId"`
+	Name      string            `json:"name"`
+	Url       string            `json:"url"`
+	Versions  []BaselineVersion `json:"versions"`
+}
+
+type BaselineVersion struct {
+	Version             string `json:"version"`
+	ApiProcessorVersion string `json:"apiProcessorVersion"`
+	HasErrors           bool   `json:"hasErrors"`
+	ChangelogHasErrors  bool   `json:"changelogHasErrors"`
 }
 
 func BuildStatusFromString(str string) (StatusEnum, error) {
