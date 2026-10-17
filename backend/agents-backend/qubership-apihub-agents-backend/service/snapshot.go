@@ -173,6 +173,8 @@ func (s *snapshotServiceImpl) GetSnapshot(ctx context.Context, namespace string,
 				BaselineFound:            baselineFound,
 				BaselineVersionFound:     baselineVersionFound,
 				ApiTypes:                 packageVersion.ApiTypes,
+				HasErrors:                packageVersion.HasErrors,
+				ChangelogHasErrors:       packageVersion.ChangelogHasErrors,
 			}
 			if packageVersion.ChangeSummary != nil {
 				serviceWithChanges.Changes = packageVersion.ChangeSummary
@@ -326,7 +328,7 @@ func (s *snapshotServiceImpl) startSnapshot(ctx context.Context, namespace strin
 						invalidVersion := svcPreviousVersion
 						svcPreviousVersion = ""
 						for i, ver := range svc.Baseline.Versions {
-							if ver == invalidVersion {
+							if ver.Version == invalidVersion {
 								svc.Baseline.Versions = append(svc.Baseline.Versions[:i], svc.Baseline.Versions[i+1:]...)
 								break
 							}

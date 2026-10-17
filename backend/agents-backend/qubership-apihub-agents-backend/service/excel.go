@@ -145,14 +145,16 @@ func (n *namespaceSecurityAuthReport) createServicesSheet(services []entity.Name
 	cells["D1"] = "Scan Status"
 	cells["E1"] = "Result"
 	cells["F1"] = "Apihub link"
-	cells["G1"] = "Details"
+	cells["G1"] = "Publication errors"
+	cells["H1"] = "Details"
 
 	n.workbook.SetColWidth(sheetName, "A", "A", 30)
 	n.workbook.SetColWidth(sheetName, "B", "C", 16)
 	n.workbook.SetColWidth(sheetName, "D", "D", 12)
 	n.workbook.SetColWidth(sheetName, "E", "E", 12)
 	n.workbook.SetColWidth(sheetName, "F", "F", 30)
-	n.workbook.SetColWidth(sheetName, "G", "G", 20)
+	n.workbook.SetColWidth(sheetName, "G", "G", 18)
+	n.workbook.SetColWidth(sheetName, "H", "H", 20)
 
 	headerStyle, err := n.workbook.NewStyle(&excelize.Style{
 		Alignment: &excelize.Alignment{Horizontal: "left"},
@@ -212,6 +214,17 @@ func (n *namespaceSecurityAuthReport) createServicesSheet(services []entity.Name
 	if err != nil {
 		return fmt.Errorf("failed to create worksheet style: %v", err.Error())
 	}
+	publicationErrorsStyle, err := n.workbook.NewStyle(&excelize.Style{
+		Alignment: &excelize.Alignment{Horizontal: "left"},
+		Fill: excelize.Fill{
+			Type:    "pattern",
+			Pattern: 1,
+			Color:   []string{"#ffd966"},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to create worksheet style: %v", err.Error())
+	}
 	n.workbook.SetRowStyle(sheetName, 2, len(services)+1, valueStyle)
 	n.workbook.SetColStyle(sheetName, "F", hyperLinkStyle)
 	n.workbook.SetRowStyle(sheetName, 1, 1, headerStyle)
@@ -240,7 +253,14 @@ func (n *namespaceSecurityAuthReport) createServicesSheet(services []entity.Name
 			n.workbook.SetCellHyperLink(sheetName, fmt.Sprintf("F%d", row), apihubLink, "External")
 			cells[fmt.Sprintf("F%d", row)] = service.ServiceId
 		}
-		cells[fmt.Sprintf("G%d", row)] = service.Details
+		if service.HasErrors {
+			cells[fmt.Sprintf("G%d", row)] = "YES"
+			err = n.workbook.SetCellStyle(sheetName, fmt.Sprintf("G%d", row), fmt.Sprintf("G%d", row), publicationErrorsStyle)
+			if err != nil {
+				return fmt.Errorf("failed to apply style")
+			}
+		}
+		cells[fmt.Sprintf("H%d", row)] = service.Details
 		row++
 	}
 	err = setCellsValues(n.workbook, sheetName, cells)
@@ -381,6 +401,10 @@ func (n *namespaceSecurityAuthReport) calculateAuthServiceResult(service entity.
 				}
 			}
 		}
+	}
+	// a version published with errors may be missing operations, so a clean result is not trustworthy
+	if service.HasErrors && serviceResult == view.ServiceResultOK {
+		return view.ServiceResultToCheck
 	}
 	return serviceResult
 }

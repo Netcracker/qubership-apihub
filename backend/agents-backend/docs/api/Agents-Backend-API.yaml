@@ -381,9 +381,24 @@ paths:
                               description: Baseline URL
                             versions:
                               type: array
+                              description: Versions of the baseline package that can be selected as previousVersion. Each entry carries the API processor version it was built with. Versions with build or changelog errors stay listed and carry the flags, so the client can mark them and block the selection.
                               items:
-                                type: string
-                              description: Available versions
+                                type: object
+                                properties:
+                                  version:
+                                    type: string
+                                    description: Version name
+                                  apiProcessorVersion:
+                                    type: string
+                                    description: Version of the API processor that built the version.
+                                  hasErrors:
+                                    type: boolean
+                                    default: false
+                                    description: The build of the version detected at least one error. Such a version cannot be used as previousVersion.
+                                  changelogHasErrors:
+                                    type: boolean
+                                    default: false
+                                    description: The comparison of the version against its own previousVersion failed. Such a version cannot be used as previousVersion.
                         serviceLabels:
                           type: object
                           additionalProperties:
@@ -499,9 +514,24 @@ paths:
                               description: Baseline URL
                             versions:
                               type: array
+                              description: Versions of the baseline package that can be selected as previousVersion. Each entry carries the API processor version it was built with. Versions with build or changelog errors stay listed and carry the flags, so the client can mark them and block the selection.
                               items:
-                                type: string
-                              description: Available versions
+                                type: object
+                                properties:
+                                  version:
+                                    type: string
+                                    description: Version name
+                                  apiProcessorVersion:
+                                    type: string
+                                    description: Version of the API processor that built the version.
+                                  hasErrors:
+                                    type: boolean
+                                    default: false
+                                    description: The build of the version detected at least one error. Such a version cannot be used as previousVersion.
+                                  changelogHasErrors:
+                                    type: boolean
+                                    default: false
+                                    description: The comparison of the version against its own previousVersion failed. Such a version cannot be used as previousVersion.
                         serviceLabels:
                           type: object
                           additionalProperties:
@@ -969,6 +999,13 @@ paths:
                           items:
                             type: string
                           description: API types for this service
+                        hasErrors:
+                          type: boolean
+                          default: false
+                          description: The build of the service version in this snapshot detected at least one error. Snapshot content and changes summary for this service may be incomplete.
+                        changelogHasErrors:
+                          type: boolean
+                          description: Errors were detected while comparing this service version against its own previous version (directly or in its comparison references). The changes summary for this service may be incomplete. Present only when the service version has a previous version; omitted when no comparison was made.
                   viewSnapshotUrl:
                     type: string
                     description: URL to view the snapshot

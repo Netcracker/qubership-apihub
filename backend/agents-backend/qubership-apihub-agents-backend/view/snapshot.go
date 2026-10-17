@@ -66,6 +66,8 @@ type ServiceWithChanges struct {
 	BaselineFound            bool           `json:"baselineFound"`
 	BaselineVersionFound     bool           `json:"baselineVersionFound"`
 	ApiTypes                 []string       `json:"apiTypes"`
+	HasErrors                bool           `json:"hasErrors"`
+	ChangelogHasErrors       *bool          `json:"changelogHasErrors,omitempty"`
 }
 
 func MakeSnapshotDashboardIdByGroupId(groupId string) string {

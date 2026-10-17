@@ -281,6 +281,7 @@ func (n *namespaceSecurityServiceImpl) startAuthSecurityCheck(securityCheck enti
 						ServiceId: svc.ServiceId,
 						PackageId: svc.PackageId,
 						Version:   version.Version,
+						HasErrors: version.HasErrors,
 					}
 					startedTasks++
 				default:
@@ -357,6 +358,7 @@ func (n *namespaceSecurityServiceImpl) processServiceEndpoints(tasks <-chan view
 			ApihubUrl: n.systemInfoService.GetApihubUrl(),
 			PackageId: task.PackageId,
 			Version:   task.Version,
+			HasErrors: task.HasErrors,
 		}
 		n.updateServiceStatus(serviceEnt, view.StatusRunning, "")
 		operationsLimit := 50
@@ -368,7 +370,7 @@ func (n *namespaceSecurityServiceImpl) processServiceEndpoints(tasks <-chan view
 			continue
 		}
 		if restOperations == nil || len(restOperations.Operations) == 0 {
-			n.updateServiceStatus(serviceEnt, view.StatusComplete, "no endpoints found for this service")
+			n.updateServiceStatus(serviceEnt, view.StatusComplete, withVersionErrorsDetails(task.HasErrors, "no endpoints found for this service"))
 			result <- 0
 			continue
 		}
@@ -432,10 +434,22 @@ func (n *namespaceSecurityServiceImpl) processServiceEndpoints(tasks <-chan view
 				continue
 			}
 		}
-		n.updateServiceStatus(serviceEnt, view.StatusComplete, "")
+		n.updateServiceStatus(serviceEnt, view.StatusComplete, withVersionErrorsDetails(task.HasErrors, ""))
 
 		result <- 1
 	}
+}
+
+const versionHasErrorsDetails = "version was published with errors, security check results may be incomplete"
+
+func withVersionErrorsDetails(hasErrors bool, details string) string {
+	if !hasErrors {
+		return details
+	}
+	if details == "" {
+		return versionHasErrorsDetails
+	}
+	return details + "; " + versionHasErrorsDetails
 }
 
 func (n *namespaceSecurityServiceImpl) updateServiceStatus(service *entity.NamespaceSecurityCheckServiceEntity, status view.Status, details string) {

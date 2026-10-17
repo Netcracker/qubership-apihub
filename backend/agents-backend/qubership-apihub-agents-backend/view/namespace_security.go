@@ -28,6 +28,7 @@ type EndpointsProcessTask struct {
 	ServiceId string
 	PackageId string
 	Version   string
+	HasErrors bool
 }
 
 type RestOperationSecurity struct {

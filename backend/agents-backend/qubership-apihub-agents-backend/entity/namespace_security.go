@@ -77,6 +77,7 @@ type NamespaceSecurityCheckServiceEntity struct {
 	EndpointsFailed int    `pg:"endpoints_failed, type:integer, use_zero"`
 	Status          string `pg:"status, type:varchar"`
 	Details         string `pg:"details, type:varchar"`
+	HasErrors       bool   `pg:"has_errors, type:boolean, use_zero"`
 }
 
 type NamespaceSecurityCheckResultEntity struct {
