@@ -9,6 +9,21 @@ const GraphqlApiType OpApiType = "graphql"
 const ProtobufApiType OpApiType = "protobuf"
 const AsyncapiApiType OpApiType = "asyncapi"
 
+func (o OpApiType) DisplayName() string {
+	switch o {
+	case RestApiType:
+		return "REST"
+	case GraphqlApiType:
+		return "GraphQL"
+	case ProtobufApiType:
+		return "Protobuf"
+	case AsyncapiApiType:
+		return "AsyncAPI"
+	default:
+		return string(o)
+	}
+}
+
 type Operation struct {
 	Data        json.RawMessage `json:"data"`
 	OperationId string          `json:"operationId"`

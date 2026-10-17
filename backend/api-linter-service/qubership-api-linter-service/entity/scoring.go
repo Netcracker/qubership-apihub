@@ -21,4 +21,34 @@ type VersionScore struct {
 
 	BackwardCompatibilityDetails map[view.OpApiType]view.BackwardCompatibilityDetails `pg:"backward_compatibility_details,type:jsonb"`
 	QualityCheckDetails          map[view.OpApiType][]view.QualityCheckDetails        `pg:"quality_check_details,type:jsonb"`
+	PublicationIntegrityDetails  *view.PublicationIntegrityDetails                    `pg:"publication_integrity_details,type:jsonb"`
+}
+
+func MakeVersionScoreView(ent *VersionScore) *view.VersionScore {
+	if ent == nil {
+		return nil
+	}
+	return &view.VersionScore{
+		Status:                       ent.Status,
+		Reasons:                      ent.Reasons,
+		Debug:                        ent.Debug,
+		PublicationIntegrityDetails:  ent.PublicationIntegrityDetails,
+		BackwardCompatibilityDetails: ent.BackwardCompatibilityDetails,
+		QualityCheckDetails:          ent.QualityCheckDetails,
+	}
+}
+
+func NewVersionScore(packageId, version string, revision int, scoredAt time.Time, score view.VersionScore) VersionScore {
+	return VersionScore{
+		PackageId:                    packageId,
+		Version:                      version,
+		Revision:                     revision,
+		ScoredAt:                     scoredAt,
+		Status:                       score.Status,
+		Reasons:                      score.Reasons,
+		Debug:                        score.Debug,
+		BackwardCompatibilityDetails: score.BackwardCompatibilityDetails,
+		QualityCheckDetails:          score.QualityCheckDetails,
+		PublicationIntegrityDetails:  score.PublicationIntegrityDetails,
+	}
 }

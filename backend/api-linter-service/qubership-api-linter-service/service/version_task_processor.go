@@ -167,11 +167,37 @@ func (v versionTaskProcessorImpl) processVersionLintTask(taskId string) {
 	}
 
 	if len(docTasks) == 0 {
-		err = v.verRepo.EmptyVersionCompleted(ctx, *task)
+		lintedVerEnt := entity.LintedVersion{
+			PackageId:   task.PackageId,
+			Version:     task.Version,
+			Revision:    task.Revision,
+			LintStatus:  view.VersionStatusSuccess,
+			LintDetails: "No linted documents",
+			LintedAt:    time.Now(),
+		}
+
+		score, err := v.scoringService.CalculateScore(ctx, task.PackageId, task.Version, task.Revision)
+		if err != nil {
+			log.Errorf("Version scoring failed: %s. (task = %s)", err, taskId)
+			lintedVerEnt.LintStatus = view.VersionStatusError
+			lintedVerEnt.LintDetails = fmt.Sprintf("scoring failed: %s", err)
+		}
+		log.Infof("Version scoring status=%s. (task = %s)", score.Status, taskId)
+
+		scoreEnt := entity.NewVersionScore(
+			task.PackageId,
+			task.Version,
+			task.Revision,
+			time.Now(),
+			score,
+		)
+
+		err = v.verRepo.VersionLintCompleted(ctx, task.Id, &lintedVerEnt, &scoreEnt)
 		if err != nil {
 			v.handleProcessingFailed(ctx, *task, err)
 			return
 		}
+
 		log.Infof("Version lint task for [ %s | %s ] (id = %s) processing finished, no suitable documents to lint", task.PackageId, task.Version, taskId)
 		return
 	}
@@ -337,17 +363,13 @@ func (v versionTaskProcessorImpl) checkDocReady() {
 
 				lintedVerEnt.LintedAt = time.Now()
 
-				scoreEnt := entity.VersionScore{
-					PackageId:                    lintedVerEnt.PackageId,
-					Version:                      lintedVerEnt.Version,
-					Revision:                     lintedVerEnt.Revision,
-					ScoredAt:                     time.Now(),
-					Status:                       score.Status,
-					Reasons:                      score.Reasons,
-					Debug:                        score.Debug,
-					BackwardCompatibilityDetails: score.BackwardCompatibilityDetails,
-					QualityCheckDetails:          score.QualityCheckDetails,
-				}
+				scoreEnt := entity.NewVersionScore(
+					lintedVerEnt.PackageId,
+					lintedVerEnt.Version,
+					lintedVerEnt.Revision,
+					time.Now(),
+					score,
+				)
 
 				err = v.verRepo.VersionLintCompleted(ctx, verLintTask.Id, lintedVerEnt, &scoreEnt)
 				if err != nil {
