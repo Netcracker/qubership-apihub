@@ -17,16 +17,19 @@
 import {
   _ParsedFileResolver,
   ApiDocument,
-  ApiOperation,
   BuilderContext,
   ExportFormat,
   FILE_KIND,
   FileFormat,
   FileId,
+  MessageCategory,
+  MessageSeverity,
+  NotificationMessage,
   OperationsApiType,
   PackageDocument,
   ResolvedGroupDocument,
   VALIDATION_RULES_SEVERITY_LEVEL_ERROR,
+  ValidationRulesSeverityLevel,
   VersionDocument,
   VersionInternalDocument,
 } from '../types'
@@ -38,6 +41,7 @@ import {
   FILE_FORMAT_JSON,
   FILE_FORMAT_YAML,
   GRAPHQL_API_TYPE,
+  MESSAGE_CATEGORY,
   MESSAGE_SEVERITY,
   REST_API_TYPE,
   SERIALIZE_SYMBOL_STRING_MAPPING,
@@ -93,8 +97,9 @@ export function toVersionDocument(document: ResolvedGroupDocument, fileFormat: F
   }
 }
 
-export function toPackageDocument(document: VersionDocument): PackageDocument {
+export function toPackageDocument(document: VersionDocument, hasErrors = false): PackageDocument {
   return {
+    ...hasErrors ? { hasErrors } : {},
     fileId: document.fileId,
     slug: document.slug,
     filename: document.filename,
@@ -109,23 +114,40 @@ export function toPackageDocument(document: VersionDocument): PackageDocument {
   }
 }
 
-export type DuplicateHandler<T> = (existing: T, duplicate: T) => void
-
-export type DuplicateOperationHandler = DuplicateHandler<ApiOperation>
-
 /**
- * Put `value` into `map` under `key`; if an entry already existed for that key, invoke `onDuplicate`
- * with `(existing, incoming)` before overwriting. Shared by operation and MCP-entity indexing.
+ * Keep the entry whose `documentId` sorts first when two claim a key. Shared by operation, MCP- and
+ * DDL-entity indexing.
+ *
+ * Processing order is `config.files` order, so without the tie-break the same files published in a different
+ * order publish a different entity. Neither claimant is more correct; the winner must not depend on the config.
  */
-export function setReportingDuplicate<K, V>(
+export function setReportingDuplicate<K, V extends { documentId: string }>(
   map: Map<K, V>,
   key: K,
   value: V,
-  onDuplicate?: DuplicateHandler<V>,
 ): void {
   const existing = map.get(key)
-  if (existing !== undefined && onDuplicate) { onDuplicate(existing, value) }
+  if (existing !== undefined) {
+    // strict: slugs are unique per version, so an equal documentId means the same document is being
+    // re-processed (incremental rebuild) and must refresh its own entry rather than keep the stale one
+    if (existing.documentId < value.documentId) { return }
+  }
   map.set(key, value)
+}
+
+/**
+ * Report one item a document could not build: an operation, a DDL table, an MCP entity.
+ *
+ * The item is left out of the document's content and the build continues. `notifications` is optional
+ * because the entity builders are also reachable from paths that pass no stream.
+ */
+export function reportItemBuildFailure(
+  notifications: NotificationMessage[] | undefined,
+  category: MessageCategory,
+  documentId: string,
+  message: string,
+): void {
+  notifications?.push({ category, severity: MESSAGE_SEVERITY.Error, message, documentId })
 }
 
 export const findSharedPath = (fileIds: string[]): string => {
@@ -154,25 +176,39 @@ export interface BundlingError {
   errorType: RefErrorType
 }
 
-export const createBundlingErrorHandler = (ctx: BuilderContext, fileId: FileId) => (errors: BundlingError[]): void => {
-  // Only throw if severity is ERROR and there's at least one critical error
-  if (ctx.config.validationRulesSeverity?.brokenRefs === VALIDATION_RULES_SEVERITY_LEVEL_ERROR) {
-    const criticalError = errors.find(error =>
-      error.errorType === RefErrorTypes.REF_NOT_FOUND ||
-      error.errorType === RefErrorTypes.REF_NOT_VALID_FORMAT,
-    )
+// One category per reference problem: they come from the same site but are different diagnostics,
+// and a consumer filtering by category must be able to tell them apart
+const REF_ERROR_CATEGORY: Record<RefErrorType, MessageCategory> = {
+  [RefErrorTypes.RICH_REF_NOT_ALLOWED]: MESSAGE_CATEGORY.RefHasSiblings,
+  [RefErrorTypes.REF_NOT_ALLOWED]: MESSAGE_CATEGORY.RefNotAllowed,
+  [RefErrorTypes.REF_NOT_FOUND]: MESSAGE_CATEGORY.RefNotFound,
+  [RefErrorTypes.REF_NOT_VALID_FORMAT]: MESSAGE_CATEGORY.RefNotValidFormat,
+}
 
-    if (criticalError) {
-      throw new Error(criticalError.message)
-    }
+/**
+ * Severity by kind of reference problem, not one constant for all of them.
+ *
+ * A `$ref` with sibling keys, or one in a position the schema disallows, resolves anyway, so it stays
+ * `Warning` whatever the caller asks for. A missing or malformed target leaves the document incomplete, and
+ * `validationRulesSeverity.brokenRefs` says what that costs: `error` for an ordinary publication, so the
+ * version cannot ship as a release; `warning` while migrating, so an already-published version carrying a
+ * broken reference stays rebuildable.
+ */
+const refErrorSeverity = (errorType: RefErrorType, brokenRefs: ValidationRulesSeverityLevel | undefined): MessageSeverity => {
+  if (errorType === RefErrorTypes.RICH_REF_NOT_ALLOWED || errorType === RefErrorTypes.REF_NOT_ALLOWED) {
+    return MESSAGE_SEVERITY.Warning
   }
+  return brokenRefs === VALIDATION_RULES_SEVERITY_LEVEL_ERROR ? MESSAGE_SEVERITY.Error : MESSAGE_SEVERITY.Warning
+}
 
-  // In other cases push all errors to notifications
+export const createBundlingErrorHandler = (ctx: BuilderContext, documentId: string) => (errors: BundlingError[]): void => {
+  const { brokenRefs } = ctx.config.validationRulesSeverity ?? {}
   for (const error of errors) {
     ctx.notifications.push({
-      severity: MESSAGE_SEVERITY.Error,
+      category: REF_ERROR_CATEGORY[error.errorType],
+      severity: refErrorSeverity(error.errorType, brokenRefs),
       message: error.message,
-      fileId: fileId,
+      documentId: documentId,
     })
   }
 }
@@ -197,6 +233,12 @@ export const getBundledFileDataWithDependencies = async (
       return {}
     }
 
+    // recorded before the format check: a file whose parser threw arrives as a binary fallback carrying the
+    // parse error, and dropping it here would report only the unresolvable `$ref`, never the reason
+    if (filepath !== fileId) {
+      dependencies.push(filepath)
+    }
+
     if (data.kind !== FILE_KIND.TEXT) {
       // can't throw the error here because it will be suppressed: https://github.com/udamir/api-ref-bundler/blob/0.4.0/src/resolver.ts#L33
       errors.push({
@@ -204,10 +246,6 @@ export const getBundledFileDataWithDependencies = async (
         errorType: RefErrorTypes.REF_NOT_VALID_FORMAT,
       })
       return {}
-    }
-
-    if (filepath !== fileId) {
-      dependencies.push(filepath)
     }
 
     return data.data

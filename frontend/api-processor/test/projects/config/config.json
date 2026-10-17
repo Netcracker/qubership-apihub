@@ -1,0 +1,6 @@
+{
+  "packageId": "config",
+  "files": [
+    { "fileId": "openapi.json", "publish": true, "labels": ["123"] }
+  ]
+}

@@ -1,0 +1,15 @@
+openapi: 3.0.1
+info: { title: broken-ref, version: 1.0.0 }
+paths:
+  /pets:
+    get:
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: { $ref: './non-existent-reference.yaml#/Pet' }
+  # a second, unrelated problem, found only where operations are built
+  //shops:
+    get:
+      responses: { '200': { description: ok } }

@@ -1,0 +1,9 @@
+{
+  "packageId": "tolerant-publication",
+  "apiType": "rest",
+  "version": "v1",
+  "files": [
+    { "fileId": "rest.json", "publish": true },
+    { "fileId": "broken-async.yaml", "publish": true }
+  ]
+}

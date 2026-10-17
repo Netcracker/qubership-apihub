@@ -20,6 +20,7 @@ import { DDL_DOCUMENT_TYPE } from '../src/apitypes/ddl/ddl.consts'
 import { isOwnPackageDocument } from '../src/components/compare/compare.ddl'
 import { BuildConfigFile } from '../src/types'
 import { FILE_FORMAT_SQL } from '../src/consts'
+import { expectNotEmpty } from './helpers'
 
 const makeSqlBlob = (sql: string): Blob => new Blob([sql], { type: 'text/plain' })
 
@@ -42,7 +43,7 @@ describe('DDL parser', () => {
     expect(result!.type).toBe(DDL_DOCUMENT_TYPE.DDL)
     expect(result!.format).toBe(FILE_FORMAT_SQL)
     expect(result!.data.originalSql).toBe(USERS_SQL)
-    expect(result!.data.realm.schemas.length).toBeGreaterThan(0)
+    expectNotEmpty(result!.data.realm.schemas)
     // source keeps the original bytes verbatim
     await expect(result!.source.text()).resolves.toBe(USERS_SQL)
   })
@@ -64,7 +65,7 @@ describe('DDL parser', () => {
     expect(result).toBeDefined()
     // issues ride on ParsedDdlData (not TextFile.errors), so the generic parse→Error path is bypassed
     expect(result!.errors).toBeUndefined()
-    expect(result!.data.issues.length).toBeGreaterThan(0)
+    expectNotEmpty(result!.data.issues)
     expect(result!.data.issues.some((e) => e.kind === 'out-of-scope-statement')).toBe(true)
     // the partial Realm is still built — the table is present despite the skipped ALTER
     expect(result!.data.realm.schemas.some((s) => (s.tables ?? []).length > 0)).toBe(true)

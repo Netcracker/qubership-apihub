@@ -15,10 +15,20 @@
  */
 
 import { describe, expect, test } from '@jest/globals'
-import { Editor, LocalRegistry, VERSIONS_PATH, loadFileAsStringFromRegistry } from './helpers'
-import { BUILD_TYPE, REST_API_TYPE, VERSION_STATUS } from '../src/consts'
+import {
+  documentOf,
+  Editor,
+  errorNotificationsOf,
+  expectNotEmpty,
+  loadJsonFromRegistry,
+  LocalRegistry,
+  VERSIONS_PATH,
+  warningNotificationsOf,
+} from './helpers'
+import { BUILD_TYPE, MESSAGE_CATEGORY, REST_API_TYPE, VERSION_STATUS } from '../src/consts'
 import { MCP_DOCUMENT_TYPE } from '../src/apitypes/mcp'
 import { McpEntity, McpEntityIndex, McpKind, PackageMcpEntity } from '../src/types/package/mcp'
+import { BuildResult } from '../src/types'
 
 const MCP_ENDPOINT = '/mcp'
 
@@ -59,7 +69,8 @@ function createMcpEditor(registry?: LocalRegistry): Editor {
   return new Editor(packageId, {
     packageId,
     version: 'v1',
-    status: VERSION_STATUS.RELEASE,
+    // draft: these tests are about what is reported, not about whether a release may publish
+    status: VERSION_STATUS.DRAFT,
     buildType: BUILD_TYPE.BUILD,
     files: [],
   }, {}, reg)
@@ -79,6 +90,18 @@ const SEARCH_DOCS_TOOL_PAYLOAD = {
   }],
 }
 
+
+// A whole-set MCP check no longer kills the publish: it reports, and every affected document is told.
+const expectReportedErrors = (
+  result: BuildResult,
+  expectedMessage: RegExp,
+): void => {
+  const errors = errorNotificationsOf(result.notifications)
+  expectNotEmpty(errors)
+  expect(errors.some(({ message }) => expectedMessage.test(message))).toBe(true)
+  expect(errors.every(({ documentId }) => documentId !== undefined)).toBe(true)
+}
+
 describe('MCP Build', () => {
 
   describe('Document types', () => {
@@ -89,9 +112,8 @@ describe('MCP Build', () => {
           initFile(),
         ],
       })
-      const doc = result.documents.get('init.json')
-      expect(doc).toBeDefined()
-      expect(doc!.type).toBe(MCP_DOCUMENT_TYPE.MCP_INIT)
+      const doc = documentOf(result, 'init.json')
+      expect(doc.type).toBe(MCP_DOCUMENT_TYPE.MCP_INIT)
     })
 
     test('should produce tools document type from tools file', async () => {
@@ -102,9 +124,8 @@ describe('MCP Build', () => {
           { fileId: 'tools.json', metadata: { mcpEndpoint: MCP_ENDPOINT } },
         ],
       })
-      const doc = result.documents.get('tools.json')
-      expect(doc).toBeDefined()
-      expect(doc!.type).toBe(MCP_DOCUMENT_TYPE.MCP_TOOLS)
+      const doc = documentOf(result, 'tools.json')
+      expect(doc.type).toBe(MCP_DOCUMENT_TYPE.MCP_TOOLS)
     })
 
     test('should produce resources document type from resources file', async () => {
@@ -115,9 +136,8 @@ describe('MCP Build', () => {
           { fileId: 'resources.json', metadata: { mcpEndpoint: MCP_ENDPOINT } },
         ],
       })
-      const doc = result.documents.get('resources.json')
-      expect(doc).toBeDefined()
-      expect(doc!.type).toBe(MCP_DOCUMENT_TYPE.MCP_RESOURCES)
+      const doc = documentOf(result, 'resources.json')
+      expect(doc.type).toBe(MCP_DOCUMENT_TYPE.MCP_RESOURCES)
     })
 
     test('should produce prompts document type from prompts file', async () => {
@@ -128,9 +148,8 @@ describe('MCP Build', () => {
           { fileId: 'prompts.json', metadata: { mcpEndpoint: MCP_ENDPOINT } },
         ],
       })
-      const doc = result.documents.get('prompts.json')
-      expect(doc).toBeDefined()
-      expect(doc!.type).toBe(MCP_DOCUMENT_TYPE.MCP_PROMPTS)
+      const doc = documentOf(result, 'prompts.json')
+      expect(doc.type).toBe(MCP_DOCUMENT_TYPE.MCP_PROMPTS)
     })
   })
 
@@ -153,7 +172,7 @@ describe('MCP Build', () => {
         mcpEndpoint: MCP_ENDPOINT,
         description: 'Search through documentation',
         search: { useEntityDataAsSearchText: true },
-        documentId: 'tools.json',
+        documentId: 'tools',
       })
     })
 
@@ -175,7 +194,7 @@ describe('MCP Build', () => {
         mcpEndpoint: MCP_ENDPOINT,
         description: 'Project README file',
         search: { useEntityDataAsSearchText: true },
-        documentId: 'resources.json',
+        documentId: 'resources',
       })
     })
 
@@ -197,7 +216,7 @@ describe('MCP Build', () => {
         mcpEndpoint: MCP_ENDPOINT,
         description: 'Summarize the given text',
         search: { useEntityDataAsSearchText: true },
-        documentId: 'prompts.json',
+        documentId: 'prompts',
       })
     })
 
@@ -220,7 +239,7 @@ describe('MCP Build', () => {
         description: '',
         mcpEndpoint: MCP_ENDPOINT,
         search: { useEntityDataAsSearchText: true },
-        documentId: 'init.json',
+        documentId: 'init',
       })
     })
 
@@ -347,7 +366,7 @@ describe('MCP Build', () => {
       await registry.publishPackage(result, editor.builder.builderContext(editor.config), editor.config)
 
       // mcp.json — the lightweight index, grouped by kind, with payloads (`data`) stripped out
-      const index = JSON.parse((await loadFileAsStringFromRegistry(VERSIONS_PATH, 'mcp-build/v1', 'mcp.json'))!)
+      const index = await loadJsonFromRegistry(VERSIONS_PATH, 'mcp-build/v1', 'mcp.json')
       expect(index.inits).toHaveLength(1)
       expect(index.tools).toHaveLength(2)
       expect(index.resources).toHaveLength(2)
@@ -364,8 +383,16 @@ describe('MCP Build', () => {
       expect(searchDocs).not.toHaveProperty('data')
 
       // mcp/{id}.json — the full element payload lives here, not in the index
-      const payload = JSON.parse((await loadFileAsStringFromRegistry(VERSIONS_PATH, 'mcp-build/v1/mcp', searchDocs.mcpEntityId))!)
+      const payload = await loadJsonFromRegistry(VERSIONS_PATH, 'mcp-build/v1/mcp', searchDocs.mcpEntityId)
       expect(payload).toEqual(SEARCH_DOCS_TOOL_PAYLOAD)
+
+      // every documentId is a document slug, never a fileId
+      const documents = await loadJsonFromRegistry(VERSIONS_PATH, 'mcp-build/v1', 'documents.json')
+      const slugs = documents.documents.map((document: { slug: string }) => document.slug)
+      const entities: PackageMcpEntity[] = [...index.inits, ...index.tools, ...index.resources, ...index.prompts]
+      for (const entity of entities) {
+        expect(slugs).toContain(entity.documentId)
+      }
     }, 30000)
   })
 
@@ -379,7 +406,7 @@ describe('MCP Build', () => {
         ],
       })
 
-      const warnings = result.notifications.filter(n => n.severity === 1)
+      const warnings = warningNotificationsOf(result.notifications)
       expect(warnings.some(w => w.message.includes('\'resources\'') && w.message.includes('no resource entities'))).toBe(true)
       expect(warnings.some(w => w.message.includes('\'prompts\'') && w.message.includes('no prompt entities'))).toBe(true)
       expect(warnings.some(w => w.message.includes('\'tools\''))).toBe(false)
@@ -396,60 +423,83 @@ describe('MCP Build', () => {
         ],
       })
 
-      const warnings = result.notifications.filter(n => n.severity === 1)
+      const warnings = warningNotificationsOf(result.notifications)
       expect(warnings).toHaveLength(0)
     })
 
-    test('should reject publishing MCP entities with no init document', async () => {
+    test('should report every document of an endpoint that has no init', async () => {
       const editor = createMcpEditor()
-      // tool/resource/prompt entities with no init describe an incomplete MCP server → publish must fail
-      await expect(
-        editor.run({
+      // entities with no init describe an incomplete MCP server → publish must fail, and the endpoint is
+      // published by both documents, so both are told
+      const result = await editor.run({
           files: [
             { fileId: 'tools.json', metadata: { mcpEndpoint: MCP_ENDPOINT } },
+            { fileId: 'resources.json', metadata: { mcpEndpoint: MCP_ENDPOINT } },
           ],
-        }),
-      ).rejects.toThrow(/MCP init is required/)
+        })
+      expectReportedErrors(result, /MCP init is required/)
+      expect(result.notifications
+        .filter(({ message }) => /MCP init is required/.test(message))
+        .map(({ documentId }) => documentId)
+        .sort()).toEqual(['resources', 'tools'])
     })
 
-    test('should require an init per endpoint when several endpoints are published at once', async () => {
+    test('should report an endpoint without an init even when another endpoint has one', async () => {
       const editor = createMcpEditor()
       // /mcp/a has its own init, /mcp/b publishes tools but no init → publish must fail even though
       // another endpoint does have an init (each endpoint needs its own init)
-      await expect(
-        editor.run({
+      const result = await editor.run({
           files: [
             initFile('/mcp/a'),
             { fileId: 'tools.json', metadata: { mcpEndpoint: '/mcp/b' } },
           ],
-        }),
-      ).rejects.toThrow(/endpoint '\/mcp\/b' publishes entities but has no init/)
+        })
+      expectReportedErrors(result, /endpoint '\/mcp\/b' publishes entities but has no init/)
     })
   })
 
   describe('Duplicate detection', () => {
-    test('should fail on duplicate name within a single file', async () => {
+    test('should report a duplicate name within a single file', async () => {
       const editor = createMcpEditor()
-      await expect(
-        editor.run({
-          files: [
-            { fileId: 'tools-duplicate-name.json', metadata: { mcpEndpoint: MCP_ENDPOINT } },
-          ],
-        }),
-      ).rejects.toThrow(/Duplicate MCP entity ID/)
+      const result = await editor.run({
+        files: [
+          initFile(),
+          { fileId: 'tools-duplicate-name.json', metadata: { mcpEndpoint: MCP_ENDPOINT } },
+        ],
+      })
+
+      // intra-document: caught per entity, so the entity that failed is the only thing lost — the first
+      // `search` is built and the document keeps it, and the failure is reported once
+      const errors = errorNotificationsOf(result.notifications)
+      expect(errors.map(({ category }) => category)).toEqual([MESSAGE_CATEGORY.McpEntityBuild])
+      expect(errors[0].message).toMatch(/Duplicate MCP entity ID/)
+      expect(entitiesOfKind(result, 'tool').map(({ description }) => description)).toEqual(['First search tool'])
+
+      // the collision is in the document's own content, so the text names the document as DDL's twin does —
+      // a `fileId` belongs in a message only when it is the thing the user edits, which here it is not
+      const { slug } = documentOf(result, 'tools-duplicate-name.json')
+      expect(errors[0].message).toContain(`in document '${slug}'`)
+      expect(errors[0].message).not.toContain('tools-duplicate-name.json')
     })
 
-    test('should fail on duplicate entity id across files sharing an endpoint', async () => {
+    test('should report a duplicate entity id across files sharing an endpoint', async () => {
       const editor = createMcpEditor()
       // both files declare a tool named "search" → same id under the same endpoint
-      await expect(
-        editor.run({
-          files: [
-            { fileId: 'tools-same-name.json', metadata: { mcpEndpoint: MCP_ENDPOINT } },
-            { fileId: 'tools-same-name-2.json', metadata: { mcpEndpoint: MCP_ENDPOINT } },
-          ],
-        }),
-      ).rejects.toThrow(/found in different documents/)
+      const result = await editor.run({
+        files: [
+          initFile(),
+          { fileId: 'tools-same-name.json', metadata: { mcpEndpoint: MCP_ENDPOINT } },
+          { fileId: 'tools-same-name-2.json', metadata: { mcpEndpoint: MCP_ENDPOINT } },
+        ],
+      })
+
+      // cross-document: one notification per involved document, and both keep their entities
+      // exactly two errors, one per involved document — no third copy from another site
+      const errors = errorNotificationsOf(result.notifications)
+      expect(errors.map(({ category }) => category))
+        .toEqual([MESSAGE_CATEGORY.McpDuplicateEntity, MESSAGE_CATEGORY.McpDuplicateEntity])
+      expect(errors.map(({ documentId }) => documentId).sort())
+        .toEqual(['tools-same-name', 'tools-same-name-2'])
     })
 
     test('should not collide when the same tool name is under different endpoints', async () => {
@@ -470,68 +520,83 @@ describe('MCP Build', () => {
   })
 
   describe('Validation', () => {
-    test('should fail when mcpEndpoint is missing', async () => {
+    test('should report a document with no mcpEndpoint', async () => {
       const editor = createMcpEditor()
-      await expect(
-        editor.run({
+      const result = await editor.run({
           files: [
             { fileId: 'tools.json' },
           ],
-        }),
-      ).rejects.toThrow(/mcpEndpoint/)
+        })
+      expectReportedErrors(result, /mcpEndpoint/)
     })
 
-    test('should fail the publish when a tool violates the schema (missing inputSchema)', async () => {
+    // The endpoint is checked twice: `buildMcpEntities` rejects the document, and the whole-set pass checks
+    // it again for callers that run alone. A build must still report it once.
+    test('should report a missing mcpEndpoint once', async () => {
+      const editor = createMcpEditor()
+      const result = await editor.run({ files: [{ fileId: 'tools.json' }] })
+
+      const endpointErrors = result.notifications.filter(({ message }) => /missing required metadata.mcpEndpoint/.test(message))
+      expect(endpointErrors).toHaveLength(1)
+    })
+
+    test('should report a tool that violates the schema (missing inputSchema)', async () => {
       const editor = createMcpEditor()
       // schema conformance is mandatory and fatal — a tool missing the required inputSchema breaks publish
-      await expect(
-        editor.run({
+      const result = await editor.run({
           files: [
             initFile(),
             { fileId: 'tools-missing-inputschema.json', metadata: { mcpEndpoint: MCP_ENDPOINT } },
           ],
-        }),
-      ).rejects.toThrow(/does not conform to protocolVersion/)
+        })
+      expectReportedErrors(result, /does not conform to protocolVersion/)
+
+      // the document failed against the schema, so the text names it the way the notification does — by slug.
+      // A `fileId` belongs in a message only when it points at something other than the attributed document.
+      const failure = result.notifications.find(({ message }) => /does not conform to protocolVersion/.test(message))!
+      expect(failure.message).toContain(`document '${failure.documentId}'`)
+      expect(failure.message).not.toContain('tools-missing-inputschema.json')
+
+      // the check runs after the document's entities are indexed, and nothing un-indexes them: the version
+      // publishes what the document built and says what is wrong with it
+      expect([...result.mcpEntities.values()].some(({ documentId }) => documentId === failure.documentId)).toBe(true)
     })
 
-    test('should fail the publish when any list item violates the schema (item without a name)', async () => {
+    test('should report a list item that violates the schema (item without a name)', async () => {
       const editor = createMcpEditor()
       // one valid tool + one nameless tool: the nameless item violates the schema → the whole publish
       // fails (invalid input is not silently dropped)
-      await expect(
-        editor.run({
+      const result = await editor.run({
           files: [
             initFile(),
             { fileId: 'tools-partial-invalid.json', metadata: { mcpEndpoint: MCP_ENDPOINT } },
           ],
-        }),
-      ).rejects.toThrow(/does not conform to protocolVersion/)
+        })
+      expectReportedErrors(result, /does not conform to protocolVersion/)
     })
 
-    test('should fail the publish for a list document whose every item is invalid', async () => {
+    test('should report a list document whose every item is invalid', async () => {
       const editor = createMcpEditor()
       // every item is dropped at extraction, but the raw document is still schema-validated against its
       // endpoint's protocolVersion — so an all-invalid list breaks publish (invalid input is not silently
       // dropped), independent of whether any entity was extracted.
-      await expect(
-        editor.run({
+      const result = await editor.run({
           files: [
             initFile(),
             { fileId: 'tools-all-invalid.json', metadata: { mcpEndpoint: MCP_ENDPOINT } },
           ],
-        }),
-      ).rejects.toThrow(/does not conform to protocolVersion/)
+        })
+      expectReportedErrors(result, /does not conform to protocolVersion/)
     })
 
-    test('should fail the publish when init declares an unsupported protocolVersion', async () => {
+    test('should report an init that declares an unsupported protocolVersion', async () => {
       const editor = createMcpEditor()
-      await expect(
-        editor.run({
+      const result = await editor.run({
           files: [
             { fileId: 'init-unsupported-version.json', metadata: { mcpEndpoint: MCP_ENDPOINT } },
           ],
-        }),
-      ).rejects.toThrow(/unsupported protocolVersion '9999-01-01'/)
+        })
+      expectReportedErrors(result, /unsupported protocolVersion '9999-01-01'/)
     })
   })
 
@@ -553,7 +618,7 @@ describe('MCP Build', () => {
 
       await registry.publishPackage(result, editor.builder.builderContext(editor.config), editor.config)
 
-      const index = JSON.parse((await loadFileAsStringFromRegistry(VERSIONS_PATH, 'mcp-build/v1', 'mcp.json'))!)
+      const index = await loadJsonFromRegistry(VERSIONS_PATH, 'mcp-build/v1', 'mcp.json')
       expect(index.tools).toHaveLength(2)
       const ids = index.tools.map((t: PackageMcpEntity) => t.mcpEntityId)
       expect(new Set(ids).size).toBe(2)

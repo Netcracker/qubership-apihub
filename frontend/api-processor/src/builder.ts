@@ -45,7 +45,6 @@ import {
   BuilderRunOptions,
   BuildResult,
   CompareContext,
-  FILE_KIND,
   FileSourceMap,
   IPackageVersionBuilder,
   OperationChanges,
@@ -63,7 +62,8 @@ import {
   unknownApiBuilder,
 } from './apitypes'
 import { ddlBuilder } from './apitypes/ddl/ddl.builder'
-import { filesDiff, findSharedPath, getCompositeKey, getFileExtension, getOperationsList } from './utils'
+import { filesDiff, findSharedPath, getCompositeKey, getFileExtension, getOperationsList, replaceInPlace } from './utils'
+import { reconcileOwnedIds } from './components/build-documents'
 import {
   BUILD_TYPE,
   ContractType,
@@ -71,23 +71,26 @@ import {
   DEFAULT_VALIDATION_RULES_SEVERITY_CONFIG,
   EXPORT_BUILD_TYPES,
   MCP_CONTRACT_TYPE,
+  MESSAGE_CATEGORY,
   MESSAGE_SEVERITY,
   REST_API_TYPE,
   SUPPORTED_FILE_FORMATS,
   VERSION_STATUS,
 } from './consts'
-import { unknownParsedFile } from './apitypes/unknown/unknown.parser'
+import { unknownParsedFile, unparsableFile } from './apitypes/unknown/unknown.parser'
 import { createVersionPackage } from './components/package'
+import { pushOnce } from './components/build-result-index'
 import { compareVersions } from './components/compare'
 import { applyBuilderVersionInfo, validateConfig } from './validators'
+import { dumpDocument } from './components/document'
 import { buildFiles } from './components/files'
 import {
-  createDuplicateMcpEntityHandler,
   McpBuildContext,
   processMcpDocument,
+  reportMcpCollisionsOf,
   validateMcpCapabilities,
 } from './components/mcp'
-import { createDuplicateOperationHandler, processOperationDocument } from './components/operations'
+import { operationKey, processOperationDocument, reportOperationCollisionsOf } from './components/operations'
 import JSZip from 'jszip'
 import { calculateHistoryForDeprecatedItems } from './components/deprecated'
 import { JsZipTool } from './components/js-zip-tool'
@@ -119,7 +122,10 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
   referencesCache = new Map<string, BuildConfigRef[]>()
   packageChangesCache = new Map<string, OperationChanges[]>()
 
-  notifications: NotificationMessage[] = []
+  // `readonly` because contexts capture the array via `bind`; clear it in place — see `replaceInPlace`
+  readonly notifications: NotificationMessage[] = []
+  // comparison-phase messages live apart: they mark a comparison, never the version
+  readonly comparisonNotifications: NotificationMessage[] = []
   merged?: VersionDocument
   config: BuildConfig
   builderRunOptions = DEFAULT_RUN_OPTIONS
@@ -131,8 +137,6 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
   ddlEntities: DdlEntityIndex = new Map()
 
   readonly parsedFiles: Map<string, SourceFile> = new Map()
-
-  private basePath: string = ''
 
   constructor(config: BuildConfig, public params: BuilderParams, fileSources?: FileSourceMap) {
     this.apiBuilders.push(restApiBuilder, graphqlApiBuilder, asyncApiBuilder, mcpBuilder, ddlBuilder, textApiBuilder, unknownApiBuilder)
@@ -196,6 +200,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
       exportFileName: this.exportFileName,
       config: this.packageConfig,
       notifications: this.notifications,
+      comparisonNotifications: this.comparisonNotifications,
       merged: this.merged,
       mcpEntities: this.mcpEntities,
       ddlEntities: this.ddlEntities,
@@ -209,7 +214,8 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     this.documents = buildResult.documents
     this.exportDocuments = buildResult.exportDocuments
     this.exportFileName = buildResult.exportFileName
-    this.notifications = buildResult.notifications
+    replaceInPlace(this.notifications, buildResult.notifications)
+    replaceInPlace(this.comparisonNotifications, buildResult.comparisonNotifications)
     this.merged = buildResult.merged
     this.mcpEntities = buildResult.mcpEntities
     this.ddlEntities = buildResult.ddlEntities
@@ -230,31 +236,33 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
       templateResolver: this.templateResolver.bind(this),
       parsedFileResolver: this.parsedFileResolver.bind(this),
       rawDocumentResolver: this.rawDocumentResolver.bind(this),
-      operationResolver: (operationId: OperationId) => this.operations.get(operationId) ?? null,
+      operationResolver: (apiType: string, operationId: OperationId) =>
+        this.operations.get(operationKey({ apiType, operationId })) ?? null,
       notifications: this.notifications,
       config: this.config,
       configuration: this.params.configuration,
       builderRunOptions: this.builderRunOptions,
-      groupDocumentsResolver: this.groupDocumentsResolver.bind(this),
-      versionDocumentsResolver: this.versionDocumentsResolver.bind(this),
+      groupDocumentsResolver: this.groupDocumentsResolver.bind(this, this.notifications),
+      versionDocumentsResolver: this.versionDocumentsResolver.bind(this, this.notifications),
       groupExportTemplateResolver: this.params.resolvers.groupExportTemplateResolver,
       versionLabels: this.config.metadata?.versionLabels as Array<string>,
       normalizedSpecFragmentsHashCache: this.normalizedSpecFragmentsHashCache,
     }
   }
 
-  private compareContext(config: BuildConfig): CompareContext {
+  private compareContext(config: BuildConfig, notifications: NotificationMessage[] = this.comparisonNotifications): CompareContext {
     return {
       apiBuilders: this.apiBuilders,
-      notifications: this.notifications,
+      notifications: notifications,
+      forPair: (pairNotifications) => this.compareContext(config, pairNotifications),
       batchSize: this.params.configuration?.batchSize,
       config: config,
-      versionResolver: this.versionResolver.bind(this),
+      versionResolver: this.versionResolver.bind(this, notifications),
       versionOperationsResolver: this.versionOperationsResolver.bind(this),
-      versionReferencesResolver: this.versionReferencesResolver.bind(this),
+      versionReferencesResolver: this.versionReferencesResolver.bind(this, notifications),
       versionComparisonResolver: this.versionComparisonResolver.bind(this),
       versionDeprecatedResolver: this.versionDeprecatedResolver.bind(this),
-      versionDocumentsResolver: this.versionDocumentsResolver.bind(this),
+      versionDocumentsResolver: this.versionDocumentsResolver.bind(this, notifications),
       rawDocumentResolver: this.rawDocumentResolver.bind(this),
       normalizedSpecFragmentsHashCache: this.normalizedSpecFragmentsHashCache,
       apiProcessorVersionValidationLevel: this.builderRunOptions.apiProcessorVersionValidationLevel,
@@ -385,7 +393,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
         throw new Error(`Raw document ${slug} is missing in local cache`)
       }
       const apiBuilder = this.findApiBuilderBySpecType(document.type)
-      return new File([apiBuilder.dumpDocument(document)], document.filename)
+      return new File([dumpDocument(document, apiBuilder)], document.filename)
     }
 
     if (!this.params.resolvers.rawDocumentResolver) {
@@ -454,24 +462,11 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
       includeData,
     )
 
-    // validate for missing operationData
-    if (includeData && operations?.operations) {
-      for (const { data, operationId } of operations.operations) {
-        if (data) {
-          continue
-        }
-
-        this.notifications.push({
-          severity: MESSAGE_SEVERITY.Warning,
-          message: `No data for operation ${operationId} of package ${packageId}/${version}`,
-        })
-      }
-    }
-
     return operations
   }
 
   async groupDocumentsResolver(
+    notifications: NotificationMessage[],
     apiType: OperationsApiType,
     version: VersionId,
     packageId: PackageId,
@@ -492,13 +487,15 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     )
 
     if (!documents?.documents.length) {
-      this.notifications.push({
+      notifications.push({
+        category: MESSAGE_CATEGORY.GroupDocumentsMissing,
         severity: MESSAGE_SEVERITY.Warning,
         message: `No documents for ${packageId}/${version} that match the criteria (apiType=${apiType}, filterByOperationGroup=${filterByOperationGroup})`,
       })
 
       if (!documents?.documents.every(document => document.data)) {
-        this.notifications.push({
+        notifications.push({
+          category: MESSAGE_CATEGORY.PartialGroupDocuments,
           severity: MESSAGE_SEVERITY.Warning,
           message: `Not all documents have data for ${packageId}/${version} that match the criteria (apiType=${apiType}, filterByOperationGroup=${filterByOperationGroup})`,
         })
@@ -525,6 +522,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
   }
 
   async versionDocumentsResolver(
+    notifications: NotificationMessage[],
     version: VersionId,
     packageId: PackageId,
     apiType?: OperationsApiType,
@@ -559,7 +557,8 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     // is normal and must NOT warn. apiType queries are gated upstream by the version's operationTypes, so
     // an empty result there is still worth a warning.
     if (!documents?.documents.length && !contractType) {
-      this.notifications.push({
+      notifications.push({
+        category: MESSAGE_CATEGORY.VersionDocumentsMissing,
         severity: MESSAGE_SEVERITY.Warning,
         message: `No documents for ${packageId}/${version} that match the criteria (apiType=${apiType})`,
       })
@@ -608,6 +607,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
   }
 
   async versionResolver(
+    notifications: NotificationMessage[],
     version: string,
     packageId: string,
   ): Promise<VersionCache | null> {
@@ -632,7 +632,8 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     const versionContent = await versionResolver(packageId, version, true)
 
     if (!versionContent) {
-      this.notifications.push({
+      pushOnce(notifications, {
+        category: MESSAGE_CATEGORY.VersionNotResolved,
         severity: MESSAGE_SEVERITY.Error,
         message: `No such version: version: ${version}, packageId: ${packageId}`,
       })
@@ -649,6 +650,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
   }
 
   async versionReferencesResolver(
+    notifications: NotificationMessage[],
     version: string,
     packageId?: string,
   ): Promise<BuildConfigRef[]> {
@@ -678,7 +680,8 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     )
 
     if (!versionReferences) {
-      this.notifications.push({
+      pushOnce(notifications, {
+        category: MESSAGE_CATEGORY.VersionRefsNotResolved,
         severity: MESSAGE_SEVERITY.Error,
         message: `No version references for: version: ${version}, packageId: ${packageId || this.config.packageId}`,
       })
@@ -746,22 +749,13 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
           const result = await parser(fileId, source)
 
           if (result) {
-            // add errors to notifications
-            if (result.kind === FILE_KIND.TEXT && result.errors) {
-              result.errors.forEach((error) => {
-                this.notifications.push({
-                  fileId: fileId,
-                  severity: MESSAGE_SEVERITY.Error,
-                  message: `Invalid ${result.type} file. ${error.message || ''}`,
-                })
-              })
-            }
-
             this.parsedFiles.set(fileId, result)
             return result
           }
         } catch (error) {
-          throw new Error(`Cannot parse file ${fileId}. ${error instanceof Error ? error.message : ''}`)
+          const fallback = unparsableFile(fileId, source, error)
+          this.parsedFiles.set(fileId, fallback)
+          return fallback
         }
       }
     }
@@ -773,8 +767,14 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
 
   setDocument(document: VersionDocument, operations: ApiOperation[] = []): void {
     this.documents.set(document.fileId, document)
+    // `dropOwnedOperations` and `reconcileOwnedIds` find an entry by the claim that made it, so a document
+    // seeded here has to carry its claims or its operations can never be evicted. Re-registering the same
+    // document without operations leaves the claims it already had, which still name the entries in the index.
+    if (operations.length) {
+      document.operationClaims = operations.map(({ operationId, apiType }) => ({ operationId, apiType }))
+    }
     for (const operation of operations) {
-      this.operations.set(operation.operationId, operation)
+      this.operations.set(operationKey(operation), operation)
     }
   }
 
@@ -847,9 +847,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
       const document = this.documents.get(removedFileId)
       if (!document) { continue }
 
-      document.operationIds?.forEach(operationId => {
-        this.operations.delete(operationId)
-      })
+      this.dropOwnedOperations(document)
       // mcpEntities is a flat map keyed by id, so a removed document's entities drop out granularly
       document.mcpEntityIds?.forEach(entityId => {
         this.mcpEntities.delete(entityId)
@@ -865,7 +863,6 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     if (!changedFileIds.length) {
       return false
     }
-    this.basePath = findSharedPath(this.config.files!.map(({ fileId }) => fileId).filter(Boolean))
     return this.rebuildFiles(this.config.files!.filter(file => changedFileIds.includes(file.fileId)))
   }
 
@@ -911,15 +908,31 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     }
   }
 
+  /**
+   * Take the document's operations out of the index.
+   *
+   * The index is keyed per api type, so the entries are found by what the document claimed rather than by the
+   * ids it announced. Claims are kept whole, so one the document lost names another document's entry — only
+   * what it still owns is dropped.
+   */
+  private dropOwnedOperations(document: VersionDocument): void {
+    document.operationClaims?.forEach(claim => {
+      const key = operationKey(claim)
+      if (this.operations.get(key)?.documentId === document.slug) {
+        this.operations.delete(key)
+      }
+    })
+  }
+
   private async rebuildFiles(changedFiles: BuildConfigFile[]): Promise<boolean> {
     for (const changedFile of changedFiles) {
       const previousDocument = this.documents.get(changedFile.fileId)
       if (previousDocument) {
-        previousDocument.operationIds?.forEach(operationId => {
-          this.operations.delete(operationId)
-        })
+        this.dropOwnedOperations(previousDocument)
         previousDocument.mcpEntityIds?.forEach(entityId => {
-          this.mcpEntities.delete(entityId)
+          if (this.mcpEntities.get(entityId)?.documentId === previousDocument.slug) {
+            this.mcpEntities.delete(entityId)
+          }
         })
         this.documents.delete(previousDocument.fileId)
       }
@@ -929,8 +942,6 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     const buildFilesResult = await buildFiles(changedFiles, ctx)
 
     const { buildResult } = this
-    const handleDuplicateOperation = createDuplicateOperationHandler(buildResult)
-    const handleDuplicateMcp = createDuplicateMcpEntityHandler()
     const mcpCtx: McpBuildContext = { mcpEntities: this.mcpEntities }
     let hasMcpChanges = false
 
@@ -939,12 +950,20 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
       if (!builder || document.publish === false) { continue }
 
       if (builder.apiType === MCP_CONTRACT_TYPE) {
-        processMcpDocument(file, document, builder, mcpCtx, handleDuplicateMcp)
+        processMcpDocument(file, document, builder, mcpCtx, this.notifications)
         hasMcpChanges = true
       } else {
-        await processOperationDocument(document, builder, ctx, buildResult, handleDuplicateOperation)
+        await processOperationDocument(document, builder, ctx, buildResult)
       }
     }
+
+    // graded from the claim lists every document keeps, over the whole claimant set, so the preview and a
+    // publication reach the same verdict
+    reportOperationCollisionsOf(this.documents.values(), this.notifications)
+    reportMcpCollisionsOf(this.documents.values(), this.notifications)
+
+    // same reconciliation as a full build: a rebuilt document may have lost an id to a smaller slug
+    reconcileOwnedIds(this.documents.values(), this.operations, this.mcpEntities)
 
     // entities are maintained in this.mcpEntities granularly; caller refreshes capability warnings
     return hasMcpChanges
@@ -955,7 +974,8 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
   }
 
   clearRuntimeCachesOnly(): void {
-    this.notifications = []
+    this.notifications.length = 0
+    this.comparisonNotifications.length = 0
   }
 
   clearCaches(): void {
@@ -971,6 +991,7 @@ export class PackageVersionBuilder implements IPackageVersionBuilder {
     this.mcpEntities = new Map()
     this.ddlEntities = new Map()
 
-    this.notifications = []
+    this.notifications.length = 0
+    this.comparisonNotifications.length = 0
   }
 }

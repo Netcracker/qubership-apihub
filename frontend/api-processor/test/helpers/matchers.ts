@@ -16,118 +16,35 @@
 
 import {
   BuildResult,
-  ChangeMessage,
-  ChangeSummary,
   ComparisonInternalDocument,
   DeprecateItem,
-  EMPTY_CHANGE_SUMMARY,
   MessageSeverity,
   NotificationMessage,
   OperationChanges,
-  type OperationsApiType,
-  OperationType,
-  REST_API_TYPE,
-  VersionsComparison,
   ZippableDocument,
 } from '../../src'
-import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
-import { ActionType, Diff, DIFFS_AGGREGATED_META_KEY, DiffType } from '@netcracker/qubership-apihub-api-diff'
+import { Diff, DIFFS_AGGREGATED_META_KEY, DiffType } from '@netcracker/qubership-apihub-api-diff'
 import {
-  ArrayContaining,
   AsymmetricMatcher,
   ExpectedRecursive,
   ObjectContaining,
   RecursiveMatcher,
 } from '../../.jest/jasmin'
 import { extractSecuritySchemesNames } from '../../src/apitypes/rest/rest.utils'
-import { calculateChangeSummary, isObject } from '../../src/utils'
+import { isObject } from '../../src/utils'
 import type { OpenAPIV3 } from 'openapi-types'
-import { deserializeDocument } from './utils'
+import { deserializeDocument } from './documents'
 
 type SecuritySchemesObject = OpenAPIV3.ComponentsObject['securitySchemes']
 
-export type ApihubComparisonMatcher = ObjectContaining<VersionsComparison> & VersionsComparison
 export type ApihubOperationChangesMatcher = ObjectContaining<OperationChanges> & OperationChanges
-export type ApihubChangesSummaryMatcher = ObjectContaining<ChangeSummary> & ChangeSummary
 export type ApihubNotificationsMatcher = ObjectContaining<BuildResult> & BuildResult
 export type ApihubNotificationMatcher = ObjectContaining<NotificationMessage> & NotificationMessage
-export type ApihubChangeMessagesMatcher = ArrayContaining<ChangeMessage> & ChangeMessage[]
 export type ApihubExportDocumentsMatcher = ObjectContaining<BuildResult> & BuildResult
 export type ApihubExportDocumentMatcher = ObjectContaining<ZippableDocument> & ZippableDocument
-export type ApihubComparisonDocumentMatcher = ObjectContaining<ComparisonInternalDocument> & ComparisonInternalDocument
+type ApihubComparisonDocumentMatcher = ObjectContaining<ComparisonInternalDocument> & ComparisonInternalDocument
 
-export function apihubComparisonMatcher(
-  expected: RecursiveMatcher<VersionsComparison>,
-): ApihubComparisonMatcher {
-  return expect.arrayContaining([
-    expect.objectContaining(expected),
-  ])
-}
-
-export function apihubOperationChangesMatcher(
-  expected: RecursiveMatcher<OperationChanges>,
-): ApihubOperationChangesMatcher {
-  return expect.arrayContaining([
-    expect.objectContaining({
-      data: expect.arrayContaining([
-        expect.objectContaining(expected),
-      ]),
-    }),
-  ])
-}
-
-export function noChangesMatcher(
-  apiType: OperationsApiType = REST_API_TYPE,
-): ApihubChangesSummaryMatcher {
-  return operationTypeMatcher({
-    apiType: apiType,
-    changesSummary: EMPTY_CHANGE_SUMMARY,
-    numberOfImpactedOperations: EMPTY_CHANGE_SUMMARY,
-  })
-}
-
-export function changesSummaryMatcher(
-  expected: Partial<ChangeSummary>,
-  apiType: OperationsApiType = REST_API_TYPE,
-): ApihubChangesSummaryMatcher {
-  return operationTypeMatcher({
-    apiType: apiType,
-    changesSummary: expect.objectContaining({
-      ...EMPTY_CHANGE_SUMMARY,
-      ...expected,
-    }),
-  })
-}
-
-export function numberOfImpactedOperationsMatcher(
-  expected: Partial<ChangeSummary>,
-  apiType: OperationsApiType = REST_API_TYPE,
-): ApihubChangesSummaryMatcher {
-  return operationTypeMatcher({
-    apiType: apiType,
-    numberOfImpactedOperations: expect.objectContaining({
-      ...EMPTY_CHANGE_SUMMARY,
-      ...expected,
-    }),
-  })
-}
-
-export function operationTypeMatcher(
-  expected: RecursiveMatcher<OperationType>,
-): ApihubChangesSummaryMatcher {
-  return expect.objectContaining({
-    comparisons: expect.arrayContaining([
-      expect.objectContaining({
-        operationTypes: expect.arrayContaining([
-          expect.objectContaining(expected),
-        ]),
-      }),
-    ]),
-  },
-  )
-}
-
-export function comparisonDocumentDiffMatcher(
+function comparisonDocumentDiffMatcher(
   expected: RecursiveMatcher<{ serializedComparisonDocument: AsymmetricMatcher<string> }>,
 ): ApihubComparisonDocumentMatcher {
   return expect.objectContaining({
@@ -155,30 +72,15 @@ export function operationChangesMatcher(
   )
 }
 
-export function apihubChangeMessageMatcher(
-  path: JsonPath,
-  action: ActionType,
-): ApihubChangeMessagesMatcher {
-  return apihubChangeMessagesMatcher([
-    expect.objectContaining({
-      jsonPath: path,
-      action: action,
-    }),
-  ])
-}
-
-export function apihubChangeMessagesMatcher(
-  expected: Array<RecursiveMatcher<ChangeMessage>>,
-): ApihubChangeMessagesMatcher {
-  return expect.arrayContaining([
-    expect.objectContaining({
-      data: expect.arrayContaining([
-        expect.objectContaining({
-          changes: expect.toIncludeSameMembers(expected),
-        }),
-      ]),
-    }),
-  ])
+/**
+ * One entry of the list `operationChangesMatcher` expects: an operation compared with its previous version. Both
+ * ids are always spelled out, the same one twice when the operation was not renamed.
+ */
+export function changedOperationMatcher(
+  operationId: string,
+  previousOperationId: string,
+): ApihubOperationChangesMatcher {
+  return expect.objectContaining({ operationId, previousOperationId })
 }
 
 export function deprecatedItemDescriptionMatcher(
@@ -191,6 +93,11 @@ export function deprecatedItemDescriptionMatcher(
 
 type Matcher = ObjectContaining<DeprecateItem>
 
+/**
+ * The whole notification list as a set: every notification the build reported matches one of `expected`, and
+ * none is left over. For one notification of a known category use `notificationOf`; to count or filter, use
+ * `errorNotificationsOf`, `warningNotificationsOf` or `notificationsInCategory`.
+ */
 export function notificationsMatcher(
   expected: Array<RecursiveMatcher<NotificationMessage>>,
 ): ApihubNotificationsMatcher {
@@ -200,13 +107,17 @@ export function notificationsMatcher(
   )
 }
 
+/** One element of the list `notificationsMatcher` expects, matched by severity and message. */
 export function notificationMatcher(
   severity: MessageSeverity,
   message: string | RegExp,
+  // category and documentId are asserted only where the test is about attribution
+  expectedAttribution: Partial<Pick<NotificationMessage, 'category' | 'documentId'>> = {},
 ): ApihubNotificationMatcher {
   const expected: Partial<NotificationMessage> = {
     message: expect.stringMatching(message),
     severity: severity,
+    ...expectedAttribution,
   }
 
   return expect.objectContaining(expected)
@@ -290,23 +201,4 @@ export function serializedComparisonDocumentMatcher(
       },
     },
   })
-}
-
-/**
- * A summary that contradicts the changes it counts is the symptom users report: an operation shown as
- * breaking while none of its changes is breaking. The two are computed at different moments, so any change
- * to how a verdict is decided can pull them apart. Assert this wherever a build reclassifies anything.
- */
-export function expectSummariesMatchDiffs(result: BuildResult): void {
-  let checked = 0
-  for (const comparison of result.comparisons) {
-    for (const changes of comparison.data ?? []) {
-      expect(changes.changeSummary).toEqual(calculateChangeSummary(changes.diffs ?? []))
-      checked += 1
-    }
-  }
-
-  // Outside both loops: a build that produced no comparison, or none carrying operation changes, would
-  // otherwise pass this having asserted nothing
-  expect(checked).toBeGreaterThan(0)
 }

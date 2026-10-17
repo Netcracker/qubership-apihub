@@ -91,7 +91,7 @@ export const buildAsyncApiOperation = (
   const deprecatedItems = collectDeprecatedItems(
     config, message, messageId, channel, channelId,
     effectiveSingleOperationSpec, normalizedSpecFragmentsHashCache,
-    notifications,
+    notifications, documentSlug,
   )
 
   const operationApiKind = getApiKindProperty(effectiveOperationObject)
@@ -162,6 +162,7 @@ const collectDeprecatedItems = (
   effectiveSingleOperationSpec: TYPE.AsyncOperationData,
   normalizedSpecFragmentsHashCache: ObjectHashCache,
   notifications: NotificationMessage[],
+  documentSlug: string,
 ): DeprecateItem[] => {
 
   const deprecatedItems: DeprecateItem[] = []
@@ -193,8 +194,9 @@ const collectDeprecatedItems = (
       declarationJsonPaths,
       description: `${DEPRECATED_MESSAGE_PREFIX} channel '${channelTitle}'`,
       deprecatedInPreviousVersions,
+      // no tolerant hash: the unifier stamps the flag on schema and parameter nodes, never on a channel,
+      // so the request could only report a missing one. The schema items below still ask for theirs.
       hash: calculateHash(channel, normalizedSpecFragmentsHashCache),
-      tolerantHash: calculateTolerantHash(channel as Jso, notifications),
     })
   }
 
@@ -209,7 +211,7 @@ const collectDeprecatedItems = (
       description,
       deprecatedInPreviousVersions,
       hash: calculateHash(value, normalizedSpecFragmentsHashCache),
-      tolerantHash: calculateTolerantHash(value as Jso, notifications),
+      tolerantHash: calculateTolerantHash(value as Jso, notifications, documentSlug),
     })
   }
 

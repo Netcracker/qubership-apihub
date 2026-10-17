@@ -16,6 +16,7 @@
 
 import { ApiAudience } from '../package'
 import { OperationsApiType, PackageId, VersionId } from './types'
+import { DDL_CONTRACT_TYPE } from '../../consts'
 import {
   annotation,
   breaking,
@@ -43,7 +44,26 @@ export interface ResolvedComparisonSummary {
   previousVersionPackageId: PackageId
   previousVersionRevision: number
   operationTypes: OperationType[]
+  // The stored comparison is a placeholder: the row exists but holds no usable result.
+  noContent?: boolean
+  // The pair's schema changes, absent when the host holds none. Serialized form, like `operationTypes`.
+  contractsChangesSummary?: DdlContractsChangesSummary
+  // the flag the host already holds for this pair; a cached comparison carries it through unchanged
+  hasErrors?: boolean
 }
+
+// The change summary for one contract type within a comparison: the version-level change totals plus the
+// number of impacted entities. Held under its contract-type key in `contractsChangesSummary`.
+export interface DdlContractChangesSummary<T extends DiffType | DiffTypeDto = DiffType> {
+  changesSummary: ChangeSummary<T>
+  numberOfImpactedEntities: ChangeSummary<T>
+}
+
+// Per-contract change summaries, keyed by contract type (`ddl` — the only one today). Replaces the former
+// `contractTypes` array; since the key already carries the contract type, the redundant `contractType`
+// field is dropped. Empty (`{}`) when the comparison has no DDL content.
+export type DdlContractsChangesSummary<T extends DiffType | DiffTypeDto = DiffType> =
+  Partial<Record<typeof DDL_CONTRACT_TYPE, DdlContractChangesSummary<T>>>
 
 export interface OperationType<T extends DiffType | DiffTypeDto = DiffType> {
   apiType: OperationsApiType

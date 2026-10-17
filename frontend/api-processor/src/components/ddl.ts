@@ -23,7 +23,10 @@ import {
   PackageDdlEntity,
   PackageDdlFile,
 } from '../types/package/ddl'
-import { DuplicateHandler, setReportingDuplicate } from '../utils'
+import { setReportingDuplicate } from '../utils'
+import { Claims, listDocuments, reportCollisions } from './duplicate-resolution'
+import { MESSAGE_CATEGORY, MESSAGE_SEVERITY } from '../consts'
+import { NotificationMessage } from '../types/package'
 
 export interface DdlBuildContext {
   ddlEntities: DdlEntityIndex
@@ -35,33 +38,40 @@ export function createDdlBuildContext(): DdlBuildContext {
   }
 }
 
-export type DuplicateDdlEntityHandler = DuplicateHandler<DdlEntity>
-
-export const createDuplicateDdlEntityHandler = (): DuplicateDdlEntityHandler => (existing, duplicate) => {
-  // the same document re-processed is not a cross-document duplicate
-  if (existing.documentId === duplicate.documentId) { return }
-  throw new Error(
-    `Duplicate DDL entity ID '${duplicate.ddlEntityId}' found in different documents: '${existing.documentId}' and '${duplicate.documentId}'`,
+/** Cross-document DDL entity collisions, one message per claimant — see `reportCollisions`. */
+export function reportDdlCollisions(claims: Claims<DdlEntity>, notifications: NotificationMessage[]): void {
+  reportCollisions(
+    claims,
+    notifications,
+    MESSAGE_CATEGORY.DdlDuplicateEntity,
+    () => MESSAGE_SEVERITY.Error,
+    (ddlEntityId, documentIds) =>
+      `Duplicate DDL entity ID '${ddlEntityId}' found in different documents: ${listDocuments(documentIds)}`,
   )
 }
 
-/**
- * Merge a document's DDL entities into the build's flat entity index. This is where **cross-document**
- * `ddlEntityId` collisions are detected (Error, breaks publish — D10); intra-document collisions are
- * already caught in `buildDdlEntities`. Mirrors `processMcpDocument`. Per D14 (no incremental rebuild),
- * the document does not track which entities it owns.
- */
-export function processDdlDocument(
+/** Everything the document builds, claimed by nobody yet — see `indexDdlEntities`. */
+export function buildDocumentDdlEntities(
   file: BuildConfigFile,
   document: VersionDocument,
   builder: ApiBuilder,
+  notifications?: NotificationMessage[],
+): DdlEntity[] {
+  return builder.buildDdlEntities ? builder.buildDdlEntities(document, file, notifications) : []
+}
+
+/**
+ * Merge a document's DDL entities into the build's flat entity index. Cross-document collisions are reported
+ * by `reportDdlCollisions` before anything is indexed; intra-document ones are caught per entity in
+ * `buildDdlEntities`. Mirrors `indexMcpEntities`, except that the document does not track which entities it
+ * owns — there is no incremental DDL rebuild for `reconcileOwnedIds` to serve.
+ */
+export function indexDdlEntities(
+  entities: DdlEntity[],
   ctx: DdlBuildContext,
-  onDuplicate?: DuplicateDdlEntityHandler,
 ): void {
-  if (!builder.buildDdlEntities) { return }
-  const entities: DdlEntity[] = builder.buildDdlEntities(document, file)
   for (const entity of entities) {
-    setReportingDuplicate(ctx.ddlEntities, entity.ddlEntityId, entity, onDuplicate)
+    setReportingDuplicate(ctx.ddlEntities, entity.ddlEntityId, entity)
   }
 }
 
@@ -69,11 +79,11 @@ export const KIND_TO_FIELD: Record<DdlKind, keyof PackageDdlFile> = {
   [DDL_KIND.TABLE]: 'tables',
 }
 
-/** Group the flat entity index into the `{ tables }` shape written to `ddl.json` (payload stripped). */
+/** Group the flat entity index into the per-kind shape written to `ddl.json`, keyed by `KIND_TO_FIELD`. */
 export function groupDdlEntitiesByKind(entities: DdlEntityIndex): PackageDdlFile {
   const grouped: PackageDdlFile = { tables: [] }
   for (const { data: _data, ...index } of entities.values()) {
-    // strip the payload (`data`) — ddl.json is the lightweight index; payloads live in ddl/<id>
+    // ddl.json is the lightweight index; payloads live in ddl/<id>
     grouped[KIND_TO_FIELD[index.kind]].push(index as PackageDdlEntity)
   }
   return grouped

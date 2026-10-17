@@ -15,7 +15,7 @@
  */
 
 import JSZip from 'jszip'
-import { Editor, LocalRegistry } from './helpers'
+import { Editor, LocalRegistry, publishVersion, readJsonFromZip } from './helpers'
 import {
   ApiOperation,
   BUILD_TYPE,
@@ -23,6 +23,7 @@ import {
   ChangeMessage,
   ComparisonInternalDocument,
   DiffTypeDto,
+  MESSAGE_CATEGORY,
   MESSAGE_SEVERITY,
   NotificationMessage,
   PACKAGE,
@@ -35,8 +36,10 @@ import {
   VersionDocument,
 } from '../src'
 import {
+  buildCachedComparisons,
   buildComparisonInternalDocumentsIndex,
   buildComparisonOperations,
+  buildComparisonNotifications,
   buildComparisonsIndex,
   buildDdlComparisonEntities,
   buildDdlComparisonsIndex,
@@ -45,19 +48,11 @@ import {
   buildPackageOperations,
   buildVersionInternalDocumentsIndex,
 } from '../src/components/build-result-index'
-import { DdlChangesDto, DdlComparisonDto, VersionsComparisonDto } from '../src/types/internal/compare'
+import { DdlChangesDto, DdlComparison, DdlComparisonDto, VersionsComparison, VersionsComparisonDto } from '../src/types/internal/compare'
 import { MCP_KIND, McpEntity, McpEntityIndex, PackageMcpFile } from '../src/types/package/mcp'
 import { PackageDdlFile } from '../src/types/package/ddl'
 
 describe('Build result list ordering', () => {
-  const readJsonFromZip = async <T>(zip: JSZip, name: string): Promise<T> => {
-    const entry = zip.file(name)
-    if (!entry) {
-      throw new Error(`Cannot find ${name} in the build result`)
-    }
-    return JSON.parse(await entry.async('string')) as T
-  }
-
   const buildEditor = (packageId: string, overrides: Partial<BuildConfig> = {}): Editor =>
     new Editor(packageId, {
       packageId,
@@ -71,7 +66,7 @@ describe('Build result list ordering', () => {
   // before: assembly order — zebra-get, mango-get, apple-get / zeta.yaml, alpha.yaml
   // after:  apple-get, mango-get, zebra-get / alpha.yaml, zeta.yaml
   it('should serialize operations sorted by operationId and documents sorted by fileId', async () => {
-    const editor = buildEditor('list-ordering')
+    const editor = buildEditor('build-result-ordering/rest')
     await editor.run({ files: [{ fileId: 'zeta.yaml', publish: true }, { fileId: 'alpha.yaml', publish: true }] })
     const zip = await JSZip.loadAsync(await editor.createVersionPackage())
 
@@ -101,7 +96,7 @@ describe('Build result list ordering', () => {
   // before: tables.sql declaration order — zebra, mango, apple
   // after:  apple, mango, zebra
   it('should serialize ddl tables sorted by ddlEntityId', async () => {
-    const editor = buildEditor('list-ordering-ddl')
+    const editor = buildEditor('build-result-ordering/ddl')
     await editor.run({ files: [{ fileId: 'tables.sql' }] })
     const zip = await JSZip.loadAsync(await editor.createVersionPackage())
 
@@ -115,20 +110,20 @@ describe('Build result list ordering', () => {
   it('should serialize comparison operations ordered by (operationId, previousOperationId)', async () => {
     // ChangelogStrategy resolves BOTH sides from the registry, so both versions must be published first.
     const publish = async (packageId: string, version: string): Promise<void> => {
-      await LocalRegistry.openPackage(packageId).publish(packageId, {
+      await publishVersion(
         packageId,
         version,
-        status: VERSION_STATUS.RELEASE,
-        files: [{ fileId: 'spec.yaml', publish: true }],
-      })
+        { fileId: 'spec.yaml', publish: true },
+        { status: VERSION_STATUS.RELEASE },
+      )
     }
-    await publish('list-ordering-before', 'v1')
-    await publish('list-ordering-after', 'v2')
+    await publish('build-result-ordering/cross-package/previous-package', 'v1')
+    await publish('build-result-ordering/cross-package/current-package', 'v2')
 
-    const editor = buildEditor('list-ordering-after', { version: 'v2', buildType: BUILD_TYPE.CHANGELOG })
+    const editor = buildEditor('build-result-ordering/cross-package/current-package', { version: 'v2', buildType: BUILD_TYPE.CHANGELOG })
     await editor.run({
       files: [{ fileId: 'spec.yaml', publish: true }],
-      previousVersionPackageId: 'list-ordering-before',
+      previousVersionPackageId: 'build-result-ordering/cross-package/previous-package',
       previousVersion: 'v1',
     })
     const zip = await JSZip.loadAsync(await editor.createVersionPackage())
@@ -147,27 +142,59 @@ describe('Build result list ordering', () => {
   })
 })
 
+// An operationId is unique only within an api type, so two rows can carry the same one. The sort key has to
+// span both, or the tie falls back to the order `config.files` happened to list the documents in.
+describe('Operations of two api types sharing an id', () => {
+  test('should order them by api type, whatever the config order', async () => {
+    const orderOf = async (packageId: string, fileIds: string[]): Promise<string[]> => {
+      const result = await LocalRegistry.openPackage('tolerant-publication').publish('tolerant-publication', {
+        packageId,
+        version: 'v1',
+        status: VERSION_STATUS.DRAFT,
+        files: fileIds.map(fileId => ({ fileId })),
+      })
+      return buildPackageOperations(result.operations).operations
+        .map(({ apiType, operationId }) => `${apiType}:${operationId}`)
+    }
+
+    const forwards = await orderOf('ordering/api-types-forwards', ['api.yaml', 'async-a.yaml'])
+    const backwards = await orderOf('ordering/api-types-backwards', ['async-a.yaml', 'api.yaml'])
+
+    expect(forwards).toEqual(['asyncapi:pets-get', 'rest:pets-get'])
+    expect(backwards).toEqual(forwards)
+  }, 60000)
+})
+
 describe('Build result builders: deterministic sort', () => {
+  // any two distinct categories: these tests are about the order of a list, never about what raises what.
+  // The diagnostics themselves are catalogued in `notification-catalogue.test.ts`.
+  const ANY_CATEGORY = MESSAGE_CATEGORY.ParseFile
+  const OTHER_CATEGORY = MESSAGE_CATEGORY.BuildDocument
+
   // before: zzz(warning), aaa(warning), mmm(error) → after: mmm, aaa, zzz
   it('should sort notifications by (severity, message)', () => {
     const input: NotificationMessage[] = [
-      { severity: MESSAGE_SEVERITY.Warning, message: 'zzz' },
-      { severity: MESSAGE_SEVERITY.Warning, message: 'aaa' },
-      { severity: MESSAGE_SEVERITY.Error, message: 'mmm' }, // Error=0 < Warning=1 → sorts first
+      { category: ANY_CATEGORY, severity: MESSAGE_SEVERITY.Warning, message: 'zzz' },
+      { category: ANY_CATEGORY, severity: MESSAGE_SEVERITY.Warning, message: 'aaa' },
+      { category: ANY_CATEGORY, severity: MESSAGE_SEVERITY.Error, message: 'mmm' }, // Error=0 < Warning=1 → sorts first
     ]
     expect(buildNotifications(input).notifications.map(n => n.message)).toEqual(['mmm', 'aaa', 'zzz'])
   })
 
   // The key spans every field of NotificationMessage, so equal keys mean byte-identical rows.
-  // before: b/-, a/z, a/a → after: a/a, a/z, b/-
-  it('should fall through to fileId and operationId when severity and message match', () => {
+  // before: parse/-, build/z, build/a → after: build/a, build/z, parse/-
+  it('should fall through to category and documentId when severity and message match', () => {
     const input: NotificationMessage[] = [
-      { severity: MESSAGE_SEVERITY.Warning, message: 'same', fileId: 'b' },
-      { severity: MESSAGE_SEVERITY.Warning, message: 'same', fileId: 'a', operationId: 'z' },
-      { severity: MESSAGE_SEVERITY.Warning, message: 'same', fileId: 'a', operationId: 'a', previousOperationId: 'p' },
+      { category: ANY_CATEGORY, severity: MESSAGE_SEVERITY.Warning, message: 'same' },
+      { category: OTHER_CATEGORY, severity: MESSAGE_SEVERITY.Warning, message: 'same', documentId: 'z' },
+      { category: OTHER_CATEGORY, severity: MESSAGE_SEVERITY.Warning, message: 'same', documentId: 'a' },
     ]
-    expect(buildNotifications(input).notifications.map(n => [n.fileId, n.operationId ?? null]))
-      .toEqual([['a', 'a'], ['a', 'z'], ['b', null]])
+    expect(buildNotifications(input).notifications.map(n => [n.category, n.documentId ?? null]))
+      .toEqual([
+        [OTHER_CATEGORY, 'a'],
+        [OTHER_CATEGORY, 'z'],
+        [ANY_CATEGORY, null],
+      ])
   })
 
   // before: z, a → after: a, z
@@ -224,6 +251,98 @@ describe('Build result builders: deterministic sort', () => {
     const input = [row('v2', 1), row('v1', 10), row('v1', 2)]
     expect(buildComparisonsIndex(input).comparisons.map(c => `${c.version}@${c.revision}`))
       .toEqual(['v1@2', 'v1@10', 'v2@1'])
+  })
+
+  // cached-comparisons.json must order pairs the same way too, or the reader matching a key to a row walks
+  // two differently ordered lists. Asserted against the index itself, not a copy of its expected order, so
+  // the two cannot drift apart.
+  // before: v2@1, v1@10, v1@2 → after: v1@2, v1@10, v2@1
+  it('should sort cached comparisons by the same key comparisons.json uses', () => {
+    const pair = (version: string, revision: number): unknown =>
+      ({
+        packageId: 'p',
+        version,
+        revision,
+        previousVersionPackageId: 'p',
+        previousVersion: 'v0',
+        previousVersionRevision: 1,
+        fromCache: true,
+        operationTypes: [],
+      })
+    const input = [pair('v2', 1), pair('v1', 10), pair('v1', 2)]
+    const versionOf = (entry: { version: string; revision?: number }): string => `${entry.version}@${entry.revision}`
+
+    const cached = buildCachedComparisons(input as VersionsComparison[]).cachedComparisons
+    expect(cached.map(versionOf)).toEqual(['v1@2', 'v1@10', 'v2@1'])
+    expect(cached.map(versionOf))
+      .toEqual(buildComparisonsIndex(input as VersionsComparisonDto[]).comparisons.map(versionOf))
+  })
+
+  // A pair reaches one row in the host's store, so its operation and DDL comparisons owe it one entry. The
+  // build cannot produce that input today — a cache hit skips the DDL comparison entirely — but the file is
+  // a contract, and the contract is one entry per pair whatever produced it.
+  it('should record a pair once when both of its comparisons are cached', () => {
+    const pair = {
+      packageId: 'p',
+      version: 'v1',
+      revision: 1,
+      previousVersionPackageId: 'p',
+      previousVersion: 'v0',
+      previousVersionRevision: 1,
+      fromCache: true,
+    }
+    const input = [
+      { ...pair, operationTypes: [] },
+      { ...pair, contractsChangesSummary: {} },
+    ] as unknown as Array<VersionsComparison | DdlComparison>
+
+    const { cachedComparisons } = buildCachedComparisons(input)
+    expect(cachedComparisons).toHaveLength(1)
+    // the pair identity and nothing else: the comparison it came from carries the changelog
+    expect(Object.keys(cachedComparisons[0]).sort()).toEqual([
+      'packageId', 'previousVersion', 'previousVersionPackageId', 'previousVersionRevision', 'revision', 'version',
+    ])
+  })
+
+  // comparison-notifications.json must order pairs by the same six-part key comparisons.json uses, or the
+  // two files list the same pairs differently.
+  // before: p/v2@1, p/v1@10, p/v1@2 → after: p/v1@2, p/v1@10, p/v2@1
+  it('should sort comparison notifications by the full pair key, revisions included', () => {
+    const pair = (version: string, revision: number): VersionsComparison =>
+      ({
+        packageId: 'p',
+        version,
+        revision,
+        previousVersionPackageId: 'p',
+        previousVersion: 'v0',
+        previousVersionRevision: 1,
+        fromCache: false,
+        notifications: [{ category: ANY_CATEGORY, severity: MESSAGE_SEVERITY.Error, message: 'x' }],
+      }) as unknown as VersionsComparison
+
+    const out = buildComparisonNotifications([pair('v2', 1), pair('v1', 10), pair('v1', 2)])
+    expect(out.comparisons.map(entry => `${entry.version}@${entry.revision}`)).toEqual(['v1@2', 'v1@10', 'v2@1'])
+  })
+
+  // and within an entry the messages carry the canonical notification order
+  it('should sort the notifications inside a comparison entry', () => {
+    const message = (severity: number, text: string): unknown =>
+      ({ category: ANY_CATEGORY, severity, message: text })
+    const pair = {
+      packageId: 'p',
+      version: 'v1',
+      previousVersionPackageId: 'p',
+      previousVersion: 'v0',
+      fromCache: false,
+      notifications: [
+        message(MESSAGE_SEVERITY.Warning, 'zzz'),
+        message(MESSAGE_SEVERITY.Warning, 'aaa'),
+        message(MESSAGE_SEVERITY.Error, 'mmm'),
+      ],
+    } as unknown as VersionsComparison
+
+    expect(buildComparisonNotifications([pair]).comparisons[0].notifications.map(({ message }) => message))
+      .toEqual(['mmm', 'aaa', 'zzz'])
   })
 
   // Ids with separator-like chars order by code unit (`-` 0x2D < `.` 0x2E < `_` 0x5F). The encoded key

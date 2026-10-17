@@ -13,6 +13,8 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/package'
+    messages:
+      - $ref: '#/channels/package/messages/packageUpdated'
 components:
   messages:
     PackageUpdated:

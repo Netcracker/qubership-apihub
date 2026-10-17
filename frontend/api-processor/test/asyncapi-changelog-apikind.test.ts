@@ -1,11 +1,7 @@
 import {
   buildChangelogFromContent,
-  changesSummaryMatcher,
-  generateAsyncApiSpec,
-  generateAsyncApiTwoChannelsSpec,
-  generateAsyncApiTwoMessagesSpec,
-  generateAsyncApiTwoOperationsSpec,
   customScopeElementContext,
+  expectChangesSummary,
 } from './helpers'
 import {
   API_KIND_SPECIFICATION_EXTENSION,
@@ -17,10 +13,14 @@ import {
   BREAKING_CHANGE_TYPE,
   isNoBwcLike,
   RISKY_CHANGE_TYPE,
+  stringifyYaml,
   UNCLASSIFIED_CHANGE_TYPE,
 } from '../src'
 import { createAsyncApiKindValueAt } from '../src/components/compare/async.api-kind'
 import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
+
+// these tests assert nothing about validity, and validation compiles the AsyncAPI schema anew for each document
+jest.mock('../src/apitypes/async/async.validation', () => ({ validateAsyncApiDocument: async () => undefined }))
 
 const BWC = APIHUB_API_COMPATIBILITY_KIND_BWC
 const NO_BWC = APIHUB_API_COMPATIBILITY_KIND_NO_BWC
@@ -64,6 +64,82 @@ function buildExpected(changeType: typeof BREAKING | typeof RISKY, unclassified:
     ...(unclassified > 0 && { [UNCLASSIFIED_CHANGE_TYPE]: unclassified }),
   }
 }
+
+// each generator puts the api kinds where its scenario removes or changes something; the verdict tables below
+// depend on that placement
+
+interface ApiKinds {
+  channelApiKind?: ApiKindValue
+  operationApiKind?: ApiKindValue
+}
+
+const withApiKind = <T extends object>(node: T, apiKind: ApiKindValue): T =>
+  (apiKind ? { ...node, [API_KIND_SPECIFICATION_EXTENSION]: apiKind } : node)
+
+const channelObject = (name: string, messages: string[], apiKind?: ApiKindValue): object => withApiKind({
+  address: name,
+  messages: Object.fromEntries(messages.map(message => [message, { $ref: `#/components/messages/${message}` }])),
+}, apiKind)
+
+const operationObject = (channelName: string, messages: string[], apiKind?: ApiKindValue): object => withApiKind({
+  action: 'send',
+  channel: { $ref: `#/channels/${channelName}` },
+  messages: messages.map(message => ({ $ref: `#/channels/${channelName}/messages/${message}` })),
+}, apiKind)
+
+const messageObject = (property: string, type = 'number'): object =>
+  ({ payload: { type: 'object', properties: { [property]: { type } } } })
+
+const asyncApiSpec = (
+  channels: Record<string, object>,
+  operations: Record<string, object>,
+  messages: Record<string, object>,
+): string => stringifyYaml({
+  asyncapi: '3.0.0',
+  info: { title: 'Test', version: '1.0.0' },
+  channels,
+  operations,
+  components: { messages },
+})
+
+/** One channel, one operation and one message; the kinds sit on `channel1` and `operation1`. */
+const generateAsyncApiSpec = (
+  { payloadType = 'number', channelApiKind, operationApiKind }: ApiKinds & { payloadType?: string } = {},
+): string => asyncApiSpec(
+  { channel1: channelObject('channel1', ['message1'], channelApiKind) },
+  { operation1: operationObject('channel1', ['message1'], operationApiKind) },
+  { message1: messageObject('userId', payloadType) },
+)
+
+/** Two operations on one channel; the kinds sit on the shared `channel1` and on `operation2`, the one removed. */
+const generateAsyncApiTwoOperationsSpec = ({ channelApiKind, operationApiKind }: ApiKinds): string => asyncApiSpec(
+  { channel1: channelObject('channel1', ['message1', 'message2'], channelApiKind) },
+  {
+    operation1: operationObject('channel1', ['message1']),
+    operation2: operationObject('channel1', ['message2'], operationApiKind),
+  },
+  { message1: messageObject('userId'), message2: messageObject('orderId') },
+)
+
+/** One operation sending two messages; the kinds sit on `channel1` and `operation1`, which lose `message2`. */
+const generateAsyncApiTwoMessagesSpec = ({ channelApiKind, operationApiKind }: ApiKinds): string => asyncApiSpec(
+  { channel1: channelObject('channel1', ['message1', 'message2'], channelApiKind) },
+  { operation1: operationObject('channel1', ['message1', 'message2'], operationApiKind) },
+  { message1: messageObject('userId'), message2: messageObject('orderId') },
+)
+
+/** Two channels, one operation each; the kinds sit on `channel2` and `operation2`, the ones removed. */
+const generateAsyncApiTwoChannelsSpec = ({ channelApiKind, operationApiKind }: ApiKinds): string => asyncApiSpec(
+  {
+    channel1: channelObject('channel1', ['message1']),
+    channel2: channelObject('channel2', ['message2'], channelApiKind),
+  },
+  {
+    operation1: operationObject('channel1', ['message1']),
+    operation2: operationObject('channel2', ['message2'], operationApiKind),
+  },
+  { message1: messageObject('userId'), message2: messageObject('orderId') },
+)
 
 describe('AsyncAPI api kind scope element', () => {
 
@@ -379,12 +455,12 @@ describe('AsyncAPI changelog api-kind tests', () => {
       async (beforeCh, beforeOp, afterCh, expectedType, unclassified) => {
         // Guard: verify that the hardcoded ER in the table matches the computed value
         expect(expectedType).toBe(expectedRemoveType(beforeCh, beforeOp))
-        const beforeYaml = generateAsyncApiTwoOperationsSpec(beforeCh, beforeOp)
-        const afterYaml = generateAsyncApiSpec('number', afterCh)
+        const beforeYaml = generateAsyncApiTwoOperationsSpec({ channelApiKind: beforeCh, operationApiKind: beforeOp })
+        const afterYaml = generateAsyncApiSpec({ channelApiKind: afterCh })
         const packageId = `asyncapi-apikind-remove-operation/channel-${beforeCh}-${afterCh}-operation-${beforeOp}`
 
-        const result = await buildChangelogFromContent(packageId, beforeYaml, afterYaml)
-        expect(result).toEqual(changesSummaryMatcher(buildExpected(expectedType, unclassified), ASYNCAPI_API_TYPE))
+        const result = await buildChangelogFromContent(packageId, { before: beforeYaml, after: afterYaml })
+        expectChangesSummary(result, buildExpected(expectedType, unclassified), ASYNCAPI_API_TYPE)
       },
     )
   })
@@ -419,12 +495,15 @@ describe('AsyncAPI changelog api-kind tests', () => {
         // Guard: verify that the hardcoded ER in the table matches the computed value
         expect(expectedType).toBe(expectedRemoveType(beforeChannel, beforeOperation))
 
-        const beforeYaml = generateAsyncApiTwoChannelsSpec(beforeChannel, beforeOperation)
+        const beforeYaml = generateAsyncApiTwoChannelsSpec({
+          channelApiKind: beforeChannel,
+          operationApiKind: beforeOperation,
+        })
         const afterYaml = generateAsyncApiSpec()
         const packageId = `asyncapi-apikind-changelog-remove-channel/channel-${beforeChannel}-operation-${beforeOperation}`
 
-        const result = await buildChangelogFromContent(packageId, beforeYaml, afterYaml)
-        expect(result).toEqual(changesSummaryMatcher(buildExpected(expectedType, unclassified), ASYNCAPI_API_TYPE))
+        const result = await buildChangelogFromContent(packageId, { before: beforeYaml, after: afterYaml })
+        expectChangesSummary(result, buildExpected(expectedType, unclassified), ASYNCAPI_API_TYPE)
       },
     )
   })
@@ -599,12 +678,12 @@ describe('AsyncAPI changelog api-kind tests', () => {
         // Guard: verify that the hardcoded ER in the table matches the computed value
         expect(expectedType).toBe(expectedRemoveType(beforeCh, beforeOp))
 
-        const beforeYaml = generateAsyncApiTwoMessagesSpec(beforeCh, beforeOp)
-        const afterYaml = generateAsyncApiSpec('number', afterCh, afterOp)
+        const beforeYaml = generateAsyncApiTwoMessagesSpec({ channelApiKind: beforeCh, operationApiKind: beforeOp })
+        const afterYaml = generateAsyncApiSpec({ channelApiKind: afterCh, operationApiKind: afterOp })
         const packageId = `asyncapi-apikind-changelog-remove-message/channel-${beforeCh}-${afterCh}-operation-${beforeOp}-${afterOp}`
 
-        const result = await buildChangelogFromContent(packageId, beforeYaml, afterYaml)
-        expect(result).toEqual(changesSummaryMatcher(buildExpected(expectedType, unclassified), ASYNCAPI_API_TYPE))
+        const result = await buildChangelogFromContent(packageId, { before: beforeYaml, after: afterYaml })
+        expectChangesSummary(result, buildExpected(expectedType, unclassified), ASYNCAPI_API_TYPE)
       },
     )
   })
@@ -739,12 +818,16 @@ describe('AsyncAPI changelog api-kind tests', () => {
         // Guard: verify that the hardcoded ER in the table matches the computed value
         expect(expectedType).toBe(expectedModifyType(beforeChannel, beforeOperation, afterChannel, afterOperation))
 
-        const beforeYaml = generateAsyncApiSpec('number', beforeChannel, beforeOperation)
-        const afterYaml = generateAsyncApiSpec('string', afterChannel, afterOperation)
+        const beforeYaml = generateAsyncApiSpec({ channelApiKind: beforeChannel, operationApiKind: beforeOperation })
+        const afterYaml = generateAsyncApiSpec({
+          payloadType: 'string',
+          channelApiKind: afterChannel,
+          operationApiKind: afterOperation,
+        })
         const packageId = `asyncapi-apikind-changelog/channel-${beforeChannel}-${afterChannel}-operation-${beforeOperation}-${afterOperation}`
 
-        const result = await buildChangelogFromContent(packageId, beforeYaml, afterYaml)
-        expect(result).toEqual(changesSummaryMatcher(buildExpected(expectedType, unclassified), ASYNCAPI_API_TYPE))
+        const result = await buildChangelogFromContent(packageId, { before: beforeYaml, after: afterYaml })
+        expectChangesSummary(result, buildExpected(expectedType, unclassified), ASYNCAPI_API_TYPE)
       },
     )
   })

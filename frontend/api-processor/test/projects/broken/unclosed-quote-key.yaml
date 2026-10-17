@@ -1,0 +1,8 @@
+# No API header on purpose: no API parser claims the file, so the fallback parser is the one that fails
+title: A document with no API header
+properties:
+  schemas:
+    patternProperties:
+        '^[a-zA-Z0-9\.\-_
+]+$':
+          type: object

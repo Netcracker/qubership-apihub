@@ -43,8 +43,10 @@ export interface BuildResultDto {
   comparisons: VersionsComparisonDto[]
   ddlComparisons: DdlComparison[]
   notifications: NotificationMessage[]
+  comparisonNotifications: NotificationMessage[]
   documents: Map<string, VersionDocument>
   exportDocuments: ExportDocument[]
+  /** Keyed by `operationKey({ apiType, operationId })`: an operationId is unique only within an api type. */
   operations: Map<string, ApiOperation>
   merged?: VersionDocument
   mcpEntities: McpEntityIndex
@@ -55,9 +57,11 @@ export interface BuildResult {
   config: PackageConfig
   comparisons: VersionsComparison[]
   notifications: NotificationMessage[]
+  comparisonNotifications: NotificationMessage[]
   documents: Map<string, VersionDocument>
   exportDocuments: ExportDocument[]
   exportFileName?: string
+  /** Keyed by `operationKey({ apiType, operationId })`: an operationId is unique only within an api type. */
   operations: Map<string, ApiOperation>
   merged?: VersionDocument
   mcpEntities: McpEntityIndex
@@ -114,6 +118,9 @@ export interface BuildFileResult<T = any> {
   file: BuildConfigFile
   document: VersionDocument<T>
   builder?: ApiBuilder
+  // the document's own source file, kept because `buildFiles` reports its parse problems only once
+  // `publish` is settled
+  parsedFile?: SourceFile
 }
 
 

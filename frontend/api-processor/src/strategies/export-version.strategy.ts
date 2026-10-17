@@ -141,13 +141,17 @@ async function transformDocuments(
       const { createExportDocument } = apiBuilders.find(({ types }) => types.includes(document.type)) || unknownApiBuilder
       const file = await rawDocumentResolver(versionWithRevision, packageId, document.slug)
 
+      const text = await file.text()
+
       // TODO: Temporary workaround: AsyncAPI documents currently lack per-format export options, so force JSON output.
-      const filename = isAsyncApiDocument(document) ? `${getDocumentTitle(file.name)}.${FILE_FORMAT_JSON}` : file.name
+      // a document published without a model is stored as the file it was read from, and keeps that file's name
+      const isJsonDump = isAsyncApiDocument(document) && text.trimStart().startsWith('{')
+      const filename = isJsonDump ? `${getDocumentTitle(file.name)}.${FILE_FORMAT_JSON}` : file.name
 
       return (
         (await createExportDocument?.(
           filename,
-          await file.text(),
+          text,
           format,
           packageName,
           version,

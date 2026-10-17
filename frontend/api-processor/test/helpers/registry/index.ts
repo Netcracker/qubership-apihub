@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-export * from './apihub'
 export * from './local'
-export { registryFs, loadFileAsStringFromRegistry } from './fs'
+export { VERSIONS_PATH } from './utils'
+export { loadFileAsStringFromRegistry, loadJsonFromRegistry, registryFs } from './fs'

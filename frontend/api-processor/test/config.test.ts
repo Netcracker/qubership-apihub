@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import { Editor, LocalRegistry } from './helpers'
-
-const basicPackage = LocalRegistry.openPackage('basic')
+import { ANY_REST_SPEC, contentEditor, Editor, operationOf } from './helpers'
 
 describe('Config validation', () => {
   describe('Config output', () => {
@@ -24,7 +22,7 @@ describe('Config validation', () => {
       const tags = ['tag1', 'tag2']
       const title = 'Title for /pets and method get'
 
-      const editor = await Editor.openProject('basic')
+      const editor = await Editor.openProject('config')
       await editor.run({version: 'v1'})
 
       await editor.updateJsonFile('openapi.json', (data) => {
@@ -35,7 +33,7 @@ describe('Config validation', () => {
 
       const result = await editor.update(editor.config, 'openapi.json')
 
-      expect(result.operations.get('api-pets-get')?.tags.join()).toEqual(tags.join())
+      expect(operationOf(result, 'api-pets-get').tags.join()).toEqual(tags.join())
 
       expect(Array.from(result.operations.values()).map(({ metadata }) => metadata)).toEqual(
         expect.toIncludeSameMembers([
@@ -49,7 +47,7 @@ describe('Config validation', () => {
 
   describe('Config input', () => {
     test('no set packageId field', async () => {
-      const editor = await Editor.openProject('basic', basicPackage)
+      const editor = contentEditor({ packageId: 'config/no-package-id', version: 'v100' }, { 'rest.json': ANY_REST_SPEC })
       await expect(
         editor.run({packageId: undefined, version: 'v3'}),
       ).rejects.toThrow('builder config: packageId required')
@@ -57,14 +55,15 @@ describe('Config validation', () => {
     })
 
     test('no set version field', async () => {
-      const editor = await Editor.openProject('basic', basicPackage)
+      const editor = contentEditor({ packageId: 'config/no-version', version: 'v100' }, { 'rest.json': ANY_REST_SPEC })
       await expect(
         editor.run({version: undefined}),
       ).rejects.toThrow('builder config: version required')
     })
 
     test('fileId is empty', async () => {
-      const editor = await Editor.openProject('basic', basicPackage)
+      // the editor refuses a listed id it holds no content for; the build skips the empty id, so this is never read
+      const editor = contentEditor({ packageId: 'config/empty-file-id', version: 'v100' }, { '': 'unread' })
       const result = await editor.run({version: 'v3', files: [{fileId: '', publish: true, labels: []}]})
 
       expect(result.documents.size).toBe(0)

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { buildPackage, DEFAULT_PROJECTS_PATH, loadFileAsString, VERSIONS_PATH, loadFileAsStringFromRegistry } from './helpers'
+import { buildPackageFromConfigJson, DEFAULT_PROJECTS_PATH, loadFileAsString, VERSIONS_PATH, loadFileAsStringFromRegistry } from './helpers'
 import { ApiOperation, PACKAGE, PackageOperations, VersionDocument } from '../src'
 
 const DOCUMENT_FILE_NAME = 'spec'
@@ -40,7 +40,7 @@ describe('Version Internal Documents tests', () => {
 
     it('should not calculate serialized document without publish flag', async () => {
       const packageId = 'version-internal-documents/oas-no-publish'
-      const result = await buildPackage(packageId)
+      const result = await buildPackageFromConfigJson(packageId)
 
       const [document] = Array.from(result.documents.values())
 
@@ -49,7 +49,7 @@ describe('Version Internal Documents tests', () => {
 
     it('should not calculate serialized document without operations', async () => {
       const packageId = 'version-internal-documents/oas-without-operations'
-      const result = await buildPackage(packageId)
+      const result = await buildPackageFromConfigJson(packageId)
 
       const [document] = Array.from(result.documents.values())
 
@@ -73,16 +73,20 @@ describe('Version Internal Documents tests', () => {
 
   async function runPreProcessedBuildDocumentsTests(packageId: string, files: string[]): Promise<void> {
     test('should documents have internalDocumentId', async () => {
-      const result = await buildPackage(packageId)
+      const result = await buildPackageFromConfigJson(packageId)
       const documents: VersionDocument[] = Array.from(result.documents.values())
+      expect(documents).toHaveLength(files.length)
       Array.from(documents).forEach((document, i) => {
         expect(document).toHaveProperty(['versionInternalDocument', 'versionDocumentId'], files[i])
       })
     })
 
     test('should operations have versionInternalDocumentId', async () => {
-      const result = await buildPackage(packageId)
+      const result = await buildPackageFromConfigJson(packageId)
       const operations: ApiOperation[] = Array.from(result.operations.values())
+      // the loop below pairs operations[i] with files[i], and the third test in this block pins the
+      // same count from the serialized side, so the strong form is the one that matches the claim
+      expect(operations).toHaveLength(files.length)
       Array.from(operations).forEach((operation, i) => {
         expect(operation).toHaveProperty('versionInternalDocumentId')
         expect(operation['versionInternalDocumentId']).toEqual(files[i])
@@ -90,7 +94,7 @@ describe('Version Internal Documents tests', () => {
     })
 
     test('should operations from file have versionInternalDocumentId', async () => {
-      const result = await buildPackage(packageId)
+      const result = await buildPackageFromConfigJson(packageId)
       const operationsFile = await loadFileAsStringFromRegistry(
         VERSIONS_PATH,
         `${packageId}/v1`,
@@ -121,13 +125,14 @@ describe('Version Internal Documents tests', () => {
     })
 
     test('should internal document had serialize data', async () => {
-      const result = await buildPackage(packageId)
+      const result = await buildPackageFromConfigJson(packageId)
       const documents: VersionDocument[] = Array.from(result.documents.values())
       const versionSpecs = await Promise.all(
         files.map(item =>
-          loadFileAsString(DEFAULT_PROJECTS_PATH, packageId, `version-${item}.json`),
+          loadFileAsString(DEFAULT_PROJECTS_PATH, packageId, `${item}-result.json`),
         ),
       )
+      expect(documents).toHaveLength(files.length)
       documents.forEach((document, i) => {
         expect(JSON.parse(document.versionInternalDocument.serializedVersionDocument as string)).toEqual(JSON.parse(versionSpecs[i] as string))
       })

@@ -1,0 +1,8 @@
+# `healthy.yaml` with a slug that sorts before the AsyncAPI pair: the claimant order must not decide the
+# severity of a collision the three of them share
+openapi: 3.0.1
+info: { title: api, version: 1.0.0 }
+paths:
+  /pets:
+    get:
+      responses: { '200': { description: ok } }

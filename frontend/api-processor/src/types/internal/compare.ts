@@ -18,6 +18,7 @@ import { Diff, DiffType } from '@netcracker/qubership-apihub-api-diff'
 import {
   BuildConfig,
   ChangeSummary,
+  DdlContractsChangesSummary,
   DiffTypeDto,
   ImpactedOperationSummary,
   OperationType,
@@ -38,7 +39,7 @@ import {
 } from './apiBuilder'
 import { ObjectHashCache } from '../../utils/hashes'
 import { VersionValidationLevel } from './builder'
-import { ApihubApiCompatibilityKind, DDL_CONTRACT_TYPE } from '../../consts'
+import { ApihubApiCompatibilityKind } from '../../consts'
 
 export type ChangeKind = keyof ChangeSummary
 
@@ -97,13 +98,18 @@ export interface VersionsComparison<T extends DiffType | DiffTypeDto = DiffType>
   previousVersion: VersionId
   previousVersionPackageId: PackageId
   previousVersionRevision?: number
+  // Internal only
   fromCache: boolean
   operationTypes: OperationType<T>[]
   data?: OperationChanges[]
   comparisonInternalDocuments: ComparisonInternalDocument[]
+  // everything raised while comparing this version pair, and nothing else
+  readonly notifications: NotificationMessage[]
+  // derived from `notifications`, except for a cached comparison, which carries the resolver's value
+  hasErrors?: boolean
 }
 
-export interface VersionsComparisonDto extends Omit<VersionsComparison<DiffTypeDto>, 'data' | 'comparisonInternalDocuments'> {
+export interface VersionsComparisonDto extends Omit<VersionsComparison<DiffTypeDto>, 'data' | 'comparisonInternalDocuments' | 'notifications' | 'fromCache'> {
   data?: OperationChangesDto[]
 }
 
@@ -146,19 +152,6 @@ export interface DdlChangesDto {
   changes?: ChangeMessage<DiffTypeDto>[]
 }
 
-// The change summary for one contract type within a comparison: the version-level change totals plus the
-// number of impacted entities. Held under its contract-type key in `contractsChangesSummary`.
-export interface DdlContractChangesSummary<T extends DiffType | DiffTypeDto = DiffType> {
-  changesSummary: ChangeSummary<T>
-  numberOfImpactedEntities: ChangeSummary<T>
-}
-
-// Per-contract change summaries, keyed by contract type (`ddl` — the only one today). Replaces the former
-// `contractTypes` array; since the key already carries the contract type, the redundant `contractType`
-// field is dropped. Empty (`{}`) when the comparison has no DDL content.
-export type DdlContractsChangesSummary<T extends DiffType | DiffTypeDto = DiffType> =
-  Partial<Record<typeof DDL_CONTRACT_TYPE, DdlContractChangesSummary<T>>>
-
 export interface DdlComparison<T extends DiffType | DiffTypeDto = DiffType> {
   comparisonFileId?: string
   packageId: PackageId
@@ -167,13 +160,18 @@ export interface DdlComparison<T extends DiffType | DiffTypeDto = DiffType> {
   previousVersion: VersionId
   previousVersionPackageId: PackageId
   previousVersionRevision?: number
+  // Internal only
   fromCache: boolean
   contractsChangesSummary: DdlContractsChangesSummary<T>
   data?: DdlChanges[]
   comparisonInternalDocuments: ComparisonInternalDocument[]
+  // everything raised while comparing this version pair, and nothing else
+  readonly notifications: NotificationMessage[]
+  // derived from `notifications`, except for a cached comparison, which carries the resolver's value
+  hasErrors?: boolean
 }
 
-export interface DdlComparisonDto extends Omit<DdlComparison<DiffTypeDto>, 'data' | 'comparisonInternalDocuments'> {
+export interface DdlComparisonDto extends Omit<DdlComparison<DiffTypeDto>, 'data' | 'comparisonInternalDocuments' | 'notifications' | 'fromCache'> {
   data?: DdlChangesDto[]
 }
 
@@ -188,7 +186,7 @@ export interface CompareContext {
   apiBuilders: ApiBuilder[]
   batchSize?: number
   config: BuildConfig
-  notifications: NotificationMessage[]
+  readonly notifications: NotificationMessage[]
   versionResolver: _VersionResolver
   versionOperationsResolver: VersionOperationsResolver
   versionReferencesResolver: _VersionReferencesResolver
@@ -198,6 +196,9 @@ export interface CompareContext {
   rawDocumentResolver: _RawDocumentResolver
   normalizedSpecFragmentsHashCache: ObjectHashCache
   apiProcessorVersionValidationLevel?: VersionValidationLevel
+  // Narrows the context to one version pair: the returned context, and every resolver on it, writes to the
+  // pair's own notification array. A comparison-phase message always belongs to exactly one pair.
+  forPair: (notifications: NotificationMessage[]) => CompareContext
 }
 
 export type BuilderVersionInfo = {

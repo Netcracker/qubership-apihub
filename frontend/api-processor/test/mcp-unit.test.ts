@@ -19,13 +19,13 @@ import { buildMcpEntities, calculateMcpEntityId, wrapEntityData } from '../src/a
 import { buildMcpDocument } from '../src/apitypes/mcp/mcp.document'
 import { MCP_DOCUMENT_TYPE } from '../src/apitypes/mcp/mcp.consts'
 import { mcpBuilder } from '../src/apitypes/mcp'
-import { createDuplicateMcpEntityHandler, createMcpBuildContext, processMcpDocument, validateMcpCapabilities, validateMcpProtocolVersion } from '../src/components/mcp'
+import { createMcpBuildContext, processMcpDocument, reportMcpCollisionsOf, validateMcpCapabilities, validateMcpProtocolVersion } from '../src/components/mcp'
 import { getMcpSchemaValidator, isSupportedMcpVersion, SUPPORTED_MCP_VERSIONS } from '../src/apitypes/mcp/mcp.validation'
 import { BuilderContext, BuildConfigFile, FILE_KIND, TextFile, VersionDocument } from '../src/types'
 import { ParsedMcpData } from '../src/apitypes/mcp/mcp.types'
 import { MCP_KIND, McpKind } from '../src/types/package/mcp'
 import { NotificationMessage } from '../src/types/package'
-import { FILE_FORMAT_JSON, MESSAGE_SEVERITY } from '../src/consts'
+import { FILE_FORMAT_JSON, MESSAGE_CATEGORY, MESSAGE_SEVERITY } from '../src/consts'
 
 const makeBlob = (obj: unknown): Blob => new Blob([JSON.stringify(obj)], { type: 'application/json' })
 
@@ -37,7 +37,16 @@ const makeMcpDocument = (
   data: ParsedMcpData,
   extra: { mcpEndpoint?: string; publish?: boolean } = {},
 ): VersionDocument<ParsedMcpData> =>
-  ({ fileId, type, data, format: 'json', publish: extra.publish, metadata: { mcpEndpoint: extra.mcpEndpoint } }) as unknown as VersionDocument<ParsedMcpData>
+  // slug is what entities are attributed by, so the stub carries one the way createFileSlugs would
+  ({
+    fileId,
+    slug: fileId.replace(/\.[^/.]+$/, ''),
+    type,
+    data,
+    format: 'json',
+    publish: extra.publish,
+    metadata: { mcpEndpoint: extra.mcpEndpoint },
+  }) as unknown as VersionDocument<ParsedMcpData>
 
 describe('MCP parser', () => {
   test('should detect init shape (capabilities + serverInfo) as init', async () => {
@@ -299,25 +308,44 @@ describe('MCP cross-document duplicate detection', () => {
     originalDocument: { tools: [{ name: 'search', inputSchema: { type: 'object' } }] },
   })
 
-  const process = (ctx: ReturnType<typeof createMcpBuildContext>, fileId: string, endpoint: string): void =>
-    processMcpDocument(
-      { fileId, metadata: { mcpEndpoint: endpoint } },
-      makeMcpDocument(fileId, MCP_DOCUMENT_TYPE.MCP_TOOLS, toolDoc()),
-      mcpBuilder,
-      ctx,
-      createDuplicateMcpEntityHandler(),
-    )
+  // the build path: each document is processed on its own, and the collisions are graded afterwards over
+  // every document's claims
+  const process = (
+    ctx: ReturnType<typeof createMcpBuildContext>,
+    documents: VersionDocument[],
+    fileId: string,
+    endpoint: string,
+    notifications: NotificationMessage[] = [],
+  ): void => {
+    const document = makeMcpDocument(fileId, MCP_DOCUMENT_TYPE.MCP_TOOLS, toolDoc())
+    processMcpDocument({ fileId, metadata: { mcpEndpoint: endpoint } }, document, mcpBuilder, ctx, notifications)
+    documents.push(document)
+  }
 
-  test('should throw when the same entity ID appears in two documents', () => {
+  test('should report against both documents when the same entity ID appears in two', () => {
     const ctx = createMcpBuildContext()
-    process(ctx, 'tools-a.json', '/api/v1')
-    expect(() => process(ctx, 'tools-b.json', '/api/v1')).toThrow(/found in different documents/)
+    const documents: VersionDocument[] = []
+    const notifications: NotificationMessage[] = []
+    process(ctx, documents, 'tools-a.json', '/api/v1', notifications)
+    process(ctx, documents, 'tools-b.json', '/api/v1', notifications)
+    reportMcpCollisionsOf(documents, notifications)
+
+    expect(notifications).toHaveLength(2)
+    expect(notifications.map(({ documentId }) => documentId).sort()).toEqual(['tools-a', 'tools-b'])
+    expect(notifications.every(({ message }) => /found in different documents/.test(message))).toBe(true)
+    // the lexicographically smallest documentId keeps the entity
+    expect([...ctx.mcpEntities.values()][0].documentId).toBe('tools-a')
   })
 
-  test('should not throw when the same name lives under different endpoints', () => {
+  test('should not report when the same name lives under different endpoints', () => {
     const ctx = createMcpBuildContext()
-    process(ctx, 'tools-a.json', '/api/v1')
-    expect(() => process(ctx, 'tools-b.json', '/api/v2')).not.toThrow()
+    const documents: VersionDocument[] = []
+    const notifications: NotificationMessage[] = []
+    process(ctx, documents, 'tools-a.json', '/api/v1', notifications)
+    process(ctx, documents, 'tools-b.json', '/api/v2', notifications)
+    reportMcpCollisionsOf(documents, notifications)
+
+    expect(notifications).toEqual([])
   })
 })
 
@@ -399,12 +427,16 @@ describe('validateMcpProtocolVersion (build-level)', () => {
 
   // gap 2: a tools list whose every item is dropped in extraction (zero entities) must still be
   // schema-validated, so a non-conforming item (here: missing required name/inputSchema) breaks publish
-  test('should throw when an all-invalid tools list yields a non-conforming document', () => {
+  test('should report when an all-invalid tools list yields a non-conforming document', () => {
     const documents = buildDocuments([
       { fileId: 'init.json', type: MCP_DOCUMENT_TYPE.MCP_INIT, parsed: initDoc() },
       { fileId: 'tools.json', type: MCP_DOCUMENT_TYPE.MCP_TOOLS, parsed: toolsDoc([{ description: 'no name' }]) },
     ])
-    expect(() => validateMcpProtocolVersion(documents)).toThrow(/does not conform/)
+    const notifications: NotificationMessage[] = []
+    validateMcpProtocolVersion(documents, notifications)
+    expect(notifications).not.toHaveLength(0)
+    expect(notifications.every(({ category }) => category === MESSAGE_CATEGORY.McpDocumentSchema)).toBe(true)
+    expect(notifications.some(({ message }) => /does not conform/.test(message))).toBe(true)
   })
 
   test('should pass a structurally-empty tools list', () => {
@@ -412,7 +444,9 @@ describe('validateMcpProtocolVersion (build-level)', () => {
       { fileId: 'init.json', type: MCP_DOCUMENT_TYPE.MCP_INIT, parsed: initDoc() },
       { fileId: 'tools.json', type: MCP_DOCUMENT_TYPE.MCP_TOOLS, parsed: toolsDoc([]) },
     ])
-    expect(() => validateMcpProtocolVersion(documents)).not.toThrow()
+    const notifications: NotificationMessage[] = []
+    validateMcpProtocolVersion(documents, notifications)
+    expect(notifications).toEqual([])
   })
 
   test('should pass a valid init + tools set', () => {
@@ -420,14 +454,20 @@ describe('validateMcpProtocolVersion (build-level)', () => {
       { fileId: 'init.json', type: MCP_DOCUMENT_TYPE.MCP_INIT, parsed: initDoc() },
       { fileId: 'tools.json', type: MCP_DOCUMENT_TYPE.MCP_TOOLS, parsed: toolsDoc([{ name: 't', inputSchema: { type: 'object' } }]) },
     ])
-    expect(() => validateMcpProtocolVersion(documents)).not.toThrow()
+    const notifications: NotificationMessage[] = []
+    validateMcpProtocolVersion(documents, notifications)
+    expect(notifications).toEqual([])
   })
 
-  test('should throw on an unsupported protocolVersion', () => {
+  test('should report an unsupported protocolVersion', () => {
     const documents = buildDocuments([
       { fileId: 'init.json', type: MCP_DOCUMENT_TYPE.MCP_INIT, parsed: initDoc({ protocolVersion: '1999-01-01' }) },
     ])
-    expect(() => validateMcpProtocolVersion(documents)).toThrow(/unsupported protocolVersion/)
+    const notifications: NotificationMessage[] = []
+    validateMcpProtocolVersion(documents, notifications)
+    expect(notifications).not.toHaveLength(0)
+    expect(notifications.every(({ category }) => category === MESSAGE_CATEGORY.McpDocumentSchema)).toBe(true)
+    expect(notifications.some(({ message }) => /unsupported protocolVersion/.test(message))).toBe(true)
   })
 
   // gap 1: the endpoint requirement is enforced for every published MCP document, regardless of entities
@@ -438,7 +478,11 @@ describe('validateMcpProtocolVersion (build-level)', () => {
         toolsDoc([{ name: 't', inputSchema: { type: 'object' } }]), {},
       )],
     ])
-    expect(() => validateMcpProtocolVersion(documents)).toThrow(/missing required metadata.mcpEndpoint/)
+    const notifications: NotificationMessage[] = []
+    validateMcpProtocolVersion(documents, notifications)
+    expect(notifications).not.toHaveLength(0)
+    expect(notifications.every(({ category }) => category === MESSAGE_CATEGORY.McpDocumentSchema)).toBe(true)
+    expect(notifications.some(({ message }) => /missing required metadata.mcpEndpoint/.test(message))).toBe(true)
   })
 
   test('should skip documents that are not published', () => {
@@ -446,7 +490,9 @@ describe('validateMcpProtocolVersion (build-level)', () => {
     const documents = buildDocuments([
       { fileId: 'tools.json', type: MCP_DOCUMENT_TYPE.MCP_TOOLS, parsed: toolsDoc([{ description: 'no name' }]), publish: false },
     ])
-    expect(() => validateMcpProtocolVersion(documents)).not.toThrow()
+    const notifications: NotificationMessage[] = []
+    validateMcpProtocolVersion(documents, notifications)
+    expect(notifications).toEqual([])
   })
 })
 

@@ -1,9 +1,0 @@
-{
-  "resources": [
-    {
-      "uri": "file:///search-index",
-      "name": "search",
-      "description": "Search resource"
-    }
-  ]
-}

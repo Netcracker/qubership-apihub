@@ -20,16 +20,14 @@ import {
   APIHUB_API_COMPATIBILITY_KIND_NO_BWC,
   ApihubApiCompatibilityKind,
   BREAKING_CHANGE_TYPE,
-  BUILD_TYPE,
   BuildResult,
   GRAPHQL_API_TYPE,
   isNoBwcLike,
   Labels,
   RISKY_CHANGE_TYPE,
-  VERSION_STATUS,
 } from '../src'
 import { createGraphqlApiKindValueAt } from '../src/components/compare/graphql.api-kind'
-import { changesSummaryMatcher, Editor, LocalRegistry, customScopeElementContext } from './helpers'
+import { changelogEditor, customScopeElementContext, expectChangesSummary, LocalRegistry } from './helpers'
 import { takeIfDefined } from '../src/utils'
 
 const BWC = APIHUB_API_COMPATIBILITY_KIND_BWC
@@ -199,14 +197,7 @@ describe('GraphQL changelog api-kind (e2e)', () => {
       },
     )
 
-    const editor = new Editor(packageId, {
-      packageId,
-      version: 'v2',
-      previousVersionPackageId: packageId,
-      previousVersion: 'v1',
-      status: VERSION_STATUS.RELEASE,
-      buildType: BUILD_TYPE.CHANGELOG,
-    }, {}, portal)
+    const editor = changelogEditor(packageId, portal)
 
     return editor.run()
   }
@@ -234,7 +225,7 @@ describe('GraphQL changelog api-kind (e2e)', () => {
         `gql-apikind-modify/${prev}--${curr}`, MODIFY_BEFORE, MODIFY_AFTER,
         { prevFileLabels: [LABEL[prev]], currFileLabels: [LABEL[curr]] },
       )
-      expect(result).toEqual(changesSummaryMatcher({ [expectedType]: 1 }, GRAPHQL_API_TYPE))
+      expectChangesSummary(result, { [expectedType]: 1 }, GRAPHQL_API_TYPE)
     })
   })
 
@@ -247,7 +238,7 @@ describe('GraphQL changelog api-kind (e2e)', () => {
         `gql-apikind-remove/${prev}--${curr}`, REMOVE_BEFORE, REMOVE_AFTER,
         { prevFileLabels: [LABEL[prev]], currFileLabels: [LABEL[curr]] },
       )
-      expect(result).toEqual(changesSummaryMatcher({ [expectedType]: 1 }, GRAPHQL_API_TYPE))
+      expectChangesSummary(result, { [expectedType]: 1 }, GRAPHQL_API_TYPE)
     })
   })
 
@@ -260,14 +251,14 @@ describe('GraphQL changelog api-kind (e2e)', () => {
       const result = await buildGqlChangelogApiKind(
         'gql-apikind-modify-vlabel/curr-nb', MODIFY_BEFORE, MODIFY_AFTER, { currVersionLabels: NB },
       )
-      expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
+      expectChangesSummary(result, { [RISKY_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE)
     })
 
     test('should classify removal as risky when the previous version label is no-BWC', async () => {
       const result = await buildGqlChangelogApiKind(
         'gql-apikind-remove-vlabel/prev-nb', REMOVE_BEFORE, REMOVE_AFTER, { prevVersionLabels: NB },
       )
-      expect(result).toEqual(changesSummaryMatcher({ [RISKY_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE))
+      expectChangesSummary(result, { [RISKY_CHANGE_TYPE]: 1 }, GRAPHQL_API_TYPE)
     })
   })
 })

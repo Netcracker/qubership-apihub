@@ -38,7 +38,7 @@ import {
 export function toChangeMessage(
   diff: ArrayType<Diff[]>,
   normalizedSpecFragmentsHashCache: ObjectHashCache,
-  logError: (message: string) => void,
+  reportProblem: (message: string) => void,
 ): ChangeMessage<DiffTypeDto> {
   const newDiff: ArrayType<Diff<DiffTypeDto>[]> = {
     ...diff,
@@ -65,10 +65,10 @@ export function toChangeMessage(
       } = newDiff
       const afterValueNormalized = (newDiff as Record<symbol, unknown>)[AFTER_VALUE_NORMALIZED_PROPERTY]
       if (afterValueNormalized === undefined) {
-        logError('Add diff has undefined afterValueNormalized')
+        reportProblem('Add diff has undefined afterValueNormalized')
       }
       if (isEmpty(afterDeclarationPaths)) {
-        logError('Add diff has empty afterDeclarationPaths')
+        reportProblem('Add diff has empty afterDeclarationPaths')
       }
       return {
         ...commonChangeProps,
@@ -83,10 +83,10 @@ export function toChangeMessage(
       } = newDiff
       const beforeValueNormalized = (newDiff as Record<symbol, unknown>)[BEFORE_VALUE_NORMALIZED_PROPERTY]
       if (beforeValueNormalized === undefined) {
-        logError('Remove diff has undefined beforeValueNormalized')
+        reportProblem('Remove diff has undefined beforeValueNormalized')
       }
       if (isEmpty(beforeDeclarationPaths)) {
-        logError('Remove diff has empty beforeDeclarationPaths')
+        reportProblem('Remove diff has empty beforeDeclarationPaths')
       }
       return {
         ...commonChangeProps,
@@ -103,10 +103,10 @@ export function toChangeMessage(
       const beforeValueNormalized = (newDiff as Record<symbol, unknown>)[BEFORE_VALUE_NORMALIZED_PROPERTY]
       const afterValueNormalized = (newDiff as Record<symbol, unknown>)[AFTER_VALUE_NORMALIZED_PROPERTY]
       if (afterValueNormalized === undefined && beforeValueNormalized === undefined) {
-        logError('Replace diff has undefined beforeValueNormalized and afterValueNormalized')
+        reportProblem('Replace diff has undefined beforeValueNormalized and afterValueNormalized')
       }
       if (isEmpty(afterDeclarationPaths) && isEmpty(beforeDeclarationPaths)) {
-        logError('Replace diff has empty afterDeclarationPaths and beforeDeclarationPaths')
+        reportProblem('Replace diff has empty afterDeclarationPaths and beforeDeclarationPaths')
       }
       return {
         ...commonChangeProps,
@@ -125,10 +125,10 @@ export function toChangeMessage(
         afterKey,
       } = newDiff
       if (isEmpty(afterDeclarationPaths) && isEmpty(beforeDeclarationPaths)) {
-        logError('Rename diff has empty afterDeclarationPaths and beforeDeclarationPaths')
+        reportProblem('Rename diff has empty afterDeclarationPaths and beforeDeclarationPaths')
       }
       if (afterKey === undefined && beforeKey === undefined) {
-        logError('Rename diff has empty beforeKey and afterKey')
+        reportProblem('Rename diff has empty beforeKey and afterKey')
       }
       return {
         ...commonChangeProps,
@@ -147,14 +147,14 @@ export function toOperationChangesDto({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   impactedSummary,
   ...rest
-}: OperationChanges, normalizedSpecFragmentsHashCache: ObjectHashCache, logError: (message: string) => void): OperationChangesDto {
+}: OperationChanges, normalizedSpecFragmentsHashCache: ObjectHashCache, reportProblem: (message: string) => void): OperationChangesDto {
   return {
     ...rest,
     changeSummary: replacePropertyInChangesSummary<DiffType, DiffTypeDto>(rest.changeSummary, {
       origin: risky,
       override: SEMI_BREAKING_CHANGE_TYPE,
     }),
-    changes: diffs?.map(diff => toChangeMessage(diff, normalizedSpecFragmentsHashCache, logError)),
+    changes: diffs?.map(diff => toChangeMessage(diff, normalizedSpecFragmentsHashCache, reportProblem)),
   }
 }
 
@@ -162,15 +162,21 @@ export function toVersionsComparisonDto({
   data,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   comparisonInternalDocuments,
+  // the pair's messages ship in comparison-notifications.json, not inside the comparison row
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  notifications,
+  // and its reuse ships in cached-comparisons.json, recorded once for the pair rather than per comparison
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  fromCache,
   ...rest
-}: VersionsComparison, normalizedSpecFragmentsHashCache: ObjectHashCache, logError: (message: string) => void): VersionsComparisonDto {
+}: VersionsComparison, normalizedSpecFragmentsHashCache: ObjectHashCache, reportProblem: (message: string) => void): VersionsComparisonDto {
   return {
     ...rest,
     operationTypes: convertDtoFieldOperationTypes<DiffType, DiffTypeDto>(rest.operationTypes, {
       origin: risky,
       override: SEMI_BREAKING_CHANGE_TYPE,
     }),
-    data: data?.map(data => toOperationChangesDto(data, normalizedSpecFragmentsHashCache, logError)),
+    data: data?.map(data => toOperationChangesDto(data, normalizedSpecFragmentsHashCache, reportProblem)),
   }
 }
 
@@ -185,7 +191,7 @@ export function toDdlChangesDto(
     comparisonInternalDocumentId,
   }: DdlChanges,
   normalizedSpecFragmentsHashCache: ObjectHashCache,
-  logError: (message: string) => void,
+  reportProblem: (message: string) => void,
 ): DdlChangesDto {
   return {
     // group each side's id + descriptor; the side is present when its table exists and
@@ -201,7 +207,7 @@ export function toDdlChangesDto(
       override: SEMI_BREAKING_CHANGE_TYPE,
     }),
     ...(comparisonInternalDocumentId !== undefined && { comparisonInternalDocumentId }),
-    changes: diffs?.map(diff => toChangeMessage(diff, normalizedSpecFragmentsHashCache, logError)),
+    changes: diffs?.map(diff => toChangeMessage(diff, normalizedSpecFragmentsHashCache, reportProblem)),
   }
 }
 
@@ -209,15 +215,19 @@ export function toDdlComparisonDto({
   data,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   comparisonInternalDocuments,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  notifications,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  fromCache,
   ...rest
-}: DdlComparison, normalizedSpecFragmentsHashCache: ObjectHashCache, logError: (message: string) => void): DdlComparisonDto {
+}: DdlComparison, normalizedSpecFragmentsHashCache: ObjectHashCache, reportProblem: (message: string) => void): DdlComparisonDto {
   return {
     ...rest,
     contractsChangesSummary: convertDtoFieldContractsChangesSummary<DiffType, DiffTypeDto>(rest.contractsChangesSummary, {
       origin: risky,
       override: SEMI_BREAKING_CHANGE_TYPE,
     }),
-    data: data?.map(entry => toDdlChangesDto(entry, normalizedSpecFragmentsHashCache, logError)),
+    data: data?.map(entry => toDdlChangesDto(entry, normalizedSpecFragmentsHashCache, reportProblem)),
   }
 }
 

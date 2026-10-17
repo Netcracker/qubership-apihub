@@ -74,3 +74,12 @@ export function difference(array1: string[], array2: string[]): string[] {
   const set2 = new Set(array2)
   return [...new Set(array1.filter(x => !set2.has(x)))]
 }
+
+// Empty and refill `target` instead of rebinding it: contexts capture the array reference, so replacing the
+// array would leave them writing to a discarded one. The identity check is not an optimization — the build
+// result is handed the builder's own array, and clearing it would leave nothing to refill it with.
+export const replaceInPlace = <T>(target: T[], source: readonly T[]): void => {
+  if (target === source) { return }
+  target.length = 0
+  target.push(...source)
+}

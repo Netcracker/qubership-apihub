@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
+export * from './accessors'
+export * from './assertions'
+export * from './builders'
+export * from './documents'
 export * from './editor'
+export * from './factories'
+export * from './files'
+export * from './fixtures'
 export * from './matchers'
 export * from './registry'
-export * from './utils'
-export * from './asyncapi-spec-generator'

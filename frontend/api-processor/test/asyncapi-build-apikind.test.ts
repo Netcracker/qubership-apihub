@@ -7,8 +7,10 @@ import {
   Labels,
 } from '../src'
 import { calculateAsyncApiKind } from '../src/apitypes/async/async.utils'
-import { buildPackageWithDefaultConfig } from './helpers'
+import { buildPackageFromSpecYaml } from './helpers'
 
+// these tests assert nothing about validity, and validation compiles the AsyncAPI schema anew for each document
+jest.mock('../src/apitypes/async/async.validation', () => ({ validateAsyncApiDocument: async () => undefined }))
 
 describe('AsyncAPI apiKind calculation', () => {
   describe('Unit tests', () => {
@@ -57,7 +59,7 @@ describe('AsyncAPI apiKind calculation', () => {
     let operationNoBWCChannelNoBWC: ApiOperation
 
     beforeAll(async () => {
-      const result = await buildPackageWithDefaultConfig('asyncapi/api-kind/base')
+      const result = await buildPackageFromSpecYaml('asyncapi/api-kind/base')
       ;[
         operationNoKindChannelNoKind,
         operationNoKindChannelBWC,
@@ -109,7 +111,7 @@ describe('AsyncAPI apiKind calculation', () => {
   })
 
   it('should apply channel apiKind to all operations using that channel', async () => {
-    const result = await buildPackageWithDefaultConfig('asyncapi/api-kind/share-channel-api-kind')
+    const result = await buildPackageFromSpecYaml('asyncapi/api-kind/share-channel-api-kind')
     const operations = Array.from(result.operations.values())
 
     expect(operations.every(operation => operation.apiKind === APIHUB_API_COMPATIBILITY_KIND_NO_BWC)).toBeTrue()
@@ -121,21 +123,21 @@ describe('AsyncAPI apiKind calculation', () => {
       { source: 'version label', versionLabels: ['apihub/x-api-kind: no-BWC'] },
       { source: 'xApiKind', xApiKind: 'no-BWC' },
     ])('should apply a no-BWC $source to an operation with no api kind of its own', async ({ fileLabels, versionLabels, xApiKind }) => {
-      const result = await buildPackageWithDefaultConfig('asyncapi/api-kind/base', fileLabels, versionLabels, xApiKind)
+      const result = await buildPackageFromSpecYaml('asyncapi/api-kind/base', fileLabels, versionLabels, xApiKind)
       const [operationNoKindChannelNoKind] = Array.from(result.operations.values())
 
       expect(operationNoKindChannelNoKind.apiKind).toEqual(APIHUB_API_COMPATIBILITY_KIND_NO_BWC)
     })
 
     it('should not override channel no-BWC apiKind with a BWC file label', async () => {
-      const result = await buildPackageWithDefaultConfig('asyncapi/api-kind/base', ['apihub/x-api-kind: BWC'])
+      const result = await buildPackageFromSpecYaml('asyncapi/api-kind/base', ['apihub/x-api-kind: BWC'])
       const [, , operationNoKindChannelNoBWC] = Array.from(result.operations.values())
 
       expect(operationNoKindChannelNoBWC.apiKind).toEqual(APIHUB_API_COMPATIBILITY_KIND_NO_BWC)
     })
 
     it('should not override operation BWC apiKind with a no-BWC file label', async () => {
-      const result = await buildPackageWithDefaultConfig('asyncapi/api-kind/base', ['apihub/x-api-kind: no-BWC'])
+      const result = await buildPackageFromSpecYaml('asyncapi/api-kind/base', ['apihub/x-api-kind: no-BWC'])
       const [, , , operationBWCChannelNoKind] = Array.from(result.operations.values())
 
       expect(operationBWCChannelNoKind.apiKind).toEqual(APIHUB_API_COMPATIBILITY_KIND_BWC)

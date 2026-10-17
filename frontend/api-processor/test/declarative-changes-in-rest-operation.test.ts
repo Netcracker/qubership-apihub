@@ -14,61 +14,59 @@
  * limitations under the License.
  */
 
-import { buildChangelogPackage, changesSummaryMatcher, numberOfImpactedOperationsMatcher } from './helpers'
+import { buildChangelogPackage, expectChangeCounts } from './helpers'
 import { BREAKING_CHANGE_TYPE, NON_BREAKING_CHANGE_TYPE } from '../src'
 
 describe('Number of declarative changes in rest operation test', () => {
   test('Multiple use of one schema in response', async () => {
     const result = await buildChangelogPackage('declarative-changes-in-rest-operation/case1')
-    expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+    expectChangeCounts(result, { changes: { [BREAKING_CHANGE_TYPE]: 1 }, impacted: { [BREAKING_CHANGE_TYPE]: 1 } })
   })
 
   test('Multiple use of one schema in another schema which is used in response', async () => {
     const result = await buildChangelogPackage('declarative-changes-in-rest-operation/case2')
-    expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+    expectChangeCounts(result, { changes: { [BREAKING_CHANGE_TYPE]: 1 }, impacted: { [BREAKING_CHANGE_TYPE]: 1 } })
   })
 
   test('Multiple use of one schema in another schema which is used in response pathItems', async () => {
     const result = await buildChangelogPackage('declarative-changes-in-rest-operation/case8')
-    expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+    expectChangeCounts(result, { changes: { [BREAKING_CHANGE_TYPE]: 1 }, impacted: { [BREAKING_CHANGE_TYPE]: 1 } })
   })
 
   test('Multiple use of one schema in both request and response (different severity)', async () => {
     const result = await buildChangelogPackage('declarative-changes-in-rest-operation/case3')
-    expect(result).toEqual(changesSummaryMatcher({
-      [BREAKING_CHANGE_TYPE]: 1,
-      [NON_BREAKING_CHANGE_TYPE]: 1,
-    }))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({
-      [BREAKING_CHANGE_TYPE]: 1,
-      [NON_BREAKING_CHANGE_TYPE]: 1,
-    }))
+    expectChangeCounts(result, {
+      changes: {
+        [BREAKING_CHANGE_TYPE]: 1,
+        [NON_BREAKING_CHANGE_TYPE]: 1,
+      },
+      impacted: {
+        [BREAKING_CHANGE_TYPE]: 1,
+        [NON_BREAKING_CHANGE_TYPE]: 1,
+      },
+    })
   })
 
   test('Multiple use of one schema in both request and response (same severity)', async () => {
     const result = await buildChangelogPackage('declarative-changes-in-rest-operation/case4')
-    expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 2 }))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+    expectChangeCounts(result, { changes: { [BREAKING_CHANGE_TYPE]: 2 }, impacted: { [BREAKING_CHANGE_TYPE]: 1 } })
   })
 
   test('Circular reference in response', async () => {
     const result = await buildChangelogPackage('declarative-changes-in-rest-operation/case5')
-    expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+    expectChangeCounts(result, { changes: { [BREAKING_CHANGE_TYPE]: 1 }, impacted: { [BREAKING_CHANGE_TYPE]: 1 } })
   })
 
   test('Circular reference in response and request', async () => {
     const result = await buildChangelogPackage('declarative-changes-in-rest-operation/case6')
-    expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 2 }))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+    expectChangeCounts(result, { changes: { [BREAKING_CHANGE_TYPE]: 2 }, impacted: { [BREAKING_CHANGE_TYPE]: 1 } })
   })
 
   test('Remove params from response, which have refs to components', async () => {
     const result = await buildChangelogPackage('declarative-changes-in-rest-operation/case7')
-    expect(result).toEqual(changesSummaryMatcher({ [NON_BREAKING_CHANGE_TYPE]: 3 }))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }))
+    expectChangeCounts(result, {
+      changes: { [NON_BREAKING_CHANGE_TYPE]: 3 },
+      impacted: { [NON_BREAKING_CHANGE_TYPE]: 1 },
+    })
   })
 })

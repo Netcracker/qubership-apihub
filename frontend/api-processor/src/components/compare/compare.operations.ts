@@ -93,6 +93,8 @@ export async function compareVersionsOperations(
   const [previousVersion, previousRevision] = getSplittedVersionKey(prevVersionData?.version)
 
   return {
+    // the pair's own array: `forPair` narrowed the context before this comparison started
+    notifications: ctx.notifications,
     packageId: currVersionData?.packageId ?? '',
     version: currentVersion,
     revision: currentRevision,

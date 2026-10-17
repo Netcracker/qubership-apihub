@@ -5,7 +5,7 @@ import {
   VersionCache,
   VersionValidationLevel,
 } from '../src'
-import { buildChangelogWithVersionOverrides } from './helpers'
+import { buildWithApiProcessorVersionOverrides } from './helpers'
 
 let mockVersion = '1.0.0'
 jest.mock('../package.json', () => ({
@@ -93,30 +93,30 @@ describe('validateApiProcessorVersion e2e through builder', () => {
   const packageId = 'test-version-validation-e2e'
 
   it('should pass in strict mode when versions match', async () => {
-    await expect(buildChangelogWithVersionOverrides(packageId, {}, VERSION_VALIDATION_LEVEL.STRICT)).resolves.toBeDefined()
+    await expect(buildWithApiProcessorVersionOverrides(packageId, {}, { validationLevel: VERSION_VALIDATION_LEVEL.STRICT })).resolves.toBeDefined()
   })
 
   it('should throw in strict mode when previous version has different minor', async () => {
-    await expect(buildChangelogWithVersionOverrides(packageId, { v1: '1.1.0' }, VERSION_VALIDATION_LEVEL.STRICT))
+    await expect(buildWithApiProcessorVersionOverrides(packageId, { v1: '1.1.0' }, { validationLevel: VERSION_VALIDATION_LEVEL.STRICT }))
       .rejects.toThrow(/previous version was built using an outdated api-processor/)
   })
 
   it('should throw in strict mode when current version has different patch', async () => {
-    await expect(buildChangelogWithVersionOverrides(packageId, { v2: '1.0.1' }, VERSION_VALIDATION_LEVEL.STRICT))
+    await expect(buildWithApiProcessorVersionOverrides(packageId, { v2: '1.0.1' }, { validationLevel: VERSION_VALIDATION_LEVEL.STRICT }))
       .rejects.toThrow(/current version was built using an outdated api-processor/)
   })
 
   it('should pass in major mode when only minor differs', async () => {
-    await expect(buildChangelogWithVersionOverrides(packageId, { v1: '1.1.0' }, VERSION_VALIDATION_LEVEL.MAJOR)).resolves.toBeDefined()
+    await expect(buildWithApiProcessorVersionOverrides(packageId, { v1: '1.1.0' }, { validationLevel: VERSION_VALIDATION_LEVEL.MAJOR })).resolves.toBeDefined()
   })
 
   it('should throw in major mode when previous version has different major', async () => {
-    await expect(buildChangelogWithVersionOverrides(packageId, { v1: '2.0.0' }, VERSION_VALIDATION_LEVEL.MAJOR))
+    await expect(buildWithApiProcessorVersionOverrides(packageId, { v1: '2.0.0' }, { validationLevel: VERSION_VALIDATION_LEVEL.MAJOR }))
       .rejects.toThrow(/previous version was built using an outdated api-processor/)
   })
 
   it('should throw in major mode when current version has different major', async () => {
-    await expect(buildChangelogWithVersionOverrides(packageId, { v2: '2.0.0' }, VERSION_VALIDATION_LEVEL.MAJOR))
+    await expect(buildWithApiProcessorVersionOverrides(packageId, { v2: '2.0.0' }, { validationLevel: VERSION_VALIDATION_LEVEL.MAJOR }))
       .rejects.toThrow(/current version was built using an outdated api-processor/)
   })
 })
@@ -125,19 +125,19 @@ describe('Builder version info in changelog result', () => {
   const packageId = 'test-builder-version-info'
 
   it('should set previousVersionBuilderVersion when previous version has different apiProcessorVersion', async () => {
-    const result = await buildChangelogWithVersionOverrides(packageId, { v1: '1.1.0' })
+    const result = await buildWithApiProcessorVersionOverrides(packageId, { v1: '1.1.0' })
     expect(result.config.previousVersionBuilderVersion).toBe('1.1.0')
     expect(result.config).not.toHaveProperty('currentVersionBuilderVersion')
   })
 
   it('should set currentVersionBuilderVersion when current version has different apiProcessorVersion', async () => {
-    const result = await buildChangelogWithVersionOverrides(packageId, { v2: '1.1.0' })
+    const result = await buildWithApiProcessorVersionOverrides(packageId, { v2: '1.1.0' })
     expect(result.config).not.toHaveProperty('previousVersionBuilderVersion')
     expect(result.config.currentVersionBuilderVersion).toBe('1.1.0')
   })
 
   it('should set both when both versions differ from current', async () => {
-    const result = await buildChangelogWithVersionOverrides(packageId, {
+    const result = await buildWithApiProcessorVersionOverrides(packageId, {
       v1: '1.1.0',
       v2: '1.0.1',
     })
@@ -146,7 +146,7 @@ describe('Builder version info in changelog result', () => {
   })
 
   it('should not set either when both versions match current apiProcessorVersion', async () => {
-    const result = await buildChangelogWithVersionOverrides(packageId, {})
+    const result = await buildWithApiProcessorVersionOverrides(packageId, {})
     expect(result.config).not.toHaveProperty('previousVersionBuilderVersion')
     expect(result.config).not.toHaveProperty('currentVersionBuilderVersion')
   })

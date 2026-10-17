@@ -1,6 +1,6 @@
 {
   "extends": "../tsconfig.json",
   "files": [
-    "./.jest/jasmin.d.ts"
+    "./jasmin.d.ts"
   ]
 }

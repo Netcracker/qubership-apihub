@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { loadConfig, loadFile } from '../utils'
+import { assertFixtureFilesExist, loadConfig, loadFile } from '../files'
 import { registryFs, loadFileFromRegistry, loadFileAsStringFromRegistry, loadConfigFromRegistry, registryPath } from './fs'
 import {
   ApiOperation,
@@ -25,7 +25,6 @@ import {
   ChangeSummary,
   EMPTY_CHANGE_SUMMARY,
   FILE_FORMAT,
-  graphqlApiBuilder,
   isAsyncApiDocument,
   isDdlDocument,
   isGraphqlDocument,
@@ -56,10 +55,7 @@ import {
   ResolvedVersion,
   ResolvedVersionDocument,
   ResolvedVersionDocuments,
-  restApiBuilder,
   REVISION_DELIMITER,
-  textApiBuilder,
-  unknownApiBuilder,
   VERSION_STATUS,
   VersionDocument,
   VersionDocuments,
@@ -80,13 +76,12 @@ import {
 } from '../../../src/utils'
 import { IRegistry } from './types'
 import { calculateTotalChangeSummary } from '../../../src/components/compare'
-import path from 'path'
 import { ResolvedPackage } from '../../../src/types/external/package'
 import { version as apiProcessorVersion } from '../../../package.json'
 
 export const DEFAULT_PROJECTS_PATH = 'test/projects'
 
-export interface PackageVersionCache {
+interface PackageVersionCache {
   config: BuildConfig
   documents: Map<string, VersionDocument>
   operations: Map<string, ApiOperation>
@@ -95,9 +90,8 @@ export interface PackageVersionCache {
 }
 
 export class LocalRegistry implements IRegistry {
-  versions = new Map<string, PackageVersionCache>()
+  private versions = new Map<string, PackageVersionCache>()
   private versionLoadingPromises = new Map<string, Promise<PackageVersionCache | undefined>>()
-  apiBuilders = [restApiBuilder, graphqlApiBuilder, textApiBuilder, unknownApiBuilder]
 
   get versionResolvers(): Omit<BuilderResolvers, 'fileResolver'> {
     return {
@@ -113,9 +107,9 @@ export class LocalRegistry implements IRegistry {
     }
   }
 
-  groupToOperationIdsMap: Record<string, string[]> = {}
+  private groupToOperationIdsMap: Record<string, string[]> = {}
   projectsDir: string = DEFAULT_PROJECTS_PATH
-  shareabilityOverrides: Map<string, string> = new Map()
+  private shareabilityOverrides: Map<string, string> = new Map()
 
   constructor(public packageId: string, groupOperationIds: Record<string, string[]> = {}, projectsDir: string = DEFAULT_PROJECTS_PATH) {
     this.groupToOperationIdsMap = groupOperationIds
@@ -473,6 +467,7 @@ export class LocalRegistry implements IRegistry {
       status: VERSION_STATUS.RELEASE,
       ...publishParams,
     }
+    await assertFixtureFilesExist(this.projectsDir, projectId, (versionConfig.files ?? []).map(({ fileId }) => fileId))
     const builder = new PackageVersionBuilder(versionConfig, {
       resolvers: {
         fileResolver: (fileId) => loadFile(this.projectsDir, projectId, fileId),
@@ -499,7 +494,7 @@ export class LocalRegistry implements IRegistry {
       resolvers: {
         fileResolver: (fileId) => {
           const content = fileContents[fileId]
-          if (!content) { return Promise.resolve(null) }
+          if (content === undefined) { return Promise.resolve(null) }
           return Promise.resolve(new File([content], fileId, { type: 'application/yaml' }))
         },
         ...this.versionResolvers,
@@ -638,28 +633,6 @@ export class LocalRegistry implements IRegistry {
 
     this.versions.set(compositeKey, versionCache)
     return versionCache
-  }
-
-  async updateVersionFile(version: string, slug: string, modifier: (data: any) => any): Promise<void> {
-    const versionCache = await this.getVersion(this.packageId, version)
-
-    const document = versionCache?.documents.get(slug)
-    if (!document) {
-      return
-    }
-
-    versionCache?.documents.set(slug, { ...document, data: modifier(document.data) })
-  }
-
-  async updateVersionOperation(version: string, operationId: string, modifier: (data: ApiOperation) => ApiOperation): Promise<void> {
-    const versionCache = await this.getVersion(this.packageId, version)
-
-    const operation = versionCache?.operations.get(operationId)
-    if (!operation) {
-      return
-    }
-
-    versionCache?.operations.set(operationId, modifier(operation))
   }
 }
 

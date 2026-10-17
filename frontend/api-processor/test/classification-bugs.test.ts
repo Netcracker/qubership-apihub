@@ -17,8 +17,9 @@
 import { Editor, expectSummariesMatchDiffs, LocalRegistry } from './helpers'
 import { ANNOTATION_CHANGE_TYPE, BREAKING_CHANGE_TYPE, BUILD_TYPE, NON_BREAKING_CHANGE_TYPE } from '../src'
 
-const packageId = 'classification-bugs'
-const classificationBugsPackage = LocalRegistry.openPackage(packageId)
+// a package per case: the versions of two cases would otherwise share the slugs `before` and `after`
+const FIXTURE_ROOT = 'classification-bugs'
+const classificationBugsPackage = LocalRegistry.openPackage(FIXTURE_ROOT)
 
 const REQUEST_V1_VERSION = 'request-v1'
 const REQUEST_V2_VERSION = 'request-v2'
@@ -36,100 +37,112 @@ const SERVERS_V2_VERSION = 'servers-v2'
 describe('Classification bugs test', () => {
   beforeAll(async () => {
     // Publish Request body versions
-    await classificationBugsPackage.publish(packageId, {
+    await classificationBugsPackage.publish(`${FIXTURE_ROOT}/request-additional-properties`, {
+      packageId: `${FIXTURE_ROOT}/request-additional-properties`,
       version: REQUEST_V1_VERSION,
       files: [{
-        fileId: 'request_additionalProperties_v1.json',
+        fileId: 'before.json',
         publish: true,
       }],
     })
-    await classificationBugsPackage.publish(packageId, {
+    await classificationBugsPackage.publish(`${FIXTURE_ROOT}/request-additional-properties`, {
+      packageId: `${FIXTURE_ROOT}/request-additional-properties`,
       version: REQUEST_V2_VERSION,
       files: [{
-        fileId: 'request_additionalProperties_v2.json',
+        fileId: 'after.json',
         publish: true,
       }],
     })
 
     // Publish Response versions
-    await classificationBugsPackage.publish(packageId, {
+    await classificationBugsPackage.publish(`${FIXTURE_ROOT}/response-additional-properties`, {
+      packageId: `${FIXTURE_ROOT}/response-additional-properties`,
       version: RESPONSE_V1_VERSION,
       files: [{
-        fileId: 'response_additionalProperties_v1.json',
+        fileId: 'before.json',
         publish: true,
       }],
     })
-    await classificationBugsPackage.publish(packageId, {
+    await classificationBugsPackage.publish(`${FIXTURE_ROOT}/response-additional-properties`, {
+      packageId: `${FIXTURE_ROOT}/response-additional-properties`,
       version: RESPONSE_V2_VERSION,
       files: [{
-        fileId: 'response_additionalProperties_v2.json',
+        fileId: 'after.json',
         publish: true,
       }],
     })
-    await classificationBugsPackage.publish(packageId, {
+    await classificationBugsPackage.publish(`${FIXTURE_ROOT}/response-4xx`, {
+      packageId: `${FIXTURE_ROOT}/response-4xx`,
       version: RESPONSE_4XX_V1_VERSION,
       files: [{
-        fileId: 'response_4xx_v1.json',
+        fileId: 'before.json',
         publish: true,
       }],
     })
-    await classificationBugsPackage.publish(packageId, {
+    await classificationBugsPackage.publish(`${FIXTURE_ROOT}/response-4xx`, {
+      packageId: `${FIXTURE_ROOT}/response-4xx`,
       version: RESPONSE_4XX_V2_VERSION,
       files: [{
-        fileId: 'response_4XX_v2.json',
+        fileId: 'after.json',
         publish: true,
       }],
     })
 
     // Publish Headers versions
-    await classificationBugsPackage.publish(packageId, {
+    await classificationBugsPackage.publish(`${FIXTURE_ROOT}/headers`, {
+      packageId: `${FIXTURE_ROOT}/headers`,
       version: HEADERS_V1_VERSION,
       files: [{
-        fileId: 'headers_v1.json',
+        fileId: 'before.json',
         publish: true,
       }],
     })
-    await classificationBugsPackage.publish(packageId, {
+    await classificationBugsPackage.publish(`${FIXTURE_ROOT}/headers`, {
+      packageId: `${FIXTURE_ROOT}/headers`,
       version: HEADERS_V2_VERSION,
       files: [{
-        fileId: 'headers_v2.json',
+        fileId: 'after.json',
         publish: true,
       }],
     })
-    await classificationBugsPackage.publish(packageId, {
+    await classificationBugsPackage.publish(`${FIXTURE_ROOT}/header-removed`, {
+      packageId: `${FIXTURE_ROOT}/header-removed`,
       version: HEADER_REMOVED_V1_VERSION,
       files: [{
-        fileId: 'header-removed_v1.json',
+        fileId: 'before.json',
         publish: true,
       }],
     })
-    await classificationBugsPackage.publish(packageId, {
+    await classificationBugsPackage.publish(`${FIXTURE_ROOT}/header-removed`, {
+      packageId: `${FIXTURE_ROOT}/header-removed`,
       version: HEADER_REMOVED_V2_VERSION,
       files: [{
-        fileId: 'header-removed_v2.json',
+        fileId: 'after.json',
         publish: true,
       }],
     })
 
     // Publish servers versions
-    await classificationBugsPackage.publish(packageId, {
+    await classificationBugsPackage.publish(`${FIXTURE_ROOT}/servers`, {
+      packageId: `${FIXTURE_ROOT}/servers`,
       version: SERVERS_V1_VERSION,
       files: [{
-        fileId: 'servers_v1.json',
+        fileId: 'before.json',
         publish: true,
       }],
     })
-    await classificationBugsPackage.publish(packageId, {
+    await classificationBugsPackage.publish(`${FIXTURE_ROOT}/servers`, {
+      packageId: `${FIXTURE_ROOT}/servers`,
       version: SERVERS_V2_VERSION,
       files: [{
-        fileId: 'servers_v2.json',
+        fileId: 'after.json',
         publish: true,
       }],
     })
   })
 
   test('[Response] Should be non-breaking if response code changed in case', async () => {
-    const editor = await Editor.openProject(packageId)
+    const editor = await Editor.openProject(`${FIXTURE_ROOT}/response-4xx`)
     const result = await editor.run({
       version: RESPONSE_4XX_V2_VERSION,
       previousVersion: RESPONSE_4XX_V1_VERSION,
@@ -142,7 +155,7 @@ describe('Classification bugs test', () => {
   })
 
   test('[Servers] Changing servers must be a non-breaking change', async () => {
-    const editor = await Editor.openProject(packageId)
+    const editor = await Editor.openProject(`${FIXTURE_ROOT}/servers`)
     const result = await editor.run({
       version: SERVERS_V2_VERSION,
       previousVersion: SERVERS_V1_VERSION,

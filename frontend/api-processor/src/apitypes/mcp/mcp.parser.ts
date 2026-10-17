@@ -112,7 +112,7 @@ function extractEntities(obj: Record<string, unknown>, docType: string): Extract
   return { entities, errors }
 }
 
-export const parseMcpFile = async (fileId: string, source: Blob): Promise<TextFile<ParsedMcpData> | undefined> => {
+export const parseMcpFile = async (fileId: string, source: Blob): Promise<TextFile<ParsedMcpData, McpParseError> | undefined> => {
   const extension = getFileExtension(fileId)
   if (extension !== FILE_FORMAT_JSON) {
     return undefined

@@ -1,6 +1,6 @@
 lockfile_version: '1'
-generated_at: '2026-07-30T14:14:04.898039+00:00'
-apm_version: 0.23.1
+generated_at: '2026-09-30T12:42:30.969775+00:00'
+apm_version: 0.24.0
 dependencies:
 - repo_url: Netcracker/qubership-apihub-ddlapi
   name: ddlapi-using
@@ -48,19 +48,29 @@ dependencies:
   content_hash: sha256:26f877265321714d07a41435817cac085f1d5aaa721b7258af4820ac0f7f0a6e
 - repo_url: _local/api-processor-authoring
   name: api-processor-authoring
-  version: 1.0.0
+  version: 1.1.0
   package_type: apm_package
   deployed_files:
-  - .agents/skills/api-processor-authoring
-  - .agents/skills/api-processor-authoring/SKILL.md
-  - .claude/rules/api-processor-authoring.md
-  - .claude/skills/api-processor-authoring
-  - .claude/skills/api-processor-authoring/SKILL.md
-  - .cursor/rules/api-processor-authoring.mdc
+  - .agents/skills/api-processor-build-result
+  - .agents/skills/api-processor-build-result/SKILL.md
+  - .agents/skills/api-processor-notifications
+  - .agents/skills/api-processor-notifications/SKILL.md
+  - .claude/rules/api-processor-build-result.md
+  - .claude/rules/api-processor-notifications.md
+  - .claude/skills/api-processor-build-result
+  - .claude/skills/api-processor-build-result/SKILL.md
+  - .claude/skills/api-processor-notifications
+  - .claude/skills/api-processor-notifications/SKILL.md
+  - .cursor/rules/api-processor-build-result.mdc
+  - .cursor/rules/api-processor-notifications.mdc
   deployed_file_hashes:
-    .agents/skills/api-processor-authoring/SKILL.md: sha256:43a0c19f6e49246ccb0f674508b2f6c77c2f77c546e995b7385717291eb68689
-    .claude/rules/api-processor-authoring.md: sha256:23ab79bdba8c9489f803a786cfe872979f9bfe37f324ab116d1c6bcbac869178
-    .claude/skills/api-processor-authoring/SKILL.md: sha256:43a0c19f6e49246ccb0f674508b2f6c77c2f77c546e995b7385717291eb68689
-    .cursor/rules/api-processor-authoring.mdc: sha256:7927344372310800fb378fe0202909a9b5a68e567a91e2509010f1f6fec482d3
+    .agents/skills/api-processor-build-result/SKILL.md: sha256:54f8aba3999ef32b3733d056f1d2e217ac565fd524357004acf410e2d2cadfc5
+    .agents/skills/api-processor-notifications/SKILL.md: sha256:181da70f2248e29e6059731f9c520b7b17fdaf7f3999173ce4367cb095c3aa56
+    .claude/rules/api-processor-build-result.md: sha256:410d4dec409e7852dbdcdb5f0943ada6024ff6ad9842274c4638a0d1cc4d0f82
+    .claude/rules/api-processor-notifications.md: sha256:5801970975a9677de47cf9f3163a98f523ac85469f50cbefa5668cc660d6e254
+    .claude/skills/api-processor-build-result/SKILL.md: sha256:54f8aba3999ef32b3733d056f1d2e217ac565fd524357004acf410e2d2cadfc5
+    .claude/skills/api-processor-notifications/SKILL.md: sha256:181da70f2248e29e6059731f9c520b7b17fdaf7f3999173ce4367cb095c3aa56
+    .cursor/rules/api-processor-build-result.mdc: sha256:aeacc9e4138d27f59879aaf024f5132d5944778c4dbd14b96a710ac5836ffd8e
+    .cursor/rules/api-processor-notifications.mdc: sha256:0c4e74cf88a623dab0bc5c07b3c9f100c8464cd3e23a6a3435e21acf45499427
   source: local
   local_path: ./agent-packages/api-processor-authoring

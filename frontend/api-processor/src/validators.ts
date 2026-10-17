@@ -28,6 +28,11 @@ export function validateConfig(config: BuildConfig): void {
   if (!filesCount && !refsCount && config.buildType === BUILD_TYPE.BUILD) {
     throw new Error('Incorrect config. Got no files and refs')
   }
+
+  // A changelog is the comparison and nothing else, so without a baseline there is nothing to compute.
+  if (config.buildType === BUILD_TYPE.CHANGELOG && !config.previousVersion) {
+    throw new Error('Incorrect config. A changelog build requires previousVersion')
+  }
 }
 
 export function validateApiProcessorVersion(

@@ -28,7 +28,8 @@ import {
   ExportFormat,
   VersionDocument,
 } from '../../types'
-import { FILE_FORMAT, FILE_FORMAT_HTML, FILE_FORMAT_JSON } from '../../consts'
+import { FILE_FORMAT, FILE_FORMAT_HTML, FILE_FORMAT_JSON, MESSAGE_CATEGORY } from '../../consts'
+import { DocumentBuildError } from '../../errors'
 import {
   createBundlingErrorHandler,
   createVersionInternalDocument,
@@ -70,7 +71,7 @@ export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (par
   const {
     data,
     dependencies,
-  } = await getBundledFileDataWithDependencies(fileId, ctx.parsedFileResolver, createBundlingErrorHandler(ctx, fileId))
+  } = await getBundledFileDataWithDependencies(fileId, ctx.parsedFileResolver, createBundlingErrorHandler(ctx, slug))
 
   let bundledFileData = data
 
@@ -81,7 +82,10 @@ export const buildRestDocument: DocumentBuilder<OpenAPIV3.Document> = async (par
       const { openapi } = await convertObj(<OpenAPIV2.Document>bundledFileData, { patch: true })
       bundledFileData = openapi
     } catch (e) {
-      throw new Error(`Cannot transform document '${slug}' from swagger to openapi 3.0`)
+      throw new DocumentBuildError(
+        `Cannot transform document '${slug}' from swagger to openapi 3.0`,
+        MESSAGE_CATEGORY.SwaggerConversion,
+      )
     }
   }
 

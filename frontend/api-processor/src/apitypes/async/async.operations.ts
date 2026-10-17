@@ -15,21 +15,13 @@
  */
 
 import { OperationsBuilder } from '../../types'
-import {
-  calculateAsyncOperationId,
-  createBundlingErrorHandler,
-  createSerializedInternalDocument,
-  DuplicateEntry,
-  findDuplicates,
-  isNotEmpty,
-  isObject,
-  removeComponents,
-} from '../../utils'
+import { calculateAsyncOperationId, createBundlingErrorHandler, createSerializedInternalDocument, DuplicateEntry, findDuplicates, isNotEmpty, isObject, removeComponents, reportItemBuildFailure } from '../../utils'
 import type * as TYPE from './async.types'
 import { AsyncOperationActionType } from './async.types'
 import { asyncFunction, normalizeAsyncApiToRefsDocument } from '../../utils/async'
 import { normalize, RefErrorType } from '@netcracker/qubership-apihub-api-unifier'
 import { ASYNC_EFFECTIVE_NORMALIZE_OPTIONS } from './async.consts'
+import { MESSAGE_CATEGORY, MESSAGE_SEVERITY } from '../../consts'
 import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
 import { buildAsyncApiOperation } from './async.operation'
 import { getAsyncChannelId, getAsyncMessageId } from './async.utils'
@@ -37,9 +29,9 @@ import { getAsyncChannelId, getAsyncMessageId } from './async.utils'
 type OperationInfo = { messageId: string; channelId: string; asyncOperationId: string }
 
 export const buildAsyncApiOperations: OperationsBuilder<AsyncAPIV3.AsyncAPIObject> = async (document, ctx) => {
-  const { data: documentData, fileId: documentFileId } = document
+  const { data: documentData, slug: documentSlug } = document
   const documentWithoutComponents = removeComponents(documentData)
-  const bundlingErrorHandler = createBundlingErrorHandler(ctx, documentFileId)
+  const bundlingErrorHandler = createBundlingErrorHandler(ctx, documentSlug)
 
   const { notifications, normalizedSpecFragmentsHashCache, config } = ctx
   const effectiveDocument = normalize(
@@ -84,35 +76,48 @@ export const buildAsyncApiOperations: OperationsBuilder<AsyncAPIV3.AsyncAPIObjec
       const messageId = getAsyncMessageId(message)
       const operationId = calculateAsyncOperationId(asyncOperationId, messageId)
 
-      if (!operationIdMap.has(operationId)) {
-        operationIdMap.set(operationId, [])
-      }
-      operationIdMap.get(operationId)!.push({ asyncOperationId, channelId, messageId})
-
       await asyncFunction(() => {
-        const builtOperation = buildAsyncApiOperation(
-          operationId,
-          messageId,
-          channelId,
-          asyncOperationId,
-          action,
-          channel,
-          message,
-          document,
-          effectiveDocument,
-          refsOnlyDocument,
-          notifications,
-          config,
-          normalizedSpecFragmentsHashCache,
-        )
-        apihubOperations.push(builtOperation)
+        // per operation: a failure omits this one and is reported against the document; the loop continues
+        try {
+          apihubOperations.push(buildAsyncApiOperation(
+            operationId,
+            messageId,
+            channelId,
+            asyncOperationId,
+            action,
+            channel,
+            message,
+            document,
+            effectiveDocument,
+            refsOnlyDocument,
+            notifications,
+            config,
+            normalizedSpecFragmentsHashCache,
+          ))
+          // after the build, so an operation that failed does not count towards `findDuplicates`
+          if (!operationIdMap.has(operationId)) {
+            operationIdMap.set(operationId, [])
+          }
+          operationIdMap.get(operationId)!.push({ asyncOperationId, channelId, messageId })
+        } catch (error) {
+          const what = `operation '${operationId}'`
+          reportItemBuildFailure(notifications, MESSAGE_CATEGORY.BuildOperations, document.slug,
+            error instanceof Error ? `Cannot build ${what}. ${error.message}` : `Cannot build ${what}`)
+        }
       })
     }
   }
 
+  // The collision is ours, not the document's: `operations` is a map, so no name repeats, but distinct names
+  // can still derive one id — `calculateAsyncOperationId` builds it from the operation key and the message id.
   const duplicates = findDuplicates(operationIdMap)
   if (isNotEmpty(duplicates)) {
-    throw createDuplicatesError(documentFileId, duplicates)
+    notifications.push({
+      category: MESSAGE_CATEGORY.AsyncDuplicateOperation,
+      severity: MESSAGE_SEVERITY.Error,
+      message: createDuplicatesError(documentSlug, duplicates).message,
+      documentId: documentSlug,
+    })
   }
 
   if (apihubOperations.length) {
@@ -122,7 +127,7 @@ export const buildAsyncApiOperations: OperationsBuilder<AsyncAPIV3.AsyncAPIObjec
   return apihubOperations
 }
 
-function createDuplicatesError(fileId: string, duplicates: DuplicateEntry<OperationInfo>[]): Error {
+function createDuplicatesError(documentId: string, duplicates: DuplicateEntry<OperationInfo>[]): Error {
   const duplicatesList = duplicates
     .map(({ operationId, operations }) => {
       const operationsList = operations
@@ -131,5 +136,5 @@ function createDuplicatesError(fileId: string, duplicates: DuplicateEntry<Operat
       return `- operationId '${operationId}': Found ${operations.length} operations: ${operationsList}`
     })
     .join('\n')
-  return new Error(`Duplicated operationIds found within document '${fileId}':\n${duplicatesList}`)
+  return new Error(`Duplicated operationIds found within document '${documentId}':\n${duplicatesList}`)
 }

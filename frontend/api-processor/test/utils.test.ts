@@ -88,20 +88,4 @@ describe('Utils', () => {
       expect(removeSecurityDuplicates(array)).toHaveLength(2)
     })
   })
-
-  describe('Unit tests for \'openApiDocumentMeta\' function', () => {
-    describe('Unit tests for \'getValueByPath\' function', () => {
-      const obj = {
-        a: {
-          b: [1, 2, 3],
-          c: {
-            d: 4,
-          },
-        },
-        e: {
-          $ref: '#/a/b/1',
-        },
-      }
-    })
-  })
 })

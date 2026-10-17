@@ -1,0 +1,8 @@
+{
+  "packageId": "changes/cross-package/previous-package",
+  "files": [
+    {
+      "fileId": "before.yaml"
+    }
+  ]
+}

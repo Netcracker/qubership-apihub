@@ -34,6 +34,8 @@ export interface PackageDocument {
   version?: string
 
   operationIds: OperationId[]
+  // true when at least one Error-severity build notification names this document's slug
+  hasErrors?: boolean
 
   // items should be passthrough from buildConfig.files
   metadata?: Record<string, unknown>

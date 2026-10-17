@@ -1,0 +1,14 @@
+openapi: 3.0.1
+info: { title: colliding, version: 1.0.0 }
+paths:
+  # contested with `healthy.yaml`, and built before the collision below is found
+  /pets:
+    get:
+      responses: { '200': { description: ok } }
+  # both slugify to `api-v1-resource-get`
+  /api/v1/resource:
+    get:
+      responses: { '200': { description: ok } }
+  /api-v1-resource:
+    get:
+      responses: { '200': { description: ok } }

@@ -52,6 +52,15 @@ export interface VersionDocument<T = any> extends ZippableDocument<T> {
   filename: string
   dependencies: string[]
   operationIds: OperationId[]
+  /**
+   * Every operation this document derived, winner or not, with the api type each was derived by.
+   *
+   * `reconcileOwnedIds` shrinks `operationIds` to what the document kept; this list is left whole, and is
+   * what `reportOperationCollisionsOf` grades a collision from.
+   */
+  operationClaims?: Array<{ operationId: OperationId; apiType: string }>
+  /** Every MCP entity this document derived, winner or not — the `operationClaims` twin. */
+  mcpEntityClaims?: McpEntityId[]
   //TODO: split typing, document can't have both operationIds and mcpEntityIds
   mcpEntityIds?: McpEntityId[]
   metadata: Record<string, unknown>

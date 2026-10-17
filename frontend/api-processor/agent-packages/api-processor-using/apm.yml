@@ -1,4 +1,4 @@
 name: api-processor-using
-version: 1.0.0
-description: How to consume the api-processor library — the light root vs /processor engine import boundary, so main-thread/shared code stays free of the DDL parser (WASM) that the build engine pulls in.
+version: 1.1.0
+description: How to consume the api-processor library — the light root vs /processor engine import boundary, so main-thread/shared code stays free of the DDL parser (WASM) that the build engine pulls in, and how to read the build result it returns, including notifications, the hasErrors flags, and what a release build does with an error.
 author: Qubership APIHUB

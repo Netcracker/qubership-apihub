@@ -15,13 +15,16 @@
  */
 
 import {
+  AFTER_VERSION_ID,
+  BEFORE_VERSION_ID,
   buildChangelogPackage,
-  changesSummaryMatcher,
   Editor,
+  expectChangeCounts,
   LocalRegistry,
-  numberOfImpactedOperationsMatcher,
   operationChangesMatcher,
-  operationTypeMatcher,
+  operationChangesOf,
+  operationTypeOf,
+  prepareChangelogPackage,
 } from './helpers'
 import {
   ANNOTATION_CHANGE_TYPE,
@@ -31,15 +34,13 @@ import {
   NON_BREAKING_CHANGE_TYPE,
   UNCLASSIFIED_CHANGE_TYPE,
 } from '../src/processor'
-import { VERSION_STATUS } from '../src/consts'
 import { jest } from '@jest/globals'
+import { DiffAction } from '@netcracker/qubership-apihub-api-diff'
 
 let beforePackage: LocalRegistry
 let afterPackage: LocalRegistry
-const BEFORE_PACKAGE_ID = 'changes_test_before'
-const AFTER_PACKAGE_ID = 'changes_test_after'
-const BEFORE_VERSION_ID = 'v1'
-const AFTER_VERSION_ID = 'v2'
+const BEFORE_PACKAGE_ID = 'changes/cross-package/previous-package'
+const AFTER_PACKAGE_ID = 'changes/cross-package/current-package'
 
 describe('Changelog build type', () => {
   beforeAll(async () => {
@@ -65,119 +66,104 @@ describe('Changelog build type', () => {
       previousVersion: BEFORE_VERSION_ID,
       buildType: BUILD_TYPE.CHANGELOG,
     })
-    expect(result).toEqual(changesSummaryMatcher({
-      [BREAKING_CHANGE_TYPE]: 1,
-      [ANNOTATION_CHANGE_TYPE]: 1,
-    }))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({
-      [BREAKING_CHANGE_TYPE]: 1,
-      [ANNOTATION_CHANGE_TYPE]: 1,
-    }))
+    expectChangeCounts(result, {
+      changes: {
+        [BREAKING_CHANGE_TYPE]: 1,
+        [ANNOTATION_CHANGE_TYPE]: 1,
+      },
+      impacted: {
+        [BREAKING_CHANGE_TYPE]: 1,
+        [ANNOTATION_CHANGE_TYPE]: 1,
+      },
+    })
   })
 
   describe('Added/removed/changed operations handling', () => {
     test('Add operation', async () => {
       const result = await buildChangelogPackage('changelog/add-operation')
-      expect(result).toEqual(changesSummaryMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }))
+      expectChangeCounts(result, {
+        changes: { [NON_BREAKING_CHANGE_TYPE]: 1 },
+        impacted: { [NON_BREAKING_CHANGE_TYPE]: 1 },
+      })
     })
 
     test('Remove operation', async () => {
       const result = await buildChangelogPackage('changelog/remove-operation')
-      expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+      expectChangeCounts(result, { changes: { [BREAKING_CHANGE_TYPE]: 1 }, impacted: { [BREAKING_CHANGE_TYPE]: 1 } })
     })
 
     test('Change operation content', async () => {
       const result = await buildChangelogPackage('changelog/change-inside-operation')
 
-      expect(result).toEqual(changesSummaryMatcher({
-        [BREAKING_CHANGE_TYPE]: 1,
-        [NON_BREAKING_CHANGE_TYPE]: 1,
-      }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({
-        [BREAKING_CHANGE_TYPE]: 1,
-        [NON_BREAKING_CHANGE_TYPE]: 1,
-      }))
+      expectChangeCounts(result, {
+        changes: {
+          [BREAKING_CHANGE_TYPE]: 1,
+          [NON_BREAKING_CHANGE_TYPE]: 1,
+        },
+        impacted: {
+          [BREAKING_CHANGE_TYPE]: 1,
+          [NON_BREAKING_CHANGE_TYPE]: 1,
+        },
+      })
     })
 
     test('Should match moved operations', async () => {
       const result = await buildChangelogPackage(
         'changelog/documents-matching',
-        [{ fileId: 'before/spec1.yaml' }, { fileId: 'before/spec2.yaml' }],
-        [{ fileId: 'after/spec1.yaml' }, { fileId: 'after/spec2.yaml' }, { fileId: 'after/evicted.yaml' }],
+        [{ fileId: 'before1.yaml' }, { fileId: 'before2.yaml' }],
+        [{ fileId: 'after1.yaml' }, { fileId: 'after2.yaml' }, { fileId: 'evicted.yaml' }],
       )
-      expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 3 }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 3 }))
+      expectChangeCounts(result, {
+        changes: { [ANNOTATION_CHANGE_TYPE]: 3 },
+        impacted: { [ANNOTATION_CHANGE_TYPE]: 3 },
+      })
     })
 
     test('Compare parametrized operations', async () => {
       const result = await buildChangelogPackage('changelog/compare-parametrized-operations')
-      expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 2 }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+      expectChangeCounts(result, {
+        changes: { [ANNOTATION_CHANGE_TYPE]: 2 },
+        impacted: { [ANNOTATION_CHANGE_TYPE]: 1 },
+      })
     })
 
     test('Add prefix to server', async () => {
       const result = await buildChangelogPackage('changelog/add-prefix-to-server')
 
-      expect(result).toEqual(changesSummaryMatcher({
-        [BREAKING_CHANGE_TYPE]: 1,
-        [NON_BREAKING_CHANGE_TYPE]: 1,
-      }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({
-        [BREAKING_CHANGE_TYPE]: 1,
-        [NON_BREAKING_CHANGE_TYPE]: 1,
-      }))
+      expectChangeCounts(result, {
+        changes: {
+          [BREAKING_CHANGE_TYPE]: 1,
+          [NON_BREAKING_CHANGE_TYPE]: 1,
+        },
+        impacted: {
+          [BREAKING_CHANGE_TYPE]: 1,
+          [NON_BREAKING_CHANGE_TYPE]: 1,
+        },
+      })
     })
 
     test('Remove prefix from server', async () => {
       const result = await buildChangelogPackage('changelog/remove-prefix-from-server')
 
-      expect(result).toEqual(changesSummaryMatcher({
-        [BREAKING_CHANGE_TYPE]: 1,
-        [NON_BREAKING_CHANGE_TYPE]: 1,
-      }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({
-        [BREAKING_CHANGE_TYPE]: 1,
-        [NON_BREAKING_CHANGE_TYPE]: 1,
-      }))
+      expectChangeCounts(result, {
+        changes: {
+          [BREAKING_CHANGE_TYPE]: 1,
+          [NON_BREAKING_CHANGE_TYPE]: 1,
+        },
+        impacted: {
+          [BREAKING_CHANGE_TYPE]: 1,
+          [NON_BREAKING_CHANGE_TYPE]: 1,
+        },
+      })
     })
 
     test('Move prefix from server to path', async () => {
       const result = await buildChangelogPackage('changelog/move-prefix-from-server-to-path')
 
-      expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 3 }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
-    })
-
-    // todo: case that we don't support due to shifting to the new changelog calculation approach which involves comparison of the entire docs instead of the operation vs operation comparison
-    test.skip('Should match operations with granular servers override in method', async () => {
-      const result = await buildChangelogPackage('changelog/mixed-cases-with-method-prefix-override')
-      expect(result).toEqual(changesSummaryMatcher({
-        [BREAKING_CHANGE_TYPE]: 1,
-        [NON_BREAKING_CHANGE_TYPE]: 1,
-        [ANNOTATION_CHANGE_TYPE]: 2, // todo: do we really need to count change in root servers[0].url in mapped operations with overridden servers?
-      }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({
-        [BREAKING_CHANGE_TYPE]: 1,
-        [NON_BREAKING_CHANGE_TYPE]: 1,
-        [ANNOTATION_CHANGE_TYPE]: 2, // todo: do we really need to count change in root servers[0].url in mapped operations with overridden servers?
-      }))
-    })
-
-    // todo: case that we don't support due to shifting to the new changelog calculation approach which involves comparison of the entire docs instead of the operation vs operation comparison
-    test.skip('Should match operations with granular servers override in path', async () => {
-      const result = await buildChangelogPackage('changelog/mixed-cases-with-path-prefix-override')
-      expect(result).toEqual(changesSummaryMatcher({
-        [BREAKING_CHANGE_TYPE]: 1,
-        [NON_BREAKING_CHANGE_TYPE]: 1,
-        [ANNOTATION_CHANGE_TYPE]: 2, // todo
-      }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({
-        [BREAKING_CHANGE_TYPE]: 1,
-        [NON_BREAKING_CHANGE_TYPE]: 1,
-        [ANNOTATION_CHANGE_TYPE]: 2, // todo
-      }))
+      expectChangeCounts(result, {
+        changes: { [ANNOTATION_CHANGE_TYPE]: 3 },
+        impacted: { [ANNOTATION_CHANGE_TYPE]: 1 },
+      })
     })
   })
 
@@ -185,74 +171,92 @@ describe('Changelog build type', () => {
     test('Add root servers', async () => {
       const result = await buildChangelogPackage('changelog/add-root-servers')
 
-      expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+      expectChangeCounts(result, {
+        changes: { [ANNOTATION_CHANGE_TYPE]: 1 },
+        impacted: { [ANNOTATION_CHANGE_TYPE]: 1 },
+      })
+      // the counts are the same for a removal, so the direction is what tells the two tests apart
+      expect(operationChangesOf(result, 'path1-get').diffs?.map(({ action }) => action)).toEqual([DiffAction.add])
     })
 
     test('Remove root servers', async () => {
       const result = await buildChangelogPackage('changelog/remove-root-servers')
 
-      expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+      expectChangeCounts(result, {
+        changes: { [ANNOTATION_CHANGE_TYPE]: 1 },
+        impacted: { [ANNOTATION_CHANGE_TYPE]: 1 },
+      })
+      expect(operationChangesOf(result, 'path1-get').diffs?.map(({ action }) => action)).toEqual([DiffAction.remove])
     })
 
     test('Remove server', async () => {
       const result = await buildChangelogPackage('changelog/remove-server')
 
-      expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+      expectChangeCounts(result, {
+        changes: { [ANNOTATION_CHANGE_TYPE]: 1 },
+        impacted: { [ANNOTATION_CHANGE_TYPE]: 1 },
+      })
     })
 
     test('Change root servers', async () => {
       const result = await buildChangelogPackage('changelog/change-root-servers')
 
-      expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+      expectChangeCounts(result, {
+        changes: { [ANNOTATION_CHANGE_TYPE]: 1 },
+        impacted: { [ANNOTATION_CHANGE_TYPE]: 1 },
+      })
     })
 
     test('Add security', async () => {
       const result = await buildChangelogPackage('changelog/add-security')
 
-      expect(result).toEqual(changesSummaryMatcher({ [BREAKING_CHANGE_TYPE]: 2 }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [BREAKING_CHANGE_TYPE]: 1 }))
+      expectChangeCounts(result, { changes: { [BREAKING_CHANGE_TYPE]: 2 }, impacted: { [BREAKING_CHANGE_TYPE]: 1 } })
     })
 
     test('Remove security', async () => {
       const result = await buildChangelogPackage('changelog/remove-security')
 
-      expect(result).toEqual(changesSummaryMatcher({ [NON_BREAKING_CHANGE_TYPE]: 2 }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [NON_BREAKING_CHANGE_TYPE]: 1 }))
+      expectChangeCounts(result, {
+        changes: { [NON_BREAKING_CHANGE_TYPE]: 2 },
+        impacted: { [NON_BREAKING_CHANGE_TYPE]: 1 },
+      })
     })
 
     test('Add securityScheme', async () => {
-      const result = await buildChangelogPackage('changelog/add-securityScheme')
+      const result = await buildChangelogPackage('changelog/add-security-scheme')
 
-      expect(result).toEqual(changesSummaryMatcher({
-        [BREAKING_CHANGE_TYPE]: 1,
-        [NON_BREAKING_CHANGE_TYPE]: 1,
-      }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({
-        [BREAKING_CHANGE_TYPE]: 1,
-        [NON_BREAKING_CHANGE_TYPE]: 1,
-      }))
+      expectChangeCounts(result, {
+        changes: {
+          [BREAKING_CHANGE_TYPE]: 1,
+          [NON_BREAKING_CHANGE_TYPE]: 1,
+        },
+        impacted: {
+          [BREAKING_CHANGE_TYPE]: 1,
+          [NON_BREAKING_CHANGE_TYPE]: 1,
+        },
+      })
     })
 
     test('Change securityScheme content', async () => {
-      const result = await buildChangelogPackage('changelog/change-inside-securityScheme')
+      const result = await buildChangelogPackage('changelog/change-inside-security-scheme')
 
-      expect(result).toEqual(changesSummaryMatcher({
-        [UNCLASSIFIED_CHANGE_TYPE]: 1,
-      }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({
-        [UNCLASSIFIED_CHANGE_TYPE]: 1,
-      }))
+      expectChangeCounts(result, {
+        changes: {
+          [UNCLASSIFIED_CHANGE_TYPE]: 1,
+        },
+        impacted: {
+          [UNCLASSIFIED_CHANGE_TYPE]: 1,
+        },
+      })
     })
 
     test('Change openapi version', async () => {
       const result = await buildChangelogPackage('changelog/change-openapi-version')
 
-      expect(result).toEqual(changesSummaryMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
-      expect(result).toEqual(numberOfImpactedOperationsMatcher({ [ANNOTATION_CHANGE_TYPE]: 1 }))
+      expectChangeCounts(result, {
+        changes: { [ANNOTATION_CHANGE_TYPE]: 1 },
+        impacted: { [ANNOTATION_CHANGE_TYPE]: 1 },
+      })
     })
   })
 
@@ -283,48 +287,27 @@ describe('Changelog build type', () => {
   test('Tags are not duplicated', async () => {
     const result = await buildChangelogPackage('changelog/tags')
 
-    expect(result).toEqual(operationTypeMatcher({
-      tags: expect.toIncludeSameMembers([
-        'sameTagInDifferentPaths1',
-        'sameTagInDifferentPaths2',
-        'sameTagInDifferentPaths3',
-        'sameTagInMethodSiblings1',
-        'sameTagInMethodSiblings2',
-        'sameTagInMethodSiblings3',
-        'tag',
-      ]),
-    }))
+    expect(operationTypeOf(result).tags).toIncludeSameMembers([
+      'sameTagInDifferentPaths1',
+      'sameTagInDifferentPaths2',
+      'sameTagInDifferentPaths3',
+      'sameTagInMethodSiblings1',
+      'sameTagInMethodSiblings2',
+      'sameTagInMethodSiblings3',
+      'tag',
+    ])
   })
 
   test('Should fail changelog build if on of the versions was built using outdated api-processor version', async () => {
     const pckgId = 'changelog/add-operation'
 
-    await LocalRegistry.openPackage(pckgId).publish(pckgId, {
-      version: 'v1',
-      packageId: pckgId,
-      files: [{ fileId: 'before.yaml' }],
-    })
-
-    await LocalRegistry.openPackage(pckgId).publish(pckgId, {
-      version: 'v2',
-      packageId: pckgId,
-      files: [{ fileId: 'after.yaml' }],
-    })
-
-    const editor = new Editor(pckgId, {
-      version: 'v2',
-      packageId: pckgId,
-      previousVersionPackageId: pckgId,
-      previousVersion: 'v1',
-      buildType: BUILD_TYPE.CHANGELOG,
-      status: VERSION_STATUS.RELEASE,
-    })
+    const editor = await prepareChangelogPackage(pckgId)
 
     // Simulate that current version was built with an outdated api-processor
     // Mock the builder's versionResolver method (not the registry's)
     const originalVersionResolver = (editor.builder as PackageVersionBuilder).versionResolver.bind(editor.builder)
-    jest.spyOn(editor.builder as PackageVersionBuilder, 'versionResolver').mockImplementation(async (version, packageId) => {
-      const resolved = await originalVersionResolver(version, packageId)
+    jest.spyOn(editor.builder as PackageVersionBuilder, 'versionResolver').mockImplementation(async (notifications, version, packageId) => {
+      const resolved = await originalVersionResolver(notifications, version, packageId)
       if (resolved && packageId === pckgId && version === 'v2') {
         return { ...resolved, apiProcessorVersion: '0.0.0' }
       }

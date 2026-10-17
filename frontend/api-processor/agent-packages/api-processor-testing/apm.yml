@@ -1,0 +1,4 @@
+name: api-processor-testing
+version: 1.0.0
+description: Conventions for writing and changing api-processor tests.
+author: Qubership APIHUB

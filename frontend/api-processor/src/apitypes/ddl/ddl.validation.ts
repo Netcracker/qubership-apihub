@@ -17,39 +17,33 @@
 import { DdlErrorKind } from '@netcracker/qubership-apihub-ddlapi'
 import type { DdlNonFatalError } from '@netcracker/qubership-apihub-ddlapi/parser'
 import { VersionDocument } from '../../types'
-import { MessageSeverity, NotificationMessage } from '../../types/package/notifications'
-import { MESSAGE_SEVERITY } from '../../consts'
+import { MessageCategory, NotificationMessage } from '../../types/package/notifications'
+import { MESSAGE_CATEGORY, MESSAGE_SEVERITY } from '../../consts'
 import { ParsedDdlData } from './ddl.types'
 
-/**
- * Map a single non-fatal `buildFromDdl` issue to its notification severity (Task 12):
- * - `out-of-scope-statement` → Warning (one per statement — D7)
- * - `unresolved-reference` / `unresolved-like-source` → Warning (the partial entity is still built — D8)
- * - `duplicate-object` → Error (breaks the publish, like an MCP duplicate id)
- */
-function severityOf(kind: DdlNonFatalError['kind']): MessageSeverity {
-  return kind === DdlErrorKind.DuplicateObject ? MESSAGE_SEVERITY.Error : MESSAGE_SEVERITY.Warning
+// A duplicate object is its own diagnostic; every other parse issue shares one category
+function categoryOf(kind: DdlNonFatalError['kind']): MessageCategory {
+  return kind === DdlErrorKind.DuplicateObject
+    ? MESSAGE_CATEGORY.DdlDuplicateObject
+    : MESSAGE_CATEGORY.DdlParseIssue
 }
 
 /**
- * Validate a built DDL document's parse issues: push one notification per issue (severity by kind,
- * carrying `fileId`), and **throw** if any `duplicate-object` is present so the publish breaks. Warnings
- * (out-of-scope / unresolved) never abort — the partial entity is kept (D8), no `incomplete` flag.
+ * Report a DDL document's parse issues, one notification per issue, against the document's slug.
+ *
+ * Every one of them is an `Error`: an out-of-scope statement or an unresolved reference leaves the built
+ * Realm incomplete, and a release must not ship an incomplete DDL contract. Nothing here aborts the publish,
+ * and the partial entity is kept with no `incomplete` flag.
  */
 export function validateDdlDocument(document: VersionDocument<ParsedDdlData>, notifications: NotificationMessage[]): void {
   const issues = document.data.issues ?? []
 
   for (const issue of issues) {
     notifications.push({
-      severity: severityOf(issue.kind),
+      category: categoryOf(issue.kind),
+      severity: MESSAGE_SEVERITY.Error,
       message: issue.message,
-      fileId: document.fileId,
+      documentId: document.slug,
     })
-  }
-
-  const duplicate = issues.find(issue => issue.kind === DdlErrorKind.DuplicateObject)
-  if (duplicate) {
-    // breaks the publish; the Error notification was already recorded above
-    throw new Error(`DDL document '${document.fileId}' contains a duplicate object: ${duplicate.message}`)
   }
 }

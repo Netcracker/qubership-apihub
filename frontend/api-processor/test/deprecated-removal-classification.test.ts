@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-import { expectSummariesMatchDiffs, LocalRegistry, operationChangesOf } from './helpers'
+import { expectChangeCounts, expectSummariesMatchDiffs, LocalRegistry, operationChangesOf, operationTypeOf } from './helpers'
 import {
-  ANNOTATION_CHANGE_TYPE,
   BREAKING_CHANGE_TYPE,
   NON_BREAKING_CHANGE_TYPE,
-  REST_API_TYPE,
   RISKY_CHANGE_TYPE,
 } from '../src'
-import type { BuildResult, OperationChanges, OperationType } from '../src'
+import type { BuildResult, OperationChanges } from '../src'
 
 /**
  * Removing an element deprecated in more than one released version is risky rather than breaking. How long
@@ -103,26 +101,20 @@ describe('Removal of a long-deprecated element', () => {
   })
 
   test('should count the removal twice in changesSummary, as breaking and as risky', () => {
-    const { changesSummary, numberOfImpactedOperations } = restOperationType(result)
-
     // Only the removal in the request splits in two, because that is the only change the two operations
     // judge differently. Everything else they share is counted once: copies that agree carry the same
     // change id and collapse.
-    expect(changesSummary).toEqual({
-      [BREAKING_CHANGE_TYPE]: 1,
-      [NON_BREAKING_CHANGE_TYPE]: 3,
-      [RISKY_CHANGE_TYPE]: 1,
-      [ANNOTATION_CHANGE_TYPE]: 0,
-      unclassified: 0,
-      deprecated: 0,
-    })
-    expect(numberOfImpactedOperations).toEqual({
-      [BREAKING_CHANGE_TYPE]: 1,
-      [NON_BREAKING_CHANGE_TYPE]: 2,
-      [RISKY_CHANGE_TYPE]: 1,
-      [ANNOTATION_CHANGE_TYPE]: 0,
-      unclassified: 0,
-      deprecated: 0,
+    expectChangeCounts(result, {
+      changes: {
+        [BREAKING_CHANGE_TYPE]: 1,
+        [NON_BREAKING_CHANGE_TYPE]: 3,
+        [RISKY_CHANGE_TYPE]: 1,
+      },
+      impacted: {
+        [BREAKING_CHANGE_TYPE]: 1,
+        [NON_BREAKING_CHANGE_TYPE]: 2,
+        [RISKY_CHANGE_TYPE]: 1,
+      },
     })
   })
 })
@@ -178,7 +170,7 @@ describe('Operations with the same deprecation history', () => {
   })
 
   test('should count the removal once and report both operations as impacted', () => {
-    const { changesSummary, numberOfImpactedOperations } = restOperationType(result)
+    const { changesSummary, numberOfImpactedOperations } = operationTypeOf(result)
 
     expect(changesSummary?.[RISKY_CHANGE_TYPE]).toBe(1)
     expect(changesSummary?.[BREAKING_CHANGE_TYPE]).toBe(0)
@@ -218,7 +210,7 @@ describe('Operations warned about different elements', () => {
   })
 
   test('should count three risky changes in changesSummary, collapsing the shared removal', () => {
-    const { changesSummary, numberOfImpactedOperations } = restOperationType(result)
+    const { changesSummary, numberOfImpactedOperations } = operationTypeOf(result)
 
     // The two operations carry four differences between them, but the copies of the removal they share
     // agree on the verdict, so they carry the same change id and collapse. Three remain: the shared
@@ -334,20 +326,21 @@ describe('An api kind mark that changes between publications', () => {
   })
 })
 
-/** Publishes `<fixture>-v1` to `-v3` in order, each against the one before, and returns the last build. */
+/** Publishes `<fixture>/v1` to `v3` in order, each against the one before, and returns the last build. */
 async function publishSeries(fixture: string, versionLabels?: SeriesLabels, versionPrefix = ''): Promise<BuildResult> {
   let result: BuildResult | undefined
   let previousVersion: string | undefined
+  // a package per series: the versions of two series would otherwise share the slugs `v1` to `v3`
+  const packageId = `${PACKAGE_ID}/${fixture}`
 
   for (const step of [1, 2, 3]) {
-    const source = `${fixture}-v${step}`
-    const version = `${versionPrefix}${source}`
-    result = await registry.publish(PACKAGE_ID, {
-      packageId: PACKAGE_ID,
+    const version = `${versionPrefix}${fixture}-v${step}`
+    result = await registry.publish(packageId, {
+      packageId,
       version,
       ...previousVersion ? { previousVersion } : {},
       ...takeVersionLabels(versionLabels, step),
-      files: [{ fileId: `${source}.yaml`, publish: true }],
+      files: [{ fileId: `v${step}.yaml`, publish: true }],
     })
     previousVersion = version
   }
@@ -358,14 +351,6 @@ async function publishSeries(fixture: string, versionLabels?: SeriesLabels, vers
 function takeVersionLabels(versionLabels: SeriesLabels | undefined, step: number): { metadata?: { versionLabels: string[] } } {
   const labels = typeof versionLabels === 'function' ? versionLabels(step) : versionLabels
   return labels ? { metadata: { versionLabels: labels } } : {}
-}
-
-function restOperationType(result: BuildResult): OperationType {
-  const operationType = result.comparisons[0]?.operationTypes.find(({ apiType }) => apiType === REST_API_TYPE)
-  if (!operationType) {
-    throw new Error('Comparison has no REST operation type')
-  }
-  return operationType
 }
 
 /** The removal of a named property as the request of one operation sees it. */

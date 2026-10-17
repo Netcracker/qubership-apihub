@@ -15,7 +15,7 @@
  */
 
 import { ApiDocument, ApiOperation, BuildResult, OperationIdNormalizer, VersionDocument } from '../types'
-import { GraphApiComponents, GraphApiDirectiveDefinition } from '@netcracker/qubership-apihub-graphapi'
+import { GraphApiDirectiveDefinition } from '@netcracker/qubership-apihub-graphapi'
 import { OpenAPIV3 } from 'openapi-types'
 import { isObject } from './objects'
 import { capitalize, serializeDocument } from './document'
@@ -85,10 +85,6 @@ export function removeComponents(source: object | undefined): unknown {
     return rest
   }
   return source
-}
-
-function isGraphApiComponents(components: OpenAPIV3.ComponentsObject | GraphApiComponents): components is GraphApiComponents {
-  return 'directives' in components
 }
 
 export function isPathParamRenameDiff(diff: Diff): boolean {

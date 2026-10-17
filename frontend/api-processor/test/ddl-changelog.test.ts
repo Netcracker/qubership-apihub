@@ -20,7 +20,7 @@ import type { Realm } from '@netcracker/qubership-apihub-ddlapi'
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
 import { compareDdlDocuments } from '../src/apitypes/ddl/ddl.changes'
 import { DdlComparePairContext } from '../src/types'
-import { LocalRegistry, VERSIONS_PATH, loadFileAsStringFromRegistry } from './helpers'
+import { LocalRegistry, VERSIONS_PATH, loadFileAsStringFromRegistry, loadJsonFromRegistry, expectNotEmpty } from './helpers'
 import { BUILD_TYPE } from '../src/consts'
 
 const ctx = (overrides: Partial<DdlComparePairContext> = {}): DdlComparePairContext => ({
@@ -42,7 +42,7 @@ describe('compareDdlDocuments (per-pair DDL diff attribution)', () => {
     const curr = await build('CREATE TABLE users (id bigint PRIMARY KEY, email text NOT NULL, age int);')
     const { changesByEntityId } = compareDdlDocuments(prev, curr, ctx())
     expect(ids(changesByEntityId)).toEqual(['public-table-users'])
-    expect(changesByEntityId.get('public-table-users')!.length).toBeGreaterThan(0)
+    expectNotEmpty(changesByEntityId.get('public-table-users')!)
   })
 
   test('represents added and removed tables', async () => {
@@ -121,7 +121,7 @@ describe('DDL changelog end-to-end (build with previousVersion)', () => {
     expect(changedIds).toEqual(['public-table-legacy', 'public-table-orders', 'public-table-users'])
 
     // ddl-comparisons.json index (per-pair data stripped)
-    const index = JSON.parse((await loadFileAsStringFromRegistry(VERSIONS_PATH, `${PACKAGE_ID}/v2`, 'ddl-comparisons.json'))!)
+    const index = await loadJsonFromRegistry(VERSIONS_PATH, `${PACKAGE_ID}/v2`, 'ddl-comparisons.json')
     expect(index.comparisons).toHaveLength(1)
     const [indexEntry] = index.comparisons
     expect(indexEntry.contractsChangesSummary).toHaveProperty('ddl')
@@ -131,7 +131,7 @@ describe('DDL changelog end-to-end (build with previousVersion)', () => {
     // ddl-comparisons/<comparisonFileId> per-pair data, wrapper key `entities` (C2)
     type SideData = { ddlEntityId?: string; kind?: string; name?: string; schemaName?: string; description?: string }
     type Entry = { ddlEntityData?: SideData; previousDdlEntityData?: SideData; changes?: unknown[]; comparisonInternalDocumentId?: string }
-    const perPair = JSON.parse((await loadFileAsStringFromRegistry(VERSIONS_PATH, `${PACKAGE_ID}/v2/ddl-comparisons`, comparisonFileId))!)
+    const perPair = await loadJsonFromRegistry(VERSIONS_PATH, `${PACKAGE_ID}/v2/ddl-comparisons`, comparisonFileId)
     expect(Array.isArray(perPair.entities)).toBe(true)
     const byId = Object.fromEntries(perPair.entities.map((e: Entry) => [e.ddlEntityData?.ddlEntityId ?? e.previousDdlEntityData?.ddlEntityId, e]))
 
@@ -141,7 +141,7 @@ describe('DDL changelog end-to-end (build with previousVersion)', () => {
     // changed table: both sides present, descriptor-complete, with changes
     expect(users.ddlEntityData).toMatchObject({ ddlEntityId: 'public-table-users', kind: 'table', name: 'users', schemaName: 'public', description: 'Registered users' })
     expect(users.previousDdlEntityData).toMatchObject({ ddlEntityId: 'public-table-users', kind: 'table', name: 'users', schemaName: 'public', description: 'Users' })
-    expect(users.changes!.length).toBeGreaterThan(0)
+    expectNotEmpty(users.changes!)
 
     // removed table: previous side only (ddlEntityData omitted)
     const legacy: Entry = byId['public-table-legacy']

@@ -1,0 +1,8 @@
+{
+  "packageId": "changes/cross-package/current-package",
+  "files": [
+    {
+      "fileId": "after.yaml"
+    }
+  ]
+}

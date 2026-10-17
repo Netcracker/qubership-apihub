@@ -74,7 +74,7 @@ export interface BuilderContext<T = any> {
   parsedFileResolver: _ParsedFileResolver
   templateResolver: _TemplateResolver
   packageResolver: _PackageResolver
-  notifications: NotificationMessage[]
+  readonly notifications: NotificationMessage[]
   config: BuildConfig
   builderRunOptions: BuilderRunOptions
   configuration?: BuilderConfiguration
@@ -101,7 +101,7 @@ export type _RawDocumentResolver = (
 
 export interface CompareOperationsPairContext {
   apiType: OperationsApiType
-  notifications: NotificationMessage[]
+  readonly notifications: NotificationMessage[]
   rawDocumentResolver: RawDocumentResolver
   versionDeprecatedResolver: VersionDeprecatedResolver
   versionDocumentsResolver: VersionDocumentsResolver
@@ -122,8 +122,10 @@ export type FileParser = (fileId: string, data: Blob) => Promise<SourceFile | un
 export type DocumentBuilder<T> = (parsedFile: TextFile<T>, file: BuildConfigFile, ctx: BuilderContext<T>) => Promise<VersionDocument<T>>
 export type OperationsBuilder<T, M = any> = (document: VersionDocument<T>, ctx: BuilderContext<T>) => Promise<ApiOperation<M>[]>
 export type DocumentDumper<T> = (document: ZippableDocument<T>, format?: typeof FILE_FORMAT_YAML | typeof FILE_FORMAT_JSON) => Blob
-export type McpEntitiesBuilder<T> = (document: VersionDocument<T>, file: BuildConfigFile) => McpEntity[]
-export type DdlEntitiesBuilder<T> = (document: VersionDocument<T>, file: BuildConfigFile) => DdlEntity[]
+export type McpEntitiesBuilder<T> =
+  (document: VersionDocument<T>, file: BuildConfigFile, notifications?: NotificationMessage[]) => McpEntity[]
+export type DdlEntitiesBuilder<T> =
+  (document: VersionDocument<T>, file: BuildConfigFile, notifications?: NotificationMessage[]) => DdlEntity[]
 export type OperationDataCompare<T> = (current: T, previous: T, ctx: CompareOperationsPairContext) => Promise<Diff[]>
 export type DocumentsCompareData = {
   operationChanges: OperationChanges[]
@@ -155,7 +157,7 @@ export interface DdlComparePairContext {
   currentVersion: VersionId
   previousPackageId: PackageId
   currentPackageId: PackageId
-  notifications: NotificationMessage[]
+  readonly notifications: NotificationMessage[]
   normalizedSpecFragmentsHashCache: ObjectHashCache
 }
 
@@ -193,4 +195,4 @@ export type _VersionReferencesResolver = (packageId: PackageId, version: Version
 
 export type _ParsedFileResolver = (fileId: FileId) => Promise<SourceFile | null>
 export type _TemplateResolver = (templatePath: TemplatePath) => Promise<Blob>
-export type _OperationResolver = (operationId: OperationId) => ResolvedOperation | null
+export type _OperationResolver = (apiType: string, operationId: OperationId) => ResolvedOperation | null

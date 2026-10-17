@@ -234,7 +234,7 @@ stay byte-identical, because REST now calls the extracted helpers. (Plan Task 8.
 
 **Build** (`BuildStrategy`):
 
-```
+```text
 .sql file
   → parseDdlFile        (buildFromDdl → Realm; onError → file.errors)         [Task 2]
   → buildDdlDocument    (VersionDocument type 'ddl', source = raw SQL,         [Task 3]
@@ -245,7 +245,7 @@ stay byte-identical, because REST now calls the extracted helpers. (Plan Task 8.
 
 **Changelog** (`compareVersions` → new `compareVersionsDdl`):
 
-```
+```text
 prev/curr version params
   → versionDocumentsResolver(version, pkg, DDL_CONTRACT_TYPE)  (DDL doc slugs)         [Task 9]
   → rawDocumentResolver(version, pkg, slug)                    (raw .sql per doc)
@@ -400,13 +400,16 @@ DDL constants, the `BuilderType` union member, and `src/types/package/ddl.ts`. N
       installed at their `feature-ddl` versions with DDL support present (Risk R1 resolved). Remaining
       Task-1 work below is the `package.json` dep entries already added + the consts/types.
 - [x] **Done (2026-06-12):** `DDL_CONTRACT_TYPE`, `FILE_FORMAT_SQL`/`FILE_FORMAT_DDL`,
-  ```
+
+  ```text
   `PACKAGE.DDL_FILE_NAME`, `PACKAGE.DDL_DIR_NAME`, `PACKAGE.DDL_COMPARISONS_FILE_NAME`,
   `PACKAGE.DDL_COMPARISONS_DIR_NAME` added; `BuilderType` union includes `'ddl'`.
   ```
+
 - [x] **Done (2026-06-12):** `src/types/package/ddl.ts` types compile and are exported from `src/types/package/index.ts`.
 - [x] **Done (2026-06-12) — Contract-first:** `ApiBuilder` gains optional `buildDdlEntities?: DdlEntitiesBuilder<T>` and
-  ```
+
+  ```text
   `compareDdlDocuments?: DdlDocumentsCompare`, with `DdlEntitiesBuilder`, `DdlDocumentsCompare`,
   `DdlComparePairContext`, `DdlDiffResult` defined (Interface section) — so Tasks 4/7/9 build
   against a fixed signature, not a TBD.
@@ -452,11 +455,14 @@ place per-file metadata is read; entity *scope* still comes only from the SQL).
 **Acceptance criteria:**
 
 - [x] **Done (2026-06-12):** Document carries the verbatim SQL and a non-empty serialized internal document (normalize →
-  ```
+
+  ```text
   denormalize → serialize round-trip).
   ```
+
 - [x] **Done (2026-06-12):** Serialization handles unifier symbols/origins the way REST does (`serializeDocument` +
-  ```
+
+  ```text
   `SERIALIZE_SYMBOL_STRING_MAPPING`); `ORIGINS_SYMBOL`/synthetic flags don't corrupt output.
   ```
 
@@ -494,11 +500,15 @@ within a doc, `processMcpDocument` across docs).
 **Acceptance criteria:**
 
 - [x] **Done (2026-06-12):** Ids are produced by `calculateDdlEntityId` only (one code path); qualified table → its schema,
-  ```
+
+  ```text
   unqualified → `public`; segments slugified with `SLUG_OPTIONS_OPERATION_ID`, `kind` literal.
   ```
-- [x] **Done (2026-06-12):** `name`, `schemaName`, `description` populated; `description` from the table's `Comment` attr (via `findAttr`, `''` when absent).
-- [x] **Done (2026-06-12):** Two tables colliding on `ddlEntityId` **within the same document** (incl. post-slugify) throw (D10);
+
+- [x] **Done (2026-06-12):** `name`, `schemaName`, `description` populated; `description` from the table's
+      `Comment` attr (via `findAttr`, `''` when absent).
+- [x] **Done (2026-06-12):** Two tables colliding on `ddlEntityId` **within the same document** (incl.
+      post-slugify) throw (D10);
       cross-document collisions are **not** this task's concern (Task 6). *(Note: slugify preserves case —
       see deviation; the test uses a space-vs-hyphen collision, not the D10 `Users`/`users` example.)*
 
@@ -553,7 +563,8 @@ payload stripped) + `ddl/<ddlEntityId>` files in `package.ts`. Per **C3 (resolve
 #### Checkpoint B — after Tasks 4–6
 
 - [x] **Done (2026-06-12):** `npm test -- ddl-build` green (4 cases); a multi-table `.sql` yields a
-  ```
+
+  ```text
   correct `ddl.json` + `ddl/` set, each entity referencing the internal document
   (versionInternalDocumentId). Full suite green (61 suites, 1154 tests). Review with human before changelog work.
   ```
@@ -581,7 +592,8 @@ serialized later per **D5** (`normalizedResult:false` + before/after-normalized 
 **Acceptance criteria:**
 
 - [x] **Done (2026-06-12):** Diffs are attributed to the owning table's `ddlEntityId`, including index/FK/comment changes.
-- [x] **Done (2026-06-12):** A shared-type change appears on all referencing tables; an unreferenced-type change yields nothing (D2).
+- [x] **Done (2026-06-12):** A shared-type change appears on all referencing tables; an unreferenced-type
+      change yields nothing (D2).
 - [x] **Done (2026-06-12):** Added / removed / changed tables are each represented; empty-diff tables are skipped.
 - [x] **Done (2026-06-12):** Uses `aggregateDiffsWithRollup` consistently with REST (the rolled-up value is a `Set<Diff>`).
 
@@ -612,13 +624,17 @@ it stays a clean change to the operation path. (Bucket-1 helpers need no change 
 **Acceptance criteria:**
 
 - [x] **Done (2026-06-12):** Operation comparison types **and** the extracted helpers leave REST/async/graphql/MCP output
-      **byte-identical** (regression suites green: `changes`, `graphql-changes`, `asyncapi-changes`, `compare.utils`, `mcp-build`, risky/declarative).
+      **byte-identical** (regression suites green: `changes`, `graphql-changes`, `asyncapi-changes`,
+      `compare.utils`, `mcp-build`, risky/declarative).
 - [x] **Done (2026-06-12):** `createPairOperationsMap` is re-expressed via `pairByKey`; `createOperationChange` via `createChangeBase`.
 - [x] **Done (2026-06-12):** DDL variant types compile with the AD2 field names (`contractType`, `ddlEntityId`,
-      `numberOfImpactedEntities`, `contractTypes`, metadata `{ kind, name, schemaName, description }`); DTOs + `toDdlComparisonDto`/`toDdlChangesDto`/`convertDtoFieldContractTypes` added.
-- [x] **Done (2026-06-12):** `createComparisonDocument`/`serializeDocument` accept a `Realm` (the `ApiDocument` widening landed in Task 3) without a DDL-specific serializer.
+      `numberOfImpactedEntities`, `contractTypes`, metadata `{ kind, name, schemaName, description }`);
+      DTOs + `toDdlComparisonDto`/`toDdlChangesDto`/`convertDtoFieldContractTypes` added.
+- [x] **Done (2026-06-12):** `createComparisonDocument`/`serializeDocument` accept a `Realm` (the
+      `ApiDocument` widening landed in Task 3) without a DDL-specific serializer.
 
-**Verification:** `npm run build`; `npm test -- changes asyncapi-changes graphql-changes compare.utils comparison-internal-documents` (regression for both the type and helper extractions).
+**Verification:** `npm run build`; `npm test -- changes asyncapi-changes graphql-changes compare.utils
+comparison-internal-documents` (regression for both the type and helper extractions).
 **Dependencies:** Task 1.
 **Files:** `src/types/internal/compare.ts`, `src/types/external/comparison.ts`,
 `src/types/package/comparisons.ts`, `src/types/package/ddl.ts`, `src/utils/transformToDto.ts`,
@@ -652,12 +668,17 @@ id helpers, `removeObjectDuplicates`+`calculateDiffId`, `calculateChangeSummary`
 **Acceptance criteria:**
 
 - [x] **Done (2026-06-12):** Added/removed/changed tables produce correct `DdlChanges` keyed by `ddlEntityId`.
-- [x] **Done (2026-06-12):** Reuses the AD7 shared helpers (`pairByKey`, `dedupeTuples`/`removeRedundantPartialPairs`, `createChangeBase`, `createComparison*`, `removeObjectDuplicates`+`calculateDiffId`, summaries).
+- [x] **Done (2026-06-12):** Reuses the AD7 shared helpers (`pairByKey`,
+      `dedupeTuples`/`removeRedundantPartialPairs`, `createChangeBase`, `createComparison*`,
+      `removeObjectDuplicates`+`calculateDiffId`, summaries).
 - [x] **Done (2026-06-12):** Pairing by `ddlEntityId` happens **before** `apiDiff`; a table moved between `.sql` files
-  ```
+
+  ```text
   across versions is a change, not remove+add (covered by per-entity `belongsToPair` attribution).
   ```
-- [x] **Done (2026-06-12):** `metadata`/`previousMetadata` carry the full descriptor (`kind`, `name`, `schemaName`, `description`) via `collectTableDescriptors`.
+
+- [x] **Done (2026-06-12):** `metadata`/`previousMetadata` carry the full descriptor (`kind`, `name`,
+      `schemaName`, `description`) via `collectTableDescriptors`.
 - [x] **Done (2026-06-12):** Version summary dedup matches REST semantics (no double-counting across document pairs).
 - [x] **Done (2026-06-12):** One merged comparison-internal document per document pair, referenced back by each change.
 
@@ -679,9 +700,12 @@ comparison-internal documents go into the **shared** `comparison-internal-docume
 
 **Acceptance criteria:**
 
-- [x] **Done (2026-06-12):** `build` with a `previousVersion` and `changelog` both emit DDL comparisons into the sibling files (wired in both strategies).
-- [x] **Done (2026-06-12):** DDL change entries reference their `comparisonInternalDocumentId` in the shared internal-docs set.
-- [x] **Done (2026-06-12):** REST/async/graphql/MCP comparison output (`comparisons.json`/`comparisons/`) is byte-unchanged (full regression green).
+- [x] **Done (2026-06-12):** `build` with a `previousVersion` and `changelog` both emit DDL comparisons
+      into the sibling files (wired in both strategies).
+- [x] **Done (2026-06-12):** DDL change entries reference their `comparisonInternalDocumentId` in the
+      shared internal-docs set.
+- [x] **Done (2026-06-12):** REST/async/graphql/MCP comparison output (`comparisons.json`/`comparisons/`)
+      is byte-unchanged (full regression green).
 
 **Verification:** `npm test -- ddl-changelog changes compare.utils comparison-internal-documents`.
 **Dependencies:** Task 9.
@@ -704,13 +728,16 @@ comparisons the same way it does operations.
 **Acceptance criteria:**
 
 - [x] **Done (2026-06-12):** A dashboard `changelog` over refs containing DDL produces DDL comparisons per ref on the
-  ```
+
+  ```text
   cache-**miss** path (fresh `compareVersionsDdl` in `compareVersionsReferences`); cache-hit relies on host invalidation (D15).
   ```
+
 - [x] **Done (2026-06-12):** A dashboard `build` with DDL-bearing refs surfaces their DDL content/comparisons — each
       ref package's own build writes its `ddl.json`/`ddl-comparisons.json` (Tasks 6/10); the dashboard does not
       re-aggregate ref entities into its own `ddl.json` (matching how it does not re-emit ref `operations.json`).
-- [x] **Done (2026-06-12):** Resolvers are not called for empty versions (existing resolver-guard test still passes; `compareVersionsDdl` guards `null` params).
+- [x] **Done (2026-06-12):** Resolvers are not called for empty versions (existing resolver-guard test
+      still passes; `compareVersionsDdl` guards `null` params).
 - [x] **Done (2026-06-12):** Pure-REST dashboards are unaffected (existing dashboard tests green).
 
 **Verification:** `npm test -- dashboards ddl-changelog`.
@@ -722,7 +749,8 @@ comparison cache shape needs a DDL field), `src/components/package.ts`.
 #### Checkpoint C — after Tasks 7–11
 
 - [x] **Done (2026-06-12):** `ddl-changelog` + `dashboards` green; two-version scenario (add/remove/change)
-  ```
+
+  ```text
   and a DDL-bearing dashboard produce correct comparisons + shared internal documents. Full suite green
   (62 suites, 1164 tests). NOTE: a dedicated cross-file-move end-to-end fixture is deferred to Task 15
   (the mechanism — pairByKey + belongsToPair — is implemented and unit-reasoned, not yet e2e-tested).
@@ -744,7 +772,8 @@ notification codes are **deferred** (see Deferred below) — for v1 the code liv
 
 **Acceptance criteria:**
 
-- [x] **Done (2026-06-13):** Severity / break mapping matches the spec; warnings don't abort, parse errors / duplicates do (`ddl.validation.ts`).
+- [x] **Done (2026-06-13):** Severity / break mapping matches the spec; warnings don't abort, parse
+      errors / duplicates do (`ddl.validation.ts`).
 - [x] **Done (2026-06-13):** `out-of-scope-statement` emits one Warning per statement (D7); notifications carry `fileId`.
 - [x] **Done (2026-06-13):** `NotificationMessage` is unchanged (no new fields).
 
@@ -762,7 +791,8 @@ DDL compare hook), export from `src/apitypes/index.ts`, and push it into `apiBui
 
 **Acceptance criteria:**
 
-- [x] **Done (2026-06-12):** `ddlBuilder` registered (pulled forward to Task 6); `.sql`/`.ddl` files route to it end-to-end; `compareDdlDocuments` attached in Task 7; no `createExportDocument` (D13).
+- [x] **Done (2026-06-12):** `ddlBuilder` registered (pulled forward to Task 6); `.sql`/`.ddl` files route
+      to it end-to-end; `compareDdlDocuments` attached in Task 7; no `createExportDocument` (D13).
 
 **Verification:** `npm test -- ddl-build ddl-changelog` (end-to-end through the real registry).
 **Dependencies:** Tasks 3, 6, 9.
@@ -781,9 +811,11 @@ counting each contract type independently.
 **Acceptance criteria:**
 
 - [x] **Done (2026-06-13):** A package with `.yaml` + `.sql` files builds both `operations.json`/`operations/` and
-  ```
+
+  ```text
   `ddl.json`/`ddl/` with no interference.
   ```
+
 - [x] **Done (2026-06-13):** A mixed changelog emits both operation and DDL comparison artifacts; summaries are independent.
 - [x] **Done (2026-06-13):** Removing all DDL files (or all REST files) from one version is handled cleanly in changelog.
 
@@ -804,11 +836,14 @@ list of suites, fixtures, and decision coverage): fixtures under `test/projects/
 **Acceptance criteria:**
 
 - [x] **Done (2026-06-13):** Coverage spans schema defaulting, comments, indexes, duplicates, out-of-scope statements,
-  ```
+
+  ```text
   unresolved refs, added/removed/changed tables, cross-file move, rename, shared-type fan-out, mixed REST+DDL, and a DDL dashboard.
   ```
+
 - [x] **Done (2026-06-13):** Tests assert the full layout (`ddl.json`, `ddl/`, `ddl-comparisons.json`,
-  ```
+
+  ```text
   `ddl-comparisons/`, shared comparison-internal docs) and dashboard aggregation. README documents the DDL contract type.
   ```
 
@@ -821,7 +856,8 @@ list of suites, fixtures, and decision coverage): fixtures under `test/projects/
 #### Checkpoint Complete
 
 - [x] **Done (2026-06-13):** All acceptance criteria met; full `npm test` green (64 suites, 1175 tests;
-  ```
+
+  ```text
   +disk-mode for DDL suites) and `tsc`/`npm run build` clean; plan + deviations recorded. Ready for review/PR.
   Pre-merge follow-ups: pin the `feature-ddl` prerelease deps to released versions (Risk R1); confirm C2
   (per-pair wrapper key `entities`) with the backend consumer.
@@ -841,7 +877,6 @@ under both FS modes (`npm test` and `npm run test:disk`).
 
 ### Suites
 
-
 | Suite (file)                  | Build type                      | Tasks    | What it asserts                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Decisions exercised     |
 | ----------------------------- | ------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
 | `ddl-unit.test.ts`            | — (parser units)                | 2        | `.sql`/`.ddl` detected, others → `undefined`; `buildFromDdl` → `{ realm, originalSql }`; `DdlParseError` rejects; non-fatal `onError` issues collected onto `file.errors`.                                                                                                                                                                                                                                                                                                                                                                                                          | D6                      |
@@ -850,7 +885,6 @@ under both FS modes (`npm test` and `npm run test:disk`).
 | `ddl-validation.test.ts`      | `build`                         | 12       | severity mapping: `DdlParseError` → publish breaks; `duplicate-object` → **Error** (breaks); `out-of-scope-statement` → **Warning, one per statement**; `unresolved-reference`/`unresolved-like-source` → **Warning**, entity still built, no `incomplete` flag; slugify collision → duplicate Error.                                                                                                                                                                                                                                                                               | D7, D8, D10             |
 | `ddl-mixed.test.ts`           | `build` + `changelog`           | 14       | a package with `.yaml` + `.sql` emits `operations.json` **and** `ddl.json` on build, `comparisons.json` **and** `ddl-comparisons.json` on changelog; summaries independent; REST artifacts byte-unchanged; dropping all DDL (or all REST) from one version handled.                                                                                                                                                                                                                                                                                                                 | D12                     |
 | `dashboards.test.ts` (extend) | `build` + `changelog`           | 11       | a DDL-bearing dashboard aggregates DDL per ref on the cache-**miss** path; existing resolver-guard test still holds; pure-REST dashboards unaffected.                                                                                                                                                                                                                                                                                                                                                                                                                               | D15                     |
-
 
 Regression guard (Task 8 — shared base **types and** extracted **helpers**, AD2 + AD7): existing
 `changes` / `asyncapi-changes` / `graphql-changes` / `mcp-build` / `compare.utils` /
@@ -881,7 +915,6 @@ change (used by none), and a table **rename**.
 
 ## Risks and Mitigations
 
-
 | Risk                                                                                                                                                                                                       | Impact | Mitigation                                                                                                                                                                                                                                                                                                                     |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **R1** ~~api-processor consumes published `api-unifier@2.8.0`/`api-diff@3.3.0` lacking DDL support.~~ **RESOLVED 2026-06-12** — installed `ddlapi@0.1.0-feature-ddl`, `api-diff@3.3.1-feature-ddl`, `api-unifier@2.8.1-feature-ddl`, all carrying the DDL builds (`buildFromDdl`, `compareDdlApi`/`SPEC_TYPE_DDL_API_1`, `DDL_API_NORMALIZE_OPTIONS`).                                | Low    | **Residual:** these are `feature-ddl` **prerelease** versions pinned via a `feature-ddl` tag — pin to proper released versions before merging to `develop`.                                                                                                   |
@@ -891,7 +924,6 @@ change (used by none), and a table **rename**.
 | **R5** Rebuilding Realms per comparison (no cached normalized Realm resolver) may be costly for large schemas.                                                                                             | Med    | Reuse `normalizedSpecFragmentsHashCache`; consider caching `buildFromDdl` per (version, slug) within a comparison run.                                                                                                                                                                                                         |
 | **R6** Serializing the normalized Realm (symbols/origins from the unifier) could corrupt internal/comparison documents.                                                                                    | Med    | Reuse REST's `serializeDocument` + `SERIALIZE_SYMBOL_STRING_MAPPING`; assert serialization round-trip in tests.                                                                                                                                                                                                                |
 | **R7** Dashboard changelog reuses cached ref comparisons via `versionComparisonResolver`; a cached ref comparison must surface its `DdlComparison`, or dashboard DDL changes silently vanish on cache hit. | Med    | **D15:** rely on host cache invalidation (the backend rebuilds ref comparisons when DDL support lands); api-processor does **not** recompute on a hit lacking DDL. Document the host requirement; cover the cache-**miss** path in the dashboard test (Task 11). Accept under-reporting over stale ref caches until refreshed. |
-
 
 ## Resolved Questions (2026-06-12)
 
@@ -1060,4 +1092,3 @@ text). Revisit if a consumer needs to branch on codes without parsing message st
   `public-table-Users` do **not** collide. Post-slugify collisions still occur via character mapping
   (e.g. `"user name"` and `"user-name"` both → `public-table-user-name`); the duplicate test uses that
   instead. Detection logic is unchanged — only the illustrative example in D10 is off.
-
