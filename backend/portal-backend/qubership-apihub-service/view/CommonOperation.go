@@ -398,6 +398,32 @@ func GetDocumentTypesForContractType(contractType string) []string {
 	}
 }
 
+func GetApiTypeForDocumentType(documentType string) string {
+	switch documentType {
+	case OpenAPI20Type, OpenAPI30Type, OpenAPI31Type:
+		return string(RestApiType)
+	case GraphQLSchemaType, GraphAPIType, IntrospectionType:
+		return string(GraphqlApiType)
+	case Protobuf3Type:
+		return string(ProtobufApiType)
+	case Asyncapi30Type:
+		return string(AsyncapiApiType)
+	default:
+		return ""
+	}
+}
+
+func GetContractTypeForDocumentType(documentType string) string {
+	switch documentType {
+	case DDLType:
+		return ContractTypeDdl
+	case MCPInitType, MCPToolsType, MCPResourcesType, MCPPromptsType:
+		return ContractTypeMcp
+	default:
+		return ""
+	}
+}
+
 type OperationListReq struct {
 	Deprecated       *bool
 	Ids              []string

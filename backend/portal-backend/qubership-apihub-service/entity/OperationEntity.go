@@ -157,6 +157,7 @@ func MakeRefComparisonView(entity VersionComparisonEntity) *view.RefComparison {
 	refComparisonView := &view.RefComparison{
 		OperationTypes:     entity.OperationTypes,
 		NoContent:          entity.NoContent,
+		HasErrors:          entity.Metadata.GetHasErrors(),
 		PackageRef:         view.MakePackageRefKey(entity.PackageId, entity.Version, entity.Revision),
 		PreviousPackageRef: view.MakePackageRefKey(entity.PreviousPackageId, entity.PreviousVersion, entity.PreviousRevision),
 	}

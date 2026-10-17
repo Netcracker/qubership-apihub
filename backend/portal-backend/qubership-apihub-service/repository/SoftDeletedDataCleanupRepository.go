@@ -150,15 +150,15 @@ func (d softDeletedDataCleanupRepositoryImpl) VacuumAffectedTables(ctx context.C
 				logger.Trace(ctx, "Successfully vacuumed 'build_src' table")
 			}
 		}
-		if deletedItems.BuilderNotifications > 0 {
-			logger.Debugf(ctx, "Vacuuming 'builder_notifications' table for %d deleted builder notifications", deletedItems.BuilderNotifications)
-			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL builder_notifications")
+		if deletedItems.PublishedVersionNotifications > 0 {
+			logger.Debugf(ctx, "Vacuuming 'published_version_notification' table for %d deleted version notifications", deletedItems.PublishedVersionNotifications)
+			_, err = d.cp.GetConnection().ExecContext(ctx, "VACUUM FULL published_version_notification")
 			if err != nil {
-				errorMsg := fmt.Sprintf("Failed to vacuum 'builder_notifications' table: %v", err)
+				errorMsg := fmt.Sprintf("Failed to vacuum 'published_version_notification' table: %v", err)
 				logger.Warn(ctx, errorMsg)
 				vacuumErrors = append(vacuumErrors, errorMsg)
 			} else {
-				logger.Trace(ctx, "Successfully vacuumed 'builder_notifications' table")
+				logger.Trace(ctx, "Successfully vacuumed 'published_version_notification' table")
 			}
 		}
 		if deletedItems.FavoritePackages > 0 {

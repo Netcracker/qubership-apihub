@@ -153,6 +153,7 @@ type PackageInfoFile struct {
 	GroupName                     string                 `json:"groupName"`
 	Format                        string                 `json:"format"`
 	ExternalMetadata              *ExternalMetadata      `json:"externalMetadata,omitempty"`
+	HasErrors                     bool                   `json:"hasErrors"`
 }
 
 type ChangelogInfoFile struct {
@@ -201,6 +202,19 @@ type PackageComparisonsFile struct {
 	Comparisons []VersionComparison `json:"comparisons" validate:"dive,required"`
 }
 
+type PackageCachedComparisonsFile struct {
+	CachedComparisons []CachedVersionComparison `json:"cachedComparisons" validate:"dive,required"`
+}
+
+type CachedVersionComparison struct {
+	PackageId                string `json:"packageId" validate:"required"`
+	Version                  string `json:"version" validate:"required"`
+	Revision                 int    `json:"revision" validate:"required"`
+	PreviousVersionPackageId string `json:"previousVersionPackageId" validate:"required"`
+	PreviousVersion          string `json:"previousVersion" validate:"required"`
+	PreviousVersionRevision  int    `json:"previousVersionRevision" validate:"required"`
+}
+
 // --- Contract archive types ---
 
 const DdlEntityKindTable = "table"
@@ -238,7 +252,7 @@ type DdlVersionComparison struct {
 	PreviousVersionPackageId string `json:"previousVersionPackageId"`
 	PreviousVersion          string `json:"previousVersion"`
 	PreviousVersionRevision  int    `json:"previousVersionRevision"`
-	FromCache                bool   `json:"fromCache"`
+	HasErrors                bool   `json:"hasErrors"`
 	// ContractsChangesSummary is the builder format: a map keyed by contract type name.
 	ContractsChangesSummary map[string]ContractTypeSummary `json:"contractsChangesSummary"`
 }
@@ -336,8 +350,8 @@ type VersionComparison struct {
 	PreviousVersion          string          `json:"previousVersion"`
 	PreviousVersionRevision  int             `json:"previousVersionRevision"`
 	OperationTypes           []OperationType `json:"operationTypes" validate:"required,dive,required"`
-	FromCache                bool            `json:"fromCache"`
 	ComparisonFileId         string          `json:"comparisonFileId"`
+	HasErrors                bool            `json:"hasErrors"`
 }
 
 type ComparisonKey struct {
@@ -368,8 +382,27 @@ type ApiAudienceTransition struct {
 	OperationsCount  int    `json:"operationsCount"`
 }
 
-type BuilderNotificationsFile struct {
+type BuildNotificationsFile struct {
 	Notifications []BuilderNotification `json:"notifications" validate:"dive,required"`
+}
+
+type FailedBuildNotifications struct {
+	Notifications           []BuilderNotification `json:"notifications" validate:"required,dive"`
+	ComparisonNotifications []BuilderNotification `json:"comparisonNotifications" validate:"required,dive"`
+}
+
+type ComparisonNotificationsFile struct {
+	Comparisons []ComparisonNotifications `json:"comparisons" validate:"dive,required"`
+}
+
+type ComparisonNotifications struct {
+	PackageId                string                `json:"packageId"`
+	Version                  string                `json:"version"`
+	Revision                 int                   `json:"revision"`
+	PreviousVersionPackageId string                `json:"previousVersionPackageId"`
+	PreviousVersion          string                `json:"previousVersion"`
+	PreviousVersionRevision  int                   `json:"previousVersionRevision"`
+	Notifications            []BuilderNotification `json:"notifications" validate:"dive,required"`
 }
 
 type PackageDocument struct {
@@ -384,12 +417,58 @@ type PackageDocument struct {
 	Filename     string                 `json:"filename" validate:"required"`
 	Format       string                 `json:"format"`
 	ApiKind      string                 `json:"apiKind"`
+	HasErrors    bool                   `json:"hasErrors"`
 }
 
 type BuilderNotification struct {
-	Severity int    `json:"severity"`
-	Message  string `json:"message"`
-	FileId   string `json:"fileId"`
+	Severity   BuilderNotificationSeverity `json:"severity"`
+	Category   string                      `json:"category"`
+	Message    string                      `json:"message"`
+	DocumentId string                      `json:"documentId"`
+}
+
+// BuilderNotificationSeverity is the severity of a notification in the builder contract, where it is an
+// integer. The public API uses the string form.
+type BuilderNotificationSeverity int
+
+const (
+	BuilderNotificationSeverityError BuilderNotificationSeverity = iota
+	BuilderNotificationSeverityWarning
+	BuilderNotificationSeverityInformation
+	BuilderNotificationSeverityHint
+)
+
+const (
+	NotificationSeverityError       = "error"
+	NotificationSeverityWarning     = "warning"
+	NotificationSeverityInformation = "information"
+	NotificationSeverityHint        = "hint"
+)
+
+func ValidNotificationSeverity(s string) bool {
+	switch s {
+	case NotificationSeverityError, NotificationSeverityWarning, NotificationSeverityInformation, NotificationSeverityHint:
+		return true
+	}
+	return false
+}
+
+// NotificationSeverityFromBuilder converts the builder severity to the value used by the public API.
+func NotificationSeverityFromBuilder(severity BuilderNotificationSeverity) (string, error) {
+	switch severity {
+	case BuilderNotificationSeverityError:
+		return NotificationSeverityError, nil
+	case BuilderNotificationSeverityWarning:
+		return NotificationSeverityWarning, nil
+	case BuilderNotificationSeverityInformation:
+		return NotificationSeverityInformation, nil
+	case BuilderNotificationSeverityHint:
+		return NotificationSeverityHint, nil
+	default:
+		return "", fmt.Errorf("unknown notification severity %v, expecting one of %v, %v, %v, %v",
+			int(severity), int(BuilderNotificationSeverityError), int(BuilderNotificationSeverityWarning),
+			int(BuilderNotificationSeverityInformation), int(BuilderNotificationSeverityHint))
+	}
 }
 
 const PackageGroupingPrefixWildcard = "{group}"

@@ -1,0 +1,19 @@
+openapi: 3.0.0
+info:
+  title: Clean API
+  version: 2.0.0
+paths:
+  /pets:
+    get:
+      operationId: listPets
+      summary: List pets v2
+      responses:
+        '200':
+          description: OK
+  /owners:
+    get:
+      operationId: listOwners
+      summary: List owners
+      responses:
+        '200':
+          description: OK

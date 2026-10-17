@@ -92,7 +92,7 @@ func (b *buildProcessorServiceImpl) findFreeBuild(ctx context.Context, builderId
 
 		if srcConfig.UnresolvedRefs {
 			start = time.Now()
-			srcConfig.Refs, err = b.refResolverService.CalculateBuildConfigRefs(ctx, srcConfig.Refs, srcConfig.ResolveRefs, srcConfig.ResolveConflicts)
+			srcConfig.Refs, err = b.refResolverService.CalculateBuildConfigRefs(ctx, srcConfig.Refs, srcConfig.Status, srcConfig.ResolveRefs, srcConfig.ResolveConflicts)
 			if err != nil {
 				err = b.buildRepository.UpdateBuildStatus(ctx, src.BuildId, view.StatusError, fmt.Sprintf("Build config has invalid refs: %v", err.Error()))
 				if err != nil {

@@ -133,6 +133,44 @@ func getListFromParam(r *http.Request, param string) ([]string, *exception.Custo
 	return strings.Split(listStr, ","), nil
 }
 
+func getRepeatedListFromParam(r *http.Request, param string) ([]string, *exception.CustomError) {
+	values := r.URL.Query()[param]
+	if len(values) == 0 {
+		return []string{}, nil
+	}
+	//validations were added based on security scan results to avoid resource exhaustion
+	totalLen := 0
+	for _, value := range values {
+		totalLen += len(value)
+	}
+	if totalLen > maxParamLen {
+		return nil, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidParameterValueLengthMsg,
+			Params:  map[string]interface{}{"param": param, "value": strings.Join(values, ","), "maxLen": maxParamLen},
+		}
+	}
+	items := make([]string, 0, len(values))
+	for _, value := range values {
+		for _, item := range strings.Split(value, ",") {
+			if item == "" {
+				continue
+			}
+			items = append(items, item)
+		}
+	}
+	if len(items) > maxParamItems {
+		return nil, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidItemsNumberMsg,
+			Params:  map[string]interface{}{"param": param, "maxItems": maxParamItems},
+		}
+	}
+	return items, nil
+}
+
 func parseVersionStatusQueryParam(r *http.Request) ([]string, *exception.CustomError) {
 	statusParts, customError := getListFromParam(r, "status")
 	if customError != nil {
@@ -245,4 +283,86 @@ func validatePublishPackageKind(kind string, allowedKinds []string) *exception.C
 			"allowedKinds": strings.Join(allowedKinds, ", "),
 		},
 	}
+}
+
+func getNotificationsFilter(r *http.Request) (*view.NotificationsFilter, *exception.CustomError) {
+	severities, customError := getRepeatedListFromParam(r, "severity")
+	if customError != nil {
+		return nil, customError
+	}
+	for _, severity := range severities {
+		if !view.ValidNotificationSeverity(severity) {
+			return nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidParameterValue,
+				Message: exception.InvalidParameterValueMsg,
+				Params:  map[string]interface{}{"param": "severity", "value": severity},
+			}
+		}
+	}
+	categories, customError := getRepeatedListFromParam(r, "category")
+	if customError != nil {
+		return nil, customError
+	}
+	documentId := r.URL.Query().Get("documentId")
+	emptyDocumentId := false
+	if emptyDocumentIdStr := r.URL.Query().Get("emptyDocumentId"); emptyDocumentIdStr != "" {
+		var err error
+		emptyDocumentId, err = strconv.ParseBool(emptyDocumentIdStr)
+		if err != nil {
+			return nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.IncorrectParamType,
+				Message: exception.IncorrectParamTypeMsg,
+				Params:  map[string]interface{}{"param": "emptyDocumentId", "type": "boolean"},
+				Debug:   err.Error(),
+			}
+		}
+	}
+	if emptyDocumentId && documentId != "" {
+		return nil, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.OverlappingQueryParameter,
+			Message: exception.OverlappingQueryParameterMsg,
+			Params:  map[string]interface{}{"param1": "emptyDocumentId", "param2": "documentId"},
+		}
+	}
+	return &view.NotificationsFilter{
+		DocumentId:      documentId,
+		EmptyDocumentId: emptyDocumentId,
+		Severities:      severities,
+		Categories:      categories,
+	}, nil
+}
+
+func applyNotificationsPaging(r *http.Request, filter *view.NotificationsFilter) *exception.CustomError {
+	limit, customError := getLimitQueryParam(r)
+	if customError != nil {
+		return customError
+	}
+	page := 0
+	if r.URL.Query().Get("page") != "" {
+		parsedPage, err := strconv.Atoi(r.URL.Query().Get("page"))
+		if err != nil {
+			return &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.IncorrectParamType,
+				Message: exception.IncorrectParamTypeMsg,
+				Params:  map[string]interface{}{"param": "page", "type": "int"},
+				Debug:   err.Error(),
+			}
+		}
+		if parsedPage < 0 {
+			return &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidParameterValue,
+				Message: exception.InvalidParameterValueMsg,
+				Params:  map[string]interface{}{"param": "page", "value": parsedPage},
+			}
+		}
+		page = parsedPage
+	}
+	filter.Limit = limit
+	filter.Offset = limit * page
+	return nil
 }

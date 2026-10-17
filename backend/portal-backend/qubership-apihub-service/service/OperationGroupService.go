@@ -583,16 +583,16 @@ func (o operationGroupServiceImpl) StartOperationGroupPublish(ctx context.Contex
 			Params:  map[string]interface{}{"groupName": groupName},
 		}
 	}
-	if o.previousVersionStatusValidationEnabled {
-		if req.PreviousVersion != "" {
-			previousVersionPackageId := req.PreviousVersionPackageId
-			if previousVersionPackageId == "" {
-				previousVersionPackageId = req.PackageId
-			}
-			previousVersionStatus, previousVersionFound, err := o.publishedService.GetVersionStatus(ctx, previousVersionPackageId, req.PreviousVersion)
-			if err != nil {
-				return "", err
-			}
+	if req.PreviousVersion != "" {
+		previousVersionPackageId := req.PreviousVersionPackageId
+		if previousVersionPackageId == "" {
+			previousVersionPackageId = req.PackageId
+		}
+		previousVersionStatus, previousVersionHasErrors, previousVersionFound, err := o.publishedService.GetVersionStatus(ctx, previousVersionPackageId, req.PreviousVersion)
+		if err != nil {
+			return "", err
+		}
+		if o.previousVersionStatusValidationEnabled {
 			if !previousVersionFound {
 				return "", &exception.CustomError{
 					Status:  http.StatusNotFound,
@@ -606,12 +606,23 @@ func (o operationGroupServiceImpl) StartOperationGroupPublish(ctx context.Contex
 				return "", newReleaseVersionPreviousVersionNotReleaseError(ctx, req.PackageId, req.Version, previousVersionPackageId, req.PreviousVersion)
 			}
 		}
-
-		// Publishing this version as a draft must not leave a release version that references it as its previous version.
-		if req.Status == string(view.Draft) {
-			if err := o.publishedService.CheckNoReleaseDependentVersions(ctx, req.PackageId, req.Version); err != nil {
-				return "", err
+		if previousVersionHasErrors {
+			return "", &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.VersionHasErrors,
+				Message: exception.PreviousVersionHasErrorsMsg,
+				Params: map[string]interface{}{
+					"previousVersionPackageId": previousVersionPackageId,
+					"previousVersion":          req.PreviousVersion,
+				},
 			}
+		}
+	}
+
+	// Publishing this version as a draft must not leave a release version that references it as its previous version.
+	if o.previousVersionStatusValidationEnabled && req.Status == string(view.Draft) {
+		if err := o.publishedService.CheckNoReleaseDependentVersions(ctx, req.PackageId, req.Version); err != nil {
+			return "", err
 		}
 	}
 

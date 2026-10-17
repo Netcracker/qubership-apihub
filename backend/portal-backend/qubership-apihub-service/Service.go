@@ -255,7 +255,7 @@ func main() {
 	packageVersionEnrichmentService := service.NewPackageVersionEnrichmentService(publishedRepository)
 	activityTrackingService := service.NewActivityTrackingService(activityTrackingRepository, publishedRepository, userService)
 	operationService := service.NewOperationService(operationRepository, publishedRepository, packageVersionEnrichmentService)
-	roleService := service.NewRoleService(roleRepository, userService, activityTrackingService, publishedRepository)
+	roleService := service.NewRoleService(roleRepository, userService, activityTrackingService, publishedRepository, apihubApiKeyRepository)
 	ptHandler := service.NewPackageTransitionHandler(transitionRepository)
 	publishNotificationService := service.NewPublishNotificationService(olricProvider)
 	publishedService := service.NewPublishedService(publishedRepository, buildRepository, favoritesRepository, operationRepository, ddlContractRepository, activityTrackingService, monitoringService, minioStorageService, systemInfoService, publishNotificationService, roleService)
@@ -282,7 +282,7 @@ func main() {
 	versionService.SetBuildService(buildService)
 	operationGroupService.SetBuildService(buildService)
 
-	excelService := service.NewExcelService(publishedRepository, versionService, operationService, packageService, ddlContractServiceForVersion, mcpContractServiceForVersion)
+	excelService := service.NewExcelService(publishedRepository, versionService, operationService, packageService, ddlContractServiceForVersion, mcpContractServiceForVersion, buildService, buildRepository)
 	comparisonService := service.NewComparisonService(publishedRepository, operationRepository, packageVersionEnrichmentService, ddlContractServiceForVersion)
 	businessMetricService := service.NewBusinessMetricService(businessMetricRepository)
 
@@ -436,6 +436,8 @@ func main() {
 	r.HandleFunc("/api/v2/packages/{packageId}/publish/statuses", authenticator.Secure(publishV2Controller.GetPublishStatuses)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v2/packages/{packageId}/publish", authenticator.Secure(publishV2Controller.Publish)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v3/packages/{packageId}/publish/{publishId}/status", authenticator.Secure(publishV2Controller.SetPublishStatus)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v2/packages/{packageId}/publish/{publishId}/notifications", authenticator.Secure(publishV2Controller.GetPublishNotifications)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/publish/{publishId}/export/notifications", authenticator.Secure(exportController.GenerateBuildNotificationsExcelReport)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/packages/{packageId}/publish/withOperationsGroup", authenticator.Secure(versionController.PublishFromCSV_deprecated)).Methods(http.MethodPost) //deprecated
 	r.HandleFunc("/api/v2/packages/{packageId}/publish/withOperationsGroup/{apiType}", authenticator.Secure(versionController.PublishFromCSV)).Methods(http.MethodPost)
 	r.HandleFunc("/api/v1/packages/{packageId}/publish/{publishId}/withOperationsGroup/status", authenticator.Secure(versionController.GetCSVDashboardPublishStatus)).Methods(http.MethodGet)
@@ -488,6 +490,7 @@ func main() {
 	r.HandleFunc("/api/v2/user", authenticator.SecureUser(userController.GetExtendedUser)).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/changes/summary", authenticator.Secure(comparisonController.GetComparisonChangesSummary)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/changes/notifications", authenticator.Secure(versionController.GetComparisonNotifications)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations", authenticator.Secure(operationController.GetOperationList)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}", authenticator.Secure(operationController.GetOperation)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/operations/{operationId}/changes", authenticator.Secure(operationController.GetOperationChanges)).Methods(http.MethodGet)
@@ -525,6 +528,7 @@ func main() {
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/sourceData", authenticator.Secure(publishedController.GetPublishedVersionSourceDataConfig)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/config", authenticator.Secure(publishedController.GetPublishedVersionBuildConfig)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/copy", authenticator.Secure(versionController.CopyVersion)).Methods(http.MethodPost)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/notifications", authenticator.Secure(versionController.GetVersionNotifications)).Methods(http.MethodGet)
 
 	r.HandleFunc("/api/v4/packages/{packageId}/activity", authenticator.Secure(activityTrackingController.GetActivityHistoryForPackage)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v4/activity", authenticator.Secure(activityTrackingController.GetActivityHistory)).Methods(http.MethodGet)
@@ -575,6 +579,7 @@ func main() {
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/export/operations", authenticator.Secure(exportController.GenerateOperationsExcelReport)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/{apiType}/export/operations/deprecated", authenticator.Secure(exportController.GenerateDeprecatedOperationsExcelReport)).Methods(http.MethodGet)
 	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/export/shareability-report", authenticator.Secure(exportController.GenerateShareabilityReport)).Methods(http.MethodGet)
+	r.HandleFunc("/api/v2/packages/{packageId}/versions/{version}/export/notifications", authenticator.Secure(exportController.GenerateNotificationsExcelReport)).Methods(http.MethodGet)
 
 	r.Path("/metrics").Handler(promhttp.Handler())
 	r.HandleFunc("/api/v3/packages/{packageId}/versions/{version}/{apiType}/build/groups/{groupName}/buildType/{buildType}", authenticator.Secure(transformationController.TransformDocuments_deprecated_2)).Methods(http.MethodPost)             //deprecated

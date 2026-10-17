@@ -1,0 +1,24 @@
+{
+  "tools": [
+    {
+      "name": "search",
+      "description": "First search tool",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "search",
+      "description": "Second search tool with same name",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "term": { "type": "string" }
+        }
+      }
+    }
+  ]
+}

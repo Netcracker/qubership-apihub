@@ -111,5 +111,31 @@ func makeComparisonsQuery(packageIds []string, versionsIn []string, migrationId 
 		)`, migrationId)
 	}
 
+	query += `
+		/* the previous version must not have errors, otherwise the calculated changes are unreliable */
+		and not exists (
+			select 1 from published_version prev_ver
+			/* the changelog of the previous version, calculated against the latest revision of its own previous version */
+			left join lateral (
+				select max(pp.revision) as revision from published_version pp
+				where pp.package_id = coalesce(nullif(prev_ver.previous_version_package_id, ''), prev_ver.package_id)
+					and pp.version = prev_ver.previous_version
+					and pp.deleted_at is null
+			) prev_ver_prev on true
+			left join version_comparison prev_ver_changelog
+				on prev_ver_changelog.package_id = prev_ver.package_id
+				and prev_ver_changelog.version = prev_ver.version
+				and prev_ver_changelog.revision = prev_ver.revision
+				and prev_ver_changelog.previous_package_id = coalesce(nullif(prev_ver.previous_version_package_id, ''), prev_ver.package_id)
+				and prev_ver_changelog.previous_version = prev_ver.previous_version
+				and prev_ver_changelog.previous_revision = prev_ver_prev.revision
+			/* the comparison row pins the revision of the previous version */
+			where prev_ver.package_id = vc.previous_package_id
+				and prev_ver.version = vc.previous_version
+				and prev_ver.revision = vc.previous_revision
+				and (coalesce((prev_ver.metadata ->> 'has_errors')::boolean, false)
+					or coalesce((prev_ver_changelog.metadata ->> 'has_errors')::boolean, false))
+		)`
+
 	return query, params
 }

@@ -74,6 +74,13 @@ func (c comparisonCleanupRepositoryImpl) VacuumComparisonTables(ctx context.Cont
 		vacuumErrors = append(vacuumErrors, errorMsg)
 	}
 
+	_, err = c.cp.GetConnection().ExecContext(ctx, "VACUUM FULL version_comparison_notification")
+	if err != nil {
+		errorMsg := fmt.Sprintf("Failed to vacuum 'version_comparison_notification' table: %v", err)
+		logger.Warn(ctx, errorMsg)
+		vacuumErrors = append(vacuumErrors, errorMsg)
+	}
+
 	if len(vacuumErrors) > 0 {
 		return fmt.Errorf("vacuum operations failed: %s", strings.Join(vacuumErrors, "; "))
 	}

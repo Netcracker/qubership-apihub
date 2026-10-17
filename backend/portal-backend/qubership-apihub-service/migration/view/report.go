@@ -57,15 +57,17 @@ type NotMigratedVersion struct {
 	Revision                 int    `json:"revision"`
 	PreviousVersion          string `json:"previousVersion"`
 	PreviousVersionPackageId string `json:"previousVersionPackageId"`
+	Reason                   string `json:"reason,omitempty"`
 }
 
 type NotMigratedComparison struct {
-	PackageId         string `pg:"package_id, type:varchar"`
-	Version           string `pg:"version, type:varchar"`
-	Revision          int    `pg:"revision, type:integer"`
-	PreviousPackageId string `pg:"previous_package_id, type:varchar"`
-	PreviousVersion   string `pg:"previous_version, type:varchar"`
-	PreviousRevision  int    `pg:"previous_revision, type:integer"`
+	PackageId         string `json:"packageId"`
+	Version           string `json:"version"`
+	Revision          int    `json:"revision"`
+	PreviousPackageId string `json:"previousPackageId"`
+	PreviousVersion   string `json:"previousVersion"`
+	PreviousRevision  int    `json:"previousRevision"`
+	Reason            string `json:"reason,omitempty"`
 }
 
 type PostCheckResult struct {

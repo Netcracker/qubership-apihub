@@ -11,7 +11,7 @@ import (
 )
 
 type RefResolverService interface {
-	CalculateBuildConfigRefs(ctx context.Context, refs []view.BCRef, resolveRefs bool, resolveConflicts bool) ([]view.BCRef, error)
+	CalculateBuildConfigRefs(ctx context.Context, refs []view.BCRef, status string, resolveRefs bool, resolveConflicts bool) ([]view.BCRef, error)
 }
 
 func NewRefResolverService(publishedRepo repository.PublishedRepository) RefResolverService {
@@ -24,7 +24,7 @@ type refResolverServiceImpl struct {
 	publishedRepo repository.PublishedRepository
 }
 
-func (r *refResolverServiceImpl) CalculateBuildConfigRefs(ctx context.Context, refs []view.BCRef, resolveRefs bool, resolveConflicts bool) ([]view.BCRef, error) {
+func (r *refResolverServiceImpl) CalculateBuildConfigRefs(ctx context.Context, refs []view.BCRef, status string, resolveRefs bool, resolveConflicts bool) ([]view.BCRef, error) {
 	validRefs := make(map[string]struct{}, 0)
 	if resolveRefs {
 		uniqueRefs := make(map[string]struct{}, 0)
@@ -143,6 +143,21 @@ func (r *refResolverServiceImpl) CalculateBuildConfigRefs(ctx context.Context, r
 			}
 		}
 		uniquePackageRefs[ref.RefId] = struct{}{}
+		// A draft dashboard may reference an unsound version; only a release dashboard must be sound.
+		if !ref.Excluded && status == string(view.Release) {
+			refHasErrors, err := VersionHasAnyErrors(ctx, r.publishedRepo, versionEnt.PackageId, versionEnt.Version, versionEnt.Revision)
+			if err != nil {
+				return nil, err
+			}
+			if refHasErrors {
+				return nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.VersionHasErrors,
+					Message: exception.ReferencedVersionHasErrorsMsg,
+					Params:  map[string]interface{}{"packageId": ref.RefId, "version": ref.Version},
+				}
+			}
+		}
 	}
 	return refs, nil
 }

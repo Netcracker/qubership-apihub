@@ -25,6 +25,7 @@ type RoleService interface {
 	GetPackageMembers(ctx context.Context, packageId string) (*view.PackageMembers, error)
 	GetPermissionsForPackage(ctx context.Context, packageId string) ([]string, error)
 	FilterVersionsByPackageReadAccess(ctx context.Context, keys []entity.PublishedVersionKeyEntity) (accessible []entity.PublishedVersionKeyEntity, hiddenCount int, err error)
+	FilterVersionsByPublisherReadAccess(ctx context.Context, publisherId string, keys []entity.PublishedVersionKeyEntity) (accessible []entity.PublishedVersionKeyEntity, hiddenCount int, err error)
 	GetPermissionsForReadScope(ctx context.Context, scope view.PackageReadScope) ([]string, error)
 	GetWorkspacePackageVisibilityRoots(ctx context.Context, workspaceId string) ([]string, error)
 	GetUserPackagePromoteStatuses(ctx context.Context, packageIds []string, userId string) (*view.AvailablePackagePromoteStatuses, error)
@@ -49,15 +50,16 @@ type RoleService interface {
 	DeleteSystemAdministrator(ctx context.Context, userId string) error
 }
 
-func NewRoleService(roleRepository repository.RoleRepository, userService UserService, atService ActivityTrackingService, publishedRepo repository.PublishedRepository) RoleService {
-	return roleServiceImpl{roleRepository: roleRepository, userService: userService, atService: atService, publishedRepo: publishedRepo}
+func NewRoleService(roleRepository repository.RoleRepository, userService UserService, atService ActivityTrackingService, publishedRepo repository.PublishedRepository, apiKeyRepository repository.ApihubApiKeyRepository) RoleService {
+	return roleServiceImpl{roleRepository: roleRepository, userService: userService, atService: atService, publishedRepo: publishedRepo, apiKeyRepository: apiKeyRepository}
 }
 
 type roleServiceImpl struct {
-	roleRepository repository.RoleRepository
-	userService    UserService
-	atService      ActivityTrackingService
-	publishedRepo  repository.PublishedRepository
+	roleRepository   repository.RoleRepository
+	userService      UserService
+	atService        ActivityTrackingService
+	publishedRepo    repository.PublishedRepository
+	apiKeyRepository repository.ApihubApiKeyRepository
 }
 
 func (r roleServiceImpl) AddPackageMembers(ctx context.Context, packageId string, emails []string, roleIds []string) (*view.PackageMembers, error) {
@@ -619,20 +621,101 @@ func (r roleServiceImpl) GetPackageReadScope(ctx context.Context) (view.PackageR
 }
 
 func (r roleServiceImpl) FilterVersionsByPackageReadAccess(ctx context.Context, keys []entity.PublishedVersionKeyEntity) ([]entity.PublishedVersionKeyEntity, int, error) {
+	return filterVersionsByReadAccess(keys, func(packageId string) (bool, error) {
+		permissions, err := r.GetPermissionsForPackage(ctx, packageId)
+		if err != nil {
+			return false, err
+		}
+		return utils.SliceContains(permissions, string(view.ReadPermission)), nil
+	})
+}
+
+func (r roleServiceImpl) FilterVersionsByPublisherReadAccess(ctx context.Context, publisherId string, keys []entity.PublishedVersionKeyEntity) ([]entity.PublishedVersionKeyEntity, int, error) {
+	scope, err := r.resolvePublisherReadScope(ctx, publisherId)
+	if err != nil {
+		return nil, 0, err
+	}
+	switch scope.Kind {
+	case view.PackageReadScopeAll:
+		return filterVersionsByReadAccess(keys, func(string) (bool, error) { return true, nil })
+	case view.PackageReadScopeNone:
+		return filterVersionsByReadAccess(keys, func(string) (bool, error) { return false, nil })
+	case view.PackageReadScopeSubtree:
+		return filterVersionsByReadAccess(keys, func(packageId string) (bool, error) {
+			return packageId == scope.SubtreeRoot || strings.HasPrefix(packageId, scope.SubtreeRoot+"."), nil
+		})
+	case view.PackageReadScopeUser:
+		return filterVersionsByReadAccess(keys, func(packageId string) (bool, error) {
+			permissions, err := r.getUserPermissionsForPackage(ctx, packageId, publisherId)
+			if err != nil {
+				return false, err
+			}
+			return utils.SliceContains(permissions, string(view.ReadPermission)), nil
+		})
+	default:
+		return nil, 0, fmt.Errorf("unsupported package read scope kind %v", scope.Kind)
+	}
+}
+
+func (r roleServiceImpl) resolvePublisherReadScope(ctx context.Context, publisherId string) (view.PackageReadScope, error) {
+	if publisherId == "" {
+		return view.PackageReadScope{Kind: view.PackageReadScopeNone}, nil
+	}
+
+	if strings.HasPrefix(publisherId, API_KEY_PREFIX) {
+		return r.resolveApiKeyReadScope(ctx, publisherId)
+	}
+
+	systemRole, err := r.GetUserSystemRole(ctx, publisherId)
+	if err != nil {
+		return view.PackageReadScope{}, err
+	}
+	if systemRole == view.SysadmRole {
+		return view.PackageReadScope{Kind: view.PackageReadScopeAll}, nil
+	}
+
+	return view.PackageReadScope{Kind: view.PackageReadScopeUser}, nil
+}
+
+func (r roleServiceImpl) resolveApiKeyReadScope(ctx context.Context, apiKeyId string) (view.PackageReadScope, error) {
+	apiKey, err := r.apiKeyRepository.GetApiKey(ctx, apiKeyId)
+	if err != nil {
+		return view.PackageReadScope{}, err
+	}
+	if apiKey == nil {
+		return view.PackageReadScope{Kind: view.PackageReadScopeNone}, nil
+	}
+	if utils.SliceContains(apiKey.Roles, view.SysadmRole) {
+		return view.PackageReadScope{Kind: view.PackageReadScopeAll}, nil
+	}
+	apiKeyPermissions, err := r.roleRepository.GetPermissionsForRoles(ctx, apiKey.Roles)
+	if err != nil {
+		return view.PackageReadScope{}, err
+	}
+	if !utils.SliceContains(apiKeyPermissions, string(view.ReadPermission)) {
+		return view.PackageReadScope{Kind: view.PackageReadScopeNone}, nil
+	}
+	if apiKey.PackageId == view.AllPackagesApikeyScope {
+		return view.PackageReadScope{Kind: view.PackageReadScopeAll}, nil
+	}
+	return view.PackageReadScope{Kind: view.PackageReadScopeSubtree, SubtreeRoot: apiKey.PackageId}, nil
+}
+
+func filterVersionsByReadAccess(keys []entity.PublishedVersionKeyEntity, canRead func(packageId string) (bool, error)) ([]entity.PublishedVersionKeyEntity, int, error) {
 	accessible := make([]entity.PublishedVersionKeyEntity, 0, len(keys))
 	hiddenCount := 0
 	checkedPackages := make(map[string]bool)
 	for _, key := range keys {
-		canRead, checked := checkedPackages[key.PackageId]
+		readable, checked := checkedPackages[key.PackageId]
 		if !checked {
-			permissions, err := r.GetPermissionsForPackage(ctx, key.PackageId)
+			var err error
+			readable, err = canRead(key.PackageId)
 			if err != nil {
 				return nil, 0, err
 			}
-			canRead = utils.SliceContains(permissions, string(view.ReadPermission))
-			checkedPackages[key.PackageId] = canRead
+			checkedPackages[key.PackageId] = readable
 		}
-		if canRead {
+		if readable {
 			accessible = append(accessible, key)
 		} else {
 			hiddenCount++

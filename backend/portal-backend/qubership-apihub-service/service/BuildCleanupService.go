@@ -172,8 +172,8 @@ func (j BuildCleanupJob) cleanupOldBuilds(ctx context.Context, runId int, schedu
 		return fmt.Errorf("failed to remove old build results from minio storage: %w", err)
 	}
 
-	if err := j.buildCleanupRepository.RemoveOldBuildSourcesByIds(ctx, ids, runId, scheduledAt); err != nil {
-		return fmt.Errorf("failed to clean up old build sources: %w", err)
+	if err := j.buildCleanupRepository.RemoveOldBuildDataByIds(ctx, ids, runId, scheduledAt); err != nil {
+		return fmt.Errorf("failed to clean up old build data: %w", err)
 	}
 
 	return nil

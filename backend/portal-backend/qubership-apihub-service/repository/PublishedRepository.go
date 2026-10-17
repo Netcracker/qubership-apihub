@@ -22,6 +22,11 @@ type PublishedRepository interface {
 	GetVersionRevisionsList(ctx context.Context, searchQuery entity.PackageVersionSearchQueryEntity) ([]entity.PackageVersionRevisionEntity, error)
 	GetLatestContentBySlug(ctx context.Context, packageId string, versionName string, slug string) (*entity.PublishedContentEntity, error)
 	GetRevisionContentBySlug(ctx context.Context, packageId string, versionName string, slug string, revision int) (*entity.PublishedContentEntity, error)
+	GetVersionDocumentErrorSummary(ctx context.Context, packageId string, versionName string, revision int, showOnlyDeleted bool) ([]entity.DocumentErrorSummaryEntity, error)
+	GetVersionNotifications(ctx context.Context, packageId string, version string, revision int, filter view.NotificationsFilter) ([]entity.PublishedVersionNotificationEntity, error)
+	GetComparisonNotifications(ctx context.Context, comparisonId string, filter view.NotificationsFilter) ([]entity.VersionComparisonNotificationEntity, error)
+	GetVersionErrorSummary(ctx context.Context, packageId string, version string, revision int, showOnlyDeleted bool) (*entity.VersionErrorSummaryEntity, error)
+	GetVersionsErrorSummary(ctx context.Context, versionKeys []entity.PublishedVersionKeyEntity, showOnlyDeleted bool) (map[entity.PublishedVersionKeyEntity]entity.VersionErrorSummaryEntity, error)
 
 	GetVersionSources(ctx context.Context, packageId string, versionName string, revision int) (*entity.PublishedSrcArchiveEntity, error)
 	GetPublishedVersionSourceDataConfig(ctx context.Context, packageId string, versionName string, revision int) (*entity.PublishedSrcDataConfigEntity, error)
@@ -30,20 +35,21 @@ type PublishedRepository interface {
 	CreateVersionWithData(ctx context.Context, packageInfo view.PackageInfoFile, publishId string, version *entity.PublishedVersionEntity, content []*entity.PublishedContentEntity,
 		data []*entity.PublishedContentDataEntity, refs []*entity.PublishedReferenceEntity, src *entity.PublishedSrcEntity, srcArchive *entity.PublishedSrcArchiveEntity,
 		operations []*entity.OperationEntity, operationsData []*entity.OperationDataEntity,
-		operationComparisons []*entity.OperationComparisonEntity, builderNotifications []*entity.BuilderNotificationsEntity,
-		versionComparisonEntities []*entity.VersionComparisonEntity, serviceName string, pkg *entity.PackageEntity, versionComparisonsFromCache []string,
-		operationComparisonIdsToRebuild []string, ddlComparisonIdsToRebuild []string,
+		operationComparisons []*entity.OperationComparisonEntity, versionNotifications []*entity.PublishedVersionNotificationEntity,
+		comparisonNotifications []*entity.VersionComparisonNotificationEntity,
+		versionComparisonEntities []*entity.VersionComparisonEntity, serviceName string, pkg *entity.PackageEntity, cachedComparisonIds map[string]struct{},
 		versionInternalDocEntities []*entity.VersionInternalDocumentEntity, versionInternalDocDataEntities []*entity.VersionInternalDocumentDataEntity,
 		comparisonInternalDocEntities []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocDataEntities []*entity.ComparisonInternalDocumentDataEntity,
 		operationSearchTexts []*entity.OperationSearchTextEntity,
 		ddlContractEntities []*entity.DDLContractEntity, ddlContractDataEntities []*entity.DDLContractDataEntity,
 		ddlContractSearchTexts []*entity.DDLContractSearchTextEntity, ddlContractComparisonEntities []*entity.DDLContractComparisonEntity,
 		mcpContractEntities []*entity.MCPContractEntity, mcpContractDataEntities []*entity.MCPContractDataEntity,
-		mcpContractSearchTexts []*entity.MCPContractSearchTextEntity) error
+		mcpContractSearchTexts []*entity.MCPContractSearchTextEntity, buildErrorFlags view.BuildErrorFlags) error
 	GetContentData(ctx context.Context, packageId string, checksum string) (*entity.PublishedContentDataEntity, error)
 
 	GetVersionRefsV3(ctx context.Context, packageId string, version string, revision int) ([]entity.PublishedReferenceEntity, error)
 	GetVersionsByPreviousVersion(ctx context.Context, previousPackageId string, previousVersionName string) ([]entity.PublishedVersionEntity, error)
+	GetVersionRevisionsByPreviousVersion(ctx context.Context, previousPackageId string, previousVersionName string) ([]entity.PublishedVersionKeyEntity, error)
 	GetReadonlyPackageVersionsWithLimit(ctx context.Context, searchQuery entity.PublishedVersionSearchQueryEntity, checkRevisions bool, showOnlyDeleted bool) ([]entity.PackageVersionRevisionEntity, error)
 	GetDefaultVersion(ctx context.Context, packageId string, status string) (*entity.PublishedVersionEntity, error)
 	GetVersionReferencingDashboards(ctx context.Context, packageId string, version string) ([]entity.PublishedVersionKeyEntity, error)
@@ -82,7 +88,7 @@ type PublishedRepository interface {
 	GetVersionRefsComparisons(ctx context.Context, comparisonId string) ([]entity.VersionComparisonEntity, error)
 	GetVersionComparisonsCleanupCandidates(ctx context.Context, limit int, offset int) ([]entity.VersionComparisonCleanupCandidateEntity, error)
 	DeleteVersionComparison(ctx context.Context, comparisonId string) (bool, error)
-	SaveVersionChanges(ctx context.Context, packageInfo view.PackageInfoFile, publishId string, operationComparisons []*entity.OperationComparisonEntity, versionComparisons []*entity.VersionComparisonEntity, versionComparisonsFromCache []string, operationComparisonIdsToRebuild []string, ddlComparisonIdsToRebuild []string, comparisonInternalDocEntities []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocDataEntities []*entity.ComparisonInternalDocumentDataEntity, ddlContractComparisons []*entity.DDLContractComparisonEntity) error
+	SaveVersionChanges(ctx context.Context, packageInfo view.PackageInfoFile, publishId string, operationComparisons []*entity.OperationComparisonEntity, versionComparisons []*entity.VersionComparisonEntity, cachedComparisonIds map[string]struct{}, comparisonInternalDocEntities []*entity.ComparisonInternalDocumentEntity, comparisonInternalDocDataEntities []*entity.ComparisonInternalDocumentDataEntity, ddlContractComparisons []*entity.DDLContractComparisonEntity, comparisonNotifications []*entity.VersionComparisonNotificationEntity, buildErrorFlags view.BuildErrorFlags) error
 	GetLatestRevision(ctx context.Context, packageId, version string) (int, error)
 	GetDeletedPackageLatestRevision(ctx context.Context, packageId, version string) (int, error)
 

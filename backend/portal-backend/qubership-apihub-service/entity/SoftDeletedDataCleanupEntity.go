@@ -26,7 +26,6 @@ type DeletedItemsStats struct {
 	BuildDepends                    int                         `json:"buildDepends"`
 	BuildResults                    int                         `json:"buildResults"`
 	BuildSources                    int                         `json:"buildSources"`
-	BuilderNotifications            int                         `json:"builderNotifications"`
 	FavoritePackages                int                         `json:"favoritePackages"`
 	Operations                      int                         `json:"operations"`
 	OperationGroups                 int                         `json:"operationGroups"`
@@ -39,6 +38,7 @@ type DeletedItemsStats struct {
 	PublishedData                   int                         `json:"publishedData"`
 	PublishedDocumentOpenCounts     int                         `json:"publishedDocumentOpenCounts"`
 	PublishedSources                int                         `json:"publishedSources"`
+	PublishedVersionNotifications   int                         `json:"publishedVersionNotifications"`
 	PublishedVersionOpenCounts      int                         `json:"publishedVersionOpenCounts"`
 	PublishedVersionReferences      int                         `json:"publishedVersionReferences"`
 	PublishedVersionRevisionContent int                         `json:"publishedVersionRevisionContent"`
@@ -76,7 +76,6 @@ func (d *DeletedItemsStats) CalculateTotal() {
 		d.BuildDepends +
 		d.BuildResults +
 		d.BuildSources +
-		d.BuilderNotifications +
 		d.FavoritePackages +
 		d.Operations +
 		d.OperationGroups +
@@ -88,6 +87,7 @@ func (d *DeletedItemsStats) CalculateTotal() {
 		d.PublishedData +
 		d.PublishedDocumentOpenCounts +
 		d.PublishedSources +
+		d.PublishedVersionNotifications +
 		d.PublishedVersionOpenCounts +
 		d.PublishedVersionReferences +
 		d.PublishedVersionRevisionContent +
@@ -108,7 +108,6 @@ func (d *DeletedItemsStats) Add(other *DeletedItemsStats) {
 	d.BuildDepends += other.BuildDepends
 	d.BuildResults += other.BuildResults
 	d.BuildSources += other.BuildSources
-	d.BuilderNotifications += other.BuilderNotifications
 	d.FavoritePackages += other.FavoritePackages
 	d.Operations += other.Operations
 	d.OperationGroups += other.OperationGroups
@@ -120,6 +119,7 @@ func (d *DeletedItemsStats) Add(other *DeletedItemsStats) {
 	d.PublishedData += other.PublishedData
 	d.PublishedDocumentOpenCounts += other.PublishedDocumentOpenCounts
 	d.PublishedSources += other.PublishedSources
+	d.PublishedVersionNotifications += other.PublishedVersionNotifications
 	d.PublishedVersionOpenCounts += other.PublishedVersionOpenCounts
 	d.PublishedVersionReferences += other.PublishedVersionReferences
 	d.PublishedVersionRevisionContent += other.PublishedVersionRevisionContent

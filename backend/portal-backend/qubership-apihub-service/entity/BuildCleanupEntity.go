@@ -9,10 +9,11 @@ type BuildCleanupEntity struct {
 	DeletedRows int       `pg:"deleted_rows, type:integer"`
 	ScheduledAt time.Time `pg:"scheduled_at, type:timestamp without time zone"`
 
-	BuildResult           int    `pg:"build_result, type:integer"`
-	BuildSrc              int    `pg:"build_src, type:integer"`
-	ExpiredS3FilesCount   int    `pg:"expired_s3_files_count, type:integer"`
-	ExpiredS3FilesDetails string `pg:"expired_s3_files_details, type:text"`
+	BuildResult            int    `pg:"build_result, type:integer"`
+	BuildSrc               int    `pg:"build_src, type:integer"`
+	ErrorBuildNotification int    `pg:"error_build_notification, type:integer"`
+	ExpiredS3FilesCount    int    `pg:"expired_s3_files_count, type:integer"`
+	ExpiredS3FilesDetails  string `pg:"expired_s3_files_details, type:text"`
 }
 
 type BuildIdEntity struct {

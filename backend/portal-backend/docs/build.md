@@ -65,8 +65,39 @@ options:
 * documents.json - list of documents with metadata
 * operations.json - list of operatrions with metadata
 * comparisons.json - list of comparisons with metadata
-* notifications.json - warnings from builder
+* notifications.json - messages raised while building the version's own documents and operations, each with a
+  severity, a category and, when the message concerns a document, its slug
+* comparison-notifications.json - messages raised while calculating a changelog, grouped by the version pair
+  they belong to. Present for a build with a previousVersion and for a changelog build. A comparison reused
+  from the backend carries no entry
 
+
+## notifications of a failed build
+
+A failed `build` or `changelog` build writes no archive, so notifications.json and comparison-notifications.json are
+never produced for it. Instead, the builder sends the messages it had raised before it failed as an optional
+`notifications` part of the `status=error` request (`POST /api/v3/packages/{packageId}/publish/{publishId}/status`).
+The part is a JSON document with two lists, `notifications` and `comparisonNotifications`, in the integer-severity
+format of the archive files.
+
+The backend stores both lists as one in the `error_build_notification` table, in the transaction that marks the build
+failed, and sets `hasNotifications` in the build metadata. The flag is returned by the publish status endpoints. The
+messages are served by `GET /api/v2/packages/{packageId}/publish/{publishId}/notifications` (same filters and paging
+as the version notification endpoints, sorted most severe first) and exported as xlsx by
+`GET /api/v2/packages/{packageId}/publish/{publishId}/export/notifications`. The workbook's cover page is titled
+"Failed publication notifications" and shows the requested version name and status with the suffix "(not published)",
+for example `release (not published)`, so it is not mistaken for the report of a published version. Both endpoints require read permission on the package and answer
+404 for a publish id that does not belong to the package.
+
+Rules worth knowing:
+
+* Only builds of packages of kind `package` store the part. A dashboard build compares one version pair per
+  reference, and the flat part cannot tell the pairs apart, so the backend accepts the part and stores nothing.
+* An invalid part (not a file part, not JSON, invalid against the contract, or sent more than once) does not fail the request: the
+  error status is applied, the part is dropped with a WARN log line, and `hasNotifications` stays `false`. A builder
+  does not retry a 400, so rejecting the request would lose the status itself.
+* The messages live as long as the failed build's sources: the builds cleanup job removes them after 30 days and
+  clears the flag (see [Data maintenance](data_maintenance.md#builds-cleanup)).
 
 ## build sequences
 

@@ -51,9 +51,18 @@ func TestValidateObjectErrors(t *testing.T) {
 		assertMissingParams(t, file, expected)
 	})
 
-	t.Run("BuilderNotificationsFile has no required fields", func(t *testing.T) {
-		var file view.BuilderNotificationsFile
+	t.Run("BuildNotificationsFile has no required fields", func(t *testing.T) {
+		var file view.BuildNotificationsFile
 		file.Notifications = make([]view.BuilderNotification, 2)
+		assertMissingParams(t, file, nil)
+	})
+
+	t.Run("ComparisonNotificationsFile has no required fields", func(t *testing.T) {
+		var file view.ComparisonNotificationsFile
+		file.Comparisons = make([]view.ComparisonNotifications, 2)
+		for i := range file.Comparisons {
+			file.Comparisons[i].Notifications = make([]view.BuilderNotification, 2)
+		}
 		assertMissingParams(t, file, nil)
 	})
 

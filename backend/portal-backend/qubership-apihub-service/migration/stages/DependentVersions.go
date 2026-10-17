@@ -143,6 +143,34 @@ func makeDependentVersionsQuery(packageIds []string, versionsIn []string, migrat
 			  and b.metadata->>'build_type' = 'build'
 			  and b.metadata->>'migration_id' = '%s'
 		) and pkg.deleted_at is null and pkg.kind = '%s'
+		/* the previous version must not have errors, otherwise the calculated changes are unreliable */
+		and not exists (
+			select 1 from published_version prev_ver
+			/* the changelog of the previous version, calculated against the latest revision of its own previous version */
+			left join lateral (
+				select max(pp.revision) as revision from published_version pp
+				where pp.package_id = coalesce(nullif(prev_ver.previous_version_package_id, ''), prev_ver.package_id)
+					and pp.version = prev_ver.previous_version
+					and pp.deleted_at is null
+			) prev_ver_prev on true
+			left join version_comparison prev_ver_changelog
+				on prev_ver_changelog.package_id = prev_ver.package_id
+				and prev_ver_changelog.version = prev_ver.version
+				and prev_ver_changelog.revision = prev_ver.revision
+				and prev_ver_changelog.previous_package_id = coalesce(nullif(prev_ver.previous_version_package_id, ''), prev_ver.package_id)
+				and prev_ver_changelog.previous_version = prev_ver.previous_version
+				and prev_ver_changelog.previous_revision = prev_ver_prev.revision
+			where prev_ver.package_id = coalesce(nullif(pv.previous_version_package_id, ''), pv.package_id)
+				and prev_ver.version = pv.previous_version
+				and prev_ver.deleted_at is null
+				/* the build resolves the previous version to its latest revision */
+				and prev_ver.revision = (
+					select max(pr.revision) from published_version pr
+					where pr.package_id = prev_ver.package_id and pr.version = prev_ver.version and pr.deleted_at is null
+				)
+				and (coalesce((prev_ver.metadata ->> 'has_errors')::boolean, false)
+					or coalesce((prev_ver_changelog.metadata ->> 'has_errors')::boolean, false))
+		)
 		order by pv.published_at asc, pv.package_id asc, pv.version asc, pv.revision asc
 	`, maxrevQueryOperator, migrationId, view.StatusComplete, migrationId, entity.KIND_PACKAGE)
 	return query, params
