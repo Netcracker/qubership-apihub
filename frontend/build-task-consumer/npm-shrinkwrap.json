@@ -14,7 +14,7 @@
         "@nestjs/config": "^4.0.4",
         "@nestjs/core": "^11.0.0",
         "@nestjs/platform-express": "^11.0.0",
-        "@netcracker/qubership-apihub-api-processor": "dev",
+        "@netcracker/qubership-apihub-api-processor": "feature-tolerant-publication",
         "@sinclair/typebox": "^0.32.1",
         "adm-zip": "0.6.0",
         "axios": "^1.20.0",
@@ -3070,9 +3070,9 @@
       }
     },
     "node_modules/@netcracker/qubership-apihub-api-processor": {
-      "version": "5.7.2-dev.20261005165611",
-      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/5.7.2-dev.20261005165611/9822dad25806958e9c3bc0ccab95c22250d0e780",
-      "integrity": "sha512-73YiVPQYaD3v2jn/MvwkfTuJpgwjjnGQAbuByDVbpUIf4/R39LObVtGWgyxjymirtnXTq7/9WdEGCZFDOh6B+A==",
+      "version": "5.7.2-feature-failed-build-notifications.20261007065120",
+      "resolved": "https://npm.pkg.github.com/download/@netcracker/qubership-apihub-api-processor/5.7.2-feature-failed-build-notifications.20261007065120/5558fb9ee429d211013d3320245a6c5b686ce871",
+      "integrity": "sha512-55GJd036uISulUp1yD+oIuJJf0hfqRUJQaLz0mdE0Q6ThiT98DhGfI4cX0PQ1PAqZdD/WIEmf4naeNDfXjqtJA==",
       "license": "Apache-2.0",
       "dependencies": {
         "@asyncapi/parser": "^3.6.0",
@@ -3293,9 +3293,6 @@
       "integrity": "sha512-UtgGb7QGgXDIO+tqqJ5oZRGHsDLO8SlpE4MhqpY9Llpzi5rJMvrK6ZGhsRCST2abZdBqIBeXW6WPD5fGK5SDwg==",
       "cpu": [
         "x64"
-      ],
-      "libc": [
-        "glibc"
       ],
       "license": "MIT",
       "optional": true,
@@ -4443,9 +4440,6 @@
         "arm64"
       ],
       "dev": true,
-      "libc": [
-        "glibc"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -4460,9 +4454,6 @@
         "arm64"
       ],
       "dev": true,
-      "libc": [
-        "musl"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -4477,9 +4468,6 @@
         "loong64"
       ],
       "dev": true,
-      "libc": [
-        "glibc"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -4494,9 +4482,6 @@
         "loong64"
       ],
       "dev": true,
-      "libc": [
-        "musl"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -4511,9 +4496,6 @@
         "ppc64"
       ],
       "dev": true,
-      "libc": [
-        "glibc"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -4528,9 +4510,6 @@
         "riscv64"
       ],
       "dev": true,
-      "libc": [
-        "glibc"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -4545,9 +4524,6 @@
         "riscv64"
       ],
       "dev": true,
-      "libc": [
-        "musl"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -4562,9 +4538,6 @@
         "s390x"
       ],
       "dev": true,
-      "libc": [
-        "glibc"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -4579,9 +4552,6 @@
         "x64"
       ],
       "dev": true,
-      "libc": [
-        "glibc"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [
@@ -4596,9 +4566,6 @@
         "x64"
       ],
       "dev": true,
-      "libc": [
-        "musl"
-      ],
       "license": "MIT",
       "optional": true,
       "os": [

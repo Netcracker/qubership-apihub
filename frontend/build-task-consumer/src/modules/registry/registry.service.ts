@@ -22,6 +22,7 @@ import FormData from 'form-data'
 import { BuildStatus } from '../builder/builder.constants'
 import { getResponseError } from '../../utils/errors'
 import {
+  NotificationsError,
   ResolvedDeprecatedOperations,
   ResolvedGroupDocuments,
   ResolvedPackage,
@@ -95,6 +96,13 @@ export class RegistryService implements OnModuleInit {
           const errorMessage = getResponseError(data?.response?.data) ?? `${data}`
           const debugMessage = data?.response?.data?.debug ?? ''
           formData.append('errors', debugMessage ? `${errorMessage} (debug: ${debugMessage})` : errorMessage)
+          if (data instanceof NotificationsError) {
+            const { notifications, comparisonNotifications } = data
+            formData.append('notifications', JSON.stringify({ notifications, comparisonNotifications }), {
+              filename: 'failed-build-notifications.json',
+              contentType: 'application/json',
+            })
+          }
           this.logger.error(`[POST Build Status] Sending error ${errorMessage}`)
         } else if (status === BuildStatus.COMPLETE) {
           formData.append('data', data, exportFileName ?? 'package.zip')
