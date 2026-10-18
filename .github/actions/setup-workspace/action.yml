@@ -23,8 +23,8 @@ runs:
         node-version: '24'
 
     # Every Nx command loads the @nx/maven plugin, which runs Maven to read the poms, so each job needs
-    # Java 21 and Maven 3.9, not only the Java job. Maven comes with the runner image; the next step
-    # fails loudly when the image moves to another major version.
+    # Java 21 and Maven 3.9 or newer, not only the Java job. Maven comes with the runner image (3.10 at
+    # the time of writing); the next step fails loudly when the image provides an older one.
     - uses: actions/setup-java@v6
       with:
         distribution: temurin
@@ -38,8 +38,8 @@ runs:
         # A file, not a pipe: `head` closing the pipe early would fail the step with 141 under pipefail.
         mvn --version > "$RUNNER_TEMP/mvn.txt"
         cat "$RUNNER_TEMP/mvn.txt"
-        head -n 1 "$RUNNER_TEMP/mvn.txt" | grep -q 'Apache Maven 3\.9\.' || {
-          echo "::error::Maven 3.9 is required; the runner image provides another version"
+        head -n 1 "$RUNNER_TEMP/mvn.txt" | grep -Eq 'Apache Maven (3\.(9|[1-9][0-9])|[4-9])\.' || {
+          echo "::error::Maven 3.9 or newer is required; the runner image provides an older version"
           exit 1
         }
         # The analysis of a cold Maven cache exceeds the plugin's 120 s default.
