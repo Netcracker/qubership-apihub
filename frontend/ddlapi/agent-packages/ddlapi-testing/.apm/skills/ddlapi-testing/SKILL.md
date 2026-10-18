@@ -51,9 +51,10 @@ about cross-statement interaction or errors, as `buildFromDdl.test.ts` does.
 - Tests are `async`; always `await buildFromDdl(...)`.
 - Reach into the parsed Realm with non-null assertions:
   `realm.schemas[0]!.tables![0]!.columns!`.
-- **Referential equality is a tested guarantee** — assert it with `.toBe()`
-  (e.g. `fk.refTable` is the same object as the table in `schema.tables`, a
-  column's enum type is the same instance as the one in `schema.objects`).
+- **Referential equality is a tested guarantee for named types** — assert it
+  with `.toBe()` (e.g. a column's enum type is the same instance as the one in
+  `schema.objects`). Foreign keys and index parts hold names: assert them with
+  `.toEqual()` (`fk.refTable` equals `{ schema: 'public', name: 'users' }`).
 - Escape-hatch (`Unknown*`) attrs have no static fields, so find by `kind`
   string and cast to read extra properties:
 

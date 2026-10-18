@@ -15,7 +15,8 @@
  */
 
 import { readFileSync } from 'fs'
-import { resolve } from 'path'
+import { createRequire } from 'module'
+import { dirname, resolve } from 'path'
 import type { Plugin } from 'vite'
 
 // Virtual ids for the rewritten libpg-query Emscripten loader and factory.
@@ -41,7 +42,15 @@ const EMSCRIPTEN_FACTORY_SPECIFIER = 'virtual:libpg-query-emscripten-factory'
  * Web Workers under any bundler with zero consumer-side configuration.
  */
 export function libpgQueryInlineWasmPlugin(packageRoot: string): Plugin {
-  const wasmDir = resolve(packageRoot, 'node_modules/libpg-query/wasm')
+  // Resolve libpg-query through Node's own algorithm rather than assuming it sits at
+  // <packageRoot>/node_modules/libpg-query. That assumption only holds under npm's flat
+  // hoisting; under pnpm's isolated linker, or any nested install, the package is
+  // elsewhere and the build fails on a missing file. Anchoring on package.json rather
+  // than on `main` keeps this working whatever entry point the package advertises -
+  // libpg-query 17.7.3 points `main` at wasm/index.cjs, but the plugin needs the
+  // sibling ESM loader and the .wasm binary, which no entry point names.
+  const requireFromPackage = createRequire(resolve(packageRoot, 'package.json'))
+  const wasmDir = resolve(dirname(requireFromPackage.resolve('libpg-query/package.json')), 'wasm')
   const wasmIndexPath = resolve(wasmDir, 'index.js')
   const wasmJsPath = resolve(wasmDir, 'libpg-query.js')
   const wasmBinaryPath = resolve(wasmDir, 'libpg-query.wasm')

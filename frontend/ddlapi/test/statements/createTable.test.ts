@@ -84,17 +84,15 @@ describe('createTable', () => {
       const table = realm.schemas[0]!.tables![0]!
       expect(table.primaryKey).toBeDefined()
       expect(table.primaryKey!.parts).toHaveLength(1)
-      // Column ref resolved
-      expect(table.primaryKey!.parts![0]!.column).toBeDefined()
-      expect(table.primaryKey!.parts![0]!.column!.name).toBe('id')
+      expect(table.primaryKey!.parts![0]!.column).toBe('id')
     })
 
     test('primary-key-composite: table-level PK with two columns', async () => {
       const realm = await buildFromDdl(loadSql('create-table/primary-key-composite.sql'))
       const table = realm.schemas[0]!.tables![0]!
       expect(table.primaryKey!.parts).toHaveLength(2)
-      expect(table.primaryKey!.parts![0]!.column!.name).toBe('tenant_id')
-      expect(table.primaryKey!.parts![1]!.column!.name).toBe('user_id')
+      expect(table.primaryKey!.parts![0]!.column).toBe('tenant_id')
+      expect(table.primaryKey!.parts![1]!.column).toBe('user_id')
     })
 
     test('primary-key-named: named PK constraint', async () => {
@@ -106,12 +104,12 @@ describe('createTable', () => {
   })
 
   describe('unique constraints', () => {
-    test('unique-inline: creates unique index with resolved column', async () => {
+    test('unique-inline: creates unique index on the column', async () => {
       const realm = await buildFromDdl(loadSql('create-table/unique-inline.sql'))
       const table = realm.schemas[0]!.tables![0]!
       const uq = table.indexes!.find(i => i.unique)
       expect(uq).toBeDefined()
-      expect(uq!.parts![0]!.column).toBeDefined()
+      expect(uq!.parts![0]!.column).toBe('email')
     })
 
     test('unique-table-level: table-level UNIQUE creates index', async () => {
@@ -120,7 +118,7 @@ describe('createTable', () => {
       // The table-level UNIQUE (phone) creates an Index in table.indexes
       const uqIdx = table.indexes!.find(i => i.unique)
       expect(uqIdx).toBeDefined()
-      expect(uqIdx!.parts![0]!.column!.name).toBe('phone')
+      expect(uqIdx!.parts![0]!.column).toBe('phone')
     })
 
     test('unique-nulls-not-distinct: sets IndexNullsDistinct attr', async () => {
@@ -161,27 +159,23 @@ describe('createTable', () => {
   })
 
   describe('foreign keys', () => {
-    test('foreign-key-inline: resolves refTable and refColumns', async () => {
+    test('foreign-key-inline: names the column, the target table, and its columns', async () => {
       const realm = await buildFromDdl(loadSql('create-table/foreign-key-inline.sql'))
       const schema = realm.schemas[0]!
       const orders = schema.tables!.find(t => t.name === 'orders')!
       expect(orders.foreignKeys).toHaveLength(1)
       const fk = orders.foreignKeys![0]!
-      // refTable is the customers table instance
-      expect(fk.refTable).toBeDefined()
-      expect(fk.refTable!.name).toBe('customers')
-      expect(fk.refColumns).toHaveLength(1)
-      expect(fk.refColumns![0]!.name).toBe('id')
-      // Referential equality: refTable === schema.tables.customers
-      const customers = schema.tables!.find(t => t.name === 'customers')!
-      expect(fk.refTable).toBe(customers)
+      expect(fk.columns).toEqual(['customer_id'])
+      expect(fk.refTable).toEqual({ schema: 'public', name: 'customers' })
+      expect(fk.refColumns).toEqual(['id'])
     })
 
     test('foreign-key-composite: multi-column FK', async () => {
       const realm = await buildFromDdl(loadSql('create-table/foreign-key-composite.sql'))
       const schema = realm.schemas[0]!
       const child = schema.tables!.find(t => t.foreignKeys?.length)!
-      expect(child.foreignKeys![0]!.columns).toHaveLength(2)
+      expect(child.foreignKeys![0]!.columns).toEqual(['a', 'b'])
+      expect(child.foreignKeys![0]!.refColumns).toEqual(['a', 'b'])
     })
   })
 

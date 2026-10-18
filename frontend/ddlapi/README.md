@@ -6,18 +6,21 @@ slices a multi-table DDL script into the minimal verbatim SQL relevant to each t
 
 The model is a TypeScript port of the [Atlas](https://atlasgo.io/) Go schema model
 (`atlas/sql/schema/schema.go`), adapted to idiomatic TypeScript and extended with a PostgreSQL escape hatch for
-dialect-specific details that have no driver-neutral representation.
+dialect-specific details that have no driver-neutral representation. It differs from Atlas in how references are
+held: where Atlas points a foreign key or an index part at the `Table` and `Column` objects, ddlapi stores their
+names.
 
 ## Features
 
 - **Database schema model** — a driver-neutral tree (`Realm` → `Schema` → `Table` → `Column`, plus indexes,
   foreign keys, types, constraints, comments). Nodes are plain mutable objects; the union members
-  (`SchemaObject`, `SchemaType`, `Attr`, `Expr`) carry a `kind` discriminant, so the model serializes cleanly to
-  JSON. See [`src/schema.ts`](src/schema.ts), [`src/types.ts`](src/types.ts), [`src/attrs.ts`](src/attrs.ts), and
+  (`SchemaObject`, `SchemaType`, `Attr`, `Expr`) carry a `kind` discriminant, and foreign keys and index parts
+  reference tables and columns by name. See [`src/schema.ts`](src/schema.ts), [`src/types.ts`](src/types.ts), [`src/attrs.ts`](src/attrs.ts), and
   [`src/exprs.ts`](src/exprs.ts).
 - **Build from DDL** — `buildFromDdl(ddl)` parses PostgreSQL DDL (via the WASM
-  [`libpg-query`](https://www.npmjs.com/package/libpg-query)) and returns a fully-wired `Realm`, resolving
-  cross-statement references (FK targets, enum/domain types, `LIKE` sources) into shared object instances. See
+  [`libpg-query`](https://www.npmjs.com/package/libpg-query)) and returns a `Realm` with cross-statement
+  references resolved: enum and domain column types become shared object instances, `LIKE` sources are copied
+  in, and FK targets that the DDL does not define are reported. See
   [`src/parser/buildFromDdl.ts`](src/parser/buildFromDdl.ts).
 - **DDL slicer** — `prepareDdlExtractor(ddl)` indexes a multi-table script once, then returns the minimal
   **verbatim** DDL subset for any single table — its `CREATE TABLE` plus the indexes, triggers, comments, and
@@ -62,6 +65,12 @@ console.log(users?.columns?.map(c => c.name)) // ['id', 'email', 'status']
 
 There are **no back-references**: you navigate the tree top-down and keep the parent in scope if you need it. A
 `Table` has no `.schema`; a `Column` has no `.table`.
+
+Foreign keys and index parts reference tables and columns **by name**. `ForeignKey.columns`,
+`ForeignKey.refColumns`, and `IndexPart.column` hold column names, and `ForeignKey.refTable` is a `TableRef`
+(`{ schema, name }`, with `schema` set even for the default schema). To reach the referenced table, look it up in
+the realm by these names. The model does not check them: a foreign key can name a table that is not in the realm,
+and a referenced column need not exist in the referenced table.
 
 ```text
 Realm
@@ -117,16 +126,29 @@ the raw type name.
 ## Building schemas by hand
 
 The factories in [`src/factories.ts`](src/factories.ts) construct the model without parsing. They are **pure
-constructors — no validation, no graph wiring, no deduplication.** Object identity is your responsibility: pass
-the *same* `Column` reference everywhere it should appear.
+constructors — no validation, no graph wiring, no deduplication.** Keys and index parts take names, and nothing
+checks that those names match a column or a table:
 
 ```typescript
-import { newColumn, columnType, integerType, newTable, newPrimaryKey } from '@netcracker/qubership-apihub-ddlapi'
+import {
+  newColumn, columnType, integerType, newTable, newPrimaryKey, newForeignKey,
+} from '@netcracker/qubership-apihub-ddlapi'
 
 const id = newColumn('id', { type: columnType(integerType('bigint'), { null: false }) })
-const users = newTable('users', { columns: [id], primaryKey: newPrimaryKey([id]) })
-// users.primaryKey.parts[0].column === users.columns[0]
+const users = newTable('users', { columns: [id], primaryKey: newPrimaryKey(['id']) })
+const authorId = newColumn('author_id', { type: columnType(integerType('bigint')) })
+const posts = newTable('posts', {
+  columns: [authorId],
+  foreignKeys: [newForeignKey('posts_author_fk', {
+    columns: ['author_id'],
+    refTable: { schema: 'public', name: 'users' },
+    refColumns: ['id'],
+  })],
+})
 ```
+
+`buildFromDdl` shares one instance of a named type between `schema.objects` and the columns of that type. To build
+the same shape by hand, pass the *same* `EnumType` instance to both.
 
 Helpers for working with attribute lists and expressions live in [`src/utils.ts`](src/utils.ts): `findAttr`,
 `replaceOrAppendAttr` (immutable, keyed by `kind`), `removeAttr`, and `underlyingExpr` (unwraps a `NamedDefault`
@@ -205,11 +227,12 @@ try {
 The public API is split across two entries; import from whichever you need, and never from internal module paths
 (they are unstable).
 
-- **`@netcracker/qubership-apihub-ddlapi`** — the parser-free **data model**: the schema model types, the `Pg*` and
-  core `*Kind` constants, the factories, and the `utils` helpers. Re-exported from [`src/index.ts`](src/index.ts).
+- **`@netcracker/qubership-apihub-ddlapi`** — the parser-free **data model**: the schema model types (including
+  `TableRef`, which `prepareDdlExtractor` also takes), the `Pg*` and core `*Kind` constants, the factories, and the
+  `utils` helpers. Re-exported from [`src/index.ts`](src/index.ts).
 - **`@netcracker/qubership-apihub-ddlapi/parser`** — the WASM-bearing **parser**: `buildFromDdl` (with
   `DdlParseError`, `DdlBuildError`, `BuildFromDdlOptions`, `DdlNonFatalError`) and `prepareDdlExtractor` (with
-  `DdlExtractor`, `TableRef`, `TableDdlSlice`, `DdlExtractorWarning`, `DdlExtractorWarningKind`), plus `SourceRange`.
+  `DdlExtractor`, `TableDdlSlice`, `DdlExtractorWarning`, `DdlExtractorWarningKind`), plus `SourceRange`.
   Re-exported from [`src/parser.ts`](src/parser.ts).
 
 ```typescript

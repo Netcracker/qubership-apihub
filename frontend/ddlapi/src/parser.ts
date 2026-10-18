@@ -18,7 +18,6 @@ export {
   prepareDdlExtractor,
   DdlExtractorWarningKind,
   type DdlExtractor,
-  type TableRef,
   type TableDdlSlice,
   type DdlExtractorWarning,
 } from './parser/extractTableDdl'

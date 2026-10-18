@@ -374,7 +374,8 @@ export async function buildFromDdl(ddl: string, options?: BuildFromDdlOptions): 
 | `ALTER TABLE`, `DROP`, DML, `CREATE SEQUENCE`, `CREATE VIEW`, `CREATE SCHEMA`, `CREATE EXTENSION`, `CREATE FUNCTION`, `CREATE TABLE … PARTITION OF` | `out-of-scope-statement` | Statement absent from Realm |
 | `COMMENT ON` references unknown object | `unresolved-reference` | Comment discarded; target object unchanged |
 | `CREATE INDEX` on unknown table (after pass 2) | `unresolved-reference` | Index present in `Schema.objects`, not attached to any table |
-| Unresolvable FK `refTable` or `refColumns` (after pass 2) | `unresolved-reference` | Table present; `ForeignKey.refTable` / `refColumns` are `undefined` |
+| Unresolvable FK `columns`, `refTable`, or `refColumns` (after pass 2) | `unresolved-reference` | Table present; `ForeignKey.columns` / `refTable` / `refColumns` keep the names from the DDL. Column names are not checked against a table with `INHERITS` |
+| Index or primary key part on a column the table does not define (after pass 2) | `unresolved-reference` | Index present; `IndexPart.column` keeps the name. Not reported for a table with `INHERITS` |
 | Duplicate object (same qualified name) | `duplicate-object` | Second statement absent; first retained |
 | `LIKE other_table` — source not in same DDL | `unresolved-like-source` | Entire table absent from Realm |
 | `INSTEAD OF` trigger on unknown view | `unresolved-reference` | Trigger discarded |
@@ -387,8 +388,9 @@ The following invariants hold on the returned `Realm` regardless of which errors
 
 - Objects reported with `duplicate-object` or `unresolved-like-source` are **absent** from the
   Realm entirely.
-- Objects reported with `unresolved-reference` **may be present** with incomplete fields
-  (`ForeignKey.refTable` / `refColumns` undefined; orphan indexes in `Schema.objects`).
+- Objects reported with `unresolved-reference` **may be present** and keep the names they
+  reference (`ForeignKey.refTable` / `refColumns`, `IndexPart.column`); orphan indexes stay
+  in `Schema.objects`.
 - A forward-reference `CREATE INDEX` that is successfully resolved in pass 2 produces **no
   error** and appears in `Table.indexes` as if it had been declared after the table.
 - `strict: true` throws `DdlBuildError` when any `onError`-category issue occurs, but the
@@ -468,14 +470,18 @@ Runs after all statements are parsed. Order within pass 2:
    scenarios), look up its target table in `tableRegistry`. If found, move the index into
    `Table.indexes`. No `onError` — forward-reference is valid DDL ordering.
 
-4. **ForeignKey resolution**: resolve `ForeignKey.refTable` and `ForeignKey.refColumns` using
-   `tableRegistry` and `columnRegistry`. Unresolvable → `unresolved-reference` error; field left
-   undefined.
+4. **ForeignKey check**: pass 1 already stores `ForeignKey.columns` and `ForeignKey.refColumns`
+   as column names and `ForeignKey.refTable` as a `TableRef`. Pass 2 looks them up in
+   `tableRegistry` and `columnRegistry` only to report a name that the DDL does not define →
+   `unresolved-reference` error; the key keeps the name.
 
-5. **Index part columns**: resolve `Index.parts[].column` (column-name parts) using `columnRegistry`.
+5. **Index part columns**: pass 1 already stores `IndexPart.column` as a column name. Pass 2
+   looks up the parts of every index, including the primary key, in `columnRegistry` and
+   reports a column that the table does not define → `unresolved-reference` error; the part
+   keeps the name. Parts on an unknown table are reported by step 3 instead.
 
-6. **Primary key and unique index parts**: same column resolution for
-   `Table.primaryKey.parts[].column` and inline-unique index parts.
+   Steps 4 and 5 do not check column names against a table with `INHERITS`, because its
+   parents' columns are not copied.
 
 ### 8.3 Cases NOT Requiring Referential Equality
 
@@ -485,6 +491,7 @@ Runs after all statements are parsed. Order within pass 2:
 | `DomainType.baseType` | Resolved to a `SchemaType` instance if the base type name is in the registry; otherwise `UnsupportedType` |
 | Inheritance parent names (`INHERITS`) | Stored as `UnknownAttr { kind: 'Inherits', parents: string[] }`; names only |
 | Partition key columns | Stored in `UnknownAttr`; names only |
+| Foreign key and index part targets | `ForeignKey.columns`, `refTable`, `refColumns`, and `IndexPart.column` hold names |
 
 ### 8.4 Unqualified Type Name Resolution
 
@@ -908,7 +915,7 @@ All valid PostgreSQL. Source: https://www.postgresql.org/docs/current/sql-comman
 | D5 | `src/parser/stmtHandlers/createDomain.ts` | new |
 | D6 | `src/parser/stmtHandlers/createTrigger.ts` | new |
 | D7 | `src/parser/stmtHandlers/comment.ts` | new |
-| D8 | `src/parser/referenceResolver.ts` (pass-2 in order: LIKE → type upgrade → index reattach → FK → index parts) | new |
+| D8 | `src/parser/referenceResolver.ts` (pass-2 in order: LIKE → type upgrade → index reattach → FK check → index part check) | new |
 | D9 | `src/parser/buildFromDdl.ts` | new |
 
 ### Phase E — Statement Tests

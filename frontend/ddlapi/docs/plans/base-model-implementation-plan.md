@@ -310,24 +310,38 @@ In Go the `New*` helpers also update back-references on related objects. For exa
 In TypeScript that is not possible with plain readonly interfaces without returning stale
 copies — back-references are omitted entirely (see §3).
 
-Consequence: **factories produce isolated objects**. If the same `Column` object is passed
-to both `newTable` and `newIndex`, it is the caller's responsibility to ensure they hold
+Consequence: **factories produce isolated objects**. If the same `EnumType` object is passed
+to both `newSchema` and a column type, it is the caller's responsibility to ensure they hold
 the same reference. The library never deduplicates, clones, or compares objects by
 structural equality — identity (`===`) is the caller's domain.
 
 ```typescript
-// Correct — same object reference shared between table.columns and index.parts
+// An index part names its column; it does not share the Column object
 const id = newColumn('id', { type: columnType(integerType('int')) })
-const pk = newPrimaryKey([id])
+const pk = newPrimaryKey(['id'])
 const users = newTable('users', { columns: [id], primaryKey: pk })
 ```
 
 #### References are opaque
 
-`IndexPart.column`, `ForeignKey.columns`, `ForeignKey.refColumns`, and `Table.deps` hold object
-references. The library does not validate that those objects actually live under the same
-schema or realm. Structural consistency (e.g. all FK ref columns come from `refTable`) is a
-concern of the layer that builds the graph, not of the data model.
+`IndexPart.column`, `ForeignKey.columns`, and `ForeignKey.refColumns` hold column names, and
+`ForeignKey.refTable` holds a `TableRef` (`{ schema, name }`). `Table.deps` holds object
+references. The library does not validate that a name matches an object in the realm, or
+that those objects actually live under the same schema or realm. Structural consistency
+(e.g. all FK ref columns exist in `refTable`) is a concern of the layer that builds the
+graph, not of the data model.
+
+#### Divergence from Atlas: references by name
+
+Atlas Go holds `IndexPart.C`, `ForeignKey.Columns`, `ForeignKey.RefTable`, and
+`ForeignKey.RefColumns` as pointers. The TypeScript model holds names instead, for two
+reasons:
+
+- A key keeps the names of a target that is not in the realm.
+- Consumers that merge or diff realms do not have to treat these fields as edges to
+  another object.
+
+This is the only place where the model departs from the Atlas shape.
 
 ### 7. Naming Conventions
 
@@ -728,6 +742,12 @@ export interface Schema {
   readonly objects?: readonly SchemaObject[]
 }
 
+/** A schema-qualified table identity, using normalized model identifiers. */
+export interface TableRef {
+  readonly schema: string
+  readonly name: string
+}
+
 /** A Table represents a table definition. */
 export interface Table {
   readonly kind: typeof ObjectKind.Table
@@ -800,7 +820,7 @@ export interface IndexPart {
   /** Desc indicates if the key part is stored in descending order. All databases use ascending order as default. */
   readonly desc?: boolean
   readonly expr?: Expr        // Atlas Go: X Expr
-  readonly column?: Column          // Atlas Go: C *Column
+  readonly column?: string          // Atlas Go: C *Column (a name here; see §6)
   readonly attrs?: readonly Attr[]
 }
 
@@ -817,9 +837,9 @@ export interface ForeignKey {
   /** Constraint name, if exists. */
   readonly symbol?: string
   // readonly table?: Table          // back-ref to owning Table — omitted; navigate top-down
-  readonly columns?: readonly Column[]
-  readonly refTable?: Table
-  readonly refColumns?: readonly Column[]
+  readonly columns?: readonly string[]    // Atlas Go: Columns []*Column (names here; see §6)
+  readonly refTable?: TableRef            // Atlas Go: RefTable *Table
+  readonly refColumns?: readonly string[] // Atlas Go: RefColumns []*Column
   readonly onUpdate?: ReferenceOption
   readonly onDelete?: ReferenceOption
   readonly attrs?: readonly Attr[]
@@ -852,9 +872,9 @@ must have at least one column") belongs in a separate validation layer, not in c
 - `columnType(type, opts?)` → `ColumnType`
 - `newIndex(name?, props?)` → `Index`
 - `newUniqueIndex(name, props?)` → `Index`
-- `newPrimaryKey(columns)` → `Index` (auto-assigns `seqNo` to each part, starting at 0)
+- `newPrimaryKey(columns)` → `Index` (takes column names; auto-assigns `seqNo` to each part, starting at 0)
 - `newIndexPart(props?)` → `IndexPart` (`seqNo` defaults to 0; higher-level factories override it)
-- `newColumnPart(c, props?)` → `IndexPart` (mirrors Go's `NewColumnPart`; seqNo defaults to 0)
+- `newColumnPart(c, props?)` → `IndexPart` (mirrors Go's `NewColumnPart`, with a column name; seqNo defaults to 0)
 - `newExprPart(x, props?)` → `IndexPart` (mirrors Go's `NewExprPart`; seqNo defaults to 0)
 - `newForeignKey(symbol?, props?)` → `ForeignKey`
 - `newCheck(expr, name?)` → `Check`
@@ -1147,8 +1167,8 @@ Explicitly **not** implementing Go's composite column helpers (`newIntColumn`,
 - [ ] `newIndexPart` / `newColumnPart` / `newExprPart` mirror Go's `NewIndexPart` / `NewColumnPart` / `NewExprPart`
 
 **Verification:**
-- [ ] Test: PK index parts share the same `Column` reference (`===`) as table columns
-- [ ] Test: FK `columns` and `refColumns` hold exact same column object references
+- [ ] Test: PK index parts name the table columns
+- [ ] Test: FK `columns` and `refColumns` hold column names; `refTable` holds a `TableRef`
 
 **Dependencies:** Task 7
 **Files:** `src/factories.ts`, `test/schema.test.ts`
@@ -1269,10 +1289,8 @@ flowchart TD
 - Verify `NamedDefault` appears correctly in both `Expr` and `SchemaObject` positions;
   verify `underlyingExpr` unwraps it correctly.
 - FK column reference: verify that `ForeignKey.columns` and `ForeignKey.refColumns` hold
-  the exact same `Column` object references as the owning table's columns array (identity,
-  not copy) — caller's responsibility pattern.
-- Index column reference: verify `IndexPart.column` is the same object reference as the
-  corresponding `Column` in the table.
+  the column names the caller passed, and `ForeignKey.refTable` the `TableRef`.
+- Index column reference: verify `IndexPart.column` holds the column name.
 
 ---
 

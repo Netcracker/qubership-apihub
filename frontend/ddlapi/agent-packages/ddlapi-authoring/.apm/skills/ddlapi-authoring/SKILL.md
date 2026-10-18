@@ -25,6 +25,13 @@ source. Keep the correspondence visible so a reader can hold both side by side:
   **kept as commented-out fields**, not deleted — e.g. `// schema?: Schema`.
   Do not wire live back-references; the model is navigated top-down only
   (Realm → Schema → Table → Column). A consumer always has the parent in scope.
+- **References to a table or a column are names, not pointers.** This is the one
+  deliberate departure from Atlas: `IndexPart.column`, `ForeignKey.columns`, and
+  `ForeignKey.refColumns` are column names, and `ForeignKey.refTable` is a
+  `TableRef` (`{ schema, name }`, `schema` always set). The Atlas pointer stays in
+  the field's comment (`// Atlas Go: RefTable *Table`). Do not add a field that
+  points at another table or column. Named types (`EnumType`, `'pg:domain'`)
+  are the only shared instances.
 
 When you port a new Go type, follow the same shape and leave the back-ref
 comment in place.
@@ -128,7 +135,7 @@ rely on this (`...(tables.length > 0 && { tables })`).
 2. **Pass 2 — `resolveReferences`.** Runs after every statement is parsed, in a
    **fixed order that must be preserved**: LIKE expansion → column-type upgrade
    (`UnsupportedType` → registered type) → orphan index re-attachment →
-   foreign-key resolution → index-part column resolution. In-place mutation is
+   foreign-key check → index-part column check. In-place mutation is
    fine here because the Realm has not been returned yet.
 
 When you add a construct that can reference another statement, register a

@@ -1,7 +1,7 @@
 // Private module — mutable builder state for the two-pass parser.
 
 import type { SchemaType } from '../types'
-import type { Table, Schema, SchemaObject, Column, Index, IndexPart, ForeignKey, Realm } from '../schema'
+import type { Table, Schema, SchemaObject, Column, Index, ForeignKey, Realm } from '../schema'
 import { DDLAPI_VERSION } from '../schema'
 import type { Attr } from '../attrs'
 import type { SourceRange } from './positions'
@@ -16,13 +16,12 @@ export type PendingLike = {
 export type PendingFK = {
   fk: ForeignKey
   tableKey: string
-  refTableKey: string     // resolved "schema.table" key
-  refColumnNames: string[]
 }
 
 export type PendingIndexPart = {
-  part: IndexPart
-  columnKey: string       // "schema.table.column"
+  index: Index
+  tableKey: string        // "schema.table" of the indexed table
+  column: string
 }
 
 export type OrphanIndex = {

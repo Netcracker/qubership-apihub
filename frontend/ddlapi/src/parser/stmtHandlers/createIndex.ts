@@ -46,7 +46,7 @@ export function handleCreateIndex(
   // Build index parts
   const indexParams = stmt.indexParams ?? []
   const parts: IndexPart[] = []
-  const pendingParts: Array<{ part: IndexPart; columnKey: string }> = []
+  const partColumns: string[] = []
 
   for (let i = 0; i < indexParams.length; i++) {
     const elem = unwrapNode(indexParams[i], PgNode.IndexElem)
@@ -77,8 +77,8 @@ export function handleCreateIndex(
     }
 
     if (elem.name) {
-      // Column reference — resolve in pass 2
-      pendingParts.push({ part, columnKey: `${tableSchema}.${tableName}.${elem.name}` })
+      part.column = elem.name
+      partColumns.push(elem.name)
     } else if (elem.expr) {
       // Expression part — deparsed to string, set immediately
       const exprStr = deparseSync(elem.expr as Record<string, unknown>)
@@ -150,9 +150,9 @@ export function handleCreateIndex(
     ...(parts.length > 0 && { parts }),
   }
 
-  // Register pending index part column resolutions
-  for (const pp of pendingParts) {
-    acc.pendingIndexParts.push(pp)
+  // Pass 2 reports a column that the table does not define
+  for (const column of partColumns) {
+    acc.pendingIndexParts.push({ index, tableKey, column })
   }
 
   // Register in indexRegistry for COMMENT ON INDEX lookup

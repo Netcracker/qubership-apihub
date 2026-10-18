@@ -13,16 +13,12 @@ describe('createIndex', () => {
     expect(idx!.unique).toBeFalsy()
   })
 
-  test('basic-btree: index part column resolved to Column instance', async () => {
+  test('basic-btree: index part names the column', async () => {
     const realm = await buildFromDdl(loadSql('create-index/basic-btree.sql'))
     const schema = realm.schemas[0]!
     const users = schema.tables!.find(t => t.name === 'users')!
     const idx = users.indexes!.find(i => i.name === 'idx_users_email')!
-    expect(idx.parts![0]!.column).toBeDefined()
-    expect(idx.parts![0]!.column!.name).toBe('email')
-    // Referential equality: same Column instance as in users.columns
-    const emailCol = users.columns!.find(c => c.name === 'email')!
-    expect(idx.parts![0]!.column).toBe(emailCol)
+    expect(idx.parts![0]!.column).toBe('email')
   })
 
   test('unique: sets unique=true', async () => {
@@ -154,6 +150,32 @@ describe('createIndex', () => {
     )
     expect(errors).toHaveLength(1)
     expect((errors[0] as { kind: string }).kind).toBe(DdlErrorKind.UnresolvedReference)
+  })
+
+  test('index on unknown column: emits unresolved-reference, part keeps the name', async () => {
+    const errors: unknown[] = []
+    const realm = await buildFromDdl(
+      `CREATE TABLE users (id bigint PRIMARY KEY);
+       CREATE INDEX idx_users_email ON users (email);`,
+      { onError: e => errors.push(e) },
+    )
+    expect(errors).toHaveLength(1)
+    const err = errors[0] as { kind: string; target: string }
+    expect(err.kind).toBe(DdlErrorKind.UnresolvedReference)
+    expect(err.target).toBe('public.users.email')
+    const idx = realm.schemas[0]!.tables![0]!.indexes![0]!
+    expect(idx.parts![0]!.column).toBe('email')
+  })
+
+  test('index on an inherited column: no error', async () => {
+    const errors: unknown[] = []
+    await buildFromDdl(
+      `CREATE TABLE cities (name text);
+       CREATE TABLE capitals (state text) INHERITS (cities);
+       CREATE INDEX idx_capitals_name ON capitals (name);`,
+      { onError: e => errors.push(e) },
+    )
+    expect(errors).toHaveLength(0)
   })
 
   test('duplicate index: emits duplicate-object error, second index not attached', async () => {

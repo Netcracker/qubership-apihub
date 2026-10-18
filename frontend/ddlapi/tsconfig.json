@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    /* TypeScript 6 defaults "types" to [] rather than every package under typeRoots. */
+    "types": ["node", "jest"],
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "bundler",

@@ -1,10 +1,14 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "moduleResolution": "node",
+    /* TypeScript 6 defaults "types" to [] rather than every package under typeRoots. */
+    "types": ["node", "jest"],
+    /* 'bundler' to match tsconfig.json, and because TypeScript 7 removed node10
+       (TS5108). No "baseUrl": TS 7 removed that too (TS5102), and the paths below are
+       already relative to this file, which is how paths resolve without it. */
+    "moduleResolution": "bundler",
     "module": "CommonJS",
     "rootDir": ".",
-    "baseUrl": ".",
     "paths": {
       "@netcracker/qubership-apihub-ddlapi": ["./src/index.ts"]
     }
