@@ -22,22 +22,18 @@ import {
   graphSchemaNodeKind,
   GraphSchemaNodeType,
   GraphSchemaNodeValue,
-  IJsonSchemaArrayType,
-  IJsonSchemaBaseType,
-  IJsonSchemaNumberType,
-  IJsonSchemaObjectType,
-  IJsonSchemaStringType,
+  ISchemaArrayType,
+  ISchemaBaseType,
+  ISchemaNumberType,
+  ISchemaObjectType,
+  ISchemaStringType,
   IModelTreeNode,
   isDiff,
   isGraphApiNodeType,
-  isJsonSchemaNodeType,
-  JsonSchemaDiffNodeMeta,
-  JsonSchemaDiffNodeValue,
-  JsonSchemaNodeKind,
-  jsonSchemaNodeKind,
-  JsonSchemaNodeMeta,
-  JsonSchemaNodeType,
-  JsonSchemaNodeValue,
+  SchemaDiffNodeMeta,
+  SchemaDiffNodeValue,
+  SchemaNodeKind,
+  schemaNodeKind,
   modelTreeNodeType,
 } from '@netcracker/qubership-apihub-api-data-model'
 import { Diff } from '@netcracker/qubership-apihub-api-diff'
@@ -63,7 +59,7 @@ export function isExpandableStateNode(
 // Kind checkers
 
 export function isRootNode(node?: AnyTreeNode | null): boolean {
-  return matchNodeKind(jsonSchemaNodeKind.root, node) && !node?.isCycle
+  return matchNodeKind(schemaNodeKind.root, node) && !node?.isCycle
 }
 
 export function isArgumentsNode(node?: AnyTreeNode | null): boolean {
@@ -87,39 +83,39 @@ export function isOutputNode(node?: AnyTreeNode | null): boolean {
 }
 
 export function isPropertyNode(node?: AnyTreeNode | null): boolean {
-  return matchNodeKind(jsonSchemaNodeKind.property, node)
+  return matchNodeKind(schemaNodeKind.property, node)
 }
 
 export function isAdditionalPropertyNode(node?: AnyTreeNode | null): boolean {
-  return matchNodeKind(jsonSchemaNodeKind.additionalProperties, node)
+  return matchNodeKind(schemaNodeKind.additionalProperties, node)
 }
 
 export function isPatternPropertyNode(node?: AnyTreeNode | null): boolean {
-  return matchNodeKind(jsonSchemaNodeKind.patternProperty, node)
+  return matchNodeKind(schemaNodeKind.patternProperty, node)
 }
 
 export function isItemNode(node?: AnyTreeNode | null): boolean {
-  return matchNodeKind(jsonSchemaNodeKind.item, node)
+  return matchNodeKind(schemaNodeKind.item, node)
 }
 
 export function isItemsNode(node?: AnyTreeNode | null): boolean {
-  return matchNodeKind(jsonSchemaNodeKind.items, node)
+  return matchNodeKind(schemaNodeKind.items, node)
 }
 
 export function isAdditionalItemsNode(node?: AnyTreeNode | null): boolean {
-  return matchNodeKind(jsonSchemaNodeKind.additionalItems, node)
+  return matchNodeKind(schemaNodeKind.additionalItems, node)
 }
 
 export function isOneOfItemNode(node?: AnyTreeNode | null): boolean {
-  return matchNodeKind(jsonSchemaNodeKind.oneOf, node)
+  return matchNodeKind(schemaNodeKind.oneOf, node)
 }
 
 export function isAnyOfItemNode(node?: AnyTreeNode | null): boolean {
-  return matchNodeKind(jsonSchemaNodeKind.anyOf, node)
+  return matchNodeKind(schemaNodeKind.anyOf, node)
 }
 
 export function isAllOfItemNode(node?: AnyTreeNode | null): boolean {
-  return matchNodeKind(jsonSchemaNodeKind.allOf, node)
+  return matchNodeKind(schemaNodeKind.allOf, node)
 }
 
 export function isCombinerNode(node?: AnyTreeNode | null): boolean {
@@ -146,34 +142,34 @@ export function isAllOfCombinerNode(node?: AnyTreeNode | null): boolean {
 
 // Value checkers
 
-function getNodeTypeFromDiff(diff?: Diff | DiffRecord): JsonSchemaNodeType | GraphSchemaNodeType | undefined {
-  return isDiff(diff) && diffReplace(diff) && (isJsonSchemaNodeType(diff.beforeValue) || isGraphApiNodeType(diff.beforeValue))
+function getNodeTypeFromDiff(diff?: Diff | DiffRecord): GraphSchemaNodeType | undefined {
+  return isDiff(diff) && diffReplace(diff) && isGraphApiNodeType(diff.beforeValue)
     ? diff.beforeValue
     : undefined
 }
 
-export function isPrimitiveValue(value?: JsonSchemaNodeValue | GraphSchemaNodeValue | GraphApiNodeData | null) {
+export function isPrimitiveValue(value?: GraphSchemaNodeValue | GraphApiNodeData | null) {
   return isStringValue(value) || isNumberValue(value) || isBooleanValue(value)
 }
 
-export function isStringValue(value?: JsonSchemaNodeValue | GraphSchemaNodeValue | GraphApiNodeData | null) {
-  const primaryType: JsonSchemaNodeType | GraphSchemaNodeType | null | undefined = (value as JsonSchemaNodeValue | GraphSchemaNodeValue)?.type
+export function isStringValue(value?: GraphSchemaNodeValue | GraphApiNodeData | null) {
+  const primaryType: GraphSchemaNodeType | null | undefined = (value as GraphSchemaNodeValue)?.type
   const typeDiff = (value as DiffNodeValue)?.$changes?.type
-  const previousType: JsonSchemaNodeType | GraphSchemaNodeType | null | undefined = getNodeTypeFromDiff(typeDiff)
+  const previousType: GraphSchemaNodeType | null | undefined = getNodeTypeFromDiff(typeDiff)
   return [primaryType, previousType].includes(NodeType.String)
 }
 
-export function isNumberValue(value?: JsonSchemaNodeValue | GraphSchemaNodeValue | GraphApiNodeData | DiffNodeValue | null) {
-  const primaryType: JsonSchemaNodeType | GraphSchemaNodeType | null | undefined = (value as JsonSchemaNodeValue | GraphSchemaNodeValue)?.type
+export function isNumberValue(value?: GraphSchemaNodeValue | GraphApiNodeData | DiffNodeValue | null) {
+  const primaryType: GraphSchemaNodeType | null | undefined = (value as GraphSchemaNodeValue)?.type
   const typeDiff = (value as DiffNodeValue)?.$changes?.type
-  const previousType: JsonSchemaNodeType | GraphSchemaNodeType | null | undefined = getNodeTypeFromDiff(typeDiff)
-  return [primaryType, previousType].some(type => type === NodeType.Number || type === NodeType.Integer)
+  const previousType: GraphSchemaNodeType | null | undefined = getNodeTypeFromDiff(typeDiff)
+  return [primaryType, previousType].some(type => (type as string) === NodeType.Number || type === NodeType.Integer)
 }
 
-export function isBooleanValue(value?: JsonSchemaNodeValue | GraphSchemaNodeValue | GraphApiNodeData | null) {
-  const primaryType: JsonSchemaNodeType | GraphSchemaNodeType | null | undefined = (value as JsonSchemaNodeValue | GraphSchemaNodeValue)?.type
+export function isBooleanValue(value?: GraphSchemaNodeValue | GraphApiNodeData | null) {
+  const primaryType: GraphSchemaNodeType | null | undefined = (value as GraphSchemaNodeValue)?.type
   const typeDiff = (value as DiffNodeValue)?.$changes?.type
-  const previousType: JsonSchemaNodeType | GraphSchemaNodeType | null | undefined = getNodeTypeFromDiff(typeDiff)
+  const previousType: GraphSchemaNodeType | null | undefined = getNodeTypeFromDiff(typeDiff)
   return [primaryType, previousType].includes(NodeType.Boolean)
 }
 
@@ -186,21 +182,21 @@ In that case it considers Diff's field "type" as node type and tries to check no
 Case:
 http://localhost:9009/?path=/story/openapi-compatibility-suite-request--update-media-type-of-request-body
  */
-export function isObjectValue(value?: JsonSchemaNodeValue | GraphSchemaNodeValue | GraphApiNodeData | null) {
-  const primaryType: JsonSchemaNodeType | GraphSchemaNodeType | null | undefined = (value as JsonSchemaNodeValue | GraphSchemaNodeValue)?.type
+export function isObjectValue(value?: GraphSchemaNodeValue | GraphApiNodeData | null) {
+  const primaryType: GraphSchemaNodeType | null | undefined = (value as GraphSchemaNodeValue)?.type
   const typeDiff = (value as DiffNodeValue)?.$changes?.type
-  const previousType: JsonSchemaNodeType | GraphSchemaNodeType | null | undefined = getNodeTypeFromDiff(typeDiff)
+  const previousType: GraphSchemaNodeType | null | undefined = getNodeTypeFromDiff(typeDiff)
   return [primaryType, previousType].includes(NodeType.Object)
 }
 
-export function isArrayValue(value?: JsonSchemaNodeValue | GraphSchemaNodeValue | GraphApiNodeData | null) {
-  const primaryType: JsonSchemaNodeType | GraphSchemaNodeType | null | undefined = (value as JsonSchemaNodeValue | GraphSchemaNodeValue)?.type
+export function isArrayValue(value?: GraphSchemaNodeValue | GraphApiNodeData | null) {
+  const primaryType: GraphSchemaNodeType | null | undefined = (value as GraphSchemaNodeValue)?.type
   const typeDiff = (value as DiffNodeValue)?.$changes?.type
-  const previousType: JsonSchemaNodeType | GraphSchemaNodeType | null | undefined = getNodeTypeFromDiff(typeDiff)
-  return [primaryType, previousType].includes(NodeType.Array)
+  const previousType: GraphSchemaNodeType | null | undefined = getNodeTypeFromDiff(typeDiff)
+  return [primaryType, previousType].some(type => (type as string) === NodeType.Array)
 }
 
-export function valueHasExtensions(value?: JsonSchemaNodeValue | GraphSchemaNodeValue | GraphApiNodeData | null) {
+export function valueHasExtensions(value?: GraphSchemaNodeValue | GraphApiNodeData | null) {
   return (
     safePropertyIn(value, 'extensions', 'valueHasExtensions') &&
     !!(value as { extensions?: unknown }).extensions
@@ -219,8 +215,8 @@ export function hasNoContent(node?: AnyTreeNode | null): boolean {
 }
 
 export function hasNoValidationsAndAnnotations(node?: AnyTreeNode | null): boolean {
-  const nodeValue = node?.value() as IJsonSchemaBaseType
-  const nodeMeta = node?.meta as JsonSchemaNodeMeta | GraphApiNodeMeta
+  const nodeValue = node?.value() as ISchemaBaseType
+  const nodeMeta = node?.meta as GraphApiNodeMeta
 
   if (!nodeValue && !nodeMeta) {
     return true
@@ -238,24 +234,24 @@ export function hasNoValidationsAndAnnotations(node?: AnyTreeNode | null): boole
   // No validations
   let noValidations = true
   noValidations &&= ArrayUtils.isEmpty(nodeValue?.enum)
-  noValidations &&= (nodeValue as IJsonSchemaStringType)?.minLength === undefined &&
-    (nodeValue as IJsonSchemaStringType)?.maxLength === undefined
-  noValidations &&= (nodeValue as IJsonSchemaNumberType)?.minimum === undefined &&
-    (nodeValue as IJsonSchemaNumberType)?.maximum === undefined &&
-    (nodeValue as IJsonSchemaNumberType)?.exclusiveMinimum === undefined &&
-    (nodeValue as IJsonSchemaNumberType)?.exclusiveMaximum === undefined &&
-    (nodeValue as IJsonSchemaNumberType)?.multipleOf === undefined
+  noValidations &&= (nodeValue as ISchemaStringType)?.minLength === undefined &&
+    (nodeValue as ISchemaStringType)?.maxLength === undefined
+  noValidations &&= (nodeValue as ISchemaNumberType)?.minimum === undefined &&
+    (nodeValue as ISchemaNumberType)?.maximum === undefined &&
+    (nodeValue as ISchemaNumberType)?.exclusiveMinimum === undefined &&
+    (nodeValue as ISchemaNumberType)?.exclusiveMaximum === undefined &&
+    (nodeValue as ISchemaNumberType)?.multipleOf === undefined
   noValidations &&=
-    (nodeValue as IJsonSchemaObjectType)?.minProperties === undefined &&
-    (nodeValue as IJsonSchemaObjectType)?.maxProperties === undefined
-  noValidations &&= (nodeValue as IJsonSchemaArrayType)?.uniqueItems === undefined &&
-    (nodeValue as IJsonSchemaArrayType)?.minItems === undefined &&
-    (nodeValue as IJsonSchemaArrayType)?.maxItems === undefined
+    (nodeValue as ISchemaObjectType)?.minProperties === undefined &&
+    (nodeValue as ISchemaObjectType)?.maxProperties === undefined
+  noValidations &&= (nodeValue as ISchemaArrayType)?.uniqueItems === undefined &&
+    (nodeValue as ISchemaArrayType)?.minItems === undefined &&
+    (nodeValue as ISchemaArrayType)?.maxItems === undefined
 
   const isPatternProperty = isPatternPropertyNode(node)
   const isAdditionalProperty = isAdditionalPropertyNode(node)
   const arePatternsProvidedIfNecessary = !isPatternProperty || !!node?.key
-  const areAllowedPropertyNamesProvidedIfNecessary = !isAdditionalProperty || !!(node?.parent?.value() as IJsonSchemaObjectType)?.propertyNames
+  const areAllowedPropertyNamesProvidedIfNecessary = !isAdditionalProperty || !!(node?.parent?.value() as ISchemaObjectType)?.propertyNames
 
   // No extensions
   const noExtensions = !nodeValue?.extensions
@@ -302,7 +298,7 @@ export function matchNodeKind(kind: string, node?: AnyTreeNode | null): boolean 
 }
 
 export function findNoSubHeaderSide(
-  node: IModelTreeNode<JsonSchemaDiffNodeValue, JsonSchemaNodeKind, JsonSchemaDiffNodeMeta>
+  node: IModelTreeNode<SchemaDiffNodeValue, SchemaNodeKind, SchemaDiffNodeMeta>
 ): LayoutSide | undefined {
   const container = node.container
   const nodeChange = node.meta.$nodeChange

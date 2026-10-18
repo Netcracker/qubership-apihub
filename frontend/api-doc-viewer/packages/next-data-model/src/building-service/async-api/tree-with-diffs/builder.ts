@@ -14,6 +14,7 @@ import { AsyncApiTreeWithDiffsBuilderParams } from "@apihub/next-data-model/shar
 import { isObjective } from "@apihub/next-data-model/utilities";
 import { NodeId, NodeKey } from "@apihub/next-data-model/utility-types";
 import { DiffMetaKeys } from "../../abstract/tree-with-diffs/node-diffs-data/diff-meta-keys";
+import { mergeAggregatedDiffTypesIntoDescendantSummary } from "../../abstract/tree-with-diffs/node-diffs-data/aggregated-diff-types";
 import {
   AsyncApiMessageOrientedSpecWithDiffs,
   AsyncApiSpecWithDiffsTransformer,
@@ -211,13 +212,15 @@ export class AsyncApiTreeWithDiffsBuilder extends AsyncApiTreeBuilder {
     )
     if (descendantDiffsSummary) {
       node.descendantDiffsSummary.clear()
-      /* Backward propagation of summary to parent/container nodes.
-        Works for cases when the node is a direct hierarchical descendant at the same tree.
-        The tricky moment here is that visually AsyncAPI Document is the one entity, but
-        actually there are at least 3 different trees: AsyncAPI, JSO, JSON Schema.
-        So, for example, nodes from JSON Schema Tree can't reach their "visual parents" in AsyncAPI Tree. */
+      /* Seed from local aggregation + document rollup (read-down). No bubble-up to parent. */
       node.addDescendantDiffsSummary(descendantDiffsSummary)
     }
+    mergeAggregatedDiffTypesIntoDescendantSummary(
+      node.descendantDiffsSummary,
+      node.diffs,
+      params.value,
+      this.diffsMetaKeys,
+    )
 
     const diffsSeverities = this.createNodeDiffsSeverities(kind, node.diffs)
     diffsSeverities && Object.assign(node.diffsSeverities, diffsSeverities)

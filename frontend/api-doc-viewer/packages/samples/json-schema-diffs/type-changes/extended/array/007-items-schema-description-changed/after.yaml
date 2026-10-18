@@ -1,0 +1,6 @@
+type: array
+description: Array with single items schema
+items:
+  type: string
+  description: Updated item schema
+

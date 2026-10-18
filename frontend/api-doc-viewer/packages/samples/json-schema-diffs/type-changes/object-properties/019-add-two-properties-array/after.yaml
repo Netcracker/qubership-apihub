@@ -1,0 +1,28 @@
+type: object
+description: Object with 2 array property schema(s)
+properties:
+  prop0:
+    type: array
+    description: Sample array schema with all array validations
+    items:
+      type: string
+    default:
+      - alpha
+      - beta
+    minItems: 1
+    maxItems: 10
+    uniqueItems: true
+  prop1:
+    type: array
+    description: Sample array schema with all array validations
+    items:
+      type: string
+    default:
+      - alpha
+      - beta
+    minItems: 1
+    maxItems: 10
+    uniqueItems: true
+minProperties: 0
+maxProperties: 10
+

@@ -15,7 +15,7 @@
  */
 
 import { IModelStateCombinaryNode, IModelStatePropNode } from '@netcracker/qubership-apihub-api-state-model'
-import { GraphApiDiffTreeNode, GraphApiTreeNode, JsonSchemaDiffTreeNode } from '@netcracker/qubership-apihub-api-data-model'
+import { GraphApiDiffTreeNode, GraphApiTreeNode } from '@netcracker/qubership-apihub-api-data-model'
 import { AnyTreeNode } from '../aliases/nodes'
 
 export type GraphPropNodePropsWithState = {
@@ -26,17 +26,4 @@ export type GraphCombinerNodePropsWithState = {
 }
 export type AnyNodePropsWithState = {
   state: IModelStatePropNode<AnyTreeNode>
-}
-export type JsonPropNodePropsWithState = {
-  state: IModelStatePropNode<JsonSchemaDiffTreeNode>
-}
-export type JsonCombinerNodePropsWithState = {
-  state: IModelStateCombinaryNode<JsonSchemaDiffTreeNode>
-}
-// TODO 05.10.23 // This has been added until REST API operation is rendered by ADV
-export type PropsWithOverriddenKind = {
-  overriddenKind?: 'parameters'
-}
-export type PropsWithDisabledNestingIndicatorTitle = {
-  disableNestingHeader: boolean
 }

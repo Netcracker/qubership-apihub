@@ -1,0 +1,4 @@
+name: api-doc-viewer-review-session
+version: 1.0.0
+description: End-of-session retrospective for api-doc-viewer work — surface unexpected behavior and sync durable findings into the canonical agent-packages skills.
+author: Qubership APIHUB

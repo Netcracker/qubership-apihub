@@ -1,9 +1,25 @@
 import { Diff, DiffAction } from "@netcracker/qubership-apihub-api-diff"
 import { GraphApiDirective, isGraphApiDirective, isGraphApiEnumDefinition } from "@netcracker/qubership-apihub-graphapi"
 import { JsonPath, syncCrawl } from '@netcracker/qubership-apihub-json-crawl'
+import { JSON_SCHEMA_PROPERTY_REF } from '@netcracker/qubership-apihub-api-unifier'
 import { isDiff, isObject, setValueByPath, wasGraphApiEnumDefinition } from "../utils"
 import { IModelTreeNode } from "../abstract"
 import { graphApiNodeKind } from "./constants"
+
+// The base schema-vocabulary layer `SchemaModelTree`/`SchemaModelDiffTree` are built on (see
+// ./tree/schema-model.ts, ./diff-tree/schema-model.ts) - only consumed by graph-api now.
+
+export const isRequired = (key: string | number, parent: IModelTreeNode<any, any, any> | null): boolean => {
+  if (!parent || typeof key === 'number' || !key) {
+    return false
+  }
+  const value = parent?.value()
+  return !!value && 'required' in value && Array.isArray(value.required) && value.required.includes(key)
+}
+
+export function isBrokenRef(value: unknown): value is Record<typeof JSON_SCHEMA_PROPERTY_REF, unknown> {
+  return isObject(value) && JSON_SCHEMA_PROPERTY_REF in value
+}
 
 type GraphApiFragmentWithDirectives = {
   directives?: Record<string, GraphApiDirective>

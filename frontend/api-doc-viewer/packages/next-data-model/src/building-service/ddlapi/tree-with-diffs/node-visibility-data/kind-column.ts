@@ -3,13 +3,9 @@ import { isDetailedDisplayMode } from "@apihub/next-data-model/model/abstract/gu
 import { NODE_LEVEL_DIFF_KEY, ChangedPropertyMetaData } from "@apihub/next-data-model/model/abstract/tree-with-diffs/tree-node.interface"
 import { LayoutSide } from "@apihub/next-data-model/model/abstract/layout-side"
 import { isDiffAdd, isDiffRemove } from "@netcracker/qubership-apihub-api-diff"
-import { resolveFieldSideText } from "@apihub/next-data-model/model/ddlapi/tree-with-diffs/list-side-display"
+import { resolveFieldSideText } from "@apihub/next-data-model/model/abstract/tree-with-diffs/list-side-display"
 import {
-  takeColumnDefaultValueDiff,
-  takeColumnDefaultValueRowColorizingDiff,
-  takeColumnDescriptionDiff,
-  takeColumnEnumValueDiffs,
-  takeColumnGeneratedExpressionDiff,
+  DdlApiRowDiffs,
 } from "@apihub/next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs"
 import { DdlApiTreeNodeWithDiffs } from "@apihub/next-data-model/model/ddlapi/types/aliases"
 import { DdlApiTreeNodeKinds } from "@apihub/next-data-model/model/ddlapi/types/node-kind"
@@ -37,24 +33,24 @@ export class DdlApiNodeVisibilityManagerKindColumn {
 
     const showDescription = this.resolveDescriptionRowVisible(
       value,
-      takeColumnDescriptionDiff(node),
+      DdlApiRowDiffs.Column.takeDescriptionDiff(node),
       displayMode,
     )
     const showEnumValuesRow = this.resolveEnumValuesRowVisible(
       value,
-      takeColumnEnumValueDiffs(node),
+      DdlApiRowDiffs.ColumnEnumValues.takeDiffs(node),
       displayMode,
     )
     const showDefaultRow = this.resolveDefaultRowVisible(
       value,
-      takeColumnDefaultValueDiff(node),
-      takeColumnDefaultValueRowColorizingDiff(node),
+      DdlApiRowDiffs.ColumnDefaultValue.takeDiff(node),
+      DdlApiRowDiffs.ColumnDefaultValue.takeRowColorizingDiff(node),
       isWholeNodeChanged,
       displayMode,
     )
     const showGeneratedRow = this.resolveGeneratedRowVisible(
       value,
-      takeColumnGeneratedExpressionDiff(node),
+      DdlApiRowDiffs.Column.takeGeneratedExpressionDiff(node),
       displayMode,
     )
     const showAnyAdditionalInfoRow = showEnumValuesRow || showDefaultRow || showGeneratedRow
@@ -87,7 +83,7 @@ export class DdlApiNodeVisibilityManagerKindColumn {
     layoutSide: LayoutSide,
   ): string | undefined {
     const mergedExpression = node.value()?.generatedExpression
-    const generatedExpressionDiff = takeColumnGeneratedExpressionDiff(node)
+    const generatedExpressionDiff = DdlApiRowDiffs.Column.takeGeneratedExpressionDiff(node)
     return resolveFieldSideText(mergedExpression, generatedExpressionDiff, layoutSide)
   }
 

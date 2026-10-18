@@ -1,0 +1,6 @@
+type: string
+description: |-
+  Represents a single resource returned by the API server.
+  Includes core identifying fields and status flags.
+  Additional metadata may be attached when available.
+

@@ -2,7 +2,7 @@ import { NodeId, NodeKey } from "../../../utility-types";
 import { ComplexTreeNodeParams, ITreeNode, SimpleTreeNodeParams } from "./tree-node.interface";
 
 export interface ITree<
-  V extends object | null,
+  V extends object | boolean | null,
   K extends string,
   M extends object,
 > {

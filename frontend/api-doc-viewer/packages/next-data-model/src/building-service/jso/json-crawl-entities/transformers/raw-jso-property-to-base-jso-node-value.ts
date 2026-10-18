@@ -254,7 +254,10 @@ export class JsoRawValueUtilities {
     const valueDiffsKeys = new Set<string>(Object.keys(diffsRecord))
     const commonKeys: Set<string> = valueKeys.intersection(valueDiffsKeys)
 
-    const mergedValue: Record<PropertyKey, unknown> = { ...value }
+    // Keep object identity unless an array↔object merge actually rewrites a key.
+    // A needless shallow copy breaks cycle detection: ancestors.enter(copy) while
+    // cycle edges still point at the original value.
+    let mergedValue: Record<PropertyKey, unknown> | undefined
 
     for (const key of commonKeys) {
       const valueItem = value[key]
@@ -281,10 +284,13 @@ export class JsoRawValueUtilities {
         continue
       }
 
+      if (!mergedValue) {
+        mergedValue = { ...value }
+      }
       const mergedValueItem: Record<PropertyKey, unknown> = { ...beforeValue, ...afterValue }
       mergedValue[key] = mergedValueItem
     }
 
-    return mergedValue
+    return mergedValue ?? value
   }
 }

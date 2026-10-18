@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { GraphQLOperationViewer } from '../components/GraphQLOperationViewer/GraphQLOperationViewer';
 import { prepareGraphApiSchema } from './preprocess';
 import { graphapi } from './utils/helpers';

@@ -1,0 +1,6 @@
+allOf:
+  - type: object
+    properties:
+      name:
+        type: string
+  - description: Unchanged constraint

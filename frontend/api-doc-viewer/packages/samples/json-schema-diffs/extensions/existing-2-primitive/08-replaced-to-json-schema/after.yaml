@@ -1,0 +1,5 @@
+type: 'string'
+x-internal: true
+x-version:
+  type: 'integer'
+  minimum: 0

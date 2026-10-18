@@ -1,0 +1,7 @@
+type: array
+description: Sample array description
+items:
+  - type: string
+additionalItems:
+  type: integer
+

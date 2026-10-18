@@ -2,7 +2,7 @@ import { NodeId, NodeKey } from "../../../utility-types";
 import { ITreeNode, TreeNodeComplexityType, TreeNodeComplexityTypes, TreeNodeParams } from "./tree-node.interface";
 
 export class SimpleTreeNode<
-  V extends object | null,
+  V extends object | boolean | null,
   K extends string,
   M extends object,
 > implements ITreeNode<V, K, M> {
@@ -15,8 +15,8 @@ export class SimpleTreeNode<
   protected readonly _value: V | null
   protected readonly _meta: M
 
-  protected readonly _childrenNodes: ITreeNode<V, K, M>[] = []
-  protected readonly _nestedNodes: ITreeNode<V, K, M>[] = []
+  protected _childrenNodes: ITreeNode<V, K, M>[] = []
+  protected _nestedNodes: ITreeNode<V, K, M>[] = []
 
   constructor(
     public readonly id: NodeId = '#',
@@ -53,11 +53,14 @@ export class SimpleTreeNode<
       parent: parent,
       container: null,
       newDataLevel: this.newDataLevel,
-      value: this._value !== null ? { ...this._value } : null,
+      value: this._value !== null
+        ? (typeof this._value === "object" ? { ...(this._value as object) } as V : this._value)
+        : null,
       meta: { ...this._meta },
     });
-    clonedNode.setChildrenNodes(this._childrenNodes);
-    clonedNode.setNestedNodes(this._nestedNodes);
+    // Share the same children/nested arrays so later additions to the source are visible on the clone.
+    clonedNode._childrenNodes = this._childrenNodes;
+    clonedNode._nestedNodes = this._nestedNodes;
     return clonedNode;
   }
 

@@ -3,9 +3,7 @@ import { join } from 'path'
 import { HighlightVariant } from '@apihub/next-data-model/model/abstract/tree-with-diffs/tree-node.interface'
 import { DDL_PROPERTY_TITLE_ROW_DIFF_KEY } from '@apihub/next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs.types'
 import {
-  isDdlFlagBadgeDiffHighlighted,
-  takeColumnFlagDiffs,
-  takeIndexFlagDiffs,
+  DdlApiRowDiffs,
 } from '@apihub/next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs'
 import { buildFromDdl } from '@netcracker/qubership-apihub-ddlapi/parser'
 import { apiDiff, DiffAction } from '@netcracker/qubership-apihub-api-diff'
@@ -40,26 +38,30 @@ async function buildTree(caseId: string) {
 function findNode(
   tree: ReturnType<DdlApiTreeWithDiffsBuilder['build']>,
   kind: typeof DdlApiTreeNodeKinds.COLUMN | typeof DdlApiTreeNodeKinds.INDEX,
-  key: string,
+  key: string | number,
 ) {
   return Array.from(tree.nodes.values()).find(node => node.kind === kind && node.key === key)!
 }
 
-describe('index unique toggle badge contract (cases 12/13)', () => {
+// An unnamed index maps to itself by the columns it covers, so its unique toggle is a flag change
+// on one index row, as for a named index. Its node key is its position in the table's indexes.
+describe('index unique toggle badge contract (cases 12/13, 22/23)', () => {
   it.each([
-    ['12-index-became-unique', DiffAction.add, false, true],
-    ['13-index-lost-unique', DiffAction.remove, true, false],
+    ['12-index-became-unique', 'idx_t_c1', DiffAction.add, false, true],
+    ['13-index-lost-unique', 'idx_t_c1', DiffAction.remove, true, false],
+    ['22-unnamed-index-became-unique', 0, DiffAction.add, false, true],
+    ['23-unnamed-index-lost-unique', 0, DiffAction.remove, true, false],
   ])(
     'case %s: index row unique badge side visibility and title-row replace',
-    async (caseId, expectedAction, visibleBefore, visibleAfter) => {
+    async (caseId, indexKey, expectedAction, visibleBefore, visibleAfter) => {
       const tree = await buildTree(caseId)
-      const index = findNode(tree, DdlApiTreeNodeKinds.INDEX, 'idx_t_c1')
-      const flagDiffs = takeIndexFlagDiffs(index)
+      const index = findNode(tree, DdlApiTreeNodeKinds.INDEX, indexKey)
+      const flagDiffs = DdlApiRowDiffs.Index.takeFlagDiffs(index)
 
       expect(flagDiffs?.isUnique?.data.action).toBe(expectedAction)
       expect(flagDiffs?.isUnique?.styles.before.isContentVisible).toBe(visibleBefore)
       expect(flagDiffs?.isUnique?.styles.after.isContentVisible).toBe(visibleAfter)
-      expect(isDdlFlagBadgeDiffHighlighted(flagDiffs?.isUnique)).toBe(true)
+      expect(DdlApiRowDiffs.Column.isFlagBadgeHighlighted(flagDiffs?.isUnique)).toBe(true)
 
       const titleRowDiff = index.diffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY]
       expect(titleRowDiff?.data.action).toBe(DiffAction.replace)
@@ -71,17 +73,19 @@ describe('index unique toggle badge contract (cases 12/13)', () => {
   it.each([
     ['12-index-became-unique', DiffAction.add, false, true],
     ['13-index-lost-unique', DiffAction.remove, true, false],
+    ['22-unnamed-index-became-unique', DiffAction.add, false, true],
+    ['23-unnamed-index-lost-unique', DiffAction.remove, true, false],
   ])(
     'case %s: column row mirrors index unique badge when index unique toggles',
     async (caseId, expectedAction, visibleBefore, visibleAfter) => {
       const tree = await buildTree(caseId)
       const column = findNode(tree, DdlApiTreeNodeKinds.COLUMN, 'c1')
-      const flagDiffs = takeColumnFlagDiffs(column)
+      const flagDiffs = DdlApiRowDiffs.Column.takeFlagDiffs(column)
 
       expect(flagDiffs?.isUnique?.data.action).toBe(expectedAction)
       expect(flagDiffs?.isUnique?.styles.before.isContentVisible).toBe(visibleBefore)
       expect(flagDiffs?.isUnique?.styles.after.isContentVisible).toBe(visibleAfter)
-      expect(isDdlFlagBadgeDiffHighlighted(flagDiffs?.isUnique)).toBe(true)
+      expect(DdlApiRowDiffs.Column.isFlagBadgeHighlighted(flagDiffs?.isUnique)).toBe(true)
 
       const titleRowDiff = column.diffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY]
       expect(titleRowDiff?.data.action).toBe(DiffAction.replace)

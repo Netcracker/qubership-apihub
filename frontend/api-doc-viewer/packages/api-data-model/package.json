@@ -10,8 +10,14 @@
     "test:coverage": "jest --verbose --coverage"
   },
   "devDependencies": {
+    "@types/json-schema": "^7.0.15",
     "@types/treeify": "^1.0.0",
+    "jest": "30.4.2",
     "treeify": "^1.1.0",
+    "ts-jest": "29.4.12",
     "ts-node": "10.7.0"
+  },
+  "dependencies": {
+    "graphql": "16.12.0"
   }
 }

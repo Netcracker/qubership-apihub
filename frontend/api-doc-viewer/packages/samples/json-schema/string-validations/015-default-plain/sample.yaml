@@ -1,0 +1,4 @@
+type: string
+default: just a value
+title: '[default] default = "just a value"'
+

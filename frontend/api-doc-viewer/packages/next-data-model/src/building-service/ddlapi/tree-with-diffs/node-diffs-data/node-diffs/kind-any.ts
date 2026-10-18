@@ -1,6 +1,6 @@
 import { DiffMetaKeys } from "@apihub/next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/diff-meta-keys";
 import { AbstractNodeDiffsAggregator } from "@apihub/next-data-model/building-service/abstract/tree-with-diffs/node-diffs-data/node-diffs-aggregator";
-import { ChangedPropertyKey, ChangedPropertyMetaData, DIFF_HIGHLIGHTING_MODES_DEFAULT, DIFF_HIGHLIGHTING_MODES_DDL_FLAG_BADGE_SIDE_VISIBILITY_ONLY, DiffStyles, HighlightVariant, ITreeNodeWithDiffs, NODE_LEVEL_DIFF_KEY, NodeDiffs } from "@apihub/next-data-model/model/abstract/tree-with-diffs/tree-node.interface";
+import { ChangedPropertyKey, ChangedPropertyMetaData, DIFF_HIGHLIGHTING_MODES_DEFAULT, DIFF_HIGHLIGHTING_MODES_DDL_FLAG_BADGE_SIDE_VISIBILITY_ONLY, DIFF_HIGHLIGHTING_MODES_DDL_TITLE_ROW, DiffStyles, HighlightVariant, ITreeNodeWithDiffs, NODE_LEVEL_DIFF_KEY, NodeDiffs } from "@apihub/next-data-model/model/abstract/tree-with-diffs/tree-node.interface";
 import { DdlApiTreeNodeValue } from "@apihub/next-data-model/model/ddlapi/tree/node-value";
 import { DdlApiTreeNodeKind } from "@apihub/next-data-model/model/ddlapi/types/node-kind";
 import { DdlApiTreeNodeMeta } from "@apihub/next-data-model/model/ddlapi/types/node-meta";
@@ -86,9 +86,7 @@ export class DdlApiNodeDiffsAggregatorKindAny
     key: ChangedPropertyKey<DdlApiTreeNodeValue<DdlApiTreeNodeKind> | null>,
     nodeDiffs: NodeDiffs<DdlApiTreeNodeValue<DdlApiTreeNodeKind> | null>,
   ) {
-    nodeDiffs[key] = key === 'columnName' || key === 'indexName'
-      ? this.buildDdlPropertyNameChangedPropertyMetaDataFromDiff(diff)
-      : this.buildChangedPropertyMetaDataFromDiff(diff)
+    nodeDiffs[key] = this.buildChangedPropertyMetaDataFromDiff(diff)
   }
 
   protected buildChangedPropertyMetaDataFromDiff(diff: Diff<DiffType>): ChangedPropertyMetaData {
@@ -172,50 +170,6 @@ export class DdlApiNodeDiffsAggregatorKindAny
     nodeDiffs.description = this.buildChangedPropertyMetaDataFromDiff(diff)
   }
 
-  protected buildDdlPropertyNameChangedPropertyMetaDataFromDiff(
-    diff: Diff<DiffType>,
-  ): ChangedPropertyMetaData {
-    let beforeStyles: DiffStyles = this.DEFAULT_DIFF_STYLES
-    let afterStyles: DiffStyles = this.DEFAULT_DIFF_STYLES
-    if (isDiffAdd(diff)) {
-      beforeStyles = {
-        ...beforeStyles,
-        isContentVisible: false,
-        backgroundColor: HighlightVariant.Gray,
-      }
-      afterStyles = {
-        ...afterStyles,
-        isContentVisible: true,
-        backgroundColor: HighlightVariant.Green,
-      }
-    }
-    if (isDiffRemove(diff)) {
-      beforeStyles = {
-        ...beforeStyles,
-        isContentVisible: true,
-        backgroundColor: HighlightVariant.Red,
-      }
-      afterStyles = {
-        ...afterStyles,
-        isContentVisible: false,
-        backgroundColor: HighlightVariant.Gray,
-      }
-    }
-    if (isDiffRename(diff) || isDiffReplace(diff)) {
-      beforeStyles = {
-        ...beforeStyles,
-        isContentVisible: true,
-        backgroundColor: HighlightVariant.Yellow,
-      }
-      afterStyles = {
-        ...afterStyles,
-        isContentVisible: true,
-        backgroundColor: HighlightVariant.Yellow,
-      }
-    }
-    return this.createChangedPropertyMetaData(diff, beforeStyles, afterStyles)
-  }
-
   private createChangedPropertyMetaData(
     diff: Diff<DiffType>,
     beforeStyles: DiffStyles,
@@ -239,7 +193,7 @@ export class DdlApiNodeDiffsAggregatorKindAny
     }
   }
 
-  protected readonly TITLE_ROW_FLAG_AS_REPLACE_STYLES: { before: DiffStyles; after: DiffStyles } = {
+  protected readonly TITLE_ROW_COLORIZING_STYLES: { before: DiffStyles; after: DiffStyles } = {
     before: {
       isContentVisible: true,
       isHeaderVisible: true,
@@ -252,53 +206,58 @@ export class DdlApiNodeDiffsAggregatorKindAny
     },
   }
 
-  protected asReplaceFlagDiffForTitleRow(
-    flagDiff: ChangedPropertyMetaData,
+  /**
+   * Builds a diff that only colors a row whose property changed. The row stays visible on both
+   * sides, so an added or removed property is reported as a replace. The highlighting mode keeps
+   * the row's name in place of the diff's values, such as the type names of a changed column type.
+   */
+  protected asTitleRowColorizingDiff(
+    propertyDiff: ChangedPropertyMetaData,
   ): ChangedPropertyMetaData {
-    const { data } = flagDiff
-
-    if (isDiffReplace(data)) {
-      return {
-        ...flagDiff,
-        styles: this.TITLE_ROW_FLAG_AS_REPLACE_STYLES,
-      }
+    const { data } = propertyDiff
+    const colorizingDiff = {
+      ...propertyDiff,
+      styles: this.TITLE_ROW_COLORIZING_STYLES,
+      highlightingMode: DIFF_HIGHLIGHTING_MODES_DDL_TITLE_ROW,
     }
 
     if (isDiffAdd(data)) {
       return {
-        ...flagDiff,
+        ...colorizingDiff,
         data: {
           type: data.type,
           scope: data.scope,
           description: data.description,
           action: DiffAction.replace,
-          beforeValue: false,
-          afterValue: data.afterValue ?? true,
+          beforeValue: undefined,
+          afterValue: data.afterValue,
           beforeDeclarationPaths: [],
           afterDeclarationPaths: data.afterDeclarationPaths,
         },
-        styles: this.TITLE_ROW_FLAG_AS_REPLACE_STYLES,
       }
     }
 
     if (isDiffRemove(data)) {
       return {
-        ...flagDiff,
+        ...colorizingDiff,
         data: {
           type: data.type,
           scope: data.scope,
           description: data.description,
           action: DiffAction.replace,
-          beforeValue: data.beforeValue ?? true,
-          afterValue: false,
+          beforeValue: data.beforeValue,
+          afterValue: undefined,
           beforeDeclarationPaths: data.beforeDeclarationPaths,
           afterDeclarationPaths: [],
         },
-        styles: this.TITLE_ROW_FLAG_AS_REPLACE_STYLES,
       }
     }
 
-    return flagDiff
+    if (isDiffReplace(data)) {
+      return colorizingDiff
+    }
+
+    return propertyDiff
   }
 
   protected adoptNodeLevelDiffFromCrawlIfAbsent(

@@ -2,7 +2,7 @@ import { ChangedPropertyMetaData, NodeDiffs, NodeDiffsSeverities } from "@apihub
 import { annotation, breaking, deprecated, Diff, DiffType, nonBreaking, risky, unclassified } from "@netcracker/qubership-apihub-api-diff";
 
 export abstract class AbstractNodeDiffsSeveritiesAggregator<
-  V extends object | null = object | null,
+  V extends object | boolean | null = object | boolean | null,
 > {
   public abstract aggregate(
     nodeDiffs: NodeDiffs<V>,

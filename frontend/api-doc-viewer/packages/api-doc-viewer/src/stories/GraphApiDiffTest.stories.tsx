@@ -15,7 +15,7 @@
  */
 
 import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { GraphQLOperationDiffViewer } from '../components/GraphQLOperationViewer/GraphQLOperationDiffViewer'
 import { SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '../types/LayoutMode'
 import { prepareGraphApiDiffSchema } from './preprocess'

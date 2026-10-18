@@ -1,0 +1,16 @@
+type: object
+description: Root with nested combiner property
+properties:
+  payload:
+    oneOf:
+      - type: string
+        description: String variant
+      - type: object
+        description: Object variant
+        properties:
+          id:
+            type: string
+            description: Updated id property
+          count:
+            type: integer
+

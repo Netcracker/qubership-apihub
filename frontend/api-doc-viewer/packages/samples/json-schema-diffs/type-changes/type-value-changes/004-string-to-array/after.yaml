@@ -1,0 +1,11 @@
+type: array
+description: Sample array schema with all array validations
+items:
+  type: string
+default:
+  - alpha
+  - beta
+minItems: 1
+maxItems: 10
+uniqueItems: true
+

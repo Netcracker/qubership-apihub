@@ -1,0 +1,7 @@
+type: array
+default:
+  - alpha
+  - beta
+  - gamma
+  - delta
+

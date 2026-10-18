@@ -1,0 +1,6 @@
+type: string
+description: Sample string description
+enum:
+  - alpha
+  - beta
+

@@ -1,0 +1,9 @@
+oneOf:
+  - type: string
+    description: String variant
+  - type: array
+    description: Array variant
+    items:
+      type: string
+      description: Updated items schema
+

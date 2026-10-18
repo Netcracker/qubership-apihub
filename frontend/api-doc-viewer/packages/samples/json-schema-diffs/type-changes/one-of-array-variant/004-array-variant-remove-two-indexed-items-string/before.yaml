@@ -1,0 +1,39 @@
+type: object
+description: Root schema with oneOf array variant property
+properties:
+  plainProp:
+    type: string
+    description: Arbitrary plain property
+  oneOfProp:
+    oneOf:
+      - type: string
+        description: String oneOf variant (unchanged)
+      - type: number
+        description: Number oneOf variant (unchanged)
+      - type: array
+        description: Tuple array with 2 indexed string item schema(s)
+        items:
+          - type: string
+            description: Sample string schema with all string validations
+            default: alpha
+            enum:
+              - alpha
+              - beta
+              - gamma
+            minLength: 1
+            maxLength: 128
+            pattern: ^[a-z]+$
+          - type: string
+            description: Sample string schema with all string validations
+            default: alpha
+            enum:
+              - alpha
+              - beta
+              - gamma
+            minLength: 1
+            maxLength: 128
+            pattern: ^[a-z]+$
+        minItems: 0
+        maxItems: 10
+        uniqueItems: true
+

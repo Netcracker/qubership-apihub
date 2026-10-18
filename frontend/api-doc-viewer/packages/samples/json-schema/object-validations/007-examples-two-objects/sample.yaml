@@ -1,0 +1,13 @@
+type: object
+properties:
+  name:
+    type: string
+  id:
+    type: integer
+examples:
+  - name: sample
+    id: 1
+  - name: other
+    id: 2
+title: "[examples] examples = [object 1, object 2]"
+

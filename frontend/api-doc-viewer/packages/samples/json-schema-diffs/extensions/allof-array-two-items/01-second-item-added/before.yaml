@@ -1,0 +1,5 @@
+allOf:
+  - type: array
+    items:
+      - type: string
+  - description: Unchanged constraint

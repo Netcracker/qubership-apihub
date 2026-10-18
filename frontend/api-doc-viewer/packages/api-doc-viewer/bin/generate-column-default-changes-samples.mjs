@@ -9,8 +9,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(__dirname, "..");
 const groupId = "column-default-changes";
 const samplesRoot = path.resolve(packageRoot, "../samples/ddlapi-diffs", groupId);
-const storiesOut = path.resolve(packageRoot, "src/stories/ddlapi-diffs-suite/column-default-changes-samples.stories.tsx");
-const testsOut = path.resolve(packageRoot, "src/it/ddlapi-diffs-suite/column-default-changes-samples.it-test.ts");
+const storiesOut = path.resolve(packageRoot, "src/stories/ddlapi-diffs-suite/column-default-changes.stories.tsx");
+const testsOut = path.resolve(packageRoot, "src/it/ddlapi-diffs-suite/column-default-changes.it-test.ts");
 
 const metaTitle = "DDL API Diffs Suite/Column Default Changes Samples";
 const metaKebab = "ddl-api-diffs-suite-column-default-changes-samples";
@@ -242,28 +242,28 @@ const storyExports = cases
   .map((caseId) => `export const ${toExportName(caseId)}: Story = createCaseStory("${caseId}");`)
   .join("\n");
 
-const storiesSource = `import type { Meta } from "@storybook/react";
+const storiesSource = `import type { Meta } from "@storybook/react-vite";
 import {
   DdlDiffSampleStory,
   collectDdlDiffSampleCases,
   createDdlDiffCaseStoryFactory,
-  createDdlDiffSampleById,
   ddlDiffsSamplesStoryMetaBase,
   type DdlDiffsSamplesStoryObj,
 } from "./ddlapi-diffs-utils";
+import { createSampleById } from "../utils/sample-cases";
 
 const beforeFiles = import.meta.glob(
   "../../../../samples/ddlapi-diffs/${groupId}/*/before.sql",
-  { as: "raw", eager: true },
+  { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
 const afterFiles = import.meta.glob(
   "../../../../samples/ddlapi-diffs/${groupId}/*/after.sql",
-  { as: "raw", eager: true },
+  { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
 const sampleCases = collectDdlDiffSampleCases(beforeFiles, afterFiles);
-const sampleById = createDdlDiffSampleById(sampleCases);
+const sampleById = createSampleById(sampleCases);
 
 // eslint-disable-next-line storybook/story-exports
 const meta = {
@@ -289,7 +289,7 @@ const testCases = cases
       page,
       '${metaKebab}--case-${caseId}',
     );
-    await waitForDdlTableDiffsViewer();
+    await waitForDdlTableDiffsViewer(page);
     component = await story.viewComponent();
     expect(await component.captureScreenshot()).toMatchImageSnapshot({
       customSnapshotsDir: SNAPSHOTS_DIR,
@@ -301,13 +301,14 @@ const testCases = cases
 
 const testsSource = `/**
  * Screenshot tests for ${metaTitle} stories.
- * Edit together with src/stories/ddlapi-diffs-suite/column-default-changes-samples.stories.tsx.
+ * Edit together with src/stories/ddlapi-diffs-suite/column-default-changes.stories.tsx.
  * SQL fixtures: packages/api-doc-viewer/bin/generate-column-default-changes-samples.mjs
  */
 import path from "path";
 import { StoryPage } from "../service/story-page";
 import { ViewComponent } from "../service/view-component";
 import { storyPage } from "../service/storybook-service";
+import { waitForDdlTableDiffsViewer } from "../service/viewer-waits";
 
 const SNAPSHOTS_DIR = path.resolve(__dirname, "..", "__image_snapshots__");
 
@@ -318,14 +319,6 @@ describe('${metaTitle}', () => {
   beforeEach(async () => {
     await jestPuppeteer.resetPage();
   });
-
-  async function waitForDdlTableDiffsViewer() {
-    await page.waitForSelector('[data-testid="ddl-table-diffs-viewer"]', { visible: true });
-    await page.waitForFunction(() => document.readyState === "complete");
-    await page.evaluate(() => new Promise<void>(resolve =>
-      requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-    ));
-  }
 ${testCases}
 });
 `;

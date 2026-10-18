@@ -1,0 +1,8 @@
+type: 'string'
+x-tags:
+  - 'beta'
+  - 'internal'
+x-owners:
+  type: 'integer'
+  minimum: 0
+x-internal: true

@@ -1,0 +1,18 @@
+type: object
+description: After root description
+properties:
+  prop1:
+    type: string
+    description: First property
+  prop2:
+    type: string
+    description: Second property
+  prop3:
+    type: integer
+    description: Third property
+  prop4:
+    type: boolean
+    description: Fourth property
+  prop5:
+    type: number
+    description: Fifth property

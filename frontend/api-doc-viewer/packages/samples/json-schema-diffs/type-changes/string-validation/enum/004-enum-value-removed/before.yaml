@@ -1,0 +1,6 @@
+type: string
+enum:
+  - alpha
+  - beta
+  - gamma
+

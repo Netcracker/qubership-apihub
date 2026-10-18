@@ -74,11 +74,6 @@ export class DdlApiNodeDiffsAggregatorKindIndex extends DdlApiNodeDiffsAggregato
       nodeDiffs,
     )
 
-    const indexNameDiff = diffs['indexName']
-    if (AbstractNodeDiffsAggregator.isDiff(indexNameDiff)) {
-      this.aggregateTextDiff(indexNameDiff, 'indexName', nodeDiffs)
-    }
-
     if (this.hasWholeNodeAddOrRemoveDiff(nodeDiffs)) {
       this.aggregatePresentFlagDiffsFromWholeNodeAddOrRemove(
         crawlValue,
@@ -137,16 +132,10 @@ export class DdlApiNodeDiffsAggregatorKindIndex extends DdlApiNodeDiffsAggregato
       return
     }
 
-    const nameDiff = nodeDiffs.indexName
-    if (nameDiff) {
-      nodeDiffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY] = nameDiff
-      return
-    }
-
     for (const flagKey of DDL_INDEX_FLAG_DIFF_KEYS) {
       const flagDiff = nodeDiffs[flagKey]
       if (flagDiff) {
-        nodeDiffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY] = this.asReplaceFlagDiffForTitleRow(flagDiff)
+        nodeDiffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY] = this.asTitleRowColorizingDiff(flagDiff)
         return
       }
     }
@@ -160,7 +149,7 @@ export class DdlApiNodeDiffsAggregatorKindIndex extends DdlApiNodeDiffsAggregato
       ...Object.values(partNameDiffs),
     )
     if (representativeDiff) {
-      nodeDiffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY] = this.asReplaceFlagDiffForTitleRow(representativeDiff)
+      nodeDiffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY] = this.asTitleRowColorizingDiff(representativeDiff)
     }
   }
 

@@ -14,33 +14,33 @@ const SUITES = [
   {
     suiteId: "column-constraints",
     title: "DDL API Suite/Column Constraints",
-    storyFileName: "column-constraints-samples.stories.tsx",
+    storyFileName: "column-constraints.stories.tsx",
   },
   {
     suiteId: "column-types",
     title: "DDL API Suite/Column Types",
-    storyFileName: "column-types-samples.stories.tsx",
+    storyFileName: "column-types.stories.tsx",
   },
   {
     suiteId: "indexes",
     title: "DDL API Suite/Indexes",
-    storyFileName: "indexes-samples.stories.tsx",
+    storyFileName: "indexes.stories.tsx",
   },
   {
     suiteId: "escaping-spec-chars",
     title: "DDL API Suite/Escaping Spec Chars",
-    storyFileName: "escaping-spec-chars-samples.stories.tsx",
+    storyFileName: "escaping-spec-chars.stories.tsx",
   },
   {
     suiteId: "display-mode-simple",
     title: "DDL API Suite/Display Mode Simple",
-    storyFileName: "display-mode-simple-samples.stories.tsx",
+    storyFileName: "display-mode-simple.stories.tsx",
     displayMode: "simple",
   },
   {
     suiteId: "table-descriptions",
     title: "DDL API Suite/Table Descriptions",
-    storyFileName: "table-descriptions-samples.stories.tsx",
+    storyFileName: "table-descriptions.stories.tsx",
   },
 ];
 
@@ -78,11 +78,11 @@ const printStoryFile = ({ suiteId, title, displayMode }) => {
     ? `, { displayMode: ${displayMode === "simple" ? "SIMPLE" : "DETAILED"}_DISPLAY_MODE }`
     : "";
 
-  return `${displayModeImport}import type { Meta, StoryObj } from "@storybook/react";
+  return `${displayModeImport}import type { Meta, StoryObj } from "@storybook/react-vite";
 import {
   collectDdlSampleCases,
-  createDdlSampleById,
 } from "../utils/ddl-samples-cases";
+import { createSampleById } from "../utils/sample-cases";
 import {
   DdlSampleStory,
   createCaseStoryFactory,
@@ -92,11 +92,11 @@ import {
 
 const sampleFiles = import.meta.glob(
   "../../../../samples/ddlapi/${suiteId}/*/sample.sql",
-  { as: "raw", eager: true },
+  { query: "?raw", import: "default", eager: true },
 ) as Record<string, string>;
 
 const sampleCases = collectDdlSampleCases(sampleFiles);
-const sampleById = createDdlSampleById(sampleCases);
+const sampleById = createSampleById(sampleCases);
 const createCaseStory = createCaseStoryFactory(sampleById${factoryOptions});
 
 // eslint-disable-next-line storybook/story-exports

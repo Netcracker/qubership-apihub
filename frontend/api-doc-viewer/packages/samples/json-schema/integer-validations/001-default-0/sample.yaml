@@ -1,0 +1,4 @@
+type: integer
+default: 0
+title: "[default] default = 0"
+

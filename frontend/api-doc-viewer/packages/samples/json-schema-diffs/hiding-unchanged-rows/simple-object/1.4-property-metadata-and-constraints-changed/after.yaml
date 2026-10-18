@@ -1,0 +1,25 @@
+type: object
+description: Simple object with five primitive properties
+properties:
+  prop1:
+    type: string
+    description: First property — after description
+  prop2:
+    type: string
+    description: Second property
+    enum:
+      - alpha
+      - beta
+      - gamma
+      - delta
+  prop3:
+    type: integer
+    description: Third property
+    minimum: 0
+    maximum: 100
+  prop4:
+    type: boolean
+    description: Fourth property
+  prop5:
+    type: number
+    description: Fifth property

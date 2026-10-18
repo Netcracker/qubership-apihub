@@ -1,0 +1,8 @@
+type: array
+description: Tuple array with appended slot
+items:
+  - type: string
+  - type: integer
+  - type: boolean
+additionalItems: false
+

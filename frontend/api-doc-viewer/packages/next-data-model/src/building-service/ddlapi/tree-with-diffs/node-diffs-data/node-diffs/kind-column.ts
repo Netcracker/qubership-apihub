@@ -83,11 +83,6 @@ export class DdlApiNodeDiffsAggregatorKindColumn extends DdlApiNodeDiffsAggregat
       nodeDiffs,
     )
 
-    const columnNameDiff = diffs['columnName']
-    if (AbstractNodeDiffsAggregator.isDiff(columnNameDiff)) {
-      this.aggregateTextDiff(columnNameDiff, 'columnName', nodeDiffs)
-    }
-
     const generatedExpressionDiff = diffs['generatedExpression']
     if (AbstractNodeDiffsAggregator.isDiff(generatedExpressionDiff)) {
       this.aggregateTextDiff(
@@ -183,16 +178,10 @@ export class DdlApiNodeDiffsAggregatorKindColumn extends DdlApiNodeDiffsAggregat
       return
     }
 
-    const nameDiff = nodeDiffs.columnName
-    if (nameDiff) {
-      nodeDiffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY] = nameDiff
-      return
-    }
-
     for (const flagKey of DDL_COLUMN_FLAG_DIFF_KEYS) {
       const flagDiff = nodeDiffs[flagKey]
       if (flagDiff) {
-        nodeDiffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY] = this.asReplaceFlagDiffForTitleRow(flagDiff)
+        nodeDiffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY] = this.asTitleRowColorizingDiff(flagDiff)
         return
       }
     }
@@ -201,7 +190,7 @@ export class DdlApiNodeDiffsAggregatorKindColumn extends DdlApiNodeDiffsAggregat
     if (foreignKeyTargetDiffs) {
       const firstTargetDiff = Object.values(foreignKeyTargetDiffs).find(Boolean)
       if (firstTargetDiff) {
-        nodeDiffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY] = this.asReplaceFlagDiffForTitleRow(firstTargetDiff)
+        nodeDiffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY] = this.asTitleRowColorizingDiff(firstTargetDiff)
         return
       }
     }
@@ -228,7 +217,7 @@ export class DdlApiNodeDiffsAggregatorKindColumn extends DdlApiNodeDiffsAggregat
       return
     }
 
-    nodeDiffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY] = this.asReplaceFlagDiffForTitleRow(representativeDiff)
+    nodeDiffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY] = this.asTitleRowColorizingDiff(representativeDiff)
   }
 
   private aggregateForeignKeyTargetDiffs(
@@ -364,7 +353,7 @@ export class DdlApiNodeDiffsAggregatorKindColumn extends DdlApiNodeDiffsAggregat
       return
     }
 
-    nodeDiffs.enumValuesRowColorizingDiff = this.asReplaceFlagDiffForTitleRow(representativeDiff)
+    nodeDiffs.enumValuesRowColorizingDiff = this.asTitleRowColorizingDiff(representativeDiff)
   }
 
   private aggregateDefaultValueDiff(
@@ -405,7 +394,7 @@ export class DdlApiNodeDiffsAggregatorKindColumn extends DdlApiNodeDiffsAggregat
     }
 
     if (isDiffReplace(diff)) {
-      nodeDiffs.defaultValueRowColorizingDiff = this.asReplaceFlagDiffForTitleRow(defaultValueDiff)
+      nodeDiffs.defaultValueRowColorizingDiff = this.asTitleRowColorizingDiff(defaultValueDiff)
     }
   }
 

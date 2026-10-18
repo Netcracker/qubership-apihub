@@ -1,0 +1,5 @@
+type: integer
+examples:
+  - 0
+title: "[examples] examples = [0]"
+

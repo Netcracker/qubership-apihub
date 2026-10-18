@@ -1,0 +1,19 @@
+type: array
+description: Tuple array with 1 indexed object item schema(s)
+items:
+  - type: object
+    description: Sample object schema with all object validations
+    properties:
+      name:
+        type: string
+      id:
+        type: integer
+    default:
+      name: sample
+      id: 1
+    minProperties: 1
+    maxProperties: 5
+minItems: 0
+maxItems: 10
+uniqueItems: true
+

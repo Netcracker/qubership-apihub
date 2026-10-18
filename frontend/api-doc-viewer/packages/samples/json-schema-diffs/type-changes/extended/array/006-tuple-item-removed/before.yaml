@@ -1,0 +1,7 @@
+type: array
+description: Tuple array with three slots
+items:
+  - type: string
+  - type: integer
+  - type: boolean
+

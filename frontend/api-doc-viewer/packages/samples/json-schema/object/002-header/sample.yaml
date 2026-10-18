@@ -1,0 +1,6 @@
+type: object
+title: Sample Object
+readOnly: true
+writeOnly: true
+deprecated: true
+

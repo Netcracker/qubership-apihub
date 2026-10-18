@@ -1,0 +1,15 @@
+type: array
+description: Node changes summary sample (array wrapping case 1)
+items:
+  type: object
+  description: Node changes summary sample (object with simple properties)
+  properties:
+    propAdded:
+      type: string
+      description: Property added after the change
+    propDescriptionChanged:
+      type: string
+      description: Updated description
+    propTypeChanged:
+      type: integer
+

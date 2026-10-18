@@ -6,7 +6,7 @@ export const parseYamlSource = (sourceText: string): Record<string, unknown> => 
   try {
     parsedSource = JSON.parse(sourceText);
   } catch (error) {
-    console.error("Cannot parse JSON:", error);
+    console.warn("Cannot parse JSON:", error);
     parsedSource = undefined;
   }
 
@@ -15,7 +15,7 @@ export const parseYamlSource = (sourceText: string): Record<string, unknown> => 
       parsedSource = parse(sourceText);
     }
   } catch (error) {
-    console.error("Cannot parse YAML:", error);
+    console.warn("Cannot parse YAML:", error);
     parsedSource = undefined;
   }
 

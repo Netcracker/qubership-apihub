@@ -1,0 +1,13 @@
+afterSchema:
+  $ref: "#/components/schemas/SelfObject"
+afterAdditionalComponents:
+  schemas:
+    SelfObject:
+      type: object
+      description: Updated cyclic schema description
+      properties:
+        label:
+          type: string
+        child:
+          $ref: "#/components/schemas/SelfObject"
+

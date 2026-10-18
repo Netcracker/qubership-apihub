@@ -1,0 +1,6 @@
+type: 'object'
+properties:
+  name:
+    type: 'string'
+    x-metadata:
+      owner: 'platform-team'

@@ -5,6 +5,8 @@ export type JsoTreeBuilderParams = {
   source: unknown
   supportJsonSchema?: boolean
   logger?: BuildingServiceLogger
+  /** When set, simple nodes at this data depth defer children until materializeChildren(). */
+  materializeDepth?: number
 }
 
 export type JsoTreeWithDiffsBuilderParams = {

@@ -1,0 +1,6 @@
+type: 'string'
+x-metadata:
+  owner: 'platform-team'
+x-tags:
+  - 'beta'
+  - 'internal'

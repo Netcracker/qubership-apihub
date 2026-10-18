@@ -1,8 +1,8 @@
 // It's necessary because storybook doesn't render nested stories without this empty story
 
 import { AsyncApiOperationViewer } from "@apihub/components/AsyncApiOperationViewer/AsyncApiOperationViewer";
-import { userEvent, within } from "@storybook/test";
-import type { Meta, StoryObj } from '@storybook/react';
+import { userEvent, within } from "storybook/test";
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TEST_REFERENCE_NAME_PROPERTY } from "./shared-test-data";
 import { prepareAsyncApiDocument } from "../preprocess";
 

@@ -1,7 +1,7 @@
 import { DdlTableViewer } from "@apihub/components/DdlTableViewer/DdlTableViewer";
 import type { DisplayMode } from "@apihub/types/DisplayMode";
 import type { Realm } from "@netcracker/qubership-apihub-ddlapi";
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react-vite";
 import { NavigationLinkBuilder } from "@netcracker/qubership-apihub-next-data-model/shared/ddlapi/types/navigation-link-builder";
 import type { DdlSampleCase } from "../utils/ddl-samples-cases";
 import { buildFromDdlInBrowser } from "./build-from-ddl-browser";
@@ -9,14 +9,10 @@ import {
   type DdlCaseStoryComponentProps,
   ddlSampleReferenceArgTypes,
 } from "./ddl-samples-utils";
+import { ddlStoryNavigationLinkBuilder } from "./ddl-story-navigation";
 
 type LoaderData = {
   realm: Realm;
-};
-
-const navigationLinkBuilder: NavigationLinkBuilder = (schema, table, column) => {
-  console.log(`Navigating to ${schema}.${table}.${column}`);
-  return `#${schema}.${table}.${column}`;
 };
 
 export const DdlSampleStory = (_props: DdlCaseStoryComponentProps) => null;
@@ -66,7 +62,7 @@ export const createCaseStoryFactory = (
           <DdlTableViewer
             source={loaded!.realm}
             tableKey={resolvedSample.tableKey}
-            navigationLinkBuilder={navigationLinkBuilder}
+            navigationLinkBuilder={ddlStoryNavigationLinkBuilder}
             displayMode={factoryDisplayMode}
             noHeading={caseOptions.noHeading}
             devMode

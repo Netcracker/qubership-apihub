@@ -1,0 +1,9 @@
+type: object
+properties:
+  name:
+    type: string
+  id:
+    type: integer
+default: {}
+title: "[default] default = {}"
+

@@ -557,7 +557,7 @@ describe('DdlApiSpecWithDiffsTransformer', () => {
     expect(enumValueDiffs?.active?.afterValue).toBe('enabled')
   })
 
-  it('maps foreign-key reference changes onto foreignKeyTargets diffs', async () => {
+  it('maps a foreign-key reference change onto one changed foreignKeyTargets diff', async () => {
     const merged = await mergeSql(
       `CREATE TABLE public.target (id integer PRIMARY KEY);
        CREATE TABLE public.t (ref_id integer REFERENCES public.target(id));`,
@@ -576,8 +576,10 @@ describe('DdlApiSpecWithDiffsTransformer', () => {
     > | undefined
     const targetDiffs = columnDiffs?.foreignKeyTargets as Record<string, { action?: string }> | undefined
 
-    expect(refIdColumn?.foreignKeyTargets).toHaveLength(2)
-    expect(Object.values(targetDiffs ?? {}).map(diff => diff.action).sort()).toEqual(['add', 'remove'])
+    // The unnamed key maps to itself by its column, so the column keeps its key and only the
+    // referenced column changes.
+    expect(refIdColumn?.foreignKeyTargets).toEqual([{ schemaName: 'public', tableName: 'target', columnName: 'code' }])
+    expect(Object.values(targetDiffs ?? {}).map(diff => diff.action)).toEqual(['replace'])
   })
 
   it('builds a diffs tree for foreign-key reference changes without throwing', async () => {

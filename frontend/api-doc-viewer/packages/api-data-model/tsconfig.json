@@ -14,12 +14,6 @@
       "@apihub/api-data-model/graph-api-model/*": [
         "./src/graph-api/*"
       ],
-      "@apihub/api-data-model/json-schema-model": [
-        "./src/json-schema"
-      ],
-      "@apihub/api-data-model/json-schema-model/*": [
-        "./src/json-schema/*"
-      ],
       "@apihub/api-data-model": [
         "./src"
       ],

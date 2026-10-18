@@ -8,6 +8,18 @@ next-data-model is the type-safe successor to `api-data-model`. It builds
 tree structures consumed by api-doc-viewer components. Code lives under
 `packages/next-data-model/src/`.
 
+## Source of truth
+
+Design documents in `docs/design/` define the behaviour this skill implements:
+`docs/design/<api-type>/display-coverage.md`, `architecture/data-model-*.md`, `features/`, and the
+shared contracts in `docs/design/shared/`. This skill and its reference files (`json-schema/`,
+`node-visibility/`) add implementation paths, traps, and session lessons. When code or this skill
+disagrees with the design, report it; update the design first when the implementation is the
+approved behaviour.
+
+Work test-first: fixtures, stories, ITs, and unit tests (`api-doc-viewer-testing`) come before the
+data-layer change; see `docs/design/README.md` → Workflow.
+
 ## Layered layout
 
 Two top-level layers; never mix responsibilities:
@@ -22,7 +34,7 @@ Each layer has **abstract** contracts plus **spec-specific** implementations
 sub-layers implement node kinds, meta, and crawl behaviour.
 
 When adding a feature, extend abstract contracts first, then wire the JSO,
-AsyncAPI, and/or DDL API sub-layer — do not fork logic only in one sub-layer
+AsyncAPI, DDL API, and/or JSON Schema sub-layer — do not fork logic only in one sub-layer
 unless the behaviour is genuinely spec-specific.
 
 ## Encapsulation in building service
@@ -122,9 +134,9 @@ Canonical locations:
 - Building service: `packages/next-data-model/src/building-service/jso/`
 - Tree model: `packages/next-data-model/src/model/jso/`
 
-When editing JSO, follow existing JSO files and
-`packages/api-doc-viewer/jso-diffs-implementation-actions.md`; do not assume
-the ddlapi / async-api builder layout applies.
+When editing JSO, follow existing JSO files and the diffs specification
+`docs/design/jso/features/diffs.md`; do not assume the ddlapi / async-api
+builder layout applies.
 
 ### What the plain builder owns
 
@@ -179,7 +191,7 @@ populate diff-related fields:
 
 | Field | Meaning |
 | --- | --- |
-| `nodeDiffs` | Diffs on this node; keys are property names, except `""` (`NODE_LEVEL_DIFF_KEY`) for whole-node add/remove/replace |
+| `nodeDiffs` | Diffs on this node; keys are property names, except `""` (`NODE_LEVEL_DIFF_KEY`) for whole-node add/remove/replace and a node key rename |
 | `nodeDescendantDiffs` | Summarised diffs from direct descendants; keys match descendant `key` |
 | `nodeDiffsSummary` / `nodeDescendantDiffsSummary` | Unique diff-type sets for badges |
 | `nodeDiffsSeverities` | Severity per UI placement (`title-row`, `description-row`, …) |
@@ -197,26 +209,61 @@ metadata via overrides/hooks. Prefer constructing the transformer inside
 `prepareSource()` so the subclass can swap the with-diffs type without
 constructor juggling.
 
-## Diff inheritance contract
+## Diff inheritance contract (JSO)
 
-Inherited root diffs (`nodeDiffs[""]`) follow **parent-first** lookup:
+Specification: `docs/design/jso/features/diffs.md`. Summary:
 
-1. Parent `nodeDiffs[""]` (add/remove), then parent `nodeDescendantDiffs[nodeKey]`.
-2. If absent, repeat on the container node.
-3. Reuse the source diff object reference — do not clone.
+1. A child's `nodeDiffs[""]` is derived from the **parent only** — parent `nodeDiffs[""]`, else
+   parent `nodeDescendantDiffs[nodeKey]`. The container is passed to the aggregator but not
+   consulted.
+2. Primitive-side inheritance reuses the parent metadata object; complex transitions build derived
+   metadata (`inherited: true`, side visibility, `increaseLevel`).
+3. All value-level diffs are written under `""`. The `value` key is reserved: read defensively in
+   severity code, never written.
+4. `title-row` severity propagates **parent-first, then container**, cycle-safe.
+5. Descendant diff summaries include **add/remove only**.
 
-Severity propagation for complex transitions uses the same parent-first
-traversal. Descendant diff summaries include **add/remove only** — exclude
-replace from the descendant summary contract.
+### `aggregateByDescendantDiffs` — combining node diffs with descendant diffs
 
-Key resolution for value-level diff rendering:
+`AbstractNodeDiffsAggregator.aggregateByDescendantDiffs(crawlValue, nodeDiffs, nodeDescendantDiffs,
+diffMetaKeys)` is a no-op hook on the abstract base, already wired into each spec's
+`assignNodeDiffs` (called **after** both `node.diffs` and `node.descendantDiffs` are populated).
+Use it — do not recompute descendant diffs a second time inside `aggregate()` — whenever a field
+needs to react to "are my children uniformly added/removed" (ddlapi's
+`DdlApiNodeDiffsAggregatorKindPropertyListSection`, async-api's binding/parameter/server kinds,
+JSON Schema's nesting-indicator row colorizing — see `json-schema/json-schema-nesting-indicator-row-diffs.md`,
+**"Nesting-indicator row diffs"**). It exists per spec already; check for an override before
+adding new "count my descendant diffs" logic from scratch.
 
-- `DiffAdd` / `DiffRemove` → key `""`.
-- `DiffReplace` primitive→primitive → key `"value"`.
-- `DiffReplace` with a complex side → key `""`.
+The hook's return value is **discarded** by the caller — implementations must **mutate** the
+`nodeDiffs` object passed in.
 
-Full phased actions and entity IDs are in
-`packages/api-doc-viewer/jso-diffs-implementation-actions.md`.
+**Trap:** `nodeDescendantDiffs` is not guaranteed to contain only real child-key entries — some
+spec's descendant-diffs aggregators also fold in the node's own raw field-level diffs under their
+literal key. Enumerate the actual child keys yourself and look each one up individually; do not
+trust `Object.keys(nodeDescendantDiffs).length` as a child count.
+
+**Row colorizing needs a matching severity, from the same diff object.** A `*RowColorizingDiff`
+field only drives the `diff` prop (background). `diffsSeverities` / `DiffFloatingBadgeWrapper` is
+a **separate** prop from a **separate** aggregator (`node-diffs-severities/`) that must be updated
+in the same change — add a dedicated `NodeDiffsSeverityPlacemennt` member and build its severity
+from the identical diff object already used for colorizing (see async-api's `ServerAddressRow`
+pattern in `AsyncApiNodeDiffsSeveritiesAggregatorKindAny`). Do not treat severities as an optional
+follow-up; a missing severity silently drops the floating diff badge with no error.
+
+**One placement per row *instance*, not per row *component type*.** `NodeDiffsSeverities` is a
+flat `Partial<Record<NodeDiffsSeverityPlacemennt, NodeDiffsSeverity>>` on the node — a single enum
+member can hold only one severity at a time. If a node renders **several** rows built from the
+same shared row component (e.g. api-doc-viewer's `AdditionalInfoRow`, reused for JSON Schema's
+`Default` / `Examples` / `Allowed values` / each of 7 validation-constraint rows on one node), each
+row still needs its **own** dedicated placement — reusing one generic member (there is a legacy
+`NodeDiffsSeverityPlacemennt.AdditionalInfoRow` kept only for single-row callers, e.g. DDL) across
+several sibling rows silently collapses all their badges into whichever row's diff has the highest
+severity, with no type error and a badge whose `causedAt` path points at an unrelated field. See
+**"Per-row floating-badge severity"** in
+`json-schema/json-schema-validation-rows.md` for the concrete bug and fix (per-validation-row-key placements
+via `JSON_SCHEMA_VALIDATION_ROW_SEVERITY_PLACEMENTS`, and the viewer-side `AdditionalInfoRow`
+`diffsSeverityPlacement` prop that makes the placement caller-selectable instead of hardcoded).
 
 ## Crawl rules
 
@@ -240,7 +287,7 @@ regressions.
 
 **Coverage baseline:** which ddlapi fields are mapped vs intentionally omitted — and which
 view-model fields the viewer does not paint — is documented in
-`packages/api-doc-viewer/ddlapi-display-coverage.md`. Use it to classify **`ndm-future`**
+`docs/design/ddlapi/display-coverage.md`. Use it to classify **`ndm-future`**
 (add mapping here first) vs **`out-of-scope`** (no support needed) before extending
 `node-value.ts` or the transformer.
 
@@ -364,10 +411,34 @@ true.
 **Accessors:** `takeColumnFlagDiffs` / `takeIndexFlagDiffs` still return flag diffs when a
 whole-node add/remove is present — do **not** suppress them.
 
+**Same rule applies one level up, in JSON Schema's `enum`/`examples`/`allowedAdditionalPropertyNames`
+rows:** once a row's own background already says "every item here was added/removed", each item's
+own chip must go plain too (no colored border, no muted font) — the chip highlight would be
+redundant on top of the row color. See
+`json-schema/json-schema-validation-rows.md` → "Whole-list add/remove: row color suppresses per-chip highlight"
+for the JSON Schema-side implementation (`aggregateListRowColorizingDiff` in
+`node-diffs/kind-property.ts`, reusing `buildChipAddRemoveDiffMetadata` without `chipHighlight` —
+the same "plain, side-visibility-only" idea as `DIFF_HIGHLIGHTING_MODES_DDL_FLAG_BADGE_SIDE_VISIBILITY_ONLY`
+above, just not routed through `highlightingMode` since JSON Schema chips read `.styles` directly).
+
+**One level up from that, the "whole section" analogue of this same DDL pattern is a separate,
+even more significant rule:** a children-list section's own nesting-indicator title (this section's
+own `aggregatePresentFlagDiffsFromWholeNodeAddOrRemove`/whole-row logic, and its equivalents for
+Columns/Indexes/Parameters/Extensions/etc. across every spec) may only be painted wholly-added/
+removed when the owning node itself was wholly changed, **or** every single one of its children
+changed the same direction — never on a partial/mixed set, and never by checking only the children
+that happen to have a diff (an unchanged child is invisible to that check and must be counted
+separately). See `json-schema/json-schema-nesting-indicator-row-diffs.md` →
+"Cross-API-type rule: uniform-children colorizing requires full coverage" for the full rule
+statement and a verified table of every implementation of it across JSON Schema, JSO, DDL API, and
+AsyncAPI.
+
 **Descendant-diff trap:** array-element add/remove inherits `NODE_LEVEL_DIFF_KEY` from
 `node-descendant-diffs/kind-any.ts` where `styles.*.isContentVisible` is **false on both
 sides** (title row uses `isHeaderVisible` instead). Do **not** reuse node-level diff styles for
-badge side visibility in the viewer — fix in aggregators above.
+badge side visibility in the viewer — fix in aggregators above. A node key **rename** is the
+exception: it keeps content and header visible and does not end the node's aggregation (see
+`json-schema/json-schema-node-key-rename.md`).
 
 **Regression samples:** `203-add-column-unique`, `303-remove-column-unique` (column);
 `403-existing-column-became-unique` / `503-existing-column-lost-unique` **index** rows (plain
@@ -469,6 +540,67 @@ Do **not** restore add/remove text highlighter globally in
 differ. FK link highlighting belongs in `kind-column.buildForeignKeyTargetDiffMetadata`;
 property names use `buildDdlPropertyNameChangedPropertyMetaDataFromDiff` via
 `aggregateTextDiff`; boolean default replace belongs in `buildDefaultValueDiffMetadata`.
+
+## JSON Schema validation rows
+
+Display rules (design): `docs/design/json-schema/features/validation-rows.md`. When aggregating or
+resolving **constraint rows** (`validationRowDiffs`, `validationRowValueDiffs`,
+`validationRowColorizingDiffs`) — especially **value range** with OAS 3.0/3.1 bound dialects —
+also read the implementation reference:
+
+`agent-packages/next-data-model-authoring/.apm/skills/next-data-model-authoring/json-schema/json-schema-validation-rows.md`
+
+Fix diff metadata in `kind-property.ts` and `value-range-diff-side-display.ts`; do not patch viewer
+components to compensate.
+
+**Session lessons (read before changing row aggregation or aggregator dispatch):**
+
+- **Boolean-valued replace chips** (`uniqueItems`, boolean `default`, boolean enum/examples
+  literals) need `borderShadowColor`, not `textHighlighterColor` — but the check must be
+  `typeof diff.beforeValue/afterValue === "boolean"` on the diff's own value, **not** the owning
+  node's `type` keyword (`uniqueItems` is boolean-valued on an `array`-typed node, so a node-type
+  check silently never fires). See `buildBooleanAwareChipReplaceDiffMetadata` in `kind-any.ts`.
+- **Whole add/remove vs partial replace:** a row is only a whole-row add/remove when **none** of
+  its other source keys already carry unchanged content (`rowHasOtherUnchangedContent` guard in
+  `aggregateValidationRowDiffs`) — generic across every bound-range row, not row-key-specific.
+- **Aggregator dispatch:** `JsonSchemaNodeDiffsAggregatorFactory` returns `KindProperty` (which
+  extends `KindAny`, calling `super.aggregate()` first) for **every** node kind, not just
+  PROPERTY/ROOT — `KindProperty`'s default/enum/examples/required aggregation is a strict
+  superset, not PROPERTY/ROOT-specific. A per-kind switch that hands out a "lesser" aggregator to
+  other kinds silently drops default/enum/examples/validation diffs for them (e.g.
+  `additionalProperties`, `items`, combiner variants).
+- **Row ordering:** combining "present" rows with diff-only rows (rows whose type was fully
+  removed/not-yet-added but still carry semantic diffs) needs a **sort** by canonical
+  type-group order after combining — concatenation alone flips group order between a type change
+  and its reverse (`string→number` vs `number→string`).
+
+Full detail: `agent-packages/next-data-model-authoring/.apm/skills/next-data-model-authoring/json-schema/json-schema-validation-rows.md`.
+
+**Meta flags and parent `required`** (design: `docs/design/json-schema/features/meta-flags-and-required.md`):
+`resolveRequiredMetaDiff` in `kind-property.ts` reads parent crawl fragments — not picked
+`parent.value().required`. See
+`agent-packages/next-data-model-authoring/.apm/skills/next-data-model-authoring/json-schema/json-schema-meta-flags-and-required.md`.
+Unit tests: `json-schema-meta-flag-diffs.test.ts` (include OAS-normalized merge cases for Storybook parity).
+
+**Nesting-indicator row diffs** (design: `docs/design/json-schema/features/nesting-indicator-row-diffs.md`,
+shared rule: `docs/design/shared/features/section-header-colorizing.md`):
+`nestingIndicatorRowColorizingDiff` in `kind-any.ts`
+(`aggregateByDescendantDiffs` override) covers whole-node add/remove (including inherited
+parent/container) and uniform-children add/remove for the row `SchemaNodeViewer` renders above a
+node's children list. See
+`agent-packages/next-data-model-authoring/.apm/skills/next-data-model-authoring/json-schema/json-schema-nesting-indicator-row-diffs.md`.
+
+**Node key rename** (design: `docs/design/json-schema/features/node-key-rename.md`):
+a `rename` diff on a property (parent's `properties` diff record, keyed by the after key,
+`beforeKey` / `afterKey`) is the node-level diff of the property. `apiDiff` never emits it for JSON
+Schema — only consumers synthesizing a schema do — so JSON Schema fixture pairs cannot produce it
+(the screenshot suite uses OpenAPI path-parameter fixtures and a synthesized parameters schema).
+The title shows `JsonSchemaRowDiffs.PropertyName.resolveSideText` per side; the node's own diffs are
+still aggregated. The rename sits under `NODE_LEVEL_DIFF_KEY` but is **not** a whole-node change:
+"whole node changed" consumers (description row, severities, `required` tag) must use
+`JsonSchemaRowDiffs.NodeLevel.takeWholeNodeDiff`, never the raw key. See
+`agent-packages/next-data-model-authoring/.apm/skills/next-data-model-authoring/json-schema/json-schema-node-key-rename.md`.
+Unit tests: `json-schema-property-rename-diffs.test.ts`.
 
 ## Cross-package boundary
 

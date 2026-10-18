@@ -1,0 +1,3 @@
+type: 'string'
+x-internal:
+  owner: 'platform-team'

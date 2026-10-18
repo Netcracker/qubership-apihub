@@ -1,0 +1,7 @@
+type: 'object'
+properties:
+  name:
+    type: 'string'
+    x-value-schema:
+      type: 'integer'
+      minimum: 0

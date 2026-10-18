@@ -1,0 +1,12 @@
+afterSchema:
+  type: object
+  description: Combiner with cyclic object variant
+  properties:
+    value:
+      $ref: "#/components/schemas/CyclicValue"
+afterAdditionalComponents:
+  schemas:
+    CyclicValue:
+      oneOf:
+        - type: string
+

@@ -1,0 +1,13 @@
+type: string
+description: |-
+  Summary of the endpoint.
+  Explains request parameters.
+  Explains response fields.
+  Lists possible error codes.
+  Documents rate limits.
+  Notes pagination behavior.
+  Covers authentication scope.
+  Describes caching behavior.
+  Mentions versioning notes.
+  Closes with support links.
+

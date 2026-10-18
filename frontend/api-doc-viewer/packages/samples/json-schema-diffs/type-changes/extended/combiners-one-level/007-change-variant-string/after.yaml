@@ -1,0 +1,11 @@
+oneOf:
+  - type: string
+    description: Updated string variant
+  - type: object
+    description: Object variant
+    properties:
+      id:
+        type: string
+      count:
+        type: integer
+

@@ -1,0 +1,10 @@
+afterSchema:
+  $ref: "#/components/schemas/SelfArray"
+afterAdditionalComponents:
+  schemas:
+    SelfArray:
+      type: array
+      description: Updated cyclic schema description
+      items:
+        $ref: "#/components/schemas/SelfArray"
+

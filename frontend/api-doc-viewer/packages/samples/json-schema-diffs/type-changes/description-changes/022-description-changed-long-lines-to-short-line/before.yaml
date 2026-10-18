@@ -1,0 +1,13 @@
+type: string
+description: |-
+  Overview of the resource.
+  Identifies unique attributes.
+  Tracks creation timestamps.
+  Tracks update timestamps.
+  Lists related resource links.
+  Notes deprecated fields.
+  Flags experimental features.
+  Describes access permissions.
+  Summarizes validation rules.
+  Ends with usage notes.
+

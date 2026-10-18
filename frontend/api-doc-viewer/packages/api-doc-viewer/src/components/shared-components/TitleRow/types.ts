@@ -15,12 +15,15 @@ export enum TitleRowUsage {
   JsoProperty = 'jso-property',
   DdlApiSection = 'ddlapi-section',
   DdlApiProperty = 'ddlapi-property',
+  JsonSchemaProperty = 'json-schema-property',
 }
 
 export type TitleRowProps = WithPrecededByProps & WithDdlListLastRowProps & {
   value?: string // Document Mode
+  titleContent?: ReactElement | ((layoutSide: LayoutSide) => ReactElement | null)
   expandable: boolean
   expanded?: boolean
+  isRoot?: boolean
   onClickExpander?: () => void
   variant: TextValueVariant
   enableHeader?: boolean

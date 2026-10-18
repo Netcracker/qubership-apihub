@@ -2,8 +2,7 @@ import { DisplayMode } from "@apihub/next-data-model/model/abstract/display-mode
 import { isDetailedDisplayMode } from "@apihub/next-data-model/model/abstract/guards/display-mode"
 import { DdlApiNodeVisibilityManagerKindIndex as PlainIndexNodeVisibilityManager } from "../../tree/node-visibility-data/kind-index"
 import {
-  takeIndexDescriptionDiff,
-  takeIndexFlagDiffs,
+  DdlApiRowDiffs,
 } from "@apihub/next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs"
 import { DdlApiTreeNodeWithDiffs } from "@apihub/next-data-model/model/ddlapi/types/aliases"
 import { DdlApiTreeNodeKinds } from "@apihub/next-data-model/model/ddlapi/types/node-kind"
@@ -26,10 +25,10 @@ export class DdlApiNodeVisibilityManagerKindIndex {
     return {
       showDescription: this.resolveDescriptionRowVisible(
         value,
-        takeIndexDescriptionDiff(node),
+        DdlApiRowDiffs.Index.takeDescriptionDiff(node),
         displayMode,
       ),
-      showSubheader: this.resolveSubheaderVisible(value, takeIndexFlagDiffs(node)?.isUnique),
+      showSubheader: this.resolveSubheaderVisible(value, DdlApiRowDiffs.Index.takeFlagDiffs(node)?.isUnique),
     }
   }
 

@@ -1,25 +1,45 @@
-import { useDiffMetaKeys } from "@apihub/contexts/DiffMetaKeysContext"
-import { useDiffTypes } from "@apihub/contexts/DiffTypesContext"
-import { useDisplayMode } from "@apihub/contexts/DisplayModeContext"
-import { useLayoutMode } from "@apihub/contexts/LayoutModeContext"
-import { isBindingsNode, isExtensionsNode, isMessageContentHeadersNode, isMessageContentPayloadNode } from "@apihub/utils/async-api/node-type-checkers"
-import { wrapJsonSchemaForDiffsViewer, wrapJsonSchemaForViewer } from "@apihub/utils/jso/prepare-json-schema-to-jso-viewers"
-import { SimpleTreeNodeWithDiffs } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/simple-node.impl"
-import { NODE_LEVEL_DIFF_KEY } from "@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/tree-node.interface"
-import { AsyncApiTreeNode } from "@netcracker/qubership-apihub-next-data-model/model/async-api/types/aliases"
-import { AsyncApiTreeNodeKinds } from "@netcracker/qubership-apihub-next-data-model/model/async-api/types/node-kind"
-import { AsyncApiTreeNodeValueTypeMessageHeaders, AsyncApiTreeNodeValueTypeMessagePayload } from "@netcracker/qubership-apihub-next-data-model/model/async-api/types/node-value"
-import { FC, useCallback, useMemo } from "react"
-import { DiffMetaKeys, DOCUMENT_LAYOUT_MODE, JsonSchemaDiffViewer, SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from "../.."
-import { JsonSchemaViewer } from "../JsonSchemaViewer/JsonSchemaViewer"
-import { buildRowDiffProps, toNodeDiffState } from "../shared-components/diffs/node-diff-props"
-import { TextValueVariant } from "../shared-components/TextValue/types"
-import { TitleRow } from "../shared-components/TitleRow/TitleRow"
-import { TitleRowProps } from "../shared-components/TitleRow/types"
-import { ATTRIBUTE_PRECEDED_BY, PrecededBy, WithPrecededByProps } from "../shared-components/WithPrecededByProps"
-import { isAsyncApiMessageHeadersNodeWithDiffs, isAsyncApiMessagePayloadNodeWithDiffs } from "../shared-utilities/tree-node-guards"
-import { BindingsNodeViewer } from "./BindingsNodeViewer"
-import { ExtensionsNodeViewer } from "./ExtensionsNodeViewer"
+import { SUPPRESS_ROOT_NESTING_INDICATOR_CUSTOMIZATION_OPTIONS } from '@apihub/contexts/CustomizationOptionsContext'
+import { useDiffMetaKeys } from '@apihub/contexts/DiffMetaKeysContext'
+import { useDiffTypes } from '@apihub/contexts/DiffTypesContext'
+import { useDisplayMode } from '@apihub/contexts/DisplayModeContext'
+import { useLayoutMode } from '@apihub/contexts/LayoutModeContext'
+import {
+  isBindingsNode,
+  isExtensionsNode,
+  isMessageContentHeadersNode,
+  isMessageContentPayloadNode,
+} from '@apihub/utils/async-api/node-type-checkers'
+import {
+  wrapJsonSchemaForDiffsViewer,
+  wrapJsonSchemaForViewer,
+} from '@apihub/utils/jso/prepare-json-schema-to-jso-viewers'
+import {
+  SimpleTreeNodeWithDiffs,
+} from '@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/simple-node.impl'
+import {
+  NODE_LEVEL_DIFF_KEY,
+} from '@netcracker/qubership-apihub-next-data-model/model/abstract/tree-with-diffs/tree-node.interface'
+import { AsyncApiTreeNode } from '@netcracker/qubership-apihub-next-data-model/model/async-api/types/aliases'
+import { AsyncApiTreeNodeKinds } from '@netcracker/qubership-apihub-next-data-model/model/async-api/types/node-kind'
+import {
+  AsyncApiTreeNodeValueTypeMessageHeaders,
+  AsyncApiTreeNodeValueTypeMessagePayload,
+} from '@netcracker/qubership-apihub-next-data-model/model/async-api/types/node-value'
+import { FC, useCallback, useMemo } from 'react'
+import { DiffMetaKeys, DOCUMENT_LAYOUT_MODE, SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '../..'
+import { JsonSchemaDiffsViewer } from '../JsonSchemaViewer/JsonSchemaDiffsViewer'
+import { JsonSchemaViewer } from '../JsonSchemaViewer/JsonSchemaViewer'
+import { buildRowDiffProps, toNodeDiffState } from '../shared-components/diffs/node-diff-props'
+import { TextValueVariant } from '../shared-components/TextValue/types'
+import { TitleRow } from '../shared-components/TitleRow/TitleRow'
+import { TitleRowProps } from '../shared-components/TitleRow/types'
+import { ATTRIBUTE_PRECEDED_BY, PrecededBy, WithPrecededByProps } from '../shared-components/WithPrecededByProps'
+import {
+  isAsyncApiMessageHeadersNodeWithDiffs,
+  isAsyncApiMessagePayloadNodeWithDiffs,
+} from '../shared-utilities/tree-node-guards'
+import { BindingsNodeViewer } from './BindingsNodeViewer'
+import { ExtensionsNodeViewer } from './ExtensionsNodeViewer'
 
 type MessageContentNodeViewerProps = WithPrecededByProps & {
   node: AsyncApiTreeNode<typeof AsyncApiTreeNodeKinds.MESSAGE_CONTENT>
@@ -70,20 +90,19 @@ export const MessageContentNodeViewer: FC<MessageContentNodeViewerProps> = (prop
           data-precededby={PrecededBy.MESSAGE_SECTION_HEADER_HIGH_LEVEL}
           schema={source}
           displayMode={displayMode}
-          overriddenKind='parameters'
+          customizationOptions={SUPPRESS_ROOT_NESTING_INDICATOR_CUSTOMIZATION_OPTIONS}
         />
       )
     }
     if (layoutMode === SIDE_BY_SIDE_DIFFS_LAYOUT_MODE && diffMetaKeys) {
       return (
-        <JsonSchemaDiffViewer
+        <JsonSchemaDiffsViewer
           data-precededby={PrecededBy.MESSAGE_SECTION_HEADER_HIGH_LEVEL}
           schema={source}
           displayMode={displayMode}
-          metaKeys={diffMetaKeys}
-          filters={diffTypes}
-          layoutMode={SIDE_BY_SIDE_DIFFS_LAYOUT_MODE}
-          overriddenKind='parameters'
+          diffMetaKeys={diffMetaKeys}
+          diffTypes={diffTypes}
+          customizationOptions={SUPPRESS_ROOT_NESTING_INDICATOR_CUSTOMIZATION_OPTIONS}
         />
       )
     }

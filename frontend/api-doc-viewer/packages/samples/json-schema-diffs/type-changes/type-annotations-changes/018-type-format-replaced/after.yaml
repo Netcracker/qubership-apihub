@@ -1,0 +1,4 @@
+type: number
+title: Calendar
+format: <CurrencyMarker> N.MK
+

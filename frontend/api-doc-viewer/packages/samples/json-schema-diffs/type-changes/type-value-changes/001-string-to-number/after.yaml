@@ -1,0 +1,7 @@
+type: number
+description: Sample number schema with all number validations
+default: 1.5
+minimum: 0
+maximum: 100
+multipleOf: 0.5
+

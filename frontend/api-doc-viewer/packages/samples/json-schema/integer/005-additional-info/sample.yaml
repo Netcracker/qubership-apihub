@@ -1,0 +1,13 @@
+type: integer
+enum:
+  - 1
+  - 2
+  - 3
+default: 42
+examples:
+  - 1
+  - 42
+multipleOf: 2
+minimum: 0
+maximum: 100
+

@@ -1,0 +1,10 @@
+type: object
+description: Object with additionalProperties schema and propertyNames restriction
+additionalProperties:
+  type: string
+  description: Simple additional property schema
+propertyNames:
+  enum:
+    - beta
+    - alpha
+

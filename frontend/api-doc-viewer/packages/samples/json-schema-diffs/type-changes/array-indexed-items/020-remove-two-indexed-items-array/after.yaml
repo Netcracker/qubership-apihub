@@ -1,0 +1,7 @@
+type: array
+description: Tuple array with 0 indexed array item schemas
+items: []
+minItems: 0
+maxItems: 10
+uniqueItems: true
+

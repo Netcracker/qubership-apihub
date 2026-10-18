@@ -1,1 +1,0 @@
-export const TEST_SYNTHETIC_TITLE_FLAG = Symbol('test-title-synthetic')

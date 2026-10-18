@@ -1,0 +1,10 @@
+type: 'string'
+x-internal: true
+x-metadata:
+  owner: 'platform-team'
+x-tags:
+  - 'beta'
+  - 'internal'
+x-value-schema:
+  type: 'integer'
+  minimum: 0

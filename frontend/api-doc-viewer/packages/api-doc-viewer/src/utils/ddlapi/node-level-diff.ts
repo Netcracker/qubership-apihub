@@ -3,11 +3,8 @@ import { TitleRowProps } from "@apihub/components/shared-components/TitleRow/typ
 import {
   DdlApiPropertyNodeWithDiffs,
   DdlApiPropertyRowValue,
+  DdlApiRowDiffs,
   DdlApiTableHeaderNodeWithDiffs,
-  takeDdlPropertyNodeDiffIfPresent,
-  takeDdlPropertyTitleRowDiff,
-  takeDdlTableNodeDiffIfPresent,
-  takeDdlTableTitleRowDiff,
 } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs"
 
 export type {
@@ -20,13 +17,13 @@ export {
   DDL_INDEX_FLAG_DIFF_KEYS,
 } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs"
 
-export const takeNodeDiffIfPresent = takeDdlPropertyNodeDiffIfPresent
+export const takeNodeDiffIfPresent = DdlApiRowDiffs.PropertyRow.takeNodeDiffIfPresent
 
 export function buildDdlPropertyTitleRowDiffProps(
   node: DdlApiPropertyNodeWithDiffs,
 ): Pick<TitleRowProps, "diff" | "descendantDiffs" | "diffsSeverities" | "highlightingMode"> {
   const rowDiffProps = buildRowDiffProps<DdlApiPropertyRowValue>(toNodeDiffState(node), {
-    resolveDiff: () => takeDdlPropertyTitleRowDiff(node),
+    resolveDiff: () => DdlApiRowDiffs.PropertyRow.takeTitleRowDiff(node),
   })
 
   if (!rowDiffProps.diff) {
@@ -43,7 +40,7 @@ export function buildDdlTableTitleRowDiffProps(
   node: DdlApiTableHeaderNodeWithDiffs,
 ): Pick<TitleRowProps, "diff" | "descendantDiffs" | "diffsSeverities" | "highlightingMode"> {
   const rowDiffProps = buildRowDiffProps(toNodeDiffState(node), {
-    resolveDiff: () => takeDdlTableTitleRowDiff(node),
+    resolveDiff: () => DdlApiRowDiffs.Table.takeTitleRowDiff(node),
   })
 
   if (!rowDiffProps.diff) {
@@ -56,4 +53,4 @@ export function buildDdlTableTitleRowDiffProps(
   }
 }
 
-export const takeTableNodeDiffIfPresent = takeDdlTableNodeDiffIfPresent
+export const takeTableNodeDiffIfPresent = DdlApiRowDiffs.Table.takeNodeDiffIfPresent

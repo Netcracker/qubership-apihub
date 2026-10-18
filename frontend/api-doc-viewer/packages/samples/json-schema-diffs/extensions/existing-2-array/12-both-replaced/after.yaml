@@ -1,0 +1,5 @@
+type: 'string'
+x-tags:
+  type: 'integer'
+  minimum: 0
+x-owners: true

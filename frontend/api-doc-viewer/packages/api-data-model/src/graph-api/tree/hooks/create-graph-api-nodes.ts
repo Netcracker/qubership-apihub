@@ -4,7 +4,6 @@ import { SyncCrawlHook } from '@netcracker/qubership-apihub-json-crawl'
 import { modelTreeNodeType } from '../../../abstract/constants'
 import { LazyBuildingContext } from '../../../abstract/model/model-tree-node.impl'
 import { ModelTreeNodeParams } from '../../../abstract/model/types'
-import { isBrokenRef } from '../../../json-schema/utils'
 import {
   crawlHooksGraphApiTree,
   GraphApiCrawlState,
@@ -16,7 +15,7 @@ import {
   GraphApiTreeComplexNode,
   GraphApiTreeNode,
 } from '../../index'
-import { areExcludedComponents } from '../../utils'
+import { areExcludedComponents, isBrokenRef } from '../../utils'
 import { GraphApiModelTree } from '../model'
 
 export function createGraphApiTreeCrawlHook(

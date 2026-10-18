@@ -1,0 +1,6 @@
+type: 'array'
+items:
+  type: 'string'
+  x-value-schema:
+    type: 'integer'
+    minimum: 0

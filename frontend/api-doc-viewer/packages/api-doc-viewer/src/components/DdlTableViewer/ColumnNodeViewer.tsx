@@ -16,15 +16,19 @@ import { TextValueVariant } from "../shared-components/TextValue/types"
 import { TitleRow } from "../shared-components/TitleRow/TitleRow"
 import { TitleRowUsage } from "../shared-components/TitleRow/types"
 import { ATTRIBUTE_DDL_LIST_LAST_ROW, ATTRIBUTE_PRECEDED_BY, PrecededBy, WithPrecededByProps } from "../shared-components/WithPrecededByProps"
-import { AdditionalInfoPiece } from "./AdditionalInfoPiece/AdditionalInfoPiece"
-import { AdditionalInfoRow } from "./AdditionalInfoRow/AdditionalInfoRow"
+import { AdditionalInfoPiece } from "@apihub/components/shared-components/AdditionalInfoPiece/AdditionalInfoPiece"
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { AdditionalInfoPieceUsage } from "@apihub/components/shared-components/AdditionalInfoPiece/types"
+import { AdditionalInfoRow } from "@apihub/components/shared-components/AdditionalInfoRow/AdditionalInfoRow"
+import { AdditionalInfoRowUsage } from "@apihub/components/shared-components/AdditionalInfoRow/types"
 import { ColumnRowBadgesContent } from "./ColumnRowBadges/ColumnRowBadgesContent"
 import {
   ADDITIONAL_INFO_LABEL_DEFAULT,
   ADDITIONAL_INFO_LABEL_GENERATED,
   ADDITIONAL_INFO_LABEL_VALUES,
 } from "./consts"
-import { DdlApiPropertyValue } from "./DdlApiPropertyValue/DdlApiPropertyValue"
+import { SubheaderValue } from "@apihub/components/shared-components/SubheaderValue/SubheaderValue"
+import { SubheaderValueAppearance } from "@apihub/components/shared-components/SubheaderValue/types"
 
 export type ColumnNodeViewerProps = WithPrecededByProps & {
   node: DdlApiTreeNode<typeof DdlApiTreeNodeKinds.COLUMN>
@@ -60,10 +64,10 @@ export const ColumnNodeViewer: FC<ColumnNodeViewerProps> = (props) => {
 
       return (
         <div className="flex flex-wrap items-center gap-2">
-          <DdlApiPropertyValue
+          <SubheaderValue
             isVisible={true}
             value={value.columnType.label}
-            appearance="text"
+            appearance={SubheaderValueAppearance.Text}
           />
           <ColumnRowBadgesContent
             columnId={node.id}
@@ -163,6 +167,7 @@ export const ColumnNodeViewer: FC<ColumnNodeViewerProps> = (props) => {
       )}
       {visibility.showEnumValuesRow && (
         <AdditionalInfoRow
+          usage={AdditionalInfoRowUsage.DdlApiProperty}
           data-precededby={additionalInfoPrecededBy}
           {...{ [ATTRIBUTE_DDL_LIST_LAST_ROW]: listLastRowFlags.isEnumAdditionalInfoListLastRow || undefined }}
           label={ADDITIONAL_INFO_LABEL_VALUES}
@@ -171,6 +176,7 @@ export const ColumnNodeViewer: FC<ColumnNodeViewerProps> = (props) => {
       )}
       {visibility.showDefaultRow && (
         <AdditionalInfoRow
+          usage={AdditionalInfoRowUsage.DdlApiProperty}
           data-precededby={
             resolvePlainColumnAdditionalInfoRowUsesAfterRowPrecededBy(visibility, "default")
               ? PrecededBy.DDL_COLUMN_AFTER_ADDITIONAL_INFO_ROW
@@ -183,6 +189,7 @@ export const ColumnNodeViewer: FC<ColumnNodeViewerProps> = (props) => {
       )}
       {visibility.showGeneratedRow && (
         <AdditionalInfoRow
+          usage={AdditionalInfoRowUsage.DdlApiProperty}
           data-precededby={
             resolvePlainColumnAdditionalInfoRowUsesAfterRowPrecededBy(visibility, "generated")
               ? PrecededBy.DDL_COLUMN_AFTER_ADDITIONAL_INFO_ROW

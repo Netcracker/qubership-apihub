@@ -9,6 +9,8 @@ import { AsyncApiTreeNode, AsyncApiTreeNodeWithDiffs } from "@netcracker/qubersh
 import { AsyncApiTreeNodeKinds } from "@netcracker/qubership-apihub-next-data-model/model/async-api/types/node-kind";
 import { AsyncApiTreeNodeValue, AsyncApiTreeNodeValueTypeBinding } from "@netcracker/qubership-apihub-next-data-model/model/async-api/types/node-value";
 import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import { JsonSchemaDiffsViewer } from "../JsonSchemaViewer/JsonSchemaDiffsViewer";
+import { JsonSchemaViewer } from "../JsonSchemaViewer/JsonSchemaViewer";
 import { JsoDiffsViewer } from "../JsoViewer/JsoDiffsViewer";
 import { JsoViewer } from "../JsoViewer/JsoViewer";
 import { buildRowDiffProps, toNodeDiffState } from "../shared-components/diffs/node-diff-props";
@@ -19,7 +21,8 @@ import { TitleRow } from "../shared-components/TitleRow/TitleRow";
 import { TitleRowProps } from "../shared-components/TitleRow/types";
 import { ATTRIBUTE_PRECEDED_BY, PrecededBy, WithPrecededByProps } from "../shared-components/WithPrecededByProps";
 import { isBindingNodeWithDiffs, isBindingsNodeWithDiffs } from "../shared-utilities/tree-node-guards";
-import { Selector, SelectorOption } from "./Selector/Selector";
+import { Selector, SelectorOption } from "@apihub/components/shared-components/Selector/Selector"
+import { SelectorVariant } from "@apihub/components/shared-components/Selector/types"
 import { SizeVariant } from "./types/SizeVariant";
 
 type BindingsNodeViewerProps = WithPrecededByProps & {
@@ -37,7 +40,7 @@ export const BindingsNodeViewer: FC<BindingsNodeViewerProps> = (props) => {
   const bindingsNodeMeta = node.meta()
   const brokenRef = bindingsNodeMeta?.brokenRef
 
-  const [selectedBinding, setSelectedBinding] = useState<SelectorOption | null>(null)
+  const [selectedBinding, setSelectedBinding] = useState<SelectorOption<AsyncApiTreeNode> | null>(null)
   const bindingNodes: AsyncApiTreeNode[] | AsyncApiTreeNodeWithDiffs[] = node.nestedNodes()
   const bindingSelectorOptions = useMemo(() => (
     bindingNodes
@@ -86,7 +89,7 @@ export const BindingsNodeViewer: FC<BindingsNodeViewerProps> = (props) => {
         options={bindingSelectorOptions}
         selectedOption={selectedBinding}
         onSelectOption={setSelectedBinding}
-        variant={SizeVariant.SECONDARY}
+        variant={SelectorVariant.Secondary}
         // diffs
         layoutSide={layoutSide}
       />
@@ -127,6 +130,7 @@ export const BindingsNodeViewer: FC<BindingsNodeViewerProps> = (props) => {
           displayMode={displayMode}
           initialLevel={1}
           supportJsonSchema={true}
+          embeddedSchemaDiffsComponent={JsonSchemaDiffsViewer}
           // diffs specific
           diffMetaKeys={diffMetaKeys}
         />
@@ -140,6 +144,7 @@ export const BindingsNodeViewer: FC<BindingsNodeViewerProps> = (props) => {
           displayMode={displayMode}
           initialLevel={1}
           supportJsonSchema={true}
+          embeddedSchemaComponent={JsonSchemaViewer}
         />
       )
     }

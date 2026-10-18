@@ -6,7 +6,7 @@ export abstract class AbstractNodeDescendantsDiffsSummaryAggregator {
   public abstract aggregate(
     nodeDiffs?: NodeDiffs,
     nodeDescendantDiffs?: NodeDescendantDiffs,
-    crawlValue?: object | null,
+    crawlValue?: object | boolean | null,
     diffsMetaKeys?: DiffMetaKeys,
   ): NodeDescendantDiffsSummary | undefined;
 

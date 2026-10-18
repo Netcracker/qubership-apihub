@@ -1,0 +1,4 @@
+name: api-doc-viewer-reviewing
+version: 1.0.0
+description: Architecture review and refactoring briefs for api-doc-viewer API type stacks — shared rules plus per-API-type scope.
+author: Qubership APIHUB

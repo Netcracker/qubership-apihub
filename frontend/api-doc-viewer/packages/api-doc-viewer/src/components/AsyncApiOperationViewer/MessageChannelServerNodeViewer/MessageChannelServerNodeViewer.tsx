@@ -171,7 +171,7 @@ export const MessageChannelServerNodeViewer: FC<MessageChannelServerNodeViewerPr
       return (
         <div
           data-precededby={PrecededBy.MESSAGE_SECTION_HEADER_HIGH_LEVEL}
-          className={`${X_AXIS_PADDING_ROWS_ASYNC_API} py-2 flex flex-row h-full ${diffClasses.join(' ')}`}
+          className={`${X_AXIS_PADDING_ROWS_ASYNC_API} py-2 flex flex-row w-full h-full ${diffClasses.join(' ')}`}
         >
           {!isInvisible && (
             <div className="server-address-container server-address server-subheader">

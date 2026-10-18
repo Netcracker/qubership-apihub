@@ -26,18 +26,19 @@ export type ExpanderProps = {
   isExpandable?: boolean
   expanded: boolean
   onToggleExpander: () => void
+  testId?: string
   // onToggleContextMenu: ToggleContextMenuHandler
 }
 
 export const Expander: FC<ExpanderProps> = (props) => {
-  const { isRoot, isOperation, isExpandable, expanded, onToggleExpander/*, onToggleContextMenu */ } = props
+  const { isRoot, isOperation, isExpandable, expanded, onToggleExpander, testId/*, onToggleContextMenu */ } = props
 
   let expanderElement = null
   if (isExpandable) {
     expanderElement = (
       <div data-name="Expander" className="flex flex-row items-center gap-0.5 w-full">
         {!isRoot && <NestingHorizontalIndicator short />}
-        <ExpandingCaret onToggle={onToggleExpander} expanded={expanded} />
+        <ExpandingCaret onToggle={onToggleExpander} expanded={expanded} testId={testId} />
       </div>
     )
   } else if (isRoot) {

@@ -1,0 +1,4 @@
+type: boolean
+default: false
+title: "[default] default = false"
+

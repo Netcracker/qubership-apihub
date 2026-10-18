@@ -11,11 +11,13 @@ import { JsoPropertyValueTypes } from "@apihub/next-data-model/model/jso/types/n
 import { JsoTreeWithDiffsBuilderParams } from "@apihub/next-data-model/shared/jso/types/tree-builder-params";
 import { isObject } from "@apihub/next-data-model/utilities";
 import { NodeId, NodeKey } from "@apihub/next-data-model/utility-types";
-import { annotation, breaking, deprecated, DiffType, isDiffAdd, isDiffRemove, isDiffReplace, nonBreaking, risky, unclassified } from "@netcracker/qubership-apihub-api-diff";
+import { annotation, breaking, deprecated, DiffType, isDiffAdd, isDiffRemove, isDiffReplace, nonBreaking, risky, unclassified, aggregateDiffsWithRollup } from "@netcracker/qubership-apihub-api-diff";
 import { syncCrawl } from "@netcracker/qubership-apihub-json-crawl";
 import { BuildingServiceLogger, createBuildingServiceLogger } from "../../../loggers";
+import { AncestorsRegistry } from "../../abstract/json-crawl-entities/state/ancestors-registry";
 import { TreeWithDiffsBuilder } from "../../abstract/tree-with-diffs/builder";
 import { DiffMetaKeys } from "../../abstract/tree-with-diffs/node-diffs-data/diff-meta-keys";
+import { mergeAggregatedDiffTypesIntoDescendantSummary } from "../../abstract/tree-with-diffs/node-diffs-data/aggregated-diff-types";
 import { getJsoWithDiffsCrawlRules } from "../json-crawl-entities/rules/rules.jso-with-diffs";
 import { JsoWithDiffsCrawlRule } from "../json-crawl-entities/rules/types";
 import { JsoTreeWithDiffsCrawlState } from "../json-crawl-entities/state/types";
@@ -63,10 +65,16 @@ export class JsoTreeWithDiffsBuilder extends TreeWithDiffsBuilder<
       return this.tree
     }
 
+    aggregateDiffsWithRollup(
+      this.source,
+      this.diffsMetaKeys.diffsMetaKey,
+      this.diffsMetaKeys.aggregatedDiffsMetaKey,
+    )
+
     const initialState: JsoTreeWithDiffsCrawlState = {
       parent: null,
       container: null,
-      alreadyConvertedValuesCache: new Map(),
+      ancestors: new AncestorsRegistry(),
       diffMetaKeys: this.diffsMetaKeys,
     }
 
@@ -84,16 +92,16 @@ export class JsoTreeWithDiffsBuilder extends TreeWithDiffsBuilder<
         container: null,
         parent: parent,
       }),
-      createStateForSimpleNode: (_state, node, cache) => ({
+      createStateForSimpleNode: (state, node) => ({
         parent: node,
         container: null,
-        alreadyConvertedValuesCache: cache,
+        ancestors: state.ancestors,
         diffMetaKeys: this.diffsMetaKeys,
       }),
-      createStateForComplexNode: (state, node, cache) => ({
+      createStateForComplexNode: (state, node) => ({
         parent: state.parent,
         container: node,
-        alreadyConvertedValuesCache: cache,
+        ancestors: state.ancestors,
         diffMetaKeys: this.diffsMetaKeys,
       }),
       isSimpleNode: (node) => node.type === TreeNodeComplexityTypes.SIMPLE,
@@ -302,6 +310,12 @@ export class JsoTreeWithDiffsBuilder extends TreeWithDiffsBuilder<
       node.descendantDiffsSummary.clear()
       node.addDescendantDiffsSummary(descendantDiffsSummary)
     }
+    mergeAggregatedDiffTypesIntoDescendantSummary(
+      node.descendantDiffsSummary,
+      node.diffs,
+      params.value,
+      this.diffsMetaKeys,
+    )
 
     const diffsSeverities = this.createNodeDiffsSeverities(kind, node.diffs)
     diffsSeverities && Object.assign(node.diffsSeverities, diffsSeverities)

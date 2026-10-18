@@ -1,0 +1,8 @@
+type: string
+title: Sample String
+readOnly: true
+writeOnly: true
+deprecated: true
+format: email
+description: Sample string description
+

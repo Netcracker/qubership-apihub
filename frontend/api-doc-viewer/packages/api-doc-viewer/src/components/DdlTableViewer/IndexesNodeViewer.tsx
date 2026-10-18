@@ -2,7 +2,7 @@ import { LevelContext, useLevelContext } from "@apihub/contexts/LevelContext"
 import { buildRowDiffProps, toNodeDiffState } from "@apihub/components/shared-components/diffs/node-diff-props"
 import { getIndexChildNodes, isIndexNodeWithDiffs, isIndexesNodeWithDiffs } from "@apihub/utils/ddlapi/node-type-checkers"
 import { DdlApiSectionHeaderRowValue } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree/node-value"
-import { isDdlPropertyListSectionUniformWholeNodeChange } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs"
+import { DdlApiRowDiffs } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/tree-with-diffs/property-row-diffs"
 import { DdlApiTreeNode, DdlApiTreeNodeWithDiffs } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/types/aliases"
 import { DdlApiTreeNodeKinds } from "@netcracker/qubership-apihub-next-data-model/model/ddlapi/types/node-kind"
 import { FC, useMemo } from "react"
@@ -121,7 +121,7 @@ const IndexesNodeWithDiffsViewer: FC<IndexesNodeWithDiffsViewerProps> = (props) 
   )
 
   const hideLevelIndicatorWhenSideEmpty = useMemo(
-    () => isDdlPropertyListSectionUniformWholeNodeChange(node),
+    () => DdlApiRowDiffs.PropertyRow.isListSectionUniformWholeNodeChange(node),
     [node],
   )
 

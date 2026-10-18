@@ -15,7 +15,7 @@
  */
 
 import { AsyncApiOperationViewer } from '@apihub/components/AsyncApiOperationViewer/AsyncApiOperationViewer';
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 import { parse } from 'yaml';
 import type { ComponentProps } from 'react';
 import { TEST_REFERENCE_NAME_PROPERTY } from './async-api-suite/shared-test-data';

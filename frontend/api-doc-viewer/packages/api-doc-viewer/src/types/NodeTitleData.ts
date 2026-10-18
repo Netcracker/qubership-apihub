@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { GraphApiDiffTreeNode, GraphApiTreeNode, JsonSchemaDiffTreeNode } from '@netcracker/qubership-apihub-api-data-model'
+import { GraphApiDiffTreeNode, GraphApiTreeNode } from '@netcracker/qubership-apihub-api-data-model'
 import { BadgeKind } from '../components/kit/ux/UxBadge/types'
 import { CustomizationOptions } from '@apihub/contexts/CustomizationOptionsContext'
 
@@ -35,7 +35,5 @@ type NodeTitleDataOptions<T> = {
   titleMappings?: Record<string, string>
   customizationOptions?: CustomizationOptions
 }
-
-export type JsonNodeTitleDataOptions = NodeTitleDataOptions<JsonSchemaDiffTreeNode>
 
 export type GraphNodeTitleDataOptions = NodeTitleDataOptions<GraphApiDiffTreeNode | GraphApiTreeNode>

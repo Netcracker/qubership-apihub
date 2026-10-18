@@ -1,0 +1,4 @@
+type: 'string'
+x-internal:
+  - 'beta'
+  - 'internal'

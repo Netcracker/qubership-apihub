@@ -1,0 +1,39 @@
+type: object
+description: Node changes summary sample (oneOf variants wrapping objects)
+properties:
+  variantWithCaseOne:
+    oneOf:
+      - type: string
+      - type: object
+        description: Node changes summary sample (object with simple properties)
+        properties:
+          propRemoved:
+            type: string
+            description: Property removed after the change
+          propDescriptionChanged:
+            type: string
+            description: Original description
+          propTypeChanged:
+            type: string
+  variantWithCaseTwo:
+    oneOf:
+      - type: string
+      - type: object
+        description: Node changes summary sample (object wrapping case 1)
+        properties:
+          caseOne:
+            type: object
+            description: Node changes summary sample (object with simple properties)
+            properties:
+              propRemoved:
+                type: string
+                description: Property removed after the change
+              propDescriptionChanged:
+                type: string
+                description: Original description
+              propTypeChanged:
+                type: string
+          unchangedProp:
+            type: string
+            description: This property never changes
+

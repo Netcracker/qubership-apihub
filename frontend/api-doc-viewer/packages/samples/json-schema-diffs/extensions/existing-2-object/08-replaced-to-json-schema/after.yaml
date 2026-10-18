@@ -1,0 +1,6 @@
+type: 'string'
+x-metadata:
+  owner: 'platform-team'
+x-labels:
+  type: 'integer'
+  minimum: 0

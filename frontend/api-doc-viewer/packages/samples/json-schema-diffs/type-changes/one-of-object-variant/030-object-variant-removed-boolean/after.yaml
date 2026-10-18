@@ -1,0 +1,13 @@
+type: object
+description: Root schema with oneOf object variant property
+properties:
+  plainProp:
+    type: string
+    description: Arbitrary plain property
+  oneOfProp:
+    oneOf:
+      - type: string
+        description: String oneOf variant (unchanged)
+      - type: number
+        description: Number oneOf variant (unchanged)
+

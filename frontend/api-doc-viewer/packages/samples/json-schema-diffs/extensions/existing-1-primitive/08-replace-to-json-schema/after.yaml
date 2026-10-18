@@ -1,0 +1,4 @@
+type: 'string'
+x-internal:
+  type: 'integer'
+  minimum: 0

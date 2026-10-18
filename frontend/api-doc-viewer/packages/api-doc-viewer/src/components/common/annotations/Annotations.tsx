@@ -19,9 +19,7 @@ import {
   GraphSchemaDiffNodeValue,
   GraphSchemaNodeType,
   IGraphSchemaBaseType,
-  IJsonSchemaBaseType,
-  JsonSchemaDiffNodeMeta,
-  JsonSchemaDiffNodeValue,
+  ISchemaBaseType,
 } from '@netcracker/qubership-apihub-api-data-model'
 import type { FC } from 'react'
 import { DEFAULT_VALUE_LABEL, EXAMPLES_LABEL, LOCATION_LABEL, PROVIDED_VALUE_LABEL } from '../../../consts/validations'
@@ -61,8 +59,8 @@ export const Annotations: FC<AnnotationsProps> = (props) => {
   } = props
   const nodeMeta = state.meta
   const nodeValue = state.value
-  const $nodeMeta = nodeMeta as JsonSchemaDiffNodeMeta | GraphApiDiffNodeMeta
-  const $nodeValue = nodeValue as JsonSchemaDiffNodeValue | GraphSchemaDiffNodeValue
+  const $nodeMeta = nodeMeta as GraphApiDiffNodeMeta
+  const $nodeValue = nodeValue as GraphSchemaDiffNodeValue
 
   const isBoolean = isBooleanValue(nodeValue)
 
@@ -75,11 +73,11 @@ export const Annotations: FC<AnnotationsProps> = (props) => {
   // Description
   const description = nodeValue?.description
   // Default Value
-  const defaultValue = (nodeValue as IJsonSchemaBaseType)?.default
+  const defaultValue = (nodeValue as ISchemaBaseType)?.default
   // Value
   const providedValue = (nodeValue as IGraphSchemaBaseType<GraphSchemaNodeType>)?.value
   // Examples
-  const examples = (nodeValue as IJsonSchemaBaseType)?.examples as unknown[]
+  const examples = (nodeValue as ISchemaBaseType)?.examples as unknown[]
 
   // Location (AsyncAPI Channel Parameters only)
   const locationCandidate = (nodeValue as Record<string, unknown> | undefined)?.location

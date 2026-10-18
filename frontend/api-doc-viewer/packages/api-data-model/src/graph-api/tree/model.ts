@@ -6,7 +6,6 @@ import {
   isGraphApiListDefinition
 } from '@netcracker/qubership-apihub-graphapi';
 import { CreateNodeResult, IModelTreeNode } from '../../abstract/model/types';
-import { JsonSchemaCreateNodeParams, JsonSchemaModelTree } from '../../json-schema';
 import { getNodeComplexityType, isObject, pick } from '../../utils';
 import {
   graphSchemaNodeKind,
@@ -14,6 +13,8 @@ import {
   graphSchemaNodeValueProps
 } from '../constants';
 import { resolveDirectiveDeprecated, resolveEnumValues } from '../utils';
+import { SchemaModelTree } from './schema-model';
+import type { SchemaCreateNodeParams } from './schema-types';
 import {
   GraphApiNodeData,
   GraphApiNodeKind,
@@ -25,9 +26,9 @@ export class GraphApiModelTree<
   T = GraphApiNodeData,
   K extends string = GraphApiNodeKind,
   M extends object = GraphApiNodeMeta
-> extends JsonSchemaModelTree<T, K, M> {
+> extends SchemaModelTree<T, K, M> {
 
-  public createNodeMeta(params: JsonSchemaCreateNodeParams<T, K, M>): M {
+  public createNodeMeta(params: SchemaCreateNodeParams<T, K, M>): M {
     const { value } = params
 
     const complexityType = getNodeComplexityType(value)
@@ -42,7 +43,7 @@ export class GraphApiModelTree<
     }
   }
 
-  public createNodeValue(params: JsonSchemaCreateNodeParams<T, K, M>): T {
+  public createNodeValue(params: SchemaCreateNodeParams<T, K, M>): T {
     const { value } = params
     if (value === undefined || value === null) {
       return null as T
@@ -101,9 +102,9 @@ export class GraphApiModelTree<
   }
 
   public createGraphSchemaNode(
-    params: JsonSchemaCreateNodeParams<T, K, M>,
+    params: SchemaCreateNodeParams<T, K, M>,
     lazyBuildingContext?: LazyBuildingContext<any, any, any>
   ): CreateNodeResult<IModelTreeNode<T, K, M>> {
-    return this.createJsonSchemaNode(params, lazyBuildingContext)
+    return this.createSchemaNode(params, lazyBuildingContext)
   }
 }

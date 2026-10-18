@@ -33,7 +33,8 @@ import {
 import { DiffNodeMeta, DiffNodeValue, DiffRecord, NodeChange } from '../../abstract/diff'
 import { LazyBuildingContext } from '../../abstract/model/model-tree-node.impl'
 import { CreateNodeResult, IModelTreeNode } from '../../abstract/model/types'
-import { isBrokenRef, JsonSchemaCreateNodeParams, JsonSchemaModelDiffTree } from '../../json-schema'
+import { SchemaModelDiffTree } from './schema-model'
+import type { SchemaCreateNodeParams } from '../tree/schema-types'
 import {
   extendToObject,
   getNodeComplexityType,
@@ -47,7 +48,7 @@ import {
 import { graphSchemaNodeKind, graphSchemaNodeMetaProps, graphSchemaNodeValueProps } from '../constants'
 import { isGraphApiNodeType } from '../guards'
 import { type GraphSchemaNodeKind, type GraphSchemaNodeType } from '../tree/types'
-import { resolveDirectiveDeprecated, resolveEnumValues } from '../utils'
+import { isBrokenRef, resolveDirectiveDeprecated, resolveEnumValues } from '../utils'
 import { GraphApiDiffNodeMeta, GraphSchemaDiffNodeValue } from './types'
 
 const OBJECTIVE_KINDS = new Set([
@@ -60,7 +61,7 @@ export class GraphApiModelDiffTree<
   T extends DiffNodeValue = GraphSchemaDiffNodeValue,
   K extends string = GraphSchemaNodeKind,
   M extends DiffNodeMeta = GraphApiDiffNodeMeta
-> extends JsonSchemaModelDiffTree<T, K, M> {
+> extends SchemaModelDiffTree<T, K, M> {
 
   public getChildrenChanges(id: string, _fragment: any): DiffRecord {
     const childrenChanges: DiffRecord = {}
@@ -249,7 +250,7 @@ export class GraphApiModelDiffTree<
     return childrenChanges
   }
 
-  public simpleDiffMeta(params: JsonSchemaCreateNodeParams<T, K, M>): GraphApiDiffNodeMeta {
+  public simpleDiffMeta(params: SchemaCreateNodeParams<T, K, M>): GraphApiDiffNodeMeta {
     const { id } = params
     const value = params.value as unknown
 
@@ -348,7 +349,7 @@ export class GraphApiModelDiffTree<
     }
   }
 
-  public nestedDiffMeta(params: JsonSchemaCreateNodeParams<T, K, M>): GraphApiDiffNodeMeta {
+  public nestedDiffMeta(params: SchemaCreateNodeParams<T, K, M>): GraphApiDiffNodeMeta {
     const { value, id } = params
 
     const complexityType = getNodeComplexityType(value)
@@ -373,7 +374,7 @@ export class GraphApiModelDiffTree<
     }
   }
 
-  public createNodeValue(params: JsonSchemaCreateNodeParams<T, K, M>): T {
+  public createNodeValue(params: SchemaCreateNodeParams<T, K, M>): T {
     const value = params.value as unknown
     if (value === undefined || value === null) {
       // return null as T
@@ -599,13 +600,13 @@ export class GraphApiModelDiffTree<
   }
 
   public createGraphSchemaNode(
-    params: JsonSchemaCreateNodeParams<T, K, M>,
+    params: SchemaCreateNodeParams<T, K, M>,
     lazyBuildingContext?: LazyBuildingContext<any, any, any>,
   ): CreateNodeResult<IModelTreeNode<T, K, M>> {
-    return this.createJsonSchemaNode(params, lazyBuildingContext)
+    return this.createSchemaNode(params, lazyBuildingContext)
   }
 
-  protected getNodeChange = (params: JsonSchemaCreateNodeParams<T, K, M>) => {
+  protected getNodeChange = (params: SchemaCreateNodeParams<T, K, M>) => {
     const { id, parent = null, container = null } = params
     const inheritedChanges = container?.meta?.$nodeChange ?? parent?.meta.$nodeChange
 

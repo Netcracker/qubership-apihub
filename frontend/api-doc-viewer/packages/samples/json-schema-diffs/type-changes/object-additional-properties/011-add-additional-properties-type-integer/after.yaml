@@ -1,0 +1,20 @@
+type: object
+description: Object with 1 integer property schema(s)
+properties:
+  prop0:
+    type: integer
+    description: Sample integer schema with all integer validations
+    default: 1
+    minimum: 0
+    maximum: 100
+    multipleOf: 1
+minProperties: 0
+maxProperties: 10
+additionalProperties:
+  type: integer
+  description: Sample integer schema with all integer validations
+  default: 1
+  minimum: 0
+  maximum: 100
+  multipleOf: 1
+

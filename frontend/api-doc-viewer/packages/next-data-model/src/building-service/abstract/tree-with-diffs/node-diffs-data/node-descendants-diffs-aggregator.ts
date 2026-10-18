@@ -9,13 +9,13 @@ export abstract class AbstractNodeDescendantsDiffsAggregator {
   }
 
   public abstract aggregate(
-    value: object | null,
+    value: object | boolean | null,
     diffsMetaKeys: DiffMetaKeys,
     referenceNamePropertyKey?: symbol
   ): NodeDescendantDiffs | undefined;
 
   protected aggregateWholeNodeDiff<
-    V extends object | null,
+    V extends object | boolean | null,
   >(
     diff: Diff<DiffType>,
     nodeDiffs: NodeDiffs<V>,

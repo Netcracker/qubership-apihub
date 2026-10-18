@@ -1,0 +1,7 @@
+type: object
+description: Root schema with oneOf array variant property
+properties:
+  plainProp:
+    type: string
+    description: Arbitrary plain property
+

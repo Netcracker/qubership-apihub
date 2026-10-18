@@ -17,6 +17,12 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
+    /* TypeScript 6 defaults "types" to [] rather than every package under node_modules/@types.
+       Listed explicitly to keep the jest, node and react ambient globals the packages rely on. */
+    "types": ["node", "jest", "react", "jest-image-snapshot"],
+    /* jest-image-snapshot is listed because it augments jest's matchers with
+       toMatchImageSnapshot, used by the screenshot tests under src/it. Ambient
+       augmentation packages have to be named here or the augmentation is dropped. */
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx"

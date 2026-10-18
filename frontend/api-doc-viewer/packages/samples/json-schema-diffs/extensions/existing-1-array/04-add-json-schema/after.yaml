@@ -1,0 +1,7 @@
+type: 'string'
+x-tags:
+  - 'beta'
+  - 'internal'
+x-value-schema:
+  type: 'integer'
+  minimum: 0

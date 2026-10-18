@@ -13,6 +13,7 @@ import { isDdlApiTreeNodeWithDiffs } from "@apihub/next-data-model/shared/ddlapi
 import { DdlApiTreeWithDiffsBuilderParams } from "@apihub/next-data-model/shared/ddlapi/types/tree-builder-params";
 import { NodeId, NodeKey } from "@apihub/next-data-model/utility-types";
 import { DiffMetaKeys } from "../../abstract/tree-with-diffs/node-diffs-data/diff-meta-keys";
+import { mergeAggregatedDiffTypesIntoDescendantSummary } from "../../abstract/tree-with-diffs/node-diffs-data/aggregated-diff-types";
 import {
   DdlApiSpecWithDiffsTransformer,
   DdlApiTableOrientedSpecWithDiffs,
@@ -199,6 +200,12 @@ export class DdlApiTreeWithDiffsBuilder extends DdlApiTreeBuilder {
       node.descendantDiffsSummary.clear()
       node.addDescendantDiffsSummary(descendantDiffsSummary)
     }
+    mergeAggregatedDiffTypesIntoDescendantSummary(
+      node.descendantDiffsSummary,
+      node.diffs,
+      params.value,
+      this.diffsMetaKeys,
+    )
 
     const diffsSeverities = this.createNodeDiffsSeverities(kind, node.diffs)
     diffsSeverities && Object.assign(node.diffsSeverities, diffsSeverities)

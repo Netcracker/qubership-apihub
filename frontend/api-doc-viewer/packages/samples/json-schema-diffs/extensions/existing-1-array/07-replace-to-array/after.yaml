@@ -1,0 +1,4 @@
+type: 'string'
+x-tags:
+  - 'ga'
+  - 'public'

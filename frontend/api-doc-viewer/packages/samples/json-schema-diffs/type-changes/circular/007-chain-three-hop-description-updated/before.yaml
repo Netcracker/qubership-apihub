@@ -1,0 +1,26 @@
+beforeSchema:
+  $ref: "#/components/schemas/ChainRoot"
+beforeAdditionalComponents:
+  schemas:
+    ChainRoot:
+      $schema: http://json-schema.org/draft-07/schema#
+      type: object
+      description: Root of A→B→root chain
+      properties:
+        name:
+          type: string
+        nodeA:
+          $ref: "#/components/schemas/ChainA"
+    ChainA:
+      type: object
+      description: Entity A
+      properties:
+        nodeB:
+          $ref: "#/components/schemas/ChainB"
+    ChainB:
+      type: object
+      description: Entity B
+      properties:
+        backToRoot:
+          $ref: "#/components/schemas/ChainRoot"
+

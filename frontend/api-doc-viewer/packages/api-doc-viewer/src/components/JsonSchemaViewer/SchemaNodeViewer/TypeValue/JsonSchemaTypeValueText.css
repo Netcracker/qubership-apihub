@@ -1,0 +1,4 @@
+.json-schema-type-value-text {
+  font-size: 12px;
+  line-height: 1rem; /* legacy parity with .title-row-subheader-value.text */
+}

@@ -1,5 +1,5 @@
-import { addons } from '@storybook/manager-api';
-import { STORY_ARGS_UPDATED, STORY_RENDERED } from '@storybook/core-events';
+import { addons } from 'storybook/manager-api';
+import { STORY_ARGS_UPDATED, STORY_RENDERED } from 'storybook/internal/core-events';
 
 const READONLY_SAMPLE_ARG_NAMES = new Set(['beforeYaml', 'afterYaml', 'sampleSql', 'caseId']);
 

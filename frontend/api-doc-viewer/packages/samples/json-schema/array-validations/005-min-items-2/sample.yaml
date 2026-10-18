@@ -1,0 +1,6 @@
+type: array
+items:
+  type: string
+minItems: 2
+title: "[items-count] minItems = 2"
+

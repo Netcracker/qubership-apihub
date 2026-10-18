@@ -1,0 +1,8 @@
+type: array
+items:
+  type: string
+default:
+  - alpha
+  - beta
+title: "[default] Arbitrary array matching items schema"
+

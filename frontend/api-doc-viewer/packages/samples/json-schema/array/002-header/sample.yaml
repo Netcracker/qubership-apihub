@@ -1,0 +1,6 @@
+type: array
+title: Sample Array
+readOnly: true
+writeOnly: true
+deprecated: true
+

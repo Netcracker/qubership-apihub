@@ -1,0 +1,7 @@
+type: number
+title: Sample Number
+readOnly: true
+writeOnly: true
+deprecated: true
+format: float
+

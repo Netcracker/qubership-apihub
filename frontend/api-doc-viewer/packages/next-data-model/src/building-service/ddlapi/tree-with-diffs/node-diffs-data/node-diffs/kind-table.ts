@@ -65,15 +65,6 @@ export class DdlApiNodeDiffsAggregatorKindTable extends DdlApiNodeDiffsAggregato
       nodeDiffs,
     )
 
-    const tableNameDiff = diffs['tableName']
-    if (AbstractNodeDiffsAggregator.isDiff(tableNameDiff)) {
-      this.aggregateTextDiff(
-        tableNameDiff,
-        'tableName',
-        nodeDiffs,
-      )
-    }
-
     const schemaNameDiff = diffs['schemaName']
     if (AbstractNodeDiffsAggregator.isDiff(schemaNameDiff)) {
       this.aggregateTextDiff(schemaNameDiff, 'schemaName', nodeDiffs)
@@ -92,12 +83,10 @@ export class DdlApiNodeDiffsAggregatorKindTable extends DdlApiNodeDiffsAggregato
 
   protected aggregateTextDiff(
     diff: Diff<DiffType>,
-    key: 'tableName' | 'schemaName' | 'description',
+    key: 'schemaName' | 'description',
     nodeDiffs: DdlApiTablePropertyRowDiffs,
   ): void {
-    nodeDiffs[key] = key === 'tableName'
-      ? this.buildDdlPropertyNameChangedPropertyMetaDataFromDiff(diff)
-      : this.buildChangedPropertyMetaDataFromDiff(diff)
+    nodeDiffs[key] = this.buildChangedPropertyMetaDataFromDiff(diff)
   }
 
   private aggregatePropertyTitleRowDiff(
@@ -106,12 +95,6 @@ export class DdlApiNodeDiffsAggregatorKindTable extends DdlApiNodeDiffsAggregato
     const nodeLevelDiff = nodeDiffs[NODE_LEVEL_DIFF_KEY]
     if (nodeLevelDiff && (isDiffAdd(nodeLevelDiff.data) || isDiffRemove(nodeLevelDiff.data))) {
       nodeDiffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY] = nodeLevelDiff
-      return
-    }
-
-    const tableNameDiff = nodeDiffs.tableName
-    if (tableNameDiff) {
-      nodeDiffs[DDL_PROPERTY_TITLE_ROW_DIFF_KEY] = tableNameDiff
     }
   }
 }

@@ -10,7 +10,7 @@ import {
 exitIfInsideNodeModules(import.meta.url)
 
 // Dynamic import: must run after exitIfInsideNodeModules because static import breaks the UI component build
-const { getCompatibilitySuites, TEST_SPEC_TYPE_GRAPH_QL } = await import(
+const { getCompatibilitySuites, TEST_SPEC_TYPE_GRAPH_QL, TEST_SPEC_TYPE_DDL_API } = await import(
   '@netcracker/qubership-apihub-compatibility-suites'
 )
 
@@ -26,6 +26,14 @@ const STORY_GENERATION_CONFIGS = [
     storyArgsTypeName: 'GraphQLCompatibilitySuiteStoryArgs',
     storyArgsGetter: 'getGraphQLStoryArgs',
   },
+  {
+    specType: TEST_SPEC_TYPE_DDL_API,
+    specTypeConst: 'TEST_SPEC_TYPE_DDL_API',
+    displayName: 'DDL API',
+    storyComponentName: 'DdlStoryComponent',
+    storyArgsTypeName: 'DdlCompatibilitySuiteStoryArgs',
+    storyArgsGetter: 'getDdlStoryArgs',
+  },
 ]
 
 const printStoryFile = (config, suiteId, testIds) => {
@@ -40,7 +48,7 @@ const printStoryFile = (config, suiteId, testIds) => {
     .join('\n\n')
 
   return `import '../../index'
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { ${config.storyArgsGetter}, ${config.storyArgsTypeName}, ${config.storyComponentName} } from '${UTILS_IMPORT_PATH}'
 import { ${config.specTypeConst} } from '@netcracker/qubership-apihub-compatibility-suites'
 

@@ -1,0 +1,8 @@
+type: integer
+title: Sample Integer
+readOnly: true
+writeOnly: true
+deprecated: true
+format: int32
+description: Sample integer description
+

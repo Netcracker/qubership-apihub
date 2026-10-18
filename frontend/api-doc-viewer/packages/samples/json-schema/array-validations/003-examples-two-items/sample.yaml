@@ -1,0 +1,9 @@
+type: array
+items:
+  type: string
+examples:
+  - - alpha
+  - - alpha
+    - beta
+title: "[examples] Two example arrays matching items schema"
+

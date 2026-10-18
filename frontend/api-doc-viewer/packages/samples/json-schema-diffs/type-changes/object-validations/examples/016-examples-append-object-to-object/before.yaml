@@ -1,0 +1,5 @@
+type: object
+examples:
+  - id: alpha
+    count: 1
+

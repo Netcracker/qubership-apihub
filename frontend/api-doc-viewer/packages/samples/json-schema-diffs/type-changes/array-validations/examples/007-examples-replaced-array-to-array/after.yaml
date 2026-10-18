@@ -1,0 +1,6 @@
+type: array
+examples:
+  - - alpha
+    - beta
+    - gamma
+

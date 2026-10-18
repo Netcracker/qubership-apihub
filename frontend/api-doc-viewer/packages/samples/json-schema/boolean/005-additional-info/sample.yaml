@@ -1,0 +1,9 @@
+type: boolean
+enum:
+  - true
+  - false
+default: true
+examples:
+  - true
+  - false
+

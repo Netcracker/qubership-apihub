@@ -14,32 +14,32 @@ const SUITES = [
   {
     suiteId: "column-constraints",
     title: "DDL API Suite/Column Constraints",
-    testFileName: "column-constraints-samples.it-test.ts",
+    testFileName: "column-constraints.it-test.ts",
   },
   {
     suiteId: "column-types",
     title: "DDL API Suite/Column Types",
-    testFileName: "column-types-samples.it-test.ts",
+    testFileName: "column-types.it-test.ts",
   },
   {
     suiteId: "indexes",
     title: "DDL API Suite/Indexes",
-    testFileName: "indexes-samples.it-test.ts",
+    testFileName: "indexes.it-test.ts",
   },
   {
     suiteId: "escaping-spec-chars",
     title: "DDL API Suite/Escaping Spec Chars",
-    testFileName: "escaping-spec-chars-samples.it-test.ts",
+    testFileName: "escaping-spec-chars.it-test.ts",
   },
   {
     suiteId: "display-mode-simple",
     title: "DDL API Suite/Display Mode Simple",
-    testFileName: "display-mode-simple-samples.it-test.ts",
+    testFileName: "display-mode-simple.it-test.ts",
   },
   {
     suiteId: "table-descriptions",
     title: "DDL API Suite/Table Descriptions",
-    testFileName: "table-descriptions-samples.it-test.ts",
+    testFileName: "table-descriptions.it-test.ts",
   },
 ];
 
@@ -65,6 +65,7 @@ const printTestFile = ({ suiteId, title }) => {
  */
 import path from 'path'
 import { storyPage } from '../service/storybook-service'
+import { waitForDdlTableViewer } from '../service/viewer-waits'
 
 const META_ID = '${metaId}'
 const SNAPSHOTS_DIR = path.resolve(__dirname, '..', '__image_snapshots__')
@@ -73,14 +74,6 @@ const TEST_IDS: string[] = [
 ${testIdsLiteral}
 ]
 
-async function waitForDdlTableViewer() {
-  await page.waitForSelector('[data-testid="ddl-table-viewer"]', { visible: true })
-  await page.waitForFunction(() => document.readyState === 'complete')
-  await page.evaluate(() => new Promise<void>(resolve =>
-    requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
-  ))
-}
-
 beforeEach(async () => {
   await jestPuppeteer.resetPage()
 })
@@ -88,7 +81,7 @@ beforeEach(async () => {
 for (const testId of TEST_IDS) {
   it(testId, async () => {
     const story = await storyPage(page, \`\${META_ID}--\${testId}\`)
-    await waitForDdlTableViewer()
+    await waitForDdlTableViewer(page)
     const component = await story.viewComponent()
     expect(await component.captureScreenshot()).toMatchImageSnapshot({
       customSnapshotsDir: SNAPSHOTS_DIR,
