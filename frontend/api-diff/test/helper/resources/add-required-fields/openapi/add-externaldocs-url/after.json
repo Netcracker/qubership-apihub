@@ -1,0 +1,54 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Control REST API",
+        "description": "REST API for Control",
+        "version": "1.0.1"
+    },
+    "externalDocs": {
+        "description": "Example docs description",
+        "url": "https://docs.example.com"
+    },
+    "tags": [
+        {
+            "name": "items",
+            "description": "Item management",
+            "externalDocs": {
+                "description": "Example tags docs description",
+                "url": "https://docs.example.com/tags/items"
+            }
+        }
+    ],
+    "paths": {
+        "/api/v1/components/datasource/tableconfig/validate": {
+            "post": {
+                "tags": [
+                    "items"
+                ],
+                "externalDocs": {
+                    "description": "Example operation docs description",
+                    "url": "https://docs.example.com/operations/listItems"
+                },
+                "summary": "Endpoint for validation of a DataSource TableConfig.",
+                "description": "Endpoint for validation of DataSource TableConfig.",
+                "operationId": "validateDataSourceV1",
+                "responses": {
+                    "200": {
+                        "description": "A simple string response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "externalDocs": {
+                                        "description": "Example schema docs description",
+                                        "url": "https://docs.example.com/schemas/item"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,123 @@
+{
+  "openapi": "3.0.3",
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "paths": {
+    "/datasets/events": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/PageLimit"
+        },
+        {
+          "$ref": "#/components/parameters/PageOffset"
+        },
+        {
+          "$ref": "#/components/parameters/OrderBy"
+        },
+        {
+          "$ref": "#/components/parameters/FilterDatasetID"
+        },
+        {
+          "$ref": "#/components/parameters/FilterSourceDAGID"
+        },
+        {
+          "$ref": "#/components/parameters/FilterSourceTaskID"
+        },
+        {
+          "$ref": "#/components/parameters/FilterSourceRunID"
+        },
+        {
+          "$ref": "#/components/parameters/FilterSourceMapIndex"
+        }
+      ],
+      "get": {
+        "summary": "Get dataset events",
+        "description": "Get dataset events",
+        "x-openapi-router-controller": "airflow.api_connexion.endpoints.dataset_endpoint",
+        "operationId": "get_dataset_events",
+        "tags": [
+          "Dataset"
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "PageLimit": {
+        "in": "query",
+        "name": "limit",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "default": 100
+        }
+      },
+      "PageOffset": {
+        "in": "query",
+        "name": "offset",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "OrderBy": {
+        "in": "query",
+        "name": "order_by",
+        "schema": {
+          "type": "string"
+        },
+        "required": false
+      },
+      "FilterDatasetID": {
+        "in": "query",
+        "name": "dataset_id",
+        "schema": {
+          "type": "integer"
+        }
+      },
+      "FilterSourceDAGID": {
+        "in": "query",
+        "name": "source_dag_id",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "FilterSourceTaskID": {
+        "in": "query",
+        "name": "source_task_id",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "FilterSourceRunID": {
+        "in": "query",
+        "name": "source_run_id",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "FilterSourceMapIndex": {
+        "in": "query",
+        "name": "source_map_index",
+        "schema": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

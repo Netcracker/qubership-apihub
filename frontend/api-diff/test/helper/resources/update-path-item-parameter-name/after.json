@@ -1,0 +1,35 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "test",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/path1/{param2}/{anotherParam2}": {
+      "parameters": [
+        {
+          "name": "anotherParam2",
+          "in": "path",
+          "schema": {
+            "type": "string"
+          }
+        },
+        {
+          "name": "param2",
+          "in": "path",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {}
+          }
+        }
+      }
+    }
+  }
+}

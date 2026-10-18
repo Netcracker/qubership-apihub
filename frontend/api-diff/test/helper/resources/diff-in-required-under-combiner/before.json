@@ -1,0 +1,24 @@
+{
+  "openapi": "3.0.0",
+  "components": {
+    "schemas": {
+      "main": {
+        "oneOf": [
+          {
+            "required": [
+              "one"
+            ],
+            "properties": {
+              "one": {
+                "type": "string"
+              },
+              "another": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

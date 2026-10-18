@@ -1,0 +1,133 @@
+{
+    "asyncapi": "3.0.0",
+    "info": {
+        "title": "AsyncAPI Example",
+        "description": "Example",
+        "version": "1.0.0",
+        "externalDocs": {
+            "description": "Additional API documentation"
+        },
+        "tags": [
+            {
+                "name": "infoTag",
+                "description": "Public endpoints",
+                "externalDocs": {
+                    "description": "Additional API documentation"
+                }
+            }
+        ]
+    },
+    "servers": {
+        "production": {
+            "host": "api.example.com",
+            "protocol": "https",
+            "description": "Production server",
+            "externalDocs": {
+                "description": "Additional API documentation"
+            },
+            "tags": [
+                {
+                    "name": "serverTag",
+                    "description": "Public endpoints",
+                    "externalDocs": {
+                        "description": "Additional API documentation"
+                    }
+                }
+            ]
+        }
+    },
+    "channels": {
+        "userSignup": {
+            "address": "/api/v1/users/{userId}/signup",
+            "description": "Channel for user signup events",
+            "externalDocs": {
+                "description": "Additional API documentation"
+            },
+            "tags": [
+                {
+                    "name": "publicTag",
+                    "description": "Public endpoints",
+                    "externalDocs": {
+                        "description": "Additional API documentation"
+                    }
+                }
+            ],
+            "messages": {
+                "signupRequest": {
+                    "$ref": "#/components/messages/signupRequest"
+                }
+            }
+        }
+    },
+    "operations": {
+        "handleUserSignup": {
+            "action": "receive",
+            "summary": "Handle user signup",
+            "description": "Process user signup requests",
+            "channel": {
+                "$ref": "#/channels/userSignup"
+            },
+            "messages": {
+                "signupRequest": {
+                    "$ref": "#/channels/userSignup/messages/signupRequest"
+                }
+            },
+            "tags": [
+                {
+                    "$ref": "#/components/tags/componentTag"
+                },
+                {
+                    "name": "operation",
+                    "description": "Public endpoints",
+                    "externalDocs": {
+                        "description": "Additional API documentation"
+                    }
+                }
+            ]
+        }
+    },
+    "components": {
+        "messages": {
+            "signupRequest": {
+                "summary": "User signup request",
+                "description": "Request payload for user signup",
+                "contentType": "application/json",
+                "payload": {
+                    "type": "object",
+                    "properties": {
+                        "userId": {
+                            "type": "string"
+                        },
+                        "email": {
+                            "type": "string"
+                        },
+                        "password": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "externalDocs": {
+                    "description": "Additional API documentation"
+                },
+                "tags": [
+                    {
+                        "name": "message",
+                        "description": "Public endpoints",
+                        "externalDocs": {
+                            "description": "Additional API documentation"
+                        }
+                    }
+                ]
+            }
+        },
+        "tags": {
+            "componentTag": {
+                "name": "component",
+                "description": "Public endpoints",
+                "externalDocs": {
+                    "description": "Additional API documentation"
+                }
+            }
+        }
+    }
+}

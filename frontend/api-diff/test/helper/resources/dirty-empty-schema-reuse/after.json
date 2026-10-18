@@ -1,0 +1,55 @@
+{
+  "openapi": "3.0.1",
+  "paths": {
+    "/path": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "unwrapped": {
+                      "description": "dirty",
+                      "anyOf": [
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "simple": {
+                      "description": "dirty",
+                      "type": "string"
+                    },
+                    "unwrappedWrap": {
+                      "oneOf": [
+                        {
+                          "description": "dirty",
+                          "type": "boolean"
+                        },
+                        {
+                          "description": "dirty",
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DirtyEmptySchema": {
+        "description": "dirty"
+      }
+    }
+  }
+}

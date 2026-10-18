@@ -1,0 +1,39 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "test",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/path1": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MySchema"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "MySchema": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  }
+}

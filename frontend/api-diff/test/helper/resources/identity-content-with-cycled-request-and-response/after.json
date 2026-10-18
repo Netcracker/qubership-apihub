@@ -1,0 +1,58 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/dictionaries/roles/{id}": {
+      "put": {
+        "requestBody": {
+          "$ref": "#/components/requestBodies/model.DictionaryRole"
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/model.DictionaryRole"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "requestBodies": {
+      "model.DictionaryRole": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/model.DictionaryRole"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "model.DictionaryRole": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "roles": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/model.DictionaryRole"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

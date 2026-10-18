@@ -1,0 +1,4 @@
+name: api-diff-authoring
+version: 1.0.0
+description: Authoring classify rules, response-scope handling, adapters, and tests for the api-diff library.
+author: Qubership APIHUB

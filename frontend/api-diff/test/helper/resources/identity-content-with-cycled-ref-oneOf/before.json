@@ -1,0 +1,46 @@
+{
+  "openapi": "3.0.1",
+  "paths": {
+    "/documentGitBranch": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentsGitBranch"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DocumentsGitBranch": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "latestOrigin": {
+                "type": "object",
+                "properties": {
+                  "branch": {
+                    "$ref": "#/components/schemas/DocumentsGitBranch"
+                  }
+                },
+                "description": "one"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
