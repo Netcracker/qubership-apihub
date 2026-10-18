@@ -163,7 +163,28 @@
         "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
       }
     },
+    "conventionalCommits": {
+      "//": [
+        "Bumps per decision R6, every type listed: the Nx defaults bump only feat and fix.",
+        "A ! after the type or a BREAKING CHANGE: footer gives major. tools/release/conventional.js reads this table."
+      ],
+      "types": {
+        "feat": { "semverBump": "minor" },
+        "fix": { "semverBump": "patch" },
+        "perf": { "semverBump": "patch" },
+        "revert": { "semverBump": "patch" },
+        "refactor": { "semverBump": "patch" },
+        "build": { "semverBump": "patch" },
+        "chore": { "semverBump": "patch" },
+        "style": { "semverBump": "patch" },
+        "docs": { "semverBump": "none" },
+        "test": { "semverBump": "none" },
+        "ci": { "semverBump": "none" }
+      }
+    },
     "version": {
+      "//adjustSemverBumpsForZeroMajorVersion": "R6 holds below 1.0.0 too: feat takes 0.1.0 to 0.2.0, not to 0.1.1.",
+      "adjustSemverBumpsForZeroMajorVersion": false,
       "//preVersionCommand": [
         "Refuses a real release outside main before anything is versioned, committed, tagged, or pushed.",
         "A pre-push hook cannot do this: nx pushes with --no-verify. Dry runs (NX_DRY_RUN=true) pass."
