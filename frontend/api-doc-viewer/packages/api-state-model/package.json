@@ -5,6 +5,10 @@
   "private": true,
   "main": "src/index.ts",
   "dependencies": {
-    "@netcracker/qubership-apihub-api-data-model": "*"
+    "@netcracker/qubership-apihub-api-data-model": "workspace:*",
+    "@netcracker/qubership-apihub-graphapi": "workspace:^"
+  },
+  "nx": {
+    "name": "api-doc-viewer-api-state-model"
   }
 }

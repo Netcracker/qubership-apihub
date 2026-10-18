@@ -18,6 +18,13 @@
     "ts-node": "10.7.0"
   },
   "dependencies": {
+    "@netcracker/qubership-apihub-api-diff": "workspace:^",
+    "@netcracker/qubership-apihub-api-unifier": "workspace:^",
+    "@netcracker/qubership-apihub-graphapi": "workspace:^",
+    "@netcracker/qubership-apihub-json-crawl": "workspace:^",
     "graphql": "16.12.0"
+  },
+  "nx": {
+    "name": "api-doc-viewer-api-data-model"
   }
 }

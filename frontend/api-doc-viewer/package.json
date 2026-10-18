@@ -2,36 +2,20 @@
   "name": "@netcracker/qubership-apihub-api-doc-viewer-workspace",
   "license": "Apache-2.0",
   "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
   "scripts": {
-    "generate-compatibility-suite": "lerna run generate-stories && lerna run generate-tests",
-    "build": "lerna run build",
-    "build:showcase": "lerna run build:showcase",
-    "test": "lerna run test",
-    "screenshot-test": "lerna run screenshot-test",
-    "screenshot-test-single-suite": "lerna run screenshot-test-single-suite",
-    "regenerate-screenshots": "lerna run regenerate-screenshots",
-    "regenerate-screenshots-single-suite": "lerna run regenerate-screenshots-single-suite",
-    "development:storybook": "lerna run development:storybook",
-    "development:link": "yarn link --workspace @netcracker/qubership-apihub-api-doc-viewer && yarn link @netcracker/qubership-apihub-graphapi --save-dev && yarn link @netcracker/qubership-apihub-api-diff --save && yarn link @netcracker/qubership-apihub-api-unifier --save-dev && yarn link @netcracker/qubership-apihub-json-crawl --save-dev",
-    "development:unlink": "yarn unlink @netcracker/qubership-apihub-graphapi --no-save && yarn unlink @netcracker/qubership-apihub-api-diff --no-save && yarn unlink @netcracker/qubership-apihub-api-unifier --no-save && yarn unlink @netcracker/qubership-apihub-json-crawl --no-save",
     "lint:check": "eslint -c .eslintrc.json . --ext .js,.cjs,.ts,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
-    "lint:fix": "npm run lint:check -- --fix",
-    "update-lock-file": "update-lock-file @netcracker"
+    "lint:fix": "pnpm run lint:check -- --fix"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-diff": "dev",
-    "@netcracker/qubership-apihub-api-unifier": "dev",
-    "@netcracker/qubership-apihub-ddlapi": "dev",
-    "@netcracker/qubership-apihub-graphapi": "dev",
-    "@netcracker/qubership-apihub-json-crawl": "dev"
+    "@netcracker/qubership-apihub-api-diff": "workspace:^",
+    "@netcracker/qubership-apihub-api-unifier": "workspace:^",
+    "@netcracker/qubership-apihub-ddlapi": "workspace:^",
+    "@netcracker/qubership-apihub-graphapi": "workspace:^",
+    "@netcracker/qubership-apihub-json-crawl": "workspace:^"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-compatibility-suites": "dev",
-    "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "dev",
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
+    "@netcracker/qubership-apihub-compatibility-suites": "workspace:^",
+    "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "workspace:^",
     "@types/jest": "30.0.0",
     "@types/jest-image-snapshot": "6.1.0",
     "@types/lodash-es": "^4.17.12",
@@ -44,7 +28,6 @@
     "eslint-plugin-react-hooks": "4.6.0",
     "eslint-plugin-react-refresh": "0.4.3",
     "eslint-plugin-storybook": "10.5.10",
-    "lerna": "^8.2.2",
     "lodash-es": "^4.17.21",
     "typescript": "6.0.3",
     "yaml": "2.9.0"
@@ -55,5 +38,8 @@
   "overrides": {
     "jest-environment-node": "30.4.1",
     "jest-mock": "30.4.1"
+  },
+  "nx": {
+    "name": "api-doc-viewer-root"
   }
 }
