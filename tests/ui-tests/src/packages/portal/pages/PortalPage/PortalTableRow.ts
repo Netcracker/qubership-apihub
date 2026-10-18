@@ -1,6 +1,6 @@
 import type { Locator } from '@playwright/test'
 import { Button, Link, TableCell, TableRow } from '@shared/components/base'
-import { test as report } from 'playwright/test'
+import { test as report } from '@playwright/test'
 
 export class PortalTableRow extends TableRow {
 

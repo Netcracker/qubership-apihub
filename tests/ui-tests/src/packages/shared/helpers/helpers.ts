@@ -1,4 +1,4 @@
-import { test as report } from 'playwright/test'
+import { test as report } from '@playwright/test'
 import type { BaseComponent } from '@shared/components/base'
 
 export const hoverableOpening = async (hoverableElement: BaseComponent, clickableElement: BaseComponent, stepTitle: string): Promise<void> => {

@@ -355,12 +355,14 @@ test.describe('09.1 Compare Package versions', () => {
 
       await portalPage.gotoComparisonPackages(testPackage, currentVersion.version, previousVersion.version)
 
-      await comparePage.sidebar.graphQlBtn.click()
+      await comparePage.toolbar.apiTypeSlt.click()
+      await comparePage.toolbar.apiTypeSlt.graphQlItm.click()
 
       await expect(comparePage.compareContent.getOperationRow(GQL_LIST_PETS)).toBeVisible()
       await expect(comparePage.compareContent.getOperationRow(UPDATE_USER_V1)).not.toBeVisible()
 
-      await comparePage.sidebar.restApiBtn.click()
+      await comparePage.toolbar.apiTypeSlt.click()
+      await comparePage.toolbar.apiTypeSlt.restApiItm.click()
 
       await expect(comparePage.compareContent.getOperationRow(UPDATE_USER_V1)).toBeVisible()
       await expect(comparePage.compareContent.getOperationRow(GQL_LIST_PETS)).not.toBeVisible()

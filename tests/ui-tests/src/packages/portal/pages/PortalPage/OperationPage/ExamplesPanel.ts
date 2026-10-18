@@ -1,4 +1,4 @@
-import { type Page } from 'playwright/test'
+import { type Page } from '@playwright/test'
 import { BaseComponent, Button, Select } from '@shared/components/base'
 
 export class ExamplesPanel extends BaseComponent {

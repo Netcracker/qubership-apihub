@@ -1,5 +1,5 @@
 import { BaseComponent, Button, TextField } from '@shared/components/base'
-import { type Page } from 'playwright/test'
+import { type Page } from '@playwright/test'
 import { AddCustomServerDialog } from './PlaygroundPanel/AddCustomServerDialog'
 import { CustomServerSelect } from './PlaygroundPanel/CustomServerSelect'
 

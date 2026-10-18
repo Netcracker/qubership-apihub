@@ -83,7 +83,8 @@ test.describe('09.3 Compare Dashboard versions', () => {
       //! await expect(comparePage.toolbar.annotationChangesFilterBtn).toHaveText('2') //Issue GraphQL checks temporarily disabled
       await expect(comparePage.toolbar.unclassifiedChangesFilterBtn).toHaveText('1')
 
-      await comparePage.toolbar.allBtn.click() //!WA TestCase-B-1443
+      await comparePage.toolbar.apiTypeSlt.click() //!WA TestCase-B-1443
+      await comparePage.toolbar.apiTypeSlt.allItm.click()
       await comparePage.toolbar.breakingChangesFilterBtn.click()
 
       await expect.soft(comparePage.toolbar.breakingChangesFilterBtn).toBePressed()
@@ -163,19 +164,23 @@ test.describe('09.3 Compare Dashboard versions', () => {
 
       await portalPage.gotoComparisonDashboards(testDashboard, currentVersion.version, previousVersion.version)
 
-      await comparePage.toolbar.allBtn.click() //!WA TestCase-B-1443
+      await comparePage.toolbar.apiTypeSlt.click() //!WA TestCase-B-1443
+      await comparePage.toolbar.apiTypeSlt.allItm.click()
 
       await expect(comparePage.compareContent.getPackageRow()).toHaveCount(3)
 
-      await comparePage.toolbar.restApiBtn.click()
+      await comparePage.toolbar.apiTypeSlt.click()
+      await comparePage.toolbar.apiTypeSlt.restApiItm.click()
 
       await expect(comparePage.compareContent.getPackageRow()).toHaveCount(2)
 
-      await comparePage.toolbar.graphQlBtn.click()
+      await comparePage.toolbar.apiTypeSlt.click()
+      await comparePage.toolbar.apiTypeSlt.graphQlItm.click()
 
       await expect(comparePage.compareContent.getPackageRow()).toHaveCount(2)
 
-      await comparePage.toolbar.allBtn.click()
+      await comparePage.toolbar.apiTypeSlt.click()
+      await comparePage.toolbar.apiTypeSlt.allItm.click()
 
       await expect(comparePage.compareContent.getPackageRow()).toHaveCount(3)
     })
@@ -203,7 +208,8 @@ test.describe('09.3 Compare Dashboard versions', () => {
 
       await portalPage.gotoComparisonDashboards(testDashboard, currentVersion.version, previousVersion.version)
 
-      await comparePage.toolbar.allBtn.click() //!WA TestCase-B-1443
+      await comparePage.toolbar.apiTypeSlt.click() //!WA TestCase-B-1443
+      await comparePage.toolbar.apiTypeSlt.allItm.click()
 
       await expect.soft(pk11Row.changeSeverityIndicator).toHaveText('breaking')
       await expect.soft(pk11Row.leftSummary.dashboardPath).toHaveText(testDashboard.parentPath!)
@@ -258,7 +264,8 @@ test.describe('09.3 Compare Dashboard versions', () => {
 
       await portalPage.gotoComparisonDashboards(testDashboard, currentVersion.version, previousVersion.version)
 
-      await comparePage.toolbar.allBtn.click() //!WA TestCase-B-1443
+      await comparePage.toolbar.apiTypeSlt.click() //!WA TestCase-B-1443
+      await comparePage.toolbar.apiTypeSlt.allItm.click()
       await comparePage.swapper.swapBtn.click()
 
       await expect.soft(pk11Row.changeSeverityIndicator).toHaveText('breaking')

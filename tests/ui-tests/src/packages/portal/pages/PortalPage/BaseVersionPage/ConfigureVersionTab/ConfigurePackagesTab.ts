@@ -8,7 +8,7 @@ export class ConfigurePackagesTab extends Tab {
 
   readonly mainLocator = this.rootLocator.getByTestId('PackagesButton')
   readonly conflictAlertIcon = new Icon(this.mainLocator.getByTestId('ConflictAlert'), 'Conflict Alert', 'tab icon')
-  readonly notExistAlertIcon = new Icon(this.mainLocator.getByTestId('NotExistAlert'), 'Not exist Alert', 'tab icon')
+  readonly notExistAlertIcon = new Icon(this.mainLocator.getByTestId('ProblemAlert'), 'Not exist Alert', 'tab icon')
   readonly addPackageBtn = new Button(this.rootLocator.getByTestId('AddPackageButton'), 'Add Package')
   readonly addPackageDialog = new AddPackageDialog(this.page)
   readonly removePackageDialog = new BaseRemoveDialog(this.page)

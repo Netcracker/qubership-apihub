@@ -4,7 +4,7 @@ import { TextField } from './TextField'
 import { ListItem } from '../list-items/ListItem'
 import { Content } from '../Content'
 import { Chip } from '@shared/components/base'
-import { test as report } from 'playwright/test'
+import { test as report } from '@playwright/test'
 
 export class Autocomplete extends TextField {
 

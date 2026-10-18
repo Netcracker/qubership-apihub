@@ -265,7 +265,8 @@ test.describe('09.4 Compare different Dashboards', () => {
         await expect(comparePage.swapper.rightTitle).toHaveText(currentVersion.version)
         //! await expect(comparePage.toolbar.allBtn).toBePressed() //Issue TestCase-B-1443
 
-        await comparePage.toolbar.allBtn.click() //!WA TestCase-B-1443
+        await comparePage.toolbar.apiTypeSlt.click() //!WA TestCase-B-1443
+        await comparePage.toolbar.apiTypeSlt.allItm.click()
 
         await expect(comparePage.compareContent.getPackageRow()).toHaveCount(2)
         await expect.soft(pk11Row.rightSummary.restApiChanges.breaking).toHaveText('2')
@@ -279,19 +280,22 @@ test.describe('09.4 Compare different Dashboards', () => {
       })
 
       await test.step('Filter by API type', async () => {
-        await comparePage.toolbar.restApiBtn.click()
+        await comparePage.toolbar.apiTypeSlt.click()
+        await comparePage.toolbar.apiTypeSlt.restApiItm.click()
 
         await expect(comparePage.compareContent.getPackageRow()).toHaveCount(1)
         await expect(pk11Row).toBeVisible()
 
-        await comparePage.toolbar.graphQlBtn.click()
+        await comparePage.toolbar.apiTypeSlt.click()
+        await comparePage.toolbar.apiTypeSlt.graphQlItm.click()
 
         await expect(comparePage.compareContent.getPackageRow()).toHaveCount(1)
         await expect(pk14Row).toBeVisible()
       })
 
       await test.step('Filter by changes type', async () => {
-        await comparePage.toolbar.allBtn.click()
+        await comparePage.toolbar.apiTypeSlt.click()
+        await comparePage.toolbar.apiTypeSlt.allItm.click()
 
         await expect(comparePage.compareContent.getPackageRow()).toHaveCount(2)
 
