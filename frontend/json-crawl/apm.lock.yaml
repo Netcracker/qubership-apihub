@@ -1,0 +1,40 @@
+lockfile_version: '1'
+generated_at: '2026-07-02T09:02:46.915982+00:00'
+apm_version: 0.23.1
+dependencies:
+- repo_url: _local/json-crawl-authoring
+  name: json-crawl-authoring
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/json-crawl-authoring
+  - .agents/skills/json-crawl-authoring/SKILL.md
+  - .claude/rules/json-crawl-authoring.md
+  - .claude/skills/json-crawl-authoring
+  - .claude/skills/json-crawl-authoring/SKILL.md
+  - .cursor/rules/json-crawl-authoring.mdc
+  deployed_file_hashes:
+    .agents/skills/json-crawl-authoring/SKILL.md: sha256:88d2586cecb3be0c2ce6e453f4c442266a30ed68d451cff8b5df64b72e23b904
+    .claude/rules/json-crawl-authoring.md: sha256:fac47623de931f4a159850d30212875656d699a2270cd3e724b3ebc212b3971a
+    .claude/skills/json-crawl-authoring/SKILL.md: sha256:88d2586cecb3be0c2ce6e453f4c442266a30ed68d451cff8b5df64b72e23b904
+    .cursor/rules/json-crawl-authoring.mdc: sha256:571624f75c040a2457b3d4edc9e672ea5998200d86579aeaed0a55817fe5f594
+  source: local
+  local_path: ./agent-packages/json-crawl-authoring
+- repo_url: _local/json-crawl-testing
+  name: json-crawl-testing
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .agents/skills/json-crawl-testing
+  - .agents/skills/json-crawl-testing/SKILL.md
+  - .claude/rules/json-crawl-testing.md
+  - .claude/skills/json-crawl-testing
+  - .claude/skills/json-crawl-testing/SKILL.md
+  - .cursor/rules/json-crawl-testing.mdc
+  deployed_file_hashes:
+    .agents/skills/json-crawl-testing/SKILL.md: sha256:07cb355bfbfc518701e655a5fd976de082b286948ba6c076936a5405f62ca450
+    .claude/rules/json-crawl-testing.md: sha256:618ac1ce25a2bf03a5016e137887b2253c18ed0c656194116433459c85e381f5
+    .claude/skills/json-crawl-testing/SKILL.md: sha256:07cb355bfbfc518701e655a5fd976de082b286948ba6c076936a5405f62ca450
+    .cursor/rules/json-crawl-testing.mdc: sha256:7db90b485b48c2852fa667e7ab723e3cde156f3634a2db908fd58c2f11bbe878
+  source: local
+  local_path: ./agent-packages/json-crawl-testing
