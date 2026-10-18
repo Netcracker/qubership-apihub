@@ -198,16 +198,11 @@
     },
     "changelog": {
       "//": [
-        "Release notes are GitHub Releases, one per component; no CHANGELOG.md is written.",
-        "workspaceChangelog must stay false: nx cannot create GitHub Releases for both kinds of changelog.",
-        "Run nx release on main with GH_TOKEN set (export GH_TOKEN=\"$(gh auth token)\"). On Windows nx does not",
-        "find the gh login; the release then fails after the tag is pushed, and a rerun releases nothing."
+        "Nx writes no changelog and creates no GitHub Release: the release-artifacts job of ci.yml creates",
+        "them from tools/release/notes/ after the tags reach main."
       ],
       "workspaceChangelog": false,
-      "projectChangelogs": {
-        "file": false,
-        "createRelease": "github"
-      }
+      "projectChangelogs": false
     }
   },
   "namedInputs": {
