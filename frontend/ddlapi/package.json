@@ -52,5 +52,8 @@
     "@pgsql/types": "17.6.2",
     "libpg-query": "17.7.3",
     "pgsql-deparser": "17.18.3"
+  },
+  "nx": {
+    "name": "ddlapi"
   }
 }
