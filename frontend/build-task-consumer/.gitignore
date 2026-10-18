@@ -36,3 +36,9 @@ lerna-debug.log*
 !.vscode/launch.json
 !.vscode/extensions.json
 
+
+# TypeScript incremental build state. Must never be committed: tsc trusts it to
+# decide what is already emitted, so a stale one checked out in CI makes the build
+# skip emitting JavaScript while dist/ is absent, publishing a package with
+# declarations and no code.
+*.tsbuildinfo

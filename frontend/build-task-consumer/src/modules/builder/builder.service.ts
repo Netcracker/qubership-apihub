@@ -32,7 +32,7 @@ import { PublishFilesConfigType } from './builder.schema'
 import { BuildStatus, SOURCES_FOLDER } from './builder.constants'
 import { BehaviorSubject, filter, interval, tap } from 'rxjs'
 import { handleServerError } from '../../utils/errors'
-import { Task } from 'src/types'
+import { Task } from '../../types'
 import { EMPTY_OPERATIONS, OperationDto, toVersionOperation } from './builder.utils'
 import fs from 'fs/promises'
 import path from 'path'
@@ -174,6 +174,10 @@ export class BuilderService implements OnModuleInit {
             return null
           }
 
+          // @types/node 24 types Buffer as Buffer<ArrayBufferLike>, which no longer satisfies
+          // BlobPart. Copying into a Uint8Array gives a concrete ArrayBuffer-backed view and
+          // needs no cast. Note file.buffer would be wrong: Buffers under ~4KB are views into
+          // a shared allocation pool, so it yields the whole pool rather than these bytes.
           return new Blob([new Uint8Array(file)])
         },
         versionResolver: async (packageId, version, includeOperations) => {

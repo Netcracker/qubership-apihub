@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { BackendBuildStatus, BuildStatus } from "src/modules/builder/builder.constants"
+import { BackendBuildStatus, BuildStatus } from '../modules/builder/builder.constants'
 
 export function toBackendBuildStatus(status: BuildStatus, async?: boolean): BackendBuildStatus {
   switch (status) {

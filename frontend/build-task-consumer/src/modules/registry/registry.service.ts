@@ -22,6 +22,7 @@ import FormData from 'form-data'
 import { BuildStatus } from '../builder/builder.constants'
 import { getResponseError } from '../../utils/errors'
 import {
+  NotificationsError,
   ResolvedDeprecatedOperations,
   ResolvedGroupDocuments,
   ResolvedPackage,
@@ -29,8 +30,8 @@ import {
   ResolvedVersionDocuments,
 } from '@netcracker/qubership-apihub-api-processor'
 import AdmZip from 'adm-zip'
-import { toBackendBuildStatus } from 'src/utils/mapper'
-import { Task } from 'src/types'
+import { toBackendBuildStatus } from '../../utils/mapper'
+import { Task } from '../../types'
 import { OperationsDto } from '../builder/builder.utils'
 
 @Injectable()
@@ -95,6 +96,13 @@ export class RegistryService implements OnModuleInit {
           const errorMessage = getResponseError(data?.response?.data) ?? `${data}`
           const debugMessage = data?.response?.data?.debug ?? ''
           formData.append('errors', debugMessage ? `${errorMessage} (debug: ${debugMessage})` : errorMessage)
+          if (data instanceof NotificationsError) {
+            const { notifications, comparisonNotifications } = data
+            formData.append('notifications', JSON.stringify({ notifications, comparisonNotifications }), {
+              filename: 'failed-build-notifications.json',
+              contentType: 'application/json',
+            })
+          }
           this.logger.error(`[POST Build Status] Sending error ${errorMessage}`)
         } else if (status === BuildStatus.COMPLETE) {
           formData.append('data', data, exportFileName ?? 'package.zip')
@@ -347,6 +355,11 @@ export class RegistryService implements OnModuleInit {
       .pipe(
         retry({ delay: this.requestRetryHandler(logTag) }),
         map((response) => {
+          // axios types a header value as AxiosHeaderValue | undefined - string, string[],
+          // number, boolean, null or absent - so neither of these reads is a string on its
+          // own. content-disposition was read with no guard at all and threw
+          // "Cannot read properties of undefined (reading 'split')" whenever the server
+          // omitted it; the slug is what was asked for, so it is the sensible fallback.
           const contentType = String(response.headers['content-type'] ?? '')
           const contentDisposition = String(response.headers['content-disposition'] ?? '')
           const filename = contentDisposition.split('filename=')[1]?.slice(1, -1) || slug
