@@ -8,13 +8,10 @@
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "feature-start": "feature-start --featureName",
-    "feature-finish": "feature-finish",
-    "release-start": "release-start",
-    "release-finish": "release-finish"
+    "feature-finish": "feature-finish"
   },
   "devDependencies": {
     "@jest/types": "30.4.1",
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
     "@types/find-node-modules": "2.1.2",
     "@types/node": "^24.0.0",
     "typescript": "6.0.3"
@@ -30,5 +27,8 @@
   },
   "engines": {
     "node": ">=24.0.0"
+  },
+  "nx": {
+    "name": "jest-chrome-in-docker-environment"
   }
 }
