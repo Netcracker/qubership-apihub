@@ -31,17 +31,14 @@
     "node": ">=14.13"
   },
   "scripts": {
-    "build": "npm run build.webcomponents && npm run build.hooks && npm run build.styles",
+    "build": "pnpm run build.webcomponents && pnpm run build.hooks && pnpm run build.styles",
     "build.webcomponents": "webpack -c webpack.web-components.config.js",
     "build.hooks": "webpack -c ./webpack.hooks.config.js",
     "build.styles": "postcss src/styles.css -o dist/styles.min.css",
     "build:showcase": "storybook build -o ./dist-showcase",
     "test": "jest -c .jest/unit-tests/unit-test.jest.config.js",
     "lint": "eslint . --ext .ts,.tsx,.json,.jsonc --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
-    "storybook": "storybook dev -p 9001",
-    "development:link": "echo please run \"npm link\" manually in console to avoid using the deprecated node_modules/.bin/npm as it will reinstall all dependencies",
-    "development:unlink": "echo please run \"npm unlink\" manually in console to avoid using the deprecated node_modules/.bin/npm as it will reinstall all dependencies",
-    "update-lock-file": "update-lock-file @netcracker"
+    "storybook": "storybook dev -p 9001"
   },
   "rollup": {
     "bundleDeps": [
@@ -67,8 +64,7 @@
     "@mui/lab": "5.0.0-alpha.120",
     "@mui/material": "5.11.10",
     "@mui/private-theming": "5.11.9",
-    "@netcracker/qubership-apihub-http-spec": "dev",
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
+    "@netcracker/qubership-apihub-http-spec": "workspace:^",
     "@stoplight/eslint-config": "3.0.0",
     "@stoplight/json": "^3.18.1",
     "@stoplight/json-schema-sampler": "^0.2.2",
@@ -113,6 +109,7 @@
     "@typescript-eslint/parser": "5.62.0",
     "allof-merge": "0.3.0",
     "api-smart-diff": "0.6.10",
+    "babel-loader": "8.4.1",
     "classnames": "^2.2.6",
     "concurrently": "6.1.0",
     "css-loader": "6.7.1",
@@ -178,5 +175,8 @@
       "@types/react": "$@types/react",
       "@types/react-dom": "$@types/react-dom"
     }
+  },
+  "nx": {
+    "name": "rest-playground"
   }
 }
