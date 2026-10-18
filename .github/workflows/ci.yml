@@ -78,10 +78,12 @@ jobs:
           go_all="$(pnpm exec nx show projects --projects=tag:lang:go --json)"
           go="$(pick $(node -e 'console.log(JSON.parse(process.argv[1]).join(" "))' "$go_all"))"
 
-          # The Java reactor has a short-named parent project and two inferred Maven projects, which
-          # @nx/maven names <groupId>:<artifactId>. Any of them affected runs the Java job, which builds
-          # the whole reactor with `nx run java-task-consumer:build`.
+          # The Java reactor has a short-named parent project and three inferred Maven projects, which
+          # @nx/maven names <groupId>:<artifactId>: the root pom (qubership-apihub-monorepo) and the two
+          # modules. Any of them affected runs the Java job, which builds the whole reactor with
+          # `nx run java-task-consumer:build`.
           java="$(pick java-task-consumer \
+            com.netcracker.qubership.apihub:qubership-apihub-monorepo \
             com.netcracker.qubership.apihub:java-task-consumer \
             com.netcracker.qubership.apihub:jdiff-engine)"
 
