@@ -1,11 +1,12 @@
 {
   "name": "@netcracker/qubership-apihub-api-diff",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "module": "./dist/index.es.js",
   "main": "./dist/index.cjs.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "exports": {
     ".": {
@@ -21,42 +22,43 @@
     "performance:run-inspect": "vite build --sourcemap=inline -c=vite.performance.config.ts && node --inspect dist/index.es.mjs",
     "development:link": "npm link && npm link @netcracker/qubership-apihub-json-crawl && npm link @netcracker/qubership-apihub-graphapi && npm link @netcracker/qubership-apihub-api-unifier && npm link @netcracker/qubership-apihub-compatibility-suites",
     "development:unlink": "npm unlink && npm unlink @netcracker/qubership-apihub-json-crawl && npm unlink @netcracker/qubership-apihub-graphapi && npm unlink @netcracker/qubership-apihub-api-unifier && npm unlink @netcracker/qubership-apihub-compatibility-suites",
-    "test": "jest --maxWorkers 3 --verbose",
+    "test": "jest --maxWorkers 3",
     "test:compatibility-suites": "jest --detectOpenHandles test/compatibility-suites",
     "test:human-readable": "jest --detectOpenHandles test/human-readable",
     "update-lock-file": "update-lock-file @netcracker"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-unifier": "2.9.2",
-    "@netcracker/qubership-apihub-ddlapi": "1.0.0",
-    "@netcracker/qubership-apihub-json-crawl": "1.2.2",
-    "fast-equals": "6.0.0"
+    "@netcracker/qubership-apihub-api-unifier": "dev",
+    "@netcracker/qubership-apihub-ddlapi": "dev",
+    "@netcracker/qubership-apihub-json-crawl": "dev",
+    "fast-equals": "^6.0.2"
   },
   "devDependencies": {
-    "@asyncapi/parser": "3.4.0",
-    "@netcracker/qubership-apihub-compatibility-suites": "2.6.1",
-    "@netcracker/qubership-apihub-graphapi": "1.0.13",
+    "@asyncapi/parser": "3.6.0",
+    "@netcracker/qubership-apihub-compatibility-suites": "dev",
+    "@netcracker/qubership-apihub-graphapi": "dev",
     "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
     "@types/jest": "30.0.0",
-    "@types/node": "25.0.3",
+    "@types/node": "^24.0.0",
     "@typescript-eslint/eslint-plugin": "7.18.0",
     "@typescript-eslint/parser": "7.18.0",
     "eslint": "8.57.1",
     "eslint-plugin-sort-exports": "0.9.1",
     "fast-json-patch": "3.1.1",
     "graphql": "16.12.0",
-    "jest": "30.2.0",
+    "jest": "30.4.2",
     "jest-extended": "7.0.0",
+    "jest-util": "^30.4.1",
     "openapi-types": "12.1.3",
     "rimraf": "6.1.2",
-    "ts-jest": "29.4.6",
+    "ts-jest": "29.4.12",
     "ts-loader": "9.5.4",
     "ts-node": "10.9.2",
     "tslint": "6.1.3",
-    "typescript": "5.9.3",
-    "vite": "7.3.1",
-    "vite-plugin-dts": "4.5.4",
-    "vite-plugin-singlefile": "2.3.0"
+    "typescript": "6.0.3",
+    "vite": "^8.2.2",
+    "vite-plugin-dts": "^4.5.4",
+    "vite-plugin-singlefile": "^2.3.3"
   },
   "eslintConfig": {
     "extends": ".eslintrc.json"

@@ -1,14 +1,19 @@
 import { CrawlRulesContext } from '@netcracker/qubership-apihub-json-crawl'
+import { createDiffEntry, diffFactory } from '../core'
+import { CompareResolver } from '../types'
+import { isArray, isObject } from '../utils'
 import { allAnnotation, allNonBreaking, allUnclassified } from '../core'
 import {
   CompareMode,
   CompareRule,
   CompareRules,
+  IGNORE_ADD_REMOVE_RULE,
   IGNORE_DIFFERENCE_IN_KEYS_RULE,
   IGNORE_DIFFERENCE_RULE,
 } from '../types'
 import {
   AttrKind,
+  DdlapiProperties,
   DdlApiSpecVersion,
   ExprKind,
   ObjectKind,
@@ -26,9 +31,10 @@ import {
 import {
   attrsMappingResolver,
   enumValuesMappingResolver,
+  indexMappingResolver,
   indexPartMappingResolver,
   nameMappingResolver,
-  symbolMappingResolver,
+  foreignKeyMappingResolver,
 } from './ddl.mapping'
 import {
   checkDescription,
@@ -37,10 +43,12 @@ import {
   commentDescription,
   createAttrMemberParamsCalculator,
   createColumnParamsCalculator,
+  createEnumTypeParamsCalculator,
   createEnumValueParamsCalculator,
   createForeignKeyParamsCalculator,
   createIndexParamsCalculator,
   createTableParamsCalculator,
+  enumTypeDescription,
   enumValueDescription,
   foreignKeyDescription,
   indexDescription,
@@ -63,9 +71,8 @@ const SUPPRESS: CompareRule = { [IGNORE_DIFFERENCE_RULE]: true }
 // on the element suppresses it.
 //
 // It returns a shallow copy carrying the flag rather than setting it on the rule object directly,
-// because the same rule objects (columnRules, tableRules, indexRules) are reused both as
-// keyed-array elements *and* as plain single-reference edges (`/primaryKey`, `/refTable`,
-// `/column`), where the flag is meaningless. Keeping it a per-use-site copy leaves the shared
+// because the same rule object (indexRules) is reused both as a keyed-array element *and* as the
+// plain single edge `/primaryKey`, where the flag is meaningless. Keeping it a per-use-site copy leaves the shared
 // base object clean for those other uses. (An element rule that is defined inline and used once —
 // e.g. enum `/values/*` — just sets the flag directly; this wrapper is for the shared, reused
 // rules so the spread is not hand-repeated at every mapped `/*`.)
@@ -82,7 +89,7 @@ const asElement = (rules: CompareRules): CompareRules => ({
  * `unclassified` catch-all (`/**` → `$: allUnclassified`).
  *
  * All node rules are declared inside this closure so they capture `dialect`; the union
- * dispatchers and the cyclic `fk.refTable` edge are resolved lazily at crawl time.
+ * dispatchers are resolved lazily at crawl time.
  */
 export const ddlRules = (_options: DdlRulesOptions, dialect: DdlDiffDialect): CompareRules => {
   const typeNameClassifier = createTypeNameClassifier(dialect)
@@ -93,6 +100,7 @@ export const ddlRules = (_options: DdlRulesOptions, dialect: DdlDiffDialect): Co
   const indexParams = createIndexParamsCalculator(dialect)
   const foreignKeyParams = createForeignKeyParamsCalculator(dialect)
   const attrMemberParams = createAttrMemberParamsCalculator(dialect)
+  const enumTypeParams = createEnumTypeParamsCalculator(dialect)
   const enumValueParams = createEnumValueParamsCalculator(dialect)
 
   // --- union kind-dispatchers (lazy; default branch → dialect lookup → fall through) ---
@@ -152,7 +160,7 @@ export const ddlRules = (_options: DdlRulesOptions, dialect: DdlDiffDialect): Co
       case ObjectKind.ForeignKey: return foreignKeyRules
       case ObjectKind.Check: return checkRules
       case ObjectKind.NamedDefault: return namedDefaultRules
-      case ObjectKind.EnumType: return enumTypeRules
+      case ObjectKind.EnumType: return enumObjectRules
       default:
         return (kind !== undefined ? dialect.objectRulesFor(kind) : undefined) ?? {}
     }
@@ -167,9 +175,15 @@ export const ddlRules = (_options: DdlRulesOptions, dialect: DdlDiffDialect): Co
   // cross-family breaking signal rides on the `/type` name (kind is suppressed; a cross-family
   // change always changes the canonical name). Within-kind size/precision/scale changes are
   // non-breaking (O1). `/unsigned` is a PG-irrelevant MySQL-ism (always false) → suppressed.
+  //
+  // An enum column's SchemaType is the EnumType declared in `objects`, so a column type change
+  // to or from an enum adds or removes `/values` on the column's SchemaType. The `/type` name
+  // change already reports it, and the diff would point at the enum's declaration even when the
+  // enum itself is unchanged, so that add/remove is not reported.
   const typeFieldRules: CompareRules = {
     '/kind': SUPPRESS,
     '/unsigned': SUPPRESS,
+    '/values': { [IGNORE_ADD_REMOVE_RULE]: true },
     '/type': { $: typeNameClassifier, description: columnFacetDescription }, // facet = type
     '/size': { $: allNonBreaking, description: columnFacetDescription },
     '/precision': { $: allNonBreaking, description: columnFacetDescription },
@@ -179,6 +193,7 @@ export const ddlRules = (_options: DdlRulesOptions, dialect: DdlDiffDialect): Co
   const enumTypeRules: CompareRules = {
     ...typeFieldRules,
     '/values': {
+      [IGNORE_ADD_REMOVE_RULE]: true,
       mapping: enumValuesMappingResolver,
       // set semantics — a reorder maps a value to a new index; ignoreKeyDifference (on the
       // element) stops that index change being reported as a rename.
@@ -190,6 +205,12 @@ export const ddlRules = (_options: DdlRulesOptions, dialect: DdlDiffDialect): Co
       },
     },
     '/attrs': attrsArrayRule,
+  }
+  // The EnumType declaration itself (`CREATE TYPE … AS ENUM`), as a member of `objects`.
+  const enumObjectRules: CompareRules = {
+    ...enumTypeRules,
+    descriptionParamCalculator: enumTypeParams,
+    description: enumTypeDescription,
   }
 
   // --- Attr members ---
@@ -278,14 +299,14 @@ export const ddlRules = (_options: DdlRulesOptions, dialect: DdlDiffDialect): Co
 
   // --- Index / IndexPart ---
   // Indexes are performance-only and primary key/unique alter grain, not query validity →
-  // all non-breaking. Parts are keyed by referenced column name so a
-  // column-order swap surfaces as `seqNo` replace diffs (non-breaking), not add/remove churn.
+  // all non-breaking. Parts are keyed by column name so a column-order swap surfaces as
+  // `seqNo` replace diffs (non-breaking), not add/remove churn. A part names its column, so a
+  // change to the column itself is reported only under `table.columns`.
   const indexPartRules: CompareRules = {
     $: allNonBreaking,
     description: indexDescription,
     '/seqNo': { $: allNonBreaking, description: indexDescription },
     '/expr': exprRules,
-    '/column': columnRules, // reference edge to a table column (same instance)
     '/attrs': attrsArrayRule,
   }
   const indexRules: CompareRules = {
@@ -300,17 +321,48 @@ export const ddlRules = (_options: DdlRulesOptions, dialect: DdlDiffDialect): Co
   }
 
   // --- ForeignKey ---
-  // FK add/remove and onUpdate/onDelete/refColumns changes are write-time constraints
-  // invisible to a reader → non-breaking. refTable reuses the table rule via a lazy
-  // cyclic edge — never cloned (the shared-instance contract).
+  // FK add/remove and onUpdate/onDelete changes are write-time constraints invisible to a
+  // reader → non-breaking. So is moving a key onto different columns or a different table: it
+  // changes which rows the database accepts on write, while nothing a reader selects stops
+  // resolving. Dropping the same column at its declaration site stays breaking.
+  //
+  // `/columns` and `/refColumns` are lists of column names, and `/refTable` is a
+  // `{ schema, name }` reference; the columns and tables they name are diffed where they are
+  // declared. Each is compared as one value at its slot, so a change reports one diff on the
+  // key: a repoint that changes both the schema and the name of the target is one diff, not one
+  // per field.
+  const sameNames = (before: unknown, after: unknown): boolean =>
+    isArray(before) && isArray(after) && before.length === after.length &&
+    before.every((name, index) => name === after[index])
+  const sameTableRef = (before: unknown, after: unknown): boolean =>
+    isObject(before) && isObject(after) &&
+    before[DdlapiProperties.Schema] === after[DdlapiProperties.Schema] &&
+    before[DdlapiProperties.Name] === after[DdlapiProperties.Name]
+  const compareAsOneValue = (same: (before: unknown, after: unknown) => boolean): CompareResolver => (ctx) => {
+    if (same(ctx.before.value, ctx.after.value)) { return undefined }
+    const diffEntry = createDiffEntry(ctx, diffFactory.replaced(ctx))
+    return { diffs: [diffEntry.diff], ownerDiffEntry: diffEntry, merged: ctx.after.value }
+  }
+  const foreignKeyColumnsRules: CompareRules = {
+    descriptionParamCalculator: foreignKeyParams,
+    compare: compareAsOneValue(sameNames),
+    $: allNonBreaking,
+    description: foreignKeyDescription,
+  }
+  const foreignKeyRefTableRules: CompareRules = {
+    descriptionParamCalculator: foreignKeyParams,
+    compare: compareAsOneValue(sameTableRef),
+    $: allNonBreaking,
+    description: foreignKeyDescription,
+  }
   const foreignKeyRules: CompareRules = {
     descriptionParamCalculator: foreignKeyParams,
     $: allNonBreaking,
     description: foreignKeyDescription,
     '/kind': SUPPRESS,
-    '/columns': { mapping: nameMappingResolver, '/*': asElement(columnRules) },
-    '/refTable': () => tableRules, // lazy cyclic edge to a shared Table instance
-    '/refColumns': { mapping: nameMappingResolver, '/*': asElement(columnRules) },
+    '/columns': foreignKeyColumnsRules,
+    '/refTable': foreignKeyRefTableRules,
+    '/refColumns': foreignKeyColumnsRules,
     '/onUpdate': { $: allNonBreaking, description: foreignKeyDescription },
     '/onDelete': { $: allNonBreaking, description: foreignKeyDescription },
     '/attrs': attrsArrayRule,
@@ -323,9 +375,9 @@ export const ddlRules = (_options: DdlRulesOptions, dialect: DdlDiffDialect): Co
     description: tableDescription,
     '/kind': SUPPRESS,
     '/columns': { mapping: nameMappingResolver, '/*': asElement(columnRules) },
-    '/indexes': { mapping: nameMappingResolver, '/*': asElement(indexRules) },
+    '/indexes': { mapping: indexMappingResolver, '/*': asElement(indexRules) },
     '/primaryKey': indexRules,
-    '/foreignKeys': { mapping: symbolMappingResolver, '/*': asElement(foreignKeyRules) },
+    '/foreignKeys': { mapping: foreignKeyMappingResolver, '/*': asElement(foreignKeyRules) },
     '/attrs': attrsArrayRule,
     '/objects': objectsArrayRule,
   }

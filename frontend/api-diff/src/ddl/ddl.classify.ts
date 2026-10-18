@@ -1,8 +1,8 @@
 import { addNonBreaking, allNonBreaking, breaking, breakingIf, nonBreaking } from '../core'
 import { ClassifyRule, DiffTypeClassifier } from '../types'
-import { TypeConsumptionFamily, TypeKind } from './ddl.const'
+import { SqlTypeName, TypeConsumptionFamily, TypeKind } from './ddl.const'
 import { DdlDiffDialect } from './ddl.dialect'
-import { readKind } from './ddl.utils'
+import { readKind, readTypeName } from './ddl.utils'
 
 // --- structural add/remove classifiers ---
 // Adding a table/column never breaks an existing query; deleting one makes a previously
@@ -21,6 +21,14 @@ export const enumValueClassifier: ClassifyRule = allNonBreaking
 
 // --- column type change ---
 
+// Temporal types do not share one family: each SQL temporal type is its own. A name outside
+// this table is a temporal type the core does not model, and falls through to `opaque`.
+const TEMPORAL_FAMILY_BY_SQL_TYPE: Record<string, TypeConsumptionFamily> = {
+  [SqlTypeName.Date]: TypeConsumptionFamily.Date,
+  [SqlTypeName.Time]: TypeConsumptionFamily.Time,
+  [SqlTypeName.Timestamp]: TypeConsumptionFamily.Timestamp,
+}
+
 /**
  * Maps a `SchemaType` to how a dashboard consumes its values. Core, closed kinds
  * are classified here; escape-hatch kinds defer to the dialect, falling back to `opaque`.
@@ -38,7 +46,7 @@ export const consumptionFamily = (schemaType: unknown, dialect: DdlDiffDialect):
     case TypeKind.BinaryType:
       return TypeConsumptionFamily.Binary
     case TypeKind.TimeType:
-      return TypeConsumptionFamily.Temporal
+      return TEMPORAL_FAMILY_BY_SQL_TYPE[readTypeName(schemaType) ?? ''] ?? TypeConsumptionFamily.Opaque
     case TypeKind.JSONType:
       return TypeConsumptionFamily.Json
     case TypeKind.UUIDType:

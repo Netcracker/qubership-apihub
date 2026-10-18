@@ -64,52 +64,7 @@ describe('shared-instance / merged-document contract', () => {
     expect(diffAt(enumObject!.values, 1)).toBe(valueAddDiff)
   })
 
-  it('a column in a primary key and a foreign key: type change ⇒ one shared diff at every site', async () => {
-    const beforeSql = `
-      create table t(id int, primary key (id));
-      create table u(uid int, ref int, constraint fk_u foreign key (ref) references t(id));
-    `
-    const afterSql = `
-      create table t(id bigint, primary key (id));
-      create table u(uid int, ref int, constraint fk_u foreign key (ref) references t(id));
-    `
-    const { diffs, merged } = await diffSql(beforeSql, afterSql)
-
-    // One /type-name diff (same family int→bigint → non-breaking), shared across sites.
-    expect(diffs).toHaveLength(1) // the single shared column /type-name replace
-    expect(diffs).toEqual(diffsMatcher([
-      expect.objectContaining({
-        action: DiffAction.replace,
-        type: nonBreaking,
-        beforeValue: 'integer',
-        afterValue: 'bigint',
-        beforeDeclarationPaths: [['schemas', 0, 'tables', 0, 'columns', 0, 'type', 'type', 'type']],
-        afterDeclarationPaths: [['schemas', 0, 'tables', 0, 'columns', 0, 'type', 'type', 'type']],
-      }),
-    ]))
-
-    const t = findTable(merged, 't')
-    const idColumn = findColumn(t, 'id')
-    const pkColumn = t.primaryKey!.parts![0].column!
-    const u = findTable(merged, 'u')
-    const fk = u.foreignKeys![0]
-    const fkRefColumn = fk.refColumns![0]
-
-    // The same Column instance is reached via table.columns, the primary-key part, and the
-    // foreign key's refColumns; fk.refTable is the same Table instance.
-    expect(pkColumn).toBe(idColumn)
-    expect(fk.refTable).toBe(t)
-    expect(fkRefColumn).toBe(idColumn)
-
-    // The /type-name Diff is the SAME instance at every one of those reference sites — and is
-    // exactly the diff reported in `diffs`.
-    const typeChangeDiff = diffAt(idColumn.type!.type, 'type')
-    expect(typeChangeDiff).toBe(diffs[0])
-    expect(diffAt(pkColumn.type!.type, 'type')).toBe(typeChangeDiff)
-    expect(diffAt(fkRefColumn.type!.type, 'type')).toBe(typeChangeDiff)
-  })
-
-  it('a change reached via fk.refTable is the same Diff (appears once)', async () => {
+  it('a change to a referenced table appears once, at the table', async () => {
     const beforeSql = `
       create table t(id int, primary key (id));
       create table u(ref int, constraint fk_u foreign key (ref) references t(id));
@@ -119,7 +74,7 @@ describe('shared-instance / merged-document contract', () => {
       create table u(ref int, constraint fk_u foreign key (ref) references t(id));
     `
     const { diffs, merged } = await diffSql(beforeSql, afterSql)
-    // The added column on t appears once, even though t is reachable via u.foreignKeys[].refTable.
+    // The added column on t appears once; u's foreign key names t and is not a second route to it.
     expect(diffs).toHaveLength(1) // the single added column on t
     expect(diffs).toEqual(diffsMatcher([
       expect.objectContaining({
@@ -132,8 +87,7 @@ describe('shared-instance / merged-document contract', () => {
 
     const tables = (merged as Realm).schemas[0].tables
     expect(tables).toBeDefined()
-    const t = tables!.find((tbl: Table) => tbl.name === 't')!
     const u = tables!.find((tbl: Table) => tbl.name === 'u')
-    expect(u!.foreignKeys![0].refTable).toBe(t)
+    expect(u!.foreignKeys![0].refTable).toMatchObject({ schema: 'public', name: 't' })
   })
 })

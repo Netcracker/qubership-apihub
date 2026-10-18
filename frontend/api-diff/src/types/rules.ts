@@ -118,6 +118,7 @@ export const DIFF_DESCRIPTION_RULE = 'description'
 export const DIFF_DESCRIPTION_PARAM_CALCULATOR_RULE = 'descriptionParamCalculator'
 export const IGNORE_DIFFERENCE_IN_KEYS_RULE = 'ignoreKeyDifference'
 export const IGNORE_DIFFERENCE_RULE = 'ignoreDifference'
+export const IGNORE_ADD_REMOVE_RULE = 'ignoreAddRemove'
 //not happy to do this, but introduce covariant support on core level too hard. If you can change it, feel free
 export const START_NEW_COMPARE_SCOPE_RULE = 'newCompareScope'
 export const SYNTHETIC_DIFF = 'syntheticDiffs'
@@ -130,7 +131,8 @@ export type CompareRule = {
   [DIFF_DESCRIPTION_RULE]?: DiffDescriptionRule               // rule for description
   [DIFF_DESCRIPTION_PARAM_CALCULATOR_RULE]?: DiffTemplateParamsCalculator               // rule for description calculation
   [IGNORE_DIFFERENCE_IN_KEYS_RULE]?: boolean                 // rule for ignore keys as values, it is relevant for arrays as sets
-  [IGNORE_DIFFERENCE_RULE]?: boolean                         // suppress add/remove/replace diffs for this node and its whole subtree (still merges the after-value)
+  [IGNORE_DIFFERENCE_RULE]?: boolean                         // suppress all diffs at and below this node when it is present on both sides (still merges the after-value); its own add/remove is not suppressed
+  [IGNORE_ADD_REMOVE_RULE]?: boolean                         // suppress the add/remove diff the parent reports when this node is present on one side only (still merges it)
   [START_NEW_COMPARE_SCOPE_RULE]?: CompareScope // rule for star a new scope
   [SYNTHETIC_DIFF]?: SyntheticDiffsResolver<PropertyKey>
 }

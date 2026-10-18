@@ -6,6 +6,7 @@ import {
   TEST_SPEC_TYPE_ASYNC_API,
   TEST_SPEC_TYPE_GRAPH_QL,
   TEST_SPEC_TYPE_OPEN_API,
+  TEST_SPEC_TYPE_DDL_API,
   TestSpecType,
 } from '@netcracker/qubership-apihub-compatibility-suites'
 import { buildFromSchema, GraphApiDirectiveDefinition } from '@netcracker/qubership-apihub-graphapi'
@@ -14,6 +15,7 @@ import { buildSchema } from 'graphql/utilities'
 import { apiDiff, CompareOptions, CompareResult, Diff, DiffType } from '../../src'
 import { RUNTIME_DIRECTIVE_LOCATIONS } from '../../src/graphapi'
 import { TEST_DIFF_FLAG, TEST_ORIGINS_FLAG, TEST_SYNTHETIC_TITLE_FLAG } from '../helper'
+import { buildFromDdl } from '@netcracker/qubership-apihub-ddlapi/parser'
 
 export const DATA_FLOW_DIRECTION_SEND = 'send' as const
 export const DATA_FLOW_DIRECTION_RECEIVE = 'receive' as const
@@ -193,6 +195,11 @@ export async function compareFilesWithMerge(
       const afterSchema = buildSchema(after, { noLocation: true })
       beforeObject = buildFromSchema(beforeSchema)
       afterObject = buildFromSchema(afterSchema)
+      break
+    }
+    case TEST_SPEC_TYPE_DDL_API: {
+      beforeObject = await buildFromDdl(before)
+      afterObject = await buildFromDdl(after)
       break
     }
     default: {
