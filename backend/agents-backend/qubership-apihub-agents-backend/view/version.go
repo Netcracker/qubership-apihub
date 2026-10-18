@@ -29,6 +29,8 @@ type VersionContent struct {
 	PackageId                string                 `json:"packageId"`
 	Version                  string                 `json:"version"`
 	NotLatestRevision        bool                   `json:"notLatestRevision,omitempty"`
+	HasErrors                bool                   `json:"hasErrors"`
+	ChangelogHasErrors       *bool                  `json:"changelogHasErrors,omitempty"`
 }
 
 type VersionCreatedBy struct {
@@ -79,13 +81,15 @@ type VersionSearchRequest struct {
 }
 
 type PublishedVersionListView struct {
-	Version           string           `json:"version"`
-	Status            string           `json:"status"`
-	CreatedBy         VersionCreatedBy `json:"createdBy"`
-	CreatedAt         time.Time        `json:"createdAt"`
-	VersionLabels     []string         `json:"versionLabels"`
-	PreviousVersion   string           `json:"previousVersion"`
-	NotLatestRevision bool             `json:"notLatestRevision,omitempty"`
+	Version            string           `json:"version"`
+	Status             string           `json:"status"`
+	CreatedBy          VersionCreatedBy `json:"createdBy"`
+	CreatedAt          time.Time        `json:"createdAt"`
+	VersionLabels      []string         `json:"versionLabels"`
+	PreviousVersion    string           `json:"previousVersion"`
+	NotLatestRevision  bool             `json:"notLatestRevision,omitempty"`
+	HasErrors          bool             `json:"hasErrors"`
+	ChangelogHasErrors bool             `json:"changelogHasErrors"`
 }
 
 type PublishedVersionsView struct {
