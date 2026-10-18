@@ -15,6 +15,7 @@ import type { ArrayCallbackParameters } from '../types';
 import { entries, pickKeptProperties } from '../utils';
 import { isSecurityScheme } from './guards';
 import { transformOas3WithMetaOperations } from './operation';
+import { translateToSharedCallbacks } from './transformers/callbacks';
 import { translateToExample } from './transformers/examples';
 import { translateToSharedParameters } from './transformers/parameters';
 import { translateRequestBody } from './transformers/request';
@@ -37,6 +38,7 @@ export const bundleOas3WithMetaService: Oas3HttpServiceBundle = ({ document: _do
       securitySchemes: translateSecurityScheme,
     }),
     ...translateToSharedParameters.call(ctx, document.components),
+    callbacks: translateToSharedCallbacks.call(ctx, document.components?.callbacks),
   };
 
   const operations = transformOas3WithMetaOperations(document, ctx) as unknown as IHttpOperation<true>[];
@@ -95,8 +97,8 @@ export const transformOas3WithMetaService: Oas3HttpServiceTransformer = ({
         if (ss && ss.type === 'oauth2') {
           const flows = {};
           for (const flowKey in ss.flows) {
-            const flow = ss.flows[flowKey];
-            flows[flowKey] = {
+            const flow = (ss.flows as any)[flowKey];
+            (flows as any)[flowKey] = {
               ...flow,
               scopes: pickBy(flow.scopes, (_val: string, scopeKey: string) => {
                 const secKey = sec[key];

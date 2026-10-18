@@ -8,12 +8,18 @@ import { Fragment, TransformerContext, TranslateFunction } from '../types';
 import { entries } from '../utils';
 import { AsyncApiDocument, ChannelItemObject, OperationObject, OperationTraitObject } from './asyncApiDocument';
 import { AsyncOperationTransformerImpl } from './types';
+import type { WithExtensions } from '../types';
 
 export type IAsyncOperation = Omit<
   IHttpOperation,
   'responses' | 'request' | 'security' | 'servers' | 'callbacks' | 'deprecated'
 > &
   Pick<OperationObject, 'bindings' & 'traits' & 'message'>;
+
+/** The two operation keys an AsyncAPI 2.x channel item may carry. Declared `as const`
+ * so the values are a key union rather than `string`, which makes indexing a channel
+ * legal without widening it. */
+const ASYNC_OPERATION_METHODS = ['publish', 'subscribe'] as const;
 
 export function transformAsyncApiOperations(
   document: DeepPartial<AsyncApiDocument>,
@@ -26,7 +32,7 @@ export function transformAsyncApiOperations(
     const value = document.channels?.[path];
     if (!isPlainObject(value)) return [];
 
-    const operations = ['publish', 'subscribe'].filter(method => value?.[method]);
+    const operations = ASYNC_OPERATION_METHODS.filter(method => value?.[method]);
 
     return operations.map(method =>
       transformAsyncApiOperation({
@@ -79,7 +85,7 @@ export const transformAsyncApiOperationBase: TranslateFunction<
     throw new Error(`Could not find ${['channels', path].join('/')} in the provided spec.`);
   }
 
-  const operation = this.maybeResolveLocalRef(pathObj[method]) as OperationObject;
+  const operation = this.maybeResolveLocalRef((pathObj as any)[method]) as OperationObject;
   if (!operation) {
     throw new Error(`Could not find ${['channels', path, method].join('/')} in the provided spec.`);
   }
@@ -101,7 +107,7 @@ export const transformAsyncApiOperationBase: TranslateFunction<
 
     ...pickBy(
       {
-        internal: operation['x-internal'],
+        internal: (operation as WithExtensions<typeof operation>)['x-internal'],
       },
       isBoolean,
     ),

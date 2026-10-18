@@ -4,11 +4,12 @@ import type * as OAS3 from 'openapi3-ts';
 import type * as OAS2 from 'swagger-schema-official';
 
 import type { Oas2ParamBase, Oas3ParamBase, ParamBase } from './types';
+import type { WithExtensions } from '../types';
 
 export function hasXLogo(
   info: DeepPartial<OAS2.Info | OAS3.InfoObject>,
 ): info is DeepPartial<OAS2.Info | OAS3.InfoObject> & { 'x-logo': Record<string, unknown> } {
-  return isPlainObject(info['x-logo']);
+  return isPlainObject((info as WithExtensions<typeof info>)['x-logo']);
 }
 
 const VALID_OAS3_PARAM_LOCATION: OAS3.ParameterLocation[] = ['query', 'header', 'path', 'cookie'];

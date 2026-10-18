@@ -5,7 +5,9 @@ import { merge, pick } from 'lodash'
 export function entries<T = Record<string, unknown>>(o: { [s: string]: T } | ArrayLike<T>): [string, T][];
 export function entries<T = unknown>(o: T): [string, T][];
 export function entries<T = unknown>(o: T): [string, T][] {
-  return isPlainObject(o) ? Object.entries(o as T) : [];
+  // `o as T` was a no-op cast that TypeScript 6 no longer matches to an Object.entries
+  // overload. The isPlainObject guard above already establishes the shape, so name it.
+  return isPlainObject(o) ? Object.entries(o as Record<string, T>) : [];
 }
 
 export function isEqual(left: unknown, right: unknown) {

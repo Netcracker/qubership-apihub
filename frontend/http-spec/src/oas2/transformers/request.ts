@@ -42,7 +42,7 @@ export const translateToRequest: Oas2TranslateFunction<
   for (const param of parameters) {
     if (isReferenceObject(param)) {
       const kind = getComponentName(this.references, param.$ref) ?? '';
-      const target = params[kind === 'header' ? 'headers' : kind || 'unknown'];
+      const target = (params as any)[kind === 'header' ? 'headers' : kind || 'unknown'];
 
       if (Array.isArray(target)) {
         target.push(syncReferenceObject(param, this.references));

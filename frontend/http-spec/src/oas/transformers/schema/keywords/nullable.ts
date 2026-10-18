@@ -22,7 +22,7 @@ const createNullableConverter = (keyword: 'x-nullable' | 'nullable'): Converter 
       return;
     }
 
-    if (schema[keyword] === true) {
+    if ((schema as any)[keyword] === true) {
       schema.type = [schema.type, 'null'];
 
       if (Array.isArray(schema.enum)) {
@@ -30,7 +30,7 @@ const createNullableConverter = (keyword: 'x-nullable' | 'nullable'): Converter 
       }
     }
 
-    delete schema[keyword];
+    delete (schema as any)[keyword];
   };
 };
 

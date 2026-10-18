@@ -10,7 +10,10 @@ import { Oas3WithMetaTranslateFunction } from '../types';
 import { translateHeaderObject } from './headers';
 import { translateParameterObject } from './request';
 
-type ParameterComponents = Pick<IBundledHttpService['components'], 'query' | 'header' | 'path' | 'cookie'>;
+type ParameterComponents = Pick<
+  IBundledHttpService['components'],
+  'query' | 'header' | 'path' | 'cookie' | 'unknownParameters'
+>;
 
 export const translateToSharedParameters = withContext<
   Oas3WithMetaTranslateFunction<[components: unknown], ParameterComponents>
@@ -20,6 +23,7 @@ export const translateToSharedParameters = withContext<
     query: [],
     cookie: [],
     path: [],
+    unknownParameters: [],
     ...pickKeptProperties(components as object, this.keepProperties),
   };
 
@@ -83,9 +87,17 @@ export const translateToSharedParameters = withContext<
 
   for (const resolvable of resolvables) {
     const kind = getComponentName(this.references, resolvable.$ref);
-    if (kind === void 0 || !(kind in sharedParameters)) continue;
+    // A component parameter that is only a $ref to a definition this document does not
+    // contain cannot be sorted into path/query/header/cookie, because the kind is a
+    // property of the target and the target is not here. Until @stoplight/types 13.9
+    // there was nowhere to put it and it was dropped on the floor - a silent loss of a
+    // declared component. `unknownParameters` is exactly that bucket.
+    if (kind === void 0 || !(kind in sharedParameters)) {
+      sharedParameters.unknownParameters.push(resolvable);
+      continue;
+    }
 
-    sharedParameters[kind].push(resolvable);
+    (sharedParameters as any)[kind].push(resolvable);
   }
 
   return sharedParameters;

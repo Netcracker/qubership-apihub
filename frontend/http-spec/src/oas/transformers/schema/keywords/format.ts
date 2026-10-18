@@ -61,7 +61,7 @@ const formatConverters = {
 
 const format: Converter = schema => {
   if (typeof schema.format === 'string' && schema.format in formatConverters) {
-    formatConverters[schema.format](schema);
+    (formatConverters as any)[schema.format](schema);
   }
 };
 

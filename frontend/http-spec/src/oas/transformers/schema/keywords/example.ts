@@ -5,8 +5,8 @@ import { Converter } from '../types';
 const createExampleConverter = (keyword: 'x-example' | 'example'): Converter => {
   return schema => {
     if (!(keyword in schema)) return;
-    (schema as JSONSchema7).examples = [schema[keyword]];
-    delete schema[keyword];
+    (schema as JSONSchema7).examples = [(schema as any)[keyword]];
+    delete (schema as any)[keyword];
   };
 };
 

@@ -69,7 +69,7 @@ export const translateParameterObject = withContext<
   const kind = parameterObject.in === 'path' ? 'pathParam' : parameterObject.in;
   const name = parameterObject.name;
   const keyOrName = getSharedKey(parameterObject) ?? name;
-  const id = this.generateId[`http${kind[0].toUpperCase()}${kind.slice(1)}`]({ keyOrName });
+  const id = (this.generateId as any)[`http${kind[0].toUpperCase()}${kind.slice(1)}`]({ keyOrName });
 
   return {
     id,
@@ -116,7 +116,7 @@ const aggregateParametersDiffMetaFromOperation = (
   const parameters = isObject(operation.parameters) ? operation.parameters : []
   for (const property of Reflect.ownKeys(parameters)) {
     if (property.toString() === mirrorDiffMetaKey.toString()) {
-      parametersDiffMeta = parameters[property] as ParametersDiffMetaData;
+      parametersDiffMeta = (parameters as any)[property] as ParametersDiffMetaData;
       break;
     }
   }
@@ -156,7 +156,7 @@ const transformDiffMetaForReplacedParameter = (
       newWholeParameterDiffMeta[property] = {
         type: wholeParameterDiffMeta.type,
         action: wholeParameterDiffMeta.action,
-        beforeValue: beforeValue[property],
+        beforeValue: (beforeValue as any)[property],
       };
     });
   }
@@ -188,7 +188,7 @@ export const translateToRequest = withContext<
       kind = param.in;
     }
 
-    const target = params[kind || 'unknown'];
+    const target = (params as any)[kind || 'unknown'];
     if (!Array.isArray(target)) continue;
 
     let transformedParam = isReferenceObject(param)
@@ -211,7 +211,7 @@ export const translateToRequest = withContext<
     if (!transformedParam[mirrorDiffMetaKey]) {
       Reflect.ownKeys(param).forEach(property => {
         if (property.toString() === mirrorDiffMetaKey.toString()) {
-          transformedParam[mirrorDiffMetaKey] = param[property];
+          transformedParam[mirrorDiffMetaKey] = (param as any)[property];
         }
       });
     }
@@ -278,7 +278,7 @@ const transformContents = withContext<
         typeof contentDiffMeta === 'object' &&
         result.mediaType in contentDiffMeta
       ) {
-        result[contentDiffMetaKey] = contentDiffMeta[result.mediaType]
+        (result as any)[contentDiffMetaKey] = (contentDiffMeta as any)[result.mediaType]
       }
       return result
     })
