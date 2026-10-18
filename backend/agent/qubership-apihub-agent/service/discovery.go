@@ -1,0 +1,457 @@
+package service
+
+import (
+	goctx "context"
+	"fmt"
+	"net/http"
+	"net/url"
+	"regexp"
+	"strconv"
+	"sync"
+	"time"
+
+	"github.com/Netcracker/qubership-apihub-agent/client"
+	"github.com/Netcracker/qubership-apihub-agent/config"
+	"github.com/Netcracker/qubership-apihub-agent/secctx"
+	"github.com/netcracker/qubership-core-lib-go-paas-mediation-client/v8/entity"
+	"github.com/netcracker/qubership-core-lib-go-paas-mediation-client/v8/filter"
+	"github.com/netcracker/qubership-core-lib-go-paas-mediation-client/v8/service"
+
+	"github.com/Netcracker/qubership-apihub-agent/exception"
+	"github.com/Netcracker/qubership-apihub-agent/utils"
+	"github.com/Netcracker/qubership-apihub-agent/view"
+	log "github.com/sirupsen/logrus"
+)
+
+type DiscoveryService interface {
+	StartDiscovery(ctx secctx.SecurityContext, namespace string, workspaceId string, failOnError bool, req view.DiscoveryRequest) error
+	GetServiceUrl(namespace string, serviceId string) (string, error)
+}
+
+func NewDiscoveryService(
+	cloudName string,
+	agentNamespace string,
+	apihubUrl string,
+	excludeWithLabels []string,
+	groupingLabels []string,
+	namespaceListCache NamespaceListCache,
+	serviceListCache ServiceListCache,
+	paasClient service.PlatformService,
+	documentsDiscoveryService DocumentsDiscoveryService,
+	apihubClient client.ApihubClient,
+	discoveryUrls config.ApiTypeUrlsConfig) DiscoveryService {
+	groupingLabelsMap := make(map[string]struct{}, len(groupingLabels))
+	for _, label := range groupingLabels {
+		groupingLabelsMap[label] = struct{}{}
+	}
+
+	return &discoveryServiceImpl{
+		cloudName:                 cloudName,
+		agentNamespace:            agentNamespace,
+		apihubUrl:                 apihubUrl,
+		excludeWithLabels:         excludeWithLabels,
+		groupingLabels:            groupingLabelsMap,
+		namespaceListCache:        namespaceListCache,
+		serviceListCache:          serviceListCache,
+		paasClient:                paasClient,
+		documentsDiscoveryService: documentsDiscoveryService,
+		apihubClient:              apihubClient,
+		discoveryUrls:             discoveryUrls}
+}
+
+type discoveryServiceImpl struct {
+	cloudName         string
+	agentNamespace    string
+	apihubUrl         string
+	excludeWithLabels []string
+	groupingLabels    map[string]struct{}
+	discoveryUrls     config.ApiTypeUrlsConfig
+
+	namespaceListCache NamespaceListCache
+	serviceListCache   ServiceListCache
+
+	paasClient                service.PlatformService
+	documentsDiscoveryService DocumentsDiscoveryService
+	apihubClient              client.ApihubClient
+}
+
+func (d discoveryServiceImpl) StartDiscovery(ctx secctx.SecurityContext, namespace string, workspaceId string, failOnError bool, req view.DiscoveryRequest) error {
+	exists, err := d.namespaceListCache.NamespaceExists(namespace)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.NamespaceDoesntExist,
+			Message: exception.NamespaceDoesntExistMsg,
+			Params:  map[string]interface{}{"namespace": namespace},
+		}
+	}
+
+	d.serviceListCache.handleDiscoveryStart(namespace, workspaceId, req.Services)
+
+	utils.SafeAsync(func() {
+		d.runDiscovery(ctx, namespace, workspaceId, failOnError, req.Services)
+	})
+	return nil
+}
+
+func (d discoveryServiceImpl) runDiscovery(secCtx secctx.SecurityContext, namespace string, workspaceId string, failOnError bool, requestedServices []string) {
+	log.Infof("Starting discovery for namespace %s", namespace)
+	utils.RecordDiscoveryStart(namespace)
+	start := time.Now()
+
+	ctx := goctx.Background()
+
+	wg := sync.WaitGroup{}
+
+	var services []entity.Service
+	var svcErr error
+
+	var pods []entity.Pod
+	var podsErr error
+
+	var deployments []entity.Deployment
+	var deploymentsErr error
+
+	wg.Add(3)
+
+	utils.SafeAsync(func() {
+		defer wg.Done()
+		services, svcErr = d.paasClient.GetServiceList(ctx, namespace, filter.Meta{})
+	})
+	utils.SafeAsync(func() {
+		defer wg.Done()
+		pods, podsErr = d.paasClient.GetPodList(ctx, namespace, filter.Meta{})
+	})
+	utils.SafeAsync(func() {
+		defer wg.Done()
+		deployments, deploymentsErr = d.paasClient.GetDeploymentList(ctx, namespace, filter.Meta{})
+	})
+
+	wg.Wait()
+
+	if svcErr != nil {
+		d.serviceListCache.setResultStatus(namespace, workspaceId, requestedServices, view.StatusError, svcErr.Error())
+		log.Errorf("Failed to list k8s services in namespace %s: %s", namespace, svcErr.Error())
+		utils.RecordDiscoveryError()
+		return
+	}
+
+	if podsErr != nil {
+		d.serviceListCache.setResultStatus(namespace, workspaceId, requestedServices, view.StatusError, podsErr.Error())
+		log.Errorf("Failed to list k8s pods in namespace %s: %s", namespace, podsErr.Error())
+		utils.RecordDiscoveryError()
+		return
+	}
+
+	if deploymentsErr != nil {
+		d.serviceListCache.setResultStatus(namespace, workspaceId, requestedServices, view.StatusError, deploymentsErr.Error())
+		log.Errorf("Failed to list k8s deployments in namespace %s: %s", namespace, deploymentsErr.Error())
+		utils.RecordDiscoveryError()
+		return
+	}
+
+	if len(requestedServices) > 0 {
+		total := len(services)
+		services = filterRequestedServices(services, requestedServices)
+		log.Infof("Discovery for namespace %s is limited to %d requested service(s): %d of %d k8s services matched", namespace, len(requestedServices), len(services), total)
+	}
+
+	agentId := utils.MakeAgentId(d.cloudName, d.agentNamespace)
+
+	for _, srv := range services {
+		log.Infof("Getting pods for service: %s", srv.Name)
+		servicePods := getPodsForSelector(pods, srv.Spec.Selector)
+		labels := getAllLabelsForService(srv, servicePods)
+		log.Infof("Full list of labels for service %s: %+v", srv.Name, labels)
+		annotations := getAllAnnotationsForService(srv)
+		log.Debugf("Full list of annotations for service %s: %+v", srv.Name, annotations)
+		deployment := getDeploymentForService(deployments, srv.Spec.Selector)
+		log.Debugf("Deployment for service %s: %+v", srv.Name, deployment)
+
+		// apply skip list for full list of labels
+		exclude := false
+		for _, label := range d.excludeWithLabels {
+			if _, ok := labels[label]; ok {
+				log.Infof("Service %s is excluded from discovery", srv.Name)
+				exclude = true
+				break
+			}
+		}
+		if exclude {
+			continue
+		}
+
+		containerReady := false
+		for _, svcPod := range servicePods {
+			containerStatuses := svcPod.Status.ContainerStatuses
+			for _, containerStatus := range containerStatuses {
+				if containerStatus.Ready {
+					containerReady = true
+					break
+				}
+			}
+		}
+
+		if failOnError { // invoke service status check if true
+			if srv.Spec.Type != "ExternalName" { // ExternalName service do not have pods in local namespace, so the following check is not applicable.
+				// Some deployments may be scaled down intentionally, need to check replicas count
+				if deployment != nil && deployment.Spec.Replicas != nil && *deployment.Spec.Replicas > 0 && !containerReady {
+					// We expect the service up and running, but have no live and ready pods.
+					// Looks like the namespace is in deployment/restart phase.
+					// In this case discovery result will not be completely correct, so returning the error.
+					errMsg := fmt.Sprintf("no pod is up yet for service: %s", srv.Name)
+					d.serviceListCache.setResultStatus(namespace, workspaceId, requestedServices, view.StatusError, errMsg)
+					log.Error(errMsg)
+					utils.RecordDiscoveryError()
+					return
+				}
+			}
+		}
+
+		discoveryUrls := view.MakeDocDiscoveryUrls(d.discoveryUrls, annotations)
+
+		srvTmp := srv
+		wg.Add(1)
+
+		utils.SafeAsync(func() {
+			defer wg.Done()
+
+			serviceId := srvTmp.Name
+			serviceName := getServiceName(serviceId)
+			baseUrl := buildBaseurl(srvTmp)
+
+			var discoveryResult *view.DiscoveryResult
+			var docErr error
+
+			// search for documents and for baseline in parallel
+			srvWg := sync.WaitGroup{}
+			srvWg.Add(2)
+
+			utils.SafeAsync(func() {
+				defer srvWg.Done()
+
+				discoveryResult, docErr = d.documentsDiscoveryService.RetrieveDocuments(baseUrl, serviceName, discoveryUrls)
+				if docErr != nil {
+					log.Errorf("Service %s have errors during discovery: %s", serviceName, docErr)
+				}
+			})
+
+			var baselineObj *view.Baseline
+
+			utils.SafeAsync(func() {
+				defer srvWg.Done()
+				baselinePackage, err := d.apihubClient.GetPackageByServiceName(secCtx, workspaceId, serviceName) // name here, not id!
+				if err != nil {
+					log.Errorf("failed to get baseline for %s: %s", serviceName, err)
+				}
+
+				if baselinePackage != nil {
+					versions := make([]string, 0)
+
+					defaultVersion := baselinePackage.DefaultReleaseVersion
+					versionsResp, err := d.apihubClient.GetVersions(secCtx, baselinePackage.Id, 0, 100)
+					if err != nil {
+						log.Warnf("failed to get baseline %s versions: %s", baselinePackage.Id, err)
+					} else {
+						if versionsResp != nil {
+							for _, v := range versionsResp.Versions {
+								versions = append(versions, v.Version)
+
+								if defaultVersion == "" {
+									defaultVersion = v.Version
+								}
+							}
+						}
+					}
+
+					baselineObj = &view.Baseline{
+						PackageId: baselinePackage.Id,
+						Name:      baselinePackage.Name,
+						Url:       fmt.Sprintf("%s/portal/packages/%s/%s?mode=overview&item=summary", d.apihubUrl, baselinePackage.Id, url.PathEscape(defaultVersion)),
+						Versions:  versions,
+					}
+				}
+			})
+
+			srvWg.Wait()
+
+			labelsToAdd := map[string]string{}
+			for k, v := range labels {
+				if _, ok := d.groupingLabels[k]; ok {
+					labelsToAdd[k] = v
+					continue
+				}
+				if k == xApiKindLabel {
+					labelsToAdd[k] = v
+				}
+			}
+
+			errorStr := ""
+			if docErr != nil {
+				errorStr = docErr.Error()
+			}
+
+			// Build diagnostic info - only include failed calls if no specs found
+			var diagnostic *view.ServiceDiagnostic
+			documents := []view.Document{}
+			if discoveryResult != nil {
+				documents = discoveryResult.Documents
+				utils.RecordDocumentsDownloaded(len(documents))
+				if len(discoveryResult.Documents) == 0 && len(discoveryResult.EndpointCalls) > 0 {
+					diagnostic = &view.ServiceDiagnostic{
+						EndpointCalls: discoveryResult.EndpointCalls,
+					}
+				}
+			}
+
+			srvToAdd := view.Service{
+				Id:             serviceId,
+				Name:           serviceName,
+				Url:            baseUrl,
+				Documents:      documents,
+				Baseline:       baselineObj,
+				Labels:         labelsToAdd,
+				ProxyServerUrl: utils.MakeCustomProxyPath(agentId, namespace, serviceId),
+				Error:          errorStr,
+				DiagnosticInfo: diagnostic,
+			}
+			utils.RecordServiceProcessed()
+			d.serviceListCache.addService(namespace, workspaceId, requestedServices, srvToAdd)
+		})
+	}
+
+	wg.Wait()
+
+	log.Infof("Discovery for namespace %s took %dms", namespace, time.Since(start).Milliseconds())
+
+	d.serviceListCache.setResultStatus(namespace, workspaceId, requestedServices, view.StatusComplete, "")
+}
+
+func getPodsForSelector(allPods []entity.Pod, selector map[string]string) []entity.Pod {
+	var result []entity.Pod
+	if len(selector) == 0 {
+		return result
+	}
+	for _, pod := range allPods {
+		matchSelectors := 0
+		for k, v := range selector {
+			if pod.Labels[k] == v {
+				matchSelectors++
+			}
+		}
+		if matchSelectors == len(selector) {
+			log.Infof("Got pod for selectors %+v. Name = %s", selector, pod.Name)
+			result = append(result, pod)
+		}
+	}
+	return result
+}
+
+func getDeploymentForService(allDeployments []entity.Deployment, selector map[string]string) *entity.Deployment {
+	for _, deployment := range allDeployments {
+		matchSelectors := 0
+		for k, v := range selector {
+			if deployment.Labels[k] == v {
+				matchSelectors++
+			}
+		}
+		if matchSelectors == len(selector) {
+			return &deployment
+		}
+	}
+	return nil
+}
+
+func getAllLabelsForService(service entity.Service, pods []entity.Pod) map[string]string {
+	result := map[string]string{}
+	for k, v := range service.Labels {
+		result[k] = v
+	}
+	for _, pod := range pods {
+		for k, v := range pod.Labels {
+			result[k] = v
+		}
+	}
+	return result
+}
+
+func getAllAnnotationsForService(service entity.Service) map[string]string {
+	result := map[string]string{}
+	for k, v := range service.Annotations {
+		result[k] = v
+	}
+	return result
+}
+
+// filterRequestedServices narrows the k8s service list to the requested services.
+// Requested names are matched against the blue-green-normalised name. An empty request means no filter.
+func filterRequestedServices(services []entity.Service, requestedServices []string) []entity.Service {
+	if len(requestedServices) == 0 {
+		return services
+	}
+
+	requested := make(map[string]struct{}, len(requestedServices))
+	for _, name := range requestedServices {
+		requested[name] = struct{}{}
+	}
+
+	filtered := make([]entity.Service, 0, len(services))
+	for _, srv := range services {
+		if _, ok := requested[getServiceName(srv.Name)]; ok {
+			filtered = append(filtered, srv)
+		}
+	}
+	return filtered
+}
+
+var bgRegexp = regexp.MustCompile(`(.*?)-v\d+$`)
+
+func getServiceName(nameFromKuber string) string {
+	if bgRegexp.MatchString(nameFromKuber) {
+		res := bgRegexp.FindStringSubmatch(nameFromKuber)
+		if len(res) < 2 {
+			return nameFromKuber
+		} else {
+			return res[1]
+		}
+	} else {
+		return nameFromKuber
+	}
+}
+
+func buildBaseurl(srv entity.Service) string {
+	// TODO: https support
+	baseUrl := "http://" + srv.Name + "." + srv.Namespace + ".svc.cluster.local" + ":"
+	for _, port := range srv.Spec.Ports {
+		if port.Name == "web" || port.Name == "http" || port.Port == 8080 || port.Port == 80 || port.Port == 443 || port.Port == 8443 {
+			baseUrl += strconv.Itoa(int(port.Port))
+			break
+		}
+	}
+	return baseUrl
+}
+
+const xApiKindLabel = "apihub/x-api-kind"
+
+func (d discoveryServiceImpl) GetServiceUrl(namespace string, serviceId string) (string, error) {
+	ctx := goctx.Background()
+	list, err := d.paasClient.GetServiceList(ctx, namespace, filter.Meta{})
+	if err != nil {
+		return "", fmt.Errorf("failed to get k8s services list in namespace %s: %w", namespace, err)
+	}
+	for _, namespaceService := range list {
+		if namespaceService.Name == serviceId {
+			return buildBaseurl(namespaceService), nil
+		}
+	}
+	return "", &exception.CustomError{
+		Status:  http.StatusBadRequest,
+		Code:    exception.NamespaceServiceDoesntExist,
+		Message: exception.NamespaceServiceDoesntExistMsg,
+		Params:  map[string]interface{}{"service": serviceId, "namespace": namespace},
+	}
+}

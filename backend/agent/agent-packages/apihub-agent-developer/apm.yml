@@ -1,0 +1,8 @@
+name: apihub-agent-developer
+version: 0.1.0
+description: APIHub K8s discovery agent development workflow
+author: Qubership
+dependencies:
+  apm:
+    - Netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+

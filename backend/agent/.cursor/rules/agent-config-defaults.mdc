@@ -1,0 +1,14 @@
+---
+description: Agent config defaults and validation conventions
+globs: "qubership-apihub-agent/**/*.go"
+---
+
+# Agent Configuration Defaults
+
+- **Single source of truth:** `viper.SetDefault` in `service/system_info.go` (`setDefaults`).
+- **Struct:** `config/Config.go` with `validate` tags; validated via `utils.ValidateConfig` at startup.
+- **Template:** `qubership-apihub-agent/config.template.yaml` — document new keys with mandatory/optional comments and examples.
+- **Config path:** `AGENT_CONFIG_FOLDER` env var (defaults to `.`).
+- **Services:** read config through `SystemInfoService` getters after init; do not duplicate defaults as unrelated constants.
+
+This service has **no database** — do not add migrations, repositories, or SQL.
