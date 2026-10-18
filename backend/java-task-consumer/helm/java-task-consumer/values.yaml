@@ -1,0 +1,38 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/netcracker/qubership-apihub-java-task-consumer
+  tag: dev
+  pullPolicy: IfNotPresent
+
+service:
+  port: 3000
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    cpu: "2"
+    memory: 4Gi
+
+env:
+  logLevel: ""
+  requestIntervalMs: "3000"
+  statusIntervalMs: "5000"
+  jdiffThreads: "4"
+
+apihub:
+  backendAddress: qubership-apihub-backend:8080
+  accessToken: ""
+
+# OCI registry credentials for daemonless subject image pull (java-upgrade-impact, subject.type=docker).
+# Mounts config.json and sets DOCKER_CONFIG=/etc/secrets/docker.
+registryAuth:
+  # Use an existing Secret that contains key config.json (recommended in production).
+  existingSecret: ""
+  # Or let the chart create a Secret from inline Docker config JSON (dev/CI only).
+  configJson: ""
+
+serviceAccount:
+  create: true

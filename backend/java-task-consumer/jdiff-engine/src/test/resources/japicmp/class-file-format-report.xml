@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<japicmp oldVersion="8.4.3" newVersion="9.1.8" semanticVersioning="0.0.1">
+    <classes>
+        <class fullyQualifiedName="com.netcracker.cloud.dbaas.client.config.SpringDbaasApiProperties"
+               changeStatus="MODIFIED" binaryCompatible="true" sourceCompatible="true">
+            <classFileFormatVersion changeStatus="MODIFIED"
+                                    majorVersionOld="61" minorVersionOld="0"
+                                    majorVersionNew="65" minorVersionNew="0"/>
+            <classType changeStatus="UNCHANGED" newType="CLASS" oldType="CLASS"/>
+            <compatibilityChanges/>
+            <constructors/>
+            <fields/>
+            <methods/>
+        </class>
+    </classes>
+</japicmp>

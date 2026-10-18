@@ -1,0 +1,16 @@
+checkstyle-13.9.0.jar -> C:\sources\RnD\qubership-java-diff-service\jdepts-research\picocli-4.7.7.jar
+   com.puppycrawl.tools.checkstyle.JavadocPropertiesGenerator -> picocli.CommandLine                                picocli-4.7.7.jar
+   com.puppycrawl.tools.checkstyle.JavadocPropertiesGenerator -> picocli.CommandLine$ParameterException             picocli-4.7.7.jar
+   com.puppycrawl.tools.checkstyle.JavadocPropertiesGenerator -> picocli.CommandLine$ParseResult                    picocli-4.7.7.jar
+   com.puppycrawl.tools.checkstyle.JavadocPropertiesGenerator$CliOptions -> picocli.CommandLine                                picocli-4.7.7.jar
+   com.puppycrawl.tools.checkstyle.JavadocPropertiesGenerator$CliOptions -> picocli.CommandLine$Command                        picocli-4.7.7.jar
+   com.puppycrawl.tools.checkstyle.JavadocPropertiesGenerator$CliOptions -> picocli.CommandLine$Option                         picocli-4.7.7.jar
+   com.puppycrawl.tools.checkstyle.JavadocPropertiesGenerator$CliOptions -> picocli.CommandLine$Parameters                     picocli-4.7.7.jar
+   com.puppycrawl.tools.checkstyle.Main               -> picocli.CommandLine                                picocli-4.7.7.jar
+   com.puppycrawl.tools.checkstyle.Main               -> picocli.CommandLine$ParameterException             picocli-4.7.7.jar
+   com.puppycrawl.tools.checkstyle.Main               -> picocli.CommandLine$ParseResult                    picocli-4.7.7.jar
+   com.puppycrawl.tools.checkstyle.Main$CliOptions    -> picocli.CommandLine                                picocli-4.7.7.jar
+   com.puppycrawl.tools.checkstyle.Main$CliOptions    -> picocli.CommandLine$Command                        picocli-4.7.7.jar
+   com.puppycrawl.tools.checkstyle.Main$CliOptions    -> picocli.CommandLine$Option                         picocli-4.7.7.jar
+   com.puppycrawl.tools.checkstyle.Main$CliOptions    -> picocli.CommandLine$Parameters                     picocli-4.7.7.jar
+   com.puppycrawl.tools.checkstyle.Main$CliOptions    -> picocli.CommandLine$ParseResult                    picocli-4.7.7.jar

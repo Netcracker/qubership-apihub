@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<japicmp oldVersion="1.0.0" newVersion="2.0.0" semanticVersioning="1.0.0">
+    <classes>
+        <class fullyQualifiedName="com.example.NewClass" changeStatus="NEW" binaryCompatible="true" sourceCompatible="true">
+            <classType newType="CLASS" oldType="n.a."/>
+            <compatibilityChanges/>
+            <constructors/>
+            <fields/>
+            <methods/>
+        </class>
+        <class fullyQualifiedName="com.example.ChangedClass" changeStatus="MODIFIED" binaryCompatible="true" sourceCompatible="true">
+            <classType newType="CLASS" oldType="CLASS"/>
+            <compatibilityChanges/>
+            <constructors/>
+            <fields/>
+            <methods>
+                <method name="removedMethod" changeStatus="REMOVED" binaryCompatible="false" sourceCompatible="false">
+                    <compatibilityChanges>
+                        <compatibilityChange type="METHOD_REMOVED" binaryCompatible="false" sourceCompatible="false"/>
+                    </compatibilityChanges>
+                    <parameters>
+                        <parameter type="java.lang.String"/>
+                    </parameters>
+                    <returnType newValue="n.a." oldValue="void"/>
+                </method>
+                <method name="unchangedMethod" changeStatus="UNCHANGED" binaryCompatible="true" sourceCompatible="true">
+                    <compatibilityChanges/>
+                    <parameters/>
+                    <returnType newValue="int" oldValue="int"/>
+                </method>
+            </methods>
+        </class>
+        <class fullyQualifiedName="com.example.RemovedClass" changeStatus="REMOVED" binaryCompatible="false" sourceCompatible="false">
+            <classType newType="n.a." oldType="CLASS"/>
+            <compatibilityChanges>
+                <compatibilityChange type="CLASS_REMOVED" binaryCompatible="false" sourceCompatible="false"/>
+            </compatibilityChanges>
+            <constructors/>
+            <fields/>
+            <methods/>
+        </class>
+    </classes>
+</japicmp>

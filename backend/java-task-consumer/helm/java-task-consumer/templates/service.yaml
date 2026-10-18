@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "java-task-consumer.fullname" . }}
+  labels:
+    {{- include "java-task-consumer.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: web
+      port: {{ .Values.service.port }}
+      targetPort: web
+  selector:
+    app.kubernetes.io/name: {{ include "java-task-consumer.name" . }}
