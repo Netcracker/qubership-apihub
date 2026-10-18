@@ -1,0 +1,13 @@
+---
+description: Agents-backend API spec discovery via commons-go api-spec-exposer
+globs:
+  - "qubership-apihub-agents-backend/service.go"
+  - "docs/api/**"
+---
+
+# Agents Backend API Spec Exposer
+
+- OpenAPI specs under `docs/api/` are exposed at runtime via `github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer`.
+- **Scan directory:** `API_SPEC_DIR` env var (default: `{BASE_PATH}/api`); place or symlink specs so discovery finds them.
+- **Registration:** in `service.go`, `exposer.New(discoveryConfig).Discover()` registers GET handlers for each discovered spec; discovery errors are fatal (`panic`).
+- When adding or renaming spec files, ensure they are discoverable under `API_SPEC_DIR` and update the source YAML in `docs/api/`.
