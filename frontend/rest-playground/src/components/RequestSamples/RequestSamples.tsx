@@ -3,8 +3,8 @@ import { CodeViewer } from '@stoplight/mosaic-code-viewer'
 import { Request } from 'har-format'
 import { atom, useAtom } from 'jotai'
 import React, { useCallback, useMemo } from 'react'
-import { NativeMenuAdapter } from 'src/hoc/NativeMenuAdapter'
 
+import { NativeMenuAdapter } from '../../hoc/NativeMenuAdapter'
 import { persistAtom } from '../../utils/jotai/persistAtom'
 import { convertRequestToSample } from './convertRequestToSample'
 import { getConfigFor, requestSampleConfigs } from './requestSampleConfigs'
@@ -72,7 +72,7 @@ export const RequestSamples = React.memo<RequestSamplesProps>(({ request, embedd
   }, [selectedLanguage, selectedLibrary, setSelectedLanguage, setSelectedLibrary])
 
   const onChange = useCallback(
-    event => {
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
       setSelectedLanguage(event.target.value)
       event.target.value = 'default'
     },

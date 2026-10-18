@@ -1,5 +1,5 @@
 import { INodeVariable } from '@stoplight/types'
-import { renderHook } from '@testing-library/react-hooks'
+import { renderHook } from '@testing-library/react'
 
 import type { IServer } from '../utils/http-spec/IServer'
 import { useCombinedServers, useProcessedCustomServers, useProcessedSpecServers } from './useServerProcessing'

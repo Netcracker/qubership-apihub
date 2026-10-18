@@ -2,7 +2,8 @@ import { safeParse, safeStringify } from '@stoplight/json'
 import { Optional } from '@stoplight/types'
 import { isEqual, mapValues } from 'lodash'
 import * as React from 'react'
-import * as ReactDOM from 'react-dom'
+import { createRoot } from 'react-dom/client'
+import type { Root } from 'react-dom/client'
 
 type TypeNameMap<T> = T extends string
   ? 'string'
@@ -34,6 +35,9 @@ export const createElementClass = <P>(
 ): new () => HTMLElement => {
   return class extends HTMLElement {
     private _mountPoint: HTMLElement | undefined
+    /* React 18 requires one root per container, created once and reused for every
+       subsequent render, so it is held per element rather than re-derived. */
+    private _root: Root | undefined
     private _props: Partial<P> = {}
 
     static get observedAttributes() {
@@ -77,6 +81,7 @@ export const createElementClass = <P>(
       this._mountPoint = document.createElement('div')
       this.appendChild(this._mountPoint)
       this._mountPoint.style.height = '100%'
+      this._root = createRoot(this._mountPoint)
 
       for (const key in propDescriptors) {
         if (propDescriptors.hasOwnProperty(key)) {
@@ -88,8 +93,14 @@ export const createElementClass = <P>(
     }
 
     disconnectedCallback() {
+      /* Unmount before detaching the node: the root owns the container, and a
+         reconnected element gets a fresh mount point and a fresh root from
+         connectedCallback. */
+      if (this._root) {
+        this._root.unmount()
+        this._root = undefined
+      }
       if (this._mountPoint) {
-        ReactDOM.unmountComponentAtNode(this._mountPoint)
         this.removeChild(this._mountPoint)
         this._mountPoint = undefined
       }
@@ -149,9 +160,9 @@ export const createElementClass = <P>(
     }
 
     private _renderComponent() {
-      if (this._mountPoint) {
+      if (this._root) {
         const props = mapValues(propDescriptors, (descriptor, key) => this._props[key] ?? descriptor.defaultValue)
-        ReactDOM.render(React.createElement(Component, props), this._mountPoint)
+        this._root.render(React.createElement(Component, props))
       }
     }
   }
