@@ -124,12 +124,12 @@ else
     (
       cd "$tmp"
       oras push "$repo:$content" \
-        --artifact-type application/vnd.alagishev.storybook.v1 \
+        --artifact-type application/vnd.netcracker.apihub.storybook.v1 \
         --annotation "org.opencontainers.image.source=$source_url" \
         --annotation "org.opencontainers.image.revision=$GITHUB_SHA" \
         --annotation "org.netcracker.apihub.storybook.component=$COMPONENT" \
         --annotation "org.netcracker.apihub.storybook.input=$input" \
-        storybook.tar.gz:application/vnd.alagishev.storybook.layer.v1.tar+gzip
+        storybook.tar.gz:application/vnd.netcracker.apihub.storybook.layer.v1.tar+gzip
     )
     echo "| build | **built and stored** as \`$content\`: $stripped; $files files, $((bytes / 1024)) KiB, packed to $((packed / 1024)) KiB |" >> "$summary"
   fi
@@ -139,7 +139,7 @@ else
   (
     cd "$tmp"
     oras push "$repo:$input" \
-      --artifact-type application/vnd.alagishev.storybook-index.v1 \
+      --artifact-type application/vnd.netcracker.apihub.storybook-index.v1 \
       --annotation "org.netcracker.apihub.storybook.content=$content" \
       --annotation "org.opencontainers.image.source=$source_url" \
       index.txt
@@ -153,7 +153,7 @@ echo "$content" > "$tmp/pointer.txt"
 (
   cd "$tmp"
   oras push "$repo:branch-$slug" \
-    --artifact-type application/vnd.alagishev.storybook-pointer.v1 \
+    --artifact-type application/vnd.netcracker.apihub.storybook-pointer.v1 \
     --annotation "org.netcracker.apihub.storybook.content=$content" \
     --annotation "org.netcracker.apihub.storybook.input=$input" \
     --annotation "org.opencontainers.image.source=$source_url" \
