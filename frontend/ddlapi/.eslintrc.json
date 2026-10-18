@@ -1,0 +1,101 @@
+{
+  "root": true,
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "env": {
+    "es6": true,
+    "browser": true
+  },
+  "rules": {
+    "no-control-regex": "off",
+    "camelcase": "off",
+    "eol-last": [
+      "error",
+      "always"
+    ],
+    "eqeqeq": [
+      "error",
+      "always"
+    ],
+    "no-confusing-arrow": "error",
+    "no-useless-rename": "error",
+    "no-unexpected-multiline": "off",
+    "operator-linebreak": "error",
+    "prefer-arrow-callback": "error",
+    "prefer-const": "error",
+    "prefer-numeric-literals": "error",
+    "prefer-rest-params": "error",
+    "prefer-spread": "error",
+    "prefer-template": "error",
+    "prefer-destructuring": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/member-delimiter-style": "off",
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-loss-of-precision": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/semi": [
+      "error",
+      "never"
+    ],
+    "@typescript-eslint/explicit-member-accessibility": "off",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "@typescript-eslint/no-inferrable-types": "off",
+    "yoda": "error"
+  },
+  "parserOptions": {
+    "jsx": true,
+    "ecmaVersion": 6,
+    "sourceType": "module"
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/src/**/*.ts(x)"
+      ],
+      "parserOptions": {
+        "parser": "@typescript-eslint/parser",
+        "project": "./tsconfig.json"
+      },
+      "plugins": [
+        "@typescript-eslint"
+      ],
+      "globals": {
+        "browser": true
+      },
+      "env": {
+        "browser": true
+      },
+      "rules": {
+        "indent": "off",
+        "@typescript-eslint/indent": [
+          "error",
+          2,
+          {
+            "FunctionExpression": {
+              "parameters": "first"
+            },
+            "SwitchCase": 1,
+            "ignoredNodes": [
+              "Decorator"
+            ]
+          }
+        ],
+        "@typescript-eslint/array-type": "error"
+      }
+    },
+    {
+      "files": [
+        "index.ts"
+      ]
+    }
+  ],
+  "ignorePatterns": [
+    "*.d.ts",
+    ".eslintrc.json",
+    "package.json",
+    "tsconfig.json"
+  ]
+}
