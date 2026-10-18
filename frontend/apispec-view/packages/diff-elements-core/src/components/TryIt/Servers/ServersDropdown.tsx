@@ -1,4 +1,4 @@
-import { NativeMenuAdapter } from '@stoplight/diff-elements-core/hoc/NativeMenuAdapter';
+import { NativeMenuAdapter } from '../../../hoc/NativeMenuAdapter';
 import { MenuItem } from '@stoplight/mosaic';
 import { useAtom } from 'jotai';
 import * as React from 'react';
@@ -14,15 +14,19 @@ export type ServersDropdownProps = {
 export const ServersDropdown = ({ servers }: ServersDropdownProps) => {
   const [chosenServer, setChosenServer] = useAtom(chosenServerAtom);
 
-  const serverItems: MenuItem[] = servers.map(server => ({
-    id: server.url,
+  // Server urls are not guaranteed to be unique, so the position identifies the item.
+  const serverItems: MenuItem[] = servers.map((server, index) => ({
+    id: String(index),
     title: server.name || server.description,
   })) as MenuItem[];
 
   const onChange = useCallback(
-    event => {
-      const server = servers.find(server => server.url === event.target.value);
-      setChosenServer(server);
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
+      const index = Number.parseInt(event.target.value, 10);
+      const server = Number.isInteger(index) ? servers[index] : undefined;
+      if (server !== undefined) {
+        setChosenServer(server);
+      }
       event.target.value = 'default';
     },
     [servers, setChosenServer],

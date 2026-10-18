@@ -1,10 +1,9 @@
-import { DiffBlock, useValueFromObjWithDiff } from 'diff-block';
+import { DiffBlock, useValueFromObjWithDiff } from '@netcracker/qubership-apihub-apispec-view-diff-block';
 import { keys } from 'lodash';
-import { nanoid } from 'nanoid';
 import React, { FC } from 'react';
 
 import { Extension, ExtensionMeta, Extensions } from './Extensions';
-import { useDiffsMetaKey } from "@stoplight/elements/containers/DiffsMetaKeyContext";
+import { useDiffsMetaKey } from "@netcracker/qubership-apihub-apispec-view/containers/DiffsMetaKeyContext";
 import { buildOpenApiDiffCause } from "@netcracker/qubership-apihub-api-doc-viewer";
 
 interface ExtensionsDiffBlockProps {
@@ -35,7 +34,7 @@ export const ExtensionsDiffBlock: FC<ExtensionsDiffBlockProps> = ({ idPrefix, va
       action={firstDiff?.action}
       cause={buildOpenApiDiffCause(firstDiff)}
     >
-      <Extensions key={nanoid(8)} value={content} />
+      <Extensions value={content} />
     </DiffBlock>
   );
 };

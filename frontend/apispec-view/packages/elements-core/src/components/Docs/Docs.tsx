@@ -1,8 +1,8 @@
-import { AsyncOperation } from '@stoplight/elements-core/components/Docs/AsyncOperation';
-import { IServer } from '@stoplight/elements-core/utils/http-spec/IServer';
+import { AsyncOperation } from './AsyncOperation';
+import { IServer } from '../../utils/http-spec/IServer';
 import { NodeType } from '@stoplight/types';
 import { Location } from 'history';
-import { SchemaViewMode } from 'json-schema-viewer';
+import { SchemaViewMode } from '@netcracker/qubership-apihub-apispec-view-json-schema-viewer';
 import * as React from 'react';
 
 import { InlineRefResolverProvider } from '../../context/InlineRefResolver';

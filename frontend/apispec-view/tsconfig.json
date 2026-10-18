@@ -3,17 +3,42 @@
   "compilerOptions": {
     "jsx": "react",
     "esModuleInterop": true,
+    // @stoplight/scripts/tsconfig.json sets "suppressImplicitAnyIndexErrors": true, which
+    // TypeScript 5.5 removed and TypeScript 6 rejects (TS5102 - a removal, so
+    // "ignoreDeprecations" does not cover it). The base config is in node_modules and
+    // cannot be edited; overriding to false is accepted, as TS only errors when it is true.
+    "suppressImplicitAnyIndexErrors": false,
+    // The base config sets "moduleResolution": "node", which TypeScript 7 removed (TS5108).
+    // Same situation as suppressImplicitAnyIndexErrors above: node_modules cannot be edited,
+    // so it is overridden here. 'bundler' because webpack bundles these packages.
+    "moduleResolution": "bundler",
+    // Still required for the "baseUrl" below, which TS 6 reports as TS5101.
+    "ignoreDeprecations": "6.0",
+    // TypeScript 6 defaults "types" to [] rather than every package under typeRoots.
+    "types": ["node", "jest", "react"],
+    // "baseUrl" CANNOT be removed here yet, though TypeScript 7 removed the option (TS5102).
+    // tsconfig-paths-webpack-plugin requires it: without baseUrl the plugin silently applies
+    // no mappings, webpack falls through to node_modules, and the published package's
+    // "exports" then blocks every deep subpath the sibling packages import - 21 module-not-
+    // found errors, with webpack leaving the previous dist in place so the artifact still
+    // compares clean. Removing it needs the plugin replaced or upgraded first. See item 1.10.
     "baseUrl": "./packages",
+    // TypeScript 6 requires rootDir to be explicit alongside the base config's outDir
+    // (TS5011), and it must cover every package reachable through the "paths" aliases
+    // below. Inferred, it resolves to the single package being built and then rejects the
+    // sibling sources as outside the root (TS6059) - 397 errors in the webpack build.
+    // ts-loader must be >= 9.6 for this to be honoured; see the note in package.json.
+    "rootDir": "./packages",
     "paths": {
-      "@stoplight/elements": ["./elements/src"],
-      "@stoplight/elements/*": ["./elements/src/*"],
-      "@stoplight/elements-core": ["./elements-core/src"],
-      "@stoplight/elements-core/*": ["./elements-core/src/*"],
-      "@stoplight/diff-elements-core": ["./diff-elements-core/src"],
-      "@stoplight/diff-elements-core/*": ["./diff-elements-core/src/*"],
-      "diff-block": ["./diff-block/src"],
-      "json-schema-viewer": ["./json-schema-viewer/src"],
-      "json-schema-diff-viewer": ["./json-schema-diff-viewer/src"],
+      "@netcracker/qubership-apihub-apispec-view": ["./elements/src"],
+      "@netcracker/qubership-apihub-apispec-view/*": ["./elements/src/*"],
+      "@netcracker/qubership-apihub-apispec-view-elements-core": ["./elements-core/src"],
+      "@netcracker/qubership-apihub-apispec-view-elements-core/*": ["./elements-core/src/*"],
+      "@netcracker/qubership-apihub-apispec-view-diff-elements-core": ["./diff-elements-core/src"],
+      "@netcracker/qubership-apihub-apispec-view-diff-elements-core/*": ["./diff-elements-core/src/*"],
+      "@netcracker/qubership-apihub-apispec-view-diff-block": ["./diff-block/src"],
+      "@netcracker/qubership-apihub-apispec-view-json-schema-viewer": ["./json-schema-viewer/src"],
+      "@netcracker/qubership-apihub-apispec-view-json-schema-diff-viewer": ["./json-schema-diff-viewer/src"],
       "@netcracker/qubership-apihub-apispec-view-samples": ["./samples/src"],
       "@netcracker/qubership-apihub-apispec-view-samples/*": ["./samples/src/*"]
     }

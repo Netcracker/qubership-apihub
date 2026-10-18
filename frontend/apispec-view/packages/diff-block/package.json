@@ -1,12 +1,19 @@
 {
-  "name": "diff-block",
+  "name": "@netcracker/qubership-apihub-apispec-view-diff-block",
   "version": "0.0.0",
-  "private": "true",
+  "private": true,
   "keywords": [],
   "sideEffects": false,
   "license": "Apache-2.0",
   "main": "src/index.ts",
   "files": [
     "**/*"
-  ]
+  ],
+  "devDependencies": {
+    "@stoplight/mosaic": "^1.40.0",
+    "jotai": "1.6.3",
+    "lodash": "^4.17.21",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
 }

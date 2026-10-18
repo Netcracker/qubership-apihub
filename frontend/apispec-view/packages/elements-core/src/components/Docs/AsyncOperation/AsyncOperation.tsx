@@ -1,6 +1,6 @@
 import { IAsyncOperation } from '@netcracker/qubership-apihub-http-spec';
-import { Extensions } from '@stoplight/elements-core/components/Docs/Extensions';
-import { SectionSubtitle } from '@stoplight/elements-core/components/Docs/Sections';
+import { Extensions } from '../Extensions';
+import { SectionSubtitle } from '../Sections';
 import { Box, Flex, Heading, HStack, isNotEmptyObject, useThemeIsDark, VStack } from '@stoplight/mosaic';
 import { ErrorBoundaryProps, withErrorBoundary } from '@stoplight/react-error-boundary';
 import cn from 'classnames';

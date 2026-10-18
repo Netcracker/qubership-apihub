@@ -9,7 +9,7 @@ import {
   DiffBlock,
   useDiffContext,
   useValueFromObjWithDiff,
-} from 'diff-block';
+} from '@netcracker/qubership-apihub-apispec-view-diff-block';
 import { useAtom } from 'jotai';
 import { useAtomValue } from 'jotai/utils';
 import { isEmpty, keys, last, pick } from 'lodash';
@@ -22,8 +22,8 @@ import { choicesAtom, isExpandedAtom, isNodeHoveredAtom, selectedChoiceAtom } fr
 import { Caret } from './Caret';
 import { Format } from './Format';
 import { Types } from './Types';
-import { useDiffMetaKey } from "@stoplight/elements/containers/DIffMetaKeyContext";
-import { useChangeSeverityFilters } from "@stoplight/elements/containers/ChangeSeverityFiltersContext";
+import { useDiffMetaKey } from "@netcracker/qubership-apihub-apispec-view/containers/DIffMetaKeyContext";
+import { useChangeSeverityFilters } from "@netcracker/qubership-apihub-apispec-view/containers/ChangeSeverityFiltersContext";
 
 export const SchemaNameAndProperties: React.FC<{ schemaNode: SchemaNode; nestingLevel: number }> = ({
   schemaNode,

@@ -1,17 +1,19 @@
-import { buildOpenApiDiffCause, JsonSchemaDiffViewer, JsonSchemaViewer } from '@netcracker/qubership-apihub-api-doc-viewer'
-import { useOperationSchemaOptionsMode } from '@stoplight/elements'
+import { buildOpenApiDiffCause, JsonSchemaDiffsViewer, JsonSchemaViewer } from '@netcracker/qubership-apihub-api-doc-viewer'
+import { useOperationSchemaOptionsMode } from '@netcracker/qubership-apihub-apispec-view'
 import { Flex, VStack } from '@stoplight/mosaic'
 import { IHttpOperationRequestBody } from '@stoplight/types'
-import { DiffBlock, DiffContainer, isDiff } from 'diff-block'
+import { DiffBlock, DiffContainer, isDiff } from '@netcracker/qubership-apihub-apispec-view-diff-block'
 import * as React from 'react'
 import { useCallback, useEffect, useState } from 'react'
 
 import { isDiffRename } from '@netcracker/qubership-apihub-api-diff'
-import { Description } from '@stoplight/diff-elements-core/components/Docs/HttpOperation/Description'
-import { useAggregatedDiffsMetaKey } from '@stoplight/elements/containers/AggregatedDiffsMetaKeyContext'
-import { useChangeSeverityFilters } from '@stoplight/elements/containers/ChangeSeverityFiltersContext'
-import { useDiffsMetaKey } from '@stoplight/elements/containers/DiffsMetaKeyContext'
+import { Description } from './Description'
+import { useAggregatedDiffsMetaKey } from '@netcracker/qubership-apihub-apispec-view/containers/AggregatedDiffsMetaKeyContext'
+import { useChangeSeverityFilters } from '@netcracker/qubership-apihub-apispec-view/containers/ChangeSeverityFiltersContext'
+import { useDiffsMetaKey } from '@netcracker/qubership-apihub-apispec-view/containers/DiffsMetaKeyContext'
+import { JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS } from '../../../constants'
 import { SectionSubtitle } from '../Sections'
+import { DIFF_ACTION_ATTRIBUTE, resolveMediaTypeDiffAction } from './diffActionMarkers'
 
 export type DiffBodyProps = {
   body: IHttpOperationRequestBody;
@@ -99,23 +101,36 @@ export const Body = ({ body, onChange }: DiffBodyProps) => {
               schema={schema}
               displayMode={schemaViewMode}
               expandedDepth={defaultSchemaDepth}
-              overriddenKind="parameters"
+              customizationOptions={JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS}
             />
           </DiffBlock>
         </DiffContainer>
       )
     }
 
+    // Whole operation was added/removed, so there is nothing to compare side-by-side
+    if (notSplitSchemaViewer) {
+      return (
+        <JsonSchemaViewer
+          schema={schema}
+          displayMode={schemaViewMode}
+          expandedDepth={defaultSchemaDepth}
+          customizationOptions={JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS}
+        />
+      )
+    }
+
     return (
-      <JsonSchemaDiffViewer
+      <JsonSchemaDiffsViewer
         schema={schema}
         displayMode={schemaViewMode}
         expandedDepth={defaultSchemaDepth}
-        overriddenKind="parameters"
+        customizationOptions={JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS}
         // diffs specific
-        layoutMode={notSplitSchemaViewer ? 'document' : 'side-by-side-diffs'}
-        filters={filters}
-        metaKeys={diffMetaKeys}
+        diffTypes={filters}
+        diffMetaKeys={diffMetaKeys}
+        // TODO: Temporarily disabled, restore once hiding unchanged nodes is supported
+        hideUnchangedNodes={false}
       />
     )
   }, [defaultSchemaDepth, diffsMetaKey, filters, notSplitSchemaViewer, schema, schemaViewMode, wholeContentDiff, aggregatedDiffsMetaKey])
@@ -133,6 +148,7 @@ export const Body = ({ body, onChange }: DiffBodyProps) => {
               <Flex flex={1} justify="end">
                 <select
                   aria-label="Request Body Content Type"
+                  data-testid="request-body-media-type-select"
                   value={String(chosenContent)}
                   style={{ background: 'white' }}
                   onChange={event => {
@@ -142,7 +158,12 @@ export const Body = ({ body, onChange }: DiffBodyProps) => {
                   className="sl-menu-adapter"
                 >
                   {contents.map((content, index) => (
-                    <option key={index} value={index} style={{ background: 'white' }}>
+                    <option
+                      key={index}
+                      value={index}
+                      style={{ background: 'white' }}
+                      {...{ [DIFF_ACTION_ATTRIBUTE]: resolveMediaTypeDiffAction(content, diffsMetaKey) }}
+                    >
                       {content.mediaType}
                     </option>
                   ))}

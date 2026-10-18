@@ -15,6 +15,11 @@
       "dom.iterable"
     ],
     "target": "es2017",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    // This config extends @stoplight/scripts directly rather than the repository root, so
+    // the root's override does not reach it: it inherits "moduleResolution": "node" from
+    // node_modules, which TypeScript 7 removed (TS5108). Overridden here for the same
+    // reason and to the same value the rest of this repository uses.
+    "moduleResolution": "bundler"
   }
 }

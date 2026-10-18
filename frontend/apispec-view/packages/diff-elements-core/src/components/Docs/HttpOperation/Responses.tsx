@@ -1,23 +1,25 @@
-import { buildOpenApiDiffCause, JsonSchemaDiffViewer, JsonSchemaViewer } from '@netcracker/qubership-apihub-api-doc-viewer'
+import { buildOpenApiDiffCause, JsonSchemaDiffsViewer, JsonSchemaViewer } from '@netcracker/qubership-apihub-api-doc-viewer'
 import { mirrorSelfDiffMetaKey } from '@netcracker/qubership-apihub-http-spec/oas3WithMeta'
-import { Extension, ExtensionMeta } from '@stoplight/diff-elements-core/components/Docs/Extensions'
-import { ExtensionsDiff } from '@stoplight/diff-elements-core/components/Docs/ExtensionsDiff'
-import { useOperationSchemaOptionsMode } from '@stoplight/elements'
+import { Extension, ExtensionMeta } from '../Extensions'
+import { ExtensionsDiff } from '../ExtensionsDiff'
+import { useOperationSchemaOptionsMode } from '@netcracker/qubership-apihub-apispec-view'
 import { Box, Flex, IntentVals, Tab, TabList, TabPanel, TabPanels, Tabs, VStack } from '@stoplight/mosaic'
 import { IHttpHeaderParam, IHttpOperation, IHttpOperationResponse } from '@stoplight/types'
-import { DiffBlock, DiffContainer, extractAmountOfDiffs, isDiff, selfDiffMetaKey, WithDiffMetaKey } from 'diff-block'
+import { DiffBlock, DiffContainer, extractAmountOfDiffs, isDiff, selfDiffMetaKey, WithDiffMetaKey } from '@netcracker/qubership-apihub-apispec-view-diff-block'
 import { atom, useAtom } from 'jotai'
 import { isEmpty, keys, sortBy, uniqBy } from 'lodash'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { isDiffRename } from '@netcracker/qubership-apihub-api-diff'
-import { Description } from '@stoplight/diff-elements-core/components/Docs/HttpOperation/Description'
-import { isObject } from '@stoplight/diff-elements-core/utils/guards'
-import { useAggregatedDiffsMetaKey } from '@stoplight/elements/containers/AggregatedDiffsMetaKeyContext'
-import { useChangeSeverityFilters } from '@stoplight/elements/containers/ChangeSeverityFiltersContext'
-import { useDiffsMetaKey } from '@stoplight/elements/containers/DiffsMetaKeyContext'
+import { Description } from './Description'
+import { isObject } from '../../../utils/guards'
+import { useAggregatedDiffsMetaKey } from '@netcracker/qubership-apihub-apispec-view/containers/AggregatedDiffsMetaKeyContext'
+import { useChangeSeverityFilters } from '@netcracker/qubership-apihub-apispec-view/containers/ChangeSeverityFiltersContext'
+import { useDiffsMetaKey } from '@netcracker/qubership-apihub-apispec-view/containers/DiffsMetaKeyContext'
+import { JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS } from '../../../constants'
 import { SectionSubtitle, SectionTitle } from '../Sections'
+import { DIFF_ACTION_ATTRIBUTE, resolveMediaTypeDiffAction } from './diffActionMarkers'
 import { Parameters } from './Parameters'
 
 interface ResponseCodeItemProps {
@@ -168,7 +170,7 @@ const ACTION_COLORS: Record<'add' | 'remove', string> = {
 
 const ResponseCodeItem = ({ response, action }: ResponseCodeItemProps) => {
   return (
-    <Box>
+    <Box data-testid={`response-code-${response.code}`} {...{ [DIFF_ACTION_ATTRIBUTE]: action }}>
       {response.code}
       {action && (
         <div
@@ -255,23 +257,36 @@ const Response = ({ response, onMediaTypeChange, extensions, extensionsMeta }: R
               schema={schema}
               displayMode={schemaViewMode}
               expandedDepth={defaultSchemaDepth}
-              overriddenKind="parameters"
+              customizationOptions={JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS}
             />
           </DiffBlock>
         </DiffContainer>
       )
     }
 
+    // Whole operation was added/removed, so there is nothing to compare side-by-side
+    if (notSplitSchemaViewer) {
+      return (
+        <JsonSchemaViewer
+          schema={schema}
+          displayMode={schemaViewMode}
+          expandedDepth={defaultSchemaDepth}
+          customizationOptions={JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS}
+        />
+      )
+    }
+
     return (
-      <JsonSchemaDiffViewer
+      <JsonSchemaDiffsViewer
         schema={schema}
         displayMode={schemaViewMode}
         expandedDepth={defaultSchemaDepth}
-        overriddenKind="parameters"
+        customizationOptions={JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS}
         // diffs specific
-        layoutMode={notSplitSchemaViewer ? 'document' : 'side-by-side-diffs'}
-        filters={filters}
-        metaKeys={diffMetaKeys}
+        diffTypes={filters}
+        diffMetaKeys={diffMetaKeys}
+        // TODO: Temporarily disabled, restore once hiding unchanged nodes is supported
+        hideUnchangedNodes={false}
       />
     )
   }, [defaultSchemaDepth, diffMetaKeys, filters, notSplitSchemaViewer, schema, schemaViewMode, wholeContentDiff, aggregatedDiffsMetaKey])
@@ -311,6 +326,7 @@ const Response = ({ response, onMediaTypeChange, extensions, extensionsMeta }: R
               <Flex pos="relative" flex={1} justify="end">
                 <select
                   aria-label="Response Body Content Type"
+                  data-testid="response-body-media-type-select"
                   value={String(chosenContent)}
                   onChange={e => {
                     setWholeContentDiff(undefined)
@@ -320,7 +336,11 @@ const Response = ({ response, onMediaTypeChange, extensions, extensionsMeta }: R
                   style={{ backgroundColor: 'white' }}
                 >
                   {contents.map((content, index) => (
-                    <option key={index} value={index}>
+                    <option
+                      key={index}
+                      value={index}
+                      {...{ [DIFF_ACTION_ATTRIBUTE]: resolveMediaTypeDiffAction(content, diffsMetaKey) }}
+                    >
                       {content.mediaType}
                     </option>
                   ))}

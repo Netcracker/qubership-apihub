@@ -1,4 +1,4 @@
-import { isRegularNode, RegularNode } from '@stoplight/json-schema-tree';
+import { isRegularNode, RegularNode, SchemaNode } from '@stoplight/json-schema-tree';
 import { Box, Flex, HStack, Tab, TabList, TabPanel, TabPanels, Tabs } from '@stoplight/mosaic';
 import { useAtom } from 'jotai';
 import { useAtomValue, useUpdateAtom } from 'jotai/utils';
@@ -46,23 +46,25 @@ export const TopLevelSchemaRow = ({ schemaNode }: Pick<SchemaRowProps, 'schemaNo
           spacing={8}
           as={Tabs}
           appearance="pill"
-          selectedId={selectedChoice.title}
-          onChange={(value: string) => setSelectedChoice(choices.find(c => c.title === value)!)}
+          selectedId={choiceTabId(selectedChoice)}
+          onChange={(value: string) =>
+            setSelectedChoice(choices.find(choice => choiceTabId(choice) === value) ?? choices[0])
+          }
         >
           <div className="sl-responses-tab-list">
             <TabList density="compact" fontSize="sm">
-              {choices.map((choice, index) => (
-                <Tab key={choice.title} id={choice.title}>
+              {choices.map(choice => (
+                <Tab key={choice.type.id} id={choiceTabId(choice)}>
                   {choice.title}
                 </Tab>
               ))}
             </TabList>
           </div>
           <TabPanels>
-            {choices.map((choice, index) => {
+            {choices.map(choice => {
               const nodes = calculateChildrenToShow(choice.type);
               return (
-                <TabPanel key={choice.title} id={choice.title}>
+                <TabPanel key={choice.type.id} id={choiceTabId(choice)}>
                   <ChildStack schemaNode={schemaNode} childNodes={nodes} currentNestingLevel={nestingLevel} />
                 </TabPanel>
               );
@@ -111,4 +113,16 @@ function ScrollCheck() {
 
 function isPureObjectNode(schemaNode: RegularNode) {
   return schemaNode.primaryType === 'object' && schemaNode.types?.length === 1;
+}
+
+/**
+ * Identifies a combiner branch for `Tab` and `TabPanel`.
+ *
+ * These ids reach the document rather than staying inside one tab list, and a page can render
+ * several combiners at once, so a bare index would collide between them. Combiner branch titles
+ * are derived from the node type ('object', 'string', ...) and are not unique either. Every choice
+ * already carries a node whose `id` is unique per tree, which makes it the one safe suffix.
+ */
+function choiceTabId({ type }: { type: SchemaNode }) {
+  return `choice-${type.id}`;
 }

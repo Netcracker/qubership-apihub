@@ -1,5 +1,5 @@
-import { getOriginalObject, useInlineRefResolver } from '@stoplight/elements-core';
-import { JsonSchemaViewer } from 'json-schema-viewer';
+import { getOriginalObject, useInlineRefResolver } from '@netcracker/qubership-apihub-apispec-view-elements-core';
+import { JsonSchemaViewer } from '@netcracker/qubership-apihub-apispec-view-json-schema-viewer';
 import { DefaultSMDComponents } from '@stoplight/markdown-viewer';
 import { Box, Flex, Icon } from '@stoplight/mosaic';
 import { HttpParamStyles, IHttpOperation, IHttpRequest, NodeType } from '@stoplight/types';

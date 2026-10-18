@@ -9,7 +9,7 @@ import { transformOas3Operation, transformOas3Service } from '@netcracker/qubers
 import { transformOas3WithMetaOperation, transformOas3WithMetaService } from '@netcracker/qubership-apihub-http-spec/oas3WithMeta';
 import { encodePointerFragment, pointerToPath } from '@stoplight/json';
 import { IHttpService, NodeType } from '@stoplight/types';
-import { selfDiffMetaKey } from 'diff-block';
+import { selfDiffMetaKey } from '@netcracker/qubership-apihub-apispec-view-diff-block';
 import { get, isObject, last } from 'lodash';
 import { OpenAPIObject } from 'openapi3-ts';
 import { Spec } from 'swagger-schema-official';

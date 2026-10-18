@@ -6,7 +6,7 @@ import { getDisplayName } from './hoc/utils';
 
 const scopeClassName = 'sl-elements';
 
-export class Styled extends React.Component {
+export class Styled extends React.Component<React.PropsWithChildren> {
   // Unfortunately BP uses the Legacy Context API which can only be utilized via class components and PropTypes.
   static childContextTypes = {
     blueprintPortalClassName: PropTypes.string,
@@ -27,7 +27,7 @@ export class Styled extends React.Component {
   }
 }
 
-export function withStyles<T>(Component: React.ComponentType<T>): React.FC<T> {
+export function withStyles<T extends object>(Component: React.ComponentType<T>): React.FC<T> {
   const Inner: React.FC<T> = props => {
     return (
       <Styled>

@@ -1,4 +1,4 @@
-import { CustomComponentMapping } from '@stoplight/elements-core';
+import { CustomComponentMapping } from '../../../index';
 import { Box } from '@stoplight/mosaic';
 import React from 'react';
 

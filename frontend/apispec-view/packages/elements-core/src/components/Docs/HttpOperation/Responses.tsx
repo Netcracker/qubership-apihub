@@ -1,14 +1,14 @@
 import { JsonSchemaViewer } from '@netcracker/qubership-apihub-api-doc-viewer';
-import { Extension, Extensions } from '@stoplight/elements-core/components/Docs/Extensions';
-import { useSearchPhrase, useOperationSchemaOptionsMode } from '@stoplight/elements-core';
+import { Extension, Extensions } from '../Extensions';
+import { useSearchPhrase, useOperationSchemaOptionsMode } from '../../../index';
 import { Box, Flex, IntentVals, Tab, TabList, TabPanel, TabPanels, Tabs, VStack } from '@stoplight/mosaic';
 import { IHttpOperationResponse } from '@stoplight/types';
-import { JsonSchemaViewer as OldJsonSchemaViewer } from 'json-schema-viewer';
+import { JsonSchemaViewer as OldJsonSchemaViewer } from '@netcracker/qubership-apihub-apispec-view-json-schema-viewer';
 import { isEmpty, sortBy, uniqBy } from 'lodash';
-import { nanoid } from 'nanoid';
 import * as React from 'react';
 import { Marker } from 'react-mark.js';
 
+import { JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS } from '../../../constants';
 import { useInlineRefResolver } from '../../../context/InlineRefResolver';
 import { getOriginalObject } from '../../../utils/ref-resolving/resolvedObject';
 import { MarkdownViewer } from '../../MarkdownViewer';
@@ -98,8 +98,8 @@ const Response = ({ response, onMediaTypeChange, extensions }: ResponseProps) =>
         {extensions && !isEmpty(extensions) && (
           <Box>
             <SectionSubtitle title="Custom properties" id="response-extensions" />
-            {extensions.map(extension => (
-              <Extensions key={nanoid(8)} value={extension} />
+            {extensions.map((extension, index) => (
+              <Extensions key={index} value={extension} />
             ))}
           </Box>
         )}
@@ -145,11 +145,10 @@ const Response = ({ response, onMediaTypeChange, extensions }: ResponseProps) =>
                 />
               ) : (
                 <JsonSchemaViewer
-                  key={nanoid(6)}
                   schema={getOriginalObject(schema!)}
                   displayMode={schemaViewMode}
                   expandedDepth={defaultSchemaDepth}
-                  overriddenKind="parameters"
+                  customizationOptions={JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS}
                 />
               ))}
           </>

@@ -4,7 +4,7 @@ import {
   OperationDisplayModeContext,
   OperationSchemaOptions,
   OperationSchemaOptionsContext,
-} from '@stoplight/elements'
+} from '../index'
 import {
   InlineRefResolverProvider,
   NonIdealState,
@@ -14,18 +14,18 @@ import {
   withQueryClientProvider,
   withRouter,
   withStyles,
-} from '@stoplight/elements-core'
-import { IServer } from '@stoplight/elements-core/utils/http-spec/IServer'
+} from '@netcracker/qubership-apihub-apispec-view-elements-core'
+import { IServer } from '@netcracker/qubership-apihub-apispec-view-elements-core/utils/http-spec/IServer'
 import { Box, Flex, Icon, Provider } from '@stoplight/mosaic'
 import { IHttpOperation } from '@stoplight/types'
-import { SchemaViewMode } from 'json-schema-viewer'
+import { SchemaViewMode } from '@netcracker/qubership-apihub-apispec-view-json-schema-viewer'
 import { flow } from 'lodash'
 import * as React from 'react'
 import { useEffect, useMemo } from 'react'
 
 import { buildOpenApiDiffCause } from '@netcracker/qubership-apihub-api-doc-viewer'
-import { DiffsMetaKeyContext } from '@stoplight/elements/containers/DiffsMetaKeyContext'
-import { DiffBlock, DiffContainer } from 'diff-block'
+import { DiffsMetaKeyContext } from './DiffsMetaKeyContext'
+import { DiffBlock, DiffContainer } from '@netcracker/qubership-apihub-apispec-view-diff-block'
 import { APIWithOperation } from '../components/API/APIWithOperation'
 import { useExportDocumentProps } from '../hooks/useExportDocumentProps'
 import { transformOasToServiceNodeWithDiffMeta } from '../utils/oas'

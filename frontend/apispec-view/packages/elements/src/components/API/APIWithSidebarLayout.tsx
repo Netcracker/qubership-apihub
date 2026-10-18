@@ -6,11 +6,11 @@ import {
   SidebarLayout,
   TableOfContents,
   useSearchPhrase,
-} from '@stoplight/elements-core';
-import { IServer } from '@stoplight/elements-core/utils/http-spec/IServer';
+} from '@netcracker/qubership-apihub-apispec-view-elements-core';
+import { IServer } from '@netcracker/qubership-apihub-apispec-view-elements-core/utils/http-spec/IServer';
 import { Flex, Heading } from '@stoplight/mosaic';
 import { NodeType } from '@stoplight/types';
-import { SchemaViewMode } from 'json-schema-viewer';
+import { SchemaViewMode } from '@netcracker/qubership-apihub-apispec-view-json-schema-viewer';
 import * as React from 'react';
 import { Link, Redirect, useLocation } from 'react-router-dom';
 

@@ -1,4 +1,4 @@
-import { NativeMenuAdapter } from '@stoplight/elements-core/hoc/NativeMenuAdapter';
+import { NativeMenuAdapter } from '../../../hoc/NativeMenuAdapter';
 import { safeParse, safeStringify } from '@stoplight/json';
 import { Box, Flex, Icon, Image, Link, MenuItems, Panel } from '@stoplight/mosaic';
 import { capitalize } from 'lodash';
@@ -125,8 +125,12 @@ const ResponseMenu: React.FC<{
   }, [types, onChange]);
 
   const onChangeType = useCallback(
-    event => {
-      onChange(event.target.value);
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
+      /* The select's options are built from `types` just above, so every value it can
+         produce is a BodyFormat. Typing the event (React 18's useCallback no longer
+         contextually types the parameter) is what made this visible - it was an implicit
+         any before, not a check that passed. */
+      onChange(event.target.value as BodyFormat);
     },
     [onChange],
   );

@@ -1,6 +1,6 @@
 import { useDiffContext } from './DiffContext';
 import { applyReplacedFromMeta } from './util';
-import { useDiffsMetaKey } from '@stoplight/elements/containers/DiffsMetaKeyContext';
+import { useDiffsMetaKey } from '@netcracker/qubership-apihub-apispec-view/containers/DiffsMetaKeyContext';
 import { DiffAction } from '@netcracker/qubership-apihub-api-diff';
 
 export function useValueFromObjWithDiff(data: any, key: string): unknown {

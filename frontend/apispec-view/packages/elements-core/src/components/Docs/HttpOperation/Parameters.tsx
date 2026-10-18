@@ -1,11 +1,12 @@
 import { JsonSchemaViewer } from '@netcracker/qubership-apihub-api-doc-viewer';
-import { useOperationSchemaOptionsMode } from '@stoplight/elements-core';
+import { useOperationSchemaOptionsMode } from '../../../index';
 import { HttpParamStyles, IHttpContent, IHttpParam } from '@stoplight/types';
 import type { JSONSchema7Object } from 'json-schema';
-import { JsonSchemaViewer as OldJsonSchemaViewer } from 'json-schema-viewer';
+import { JsonSchemaViewer as OldJsonSchemaViewer } from '@netcracker/qubership-apihub-apispec-view-json-schema-viewer';
 import { isObject, sortBy } from 'lodash';
 import * as React from 'react';
 
+import { JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS } from '../../../constants';
 import { isNodeExample } from '../../../utils/http-spec/examples';
 import {useMemo} from "react";
 
@@ -63,7 +64,7 @@ export const Parameters: React.FunctionComponent<ParametersProps> = ({ parameter
       schema={schema}
       displayMode={schemaViewMode}
       expandedDepth={defaultSchemaDepth}
-      overriddenKind="parameters"
+      customizationOptions={JSON_SCHEMA_VIEWER_CUSTOMIZATION_OPTIONS}
       topLevelPropsMediaTypes={parametersMediaTypes}
     />
   );

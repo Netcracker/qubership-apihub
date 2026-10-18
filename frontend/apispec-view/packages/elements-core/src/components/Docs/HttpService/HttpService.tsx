@@ -1,11 +1,10 @@
-import { Extensions } from '@stoplight/elements-core/components/Docs/Extensions';
-import { useSearchPhrase, useServiceExtensions } from '@stoplight/elements-core';
-import { SectionSubtitle } from '@stoplight/elements-core/components/Docs/Sections';
+import { Extensions } from '../Extensions';
+import { useSearchPhrase, useServiceExtensions } from '../../../index';
+import { SectionSubtitle } from '../Sections';
 import { Box, Flex, Heading, VStack } from '@stoplight/mosaic';
 import { withErrorBoundary } from '@stoplight/react-error-boundary';
 import { IHttpService } from '@stoplight/types';
 import { isEmpty } from 'lodash';
-import { nanoid } from 'nanoid';
 import * as React from 'react';
 import { Marker } from 'react-mark.js';
 
@@ -59,7 +58,7 @@ const HttpServiceComponent = React.memo<HttpServiceProps>(({ data, location = {}
               <AdditionalInfo contact={data.contact} license={data.license} termsOfService={data.termsOfService} />
             )}
             {!isEmpty(extensions) && <SectionSubtitle title="Custom properties" id="operation-extensions" />}
-            {!isEmpty(extensions) && extensions.map(extension => <Extensions key={nanoid(8)} value={extension} />)}
+            {!isEmpty(extensions) && extensions.map((extension, index) => <Extensions key={index} value={extension} />)}
           </Box>
         </VStack>
         {data.description && <MarkdownViewer className="sl-my-5" markdown={data.description} />}

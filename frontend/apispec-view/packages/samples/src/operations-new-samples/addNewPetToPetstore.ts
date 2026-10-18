@@ -15,7 +15,7 @@ export namespace AddNewPetToPetstore {
           operationId: 'addPet',
           responses: {
             '200': {
-              description: 'REMOVED Successful operation Response Description',
+              description: 'Successful operation',
               content: {
                 'application/xml': {
                   schema: {
@@ -182,14 +182,12 @@ export namespace AddNewPetToPetstore {
       '/pet': {
         post: {
           tags: ['pet'],
-          // it is changed 'summary'
-          summary: 'CHANGED Add a new pet to the store',
-          // it is changed 'description'
-          description: 'CHANGED Add a new pet to the store',
+          summary: 'Add a new pet to the store',
+          description: 'Add a new pet to the store',
           operationId: 'addPet',
           responses: {
             '200': {
-              // there was deleted description here
+              description: 'Successful operation',
               content: {
                 'application/xml': {
                   schema: {
@@ -213,8 +211,6 @@ export namespace AddNewPetToPetstore {
           },
           // there was removed 'security' block
           requestBody: {
-            // it is added description
-            description: 'ADDED Create a new pet in the store Request Body Description',
             // true -> false
             required: false,
             content: {
@@ -260,8 +256,6 @@ export namespace AddNewPetToPetstore {
           // it is 'required' with appended 'category'
           'x-swagger-router-model': 'io.swagger.petstore.model.Pet',
           required: ['name', 'photoUrls', 'category'],
-          // it is added 'description'
-          description: 'Model of pet',
           properties: {
             id: {
               type: 'integer',
@@ -303,8 +297,7 @@ export namespace AddNewPetToPetstore {
             },
             status: {
               type: 'string',
-              // it is changed 'description'
-              description: 'CHANGED pet status in the store',
+              description: 'pet status in the store',
               enum: ['available', 'pending', 'sold'],
               // it is added 'maxLength'
               maxLength: 49,

@@ -1,6 +1,6 @@
-import { useResolvedObject, useSearchPhrase, useOperationExtensions } from '@stoplight/elements-core';
-import { Extensions } from '@stoplight/elements-core/components/Docs/Extensions';
-import { SectionSubtitle } from '@stoplight/elements-core/components/Docs/Sections';
+import { useResolvedObject, useSearchPhrase, useOperationExtensions } from '../../../index';
+import { Extensions } from '../Extensions';
+import { SectionSubtitle } from '../Sections';
 import { Box, Flex, Heading, HStack, isNotEmptyObject, useThemeIsDark, VStack } from '@stoplight/mosaic';
 import { ErrorBoundaryProps, withErrorBoundary } from '@stoplight/react-error-boundary';
 import { IHttpOperation, IServer } from '@stoplight/types';

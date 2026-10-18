@@ -1,4 +1,4 @@
-import { NativeMenu } from '@stoplight/elements-core/hoc/Menu';
+import { NativeMenu } from '../../../hoc/Menu';
 import { safeStringify } from '@stoplight/json';
 import { MenuItems, Panel } from '@stoplight/mosaic';
 import { CodeEditor } from '@stoplight/mosaic-code-editor';
@@ -51,8 +51,8 @@ function ExampleMenu({ examples, requestBody, onChange }: RequestBodyProps) {
   const data = React.useMemo(() => {
     const items: MenuItems = [];
     const mapping = new Map<string, INodeExample | INodeExternalExample>();
-    examples.forEach(example => {
-      const id = `request-example-${example.key}`;
+    examples.forEach((example, index) => {
+      const id = `request-example-${index}-${example.key}`;
       items.push({ id, title: example.key });
       mapping.set(id, example);
     });

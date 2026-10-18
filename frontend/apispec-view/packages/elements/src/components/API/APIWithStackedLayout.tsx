@@ -5,11 +5,11 @@ import {
   HttpMethodColors,
   ParsedDocs,
   TryItWithRequestSamples,
-} from '@stoplight/elements-core';
+} from '@netcracker/qubership-apihub-apispec-view-elements-core';
 import { Box, Flex, Icon, Tab, TabList, TabPanel, TabPanels, Tabs } from '@stoplight/mosaic';
 import { NodeType } from '@stoplight/types';
 import cn from 'classnames';
-import { SchemaViewMode } from 'json-schema-viewer';
+import { SchemaViewMode } from '@netcracker/qubership-apihub-apispec-view-json-schema-viewer';
 import * as React from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -213,7 +213,7 @@ const Item = React.memo<{ item: OperationNode }>(({ item }) => {
   );
 });
 
-const Collapse: React.FC<{ isOpen: boolean }> = ({ isOpen, children }) => {
+const Collapse: React.FC<React.PropsWithChildren<{ isOpen: boolean }>> = ({ isOpen, children }) => {
   if (!isOpen) return null;
 
   return <Box>{children}</Box>;

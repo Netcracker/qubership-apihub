@@ -1,7 +1,7 @@
 {
-  "name": "@stoplight/json-schema-viewer",
+  "name": "@netcracker/qubership-apihub-apispec-view-json-schema-viewer",
   "version": "0.0.0",
-  "private": "true",
+  "private": true,
   "description": "A beautiful React component for viewing JSON Schema",
   "keywords": [],
   "sideEffects": false,
@@ -9,5 +9,24 @@
   "main": "src/index.ts",
   "engines": {
     "node": ">=24.0.0"
+  },
+  "dependencies": {
+    "fnv-plus": "1.3.1"
+  },
+  "devDependencies": {
+    "@stoplight/json": "^3.18.1",
+    "@stoplight/json-schema-tree": "^2.2.1",
+    "@stoplight/markdown-viewer": "^5.4.7",
+    "@stoplight/mosaic": "^1.40.0",
+    "@stoplight/mosaic-code-viewer": "^1.24.4",
+    "@stoplight/react-error-boundary": "^2.0.0",
+    "@stoplight/types": "^13.0.0",
+    "@storybook/react": "^8.1.11",
+    "@types/json-schema": "^7.0.11",
+    "classnames": "^2.2.6",
+    "jotai": "1.6.3",
+    "lodash": "^4.17.21",
+    "nanoid": "^3.1.32",
+    "react": "^18.3.1"
   }
 }

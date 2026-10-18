@@ -1,5 +1,5 @@
 import { IAsyncOperation } from '@netcracker/qubership-apihub-http-spec';
-import { NodeTypeAsyncOperation } from '@stoplight/elements-core/types';
+import { NodeTypeAsyncOperation } from '@netcracker/qubership-apihub-apispec-view-elements-core/types';
 import { IHttpOperation, IHttpService, NodeType } from '@stoplight/types';
 import { JSONSchema7 } from 'json-schema';
 

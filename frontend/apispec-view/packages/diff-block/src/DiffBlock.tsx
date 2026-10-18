@@ -8,7 +8,7 @@ import { DIFF_TYPE_COLOR_MAP, DIFF_TYPE_NAME_MAP } from './constants'
 import { useDiffBlockIdPrefixContext } from './DiffBlockIdPrefixContext';
 import { useDiffContext } from './DiffContext';
 import { diffBlockHeight, diffBlockTop } from './state';
-import { useChangeSeverityFilters } from "@stoplight/elements/containers/ChangeSeverityFiltersContext";
+import { useChangeSeverityFilters } from "@netcracker/qubership-apihub-apispec-view/containers/ChangeSeverityFiltersContext";
 
 // eslint-disable-next-line
 const resetTypeIfExcluded = (
@@ -21,12 +21,14 @@ const resetTypeIfExcluded = (
   return type;
 };
 
-export const DiffBlock: React.FunctionComponent<{
-  type: DiffType | undefined;
-  action: ActionType | undefined;
-  cause: string | undefined;
-  id: string;
-}> = props => {
+export const DiffBlock: React.FunctionComponent<
+  React.PropsWithChildren<{
+    type: DiffType | undefined;
+    action: ActionType | undefined;
+    cause: string | undefined;
+    id: string;
+  }>
+> = props => {
   const { action, cause, id, children } = props;
   const { side, containerElement } = useDiffContext();
   const filters = useChangeSeverityFilters()

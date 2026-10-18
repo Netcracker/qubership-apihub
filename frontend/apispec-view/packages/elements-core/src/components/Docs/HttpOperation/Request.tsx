@@ -1,10 +1,9 @@
-import { Extension, Extensions } from '@stoplight/elements-core/components/Docs/Extensions';
+import { Extension, Extensions } from '../Extensions';
 import { Box, VStack } from '@stoplight/mosaic';
 import { HttpSecurityScheme, IHttpOperation } from '@stoplight/types';
 import { useAtom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 import { flatten, isEmpty } from 'lodash';
-import { nanoid } from 'nanoid';
 import * as React from 'react';
 
 import { getReadableSecurityName, shouldIncludeKey } from '../../../utils/oas/security';
@@ -65,8 +64,8 @@ export const Request: React.FunctionComponent<IRequestProps> = ({
       {extensions && !isEmpty(extensions) && (
         <Box>
           <SectionSubtitle title="Custom properties" id="request-extensions" />
-          {extensions.map(extension => (
-            <Extensions key={nanoid(8)} value={extension} />
+          {extensions.map((extension, index) => (
+            <Extensions key={index} value={extension} />
           ))}
         </Box>
       )}

@@ -1,8 +1,8 @@
-import { Extension, ExtensionMeta } from '@stoplight/diff-elements-core/components/Docs/Extensions';
-import { useDocument } from '@stoplight/elements-core/context/InlineRefResolver';
+import { Extension, ExtensionMeta } from '@netcracker/qubership-apihub-apispec-view-diff-elements-core/components/Docs/Extensions';
+import { useDocument } from '@netcracker/qubership-apihub-apispec-view-elements-core/context/InlineRefResolver';
 import { entries, mergeWith } from 'lodash';
 import * as React from 'react';
-import { useDiffsMetaKey } from "@stoplight/elements/containers/DiffsMetaKeyContext";
+import { useDiffsMetaKey } from "@netcracker/qubership-apihub-apispec-view/containers/DiffsMetaKeyContext";
 
 // If you have OVERWRITING original specification, look at this place
 

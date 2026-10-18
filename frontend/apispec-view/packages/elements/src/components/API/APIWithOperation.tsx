@@ -1,13 +1,13 @@
-import { HttpOperation as HttpOperationDiff } from '@stoplight/diff-elements-core/components/Docs/HttpOperation';
+import { HttpOperation as HttpOperationDiff } from '@netcracker/qubership-apihub-apispec-view-diff-elements-core/components/Docs/HttpOperation';
 import {
   COMPARE_DISPLAY_MODE,
   useOperationDisplayMode,
-} from '@stoplight/elements/containers/OperationDisplayModeContext';
-import { ExportButtonProps, RoutingProps } from '@stoplight/elements-core';
-import { HttpOperation } from '@stoplight/elements-core/components/Docs/HttpOperation';
-import { IServer } from '@stoplight/elements-core/utils/http-spec/IServer';
+} from '../../containers/OperationDisplayModeContext';
+import { ExportButtonProps, RoutingProps } from '@netcracker/qubership-apihub-apispec-view-elements-core';
+import { HttpOperation } from '@netcracker/qubership-apihub-apispec-view-elements-core/components/Docs/HttpOperation';
+import { IServer } from '@netcracker/qubership-apihub-apispec-view-elements-core/utils/http-spec/IServer';
 import { IHttpOperation } from '@stoplight/types';
-import { SchemaViewMode } from 'json-schema-viewer';
+import { SchemaViewMode } from '@netcracker/qubership-apihub-apispec-view-json-schema-viewer';
 import * as React from 'react';
 
 type PartialLayoutProps = {
