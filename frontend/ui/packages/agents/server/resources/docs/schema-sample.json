@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "title": "SchemaSamle",
+  "required": ["id", "hash"],
+  "description": "Some JSON schema",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "UUID"
+    },
+    "hash": {
+      "type": "string",
+      "format": "md5"
+    },
+    "values": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      }
+    }
+  }
+}

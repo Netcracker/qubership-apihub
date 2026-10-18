@@ -1,0 +1,117 @@
+import type { VersionKey } from '@apihub/entities/keys'
+import { INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING } from '@apihub/utils/internal-documents/constants'
+import { isAsyncApiSpecification, isGraphApiSpecification, isOpenApiSpecification } from '@apihub/utils/internal-documents/type-guards'
+import { extractOperationBasePath } from '@netcracker/qubership-apihub-api-diff'
+import { calculateNormalizedRestOperationId, removeComponents } from '@netcracker/qubership-apihub-api-processor'
+import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
+import { isRestOperation, type OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
+import type { PackageKey } from '@netcracker/qubership-apihub-ui-shared/utils/types'
+import { useMemo } from 'react'
+import type { QueryResultWithNoInternalDocument } from './shared-types'
+import { useInternalDocumentContent } from './useInternalDocumentContent'
+import { useInternalDocumentsByPackageVersion } from './useInternalDocumentsByPackageVersion'
+
+type Options = {
+  operation: OperationData | undefined
+  packageId: PackageKey | undefined
+  versionId: VersionKey | undefined
+}
+
+export function useNormalizedOperation(options: Options): QueryResultWithNoInternalDocument<unknown, Error> {
+  const { operation, packageId, versionId } = options
+
+  const hasVersionInternalDocument = !!operation?.versionInternalDocumentId
+
+  const operationPackageKey = encodeURIComponent(packageId ?? '')
+  const operationPackageVersion = encodeURIComponent(versionId ?? '')
+
+  const {
+    data: internalDocuments,
+    isLoading: isInternalDocumentsLoading,
+    error: internalDocumentsError,
+  } = useInternalDocumentsByPackageVersion(operationPackageKey, operationPackageVersion)
+
+  const internalDocumentWithOperation = useMemo(
+    () => internalDocuments?.find(document => document.id === operation?.versionInternalDocumentId),
+    [internalDocuments, operation?.versionInternalDocumentId],
+  )
+
+  const {
+    data: internalDocumentContent,
+    isLoading: isInternalDocumentContentLoading,
+    error: internalDocumentContentError,
+  } = useInternalDocumentContent(internalDocumentWithOperation?.hash)
+
+  const deserializedInternalDocument = useMemo(() => {
+    if (!internalDocumentContent) {
+      return undefined
+    }
+    return deserialize(internalDocumentContent, INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING)
+  }, [internalDocumentContent])
+
+  const filteredInternalDocumentForOperation = useMemo(
+    () => {
+      if (isOpenApiSpecification(deserializedInternalDocument)) {
+        // Truncate REST specification and leave the only necessary path
+        const operationPath = operation && isRestOperation(operation) ? operation.path : undefined
+        const operationMethod = operation && isRestOperation(operation) ? operation.method : undefined
+        if (!operationPath || !operationMethod) {
+          return undefined
+        }
+        const internalDocument = deserializedInternalDocument
+        const { paths = {}, servers = [] } = internalDocument ?? {}
+        const firstServerBasePath = extractOperationBasePath(servers)
+        let foundPath
+        const currentOperationNormalizedId = calculateNormalizedRestOperationId(firstServerBasePath === '/' ? firstServerBasePath : '', operationPath, operationMethod)
+        for (const path of Object.keys(paths)) {
+          const pathObject = paths[path]
+          const operationNormalizedId = calculateNormalizedRestOperationId(firstServerBasePath, path, operationMethod)
+          const matchedById = currentOperationNormalizedId === operationNormalizedId
+          const matchedByMethod = !!pathObject?.[operationMethod]
+          if (matchedById && matchedByMethod) {
+            foundPath = path
+            break
+          }
+        }
+        if (!foundPath) {
+          return undefined
+        }
+        return removeComponents({
+          ...internalDocument,
+          paths: {
+            [foundPath]: {
+              [operationMethod]: paths![foundPath]![operationMethod],
+            },
+          },
+        })
+      }
+      // GraphQL operations should be returned as is, because truncating is on ADV layer
+      if (isGraphApiSpecification(deserializedInternalDocument)) {
+        return deserializedInternalDocument
+      }
+      if (isAsyncApiSpecification(deserializedInternalDocument)) {
+        return deserializedInternalDocument
+      }
+      // Handle unrecognized operations
+      return undefined
+    },
+    [deserializedInternalDocument, operation],
+  )
+
+  return useMemo(
+    () => ({
+      data: filteredInternalDocumentForOperation,
+      isLoading: isInternalDocumentsLoading || isInternalDocumentContentLoading,
+      error: internalDocumentsError || internalDocumentContentError,
+      hasInternalDocument: hasVersionInternalDocument,
+    }),
+    [
+      filteredInternalDocumentForOperation,
+      internalDocumentContentError,
+      internalDocumentsError,
+      isInternalDocumentContentLoading,
+      isInternalDocumentsLoading,
+      hasVersionInternalDocument,
+    ],
+  )
+}

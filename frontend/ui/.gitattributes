@@ -1,0 +1,29 @@
+*.js text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.md text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.sh text eol=lf
+*.svg text eol=lf
+*.cjs text eol=lf
+.browserslistrc text eol=lf
+*.mp4 binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.vsdx binary
+*.ttf binary
+*.eot binary
+*.woff binary
+*.woff2 binary
+.gitignore text eol=lf
+.npmignore text eol=lf
+.gitattributes text eol=lf
+LICENSE eol=lf
+NOTICE eol=lf
+Dockerfile text eol=lf
+Dockerfile.local text eol=lf
+nginx.conf.template text eol=lf

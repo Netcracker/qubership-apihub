@@ -1,0 +1,827 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "This is Swagger UI environment generated for the Payment Methods TMF specification",
+    "version": "1.1",
+    "title": "Payment Methods TMF"
+  },
+  "host": "serverRoot",
+  "basePath": "/paymentMethods/v1",
+  "paths": {
+    "/paymentMethods/v1/paymentMethod": {
+      "get": {
+        "summary": "This operation lists payment methods",
+        "description": "",
+        "operationId": "listPaymentMethod",
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "type": "uuid",
+            "format": "uuid"
+          },
+          {
+            "name": "validFor.startDateTime",
+            "in": "query",
+            "required": false,
+            "type": "date-time",
+            "format": "date-time"
+          },
+          {
+            "name": "validFor.endDateTime",
+            "in": "query",
+            "required": false,
+            "type": "date-time",
+            "format": "date-time"
+          },
+          {
+            "name": "preferred",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "relatedParty.id",
+            "in": "query",
+            "required": false,
+            "type": "uuid",
+            "format": "uuid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "responseSchema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PaymentMethod"
+              }
+            },
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/PaymentMethod"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "The operation creates a new payment method. Cardinality of attributes and sub-resources is defined in payment method resource specification via #MandatoryOnCreate property",
+        "description": "",
+        "operationId": "createPaymentMethod",
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "required": false,
+            "schema": {
+              "$ref": "#/definitions/PaymentMethod"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "responseSchema": {
+              "$ref": "#/definitions/PaymentMethod"
+            },
+            "schema": {
+              "$ref": "#/definitions/PaymentMethod"
+            }
+          },
+          "201": {
+            "description": "OK",
+            "responseSchema": {
+              "$ref": "#/definitions/PaymentMethod"
+            },
+            "schema": {
+              "$ref": "#/definitions/PaymentMethod"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    },
+    "/paymentMethods/v1/paymentMethod/{paymentMethodId}": {
+      "get": {
+        "summary": "This operation to retrieve a specific payment method",
+        "description": "",
+        "operationId": "retrievePaymentMethod",
+        "parameters": [
+          {
+            "name": "paymentMethodId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "responseSchema": {
+              "$ref": "#/definitions/PaymentMethod"
+            },
+            "schema": {
+              "$ref": "#/definitions/PaymentMethod"
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "This operation deletes a payment method",
+        "description": "",
+        "operationId": "deletePaymentMethod",
+        "parameters": [
+          {
+            "name": "paymentMethodId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "405": {
+            "description": "Method Not Allowed",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "responseSchema": {
+              "$ref": "#/definitions/ErrorResponse"
+            },
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "AccountRef": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the object"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the object"
+        },
+        "href": {
+          "type": "string",
+          "description": "Href to the object"
+        },
+        "description": {
+          "type": "string"
+        },
+        "get_referredType": {
+          "type": "string",
+          "description": "Generic attribute indicating the name of the class type of the referred resource/entity"
+        }
+      },
+      "description": "Reference to an external entity that can be typically queried with another API such as a customer account, a ticket, etc"
+    },
+    "BankAccountDebit": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PaymentMethodDetails"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "accountNumber": {
+              "type": "string",
+              "description": "Bank Account Number (this could refer to the IBAN or SWIFT number)"
+            },
+            "accountNumberType": {
+              "type": "string",
+              "description": "Type of account number (e.g.: IBAN, SWIFT, ...)"
+            },
+            "bank": {
+              "type": "string",
+              "description": "Screen name of the bank"
+            },
+            "owner": {
+              "type": "string",
+              "description": "Owner of the bank account"
+            },
+            "BIC": {
+              "type": "string"
+            }
+          },
+          "description": "Details of a bank account"
+        }
+      ]
+    },
+    "BankAccountTransfer": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PaymentMethodDetails"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "accountNumber": {
+              "type": "string",
+              "description": "Bank Account Number (this could refer to the IBAN or SWIFT number)"
+            },
+            "accountNumberType": {
+              "type": "string",
+              "description": "Type of account number (e.g.: IBAN, SWIFT, ...)"
+            },
+            "bank": {
+              "type": "string",
+              "description": "Screen name of the bank"
+            },
+            "owner": {
+              "type": "string",
+              "description": "Owner of the bank account"
+            },
+            "BIC": {
+              "type": "string"
+            }
+          },
+          "description": "Details of a bank account"
+        }
+      ]
+    },
+    "Cash": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PaymentMethodDetails"
+        },
+        {
+          "type": "object",
+          "description": "Details of cash payer"
+        }
+      ]
+    },
+    "Check": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PaymentMethodDetails"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "bank": {
+              "type": "string",
+              "description": "Entity, typically a bank, performing the payment of the check"
+            },
+            "code": {
+              "type": "string",
+              "description": "Unique identifier of the check in the bank that issues them. Typically writen on them and comprises bank, account and serial number"
+            },
+            "date": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Date when the check was signed"
+            },
+            "drawer": {
+              "type": "string",
+              "description": "Person or entity writing the check"
+            },
+            "payee": {
+              "type": "string",
+              "description": "Person or entity the check is addressed to"
+            }
+          },
+          "description": "Details of a check"
+        }
+      ]
+    },
+    "DigitalWallet": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PaymentMethodDetails"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "service": {
+              "type": "string",
+              "description": "Wallet service (e.g.: PayPal)"
+            },
+            "walletId": {
+              "type": "string",
+              "description": "Unique Id of the account in the service"
+            },
+            "walletUrl": {
+              "type": "string",
+              "description": "URI pointing at the digital wallet (e.g.: https://paypal.me/johndoe)"
+            }
+          },
+          "description": "Details of a digital wallet"
+        }
+      ]
+    },
+    "ErrorEntry": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/definitions/ErrorSource"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "debugDetail": {
+          "type": "string"
+        },
+        "extra": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "ErrorResponse": {
+      "type": "object",
+      "properties": {
+        "errors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ErrorEntry"
+          }
+        }
+      }
+    },
+    "ErrorSource": {
+      "type": "object",
+      "properties": {
+        "pointer": {
+          "type": "string"
+        },
+        "parameter": {
+          "type": "string"
+        }
+      }
+    },
+    "PaymentMethod": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the object"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the object"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the payment method"
+        },
+        "preferred": {
+          "type": "boolean",
+          "description": "Defines whether this particular method is the preferred one"
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status of the payment method"
+        },
+        "statusDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last time the status changed"
+        },
+        "validFor": {
+          "description": "Validity period of the payment method",
+          "$ref": "#/definitions/TimePeriod"
+        },
+        "details": {
+          "description": "Details of the payment method. This object's type depends on the value of the type field specified for the payment method",
+          "$ref": "#/definitions/PaymentMethodDetails"
+        },
+        "relatedParty": {
+          "description": "Account (party) that owns the payment method",
+          "$ref": "#/definitions/RelatedPartyRef"
+        },
+        "account": {
+          "type": "array",
+          "description": "Account that owns or can use the payment method",
+          "items": {
+            "$ref": "#/definitions/AccountRef"
+          }
+        },
+        "extendedAttributes": {
+          "type": "object",
+          "description": "Extended parameters",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "get_baseType": {
+          "type": "string",
+          "description": "Generic attribute indicating the base class type of the extension class of the object. Useful only when the class type of the current object is unknown to the implementation"
+        },
+        "get_type": {
+          "type": "string",
+          "description": "Generic attribute containing the name of the resource class type"
+        },
+        "get_schemaLocation": {
+          "type": "string",
+          "description": "Generic attribute containing the link to the schema that defines the structure of the class type of the object"
+        }
+      },
+      "description": "Representation of a payment method"
+    },
+    "PaymentMethodDetails": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Free text description"
+        },
+        "get_type": {
+          "type": "string",
+          "description": "Payment Method Type"
+        }
+      }
+    },
+    "QuantityType": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "number",
+          "format": "float",
+          "description": "Measured amount"
+        },
+        "units": {
+          "type": "string",
+          "description": "Units the quantity is measured in"
+        }
+      },
+      "description": "Representation of a quantity of something. I can also be used to represent a quantity range"
+    },
+    "RelatedPartyRef": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the object"
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the object"
+        },
+        "href": {
+          "type": "string",
+          "description": "Href to the object"
+        },
+        "role": {
+          "type": "string"
+        },
+        "get_referredType": {
+          "type": "string",
+          "description": "Generic attribute indicating the name of the class type of the referred resource/entity"
+        }
+      },
+      "description": "Information about an associated entity and its role"
+    },
+    "TimePeriod": {
+      "type": "object",
+      "properties": {
+        "startDateTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Start date of the period"
+        },
+        "endDateTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "End date of the period"
+        }
+      },
+      "description": "Representation of a time period"
+    },
+    "TokenizedCard": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PaymentMethodDetails"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "brand": {
+              "type": "string",
+              "description": "Credit card brand. E.g.: Visa, MasterCard, AmericanExpress... Might be used for display purposes"
+            },
+            "issuer": {
+              "type": "string",
+              "description": "Whoever issued the token"
+            },
+            "lastFourDigits": {
+              "type": "string",
+              "description": "Last four digits of the credit card. Might be used for display purposes"
+            },
+            "token": {
+              "type": "string",
+              "description": "The token itself"
+            },
+            "tokenType": {
+              "type": "string",
+              "description": "Token type (e.g.: emv)"
+            },
+            "type": {
+              "type": "string",
+              "description": "Card type (e.g. Debit or Credit). Might be used for display purposes"
+            }
+          },
+          "description": "Details of a tokenized bank card"
+        }
+      ]
+    },
+    "Voucher": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/PaymentMethodDetails"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "description": "Description of the voucher (e.g.: get one and receive one free)"
+            },
+            "campaign": {
+              "type": "string",
+              "description": "Campaign this voucher belongs to"
+            },
+            "code": {
+              "type": "string",
+              "description": "Code that identifies the voucher or provides the discount"
+            },
+            "expirationDate": {
+              "type": "string",
+              "format": "date-time",
+              "description": "The voucher's expiration date"
+            },
+            "value": {
+              "description": "Discount that the voucher applies when it's a discount voucher",
+              "$ref": "#/definitions/QuantityType"
+            }
+          },
+          "description": "Details of a voucher"
+        }
+      ]
+    }
+  }
+}

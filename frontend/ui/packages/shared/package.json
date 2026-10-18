@@ -1,0 +1,30 @@
+{
+  "name": "@netcracker/qubership-apihub-ui-shared",
+  "version": "0.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "files": [
+    "**/*"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "storybook": "storybook dev -p 6006",
+    "build:showcase": "cross-env NODE_OPTIONS=--max-old-space-size=8192 storybook build -o ../../dist-showcase --disable-telemetry",
+    "test": "jest -c .jest/unit-tests/unit-test.jest.config.js",
+    "lint:check": "eslint . --ext .ts,.tsx,.json --ignore-path ../../.gitignore --max-warnings 0 --report-unused-disable-directives",
+    "lint:fix": "npm run lint:check -- --fix"
+  },
+  "peerDependencies": {
+    "@emotion/react": "11.10.6",
+    "@emotion/styled": "11.10.6",
+    "@mui/icons-material": "5.11.9",
+    "@mui/material": "5.11.10",
+    "@mui/private-theming": "5.11.9",
+    "js-file-download": "0.4.12",
+    "jszip": "3.10.1"
+  },
+  "devDependencies": {
+    "vite-plugin-dts": "1.7.1"
+  }
+}

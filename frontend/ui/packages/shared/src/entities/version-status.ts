@@ -1,0 +1,87 @@
+/**
+ * Copyright 2024-2025 NetCracker Technology Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import type { PackagePermission } from './package-permissions'
+import {
+  MANAGE_DRAFT_VERSION_PERMISSION,
+  MANAGE_RELEASE_VERSION_PERMISSION,
+} from './package-permissions'
+import type { Key } from './keys'
+
+export const DRAFT_VERSION_STATUS = 'draft'
+export const RELEASE_VERSION_STATUS = 'release'
+
+export type VersionStatus =
+  | typeof DRAFT_VERSION_STATUS
+  | typeof RELEASE_VERSION_STATUS
+
+export type VersionStatuses = ReadonlyArray<VersionStatus>
+
+export const PUBLISH_STATUSES = new Map([
+  [DRAFT_VERSION_STATUS, 'Draft'],
+  [RELEASE_VERSION_STATUS, 'Release'],
+])
+
+export const VERSION_STATUS_MANAGE_PERMISSIONS: Record<VersionStatus, PackagePermission> = {
+  [DRAFT_VERSION_STATUS]: MANAGE_DRAFT_VERSION_PERMISSION,
+  [RELEASE_VERSION_STATUS]: MANAGE_RELEASE_VERSION_PERMISSION,
+}
+
+export const VERSION_STATUSES: VersionStatuses = [
+  DRAFT_VERSION_STATUS,
+  RELEASE_VERSION_STATUS,
+]
+
+export const NO_PREVIOUS_RELEASE_VERSION_OPTION: Key = 'No previous release version'
+
+export const RELEASE_PREVIOUS_VERSION_REQUIRED_MESSAGE = 'A release version must have a release previous version'
+
+export type PreviousVersionLabels = {
+  fieldLabel: string
+  noPreviousOptionLabel: string
+}
+
+const DRAFT_PREVIOUS_VERSION_LABELS: PreviousVersionLabels = {
+  fieldLabel: 'Previous version',
+  noPreviousOptionLabel: 'No previous version',
+}
+
+const RELEASE_PREVIOUS_VERSION_LABELS: PreviousVersionLabels = {
+  fieldLabel: 'Previous release version',
+  noPreviousOptionLabel: 'No previous release version',
+}
+
+export function getPreviousVersionLabels(status: VersionStatus | undefined): PreviousVersionLabels {
+  return status === DRAFT_VERSION_STATUS
+    ? DRAFT_PREVIOUS_VERSION_LABELS
+    : RELEASE_PREVIOUS_VERSION_LABELS
+}
+
+export function getPreviousVersionStatuses(status: VersionStatus | undefined): VersionStatus[] {
+  return status === DRAFT_VERSION_STATUS
+    ? [RELEASE_VERSION_STATUS, DRAFT_VERSION_STATUS]
+    : [RELEASE_VERSION_STATUS]
+}
+
+export function isPreviousVersionStatusAllowed(
+  status: VersionStatus | undefined,
+  previousStatus: VersionStatus,
+): boolean {
+  if (status === DRAFT_VERSION_STATUS) {
+    return previousStatus === DRAFT_VERSION_STATUS || previousStatus === RELEASE_VERSION_STATUS
+  }
+  return previousStatus === RELEASE_VERSION_STATUS
+}

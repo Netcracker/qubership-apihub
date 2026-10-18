@@ -1,0 +1,3 @@
+.graphiql-dialog, .graphiql-tooltip {
+    z-index: 1400;
+}

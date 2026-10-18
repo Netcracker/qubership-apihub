@@ -1,0 +1,33 @@
+/**
+ * Copyright 2024-2025 NetCracker Technology Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import type { FC } from 'react'
+import { memo } from 'react'
+
+export const ExitIcon: FC<{ color?: string }> = memo(({ color }) => {
+  return (
+    <div style={{ display: 'flex' }}>
+      <svg width="21" height="20" viewBox="0 0 21 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M15.1423 3.53625C14.7297 3.50254 14.1985 3.50195 13.43 3.50195H11.5C11.0858 3.50195 10.75 3.16617 10.75 2.75195C10.75 2.33774 11.0858 2.00195 11.5 2.00195L13.4617 2.00195C14.1909 2.00195 14.7835 2.00194 15.2644 2.04123C15.7611 2.0818 16.2042 2.16799 16.6163 2.37798C17.2654 2.70874 17.7932 3.23653 18.124 3.88569C18.334 4.29782 18.4202 4.74091 18.4607 5.23753C18.5 5.71842 18.5 6.31108 18.5 7.04022V12.9617C18.5 13.6909 18.5 14.2835 18.4607 14.7644C18.4202 15.261 18.334 15.7041 18.124 16.1163C17.7932 16.7654 17.2654 17.2932 16.6163 17.624C16.2042 17.834 15.7611 17.9202 15.2644 17.9607C14.7835 18 14.1909 18 13.4618 18H11.5C11.0858 18 10.75 17.6642 10.75 17.25C10.75 16.8358 11.0858 16.5 11.5 16.5H13.43C14.1985 16.5 14.7297 16.4994 15.1423 16.4657C15.5461 16.4327 15.7699 16.3718 15.9353 16.2875C16.3022 16.1005 16.6005 15.8022 16.7875 15.4353C16.8718 15.2699 16.9327 15.0461 16.9657 14.6423C16.9994 14.2297 17 13.6985 17 12.93V7.07195C17 6.30351 16.9994 5.77228 16.9657 5.35967C16.9327 4.95582 16.8718 4.7321 16.7875 4.56667C16.6005 4.19976 16.3022 3.90144 15.9353 3.71449C15.7699 3.6302 15.5461 3.56924 15.1423 3.53625Z"
+          fill={color ? color : '#353C4E'}/>
+        <path
+          d="M7.26006 14.0165C6.96717 14.3094 6.49229 14.3094 6.1994 14.0165L2.75772 10.5747C2.73612 10.5574 2.71526 10.5388 2.69525 10.5188C2.40236 10.2259 2.40237 9.75101 2.69526 9.45812L6.18079 5.97272C6.47369 5.67983 6.94856 5.67984 7.24145 5.97274C7.53434 6.26564 7.53433 6.74051 7.24143 7.0334L5.03629 9.23846L11.7522 9.23846C12.1665 9.23846 12.5022 9.57425 12.5022 9.98846C12.5022 10.4027 12.1665 10.7385 11.7522 10.7385H5.04276L7.26007 12.9558C7.55296 13.2487 7.55296 13.7236 7.26006 14.0165Z"
+          fill={color ? color : '#353C4E'}/>
+      </svg>
+    </div>
+  )
+})

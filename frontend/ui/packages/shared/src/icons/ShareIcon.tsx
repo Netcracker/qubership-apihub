@@ -1,0 +1,35 @@
+/**
+ * Copyright 2024-2025 NetCracker Technology Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import type { FC } from 'react'
+import { memo } from 'react'
+
+export const ShareIcon: FC = memo(() => {
+  return (
+    <div style={{ display: 'flex' }}>
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M2.75 11.25C3.16421 11.25 3.5 11.5858 3.5 12V12.4521C3.5 13.3046 3.50058 13.8988 3.53838 14.3615C3.57547 14.8153 3.6446 15.0761 3.74524 15.2736C3.96095 15.697 4.30516 16.0412 4.72852 16.2569C4.92604 16.3575 5.1868 16.4267 5.64068 16.4638C6.10331 16.5016 6.69755 16.5021 7.55 16.5021H12.45C13.3025 16.5021 13.8967 16.5016 14.3593 16.4638C14.8132 16.4267 15.074 16.3575 15.2715 16.2569C15.6949 16.0412 16.0391 15.697 16.2548 15.2736C16.3554 15.0761 16.4246 14.8153 16.4616 14.3614C16.4994 13.8988 16.5 13.3046 16.5 12.4521L16.5 12C16.5 11.5858 16.8358 11.25 17.25 11.25C17.6642 11.25 18 11.5858 18 12L18 12.4842C18 13.2971 18 13.9527 17.9567 14.4836C17.912 15.0302 17.8176 15.5104 17.5913 15.9546C17.2318 16.6602 16.6581 17.2339 15.9525 17.5934C15.5083 17.8197 15.0281 17.9141 14.4815 17.9588C13.9506 18.0021 13.295 18.0021 12.4821 18.0021H7.51791C6.70506 18.0021 6.04945 18.0021 5.51853 17.9588C4.9719 17.9141 4.49175 17.8197 4.04754 17.5934C3.34193 17.2339 2.76825 16.6602 2.40873 15.9546C2.18239 15.5104 2.08803 15.0302 2.04336 14.4836C1.99999 13.9527 1.99999 13.2971 2 12.4842L2 12C2 11.5858 2.33579 11.25 2.75 11.25Z"
+          fill="#8F9EB4"
+        />
+        <path
+          d="M9.47034 2.224C9.76324 1.93117 10.2381 1.9312 10.5309 2.22406L14.7771 6.47008C15.07 6.76296 15.07 7.23784 14.7771 7.53074C14.4842 7.82363 14.0093 7.82364 13.7164 7.53075L10.7506 4.56502L10.7506 13.2501C10.7506 13.6643 10.4148 14.0001 10.0006 14.0001C9.58639 14.0001 9.2506 13.6643 9.2506 13.2501L9.2506 4.56473L6.2841 7.53048C5.99117 7.82334 5.5163 7.82328 5.22344 7.53035C4.93059 7.23742 4.93065 6.76254 5.22358 6.46969L9.47034 2.224Z"
+          fill="#8F9EB4"
+        />
+      </svg>
+    </div>
+  )
+})

@@ -1,0 +1,17 @@
+### Set system role
+POST {{APIHUB_HOST}}/api/internal/users/{{userId}}/systemRole
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "role": "System administrator"
+}
+
+### Generate new apiKey
+POST {{APIHUB_HOST}}/api/v2/packages/*/apiKeys
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "new_token"
+}

@@ -1,0 +1,25 @@
+{
+  "name": "@netcracker/qubership-apihub-ui-portal",
+  "version": "3.10.1",
+  "license": "Apache-2.0",
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "build": "npm run build:tsc && npm run build:vite",
+    "build:tsc": "tsc && tsc --project server/tsconfig.json",
+    "build:vite": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build",
+    "build:analyze": "npm run build:tsc && npm run build:vite -- --mode analyze",
+    "dev:backend": "nodemon --watch server --ext ts,json server/index.ts",
+    "dev:frontend": "vite --host --force",
+    "proxy": "vite --host --mode=proxy --force",
+    "preview": "npm run build && vite preview --host --mode=proxy",
+    "test:server": "jest -c server/jest.config.mjs",
+    "lint:check": "eslint . --ext .ts,.tsx,.json --ignore-path ../../.gitignore --max-warnings 0 --report-unused-disable-directives",
+    "lint:fix": "npm run lint:check -- --fix"
+  },
+  "dependencies": {
+    "openapi3-ts": "2.0.2",
+    "react-multi-date-picker": "4.1.1"
+  }
+}
