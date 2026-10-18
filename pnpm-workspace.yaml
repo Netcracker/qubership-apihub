@@ -56,3 +56,7 @@ overrides:
 
 patchedDependencies:
   '@nx/maven@23.2.0': patches/@nx__maven@23.2.0.patch
+
+# `pnpm deploy` (legacy mode, see build-task-consumer) installs only one package. It would fail with
+# ERR_PNPM_UNUSED_PATCH because the root-only @nx/maven patch has no target there.
+allowUnusedPatches: true
