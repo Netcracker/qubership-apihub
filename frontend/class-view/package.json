@@ -17,22 +17,20 @@
   "sideEffects": false,
   "scripts": {
     "lint:check": "tsc && eslint src --ext ts --report-unused-disable-directives --max-warnings 0",
-    "lint:fix": "npm run lint:check -- --fix",
-    "build": "npm run build:dist && npm run build:showcase",
+    "lint:fix": "pnpm run lint:check -- --fix",
+    "build": "pnpm run build:dist && pnpm run build:showcase",
     "build:dist": "vite build",
     "build:showcase": "storybook build -o dist-showcase",
     "screenshot-test": "start-server-and-test screenshot-test:server http://localhost:6006 screenshot-test:run-local",
     "screenshot-test:ci-legacy": "start-server-and-test screenshot-test:server http://localhost:6006 screenshot-test:run-ci",
     "regenerate-screenshots": "start-server-and-test screenshot-test:server http://localhost:6006 \"jest --maxWorkers 4 --updateSnapshot -c .jest/integration/it-test-docker.jest.config.cjs\"",
     "regenerate-screenshots:ci-legacy": "start-server-and-test screenshot-test:server http://localhost:6006 \"jest --maxWorkers 8 --updateSnapshot -c .jest/integration/it-test.jest.config.cjs\"",
-    "screenshot-test:server": "npm run build:showcase && ws -p 6006 -d dist-showcase --spa index.html --static.maxage 3600",
+    "screenshot-test:server": "pnpm run build:showcase && ws -p 6006 -d dist-showcase --spa index.html --static.maxage 3600",
     "screenshot-test:run-local": "jest --maxWorkers 4 -c .jest/integration/it-test-docker.jest.config.cjs",
     "screenshot-test:run-ci": "jest --maxWorkers 8 -c .jest/integration/it-test.jest.config.cjs",
     "development:local-server": "storybook dev -p 6006",
     "feature-start": "feature-start --featureName",
-    "feature-finish": "feature-finish",
-    "release-start": "release-start",
-    "release-finish": "release-finish"
+    "feature-finish": "feature-finish"
   },
   "dependencies": {
     "d3": "^7.8.5",
@@ -44,8 +42,7 @@
     "svg-round-corners": "0.4.1"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "dev",
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
+    "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "workspace:^",
     "@storybook/addon-actions": "^7.5.2",
     "@storybook/addon-essentials": "^7.5.2",
     "@storybook/addon-links": "^7.5.2",
@@ -84,5 +81,8 @@
   "overrides": {
     "jest-environment-node": "30.4.1",
     "jest-mock": "30.4.1"
+  },
+  "nx": {
+    "name": "class-view"
   }
 }
