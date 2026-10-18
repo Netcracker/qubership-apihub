@@ -1,5 +1,5 @@
 name: Set up the pnpm workspace
-description: Node, pnpm, the pnpm store cache, and the Nx cache, shared by every job.
+description: Node, Java and Maven (for the Nx Maven plugin), pnpm, the pnpm store cache, and the Nx cache, shared by every job.
 
 inputs:
   cache-scope:
@@ -21,6 +21,27 @@ runs:
     - uses: actions/setup-node@v6
       with:
         node-version: '24'
+
+    # Every Nx command loads the @nx/maven plugin, which runs Maven to read the poms, so each job needs
+    # Java 21 and Maven 3.9, not only the Java job. Maven comes with the runner image; the next step
+    # fails loudly when the image moves to another major version.
+    - uses: actions/setup-java@v6
+      with:
+        distribution: temurin
+        java-version: '21'
+        cache: maven
+
+    - name: Check the Maven version
+      shell: bash
+      run: |
+        set -euo pipefail
+        mvn --version
+        mvn --version | head -1 | grep -q 'Apache Maven 3\.9\.' || {
+          echo "::error::Maven 3.9 is required; the runner image provides another version"
+          exit 1
+        }
+        # The analysis of a cold Maven cache exceeds the plugin's 120 s default.
+        echo 'NX_MAVEN_ANALYSIS_TIMEOUT=400' >> "$GITHUB_ENV"
 
     - name: Locate the pnpm store
       id: store
