@@ -725,10 +725,25 @@ components:
               type: string
               description: URL to view this baseline package in the APIHUB Portal.
             versions:
-              description: Package release versions
+              description: Versions of the baseline package that can be selected as previousVersion. Each entry carries the API processor version it was built with. Versions with build or changelog errors stay listed and carry the flags, so the client can mark them and block the selection.
               type: array
               items:
-                type: string
+                type: object
+                properties:
+                  version:
+                    type: string
+                    description: Version name
+                  apiProcessorVersion:
+                    type: string
+                    description: Version of the API processor that built the version.
+                  hasErrors:
+                    type: boolean
+                    default: false
+                    description: The build of the version detected at least one error. Such a version cannot be used as previousVersion.
+                  changelogHasErrors:
+                    type: boolean
+                    default: false
+                    description: The comparison of the version against its own previousVersion failed. Such a version cannot be used as previousVersion.
         specs:
           description: List of the service's API documents found in the target environment.
           type: array
@@ -849,10 +864,25 @@ components:
               type: string
               description: URL to view this baseline package in the APIHUB Portal.
             versions:
-              description: Package release versions
+              description: Versions of the baseline package that can be selected as previousVersion. Each entry carries the API processor version it was built with. Versions with build or changelog errors stay listed and carry the flags, so the client can mark them and block the selection.
               type: array
               items:
-                type: string
+                type: object
+                properties:
+                  version:
+                    type: string
+                    description: Version name
+                  apiProcessorVersion:
+                    type: string
+                    description: Version of the API processor that built the version.
+                  hasErrors:
+                    type: boolean
+                    default: false
+                    description: The build of the version detected at least one error. Such a version cannot be used as previousVersion.
+                  changelogHasErrors:
+                    type: boolean
+                    default: false
+                    description: The comparison of the version against its own previousVersion failed. Such a version cannot be used as previousVersion.
         specs:
           description: List of the service's API documents found in the target environment.
           type: array
@@ -951,10 +981,25 @@ components:
               type: string
               description: URL to view this baseline package in the APIHUB Portal.
             versions:
-              description: Package release versions
+              description: Versions of the baseline package that can be selected as previousVersion. Each entry carries the API processor version it was built with. Versions with build or changelog errors stay listed and carry the flags, so the client can mark them and block the selection.
               type: array
               items:
-                type: string
+                type: object
+                properties:
+                  version:
+                    type: string
+                    description: Version name
+                  apiProcessorVersion:
+                    type: string
+                    description: Version of the API processor that built the version.
+                  hasErrors:
+                    type: boolean
+                    default: false
+                    description: The build of the version detected at least one error. Such a version cannot be used as previousVersion.
+                  changelogHasErrors:
+                    type: boolean
+                    default: false
+                    description: The comparison of the version against its own previousVersion failed. Such a version cannot be used as previousVersion.
         documents:
           description: List of the service's API documents found in the target environment.
           type: array

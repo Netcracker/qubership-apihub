@@ -12,6 +12,8 @@ type PublishedVersionListView struct {
 	PreviousVersionPackageId string                 `json:"previousVersionPackageId,omitempty"`
 	NotLatestRevision        bool                   `json:"notLatestRevision,omitempty"`
 	ApiProcessorVersion      string                 `json:"apiProcessorVersion"`
+	HasErrors                bool                   `json:"hasErrors"`
+	ChangelogHasErrors       bool                   `json:"changelogHasErrors"`
 }
 
 type PublishedVersionsView struct {
