@@ -19,11 +19,8 @@
   "scripts": {
     "prebuild": "rimraf ./dist",
     "build": "vite build",
-    "development:link": "npm link",
-    "development:unlink": "npm unlink",
     "test": "jest --verbose",
-    "test:coverage": "jest --verbose --coverage",
-    "update-lock-file": "update-lock-file @netcracker"
+    "test:coverage": "jest --verbose --coverage"
   },
   "keywords": [
     "json",
@@ -35,7 +32,6 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
     "@types/jest": "30.0.0",
     "@types/node": "^24.0.0",
     "jest": "30.4.2",
@@ -71,5 +67,8 @@
       "<rootDir>/dist/"
     ],
     "collectCoverage": true
+  },
+  "nx": {
+    "name": "json-crawl"
   }
 }
