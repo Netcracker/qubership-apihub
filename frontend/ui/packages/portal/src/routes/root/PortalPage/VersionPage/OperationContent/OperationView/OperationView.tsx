@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { GraphQlOperationViewer } from '@apihub/components/GraphQlOperationViewer'
-import { SchemaContextPanel } from '@apihub/components/SchemaContextPanel'
-import type { DiffMetaKeys } from '@apihub/entities/diff-meta-keys'
-import type { OpenApiData } from '@apihub/entities/operation-structure'
-import { OPEN_API_SECTION_PARAMETERS, OPEN_API_SECTION_REQUESTS, OPEN_API_SECTION_RESPONSES } from '@apihub/entities/operation-structure'
+import { GraphQlOperationViewer } from '@portal/components/GraphQlOperationViewer'
+import { SchemaContextPanel } from '@portal/components/SchemaContextPanel'
+import type { DiffMetaKeys } from '@portal/entities/diff-meta-keys'
+import type { OpenApiData } from '@portal/entities/operation-structure'
+import { OPEN_API_SECTION_PARAMETERS, OPEN_API_SECTION_REQUESTS, OPEN_API_SECTION_RESPONSES } from '@portal/entities/operation-structure'
 import { Box } from '@mui/material'
 import { DIFF_META_KEY, DIFFS_AGGREGATED_META_KEY } from '@netcracker/qubership-apihub-api-diff'
 import { AsyncApiOperationDiffsViewer, AsyncApiOperationViewer, GraphQLOperationDiffViewer, SIDE_BY_SIDE_DIFFS_LAYOUT_MODE } from '@netcracker/qubership-apihub-api-doc-viewer'

@@ -15,11 +15,11 @@
  */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import type { Services, ServicesDto } from '@apihub/entities/services'
-import { EMPTY_SERVICES, getServices, toServices } from '@apihub/entities/services'
+import type { Services, ServicesDto } from '@agents/entities/services'
+import { EMPTY_SERVICES, getServices, toServices } from '@agents/entities/services'
 import { useParams } from 'react-router-dom'
 import type { InvalidateQuery, IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { RUNNING_DISCOVERY_STATUS } from '@apihub/entities/statuses'
+import { RUNNING_DISCOVERY_STATUS } from '@agents/entities/statuses'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { STATUS_REFETCH_INTERVAL } from '@netcracker/qubership-apihub-ui-shared/utils/requests'

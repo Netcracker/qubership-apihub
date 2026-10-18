@@ -27,15 +27,13 @@ import {
   DialogContent,
   DialogTitle,
   ListItem,
-  ListItemText,
   TextField,
 } from '@mui/material'
 import { LoadingButton } from '@mui/lab'
 import { Controller, useForm } from 'react-hook-form'
 import { usePackages } from '../../usePackages'
 import { useEffectOnce } from 'react-use'
-import type { ControllerFieldState, ControllerRenderProps } from 'react-hook-form/dist/types/controller'
-import type { UseFormStateReturn } from 'react-hook-form/dist/types'
+import type { ControllerFieldState, ControllerRenderProps, UseFormStateReturn } from 'react-hook-form'
 import { useDashboardReferences, useSetDashboardReferences } from './DashboardReferencesProvider'
 import { getReferences } from '../../useVersionReferences'
 import { useHandleAddedReferences } from '../useHandleReferences'
@@ -44,7 +42,7 @@ import type { Package } from '@netcracker/qubership-apihub-ui-shared/entities/pa
 import { DASHBOARD_KIND, PACKAGE_KIND, WORKSPACE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
-import { SHOW_ADD_PACKAGE_DIALOG } from '@apihub/routes/EventBusProvider'
+import { SHOW_ADD_PACKAGE_DIALOG } from '@portal/routes/EventBusProvider'
 import type { PackageVersion } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import type { ReferenceKind } from '@netcracker/qubership-apihub-ui-shared/entities/version-references'
 import { toVersionReferences } from '@netcracker/qubership-apihub-ui-shared/entities/version-references'
@@ -54,13 +52,14 @@ import { DEFAULT_DEBOUNCE } from '@netcracker/qubership-apihub-ui-shared/utils/c
 import { OptionItem } from '@netcracker/qubership-apihub-ui-shared/components/OptionItem'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
-import { VersionStatusChip } from '@netcracker/qubership-apihub-ui-shared/components/VersionStatusChip'
 import { DialogForm } from '@netcracker/qubership-apihub-ui-shared/components/DialogForm'
 import { usePagedPackageVersions } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
-import {
-  WARNING_API_PROCESSOR_TEXT,
-  WarningApiProcessorVersion,
-} from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
+import { VersionErrorFormMessage } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorFormMessage'
+import { VersionSelectorAutocomplete } from '@netcracker/qubership-apihub-ui-shared/components/Autocompletes/VersionSelectorAutocomplete'
+import { VersionErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorIndicator'
+import { VersionOptionItem } from '@netcracker/qubership-apihub-ui-shared/components/VersionOptionItem'
+import { useVersionProblemDetails } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/useVersionProblemDetails'
+import { VERSION_PROBLEM_DIALOG_SURFACE } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/versionProblemDetails'
 
 const WORKSPACE_KEY = 'workspaceKey'
 const PACKAGE_KEY = 'packageKey'
@@ -110,7 +109,23 @@ const AddPackagePopup: FC<AddPackagePopupProps> = memo<AddPackagePopupProps>(({ 
   const [selectedWorkspace, setSelectedWorkspace] = useState<Package | null>(null)
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null)
   const [selectedVersion, setSelectedVersion] = useState<PackageVersion | null>(null)
-  const [warningApiProcessorState, setWarningApiProcessorState] = useState(false)
+  const selectedPackageKind = selectedPackage?.kind
+  const selectedVersionKey = selectedVersion
+    ? getSplittedVersionKey(selectedVersion.key, selectedVersion.latestRevision).versionKey
+    : undefined
+  const {
+    hasProblems: selectedVersionHasProblems,
+    isBlocking: isSelectedVersionBlocking,
+    formHelperText: selectedVersionFormHelperText,
+  } = useVersionProblemDetails({
+    packageKey: selectedPackage?.key,
+    versionKey: selectedVersionKey,
+    hasErrors: selectedVersion?.hasErrors,
+    changelogHasErrors: selectedVersion?.changelogHasErrors,
+    apiProcessorVersion: selectedVersion?.apiProcessorVersion,
+    kind: selectedPackageKind,
+    surface: VERSION_PROBLEM_DIALOG_SURFACE.ADD_TO_DASHBOARD,
+  })
 
   const [selectedPackageInput, setSelectedPackageInput] = useState('')
   const onSelectedPackageInputValueChange = useCallback((_: SyntheticEvent, value: string) => setSelectedPackageInput(value), [])
@@ -126,6 +141,8 @@ const AddPackagePopup: FC<AddPackagePopupProps> = memo<AddPackagePopupProps>(({ 
         kind: selectedPackage?.kind as ReferenceKind,
         version: selectedVersion?.key,
         status: selectedVersion?.status,
+        hasErrors: selectedVersion?.hasErrors,
+        changelogHasErrors: selectedVersion?.changelogHasErrors,
       },
       added: true,
     }])
@@ -199,7 +216,6 @@ const AddPackagePopup: FC<AddPackagePopupProps> = memo<AddPackagePopupProps>(({ 
         setSelectedWorkspace(value)
         setSelectedPackage(null)
         setSelectedVersion(null)
-        setWarningApiProcessorState(false)
       }}
       data-testid="WorkspaceAutocomplete"
     />
@@ -225,42 +241,44 @@ const AddPackagePopup: FC<AddPackagePopupProps> = memo<AddPackagePopupProps>(({ 
         setValue(PACKAGE_KEY, value?.key ?? '')
         setSelectedPackage(value)
         setSelectedVersion(null)
-        setWarningApiProcessorState(false)
       }}
       data-testid="PackageAutocomplete"
     />
   ), [onSelectedPackageInputValueChange, unusedPackages, selectedPackage, isPackagesLoading, setValue])
 
-  const renderSelectVersion = useCallback((
-      { field }: ControllerRenderFunctionProps<typeof VERSION_KEY>) => (
-      <Autocomplete<PackageVersion>
+  const renderSelectVersion = useCallback(
+    ({ field }: ControllerRenderFunctionProps<typeof VERSION_KEY>) => (
+      <VersionSelectorAutocomplete<PackageVersion>
         key="versionAutocomplete"
         disabled={isEmpty(flattenVersions)}
         options={flattenVersions}
         getOptionLabel={({ key }: PackageVersion) => getSplittedVersionKey(key).versionKey}
         value={selectedVersion}
-        renderOption={(props, { key, status }) => (
-          <ListItem {...props}>
-            <ListItemText>{getSplittedVersionKey(key).versionKey}</ListItemText>
-            <VersionStatusChip status={status}/>
-          </ListItem>
+        inputIndicator={selectedVersionHasProblems && selectedVersion && (
+          <VersionErrorIndicator
+            versionKey={selectedVersionKey}
+            hasErrors={selectedVersion.hasErrors}
+            changelogHasErrors={selectedVersion.changelogHasErrors}
+            apiProcessorVersion={selectedVersion.apiProcessorVersion}
+            kind={selectedPackageKind}
+          />
+        )}
+        renderOption={(props, version) => (
+          <VersionOptionItem key={version.key} props={props} version={version}/>
         )}
         isOptionEqualToValue={(option, value) => option.key === value?.key}
         renderInput={(params) => (
-          <TextField {...field} {...params} required label="Version"/>
+          <TextField {...field} {...params} required label="Version" error={isSelectedVersionBlocking}/>
         )}
         onChange={(_, value) => {
           setValue(VERSION_KEY, value?.key ?? '')
           setSelectedVersion(value)
-          if (!value) {
-            setWarningApiProcessorState(false)
-          }
         }}
         data-testid="VersionAutocomplete"
       />
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [versions, selectedVersion, setValue],
+    [versions, selectedVersion, selectedVersionKey, selectedVersionHasProblems, selectedPackageKind, isSelectedVersionBlocking, setValue],
   )
 
   return (
@@ -289,11 +307,7 @@ const AddPackagePopup: FC<AddPackagePopupProps> = memo<AddPackagePopupProps>(({ 
           control={control}
           render={renderSelectVersion}
         />
-        <WarningApiProcessorVersion
-          versionKey={selectedVersion?.key}
-          packageKey={selectedPackage?.key}
-          type={WARNING_API_PROCESSOR_TEXT}
-          onWarningTextChange={(value) => setWarningApiProcessorState(!!value)}/>
+        <VersionErrorFormMessage message={selectedVersionFormHelperText} />
       </DialogContent>
 
 
@@ -302,7 +316,7 @@ const AddPackagePopup: FC<AddPackagePopupProps> = memo<AddPackagePopupProps>(({ 
                        type="submit"
                        loading={false}
                        data-testid="AddButton"
-                       disabled={warningApiProcessorState}>
+                       disabled={isSelectedVersionBlocking}>
           Add
         </LoadingButton>
         <Button variant="outlined" onClick={() => setOpen(false)} data-testid="CancelButton">

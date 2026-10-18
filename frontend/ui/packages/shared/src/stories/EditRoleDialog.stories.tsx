@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { PERMISSIONS_LIST, ROLES_LIST } from './samples/roles-samples'
 import { EditRolePopup } from '../components/EditRoleDialog'
 

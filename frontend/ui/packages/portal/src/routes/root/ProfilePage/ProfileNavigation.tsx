@@ -6,7 +6,7 @@ import { memo, useCallback } from 'react'
 import { Box, List, ListItemButton, ListItemText, Typography } from '@mui/material'
 import type { ProfilePageRoute } from '../../../routes'
 import { PERSONAL_ACCESS_TOKENS_PAGE } from '../../../routes'
-import { getProfilePath } from '@apihub/routes/NavigationProvider'
+import { getProfilePath } from '@portal/routes/NavigationProvider'
 
 export const ProfileNavigation: FC = memo(() => {
   const activeTab = useActiveTabContentContext()

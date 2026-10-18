@@ -30,11 +30,11 @@ import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/sea
 import { GROUP_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
-import { useComparisonObjects } from '@apihub/routes/root/PortalPage/VersionPage/useComparisonObjects'
+import { useComparisonObjects } from '@portal/routes/root/PortalPage/VersionPage/useComparisonObjects'
 import {
   isOperationsGroupComparison,
   useCompareBreadcrumbs,
-} from '@apihub/routes/root/PortalPage/VersionPage/useCompareBreadcrumbs'
+} from '@portal/routes/root/PortalPage/VersionPage/useCompareBreadcrumbs'
 import { BreadcrumbsDataContext } from '../ComparedPackagesBreadcrumbsProvider'
 
 export const GroupComparePage: FC = memo(() => {

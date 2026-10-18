@@ -19,6 +19,7 @@ import { memo } from 'react'
 import { DocumentsCard } from './DocumentsCard'
 import { DocumentsSidebar } from './DocumentsSidebar'
 import { CurrentDocumentsListProvider } from './CurrentDocumentsListProvider'
+import { DocumentErrorsDialog } from './DocumentErrorsDialog/DocumentErrorsDialog'
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
 
 export const VersionDocumentsSubPage: FC = memo(() => {
@@ -30,6 +31,7 @@ export const VersionDocumentsSubPage: FC = memo(() => {
         nestedPage
         data-testid="DocumentsTab"
       />
+      <DocumentErrorsDialog/>
     </CurrentDocumentsListProvider>
   )
 })

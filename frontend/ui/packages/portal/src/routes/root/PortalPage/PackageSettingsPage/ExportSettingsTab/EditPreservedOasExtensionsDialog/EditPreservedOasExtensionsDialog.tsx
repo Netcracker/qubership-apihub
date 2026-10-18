@@ -7,7 +7,7 @@ import { PopupDelegate, type PopupProps } from '@netcracker/qubership-apihub-ui-
 import {
   SHOW_EDIT_PRESERVED_OAS_EXTENSIONS_DIALOG,
   type ShowEditPreservedOasExtensionsDetail,
-} from '@apihub/routes/EventBusProvider'
+} from '@portal/routes/EventBusProvider'
 import { DialogForm } from '@netcracker/qubership-apihub-ui-shared/components/DialogForm'
 import { OAS_EXTENSION_KIND_INHERITED } from '../package-export-config'
 import { type EditOasExtensionsForm, useOasExtensionsManager } from './useOasExtensionsManager'

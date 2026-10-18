@@ -62,12 +62,12 @@ import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/ut
 import { StatusMarker } from '@netcracker/qubership-apihub-ui-shared/components/StatusMarker'
 import { createComponents } from '@netcracker/qubership-apihub-ui-shared/utils/components'
 import { DEFAULT_NUMBER_SKELETON_ROWS } from '@netcracker/qubership-apihub-ui-shared/utils/constants'
-import { PackageSettingsButton } from '@apihub/components/PackageSettingsButton'
+import { PackageSettingsButton } from '@portal/components/PackageSettingsButton'
 import { useResizeObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useResizeObserver'
 import { getTooltipMessage } from '@netcracker/qubership-apihub-ui-shared/utils/tooltip-message'
 import { getBwcData } from '@netcracker/qubership-apihub-ui-shared/utils/change-severities'
 import { useIntersectionObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useIntersectionObserver'
-import { usePagedPackages } from '@apihub/routes/root/usePagedPackages'
+import { usePagedPackages } from '@portal/routes/root/usePagedPackages'
 
 export type PackagesTreeProps = Readonly<{
   rootPackageKey?: Key

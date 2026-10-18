@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-import type { AgentKey, NamespaceKey, WorkspaceKey } from '@apihub/entities/keys'
-import type { ServiceConfig } from '@apihub/entities/publish-config'
-import type { PublishDetails } from '@apihub/entities/publish-details'
-import { setPublicationDetails } from '@apihub/entities/publish-details'
-import type { PublishStatus } from '@apihub/entities/statuses'
-import { COMPLETE_PUBLISH_STATUS, ERROR_PUBLISH_STATUS } from '@apihub/entities/statuses'
+import type { AgentKey, NamespaceKey, WorkspaceKey } from '@agents/entities/keys'
+import type { ServiceConfig } from '@agents/entities/publish-config'
+import { setPublicationDetails } from '@agents/entities/publish-details'
 import type { VersionValidationLevel } from '@netcracker/qubership-apihub-api-processor'
 import { BUILD_TYPE, VERSION_VALIDATION_LEVEL } from '@netcracker/qubership-apihub-api-processor'
 import { PackageVersionBuilder } from '@netcracker/qubership-apihub-api-processor/processor'
@@ -31,7 +28,15 @@ import {
   versionOperationsResolver,
   versionReferencesResolver,
 } from '@netcracker/qubership-apihub-ui-shared/utils/builder-resolvers'
-import { NONE_PUBLISH_STATUS, RUNNING_PUBLISH_STATUS } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
+import { toFailedPublicationDetails } from '@netcracker/qubership-apihub-ui-shared/utils/failed-build-notifications'
+import {
+  COMPLETE_PUBLISH_STATUS,
+  ERROR_PUBLISH_STATUS,
+  NONE_PUBLISH_STATUS,
+  type PublishDetails,
+  type PublishStatus,
+  RUNNING_PUBLISH_STATUS,
+} from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 import { getSystemInfo } from '@netcracker/qubership-apihub-ui-shared/utils/system-info'
 import { expose } from 'comlink'
 import { getSpecBlob } from '../../useSpecRaw'
@@ -125,7 +130,7 @@ const worker: PackageVersionBuilderWorker = {
         status: status,
         abortController: null,
         builderId: builderId,
-        errors: `${error}`,
+        ...toFailedPublicationDetails(error),
       })
     }
 

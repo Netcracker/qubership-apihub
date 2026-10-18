@@ -21,8 +21,8 @@ import type { OperationGroupParameters } from './OperationGroupParametersPopup'
 import { OperationGroupParametersPopup } from './OperationGroupParametersPopup'
 import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
-import type { EditOperationGroupDetail } from '@apihub/routes/EventBusProvider'
-import { SHOW_EDIT_OPERATION_GROUP_DIALOG } from '@apihub/routes/EventBusProvider'
+import type { EditOperationGroupDetail } from '@portal/routes/EventBusProvider'
+import { SHOW_EDIT_OPERATION_GROUP_DIALOG } from '@portal/routes/EventBusProvider'
 
 export const EditOperationGroupDialog: FC = memo(() => {
   return (

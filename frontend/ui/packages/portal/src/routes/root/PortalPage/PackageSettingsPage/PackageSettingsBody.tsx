@@ -34,10 +34,10 @@ import {
 } from './SpecificConfigurationPackageSettingsTab/SpecificConfigurationPackageSettingsTab'
 import {
   UserPackageAccessControlSettingsTab,
-} from '@apihub/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/UserPackageAccessControlSettingsTab'
+} from '@portal/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/UserPackageAccessControlSettingsTab'
 import {
   ExportSettingsTab,
-} from '@apihub/routes/root/PortalPage/PackageSettingsPage/ExportSettingsTab/ExportSettingsTab'
+} from '@portal/routes/root/PortalPage/PackageSettingsPage/ExportSettingsTab/ExportSettingsTab'
 import {
   CONTENT_PLACEHOLDER_AREA,
   NO_PERMISSION,

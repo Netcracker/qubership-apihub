@@ -28,7 +28,7 @@ import {
   toCreateOperationGroupDto,
   toUpdateOperationGroupDto,
 } from '@netcracker/qubership-apihub-ui-shared/entities/operation-groups'
-import { portalRequestVoid } from '@apihub/utils/requests'
+import { portalRequestVoid } from '@portal/utils/requests'
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 import { API_V3 } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'

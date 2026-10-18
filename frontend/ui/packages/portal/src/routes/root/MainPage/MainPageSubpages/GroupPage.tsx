@@ -30,7 +30,7 @@ import {
 } from '../ActivityHistoryFiltersProvider'
 import type { ActivityHistoryQueryResult } from '../../useActivityHistory'
 import { usePackageActivityHistory } from '../../useActivityHistory'
-import { MainPageCard } from '@apihub/routes/root/MainPage/MainPageCard'
+import { MainPageCard } from '@portal/routes/root/MainPage/MainPageCard'
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
 import { isBoolean } from '@netcracker/qubership-apihub-ui-shared/utils/types'
 

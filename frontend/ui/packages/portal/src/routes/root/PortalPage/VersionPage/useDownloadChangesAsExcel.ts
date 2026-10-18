@@ -16,10 +16,10 @@
 
 import { useMutation } from '@tanstack/react-query'
 import fileDownload from 'js-file-download'
-import type { Key } from '@apihub/entities/keys'
+import type { Key } from '@portal/entities/keys'
 import { useShowErrorNotification } from '../../BasePage/Notification'
 import { generatePath } from 'react-router-dom'
-import { portalRequestBlob } from '@apihub/utils/requests'
+import { portalRequestBlob } from '@portal/utils/requests'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import type { ApiAudience, ApiKind } from '@netcracker/qubership-apihub-ui-shared/entities/operations'

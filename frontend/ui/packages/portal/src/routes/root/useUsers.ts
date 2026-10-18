@@ -15,7 +15,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query'
-import { portalRequestJson } from '@apihub/utils/requests'
+import { portalRequestJson } from '@portal/utils/requests'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { Users, UsersDto } from '@netcracker/qubership-apihub-ui-shared/types/user'
 import { toUsers } from '@netcracker/qubership-apihub-ui-shared/types/user'

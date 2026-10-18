@@ -16,21 +16,20 @@
 
 import type { FC } from 'react'
 import { memo } from 'react'
-import { Box, ListItem, ListItemButton, ListItemText, Tooltip } from '@mui/material'
+import { Box, ListItem, ListItemButton, ListItemText } from '@mui/material'
 import { PACKAGES_PAGE } from '../../../../../routes'
 import type { To } from 'react-router-dom'
 import { useNavigate } from 'react-router-dom'
-import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { TestableProps } from '@netcracker/qubership-apihub-ui-shared/components/Testable'
-import { isNotEmptyMap } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
-import { RedWarningIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningIcon'
+import { DotIndicator } from '@netcracker/qubership-apihub-ui-shared/components/DotIndicator'
+import { PUBLICATION_ERROR_MESSAGES } from '@netcracker/qubership-apihub-ui-shared/utils/publicationErrorMessages'
 
 type OverviewNavigationItemProps = Readonly<{
   url: To | undefined
   title: string
   id: string
   sidebarItem: string
-  deletedReferences: Map<Key, number> | undefined
+  hasReferenceProblems: boolean
 }> & TestableProps
 
 export const OverviewNavigationItem: FC<OverviewNavigationItemProps> = memo<OverviewNavigationItemProps>(({
@@ -38,7 +37,7 @@ export const OverviewNavigationItem: FC<OverviewNavigationItemProps> = memo<Over
   title,
   id,
   sidebarItem,
-  deletedReferences,
+  hasReferenceProblems,
   'data-testid': dataTestId,
 }) => {
   const navigate = useNavigate()
@@ -63,13 +62,14 @@ export const OverviewNavigationItem: FC<OverviewNavigationItemProps> = memo<Over
             <Box sx={{ display: 'flex' }}>
               {title}
               <Box sx={{ ml: '5px' }}>
-                {id === PACKAGES_PAGE && isNotEmptyMap(deletedReferences) &&
-                  <Tooltip title="Some included package/dashboard versions no longer exist" placement="right">
-                    <Box data-testid="NotExistAlert">
-                      <RedWarningIcon/>
-                    </Box>
-                  </Tooltip>
-                }
+                {id === PACKAGES_PAGE && hasReferenceProblems && (
+                  <DotIndicator
+                    color="error"
+                    tooltip={PUBLICATION_ERROR_MESSAGES.reference.subtabPackagesHasIssues}
+                    tabIndex={-1}
+                    data-testid="ProblemAlert"
+                  />
+                )}
               </Box>
             </Box>
           }/>

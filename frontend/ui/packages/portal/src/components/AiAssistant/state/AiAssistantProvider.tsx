@@ -3,7 +3,7 @@ import { type FC, memo, type PropsWithChildren, useCallback, useMemo, useState }
 import {
   AI_ASSISTANT_PANEL,
   useSidePanel,
-} from '@netcracker/qubership-apihub-ui-portal/src/routes/root/BasePage/PanelManager/SidePanelManager'
+} from '@portal/routes/root/BasePage/PanelManager/SidePanelManager'
 import type { ChatId } from '../api/types'
 import { useStreamingTurn } from '../streaming/turn/useStreamingTurn'
 import {

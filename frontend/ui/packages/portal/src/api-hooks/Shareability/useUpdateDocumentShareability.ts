@@ -3,7 +3,7 @@ import { useCallback } from 'react'
 import { generatePath } from 'react-router-dom'
 
 import type { ShareabilityStatus } from '@netcracker/qubership-apihub-api-processor'
-import { portalRequestVoid } from '@netcracker/qubership-apihub-ui-portal/src/utils/requests'
+import { portalRequestVoid } from '@portal/utils/requests'
 import { DOCUMENT_QUERY_KEY } from '../../routes/root/PortalPage/VersionPage/useDocument'
 import { DOCUMENTS_QUERY_KEY } from '../../routes/root/PortalPage/VersionPage/useDocuments'
 

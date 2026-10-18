@@ -21,7 +21,6 @@ import { useServices } from '../../../useServices'
 import { filterServices } from '../../services'
 import { useSnapshotPublicationInfo } from '../../../useSnapshotPublicationInfo'
 import { Box } from '@mui/material'
-import type { ServicePublishInfo } from '@apihub/entities/service-publish-info'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import {
   ERROR_STEP_STATUS,
@@ -35,22 +34,7 @@ import {
   NO_SEARCH_RESULTS,
   Placeholder,
 } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
-
-// TODO: Move to another place
-export const BWC_ERRORS_FILTER = 'bwc-errors'
-export const NO_BWC_ERRORS_FILTER = 'no-bwc-errors'
-export const NO_BASELINE_FILTER = 'no-baseline'
-
-export type ValidationFilter =
-  typeof BWC_ERRORS_FILTER
-  | typeof NO_BWC_ERRORS_FILTER
-  | typeof NO_BASELINE_FILTER
-
-const FILTERED_SERVICES_MAP: Record<ValidationFilter, (value: ServicePublishInfo) => boolean> = {
-  [BWC_ERRORS_FILTER]: (value) => value.baselineVersionFound && !!(value?.changeSummary?.breaking),
-  [NO_BWC_ERRORS_FILTER]: (value) => value.baselineVersionFound && value?.changeSummary?.breaking === 0,
-  [NO_BASELINE_FILTER]: (value) => !value.baselineVersionFound || !value.baselineFound,
-}
+import { type ValidationFilter, VALIDATION_FILTER_PREDICATES } from './validationFilters'
 
 export const ValidationResultsStep: FC = memo(() => {
   const [{ services }, isServicesLoading] = useServices({ onlyWithSpecs: true })
@@ -68,7 +52,7 @@ export const ValidationResultsStep: FC = memo(() => {
           const currentService = services.find(({ key }) => key === serviceKey)
 
           return filters.some(filterItem => {
-            return currentService && FILTERED_SERVICES_MAP[filterItem!](currentService)
+            return currentService && VALIDATION_FILTER_PREDICATES[filterItem!](currentService)
           })
         })
       }

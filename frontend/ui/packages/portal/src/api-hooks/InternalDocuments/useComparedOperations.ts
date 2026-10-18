@@ -1,8 +1,8 @@
 import type { VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { OperationData } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 
-import { INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING } from '@apihub/utils/internal-documents/constants'
-import { isAsyncApiSpecification, isGraphApiSpecification, isOpenApiSpecification } from '@apihub/utils/internal-documents/type-guards'
+import { INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING } from '@portal/utils/internal-documents/constants'
+import { isAsyncApiSpecification, isGraphApiSpecification, isOpenApiSpecification } from '@portal/utils/internal-documents/type-guards'
 import { deserialize } from '@netcracker/qubership-apihub-api-unifier'
 import type { PackageKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { VersionChanges } from '@netcracker/qubership-apihub-ui-shared/entities/version-changelog'

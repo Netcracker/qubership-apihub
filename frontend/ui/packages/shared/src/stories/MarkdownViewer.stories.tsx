@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Box, CssBaseline, ThemeProvider } from '@mui/material'
 import { MarkdownViewer } from '../components/SpecificationDialog/MarkdownViewer'
 import { markdownSample } from './samples/markdown-sample'
@@ -42,7 +42,6 @@ type Story = StoryObj<typeof meta>
 /** Two valid Mermaid diagrams (sequence + flowchart) embedded in a markdown document.
  *  Verifies that multiple diagrams on the same page all render as SVG. */
 export const WithMermaidDiagrams: Story = {
-  name: 'With Mermaid Diagrams',
   args: {
     value: mermaidSample,
   },

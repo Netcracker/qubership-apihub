@@ -20,6 +20,7 @@ import { memo, useCallback, useMemo, useRef } from 'react'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import { VersionHistoryTable } from '../../VersionHistoryTable'
 import type { PackagePermissions } from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
+import type { PackageKind } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import type { PackageVersion } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import { VERSION_STATUS_MANAGE_PERMISSIONS } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
@@ -37,6 +38,7 @@ import { usePackageVersions } from '@netcracker/qubership-apihub-ui-shared/hooks
 
 export type PackageVersionsTableProps = Readonly<{
   packageKey: string
+  kind?: PackageKind
   permissions?: PackagePermissions
   onDelete: (version: PackageVersion) => void
   onEdit: (version: PackageVersion) => void
@@ -45,7 +47,7 @@ export type PackageVersionsTableProps = Readonly<{
 }>
 export const PackageVersionsTable: FC<PackageVersionsTableProps> = memo<PackageVersionsTableProps>((props) => {
   const {
-    packageKey, permissions, status,
+    packageKey, kind, permissions, status,
     onDelete, onEdit, searchValue,
   } = props
   const statuses = useMemo(() => (status ? [status] : undefined), [status])
@@ -72,6 +74,7 @@ export const PackageVersionsTable: FC<PackageVersionsTableProps> = memo<PackageV
       <VersionHistoryTable
         value={filteredVersions}
         packageKey={packageKey}
+        kind={kind}
         actionsCell={(item) => <VersionHistoryActions
           version={item as PackageVersion}
           permissions={permissions}

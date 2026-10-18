@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { useShowSuccessNotification } from '@apihub/routes/root/BasePage/Notification'
-import { useUsers } from '@apihub/routes/root/useUsers'
+import { useShowSuccessNotification } from '@portal/routes/root/BasePage/Notification'
+import { useUsers } from '@portal/routes/root/useUsers'
 import { Box } from '@mui/material'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import { GenerateTokenForm } from '@netcracker/qubership-apihub-ui-shared/components/GenerateTokenForm'

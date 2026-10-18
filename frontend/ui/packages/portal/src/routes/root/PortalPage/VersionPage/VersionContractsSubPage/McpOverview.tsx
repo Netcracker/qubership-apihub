@@ -16,6 +16,7 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
 import type { Key, PackageKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { toOptionalString } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
 
 import { usePackageKind } from '../../usePackageKind'
@@ -29,6 +30,7 @@ type McpOverviewProps = Readonly<{
   mcpEndpoint?: string
   refPackageKey?: PackageKey
   isEmptyMcpScope: boolean
+  emptyMessage?: string
 }>
 
 export const McpOverview: FC<McpOverviewProps> = memo<McpOverviewProps>(({
@@ -37,11 +39,12 @@ export const McpOverview: FC<McpOverviewProps> = memo<McpOverviewProps>(({
   mcpEndpoint,
   refPackageKey,
   isEmptyMcpScope,
+  emptyMessage,
 }) => {
   const [kind] = usePackageKind()
   const canLoadOverview = !isEmptyMcpScope && !!mcpEndpoint
 
-  const [initEntities] = useMcpEntities({
+  const [initEntities, isInitEntitiesLoading] = useMcpEntities({
     packageKey: packageKey,
     versionKey: versionKey,
     collection: MCP_COLLECTION_INIT,
@@ -79,12 +82,15 @@ export const McpOverview: FC<McpOverviewProps> = memo<McpOverviewProps>(({
     ? entityDetails?.data
     : undefined
 
-  if (isEmptyMcpScope) {
+  const showEmptyPlaceholder = isEmptyMcpScope ||
+    (canLoadOverview && !isInitEntitiesLoading && isEmpty(initEntities))
+
+  if (showEmptyPlaceholder) {
     return (
       <Placeholder
         invisible={false}
         area={CONTENT_PLACEHOLDER_AREA}
-        message={MCP_EMPTY_SCOPE_MESSAGE}
+        message={emptyMessage ?? MCP_EMPTY_SCOPE_MESSAGE}
         data-testid="NoItemsPlaceholder"
       />
     )

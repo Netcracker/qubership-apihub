@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-import type { FC, ReactNode } from 'react'
-import * as React from 'react'
-import { memo } from 'react'
-import { Box, Typography } from '@mui/material'
+import { type FC, memo, type ReactNode } from 'react'
+import { Box, styled, Typography } from '@mui/material'
 
 import { ApiTypeSelector } from '../ApiTypeSelector'
 import type { ApiType } from '../../entities/api-types'
 import type { ContractType } from '../../entities/contract-types'
+import type { ApiTypeProblemDetails } from '../../hooks/versions/apiTypeProblemDetails'
 
 export type PageTitleProps = {
   title: string
@@ -29,6 +28,7 @@ export type PageTitleProps = {
   additionalSelectors?: ReactNode
   apiType?: ApiType | ContractType
   allowedApiTypes?: ReadonlyArray<ApiType | ContractType>
+  apiTypeProblems?: Partial<Record<ApiType | ContractType, ApiTypeProblemDetails>>
   withApiSelector?: boolean
   onApiTypeChange?: (apiType: ApiType | ContractType) => void
 }
@@ -40,36 +40,75 @@ export const PageTitle: FC<PageTitleProps> = memo<PageTitleProps>(({
   additionalSelectors,
   apiType,
   allowedApiTypes,
+  apiTypeProblems,
   withApiSelector = false,
   onApiTypeChange,
 }) => {
   return (
-    <Box
-      display="flex"
-      width="100%"
-      alignItems="center"
-      flexGrow={1}
-      gap={3}
-      mr={3}
-      height="32px"
-    >
-      <Box display="flex" alignItems="center" gap={1}>
-        <Typography variant="body1" fontSize={15} sx={{ fontWeight: 600 }}>{title}</Typography>
-        {titleComponent && <Box fontSize={15} fontWeight={600}>{titleComponent}</Box>}
-      </Box>
+    <PageTitleRoot>
+      <TitleContainer>
+        <TitleText noWrap variant="body1">
+          {title}
+        </TitleText>
+        {titleComponent && (
+          <TitleComponentContainer>
+            {titleComponent}
+          </TitleComponentContainer>
+        )}
+      </TitleContainer>
 
-      <Box display="flex" alignItems="center" gap={1}>
+      <SelectorsContainer>
         {withApiSelector && apiType && allowedApiTypes && (
           <ApiTypeSelector
             apiType={apiType}
             allowedApiTypes={allowedApiTypes}
+            apiTypeProblems={apiTypeProblems}
             onChange={onApiTypeChange}
           />
         )}
         {additionalSelectors}
-      </Box>
-    </Box>
+      </SelectorsContainer>
+    </PageTitleRoot>
   )
 })
 
 PageTitle.displayName = 'PageTitle'
+
+const PageTitleRoot = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  width: '100%',
+  alignItems: 'center',
+  flexGrow: 1,
+  gap: theme.spacing(3),
+  marginRight: theme.spacing(3),
+  height: theme.spacing(4),
+}))
+
+const TitleContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+  overflow: 'hidden',
+}))
+
+const TitleText = styled(Typography)({
+  fontSize: 15,
+  fontWeight: 600,
+  whiteSpace: 'nowrap',
+  flexShrink: 0,
+})
+
+const TitleComponentContainer = styled(Box)({
+  fontSize: 15,
+  fontWeight: 600,
+  display: 'flex',
+  alignItems: 'center',
+  minWidth: 0,
+})
+
+const SelectorsContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+  flexShrink: 0,
+}))

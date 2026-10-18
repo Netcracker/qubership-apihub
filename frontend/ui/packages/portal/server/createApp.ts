@@ -1,4 +1,3 @@
-import bodyParser from 'body-parser'
 import cors from 'cors'
 import type { Express, Router } from 'express'
 import express from 'express'
@@ -34,8 +33,8 @@ export function createApp(): Express {
   ])
 
   app.use(cors())
-  app.use(bodyParser.json())
-  app.use(bodyParser.text())
+  app.use(express.json())
+  app.use(express.text())
 
   routersMap.forEach((router, path) => app.use(path, router))
 

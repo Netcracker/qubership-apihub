@@ -28,14 +28,16 @@ import {
   SUMMARY_PAGE,
 } from '../../../../../routes'
 import { usePackage } from '../../../usePackage'
-import { useDeletedReferences, useUpdateDeletedReferences } from '../../useDeletedReferences'
+import { useUpdateDeletedReferences } from '../../useDeletedReferences'
 import { OverviewNavigationItem } from './OverviewNavigationItem'
 import { getOverviewPath } from '../../../../NavigationProvider'
+import { hasReferenceProblems } from '../../PackagesAndDashboardsTree/referenceProblems'
 import { useActiveTabs } from '@netcracker/qubership-apihub-ui-shared/hooks/pathparams/useActiveTabs'
 import type { SidebarMenu } from '@netcracker/qubership-apihub-ui-shared/components/NavigationMenu'
 import type { PackageKind } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { useVersionReferences } from '@apihub/routes/root/useVersionReferences'
+import { useVersionProblemProcessorContext } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/useVersionProblemProcessorContext'
+import { useVersionReferences } from '@portal/routes/root/useVersionReferences'
 
 export const OverviewNavigation: FC = memo(() => {
   const { packageId, versionId } = useParams()
@@ -50,12 +52,13 @@ export const OverviewNavigation: FC = memo(() => {
     enabled: true,
   })
   const [updateDeletedReferences] = useUpdateDeletedReferences()
+  const processorContext = useVersionProblemProcessorContext()
 
   useEffect(() => {
     updateDeletedReferences({ versionReferences })
   }, [updateDeletedReferences, versionReferences])
 
-  const { data: deletedReferences } = useDeletedReferences(packageId!, versionId!)
+  const hasPackagesProblems = hasReferenceProblems(versionReferences, processorContext)
 
   return (
     <List>
@@ -69,7 +72,7 @@ export const OverviewNavigation: FC = memo(() => {
             id={id}
             data-testid={dataTestId}
             sidebarItem={sidebarItem}
-            deletedReferences={deletedReferences}
+            hasReferenceProblems={hasPackagesProblems}
           />
         )
       })}

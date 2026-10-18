@@ -36,6 +36,7 @@ export const TOGGLE_SIDEBAR_BUTTON = 'toggle-sidebar'
 
 export type SidebarMenu = {
   id: string
+  route?: string
   title: string
   icon?: ReactNode
   disabled?: boolean
@@ -107,13 +108,13 @@ export const NavigationMenu: FC<NavigationMenuProps> = memo<NavigationMenuProps>
       >
         <List sx={{ height: `calc(100% - ${serviceItems.length} *  48px)` }}>
           {sidebarMenuItems.map(menuItem => {
-            const { id, title, disabled, tooltip, icon, 'data-testid': dataTestId } = menuItem
+            const { id, route, title, disabled, tooltip, icon, 'data-testid': dataTestId } = menuItem
             return (
               <Tooltip key={`tooltip-${id}`} title={tooltip} disableHoverListener={open && !disabled} placement="right">
                 <ListItem key={id} disablePadding sx={{ display: 'block' }}>
                   <ListItemButton
                     sx={LIST_ITEM_BUTTON_STYLE(activeItem, id)}
-                    onClick={() => onClickItem(id)}
+                    onClick={() => onClickItem(route ?? id)}
                     disabled={disabled}
                     data-testid={dataTestId}
                   >
@@ -129,13 +130,13 @@ export const NavigationMenu: FC<NavigationMenuProps> = memo<NavigationMenuProps>
         </List>
         <List sx={{ height: 'auto' }}>
           {serviceItems.map(menuItem => {
-            const { id, title, disabled, tooltip, icon, 'data-testid': dataTestId } = menuItem
+            const { id, route, title, disabled, tooltip, icon, 'data-testid': dataTestId } = menuItem
             return (
               <Tooltip key={`tooltip-${id}`} title={tooltip} disableHoverListener={open && !disabled} placement="right">
                 <ListItem key={id} disablePadding sx={{ display: 'block' }}>
                   <ListItemButton
                     sx={LIST_ITEM_BUTTON_STYLE(activeItem, id)}
-                    onClick={() => onClickItem(id)}
+                    onClick={() => onClickItem(route ?? id)}
                     disabled={disabled}
                     data-testid={dataTestId}
                   >

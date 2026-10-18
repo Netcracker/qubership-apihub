@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import type { ComparisonObject } from '@apihub/routes/root/PortalPage/VersionPage/breadcrumbs'
+import type { ComparisonObject } from '@portal/routes/root/PortalPage/VersionPage/breadcrumbs'
 import {
   COMPARISON_OBJECT_TYPE_DASHBOARD_REVISION,
   COMPARISON_OBJECT_TYPE_OPERATION_IN_DASHBOARD_REVISION,
   COMPARISON_OBJECT_TYPE_OPERATION_IN_PACKAGE_REVISION,
   COMPARISON_OBJECT_TYPE_OPERATIONS_GROUP_IN_PACKAGE_REVISION,
   COMPARISON_OBJECT_TYPE_PACKAGE_REVISION,
-} from '@apihub/routes/root/PortalPage/VersionPage/breadcrumbs'
-import { useVersionWithRevision } from '@apihub/routes/root/useVersionWithRevision'
+} from '@portal/routes/root/PortalPage/VersionPage/breadcrumbs'
+import { useVersionWithRevision } from '@portal/routes/root/useVersionWithRevision'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import type { Key, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { Package, PackageKind } from '@netcracker/qubership-apihub-ui-shared/entities/packages'

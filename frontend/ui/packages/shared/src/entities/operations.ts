@@ -172,6 +172,9 @@ export type PackageRefDto = {
   deletedAt?: string
   deletedBy?: string
   parentPackages?: ReadonlyArray<string>
+  hasErrors?: boolean
+  changelogHasErrors?: boolean
+  apiProcessorVersion?: string
 }
 
 export type OperationWithDeprecations = OperationData & Readonly<{
@@ -193,6 +196,9 @@ export type PackageRef = {
   deletedAt?: string
   deletedBy?: string
   parentPackages?: ReadonlyArray<string>
+  hasErrors?: boolean
+  changelogHasErrors?: boolean
+  apiProcessorVersion?: string
 }
 
 export function toOperation(operationDto: OperationDto, packagesRefs: PackagesRefs): OperationData {
@@ -281,6 +287,9 @@ export function toPackageRef(packageRef: string | undefined, packages?: Packages
     name: relatedPackage.name,
     parentPackages: relatedPackage.parentPackages,
     latestRevision: !relatedPackage?.notLatestRevision,
+    hasErrors: relatedPackage.hasErrors,
+    changelogHasErrors: relatedPackage.changelogHasErrors,
+    apiProcessorVersion: relatedPackage.apiProcessorVersion,
   } : undefined
 }
 

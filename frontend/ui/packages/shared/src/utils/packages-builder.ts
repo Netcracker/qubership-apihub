@@ -19,6 +19,7 @@ import type {
   ApihubApiCompatibilityKind,
   BuildConfig,
   ContractType,
+  FailedBuildNotifications,
   ResolvedDeprecatedOperations,
   ResolvedGroupDocuments,
   ResolvedOperation,
@@ -27,6 +28,7 @@ import type {
 } from '@netcracker/qubership-apihub-api-processor'
 import { generatePath } from 'react-router-dom'
 import type { ApiType } from '../entities/api-types'
+import { appendFailedBuildNotifications } from './failed-build-notifications'
 import type {
   AsyncApiOperationDto,
   GraphQlOperationDto,
@@ -40,6 +42,7 @@ import { getPackageRedirectDetails } from './redirects'
 import { API_V1, API_V2, API_V3, requestBlob, requestJson, requestVoid } from './requests'
 import { optionalSearchParams } from './search-params'
 import type { Key } from './types'
+import type { PublishKey } from '../entities/keys'
 import type { DocumentsDto } from '../entities/documents'
 
 export async function getPackageVersionContent(
@@ -164,6 +167,7 @@ export type SetPublicationDetailsOptions = {
   abortController: AbortController | null
   data?: Blob
   errors?: ErrorMessage
+  notifications?: FailedBuildNotifications
 }
 
 export async function setPublicationDetails(options: SetPublicationDetailsOptions): Promise<void> {
@@ -175,6 +179,7 @@ export async function setPublicationDetails(options: SetPublicationDetailsOption
     abortController,
     data,
     errors,
+    notifications,
   } = options
 
   const formData = new FormData()
@@ -182,6 +187,7 @@ export async function setPublicationDetails(options: SetPublicationDetailsOption
   formData.append('builderId', builderId)
   errors && formData.append('errors', errors)
   data && formData.append('data', data, 'package.zip')
+  notifications && appendFailedBuildNotifications(formData, notifications)
 
   const signal = abortController?.signal
   const packageId = encodeURIComponent(packageKey)
@@ -266,9 +272,11 @@ export type PublishStatus =
 export type PublishDetails = PublishDetailsDto
 
 export type PublishDetailsDto = {
-  publishId: string
+  publishId: PublishKey
   status: PublishStatus
   message?: string
+  hasErrors?: boolean
+  changelogHasErrors?: boolean
 }
 
 type OperationMetadata =
@@ -368,6 +376,8 @@ export async function getDocuments(
 export async function getResolvedVersionDocuments(
   packageKey: Key,
   versionKey: Key,
+  page: number,
+  limit: number,
   apiType?: ApiType,
   contractType?: ContractType,
   signal?: AbortSignal,
@@ -375,7 +385,12 @@ export async function getResolvedVersionDocuments(
   const packageId = encodeURIComponent(packageKey)
   const versionId = encodeURIComponent(versionKey)
 
-  const queryParams = optionalSearchParams({ apiType: { value: apiType }, contractType: { value: contractType } })
+  const queryParams = optionalSearchParams({
+    apiType: { value: apiType },
+    contractType: { value: contractType },
+    page: { value: page },
+    limit: { value: limit },
+  })
   const pathPattern = '/packages/:packageId/versions/:versionId/documents'
   return await requestJson<ResolvedVersionDocuments>(
     `${generatePath(pathPattern, { packageId, versionId })}?${queryParams}`,
@@ -386,4 +401,35 @@ export async function getResolvedVersionDocuments(
     },
     signal,
   )
+}
+
+export async function getAllResolvedVersionDocuments(
+  packageKey: Key,
+  versionKey: Key,
+  apiType?: ApiType,
+  contractType?: ContractType,
+  signal?: AbortSignal,
+): Promise<ResolvedVersionDocuments> {
+  const limit = 100
+  const result: ResolvedVersionDocuments = { documents: [], packages: {} }
+  let page = 0
+  let documentsCount = 0
+
+  while (page === 0 || documentsCount === limit) {
+    const { documents, packages } = await getResolvedVersionDocuments(
+      packageKey,
+      versionKey,
+      page,
+      limit,
+      apiType,
+      contractType,
+      signal,
+    )
+    result.documents = [...result.documents, ...documents]
+    result.packages = { ...result.packages, ...packages }
+    page += 1
+    documentsCount = documents.length
+  }
+
+  return result
 }

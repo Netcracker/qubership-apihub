@@ -18,10 +18,10 @@ import { useMutation } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import { useInvalidateServices } from '../../../useServices'
 import type { IsError, IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { runServiceDiscovery } from '@apihub/entities/services'
+import { runServiceDiscovery } from '@agents/entities/services'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
-import type { WorkspaceKey } from '@apihub/entities/keys'
+import type { WorkspaceKey } from '@agents/entities/keys'
 import {
   useGetAgentPrefix,
 } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'

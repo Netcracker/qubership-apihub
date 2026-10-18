@@ -5,7 +5,7 @@ import { sortChanges } from '@netcracker/qubership-apihub-ui-shared/utils/api-ch
 import type { DdlSubTableComponentProps } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/components/DdlChangesViewTable'
 import { DdlEntityChangesSubTable } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/components/DdlEntityChangesSubTable'
 
-import { usePackageVersionContent } from '@apihub/routes/root/usePackageVersionContent'
+import { usePackageVersionContent } from '@portal/routes/root/usePackageVersionContent'
 
 import { useDdlEntityChanges } from '../api/useDdlEntityChanges'
 

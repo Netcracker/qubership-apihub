@@ -1,9 +1,10 @@
-import { Link } from '@mui/material'
 import { type FC, memo, useMemo, useState } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
+import { Box, Link, styled } from '@mui/material'
 
 import { CATEGORY_OPERATION } from '@netcracker/qubership-apihub-ui-shared/components/ChangesTooltip'
 import { RichFiltersLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/RichFiltersLayout'
+import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 import { PageTitle } from '@netcracker/qubership-apihub-ui-shared/components/Titles/PageTitle'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { CHANGE_SEVERITIES } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
@@ -22,8 +23,8 @@ import {
   usePreviousReleaseVersion,
 } from '@netcracker/qubership-apihub-ui-shared/widgets/ChangesViewWidget/components/PreviousReleaseOptionsProvider'
 
-import { usePortalPageSettingsContext } from '@apihub/routes/PortalPageSettingsProvider'
-import { isApiTypeSelectorShown } from '@apihub/utils/operation-types'
+import { usePortalPageSettingsContext } from '@portal/routes/PortalPageSettingsProvider'
+import { isApiTypeSelectorShown } from '@portal/utils/operation-types'
 import { VERSION_TAB_IDS } from '../VersionTabApiTypes/version-tab-allowed-api-types'
 import { getVersionPath } from '../../../../NavigationProvider'
 import { usePackage } from '../../../usePackage'
@@ -40,6 +41,7 @@ import { useOperationGroupSearchFilter } from '../useOperationGroupSearchFilter'
 import { useSetPathParam } from '../useSetPathParam'
 import { useTagSearchFilter } from '../useTagSearchFilter'
 import { useVersionTabApiTypes } from '../useVersionTabApiTypes'
+import { VersionErrorIndicatorWithFetch } from '../VersionErrorIndicatorWithFetch'
 import { ApiChangesCard } from './ApiChangesCard'
 import { ApiChangesNavigation } from './ApiChangesNavigation'
 
@@ -61,7 +63,7 @@ export const VersionApiChangesSubPage: FC = memo(() => {
   const [operationGroup] = useOperationGroupSearchFilter()
   const setPathParam = useSetPathParam()
   const { tabs, isLoading } = useVersionTabApiTypes()
-  const { allowedApiTypes } = tabs[VERSION_TAB_IDS.apiChanges]
+  const { allowedApiTypes, apiTypeProblems } = tabs[VERSION_TAB_IDS.apiChanges]
 
   useEnsureValidRouteApiType(allowedApiTypes, isLoading)
 
@@ -80,15 +82,38 @@ export const VersionApiChangesSubPage: FC = memo(() => {
 
   const { hideFiltersPanel, toggleHideFiltersPanel } = usePortalPageSettingsContext()
 
-  const versionElement = useMemo(() => (
-    <Link
-      component={NavLink}
-      to={getVersionPath({ packageKey: packageId!, versionKey: previousReleaseVersion! })}
-      data-testid="ComparedToLink"
-    >
-      {previousReleaseVersionKey}
-    </Link>
-  ), [packageId, previousReleaseVersion, previousReleaseVersionKey])
+  const versionElement = useMemo(() => {
+    if (!previousReleaseVersion || !packageId) {
+      return null
+    }
+
+    return (
+      <VersionLinkContainer>
+        <TextWithOverflowTooltip
+          tooltipText={previousReleaseVersionKey}
+          variant="inherit"
+          sx={{ minWidth: 0, flexShrink: 1 }}
+        >
+          <Link
+            component={NavLink}
+            to={getVersionPath({
+              packageKey: packageId,
+              versionKey: previousReleaseVersion,
+            })}
+            data-testid="ComparedToLink"
+          >
+            {previousReleaseVersionKey}
+          </Link>
+        </TextWithOverflowTooltip>
+        <VersionErrorIndicatorWithFetch
+          packageKey={packageId}
+          versionKey={previousReleaseVersion}
+          kind={packageObject?.kind}
+          data-testid="PreviousVersionErrorIndicator"
+        />
+      </VersionLinkContainer>
+    )
+  }, [packageId, packageObject?.kind, previousReleaseVersion, previousReleaseVersionKey])
 
   return (
     <ChangesSummaryProvider>
@@ -100,6 +125,7 @@ export const VersionApiChangesSubPage: FC = memo(() => {
             onApiTypeChange={setPathParam}
             apiType={routeApiType}
             allowedApiTypes={allowedApiTypes}
+            apiTypeProblems={apiTypeProblems}
             withApiSelector={isApiTypeSelectorShown(allowedApiTypes)}
           />
         }
@@ -142,3 +168,10 @@ export const VersionApiChangesSubPage: FC = memo(() => {
 VersionApiChangesSubPage.displayName = 'VersionApiChangesSubPage'
 
 const API_CHANGES_TITLE = 'API changes compared to '
+
+const VersionLinkContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+  minWidth: 0,
+}))

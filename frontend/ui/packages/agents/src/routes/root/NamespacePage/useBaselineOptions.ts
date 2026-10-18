@@ -16,18 +16,32 @@
 
 import { useServices } from './useServices'
 import { useMemo } from 'react'
-import { NO_PREVIOUS_VERSION_OPTION } from '@apihub/entities/snapshots'
-import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
+import { NO_PREVIOUS_VERSION_OPTION } from '@agents/entities/snapshots'
+import type { ServiceKey } from '@agents/entities/keys'
+import { type BaselineOptions, toBaselineOptions } from './baselineOptions'
+import { useAppApiProcessorVersion } from '@netcracker/qubership-apihub-ui-shared/hooks/frontend-version/useVersionInfo'
+import { agent } from '@netcracker/qubership-apihub-ui-shared/utils/version-info'
 
-export function useBaselineOptions(withDefaultOption = false): string[] {
+type UseBaselineOptionsParams = {
+  selectedServiceKeys?: ReadonlyArray<ServiceKey>
+  withDefaultOption?: boolean
+}
+
+export function useBaselineOptions({
+  selectedServiceKeys,
+  withDefaultOption = false,
+}: UseBaselineOptionsParams = {}): BaselineOptions {
   const [{ services }] = useServices()
-  return useMemo(() => [
-    ...new Set(withDefaultOption ? [NO_PREVIOUS_VERSION_OPTION] : []),
-    ...new Set(services.flatMap(({ baseline }) => {
-      if (baseline?.versions) {
-        return baseline.versions.map(version => getSplittedVersionKey(version).versionKey)
-      }
-      return []
-    })),
-  ], [services, withDefaultOption])
+  const appApiProcessorVersion = useAppApiProcessorVersion(agent)
+
+  return useMemo(() => {
+    const options = toBaselineOptions(services, selectedServiceKeys, appApiProcessorVersion)
+    if (!withDefaultOption) {
+      return options
+    }
+    return {
+      ...options,
+      versionKeys: [NO_PREVIOUS_VERSION_OPTION, ...options.versionKeys],
+    }
+  }, [appApiProcessorVersion, selectedServiceKeys, services, withDefaultOption])
 }

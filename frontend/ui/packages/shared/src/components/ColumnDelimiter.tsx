@@ -17,12 +17,12 @@
 import { useMemo } from 'react'
 import { Box } from '@mui/material'
 import type { Header, RowData } from '@tanstack/react-table'
-import type { ReactJSXElement } from '@emotion/react/types/jsx-namespace'
+import type { ReactElement } from 'react'
 
 export function ColumnDelimiter<TData extends RowData>(props: {
   header: Header<TData, unknown>
   resizable?: boolean
-}): ReactJSXElement {
+}): ReactElement {
   const { header, resizable } = props
   const resizeHandler = useMemo(() => header.getResizeHandler(), [header])
   return (

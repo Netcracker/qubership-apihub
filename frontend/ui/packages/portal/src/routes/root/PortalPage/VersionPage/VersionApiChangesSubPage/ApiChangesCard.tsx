@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { useComparisonParams } from '@apihub/routes/root/PortalPage/VersionPage/useComparisonParams'
+import { useComparisonParams } from '@portal/routes/root/PortalPage/VersionPage/useComparisonParams'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import {
   usePreviousReleasePackageKey,

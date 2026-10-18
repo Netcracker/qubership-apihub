@@ -202,10 +202,7 @@ export function createComponents(): Components<Theme> {
       },
       styleOverrides: {
         root: {
-          // Hide the default focus ring on pointer clicks; MUI still applies
-          // `.Mui-focusVisible` for keyboard Tab navigation so the outline stays visible there.
-          // TODO: remove once doc-viewer focus styles are fixed - https://github.com/Netcracker/qubership-apihub/issues/311
-          '&:focus': { outline: 'none' },
+          // MUI resets the outline and the ripple is disabled, so keyboard focus needs its own indicator
           '&.Mui-focusVisible': { outline: '4px auto -webkit-focus-ring-color' },
         },
       },
@@ -471,10 +468,6 @@ export function createComponents(): Components<Theme> {
           '&:hover': {
             cursor: 'pointer',
           },
-          // Hide the default focus ring on pointer clicks; MUI still applies
-          // `.Mui-focusVisible` for keyboard Tab navigation so the outline stays visible there.
-          '&:focus': { outline: 'none' },
-          '&:focus-visible': { outline: '4px auto -webkit-focus-ring-color' },
         },
       },
     },
@@ -565,6 +558,22 @@ export function createComponents(): Components<Theme> {
       styleOverrides: {
         root: {
           '&:hover': {
+            backgroundColor: 'transparent',
+          },
+        },
+      },
+    },
+    MuiSelect: {
+      defaultProps: {
+        MenuProps: {
+          // Skip auto-focus on the selected item to avoid the redundant focus outline on first open.
+          disableAutoFocusItem: true,
+        },
+      },
+      styleOverrides: {
+        select: {
+          // MUI default: gray background + borderRadius 0 on focus - looks like a tall rectangle inside rounded inputs.
+          '&:focus': {
             backgroundColor: 'transparent',
           },
         },

@@ -21,8 +21,8 @@ import type { TestableProps } from '@netcracker/qubership-apihub-ui-shared/compo
 import { ALERT_SEVERITY } from '@netcracker/qubership-apihub-ui-shared/themes/alert'
 import { type McpDocumentType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 
-import type { McpStagedFileMeta } from '@apihub/routes/root/PortalPage/PackagePage/mcpPublish'
-import { formatMcpEndpointReplaceStagedFileAlertMessage } from '@apihub/routes/root/PortalPage/PackagePage/mcpValidation'
+import type { McpStagedFileMeta } from '@portal/routes/root/PortalPage/PackagePage/mcpPublish'
+import { formatMcpEndpointReplaceStagedFileAlertMessage } from '@portal/routes/root/PortalPage/PackagePage/mcpValidation'
 
 export const McpEndpointDialog: FC = memo(() => {
   return (

@@ -22,7 +22,7 @@ import {
   OPERATIONS_ADD_TO_GROUP_ACTION,
   OPERATIONS_REMOVE_FROM_GROUP_ACTION,
   useEventBus,
-} from '@apihub/routes/EventBusProvider'
+} from '@portal/routes/EventBusProvider'
 import { OutlinedIconButton } from '@netcracker/qubership-apihub-ui-shared/components/OutlinedIconButton'
 import { ToLeftIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ToLeftIcon'
 import { DISABLED_BUTTON_COLOR, ENABLED_BUTTON_COLOR } from '@netcracker/qubership-apihub-ui-shared/entities/operation-groups'

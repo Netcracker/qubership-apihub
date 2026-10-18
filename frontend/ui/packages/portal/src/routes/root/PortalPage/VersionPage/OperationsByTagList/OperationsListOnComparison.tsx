@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { buildOperationPairKey, useHandledOperationPairsContext } from '@apihub/components/HandledOperationPairsProvider'
-import { useHasComparisonInternalDocument, useSetIsApiDiffResultLoading } from '@apihub/routes/root/ApiDiffResultProvider'
+import { buildOperationPairKey, useHandledOperationPairsContext } from '@portal/components/HandledOperationPairsProvider'
+import { useHasComparisonInternalDocument, useSetIsApiDiffResultLoading } from '@portal/routes/root/ApiDiffResultProvider'
 import { CustomListItemButton } from '@netcracker/qubership-apihub-ui-shared/components/CustomListItemButton'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'

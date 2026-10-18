@@ -24,7 +24,7 @@ import { PublishPackageVersionDialog } from '../DashboardPage/PublishPackageVers
 import { PackageVersionPageToolbar } from './PackageVersionPageToolbar'
 import { VersionConfigurationSubPage } from './VersionConfigurationSubPage'
 import { ConfigureVersionNavigationMenu } from '../ConfigureVersionNavigationMenu'
-import { CurrentPackageProvider } from '@apihub/components/CurrentPackageProvider'
+import { CurrentPackageProvider } from '@portal/components/CurrentPackageProvider'
 import { FilesProvider } from '../FilesProvider'
 import { PortalSpecificationDialog } from './PortalSpecificationDialog'
 import { PortalPublicationErrorReportDialog } from './PortalPublicationErrorReportDialog'
@@ -34,9 +34,9 @@ import { LayoutWithToolbar } from '@netcracker/qubership-apihub-ui-shared/compon
 import { DeleteFileDialog } from '@netcracker/qubership-apihub-ui-shared/components/FileTableUpload/DeleteFileDialog'
 import { LayoutWithTabs } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/LayoutWithTabs'
 import { EditFileLabelsDialog } from '@netcracker/qubership-apihub-ui-shared/components/FileTableUpload/EditFileLabelsDialog'
-import { McpEndpointDialog } from '@apihub/routes/root/PortalPage/PackagePage/McpEndpointDialog'
-import { McpRenameEndpointDialog } from '@apihub/routes/root/PortalPage/PackagePage/McpRenameEndpointDialog'
-import { McpDuplicateKindDialog } from '@apihub/routes/root/PortalPage/PackagePage/McpDuplicateKindDialog'
+import { McpEndpointDialog } from '@portal/routes/root/PortalPage/PackagePage/McpEndpointDialog'
+import { McpRenameEndpointDialog } from '@portal/routes/root/PortalPage/PackagePage/McpRenameEndpointDialog'
+import { McpDuplicateKindDialog } from '@portal/routes/root/PortalPage/PackagePage/McpDuplicateKindDialog'
 
 export const ConfigurePackageVersionPage: FC = memo(() => {
   const [menuItem] = useActiveTabs()

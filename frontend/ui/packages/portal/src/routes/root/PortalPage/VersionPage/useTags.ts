@@ -18,7 +18,7 @@ import type { FetchNextPageOptions, InfiniteQueryObserverResult } from '@tanstac
 import { useInfiniteQuery } from '@tanstack/react-query'
 
 import { usePackageParamsWithRef } from '../usePackageParamsWithRef'
-import { portalRequestJson } from '@apihub/utils/requests'
+import { portalRequestJson } from '@portal/utils/requests'
 import { generatePath } from 'react-router-dom'
 import type {
   ApiAudience,

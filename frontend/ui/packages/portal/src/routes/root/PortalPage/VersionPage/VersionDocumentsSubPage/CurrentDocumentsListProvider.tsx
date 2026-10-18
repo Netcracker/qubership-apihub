@@ -16,7 +16,7 @@
 
 import type { Dispatch, FC, PropsWithChildren, SetStateAction } from 'react'
 import { createContext, useContext, useState } from 'react'
-import type { Documents } from '@apihub/entities/documents'
+import type { Documents } from '@portal/entities/documents'
 
 const SelectedDocumentContext = createContext<Documents>()
 const SetSelectedDocumentContext = createContext<Dispatch<SetStateAction<Documents>>>()

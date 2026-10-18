@@ -21,7 +21,7 @@ import type {
   ContractElementSearchResult,
   DocumentSearchResult,
   PackageSearchResult,
-} from '@apihub/entities/global-search'
+} from '@portal/entities/global-search'
 
 export type SearchResultTabLabelProps = {
   label: string

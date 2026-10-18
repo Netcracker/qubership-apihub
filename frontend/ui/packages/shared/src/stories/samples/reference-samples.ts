@@ -73,6 +73,7 @@ export const references: PackageReference[] = [
     ],
     'key': 'PRMR.SCDR.APPS.BKSTR',
     'latestRevision': true,
+    'hasErrors': true,
   },
   {
     'kind': PACKAGE_KIND,
@@ -85,5 +86,6 @@ export const references: PackageReference[] = [
     ],
     'key': 'PSB.MYPKG',
     'latestRevision': true,
+    'changelogHasErrors': true,
   },
 ]

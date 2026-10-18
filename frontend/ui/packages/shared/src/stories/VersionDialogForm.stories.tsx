@@ -17,7 +17,7 @@
 import type { ReactElement } from 'react'
 import React, { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { VersionStatus } from '../entities/version-status'
 import { DRAFT_VERSION_STATUS, NO_PREVIOUS_RELEASE_VERSION_OPTION } from '../entities/version-status'
 import type { VersionDialogFormProps, VersionFormData } from '../components/VersionDialogForm'

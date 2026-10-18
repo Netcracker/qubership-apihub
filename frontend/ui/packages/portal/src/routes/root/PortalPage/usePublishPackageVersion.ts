@@ -29,6 +29,9 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
 import type { IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import type { PublishDetails } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
+import { PUBLICATION_ERROR_MESSAGES } from '@netcracker/qubership-apihub-ui-shared/utils/publicationErrorMessages'
+import { RELEASE_VERSION_STATUS } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
+import { PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import {
   COMPLETE_PUBLISH_STATUS,
   ERROR_PUBLISH_STATUS,
@@ -40,7 +43,7 @@ import { useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { useNavigation } from '../../NavigationProvider'
 import { useEventBus } from '../../EventBusProvider'
-import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
+import { useCurrentPackage } from '@portal/components/CurrentPackageProvider'
 import { useAsyncInvalidateVersionContent } from '../usePackageVersionContent'
 import { useAsyncInvalidateVersionSources } from '../useVersionSources'
 import { getPackageVersionBuilder } from './package-version-builder'
@@ -48,9 +51,10 @@ import { getPackageVersionBuilder } from './package-version-builder'
 export function usePublishPackageVersion(): [PublishPackageVersion, IsLoading, IsSuccess] {
   const { packageId } = useParams()
   const [user] = useUser()
-  const { navigateToVersion } = useNavigation()
+  const { navigateToVersion, navigateToDocuments } = useNavigation()
 
   const currentPackage = useCurrentPackage()
+  const isPackage = currentPackage?.kind === PACKAGE_KIND
   const { showErrorNotification, showPublicationErrorReportDialog } = useEventBus()
 
   const invalidateVersionContent = useAsyncInvalidateVersionContent()
@@ -64,6 +68,7 @@ export function usePublishPackageVersion(): [PublishPackageVersion, IsLoading, I
     const filesListLength = files?.length
     if (filesListLength) {
       const packageName = currentPackage?.name ?? packageId ?? ''
+      const errors = errorMessage ?? ''
       showErrorNotification({
         title: 'Publication error',
         message: `There was an error while publishing package ${packageName}`,
@@ -71,7 +76,7 @@ export function usePublishPackageVersion(): [PublishPackageVersion, IsLoading, I
           title: 'View details',
           onClick: () => showPublicationErrorReportDialog({
             downloadFilename: `Error report for the package ${packageName}`,
-            errors: errorMessage ?? '',
+            errors: errors,
           }),
         },
       })
@@ -87,7 +92,7 @@ export function usePublishPackageVersion(): [PublishPackageVersion, IsLoading, I
         toPublishOptions(packageId!, options, user!.key),
       )
     },
-    onSuccess: async ({ status, message }, { version, sources, files }) => {
+    onSuccess: async ({ status, message, hasErrors }, { version, sources, files, status: versionStatus }) => {
       await invalidatePackageVersions()
       await invalidateVersionContent({
         packageKey: packageId!,
@@ -102,8 +107,35 @@ export function usePublishPackageVersion(): [PublishPackageVersion, IsLoading, I
 
       if (status === COMPLETE_PUBLISH_STATUS) {
         navigateToVersion({ packageKey: packageId!, versionKey: version })
+        if (hasErrors) {
+          showErrorNotification({
+            title: PUBLICATION_ERROR_MESSAGES.snackbar.draftPublishWithErrors.title,
+            message: PUBLICATION_ERROR_MESSAGES.snackbar.draftPublishWithErrors.body,
+            button: {
+              title: PUBLICATION_ERROR_MESSAGES.snackbar.draftPublishWithErrors.action,
+              onClick: () => navigateToDocuments({ packageKey: packageId!, versionKey: version }),
+            },
+          })
+        }
       } else if (status === ERROR_PUBLISH_STATUS) {
-        handlePublicationError(message, files)
+        // Dashboard build fails on a reference comparison with errors
+        // in draft too, so dashboards get the generic error with the real cause
+        if (isPackage && versionStatus === RELEASE_VERSION_STATUS) {
+          showErrorNotification({
+            title: PUBLICATION_ERROR_MESSAGES.snackbar.releasePublishRefused.title,
+            message: PUBLICATION_ERROR_MESSAGES.snackbar.releasePublishRefused.body,
+            button: {
+              title: PUBLICATION_ERROR_MESSAGES.snackbar.releasePublishRefused.action,
+              // TODO: integrate build error report dialog from branch feature/document-errors-dialog-718
+              onClick: () => showPublicationErrorReportDialog({
+                downloadFilename: `Error report for the package ${currentPackage?.name ?? packageId ?? ''}`,
+                errors: message ?? '',
+              }),
+            },
+          })
+        } else {
+          handlePublicationError(message, files)
+        }
       }
     },
     onError: async (error, variables, context) => {

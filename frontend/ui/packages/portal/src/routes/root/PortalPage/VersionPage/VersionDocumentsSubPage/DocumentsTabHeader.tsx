@@ -1,15 +1,16 @@
 import MoreVertIcon from '@mui/icons-material/MoreVert'
-import { Box, Skeleton } from '@mui/material'
+import { Box, Button, Skeleton } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { type Dispatch, type FC, memo, type SetStateAction, useCallback } from 'react'
 
-import type { Document } from '@apihub/entities/documents'
-import type { Key } from '@apihub/entities/keys'
+import type { Document } from '@portal/entities/documents'
+import type { Key } from '@portal/entities/keys'
+import { useEventBus } from '@portal/routes/EventBusProvider'
 import {
   type DocumentsTabSubPageKey,
   OPERATIONS_SUB_PAGE,
   OVERVIEW_SUB_PAGE,
-} from '@apihub/routes/root/PortalPage/VersionPage/OpenApiViewer/OpenApiViewer'
+} from '@portal/routes/root/PortalPage/VersionPage/OpenApiViewer/OpenApiViewer'
 import { DocumentTitleWithVersion } from '@netcracker/qubership-apihub-ui-shared/components/Titles/DocumentTitleWithVersion'
 import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
 import { Toggler } from '@netcracker/qubership-apihub-ui-shared/components/Toggler'
@@ -25,6 +26,7 @@ import { useSelectedSubPage, useSetSelectedSubPage } from './SelectedSubPageProv
 import { ShareabilityDropdown } from './ShareabilityDropdown'
 import { ShareabilityMarker } from './ShareabilityMarker'
 import { useDocumentShareabilityState } from './useDocumentShareabilityState'
+import { ErrorOutlineIcon } from '@netcracker/qubership-apihub-ui-shared/icons/ErrorOutlineIcon'
 
 export type DocumentsTabHeaderProps = {
   title: string
@@ -58,7 +60,9 @@ export const DocumentsTabHeader: FC<DocumentsTabHeaderProps> = (props) => {
 
   const selectedSubPage = useSelectedSubPage()
 
-  const { shareabilityStatus } = document
+  const { shareabilityStatus, hasErrors } = document
+
+  const { showDocumentErrorsDialog } = useEventBus()
 
   const {
     hasPermission: hasShareabilityPermission,
@@ -67,6 +71,18 @@ export const DocumentsTabHeader: FC<DocumentsTabHeaderProps> = (props) => {
     isShareabilityStatusLoading,
     handleChange: handleShareabilityChange,
   } = useDocumentShareabilityState(slug)
+
+  const handleShowErrorDetails = useCallback(() => {
+    if (!docPackageKey || !fullVersion) {
+      return
+    }
+    showDocumentErrorsDialog({
+      packageKey: docPackageKey,
+      versionKey: fullVersion,
+      documentId: slug,
+      documentTitle: title,
+    })
+  }, [docPackageKey, fullVersion, showDocumentErrorsDialog, slug, title])
 
   if (isLoading) {
     return (
@@ -81,6 +97,9 @@ export const DocumentsTabHeader: FC<DocumentsTabHeaderProps> = (props) => {
       </TabHeader>
     )
   }
+
+  const isSpecWithSubPages = !hasErrors &&
+    (isOpenApiSpecType(type) || isGraphQlSpecType(type) || isAsyncApiSpecType(type))
 
   return (
     <TabHeader data-testid="DocumentToolbar">
@@ -100,7 +119,7 @@ export const DocumentsTabHeader: FC<DocumentsTabHeaderProps> = (props) => {
         </TitleSuffix>
       </TextSection>
       <ActionsSection>
-        {(isOpenApiSpecType(type) || isGraphQlSpecType(type) || isAsyncApiSpecType(type)) && (
+        {isSpecWithSubPages && (
           <>
             {selectedSubPage === OPERATIONS_SUB_PAGE && (
               <SearchInput
@@ -112,11 +131,22 @@ export const DocumentsTabHeader: FC<DocumentsTabHeaderProps> = (props) => {
             <DocumentsSubPageSelector />
           </>
         )}
+        {hasErrors && (
+          <Button
+            variant="outlined"
+            onClick={handleShowErrorDetails}
+            data-testid="ShowDocumentErrorsButton"
+            startIcon={<ErrorOutlineIcon />}
+          >
+            Document Errors
+          </Button>
+        )}
         <ActionsButton
           slug={slug}
           docType={type}
           format={format}
           shareabilityStatus={shareabilityStatus}
+          hasErrors={hasErrors}
           customProps={MORE_ACTIONS_BUTTON_PROPS}
           startIcon={<MoreButtonIcon fontSize="small" />}
         />
@@ -124,6 +154,8 @@ export const DocumentsTabHeader: FC<DocumentsTabHeaderProps> = (props) => {
     </TabHeader>
   )
 }
+
+DocumentsTabHeader.displayName = 'DocumentsTabHeader'
 
 const DocumentsSubPageSelector = memo(() => {
   const selectedSubPage = useSelectedSubPage()
@@ -143,6 +175,8 @@ const DocumentsSubPageSelector = memo(() => {
     </SubPageSelector>
   )
 })
+
+DocumentsSubPageSelector.displayName = 'DocumentsSubPageSelector'
 
 const LEFT_SECTION_MIN_WIDTH = 240
 

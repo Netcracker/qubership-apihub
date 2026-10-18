@@ -88,6 +88,20 @@ export function calculatePreviousVersion(value: string): VersionKey {
   return value === NO_PREVIOUS_VERSION_OPTION ? '' : value
 }
 
+/**
+ * Returns the version that Create Snapshot publishes for a snapshot name. The name is sent URI-encoded and stored as
+ * is, so a name with a space or a non-ASCII character gets a version that differs from the name.
+ */
+// TODO(agents-backend): publish the plain name, as Promote Version does, and remove this function. The encoding works
+//  around a defect of the agents-backend: its router keeps path parameters encoded (UseEncodedPath), and
+//  GET .../snapshots/{version} reads the version without decoding it, so it finds a snapshot only when the stored
+//  version equals the encoded path parameter. The encoded version breaks the snapshot links in the portal, which
+//  decodes path parameters twice. Once GetSnapshot decodes the version, also encode the snapshot name in the
+//  GetSnapshot path.
+export function toSnapshotVersionKey(name: string): VersionKey {
+  return encodeURI(name)
+}
+
 export async function publishSnapshot(
   agentId: AgentKey,
   namespaceKey: NamespaceKey,

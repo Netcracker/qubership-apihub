@@ -27,5 +27,8 @@ export function generateVersionWithRevision(versionContent: PackageVersionConten
     versionLabels: versionContent.versionLabels ?? [],
     latestRevision: versionContent.latestRevision,
     createdBy: versionContent.createdBy,
+    apiProcessorVersion: versionContent.apiProcessorVersion,
+    hasErrors: versionContent.hasErrors,
+    changelogHasErrors: versionContent.changelogHasErrors,
   }
 }

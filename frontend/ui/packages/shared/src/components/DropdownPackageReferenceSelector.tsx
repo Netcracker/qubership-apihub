@@ -17,19 +17,27 @@
 import type { FC } from 'react'
 import { memo, useState } from 'react'
 import { Box, Button, List, ListItem, ListItemButton, ListItemText } from '@mui/material'
+import { styled } from '@mui/material/styles'
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
 import type { Key } from '../entities/keys'
 import { MenuButtonItems } from './Buttons/MenuButton'
 import { NAVIGATION_PLACEHOLDER_AREA, NO_SEARCH_RESULTS, Placeholder } from './Placeholder'
 import { SearchBar } from './SearchBar'
 import { isNotEmpty } from '../utils/arrays'
+import { getReferenceVersionLabel } from '../utils/versions'
+import { useVersionProblemProcessorContext } from '../hooks/versions/useVersionProblemProcessorContext'
+import { hasVersionProblems } from '../hooks/versions/versionProblemDetails'
 import { LoadingIndicator } from './LoadingIndicator'
 import type { PackageReference } from '../entities/version-references'
+import { PackageReferenceErrorIndicator } from './ErrorIndicators/PackageReferenceErrorIndicator'
 
 export interface DropdownPackageReferenceSelectorProps {
   searchValue: string
   loading: boolean
   references: PackageReference[]
+  // The reference that an option shows, by package key: its version, status and error icon. A package without an
+  // entry shows its own reference.
+  problemReferences?: ReadonlyMap<Key, PackageReference>
   onSearch: (value: string) => void
   selectedPackage: PackageReference | null
   defaultPackageKey: string | undefined
@@ -40,6 +48,7 @@ export interface DropdownPackageReferenceSelectorProps {
 export const DropdownPackageReferenceSelector: FC<DropdownPackageReferenceSelectorProps> = memo(({
   selectedPackage,
   references,
+  problemReferences,
   loading,
   searchValue,
   onSearch,
@@ -47,6 +56,7 @@ export const DropdownPackageReferenceSelector: FC<DropdownPackageReferenceSelect
   onSearchParam,
 }) => {
   const [anchor, setAnchor] = useState<HTMLElement>()
+  const processorContext = useVersionProblemProcessorContext()
 
   return (
     <Box display="flex" alignItems="center" gap={2} overflow="hidden" data-testid="PackageSelector">
@@ -67,7 +77,12 @@ export const DropdownPackageReferenceSelector: FC<DropdownPackageReferenceSelect
           },
         }}
         variant="text"
-        onClick={({ currentTarget }) => setAnchor(currentTarget)}
+        onClick={({ currentTarget }) => {
+          // Clear on open, not on close: the search bar reports its text with a delay and stays mounted while the menu
+          // closes, so text typed just before closing would otherwise come back on the next open.
+          setAnchor(currentTarget)
+          onSearch('')
+        }}
         endIcon={<KeyboardArrowDownOutlinedIcon/>}
       >
         <span style={{
@@ -78,6 +93,12 @@ export const DropdownPackageReferenceSelector: FC<DropdownPackageReferenceSelect
         }}>
           {`${selectedPackage?.name ?? ''}`}
         </span>
+        {selectedPackage && (
+          <SelectedPackageErrorIndicator
+            reference={getProblemReference(selectedPackage, problemReferences)}
+            tabIndex={-1}
+          />
+        )}
         <MenuButtonItems
           anchorEl={anchor}
           open={!!anchor}
@@ -108,21 +129,29 @@ export const DropdownPackageReferenceSelector: FC<DropdownPackageReferenceSelect
                   >
                     <List>
                       {references.map(reference => {
+                        // The version line and the icon appear only for a version with a problem.
+                        const problemReference = getProblemReference(reference, problemReferences)
+                        const hasProblems = hasVersionProblems(problemReference, processorContext)
                         return (
                           <ListItem key={reference.key} sx={{ p: 0 }}>
-                            <ListItemButton
-                              sx={{
-                                height: '36px',
-                                alignItems: 'center',
-                              }}
+                            <PackageItemButton
                               selected={reference.key === defaultPackageKey}
                               onClick={() => onSearchParam(reference.key)}
                             >
-                              <ListItemText
-                                primary={reference.name}
-                                primaryTypographyProps={{ sx: { mt: 1 } }}
-                              />
-                            </ListItemButton>
+                              <PackageItemContent>
+                                <ListItemText
+                                  primary={reference.name}
+                                  secondary={hasProblems ? getReferenceVersionLabel(problemReference) : undefined}
+                                />
+                                {hasProblems && (
+                                  <OptionErrorIndicator
+                                    reference={problemReference}
+                                    fontSize="extra-small"
+                                    showTooltip={false}
+                                  />
+                                )}
+                              </PackageItemContent>
+                            </PackageItemButton>
                           </ListItem>
                         )
                       })}
@@ -136,3 +165,34 @@ export const DropdownPackageReferenceSelector: FC<DropdownPackageReferenceSelect
     </Box>
   )
 })
+
+const SelectedPackageErrorIndicator = styled(PackageReferenceErrorIndicator)(({ theme }) => ({
+  marginLeft: theme.spacing(0.5),
+}))
+
+const PackageItemButton = styled(ListItemButton)(({ theme }) => ({
+  justifyContent: 'center',
+  height: 'auto',
+  minHeight: theme.spacing(4.5),
+  paddingTop: theme.spacing(0.5),
+  paddingBottom: theme.spacing(0.5),
+}))
+
+const PackageItemContent = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  width: '100%',
+  gap: theme.spacing(1),
+}))
+
+// The icon stands at the bottom of the row, on the line of the version.
+const OptionErrorIndicator = styled(PackageReferenceErrorIndicator)({
+  alignSelf: 'flex-end',
+})
+
+function getProblemReference(
+  reference: PackageReference,
+  problemReferences: ReadonlyMap<Key, PackageReference> | undefined,
+): PackageReference {
+  const problemReference = reference.key === undefined ? undefined : problemReferences?.get(reference.key)
+  return problemReference ?? reference
+}

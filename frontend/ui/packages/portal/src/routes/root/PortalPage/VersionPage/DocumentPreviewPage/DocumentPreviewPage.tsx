@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ExportSettingsDialog } from '@apihub/components/ExportSettingsDialog/ui/ExportSettingsDialog'
+import { ExportSettingsDialog } from '@portal/components/ExportSettingsDialog/ui/ExportSettingsDialog'
 import { PageLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayout'
 import type { FC } from 'react'
 import { memo } from 'react'

@@ -14,23 +14,38 @@
  * limitations under the License.
  */
 
-import { getOverviewPath } from '@apihub/routes/NavigationProvider'
+import { getOverviewPath } from '@portal/routes/NavigationProvider'
 import { Box, Link, Typography } from '@mui/material'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'
 import { FormattedDate } from '@netcracker/qubership-apihub-ui-shared/components/FormattedDate'
 import { LoadingIndicator } from '@netcracker/qubership-apihub-ui-shared/components/LoadingIndicator'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { PrincipalView } from '@netcracker/qubership-apihub-ui-shared/components/PrincipalView'
-import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import {
+  API_TYPE_ASYNCAPI,
+  API_TYPE_GRAPHQL,
+  API_TYPE_REST,
+  type ApiType,
+} from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import {
+  CONTRACT_TYPE_DDL,
+  CONTRACT_TYPE_MCP,
+  type ContractType,
+} from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import { hasDdlContracts } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-ddl'
 import { hasMcpContracts } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
 import type { PackageKey, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import {
+  type ApiTypeProblemDetails,
+  resolveOverviewSummaryApiTypeProblemsMap,
+} from '@netcracker/qubership-apihub-ui-shared/hooks/versions/apiTypeProblemDetails'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import type { FC, ReactNode } from 'react'
 import { memo, useMemo } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
 import { OVERVIEW_PAGE, REVISION_HISTORY_PAGE } from '../../../../../../routes'
 import { usePackageVersionContent } from '../../../../usePackageVersionContent'
+import { useDocuments } from '../../useDocuments'
 import { ContractsSummary } from './ContractsSummary'
 import { DdlSummary } from './DdlSummary'
 import { McpSummary } from './McpSummary'
@@ -39,6 +54,8 @@ import { OperationTypeSummary } from './OperationTypeSummary'
 const SUMMARY_BOX_MARGIN_TOP = 4
 
 const OPERATION_TYPES_ORDER = [API_TYPE_REST, API_TYPE_GRAPHQL, API_TYPE_ASYNCAPI]
+
+const EMPTY_API_TYPE_PROBLEMS: Partial<Record<ApiType | ContractType, ApiTypeProblemDetails>> = {}
 
 const PreviousVersion: FC<Partial<{
   packageKey: PackageKey
@@ -97,6 +114,28 @@ export const SummaryTab: FC = memo(() => {
         })
       : []
   }, [operationTypes])
+
+  const hasAnySectionErrors = Object.values(operationTypes ?? {}).some(op => op?.hasErrors) ||
+    (ddlSummary?.hasErrors ?? false) ||
+    (mcpSummary?.totals?.hasErrors ?? false)
+
+  const { documents } = useDocuments({
+    packageKey: packageId,
+    versionKey: versionId,
+    enabled: hasAnySectionErrors,
+  })
+
+  const overviewApiTypeProblems = useMemo(() => {
+    if (!hasAnySectionErrors || !splittedVersionKey) {
+      return EMPTY_API_TYPE_PROBLEMS
+    }
+    return resolveOverviewSummaryApiTypeProblemsMap({
+      operationTypes: operationTypes,
+      contractsSummary: contractsSummary,
+      documents: documents,
+      versionKey: splittedVersionKey,
+    })
+  }, [contractsSummary, documents, hasAnySectionErrors, operationTypes, splittedVersionKey])
 
   if (isLoading) {
     return (
@@ -193,6 +232,7 @@ export const SummaryTab: FC = memo(() => {
             <OperationTypeSummary
               key={apiType}
               apiType={apiType}
+              problem={overviewApiTypeProblems[apiType]}
               changesSummary={changesSummary}
               numberOfImpactedOperations={numberOfImpactedOperations}
               operationsCount={operationsCount}
@@ -204,8 +244,18 @@ export const SummaryTab: FC = memo(() => {
             />,
           )
         }
-        {hasMcpContracts(mcpSummary) && <McpSummary mcpSummary={mcpSummary} />}
-        {hasDdlContracts(ddlSummary) && <DdlSummary ddlSummary={ddlSummary} />}
+        {hasMcpContracts(mcpSummary) && (
+          <McpSummary
+            mcpSummary={mcpSummary}
+            problem={overviewApiTypeProblems[CONTRACT_TYPE_MCP]}
+          />
+        )}
+        {hasDdlContracts(ddlSummary) && (
+          <DdlSummary
+            ddlSummary={ddlSummary}
+            problem={overviewApiTypeProblems[CONTRACT_TYPE_DDL]}
+          />
+        )}
       </ContractsSummary>
     </Box>
   )

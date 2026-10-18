@@ -19,7 +19,7 @@ import type { FC, MutableRefObject, ReactNode } from 'react'
 import { memo, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 
-import { isApiTypeSelectorShown } from '@apihub/utils/operation-types'
+import { isApiTypeSelectorShown } from '@portal/utils/operation-types'
 import { RichFiltersLayout } from '@netcracker/qubership-apihub-ui-shared/components/PageLayouts/RichFiltersLayout'
 import { ListBox } from '@netcracker/qubership-apihub-ui-shared/components/Panels/ListBox'
 import type { TestableProps } from '@netcracker/qubership-apihub-ui-shared/components/Testable'
@@ -100,7 +100,7 @@ export const VersionContractsPanel: FC<VersionContractsProps> = memo<VersionCont
   const setSearchParams = useSetSearchParams()
   const setPreviewOperation = useSetSelectedPreviewOperation()
   const { tabs, isLoading } = useVersionTabApiTypes()
-  const { allowedApiTypes } = tabs[versionTabId]
+  const { allowedApiTypes, apiTypeProblems } = tabs[versionTabId]
 
   const isDashboard = packageObject?.kind === DASHBOARD_KIND
   const showFilterBadge = useCheckOperationFiltersApplied(isDashboard)
@@ -132,6 +132,7 @@ export const VersionContractsPanel: FC<VersionContractsProps> = memo<VersionCont
         <PageTitle
           apiType={routeApiType}
           allowedApiTypes={allowedApiTypes}
+          apiTypeProblems={apiTypeProblems}
           title={title}
           withApiSelector={isApiTypeSelectorShown(allowedApiTypes)}
           onApiTypeChange={onApiTypeChange}

@@ -16,8 +16,8 @@ import {
   type SpecType,
 } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 
-import type { PackageVersionConfig } from '@apihub/entities/package-version-config'
-import { createFilesRecord } from '@apihub/routes/root/PortalPage/PackagePage/files'
+import type { PackageVersionConfig } from '@portal/entities/package-version-config'
+import { createFilesRecord } from '@portal/routes/root/PortalPage/PackagePage/files'
 
 export type McpStagedFileMeta = Readonly<{
   documentType: McpDocumentType

@@ -33,7 +33,7 @@ import type {
   OperationWithDeprecations,
 } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { HasNextPage, IsFetchingNextPage, IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
+import { useCurrentPackage } from '@portal/components/CurrentPackageProvider'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { CustomTableHeadCell } from '@netcracker/qubership-apihub-ui-shared/components/CustomTableHeadCell'
 import { InfoContextIcon } from '@netcracker/qubership-apihub-ui-shared/icons/InfoContextIcon'

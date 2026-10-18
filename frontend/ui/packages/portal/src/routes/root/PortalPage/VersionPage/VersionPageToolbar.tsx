@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
-import { ExportedEntityKind } from '@apihub/components/ExportSettingsDialog/api/useExport'
-import { PackageSettingsButton } from '@apihub/components/PackageSettingsButton'
-import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
-import { CreateDashboardVersionButton } from '@apihub/routes/root/PortalPage/DashboardPage/CreateDashboardVersionButton'
-import { usePackageVersionConfig } from '@apihub/routes/root/PortalPage/usePackageVersionConfig'
-import { CopyPackageVersionButton } from '@apihub/routes/root/PortalPage/VersionPage/CopyPackageVersionButton'
-import { getDefaultApiType } from '@apihub/utils/operation-types'
+import { useCurrentPackage } from '@portal/components/CurrentPackageProvider'
+import { ExportedEntityKind } from '@portal/components/ExportSettingsDialog/api/useExport'
+import { PackageSettingsButton } from '@portal/components/PackageSettingsButton'
+import { useBackwardLocationContext, useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
+import { useEventBus } from '@portal/routes/EventBusProvider'
+import { CreateDashboardVersionButton } from '@portal/routes/root/PortalPage/DashboardPage/CreateDashboardVersionButton'
+import { usePackageVersionConfig } from '@portal/routes/root/PortalPage/usePackageVersionConfig'
+import { CopyPackageVersionButton } from '@portal/routes/root/PortalPage/VersionPage/CopyPackageVersionButton'
+import { getDefaultApiType } from '@portal/utils/operation-types'
 import { Box, Button, Divider, Typography } from '@mui/material'
 import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
+import { VersionErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorIndicator'
 import { VersionStatusChip } from '@netcracker/qubership-apihub-ui-shared/components/VersionStatusChip'
 import { Toolbar } from '@netcracker/qubership-apihub-ui-shared/components/Toolbar'
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
@@ -54,7 +55,6 @@ import { VersionSelector } from '../VersionSelector'
 import { ComparisonSelectorButton } from './ComparisonSelectorButton'
 import { EditButton } from './EditButton'
 import { usePackageVersionApiTypes } from './usePackageVersionApiTypes'
-import { WarningApiProcessorVersion } from '@netcracker/qubership-apihub-ui-shared/components/WarningApiProcessorVersion'
 
 export const VersionPageToolbar: FC = memo(() => {
   const { packageId, versionId, apiType } = useParams()
@@ -147,9 +147,18 @@ export const VersionPageToolbar: FC = memo(() => {
               Version
             </Typography>
             <VersionSelector />
-            {versionContent &&
-              <VersionStatusChip status={versionContent!.status} sx={{ height: 20 }} data-testid="VersionStatusChip"/>}
-            <WarningApiProcessorVersion packageKey={packageId} versionKey={versionId} />
+            {versionContent && (
+              <>
+                <VersionStatusChip status={versionContent.status} sx={{ height: 20 }} data-testid="VersionStatusChip" />
+                <VersionErrorIndicator
+                  versionKey={versionId}
+                  kind={currentPackage?.kind}
+                  hasErrors={versionContent.hasErrors}
+                  changelogHasErrors={versionContent.changelogHasErrors}
+                  apiProcessorVersion={versionContent.apiProcessorVersion}
+                />
+              </>
+            )}
             <Divider orientation="vertical" sx={{ height: '20px', mt: '6px' }}/>
             {isDashboard && <CreateDashboardVersionButton
               variant="text"

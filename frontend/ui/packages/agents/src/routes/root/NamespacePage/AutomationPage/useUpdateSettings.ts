@@ -15,13 +15,13 @@
  */
 
 import { useMutation } from '@tanstack/react-query'
-import type { Emails, Schedules } from '@apihub/entities/settings'
-import { updateSettings } from '@apihub/entities/settings'
+import type { Emails, Schedules } from '@agents/entities/settings'
+import { updateSettings } from '@agents/entities/settings'
 import { useParams } from 'react-router-dom'
 import { useSetSettings } from './useSettings'
 import type { IsError, IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import type { VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import type { AutodiscoveryStatus } from '@apihub/entities/statuses'
+import type { AutodiscoveryStatus } from '@agents/entities/statuses'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { WORKSPACE_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import {

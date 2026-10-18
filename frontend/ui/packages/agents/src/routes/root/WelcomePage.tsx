@@ -36,7 +36,7 @@ export const WelcomePage: FC = memo(() => {
           area={CONTENT_PLACEHOLDER_AREA}
           message={
             <Typography width='590px' fontSize='15px'>
-              Please select Cloud, Namespace and Portal Workspace to start working with Agent
+              Please select Cloud, Namespace and Portal Workspace to start working with Agent.
               Portal workspace determines where the baseline packages will come from, where
               snapshots and promoted versions will be published.
             </Typography>

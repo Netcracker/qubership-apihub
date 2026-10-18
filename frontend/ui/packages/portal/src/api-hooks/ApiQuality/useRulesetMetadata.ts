@@ -1,5 +1,5 @@
-import type { Ruleset, RulesetDto } from '@apihub/entities/api-quality/rulesets'
-import type { Key } from '@apihub/entities/keys'
+import type { Ruleset, RulesetDto } from '@portal/entities/api-quality/rulesets'
+import type { Key } from '@portal/entities/keys'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { requestJson } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { useQuery } from '@tanstack/react-query'

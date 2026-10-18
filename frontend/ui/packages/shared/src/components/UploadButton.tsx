@@ -24,7 +24,7 @@ import type { SxProps } from '@mui/system'
 export type UploadButtonProps = {
   title: string
   onUpload: (event: ChangeEvent<HTMLInputElement>) => void
-  acceptableFileTypes?: string[]
+  acceptableFileTypes?: readonly string[]
   buttonSxProp?: SxProps
   withIcon?: boolean
   multiple?: boolean

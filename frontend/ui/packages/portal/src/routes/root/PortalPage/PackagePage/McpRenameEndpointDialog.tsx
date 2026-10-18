@@ -3,7 +3,7 @@ import { Button, DialogActions, DialogContent, DialogTitle, IconButton, InputAdo
 import { type FC, memo, useCallback, useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
-import { ErrorTextField } from '@apihub/components/ErrorTextField'
+import { ErrorTextField } from '@portal/components/ErrorTextField'
 import { DialogForm } from '@netcracker/qubership-apihub-ui-shared/components/DialogForm'
 import { PopupDelegate, type PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 

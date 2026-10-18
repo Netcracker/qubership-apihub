@@ -31,6 +31,9 @@ export type Revision = Readonly<{
   createdAt: string
   revisionLabels?: string[]
   publishMeta?: PublishMeta
+  hasErrors?: boolean
+  changelogHasErrors?: boolean
+  apiProcessorVersion?: string
 }>
 
 export type RevisionDto = Readonly<{
@@ -42,6 +45,9 @@ export type RevisionDto = Readonly<{
   createdAt: string
   revisionLabels?: string[]
   publishMeta?: PublishMetaDto
+  hasErrors?: boolean
+  changelogHasErrors?: boolean
+  apiProcessorVersion?: string
 }>
 
 export type RevisionsDto = Readonly<{

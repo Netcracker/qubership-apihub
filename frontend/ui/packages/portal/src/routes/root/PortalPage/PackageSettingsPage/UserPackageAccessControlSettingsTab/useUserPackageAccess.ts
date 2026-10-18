@@ -37,9 +37,9 @@ import type {
   IsSuccess,
   OptionInvalidateQuery,
 } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { portalRequestJson, portalRequestVoid } from '@apihub/utils/requests'
+import { portalRequestJson, portalRequestVoid } from '@portal/utils/requests'
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
-import { useInvalidatePackage } from '@apihub/routes/root/usePackage'
+import { useInvalidatePackage } from '@portal/routes/root/usePackage'
 
 const USER_PACKAGE_ACCESS_QUERY_KEY = 'user-package-access-query-key'
 

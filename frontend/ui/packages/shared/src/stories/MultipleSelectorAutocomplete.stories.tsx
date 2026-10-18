@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryFn } from '@storybook/react'
+import type { Meta, StoryFn } from '@storybook/react-vite'
 import React from 'react'
 import { DialogForm } from '../components/DialogForm'
 import { Box, Chip, DialogContent, ListItem } from '@mui/material'

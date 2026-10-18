@@ -18,8 +18,8 @@ import { Box, Button } from '@mui/material'
 import type { FC } from 'react'
 import * as React from 'react'
 import { memo, useCallback } from 'react'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
-import { useShowErrorNotification, useShowSuccessNotification } from '@apihub/routes/root/BasePage/Notification'
+import { useEventBus } from '@portal/routes/EventBusProvider'
+import { useShowErrorNotification, useShowSuccessNotification } from '@portal/routes/root/BasePage/Notification'
 import {
   useCreateRole,
   useDeleteRole,

@@ -12,8 +12,8 @@ import { useLogoutUser } from '@netcracker/qubership-apihub-ui-shared/hooks/auth
 import { useUser } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization/useUser'
 import { redirectToLogin } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 
-import { useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
-import { getProfilePath } from '@apihub/routes/NavigationProvider'
+import { useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
+import { getProfilePath } from '@portal/routes/NavigationProvider'
 import { useSidePanelManager } from './PanelManager/SidePanelManager'
 
 export const UserPanel: FC = memo(() => {

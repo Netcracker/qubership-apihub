@@ -19,7 +19,7 @@ import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { Namespaces, NamespacesDto } from '@netcracker/qubership-apihub-ui-shared/entities/namespaces'
 import { EMPTY_NAMESPACES, toNamespaces } from '@netcracker/qubership-apihub-ui-shared/entities/namespaces'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { portalRequestJson } from '@apihub/utils/requests'
+import { portalRequestJson } from '@portal/utils/requests'
 import {
   useGetAgentPrefix,
 } from '@netcracker/qubership-apihub-ui-shared/features/system-extensions/useSystemExtensions'

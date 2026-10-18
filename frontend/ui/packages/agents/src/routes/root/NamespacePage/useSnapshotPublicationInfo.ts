@@ -19,11 +19,11 @@ import { useParams } from 'react-router-dom'
 import type {
   SnapshotPublicationInfo,
   SnapshotPublicationInfoDto,
-} from '@apihub/entities/snapshot-publication-info'
+} from '@agents/entities/snapshot-publication-info'
 import {
   EMPTY_SNAPSHOT_PUBLICATION_INFO,
   getSnapshotPublicationInfo, toSnapshotPublicationInfo,
-} from '@apihub/entities/snapshot-publication-info'
+} from '@agents/entities/snapshot-publication-info'
 import type {
   InvalidateQuery,
   IsInitialLoading,

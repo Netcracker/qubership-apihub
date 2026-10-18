@@ -22,6 +22,7 @@ import { VERSION_SWAPPER_HEIGHT } from './shared-styles'
 import { Swapper } from '@netcracker/qubership-apihub-ui-shared/components/Swapper'
 import { EditIcon } from '@netcracker/qubership-apihub-ui-shared/icons/EditIcon'
 import type { ComparedPackagesBreadcrumbsData } from './breadcrumbs'
+import { useSwapDisabledReason } from './useSwapDisabledReason'
 
 export type ComparisonSwapper = {
   breadcrumbsData: ComparedPackagesBreadcrumbsData | null
@@ -38,6 +39,8 @@ export const ComparisonSwapper: FC<ComparisonSwapper> = memo<ComparisonSwapper>(
   customComponentBeforeSwapperBreadcrumbs,
   customComponentAfterSwapperBreadcrumbs,
 }) => {
+  const swapDisabledReason = useSwapDisabledReason()
+
   return (
     <Box sx={SWAPPER_STYLES}>
       <Box sx={SWAPPER_HEADER_STYLES} data-testid="LeftSwapperHeader">
@@ -47,7 +50,7 @@ export const ComparisonSwapper: FC<ComparisonSwapper> = memo<ComparisonSwapper>(
       </Box>
       <Box sx={SWAPPER_DELIMITER_STYLES}>
         <Box sx={SWAPPER_ARROW_STYLES}>
-          <Swapper onSwap={handleSwap}/>
+          <Swapper onSwap={handleSwap} disabledReason={swapDisabledReason}/>
         </Box>
       </Box>
       <Box sx={SECOND_SWAPPER_HEADER_STYLES}>

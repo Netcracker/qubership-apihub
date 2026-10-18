@@ -11,7 +11,7 @@ import {
   type SpecType,
 } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 
-import { EMPTY_DOC } from '@apihub/entities/documents'
+import { EMPTY_DOC } from '@portal/entities/documents'
 import { OpenApiViewer } from '../OpenApiViewer/OpenApiViewer'
 import { FormatViewer } from './FormatViewer'
 import { PublishedDocumentRawView } from './PublishedDocumentRawView'
@@ -20,11 +20,12 @@ import { useSelectedDocument } from './SelectedDocumentProvider'
 export type DocumentsTabProps = Readonly<{
   format: FileFormat
   type: SpecType
+  hasErrors?: boolean
   isDocumentLoading?: boolean
 }>
 
 export const DocumentsTab: FC<DocumentsTabProps> = memo<DocumentsTabProps>((props) => {
-  const { format, type, isDocumentLoading } = props
+  const { format, type, hasErrors, isDocumentLoading } = props
 
   if (isDocumentLoading) {
     return (
@@ -36,7 +37,7 @@ export const DocumentsTab: FC<DocumentsTabProps> = memo<DocumentsTabProps>((prop
     )
   }
 
-  if (isMcpDocumentSpecType(type) || isDdlDocumentSpecType(type)) {
+  if (hasErrors || isMcpDocumentSpecType(type) || isDdlDocumentSpecType(type)) {
     return <PublishedDocumentRawView type={type} format={format} />
   }
 

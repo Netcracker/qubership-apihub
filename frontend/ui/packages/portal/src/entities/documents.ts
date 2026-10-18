@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { FileKey, Key } from './keys'
+import type { Key } from './keys'
 import type {
   OperationData,
   OperationDto,
@@ -30,7 +30,7 @@ import type { FileFormat } from '@netcracker/qubership-apihub-ui-shared/utils/fi
 import { getFileFormat } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import type { MethodType } from '@netcracker/qubership-apihub-ui-shared/entities/method-types'
 import type { GraphQlOperationType } from '@netcracker/qubership-apihub-ui-shared/entities/graphql-operation-types'
-import { type DocumentsDto } from '@netcracker/qubership-apihub-ui-shared/entities/documents'
+import { type DocumentDto, type DocumentsDto } from '@netcracker/qubership-apihub-ui-shared/entities/documents'
 import { UNKNOWN_FILE_FORMAT } from '@netcracker/qubership-apihub-ui-shared/entities/file-formats'
 import {
   SHAREABILITY_STATUS_UNKNOWN,
@@ -54,25 +54,10 @@ export type Document = Readonly<{
   operations: OperationsData
   packageRef?: PackageRef
   shareabilityStatus: ShareabilityStatus
+  hasErrors?: boolean
 }>
 
-export type DocumentDto = Readonly<{
-  fileId: FileKey
-  slug: Key
-  filename: string
-  title: string
-  type: SpecType
-  format: FileFormat
-  version?: string
-  labels?: Labels
-  description?: string
-  info?: Readonly<DocumentInfo>
-  externalDocs?: Readonly<ExternalDocsLink>
-  operations?: ReadonlyArray<OperationDto>
-  packages?: PackagesRefs // For operations
-  packageRef?: string // For dashboards
-  shareabilityStatus?: ShareabilityStatus
-}>
+export type { DocumentDto }
 
 export function toDocument(value: DocumentDto, packagesRefs?: PackagesRefs): Document {
   return {
@@ -92,6 +77,7 @@ export function toDocument(value: DocumentDto, packagesRefs?: PackagesRefs): Doc
     ) ?? [],
     packageRef: toPackageRef(value.packageRef, packagesRefs),
     shareabilityStatus: value.shareabilityStatus ?? SHAREABILITY_STATUS_UNKNOWN,
+    hasErrors: value.hasErrors,
   }
 }
 

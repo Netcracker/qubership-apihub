@@ -18,8 +18,8 @@ import type { FC } from 'react'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
-import type { PublishOperationGroupPackageVersionDetail } from '@apihub/routes/EventBusProvider'
-import { SHOW_PUBLISH_OPERATION_GROUP_PACKAGE_VERSION_DIALOG } from '@apihub/routes/EventBusProvider'
+import type { PublishOperationGroupPackageVersionDetail } from '@portal/routes/EventBusProvider'
+import { SHOW_PUBLISH_OPERATION_GROUP_PACKAGE_VERSION_DIALOG } from '@portal/routes/EventBusProvider'
 import type { VersionFormData } from '@netcracker/qubership-apihub-ui-shared/components/VersionDialogForm'
 import {
   getPackageOptions,
@@ -35,15 +35,15 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import type { Package } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { PACKAGE_KIND, WORKSPACE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { usePackages } from '@apihub/routes/root/usePackages'
+import { usePackages } from '@portal/routes/root/usePackages'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
+import { useCurrentPackage } from '@portal/components/CurrentPackageProvider'
 import { usePackageVersions } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/usePackageVersions'
 import { getSplittedVersionKey, getVersionLabelsMap } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import { usePublishOperationGroupPackageVersion } from '../../../usePublishOperationGroupPackageVersion'
 import { useOperationGroupPublicationStatuses } from '../../../usePublicationStatus'
 import { useFullMainVersion } from '../../../FullMainVersionProvider'
-import { usePackageVersionConfig } from '@apihub/routes/root/PortalPage/usePackageVersionConfig'
+import { usePackageVersionConfig } from '@portal/routes/root/PortalPage/usePackageVersionConfig'
 
 export const PublishOperationGroupPackageVersionDialog: FC = memo(() => {
   return (

@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom'
 import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import { ConfirmationDialog } from '@netcracker/qubership-apihub-ui-shared/components/ConfirmationDialog/ConfirmationDialog'
-import { SHOW_DELETE_CUSTOM_SERVER_DIALOG } from '@netcracker/qubership-apihub-ui-portal/src/routes/EventBusProvider'
+import { SHOW_DELETE_CUSTOM_SERVER_DIALOG } from '@portal/routes/EventBusProvider'
 import { useCustomServersPackageMap } from '../hooks/useCustomServersPackageMap'
 
 export const DeleteCustomServerDialog: FC = memo(() => {

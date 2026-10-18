@@ -1,8 +1,8 @@
 import { type FC, useCallback, useEffect, useMemo, useState } from 'react'
 
-import type { Documents } from '@apihub/entities/documents'
-import type { ExportSettingsPopupDetail } from '@apihub/routes/EventBusProvider'
-import { useShowErrorNotification } from '@apihub/routes/root/BasePage/Notification'
+import type { Documents } from '@portal/entities/documents'
+import type { ExportSettingsPopupDetail } from '@portal/routes/EventBusProvider'
+import { useShowErrorNotification } from '@portal/routes/root/BasePage/Notification'
 import { SHAREABILITY_STATUS_UNKNOWN } from '@netcracker/qubership-apihub-api-processor'
 import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import { isExportableSpecType, isOpenApiSpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
@@ -25,6 +25,7 @@ export const ExportSettingsPopup: FC<PopupProps> = ({ open, setOpen, detail }) =
     groupName,
     shareabilityStatus,
     specType,
+    hasErrors,
   } = detail as ExportSettingsPopupDetail
 
   const showErrorNotification = useShowErrorNotification()
@@ -55,6 +56,7 @@ export const ExportSettingsPopup: FC<PopupProps> = ({ open, setOpen, detail }) =
         documentId: doc.slug,
         specType: doc.type,
         shareabilityStatus: doc.shareabilityStatus,
+        hasErrors: doc.hasErrors,
       }
     }
     return {
@@ -63,12 +65,13 @@ export const ExportSettingsPopup: FC<PopupProps> = ({ open, setOpen, detail }) =
       specType: specType,
       // For version-export payloads, shareability is absent, so default to UNKNOWN.
       shareabilityStatus: shareabilityStatus ?? SHAREABILITY_STATUS_UNKNOWN,
+      hasErrors: hasErrors,
     }
-  }, [isVersionExport, isLoadingDocuments, documents, exportedEntity, documentId, specType, shareabilityStatus])
+  }, [isVersionExport, isLoadingDocuments, documents, exportedEntity, documentId, specType, shareabilityStatus, hasErrors])
 
   const isDownloadOnly = resolvedExportParams.exportedEntity === ExportedEntityKind.SINGLE_DOCUMENT &&
     !!resolvedExportParams.documentId &&
-    !isExportableSpecType(resolvedExportParams.specType)
+    (!isExportableSpecType(resolvedExportParams.specType) || (resolvedExportParams.hasErrors ?? false))
 
   const [downloadPublishedDocument, isDownloadingDocument] = useDownloadPublishedDocument({
     packageKey: packageId,
@@ -143,6 +146,7 @@ export const ExportSettingsPopup: FC<PopupProps> = ({ open, setOpen, detail }) =
       specType={resolvedExportParams.specType}
       shareabilityStatus={resolvedExportParams.shareabilityStatus}
       shareabilitySummary={shareabilitySummary}
+      isDownloadOnly={isDownloadOnly}
       onDownloadPublishedDocument={isDownloadOnly ? handleDownloadPublishedDocument : undefined}
     />
   )

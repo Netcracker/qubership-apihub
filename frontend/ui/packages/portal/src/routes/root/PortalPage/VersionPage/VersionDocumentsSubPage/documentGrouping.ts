@@ -15,9 +15,9 @@ import {
   type SpecType,
 } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 
-import type { Document } from '@apihub/entities/documents'
-import type { Key } from '@apihub/entities/keys'
-import type { VersionFiles } from '@apihub/entities/package-version-config'
+import type { Document } from '@portal/entities/documents'
+import type { Key } from '@portal/entities/keys'
+import type { VersionFiles } from '@portal/entities/package-version-config'
 
 const GROUP_NAME_MCP = 'MCP'
 const GROUP_NAME_DDL = 'DDL'

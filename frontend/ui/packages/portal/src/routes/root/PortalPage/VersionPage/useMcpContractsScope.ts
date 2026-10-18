@@ -10,7 +10,7 @@ import {
   type McpEndpointSummary,
 } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
 
-import { usePackageVersionContent } from '@apihub/routes/root/usePackageVersionContent'
+import { usePackageVersionContent } from '@portal/routes/root/usePackageVersionContent'
 import { usePackageParamsWithRef } from '../usePackageParamsWithRef'
 import { useMcpCollectionSearchParam } from './useMcpCollectionSearchParam'
 import { useMcpEndpointSearchParam } from './useMcpEndpointSearchParam'

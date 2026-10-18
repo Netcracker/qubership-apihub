@@ -38,6 +38,7 @@ export type VersionChangesSummary = PackageComparisonSummary | DashboardComparis
 export type DashboardComparisonSummaryDto = Readonly<{
   refs: ReadonlyArray<RefComparisonSummaryDto>
   packages: PackagesRefs
+  hasErrors?: boolean
 }>
 
 export type RefComparisonSummaryDto = Readonly<{
@@ -46,6 +47,7 @@ export type RefComparisonSummaryDto = Readonly<{
   operationTypes: ReadonlyArray<OperationType<DiffTypeDto>>
   contractsChangesSummary?: VersionComparisonContractsSummaryDto
   noContent?: boolean
+  hasErrors?: boolean
 }>
 
 export type RefComparisonSummary = Readonly<{
@@ -62,20 +64,25 @@ export type RefComparisonSummary = Readonly<{
   packageRef?: PackageRef
   previousPackageRef?: PackageRef
   noContent?: boolean
+  hasErrors?: boolean
 }>
 
-export type DashboardComparisonSummary = ReadonlyArray<RefComparisonSummary>
+export type DashboardComparisonSummary = ReadonlyArray<RefComparisonSummary> & Readonly<{
+  hasErrors?: boolean
+}>
 
 export type PackageComparisonSummaryDto = Readonly<{
   operationTypes: ReadonlyArray<OperationType<DiffTypeDto>>
   contractsChangesSummary?: VersionComparisonContractsSummaryDto
   noContent?: boolean
+  hasErrors?: boolean
 }>
 
 export type PackageComparisonSummary = Readonly<{
   operationTypes: ReadonlyArray<OperationType>
   contractsChangesSummary?: VersionComparisonContractsSummary
   noContent?: boolean
+  hasErrors?: boolean
 }>
 
 const UNDEFINED_NAME = 'UNDEFINED NAME'
@@ -94,7 +101,7 @@ function isDashboardSummaryDto(value: VersionChangesSummaryDto): value is Dashbo
 
 export function toVersionChangesSummary(value: VersionChangesSummaryDto): VersionChangesSummary {
   if (isDashboardSummaryDto(value)) {
-    return value.refs.map((ref) => {
+    const refs = value.refs.map((ref) => {
       const changedPackage = toPackageRef(ref.packageRef, value.packages)
       const originalPackage = toPackageRef(ref.previousPackageRef, value.packages)
       return {
@@ -110,15 +117,18 @@ export function toVersionChangesSummary(value: VersionChangesSummaryDto): Versio
         packageRef: changedPackage,
         previousPackageRef: originalPackage,
         noContent: ref.noContent,
+        hasErrors: ref.hasErrors,
         latestRevision: changedPackage?.latestRevision ?? true,
       }
     })
+    return Object.assign(refs, { hasErrors: value.hasErrors })
   } else {
     const packageSummary: PackageComparisonSummary = value
       ? {
         operationTypes: convertDtoFieldOperationTypes(value.operationTypes),
         contractsChangesSummary: toVersionComparisonContractsSummary(value.contractsChangesSummary),
         noContent: value.noContent,
+        hasErrors: value.hasErrors,
       }
       : value
     return packageSummary

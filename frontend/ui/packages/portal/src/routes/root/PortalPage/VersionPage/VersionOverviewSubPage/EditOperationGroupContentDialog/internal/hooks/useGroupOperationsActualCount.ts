@@ -16,7 +16,7 @@
 
 import { useMemo } from 'react'
 import type { OperationListsDelta } from '../types'
-import { OPERATIONS_ADD_TO_GROUP_ACTION, OPERATIONS_REMOVE_FROM_GROUP_ACTION } from '@apihub/routes/EventBusProvider'
+import { OPERATIONS_ADD_TO_GROUP_ACTION, OPERATIONS_REMOVE_FROM_GROUP_ACTION } from '@portal/routes/EventBusProvider'
 
 export function useGroupOperationsActualCount(
   initialCount: number,

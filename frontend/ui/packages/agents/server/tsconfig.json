@@ -1,7 +1,13 @@
 {
   "compilerOptions": {
     "target": "es6",
-    "module": "commonjs",
+    /* Node runs this express server directly, so NodeNext is what describes it - matching
+      packages/portal/server, which already uses it. This config previously declared no
+      moduleResolution at all and relied on the implied default, which compiles clean on
+      both TypeScript 6 and 7 and therefore shifts semantics silently between them. The
+      package has no "type": "module", so NodeNext still emits CommonJS require() calls. */
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "rootDir": "./",
     "outDir": "./build",
     "esModuleInterop": true,

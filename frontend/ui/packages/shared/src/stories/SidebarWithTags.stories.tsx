@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ReactElement } from 'react'
-import { useArgs } from '@storybook/preview-api'
+import { useArgs } from 'storybook/preview-api'
 import { operationTags } from './samples/tags-samples'
 import type { SidebarWithTagsProps } from '../components/SidebarWithTags/SidebarWithTags'
 import { SidebarWithTags } from '../components/SidebarWithTags/SidebarWithTags'

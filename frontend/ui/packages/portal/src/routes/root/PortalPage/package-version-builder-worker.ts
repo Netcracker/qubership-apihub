@@ -15,7 +15,7 @@
  */
 
 import type { BuilderResolvers, FileId, FileSourceMap, VersionValidationLevel, VersionsComparison } from '@netcracker/qubership-apihub-api-processor'
-import { BUILD_TYPE, VERSION_STATUS, VERSION_VALIDATION_LEVEL } from '@netcracker/qubership-apihub-api-processor'
+import { BUILD_TYPE, MESSAGE_SEVERITY, VERSION_STATUS, VERSION_VALIDATION_LEVEL } from '@netcracker/qubership-apihub-api-processor'
 import { PackageVersionBuilder } from '@netcracker/qubership-apihub-api-processor/processor'
 import {
   packageVersionResolver,
@@ -25,6 +25,10 @@ import {
   versionOperationsResolver,
   versionReferencesResolver,
 } from '@netcracker/qubership-apihub-ui-shared/utils/builder-resolvers'
+import {
+  serializeThrownValue,
+  toFailedPublicationDetails,
+} from '@netcracker/qubership-apihub-ui-shared/utils/failed-build-notifications'
 import { packToZip } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import type { PublishDetails, PublishStatus } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 import {
@@ -35,7 +39,7 @@ import {
   setPublicationDetails,
   startPackageVersionPublication,
 } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
-import { isInWebWorker, WorkerUnauthorizedError } from '@netcracker/qubership-apihub-ui-shared/utils/security'
+import { isInWebWorker } from '@netcracker/qubership-apihub-ui-shared/utils/security'
 import { expose, transferHandlers } from 'comlink'
 import { v4 as uuidv4 } from 'uuid'
 import type { BuilderOptions } from './package-version-builder'
@@ -195,7 +199,7 @@ const worker: PackageVersionBuilderWorker = {
         status: publicationStatus,
         builderId: builderId,
         abortController: null,
-        errors: `${error}`,
+        ...toFailedPublicationDetails(error),
       })
     }
 
@@ -203,43 +207,20 @@ const worker: PackageVersionBuilderWorker = {
       publishId: publishId,
       status: publicationStatus,
       message: message,
+      hasErrors: builder.notifications.some(({ severity }) => severity === MESSAGE_SEVERITY.Error),
     }
   },
 }
 
+const defaultThrowHandler = transferHandlers.get('throw')!
+
 // Override default handlers for thrown values from worker
 // This is necessary to handle custom errors from worker in the calling thread
 transferHandlers.set('throw', {
-  canHandle: transferHandlers.get('throw')!.canHandle,
-  serialize: ({ value }) => {
-    let serialized
-    if (value instanceof Error) {
-      serialized = {
-        isError: true,
-        value: {
-          message: value.message,
-          name: value.name,
-          stack: value.stack,
-          responseStatus: (value as WorkerUnauthorizedError).responseStatus,
-        },
-      }
-    } else {
-      serialized = {
-        isError: false,
-        value: value,
-      }
-    }
-    return [serialized, []]
-  },
-  deserialize: (serialized: {
-    isError: boolean
-    value: { message: string; name: string; stack: string; responseStatus: number }
-  }) => {
-    if (serialized.isError) {
-      throw new WorkerUnauthorizedError()
-    }
-    throw serialized.value
-  },
+  canHandle: defaultThrowHandler.canHandle,
+  serialize: ({ value }) => [serializeThrownValue(value), []],
+  // the calling thread deserializes with its own default handler, so this one never runs
+  deserialize: defaultThrowHandler.deserialize,
 })
 
 expose(worker)

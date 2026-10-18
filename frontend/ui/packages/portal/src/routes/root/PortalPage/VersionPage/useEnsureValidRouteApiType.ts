@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 
-import { getDefaultApiType } from '@apihub/utils/operation-types'
+import { getDefaultApiType } from '@portal/utils/operation-types'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { type ContractType, toRouteApiType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
 import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'

@@ -1,4 +1,4 @@
-import { useShowErrorNotification } from '@apihub/routes/root/BasePage/Notification'
+import { useShowErrorNotification } from '@portal/routes/root/BasePage/Notification'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { API_V1, requestUnknown } from '@netcracker/qubership-apihub-ui-shared/utils/requests'

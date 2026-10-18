@@ -44,7 +44,7 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/hooks/operation-groups/useResolvedOperationGroupParameters'
 import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { isEmptyTag } from '@netcracker/qubership-apihub-ui-shared/utils/tags'
-import { portalRequestJson } from '@apihub/utils/requests'
+import { portalRequestJson } from '@portal/utils/requests'
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 

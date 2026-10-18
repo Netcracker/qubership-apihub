@@ -35,6 +35,7 @@ export type DdlTableListWithPreviewProps = {
   initialSize: number
   handleResize: ResizeCallback
   maxPreviewWidth: number
+  emptyMessage?: string
 }
 
 export const DdlTableListWithPreview: FC<DdlTableListWithPreviewProps> = memo<DdlTableListWithPreviewProps>((props) => {
@@ -49,6 +50,7 @@ export const DdlTableListWithPreview: FC<DdlTableListWithPreviewProps> = memo<Dd
     initialSize,
     handleResize,
     maxPreviewWidth,
+    emptyMessage,
   } = props
 
   const selectedPreviewOperation = useSelectedPreviewOperation()
@@ -120,10 +122,10 @@ export const DdlTableListWithPreview: FC<DdlTableListWithPreviewProps> = memo<Dd
     <Placeholder
       invisible={false}
       area={NAVIGATION_PLACEHOLDER_AREA}
-      message={DDL_TABLES_EMPTY_MESSAGE}
+      message={emptyMessage ?? DDL_TABLES_EMPTY_MESSAGE}
       data-testid="NoItemsPlaceholder"
     />
-  ), [])
+  ), [emptyMessage])
 
   return (
     <MetaClickableListWithPreview

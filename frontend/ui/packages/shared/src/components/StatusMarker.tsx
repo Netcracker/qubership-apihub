@@ -32,9 +32,24 @@ export type StatusMarkerProps = {
   placement?: TooltipProps['placement']
 }
 
-export const StatusMarker: FC<StatusMarkerProps> = memo<StatusMarkerProps>(({ value, title = null, placement }) => {
+export const StatusMarker: FC<StatusMarkerProps> = memo<StatusMarkerProps>(({ value, title, placement }) => {
   if (!value) {
     return null
+  }
+
+  const marker = (
+    <Box
+      display="flex"
+      gap={0.5}
+      alignItems="center"
+      width="max-content"
+    >
+      {STATUS_MARKER_VARIANT_TO_ICON_MAP[value]}
+    </Box>
+  )
+
+  if (!title) {
+    return marker
   }
 
   return (
@@ -42,14 +57,7 @@ export const StatusMarker: FC<StatusMarkerProps> = memo<StatusMarkerProps>(({ va
       title={<ScrollableTooltipContent>{title}</ScrollableTooltipContent>}
       placement={placement}
     >
-      <Box
-        display="flex"
-        gap={0.5}
-        alignItems="center"
-        width="max-content"
-      >
-        {STATUS_MARKER_VARIANT_TO_ICON_MAP[value]}
-      </Box>
+      {marker}
     </ScrollableTooltip>
   )
 })
@@ -70,7 +78,6 @@ export type StatusMarkerVariant =
 const STATUS_ICON_SX: SxProps = {
   verticalAlign: 'inherit',
   fontSize: 18,
-  cursor: 'pointer',
 }
 
 const STATUS_MARKER_VARIANT_TO_ICON_MAP: Record<StatusMarkerVariant, ReactNode> = {

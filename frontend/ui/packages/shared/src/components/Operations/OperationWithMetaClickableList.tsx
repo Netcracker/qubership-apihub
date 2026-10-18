@@ -50,6 +50,7 @@ export type OperationWithMetaClickableListProps = {
   maxWidth: number
   isExpandableItem?: (operation: OperationData) => boolean
   SubComponent?: FC<OperationListSubComponentProps>
+  emptyMessage?: string
 }
 
 // First Order Component //
@@ -70,6 +71,7 @@ export const OperationWithMetaClickableList: FC<OperationWithMetaClickableListPr
     maxWidth,
     isExpandableItem,
     SubComponent,
+    emptyMessage,
   } = props
 
   const handleRowClick = useCallback((operation: OperationData) => {
@@ -125,7 +127,7 @@ export const OperationWithMetaClickableList: FC<OperationWithMetaClickableListPr
         <Placeholder
           invisible={false}
           area={NAVIGATION_PLACEHOLDER_AREA}
-          message="No operations"
+          message={emptyMessage ?? 'No operations'}
           data-testid="NoOperationsPlaceholder"
         />
       }

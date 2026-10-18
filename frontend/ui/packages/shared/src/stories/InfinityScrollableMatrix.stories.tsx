@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryFn } from '@storybook/react'
+import type { Meta, StoryFn } from '@storybook/react-vite'
 import type { InfinityScrollableMatrixProps } from '../components/InfinityScrollableMatrix'
 import { InfinityScrollableMatrix } from '../components/InfinityScrollableMatrix'
 import { TableCell, Typography } from '@mui/material'

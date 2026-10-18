@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { ServiceConfig } from '@apihub/entities/publish-config'
-import { EMPTY_PUBLISH_DETAILS } from '@apihub/entities/publish-details'
+import type { ServiceConfig } from '@agents/entities/publish-config'
+import { EMPTY_PUBLISH_DETAILS } from '@agents/entities/publish-details'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import type { PublishDetails, PublishDetailsDto } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'

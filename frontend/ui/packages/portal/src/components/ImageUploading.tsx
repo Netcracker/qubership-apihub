@@ -17,7 +17,7 @@
 import { ButtonBase, IconButton, TextField, Typography } from '@mui/material'
 import type { FC } from 'react'
 import { memo, useCallback, useState } from 'react'
-import type { RefCallBack } from 'react-hook-form/dist/types'
+import type { RefCallBack } from 'react-hook-form'
 import { FolderIcon } from '@netcracker/qubership-apihub-ui-shared/icons/FolderIcon'
 import { UploadImageIcon } from '@netcracker/qubership-apihub-ui-shared/icons/UploadImageIcon'
 

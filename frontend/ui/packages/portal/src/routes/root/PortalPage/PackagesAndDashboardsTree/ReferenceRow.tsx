@@ -17,6 +17,7 @@
 import type { FC } from 'react'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import { Box, IconButton, Link, TableCell, TableRow, Tooltip, Typography } from '@mui/material'
+import { styled } from '@mui/material/styles'
 import { NavLink } from 'react-router-dom'
 import { getVersionPath } from '../../../NavigationProvider'
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
@@ -25,7 +26,6 @@ import {
   useDashboardCollapsedReferenceKeys,
   useSetDashboardCollapsedReferenceKeys,
 } from './CollapsedReferenceKeysContext'
-import { useDeletedReferences } from '../useDeletedReferences'
 import { useVersionReferences } from '../../useVersionReferences'
 import { useParams } from 'react-router-dom'
 import { useAddConflictedReferences, useConflictedReferences } from '../useConflictedReferences'
@@ -34,18 +34,17 @@ import {
   useRecursiveDashboardName,
   useSetRecursiveDashboardName,
 } from '../DashboardPage/RecursiveDashboardNameContextProvider'
+import { getDeletedDescendantRefs, hasDeletedReferences } from './referenceProblems'
 
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
+import { VersionErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorIndicator'
+import { DotIndicator } from '@netcracker/qubership-apihub-ui-shared/components/DotIndicator'
 import { DASHBOARD_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { PackageKindLogo } from '@netcracker/qubership-apihub-ui-shared/components/PackageKindLogo'
-import {
-  RedWarningCircleIcon,
-  YellowWarningCircleIcon,
-} from '@netcracker/qubership-apihub-ui-shared/icons/WarningCircleIcon'
-import { RedWarningIcon, YellowWarningIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningIcon'
+import { YellowWarningIcon } from '@netcracker/qubership-apihub-ui-shared/icons/WarningIcon'
 import { VersionStatusChip } from '@netcracker/qubership-apihub-ui-shared/components/VersionStatusChip'
 import { DeleteIcon } from '@netcracker/qubership-apihub-ui-shared/icons/DeleteIcon'
 import type {
@@ -57,11 +56,16 @@ import type {
 import {
   ConfirmationDialog,
 } from '@netcracker/qubership-apihub-ui-shared/components/ConfirmationDialog/ConfirmationDialog'
+import { PUBLICATION_ERROR_MESSAGES } from '@netcracker/qubership-apihub-ui-shared/utils/publicationErrorMessages'
+
+// The Packages item of the Overview navigation uses the same gap before its red dot.
+const MARKER_GAP = '5px'
 
 export type ReferenceRowProps = {
   reference: UnresolvedReference
   pack: PackageReference
   versionReferences: VersionReferences
+  deletedDescendantRefs: ReadonlySet<Key>
   level: number
   onRemove?: (key: string, version: string, kind: ReferenceKind, deleted: boolean) => void
   added: boolean
@@ -79,8 +83,12 @@ export const ReferenceRow: FC<ReferenceRowProps> = memo<ReferenceRowProps>((
       status,
       deletedAt,
       latestRevision,
+      hasErrors,
+      changelogHasErrors,
+      apiProcessorVersion,
     },
     versionReferences,
+    deletedDescendantRefs,
     level,
     onRemove,
     added,
@@ -88,7 +96,6 @@ export const ReferenceRow: FC<ReferenceRowProps> = memo<ReferenceRowProps>((
   },
 ) => {
   const { packageId, versionId } = useParams()
-  const { data: deletedReferences } = useDeletedReferences(packageId!, versionId!)
   const { data: conflictedReferences } = useConflictedReferences(packageId!, versionId!)
   const [addConflictedReferences] = useAddConflictedReferences()
   const { data: dashboardPackages } = useDashboardPackages(packageId!, versionId!)
@@ -112,6 +119,14 @@ export const ReferenceRow: FC<ReferenceRowProps> = memo<ReferenceRowProps>((
     version: version!,
     enabled: added,
   })
+
+  const addedDeletedDescendantRefs = useMemo(
+    () => getDeletedDescendantRefs(addedVersionReferences),
+    [addedVersionReferences],
+  )
+  const hasOwnDeletedDescendants = packageRef !== undefined && deletedDescendantRefs.has(packageRef)
+  const hasDeletedDescendants = added ? hasDeletedReferences(addedVersionReferences) : hasOwnDeletedDescendants
+  const childDeletedDescendantRefs = added ? addedDeletedDescendantRefs : deletedDescendantRefs
 
   useEffect(() => {
     addConflictedReferences({ versionReferences: addedVersionReferences, parentKey: key })
@@ -175,7 +190,7 @@ export const ReferenceRow: FC<ReferenceRowProps> = memo<ReferenceRowProps>((
                 width: '100%',
               }}>
                 <Typography noWrap variant="body2" sx={{ display: 'flex', alignItems: 'center' }}>
-                  <Box sx={{ display: 'flex', ml: '3px' }}>
+                  <NameWithMarkers>
                     {!readonly && excluded
                       ? <Tooltip
                         title="The package is not included in the dashboard because the same package is already included in the dashboard"
@@ -193,55 +208,63 @@ export const ReferenceRow: FC<ReferenceRowProps> = memo<ReferenceRowProps>((
                           {name}
                         </Link>
                         : name}
-                    {kind === DASHBOARD_KIND && deletedReferences?.get(key!) &&
-                      <Box sx={{ mr: '3px' }}>
-                        <Tooltip
-                          title="One of the child package/dashboard version no longer exists. Expand this dashboard to see deleted package/dashboard version"
-                          placement="right">
-                          <Box data-testid="NotExistIndicator">
-                            <RedWarningCircleIcon/>
-                          </Box>
-                        </Tooltip>
-                      </Box>
-                    }
-                    {readonly && kind === DASHBOARD_KIND && conflictedReferences?.has(key!) &&
-                      <Tooltip title="One of the child package/dashboard has conflict" placement="right">
-                        <Box data-testid="ConflictIndicator">
-                          <YellowWarningCircleIcon/>
-                        </Box>
-                      </Tooltip>
-                    }
-                  </Box>
-                  <Box sx={{ ml: '8px', display: 'flex' }}>
+                    {kind === DASHBOARD_KIND && hasDeletedDescendants && (
+                      <DotIndicator
+                        color="error"
+                        tooltip={PUBLICATION_ERROR_MESSAGES.reference.childIssueDot}
+                        data-testid="NotExistIndicator"
+                      />
+                    )}
+                    {readonly && kind === DASHBOARD_KIND && conflictedReferences?.has(key!) && (
+                      <DotIndicator
+                        color="warning"
+                        tooltip="One of the child package/dashboard has conflict"
+                        data-testid="ConflictIndicator"
+                      />
+                    )}
+                  </NameWithMarkers>
+                  <RowAlerts>
                     {readonly && conflicted &&
                       <Tooltip
                         title="There is a conflict because this package is included in the dashboard multiple times. The conflict will be resolved automatically after version publication and out of all identical packages only one package will be included in the dashboard"
                         placement="right">
-                        <Box data-testid="ConflictAlert">
+                        <ConflictAlert data-testid="ConflictAlert">
                           <YellowWarningIcon/>
-                        </Box>
+                        </ConflictAlert>
                       </Tooltip>}
-                    {deletedAt && (kind === PACKAGE_KIND
-                      ? <Tooltip title="The included package version no longer exists" placement="right">
-                        <Box data-testid="NotExistAlert">
-                          <RedWarningIcon/>
-                        </Box>
-                      </Tooltip>
-                      : <Tooltip title="The included dashboard version no longer exists" placement="right">
-                        <Box data-testid="NotExistAlert">
-                          <RedWarningIcon/>
-                        </Box>
-                      </Tooltip>)}
-                  </Box>
+                    {deletedAt && (
+                      <VersionErrorIndicator
+                        deletedAt={deletedAt}
+                        kind={kind}
+                        fontSize="extra-small"
+                        tooltipPlacement="right"
+                        data-testid="NotExistAlert"
+                      />
+                    )}
+                  </RowAlerts>
                 </Typography>
               </Box>
             </Box>
           </TextWithOverflowTooltip>
         </TableCell>
         <TableCell key="version" data-testid="VersionCell">
-          <TextWithOverflowTooltip tooltipText={versionKey}>
-            {versionKey}
-          </TextWithOverflowTooltip>
+          <VersionCellContent>
+            <VersionText>
+              <TextWithOverflowTooltip tooltipText={versionKey}>
+                {versionKey}
+              </TextWithOverflowTooltip>
+            </VersionText>
+            {isLinkable && (
+              <VersionErrorIndicator
+                versionKey={versionKey}
+                hasErrors={hasErrors}
+                changelogHasErrors={changelogHasErrors}
+                apiProcessorVersion={apiProcessorVersion}
+                kind={kind}
+                fontSize="extra-small"
+              />
+            )}
+          </VersionCellContent>
         </TableCell>
         <TableCell key="status" data-testid="StatusCell">
           {status && <VersionStatusChip status={status}/>}
@@ -279,6 +302,7 @@ export const ReferenceRow: FC<ReferenceRowProps> = memo<ReferenceRowProps>((
             reference={{ ...descendant, excluded: descendant.excluded || excluded }}
             pack={descendantPackage}
             versionReferences={references}
+            deletedDescendantRefs={childDeletedDescendantRefs}
             level={nextLevel}
             added={false}
             readonly={readonly}
@@ -286,4 +310,31 @@ export const ReferenceRow: FC<ReferenceRowProps> = memo<ReferenceRowProps>((
       })}
     </>
   )
+})
+
+const NameWithMarkers = styled(Box)({
+  display: 'flex',
+  gap: MARKER_GAP,
+  marginLeft: '3px',
+})
+
+const RowAlerts = styled(Box)({
+  display: 'flex',
+  gap: MARKER_GAP,
+  marginLeft: MARKER_GAP,
+})
+
+const ConflictAlert = styled(Box)({
+  display: 'flex',
+})
+
+const VersionCellContent = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+  overflow: 'hidden',
+}))
+
+const VersionText = styled(Box)({
+  minWidth: 0,
 })

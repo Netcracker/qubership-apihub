@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import type { Key } from '@apihub/entities/keys'
-import { portalRequestJson } from '@apihub/utils/requests'
+import type { Key } from '@portal/entities/keys'
+import { portalRequestJson } from '@portal/utils/requests'
 import type { RefetchQuery } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { useQuery } from '@tanstack/react-query'
 

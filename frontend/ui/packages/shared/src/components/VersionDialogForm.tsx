@@ -15,7 +15,7 @@
  */
 
 import * as React from 'react'
-import type { ChangeEvent, FC, ReactNode, SyntheticEvent } from 'react'
+import type { ChangeEvent, FC, ReactElement, ReactNode, SyntheticEvent } from 'react'
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
 import type { Control, FormState, UseFormSetValue } from 'react-hook-form'
 import { Controller, useWatch } from 'react-hook-form'
@@ -61,10 +61,13 @@ import { EditIcon } from '../icons/EditIcon'
 import { CloudUploadIcon } from '../icons/CloudUploadIcon'
 import { getSplittedVersionKey, handleVersionsRevision } from '../utils/versions'
 import { ErrorTypography } from './Typography/ErrorTypography'
-import type { PackageVersions } from '../entities/versions'
+import type { PackageVersion, PackageVersions } from '../entities/versions'
 import { usePackageVersions } from '../hooks/versions/usePackageVersions'
+import { useVersionProblemDetails } from '../hooks/versions/useVersionProblemDetails'
+import { VERSION_PROBLEM_DIALOG_SURFACE } from '../hooks/versions/versionProblemDetails'
 import { LabelsAutocomplete } from './LabelsAutocomplete'
-import type { Package, Packages } from '../entities/packages'
+import type { Package, PackageKind, Packages } from '../entities/packages'
+import { PACKAGE_KIND } from '../entities/packages'
 import { OptionItem } from './OptionItem'
 import { disableAutocompleteSearch } from '../utils/mui'
 import { DEFAULT_DEBOUNCE } from '../utils/constants'
@@ -72,7 +75,9 @@ import { InfoContextIcon } from '../icons/InfoContextIcon'
 import { CSV_FILE_EXTENSION } from '../utils/files'
 import { FileUploadField } from './FileUploadField'
 import type { AutocompleteInputChangeReason } from '@mui/base/AutocompleteUnstyled/useAutocomplete'
-import { WARNING_API_PROCESSOR_TEXT, WarningApiProcessorVersion } from './WarningApiProcessorVersion'
+import { VersionErrorFormMessage } from './ErrorIndicators/VersionErrorFormMessage'
+import { VersionErrorIndicator } from './ErrorIndicators/VersionErrorIndicator'
+import { VersionSelectorAutocomplete } from './Autocompletes/VersionSelectorAutocomplete'
 import type { ApiType } from '../entities/api-types'
 import { API_TYPE_REST, API_TYPE_TITLE_MAP, API_TYPES } from '../entities/api-types'
 import { REST_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
@@ -137,6 +142,10 @@ export type VersionDialogFormProps<T extends VersionFormData = VersionFormData> 
   publishButtonDisabled?: boolean
   publishFieldsDisabled?: boolean
   currentPackageKey?: Key
+  kind?: PackageKind
+  formHelperText?: string
+  isBlocking?: boolean
+  statusErrorIndicator?: ReactNode
 }
 
 export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogFormProps>((props) => {
@@ -184,6 +193,10 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
     publishButtonDisabled,
     publishFieldsDisabled,
     currentPackageKey,
+    kind = PACKAGE_KIND,
+    formHelperText,
+    isBlocking = false,
+    statusErrorIndicator,
   } = props
 
   const { errors } = formState
@@ -203,7 +216,6 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
   }, [onVersionsFilter, onSetTargetVersion])
   const onLabelsChange = useCallback((_: SyntheticEvent, value: string[]): void => onSetTargetLabels?.(value), [onSetTargetLabels])
   const onStatusChange = useCallback((_: SyntheticEvent, value: VersionStatus): void => onSetTargetStatus?.(value), [onSetTargetStatus])
-  const [warningApiProcessorState, setWarningApiProcessorState] = useState(false)
 
   const previousVersionLabels = getPreviousVersionLabels(status)
   const getPreviousVersionOptionLabel = useCallback((value: Key): string => (
@@ -232,28 +244,56 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
     [previousVersions, queriedPreviousVersions],
   )
 
-  const previousVersionStatusMap = useMemo(
-    () => new Map(normalizedPreviousVersions.map(({ key, status: versionStatus }) => [key, versionStatus])),
+  const previousVersionMap = useMemo(
+    () => new Map(normalizedPreviousVersions.map(versionItem => [versionItem.key, versionItem])),
     [normalizedPreviousVersions],
   )
 
-  const [rememberedPreviousVersionStatus, setRememberedPreviousVersionStatus] =
-    useState<{ version: Key; status: VersionStatus } | undefined>()
+  const [rememberedPreviousVersion, setRememberedPreviousVersion] = useState<PackageVersion | undefined>()
 
   useEffect(() => {
     if (!previousVersion || previousVersion === NO_PREVIOUS_RELEASE_VERSION_OPTION) {
-      setRememberedPreviousVersionStatus(undefined)
+      setRememberedPreviousVersion(undefined)
       return
     }
-    const knownStatus = previousVersionStatusMap.get(previousVersion)
-    if (knownStatus) {
-      setRememberedPreviousVersionStatus({ version: previousVersion, status: knownStatus })
+    const known = previousVersionMap.get(previousVersion)
+    if (known) {
+      setRememberedPreviousVersion(known)
       return
     }
-    setRememberedPreviousVersionStatus(remembered => (
-      remembered?.version === previousVersion ? remembered : undefined
+    setRememberedPreviousVersion(remembered => (
+      remembered?.key === previousVersion ? remembered : undefined
     ))
-  }, [previousVersion, previousVersionStatusMap])
+  }, [previousVersion, previousVersionMap])
+
+  const selectedPreviousVersion = useMemo(
+    () => previousVersionMap.get(previousVersion) ?? (
+      rememberedPreviousVersion?.key === previousVersion ? rememberedPreviousVersion : undefined
+    ),
+    [previousVersionMap, previousVersion, rememberedPreviousVersion],
+  )
+
+  const selectedStatus = selectedPreviousVersion?.status
+
+  const previousVersionKey = previousVersion !== NO_PREVIOUS_RELEASE_VERSION_OPTION
+    ? previousVersion
+    : undefined
+
+  const {
+    isBlocking: isPreviousVersionBlocking,
+    formHelperText: previousVersionFormHelperText,
+    hasProblems: previousVersionHasProblems,
+  } = useVersionProblemDetails({
+    packageKey: previousVersionsPackageKey || targetPackage?.key || currentPackageKey,
+    versionKey: previousVersionKey,
+    hasErrors: selectedPreviousVersion?.hasErrors,
+    changelogHasErrors: selectedPreviousVersion?.changelogHasErrors,
+    apiProcessorVersion: selectedPreviousVersion?.apiProcessorVersion,
+    kind: kind,
+    surface: VERSION_PROBLEM_DIALOG_SURFACE.PUBLISH_PREVIOUS_VERSION,
+  })
+
+  const formHelperMessage = formHelperText ?? previousVersionFormHelperText
 
   /**
    * Single source for the status chip, used by the dropdown, the closed field and the validation.
@@ -263,11 +303,11 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
    */
   const getPreviousVersionOptionStatus = useCallback(
     (versionKey: Key): VersionStatus | undefined =>
-      previousVersionStatusMap.get(versionKey) ??
-      (versionKey === rememberedPreviousVersionStatus?.version
-        ? rememberedPreviousVersionStatus.status
+      previousVersionMap.get(versionKey)?.status ??
+      (versionKey === rememberedPreviousVersion?.key
+        ? rememberedPreviousVersion.status
         : undefined),
-    [previousVersionStatusMap, rememberedPreviousVersionStatus],
+    [previousVersionMap, rememberedPreviousVersion],
   )
 
   const renderPreviousVersionStatusChip = useCallback(
@@ -279,6 +319,25 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
     },
     [getPreviousVersionOptionStatus],
   )
+
+  const renderPreviousVersionErrorIndicator = useCallback((versionKey: Key): ReactElement | null => {
+    const versionItem = previousVersionMap.get(versionKey) ?? (
+      rememberedPreviousVersion?.key === versionKey ? rememberedPreviousVersion : undefined
+    )
+    if (!versionItem) {
+      return null
+    }
+    return (
+      <VersionErrorIndicator
+        versionKey={versionKey}
+        hasErrors={versionItem.hasErrors}
+        changelogHasErrors={versionItem.changelogHasErrors}
+        apiProcessorVersion={versionItem.apiProcessorVersion}
+        fontSize="extra-small"
+        showTooltip={false}
+      />
+    )
+  }, [previousVersionMap, rememberedPreviousVersion])
 
   const previousVersionOptions = useMemo(() => {
     const availableKeys = normalizedPreviousVersions.map(({ key }) => key)
@@ -649,7 +708,6 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                   setValue('package', value)
                   onSetTargetPackage?.(value)
                   previousVersion !== NO_PREVIOUS_RELEASE_VERSION_OPTION && setValue('previousVersion', NO_PREVIOUS_RELEASE_VERSION_OPTION)
-                  setWarningApiProcessorState(false)
                 }}
                 onClose={clearFilter(onPackagesFilter)}
                 data-testid="PackageAutocomplete"
@@ -711,8 +769,9 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
           name="status"
           control={control}
           render={({ field: { value } }) => (
-            <Autocomplete
+            <VersionSelectorAutocomplete
               disableClearable
+              inputIndicator={statusErrorIndicator}
               value={value ?? null}
               options={VERSION_STATUSES}
               getOptionDisabled={(option) => !packagePermissions.includes(VERSION_STATUS_MANAGE_PERMISSIONS[option])}
@@ -735,6 +794,7 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                   {...params}
                   label="Status"
                   required
+                  error={!!statusErrorIndicator}
                   InputProps={{
                     ...params.InputProps,
                     // These styles hide the text in the input for correct view
@@ -782,8 +842,20 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
               name="previousVersion"
               control={control}
               render={({ field }) => (
-                <Autocomplete
+                <VersionSelectorAutocomplete
                   disabled={isPublishFieldsDisabled}
+                  inputChip={selectedStatus
+                    ? <VersionStatusChip sx={{ height: '18px' }} status={selectedStatus}/>
+                    : undefined}
+                  inputIndicator={previousVersionHasProblems && selectedPreviousVersion && (
+                    <VersionErrorIndicator
+                      versionKey={previousVersion}
+                      hasErrors={selectedPreviousVersion.hasErrors}
+                      changelogHasErrors={selectedPreviousVersion.changelogHasErrors}
+                      apiProcessorVersion={selectedPreviousVersion.apiProcessorVersion}
+                      kind={kind}
+                    />
+                  )}
                   value={field.value ?? null}
                   options={previousVersionOptions}
                   loading={arePreviousVersionsLoading}
@@ -797,45 +869,26 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
                       key={versionKey}
                       props={props}
                       title={getPreviousVersionOptionLabel(versionKey)}
+                      overflowTooltipPlacement="left"
+                      indicator={renderPreviousVersionErrorIndicator(versionKey)}
                       chip={renderPreviousVersionStatusChip(versionKey)}
                       data-testid={`Option-${versionKey}`}
                     />
                   )}
-                  renderInput={(params) => {
-                    const selectedStatus = previousVersion
-                      ? getPreviousVersionOptionStatus(previousVersion)
-                      : undefined
-
-                    return (
-                      <TextField
-                        {...params}
-                        required
-                        label={previousVersionLabels.fieldLabel}
-                        error={hasInvalidPreviousVersionStatus}
-                        helperText={hasInvalidPreviousVersionStatus
-                          ? RELEASE_PREVIOUS_VERSION_REQUIRED_MESSAGE
-                          : extraValidationMassage}
-                        InputProps={{
-                          ...params.InputProps,
-                          endAdornment: (
-                            <>
-                              {selectedStatus && (
-                                <VersionStatusChip sx={{ mr: 0.5, height: '18px' }} status={selectedStatus}/>
-                              )}
-                              {params.InputProps.endAdornment}
-                            </>
-                          ),
-                        }}
-                      />
-                    )
-                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      required
+                      label={previousVersionLabels.fieldLabel}
+                      error={hasInvalidPreviousVersionStatus || isPreviousVersionBlocking}
+                      helperText={hasInvalidPreviousVersionStatus
+                        ? RELEASE_PREVIOUS_VERSION_REQUIRED_MESSAGE
+                        : extraValidationMassage}
+                    />
+                  )}
                   onChange={(_, value) => {
                     setValue('previousVersion', value ?? NO_PREVIOUS_RELEASE_VERSION_OPTION)
                     setSelectedPreviousVersion?.(value ?? NO_PREVIOUS_RELEASE_VERSION_OPTION)
-                    if (!value || value === NO_PREVIOUS_RELEASE_VERSION_OPTION) {
-                      setWarningApiProcessorState(false)
-                    }
-
                   }}
                   data-testid="PreviousReleaseVersionAutocomplete"
                 />
@@ -849,18 +902,14 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
             <ErrorTypography>{errors.version?.message}</ErrorTypography>
           </Box>
         )}
-        <WarningApiProcessorVersion
-          versionKey={NO_PREVIOUS_RELEASE_VERSION_OPTION !== previousVersion ? previousVersion : undefined}
-          packageKey={targetPackage?.key || currentPackageKey}
-          type={WARNING_API_PROCESSOR_TEXT}
-          onWarningTextChange={(value) => setWarningApiProcessorState(!!value)}/>
+        <VersionErrorFormMessage message={formHelperMessage} />
       </DialogContent>
       <DialogActions>
         <LoadingButton
           variant="contained"
           type="submit"
           loading={isPublishing}
-          disabled={isFileReading || publishButtonDisabled || publishFieldsDisabled || warningApiProcessorState || hasInvalidPreviousVersionStatus}
+          disabled={isFileReading || publishButtonDisabled || publishFieldsDisabled || isPublishing || isPreviousVersionBlocking || isBlocking || hasInvalidPreviousVersionStatus}
           data-testid={submitButtonTittle ? `${submitButtonTittle}Button` : 'PublishButton'}
         >
           {submitButtonTittle ?? 'Publish'}
@@ -876,6 +925,8 @@ export const VersionDialogForm: FC<VersionDialogFormProps> = memo<VersionDialogF
     </DialogForm>
   )
 })
+
+VersionDialogForm.displayName = 'VersionDialogForm'
 
 export function replaceEmptyPreviousVersion(previousVersion: Key): Key {
   return previousVersion === NO_PREVIOUS_RELEASE_VERSION_OPTION

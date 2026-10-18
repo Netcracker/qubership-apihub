@@ -368,6 +368,7 @@ export interface OperationType {
 export type PackageComparisonSummaryDto = Readonly<{
   operationTypes: ReadonlyArray<OperationType>
   noContent?: boolean
+  hasErrors?: boolean
 }>
 
 export type RefComparisonSummaryDto = Readonly<{
@@ -375,11 +376,13 @@ export type RefComparisonSummaryDto = Readonly<{
   previousPackageRef?: string
   operationTypes: ReadonlyArray<OperationType>
   noContent?: boolean
+  hasErrors?: boolean
 }>
 
 export type DashboardComparisonSummaryDto = Readonly<{
   refs: ReadonlyArray<RefComparisonSummaryDto>
   packages: PackagesRefs
+  hasErrors?: boolean
 }>
 
 export type DocumentsDto = Readonly<{

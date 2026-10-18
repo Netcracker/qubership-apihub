@@ -5,13 +5,13 @@ import type { IsLoading, IsSuccess } from '@netcracker/qubership-apihub-ui-share
 import { API_V1, requestJson } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import type {
   OasSettingsExtensions,
-} from '@apihub/routes/root/PortalPage/PackageSettingsPage/ExportSettingsTab/package-export-config'
+} from '@portal/routes/root/PortalPage/PackageSettingsPage/ExportSettingsTab/package-export-config'
 import {
   toOasExtensionNames,
   toOasSettingsExtensions,
-} from '@apihub/routes/root/PortalPage/PackageSettingsPage/ExportSettingsTab/package-export-config'
-import type { ExportConfigDto } from '@apihub/routes/root/PortalPage/useExportConfig'
-import { QUERY_KEY_EXPORT_CONFIG, useExportConfig } from '@apihub/routes/root/PortalPage/useExportConfig'
+} from '@portal/routes/root/PortalPage/PackageSettingsPage/ExportSettingsTab/package-export-config'
+import type { ExportConfigDto } from '@portal/routes/root/PortalPage/useExportConfig'
+import { QUERY_KEY_EXPORT_CONFIG, useExportConfig } from '@portal/routes/root/PortalPage/useExportConfig'
 
 type UpdateExportConfigDto = {
   allowedOasExtensions: ReadonlyArray<string>

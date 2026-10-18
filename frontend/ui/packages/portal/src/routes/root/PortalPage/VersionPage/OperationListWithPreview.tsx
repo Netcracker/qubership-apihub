@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { useNormalizedOperation } from '@apihub/api-hooks/InternalDocuments/useNormalizedOperation'
-import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
+import { useNormalizedOperation } from '@portal/api-hooks/InternalDocuments/useNormalizedOperation'
+import { useBackwardLocationContext, useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
 import {
   useRawGraphQlCroppedToSingleOperationRawGraphQl,
-} from '@apihub/routes/root/PortalPage/VersionPage/useRawGraphQlCroppedToSingleOperationRawGraphQl'
+} from '@portal/routes/root/PortalPage/VersionPage/useRawGraphQlCroppedToSingleOperationRawGraphQl'
 import type {
   OperationListSubComponentProps,
 } from '@netcracker/qubership-apihub-ui-shared/components/Operations/OperationWithMetaClickableList'
@@ -68,6 +68,7 @@ export type OperationListWithPreviewProps = {
   maxPreviewWidth: number
   isExpandableItem?: (operation: OperationData) => boolean
   SubComponent?: FC<OperationListSubComponentProps>
+  emptyMessage?: string
 }
 
 // High Order Component //
@@ -79,6 +80,7 @@ export const OperationListWithPreview: FC<OperationListWithPreviewProps> = memo<
     initialSize, handleResize, maxPreviewWidth,
     isExpandableItem,
     SubComponent,
+    emptyMessage,
   } = props
 
   const operationSearchParams = useOperationSearchParams()
@@ -177,6 +179,7 @@ export const OperationListWithPreview: FC<OperationListWithPreviewProps> = memo<
       onLinkClick={onClickLink}
       isExpandableItem={isExpandableItem}
       SubComponent={SubComponent}
+      emptyMessage={emptyMessage}
       previewComponent={
         <OperationPreview
           apiType={apiType}

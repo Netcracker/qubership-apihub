@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import type { Key } from '@apihub/entities/keys'
-import { OperationContent } from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationContent'
+import type { Key } from '@portal/entities/keys'
+import { OperationContent } from '@portal/routes/root/PortalPage/VersionPage/OperationContent/OperationContent'
 import {
   COMPARE_SAME_OPERATIONS_MODE,
-} from '@apihub/routes/root/PortalPage/VersionPage/OperationContent/OperationView/OperationDisplayMode'
-import { useComparisonObjects } from '@apihub/routes/root/PortalPage/VersionPage/useComparisonObjects'
-import { groupOperationPairsByTags, isFullyAddedOperationChange, isFullyRemovedOperationChange } from '@apihub/utils/operations'
+} from '@portal/routes/root/PortalPage/VersionPage/OperationContent/OperationView/OperationDisplayMode'
+import { useComparisonObjects } from '@portal/routes/root/PortalPage/VersionPage/useComparisonObjects'
+import { groupOperationPairsByTags, isFullyAddedOperationChange, isFullyRemovedOperationChange } from '@portal/utils/operations'
 import type { ActionType } from '@netcracker/qubership-apihub-api-diff'
 import { DiffAction } from '@netcracker/qubership-apihub-api-diff'
 import type { OperationChanges } from '@netcracker/qubership-apihub-api-processor'

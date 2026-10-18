@@ -1,4 +1,4 @@
-import type { DocumentValidationSummary } from '@apihub/entities/api-quality/package-version-validation-summary'
+import type { DocumentValidationSummary } from '@portal/entities/api-quality/package-version-validation-summary'
 import KeyboardArrowDownOutlinedIcon from '@mui/icons-material/KeyboardArrowDownOutlined'
 import { Box, Button, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Skeleton } from '@mui/material'
 import { MenuButtonItems } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/MenuButton'

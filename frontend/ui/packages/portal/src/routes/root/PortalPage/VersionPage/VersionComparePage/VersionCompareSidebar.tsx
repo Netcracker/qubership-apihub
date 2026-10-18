@@ -2,16 +2,8 @@ import { type FC, memo } from 'react'
 
 import { SidebarPanel } from '@netcracker/qubership-apihub-ui-shared/components/Panels/SidebarPanel'
 import { SidebarWithTags } from '@netcracker/qubership-apihub-ui-shared/components/SidebarWithTags/SidebarWithTags'
-import { type ApiType, isApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
-import type { ContractType } from '@netcracker/qubership-apihub-ui-shared/entities/contract-types'
-
-import { isApiTypeSelectorShown } from '@apihub/utils/operation-types'
-import { ApiTypeListSelector } from './ApiTypeListSelector'
-import type { CompareApiTypeSearchParam } from './compareApiTypeFilter'
 
 export type VersionCompareSidebarProps = {
-  apiType: CompareApiTypeSearchParam
-  apiTypes: Array<ApiType | ContractType>
   filteredTags: string[]
   isLoading: boolean
   selectedTag: string
@@ -21,8 +13,6 @@ export type VersionCompareSidebarProps = {
 
 export const VersionCompareSidebar: FC<VersionCompareSidebarProps> = memo<VersionCompareSidebarProps>(props => {
   const {
-    apiType,
-    apiTypes,
     filteredTags,
     isLoading,
     selectedTag,
@@ -30,14 +20,9 @@ export const VersionCompareSidebar: FC<VersionCompareSidebarProps> = memo<Versio
     setSelectedTag,
   } = props
 
-  const showTypeSelector = isApiTypeSelectorShown(apiTypes)
-
   return (
     <SidebarPanel
-      header={showTypeSelector && <ApiTypeListSelector allowedApiTypes={apiTypes} />}
-      headerFullWidth
-      withDivider={showTypeSelector}
-      body={isApiType(apiType) && (
+      body={(
         <SidebarWithTags
           tags={filteredTags}
           areTagsLoading={isLoading}

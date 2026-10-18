@@ -24,8 +24,8 @@ import { useOperationGroups } from './useOperationGroups'
 import { useRefSearchParam } from '../useRefSearchParam'
 import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
-import { SHOW_COMPARE_REST_GROUPS_DIALOG } from '@apihub/routes/EventBusProvider'
-import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
+import { SHOW_COMPARE_REST_GROUPS_DIALOG } from '@portal/routes/EventBusProvider'
+import { useBackwardLocationContext, useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
 import {
   GROUP_SEARCH_PARAM,
   optionalSearchParams,

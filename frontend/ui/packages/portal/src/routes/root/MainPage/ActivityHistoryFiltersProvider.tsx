@@ -16,7 +16,7 @@
 
 import type { Dispatch, FC, PropsWithChildren, SetStateAction } from 'react'
 import { createContext, memo, useContext, useState } from 'react'
-import type { ActivityType } from '@apihub/entities/activity-enums'
+import type { ActivityType } from '@portal/entities/activity-enums'
 
 export const ActivityHistoryFiltersProvider: FC<PropsWithChildren> = memo<PropsWithChildren>(({ children }) => {
   const [content, setContent] = useState({})

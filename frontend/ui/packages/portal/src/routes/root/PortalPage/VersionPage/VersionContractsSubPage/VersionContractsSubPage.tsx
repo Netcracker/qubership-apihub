@@ -3,8 +3,8 @@ import type { FC, MutableRefObject } from 'react'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
-import type { Key } from '@apihub/entities/keys'
-import { usePortalPageSettingsContext } from '@apihub/routes/PortalPageSettingsProvider'
+import type { Key } from '@portal/entities/keys'
+import { usePortalPageSettingsContext } from '@portal/routes/PortalPageSettingsProvider'
 import { type ApiType, isApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import {
   CONTRACT_TYPE_DDL,
@@ -15,12 +15,15 @@ import {
 import { MCP_COLLECTION_INIT, type McpListCollection } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-mcp'
 import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import { resolveApiTypeEmptyMessage } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/apiTypeProblemDetails'
 import { isEmpty, isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { NAVIGATION_MAX_WIDTH } from '@netcracker/qubership-apihub-ui-shared/utils/page-layouts'
 import { isEmptyTag } from '@netcracker/qubership-apihub-ui-shared/utils/tags'
 
+import { usePackageVersionContent } from '@portal/routes/root/usePackageVersionContent'
 import { useSetSelectedPreviewOperation } from '../../SelectedPreviewOperationProvider'
 import { usePackageKind } from '../../usePackageKind'
+import { usePackageParamsWithRef } from '../../usePackageParamsWithRef'
 import { useRefSearchParam } from '../../useRefSearchParam'
 import { useDdlTables } from '../api/useDdlTables'
 import { useMcpEntities } from '../api/useMcpEntities'
@@ -55,6 +58,19 @@ export const VersionContractsSubPage: FC = memo(() => {
   }>()
   const routeApiType = toRouteApiType(apiType)
   const bodyRef: MutableRefObject<HTMLDivElement | null> = useRef(null)
+
+  const [summaryPackageKey, summaryVersionKey] = usePackageParamsWithRef()
+  const { versionContent } = usePackageVersionContent({
+    packageKey: summaryPackageKey,
+    versionKey: summaryVersionKey,
+    includeSummary: true,
+  })
+
+  const emptyMessage = resolveApiTypeEmptyMessage(
+    routeApiType,
+    isApiType(routeApiType) ? versionContent?.operationTypes?.[routeApiType] : undefined,
+    versionContent?.contractsSummary,
+  )
 
   const [apiKindFilter] = useApiKindSearchFilter()
   const [apiAudienceFilter] = useApiAudienceSearchFilter()
@@ -98,8 +114,9 @@ export const VersionContractsSubPage: FC = memo(() => {
       mcpEndpoint={mcpEndpoint}
       refPackageKey={refKey}
       isEmptyMcpScope={isEmptyMcpScope}
+      emptyMessage={emptyMessage}
     />
-  ), [isEmptyMcpScope, mcpEndpoint, packageId, refKey, versionId])
+  ), [emptyMessage, isEmptyMcpScope, mcpEndpoint, packageId, refKey, versionId])
 
   const [
     operations,
@@ -220,6 +237,7 @@ export const VersionContractsSubPage: FC = memo(() => {
           isNextPageFetching={isFetchingNextMcpPage}
           hasNextPage={hasNextMcpPage}
           isLoading={isMcpEntitiesLoading}
+          emptyMessage={emptyMessage}
         />
       )
     }
@@ -233,6 +251,7 @@ export const VersionContractsSubPage: FC = memo(() => {
           isNextPageFetching={isFetchingNextDdlPage}
           hasNextPage={hasNextDdlPage}
           isLoading={isDdlTablesLoading}
+          emptyMessage={emptyMessage}
         />
       )
     }
@@ -246,6 +265,7 @@ export const VersionContractsSubPage: FC = memo(() => {
           isLoading={isOperationsLoading}
           apiType={routeApiType}
           textFilter={searchValue}
+          emptyMessage={emptyMessage}
         />
       )
     }
@@ -253,6 +273,7 @@ export const VersionContractsSubPage: FC = memo(() => {
   }, [
     routeApiType,
     ddlTables,
+    emptyMessage,
     fetchNextDdlPage,
     fetchNextMcpPage,
     fetchNextOperationsPage,
@@ -296,6 +317,7 @@ export const VersionContractsSubPage: FC = memo(() => {
           initialSize={previewSize}
           handleResize={onResize}
           maxPreviewWidth={maxPreviewWidth}
+          emptyMessage={emptyMessage}
         />
       )
     }
@@ -312,6 +334,7 @@ export const VersionContractsSubPage: FC = memo(() => {
           initialSize={previewSize}
           handleResize={onResize}
           maxPreviewWidth={maxPreviewWidth}
+          emptyMessage={emptyMessage}
         />
       )
     }
@@ -329,6 +352,7 @@ export const VersionContractsSubPage: FC = memo(() => {
           initialSize={previewSize}
           handleResize={onResize}
           maxPreviewWidth={maxPreviewWidth}
+          emptyMessage={emptyMessage}
         />
       )
     }
@@ -336,6 +360,7 @@ export const VersionContractsSubPage: FC = memo(() => {
   }, [
     routeApiType,
     ddlTables,
+    emptyMessage,
     fetchNextDdlPage,
     fetchNextMcpPage,
     fetchNextOperationsPage,

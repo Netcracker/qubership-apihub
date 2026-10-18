@@ -25,6 +25,8 @@ import type { PackageReference } from '@netcracker/qubership-apihub-ui-shared/en
 import { PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { isNotEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import { DropdownPackageReferenceSelector } from '@netcracker/qubership-apihub-ui-shared/components/DropdownPackageReferenceSelector'
+import { useVersionProblemProcessorContext } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/useVersionProblemProcessorContext'
+import { getComparisonProblemReferences } from './comparisonProblemReferences'
 
 export const PackageSelector: FC = memo(() => {
   const [searchValue, setSearchValue] = useState('')
@@ -39,18 +41,17 @@ export const PackageSelector: FC = memo(() => {
     packageKey: rootPackageKey!,
     version: rootPackageVersion!,
     kind: PACKAGE_KIND,
-    textFilter: searchValue,
     showAllDescendants: true,
   })
   const { data: originReferences, isLoading: originReferencesLoading } = useFilteredPackageRefs({
     packageKey: originPackageKey ?? rootPackageKey!,
     version: originVersionKey!,
     kind: PACKAGE_KIND,
-    textFilter: searchValue,
     showAllDescendants: true,
   })
+  const { appApiProcessorVersion, migrationInProgress } = useVersionProblemProcessorContext()
 
-  const references: PackageReference[] = useMemo(() => {
+  const allReferences: PackageReference[] = useMemo(() => {
     const result: PackageReference[] = []
     const keySet = new Set<string>()
     const addReferenceIfAbsent = (ref: PackageReference): void => {
@@ -66,22 +67,38 @@ export const PackageSelector: FC = memo(() => {
 
     return result
   }, [changedReferences, originReferences])
+  const references = useMemo(
+    () => (searchValue
+      ? allReferences.filter(({ name }) => name?.toLowerCase().includes(searchValue.toLowerCase()))
+      : allReferences),
+    [allReferences, searchValue],
+  )
   const referencesLoading = useMemo(
     () => changedReferencesLoading || originReferencesLoading,
     [changedReferencesLoading, originReferencesLoading],
   )
 
+  const problemReferences = useMemo(
+    () =>
+      getComparisonProblemReferences(changedReferences, originReferences, {
+        appApiProcessorVersion,
+        migrationInProgress,
+      }),
+    [changedReferences, originReferences, appApiProcessorVersion, migrationInProgress],
+  )
+
   useEffect(() => {
-    if (isNotEmpty(references) && !referencesLoading) {
-      const newSelectedReference = references.find(ref => ref.key === defaultPackageKey) ?? references[0]
+    if (isNotEmpty(allReferences) && !referencesLoading) {
+      const newSelectedReference = allReferences.find(ref => ref.key === defaultPackageKey) ?? allReferences[0]
       setSelectedReference(newSelectedReference)
     }
-  }, [defaultPackageKey, references, referencesLoading])
+  }, [defaultPackageKey, allReferences, referencesLoading])
 
   return (
     <DropdownPackageReferenceSelector
       selectedPackage={selectedReference}
       references={references}
+      problemReferences={problemReferences}
       loading={referencesLoading}
       defaultPackageKey={defaultPackageKey}
       searchValue={searchValue}

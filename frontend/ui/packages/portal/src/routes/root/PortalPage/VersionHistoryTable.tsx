@@ -21,14 +21,19 @@ import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-tabl
 import { Box, Link, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material'
 import { NavLink } from 'react-router-dom'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import type { PackageVersion, PackageVersions } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
+import type { PackageKind } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
+import {
+  type PackageVersion,
+  type PackageVersions,
+  REVISION_DELIMITER,
+} from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import type { ColumnModel } from '@netcracker/qubership-apihub-ui-shared/hooks/table-resizing/useColumnResizing'
 import {
   DEFAULT_CONTAINER_WIDTH,
   useColumnsSizing,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/table-resizing/useColumnResizing'
 import { CustomTableHeadCell } from '@netcracker/qubership-apihub-ui-shared/components/CustomTableHeadCell'
-import { REVISION_DELIMITER } from '@apihub/entities/versions'
+import { VersionErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorIndicator'
 import { TextWithOverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/TextWithOverflowTooltip'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 import { format } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
@@ -53,10 +58,11 @@ export type VersionHistoryTableProps = {
   hasNextPage?: boolean
   actionsCell?: (item: PackageVersion | Revision) => ReactNode
   isLoading: boolean
+  kind?: PackageKind
 }
 
 export const VersionHistoryTable: FC<VersionHistoryTableProps> = memo<VersionHistoryTableProps>((props) => {
-  const { value, actionsCell, packageKey, hasNextPage, refObject, isLoading } = props
+  const { value, actionsCell, packageKey, hasNextPage, refObject, isLoading, kind } = props
 
   const isVersionsHistoryContent = isVersionsHistory(value)
 
@@ -81,12 +87,12 @@ export const VersionHistoryTable: FC<VersionHistoryTableProps> = memo<VersionHis
     {
       id: VERSION_COLUMN_ID,
       header: () => <CustomTableHeadCell title={`${isVersionsHistoryContent ? 'Version' : 'Revision'}`}/>,
-      cell: ({ row: { original: { version, revision, latest } } }) => {
+      cell: ({ row: { original: { version, revision, latest, hasErrors, changelogHasErrors, apiProcessorVersion } } }) => {
         const value = isVersionsHistoryContent ? version : `${REVISION_DELIMITER}${revision}`
         const isLatestRevision = !isVersionsHistoryContent && latest
         return (
-          <TextWithOverflowTooltip tooltipText={value}>
-            <Box display="flex" gap={1} alignItems="center">
+          <Box display="flex" alignItems="center" gap={1} overflow="hidden">
+            <TextWithOverflowTooltip tooltipText={value} sx={{ minWidth: 0, flexShrink: 1 }}>
               <Link
                 component={NavLink}
                 to={{
@@ -99,9 +105,17 @@ export const VersionHistoryTable: FC<VersionHistoryTableProps> = memo<VersionHis
               >
                 {value}
               </Link>
-              <LatestRevisionMark latest={isLatestRevision}/>
-            </Box>
-          </TextWithOverflowTooltip>
+            </TextWithOverflowTooltip>
+            {isLatestRevision && <LatestRevisionMark latest />}
+            <VersionErrorIndicator
+              kind={kind}
+              versionKey={version}
+              hasErrors={hasErrors}
+              changelogHasErrors={changelogHasErrors}
+              apiProcessorVersion={apiProcessorVersion}
+              fontSize='extra-small'
+            />
+          </Box>
         )
       },
     },
@@ -134,7 +148,7 @@ export const VersionHistoryTable: FC<VersionHistoryTableProps> = memo<VersionHis
         <PrincipalView value={createdBy}/>
       ),
     },
-  ], [isVersionsHistoryContent, packageKey])
+  ], [isVersionsHistoryContent, kind, packageKey])
 
   const previousVersionColumn: ColumnDef<VersionHistoryItem> = useMemo(() => ({
     id: PREVIOUS_VERSION_COLUMN_ID,
@@ -289,6 +303,9 @@ export type VersionHistoryItem = {
   previousValueKey?: Key
   latest?: boolean
   publishMeta?: PublishMeta
+  hasErrors?: boolean
+  changelogHasErrors?: boolean
+  apiProcessorVersion?: string
 }
 
 function isVersionsHistory(value: PackageVersions | Revisions): value is PackageVersions {
@@ -332,6 +349,9 @@ function toVersionHistoryItems(value: PackageVersions | Revisions): VersionHisto
         labels: item.versionLabels,
         previousValueKey: item.previousVersion,
         latest: item.latestRevision,
+        hasErrors: item.hasErrors,
+        changelogHasErrors: item.changelogHasErrors,
+        apiProcessorVersion: item.apiProcessorVersion,
       })
     })
   } else {
@@ -343,6 +363,9 @@ function toVersionHistoryItems(value: PackageVersions | Revisions): VersionHisto
         createdAt: item.createdAt ?? '',
         labels: item.revisionLabels,
         latest: item.latestRevision,
+        hasErrors: item.hasErrors,
+        changelogHasErrors: item.changelogHasErrors,
+        apiProcessorVersion: item.apiProcessorVersion,
       })
     })
   }

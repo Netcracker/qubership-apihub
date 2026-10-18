@@ -21,6 +21,9 @@ import {
   type McpDocumentType,
 } from '@netcracker/qubership-apihub-api-processor'
 
+import { API_TYPE_ASYNCAPI, API_TYPE_GRAPHQL, API_TYPE_REST, type ApiType } from '../entities/api-types'
+import { CONTRACT_TYPE_DDL, CONTRACT_TYPE_MCP, type ContractType } from '../entities/contract-types'
+
 export { DDL_DOCUMENT_TYPE, type DdlDocumentType, MCP_DOCUMENT_TYPE, type McpDocumentType }
 
 export const OPENAPI_3_1_SPEC_TYPE = 'openapi-3-1'
@@ -108,4 +111,22 @@ export function isDdlDocumentSpecType(type?: SpecType): type is DdlDocumentType 
 
 export const isExportableSpecType = (type?: SpecType): boolean => {
   return isOpenApiSpecType(type) || isAsyncApiSpecType(type)
+}
+
+/** Whether a document spec type is handled under the given API or contract type (e.g. openapi-3-0 → REST). */
+export function isSpecTypeForApiType(specType: SpecType, apiOrContractType: ApiType | ContractType): boolean {
+  switch (apiOrContractType) {
+    case API_TYPE_REST:
+      return isOpenApiSpecType(specType)
+    case API_TYPE_GRAPHQL:
+      return isGraphQlSpecType(specType)
+    case API_TYPE_ASYNCAPI:
+      return isAsyncApiSpecType(specType)
+    case CONTRACT_TYPE_DDL:
+      return isDdlDocumentSpecType(specType)
+    case CONTRACT_TYPE_MCP:
+      return isMcpDocumentSpecType(specType)
+    default:
+      return false
+  }
 }

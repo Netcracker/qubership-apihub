@@ -20,7 +20,7 @@ import TreeItem from '@mui/lab/TreeItem'
 import type { SectionKey } from './OperationModelList'
 import { joinedJsonPath } from '@netcracker/qubership-apihub-ui-shared/utils/operations'
 import type { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
-import type { OpenApiCustomSchemaObject } from '@apihub/entities/operation-structure'
+import type { OpenApiCustomSchemaObject } from '@portal/entities/operation-structure'
 import type {
   HashWithTitle,
 } from '@netcracker/qubership-apihub-ui-shared/components/SchemaGraphView/oasToClassDiagramService'

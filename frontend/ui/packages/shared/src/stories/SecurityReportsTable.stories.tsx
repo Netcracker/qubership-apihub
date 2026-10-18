@@ -15,8 +15,8 @@
  */
 
 import React from 'react'
-import type { Meta, StoryObj } from '@storybook/react'
-import { useArgs } from '@storybook/preview-api'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import { useArgs } from 'storybook/preview-api'
 import type { SecurityReportsTableProps } from '../components/SecurityReportsTable'
 import { SecurityReportsTable } from '../components/SecurityReportsTable'
 import { fullTableData, longNameTableData } from './samples/table-samples'

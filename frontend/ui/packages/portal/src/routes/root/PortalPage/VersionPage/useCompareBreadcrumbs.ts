@@ -14,31 +14,30 @@
  * limitations under the License.
  */
 
-import { REVISION_DELIMITER } from '@apihub/entities/versions'
-import type { OperationOptions } from '@apihub/routes/root/PortalPage/VersionPage/useOperation'
-import { useOperation } from '@apihub/routes/root/PortalPage/VersionPage/useOperation'
-import { usePackage } from '@apihub/routes/root/usePackage'
 import type { OperationsApiType } from '@netcracker/qubership-apihub-api-processor'
-import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
+
+import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import { REVISION_DELIMITER } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
+
+import { type OperationOptions, useOperation } from '@portal/routes/root/PortalPage/VersionPage/useOperation'
+import { usePackage } from '@portal/routes/root/usePackage'
 import { useVersionWithRevision } from '../../useVersionWithRevision'
-import type {
-  ComparedBreadcrumbPathItem,
-  ComparedPackagesBreadcrumbsData,
-  ComparisonObject,
-  OperationInPackageRevision,
-  OperationsGroupInPackageRevision,
-} from './breadcrumbs'
 import {
   COMPARISON_OBJECT_TYPE_OPERATION_IN_DASHBOARD_REVISION,
   COMPARISON_OBJECT_TYPE_OPERATION_IN_PACKAGE_REVISION,
   COMPARISON_OBJECT_TYPE_OPERATIONS_GROUP_IN_PACKAGE_REVISION,
+  type ComparedBreadcrumbPathItem,
+  type ComparedPackagesBreadcrumbsData,
+  type ComparisonObject,
   getGroupBreadcrumb,
   getOperationBreadcrumb,
   getPackageBreadcrumb,
   getRevisionBreadcrumb,
   getVersionBreadcrumb,
+  type OperationInPackageRevision,
+  type OperationsGroupInPackageRevision,
 } from './breadcrumbs'
 
 export function getVersionWithRevisionOptions(obj?: ComparisonObject | null, enabled?: boolean): [Key | undefined, Key | undefined, boolean | undefined] {

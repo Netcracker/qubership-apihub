@@ -116,6 +116,7 @@ export type McpEndpointSummaryDto = Readonly<{
   toolsCount: number
   promptsCount: number
   resourcesCount: number
+  hasErrors?: boolean
 }>
 
 export type McpEndpointSummary = McpEndpointSummaryDto
@@ -127,6 +128,7 @@ export type McpContractsSummaryTotals = Readonly<{
   toolsCount: number
   promptsCount: number
   resourcesCount: number
+  hasErrors: boolean
 }>
 
 export type McpContractsSummary = Readonly<{
@@ -198,6 +200,7 @@ export function toMcpContractsSummary(dto: McpContractsSummaryDto | undefined): 
       toolsCount: toolsCount,
       promptsCount: promptsCount,
       resourcesCount: resourcesCount,
+      hasErrors: endpointKeys.some(endpoint => dto[endpoint]?.hasErrors),
     },
   }
 }

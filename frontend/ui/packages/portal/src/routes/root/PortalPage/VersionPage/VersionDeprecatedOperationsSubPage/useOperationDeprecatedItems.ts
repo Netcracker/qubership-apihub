@@ -20,7 +20,7 @@ import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { DeprecatedItem, DeprecatedItems, DeprecatedItemsDto } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import { DEFAULT_API_TYPE } from '@netcracker/qubership-apihub-ui-shared/entities/operations'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
-import { portalRequestJson } from '@apihub/utils/requests'
+import { portalRequestJson } from '@portal/utils/requests'
 import { getPackageRedirectDetails } from '@netcracker/qubership-apihub-ui-shared/utils/redirects'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 

@@ -16,9 +16,9 @@
 
 import { memo } from 'react'
 import { Button } from '@mui/material'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { useEventBus } from '@portal/routes/EventBusProvider'
 import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined'
-import { CopyPackageVersionDialog } from '@apihub/routes/root/PortalPage/CopyPackageVersionDialog'
+import { CopyPackageVersionDialog } from '@portal/routes/root/PortalPage/CopyPackageVersionDialog'
 
 export const CopyPackageVersionButton = memo(() => {
   const { showCopyPackageVersionDialog } = useEventBus()

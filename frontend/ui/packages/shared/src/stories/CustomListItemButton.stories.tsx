@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Box } from '@mui/material'
 import type { CustomListItemButtonProps } from '../components/CustomListItemButton'
 import { CustomListItemButton, LIST_ITEM_SIZE_BIG, LIST_ITEM_SIZE_SMALL } from '../components/CustomListItemButton'

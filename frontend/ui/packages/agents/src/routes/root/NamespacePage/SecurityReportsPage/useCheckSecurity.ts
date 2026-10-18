@@ -15,7 +15,7 @@
  */
 
 import { useMutation } from '@tanstack/react-query'
-import type { Key } from '@apihub/entities/keys'
+import type { Key } from '@agents/entities/keys'
 import { useInvalidateSecurityReports } from './useSecurityReports'
 import { useParams } from 'react-router-dom'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'

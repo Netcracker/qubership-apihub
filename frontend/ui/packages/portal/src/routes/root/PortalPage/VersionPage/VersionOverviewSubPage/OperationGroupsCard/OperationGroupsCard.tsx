@@ -27,10 +27,10 @@ import { useGroupingNamesByApiType } from './useGroupingNamesByApiType'
 import { EditOperationGroupContentDialog } from '../EditOperationGroupContentDialog/EditOperationGroupContentDialog'
 import { useFullMainVersion } from '../../../FullMainVersionProvider'
 import type { OperationGroup } from '@netcracker/qubership-apihub-ui-shared/entities/operation-groups'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { useEventBus } from '@portal/routes/EventBusProvider'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'
 import { PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { useCurrentPackage } from '@apihub/components/CurrentPackageProvider'
+import { useCurrentPackage } from '@portal/components/CurrentPackageProvider'
 import {
   ConfirmationDialog,
 } from '@netcracker/qubership-apihub-ui-shared/components/ConfirmationDialog/ConfirmationDialog'
@@ -41,17 +41,17 @@ import {
 import { ButtonWithHint } from '@netcracker/qubership-apihub-ui-shared/components/Buttons/ButtonWithHint'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import { PublishOperationGroupPackageVersionDialog } from './PublishOperationGroupPackageVersionDialog'
-import type { IRequestDataExportWithoutFormat } from '@apihub/components/ExportSettingsDialog/api/useExport'
+import type { IRequestDataExportWithoutFormat } from '@portal/components/ExportSettingsDialog/api/useExport'
 import {
   ExportedEntityKind,
   ExportedEntityKindWithoutForm,
   RequestDataExportGraphQlOperationsGroup,
   useExport,
   useRemoveExportResult,
-} from '@apihub/components/ExportSettingsDialog/api/useExport'
+} from '@portal/components/ExportSettingsDialog/api/useExport'
 import { ASYNCAPI_API_TYPE, REST_API_TYPE, GRAPHQL_API_TYPE } from '@netcracker/qubership-apihub-api-processor'
-import { useExportStatus } from '@apihub/components/ExportSettingsDialog/api/useExportStatus'
-import { useShowErrorNotification, useShowInfoNotification } from '@apihub/routes/root/BasePage/Notification'
+import { useExportStatus } from '@portal/components/ExportSettingsDialog/api/useExportStatus'
+import { useShowErrorNotification, useShowInfoNotification } from '@portal/routes/root/BasePage/Notification'
 
 export const OperationGroupsCard: FC = memo(() => {
   const { packageId: packageKey } = useParams()

@@ -1,8 +1,8 @@
 import { Box, IconButton, styled, Tooltip } from '@mui/material'
 import { type FC, memo, useCallback } from 'react'
 
-import { useEventBus } from '@apihub/routes/EventBusProvider'
-import { useFileActions } from '@apihub/routes/root/PortalPage/FilesProvider'
+import { useEventBus } from '@portal/routes/EventBusProvider'
+import { useFileActions } from '@portal/routes/root/PortalPage/FilesProvider'
 import { DeleteIcon } from '@netcracker/qubership-apihub-ui-shared/icons/DeleteIcon'
 import { EditIcon } from '@netcracker/qubership-apihub-ui-shared/icons/EditIcon'
 

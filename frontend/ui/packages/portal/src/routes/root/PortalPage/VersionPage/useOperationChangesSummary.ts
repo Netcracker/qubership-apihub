@@ -6,9 +6,9 @@ import { API_V2, requestJson } from '@netcracker/qubership-apihub-ui-shared/util
 import { optionalSearchParams } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useQuery } from '@tanstack/react-query'
 import { generatePath, useParams } from 'react-router-dom'
-import { usePackageKind } from '@apihub/routes/root/PortalPage/usePackageKind'
+import { usePackageKind } from '@portal/routes/root/PortalPage/usePackageKind'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { useVersionSearchParam } from '@apihub/routes/root/useVersionSearchParam'
+import { useVersionSearchParam } from '@portal/routes/root/useVersionSearchParam'
 import {
   usePackageSearchParam,
 } from '@netcracker/qubership-apihub-ui-shared/hooks/routes/package/usePackageSearchParam'

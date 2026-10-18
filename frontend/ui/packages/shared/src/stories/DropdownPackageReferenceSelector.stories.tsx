@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryFn } from '@storybook/react'
+import type { Meta, StoryFn } from '@storybook/react-vite'
 import { fullHeight } from './commons/decorators'
 import type { DropdownPackageReferenceSelectorProps } from '../components/DropdownPackageReferenceSelector'
 import { DropdownPackageReferenceSelector } from '../components/DropdownPackageReferenceSelector'
 import { references } from './samples/reference-samples'
-import { useArgs } from '@storybook/preview-api'
+import { useArgs } from 'storybook/preview-api'
 import { useCallback } from 'react'
 
 const meta: Meta<typeof DropdownPackageReferenceSelector> = {

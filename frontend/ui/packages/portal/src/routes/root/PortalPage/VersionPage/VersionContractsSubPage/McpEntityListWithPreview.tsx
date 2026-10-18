@@ -38,6 +38,7 @@ export type McpEntityListWithPreviewProps = {
   initialSize: number
   handleResize: ResizeCallback
   maxPreviewWidth: number
+  emptyMessage?: string
 }
 
 export const McpEntityListWithPreview: FC<McpEntityListWithPreviewProps> = memo<McpEntityListWithPreviewProps>(
@@ -54,6 +55,7 @@ export const McpEntityListWithPreview: FC<McpEntityListWithPreviewProps> = memo<
       initialSize,
       handleResize,
       maxPreviewWidth,
+      emptyMessage,
     } = props
 
     const [mcpEndpoint] = useMcpEndpointSearchParam()
@@ -130,10 +132,10 @@ export const McpEntityListWithPreview: FC<McpEntityListWithPreviewProps> = memo<
       <Placeholder
         invisible={false}
         area={NAVIGATION_PLACEHOLDER_AREA}
-        message={MCP_COLLECTION_EMPTY_MESSAGES[collection]}
+        message={emptyMessage ?? MCP_COLLECTION_EMPTY_MESSAGES[collection]}
         data-testid="NoItemsPlaceholder"
       />
-    ), [collection])
+    ), [collection, emptyMessage])
 
     return (
       <MetaClickableListWithPreview

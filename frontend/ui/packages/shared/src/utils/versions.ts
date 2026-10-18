@@ -19,6 +19,13 @@ import { API_V3, requestJson } from './requests'
 import { generatePath } from 'react-router-dom'
 import { getPackageRedirectDetails } from './redirects'
 import type { PackageVersion, PackageVersions } from '../entities/versions'
+import type { PackageReference } from '../entities/version-references'
+
+// Returns the version of a reference with its status in square brackets, for example `2023.1 [draft]`.
+export function getReferenceVersionLabel({ version, latestRevision, status }: PackageReference): string {
+  const { versionKey } = getSplittedVersionKey(version, latestRevision)
+  return status ? `${versionKey} [${status}]` : versionKey
+}
 
 export function getSplittedVersionKey(version: Key | undefined, latestRevision: boolean = true): {
   versionKey: Key

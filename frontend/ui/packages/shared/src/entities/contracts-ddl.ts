@@ -63,12 +63,14 @@ export type DdlContractsSummaryDto = Readonly<{
   tablesCount: number
   changesSummary?: ChangesSummary<DiffTypeDto>
   numberOfImpactedEntities?: ChangesSummary<DiffTypeDto>
+  hasErrors?: boolean
 }>
 
 export type DdlContractsSummary = Readonly<{
   tablesCount: number
   changesSummary?: ChangesSummary<DiffType>
   numberOfImpactedEntities?: ChangesSummary<DiffType>
+  hasErrors?: boolean
 }>
 
 export const DDL_TABLES_EMPTY_MESSAGE = 'No tables'
@@ -77,16 +79,20 @@ export function hasDdlContracts(ddl?: DdlContractsSummary): ddl is DdlContractsS
   if (!ddl) {
     return false
   }
+  if (ddl.hasErrors) {
+    return true
+  }
   return ddl.tablesCount > 0
 }
 
 export function toDdlContractsSummary(dto: DdlContractsSummaryDto | undefined): DdlContractsSummary | undefined {
-  if (!dto || (dto.tablesCount ?? 0) <= 0) {
+  if (!dto || ((dto.tablesCount ?? 0) <= 0 && !dto.hasErrors)) {
     return undefined
   }
 
   return {
     tablesCount: dto.tablesCount ?? 0,
+    hasErrors: dto.hasErrors,
     changesSummary: dto.changesSummary && replacePropertyInChangesSummary(dto.changesSummary),
     numberOfImpactedEntities: dto.numberOfImpactedEntities &&
       replacePropertyInChangesSummary(dto.numberOfImpactedEntities),

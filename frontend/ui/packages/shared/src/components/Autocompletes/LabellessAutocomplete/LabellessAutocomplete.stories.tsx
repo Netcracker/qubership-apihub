@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ReactElement, SyntheticEvent } from 'react'
 import React, { useState } from 'react'
 import { Box, TextField, ThemeProvider } from '@mui/material'

@@ -1,4 +1,4 @@
-import type { Key } from '@apihub/entities/keys'
+import type { Key } from '@portal/entities/keys'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { requestVoid } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { useMutation } from '@tanstack/react-query'

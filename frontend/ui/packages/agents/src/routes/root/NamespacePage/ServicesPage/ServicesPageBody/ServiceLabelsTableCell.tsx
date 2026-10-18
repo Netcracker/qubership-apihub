@@ -17,7 +17,7 @@
 import type { FC } from 'react'
 import { memo } from 'react'
 import type { Row } from '@tanstack/react-table'
-import type { Service } from '@apihub/entities/services'
+import type { Service } from '@agents/entities/services'
 import { Box } from '@mui/material'
 import { OverflowTooltip } from '@netcracker/qubership-apihub-ui-shared/components/OverflowTooltip'
 import { CustomChip } from '@netcracker/qubership-apihub-ui-shared/components/CustomChip'

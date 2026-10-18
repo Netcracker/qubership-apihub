@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-import type { Service } from '@apihub/entities/services'
+import type { Service } from '@agents/entities/services'
 import type { FC } from 'react'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import {
-  Box,
-  Button,
   Checkbox,
   Skeleton,
   Table,
@@ -29,7 +27,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Typography,
 } from '@mui/material'
 import type {
   ColumnSizingInfoState,
@@ -48,20 +45,17 @@ import {
 } from '@tanstack/react-table'
 import { ServiceOrDocumentationTableCell } from '../ServiceOrDocumentationTableCell'
 import { BaselinePackageTableCell } from '../BaselinePackageTableCell'
-import {
-  PUBLISH_STATUS_TO_STATUS_DESCRIPTION_MAP,
-  PUBLISH_STATUS_TO_STATUS_MARKER_VARIANT_MAP,
-} from '../../../constants'
 import { useSnapshotPublicationInfo } from '../../../useSnapshotPublicationInfo'
 import { useServicePromoteDetails } from './useServicePromoteDetails'
-import ArrowOutwardRoundedIcon from '@mui/icons-material/ArrowOutwardRounded'
 import { useConfigureServiceSelection } from '../useConfigureServiceSelection'
 import { ServiceLabelsTableCell } from '../ServiceLabelsTableCell'
-import { usePromoteVersionStepStatus } from './usePromoteVersionStepStatus'
 import { BwcStatusTableCell } from '../BwcStatusTableCell'
 import { serviceFilter } from '../utils'
+import { useAllPublicationDetails } from '../useAllPublicationDetails'
+import { PublishStatusTableCell } from '../PublishStatusTableCell'
+import { PublicationActionTableCell } from '../PublicationActionTableCell'
 import type { VersionStatus } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
-import type { ServiceKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import type { PackageKey, ServiceKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { ColumnModel } from '@netcracker/qubership-apihub-ui-shared/hooks/table-resizing/useColumnResizing'
 import {
   DEFAULT_CONTAINER_WIDTH,
@@ -69,16 +63,13 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/hooks/table-resizing/useColumnResizing'
 import { usePromoteVersionPublicationOptions } from '../../ServicesPageProvider/ServicesPublicationOptionsProvider'
 import { Changes } from '@netcracker/qubership-apihub-ui-shared/components/Changes'
-import { SUCCESS_STEP_STATUS } from '../../ServicesPageProvider/ServicesStepsProvider'
 import { ColumnDelimiter } from '@netcracker/qubership-apihub-ui-shared/components/ColumnDelimiter'
 import { isEmpty } from '@netcracker/qubership-apihub-ui-shared/utils/arrays'
 import type { ChangesSummary } from '@netcracker/qubership-apihub-ui-shared/entities/change-severities'
 import type { Spec } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
-import type { ServiceConfig } from '@apihub/entities/publish-config'
-import {
-  LOADING_STATUS_MARKER_VARIANT,
-  StatusMarker,
-} from '@netcracker/qubership-apihub-ui-shared/components/StatusMarker'
+import type { ServiceConfig } from '@agents/entities/publish-config'
+import { EMPTY_PUBLISH_DETAILS } from '@agents/entities/publish-details'
+import type { PublishDetails } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 import { createComponents } from '@netcracker/qubership-apihub-ui-shared/utils/components'
 import { DEFAULT_NUMBER_SKELETON_ROWS } from '@netcracker/qubership-apihub-ui-shared/utils/constants'
 import { useResizeObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useResizeObserver'
@@ -120,12 +111,9 @@ export const PromoteVersionStepTable: FC<PromoteVersionStepTableProps> = memo<Pr
     defaultMinColumnSize: 180,
   })
 
-  const {
-    snapshotPublicationInfo,
-    isSuccess: isSnapshotPublicationInfoSuccess,
-  } = useSnapshotPublicationInfo({ promote: true })
+  const { snapshotPublicationInfo } = useSnapshotPublicationInfo({ promote: true })
   const { promotePublicationOptions: { config } } = usePromoteVersionPublicationOptions()
-  const stepStatus = usePromoteVersionStepStatus()
+  const [allPublishDetails] = useAllPublicationDetails({ config })
 
   const availableVersionStatusFilter = useCallback(
     (service?: Service) => !!service?.availablePromoteStatuses?.includes(promoteStatus),
@@ -202,48 +190,49 @@ export const PromoteVersionStepTable: FC<PromoteVersionStepTableProps> = memo<Pr
     },
     {
       id: VIEW_BASELINE_URL_COLUMN_ID,
-      cell: isSnapshotPublicationInfoSuccess ? ({ row: { original: { service, viewBaselineUrl, serviceConfig } } }) => {
-        if (service && serviceConfig?.apihubPackageUrl) {
-          return (
-            <Button
-              data-testid="PromotedVersionButton"
-              sx={{ visibility: 'hidden', p: 0, height: 10, whiteSpace: 'nowrap' }}
-              className="hoverable"
-              component="a"
-              variant="text"
-              href={stepStatus === SUCCESS_STEP_STATUS ? serviceConfig.apihubPackageUrl : viewBaselineUrl}
-              target="_blank"
-              startIcon={<ArrowOutwardRoundedIcon/>}
-            >
-              View Version
-            </Button>
-          )
-        }
-
-        return null
-      } : undefined,
+      cell: ({
+        row: {
+          original: {
+            serviceConfig,
+            publishDetails = EMPTY_PUBLISH_DETAILS,
+          },
+        },
+      }) => (
+        <PublicationActionTableCell
+          serviceConfig={serviceConfig}
+          publishDetails={publishDetails}
+          versionLinkLabel="View Version"
+          data-testid="PromotedVersionButton"
+        />
+      ),
     },
-  ], [availableVersionStatusFilter, isSnapshotPublicationInfoSuccess, stepStatus, promoteStatus, selectable])
+  ], [availableVersionStatusFilter, promoteStatus, selectable])
 
   const data: TableData[] = useMemo(() => services.filter(service => !!snapshotPublicationInfo.services.find(({ key }) => key === service.key && !!service.baseline)).map(service => {
     const {
       changeSummary,
-      viewBaselineUrl,
       baselineFound,
       baselineVersionFound,
+      changelogHasErrors,
+      hasErrors,
+      packageKey,
     } = snapshotPublicationInfo.services.find(({ key }) => key === service.key)!
+    const serviceConfig = config?.serviceConfigs.find(({ serviceId }) => serviceId === service.key)
     return ({
       service: service,
-      serviceConfig: config?.serviceConfigs.find(({ serviceId }) => serviceId === service.key),
+      serviceConfig: serviceConfig,
+      publishDetails: allPublishDetails.find(({ publishId }) => publishId === serviceConfig?.publishId) ?? EMPTY_PUBLISH_DETAILS,
       bwcErrors: (baselineFound && baselineVersionFound) ? changeSummary?.breaking : undefined,
       changeSummary: changeSummary,
       children: service.specs?.map(spec => ({ spec })),
-      viewBaselineUrl: viewBaselineUrl,
       baselineFound: baselineFound,
       baselineVersionFound: baselineVersionFound,
+      changelogHasErrors: changelogHasErrors,
       builderId: config?.builderId,
+      snapshotHasErrors: hasErrors,
+      snapshotPackageKey: packageKey,
     })
-  }), [config?.builderId, config?.serviceConfigs, snapshotPublicationInfo.services, services])
+  }), [allPublishDetails, config?.builderId, config?.serviceConfigs, snapshotPublicationInfo.services, services])
 
   const globalFilter = useMemo(() => ({
     searchValue,
@@ -353,14 +342,17 @@ const COLUMNS_MODELS: ColumnModel[] = [
 type TableData = Partial<{
   service: Service
   serviceConfig: ServiceConfig
+  publishDetails: PublishDetails
   spec: Spec
   bwcErrors: number
   changeSummary: ChangesSummary
-  viewBaselineUrl: string
   children: TableData[]
   baselineFound: boolean
   baselineVersionFound: boolean
+  changelogHasErrors: boolean
   builderId?: string
+  snapshotHasErrors: boolean
+  snapshotPackageKey: PackageKey
 }>
 
 type PromoteVersionDetailsTableCellProps = {
@@ -371,28 +363,17 @@ const PromoteVersionDetailsTableCell: FC<PromoteVersionDetailsTableCellProps> = 
   value: {
     serviceConfig,
     builderId,
+    publishDetails = EMPTY_PUBLISH_DETAILS,
   },
 }) => {
-  const [promoteDetails, isLoading] = useServicePromoteDetails({ serviceConfig, builderId })
+  // Starts the build in the browser; its outcome reaches the cell through the statuses poll of the table
+  useServicePromoteDetails({ serviceConfig, builderId })
 
   if (!serviceConfig) {
     return null
   }
 
-  if (isLoading) {
-    return (
-      <StatusMarker value={LOADING_STATUS_MARKER_VARIANT}/>
-    )
-  }
-
-  return (
-    <Box display="flex" gap={1}>
-      <StatusMarker value={PUBLISH_STATUS_TO_STATUS_MARKER_VARIANT_MAP[promoteDetails.status]}
-                    title={promoteDetails.message}/>
-      <Typography noWrap
-                  variant="inherit">{PUBLISH_STATUS_TO_STATUS_DESCRIPTION_MAP[promoteDetails.status]}</Typography>
-    </Box>
-  )
+  return <PublishStatusTableCell publishDetails={publishDetails} />
 })
 
 const TableSkeleton: FC = memo(() => {

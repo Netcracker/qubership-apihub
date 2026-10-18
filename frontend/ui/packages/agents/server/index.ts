@@ -16,7 +16,6 @@
 
 // eslint-disable-next-line filenames/no-index
 import express from 'express'
-import bodyParser from 'body-parser'
 import cors from 'cors'
 import http from 'http'
 
@@ -62,8 +61,8 @@ const routersMap = new Map([
 ])
 
 app.use(cors())
-app.use(bodyParser.json())
-app.use(bodyParser.text())
+app.use(express.json())
+app.use(express.text())
 
 routersMap.forEach((router, path) => app.use(path, router))
 

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
-import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { useBackwardLocationContext, useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
+import { useEventBus } from '@portal/routes/EventBusProvider'
 import { Box, Button, capitalize, Link } from '@mui/material'
 import { EmptyPackageDialog } from '@netcracker/qubership-apihub-ui-shared/components/EmptyPackageDialog'
 import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
@@ -66,7 +66,7 @@ export const PackagePagePlaceholder: FC<PackagePagePlaceholderProps> = memo<Pack
       'data-testid': 'ToPortalButton',
     },
     {
-      label: 'Go to Agent',
+      label: 'Go to the Agent',
       navigate: navigateToAgent,
       description: 'Discover the API documentation in your environment, and promote it to the package in Portal.',
       'data-testid': 'ToAgentButton',

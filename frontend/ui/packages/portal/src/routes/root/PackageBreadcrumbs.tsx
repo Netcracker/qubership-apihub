@@ -25,7 +25,7 @@ import { getGroupPath, getOverviewPath, getWorkspacePath } from '../NavigationPr
 import type { Package } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import { WORKSPACE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
-import { useBackwardLocationContext, useSetBackwardLocationContext } from '@apihub/routes/BackwardLocationProvider'
+import { useBackwardLocationContext, useSetBackwardLocationContext } from '@portal/routes/BackwardLocationProvider'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 
 export type PackageBreadcrumbsProps = Partial<{

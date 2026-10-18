@@ -1,6 +1,6 @@
-import type { ValidationDetails } from '@apihub/entities/api-quality/document-validation-details'
-import type { IssuePath } from '@apihub/entities/api-quality/issue-paths'
-import type { Issue } from '@apihub/entities/api-quality/issues'
+import type { ValidationDetails } from '@portal/entities/api-quality/document-validation-details'
+import type { IssuePath } from '@portal/entities/api-quality/issue-paths'
+import type { Issue } from '@portal/entities/api-quality/issues'
 import { loadYaml } from '@netcracker/qubership-apihub-api-unifier'
 import { JSON_FILE_FORMAT, YAML_FILE_FORMAT } from '@netcracker/qubership-apihub-ui-shared/entities/file-formats'
 import type { SpecItemUri } from '@netcracker/qubership-apihub-ui-shared/utils/specifications'
@@ -8,7 +8,7 @@ import { encodeKey } from '@netcracker/qubership-apihub-ui-shared/utils/specific
 import { safeParse } from '@stoplight/json'
 import { stringifyYaml } from '@netcracker/qubership-apihub-api-processor'
 import type { OriginalDocumentFileFormat } from '../types'
-import type { RulesetMetadata } from '@apihub/entities/api-quality/rulesets'
+import type { RulesetMetadata } from '@portal/entities/api-quality/rulesets'
 
 export function issuePathToSpecItemUri(issuePath: IssuePath): SpecItemUri {
   return `/${issuePath.map(pathItem => encodeKey(`${pathItem}`)).join('/')}`

@@ -15,7 +15,7 @@
  */
 
 import React from 'react'
-import type { Preview } from '@storybook/react'
+import type { Preview } from '@storybook/react-vite'
 import { MemoryRouter } from 'react-router-dom'
 import { CssBaseline, ThemeProvider } from '@mui/material'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'

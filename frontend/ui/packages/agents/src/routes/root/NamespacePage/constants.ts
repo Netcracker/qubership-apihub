@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import type { PublishStatus } from '@apihub/entities/statuses'
 import type {
   StatusMarkerVariant} from '@netcracker/qubership-apihub-ui-shared/components/StatusMarker'
 import {
@@ -26,6 +25,7 @@ import {
   COMPLETE_PUBLISH_STATUS,
   ERROR_PUBLISH_STATUS,
   NONE_PUBLISH_STATUS,
+  type PublishStatus,
   RUNNING_PUBLISH_STATUS,
 } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 import type {
@@ -46,11 +46,13 @@ export const PUBLISH_STATUS_TO_STATUS_MARKER_VARIANT_MAP: Record<PublishStatus, 
 
 export const EMPTY_STATUS_DESCRIPTION = ''
 export const COMPLETE_PUBLISH_STATUS_DESCRIPTION = 'Published successfully'
+export const COMPLETE_WITH_ERRORS_PUBLISH_STATUS_DESCRIPTION = 'Published with errors'
 export const ERROR_PUBLISH_STATUS_DESCRIPTION = 'Publication failed'
 
 export type PublishStatusDescription =
   | typeof EMPTY_STATUS_DESCRIPTION
   | typeof COMPLETE_PUBLISH_STATUS_DESCRIPTION
+  | typeof COMPLETE_WITH_ERRORS_PUBLISH_STATUS_DESCRIPTION
   | typeof ERROR_PUBLISH_STATUS_DESCRIPTION
 
 export const PUBLISH_STATUS_TO_STATUS_DESCRIPTION_MAP: Record<PublishStatus, PublishStatusDescription> = {

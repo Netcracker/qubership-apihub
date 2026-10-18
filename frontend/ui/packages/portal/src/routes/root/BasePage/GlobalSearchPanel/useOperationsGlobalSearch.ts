@@ -32,7 +32,7 @@ import {
   OPERATION_LEVEL,
   type SearchCriteria,
   type SearchResults,
-} from '@apihub/entities/global-search'
+} from '@portal/entities/global-search'
 import { getSearchResult, type FetchNextSearchResultList } from './global-search'
 import { SEARCH_RESULTS_PAGE_SIZE } from './globalSearchConstants'
 

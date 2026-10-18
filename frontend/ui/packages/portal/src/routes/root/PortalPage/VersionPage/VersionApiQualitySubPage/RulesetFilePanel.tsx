@@ -1,5 +1,5 @@
-import { ValidationRulesetFileControls } from '@apihub/components/ApiQuality/ValidationRulesetFileControls'
-import type { Ruleset } from '@apihub/entities/api-quality/rulesets'
+import { ValidationRulesetFileControls } from '@portal/components/ApiQuality/ValidationRulesetFileControls'
+import type { Ruleset } from '@portal/entities/api-quality/rulesets'
 import { Box, Typography } from '@mui/material'
 import { FileIcon } from '@netcracker/qubership-apihub-ui-shared/icons/FileIcon'
 import type { FC } from 'react'

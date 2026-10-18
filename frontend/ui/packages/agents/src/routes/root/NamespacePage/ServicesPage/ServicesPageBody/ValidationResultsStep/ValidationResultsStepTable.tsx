@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Service } from '@apihub/entities/services'
+import type { Service } from '@agents/entities/services'
 import type { FC } from 'react'
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSnapshotPublicationInfo } from '../../../useSnapshotPublicationInfo'
@@ -48,6 +48,7 @@ import { createComponents } from '@netcracker/qubership-apihub-ui-shared/utils/c
 import { DEFAULT_NUMBER_SKELETON_ROWS } from '@netcracker/qubership-apihub-ui-shared/utils/constants'
 import { useResizeObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useResizeObserver'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
+import type { PackageKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 
 export type ValidationResultsStepTableProps = {
   value: ReadonlyArray<Service>
@@ -146,7 +147,10 @@ export const ValidationResultsStepTable: FC<ValidationResultsStepTableProps> = m
       viewChangesUrl,
       baselineFound,
       baselineVersionFound,
+      changelogHasErrors,
       apiTypes,
+      hasErrors,
+      packageKey,
     } = snapshotPublicationInfo.services.find(({ key }) => key === service.key)!
     const [apiType = DEFAULT_API_TYPE] = apiTypes ?? []
     return ({
@@ -157,7 +161,10 @@ export const ValidationResultsStepTable: FC<ValidationResultsStepTableProps> = m
       children: service.specs?.map(spec => ({ spec })),
       baselineFound: baselineFound,
       baselineVersionFound: baselineVersionFound,
+      changelogHasErrors: changelogHasErrors,
       apiType: apiType,
+      snapshotHasErrors: hasErrors,
+      snapshotPackageKey: packageKey,
     })
   }), [snapshotPublicationInfo.services, value])
 
@@ -249,7 +256,10 @@ type TableData = Partial<{
   children: TableData[]
   baselineFound: boolean
   baselineVersionFound: boolean
+  changelogHasErrors: boolean
   apiType: ApiType
+  snapshotHasErrors: boolean
+  snapshotPackageKey: PackageKey
 }>
 
 const TableSkeleton: FC = memo(() => {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Service } from '@apihub/entities/services'
+import type { Service } from '@agents/entities/services'
 import type { FC } from 'react'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'

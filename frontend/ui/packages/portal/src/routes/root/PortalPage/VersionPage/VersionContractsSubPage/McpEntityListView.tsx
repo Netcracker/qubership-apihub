@@ -47,6 +47,7 @@ export type McpEntityListViewProps = {
   isNextPageFetching?: boolean
   hasNextPage?: boolean
   isLoading?: boolean
+  emptyMessage?: string
 }
 
 export const McpEntityListView: FC<McpEntityListViewProps> = memo<McpEntityListViewProps>(({
@@ -58,6 +59,7 @@ export const McpEntityListView: FC<McpEntityListViewProps> = memo<McpEntityListV
   isNextPageFetching,
   hasNextPage,
   isLoading = false,
+  emptyMessage,
 }) => {
   const [mcpEndpoint] = useMcpEndpointSearchParam()
   const [refKey] = useRefSearchParam()
@@ -120,7 +122,7 @@ export const McpEntityListView: FC<McpEntityListViewProps> = memo<McpEntityListV
       data={data}
       getRowId={resolveRowId}
       columnModels={columnModels}
-      emptyMessage={MCP_COLLECTION_EMPTY_MESSAGES[collection]}
+      emptyMessage={emptyMessage ?? MCP_COLLECTION_EMPTY_MESSAGES[collection]}
       fetchNextPage={fetchNextPage}
       isNextPageFetching={isNextPageFetching}
       hasNextPage={hasNextPage}

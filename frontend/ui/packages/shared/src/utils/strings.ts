@@ -102,6 +102,10 @@ export function truncateDescription(
   return `${description.slice(0, maxLength)}...`
 }
 
+export function toFirstLine(value: string): string {
+  return value.split('\n', 1)[0] ?? value
+}
+
 export const NO_DATA_STRING = '—'
 
 export const transformStringValue = (value: string | undefined): string => {

@@ -44,7 +44,7 @@ import { useAgentEnabled } from '@netcracker/qubership-apihub-ui-shared/features
 
 export const BasePage: FC = memo(() => {
   const { notification: systemNotification } = useSystemInfo()
-  const { frontendVersion, apiProcessorVersion } = useVersionInfo(agent)
+  const { frontendVersion, apiProcessorVersion } = useVersionInfo(agent, packageJson.version)
   const agentEnabled = useAgentEnabled()
   const viewPortStyleCalculator = useCallback(
     (theme: Theme): SystemStyleObject<Theme> => {

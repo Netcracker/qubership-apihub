@@ -102,7 +102,8 @@ const MENU_ITEMS: SidebarMenu[] = [
     'data-testid': 'SnapshotsTabButton',
   },
   {
-    id: `${SECURITY_REPORTS_PAGE}/${AUTHENTICATION_REPORTS_PAGE}`,
+    id: SECURITY_REPORTS_PAGE,
+    route: `${SECURITY_REPORTS_PAGE}/${AUTHENTICATION_REPORTS_PAGE}`,
     title: 'Security Reports',
     tooltip: 'Security Reports',
     icon: <LockOpenIcon/>,

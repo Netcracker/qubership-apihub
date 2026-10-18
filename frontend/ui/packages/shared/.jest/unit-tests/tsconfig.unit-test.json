@@ -5,7 +5,13 @@
       "node",
       "jest"
     ],
-    "baseUrl": ".",
+    /* No "baseUrl": TypeScript 7 removed it (TS5102), and the paths below are already
+      relative to this file, which is how paths resolve when baseUrl is absent. */
+    /* TypeScript 6 requires rootDir to be explicit alongside an inherited outDir (TS5011).
+      The include below spans the whole packages/ tree - this shared suite also runs
+      portal's unit tests - so rootDir has to cover it, or TypeScript infers the directory
+      of whichever test file it saw first and rejects every other one. */
+    "rootDir": "../../../",
     "paths": {
       "@netcracker/qubership-apihub-ui-shared/*": ["../../src/*"]
     }

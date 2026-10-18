@@ -24,9 +24,9 @@ import {
   useActivityHistoryFiltersContext,
   useSetActivityHistoryFiltersContext,
 } from '../ActivityHistoryFiltersProvider'
-import { MainPageCard } from '@apihub/routes/root/MainPage/MainPageCard'
+import { MainPageCard } from '@portal/routes/root/MainPage/MainPageCard'
 import { DASHBOARD_KIND, GROUP_KIND, PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
-import { FAVORITE_PAGE_REFERER } from '@apihub/entities/referer-pages-names'
+import { FAVORITE_PAGE_REFERER } from '@portal/entities/referer-pages-names'
 
 export const FavoritePage: FC = memo(() => {
   const { textFilter, types } = useActivityHistoryFiltersContext()

@@ -18,8 +18,8 @@ import { Fragment, memo, useMemo, type FC } from 'react'
 import { Box, Link } from '@mui/material'
 import { CONTENT_PLACEHOLDER_AREA, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
 import { MarkdownViewer } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/MarkdownViewer'
-import type { Document } from '@apihub/entities/documents'
-import { DocumentLabels } from '@apihub/routes/root/PortalPage/VersionPage/VersionDocumentsSubPage/DocumentLabels'
+import type { Document } from '@portal/entities/documents'
+import { DocumentLabels } from '@portal/routes/root/PortalPage/VersionPage/VersionDocumentsSubPage/DocumentLabels'
 
 export type OpenApiOverviewProps = Pick<Document, 'labels' | 'description' | 'info' | 'externalDocs'>
 

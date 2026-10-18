@@ -30,7 +30,7 @@ import {
   DOC_OPERATION_VIEW_MODE,
   RAW_OPERATION_VIEW_MODE,
 } from '@netcracker/qubership-apihub-ui-shared/entities/operation-view-mode'
-import { DocSpecView } from '@apihub/components/DocSpecView'
+import { DocSpecView } from '@portal/components/DocSpecView'
 import { JSON_FILE_FORMAT } from '@netcracker/qubership-apihub-ui-shared/utils/files'
 import { toFormattedJsonString } from '@netcracker/qubership-apihub-ui-shared/utils/strings'
 
@@ -47,18 +47,20 @@ export const DocumentPreviewContentBody: FC<DocumentPreviewContentBodyProps> = m
 
   const { documentId } = useParams()
   const [docPackageKey, docPackageVersion] = usePackageParamsWithRef()
-  const [{ type }] = useDocument(docPackageKey, docPackageVersion, documentId)
+  const [document, isDocumentLoading] = useDocument(docPackageKey, docPackageVersion, documentId)
+  const { type, hasErrors } = document
   const [mode] = useSpecViewMode()
   const [schemaViewMode = DETAILED_SCHEMA_VIEW_MODE] = useSchemaViewMode()
   const [specItemUri] = useSpecItemUriHashParam()
+  const effectiveMode = hasErrors ? RAW_OPERATION_VIEW_MODE : mode
 
   let operationContentElement
-  if (isLoading) {
+  if (isLoading || isDocumentLoading) {
     operationContentElement = <LoadingIndicator/>
   } else {
     operationContentElement = (
       <>
-        {mode === DOC_OPERATION_VIEW_MODE && (
+        {effectiveMode === DOC_OPERATION_VIEW_MODE && (
           <DocSpecView
             value={apiDescriptionDocument}
             type={type}
@@ -68,7 +70,7 @@ export const DocumentPreviewContentBody: FC<DocumentPreviewContentBodyProps> = m
             selectedUri={specItemUri}
           />
         )}
-        {mode === RAW_OPERATION_VIEW_MODE && (
+        {effectiveMode === RAW_OPERATION_VIEW_MODE && (
           <RawSpecView
             value={toFormattedJsonString(apiDescriptionDocument)}
             extension=".json"

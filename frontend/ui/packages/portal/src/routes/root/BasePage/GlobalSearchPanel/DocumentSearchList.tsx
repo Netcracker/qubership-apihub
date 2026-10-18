@@ -27,7 +27,7 @@ import {
 } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import { getSplittedVersionKey } from '@netcracker/qubership-apihub-ui-shared/utils/versions'
 
-import type { DocumentSearchResult } from '@apihub/entities/global-search'
+import type { DocumentSearchResult } from '@portal/entities/global-search'
 import { getDocumentPath } from '../../../NavigationProvider'
 import type { FetchNextSearchResultList } from './global-search'
 import { RateResults } from './RateResults'

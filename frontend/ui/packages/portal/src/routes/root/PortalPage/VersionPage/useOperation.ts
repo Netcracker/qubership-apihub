@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { portalRequestJson } from '@apihub/utils/requests'
+import { portalRequestJson } from '@portal/utils/requests'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
 import type { Key } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { OperationData, OperationDto, PackagesRefs } from '@netcracker/qubership-apihub-ui-shared/entities/operations'

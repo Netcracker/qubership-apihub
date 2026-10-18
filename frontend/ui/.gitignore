@@ -33,3 +33,7 @@ AGENTS.md
 CLAUDE.md
 packages/**/AGENTS.md
 packages/**/CLAUDE.md
+
+# tsc -p --noEmit on a composite/incremental config drops these in the tree.
+# One was committed by mistake and CI reads it as a valid incremental state.
+*.tsbuildinfo

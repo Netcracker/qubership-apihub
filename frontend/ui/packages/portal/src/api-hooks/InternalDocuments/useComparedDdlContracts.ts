@@ -7,8 +7,8 @@ import type { DdlContractEntity } from '@netcracker/qubership-apihub-ui-shared/e
 import type { DdlEntityChangeEntry } from '@netcracker/qubership-apihub-ui-shared/entities/contracts-ddl-changelog'
 import type { PackageKey, VersionKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 
-import { INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING } from '@apihub/utils/internal-documents/constants'
-import { isDdlApiSpecification } from '@apihub/utils/internal-documents/type-guards'
+import { INTERNAL_DOCUMENT_STRING_SYMBOL_MAPPING } from '@portal/utils/internal-documents/constants'
+import { isDdlApiSpecification } from '@portal/utils/internal-documents/type-guards'
 
 import type { QueryResultWithNoInternalDocument } from './shared-types'
 import { useComparisonInternalDocumentContent } from './useComparisonInternalDocumentContent'

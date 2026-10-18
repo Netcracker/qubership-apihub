@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { ThemeProvider } from '@mui/material'
 import { AddUserPopup } from '../components/Users/AddUserDialog'
 import { theme } from '../themes/theme'

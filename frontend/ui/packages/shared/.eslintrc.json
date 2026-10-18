@@ -22,6 +22,10 @@
                     {
                         "group": ["@netcracker/qubership-apihub-ui-portal/*"],
                         "message": "You are not allowed to import APIHUB Portal components in APIHUB Shared."
+                    },
+                    {
+                        "group": ["**/portal", "**/portal/**", "**/agents", "**/agents/**"],
+                        "message": "You are not allowed to import APIHUB Portal or Agents in APIHUB Shared -- by a relative path either. The rules above name the packages, and a relative path matched none of them. Shared is a library: the apps depend on it, never the reverse. See the comment in src/hooks/frontend-version/useVersionInfo.ts."
                     }
                 ]
             }

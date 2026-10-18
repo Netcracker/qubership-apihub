@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import type { ExportedEntityKind } from '@apihub/components/ExportSettingsDialog/api/useExport'
-import { SHOW_EXPORT_SETTINGS_DIALOG } from '@apihub/components/ExportSettingsDialog/ui/ExportSettingsDialog'
-import type { SearchCriteria } from '@apihub/entities/global-search'
+import type { ExportedEntityKind } from '@portal/components/ExportSettingsDialog/api/useExport'
+import { SHOW_EXPORT_SETTINGS_DIALOG } from '@portal/components/ExportSettingsDialog/ui/ExportSettingsDialog'
+import type { SearchCriteria } from '@portal/entities/global-search'
 import type {
   OasSettingsExtension,
-} from '@netcracker/qubership-apihub-ui-portal/src/routes/root/PortalPage/PackageSettingsPage/ExportSettingsTab/package-export-config'
+} from '@portal/routes/root/PortalPage/PackageSettingsPage/ExportSettingsTab/package-export-config'
 import { SHOW_ADD_SYSTEM_ADMINISTRATOR_DIALOG } from '@netcracker/qubership-apihub-ui-shared/components/AddSystemAdministratorDialog'
 import type { ShowDeleteRoleDetail } from '@netcracker/qubership-apihub-ui-shared/components/DeleteRoleDialog'
 import { SHOW_DELETE_ROLE_DIALOG } from '@netcracker/qubership-apihub-ui-shared/components/DeleteRoleDialog'
@@ -31,12 +31,12 @@ import type { ShowDeleteFileDetail } from '@netcracker/qubership-apihub-ui-share
 import { SHOW_DELETE_FILE_DIALOG } from '@netcracker/qubership-apihub-ui-shared/components/FileTableUpload/DeleteFileDialog'
 import type { ShowEditFileLabelsDetail } from '@netcracker/qubership-apihub-ui-shared/components/FileTableUpload/EditFileLabelsDialog'
 import { SHOW_EDIT_FILE_LABELS_DIALOG } from '@netcracker/qubership-apihub-ui-shared/components/FileTableUpload/EditFileLabelsDialog'
-import type { ShowMcpDuplicateKindDetail } from '@apihub/routes/root/PortalPage/PackagePage/McpDuplicateKindDialog'
-import { SHOW_MCP_DUPLICATE_KIND_DIALOG } from '@apihub/routes/root/PortalPage/PackagePage/McpDuplicateKindDialog'
-import type { ShowMcpEndpointDetail } from '@apihub/routes/root/PortalPage/PackagePage/McpEndpointDialog'
-import { SHOW_MCP_ENDPOINT_DIALOG } from '@apihub/routes/root/PortalPage/PackagePage/McpEndpointDialog'
-import type { ShowMcpRenameEndpointDetail } from '@apihub/routes/root/PortalPage/PackagePage/McpRenameEndpointDialog'
-import { SHOW_MCP_RENAME_ENDPOINT_DIALOG } from '@apihub/routes/root/PortalPage/PackagePage/McpRenameEndpointDialog'
+import type { ShowMcpDuplicateKindDetail } from '@portal/routes/root/PortalPage/PackagePage/McpDuplicateKindDialog'
+import { SHOW_MCP_DUPLICATE_KIND_DIALOG } from '@portal/routes/root/PortalPage/PackagePage/McpDuplicateKindDialog'
+import type { ShowMcpEndpointDetail } from '@portal/routes/root/PortalPage/PackagePage/McpEndpointDialog'
+import { SHOW_MCP_ENDPOINT_DIALOG } from '@portal/routes/root/PortalPage/PackagePage/McpEndpointDialog'
+import type { ShowMcpRenameEndpointDetail } from '@portal/routes/root/PortalPage/PackagePage/McpRenameEndpointDialog'
+import { SHOW_MCP_RENAME_ENDPOINT_DIALOG } from '@portal/routes/root/PortalPage/PackagePage/McpRenameEndpointDialog'
 import type { SpecificationDialogDetail } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/SpecificationDialog'
 import { SHOW_SPECIFICATION_DIALOG } from '@netcracker/qubership-apihub-ui-shared/components/SpecificationDialog/SpecificationDialog'
 import type { ApiType } from '@netcracker/qubership-apihub-ui-shared/entities/api-types'
@@ -59,7 +59,7 @@ import type { FC, PropsWithChildren } from 'react'
 import { createContext, memo, useContext, useState } from 'react'
 import { createEventBus, slot } from 'ts-event-bus'
 import { SHOW_RULESET_INFO_DIALOG } from './root/PortalPage/VersionPage/VersionApiQualitySubPage/components/RulesetInfoDialog/RulesetInfoDialog'
-import type { RulesetMetadata } from '@apihub/entities/api-quality/rulesets'
+import type { RulesetMetadata } from '@portal/entities/api-quality/rulesets'
 import type { SpecType } from '@netcracker/qubership-apihub-ui-shared/utils/specs'
 import { type ShareabilityStatus } from '@netcracker/qubership-apihub-api-processor'
 
@@ -103,6 +103,8 @@ export const SHOW_DELETE_CUSTOM_SERVER_DIALOG = 'show-delete-custom-server-dialo
 export const SELECT_CREATED_CUSTOM_SERVER = 'select-created-custom-server'
 // Feature "Publication Validation Error Report"
 export const SHOW_PUBLICATION_ERROR_REPORT_DIALOG = 'show-publication-error-report-dialog'
+// Feature "Document Errors Dialog"
+export const SHOW_DOCUMENT_ERRORS_DIALOG = 'show-document-errors-dialog'
 
 export type NotificationDetail = {
   title?: string
@@ -137,6 +139,10 @@ export type ShowEditPackageVersionDetail = {
   version: VersionKey
   status?: VersionStatus
   versionLabels?: string[]
+  hasErrors?: boolean
+  changelogHasErrors?: boolean
+  apiProcessorVersion?: string
+  kind?: PackageKind
 }
 
 export type CreateOperationGroupDetail = {
@@ -195,6 +201,7 @@ export type ExportSettingsPopupDetail = {
   groupName?: string
   specType?: SpecType
   shareabilityStatus?: ShareabilityStatus
+  hasErrors?: boolean
 }
 
 export type ShowDeleteCustomServerDetail = {
@@ -210,6 +217,13 @@ export type RulesetInfoPopupDetails = RulesetMetadata
 export type ShowPublicationErrorReportDetail = {
   downloadFilename: string
   errors: string
+}
+
+export type ShowDocumentErrorsDetail = {
+  packageKey: PackageKey
+  versionKey: VersionKey
+  documentId: Key
+  documentTitle: string
 }
 
 type EventBus = {
@@ -272,6 +286,8 @@ type EventBus = {
   showRulesetInfoDialog: (value: RulesetInfoPopupDetails) => void
   // Feature "Publication Validation Error Report"
   showPublicationErrorReportDialog: (detail: ShowPublicationErrorReportDetail) => void
+  // Feature "Document Errors Dialog"
+  showDocumentErrorsDialog: (detail: ShowDocumentErrorsDetail) => void
 }
 
 function eventBusProvider(): EventBus {
@@ -336,6 +352,8 @@ function eventBusProvider(): EventBus {
       showRulesetInfoDialog: slot<RulesetInfoPopupDetails>(),
       // Feature "Publication Validation Error Report"
       showPublicationErrorReportDialog: slot<ShowPublicationErrorReportDetail>(),
+      // Feature "Document Errors Dialog"
+      showDocumentErrorsDialog: slot<ShowDocumentErrorsDetail>(),
     },
   })
 
@@ -460,6 +478,10 @@ function eventBusProvider(): EventBus {
   // Feature "Publication Validation Error Report"
   eventBus.showPublicationErrorReportDialog.on((detail: ShowPublicationErrorReportDetail) => {
     dispatchEvent(new CustomEvent(SHOW_PUBLICATION_ERROR_REPORT_DIALOG, { detail }))
+  })
+  // Feature "Document Errors Dialog"
+  eventBus.showDocumentErrorsDialog.on((detail: ShowDocumentErrorsDetail) => {
+    dispatchEvent(new CustomEvent(SHOW_DOCUMENT_ERRORS_DIALOG, { detail }))
   })
   eventBus.showSpecificationDialog.on((detail: SpecificationDialogDetail) => {
     dispatchEvent(new CustomEvent(SHOW_SPECIFICATION_DIALOG, { detail }))

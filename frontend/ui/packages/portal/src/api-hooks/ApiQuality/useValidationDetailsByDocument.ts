@@ -1,5 +1,5 @@
-import type { ValidationDetails, ValidationDetailsDto } from '@apihub/entities/api-quality/document-validation-details'
-import type { Key } from '@apihub/entities/keys'
+import type { ValidationDetails, ValidationDetailsDto } from '@portal/entities/api-quality/document-validation-details'
+import type { Key } from '@portal/entities/keys'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 import { requestJson } from '@netcracker/qubership-apihub-ui-shared/utils/requests'
 import { useQuery } from '@tanstack/react-query'

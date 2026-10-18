@@ -24,7 +24,7 @@ import {
   type McpContractSearchResult,
   OPERATION_LEVEL,
   type OperationSearchResult,
-} from '@apihub/entities/global-search'
+} from '@portal/entities/global-search'
 import { getOperationsPath } from '../../../NavigationProvider'
 import { MCP_COLLECTION_SEARCH_PARAM } from '../../PortalPage/VersionPage/useMcpCollectionSearchParam'
 import { MCP_ENDPOINT_SEARCH_PARAM } from '../../PortalPage/VersionPage/useMcpEndpointSearchParam'

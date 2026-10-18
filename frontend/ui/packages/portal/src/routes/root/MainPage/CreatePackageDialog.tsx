@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { WORKSPACES_PAGE_REFERER } from '@apihub/entities/referer-pages-names'
-import type { ShowCreatePackageDetail } from '@apihub/routes/EventBusProvider'
-import { SHOW_CREATE_PACKAGE_DIALOG } from '@apihub/routes/EventBusProvider'
+import { WORKSPACES_PAGE_REFERER } from '@portal/entities/referer-pages-names'
+import type { ShowCreatePackageDetail } from '@portal/routes/EventBusProvider'
+import { SHOW_CREATE_PACKAGE_DIALOG } from '@portal/routes/EventBusProvider'
 import { PackageDialogForm } from '@netcracker/qubership-apihub-ui-shared/components/Forms/PackageDialogForm'
 import type { PopupProps } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'
 import { PopupDelegate } from '@netcracker/qubership-apihub-ui-shared/components/PopupDelegate'

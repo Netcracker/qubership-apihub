@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-import type { FC } from 'react'
-import { memo, useCallback, useEffect, useMemo, useState } from 'react'
-import { Autocomplete, Box, Checkbox, FormControlLabel, MenuItem, TextField, Typography } from '@mui/material'
+import { type FC, memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { Autocomplete, Box, Checkbox, FormControlLabel, MenuItem, styled, TextField, Typography } from '@mui/material'
 import { useServices } from '../../../useServices'
 import type { Control, FieldErrors } from 'react-hook-form'
 import { Controller, useForm } from 'react-hook-form'
@@ -28,21 +27,31 @@ import { filterServices } from '../../services'
 import { PromoteVersionStepTable } from './PromoteVersionStepTable'
 import type { PromoteVersion } from './usePromoteVersion'
 import { usePromoteVersion } from './usePromoteVersion'
-import type { Service } from '@apihub/entities/services'
+import type { Service } from '@agents/entities/services'
+import type { ServicePublishInfo } from '@agents/entities/service-publish-info'
 import { usePromoteVersionStepStatus } from './usePromoteVersionStepStatus'
+import type { BaselineOptions } from '../../../baselineOptions'
 import { useBaselineOptions } from '../../../useBaselineOptions'
 import { useVersionOptions } from '../../../AutomationPage/useVersionOptions'
-import type {
-  VersionStatus} from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import {
   DRAFT_VERSION_STATUS,
+  PUBLISH_STATUSES,
   RELEASE_VERSION_STATUS,
+  type VersionStatus,
 } from '@netcracker/qubership-apihub-ui-shared/entities/version-status'
 import {
   checkVersionNotEqualToPrevious,
   checkVersionRestrictedSymbols,
 } from '@netcracker/qubership-apihub-ui-shared/utils/validations'
 import { SearchBar } from '@netcracker/qubership-apihub-ui-shared/components/SearchBar'
+import { VersionSelectorAutocomplete } from '@netcracker/qubership-apihub-ui-shared/components/Autocompletes/VersionSelectorAutocomplete'
+import { VersionErrorFormMessage } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorFormMessage'
+import { VersionErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/VersionErrorIndicator'
+import { agent } from '@netcracker/qubership-apihub-ui-shared/utils/version-info'
+import { ErrorIndicator } from '@netcracker/qubership-apihub-ui-shared/components/ErrorIndicators/ErrorIndicator'
+import { PUBLICATION_ERROR_MESSAGES } from '@netcracker/qubership-apihub-ui-shared/utils/publicationErrorMessages'
+import { useVersionProblemDetails } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/useVersionProblemDetails'
+import { VERSION_PROBLEM_DIALOG_SURFACE } from '@netcracker/qubership-apihub-ui-shared/hooks/versions/versionProblemDetails'
 import {
   CONTENT_PLACEHOLDER_AREA,
   NO_SEARCH_RESULTS,
@@ -59,6 +68,7 @@ import {
   SUCCESS_STEP_STATUS,
   usePromoteVersionStep,
 } from '../../ServicesPageProvider/ServicesStepsProvider'
+import { useSnapshotPublicationInfo } from '../../../useSnapshotPublicationInfo'
 
 export const PromoteVersionStep: FC = memo(() => {
   const [promoteVersion, isLoading] = usePromoteVersion()
@@ -73,7 +83,21 @@ export const PromoteVersionStep: FC = memo(() => {
     status,
     previousVersion,
     formErrors,
+    isReleaseRefused,
   ] = useToolbarData(promoteVersion)
+
+  const previousVersionFlags = baselineOptions.flagsByVersionKey.get(previousVersion)
+  const {
+    hasProblems: previousVersionHasProblems,
+    isBlocking: isPreviousVersionBlocking,
+    formHelperText: previousVersionErrorMessage,
+  } = useVersionProblemDetails({
+    versionKey: previousVersion,
+    hasErrors: previousVersionFlags?.hasErrors,
+    changelogHasErrors: previousVersionFlags?.changelogHasErrors,
+    apiProcessorVersion: previousVersionFlags?.apiProcessorVersion,
+    surface: VERSION_PROBLEM_DIALOG_SURFACE.PUBLISH_PREVIOUS_VERSION,
+  })
 
   const areControlsDisabled = isLoading || isCreateSnapshotRunning
   const [repromoteEnabled, setRepromoteEnabled] = useState(false)
@@ -155,11 +179,20 @@ export const PromoteVersionStep: FC = memo(() => {
           name="previousVersion"
           control={control}
           render={({ field: { value, onChange } }) => (
-            <Autocomplete
+            <VersionSelectorAutocomplete
               freeSolo
               disabled
               value={value}
-              options={baselineOptions}
+              options={baselineOptions.versionKeys}
+              inputIndicator={previousVersionHasProblems && previousVersionFlags && (
+                <VersionErrorIndicator
+                  app={agent}
+                  versionKey={previousVersion}
+                  hasErrors={previousVersionFlags.hasErrors}
+                  changelogHasErrors={previousVersionFlags.changelogHasErrors}
+                  apiProcessorVersion={previousVersionFlags.apiProcessorVersion}
+                />
+              )}
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -167,6 +200,7 @@ export const PromoteVersionStep: FC = memo(() => {
                   required
                   label="Previous Version"
                   variant="outlined"
+                  error={isPreviousVersionBlocking}
                   onChange={onChange}
                 />
               )}
@@ -187,6 +221,9 @@ export const PromoteVersionStep: FC = memo(() => {
               disabled={areControlsDisabled}
               label="Status"
               variant="outlined"
+              SelectProps={{
+                renderValue: () => <StatusSelectValue status={status} isReleaseRefused={isReleaseRefused}/>,
+              }}
             >
               <MenuItem value={DRAFT_VERSION_STATUS}>Draft</MenuItem>
               <MenuItem value={RELEASE_VERSION_STATUS}>Release</MenuItem>
@@ -198,7 +235,7 @@ export const PromoteVersionStep: FC = memo(() => {
           <LoadingButton
             data-testid={repromoteEnabled ? 'RePromoteVersionButton' : 'PromoteVersionButton'}
             sx={{ width: repromoteEnabled ? 180 : 160 }}
-            disabled={areControlsDisabled || !isPromoteAvailable}
+            disabled={areControlsDisabled || !isPromoteAvailable || isPreviousVersionBlocking || isReleaseRefused}
             variant={repromoteEnabled ? 'outlined' : 'contained'}
             loading={isLoading || isCreateSnapshotRunning}
             type="submit"
@@ -224,6 +261,11 @@ export const PromoteVersionStep: FC = memo(() => {
         >
           {formErrors.version?.message}
         </Typography>
+
+        <VersionErrorFormMessage
+          message={previousVersionErrorMessage}
+          data-testid="PreviousVersionErrorMessage"
+        />
 
         <FormControlLabel
           data-testid="OnlyPromotableCheckbox"
@@ -258,6 +300,26 @@ export const PromoteVersionStep: FC = memo(() => {
   )
 })
 
+type StatusSelectValueProps = {
+  status: VersionStatus
+  isReleaseRefused: boolean
+}
+
+const StatusSelectValue: FC<StatusSelectValueProps> = memo<StatusSelectValueProps>(({ status, isReleaseRefused }) => (
+  <StatusValue>
+    <Typography noWrap variant="inherit">{PUBLISH_STATUSES.get(status)}</Typography>
+    <ErrorIndicator
+      hasProblems={isReleaseRefused}
+      tooltip={PUBLICATION_ERROR_MESSAGES.agent.promoteReleaseRefused}
+      fontSize="extra-small"
+      tabIndex={-1}
+      data-testid="ReleaseRefusedIndicator"
+    />
+  </StatusValue>
+))
+
+StatusSelectValue.displayName = 'StatusSelectValue'
+
 type FormData = {
   version: string
   previousVersion: string
@@ -266,23 +328,30 @@ type FormData = {
 }
 
 type VersionOptions = string[]
-type PreviousVersionOptions = string[]
 type OnSubmit = () => void
 type IsPromoteAvailable = boolean
+type IsReleaseRefused = boolean
+
+const StatusValue = styled(Box)(({ theme }) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: theme.spacing(1),
+}))
 
 function useToolbarData(
   promoteVersion: PromoteVersion,
 ): [
   Control<FormData>,
   VersionOptions,
-  PreviousVersionOptions,
+  BaselineOptions,
   OnSubmit,
   IsLoading,
   IsSuccess,
   IsPromoteAvailable,
   VersionStatus,
   FormData['previousVersion'],
-  FieldErrors<FormData>
+  FieldErrors<FormData>,
+  IsReleaseRefused,
 ] {
   const { createSnapshotPublicationOptions: { baseline, name } } = useCreateSnapshotPublicationOptions()
   const {
@@ -311,7 +380,6 @@ function useToolbarData(
   )
 
   const versionOptions = useVersionOptions()
-  const previousVersionOptions = useBaselineOptions()
 
   const [, setPromoteVersionStep] = usePromoteVersionStep()
   const stepStatus = usePromoteVersionStepStatus()
@@ -327,7 +395,16 @@ function useToolbarData(
     serviceKeys: serviceKeysForm,
   } = watch()
 
+  // Create Snapshot already blocks a previous version with problems for the services of the snapshot, so this field
+  // normally shows no problem. The check stays as a safeguard.
+  const previousVersionOptions = useBaselineOptions({ selectedServiceKeys: serviceKeysForm })
+
+  const { snapshotPublicationInfo } = useSnapshotPublicationInfo({ promote: true })
+
   const isPromoteVersionAvailable = !!previousVersionForm && !!versionForm && !!statusForm && isNotEmpty(serviceKeysForm)
+
+  const isReleaseRefused = statusForm === RELEASE_VERSION_STATUS &&
+    hasUnsoundSnapshotVersion(snapshotPublicationInfo.services, serviceKeysForm)
 
   return [
     control,
@@ -340,5 +417,15 @@ function useToolbarData(
     statusForm,
     previousVersionForm,
     errors,
+    isReleaseRefused,
   ]
+}
+
+function hasUnsoundSnapshotVersion(
+  services: ReadonlyArray<ServicePublishInfo>,
+  selectedServiceKeys: ReadonlyArray<ServiceKey>,
+): boolean {
+  return services.some(({ key, hasErrors, changelogHasErrors }) =>
+    (hasErrors || changelogHasErrors) && selectedServiceKeys.includes(key),
+  )
 }

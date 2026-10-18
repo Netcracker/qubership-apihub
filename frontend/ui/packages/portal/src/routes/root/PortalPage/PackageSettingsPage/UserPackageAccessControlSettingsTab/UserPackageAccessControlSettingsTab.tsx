@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-import { useEventBus } from '@apihub/routes/EventBusProvider'
+import { useEventBus } from '@portal/routes/EventBusProvider'
 import {
   UserAccessControlTable,
-} from '@apihub/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/UserAccessControlTable'
+} from '@portal/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/UserAccessControlTable'
 import {
   UserRolesDialog,
-} from '@apihub/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/UserRolesDialog'
+} from '@portal/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/UserRolesDialog'
 import {
   useAddPackageMember,
   usePackageMembers,
-} from '@apihub/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/useUserPackageAccess'
-import { useUsers } from '@apihub/routes/root/useUsers'
+} from '@portal/routes/root/PortalPage/PackageSettingsPage/UserPackageAccessControlSettingsTab/useUserPackageAccess'
+import { useUsers } from '@portal/routes/root/useUsers'
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
 import { Box, IconButton } from '@mui/material'
 import { BodyCard } from '@netcracker/qubership-apihub-ui-shared/components/BodyCard'

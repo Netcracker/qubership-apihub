@@ -25,7 +25,7 @@ import { SelectedSubPageProvider } from './SelectedSubPageProvider'
 import { useCurrentDocumentsList } from './CurrentDocumentsListProvider'
 import { usePackageKind } from '../../usePackageKind'
 import { SelectedDocumentContext } from './SelectedDocumentProvider'
-import type { Document } from '@apihub/entities/documents'
+import type { Document } from '@portal/entities/documents'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'
 import { REF_SEARCH_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { DASHBOARD_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/packages'
@@ -99,6 +99,7 @@ export const DocumentsCard: FC = memo(() => {
             <DocumentsTab
               format={format}
               type={type}
+              hasErrors={document.hasErrors}
               isDocumentLoading={isLoading}
             />
           }
@@ -107,3 +108,5 @@ export const DocumentsCard: FC = memo(() => {
     </SelectedDocumentContext.Provider>
   )
 })
+
+DocumentsCard.displayName = 'DocumentsCard'

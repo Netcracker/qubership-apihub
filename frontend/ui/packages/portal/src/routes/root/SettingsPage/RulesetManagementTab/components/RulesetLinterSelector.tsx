@@ -1,4 +1,4 @@
-import type { Linter } from '@apihub/entities/api-quality/linters'
+import type { Linter } from '@portal/entities/api-quality/linters'
 import { FormControl, InputLabel, MenuItem, Select, type SelectChangeEvent } from '@mui/material'
 import { memo, type FC } from 'react'
 

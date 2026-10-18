@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { AppHeaderDivider } from './AppHeaderDivider'
 import { appHeaderBackground } from '../../../stories/commons/decorators'
 

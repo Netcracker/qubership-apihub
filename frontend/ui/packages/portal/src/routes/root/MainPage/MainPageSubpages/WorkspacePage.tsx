@@ -32,7 +32,7 @@ import { ActivityHistoryCard } from './ActivityHistoryCard'
 import { READ_PERMISSION } from '@netcracker/qubership-apihub-ui-shared/entities/package-permissions'
 import { isBoolean } from '@netcracker/qubership-apihub-ui-shared/utils/types'
 import { ToolbarTitle } from '@netcracker/qubership-apihub-ui-shared/components/ToolbarTitle'
-import { MainPageCard } from '@apihub/routes/root/MainPage/MainPageCard'
+import { MainPageCard } from '@portal/routes/root/MainPage/MainPageCard'
 import { CONTENT_PLACEHOLDER_AREA, NO_PERMISSION, Placeholder } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
 
 export const WorkspacePage: FC = memo(() => {

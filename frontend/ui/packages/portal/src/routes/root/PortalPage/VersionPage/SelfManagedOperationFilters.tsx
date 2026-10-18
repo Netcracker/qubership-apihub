@@ -10,8 +10,8 @@ import { PACKAGE_KIND } from '@netcracker/qubership-apihub-ui-shared/entities/pa
 import type { PackageReference } from '@netcracker/qubership-apihub-ui-shared/entities/version-references'
 import type { HasNextPage, IsFetchingNextPage } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'
 
-import { usePortalPageSettingsContext } from '@apihub/routes/PortalPageSettingsProvider'
-import { useFullMainVersion } from '@apihub/routes/root/PortalPage/FullMainVersionProvider'
+import { usePortalPageSettingsContext } from '@portal/routes/PortalPageSettingsProvider'
+import { useFullMainVersion } from '@portal/routes/root/PortalPage/FullMainVersionProvider'
 import { usePackageVersionContent } from '../../usePackageVersionContent'
 import { useFilteredPackageRefs } from '../../useRefPackage'
 

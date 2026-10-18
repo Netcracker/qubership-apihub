@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 
 import { ThemeProvider } from '@mui/material'
 import { AddSystemAdministratorPopup } from '../components/AddSystemAdministratorDialog'

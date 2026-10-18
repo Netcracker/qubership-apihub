@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Key } from '@apihub/entities/keys'
+import type { Key } from '@portal/entities/keys'
 import { useMemo } from 'react'
 import { OPERATIONS_VIEW_MODE_PARAM } from '@netcracker/qubership-apihub-ui-shared/utils/search-params'
 import { useSearchParam } from '@netcracker/qubership-apihub-ui-shared/hooks/searchparams/useSearchParam'

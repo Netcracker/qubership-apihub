@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Box, CssBaseline, ThemeProvider } from '@mui/material'
 import type { FC } from 'react'
 import React from 'react'

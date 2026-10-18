@@ -3,17 +3,17 @@ import type { FC, PropsWithChildren } from 'react'
 import { createContext, memo, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
-import { useEventBus } from '@apihub/routes/EventBusProvider'
-import { createFilesRecord, filesRecordToArray } from '@apihub/routes/root/PortalPage/PackagePage/files'
-import type { ShowMcpEndpointDetail } from '@apihub/routes/root/PortalPage/PackagePage/McpEndpointDialog'
+import { useEventBus } from '@portal/routes/EventBusProvider'
+import { createFilesRecord, filesRecordToArray } from '@portal/routes/root/PortalPage/PackagePage/files'
+import type { ShowMcpEndpointDetail } from '@portal/routes/root/PortalPage/PackagePage/McpEndpointDialog'
 import {
   buildFileTypesAndLabels,
   buildInitFileState,
   type McpStagedFileMeta,
   partitionFilesByMcp,
   pruneMcpEndpoint,
-} from '@apihub/routes/root/PortalPage/PackagePage/mcpPublish'
-import { hasDuplicateMcpTypesInBatch } from '@apihub/routes/root/PortalPage/PackagePage/mcpValidation'
+} from '@portal/routes/root/PortalPage/PackagePage/mcpPublish'
+import { hasDuplicateMcpTypesInBatch } from '@portal/routes/root/PortalPage/PackagePage/mcpValidation'
 import type { FileLabelsRecord } from '@netcracker/qubership-apihub-ui-shared/components/FileTableUpload/FileTableUpload'
 import { SPECIAL_VERSION_KEY } from '@netcracker/qubership-apihub-ui-shared/entities/versions'
 import type { IsLoading } from '@netcracker/qubership-apihub-ui-shared/utils/aliases'

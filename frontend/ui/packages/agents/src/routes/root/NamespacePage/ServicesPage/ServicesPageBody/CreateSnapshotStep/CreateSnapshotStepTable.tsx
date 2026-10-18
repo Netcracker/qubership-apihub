@@ -18,8 +18,6 @@ import type { FC } from 'react'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import type { ColumnDef } from '@tanstack/table-core'
 import {
-  Box,
-  Button,
   Checkbox,
   Skeleton,
   Table,
@@ -28,11 +26,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Typography,
 } from '@mui/material'
 import { styled } from '@mui/material/styles'
-import ArrowOutwardRoundedIcon from '@mui/icons-material/ArrowOutwardRounded'
-import ErrorOutlinedIcon from '@mui/icons-material/ErrorOutlined'
 import type {
   ColumnSizingInfoState,
   ColumnSizingState,
@@ -51,18 +46,14 @@ import {
 import { useServicePublishDetails } from './useServicePublishDetails'
 import { ServiceOrDocumentationTableCell } from '../ServiceOrDocumentationTableCell'
 import { BaselinePackageTableCell } from '../BaselinePackageTableCell'
-import {
-  PUBLISH_STATUS_TO_STATUS_DESCRIPTION_MAP,
-  PUBLISH_STATUS_TO_STATUS_MARKER_VARIANT_MAP,
-} from '../../../constants'
-import { ERROR_PUBLISH_STATUS } from '@apihub/entities/statuses'
-import { useEventBus } from '../../../../../EventBusProvider'
-import { useSnapshotPublicationInfo } from '../../../useSnapshotPublicationInfo'
 import { useConfigureServiceSelection } from '../useConfigureServiceSelection'
 import { ServiceLabelsTableCell } from '../ServiceLabelsTableCell'
 import { serviceFilter } from '../utils'
+import { useAllPublicationDetails } from '../useAllPublicationDetails'
+import { PublishStatusTableCell } from '../PublishStatusTableCell'
+import { PublicationActionTableCell } from '../PublicationActionTableCell'
 import { useServices } from '../../../useServices'
-import type { ServiceKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
+import type { PackageKey, ServiceKey } from '@netcracker/qubership-apihub-ui-shared/entities/keys'
 import type { ColumnModel } from '@netcracker/qubership-apihub-ui-shared/hooks/table-resizing/useColumnResizing'
 import {
   DEFAULT_CONTAINER_WIDTH,
@@ -76,13 +67,11 @@ import {
   Placeholder,
 } from '@netcracker/qubership-apihub-ui-shared/components/Placeholder'
 import { ColumnDelimiter } from '@netcracker/qubership-apihub-ui-shared/components/ColumnDelimiter'
-import type { Service } from '@apihub/entities/services'
-import type { ServiceConfig } from '@apihub/entities/publish-config'
+import type { Service } from '@agents/entities/services'
+import type { ServiceConfig } from '@agents/entities/publish-config'
+import { EMPTY_PUBLISH_DETAILS } from '@agents/entities/publish-details'
+import { COMPLETE_PUBLISH_STATUS, type PublishDetails } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
 import type { Spec } from '@netcracker/qubership-apihub-ui-shared/entities/specs'
-import {
-  LOADING_STATUS_MARKER_VARIANT,
-  StatusMarker,
-} from '@netcracker/qubership-apihub-ui-shared/components/StatusMarker'
 import { useResizeObserver } from '@netcracker/qubership-apihub-ui-shared/hooks/common/useResizeObserver'
 
 export type CreateSnapshotStepTableProps = {
@@ -116,7 +105,7 @@ export const CreateSnapshotStepTable: FC<CreateSnapshotStepTableProps> = memo<Cr
   })
 
   const { createSnapshotPublicationOptions: { config } } = useCreateSnapshotPublicationOptions()
-  const { snapshotPublicationInfo, isSuccess: isSnapshotPublicationInfoSuccess } = useSnapshotPublicationInfo()
+  const [allPublishDetails] = useAllPublicationDetails({ config })
   const columns: ColumnDef<TableData>[] = useMemo(() => [
     {
       // activates global filtering in react-table
@@ -169,45 +158,36 @@ export const CreateSnapshotStepTable: FC<CreateSnapshotStepTableProps> = memo<Cr
       cell: ({
         row: {
           original: {
-            service,
-            viewSnapshotUrl,
             serviceConfig,
-            builderId,
+            publishDetails = EMPTY_PUBLISH_DETAILS,
           },
         },
-      }) => {
-        if (service && viewSnapshotUrl && isSnapshotPublicationInfoSuccess) {
-          return (
-            <ViewSnapshotActionButton
-              data-testid="ViewSnapshotButton"
-              className="hoverable"
-              component="a"
-              variant="text"
-              href={viewSnapshotUrl}
-              target="_blank"
-              startIcon={<ArrowOutwardRoundedIcon/>}
-            >
-              View Snapshot
-            </ViewSnapshotActionButton>
-          )
-        }
-
-        return <ViewDetailsButton serviceConfig={serviceConfig} builderId={builderId} service={service}/>
-      },
+      }) => (
+        <PublicationActionTableCell
+          serviceConfig={serviceConfig}
+          publishDetails={publishDetails}
+          versionLinkLabel="View Snapshot"
+          data-testid="ViewSnapshotButton"
+        />
+      ),
     },
-  ], [isSnapshotPublicationInfoSuccess, selectable])
+  ], [selectable])
 
   const data: TableData[] = useMemo(() => services.map(service => {
-    const servicePublishInfo = snapshotPublicationInfo.services.find(({ key }) => key === service.key)
+    const serviceConfig = config?.serviceConfigs.find(({ serviceId }) => serviceId === service.key)
+    const publishDetails = allPublishDetails.find(({ publishId }) => publishId === serviceConfig?.publishId) ??
+      EMPTY_PUBLISH_DETAILS
 
     return ({
       service: service,
-      serviceConfig: config?.serviceConfigs.find(({ serviceId }) => serviceId === service.key),
+      serviceConfig: serviceConfig,
+      publishDetails: publishDetails,
       children: service.specs?.map(spec => ({ spec })),
-      viewSnapshotUrl: servicePublishInfo?.viewSnapshotUrl,
       builderId: config?.builderId,
+      snapshotHasErrors: publishDetails.status === COMPLETE_PUBLISH_STATUS && (publishDetails.hasErrors ?? false),
+      snapshotPackageKey: serviceConfig?.packageId,
     })
-  }), [config?.builderId, config?.serviceConfigs, snapshotPublicationInfo.services, services])
+  }), [allPublishDetails, config?.builderId, config?.serviceConfigs, services])
 
   const globalFilter = useMemo(() => ({
     searchValue,
@@ -316,10 +296,12 @@ const COLUMNS_MODELS: ColumnModel[] = [
 type TableData = Partial<{
   service: Service
   serviceConfig: ServiceConfig
+  publishDetails: PublishDetails
   spec: Spec
-  viewSnapshotUrl: string
   builderId: string
   children: TableData[]
+  snapshotHasErrors: boolean
+  snapshotPackageKey: PackageKey
 }>
 
 type CreateSnapshotDetailsTableCellProps = {
@@ -330,70 +312,17 @@ const CreateSnapshotDetailsTableCell: FC<CreateSnapshotDetailsTableCellProps> = 
   value: {
     serviceConfig,
     builderId,
+    publishDetails = EMPTY_PUBLISH_DETAILS,
   },
 }) => {
-  const [publishDetails, isLoading] = useServicePublishDetails({ serviceConfig, builderId })
+  // Starts the build in the browser; its outcome reaches the cell through the statuses poll of the table
+  useServicePublishDetails({ serviceConfig, builderId })
 
   if (!serviceConfig) {
     return null
   }
 
-  if (isLoading) {
-    return (
-      <StatusMarker value={LOADING_STATUS_MARKER_VARIANT}/>
-    )
-  }
-
-  return (
-    <StatusCell>
-      <StatusMarker
-        value={PUBLISH_STATUS_TO_STATUS_MARKER_VARIANT_MAP[publishDetails.status]}
-        title={publishDetails.message}
-      />
-      <Typography noWrap variant="inherit">
-        {PUBLISH_STATUS_TO_STATUS_DESCRIPTION_MAP[publishDetails.status]}
-      </Typography>
-    </StatusCell>
-  )
-})
-
-type ViewDetailsButtonProps = {
-  serviceConfig: ServiceConfig | undefined
-  builderId: string | undefined
-  service: Service | undefined
-}
-
-const ViewDetailsButton: FC<ViewDetailsButtonProps> = memo<ViewDetailsButtonProps>(({
-  serviceConfig,
-  builderId,
-  service,
-}) => {
-  const [publishDetails, isLoading] = useServicePublishDetails({ serviceConfig, builderId })
-  const { showPublicationErrorReportDialog } = useEventBus()
-
-  if (!serviceConfig || isLoading) {
-    return null
-  }
-
-  const hasError = publishDetails.status === ERROR_PUBLISH_STATUS && !!publishDetails.message
-  if (!hasError) {
-    return null
-  }
-
-  return (
-    <ErrorDetailsButton
-      data-testid="ViewDetailsButton"
-      variant="text"
-      color="error"
-      startIcon={<ErrorOutlinedIcon color="error"/>}
-      onClick={() => showPublicationErrorReportDialog({
-        downloadFilename: `${service?.key ?? serviceConfig.serviceId}-publication-errors.txt`,
-        errors: publishDetails.message!,
-      })}
-    >
-      Error Details
-    </ErrorDetailsButton>
-  )
+  return <PublishStatusTableCell publishDetails={publishDetails} />
 })
 
 const TableSkeleton: FC = memo(() => {
@@ -430,19 +359,6 @@ const CompactCheckbox = styled(Checkbox)({
   paddingBottom: 0,
 })
 
-const ViewSnapshotActionButton = styled(Button)({
-  visibility: 'hidden',
-  padding: 0,
-  height: 10,
-  whiteSpace: 'nowrap',
-}) as typeof Button
-
-const ErrorDetailsButton = styled(Button)({
-  padding: 0,
-  height: 10,
-  whiteSpace: 'nowrap',
-})
-
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
   marginTop: theme.spacing(1),
   paddingBottom: theme.spacing(7),
@@ -452,9 +368,4 @@ const HeadTableCell = styled(TableCell)({
   '&:hover': {
     borderRight: '2px solid rgba(224, 224, 224, 1)',
   },
-})
-
-const StatusCell = styled(Box)({
-  display: 'flex',
-  gap: 8,
 })
