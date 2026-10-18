@@ -123,8 +123,7 @@
     "lint.fix": "npm lint --fix",
     "release": "sl-scripts release",
     "release.dryRun": "sl-scripts release --dry-run --debug",
-    "test:skip": "jest",
-    "update-lock-file": "update-lock-file @netcracker"
+    "test:skip": "jest"
   },
   "dependencies": {
     "@stoplight/json": "^3.18.1",
@@ -144,7 +143,6 @@
     "type-is": "^1.6.18"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
     "@stoplight/eslint-config": "^3.0.0",
     "@stoplight/scripts": "^9.2.0",
     "@types/jest": "30.0.0",
@@ -182,5 +180,8 @@
   },
   "release": {
     "extends": "@stoplight/scripts/release"
+  },
+  "nx": {
+    "name": "http-spec"
   }
 }
