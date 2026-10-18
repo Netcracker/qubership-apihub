@@ -1,0 +1,171 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "//cache": [
+    "No cacheDirectory: Nx 23 then keeps the cache in ~/.nx/<id>/, where <id> comes from the git",
+    "repository, so every worktree shares it. Setting cacheDirectory or NX_CACHE_DIRECTORY gives",
+    "each checkout its own cache."
+  ],
+  "plugins": [
+    "@nx-go/nx-go",
+    "./tools/nx/go-lang-tag.js"
+  ],
+  "release": {
+    "//": [
+      "Components release together from one branch and keep independent versions.",
+      "The current version is the last <project>/<version> tag, or package.json before the first release.",
+      "The conventionalCommits shorthand is not used: it also sets currentVersionResolver,",
+      "and setting both is an error.",
+      "preserveLocalDependencyProtocols keeps workspace:^, so pnpm writes the real range at publish time."
+    ],
+    "projectsRelationship": "independent",
+    "releaseTag": {
+      "pattern": "{projectName}/{version}"
+    },
+    "version": {
+      "//preVersionCommand": [
+        "Refuses a real release outside main before anything is versioned, committed, tagged, or pushed.",
+        "A pre-push hook cannot do this: nx pushes with --no-verify. Dry runs (NX_DRY_RUN=true) pass."
+      ],
+      "preVersionCommand": "node tools/release/guard.js",
+      "specifierSource": "conventional-commits",
+      "currentVersionResolver": "git-tag",
+      "fallbackCurrentVersionResolver": "disk",
+      "preserveLocalDependencyProtocols": true,
+      "updateDependents": "auto"
+    },
+    "changelog": {
+      "//": [
+        "Release notes are GitHub Releases, one per component; no CHANGELOG.md is written.",
+        "workspaceChangelog must stay false: nx cannot create GitHub Releases for both kinds of changelog.",
+        "Run nx release on main with GH_TOKEN set (export GH_TOKEN=\"$(gh auth token)\"). On Windows nx does not",
+        "find the gh login; the release then fails after the tag is pushed, and a rerun releases nothing."
+      ],
+      "workspaceChangelog": false,
+      "projectChangelogs": {
+        "file": false,
+        "createRelease": "github"
+      }
+    }
+  },
+  "namedInputs": {
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals"
+    ],
+    "production": [
+      "default",
+      "!{projectRoot}/**/*.spec.ts",
+      "!{projectRoot}/**/*.spec.tsx",
+      "!{projectRoot}/**/*.test.ts",
+      "!{projectRoot}/**/*.test.tsx",
+      "!{projectRoot}/**/*.unit-test.ts",
+      "!{projectRoot}/**/*.unit-test.tsx",
+      "!{projectRoot}/**/test/**/*",
+      "!{projectRoot}/**/__tests__/**/*",
+      "!{projectRoot}/**/__image_snapshots__/**/*",
+      "!{projectRoot}/**/*.stories.ts",
+      "!{projectRoot}/**/*.stories.tsx",
+      "!{projectRoot}/.storybook/**/*"
+    ],
+    "//goToolchain": [
+      "backend/.go-version belongs to no project, so the Go targets list it as an input. It is not in",
+      "sharedGlobals, which would rebuild every JavaScript project on a Go version change."
+    ],
+    "goToolchain": [
+      "{workspaceRoot}/backend/.go-version"
+    ],
+    "sharedGlobals": [
+      "{workspaceRoot}/pnpm-lock.yaml",
+      "{workspaceRoot}/pnpm-workspace.yaml",
+      "{workspaceRoot}/.npmrc",
+      "{workspaceRoot}/nx.json"
+    ]
+  },
+  "targetDefaults": {
+    "@nx-go/nx-go:build": {
+      "//outputs": [
+        "nx-go declares dist/{projectRoot}*, which for agent also matches agents-backend's binary.",
+        "These name the one file the executor writes; .exe is the Windows name."
+      ],
+      "outputs": [
+        "{workspaceRoot}/dist/{projectRoot}",
+        "{workspaceRoot}/dist/{projectRoot}.exe"
+      ],
+      "inputs": [
+        "default",
+        "^default",
+        "goToolchain",
+        "{workspaceRoot}/go.work",
+        "{workspaceRoot}/go.work.sum"
+      ]
+    },
+    "@nx-go/nx-go:test": {
+      "inputs": [
+        "default",
+        "^default",
+        "goToolchain",
+        "{workspaceRoot}/go.work",
+        "{workspaceRoot}/go.work.sum"
+      ]
+    },
+    "build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ],
+      "outputs": [
+        "{projectRoot}/dist"
+      ],
+      "cache": true
+    },
+    "test": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "default",
+        "^production"
+      ],
+      "cache": true
+    },
+    "lint:check": {
+      "inputs": [
+        "default"
+      ],
+      "cache": true
+    },
+    "type-check": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "default",
+        "^production"
+      ],
+      "cache": true
+    },
+    "build:showcase": {
+      "dependsOn": [
+        "build",
+        "^build"
+      ],
+      "cache": false
+    },
+    "screenshot-test": {
+      "dependsOn": [
+        "build",
+        "^build"
+      ],
+      "inputs": [
+        "default",
+        "^production"
+      ],
+      "cache": true
+    }
+  },
+  "defaultBase": "develop",
+  "analytics": false
+}

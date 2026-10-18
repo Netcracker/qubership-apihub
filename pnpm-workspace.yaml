@@ -1,0 +1,55 @@
+packages:
+  - 'frontend/*'
+  - 'frontend/*/packages/*'
+  - 'tests/ui-tests'
+  - 'tools/jest-chrome-in-docker-environment'
+
+# Settings other than auth and registry live here, not in .npmrc: pnpm 12 ignores them there without a
+# warning. An unknown key here fails with ERR_PNPM_UNRECOGNIZED_WORKSPACE_SETTINGS.
+
+# Each project resolves only its declared dependencies, so every import and every binary a script
+# runs must be declared, and scripts use pnpm run, not npm run.
+nodeLinker: isolated
+
+strictPeerDependencies: false
+
+# Every dependency build script in the lockfile, each denied. A new one fails `pnpm install`
+# (ERR_PNPM_IGNORED_BUILDS) until it is added here.
+allowBuilds:
+  # Native binaries ship as optional platform packages; these scripts only verify or relink them.
+  esbuild: false
+  unrs-resolver: false
+  # Nx Cloud client update; this workspace does not use Nx Cloud.
+  nx: false
+  # Downloads Chrome; the screenshot suites use Chrome in a container.
+  puppeteer: false
+  # husky 4 installs git hooks.
+  husky: false
+  # Banners and telemetry.
+  core-js: false
+  es5-ext: false
+  '@fortawesome/fontawesome-common-types': false
+  '@fortawesome/fontawesome-svg-core': false
+  '@scarf/scarf': false
+  # Refreshes the mock service worker file in the workerDirectory; `pnpm run msw:init` does that on demand.
+  msw: false
+
+# Lets `pnpm deploy` build build-task-consumer's production tree without injectWorkspacePackages,
+# which would change how every internal dependency resolves.
+forceLegacyDeploy: true
+
+# `pnpm run` and `pnpm exec` do not install first. With the pnpm 11 default, the first pnpm command
+# after `pnpm deploy --prod` reinstalled the workspace without devDependencies and removed nx.
+verifyDepsBeforeRun: false
+
+# pnpm applies overrides only from this file; an overrides block in any package.json is ignored.
+overrides:
+  # jest-environment-puppeteer 11 pulls jest-environment-node 29 beside jest 30, and jest then
+  # fails at load with `this._moduleMocker.clearMocksOnScope is not a function` (gap G15).
+  jest-environment-node: 30.4.1
+  jest-mock: 30.4.1
+
+  # @stoplight/mosaic depends on @types/react 17, which breaks every React 18 consumer with TS2786
+  # (gap G23). `$` resolves against the root package.json, so the whole workspace gets one version.
+  '@stoplight/mosaic>@types/react': '$@types/react'
+  '@stoplight/mosaic>@types/react-dom': '$@types/react-dom'

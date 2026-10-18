@@ -1,0 +1,19 @@
+{
+  "name": "@netcracker/apihub-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Third monorepo prototype: the 18 JavaScript components of APIHUB in one pnpm workspace. Local only, no remote, nothing published.",
+  "packageManager": "pnpm@12.4.2",
+  "devDependencies": {
+    "@nx-go/nx-go": "4.1.1",
+    "@nx/js": "23.2.0",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "nx": "23.2.0",
+    "typescript": "6.0.3"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test"
+  }
+}

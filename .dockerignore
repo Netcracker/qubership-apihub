@@ -1,0 +1,20 @@
+# Opt-in: exclude everything, then re-include what the frontend images copy. The build context is
+# the workspace root, so a COPY path missing here fails the build at once. Keep this list in step
+# with the COPY lines in frontend/ui/Dockerfile and frontend/build-task-consumer/Dockerfile.
+**
+
+# --- frontend/ui -----------------------------------------------------------------------
+!frontend/ui/nginx/**
+!frontend/ui/packages/agents/dist/**
+!frontend/ui/packages/portal/dist/**
+
+# --- frontend/build-task-consumer ------------------------------------------------------
+!frontend/build-task-consumer/dist/**
+# The production tree that `pnpm deploy --prod` writes on the host. It is gitignored, but docker
+# does not read .gitignore.
+!.deploy/**
+
+# pnpm writes a different .modules.yaml on every deploy, and that alone invalidated the
+# 16316-file node_modules layer on every build. Nothing reads it at runtime. It must come after
+# the re-include above: the last matching pattern wins.
+.deploy/*/node_modules/.modules.yaml

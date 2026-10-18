@@ -16,3 +16,13 @@ apm_modules/
 
 # APM pack build artifacts
 agent-packages/**/build/
+
+# Workspace build output
+node_modules/
+dist/
+build/
+out/
+.nx/
+.deploy/
+*.tsbuildinfo
+.DS_Store
