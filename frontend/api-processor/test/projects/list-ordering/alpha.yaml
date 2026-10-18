@@ -1,0 +1,10 @@
+openapi: 3.0.0
+info:
+  title: Alpha
+  version: 1.0.0
+paths:
+  /apple:
+    get:
+      responses:
+        '200':
+          description: ok

@@ -1,0 +1,12 @@
+apihub-test-service/.idea
+apihub-test-service/go.sum
+.idea
+.vscode
+apihub-test-service/data/**
+apihub-test-service/logs/**
+apihub-test-service/apihub-test-service.exe
+apihub-test-service/apihub-test-service
+
+
+*.bak
+*.iml

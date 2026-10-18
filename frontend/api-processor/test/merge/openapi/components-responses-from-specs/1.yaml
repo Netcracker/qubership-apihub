@@ -1,0 +1,12 @@
+openapi: 3.0.1
+info:
+  title: test
+  version: 0.1.0
+components:
+  responses:
+    NotFound:
+      description: The specified resource was not found
+      content:
+        application/json:
+          schema:
+            type: object

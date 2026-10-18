@@ -1,0 +1,342 @@
+/**
+ * Copyright 2024-2025 NetCracker Technology Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { JsonPath } from '@netcracker/qubership-apihub-json-crawl'
+import { OpenAPIV3 } from 'openapi-types'
+import type * as TYPE from './rest.types'
+import { RestOperationData } from './rest.types'
+import {
+  BuildConfig,
+  DeprecateItem,
+  NotificationMessage,
+  OperationId,
+} from '../../types'
+import {
+  _calculateRestOperationIdV1,
+  calculateRestOperationId,
+  calculateRestOperationTitle,
+  extractSymbolProperty,
+  getInlineRefsFomDocument,
+  getKeyValue,
+  getSplittedVersionKey,
+  getSymbolValueIfDefined,
+  isDeprecatedOperationItem,
+  isOperationDeprecated,
+  isValidHttpMethod,
+  normalizePath,
+  setValueByPath,
+  takeIf,
+  takeIfDefined,
+  deprecatedDeclarationPaths,
+} from '../../utils'
+import { getUsedTags } from '../../utils/mergeOpenapiDocuments'
+import {
+  APIHUB_API_COMPATIBILITY_KIND_BWC,
+  INLINE_REFS_FLAG,
+  ORIGINS_SYMBOL,
+  REST_API_TYPE,
+  VERSION_STATUS,
+} from '../../consts'
+import { extractSecuritySchemesNames, getCustomTags, resolveApiAudience, resolveOperationBasePath } from './rest.utils'
+import {
+  calculateDeprecatedItems,
+  grepValue,
+  matchPaths,
+  OPEN_API_PROPERTY_COMPONENTS,
+  OPEN_API_PROPERTY_PATHS,
+  OPEN_API_PROPERTY_SCHEMAS,
+  parseRef,
+  PREDICATE_ANY_VALUE,
+  PREDICATE_UNCLOSED_END,
+} from '@netcracker/qubership-apihub-api-unifier'
+import { calculateHash, ObjectHashCache } from '../../utils/hashes'
+import { calculateTolerantHash } from '../../components/deprecated'
+import { getValueByPath } from '../../utils/path'
+import { getApiKindProperty } from '../../components/document'
+
+export const buildRestOperation = (
+  operationId: string,
+  path: string,
+  method: OpenAPIV3.HttpMethods,
+  // TODO: move to BuildOperationContext
+  document: TYPE.VersionRestDocument,
+  effectiveDocument: OpenAPIV3.Document,
+  refsOnlyDocument: OpenAPIV3.Document,
+  basePath: string,
+  notifications: NotificationMessage[],
+  config: BuildConfig,
+  normalizedSpecFragmentsHashCache: ObjectHashCache,
+  originalSpecComponentsHashCache: Map<string, string>,
+): TYPE.VersionRestOperation => {
+  const { apiKind: documentApiKind, data: documentData, slug: documentSlug, versionInternalDocument } = document
+  const { servers, security, components, openapi } = documentData
+  const effectiveOperationObject = effectiveDocument.paths[path]![method]! as OpenAPIV3.OperationObject<TYPE.OperationExtension>
+  const effectiveSingleOperationSpec = createSingleOperationSpec(effectiveDocument, path, method, openapi)
+  const refsOnlySingleOperationSpec = createSingleOperationSpec(refsOnlyDocument, path, method, openapi)
+  const { tags = [] } = effectiveOperationObject
+
+  const deprecatedItems: DeprecateItem[] = []
+  const foundedDeprecatedItems = calculateDeprecatedItems(effectiveSingleOperationSpec, ORIGINS_SYMBOL)
+
+  for (const item of foundedDeprecatedItems) {
+    const { description, deprecatedReason, value } = item
+
+    const declarationJsonPaths = deprecatedDeclarationPaths(value)
+    const isOperation = isOperationPaths(declarationJsonPaths)
+    const [version] = getSplittedVersionKey(config.version)
+
+    const hash = isOperation ? undefined : calculateHash(value, normalizedSpecFragmentsHashCache)
+    const tolerantHash = isOperation ? undefined : calculateTolerantHash(value, notifications)
+
+    deprecatedItems.push({
+      declarationJsonPaths,
+      description,
+      ...takeIfDefined({ deprecatedInfo: deprecatedReason }),
+      ...takeIf({ [isOperationDeprecated]: true }, isOperation),
+      deprecatedInPreviousVersions: config.status === VERSION_STATUS.RELEASE ? [version] : [],
+      ...takeIfDefined({ hash: hash }),
+      ...takeIfDefined({ tolerantHash: tolerantHash }),
+    })
+  }
+
+  const models: Record<string, string> = {}
+  const operationApiKind = getApiKindProperty(effectiveOperationObject) || documentApiKind || APIHUB_API_COMPATIBILITY_KIND_BWC
+  const operationSecurity = effectiveOperationObject.security
+  const specWithSingleOperation = createSingleOperationSpec(
+    documentData,
+    path,
+    method,
+    openapi,
+    servers,
+    security,
+    operationSecurity,
+    components?.securitySchemes,
+  )
+  calculateSpecRefs(documentData, refsOnlySingleOperationSpec, specWithSingleOperation, [operationId], models, originalSpecComponentsHashCache)
+
+  const deprecatedOperationItem = deprecatedItems.find(isDeprecatedOperationItem)
+
+  const customTags = getCustomTags(effectiveOperationObject)
+
+  const apiAudience = resolveApiAudience(document.metadata?.info)
+
+  const operationIdV1 = _calculateRestOperationIdV1(basePath, method, path)
+
+  return {
+    operationId,
+    documentId: documentSlug,
+    apiType: REST_API_TYPE,
+    apiKind: operationApiKind,
+    deprecated: !!effectiveOperationObject.deprecated,
+    title: effectiveOperationObject.summary || calculateRestOperationTitle(basePath, method, path),
+    metadata: {
+      customTags: customTags,
+      path: normalizePath(basePath + path),
+      originalPath: basePath + path,
+      method,
+      operationIdV1,
+    },
+    tags: Array.isArray(tags) ? tags : [tags],
+    data: specWithSingleOperation,
+    search: { useOperationDataAsSearchText: true },
+    deprecatedItems,
+    models,
+    ...takeIf({
+      deprecatedInfo: deprecatedOperationItem?.deprecatedInfo,
+      deprecatedInPreviousVersions: deprecatedOperationItem?.deprecatedInPreviousVersions,
+    }, !!deprecatedOperationItem),
+    apiAudience,
+    versionInternalDocumentId: versionInternalDocument.versionDocumentId,
+  }
+}
+
+export const calculateSpecRefs = (
+  sourceDocument: TYPE.RestOperationData,
+  normalizedSpec: TYPE.RestOperationData,
+  resultSpec: TYPE.RestOperationData,
+  operations: OperationId[],
+  models?: Record<string, string>,
+  originalSpecComponentsHashCache?: Map<string, string>,
+): void => {
+  const inlineRefs = getInlineRefsFomDocument(normalizedSpec)
+  inlineRefs.forEach(ref => {
+    const path = parseRef(ref).jsonPath
+    const grepKey = 'componentName'
+    const matchResult = matchPaths([path], [
+      [OPEN_API_PROPERTY_COMPONENTS, PREDICATE_ANY_VALUE, grepValue(grepKey), PREDICATE_UNCLOSED_END],
+    ])
+    if (!matchResult) {
+      return
+    }
+    const componentName = matchResult.grepValues[grepKey].toString()
+    const component = getKeyValue(sourceDocument, ...matchResult.path) as Record<string, unknown>
+    if (!component) {
+      return
+    }
+    if (models && !models[componentName] && isComponentsSchemaRef(matchResult.path)) {
+      let componentHash = originalSpecComponentsHashCache?.get(componentName)
+      if (componentHash) {
+        models[componentName] = componentHash
+      } else {
+        componentHash = calculateHash(component)
+        originalSpecComponentsHashCache?.set(componentName, componentHash)
+        models[componentName] = componentHash
+      }
+    }
+    setValueByPath(resultSpec, matchResult.path, component)
+  })
+
+  if (operations?.length) {
+    reduceComponentPathItemsToOperations(resultSpec, normalizedSpec, operations)
+  }
+}
+
+function reduceComponentPathItemsToOperations(
+  resultSpec: RestOperationData,
+  normalizedDocument: RestOperationData,
+  operations: OperationId[],
+): void {
+  const { paths } = normalizedDocument
+
+  for (const path of Object.keys(paths)) {
+    const sourcePathItem = paths[path] as OpenAPIV3.PathItemObject
+    const pathItemComponentJsonPath = getPathItemComponentJsonPath(sourcePathItem)
+    if (!pathItemComponentJsonPath) {
+      continue
+    }
+
+    const pathItemComponent = getValueByPath(resultSpec, pathItemComponentJsonPath) as OpenAPIV3.PathItemObject
+
+    const operationIds: OpenAPIV3.HttpMethods[] = (Object.keys(pathItemComponent) as OpenAPIV3.HttpMethods[])
+      .filter((httpMethod) => isValidHttpMethod(httpMethod))
+      .filter(httpMethod => {
+        const methodData = sourcePathItem[httpMethod as OpenAPIV3.HttpMethods]
+        if (!methodData) return false
+        const basePath = resolveOperationBasePath(methodData, sourcePathItem)
+        const operationId = calculateRestOperationId(basePath, path, httpMethod)
+        return operations.includes(operationId)
+      })
+
+    if (operationIds?.length) {
+      const pathItemObject = {
+        ...extractCommonPathItemProperties(pathItemComponent),
+        ...operationIds.reduce<OpenAPIV3.PathItemObject>((pathItemObject: OpenAPIV3.PathItemObject, operationId: OpenAPIV3.HttpMethods) => {
+          const operationData = pathItemComponent[operationId]
+          if (operationData) {
+            pathItemObject[operationId] = { ...operationData }
+          }
+          return pathItemObject
+        }, {}),
+      }
+      setValueByPath(resultSpec, pathItemComponentJsonPath, pathItemObject)
+    }
+  }
+}
+
+const getPathItemComponentJsonPath = (sourcePathItem: OpenAPIV3.PathItemObject): JsonPath | undefined => {
+  const refs = getSymbolValueIfDefined(sourcePathItem, INLINE_REFS_FLAG) as string[] | undefined
+  if (!refs || refs.length === 0) {
+    return undefined
+  }
+
+  return parseRef(refs[0])?.jsonPath
+}
+
+export const isComponentsSchemaRef = (path: JsonPath): boolean => {
+  return !!matchPaths(
+    [path],
+    [[OPEN_API_PROPERTY_COMPONENTS, OPEN_API_PROPERTY_SCHEMAS, PREDICATE_UNCLOSED_END]],
+  )
+}
+
+const isOperationPaths = (paths: JsonPath[]): boolean => {
+  return !!matchPaths(
+    paths,
+    [[OPEN_API_PROPERTY_PATHS, PREDICATE_ANY_VALUE, PREDICATE_ANY_VALUE, PREDICATE_ANY_VALUE]],
+  )
+}
+
+// todo output of this method disrupts document normalization.
+//  origin symbols are not being transferred to the resulting spec.
+//  DO NOT pass output of this method to apiDiff
+// TODO: conceptually, this method does processing which is very similar
+// is very similar to the reducedSourceSpecifications transformation.
+// We should merge these two functions into one.
+export const createSingleOperationSpec = (
+  document: OpenAPIV3.Document,
+  path: string,
+  method: OpenAPIV3.HttpMethods,
+  openapi?: string,
+  servers?: OpenAPIV3.ServerObject[],
+  security?: OpenAPIV3.SecurityRequirementObject[],
+  operationSecurity?: OpenAPIV3.SecurityRequirementObject[],
+  securitySchemes?: { [p: string]: OpenAPIV3.ReferenceObject | OpenAPIV3.SecuritySchemeObject },
+): TYPE.RestOperationData => {
+  const pathData = document.paths[path] as OpenAPIV3.PathItemObject
+
+  // Filter security schemes to only include used ones
+  const effectiveSecurity = operationSecurity ?? security ?? []
+  const usedSecuritySchemeNames = extractSecuritySchemesNames(effectiveSecurity)
+  const effectiveSecuritySchemes = securitySchemes && usedSecuritySchemeNames.size > 0
+    ? Object.fromEntries(
+      Object.entries(securitySchemes).filter(([name]) => usedSecuritySchemeNames.has(name)),
+    )
+    : undefined
+
+  const isRefPathData = !!pathData.$ref
+
+  // Construct the single operation document
+  const singleOperationDocument: TYPE.RestOperationData = {
+    openapi: openapi ?? '3.0.0',
+    ...takeIfDefined({ info: document.info }),
+    ...takeIfDefined({ externalDocs: document.externalDocs }),
+    ...takeIfDefined({ servers }),
+    ...!operationSecurity ? takeIfDefined({ security }) : {},// Only add root security if operation security is not explicitly defined
+    paths: {
+      [path]: isRefPathData
+        ? pathData
+        : {
+          ...extractCommonPathItemProperties(pathData),
+          [method]: { ...pathData[method] },
+          ...extractSymbolProperty(pathData, INLINE_REFS_FLAG),
+        },
+    },
+    ...takeIfDefined({
+      components: effectiveSecuritySchemes ? { securitySchemes: effectiveSecuritySchemes } : undefined,
+    }),
+  }
+
+  // Filter tags to only include those used by this operation
+  if (document.tags) {
+    const filteredTags = getUsedTags([{
+      ...singleOperationDocument,
+      tags: document.tags,
+    } as OpenAPIV3.Document])
+    if (filteredTags) {
+      singleOperationDocument.tags = filteredTags
+    }
+  }
+
+  return singleOperationDocument
+}
+export const extractCommonPathItemProperties = (
+  pathData: OpenAPIV3.PathItemObject,
+): Pick<OpenAPIV3.PathItemObject, 'summary' | 'description' | 'servers' | 'parameters'> => ({
+  ...takeIfDefined({ summary: pathData?.summary }),
+  ...takeIfDefined({ description: pathData?.description }),
+  ...takeIfDefined({ servers: pathData?.servers }),
+  ...takeIfDefined({ parameters: pathData?.parameters }),
+})

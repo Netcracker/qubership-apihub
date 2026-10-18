@@ -1,0 +1,22 @@
+interface Fruit {
+  id: ID
+  name: String
+}
+type Apple {
+  id: ID
+  name: String
+  color: String
+}
+interface Animal {
+  id: ID
+  name: String
+}
+type Cat {
+  id: ID
+  name: String
+  color: String
+}
+type Query {
+  apples: [Apple]
+  animals: [Animal]
+}

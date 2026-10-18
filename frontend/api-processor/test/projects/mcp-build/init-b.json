@@ -1,0 +1,12 @@
+{
+  "capabilities": {
+    "tools": {
+      "listChanged": true
+    }
+  },
+  "protocolVersion": "2025-11-25",
+  "serverInfo": {
+    "name": "test-mcp-server-b",
+    "version": "1.0.0"
+  }
+}

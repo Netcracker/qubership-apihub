@@ -1,0 +1,26 @@
+{
+  "packageId": "shareability",
+  "packageName": "shareability pkg",
+  "apiType": "rest",
+  "version": "regular-version@1",
+  "files": [
+    {
+      "fileId": "1.yaml",
+      "publish": true,
+      "labels": [],
+      "commitId": "6c778b1f44200bd19944a6a8eac10a4e5a21a1cd"
+    },
+    {
+      "fileId": "2.yaml",
+      "publish": true,
+      "labels": [],
+      "commitId": "6c778b1f44200bd19944a6a8eac10a4e5a21a3cd"
+    },
+    {
+      "fileId": "3.yaml",
+      "publish": true,
+      "labels": [],
+      "commitId": "6c778b1f44200bd19944a6a8eac10a4e5d21a3cd"
+    }
+  ]
+}

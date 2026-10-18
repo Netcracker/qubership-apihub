@@ -1,0 +1,29 @@
+{
+  "openapi": "3.0.1",
+  "components": {
+    "schemas": {
+      "MyType": {
+        "type": "object",
+        "properties": {
+          "first": {
+            "type": "string"
+          },
+          "second": {
+            "type": "number"
+          }
+        }
+      },
+      "YourType": {
+        "type": "object",
+        "properties": {
+          "first": {
+            "type": "number"
+          },
+          "second": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

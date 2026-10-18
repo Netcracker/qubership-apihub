@@ -1,0 +1,7 @@
+apiVersion: v2
+appVersion: "1.0"
+description: A Helm chart for the qubership-apihub-test-service application
+name: qubership-apihub-test-service
+# The effective version will be computed during Helm generation
+version: 0.0.1
+

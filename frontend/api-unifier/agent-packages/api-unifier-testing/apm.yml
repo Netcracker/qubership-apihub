@@ -1,0 +1,5 @@
+name: api-unifier-testing
+version: 1.0.0
+description: Conventions for writing api-unifier tests across OpenAPI, AsyncAPI, JSON Schema, and GraphAPI.
+author: netcracker
+license: Apache-2.0

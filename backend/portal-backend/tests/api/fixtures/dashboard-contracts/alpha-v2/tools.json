@@ -1,0 +1,19 @@
+{
+  "tools": [
+    {
+      "name": "alpha_lookup",
+      "description": "Look up an alpha item with its description",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+openapi: 3.0.1
+info:
+  title: test
+  version: 0.1.0
+components:
+  securitySchemes:
+    openID:
+      type: openIdConnect
+      openIdConnectUrl: http://petstore.swagger.io/oauth/dialog

@@ -1,0 +1,7 @@
+input MessageInput {
+  content: String
+  likes: Int
+}
+type Mutation {
+  createMessage(input: MessageInput): String
+} 

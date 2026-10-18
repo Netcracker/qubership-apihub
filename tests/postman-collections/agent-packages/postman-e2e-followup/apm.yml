@@ -1,0 +1,6 @@
+name: postman-e2e-followup
+version: 0.1.0
+description: When backend REST changes require Newman E2E updates in this repository
+author: Qubership
+dependencies:
+  apm: []

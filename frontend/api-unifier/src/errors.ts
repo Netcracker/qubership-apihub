@@ -1,0 +1,16 @@
+import { JSON_SCHEMA_PROPERTY_REF } from './rules/jsonschema.const'
+
+export const ErrorMessage = {
+  mergeError: () => 'Could not merge values, they are probably incompatible',
+  mergeWithBrokenRef: () => 'Could not merge values with unresolved ref',
+  ruleNotFound: (key: any) => `Merge rule not found for key: ${key}`,
+  richRefObjectNotAllowed: (ref: string) => `${JSON_SCHEMA_PROPERTY_REF} can't have siblings in this specification version: ${ref}`,
+  referenceNotAllowed: (ref: string) => `${JSON_SCHEMA_PROPERTY_REF} not allowed here: ${ref}`,
+  refNotFound: (ref: string) => `${JSON_SCHEMA_PROPERTY_REF} can't be resolved: ${ref}`,
+  refNotValidFormat: (ref: string) => `${JSON_SCHEMA_PROPERTY_REF} can't be parsed: ${ref}`,
+  duplicateParameter: (name: string, location: string) => `Duplicate parameter detected: name='${name}', in='${location}'`,
+  // Stable prefix 'ddlapi: dangling foreign key' for consumers that string-match. A
+  // structured `cause` for these cases is a deferred additive follow-up.
+  ddlApiDanglingForeignKey: (symbol?: string) =>
+    `ddlapi: dangling foreign key${symbol ? ` '${symbol}'` : ''} has columns but no resolved refTable (partial realm)`,
+} as const

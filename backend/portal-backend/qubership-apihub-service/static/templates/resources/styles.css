@@ -1,0 +1,103 @@
+/**
+ * Copyright 2024-2025 NetCracker Technology Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+body {
+    background-color: rgb(245, 245, 250);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+a {
+    text-decoration: none;
+    color:#000000;
+}
+a:hover {
+    color: #0063ce;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 10px;
+}
+
+.header__logo {
+    height: 100px;
+}
+
+.header__info {
+    text-align: left;
+}
+
+.page {
+    padding: 0 10px;
+}
+
+.breadcrumbs {
+    padding: 10px 10px;
+}
+
+.content {
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.footer {
+    display: flex;
+    justify-content: space-between;
+    color: #000000;
+    margin-top: 10px;
+    padding: 0 10px;
+}
+
+.footer__statement {
+
+}
+
+.footer__legal {
+    margin-left: auto;
+    text-align: right;
+    font-size: 10pt;
+}
+
+.card {
+    background-color: rgb(255, 255, 255);
+    box-shadow: rgb(4 11 23 / 4%) 0px 1px 5px, rgb(0 0 0 / 6%) 0px 5px 25px, rgb(0 0 0 / 9%) 0px 0px 2px;
+}
+
+.card__title {
+    font-size: 18pt;
+}
+
+.card__text {
+    padding: 5px 0;
+    font-size: 12pt;
+}
+
+.card__list {
+    list-style-type: circle;
+}
+
+.card__list li{
+    font-size: 13pt;
+}
+
+table, th, td {
+    border-collapse: collapse;
+    border: 1px solid hsla(210,18%,87%,1);
+    padding: 5px;
+}

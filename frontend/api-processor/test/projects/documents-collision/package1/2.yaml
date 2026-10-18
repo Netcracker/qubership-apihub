@@ -1,0 +1,14 @@
+openapi: "3.0.0"
+info:
+  title: some test
+  version: 0.1.0
+paths:
+  /another/path1:
+    summary: another path item summary
+    description: another path item description
+    put:
+      summary: another operation summary
+      description: another operation description
+      responses:
+        '200':
+          description: another response description

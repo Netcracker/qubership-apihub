@@ -1,0 +1,71 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "Account Service JSON",
+    "version": "1.0.0",
+    "description": "This service is in charge of processing user sign-outs"
+  },
+  "channels": {
+    "userSignedOut": {
+      "address": "user/signedout",
+      "messages": {
+        "UserSignedOut": {
+          "$ref": "#/components/messages/UserSignedOut"
+        },
+        "UserSignedOutTest": {
+          "$ref": "#/components/messages/UserSignedOut"
+        }
+      }
+    }
+  },
+  "operations": {
+    "sendUserSignedOut": {
+      "action": "receive",
+      "channel": {
+        "$ref": "#/channels/userSignedOut"
+      },
+      "messages": [
+        { "$ref": "#/channels/userSignedOut/messages/UserSignedOut" },
+        { "$ref": "#/channels/userSignedOut/messages/UserSignedOutTest" }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "UserSignedOut": {
+        "title": "User Signed Out",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "displayName": {
+              "type": "string",
+              "description": "Name of the user"
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "description": "Email of the user"
+            }
+          }
+        }
+      },
+      "UserSignedOutTest": {
+        "title": "User Signed Out",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "displayName": {
+              "type": "string",
+              "description": "Name of the user"
+            },
+            "email": {
+              "type": "string",
+              "format": "email",
+              "description": "Email of the user"
+            }
+          }
+        }
+      }
+    }
+  }
+}

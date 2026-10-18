@@ -1,0 +1,19 @@
+{
+  "tools": [
+    {
+      "name": "beta_search",
+      "description": "Search active and inactive beta items by code",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      }
+    }
+  ]
+}

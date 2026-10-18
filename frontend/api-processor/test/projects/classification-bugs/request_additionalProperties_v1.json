@@ -1,0 +1,36 @@
+{
+  "openapi": "3.0.1",
+  "paths": {
+    "/test/api/v2/event-requests": {
+      "post": {
+        "tags": [
+          "Test Requests V2"
+        ],
+        "summary": "Receive event request",
+        "operationId": "receiveeventRequest_1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "customParameters": {
+                    "additionalProperties": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "No Data"
+          }
+        }
+      }
+    }
+  }
+}

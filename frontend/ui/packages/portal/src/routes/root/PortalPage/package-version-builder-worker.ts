@@ -1,0 +1,245 @@
+/**
+ * Copyright 2024-2025 NetCracker Technology Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import type { BuilderResolvers, FileId, FileSourceMap, VersionValidationLevel, VersionsComparison } from '@netcracker/qubership-apihub-api-processor'
+import { BUILD_TYPE, VERSION_STATUS, VERSION_VALIDATION_LEVEL } from '@netcracker/qubership-apihub-api-processor'
+import { PackageVersionBuilder } from '@netcracker/qubership-apihub-api-processor/processor'
+import {
+  packageVersionResolver,
+  rawDocumentResolver,
+  versionDeprecatedResolver,
+  versionDocumentsResolver,
+  versionOperationsResolver,
+  versionReferencesResolver,
+} from '@netcracker/qubership-apihub-ui-shared/utils/builder-resolvers'
+import { packToZip } from '@netcracker/qubership-apihub-ui-shared/utils/files'
+import type { PublishDetails, PublishStatus } from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
+import {
+  COMPLETE_PUBLISH_STATUS,
+  ERROR_PUBLISH_STATUS,
+  NONE_PUBLISH_STATUS,
+  RUNNING_PUBLISH_STATUS,
+  setPublicationDetails,
+  startPackageVersionPublication,
+} from '@netcracker/qubership-apihub-ui-shared/utils/packages-builder'
+import { isInWebWorker, WorkerUnauthorizedError } from '@netcracker/qubership-apihub-ui-shared/utils/security'
+import { expose, transferHandlers } from 'comlink'
+import { v4 as uuidv4 } from 'uuid'
+import type { BuilderOptions } from './package-version-builder'
+import type { PublishOptions } from './usePublishPackageVersion'
+import { systemConfiguration } from '@netcracker/qubership-apihub-ui-shared/hooks/authorization/useSystemConfiguration'
+import { getSystemInfo } from '@netcracker/qubership-apihub-ui-shared/utils/system-info'
+
+/*
+For using worker in proxy mode you need to change common apihub-shared import
+to specific directory ('@netcracker/qubership-apihub-ui-shared/utils' for example)
+*/
+
+export type Filename = string
+
+function toFileSourceMap(files: File[]): FileSourceMap {
+  const fileSources: FileSourceMap = {}
+  for (const file of files) {
+    fileSources[file.name] = file
+  }
+  return fileSources
+}
+
+export type PackageVersionBuilderWorker = {
+  buildChangelogPackage: (options: BuilderOptions) => Promise<[VersionsComparison[], Blob]>
+  buildGroupChangelogPackage: (options: BuilderOptions) => Promise<[VersionsComparison[], Blob]>
+  publishPackage: (options: PublishOptions) => Promise<PublishDetails>
+  init: (lastIdentityProviderId: string | null) => Promise<void>
+}
+
+async function getValidationLevel(): Promise<VersionValidationLevel> {
+  try {
+    const info = await getSystemInfo()
+    return info.migrationInProgress ? VERSION_VALIDATION_LEVEL.MAJOR : VERSION_VALIDATION_LEVEL.STRICT
+  } catch {
+    return VERSION_VALIDATION_LEVEL.STRICT
+  }
+}
+
+async function createCommonResolvers(): Promise<BuilderResolvers> {
+  return {
+    versionResolver: await packageVersionResolver(),
+    versionReferencesResolver: await versionReferencesResolver(),
+    versionOperationsResolver: await versionOperationsResolver(),
+    versionDeprecatedResolver: await versionDeprecatedResolver(),
+    versionDocumentsResolver: await versionDocumentsResolver(),
+    rawDocumentResolver: await rawDocumentResolver(),
+  }
+}
+
+const worker: PackageVersionBuilderWorker = {
+  init: async (lastIdentityProviderId) => {
+    if (isInWebWorker(self)) {
+      self.systemConfigurationDto = await systemConfiguration()
+      self.lastIdentityProviderId = lastIdentityProviderId
+    }
+  },
+  buildChangelogPackage: async ({ packageKey, versionKey, previousPackageKey, previousVersionKey }) => {
+    const builder = new PackageVersionBuilder(
+      {
+        packageId: packageKey,
+        version: versionKey,
+        previousVersion: previousVersionKey,
+        previousVersionPackageId: previousPackageKey,
+        status: VERSION_STATUS.NONE,
+        buildType: BUILD_TYPE.CHANGELOG,
+      },
+      {
+        resolvers: await createCommonResolvers(),
+      },
+    )
+
+    const level = await getValidationLevel()
+    await builder.run({ apiProcessorVersionValidationLevel: level })
+
+    return [builder.buildResult.comparisons, await builder.createVersionPackage({ type: 'blob' })]
+  },
+  buildGroupChangelogPackage: async ({ packageKey, versionKey, currentGroup, previousGroup }) => {
+    const builder = new PackageVersionBuilder(
+      {
+        packageId: packageKey,
+        version: versionKey,
+        currentGroup: currentGroup,
+        previousGroup: previousGroup,
+        status: 'draft',
+        buildType: BUILD_TYPE.PREFIX_GROUPS_CHANGELOG,
+      },
+      {
+        resolvers: await createCommonResolvers(),
+      },
+    )
+
+    const groupLevel = await getValidationLevel()
+    await builder.run({ apiProcessorVersionValidationLevel: groupLevel })
+
+    return [builder.buildResult.comparisons, await builder.createVersionPackage({ type: 'blob' })]
+  },
+  publishPackage: async (options): Promise<PublishDetails> => {
+    const { packageId, sources } = options
+    const builderId = uuidv4()
+    const sourcesZip = sources && await packToZip(sources)
+    const {
+      publishId,
+      config: buildConfig,
+    } = await startPackageVersionPublication(options, builderId, sourcesZip)
+
+    const fileSources = sources && toFileSourceMap(sources)
+
+    const builder = new PackageVersionBuilder(buildConfig, {
+      resolvers: {
+        fileResolver: async (fileId: FileId) => fileSources?.[fileId] ?? null,
+        ...(await createCommonResolvers()),
+      },
+    }, fileSources)
+
+    const abortController = new AbortController()
+    const intervalId = setInterval(() => {
+      setPublicationDetails({
+        packageKey: packageId,
+        publishKey: publishId,
+        status: RUNNING_PUBLISH_STATUS,
+        builderId: builderId,
+        abortController: abortController,
+      })
+    }, 15000)
+
+    const stopSendingRunningStatus = (): void => {
+      clearInterval(intervalId)
+      abortController.abort()
+    }
+
+    let publicationStatus: PublishStatus = NONE_PUBLISH_STATUS
+    let message
+
+    try {
+      const level = await getValidationLevel()
+      await builder.run({ apiProcessorVersionValidationLevel: level })
+      const data = await builder?.createVersionPackage({ type: 'blob' })
+      stopSendingRunningStatus()
+
+      publicationStatus = COMPLETE_PUBLISH_STATUS
+      await setPublicationDetails({
+        packageKey: packageId,
+        publishKey: publishId,
+        status: publicationStatus,
+        builderId: builderId,
+        abortController: null,
+        data: data,
+      })
+    } catch (error) {
+      stopSendingRunningStatus()
+
+      publicationStatus = ERROR_PUBLISH_STATUS
+      message = error instanceof Error ? error.message : `${error}`
+      await setPublicationDetails({
+        packageKey: packageId,
+        publishKey: publishId,
+        status: publicationStatus,
+        builderId: builderId,
+        abortController: null,
+        errors: `${error}`,
+      })
+    }
+
+    return {
+      publishId: publishId,
+      status: publicationStatus,
+      message: message,
+    }
+  },
+}
+
+// Override default handlers for thrown values from worker
+// This is necessary to handle custom errors from worker in the calling thread
+transferHandlers.set('throw', {
+  canHandle: transferHandlers.get('throw')!.canHandle,
+  serialize: ({ value }) => {
+    let serialized
+    if (value instanceof Error) {
+      serialized = {
+        isError: true,
+        value: {
+          message: value.message,
+          name: value.name,
+          stack: value.stack,
+          responseStatus: (value as WorkerUnauthorizedError).responseStatus,
+        },
+      }
+    } else {
+      serialized = {
+        isError: false,
+        value: value,
+      }
+    }
+    return [serialized, []]
+  },
+  deserialize: (serialized: {
+    isError: boolean
+    value: { message: string; name: string; stack: string; responseStatus: number }
+  }) => {
+    if (serialized.isError) {
+      throw new WorkerUnauthorizedError()
+    }
+    throw serialized.value
+  },
+})
+
+expose(worker)

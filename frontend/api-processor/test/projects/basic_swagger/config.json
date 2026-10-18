@@ -1,0 +1,6 @@
+{
+  "packageId": "basic_swagger",
+  "files": [
+    { "fileId": "swagger.json", "publish": true, "labels": ["123"] }
+  ]
+}

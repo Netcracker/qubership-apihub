@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: Info, ExternalDocs, and Tags Filtering Test
+  version: 1.0.0
+  description: Test document for filtering info, externalDocs, and tags
+  contact:
+    name: API Support
+    email: support@example.com
+externalDocs:
+  description: API Documentation
+  url: https://docs.example.com
+tags:
+  - name: pet
+    description: Pet operations
+  - name: store
+    description: Store operations
+  - name: user
+    description: User operations
+paths:
+  /test:
+    get:
+      summary: Test operation
+      tags:
+        - pet
+      responses:
+        "200":
+          description: OK

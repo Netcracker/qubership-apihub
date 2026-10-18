@@ -1,0 +1,124 @@
+{
+    "openapi": "3.0.3",
+    "servers": [
+        {
+            "url": "/api/v1"
+        }
+    ],
+    "security": [],
+    "paths": {
+        "/datasets/events": {
+            "parameters": [
+                {
+                    "$ref": "#/components/parameters/PageLimit"
+                },
+                {
+                    "$ref": "#/components/parameters/PageOffset"
+                },
+                {
+                    "$ref": "#/components/parameters/OrderBy"
+                },
+                null,
+                "error",
+                42,
+                {
+                    "$ref": "#/components/parameters/FilterDatasetID"
+                },
+                {
+                    "$ref": "#/components/parameters/FilterSourceDAGID"
+                }
+            ],
+            "get": {
+                "parameters": [
+                    {
+                        "$ref": "#/components/parameters/FilterSourceTaskID"
+                    },
+                    null,
+                    {
+                        "$ref": "#/components/parameters/FilterSourceRunID"
+                    },
+                    "error",
+                    {
+                        "$ref": "#/components/parameters/FilterSourceMapIndex"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type":"string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "parameters": {
+            "PageLimit": {
+                "in": "query",
+                "name": "limit",
+                "required": false,
+                "schema": {
+                    "type": "integer",
+                    "default": 100
+                }
+            },
+            "PageOffset": {
+                "in": "query",
+                "name": "offset",
+                "required": false,
+                "schema": {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            },
+            "OrderBy": {
+                "in": "query",
+                "name": "order_by",
+                "schema": {
+                    "type": "string"
+                },
+                "required": false
+            },
+            "FilterDatasetID": {
+                "in": "query",
+                "name": "dataset_id",
+                "schema": {
+                    "type": "integer"
+                }
+            },
+            "FilterSourceDAGID": {
+                "in": "query",
+                "name": "source_dag_id",
+                "schema": {
+                    "type": "string"
+                }
+            },
+            "FilterSourceTaskID": {
+                "in": "query",
+                "name": "source_task_id",
+                "schema": {
+                    "type": "string"
+                }
+            },
+            "FilterSourceRunID": {
+                "in": "query",
+                "name": "source_run_id",
+                "schema": {
+                    "type": "string"
+                }
+            },
+            "FilterSourceMapIndex": {
+                "in": "query",
+                "name": "source_map_index",
+                "schema": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

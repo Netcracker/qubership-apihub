@@ -1,0 +1,10 @@
+directive @sort on INTERFACE
+
+type Query {
+  fruits: [Fruit]
+}  
+
+interface Fruit @sort {
+  id: ID
+  name: String
+}

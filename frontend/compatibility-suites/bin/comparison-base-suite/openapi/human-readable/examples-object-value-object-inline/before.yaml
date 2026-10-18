@@ -1,0 +1,23 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /users:
+    get:
+      summary: Gets a list of users.
+      parameters:
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          examples:
+            one:
+              value:
+                prop1:
+                  prop11: value0
+                prop2: value2
+              summary: Offset value
+      responses:
+        '200':
+          description: OK

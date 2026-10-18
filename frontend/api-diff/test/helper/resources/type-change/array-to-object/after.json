@@ -1,0 +1,35 @@
+{
+  "openapi": "3.0.1",
+  "paths": {
+    "/path": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyType"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "MyType": {
+        "type": "object",
+        "properties": {
+          "first": {
+            "type": "string"
+          },
+          "recursive": {
+            "$ref": "#/components/schemas/MyType"
+          }
+        }
+      }
+    }
+  }
+}

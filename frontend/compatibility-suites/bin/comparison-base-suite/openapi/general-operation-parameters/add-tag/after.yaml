@@ -1,0 +1,15 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+tags:
+  - name: tag1
+paths:
+  /path1:
+    get:
+      tags:
+        - tag1
+      responses:
+        '200':
+          description: OK
+          content: { }

@@ -1,0 +1,97 @@
+{
+    "asyncapi": "3.0.0",
+    "info": {
+        "title": "AsyncAPI Example",
+        "description": "Example",
+        "version": "1.0.0",
+        "tags": [
+            {
+                "description": "Public endpoints"
+            }
+        ]
+    },
+    "servers": {
+        "production": {
+            "host": "api.example.com",
+            "protocol": "https",
+            "description": "Production server",
+            "tags": [
+                {
+                    "description": "Public endpoints"
+                }
+            ]
+        }
+    },
+    "channels": {
+        "userSignup": {
+            "address": "/api/v1/users/{userId}/signup",
+            "description": "Channel for user signup events",
+            "tags": [
+                {
+                    "description": "Public endpoints"
+                }
+            ],
+            "messages": {
+                "signupRequest": {
+                    "$ref": "#/components/messages/signupRequest"
+                }
+            }
+        }
+    },
+    "operations": {
+        "handleUserSignup": {
+            "action": "receive",
+            "summary": "Handle user signup",
+            "description": "Process user signup requests",
+            "channel": {
+                "$ref": "#/channels/userSignup"
+            },
+            "messages": {
+                "signupRequest": {
+                    "$ref": "#/channels/userSignup/messages/signupRequest"
+                }
+            },
+            "tags": [
+                {
+                    "$ref": "#/components/tags/componentTag"
+                },
+                {
+                    "description": "Public endpoints"
+                }
+            ]
+        }
+    },
+    "components": {
+        "messages": {
+            "signupRequest": {
+                "summary": "User signup request",
+                "description": "Request payload for user signup",
+                "contentType": "application/json",
+                "payload": {
+                    "type": "object",
+                    "properties": {
+                        "userId": {
+                            "type": "string"
+                        },
+                        "email": {
+                            "type": "string"
+                        },
+                        "password": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "tags": [
+                    {
+                        "description": "Public endpoints"
+                    }
+                ]
+            }
+        },
+        "tags": {
+            "componentTag": {
+                "description": "Public endpoints"
+            }
+        }
+    }
+}

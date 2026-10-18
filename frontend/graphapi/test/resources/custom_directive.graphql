@@ -1,0 +1,6 @@
+# Minimum valid GraphQL schema with custom directive
+directive @example on FIELD_DEFINITION
+
+type Query {
+  hello: String @example
+}

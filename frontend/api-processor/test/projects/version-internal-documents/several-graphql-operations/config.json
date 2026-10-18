@@ -1,0 +1,16 @@
+{
+  "packageId": "version-internal-documents",
+  "version": "v1",
+  "files": [
+    {
+      "fileId": "spec1.gql",
+      "publish": true,
+      "labels": []
+    },
+    {
+      "fileId": "spec2.gql",
+      "publish": true,
+      "labels": []
+    }
+  ]
+}

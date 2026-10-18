@@ -1,0 +1,9 @@
+type Mutation {
+    createPackage(name: String!): Package
+}
+
+type Package {
+    packageId: String!
+    name: String!
+    parentPackageId: String
+}

@@ -1,0 +1,32 @@
+{
+  "openapi": "3.0.1",
+  "paths": {
+    "/test/api/v2/event-responses": {
+      "post": {
+        "tags": [
+          "Test Requests V2"
+        ],
+        "summary": "Receive event response",
+        "responses": {
+          "200": {
+            "description": "Hello",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "customParameters": {
+                      "additionalProperties": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

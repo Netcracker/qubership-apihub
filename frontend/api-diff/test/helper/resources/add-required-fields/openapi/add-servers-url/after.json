@@ -1,0 +1,40 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Control REST API",
+        "description": "REST API for Control",
+        "version": "1.0.1"
+    },
+    "servers": [
+        {
+            "url": "https://api.example.com",
+            "description": "Root-level servers"
+        }
+    ],
+    "paths": {
+        "/api/v1/components/datasource/tableconfig/validate": {
+            "servers": [
+                {
+                    "url": "https://api.example-1.com",
+                    "description": "Path-level override"
+                }
+            ],
+            "post": {
+                "servers": [
+                    {
+                        "url": "https://api.example-2.com",
+                        "description": "Operation-level override"
+                    }
+                ],
+                "summary": "Endpoint for validation of a DataSource TableConfig.",
+                "description": "Endpoint for validation of DataSource TableConfig.",
+                "operationId": "validateDataSourceV1",
+                "responses": {
+                    "200": {
+                        "description": "A simple string response"
+                    }
+                }
+            }
+        }
+    }
+}

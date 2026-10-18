@@ -1,0 +1,14 @@
+{
+  "graphapi": "0.0.1",
+  "queries": {
+    "book": {
+      "output": {
+        "typeDef": {
+          "type": {
+            "kind": "string"
+          }
+        }
+      }
+    }
+  }
+}

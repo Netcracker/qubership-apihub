@@ -1,0 +1,12 @@
+type Query {
+    getProps: Props
+}
+
+type Props {
+    one: MyType
+    another: MyType
+}
+
+type MyType {
+    value: String
+}

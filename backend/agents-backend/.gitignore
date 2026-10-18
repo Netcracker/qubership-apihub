@@ -1,0 +1,9 @@
+.idea
+.vscode
+*.bak
+*.iml
+.DS_Store
+go.sum
+qubership-apihub-agents-backend/qubership-apihub-agents-backend
+qubership-apihub-agents-backend/qubership-apihub-agents-backend.exe
+qubership-apihub-agents-backend/config.yaml

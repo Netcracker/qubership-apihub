@@ -1,0 +1,19 @@
+name: qubership-apihub-api-doc-viewer
+version: 1.0.0
+description: Agent guidance for developing and testing the api-doc-viewer monorepo.
+author: Qubership APIHUB
+license: Apache-2.0
+
+targets:
+  - claude
+  - cursor
+
+dependencies:
+  apm:
+    - ./agent-packages/api-doc-viewer-authoring
+    - ./agent-packages/api-doc-viewer-using
+    - ./agent-packages/next-data-model-authoring
+    - ./agent-packages/next-data-model-using
+    - ./agent-packages/api-doc-viewer-testing
+    - Netcracker/qubership-apihub-ddlapi/agent-packages/ddlapi-using
+    - Netcracker/qubership-apihub-json-crawl/agent-packages/json-crawl-using

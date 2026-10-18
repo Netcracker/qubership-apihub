@@ -1,0 +1,4 @@
+name: json-crawl-testing
+version: 1.0.0
+description: How to write tests for the json-crawl library — hook ordering, sparse arrays, and rules fixtures.
+author: Netcracker

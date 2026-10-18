@@ -1,0 +1,17 @@
+interface Fruit {
+""" Unique ID of the Fruit."""
+  id: ID
+""" Name of the Fruit."""  
+  name: String
+  color: String
+}
+type Apple implements Fruit {
+  id: ID
+""" Name"""  
+  name: String
+  color: String
+  variety: String
+}
+type Query {
+  fruits: [Apple]
+}

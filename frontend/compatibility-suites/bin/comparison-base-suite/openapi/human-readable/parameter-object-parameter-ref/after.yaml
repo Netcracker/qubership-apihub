@@ -1,0 +1,28 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /users:
+    get:
+      summary: Gets a list of users.
+      parameters:
+        - $ref: '#/components/parameters/offsetParam'
+        - $ref: '#/components/parameters/limitParam'
+      responses:
+        '200':
+          description: OK
+components:
+  parameters:
+    offsetParam:
+      in: query
+      name: offset
+      schema:
+        type: integer
+        minimum: 0
+    limitParam:
+      in: query
+      name: limit
+      required: false
+      schema:
+        type: integer

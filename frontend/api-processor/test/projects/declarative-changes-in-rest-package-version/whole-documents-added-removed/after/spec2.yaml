@@ -1,0 +1,36 @@
+openapi: 3.0.0
+info:
+  title: Sample API
+  description: API specification example
+  version: 1.0.0
+paths:
+  /packages:
+    post:
+      summary: create package
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  packageId:
+                    $ref: '#/components/schemas/packageId'
+                  name:
+                    type: string
+                  parentPackageId:
+                    $ref: '#/components/schemas/packageId'
+components:
+  schemas:
+    packageId:
+      type: string
+      description: APIHUB package id

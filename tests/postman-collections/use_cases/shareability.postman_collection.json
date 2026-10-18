@@ -1,0 +1,150 @@
+{
+  "info": {
+    "_postman_id": "08e4f649-c07c-4b70-895e-9355909d4f5d",
+    "name": "Shareability",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Generate shareability report",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Personal-Access-Token",
+            "value": "{{PAT}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{SERVER_HOST}}/api/v2/packages/{{packageId}}/versions/{{version}}/export/shareability-report",
+          "host": [
+            "{{SERVER_HOST}}"
+          ],
+          "path": [
+            "api",
+            "v2",
+            "packages",
+            "{{packageId}}",
+            "versions",
+            "{{version}}",
+            "export",
+            "shareability-report"
+          ]
+        },
+        "description": "Downloads an xlsx report for shareability statuses."
+      },
+      "response": []
+    },
+    {
+      "name": "Bulk update shareability",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Personal-Access-Token",
+            "value": "{{PAT}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/octet-stream",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "file",
+          "file": {
+            "src": "{{shareabilityReportPath}}"
+          }
+        },
+        "url": {
+          "raw": "{{SERVER_HOST}}/api/v1/shareability/bulk-update",
+          "host": [
+            "{{SERVER_HOST}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "shareability",
+            "bulk-update"
+          ]
+        },
+        "description": "Uploads an edited xlsx report to apply changed shareability statuses in bulk."
+      },
+      "response": []
+    },
+    {
+      "name": "Update single document shareability (optional)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "X-Personal-Access-Token",
+            "value": "{{PAT}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"shareable\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{SERVER_HOST}}/api/v2/packages/{{packageId}}/versions/{{version}}/documents/{{slug}}/shareability",
+          "host": [
+            "{{SERVER_HOST}}"
+          ],
+          "path": [
+            "api",
+            "v2",
+            "packages",
+            "{{packageId}}",
+            "versions",
+            "{{version}}",
+            "documents",
+            "{{slug}}",
+            "shareability"
+          ]
+        },
+        "description": "Updates shareability for one document. Allowed statuses: shareable, non-shareable, unknown."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "SERVER_HOST",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "PAT",
+      "value": ""
+    },
+    {
+      "key": "packageId",
+      "value": "group.id"
+    },
+    {
+      "key": "version",
+      "value": "2024.1"
+    },
+    {
+      "key": "slug",
+      "value": "document-slug"
+    },
+    {
+      "key": "shareabilityReportPath",
+      "value": "C:/path/to/shareability_report.xlsx"
+    }
+  ]
+}

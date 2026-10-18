@@ -1,0 +1,111 @@
+/**
+ * Copyright 2024-2025 NetCracker Technology Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import {
+  DDL_DOCUMENT_TYPE,
+  type DdlDocumentType,
+  MCP_DOCUMENT_TYPE,
+  type McpDocumentType,
+} from '@netcracker/qubership-apihub-api-processor'
+
+export { DDL_DOCUMENT_TYPE, type DdlDocumentType, MCP_DOCUMENT_TYPE, type McpDocumentType }
+
+export const OPENAPI_3_1_SPEC_TYPE = 'openapi-3-1'
+export const OPENAPI_3_0_SPEC_TYPE = 'openapi-3-0'
+export const OPENAPI_2_0_SPEC_TYPE = 'openapi-2-0'
+export const OPENAPI_SPEC_TYPE = 'openapi'
+export const ASYNCAPI_3_SPEC_TYPE = 'asyncapi-3-0'
+export const ASYNCAPI_SPEC_TYPE = 'asyncapi'
+export const JSON_SCHEMA_SPEC_TYPE = 'json-schema'
+export const MARKDOWN_SPEC_TYPE = 'markdown'
+export const UNKNOWN_SPEC_TYPE = 'unknown'
+export const GRAPHQL_SPEC_TYPE = 'graphql'
+export const GRAPHQL_SCHEMA_SPEC_TYPE = 'graphql-schema'
+export const GRAPHAPI_SPEC_TYPE = 'graphapi'
+export const GRAPHQL_INTROSPECTION_SPEC_TYPE = 'introspection'
+export const PROTOBUF_3_SPEC_TYPE = 'protobuf-3'
+
+export type SpecType =
+  | typeof OPENAPI_3_1_SPEC_TYPE
+  | typeof OPENAPI_3_0_SPEC_TYPE
+  | typeof OPENAPI_2_0_SPEC_TYPE
+  | typeof OPENAPI_SPEC_TYPE
+  | typeof ASYNCAPI_3_SPEC_TYPE
+  | typeof ASYNCAPI_SPEC_TYPE
+  | typeof JSON_SCHEMA_SPEC_TYPE
+  | typeof MARKDOWN_SPEC_TYPE
+  | typeof UNKNOWN_SPEC_TYPE
+  | typeof GRAPHQL_SPEC_TYPE
+  | typeof GRAPHQL_SCHEMA_SPEC_TYPE
+  | typeof GRAPHAPI_SPEC_TYPE
+  | typeof GRAPHQL_INTROSPECTION_SPEC_TYPE
+  | typeof PROTOBUF_3_SPEC_TYPE
+  | McpDocumentType
+  | DdlDocumentType
+
+export const OPENAPI_SPEC_TYPES: ReadonlyArray<string> = [
+  OPENAPI_3_1_SPEC_TYPE,
+  OPENAPI_3_0_SPEC_TYPE,
+  OPENAPI_2_0_SPEC_TYPE,
+  OPENAPI_SPEC_TYPE,
+] as const
+
+export const GRAPHQL_SPEC_TYPES: ReadonlyArray<SpecType> = [
+  GRAPHQL_SCHEMA_SPEC_TYPE,
+  GRAPHAPI_SPEC_TYPE,
+  GRAPHQL_INTROSPECTION_SPEC_TYPE,
+  GRAPHQL_SPEC_TYPE,
+] as const
+
+export const ASYNCAPI_SPEC_TYPES: ReadonlyArray<SpecType> = [
+  ASYNCAPI_3_SPEC_TYPE,
+  ASYNCAPI_SPEC_TYPE,
+] as const
+
+export const MCP_DOCUMENT_SPEC_TYPES: ReadonlyArray<McpDocumentType> = [
+  MCP_DOCUMENT_TYPE.MCP_INIT,
+  MCP_DOCUMENT_TYPE.MCP_TOOLS,
+  MCP_DOCUMENT_TYPE.MCP_PROMPTS,
+  MCP_DOCUMENT_TYPE.MCP_RESOURCES,
+]
+
+export function isOpenApiSpecType(type?: SpecType): boolean {
+  return !!type && OPENAPI_SPEC_TYPES.includes(type)
+}
+
+export function isGraphQlSpecType(type?: SpecType): boolean {
+  return !!type && GRAPHQL_SPEC_TYPES.includes(type)
+}
+
+export function isAsyncApiSpecType(type?: SpecType): boolean {
+  return !!type && ASYNCAPI_SPEC_TYPES.includes(type)
+}
+
+export function isMcpDocumentSpecType(type?: SpecType): type is McpDocumentType {
+  return !!type && MCP_DOCUMENT_SPEC_TYPES.some(documentType => documentType === type)
+}
+
+export function isMcpInitDocumentSpecType(type?: SpecType): boolean {
+  return type === MCP_DOCUMENT_TYPE.MCP_INIT
+}
+
+export function isDdlDocumentSpecType(type?: SpecType): type is DdlDocumentType {
+  return type === DDL_DOCUMENT_TYPE.DDL
+}
+
+export const isExportableSpecType = (type?: SpecType): boolean => {
+  return isOpenApiSpecType(type) || isAsyncApiSpecType(type)
+}

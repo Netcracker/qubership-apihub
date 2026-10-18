@@ -1,0 +1,14 @@
+name: qubership-apihub-json-crawl
+version: 1.0.0
+description: Agent guidance for developing, testing, and consuming the json-crawl traversal library.
+author: Netcracker
+license: Apache-2.0
+
+targets:
+  - claude
+  - cursor
+
+dependencies:
+  apm:
+    - ./agent-packages/json-crawl-authoring
+    - ./agent-packages/json-crawl-testing

@@ -1,0 +1,17 @@
+name: frontend-ci
+
+on:
+  push:
+    branches:
+      - release
+      - hotfix
+      - develop
+      - feature/*
+      - bugfix/*
+      - dependabot/*
+    tags:
+      - '**'
+
+jobs:
+  call-frontend-ci-workflow:
+    uses: netcracker/qubership-apihub-ci/.github/workflows/frontend-ci.yaml@main

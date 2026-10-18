@@ -1,0 +1,12 @@
+{
+  "protocolVersion": "2025-11-25",
+  "capabilities": {
+    "tools": {
+      "listChanged": true
+    }
+  },
+  "serverInfo": {
+    "name": "dashboard-beta-server",
+    "version": "1.0.0"
+  }
+}

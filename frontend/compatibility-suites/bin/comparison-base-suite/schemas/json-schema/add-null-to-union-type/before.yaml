@@ -1,0 +1,1 @@
+type: [string, integer] # Before - Union type with string and integer only

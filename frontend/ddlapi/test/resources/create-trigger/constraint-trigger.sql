@@ -1,0 +1,7 @@
+CREATE TABLE orders (id bigint PRIMARY KEY, total numeric);
+
+CREATE CONSTRAINT TRIGGER trg_orders_check_total
+  AFTER INSERT OR UPDATE ON orders
+  DEFERRABLE INITIALLY DEFERRED
+  FOR EACH ROW
+  EXECUTE FUNCTION check_order_total();

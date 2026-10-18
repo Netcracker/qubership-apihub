@@ -1,0 +1,41 @@
+{
+  "Tag": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "format": "int64",
+        "exclusiveMinimum": 2,
+        "exclusiveMaximim": 10
+      },
+      "name": {
+        "type": [
+          "string",
+          null
+        ]
+      }
+    },
+    "xml": {
+      "name": "tag"
+    }
+  },
+  "Category": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "integer",
+        "format": "int64",
+        "example": 1
+      },
+      "name": {
+        "type": "string",
+        "examples": [
+          "Dogs"
+        ]
+      }
+    },
+    "xml": {
+      "name": "category"
+    }
+  }
+}

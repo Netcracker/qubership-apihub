@@ -1,0 +1,25 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    post:
+      security:
+        - oAuthSample:
+            - write_pets
+      responses:
+        '200':
+          description: OK
+          content: { }
+components:
+  securitySchemes:
+    oAuthSample:
+      type: oauth2
+      description: This API uses OAuth 2 with the implicit grant flow.
+      flows:
+        implicit:
+          authorizationUrl: https://api.example.com/oauth2/authorize
+          scopes:
+            read_pets: read your pets
+            write_pets: modify pets in your account

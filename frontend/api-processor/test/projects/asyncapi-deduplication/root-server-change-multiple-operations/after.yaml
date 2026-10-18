@@ -1,0 +1,50 @@
+asyncapi: 3.0.0
+info:
+  title: Test AsyncAPI
+  version: 1.0.0
+servers:
+  production:
+    host: new.example.com
+    protocol: kafka
+channels:
+  channel1:
+    address: channel1
+    servers:
+      - $ref: '#/servers/production'
+    messages:
+      message1:
+        $ref: '#/components/messages/message1'
+  channel2:
+    address: channel2
+    servers:
+      - $ref: '#/servers/production'
+    messages:
+      message2:
+        $ref: '#/components/messages/message2'
+operations:
+  operation1:
+    action: receive
+    channel:
+      $ref: '#/channels/channel1'
+    messages:
+      - $ref: '#/channels/channel1/messages/message1'
+  operation2:
+    action: send
+    channel:
+      $ref: '#/channels/channel2'
+    messages:
+      - $ref: '#/channels/channel2/messages/message2'
+components:
+  messages:
+    message1:
+      payload:
+        type: object
+        properties:
+          userId:
+            type: string
+    message2:
+      payload:
+        type: object
+        properties:
+          orderId:
+            type: string

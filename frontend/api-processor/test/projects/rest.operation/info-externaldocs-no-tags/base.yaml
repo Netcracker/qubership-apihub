@@ -1,0 +1,15 @@
+openapi: 3.0.3
+info:
+  title: Info and ExternalDocs without Tags Test
+  version: 1.0.0
+  description: Test document for info and externalDocs when no tags are present
+externalDocs:
+  description: API Documentation
+  url: https://docs.example.com
+paths:
+  /test:
+    get:
+      summary: Test operation without tags
+      responses:
+        "200":
+          description: OK

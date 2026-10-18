@@ -1,0 +1,23 @@
+anyOf:
+  - type: object
+    title: simpleObject
+    required:
+      - objectType
+      - attribute
+    properties:
+      objectType:
+        type: string
+      attribute:
+        type: string
+  - type: object
+    title: complexObject
+    required:
+      - objectType
+      - attribute
+    properties:
+      objectType:
+        type: string
+      attribute:
+        type: string
+discriminator:
+  propertyName: attribute

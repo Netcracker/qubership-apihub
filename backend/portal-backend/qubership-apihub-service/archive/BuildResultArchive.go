@@ -1,0 +1,238 @@
+package archive
+
+import (
+	"archive/zip"
+	"encoding/json"
+	"net/http"
+	"strings"
+
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
+)
+
+const (
+	InfoFilePath                        = "info.json"
+	DocumentsFilePath                   = "documents.json"
+	ComparisonsFilePath                 = "comparisons.json"
+	OperationsFilePath                  = "operations.json"
+	BuilderNotificationsFilePath        = "notifications.json"
+	ChangelogFilePath                   = "changelog.json"
+	VersionInternalDocumentsFilePath    = "version-internal-documents.json"
+	ComparisonInternalDocumentsFilePath = "comparison-internal-documents.json"
+
+	ContractsDdlFilePath              = "ddl.json"
+	ContractsDdlComparisonsFilePath   = "ddl-comparisons.json"
+	ContractsMcpFilePath              = "mcp.json"
+	ContractsDdlRootFolder            = "ddl/"
+	ContractsMcpRootFolder            = "mcp/"
+	ContractsDdlComparisonsRootFolder = "ddl-comparisons/"
+
+	DocumentsRootFolder                   = "documents/"
+	ComparisonsRootFolder                 = "comparisons/"
+	OperationFilesRootFolder              = "operations/"
+	VersionInternalDocumentsRootFolder    = "version-internal-documents/"
+	ComparisonInternalDocumentsRootFolder = "comparison-internal-documents/"
+)
+
+type BuildResultArchive struct {
+	ZipReader *zip.Reader
+
+	InfoFile                        *zip.File
+	DocumentsFile                   *zip.File
+	ComparisonsFile                 *zip.File
+	OperationsFile                  *zip.File
+	BuilderNotificationsFile        *zip.File
+	ChangelogFile                   *zip.File
+	VersionInternalDocumentsFile    *zip.File
+	ComparisonInternalDocumentsFile *zip.File
+	ContractsDdlFile                *zip.File
+	ContractsDdlComparisonsFile     *zip.File
+	ContractsMcpFile                *zip.File
+
+	DocumentsHeaders                   map[string]*zip.File
+	OperationFileHeaders               map[string]*zip.File
+	ComparisonsFileHeaders             map[string]*zip.File
+	VersionInternalDocumentsHeaders    map[string]*zip.File
+	ComparisonInternalDocumentsHeaders map[string]*zip.File
+	ContractsDdlFileHeaders            map[string]*zip.File
+	ContractsMcpFileHeaders            map[string]*zip.File
+	ContractsDdlComparisonsFileHeaders map[string]*zip.File
+	UncategorizedFileHeaders           map[string]*zip.File
+
+	PackageInfo                 view.PackageInfoFile
+	PackageDocuments            view.PackageDocumentsFile
+	PackageOperations           view.PackageOperationsFile
+	PackageComparisons          view.PackageComparisonsFile
+	BuilderNotifications        view.BuilderNotificationsFile
+	VersionInternalDocuments    view.VersionInternalDocumentsFile
+	ComparisonInternalDocuments view.ComparisonInternalDocumentsFile
+	PackageDdlContracts         view.PackageDdlContractsFile
+	PackageDdlComparisons       view.PackageDdlComparisonsFile
+	PackageMcpContracts         view.PackageMcpContractsFile
+}
+
+func NewBuildResultArchive(zipReader *zip.Reader) *BuildResultArchive {
+	result := &BuildResultArchive{
+		ZipReader:                          zipReader,
+		DocumentsHeaders:                   map[string]*zip.File{},
+		OperationFileHeaders:               map[string]*zip.File{},
+		ComparisonsFileHeaders:             map[string]*zip.File{},
+		VersionInternalDocumentsHeaders:    map[string]*zip.File{},
+		ComparisonInternalDocumentsHeaders: map[string]*zip.File{},
+		ContractsDdlFileHeaders:            map[string]*zip.File{},
+		ContractsMcpFileHeaders:            map[string]*zip.File{},
+		ContractsDdlComparisonsFileHeaders: map[string]*zip.File{},
+		UncategorizedFileHeaders:           map[string]*zip.File{},
+	}
+	result.splitFiles()
+	return result
+}
+
+func (a *BuildResultArchive) ReadPackageInfo() error {
+	return a.readFile(InfoFilePath, a.InfoFile, &a.PackageInfo, true)
+}
+
+func (a *BuildResultArchive) ReadPackageDocuments(required bool) error {
+	return a.readFile(DocumentsFilePath, a.DocumentsFile, &a.PackageDocuments, required)
+}
+
+func (a *BuildResultArchive) ReadPackageOperations(required bool) error {
+	return a.readFile(OperationsFilePath, a.OperationsFile, &a.PackageOperations, required)
+}
+
+func (a *BuildResultArchive) ReadPackageComparisons(required bool) error {
+	return a.readFile(ComparisonsFilePath, a.ComparisonsFile, &a.PackageComparisons, required)
+}
+
+func (a *BuildResultArchive) ReadBuilderNotifications(required bool) error {
+	return a.readFile(BuilderNotificationsFilePath, a.BuilderNotificationsFile, &a.BuilderNotifications, required)
+}
+
+func (a *BuildResultArchive) ReadVersionInternalDocuments(required bool) error {
+	return a.readFile(VersionInternalDocumentsFilePath, a.VersionInternalDocumentsFile, &a.VersionInternalDocuments, required)
+}
+
+func (a *BuildResultArchive) ReadComparisonInternalDocuments(required bool) error {
+	return a.readFile(ComparisonsFilePath, a.ComparisonInternalDocumentsFile, &a.ComparisonInternalDocuments, required)
+}
+
+func (a *BuildResultArchive) ReadPackageDdlContracts(required bool) error {
+	return a.readFile(ContractsDdlFilePath, a.ContractsDdlFile, &a.PackageDdlContracts, required)
+}
+
+func (a *BuildResultArchive) ReadPackageDdlContractComparisons(required bool) error {
+	return a.readFile(ContractsDdlComparisonsFilePath, a.ContractsDdlComparisonsFile, &a.PackageDdlComparisons, required)
+}
+
+func (a *BuildResultArchive) ReadPackageMcpContracts(required bool) error {
+	return a.readFile(ContractsMcpFilePath, a.ContractsMcpFile, &a.PackageMcpContracts, required)
+}
+
+func (a *BuildResultArchive) readFile(filePath string, file *zip.File, v interface{}, required bool) error {
+	if file == nil {
+		if required {
+			return &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.FileMissingFromSources,
+				Message: exception.FileMissingFromSourcesMsg,
+				Params:  map[string]interface{}{"fileId": filePath},
+			}
+		}
+		return nil
+	}
+	unzippedFileBytes, err := ReadZipFile(file)
+	if err != nil {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidPackageArchivedFile,
+			Message: exception.InvalidPackageArchivedFileMsg,
+			Params:  map[string]interface{}{"file": filePath, "error": err.Error()},
+		}
+	}
+	err = json.Unmarshal(unzippedFileBytes, v)
+	if err != nil {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidPackageArchivedFile,
+			Message: exception.InvalidPackageArchivedFileMsg,
+			Params:  map[string]interface{}{"file": filePath, "error": "failed to unmarshal"},
+			Debug:   err.Error(),
+		}
+	}
+	return nil
+}
+
+func (a *BuildResultArchive) splitFiles() {
+	for _, zipFile := range a.ZipReader.File {
+		if zipFile.FileInfo().IsDir() {
+			continue
+		}
+		filepath := zipFile.Name
+		switch filepath {
+		case InfoFilePath:
+			a.InfoFile = zipFile
+		case DocumentsFilePath:
+			a.DocumentsFile = zipFile
+		case OperationsFilePath:
+			a.OperationsFile = zipFile
+		case ComparisonsFilePath:
+			a.ComparisonsFile = zipFile
+		case BuilderNotificationsFilePath:
+			a.BuilderNotificationsFile = zipFile
+		case ChangelogFilePath:
+			a.ChangelogFile = zipFile
+		case VersionInternalDocumentsFilePath:
+			a.VersionInternalDocumentsFile = zipFile
+		case ComparisonInternalDocumentsFilePath:
+			a.ComparisonInternalDocumentsFile = zipFile
+		case ContractsDdlFilePath:
+			a.ContractsDdlFile = zipFile
+		case ContractsDdlComparisonsFilePath:
+			a.ContractsDdlComparisonsFile = zipFile
+		case ContractsMcpFilePath:
+			a.ContractsMcpFile = zipFile
+		default:
+			{
+				if strings.HasPrefix(filepath, DocumentsRootFolder) {
+					zipFilePtr := zipFile
+					a.DocumentsHeaders[strings.TrimPrefix(filepath, DocumentsRootFolder)] = zipFilePtr
+					continue
+				} else if strings.HasPrefix(filepath, OperationFilesRootFolder) {
+					zipFilePtr := zipFile
+					a.OperationFileHeaders[strings.TrimPrefix(filepath, OperationFilesRootFolder)] = zipFilePtr
+					continue
+				} else if strings.HasPrefix(filepath, ComparisonsRootFolder) {
+					zipFilePtr := zipFile
+					a.ComparisonsFileHeaders[strings.TrimPrefix(filepath, ComparisonsRootFolder)] = zipFilePtr
+					continue
+				} else if strings.HasPrefix(filepath, VersionInternalDocumentsRootFolder) {
+					zipFilePtr := zipFile
+					a.VersionInternalDocumentsHeaders[strings.TrimPrefix(filepath, VersionInternalDocumentsRootFolder)] = zipFilePtr
+					continue
+				} else if strings.HasPrefix(filepath, ComparisonInternalDocumentsRootFolder) {
+					zipFilePtr := zipFile
+					a.ComparisonInternalDocumentsHeaders[strings.TrimPrefix(filepath, ComparisonInternalDocumentsRootFolder)] = zipFilePtr
+					continue
+				} else if strings.HasPrefix(filepath, ContractsDdlRootFolder) {
+					zipFilePtr := zipFile
+					a.ContractsDdlFileHeaders[strings.TrimPrefix(filepath, ContractsDdlRootFolder)] = zipFilePtr
+					continue
+				} else if strings.HasPrefix(filepath, ContractsMcpRootFolder) {
+					zipFilePtr := zipFile
+					a.ContractsMcpFileHeaders[strings.TrimPrefix(filepath, ContractsMcpRootFolder)] = zipFilePtr
+					continue
+				} else if strings.HasPrefix(filepath, ContractsDdlComparisonsRootFolder) {
+					zipFilePtr := zipFile
+					a.ContractsDdlComparisonsFileHeaders[strings.TrimPrefix(filepath, ContractsDdlComparisonsRootFolder)] = zipFilePtr
+					continue
+				} else {
+					a.UncategorizedFileHeaders[filepath] = zipFile
+				}
+			}
+		}
+	}
+}
+
+func getMediaType(data []byte) string {
+	return http.DetectContentType(data)
+}

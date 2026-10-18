@@ -1,0 +1,7 @@
+type Query {
+  fruits(
+  """
+  Unique identifier of fruit.
+  """ 
+  id: ID): String
+}

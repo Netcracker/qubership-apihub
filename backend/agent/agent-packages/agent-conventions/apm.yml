@@ -1,0 +1,6 @@
+name: agent-conventions
+version: 0.1.0
+description: Always-on rules for qubership-apihub-agent
+author: Qubership
+dependencies:
+  apm: []

@@ -1,0 +1,6 @@
+{
+  "packageId": "basic",
+  "files": [
+    { "fileId": "openapi.json", "publish": true, "labels": ["123"] }
+  ]
+}

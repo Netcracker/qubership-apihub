@@ -1,0 +1,16 @@
+openapi: 3.0.0
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /pets:
+    post:
+      parameters:
+        - name: param1
+          in: query
+          schema:
+            type: string
+          style: form
+      responses:
+        '200':
+          description: OK

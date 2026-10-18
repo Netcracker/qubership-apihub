@@ -1,0 +1,35 @@
+{
+  "openapi": "3.0.1",
+  "paths": {
+    "/path": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "unwrapped": {
+                      "$ref": "#/components/schemas/EmptySchema"
+                    },
+                    "simple": {
+                      "$ref": "#/components/schemas/EmptySchema"
+                    },
+                    "unwrappedWrap": {
+                      "$ref": "#/components/schemas/EmptySchema"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "EmptySchema": {}
+    }
+  }
+}

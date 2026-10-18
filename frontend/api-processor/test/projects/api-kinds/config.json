@@ -1,0 +1,13 @@
+{
+  "packageId": "api-kinds",
+  "files": [
+    {
+      "fileId": "Petstore.yaml",
+      "publish": true
+    },
+    {
+      "fileId": "Petstorev2.yaml",
+      "publish": true
+    }
+  ]
+}

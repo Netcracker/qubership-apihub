@@ -1,0 +1,6 @@
+{
+  "tools": [
+    { "name": "with_title", "title": "Nice Title", "description": "Has a title", "inputSchema": { "type": "object" } },
+    { "name": "no_desc", "inputSchema": { "type": "object" } }
+  ]
+}

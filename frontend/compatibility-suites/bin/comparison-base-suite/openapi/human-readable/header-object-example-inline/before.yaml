@@ -1,0 +1,18 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /users:
+    get:
+      summary: Gets a list of users.
+      responses:
+        '200':
+          description: OK
+          headers:
+            XRateLimit:
+              example: abc
+              schema:
+                type: array
+                items:
+                  type: string

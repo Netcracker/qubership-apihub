@@ -1,0 +1,19 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /pets:
+    get:
+      security:
+        - ApiKeyAuth1: [ ]
+      responses:
+        '200':
+          description: OK
+components:
+  securitySchemes:
+    ApiKeyAuth1:
+      type: apiKey
+      in: header
+      name: X-API-KEY
+      x-security-level: medium

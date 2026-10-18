@@ -1,0 +1,338 @@
+/**
+ * Copyright 2024-2025 NetCracker Technology Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import fileDownload from 'js-file-download'
+import type { ErrorMessage } from './packages-builder'
+import { HttpError } from './responses'
+import { handleAuthentication, isTokenRefreshed } from './security'
+import type { Key } from './types'
+
+export const API_V1 = '/api/v1'
+export const API_V2 = '/api/v2'
+export const API_V3 = '/api/v3'
+export const API_V4 = '/api/v4'
+
+export const API_BASE_PATH_PATTERN = '/api/:apiVersion'
+
+export const STATUS_REFETCH_INTERVAL = 3 * 1000 // three seconds
+export const DEFAULT_REFETCH_INTERVAL = 5 * (60 * 1000) // five minutes
+
+export type CustomErrorHandler = (response: Response) => void
+export type CustomRedirectHandler = (response: Response) => FetchRedirectDetails | null
+
+export type RequestJsonExtraOptions = {
+  basePath?: string
+  customErrorHandler?: CustomErrorHandler
+  customRedirectHandler?: CustomRedirectHandler
+  ignoreNotFound?: boolean
+}
+
+export async function requestJson<T extends object | null>(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  options: RequestJsonExtraOptions = {},
+  signal?: AbortSignal,
+): Promise<T> {
+  const { basePath = '', customErrorHandler, customRedirectHandler, ignoreNotFound = false } = options
+
+  const response = await fetch(`${basePath}${input}`, {
+    ...init,
+    signal: signal,
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    const tokenRefreshResult = await handleAuthentication(response.status)
+    if (isTokenRefreshed(tokenRefreshResult)) {
+      return requestJson(input, init, options, signal)
+    }
+
+    await handleFetchError(response, { 401: true, 404: ignoreNotFound }, customErrorHandler)
+    return null as T
+  }
+
+  await handleFetchRedirect(response, customRedirectHandler)
+
+  return await response.json() as T
+}
+
+export type RequestUnknownExtraOptions = {
+  basePath?: string
+  customErrorHandler?: CustomErrorHandler
+  customRedirectHandler?: CustomRedirectHandler
+  ignoreNotFound?: boolean
+  mediaTypes?: string[]
+}
+
+export async function requestUnknown<T extends Record<PropertyKey, unknown> | null>(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  options: RequestUnknownExtraOptions = {},
+  signal?: AbortSignal,
+): Promise<T> {
+  const {
+    basePath = '',
+    customErrorHandler,
+    customRedirectHandler,
+    ignoreNotFound = false,
+    mediaTypes = [],
+  } = options
+
+  const response = await fetch(`${basePath}${input}`, {
+    headers: {
+      ...mediaTypes.length ? { 'Accept': mediaTypes.join(', ') } : {},
+    },
+    ...init,
+    signal: signal,
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    const tokenRefreshResult = await handleAuthentication(response.status)
+    if (isTokenRefreshed(tokenRefreshResult)) {
+      return requestJson(input, init, options, signal)
+    }
+
+    await handleFetchError(response, { 401: true, 404: ignoreNotFound }, customErrorHandler)
+    return null as T
+  }
+
+  await handleFetchRedirect(response, customRedirectHandler)
+
+  // Handle unknown response
+  const contentType = response.headers.get('content-type')
+  if (contentType?.includes('application/json')) {
+    return await response.json()
+  }
+  if (contentType?.includes('application/octet-stream')) {
+    const getFilename = (): string => response.headers
+      .get('content-disposition')!
+      .split('filename=')[1]
+      .split(';')[0]
+    const data = await response.blob()
+    fileDownload(data, getFilename())
+    return null as T
+  }
+  return null as T
+}
+
+export type RequestTextExtraOptions = {
+  basePath?: string
+  customErrorHandler?: CustomErrorHandler
+  customRedirectHandler?: CustomRedirectHandler
+}
+
+export async function requestText(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  options: RequestTextExtraOptions = {},
+): Promise<string> {
+  const { basePath = '', customErrorHandler, customRedirectHandler } = options
+
+  const response = await fetch(`${basePath ?? ''}${input}`, {
+    ...init,
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    const tokenRefreshResult = await handleAuthentication(response.status)
+    if (isTokenRefreshed(tokenRefreshResult)) {
+      return requestText(input, init, options)
+    }
+
+    await handleFetchError(response, { 401: true }, customErrorHandler)
+    return ''
+  }
+
+  await handleFetchRedirect(response, customRedirectHandler)
+  return await response.text()
+}
+
+export type RequestBlobExtraOptions = {
+  basePath?: string
+  customErrorHandler?: CustomErrorHandler
+  customRedirectHandler?: CustomRedirectHandler
+}
+
+export async function requestBlob(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  options: RequestBlobExtraOptions = {},
+): Promise<Response> {
+  const { basePath = '', customErrorHandler, customRedirectHandler } = options
+
+  const response = await fetch(`${basePath ?? ''}${input}`, {
+    ...init,
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    const tokenRefreshResult = await handleAuthentication(response.status)
+    if (isTokenRefreshed(tokenRefreshResult)) {
+      return requestBlob(input, init, options)
+    }
+
+    if (customErrorHandler) {
+      customErrorHandler(response)
+    } else {
+      await handleError(response)
+    }
+  }
+
+  await handleFetchRedirect(response, customRedirectHandler)
+  return response
+}
+
+export type RequestVoidExtraOptions = {
+  basePath?: string
+  ignoreNotFound?: boolean
+  customErrorHandler?: CustomErrorHandler
+  customRedirectHandler?: CustomRedirectHandler
+}
+
+export async function requestVoid(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  options: RequestVoidExtraOptions = {},
+): Promise<void> {
+  const { basePath = '', ignoreNotFound = false, customErrorHandler, customRedirectHandler } = options
+
+  const response = await fetch(`${basePath}${input}`, {
+    ...init,
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    const tokenRefreshResult = await handleAuthentication(response.status)
+    if (isTokenRefreshed(tokenRefreshResult)) {
+      return requestVoid(input, init, options)
+    }
+
+    await handleFetchError(response, { 401: true, 404: ignoreNotFound }, customErrorHandler)
+  }
+
+  await handleFetchRedirect(response, customRedirectHandler)
+  return
+}
+
+async function handleFetchError(
+  response: Response,
+  ignoredStatuses: Record<number, boolean>,
+  customErrorHandler?: CustomErrorHandler,
+): Promise<void> {
+  if (ignoredStatuses[response.status]) {
+    return Promise.reject()
+  }
+
+  if (customErrorHandler) {
+    customErrorHandler(response)
+  } else {
+    await handleCustomError(response)
+  }
+}
+
+async function handleFetchRedirect(response: Response, customRedirectHandler?: CustomRedirectHandler): Promise<void> {
+  if (response.redirected && customRedirectHandler) {
+    const redirectDetails = customRedirectHandler(response)
+    if (redirectDetails) {
+      await handleCustomRedirect(redirectDetails)
+    } else {
+      await handleCustomError(response)
+    }
+  }
+}
+
+async function handleCustomError(response: Response): Promise<void> {
+  const [message, code, status] = await getResponseError(response)
+  const detail = { title: `Error ${response.status}`, message: message, code: code, status: status }
+  dispatchEvent(new CustomEvent<FetchErrorDetails>(FETCH_ERROR_EVENT, {
+    detail: detail,
+    bubbles: true,
+    composed: true,
+    cancelable: false,
+  }))
+  throw new HttpError(message, code, status)
+}
+
+async function handleCustomRedirect(details: FetchRedirectDetails): Promise<void> {
+  dispatchEvent(new CustomEvent<FetchRedirectDetails>(FETCH_REDIRECT_EVENT, {
+    detail: details,
+    bubbles: true,
+    composed: true,
+    cancelable: false,
+  }))
+  window.stop()
+}
+
+export type ErrorCode = string
+export type ErrorStatus = number | null
+
+export type ResponseError = Readonly<{
+  code: ErrorCode
+  message: ErrorMessage
+  params?: { [key: string]: string }
+  status: ErrorStatus
+}>
+
+export async function getResponseError(response: Response): Promise<[ErrorMessage, ErrorCode, ErrorStatus]> {
+  const errorObject = await response.json() as ResponseError | null
+  const errorMessage = errorObject?.message ?? 'Something went wrong'
+  const errorCode = errorObject?.code ?? ''
+  const errorStatus = errorObject?.status ?? null
+  if (!errorObject?.params) {
+    return [errorMessage, errorCode, errorStatus]
+  }
+  return [
+    Object.entries(errorObject.params).reduce((message, [key, value]) => {
+      return message.replace(`$${key}`, value)
+    }, errorMessage),
+    errorCode,
+    errorStatus,
+  ]
+}
+
+export class NotFoundError extends Error { }
+
+async function handleError(response: Response): Promise<void> {
+  const [message] = await getResponseError(response)
+  if (response.status === 404) {
+    throw new NotFoundError(message)
+  }
+  throw new Error(message)
+}
+
+export const FETCH_ERROR_EVENT = 'fetch-error'
+export const FETCH_REDIRECT_EVENT = 'fetch-redirect'
+
+export type FetchErrorDetails = {
+  title: string
+  message: ErrorMessage
+  code: ErrorCode
+  status: ErrorStatus
+  /** When true, always snackbar — never the full-page ErrorPage (used by AI Chat over the portal). */
+  forceSnackbar?: boolean
+}
+
+export const FETCH_REDIRECT_TYPE_PACKAGE = 'package-redirect'
+export type FetchRedirectType = typeof FETCH_REDIRECT_TYPE_PACKAGE
+
+export type FetchRedirectDetails = {
+  redirectType: FetchRedirectType
+  id: Key
+}
+
+export const ERROR_CODE_OPERATION_NOT_FOUND = '2301'
+export const ERROR_CODE_IDP_URL_NOT_FOUND = '2902'

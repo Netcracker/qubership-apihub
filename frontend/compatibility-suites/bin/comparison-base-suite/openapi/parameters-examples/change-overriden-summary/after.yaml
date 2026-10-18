@@ -1,0 +1,29 @@
+openapi: 3.1.0
+info:
+  title: Swagger Petstore - OpenAPI 3.1
+  version: 1.0.12
+paths:
+  /path1:
+    post:
+      summary: Finds Pets by tags.
+      description: Multiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.
+      operationId: findPetsByTags
+      parameters:
+        - name: tags
+          in: query
+          description: Tags to filter by
+          schema:
+            type: string
+          examples:
+            ex1: 
+              $ref: "#/components/examples/ex1"
+              summary: New example summary override
+      responses:
+        '200':
+          description: successful operation
+components:
+  examples:
+    ex1:
+      summary: example summary from components 
+      description: example description from components 
+      value: petpet

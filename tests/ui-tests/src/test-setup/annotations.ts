@@ -1,0 +1,1 @@
+export const OUTDATED_NOTIFICATION_FLAKY_TEST_ANNOTATION = 'Sometimes the Outdated Revision notification dialog doesn\'t appear immediately when switching tabs, although by design it should appear instantly upon tab switching'

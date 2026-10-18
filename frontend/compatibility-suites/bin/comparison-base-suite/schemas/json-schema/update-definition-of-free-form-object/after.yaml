@@ -1,0 +1,7 @@
+properties:
+  option1:
+    type: object
+    additionalProperties: true
+  option2:
+    type: object
+    additionalProperties: {}

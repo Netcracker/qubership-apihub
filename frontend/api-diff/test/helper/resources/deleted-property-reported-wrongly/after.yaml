@@ -1,0 +1,66 @@
+openapi: 3.1.0
+info:
+  title: Test sample
+  version: '1.0.0'
+paths:
+  /testPath:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/QipDatafixCreateDto'
+                - $ref: '#/components/schemas/RestCreateDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    AuthorizationDto:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+    RestApiCallDto:
+      type: object
+      required:
+        - method
+        - url
+        - auth
+      properties:
+        method:
+          type: string
+        url:
+          type: string
+          pattern: \S
+        auth:
+          $ref: '#/components/schemas/AuthorizationDto'
+    ChainDto:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+    QipDatafixCreateDto:
+      type: object
+      properties:
+        qipHttpTrigger:
+          type: object
+        qipChain:
+          $ref: '#/components/schemas/ChainDto'
+          type: object
+    RestCreateDto:
+      type: object
+      required:
+        - ticketExternalLink
+        - type
+      properties:
+        restApiCall:
+          type: object
+        ticketExternalLink:
+          type: string

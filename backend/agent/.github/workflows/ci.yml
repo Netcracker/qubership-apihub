@@ -1,0 +1,42 @@
+name: build Docker image and run agent E2E tests
+
+on:
+  push:
+    branches:
+      - "**"
+    tags:
+      - '**'
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-docker-image:
+    uses: netcracker/qubership-apihub-ci/.github/workflows/docker-ci.yml@main
+    with:
+        name: qubership-apihub-agent
+        file: Dockerfile
+        context: ""
+        platforms: linux/amd64,linux/arm64
+        labels: |
+            maintainer=qubership
+
+  run-e2e-tests:
+    uses: netcracker/qubership-apihub-ci/.github/workflows/run-e2e-tests-kind.yaml@main
+    needs: build-docker-image
+    if: github.event_name == 'pull_request'
+    with:
+      postman-collections-list: './e2e/1_1_Smoke_Portal.postman_collection.json,./e2e/1_2_Smoke_Agent.postman_collection.json'
+      playwright-tests-run: false
+      apihub-agent-helm-repository-branch: ${{ github.head_ref }}
+      apihub-agent-image-tag: ${{ needs.build-docker-image.outputs.image_tag }}
+    secrets:
+      APIHUB_ACCESS_TOKEN: ${{ secrets.APIHUB_ACCESS_TOKEN }}
+      APIHUB_ADMIN_EMAIL: ${{ secrets.APIHUB_ADMIN_EMAIL }}
+      APIHUB_ADMIN_PASSWORD: ${{ secrets.APIHUB_ADMIN_PASSWORD }}
+      JWT_PRIVATE_KEY: ${{ secrets.JWT_PRIVATE_KEY }}

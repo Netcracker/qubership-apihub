@@ -1,0 +1,5 @@
+directive @limit on FIELD 
+
+type Query {
+  fruits: [String]
+}

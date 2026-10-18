@@ -1,0 +1,15 @@
+openapi: 3.0.1
+info:
+  title: Test spec
+  version: "1.1"
+  x-api-audience: myAudience
+paths:
+  /operation21:
+    post:
+      operationId: operation21
+  /operation22:
+    post:
+      operationId: operation22
+  /operation23:
+    post:
+      operationId: operation23

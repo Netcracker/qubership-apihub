@@ -1,0 +1,13 @@
+openapi: 3.0.1
+info:
+  title: test
+  version: 0.1.0
+components:
+  parameters:
+    fields:
+      name: fields
+      in: query
+      description: description
+      schema:
+        type: string
+      example: 'category.name'

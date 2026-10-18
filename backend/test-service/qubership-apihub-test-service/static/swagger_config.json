@@ -1,0 +1,15 @@
+{
+    "configUrl": "/v3/api-docs/swagger-config",
+    "urls":[
+        {
+            "url":"/v3/api-docs",
+            "name":"Config /v3/api-docs name",
+            "x-api-kind":"no-BWC"
+        },
+        {
+            "url":"/v3/api-docs/yaml",
+            "name":"Yaml specification",
+            "x-api-kind":"no-BWC"
+        }
+    ]
+}

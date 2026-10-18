@@ -1,0 +1,35 @@
+{
+  "rules": {
+    "terminology": {
+      "defaultTerms": false,
+      "terms": [
+        "Markdown",
+        "GitHub",
+        "Git",
+        "APIs",
+        "API",
+        "JSON",
+        "YAML",
+        "HTML",
+        "CSS",
+        "SQL",
+        "URL",
+        "URLs",
+        "HTTP",
+        "HTTPS",
+        "OpenAPI",
+        "Node.js",
+        ["hard-coded", "hardcoded"],
+        ["pre-defined", "predefined"],
+        ["end to end", "end-to-end"],
+        ["server side", "server-side"],
+        ["3rd party", "third-party"],
+        ["file name", "filename"],
+        ["authentification", "authentication"],
+        ["JIRA", "Jira"],
+        ["stylesheet", "style sheet"],
+        ["API's", "APIs"]
+      ]
+    }
+  }
+}

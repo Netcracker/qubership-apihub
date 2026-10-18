@@ -1,0 +1,42 @@
+{
+  "openapi": "3.1.0",
+  "paths": {
+    "/example": {
+      "post": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "allOf": [
+                        {
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    {
+                      "allOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "boolean"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

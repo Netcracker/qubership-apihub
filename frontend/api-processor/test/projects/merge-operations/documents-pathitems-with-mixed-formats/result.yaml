@@ -1,0 +1,19 @@
+openapi: 3.1.0
+info:
+  title: manualGroup
+  version: v1
+paths:
+  /path1:
+    $ref: '#/components/pathItems/pathItem1'
+  /path2:
+    post:
+      responses:
+        '200':
+          description: response description main
+components:
+  pathItems:
+    pathItem1:
+      get:
+        responses:
+          '200':
+            description: response description main

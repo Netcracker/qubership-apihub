@@ -1,0 +1,9 @@
+properties:
+  option1:
+    type: number
+    minimum: 1
+    exclusiveMinimum: true
+  option2:
+    type: number
+    minimum: 1
+    exclusiveMinimum: true

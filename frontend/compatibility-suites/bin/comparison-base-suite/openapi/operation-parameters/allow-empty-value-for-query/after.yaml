@@ -1,0 +1,22 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    get:
+      parameters:
+        - name: param1
+          in: query
+          allowEmptyValue: true
+          schema:
+            type: string
+        - name: param2
+          in: query
+          allowEmptyValue: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content: { }

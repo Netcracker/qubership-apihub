@@ -1,0 +1,10 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+components:
+  schemas:
+    TestSchema:
+      title: TestSchema
+      x-test: TestSchema
+      type: string

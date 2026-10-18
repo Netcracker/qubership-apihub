@@ -1,0 +1,18 @@
+openapi: 3.0.3
+info:
+  title: Security Test
+  version: 1.0.0
+paths:
+  /test:
+    get:
+      summary: Test operation
+      responses:
+        '200':
+          description: OK
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+

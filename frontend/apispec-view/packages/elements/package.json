@@ -1,0 +1,42 @@
+{
+  "name": "@netcracker/qubership-apihub-apispec-view",
+  "version": "2.1.3",
+  "description": "Web Component to represent various API-specifications as a human-readable document",
+  "license": "Apache-2.0",
+  "sideEffects": [
+    "./dist/index.js",
+    "src/web-components/**",
+    "**/*.css"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./typings/index.d.ts",
+  "exports": {
+    "./styles.min.css": "./dist/index.css",
+    ".": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "generate-stories": "node bin/generate-openapi-compatibility-suite-stories.mjs",
+    "generate-tests": "node bin/generate-openapi-compatibility-suite-tests.mjs",
+    "build": "npm run build.webcomponents",
+    "postbuild": "npm run build.styles",
+    "build.styles": "postcss src/styles.css -o dist/index.css",
+    "build.webcomponents": "webpack -c ./web-components.config.js",
+    "build:showcase": "npm run generate-stories && storybook build -o ../../dist-showcase --disable-telemetry",
+    "development:storybook": "npm run generate-stories && storybook dev -p 9099",
+    "development:local-server:static": "npm run build:showcase && ws -p 9009 -d ../../dist-showcase --spa index.html --static.maxage 3600",
+    "screenshot-test": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 -c .config/it/it-test-docker.jest.config.js\"",
+    "screenshot-test:ci-legacy": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 -c .config/it/it-test.jest.config.js\"",
+    "regenerate-screenshots": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test-docker.jest.config.js\"",
+    "regenerate-screenshots:ci-legacy": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test.jest.config.js\"",
+    "type-check": "tsc --noEmit"
+  },
+  "rollup": {
+    "bundleDeps": [
+      "@fortawesome/free-solid-svg-icons"
+    ]
+  }
+}

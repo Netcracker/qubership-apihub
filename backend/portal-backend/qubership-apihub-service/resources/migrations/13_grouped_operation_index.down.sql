@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS grouped_operation_idx CASCADE;

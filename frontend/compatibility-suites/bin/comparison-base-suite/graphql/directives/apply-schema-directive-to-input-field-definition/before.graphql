@@ -1,0 +1,10 @@
+directive @sort on INPUT_FIELD_DEFINITION
+
+type Query {
+  fruits: [Fruit]
+}
+
+input Fruit {
+  id: ID
+  name: String
+} 

@@ -1,0 +1,4 @@
+name: api-doc-viewer-authoring
+version: 1.0.0
+description: Authoring React viewer components, layouts, diff rendering, and Storybook stories for api-doc-viewer.
+author: Qubership APIHUB

@@ -1,0 +1,18 @@
+{
+  "packageId": "basic_operations",
+  "files": [
+    {
+      "fileId": "openapi.json",
+      "publish": true,
+      "labels": [
+        "123"
+      ]
+    }
+  ],
+  "refs": [
+    {
+      "refId": "basic_operations_refs",
+      "version": "v2"
+    }
+  ]
+}

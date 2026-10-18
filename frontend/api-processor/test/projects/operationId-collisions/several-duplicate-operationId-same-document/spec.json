@@ -1,0 +1,82 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "API with Multiple Duplicated Operations",
+    "description": "Test case for multiple duplicate operationIds within single document",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/v1/resource": {
+      "get": {
+        "summary": "Get resource",
+        "operationId": "getResource1",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api-v1-resource": {
+      "get": {
+        "summary": "Get resource duplicate",
+        "operationId": "getResource2",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/user": {
+      "post": {
+        "summary": "Create user",
+        "operationId": "createUser",
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api-v1-user": {
+      "post": {
+        "summary": "Create user duplicate",
+        "operationId": "createUser2",
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

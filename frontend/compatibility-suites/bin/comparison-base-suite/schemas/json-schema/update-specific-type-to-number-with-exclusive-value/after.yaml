@@ -1,0 +1,4 @@
+description: specific to number with exclusive value
+type: number
+exclusiveMaximum: true
+exclusiveMinimum: true

@@ -1,0 +1,13 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /pets:
+    get:
+      x-internal-use-reason:
+        reason: internal
+        release: 2022.1
+      responses:
+        '200':
+          description: OK

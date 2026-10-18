@@ -1,0 +1,7 @@
+type Query {
+  fruits: [FruitType]
+}
+enum FruitType {
+  apple @deprecated (reason: "No longer supported")
+  banana
+}

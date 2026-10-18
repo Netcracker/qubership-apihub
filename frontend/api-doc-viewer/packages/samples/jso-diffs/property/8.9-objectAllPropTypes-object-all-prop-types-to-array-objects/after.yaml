@@ -1,0 +1,46 @@
+stringValue: hello
+numberValue: 7
+booleanValue: true
+nullValue: null
+objectPrimitiveProps:
+  first: one
+  second: 2
+  third: true
+  fourth: null
+objectPropsObjects:
+  first:
+    a: 1
+  second:
+    b: 2
+objectPropsArrays:
+  first:
+    - a
+    - 1
+  second:
+    - true
+    - null
+objectAllPropTypes:
+  - id: 1
+  - id: 2
+arrayPrimitives:
+  - x
+  - 1
+  - false
+  - null
+arrayObjects:
+  - id: 1
+  - id: 2
+arrayArrayItems:
+  - - a
+    - b
+  - - 1
+    - 2
+  - - true
+    - false
+arrayAllItemTypes:
+  - x
+  - 1
+  - true
+  - null
+  - a: 1
+  - - nested

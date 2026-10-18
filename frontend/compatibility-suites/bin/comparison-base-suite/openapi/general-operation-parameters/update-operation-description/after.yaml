@@ -1,0 +1,13 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    get:
+      summary: It is a summary
+      description: It is a NEW description.
+      responses:
+        '200':
+          description: OK
+          content: { }

@@ -1,0 +1,253 @@
+{
+	"info": {
+		"_postman_id": "e62957f2-ff48-4f89-8e42-91d9d49483a3",
+		"name": "Migration",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "42584020"
+	},
+	"item": [
+		{
+			"name": "start migration",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {\r",
+							"    pm.response.to.have.status(201);\r",
+							"});\r",
+							"\r",
+							"var data = JSON.parse(responseBody);\r",
+							"pm.environment.set(\"migration_id\", data.id)"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Personal-Access-Token",
+						"value": "{{PAT}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"packageIds\": []}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{SERVER_HOST}}/api/internal/migrate/operations",
+					"host": [
+						"{{SERVER_HOST}}"
+					],
+					"path": [
+						"api",
+						"internal",
+						"migrate",
+						"operations"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get migration status",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Personal-Access-Token",
+						"value": "{{PAT}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{SERVER_HOST}}/api/internal/migrate/operations/{{migration_id}}",
+					"host": [
+						"{{SERVER_HOST}}"
+					],
+					"path": [
+						"api",
+						"internal",
+						"migrate",
+						"operations",
+						"{{migration_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_migration perf data",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Personal-Access-Token",
+						"value": "{{PAT}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{SERVER_HOST}}/api/internal/migrate/operations/{{migration_id}}/perf?includeHourPackageData=false",
+					"host": [
+						"{{SERVER_HOST}}"
+					],
+					"path": [
+						"api",
+						"internal",
+						"migrate",
+						"operations",
+						"{{migration_id}}",
+						"perf"
+					],
+					"query": [
+						{
+							"key": "includeHourPackageData",
+							"value": "false"
+						},
+						{
+							"key": "stage",
+							"value": "independent_versions_last",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_migration suspicious builds",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-Personal-Access-Token",
+						"value": "{{PAT}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{SERVER_HOST}}/api/internal/migrate/operations/{{migration_id}}/suspiciousBuilds?limit=1000&page=0",
+					"host": [
+						"{{SERVER_HOST}}"
+					],
+					"path": [
+						"api",
+						"internal",
+						"migrate",
+						"operations",
+						"{{migration_id}}",
+						"suspiciousBuilds"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "1000"
+						},
+						{
+							"key": "page",
+							"value": "0"
+						},
+						{
+							"key": "changedField",
+							"value": "operation_data.SearchScope",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "cancel running migration",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201\", function () {\r",
+							"    pm.response.to.have.status(201);\r",
+							"});\r",
+							"\r",
+							"var data = JSON.parse(responseBody);\r",
+							"pm.environment.set(\"migration_id\", data.id)"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-Personal-Access-Token",
+						"value": "{{PAT}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{SERVER_HOST}}/api/internal/migrate/operations/cancel",
+					"host": [
+						"{{SERVER_HOST}}"
+					],
+					"path": [
+						"api",
+						"internal",
+						"migrate",
+						"operations",
+						"cancel"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

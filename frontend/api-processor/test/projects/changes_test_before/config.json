@@ -1,0 +1,8 @@
+{
+  "packageId": "changes_test_before",
+  "files": [
+    {
+      "fileId": "test-api.before.yaml"
+    }
+  ]
+}

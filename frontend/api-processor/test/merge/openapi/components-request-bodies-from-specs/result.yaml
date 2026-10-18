@@ -1,0 +1,20 @@
+openapi: 3.0.1
+info:
+  title: test
+  version: 0.1.0
+components:
+  requestBodies:
+    PetBody:
+      description: description
+      content:
+        application/json:
+          schema:
+            type: string
+          example: value1
+    PetBody2:
+      description: description
+      content:
+        application/xml:
+          schema:
+            type: string
+          example: value1

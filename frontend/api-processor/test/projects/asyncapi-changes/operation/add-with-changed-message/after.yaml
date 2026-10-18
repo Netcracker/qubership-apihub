@@ -1,0 +1,34 @@
+asyncapi: 3.0.0
+info:
+  title: Test AsyncAPI
+  version: 1.0.0
+channels:
+  channel1:
+    address: channel1
+    messages:
+      message1:
+        $ref: '#/components/messages/message1'
+operations:
+  operation1:
+    action: receive
+    channel:
+      $ref: '#/channels/channel1'
+    messages:
+      - $ref: '#/channels/channel1/messages/message1'
+  operation2:
+    action: send
+    channel:
+      $ref: '#/channels/channel1'
+    messages:
+      - $ref: '#/channels/channel1/messages/message1'
+components:
+  messages:
+    message1:
+      payload:
+        $ref: '#/components/schemas/Message1Payload'
+  schemas:
+    Message1Payload:
+      type: object
+      properties:
+        userId:
+          type: integer

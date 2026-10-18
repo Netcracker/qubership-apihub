@@ -1,0 +1,1289 @@
+{
+    "info": {
+        "name": "3_2_Stories_Bugs",
+        "_postman_id": "c436c6f8-9548-4a9e-92da-17f9c934c9cd",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "8. Stories covering",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            ""
+                        ]
+                    }
+                }
+            ],
+            "item": [
+                {
+                    "name": "8.32 APIHUB-12725 [BE] Async support",
+                    "item": [
+                        {
+                            "name": "8.32.1 Add static test-4 group",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 201\", function () {\r",
+                                            "    pm.response.to.have.status(201);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "pm.environment.set(\"static_root_group_4\", data.packageId)"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-4\",\r\n    \"Alias\" :\"QS-STATIC-TEST-4\",\r\n    \"name\": \"Test Workspace\",\r\n    \"parentId\": null,\r\n    \"kind\":\"workspace\",\r\n    \"description\": \"Required for to upload hardcoded packages\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.32.2 Create package 3",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 201\", function () {\r",
+                                            "    pm.response.to.have.status(201);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "pm.environment.set(\"package_4\", data.packageId)"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\r\n    \"id\": \"QS-STATIC-TEST-1.ASYNC\",\r\n    \"Alias\" :\"ASYNC\",\r\n    \"name\": \"Test static package\",\r\n    \"parentId\": \"QS-STATIC-TEST-4\",\r\n    \"kind\":\"package\",\r\n    \"description\": \"Package to be built\",\r\n    \"serviceName\": \"\",\r\n    \"imageUrl\": \"\"\r\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.32.1 Publish version with Async for package 1",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 202\", function () {\r",
+                                            "    pm.response.to.have.status(202);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "pm.environment.set(\"publish_id\", data.publishId);\r",
+                                            "\r",
+                                            "setTimeout(function(){}, 30000)"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_4}}/publish",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_4}}",
+                                        "publish"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data; boundary=--------------------------127308995100818139707097",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Transfer-Encoding",
+                                        "value": "base64",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"clientBuild\"\r\n\r\nfalse\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"builderId\"\r\n\r\n5680525d-7c7b-47be-8ede-d502626a79dc\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"config\"\r\n\r\n{\r\n    \"packageId\": \"QS-STATIC-TEST-4.ASYNC\",\r\n    \"version\": \"1.0\",\r\n    \"status\": \"draft\",\r\n    \"versionFolder\": \"qwerty\",\r\n    \"refs\": [],\r\n    \"files\": [{\r\n            \"fileId\": \"async.yaml\",\r\n            \"publish\": true\r\n        }\r\n    ]\r\n}\r\n----------------------------127308995100818139707097\r\nContent-Disposition: form-data; name=\"sources\"; filename=\"asunc.zip\"\r\nContent-Type: application/zip;base64\r\n\r\n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\r\n----------------------------127308995100818139707097--",
+                                    "options": {
+                                        "raw": {
+                                            "language": "text"
+                                        }
+                                    }
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.32.2 Get package build status",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "var retry = parseInt(pm.environment.get(\"com_retry_counter\") || 0);\r",
+                                            "var delay = parseInt(pm.environment.get(\"com_retry_delay\") || 0);\r",
+                                            "\r",
+                                            "var respBody = pm.response.json();\r",
+                                            "\r",
+                                            "if ((respBody.status != \"complete\") && retry < 15) {\r",
+                                            "    retry++;\r",
+                                            "    delay = 5000 + delay;\r",
+                                            "\r",
+                                            "\r",
+                                            "pm.test(\"Status is ok, response is json\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "    pm.response.to.be.ok;\r",
+                                            "});\r",
+                                            "\r",
+                                            "var respBody = pm.response.json();\r",
+                                            "\r",
+                                            "    setTimeout(function () { }, delay);\r",
+                                            "    postman.setNextRequest(request.name);\r",
+                                            "    pm.environment.set(\"com_retry_counter\", retry);\r",
+                                            "    pm.environment.set(\"com_retry_delay\", delay);\r",
+                                            "}\r",
+                                            "else {\r",
+                                            "    pm.environment.set(\"com_retry_counter\", null);\r",
+                                            "    pm.environment.set(\"com_retry_delay\", null);\r",
+                                            "\r",
+                                            "    pm.test(\"Status code is 200\", function () {\r",
+                                            "        pm.response.to.have.status(200);\r",
+                                            "    });\r",
+                                            "\r",
+                                            "}\r",
+                                            "setTimeout(function(){}, [100]);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_4}}/publish/{{publish_id}}/status",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_4}}",
+                                        "publish",
+                                        "{{publish_id}}",
+                                        "status"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.32.3 Get package versions",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = pm.response.json();\r",
+                                            "\r",
+                                            "pm.test(\"Packages has versions\", function () {\r",
+                                            "    pm.expect(data.versions.length).to.greaterThan(0);\r",
+                                            "});\r",
+                                            "\r",
+                                            "pm.environment.set(\"version_3\", data.versions[0].version);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_4}}/versions",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v3",
+                                        "packages",
+                                        "{{package_4}}",
+                                        "versions"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.32.4 Get package version details",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = pm.response.json();\r",
+                                            "\r",
+                                            "pm.test(\"'apiType' is 'asyncapi'\", function () {\r",
+                                            "    pm.expect(data.operationTypes[0].apiType).to.eql('asyncapi');\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_4}}/versions/{{version_3}}?includeSummary=true",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v3",
+                                        "packages",
+                                        "{{package_4}}",
+                                        "versions",
+                                        "{{version_3}}"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "includeSummary",
+                                            "value": "true"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.32.5 Get version documents",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = pm.response.json();\r",
+                                            "\r",
+                                            "pm.test(\"Only 1 document displayed\", function () {\r",
+                                            "    pm.expect(data.documents.length).to.eq(1);\r",
+                                            "});\r",
+                                            "\r",
+                                            "pm.environment.set(\"pkg_file_slug\", data.documents[0].slug)"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_4}}/versions/{{version_3}}/documents?limit=1&page=0",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_4}}",
+                                        "versions",
+                                        "{{version_3}}",
+                                        "documents"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "limit",
+                                            "value": "1"
+                                        },
+                                        {
+                                            "key": "page",
+                                            "value": "0"
+                                        }
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.32.6 Get document details",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "var data = pm.response.json();\r",
+                                            "\r",
+                                            "pm.environment.set(\"file_name\", data.fileId.replace(/^.*[\\\\\\/]/, ''))\r",
+                                            "\r",
+                                            "pm.test(\"Operation 'apiType' is 'asyncapi'\", function () {\r",
+                                            "    pm.expect(data.type).to.eql('asyncapi-3-0');\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_4}}/versions/{{version_3}}/documents/{{pkg_file_slug}}",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v3",
+                                        "packages",
+                                        "{{package_4}}",
+                                        "versions",
+                                        "{{version_3}}",
+                                        "documents",
+                                        "{{pkg_file_slug}}"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.32.7 Get list of graphql operations",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = JSON.parse(responseBody);\r",
+                                            "\r",
+                                            "pm.test(\"List of async operations displayed\", () => {\r",
+                                            "    pm.expect(data.operations.length).not.to.eql(0);\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_4}}/versions/{{version_3}}/asyncapi/operations",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_4}}",
+                                        "versions",
+                                        "{{version_3}}",
+                                        "asyncapi",
+                                        "operations"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        }
+                    ]
+                },
+                {
+                    "name": "8.33 APIHUB-12725 [BE] Operation groups asunc",
+                    "item": [
+                        {
+                            "name": "8.33.1 Create operation group 1",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 201\", function () {\r",
+                                            "    pm.response.to.have.status(201);\r",
+                                            "});\r",
+                                            "\r",
+                                            "pm.environment.set(\"operation_group_3\", 'test_2');"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_4}}/versions/{{version_3}}/asyncapi/groups",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v3",
+                                        "packages",
+                                        "{{package_4}}",
+                                        "versions",
+                                        "{{version_3}}",
+                                        "asyncapi",
+                                        "groups"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "groupName",
+                                            "type": "default",
+                                            "value": "test_2"
+                                        },
+                                        {
+                                            "key": "description",
+                                            "type": "default",
+                                            "value": "Test group"
+                                        }
+                                    ]
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.33.2 Check that list of operations for operation group 1 is empty",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = pm.response.json();\r",
+                                            "\r",
+                                            "pm.test(\"Operation group is empty\", function () {\r",
+                                            "    pm.expect(data.operations.length).to.eql(0);\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_4}}/versions/{{version_3}}/asyncapi/groups/{{operation_group_3}}",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_4}}",
+                                        "versions",
+                                        "{{version_3}}",
+                                        "asyncapi",
+                                        "groups",
+                                        "{{operation_group_3}}"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.33.3 Get list of operations",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = pm.response.json();\r",
+                                            "\r",
+                                            "pm.environment.set(\"operation_id_1\", data.operations[0].operationId);\r",
+                                            "pm.environment.set(\"operation_id_2\", data.operations[1].operationId);"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_4}}/versions/{{version_3}}/asyncapi/operations",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_4}}",
+                                        "versions",
+                                        "{{version_3}}",
+                                        "asyncapi",
+                                        "operations"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.33.4 Update parameters of operation group",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 204\", function () {\r",
+                                            "    pm.response.to.have.status(204);\r",
+                                            "});\r",
+                                            "\r",
+                                            "pm.environment.set(\"operation_group_1\", 'test_2');"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_4}}/versions/{{version_3}}/asyncapi/groups/{{operation_group_3}}",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v3",
+                                        "packages",
+                                        "{{package_4}}",
+                                        "versions",
+                                        "{{version_3}}",
+                                        "asyncapi",
+                                        "groups",
+                                        "{{operation_group_3}}"
+                                    ]
+                                },
+                                "method": "PATCH",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "groupName",
+                                            "type": "default",
+                                            "value": "test_2"
+                                        },
+                                        {
+                                            "key": "description",
+                                            "type": "default",
+                                            "value": "Updated test group"
+                                        }
+                                    ]
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.33.5 Update operation group",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 204\", function () {\r",
+                                            "    pm.response.to.have.status(204);\r",
+                                            "});\r",
+                                            "\r",
+                                            "pm.environment.set(\"operation_group_1\", 'test_2');"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_4}}/versions/{{version_3}}/asyncapi/groups/{{operation_group_3}}",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v3",
+                                        "packages",
+                                        "{{package_4}}",
+                                        "versions",
+                                        "{{version_3}}",
+                                        "asyncapi",
+                                        "groups",
+                                        "{{operation_group_3}}"
+                                    ]
+                                },
+                                "method": "PATCH",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "groupName",
+                                            "type": "default",
+                                            "value": "test_2"
+                                        },
+                                        {
+                                            "key": "operations",
+                                            "type": "default",
+                                            "value": "[{\n        \"operationId\": \"{{operation_id_1}}\"\n    },\n    {\n        \"operationId\": \"{{operation_id_2}}\"\n    }]"
+                                        }
+                                    ]
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.33.6 Get list of operations for operation group",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 200\", function () {\r",
+                                            "    pm.response.to.have.status(200);\r",
+                                            "});\r",
+                                            "\r",
+                                            "var data = pm.response.json();\r",
+                                            "\r",
+                                            "pm.test(\"Operation group has 2 operations\", function () {\r",
+                                            "    pm.expect(data.operations.length).to.eql(2);\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_4}}/versions/{{version_3}}/asyncapi/groups/{{operation_group_3}}",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_4}}",
+                                        "versions",
+                                        "{{version_3}}",
+                                        "asyncapi",
+                                        "groups",
+                                        "{{operation_group_3}}"
+                                    ]
+                                },
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.33.7 Create operation group 2",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 201\", function () {\r",
+                                            "    pm.response.to.have.status(201);\r",
+                                            "});\r",
+                                            "\r",
+                                            "pm.environment.set(\"operation_group_2\", 'test_del');"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v3/packages/{{package_4}}/versions/{{version_3}}/asyncapi/groups",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v3",
+                                        "packages",
+                                        "{{package_4}}",
+                                        "versions",
+                                        "{{version_3}}",
+                                        "asyncapi",
+                                        "groups"
+                                    ]
+                                },
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    },
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "multipart/form-data",
+                                        "type": "default"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "groupName",
+                                            "type": "default",
+                                            "value": "test_del"
+                                        },
+                                        {
+                                            "key": "description",
+                                            "type": "default",
+                                            "value": "Test group"
+                                        }
+                                    ]
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        },
+                        {
+                            "name": "8.33.8 Delete operation group",
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test(\"Status code is 204\", function () {\r",
+                                            "    pm.response.to.have.status(204);\r",
+                                            "});"
+                                        ]
+                                    }
+                                },
+                                {
+                                    "listen": "prerequest",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            ""
+                                        ]
+                                    }
+                                }
+                            ],
+                            "request": {
+                                "url": {
+                                    "raw": "{{SERVER_HOST}}/api/v2/packages/{{package_4}}/versions/{{version_3}}/asyncapi/groups/{{operation_group_3}}",
+                                    "host": [
+                                        "{{SERVER_HOST}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "v2",
+                                        "packages",
+                                        "{{package_4}}",
+                                        "versions",
+                                        "{{version_3}}",
+                                        "asyncapi",
+                                        "groups",
+                                        "{{operation_group_3}}"
+                                    ]
+                                },
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "api-key",
+                                        "value": "{{at-api-key}}",
+                                        "type": "default"
+                                    }
+                                ]
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {}
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "10. Cleanup Copy",
+            "auth": {
+                "type": "bearer",
+                "bearer": [
+                    {
+                        "key": "token",
+                        "value": "",
+                        "type": "string"
+                    }
+                ]
+            },
+            "item": [
+                {
+                    "name": "10.3 Delete test data from DB",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 204\", function () {\r",
+                                    "    pm.response.to.have.status(204);\r",
+                                    "});\r",
+                                    ""
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/internal/clear/{{test_id}}",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "clear",
+                                "{{test_id}}"
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                },
+                {
+                    "name": "10.4 Delete static_test_1 data from DB",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 204\", function () {\r",
+                                    "    pm.response.to.have.status(204);\r",
+                                    "});\r",
+                                    ""
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    ""
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "url": {
+                            "raw": "{{SERVER_HOST}}/api/internal/clear/STATIC-TEST-4",
+                            "host": [
+                                "{{SERVER_HOST}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "clear",
+                                "STATIC-TEST-4"
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "api-key",
+                                "value": "{{at-api-key}}",
+                                "type": "default"
+                            }
+                        ]
+                    },
+                    "response": [],
+                    "protocolProfileBehavior": {}
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        }
+    ],
+    "variable": []
+}

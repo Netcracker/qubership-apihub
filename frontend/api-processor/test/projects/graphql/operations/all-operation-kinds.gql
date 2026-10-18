@@ -1,0 +1,38 @@
+directive @deprecated(reason: String = "No longer supported") on OBJECT | INPUT_OBJECT | FIELD_DEFINITION | INPUT_FIELD_DEFINITION | ARGUMENT_DEFINITION | UNION | ENUM_VALUE
+directive @cached(maxAge: Int) on FIELD
+
+type Query {
+  listPets: [Pet!]
+  getPet(id: String!): Pet
+  listUsers: [User!]
+  getUser: User @deprecated(reason: "New query is developed")
+}
+
+type Mutation {
+  petAvailabilityCheck(input: AvailabilityCheckRequest): [AvailabilityCheckResult!]
+}
+
+type Subscription {
+  onPetAdded: Pet
+}
+
+input AvailabilityCheckRequest {
+  petId: String
+}
+
+type AvailabilityCheckResult {
+  petId: String
+}
+
+type Pet {
+  id: String
+  category: Category
+}
+
+type Category {
+  id: String
+}
+
+type User {
+  id: String
+}

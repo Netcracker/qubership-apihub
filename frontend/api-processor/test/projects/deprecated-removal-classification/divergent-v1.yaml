@@ -1,0 +1,69 @@
+openapi: 3.0.3
+info:
+  title: Deprecated removal, divergent histories
+  version: 1.0.0
+paths:
+  # Both operations are as old as each other, and both carry a long-announced element of their own on top
+  # of the one they share. That is what makes their partition signatures differ while neither of them is
+  # left without a partition, which is the case every other series here misses.
+  /first:
+    post:
+      operationId: first
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                shared:
+                  $ref: '#/components/schemas/Shared'
+                own:
+                  $ref: '#/components/schemas/AlphaBox'
+      responses:
+        '200':
+          description: OK
+  /second:
+    post:
+      operationId: second
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                shared:
+                  $ref: '#/components/schemas/Shared'
+                own:
+                  $ref: '#/components/schemas/BetaBox'
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    # Reached by both operations, so both accumulate the same history for it
+    Shared:
+      type: object
+      properties:
+        common:
+          type: string
+          deprecated: true
+        keep:
+          type: string
+    # Reached by /first alone
+    AlphaBox:
+      type: object
+      properties:
+        alpha:
+          type: string
+          deprecated: true
+        keep:
+          type: string
+    # Reached by /second alone
+    BetaBox:
+      type: object
+      properties:
+        beta:
+          type: string
+          deprecated: true
+        keep:
+          type: string

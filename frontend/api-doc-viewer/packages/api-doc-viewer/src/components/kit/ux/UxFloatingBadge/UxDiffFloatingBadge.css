@@ -1,0 +1,7 @@
+.UxDiffFloatingBadge:hover .UxDiffFloatingBadge-content {
+    display: inline;
+}
+
+.UxDiffFloatingBadge-content {
+    display: none;
+}

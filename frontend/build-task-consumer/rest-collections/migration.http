@@ -1,0 +1,24 @@
+@MIGRATE_ID = %
+@APIHUB_HOST = %
+@API_KEY = %
+
+### Start migration
+POST {{APIHUB_HOST}}/api/internal/migrate/operations
+Content-Type: application/json
+api-key: {{API_KEY}}
+
+{
+  "packageIds": [],
+  "versions": [],
+  "rebuild": true,
+  "currentBuilderVersion": ""
+}
+
+
+### Get migration results
+GET {{APIHUB_HOST}}/api/internal/migrate/operations/{{MIGRATE_ID}}?ignoreSuspiciousBuilds=true
+api-key: {{API_KEY}}
+
+### Cancel all migrations
+POST {{APIHUB_HOST}}/api/internal/migrate/operations/cancel
+api-key: {{API_KEY}}

@@ -1,0 +1,8 @@
+rules:
+  info-contact:
+    description: "Info object should contain contact info."
+    severity: warn
+    given: "$.info"
+    then:
+      field: "contact"
+      function: truthy

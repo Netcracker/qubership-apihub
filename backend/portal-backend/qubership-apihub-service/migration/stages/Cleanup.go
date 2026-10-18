@@ -1,0 +1,120 @@
+package stages
+
+import (
+	"fmt"
+
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
+
+	"github.com/go-pg/pg/v10/orm"
+	log "github.com/sirupsen/logrus"
+)
+
+func (d OpsMigration) StageCleanupBefore() error {
+	if len(d.ent.PackageIds) == 0 && len(d.ent.Versions) == 0 {
+		// it means that we're going to rebuild all versions
+		// this action will generate a lot of data and may cause DB disk overflow
+		// Try to avoid too much space usage by cleaning up all old migration build data
+		log.Infof("ops migration %s: Starting cleanup before full migration", d.ent.Id)
+
+		deleted, err := d.cleanupTransformedContentData()
+		if err != nil {
+			return err
+		}
+		log.Infof("ops migration %s: cleaned %d rows from transformed_content_data", d.ent.Id, deleted)
+
+		if d.systemInfoService.IsMinioStorageActive() {
+			ids, err := withDBRetry(d, func() ([]string, error) {
+				return d.buildCleanupRepository.GetRemoveMigrationBuildIds(d.migrationCtx)
+			})
+			if err != nil {
+				return err
+			}
+			if len(ids) == 0 {
+				log.Infof("ops migration %s: No migration build data to clean up", d.ent.Id)
+			} else {
+				err = d.minioStorageService.RemoveFiles(d.migrationCtx, view.BUILD_RESULT_TABLE, ids)
+				if err != nil {
+					return err
+				}
+				deleted, err := withDBRetry(d, func() (int, error) {
+					return d.buildCleanupRepository.RemoveMigrationBuildSourceData(d.migrationCtx, ids)
+				})
+				if err != nil {
+					return err
+				}
+				log.Infof("ops migration %s: Cleanup before full migration cleaned up %d entries", d.ent.Id, deleted)
+			}
+		} else {
+			deleted, err := withDBRetry(d, func() (int, error) {
+				return d.buildCleanupRepository.RemoveMigrationBuildData(d.migrationCtx)
+			})
+			if err != nil {
+				return err
+			}
+			log.Infof("ops migration %s: Cleanup before full migration cleaned up %d entries", d.ent.Id, deleted)
+		}
+
+		d.resetStatStatements()
+
+	}
+	return nil
+}
+
+func (d OpsMigration) StageCleanupAfter() error {
+	// delete temporary tables after migration end
+	_, err := withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().Exec(fmt.Sprintf(`drop table if exists migration."version_comparison_%s";`, d.ent.Id))
+	})
+	if err != nil {
+		log.Errorf("failed to cleanup migration tables: %v", err.Error())
+	}
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().Exec(fmt.Sprintf(`drop table if exists migration."operation_comparison_%s";`, d.ent.Id))
+	})
+	if err != nil {
+		log.Errorf("failed to cleanup migration tables: %v", err.Error())
+	}
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().Exec(fmt.Sprintf(`drop table if exists migration."ddl_comparison_%s";`, d.ent.Id))
+	})
+	if err != nil {
+		log.Errorf("failed to cleanup migration tables: %v", err.Error())
+	}
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().Exec(fmt.Sprintf(`drop table if exists migration."fts_operation_search_text_tmp_%s";`, d.ent.Id))
+	})
+	if err != nil {
+		log.Errorf("ops migration %s: failed to cleanup migration tables: %v", d.ent.Id, err.Error())
+	}
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().Exec(fmt.Sprintf(`drop table if exists migration."fts_mcp_search_text_tmp_%s";`, d.ent.Id))
+	})
+	if err != nil {
+		log.Errorf("ops migration %s: failed to cleanup migration tables: %v", d.ent.Id, err.Error())
+	}
+	_, err = withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().Exec(fmt.Sprintf(`drop table if exists migration."fts_ddl_search_text_tmp_%s";`, d.ent.Id))
+	})
+	if err != nil {
+		log.Errorf("ops migration %s: failed to cleanup migration tables: %v", d.ent.Id, err.Error())
+	}
+	return nil
+}
+
+func (d OpsMigration) resetStatStatements() {
+	log.Debugf("ops migration %s: Reset pg stat statements", d.ent.Id)
+	_, err := d.cp.GetConnection().Exec(`select pg_stat_statements_reset();`) // Ignore error in this case
+	if err != nil {
+		log.Warnf("failed to reset stat statements: %v", err.Error())
+	}
+}
+
+func (d OpsMigration) cleanupTransformedContentData() (int, error) {
+	result, err := withDBRetry(d, func() (orm.Result, error) {
+		return d.cp.GetConnection().Exec(`DELETE FROM transformed_content_data`)
+	})
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}

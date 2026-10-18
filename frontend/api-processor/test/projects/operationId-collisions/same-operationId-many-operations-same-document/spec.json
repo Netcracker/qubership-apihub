@@ -1,0 +1,64 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "API with Three Duplicated Operations",
+    "description": "Test case for three operations with same operationId",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/v1/resource": {
+      "get": {
+        "summary": "Get resource",
+        "operationId": "getResource1",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api-v1-resource": {
+      "get": {
+        "summary": "Get resource duplicate",
+        "operationId": "getResource2",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1-resource": {
+      "get": {
+        "summary": "Get resource triplicate",
+        "operationId": "getResource3",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

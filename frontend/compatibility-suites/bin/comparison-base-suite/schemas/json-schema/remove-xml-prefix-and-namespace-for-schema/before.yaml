@@ -1,0 +1,7 @@
+type: object
+properties:
+  id:
+    type: integer
+xml:
+  prefix: "p1"
+  namespace: "http://example.com/schema"

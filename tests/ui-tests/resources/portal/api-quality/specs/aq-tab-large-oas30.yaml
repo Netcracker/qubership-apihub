@@ -1,0 +1,335 @@
+openapi: 3.0.0
+info:
+  title: Synthetic Large Spec
+  version: 1.0.0
+paths:
+  # 1. Error 1
+  /path01:
+    get:
+      operationId: op01
+      summary: Operation with Error1
+      responses:
+        "200":
+          description: OK
+
+  # Filler 1-5
+  /filler01:
+    get:
+      operationId: fill01
+      summary: Clean Operation 1
+      responses:
+        "200":
+          description: OK
+  /filler02:
+    get:
+      operationId: fill02
+      summary: Clean Operation 2
+      responses:
+        "200":
+          description: OK
+  /filler03:
+    get:
+      operationId: fill03
+      summary: Clean Operation 3
+      responses:
+        "200":
+          description: OK
+  /filler04:
+    get:
+      operationId: fill04
+      summary: Clean Operation 4
+      responses:
+        "200":
+          description: OK
+  /filler05:
+    get:
+      operationId: fill05
+      summary: Clean Operation 5
+      responses:
+        "200":
+          description: OK
+
+  # 2. Warning 1
+  /path02:
+    get:
+      operationId: op02
+      summary: Operation with Warn1
+      responses:
+        "200":
+          description: OK
+
+  # Filler 6-10
+  /filler06:
+    get:
+      operationId: fill06
+      summary: Clean Operation 6
+      responses:
+        "200":
+          description: OK
+  /filler07:
+    get:
+      operationId: fill07
+      summary: Clean Operation 7
+      responses:
+        "200":
+          description: OK
+  /filler08:
+    get:
+      operationId: fill08
+      summary: Clean Operation 8
+      responses:
+        "200":
+          description: OK
+  /filler09:
+    get:
+      operationId: fill09
+      summary: Clean Operation 9
+      responses:
+        "200":
+          description: OK
+  /filler10:
+    get:
+      operationId: fill10
+      summary: Clean Operation 10
+      responses:
+        "200":
+          description: OK
+
+  # 3. Info 1
+  /path03:
+    get:
+      operationId: op03
+      summary: Operation with Info1
+      responses:
+        "200":
+          description: OK
+
+  # Filler 11-15
+  /filler11:
+    get:
+      operationId: fill11
+      summary: Clean Operation 11
+      responses:
+        "200":
+          description: OK
+  /filler12:
+    get:
+      operationId: fill12
+      summary: Clean Operation 12
+      responses:
+        "200":
+          description: OK
+  /filler13:
+    get:
+      operationId: fill13
+      summary: Clean Operation 13
+      responses:
+        "200":
+          description: OK
+  /filler14:
+    get:
+      operationId: fill14
+      summary: Clean Operation 14
+      responses:
+        "200":
+          description: OK
+  /filler15:
+    get:
+      operationId: fill15
+      summary: Clean Operation 15
+      responses:
+        "200":
+          description: OK
+
+  # 4. Hint 1
+  /path04:
+    get:
+      operationId: op04
+      summary: Operation with Hint1
+      responses:
+        "200":
+          description: OK
+
+  # Filler 16-20
+  /filler16:
+    get:
+      operationId: fill16
+      summary: Clean Operation 16
+      responses:
+        "200":
+          description: OK
+  /filler17:
+    get:
+      operationId: fill17
+      summary: Clean Operation 17
+      responses:
+        "200":
+          description: OK
+  /filler18:
+    get:
+      operationId: fill18
+      summary: Clean Operation 18
+      responses:
+        "200":
+          description: OK
+  /filler19:
+    get:
+      operationId: fill19
+      summary: Clean Operation 19
+      responses:
+        "200":
+          description: OK
+  /filler20:
+    get:
+      operationId: fill20
+      summary: Clean Operation 20
+      responses:
+        "200":
+          description: OK
+
+  # 5. Error 2
+  /path05:
+    get:
+      operationId: op05
+      summary: Operation with Error2
+      responses:
+        "200":
+          description: OK
+
+  # Filler 21-25
+  /filler21:
+    get:
+      operationId: fill21
+      summary: Clean Operation 21
+      responses:
+        "200":
+          description: OK
+  /filler22:
+    get:
+      operationId: fill22
+      summary: Clean Operation 22
+      responses:
+        "200":
+          description: OK
+  /filler23:
+    get:
+      operationId: fill23
+      summary: Clean Operation 23
+      responses:
+        "200":
+          description: OK
+  /filler24:
+    get:
+      operationId: fill24
+      summary: Clean Operation 24
+      responses:
+        "200":
+          description: OK
+  /filler25:
+    get:
+      operationId: fill25
+      summary: Clean Operation 25
+      responses:
+        "200":
+          description: OK
+
+  # 6. Warning 2
+  /path06:
+    get:
+      operationId: op06
+      summary: Operation with Warn2
+      responses:
+        "200":
+          description: OK
+
+  # Filler 26-30
+  /filler26:
+    get:
+      operationId: fill26
+      summary: Clean Operation 26
+      responses:
+        "200":
+          description: OK
+  /filler27:
+    get:
+      operationId: fill27
+      summary: Clean Operation 27
+      responses:
+        "200":
+          description: OK
+  /filler28:
+    get:
+      operationId: fill28
+      summary: Clean Operation 28
+      responses:
+        "200":
+          description: OK
+  /filler29:
+    get:
+      operationId: fill29
+      summary: Clean Operation 29
+      responses:
+        "200":
+          description: OK
+  /filler30:
+    get:
+      operationId: fill30
+      summary: Clean Operation 30
+      responses:
+        "200":
+          description: OK
+
+  # 7. Info 2
+  /path07:
+    get:
+      operationId: op07
+      summary: Operation with Info2
+      responses:
+        "200":
+          description: OK
+
+  # Filler 31-35
+  /filler31:
+    get:
+      operationId: fill31
+      summary: Clean Operation 31
+      responses:
+        "200":
+          description: OK
+  /filler32:
+    get:
+      operationId: fill32
+      summary: Clean Operation 32
+      responses:
+        "200":
+          description: OK
+  /filler33:
+    get:
+      operationId: fill33
+      summary: Clean Operation 33
+      responses:
+        "200":
+          description: OK
+  /filler34:
+    get:
+      operationId: fill34
+      summary: Clean Operation 34
+      responses:
+        "200":
+          description: OK
+  /filler35:
+    get:
+      operationId: fill35
+      summary: Clean Operation 35
+      responses:
+        "200":
+          description: OK
+
+  # 8. Hint 2
+  /path08:
+    get:
+      operationId: op08
+      summary: Operation with Hint2
+      responses:
+        "200":
+          description: OK

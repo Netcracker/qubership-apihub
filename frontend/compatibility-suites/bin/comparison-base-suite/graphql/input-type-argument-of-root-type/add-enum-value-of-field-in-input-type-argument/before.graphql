@@ -1,0 +1,12 @@
+input MessageInput {
+  content: Content
+  author: String
+  createTimestamp: String
+}
+enum Content {
+  text
+  image
+}
+type Mutation {
+  createMessage(input: MessageInput): String
+}
