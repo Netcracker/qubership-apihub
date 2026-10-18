@@ -484,7 +484,7 @@ jobs:
           bash tools/ci/e2e-collections.sh kind "$COLLECTIONS" "$TIER" "$AGENT" > "$RUNNER_TEMP/collections.txt"
           echo "collections=$(cut -d' ' -f1 "$RUNNER_TEMP/collections.txt" | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
 
-          npm install -g newman newman-reporter-htmlextra
+          npm install -g newman@6.2.3 newman-reporter-htmlextra@1.23.1
 
           env_file="$RUNNER_TEMP/ci.postman_environment.json"
           reports="$RUNNER_TEMP/newman-reports"
