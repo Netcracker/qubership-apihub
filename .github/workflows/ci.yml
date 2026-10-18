@@ -581,7 +581,10 @@ jobs:
   # on the default branch, where workflow_dispatch requires it.
   storybook-pages:
     needs: [storybooks]
-    if: always() && github.event_name != 'pull_request' && needs.storybooks.result != 'skipped'
+    # Nothing deploys the site until the PAGES_DEPLOY variable is true, so no run is dispatched before.
+    if: >-
+      always() && github.event_name != 'pull_request' && needs.storybooks.result != 'skipped'
+      && vars.PAGES_DEPLOY == 'true'
     runs-on: ubuntu-latest
     permissions:
       actions: write
@@ -613,7 +616,8 @@ jobs:
   # job that had to run was skipped: tools/ci/ci-verdict.js derives from the plan which jobs those
   # are. A skip is accepted only where the plan says nothing is affected (go, java, screenshot-tests),
   # where E2E is not due (tier none), where the run is a pull request (storybooks), or where the run
-  # cannot publish (can_publish false: images, e2e, storybooks).
+  # cannot publish (can_publish false: images, e2e, storybooks), or where PAGES_DEPLOY is not true
+  # (storybook-pages).
   ci-ok:
     needs:
       - plan
@@ -640,6 +644,7 @@ jobs:
         env:
           NEEDS: ${{ toJSON(needs) }}
           EVENT: ${{ github.event_name }}
+          PAGES_DEPLOY: ${{ vars.PAGES_DEPLOY }}
         run: node tools/ci/ci-verdict.js | tee -a "$GITHUB_STEP_SUMMARY"
 
   # Publishes the npm packages on main, after ci-ok passes. `"private": true` in each package.json

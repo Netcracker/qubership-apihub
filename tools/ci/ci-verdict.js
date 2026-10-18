@@ -9,6 +9,7 @@
  *   go, java, screenshot-tests   skipped when nothing in their area is affected
  *   e2e                          skipped when the plan chose no E2E tier
  *   storybooks, storybook-pages  skipped on pull requests
+ *   storybook-pages              also skipped while the variable PAGES_DEPLOY is not `true`
  *   js-images, go-images, java-images, e2e, storybooks, storybook-pages
  *                                skipped when the plan says the run cannot publish (`can_publish` is
  *                                `false`: a pull request from a fork, or Dependabot), because the
@@ -19,7 +20,8 @@
  * If `plan` itself failed its outputs are empty, so every optional job counts as required and the
  * verdict fails on `plan` anyway.
  *
- * Environment: NEEDS (the JSON of `toJSON(needs)`), EVENT (`github.event_name`).
+ * Environment: NEEDS (the JSON of `toJSON(needs)`), EVENT (`github.event_name`), PAGES_DEPLOY
+ * (`vars.PAGES_DEPLOY`).
  * Prints a Markdown table to stdout; exits 1 on a bad verdict.
  */
 
@@ -29,6 +31,9 @@ const out = (needs.plan && needs.plan.outputs) || {}
 
 // Only the exact string `false` excuses a skip; an empty output (plan failed) counts as publishing.
 const canPublish = out.can_publish !== 'false'
+
+// ci.yml dispatches pages.yml only while the repository variable PAGES_DEPLOY is `true`.
+const pagesDeploy = process.env.PAGES_DEPLOY === 'true'
 
 // Is the job due? An empty output (plan failed) counts as due.
 const due = {
@@ -43,7 +48,7 @@ const due = {
   'java-images': out.image_projects !== '[]' && canPublish,
   e2e: out.e2e_tier !== 'none' && canPublish,
   storybooks: event !== 'pull_request' && canPublish,
-  'storybook-pages': event !== 'pull_request' && canPublish,
+  'storybook-pages': event !== 'pull_request' && canPublish && pagesDeploy,
 }
 
 const problems = []
