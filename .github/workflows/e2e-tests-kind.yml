@@ -626,6 +626,9 @@ jobs:
           PLAYWRIGHT_REF: ${{ inputs.playwright_ref }}
           IMAGE_TAGS: ${{ inputs.image_tags }}
           DEFAULT_TAG: ${{ inputs.default_image_tag }}
+          TIER: ${{ inputs.tier }}
+          SUITES: ${{ inputs.suites }}
+          AGENT: ${{ inputs.agent }}
         run: |
           set -euo pipefail
           newman='${{ steps.newman.outcome }}'
@@ -638,7 +641,7 @@ jobs:
             echo '|---|---|'
             echo "| images | \`${{ steps.images.outputs.owner }}\`: \`$IMAGE_TAGS\`, other images \`$DEFAULT_TAG\` |"
             echo "| refs | deploy \`${DEPLOY_REF:-this commit}\`, postman \`${POSTMAN_REF:-this commit}\`, playwright \`${PLAYWRIGHT_REF:-this commit}\` |"
-            echo "| tier, suites, agent | \`${{ inputs.tier }}\`, \`${{ inputs.suites }}\`, \`${{ inputs.agent }}\` |"
+            echo "| tier, suites, agent | \`$TIER\`, \`$SUITES\`, \`$AGENT\` |"
             echo "| postman collections | \`${{ steps.newman.outputs.collections }}\` |"
             echo "| postman collections, run | \`$newman\` |"
             echo "| postman collections, results | \`$results\` |"

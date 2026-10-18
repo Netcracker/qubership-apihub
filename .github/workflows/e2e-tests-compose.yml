@@ -449,6 +449,8 @@ jobs:
         shell: bash
         env:
           FOLDER: ${{ inputs.compose_folder }}
+          TIER: ${{ inputs.tier }}
+          SUITES: ${{ inputs.suites }}
         run: |
           set -euo pipefail
           newman='${{ steps.newman.outcome }}'
@@ -460,7 +462,7 @@ jobs:
             echo '| | |'
             echo '|---|---|'
             echo "| stack | \`$FOLDER\` |"
-            echo "| tier, suites | \`${{ inputs.tier }}\`, \`${{ inputs.suites }}\` |"
+            echo "| tier, suites | \`$TIER\`, \`$SUITES\` |"
             echo "| postman collections, run | \`$newman\` |"
             echo "| postman collections, results | \`$results\` |"
             echo "| playwright | \`$play\` |"
