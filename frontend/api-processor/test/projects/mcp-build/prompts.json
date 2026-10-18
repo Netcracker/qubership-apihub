@@ -1,0 +1,36 @@
+{
+  "prompts": [
+    {
+      "name": "summarize",
+      "description": "Summarize the given text",
+      "arguments": [
+        {
+          "name": "text",
+          "description": "Text to summarize",
+          "required": true
+        },
+        {
+          "name": "max_length",
+          "description": "Maximum length of summary",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "translate",
+      "description": "Translate text to a target language",
+      "arguments": [
+        {
+          "name": "text",
+          "description": "Text to translate",
+          "required": true
+        },
+        {
+          "name": "target_language",
+          "description": "Target language",
+          "required": true
+        }
+      ]
+    }
+  ]
+}

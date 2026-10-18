@@ -1,0 +1,63 @@
+asyncapi: 3.0.0
+info:
+  title: Account Service
+  version: 1.0.0
+  description: This service is in charge of processing user signups
+servers:
+  amqp1:
+    host: broker-amqp.example.com
+    protocol: amqp
+  kafka1:
+    host: broker-kafka.example.com
+    protocol: kafka
+channels:
+  userSignedUp:
+    address: user/signedup
+    servers:
+      - $ref: '#/servers/amqp1'
+      - $ref: '#/servers/kafka1'
+    messages:
+      UserSignedUp:
+        $ref: '#/components/messages/UserSignedUp'
+  userSignedOut:
+    address: user/signedOut
+    servers:
+      - $ref: '#/servers/amqp1'
+    messages:
+      UserSignedOut:
+        $ref: '#/components/messages/UserSignedOut'
+operations:
+  sendUserSignedUp:
+    action: send
+    channel:
+      $ref: '#/channels/userSignedUp'
+    messages:
+      - $ref: '#/channels/userSignedUp/messages/UserSignedUp'
+  sendUserSignedOut:
+    action: receive
+    channel:
+      $ref: '#/channels/userSignedOut'
+    messages:
+      - $ref: '#/channels/userSignedOut/messages/UserSignedOut'
+components:
+  messages:
+    UserSignedUp:
+      title: User Signed Up
+      payload:
+        type: object
+        properties:
+          displayName:
+            type: string
+            description: Name of the user
+          email:
+            type: string
+            format: email
+            description: Email of the user
+    UserSignedOut:
+      title: User Signed Out
+      payload:
+        type: object
+        properties:
+          displayName:
+            type: string
+            description: Name of the user

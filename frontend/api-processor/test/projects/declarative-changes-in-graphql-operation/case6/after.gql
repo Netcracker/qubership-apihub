@@ -1,0 +1,15 @@
+type Mutation {
+    createPackage(input: PackageInput): Package
+}
+
+input PackageInput {
+    id: String # changed from Float
+    name: String
+    parentPackage: PackageInput  # Circular reference remains
+}
+
+type Package {
+    id: String # changed from Float
+    name: String
+    parentPackage: Package # Circular reference remains
+}

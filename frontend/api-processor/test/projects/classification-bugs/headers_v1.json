@@ -1,0 +1,47 @@
+{
+  "openapi": "3.0.1",
+  "paths": {
+    "/test/api/v2/event-headers": {
+      "post": {
+        "tags": [
+          "Test Requests V2"
+        ],
+        "summary": "Receive event headers",
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "application/json"
+              ]
+            }
+          },
+          {
+            "name": "Content-Type",
+            "in": "header",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "application/json"
+              ]
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "No content"
+          }
+        }
+      }
+    }
+  }
+}

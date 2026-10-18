@@ -1,0 +1,22 @@
+{
+  "packageId": "apihub",
+  "version": "v2",
+  "files": [
+    {
+      "fileId": "APIHUB API.yaml",
+      "publish": true,
+      "labels": [
+        "123"
+      ],
+      "commitId": "k123jkqlwe1"
+    },
+    {
+      "fileId": "Public Registry API.yaml",
+      "publish": true,
+      "labels": [
+        "333"
+      ],
+      "commitId": "k123jkqlwe31"
+    }
+  ]
+}

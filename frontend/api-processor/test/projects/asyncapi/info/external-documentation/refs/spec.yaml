@@ -1,0 +1,33 @@
+asyncapi: 3.0.0
+
+info:
+  title: External documentation
+  version: 1.0.0
+  description: AsyncAPI
+  externalDocs:
+    $ref: '#/components/externalDocs/myDocs'
+
+servers:
+  production:
+    host: broker.mycompany.com
+    protocol: amqp
+
+channels:
+  channels1:
+    messages:
+      testMessage:
+        name: test
+        payload:
+          type: object
+
+operations:
+  operation1:
+    action: send
+    channel:
+      $ref: '#/channels/channels1'
+
+components:
+  externalDocs:
+    myDocs:
+      description: Ref
+      url: https://example.com/docs

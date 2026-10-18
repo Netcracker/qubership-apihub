@@ -1,0 +1,45 @@
+openapi: 3.0.0
+info:
+  title: Sample API
+  description: API specification example
+  version: 1.0.0
+paths:
+  /salesOrder:
+    get:
+      operationId: getSalesOrder
+      summary: get sales order
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesOrder'
+components:
+  schemas:
+    SalesOrder:
+      title: SalesOrder
+      type: object
+      properties:
+        id:
+          type: string
+        price:
+          $ref: '#/components/schemas/SalesOrderPrice'
+    SalesOrderPrice:
+      title: SalesOrderPrice
+      type: object
+      properties:
+        oneTimeDiscount:
+          $ref: '#/components/schemas/MonetaryValue'
+        oneTimeTotalWithTax:
+          $ref: '#/components/schemas/MonetaryValue'
+        oneTimeTotalWithTaxDiscounted:
+          $ref: '#/components/schemas/MonetaryValue'
+    MonetaryValue:
+      title: MonetaryValue
+      type: object
+      properties:
+        value:
+          type: number #!
+        currency:
+          type: string

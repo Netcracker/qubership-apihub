@@ -1,0 +1,31 @@
+asyncapi: 3.0.0
+info:
+  title: Sample AsyncAPI
+  version: 1.0.0
+channels:
+  correlated:
+    address: correlated
+    messages:
+      correlatedEvent:
+        $ref: '#/components/messages/CorrelatedEvent'
+operations:
+  onReceive:
+    action: receive
+    channel:
+      $ref: '#/channels/correlated'
+components:
+  messages:
+    CorrelatedEvent:
+      headers:
+        $ref: '#/components/schemas/CorrelationHeaders'
+      payload:
+        type: object
+        properties:
+          correlation:
+            $ref: '#/components/schemas/CorrelationHeaders'
+  schemas:
+    CorrelationHeaders:
+      type: object
+      properties:
+        correlationId:
+          type: string #!

@@ -1,0 +1,39 @@
+openapi: 3.0.3
+info:
+  title: Deprecated removal, agreeing operations
+  version: 1.0.0
+paths:
+  # Both operations exist from the first version and reach the same schema, so they accumulate the
+  # same deprecation history and have nothing to disagree about.
+  /first:
+    post:
+      operationId: first
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shared'
+      responses:
+        '200':
+          description: OK
+  /second:
+    post:
+      operationId: second
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shared'
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    Shared:
+      type: object
+      properties:
+        legacy:
+          type: string
+          deprecated: true
+        keep:
+          type: string

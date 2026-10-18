@@ -1,0 +1,37 @@
+asyncapi: 3.0.0
+info:
+  title: Sample AsyncAPI
+  version: 1.0.0
+channels:
+  price:
+    address: price
+    messages:
+      priceUpdated:
+        $ref: '#/components/messages/PriceUpdated'
+operations:
+  onReceive:
+    action: receive
+    channel:
+      $ref: '#/channels/price'
+components:
+  messages:
+    PriceUpdated:
+      payload:
+        $ref: '#/components/schemas/Price'
+  schemas:
+    Price:
+      type: object
+      properties:
+        oneTimeDiscount:
+          $ref: '#/components/schemas/MonetaryValue'
+        oneTimeTotalWithTax:
+          $ref: '#/components/schemas/MonetaryValue'
+        oneTimeTotalWithTaxDiscounted:
+          $ref: '#/components/schemas/MonetaryValue'
+    MonetaryValue:
+      type: object
+      properties:
+        value:
+          type: number #!
+        currency:
+          type: string

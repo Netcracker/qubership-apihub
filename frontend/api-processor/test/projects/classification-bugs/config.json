@@ -1,0 +1,14 @@
+{
+  "packageId": "classification-bugs",
+  "version": "v1",
+  "files": [
+    {
+      "fileId": "request_additionalProperties_v1.json",
+      "publish": true
+    },
+    {
+      "fileId": "response_additionalProperties_v1.json",
+      "publish": true
+    }
+  ]
+}

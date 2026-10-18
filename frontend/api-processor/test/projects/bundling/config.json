@@ -1,0 +1,9 @@
+{
+  "packageId": "bundling",
+  "previousVersionPackageId": "bundling",
+  "files": [
+    {
+      "fileId": "openapi.yaml"
+    }
+  ]
+}

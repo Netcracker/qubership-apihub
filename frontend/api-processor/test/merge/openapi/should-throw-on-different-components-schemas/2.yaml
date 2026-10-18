@@ -1,0 +1,10 @@
+openapi: 3.0.1
+info:
+  title: test
+  version: 0.1.0
+components:
+  schemas:
+    UpgradeRequest:
+      title: UpgradeRequest
+      description: description
+      type: number

@@ -1,0 +1,57 @@
+openapi: 3.0.3
+info:
+  title: Deprecated removal, divergent histories
+  version: 1.0.0
+paths:
+  /first:
+    post:
+      operationId: first
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                shared:
+                  $ref: '#/components/schemas/Shared'
+                own:
+                  $ref: '#/components/schemas/AlphaBox'
+      responses:
+        '200':
+          description: OK
+  /second:
+    post:
+      operationId: second
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                shared:
+                  $ref: '#/components/schemas/Shared'
+                own:
+                  $ref: '#/components/schemas/BetaBox'
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    # All three notices are honoured at once. The two operations disagree about nothing here: each was
+    # warned about the element it shares and about its own. What differs is the set they were warned
+    # about, which is what has to keep them in separate partitions.
+    Shared:
+      type: object
+      properties:
+        keep:
+          type: string
+    AlphaBox:
+      type: object
+      properties:
+        keep:
+          type: string
+    BetaBox:
+      type: object
+      properties:
+        keep:
+          type: string

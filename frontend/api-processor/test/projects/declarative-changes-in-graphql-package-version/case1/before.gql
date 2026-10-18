@@ -1,0 +1,21 @@
+type Query {
+    salesOrder(id: String): SalesOrder
+}
+
+type Mutation {
+    createSalesOrder(input: CreateSalesOrderInput): SalesOrder
+}
+
+type SalesOrder {
+    id: String
+    price: MonetaryValue
+}
+
+type MonetaryValue {
+    value: Float
+    currency: String
+}
+
+input CreateSalesOrderInput {
+    price: MonetaryValue
+}

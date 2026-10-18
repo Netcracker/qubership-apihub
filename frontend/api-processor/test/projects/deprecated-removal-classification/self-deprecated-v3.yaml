@@ -1,0 +1,37 @@
+openapi: 3.0.3
+info:
+  title: Deprecated removal, an operation deprecated in its own right
+  version: 1.0.0
+paths:
+  # The property goes while still too young to qualify, so the removal is breaking for both operations and
+  # stays one difference. `/retired` being deprecated changes nothing about it.
+  /retired:
+    post:
+      operationId: retired
+      deprecated: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shared'
+      responses:
+        '200':
+          description: OK
+  /current:
+    post:
+      operationId: current
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Shared'
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    Shared:
+      type: object
+      properties:
+        keep:
+          type: string

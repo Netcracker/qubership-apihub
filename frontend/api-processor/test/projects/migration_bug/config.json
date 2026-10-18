@@ -1,0 +1,34 @@
+{
+  "refs": [],
+  "files": [
+    {
+      "fileId": ".gitattributes",
+      "labels": [],
+      "publish": true
+    },
+    {
+      "fileId": ".gitignore",
+      "labels": [],
+      "publish": true
+    },
+    {
+      "fileId": "README.md",
+      "labels": [],
+      "publish": true
+    }
+  ],
+  "status": "draft",
+  "version": "1.0@1",
+  "metadata": {
+    "branchName": "main",
+    "repositoryUrl": "https://git.example.com"
+  },
+  "createdBy": "",
+  "packageId": "migration_bug",
+  "publishId": "ba704d36-2010-4679-8c92-47b3a67b2422",
+  "noChangeLog": true,
+  "publishedAt": "2022-07-18T11:22:40.072378Z",
+  "versionLabels": null,
+  "previousVersion": "",
+  "previousVersionPackageId": ""
+}

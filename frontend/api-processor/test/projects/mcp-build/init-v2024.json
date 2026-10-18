@@ -1,0 +1,10 @@
+{
+  "protocolVersion": "2024-11-05",
+  "capabilities": {
+    "tools": {}
+  },
+  "serverInfo": {
+    "name": "test-mcp-server-2024",
+    "version": "1.0.0"
+  }
+}

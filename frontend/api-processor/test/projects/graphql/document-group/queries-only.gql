@@ -1,0 +1,14 @@
+type Query {
+  listPets: [Pet!]
+  listUsers: [User!]
+}
+
+type Pet {
+  id: String
+  name: String
+}
+
+type User {
+  id: String
+  username: String
+}

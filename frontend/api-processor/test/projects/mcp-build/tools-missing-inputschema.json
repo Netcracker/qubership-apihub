@@ -1,0 +1,8 @@
+{
+  "tools": [
+    {
+      "name": "no_schema_tool",
+      "description": "A tool that is missing its required inputSchema field"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+type Query {
+    getSalesOrder: SalesOrder
+}
+
+type SalesOrder {
+    id: String
+    price: Price
+}
+
+type Price {
+    priceValue: String
+}

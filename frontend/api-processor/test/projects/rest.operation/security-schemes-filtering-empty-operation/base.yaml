@@ -1,0 +1,24 @@
+openapi: 3.0.3
+info:
+  title: Security Filtering Root Test
+  version: 1.0.0
+paths:
+  /test:
+    get:
+      summary: Test operation
+      security: []
+      responses:
+        '200':
+          description: OK
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    unusedAuth:
+      type: http
+      scheme: basic

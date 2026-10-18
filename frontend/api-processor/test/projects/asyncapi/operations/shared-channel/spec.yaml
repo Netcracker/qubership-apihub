@@ -1,0 +1,90 @@
+asyncapi: 3.0.0
+info:
+  title: Shared Channel Test
+  version: 1.0.0
+channels:
+  sharedChannel:
+    address: events/shared
+    messages:
+      MessageA:
+        $ref: '#/components/messages/MessageA'
+      MessageB:
+        $ref: '#/components/messages/MessageB'
+      MessageC:
+        $ref: '#/components/messages/MessageC'
+      MessageD:
+        $ref: '#/components/messages/MessageD'
+  otherChannel:
+    address: events/other
+    messages:
+      MessageE:
+        $ref: '#/components/messages/MessageE'
+  anotherChannelWithSameMessage:
+    address: events/another
+    messages:
+      MessageA:
+        $ref: '#/components/messages/MessageA'
+operations:
+  multiMessageOp:
+    action: send
+    channel:
+      $ref: '#/channels/sharedChannel'
+    messages:
+      - $ref: '#/channels/sharedChannel/messages/MessageA'
+      - $ref: '#/channels/sharedChannel/messages/MessageB'
+      - $ref: '#/channels/sharedChannel/messages/MessageC'
+  operationD:
+    action: receive
+    channel:
+      $ref: '#/channels/sharedChannel'
+    messages:
+      - $ref: '#/channels/sharedChannel/messages/MessageD'
+  operationE:
+    action: send
+    channel:
+      $ref: '#/channels/otherChannel'
+    messages:
+      - $ref: '#/channels/otherChannel/messages/MessageE'
+  operationF:
+    action: send
+    channel:
+      $ref: '#/channels/anotherChannelWithSameMessage'
+    messages:
+      - $ref: '#/channels/anotherChannelWithSameMessage/messages/MessageA'
+components:
+  messages:
+    MessageA:
+      title: Message A
+      payload:
+        type: object
+        properties:
+          fieldA:
+            type: string
+    MessageB:
+      title: Message B
+      payload:
+        type: object
+        properties:
+          fieldB:
+            type: integer
+    MessageC:
+      title: Message C
+      payload:
+        type: object
+        properties:
+          fieldC:
+            type: boolean
+    MessageD:
+      title: Message D
+      payload:
+        type: object
+        properties:
+          fieldD:
+            type: boolean
+    MessageE:
+      title: Message E
+      payload:
+        type: object
+        properties:
+          fieldE:
+            type: string

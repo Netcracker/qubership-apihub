@@ -1,0 +1,22 @@
+{
+  "capabilities": {
+    "tools": {
+      "listChanged": true
+    },
+    "resources": {
+      "subscribe": true,
+      "listChanged": true
+    },
+    "prompts": {
+      "listChanged": true
+    },
+    "logging": {}
+  },
+  "protocolVersion": "2025-11-25",
+  "serverInfo": {
+    "name": "test-mcp-server",
+    "version": "1.0.0"
+  },
+  "title": "Server Display Title",
+  "instructions": "This is a test MCP server for unit testing."
+}

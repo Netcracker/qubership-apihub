@@ -1,0 +1,19 @@
+{
+  "packageId": "reference-bundling/case1",
+  "apiType": "rest",
+  "version": "v1",
+  "files": [
+    {
+      "fileId": "reference.yaml",
+      "publish": true,
+      "labels": [],
+      "commitId": "6c778b1f44200bd19944a6a8eac10a4e5a21a1cd"
+    },
+    {
+      "fileId": "openapi.yaml",
+      "publish": true,
+      "labels": [],
+      "commitId": "6c778b1f44200bd19944a6a8eac10a4e5a21a1xd"
+    }
+  ]
+}

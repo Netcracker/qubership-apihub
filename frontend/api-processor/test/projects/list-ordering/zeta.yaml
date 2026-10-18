@@ -1,0 +1,15 @@
+openapi: 3.0.0
+info:
+  title: Zeta
+  version: 1.0.0
+paths:
+  /zebra:
+    get:
+      responses:
+        '200':
+          description: ok
+  /mango:
+    get:
+      responses:
+        '200':
+          description: ok

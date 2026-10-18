@@ -1,0 +1,22 @@
+openapi: 3.0.0
+info:
+  description: 'test operation title'
+  title: The title
+  version: 1.0.0
+security:
+  - OAuth2_Access_Token: []
+paths:
+  /api/v1/items/{item}:
+    get:
+      description: Without summary
+      operationId: getItems
+      responses:
+        '200':
+          description: Item
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+      servers: []

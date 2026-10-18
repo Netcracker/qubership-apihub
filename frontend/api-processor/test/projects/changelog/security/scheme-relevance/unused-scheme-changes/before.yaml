@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: Security Test
+  version: 1.0.0
+paths:
+  /test:
+    get:
+      summary: Test operation
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: OK
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    OAuth2:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://example.com/oauth/authorize
+          scopes:
+            read: Read access
+

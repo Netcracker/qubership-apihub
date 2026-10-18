@@ -1,0 +1,100 @@
+/**
+ * Copyright 2024-2025 NetCracker Technology Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import type { BuildConfigFile, BuilderContext, BuildFileResult } from '../types'
+import { buildDocument, buildErrorDocument } from './document'
+import { MESSAGE_SEVERITY } from '../consts'
+import { SLUG_OPTIONS_DOCUMENT_ID, slugify } from '../utils'
+
+export const createFileSlugs = (files: BuildConfigFile[], basePath: string): BuildConfigFile[] => {
+  const { fs, slugs } = files.reduce(({ fs, slugs }, file) => {
+    if (file.slug && !slugs.includes(file.slug)) {
+      return { fs, slugs: [...slugs, file.slug] }
+    } else {
+      return { fs: [...fs, file], slugs }
+    }
+  }, { fs: [], slugs: [] } as { fs: BuildConfigFile[]; slugs: string[] })
+
+  for (const file of fs) {
+    const filename = file.fileId.substring(basePath.length).trim()
+    const name = filename.substring(filename.startsWith('.') ? 1 : 0).replace(/\.[^/.]+$/, '')
+    file.slug = slugify(name, SLUG_OPTIONS_DOCUMENT_ID, slugs)
+    slugs.push(file.slug)
+  }
+
+  return files
+}
+
+export const buildFile = async (configFile: BuildConfigFile, ctx: BuilderContext): Promise<BuildFileResult> => {
+  // Built on a copy: the entry belongs to the build config, which outlives the build and is handed over
+  // again by an incremental rebuild, so nothing the build writes may be left on it
+  const file = { ...configFile }
+  const data = await ctx.parsedFileResolver(file.fileId)
+
+  if (!data) {
+    ctx.notifications.push({
+      severity: MESSAGE_SEVERITY.Error,
+      message: 'File was not parsed',
+      fileId: file.fileId,
+    })
+    return {
+      file,
+      document: buildErrorDocument(file),
+    }
+  }
+
+  const result = await buildDocument(data, file, ctx)
+
+  if (!result) {
+    ctx.notifications.push({
+      severity: MESSAGE_SEVERITY.Error,
+      message: 'Cannot build document',
+      fileId: file.fileId,
+    })
+    return {
+      file,
+      document: buildErrorDocument(file),
+    }
+  }
+
+  return { file, document: result.document, builder: result.builder }
+}
+
+export const buildFiles = async (files: BuildConfigFile[], ctx: BuilderContext): Promise<BuildFileResult[]> => {
+
+  files = createFileSlugs(files, ctx.basePath)
+
+  const tasks = []
+
+  for (const file of files) {
+    if (!file.fileId) { continue }
+    tasks.push(
+      buildFile(file, ctx),
+    )
+  }
+
+  const result = await Promise.all(tasks)
+
+  // update publish status in documents
+  const dependencies = result.reduce((r, curr) => [...r, ...curr.document.dependencies], [] as string[])
+  for (const { document } of result) {
+    if (!dependencies.includes(document.fileId) && document.publish === undefined) {
+      document.publish = true
+    }
+  }
+
+  return result
+}

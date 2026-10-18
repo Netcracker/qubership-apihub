@@ -1,0 +1,15 @@
+{
+  "resources": [
+    {
+      "uri": "file:///docs/readme.md",
+      "name": "readme",
+      "description": "Project README file",
+      "mimeType": "text/markdown"
+    },
+    {
+      "uri": "file:///docs/changelog.md",
+      "name": "changelog",
+      "description": "Project changelog"
+    }
+  ]
+}

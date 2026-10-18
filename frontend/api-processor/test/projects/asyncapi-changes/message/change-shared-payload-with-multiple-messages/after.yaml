@@ -1,0 +1,34 @@
+asyncapi: 3.0.0
+info:
+  title: Test AsyncAPI
+  version: 1.0.0
+channels:
+  channel1:
+    address: channel1
+    messages:
+      message1:
+        $ref: '#/components/messages/message1'
+      message2:
+        $ref: '#/components/messages/message2'
+operations:
+  operation1:
+    action: receive
+    channel:
+      $ref: '#/channels/channel1'
+    messages:
+      - $ref: '#/channels/channel1/messages/message1'
+      - $ref: '#/channels/channel1/messages/message2'
+components:
+  schemas:
+    SharedPayload:
+      type: object
+      properties:
+        userId:
+          type: string
+  messages:
+    message1:
+      payload:
+        $ref: '#/components/schemas/SharedPayload'
+    message2:
+      payload:
+        $ref: '#/components/schemas/SharedPayload'

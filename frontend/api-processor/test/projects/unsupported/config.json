@@ -1,0 +1,16 @@
+{
+  "packageId": "unsupported",
+  "apiType": "rest",
+  "files": [
+    {
+      "fileId": "Document.docx",
+      "publish": true,
+      "commitId": "55d4a4c5008207d5243d511a27601ba1f2ace0c1"
+    },
+    {
+      "fileId": "Test.png",
+      "publish": true,
+      "commitId": "55d4a4c5008207d5243d511a27601ba1f2ace0c1"
+    }
+  ]
+}

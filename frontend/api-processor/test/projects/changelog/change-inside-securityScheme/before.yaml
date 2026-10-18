@@ -1,0 +1,26 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+security:
+  - ApiKeyAuth1: []
+paths:
+  /path1:
+    post:
+      responses:
+        '200':
+          description: OK
+          content: {}
+      security:
+        - Oauth2:
+            - https://www.googleapis.com/auth/bigquery
+components:
+  securitySchemes:
+    Oauth2:
+      description: Oauth 2.0 authentication
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://accounts.google.com/o/oauth2/auth
+          scopes:
+            https://www.googleapis.com/auth/bigquery: BigQuery

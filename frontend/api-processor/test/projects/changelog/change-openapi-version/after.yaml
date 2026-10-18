@@ -1,0 +1,11 @@
+openapi: 3.0.4
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    get:
+      responses:
+        '200':
+          description: OK
+          content: {}

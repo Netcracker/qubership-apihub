@@ -1,0 +1,22 @@
+{
+  "files": [
+    {
+      "fileId": "PublicRegistry API(4).yaml",
+      "publish": true,
+      "labels": [
+        "1223"
+      ],
+      "commitId": "k123jkqlwew"
+    }
+  ],
+  "status": "draft",
+  "version": "2023.2",
+  "metadata": {},
+  "buildType": "build",
+  "createdBy": "user",
+  "packageId": "agent",
+  "publishId": "25593f02-fc00-4207-87b6-487fcf2fde76",
+  "publishedAt": "0001-01-01T00:00:00Z",
+  "previousVersion": "2023.1",
+  "previousVersionPackageId": "agent"
+}

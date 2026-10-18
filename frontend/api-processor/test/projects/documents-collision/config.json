@@ -1,0 +1,20 @@
+{
+  "packageId": "documents-collision",
+  "packageName": "documents collision dashboard",
+  "apiType": "rest",
+  "version": "v1",
+  "refs": [
+    {
+      "refId": "documents-collision/package1",
+      "version": "v1"
+    },
+    {
+      "refId": "documents-collision/package2",
+      "version": "v1"
+    },
+    {
+      "refId": "documents-collision/package3",
+      "version": "v1"
+    }
+  ]
+}

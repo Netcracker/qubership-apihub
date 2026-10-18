@@ -1,0 +1,241 @@
+/**
+ * Copyright 2024-2025 NetCracker Technology Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import {
+  _ParsedFileResolver,
+  ApiDocument,
+  ApiOperation,
+  BuilderContext,
+  ExportFormat,
+  FILE_KIND,
+  FileFormat,
+  FileId,
+  OperationsApiType,
+  PackageDocument,
+  ResolvedGroupDocument,
+  VALIDATION_RULES_SEVERITY_LEVEL_ERROR,
+  VersionDocument,
+  VersionInternalDocument,
+} from '../types'
+import { bundle, Resolver } from 'api-ref-bundler'
+import {
+  ASYNCAPI_API_TYPE,
+  FILE_FORMAT_GRAPHQL,
+  FILE_FORMAT_HTML,
+  FILE_FORMAT_JSON,
+  FILE_FORMAT_YAML,
+  GRAPHQL_API_TYPE,
+  MESSAGE_SEVERITY,
+  REST_API_TYPE,
+  SERIALIZE_SYMBOL_STRING_MAPPING,
+} from '../consts'
+import { isNotEmpty } from './arrays'
+import { RefErrorType, RefErrorTypes, serialize } from '@netcracker/qubership-apihub-api-unifier'
+
+const REST_FILE_FORMATS = [FILE_FORMAT_YAML, FILE_FORMAT_JSON] as const
+type RestFileFormat = typeof REST_FILE_FORMATS[number]
+
+const GRAPHQL_FILE_FORMATS = [FILE_FORMAT_GRAPHQL] as const
+type GraphQlFileFormat = typeof GRAPHQL_FILE_FORMATS[number]
+
+const ASYNCAPI_FILE_FORMATS = [FILE_FORMAT_YAML, FILE_FORMAT_JSON] as const
+type AsyncApiFileFormat = typeof ASYNCAPI_FILE_FORMATS[number]
+
+export const EXPORT_FORMAT_TO_FILE_FORMAT = new Map<ExportFormat, RestFileFormat>([
+  [FILE_FORMAT_YAML, FILE_FORMAT_YAML],
+  [FILE_FORMAT_JSON, FILE_FORMAT_JSON],
+  [FILE_FORMAT_HTML, FILE_FORMAT_JSON],
+])
+
+export const EXPORT_GRAPHQL_FORMAT_TO_FILE_FORMAT = new Map<ExportFormat, GraphQlFileFormat>([
+  [FILE_FORMAT_GRAPHQL, FILE_FORMAT_GRAPHQL],
+])
+
+export const EXPORT_ASYNCAPI_FORMAT_TO_FILE_FORMAT = new Map<ExportFormat, AsyncApiFileFormat>([
+  [FILE_FORMAT_YAML, FILE_FORMAT_YAML],
+  [FILE_FORMAT_JSON, FILE_FORMAT_JSON],
+])
+
+export const EXPORT_API_TYPE_FORMATS = new Map<OperationsApiType, Map<ExportFormat, RestFileFormat | GraphQlFileFormat | AsyncApiFileFormat>>([
+  [REST_API_TYPE, EXPORT_FORMAT_TO_FILE_FORMAT],
+  [GRAPHQL_API_TYPE, EXPORT_GRAPHQL_FORMAT_TO_FILE_FORMAT],
+  [ASYNCAPI_API_TYPE, EXPORT_ASYNCAPI_FORMAT_TO_FILE_FORMAT],
+])
+
+export function toVersionDocument(document: ResolvedGroupDocument, fileFormat: FileFormat): VersionDocument {
+  return {
+    data: document.data,
+    version: document.version,
+    operationIds: document.includedOperationIds ?? [],
+    title: document.title,
+    filename: `${getDocumentTitle(document.filename)}.${fileFormat}`,
+    fileId: document.fileId,
+    slug: document.slug,
+    type: document.type,
+    format: fileFormat,
+    dependencies: [],
+    description: '',
+    metadata: {},
+    versionInternalDocument: createVersionInternalDocument(document.slug),
+  }
+}
+
+export function toPackageDocument(document: VersionDocument): PackageDocument {
+  return {
+    fileId: document.fileId,
+    slug: document.slug,
+    filename: document.filename,
+    type: document.type,
+    format: document.format,
+    title: document.title,
+    description: document.description,
+    operationIds: document.operationIds,
+    metadata: document.metadata,
+    version: document.version,
+    apiKind: document.apiKind,
+  }
+}
+
+export type DuplicateHandler<T> = (existing: T, duplicate: T) => void
+
+export type DuplicateOperationHandler = DuplicateHandler<ApiOperation>
+
+/**
+ * Put `value` into `map` under `key`; if an entry already existed for that key, invoke `onDuplicate`
+ * with `(existing, incoming)` before overwriting. Shared by operation and MCP-entity indexing.
+ */
+export function setReportingDuplicate<K, V>(
+  map: Map<K, V>,
+  key: K,
+  value: V,
+  onDuplicate?: DuplicateHandler<V>,
+): void {
+  const existing = map.get(key)
+  if (existing !== undefined && onDuplicate) { onDuplicate(existing, value) }
+  map.set(key, value)
+}
+
+export const findSharedPath = (fileIds: string[]): string => {
+  if (!fileIds.length) { return '' }
+  const sorted = fileIds.concat().sort()
+  const first = sorted[0].split('/')
+  const last = sorted[sorted.length - 1].split('/')
+
+  let i = 0
+  while (i < first.length - 1 && first[i] === last[i]) { i++ }
+  return first.slice(0, i).join('/') + (i ? '/' : '')
+}
+
+export const getFileExtension = (fileId: string): string => {
+  return (/[^\\/]\.([^.\\/]+)$/.exec(fileId.toLowerCase()) || ['']).pop() || ''
+}
+
+export const getDocumentTitle = (fileId: string): string => {
+  // get file name and remove extension
+  const cutDot = fileId.startsWith('.') ? 1 : 0
+  return fileId.substring(cutDot).split('/').pop()!.replace(/\.[^/.]+$/, '')
+}
+
+export interface BundlingError {
+  message: string
+  errorType: RefErrorType
+}
+
+export const createBundlingErrorHandler = (ctx: BuilderContext, fileId: FileId) => (errors: BundlingError[]): void => {
+  // Only throw if severity is ERROR and there's at least one critical error
+  if (ctx.config.validationRulesSeverity?.brokenRefs === VALIDATION_RULES_SEVERITY_LEVEL_ERROR) {
+    const criticalError = errors.find(error =>
+      error.errorType === RefErrorTypes.REF_NOT_FOUND ||
+      error.errorType === RefErrorTypes.REF_NOT_VALID_FORMAT,
+    )
+
+    if (criticalError) {
+      throw new Error(criticalError.message)
+    }
+  }
+
+  // In other cases push all errors to notifications
+  for (const error of errors) {
+    ctx.notifications.push({
+      severity: MESSAGE_SEVERITY.Error,
+      message: error.message,
+      fileId: fileId,
+    })
+  }
+}
+
+export const getBundledFileDataWithDependencies = async (
+  fileId: FileId,
+  parsedFileResolver: _ParsedFileResolver,
+  onError: (errors: BundlingError[]) => void,
+): Promise<{ data: any; dependencies: string[] }> => {
+  const dependencies: string[] = []
+  const errors: BundlingError[] = []
+
+  const resolver: Resolver = async (filepath: string) => {
+    const data = await parsedFileResolver(filepath)
+
+    if (data === null) {
+      // can't throw the error here because it will be suppressed: https://github.com/udamir/api-ref-bundler/blob/0.4.0/src/resolver.ts#L33
+      errors.push({
+        message: `Unable to resolve the file "${filepath}" because it does not exist.`,
+        errorType: RefErrorTypes.REF_NOT_FOUND,
+      })
+      return {}
+    }
+
+    if (data.kind !== FILE_KIND.TEXT) {
+      // can't throw the error here because it will be suppressed: https://github.com/udamir/api-ref-bundler/blob/0.4.0/src/resolver.ts#L33
+      errors.push({
+        message: `Unable to resolve the file "${filepath}" because it is not a valid text file.`,
+        errorType: RefErrorTypes.REF_NOT_VALID_FORMAT,
+      })
+      return {}
+    }
+
+    if (filepath !== fileId) {
+      dependencies.push(filepath)
+    }
+
+    return data.data
+  }
+
+  const bundledFileData = await bundle(fileId, resolver)
+
+  if (isNotEmpty(errors)) {
+    onError(errors)
+  }
+
+  return { data: bundledFileData, dependencies: dependencies }
+}
+
+export function capitalize(string: string): string {
+  if (!string) {
+    return ''
+  }
+
+  return string.charAt(0).toUpperCase() + string.slice(1)
+}
+
+export function serializeDocument(normalizedDocument: ApiDocument): string {
+  return serialize(normalizedDocument, SERIALIZE_SYMBOL_STRING_MAPPING)
+}
+
+export const createVersionInternalDocument = (internalDocumentId: string): VersionInternalDocument => {
+  return {
+    versionDocumentId: internalDocumentId,
+  }
+}

@@ -1,0 +1,39 @@
+asyncapi: 3.0.0
+info:
+  title: Account Service
+  version: 1.0.0
+  description: This service is in charge of processing user signups
+channels:
+  channel:
+    address: user/signedup
+    x-api-kind: no-BWC
+    messages:
+      UserSignedUp:
+        $ref: '#/components/messages/UserSignedUp'
+operations:
+  operation1:
+    action: send
+    channel:
+      $ref: '#/channels/channel'
+    messages:
+      - $ref: '#/channels/channel/messages/UserSignedUp'
+  operation2:
+    action: send
+    channel:
+      $ref: '#/channels/channel'
+    messages:
+      - $ref: '#/channels/channel/messages/UserSignedUp'
+components:
+  messages:
+    UserSignedUp:
+      title: User Signed Up
+      payload:
+        type: object
+        properties:
+          displayName:
+            type: string
+            description: Name of the user
+          email:
+            type: string
+            format: email
+            description: Email of the user

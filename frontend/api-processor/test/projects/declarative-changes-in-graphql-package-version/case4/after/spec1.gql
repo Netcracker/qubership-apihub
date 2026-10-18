@@ -1,0 +1,10 @@
+type Query {
+    getPackage(id: ID!): Package
+}
+
+type Package {
+    packageId: ID!
+    name: String!
+    parentPackageId: String
+    description: String # Added a new optional field for a description
+}

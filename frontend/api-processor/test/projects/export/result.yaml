@@ -1,0 +1,47 @@
+openapi: 3.0.0
+info:
+  title: GROUP_WITH_OPERATIONS_FROM_TWO_DOCUMENTS
+  version: regular-version
+paths:
+  /path1:
+    summary: path item summary
+    description: path item description
+    servers:
+      - url: https://example1.com
+        description: This is a server description in path item
+    parameters:
+      - $ref: '#/components/parameters/usedParameter1'
+    get:
+      summary: operation summary
+      description: operation description
+      servers:
+        - url: https://example2.com
+          description: This is a server description in operation
+      parameters:
+        - $ref: '#/components/parameters/usedParameter2'
+      responses:
+        '200':
+          description: response description
+  /path2:
+    parameters:
+      - $ref: '#/components/parameters/usedParameter1'
+    post:
+      parameters:
+        - $ref: '#/components/parameters/usedParameter2'
+      responses:
+        '200':
+          description: response description
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      description: Bearer token authentication. Default security scheme for API usage.
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    usedParameter2:
+      name: usedParameter2
+      in: query
+    usedParameter1:
+      name: usedParameter1
+      in: query

@@ -1,0 +1,60 @@
+/**
+ * Copyright 2024-2025 NetCracker Technology Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import {
+  DEPRECATED_META_KEY,
+  FILE_FORMAT_JSON,
+  FILE_FORMAT_YAML,
+  FILE_FORMAT_YML,
+  HASH_FLAG,
+  NORMALIZE_OPTIONS,
+  ORIGINS_SYMBOL,
+} from '../../consts'
+import { KeyOfConstType, ResolvedVersionDocument, ZippableDocument } from '../../types'
+import { TEXT_DOCUMENT_TYPE } from '../text'
+import { NormalizeOptions } from '@netcracker/qubership-apihub-api-unifier'
+
+export const REST_DOCUMENT_TYPE = {
+  OAS3: 'openapi-3-0',
+  OAS31: 'openapi-3-1',
+  SWAGGER: 'openapi-2-0',
+} as const
+
+export type RestDocumentType = KeyOfConstType<typeof REST_DOCUMENT_TYPE>
+
+export const REST_FILE_FORMAT = {
+  YAML: FILE_FORMAT_YAML,
+  YML: FILE_FORMAT_YML,
+  JSON: FILE_FORMAT_JSON,
+} as const
+
+// Re-export shared constants for backward compatibility
+// TODO: just use new constants for REST
+export { DEPRECATED_META_KEY }
+
+export function isRestDocument(document: ZippableDocument | ResolvedVersionDocument): boolean {
+  return Object.values(REST_DOCUMENT_TYPE).some(type => document.type === type)
+}
+
+export function isTextDocument(document: ResolvedVersionDocument): boolean {
+  return Object.values(TEXT_DOCUMENT_TYPE).some(type => document.type === type)
+}
+
+export const REST_EFFECTIVE_NORMALIZE_OPTIONS: NormalizeOptions = {
+  ...NORMALIZE_OPTIONS,
+  originsFlag: ORIGINS_SYMBOL,
+  hashFlag: HASH_FLAG,
+}

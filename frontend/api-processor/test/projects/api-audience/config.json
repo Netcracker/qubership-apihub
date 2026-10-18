@@ -1,0 +1,6 @@
+{
+  "packageId": "api-audience",
+  "files": [
+    { "fileId": "spec-1-v1.yaml", "publish": true, "labels": ["123"] }
+  ]
+}

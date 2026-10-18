@@ -1,0 +1,16 @@
+{
+  "packageId": "version-internal-documents",
+  "version": "v1",
+  "files": [
+    {
+      "fileId": "spec1.yaml",
+      "publish": true,
+      "labels": []
+    },
+    {
+      "fileId": "spec2.yaml",
+      "publish": true,
+      "labels": []
+    }
+  ]
+}

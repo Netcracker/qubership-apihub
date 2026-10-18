@@ -1,0 +1,717 @@
+swagger: "2.0"
+schemes:
+  - https
+host: api.instagram.com
+basePath: /v1
+info:
+  contact:
+    name: Instagram
+    url: https://instagram.com/developer/support
+    x-twitter: instagram
+  description: Description of Instagram RESTful API.
+  termsOfService: https://instagram.com/about/legal/terms/api/
+  title: Instagram API
+  version: 1.0.0
+externalDocs:
+  description: Instagram Developer Documentation
+  url: https://instagram.com/developer
+produces:
+  - application/json
+securityDefinitions:
+  api_key:
+    in: query
+    name: access_token
+
+tags:
+  - description: Get information about users
+    name: users
+  - description: Relationships to other users outgoing and incoming
+    name: relationships
+paths:
+  /users/search:
+    get:
+      description: Search for a user by name.
+      parameters:
+        - description: A query string.
+          in: query
+          name: q
+          required: true
+          type: string
+        - description: Number of users to return.
+          in: query
+          name: count
+          required: false
+          type: integer
+      responses:
+        "200":
+          description: List of found users.
+          schema:
+            $ref: "#/definitions/UsersInfoResponse"
+      security:
+        - api_key: []
+        - instagram_auth:
+            - basic
+      summary: Search for a user by name.
+      tags:
+        - users
+  "/users/{user-id}":
+    get:
+      description: |
+        Get basic information about a user. To get information about the owner of the access token, you can use
+        **self** instead of the `user-id`.
+
+        Security scope `public_content` is required to read information about other users.
+      parameters:
+        - description: The ID of a user to get information about, or **self** to retrieve information about authenticated user.
+          in: path
+          name: user-id
+          required: true
+          type: string
+      responses:
+        "200":
+          description: User basic information.
+          schema:
+            $ref: "#/definitions/UserResponse"
+        "404":
+          description: Not Found, user with such ID does not exist.
+      security:
+        - api_key: []
+        - instagram_auth:
+            - basic
+            - public_content
+      summary: Get basic information about a user.
+      tags:
+        - users
+  "/users/{user-id}/followed-by":
+    get:
+      description: |
+        Get the list of users this user is followed by. To get users followed by the owner of the access token, you
+        can use **self** instead of the `user-id`.
+      parameters:
+        - description: The ID of a user, or **self** to retrieve information about authenticated user.
+          in: path
+          name: user-id
+          required: true
+          type: string
+      responses:
+        "200":
+          description: List of users this user is followed by.
+          schema:
+            $ref: "#/definitions/UsersPagingResponse"
+      security:
+        - api_key: []
+        - instagram_auth:
+            - follower_list
+      summary: Get the list of users this user is followed by.
+      tags:
+        - relationships
+  "/users/{user-id}/follows":
+    get:
+      description: |
+        Get the list of users this user follows. To get follows of the owner of the access token, you can use **self**
+        instead of the `user-id`.
+      parameters:
+        - description: The ID of a user, or **self** to retrieve information about authenticated user.
+          in: path
+          name: user-id
+          required: true
+          type: string
+      responses:
+        "200":
+          description: List of users this user follows.
+          schema:
+            $ref: "#/definitions/UsersPagingResponse"
+      security:
+        - api_key: []
+        - instagram_auth:
+            - follower_list
+      summary: Get the list of users this user follows.
+      tags:
+        - relationships
+  "/users/{user-id}/media/recent":
+    get:
+      description: |
+        Get the most recent media published by a user. To get the most recent media published by the owner of the
+        access token, you can use **self** instead of the `user-id`.
+
+        Security scope `public_content` is required to read information about other users.
+      parameters:
+        - description: The ID of a user to get recent media of, or **self** to retrieve media of authenticated user.
+          in: path
+          name: user-id
+          required: true
+          type: string
+        - description: Count of media to return.
+          in: query
+          name: count
+          required: false
+          type: integer
+        - description: Return media before this UNIX timestamp.
+          format: int64
+          in: query
+          name: max_timestamp
+          required: false
+          type: integer
+        - description: Return media after this UNIX timestamp.
+          format: int64
+          in: query
+          name: min_timestamp
+          required: false
+          type: integer
+        - description: Return media later than this `min_id`.
+          in: query
+          name: min_id
+          required: false
+          type: string
+        - description: Return media earlier than this `max_id`.
+          in: query
+          name: max_id
+          required: false
+          type: string
+      responses:
+        "200":
+          description: Users media entries.
+          schema:
+            $ref: "#/definitions/MediaListResponse"
+      security:
+        - api_key: []
+        - instagram_auth:
+            - basic
+            - public_content
+      summary: Get the most recent media published by a user.
+      tags:
+        - users
+  "/users/{user-id}/relationship":
+    get:
+      description: Get information about a relationship to another user.
+      parameters:
+        - description: The ID of a user to get information about.
+          in: path
+          name: user-id
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Relationship information.
+          schema:
+            $ref: "#/definitions/RelationshipResponse"
+      security:
+        - api_key: []
+        - instagram_auth:
+            - follower_list
+      summary: Get information about a relationship to another user.
+      tags:
+        - relationships
+    post:
+      description: Modify the relationship between the current user and the target user.
+      parameters:
+        - description: The ID of the target user.
+          in: path
+          name: user-id
+          required: true
+          type: string
+        - description: Type of action to apply for relationship with the user.
+          enum:
+            - follow
+            - unfollow
+            - block
+            - unblock
+            - approve
+            - ignore
+          in: query
+          name: action
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Relationship information.
+          schema:
+            $ref: "#/definitions/RelationshipPostResponse"
+      security:
+        - api_key: []
+        - instagram_auth:
+            - relationships
+      summary: Modify the relationship between the current user and the target user.
+      tags:
+        - relationships
+definitions:
+  CaptionData:
+    properties:
+      created_time:
+        description: Caption creation UNIX timestamp
+        type: string
+      from:
+        $ref: "#/definitions/UserShortInfo"
+        description: User who created this caption
+      id:
+        description: ID of this caption
+        type: string
+      text:
+        description: Caption text
+        type: string
+    type: object
+  CommentEntry:
+    properties:
+      created_time:
+        description: Comment creation UNIX timestamp
+        type: string
+      from:
+        $ref: "#/definitions/UserShortInfo"
+        description: User who posted this comment
+      id:
+        description: ID of this comment
+        type: string
+      text:
+        description: Text of the comment
+        type: string
+    type: object
+  CommentsCollection:
+    properties:
+      count:
+        description: Nember of comments available, data does not necessary contain all comments
+        type: integer
+      data:
+        description: Collection of comment entries; **warning:** deprecated for Apps [created on or after Nov 17, 2015](http://instagram.com/developer/changelog/)
+        items:
+          $ref: "#/definitions/CommentEntry"
+        type: array
+    type: object
+  CommentsResponse:
+    properties:
+      data:
+        description: Collection of comments
+        items:
+          $ref: "#/definitions/CommentEntry"
+        type: array
+      meta:
+        $ref: "#/definitions/MetaData"
+        description: Response meta-data
+    type: object
+  CursorPaginationInfo:
+    properties:
+      next_cursor:
+        description: The cursor ID of the next page
+        type: string
+      next_url:
+        description: URL to retrieve next page of entries
+        type: string
+    type: object
+  IdPaginationInfo:
+    properties:
+      next_max_id:
+        description: The max ID of the next page
+        type: string
+      next_url:
+        description: URL to retrieve next page of entries
+        type: string
+    type: object
+  ImageInfo:
+    properties:
+      height:
+        description: Image/video height in pixels
+        type: integer
+      url:
+        description: URL of the image/video resource
+        type: string
+      width:
+        description: Image/video width in pixels
+        type: integer
+    type: object
+  ImagesData:
+    properties:
+      low_resolution:
+        $ref: "#/definitions/ImageInfo"
+        description: Image in low resolution
+      standard_resolution:
+        $ref: "#/definitions/ImageInfo"
+        description: Image in standard resolution
+      thumbnail:
+        $ref: "#/definitions/ImageInfo"
+        description: Thumbnail of the image
+    type: object
+  LikesCollection:
+    properties:
+      count:
+        description: Nember of likes available, data does not necessary contain all comments
+        type: integer
+      data:
+        description: Collection of users who liked; **warning:** deprecated for Apps [created on or after Nov 17, 2015](http://instagram.com/developer/changelog/)
+        items:
+          $ref: "#/definitions/UserShortInfo"
+        type: array
+    type: object
+  LocationInfo:
+    properties:
+      id:
+        description: ID of this location (in some responses it has a type of 'integer')
+        type: string
+      latitude:
+        description: Location latitude
+        format: double
+        type: number
+      longitude:
+        description: Location longitude
+        format: double
+        type: number
+      name:
+        description: Location name
+        type: string
+    type: object
+  LocationInfoResponse:
+    properties:
+      data:
+        $ref: "#/definitions/LocationInfo"
+        description: Location brief information
+      meta:
+        $ref: "#/definitions/MetaData"
+        description: Response meta-data
+    type: object
+  LocationSearchResponse:
+    properties:
+      data:
+        description: List of found locations
+        items:
+          $ref: "#/definitions/LocationInfo"
+        type: array
+      meta:
+        $ref: "#/definitions/MetaData"
+        description: Response meta-data
+    type: object
+  MediaEntry:
+    properties:
+      attribution:
+        description: ??? Unknown ???
+        type: string
+      caption:
+        $ref: "#/definitions/CaptionData"
+        description: Describes caption of this media
+      comments:
+        $ref: "#/definitions/CommentsCollection"
+        description: Comments of this media entry
+      created_time:
+        description: Media creation UNIX timestamp
+        type: string
+      filter:
+        description: Filter of this media entry
+        type: string
+      id:
+        description: ID of a media entry
+        type: string
+      images:
+        $ref: "#/definitions/ImagesData"
+        description: Images data in different resolutions
+      likes:
+        $ref: "#/definitions/LikesCollection"
+        description: Likes of this media entry
+      link:
+        description: Fixed URL of this media entry
+        type: string
+      location:
+        $ref: "#/definitions/LocationInfo"
+        description: Location data for this media if available
+      tags:
+        description: List of tags assigned to this media
+        items:
+          type: string
+        type: array
+      type:
+        description: Type of this media entry
+        enum:
+          - image
+          - video
+        type: string
+      user:
+        $ref: "#/definitions/UserShortInfo"
+        description: User who posted this media
+      user_has_liked:
+        description: Indicates whether authenticated user has liked this media or not
+        type: boolean
+      users_in_photo:
+        description: Users located on this media entry
+        items:
+          $ref: "#/definitions/UserInPhoto"
+        type: array
+      videos:
+        $ref: "#/definitions/VideosData"
+        description: Videos data in different resolutions, applied for 'video' type
+    type: object
+  MediaEntryResponse:
+    properties:
+      data:
+        $ref: "#/definitions/MediaEntry"
+        description: Media resource information
+      meta:
+        $ref: "#/definitions/MetaData"
+        description: Response meta-data
+    type: object
+  MediaListResponse:
+    properties:
+      data:
+        description: List of media entries
+        items:
+          $ref: "#/definitions/MediaEntry"
+        type: array
+      meta:
+        $ref: "#/definitions/MetaData"
+        description: Response meta-data
+      pagination:
+        $ref: "#/definitions/IdPaginationInfo"
+        description: Information for pagination
+    type: object
+  MediaSearchResponse:
+    properties:
+      data:
+        description: Found media entries; some end-points do not return likes informtaion
+        items:
+          $ref: "#/definitions/MediaEntry"
+        type: array
+      meta:
+        $ref: "#/definitions/MetaData"
+        description: Response meta-data
+    type: object
+  MetaData:
+    properties:
+      code:
+        description: HTTP result code
+        format: int32
+        type: integer
+    type: object
+  Position:
+    properties:
+      x:
+        description: X position (horizontal)
+        format: float
+        type: number
+      y:
+        description: Y position (vertical)
+        format: float
+        type: number
+    type: object
+  RelationshipInfo:
+    properties:
+      incoming_status:
+        description: Status of incoming relationship
+        enum:
+          - none
+          - followed_by
+          - requested_by
+        type: string
+      outgoing_status:
+        description: Status of outgoing relationship
+        enum:
+          - none
+          - follows
+          - requested
+        type: string
+      target_user_is_private:
+        description: Indicates whether target user is private or not
+        type: boolean
+    type: object
+  RelationshipPostResponse:
+    properties:
+      data:
+        $ref: "#/definitions/RelationshipStatus"
+        description: Current relationship status
+      meta:
+        $ref: "#/definitions/MetaData"
+        description: Response meta-data
+    type: object
+  RelationshipResponse:
+    properties:
+      data:
+        $ref: "#/definitions/RelationshipInfo"
+        description: Relationship information
+      meta:
+        $ref: "#/definitions/MetaData"
+        description: Response meta-data
+    type: object
+  RelationshipStatus:
+    properties:
+      outgoing_status:
+        description: Status of outgoing relationship
+        enum:
+          - none
+          - follows
+          - requested
+        type: string
+    type: object
+  StatusResponse:
+    properties:
+      data:
+        description: No data - 'null'
+        type: string
+      meta:
+        $ref: "#/definitions/MetaData"
+        description: Response meta-data
+    type: object
+  TagInfo:
+    properties:
+      media_count:
+        description: Overall number of media entries taged with this name
+        format: int64
+        type: integer
+      name:
+        description: Tag name
+        type: string
+    type: object
+  TagInfoResponse:
+    properties:
+      data:
+        $ref: "#/definitions/TagInfo"
+        description: Tag brief information
+      meta:
+        $ref: "#/definitions/MetaData"
+        description: Response meta-data
+    type: object
+  TagMediaListResponse:
+    properties:
+      data:
+        description: List of media entries with this tag
+        items:
+          $ref: "#/definitions/MediaEntry"
+        type: array
+      meta:
+        $ref: "#/definitions/MetaData"
+        description: Response meta-data
+      pagination:
+        $ref: "#/definitions/TagPaginationInfo"
+        description: Information for pagination
+    type: object
+  TagPaginationInfo:
+    properties:
+      deprecation_warning:
+        description: The deprication warning, if information is available
+        type: string
+      min_tag_id:
+        description: The min ID of a tag for the next page
+        type: string
+      next_max_id:
+        description: Depricated. Use min_tag_id instead
+        type: string
+      next_max_tag_id:
+        description: The max ID of a tag for the next page
+        type: string
+      next_min_id:
+        description: Depricated. Use max_tag_id instead
+        type: string
+      next_url:
+        description: URL to retrieve next page of entries
+        type: string
+    type: object
+  TagSearchResponse:
+    properties:
+      data:
+        description: List of found tags with brief statistics
+        items:
+          $ref: "#/definitions/TagInfo"
+        type: array
+      meta:
+        $ref: "#/definitions/MetaData"
+        description: Response meta-data
+    type: object
+  UserCounts:
+    properties:
+      followed_by:
+        description: Number of followers of this user
+        format: int32
+        type: integer
+      follows:
+        description: Number of users followed by this user
+        format: int32
+        type: integer
+      media:
+        description: Number of user media
+        format: int32
+        type: integer
+    type: object
+  UserInPhoto:
+    properties:
+      position:
+        $ref: "#/definitions/Position"
+        description: Position in photo
+      user:
+        $ref: "#/definitions/UserShortInfo"
+        description: User who is indicated on the photo
+    type: object
+  UserInfo:
+    properties:
+      bio:
+        description: User biography
+        type: string
+      counts:
+        $ref: "#/definitions/UserCounts"
+        description: User statistics (counters)
+      full_name:
+        description: User full name
+        type: string
+      id:
+        description: User ID
+        type: string
+      profile_picture:
+        description: URL to user profile picture
+        type: string
+      username:
+        description: User name, nickname
+        type: string
+      website:
+        description: URL to user web-site
+        type: string
+    type: object
+  UserResponse:
+    properties:
+      data:
+        $ref: "#/definitions/UserInfo"
+        description: User basic information
+      meta:
+        $ref: "#/definitions/MetaData"
+        description: Response meta-data
+    type: object
+  UserShortInfo:
+    properties:
+      full_name:
+        description: User full name
+        type: string
+      id:
+        description: User ID
+        type: string
+      profile_picture:
+        description: URL to user profile picture
+        type: string
+      username:
+        description: User name, nickname
+        type: string
+    type: object
+  UsersInfoResponse:
+    properties:
+      data:
+        description: User short information entries
+        items:
+          $ref: "#/definitions/UserShortInfo"
+        type: array
+      meta:
+        $ref: "#/definitions/MetaData"
+        description: Response meta-data
+    type: object
+  UsersPagingResponse:
+    properties:
+      data:
+        description: List of user short information entries
+        items:
+          $ref: "#/definitions/UserShortInfo"
+        type: array
+      meta:
+        $ref: "#/definitions/MetaData"
+        description: Response meta-data
+      pagination:
+        $ref: "#/definitions/CursorPaginationInfo"
+        description: Information for pagination
+    type: object
+  VideosData:
+    properties:
+      low_resolution:
+        $ref: "#/definitions/ImageInfo"
+        description: Video in low resolution
+      standard_resolution:
+        $ref: "#/definitions/ImageInfo"
+        description: Video in standard resolution
+    type: object
