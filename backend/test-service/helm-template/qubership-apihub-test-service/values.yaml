@@ -1,0 +1,11 @@
+qubershipApihubTestService:
+  image:
+    repository: 'ghcr.io/netcracker/qubership-apihub-test-service'
+    tag: 'main'
+  resource:
+    memory:
+      request: "32Mi"
+      limit: "32Mi"
+    cpu:
+      request: "30m"
+      limit: "100m"

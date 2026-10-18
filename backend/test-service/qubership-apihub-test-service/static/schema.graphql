@@ -1,0 +1,7864 @@
+#@deprecated Directive
+
+directive @deprecated( reason: String = "No longer supported" ) on FIELD_DEFINITION | ENUM_VALUE | INPUT_OBJECT | INPUT_FIELD_DEFINITION
+
+#@filter Directive
+
+directive @filter(filters : [String!]) on FIELD
+
+#@sort Directive
+
+directive @sort(fields: [String!]) on FIELD
+
+#@limit Directive
+
+directive @limit(offset: Int = 0, limit: Int = 20) on FIELD
+
+#@mock Directive
+
+directive @mock(value : JSON) on FIELD_DEFINITION
+
+#@complexity Directive
+
+directive @complexity(value : Int) on FIELD_DEFINITION
+
+#Queries
+
+type Query
+
+{
+
+    #getQuote
+
+    getQuote(
+        """
+        Unique identifier of the quote
+        """
+        id: ID!
+        """
+        Allows exposing not applied Price Alterations for the queried quote.
+        """
+        exposeNotAppliedDiscounts: Boolean
+
+        """Allows to get Quote Items of the Quote with only related TOP Product Offerings"""
+
+        exposeRootQuoteItems:Boolean
+    ): Quote
+
+    #List fullTextQuoteSearch Query
+    """
+    This operation lists Quotes using full text search functionality. The system searches for the text entered by the user across all Quotes for full equality. .
+    """
+    fullTextQuoteSearch (
+        """Is searched string"""
+        query: String!
+
+        """Allows to get Quote Items of Quotes with only related TOP Product Offerings"""
+
+        exposeRootQuoteItems:Boolean
+    ): [Quote!]
+
+    #List FullTextQuoteStatisticsSearch Query
+
+    """This operation lists Quotes using full text search functionality."""
+
+    fullTextQuoteStatisticsSearch(
+
+        """Is searched string"""
+
+        query: String!
+
+    ): [QuoteStatistics!]
+
+    #List QuotesStatistics Query
+
+    """This operation is used to get  list of in-flight quotes and non-in-flight ones that meet search criteria."""
+
+    listQuotesStatistics(
+
+        """State to filtering of in-flight Quotes."""
+
+        aggregate: String
+
+    ): [QuoteStatistics!]
+
+    #getCatalog
+
+    """The operation allows getting details of a catalog from Product Catalog Management"""
+
+    getCatalog(id: String!, locale:String): Catalog
+
+    #listCatalogs
+
+    """The operation allows listing existing catalogs from Product Catalog Management. Note! In order to request list of Catalogs it is required to pass at least one filtering parameter."""
+
+    listCatalogs(locale:String):[Catalog!]
+
+    #getMarketingBundleByExternalId
+
+    """This operation retrieves a Marketing Bundle by externalId (Id from external system)."""
+
+    getMarketingBundleByExternalId(
+
+        """Unique identifier if queried Marketing Bundle"""
+
+        externalId: String! ,
+
+        locale:String,
+
+        exposeActiveComponents: Boolean,
+
+    ): MarketingBundle
+
+    #getMarketingBundle
+
+    """The operations allows getting details of a Marketing Bundle."""
+
+    getMarketingBundle(
+
+        """Unique identifier if queried Marketing Bundle"""
+
+        id: ID! ,
+
+        locale:String,
+
+        exposeActiveComponents: Boolean,
+
+    ): MarketingBundle
+
+    #listMarketingBundles
+
+    """The operations allows getting list of Marketing Bundles. Note! In order to request list of Marketing Bundles it is required to pass at least one filtering parameter."""
+
+    listMarketingBundles(
+
+        locale:String,
+
+        exposeActiveComponents: Boolean,
+
+        """Date and time in which Marketing Bundle is saleable."""
+
+        effectiveDate: DateTime
+
+    ): [MarketingBundle!]
+
+    #getCategoryByExternalId
+
+    """This operation retrieves a category by externalId (Id from external system)."""
+
+    getCategoryByExternalId(
+
+        """Unique identifier of category"""
+
+        externalId: String!,
+
+        locale:String
+
+    ): Category
+
+    #getCategory
+
+    """The operation allows getting category details"""
+
+    getCategory(
+
+        """Unique identifier of category"""
+
+        id: String!,
+
+        locale:String,
+
+    ): Category
+
+    #listCategories
+
+    """The operation allows getting list of offering categories. Note! In order to request list of Categories it is required to pass at least one filtering parameter."""
+
+    listCategories(locale:String): [Category!]
+
+    #getProductOfferingByExternalId
+
+    """This operation retrieves a product offering entity."""
+
+    getProductOfferingByExternalId(
+
+        """Unique identifier of product offering"""
+
+        externalId: String!,
+
+        locale:String,
+
+        """Parameter is used to filtration the ProductOffering and his child Product Offerings.
+
+        'filterParameters' might include list of pairs <parameterName=parameterValue>,
+
+        where <parameterName> can have following names: marketId(String), brandId(String), distributionChannelId(String), customerCategoryId(String), lifecycleStatus(String), validForStartDateTime(DateTime), validForEndDateTime(DateTime) """
+
+        filterParameters:[String]
+
+    ): ProductOffering
+
+    #getProductOffering
+
+    """The operation allows getting a product offering by product offering unique identifier"""
+
+    getProductOffering(
+
+        """Unique identifier of product offering"""
+
+        id: String!,
+
+        locale: String
+
+        """Parameter is used to filtration the ProductOffering and his child Product Offerings.
+
+        'filterParameters' might include list of pairs <parameterName=parameterValue>"""
+
+        filterParameters:[String]
+
+    ): ProductOffering
+
+    #listProductOffering
+
+    """The operation allows listing product offerings."""
+
+    listProductOfferings(
+        locale: String
+    ): [ProductOffering!]
+
+    #getProductOfferingsByIds
+
+    """This bulk operation is used to retrieve list of Product Offerings by their Ids."""
+
+    getProductOfferingsByIds(
+
+        """This class is used for bulk retrieve of Produt Offerings"""
+
+        input: ProductOfferingBulkRequestInput!,
+
+    ): [ProductOffering!]
+
+    #getMarketingBundleByIds
+
+    """This bulk operation is used to retrieve list of Marketing Bundles by their Ids."""
+
+    getMarketingBundlesByIds(
+
+        """This class is used for bulk retrieve of Product Offerings"""
+
+        input: MarketingBundleBulkRequestInput!
+
+    ): [MarketingBundle!]
+
+    #getProductOfferingPriceByExternalId
+
+    """This operation retrieves a product offering price entity by externalId (Id from external system)."""
+
+    getProductOfferingPriceByExternalId(
+
+        """Unique identifier of product offering price"""
+
+        externalId: String!,
+
+        locale:String
+
+    ): ProductOfferingPrice
+
+    #getProductOfferingPrice
+
+    """This operation retrieves a product offering price entity"""
+
+    getProductOfferingPrice(
+
+        """Unique identifier of product offering price"""
+
+        id: String!,
+
+        locale:String
+
+    ): ProductOfferingPrice
+
+    #listProductOfferingPrice
+
+    """The operation returns all objects related to product offering price."""
+
+    listProductOfferingPrices(
+
+        locale:String
+
+    ): [ProductOfferingPrice!]
+
+    #GQL Anonymous Get Tag Query
+
+    """This operation retrieves a tag entity."""
+
+    getTag(
+
+        """Unique identifier of the Tag"""
+
+        id: String!
+
+    ): Tag
+
+    #GQL Anonymous List Tags Query
+
+    """The operation returns the list tags sorted by name"""
+
+    listTags: [Tag!]
+
+    #GQL Anonymous List TagGroups Query
+
+    """The operation returns the list of full Tag Group resource sorted by name"""
+
+    listTagGroups: [TagGroup!]
+
+    # GQL Anonymous Get TagGroup by Tag Query
+
+    """This operation retrieves a tag group entity by Tag id"""
+
+    getTagGroupByTag(
+
+        """Unique identifier of the Tag"""
+
+        id: String!
+
+    ): TagGroup
+
+    #GQL Anonymous Get TagGroup by Id Query
+
+    """
+
+    This operation retrieves a tag group entity.
+
+    """
+
+    getTagGroupById(
+
+        """Unique identifier of the id group"""
+
+        id: String!
+
+    ): TagGroup
+
+    #List Dictionary
+
+    """The operation allows getting a list of existing Dictionaries. Note! In order to request list of Entity Specifications it is required to pass at least one filtering parameter."""
+
+    listDictionary: [Dictionary!]
+
+    #Get Dictionary
+
+    """The operation allows getting an Entity Specification by its unique identifier"""
+
+    getDictionary(
+
+        """Unique identifier of Dictionary"""
+
+        id: String!): Dictionary
+
+    #Anonymous Marketing Catalog Management Queries
+
+    #ListEnrichmentContainer Query
+
+    """The operation returns list of EnrichmentContainers."""
+
+    listEnrichmentContainers(
+
+        """The parameter is used to filter arrays of LocalizedData."""
+
+        locale: String
+
+    ): [EnrichmentContainer!]
+
+    #UpdateEnrichmentContainer Query
+
+    """This operation retrieves enrichment container by id."""
+
+    getEnrichmentContainer(
+
+        """Unique identifier of enrichment container."""
+
+        id: String!
+
+    ): EnrichmentContainer
+
+    #ListAssociation Query
+
+    """This operation lists associations."""
+
+    listAssociations(
+
+        """Source object type of the association. The following types are supported: "ProductOffering", "TangibleProduct"."""
+
+        fromType: String!
+
+        """Source object identifier of the association."""
+
+        fromId: String!
+
+    ): [Association!]
+
+    #GetAssociation Query
+
+    """This operation retrieves association by id."""
+
+    getAssociation(
+
+        """Unique identifier of association."""
+
+        id: String!
+
+    ): Association
+
+    #GetTangibleProduct Query
+
+    """This operation retrieves tangible product by id."""
+
+    getTangibleProduct(
+
+        """Unique identifier of tangible product."""
+
+        id: String!
+
+    ): TangibleProduct
+
+    #ListTangibleProduct Query
+
+    """This operation lists tangible products."""
+
+    listTangibleProducts(
+
+        """Tangible products category"""
+
+        categoryId: String!,
+
+        """The parameter is used to filter arrays of LocalizedData"""
+
+        locale: String
+
+    ): [TangibleProduct!]
+
+    #Session Context Service Queries
+
+    #Get Session Query
+
+    """This operation retrieves specified session."""
+
+    getSessionContext(
+
+        """Unique identifier of the Session."""
+
+        sessionId: String!
+
+        """If true, systemInfo will be included in the response."""
+
+        includeSystemInfo: Boolean
+
+    ): SessionContext
+
+}
+
+#Mutations
+
+type Mutation {
+
+    #Availability Check Mutation
+
+    """The operation allows performing availability check operation in Product Catalog Management"""
+
+    availabilityCheck(input: AvailabilityCheckRequestInput): [AvailabilityCheckResult!]
+
+    # Change Quote State Mutation
+
+    """
+
+    The operation allows changing the state of a quote and returns the updated quote.
+
+    """
+
+    changeQuoteState(
+
+        """
+
+        Unique identifier of the quote.
+
+        """
+
+        id: ID!,
+
+        """Represents the state of desired state of the quote"""
+
+        input: QuoteStateChangeInput): Quote
+
+    #Create Quote Mutation
+
+    """The operation allows creating a new quote"""
+
+    createQuote(
+
+        """QuoteInput is used to create a new quote."""
+
+        input: QuoteInput
+
+        """ If equals to True, then the system returns not applied discounts in the response."""
+
+        exposeNotAppliedDiscounts: Boolean
+
+        """The parameter is used to provide the ability to create a new in-memory Quote. """
+
+        inMemoryQuoteStrategy: String
+
+    ): Quote
+
+    # Update Quote Mutation
+
+    """The operation allows updating parameters of an existing quote."""
+
+    updateQuote(
+
+        """Unique identifier of the quote."""
+
+        id: String!
+
+        """QuoteUpdateInput is used to update a quote."""
+
+        input: QuoteUpdateInput
+
+        """ If equals to True, then the system returns not applied discounts in the response."""
+
+        exposeNotAppliedDiscounts: Boolean
+
+        """The parameter provides the ability to patch previously created "In-memory" quote."""
+
+        inMemoryQuoteStrategy: String
+
+    ): Quote
+
+    #Validate Quote Mutation
+
+
+    """
+    The operation allows validating an existing quote.
+    """
+    validateQuote
+    (
+        """
+        Unique identifier of the quote.
+        """
+        id: ID!,
+        """Determines whether the Quote validation procedure includes check of hierarchical constraints for selected Product offerings.
+        True value -is skipped, others cases -must be checked"""
+        skipHierarchicalConstraintsCheck: Boolean
+    ): Quote
+
+    #GQL Anonymous Create Inflight Quote Mutation
+
+    """The operation creates in-flight Quote."""
+
+    createInflightQuote(
+
+        """Request body to create in-flight Quote."""
+        input: CreateInflightQuoteInput!
+
+    ): Quote
+
+
+    #Session Context Service Mutation
+
+    #CreateOrUpdateSessions Mutation
+
+    """This operation creates or updates sessions with context."""
+
+    createOrUpdateSessionContext(
+
+        """A session context is a data storage in the session that can contain arbitrary data."""
+
+        input: SessionContextInput!
+
+    ): SessionContext
+
+    #DeleteSession Mutation
+
+    """This operation deletes specified session with context."""
+
+    deleteSession(
+
+        """Unique identifier of the Session."""
+
+        id: String!
+
+    ): Void
+}
+
+
+
+#Quote Management Types
+
+#Money
+
+"""The entity represent a base / value business entity used to represent money..
+
+Attention:
+
+The type is used in several services.
+To check actual supported attributes please refer to TMF documentation of specific service.
+
+"""
+type Money {
+
+    """Currency (ISO4217 norm uses 3 letters to define the currency)"""
+    value: Float
+
+    """A positive floating point number"""
+    unit: String
+}
+
+#AlertItem
+
+"""
+An entity that represents a rule violation (e.g. business rules, price boundaries and so on)
+"""
+type AlertItem {
+    """Shows where rising Alert Item. Allowable values: UI,System Integration"""
+    alertDomain: String
+
+    """Level of the Alert Item. Allowable values: Error,Warning,Info"""
+    alertLevel: String
+
+    """
+    Type of the Alert Item. Allowable values: Financial,Structure,Content,Eligibility,Availability
+    """
+    alertType: String
+
+    """Shows boundaries of the overridden Price. Allowable values: More,Less"""
+    boundaryType: String
+
+    """Id of the violated category"""
+    categoryId: String
+
+    """Id of the violated characteristic"""
+    characteristicId: String
+
+    """Id of the Alert Item"""
+    id: String
+
+    """Message of the rule which conditions are violated"""
+    message: Message
+
+    """Message Code of the rule which conditions are violated"""
+    messageCode: String @deprecated(reason: "The attribute will be deleted next release23_1 cause of not supported any more.")
+
+    """Type of the violated price. Allowable values: RC,NRC"""
+    priceType: String
+
+    """Id of the related object"""
+    refId: String
+
+    """
+    Type of the related object (e.g. QuoteItem, PlaceRef, QuotePrice and so on)
+    """
+    refType: String
+
+    """Id of the violated rule"""
+    ruleId: String
+
+    """Type of the triggered rule. Allowable values: BRE,Custom"""
+    ruleType: String
+
+    """Unique identifier of a Price Alteration associated with the alert item."""
+
+    priceAlterationId: String
+
+}
+
+#AnonymousCustomerData
+
+"""
+Object that unites necessary Customer data for Anonymous Quotation process
+"""
+type AnonymousCustomerData {
+
+    """Type of the object (AnonymousCustomerInfo)"""
+
+    atType: String
+
+    """Name of the entity"""
+
+    name: String
+
+    """Represents Engaged Party data for anonymous Quotation process """
+
+    engagedParty: EngagedParty
+
+    """Represents necessary Billing Account data for anonymous Quotation process"""
+
+    billingAccountInfo: BillingAccountInfo
+
+    """The attribute contains additional parameters of the entity"""
+
+    extendedParameters: JSON
+
+    """Name of the template, that will be used for Customer and Billing Account creation"""
+
+    templateName: String
+
+    """Represents necessary Consent data for anonymous Quotation process."""
+
+    consentInfo: [ConsentInfo!]
+
+    """Indicates Notification Preferences: which notifications should be sent to particular ContactMedium"""
+
+    notificationPreference: [AnonymousNotificationPreference!]
+
+}
+
+"""Indicates Notification Preferences: which notifications should be sent to particular ContactMedium."""
+
+type AnonymousNotificationPreference {
+
+    extendedParameters: JSON
+
+    """Category of events which initiate notification (e.g. Billing Account Notifications)."""
+
+    notificationCategory: String
+
+    validFor: TimePeriod
+
+    """Indicates the contact medium that could be used to contact the party."""
+
+    contactMedium: ContactMedium
+}
+
+#BillingAccountInfo
+
+"""Represents necessary Billing Account data for anonymous Quotation process."""
+
+type BillingAccountInfo {
+
+    """This gives any additional handling instructions that are output with the bills for this account. For example, it might include instructions to the printing house regarding any special paper stock required"""
+
+    billingPresentationMedia: String
+
+    """The attribute contains additional parameters of the entity."""
+
+    extendedParameters: JSON
+
+    """Name of the template, that will be used for Billing Account creation."""
+
+    templateName: String
+
+}
+
+#BusinessGroup
+
+"""Business Group"""
+
+type BusinessGroup {
+
+    """Unique identifier of the Business Group"""
+    id: String
+
+    """Unique identifier of the Marketing Bundle"""
+    marketingBundleId: String
+
+    """Name of the Business Group."""
+    name: String
+
+    """Business Group type"""
+    type: String
+
+    """Business Group Price"""
+    businessGroupPrice: [QuotePrice!]
+
+    """Action to be performed on this Business Group."""
+    action: String
+
+    """Sub-action to be performed on this Business Group, e.g.: ROLLBACK. Attribute is used for in-flight Quote."""
+    subAction: String
+
+    """Billing name of Business Group used in the Billing system."""
+
+    billingName: String
+
+    """Attribute to capture additional parameters of the Business Group."""
+
+    extendedParameters: JSON
+}
+
+#EngagedParty Type
+
+"""
+Engaged Party data for anonymous Quotation process
+"""
+type EngagedParty {
+
+    """Birth Date"""
+
+    birthDate: DateTime
+
+    """First name"""
+
+    firstName: String
+
+    """Last name"""
+
+    lastName: String
+
+    """Middle name"""
+
+    middleName: String
+
+}
+
+#Message
+
+"""This field contains technical details about Quote processing"""
+type Message {
+    code: String
+    defaultMessage: String
+    params: JSON
+
+    """Message category."""
+
+    messageCategory: [String!]
+}
+
+#Price
+
+"""An entity that contains price values"""
+type Price {
+
+    """Generic attribute containing the link to the schema that defines the structure of the class type of the object"""
+    atSchemaLocation: String
+
+    """Indicates the (class) type of the Price."""
+    atType: String
+
+    """OTS ApproxInstallmentPaymentAmount excl. Tax"""
+    approxInstallmentPaymentAmountExcludingTax: String
+
+    """OTS ApproxInstallmentPaymentAmount excl. Tax Rounded"""
+    approxInstallmentPaymentAmountExcludingTaxRounded: String
+
+    """OTS ApproxInstallmentPaymentAmount incl. Tax"""
+    approxInstallmentPaymentAmountIncludingTax: String
+
+    """OTS ApproxInstallmentPaymentAmount incl. Tax Rounded"""
+    approxInstallmentPaymentAmountIncludingTaxRounded: String
+
+    """This flag indicates that Down Payment is overridden"""
+    downPaymentOverridden: Boolean
+
+    """Down payment Price value excluding taxes"""
+    downPaymentValueExcludingTax: String
+
+    """Down payment Price value excluding taxes and rounded"""
+    downPaymentValueExcludingTaxRounded: String
+
+    """Down payment Price value including taxes"""
+    downPaymentValueIncludingTax: String
+
+    """Down payment Price value including taxes and rounded"""
+    downPaymentValueIncludingTaxRounded: String
+
+    """Amount after all taxes are excluded"""
+    dutyFreeAmount: String @deprecated (reason: "The attribute will be deleted next release version. You can use dutyFreeAmountMoney attribute")
+
+    """All taxes excluded amount"""
+
+    dutyFreeAmountMoney: Money
+
+    """Extended parameters in <String, List<String>> format"""
+    extendedParameters: JSON
+
+    """Unique identifier of Instalment plan"""
+    installmentPlanId: String  @deprecated (reason: "According to CPQ Design.")
+
+    """Is the price overridden or not"""
+    overridden: Boolean
+
+    """Overridden price value in case of price override"""
+
+    overriddenValue: String
+
+    """
+    Type of price override. Allowable values: Manual,Automatically,MSA override
+    """
+    overrideType: String
+
+    """Percentage to apply for the Discount"""
+    percentage: Float
+
+    """Exceeding Price boundaries in case of overridden price"""
+    priceArrow: String
+
+    """Id of the Price Value from Product Offering Catalog"""
+    priceValueRef: String
+
+    """Unique identifier of the taxation involvement"""
+
+    prodOfferingPriceTaxAlterationId: String
+
+    """All taxes included amount"""
+    taxIncludedAmount: String @deprecated (reason: "The attribute will be deleted next release version. You can use taxIncludedAmountMoney attribute")
+
+    """All taxes included amount"""
+
+    taxIncludedAmountMoney: Money
+
+    """Tax rate"""
+    taxRate: Float
+
+    """Represents usage tariff"""
+    usageTariff: [UsageTariff!]
+
+    """Base Price value excluding taxes"""
+    valueBasePriceExcludingTax: String
+
+    """Base Price value excluding taxes and rounded"""
+    valueBasePriceExcludingTaxRounded: String
+
+    """Base Price value including taxes"""
+    valueBasePriceIncludingTax: String
+
+    """Base Price value including taxes and rounded"""
+    valueBasePriceIncludingTaxRounded: String
+
+    """Price value excluding taxes"""
+    valueExcludingTax: String
+
+    """Price value excluding tax and rounded"""
+    valueExcludingTaxRounded: String
+
+    """Price value including taxes"""
+    valueIncludingTax: String
+
+    """Price value including tax and rounded"""
+    valueIncludingTaxRounded: String
+
+    """Quote Item SubTotal Amount Excluding Tax"""
+    valueSubTotalPriceExcludingTax: String
+
+    """Quote Item SubTotal Amount Including Tax Rounded"""
+    valueSubTotalPriceExcludingTaxRounded: String
+
+    """Quote Item SubTotal amount Including tax"""
+    valueSubTotalPriceIncludingTax: String
+
+    """Quote Item SubTotal Amount Including tax rounded"""
+    valueSubTotalPriceIncludingTaxRounded: String
+
+    """External Id of the Price Alteration which is calculated in external system"""
+
+    externalPriceAlterationId: String
+
+    """Resulting price of One-Time Service."""
+
+    otsResultingPriceValue: String
+
+    """Price Plan ID as received from Catalog."""
+
+    pricePlanId: String
+
+}
+
+#ProductCharacteristic
+
+"""An entity that represents Characteristic of the Product Offering"""
+type ProductCharacteristic {
+
+    """Unique identifier of the Product's characteristic"""
+    id: String
+
+    """Name of the Characteristic"""
+    name: String
+
+    """
+    Unique identifiers of list Characteristic Values from Product Offering Catalog
+    """
+    rawValue: [String!]
+
+    """Value(s) of the Characteristic."""
+    value: [String!]
+
+    """Data type of the value of the characteristic (E.g. "String", "Object", "String[]"). Currently only value 'String []' is supported.."""
+
+    valueType: String
+
+    """
+    This Attribute defined in Product Catalog and reflects visibility of the Characteristic on UI.
+    """
+    visible: Boolean
+
+    """
+    Schema location
+    """
+    atSchemaLocation: String @deprecated(reason: "The attribute not supported by the service. It will be deleted next release.")
+    """
+    Type of the entity.
+    """
+    atType: String
+    """
+    Unique identifier of attribute
+    """
+    attributeId: String
+    """Attribute reflects that the Characteristic is technical and should be hidden from the User on UI. """
+    technical: Boolean
+
+    """Business Type of Product Offering Characteristic."""
+
+    businessType: String
+}
+
+#QuoteContactMedium
+
+"""Indicates the contact medium that could be used to contact the party"""
+type ContactMedium {
+    """The time period that the contact medium is valid for"""
+    characteristic: MediumCharacteristic
+
+    """If true, indicates that is the preferred contact medium"""
+    preferred: Boolean
+
+    """If true, indicates that is the preferred contact medium for contacting"""
+    preferredNotification: Boolean
+
+    """
+    Type of the contact medium, such as: email address, telephone number, postal address
+    """
+    type: String @deprecated(reason: "The attribute is not supported by service")
+
+    """
+    Type of the contact medium, such as: email address, telephone number, postal address
+    """
+    validFor: TimePeriod
+
+    """Type of the Contact Medium, such as: email address, telephone number, postal address and so on."""
+
+    mediumType: String
+}
+
+#QuoteItem
+
+"""
+Quote Item is an entity that represents a Product Offering or a Discount in the Quote.
+"""
+type QuoteItem {
+
+    """
+
+    Base type of the entity
+    """
+    atBaseType: String
+    """
+    Schema location
+    """
+    atSchemaLocation: String
+    """
+    Type of the entity.
+    """
+    atType: String
+    """
+    Unique identifier of the entity.
+    """
+    id: String
+
+
+    """
+    Action that is supposed to be initiated for the Quote Item, possible values:
+    • ADD
+    • MODIFY (for re-assign Location)
+    • DISCONNECT
+    • DASH
+    For other actions related to modification or disconnection scenarios refer to Initiate Product to Quote for Modification or Disconnection. """
+    action: String!
+    """
+    Extended parameters are used for non-OOB (not present in OOB schema) parameters in <String, List<String>> format which can be used in the business logic or 3rd party integrations. Extended parameters list is an OOB extension point of the Quote and related sub-resources.
+    """
+    extendedParameters: JSON
+    """
+    Business Group Id defines the key for bundling of Quote Items.
+    """
+    businessGroupId: String
+
+
+    """Lifecycle state of the Quote Item"""
+    state: String
+    """Number of Installments can be defined for Quote Items associated to One-Time Product Offerings that have Installment Plan(s) configured in Offering Catalog."""
+
+    numberOfInstallments: Int
+
+    """
+
+    Number of Months Till Expiration
+
+    """
+
+    numberOfMonthsTillExpiration: Int
+    """Product activation date"""
+    activeFrom: DateTime
+    """Date until which the corresponding Product is active"""
+    activeTo: DateTime
+
+    """Approval Level"""
+    approvalLevel: Int
+    """Stores the result of availability check"""
+    availabilityCheckResult: String
+    """
+    The Availability Check Result Message"""
+    availabilityCheckResultMessage: Message
+    """Date on which the prices are frozen"""
+    contractedDate: DateTime
+    """Quote Item planned disconnection date"""
+    plannedDisconnectionDate: DateTime
+    """Number of months between plannedDisconnectionDate and complitionDate of the Agreement."""
+    numberOfMonthTillExpiration : Int
+    """Reason of disconnection of the Product."""
+    disconnectionReason: String
+    """Description of disconnection reason."""
+    disconnectionReasonDescription: String
+
+    """The multiplier value defining if the Quote Item would be transformed into several Product Instances on Quote Processing completion
+    Initial Value = 1"""
+    amount: Int
+    """
+    Market the Quote Item is going to be delivered in.
+    """
+    marketSegment: MarketSegment
+    """
+    Unique id of the parent quote item within the same quote.
+    """
+    parentQuoteItemId: String
+    """
+    Quote item related Agreements
+    """
+    agreementIds: [String!]
+
+    """
+    Unique identifier of the Distribution Channel related to the Quote Item.
+    """
+    distributionChannel: Channel
+
+    """Quote item related product."""
+    product: ProductRefOrValue
+
+    """
+
+    Quote Item related product offering
+
+    """
+
+    productOffering: ProductOfferingRef
+
+    """
+
+    Indicates the quantity of the Product to be Quoted
+
+    """
+
+    quantity: Int @deprecated(reason: "The attribute will be deleted next release 23_1. The quantityNumber should be used instead of it.")
+
+    """Indicates the quantity of the Product to be quoted. By default=1"""
+
+    quantityNumber: QuantityInt
+
+    """
+
+    Quote Item prices
+
+    """
+
+    quoteItemPrice: [QuotePrice!]
+
+    """
+
+    Related billing account.
+
+    """
+
+    billingAccount: [BillingAccountRef!]
+
+    """
+    Id of the root (top) Quote Item
+    """
+    rootQuoteItemId: String
+
+    """
+
+    This field contains technical details about Quote Item processing.
+
+    """
+
+    status: String
+
+    """Id of a corresponding Condition Set"""
+    conditionSet: String
+
+    """Parameters used to override min cardinality of an Offering for MSA"""
+    mandatoryForMSA: Boolean
+
+    """Time of creation"""
+    creationTime: DateTime
+
+    """Quote Item related party reference."""
+
+    relatedParty: [RelatedPartyRef!]
+
+    """
+
+    Id of a Business Group automatically populated by the system from CPI during init procedure.
+    The Id is used by the system to control business group consistency during the quotation.
+
+    """
+
+    cpiBusinessGroupId:String
+
+    """Alternative date that used for price definition (instead of Contracted date). Example, used for definition of Price Key for calculation Disconnection fee"""
+
+    priceRecalculationDate:DateTime
+
+    """Unique identifier of Distribution Channel through which the Quote has been created."""
+
+    distributionChannelId: String
+
+    """A list of appointment references."""
+
+    appointment: [AppointmentRef!]
+
+    """Flag that highlights whether a Quote Item resides under billing suspension."""
+
+    suspended: Boolean
+
+    """The flag is set by the system in case of lack or corrupted content of the Quote Item"""
+
+    corrupted: Boolean
+
+    """Business action of the Quote Item. This is the calculated parameter with the value defined by the Project logic."""
+
+    businessAction: String
+    """Version of the CPI."""
+
+    cpiVersion: Int
+
+    """Fulfillment state of Product Order Item, e.g.:
+
+    ponrPassed
+    ponrNotPassed
+    completed
+    Attribute is used for in-flight Quote."""
+
+    fulfillmentState: String
+
+    """Sub-action to be performed on this Quote Item, e.g.:
+
+    ROLLBACK
+    Attribute is used for in-flight Quote."""
+
+    subAction: String
+
+    """Attribute is used to mark in-flight Quote Item."""
+
+    baselineQuoteItem: Boolean
+
+    """Indicates which kind of price is overridable (GROSS or NET)."""
+
+    overrideMode: String
+
+    """A product family reference."""
+
+    productFamily: ProductFamilyRef
+
+    """Unique identifier of Business Barring which was applied when this product offering added in quote."""
+
+    appliedBusinessBarringId: String
+
+    """The flag indicating either the Quote Item behaves as a periodical Product Offering or a One-Time Service."""
+
+    isOneTimeOffering: Boolean
+
+    """Unique identifier of a marketing bundle component automatically populated by the system from the Product Offering Catalog."""
+
+    marketingBundleComponentId: String
+
+    """Billing Name of Product Offering used in the Billing system"""
+
+    billingName: String
+
+    """Date is used to freeze hierarchy and check saleability on this date. It is used in cases of sale to date in the past. """
+
+    salesDate: DateTime
+
+    """Id of Business Policy Rule (from Product Offering Catalog) by which this quote item was automatically added to quote."""
+
+    appliedByBusinessRuleId: String
+
+    """Flag defines that a quote item can't be removed manually from a quote."""
+
+    prohibitManualRemoval: Boolean
+
+    """This flag indicates whether prepayment is required for this Quote Item. Null value to be considered as False."""
+
+    prepaymentRequired: Boolean
+
+    """Id of the Delivery Item."""
+
+    deliveryItemId: String
+
+}
+
+#MediumCharacteristic
+
+"""Represents the medium characteristic"""
+type MediumCharacteristic {
+
+    """The City"""
+    city: String
+
+    """The Country"""
+    country: String
+
+    """Full email address in standard format"""
+    emailAddress: String
+
+    """Extended parameters in <String, List<String>> format"""
+    extendedAttributes: JSON @deprecated(reason: "The attribute will be deleted next release cause of not supported by the service")
+
+    """Type of medium (fax, mobile phone...)"""
+    faxNumber: String
+
+    """The primary phone number of the contact"""
+    phoneNumber: String
+
+    """Postcode"""
+    postCode: String
+
+    """State or province"""
+    stateOrProvince: String
+
+    """Describes the street"""
+    street1: String
+
+    """Complementary street description"""
+    street2: String
+
+    """Type of medium (fax, mobile phone...)"""
+    type: String @deprecated(reason: "The attribute will be deleted next release cause of not supported by the service")
+
+    """The type of medium characteristic, for example: home, work, etc."""
+
+    contactType: String
+
+    """Attribute to capture additional ContactMedium parameters."""
+
+    extendedParameters: JSON
+
+}
+
+#QuotePriceAlteration
+
+"""
+The entity represents an amount, usually of money, that modifies the price charged for an order item.
+"""
+
+type PriceAlteration {
+    id: String
+
+    """
+    A short descriptive name such as "Monthly discount
+    """
+    name: String
+
+    """
+    A narrative that explains in detail the semantics of this Order Item Price Alteration
+    """
+    description: String
+
+    """ category that describes the price such as recurring, one time and usage"""
+    priceType: String
+
+    """
+    Unit of measure. Could be minutes, GB and so on
+    Note: Not supported in the current version
+    """
+    unitOfMeasure: String
+
+    """Charge Period """
+    recurringChargePeriod: String
+
+    """
+    Duration during which the alteration applies on the order item price (for
+    instance 2 months free of charge for the recurring charge)
+    """
+    applicationDuration: Int
+
+    """
+    Priority level for applying this alteration among all the defined alterations on the order item price
+    """
+    priority: Int
+    priceCondition: String @deprecated(reason: "The attribute will be deleted next release 23_1 cause of not supported any more")
+
+    """The period for which the Price Alteration is valid"""
+    validFor: TimePeriod
+
+    """An entity that contains price values"""
+    price: Price
+
+    """Related product offering Price"""
+    productOfferingPrice: ProductOfferingPriceRef
+
+    """Price Alteration action"""
+    action: String
+
+    """If alteration is applied."""
+    applied: Boolean
+
+    """Indicates the (class) type of the Price Alteration"""
+    atType: String
+    atSchemaLocation: String
+
+    """
+    Parameter states whether a Discount is applied automatically or manually
+    """
+    applicationMode: String
+
+    """
+    Parameter from Product Offering Catalog that indicates where this Discount is compatible with other ones or not
+    """
+    solo: Boolean
+
+    """Weight of the Price Alteration"""
+    weight: Int
+
+    """ Attribute used to capture additional parameters for a PriceAlteration. """
+    extendedParameters: JSON
+
+    """Units of discount application duration, e.g. Day, Week, Month, Quarter, Year."""
+    durationUnits: String
+
+    """Unique identifier of the corresponding Promotion in Catalog."""
+    promotionId: String
+
+    """Type of Price Alteration."""
+    priceAlterationType: String
+
+    """Flag indicates whether Price Alteration applies to the suspended Price."""
+    alterationOnSuspendedPrice: Boolean
+
+    """Unique identifier of the ticket from CPM. It's filled in case when Price Alteration of the 'REPLACEMENT' type (that represents price override) is created via ticket in the CPM."""
+    ticketId: String
+
+    """Ticket creation reason. It's filled in case when Price Alteration of the 'REPLACEMENT' type (that represents price override) is created via ticket in the CPM."""
+    reason: String
+
+    """ID of Price Specification, copied from the QuotePrice.priceComponentSpecificationRef. This attribute is populated only for PriceAlteration with priceAlterationType = 'DISCOUNT'."""
+
+    priceComponentSpecificationRef: String
+}
+
+
+
+#QuotePrice
+
+"""
+Quote Price is an entity that represents a specification of price of a Product Offering or a Discount
+"""
+type QuotePrice {
+
+    """
+
+    Base type of the entity
+    """
+    atBaseType: String
+    """
+    Schema location
+    """
+    atSchemaLocation: String
+    """
+    Type of the entity.
+    """
+    atType: String
+    """
+    Unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String
+
+    """
+    Indicates the base (class) type of the Quote Price. Enum: QuotePrice
+    """
+    type: String
+    """
+    Charge Type
+    Enum:
+    In Advance
+    In Arrears
+    """
+    chargeMethod: String @deprecated(reason: "The attribute will be deleted next release 23_1.")
+    """Description of the Quote Item Price"""
+    description: String
+    """
+    Id of the Price Component Specification from Product Offering Catalog
+    """
+    priceComponentSpecificationRef: String
+    """ Currency of the price from Product Offering Catalog """
+    priceCurrency: String
+    """
+    Specification of the Price type
+    Enum:
+    Activation fee
+    Deactivation fee
+    Recurrent fee
+    Usage fee
+    """
+    priceSpecificationType: String
+    """
+    Indicate if the price is for recurrent or no-recurrent charge
+    Type of the price.
+
+    Enum:
+    RC
+    NRC
+    Total RC
+    Total NRC
+    Total RC Reduction
+    Total NRC Reduction
+    Total RC Tax
+    Total NRC Tax
+    Total Deactivation Fee
+    Total Deactivation Fee Tax
+    """
+    priceType: String
+
+    """
+    Price Value Id from Product Offering Catalog of discounted Price
+    """
+    alteredPriceId: String
+
+    """Conversion Rate for price from Price Currency (refers to amount configured in Catalog) to Conversion Currency"""
+
+    rate: String @deprecated(reason: "The attribute will be deleted next release 23_1.")
+    """Date and time of conversion Rate binding"""
+    rateBindingDate: DateTime @deprecated(reason: "The attribute will be deleted next release 23_1.")
+    """ISO code of Conversion Currency"""
+
+    rateCurrency: String @deprecated(reason: "The attribute will be deleted next release 23_1.")
+
+    """Charge Period
+    Enum:
+    Day
+    Week
+    Month
+    Quarter
+    Year
+    Note: In the current version only Month is supported"""
+    recurringChargePeriod: String
+    """Unit of measure. Could be minutes, GB and so on
+    Note: Not supported in the current version"""
+    unitOfMeasure: String
+    """
+    List of related prices.
+    """
+    price: Price
+    """
+    List of related price alterations.
+    """
+    priceAlteration: [PriceAlteration!]
+
+
+}
+
+#Quote
+
+"""
+The entity that represents common information about a customers request.
+"""
+type Quote {
+    """
+    Base type of the entity
+    """
+    atBaseType: String
+    """
+    Schema location
+    """
+    atSchemaLocation: String
+    """
+    Type of the entity.
+    """
+    atBase: String @deprecated(reason: "The attribute is not supported by the Quote service")
+    """
+    Unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String
+
+
+    """
+    Acceptance sign-off signature type.
+    Enum:
+    Physical
+    Digital
+    Electronic
+    """
+    acceptanceSignatureType: String @deprecated(reason: "The attribute is not supported by the Quote service")
+    """
+    The name of the user/team to whom this Quote is assigned.
+    """
+    assignTo: String
+    """
+    Customer Category. Required for eligibility check of the Offerings in the Quote. Can be either passed to via the request or calculated automatically via integration to Customer Information Management service.
+    Must be passed for anonymous Quotes (anonymous Quote is not associated to any Customer and used for initial acquisition).
+    """
+    customerCategory: String!
+    """
+    Date on which delivery of the Quote is committed to the customer.
+    """
+    customerCommittedDate: DateTime
+    """
+    Date of the Quote’s delivery requested by the customer.
+    """
+    customerRequestedDate: DateTime
+    """
+    Quote’s fulfillment start date requested by the customer.
+    """
+    expectedFulfillmentStartDate: DateTime
+
+    """
+    Description of the Quote.
+    """
+    description: String
+
+    """
+    Unique identifier of Distribution Channel through which the Quote has been created
+    """
+    distributionChannel: Channel!
+
+    """
+    Extended parameters are used for non-OOB (not present in OOB schema) parameters in <String, List<String>> format which can be used in the business logic or 3rd party integrations. Extended parameters list is an OOB extension point of the Quote.
+    """
+    extendedParameters: JSON
+    """
+    External identifier of the Quote.
+    """
+    externalId: String
+    """
+    Identifier of the Opportunity to which the Quote belongs to.
+    """
+    opportunityId: String
+    """
+    Name of the Quote’s owner. Quote’s owner is usually either sales account manager or sales representative who holds responsibility for the Quotes qualification and conversion.
+    """
+    owner: String
+    """
+    Full name of the sales representative responsible for the Quote.
+    """
+    salesUser: String
+    """
+    EMail address of the sales representative responsible for the Quote.
+    """
+    salesUsersEmail: String
+    """
+    Landline phone number of the sales representative responsible for the Quote.
+    """
+    salesUsersLandline: String
+    """
+    Mobile phone number of the sales representative responsible for the Quote.
+    """
+    salesUsersMobile: String
+    """
+    Identifier of the sales representative responsible for the Quote.
+    """
+    salesUserId: String
+    """
+    Additional identifier of the sales representative responsible for the Quote.
+    """
+    salesUserId2: String
+    """
+    Additional identifier of the sales representative responsible for the Quote.
+    """
+    salesUserId3: String
+    """
+    Validity period of the Quote. Used in process of Quote’s expiration.
+    """
+    validFor: TimePeriod
+    """
+    Extended eligibility parameters are used to set information for extended eligibility check of Offerings in the Quote in <String, List<String>> format . Extended eligibility check list is OOB extension point.
+    """
+    extendedEligibilityParameters: JSON
+    """
+    Unique identifier of Brand through which the Quote has been created. Requires for eligibility check of the Offerings in the Quote.
+    Note: This attribute is ! on creation of the Quote only if brand functionality is used.
+    """
+    brand: Brand
+    """
+    Unique identification of Price List from which prices have to be taken.
+    Note: This attribute can be populated if Price List fictionally is used.
+    """
+    priceListId: String
+    """
+    The reason why the Quote state has been changed
+    Yes (for moving to "Cancelled" state, ignored for other transitions)
+    """
+    stateChangeReason: String  @deprecated(reason: "The attribute is not supported by the Quote service")
+    """
+    Offering Categories related to quote
+    """
+    productOfferingCategoryRefs: [CategoryRef!]
+    """
+    Quote items of the Quote.
+    """
+    quoteItem: [QuoteItem!]
+    """
+    A list of related agreements.
+    """
+    agreement: [QuoteAgreementRef!]
+    """
+    A list of related contact mediums.
+    """
+    contactMedium: [ContactMedium!]
+    """
+    List of quote alerts
+    """
+    alertItems: [AlertItem!]
+
+
+    """
+
+    Business Groups
+
+    """
+
+    businessGroup: [BusinessGroup!]
+
+    """
+
+    This attributes is needed to mark the Quote that is going to be used for MSA quotation
+    """
+    newMSA: Boolean
+
+    """
+    Attribute is used to mark in-flight Quote. Increased in case changes are done to the Quote after submission
+    """
+    revision: Int
+
+    """This field contains technical details about Quote processing"""
+    status: Message
+
+    """Date and time when the Quote was updated"""
+    updatedWhen: DateTime
+
+    """
+    Indicates which kind of price is editable(Gross or Net). Allowable values: Gross,Net
+    """
+    overrideMode: String
+
+    """Level of approval"""
+    approvalLevel: Int
+
+    """If true, shows that rates are frozen (used for a Conversion Currency)"""
+    ratesBound: Boolean
+
+    """
+    This is the calculated parameter with the value defined by the Project logic
+    """
+    businessAction: String
+
+    """TRUE when the Quote contains corrupted items"""
+    corrupted: Boolean
+
+    """Quote related party"""
+
+    relatedParty: [RelatedPartyRef!]
+
+    """State of the Quote"""
+    state: String
+
+    """Array of place references"""
+
+    placeRefs: [QuotePlaceRef!]
+
+    """
+    The reason (from a list of Cancellation Reasons) why the Quote has been cancelled
+    """
+    cancellationReason: String
+
+    """The reason (from the free text field) why the Quote has been cancelled"""
+    cancellationReasonDescription: String
+
+    """
+    Used to categorize the Quote from a business perspective that can be useful
+    for the CRM system (e.g. "enterprise", "residential", ...)
+    """
+    category: String
+
+    #"""Id of the customer, technical attribute. Use RelatedParty.Customer"""
+
+    # customerId: String
+
+    """Date when the Quote was fulfilled"""
+    effectiveQuoteCompletionDate: DateTime
+
+    """The date when the customer requests the Quote to be fulfilled"""
+    expectedQuoteCompletionDate: DateTime
+
+    """The date when the Quote expires"""
+
+    expirationDate: DateTime
+
+    """Quote external references"""
+
+    externalRefs: [ExternalRef!]
+
+    """Related market segments"""
+
+    marketRefs: [MarketRef!]
+
+    """Date and time when the Quote was created"""
+    quoteDate: DateTime
+
+    """Total price of the quote."""
+
+    quoteTotalPrice: [QuotePrice!]
+
+    """The entity that holds association between ProductOffering and MarketSegment for Total Price by Top Product Offering (incl. children) and MarketSegment."""
+
+    productOfferingRefByMarketRefs: [ProductOfferingRefByMarketRef!]
+
+    """Necessary Customer data for Anonymous Quotation process"""
+
+    anonymousCustomerData: AnonymousCustomerData
+
+    """Unique identifier of Distribution Channel through which the Quote has been created."""
+
+    distributionChannelId: String
+
+    """Name of Distribution Channel through which the Quote has been created."""
+
+    distributionChannelName: String
+
+    """Id of a Distribution Channel used during Quote creation. The value is defined once and never changed during Quote lifecycle"""
+
+    initialDistributionChannelId: String
+
+    """Id of the Delivery Method (from the Delivery Method list) for Quote (Optional)"""
+
+    deliveryMethod:String
+
+    """The class represents user facing notifications about automatic actions performed by Quotation Engine (e.g. adding a Product Offering based on the auto apply rule)."""
+    notification: [Notification]
+
+    number: String
+
+    """Version of the Quote"""
+    version: String
+
+    """Attribute is used to mark in-flight Quote. Unique identifier of the baseline Quote"""
+
+    baselineQuoteId: String
+
+    """Parameter based on which the system provides the ability to test new Product Offerings and Promotions on production environment earlier these Product Offerings and Promotions will be saleable for end-customers."""
+
+    target: [String!]
+
+    """The User who created an entity"""
+    createdBy: UserRef
+
+    """Id of a Quote that is generated when it is created in the system. The value is defined once and never changed during Quote lifecycle."""
+
+    initialBaselineQuoteId: String
+
+    """ It represents another revision of the in-flight Quote from the same chain, i.e. in-flight Quote with the same initialBaselineQuoteId value.
+    This class is returned in the API response only in case of enhancedListQuotes API operation is called. """
+
+    relatedQuote: [RelatedQuote!]
+
+    """Reference to an external bulk request for CPIs modification."""
+
+    batch: BatchRef
+
+    """State of the Project (e.g. PM Workplace Project) to which the Quote belongs. Patchable."""
+
+    externalProjectState: String
+
+    """Id of Payment"""
+
+    paymentId: String
+
+    """Attribute that holds Id of the payment taken from external system."""
+
+    externalPaymentId: String
+
+    """Indicates the delivery info."""
+
+    deliveryItem: [DeliveryItem!]
+
+    """The flag indicates whether payment is required for this Quote. Null value to be considered as False."""
+
+    paymentRequired: Boolean
+
+    """The flag indicates whether payment for this Quote is received. Null value to be considered as False."""
+
+    paymentReceived: Boolean
+
+    """Date when payment is made and Quote moves to "PAID" state"""
+
+    paymentDate: DateTime
+
+}
+
+#UsageTariff
+
+type UsageTariff {
+
+    """Extended parameters in <String, List<String>> format"""
+    extendedParameters: JSON
+    externalEventSpecification: String
+    priceValueRef: String
+    ratePlanId: String
+}
+
+#Notification Type
+
+"""The class represents user facing notifications about automatic actions performed by Quotation Engine."""
+type Notification {
+
+    """Unique identifiers of the objects to which the notification is related to."""
+
+    refIds: [String]
+
+    """Type of object to which the notification is related to."""
+
+    refType: String
+
+    """Message related to an entity (e.g. alert item, notification)"""
+
+    message: Message
+}
+
+#BusinessBarringRecord Type
+
+type BusinessBarringRecord {
+
+    """Unique identifier of Business Barring."""
+
+    id: String
+
+    """Reference to Business Barring Specification from Catalog."""
+
+    businessBarringSpecification: BusinessBarringSpecificationRef
+
+    action: String
+
+    """Date and time reflects defined expiration date of the Business Barring Record."""
+
+    expirationDate: DateTime
+
+}
+
+#RelatedQuote Type
+
+"""
+The class represents another revision of the in-flight Quote from the same chain, i.e. in-flight Quote with the same initialBaselineQuoteId value.
+"""
+type RelatedQuote {
+    """Date and time when the Quote was created."""
+    createdWhen: DateTime
+
+    """Unique identifier of the Quote."""
+    id: String
+
+    """Name of the Quote."""
+    name: String
+
+    """Revision of the Quote. Attribute is used to mark in-flight Quote. Increased in case changes are done to the Quote after submission."""
+    revision: String
+
+    """State of the Quote (e.g. 'In Progress, Submitted For Delivery', 'Canceled')."""
+    state: String
+
+    """Date and time when the Quote was updated."""
+    updatedWhen: DateTime
+}
+
+#QuoteStatistics Type
+
+"""Shows the Quote with a number of root Quote Items."""
+
+type QuoteStatistics {
+
+    """Represents the Quote with default fetchplan."""
+
+    quote: ReducedQuote
+
+    """Shows the number of Quote's root Quote Items grouped by some criteria(e.g. by Product Offering, Action)"""
+
+    quoteItemStatistic: [QuoteItemStatistic!]
+
+}
+
+#QuoteItemStatistic Type
+
+"""Shows the number of Quote's root Quote Items grouped by some criteria(e.g. by Product Offering, Action)."""
+
+type QuoteItemStatistic {
+
+    """Product offering name. Attribute is returned in the response for catalog entities only (product offering). """
+
+    productOfferingName: String
+
+    """Unique identifier of Product Offering"""
+
+    productOfferingId: String
+
+    """Numbers of root Quote Items grouped by Action"""
+
+    action: [StatisticValue!]
+
+}
+
+#StatisticValue Type
+
+"""Shows the number of Quote Items for specified criteria (e.g. Product offering)."""
+
+type StatisticValue {
+
+    """Number of Quote Items for the specific value."""
+
+    count: Int
+
+    """Action name(e.g. ADD, DASH and so on)."""
+
+    name: String
+
+}
+
+#ReducedQuote Type
+
+"""Quote with reduced scope of attributes."""
+
+type ReducedQuote {
+
+    """The name of the user/team to whom the Quote is assigned."""
+
+    assignTo: String
+
+    """The entity that represents common information about a customer's request."""
+
+    cancellationReason: String
+
+    """The reason (from the free text field) why the Quote has been cancelled."""
+
+    cancellationReasonDescription: String
+
+    """Id of the Delivery Method (from the Delivery Method list) for Quote."""
+
+    deliveryMethod: String
+
+    """Description of the Quote."""
+
+    description: String
+
+    """The attribute contains additional parameters of the Quote."""
+
+    extendedParameters: JSON
+
+    """Unique identifier of the Quote."""
+
+    id: String
+
+    """Name of the quote."""
+
+    name: String
+
+    """Date and time when the Quote was created."""
+
+    quoteDate: DateTime
+
+    """Attribute is used to mark in-flight Quote. Increased in case changes are done to the Quote after submission."""
+
+    revision: Int
+
+    """State of the Quote."""
+
+    state: String
+
+    """Date and time when the Quote was updated."""
+
+    updatedWhen: DateTime
+
+    """The period during the Quote, offerings and prices are valid."""
+
+    validFor: TimePeriod
+
+    """Represents a reference to an external object."""
+
+    externalRefs: [ExternalRef!]
+
+    """A list of related quotes. Applicable only for listQuotesStatistics."""
+
+    relatedQuote: [RelatedQuote!]
+
+    """Necessary Customer data for Anonymous Quotation process."""
+
+    anonymousCustomerData: AnonymousCustomerData
+
+    """Represents Quote total price."""
+
+    quoteTotalPrice: [QuotePrice!]
+
+    """A list of contact mediums. Indicates the contact medium that could be used to contact the party."""
+
+    contactMedium: [ContactMedium!]
+
+    """A related party defines party or party role linked to a specific entity."""
+
+    relatedParty: [RelatedPartyRef!]
+
+    """Business action of the Quote Item."""
+
+    businessAction: String
+
+}
+
+#Quote Management Reference Types
+
+#MarketRef
+
+"""An entity that represents geographical area"""
+type MarketRef {
+    """External Id of the geographical area"""
+    externalId: String
+
+    """Unique identifier of geographical area."""
+    marketId: String
+
+    """Name of the geographical area. + FIELD| Original resource |origin MarketSegment"""
+    marketName: String
+
+    origin:MarketSegment!
+
+}
+
+#Place (QuotePlaceRef)
+
+"""Defines the places where the products are sold or delivered"""
+type QuotePlaceRef {
+    """Place reference details"""
+    addedToTheQuote: Boolean @deprecated(reason: "The attribute is not supported by service")
+
+    """Address of the Place"""
+    address: String
+
+    """Map to capture additional PlaceRef parameters"""
+    extendedParameters: JSON
+
+    """External ID"""
+    externalId: String
+
+    """Unique reference to the Place"""
+    href: String
+
+    """Unique identifier of the Place"""
+    id: String
+
+    """Id of the geographical area to which this Place belongs"""
+    marketId: String
+
+    """Name of the geographical area to which this Place belongs"""
+    marketName: String
+
+    """
+    A user-friendly name for the Place, such as "Paris Store", "London Store", "Main Home"
+    """
+    name: String
+
+    """Role of the Place. Allowable values: customerLocation"""
+    role: String
+
+    """Represents total prices by  location"""
+    totalPricesByLocation: [QuotePrice!]
+
+    """Id of the address unit from Address Management."""
+    geoAddressId: String
+}
+
+#ProductOfferingRefByMarket
+
+type ProductOfferingByMarket {
+    """Id of the geographical area to which this Place belongs"""
+    marketId: String
+
+    """Prices by offering"""
+    pricesByOffering: [QuotePrice!]
+
+    """Unique identifier of the Product Offering"""
+    productOfferingId: String
+}
+
+#ProductOfferingRefByMarketRef
+
+"""
+An entity that links ProductOffering and MarketSegment for Total Price by Top Product Offering (incl. children) and Market
+"""
+
+type ProductOfferingRefByMarketRef {
+    """Id of the geographical area to which this Place belongs"""
+    marketId: String
+
+    """Prices by offering"""
+    pricesByOffering: [QuotePrice!]
+
+    """Unique identifier of the Product Offering"""
+    productOfferingId: String
+}
+
+"""The User who created an entity."""
+
+type UserRef {
+    """Type of the referred entity (User)."""
+    atReferredType: String
+
+    """Unique reference of the user. Not Supported."""
+    href: String
+
+    """Unique identifier of the User."""
+    id: String
+
+    """Name of the User."""
+    name: String
+}
+
+
+#ProductRefOrValue
+
+"""
+Configure all Product Offering characteristics (including non-modifiable and with default value)
+"""
+type ProductRefOrValue {
+    agreement: [AgreementItemRef!]
+
+    """
+    A list of product characteristics (ProductCharacteristic [*]). Characteristics of
+    the product to instantiate or to modify.
+    """
+    characteristic: [ProductCharacteristic!] @deprecated(reason: "The attribute will be deleted next release 23_1. Please use productCharacteristic attribute")
+
+    """Reference to the Product"""
+    href: String
+
+    """Unique identifier of the Product"""
+    id: String
+
+    """Name of the Product"""
+    name: String
+
+    """
+    A list of related places. Place defines the places where the
+    products are sold or delivered.
+    """
+    place: [QuotePlaceRef!]
+
+    """
+    A product specification reference (ProductSpecificationRef). A
+    ProductSpecification is a detailed description of a tangible or intangible object
+    made available externally in the form of a ProductOffering to customers or
+    other parties playing a party role.
+    """
+    productSpecification: ProductSpecificationRef
+
+    """Reference to Product Offering"""
+
+    productOffering: ProductOfferingRef
+
+    businessBarringRecord: [BusinessBarringRecord!]
+
+    """
+    A list of product characteristics (ProductCharacteristic [*]). Characteristics of
+    the product to instantiate or to modify.
+    """
+
+    productCharacteristic: [ProductCharacteristic!]
+
+}
+
+#QuoteAgreementRef
+
+"""
+Agreement reference. An agreement represents a contract or arrangement between
+the parties (e.g. between a service provider and a customer). An agreement
+involves a number of other business entities, such as products, services, and
+resources and/or their specifications
+"""
+type QuoteAgreementRef {
+
+    """ Indicates the (class) type of the Agreement.
+
+    Enum: CommercialAgreement, MainServiceAgreement, ServiceLevelAgreement
+
+    """
+
+    atType: String
+
+    """Type of the Agreement (e.g. CommercialAgreement, MainServiceAgreement) """
+
+    agreementType: String
+
+    """
+    Array of Customer Ids representing Cusotmers that act as "Associates" for a
+    corresponding Agreement (relevant for MSA only)
+    """
+    associates: [String!]
+
+    """The attributes holds information on when the agreement associated to a Quote is going to expire"""
+
+    expirationDate: DateTime
+
+    """
+    Map to capture additional Contract parameters (e.g. parameters are needed for Contract creation/sign-off).
+    """
+    extendedParameters: JSON
+
+    """External identifier of the Contract"""
+    externalId: String
+
+    """Unique identifier of the Agreement"""
+    id: String
+
+    """
+    Defined on MSA level and used for definition of sales conditions for Product Offerings (prices, discounts)
+    """
+    msaBaselineDate: DateTime
+
+    """Name of the Agreement"""
+    name: String
+
+    """ Flag indicates that the agreement was accepted by the customer. Each change in the agreement should be accept by the customer """
+
+    accepted: Boolean
+
+    """Agreement action defined by the Quote content. Possible values are:
+    - ADD - a new agreement to be created as result of Quote submission
+    - DASH - no change to existing Agreement to be triggered on Quote submission
+    - MODIFY - modification of Agreement on Quote submission
+    - TERMINATE - termination of Agreement on Quote submission
+    """
+
+    action: String
+
+    """Indicates the (class) type of the Agreement."""
+
+    atReferredType: String
+}
+
+
+
+#ExternalRef
+
+"""The entity stores reference to an external object (e.g. Product Order).
+
+Attention:
+
+The type is used in several services.
+To check actual supported attributes please refer to TMF documentation of specific service.
+
+"""
+type ExternalRef {
+    """Not supported. Name of the external reference"""
+    name: String
+
+    """Id of external object"""
+    refId: String
+
+    """Type of reference (e.g. Product Order)"""
+    refType: String
+}
+
+#AgreementItemRef
+
+type AgreementItemRef {
+
+    """Unique Identifier of agreement item."""
+
+    agreementItemId: String
+
+    """Type of agreement"""
+    agreementType: String
+
+    """Unique identifier of related agreement"""
+    id: String
+
+    """Name of the agreement"""
+    name: String
+}
+
+
+#RelatedPartyRef
+
+"""
+A related party defines party or party role linked to a specific entity.
+"""
+type RelatedPartyRef {
+    """
+    Unique identifier of a Related Party
+    """
+    id: String
+
+    """
+
+    Entity referred type
+
+    """
+
+    atReferredType: String
+    """
+    Reference of the Related Party, could be a party reference or a party role reference
+    """
+    href: String
+    """
+    Name of the Related Party.
+    """
+    name: String
+    """
+    Role of the Related Party.
+    """
+    role: String
+
+    """Is used to show that Related Party is a user of service (the Individual use this product on their own or only manages)."""
+
+    userOfService: Boolean
+}
+
+#AppointmentRef
+
+"""
+Refers an appointment, such as a Customer presentation or internal meeting or site visit.
+"""
+type AppointmentRef {
+
+    """Indicates the (class) type of the appointment."""
+
+    atReferredType: String
+
+    """
+    The identifier of the referred appointment.
+    """
+    id: String
+
+    """
+    The reference of the appointment.
+    """
+    href: String
+
+    """The name of the appointment. """
+
+    name: String
+
+    """The period during the Appointment is valid."""
+
+    timeSlot: TimePeriod
+
+    """Id of a time slot from external system."""
+
+    timeSlotId: String
+}
+
+#BusinessBarringSpecificationRef Type
+
+type BusinessBarringSpecificationRef {
+
+    """The type of the referred entity."""
+
+    atReferredType: String
+
+    """Unique identifier of Business Barring Specification."""
+
+    id: String
+
+    """Name of the Business Barring Specification."""
+
+    name: String
+
+    href: String
+
+}
+
+#Quote Management Inputs
+
+#GQL Anonymous CreateInflightQuoteInput
+
+input CreateInflightQuoteInput {
+
+    """Unique identifier of the baseline Quote based on which the in-flight Quote should be created."""
+
+    baselineQuoteId: String
+
+    """Unique identifier of the Distribution Channel to be used for the in-flight Quote."""
+
+    distributionChannelId: String
+
+    """Extended parameters to be used in the in-flight Quote creation process. Parameters in <String, List<String>> format."""
+
+    extendedParameters: JSON
+}
+
+#QuoteAgreementRefInput
+
+"""
+Agreement reference. An agreement represents a contract or arrangement between
+the parties (e.g. between a service provider and a customer). An agreement
+involves a number of other business entities, such as products, services, and
+resources and/or their specifications
+"""
+input QuoteAgreementRefInput {
+
+    """The attributes holds information on when the agreement associated to a Quote is going to expire"""
+
+    expirationDate: DateTime
+
+    """A special MSA related date that is used to define active Offerings, Discounts and priceKeys during MSA consumption"""
+
+    msaBaselineDate: DateTime
+
+
+    """Reference to the Agreement"""
+    href: String
+
+    """Unique identifier of the Agreement"""
+    id: String
+
+    """Name of the Agreement"""
+    name: String
+
+    """External identifier of the Contract"""
+    externalId: String
+
+    """Extended parameters in <String, List<String>> format"""
+    extendedParameters: JSON
+
+    """Indicates the (class) type of the Agreement. Enum: CommercialAgreement, MainServiceAgreement, ServiceLevelAgreement"""
+
+    atType: String @deprecated(reason: "The attribute is going to be deleted. It is not supported by the service.")
+
+    """
+    Type of the Agreement (e.g. CommercialAgreement, MainServiceAgreement)
+    """
+    agreementType: String
+
+    """
+    Array of Customer Ids representing Cusotmers that act as \"Associates\" for a
+    corresponding Agreement (relevant for MSA only)
+    """
+    associates: [String!]
+
+    """ Flag indicates that the agreement was accepted by the customer. Each change in the agreement should be accept by the customer """
+
+    accepted: Boolean
+
+    """Agreement action defined by the Quote content. Possible values are:
+    - ADD - a new agreement to be created as result of Quote submission
+    - DASH - no change to existing Agreement to be triggered on Quote submission
+    - MODIFY - modification of Agreement on Quote submission
+    - TERMINATE - termination of Agreement on Quote submission
+    """
+
+    action: String
+}
+
+#BusinessGroupInput
+
+"""Business Group"""
+input BusinessGroupInput {
+    """Unique identifier of the Business Group"""
+    id: String
+
+    """Marketing Bundle Id"""
+    marketingBundleId: String
+
+    """Name"""
+    name: String
+
+    """Type"""
+    type: String
+
+    """Mandatory on create. Action to be performed on this Business Group."""
+    action: String
+
+    """Sub-action to be performed on this Business Group, e.g.: ROLLBACK. Attribute is used for in-flight Quote."""
+    subAction: String
+
+    """Id of the market. Could be mandatory. It doesn't returned in the response."""
+    marketId: String
+
+    """Id of the place. Place defines the places where the products are sold or delivered."""
+    placeId: String
+
+    """Billing name of Business Group used in the Billing system."""
+
+    billingName: String
+
+    """Attribute to capture additional parameters of the Business Group."""
+
+    extendedParameters: JSON
+
+    """Reason of disconnection of the Business Group. The attribute is not returned in the response."""
+
+    disconnectionReason: String
+
+    """Description of disconnection reason. The attribute is not returned in the response."""
+
+    disconnectionReasonDescription: String
+}
+
+
+
+
+#ProductRefOrValueInput
+
+"""
+Product Reference or Value defines association of the Quote Item to the Product
+"""
+input ProductRefOrValueInput {
+    """
+    Reference to the Product
+    """
+    href: String @deprecated(reason: "The attribute will be deleted next release 23_1, cause of autogenerated")
+    """
+    Unique identifier of the Product
+    """
+    id: String
+    """
+    Name of the Product
+    """
+    name: String
+
+    """
+    A list of product characteristics (ProductCharacteristic [*]). Characteristics of
+    the product to instantiate or to modify
+    """
+    characteristic: [ProductCharacteristicInput!] @deprecated(reason: "The attribute will be deleted next release 23_1. Please use 'productCharacteristic' ")
+    """
+    Related agreement items
+    """
+    agreement: [AgreementItemRefInput!]
+
+    """
+
+    A list of place references. Place defines the places where the
+    products are sold or delivered.
+    """
+    place: [PlaceRefInput!]
+
+    """A list of Business Barring Record references"""
+    businessBarringRecord: [BusinessBarringRecordInput!]
+
+    """
+    A list of product characteristics (ProductCharacteristic [*]). Characteristics of
+    the product to instantiate or to modify."""
+    productCharacteristic: [ProductCharacteristicInput!]
+}
+
+#ProductCharacteristicInput
+
+"""
+Defines the product related characteristic and values.
+
+"""
+input ProductCharacteristicInput {
+    """
+    Unique id of a product characteristic.
+    """
+    id: String!
+
+    """
+
+    Raw values of product characteristic.
+
+    """
+
+    rawValue: [String!]!
+
+    """Attribute reflects that the Characteristic is technical and should be hidden from the User on UI. """
+
+    technical: Boolean
+
+    """Business Type of Product Offering Characteristic."""
+
+    businessType: String
+}
+
+#QuoteAgreementItemRefInput
+
+input AgreementItemRefInput {
+
+    """
+    Type of reference.
+    """
+    atReferredType: String
+    """
+    Href to the entity.
+    """
+    href: String
+    """
+    Contains unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String
+
+    """Id of the Agreement Item"""
+
+    agreementItemId: String
+
+    """Type of agreement"""
+
+    agreementType: String
+
+}
+
+#QuoteBillingAccountRefInput
+
+"""
+A party account used for billing purposes.
+"""
+input BillingAccountRefInput {
+    """
+    Unique ID.
+    """
+    id: String!
+    """
+    Name of the billing account.
+    """
+    name: String
+}
+
+
+#QuoteStateChangeInput
+
+"""The request to change Quote state"""
+input QuoteStateChangeInput {
+    """The unique identifier of the customer"""
+    businessId: String
+
+    """The unique identifier of the Quote"""
+    quoteId: String
+
+    """External Identifier of the Quote"""
+    externalId: String
+
+    """The state from which the Quote passes"""
+    sourceState: String
+
+    """The state to which the Quote passes"""
+    targetState: String
+
+    """The reason of changing state"""
+    stateChangeReason: String
+
+    """Description of the state change reason"""
+    stateChangeReasonDescription: String
+}
+
+#QuoteInput
+
+input QuoteInput {
+
+    """
+    Acceptance sign-off signature type.
+    Enum:
+    Physical
+    Digital
+    Electronic
+    """
+    acceptanceSignatureType: String
+    """
+    The name of the user/team to whom this Quote is assigned.
+    """
+    assignTo: String
+    """
+    Customer Category. Required for eligibility check of the Offerings in the Quote. Can be either passed to via the request or calculated automatically via integration to Customer Information Management service.
+    Must be passed for anonymous Quotes (anonymous Quote is not associated to any Customer and used for initial acquisition).
+    """
+    customerCategory: String
+    """
+    Date on which delivery of the Quote is committed to the customer.
+    """
+    customerCommittedDate: DateTime
+    """
+    Date of the Quote’s delivery requested by the customer.
+    """
+    customerRequestedDate: DateTime
+    """
+    Quote’s fulfillment start date requested by the customer.
+    """
+    expectedFulfillmentStartDate: DateTime
+    """
+    Quote’s actual fulfillment end date.
+    """
+    effectiveQuoteComplitionDate: DateTime
+    """
+    Description of the Quote.
+    """
+    description: String
+    """
+    Distribution channel via which the Quote is initiated. Requires for eligibility check of the Offerings in the Quote.
+    """
+    distributionChannelId: String
+    """
+    Extended parameters are used for non-OOB (not present in OOB schema) parameters in <String, List<String>> format which can be used in the business logic or 3rd party integrations. Extended parameters list is an OOB extension point of the Quote.
+    """
+    extendedParameters: JSON
+    """
+    External identifier of the Quote.
+    """
+    externalId: String
+    """
+    Identifier of the Opportunity to which the Quote belongs to.
+    """
+    opportunityId: String
+    """
+    Name of the Quote’s owner. Quote’s owner is usually either sales account manager or sales representative who holds responsibility for the Quotes qualification and conversion.
+    """
+    owner: String
+    """
+    Full name of the sales representative responsible for the Quote.
+    """
+    salesUser: String
+    """
+    Email address of the sales representative responsible for the Quote.
+    """
+    salesUsersEmail: String
+    """
+    Landline phone number of the sales representative responsible for the Quote.
+    """
+    salesUsersLandline: String
+    """
+    Mobile phone number of the sales representative responsible for the Quote.
+    """
+    salesUsersMobile: String
+    """
+    Identifier of the sales representative responsible for the Quote.
+    """
+    salesUserId: String
+    """
+    Additional identifier of the sales representative responsible for the Quote.
+    """
+    salesUserId2: String
+    """
+    Additional identifier of the sales representative responsible for the Quote.
+    """
+    salesUserId3: String
+    """
+    Validity period of the Quote. Used in process of Quote’s expiration.
+    """
+    validFor: TimePeriodInput
+    """
+    Extended eligibility parameters are used to set information for extended eligibility check of Offerings in the Quote in <String, List<String>> format. Extended eligibility check list is OOB extension point.
+    """
+    extendedEligibilityParameters: JSON
+    """
+    Unique identifier of Brand through which the Quote has been created. Requires for eligibility check of the Offerings in the Quote.
+    Note: This attribute is ! on creation of the Quote only if brand functionality is used.
+    """
+    brandId: String
+    """
+    Unique identification of Price List from which prices have to be taken.
+    Note: This attribute can be populated if Price List fictionally is used.
+    """
+    priceListId: String
+    """
+    The reason why the Quote state has been changed
+    Yes (for moving to "Cancelled" state, ignored for other transitions)
+    """
+    stateChangeReason: String
+    """
+    Unique identification of MSA
+    """
+    msaId: String
+    """
+    Offering Categories related to quote
+    """
+    productOfferingCategory: [CategoryRefInput]
+    """
+    Quote items of the Quote.
+    """
+    quoteItem: [QuoteItemInput!]
+    """
+    A list of related agreements.
+    """
+    agreement: [QuoteAgreementRefInput!]
+    """
+    A list of related contact mediums.
+    """
+    contactMedium: [ContactMediumInput!]
+    """
+
+    Related party.
+
+    """
+
+    relatedParty: [RelatedPartyRefInput!]
+
+    """
+
+    Business Group
+
+    """
+
+    businessGroup: [BusinessGroupInput!]
+
+    """
+    This attributes is needed to mark the Quote that is going to be used for MSA quotation
+    """
+    newMSA: Boolean
+
+    """Array of places related to quote."""
+
+    placeRefs: [PlaceRefInput!]
+
+    """Array of market segment references."""
+
+    marketRefs: [MarketRefInput!]
+
+    """Necessary Customer data for Anonymous Quotation process"""
+
+    anonymousCustomerData: AnonymousCustomerDataInput
+
+    """Name of Distribution Channel through which the Quote has been created."""
+
+    distributionChannelName: String
+
+    """Id of a Distribution Channel used during Quote creation. The value is defined once and never changed during Quote lifecycle"""
+
+    initialDistributionChannelId: String
+
+    """Id of the Delivery Method (from the Delivery Method list) for Quote (Optional)"""
+
+    deliveryMethod:String
+
+    """Unique identifier of baseline Quote. Attribute is used for in-flight Quote."""
+
+    baselineQuoteId: String
+
+    """Attribute is used to mark in-flight Quote. Increased in case changes are done to the Quote after submission."""
+
+    revision: Int
+
+    """Parameter based on which the system provides the ability to test new Product Offerings and Promotions on production environment earlier these Product Offerings and Promotions will be saleable for end-customers."""
+
+    target: [String!]
+
+    """State of the Quote."""
+
+    state: String
+
+    """State of the Project (e.g. PM Workplace Project) to which the Quote belongs. Patchable."""
+
+    externalProjectState: String
+
+    """Id of Payment"""
+
+    paymentId: String
+
+    """Attribute that holds Id of the payment taken from external system."""
+
+    externalPaymentId: String
+
+    """Indicates the delivery info."""
+
+    deliveryItem: [DeliveryItemInput!]
+
+}
+
+#QuoteUpdateInput
+
+input QuoteUpdateInput {
+
+    """
+    Acceptance sign-off signature type.
+    Enum:
+    Physical
+    Digital
+    Electronic
+    """
+    acceptanceSignatureType: String
+    """
+    The name of the user/team to whom this Quote is assigned.
+    """
+    assignTo: String
+    """
+    Customer Category. Required for eligibility check of the Offerings in the Quote. Can be either passed to via the request or calculated automatically via integration to Customer Information Management service.
+    Must be passed for anonymous Quotes (anonymous Quote is not associated to any Customer and used for initial acquisition).
+    """
+    customerCategory: String
+    """
+    Date on which delivery of the Quote is committed to the customer.
+    """
+    customerCommittedDate: DateTime
+    """
+    Date of the Quote’s delivery requested by the customer.
+    """
+    customerRequestedDate: DateTime
+    """
+    Quote’s fulfillment start date requested by the customer.
+    """
+    expectedFulfillmentStartDate: DateTime
+    """
+    Quote’s actual fulfillment end date.
+    """
+    effectiveQuoteComplitionDate: DateTime
+    """
+    Description of the Quote.
+    """
+    description: String
+    """
+    Distribution channel via which the Quote is initiated. Requires for eligibility check of the Offerings in the Quote.
+    """
+    distributionChannelId: String
+    """
+    Extended parameters are used for non-OOB (not present in OOB schema) parameters in <String, List<String>> format which can be used in the business logic or 3rd party integrations. Extended parameters list is an OOB extension point of the Quote.
+    """
+    extendedParameters: JSON
+    """
+    External identifier of the Quote.
+    """
+    externalId: String
+    """
+    Identifier of the Opportunity to which the Quote belongs to.
+    """
+    opportunityId: String
+    """
+    Name of the Quote’s owner. Quote’s owner is usually either sales account manager or sales representative who holds responsibility for the Quotes qualification and conversion.
+    """
+    owner: String
+    """
+    Full name of the sales representative responsible for the Quote.
+    """
+    salesUser: String
+    """
+    Email address of the sales representative responsible for the Quote.
+    """
+    salesUsersEmail: String
+    """
+    Landline phone number of the sales representative responsible for the Quote.
+    """
+    salesUsersLandline: String
+    """
+    Mobile phone number of the sales representative responsible for the Quote.
+    """
+    salesUsersMobile: String
+    """
+    Identifier of the sales representative responsible for the Quote.
+    """
+    salesUserId: String
+    """
+    Additional identifier of the sales representative responsible for the Quote.
+    """
+    salesUserId2: String
+    """
+    Additional identifier of the sales representative responsible for the Quote.
+    """
+    salesUserId3: String
+    """
+    Validity period of the Quote. Used in process of Quote’s expiration.
+    """
+    validFor: TimePeriodInput
+    """
+    Extended eligibility parameters are used to set information for extended eligibility check of Offerings in the Quote in <String, List<String>> format. Extended eligibility check list is OOB extension point.
+    """
+    extendedEligibilityParameters: JSON
+    """
+    Unique identifier of Brand through which the Quote has been created. Requires for eligibility check of the Offerings in the Quote.
+    Note: This attribute is ! on creation of the Quote only if brand functionality is used.
+    """
+    brandId: String
+    """
+    Unique identification of Price List from which prices have to be taken.
+    Note: This attribute can be populated if Price List fictionally is used.
+    """
+    priceListId: String
+    """
+    The reason why the Quote state has been changed
+    Yes (for moving to "Cancelled" state, ignored for other transitions)
+    """
+    stateChangeReason: String
+    """
+    Unique identification of MSA
+    """
+    msaId: String
+    """
+    Offering Categories related to quote
+    """
+    productOfferingCategory: [CategoryRefInput]
+    """
+    Quote items of the Quote.
+    """
+    quoteItem: [QuoteItemInput!]
+    """
+    A list of related agreements.
+    """
+    agreement: [QuoteAgreementRefInput!]
+    """
+    A list of related contact mediums.
+    """
+    contactMedium: [ContactMediumInput!]
+    """
+
+    Related party.
+
+    """
+
+    relatedParty: [RelatedPartyRefInput!]
+
+    """
+
+    Business Group
+
+    """
+
+    businessGroup: [BusinessGroupInput!]
+
+    """
+    This attributes is needed to mark the Quote that is going to be used for MSA quotation
+    """
+    newMSA: Boolean
+
+    """Array of places related to quote."""
+
+    placeRefs: [PlaceRefInput!]
+
+    """Array of market segment references."""
+
+    marketRefs: [MarketRefInput!]
+
+    """Necessary Customer data for Anonymous Quotation process"""
+
+    anonymousCustomerData: AnonymousCustomerDataInput
+
+    """Name of Distribution Channel through which the Quote has been created."""
+
+    distributionChannelName: String
+
+    """Id of a Distribution Channel used during Quote creation. The value is defined once and never changed during Quote lifecycle"""
+
+    initialDistributionChannelId: String
+
+    """Id of the Delivery Method (from the Delivery Method list) for Quote (Optional)"""
+
+    deliveryMethod:String
+
+    """State of the Project (e.g. PM Workplace Project) to which the Quote belongs. Patchable."""
+
+    externalProjectState: String
+
+    """Attribute that holds Id of the payment taken from external system."""
+
+    externalPaymentId: String
+
+    """Indicates the delivery info."""
+
+    deliveryItem: [DeliveryItemInput!]
+
+}
+
+
+
+#QuoteItemInput
+
+input QuoteItemInput {
+
+    """
+    unique identifier of quote item.
+    """
+    id: String
+    """
+    MandatoryOnCreate.
+    Action that is supposed to be initiated for the Quote Item, possible values:
+    ADD
+    MODIFY (for re-assign Location)
+    DISCONNECT
+    DASH
+    For other actions related to modification or disconnection scenarios refer to Initiate Product to Quote for Modification or Disconnection.
+    """
+    action: String!
+    """
+    Extended parameters are used for non-OOB (not present in OOB schema) parameters in <String, List<String>> format which can be used in the business logic or 3rd party integrations. Extended parameters list is an OOB extension point of the Quote and related sub-resources.
+    """
+    extendedParameters: JSON
+    """
+    Business Group Id defines the key for bundling of Quote Items.
+    """
+    businessGroupId: String
+    """
+    Quantity of the Quote Item to be added. Default value is “1”. Possibility of set quantity is defined for Product Offering. Note, that quantity can be managed not for every Product Offering.
+    """
+    quantity: String @deprecated(reason: "The attribute will be deleted next release 23_1. The quantityNumber should be used instead of it.")
+    """Indicates the quantity of the Product to be quoted. By default=1"""
+
+    quantityNumber: QuantityIntInput
+    """
+    MandatoryOnCreate. Lifecycle state of the Quote Item
+    """
+    state: String!
+    """
+    MandatoryOnCreate. Unique identifier of Market the Quote Item is going to be delivered in.
+    """
+    marketId: String!
+    """
+    Number of Installments can be defined for Quote Items associated to One-Time Product Offerings that have Installment Plan(s) configured in Offering Catalog.
+    """
+    numberOfInstallments: Int
+    """
+    MandatoryOnCreate. Unique identifier of Distribution Channel is going to be sold via.
+    """
+    distributionChannelId: String!
+    """
+    Product activation date
+    """
+    activeFrom: DateTime
+    """
+    Date until which the corresponding Product is active
+    """
+    activeTo: DateTime
+    """
+    A list of unique identifiers of the Agreements
+    """
+    agreementIds: [String!]
+    """
+    Approval Level
+    """
+    approvalLevel: Int
+    """
+    Stores the result of availability check
+    """
+    availabilityCheckResult: String
+    """
+    The Availability Check Result Message
+    """
+    availabilityCheckResultMessage: String
+    """
+    Date on which the prices are frozen
+    """
+    contractedDate: DateTime
+    """
+    Quote Item planned disconnection date
+    """
+    plannedDisconnectionDate: DateTime
+    """
+    Number of months between plannedDisconnectionDate and complitionDate of the Agreement.
+    """
+    numberOfMonthTillExpiration: Int
+    """
+    Reason of disconnection of the Product.
+    """
+    disconnectionReason: String
+    """
+    Description of disconnection reason.
+    """
+    disconnectionReasonDescription: String
+
+    """
+    The multiplier value defining if the Quote Item would be transformed into several Product Instances on Quote Processing completion
+    Initial Value = 1
+    """
+    amount: Int
+    """
+    Product Offering Reference defines association between Quote Item and Product Offering it belongs to.
+    """
+    productOffering: ProductOfferingRefInput
+    """
+    Defines the list of product s.
+    """
+    product: ProductRefOrValueInput
+
+    """
+    Id of a corresponding Condition Set
+    """
+    conditionSet: String
+    """
+    Parameters used to override min cardinality of an Offering for MSA
+    """
+    mandatoryForMSA: Boolean
+
+    """Unique id of the parent quote item within the same quote."""
+    parentQuoteItemId: String
+
+    """Id of the root (top) Quote Item"""
+    rootQuoteItemId: String
+
+    """Quote Item Prices"""
+
+    quoteItemPrice: [QuotePriceInput!]
+
+    """Quote Item related party reference."""
+
+    relatedParty: [RelatedPartyRefInput!]
+
+    """
+    A list of related billing accounts
+    """
+    billingAccount: [BillingAccountRefInput!]
+
+    """
+
+    Id of a Business Group automatically populated by the system from CPI during init procedure.
+    The Id is used by the system to control business group consistency during the quotation.
+
+    """
+
+    cpiBusinessGroupId:String
+
+    """Alternative date that used for price definition (instead of Contracted date). Example, used for definition of Price Key for calculation Disconnection fee"""
+
+    priceRecalculationDate:DateTime
+
+    """A list of appointment references."""
+
+    appointment: [AppointmentRefInput!]
+
+    """Version of the CPI."""
+
+    cpiVersion: Int
+
+    """Fulfillment state of Product Order Item."""
+
+    fulfillmentState: String
+
+    """Sub-action to be performed on this Quote Item."""
+
+    subAction: String
+
+    """Attribute is used to mark in-flight Quote Item."""
+
+    baselineQuoteItem: Boolean
+
+    """Billing Name of Product Offering used in the Billing system"""
+
+    billingName: String
+
+    """Patchable. Date is used to freeze hierarchy and check saleability on this date. It is used in cases of sale to date in the past. """
+
+    salesDate: DateTime
+}
+
+
+
+#ContactMediumInput
+
+"""
+
+Indicates the contact medium that could be used to contact the customer.
+
+"""
+
+input ContactMediumInput {
+    """
+
+    The field identifies if the Contact Medium is preferred one for contacting the customer.
+
+    """
+    preferred: Boolean
+    """
+
+    The field identifies if the Contact Medium is preferred one for notifying the customer.
+
+    """
+
+    preferredNotification: Boolean
+    """
+
+    Type of the Contact Medium.
+    Possible values are:
+    email address,
+    telephone number,
+    postal address,
+    social profile.
+    Any other types can be provided if supported by end-to-end solution.
+
+    """
+
+    type: String @deprecated(reason: "The attribute is not supported by service")
+    """
+
+    Validity period of the Contact Medium. Contains the following attributes:
+    startDateTime;
+    endDateTime.
+    """
+    validFor: TimePeriodInput
+    """
+
+    Contact medium characteristics.
+
+    """
+    characteristic: MediumCharacteristicInput
+
+    """Type of the Contact Medium, such as: email address, telephone number, postal address and so on."""
+
+    mediumType: String
+}
+
+#MarketRefInput
+
+"""An entity that represents geographical area"""
+input MarketRefInput {
+    """External Id of the geographical area"""
+    externalId: String
+
+    """Unique identifier of geographical area."""
+    marketId: String
+
+    """Name of the geographical area."""
+    marketName: String
+}
+
+#QuotePlaceRefInput
+
+"""Defines the places where the products are sold or delivered"""
+input PlaceRefInput {
+    """Unique identifier of the Place"""
+    id: String
+
+    """Unique reference to the Place"""
+    href: String @deprecated(reason: "The attribute is not supported by service")
+
+    """
+    A user-friendly name for the Place, such as "Paris Store", "London Store", "Main Home"
+    """
+    name: String
+
+    """Role of the Place. Allowable values: customerLocation"""
+    role: String!
+
+    """Place reference details"""
+    addedToTheQuote: Boolean @deprecated(reason: "The attribute is not supported by service")
+
+    """Address of the Place"""
+    address: String
+
+    """External ID"""
+    externalId: String
+
+    """Id of the geographical area to which this Place belongs"""
+    marketId: String!
+
+    """Name of the geographical area to which this Place belongs"""
+    marketName: String
+
+    """Represents total prices by  location"""
+    totalPricesByLocation: [QuotePriceInput!]
+
+    """Extended parameters in <String, List<String>> format"""
+    extendedParameters: JSON
+
+    """Id of the address unit from Address Management."""
+    geoAddressId: String
+}
+
+#AnonymousCustomerDataInput
+
+"""
+Object that unites necessary Customer data for Anonymous Quotation process
+"""
+input AnonymousCustomerDataInput {
+
+    """Type of the object (AnonymousCustomerInfo)"""
+
+    atType: String
+
+    """Name of the entity"""
+
+    name: String
+
+    """Represents Engaged Party data for anonymous Quotation process """
+
+    engagedParty: EngagedPartyInput
+
+    """Represents necessary Billing Account data for anonymous Quotation process"""
+
+    billingAccountInfo: BillingAccountInfoInput
+
+    """The attribute contains additional parameters of the entity"""
+
+    extendedParameters: JSON
+
+    """Name of the template, that will be used for Customer and Billing Account creation"""
+
+    templateName: String
+
+    """Represents necessary Consent data for anonymous Quotation process. Patchable."""
+
+    consentInfo: [ConsentInfoInput!]
+
+    """Indicates Notification Preferences: which notifications should be sent to particular ContactMedium"""
+
+    notificationPreference: [AnonymousNotificationPreferenceInput!]
+}
+
+"""Indicates Notification Preferences: which notifications should be sent to particular ContactMedium."""
+
+input AnonymousNotificationPreferenceInput {
+
+    extendedParameters: JSON
+
+    """Category of events which initiate notification (e.g. Billing Account Notifications)."""
+
+    notificationCategory: String
+
+    validFor: TimePeriodInput
+
+    """Indicates the contact medium that could be used to contact the party."""
+
+    contactMedium: ContactMediumInput
+}
+
+#EngagedPartyInput
+
+"""
+Engaged Party data for anonymous Quotation process
+"""
+input EngagedPartyInput {
+
+    """Birth Date"""
+
+    birthDate: DateTime
+
+    """First name"""
+
+    firstName: String
+
+    """Last name"""
+
+    lastName: String
+
+    """Middle name"""
+
+    middleName: String
+
+}
+
+#ProductOfferingRefInput
+
+"""
+A Product Offering represents entities that are orderable from the provider of the catalog, this resource includes pricing information
+"""
+input ProductOfferingRefInput {
+
+    """
+    Type of the entity.
+    """
+    atType: String@deprecated(reason: "The attribute will be deleted next release 23_1 cause of not supported by the service")
+    """
+    Unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String @deprecated(reason: "The attribute will be deleted next release 23_1 cause of not supported by the service")
+
+    """
+    Href to the entity.
+    """
+    href: String @deprecated(reason: "The attribute is Autogenerated")
+
+    """Additional name of the Product Offering."""
+
+    nameAdditional:String @deprecated(reason: "The attribute will be deleted next release 23_1 cause of not supported by the service")
+
+}
+
+#QuotePriceInput
+
+"""An entity that contains price values"""
+input PriceInput {
+    """All taxes included amount"""
+    taxIncludedAmount: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Amount after all taxes are excluded"""
+    dutyFreeAmount: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Tax rate"""
+    taxRate: Float @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Percentage to apply for the Discount"""
+    percentage: Float @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Is the price overridden or not"""
+    overridden: Boolean
+
+    """
+    Type of price override. Allowable values: Manual,Automatically,MSA override
+    """
+    overrideType: String
+
+    """Id of the Price Value from Product Offering Catalog"""
+    priceValueRef: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Base Price value excluding taxes"""
+    valueBasePriceExcludingTax: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Base Price value excluding taxes and rounded"""
+    valueBasePriceExcludingTaxRounded: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Base Price value including taxes"""
+    valueBasePriceIncludingTax: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Base Price value including taxes and rounded"""
+    valueBasePriceIncludingTaxRounded: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Price value excluding taxes"""
+    valueExcludingTax: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Price value excluding tax and rounded"""
+    valueExcludingTaxRounded: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Price value including taxes"""
+    valueIncludingTax: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Price value including tax and rounded"""
+    valueIncludingTaxRounded: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Quote Item SubTotal Amount Excluding Tax. Used only for Quote service."""
+    valueSubTotalPriceExcludingTax: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Quote Item SubTotal Amount Including Tax Rounded. Used only for Quote service."""
+    valueSubTotalPriceExcludingTaxRounded: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Quote Item SubTotal amount Including tax. Used only for Quote service."""
+    valueSubTotalPriceIncludingTax: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Quote Item SubTotal Amount Including tax rounded. Used only for Quote service."""
+    valueSubTotalPriceIncludingTaxRounded: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Exceeding Price boundaries in case of overridden price"""
+    priceArrow: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Unique identifier of Instalment plan"""
+    installmentPlanId: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """This flag indicates that Down Payment is overridden"""
+    downPaymentOverridden: Boolean
+
+    """OTS ApproxInstallmentPaymentAmount excl. Tax"""
+    approxInstallmentPaymentAmountExcludingTax: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """OTS ApproxInstallmentPaymentAmount excl. Tax Rounded"""
+    approxInstallmentPaymentAmountExcludingTaxRounded: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """OTS ApproxInstallmentPaymentAmount incl. Tax"""
+    approxInstallmentPaymentAmountIncludingTax: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """OTS ApproxInstallmentPaymentAmount incl. Tax Rounded"""
+    approxInstallmentPaymentAmountIncludingTaxRounded: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Down payment Price value excluding taxes"""
+    downPaymentValueExcludingTax: String
+
+    """Down payment Price value excluding taxes and rounded"""
+    downPaymentValueExcludingTaxRounded: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Down payment Price value including taxes"""
+    downPaymentValueIncludingTax: String
+
+    """Down payment Price value including taxes and rounded"""
+    downPaymentValueIncludingTaxRounded: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """ Extended parameters in in <String, List<String>> format."""
+    extendedParameters: JSON @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Indicates the (class) type of the Price"""
+    atType: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+    """Link to the schema describing the REST resource"""
+    atSchemaLocation: String @deprecated(reason: "The attribute not supported by the service")
+
+    """External Id of the Price Alteration which is calculated in external system"""
+
+    externalPriceAlterationId: String
+
+    """Overridden price value in case of price override"""
+
+    overriddenValue: String
+
+    """Unique identifier of the taxation involvement"""
+
+    prodOfferingPriceTaxAlterationId: String @deprecated(reason: "Tag - #AutoGenerated" )
+
+}
+
+
+
+
+
+
+
+
+
+#QuoteQuotePriceInput
+
+"""
+Quote Price is an entity that represents a specification of price of a Product Offering or a Discount
+"""
+input QuotePriceInput {
+    """Indicate if the price is for recurrent or no-recurrent charge"""
+    priceType: String @deprecated(reason: "Tag - #AutoGenerated. The attribute will be deleted next release 23_1." )
+
+    """Charge Period"""
+    recurringChargePeriod: String  @deprecated(reason: "Tag - #AutoGenerated. The attribute will be deleted next release 23_1." )
+
+    """
+    Unit of measure. Could be minutes, GB and so on
+    Note: Not supported in the current version
+    """
+    unitOfMeasure: String @deprecated(reason: "Tag - #NotSupported. The attribute will be deleted next release 23_1." )
+
+    """Name of the Quote Item Price"""
+    name: String @deprecated(reason: "Tag - #AutoGenerated. The attribute will be deleted next release 23_1." )
+
+    """Description of the Quote Item Price"""
+    description: String @deprecated(reason: "Tag - #AutoGenerated. The attribute will be deleted next release 23_1." )
+
+    """An entity that contains price values"""
+    price: PriceInput
+
+    """A list of price alterations. Is an amount, usually of money, that modifies the price charged for an order item"""
+    priceAlteration: [PriceAlterationInput!]
+
+    """Charge Type. Allowable values: In Advance,In Arrears"""
+    chargeMethod: String @deprecated(reason: "The attribute will be deleted next release 23_1.")
+
+    """Id of the Price Component Specification from Product Offering Catalog. Mandatory for creation in certain cases."""
+    priceComponentSpecificationRef: String
+
+    """Specification of the price type"""
+    priceSpecificationType: String @deprecated(reason: "Tag - #AutoGenerated. The attribute will be deleted next release 23_1." )
+
+    """Currency of the price from Product Offering Catalog"""
+    priceCurrency: String @deprecated(reason: "Tag - #AutoGenerated. The attribute will be deleted next release 23_1." )
+
+    """Conversion rate for the price from priceCurrency to rateCurrency"""
+    rate: String @deprecated(reason: "The attribute not supported by the service. It will be deleted next release 23_1.")
+
+    """Currency to which the price is converted"""
+    rateCurrency: String @deprecated(reason: "The attribute not supported by the service. It will be deleted next release 23_1.")
+
+    """Date and time when conversionRate is frozen"""
+    rateBindingDate: String @deprecated(reason: "The attribute not supported by the service. It will be deleted next release 23_1.")
+
+    """Indicates the base (class) type of the Quote Price"""
+    atType: String @deprecated(reason: "Tag - #AutoGenerated. The attribute will be deleted next release 23_1." )
+    atSchemaLocation: String @deprecated(reason: "The attribute not supported by the service. It will be deleted next release 23_1.")
+
+    """PriceValueId from Product Offering Catalog of discounted Price"""
+    alteredPriceId: String
+
+}
+
+#MediumCharacteristicInput
+
+"""
+Represents a contact medium characteristic.
+"""
+input MediumCharacteristicInput {
+    """
+    City. Applicable for postal address type of Contact Medium.
+    """
+    city: String
+    """
+    Country. Applicable for postal address type of Contact Medium.
+    """
+    country: String
+    """
+    E-mail. Applicable for e-mail type of Contact Medium.
+    """
+    emailAddress: String
+    """
+    Extended parameters are used for non-OOB (not present in OOB schema) parameters in <String, List<String>> format which can be used in the business logic or 3rd party integrations.
+    """
+    extendedAttributes: JSON @deprecated(reason: "The attribute will be deleted next release cause of not supported by the service")
+    """
+    Fax number. Applicable for telephone number type of Contact Medium.
+    """
+    faxNumber: String
+    """
+    Phone number. Applicable for telephone number type of Contact Medium.
+    """
+    phoneNumber:String
+    """
+    Post code. Applicable for postal address type of Contact Medium.
+    """
+    postCode
+    :
+    String
+    """
+    State or Province. Applicable for postal address type of Contact Medium.
+    """
+    stateOrProvince: String
+    """
+    Street line 1. Applicable for postal address type of Contact Medium.
+    """
+    street1: String
+    """
+    Street line 2. Applicable for postal address type of Contact Medium.
+    """
+    street2: String
+    """
+    Social profile. Applicable for social profile type of Contact Medium.
+    """
+    socialProfile: String
+    """
+    Type of medium (home, work, etc.).
+    """
+    type: String @deprecated(reason: "The attribute will be deleted next release cause of not supported by the service")
+
+    """The type of medium characteristic, for example: home, work, etc."""
+
+    contactType: String
+
+    """Attribute to capture additional ContactMedium parameters."""
+
+    extendedParameters: JSON
+}
+
+#BillingAccountInfoInput
+
+"""Represents necessary Billing Account data for anonymous Quotation process."""
+
+input BillingAccountInfoInput {
+
+    """This gives any additional handling instructions that are output with the bills for this account. For example, it might include instructions to the printing house regarding any special paper stock required"""
+
+    billingPresentationMedia: String
+
+    """The attribute contains additional parameters of the entity."""
+
+    extendedParameters: JSON
+
+    """Name of the template, that will be used for Billing Account creation."""
+
+    templateName: String
+
+}
+
+#QuotePriceAlterationInput
+
+"""An entity that represents a Discount (currently not supported)"""
+input PriceAlterationInput {
+    id: String
+
+    """
+    A short descriptive name such as "Monthly discount"
+    """
+
+    name: String @deprecated(reason: "The attribute is autogenerated by the service.")
+
+    """ category that describes the price such as recurring, one time and usage
+    """
+    priceType: String @deprecated(reason: "The attribute is autogenerated by the service.")
+
+    """
+    Unit of measure. Could be minutes, GB and so on
+    Note: Not supported in the current version
+    """
+    unitOfMeasure: String @deprecated(reason: "The attribute will be deleted release 23_1 cause of not supported by the service")
+
+    """Charge Period """
+    recurringChargePeriod: String @deprecated(reason: "The attribute is autogenerated by the service.")
+
+    """
+    Duration during which the alteration applies on the order item price (for
+    instance 2 months free of charge for the recurring charge)
+    """
+    applicationDuration: Int
+
+    """
+    Priority level for applying this alteration among all the defined alterations on the order item price
+    """
+    priority: Int @deprecated(reason: "The attribute is autogenerated by the service.")
+
+    priceCondition: String @deprecated(reason: "The attribute will be deleted release 23_1 cause of not supported by the service")
+
+    """The period for which the Price Alteration is valid"""
+    validFor: TimePeriodInput
+
+    """An entity that contains price values"""
+    price: PriceInput
+    productOfferingPrice: ProductOfferingPriceRefInput @deprecated(reason: "The attribute will be deleted release 23_1 cause of autogenerated by the service")
+
+    """Action (add/disconnect/null/dash)"""
+    action: String
+    """The flag reflecting whether of no the Promotion applied"""
+    applied: Boolean
+
+    """Indicates the (class) type of the Price Alteration"""
+    atType: String @deprecated(reason: "The attribute will be deleted release 23_1 cause of not supported by the service")
+    atSchemaLocation: String @deprecated(reason: "The attribute will be deleted release 23_1 cause of not supported by the service")
+
+    """
+    Parameter states whether a Discount is applied automatically or manually
+    """
+    applicationMode: String
+
+    """
+    If TRUE, then the Discount can't be applied with other Discounts on the same Price Specification
+    """
+    solo: Boolean @deprecated(reason: "The attribute will be deleted release 23_1 cause of not supported by the service")
+
+    """Weight of the Price Alteration"""
+    weight: Int @deprecated(reason: "The attribute will be deleted release 23_1 cause of not supported by the service")
+
+    """Attribute used to capture additional parameters for a PriceAlteration."""
+
+    extendedParameters: JSON
+
+    """Units of discount application duration, e.g. Day, Week, Month, Quarter, Year."""
+
+    durationUnits: String @deprecated(reason: "The attribute will be deleted release 23_1 cause of not supported by the service")
+
+    """Type of Price Alteration."""
+
+    priceAlterationType: String
+
+    """Flag indicates whether Price Alteration applies to the suspended Price."""
+
+    alterationOnSuspendedPrice: Boolean
+
+    """Unique identifier of the ticket from CPM. It's filled in case when Price Alteration of the 'REPLACEMENT' type (that represents price override) is created via ticket in the CPM."""
+
+    ticketId: String
+
+    """Ticket creation reason. It's filled in case when Price Alteration of the 'REPLACEMENT' type (that represents price override) is created via ticket in the CPM."""
+
+    reason: String
+
+}
+
+#QuoteProductOfferingPriceRefInput
+
+input ProductOfferingPriceRefInput {
+    href: String
+    id: ID
+    name: String
+    atBaseType: String
+    atReferredType: String
+    atSchemaLocation: String
+    atType: String
+}
+
+"""
+The Party/PartyRole which the Quote/Quote Item related with.
+"""
+input RelatedPartyRefInput {
+    """
+    Indicates the (class) type of the Related Party.
+    """
+    atType: String
+
+    """Reference to the Related Party."""
+
+    href: String
+
+    """Generic attribute indicating the name of the class type of the referred resource/entity."""
+
+    atReferredType: String
+
+    """
+    Unique identifier of Related Party.
+    """
+    id: String!
+    """
+    Name of the Related Party.
+    """
+    name: String
+    """
+    Role of the Related Party.
+    """
+    role: String
+
+    """Is used to show that Related Party is a user of service (the Individual use this product on their own or only manages)."""
+    userOfService: Boolean
+}
+
+#BusinessBarringSpecificationRef Input
+
+input BusinessBarringSpecificationRefInput{
+
+    """Unique identifier of Business Barring Specification."""
+
+    id: String!
+
+    """Name of the Business Barring Specification."""
+
+    name: String
+
+}
+
+#BusinessBarringRecord Input
+
+"""Business Barring Record represents a Barring applied in accordance with Business Barring Specification"""
+
+input BusinessBarringRecordInput {
+
+    """Unique identifier of Business Barring. Mandatory on create."""
+
+    id: String
+
+    """A reference to Business Barring Specification from Catalog, describes the business reason of a barring"""
+
+    businessBarringSpecification: BusinessBarringSpecificationRefInput!
+
+    """Mandatory on create. Action to be performed on this Business Barring record, e.g. : ADD, DASH, DISCONNECT"""
+
+    action: String
+
+    """Date and time reflects defined expiration date of the Business Barring Record."""
+
+    expirationDate: DateTime
+
+}
+
+#ConsentInfoInput
+
+"""Represents necessary Consent data for anonymous Quotation process."""
+
+input ConsentInfoInput {
+
+    """Unique identifier of the Consent Specification. Mandatory on create. Patchable."""
+
+    consentSpecificationId: String
+
+    """State of the Consent(e.g. Granted, Rejected, Revoked). Patchable."""
+
+    consentState: String
+
+    """Project-specific consent parameters. Patchable."""
+
+    extendedParameters: JSON
+
+    """Consent validity period. Patchable."""
+
+    validFor: TimePeriodInput
+
+}
+
+"""The entity represents the delivery info."""
+
+input DeliveryItemInput {
+
+    """Id of the Delivery Method."""
+
+    deliveryMethodId: String
+
+    """Delivery date and time requested by the Customer."""
+
+    requestedDeliveryDate: DateTime
+
+    """Attribute to capture additional parameters of the Delivery Item. Patchable."""
+
+    extendedParameters: JSON
+
+    """Indicates the contact medium that should be used to delivery. Patchable."""
+
+    contactMedium: ContactMediumInput
+
+}
+
+#Catalog Management Queries
+
+#Catalog Management Types
+
+#GQL Anonymous Tag Type
+
+"""
+A Tag is a keyword or term assigned to a configuration item (e.g Product Offering, Discount and so on).
+"""
+type Tag {
+    """(Class) type of  Tag"""
+
+    atType: String
+
+    """Reference of the Tag"""
+
+    href: String
+    """Unique identifier of the Tag"""
+    id: String
+    """Name of the Tag."""
+    name: String
+
+    """Unique identifier of the Tag Group"""
+
+    tagGroupId: String
+}
+
+
+#GQL Anonymous TagGroup Type
+
+"""
+Tag Group. Used for group tags
+"""
+type TagGroup {
+    """(Class) type of  Tag Group"""
+
+    atType: String
+    """Extended attributes of Tag Group used for customization purposes"""
+
+    extendedParameters: JSON
+
+    """Reference of the Tag Group"""
+
+    href: String
+
+    """Unique identifier of the Tag Group"""
+    id: String
+    """Unique name of the Tag Group"""
+    name: String
+
+    """Name of Group Condition Type"""
+
+    tagGroupConditionType: String
+
+    """Type of the Tag Group"""
+
+    tagGroupType: String
+
+}
+
+#AvailabilityCheckResult Type
+
+"""
+Availability Check Result
+"""
+
+type AvailabilityCheckResult {
+    """Product Offering Unique identifier"""
+
+    productOfferingId: String
+
+    """Result of the availability check"""
+    availabilityCheckResult: String
+
+    """Availability check message"""
+    availabilityCheckResultMessage: String
+}
+
+
+#ProductOfferingCategoryConstraint
+
+"""Defines min/max allowances for number of instances of offerings under the Offering category (Top and Sub category), regarding the determined scope (Location, Quote, Customer)."""
+type ProductOfferingCategoryConstraint{
+
+    """Min allowance for the determined scope of the product offering category."""
+    offeringCountMin: Int
+
+    """Max allowance for the determined scope of the product offering category."""
+
+    offeringCountMax: Int
+
+    """Scope for min/max allowances application, determined for the product offering category."""
+
+    scope: String
+
+}
+
+#LocalizedData
+
+"""Class exposes localized data (e.g. name, description)
+
+Attention:
+
+The type is used in several services: TMF620 Product Catalog Management, Marketing Catalog Management
+To check actual supported attributes please refer to TMF documentation of specific service
+
+"""
+type LocalizedData {
+    """
+    Localized description.
+    """
+    description: String
+
+    """ISO code of locale (e.g. en)"""
+
+    locale: String
+
+    """
+
+    Localized name
+
+    """
+
+    name: String
+
+}
+
+#GQL Unknown Currency Type
+
+"""
+
+Currency (ISO4217 norm uses 3 letters to define the currency). Unit measure for Product Price (e.g. Euro, Canadian dollar, United States dollar) that is used in a particular country at a particular time.
+
+"""
+type Currency{
+
+
+    """ (Class) type of the Currency."""
+    atType: String
+
+    """Code of  the Currency (e.g. 'USD', 'EUR', etc)"""
+
+    code:String
+
+    """Currency description"""
+
+    description:String
+
+    """ id of the Currency"""
+
+    id: String
+
+    """Indicates the number of decimal places used for amounts"""
+
+    minorDecimalPlaces:Int
+
+    """ Name of the Currency (e.g. 'USD', 'EUR', etc)"""
+    name: String
+
+    """Position of the sign relative to the number"""
+
+    place:String
+
+    """Rounding Algorithm of the Currency (e.g. 'HALF_UP', 'HALF_DOWN','NEAREST ')"""
+
+    roundingAlgorithm:String
+
+    """Rounding precision of the Currency"""
+
+    roundingPrecision:Int
+
+    """The sign of the Currecny (e.g '$', '£')"""
+
+    sign:String
+
+}
+
+#Catalog
+
+"""
+The entity represents a collection of Product Offerings and other related objects.
+"""
+type Catalog {
+    """Base type of the entity"""
+
+    atBaseType: String
+    """Schema location"""
+    atSchemaLocation: String
+    """Type of the entity."""
+    atType: String
+    """Unique identifier of the entity."""
+    id: String
+    """Name of the entity."""
+    name: String
+
+    """ Description of this catalog."""
+
+    description: String
+    """Reference of the catalog."""
+    href: String
+    """Date and time of the last update"""
+    lastUpdate: DateTime
+    """Used to indicate the current lifecycle status"""
+    lifecycleStatus: String
+    """The period for which the catalog is valid. TimePeriod contains startDateTime (type:DateTime) and endDateTime (type: DateTime)."""
+    validFor: TimePeriod
+    """ Catalog version """
+    version: String
+
+    """List of Customer Categories"""
+
+    customerCategory: [CustomerCategory!]
+
+    """List of Channels"""
+
+    channel: [Channel]
+
+    """List of Market Segments"""
+
+    marketSegment: [MarketSegment!]
+
+    """List of Brands"""
+
+    brand: [Brand]
+
+    """List of Price Lists"""
+
+    priceList: [PriceList!]
+
+    """List of Offering Categories"""
+
+    category: [CategoryRef!]
+
+    """Marketing bundles"""
+
+    marketingBundle: [MarketingBundleRef!]
+
+    """List of MarketingBundleCategories"""
+
+    marketingBundleCategory: [MarketingBundleCategory!]
+
+    """List of Extended Entities"""
+
+    extendedEntity: [ExtendedEntity!]
+
+    """List of Product Families"""
+
+    productFamily: [ProductFamily!]
+
+    """The list of Currencies"""
+
+    currency:[Currency!]
+
+}
+
+#ProductFamily
+
+"""
+Represents the product family.
+"""
+type ProductFamily {
+
+    """
+
+    The class type of the Product Family
+
+    """
+
+    atType: String
+
+    """
+    Unique identifier of the product family.
+    """
+    id: String
+    """
+    Name of the product family.
+    """
+    name: String
+
+    """
+    Description of the product family.
+    """
+    description: String
+
+    """
+    Extended parameters. In <String, List<Object>> format.
+    """
+    extendedParameters: JSON
+
+    """Link to appropriate localization data. Used for name, description localization in UI."""
+
+    localizedData:[LocalizedData]
+
+
+}
+
+#CustomerCategory
+
+"""
+
+Represents an entity for logical grouping of customer accounts.
+"""
+type CustomerCategory
+{
+
+    """
+    Unique identifier of the entity
+    """
+    id: String
+    """
+    Unique identifier of the parent Customer Category
+    """
+    parentId: String
+    """
+    Name of the Customer Category.
+    """
+    name: String
+    """
+    Type of entity.
+    """
+    atType: String
+
+    """Link to appropriate localization data. Used for name, description localization in UI."""
+    localizedData:[LocalizedData]
+
+    """Extended parameters in <String, List<String>> format"""
+    extendedParameters: JSON
+
+}
+
+#ExtendedEntity
+
+"""Represents an Extended Entity."""
+
+type ExtendedEntity {
+    """Unique identifier of the Extended Entity"""
+
+    id: String!
+
+    """Unique identifier of parent Extended Entity"""
+    parentId: String
+
+    """Extended parameters in <String, List<String>> format"""
+
+    extendedParameters: JSON
+
+    """Type of the Extended Entity"""
+
+    extendedEntityType: String
+
+    """Name of Entity"""
+
+    name: String
+
+    """
+    Represents the type of Entity.
+    """
+    atType: String
+}
+
+
+
+#PriceList
+
+"""
+The entity represents a reference to the Price List.
+"""
+type PriceList {
+    """
+    The class type of the price list.
+    """
+    atType: String
+    """
+    Unique identifier of the price list.
+    """
+    id: String
+
+    """
+    Name of the price list
+    """
+    name: String
+
+    """
+    If price list is default
+    """
+    isDefault: Boolean
+}
+
+#MarketingBundle
+
+"""
+The entity represents a Marketing Bundle
+"""
+type MarketingBundle {
+
+    """Unique identifier of the marketing bundle."""
+
+    id: String
+
+    """Name of Marketing Bundle."""
+
+    name: String
+
+    """Billing name of Marketing Bundle."""
+
+    billingName: String
+
+    """Description of the marketing bundle"""
+
+    description: String
+
+    """Display name of Marketing Bundle."""
+
+    displayName: String
+
+    """Date and Time Marketing Bundle is available from."""
+
+    availableFrom: DateTime
+
+    """Date and Time Marketing Bundle is available to."""
+
+    availableTo: DateTime
+
+    """Status of Marketing Bundle"""
+
+    status: String
+
+    """Weight of the marketing bundle"""
+
+    weight: Int
+
+    """Marketing Bundle price references"""
+
+    productOfferingPrice: [ProductOfferingPriceRef!]
+
+    """Allowed Marketing Bundle Transitions"""
+
+    transition: [MarketingBundleRef!]
+
+    """List of marketing bundle components."""
+
+    component: [MarketingBundleComponent!]
+
+    """Marketing Bundle Related categories"""
+
+    marketingBundleCategory: [MarketingBundleCategoryRef!]
+
+    """Order Number. Used for ordering of Marketing Bundles in UI"""
+
+    orderNumber: Int
+
+    """Extended eligibility parameters of the marketing bundle."""
+
+    extendedEligibilityCheckParameters: JSON
+
+    """FullEligibilityCondition includes the following eligible criteria:
+
+    Market Segment: include\exclude values; Customer category: include\exclude values; Distribution Channel: include\exclude values"""
+
+    fullEligibilityCondition: FullEligibilityCondition
+
+    """Extended parameters in <String, List<String>> format"""
+
+    extendedParameters: JSON
+
+    """ Type of Marketing Bundle"""
+
+    atType: String
+
+    """ Hyperlink to access the Marketing Bundle"""
+
+    href: String
+
+    """ Value that refers to offering versioning strategy of bundle components"""
+
+    ignoreVersionStrategy: Boolean
+
+    """Link to appropriate localization data. Used for name, description localization in UI."""
+
+    localizedData:[LocalizedData]
+
+    """If true, Order Capture Application propagate location to the all Bundle Members"""
+
+    isSingleLocation: Boolean
+
+    """If true, Order Capture Application validates that Bundle Members belong to the same billing account"""
+
+    isSingleBillingAccount: Boolean
+
+    """Id from external system"""
+
+    externalId: String
+
+    """ A Tag is a keyword or term assigned to a configuration item (e.g. Marketing Bundle). This kind of metadata helps describe an item and allows it to be found by searching."""
+
+    tag: [String!]
+
+    """Marketing Bundle status that is calculated by the system based on Marketing Bundle's validity period (availableFrom, availableTo dates)."""
+
+    effectiveStatus: String
+}
+
+#MarketingBundleCategory
+
+"""
+The entity is used to group Marketing Bundles.
+"""
+type MarketingBundleCategory {
+
+    """
+    Type of the entity.
+    """
+    atType: String
+    """
+    Unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String
+
+    """
+    Order Number of the category
+    """
+    orderNumber: Int
+
+    """Link to appropriate localization data. Used for name, description localization in UI."""
+
+    localizedData:[LocalizedData]
+
+}
+
+#MarketingBundleComponent
+
+"""
+The entity represents a Marketing Bundle Component.
+"""
+type MarketingBundleComponent {
+
+    """Unique identifier of the marketing bundle component."""
+
+    id: String
+
+    """Component Cardinality."""
+
+    cardinality: Int @deprecated(reason: "Use 'cardinalityDefault', 'cardinalityMax', 'cardinalityMin'. 'cardinality' attribute won't be supported after 21_4 release ")
+
+    """Marketing Bundle. related characteristic"""
+
+    characteristicId: String
+
+    """Marketing Bundle component characteristic value."""
+
+    value: String
+
+    """Marketing Bundle operator unique identifier"""
+
+    operatorId: Int
+
+    """Marketing Bundle Product offering."""
+
+    productOffering: ProductOfferingRef
+
+    """A product offering represents entities that are orderable from the provider of the catalog"""
+
+    productOfferings: [ProductOfferingRef!]
+
+    """Type of Marketing Bundle Component """
+
+    atType: String
+
+    """Default number of a marketing bundle component that should be presented in a marketing bundle"""
+
+    cardinalityDefault: Int
+
+    """Maximum quantity of a marketing bundle component that should be presented in a marketing bundle"""
+
+    cardinalityMax: Int
+
+    """Minimum quantity of a marketing bundle component that should be presented in a marketing bundle"""
+
+    cardinalityMin: Int
+
+    """Used for ordering of Marketing Bundle Components in UI."""
+
+    orderNumber: Int
+}
+
+#Category
+
+"""
+The entity is used to group Product Offerings and resource candidates in logical containers. Each category can contain other (sub-)categories and/or product offerings, resource candidates.
+"""
+type Category {
+    """
+
+    Base type of the entity
+    """
+    atBaseType: String
+    """
+    Schema location
+    """
+    atSchemaLocation: String
+    """
+    Type of the entity.
+    """
+    atType: String
+    """
+    Unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String
+
+    """
+    Description of the category
+    """
+    description: String
+    """
+    Reference of the category
+    """
+    href: String
+    """
+    If true, indicates that the category is a root of categories
+    """
+    isRoot: Boolean
+    """
+    Date and time of the last update
+    """
+    lastUpdate: DateTime
+    """
+    Used to indicate the current lifecycle status
+    """
+    lifecycleStatus: String
+    """
+    Maximum number of offerings that can be involved in Quote under this category.
+    """
+    offeringCountMax: Int
+    """
+    Minimum number of offerings that should be added to Quote under this category.
+    """
+    offeringCountMin: Int
+
+    """Optional attribute, which is needed to calculate max allowance of child OTSs offerings under the Category, when Parent Quote Item has action MODIFY, DISCONNECT, or DASH (i.e. to consider already consumed and paid OTSs in modify cases)"""
+
+    offeringCountMaxRetain: Int
+
+    """Optional attribute, which is needed to calculate min allowance of child OTSs offerings under the Category, when Parent Quote Item has action MODIFY, DISCONNECT, or DASH (i.e. to consider already consumed and paid OTSs in modify cases)."""
+
+    offeringCountMinRetain: Int
+    """
+    This attribute defines the order of the entity in UI.
+    """
+    orderNumber: Int
+    """
+    It is not applicable anymore, because Category can have more then one parent Category
+    """
+    parentId: String
+    """
+    The period for which the category is valid. TimePeriod contains startDateTime (type:DateTime) and endDateTime (type: DateTime).
+    """
+    validFor: TimePeriod
+    """
+    Category version
+    """
+    version: String
+
+    """
+
+    A list of product offering references (ProductOfferingRef [*]). A product offering represents entities that are orderable from the provider of the catalog, this resource includes pricing information
+
+    """
+
+    productOffering: [ProductOfferingRef!]
+
+    """
+
+    A list of (sub-)category references (CategoryRef [*]). The category resource is used to group product offerings, service and resource candidates in logical containers. Categories can contain other (sub-)categories and/or product offerings
+
+    """
+
+    subCategory: [CategoryRef!]
+
+    """List of filtering characteristics"""
+
+    filteringCharacteristic: [FilteringCharacteristic]
+
+    """Extended parameters in <String, List<String>> format"""
+
+    extendedParameters: JSON
+
+    """Link to appropriate localization data. Used for name, description localization in UI."""
+
+    localizedData:[LocalizedData]
+
+    """
+
+    Reference Product Offering Category Constraint. CategoryConstraint defines min/max allowances for number of instances of offerings under the Offering category (Top and Sub category), regarding the determined scope (Location, Quote, Customer).
+
+    """
+
+    categoryConstraint: [ProductOfferingCategoryConstraint]
+
+    """The attribute defines that a Category should be hidden on UI."""
+
+    isHidden: Boolean
+
+    """A tag is a keyword or term assigned to a configuration item """
+
+    tag: [String!]
+
+    """Override of the min/max category cardinality in case when it depends on Context Key Id (Product Offering)."""
+
+    categoryCardinalityOverride: [CategoryCardinalityOverride!]
+}
+
+"""Override of the  min/max category cardinality in case when it depends on Context Key Id (Product Offering)"""
+
+type CategoryCardinalityOverride {
+
+    """Unique identifier of the context key."""
+
+    contextKeyId: String
+
+    """Maximum number of offerings that can be involved in Quote under this category. """
+
+    offeringCountMax: Int
+
+    """Optional attribute, which is needed to calculate max allowance of child OTSs offerings under the Category."""
+
+    offeringCountMaxRetain: Int
+
+    """Minimum number of offerings that can be involved in Quote under this category."""
+
+    offeringCountMin: Int
+
+    """Optional attribute, which is needed to calculate min allowance of child OTSs offerings under the Category."""
+
+    offeringCountMinRetain: Int
+
+}
+
+#ConsentInfo Type
+
+"""Represents necessary Consent data for anonymous Quotation process."""
+
+type ConsentInfo {
+
+    """Unique identifier of the Consent Specification."""
+
+    consentSpecificationId: String
+
+    """State of the Consent(e.g. Granted, Rejected, Revoked)."""
+
+    consentState: String
+
+    """Project-specific consent parameters."""
+
+    extendedParameters: JSON
+
+    """Consent validity period."""
+
+    validFor: TimePeriod
+
+}
+
+#FilteringCharacteristic
+
+"""
+
+The entity represents characteristic that can be used for filtering on UI
+
+"""
+type FilteringCharacteristic {
+
+    """Unique identifier of the Characteristic from POC"""
+
+    characteristicId: String!
+
+    """Responsible for corresponding rendering values on UI. E.g.: List of Checkboxes; Ranges with drop-down; Ranges with input value."""
+
+    characteristicWidget: String
+
+    """Name of characteristic"""
+
+    name: String
+
+    """Order number can be used to define the order of the entity on UI."""
+
+    orderNumber: Int
+
+    """Characteristic Value type"""
+
+    valueType: String!
+
+    """List of filtering characteristic values"""
+
+    availableValue:[FilteringCharacteristicValue]
+
+    """Link to appropriate localization data. Used for name, description localization in UI."""
+
+    localizedData:[LocalizedData]
+
+
+
+}
+
+#FilteringCharacteristicValue
+
+"""
+
+The entity represents characteristic values that can be used for filtering on UI
+
+"""
+type FilteringCharacteristicValue {
+
+    """Unique identifier of the Characteristic Value from POC"""
+
+    characteristicValueId: String!
+
+    """Name of characteristic value"""
+
+    name: String
+
+    """Order number can be used to define the order of the entity on UI."""
+
+    orderNumber: Int
+
+    """A discrete value of characteristic"""
+
+    value: String!
+
+
+
+    """A value type of characteristic"""
+
+
+
+    valueType: String!
+
+    """Link to appropriate localization data. Used for name, description localization in UI."""
+
+    localizedData:[LocalizedData]
+
+
+
+}
+
+#ProductOffering
+
+"""
+Product Offering represents entity that are orderable from the provider of the catalog, this resource includes pricing information.
+"""
+type ProductOffering {
+
+    """
+
+    Base type of the entity
+    """
+    atBaseType: String
+    """
+    Schema location
+    """
+    atSchemaLocation: String
+    """
+    Type of the entity.
+    """
+    atType: String
+    """
+    Unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String
+
+    """
+    Description of the productOffering
+    """
+    description: String
+    """Extended parameters in <String, List<String>> format"""
+    extendedEligibilityCheckParameters: JSON
+    """
+    Arbitrary parameters that can be provided along with Product Offering.
+    """
+    extendedParameters: JSON
+
+    """Product offering external unique identificator."""
+    externalId:String
+
+    """Reference to Resource Candidate """
+
+    resourceCandidate: ResourceCandidateRef
+
+    """
+    Reference of the ProductOffering
+    """
+    href: String
+    """
+    Determines whether a productOffering represents a single productOffering (false), or a bundle of productOfferings (true).
+    Attribute is not supported by BE service.
+    """
+    isBundle: Boolean
+    """
+    Shows if the Location information is required to provide this Product Offering.
+    """
+    isLocationRequired: Boolean
+    """
+    A flag indicating if this product offer can be sold stand-alone for sale or not. If this flag is false it indicates that the offer can only be sold within a bundle
+    """
+    isSellable: Boolean
+    """
+    The attribute reflects whether Product is tangible.
+    """
+    isTangible: Boolean
+    """
+    It is true if the Product Offering is Top Product Offering.
+    """
+    isTopOffer: Boolean
+    """
+    Date and time of the last update
+    """
+    lastUpdate: DateTime
+    """
+    Used to indicate the current lifecycle status
+    """
+    lifecycleStatus: String
+    """
+
+    If tax inclusive.
+
+    """
+    taxInclusive: Boolean
+    """
+    The period for which the product Offering is valid. TimePeriod contains startDateTime (type:DateTime) and endDateTime (type: DateTime).
+    """
+    validFor: TimePeriod
+    """
+    ProductOffering version
+    """
+    version: String
+
+    """
+    List of applicable markets
+    """
+    marketSegment: [MarketSegmentRef!]
+    """
+    List of applicable distribution channels.
+    """
+    channel: [ChannelRef!]
+    """
+    List of applicable customer categories.
+    """
+    customerCategory: [CustomerCategoryRef!]
+    """
+    List of product offering prices.
+    """
+    productOfferingPrice: [ProductOfferingPriceRef!]
+    """
+    List of product applicable brands.
+    """
+    brand: [BrandRef!]
+
+    """
+
+    Child product offerings categories
+
+    """
+
+    childCategory: [CategoryRef!]
+
+    """
+
+    Related product offerings categories
+
+    """
+
+    category: [CategoryRef!]
+
+    """
+    Related product specificatoin.
+    """
+    productSpecification: ProductSpecificationRef
+
+    """
+
+    Child product offerings
+
+    """
+
+    childOffering: [ProductOfferingToChildProductOfferingRef!]
+
+    """
+
+    List of offerings to which this offering can be upgraded to
+
+    """
+
+    canBeUpgradedTo: [ProductOfferingRef!]
+
+    """List of offerings to which this offering can be downgraded to"""
+
+    canBeDowngradedTo: [ProductOfferingRef!]
+
+    """Product characteristic value use."""
+
+    prodSpecCharValueUse: [ProdSpecCharValueUse!]
+
+    """Product Offering Terms"""
+
+    productOfferingTerm: [ProductOfferingTerm!]
+
+    """Product offering price details"""
+
+    productOfferingPriceDetails: ProductOfferingPriceDetails
+
+    """Product Offering Tax Involvement"""
+
+    taxInvolvement: [TaxInvolvement!]
+
+    """Product Offering rules"""
+
+    rule: [RuleNode!]
+
+    """Weight of Product Offering using for upgrade/downgrade case definition."""
+
+    weight: Int
+
+    """Stock Keeping Unit"""
+
+    skuId: String
+
+    """Charging Type of the Product Offering
+
+    Supported values: Prepaid; Postpaid."""
+
+    chargingType: String
+
+    """Product Family Reference"""
+
+    productFamily: ProductFamilyRef
+
+    """Link to appropriate localization data. Used for name, description localization in UI."""
+
+    localizedData:[LocalizedData]
+
+    """
+
+    Attribute helps to determine, if Child OTS offering should be visualized or hidden on UI according to the business action performed over the parent QI.
+
+    Values are populated on project side - e.g. 'New Sale', 'Change Ownership'. (for OTS offerings only)
+
+    """
+
+    businessActions: [String]
+
+    """A Tag is a keyword or term assigned to a configuration item (e.g Product Offering). This kind of metadata helps describe an item and allows it to be found by searching"""
+    tag: [String!]
+
+    """Defines Product Offerings that generate events."""
+
+    eventGenerating: Boolean
+
+    """The attribute defines that Product Offering can be sold only in a Soft Bundle as a Bundle Component, i.e. it can’t be sold standalone."""
+    isBundleOnly: Boolean
+
+    """The flag that can be used by UI(s) to prohibit manual adding of Product Offerings that are added to Quote as a result of Business Rules executing."""
+    isAppliedByBusinessRule: Boolean
+
+    """List of enrichment containers."""
+    enrichmentContainer: [EnrichmentContainer!]
+
+    """Duration of the Product Offering."""
+
+    duration: QuantityInt
+
+    """Used to indicate current lifecycle status of the Product Offering, it is calculated by the system based on Product Offering's validity period (validFor dates)."""
+
+    effectiveLifecycleStatus: String
+
+    """Unique identifier of the Product Offering Template (from Product Offering Catalog) based on which Product Offering was created."""
+
+    templateId: String
+
+    """This attribute defines the order of the entity in UI."""
+
+    orderNumber: Int
+
+    """A flag defines the ability to add such Product Offering in the Quote in non-editable state"""
+
+    isAllowForceAdd: Boolean
+
+    """A flag defines if Amount parameter can be modified."""
+
+    isDisableAmount: Boolean
+
+}
+
+#ProductOfferingToChildProductOffering
+
+"""
+The entity represent reference to the child Product Offering.
+"""
+type ProductOfferingToChildProductOfferingRef {
+    """
+    The class type of the referred product offering
+    """
+    atReferredType: String
+    """
+    Maximum Cardinality of Child Product Offerings. This parameter is inherited by child Categories and Product Offerings until explicitly overridden on child Categories or Product Offerings. It may be specified for role=child only.
+    """
+    childMax: Int
+    """
+    Minimum Cardinality of Child Product Offerings. This parameter is inherited by child Product Offerings until explicitly overridden on child Product Offerings.
+    """
+    childMin: Int
+    """This attribute defines Defauld behavior in UI. The possible value are:
+
+    Selected
+
+    Not selected"""
+
+    defaultBehavior: String
+    """
+    Reference of the product offering
+    """
+    href: String
+    """
+    Child product offering
+    """
+    productOffering: ProductOffering
+    """
+    Name of the child product offering
+    """
+    name: String
+    """
+    This attribute defines the order of the entity in UI.
+    """
+    orderNumber: Int
+
+    """
+
+    Unique identifier of the referred product offering"""
+
+    id: String
+
+    """A flag is used to retain child Offerings when the user changes one parent Offering to another one. If isRetainChildOffers=true then the system should retain all child Offerings under parent Offering."""
+
+    childOffersRetained: Boolean
+}
+
+#TaxInvolvement
+
+"""
+A list of taxes that represent an amount of money levied on the price of a Product by a legislative body. It contains references to CustomerCategory and MarketSegment that define taxation logic.
+"""
+type TaxInvolvement {
+    """
+    Tax involvement description.
+    """
+    description: String
+    """
+
+    Extended eligibility check parameters in <String, List<String>> format.
+
+    """
+    extentedEligibilityCheckParameters: JSON
+    """
+    Unique identifier of Taxation Involvement
+    """
+    Id: String
+    """
+    The Tax Involvement name.
+    """
+    name: String
+    """
+    The Name of the Point of Supply.
+    """
+    pointOfSupplyName: String
+    """
+    The time periov when Tax Involvement is valid. TimePeriod contains startDateTime (type:DateTime) and endDateTime (type: DateTime).
+    """
+    validFor: TimePeriod
+
+    """
+
+    Tax details
+
+    """
+
+    details: [TaxDetails!]
+
+    """
+
+    Applicable customer categories
+
+    """
+
+    customerCategory: [CustomerCategoryRef!]
+
+    """Applicable Market Segments"""
+
+    marketSegment: [MarketSegmentRef!]
+}
+
+#TaxDetails
+
+"""
+Provides information about absolute or percentage amount of tax
+"""
+type TaxDetails {
+    """
+    Absolute tax amount.
+    """
+    absoluteTaxAmount: Float
+    """
+    Percentage tax amount.
+    """
+    percentageTaxAmount: Float
+    """
+    Tax code identifier.
+    """
+    taxCodeId: String
+}
+
+#RueNode
+
+"""
+It provides the rule representation.
+"""
+type RuleNode {
+    """
+    Description of the rule
+    """
+    description: String
+    """
+    Unique identifier of the RuleNode
+    """
+    id: String
+    """
+    Name of the rule.
+    """
+    name: String
+    """
+    The rule details.
+    """
+    ruleData: JSON
+    """
+    The type of the rule.
+    """
+    type: String
+
+    localizedData: [LocalizedData!]
+}
+
+#ProductOfferingPriceDetails
+
+"""
+The entity represents the details of Product Offering Prices Charges.
+"""
+type ProductOfferingPriceDetails {
+    """
+    Define the length of time for which the periodic prices apply
+    """
+    chargePeriod: Int
+    """
+    Charge period unit
+    """
+    chargePeriodUnit: String
+    """
+
+    """
+    description: String
+    """
+    Attribute specifies -need to generate additional no charge price plan
+    """
+    generatedNoCharge: Boolean
+    """
+    An indicator of whether the periodic charge for the product is to be billed in advance
+    """
+    inAdvance: Boolean
+    """
+
+    """
+    name: String
+    """
+    Activation product status transition rule specifies when a product status transition is considered to occur for the purposes of product charging.
+    Valid values are:
+
+    • At midnight on that day;
+
+    • At midnight on the following day;
+
+    • To the nearest day;
+
+    • At the exact time on that day
+    """
+    onActivation: String
+    """
+    Reactivation product status transition rule specifies when a product status transition is considered to occur for the purposes of product charging.
+    Valid values are:
+
+    • At midnight on that day;
+
+
+    • At midnight on the following day;
+
+
+    • To the nearest day;
+
+
+    • At the exact time on that day
+    """
+    onReactivation: String
+    """
+    Suspension product status transition rule specifies when a product status transition is considered to occur for the purposes of product charging.
+    Valid values are:
+
+    • At midnight on that day;
+
+
+    • At midnight on the following day;
+
+
+    • To the nearest day;
+
+
+    • At the exact time on that day
+    """
+    onSuspension: String
+    """
+    Termination product status transition rule specifies when a product status transition is considered to occur for the purposes of product charging.
+    Valid values are:
+
+    • At midnight on that day;
+
+
+    • At midnight on the following day;
+
+
+    • To the nearest day;
+
+
+    • At the exact time on that day
+    """
+    onTermination: String
+    """
+    The type of Price Plan. Valid values are Public and Private
+    """
+    pricePlanType: String
+    """
+    Defines whether the product can be prorated
+    """
+    prorate: Boolean
+    """
+    Define whether the product can be refunded for partial periods if the customer cancels the product part way through a pre-paid period
+    """
+    refundable: Boolean
+    """
+    Status of Offering Price Details
+    """
+    status: String
+    """
+    attribute with possible values 'Yes'/'No' defining that the Tax are included or not
+    """
+    taxInclusive: Boolean
+    """
+    Defines whether the Billing Engine should monitor price plans for changes between consecutive catalogs in order to refund and rebill accordingly
+    """
+    trackPriceChange: Boolean
+
+    """
+    Defines the start/end dates of the period during which the price components are to be effective
+    """
+    validFor: TimePeriod
+
+    """Optional.
+
+    Basis for ETF calculation. Available values:
+
+    Dedicated price
+    Product Inventory Price"""
+    calculationBasis: String
+
+    """
+
+    Mandatory only if ProductOfferingPriceDetails.calculationBasis = 'Product Inventory Price'.
+    Mode which is going to be used by CPQ to pre-calculate ETF calculation basis.
+
+    Available values:
+
+    Catalog Price (for current date-time)
+    Overridden Price (if exists, otherwise Catalog Price is going to be used)
+    Resulting Price"""
+    productInventoryBasedMode: String
+
+    """
+
+    Mandatory only if ProductOfferingPriceDetails.calculationBasis = 'Product Inventory Price'.
+    Reference to the Price Specification which is going to act as a source for ETF calculation basis.
+    Available values: reference selector with the list of price specification of the Price Type = Recurrent.
+
+    """
+
+    productInventoryBasedCalculationPriceSpecification: String
+}
+
+#ProductOfferingTerm
+
+"""
+A condition under which a ProductOffering is made available to Customers. For instance, a productOffering can be offered with multiple commitment periods
+"""
+type ProductOfferingTerm {
+
+    """
+
+    Base type of the entity
+    """
+    atBaseType: String
+    """
+    Schema location
+    """
+    atSchemaLocation: String
+    """
+    Type of the entity.
+    """
+    atType: String
+    """
+    Unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String
+
+    """
+    Description of the productOfferingTerm
+    """
+    description: String
+    """
+    Duration of the Product Offering Term. The Quantity consists of units (type:String) and amount (type:integer).
+    """
+    duration: Quantity
+    """
+    The period for which the Product Offering Term is valid. TimePeriod contains startDateTime (type:DateTime) and endDateTime (type: DateTime).
+    """
+    validFor: TimePeriod
+}
+
+
+
+#ProdSpecCharValueUse
+
+"""
+A use of the ProdSpecCharacteristicValue by a ProductOffering to which additional properties (attributes) apply or override the properties of similar properties contained in ProdSpecCharacteristicValue.
+"""
+type ProdSpecCharValueUse {
+    """
+    Product Specification Characteristic unique id from Product Offering Catalog.
+    """
+    characteristicId: String
+    """
+    Restrict modification of the characteristic via PATCH API:
+    Yes - characteristic is not patchable
+    No - characteristic is patchable
+    """
+    constant: Boolean
+    """
+    A narrative that explains in detail what the productSpecCharacteristic is
+    """
+    description: String
+    """
+    Unique identifier of ProdSpecCharValueUse
+    """
+    id: String
+    """
+    It shows if the characteristic is mandatory.
+    """
+    mandatory: Boolean
+    """
+    The mask characteristic values are checked on.
+    """
+    mask: String
+    """
+    The maximum number of instances a CharacteristicValue can take on. For example, zero to five phone numbers in a group calling plan, where five is the value for the maxCardinality
+    """
+    maxCardinality: Int
+    """
+    The minimum number of instances a CharacteristicValue can take on. For example, zero to five phone numbers in a group calling plan, where zero is the value for the minCardinality
+    """
+    minCardinality: Int
+    """
+    It shows if the characteristic may be modified.
+    """
+    modifiable: Boolean
+    """
+    Name of the associated productSpecCharacteristic
+    """
+    name: String
+    """
+    It defines the operator that will be allied to the characteristic value. Can be "Equal", "Within" "In", "Not Equal", "Not Within", "Not In"
+    """
+    operator: String #NotSupported:
+    """
+    The text to be displayed in the field.
+    """
+    placeHolder: String
+    """
+    if true value is propagated down to hierarchy.
+    """
+    propagateEnteredValue: Boolean
+
+    """Referenced characteristic where to propagate the value"""
+
+    propagateTo: [ProdSpecCharValueUseRef!]
+    """
+    regexp to be checked by Quotation Engine
+    """
+    regularExpression: String
+    """
+    The period for which the Product Specification Characteristic Usage is valid. TimePeriod contains startDateTime (type:DateTime) and endDateTime (type: DateTime).
+    """
+    validFor: TimePeriod #NotSupported:
+    """
+    A kind of value that the characteristic value can take on:
+    NUMBER("Number")
+    TEXT("Text")
+    DECIMAL("Decimal")
+    DATE("Date")
+    OBJECT("Object")
+    PHONE("Phone")
+    MEMO("Memo")
+    CMS_RESOURCE("CMS Resource")
+    UNEXPECTED("Unexpected")
+    """
+    valueType: String
+    """
+    It shows if the characteristic is visible in UI.
+    """
+    visible: Boolean
+
+    """
+
+    Characteristic Values
+
+    """
+
+    productSpecCharacteristicValue: [ProductSpecCharacteristicValue!]
+
+    """
+
+    Default Characteristic Values
+
+    """
+
+    defaultValue: [ProductSpecCharacteristicValue!]
+
+    """
+
+    Available Characteristic Values
+
+    """
+
+    availableValue: [ProductSpecCharacteristicValue!]
+
+    """Extended parameters in <String, List<String>> format"""
+
+    extendedParameters: JSON
+
+    """Defines if empty value is acceptable in case of product modification"""
+
+    quoteOnlyByPassInit: Boolean
+
+    """
+    Business Type of the characteristic.
+    """
+    businessType: String
+
+
+
+    productSpecificationCharacteristic: ProductSpecificationCharacteristicRef
+
+    """Link to appropriate localization data. Used for name, description localization in UI."""
+
+    localizedData: LocalizedData
+
+    """External Id of Product Offering Characteristic."""
+
+    externalCharacteristicId: String
+
+    """Min value of the numeric product offering characteristic"""
+
+    valueFrom: String
+
+    """Max value of the numeric product offering characteristic"""
+
+    valueTo: String
+
+    """Attribute reflects that the Characteristic is technical and should be hidden from the User on UI. """
+    technical: Boolean
+}
+
+#ProductSpecCharacteristicValue
+
+"""
+A number or text that can be assigned to a ProductSpecCharacteristic
+"""
+type ProductSpecCharacteristicValue {
+
+    """
+
+    Base type of the entity
+    """
+    atBaseType: String
+    """
+    Schema location
+    """
+    atSchemaLocation: String
+    """
+    Type of the entity.
+    """
+    atType: String
+    """
+    Unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String
+
+
+    """
+    Unique identifier of the Product Specification Characteristic Value.
+    """
+    characteristicValueId: String
+    """
+    Indicates if the value is the default value for a characteristic
+    """
+    isDefault: Boolean
+    """
+    This attribute defines the order of the entity in UI.
+    """
+    orderNumber: Int
+    """
+    An indicator that specifies the inclusion or exclusion of the valueFrom and valueTo attributes. If applicable, possible values are "open", "closed", "closedBottom" and "closedTop"
+    """
+    rangeInterval: String
+    """
+    Regular expression to define constraint on the allowed value
+    """
+    regexp: String
+    """
+    Could be minutes, GB...
+    """
+    unitOfMeasure: String
+    """
+    The period of time for which a value is applicable. TimePeriod contains startDateTime (type:DateTime) and endDateTime (type: DateTime).
+    """
+    validFor: TimePeriod
+    """
+    A discrete value that the characteristic can take on. The type of value is determined by ‘valueType’ characteristic
+    """
+    value: String
+    """
+    The low range value that a characteristic can take on
+    """
+    valueFrom: String
+    """
+    The upper range value that a characteristic can take on.
+    """
+    valueTo: String
+    """
+    A kind of value that the characteristic can take on, such as numeric, text, and so forth
+    """
+    valueType: String
+    """Link to appropriate localization data. Used for name, description localization in UI."""
+
+    localizedData:[LocalizedData]
+
+    """External id of Product Offering Characteristic Value."""
+
+    externalId: String
+
+    """Indicates if the value is disabled for a characteristic"""
+
+    disabled: Boolean
+}
+
+#ProductSpecCharacteristic
+
+"""
+
+"""
+
+type ProductSpecCharacteristic {
+
+    """Type of the entity"""
+
+    atType: String
+
+    """Schema location"""
+
+    atSchemaLocation: String
+
+    """Value Schema location"""
+    atValueSchemaLocation: String
+    """Unique identifier of the entity."""
+    id: String
+    """Name of the entity."""
+    name: String
+
+    """Description of the Product Offering Specification Characteristic"""
+    description: String
+
+    """An indicator that specifies that the values for the characteristic can be extended by adding new values when instantiating a characteristic for a product"""
+
+    extensible: Boolean
+
+
+
+    """An indicator that specifies if a value is unique for the specification. Possible values are: unique while value is in effect and unique whether value is in effect or not"""
+
+    isUnique: Boolean
+    """The maximum number of instances a CharacteristicValue can take on. For example, zero to five phone numbers in a group calling plan, where five is the value for the maxCardinality"""
+
+    maxCardinality: Int
+
+    """The minimum number of instances a CharacteristicValue can take on. For example, zero to five phone numbers in a group calling plan, where five is the value for the maxCardinality"""
+
+    minCardinality: Int
+
+    """A rule or principle represented in regular expression used to derive the value of a characteristic value"""
+
+    regex: String
+
+    """The period for which the product Offering Specification is valid. TimePeriod contains startDateTime (type:DateTime) and endDateTime (type: DateTime)."""
+    validFor: TimePeriod
+    """A kind of value that the characteristic can take on, such as numeric, text and so forth"""
+
+    valueType: String
+
+}
+
+#ProductOfferingPrice
+
+"""
+The entity represents Product Offering Charges interface (e.g. MRC, NRC etc.) with all amounts (tax included, duty free, tax rate), used currency etc.
+"""
+interface ProductOfferingPrice {
+
+    """
+
+    Base type of the entity
+    """
+    atBaseType: String
+    """
+    Schema location
+    """
+    atSchemaLocation: String
+    """
+    Type of the entity.
+    """
+    atType: String
+    """
+    Unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String
+
+    """
+    Charge in Advance.
+    """
+    chargeInAdvance: Boolean
+    """
+    Charge in Advance Offset. It can be day, month.
+    """
+    chargeInAdvanceOffset: String
+    """
+    Charging Offset.
+    """
+    chargingOffset: Int
+    """
+    Description of the productOfferingPrice
+    """
+    description: String
+    """
+    The list of extended parameters in <String, List<String>> format.
+    """
+    extendedParameters: JSON
+    """
+    Hyperlink reference to the product offering price if it is exposed as a resource
+    """
+    href: String
+    """
+    A flag indicating if this Product Offering Price is composite (bundle) or not
+    """
+    isBundle: Boolean
+    """
+    The last update time of this ProductOfferingPrice
+    """
+    lastUpdate: DateTime
+    """
+    Used to indicate the current lifecycle status.
+    """
+    lifecycleStatus: String
+    """
+    No charge.
+    """
+    noCharge: Boolean
+    """
+    Shows if this price is override-able or no.
+    """
+    overridable: Boolean
+    """
+    Percentage to apply for Price override.
+    """
+    percentage: Float
+    """
+    A category that describes the price, such as recurring, discount, allowance, penalty, and so forth
+    """
+    priceType: String
+    """
+    the period of the recurring charge: 1, 2, ... It sets to zero if it is not applicable
+    """
+    recurringChargePeriodLength: Int
+    """
+    The period to repeat the application of the price
+    Could be month, week, day, etc.
+    """
+    recurringChargePeriodType: String
+    """
+    Rounding Accuracy
+    """
+    roundingAccuracy: Int
+    """
+    Rounding Type. It can be "Half Up", "Ceiling", "Floor"
+    """
+    roundingType: String
+    """
+    A unit representing how an ProductOffering is available at the offered price. Its meaning depends on the priceType. It could be a price, a rate, or a discount. It Could be minutes, GB…
+    """
+    unitOfMeasure: Quantity
+    """
+    The period for which the Product Offering Price is valid. TimePeriod contains startDateTime (type:DateTime) and endDateTime (type: DateTime).
+    """
+    validFor: TimePeriod
+    """
+    ProductOfferingPrice version
+    """
+    version: String
+
+    """
+
+    Price.
+
+    """
+
+    price: OfferingMoney
+
+    """
+
+    Product Specification characteristic value use.
+
+    """
+
+    prodSpecCharValueUse: [ProdSpecCharValueUse!]
+
+    """
+
+    Price Eligibility
+
+    """
+
+    eligibility: [EligibilityCondition!]
+
+    productOfferingTerm: [ProductOfferingTerm!]
+
+    """Id of the Price from external system. Optional"""
+
+    externalId: String
+
+    """Id of the Product Offering Price Specification"""
+
+    priceSpecificationId: String
+
+    """Id of the Revenue Code"""
+
+    revenueCodeId: String
+
+}
+
+#EligibilityCondition
+
+"""
+The entity represents a set of Customer Categories and Market Segments that price is applicable to.
+"""
+type EligibilityCondition {
+    """
+    The class type of the Eligibility Condition
+    """
+    atType: String
+    """
+    Unique identifier of the Eligibility Condition
+    """
+    id: String
+    """
+    Name of the Eligibility Condition
+    """
+    name: String
+
+    """
+
+    Market Segment Include
+
+    """
+
+    marketSegment: [MarketSegmentRef!]
+
+    """
+
+    Market Segment Exclude
+
+    """
+
+    marketSegmentExclude: [MarketSegmentRef!]
+
+    """
+
+    Customer CategoryInclude
+
+    """
+
+    customerCategory: [CustomerCategoryRef!]
+
+    """
+
+    Customer Category Exclude
+
+    """
+
+    customerCategoryExclude: [CustomerCategoryRef!]
+
+}
+
+
+
+#FullEligibilityCondition
+
+"""
+
+FullEligibilityCondition includes the following eligible criteria:
+
+Market Segment: include\exclude values; Customer category: include\exclude values; Distribution Channel: include\exclude value"""
+
+type FullEligibilityCondition {
+    """
+    The class type of the Eligibility Condition
+    """
+    atType: String
+    """
+    Unique identifier of the Eligibility Condition
+    """
+    id: String
+    """
+    Name of the Eligibility Condition
+    """
+    name: String
+
+    """
+
+    Market Segment Include
+
+    """
+
+    marketSegment: [MarketSegmentRef!]
+
+    """
+
+    Market Segment Exclude
+
+    """
+
+    marketSegmentExclude: [MarketSegmentRef!]
+
+    """
+
+    Customer CategoryInclude
+
+    """
+
+    customerCategory: [CustomerCategoryRef!]
+
+    """
+
+    Customer Category Exclude
+
+    """
+
+    customerCategoryExclude: [CustomerCategoryRef!]
+
+    """
+
+    Channel Include
+
+    """
+
+    channel: [ChannelRef!]
+
+    """
+
+    Channel Exclude
+
+    """
+
+    channelExclude: [ChannelRef!]
+
+}
+
+
+
+#ProductOfferPriceCharge
+
+"""
+The entity represents Product Offering Charges (e.g. MRC, NRC etc.) with all amounts (tax included, duty free, tax rate), used currency etc.
+"""
+type ProductOfferPriceCharge implements ProductOfferingPrice {
+
+    """
+
+    Base type of the entity
+    """
+    atBaseType: String
+    """
+    Schema location
+    """
+    atSchemaLocation: String
+    """
+    Type of the entity.
+    """
+    atType: String
+    """
+    Unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String
+
+    """Charge in Advance."""
+    chargeInAdvance: Boolean
+    """Charge in Advance Offset. It can be day, month."""
+    chargeInAdvanceOffset: String
+    """Charging Offset. """
+    chargingOffset: Int
+    """Description of the productOfferingPrice"""
+    description: String
+    """The list of extended parameters in <String, List<String>> format."""
+    extendedParameters: JSON
+    """Hyperlink reference to the product offering price if it is exposed as a resource"""
+    href: String
+    """A flag indicating if this Product Offering Price is composite (bundle) or not"""
+    isBundle: Boolean
+    """The last update time of this ProductOfferingPrice"""
+    lastUpdate: DateTime
+    """Used to indicate the current lifecycle status."""
+    lifecycleStatus: String
+    """No charge."""
+    noCharge: Boolean
+    """Shows if this price is override-able or no."""
+    overridable: Boolean
+    """Percentage to apply for Price override."""
+    percentage: Float
+    """A category that describes the price, such as recurring, discount, allowance, penalty, and so forth"""
+    priceType: String
+    """The period of the recurring charge: 1, 2, ... It sets to zero if it is not applicable"""
+    recurringChargePeriodLength: Int
+    """The period to repeat the application of the price. Could be month, week, day, etc."""
+    recurringChargePeriodType: String
+    """Rounding Accuracy"""
+    roundingAccuracy: Int
+    """Rounding Type. It can be "Half Up", "Ceiling", "Floor"""
+    roundingType: String
+    """A unit representing how an ProductOffering is available at the offered price. Its meaning depends on the priceType. It could be a price, a rate, or a discount. It Could be minutes, GB…"""
+    unitOfMeasure: Quantity
+    """The period for which the Product Offering Price is valid. TimePeriod contains startDateTime (type:DateTime) and endDateTime (type: DateTime)."""
+    validFor: TimePeriod
+    """ProductOfferingPrice version"""
+    version: String
+
+    """Specification of event for which the rate plan is applicable"""
+    externalEventSpecification: String
+    """Shows if that is default price for offering."""
+    isBasePrice: Boolean
+    """If true the price is a Default Price for Flat Prices."""
+    isDefaultPrice: Boolean
+    """Unique identifier of the Price List Item for Flat Prices."""
+    priceItemId: String
+    """Price Key for Flat Prices."""
+    priceKeyId: String
+    """Rate plan unique identifier."""
+    ratePlanId: String
+
+    """Price."""
+
+    price: OfferingMoney
+
+    """Base price."""
+
+    basePrice: OfferingMoney
+
+    """Installment Plan"""
+
+    installmentPlan: InstallmentPlan
+
+    """Price List"""
+
+    priceList: PriceListRef
+
+    """Product Specification characteristic value use."""
+
+    prodSpecCharValueUse: [ProdSpecCharValueUse!]
+
+    """Price Eligibility"""
+
+    eligibility: [EligibilityCondition!]
+
+    """Represents a list of product offering terms"""
+
+    productOfferingTerm: [ProductOfferingTerm!]
+
+    """Sale Type value (e.g. Rent, Buy, Buy with Installments) defined for ProductOfferingPriceCharge."""
+
+    saleType: String
+
+    """Id of the Price from external system. Optional"""
+
+    externalId: String
+
+    """Id of the Product Offering Price Specification"""
+
+    priceSpecificationId: String
+
+    """Id of the Revenue Code"""
+
+    revenueCodeId: String
+
+    """Represents context keys for the price in case when the price of the current child product offering depends on its top product offering."""
+
+    contextTopProductOffering: [ProductOfferingRef!]
+
+}
+
+#ProductOfferPriceAlteration
+
+"""The entity represents an amount, usually of money, that modifies the price charged for an order item."""
+type ProductOfferPriceAlteration implements ProductOfferingPrice {
+    """Base type of the entity"""
+
+    atBaseType: String
+    """Schema location"""
+    atSchemaLocation: String
+    """Type of the entity."""
+    atType: String
+    """Unique identifier of the entity."""
+    id: String
+    """Name of the entity"""
+    name: String
+
+    """Charge in Advance."""
+    chargeInAdvance: Boolean
+    """Charge in Advance Offset. It can be day, month."""
+    chargeInAdvanceOffset: String
+    """Charging Offset."""
+    chargingOffset: Int
+    """Description of the productOfferingPrice"""
+    description: String
+    """The list of extended parameters in <String, List<String>> format."""
+    extendedParameters: JSON
+    """Hyperlink reference to the product offering price if it is exposed as a resource"""
+    href: String
+    """A flag indicating if this Product Offering Price is composite (bundle) or not"""
+    isBundle: Boolean
+    """The last update time of this ProductOfferingPrice"""
+    lastUpdate: DateTime
+    """Used to indicate the current lifecycle status."""
+    lifecycleStatus: String
+    """No charge."""
+    noCharge: Boolean
+    """Shows if this price is override-able or no."""
+    overridable: Boolean
+    """Percentage to apply for Price override."""
+    percentage: Float
+    """A category that describes the price, such as recurring, discount, allowance, penalty, and so forth"""
+    priceType: String
+    """The period of the recurring charge: 1, 2, ... It sets to zero if it is not applicable"""
+    recurringChargePeriodLength: Int
+    """The period to repeat the application of the price. Could be month, week, day, etc."""
+    recurringChargePeriodType: String
+    """ Rounding Accuracy"""
+    roundingAccuracy: Int
+    """ Rounding Type. It can be Half Up, Ceiling, Floor"""
+    roundingType: String
+    """ A unit representing how an ProductOffering is available at the offered price. Its meaning depends on the priceType. It could be a price, a rate, or a discount. It Could be minutes, GB…"""
+    unitOfMeasure: Quantity
+    """ The period for which the Product Offering Price is valid. TimePeriod contains startDateTime (type:DateTime) and endDateTime (type: DateTime)."""
+    validFor: TimePeriod
+    """ ProductOfferingPrice version """
+    version: String
+
+    """ Apply Mode. It can have values Automatic or Manual"""
+    applyMode: String
+    """ Discount Level. It can have values Instance or Offering"""
+    discountLevel: String
+    """Duration of the Product Offering Price Alteration. Duration of the Product Offering Term. The Quantity consists of units (type:String) and amount (type:Int)."""
+    duration: Quantity
+    """Extended parameters in <String, List<String>> format"""
+    extendedEligibilityCheckParameters: JSON
+
+    """Flag used to highlight those Discounts which do not require Retention rules, i.e. the system always regard such Discounts as matching the Retention criteria."""
+    installationRulesOnly: Boolean
+    """Max value of discount"""
+    maxPercentageAlteration: String
+    """Min value of discount"""
+    minPercentageAlteration: String
+
+    """Absolute Price Alteration"""
+
+    absoluteAlteration: OfferingMoney
+
+    """Product Specification characteristic value use."""
+
+    prodSpecCharValueUse: [ProdSpecCharValueUse!]
+
+    """Product offering term."""
+
+    productOfferingTerm: [ProductOfferingTerm!]
+
+    """Rule Node"""
+
+    rule: [RuleNode!]
+
+    """Applicable brands"""
+
+    brand: [BrandRef!]
+
+    """Applicable Channel"""
+
+    channel: [ChannelRef!]
+
+    """Price Eligibility Condition."""
+
+    eligibility: [EligibilityCondition!]
+
+    """Price value represented by Money."""
+
+    price: OfferingMoney
+
+    """If TRUE, shows that Discount can't be applied with other Discount"""
+
+    isSolo: Boolean
+
+    """Priority of the Discount"""
+
+    priority: Int
+
+    """Weight of Discount (the more the stronger)"""
+
+    weight: Int
+
+    """An array of Categories that contain Product Offerings to which Product Offering Price Alteration can be applied."""
+
+    discountedCategory: [CategoryRef!]
+
+    """Unique identifier of the Discount"""
+
+    discountId: String
+
+    """Link to appropriate localization data. Used for name, description localization in UI."""
+
+    localizedData:[LocalizedData]
+
+    """List of Sale Type values (e.g. Rent, Buy, Buy with Installments) associated with Discount"""
+
+    saleType: [String]
+
+    """(Optional) Id of the Discount (Price Alteration) from external system"""
+
+    discountExternalId: String
+
+    """Id of the Price from external system. Optional"""
+
+    externalId: String
+
+    """Id of the Product Offering Price Specification"""
+
+    priceSpecificationId: String
+
+    """Represents context keys for the discount"""
+
+    filterProductOffering: [ProductOfferingRef!]
+
+    """Id of the Revenue Code"""
+
+    revenueCodeId: String
+
+    """In case when a referenced Category has IsIgnoreSubCategory flag set to 'False' the service retrieves that category along with all the underlying categories in one plain list (i.e. as N categories referenced with the priceAlteration)."""
+
+    filterCategory: [CategoryRef!]
+
+    """Unique identifier of the Promotion."""
+
+    promotionId: String
+}
+
+#InstallmentPlan
+
+"""
+The entity represents the plan of installments.
+"""
+type InstallmentPlan {
+    """
+    The configured down payment amount.
+    """
+    downPayment: String
+    """
+    The maximum down payment amount for a one-time service instance.
+    """
+    downPaymentMax: String
+    """
+    The minimum down payment amount for a one-time service instance.
+    """
+    downPaymentMin: String
+    """
+    Can be Fixed or Percentage
+    """
+    downPaymentType: String @deprecated (reason: "According to CPQ Design.")
+    """
+    Unique identifier of Installment Plan
+    """
+    id: String
+    """
+    The period between installments.
+    """
+    installmentPeriod: Int
+    """
+    The units of the installment period.
+    Can be Days, Weeks or Months.
+    """
+    installmentPeriodUnits: String
+    """
+    The name of Installment Plan.
+    """
+    name: String
+}
+
+#OfferingMoney (Money)
+
+"""
+A base / value business entity used to represent money.
+"""
+type OfferingMoney {
+    """
+    Money units.
+    """
+    units: String
+
+    """ Money value"""
+    value: Float
+
+    """ Allowed min value"""
+
+    minValue: String
+
+    """ Allowed max value"""
+
+    maxValue: String
+
+}
+
+#Entity Catalog Management Types
+
+#Dictionary
+
+"""
+Dictionary
+"""
+type Dictionary {
+
+    """Unique identifier of Dictionary"""
+    id: String
+    """Name of the Specification Characteristic"""
+    name: String
+
+    """Type of the Dictionary"""
+    atType: String
+
+    """Represents a Dictionary Item"""
+    items: [DictionaryItem!]
+}
+
+#DictionaryItem
+
+"""
+Dictionary
+"""
+type DictionaryItem{
+
+    """Type of the Dictionary Item"""
+    atType: String
+
+    """Unique identifier of Dictionary Item"""
+    id: String
+    """Name of the Dictionary Item"""
+    name: String
+
+    """Represents localized name of the Dictionary Item"""
+    localizedName: JSON
+
+    """If dictionary Item is deleted."""
+
+    deleted: Boolean
+
+    """Represents a parent Dictionary Item."""
+
+    parentDictionaryItem: [DictionaryItemRef!]
+}
+
+"""
+Dictionary Item Reference
+"""
+type DictionaryItemRef {
+
+    """Type of reference."""
+
+    atReferredType: String
+
+    """Hyperlink reference to this resource. Not supported."""
+
+    href: String
+
+    """Unique identifier of this resource"""
+
+    id: String
+
+    """Name given to this resource"""
+
+    name: String
+
+    """Unique identifier of the Dictionary Item."""
+
+    itemId: String
+
+}
+
+#Catalog Management Reference Entities
+
+# ResourceCandidateRef
+
+"""
+ResourceCandidate reference: A resource candidate is an entity that makes a ResourceSpecification available to a catalog
+"""
+type ResourceCandidateRef{
+
+    """The class type of referred resource candidate"""
+
+    atReferredType: String
+
+    """Reference of the resource candidate"""
+
+    href: String
+
+    """Unique identifier of the resource candidate"""
+
+    id: String
+
+    """Name of the resource candidate"""
+
+    name: String
+
+    """Version of the resource candidate"""
+
+    version: String
+
+}
+
+#ProductSpecificationCharacteristicRef
+
+"""Product specification reference: A ProductSpecification is a detailed description of a tangible or intangible object made available externally in the form of a ProductOffering to customers or other parties playing a party role"""
+
+type ProductSpecificationCharacteristicRef {
+
+    """
+    Class type of referred Product Specification
+    """
+    atReferredType: String
+    """
+    Reference of the product specification
+    """
+    href: String
+    """
+    Unique identifier of the product specification
+    """
+    id: String
+    """
+    Name of the product specification
+    """
+    name: String
+    """
+    Version of the product specification
+    """
+    version: String
+
+    """Attribute Id of Product Specification Characteristic is used to establish mapping between Product Offering Characteristic and Product Specification Characteristic"""
+
+    attributeId: String
+
+    """Unique identifier of Product Specification Characteristic"""
+
+    productSpecCharId: String
+
+    """Name of Product Specification Characteristic"""
+
+    productSpecCharName: String
+
+}
+
+"""Reference to an external bulk request for CPIs modification."""
+
+type BatchRef {
+
+    """Id of an external bulk request for CPIs modification."""
+
+    id: String
+
+    """Name of an external bulk request for CPIs modification."""
+
+    name: String
+
+}
+
+#ProductFamilyRef
+
+"""
+The entity represents reference to the Product Family
+"""
+type ProductFamilyRef {
+    """
+    Type of reference.
+    """
+    atReferredType: String
+
+    """
+    Href to the entity.
+    """
+    href: String
+    """
+    Contains unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String
+
+    origin: ProductFamily!
+
+}
+
+#ChannelRef
+
+"""
+The entity represents reference to the Channel
+"""
+type ChannelRef {
+
+    """
+    Type of reference.
+    """
+    atReferredType: String
+
+    """
+    Href to the entity.
+    """
+    href: String
+    """
+    Contains unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String
+
+    origin: Channel!
+
+}
+
+#BrandRef
+
+"""
+The entity represents reference to the Brand
+"""
+type BrandRef {
+    """
+    Type of reference.
+    """
+    atReferredType: String
+    """
+    Href to the entity.
+    """
+    href: String
+    """
+    Contains unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String
+
+    origin: Brand!
+
+}
+
+#CustomerCategoryRef
+
+"""
+The entity represents reference to the Customer Category
+"""
+type CustomerCategoryRef {
+
+    """
+    Type of reference.
+    """
+    atReferredType: String
+
+    """
+    Href to the entity.
+    """
+    href: String
+    """
+    Contains unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String
+    """Original resource"""
+    origin: CustomerCategory
+}
+
+#MarketSegmentRef
+
+"""
+The entity represents reference to the Market
+"""
+type MarketSegmentRef {
+
+    """
+    Type of reference.
+    """
+    atReferredType: String
+    """Href to the entity."""
+
+    href: String
+    """
+    Contains unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String
+
+    origin: MarketSegment!
+
+}
+
+#PriceListRef
+
+"""
+The entity represents a reference to the Price List.
+"""
+type PriceListRef {
+
+    """
+    Type of reference.
+    """
+    atReferredType: String
+
+    """
+    Href to the entity.
+    """
+    href: String
+    """
+    Contains unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String
+
+}
+
+#ProdSpecCharValueUseRef
+
+"""
+The entity represents reference to ProdSpecCharValueUse. The value of Characteristic may be propagated to the referenced characteristic.
+"""
+type ProdSpecCharValueUseRef {
+    """
+    The type (class) of the referred entity.
+    """
+    atReferredType: String
+    """
+    Unique identifier of the referred char value Use
+    """
+    id: String
+    """
+    Name of the referred char value Use
+    """
+    name: String
+
+}
+
+#MarketSegementReference
+
+"""
+The entity represents reference to the Market
+"""
+type Market {
+
+    """Contains unique identifier of the entity."""
+
+    id: String
+    """Name of the entity."""
+    name: String
+
+}
+
+#MarketingBundleCategoryRef
+
+"""The entity represents reference to the MarketingBundleCategory"""
+type MarketingBundleCategoryRef {
+
+    """Type of reference."""
+    atReferredType: String
+    """Href to the entity."""
+    href: String
+    """Contains unique identifier of the entity."""
+    id: String
+    """Name of the entity."""
+    name: String
+
+    origin: MarketingBundleCategory!
+
+}
+
+#MarketingBundleRef
+
+"""
+The entity represents reference to the MarketingBundle
+"""
+type MarketingBundleRef {
+
+    """
+    Type of reference.
+    """
+    atReferredType: String
+    """
+    Unique reference of the entity.
+    """
+    href: String
+    """
+    Contains unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String
+
+    origin: MarketingBundle!
+
+}
+
+#Session Context Service Types
+
+#SessionContext Type
+
+"""A session context is a data storage in the session that can contain arbitrary data"""
+type SessionContext {
+    """Contains arbitrary data for a specific session."""
+
+    context: JSON
+
+    """Unique identifier of the session."""
+
+    sessionId: String
+
+    """Additional properties for session context."""
+
+    systemInfo: SystemInfo
+
+}
+
+#SystemInfo Type
+
+"""Holds information about additional properties for session context."""
+type SystemInfo {
+
+    """Date and time to which System Info will be active (TTL). UNIX epoch time in seconds."""
+
+    activeTillTimestamp: Int
+
+    """CreateDate and time of creation of the System Info. UNIX epoch time in seconds."""
+
+    createTimestamp: Int
+
+}
+
+#Session Context Service Input
+
+#SessionContext Input
+
+"""A session context is a data storage in the session that can contain arbitrary data"""
+input SessionContextInput {
+
+    """Contains arbitrary data for a specific session."""
+
+    context: JSON
+
+    """Unique identifier of the session."""
+
+    sessionId: String!
+
+    """Additional properties for session context."""
+
+    systemInfo: SystemInfoInput
+
+}
+
+#SystemInfo Input
+
+"""Holds information about additional properties for session context."""
+input SystemInfoInput {
+
+    """Mandatory on create. Date and time to which System Info will be active (TTL). UNIX epoch time in seconds."""
+
+    activeTillTimestamp: Int
+
+    """Mandatory on create. CreateDate and time of creation of the System Info. UNIX epoch time in seconds."""
+
+    createTimestamp: Int
+
+}
+
+#Catalog Management Inputs
+
+#QuantityIntInput
+
+"""An entity representing an amount in a given units."""
+
+input QuantityIntInput {
+
+    """Amount"""
+    amount: Int
+
+    """Units"""
+    units: String
+
+}
+
+#AvailabilityCheckRequestInput
+
+"""
+Availability Check Request
+"""
+
+input AvailabilityCheckRequestInput {
+    """Product Offering Unique identifiers"""
+
+    productOfferingId: [String!]
+
+    """Availability parameters in <String, List<String>> format"""
+    availabilityParameters: JSON
+
+}
+
+#BrandRequestInput
+
+"""The entity represents Brands"""
+input BrandRequestInput{
+
+    """Id of the Brands"""
+
+    id: String
+
+}
+
+#ChannelRequestInput
+
+"""The entity represents Brands"""
+input ChannelRequestInput{
+
+    """Id of the Channel"""
+
+    id: String
+
+}
+
+#CustomerCategoryRequestInput
+
+"""The entity represents CustomerCategory"""
+input CustomerCategoryRequestInput{
+
+    """Id of the CustomerCategory"""
+
+    id: String
+
+}
+
+#ProductOfferingBulkRequestInput
+
+"""This class is used for bulk retrieve of Product Offerings ."""
+input ProductOfferingBulkRequestInput {
+
+    """The entity represents Customer Category."""
+
+    marketSegmentRequest: [MarketSegmentRequestInput!]
+
+    """The entity represents Brand"""
+
+    brandRequest: [BrandRequestInput!]
+
+    """The entity represents Customer Category."""
+
+    customerCategoryRequest: [CustomerCategoryRequestInput!]
+
+    """The entity represents distribution Channel."""
+
+    channelRequest: [ChannelRequestInput!]
+
+    """List of Product Offerings Ids."""
+
+    id: [String!]!
+
+    """Used to indicate the current lifecycle status"""
+
+    lifecycleStatus:String
+
+    """The parameter is used to filter arrays of LocalizedData"""
+
+    locale:String
+
+    """The period for which the product Offering is valid."""
+
+    validFor: [TimePeriodInput!]
+
+    """List of tag Ids.Tag is a keyword or term assigned to a configuration item."""
+
+    tag: [String!]
+}
+
+#MarketingBundleBulkRequestInput
+
+"""
+This class is used for bulk retrieve of Marketing Bundles"""
+input MarketingBundleBulkRequestInput{
+
+    """List of Marketing Bundles Ids"""
+
+    id: [String!]!
+
+    """The parameter is used to filter arrays of LocalizedData"""
+
+    locale: String
+
+    """Marketing bundle status (Offering Status List Values)"""
+
+    status:String
+
+}
+
+#MarketSegmentRequestInput
+
+"""The entity represents Market Segment"""
+input MarketSegmentRequestInput{
+
+    """Id of the Market Segment"""
+
+    id: String
+
+}
+
+#AppointmentRefInput
+
+"""
+Refers an appointment, such as a Customer presentation or internal meeting or site visit.
+"""
+input AppointmentRefInput {
+
+    """
+    The identifier of the referred appointment.
+    """
+    id: String!
+
+    """The name of the appointment. """
+
+    name: String
+
+    """The period during the Appointment is valid."""
+
+    timeSlot: TimePeriodInput
+
+    """Id of a time slot from external system."""
+
+    timeSlotId: String
+}
+
+#Common Types
+
+#BillingAccountRef
+
+"""
+BillingAccount reference. A Billing Account is a detailed description of a bill structure
+"""
+type BillingAccountRef {
+
+    """Unique identifier of the object"""
+    id: String
+
+    """Name of the object"""
+    name: String
+
+    """Href to the object"""
+    href: String
+
+    """Detailed description of the account"""
+    description: String
+
+    """
+    Generic attribute indicating the name of the class type of the referred resource/entity
+    """
+    atReferredType: String
+
+}
+
+#Scalar Types
+
+scalar JSON
+
+scalar DateTime
+
+scalar Void
+
+#TimePeriod
+
+"""The period for which the entity is valid.
+
+Attention:
+
+The type is used in several services: TMF620 Product Catalog Management, TMF648 Quote Management.
+To check actual supported attributes please refer to TMF documentation of specific service.
+
+"""
+type TimePeriod {
+
+    """End date and time"""
+    endDateTime: DateTime
+
+    """Start date and time"""
+    startDateTime: DateTime
+}
+
+#Quantity
+
+"""Represents quantity"""
+
+type Quantity {
+
+    """Amount"""
+    amount: String
+
+    """Units"""
+    units: String
+}
+
+#Channel
+
+"""
+Represents a distribution channel.
+
+Attention:
+
+The type is used in several services: TMF620 Product Catalog Management, TMF648 Quote Management.
+To check actual supported attributes please refer to TMF documentation of specific service.
+
+"""
+type Channel {
+
+    """Unique identifier"""
+    id: String
+
+    """Unique identifier of parent channel"""
+    parentId: String
+
+    """Name of channel"""
+    name: String
+
+    """
+    Type of entity.
+    """
+    atType: String
+
+    """Link to appropriate localization data. Used for name, description localization in UI."""
+    localizedData:[LocalizedData]
+
+    """Extended parameters in <String, List<String>> format"""
+    extendedParameters: JSON
+}
+
+
+
+#Brand
+
+"""
+Brand if identity of a company in terms of what products and services they offer.
+
+Attention:
+
+The type is used in several services: TMF620 Product Catalog Management, TMF648 Quote Management.
+To check actual supported attributes please refer to TMF documentation of specific service."""
+type Brand {
+    """
+    Unique ID
+    """
+    id: String!
+    """
+    Name of the Brand.
+    """
+    name: String
+
+    """Parent Brand unique identifier"""
+
+    parentId: String
+
+    """Class type of the entity"""
+
+    atType: String
+
+    """Link to appropriate localization data. Used for name, description localization in UI."""
+
+    localizedData:[LocalizedData]
+
+
+}
+
+#CategoryRef
+
+"""
+An entity that represents Product Offering Category.
+
+Attention:
+
+The type is used in several services: TMF620 Product Catalog Management, TMF648 Quote Management.
+To check actual supported attributes please refer to TMF documentation of specific service."""
+type CategoryRef {
+    """
+    Unique identifier of the Product Offering Category from Product Offering Catalog
+    """
+    id: String
+    """
+    Name of the Product Offering Category
+    """
+    name: String
+    """
+    Link to category.
+    """
+    href: String
+
+    """
+    Version
+    """
+    version: String
+    """
+    Category order number
+    """
+    orderNumber: Int
+    """
+    The class type of the referred category.
+    """
+    atReferredType: String
+
+    origin: Category
+
+}
+
+#ProductOfferingPriceRef
+
+"""
+The entity represents reference to the ProductOfferingPrice.
+
+Attention:
+
+The type is used in several services: TMF620 Product Catalog Management, TMF648 Quote Management.
+To check actual supported attributes please refer to TMF documentation of specific service."""
+type ProductOfferingPriceRef {
+
+    """ Unique identifier"""
+
+    id: String
+    """
+    The class type of referred Product Offering Price
+    """
+    atReferredType: String
+    """
+    Hyperlink reference to the product offering price.
+    """
+    href: String
+    """
+    Product Offering Price or Price alteration
+    """
+    origin: ProductOfferingPrice
+    """
+    Name of the productOfferingPrice
+    """
+    name: String
+    """
+    ProductOfferingPrice version
+    """
+    version: String
+
+    """Description."""
+
+    description: String
+}
+
+#ProductOfferingRef
+
+"""
+The entity represents reference to the Product Offering.
+
+Attention:
+
+The type is used in several services: TMF620 Product Catalog Management, TMF648 Quote Management.
+To check actual supported attributes please refer to TMF documentation of specific service."""
+type ProductOfferingRef {
+
+    """
+    Type of reference.
+    """
+    atReferredType: String
+    """
+    Type of the entity
+    """
+    atType: String
+    """
+    Additional name of the Product Offering.
+    """
+    nameAdditional: String
+    """
+    Href to the entity.
+    """
+    href: String
+    """
+    Contains unique identifier of the entity.
+    """
+    id: String
+    """
+    Name of the entity.
+    """
+    name: String
+    """
+    Attribute that holds Id of an associated Product Offering Object taken from external main system.
+    """
+    externalId: String
+
+    origin: ProductOffering!
+
+    """Stock Keeping Unit Identifier of Product Offering."""
+
+    skuId: String
+
+}
+
+#ProductSpecificationRef
+
+"""
+Product specification reference: A ProductSpecification is a detailed description of a tangible or intangible object made available externally in the form of a ProductOffering to customers or other parties playing a party role.
+
+Attention:
+
+The type is used in several services: TMF620 Product Catalog Management, TMF648 Quote Management.
+To check actual supported attributes please refer to TMF documentation of specific service.
+
+
+"""
+type ProductSpecificationRef {
+    """
+    Class type of referred Product Specification
+    """
+    atReferredType: String
+    """
+    Reference of the product specification
+    """
+    href: String
+    """
+    Unique identifier of the product specification
+    """
+    id: String
+    """
+    Name of the product specification
+    """
+    name: String
+    """
+    Version of the product specification
+    """
+    version: String
+}
+
+#MarketSegment
+
+"""
+A market is a geographical location with its own price and tax administration
+
+Attention:
+
+The type is used in several services: TMF620 Product Catalog Management, TMF648 Quote Management
+To check actual supported attributes please refer to TMF documentation of specific service
+
+"""
+type MarketSegment {
+
+    """
+    Unique identifier of the Market from Product Offering Catalog
+    """
+    id: String
+    """
+    Name of the Market.
+    """
+    name: String
+
+    """
+    Unique identifier of the parent market.
+    """
+    parentId: String
+    """
+    The class type of the entity.
+    """
+    atType: String
+
+    """Link to appropriate localization data. Used for name, description localization in UI."""
+    localizedData:[LocalizedData]
+
+    """External Id of the geographical area"""
+    externalId: String
+    marketId: String
+
+    """Name of the geographical area"""
+    marketName: String
+
+    """Extended parameters in <String, List<String>> format"""
+    extendedParameters: JSON
+}
+
+#Common Inputs
+
+#TimePeriodInput
+
+"""
+Represents a time period with start DateTime and end DateTime
+"""
+input TimePeriodInput {
+    """
+    Start Date and Time
+    """
+    startDateTime: DateTime
+    """
+    End Date and Time
+    """
+    endDateTime: DateTime
+}
+
+#CategoryRefInput
+
+"""
+An entity that represents Product Offering Category
+"""
+input CategoryRefInput {
+    """
+    Unique identifier of the Product Offering Category from Product Offering Catalog
+    """
+    id: String
+    """
+    Name of the Product Offering Category
+    """
+    name: String
+    """
+    Link to category.
+    """
+    href: String
+
+    """
+    Version
+    """
+    version: String
+    """
+    Category order number
+    """
+    orderNumber: Int
+    """
+    The class type of the referred category.
+    """
+    atReferredType: String
+
+}
+#Marketing Catalog Management Types
+
+#Enrichment Type
+
+"""Entity represents an enrichment inside Wrapper."""
+
+type Enrichment{
+
+    """Indicates the type of entity. For enrichment, this will be ‘Enrichment’."""
+
+    atType: String
+
+    """Name of the enrichment."""
+
+    name: String
+
+    """Localized values for Attribute name."""
+
+    localizedName: [LocalizedData!]
+
+    """List of Components for Enrichment."""
+
+    component: [EnrichmentComponent!]
+
+    """List of Attributes inside Enrichment."""
+
+    attribute: [EnrichmentAttribute!]
+
+}
+
+#EnrichmentAttribute Type
+
+"""Entity represents a basic enrichment with name, type and value to be used by clients."""
+
+type EnrichmentAttribute{
+
+    """Indicates the type of entity. For attribute, this will be ‘Attribute’."""
+
+    atType: String
+
+    """Name of the attribute."""
+
+    name: String
+
+    """Type of the given attribute, for example "TEXT", "CMS_URL"."""
+
+    type: String
+
+    """Attribute value."""
+
+    value: String
+
+    """Localized values for attribute value."""
+
+    localizedValue: [LocalizedData!]
+
+    """Localized values for Attribute name."""
+
+    localizedName: [LocalizedData!]
+
+    """Map used to include adapted images for enrichments with IMAGE type. Key is alias of image, value is path to image with host."""
+
+    meta: JSON
+
+    """List of localizable images."""
+
+    localizedMeta: [LocalizedMeta!]
+
+}
+
+#EnrichmentComponent Type
+
+"""Entity represents a list of enrichments to compose lists of enrichments."""
+
+type EnrichmentComponent{
+
+    """Indicates the type of entity. For component, this will be 'Component'."""
+
+    atType: String
+
+    """Name of the component element."""
+
+    name: String
+
+    """Order of component element to provide component order (for example, Promo 1, Promo 2, etc. )"""
+
+    order: Int
+
+    """List of Enrichments inside Component."""
+
+    attribute: [EnrichmentAttribute!]
+
+}
+
+#EnrichmentContainer Type
+
+"""Entity represents container for all static enrichments and wrappers for referenced entity."""
+
+type EnrichmentContainer{
+
+    """Indicates the type of entity. For enrichment container, this will be ‘EnrichmentContainer’."""
+
+    atType: String
+
+    """Name of the enrichment container."""
+
+    name: String
+
+    """Unique identifier of the enrichment container."""
+
+    id: String
+
+    """List of enrichment wrappers for Container. Only one wrapper with isDefault = true is supported at the moment."""
+
+    wrapper: [EnrichmentWrapper!]
+
+    """Ref to entity for which enrichments are configured."""
+
+    entity: RelatedEntityRef!
+
+    """List of static enrichments."""
+
+    staticEnrichment: [StaticEnrichmentValue!]
+
+}
+
+#StaticEnrichmentValue Type
+
+"""Entity represents static enrichments (technical characteristics) for referenced entity."""
+
+type StaticEnrichmentValue{
+
+    """Indicates the type of entity. For static enrichment value, this will be ‘StaticEnrichmentValue’."""
+
+    atType: String
+
+    """Name of the static enrichment."""
+
+    name: String
+
+    """Type of the static enrichment."""
+
+    type: String
+
+    """Value of the static enrichment."""
+
+    value: String
+
+    """Localized values for static enrichment value."""
+
+    localizedValue: [LocalizedData!]
+
+    """Localized values for static enrichment name."""
+
+    localizedName: [LocalizedData!]
+
+    """Localized values for static enrichment group name."""
+
+    localizedGroup: [LocalizedData!]
+
+    """Map used to include adapted images for enrichments with IMAGE type. Key is alias of image, value is path to image with host."""
+
+    meta: JSON
+
+    """List of localizable images."""
+
+    localizedMeta: [LocalizedMeta!]
+
+    group: String
+}
+
+#Wrapper Type
+
+"""Entity represents wrapper for enrichments."""
+
+type EnrichmentWrapper{
+
+    """Indicates the type of entity. For wrapper, this will be ‘Wrapper’."""
+
+    atType: String
+
+    """Flag that defines that this wrapper is default for enrichment container."""
+
+    isDefault: Boolean
+
+    """Name of the wrapper."""
+
+    name: String
+
+    """List of Enrichments for Wrapper."""
+
+    enrichment: [Enrichment!]
+
+}
+
+"""Entity describes localized image data (e.g. id, url)."""
+
+type LocalizedMeta {
+
+    """ISO code of locale (e.g. en)."""
+
+    locale: String
+
+    """Map used to include adapted images for enrichments with IMAGE type. Key is alias of image, value is path to image with host."""
+
+    meta: JSON
+}
+
+#Association Type
+
+"""An association represents a compatibility rule between two products. For example, it can represent a compatibility rule between a product offering and its tangible product."""
+
+type Association{
+
+    """Indicates the type of entity. For association, this will be ‘Association’."""
+
+    atType: String
+
+    """Unique identifier of the source object of the association."""
+
+    fromId: String
+
+    """Source object type of the association. The following types are supported: Product Offering, Tangible Product"""
+
+    fromType: String
+
+    """Unique identifier of Association."""
+
+    id: String
+
+    """Unique identifier of the target object of the association."""
+
+    toId: String
+
+    """Target object type of the association.
+    The following types are supported: Product Offering, Tangible Product"""
+
+    toType: String
+
+    """Link to association type."""
+
+    associationType: AssociationType!
+
+}
+
+#AssociationType Type
+
+"""An association type allows to group associations by specific marketing purpose (for example, up-sale or cross-sale)."""
+
+type AssociationType{
+
+    """Indicates the type of referenced entity. For association type, it will be ‘AssociationType’."""
+
+    atType: String
+
+    """Unique identifier of Association Type"""
+
+    id: String
+
+    """Flag which defines whether the association is unidirectional or bidirectional."""
+
+    isTwoWay: Boolean
+
+    """Name of the association type (for example, up-sale or cross-sale)"""
+
+    name: String
+
+}
+
+#TangibleProduct Type
+
+"""A tangible product serves for grouping tangible product offerings of the same kind but with different characteristics and features (for example, the same model of mobile phone with different memory size or color)."""
+
+type TangibleProduct{
+
+    """Indicates the type of entity. For tangible product, this will be ‘TangibleProduct’."""
+
+    atType: String
+
+    """List of categories (product catalogs) that contain Tangible Product"""
+
+    category: [String!]
+
+    """Unique identifier of TangibleProduct"""
+
+    id: String
+
+    """Name of the TangibleProduct"""
+
+    name: String
+
+    """List of product offerings ids in TangibleProduct"""
+
+    productOffering: [String!]
+
+    """Link to appropriate localization data. Used for name, description localization in UI."""
+
+    localizedName: LocalizedData
+
+    """EnrichmentContainer that contains enrichments for this TangibleProduct."""
+
+    enrichmentContainer: EnrichmentContainer
+
+}
+
+#Marketing Catalog Management Reference Types
+
+#EntityRef Type
+
+"""Ref to entity for which enrichments are configured."""
+
+type RelatedEntityRef{
+
+    """Indicates the type of entity. For entity ref, this will be ‘EntityRef’."""
+
+    atReferredType: String
+
+    """Unique identifier of the entity ref."""
+
+    id: String
+
+}
+
+"""Represents quantity"""
+
+type QuantityInt {
+
+    """Amount"""
+    amount: Int
+
+    """Units"""
+    units: String
+}
+
+"""The entity represents the delivery info."""
+
+type DeliveryItem {
+
+    """Id of the Delivery Method."""
+
+    deliveryMethodId: String
+
+    """Name of the Delivery Method."""
+
+    deliveryMethodName: String
+
+    """Delivery date and time requested by the Customer."""
+
+    requestedDeliveryDate: DateTime
+
+    """Attribute to capture additional parameters of the Delivery Item."""
+
+    extendedParameters: JSON
+
+    """Unique identifier of the Delivery Item."""
+
+    id: String
+
+    """Indicates the contact medium that should be used to delivery."""
+
+    contactMedium: ContactMedium
+
+}
+
