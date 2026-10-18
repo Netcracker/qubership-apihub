@@ -518,3 +518,7 @@ export function isString(value: unknown): value is string {
 export function isNumber(value: unknown): value is number {
   return typeof value === 'number' || isString(value) && !Number.isNaN(+value)
 }
+
+export function isSymbol(value: unknown): value is symbol {
+  return typeof value === 'symbol'
+}

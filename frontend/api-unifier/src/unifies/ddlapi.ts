@@ -4,19 +4,16 @@ import {
   DEFAULT_TYPE_FLAG_SYNTHETIC,
   DefaultMetaRecord,
   DefaultTypeFlag,
-  TransformFunction,
   UnifyFunction,
 } from '../types'
 import { isBroken, isPureCombiner } from './type'
 import { cleanOrigins, resolveOrigins, setOrigins } from '../origins'
 import { getJsoProperty, setJsoProperty } from '../utils'
-import { ErrorMessage } from '../errors'
 import { DdlapiProperties } from '@netcracker/qubership-apihub-ddlapi'
 
-// The set of Column instances participating in the table's primary key, keyed by
-// reference identity against primaryKey.parts[].column (the very same Column instances).
-const primaryKeyColumns = (table: Record<PropertyKey, unknown>): Set<unknown> => {
-  const set = new Set<unknown>()
+// The names of the columns in the table's primary key (primaryKey.parts[].column).
+const primaryKeyColumns = (table: Record<PropertyKey, unknown>): Set<string> => {
+  const set = new Set<string>()
   const pk = table[DdlapiProperties.PrimaryKey]
   if (!isObject(pk)) { return set }
   const parts = (pk as Record<PropertyKey, unknown>)[DdlapiProperties.Parts]
@@ -24,7 +21,7 @@ const primaryKeyColumns = (table: Record<PropertyKey, unknown>): Set<unknown> =>
   for (const part of parts) {
     if (isObject(part)) {
       const column = (part as Record<PropertyKey, unknown>)[DdlapiProperties.Column]
-      if (isObject(column)) { set.add(column) }
+      if (typeof column === 'string') { set.add(column) }
     }
   }
   return set
@@ -34,23 +31,6 @@ const primaryKeyColumns = (table: Record<PropertyKey, unknown>): Set<unknown> =>
 // nullable, EXCEPT a primary-key member, which is implicitly NOT NULL.
 const nullabilityDefaultFor = (isPrimaryKeyMember: boolean): boolean => !isPrimaryKeyMember
 
-/**
- * Forward-only reporter for dangling FK edges from a partial build: a ForeignKey that
- * has source columns but no resolved `refTable` is reported via `onUnifyError` and left as-is
- * — never thrown, honouring ddlapi's partial-realm guarantee. Uses a stable message prefix.
- */
-export const reportDanglingForeignKey: TransformFunction = (value, { options, path }) => {
-  if (!isObject(value) || isArray(value)) { return value }
-  const fk = value as Record<PropertyKey, unknown>
-  const columns = fk[DdlapiProperties.Columns]
-  const hasSourceColumns = isArray(columns) && columns.length > 0
-  if (hasSourceColumns && !isObject(fk[DdlapiProperties.RefTable])) {
-    const symbol = typeof fk[DdlapiProperties.Symbol] === 'string' ? (fk[DdlapiProperties.Symbol] as string) : undefined
-    options.onUnifyError?.(ErrorMessage.ddlApiDanglingForeignKey(symbol), path, value)
-  }
-  return value
-}
-
 const columnTypesWithDefault = (
   table: Record<PropertyKey, unknown>,
 ): Array<{ colType: Record<PropertyKey, unknown>; column: Record<PropertyKey, unknown>; def: boolean }> => {
@@ -58,14 +38,16 @@ const columnTypesWithDefault = (
   if (!isArray(columns)) { return [] }
   const pkColumns = primaryKeyColumns(table)
   const result: Array<{ colType: Record<PropertyKey, unknown>; column: Record<PropertyKey, unknown>; def: boolean }> = []
-  for (const column of columns) {
-    if (!isObject(column)) { continue }
-    const colType = (column as Record<PropertyKey, unknown>)[DdlapiProperties.Type]
+  for (const item of columns) {
+    if (!isObject(item)) { continue }
+    const column = item as Record<PropertyKey, unknown>
+    const colType = column[DdlapiProperties.Type]
     if (!isObject(colType)) { continue } // no type clause → no nullability to default
+    const name = column[DdlapiProperties.Name]
     result.push({
       colType: colType as Record<PropertyKey, unknown>,
-      column: column as Record<PropertyKey, unknown>,
-      def: nullabilityDefaultFor(pkColumns.has(column)),
+      column,
+      def: nullabilityDefaultFor(typeof name === 'string' && pkColumns.has(name)),
     })
   }
   return result
@@ -76,11 +58,10 @@ const columnTypesWithDefault = (
  * defaulting. Primary-key membership needs table-scope context a column-level
  * rule lacks, so all nullability logic lives in one place, mirroring `pathItemsUnification`.
  *
- * DOCUMENTED EXCEPTION to the immutable-forward-pass rule: this mutates the shared
- * `ColumnType` in place (adding `null`) rather than recreating it, because the ColumnType
- * (and the Column that holds it) is shared by index parts and FK column lists — deep-copying
- * it would break referential identity. This is the sanctioned `pathItemsUnification`
- * situation; do not generalize the pattern to other rules.
+ * DOCUMENTED EXCEPTION to the immutable-forward-pass rule: this mutates the
+ * `ColumnType` in place (adding `null`) rather than recreating the Column and its
+ * ColumnType under the table. This is the sanctioned `pathItemsUnification` situation;
+ * do not generalize the pattern to other rules.
  */
 export const ddlApiNullabilityDefault: UnifyFunction = {
   forward: (value, { options }) => {

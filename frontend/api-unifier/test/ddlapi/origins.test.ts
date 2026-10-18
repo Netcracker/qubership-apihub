@@ -139,8 +139,11 @@ describe('ddlapi origins', () => {
         ['schemas/0/objects/0'],
       )
     })
+  })
 
-    it('FK column origin points to the definition site in table.columns, not the FK referrer', async () => {
+  // Foreign keys and index parts hold names, so each name is homed at its own slot.
+  describe('name references', () => {
+    it('FK columns, refTable and refColumns origins point to the FK itself', async () => {
       const realm = await buildRealmAndAssertValid(`
         CREATE TABLE users (id bigint PRIMARY KEY);
         CREATE TABLE orders (id bigint PRIMARY KEY, user_id bigint REFERENCES users (id));
@@ -149,36 +152,26 @@ describe('ddlapi origins', () => {
       commonOriginsCheck(result, { originsFlag: TEST_ORIGINS_FLAG })
 
       const resultWithHmr = convertOriginToHumanReadable(result, TEST_ORIGINS_FLAG)
-      // user_id is orders.columns[1]; fk.columns[0] is that same Column instance
+      const fkPath = ['schemas', 0, 'tables', 1, 'foreignKeys', 0]
       expect(resultWithHmr).toHaveProperty(
-        ['schemas', 0, 'tables', 1, 'foreignKeys', 0, 'columns', TEST_ORIGINS_FLAG, 0],
-        ['schemas/0/tables/1/columns/1'],
+        [...fkPath, 'columns', TEST_ORIGINS_FLAG, 0],
+        ['schemas/0/tables/1/foreignKeys/0/columns/0'],
+      )
+      expect(resultWithHmr).toHaveProperty(
+        [...fkPath, TEST_ORIGINS_FLAG, 'refTable'],
+        ['schemas/0/tables/1/foreignKeys/0/refTable'],
+      )
+      expect(resultWithHmr).toHaveProperty(
+        [...fkPath, 'refTable', TEST_ORIGINS_FLAG, 'name'],
+        ['schemas/0/tables/1/foreignKeys/0/refTable/name'],
+      )
+      expect(resultWithHmr).toHaveProperty(
+        [...fkPath, 'refColumns', TEST_ORIGINS_FLAG, 0],
+        ['schemas/0/tables/1/foreignKeys/0/refColumns/0'],
       )
     })
 
-    it('FK refTable and refColumns origins point to the referenced table and its columns', async () => {
-      const realm = await buildRealmAndAssertValid(`
-        CREATE TABLE users (id bigint PRIMARY KEY);
-        CREATE TABLE orders (id bigint PRIMARY KEY, user_id bigint REFERENCES users (id));
-      `)
-      const result = normalize(realm, baseOptions)
-      const resultWithHmr = convertOriginToHumanReadable(result, TEST_ORIGINS_FLAG)
-
-      // fk.refTable is the users Table instance, homed at schemas/0/tables/0
-      expect(resultWithHmr).toHaveProperty(
-        ['schemas', 0, 'tables', 1, 'foreignKeys', 0, TEST_ORIGINS_FLAG, 'refTable'],
-        ['schemas/0/tables/0'],
-      )
-      // fk.refColumns[0] is the users.id Column instance, homed at schemas/0/tables/0/columns/0
-      expect(resultWithHmr).toHaveProperty(
-        ['schemas', 0, 'tables', 1, 'foreignKeys', 0, 'refColumns', TEST_ORIGINS_FLAG, 0],
-        ['schemas/0/tables/0/columns/0'],
-      )
-    })
-
-    it('index part column origin points to the definition site in table.columns', async () => {
-      // IndexPart has no `kind`; define-ddlapi-origins identifies it by SeqNo and treats
-      // its `column` property as a reference edge — same interning rule as FK.columns.
+    it('index part column origin points to the index part', async () => {
       const realm = await buildRealmAndAssertValid(`
         CREATE TABLE t (id bigint, name text);
         CREATE INDEX idx ON t (id, name);
@@ -188,11 +181,11 @@ describe('ddlapi origins', () => {
 
       expect(resultWithHmr).toHaveProperty(
         ['schemas', 0, 'tables', 0, 'indexes', 0, 'parts', 0, TEST_ORIGINS_FLAG, 'column'],
-        ['schemas/0/tables/0/columns/0'],
+        ['schemas/0/tables/0/indexes/0/parts/0/column'],
       )
       expect(resultWithHmr).toHaveProperty(
         ['schemas', 0, 'tables', 0, 'indexes', 0, 'parts', 1, TEST_ORIGINS_FLAG, 'column'],
-        ['schemas/0/tables/0/columns/1'],
+        ['schemas/0/tables/0/indexes/0/parts/1/column'],
       )
     })
   })

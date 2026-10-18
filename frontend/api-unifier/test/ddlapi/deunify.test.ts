@@ -1,4 +1,4 @@
-import { Realm, Table } from '@netcracker/qubership-apihub-ddlapi'
+import { Realm } from '@netcracker/qubership-apihub-ddlapi'
 import { denormalize, normalize, DDL_API_NORMALIZE_OPTIONS } from '../../src'
 import { buildRealmAndAssertValid } from '../helpers/ddlapi'
 import { TEST_DEFAULTS_FLAG, TEST_ORIGINS_FLAG, TEST_ORIGINS_FOR_DEFAULTS } from '../helpers'
@@ -32,27 +32,32 @@ describe('ddlapi denormalize (round-trip)', () => {
 
   it('preserves intra-document shared references after round-trip', async () => {
     const realm = await buildRealmAndAssertValid(`
-      CREATE TABLE t (id bigint, name text);
-      CREATE INDEX idx ON t (id, name);
+      CREATE TYPE mood AS ENUM ('happy', 'sad');
+      CREATE TABLE t (id bigint, m mood);
     `)
     const result = roundTrip(realm)
 
-    const table = result.schemas[0].tables![0] as Table
-    const index = table.indexes![0]
-    expect(index.parts![0].column).toBe(table.columns!.find((c) => c.name === 'id'))
-    expect(index.parts![1].column).toBe(table.columns!.find((c) => c.name === 'name'))
+    const schema = result.schemas[0]
+    const column = schema.tables![0].columns!.find((c) => c.name === 'm')!
+    expect(column.type!.type).toBe(schema.objects!.find((o) => o.kind === 'EnumType'))
   })
 
-  it('round-trips a cyclic FK graph back to the source', async () => {
+  it('round-trips the names held by foreign keys and index parts', async () => {
     const realm = await buildRealmAndAssertValid(`
       CREATE TABLE a (id bigint PRIMARY KEY, b_id bigint REFERENCES b (id));
       CREATE TABLE b (id bigint PRIMARY KEY, a_id bigint REFERENCES a (id));
+      CREATE INDEX idx ON a (id, b_id);
     `)
     const result = roundTrip(realm)
 
     const a = result.schemas[0].tables!.find((t) => t.name === 'a')!
     const b = result.schemas[0].tables!.find((t) => t.name === 'b')!
-    expect(a.foreignKeys![0].refTable).toBe(b)
-    expect(b.foreignKeys![0].refTable).toBe(a)
+    expect(a.foreignKeys![0]).toMatchObject({
+      columns: ['b_id'],
+      refTable: { schema: 'public', name: 'b' },
+      refColumns: ['id'],
+    })
+    expect(b.foreignKeys![0].refTable).toEqual({ schema: 'public', name: 'a' })
+    expect(a.indexes![0].parts).toEqual([{ seqNo: 0, column: 'id' }, { seqNo: 1, column: 'b_id' }])
   })
 })
