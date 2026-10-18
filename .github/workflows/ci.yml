@@ -293,11 +293,12 @@ jobs:
       # are the `go-checks` job, which runs on every change.
       - name: build and test what is affected
         shell: bash
+        env:
+          GO_PROJECTS: ${{ needs.plan.outputs.go_projects }}
         run: |
           # pipefail: tee alone would return 0.
           set -o pipefail
-          projects="$(node -e 'console.log(JSON.parse(process.argv[1]).join(","))' \
-            '${{ needs.plan.outputs.go_projects }}')"
+          projects="$(node -e 'console.log(JSON.parse(process.argv[1]).join(","))' "$GO_PROJECTS")"
           echo "go projects: $projects"
           pnpm exec nx run-many -t build test --projects="$projects" --verbose 2>&1 \
             | tee "$RUNNER_TEMP/nx.log"
@@ -306,10 +307,11 @@ jobs:
       # `go build ./...` matches no package. commons-go declares `outputs: []`, so it is exempt.
       - name: the binaries exist
         shell: bash
+        env:
+          GO_PROJECTS: ${{ needs.plan.outputs.go_projects }}
         run: |
           set -euo pipefail
-          projects="$(node -e 'console.log(JSON.parse(process.argv[1]).join(","))' \
-            '${{ needs.plan.outputs.go_projects }}')"
+          projects="$(node -e 'console.log(JSON.parse(process.argv[1]).join(","))' "$GO_PROJECTS")"
           pnpm exec nx graph --file=go-graph.json >/dev/null
           printf '### Go binaries\n\n```text\n' >> "$GITHUB_STEP_SUMMARY"
           node tools/ci/go-artifacts-check.js go-graph.json "$projects" 2>&1 \
