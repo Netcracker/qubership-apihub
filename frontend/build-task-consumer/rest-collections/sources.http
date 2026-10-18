@@ -1,0 +1,7 @@
+@APIHUB_HOST =
+@PACKAGE_ID =
+@VERSION = 2024.3@1
+@TOKEN =
+
+GET {{APIHUB_HOST}}/api/v2/packages/{{PACKAGE_ID}}/versions/{{VERSION}}/sourceData
+Authorization: Bearer {{TOKEN}}

@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: APIHUB Node Service API
+  description: |
+    The API contract for APIHUB Node Service.
+  license:
+    name: qubership
+    url: https://example.com
+  version: 0.1.0
+externalDocs:
+  description: Find out more about package
+  url: https://example.com/APIHUB
+servers:
+  - url: "https://{builderUrl}/api/v1"
+    description: Builder service address
+    variables:
+      builderUrl:
+        default: localhost
+        description: Local server
+tags:
+  - name: Builder
+    description: Build package version API
+paths:
+  /build/{buildId}:
+    post:
+      summary: Build package version
+      description: Start package version build process and send result to APIHUB
+      operationId: postPublishFiles
+      tags: 
+        - Builder
+      parameters:
+        - name: buildId
+          description: Build job Id for status hook request
+          schema:
+            type: string
+          in: path
+          required: true
+        - name: api-key
+          in: header
+          description: Api-key for status hook request
+          schema:
+            type: string
+          required: false
+        - name: authorization
+          in: header
+          description: Bearer token for status hook request
+          schema:
+            type: string
+          required: false
+      requestBody:  
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                sources:
+                  type: string
+                  description: Source files (gz|tgz|zip)
+                  format: binary
+                config:
+                  type: object
+                  required:
+                    - packageId
+                    - version
+                    - files
+                    - refs
+                  properties:
+                    packageId:
+                      type: string
+                    version:
+                      type: string
+                      description: Version name
+                    versionFolder:
+                      type: string
+                    previousVersion:
+                      type: string
+                    previousVersionPackageId:
+                      type: string
+                    refs:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          refId:
+                            type: string
+                          version:
+                            type: string
+                    files:
+                      type: array
+                      items:
+                        type: object
+                        required:
+                          - fileId
+                          - labels
+                        properties:
+                          fileId: 
+                            type: string
+                          publish: 
+                            type: boolean
+                          labels:
+                            type: array
+                            items:
+                              type: string
+      responses:
+        "202":
+          description: Build process started
+        "400":
+          $ref: "#/components/responses/badRequest400"   
+        "500":
+          $ref: "#/components/responses/internalServerError500"                 
+components:
+  schemas:
+    ErrorResponse:
+      description: An error description
+      type: object
+      properties:
+        status:
+          description: HTTP Status Code
+          type: number
+        code:
+          description: Internal string error code. Mandatory in response.
+          type: string
+        message:
+          description: The attribute contains an error message.
+          type: string
+        params:
+          description: Message parameters
+          type: object
+          example:
+            "id": "12345"
+            "type": "string"
+        debug:
+          description: |
+            The attribute contains debug details (e.g. stack-trace). 
+            Presented in the error response only on Dev/Test environments if corresponding logging level is enabled.
+          type: string
+      required:
+        - status
+        - code
+        - message                  
+  responses:
+    badRequest400:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    internalServerError500:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"

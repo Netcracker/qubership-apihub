@@ -1,0 +1,22 @@
+FROM docker.io/node:24-alpine
+
+ARG TAG=dev
+ARG GIT_BRANCH=unknown
+ARG GIT_HASH=unknown
+
+ENV GIT_BRANCH=$GIT_BRANCH
+ENV GIT_HASH=$GIT_HASH
+
+WORKDIR /usr/src/app
+
+RUN --mount=type=secret,id=npmrc,target=.npmrc mv "$(npm pack @netcracker/qubership-apihub-build-task-consumer@"$TAG")" qubership-apihub-build-task-consumer.tgz
+RUN tar zxvf ./qubership-apihub-build-task-consumer.tgz && mv ./package/dist dist
+
+RUN --mount=type=secret,id=npmrc,target=.npmrc mv ./package/package.json package.json && mv ./package/npm-shrinkwrap.json npm-shrinkwrap.json && npm ci --omit=dev \
+    && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+              /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+              /usr/local/bin/yarn /usr/local/bin/yarnpkg /opt/yarn-*
+
+USER 10001
+
+CMD [ "node", "--max-old-space-size=3100", "--max-semi-space-size=32", "dist/main" ]
