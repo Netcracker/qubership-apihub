@@ -1,0 +1,3 @@
+export const DEFAULT_REQUEST_TIMEOUT = 30000
+export const DEFAULT_RETRY_TIMEOUT = 2000
+export const DEFAULT_RETRY_COUNT = 3

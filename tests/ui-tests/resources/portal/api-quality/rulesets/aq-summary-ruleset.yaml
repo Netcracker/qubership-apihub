@@ -1,0 +1,44 @@
+rules:
+  # Error if title contains "TriggerError"
+  test-error-rule:
+    description: "Trigger Error"
+    message: "Trigger Error Found"
+    severity: error
+    given: $.info.title
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: TriggerError
+
+  # Warning if summary contains "TriggerWarning"
+  test-warning-rule:
+    description: "Trigger Warning"
+    message: "Trigger Warning Found"
+    severity: warn
+    given: $.paths.*.*.summary
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: TriggerWarning
+
+  # Info if description contains "TriggerInfo"
+  test-info-rule:
+    description: "Trigger Info"
+    message: "Trigger Info Found"
+    severity: info
+    given: $.info.description
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: TriggerInfo
+
+  # Hint if operationId contains "TriggerHint"
+  test-hint-rule:
+    description: "Trigger Hint"
+    message: "Trigger Hint Found"
+    severity: hint
+    given: $.paths.*.*.operationId
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: TriggerHint

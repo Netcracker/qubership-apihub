@@ -1,0 +1,188 @@
+import type { Fixtures } from '@fixtures'
+import { defineConfig, devices } from '@playwright/test'
+import dayjs from 'dayjs'
+import 'dotenv/config'
+import process from 'node:process'
+import { getChromeExecutablePath } from './src/test-setup/process'
+
+const chromeExecutablePath = getChromeExecutablePath()
+
+/**
+ * Read environment variables from file.
+ * https://github.com/motdotla/dotenv
+ */
+
+/**
+ * See https://playwright.dev/docs/test-configuration.
+ */
+
+export default defineConfig<Fixtures>({
+  /* Folder for test artifacts such as screenshots, videos, traces, etc. */
+  outputDir: 'temp/test-results',
+  /* Timeout for the whole test run */
+  globalTimeout: 60_000 * 110,
+  /* Maximum time one test can run for. */
+  timeout: 70_000,
+  expect: {
+    /**
+     * Maximum time expect() should wait for the condition to be met.
+     * For example in `await expect(locator).toHaveText();`
+     */
+    timeout: 20_000,
+  },
+  /* Run tests in files in parallel */
+  fullyParallel: false,
+  /* Fail the build on CI if you accidentally left test.only in the source code. */
+  forbidOnly: !!process.env.CI,
+  retries: 2,
+  /* 'isolated' runs all retries at the end, one by one in a single worker. */
+  retryStrategy: 'isolated',
+  /* Opt out of parallel tests on CI. */
+  workers: process.env.CI ? 10 : 3,
+  /* Limit the number of failures on CI to save resources */
+  maxFailures: process.env.CI ? 15 : undefined,
+  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+  reporter: [
+    ['html', {
+      open: 'never',
+      outputFolder: 'reports/playwright',
+      title: `${process.env.CI ? 'CI' : 'Local'} - ${formatReportTimestamp(new Date())}`,
+      noCopyPrompt: true,
+    }],
+    ['list'],
+    [
+      './src/services/custom-reporter/CustomReporter.ts',
+      {
+        html: true,
+        github: process.env.GITHUB_ACTIONS === 'true'
+          ? { title: 'UI E2E tests result', affectRatio: false }
+          : false,
+      },
+    ],
+  ],
+  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  use: {
+    /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
+    actionTimeout: 20_000,
+    /* Base URL to use in actions like `await page.goto('/')`. */
+    /* baseURL: '', */
+    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    /* Whether to ignore HTTPS errors when sending network requests. For Firefox in this case */
+    ignoreHTTPSErrors: true,
+    permissions: ['clipboard-read'],
+    /* Set CHROME_EXECUTABLE_PATH in CI that ships a custom Chrome; leave unset locally. */
+    launchOptions: chromeExecutablePath
+      ? { executablePath: chromeExecutablePath }
+      : undefined,
+  },
+  projects: [
+    {
+      name: 'Portal',
+      testDir: './src/tests/portal',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1440, height: 810 },
+      },
+      dependencies: ['Portal-Setup'],
+    },
+    {
+      name: 'Agent',
+      testDir: './src/tests/agent',
+      timeout: 100_000,
+      use: {
+        ...devices['Desktop Chrome'],
+      },
+      dependencies: ['Agent-Setup'],
+    },
+    {
+      name: 'Apihub-Setup',
+      testDir: './src/tests',
+      testMatch: /apihub-setup\.ts/,
+      teardown: 'Apihub-Teardown',
+    },
+    {
+      name: 'Apihub-Teardown',
+      testDir: './src/tests',
+      testMatch: /apihub-teardown\.ts/,
+      timeout: 360_000,
+    },
+    {
+      name: 'Portal-Setup',
+      testDir: './src/tests/portal',
+      testMatch: /setup\.ts/,
+      timeout: 1200_000,
+      retries: 0,
+      dependencies: ['Apihub-Setup'],
+    },
+    {
+      name: 'Agent-Setup',
+      testDir: './src/tests/agent',
+      testMatch: /setup\.ts/,
+      timeout: 140_000,
+      use: {
+        ...devices['Desktop Chrome'],
+      },
+      dependencies: ['Apihub-Setup'],
+    },
+    {
+      name: 'Utils',
+      testDir: './src/tests/utils',
+      testMatch: [/tools\.ts/, /cleanup\.ts/, /debug\.spec\.ts/],
+    },
+    {
+      name: 'Component',
+      testDir: './src',
+      testMatch: [/\.component\.test\.ts/],
+      retries: 0,
+      dependencies: ['Apihub-Setup'],
+    },
+    {
+      name: 'Unit',
+      testDir: './src',
+      testMatch: [/\.unit\.test\.ts/],
+      retries: 0,
+    },
+    {
+      name: 'Cleanup',
+      testDir: './src/tests/utils',
+      testMatch: ['2-cleanup.ts'],
+      timeout: 620_000,
+      grep: /@cleanup/,
+    },
+    {
+      name: 'ADV-operations',
+      testDir: './src/tests/adv',
+      testMatch: /.*operations.*\.ts/,
+      timeout: 130_000,
+      use: {
+        ...devices['Desktop Chrome'],
+        actionTimeout: 120_000,
+        trace: 'off',
+        screenshot: 'off',
+      },
+    },
+    {
+      name: 'ADV-comparisons',
+      testDir: './src/tests/adv',
+      testMatch: /.*comparisons.*\.ts/,
+      timeout: 190_000,
+      use: {
+        ...devices['Desktop Chrome'],
+        actionTimeout: 180_000,
+        trace: 'off',
+        screenshot: 'off',
+      },
+    },
+  ],
+  /* Run your local dev server before starting the tests */
+  // webServer: {
+  //   command: 'npm run start',
+  //   port: 3000,
+  // },
+})
+
+function formatReportTimestamp(date: Date): string {
+  return dayjs(date).locale('en').format('DD MMM YYYY HH:mm')
+}

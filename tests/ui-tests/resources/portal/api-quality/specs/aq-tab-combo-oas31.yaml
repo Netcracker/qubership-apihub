@@ -1,0 +1,24 @@
+openapi: 3.1.0
+info:
+  title: Synthetic Combo Spec
+  version: 1.0.0
+paths:
+  # 1. Combo: 4 different types (Error, Warn, Info, Hint)
+  # Using keywords: Error1, Warn1, Info1, Hint1
+  /combo-types:
+    get:
+      operationId: comboTypes
+      summary: Combo Error1 Warn1 Info1 Hint1
+      responses:
+        "200":
+          description: OK
+
+  # 2. Multi: 2 rules of same type (Error)
+  # Using keyword: OverlapErr
+  /multi-message:
+    get:
+      operationId: multiMsg
+      summary: OverlapErr Operation
+      responses:
+        "200":
+          description: OK

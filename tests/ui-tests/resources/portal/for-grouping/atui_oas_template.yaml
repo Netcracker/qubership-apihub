@@ -1,0 +1,18 @@
+openapi: 3.0.3
+info:
+  title: ATUI OAS Template
+  description: |-
+    Template description.
+
+  termsOfService: http://oastswagger.io/terms/
+  contact:
+    email: oastapiteam@swagger.io
+  license:
+    name: Apache 2.0 oast
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+externalDocs:
+  description: Find out more about oast Swagger
+  url: http://oastswagger.io
+servers:
+  - url: https://oast.swagger.io/api/v1

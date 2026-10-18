@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "useDefineForClassFields": false,
+    "strict": true,
+    "noEmit": true,
+    "types": ["node"],
+    "paths": {
+      "@factories": ["./src/factories"],
+      "@helpers": ["./src/helpers"],
+      "@fixtures": ["./src/fixtures"],
+      "@agent/*": ["./src/packages/agent/*"],
+      "@portal/*": ["./src/packages/portal/*"],
+      "@shared/*": ["./src/packages/shared/*"],
+      "@services/*": ["./src/services/*"],
+      "@test-setup": ["./src/test-setup"],
+      "@test-data": ["./src/test-data"],
+      "@test-data/*": ["./src/test-data/*"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "playwright.config.ts"
+  ]
+}

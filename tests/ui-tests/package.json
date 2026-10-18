@@ -1,0 +1,38 @@
+{
+  "name": "@netcracker/qubership-apihub-ui-tests",
+  "version": "2.36.1-dev.0",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "html-report": "playwright show-report reports/playwright",
+    "debug": "playwright test --project=Portal --debug",
+    "test-e2e-portal": "playwright test --project=Portal",
+    "test-e2e-portal-last-failed": "playwright test --project=Portal --last-failed",
+    "test-component": "playwright test --project=Component",
+    "test-unit": "playwright test --project=Unit",
+    "cleanup": "playwright test --project=Cleanup",
+    "lint:check": "eslint . --ext .ts,.tsx,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
+    "lint:fix": "npm run lint:check -- --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@actions/core": "3.0.1",
+    "@playwright/test": "1.62.1",
+    "@types/node": "24.13.3",
+    "@typescript-eslint/eslint-plugin": "7.18.0",
+    "@typescript-eslint/parser": "7.18.0",
+    "@typescript-eslint/types": "7.18.0",
+    "dayjs": "1.11.21",
+    "dotenv": "17.4.2",
+    "eslint": "8.57.1",
+    "eslint-plugin-json": "3.1.0",
+    "eslint-plugin-promise": "6.6.0",
+    "eslint-plugin-sort-exports": "0.9.1",
+    "eslint-plugin-ui-testing": "2.0.1",
+    "jszip": "3.10.1",
+    "typescript": "6.0.3"
+  },
+  "eslintConfig": {
+    "extends": ".eslintrc.json"
+  }
+}
