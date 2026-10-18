@@ -1,0 +1,3 @@
+CREATE TABLE t (
+    v NUMERIC(15, 2)
+);

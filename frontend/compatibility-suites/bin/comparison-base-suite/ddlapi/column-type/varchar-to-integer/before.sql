@@ -1,0 +1,3 @@
+CREATE TABLE t (
+    v VARCHAR(20)
+);
