@@ -3,8 +3,10 @@
     # '**' rather than no filter: a bare `push:` also fires on the tags nx release pushes.
     branches: ['**']
   pull_request:
+    # No paths-ignore: `ci-ok` is the required check, and a skipped workflow never reports it, so a
+    # documentation-only pull request would wait for it forever. The `plan` job gives such a pull
+    # request no E2E tier instead.
     types: [opened, reopened, synchronize]
-    paths-ignore: ['docs/**', '**/*.md']
   # release-finish.yml dispatches CI after its version commit: a push with GITHUB_TOKEN starts no run.
   workflow_dispatch:
 
@@ -33,6 +35,8 @@ jobs:
       screenshot_projects: ${{ steps.affected.outputs.screenshot_projects }}
       image_projects: ${{ steps.affected.outputs.image_projects }}
       go_projects: ${{ steps.affected.outputs.go_projects }}
+      java_projects: ${{ steps.affected.outputs.java_projects }}
+      branch_tag: ${{ steps.tags.outputs.branch_tag }}
       e2e_tier: ${{ steps.e2e_tier.outputs.value }}
       storybooks: ${{ steps.storybooks.outputs.value }}
     steps:
@@ -71,16 +75,24 @@ jobs:
           go_all="$(pnpm exec nx show projects --projects=tag:lang:go --json)"
           go="$(pick $(node -e 'console.log(JSON.parse(process.argv[1]).join(" "))' "$go_all"))"
 
+          # The Java reactor has a short-named parent project and two inferred Maven projects, which
+          # @nx/maven names <groupId>:<artifactId>. Any of them affected runs the Java job, which builds
+          # the whole reactor with `nx run java-task-consumer:build`.
+          java="$(pick java-task-consumer \
+            com.netcracker.qubership.apihub:java-task-consumer \
+            com.netcracker.qubership.apihub:jdiff-engine)"
+
           # Images are not selected by `affected`: whether a branch tag points at the right image is a
           # question about the registry. The images job retags when the content already exists. The diff
           # below only feeds the summary.
-          images='["ui-portal","build-task-consumer","agent","test-service","agents-backend","api-linter-service","portal-backend"]'
+          images='["ui-portal","build-task-consumer","agent","test-service","agents-backend","api-linter-service","portal-backend","java-task-consumer"]'
           image_inputs="$(git diff --name-only "$NX_BASE" "$NX_HEAD" -- \
             .dockerignore tools/ci .github/workflows/ci.yml .github/actions || true)"
 
           echo "screenshot_projects=$shots" >> "$GITHUB_OUTPUT"
           echo "image_projects=$images"     >> "$GITHUB_OUTPUT"
           echo "go_projects=$go"          >> "$GITHUB_OUTPUT"
+          echo "java_projects=$java"      >> "$GITHUB_OUTPUT"
 
           # A Mermaid summary of the affected set: a skipped job looks the same whether the skip was
           # correct or not.
@@ -96,8 +108,18 @@ jobs:
         shell: bash
         run: echo "value=$(jq -c . tools/ci/storybooks.json)" >> "$GITHUB_OUTPUT"
 
+      # The tag this ref's images carry (tools/ci/branch-tag.sh, the same script images.yml uses); E2E
+      # pulls the stack by it.
+      - name: Branch tag
+        id: tags
+        shell: bash
+        env:
+          REF: ${{ github.ref }}
+        run: echo "branch_tag=$(bash tools/ci/branch-tag.sh "$REF")" >> "$GITHUB_OUTPUT"
+
       # The E2E tier, decided once so a push and its pull request do not both run E2E:
-      #   pull_request event          full
+      #   pull_request event          full, none if only docs/ or Markdown files changed
+      #   push to release             full, always: the release candidate gets the whole suite
       #   push, an open PR exists     none: the pull_request run covers this commit
       #   push, no open PR            none; smoke is disabled below
       - name: Decide the E2E tier
@@ -105,15 +127,29 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          REF_NAME: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
         run: |
           set -euo pipefail
-          if [ '${{ github.event_name }}' = 'pull_request' ]; then
+          if [ "$EVENT" = 'pull_request' ]; then
+            # NX_BASE and NX_HEAD come from nrwl/nx-set-shas: the merge base and this commit.
+            code_changes="$(git diff --name-only "$NX_BASE" "$NX_HEAD" | grep -vE '^docs/|\.md$' || true)"
+            if [ -z "$code_changes" ]; then
+              tier=none
+              why='pull_request event, but only docs/ or Markdown files changed'
+            else
+              tier=full
+              why='pull_request event'
+            fi
+          elif [ "$REF" = 'refs/heads/release' ]; then
             tier=full
-            why='pull_request event'
+            why='push to release — the full suite runs on every push to release'
           else
-            open="$(gh api \
-              "repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:${{ github.ref_name }}&state=open" \
-              --jq 'length')"
+            open="$(gh api --method GET "repos/$REPO/pulls" \
+              -f head="$OWNER:$REF_NAME" -f state=open --jq 'length')"
             if [ "$open" -gt 0 ]; then
               tier=none
               why="push, but $open open pull request(s) — the pull_request run does the full suite"
@@ -152,17 +188,59 @@ jobs:
         with:
           main-branch-name: develop
 
-      # build and test together: otherwise test-only dependencies are never exercised.
+      # build and test together: otherwise test-only dependencies are never exercised. Go and Maven
+      # projects have their own jobs; the Maven projects carry the `maven:<groupId>` tag, which the
+      # parent project java-task-consumer shares.
       - name: build and test what is affected
         run: |
           # pipefail: tee alone would return 0.
           set -o pipefail
-          pnpm exec nx affected -t build test --exclude=tag:lang:go --verbose 2>&1 | tee "$RUNNER_TEMP/nx.log"
+          pnpm exec nx affected -t build test \
+            --exclude='tag:lang:go,tag:maven:com.netcracker.qubership.apihub' --verbose 2>&1 \
+            | tee "$RUNNER_TEMP/nx.log"
 
       - name: cache summary
         if: always()
         run: bash tools/ci/cache-summary.sh 'js' "$RUNNER_TEMP/nx.log" >> "$GITHUB_STEP_SUMMARY"
 
+
+  # The Go consistency checks, on every run whatever is affected: a drifted version or go.mod breaks the
+  # images, which build each module alone, and no affected-based job would notice. They need Go and
+  # bash, not the pnpm workspace, so this job skips setup-workspace.
+  go-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+
+      # The one Go version, from backend/.go-version.
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: backend/.go-version
+          cache-dependency-path: |
+            backend/**/go.sum
+            go.work.sum
+
+      # With GOTOOLCHAIN=auto, a module that declares another Go version downloads it and builds green.
+      - name: every Go module on the same version
+        shell: bash
+        run: |
+          printf '### Go version\n\n```text\n' >> "$GITHUB_STEP_SUMMARY"
+          set -o pipefail
+          bash tools/ci/go-version-check.sh 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
+          printf '```\n' >> "$GITHUB_STEP_SUMMARY"
+          exit "${status:-0}"
+
+      # The workspace build cannot see this: images build each module alone with GOWORK=off, so every
+      # go.mod must hold the versions go.work resolves.
+      - name: every go.mod states what the workspace resolves
+        shell: bash
+        run: |
+          printf '### Go workspace sync\n\n```text\n' >> "$GITHUB_STEP_SUMMARY"
+          set -o pipefail
+          bash tools/ci/go-work-sync-check.sh 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
+          printf '```\n' >> "$GITHUB_STEP_SUMMARY"
+          exit "${status:-0}"
 
   # Builds and tests the affected Go modules in one job, in parallel with `js`. Skipped when no Go
   # module is affected: `nx run-many` over an empty list exits 0, which looks like a pass.
@@ -186,29 +264,8 @@ jobs:
             backend/**/go.sum
             go.work.sum
 
-      # Before the build: with GOTOOLCHAIN=auto, a module that declares another Go version downloads
-      # it and builds green.
-      - name: every Go module on the same version
-        shell: bash
-        run: |
-          printf '### Go version\n\n```text\n' >> "$GITHUB_STEP_SUMMARY"
-          set -o pipefail
-          bash tools/ci/go-version-check.sh 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
-          printf '```\n' >> "$GITHUB_STEP_SUMMARY"
-          exit "${status:-0}"
-
-      # The workspace build cannot see this: images build each module alone with GOWORK=off, so every
-      # go.mod must hold the versions go.work resolves.
-      - name: every go.mod states what the workspace resolves
-        shell: bash
-        run: |
-          printf '### Go workspace sync\n\n```text\n' >> "$GITHUB_STEP_SUMMARY"
-          set -o pipefail
-          bash tools/ci/go-work-sync-check.sh 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
-          printf '```\n' >> "$GITHUB_STEP_SUMMARY"
-          exit "${status:-0}"
-
-      # build and test together, so test-only imports are resolved.
+      # build and test together, so test-only imports are resolved. The version and workspace checks
+      # are the `go-checks` job, which runs on every change.
       - name: build and test what is affected
         shell: bash
         run: |
@@ -238,6 +295,46 @@ jobs:
       - name: cache summary
         if: always()
         run: bash tools/ci/cache-summary.sh 'go' "$RUNNER_TEMP/nx.log" >> "$GITHUB_STEP_SUMMARY"
+
+  # Builds and tests the Java reactor (jdiff-engine and java-task-consumer) with `mvn verify`, through
+  # the Nx `build` target of the parent project. Java 21 and Maven 3.9 come from setup-workspace.
+  # Skipped when no Java project is affected. Maven needs no MAVEN_HOME on a Linux runner.
+  java:
+    needs: [plan]
+    if: needs.plan.outputs.java_projects != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-workspace
+
+      - name: build and test the Java reactor
+        shell: bash
+        run: |
+          # pipefail: tee alone would return 0.
+          set -o pipefail
+          pnpm exec nx run java-task-consumer:build --verbose 2>&1 | tee "$RUNNER_TEMP/nx.log"
+
+      # The jar the image copies: check the file itself, as the images job does before its build.
+      - name: the jar exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          ls -l backend/java-task-consumer/java-task-consumer/target/java-task-consumer-*.jar
+
+      - name: cache summary
+        if: always()
+        run: bash tools/ci/cache-summary.sh 'java' "$RUNNER_TEMP/nx.log" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: upload surefire reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: surefire-reports
+          path: backend/java-task-consumer/*/target/surefire-reports
+          if-no-files-found: ignore
+          retention-days: 14
 
   # The only real test coverage api-doc-viewer, apispec-view, and class-view have. Each suite builds
   # its Storybook, serves it, and drives Chrome in a container through jest. It does not wait for
@@ -293,7 +390,8 @@ jobs:
           retention-days: 14
 
   # Images publish floating tags that others pull, so each language's images wait for its tests.
-  # Both call images.yml.
+  # All three call images.yml. The names are the ones the product has always used (assumption A2);
+  # the registry owner is the repository owner, netcracker.
   js-images:
     needs: [plan, js]
     # `js` never skips, so the implicit check that every need succeeded is enough.
@@ -304,21 +402,23 @@ jobs:
     uses: ./.github/workflows/images.yml
     with:
       images: >-
-        [{"project":"ui-portal","image":"apihub-ui","dockerfile":"frontend/ui/Dockerfile",
+        [{"project":"ui-portal","image":"qubership-apihub-ui","dockerfile":"frontend/ui/Dockerfile",
           "build_projects":"ui-portal,ui-agents","deploy":"","context":".","dockerignore":".dockerignore",
-          "workspace_build":"true"},
-         {"project":"build-task-consumer","image":"apihub-build-task-consumer",
+          "workspace_build":"true","outputs":""},
+         {"project":"build-task-consumer","image":"qubership-apihub-build-task-consumer",
           "dockerfile":"frontend/build-task-consumer/Dockerfile",
           "build_projects":"build-task-consumer","deploy":"build-task-consumer","context":".","dockerignore":".dockerignore",
-          "workspace_build":"true"}]
+          "workspace_build":"true","outputs":""}]
 
   go-images:
-    needs: [plan, go]
+    needs: [plan, go-checks, go]
     # `go` is skipped when no Go module is affected, and a skipped need fails the implicit check.
     # Images must still run, so a skipped `go` passes here and a failed or cancelled one does not.
+    # `go-checks` never skips: a drifted Go version or go.mod would break the per-module image builds.
     if: >-
       always()
       && needs.plan.result == 'success'
+      && needs.go-checks.result == 'success'
       && needs.go.result != 'failure' && needs.go.result != 'cancelled'
       && needs.plan.outputs.image_projects != '[]'
     permissions:
@@ -327,45 +427,70 @@ jobs:
     uses: ./.github/workflows/images.yml
     with:
       images: >-
-        [{"project":"agent","image":"apihub-agent","dockerfile":"backend/agent/Dockerfile",
+        [{"project":"agent","image":"qubership-apihub-agent","dockerfile":"backend/agent/Dockerfile",
           "build_projects":"agent","deploy":"","context":"backend/agent","dockerignore":".dockerignore backend/agent/.dockerignore",
-          "workspace_build":"false"},
-         {"project":"test-service","image":"apihub-test-service",
+          "workspace_build":"false","outputs":""},
+         {"project":"test-service","image":"qubership-apihub-test-service",
           "dockerfile":"backend/test-service/Dockerfile","build_projects":"test-service",
           "deploy":"","context":"backend/test-service","dockerignore":".dockerignore backend/test-service/.dockerignore",
-          "workspace_build":"false"},
-         {"project":"agents-backend","image":"apihub-agents-backend",
+          "workspace_build":"false","outputs":""},
+         {"project":"agents-backend","image":"qubership-apihub-agents-backend",
           "dockerfile":"backend/agents-backend/Dockerfile",
           "build_projects":"agents-backend,commons-go","deploy":"","context":"backend",
-          "dockerignore":".dockerignore backend/.dockerignore","workspace_build":"false"},
-         {"project":"api-linter-service","image":"apihub-api-linter-service",
+          "dockerignore":".dockerignore backend/.dockerignore","workspace_build":"false","outputs":""},
+         {"project":"api-linter-service","image":"qubership-api-linter-service",
           "dockerfile":"backend/api-linter-service/Dockerfile",
           "build_projects":"api-linter-service,commons-go","deploy":"","context":"backend",
-          "dockerignore":".dockerignore backend/.dockerignore","workspace_build":"false"},
-         {"project":"portal-backend","image":"apihub-portal-backend",
+          "dockerignore":".dockerignore backend/.dockerignore","workspace_build":"false","outputs":""},
+         {"project":"portal-backend","image":"qubership-apihub-backend",
           "dockerfile":"backend/portal-backend/Dockerfile",
           "build_projects":"portal-backend,commons-go","deploy":"","context":"backend",
-          "dockerignore":".dockerignore backend/.dockerignore","workspace_build":"false"}]
+          "dockerignore":".dockerignore backend/.dockerignore","workspace_build":"false","outputs":""}]
 
+  # The Java image copies the shaded jar that `mvn verify` writes, so its leg runs the Nx build first
+  # (workspace_build) and checks the jar. The Dockerfile's context is the Maven parent directory.
+  java-images:
+    needs: [plan, java]
+    # `java` is skipped when no Java project is affected, as `go` is.
+    if: >-
+      always()
+      && needs.plan.result == 'success'
+      && needs.java.result != 'failure' && needs.java.result != 'cancelled'
+      && needs.plan.outputs.image_projects != '[]'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/images.yml
+    with:
+      images: >-
+        [{"project":"java-task-consumer","image":"qubership-apihub-java-task-consumer",
+          "dockerfile":"backend/java-task-consumer/Dockerfile","build_projects":"java-task-consumer",
+          "deploy":"","context":"backend/java-task-consumer","dockerignore":"",
+          "workspace_build":"true",
+          "outputs":"backend/java-task-consumer/java-task-consumer/target/java-task-consumer-*.jar"}]
 
-  # E2E on Kind from the Helm charts, with this run's images. e2e-tests-compose.yml takes the same
-  # inputs, so switching to compose means changing the `uses:` line.
+  # E2E on Kind from the Helm charts, with this run's images, at the branch tag. e2e-tests-compose.yml
+  # takes the same inputs (plus the compose folder), so switching to compose means changing the `uses:`
+  # line. The repository's E2E secrets are passed on; a run without them (a pull request from a fork)
+  # generates its own credentials. The Java image is not part of the product chart, so E2E does not
+  # wait for it.
   e2e:
     needs: [plan, js-images, go-images]
-    # `go-images` can be skipped, so the result is checked explicitly, as in go-images.
+    # `always()` because go-images has its own always() condition and a skipped need would skip this
+    # job too; the results are read explicitly.
     if: >-
       always()
       && needs.plan.outputs.e2e_tier != 'none'
       && needs.js-images.result == 'success'
-      && needs.go-images.result != 'failure' && needs.go-images.result != 'cancelled'
+      && needs.go-images.result == 'success'
     permissions:
       contents: read
       packages: read
     uses: ./.github/workflows/e2e-tests-kind.yml
+    secrets: inherit
     with:
-      repoint_images: true
+      default_image_tag: ${{ needs.plan.outputs.branch_tag }}
       tier: ${{ needs.plan.outputs.e2e_tier }}
-
 
   # Stores each Storybook in ghcr as an OCI artifact keyed by content hash and gives this branch a
   # pointer to it (tools/ci/storybook-store.sh); pages.yml assembles the site from the store. All
@@ -434,6 +559,8 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF_NAME: ${{ github.ref_name }}
+          RUN_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
           repo='${{ github.repository }}'
@@ -445,35 +572,42 @@ jobs:
             exit 0
           fi
           gh workflow run pages.yml --repo "$repo" --ref "$default" \
-            -f reason='CI on ${{ github.ref_name }}, run ${{ github.run_id }}'
+            -f reason="CI on $REF_NAME, run $RUN_ID"
           echo "dispatched pages.yml at \`$default\`" | tee -a "$GITHUB_STEP_SUMMARY"
 
 
   # The only required check. It always runs, so affected-based skipping cannot leave a pull request
-  # waiting for a check that never reports. Fails if any job failed or was cancelled; skipped passes.
+  # waiting for a check that never reports. It fails if any job failed or was cancelled, and also if a
+  # job that had to run was skipped: tools/ci/ci-verdict.js derives from the plan which jobs those
+  # are. A skip is accepted only where the plan says nothing is affected (go, java, screenshot-tests),
+  # where E2E is not due (tier none), or where the run is a pull request (storybooks).
   ci-ok:
-    needs: [plan, js, go, screenshot-tests, js-images, go-images, e2e, storybooks, storybook-pages]
+    needs:
+      - plan
+      - js
+      - go-checks
+      - go
+      - java
+      - screenshot-tests
+      - js-images
+      - go-images
+      - java-images
+      - e2e
+      - storybooks
+      - storybook-pages
     if: always()
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: tools/ci
+
       - name: verdict
         shell: bash
-        run: |
-          set -euo pipefail
-          results='${{ toJSON(needs) }}'
-          echo "$results"
-          bad="$(node -e '
-            const needs = JSON.parse(process.argv[1])
-            const bad = Object.entries(needs)
-              .filter(([, v]) => v.result === "failure" || v.result === "cancelled")
-              .map(([k, v]) => `${k}=${v.result}`)
-            console.log(bad.join(" "))
-          ' "$results")"
-          if [ -n "$bad" ]; then
-            echo "FAILED: $bad"
-            exit 1
-          fi
-          echo "all needed jobs succeeded or were skipped"
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+          EVENT: ${{ github.event_name }}
+        run: node tools/ci/ci-verdict.js | tee -a "$GITHUB_STEP_SUMMARY"
 
   # Publishes the npm packages on main, after ci-ok passes. `"private": true` in each package.json
   # decides what is published. Always pnpm: `npm pack` leaves `workspace:^` in the tarball, and
