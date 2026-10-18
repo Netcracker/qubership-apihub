@@ -34,7 +34,7 @@ The registry is configured through **`config.yaml`**, whose annotated super-set 
 
 ## Kubernetes Helm operations
 
-Chart: **`helm-templates/qubership-apihub/`**. Values file is self-commented.
+Chart: **`deploy/helm-templates/qubership-apihub/`**. Values file is self-commented.
 
 - **Rolling configuration changes**: prefer `helm upgrade` with declarative **`values.yaml`** revision control; pods pick up regenerated Secrets/ConfigMaps.
 - **Ingress/TLS**: `qubershipApihubUi.tlsIngress` bundles cert material; ACM/Let's Encrypt integrations are customer-specific — wire them into the secret Helm consumes.
@@ -45,7 +45,7 @@ Chart: **`helm-templates/qubership-apihub/`**. Values file is self-commented.
 
 ## Docker Compose on workstations
 
-Scripts under **`docker-compose/apihub-generic/`**:
+Scripts under **`deploy/docker-compose/apihub-generic/`**:
 
 - **`generate_env_and_up_compose.sh`** randomizes JWT, admin bootstrap, token, substitutes env files, launches Podman Compose. Assume **files mutate** unless you checkpoint them first.
 - **Persistence**: follow readme guidance on **`PGDATA=/pgdata`**, `./data`, and Podman/WSL metadata for Windows mounts.
@@ -67,7 +67,7 @@ Scripts under **`docker-compose/apihub-generic/`**:
 
 | Task | Guidance |
 |------|----------|
-| IdP onboarding | SAML metadata / OIDC client credentials live under **`externalIdentityProviders`**. Detailed flows: [**security_model.md**](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/security/security_model.md). Keycloak Compose recipe: **`docker-compose/with-keycloak/`**. |
+| IdP onboarding | SAML metadata / OIDC client credentials live under **`externalIdentityProviders`**. Detailed flows: [**security_model.md**](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/security/security_model.md). Keycloak Compose recipe: **`deploy/docker-compose/with-keycloak/`**. |
 | Rotate JWT signing key | Plan user re-login sessions; coordinate with SSO session lifetime. Replace **`jwt.privateKey`**, bounce backend pods/deployments. |
 | Rotate system token | Change backend **`accessToken`**, the builder **`APIHUB_API_KEY`**, and linter / agents-backend **`technicalParameters.apihub.accessToken`** concurrently; regenerate the Helm config Secrets (`build-task-consumer`, linter, agents-backend). |
 | Playground proxy hardening | Keep **`security.insecureProxy`** / **`allowedHostsForProxy`** tight; never expose unsafe proxy settings on untrusted networks. |

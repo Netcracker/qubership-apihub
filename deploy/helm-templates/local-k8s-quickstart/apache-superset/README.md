@@ -23,7 +23,7 @@ The chart automatically registers these PostgreSQL connections on first run:
 ### 1. Update Helm dependencies
 
 ```bash
-cd helm-templates/local-k8s-quickstart/apache-superset
+cd deploy/helm-templates/local-k8s-quickstart/apache-superset
 helm repo add superset https://apache.github.io/superset
 helm dependency update
 ```

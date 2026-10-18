@@ -1,14 +1,14 @@
-docker-compose/apihub-generic/data/**
-docker-compose/apihub-generic/jwt_private_key
-docker-compose/with-keycloak/data/**
-docker-compose/with-keycloak/jwt_private_key
-docker-compose/with-gitlab/gitlab/**
-helm-templates/qubership-apihub/jwt_private_key
-helm-templates/qubership-apihub/local-secrets.yaml
-helm-templates/local-k8s-quickstart/qubership-apihub/local-secrets.yaml
-helm-templates/local-k8s-quickstart/qubership-apihub/with-keycloak-local-secrets.yaml
-helm-templates/local-k8s-quickstart/qubership-apihub/certs/
-helm-templates/local-k8s-quickstart/keycloak/files/realm.json
+deploy/docker-compose/apihub-generic/data/**
+deploy/docker-compose/apihub-generic/jwt_private_key
+deploy/docker-compose/with-keycloak/data/**
+deploy/docker-compose/with-keycloak/jwt_private_key
+deploy/docker-compose/with-gitlab/gitlab/**
+deploy/helm-templates/qubership-apihub/jwt_private_key
+deploy/helm-templates/qubership-apihub/local-secrets.yaml
+deploy/helm-templates/local-k8s-quickstart/qubership-apihub/local-secrets.yaml
+deploy/helm-templates/local-k8s-quickstart/qubership-apihub/with-keycloak-local-secrets.yaml
+deploy/helm-templates/local-k8s-quickstart/qubership-apihub/certs/
+deploy/helm-templates/local-k8s-quickstart/keycloak/files/realm.json
 .idea
 
 # APM cache (installed package sources)

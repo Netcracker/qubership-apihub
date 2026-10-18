@@ -25,7 +25,7 @@ This guide covers **Docker Compose** (local/bare-metal), **Helm on Kubernetes**,
 |------|---------|----------|-------|
 | **PostgreSQL** | 14+ | Yes | Three logical databases required: `apihub_backend`, `api_linter`, `agents_backend` (names are configurable). Pre-create them before first start — see `scripts/init-db/init.sql` in the Compose folder. |
 | **S3-compatible storage** | Any | Optional | Offloads build artefacts; reduces PG growth. Configure under `s3Storage` in backend `config.yaml` / Helm values. |
-| **SAML / OIDC identity provider** | Any | Optional | Required when `security.productionMode: true`. Keycloak example: [`docker-compose/with-keycloak/`](../docker-compose/with-keycloak/). |
+| **SAML / OIDC identity provider** | Any | Optional | Required when `security.productionMode: true`. Keycloak example: [`deploy/docker-compose/with-keycloak/`](../deploy/docker-compose/with-keycloak/). |
 | **LDAP** | Any | Optional | User directory sync when federated login is active (`security.ldap` in backend config). |
 
 ---
@@ -67,8 +67,8 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 
 | Folder | Use case |
 |--------|----------|
-| [`docker-compose/apihub-generic/`](../docker-compose/apihub-generic/) | Full stack + bundled PostgreSQL. Recommended for local development and demos. |
-| [`docker-compose/with-keycloak/`](../docker-compose/with-keycloak/) | Same stack + Keycloak pre-configured for SAML and OIDC. |
+| [`deploy/docker-compose/apihub-generic/`](../deploy/docker-compose/apihub-generic/) | Full stack + bundled PostgreSQL. Recommended for local development and demos. |
+| [`deploy/docker-compose/with-keycloak/`](../deploy/docker-compose/with-keycloak/) | Same stack + Keycloak pre-configured for SAML and OIDC. |
 
 **Prerequisites:**
 - **Podman with compose plugin** (`podman compose up`). Docker Compose also works.
@@ -80,7 +80,7 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 
 ```bash
 # Generates JWT key, random admin/token, substitutes placeholders, starts all containers
-./docker-compose/apihub-generic/generate_env_and_up_compose.sh
+./deploy/docker-compose/apihub-generic/generate_env_and_up_compose.sh
 ```
 
 ⚠️ This script **overwrites** template files in-place (`.env` files + every `*-config.yaml`). Stash or branch before running if you want reproducibility.
@@ -136,7 +136,7 @@ extensions:
 
 > **JWT key generation:**
 > ```bash
-> ./docker-compose/apihub-generic/generate_jwt_pkey.sh
+> ./deploy/docker-compose/apihub-generic/generate_jwt_pkey.sh
 > # outputs base64 value to ./jwt_private_key
 > ```
 
@@ -404,7 +404,7 @@ All configuration via **`config.yaml`** (path: `AGENTS_BACKEND_CONFIG_FOLDER`). 
 
 ## Helm (Kubernetes)
 
-Chart: **[`helm-templates/qubership-apihub/`](../helm-templates/qubership-apihub/)**.
+Chart: **[`deploy/helm-templates/qubership-apihub/`](../deploy/helm-templates/qubership-apihub/)**.
 
 **Prerequisites:**
 - `kubectl` with namespace admin access
@@ -474,14 +474,14 @@ qubershipApihubAgentsBackend:
 
 ```bash
 helm install apihub -n qubership-apihub --create-namespace \
-  -f ./helm-templates/qubership-apihub/values.yaml \
-  ./helm-templates/qubership-apihub
+  -f ./deploy/helm-templates/qubership-apihub/values.yaml \
+  ./deploy/helm-templates/qubership-apihub
 ```
 
 ```bash
 helm upgrade apihub -n qubership-apihub \
-  -f ./helm-templates/qubership-apihub/values.yaml \
-  ./helm-templates/qubership-apihub
+  -f ./deploy/helm-templates/qubership-apihub/values.yaml \
+  ./deploy/helm-templates/qubership-apihub
 ```
 
 ```bash
@@ -540,11 +540,11 @@ For secrets management on production clusters use Kubernetes **ExternalSecrets**
 
 ## Local Kubernetes quickstart
 
-**Not for production.** [`helm-templates/local-k8s-quickstart/`](../helm-templates/local-k8s-quickstart/README.md) contains scripts for Kind or Rancher Desktop with an ingress controller and PostgreSQL. Optional Apache Superset can be deployed for analytics.
+**Not for production.** [`deploy/helm-templates/local-k8s-quickstart/`](../deploy/helm-templates/local-k8s-quickstart/README.md) contains scripts for Kind or Rancher Desktop with an ingress controller and PostgreSQL. Optional Apache Superset can be deployed for analytics.
 
 ```bash
 # One-liner: creates Kind cluster + installs APIHUB
-./helm-templates/local-k8s-quickstart/apihub-quickstart.sh
+./deploy/helm-templates/local-k8s-quickstart/apihub-quickstart.sh
 # Portal at: https://qubership-apihub.localtest.me/login
 ```
 

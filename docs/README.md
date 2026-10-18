@@ -27,7 +27,7 @@ High-level narratives (architecture roadmap, backlog process) evolve on the [Git
 | Landscape diagram, TS processing stack matrix | Wiki — [Architecture landscape](https://github.com/Netcracker/qubership-apihub/wiki/Architecture-landscape) |
 | Feature inventory (`asyncapi`, AI scoring…) | Wiki — [Features list](https://github.com/Netcracker/qubership-apihub/wiki/Features-list) |
 | Process / ticketing / branching | Wiki — [Development Management Guide](https://github.com/Netcracker/qubership-apihub/wiki/Development-Management-Guide) |
-| **Exact chart values, Compose env keys, JWT scripts** | This repository — `docs/` + `helm-templates/` + `docker-compose/` |
+| **Exact chart values, Compose env keys, JWT scripts** | This repository — `docs/` + `deploy/helm-templates/` + `deploy/docker-compose/` |
 
 ---
 
@@ -35,11 +35,11 @@ High-level narratives (architecture roadmap, backlog process) evolve on the [Git
 
 | Path | Role |
 |------|------|
-| [`../docker-compose/apihub-generic/`](../docker-compose/apihub-generic/) | Reference Podman Compose stack + `init.sql` + `generate_env_and_up_compose.sh` |
-| [`../docker-compose/with-keycloak/`](../docker-compose/with-keycloak/) | Compose + Keycloak SAML/OIDC recipe |
-| [`../helm-templates/README.md`](../helm-templates/README.md) | Chart entry text |
-| [`../helm-templates/qubership-apihub/values.yaml`](../helm-templates/qubership-apihub/values.yaml) | Commented production values (mirrors backend `config.template.yaml` shape) |
-| [`../helm-templates/local-k8s-quickstart/`](../helm-templates/local-k8s-quickstart/) | Kind/Rancher lab automation — **not** production |
+| [`../deploy/docker-compose/apihub-generic/`](../deploy/docker-compose/apihub-generic/) | Reference Podman Compose stack + `init.sql` + `generate_env_and_up_compose.sh` |
+| [`../deploy/docker-compose/with-keycloak/`](../deploy/docker-compose/with-keycloak/) | Compose + Keycloak SAML/OIDC recipe |
+| [`../deploy/helm-templates/README.md`](../deploy/helm-templates/README.md) | Chart entry text |
+| [`../deploy/helm-templates/qubership-apihub/values.yaml`](../deploy/helm-templates/qubership-apihub/values.yaml) | Commented production values (mirrors backend `config.template.yaml` shape) |
+| [`../deploy/helm-templates/local-k8s-quickstart/`](../deploy/helm-templates/local-k8s-quickstart/) | Kind/Rancher lab automation — **not** production |
 
 ---
 

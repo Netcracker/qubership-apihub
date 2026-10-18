@@ -7,9 +7,9 @@ compatible tools).
 
 This repository is the **umbrella deployment project** only:
 
-- **Helm charts** — `helm-templates/qubership-apihub/` (production-oriented delivery)
-- **Docker Compose** — `docker-compose/apihub-generic/`, `docker-compose/with-keycloak/`
-- **Local Kubernetes quickstart** — `helm-templates/local-k8s-quickstart/` (dev/R&D, not production)
+- **Helm charts** — `deploy/helm-templates/qubership-apihub/` (production-oriented delivery)
+- **Docker Compose** — `deploy/docker-compose/apihub-generic/`, `deploy/docker-compose/with-keycloak/`
+- **Local Kubernetes quickstart** — `deploy/helm-templates/local-k8s-quickstart/` (dev/R&D, not production)
 - **Product documentation** — `docs/` (installation, admin, configuration map, guides)
 
 **Application source code is not here.** Implement features in sibling repositories and
@@ -19,11 +19,11 @@ update deployment assets here when install shape, env vars, or documented config
 
 | Area | Path | Purpose |
 |------|------|---------|
-| Helm chart | `helm-templates/qubership-apihub/` | `values.yaml`, templates, Secrets, ingress |
-| Compose stacks | `docker-compose/` | Local rigs, env files, backend config YAML mounts |
+| Helm chart | `deploy/helm-templates/qubership-apihub/` | `values.yaml`, templates, Secrets, ingress |
+| Compose stacks | `deploy/docker-compose/` | Local rigs, env files, backend config YAML mounts |
 | Configuration map | `docs/configuration-reference.md` | Files vs env vs Helm; cross-component consistency |
 | Installation | `docs/installation-guide.md` | Helm and Compose procedures |
-| Quickstart | `helm-templates/local-k8s-quickstart/` | Kind/Rancher local cluster workflows |
+| Quickstart | `deploy/helm-templates/local-k8s-quickstart/` | Kind/Rancher local cluster workflows |
 | Doc hub | `docs/README.md` | Index to layered guides |
 
 ## Sibling component repositories
@@ -63,7 +63,7 @@ user to the appropriate component repo; return here only for deployment and docu
 ## Cross-platform development
 
 - Scripts and docs may be used on **Linux** and **Windows** (WSL, Git Bash, or PowerShell).
-- Prefer repo-relative paths (`helm-templates/...`, `docker-compose/...`).
+- Prefer repo-relative paths (`deploy/helm-templates/...`, `deploy/docker-compose/...`).
 
 ## Documentation
 

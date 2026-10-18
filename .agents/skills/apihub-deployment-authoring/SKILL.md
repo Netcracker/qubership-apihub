@@ -1,6 +1,6 @@
 ---
 name: apihub-deployment-authoring
-description: "Authors and updates APIHUB deployment assets in qubership-apihub: Helm values/templates, Docker Compose env wiring, docs/configuration-reference.md parity, local-k8s-quickstart, and optional extensions (linter, agents-backend). Use when changing helm-templates/, docker-compose/, or deployment docs under docs/."
+description: "Authors and updates APIHUB deployment assets in qubership-apihub: Helm values/templates, Docker Compose env wiring, docs/configuration-reference.md parity, local-k8s-quickstart, and optional extensions (linter, agents-backend). Use when changing deploy/helm-templates/, deploy/docker-compose/, or deployment docs under docs/."
 ---
 
 # APIHub Deployment Authoring
@@ -20,7 +20,7 @@ source code lives in sibling component repositories; do not implement Go/TS/UI f
    `docs/configuration-reference.md` and the relevant guide (`installation-guide.md`,
    `admin-guide.md`) so the map stays authoritative.
 
-## Helm (`helm-templates/qubership-apihub/`)
+## Helm (`deploy/helm-templates/qubership-apihub/`)
 
 - **`values.yaml`** is the canonical contract: `qubershipApihubBackend.env`,
   `qubershipApiLinterService.env`, and `qubershipApihubAgentsBackend.env` each render into a
@@ -35,7 +35,7 @@ source code lives in sibling component repositories; do not implement Go/TS/UI f
 
 After chart edits, sanity-check against `docs/configuration-reference.md` § Helm table.
 
-## Docker Compose (`docker-compose/`)
+## Docker Compose (`deploy/docker-compose/`)
 
 | Stack | Path | Notes |
 |-------|------|-------|
@@ -55,10 +55,10 @@ After chart edits, sanity-check against `docs/configuration-reference.md` § Hel
 
 Do not treat Compose as replacing Helm for production install arguments.
 
-## Local Kubernetes quickstart (`helm-templates/local-k8s-quickstart/`)
+## Local Kubernetes quickstart (`deploy/helm-templates/local-k8s-quickstart/`)
 
 - **Not production-ready** — Kind/Rancher guides, overlay values, optional Superset chart.
-- Entry: [`README.md`](../../../../helm-templates/local-k8s-quickstart/README.md) and
+- Entry: [`README.md`](../../../deploy/helm-templates/local-k8s-quickstart/README.md) and
   `apihub-quickstart.sh` where present.
 - Values templates: `local-k8s-values.yaml`, `with-keycloak-local-k8s-values.yaml`, secrets
   templates under `qubership-apihub/`.

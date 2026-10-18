@@ -6,11 +6,11 @@ This page ties together **what you edit in GitOps** versus **what the processes 
 
 ## Source of truth hierarchy
 
-1. **`qubership-apihub` Helm chart** ([`helm-templates/qubership-apihub/`](../helm-templates/qubership-apihub/) — **`values.yaml` + templates**) is the **canonical delivery contract for Kubernetes**: it defines Secrets, mounts, injected env vars, images, probes. Supported production shapes should be expressible **without bypassing** the chart (operators extend via values/overlays).
+1. **`qubership-apihub` Helm chart** ([`deploy/helm-templates/qubership-apihub/`](../deploy/helm-templates/qubership-apihub/) — **`values.yaml` + templates**) is the **canonical delivery contract for Kubernetes**: it defines Secrets, mounts, injected env vars, images, probes. Supported production shapes should be expressible **without bypassing** the chart (operators extend via values/overlays).
 
 2. **Component source code** is the **authority on runtime behaviour**: which knobs are read from **`config.yaml`**, which from **environment**, and exact variable names. The umbrella Markdown is a map; disagreeing forks should be settled against code on `develop`.
 
-3. **`docker-compose/` stacks** reproduce the **same split** for local rigs; they are **downstream helpers**, not replacements for Helm when you argue about cluster installs.
+3. **`deploy/docker-compose/` stacks** reproduce the **same split** for local rigs; they are **downstream helpers**, not replacements for Helm when you argue about cluster installs.
 
 Annotated **YAML schemas** used by file-backed binaries live only where the loader exists today:
 
@@ -42,7 +42,7 @@ Annotated **YAML schemas** used by file-backed binaries live only where the load
 
 ## 2. Helm — mapping `values.yaml` → runtime (integration first)
 
-Chart: **[`helm-templates/qubership-apihub/`](../helm-templates/qubership-apihub/)**. File: **`values.yaml`** with inline semantics.
+Chart: **[`deploy/helm-templates/qubership-apihub/`](../deploy/helm-templates/qubership-apihub/)**. File: **`values.yaml`** with inline semantics.
 
 | `values.yaml` root key | Produced runtime configuration |
 |------------------------|-------------------------------|
@@ -103,7 +103,7 @@ MinIO/S3 endpoint CA stays in **`s3Storage.crt`** inside the backend config Secr
 
 ## 3. Compose — which file to edit
 
-Repository path: **[`docker-compose/apihub-generic/`](../docker-compose/apihub-generic/)** (standalone) and **`docker-compose/with-keycloak/`** (Keycloak SSO example).
+Repository path: **[`deploy/docker-compose/apihub-generic/`](../deploy/docker-compose/apihub-generic/)** (standalone) and **`deploy/docker-compose/with-keycloak/`** (Keycloak SSO example).
 
 | File | Service | Role |
 |------|---------|------|

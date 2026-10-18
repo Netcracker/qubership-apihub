@@ -121,9 +121,9 @@ More context: [Supplementary applications](https://github.com/Netcracker/qubersh
 
 ## Deploy
 
-- **Helm** (production-oriented): see [helm-templates/README.md](./helm-templates/README.md) and [docs/installation-guide.md](./docs/installation-guide.md).
-- **Docker Compose** (dev/test): [docker-compose/apihub-generic/](./docker-compose/apihub-generic/).
-- **Local Kubernetes quickstart** (developers / R&D, not production): [helm-templates/local-k8s-quickstart/README.md](./helm-templates/local-k8s-quickstart/README.md).
+- **Helm** (production-oriented): see [deploy/helm-templates/README.md](./deploy/helm-templates/README.md) and [docs/installation-guide.md](./docs/installation-guide.md).
+- **Docker Compose** (dev/test): [deploy/docker-compose/apihub-generic/](./deploy/docker-compose/apihub-generic/).
+- **Local Kubernetes quickstart** (developers / R&D, not production): [deploy/helm-templates/local-k8s-quickstart/README.md](./deploy/helm-templates/local-k8s-quickstart/README.md).
 
 ---
 

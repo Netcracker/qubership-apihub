@@ -14,7 +14,7 @@ repo follow-up.
 | Field | Value |
 |-------|--------|
 | **Repo** | https://github.com/Netcracker/qubership-apihub |
-| **Typical paths** | `helm-templates/qubership-apihub/values.yaml`, chart templates, `docker-compose/`, `docs/configuration-reference.md` |
+| **Typical paths** | `deploy/helm-templates/qubership-apihub/values.yaml`, chart templates, `deploy/docker-compose/`, `docs/configuration-reference.md` |
 
 ## Remind when the backend change includes any of
 
