@@ -31,8 +31,8 @@ The build process generates a standalone binary with all required dependencies. 
 ## Configuration
 
 Application parameters are loaded from `config.yaml`. The configuration format,
-defaults, and examples are documented in [the template file](qubership-api-linter-service/config.template.yaml). For local development,
-use that template as a reference and create `qubership-api-linter-service/config.yaml`.
+defaults, and examples are documented in [the template file](config.template.yaml). For local development,
+use that template as a reference and create `config.yaml`.
 
 By default, the service looks for `config.yaml` in the current working directory. Set
 `LINTER_CONFIG_FOLDER` to point to a different directory that contains the file.

@@ -27,7 +27,7 @@ Applies to **bug fixes and new features**.
 
 - **Propagate errors** from repositories and services; map to HTTP at the controller boundary.
 - Use **`exception.CustomError`** for client-facing API errors (see **API errors** below). Use plain `error` for internal layers when the controller already translates failures.
-- **Fail fast** on fatal startup wiring (`log.Fatalf` / `panic` patterns already used in `service.go` for migration failure, missing Spectral binary, auth setup, etc.).
+- **Fail fast** on fatal startup wiring (`log.Fatalf` / `panic` patterns already used in `main.go` for migration failure, missing Spectral binary, auth setup, etc.).
 - **Log errors** at ERROR for unrecoverable failures; DEBUG for expected client errors passed through `RespondWithCustomError`.
 - Background workers (`DocTaskProcessor`, `VersionTaskProcessor`) must mark tasks failed in DB and log the cause — do not leave tasks stuck in an ambiguous state without logging.
 
@@ -49,9 +49,9 @@ Briefly state: **root cause**, **why the change fixes it**, and confirm you did 
 ## Cross-platform development (Windows + Linux)
 
 - Team uses **Linux** and **Windows (often with WSL)**.
-- Go module and runnable binary live under `qubership-api-linter-service/`; run `go test` / `go build` from that directory unless the task says otherwise.
+- Go module and runnable binary live at the component root; run `go test` / `go build` from there unless the task says otherwise.
 - Spectral/Vacuum bundled binaries exist under `resources/spectral/` and `resources/vacuum/` per OS — respect platform paths when touching executor code.
-- Prefer repo-relative paths like `qubership-api-linter-service/controller/...`.
+- Prefer repo-relative paths like `controller/...`.
 
 ## Related repositories
 
@@ -67,17 +67,17 @@ When a change affects REST contracts or integration behaviour, **remind** the de
 
 | Area | Location |
 |------|----------|
-| Entry point / route registration | `qubership-api-linter-service/service.go` |
-| HTTP controllers | `qubership-api-linter-service/controller/` |
-| Business logic | `qubership-api-linter-service/service/` |
-| Data access | `qubership-api-linter-service/repository/` |
-| DB entities | `qubership-api-linter-service/entity/` |
-| API DTOs / enums (`Linter`, `ApiType`, …) | `qubership-api-linter-service/view/` |
-| API error codes | `qubership-api-linter-service/exception/errors.go` |
-| APIHUB HTTP client | `qubership-api-linter-service/client/apihub.go` |
-| Auth middleware | `qubership-api-linter-service/security/` |
-| SQL migrations | `qubership-api-linter-service/resources/migrations/` |
-| Default Spectral/Vacuum rules | `qubership-api-linter-service/resources/spectral/`, `.../vacuum/` |
+| Entry point / route registration | `main.go` |
+| HTTP controllers | `controller/` |
+| Business logic | `service/` |
+| Data access | `repository/` |
+| DB entities | `entity/` |
+| API DTOs / enums (`Linter`, `ApiType`, …) | `view/` |
+| API error codes | `exception/errors.go` |
+| APIHUB HTTP client | `client/apihub.go` |
+| Auth middleware | `security/` |
+| SQL migrations | `resources/migrations/` |
+| Default Spectral/Vacuum rules | `resources/spectral/`, `.../vacuum/` |
 | OpenAPI specs (this service) | `docs/api/linter_service_api.yaml`, `docs/api/admin_api.yaml` |
 | Architecture notes | `docs/arch_proposal/`, `docs/validation_sequence/` |
 
@@ -123,19 +123,19 @@ Detailed rules apply via deployed `.cursor/rules/` and `.claude/rules/` (from AP
 - **Repeated strings** — extract to constants (especially error codes/messages).
 - **Comments** — only for non-obvious logic; do not map types to HTTP routes in comments.
 - **Entity → view converters** without dependencies: `Make{Name}View` in `entity/` next to the struct.
-- **Wiring in `service.go`** — follow existing order: repositories → services → background processors → controllers → routes. Use `log.Fatalf` for fatal init errors consistent with surrounding code.
+- **Wiring in `main.go`** — follow existing order: repositories → services → background processors → controllers → routes. Use `log.Fatalf` for fatal init errors consistent with surrounding code.
 - **API errors** — client-facing codes and messages as constants in `exception/errors.go`, returned via `exception.CustomError` with `Status`, `Code`, `Message`, optional `Params` (placeholders like `$id`, `$param`), and `Debug` for internal detail. Reuse existing codes (`EntityNotFound`, `LintNotSupported`, `InvalidParameterValue`, …) before inventing new ones.
 
 ## REST API and OpenAPI
 
 - Follow **API-first**: update `docs/api/linter_service_api.yaml` (and `admin_api.yaml` if admin endpoints change) when REST contract changes.
 - Prefer **v2** endpoints for new summary/detail behaviour; v1 paths marked deprecated in code — do not extend deprecated handlers unless fixing a bug.
-- Service exposes its own specs via api-spec-exposer from `technicalParameters.apiSpecDirectory`; if it is empty, the service uses `<technicalParameters.basePath>/api` (see `service.go` discovery block).
+- Service exposes its own specs via api-spec-exposer from `technicalParameters.apiSpecDirectory`; if it is empty, the service uses `<technicalParameters.basePath>/api` (see `main.go` discovery block).
 - Avoid breaking public API changes without explicit product approval.
 
 ## Database migrations
 
-- Files: `qubership-api-linter-service/resources/migrations/`.
+- Files: `resources/migrations/`.
 - Use the next unused numeric prefix; **no duplicate numbers**.
 - Provide paired `.up.sql` and `.down.sql` when rollback is required.
 - Migrations run at startup via `DBMigrationService` before the main server accepts traffic.
@@ -163,9 +163,9 @@ Full checklist: `.cursor/rules/ci-super-linter.mdc` after `apm install`.
 
 ## Testing and verification
 
-- Run targeted tests: `go test ./...` from `qubership-api-linter-service/`.
+- Run targeted tests: `go test ./...` from the component root.
 - For lint executor changes, consider unit tests with fixture specs; integration tests may require Spectral binary and DB.
-- After REST changes, sanity-check OpenAPI parity with registered routes in `service.go`.
+- After REST changes, sanity-check OpenAPI parity with registered routes in `main.go`.
 
 ## Completion
 

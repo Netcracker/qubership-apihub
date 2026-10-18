@@ -13,23 +13,28 @@
 # limitations under the License.
 
 # Note: this uses host platform for the build, and we ask go build to target the needed platform, so we do not spend time on qemu emulation when running "go build"
-FROM --platform=$BUILDPLATFORM docker.io/golang:1.26.5-alpine3.23 AS builder
+FROM --platform=$BUILDPLATFORM docker.io/golang:1.26.6-alpine3.23 AS builder
 ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
 
 WORKDIR /workspace
 
-COPY qubership-api-linter-service ./qubership-api-linter-service
+# Built from backend/, so that `replace ... => ../commons-go` in go.mod resolves to
+# /workspace/commons-go.
+COPY commons-go ./commons-go
+COPY api-linter-service ./api-linter-service
 
-WORKDIR /workspace/qubership-api-linter-service
+WORKDIR /workspace/api-linter-service
 
 SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
+# GOWORK=off on every go command: the image builds this module alone, so go.mod must hold
+# the versions `go work sync` writes; CI checks that.
 RUN if env | grep -Eiq '^(http|https|all)_proxy=https?://https?://'; then unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy; fi; \
-    go run ./tools/download-linter-tools -os=${TARGETOS} -arch=${TARGETARCH}
+    GOWORK=off go run ./tools/download-linter-tools -os=${TARGETOS} -arch=${TARGETARCH}
 RUN if env | grep -Eiq '^(http|https|all)_proxy=https?://https?://'; then unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy; fi; \
-    GOSUMDB=off CGO_ENABLED=0 go mod tidy && go mod download && GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build .
+    GOWORK=off GOSUMDB=off CGO_ENABLED=0 GOFLAGS=-mod=readonly go mod download && GOWORK=off GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o qubership-api-linter-service .
 
 FROM ghcr.io/netcracker/qubership-core-base:2.3.7@sha256:b917b3a1731a2ae26b507d22565f030ec25ff8d28b75a80b8b08bbc946f4d73b
 
@@ -42,9 +47,9 @@ ENV SPECTRAL_BIN_PATH=resources/spectral/linux/spectral
 
 WORKDIR /app/qubership-api-linter-service
 
-COPY --chown=10001:0 --chmod=555 --from=builder /workspace/qubership-api-linter-service/qubership-api-linter-service ./qubership-api-linter-service
-COPY --chown=10001:0 --chmod=555 --from=builder /workspace/qubership-api-linter-service/resources ./resources
-COPY --chown=10001:0 --chmod=555 docs/api ./api
+COPY --chown=10001:0 --chmod=555 --from=builder /workspace/api-linter-service/qubership-api-linter-service ./qubership-api-linter-service
+COPY --chown=10001:0 --chmod=555 --from=builder /workspace/api-linter-service/resources ./resources
+COPY --chown=10001:0 --chmod=555 api-linter-service/docs/api ./api
 
 USER 10001:10001
 
