@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Aggregator for the Maven projects of the monorepo. It builds nothing itself: the @nx/maven plugin
+  only reads Maven projects when a pom.xml sits in the workspace root, so this file lists the
+  Maven modules and Nx derives its projects from them.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.netcracker.qubership.apihub</groupId>
+  <artifactId>qubership-apihub-monorepo</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>qubership-apihub-monorepo</name>
+  <description>Maven aggregator for the qubership-apihub monorepo</description>
+
+  <modules>
+    <module>backend/java-task-consumer</module>
+  </modules>
+</project>

@@ -53,3 +53,6 @@ overrides:
   # (gap G23). `$` resolves against the root package.json, so the whole workspace gets one version.
   '@stoplight/mosaic>@types/react': '$@types/react'
   '@stoplight/mosaic>@types/react-dom': '$@types/react-dom'
+
+patchedDependencies:
+  '@nx/maven@23.2.0': patches/@nx__maven@23.2.0.patch

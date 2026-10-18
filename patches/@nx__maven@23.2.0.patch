@@ -1,0 +1,45 @@
+diff --git a/dist/plugins/dependencies.js b/dist/plugins/dependencies.js
+index 4ac4fa194e74b7b164358e94d092e7c4e61a3050..e11bcb50c9c05aef1b7abae0f1ec4d58fd83a212 100644
+--- a/dist/plugins/dependencies.js	
++++ b/dist/plugins/dependencies.js
+@@ -18,7 +18,16 @@ const createDependencies = async (options, context) => {
+     // Create a mapping from project root to project name
+     const rootToProjectMap = (0, internal_1.createProjectRootMappingsFromProjectConfigurations)(context.projects);
+     // Extract and transform dependencies from the mavenData
+-    const transformedDependencies = mavenData.createDependenciesResults.map((dep) => ({
++    // The Kotlin analyzer reports Windows paths with backslashes; Nx file maps and project roots use "/".
++    const posix = (p) => (typeof p === 'string' ? p.replace(/\\/g, '/') : p);
++    const transformedDependencies = mavenData.createDependenciesResults
++        .map((rawDep) => ({
++        ...rawDep,
++        source: posix(rawDep.source),
++        target: posix(rawDep.target),
++        sourceFile: posix(rawDep.sourceFile),
++    }))
++        .map((dep) => ({
+         ...dep,
+         source: dep.source.startsWith('maven:')
+             ? dep.source
+diff --git a/dist/plugins/nodes.js b/dist/plugins/nodes.js
+index 3acc6cfc4f3f9c38841d8112d07a112fc6488783..2a30794cb0e0124c2af0da6c7694bc75f9e48c2d 100644
+--- a/dist/plugins/nodes.js	
++++ b/dist/plugins/nodes.js
+@@ -61,10 +61,16 @@ exports.createNodes = [
+             // Store in module-level variable for createDependencies to use
+             (0, maven_data_cache_1.setCurrentMavenData)(mavenData);
+             // Return createNodesResults (atomization now handled in Kotlin)
++            // The Kotlin analyzer reports Windows paths with backslashes; Nx project roots and file maps use "/".
++            const posix = (p) => (typeof p === 'string' ? p.replace(/\\/g, '/') : p);
+             return mavenData.createNodesResults.map(([configFile, createNodesResult]) => {
++                const projects = {};
++                for (const [root, project] of Object.entries(createNodesResult.projects ?? {})) {
++                    projects[posix(root)] = { ...project, root: posix(project.root) };
++                }
+                 return [
+-                    (0, path_1.relative)(context.workspaceRoot, configFile),
+-                    createNodesResult,
++                    posix((0, path_1.relative)(context.workspaceRoot, configFile)),
++                    { ...createNodesResult, projects },
+                 ];
+             });
+         }
