@@ -1,21 +1,30 @@
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
-const { componentPaths, expectedBump, renderPlan } = require('./plan')
+const { expectedBump, planRows, renderPlan } = require('./plan')
 
-const roots = {
-  'ui-root': 'frontend/ui',
-  'ui-portal': 'frontend/ui/packages/portal',
-  'ui-shared': 'frontend/ui/packages/shared',
-  agent: 'backend/agent',
-  'agents-backend': 'backend/agents-backend',
-  nested: 'backend/agent/tools/nested',
-  'maven-root': '.',
-}
-
-test('componentPaths keeps the outermost roots and excludes nested projects of other components', () => {
-  assert.deepEqual(componentPaths(['ui-root', 'ui-portal', 'ui-shared'], roots), ['frontend/ui'])
-  assert.deepEqual(componentPaths(['agent'], roots), ['backend/agent', ':(exclude)backend/agent/tools/nested'])
-  assert.deepEqual(componentPaths(['agents-backend'], roots), ['backend/agents-backend'])
+test('planRows marks the plan bumps as own changes and the other Nx bumps as dependencies', () => {
+  const groups = {
+    'api-unifier': { projects: ['api-unifier'] },
+    ui: { projects: ['ui-root', 'ui-portal'] },
+    agent: { projects: ['agent'] },
+  }
+  const bumps = [
+    { component: 'api-unifier', bump: 'minor' },
+    { component: 'ui', bump: 'none' },
+    { component: 'agent', bump: 'none' },
+  ]
+  const data = {
+    'api-unifier': { currentVersion: '2.9.2', newVersion: '2.10.0' },
+    'ui-portal': { currentVersion: '3.10.1', newVersion: '3.10.2' },
+    agent: { currentVersion: '1.0.0', newVersion: null },
+  }
+  assert.deepEqual(planRows(bumps, data, groups), {
+    rows: [
+      { component: 'api-unifier', from: '2.9.2', to: '2.10.0', bump: 'minor', ownBump: 'minor', reason: 'own change' },
+      { component: 'ui', from: '3.10.1', to: '3.10.2', bump: 'patch', ownBump: 'none', reason: 'dependency' },
+    ],
+    unchanged: ['agent'],
+  })
 })
 
 test('expectedBump is the own bump, or patch for a dependency-only release', () => {

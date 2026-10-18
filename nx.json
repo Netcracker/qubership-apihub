@@ -12,80 +12,70 @@
   ],
   "release": {
     "//": [
-      "One release group per component, tagged <component>/{version}.",
-      "ui, apispec-view, api-doc-viewer, and java-task-consumer have several projects and are fixed groups.",
-      "Each independent group sets its own releaseTag: Nx gives independent groups {projectName}@{version}",
-      "and ignores the root pattern for them. Projects outside every group (ui-tests, the root Maven project)",
-      "are not released.",
+      "One release group per component, tagged <component>/{version} by the root releaseTag pattern.",
+      "Every group is fixed, also those with one project: a version plan names groups, and Nx rejects an",
+      "independent group named like its project. Projects outside every group (ui-tests, the root Maven",
+      "project) are not released.",
+      "The bumps come from the version plan that tools/release/version-plan.js writes before each run: the",
+      "highest R6 bump among the commits touching a component since its last tag. Nx gives each in-repo",
+      "dependent of a bumped component a patch bump. specifierSource conventional-commits is not used:",
+      "Nx would count a dependency's commits as the dependent's own (see the header of version-plan.js).",
       "The current version is the last tag. The Go and Java groups have no manifest: their version actions",
       "write nothing and start a component without a tag from 0.0.0.",
-      "The version.conventionalCommits shorthand is not used: it also sets currentVersionResolver,",
-      "and setting both is an error.",
       "preserveLocalDependencyProtocols keeps workspace:^, so pnpm writes the real range at publish time."
     ],
     "releaseTag": {
       "pattern": "{releaseGroupName}/{version}"
     },
+    "versionPlans": true,
     "groups": {
       "api-diff": {
         "projects": ["api-diff"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "api-diff/{version}" }
+        "projectsRelationship": "fixed"
       },
       "api-processor": {
         "projects": ["api-processor"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "api-processor/{version}" }
+        "projectsRelationship": "fixed"
       },
       "api-unifier": {
         "projects": ["api-unifier"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "api-unifier/{version}" }
+        "projectsRelationship": "fixed"
       },
       "api-visitor": {
         "projects": ["api-visitor"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "api-visitor/{version}" }
+        "projectsRelationship": "fixed"
       },
       "class-view": {
         "projects": ["class-view"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "class-view/{version}" }
+        "projectsRelationship": "fixed"
       },
       "compatibility-suites": {
         "projects": ["compatibility-suites"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "compatibility-suites/{version}" }
+        "projectsRelationship": "fixed"
       },
       "ddlapi": {
         "projects": ["ddlapi"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "ddlapi/{version}" }
+        "projectsRelationship": "fixed"
       },
       "graphapi": {
         "projects": ["graphapi"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "graphapi/{version}" }
+        "projectsRelationship": "fixed"
       },
       "http-spec": {
         "projects": ["http-spec"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "http-spec/{version}" }
+        "projectsRelationship": "fixed"
       },
       "json-crawl": {
         "projects": ["json-crawl"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "json-crawl/{version}" }
+        "projectsRelationship": "fixed"
       },
       "rest-playground": {
         "projects": ["rest-playground"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "rest-playground/{version}" }
+        "projectsRelationship": "fixed"
       },
       "jest-chrome-in-docker-environment": {
         "projects": ["jest-chrome-in-docker-environment"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "jest-chrome-in-docker-environment/{version}" }
+        "projectsRelationship": "fixed"
       },
       "apispec-view": {
         "projects": [
@@ -114,43 +104,36 @@
       "ui": { "projects": ["ui-root", "ui-portal", "ui-agents", "ui-shared"], "projectsRelationship": "fixed" },
       "build-task-consumer": {
         "projects": ["build-task-consumer"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "build-task-consumer/{version}" }
+        "projectsRelationship": "fixed"
       },
       "portal-backend": {
         "projects": ["portal-backend"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "portal-backend/{version}" },
+        "projectsRelationship": "fixed",
         "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
       },
       "api-linter-service": {
         "projects": ["api-linter-service"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "api-linter-service/{version}" },
+        "projectsRelationship": "fixed",
         "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
       },
       "agents-backend": {
         "projects": ["agents-backend"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "agents-backend/{version}" },
+        "projectsRelationship": "fixed",
         "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
       },
       "agent": {
         "projects": ["agent"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "agent/{version}" },
+        "projectsRelationship": "fixed",
         "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
       },
       "test-service": {
         "projects": ["test-service"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "test-service/{version}" },
+        "projectsRelationship": "fixed",
         "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
       },
       "commons-go": {
         "projects": ["commons-go"],
-        "projectsRelationship": "independent",
-        "releaseTag": { "pattern": "commons-go/{version}" },
+        "projectsRelationship": "fixed",
         "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
       },
       "java-task-consumer": {
@@ -165,8 +148,8 @@
     },
     "conventionalCommits": {
       "//": [
-        "Bumps per decision R6, every type listed: the Nx defaults bump only feat and fix.",
-        "A ! after the type or a BREAKING CHANGE: footer gives major. tools/release/conventional.js reads this table."
+        "Bumps per decision R6, every type listed. tools/release/version-plan.js reads this table, not Nx.",
+        "A ! after the type or a BREAKING CHANGE: footer gives major."
       ],
       "types": {
         "feat": { "semverBump": "minor" },
@@ -190,7 +173,7 @@
         "A pre-push hook cannot do this: nx pushes with --no-verify. Dry runs (NX_DRY_RUN=true) pass."
       ],
       "preVersionCommand": "node tools/release/guard.js",
-      "specifierSource": "conventional-commits",
+      "specifierSource": "version-plans",
       "currentVersionResolver": "git-tag",
       "fallbackCurrentVersionResolver": "disk",
       "preserveLocalDependencyProtocols": true,
