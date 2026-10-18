@@ -1,13 +1,55 @@
+# Local image build, from output you have already built.
+#
+# Context is THIS directory, matching the existing convention:
+#
+#     pnpm install                                   # once, at the workspace root
+#     pnpm exec nx build build-task-consumer
+#     pnpm deploy --filter=./frontend/build-task-consumer --prod \
+#                 frontend/build-task-consumer/.deploy
+#     cd frontend/build-task-consumer && podman build -f Dockerfile.local .
+#
+# THE `pnpm deploy` STEP IS THE ONE PREREQUISITE, and unlike ui's it cannot be removed.
+#
+# This file used to be self-contained: `COPY .npmrc / package.json / npm-shrinkwrap.json`,
+# then `RUN npm ci` inside the image. Both of its inputs are gone — the workspace has one
+# lockfile at the root and the per-component shrinkwrap was deleted with the other sixteen —
+# and the internal dependencies are now `workspace:` specifiers, which no in-image install
+# can resolve without the whole workspace present.
+#
+# `pnpm deploy --prod` is what produces a resolvable, production-only tree, and it has to run
+# where the workspace is. Three reasons it is not simply moved inside this Dockerfile:
+#
+#   1. It would restore the in-image install that made this image the 15.7-minute outlier in
+#      the first place — its build stage has no `--platform=$BUILDPLATFORM`, so on any
+#      non-native architecture the install runs under QEMU emulation.
+#   2. It needs the lockfile and every workspace package, so the build context would have to
+#      be the whole workspace — which is what `Dockerfile` is for.
+#   3. It would need registry credentials inside the build, which is the `.npmrc` PAT this
+#      file no longer requires.
+#
+# On Windows `pnpm deploy` may fail with EPERM renaming its temporary directory into place —
+# a file handle held over the thousands of files just written, usually a virus scanner. It is
+# reliable on Linux. Build this image in CI or WSL if that happens; `ui`'s local image needs
+# no deploy tree and is unaffected.
+
 FROM docker.io/node:24-alpine
+
+# GIT_BRANCH / GIT_HASH are not declared here any more, to keep this file honest about being
+# the same image as Dockerfile with different input paths. See the note in that file: the
+# provenance moved to OCI annotations on the branch tag, because a value baked into a layer
+# belongs to the content and a ref does not.
+
+ENV NODE_ENV=production
 
 WORKDIR /usr/src/app
 
-COPY .npmrc .npmrc
-COPY package.json ./
-COPY npm-shrinkwrap.json ./
-RUN npm ci
+# The deploy tree: production dependencies only, workspace: specifiers already resolved.
+COPY .deploy/package.json ./package.json
+COPY .deploy/node_modules ./node_modules
+
+# The build output.
 COPY dist dist
 
 USER 10001
 
-CMD [ "node", "--max-old-space-size=3100", "--max-semi-space-size=32", "dist/main" ]
+CMD ["node", "--max-old-space-size=3100", "--max-semi-space-size=32", "dist/main"]

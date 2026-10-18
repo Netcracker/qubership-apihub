@@ -1,6 +1,7 @@
 {
   "name": "@netcracker/qubership-apihub-build-task-consumer",
   "version": "3.4.2",
+  "private": true,
   "license": "Apache-2.0",
   "files": [
     "dist",
@@ -9,8 +10,6 @@
   "scripts": {
     "prebuild": "rimraf dist tsconfig.tsbuildinfo tsconfig.build.tsbuildinfo",
     "build": "nest build",
-    "development:link": "npm link && npm link @netcracker/qubership-apihub-api-processor",
-    "development:unlink": "npm unlink && npm unlink @netcracker/qubership-apihub-api-processor",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -21,8 +20,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config jest-e2e.json",
-    "update-lock-file": "update-lock-file @netcracker"
+    "test:e2e": "jest --config jest-e2e.json"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",
@@ -30,7 +28,7 @@
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
-    "@netcracker/qubership-apihub-api-processor": "dev",
+    "@netcracker/qubership-apihub-api-processor": "workspace:^",
     "@sinclair/typebox": "^0.32.1",
     "adm-zip": "0.6.0",
     "axios": "^1.20.0",
@@ -47,8 +45,7 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.0",
-    "@netcracker/qubership-apihub-api-unifier": "dev",
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
+    "@netcracker/qubership-apihub-api-unifier": "workspace:^",
     "@types/express": "^5.0.0",
     "@types/jest": "30.0.0",
     "@types/multer": "^2.0.0",
@@ -95,5 +92,8 @@
   },
   "engines": {
     "node": ">=24.0.0"
+  },
+  "nx": {
+    "name": "build-task-consumer"
   }
 }

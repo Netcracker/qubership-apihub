@@ -1,0 +1,7 @@
+# Opt-in, same principle as the workspace-root .dockerignore. `.deploy` is the pnpm deploy
+# tree produced before the build; it is gitignored, which does not matter here — docker does
+# not read .gitignore — but it does have to be named.
+**
+!dist/**
+!.deploy/package.json
+!.deploy/node_modules/**
