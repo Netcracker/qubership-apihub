@@ -25,8 +25,8 @@ Presence of this plug-in in Qubership-APIHUB deployments enables `Agents` tab in
 ## Configuration
 
 Application parameters are loaded from `config.yaml`. The configuration format,
-defaults, and examples are documented in [the template file](qubership-apihub-agents-backend/config.template.yaml). For local development,
-use that template as a reference and create `qubership-apihub-agents-backend/config.yaml`.
+defaults, and examples are documented in [the template file](config.template.yaml). For local development,
+use that template as a reference and create `config.yaml`.
 
 By default, the service looks for `config.yaml` in the current working directory. Set
 `AGENTS_BACKEND_CONFIG_FOLDER` to point to a different directory that contains the file.
