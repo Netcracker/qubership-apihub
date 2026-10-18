@@ -12,10 +12,12 @@
 
 name: CI
 
-# One run per ref; a newer push cancels the older run.
+# One run per ref; a newer push cancels the older run, except on main and release: a publish or image
+# run there is never cancelled (release-finish.yml dispatches CI right after a push that already
+# started a run, and one of the two would otherwise be cancelled). Those runs queue instead.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/release' }}
 
 permissions:
   contents: read
