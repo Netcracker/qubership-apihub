@@ -27,7 +27,7 @@ Applies to **bug fixes and new features**.
 
 - **Propagate errors** from services and clients; map to HTTP at the controller boundary.
 - Use **`exception.CustomError`** for client-facing API errors. Use plain `error` for internal layers when the controller already translates failures.
-- **Fail fast** on fatal startup wiring (`panic` / logged fatal patterns in `service.go` for config, PaaS client, etc.).
+- **Fail fast** on fatal startup wiring (`panic` / logged fatal patterns in `main.go` for config, PaaS client, etc.).
 - **Log errors** at ERROR for unrecoverable failures; DEBUG for expected client errors.
 
 ### Before submitting a bug-fix diff
@@ -48,9 +48,9 @@ Briefly state: **root cause**, **why the change fixes it**, and confirm you did 
 ## Cross-platform development (Windows + Linux)
 
 - Team uses **Linux** and **Windows (often with WSL)**.
-- Go module and runnable binary live under `qubership-apihub-agent/`; run `go test` / `go build` from that directory unless the task says otherwise.
+- The Go module and runnable binary live at the component root; run `go test` / `go build` from there unless the task says otherwise.
 - Set `STUB_PM` for local runs without a real Kubernetes API.
-- Prefer repo-relative paths like `qubership-apihub-agent/service/...`.
+- Prefer repo-relative paths like `service/...`.
 
 ## Related repositories
 
@@ -68,17 +68,17 @@ When a change affects REST contracts, Helm values, or integration behaviour, **r
 
 | Area | Location |
 |------|----------|
-| Entry point / route registration | `qubership-apihub-agent/service.go` |
-| HTTP controllers | `qubership-apihub-agent/controller/` |
-| Business logic | `qubership-apihub-agent/service/` |
-| API type discovery | `qubership-apihub-agent/api_type/` (`rest`, `graphql`, `asyncapi`, `markdown`, `json_schema`, `unknown`, `generic`) |
-| DTOs / enums | `qubership-apihub-agent/view/` |
-| API errors | `qubership-apihub-agent/exception/` |
-| APIHUB HTTP client | `qubership-apihub-agent/client/apihub.go` |
-| Agents-backend client | `qubership-apihub-agent/client/agents_backend.go` |
-| Config struct | `qubership-apihub-agent/config/` |
-| Config template | `qubership-apihub-agent/config.template.yaml` |
-| Auth middleware | `qubership-apihub-agent/security/` |
+| Entry point / route registration | `main.go` |
+| HTTP controllers | `controller/` |
+| Business logic | `service/` |
+| API type discovery | `api_type/` (`rest`, `graphql`, `asyncapi`, `markdown`, `json_schema`, `unknown`, `generic`) |
+| DTOs / enums | `view/` |
+| API errors | `exception/` |
+| APIHUB HTTP client | `client/apihub.go` |
+| Agents-backend client | `client/agents_backend.go` |
+| Config struct | `config/` |
+| Config template | `config.template.yaml` |
+| Auth middleware | `security/` |
 | OpenAPI specs (this service) | `documentation/api/` |
 | Helm templates | `helm-templates/qubership-apihub-agent/` |
 
@@ -107,7 +107,7 @@ Detailed rules apply via deployed `.cursor/rules/` and `.claude/rules/` (from AP
 - **Repeated strings** — extract to constants (especially error codes/messages).
 - **Comments** — only for non-obvious logic; do not map types to HTTP routes in comments.
 - **No database** — no migrations, repositories, or SQL (see `agent-conventions`).
-- **Wiring in `service.go`** — follow existing order; fatal init on misconfiguration consistent with surrounding code.
+- **Wiring in `main.go`** — follow existing order; fatal init on misconfiguration consistent with surrounding code.
 
 ## REST API and OpenAPI
 
@@ -127,9 +127,9 @@ Full checklist: `.cursor/rules/ci-super-linter.mdc` after `apm install`.
 
 ## Testing and verification
 
-- Run targeted tests: `go test ./...` from `qubership-apihub-agent/`.
+- Run targeted tests: `go test ./...` from the component root.
 - For discovery changes, consider unit tests with mocked HTTP; full integration requires K8s or `STUB_PM`.
-- After REST changes, sanity-check OpenAPI parity with registered routes in `service.go`.
+- After REST changes, sanity-check OpenAPI parity with registered routes in `main.go`.
 
 ## Completion
 

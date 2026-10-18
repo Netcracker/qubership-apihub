@@ -1,7 +1,7 @@
 ---
 paths:
   - "documentation/api/**"
-  - "qubership-apihub-agent/controller/**"
+  - "controller/**"
 ---
 
 # Agent OpenAPI Files

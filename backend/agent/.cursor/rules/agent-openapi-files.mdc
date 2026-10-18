@@ -2,7 +2,7 @@
 description: Agent OpenAPI file list and sync requirements
 globs:
   - "documentation/api/**"
-  - "qubership-apihub-agent/controller/**"
+  - "controller/**"
 ---
 
 # Agent OpenAPI Files

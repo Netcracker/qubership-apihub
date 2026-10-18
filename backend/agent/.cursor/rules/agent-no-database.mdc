@@ -1,6 +1,6 @@
 ---
 description: Agent has no database layer
-globs: "qubership-apihub-agent/**"
+globs: "**"
 ---
 
 # No Database Layer

@@ -1,6 +1,6 @@
 ---
 description: Agent OpenAPI file list and sync requirements
-applyTo: documentation/api/**,qubership-apihub-agent/controller/**
+applyTo: documentation/api/**,controller/**
 ---
 
 # Agent OpenAPI Files

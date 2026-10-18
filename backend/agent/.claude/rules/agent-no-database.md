@@ -1,6 +1,6 @@
 ---
 paths:
-  - "qubership-apihub-agent/**"
+  - "**"
 ---
 
 # No Database Layer

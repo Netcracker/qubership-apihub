@@ -1,0 +1,23 @@
+# A deny-list: podman does not descend into an excluded directory, so `*` with `!**/*.go`
+# copied only the top-level main.go.
+.git*
+.agents
+.claude
+.cursor
+.github
+.qubership
+agent-packages
+documentation
+helm-templates
+dist
+static
+*.md
+*.cmd
+*.yml
+*.yaml
+apm*
+LICENSE
+Dockerfile
+.dockerignore
+.editorconfig
+.lycheeignore

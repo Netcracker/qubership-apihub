@@ -1,6 +1,6 @@
 ---
 name: apihub-agent-developer
-description: "Implements and modifies the APIHub K8s discovery agent (qubership-apihub-agent): api_type discovery runners, K8s discovery services, service.go wiring, clients, config, and OpenAPI specs. Use when adding or changing agent features, discovery behaviour, API type support, REST endpoints, or Go code in qubership-apihub-agent."
+description: "Implements and modifies the APIHub K8s discovery agent (qubership-apihub-agent): api_type discovery runners, K8s discovery services, main.go wiring, clients, config, and OpenAPI specs. Use when adding or changing agent features, discovery behaviour, API type support, REST endpoints, or Go code in qubership-apihub-agent."
 ---
 
 # APIHub Agent Developer
@@ -12,8 +12,8 @@ Follow `AGENTS.md` and project rules.
 ## Agent-specific workflow
 
 1. **No database** — this service has no PostgreSQL, migrations, or repository layer. Do not add DB wiring or SQL.
-2. **Config** — defaults in `service/system_info.go` (`setDefaults`); struct in `config/Config.go`; template in `qubership-apihub-agent/config.template.yaml`. Keep template comments in sync with new keys.
-3. **Wiring** — extend `service.go` in existing order: `SystemInfoService` → PaaS client → `ApihubClient` / `AgentsBackendClient` → caches → discovery/registration services → controllers → routes.
+2. **Config** — defaults in `service/system_info.go` (`setDefaults`); struct in `config/Config.go`; template in `config.template.yaml`. Keep template comments in sync with new keys.
+3. **Wiring** — extend `main.go` in existing order: `SystemInfoService` → PaaS client → `ApihubClient` / `AgentsBackendClient` → caches → discovery/registration services → controllers → routes.
 4. **OpenAPI** — REST changes must update specs under `documentation/api/` (see deployed `agent-conventions` rules).
 5. **Related repos** — if deploy config, env vars, or integration contracts change, remind the developer about **qubership-apihub-agents-backend**, **qubership-apihub** (Helm), and **qubership-apihub-backend** as applicable.
 

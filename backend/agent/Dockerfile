@@ -13,20 +13,18 @@
 # limitations under the License.
 
 # Note: this uses host platform for the build, and we ask go build to target the needed platform, so we do not spend time on qemu emulation when running "go build"
-FROM --platform=$BUILDPLATFORM docker.io/golang:1.26.5-alpine3.23 AS builder
+FROM --platform=$BUILDPLATFORM docker.io/golang:1.26.6-alpine3.23 AS builder
 ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
 
-WORKDIR /workspace
-
-COPY qubership-apihub-agent ./qubership-apihub-agent
-
 WORKDIR /workspace/qubership-apihub-agent
 
-RUN go mod tidy
+COPY . .
 
-RUN GOSUMDB=off CGO_ENABLED=0 go mod tidy && go mod download && GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build .
+# GOWORK=off: the image builds this module alone, so go.mod must hold the versions
+# `go work sync` writes; CI checks that.
+RUN GOWORK=off GOSUMDB=off CGO_ENABLED=0 GOFLAGS=-mod=readonly go mod download && GOWORK=off GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o qubership-apihub-agent .
 
 FROM ghcr.io/netcracker/qubership-core-base:2.3.7@sha256:b917b3a1731a2ae26b507d22565f030ec25ff8d28b75a80b8b08bbc946f4d73b
 

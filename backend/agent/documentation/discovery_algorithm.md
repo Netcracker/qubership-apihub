@@ -58,7 +58,7 @@ discovered via `apihub-config`.
 
 ## Configuring Discovery URLs
 
-All discovery URLs can be configured via `config.yaml`, see [`config.template.yaml`](../qubership-apihub-agent/config.template.yaml) for a full example with all available configuration options.
+All discovery URLs can be configured via `config.yaml`, see [`config.template.yaml`](../config.template.yaml) for a full example with all available configuration options.
 
 The YAML config structure for discovery URLs:
 
