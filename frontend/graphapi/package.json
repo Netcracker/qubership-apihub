@@ -21,18 +21,14 @@
     "lint:check": "eslint -c .eslintrc.json . --ext .js,.cjs,.ts,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
     "storybook": "storybook dev -p 6006",
     "build:showcase": "storybook build -o dist-showcase",
-    "lint:fix": "npm run lint:check -- --fix",
+    "lint:fix": "pnpm run lint:check -- --fix",
     "prebuild": "rimraf ./dist",
     "build": "vite build",
-    "development:link": "npm link",
-    "development:unlink": "npm unlink",
     "test": "jest --maxWorkers 3 --verbose",
     "test:coverage": "jest --verbose --coverage",
     "build:web": "webpack",
     "feature-start": "feature-start --featureName",
     "feature-finish": "feature-finish",
-    "release-start": "release-start",
-    "release-finish": "release-finish",
     "build-storybook": "storybook build"
   },
   "keywords": [
@@ -44,7 +40,6 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
     "@storybook/addon-docs": "10.5.10",
     "@storybook/addon-links": "10.5.10",
     "@storybook/addon-onboarding": "10.5.10",
@@ -98,5 +93,8 @@
   },
   "eslintConfig": {
     "extends": ".eslintrc.json"
+  },
+  "nx": {
+    "name": "graphapi"
   }
 }
