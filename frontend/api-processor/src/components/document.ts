@@ -14,7 +14,16 @@
  * limitations under the License.
  */
 
-import { ApiBuilder, BuildConfigFile, BuilderContext, FILE_KIND, SourceFile, TextFile, VersionDocument } from '../types'
+import {
+  ApiBuilder,
+  BuildConfigFile,
+  BuilderContext,
+  DocumentDumper,
+  FILE_KIND,
+  SourceFile,
+  VersionDocument,
+  ZippableDocument,
+} from '../types'
 import {
   API_KIND_LABEL, API_KIND_SPECIFICATION_EXTENSION,
   APIHUB_API_COMPATIBILITY_KIND_BWC,
@@ -22,15 +31,15 @@ import {
   DOCUMENT_TYPE,
   FILE_FORMAT_UNKNOWN,
 } from '../consts'
+import { DocumentBuildError } from '../errors'
 import {
   createVersionInternalDocument,
   getDocumentTitle,
-  getFileExtension,
   isObject,
   isString,
   rawToApiKind,
 } from '../utils'
-import { buildBinaryDocument, unknownApiBuilder } from '../apitypes'
+import { buildBinaryDocument, isTextDocument, unknownApiBuilder } from '../apitypes'
 
 const consumeXApiKind = (file: BuildConfigFile): string | undefined => {
   const { xApiKind } = file
@@ -38,7 +47,7 @@ const consumeXApiKind = (file: BuildConfigFile): string | undefined => {
   return xApiKind
 }
 
-export const buildErrorDocument = (file: BuildConfigFile, parsedFile?: TextFile): VersionDocument => {
+export const buildErrorDocument = (file: BuildConfigFile, parsedFile?: SourceFile): VersionDocument => {
   consumeXApiKind(file)
   const { fileId, slug = '', publish = true, ...metadata } = file
   return {
@@ -48,7 +57,8 @@ export const buildErrorDocument = (file: BuildConfigFile, parsedFile?: TextFile)
     data: '',
     slug,
     publish,
-    filename: `${slug}.${getFileExtension(fileId)}`,
+    // `fileId`, matching what unknown and binary documents already ship — a build may contain both flavours
+    filename: fileId,
     title: getDocumentTitle(fileId),
     dependencies: [],
     description: '',
@@ -58,6 +68,23 @@ export const buildErrorDocument = (file: BuildConfigFile, parsedFile?: TextFile)
     versionInternalDocument: createVersionInternalDocument(slug),
   }
 }
+
+/**
+ * Dump a document with the dumper of its api type, or as the bytes it was read from when it has no model.
+ *
+ * A file whose parser threw keeps its type and is published without a model, so the typed dumper has
+ * nothing to print. Its original bytes are the troubleshooting artifact, and they ship unchanged. A text
+ * document never has a model, keeps its text in `description`, and is dumped from there as before.
+ */
+export const dumpDocument = (
+  document: ZippableDocument,
+  { dumpDocument: dumpModel }: Pick<ApiBuilder, 'dumpDocument'>,
+  format?: Parameters<DocumentDumper<unknown>>[1],
+): Blob => (
+  document.data === '' && document.source && !isTextDocument(document)
+    ? document.source
+    : dumpModel(document, format)
+)
 
 export interface BuildDocumentResult {
   document: VersionDocument
@@ -79,7 +106,11 @@ export const buildDocument = async (parsedFile: SourceFile, file: BuildConfigFil
     const document = await apiBuilder.buildDocument(parsedFile, file, ctx)
     return { document, builder: apiBuilder }
   } catch (error) {
-    throw new Error(`Cannot process the "${file.fileId}" document. ${error instanceof Error ? error.message : 'Unknown error'}`)
+    const message = `Cannot process the "${file.slug}" document. ${error instanceof Error ? error.message : 'Unknown error'}`
+    // keep the category the nested failure carried, otherwise it flattens into `build-document`
+    throw error instanceof DocumentBuildError
+      ? new DocumentBuildError(message, error.category)
+      : new Error(message)
   }
 }
 

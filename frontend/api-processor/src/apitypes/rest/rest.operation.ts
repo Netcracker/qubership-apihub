@@ -99,7 +99,7 @@ export const buildRestOperation = (
     const [version] = getSplittedVersionKey(config.version)
 
     const hash = isOperation ? undefined : calculateHash(value, normalizedSpecFragmentsHashCache)
-    const tolerantHash = isOperation ? undefined : calculateTolerantHash(value, notifications)
+    const tolerantHash = isOperation ? undefined : calculateTolerantHash(value, notifications, documentSlug)
 
     deprecatedItems.push({
       declarationJsonPaths,
@@ -181,7 +181,13 @@ export const calculateSpecRefs = (
     if (!matchResult) {
       return
     }
-    const componentName = matchResult.grepValues[grepKey].toString()
+    // `#/components/schemas` matches the pattern with nothing left to grep. Reading the name that is not
+    // there threw, and one such `$ref` cost the document every operation it had.
+    const grepped = matchResult.grepValues[grepKey]
+    if (grepped === undefined) {
+      return
+    }
+    const componentName = grepped.toString()
     const component = getKeyValue(sourceDocument, ...matchResult.path) as Record<string, unknown>
     if (!component) {
       return

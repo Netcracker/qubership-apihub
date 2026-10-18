@@ -19,16 +19,17 @@ import * as realFs from 'fs/promises'
 import path from 'path'
 import mime from 'mime-types'
 import { getFileExtension } from '../../../src/utils'
+import type { BuildConfig } from '../../../src/processor'
 
 /**
  * Set FS_MODE=disk to write build results to disk instead of memory.
- * Useful for debugging test output.
+ * Useful for debugging test output. Each jest worker writes under its own `test/versions/worker-<id>`.
  *
  * Usage:
  *   npm run test:disk
  */
 const FS_MODE = process.env.FS_MODE ?? 'memory'
-const useDisk = FS_MODE === 'disk'
+export const useDisk = FS_MODE === 'disk'
 
 if (useDisk) {
   console.warn('[registryFs] Running in DISK mode')
@@ -66,11 +67,24 @@ export async function loadFileAsStringFromRegistry(filePath: string, folder: str
 }
 
 /**
+ * A JSON file the build published, parsed. Throws with the path when the file is missing, where
+ * `JSON.parse(text!)` would report a syntax error about `null` instead. Untyped by default, like `JSON.parse`.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function loadJsonFromRegistry<T = any>(filePath: string, folder: string, fileName: string): Promise<T> {
+  const text = await loadFileAsStringFromRegistry(filePath, folder, fileName)
+  if (text === null) {
+    throw new Error(`Registry has no ${folder}/${fileName}`)
+  }
+  return JSON.parse(text)
+}
+
+/**
  * Read a JSON config from the build result stored in registry filesystem (memfs or disk).
  * Use this to read config files produced by the build process.
  * For reading source/input configs from the real filesystem, use {@link loadConfig} from `../utils.ts` instead.
  */
-export async function loadConfigFromRegistry(filePath: string, folder: string, filename?: string): Promise<any | null> {
+export async function loadConfigFromRegistry(filePath: string, folder: string, filename?: string): Promise<BuildConfig | null> {
   try {
     const fullPath = registryPath(filePath, folder, filename ?? 'config.json')
     const file = await registryFs.readFile(fullPath, 'utf8')

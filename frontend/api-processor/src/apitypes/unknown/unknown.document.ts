@@ -41,7 +41,7 @@ export const buildUnknownDocument: DocumentBuilder<unknown> = async (parsedFile,
       const {
         data,
         dependencies: fileDependencies,
-      } = await getBundledFileDataWithDependencies(fileId, ctx.parsedFileResolver, createBundlingErrorHandler(ctx, fileId))
+      } = await getBundledFileDataWithDependencies(fileId, ctx.parsedFileResolver, createBundlingErrorHandler(ctx, slug))
       bundledFileData = data
       dependencies = fileDependencies
     }
@@ -88,9 +88,6 @@ export const buildBinaryDocument: (parsedFile: SourceFile, file: BuildConfigFile
   }
 }
 
-export const dumpUnknownDocument: DocumentDumper<unknown> = (document) => {
-  if (!document.source) {
-    throw new Error(`Document with fileId = ${document.fileId} does not have source`)
-  }
-  return document.source
-}
+// A sourceless document is a file that could not be fetched at all: it ships as a zero-byte entry, and the
+// notification says why.
+export const dumpUnknownDocument: DocumentDumper<unknown> = (document) => document.source ?? new Blob([])

@@ -1,4 +1,4 @@
 name: api-processor-authoring
-version: 1.0.0
+version: 1.1.0
 description: Conventions for developing api-processor itself, one skill per aspect of the codebase.
 author: Qubership APIHUB

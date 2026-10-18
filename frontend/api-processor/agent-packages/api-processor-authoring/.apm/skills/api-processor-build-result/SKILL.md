@@ -5,8 +5,8 @@ description: Use when adding or changing anything that lands in an api-processor
 
 # Ordering the api-processor build result
 
-Every list serialized into a package version must come out in an order that depends only on content — never on
-`Map` iteration, on which async task finished first, or on the host runtime. A migration rebuilds an
+Every list serialized into a package version must come out in an order that depends only on content — never
+on `Map` iteration, on which async task finished first, or on the host runtime. A migration rebuilds an
 already-published version and diffs it against the stored one, so a list that merely reordered reads as a
 changed build: a false regression on every rebuild.
 
@@ -27,6 +27,22 @@ What a call site does not show:
 - A new MCP or DDL entity kind is sorted automatically, provided it is registered both in `KIND_TO_FIELD` and
   in the grouping literal of `groupMcpEntitiesByKind` / `groupDdlEntitiesByKind`. Missing from the literal,
   `grouped[kind]` is undefined and the sort throws.
+
+## Resolving a duplicate is an ordering decision too
+
+When two documents claim the same id — an operation id, an MCP entity id, a DDL entity id — the winner is the
+one with the **lexicographically smaller `documentId`**, decided by `setReportingDuplicate`
+(`src/utils/document.ts`). "First one wins" would hand the result to document processing order, which is the
+same nondeterminism this skill exists to remove.
+
+Use strict `<`, not `<=`. Equal `documentId`s mean the same document is being reprocessed: `<` falls through
+to the write so the document refreshes its own entry, where `<=` would return early and keep the stale one.
+Route a new duplicate check through that helper rather than writing the comparison again.
+
+Ownership is settled **after** the document loop, by `reconcileOwnedIds`, not when a document is processed: a
+document that owned an id at its turn can lose it to a later one. That pass strips the losing ids from
+`document.operationIds` and `document.mcpEntityIds`, so no consumer has to filter by ownership. A test that
+fixes ownership during the loop passes only for a lucky document order — reverse the order and it fails.
 
 ## What must stay unsorted
 

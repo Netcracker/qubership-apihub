@@ -37,7 +37,7 @@ import {
   ResolvedDeprecatedOperation,
   ResolvedVersionDocument,
 } from '../../types'
-import { DEFAULT_BATCH_SIZE, MESSAGE_SEVERITY, REST_API_TYPE } from '../../consts'
+import { DEFAULT_BATCH_SIZE, MESSAGE_CATEGORY, MESSAGE_SEVERITY, REST_API_TYPE } from '../../consts'
 import {
   areDeprecatedOriginsNotEmpty,
   containsDeprecatedElement,
@@ -112,7 +112,7 @@ export async function createDeprecatedRemovalRules(
     return NOTHING_TO_DOWNGRADE
   }
   const deprecationOf = createOperationDeprecationLookup(operationsMap, previousDocumentData?.servers, deprecationByOperationId)
-  const reportBrokenOrigins = createBrokenOriginsReporter(ctx)
+  const reportBrokenOrigins = createBrokenOriginsReporter(ctx, previousDocument?.slug)
 
   return {
     customScopeElementProviders: [{
@@ -335,8 +335,10 @@ function classifyElementRemoval(
  * Reports a broken deprecated element once, however many differences it produces. Keyed on the element,
  * which api-diff hands out as one shared object across the partitions reaching it, and scoped to the
  * document pair so that a later build in the same process still reports its own.
+ * The removed element comes from the previous document, so that is the document the report names. A rule
+ * sees a difference, not the operation it reached, so it cannot name the operation's own document instead.
  */
-function createBrokenOriginsReporter(ctx: CompareOperationsPairContext): (element: object) => void {
+function createBrokenOriginsReporter(ctx: CompareOperationsPairContext, documentId: string | undefined): (element: object) => void {
   const reported = new WeakSet<object>()
   return (element) => {
     if (reported.has(element)) {
@@ -344,8 +346,11 @@ function createBrokenOriginsReporter(ctx: CompareOperationsPairContext): (elemen
     }
     reported.add(element)
     ctx.notifications.push({
-      severity: MESSAGE_SEVERITY.Error,
+      category: MESSAGE_CATEGORY.RiskyOrigins,
+      // a diagnostic of the changelog calculation, not a defect of the document, so it does not block a release
+      severity: MESSAGE_SEVERITY.Warning,
       message: '[Risky validation] Something wrong with origins',
+      documentId,
     })
   }
 }

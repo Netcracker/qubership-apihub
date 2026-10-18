@@ -15,7 +15,7 @@
  */
 
 import { describe, expect, test } from '@jest/globals'
-import { buildPackageWithDefaultConfig, deprecatedItemDescriptionMatcher } from './helpers'
+import { buildPackageFromSpecYaml, deprecatedItemDescriptionMatcher, deprecatedItemsOf, expectNotEmpty } from './helpers'
 import { DeprecateItem } from '../src'
 import { isOperationDeprecated } from '../src/utils'
 
@@ -24,14 +24,14 @@ describe('AsyncAPI 3.0 Deprecated tests', () => {
   describe('Channel tests', () => {
     let deprecatedItems: DeprecateItem[]
     beforeAll(async () => {
-      const result = await buildPackageWithDefaultConfig('asyncapi/deprecated/channel')
-      deprecatedItems = Array.from(result.operations.values()).flatMap(operation => operation.deprecatedItems ?? [])
+      const result = await buildPackageFromSpecYaml('asyncapi/deprecated/channel')
+      deprecatedItems = deprecatedItemsOf(result)
     })
 
     test('should deprecated channel has message', async () => {
       const [deprecatedItem] = deprecatedItems
 
-      expect(deprecatedItems.length).toBeGreaterThan(0)
+      expectNotEmpty(deprecatedItems)
       expect(deprecatedItem).toEqual(deprecatedItemDescriptionMatcher('[Deprecated] channel \'userSignedUp\''))
     })
 
@@ -39,21 +39,22 @@ describe('AsyncAPI 3.0 Deprecated tests', () => {
       const [deprecatedItem] = deprecatedItems
 
       expect(deprecatedItem).toHaveProperty('hash')
-      expect(deprecatedItem).toHaveProperty('tolerantHash')
+      // a channel carries no tolerant hash: the unifier stamps the flag on schema and parameter nodes only
+      expect(deprecatedItem).not.toHaveProperty('tolerantHash')
     })
   })
 
   describe('Messages tests', () => {
     let deprecatedItems: DeprecateItem[]
     beforeAll(async () => {
-      const result = await buildPackageWithDefaultConfig('asyncapi/deprecated/messages')
-      deprecatedItems = Array.from(result.operations.values()).flatMap(operation => operation.deprecatedItems ?? [])
+      const result = await buildPackageFromSpecYaml('asyncapi/deprecated/messages')
+      deprecatedItems = deprecatedItemsOf(result)
     })
 
     test('should report deprecated messages', async () => {
       const [deprecatedItem] = deprecatedItems
 
-      expect(deprecatedItems.length).toBeGreaterThan(0)
+      expectNotEmpty(deprecatedItems)
       expect(deprecatedItem).toEqual(deprecatedItemDescriptionMatcher('[Deprecated] message \'User Signed Up\''))
     })
 
@@ -72,7 +73,7 @@ describe('AsyncAPI 3.0 Deprecated tests', () => {
   })
 
   test('should mark apihub operation as deprecated if message was deprecated', async () => {
-    const result = await buildPackageWithDefaultConfig('asyncapi/deprecated/messages')
+    const result = await buildPackageFromSpecYaml('asyncapi/deprecated/messages')
     const operations = Array.from(result.operations.values())
 
     const [operation] = operations
@@ -81,7 +82,7 @@ describe('AsyncAPI 3.0 Deprecated tests', () => {
 
   describe('Shared channel with different deprecation per message', () => {
     test('should only report deprecated items for the operation that uses the deprecated message', async () => {
-      const result = await buildPackageWithDefaultConfig('asyncapi/deprecated/shared-channel-different-deprecation')
+      const result = await buildPackageFromSpecYaml('asyncapi/deprecated/shared-channel-different-deprecation')
       const operations = Array.from(result.operations.entries())
 
       // operation1 uses UserSignedUp (deprecated: false on email) — should have NO deprecated items
@@ -100,9 +101,9 @@ describe('AsyncAPI 3.0 Deprecated tests', () => {
   })
 
   test('should report deprecated schemas (flag "deprecated" in payload schema)', async () => {
-    const result = await buildPackageWithDefaultConfig('asyncapi/deprecated/schemas')
-    const deprecatedItems = Array.from(result.operations.values()).flatMap(operation => operation.deprecatedItems ?? [])
-    expect(deprecatedItems.length).toBeGreaterThan(0)
+    const result = await buildPackageFromSpecYaml('asyncapi/deprecated/schemas')
+    const deprecatedItems = deprecatedItemsOf(result)
+    expectNotEmpty(deprecatedItems)
 
     const [deprecatedItem] = deprecatedItems
     expect(deprecatedItem).toEqual(deprecatedItemDescriptionMatcher('[Deprecated] schema in \'components.schemas.DeprecatedEmail\''))

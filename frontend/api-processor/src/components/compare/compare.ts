@@ -14,23 +14,32 @@
  * limitations under the License.
  */
 
-import { BuildConfigRef, CompareContext, CompareResult, DdlComparison, KIND_DASHBOARD, VersionParams, VersionsComparison } from '../../types'
+import { BuildConfigRef, CompareContext, CompareResult, DdlComparison, KIND_DASHBOARD, NotificationMessage, VersionParams, VersionsComparison } from '../../types'
 import { compareVersionsOperations } from './compare.operations'
 import { compareVersionsDdl } from './compare.ddl'
-import { getSplittedVersionKey } from '../../utils'
+import { comparisonHasErrors, getSplittedVersionKey } from '../../utils'
 
+/** Compare two versions: the dashboard references first, then the root pair's operations and its DDL. */
 export async function compareVersions(
   prev: VersionParams,
   curr: VersionParams,
   ctx: CompareContext,
+  rootNotifications: NotificationMessage[] = [],
 ): Promise<CompareResult> {
-  const { comparisons, ddlComparisons } = await compareVersionsReferences(prev, curr, ctx)
-  const { previousVersionBuilderVersion, currentVersionBuilderVersion, ...comparison } = await compareVersionsOperations(prev, curr, ctx)
+  // The pair's operation and DDL comparison share one array: a failure to resolve one side degrades both, so
+  // both report it. A caller that resolved the baseline first passes in the array it reported to, keeping
+  // that failure on the same pair. Either way the array exists before the reference walk, and the references
+  // are `prev`'s and `curr`'s, so a failure to list them belongs to this pair.
+  const rootCtx = ctx.forPair(rootNotifications)
+
+  const { comparisons, ddlComparisons } = await compareVersionsReferences(prev, curr, rootCtx)
+
+  const { previousVersionBuilderVersion, currentVersionBuilderVersion, ...comparison } = await compareVersionsOperations(prev, curr, rootCtx)
   comparisons.push(comparison)
 
-  // DDL changelog runs as a parallel step (AD1), emitting its own sibling comparisons. Ref DDL is added
-  // by compareVersionsReferences (cache-miss only — D15); here we add the root package's DDL comparison.
-  const rootDdlComparison = await compareVersionsDdl(prev, curr, ctx)
+  // DDL changelog runs as a parallel step (AD1), emitting its own sibling comparisons. Ref DDL is added by
+  // compareVersionsReferences; here we add the root package's own.
+  const rootDdlComparison = await compareVersionsDdl(prev, curr, rootCtx)
   if (Object.keys(rootDdlComparison.contractsChangesSummary).length) {
     ddlComparisons.push(rootDdlComparison)
   }
@@ -41,6 +50,27 @@ export async function compareVersions(
     previousVersionBuilderVersion,
     currentVersionBuilderVersion,
   }
+}
+
+/**
+ * Fatal. A dashboard's changelog is the **aggregate** of its references'
+ * changelogs, so a reference known to be wrong makes every number in the aggregate wrong with nothing to say
+ * which. That is the "is anything publishable left?" test reaching the opposite answer than usual: for a
+ * version a bad document leaves the others useful; an aggregate has no unaffected part.
+ *
+ * Both origins count. A comparison reused from cache carries the flag the host holds and feeds the same
+ * aggregate as one calculated here, so the argument does not distinguish them. The backend refuses to
+ * reference an unsound version as well.
+ */
+function assertReferencesAreSound(comparisons: Array<VersionsComparison | DdlComparison>): void {
+  const unsound = comparisons.filter(comparisonHasErrors)
+  if (!unsound.length) { return }
+
+  const references = [...new Set(unsound.map(({ packageId, version }) => `${packageId}/${version}`))].sort()
+  throw new Error(
+    `Cannot build a dashboard changelog: the comparison of ${references.join(', ')} has errors. ` +
+    'A dashboard changelog is the aggregate of its references, so it cannot be built on one that is wrong.',
+  )
 }
 
 export async function compareVersionsReferences(
@@ -76,39 +106,50 @@ export async function compareVersionsReferences(
     }
     if (previous && current) {
       const comparison = await ctx.versionComparisonResolver(current.version, current.refId, previous.version, previous.refId)
-      if (comparison && Array.isArray(comparison.operationTypes)) {
+      // A placeholder answer is no answer: the host reads `noContent` the same way, refusing to call such
+      // a row a valid comparison result.
+      if (comparison && !comparison.noContent && Array.isArray(comparison.operationTypes)) {
         const [previousVersion, previousVersionRevision] = getSplittedVersionKey(previous.version)
         const [version, revision] = getSplittedVersionKey(current.version)
 
-        comparisons.push({
-          ...comparison,
+        const pair = {
           packageId: current.refId,
           version: version,
           revision: revision,
           previousVersionPackageId: previous.refId,
           previousVersion: previousVersion,
           previousVersionRevision: previousVersionRevision,
+          hasErrors: comparison.hasErrors,
           fromCache: true,
           comparisonInternalDocuments: [],
-        })
-        // D15: on a cache hit the cached ref comparison carries no DDL section; api-processor trusts the
-        // host to have invalidated/rebuilt it. We do NOT recompute DDL here — accept under-reporting until
-        // the host refreshes the cache. DDL for refs is computed on the cache-miss path below only.
+          notifications: [],
+        }
+        comparisons.push({ ...pair, operationTypes: comparison.operationTypes })
+        // The host's answer carries the pair's schema changes when it holds any (AD6), passed through as
+        // `operationTypes` is. Nothing is recalculated on a hit.
+        const contractsChangesSummary = comparison.contractsChangesSummary ?? {}
+        if (Object.keys(contractsChangesSummary).length) {
+          ddlComparisons.push({ ...pair, contractsChangesSummary })
+        }
         continue
       }
     }
     const prevParams: VersionParams = previous ? [previous.version, previous.refId] : null
     const currParams: VersionParams = current ? [current.version, current.refId] : null
+    // every referenced pair gets its own array, so a dashboard build never mixes two comparisons' messages
+    const refNotifications: NotificationMessage[] = []
+    const refCtx = ctx.forPair(refNotifications)
     // builder version info is only relevant for the root package; ref-packages report it at their own root level
-    const { previousVersionBuilderVersion: _, currentVersionBuilderVersion: __, ...refComparison } = await compareVersionsOperations(prevParams, currParams, ctx)
+    const { previousVersionBuilderVersion: _, currentVersionBuilderVersion: __, ...refComparison } = await compareVersionsOperations(prevParams, currParams, refCtx)
     comparisons.push(refComparison)
 
-    // cache miss: also compute this ref's DDL comparison so a DDL-bearing dashboard aggregates it (Task 11)
-    const refDdlComparison = await compareVersionsDdl(prevParams, currParams, ctx)
+    const refDdlComparison = await compareVersionsDdl(prevParams, currParams, refCtx)
     if (Object.keys(refDdlComparison.contractsChangesSummary).length) {
       ddlComparisons.push(refDdlComparison)
     }
   }
+
+  assertReferencesAreSound([...comparisons, ...ddlComparisons])
 
   return { comparisons, ddlComparisons }
 }

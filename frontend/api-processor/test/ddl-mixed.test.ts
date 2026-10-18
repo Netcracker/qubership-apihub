@@ -15,7 +15,7 @@
  */
 
 import { describe, expect, test } from '@jest/globals'
-import { LocalRegistry, VERSIONS_PATH, loadFileAsStringFromRegistry } from './helpers'
+import { LocalRegistry, VERSIONS_PATH, loadJsonFromRegistry } from './helpers'
 import { BUILD_TYPE, VERSION_STATUS } from '../src/consts'
 import { BuildConfigFile } from '../src/types'
 
@@ -73,11 +73,11 @@ describe('Mixed REST + DDL content', () => {
     expect(result.operations.size).toBe(1)
     expect(result.ddlEntities.size).toBe(1)
 
-    const operations = JSON.parse((await loadFileAsStringFromRegistry(VERSIONS_PATH, `${PACKAGE_ID}/v1`, 'operations.json'))!)
+    const operations = await loadJsonFromRegistry(VERSIONS_PATH, `${PACKAGE_ID}/v1`, 'operations.json')
     expect(operations.operations).toHaveLength(1)
     expect(operations.operations[0].operationId).toBe('users-get')
 
-    const ddl = JSON.parse((await loadFileAsStringFromRegistry(VERSIONS_PATH, `${PACKAGE_ID}/v1`, 'ddl.json'))!)
+    const ddl = await loadJsonFromRegistry(VERSIONS_PATH, `${PACKAGE_ID}/v1`, 'ddl.json')
     expect(ddl.tables).toHaveLength(1)
     expect(ddl.tables[0].ddlEntityId).toBe('public-table-users')
   })
@@ -91,10 +91,10 @@ describe('Mixed REST + DDL content', () => {
     expect(result.ddlComparisons).toHaveLength(1)
 
     // both sibling files exist
-    const operationComparisons = JSON.parse((await loadFileAsStringFromRegistry(VERSIONS_PATH, `${PACKAGE_ID}/v2`, 'comparisons.json'))!)
+    const operationComparisons = await loadJsonFromRegistry(VERSIONS_PATH, `${PACKAGE_ID}/v2`, 'comparisons.json')
     expect(operationComparisons.comparisons[0].operationTypes[0].apiType).toBe('rest')
 
-    const ddlComparisons = JSON.parse((await loadFileAsStringFromRegistry(VERSIONS_PATH, `${PACKAGE_ID}/v2`, 'ddl-comparisons.json'))!)
+    const ddlComparisons = await loadJsonFromRegistry(VERSIONS_PATH, `${PACKAGE_ID}/v2`, 'ddl-comparisons.json')
     expect(ddlComparisons.comparisons[0].contractsChangesSummary).toHaveProperty('ddl')
   })
 

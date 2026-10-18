@@ -158,7 +158,7 @@ describe('Export test', () => {
     expect(result).toEqual(exportDocumentsMatcher([
       exportDocumentMatcher('1.html'),
       exportDocumentMatcher('2.html'),
-      exportDocumentMatcher('atui_graphql_changelog_base.graphql'),
+      exportDocumentMatcher('atui-graphql-changelog-base.graphql'),
       exportDocumentMatcher('Document.docx'),
       exportDocumentMatcher('Test.png'),
       exportDocumentMatcher('README.md'),
@@ -180,7 +180,7 @@ describe('Export test', () => {
     expect(result).toEqual(exportDocumentsMatcher([
       exportDocumentMatcher('1.json'),
       exportDocumentMatcher('2.json'),
-      exportDocumentMatcher('atui_graphql_changelog_base.graphql'),
+      exportDocumentMatcher('atui-graphql-changelog-base.graphql'),
       exportDocumentMatcher('Document.docx'),
       exportDocumentMatcher('Test.png'),
       exportDocumentMatcher('README.md'),
@@ -197,7 +197,7 @@ describe('Export test', () => {
     expect(result).toEqual(exportDocumentsMatcher([
       exportDocumentMatcher('1.yaml'),
       exportDocumentMatcher('2.yaml'),
-      exportDocumentMatcher('atui_graphql_changelog_base.graphql'),
+      exportDocumentMatcher('atui-graphql-changelog-base.graphql'),
       exportDocumentMatcher('Document.docx'),
       exportDocumentMatcher('Test.png'),
       exportDocumentMatcher('README.md'),

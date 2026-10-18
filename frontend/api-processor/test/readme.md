@@ -6,20 +6,25 @@ Registry provide version config-file and files data like APIHUB Registry.
 Data folder: `./versions/<packageId>/<version>`
 
 ### Usage
+
 Create registry for package:
+
 ```ts
-const registry = await Registry.openPackage("basic")
+const registry = await Registry.openPackage("config")
 ```
 
 Publish project from folder `./projects/<projectId>` to registry:
+
 ```ts
-const result = await registry.publish("basic", {
+const result = await registry.publish("config", {
   version: "v3",
   previousVersion: "v2",
   serviceName: "basic-service"
 })
 ```
+
 - package - publish results with `BuildResult` interface:
+
 ```ts
 
 export interface BuildResult {
@@ -68,18 +73,22 @@ interface VersionConfig {
 ```
 
 Get version config and files:
+
 ```ts
 const { config, files } = await registry.getVersion("v3")
 ```
+
 - `files` - Map of parsed files data
 - `config` - object with `VersionConfig` interface
 
 Update version in registry:
+
 ```ts
 registry.setVersion(package)
 ```
 
 Update version file in registry (by slug):
+
 ```ts
 await registry.updateVersionFile("v3", "openapi-json", (data) => {
   delete data.paths["pets"]
@@ -94,23 +103,27 @@ Project data folder: `./projects/<packageId>`
 ### Usage
 
 Create editor for project with exiting registry:
+
 ```ts
-const registry = await Registry.openPackage("basic")
-const editor = await Editor.openProject("basic", registry)
+const registry = await Registry.openPackage("config")
+const editor = await Editor.openProject("config", registry)
 ```
 
 Create registry from editor:
+
 ```ts
-const editor = await Editor.openProject("basic")
+const editor = await Editor.openProject("config")
 const registry = editor.registry
 ```
 
 Run bundle and validation for project files:
+
 ```ts
 const result = await editor.run()
 ```
 
 Update project config:
+
 ```ts
 const result = await editor.update({
   previousVersion: "v2"
@@ -118,6 +131,7 @@ const result = await editor.update({
 ```
 
 Update project file content:
+
 ```ts
 const result = await editor.updateJsonFile("openapi.json", (data) => {
   delete data.paths["pets"]

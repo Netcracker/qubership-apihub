@@ -17,7 +17,7 @@
 import { apiDiff, COMPARE_MODE_DEFAULT, CompareResult, Diff } from '@netcracker/qubership-apihub-api-diff'
 import { trimPath } from './path'
 import { OpenAPIV3 } from 'openapi-types'
-import { takeIf, takeIfDefined } from './objects'
+import { takeIf, takeIfDefined, FillKeys } from './objects'
 import { isEmpty, isNotEmpty } from './arrays'
 import { removeObjectDuplicates } from './builder'
 import { matchPaths, resolveSpec } from '@netcracker/qubership-apihub-api-unifier'
@@ -102,10 +102,12 @@ function validateSpecs(spec1: unknown, spec2: unknown): void {
 }
 
 function extractDeclarationPaths(diff: Diff): JsonPath[] {
+  // `Diff` is a discriminated union and these fields exist on some members only; `FillKeys`
+  // gives every member the keys it lacks, as optional and `undefined`.
   const {
     afterDeclarationPaths = [],
     beforeDeclarationPaths = [],
-  } = { ...diff }
+  }: FillKeys<Diff> = { ...diff }
 
   return [...afterDeclarationPaths, ...beforeDeclarationPaths]
 }
@@ -120,17 +122,19 @@ function compliesWithRules(rules: DiffRule[], diff: Diff): boolean {
 
 const validateResult = (rules: DiffRule[], diffs: Diff[], title1: string, title2: string): void => {
   const [firstProhibitedDiff] = diffs.filter(diff => !compliesWithRules(rules, diff))
+  if (!firstProhibitedDiff) {
+    return
+  }
+
   const [firstPathFromProhibitedDiff] = extractDeclarationPaths(firstProhibitedDiff)
 
-  if (firstProhibitedDiff && isEmpty(firstPathFromProhibitedDiff)) {
+  if (isEmpty(firstPathFromProhibitedDiff)) {
     throw new Error(`Unable to merge specifications ${title1}, ${title2}. You can download reduced source specifications and merge operations manually.`)
   }
 
-  if (firstProhibitedDiff) {
-    throw new Error(`Unable to merge ${trimPath(firstPathFromProhibitedDiff).join('.')}. These specifications have different content for it: ${title1}, ${title2}.
-      Please resolve the conflicts in source specification, republish them and try again. You can also download reduced source specifications and merge operations manually.`,
-    )
-  }
+  throw new Error(`Unable to merge ${trimPath(firstPathFromProhibitedDiff).join('.')}. These specifications have different content for it: ${title1}, ${title2}.
+    Please resolve the conflicts in source specification, republish them and try again. You can also download reduced source specifications and merge operations manually.`,
+  )
 }
 
 export function filterUsedTags<T extends { name: string }>(

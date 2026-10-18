@@ -1,0 +1,6 @@
+{
+  "packageId": "bugs/swagger-schema-warning",
+  "files": [
+    { "fileId": "swagger.json", "publish": true, "labels": ["123"] }
+  ]
+}

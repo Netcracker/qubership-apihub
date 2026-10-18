@@ -21,7 +21,7 @@ import {
   BuildResult,
   Labels,
 } from '../src'
-import { buildPackageFromContent } from './helpers'
+import { buildPackageFromContent, documentOf } from './helpers'
 
 const BWC = APIHUB_API_COMPATIBILITY_KIND_BWC
 const NO_BWC = APIHUB_API_COMPATIBILITY_KIND_NO_BWC
@@ -33,8 +33,8 @@ const SPEC = `type Query {
   vegetables: String
 }`
 
-// Difference from `apiKinds.test.ts`:
-//   - `apiKinds.test.ts` covers REST and asserts only the DOCUMENT apiKind, exhaustively
+// Difference from `api-kinds.test.ts`:
+//   - `api-kinds.test.ts` covers REST and asserts only the DOCUMENT apiKind, exhaustively
 //     exercising the shared `calculateFileApiKind` resolution (uppercase / experimental / invalid /
 //     priority between the sources).
 //   - This file covers the GraphQL-specific bit that resolution does NOT: every OPERATION of the
@@ -44,9 +44,9 @@ const SPEC = `type Query {
 describe('GraphQL build api-kind', () => {
   // Document apiKind + apiKind of every operation — they must all match.
   const documentAndOperationsApiKind = (result: BuildResult): (ApihubApiCompatibilityKind | undefined)[] => {
-    const document = result.documents.get(FILE_ID)
+    const document = documentOf(result, FILE_ID)
     const operations = Array.from(result.operations.values())
-    return [document?.apiKind, ...operations.map(operation => operation.apiKind)]
+    return [document.apiKind, ...operations.map(operation => operation.apiKind)]
   }
 
   it.each<{ id: string; desc: string; fileLabels?: Labels; versionLabels?: Labels; xApiKind?: string; expected: ApihubApiCompatibilityKind }>([

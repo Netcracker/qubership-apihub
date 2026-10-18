@@ -55,6 +55,9 @@ export const DIFF_OPERATION_ACTION = {
   RENAME: 'rename',
 } as const
 
+// The numbers are the contract, not an ordering convenience: they ship in `notifications.json`, and a
+// consumer rejects the whole archive over a value it does not know. Lower is more severe — `Error` is what
+// the release gate blocks on, and what wins when two sides of one problem disagree.
 export const MESSAGE_SEVERITY = {
   Error: 0,
   Warning: 1,
@@ -62,12 +65,64 @@ export const MESSAGE_SEVERITY = {
   Hint: 3,
 } as const
 
+// One value per problem a reader acts on the same way, so a consumer filters by it instead of matching
+// interpolated message text. The prefixes (`ref-`, `mcp-`, `ddl-`, `tolerant-hash-`, `risky-`, `version-`)
+// give a coarse grouping for free.
+export const MESSAGE_CATEGORY = {
+  // parsing and document build
+  ParseFile: 'parse-file',
+  InvalidTextFile: 'invalid-text-file',
+  FileNotParsed: 'file-not-parsed',
+  BuildDocument: 'build-document',
+  SwaggerConversion: 'swagger-conversion',
+  // references
+  RefHasSiblings: 'ref-has-siblings',
+  RefNotAllowed: 'ref-not-allowed',
+  RefNotFound: 'ref-not-found',
+  RefNotValidFormat: 'ref-not-valid-format',
+  // operations
+  BuildOperations: 'build-operations',
+  DuplicateOperationId: 'duplicate-operation-id',
+  RestDuplicateOperation: 'rest-duplicate-operation',
+  // intra-document, the AsyncAPI counterpart of `rest-duplicate-operation`; the cross-document case is
+  // `duplicate-operation-id`
+  AsyncDuplicateOperation: 'async-duplicate-operation',
+  EmptyPathParameter: 'empty-path-parameter',
+  DoubleSlashPath: 'double-slash-path',
+  // DDL
+  DdlDuplicateObject: 'ddl-duplicate-object',
+  DdlParseIssue: 'ddl-parse-issue',
+  DdlEntityBuild: 'ddl-entity-build',
+  DdlDuplicateEntity: 'ddl-duplicate-entity',
+  // MCP
+  McpEntityBuild: 'mcp-entity-build',
+  McpDocumentSchema: 'mcp-document-schema',
+  McpInitRequired: 'mcp-init-required',
+  McpDuplicateEntity: 'mcp-duplicate-entity',
+  McpCapabilityUnused: 'mcp-capability-unused',
+  // deprecated items
+  TolerantHashMissing: 'tolerant-hash-missing',
+  TolerantHashFailed: 'tolerant-hash-failed',
+  DeprecatedComponentPath: 'deprecated-component-path',
+  // comparison phase
+  VersionNotResolved: 'version-not-resolved',
+  VersionRefsNotResolved: 'version-refs-not-resolved',
+  VersionDocumentsMissing: 'version-documents-missing',
+  RiskyOrigins: 'risky-origins',
+  ComparisonSerialization: 'comparison-serialization',
+  // transform build types
+  GroupDocumentsMissing: 'group-documents-missing',
+  PartialGroupDocuments: 'partial-group-documents',
+} as const
+
 export const PACKAGE = {
   INFO_FILE_NAME: 'info.json',
   NOTIFICATIONS_FILE_NAME: 'notifications.json',
+  COMPARISON_NOTIFICATIONS_FILE_NAME: 'comparison-notifications.json',
   DOCUMENTS_FILE_NAME: 'documents.json',
   OPERATIONS_FILE_NAME: 'operations.json',
   COMPARISONS_FILE_NAME: 'comparisons.json',
+  CACHED_COMPARISONS_FILE_NAME: 'cached-comparisons.json',
   COMPARISON_INTERNAL_FILE_NAME: 'comparison-internal-documents.json',
   VERSION_INTERNAL_FILE_NAME: 'version-internal-documents.json',
   DOCUMENTS_DIR_NAME: 'documents',

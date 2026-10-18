@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
+import { MESSAGE_CATEGORY } from '../../consts'
 import { MCP_COLLECTION_KEY, MCP_KIND, McpEntitiesBuilder, McpKind } from '../../types'
 import { ParsedMcpData } from './mcp.types'
-import { isString, removeFirstSlash, SLUG_OPTIONS_OPERATION_ID, slugify } from '../../utils'
+import { isString, removeFirstSlash, reportItemBuildFailure, SLUG_OPTIONS_OPERATION_ID, slugify } from '../../utils'
 
 // the init entity has no per-item title; it is shown as a fixed "Overview" label (kept as "init" in data)
 const INIT_ENTITY_TITLE = 'init'
@@ -37,7 +38,7 @@ export function wrapEntityData(kind: McpKind, data: Record<string, unknown>): Re
   return { [MCP_COLLECTION_KEY[kind]]: [data] }
 }
 
-export const buildMcpEntities: McpEntitiesBuilder<ParsedMcpData> = (document, file) => {
+export const buildMcpEntities: McpEntitiesBuilder<ParsedMcpData> = (document, file, notifications) => {
   // metadata.mcpEndpoint is required for every MCP file, independent of how many entities it yields —
   // check it before the no-entities early return so a zero-entity document cannot slip through without it
   const mcpEndpoint = file.metadata?.mcpEndpoint
@@ -56,39 +57,46 @@ export const buildMcpEntities: McpEntitiesBuilder<ParsedMcpData> = (document, fi
   const { data } = document
   if (!data?.entities) { return [] }
 
-  const documentId = document.fileId
+  const documentId = document.slug
   // intra-document duplicate detection, mirroring `operationIdMap` in rest/async.operations.
   // TODO: unify with the shared `findDuplicates`/`createDuplicatesError` once those are de-coupled from
   // operation-specific naming (`DuplicateEntry.operationId`, "Duplicated operationIds found") so the MCP
   // message stays correct. Until then we keep this MCP-specific check (id -> name, for the error text).
   const mcpEntityIdMap = new Map<string, string>()
 
-  return data.entities.map((entity) => {
-    const mcpEntityId = calculateMcpEntityId(mcpEndpoint, entity.kind, entity.name)
+  // per entity: a failure omits this one and is reported against the document; the rest are still built
+  return data.entities.flatMap((entity) => {
+    try {
+      const mcpEntityId = calculateMcpEntityId(mcpEndpoint, entity.kind, entity.name)
 
-    if (mcpEntityIdMap.has(mcpEntityId)) {
-      throw new Error(
-        `Duplicate MCP entity ID '${mcpEntityId}': '${entity.name}' conflicts with '${mcpEntityIdMap.get(mcpEntityId)}' in file '${file.fileId}'`,
-      )
-    }
-    mcpEntityIdMap.set(mcpEntityId, entity.name)
+      if (mcpEntityIdMap.has(mcpEntityId)) {
+        throw new Error(
+          `Duplicate MCP entity ID '${mcpEntityId}': '${entity.name}' conflicts with '${mcpEntityIdMap.get(mcpEntityId)}' in document '${documentId}'`,
+        )
+      }
+      mcpEntityIdMap.set(mcpEntityId, entity.name)
 
-    const isInitEntity = entity.kind === MCP_KIND.INIT
-    const rawTitle = entity.data.title
-    const title = isInitEntity
-      ? INIT_ENTITY_TITLE
-      : (isString(rawTitle) ? rawTitle : entity.name)
-    const description = isInitEntity ? '' : (entity.description ?? '')
+      const isInitEntity = entity.kind === MCP_KIND.INIT
+      const rawTitle = entity.data.title
+      const title = isInitEntity
+        ? INIT_ENTITY_TITLE
+        : (isString(rawTitle) ? rawTitle : entity.name)
+      const description = isInitEntity ? '' : (entity.description ?? '')
 
-    return {
-      mcpEntityId,
-      kind: entity.kind,
-      title,
-      description,
-      mcpEndpoint,
-      search: { useEntityDataAsSearchText: true },
-      documentId,
-      data: wrapEntityData(entity.kind, entity.data),
+      return [{
+        mcpEntityId,
+        kind: entity.kind,
+        title,
+        description,
+        mcpEndpoint,
+        search: { useEntityDataAsSearchText: true },
+        documentId,
+        data: wrapEntityData(entity.kind, entity.data),
+      }]
+    } catch (error) {
+      reportItemBuildFailure(notifications, MESSAGE_CATEGORY.McpEntityBuild, documentId,
+        error instanceof Error ? error.message : `Cannot build MCP entity '${entity.name}'`)
+      return []
     }
   })
 }

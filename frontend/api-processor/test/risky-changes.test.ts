@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { changesSummaryMatcher, Editor, LocalRegistry, numberOfImpactedOperationsMatcher } from './helpers'
+import { Editor, expectChangeCounts, LocalRegistry } from './helpers'
 import { BREAKING_CHANGE_TYPE, BUILD_TYPE, NON_BREAKING_CHANGE_TYPE, RISKY_CHANGE_TYPE, VERSION_STATUS } from '../src'
 
 const portal = new LocalRegistry('new-deprecated')
@@ -23,25 +23,25 @@ describe('Risky changes test', () => {
   test('should build 1 risky change', async () => {
     const packageId = 'new-deprecated-semibreaking'
 
-    await portal.publish('new-deprecated', {
+    await portal.publish('new-deprecated/semi-breaking-changes', {
       packageId: packageId,
       version: 'v1',
-      files: [{ fileId: 'semi-breaking-changes.yaml' }],
+      files: [{ fileId: 'before.yaml' }],
     })
-    await portal.publish('new-deprecated', {
+    await portal.publish('new-deprecated/semi-breaking-changes', {
       packageId: packageId,
       version: 'v2',
       previousVersion: 'v1',
-      files: [{ fileId: 'semi-breaking-changes.yaml' }],
+      files: [{ fileId: 'before.yaml' }],
     })
-    await portal.publish('new-deprecated', {
+    await portal.publish('new-deprecated/semi-breaking-changes', {
       packageId: packageId,
       version: 'v3',
       previousVersion: 'v2',
-      files: [{ fileId: 'semi-breaking-changes2.yaml' }],
+      files: [{ fileId: 'after.yaml' }],
     })
 
-    const editor = new Editor('new-deprecated', {
+    const editor = new Editor('new-deprecated/semi-breaking-changes', {
       packageId: packageId,
       version: 'v3',
       previousVersion: 'v2',
@@ -50,38 +50,40 @@ describe('Risky changes test', () => {
     }, {}, portal)
 
     const result = await editor.run()
-    expect(result).toEqual(changesSummaryMatcher({
-      [NON_BREAKING_CHANGE_TYPE]: 1,
-      [RISKY_CHANGE_TYPE]: 1,
-    }))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({
-      [NON_BREAKING_CHANGE_TYPE]: 1,
-      [RISKY_CHANGE_TYPE]: 1,
-    }))
+    expectChangeCounts(result, {
+      changes: {
+        [NON_BREAKING_CHANGE_TYPE]: 1,
+        [RISKY_CHANGE_TYPE]: 1,
+      },
+      impacted: {
+        [NON_BREAKING_CHANGE_TYPE]: 1,
+        [RISKY_CHANGE_TYPE]: 1,
+      },
+    })
   })
 
   test('should build 1 semi-breaking change and 1 breaking change', async () => {
     const packageId = 'new-deprecated-semibreaking-inline'
 
-    await portal.publish('new-deprecated', {
+    await portal.publish('new-deprecated/semi-breaking-classification', {
       packageId: packageId,
       version: 'v1',
-      files: [{ fileId: 'semi-breaking-classification-1.yaml' }],
+      files: [{ fileId: 'v1.yaml' }],
     })
-    await portal.publish('new-deprecated', {
+    await portal.publish('new-deprecated/semi-breaking-classification', {
       packageId: packageId,
       version: 'v2',
       previousVersion: 'v1',
-      files: [{ fileId: 'semi-breaking-classification-2.yaml' }],
+      files: [{ fileId: 'v2.yaml' }],
     })
-    await portal.publish('new-deprecated', {
+    await portal.publish('new-deprecated/semi-breaking-classification', {
       packageId: packageId,
       version: 'v3',
       previousVersion: 'v2',
-      files: [{ fileId: 'semi-breaking-classification-3.yaml' }],
+      files: [{ fileId: 'v3.yaml' }],
     })
 
-    const editor = new Editor('new-deprecated', {
+    const editor = new Editor('new-deprecated/semi-breaking-classification', {
       packageId: packageId,
       version: 'v3',
       previousVersion: 'v2',
@@ -90,37 +92,39 @@ describe('Risky changes test', () => {
     }, {}, portal)
 
     const result = await editor.run()
-    expect(result).toEqual(changesSummaryMatcher({
-      [BREAKING_CHANGE_TYPE]: 1,
-      [RISKY_CHANGE_TYPE]: 1,
-    }))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({
-      [BREAKING_CHANGE_TYPE]: 1,
-      [RISKY_CHANGE_TYPE]: 1,
-    }))
+    expectChangeCounts(result, {
+      changes: {
+        [BREAKING_CHANGE_TYPE]: 1,
+        [RISKY_CHANGE_TYPE]: 1,
+      },
+      impacted: {
+        [BREAKING_CHANGE_TYPE]: 1,
+        [RISKY_CHANGE_TYPE]: 1,
+      },
+    })
   })
 
   test('should build 1 semi-breaking change for schema', async () => {
     const packageId = 'new-deprecated-semibreaking-schema'
 
-    await portal.publish('new-deprecated', {
+    await portal.publish('new-deprecated/one-schema-usage', {
       packageId: packageId,
       version: 'v1',
-      files: [{ fileId: 'one-schema-usage-1.yaml' }],
+      files: [{ fileId: 'before.yaml' }],
     })
-    await portal.publish('new-deprecated', {
+    await portal.publish('new-deprecated/one-schema-usage', {
       packageId: packageId,
       version: 'v2',
       previousVersion: 'v1',
-      files: [{ fileId: 'one-schema-usage-1.yaml' }],
+      files: [{ fileId: 'before.yaml' }],
     })
-    await portal.publish('new-deprecated', {
+    await portal.publish('new-deprecated/one-schema-usage', {
       packageId: packageId,
       version: 'v3',
       previousVersion: 'v2',
-      files: [{ fileId: 'one-schema-usage-2.yaml' }],
+      files: [{ fileId: 'after.yaml' }],
     })
-    const editor = new Editor('new-deprecated', {
+    const editor = new Editor('new-deprecated/one-schema-usage', {
       packageId: packageId,
       version: 'v3',
       previousVersion: 'v2',
@@ -130,35 +134,37 @@ describe('Risky changes test', () => {
 
     const result = await editor.run()
 
-    expect(result).toEqual(changesSummaryMatcher({
-      [RISKY_CHANGE_TYPE]: 2,
-    }))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({
-      [RISKY_CHANGE_TYPE]: 2,
-    }))
+    expectChangeCounts(result, {
+      changes: {
+        [RISKY_CHANGE_TYPE]: 2,
+      },
+      impacted: {
+        [RISKY_CHANGE_TYPE]: 2,
+      },
+    })
   })
 
   test('should build 3 risky change for removed required property and required status', async () => {
     const packageId = 'new-deprecated-semibreaking-required'
 
-    await portal.publish('new-deprecated', {
+    await portal.publish('new-deprecated/semi-breaking-required', {
       packageId: packageId,
       version: 'v1',
-      files: [{ fileId: 'semi-breaking-required-1.yaml' }],
+      files: [{ fileId: 'before.yaml' }],
     })
-    await portal.publish('new-deprecated', {
+    await portal.publish('new-deprecated/semi-breaking-required', {
       packageId: packageId,
       version: 'v2',
       previousVersion: 'v1',
-      files: [{ fileId: 'semi-breaking-required-1.yaml' }],
+      files: [{ fileId: 'before.yaml' }],
     })
-    await portal.publish('new-deprecated', {
+    await portal.publish('new-deprecated/semi-breaking-required', {
       packageId: packageId,
       version: 'v3',
       previousVersion: 'v2',
-      files: [{ fileId: 'semi-breaking-required-2.yaml' }],
+      files: [{ fileId: 'after.yaml' }],
     })
-    const editor = new Editor('new-deprecated', {
+    const editor = new Editor('new-deprecated/semi-breaking-required', {
       packageId: packageId,
       version: 'v3',
       previousVersion: 'v2',
@@ -168,13 +174,15 @@ describe('Risky changes test', () => {
 
     const result = await editor.run()
 
-    expect(result).toEqual(changesSummaryMatcher({
-      [RISKY_CHANGE_TYPE]: 3,
-      [NON_BREAKING_CHANGE_TYPE]: 1,
-    }))
-    expect(result).toEqual(numberOfImpactedOperationsMatcher({
-      [RISKY_CHANGE_TYPE]: 1,
-      [NON_BREAKING_CHANGE_TYPE]: 1,
-    }))
+    expectChangeCounts(result, {
+      changes: {
+        [RISKY_CHANGE_TYPE]: 3,
+        [NON_BREAKING_CHANGE_TYPE]: 1,
+      },
+      impacted: {
+        [RISKY_CHANGE_TYPE]: 1,
+        [NON_BREAKING_CHANGE_TYPE]: 1,
+      },
+    })
   })
 })

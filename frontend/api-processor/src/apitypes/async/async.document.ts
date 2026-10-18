@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-import { DocumentBuilder, DocumentDumper, ExportDocument, ExportFormat, VersionDocument } from '../../types'
-import { FILE_FORMAT, FILE_FORMAT_HTML } from '../../consts'
+import { DocumentBuilder, DocumentDumper, VersionDocument } from '../../types'
+import { FILE_FORMAT } from '../../consts'
 import {
   createBundlingErrorHandler,
   createVersionInternalDocument,
-  EXPORT_FORMAT_TO_FILE_FORMAT,
   getBundledFileDataWithDependencies,
   getDocumentTitle,
   getStringValue,
@@ -28,8 +27,6 @@ import {
 import { dump } from '../../utils/apihubSpecificationExtensions'
 import { v3 as AsyncAPIV3 } from '@asyncapi/parser/esm/spec-types'
 import { AsyncDocumentInfo } from './async.types'
-import { OpenApiExtensionKey } from '@netcracker/qubership-apihub-api-unifier'
-import { removeOasExtensions } from '../../utils/removeOasExtensions'
 import { toExternalDocumentationObject, toTagObjects } from './async.utils'
 
 const asyncApiDocumentMeta = (data: AsyncAPIV3.AsyncAPIObject): AsyncDocumentInfo => {
@@ -55,7 +52,7 @@ export const buildAsyncApiDocument: DocumentBuilder<AsyncAPIV3.AsyncAPIObject> =
   const {
     data,
     dependencies,
-  } = await getBundledFileDataWithDependencies(fileId, ctx.parsedFileResolver, createBundlingErrorHandler(ctx, fileId))
+  } = await getBundledFileDataWithDependencies(fileId, ctx.parsedFileResolver, createBundlingErrorHandler(ctx, slug))
 
   const bundledFileData = data as AsyncAPIV3.AsyncAPIObject
 

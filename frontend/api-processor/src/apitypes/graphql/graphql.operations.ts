@@ -15,10 +15,10 @@
  */
 
 import type { VersionGraphQLOperation } from './graphql.types'
-import { calculateGraphqlOperationId, createSerializedInternalDocument, removeComponents } from '../../utils'
+import { calculateGraphqlOperationId, createSerializedInternalDocument, removeComponents, reportItemBuildFailure } from '../../utils'
 import type { OperationsBuilder } from '../../types'
 import { GRAPHQL_TYPE, GRAPHQL_TYPE_KEYS } from './graphql.consts'
-import { INLINE_REFS_FLAG } from '../../consts'
+import { INLINE_REFS_FLAG, MESSAGE_CATEGORY } from '../../consts'
 import { GraphApiSchema } from '@netcracker/qubership-apihub-graphapi'
 import { buildGraphQLOperation } from './graphql.operation'
 import { asyncFunction } from '../../utils/async'
@@ -60,18 +60,24 @@ export const buildGraphQLOperations: OperationsBuilder<GraphApiSchema> = async (
       await asyncFunction(async () => {
         const operationId = calculateGraphqlOperationId(GRAPHQL_TYPE[type], operationKey)
 
-        const operation: VersionGraphQLOperation = buildGraphQLOperation(
-          operationId,
-          type,
-          operationKey,
-          document,
-          effectiveDocument,
-          refsOnlyDocument,
-          notifications,
-          config,
-          normalizedSpecFragmentsHashCache,
-        )
-        operations.push(operation)
+        // per operation: a failure omits this one and is reported against the document; the loop continues
+        try {
+          operations.push(buildGraphQLOperation(
+            operationId,
+            type,
+            operationKey,
+            document,
+            effectiveDocument,
+            refsOnlyDocument,
+            notifications,
+            config,
+            normalizedSpecFragmentsHashCache,
+          ))
+        } catch (error) {
+          const what = `operation '${operationId}'`
+          reportItemBuildFailure(notifications, MESSAGE_CATEGORY.BuildOperations, document.slug,
+            error instanceof Error ? `Cannot build ${what}. ${error.message}` : `Cannot build ${what}`)
+        }
       })
     }
   }

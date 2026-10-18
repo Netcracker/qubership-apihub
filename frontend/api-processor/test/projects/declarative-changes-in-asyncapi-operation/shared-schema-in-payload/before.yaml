@@ -13,6 +13,8 @@ operations:
     action: receive
     channel:
       $ref: '#/channels/salesOrder'
+    messages:
+      - $ref: '#/channels/salesOrder/messages/salesOrderUpdated'
 components:
   messages:
     SalesOrderUpdated:

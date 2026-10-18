@@ -49,7 +49,7 @@ export function isRestDocument(document: ZippableDocument | ResolvedVersionDocum
   return Object.values(REST_DOCUMENT_TYPE).some(type => document.type === type)
 }
 
-export function isTextDocument(document: ResolvedVersionDocument): boolean {
+export function isTextDocument(document: ZippableDocument | ResolvedVersionDocument): boolean {
   return Object.values(TEXT_DOCUMENT_TYPE).some(type => document.type === type)
 }
 

@@ -24,6 +24,8 @@ export * from './apitypes'
 export * from './components/compare/compare.utils'
 export * from './consts'
 export * from './types'
+// what a failed build throws; clients read its lists to report the notifications with the failure
+export { NotificationsError } from './errors'
 export {
   calculateChangeId,
   calculateDiffId,
@@ -33,4 +35,7 @@ export {
   removeComponents,
 } from './utils'
 export { convertDtoFieldOperationTypes, replacePropertyInChangesSummary } from './utils/transformToDto'
+// the key of `BuildResult.operations`, which `./types` above exports: a consumer holding an operationId
+// cannot address the index without it, and this entry is the one that carries the type
+export { operationKey } from './components/operations'
 export { stringifyYaml } from './utils/export'

@@ -13,7 +13,7 @@ import { Editor, LocalRegistry } from './helpers'
 describe('Export shareability filtering', () => {
   let shareabilityPkg: LocalRegistry
   let shareabilityEditor: Editor
-  const SHAREABILITY_PACKAGE_ID = 'shareability'
+  const SHAREABILITY_PACKAGE_ID = 'export-shareability'
   const SHAREABILITY_VERSION = 'shareability-version@1'
 
   beforeAll(async () => {

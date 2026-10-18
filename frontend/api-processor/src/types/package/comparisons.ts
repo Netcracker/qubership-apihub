@@ -32,8 +32,32 @@ export interface PackageComparison {
   previousVersion: VersionId
   previousVersionPackageId: PackageId
   previousVersionRevision?: number
-  fromCache: boolean
   operationTypes: OperationType<DiffTypeDto>[]
+}
+
+/**
+ * Content of `cached-comparisons.json`: the version pairs this build reused from the host rather than
+ * calculating.
+ *
+ * The pair the build was started for never appears here. It is always calculated, and the host rewrites its
+ * version and revision from the build config, so a key naming it would match nothing.
+ */
+export interface PackageCachedComparisons {
+  cachedComparisons: ComparisonKey[]
+}
+
+/**
+ * The six fields that identify a version pair, and with it that pair's comparison.
+ *
+ * This is what the comparison indexes sort by and what the host turns into a comparison id.
+ */
+export interface ComparisonKey {
+  packageId: PackageId
+  version: VersionId
+  revision?: number
+  previousVersionPackageId: PackageId
+  previousVersion: VersionId
+  previousVersionRevision?: number
 }
 
 export interface PackageComparisonOperations {

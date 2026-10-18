@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { Editor, LocalRegistry } from './helpers'
+import { BUILD_TYPE, VERSION_STATUS } from '../src'
+import { contentEditor, Editor, errorNotificationsOf, expectNotEmpty, LocalRegistry } from './helpers'
 
 let pkg: LocalRegistry
 const PACKAGE_ID = 'graphql'
@@ -79,12 +80,49 @@ describe('GraphQL test', () => {
       const graphqlOperations = resolvedOperations!.operations
 
       // GraphQL operations should exist in the operations list
-      expect(graphqlOperations.length).toBeGreaterThan(0)
+      expectNotEmpty(graphqlOperations)
 
       // GraphQL operations should have undefined data (which prevents file creation)
       for (const operation of graphqlOperations) {
         expect(operation.data).toBeUndefined()
       }
     })
+  })
+})
+
+describe('GraphQL introspection documents', () => {
+  // a single query field, `book`
+  const INTROSPECTION_SCHEMA = {
+    queryType: { name: 'Query' },
+    types: [{
+      kind: 'OBJECT',
+      name: 'Query',
+      fields: [{ name: 'book', args: [], type: { kind: 'SCALAR', name: 'String' } }],
+    }],
+  }
+
+  // a draft, so a document that fails to parse is reported rather than thrown
+  const buildDraft = (packageId: string, fileId: string, content: unknown): ReturnType<Editor['run']> =>
+    contentEditor({ packageId, version: 'v1' }, { [fileId]: JSON.stringify(content) })
+      .run({ status: VERSION_STATUS.DRAFT, buildType: BUILD_TYPE.BUILD })
+
+  // the parser tells an introspection from SDL in a `.gql` file by the `__schema` key in its text
+  test('should build operations from an introspection in a .gql file', async () => {
+    const result = await buildDraft('graphql/introspection-in-gql', 'schema.gql', {
+      data: { __schema: INTROSPECTION_SCHEMA },
+    })
+
+    expect(errorNotificationsOf(result.notifications)).toEqual([])
+    expect([...result.operations.values()].map(({ operationId }) => operationId)).toEqual(['query-book'])
+  })
+
+  // an introspection usually comes wrapped in the response's `data`; a bare one has `__schema` at the root
+  test('should build operations from an introspection with __schema at the root', async () => {
+    const result = await buildDraft('graphql/introspection-at-root', 'introspection.json', {
+      __schema: INTROSPECTION_SCHEMA,
+    })
+
+    expect(errorNotificationsOf(result.notifications)).toEqual([])
+    expect([...result.operations.values()].map(({ operationId }) => operationId)).toEqual(['query-book'])
   })
 })

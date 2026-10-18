@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { deprecatedItemDescriptionMatcher, Editor, LocalRegistry } from './helpers'
+import { deprecatedItemDescriptionMatcher, deprecatedItemsOf, Editor, LocalRegistry } from './helpers'
 import { BUILD_TYPE, VERSION_STATUS } from '../src'
 
 const packageRegistry = LocalRegistry.openPackage('deprecated-item-description')
@@ -33,7 +33,7 @@ describe('Description for deprecated items test', () => {
 
     const result = await editor.run()
 
-    const deprecatedItems = Array.from(result.operations.values()).flatMap(operation => operation.deprecatedItems)
+    const deprecatedItems = deprecatedItemsOf(result)
 
     expect(deprecatedItems[0]).toEqual(deprecatedItemDescriptionMatcher('[Deprecated] schema in query parameter \'param1\''))
     expect(deprecatedItems[1]).toEqual(deprecatedItemDescriptionMatcher('[Deprecated] schema in \'components.parameters.Parameter.schema\''))

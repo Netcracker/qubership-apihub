@@ -1,0 +1,23 @@
+asyncapi: 3.0.0
+info:
+  title: Duplicate within one document
+  version: 1.0.0
+channels:
+  channel1:
+    address: channel1
+    messages:
+      message1:
+        payload: {}
+operations:
+  'user/created':
+    action: receive
+    channel:
+      $ref: '#/channels/channel1'
+    messages:
+      - $ref: '#/channels/channel1/messages/message1'
+  'user-created':
+    action: send
+    channel:
+      $ref: '#/channels/channel1'
+    messages:
+      - $ref: '#/channels/channel1/messages/message1'

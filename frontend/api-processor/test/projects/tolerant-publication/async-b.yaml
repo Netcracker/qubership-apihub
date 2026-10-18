@@ -1,0 +1,23 @@
+asyncapi: 3.0.0
+info:
+  title: AsyncAPI b
+  version: 1.0.0
+channels:
+  pets:
+    address: pets
+    messages:
+      get:
+        $ref: '#/components/messages/get'
+operations:
+  # `pets` + `get` derives the operationId `pets-get`, which is also what REST derives for GET /pets
+  pets:
+    action: receive
+    channel:
+      $ref: '#/channels/pets'
+    messages:
+      - $ref: '#/channels/pets/messages/get'
+components:
+  messages:
+    get:
+      payload:
+        type: object
