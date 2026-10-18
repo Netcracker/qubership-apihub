@@ -42,13 +42,13 @@ Each specification is analyzed to determine its exact type and version, enabling
 To use the library in your project, add the dependency:
 
 ```bash
-go get github.com/Netcracker/qubership-apihub-commons-go
+go get github.com/Netcracker/qubership-apihub/backend/commons-go
 ```
 
 Or add to your `go.mod`:
 
 ```go
-require github.com/Netcracker/qubership-apihub-commons-go v0.0.0 //specify required version
+require github.com/Netcracker/qubership-apihub/backend/commons-go v0.0.0 //specify required version
 ```
 
 ## Build
@@ -78,8 +78,8 @@ import (
     "log"
     "net/http"
 
-    "github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer"
-    "github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/config"
+    "github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer"
+    "github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer/config"
 )
 
 func main() {

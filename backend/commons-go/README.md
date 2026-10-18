@@ -22,7 +22,7 @@ A library for automatic discovery and exposure of API specifications.
 
 **Installation:**
 ```bash
-go get github.com/Netcracker/qubership-apihub-commons-go
+go get github.com/Netcracker/qubership-apihub/backend/commons-go
 ```
 
 ## Project Structure

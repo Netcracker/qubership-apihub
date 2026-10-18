@@ -1,1 +1,1 @@
-podman build ./ -t netcracker/qubership-api-linter-service
+podman build -f "%~dp0Dockerfile" "%~dp0.." -t netcracker/qubership-api-linter-service
