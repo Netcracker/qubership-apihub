@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/Netcracker/qubership-apihub-test-service/exception"
+	"github.com/Netcracker/qubership-apihub/backend/test-service/exception"
 )
 
 type TryitController interface {
