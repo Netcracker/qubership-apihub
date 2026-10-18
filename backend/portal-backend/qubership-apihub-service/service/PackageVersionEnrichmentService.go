@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
 	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
@@ -21,7 +22,8 @@ type packageVersionEnrichmentServiceImpl struct {
 }
 
 func (p packageVersionEnrichmentServiceImpl) GetPackageVersionRefsMap(ctx context.Context, packageRefs map[string][]string) (map[string]view.PackageVersionRef, error) {
-	packageVersionRefs := make(map[string]view.PackageVersionRef)
+	richPackageVersions := make([]*entity.PackageVersionRichEntity, 0)
+	versionKeys := make([]entity.PublishedVersionKeyEntity, 0)
 	for packageId, versions := range packageRefs {
 		uniqueVersions := utils.UniqueSet(versions)
 		for _, version := range uniqueVersions {
@@ -29,12 +31,35 @@ func (p packageVersionEnrichmentServiceImpl) GetPackageVersionRefsMap(ctx contex
 			if err != nil {
 				return nil, err
 			}
-			if richPackageVersion != nil {
-				packageAndVersionData := entity.MakePackageVersionRef(richPackageVersion)
-				refId := view.MakePackageRefKey(richPackageVersion.PackageId, richPackageVersion.Version, richPackageVersion.Revision)
-				packageVersionRefs[refId] = packageAndVersionData
+			if richPackageVersion == nil {
+				continue
+			}
+			richPackageVersions = append(richPackageVersions, richPackageVersion)
+			versionKeys = append(versionKeys, entity.PublishedVersionKeyEntity{
+				PackageId: richPackageVersion.PackageId,
+				Version:   richPackageVersion.Version,
+				Revision:  richPackageVersion.Revision,
+			})
+		}
+	}
+
+	errorSummaries, err := p.publishedRepo.GetVersionsErrorSummary(ctx, versionKeys, false)
+	if err != nil {
+		return nil, err
+	}
+
+	packageVersionRefs := make(map[string]view.PackageVersionRef, len(richPackageVersions))
+	for i, richPackageVersion := range richPackageVersions {
+		packageAndVersionData := entity.MakePackageVersionRef(richPackageVersion)
+		if errorSummary, exists := errorSummaries[versionKeys[i]]; exists {
+			packageAndVersionData.HasErrors = errorSummary.VersionHasErrors()
+			if richPackageVersion.PreviousVersion != "" {
+				changelogHasErrors := errorSummary.ChangelogHasAnyErrors()
+				packageAndVersionData.ChangelogHasErrors = &changelogHasErrors
 			}
 		}
+		refId := view.MakePackageRefKey(richPackageVersion.PackageId, richPackageVersion.Version, richPackageVersion.Revision)
+		packageVersionRefs[refId] = packageAndVersionData
 	}
 	return packageVersionRefs, nil
 }

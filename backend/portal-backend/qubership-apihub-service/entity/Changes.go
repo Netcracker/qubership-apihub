@@ -8,7 +8,15 @@ import (
 func (s Metadata) GetChanges(t Metadata) map[string]interface{} {
 	changes := make(map[string]interface{}, 0)
 	for key, sVal := range s {
+		if key == MIGRATION_ID_KEY {
+			continue
+		}
 		if key == BUILDER_VERSION_KEY {
+			continue
+		}
+		//this loop walks the keys of the old row only, so a flag set by the rebuild but absent from the old row
+		// would never be reported, and a missing key must read as false rather than as a removal
+		if key == HAS_ERRORS_KEY {
 			continue
 		}
 		tVal, exists := t[key]
@@ -95,6 +103,12 @@ func (s PublishedVersionEntity) GetChanges(t PublishedVersionEntity) map[string]
 	if metadataChanges := s.Metadata.GetChanges(t.Metadata); len(metadataChanges) > 0 {
 		changes["Metadata"] = metadataChanges
 	}
+	if s.Metadata.GetHasErrors() != t.Metadata.GetHasErrors() {
+		changes["HasErrors"] = map[string]interface{}{
+			"old": s.Metadata.GetHasErrors(),
+			"new": t.Metadata.GetHasErrors(),
+		}
+	}
 	if (len(s.Labels) != 0 || len(t.Labels) != 0) &&
 		!reflect.DeepEqual(s.Labels, t.Labels) {
 		changes["Labels"] = map[string]interface{}{
@@ -169,6 +183,12 @@ func (s PublishedContentEntity) GetChanges(t PublishedContentEntity) map[string]
 	}
 	if metadataChanges := s.Metadata.GetChanges(t.Metadata); len(metadataChanges) > 0 {
 		changes["Metadata"] = metadataChanges
+	}
+	if s.Metadata.GetHasErrors() != t.Metadata.GetHasErrors() {
+		changes["HasErrors"] = map[string]interface{}{
+			"old": s.Metadata.GetHasErrors(),
+			"new": t.Metadata.GetHasErrors(),
+		}
 	}
 	if (len(s.OperationIds) != 0 || len(t.OperationIds) != 0) &&
 		!reflect.DeepEqual(s.OperationIds, t.OperationIds) {
@@ -306,6 +326,12 @@ func (s OperationSearchTextEntity) GetChanges(t OperationSearchTextEntity) map[s
 
 func (s VersionComparisonEntity) GetChanges(t VersionComparisonEntity) map[string]interface{} {
 	changes := make(map[string]interface{}, 0)
+	if s.Metadata.GetHasErrors() != t.Metadata.GetHasErrors() {
+		changes["HasErrors"] = map[string]interface{}{
+			"old": s.Metadata.GetHasErrors(),
+			"new": t.Metadata.GetHasErrors(),
+		}
+	}
 	if (len(s.Refs) != 0 || len(t.Refs) != 0) &&
 		!reflect.DeepEqual(s.Refs, t.Refs) {
 		changes["Refs"] = map[string]interface{}{
@@ -313,6 +339,12 @@ func (s VersionComparisonEntity) GetChanges(t VersionComparisonEntity) map[strin
 			"new": t.Refs,
 		}
 	}
+	s.setOperationTypeChanges(t, changes)
+	s.setContractTypeChanges(t, changes)
+	return changes
+}
+
+func (s VersionComparisonEntity) setOperationTypeChanges(t VersionComparisonEntity, changes map[string]interface{}) {
 	matchedOperationTypes := make(map[string]struct{}, 0)
 	for _, sOperationType := range s.OperationTypes {
 		found := false
@@ -373,7 +405,56 @@ func (s VersionComparisonEntity) GetChanges(t VersionComparisonEntity) map[strin
 			changes[tOperationType.ApiType] = "unexpected comparison operation type (not found in database)"
 		}
 	}
-	return changes
+}
+
+func (s VersionComparisonEntity) setContractTypeChanges(t VersionComparisonEntity, changes map[string]interface{}) {
+	matchedContractTypes := make(map[string]struct{}, 0)
+	for _, sContractType := range s.ContractTypes {
+		found := false
+		for _, tContractType := range t.ContractTypes {
+			if sContractType.ContractType != tContractType.ContractType {
+				continue
+			}
+			found = true
+			matchedContractTypes[sContractType.ContractType] = struct{}{}
+			contractTypeChanges := make(map[string]interface{}, 0)
+			if sContractType.ChangesSummary.GetTotalSummary() != tContractType.ChangesSummary.GetTotalSummary() {
+				contractTypeChanges["TotalChangesSummary"] = map[string]interface{}{
+					"old": sContractType.ChangesSummary.GetTotalSummary(),
+					"new": tContractType.ChangesSummary.GetTotalSummary(),
+				}
+			}
+			if sContractType.NumberOfImpactedEntities.GetTotalSummary() != tContractType.NumberOfImpactedEntities.GetTotalSummary() {
+				contractTypeChanges["TotalNumberOfImpactedEntities"] = map[string]interface{}{
+					"old": sContractType.NumberOfImpactedEntities.GetTotalSummary(),
+					"new": tContractType.NumberOfImpactedEntities.GetTotalSummary(),
+				}
+			}
+			if !reflect.DeepEqual(sContractType.ChangesSummary, tContractType.ChangesSummary) {
+				contractTypeChanges["ChangesSummary"] = map[string]interface{}{
+					"old": sContractType.ChangesSummary,
+					"new": tContractType.ChangesSummary,
+				}
+			}
+			if !reflect.DeepEqual(sContractType.NumberOfImpactedEntities, tContractType.NumberOfImpactedEntities) {
+				contractTypeChanges["NumberOfImpactedEntities"] = map[string]interface{}{
+					"old": sContractType.NumberOfImpactedEntities,
+					"new": tContractType.NumberOfImpactedEntities,
+				}
+			}
+			if len(contractTypeChanges) > 0 {
+				changes[sContractType.ContractType] = contractTypeChanges
+			}
+		}
+		if !found {
+			changes[sContractType.ContractType] = "comparison contract type not found in build archive"
+		}
+	}
+	for _, tContractType := range t.ContractTypes {
+		if _, matched := matchedContractTypes[tContractType.ContractType]; !matched {
+			changes[tContractType.ContractType] = "unexpected comparison contract type (not found in database)"
+		}
+	}
 }
 
 func (s OperationComparisonEntity) GetChanges(t OperationComparisonEntity) map[string]interface{} {

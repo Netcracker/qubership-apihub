@@ -28,6 +28,9 @@ for u in *.up.sql; do n="${u%%_*}"; ls ${n}_*.down.sql >/dev/null 2>&1 || echo "
 Not every migration has a down script today, so the pairing loop prints results. That is the current state, not a
 regression you introduced.
 
+When the `apihub-backend-developer` skill is installed through APM, its `check_migration_numbers` script runs both checks
+and also reports gaps in the numbering and down files without an up file, which the service rejects at startup.
+
 ## Startup migration takes no lock
 
 Two instances starting against one database at the same time race, and one dies on a unique-constraint violation

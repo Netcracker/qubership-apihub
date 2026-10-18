@@ -32,6 +32,8 @@ type ExportController interface {
 	GenerateDdlEntitiesExcelReport(w http.ResponseWriter, r *http.Request)
 	GenerateDdlChangesExcelReport(w http.ResponseWriter, r *http.Request)
 	GenerateMcpEntitiesExcelReport(w http.ResponseWriter, r *http.Request)
+	GenerateNotificationsExcelReport(w http.ResponseWriter, r *http.Request)
+	GenerateBuildNotificationsExcelReport(w http.ResponseWriter, r *http.Request)
 	GenerateShareabilityReport(w http.ResponseWriter, r *http.Request)
 	ExportOperationGroupAsOpenAPIDocuments_deprecated_2(w http.ResponseWriter, r *http.Request) //deprecated
 
@@ -1106,6 +1108,104 @@ func (e exportControllerImpl) GenerateDdlEntitiesExcelReport(w http.ResponseWrit
 	}
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=DDLEntities_%s_%s.xlsx", packageId, versionName))
+	w.Header().Set("Content-Transfer-Encoding", "binary")
+	w.Header().Set("Expires", "0")
+	report.Write(w)
+}
+
+func (e exportControllerImpl) GenerateNotificationsExcelReport(w http.ResponseWriter, r *http.Request) {
+	packageId := getStringParam(r, "packageId")
+	ctx := secctx.MakeUserContext(r)
+	sufficientPrivileges, err := e.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+	if err != nil {
+		e.responder.RespondWithError(w, r, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		e.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	version, err := getUnescapedStringParam(r, "version")
+	if err != nil {
+		e.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "version"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	includeChangelog := true
+	if r.URL.Query().Get("includeChangelogNotifications") != "" {
+		includeChangelog, err = strconv.ParseBool(r.URL.Query().Get("includeChangelogNotifications"))
+		if err != nil {
+			e.responder.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.IncorrectParamType,
+				Message: exception.IncorrectParamTypeMsg,
+				Params:  map[string]interface{}{"param": "includeChangelogNotifications", "type": "boolean"},
+				Debug:   err.Error(),
+			})
+			return
+		}
+	}
+	filter, customError := getNotificationsFilter(r)
+	if customError != nil {
+		e.responder.RespondWithCustomError(w, customError)
+		return
+	}
+
+	e.monitoringService.IncreaseBusinessMetricCounter(secctx.GetUserId(ctx), metrics.ExportsCalled, packageId)
+
+	report, versionName, err := e.excelService.ExportNotifications(ctx, packageId, version, includeChangelog, *filter)
+	if err != nil {
+		e.responder.RespondWithError(w, r, "Failed to export notifications", err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=Notifications_%s_%s.xlsx", packageId, versionName))
+	w.Header().Set("Content-Transfer-Encoding", "binary")
+	w.Header().Set("Expires", "0")
+	report.Write(w)
+}
+
+func (e exportControllerImpl) GenerateBuildNotificationsExcelReport(w http.ResponseWriter, r *http.Request) {
+	packageId := getStringParam(r, "packageId")
+	publishId := getStringParam(r, "publishId")
+	ctx := secctx.MakeUserContext(r)
+	sufficientPrivileges, err := e.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+	if err != nil {
+		e.responder.RespondWithError(w, r, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		e.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	filter, customError := getNotificationsFilter(r)
+	if customError != nil {
+		e.responder.RespondWithCustomError(w, customError)
+		return
+	}
+
+	e.monitoringService.IncreaseBusinessMetricCounter(secctx.GetUserId(ctx), metrics.ExportsCalled, packageId)
+
+	report, err := e.excelService.ExportBuildNotifications(ctx, packageId, publishId, *filter)
+	if err != nil {
+		e.responder.RespondWithError(w, r, "Failed to export publish notifications", err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=Notifications_%s.xlsx", publishId))
 	w.Header().Set("Content-Transfer-Encoding", "binary")
 	w.Header().Set("Expires", "0")
 	report.Write(w)

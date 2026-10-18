@@ -199,6 +199,14 @@ func copyVersions(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 	}
 	objAffected += res.RowsAffected()
 
+	copyVersionNotifications := "insert into published_version_notification (package_id, version, revision, severity, category, message, document_id) " +
+		"(select ?, version, revision, severity, category, message, document_id from published_version_notification orig where orig.package_id = ?)"
+	res, err = tx.Exec(copyVersionNotifications, toPkg, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("failed to copy published_version_notification from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+
 	copyRefsMain := "insert into published_version_reference (package_id, version, revision, reference_id, reference_version, reference_revision, parent_reference_id, parent_reference_version, parent_reference_revision, excluded) " +
 		"(select ?, version, revision, reference_id, reference_version, reference_revision, parent_reference_id, parent_reference_version, parent_reference_revision, excluded from published_version_reference orig where orig.package_id = ?)  on conflict do nothing"
 	res, err = tx.Exec(copyRefsMain, toPkg, fromPkg)
@@ -383,6 +391,20 @@ func moveNonVersionsData(tx *pg.Tx, fromPkg, toPkg string) (int, error) {
 	res, err = tx.Exec(updateVersCompPrev, toPkg, fromPkg)
 	if err != nil {
 		return 0, fmt.Errorf("MoveAllData: failed to update prev package_id in version_comparison from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+
+	updateCompNotif := "update version_comparison_notification set package_id = ? where package_id = ?;"
+	res, err = tx.Exec(updateCompNotif, toPkg, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("MoveAllData: failed to update package_id in version_comparison_notification from %s to %s: %w", fromPkg, toPkg, err)
+	}
+	objAffected += res.RowsAffected()
+
+	updateCompNotifPrev := "update version_comparison_notification set previous_package_id = ? where previous_package_id = ?;"
+	res, err = tx.Exec(updateCompNotifPrev, toPkg, fromPkg)
+	if err != nil {
+		return 0, fmt.Errorf("MoveAllData: failed to update prev package_id in version_comparison_notification from %s to %s: %w", fromPkg, toPkg, err)
 	}
 	objAffected += res.RowsAffected()
 

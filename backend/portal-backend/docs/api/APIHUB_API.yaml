@@ -2434,6 +2434,12 @@ paths:
                   $ref: "#/components/examples/PreviousVersionNotRelease"
                 VersionReferencedAsPreviousByRelease:
                   $ref: "#/components/examples/VersionReferencedAsPreviousByRelease"
+                ReleasePublishWithErrors:
+                  $ref: "#/components/examples/ReleasePublishWithErrors"
+                PreviousVersionHasErrors:
+                  $ref: "#/components/examples/PreviousVersionHasErrors"
+                ReferencedVersionHasErrors:
+                  $ref: "#/components/examples/ReferencedVersionHasErrors"
         "401":
           description: Unauthorized
           content:
@@ -2469,14 +2475,7 @@ paths:
   "/api/v2/packages/{packageId}/publish/{publishId}/status":
     parameters:
       - $ref: "#/components/parameters/packageId"
-      - name: publishId
-        description: Publish Id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          example: 9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc
+      - $ref: "#/components/parameters/publishId"
     get:
       tags:
         - Publish
@@ -2492,6 +2491,11 @@ paths:
               schema:
                 type: object
                 properties:
+                  publishId:
+                    description: Publish process id, echoing the one in the path.
+                    type: string
+                    format: uuid
+                    example: 9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc
                   status:
                     description: Publish process status.
                     type: string
@@ -2503,6 +2507,12 @@ paths:
                   message:
                     description: The message for **error** status.
                     type: string
+                  hasErrors:
+                    $ref: "#/components/schemas/PublishHasErrors"
+                  changelogHasErrors:
+                    $ref: "#/components/schemas/ChangelogHasErrors"
+                  hasNotifications:
+                    $ref: "#/components/schemas/PublishHasNotifications"
         "301":
           description: Moved Permanently
           headers:
@@ -2528,6 +2538,222 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
               examples: {}
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/v2/packages/{packageId}/publish/{publishId}/notifications":
+    parameters:
+      - $ref: "#/components/parameters/packageId"
+      - $ref: "#/components/parameters/publishId"
+    get:
+      tags:
+        - Publish
+      summary: Get publish process notifications
+      description: |
+        Get the list of messages produced by api-processor while running a publish process that failed.
+
+        A failed publish creates no version, so its messages have no version to hang on and
+        `GET /api/v2/packages/{packageId}/versions/{version}/notifications` cannot return them. This endpoint
+        is where they are read, addressed by the publish id the publish request returned. The publish status
+        carries hasNotifications, so a client knows whether there is anything here without asking.
+
+        Only a failed publish has messages. A process that is running, one that completed, and one that failed
+        without raising any message return an empty list. A version published successfully, in draft status
+        and with errors, has its messages on the version endpoints instead.
+
+        The list holds the messages about the version's own documents and the messages about its changelog
+        against the previous version the publish declared. The category tells them apart: a changelog message
+        has a category such as risky-origins or version-not-resolved, and its documentId, when present, can be
+        the slug of a document of the previous version.
+
+        Messages are sorted by severity, most severe first (error, warning, information, hint), then by
+        category, then by message text. Messages that are equal on all three, such as one problem reported for
+        several documents, are sorted by documentId, with messages that have none first.
+
+        Only publish processes of packages are covered. A failed dashboard publish stores no messages: this
+        endpoint returns an empty list for it, and its hasNotifications stays false. The reason it failed is
+        in the message of its publish status.
+
+        Messages are kept for 30 days after the publish process failed, the retention of the process's sources,
+        and are then removed. A republish is a new publish process with its own id and its own messages; it
+        does not replace these.
+
+        Requires read permission on the package.
+      operationId: getPackagesIdPublishIdNotifications
+      parameters:
+        - $ref: "#/components/parameters/notificationDocumentId"
+        - $ref: "#/components/parameters/notificationEmptyDocumentId"
+        - $ref: "#/components/parameters/notificationSeverity"
+        - $ref: "#/components/parameters/notificationCategory"
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/VersionNotification"
+              examples: {}
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+                OverlappingDocumentIdParameters:
+                  $ref: "#/components/examples/OverlappingDocumentIdParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden - the user has no read permission on the package
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+                PublishNotFound:
+                  $ref: "#/components/examples/PublishNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/v2/packages/{packageId}/publish/{publishId}/export/notifications":
+    parameters:
+      - $ref: "#/components/parameters/packageId"
+      - $ref: "#/components/parameters/publishId"
+    get:
+      tags:
+        - Publish
+      summary: Export publish process notifications to xlsx file
+      description: |
+        Export the messages produced by api-processor for a publish process that failed to an xlsx file. The
+        file holds the messages that
+        `GET /api/v2/packages/{packageId}/publish/{publishId}/notifications` returns.
+
+        The sheet is the one the version notifications export produces, with four columns: Severity, Category,
+        Message, Document ID. Rows are in the order the JSON endpoint returns: by severity, most severe first,
+        then by category, then by message text, then by Document ID.
+
+        The file holds every message that matches the filters, so the endpoint takes no paging parameters. A
+        publish process with no messages returns a file that holds only the header row. That is what a
+        process that is running, one that completed, one that failed without raising any message, and a
+        dashboard publish all return, and what a failed one returns once its messages are removed 30 days
+        after it failed.
+
+        Requires read permission on the package.
+      operationId: getPackagesIdPublishIdNotificationsExport
+      parameters:
+        - $ref: "#/components/parameters/notificationDocumentId"
+        - $ref: "#/components/parameters/notificationEmptyDocumentId"
+        - $ref: "#/components/parameters/notificationSeverity"
+        - $ref: "#/components/parameters/notificationCategory"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/xlsx:
+              schema:
+                type: string
+                format: binary
+                description: xlsx file to download
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                description: xlsx file name
+                example: attachment; filename="Notifications_9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc.xlsx"
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+                OverlappingDocumentIdParameters:
+                  $ref: "#/components/examples/OverlappingDocumentIdParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden - the user has no read permission on the package
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+                PublishNotFound:
+                  $ref: "#/components/examples/PublishNotFound"
         "500":
           description: Internal Server Error
           content:
@@ -2675,14 +2901,7 @@ paths:
   "/api/v1/packages/{packageId}/publish/{publishId}/withOperationsGroup/status":
     parameters:
       - $ref: '#/components/parameters/packageId'
-      - name: publishId
-        description: Publish Id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          example: 9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc
+      - $ref: "#/components/parameters/publishId"
     get:
       tags:
         - Publish
@@ -2754,14 +2973,7 @@ paths:
   "/api/v1/packages/{packageId}/publish/{publishId}/withOperationsGroup/status/report":
     parameters:
       - $ref: '#/components/parameters/packageId'
-      - name: publishId
-        description: Publish Id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          example: 9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc
+      - $ref: "#/components/parameters/publishId"
     get:
       tags:
         - Publish
@@ -3140,6 +3352,8 @@ paths:
               examples:
                 IncorrectInputParams:
                   $ref: "#/components/examples/IncorrectInputParameters"
+                VersionStatusChangeWithErrors:
+                  $ref: "#/components/examples/VersionStatusChangeWithErrors"
                 VersionStatusChangePreviousVersionNotRelease:
                   $ref: "#/components/examples/VersionStatusChangePreviousVersionNotRelease"
                 VersionReferencedAsPreviousByRelease:
@@ -3371,8 +3585,19 @@ paths:
                                   operationsCount:
                                     type: number
                                     description: Number of operations in which the apiAudience was changed from previousAudience to currentAudience
+                            hasErrors:
+                              description: |
+                                Flag showing that at least one document of this API type has a critical problem
+                                detected during the build.
+
+                                Note a document that failed before its API type could be determined is not
+                                counted here, but still sets hasErrors on the version.
+                              type: boolean
+                              default: false
                       contractsSummary:
                         $ref: "#/components/schemas/VersionContractsSummary"
+                      changelogHasErrors:
+                        $ref: "#/components/schemas/ChangelogHasErrors"
                   - type: object
                     properties:
                       operationGroups:
@@ -3492,6 +3717,8 @@ paths:
                         default: false
                       contractsChangesSummary:
                         $ref: "#/components/schemas/VersionComparisonContractsSummary"
+                      hasErrors:
+                        $ref: "#/components/schemas/ChangelogHasErrors"
                   - type: object
                     title: dashboardComparison
                     required:
@@ -3550,6 +3777,8 @@ paths:
                               default: false
                             contractsChangesSummary:
                               $ref: "#/components/schemas/VersionComparisonContractsSummary"
+                            hasErrors:
+                              $ref: "#/components/schemas/ChangelogHasErrors"
                       packages:
                         $ref: "#/components/schemas/PackagesMap"
         "301":
@@ -3993,13 +4222,7 @@ paths:
   "/api/v2/packages/{packageId}/versions/{version}/sources":
     parameters:
       - $ref: "#/components/parameters/packageId"
-      - name: version
-        in: path
-        description: Package version. The mask <version>@<revision> may be used to get resouces of the specific revision. If the @revision is not provided, the latest version's revision will be used.
-        required: true
-        schema:
-          type: string
-          example: "2022.3"
+      - $ref: "#/components/parameters/version"
     get:
       tags:
         - Export
@@ -4051,13 +4274,7 @@ paths:
   "/api/v2/packages/{packageId}/versions/{version}/config":
     parameters:
       - $ref: "#/components/parameters/packageId"
-      - name: version
-        in: path
-        description: Package version. The mask <version>@<revision> may be used to get resouces of the specific revision. If the @revision is not provided, the latest version's revision will be used.
-        required: true
-        schema:
-          type: string
-          example: "2022.3"
+      - $ref: "#/components/parameters/version"
     get:
       tags:
         - Versions
@@ -4359,6 +4576,8 @@ paths:
               examples:
                 IncorrectInputParams:
                   $ref: "#/components/examples/IncorrectInputParameters"
+                PreviousVersionHasErrors:
+                  $ref: "#/components/examples/PreviousVersionHasErrors"
         "401":
           description: Unauthorized
           content:
@@ -9369,14 +9588,7 @@ paths:
         description: Name of the operation group
         schema:
           type: string
-      - name: publishId
-        description: Publish Id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          example: 9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc
+      - $ref: "#/components/parameters/publishId"
     get:
       tags:
         - Operation groups
@@ -9527,6 +9739,9 @@ paths:
       summary: Get the version revisions list
       description: |
         Get the list of version revisions.
+
+        Every revision reports its own hasErrors and changelogHasErrors, so a revision that was published with
+        errors stays marked after a later revision fixed them.
       operationId: getPackagesIdVersionsIdRevisionsV3
       parameters:
         - $ref: "#/components/parameters/packageId"
@@ -10546,11 +10761,27 @@ paths:
                   type: object
                   properties:
                     publishId:
+                      description: Publish process id, identifying which of the requested processes this entry describes.
                       type: string
+                      format: uuid
+                      example: 9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc
                     status:
+                      description: Publish process status.
                       type: string
+                      enum:
+                        - running
+                        - error
+                        - complete
+                        - none
                     message:
+                      description: The message for **error** status.
                       type: string
+                    hasErrors:
+                      $ref: "#/components/schemas/PublishHasErrors"
+                    changelogHasErrors:
+                      $ref: "#/components/schemas/ChangelogHasErrors"
+                    hasNotifications:
+                      $ref: "#/components/schemas/PublishHasNotifications"
         "400":
           description: Bad request
           content:
@@ -10700,6 +10931,321 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/v2/packages/{packageId}/versions/{version}/notifications":
+    parameters:
+      - $ref: "#/components/parameters/packageId"
+      - $ref: "#/components/parameters/version"
+    get:
+      tags:
+        - Versions
+      summary: Get package version notifications
+      description: |
+        Get the list of messages produced by api-processor while building the package version's own documents
+        and operations, e.g. parse and validation problems.
+
+        Problems detected while calculating a changelog are returned by
+        `GET /api/v2/packages/{packageId}/versions/{version}/changes/notifications` instead.
+
+        A message with severity = error is a critical problem. A version that has at least one such message can
+        only be published in `draft` status, and is marked with hasErrors = true. Documents affected by such a
+        message are marked with hasErrors = true as well.
+
+        A message is not necessarily attributable to a document: problems that belong to the version as a whole,
+        e.g. an unresolvable previous version, have no documentId. Set emptyDocumentId to true to get only
+        those.
+
+        Messages are denormalized by document: a problem that concerns several documents at once is returned as
+        several messages with the same text, one per affected document.
+
+        Requires read permission on the package.
+      operationId: getPackagesIdVersionsIdNotifications
+      parameters:
+        - $ref: "#/components/parameters/notificationDocumentId"
+        - $ref: "#/components/parameters/notificationEmptyDocumentId"
+        - $ref: "#/components/parameters/notificationSeverity"
+        - $ref: "#/components/parameters/notificationCategory"
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/VersionNotification"
+              examples: {}
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+                OverlappingDocumentIdParameters:
+                  $ref: "#/components/examples/OverlappingDocumentIdParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden - the user has no read permission on the package
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/v2/packages/{packageId}/versions/{version}/changes/notifications":
+    parameters:
+      - $ref: "#/components/parameters/packageId"
+      - $ref: "#/components/parameters/version"
+    get:
+      tags:
+        - Changes
+      summary: Get comparison notifications
+      description: |
+        Get the list of messages produced by api-processor while calculating the changelog between two package
+        versions.
+
+        A message with severity = error means that the comparison may be incomplete or inaccurate, and the
+        corresponding comparison is marked with hasErrors. Such a message describes the comparison only and
+        does not mark either of the compared versions — but it does refuse a `release`: a version whose
+        changelog is unreliable can be published in `draft` status only, the same as one whose own documents
+        carry errors. Problems of the versions themselves are returned by
+        `GET /api/v2/packages/{packageId}/versions/{version}/notifications` instead.
+
+        Most comparison messages are not attributable to a document, e.g. the previous version could not be
+        resolved, so documentId is empty more often than for the version notifications. Set emptyDocumentId to
+        true to get only those messages.
+
+        Requires read permission on the package.
+      operationId: getPackagesIdVersionsIdChangesNotifications
+      parameters:
+        - $ref: "#/components/parameters/previousVersion"
+        - $ref: "#/components/parameters/previousVersionPackageId"
+        - $ref: "#/components/parameters/notificationDocumentId"
+        - $ref: "#/components/parameters/notificationEmptyDocumentId"
+        - $ref: "#/components/parameters/notificationSeverity"
+        - $ref: "#/components/parameters/notificationCategory"
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/page"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/VersionNotification"
+              examples: {}
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+                OverlappingDocumentIdParameters:
+                  $ref: "#/components/examples/OverlappingDocumentIdParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden - the user has no read permission on the package
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/v2/packages/{packageId}/versions/{version}/export/notifications":
+    parameters:
+      - $ref: "#/components/parameters/packageId"
+      - $ref: "#/components/parameters/version"
+    get:
+      tags:
+        - Versions
+      summary: Export notifications to xlsx file
+      description: |
+        Export the messages produced by api-processor for the package version to an xlsx file. The file holds
+        the messages that `GET /api/v2/packages/{packageId}/versions/{version}/notifications` returns, and, by
+        default, the messages of the changelog against the version's previous version as well.
+
+        Both sets share one sheet with four columns: Severity, Category, Message, Document ID. Neither the
+        previous version nor the phase gets a column: a category belongs to one phase, so it already tells a
+        changelog message apart from a message about the version's own documents.
+
+        The exported changelog is the one against the previous version recorded on the version at publication,
+        which is the comparison the version page shows. An arbitrary comparison cannot be exported: unlike
+        `GET /api/v2/packages/{packageId}/versions/{version}/changes/notifications`, this endpoint takes no
+        previousVersion and no previousVersionPackageId, and no other endpoint exports the messages of a
+        comparison between two versions the caller names.
+
+        The file holds every message that matches the filters, so the endpoint takes no paging parameters. A
+        version with no messages returns a file that holds only the header row.
+
+        Requires read permission on the package.
+      operationId: getPackagesIdVersionsIdNotificationsExport
+      parameters:
+        - name: includeChangelogNotifications
+          in: query
+          description: |
+            Add the messages of the version's changelog to the file.\
+            The changelog is the one against the previous version recorded on the version at publication, compared against the package itself unless the version recorded a previous version package id of its own.\
+            A version that recorded no previous version, and a version whose changelog was never calculated, contribute no such messages, and the response is still 200.\
+            Set the flag to false to export the messages about the version's own documents alone.
+          schema:
+            type: boolean
+            default: true
+        - $ref: "#/components/parameters/notificationDocumentId"
+        - $ref: "#/components/parameters/notificationEmptyDocumentId"
+        - $ref: "#/components/parameters/notificationSeverity"
+        - $ref: "#/components/parameters/notificationCategory"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/xlsx:
+              schema:
+                type: string
+                format: binary
+                description: xlsx file to download
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                description: xlsx file name
+                example: attachment; filename="Notifications_package.id_version.xlsx"
+        "301":
+          description: Moved Permanently
+          headers:
+            Location:
+              schema:
+                type: string
+              description: Current ednpoint with new packageId of moved package
+            X-New-Package-Id:
+              schema:
+                type: string
+              description: New packageId of moved package
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+                OverlappingDocumentIdParameters:
+                  $ref: "#/components/examples/OverlappingDocumentIdParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden - the user has no read permission on the package
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                PackageNotFound:
+                  $ref: "#/components/examples/PackageNotFound"
         "500":
           description: Internal Server Error
           content:
@@ -11474,10 +12020,21 @@ components:
       schema:
         type: string
         example: QS.CloudQSS.CPQ.Q-TMF
+    publishId:
+      name: publishId
+      description: Publish Id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc
     version:
       name: version
       in: path
-      description: Package version
+      description: |
+        Package version. The mask <version>@<revision> may be used to address a specific revision.
+        If the @revision is not provided, the latest revision of the version is used.
       required: true
       schema:
         type: string
@@ -11539,6 +12096,55 @@ components:
         type: string
         format: uuid
         example: "e1a9f6d2-4a17-4a3b-9b91-4d7e9e8a0f11"
+    notificationDocumentId:
+      name: documentId
+      in: query
+      description: |
+        Filter by document slug. Returns the messages attributed to the document.\
+        Either "documentId" or "emptyDocumentId" (= true) can be sent in the request. If both are specified, 400 is returned in the response.
+      schema:
+        type: string
+        example: qitmf-v5-11-json
+    notificationEmptyDocumentId:
+      name: emptyDocumentId
+      in: query
+      description: |
+        Flag for filtering the messages that are not attributed to any document.\
+        Either "documentId" or "emptyDocumentId" (= true) can be sent in the request. If both are specified, 400 is returned in the response.
+      schema:
+        type: boolean
+        default: false
+    notificationSeverity:
+      name: severity
+      in: query
+      description: |
+        Filter by severity.\
+        Multiple severities separated by comma can be specified.
+      schema:
+        type: array
+        items:
+          type: string
+          enum:
+            - error
+            - warning
+            - information
+            - hint
+      style: form
+      explode: false
+      example: ["error", "warning"]
+    notificationCategory:
+      name: category
+      in: query
+      description: |
+        Filter by message category.\
+        Multiple categories separated by comma can be specified.
+      schema:
+        type: array
+        items:
+          $ref: "#/components/schemas/NotificationCategoryEnum"
+      style: form
+      explode: false
+      example: ["build-document", "version-not-resolved"]
   schemas:
     SystemInfo:
       description: Information about the APIHUB product
@@ -11702,8 +12308,12 @@ components:
             - versionInternalDocumentId
           properties:
             documentId:
-              description: Source document identifier.
+              description: |
+                Slug of the source document this entity was extracted from.
+                Can be used to request the document via
+                `GET /api/v3/packages/{packageId}/versions/{version}/documents/{slug}`.
               type: string
+              pattern: "^[a-z0-9-]"
               example: "shop-sql"
             versionInternalDocumentId:
               description: >
@@ -11766,8 +12376,12 @@ components:
           type: string
           example: /mcp
         documentId:
-          description: Source document identifier.
+          description: |
+            Slug of the source document this entity was extracted from.
+            Can be used to request the document via
+            `GET /api/v3/packages/{packageId}/versions/{version}/documents/{slug}`.
           type: string
+          pattern: "^[a-z0-9-]"
           example: tools-forecast-json
     McpEntityView:
       description: |
@@ -11801,6 +12415,138 @@ components:
                 - $ref: "#/components/schemas/ChangeSummary"
                 - type: object
                   description: Number of DDL entities impacted by each severity type.
+    ChangelogHasErrors:
+      description: |
+        Flag showing that the changelog calculation for the comparison produced at least one critical problem,
+        i.e. the comparison may be incomplete or inaccurate. Returned when there is a comparison to describe -
+        on a version or a revision that means one against its previousVersion.
+
+        The flag describes the comparison only, it does not mean that either of the compared versions has
+        problems - see hasErrors on the version for that.
+
+        Use `GET /api/v2/packages/{packageId}/versions/{version}/changes/notifications` to get the details.
+      type: boolean
+      default: false
+    NotificationCategoryEnum:
+      description: |
+        Stable code identifying which check produced the message. There is one value per diagnostic, so the
+        category is precise enough to filter on without matching message text. It describes the kind of
+        problem, not the build phase - the phase is defined by the endpoint the message is returned by. The
+        publish notifications endpoints return both phases in one list. There, a category is raised in one phase
+        only, so it identifies the phase as well.
+
+        Values share a domain prefix, so a coarse grouping can be derived without a second field:
+          * **ref-*** - reference resolution (`ref-has-siblings`, `ref-not-allowed`, `ref-not-found`,
+            `ref-not-valid-format`).
+          * **mcp-*** - MCP entity, schema, init and capability problems.
+          * **ddl-*** - DDL parsing, entity build and duplicates.
+          * **tolerant-hash-*** / **deprecated-component-path** - deprecated item hashing and matching.
+          * **risky-*** - reclassification of breaking changes during a comparison.
+          * **version-*** - a version, its references or its documents could not be resolved.
+          * everything else names the check directly, e.g. `parse-file`, `invalid-text-file`,
+            `duplicate-operation-id`, `empty-path-parameter`, `comparison-serialization`.
+      type: string
+      enum:
+        - parse-file
+        - invalid-text-file
+        - file-not-parsed
+        - build-document
+        - swagger-conversion
+        - ref-has-siblings
+        - ref-not-allowed
+        - ref-not-found
+        - ref-not-valid-format
+        - build-operations
+        - duplicate-operation-id
+        - rest-duplicate-operation
+        - async-duplicate-operation
+        - empty-path-parameter
+        - double-slash-path
+        - ddl-duplicate-object
+        - ddl-parse-issue
+        - ddl-entity-build
+        - ddl-duplicate-entity
+        - mcp-entity-build
+        - mcp-document-schema
+        - mcp-init-required
+        - mcp-duplicate-entity
+        - mcp-capability-unused
+        - tolerant-hash-missing
+        - tolerant-hash-failed
+        - deprecated-component-path
+        - version-not-resolved
+        - version-refs-not-resolved
+        - version-documents-missing
+        - risky-before-value
+        - risky-origins
+        - comparison-serialization
+        - group-documents-missing
+        - partial-group-documents
+      example: build-document
+    VersionNotification:
+      description: |
+        A message produced by api-processor while building a package version or calculating a changelog.
+      type: object
+      title: Version notification
+      required:
+        - category
+        - severity
+        - message
+      properties:
+        category:
+          $ref: "#/components/schemas/NotificationCategoryEnum"
+        severity:
+          description: |
+            Severity of the message. A message with severity = error is a critical problem that prevents the
+            version from being published in `release` status.
+          type: string
+          enum:
+            - error
+            - warning
+            - information
+            - hint
+          example: error
+        message:
+          description: Human readable message text.
+          type: string
+          example: "Cannot process the \"docs/events.yaml\" document. Unexpected token"
+        documentId:
+          description: |
+            Slug of the document the message is attributed to, matching the `slug` field of the version
+            documents.
+
+            Messages are denormalized by document: a problem that concerns several documents at once, e.g. an
+            operation id duplicated between two documents, is returned as several messages with the same text,
+            one per affected document.
+
+            Absent when the message is not attributable to any document, e.g. the previous version of the
+            comparison could not be resolved.
+          type: string
+          example: "events-yaml"
+    PublishHasErrors:
+      description: |
+        Flag showing that at least one document of the version the process published has a critical problem
+        detected during the build. Such a version can only be published in `draft` status.
+
+        Set for a publish process that completed. A process that is running or that failed published no
+        version, so the flag is false - for a failed one, hasNotifications and
+        `GET /api/v2/packages/{packageId}/publish/{publishId}/notifications` are where its problems are.
+
+        Use `GET /api/v2/packages/{packageId}/versions/{version}/notifications` to get the details.
+      type: boolean
+      default: false
+    PublishHasNotifications:
+      description: |
+        Flag showing that the publish process stored messages that
+        `GET /api/v2/packages/{packageId}/publish/{publishId}/notifications` returns.
+
+        Only a failed publish of a package stores them. The flag is false for a process that is running, for
+        one that completed, for one that failed without raising any message, e.g. because the registry was
+        unreachable, and for a dashboard publish, whose messages are not stored. It turns false when the
+        messages are removed, 30 days after the process failed. A client polling the status uses it to decide
+        whether to offer the messages, rather than requesting them to find out.
+      type: boolean
+      default: false
     VersionContractsSummary:
       description: |
         Summary of contract entities published in a package version, keyed by contract type.
@@ -11825,6 +12571,12 @@ components:
                 - $ref: "#/components/schemas/ChangeSummary"
                 - type: object
                   description: Number of DDL entities impacted by each severity type. Present only when the version has a previous version to compare against.
+            hasErrors:
+              description: |
+                Flag showing that at least one DDL document of the version has a critical problem detected
+                during the build.
+              type: boolean
+              default: false
         mcp:
           description: MCP summary keyed by MCP endpoint (one entry per published MCP endpoint in this version).
           type: object
@@ -11840,11 +12592,18 @@ components:
               resourcesCount:
                 type: integer
                 default: 0
+              hasErrors:
+                description: |
+                  Flag showing that at least one MCP document of this endpoint has a critical problem detected
+                  during the build.
+                type: boolean
+                default: false
           example:
             /mcp:
               toolsCount: 3
               promptsCount: 1
               resourcesCount: 2
+              hasErrors: false
     ExportVersion:
       type: object
       title: Export entire version
@@ -12489,9 +13248,19 @@ components:
         notLatestRevision:
           type: boolean
           default: false
-        apiProcessorVerson:
+        apiProcessorVersion:
           description: Version of api-processor with which current version was built.
           type: string
+        hasErrors:
+          description: |
+            Flag showing that at least one document of the version has a critical problem detected during the
+            build. Such a version can only be published in `draft` status.
+
+            Use `GET /api/v2/packages/{packageId}/versions/{version}/notifications` to get the details.
+          type: boolean
+          default: false
+        changelogHasErrors:
+          $ref: "#/components/schemas/ChangelogHasErrors"
     PackageVersionContent:
       description: Published package version content
       type: object
@@ -12504,7 +13273,7 @@ components:
         - revision
         - revisionsCount
         - status
-        - apiProcessorVerson
+        - apiProcessorVersion
       properties:
         packageId:
           description: Package unique string identifier (full alias)
@@ -12544,9 +13313,20 @@ components:
           example: 3
         status:
           $ref: "#/components/schemas/VersionStatusEnum"
-        apiProcessorVerson:
+        apiProcessorVersion:
           description: Version of api-processor with which current version was built.
           type: string
+        hasErrors:
+          description: |
+            Flag showing that at least one document of the version has a critical problem detected during the
+            build. Such a version can only be published in `draft` status.
+
+            Note the flag can be true while every document has hasErrors = false, when the problem belongs to
+            the version as a whole rather than to a document, e.g. the previous version could not be resolved.
+
+            Use `GET /api/v2/packages/{packageId}/versions/{version}/notifications` to get the details.
+          type: boolean
+          default: false
     PackageVersionFile:
       description: Parameters of published file in package version
       type: object
@@ -12599,6 +13379,17 @@ components:
             - unknown
           default: unknown
           example: "unknown"
+        hasErrors:
+          description: |
+            Flag showing that the document has a critical problem detected during the build. Such a document is
+            published and keeps whatever the build managed to produce from it: the flag marks the document,
+            it does not empty it. A document with no operations or contract entities is one whose parsing or
+            build left nothing to expose.
+
+            Use `GET /api/v2/packages/{packageId}/versions/{version}/notifications?documentId={slug}` to get
+            the details.
+          type: boolean
+          default: false
         apiKind:
           $ref: "#/components/schemas/ApiKind"
     PackageTransformationFile:
@@ -12762,6 +13553,20 @@ components:
         notLatestRevision:
           type: boolean
           default: false
+        apiProcessorVersion:
+          description: Version of api-processor with which the referenced version was built.
+          type: string
+        hasErrors:
+          description: |
+            Flag showing that the build of the referenced version has at least one critical problem.
+            For a referenced dashboard version the flag is also true when any of its own references, at any
+            depth, has hasErrors or changelogHasErrors. Excluded and deleted references are not counted.
+
+            Use `GET /api/v2/packages/{packageId}/versions/{version}/notifications` to get the details.
+          type: boolean
+          default: false
+        changelogHasErrors:
+          $ref: "#/components/schemas/ChangelogHasErrors"
     PackagesMap:
       description: |
         A map of referenced package versions to the package version objects.
@@ -12781,6 +13586,9 @@ components:
           deletedAt: "2023-05-30T17:17:11.755146Z"
           deletedBy: "user1221"
           notLatestRevision: true
+          apiProcessorVersion: "4.2.1"
+          hasErrors: true
+          changelogHasErrors: false
     ErrorResponse:
       description: Standard error response returned for failed requests. Includes HTTP status, internal error code, human-readable message, optional message parameters, and optional debug details (non-production only).
       type: object
@@ -14027,6 +14835,23 @@ components:
               description: Namespace of Agent's publication.
               type: string
               example: cloudQSS-release2
+        apiProcessorVersion:
+          description: Version of api-processor with which this revision was built.
+          type: string
+        hasErrors:
+          description: |
+            Flag showing that at least one document of the revision has a critical problem detected during the
+            build. Such a revision can only be published in `draft` status.
+
+            The flag belongs to the revision, not to the version: a later revision that fixed the problem has
+            hasErrors = false while the revision that carried it keeps hasErrors = true.
+
+            Use `GET /api/v2/packages/{packageId}/versions/{version}@{revision}/notifications` to get the
+            details.
+          type: boolean
+          default: false
+        changelogHasErrors:
+          $ref: "#/components/schemas/ChangelogHasErrors"
     InternalDocumentMetadata:
       type: object
       required:
@@ -14406,6 +15231,12 @@ components:
         status: 404
         code: "APIHUB-3020"
         message: "package with packageId = $packageId not found"
+    PublishNotFound:
+      description: Publish process not found by ID. Response for the 404 error
+      value:
+        status: 404
+        code: "2611"
+        message: "Build with 9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc not found"
     VersionNotFound:
       description: Version not found by number. Response for the 404 error
       value:
@@ -14455,6 +15286,15 @@ components:
         status: 400
         code: "APIHUB-COMMON-4001"
         message: "Incorrect input parameters"
+    OverlappingDocumentIdParameters:
+      description: Both documentId and emptyDocumentId = true are specified in the request
+      value:
+        status: 400
+        code: "6013"
+        message: "Query parameter '$param2' cannot be used in addition to '$param1' parameter"
+        params:
+          param1: "emptyDocumentId"
+          param2: "documentId"
     PreviousVersionNotRelease:
       description: A release version cannot reference a draft previous version
       value:
@@ -14466,6 +15306,42 @@ components:
           packageId: "QS.group.my-package"
           previousVersion: "2024.1"
           previousVersionPackageId: "QS.group.previous-package"
+    ReleasePublishWithErrors:
+      description: Version cannot be published in 'release' status because it has errors
+      value:
+        status: 400
+        code: '8700'
+        message: Version 2024.2 for package QS.group.my-package cannot be published in the 'release' status because it has critical errors. Publish it in the 'draft' status to investigate them.
+        params:
+          version: '2024.2'
+          packageId: QS.group.my-package
+    VersionStatusChangeWithErrors:
+      description: Version status cannot be changed to 'release' because the version has errors
+      value:
+        status: 400
+        code: '8700'
+        message: Version 2024.2 for package QS.group.my-package cannot be changed to the 'release' status because it or its changelog has critical errors. Fix them and republish the version.
+        params:
+          version: '2024.2'
+          packageId: QS.group.my-package
+    PreviousVersionHasErrors:
+      description: Version cannot be used as the previous version because it has errors
+      value:
+        status: 400
+        code: '8700'
+        message: Version 2024.1 for package QS.group.previous-package cannot be used as the previous version because it or its changelog has critical errors, so the calculated changes would be unreliable.
+        params:
+          previousVersion: '2024.1'
+          previousVersionPackageId: QS.group.previous-package
+    ReferencedVersionHasErrors:
+      description: Dashboard cannot reference a version that has errors
+      value:
+        status: 400
+        code: '8700'
+        message: Version 2024.1 for package QS.group.referenced-package cannot be added to the dashboard because it or its changelog has critical errors.
+        params:
+          version: '2024.1'
+          packageId: QS.group.referenced-package
     VersionStatusChangePreviousVersionNotRelease:
       description: Version status cannot be changed to 'release' when the previous version is a draft
       value:

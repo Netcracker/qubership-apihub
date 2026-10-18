@@ -31,25 +31,13 @@ type comparisonServiceImpl struct {
 	ddlContractService              DDLContractService
 }
 
-func (c comparisonServiceImpl) GetComparisonResult(ctx context.Context, packageId string, version string, previousVersionPackageId string, previousVersion string) (*view.VersionComparisonSummary, error) {
-	packageEnt, err := c.publishedRepo.GetPackage(ctx, packageId)
+func ResolveVersionComparison(ctx context.Context, publishedRepo repository.PublishedRepository, packageId string, version string, previousVersionPackageId string, previousVersion string) (string, *entity.VersionComparisonEntity, error) {
+	versionEnt, err := publishedRepo.GetVersion(ctx, packageId, version)
 	if err != nil {
-		return nil, err
-	}
-	if packageEnt == nil {
-		return nil, &exception.CustomError{
-			Status:  http.StatusNotFound,
-			Code:    exception.PackageNotFound,
-			Message: exception.PackageNotFoundMsg,
-			Params:  map[string]interface{}{"packageId": packageId},
-		}
-	}
-	versionEnt, err := c.publishedRepo.GetVersion(ctx, packageId, version)
-	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 	if versionEnt == nil {
-		return nil, &exception.CustomError{
+		return "", nil, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.PublishedPackageVersionNotFound,
 			Message: exception.PublishedPackageVersionNotFoundMsg,
@@ -58,7 +46,7 @@ func (c comparisonServiceImpl) GetComparisonResult(ctx context.Context, packageI
 	}
 	if previousVersion == "" || previousVersionPackageId == "" {
 		if versionEnt.PreviousVersion == "" {
-			return nil, &exception.CustomError{
+			return "", nil, &exception.CustomError{
 				Status:  http.StatusNotFound,
 				Code:    exception.NoPreviousVersion,
 				Message: exception.NoPreviousVersionMsg,
@@ -72,12 +60,12 @@ func (c comparisonServiceImpl) GetComparisonResult(ctx context.Context, packageI
 			previousVersionPackageId = packageId
 		}
 	}
-	previousVersionEnt, err := c.publishedRepo.GetVersion(ctx, previousVersionPackageId, previousVersion)
+	previousVersionEnt, err := publishedRepo.GetVersion(ctx, previousVersionPackageId, previousVersion)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 	if previousVersionEnt == nil {
-		return nil, &exception.CustomError{
+		return "", nil, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.PublishedPackageVersionNotFound,
 			Message: exception.PublishedPackageVersionNotFoundMsg,
@@ -88,12 +76,12 @@ func (c comparisonServiceImpl) GetComparisonResult(ctx context.Context, packageI
 		versionEnt.PackageId, versionEnt.Version, versionEnt.Revision,
 		previousVersionEnt.PackageId, previousVersionEnt.Version, previousVersionEnt.Revision,
 	)
-	comparisonEnt, err := c.publishedRepo.GetVersionComparison(ctx, comparisonId)
+	comparisonEnt, err := publishedRepo.GetVersionComparison(ctx, comparisonId)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 	if comparisonEnt == nil {
-		return nil, &exception.CustomError{
+		return "", nil, &exception.CustomError{
 			Status:  http.StatusNotFound,
 			Code:    exception.ComparisonNotFound,
 			Message: exception.ComparisonNotFoundMsg,
@@ -108,7 +96,28 @@ func (c comparisonServiceImpl) GetComparisonResult(ctx context.Context, packageI
 			},
 		}
 	}
+	return comparisonId, comparisonEnt, nil
+}
+
+func (c comparisonServiceImpl) GetComparisonResult(ctx context.Context, packageId string, version string, previousVersionPackageId string, previousVersion string) (*view.VersionComparisonSummary, error) {
+	packageEnt, err := c.publishedRepo.GetPackage(ctx, packageId)
+	if err != nil {
+		return nil, err
+	}
+	if packageEnt == nil {
+		return nil, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.PackageNotFound,
+			Message: exception.PackageNotFoundMsg,
+			Params:  map[string]interface{}{"packageId": packageId},
+		}
+	}
+	comparisonId, comparisonEnt, err := ResolveVersionComparison(ctx, c.publishedRepo, packageId, version, previousVersionPackageId, previousVersion)
+	if err != nil {
+		return nil, err
+	}
 	result := new(view.VersionComparisonSummary)
+	result.HasErrors = comparisonEnt.Metadata.GetHasErrors()
 
 	if packageEnt.Kind == entity.KIND_PACKAGE {
 		result.NoContent = comparisonEnt.NoContent
@@ -137,6 +146,10 @@ func (c comparisonServiceImpl) GetComparisonResult(ctx context.Context, packageI
 			if refView.PreviousPackageRef != "" {
 				packageVersions[refEnt.PreviousPackageId] = append(packageVersions[refEnt.PreviousPackageId], view.MakeVersionRefKey(refEnt.PreviousVersion, refEnt.PreviousRevision))
 			}
+			//each reference is a comparison of this dashboard's changelog, so a failure in any of them makes
+			//the changelog as a whole unreliable. Aggregating the slice that is returned keeps the top-level
+			//flag and the per-reference flags describing the same set.
+			result.HasErrors = result.HasErrors || refView.HasErrors
 			refComparisons = append(refComparisons, *refView)
 		}
 		packagesRefs, err := c.packageVersionEnrichmentService.GetPackageVersionRefsMap(ctx, packageVersions)

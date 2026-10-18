@@ -56,12 +56,13 @@ type MigrationBuildResultEntity struct {
 type MigrationChangelogEntity struct {
 	tableName struct{} `pg:"version_comparison, alias:version_comparison"`
 
-	PackageId         string `pg:"package_id, type:varchar"`
-	Version           string `pg:"version, type:varchar"`
-	Revision          int    `pg:"revision, type:integer"`
-	PreviousPackageId string `pg:"previous_package_id, type:varchar"`
-	PreviousVersion   string `pg:"previous_version, type:varchar"`
-	PreviousRevision  int    `pg:"previous_revision, type:integer"`
+	PackageId         string `pg:"package_id, type:varchar" json:"packageId"`
+	Version           string `pg:"version, type:varchar" json:"version"`
+	Revision          int    `pg:"revision, type:integer" json:"revision"`
+	PreviousPackageId string `pg:"previous_package_id, type:varchar" json:"previousPackageId"`
+	PreviousVersion   string `pg:"previous_version, type:varchar" json:"previousVersion"`
+	PreviousRevision  int    `pg:"previous_revision, type:integer" json:"previousRevision"`
+	SkipReason        string `pg:"skip_reason, type:varchar" json:"skipReason"`
 }
 
 type SchemaMigrationEntity struct {
@@ -103,6 +104,7 @@ type MigrationVersionEntity struct {
 	Revision                 int    `json:"revision"`
 	PreviousVersion          string `json:"previousVersion"`
 	PreviousVersionPackageId string `json:"previousVersionPackageId"`
+	SkipReason               string `json:"skipReason,omitempty"`
 }
 
 type PostCheckResultEntity struct {
@@ -132,6 +134,7 @@ func MakePostCheckResultView(entity PostCheckResultEntity) *view.PostCheckResult
 			Revision:                 version.Revision,
 			PreviousVersion:          version.PreviousVersion,
 			PreviousVersionPackageId: version.PreviousVersionPackageId,
+			Reason:                   version.SkipReason,
 		}
 	}
 
@@ -144,6 +147,7 @@ func MakePostCheckResultView(entity PostCheckResultEntity) *view.PostCheckResult
 			PreviousPackageId: comparison.PreviousPackageId,
 			PreviousVersion:   comparison.PreviousVersion,
 			PreviousRevision:  comparison.PreviousRevision,
+			Reason:            comparison.SkipReason,
 		}
 	}
 

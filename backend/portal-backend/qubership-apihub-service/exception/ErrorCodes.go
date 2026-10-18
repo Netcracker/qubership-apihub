@@ -851,6 +851,14 @@ const RequestTimeoutMsg = "The request timed out. Please try again."
 const RequestCancelled = "8701"
 const RequestCancelledMsg = "The request was cancelled before it completed. Retry the request."
 
+const VersionHasErrors = "8800"
+const VersionStatusChangeWithErrorsMsg = "Version $version for package $packageId cannot be changed to the 'release' status because it or its changelog contains errors. Fix them and republish the version."
+const PreviousVersionHasErrorsMsg = "Version $previousVersion for package $previousVersionPackageId cannot be used as the previous version because it or its changelog contains errors, so the calculated changes would be unreliable."
+const ReferencedVersionHasErrorsMsg = "Version $version for package $packageId cannot be referenced by a dashboard with the 'release' status because it or its changelog contains errors. Publish the dashboard as a draft, or exclude the reference."
+const ReleasePublishWithErrorsMsg = "Version $version for package $packageId cannot be published with the 'release' status because it contains errors. Publish the version as a draft for troubleshooting."
+const VersionCopyWithErrorsMsg = "Version $version for package $packageId cannot be copied with the 'release' status because it contains errors."
+const ErroredVersionUsedAsPreviousMsg = "Version $version for package $packageId cannot be published because it contains errors and is the previous version of: $dependentVersions. Fix the errors, or change the previous version of those versions, then retry."
+
 // AI Chat error codes (APIHUB-AI-*). Each public error has a Code constant; variant
 // messages reuse the parent Code (same pattern as InvalidParameterValue + InvalidLimitMsg).
 

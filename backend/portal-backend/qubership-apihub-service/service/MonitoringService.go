@@ -149,6 +149,14 @@ func (m *monitoringServiceImpl) startPeriodicFlushJob(interval time.Duration) {
 	})
 }
 
+// flushOpenCount upserts each buffered counter as its own statement, rather than one
+// all-or-nothing transaction: the target rows reference package_group/published_version
+// with ON DELETE CASCADE, so a counter buffered for a package or version deleted before
+// this flush runs will permanently violate the FK. Batching every counter into a single
+// transaction would let that one permanent failure roll back and indefinitely re-block
+// every other (unrelated) counter on every subsequent flush. A counter that fails on a
+// foreign-key violation is dropped (its target no longer exists, so it can never succeed);
+// any other error leaves the counter buffered for retry on the next flush.
 func (m *monitoringServiceImpl) flushOpenCount() error {
 	if len(m.versionOpenCount) == 0 && len(m.documentOpenCount) == 0 && len(m.operationOpenCount) == 0 {
 		return nil
@@ -162,54 +170,75 @@ func (m *monitoringServiceImpl) flushOpenCount() error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), monitoringFlushTimeout)
 	defer cancel()
-	err := m.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
-		versionOpenCountInsertQuery := `
-		insert into published_version_open_count as pv
-		values (?, ?, ?)
-		on conflict (package_id, version) do update
-		set open_count = pv.open_count + ?`
-		for versionKey, openCount := range m.versionOpenCount {
-			packageId, version := splitVersionKey(versionKey)
-			_, err := tx.Exec(versionOpenCountInsertQuery, packageId, version, openCount, openCount)
-			if err != nil {
-				return err
-			}
+	conn := m.cp.GetConnection()
+	var flushErr error
+
+	versionOpenCountInsertQuery := `
+	insert into published_version_open_count as pv
+	values (?, ?, ?)
+	on conflict (package_id, version) do update
+	set open_count = pv.open_count + ?`
+	for versionKey, openCount := range m.versionOpenCount {
+		packageId, version := splitVersionKey(versionKey)
+		_, err := conn.ExecContext(ctx, versionOpenCountInsertQuery, packageId, version, openCount, openCount)
+		if err == nil {
+			delete(m.versionOpenCount, versionKey)
+			continue
 		}
-		documentOpenCountInsertQuery := `
-		insert into published_document_open_count as pd
-		values (?, ?, ?, ?)
-		on conflict (package_id, version, slug) do update
-		set open_count = pd.open_count + ?`
-		for documentKey, openCount := range m.documentOpenCount {
-			packageId, version, slug := splitDocumentKey(documentKey)
-			_, err := tx.Exec(documentOpenCountInsertQuery, packageId, version, slug, openCount, openCount)
-			if err != nil {
-				return err
-			}
+		if isForeignKeyViolation(err) {
+			log.Warnf("dropping version open count for %s/%s: referenced package or version no longer exists: %v", packageId, version, err)
+			delete(m.versionOpenCount, versionKey)
+			continue
 		}
-		operationOpenCountInsertQuery := `
-		insert into operation_open_count as o
-		values (?, ?, ?, ?)
-		on conflict (package_id, version, operation_id) do update
-		set open_count = o.open_count + ?`
-		for operationKey, openCount := range m.operationOpenCount {
-			packageId, version, operationId := splitOperationKey(operationKey)
-			_, err := tx.Exec(operationOpenCountInsertQuery, packageId, version, operationId, openCount, openCount)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		// Keep the buffered counts so the next flush retries them; clearing on failure (or timeout)
-		// would silently drop metrics.
-		return err
+		flushErr = err
 	}
-	m.versionOpenCount = make(map[string]int)
-	m.documentOpenCount = make(map[string]int)
-	m.operationOpenCount = make(map[string]int)
-	return nil
+
+	documentOpenCountInsertQuery := `
+	insert into published_document_open_count as pd
+	values (?, ?, ?, ?)
+	on conflict (package_id, version, slug) do update
+	set open_count = pd.open_count + ?`
+	for documentKey, openCount := range m.documentOpenCount {
+		packageId, version, slug := splitDocumentKey(documentKey)
+		_, err := conn.ExecContext(ctx, documentOpenCountInsertQuery, packageId, version, slug, openCount, openCount)
+		if err == nil {
+			delete(m.documentOpenCount, documentKey)
+			continue
+		}
+		if isForeignKeyViolation(err) {
+			log.Warnf("dropping document open count for %s/%s/%s: referenced package or version no longer exists: %v", packageId, version, slug, err)
+			delete(m.documentOpenCount, documentKey)
+			continue
+		}
+		flushErr = err
+	}
+
+	operationOpenCountInsertQuery := `
+	insert into operation_open_count as o
+	values (?, ?, ?, ?)
+	on conflict (package_id, version, operation_id) do update
+	set open_count = o.open_count + ?`
+	for operationKey, openCount := range m.operationOpenCount {
+		packageId, version, operationId := splitOperationKey(operationKey)
+		_, err := conn.ExecContext(ctx, operationOpenCountInsertQuery, packageId, version, operationId, openCount, openCount)
+		if err == nil {
+			delete(m.operationOpenCount, operationKey)
+			continue
+		}
+		if isForeignKeyViolation(err) {
+			log.Warnf("dropping operation open count for %s/%s/%s: referenced package or version no longer exists: %v", packageId, version, operationId, err)
+			delete(m.operationOpenCount, operationKey)
+			continue
+		}
+		flushErr = err
+	}
+
+	return flushErr
+}
+
+func isForeignKeyViolation(err error) bool {
+	pgErr, ok := err.(pg.Error)
+	return ok && pgErr.IntegrityViolation()
 }
 
 func (m *monitoringServiceImpl) IncreaseBusinessMetricCounter(userId string, metric string, key string) {

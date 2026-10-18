@@ -304,14 +304,7 @@ paths:
   "/api/v3/packages/{packageId}/publish/{publishId}/status":
     parameters:
       - $ref: "#/components/parameters/packageId"
-      - name: publishId
-        description: Publish Id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-          example: 9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc
+      - $ref: "#/components/parameters/publishId"
     post:
       x-nc-api-audience: noBWC
       tags:
@@ -323,9 +316,43 @@ paths:
       requestBody:
         description: |
           Store build result, depending on the process status.
-          * **running** - build in progress, data object is not transmitted.
-          * **error** - build process will send a the list of errors.
-          * **complete** - build process will send a result in a ZIP archive.
+          * **running** - build in progress; only `status` and `builderId` are sent.
+          * **error** - the build, or the delivery of its result, failed. `errors` is required, `notifications`
+            is optional.
+          * **complete** - build completed. `data` is required.
+
+          Every property is a part of its own at the top level of the form. The `oneOf` lists the parts each
+          status requires. The backend ignores the parts a status does not use and checks only that
+          **complete** carries `data`.
+
+          A builder may send `notifications` only when a `build` or `changelog` build failed after it had
+          started, including while packaging its result. A failure before the build starts and a rejected
+          **complete** request send no `notifications`, and the backend ignores the part for any other build
+          type. A successful build carries its messages in the archive instead.
+
+          An **error** request with `notifications` (body only):
+
+          ```text
+          --boundary
+          Content-Disposition: form-data; name="status"
+
+          error
+          --boundary
+          Content-Disposition: form-data; name="builderId"
+
+          builder-1
+          --boundary
+          Content-Disposition: form-data; name="errors"
+
+          Error: Cannot build document (document: orders). You can publish version in draft status for troubleshooting
+          --boundary
+          Content-Disposition: form-data; name="notifications"; filename="failed-build-notifications.json"
+          Content-Type: application/json
+
+          {"notifications": [{"category": "build-document", "severity": 0, "message": "Cannot build document",
+          "documentId": "orders"}], "comparisonNotifications": []}
+          --boundary--
+          ```
 
           ZIP archive with build result can contain folders with sources, builded documents, JSON operation files, and contract files. In addition, several config files are provided. The structure of these files is described in buildResult schema.
           There are following build types:
@@ -348,10 +375,6 @@ paths:
                 - status
                 - builderId
               properties:
-                data:
-                  oneOf:
-                    - $ref: "#/components/schemas/BuildResult"
-                    - $ref: "#/components/schemas/BuildErrors"
                 status:
                   description: Build process result status.
                   type: string
@@ -362,6 +385,67 @@ paths:
                 builderId:
                   description: Builder identifier.
                   type: string
+                data:
+                  description: |
+                    Build result, required with **complete** status and not sent otherwise.
+
+                    For an export build, it is the exported content: the exported file itself when the export
+                    produced a single file, or a ZIP archive of the exported files when it produced several. The
+                    backend stores the file name and uses it as the download name.
+
+                    For any other build type, it is a ZIP archive whose structure is described in the BuildResult
+                    schema, and its file name must end with `.zip`. The backend ignores the part's `Content-Type`.
+                  type: string
+                  format: binary
+                errors:
+                  description: |
+                    Build error message, required with **error** status and not sent otherwise. A single free-form
+                    string, not structured: it usually starts with the error's name, such as `Error:` or
+                    `TypeError:`, and may end with debug details in parentheses.
+                  type: string
+                notifications:
+                  description: |
+                    Messages the build had raised before it failed, sent with **error** status only. Builders send a
+                    file part with a file name, such as `failed-build-notifications.json`. The backend reads it as a
+                    file and ignores its `Content-Type`; a plain form field without a file name is not read. The
+                    content follows the FailedBuildNotifications schema, not the archive's notifications.json.
+
+                    An invalid part (not JSON, not valid against FailedBuildNotifications, or sent more than once)
+                    must not fail the request: the backend applies the **error** status and drops the part, because
+                    a builder does not retry a 400. A new `category` or `severity` value must ship in this spec and
+                    the backend together with the builder that emits it.
+                  allOf:
+                    - $ref: "#/components/schemas/FailedBuildNotifications"
+              oneOf:
+                - properties:
+                    status:
+                      enum:
+                        - running
+                  required:
+                    - status
+                - properties:
+                    status:
+                      enum:
+                        - error
+                  required:
+                    - status
+                    - errors
+                - properties:
+                    status:
+                      enum:
+                        - complete
+                  required:
+                    - status
+                    - data
+            encoding:
+              notifications:
+                contentType: application/json
+                headers:
+                  Content-Disposition:
+                    description: Carries the file name that makes the part a file part.
+                    schema:
+                      type: string
+                      example: 'form-data; name="notifications"; filename="failed-build-notifications.json"'
       responses:
         "204":
           description: No content
@@ -971,6 +1055,15 @@ components:
       schema:
         type: string
         example: QS.CloudQSS.CPQ.Q-TMF
+    publishId:
+      name: publishId
+      description: Publish Id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: 9c8e9045-dd9c-4946-b9e4-e05e3f41c4cc
     builderId:
       name: builderId
       in: path
@@ -1392,6 +1485,15 @@ components:
                 buildId:
                   description: Id of the build.
                   type: string
+                hasErrors:
+                  description: |
+                    Flag showing that at least one document of the version has a critical problem, i.e. the
+                    build produced at least one notification with severity = 0 (Error). See notifications.json
+                    for the details.
+
+                    A version with hasErrors = true can only be published in `draft` status.
+                  type: boolean
+                  default: false
                 validationRulesSeverity:
                   type: object
                   description: Configuration for validation rules severity levels
@@ -1525,6 +1627,17 @@ components:
                         items:
                           type: string
                         example: ["get-quoteManagement-v5-quote"]
+                      hasErrors:
+                        description: |
+                          Flag showing that the document has a critical problem, i.e. the build produced at
+                          least one notification with severity = 0 (Error) attributed to this document.
+                          Such a document is published and keeps whatever the build managed to produce from
+                          it: the flag marks the document, it does not empty it. A document with no
+                          operations or contract entities is one whose parsing or build left nothing to
+                          expose.
+                          See notifications.json for the details.
+                        type: boolean
+                        default: false
                       apiKind:
                         $ref: "#/components/schemas/ApiKind"
                       metadata:
@@ -1561,6 +1674,17 @@ components:
                                     type: string
                                   url:
                                     type: string
+            notifications.json:
+              description: |
+                Problems detected while building the version's own documents and operations.
+              allOf:
+                - $ref: "#/components/schemas/BuildResultNotifications"
+            comparison-notifications.json:
+              description: |
+                Problems detected while calculating the changelog against the previous version, grouped by
+                comparison. Only present when previousVersion is specified in the build configuration.
+              allOf:
+                - $ref: "#/components/schemas/BuildResultComparisonNotifications"
             version-internal-documents.json:
               type: object
               description: List of version internal documents data. Only provided for packages of kind `package`.
@@ -1579,6 +1703,8 @@ components:
                   type: array
                   items:
                     $ref: "#/components/schemas/ComparisonInternalDocumentMetadata"
+            cached-comparisons.json:
+              $ref: "#/components/schemas/BuildResultCachedComparisons"
             comparisons.json:
               $ref: "#/components/schemas/BuildResultComparisons"
             comparisons/{comparisonFileId}:
@@ -1758,6 +1884,8 @@ components:
                       example: "cloudQSS-release2"
             comparison-internal-documents.json:
               $ref: "#/components/schemas/BuildResultInternalDocuments"
+            cached-comparisons.json:
+              $ref: "#/components/schemas/BuildResultCachedComparisons"
             comparisons.json:
               $ref: "#/components/schemas/BuildResultComparisons"
             comparisons/{comparisonFileId}:
@@ -1766,6 +1894,12 @@ components:
               $ref: "#/components/schemas/BuildResultDdlComparisons"
             ddl-comparisons/{comparisonFileId}:
               $ref: "#/components/schemas/BuildResultDdlComparisonsData"
+            comparison-notifications.json:
+              description: |
+                Problems detected while calculating the changelog against the previous version, grouped by
+                comparison.
+              allOf:
+                - $ref: "#/components/schemas/BuildResultComparisonNotifications"
         - title: Build result for mergedSpecification and reducedSourceSpecifications
           description: |
             Build result for the following buildType:
@@ -2054,12 +2188,52 @@ components:
           description: Number of unclassified changes.
           type: integer
           default: 0
-    BuildErrors:
+    FailedBuildNotifications:
+      description: |
+        Messages the build had raised before it failed, sent as a separate part of the status request.
+
+        A failed build publishes no version and writes no archive, so notifications.json and
+        comparison-notifications.json are never produced for it and its messages would otherwise be lost.
+        The backend stores these against the build itself, and
+        `GET /api/v2/packages/{packageId}/versions/{version}/notifications` does not return them - the version
+        they were raised for does not exist.
+
+        The two streams keep the meaning they have in the archive. `notifications` holds the messages raised
+        while building the version's own documents, as notifications.json does; `comparisonNotifications`
+        holds the messages raised while calculating the changelog against the previous version, as
+        comparison-notifications.json does. Calculating the changelog starts with resolving the previous
+        version, which happens before the documents are built, so a build that failed while building its
+        documents can already carry a `version-not-resolved` message in `comparisonNotifications`. Both lists
+        are always present, and either or both may be empty; a changelog build builds no documents, so its
+        `notifications` list is empty. The backend stores both lists as one:
+        `GET /api/v2/packages/{packageId}/publish/{publishId}/notifications` returns them together, and the
+        category of a message tells which phase raised it.
+
+        The changelog messages are not grouped by version pair, unlike comparison-notifications.json. The
+        backend stores the part only for a package of kind `package`, and a package build calculates at most
+        one comparison: its version against the previous version. A package version cannot have references,
+        so there are no reference pairs to tell apart.
+
+        A dashboard build is not covered. The part may still be sent for one, and the backend accepts the
+        request and stores nothing from it.
+
+        Severity is the integer of the builder contract here, as it is in the archive. The API returns the
+        string form.
       type: object
+      required:
+        - notifications
+        - comparisonNotifications
       properties:
-        errors:
-          type: string
-          description: Build error message.
+        notifications:
+          description: Messages raised while building the version's own documents and operations.
+          type: array
+          items:
+            $ref: "#/components/schemas/BuildResultNotificationMessage"
+        comparisonNotifications:
+          description: Messages raised while calculating the changelog against the previous version.
+          type: array
+          items:
+            $ref: "#/components/schemas/BuildResultNotificationMessage"
     ChangeSeverity:
       description: Severity of the particular change.
       type: string
@@ -2505,12 +2679,155 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/InternalDocumentMetadata"
+    BuildResultNotificationMessage:
+      type: object
+      description: |
+        A single message produced while processing the build.
+      required:
+        - category
+        - severity
+        - message
+      properties:
+        category:
+          description: |
+            Stable code identifying which check produced the message. One value per diagnostic, so it is
+            precise enough to filter on without matching message text. The category describes the kind of
+            problem, not the build phase - the phase is defined by the file the message is in.
+
+            Values share a domain prefix (ref-, mcp-, ddl-, tolerant-hash-, risky-, version-), so a coarse
+            grouping can be derived by prefix without a second field.
+          type: string
+          enum:
+            - parse-file
+            - invalid-text-file
+            - file-not-parsed
+            - build-document
+            - swagger-conversion
+            - ref-has-siblings
+            - ref-not-allowed
+            - ref-not-found
+            - ref-not-valid-format
+            - build-operations
+            - duplicate-operation-id
+            - rest-duplicate-operation
+            - async-duplicate-operation
+            - empty-path-parameter
+            - double-slash-path
+            - ddl-duplicate-object
+            - ddl-parse-issue
+            - ddl-entity-build
+            - ddl-duplicate-entity
+            - mcp-entity-build
+            - mcp-document-schema
+            - mcp-init-required
+            - mcp-duplicate-entity
+            - mcp-capability-unused
+            - tolerant-hash-missing
+            - tolerant-hash-failed
+            - deprecated-component-path
+            - version-not-resolved
+            - version-refs-not-resolved
+            - version-documents-missing
+            - risky-before-value
+            - risky-origins
+            - comparison-serialization
+            - group-documents-missing
+            - partial-group-documents
+          example: build-document
+        severity:
+          description: |
+            Severity of the message.
+            * **0** - Error
+            * **1** - Warning
+            * **2** - Information
+            * **3** - Hint
+          type: integer
+          enum:
+            - 0
+            - 1
+            - 2
+            - 3
+          example: 0
+        message:
+          description: Human readable message text.
+          type: string
+          example: "Cannot process the \"docs/events.yaml\" document. Unexpected token"
+        documentId:
+          description: |
+            Slug of the document the message is attributed to, matching the `slug` field in documents.json.
+
+            Messages are denormalized by document: a problem that concerns several documents at once,
+            e.g. an operation id duplicated between two documents, is reported as several messages with
+            the same text, one per affected document.
+
+            Absent when the message is not attributable to any document, e.g. the previous version of
+            the comparison could not be resolved.
+          type: string
+          example: "events-yaml"
+    BuildResultNotifications:
+      type: object
+      description: |
+        Content of notifications.json - problems detected while building the version's own documents and
+        operations, e.g. parse and validation problems.
+
+        A message with severity = 0 (Error) is a critical problem: the affected document and the version are
+        marked with hasErrors, and the version can only be published in `draft` status.
+      properties:
+        notifications:
+          description: List of build notifications.
+          type: array
+          items:
+            $ref: "#/components/schemas/BuildResultNotificationMessage"
+    BuildResultComparisonNotifications:
+      type: object
+      description: |
+        Content of comparison-notifications.json - problems detected while calculating a changelog against a
+        previous version.
+
+        Messages are grouped by the version pair they belong to, because a single build can produce several
+        comparisons (the root version pair plus one per dashboard reference). Each entry of `comparisons`
+        carries the same version pair identity as the corresponding entry of comparisons.json, so it can be
+        matched to that comparison without guessing.
+
+        Every message belongs to exactly one version pair: it is reported for the comparison it was produced
+        for and for no other, whatever else the build was comparing at the time. There is no build-level
+        bucket.
+
+        A message with severity = 0 (Error) marks the corresponding entry of comparisons.json /
+        ddl-comparisons.json with hasErrors. It never marks the version or its documents - it describes the
+        comparison, not the quality of the version being published. It does, however, prevent publication in
+        `release` status: a release version that declares a previousVersion is expected to ship a reliable
+        changelog.
+      properties:
+        comparisons:
+          description: |
+            Messages grouped by the version pair they were produced for.
+
+            Contains an entry only for comparisons this build actually calculated. A comparison reused from
+            the backend (its version pair is listed in cached-comparisons.json) has no entry, because nothing
+            was computed for it - an empty entry would replace the notifications stored when that comparison
+            was calculated. Its hasErrors flag is still reported in comparisons.json, carried over from the
+            stored comparison.
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/BuildResultComparisonData"
+              - type: object
+                properties:
+                  notifications:
+                    description: |
+                      Messages produced while calculating this comparison, and only those.
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/BuildResultNotificationMessage"
     BuildResultComparisonData:
       type: object
       description: |
         Common metadata for a single version-to-version comparison entry, shared by the operation comparison
         index (comparisons.json) and the DDL comparison index (ddl-comparisons.json). Each index extends this
         with its own change-summary field (`operationTypes` / `contractsChangesSummary`).
+
+        Reuse of a comparison is recorded per version pair in cached-comparisons.json.
       properties:
         comparisonFileId:
           type: string
@@ -2538,9 +2855,65 @@ components:
           example: "QS.CloudQSS.CPQ.Q-TMF"
         previousVersionRevision:
           type: number
-        fromCache:
-          description: True if the changes were retrieved from BE (not calculated).
+        hasErrors:
+          description: |
+            Flag showing that the changelog calculation for this version pair produced at least one message
+            with severity = 0 (Error), i.e. the comparison may be incomplete or inaccurate.
+            See comparison-notifications.json for the details.
+
+            When the version pair is listed in cached-comparisons.json the comparison was reused rather than
+            calculated, so the flag is carried over from the stored comparison and comparison-notifications.json
+            holds no entry for it.
+
+            The flag describes the comparison only. It does not mark the compared versions and does not
+            prevent publication of a version in `release` status.
           type: boolean
+          default: false
+    BuildResultCachedComparisons:
+      type: object
+      description: |
+        Content of cached-comparisons.json - the version pairs whose comparison the build reused from the backend instead of calculating.
+        An entry means the following for the pair it names:
+          - the stored comparison is kept, the archive carries no recalculated one;
+          - the archive carries no changes and no notifications for the pair;
+          - the pair keeps its entry in comparisons.json.
+        One entry covers both comparison indexes, comparisons.json and ddl-comparisons.json.
+        Only the references of a dashboard are reused. The pair the build was started for is always calculated and is never listed.
+        The file is present whenever comparisons.json is present. The list is empty when nothing was reused.
+      properties:
+        cachedComparisons:
+          description: |
+            Version pairs reused from the backend. Each is identified by the same six fields that identify a comparison entry and carries the same values as that entry.
+            revision and previousVersionRevision are 0 when the version carries no revision.
+          type: array
+          items:
+            type: object
+            required:
+              - packageId
+              - version
+              - previousVersionPackageId
+              - previousVersion
+            properties:
+              packageId:
+                description: Package unique string identifier (full alias).
+                type: string
+                example: "QS.CloudQSS.CPQ.Q-TMF"
+              version:
+                description: Version name for publication.
+                type: string
+                example: "2022.3"
+              revision:
+                type: number
+              previousVersionPackageId:
+                description: Previous release version package id.
+                type: string
+                example: "QS.CloudQSS.CPQ.Q-TMF"
+              previousVersion:
+                description: Name of the previous published version.
+                type: string
+                example: "2022.2"
+              previousVersionRevision:
+                type: number
     BuildResultComparisons:
       type: object
       properties:
@@ -2703,9 +3076,12 @@ components:
                   search:
                     $ref: "#/components/schemas/SearchUseEntityData"
                   documentId:
-                    description: fileId of the source DDL document this entity was extracted from.
+                    description: |
+                      Slug of the source DDL document this entity was extracted from.
+                      Corresponds to the `slug` field of the document in documents.json.
                     type: string
-                    example: ddl/shop.sql
+                    pattern: "^[a-z0-9-]"
+                    example: shop-sql
                   versionInternalDocumentId:
                     description: |
                       Id of the version internal document holding the normalized/denormalized Realm for the
@@ -2810,8 +3186,11 @@ components:
           type: string
           example: /mcp
         documentId:
-          description: Source document identifier.
+          description: |
+            Slug of the source MCP document this entity was extracted from.
+            Corresponds to the `slug` field of the document in documents.json.
           type: string
+          pattern: "^[a-z0-9-]"
           example: tools-forecast-json
     BuildResultDdlComparisons:
       type: object

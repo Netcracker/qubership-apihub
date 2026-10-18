@@ -176,7 +176,8 @@ func TestValidatePublishBuildResult_DdlComparisons(t *testing.T) {
 
 	t.Run("comparisons without a comparisonFileId are skipped", func(t *testing.T) {
 		// a comparison entry with no comparisonFileId carries no per-pair diff file
-		// (e.g. FromCache) and must not be treated as a reference to a missing file.
+		// (e.g. a pair listed in cached-comparisons.json) and must not be treated as a
+		// reference to a missing file.
 		zipReader := buildResultZipReader(t, map[string]string{})
 		buildArc := archive.NewBuildResultArchive(zipReader)
 		buildArc.PackageDdlComparisons = view.PackageDdlComparisonsFile{
@@ -185,5 +186,27 @@ func TestValidatePublishBuildResult_DdlComparisons(t *testing.T) {
 
 		err := ValidatePublishBuildResult(buildArc)
 		assert.NoError(t, err)
+	})
+}
+
+func TestValidatePublishBuildResult_CachedComparisons(t *testing.T) {
+	t.Run("cached-comparisons.json is a known archive file", func(t *testing.T) {
+		zipReader := buildResultZipReader(t, map[string]string{
+			archive.CachedComparisonsFilePath: `{"cachedComparisons":[]}`,
+		})
+		buildArc := archive.NewBuildResultArchive(zipReader)
+
+		err := ValidatePublishBuildResult(buildArc)
+		assert.NoError(t, err)
+	})
+
+	t.Run("an unknown top-level file is still rejected", func(t *testing.T) {
+		zipReader := buildResultZipReader(t, map[string]string{
+			"cached-comparison.json": `{"cachedComparisons":[]}`,
+		})
+		buildArc := archive.NewBuildResultArchive(zipReader)
+
+		err := ValidatePublishBuildResult(buildArc)
+		expectCustomErrorCode(t, err, exception.FileRedundant)
 	})
 }

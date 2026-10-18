@@ -38,7 +38,10 @@ bash .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.sh
 powershell -File .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1
 ```
 
-Fix any reported duplicate numbers before finishing.
+The script reports:
+
+- an error for a duplicate number, a gap in the numbering, or a down file without an up file; fix these before finishing;
+- a warning for an up migration without a down migration. This is allowed for data fixes that cannot be reverted; confirm it is intentional.
 
 ## Completion checklist (backend additions)
 
@@ -46,7 +49,7 @@ In addition to the `apihub-go-developer` checklist:
 
 - [ ] Go conventions and `Service.go` / `ErrorCodes.go` rules followed.
 - [ ] REST changes reflected in `docs/api/*.yaml`.
-- [ ] Migrations use unique prefix (script passed).
+- [ ] Migration check script passed; any missing-down warning is intentional.
 - [ ] **Related repositories** — deployment and Postman follow-up skills applied when applicable (`apihub-deployment-followup`, `postman-e2e-followup`).
 - [ ] End-to-end verified locally via `advanced-verification` when the change affects HTTP behavior.
 

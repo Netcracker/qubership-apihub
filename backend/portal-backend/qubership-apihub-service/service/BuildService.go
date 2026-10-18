@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -25,9 +26,11 @@ import (
 
 type BuildService interface {
 	PublishVersion(ctx context.Context, config view.BuildConfig, src []byte, clientBuild bool, builderId string, dependencies []string, resolveRefs bool, resolveConflicts bool) (*view.PublishV2Response, error)
-	GetStatus(ctx context.Context, buildId string) (string, string, error)
+	GetStatus(ctx context.Context, buildId string) (*view.PublishStatusResponse, error)
 	GetStatuses(ctx context.Context, buildIds []string) ([]view.PublishStatusResponse, error)
 	UpdateBuildStatus(ctx context.Context, buildId string, status view.BuildStatusEnum, details string) error
+	FailBuild(ctx context.Context, packageId string, buildId string, details string, notificationsPart []byte) error
+	GetBuildNotifications(ctx context.Context, packageId string, buildId string, filter view.NotificationsFilter) (*view.Notifications, error)
 	GetFreeBuild(ctx context.Context, builderId string) ([]byte, error)
 	CreateChangelogBuild(ctx context.Context, config view.BuildConfig, isExternal bool, builderId string) (string, view.BuildConfig, error) //deprecated
 	GetBuildViewByChangelogSearchQuery(ctx context.Context, searchRequest view.ChangelogBuildSearchRequest) (*view.BuildView, error)
@@ -152,7 +155,7 @@ func (b *buildServiceImpl) PublishVersion(ctx context.Context, config view.Build
 		if config.PreviousVersionPackageId != "" {
 			previousVersionPackageId = config.PreviousVersionPackageId
 		}
-		previousVersionStatus, previousVersionFound, err := b.publishService.GetVersionStatus(ctx, previousVersionPackageId, config.PreviousVersion)
+		previousVersionStatus, previousVersionHasErrors, previousVersionFound, err := b.publishService.GetVersionStatus(ctx, previousVersionPackageId, config.PreviousVersion)
 		if err != nil {
 			return nil, err
 		}
@@ -168,6 +171,17 @@ func (b *buildServiceImpl) PublishVersion(ctx context.Context, config view.Build
 		if b.previousVersionStatusValidationEnabled &&
 			config.BuildType == view.PublishType && config.Status == string(view.Release) && previousVersionStatus == string(view.Draft) {
 			return nil, newReleaseVersionPreviousVersionNotReleaseError(ctx, config.PackageId, config.Version, previousVersionPackageId, config.PreviousVersion)
+		}
+		if previousVersionHasErrors {
+			return nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.VersionHasErrors,
+				Message: exception.PreviousVersionHasErrorsMsg,
+				Params: map[string]interface{}{
+					"previousVersionPackageId": previousVersionPackageId,
+					"previousVersion":          config.PreviousVersion,
+				},
+			}
 		}
 
 		dependencyCycleExists, err := b.publishService.CheckPreviousVersionDependencyCycle(ctx, config.PackageId, config.Version, config.PreviousVersionPackageId, config.PreviousVersion, config.ComparisonRevision)
@@ -223,7 +237,7 @@ func (b *buildServiceImpl) PublishVersion(ctx context.Context, config view.Build
 		config.ResolveConflicts = resolveConflicts
 		config.ResolveRefs = resolveRefs
 	} else {
-		config.Refs, err = b.refResolverService.CalculateBuildConfigRefs(ctx, config.Refs, resolveRefs, resolveConflicts)
+		config.Refs, err = b.refResolverService.CalculateBuildConfigRefs(ctx, config.Refs, config.Status, resolveRefs, resolveConflicts)
 		if err != nil {
 			return nil, err
 		}
@@ -273,6 +287,28 @@ func (b *buildServiceImpl) setValidationRulesSeverity(config view.BuildConfig) v
 // CreateChangelogBuild deprecated. use to CreateBuildWithoutDependencies
 func (b *buildServiceImpl) CreateChangelogBuild(ctx context.Context, config view.BuildConfig, isExternal bool, builderId string) (string, view.BuildConfig, error) {
 	config = b.setValidationRulesSeverity(config)
+
+	if config.PreviousVersion != "" {
+		previousVersionPackageId := config.PackageId
+		if config.PreviousVersionPackageId != "" {
+			previousVersionPackageId = config.PreviousVersionPackageId
+		}
+		_, previousVersionHasErrors, _, err := b.publishService.GetVersionStatus(ctx, previousVersionPackageId, config.PreviousVersion)
+		if err != nil {
+			return "", config, err
+		}
+		if previousVersionHasErrors {
+			return "", config, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.VersionHasErrors,
+				Message: exception.PreviousVersionHasErrorsMsg,
+				Params: map[string]interface{}{
+					"previousVersionPackageId": previousVersionPackageId,
+					"previousVersion":          config.PreviousVersion,
+				},
+			}
+		}
+	}
 
 	status := view.StatusNotStarted
 	if isExternal {
@@ -426,15 +462,21 @@ func (b *buildServiceImpl) addBuild(ctx context.Context, config view.BuildConfig
 	return buildEnt.BuildId, config, nil
 }
 
-func (b *buildServiceImpl) GetStatus(ctx context.Context, buildId string) (string, string, error) {
+func (b *buildServiceImpl) GetStatus(ctx context.Context, buildId string) (*view.PublishStatusResponse, error) {
 	ent, err := b.buildRepository.GetBuild(ctx, buildId)
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 	if ent == nil {
-		return "", "", nil
+		return nil, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.BuildNotFoundById,
+			Message: exception.BuildNotFoundByIdMsg,
+			Params:  map[string]interface{}{"id": buildId},
+		}
 	}
-	return ent.Status, ent.Details, nil
+	status := entity.MakePublishStatusResponse(ent)
+	return &status, nil
 }
 
 func (b *buildServiceImpl) GetStatuses(ctx context.Context, buildIds []string) ([]view.PublishStatusResponse, error) {
@@ -444,11 +486,7 @@ func (b *buildServiceImpl) GetStatuses(ctx context.Context, buildIds []string) (
 	}
 	var result []view.PublishStatusResponse
 	for _, ent := range ents {
-		result = append(result, view.PublishStatusResponse{
-			PublishId: ent.BuildId,
-			Status:    ent.Status,
-			Message:   ent.Details,
-		})
+		result = append(result, entity.MakePublishStatusResponse(&ent))
 	}
 	return result, nil
 }
@@ -460,6 +498,70 @@ func (b *buildServiceImpl) UpdateBuildStatus(ctx context.Context, buildId string
 	}
 
 	return nil
+}
+
+func (b *buildServiceImpl) FailBuild(ctx context.Context, packageId string, buildId string, details string, notificationsPart []byte) error {
+	var notifications []entity.ErrorBuildNotificationEntity
+	if notificationsPart != nil {
+		var part view.FailedBuildNotifications
+		err := json.Unmarshal(notificationsPart, &part)
+		if err == nil {
+			err = validation.ValidateFailedBuildNotifications(part)
+		}
+		if err != nil {
+			log.Warnf("Build %s: dropping invalid notifications part: %v", buildId, err)
+		} else {
+			pkg, err := b.packageService.GetPackage(ctx, packageId, false)
+			if err != nil {
+				return err
+			}
+			// only package builds store the part: a dashboard build compares one version pair per reference, and the
+			// flat part cannot tell the pairs apart
+			if pkg.Kind == entity.KIND_PACKAGE {
+				notifications = make([]entity.ErrorBuildNotificationEntity, 0, len(part.Notifications)+len(part.ComparisonNotifications))
+				for _, notification := range slices.Concat(part.Notifications, part.ComparisonNotifications) {
+					severity, err := view.NotificationSeverityFromBuilder(notification.Severity)
+					if err != nil {
+						return fmt.Errorf("build %s: %w", buildId, err)
+					}
+					notifications = append(notifications, entity.ErrorBuildNotificationEntity{
+						BuildId:    buildId,
+						Severity:   severity,
+						Category:   notification.Category,
+						Message:    notification.Message,
+						DocumentId: notification.DocumentId,
+					})
+				}
+			} else {
+				log.Debugf("Build %s: notifications of a dashboard build are not stored", buildId)
+			}
+		}
+	}
+	return b.buildRepository.FailBuild(ctx, buildId, details, notifications)
+}
+
+func (b *buildServiceImpl) GetBuildNotifications(ctx context.Context, packageId string, buildId string, filter view.NotificationsFilter) (*view.Notifications, error) {
+	ent, err := b.buildRepository.GetBuild(ctx, buildId)
+	if err != nil {
+		return nil, err
+	}
+	if ent == nil || ent.PackageId != packageId {
+		return nil, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.BuildNotFoundById,
+			Message: exception.BuildNotFoundByIdMsg,
+			Params:  map[string]interface{}{"id": buildId},
+		}
+	}
+	ents, err := b.buildRepository.GetBuildNotifications(ctx, buildId, filter)
+	if err != nil {
+		return nil, err
+	}
+	result := view.Notifications{Notifications: make([]view.Notification, 0, len(ents))}
+	for _, notificationEnt := range ents {
+		result.Notifications = append(result.Notifications, entity.MakeErrorBuildNotificationView(notificationEnt))
+	}
+	return &result, nil
 }
 
 func (b *buildServiceImpl) GetFreeBuild(ctx context.Context, builderId string) ([]byte, error) {

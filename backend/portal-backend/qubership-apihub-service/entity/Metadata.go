@@ -34,6 +34,10 @@ const PROTOCOL_KEY = "protocol"
 const ASYNC_OPERATION_ID_KEY = "asyncOperationId"
 const MESSAGE_ID_KEY = "messageId"
 const OPERATION_ID_V1 = "operationIdV1"
+const HAS_ERRORS_KEY = "has_errors"
+const CHANGELOG_HAS_ERRORS_KEY = "changelog_has_errors"
+const HAS_NOTIFICATIONS_KEY = "has_notifications"
+const MCP_ENDPOINT_KEY = "mcp_endpoint"
 
 type Metadata map[string]interface{}
 
@@ -50,6 +54,13 @@ func (m Metadata) GetIntValue(field string) int {
 		return int(fieldValue)
 	}
 	return 0
+}
+
+func (m Metadata) GetBoolValue(field string) bool {
+	if fieldValue, ok := m[field].(bool); ok {
+		return fieldValue
+	}
+	return false
 }
 
 func (m Metadata) GetObject(field string) interface{} {
@@ -418,6 +429,38 @@ func (m Metadata) GetOperationIdV1() string {
 		return operationIdV1
 	}
 	return ""
+}
+
+func (m Metadata) SetHasErrors(hasErrors bool) {
+	m[HAS_ERRORS_KEY] = hasErrors
+}
+
+func (m Metadata) GetHasErrors() bool {
+	return m.GetBoolValue(HAS_ERRORS_KEY)
+}
+
+func (m Metadata) SetChangelogHasErrors(changelogHasErrors bool) {
+	m[CHANGELOG_HAS_ERRORS_KEY] = changelogHasErrors
+}
+
+func (m Metadata) GetChangelogHasErrors() bool {
+	return m.GetBoolValue(CHANGELOG_HAS_ERRORS_KEY)
+}
+
+func (m Metadata) SetHasNotifications(hasNotifications bool) {
+	m[HAS_NOTIFICATIONS_KEY] = hasNotifications
+}
+
+func (m Metadata) GetHasNotifications() bool {
+	return m.GetBoolValue(HAS_NOTIFICATIONS_KEY)
+}
+
+func (m Metadata) SetMcpEndpoint(mcpEndpoint string) {
+	m[MCP_ENDPOINT_KEY] = mcpEndpoint
+}
+
+func (m Metadata) GetMcpEndpoint() string {
+	return m.GetStringValue(MCP_ENDPOINT_KEY)
 }
 
 func (m Metadata) MergeMetadata(other Metadata) {

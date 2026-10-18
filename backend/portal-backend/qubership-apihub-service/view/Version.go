@@ -19,6 +19,8 @@ type VersionContent struct {
 	OperationGroups          []VersionOperationGroup `json:"operationGroups,omitempty"`
 	ApiProcessorVersion      string                  `json:"apiProcessorVersion"`
 	ContractsSummary         *ContractsSummaryView   `json:"contractsSummary,omitempty"`
+	HasErrors                bool                    `json:"hasErrors"`
+	ChangelogHasErrors       *bool                   `json:"changelogHasErrors,omitempty"`
 }
 
 // ContractsSummaryView is an object keyed by contract type (ddl, mcp).
@@ -31,13 +33,15 @@ type DdlVersionContractSummary struct {
 	TablesCount              int            `json:"tablesCount"`
 	ChangesSummary           *ChangeSummary `json:"changesSummary,omitempty"`
 	NumberOfImpactedEntities *ChangeSummary `json:"numberOfImpactedEntities,omitempty"`
+	HasErrors                bool           `json:"hasErrors"`
 }
 
 // McpEndpointSummary is the per-MCP-endpoint entity counts (inits intentionally omitted).
 type McpEndpointSummary struct {
-	ToolsCount     int `json:"toolsCount"`
-	PromptsCount   int `json:"promptsCount"`
-	ResourcesCount int `json:"resourcesCount"`
+	ToolsCount     int  `json:"toolsCount"`
+	PromptsCount   int  `json:"promptsCount"`
+	ResourcesCount int  `json:"resourcesCount"`
+	HasErrors      bool `json:"hasErrors"`
 }
 
 type VersionOperationType struct {
@@ -50,6 +54,7 @@ type VersionOperationType struct {
 	InternalAudienceOperationsCount *int                    `json:"internalAudienceOperationsCount,omitempty"`
 	UnknownAudienceOperationsCount  *int                    `json:"unknownAudienceOperationsCount,omitempty"`
 	ApiAudienceTransitions          []ApiAudienceTransition `json:"apiAudienceTransitions,omitempty"`
+	HasErrors                       bool                    `json:"hasErrors"`
 }
 
 type VersionOperationGroup struct {
@@ -88,6 +93,8 @@ type PublishedVersionListView struct {
 	PreviousVersionPackageId string                 `json:"previousVersionPackageId,omitempty"`
 	NotLatestRevision        bool                   `json:"notLatestRevision,omitempty"`
 	ApiProcessorVersion      string                 `json:"apiProcessorVersion"`
+	HasErrors                bool                   `json:"hasErrors"`
+	ChangelogHasErrors       *bool                  `json:"changelogHasErrors,omitempty"`
 }
 
 // PublishedVersionListMCPView is a compact view used in MCP resources.
@@ -136,16 +143,19 @@ type CompareVersionsReq struct {
 }
 
 type PackageVersionRef struct {
-	RefPackageId      string     `json:"refId"`
-	Kind              string     `json:"kind"`
-	RefPackageName    string     `json:"name"`
-	RefPackageVersion string     `json:"version"`
-	Status            string     `json:"status"`
-	DeletedAt         *time.Time `json:"deletedAt,omitempty"`
-	DeletedBy         string     `json:"deletedBy,omitempty"`
-	ParentNames       []string   `json:"parentPackages,omitempty"`
-	ServiceName       string     `json:"-"`
-	NotLatestRevision bool       `json:"notLatestRevision,omitempty"`
+	RefPackageId        string     `json:"refId"`
+	Kind                string     `json:"kind"`
+	RefPackageName      string     `json:"name"`
+	RefPackageVersion   string     `json:"version"`
+	Status              string     `json:"status"`
+	ApiProcessorVersion string     `json:"apiProcessorVersion"`
+	HasErrors           bool       `json:"hasErrors"`
+	ChangelogHasErrors  *bool      `json:"changelogHasErrors,omitempty"`
+	DeletedAt           *time.Time `json:"deletedAt,omitempty"`
+	DeletedBy           string     `json:"deletedBy,omitempty"`
+	ParentNames         []string   `json:"parentPackages,omitempty"`
+	ServiceName         string     `json:"-"`
+	NotLatestRevision   bool       `json:"notLatestRevision,omitempty"`
 }
 
 type PackageVersionRevisions struct {
@@ -153,14 +163,17 @@ type PackageVersionRevisions struct {
 }
 
 type PackageVersionRevision struct {
-	Version           string                 `json:"version"`
-	Revision          int                    `json:"revision"`
-	Status            string                 `json:"status"`
-	CreatedBy         map[string]interface{} `json:"createdBy"`
-	CreatedAt         time.Time              `json:"createdAt"`
-	RevisionLabels    []string               `json:"revisionLabels"`
-	PublishMeta       BuildConfigMetadata    `json:"publishMeta"`
-	NotLatestRevision bool                   `json:"notLatestRevision,omitempty"`
+	Version             string                 `json:"version"`
+	Revision            int                    `json:"revision"`
+	Status              string                 `json:"status"`
+	CreatedBy           map[string]interface{} `json:"createdBy"`
+	CreatedAt           time.Time              `json:"createdAt"`
+	RevisionLabels      []string               `json:"revisionLabels"`
+	PublishMeta         BuildConfigMetadata    `json:"publishMeta"`
+	ApiProcessorVersion string                 `json:"apiProcessorVersion"`
+	NotLatestRevision   bool                   `json:"notLatestRevision,omitempty"`
+	HasErrors           bool                   `json:"hasErrors"`
+	ChangelogHasErrors  *bool                  `json:"changelogHasErrors,omitempty"`
 }
 
 type DeleteVersionsRecursivelyReq struct {

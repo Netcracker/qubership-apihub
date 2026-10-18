@@ -1,0 +1,4671 @@
+{
+ "info": {
+  "name": "Tolerant publication E2E",
+  "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+  "description": "Verifies tolerant publication: a version whose documents fail to build is still published in draft\nstatus, is marked with hasErrors, exposes per-document error details through the notification\nendpoints, and is barred from every composition that would spread the error.\n\nEndpoints under test:\n  GET   /api/v2/packages/{packageId}/versions/{version}/notifications\n  GET   /api/v2/packages/{packageId}/versions/{version}/changes/notifications\n  GET   /api/v2/packages/{packageId}/versions/{version}/changes/summary    (hasErrors)\n  GET   /api/v3/packages/{packageId}/versions/{version}          (hasErrors, contract summaries)\n  GET   /api/v3/packages/{packageId}/versions                    (hasErrors)\n  GET   /api/v2/packages/{packageId}/versions/{version}/documents (hasErrors)\n  POST  /api/v2/packages/{packageId}/publish                     (release and baseline refusals)\n  GET   /api/v2/packages/{packageId}/publish/{publishId}/status  (hasNotifications of a failed publish)\n  POST  /api/v2/packages/{packageId}/publish/statuses            (hasNotifications)\n  GET   /api/v2/packages/{packageId}/publish/{publishId}/notifications\n  GET   /api/v2/packages/{packageId}/publish/{publishId}/export/notifications\n  POST  /api/v2/packages/{packageId}/versions/{version}/copy     (errored source and reference refusals)\n  PATCH /api/v2/packages/{packageId}/versions/{version}          (status change refusal)\n\nAuth: the api-key header carries a sysadm token; set apiKey to zeroDayConfiguration.accessToken\nof the running instance.\n\nPrerequisites: the backend and a build-task-consumer built from feature/failed-build-notifications (or\nlater) must be running. That consumer sends the \"notifications\" part with a failed build's error status,\nwhich folder 04 relies on; an older tolerant-publication consumer fails folder 04's notification checks.\n\nRun from the repository root so the multipart fixtures resolve:\n  newman run tests/api/tolerant_publication.postman_collection.json --working-dir . \\\n    --env-var baseUrl=http://localhost:8090 --env-var apiKey=<token>\n\nFolder 02 uses a mixed fixture: one version with two API types (rest, asyncapi) and two contract\ntypes (ddl, mcp over two endpoints), where three of its seven documents fail. It is there so the\nper-type roll-ups are checked for discrimination, not just for being set.\n\nFolder 04 also checks that a refused release publish keeps the messages it raised: the publish status\ncarries hasNotifications, the publish notification endpoints return them with the filters and paging of\nthe version endpoints, sorted most severe first, and the xlsx export is named after the publish id. A\ncompleted publish stores nothing at the publish level. A failed dashboard build stores nothing either,\nbut it is not constructible through the API (a release dashboard with unsound references is refused\nbefore any build runs), so that rule is covered by unit tests.\n\nFolder 09 checks that the two error flags stay apart: hasErrors describes the version's content and\nchangelogHasErrors describes its changelog, and neither reports the other's problem. It also checks\nthat the versions list and the version itself answer identically. A changelog that genuinely fails is\nnot constructible from source fixtures - every comparison-phase Error is an internal resolution\nfailure - so that half is covered by unit tests instead.\n\nFolder 10 covers copy version: an errored version can be copied as a draft but not as a release, a copy\nmay not name an errored previous version, and a dashboard copy keeps the reference revisions pinned by the source build config, so it stays\nsound when a later revision of a referenced version has errors. A dashboard pinned to an errored\nreference revision is not constructible through the API, because such a publication is refused; the\ncopy-time refusal for that case is covered by unit tests.\n\nA unique suffix is generated once per run, so the collection is safe to re-run. Package aliases\nstay within the API's 10-character limit."
+ },
+ "variable": [
+  {
+   "key": "baseUrl",
+   "value": "http://localhost:8090",
+   "type": "string"
+  },
+  {
+   "key": "apiKey",
+   "value": "",
+   "type": "string"
+  },
+  {
+   "key": "runSuffix",
+   "value": "",
+   "type": "string"
+  },
+  {
+   "key": "workspaceAlias",
+   "value": "",
+   "type": "string"
+  },
+  {
+   "key": "workspaceId",
+   "value": "",
+   "type": "string"
+  },
+  {
+   "key": "pkgAId",
+   "value": "",
+   "type": "string"
+  },
+  {
+   "key": "pkgBId",
+   "value": "",
+   "type": "string"
+  },
+  {
+   "key": "dashboardId",
+   "value": "",
+   "type": "string"
+  },
+  {
+   "key": "brokenVersion",
+   "value": "broken",
+   "type": "string"
+  },
+  {
+   "key": "releaseVersion",
+   "value": "rel",
+   "type": "string"
+  },
+  {
+   "key": "cleanVersion",
+   "value": "clean",
+   "type": "string"
+  },
+  {
+   "key": "mixedVersion",
+   "value": "mixed",
+   "type": "string"
+  },
+  {
+   "key": "baseVersion",
+   "value": "base",
+   "type": "string"
+  },
+  {
+   "key": "nextVersion",
+   "value": "next",
+   "type": "string"
+  },
+  {
+   "key": "dashboardVersion",
+   "value": "dash",
+   "type": "string"
+  },
+  {
+   "key": "baselineDependentVersion",
+   "value": "dep",
+   "type": "string"
+  },
+  {
+   "key": "publishId",
+   "value": "",
+   "type": "string"
+  },
+  {
+   "key": "pollAttempts",
+   "value": "0",
+   "type": "string"
+  },
+  {
+   "key": "pollDelayMs",
+   "value": "1000",
+   "type": "string"
+  },
+  {
+   "key": "maxPollAttempts",
+   "value": "60",
+   "type": "string"
+  },
+  {
+   "key": "lastBuildStatus",
+   "value": "",
+   "type": "string"
+  },
+  {
+   "key": "lastBuildMessage",
+   "value": "",
+   "type": "string"
+  },
+  {
+   "key": "lastErrorMessage",
+   "value": "",
+   "type": "string"
+  },
+  {
+   "key": "brokenDocumentSlug",
+   "value": "",
+   "type": "string"
+  },
+  {
+   "key": "mixedNotificationCount",
+   "value": "",
+   "type": "string"
+  },
+  {
+   "key": "firstPageMessage",
+   "value": "",
+   "type": "string"
+  },
+  {
+   "key": "versionChangelogHasErrors",
+   "value": "",
+   "type": "string"
+  },
+  {
+   "key": "copyReleaseVersion",
+   "value": "copy-rel",
+   "type": "string"
+  },
+  {
+   "key": "copyDraftVersion",
+   "value": "copy-draft",
+   "type": "string"
+  },
+  {
+   "key": "copyPreviousVersion",
+   "value": "copy-prev",
+   "type": "string"
+  },
+  {
+   "key": "referencedVersion",
+   "value": "refd",
+   "type": "string"
+  },
+  {
+   "key": "copySourceDashboardVersion",
+   "value": "dash-src",
+   "type": "string"
+  },
+  {
+   "key": "copiedDashboardVersion",
+   "value": "dash-copy",
+   "type": "string"
+  },
+  {
+   "key": "copiedExcludedDashboardVersion",
+   "value": "dash-copy2",
+   "type": "string"
+  },
+  {
+   "key": "erroredDashboardVersion",
+   "value": "dash-errored",
+   "type": "string"
+  },
+  {
+   "key": "copiedErroredDashboardReleaseVersion",
+   "value": "dash-copy-rel",
+   "type": "string"
+  },
+  {
+   "key": "copiedErroredDashboardVersion",
+   "value": "dash-copy3",
+   "type": "string"
+  },
+  {
+   "key": "brokenDraftPublishId",
+   "value": "",
+   "type": "string"
+  },
+  {
+   "key": "unknownPublishId",
+   "value": "00000000-0000-0000-0000-000000000000",
+   "type": "string"
+  },
+  {
+   "key": "failedNotificationCount",
+   "value": "",
+   "type": "string"
+  }
+ ],
+ "item": [
+  {
+   "name": "00 - Setup",
+   "item": [
+    {
+     "name": "Create workspace",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "// A fresh suffix on every run: Postman keeps collection variables between runs, and a deleted",
+         "// package still reserves its alias, so reusing the previous suffix would fail with 409.",
+         "var suffix = (Date.now().toString(36) + Math.random().toString(36).slice(2)).slice(-7);",
+         "pm.collectionVariables.set('runSuffix', suffix);",
+         "pm.collectionVariables.set('workspaceAlias', 'tpw' + suffix);"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Workspace created', function () { pm.response.to.have.status(201); });",
+         "pm.collectionVariables.set('workspaceId', pm.response.json().packageId);"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages",
+      "body": {
+       "mode": "raw",
+       "raw": "{\"alias\":\"{{workspaceAlias}}\",\"name\":\"Tolerant publication {{runSuffix}}\",\"kind\":\"workspace\",\"parentId\":\"\"}"
+      }
+     },
+     "response": []
+    },
+    {
+     "name": "Create package A",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Package A created', function () { pm.response.to.have.status(201); });",
+         "pm.collectionVariables.set('pkgAId', pm.response.json().packageId);"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages",
+      "body": {
+       "mode": "raw",
+       "raw": "{\"alias\":\"tpa\",\"name\":\"Package A {{runSuffix}}\",\"kind\":\"package\",\"parentId\":\"{{workspaceId}}\"}"
+      }
+     },
+     "response": []
+    },
+    {
+     "name": "Create package B",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Package B created', function () { pm.response.to.have.status(201); });",
+         "pm.collectionVariables.set('pkgBId', pm.response.json().packageId);"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages",
+      "body": {
+       "mode": "raw",
+       "raw": "{\"alias\":\"tpb\",\"name\":\"Package B {{runSuffix}}\",\"kind\":\"package\",\"parentId\":\"{{workspaceId}}\"}"
+      }
+     },
+     "response": []
+    },
+    {
+     "name": "Create dashboard",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Dashboard created', function () { pm.response.to.have.status(201); });",
+         "pm.collectionVariables.set('dashboardId', pm.response.json().packageId);"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages",
+      "body": {
+       "mode": "raw",
+       "raw": "{\"alias\":\"tpd\",\"name\":\"Dashboard {{runSuffix}}\",\"kind\":\"dashboard\",\"parentId\":\"{{workspaceId}}\"}"
+      }
+     },
+     "response": []
+    }
+   ]
+  },
+  {
+   "name": "01 - Tolerant draft publication",
+   "item": [
+    {
+     "name": "Publish broken document as draft",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Broken draft publish accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('brokenDraftPublishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "body": {
+       "mode": "formdata",
+       "formdata": [
+        {
+         "key": "config",
+         "value": "{\"packageId\":\"{{pkgAId}}\",\"version\":\"{{brokenVersion}}\",\"status\":\"draft\",\"buildType\":\"build\",\"files\":[{\"fileId\":\"spec.yaml\"}]}",
+         "type": "text"
+        },
+        {
+         "key": "sources",
+         "type": "file",
+         "src": "tests/api/fixtures/tolerant-publication/broken-yaml.zip"
+        }
+       ]
+      },
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish"
+     },
+     "response": []
+    },
+    {
+     "name": "Wait for broken draft",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Wait for broken draft status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Wait for broken draft completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.collectionVariables.set('lastBuildStatus', json.status);",
+         "pm.collectionVariables.set('lastBuildMessage', json.message || '');",
+         "pm.test('Wait for broken draft ends with status \\'complete\\'', function () { pm.expect(json.status, json.message || '').to.eql('complete'); });",
+         "pm.test('Build result reports errors', function () { pm.expect(json.hasErrors).to.eql(true); });",
+         "pm.test('Build result reports no changelog errors', function () { pm.expect(json.changelogHasErrors).to.eql(false); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "Version is published and marked with errors",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Version is readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "pm.test('Version stays a draft', function () { pm.expect(json.status).to.eql('draft'); });",
+         "pm.test('Version carries hasErrors', function () { pm.expect(json.hasErrors).to.eql(true); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgAId}}/versions/{{brokenVersion}}?includeSummary=true"
+     },
+     "response": []
+    },
+    {
+     "name": "Document is published and marked with errors",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Documents are readable', function () { pm.response.to.have.status(200); });",
+         "var docs = pm.response.json().documents;",
+         "pm.test('The broken document is published', function () { pm.expect(docs).to.have.lengthOf(1); });",
+         "pm.test('The broken document carries hasErrors', function () { pm.expect(docs[0].hasErrors).to.eql(true); });",
+         "pm.collectionVariables.set('brokenDocumentSlug', docs[0].slug);"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{brokenVersion}}/documents"
+     },
+     "response": []
+    },
+    {
+     "name": "Version notifications report the parse failure",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Notifications are readable', function () { pm.response.to.have.status(200); });",
+         "var notifications = pm.response.json().notifications;",
+         "pm.test('One notification is returned', function () { pm.expect(notifications).to.have.lengthOf(1); });",
+         "pm.test('Category is parse-file', function () { pm.expect(notifications[0].category).to.eql('parse-file'); });",
+         "pm.test('Severity is error', function () { pm.expect(notifications[0].severity).to.eql('error'); });",
+         "pm.test('Message is not empty', function () { pm.expect(notifications[0].message).to.be.a('string').and.not.empty; });",
+         "pm.test('Notification is attributed to the document', function () { pm.expect(notifications[0].documentId).to.eql((pm.collectionVariables.get('brokenDocumentSlug') || 'spec')); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{brokenVersion}}/notifications"
+     },
+     "response": []
+    },
+    {
+     "name": "Version list carries hasErrors",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Version list is readable', function () { pm.response.to.have.status(200); });",
+         "var versions = pm.response.json().versions;",
+         "var broken = versions.filter(function (v) { return v.version.split('@')[0] === pm.collectionVariables.get('brokenVersion'); });",
+         "pm.test('The broken version is listed', function () { pm.expect(broken).to.have.lengthOf.at.least(1); });",
+         "pm.test('The listed version carries hasErrors', function () { pm.expect(broken[0].hasErrors).to.eql(true); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgAId}}/versions?limit=100"
+     },
+     "response": []
+    }
+   ]
+  },
+  {
+   "name": "02 - Mixed version, per-type error scope",
+   "item": [
+    {
+     "name": "Publish a mixed version with three failing documents",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Mixed version publish accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "body": {
+       "mode": "formdata",
+       "formdata": [
+        {
+         "key": "config",
+         "value": "{\"packageId\":\"{{pkgAId}}\",\"version\":\"{{mixedVersion}}\",\"status\":\"draft\",\"buildType\":\"build\",\"files\":[{\"fileId\":\"rest-ok.yaml\"},{\"fileId\":\"async-bad.yaml\"},{\"fileId\":\"ddl-bad.sql\"},{\"fileId\":\"mcp-bad-init.json\",\"metadata\":{\"mcpEndpoint\":\"/mcp\"}},{\"fileId\":\"mcp-bad-tools.json\",\"metadata\":{\"mcpEndpoint\":\"/mcp\"}},{\"fileId\":\"mcp-ok-init.json\",\"metadata\":{\"mcpEndpoint\":\"/admin-mcp\"}},{\"fileId\":\"mcp-ok-tools.json\",\"metadata\":{\"mcpEndpoint\":\"/admin-mcp\"}}]}",
+         "type": "text"
+        },
+        {
+         "key": "sources",
+         "type": "file",
+         "src": "tests/api/fixtures/tolerant-publication/mixed.zip"
+        }
+       ]
+      },
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish"
+     },
+     "response": []
+    },
+    {
+     "name": "Wait for the mixed version",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Wait for the mixed version status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Wait for the mixed version completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.collectionVariables.set('lastBuildStatus', json.status);",
+         "pm.collectionVariables.set('lastBuildMessage', json.message || '');",
+         "pm.test('Wait for the mixed version ends with status \\'complete\\'', function () { pm.expect(json.status, json.message || '').to.eql('complete'); });",
+         "pm.test('The mixed build reports errors', function () { pm.expect(json.hasErrors).to.eql(true); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "Only the failing API type is marked",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Version is readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "pm.test('The version is marked', function () { pm.expect(json.hasErrors).to.eql(true); });",
+         "var byApiType = {};",
+         "(json.operationTypes || []).forEach(function (o) { byApiType[o.apiType] = o; });",
+         "pm.test('Both API types are present', function () {",
+         "    pm.expect(Object.keys(byApiType).sort()).to.eql(['asyncapi', 'rest']);",
+         "});",
+         "pm.test('The asyncapi type is marked and the rest type is not', function () {",
+         "    pm.expect(byApiType.asyncapi.hasErrors, 'asyncapi').to.eql(true);",
+         "    pm.expect(byApiType.rest.hasErrors, 'rest').to.eql(false);",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgAId}}/versions/{{mixedVersion}}?includeSummary=true"
+     },
+     "response": []
+    },
+    {
+     "name": "Only the failing contract type and MCP endpoint are marked",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Version is readable', function () { pm.response.to.have.status(200); });",
+         "var summary = pm.response.json().contractsSummary;",
+         "pm.test('Both contract types are summarised', function () {",
+         "    pm.expect(summary, 'contractsSummary').to.be.an('object');",
+         "    pm.expect(summary.ddl, 'ddl').to.be.an('object');",
+         "    pm.expect(summary.mcp, 'mcp').to.be.an('object');",
+         "});",
+         "pm.test('The DDL contract type is marked', function () { pm.expect(summary.ddl.hasErrors).to.eql(true); });",
+         "pm.test('Both MCP endpoints are summarised', function () {",
+         "    pm.expect(Object.keys(summary.mcp).sort()).to.eql(['/admin-mcp', '/mcp']);",
+         "});",
+         "pm.test('Only the failing MCP endpoint is marked', function () {",
+         "    pm.expect(summary.mcp['/mcp'].hasErrors, '/mcp').to.eql(true);",
+         "    pm.expect(summary.mcp['/admin-mcp'].hasErrors, '/admin-mcp').to.eql(false);",
+         "});",
+         "pm.test('The sound MCP endpoint still exposes its tools', function () {",
+         "    pm.expect(summary.mcp['/admin-mcp'].toolsCount).to.eql(2);",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgAId}}/versions/{{mixedVersion}}?includeSummary=true"
+     },
+     "response": []
+    },
+    {
+     "name": "Only the failing documents are marked",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Documents are readable', function () { pm.response.to.have.status(200); });",
+         "var docs = pm.response.json().documents;",
+         "pm.test('Every document is published, the failing ones included', function () {",
+         "    pm.expect(docs).to.have.lengthOf(7);",
+         "});",
+         "var errored = docs.filter(function (d) { return d.hasErrors; }).map(function (d) { return d.slug; }).sort();",
+         "var clean = docs.filter(function (d) { return !d.hasErrors; }).map(function (d) { return d.slug; }).sort();",
+         "pm.test('Exactly the three failing documents are marked', function () {",
+         "    pm.expect(errored).to.eql(['async-bad', 'ddl-bad', 'mcp-bad-tools']);",
+         "});",
+         "pm.test('The four sound documents are left alone', function () {",
+         "    pm.expect(clean).to.eql(['mcp-bad-init', 'mcp-ok-init', 'mcp-ok-tools', 'rest-ok']);",
+         "});",
+         "pm.test('A sound document sharing an endpoint with a failing one stays unmarked', function () {",
+         "    var init = docs.filter(function (d) { return d.slug === 'mcp-bad-init'; })[0];",
+         "    pm.expect(init.hasErrors).to.eql(false);",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{mixedVersion}}/documents?limit=100"
+     },
+     "response": []
+    },
+    {
+     "name": "Every failing document has an error and no sound one does",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Notifications are readable', function () { pm.response.to.have.status(200); });",
+         "var notifications = pm.response.json().notifications;",
+         "var errors = notifications.filter(function (n) { return n.severity === 'error'; });",
+         "pm.test('One error per failing document', function () { pm.expect(errors).to.have.lengthOf(3); });",
+         "pm.test('The errors name the three failing documents', function () {",
+         "    var docs = errors.map(function (n) { return n.documentId; }).sort();",
+         "    pm.expect(docs).to.eql(['async-bad', 'ddl-bad', 'mcp-bad-tools']);",
+         "});",
+         "pm.test('Each failure reports the check that produced it', function () {",
+         "    var categories = errors.map(function (n) { return n.category; }).sort();",
+         "    pm.expect(categories).to.eql(['async-duplicate-operation', 'ddl-entity-build', 'mcp-entity-build']);",
+         "});",
+         "pm.test('No error is attributed to a sound document', function () {",
+         "    errors.forEach(function (n) {",
+         "        pm.expect(['mcp-bad-init', 'mcp-ok-init', 'mcp-ok-tools', 'rest-ok'], 'error on ' + n.documentId).to.not.include(n.documentId);",
+         "    });",
+         "});",
+         "pm.collectionVariables.set('mixedNotificationCount', String(notifications.length));"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{mixedVersion}}/notifications?limit=100"
+     },
+     "response": []
+    },
+    {
+     "name": "The warning filter never returns an error or a marked document",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Warning filter succeeds', function () { pm.response.to.have.status(200); });",
+         "var warnings = pm.response.json().notifications;",
+         "pm.test('Every returned message is a warning', function () {",
+         "    warnings.forEach(function (n) { pm.expect(n.severity).to.eql('warning'); });",
+         "});",
+         "pm.test('No warning is attributed to a document marked with errors', function () {",
+         "    warnings.forEach(function (n) {",
+         "        if (n.documentId) { pm.expect(['async-bad', 'ddl-bad', 'mcp-bad-tools'], n.documentId).to.not.include(n.documentId); }",
+         "    });",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{mixedVersion}}/notifications?severity=warning"
+     },
+     "response": []
+    }
+   ]
+  },
+  {
+   "name": "03 - Notification query parameters",
+   "item": [
+    {
+     "name": "Filter by severity returns only errors",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Filtered request succeeds', function () { pm.response.to.have.status(200); });",
+         "var notifications = pm.response.json().notifications;",
+         "pm.test('Three errors are returned', function () { pm.expect(notifications).to.have.lengthOf(3); });",
+         "pm.test('Every notification has severity error', function () {",
+         "    notifications.forEach(function (n) { pm.expect(n.severity).to.eql('error'); });",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{mixedVersion}}/notifications?severity=error"
+     },
+     "response": []
+    },
+    {
+     "name": "Repeated severity parameter is combined",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Repeated parameter request succeeds', function () { pm.response.to.have.status(200); });",
+         "var notifications = pm.response.json().notifications;",
+         "pm.test('Errors and warnings together match the unfiltered count', function () {",
+         "    pm.expect(String(notifications.length)).to.eql(pm.collectionVariables.get('mixedNotificationCount'));",
+         "});",
+         "pm.test('Every notification matches one of the requested severities', function () {",
+         "    notifications.forEach(function (n) { pm.expect(['error', 'warning']).to.include(n.severity); });",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{mixedVersion}}/notifications?severity=error&severity=warning"
+     },
+     "response": []
+    },
+    {
+     "name": "Comma-separated severity list is accepted",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Comma-separated request succeeds', function () { pm.response.to.have.status(200); });",
+         "pm.test('It matches the repeated-parameter form', function () {",
+         "    pm.expect(String(pm.response.json().notifications.length)).to.eql(pm.collectionVariables.get('mixedNotificationCount'));",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{mixedVersion}}/notifications?severity=error,warning"
+     },
+     "response": []
+    },
+    {
+     "name": "Filter by category isolates one check",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Category filter succeeds', function () { pm.response.to.have.status(200); });",
+         "var notifications = pm.response.json().notifications;",
+         "pm.test('Only the DDL failure is returned', function () {",
+         "    pm.expect(notifications).to.have.lengthOf(1);",
+         "    pm.expect(notifications[0].category).to.eql('ddl-entity-build');",
+         "    pm.expect(notifications[0].documentId).to.eql('ddl-bad');",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{mixedVersion}}/notifications?category=ddl-entity-build"
+     },
+     "response": []
+    },
+    {
+     "name": "Filter by two categories spans two contract types",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Multi-category filter succeeds', function () { pm.response.to.have.status(200); });",
+         "var notifications = pm.response.json().notifications;",
+         "pm.test('One failure from each contract type is returned', function () {",
+         "    var docs = notifications.map(function (n) { return n.documentId; }).sort();",
+         "    pm.expect(docs).to.eql(['ddl-bad', 'mcp-bad-tools']);",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{mixedVersion}}/notifications?category=ddl-entity-build&category=mcp-entity-build"
+     },
+     "response": []
+    },
+    {
+     "name": "Filter by documentId isolates one document",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Document filter succeeds', function () { pm.response.to.have.status(200); });",
+         "var notifications = pm.response.json().notifications;",
+         "pm.test('Only the AsyncAPI failure is returned', function () {",
+         "    pm.expect(notifications).to.have.lengthOf(1);",
+         "    pm.expect(notifications[0].documentId).to.eql('async-bad');",
+         "    pm.expect(notifications[0].category).to.eql('async-duplicate-operation');",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{mixedVersion}}/notifications?documentId=async-bad"
+     },
+     "response": []
+    },
+    {
+     "name": "Filters combine",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Combined filter succeeds', function () { pm.response.to.have.status(200); });",
+         "pm.test('The AsyncAPI document has no warnings', function () {",
+         "    pm.expect(pm.response.json().notifications).to.eql([]);",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{mixedVersion}}/notifications?documentId=async-bad&severity=warning"
+     },
+     "response": []
+    },
+    {
+     "name": "Filter by a sound document returns nothing",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Sound-document filter succeeds', function () { pm.response.to.have.status(200); });",
+         "pm.test('The sound REST document has no messages', function () {",
+         "    pm.expect(pm.response.json().notifications).to.eql([]);",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{mixedVersion}}/notifications?documentId=rest-ok"
+     },
+     "response": []
+    },
+    {
+     "name": "Paging returns a single notification per page",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('First page succeeds', function () { pm.response.to.have.status(200); });",
+         "var notifications = pm.response.json().notifications;",
+         "pm.test('One notification is returned', function () { pm.expect(notifications).to.have.lengthOf(1); });",
+         "pm.collectionVariables.set('firstPageMessage', notifications[0].message);"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{mixedVersion}}/notifications?limit=1&page=0"
+     },
+     "response": []
+    },
+    {
+     "name": "Second page returns a different notification",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Second page succeeds', function () { pm.response.to.have.status(200); });",
+         "var notifications = pm.response.json().notifications;",
+         "pm.test('One notification is returned', function () { pm.expect(notifications).to.have.lengthOf(1); });",
+         "pm.test('The page holds a different notification', function () {",
+         "    pm.expect(notifications[0].message).to.not.eql(pm.collectionVariables.get('firstPageMessage'));",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{mixedVersion}}/notifications?limit=1&page=1"
+     },
+     "response": []
+    },
+    {
+     "name": "Unknown severity is rejected",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Unknown severity is rejected with 400', function () { pm.response.to.have.status(400); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{mixedVersion}}/notifications?severity=critical"
+     },
+     "response": []
+    },
+    {
+     "name": "Notifications of an older revision are kept apart",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Revision-qualified request succeeds', function () { pm.response.to.have.status(200); });",
+         "var notifications = pm.response.json().notifications;",
+         "pm.test('The first revision keeps its own notification', function () {",
+         "    pm.expect(notifications).to.have.lengthOf(1);",
+         "    pm.expect(notifications[0].category).to.eql('parse-file');",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{brokenVersion}}%401/notifications"
+     },
+     "response": []
+    },
+    {
+     "name": "Notifications require authentication",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Unauthenticated request is rejected', function () { pm.response.to.have.status(401); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{brokenVersion}}/notifications"
+     },
+     "response": []
+    }
+   ]
+  },
+  {
+   "name": "04 - Release publication is refused",
+   "item": [
+    {
+     "name": "Publish broken document as release",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Broken release publish accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "body": {
+       "mode": "formdata",
+       "formdata": [
+        {
+         "key": "config",
+         "value": "{\"packageId\":\"{{pkgAId}}\",\"version\":\"{{releaseVersion}}\",\"status\":\"release\",\"buildType\":\"build\",\"files\":[{\"fileId\":\"spec.yaml\"}]}",
+         "type": "text"
+        },
+        {
+         "key": "sources",
+         "type": "file",
+         "src": "tests/api/fixtures/tolerant-publication/broken-yaml.zip"
+        }
+       ]
+      },
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish"
+     },
+     "response": []
+    },
+    {
+     "name": "Broken release build fails",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Broken release build fails status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Broken release build fails completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.collectionVariables.set('lastBuildStatus', json.status);",
+         "pm.collectionVariables.set('lastBuildMessage', json.message || '');",
+         "pm.test('Broken release build fails ends with status \\'error\\'', function () { pm.expect(json.status, json.message || '').to.eql('error'); });",
+         "pm.test('The failure explains that a draft can be published instead', function () {",
+         "    pm.expect(json.message || '').to.match(/draft/i);",
+         "});",
+         "pm.test('A failed publish stores its notifications', function () { pm.expect(json.hasNotifications).to.eql(true); });",
+         "pm.test('A failed publish published no version, so hasErrors is false', function () { pm.expect(json.hasErrors).to.eql(false); });",
+         "pm.test('A failed publish calculated no changelog, so changelogHasErrors is false', function () { pm.expect(json.changelogHasErrors).to.eql(false); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "Failed publish notifications list the parse failure",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Publish notifications are readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "pm.test('At least one message is stored', function () { pm.expect(json.notifications.length).to.be.at.least(1); });",
+         "pm.test('Every message has a string severity and category', function () {",
+         "    json.notifications.forEach(function (n) {",
+         "        pm.expect(n.severity).to.be.oneOf(['error', 'warning', 'information', 'hint']);",
+         "        pm.expect(n.category).to.be.a('string').and.not.empty;",
+         "        pm.expect(n.message).to.be.a('string').and.not.empty;",
+         "    });",
+         "});",
+         "pm.test('Errors come first', function () { pm.expect(json.notifications[0].severity).to.eql('error'); });",
+         "pm.test('The parse failure is attributed to the broken document', function () {",
+         "    var slug = (pm.collectionVariables.get('brokenDocumentSlug') || 'spec');",
+         "    var parse = json.notifications.filter(function (n) { return n.category === 'parse-file' && n.severity === 'error'; });",
+         "    pm.expect(parse.length, 'parse-file errors').to.be.at.least(1);",
+         "    pm.expect(parse[0].documentId).to.eql(slug);",
+         "});",
+         "pm.collectionVariables.set('failedNotificationCount', String(json.notifications.length));"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{publishId}}/notifications"
+     },
+     "response": []
+    },
+    {
+     "name": "Failed publish notifications filter by severity",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Severity filter succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "pm.test('Only errors are returned', function () { pm.expect(json.notifications.length).to.be.at.least(1); json.notifications.forEach(function (n) { pm.expect(n.severity).to.eql('error'); }); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{publishId}}/notifications?severity=error"
+     },
+     "response": []
+    },
+    {
+     "name": "Failed publish notifications filter by an absent severity",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Absent severity filter succeeds', function () { pm.response.to.have.status(200); });",
+         "pm.test('No hint is stored', function () { pm.expect(pm.response.json().notifications).to.eql([]); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{publishId}}/notifications?severity=hint"
+     },
+     "response": []
+    },
+    {
+     "name": "Failed publish notifications filter by category",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Category filter succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "pm.test('Only parse-file messages are returned', function () { pm.expect(json.notifications.length).to.be.at.least(1); json.notifications.forEach(function (n) { pm.expect(n.category).to.eql('parse-file'); }); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{publishId}}/notifications?category=parse-file"
+     },
+     "response": []
+    },
+    {
+     "name": "Failed publish notifications filter by document",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Document filter succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "var slug = (pm.collectionVariables.get('brokenDocumentSlug') || 'spec');",
+         "pm.test('Only messages of the document are returned', function () { pm.expect(json.notifications.length).to.be.at.least(1); json.notifications.forEach(function (n) { pm.expect(n.documentId).to.eql(slug); }); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{publishId}}/notifications?documentId={{brokenDocumentSlug}}"
+     },
+     "response": []
+    },
+    {
+     "name": "Failed publish notifications filter by empty document",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Empty document filter succeeds', function () { pm.response.to.have.status(200); });",
+         "pm.test('Every returned message has no document', function () { pm.response.json().notifications.forEach(function (n) { pm.expect(n.documentId || '').to.eql(''); }); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{publishId}}/notifications?emptyDocumentId=true"
+     },
+     "response": []
+    },
+    {
+     "name": "Failed publish notifications first page",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('First page succeeds', function () { pm.response.to.have.status(200); });",
+         "pm.test('First page holds one message', function () { pm.expect(pm.response.json().notifications.length).to.eql(1); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{publishId}}/notifications?limit=1&page=0"
+     },
+     "response": []
+    },
+    {
+     "name": "Failed publish notifications page past the end",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Page past the end succeeds', function () { pm.response.to.have.status(200); });",
+         "pm.test('Page past the end is empty', function () { pm.expect(pm.response.json().notifications).to.eql([]); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{publishId}}/notifications?limit=1&page=50"
+     },
+     "response": []
+    },
+    {
+     "name": "Failed publish notifications reject overlapping document filters",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Overlapping filters are rejected with 400', function () { pm.response.to.have.status(400); });",
+         "pm.test('Overlapping filters carry code 6013', function () { pm.expect(pm.response.json().code).to.eql('6013'); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{publishId}}/notifications?documentId=x&emptyDocumentId=true"
+     },
+     "response": []
+    },
+    {
+     "name": "Failed publish notifications reject an unknown severity",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Unknown severity is rejected with 400', function () { pm.response.to.have.status(400); });",
+         "pm.test('Unknown severity carries code 9', function () { pm.expect(pm.response.json().code).to.eql('9'); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{publishId}}/notifications?severity=critical"
+     },
+     "response": []
+    },
+    {
+     "name": "Failed publish notifications export to xlsx",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Export succeeds', function () { pm.response.to.have.status(200); });",
+         "pm.test('Export is named after the publish id', function () {",
+         "    pm.expect(pm.response.headers.get('Content-Disposition')).to.include('Notifications_' + pm.collectionVariables.get('publishId') + '.xlsx');",
+         "});",
+         "pm.test('Export is not empty', function () { pm.expect(pm.response.stream.length).to.be.above(0); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{publishId}}/export/notifications"
+     },
+     "response": []
+    },
+    {
+     "name": "Failed publish notifications export rejects overlapping document filters",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Overlapping filters are rejected with 400', function () { pm.response.to.have.status(400); });",
+         "pm.test('Overlapping filters carry code 6013', function () { pm.expect(pm.response.json().code).to.eql('6013'); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{publishId}}/export/notifications?documentId=x&emptyDocumentId=true"
+     },
+     "response": []
+    },
+    {
+     "name": "Bulk statuses carry hasNotifications",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Bulk statuses succeed', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "var failed = json.find(function (s) { return s.publishId === pm.collectionVariables.get('publishId'); });",
+         "var draft = json.find(function (s) { return s.publishId === pm.collectionVariables.get('brokenDraftPublishId'); });",
+         "pm.test('The failed publish reports notifications', function () { pm.expect(failed && failed.hasNotifications).to.eql(true); });",
+         "pm.test('The completed draft publish reports none', function () { pm.expect(draft && draft.hasNotifications).to.eql(false); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/statuses",
+      "body": {
+       "mode": "raw",
+       "raw": "{\"publishIds\": [\"{{publishId}}\", \"{{brokenDraftPublishId}}\"]}"
+      }
+     },
+     "response": []
+    },
+    {
+     "name": "Completed publish has no stored notifications",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Completed publish status is readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "pm.test('Completed publish keeps its messages on the version, not on the publish', function () { pm.expect(json.status).to.eql('complete'); pm.expect(json.hasNotifications).to.eql(false); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{brokenDraftPublishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "Completed publish notifications are empty",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Completed publish notifications are readable', function () { pm.response.to.have.status(200); });",
+         "pm.test('Completed publish has no publish-level messages', function () { pm.expect(pm.response.json().notifications).to.eql([]); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{brokenDraftPublishId}}/notifications"
+     },
+     "response": []
+    },
+    {
+     "name": "Unknown publish notifications are not found",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Unknown publish is rejected with 404', function () { pm.response.to.have.status(404); });",
+         "pm.test('Unknown publish carries code 2611', function () { pm.expect(pm.response.json().code).to.eql('2611'); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{unknownPublishId}}/notifications"
+     },
+     "response": []
+    },
+    {
+     "name": "Unknown publish export is not found",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Unknown publish export is rejected with 404', function () { pm.response.to.have.status(404); });",
+         "pm.test('Unknown publish export carries code 2611', function () { pm.expect(pm.response.json().code).to.eql('2611'); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{unknownPublishId}}/export/notifications"
+     },
+     "response": []
+    },
+    {
+     "name": "Publish of another package is not found",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('A publish addressed through another package is rejected with 404', function () { pm.response.to.have.status(404); });",
+         "pm.test('It carries code 2611', function () { pm.expect(pm.response.json().code).to.eql('2611'); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/publish/{{publishId}}/notifications"
+     },
+     "response": []
+    },
+    {
+     "name": "Publish notifications require authentication",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Unauthenticated request is rejected', function () { pm.response.to.have.status(401); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{publishId}}/notifications"
+     },
+     "response": []
+    },
+    {
+     "name": "Release version was not created",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('The release version does not exist', function () { pm.response.to.have.status(404); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgAId}}/versions/{{releaseVersion}}"
+     },
+     "response": []
+    },
+    {
+     "name": "Status change to release is refused",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Status change to release is refused with 400', function () { pm.response.to.have.status(400); });",
+         "var json = pm.response.json();",
+         "pm.test('Status change to release carries the tolerant-publication error code', function () { pm.expect(json.code).to.eql('8800'); });",
+         "pm.collectionVariables.set('lastErrorMessage', json.message || '');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "PATCH",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{brokenVersion}}",
+      "body": {
+       "mode": "raw",
+       "raw": "{\"status\":\"release\",\"versionLabels\":[]}"
+      }
+     },
+     "response": []
+    }
+   ]
+  },
+  {
+   "name": "05 - Errored version cannot be a baseline",
+   "item": [
+    {
+     "name": "Publish against an errored previous version",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Publication against an errored baseline is refused with 400', function () { pm.response.to.have.status(400); });",
+         "var json = pm.response.json();",
+         "pm.test('Publication against an errored baseline carries the tolerant-publication error code', function () { pm.expect(json.code).to.eql('8800'); });",
+         "pm.collectionVariables.set('lastErrorMessage', json.message || '');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "body": {
+       "mode": "formdata",
+       "formdata": [
+        {
+         "key": "config",
+         "value": "{\"packageId\":\"{{pkgAId}}\",\"version\":\"{{cleanVersion}}\",\"status\":\"draft\",\"previousVersion\":\"{{brokenVersion}}\",\"buildType\":\"build\",\"files\":[{\"fileId\":\"openapi.yaml\"}]}",
+         "type": "text"
+        },
+        {
+         "key": "sources",
+         "type": "file",
+         "src": "tests/api/fixtures/tolerant-publication/clean-v2.zip"
+        }
+       ]
+      },
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish"
+     },
+     "response": []
+    },
+    {
+     "name": "The refusal names the previous version",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('The errored baseline is still readable', function () { pm.response.to.have.status(200); });",
+         "pm.test('The refusal message mentions the previous version', function () {",
+         "    pm.expect(pm.collectionVariables.get('lastErrorMessage')).to.match(/previous version/i);",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgAId}}/versions/{{brokenVersion}}"
+     },
+     "response": []
+    }
+   ]
+  },
+  {
+   "name": "06 - Dashboard references",
+   "item": [
+    {
+     "name": "Publish a sound version to reference",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Sound base version publish accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "body": {
+       "mode": "formdata",
+       "formdata": [
+        {
+         "key": "config",
+         "value": "{\"packageId\":\"{{pkgBId}}\",\"version\":\"{{baseVersion}}\",\"status\":\"draft\",\"buildType\":\"build\",\"files\":[{\"fileId\":\"openapi.yaml\"}]}",
+         "type": "text"
+        },
+        {
+         "key": "sources",
+         "type": "file",
+         "src": "tests/api/fixtures/tolerant-publication/clean-v1.zip"
+        }
+       ]
+      },
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/publish"
+     },
+     "response": []
+    },
+    {
+     "name": "Wait for the sound version",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Wait for the sound version status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Wait for the sound version completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.collectionVariables.set('lastBuildStatus', json.status);",
+         "pm.collectionVariables.set('lastBuildMessage', json.message || '');",
+         "pm.test('Wait for the sound version ends with status \\'complete\\'', function () { pm.expect(json.status, json.message || '').to.eql('complete'); });",
+         "pm.test('The sound build reports no errors', function () { pm.expect(json.hasErrors).to.eql(false); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "A release dashboard cannot reference an errored version",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Release dashboard reference to an errored version is refused with 400', function () { pm.response.to.have.status(400); });",
+         "var json = pm.response.json();",
+         "pm.test('Release dashboard reference to an errored version carries the tolerant-publication error code', function () { pm.expect(json.code).to.eql('8800'); });",
+         "pm.test('The refusal names the release status', function () { pm.expect(json.message || '').to.match(/release/i); });",
+         "pm.collectionVariables.set('lastErrorMessage', json.message || '');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "body": {
+       "mode": "formdata",
+       "formdata": [
+        {
+         "key": "config",
+         "value": "{\"packageId\":\"{{dashboardId}}\",\"version\":\"{{erroredDashboardVersion}}\",\"status\":\"release\",\"buildType\":\"build\",\"refs\":[{\"refId\":\"{{pkgAId}}\",\"version\":\"{{brokenVersion}}\"}],\"files\":[]}",
+         "type": "text"
+        }
+       ]
+      },
+      "url": "{{baseUrl}}/api/v2/packages/{{dashboardId}}/publish"
+     },
+     "response": []
+    },
+    {
+     "name": "A draft dashboard may reference an errored version",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Draft dashboard reference to an errored version accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "body": {
+       "mode": "formdata",
+       "formdata": [
+        {
+         "key": "config",
+         "value": "{\"packageId\":\"{{dashboardId}}\",\"version\":\"{{erroredDashboardVersion}}\",\"status\":\"draft\",\"buildType\":\"build\",\"refs\":[{\"refId\":\"{{pkgAId}}\",\"version\":\"{{brokenVersion}}\"}],\"files\":[]}",
+         "type": "text"
+        }
+       ]
+      },
+      "url": "{{baseUrl}}/api/v2/packages/{{dashboardId}}/publish"
+     },
+     "response": []
+    },
+    {
+     "name": "Wait for the errored draft dashboard",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Wait for the errored draft dashboard status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Wait for the errored draft dashboard completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.collectionVariables.set('lastBuildStatus', json.status);",
+         "pm.collectionVariables.set('lastBuildMessage', json.message || '');",
+         "pm.test('Wait for the errored draft dashboard ends with status \\'complete\\'', function () { pm.expect(json.status, json.message || '').to.eql('complete'); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{dashboardId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "The dashboard is marked by its included errored reference",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Errored dashboard is readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "pm.test('Errored dashboard stays a draft', function () { pm.expect(json.status).to.eql('draft'); });",
+         "pm.test('Errored dashboard carries hasErrors', function () { pm.expect(json.hasErrors).to.eql(true); });",
+         "pm.test('Errored dashboard omits the changelog flag', function () { pm.expect(json).to.not.have.property('changelogHasErrors'); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{dashboardId}}/versions/{{erroredDashboardVersion}}?includeSummary=true"
+     },
+     "response": []
+    },
+    {
+     "name": "The dashboard list marks the errored dashboard",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Dashboard version list is readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "var dashboard = json.versions.filter(function (v) { return v.version.split('@')[0] === pm.collectionVariables.get('erroredDashboardVersion'); })[0];",
+         "pm.test('The errored dashboard version is listed', function () { pm.expect(dashboard).to.not.be.undefined; });",
+         "pm.test('The list reports hasErrors for the errored dashboard', function () { pm.expect(dashboard.hasErrors).to.eql(true); });",
+         "pm.test('The list omits the changelog flag for the errored dashboard', function () { pm.expect(dashboard).to.not.have.property('changelogHasErrors'); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{dashboardId}}/versions?limit=100"
+     },
+     "response": []
+    },
+    {
+     "name": "The references carry the errored flag",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Dashboard references are readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "var keys = Object.keys(json.packages || {}).filter(function (k) { var parts = k.split('@'); return parts[0] === pm.collectionVariables.get('pkgAId') && parts[1] === pm.collectionVariables.get('brokenVersion'); });",
+         "pm.test('The errored package version is among the referenced packages', function () { pm.expect(keys).to.have.lengthOf(1); });",
+         "var ref = json.packages[keys[0]];",
+         "pm.test('The referenced package version carries hasErrors', function () { pm.expect(ref.hasErrors).to.eql(true); });",
+         "pm.test('The referenced package version omits the changelog flag', function () { pm.expect(ref).to.not.have.property('changelogHasErrors'); });",
+         "pm.test('The reference row points at the errored package version', function () { pm.expect(json.references[0].packageRef).to.eql(keys[0]); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{dashboardId}}/versions/{{erroredDashboardVersion}}/references"
+     },
+     "response": []
+    },
+    {
+     "name": "Status change of the errored dashboard to release is refused",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Status change of the errored dashboard to release is refused with 400', function () { pm.response.to.have.status(400); });",
+         "var json = pm.response.json();",
+         "pm.test('Status change of the errored dashboard to release carries the tolerant-publication error code', function () { pm.expect(json.code).to.eql('8800'); });",
+         "pm.collectionVariables.set('lastErrorMessage', json.message || '');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "PATCH",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{dashboardId}}/versions/{{erroredDashboardVersion}}",
+      "body": {
+       "mode": "raw",
+       "raw": "{\"status\":\"release\",\"versionLabels\":[]}"
+      }
+     },
+     "response": []
+    },
+    {
+     "name": "Dashboard may exclude an errored reference",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Dashboard with an excluded errored reference publish accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "body": {
+       "mode": "formdata",
+       "formdata": [
+        {
+         "key": "config",
+         "value": "{\"packageId\":\"{{dashboardId}}\",\"version\":\"{{dashboardVersion}}\",\"status\":\"draft\",\"buildType\":\"build\",\"refs\":[{\"refId\":\"{{pkgBId}}\",\"version\":\"{{baseVersion}}\"},{\"refId\":\"{{pkgAId}}\",\"version\":\"{{brokenVersion}}\",\"excluded\":true}],\"files\":[]}",
+         "type": "text"
+        }
+       ]
+      },
+      "url": "{{baseUrl}}/api/v2/packages/{{dashboardId}}/publish"
+     },
+     "response": []
+    },
+    {
+     "name": "Wait for the dashboard",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Wait for the dashboard status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Wait for the dashboard completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.collectionVariables.set('lastBuildStatus', json.status);",
+         "pm.collectionVariables.set('lastBuildMessage', json.message || '');",
+         "pm.test('Wait for the dashboard ends with status \\'complete\\'', function () { pm.expect(json.status, json.message || '').to.eql('complete'); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{dashboardId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    }
+   ]
+  },
+  {
+   "name": "07 - Baseline cannot become errored",
+   "item": [
+    {
+     "name": "Publish a version that depends on the baseline",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Dependent version publish accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "body": {
+       "mode": "formdata",
+       "formdata": [
+        {
+         "key": "config",
+         "value": "{\"packageId\":\"{{pkgBId}}\",\"version\":\"{{nextVersion}}\",\"status\":\"draft\",\"previousVersion\":\"{{baseVersion}}\",\"buildType\":\"build\",\"files\":[{\"fileId\":\"openapi.yaml\"}]}",
+         "type": "text"
+        },
+        {
+         "key": "sources",
+         "type": "file",
+         "src": "tests/api/fixtures/tolerant-publication/clean-v2.zip"
+        }
+       ]
+      },
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/publish"
+     },
+     "response": []
+    },
+    {
+     "name": "Wait for the dependent version",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Wait for the dependent version status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Wait for the dependent version completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.collectionVariables.set('lastBuildStatus', json.status);",
+         "pm.collectionVariables.set('lastBuildMessage', json.message || '');",
+         "pm.test('Wait for the dependent version ends with status \\'complete\\'', function () { pm.expect(json.status, json.message || '').to.eql('complete'); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "The comparison has no notifications",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Comparison notifications are readable', function () { pm.response.to.have.status(200); });",
+         "pm.test('A sound comparison reports no notifications', function () {",
+         "    pm.expect(pm.response.json().notifications).to.eql([]);",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/versions/{{nextVersion}}/changes/notifications"
+     },
+     "response": []
+    },
+    {
+     "name": "Comparison notifications need a previous version",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('A version without a baseline is rejected with 404', function () { pm.response.to.have.status(404); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/versions/{{baseVersion}}/changes/notifications"
+     },
+     "response": []
+    },
+    {
+     "name": "Republish the baseline with a broken document",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Baseline republication publish accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "body": {
+       "mode": "formdata",
+       "formdata": [
+        {
+         "key": "config",
+         "value": "{\"packageId\":\"{{pkgBId}}\",\"version\":\"{{baseVersion}}\",\"status\":\"draft\",\"buildType\":\"build\",\"files\":[{\"fileId\":\"spec.yaml\"}]}",
+         "type": "text"
+        },
+        {
+         "key": "sources",
+         "type": "file",
+         "src": "tests/api/fixtures/tolerant-publication/broken-yaml.zip"
+        }
+       ]
+      },
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/publish"
+     },
+     "response": []
+    },
+    {
+     "name": "Baseline republication fails",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Baseline republication fails status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Baseline republication fails completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.collectionVariables.set('lastBuildStatus', json.status);",
+         "pm.collectionVariables.set('lastBuildMessage', json.message || '');",
+         "pm.test('Baseline republication fails ends with status \\'error\\'', function () { pm.expect(json.status, json.message || '').to.eql('error'); });",
+         "pm.test('The failure names the dependent version', function () {",
+         "    pm.expect(json.message || '').to.include(pm.collectionVariables.get('nextVersion'));",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "The baseline keeps its sound revision",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('The baseline is still readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "pm.test('The baseline is still sound', function () { pm.expect(json.hasErrors).to.not.eql(true); });",
+         "pm.test('No new revision was created', function () { pm.expect(json.revisionsCount).to.eql(1); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgBId}}/versions/{{baseVersion}}"
+     },
+     "response": []
+    },
+    {
+     "name": "Repoint the dependent away from the baseline",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Repointed dependent publish accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "body": {
+       "mode": "formdata",
+       "formdata": [
+        {
+         "key": "config",
+         "value": "{\"packageId\":\"{{pkgBId}}\",\"version\":\"{{nextVersion}}\",\"status\":\"draft\",\"buildType\":\"build\",\"files\":[{\"fileId\":\"openapi.yaml\"}]}",
+         "type": "text"
+        },
+        {
+         "key": "sources",
+         "type": "file",
+         "src": "tests/api/fixtures/tolerant-publication/clean-v2.zip"
+        }
+       ]
+      },
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/publish"
+     },
+     "response": []
+    },
+    {
+     "name": "Wait for the repointed dependent",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Wait for the repointed dependent status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Wait for the repointed dependent completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.collectionVariables.set('lastBuildStatus', json.status);",
+         "pm.collectionVariables.set('lastBuildMessage', json.message || '');",
+         "pm.test('Wait for the repointed dependent ends with status \\'complete\\'', function () { pm.expect(json.status, json.message || '').to.eql('complete'); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "The repointed dependent has two revisions",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('The dependent is readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "pm.test('A second revision was created', function () { pm.expect(json.revisionsCount).to.eql(2); });",
+         "pm.test('The latest revision has no previous version', function () {",
+         "    pm.expect(json.previousVersion || '').to.eql('');",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgBId}}/versions/{{nextVersion}}"
+     },
+     "response": []
+    },
+    {
+     "name": "Revisions carry their own changelog flag",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Revisions are readable', function () { pm.response.to.have.status(200); });",
+         "var revisions = pm.response.json().revisions;",
+         "pm.test('Both revisions are listed, latest first', function () {",
+         "    pm.expect(revisions).to.have.lengthOf(2);",
+         "    pm.expect(revisions[0].revision).to.eql(2);",
+         "    pm.expect(revisions[1].revision).to.eql(1);",
+         "});",
+         "pm.test('Neither revision has document errors', function () {",
+         "    pm.expect(revisions[0].hasErrors).to.eql(false);",
+         "    pm.expect(revisions[1].hasErrors).to.eql(false);",
+         "});",
+         "pm.test('Each revision reports the api-processor version it was built with', function () {",
+         "    revisions.forEach(function (revision) {",
+         "        pm.expect(revision.apiProcessorVersion).to.be.a('string').and.not.empty;",
+         "    });",
+         "});",
+         "pm.test('The repointed revision has no baseline, so it reports no changelog flag', function () {",
+         "    pm.expect(revisions[0]).to.not.have.property('changelogHasErrors');",
+         "});",
+         "pm.test('The first revision keeps the sound changelog against its baseline', function () {",
+         "    pm.expect(revisions[1].changelogHasErrors).to.eql(false);",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgBId}}/versions/{{nextVersion}}/revisions"
+     },
+     "response": []
+    },
+    {
+     "name": "Republish the baseline with a broken document again",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Second baseline republication publish accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "body": {
+       "mode": "formdata",
+       "formdata": [
+        {
+         "key": "config",
+         "value": "{\"packageId\":\"{{pkgBId}}\",\"version\":\"{{baseVersion}}\",\"status\":\"draft\",\"buildType\":\"build\",\"files\":[{\"fileId\":\"spec.yaml\"}]}",
+         "type": "text"
+        },
+        {
+         "key": "sources",
+         "type": "file",
+         "src": "tests/api/fixtures/tolerant-publication/broken-yaml.zip"
+        }
+       ]
+      },
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/publish"
+     },
+     "response": []
+    },
+    {
+     "name": "Baseline republication still fails",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Baseline republication still fails status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Baseline republication still fails completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.collectionVariables.set('lastBuildStatus', json.status);",
+         "pm.collectionVariables.set('lastBuildMessage', json.message || '');",
+         "pm.test('Baseline republication still fails ends with status \\'error\\'', function () { pm.expect(json.status, json.message || '').to.eql('error'); });",
+         "pm.test('The failure names the revision that still depends on the baseline', function () {",
+         "    pm.expect(json.message || '').to.include(pm.collectionVariables.get('nextVersion') + '@1');",
+         "});",
+         "pm.test('The failure does not name the repointed revision', function () {",
+         "    pm.expect(json.message || '').to.not.include(pm.collectionVariables.get('nextVersion') + '@2');",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "The baseline still keeps its sound revision",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('The baseline is still readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "pm.test('The baseline is still sound', function () { pm.expect(json.hasErrors).to.not.eql(true); });",
+         "pm.test('Still no new revision was created', function () { pm.expect(json.revisionsCount).to.eql(1); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgBId}}/versions/{{baseVersion}}"
+     },
+     "response": []
+    }
+   ]
+  },
+  {
+   "name": "08 - Revisions keep their own notifications",
+   "item": [
+    {
+     "name": "Republish the errored version with another failure",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Second revision publish accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "body": {
+       "mode": "formdata",
+       "formdata": [
+        {
+         "key": "config",
+         "value": "{\"packageId\":\"{{pkgAId}}\",\"version\":\"{{brokenVersion}}\",\"status\":\"draft\",\"buildType\":\"build\",\"files\":[{\"fileId\":\"swagger.yaml\"}]}",
+         "type": "text"
+        },
+        {
+         "key": "sources",
+         "type": "file",
+         "src": "tests/api/fixtures/tolerant-publication/swagger.zip"
+        }
+       ]
+      },
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish"
+     },
+     "response": []
+    },
+    {
+     "name": "Wait for the second revision",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Wait for the second revision status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Wait for the second revision completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.collectionVariables.set('lastBuildStatus', json.status);",
+         "pm.collectionVariables.set('lastBuildMessage', json.message || '');",
+         "pm.test('Wait for the second revision ends with status \\'complete\\'', function () { pm.expect(json.status, json.message || '').to.eql('complete'); });",
+         "pm.test('The second revision reports errors', function () { pm.expect(json.hasErrors).to.eql(true); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "The latest revision reports the new failure",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Notifications are readable', function () { pm.response.to.have.status(200); });",
+         "var notifications = pm.response.json().notifications;",
+         "pm.test('Only the new failure is reported', function () {",
+         "    pm.expect(notifications).to.have.lengthOf(1);",
+         "    pm.expect(notifications[0].category).to.eql('swagger-conversion');",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{brokenVersion}}/notifications"
+     },
+     "response": []
+    },
+    {
+     "name": "The first revision keeps its own failure",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Notifications are readable', function () { pm.response.to.have.status(200); });",
+         "var notifications = pm.response.json().notifications;",
+         "pm.test('The first revision still reports the parse failure', function () {",
+         "    pm.expect(notifications).to.have.lengthOf(1);",
+         "    pm.expect(notifications[0].category).to.eql('parse-file');",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{brokenVersion}}%401/notifications"
+     },
+     "response": []
+    },
+    {
+     "name": "Every revision reports its own hasErrors",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Revisions are readable', function () { pm.response.to.have.status(200); });",
+         "var revisions = pm.response.json().revisions;",
+         "pm.test('Both revisions are listed, latest first', function () {",
+         "    pm.expect(revisions).to.have.lengthOf(2);",
+         "    pm.expect(revisions[0].revision).to.eql(2);",
+         "    pm.expect(revisions[0].version).to.eql(pm.collectionVariables.get('brokenVersion') + '@2');",
+         "    pm.expect(revisions[1].revision).to.eql(1);",
+         "    pm.expect(revisions[1].version).to.eql(pm.collectionVariables.get('brokenVersion') + '@1');",
+         "});",
+         "pm.test('Each errored revision stays marked', function () {",
+         "    pm.expect(revisions[0].hasErrors).to.eql(true);",
+         "    pm.expect(revisions[1].hasErrors).to.eql(true);",
+         "});",
+         "pm.test('Revisions without a baseline report no changelog flag', function () {",
+         "    pm.expect(revisions[0]).to.not.have.property('changelogHasErrors');",
+         "    pm.expect(revisions[1]).to.not.have.property('changelogHasErrors');",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgAId}}/versions/{{brokenVersion}}/revisions"
+     },
+     "response": []
+    }
+   ]
+  },
+  {
+   "name": "09 - The two error flags stay apart",
+   "item": [
+    {
+     "name": "Publish a sound version against the baseline",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Publication against a sound baseline is accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "body": {
+       "mode": "formdata",
+       "formdata": [
+        {
+         "key": "config",
+         "value": "{\"packageId\":\"{{pkgBId}}\",\"version\":\"{{baselineDependentVersion}}\",\"status\":\"draft\",\"previousVersion\":\"{{baseVersion}}\",\"buildType\":\"build\",\"files\":[{\"fileId\":\"openapi.yaml\"}]}",
+         "type": "text"
+        },
+        {
+         "key": "sources",
+         "type": "file",
+         "src": "tests/api/fixtures/tolerant-publication/clean-v2.zip"
+        }
+       ]
+      },
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/publish"
+     },
+     "response": []
+    },
+    {
+     "name": "Wait for the version with a baseline",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Wait for the version with a baseline succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Wait for the version with a baseline completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.test('The version with a baseline is published', function () { pm.expect(json.status, json.message || '').to.eql('complete'); });",
+         "pm.test('The build reports no document errors', function () { pm.expect(json.hasErrors).to.eql(false); });",
+         "pm.test('The build reports no changelog errors', function () { pm.expect(json.changelogHasErrors).to.eql(false); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "A document failure moves hasErrors only",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Version is readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "pm.test('A broken document marks the version', function () { pm.expect(json.hasErrors).to.eql(true); });",
+         "pm.test('A version with no baseline reports no changelog flag', function () {",
+         "    pm.expect(json).to.not.have.property('changelogHasErrors');",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgAId}}/versions/{{brokenVersion}}?includeSummary=true"
+     },
+     "response": []
+    },
+    {
+     "name": "The version list reports the same two flags",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Version list is readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "var broken = json.versions.filter(function (v) { return v.version.split('@')[0] === pm.collectionVariables.get('brokenVersion'); })[0];",
+         "pm.test('The errored version is listed', function () { pm.expect(broken).to.not.be.undefined; });",
+         "pm.test('The list reports the document failure', function () { pm.expect(broken.hasErrors).to.eql(true); });",
+         "pm.test('The list omits the changelog flag for a version with no baseline', function () {",
+         "    pm.expect(broken).to.not.have.property('changelogHasErrors');",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgAId}}/versions?limit=100"
+     },
+     "response": []
+    },
+    {
+     "name": "A version with a baseline reports both flags as sound",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Version is readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "pm.test('The version has no document errors', function () { pm.expect(json.hasErrors).to.eql(false); });",
+         "pm.test('A version with a baseline reports the changelog flag', function () {",
+         "    pm.expect(json).to.have.property('changelogHasErrors');",
+         "});",
+         "pm.test('The changelog against the baseline is sound', function () { pm.expect(json.changelogHasErrors).to.eql(false); });",
+         "pm.collectionVariables.set('versionChangelogHasErrors', String(json.changelogHasErrors));"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgBId}}/versions/{{baselineDependentVersion}}?includeSummary=true"
+     },
+     "response": []
+    },
+    {
+     "name": "The list reports the changelog flag for the version with a baseline",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Version list is readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "var dependent = json.versions.filter(function (v) { return v.version.split('@')[0] === pm.collectionVariables.get('baselineDependentVersion'); })[0];",
+         "pm.test('The version with a baseline is listed', function () { pm.expect(dependent).to.not.be.undefined; });",
+         "// the list and the version itself are two views of one version, so they must answer identically",
+         "pm.test('The list reports the same changelog flag as the version', function () {",
+         "    // the expected value comes from the version request earlier in this folder; sent alone, it is unknown",
+         "    var expected = pm.collectionVariables.get('versionChangelogHasErrors') || 'false';",
+         "    pm.expect(String(dependent.changelogHasErrors)).to.eql(expected);",
+         "});",
+         "pm.test('The list reports no document errors', function () { pm.expect(dependent.hasErrors).to.eql(false); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgBId}}/versions?limit=100"
+     },
+     "response": []
+    },
+    {
+     "name": "The revisions list reports both flags as sound",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Revisions are readable', function () { pm.response.to.have.status(200); });",
+         "var revisions = pm.response.json().revisions;",
+         "pm.test('The single revision is listed', function () { pm.expect(revisions).to.have.lengthOf(1); });",
+         "pm.test('The revision has no document errors', function () { pm.expect(revisions[0].hasErrors).to.eql(false); });",
+         "pm.test('The revision reports a sound changelog against its baseline', function () {",
+         "    pm.expect(revisions[0].changelogHasErrors).to.eql(false);",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgBId}}/versions/{{baselineDependentVersion}}/revisions"
+     },
+     "response": []
+    },
+    {
+     "name": "The changes summary agrees with changelogHasErrors",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Comparison summary is readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "// the summary is the drill-down of changelogHasErrors for the same version pair, so the two",
+         "// must never disagree",
+         "pm.test('The comparison reports the same answer as changelogHasErrors', function () {",
+         "    var expected = pm.collectionVariables.get('versionChangelogHasErrors') || 'false';",
+         "    pm.expect(String(Boolean(json.hasErrors))).to.eql(expected);",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/versions/{{baselineDependentVersion}}/changes/summary?previousVersion={{baseVersion}}&previousVersionPackageId={{pkgBId}}"
+     },
+     "response": []
+    },
+    {
+     "name": "An excluded errored reference does not mark the dashboard",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Dashboard version is readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "pm.test('The dashboard has no document errors', function () { pm.expect(json.hasErrors).to.eql(false); });",
+         "pm.test('The dashboard declares no baseline, so it reports no changelog flag', function () {",
+         "    pm.expect(json).to.not.have.property('changelogHasErrors');",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{dashboardId}}/versions/{{dashboardVersion}}?includeSummary=true"
+     },
+     "response": []
+    },
+    {
+     "name": "The dashboard list agrees with the dashboard version",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Dashboard version list is readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "var dashboard = json.versions.filter(function (v) { return v.version.split('@')[0] === pm.collectionVariables.get('dashboardVersion'); })[0];",
+         "pm.test('The dashboard version is listed', function () { pm.expect(dashboard).to.not.be.undefined; });",
+         "pm.test('The list reports no document errors', function () { pm.expect(dashboard.hasErrors).to.eql(false); });",
+         "pm.test('The list omits the changelog flag for the dashboard', function () {",
+         "    pm.expect(dashboard).to.not.have.property('changelogHasErrors');",
+         "});"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{dashboardId}}/versions?limit=100"
+     },
+     "response": []
+    }
+   ]
+  },
+  {
+   "name": "10 - Copy version",
+   "item": [
+    {
+     "name": "Copy of the errored version as release is refused",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Copying an errored version as release is refused with 400', function () { pm.response.to.have.status(400); });",
+         "var json = pm.response.json();",
+         "pm.test('Copying an errored version as release carries the tolerant-publication error code', function () { pm.expect(json.code).to.eql('8800'); });",
+         "pm.test('Copying an errored version as release names the reason', function () { pm.expect(json.message || '').to.match(/cannot be copied with the 'release' status/); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{brokenVersion}}/copy",
+      "body": {
+       "mode": "raw",
+       "raw": "{\"targetPackageId\":\"{{pkgAId}}\",\"targetVersion\":\"{{copyReleaseVersion}}\",\"targetStatus\":\"release\"}"
+      }
+     },
+     "response": []
+    },
+    {
+     "name": "The release copy was not created",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Refused release copy does not exist', function () { pm.response.to.have.status(404); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgAId}}/versions/{{copyReleaseVersion}}"
+     },
+     "response": []
+    },
+    {
+     "name": "Copy the errored version as draft",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Draft copy of an errored version accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/versions/{{brokenVersion}}/copy",
+      "body": {
+       "mode": "raw",
+       "raw": "{\"targetPackageId\":\"{{pkgAId}}\",\"targetVersion\":\"{{copyDraftVersion}}\",\"targetStatus\":\"draft\"}"
+      }
+     },
+     "response": []
+    },
+    {
+     "name": "Wait for the draft copy",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Wait for the draft copy status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Wait for the draft copy completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.collectionVariables.set('lastBuildStatus', json.status);",
+         "pm.collectionVariables.set('lastBuildMessage', json.message || '');",
+         "pm.test('Wait for the draft copy ends with status \\'complete\\'', function () { pm.expect(json.status, json.message || '').to.eql('complete'); });",
+         "pm.test('Wait for the draft copy: build result hasErrors = true', function () { pm.expect(json.hasErrors).to.eql(true); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "The draft copy is marked with errors",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Draft copy is readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "pm.test('Draft copy stays a draft', function () { pm.expect(json.status).to.eql('draft'); });",
+         "pm.test('Draft copy carries hasErrors', function () { pm.expect(json.hasErrors).to.eql(true); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgAId}}/versions/{{copyDraftVersion}}"
+     },
+     "response": []
+    },
+    {
+     "name": "Copy against an errored previous version is refused",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Copying with an errored previous version is refused with 400', function () { pm.response.to.have.status(400); });",
+         "var json = pm.response.json();",
+         "pm.test('Copying with an errored previous version carries the tolerant-publication error code', function () { pm.expect(json.code).to.eql('8800'); });",
+         "pm.test('Copying with an errored previous version names the reason', function () { pm.expect(json.message || '').to.match(/previous version/i); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/versions/{{baseVersion}}/copy",
+      "body": {
+       "mode": "raw",
+       "raw": "{\"targetPackageId\":\"{{pkgBId}}\",\"targetVersion\":\"{{copyPreviousVersion}}\",\"targetPreviousVersion\":\"{{brokenVersion}}\",\"targetPreviousVersionPackageId\":\"{{pkgAId}}\",\"targetStatus\":\"draft\"}"
+      }
+     },
+     "response": []
+    },
+    {
+     "name": "The copy with an errored previous version was not created",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Refused copy with an errored previous version does not exist', function () { pm.response.to.have.status(404); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{pkgBId}}/versions/{{copyPreviousVersion}}"
+     },
+     "response": []
+    },
+    {
+     "name": "Publish a version for a dashboard to reference",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Referenced version publish accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/publish",
+      "body": {
+       "mode": "formdata",
+       "formdata": [
+        {
+         "key": "config",
+         "value": "{\"packageId\":\"{{pkgBId}}\",\"version\":\"{{referencedVersion}}\",\"status\":\"draft\",\"buildType\":\"build\",\"files\":[{\"fileId\":\"openapi.yaml\"}]}",
+         "type": "text"
+        },
+        {
+         "key": "sources",
+         "type": "file",
+         "src": "tests/api/fixtures/tolerant-publication/clean-v1.zip"
+        }
+       ]
+      }
+     },
+     "response": []
+    },
+    {
+     "name": "Wait for the referenced version",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Wait for the referenced version status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Wait for the referenced version completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.collectionVariables.set('lastBuildStatus', json.status);",
+         "pm.collectionVariables.set('lastBuildMessage', json.message || '');",
+         "pm.test('Wait for the referenced version ends with status \\'complete\\'', function () { pm.expect(json.status, json.message || '').to.eql('complete'); });",
+         "pm.test('Wait for the referenced version: build result hasErrors = false', function () { pm.expect(json.hasErrors).to.eql(false); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "Publish a dashboard referencing the version",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Dashboard with a sound reference publish accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{dashboardId}}/publish",
+      "body": {
+       "mode": "formdata",
+       "formdata": [
+        {
+         "key": "config",
+         "value": "{\"packageId\":\"{{dashboardId}}\",\"version\":\"{{copySourceDashboardVersion}}\",\"status\":\"draft\",\"buildType\":\"build\",\"refs\":[{\"refId\":\"{{pkgBId}}\",\"version\":\"{{referencedVersion}}\"}],\"files\":[]}",
+         "type": "text"
+        }
+       ]
+      }
+     },
+     "response": []
+    },
+    {
+     "name": "Wait for the dashboard with a sound reference",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Wait for the dashboard with a sound reference status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Wait for the dashboard with a sound reference completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.collectionVariables.set('lastBuildStatus', json.status);",
+         "pm.collectionVariables.set('lastBuildMessage', json.message || '');",
+         "pm.test('Wait for the dashboard with a sound reference ends with status \\'complete\\'', function () { pm.expect(json.status, json.message || '').to.eql('complete'); });",
+         "pm.test('Wait for the dashboard with a sound reference: build result hasErrors = false', function () { pm.expect(json.hasErrors).to.eql(false); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{dashboardId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "Republish the referenced version with a broken document",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Referenced version republication accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/publish",
+      "body": {
+       "mode": "formdata",
+       "formdata": [
+        {
+         "key": "config",
+         "value": "{\"packageId\":\"{{pkgBId}}\",\"version\":\"{{referencedVersion}}\",\"status\":\"draft\",\"buildType\":\"build\",\"files\":[{\"fileId\":\"spec.yaml\"}]}",
+         "type": "text"
+        },
+        {
+         "key": "sources",
+         "type": "file",
+         "src": "tests/api/fixtures/tolerant-publication/broken-yaml.zip"
+        }
+       ]
+      }
+     },
+     "response": []
+    },
+    {
+     "name": "Wait for the broken referenced version",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Wait for the broken referenced version status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Wait for the broken referenced version completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.collectionVariables.set('lastBuildStatus', json.status);",
+         "pm.collectionVariables.set('lastBuildMessage', json.message || '');",
+         "pm.test('Wait for the broken referenced version ends with status \\'complete\\'', function () { pm.expect(json.status, json.message || '').to.eql('complete'); });",
+         "pm.test('Wait for the broken referenced version: build result hasErrors = true', function () { pm.expect(json.hasErrors).to.eql(true); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "Copy a dashboard pinned to a sound revision of an errored version",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "// The copy reuses the source build config, which pins the reference to the revision that was sound when the",
+         "// dashboard was published, so the copy is accepted even though the referenced version's latest revision has errors.",
+         "pm.test('Dashboard copy pinned to a sound reference revision accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{dashboardId}}/versions/{{copySourceDashboardVersion}}/copy",
+      "body": {
+       "mode": "raw",
+       "raw": "{\"targetPackageId\":\"{{dashboardId}}\",\"targetVersion\":\"{{copiedDashboardVersion}}\",\"targetStatus\":\"draft\"}"
+      }
+     },
+     "response": []
+    },
+    {
+     "name": "Wait for the pinned dashboard copy",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Wait for the pinned dashboard copy status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Wait for the pinned dashboard copy completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.collectionVariables.set('lastBuildStatus', json.status);",
+         "pm.collectionVariables.set('lastBuildMessage', json.message || '');",
+         "pm.test('Wait for the pinned dashboard copy ends with status \\'complete\\'', function () { pm.expect(json.status, json.message || '').to.eql('complete'); });",
+         "pm.test('Wait for the pinned dashboard copy: build result hasErrors = false', function () { pm.expect(json.hasErrors).to.eql(false); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{dashboardId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "The pinned dashboard copy keeps the sound reference",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Pinned dashboard copy is readable', function () { pm.response.to.have.status(200); });",
+         "pm.test('Pinned dashboard copy reports no errors', function () { pm.expect(pm.response.json().hasErrors).to.eql(false); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{dashboardId}}/versions/{{copiedDashboardVersion}}"
+     },
+     "response": []
+    },
+    {
+     "name": "The pinned dashboard copy references a sound revision",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Pinned dashboard copy references are readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "var keys = Object.keys(json.packages || {}).filter(function (k) { return k.split('@')[0] === pm.collectionVariables.get('pkgBId'); });",
+         "pm.test('The referenced package version is listed', function () { pm.expect(keys).to.have.lengthOf(1); });",
+         "pm.test('The pinned referenced revision has no errors', function () { pm.expect(json.packages[keys[0]].hasErrors).to.eql(false); });",
+         "pm.test('The pinned referenced revision is not the latest one', function () { pm.expect(json.packages[keys[0]].notLatestRevision).to.eql(true); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{dashboardId}}/versions/{{copiedDashboardVersion}}/references"
+     },
+     "response": []
+    },
+    {
+     "name": "Copy of a dashboard with an excluded errored reference is accepted",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Dashboard copy with an excluded errored reference accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{dashboardId}}/versions/{{dashboardVersion}}/copy",
+      "body": {
+       "mode": "raw",
+       "raw": "{\"targetPackageId\":\"{{dashboardId}}\",\"targetVersion\":\"{{copiedExcludedDashboardVersion}}\",\"targetStatus\":\"draft\"}"
+      }
+     },
+     "response": []
+    },
+    {
+     "name": "Wait for the dashboard copy",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Wait for the dashboard copy status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Wait for the dashboard copy completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.collectionVariables.set('lastBuildStatus', json.status);",
+         "pm.collectionVariables.set('lastBuildMessage', json.message || '');",
+         "pm.test('Wait for the dashboard copy ends with status \\'complete\\'', function () { pm.expect(json.status, json.message || '').to.eql('complete'); });",
+         "pm.test('Wait for the dashboard copy: build result hasErrors = false', function () { pm.expect(json.hasErrors).to.eql(false); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{dashboardId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "Copy of a dashboard with an included errored reference as release is refused",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Copying a dashboard with an included errored reference as release is refused with 400', function () { pm.response.to.have.status(400); });",
+         "var json = pm.response.json();",
+         "pm.test('Copying a dashboard with an included errored reference as release carries the tolerant-publication error code', function () { pm.expect(json.code).to.eql('8800'); });",
+         "pm.test('The refusal names the release status', function () { pm.expect(json.message || '').to.match(/release/i); });",
+         "pm.collectionVariables.set('lastErrorMessage', json.message || '');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{dashboardId}}/versions/{{erroredDashboardVersion}}/copy",
+      "body": {
+       "mode": "raw",
+       "raw": "{\"targetPackageId\":\"{{dashboardId}}\",\"targetVersion\":\"{{copiedErroredDashboardReleaseVersion}}\",\"targetStatus\":\"release\"}"
+      }
+     },
+     "response": []
+    },
+    {
+     "name": "The release copy of the errored dashboard was not created",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Refused release copy of the errored dashboard does not exist', function () { pm.response.to.have.status(404); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{dashboardId}}/versions/{{copiedErroredDashboardReleaseVersion}}"
+     },
+     "response": []
+    },
+    {
+     "name": "Copy of a dashboard with an included errored reference as draft is accepted",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Draft copy of a dashboard with an included errored reference accepted', function () { pm.response.to.have.status(202); });",
+         "var json = pm.response.json();",
+         "pm.collectionVariables.set('publishId', json.publishId);",
+         "pm.collectionVariables.set('pollAttempts', '0');"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "POST",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{dashboardId}}/versions/{{erroredDashboardVersion}}/copy",
+      "body": {
+       "mode": "raw",
+       "raw": "{\"targetPackageId\":\"{{dashboardId}}\",\"targetVersion\":\"{{copiedErroredDashboardVersion}}\",\"targetStatus\":\"draft\"}"
+      }
+     },
+     "response": []
+    },
+    {
+     "name": "Wait for the errored dashboard copy",
+     "event": [
+      {
+       "listen": "prerequest",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10);",
+         "if (attempts > 0) {",
+         "    var until = Date.now() + parseInt(pm.collectionVariables.get('pollDelayMs') || '1000', 10);",
+         "    while (Date.now() < until) {}",
+         "}"
+        ]
+       }
+      },
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Wait for the errored dashboard copy status endpoint succeeds', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "if (json.status === 'running' || json.status === 'none') {",
+         "    var attempts = parseInt(pm.collectionVariables.get('pollAttempts') || '0', 10) + 1;",
+         "    pm.collectionVariables.set('pollAttempts', String(attempts));",
+         "    if (attempts < parseInt(pm.collectionVariables.get('maxPollAttempts'), 10)) {",
+         "        pm.execution.setNextRequest(pm.info.requestName);",
+         "    } else {",
+         "        pm.test('Wait for the errored dashboard copy completes before timeout', function () { pm.expect.fail('publish timeout'); });",
+         "    }",
+         "    return;",
+         "}",
+         "pm.collectionVariables.set('pollAttempts', '0');",
+         "pm.collectionVariables.set('lastBuildStatus', json.status);",
+         "pm.collectionVariables.set('lastBuildMessage', json.message || '');",
+         "pm.test('Wait for the errored dashboard copy ends with status \\'complete\\'', function () { pm.expect(json.status, json.message || '').to.eql('complete'); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{dashboardId}}/publish/{{publishId}}/status"
+     },
+     "response": []
+    },
+    {
+     "name": "The draft copy of the errored dashboard is marked",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Draft copy of the errored dashboard is readable', function () { pm.response.to.have.status(200); });",
+         "var json = pm.response.json();",
+         "pm.test('Draft copy of the errored dashboard stays a draft', function () { pm.expect(json.status).to.eql('draft'); });",
+         "pm.test('Draft copy of the errored dashboard carries hasErrors', function () { pm.expect(json.hasErrors).to.eql(true); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "GET",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v3/packages/{{dashboardId}}/versions/{{copiedErroredDashboardVersion}}"
+     },
+     "response": []
+    }
+   ]
+  },
+  {
+   "name": "99 - Cleanup",
+   "item": [
+    {
+     "name": "Delete dashboard",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Dashboard deleted', function () { pm.expect([200, 204]).to.include(pm.response.code); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "DELETE",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{dashboardId}}"
+     },
+     "response": []
+    },
+    {
+     "name": "Delete package A",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Package A deleted', function () { pm.expect([200, 204]).to.include(pm.response.code); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "DELETE",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgAId}}"
+     },
+     "response": []
+    },
+    {
+     "name": "Delete package B",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Package B deleted', function () { pm.expect([200, 204]).to.include(pm.response.code); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "DELETE",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{pkgBId}}"
+     },
+     "response": []
+    },
+    {
+     "name": "Delete workspace",
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('Workspace deleted', function () { pm.expect([200, 204]).to.include(pm.response.code); });"
+        ]
+       }
+      }
+     ],
+     "request": {
+      "method": "DELETE",
+      "header": [
+       {
+        "key": "api-key",
+        "value": "{{apiKey}}"
+       }
+      ],
+      "url": "{{baseUrl}}/api/v2/packages/{{workspaceId}}"
+     },
+     "response": []
+    }
+   ]
+  }
+ ]
+}

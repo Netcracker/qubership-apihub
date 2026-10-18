@@ -17,7 +17,7 @@ type BuildCleanupRepository interface {
 	RemoveOldBuildEntities(ctx context.Context, runId int, scheduledAt time.Time) error
 	RemoveMigrationBuildData(ctx context.Context) (deletedRows int, err error)
 	GetRemoveCandidateOldBuildEntitiesIds(ctx context.Context) ([]string, error)
-	RemoveOldBuildSourcesByIds(ctx context.Context, ids []string, runId int, scheduledAt time.Time) error
+	RemoveOldBuildDataByIds(ctx context.Context, ids []string, runId int, scheduledAt time.Time) error
 	GetRemoveMigrationBuildIds(ctx context.Context) ([]string, error)
 	RemoveMigrationBuildSourceData(ctx context.Context, ids []string) (deletedRows int, err error)
 	StoreCleanup(ctx context.Context, ent *entity.BuildCleanupEntity) error
@@ -50,7 +50,7 @@ func (b buildCleanUpRepositoryImpl) GetLastCleanup(ctx context.Context) (*entity
 }
 
 func (b buildCleanUpRepositoryImpl) RemoveOldBuildEntities(ctx context.Context, runId int, scheduledAt time.Time) error {
-	var deletedBuildSources, deletedBuildResults int
+	var deletedBuildSources, deletedBuildResults, deletedBuildNotifications int
 	err := b.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		cleanupEnt, err := b.getCleanupTx(tx, runId)
 		if err != nil {
@@ -71,9 +71,14 @@ func (b buildCleanUpRepositoryImpl) RemoveOldBuildEntities(ctx context.Context, 
 		if err != nil {
 			return errors.Wrap(err, "Failed to remove old build results")
 		}
+		deletedBuildNotifications, err = b.removeOldBuildNotifications(tx, failedBuildsRetention)
+		if err != nil {
+			return errors.Wrap(err, "Failed to remove old build notifications")
+		}
 		cleanupEnt.BuildResult = deletedBuildResults
 		cleanupEnt.BuildSrc = deletedBuildSources
-		cleanupEnt.DeletedRows = cleanupEnt.DeletedRows + deletedBuildSources + deletedBuildResults
+		cleanupEnt.ErrorBuildNotification = deletedBuildNotifications
+		cleanupEnt.DeletedRows = cleanupEnt.DeletedRows + deletedBuildSources + deletedBuildResults + deletedBuildNotifications
 		if err = b.updateCleanupTx(tx, *cleanupEnt); err != nil {
 			return err
 		}
@@ -93,10 +98,18 @@ func (b buildCleanUpRepositoryImpl) RemoveOldBuildEntities(ctx context.Context, 
 	if err != nil {
 		return errors.Wrap(err, "failed to run vacuum for table build_result")
 	}
-	return err
+	return b.vacuumBuildNotifications(ctx)
 }
 
-func (b buildCleanUpRepositoryImpl) RemoveOldBuildSourcesByIds(ctx context.Context, ids []string, runId int, scheduledAt time.Time) error {
+func (b buildCleanUpRepositoryImpl) vacuumBuildNotifications(ctx context.Context) error {
+	_, err := b.cp.GetConnection().WithContext(ctx).Exec("vacuum full error_build_notification")
+	if err != nil {
+		return errors.Wrap(err, "failed to run vacuum for table error_build_notification")
+	}
+	return nil
+}
+
+func (b buildCleanUpRepositoryImpl) RemoveOldBuildDataByIds(ctx context.Context, ids []string, runId int, scheduledAt time.Time) error {
 	err := b.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
 		cleanupEnt, err := b.getCleanupTx(tx, runId)
 		if err != nil {
@@ -114,8 +127,13 @@ func (b buildCleanUpRepositoryImpl) RemoveOldBuildSourcesByIds(ctx context.Conte
 		}
 		deletedRows := result.RowsAffected()
 
+		deletedNotifications, err := b.removeBuildNotificationsByIds(tx, ids)
+		if err != nil {
+			return err
+		}
 		cleanupEnt.BuildSrc = deletedRows
-		cleanupEnt.DeletedRows = cleanupEnt.DeletedRows + deletedRows
+		cleanupEnt.ErrorBuildNotification = deletedNotifications
+		cleanupEnt.DeletedRows = cleanupEnt.DeletedRows + deletedRows + deletedNotifications
 		if err = b.updateCleanupTx(tx, *cleanupEnt); err != nil {
 			return err
 		}
@@ -128,7 +146,7 @@ func (b buildCleanUpRepositoryImpl) RemoveOldBuildSourcesByIds(ctx context.Conte
 	if err != nil {
 		return errors.Wrap(err, "failed to run vacuum for table build_src")
 	}
-	return err
+	return b.vacuumBuildNotifications(ctx)
 }
 
 func (b buildCleanUpRepositoryImpl) GetRemoveCandidateOldBuildEntitiesIds(ctx context.Context) ([]string, error) {
@@ -206,6 +224,42 @@ func (b buildCleanUpRepositoryImpl) removeOldBuildSources(tx *pg.Tx, successBuil
 	deletedRows = result.RowsAffected()
 
 	return deletedRows, err
+}
+
+// Only failed builds store notifications, so the failed-build retention is the only one that applies.
+func (b buildCleanUpRepositoryImpl) removeOldBuildNotifications(tx *pg.Tx, failedBuildsRetention time.Time) (deletedRows int, err error) {
+	var ents []entity.BuildIdEntity
+	query := `select build_id from build where status = ? and last_active <= ? and (metadata ->> ?)::boolean`
+	_, err = tx.Query(&ents, query, view.StatusError, failedBuildsRetention, entity.HAS_NOTIFICATIONS_KEY)
+	if err != nil {
+		return 0, fmt.Errorf("failed to select failed builds with notifications: %w", err)
+	}
+	if len(ents) == 0 {
+		return 0, nil
+	}
+	ids := make([]string, 0, len(ents))
+	for _, ent := range ents {
+		ids = append(ids, ent.Id)
+	}
+	return b.removeBuildNotificationsByIds(tx, ids)
+}
+
+func (b buildCleanUpRepositoryImpl) removeBuildNotificationsByIds(tx *pg.Tx, ids []string) (deletedRows int, err error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+	result, err := tx.Exec(`delete from error_build_notification where build_id in (?)`, pg.In(ids))
+	if err != nil {
+		return 0, fmt.Errorf("failed to delete builds from table error_build_notification: %w", err)
+	}
+	deletedRows = result.RowsAffected()
+
+	_, err = tx.Exec(`update build set metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object(?::text, false)
+		where build_id in (?) and (metadata ->> ?)::boolean`, entity.HAS_NOTIFICATIONS_KEY, pg.In(ids), entity.HAS_NOTIFICATIONS_KEY)
+	if err != nil {
+		return 0, fmt.Errorf("failed to clear the notifications flag of builds: %w", err)
+	}
+	return deletedRows, nil
 }
 
 func (b buildCleanUpRepositoryImpl) getRemoveCandidateOldBuildEntities(ctx context.Context, successBuildsRetention, failedBuildsRetention time.Time) ([]string, error) {

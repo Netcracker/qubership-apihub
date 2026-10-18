@@ -16,6 +16,8 @@ import (
 type BuildRepository interface {
 	StoreBuild(ctx context.Context, buildEntity entity.BuildEntity, sourceEntity entity.BuildSourceEntity, depends []entity.BuildDependencyEntity) error
 	UpdateBuildStatus(ctx context.Context, buildId string, status view.BuildStatusEnum, details string) error
+	FailBuild(ctx context.Context, buildId string, details string, notifications []entity.ErrorBuildNotificationEntity) error
+	GetBuildNotifications(ctx context.Context, buildId string, filter view.NotificationsFilter) ([]entity.ErrorBuildNotificationEntity, error)
 	GetBuild(ctx context.Context, buildId string) (*entity.BuildEntity, error)
 	GetBuilds(ctx context.Context, buildIds []string) ([]entity.BuildEntity, error)
 	GetBuildSrc(ctx context.Context, buildId string) (*entity.BuildSourceEntity, error)
@@ -195,48 +197,107 @@ func (b buildRepositoryImpl) StoreBuild(ctx context.Context, buildEntity entity.
 const getBuildWithLock = "select * from build where build_id = ? limit 1 for no key update"
 
 func (b buildRepositoryImpl) UpdateBuildStatus(ctx context.Context, buildId string, status view.BuildStatusEnum, details string) error {
-	err := b.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
-		var ents []entity.BuildEntity
-		_, err := tx.Query(&ents, getBuildWithLock, buildId)
-		if err != nil {
-			return fmt.Errorf("failed to get build %s for status update: %w", buildId, err)
-		}
-		if len(ents) == 0 {
-			return fmt.Errorf("build with id = %s is not found for status update", buildId)
-		}
-		ent := &ents[0]
+	return b.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		_, err := updateBuildStatusTx(tx, buildId, status, details)
+		return err
+	})
+}
 
-		buildStatus, err := view.BuildStatusFromString(ent.Status)
-		if err != nil {
-			return fmt.Errorf("invalid status for buildId %s: %s", ent.BuildId, err)
-		}
-		if buildStatus == view.StatusComplete ||
-			(buildStatus == view.StatusError && status != view.StatusError) {
-			return &exception.CustomError{
-				Status:  http.StatusBadRequest,
-				Code:    exception.BuildAlreadyFinished,
-				Message: exception.BuildAlreadyFinishedMsg,
-				Params:  map[string]interface{}{"buildId": buildId},
-			}
-		}
-		//Append new error to existing one
-		if buildStatus == view.StatusError && status == view.StatusError &&
-			ent.RestartCount >= 2 && ent.Details != "" {
-			details = fmt.Sprintf("%v: %v", ent.Details, details)
-		}
-
-		query := tx.Model(ent).
-			Where("build_id = ?", buildId).
-			Set("status = ?", status).
-			Set("details = ?", details).
-			Set("last_active = now()")
-		_, err = query.Update()
+func (b buildRepositoryImpl) FailBuild(ctx context.Context, buildId string, details string, notifications []entity.ErrorBuildNotificationEntity) error {
+	return b.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		ent, err := updateBuildStatusTx(tx, buildId, view.StatusError, details)
 		if err != nil {
 			return err
 		}
+		if len(notifications) == 0 {
+			return nil
+		}
+		_, err = tx.Model(&notifications).Insert()
+		if err != nil {
+			return fmt.Errorf("failed to insert notifications of build %s: %w", buildId, err)
+		}
+		metadata := entity.Metadata(ent.Metadata)
+		if metadata == nil {
+			metadata = entity.Metadata{}
+		}
+		metadata.SetHasNotifications(true)
+		_, err = tx.Model(ent).Where("build_id = ?", buildId).Set("metadata = ?", metadata).Update()
+		if err != nil {
+			return fmt.Errorf("failed to update metadata of build %s: %w", buildId, err)
+		}
 		return nil
 	})
-	return err
+}
+
+func updateBuildStatusTx(tx *pg.Tx, buildId string, status view.BuildStatusEnum, details string) (*entity.BuildEntity, error) {
+	var ents []entity.BuildEntity
+	_, err := tx.Query(&ents, getBuildWithLock, buildId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get build %s for status update: %w", buildId, err)
+	}
+	if len(ents) == 0 {
+		return nil, fmt.Errorf("build with id = %s is not found for status update", buildId)
+	}
+	ent := &ents[0]
+
+	buildStatus, err := view.BuildStatusFromString(ent.Status)
+	if err != nil {
+		return nil, fmt.Errorf("invalid status for buildId %s: %s", ent.BuildId, err)
+	}
+	if buildStatus == view.StatusComplete ||
+		(buildStatus == view.StatusError && status != view.StatusError) {
+		return nil, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BuildAlreadyFinished,
+			Message: exception.BuildAlreadyFinishedMsg,
+			Params:  map[string]interface{}{"buildId": buildId},
+		}
+	}
+	//Append new error to existing one
+	if buildStatus == view.StatusError && status == view.StatusError &&
+		ent.RestartCount >= 2 && ent.Details != "" {
+		details = fmt.Sprintf("%v: %v", ent.Details, details)
+	}
+
+	_, err = tx.Model(ent).
+		Where("build_id = ?", buildId).
+		Set("status = ?", status).
+		Set("details = ?", details).
+		Set("last_active = now()").
+		Update()
+	if err != nil {
+		return nil, err
+	}
+	return ent, nil
+}
+
+func (b buildRepositoryImpl) GetBuildNotifications(ctx context.Context, buildId string, filter view.NotificationsFilter) ([]entity.ErrorBuildNotificationEntity, error) {
+	ents := make([]entity.ErrorBuildNotificationEntity, 0)
+	query := b.cp.GetConnection().WithContext(ctx).Model(&ents).
+		Where("build_id = ?", buildId)
+	if filter.DocumentId != "" {
+		query.Where("document_id = ?", filter.DocumentId)
+	} else if filter.EmptyDocumentId {
+		query.Where("(document_id IS NULL OR document_id = '')")
+	}
+	if len(filter.Severities) > 0 {
+		query.Where("severity in (?)", pg.In(filter.Severities))
+	}
+	if len(filter.Categories) > 0 {
+		query.Where("category in (?)", pg.In(filter.Categories))
+	}
+	// severity is text and would sort error, hint, information, warning; the remaining columns make the order
+	// total, which offset paging needs
+	err := query.OrderExpr(`CASE severity WHEN 'error' THEN 0 WHEN 'warning' THEN 1 WHEN 'information' THEN 2 ELSE 3 END,
+		category, message, document_id NULLS FIRST, id`).
+		Limit(filter.Limit).Offset(filter.Offset).Select()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return ents, nil
+		}
+		return nil, err
+	}
+	return ents, nil
 }
 
 const buildKeepaliveTimeoutSec = 600

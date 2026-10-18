@@ -147,9 +147,17 @@ func BuildConfigFromMap(confAsMap map[string]interface{}, publishId string) (*Bu
 }
 
 type PublishStatusResponse struct {
-	PublishId string `json:"publishId"`
-	Status    string `json:"status"`
-	Message   string `json:"message"`
+	PublishId          string `json:"publishId"`
+	Status             string `json:"status"`
+	Message            string `json:"message"`
+	HasErrors          bool   `json:"hasErrors"`
+	ChangelogHasErrors bool   `json:"changelogHasErrors"`
+	HasNotifications   bool   `json:"hasNotifications"`
+}
+
+type BuildErrorFlags struct {
+	HasErrors          bool
+	ChangelogHasErrors bool
 }
 
 type BuildsStatusRequest struct {
@@ -213,9 +221,9 @@ type ExtendedBuilds struct {
 type ExtendedBuildFilter struct {
 	PackageId string
 	Version   string
-	BuildIds []string
-	Offset   int
-	Limit    int
+	BuildIds  []string
+	Offset    int
+	Limit     int
 }
 
 type PublishedVersionSourceDataConfig struct {

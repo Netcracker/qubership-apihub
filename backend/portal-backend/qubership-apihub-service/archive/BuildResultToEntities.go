@@ -28,10 +28,20 @@ func NewBuildResultToEntitiesReader(buildArc *BuildResultArchive) *BuildResultTo
 	}
 }
 
-func (a *BuildResultToEntitiesReader) ReadDocumentsToEntities() ([]*entity.PublishedContentEntity, []*entity.PublishedContentDataEntity, error) {
+func (a *BuildResultToEntitiesReader) ReadDocumentsToEntities(buildConfig *view.BuildConfig) ([]*entity.PublishedContentEntity, []*entity.PublishedContentDataEntity, error) {
 	filesFromZipReadStart := time.Now()
 	fileEntities := make([]*entity.PublishedContentEntity, 0)
 	fileDataEntities := make([]*entity.PublishedContentDataEntity, 0)
+	mcpEndpoints := make(map[string]string)
+	if buildConfig != nil {
+		// The endpoint is taken from the config rather than from the built document, because a document that failed to process
+		// can publish no MCP entities and its endpoint would otherwise be lost.
+		for _, file := range buildConfig.Files {
+			if mcpEndpoint, ok := file.Metadata["mcpEndpoint"].(string); ok && mcpEndpoint != "" {
+				mcpEndpoints[file.FileId] = mcpEndpoint
+			}
+		}
+	}
 
 	for i, document := range a.PackageDocuments.Documents {
 		if fileHeader, exists := a.DocumentsHeaders[document.Filename]; exists {
@@ -86,6 +96,12 @@ func (a *BuildResultToEntitiesReader) ReadDocumentsToEntities() ([]*entity.Publi
 				if tags != nil {
 					fileEntMetadata.SetDocTags(tags)
 				}
+			}
+			if document.HasErrors {
+				fileEntMetadata.SetHasErrors(true)
+			}
+			if mcpEndpoint, exists := mcpEndpoints[document.FileId]; exists {
+				fileEntMetadata.SetMcpEndpoint(mcpEndpoint)
 			}
 			index := i
 			if a.PackageInfo.MigrationBuild {
@@ -393,36 +409,24 @@ func (a *BuildResultToEntitiesReader) ReadOperationsToEntities() ([]*entity.Oper
 	return operationEntities, operationDataEntities, operationSearchTexts, operationsInfo, nil
 }
 
-func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(ctx context.Context, publishingOperationsInfo map[string]entity.OperationInfo, operationRepository repository.OperationRepository) ([]*entity.VersionComparisonEntity, []*entity.OperationComparisonEntity, []string, map[string]view.ComparisonKey, error) {
+func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(ctx context.Context, publishingOperationsInfo map[string]entity.OperationInfo, operationRepository repository.OperationRepository, cachedComparisonIds map[string]struct{}) ([]*entity.VersionComparisonEntity, []*entity.OperationComparisonEntity, map[string]view.ComparisonKey, error) {
 	versionComparisonEntities := make([]*entity.VersionComparisonEntity, 0)
 	operationComparisonEntities := make([]*entity.OperationComparisonEntity, 0)
-	versionComparisonsFromCache := make([]string, 0)
 	comparisonFileIdToKeyMap := make(map[string]view.ComparisonKey)
 	var mainVersionComparison *entity.VersionComparisonEntity
 	mainVersionRefs := make([]string, 0)
 	for _, comparison := range a.PackageComparisons.Comparisons {
 		versionComparisonEnt := &entity.VersionComparisonEntity{}
-		mainVersion := false
-		if comparison.Version != "" {
-			//check if comparison's current version is a version that is being published
-			if (a.PackageInfo.Revision == comparison.Revision || comparison.Revision == 0) &&
-				a.PackageInfo.Version == comparison.Version &&
-				a.PackageInfo.PackageId == comparison.PackageId {
-				mainVersion = true
-				mainVersionComparison = versionComparisonEnt
-				versionComparisonEnt.PackageId = comparison.PackageId
-				versionComparisonEnt.Version = a.PackageInfo.Version
-				versionComparisonEnt.Revision = a.PackageInfo.Revision
-			} else {
-				versionComparisonEnt.PackageId = comparison.PackageId
-				versionComparisonEnt.Version = comparison.Version
-				versionComparisonEnt.Revision = comparison.Revision
-			}
-		}
-		if comparison.PreviousVersion != "" {
-			versionComparisonEnt.PreviousPackageId = comparison.PreviousVersionPackageId
-			versionComparisonEnt.PreviousVersion = comparison.PreviousVersion
-			versionComparisonEnt.PreviousRevision = comparison.PreviousVersionRevision
+		comparisonKey, mainVersion := a.comparisonKey(comparison.PackageId, comparison.Version, comparison.Revision,
+			comparison.PreviousVersionPackageId, comparison.PreviousVersion, comparison.PreviousVersionRevision)
+		versionComparisonEnt.PackageId = comparisonKey.PackageId
+		versionComparisonEnt.Version = comparisonKey.Version
+		versionComparisonEnt.Revision = comparisonKey.Revision
+		versionComparisonEnt.PreviousPackageId = comparisonKey.PreviousVersionPackageId
+		versionComparisonEnt.PreviousVersion = comparisonKey.PreviousVersion
+		versionComparisonEnt.PreviousRevision = comparisonKey.PreviousVersionRevision
+		if mainVersion {
+			mainVersionComparison = versionComparisonEnt
 		}
 		versionComparisonEnt.NoContent = false
 		versionComparisonEnt.LastActive = time.Now()
@@ -445,6 +449,9 @@ func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(ctx con
 		if a.PackageInfo.CurrentVersionBuilderVersion != "" {
 			versionComparisonEnt.Metadata.SetCurrentVersionBuilderVersion(a.PackageInfo.CurrentVersionBuilderVersion)
 		}
+		if comparison.HasErrors {
+			versionComparisonEnt.Metadata.SetHasErrors(true)
+		}
 		if !mainVersion {
 			mainVersionRefs = append(mainVersionRefs, versionComparisonEnt.ComparisonId)
 		}
@@ -458,8 +465,7 @@ func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(ctx con
 				PreviousVersionPackageId: versionComparisonEnt.PreviousPackageId,
 			}
 		}
-		if comparison.FromCache {
-			versionComparisonsFromCache = append(versionComparisonsFromCache, versionComparisonEnt.ComparisonId)
+		if _, cached := cachedComparisonIds[versionComparisonEnt.ComparisonId]; cached {
 			continue
 		}
 		versionComparisonEntities = append(versionComparisonEntities, versionComparisonEnt)
@@ -469,7 +475,7 @@ func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(ctx con
 		if fileHeader, exists := a.ComparisonsFileHeaders[comparison.ComparisonFileId]; exists {
 			fileData, err := ReadZipFile(fileHeader)
 			if err != nil {
-				return nil, nil, nil, nil, &exception.CustomError{
+				return nil, nil, nil, &exception.CustomError{
 					Status:  http.StatusBadRequest,
 					Code:    exception.InvalidPackageArchivedFile,
 					Message: exception.InvalidPackageArchivedFileMsg,
@@ -479,7 +485,7 @@ func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(ctx con
 			var operationChanges view.PackageOperationChanges
 			err = json.Unmarshal(fileData, &operationChanges)
 			if err != nil {
-				return nil, nil, nil, nil, &exception.CustomError{
+				return nil, nil, nil, &exception.CustomError{
 					Status:  http.StatusBadRequest,
 					Code:    exception.InvalidPackageArchivedFile,
 					Message: exception.InvalidPackageArchivedFileMsg,
@@ -489,7 +495,7 @@ func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(ctx con
 			}
 			validationErr := utils.ValidateObject(operationChanges)
 			if validationErr != nil {
-				return nil, nil, nil, nil, &exception.CustomError{
+				return nil, nil, nil, &exception.CustomError{
 					Status:  http.StatusBadRequest,
 					Code:    exception.InvalidPackagedFile,
 					Message: exception.InvalidPackagedFileMsg,
@@ -508,7 +514,7 @@ func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(ctx con
 					versionComparisonEnt.Revision,
 				)
 				if err != nil {
-					return nil, nil, nil, nil, &exception.CustomError{
+					return nil, nil, nil, &exception.CustomError{
 						Status:  http.StatusInternalServerError,
 						Message: "Failed to get operations info for $packageId-$version-$revision",
 						Debug:   err.Error(),
@@ -527,7 +533,7 @@ func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(ctx con
 					versionComparisonEnt.PreviousRevision,
 				)
 				if err != nil {
-					return nil, nil, nil, nil, &exception.CustomError{
+					return nil, nil, nil, &exception.CustomError{
 						Status:  http.StatusInternalServerError,
 						Message: "Failed to get operations info for $packageId-$version-$revision",
 						Debug:   err.Error(),
@@ -552,7 +558,7 @@ func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(ctx con
 					}
 					err = validateOperationComparison(operationComparison, dataHashStr, previousDataHashStr)
 					if err != nil {
-						return nil, nil, nil, nil, &exception.CustomError{
+						return nil, nil, nil, &exception.CustomError{
 							Status:  http.StatusBadRequest,
 							Code:    exception.InvalidPackagedFile,
 							Message: exception.InvalidPackagedFileMsg,
@@ -582,7 +588,7 @@ func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(ctx con
 		}
 	}
 	if len(versionComparisonEntities) > 0 && mainVersionComparison == nil {
-		return nil, nil, nil, nil, &exception.CustomError{
+		return nil, nil, nil, &exception.CustomError{
 			Status:  http.StatusBadRequest,
 			Code:    exception.InvalidPackagedFile,
 			Message: exception.InvalidPackagedFileMsg,
@@ -592,7 +598,48 @@ func (a *BuildResultToEntitiesReader) ReadOperationComparisonsToEntities(ctx con
 	if mainVersionComparison != nil {
 		mainVersionComparison.Refs = mainVersionRefs
 	}
-	return versionComparisonEntities, operationComparisonEntities, versionComparisonsFromCache, comparisonFileIdToKeyMap, nil
+	return versionComparisonEntities, operationComparisonEntities, comparisonFileIdToKeyMap, nil
+}
+
+func (a *BuildResultToEntitiesReader) comparisonKey(packageId string, version string, revision int,
+	previousVersionPackageId string, previousVersion string, previousVersionRevision int) (view.ComparisonKey, bool) {
+	key := view.ComparisonKey{}
+	mainVersion := false
+	if version != "" {
+		//check if comparison's current version is a version that is being published
+		if (a.PackageInfo.Revision == revision || revision == 0) &&
+			a.PackageInfo.Version == version &&
+			a.PackageInfo.PackageId == packageId {
+			mainVersion = true
+			key.PackageId = packageId
+			key.Version = a.PackageInfo.Version
+			key.Revision = a.PackageInfo.Revision
+		} else {
+			key.PackageId = packageId
+			key.Version = version
+			key.Revision = revision
+		}
+	}
+	if previousVersion != "" {
+		key.PreviousVersionPackageId = previousVersionPackageId
+		key.PreviousVersion = previousVersion
+		key.PreviousVersionRevision = previousVersionRevision
+	}
+	return key, mainVersion
+}
+
+func (a *BuildResultToEntitiesReader) ReadCachedComparisonIds() map[string]struct{} {
+	cachedIds := make(map[string]struct{}, len(a.CachedComparisons.CachedComparisons))
+	for _, cached := range a.CachedComparisons.CachedComparisons {
+		cachedIds[view.MakeVersionComparisonId(
+			cached.PackageId,
+			cached.Version,
+			cached.Revision,
+			cached.PreviousVersionPackageId,
+			cached.PreviousVersion,
+			cached.PreviousVersionRevision)] = struct{}{}
+	}
+	return cachedIds
 }
 
 func validateOperationComparison(oc view.OperationComparison, dataHash string, previousDataHash string) error {
@@ -622,18 +669,71 @@ func validateOperationComparison(oc view.OperationComparison, dataHash string, p
 	return nil
 }
 
-func (a *BuildResultToEntitiesReader) ReadBuilderNotificationsToEntities(publishId string) []*entity.BuilderNotificationsEntity {
-	builderNotificationsEntities := make([]*entity.BuilderNotificationsEntity, 0)
-	for _, builderNotifications := range a.BuilderNotifications.Notifications {
-		builderNotificationsEntities = append(builderNotificationsEntities,
-			&entity.BuilderNotificationsEntity{
-				BuildId:  publishId,
-				Severity: builderNotifications.Severity,
-				Message:  builderNotifications.Message,
-				FileId:   builderNotifications.FileId,
+func (a *BuildResultToEntitiesReader) ReadBuildNotificationsToEntities() ([]*entity.PublishedVersionNotificationEntity, error) {
+	notificationEntities := make([]*entity.PublishedVersionNotificationEntity, 0)
+	for _, notification := range a.BuildNotifications.Notifications {
+		severity, err := view.NotificationSeverityFromBuilder(notification.Severity)
+		if err != nil {
+			return nil, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.InvalidPackagedFile,
+				Message: exception.InvalidPackagedFileMsg,
+				Params:  map[string]interface{}{"file": BuildNotificationsFilePath, "error": err.Error()},
+			}
+		}
+		notificationEntities = append(notificationEntities,
+			&entity.PublishedVersionNotificationEntity{
+				PackageId:  a.PackageInfo.PackageId,
+				Version:    a.PackageInfo.Version,
+				Revision:   a.PackageInfo.Revision,
+				Severity:   severity,
+				Category:   notification.Category,
+				Message:    notification.Message,
+				DocumentId: notification.DocumentId,
 			})
 	}
-	return builderNotificationsEntities
+	return notificationEntities, nil
+}
+
+func (a *BuildResultToEntitiesReader) ReadComparisonNotificationsToEntities() ([]*entity.VersionComparisonNotificationEntity, error) {
+	notificationEntities := make([]*entity.VersionComparisonNotificationEntity, 0)
+	for _, comparison := range a.ComparisonNotifications.Comparisons {
+		comparisonKey, _ := a.comparisonKey(comparison.PackageId, comparison.Version, comparison.Revision,
+			comparison.PreviousVersionPackageId, comparison.PreviousVersion, comparison.PreviousVersionRevision)
+		comparisonId := view.MakeVersionComparisonId(
+			comparisonKey.PackageId,
+			comparisonKey.Version,
+			comparisonKey.Revision,
+			comparisonKey.PreviousVersionPackageId,
+			comparisonKey.PreviousVersion,
+			comparisonKey.PreviousVersionRevision)
+		for _, notification := range comparison.Notifications {
+			severity, err := view.NotificationSeverityFromBuilder(notification.Severity)
+			if err != nil {
+				return nil, &exception.CustomError{
+					Status:  http.StatusBadRequest,
+					Code:    exception.InvalidPackagedFile,
+					Message: exception.InvalidPackagedFileMsg,
+					Params:  map[string]interface{}{"file": ComparisonNotificationsFilePath, "error": err.Error()},
+				}
+			}
+			notificationEntities = append(notificationEntities,
+				&entity.VersionComparisonNotificationEntity{
+					PackageId:                comparisonKey.PackageId,
+					Version:                  comparisonKey.Version,
+					Revision:                 comparisonKey.Revision,
+					PreviousVersionPackageId: comparisonKey.PreviousVersionPackageId,
+					PreviousVersion:          comparisonKey.PreviousVersion,
+					PreviousVersionRevision:  comparisonKey.PreviousVersionRevision,
+					ComparisonId:             comparisonId,
+					Severity:                 severity,
+					Category:                 notification.Category,
+					Message:                  notification.Message,
+					DocumentId:               notification.DocumentId,
+				})
+		}
+	}
+	return notificationEntities, nil
 }
 
 func (a *BuildResultToEntitiesReader) ReadVersionInternalDocumentsToEntities() ([]*entity.VersionInternalDocumentEntity, []*entity.VersionInternalDocumentDataEntity, error) {
@@ -797,10 +897,9 @@ func (a *BuildResultToEntitiesReader) ReadDdlContractsToEntities() ([]*entity.DD
 // the ddl-comparisons.json index (creating version_comparison rows carrying contractTypes) and
 // the per-pair ddl-comparisons/<comparisonFileId> files (creating ddl_comparison rows). It mirrors
 // ReadOperationComparisonsToEntities so DDL-only changelogs still produce their version_comparison row.
-func (a *BuildResultToEntitiesReader) ReadDdlContractComparisonsToEntities(ctx context.Context, publishingDdlDataHashes map[string]string, ddlRepository repository.DDLContractRepository) ([]*entity.VersionComparisonEntity, []*entity.DDLContractComparisonEntity, []string, map[string]view.ComparisonKey, error) {
+func (a *BuildResultToEntitiesReader) ReadDdlContractComparisonsToEntities(ctx context.Context, publishingDdlDataHashes map[string]string, ddlRepository repository.DDLContractRepository, cachedComparisonIds map[string]struct{}) ([]*entity.VersionComparisonEntity, []*entity.DDLContractComparisonEntity, map[string]view.ComparisonKey, error) {
 	versionComparisonEntities := make([]*entity.VersionComparisonEntity, 0)
 	ddlComparisonEntities := make([]*entity.DDLContractComparisonEntity, 0)
-	ddlComparisonsFromCache := make([]string, 0)
 	comparisonFileIdToKeyMap := make(map[string]view.ComparisonKey)
 	var mainVersionComparison *entity.VersionComparisonEntity
 	mainVersionRefs := make([]string, 0)
@@ -827,26 +926,16 @@ func (a *BuildResultToEntitiesReader) ReadDdlContractComparisonsToEntities(ctx c
 
 	for _, comparison := range a.PackageDdlComparisons.Comparisons {
 		versionComparisonEnt := &entity.VersionComparisonEntity{}
-		mainVersion := false
-		if comparison.Version != "" {
-			if (a.PackageInfo.Revision == comparison.Revision || comparison.Revision == 0) &&
-				a.PackageInfo.Version == comparison.Version &&
-				a.PackageInfo.PackageId == comparison.PackageId {
-				mainVersion = true
-				mainVersionComparison = versionComparisonEnt
-				versionComparisonEnt.PackageId = comparison.PackageId
-				versionComparisonEnt.Version = a.PackageInfo.Version
-				versionComparisonEnt.Revision = a.PackageInfo.Revision
-			} else {
-				versionComparisonEnt.PackageId = comparison.PackageId
-				versionComparisonEnt.Version = comparison.Version
-				versionComparisonEnt.Revision = comparison.Revision
-			}
-		}
-		if comparison.PreviousVersion != "" {
-			versionComparisonEnt.PreviousPackageId = comparison.PreviousVersionPackageId
-			versionComparisonEnt.PreviousVersion = comparison.PreviousVersion
-			versionComparisonEnt.PreviousRevision = comparison.PreviousVersionRevision
+		comparisonKey, mainVersion := a.comparisonKey(comparison.PackageId, comparison.Version, comparison.Revision,
+			comparison.PreviousVersionPackageId, comparison.PreviousVersion, comparison.PreviousVersionRevision)
+		versionComparisonEnt.PackageId = comparisonKey.PackageId
+		versionComparisonEnt.Version = comparisonKey.Version
+		versionComparisonEnt.Revision = comparisonKey.Revision
+		versionComparisonEnt.PreviousPackageId = comparisonKey.PreviousVersionPackageId
+		versionComparisonEnt.PreviousVersion = comparisonKey.PreviousVersion
+		versionComparisonEnt.PreviousRevision = comparisonKey.PreviousVersionRevision
+		if mainVersion {
+			mainVersionComparison = versionComparisonEnt
 		}
 		versionComparisonEnt.NoContent = false
 		versionComparisonEnt.LastActive = time.Now()
@@ -869,6 +958,9 @@ func (a *BuildResultToEntitiesReader) ReadDdlContractComparisonsToEntities(ctx c
 		if a.PackageInfo.CurrentVersionBuilderVersion != "" {
 			versionComparisonEnt.Metadata.SetCurrentVersionBuilderVersion(a.PackageInfo.CurrentVersionBuilderVersion)
 		}
+		if comparison.HasErrors {
+			versionComparisonEnt.Metadata.SetHasErrors(true)
+		}
 		if !mainVersion {
 			mainVersionRefs = append(mainVersionRefs, versionComparisonEnt.ComparisonId)
 		}
@@ -882,8 +974,7 @@ func (a *BuildResultToEntitiesReader) ReadDdlContractComparisonsToEntities(ctx c
 				PreviousVersionPackageId: versionComparisonEnt.PreviousPackageId,
 			}
 		}
-		if comparison.FromCache {
-			ddlComparisonsFromCache = append(ddlComparisonsFromCache, versionComparisonEnt.ComparisonId)
+		if _, cached := cachedComparisonIds[versionComparisonEnt.ComparisonId]; cached {
 			continue
 		}
 		versionComparisonEntities = append(versionComparisonEntities, versionComparisonEnt)
@@ -896,7 +987,7 @@ func (a *BuildResultToEntitiesReader) ReadDdlContractComparisonsToEntities(ctx c
 		}
 		fileData, err := ReadZipFile(fileHeader)
 		if err != nil {
-			return nil, nil, nil, nil, &exception.CustomError{
+			return nil, nil, nil, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.InvalidPackageArchivedFile,
 				Message: exception.InvalidPackageArchivedFileMsg,
@@ -906,7 +997,7 @@ func (a *BuildResultToEntitiesReader) ReadDdlContractComparisonsToEntities(ctx c
 		var ddlChanges view.PackageDdlContractChanges
 		err = json.Unmarshal(fileData, &ddlChanges)
 		if err != nil {
-			return nil, nil, nil, nil, &exception.CustomError{
+			return nil, nil, nil, &exception.CustomError{
 				Status:  http.StatusBadRequest,
 				Code:    exception.InvalidPackageArchivedFile,
 				Message: exception.InvalidPackageArchivedFileMsg,
@@ -949,7 +1040,7 @@ func (a *BuildResultToEntitiesReader) ReadDdlContractComparisonsToEntities(ctx c
 				if !mainVersion {
 					currentInfo, err = getDdlInfo(versionComparisonEnt.PackageId, versionComparisonEnt.Version, versionComparisonEnt.Revision)
 					if err != nil {
-						return nil, nil, nil, nil, &exception.CustomError{
+						return nil, nil, nil, &exception.CustomError{
 							Status:  http.StatusInternalServerError,
 							Message: "Failed to get ddl entities info for $packageId-$version-$revision",
 							Debug:   err.Error(),
@@ -964,7 +1055,7 @@ func (a *BuildResultToEntitiesReader) ReadDdlContractComparisonsToEntities(ctx c
 			if ddlComparisonEnt.PreviousDdlEntityId != "" {
 				previousInfo, err := getDdlInfo(versionComparisonEnt.PreviousPackageId, versionComparisonEnt.PreviousVersion, versionComparisonEnt.PreviousRevision)
 				if err != nil {
-					return nil, nil, nil, nil, &exception.CustomError{
+					return nil, nil, nil, &exception.CustomError{
 						Status:  http.StatusInternalServerError,
 						Message: "Failed to get ddl entities info for $packageId-$version-$revision",
 						Debug:   err.Error(),
@@ -981,7 +1072,7 @@ func (a *BuildResultToEntitiesReader) ReadDdlContractComparisonsToEntities(ctx c
 	if mainVersionComparison != nil {
 		mainVersionComparison.Refs = mainVersionRefs
 	}
-	return versionComparisonEntities, ddlComparisonEntities, ddlComparisonsFromCache, comparisonFileIdToKeyMap, nil
+	return versionComparisonEntities, ddlComparisonEntities, comparisonFileIdToKeyMap, nil
 }
 
 func (a *BuildResultToEntitiesReader) ReadMcpContractsToEntities() ([]*entity.MCPContractEntity, []*entity.MCPContractDataEntity, []*entity.MCPContractSearchTextEntity, error) {
