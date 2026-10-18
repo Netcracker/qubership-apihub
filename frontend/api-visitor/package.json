@@ -20,17 +20,13 @@
     "build": "vite build",
     "test": "jest --verbose",
     "lint:check": "eslint -c .eslintrc.json . --ext .js,.cjs,.ts,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
-    "lint:fix": "npm run lint:check -- --fix",
-    "development:link": "npm link && npm link @netcracker/qubership-apihub-json-crawl && npm link @netcracker/qubership-apihub-api-unifier",
-    "development:unlink": "npm unlink && npm unlink @netcracker/qubership-apihub-json-crawl && npm unlink @netcracker/qubership-apihub-api-unifier",
-    "update-lock-file": "update-lock-file @netcracker"
+    "lint:fix": "pnpm run lint:check -- --fix"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-unifier": "dev",
-    "@netcracker/qubership-apihub-json-crawl": "dev"
+    "@netcracker/qubership-apihub-api-unifier": "workspace:^",
+    "@netcracker/qubership-apihub-json-crawl": "workspace:^"
   },
   "devDependencies": {
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
     "@types/jest": "30.0.0",
     "@types/node": "^24.0.0",
     "@typescript-eslint/eslint-plugin": "6.13.2",
@@ -50,5 +46,8 @@
   },
   "eslintConfig": {
     "extends": ".eslintrc.json"
+  },
+  "nx": {
+    "name": "api-visitor"
   }
 }
