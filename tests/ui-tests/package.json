@@ -1,6 +1,7 @@
 {
   "name": "@netcracker/qubership-apihub-ui-tests",
   "version": "2.36.1-dev.0",
+  "private": true,
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
@@ -12,7 +13,7 @@
     "test-unit": "playwright test --project=Unit",
     "cleanup": "playwright test --project=Cleanup",
     "lint:check": "eslint . --ext .ts,.tsx,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
-    "lint:fix": "npm run lint:check -- --fix",
+    "lint:fix": "pnpm run lint:check -- --fix",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
@@ -34,5 +35,8 @@
   },
   "eslintConfig": {
     "extends": ".eslintrc.json"
+  },
+  "nx": {
+    "name": "ui-tests"
   }
 }
