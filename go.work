@@ -1,0 +1,10 @@
+go 1.26.6
+
+use (
+	./backend/agent
+	./backend/agents-backend
+	./backend/api-linter-service
+	./backend/commons-go
+	./backend/portal-backend
+	./backend/test-service
+)
