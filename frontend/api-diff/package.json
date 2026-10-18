@@ -17,27 +17,23 @@
   },
   "scripts": {
     "lint:check": "eslint -c .eslintrc.json . --ext .js,.cjs,.ts,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
-    "lint:fix": "npm run lint:check -- --fix",
+    "lint:fix": "pnpm run lint:check -- --fix",
     "build": "vite build",
     "performance:run-inspect": "vite build --sourcemap=inline -c=vite.performance.config.ts && node --inspect dist/index.es.mjs",
-    "development:link": "npm link && npm link @netcracker/qubership-apihub-json-crawl && npm link @netcracker/qubership-apihub-graphapi && npm link @netcracker/qubership-apihub-api-unifier && npm link @netcracker/qubership-apihub-compatibility-suites",
-    "development:unlink": "npm unlink && npm unlink @netcracker/qubership-apihub-json-crawl && npm unlink @netcracker/qubership-apihub-graphapi && npm unlink @netcracker/qubership-apihub-api-unifier && npm unlink @netcracker/qubership-apihub-compatibility-suites",
     "test": "jest --maxWorkers 3",
     "test:compatibility-suites": "jest --detectOpenHandles test/compatibility-suites",
-    "test:human-readable": "jest --detectOpenHandles test/human-readable",
-    "update-lock-file": "update-lock-file @netcracker"
+    "test:human-readable": "jest --detectOpenHandles test/human-readable"
   },
   "dependencies": {
-    "@netcracker/qubership-apihub-api-unifier": "dev",
-    "@netcracker/qubership-apihub-ddlapi": "dev",
-    "@netcracker/qubership-apihub-json-crawl": "dev",
+    "@netcracker/qubership-apihub-api-unifier": "workspace:^",
+    "@netcracker/qubership-apihub-ddlapi": "workspace:^",
+    "@netcracker/qubership-apihub-json-crawl": "workspace:^",
     "fast-equals": "^6.0.2"
   },
   "devDependencies": {
     "@asyncapi/parser": "3.6.0",
-    "@netcracker/qubership-apihub-compatibility-suites": "dev",
-    "@netcracker/qubership-apihub-graphapi": "dev",
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
+    "@netcracker/qubership-apihub-compatibility-suites": "workspace:^",
+    "@netcracker/qubership-apihub-graphapi": "workspace:^",
     "@types/jest": "30.0.0",
     "@types/node": "^24.0.0",
     "@typescript-eslint/eslint-plugin": "7.18.0",
@@ -62,5 +58,8 @@
   },
   "eslintConfig": {
     "extends": ".eslintrc.json"
+  },
+  "nx": {
+    "name": "api-diff"
   }
 }
