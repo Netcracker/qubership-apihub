@@ -74,8 +74,10 @@ jobs:
         env:
           OWNER: ${{ github.repository_owner }}
           SITE_BUDGET_MIB: ${{ inputs.budget_mib || '900' }}
+          EVENT: ${{ github.event_name }}
+          REASON: ${{ inputs.reason }}
         run: |
-          echo "reason: ${{ github.event_name }} ${{ inputs.reason }}"
+          echo "reason: $EVENT $REASON"
           node tools/ci/storybook-site.js assemble "$RUNNER_TEMP/site"
 
       - uses: actions/upload-pages-artifact@v5.0.0
