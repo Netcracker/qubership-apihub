@@ -15,6 +15,7 @@
   },
   "scripts": {
     "build": "pnpm -r build",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "test:tools": "node --test \"tools/release/**/*.test.js\""
   }
 }
