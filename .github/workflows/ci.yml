@@ -39,6 +39,7 @@ jobs:
       branch_tag: ${{ steps.tags.outputs.branch_tag }}
       e2e_tier: ${{ steps.e2e_tier.outputs.value }}
       storybooks: ${{ steps.storybooks.outputs.value }}
+      can_publish: ${{ steps.can_publish.outputs.value }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -116,6 +117,28 @@ jobs:
         env:
           REF: ${{ github.ref }}
         run: echo "branch_tag=$(bash tools/ci/branch-tag.sh "$REF")" >> "$GITHUB_OUTPUT"
+
+      # Can this run write to ghcr? A pull request from a fork and every Dependabot run get a read-only
+      # token and no secrets, so the image, E2E and Storybook jobs are skipped there, and
+      # tools/ci/ci-verdict.js accepts exactly those skips when this output is `false`.
+      - name: Can this run publish
+        id: can_publish
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          value=true
+          if [ "$EVENT" = 'pull_request' ] && [ "$HEAD_REPO" != "$REPO" ]; then
+            value=false
+          elif [ "$ACTOR" = 'dependabot[bot]' ]; then
+            value=false
+          fi
+          echo "value=$value" >> "$GITHUB_OUTPUT"
+          echo "can publish: $value"
 
       # The E2E tier, decided once so a push and its pull request do not both run E2E:
       #   pull_request event          full, none if only docs/ or Markdown files changed
@@ -395,7 +418,7 @@ jobs:
   js-images:
     needs: [plan, js]
     # `js` never skips, so the implicit check that every need succeeded is enough.
-    if: needs.plan.outputs.image_projects != '[]'
+    if: needs.plan.outputs.image_projects != '[]' && needs.plan.outputs.can_publish == 'true'
     permissions:
       contents: read
       packages: write
@@ -421,6 +444,7 @@ jobs:
       && needs.go-checks.result == 'success'
       && needs.go.result != 'failure' && needs.go.result != 'cancelled'
       && needs.plan.outputs.image_projects != '[]'
+      && needs.plan.outputs.can_publish == 'true'
     permissions:
       contents: read
       packages: write
@@ -457,6 +481,7 @@ jobs:
       && needs.plan.result == 'success'
       && needs.java.result != 'failure' && needs.java.result != 'cancelled'
       && needs.plan.outputs.image_projects != '[]'
+      && needs.plan.outputs.can_publish == 'true'
     permissions:
       contents: read
       packages: write
@@ -481,6 +506,7 @@ jobs:
     if: >-
       always()
       && needs.plan.outputs.e2e_tier != 'none'
+      && needs.plan.outputs.can_publish == 'true'
       && needs.js-images.result == 'success'
       && needs.go-images.result == 'success'
     permissions:
@@ -498,7 +524,7 @@ jobs:
   # requests, whose ref is no branch. Not gated on tests: a red branch's Storybook shows what is red.
   storybooks:
     needs: [plan]
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && needs.plan.outputs.can_publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
@@ -580,7 +606,8 @@ jobs:
   # waiting for a check that never reports. It fails if any job failed or was cancelled, and also if a
   # job that had to run was skipped: tools/ci/ci-verdict.js derives from the plan which jobs those
   # are. A skip is accepted only where the plan says nothing is affected (go, java, screenshot-tests),
-  # where E2E is not due (tier none), or where the run is a pull request (storybooks).
+  # where E2E is not due (tier none), where the run is a pull request (storybooks), or where the run
+  # cannot publish (can_publish false: images, e2e, storybooks).
   ci-ok:
     needs:
       - plan

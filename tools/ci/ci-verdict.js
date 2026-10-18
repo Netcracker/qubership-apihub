@@ -9,6 +9,10 @@
  *   go, java, screenshot-tests   skipped when nothing in their area is affected
  *   e2e                          skipped when the plan chose no E2E tier
  *   storybooks, storybook-pages  skipped on pull requests
+ *   js-images, go-images, java-images, e2e, storybooks, storybook-pages
+ *                                skipped when the plan says the run cannot publish (`can_publish` is
+ *                                `false`: a pull request from a fork, or Dependabot), because the
+ *                                token has no package write access there
  *
  * Everything else must succeed. A job that is missing from `needs`, or one this script does not know,
  * fails the verdict: adding a job to the workflow without deciding what its skip means is an error.
@@ -23,6 +27,9 @@ const needs = JSON.parse(process.env.NEEDS || '{}')
 const event = process.env.EVENT || ''
 const out = (needs.plan && needs.plan.outputs) || {}
 
+// Only the exact string `false` excuses a skip; an empty output (plan failed) counts as publishing.
+const canPublish = out.can_publish !== 'false'
+
 // Is the job due? An empty output (plan failed) counts as due.
 const due = {
   plan: true,
@@ -31,12 +38,12 @@ const due = {
   go: out.go_projects !== '[]',
   java: out.java_projects !== '[]',
   'screenshot-tests': out.screenshot_projects !== '[]',
-  'js-images': out.image_projects !== '[]',
-  'go-images': out.image_projects !== '[]',
-  'java-images': out.image_projects !== '[]',
-  e2e: out.e2e_tier !== 'none',
-  storybooks: event !== 'pull_request',
-  'storybook-pages': event !== 'pull_request',
+  'js-images': out.image_projects !== '[]' && canPublish,
+  'go-images': out.image_projects !== '[]' && canPublish,
+  'java-images': out.image_projects !== '[]' && canPublish,
+  e2e: out.e2e_tier !== 'none' && canPublish,
+  storybooks: event !== 'pull_request' && canPublish,
+  'storybook-pages': event !== 'pull_request' && canPublish,
 }
 
 const problems = []
