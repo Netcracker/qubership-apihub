@@ -1,0 +1,8 @@
+---
+description: Remind when backend REST or OpenAPI changes require Postman E2E updates.
+applyTo: "docs/api/**,qubership-apihub-service/controller/**"
+---
+
+When adding or changing REST endpoints, OpenAPI contracts, auth behaviour, or error
+responses in `qubership-apihub-backend`, apply the `postman-e2e-followup` skill before
+finishing the task.
