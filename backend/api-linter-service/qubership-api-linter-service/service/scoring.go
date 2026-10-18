@@ -3,12 +3,28 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/Netcracker/qubership-api-linter-service/client"
 	"github.com/Netcracker/qubership-api-linter-service/entity"
 	"github.com/Netcracker/qubership-api-linter-service/repository"
 	"github.com/Netcracker/qubership-api-linter-service/utils"
 	"github.com/Netcracker/qubership-api-linter-service/view"
+)
+
+const (
+	bwcInternalErrorReason            = "Internal error: failed to calculate backwards compatibility details."
+	qualityInternalErrorReason        = "Internal error: failed to calculate quality check details."
+	versionContentInternalErrorReason = "Internal error: failed to get version content."
+
+	documentsHavePublicationErrorsFmt = "%s documents have publication errors."
+	contractsHavePublicationErrorsFmt = "%s contracts have publication errors."
+	changelogHasErrorsReason          = "Changelog against the previous version has errors."
+	changelogUnreliableBwcReason      = "Changelog against the previous version has errors, so the backwards compatibility result is unreliable."
+	versionHasPublicationErrorsReason = "Version has publication errors."
+
+	contractDisplayDDL = "DDL"
+	contractDisplayMCP = "MCP"
 )
 
 type ScoringService interface {
@@ -53,17 +69,7 @@ func (s *scoringServiceImpl) GetScoringForVersion(ctx context.Context, packageId
 	if err != nil {
 		return nil, err
 	}
-	if ent == nil {
-		return nil, nil
-	}
-
-	return &view.VersionScore{
-		Status:                       ent.Status,
-		Reasons:                      ent.Reasons,
-		Debug:                        ent.Debug,
-		BackwardCompatibilityDetails: ent.BackwardCompatibilityDetails,
-		QualityCheckDetails:          ent.QualityCheckDetails,
-	}, nil
+	return entity.MakeVersionScoreView(ent), nil
 }
 
 func (s *scoringServiceImpl) calculateQualityCheck(ctx context.Context, packageId, version string, revision int) (map[view.OpApiType][]view.QualityCheckDetails, error) {
@@ -71,8 +77,9 @@ func (s *scoringServiceImpl) calculateQualityCheck(ctx context.Context, packageI
 	if err != nil {
 		return nil, fmt.Errorf("failed to get version and docs lint result: %w", err)
 	}
-	if lintedVer == nil || lintedDocs == nil {
-		return nil, fmt.Errorf("version %s@%d lint result not found for package %s", version, revision, packageId)
+	if lintedVer == nil {
+		// A version with no lintable documents has no lint result row, and nothing to report here.
+		return map[view.OpApiType][]view.QualityCheckDetails{}, nil
 	}
 
 	idToRulesetMap, err := s.makeRulesetMap(ctx, makeRulesetIdsFromLintedDocs(lintedDocs))
@@ -103,51 +110,39 @@ func (s *scoringServiceImpl) CalculateScore(ctx context.Context, packageId, vers
 		BackwardCompatibilityDetails: nil,
 		QualityCheckDetails:          nil,
 	}
-	var err error
 
 	versionStr := fmt.Sprintf("%s@%d", version, revision)
 
-	score.BackwardCompatibilityDetails, err = s.calculateBackwardsCompatibility(ctx, packageId, versionStr)
+	versionContent, err := s.apihubClient.GetVersion(ctx, packageId, versionStr, true, true)
+	if err == nil && versionContent == nil {
+		err = fmt.Errorf("version %s not found for package %s", versionStr, packageId)
+	}
 	if err != nil {
-		score.Status = view.ScoringNotPassed
-		score.Reasons = append(score.Reasons, "Internal error: failed to calculate backwards compatibility details.")
+		score.PublicationIntegrityDetails = &view.PublicationIntegrityDetails{
+			Status: view.ScoringNotPassed,
+			Reason: versionContentInternalErrorReason,
+		}
 		score.Debug = append(score.Debug, err.Error())
+	} else {
+		integrity := calculatePublicationIntegrity(versionContent)
+		score.PublicationIntegrityDetails = &integrity
+
+		score.BackwardCompatibilityDetails, err = s.calculateBackwardsCompatibility(ctx, packageId, versionStr, versionContent)
+		if err != nil {
+			score.Status = view.ScoringNotPassed
+			score.Reasons = append(score.Reasons, bwcInternalErrorReason)
+			score.Debug = append(score.Debug, err.Error())
+		}
 	}
 
 	score.QualityCheckDetails, err = s.calculateQualityCheck(ctx, packageId, version, revision)
 	if err != nil {
 		score.Status = view.ScoringNotPassed
-		score.Reasons = append(score.Reasons, "Internal error: failed to calculate backwards compatibility details.")
+		score.Reasons = append(score.Reasons, qualityInternalErrorReason)
 		score.Debug = append(score.Debug, err.Error())
 	}
 
-	if score.Status != view.ScoringNotPassed {
-		for _, bwc := range score.BackwardCompatibilityDetails {
-			if bwc.Status == view.ScoringNotPassed {
-				score.Status = view.ScoringNotPassed
-			}
-			if score.Status == view.ScoringPassed && bwc.Status == view.ScoringPassedWithDefects {
-				score.Status = view.ScoringPassedWithDefects
-			}
-			if bwc.Reason != "" {
-				score.Reasons = append(score.Reasons, bwc.Reason)
-			}
-		}
-
-		for _, qcArr := range score.QualityCheckDetails {
-			for _, qc := range qcArr {
-				if qc.Status == view.ScoringNotPassed {
-					score.Status = view.ScoringNotPassed
-				}
-				if score.Status == view.ScoringPassed && qc.Status == view.ScoringPassedWithDefects {
-					score.Status = view.ScoringPassedWithDefects
-				}
-				if qc.Reason != "" {
-					score.Reasons = append(score.Reasons, qc.Reason)
-				}
-			}
-		}
-	}
+	applyScoringDetails(&score)
 	return score, nil
 }
 
@@ -220,13 +215,9 @@ func (s *scoringServiceImpl) buildValidationDetails(ctx context.Context, doc ent
 
 const breakingMessage = "found breaking change for package %s version %s operation %s:%s"
 
-func (s *scoringServiceImpl) calculateBackwardsCompatibility(ctx context.Context, packageId, version string) (map[view.OpApiType]view.BackwardCompatibilityDetails, error) {
+func (s *scoringServiceImpl) calculateBackwardsCompatibility(ctx context.Context, packageId, version string, versionContent *view.VersionContent) (map[view.OpApiType]view.BackwardCompatibilityDetails, error) {
 	result := map[view.OpApiType]view.BackwardCompatibilityDetails{}
 
-	versionContent, err := s.apihubClient.GetVersion(ctx, packageId, version, true, true)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get version %s for package %s : %s", version, packageId, err)
-	}
 	if versionContent == nil {
 		return nil, fmt.Errorf("version %s not found for package %s", version, packageId)
 	}
@@ -426,6 +417,20 @@ func (s *scoringServiceImpl) calculateBackwardsCompatibility(ctx context.Context
 		result[ot.ApiType] = bwc
 	}
 
+	if versionContent.ChangelogHasErrors {
+		// The comparison is incomplete, so the counts above cannot be trusted. Keep them for
+		// context, but never report the section as passed.
+		for apiType, bwc := range result {
+			bwc.Status = view.ScoringNotPassed
+			if bwc.Reason == "" {
+				bwc.Reason = changelogUnreliableBwcReason
+			} else {
+				bwc.Reason = changelogUnreliableBwcReason + " " + bwc.Reason
+			}
+			result[apiType] = bwc
+		}
+	}
+
 	return result, nil
 }
 
@@ -517,4 +522,181 @@ type stringList []string
 var forbiddenTransitions = map[string]stringList{
 	view.ApiAudienceExternal: {view.ApiAudienceInternal, view.ApiAudienceUnknown},
 	view.ApiAudienceInternal: {view.ApiAudienceUnknown},
+}
+
+func calculatePublicationIntegrity(vc *view.VersionContent) view.PublicationIntegrityDetails {
+	details := view.PublicationIntegrityDetails{
+		Status: view.ScoringPassed,
+	}
+	if vc == nil {
+		return details
+	}
+
+	details.HasErrors = vc.HasErrors
+	details.ChangelogHasErrors = vc.ChangelogHasErrors
+	details.ApiTypes = apiTypesFromOperationTypes(vc.OperationTypes)
+	details.Contracts = contractsFromSummary(vc.ContractsSummary)
+
+	if isUnsoundPublication(details) {
+		details.Status = view.ScoringNotPassed
+	}
+	details.Reason = strings.Join(publicationIntegrityReasons(vc.OperationTypes, details), " ")
+	return details
+}
+
+func publicationIntegrityReasons(operationTypes []view.VersionOperationType, details view.PublicationIntegrityDetails) []string {
+	var reasons []string
+
+	for _, ot := range operationTypes {
+		flag := details.ApiTypes[ot.ApiType]
+		if flag.HasErrors && flag.Reason != "" {
+			reasons = append(reasons, flag.Reason)
+		}
+	}
+
+	if details.Contracts != nil {
+		if details.Contracts.DDL != nil && details.Contracts.DDL.HasErrors && details.Contracts.DDL.Reason != "" {
+			reasons = append(reasons, details.Contracts.DDL.Reason)
+		}
+		if details.Contracts.MCP != nil && details.Contracts.MCP.HasErrors && details.Contracts.MCP.Reason != "" {
+			reasons = append(reasons, details.Contracts.MCP.Reason)
+		}
+	}
+
+	if details.ChangelogHasErrors {
+		reasons = append(reasons, changelogHasErrorsReason)
+	}
+	// The version level flag can be set for a problem that belongs to no document and no API type,
+	// so it is reported even when a typed flag is set too.
+	if details.HasErrors {
+		reasons = append(reasons, versionHasPublicationErrorsReason)
+	}
+	return reasons
+}
+
+func applyScoringDetails(score *view.VersionScore) {
+	if score.PublicationIntegrityDetails != nil {
+		if score.PublicationIntegrityDetails.Status == view.ScoringNotPassed {
+			score.Status = view.ScoringNotPassed
+		}
+		if score.PublicationIntegrityDetails.Reason != "" {
+			score.Reasons = append(score.Reasons, score.PublicationIntegrityDetails.Reason)
+		}
+	}
+
+	for _, bwc := range score.BackwardCompatibilityDetails {
+		if bwc.Status == view.ScoringNotPassed {
+			score.Status = view.ScoringNotPassed
+		}
+		if score.Status == view.ScoringPassed && bwc.Status == view.ScoringPassedWithDefects {
+			score.Status = view.ScoringPassedWithDefects
+		}
+		if bwc.Reason != "" {
+			score.Reasons = append(score.Reasons, bwc.Reason)
+		}
+	}
+
+	for _, qcArr := range score.QualityCheckDetails {
+		for _, qc := range qcArr {
+			if qc.Status == view.ScoringNotPassed {
+				score.Status = view.ScoringNotPassed
+			}
+			if score.Status == view.ScoringPassed && qc.Status == view.ScoringPassedWithDefects {
+				score.Status = view.ScoringPassedWithDefects
+			}
+			if qc.Reason != "" {
+				score.Reasons = append(score.Reasons, qc.Reason)
+			}
+		}
+	}
+
+	// Sections repeat the same sentence per API kind, so the summary keeps the first occurrence only.
+	score.Reasons = dedupReasons(score.Reasons)
+}
+
+func dedupReasons(reasons []string) []string {
+	if len(reasons) < 2 {
+		return reasons
+	}
+	seen := make(map[string]bool, len(reasons))
+	deduped := make([]string, 0, len(reasons))
+	for _, reason := range reasons {
+		if seen[reason] {
+			continue
+		}
+		seen[reason] = true
+		deduped = append(deduped, reason)
+	}
+	return deduped
+}
+
+func isUnsoundPublication(details view.PublicationIntegrityDetails) bool {
+	if details.HasErrors || details.ChangelogHasErrors {
+		return true
+	}
+	for _, flag := range details.ApiTypes {
+		if flag.HasErrors {
+			return true
+		}
+	}
+	if details.Contracts == nil {
+		return false
+	}
+	if details.Contracts.DDL != nil && details.Contracts.DDL.HasErrors {
+		return true
+	}
+	if details.Contracts.MCP != nil && details.Contracts.MCP.HasErrors {
+		return true
+	}
+	return false
+}
+
+func apiTypesFromOperationTypes(operationTypes []view.VersionOperationType) map[view.OpApiType]view.PublicationErrorFlag {
+	if len(operationTypes) == 0 {
+		return nil
+	}
+	apiTypes := make(map[view.OpApiType]view.PublicationErrorFlag, len(operationTypes))
+	for _, ot := range operationTypes {
+		flag := view.PublicationErrorFlag{HasErrors: ot.HasErrors}
+		if ot.HasErrors {
+			flag.Reason = fmt.Sprintf(documentsHavePublicationErrorsFmt, ot.ApiType.DisplayName())
+		}
+		apiTypes[ot.ApiType] = flag
+	}
+	return apiTypes
+}
+
+func contractsFromSummary(summary *view.ContractsSummaryView) *view.PublicationContractsDetails {
+	if summary == nil {
+		return nil
+	}
+	contracts := &view.PublicationContractsDetails{}
+	hasAny := false
+	if summary.DDL != nil {
+		hasAny = true
+		flag := view.PublicationErrorFlag{HasErrors: summary.DDL.HasErrors}
+		if summary.DDL.HasErrors {
+			flag.Reason = fmt.Sprintf(contractsHavePublicationErrorsFmt, contractDisplayDDL)
+		}
+		contracts.DDL = &flag
+	}
+	if len(summary.MCP) > 0 {
+		hasAny = true
+		mcpHasErrors := false
+		for _, endpoint := range summary.MCP {
+			if endpoint.HasErrors {
+				mcpHasErrors = true
+				break
+			}
+		}
+		flag := view.PublicationErrorFlag{HasErrors: mcpHasErrors}
+		if mcpHasErrors {
+			flag.Reason = fmt.Sprintf(contractsHavePublicationErrorsFmt, contractDisplayMCP)
+		}
+		contracts.MCP = &flag
+	}
+	if !hasAny {
+		return nil
+	}
+	return contracts
 }

@@ -4,6 +4,7 @@ type VersionScore struct {
 	Status                       ScoringStatus                              `json:"status"`
 	Reasons                      []string                                   `json:"reason"`
 	Debug                        []string                                   `json:"debug"`
+	PublicationIntegrityDetails  *PublicationIntegrityDetails               `json:"publicationIntegrityDetails,omitempty"`
 	BackwardCompatibilityDetails map[OpApiType]BackwardCompatibilityDetails `json:"backwardsCompatibilityDetails"`
 	QualityCheckDetails          map[OpApiType][]QualityCheckDetails        `json:"qualityCheckDetails"`
 }
@@ -41,4 +42,23 @@ type QualityCheckDetails struct {
 	ErrorsCount   int           `json:"errorsCount"`
 	WarningsCount int           `json:"warningsCount"`
 	InternalError string        `json:"internalErrors,omitempty"`
+}
+
+type PublicationIntegrityDetails struct {
+	Status             ScoringStatus                      `json:"status"`
+	Reason             string                             `json:"reason,omitempty"`
+	HasErrors          bool                               `json:"hasErrors"`
+	ChangelogHasErrors bool                               `json:"changelogHasErrors"`
+	ApiTypes           map[OpApiType]PublicationErrorFlag `json:"apiTypes,omitempty"`
+	Contracts          *PublicationContractsDetails       `json:"contracts,omitempty"`
+}
+
+type PublicationErrorFlag struct {
+	HasErrors bool   `json:"hasErrors"`
+	Reason    string `json:"reason,omitempty"`
+}
+
+type PublicationContractsDetails struct {
+	DDL *PublicationErrorFlag `json:"ddl,omitempty"`
+	MCP *PublicationErrorFlag `json:"mcp,omitempty"`
 }

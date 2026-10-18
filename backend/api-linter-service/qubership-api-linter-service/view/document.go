@@ -39,6 +39,7 @@ type PublishedDocument struct {
 	Operations   []DocumentOperation `json:"operations,omitempty"`
 	Filename     string              `json:"filename"`
 	Tags         []interface{}       `json:"tags"`
+	HasErrors    bool                `json:"hasErrors"`
 }
 
 type LintedDocumentStatus string

@@ -309,8 +309,11 @@ paths:
       summary: Get scoring for a package version
       description: >
         Returns the scoring result for the specified package version: overall status, human-readable
-        reasons and optional debug messages, backwardsCompatibilityDetails per API kind
-        (rest, graphql, protobuf, asyncapi), and qualityCheckDetails with linter results per API kind.
+        reasons and optional debug messages, publicationIntegrityDetails, backwardsCompatibilityDetails
+        per API kind (rest, graphql, protobuf, asyncapi), and qualityCheckDetails with linter results
+        per API kind. Publication integrity, backwards compatibility, and quality checks are independent;
+        overall status is the worst of the three. An unsound published version (APIHUB hasErrors or
+        changelogHasErrors) cannot have overall status passed or passed_with_defects.
         The version parameter may include revision (e.g., 1.0.0@1) or omit it to resolve the latest revision.
       operationId: getScoringForVersion
       parameters:
@@ -1015,9 +1018,12 @@ components:
       properties:
         status:
           description: >
-            Overall scoring status derived from backwards-compatibility and quality-check results.
-            passed — no blocking issues; passed_with_defects — non-blocking warnings or minor defects;
-            not_passed — blocking errors, breaking changes, or internal calculation failures.
+            Overall scoring status derived from publication integrity, backwards-compatibility, and
+            quality-check results. passed — no blocking issues; passed_with_defects — non-blocking
+            warnings or minor defects; not_passed — blocking errors, breaking changes, unsound
+            publication (hasErrors or changelogHasErrors), or internal calculation failures.
+            Publication integrity, backwards compatibility, and quality checks are independent;
+            overall status is the worst of the three.
           type: string
           enum:
             - passed
@@ -1033,6 +1039,8 @@ components:
           type: array
           items:
             type: string
+        publicationIntegrityDetails:
+          $ref: "#/components/schemas/PublicationIntegrityDetails"
         backwardsCompatibilityDetails:
           description: >
             Backwards compatibility breakdown per API kind. A property is present only when that API type
@@ -1067,8 +1075,83 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/QualityCheckDetails"
+    PublicationIntegrityDetails:
+      description: >
+        Publication integrity for a package version, derived from APIHUB version flags
+        (hasErrors, changelogHasErrors, operationTypes[].hasErrors, contractsSummary.*.hasErrors).
+        Independent of qualityCheckDetails and backwardsCompatibilityDetails. Unsound versions
+        have status not_passed so overall scoring cannot be passed. The section also reports
+        not_passed when the flags could not be read from APIHUB, with the failure named in reason,
+        so a failed check is never mistaken for a sound publication.
+      type: object
+      required:
+        - status
+        - hasErrors
+        - changelogHasErrors
+      properties:
+        status:
+          type: string
+          enum:
+            - passed
+            - not_passed
+        reason:
+          type: string
+          description: Summary reason for this section's status.
+        hasErrors:
+          type: boolean
+          description: >
+            True when the version's documents have publication errors. For a dashboard the flag is
+            aggregated over its references, because a dashboard owns no documents of its own. The
+            flag can also be true while every document is clean, when the problem belongs to the
+            version as a whole.
+        changelogHasErrors:
+          type: boolean
+          description: >
+            True when the comparison against the previous version has errors.
+        apiTypes:
+          description: >
+            Per API kind publication error flags. A property is present only when that API type
+            exists for the version. Supported kinds are rest, graphql, protobuf, and asyncapi.
+          type: object
+          properties:
+            rest:
+              $ref: "#/components/schemas/PublicationErrorFlag"
+            graphql:
+              $ref: "#/components/schemas/PublicationErrorFlag"
+            protobuf:
+              $ref: "#/components/schemas/PublicationErrorFlag"
+            asyncapi:
+              $ref: "#/components/schemas/PublicationErrorFlag"
+        contracts:
+          $ref: "#/components/schemas/PublicationContractsDetails"
+    PublicationErrorFlag:
+      description: Publication error flag for one API kind or contract type.
+      type: object
+      required:
+        - hasErrors
+      properties:
+        hasErrors:
+          type: boolean
+        reason:
+          type: string
+          description: Summary reason when hasErrors is true.
+    PublicationContractsDetails:
+      description: Publication error flags for contract types. Omitted when APIHUB sent no contractsSummary.
+      type: object
+      properties:
+        ddl:
+          $ref: "#/components/schemas/PublicationErrorFlag"
+        mcp:
+          allOf:
+            - $ref: "#/components/schemas/PublicationErrorFlag"
+            - description: >
+                Aggregated over every published MCP endpoint of the version, so the flag says that
+                some endpoint has publication errors without identifying which one.
     BackwardsCompatibilityDetails:
-      description: Backwards compatibility analysis for one API kind.
+      description: >
+        Backwards compatibility analysis for one API kind. When the version's changelog has errors
+        (publicationIntegrityDetails.changelogHasErrors), the comparison is incomplete: the status is
+        not_passed and reason says so, while the counts are kept for context only.
       type: object
       required:
         - status
