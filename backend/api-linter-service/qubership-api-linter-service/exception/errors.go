@@ -1,0 +1,69 @@
+package exception
+
+import (
+	"fmt"
+	"strings"
+)
+
+type CustomError struct {
+	Status  int                    `json:"status"`
+	Code    string                 `json:"code,omitempty"`
+	Message string                 `json:"message,omitempty"`
+	Params  map[string]interface{} `json:"params,omitempty"`
+	Debug   string                 `json:"debug,omitempty"`
+}
+
+func (c CustomError) Error() string {
+	msg := c.Message
+	for k, v := range c.Params {
+		//todo make smart replace (e.g. now it replaces $projectId if we have $project in params)
+		msg = strings.ReplaceAll(msg, "$"+k, fmt.Sprintf("%v", v))
+	}
+	return msg
+}
+
+const IncorrectParamType = "5"
+const IncorrectParamTypeMsg = "$param parameter should be $type"
+
+const NoApihubAccess = "200"
+const NoApihubAccessMsg = "No access to Apihub with code: $code. Probably incorrect configuration: api key."
+
+const DuplicateEvent = "10000"
+const DuplicateEventMsg = "Unable to create version lint task: event id $event_id already exists"
+
+const InvalidRevisionFormat = "2500"
+const InvalidRevisionFormatMsg = "Version '$version' has invalid revision format"
+
+const InvalidURLEscape = "6"
+const InvalidURLEscapeMsg = "Failed to unescape parameter $param"
+
+const InvalidParameterValue = "9"
+const InvalidParameterValueMsg = "Value '$value' is not allowed for parameter $param"
+const InvalidLimitMsg = "Value '$value' is not allowed for parameter limit. Allowed values are in range 1:$maxLimit"
+
+const BadRequestBody = "10"
+const BadRequestBodyMsg = "Failed to decode body"
+
+const RequiredParamsMissing = "15"
+const RequiredParamsMissingMsg = "Required parameters are missing: $params"
+
+const IncorrectMultipartFile = "1000"
+const IncorrectMultipartFileMsg = "Unable to read Multipart file"
+
+const InsufficientPrivileges = "1900"
+const InsufficientPrivilegesMsg = "You don't have enough privileges to perform this operation"
+
+const EntityNotFound = "100"
+const EntityNotFoundMsg = "$entity with id $id is not found"
+
+const RulesetCanNotBeDeleted = "2000"
+const RulesetCanNotBeDeletedMsg = "Ruleset with $id can not be deleted because it's active or has been activated"
+
+const RulesetNameDuplicated = "2001"
+const RulesetNameDuplicatedMsg = "Ruleset name $name is not unique for API type $type"
+
+const LintResultNotFound = "2100"
+const LintResultNotFoundMsg = "Validation result not found for packageId $packageId and version $version"
+
+const LintNotSupported = "2200"
+const LintNotSupportedMsg = "Validation is not supported for kind=$kind (id=%id), only for kind='package'"

@@ -1,0 +1,18 @@
+{
+    "extends": ["spectral:oas"],
+    "description": "Qubership's rules for a high quality specification.",
+    "rules": {
+        "no-example-com-in-url": {
+            "description": "Url must not use example.com based domain inside",
+            "given": "$..*",
+            "severity": "warn",
+            "then": {
+                "field": "url",
+                "function": "pattern",
+                "functionOptions": {
+                    "notMatch": "example\\.com"
+                }
+            }
+        }
+    }
+}

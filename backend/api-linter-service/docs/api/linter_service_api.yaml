@@ -1,0 +1,1271 @@
+openapi: 3.0.3
+info:
+  title: Linter Service API
+  version: "1.0"
+  description: >
+    The Linter Service API provides operations for validating (linting) the quality of API specifications.
+    It supports multiple linters (Spectral and ai_linter, the AI OAS linter) and enables retrieval of
+    validation results, ruleset metadata, and version scoring — an aggregated quality and backwards-compatibility
+    assessment for a package version (see GET .../scoring and the VersionScore schema). All endpoints require
+    authenticated access unless explicitly noted.
+  contact:
+    name: Netcracker Opensource Group
+    email: opensourcegroup@netcracker.com
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+servers:
+  - url: /
+security:
+  - BearerAuth: []
+  - api-key: []
+  - PersonalAccessToken: []
+tags:
+  - name: Linters
+    description: API for retrieving available linter configurations.
+  - name: Ruleset Management
+    description: API for managing validation rulesets, including metadata, activation history, and file download.
+  - name: Validation Result
+    description: API for retrieving validation results for package versions from all configured linters (Spectral, ai_linter).
+  - name: Validation Operations
+    description: API operations for managing validation processes.
+  - name: Scoring
+    description: API for retrieving version scoring (quality and backwards compatibility).
+paths:
+  /api/v1/linters:
+    get:
+      tags:
+        - Linters
+      summary: List available linters
+      description: >
+        Returns the list of available linter configurations with their supported API types and enabled status.
+        Configuration is derived from system settings (for example, AI OAS linter visibility depends on linters.ai.enabled).
+      operationId: listLinters
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExternalLinterConfig"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/rulesets/{id}:
+    get:
+      tags:
+        - Ruleset Management
+      summary: Get ruleset metadata
+      description: >
+        Returns full ruleset metadata including identifier, name, filename, status, applicable API type,
+        target linter, creation date, and whether the ruleset can be deleted.
+        Requires read permission on rulesets.
+      operationId: getRulesetById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique ruleset identifier (UUID v4).
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ruleset"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/rulesets/{id}/activation:
+    get:
+      tags:
+        - Ruleset Management
+      summary: Get activation history for a ruleset
+      description: >
+        Returns the activation history for the specified ruleset, showing periods when the ruleset was
+        activated and deactivated. Records are sorted by activeFrom in descending order (most recent first).
+        Timestamps use ISO 8601 date-time format in UTC. See the RulesetActivationHistory schema for
+        response structure and record limits.
+      operationId: getRulesetActivationHistory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique ruleset identifier (UUID v4).
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RulesetActivationHistory"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/rulesets/{id}/data:
+    get:
+      tags:
+        - Ruleset Management
+      summary: Download Spectral ruleset file
+      description: >
+        Returns the plain YAML content of the ruleset.
+      security: []
+      operationId: getRulesetDownload
+      parameters:
+        - name: id
+          in: path
+          description: Unique ruleset identifier (UUID v4).
+          required: true
+          schema:
+            type: string
+        - name: disposition
+          in: query
+          description: >
+            Controls the content disposition of the response.
+            Use `inline` to display in browser, or `attachment` to trigger download locally.
+          schema:
+            type: string
+            enum:
+              - inline
+              - attachment
+            default: inline
+      responses:
+        "200":
+          description: Success
+          content:
+            application/yaml:
+              schema:
+                type: string
+                description: YAML content of Spectral ruleset file.
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                description: Header is required if inlineContent = false. When present, must have "attachment" and "fileName" parameters.
+                example: attachment; filename="<file name>.yaml"
+            X-Content-Type-Options:
+              schema:
+                type: string
+                enum: [nosniff]
+                example: nosniff
+                description: Prevents MIME-type sniffing.
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/packages/{packageId}/versions/{version}/validation/summary:
+    get:
+      tags:
+        - Validation Result
+      summary: Get validation summary for a package version (v1)
+      description: >
+        Returns an aggregated validation summary for the specified package version, including the ruleset
+        used and issue counts grouped by severity. If the package version contains multiple documents,
+        the summary is aggregated across all validated documents. Use GET
+        /api/v2/packages/{packageId}/versions/{version}/validation/summary for multi-linter support.
+      operationId: getPackageVersionValidationSummary
+      deprecated: true
+      parameters:
+        - name: packageId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationSummary"
+
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v2/packages/{packageId}/versions/{version}/validation/summary:
+    get:
+      tags:
+        - Validation Result
+      summary: Get validation summary for a package version
+      description: >
+        Returns a summary of the validation status for the specified package version,
+        including the rulesets used and issue counts grouped by severity.
+        Supports multiple linters (Spectral, ai_linter) per document.
+      operationId: getPackageVersionValidationSummaryV2
+      parameters:
+        - name: packageId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationSummary"
+
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/packages/{packageId}/versions/{version}/scoring:
+    get:
+      tags:
+        - Scoring
+      summary: Get scoring for a package version
+      description: >
+        Returns the scoring result for the specified package version: overall status, human-readable
+        reasons and optional debug messages, backwardsCompatibilityDetails per API kind
+        (rest, graphql, protobuf, asyncapi), and qualityCheckDetails with linter results per API kind.
+        The version parameter may include revision (e.g., 1.0.0@1) or omit it to resolve the latest revision.
+      operationId: getScoringForVersion
+      parameters:
+        - name: packageId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: >
+            Unique APIHUB package identifier (for example, a dot-separated hierarchical ID such as SD.TL.TLQSS).
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Package version (optionally with revision, e.g. 1.0.0@1)
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionScore"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Scoring not found for the package version
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/packages/{packageId}/versions/{version}/validation:
+    post:
+      tags:
+        - Validation Operations
+      summary: Run manual validation for a package version
+      description: >
+        Manually triggers validation for a specific package version. Used when the linter service was
+        deployed after version publication. Returns 202 Accepted with an empty body when the validation
+        task is queued. Poll GET /api/v2/packages/{packageId}/versions/{version}/validation/summary
+        (or the v1 equivalent) until status is no longer inProgress to observe completion. Repeating
+        the request with recalculate=false is idempotent when cached results exist; recalculate=true
+        forces a fresh run. Requires the manage_draft_version permission on the target package (or
+        system administrator access).
+      operationId: runPackageVersionValidation
+      parameters:
+        - name: packageId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: >
+            Unique APIHUB package identifier (for example, a dot-separated hierarchical ID such as SD.TL.TLQSS).
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+          description: >
+            Package version identifier (e.g., 2024.1 or 1.0.0@1 with revision).
+            Omit the revision suffix to resolve the latest revision.
+        - name: recalculate
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: >
+            When true, bypasses the lint cache and forces fresh validation.
+            Use true to enable. Omit or use false to use cached results when available.
+      responses:
+        "202":
+          description: Validation started successfully
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Package version not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/bulkValidation:
+    post:
+      tags:
+        - Validation Operations
+      summary: Start bulk validation for a package
+      description: >
+        Starts an asynchronous bulk validation job for all versions of a package, or a specific version
+        when the version field is provided. Returns a jobId for polling status via GET /api/v1/bulkValidation/{jobId}.
+        Requires the manage_draft_version permission on the target package (or system administrator access).
+      operationId: startBulkValidation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkValidationRequest"
+      responses:
+        "202":
+          description: Bulk validation job started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkValidationStartResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/bulkValidation/{jobId}:
+    get:
+      tags:
+        - Validation Operations
+      summary: Get bulk validation job status
+      description: >
+        Returns the current status, progress counters, and per-version results of a bulk validation job
+        identified by jobId. Poll this endpoint after starting a job via POST /api/v1/bulkValidation.
+        Requires the manage_draft_version permission (or system administrator access). Poll at reasonable intervals (for
+        example, every few seconds) while status is processing; results are not cached between polls.
+      operationId: getBulkValidationStatus
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: >
+            Unique job identifier (UUID v4) returned by POST /api/v1/bulkValidation. Case-sensitive;
+            must reference an existing bulk validation job. Example: 550e8400-e29b-41d4-a716-446655440000.
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkValidationStatusResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/packages/{packageId}/versions/{version}/validation/documents/{slug}/details:
+    get:
+      tags:
+        - Validation Result
+      summary: Get validation details for a specific document (v1)
+      description: >
+        Returns detailed validation results for a specific document within the package version, including
+        the list of issues and severity levels. Use GET
+        /api/v2/packages/{packageId}/versions/{version}/validation/documents/{slug}/details for
+        multi-linter support. Issues are sorted first by severity (error, then warning, then info),
+        then lexicographically by path segment array (compared element by element, shorter paths first
+        when one is a prefix of another).
+      operationId: getPackageVersionValidationDocumentsDetails
+      deprecated: true
+      parameters:
+        - name: packageId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ValidationDetails"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v2/packages/{packageId}/versions/{version}/validation/documents/{slug}/details:
+    get:
+      tags:
+        - Validation Result
+      summary: Get validation details for a specific document
+      description: >
+        Returns detailed validation results for a specific document within the package version.
+        Supports multiple linters (Spectral, ai_linter) — each linter result includes its ruleset and issues.
+        Issues within each linter result are sorted first by severity (error, then warning, then info),
+        then lexicographically by path segment array: segments are compared left to right as strings
+        (array indices are string tokens); when one path is a prefix of another, the shorter path comes first.
+        Example: ["paths", "/pets", "get"] precedes ["paths", "/pets", "post"] at the same severity.
+      operationId: getPackageVersionValidationDocumentsDetailsV2
+      parameters:
+        - name: packageId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentValidationDetails"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    ExternalLinterConfig:
+      description: >
+        Read-only configuration of an available linter as exposed by the service. Derived from system
+        settings; the enabled flag and supported apiTypes reflect the current deployment configuration.
+      type: object
+      required:
+        - linter
+        - apiTypes
+        - displayName
+        - enabled
+      properties:
+        linter:
+          description: >
+            Linter identifier (case-sensitive). Allowed values are exactly spectral and ai_linter as
+            defined by the enum; additional values may be added in future releases.
+          type: string
+          enum:
+            - spectral
+            - ai_linter
+        apiTypes:
+          description: API specification types supported by this linter.
+          type: array
+          items:
+            type: string
+            enum:
+              - openapi-2-0
+              - openapi-3-0
+              - openapi-3-1
+              - asyncapi-3-0
+        displayName:
+          description: Human-readable name of the linter.
+          type: string
+        enabled:
+          description: Whether the linter is enabled in the current configuration.
+          type: boolean
+        optional:
+          description: >
+            Whether the linter is non-blocking. When true, an execution failure of this linter does
+            not affect the version validation result or scoring (its failure details are still stored);
+            issues it reports on a successful run still count.
+          type: boolean
+    ErrorResponse:
+      description: >
+        Standard error response body returned for non-2xx responses. Includes HTTP status, internal
+        error code, and a human-readable message. Optional params provide key/value placeholders for
+        message interpolation; optional debug contains diagnostic details (non-production only).
+      type: object
+      required:
+        - status
+        - code
+        - message
+      properties:
+        status:
+          description: >
+            Numeric HTTP status code for this error (integer). Matches the HTTP response status line.
+          type: integer
+        code:
+          description: >
+            Internal numeric string error code for programmatic handling (for example, 15, 1900, 2000).
+            The message field may contain $-prefixed placeholders that correspond to keys in params.
+          type: string
+          example: "1900"
+        message:
+          description: Human-readable error message describing the failure; intended for diagnostics and safe client display.
+          type: string
+        params:
+          type: object
+          additionalProperties: true
+          description: >
+            Optional key-value map of parameters used to populate $key placeholders in message. Keys are
+            strings; values are primitive types only (string, number, or boolean) — nested objects are not
+            supported.
+          example:
+            id: "abc-123"
+            field: name
+        debug:
+          description: >
+            Optional diagnostic details (for example, stack traces). Returned only in development or
+            test environments; do not rely on this field in production because it may contain sensitive data.
+          type: string
+    Ruleset:
+      description: >
+        Metadata for a validation ruleset used by the linter, including identifiers, status, applicable
+        API type, target linter, and lifecycle information.
+      type: object
+      required:
+        - id
+        - name
+        - fileName
+        - status
+        - apiType
+        - linter
+        - createdAt
+        - canBeDeleted
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the ruleset (UUID v4).
+        name:
+          type: string
+          description: Unique name of the ruleset.
+          example: "OpenAPI Quality Ruleset"
+        fileName:
+          type: string
+          description: Name of the ruleset file (typically a YAML file, e.g., R2025Ruleset.yaml).
+          example: "R2025Ruleset.yaml"
+        status:
+          description: >
+            Lifecycle status of the ruleset. active — selected for new validations when applicable;
+            inactive — not used for new validations and eligible for deletion when canBeDeleted is true.
+          type: string
+          enum:
+            - active
+            - inactive
+        apiType:
+          description: >
+            API specification format for which this ruleset is intended (for example, openapi-3-0).
+          type: string
+          enum:
+            - openapi-2-0
+            - openapi-3-0
+            - openapi-3-1
+            - asyncapi-3-0
+        linter:
+          description: >
+            Canonical linter identifier that this ruleset targets. spectral — rule-based Spectral engine
+            for OpenAPI/AsyncAPI; ai_linter — AI-assisted OpenAPI quality checks.
+          type: string
+          enum:
+            - spectral
+            - ai_linter
+        createdAt:
+          description: Date of ruleset creation.
+          type: string
+          format: date-time
+        canBeDeleted:
+          description: >
+            Indicates whether the ruleset can be deleted. True only if the ruleset is inactive and no
+            existing package version revision has been validated using this ruleset.
+          type: boolean
+          example: true
+    RulesetActivationHistory:
+      description: >
+        Activation history for a ruleset, including the ruleset identifier and a chronologically ordered
+        list of activation periods. Used to audit when a ruleset was active or inactive.
+      type: object
+      required:
+        - id
+        - activationHistory
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the ruleset (UUID v4).
+        activationHistory:
+          description: >
+            Periods when the ruleset was activated and deactivated, sorted by activeFrom in descending
+            order (most recent first). Timestamps use ISO 8601 date-time in UTC. Empty array means the
+            ruleset was never activated. Only the latest 100 records are returned; pagination is not supported.
+          type: array
+          items:
+            type: object
+            required:
+              - activeFrom
+            properties:
+              activeFrom:
+                description: >
+                  ISO 8601 date-time in UTC when the ruleset became active. Inclusive of the activation moment.
+                type: string
+                format: date-time
+              activeTo:
+                description: >
+                  ISO 8601 date-time in UTC when the ruleset was deactivated. Null means the ruleset is
+                  currently active; null is expected and not an error. Inclusive of the deactivation moment.
+                type: string
+                format: date-time
+                nullable: true
+    RulesetMetadata:
+      description: Metadata about the ruleset used for validation.
+      type: object
+      required:
+        - id
+        - name
+        - fileName
+        - status
+      properties:
+        id:
+          description: Unique identifier of the ruleset (UUID v4).
+          type: string
+        name:
+          description: Name of the ruleset.
+          type: string
+        fileName:
+          type: string
+          description: Name of the ruleset file (typically a YAML file).
+          example: "R2025Ruleset.yaml"
+        status:
+          description: >
+            Lifecycle status of the ruleset. active — used for validation; inactive — not used for
+            new validations.
+          type: string
+          enum:
+            - active
+            - inactive
+    ValidationSummary:
+      description: Aggregated validation summary for a package version.
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          description: >
+            Overall validation status for the package version. success — all documents validated;
+            inProgress — validation is still running; error — validation failed for one or more documents.
+          type: string
+          enum:
+            - success
+            - inProgress
+            - error
+        documents:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                  - success
+                  - error
+              details:
+                type: string
+              slug:
+                type: string
+              apiType:
+                description: Type of the API specification.
+                type: string
+                enum:
+                  - openapi-2-0
+                  - openapi-3-0
+                  - openapi-3-1
+                  - asyncapi-3-0
+              documentName:
+                type: string
+              rulesetId:
+                type: string
+              issuesSummary:
+                type: object
+                properties:
+                  error:
+                    type: integer
+                  warning:
+                    type: integer
+                  info:
+                    type: integer
+                  hint:
+                    type: integer
+                required:
+                  - error
+                  - warning
+                  - info
+                  - hint
+            required:
+              - status
+              - slug
+              - apiType
+              - documentName
+              - rulesetId
+        rulesets:
+          type: array
+          items:
+            $ref: "#/components/schemas/Ruleset"
+    ValidatedDocument:
+      description: Metadata about the validated document.
+      type: object
+      required:
+        - slug
+        - specificationType
+        - documentName
+      properties:
+        slug:
+          description: >
+            Unique document identifier in slug format (URL-safe string used in API paths).
+          type: string
+        specificationType:
+          description: Specification format of the validated document (for example, openapi-3-1 or asyncapi-3-0).
+          type: string
+          enum:
+            - openapi-3-1
+            - openapi-3-0
+            - openapi-2-0
+            - asyncapi-3-0
+        documentName:
+          description: Display name of the document.
+          type: string
+    ValidationDetails:
+      description: >
+        Validation details for one document under one ruleset, including ruleset metadata, the validated
+        document, and a pre-sorted list of validation issues.
+      type: object
+      required:
+        - ruleset
+        - issues
+        - document
+      properties:
+        ruleset:
+          $ref: "#/components/schemas/RulesetMetadata"
+        issues:
+          description: List of individual validation issues in the document.
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationIssue"
+        document:
+          $ref: "#/components/schemas/ValidatedDocument"
+    DocumentValidationDetails:
+      description: Validation details for a document with results from multiple linters (v2).
+      type: object
+      required:
+        - document
+        - results
+      properties:
+        document:
+          $ref: "#/components/schemas/ValidatedDocument"
+        results:
+          description: Validation results from each configured linter (spectral, ai_linter).
+          type: array
+          items:
+            $ref: "#/components/schemas/LinterResult"
+    LinterResult:
+      description: Validation result from a single linter.
+      type: object
+      required:
+        - linter
+        - ruleset
+        - issues
+      properties:
+        linter:
+          description: >
+            Name of the linter that produced this result. Canonical values are spectral and ai_linter.
+          type: string
+          enum:
+            - spectral
+            - ai_linter
+        ruleset:
+          $ref: "#/components/schemas/RulesetMetadata"
+        issues:
+          description: List of validation issues found by this linter.
+          type: array
+          items:
+            $ref: "#/components/schemas/ValidationIssue"
+    ValidationIssue:
+      description: >
+        A single validation issue reported by a linter, including the location in the document, rule
+        identifier, severity level, and a human-readable message.
+      type: object
+      required:
+        - path
+        - severity
+        - message
+        - code
+      properties:
+        path:
+          description: >
+            Array of document path segments pointing to the issue location. This is not an RFC 6901 JSON
+            Pointer string; each element is a property name or array index encoded as a string (for example,
+            "0" for the first array element). Special characters appear as literal segment values without
+            JSON Pointer escaping. Example: ["paths", "/pets", "get", "responses", "200"].
+          type: array
+          items:
+            type: string
+        code:
+          description: Identifier of the rule that reported the issue (for example, a Spectral rule key).
+          type: string
+        severity:
+          type: string
+          enum:
+            - error
+            - warning
+            - info
+        message:
+          description: Description of the validation issue.
+          type: string
+    VersionScore:
+      description: Scoring result for a package version.
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          description: >
+            Overall scoring status derived from backwards-compatibility and quality-check results.
+            passed — no blocking issues; passed_with_defects — non-blocking warnings or minor defects;
+            not_passed — blocking errors, breaking changes, or internal calculation failures.
+          type: string
+          enum:
+            - passed
+            - passed_with_defects
+            - not_passed
+        reason:
+          description: Human-readable reasons for the overall status.
+          type: array
+          items:
+            type: string
+        debug:
+          description: Diagnostic messages for troubleshooting.
+          type: array
+          items:
+            type: string
+        backwardsCompatibilityDetails:
+          description: >
+            Backwards compatibility breakdown per API kind. A property is present only when that API type
+            exists for the version. Supported kinds are rest, graphql, protobuf, and asyncapi.
+          type: object
+          properties:
+            rest:
+              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
+            graphql:
+              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
+            protobuf:
+              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
+            asyncapi:
+              $ref: "#/components/schemas/BackwardsCompatibilityDetails"
+        qualityCheckDetails:
+          description: Quality check results from each linter, grouped by API kind.
+          type: object
+          properties:
+            rest:
+              type: array
+              items:
+                $ref: "#/components/schemas/QualityCheckDetails"
+            graphql:
+              type: array
+              items:
+                $ref: "#/components/schemas/QualityCheckDetails"
+            protobuf:
+              type: array
+              items:
+                $ref: "#/components/schemas/QualityCheckDetails"
+            asyncapi:
+              type: array
+              items:
+                $ref: "#/components/schemas/QualityCheckDetails"
+    BackwardsCompatibilityDetails:
+      description: Backwards compatibility analysis for one API kind.
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - passed
+            - passed_with_defects
+            - not_passed
+        reason:
+          type: string
+          description: Summary reason for this section's status.
+        breaking:
+          type: integer
+          description: Total breaking changes count.
+        breakingInternal:
+          type: integer
+          description: Breaking changes for internal audience.
+        breakingExternal:
+          type: integer
+          description: Breaking changes for external audience.
+        breakingUnknown:
+          type: integer
+          description: Breaking changes for unknown audience.
+        internal2Unknown:
+          type: integer
+          description: Number of changes where the audience changed from internal to unknown.
+        external2Internal:
+          type: integer
+          description: Number of changes where the audience changed from external to internal.
+        external2Unknown:
+          type: integer
+          description: Number of changes where the audience changed from external to unknown.
+    QualityCheckDetails:
+      description: Quality check result from a single linter for one API kind.
+      type: object
+      required:
+        - linter
+        - status
+        - errorsCount
+        - warningsCount
+      properties:
+        linter:
+          type: string
+          enum:
+            - spectral
+            - ai_linter
+        status:
+          type: string
+          enum:
+            - passed
+            - passed_with_defects
+            - not_passed
+        optional:
+          description: >
+            Whether this linter is non-blocking. When true, an internal/execution failure of the linter
+            (see internalErrors) does not push the overall score to not_passed; issues found on a
+            successful run still count.
+          type: boolean
+        reason:
+          type: string
+          description: Summary reason for this linter's result.
+        errorsCount:
+          type: integer
+        warningsCount:
+          type: integer
+        internalErrors:
+          type: string
+          description: >
+            Plain-text diagnostic message returned only when a linter fails internally (for example, a
+            runtime or configuration error) instead of producing validation issues. Visible to authenticated
+            API clients with access to scoring results; intended for operators and integrators, not for
+            display in end-user interfaces. The API does not redact or truncate this field in any environment.
+    BulkValidationRequest:
+      description: >
+        Request body for starting a bulk validation job. packageId identifies the root package, group, or
+        workspace to validate. When version is set, only that version is validated per target package;
+        when omitted, all versions of each target package are validated. excludePackages lists package
+        IDs to skip when packageId resolves to a group or workspace (child packages only; does not
+        affect packages outside the resolved tree). recalculate controls cache bypass for each queued task.
+      type: object
+      required:
+        - packageId
+      properties:
+        packageId:
+          type: string
+          description: ID of the package whose versions should be validated.
+        version:
+          type: string
+          description: Specific version to validate. If omitted, all versions are validated.
+        excludePackages:
+          type: array
+          description: Package IDs to exclude from bulk validation.
+          items:
+            type: string
+        recalculate:
+          type: boolean
+          description: When true, bypasses the lint cache and forces fresh validation.
+          default: false
+    BulkValidationStartResponse:
+      description: >
+        Response returned when a bulk validation job is successfully started. Use the returned jobId
+        to poll GET /api/v1/bulkValidation/{jobId} for status and progress.
+      type: object
+      required:
+        - jobId
+      properties:
+        jobId:
+          type: string
+          description: Unique identifier of the started bulk validation job (UUID v4).
+    BulkValidationStatusResponse:
+      description: >
+        Current status and progress of a bulk validation job. processedVersions counts completed versions
+        (including per-version failures) out of totalVersions. status transitions: not_started (initial,
+        rarely observed) → processing → success (job finished) or error (job aborted). success means the
+        job completed processing all scheduled versions, not that every version passed validation.
+      type: object
+      required:
+        - jobId
+        - status
+        - processedVersions
+        - totalVersions
+      properties:
+        jobId:
+          type: string
+          description: Unique identifier of the bulk validation job (UUID v4).
+        status:
+          type: string
+          description: >
+            Current job status. not_started — job created but not yet processing; processing — versions
+            are being validated; success — all scheduled versions processed; error — job failed before
+            completion (see error field).
+          enum:
+            - not_started
+            - processing
+            - success
+            - error
+        processedVersions:
+          type: integer
+          description: Number of versions processed so far.
+        totalVersions:
+          type: integer
+          description: Total number of versions to process.
+        error:
+          type: string
+          description: Error message if the job failed.
+        packages:
+          type: array
+          description: Per-version validation entries.
+          items:
+            $ref: "#/components/schemas/BulkValidationEntry"
+    BulkValidationEntry:
+      description: >
+        Validation result entry for a single package version within a bulk validation job, indicating
+        whether validation was successfully queued and the associated task identifier when available.
+      type: object
+      required:
+        - packageId
+        - version
+        - validationStarted
+      properties:
+        packageId:
+          type: string
+          description: Package identifier (UUID v4) of the validated package version.
+        version:
+          type: string
+          description: >
+            Package version string (for example, 2024.1 or 1.0.0@1 with optional revision suffix).
+        validationTaskId:
+          type: string
+          description: ID of the validation task created for this version.
+        validationStarted:
+          type: boolean
+          description: >
+            True if a validation task was successfully created and queued for this version; false if
+            validation could not be started (for example, due to missing metadata or an error).
+  securitySchemes:
+    BearerAuth:
+      type: http
+      description: >
+        JWT Bearer token authentication for Qubership APIHUB. Send Authorization: Bearer <token> in the
+        request header. The token grants access according to the caller's assigned roles and permissions.
+      scheme: bearer
+      bearerFormat: JWT
+    api-key:
+      type: apiKey
+      description: >
+        API key authentication for Qubership APIHUB. Send the key in the api-key request header
+        (for example, api-key: <your-key>). The key inherits the associated user's permissions.
+      name: api-key
+      in: header
+    PersonalAccessToken:
+      type: apiKey
+      description: >
+        Personal access token authentication for programmatic access to Qubership APIHUB. Send the token
+        in the X-Personal-Access-Token header. The token inherits the issuing user's permissions and
+        remains valid until revoked or expired.
+      name: X-Personal-Access-Token
+      in: header
