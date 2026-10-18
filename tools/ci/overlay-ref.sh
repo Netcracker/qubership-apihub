@@ -23,6 +23,12 @@ if [[ $# -eq 0 ]]; then
   exit 1
 fi
 
+# A ref that starts with `-` would be read as an option by `git fetch`.
+if [[ "$ref" == -* ]]; then
+  echo "::error::ref '$ref' must not start with '-'" >&2
+  exit 1
+fi
+
 # A branch, a tag, or a full commit id; the remote resolves it.
 git fetch --no-tags --depth=1 origin "$ref"
 sha="$(git rev-parse FETCH_HEAD)"
