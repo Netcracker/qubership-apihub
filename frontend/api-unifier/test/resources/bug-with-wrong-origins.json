@@ -1,0 +1,73 @@
+{
+  "openapi": "3.0.1",
+  "paths": {
+    "/api/v2/": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Root"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Root": {
+        "type": "object",
+        "properties": {
+          "p1": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          },
+          "p2": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          },
+          "p3": {
+            "$ref": "#/components/schemas/Problem"
+          }
+        }
+      },
+      "Problem": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Array"
+          },
+          {
+            "properties": {
+              "values": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Array"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "Array": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Root"
+        }
+      }
+    }
+  }
+}

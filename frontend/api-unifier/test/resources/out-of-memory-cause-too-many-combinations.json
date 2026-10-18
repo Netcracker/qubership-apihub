@@ -1,0 +1,1746 @@
+{
+  "openapi": "3.0.3",
+  "paths": {
+    "/api/v1/process/{id}": {
+      "post": {
+        "tags": [
+          "Process"
+        ],
+        "summary": "Decompose process",
+        "operationId": "decomposeProcess",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Decompose process.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecomposeProcessInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "SecurityScheme": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "SecurityScheme": {
+        "type": "openIdConnect",
+        "description": "Authentication"
+      }
+    },
+    "schemas": {
+      "DecomposeProcessInput": {
+        "type": "object",
+        "properties": {
+          "context": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          }
+        }
+      },
+      "ContextDto": {
+        "required": [
+          "@type"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          }
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/BasketContextDto"
+          },
+          {
+            "$ref": "#/components/schemas/UserContextDto"
+          },
+          {
+            "$ref": "#/components/schemas/BrowserContextDto"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "@type",
+          "mapping": {
+            "BasketContext": "#/components/schemas/BasketContextDto",
+            "UserContext": "#/components/schemas/UserContextDto",
+            "BrowserContext": "#/components/schemas/BrowserContextDto"
+          }
+        }
+      },
+      "BasketContextDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          }
+        }
+      },
+      "UserContextDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          }
+        }
+      },
+      "BrowserContextDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "browserType": {
+            "type": "string"
+          }
+        }
+      },
+      "ProcessDto": {
+        "required": [
+          "@type"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "submitted": {
+            "type": "boolean"
+          },
+          "orchestrationStrategy": {
+            "$ref": "#/components/schemas/OrchestrationStrategy"
+          },
+          "submitStrategy": {
+            "$ref": "#/components/schemas/SubmitStrategy"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "relatedBssObjectRef": {
+            "$ref": "#/components/schemas/RelatedBssObjectRefDto"
+          },
+          "processStep": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProcessStepDto"
+            }
+          },
+          "processContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserDto"
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          }
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/CheckoutProcessDto"
+          },
+          {
+            "$ref": "#/components/schemas/UpgradeDowngradeProcessDto"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "@type",
+          "mapping": {
+            "Checkout": "#/components/schemas/CheckoutProcessDto",
+            "UpgradeDowngrade": "#/components/schemas/UpgradeDowngradeProcessDto"
+          }
+        }
+      },
+      "OrchestrationStrategy": {
+        "enum": [
+          "CHANNEL_ORCHESTRATOR",
+          "NO_ORCHESTRATION"
+        ],
+        "type": "string"
+      },
+      "SubmitStrategy": {
+        "enum": [
+          "FULL_SUBMIT",
+          "SUBMIT_PROCESS_ONLY"
+        ],
+        "type": "string"
+      },
+      "RelatedBssObjectRefDto": {
+        "type": "object",
+        "properties": {
+          "bssId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "default": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ProcessStepDto": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "businessOrder": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "orchestrationStrategy": {
+            "$ref": "#/components/schemas/OrchestrationStrategy"
+          },
+          "submitted": {
+            "type": "boolean"
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "processStepContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "processStepItem": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProcessStepItemDto"
+            }
+          }
+        }
+      },
+      "ViewPropertyDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "controlType": {
+            "$ref": "#/components/schemas/ControlType"
+          },
+          "readOnly": {
+            "type": "boolean"
+          },
+          "mandatory": {
+            "type": "boolean"
+          },
+          "collapsible": {
+            "type": "boolean"
+          },
+          "collapsed": {
+            "type": "boolean"
+          },
+          "min": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "max": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "displayOrder": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "additionalValidation": {
+            "type": "string"
+          },
+          "placeholder": {
+            "type": "string"
+          },
+          "mask": {
+            "type": "string"
+          },
+          "dataType": {
+            "$ref": "#/components/schemas/DataType"
+          },
+          "applicableFor": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "iconRef": {
+            "type": "string"
+          }
+        }
+      },
+      "ControlType": {
+        "enum": [
+          "RADIO_GROUP",
+          "CHECKBOX_GROUP",
+          "CHECKBOX_INPUT",
+          "STRING_INPUT",
+          "NUMBER_INPUT",
+          "DATE_INPUT"
+        ],
+        "type": "string"
+      },
+      "DataType": {
+        "enum": [
+          "STRING",
+          "NUMBER",
+          "BOOLEAN",
+          "TIMESTAMP",
+          "DECIMAL"
+        ],
+        "type": "string"
+      },
+      "ProcessStepItemDto": {
+        "required": [
+          "@type"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "processStepItemContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          }
+        },
+        "anyOf": [
+          {
+            "$ref": "#/components/schemas/CheckoutItemDto"
+          },
+          {
+            "$ref": "#/components/schemas/UpgradeDowngradeItemDto"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "@type"
+        }
+      },
+      "CheckoutItemDto": {
+        "required": [
+          "@type"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "processStepItemContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "basketItem": {
+            "$ref": "#/components/schemas/BasketItemDto"
+          }
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/AppointmentManagementItemDto"
+          },
+          {
+            "$ref": "#/components/schemas/OrderContactInformationItemDto"
+          },
+          {
+            "$ref": "#/components/schemas/AnonymousPersonalInformationItemDto"
+          },
+          {
+            "$ref": "#/components/schemas/AuthorizedPersonalInformationItemDto"
+          },
+          {
+            "$ref": "#/components/schemas/OrganizationInformationItemDto"
+          },
+          {
+            "$ref": "#/components/schemas/DeliveryItemDto"
+          },
+          {
+            "$ref": "#/components/schemas/IdentityVerificationItemDto"
+          },
+          {
+            "$ref": "#/components/schemas/OrderItemsReviewItemDto"
+          },
+          {
+            "$ref": "#/components/schemas/ProcessSubmitResultItemDto"
+          },
+          {
+            "$ref": "#/components/schemas/NextBestActionEnablerItemDto"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "@type",
+          "mapping": {
+            "appointmentManagement": "#/components/schemas/AppointmentManagementItemDto",
+            "orderContactInformation": "#/components/schemas/OrderContactInformationItemDto",
+            "anonymousPersonalInformation": "#/components/schemas/AnonymousPersonalInformationItemDto",
+            "authorizedPersonalInformation": "#/components/schemas/AuthorizedPersonalInformationItemDto",
+            "organizationInformation": "#/components/schemas/OrganizationInformationItemDto",
+            "delivery": "#/components/schemas/DeliveryItemDto",
+            "identityVerification": "#/components/schemas/IdentityVerificationItemDto",
+            "orderItemsReview": "#/components/schemas/OrderItemsReviewItemDto",
+            "processSubmitResult": "#/components/schemas/ProcessSubmitResultItemDto",
+            "nextBestActionEnabler": "#/components/schemas/NextBestActionEnablerItemDto"
+          }
+        }
+      },
+      "BasketItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "productOfferingBrowsingItem": {
+            "$ref": "#/components/schemas/ProductOfferingBrowsingItemDto"
+          },
+          "relatedBssObjectRef": {
+            "$ref": "#/components/schemas/RelatedBssObjectRefDto"
+          },
+          "location": {
+            "$ref": "#/components/schemas/LocationDto"
+          },
+          "checkoutItem": {
+            "$ref": "#/components/schemas/CheckoutItemDto"
+          }
+        }
+      },
+      "ProductOfferingBrowsingItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "ribbonText": {
+            "type": "string"
+          },
+          "descriptionText": {
+            "type": "string"
+          },
+          "descriptionHTML": {
+            "type": "string"
+          },
+          "carouselId": {
+            "type": "string"
+          },
+          "catalogId": {
+            "type": "string"
+          },
+          "label": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabelDto"
+            }
+          },
+          "feature": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeatureDto"
+            }
+          },
+          "relatedBssObject": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RelatedBssObjectRefDto"
+            }
+          },
+          "additionalMarketingContent": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdditionalMarketingContentDto"
+            }
+          },
+          "productOfferingBrowsingItemPrice": {
+            "$ref": "#/components/schemas/ProductOfferingBrowsingItemPriceDto"
+          },
+          "productOfferingBrowsingItemSetting": {
+            "$ref": "#/components/schemas/ProductOfferingBrowsingItemSettingsDto"
+          }
+        }
+      },
+      "LabelDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "textColorCode": {
+            "type": "string"
+          },
+          "backgroundColorCode": {
+            "type": "string"
+          }
+        }
+      },
+      "FeatureDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          }
+        }
+      },
+      "AdditionalMarketingContentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          }
+        }
+      },
+      "ProductOfferingBrowsingItemPriceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "price": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PriceDto"
+            }
+          }
+        }
+      },
+      "PriceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "priceType": {
+            "$ref": "#/components/schemas/PriceType"
+          },
+          "taxIncludedAmount": {
+            "type": "string"
+          },
+          "taxExcludedAmount": {
+            "type": "string"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "recurringChargePeriod": {
+            "type": "string"
+          }
+        }
+      },
+      "PriceType": {
+        "enum": [
+          "RC",
+          "NRC",
+          "TOTAL_RC",
+          "TOTAL_NRC",
+          "TOTAL_NRC_REDUCTION",
+          "TOTAL_RC_REDUCTION",
+          "VAT_RC",
+          "VAT_NRC",
+          "FROM_RC",
+          "FROM_NRC",
+          "PAY_NOW",
+          "RC_DISCOUNT",
+          "NRC_DISCOUNT"
+        ],
+        "type": "string"
+      },
+      "ProductOfferingBrowsingItemSettingsDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "setting": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettingDto"
+            }
+          }
+        }
+      },
+      "SettingDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "priceImpacting": {
+            "type": "boolean"
+          },
+          "businessType": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/SettingRole"
+          },
+          "childSetting": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettingDto"
+            }
+          },
+          "settingPrice": {
+            "$ref": "#/components/schemas/SettingPriceDto"
+          },
+          "additionalMarketingContent": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdditionalMarketingContentDto"
+            }
+          },
+          "label": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabelDto"
+            }
+          },
+          "relatedBssObjectRef": {
+            "$ref": "#/components/schemas/RelatedBssObjectRefDto"
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "selectedSettingValue": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettingValueDto"
+            }
+          },
+          "availableSettingValue": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettingValueDto"
+            }
+          },
+          "defaultSettingValue": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SettingValueDto"
+            }
+          }
+        }
+      },
+      "SettingRole": {
+        "enum": [
+          "GROUP",
+          "ITEM"
+        ],
+        "type": "string"
+      },
+      "SettingPriceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "price": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PriceDto"
+            }
+          }
+        }
+      },
+      "SettingValueDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "value": {},
+          "dataType": {
+            "$ref": "#/components/schemas/DataType"
+          },
+          "additionalMarketingContent": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdditionalMarketingContentDto"
+            }
+          },
+          "label": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LabelDto"
+            }
+          },
+          "relatedBssObjectRef": {
+            "$ref": "#/components/schemas/RelatedBssObjectRefDto"
+          },
+          "settingValuePrice": {
+            "$ref": "#/components/schemas/SettingValuePriceDto"
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          }
+        }
+      },
+      "SettingValuePriceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "price": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PriceDto"
+            }
+          }
+        }
+      },
+      "LocationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "formattedAddress": {
+            "type": "string"
+          }
+        }
+      },
+      "AppointmentManagementItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "processStepItemContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "basketItem": {
+            "$ref": "#/components/schemas/BasketItemDto"
+          },
+          "appointment": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppointmentDto"
+            }
+          }
+        }
+      },
+      "AppointmentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "relatedProductName": {
+            "type": "string"
+          },
+          "geoAddressId": {
+            "type": "string"
+          },
+          "tloOfferingId": {
+            "type": "string"
+          },
+          "appointmentAddress": {
+            "type": "string"
+          },
+          "appointmentComment": {
+            "type": "string"
+          },
+          "recipientPhoneNumber": {
+            "type": "string"
+          },
+          "selectedSlot": {
+            "$ref": "#/components/schemas/AppointmentTimeSlotDto"
+          },
+          "availableSlot": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppointmentTimeSlotDto"
+            }
+          },
+          "appointmentPrice": {
+            "$ref": "#/components/schemas/AppointmentPriceDto"
+          }
+        }
+      },
+      "AppointmentTimeSlotDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "startTime": {
+            "$ref": "#/components/schemas/OffsetDateTime"
+          },
+          "endTime": {
+            "$ref": "#/components/schemas/OffsetDateTime"
+          }
+        }
+      },
+      "OffsetDateTime": {
+        "format": "date-time",
+        "type": "string",
+        "example": {}
+      },
+      "AppointmentPriceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "price": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PriceDto"
+            }
+          }
+        }
+      },
+      "OrderContactInformationItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "processStepItemContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "basketItem": {
+            "$ref": "#/components/schemas/BasketItemDto"
+          },
+          "orderContactInformation": {
+            "$ref": "#/components/schemas/OrderContactInformationDto"
+          }
+        }
+      },
+      "OrderContactInformationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phoneNumber": {
+            "type": "string"
+          }
+        }
+      },
+      "AnonymousPersonalInformationItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "processStepItemContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "basketItem": {
+            "$ref": "#/components/schemas/BasketItemDto"
+          },
+          "anonymousPersonalInformation": {
+            "$ref": "#/components/schemas/AnonymousPersonalInformationDto"
+          }
+        }
+      },
+      "AnonymousPersonalInformationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phoneNumber": {
+            "type": "string"
+          },
+          "billingAddress": {
+            "$ref": "#/components/schemas/AddressDto"
+          }
+        }
+      },
+      "AddressDto": {
+        "type": "object",
+        "properties": {
+          "postCode": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "stateOrProvince": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "street1": {
+            "type": "string"
+          }
+        }
+      },
+      "AuthorizedPersonalInformationItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "processStepItemContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "basketItem": {
+            "$ref": "#/components/schemas/BasketItemDto"
+          },
+          "authorizedPersonalInformation": {
+            "$ref": "#/components/schemas/AuthorizedPersonalInformationDto"
+          }
+        }
+      },
+      "AuthorizedPersonalInformationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "documentType": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "billingAddress": {
+            "$ref": "#/components/schemas/AddressDto"
+          }
+        }
+      },
+      "OrganizationInformationItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "processStepItemContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "basketItem": {
+            "$ref": "#/components/schemas/BasketItemDto"
+          },
+          "organizationInformation": {
+            "$ref": "#/components/schemas/OrganizationInformationDto"
+          }
+        }
+      },
+      "OrganizationInformationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "documentType": {
+            "type": "string"
+          },
+          "documentId": {
+            "type": "string"
+          },
+          "companyType": {
+            "type": "string"
+          },
+          "companyName": {
+            "type": "string"
+          },
+          "legalAddress": {
+            "$ref": "#/components/schemas/AddressDto"
+          }
+        }
+      },
+      "DeliveryItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "processStepItemContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "basketItem": {
+            "$ref": "#/components/schemas/BasketItemDto"
+          },
+          "deliveryOption": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeliveryOptionDto"
+            }
+          }
+        }
+      },
+      "DeliveryOptionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "deliveryOptionPrice": {
+            "$ref": "#/components/schemas/DeliveryOptionPriceDto"
+          }
+        }
+      },
+      "DeliveryOptionPriceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "price": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PriceDto"
+            }
+          }
+        }
+      },
+      "IdentityVerificationItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "processStepItemContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "basketItem": {
+            "$ref": "#/components/schemas/BasketItemDto"
+          },
+          "identityVerification": {
+            "$ref": "#/components/schemas/IdentityVerificationDto"
+          }
+        }
+      },
+      "IdentityVerificationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "authenticated": {
+            "type": "boolean"
+          },
+          "basket": {
+            "$ref": "#/components/schemas/BasketDto"
+          }
+        }
+      },
+      "BasketDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "quoteId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "basketSummaryPrice": {
+            "$ref": "#/components/schemas/BasketSummaryPriceDto"
+          },
+          "basketItem": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BasketItemDto"
+            }
+          },
+          "relatedBssObjectRef": {
+            "$ref": "#/components/schemas/RelatedBssObjectRefDto"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserDto"
+          }
+        }
+      },
+      "BasketSummaryPriceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "price": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PriceDto"
+            }
+          }
+        }
+      },
+      "UserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "accessToken": {
+            "type": "string"
+          },
+          "relatedBssObjectRef": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RelatedBssObjectRefDto"
+            }
+          }
+        }
+      },
+      "OrderItemsReviewItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "processStepItemContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "basketItem": {
+            "$ref": "#/components/schemas/BasketItemDto"
+          },
+          "basket": {
+            "$ref": "#/components/schemas/BasketDto"
+          }
+        }
+      },
+      "ProcessSubmitResultItemDto": {
+        "required": [
+          "@type"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "processStepItemContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        }
+      },
+      "NextBestActionEnablerItemDto": {
+        "required": [
+          "@type"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "processStepItemContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "bannerBrowsingItem": {
+            "$ref": "#/components/schemas/BannerBrowsingItemDto"
+          }
+        }
+      },
+      "BannerBrowsingItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          }
+        }
+      },
+      "UpgradeDowngradeItemDto": {
+        "required": [
+          "@type"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "processStepItemContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          }
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/UpgradeDowngradeOptionListItemDto"
+          },
+          {
+            "$ref": "#/components/schemas/UpgradeDowngradeOptionDetailsItemDto"
+          },
+          {
+            "$ref": "#/components/schemas/UpgradeDowngradeOptionSettingsItemDto"
+          },
+          {
+            "$ref": "#/components/schemas/UpgradeDowngradeOptionReviewItemDto"
+          },
+          {
+            "$ref": "#/components/schemas/ProcessSubmitResultItemDto"
+          },
+          {
+            "$ref": "#/components/schemas/NextBestActionEnablerItemDto"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "@type",
+          "mapping": {
+            "upgradeDowngradeOptionList": "#/components/schemas/UpgradeDowngradeOptionListItemDto",
+            "upgradeDowngradeOptionDetails": "#/components/schemas/UpgradeDowngradeOptionDetailsItemDto",
+            "upgradeDowngradeOptionSettings": "#/components/schemas/UpgradeDowngradeOptionSettingsItemDto",
+            "upgradeDowngradeOptionReview": "#/components/schemas/UpgradeDowngradeOptionReviewItemDto",
+            "processSubmitResult": "#/components/schemas/ProcessSubmitResultItemDto",
+            "nextBestActionEnabler": "#/components/schemas/NextBestActionEnablerItemDto"
+          }
+        }
+      },
+      "UpgradeDowngradeOptionListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "processStepItemContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "availableUpgradeDowngradeOption": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpgradeDowngradeOption"
+            }
+          },
+          "selectedUpgradeDowngradeOption": {
+            "$ref": "#/components/schemas/UpgradeDowngradeOption"
+          }
+        }
+      },
+      "UpgradeDowngradeOption": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "modificationType": {
+            "$ref": "#/components/schemas/ModificationType"
+          },
+          "productOfferingBrowsingItem": {
+            "$ref": "#/components/schemas/ProductOfferingBrowsingItemDto"
+          }
+        }
+      },
+      "ModificationType": {
+        "enum": [
+          "UPGRADE",
+          "DOWNGRADE"
+        ],
+        "type": "string"
+      },
+      "UpgradeDowngradeOptionDetailsItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "processStepItemContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "upgradeDowngradeOption": {
+            "$ref": "#/components/schemas/UpgradeDowngradeOption"
+          }
+        }
+      },
+      "UpgradeDowngradeOptionSettingsItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "processStepItemContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "upgradeDowngradeOption": {
+            "$ref": "#/components/schemas/UpgradeDowngradeOption"
+          }
+        }
+      },
+      "UpgradeDowngradeOptionReviewItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "processStepItemContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "basket": {
+            "$ref": "#/components/schemas/BasketDto"
+          }
+        }
+      },
+      "CheckoutProcessDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "submitted": {
+            "type": "boolean"
+          },
+          "orchestrationStrategy": {
+            "$ref": "#/components/schemas/OrchestrationStrategy"
+          },
+          "submitStrategy": {
+            "$ref": "#/components/schemas/SubmitStrategy"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "relatedBssObjectRef": {
+            "$ref": "#/components/schemas/RelatedBssObjectRefDto"
+          },
+          "processStep": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProcessStepDto"
+            }
+          },
+          "processContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserDto"
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "basketToBeCheckedOut": {
+            "$ref": "#/components/schemas/BasketDto"
+          }
+        }
+      },
+      "UpgradeDowngradeProcessDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "submitted": {
+            "type": "boolean"
+          },
+          "orchestrationStrategy": {
+            "$ref": "#/components/schemas/OrchestrationStrategy"
+          },
+          "submitStrategy": {
+            "$ref": "#/components/schemas/SubmitStrategy"
+          },
+          "@type": {
+            "type": "string"
+          },
+          "relatedBssObjectRef": {
+            "$ref": "#/components/schemas/RelatedBssObjectRefDto"
+          },
+          "processStep": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProcessStepDto"
+            }
+          },
+          "processContext": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContextDto"
+            }
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserDto"
+          },
+          "viewProperty": {
+            "$ref": "#/components/schemas/ViewPropertyDto"
+          },
+          "productInstance": {
+            "$ref": "#/components/schemas/PlanProductDto"
+          },
+          "upgradeDowngradeOption": {
+            "$ref": "#/components/schemas/UpgradeDowngradeOption"
+          }
+        }
+      },
+      "PlanProductDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "upgradeDowngradeOption": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpgradeDowngradeOption"
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorEntry"
+            }
+          }
+        }
+      },
+      "ErrorEntry": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/ErrorSource"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "debugDetail": {
+            "type": "string"
+          },
+          "extra": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "originatingService": {
+            "type": "string"
+          }
+        }
+      },
+      "ErrorSource": {
+        "type": "object",
+        "properties": {
+          "pointer": {
+            "type": "string"
+          },
+          "parameter": {
+            "type": "string"
+          },
+          "value": {},
+          "description": {
+            "type": "string"
+          },
+          "example": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
