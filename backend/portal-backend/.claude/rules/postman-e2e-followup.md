@@ -1,7 +1,7 @@
 ---
 paths:
   - "docs/api/**"
-  - "qubership-apihub-service/controller/**"
+  - "controller/**"
 ---
 
 When adding or changing REST endpoints, OpenAPI contracts, auth behaviour, or error

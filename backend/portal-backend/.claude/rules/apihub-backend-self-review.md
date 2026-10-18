@@ -1,6 +1,6 @@
 ---
 paths:
-  - "qubership-apihub-service/**/*.go"
+  - "**/*.go"
 ---
 
 When the user asks for self-review, code review of a diff, or a post-implementation

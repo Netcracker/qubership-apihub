@@ -121,7 +121,7 @@ build.cmd
 
 Configuration is provided via `config.yaml` (loaded from `basePath` at startup).
 For a full reference with descriptions and defaults see
-[config.template.yaml](qubership-apihub-service/config.template.yaml).
+[config.template.yaml](config.template.yaml).
 
 Notable sections:
 

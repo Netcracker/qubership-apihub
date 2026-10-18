@@ -23,7 +23,7 @@ docker-compose -f docs/local_development/docker-compose/DB/docker-compose.yml up
 ```
 
 This provisions Postgres with database/user/password `apihub`/`apihub`/`apihub`, matching
-`qubership-apihub-service/local_config/config.yaml`.
+`local_config/config.yaml`.
 
 ## Build and run
 
@@ -35,7 +35,7 @@ go build .
 Do not pass `GOOS=linux`/`GOARCH=amd64` (used only by `build_golang_binary.cmd` for the
 container image) — build for the host platform for a local run.
 
-Start with the local config, from `qubership-apihub-service/`:
+Start with the local config, from the component root:
 
 **Bash:**
 
@@ -63,7 +63,7 @@ only from the `config.yaml` under `APIHUB_CONFIG_FOLDER`, no automatic env bindi
 **Bash:**
 
 ```bash
-cp -r qubership-apihub-service/local_config /tmp/local_config_override
+cp -r local_config /tmp/local_config_override
 sed -i "s/listenAddress: ':8090'/listenAddress: ':<free-port>'/" /tmp/local_config_override/config.yaml
 APIHUB_CONFIG_FOLDER=/tmp/local_config_override ./qubership-apihub-service
 ```

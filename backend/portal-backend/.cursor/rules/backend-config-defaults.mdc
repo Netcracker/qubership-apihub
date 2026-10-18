@@ -1,6 +1,6 @@
 ---
 description: Backend config defaults and validation conventions
-globs: "qubership-apihub-service/**/*.go"
+globs: "**/*.go"
 ---
 
 # Backend Configuration Defaults

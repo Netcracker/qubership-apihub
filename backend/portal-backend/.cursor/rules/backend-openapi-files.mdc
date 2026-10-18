@@ -2,7 +2,7 @@
 description: Backend OpenAPI file list and sync requirements
 globs:
   - "docs/api/**"
-  - "qubership-apihub-service/controller/**"
+  - "controller/**"
 ---
 
 # Backend OpenAPI Files

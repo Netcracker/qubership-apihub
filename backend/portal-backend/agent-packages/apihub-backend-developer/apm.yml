@@ -1,6 +1,6 @@
 name: apihub-backend-developer
 version: 0.2.0
-description: APIHub backend service specifics (Service.go, ErrorCodes, migrations, OpenAPI files)
+description: APIHub backend service specifics (main.go, ErrorCodes, migrations, OpenAPI files)
 author: Qubership
 dependencies:
   apm:

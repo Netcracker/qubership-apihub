@@ -1,7 +1,7 @@
 ---
 paths:
   - "docs/api/**"
-  - "qubership-apihub-service/controller/**"
+  - "controller/**"
 ---
 
 # Backend OpenAPI Files

@@ -29,16 +29,16 @@ with no behavior change.
    creating a duplicate when one already targets the same feature area.
 
 2. **Check Postgres** is reachable at `localhost:5432` (matches
-   `qubership-apihub-service/local_config/config.yaml`). If unreachable, **stop and ask the
+   `local_config/config.yaml`). If unreachable, **stop and ask the
    user** whether to start it via the local docker-compose DB stack or point to another
    instance — do not start containers unprompted.
 
-3. **Build**: `go build .` from `qubership-apihub-service/` (do not force
+3. **Build**: `go build .` from the component root (do not force
    `GOOS=linux`/`GOARCH=amd64` — that's only for the container build script).
 
 4. **Start locally with `local_config`**: set `APIHUB_CONFIG_FOLDER` to
-   `qubership-apihub-service/local_config` and run the built binary from
-   `qubership-apihub-service/`. Default listen address is `:8090`. There is no env-var override
+   `local_config` and run the built binary from
+   the component root. Default listen address is `:8090`. There is no env-var override
    for config values in this codebase — if the port is occupied, do not edit the committed
    `local_config/config.yaml`; copy it to a scratch directory, edit
    `technicalParameters.listenAddress` in the copy, and point `APIHUB_CONFIG_FOLDER` at the copy

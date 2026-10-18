@@ -3,7 +3,7 @@
 
 $ErrorActionPreference = 'Stop'
 $RepoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..')
-$MigrationsDir = Join-Path $RepoRoot 'qubership-apihub-service\resources\migrations'
+$MigrationsDir = Join-Path $RepoRoot 'resources/migrations'
 
 if (-not (Test-Path $MigrationsDir)) {
     Write-Error "migrations directory not found: $MigrationsDir"

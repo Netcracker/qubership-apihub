@@ -1,6 +1,6 @@
 ---
 description: Remind when backend REST or OpenAPI changes require Postman E2E updates.
-applyTo: "docs/api/**,qubership-apihub-service/controller/**"
+applyTo: "docs/api/**,controller/**"
 ---
 
 When adding or changing REST endpoints, OpenAPI contracts, auth behaviour, or error

@@ -1,7 +1,7 @@
 ---
 description: Remind when backend changes require Helm or Compose updates in qubership-apihub.
 globs:
-  - "qubership-apihub-service/**/*.go"
+  - "**/*.go"
   - "docs/api/**"
 ---
 

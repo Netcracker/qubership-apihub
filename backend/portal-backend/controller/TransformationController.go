@@ -1,0 +1,406 @@
+package controller
+
+import (
+	"net/http"
+	"net/url"
+	"strconv"
+
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/exception"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/responder"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/secctx"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/service"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/view"
+)
+
+type TransformationController interface {
+	TransformDocuments_deprecated_2(w http.ResponseWriter, r *http.Request) //deprecated
+	GetDataForDocumentsTransformation(w http.ResponseWriter, r *http.Request)
+}
+
+func NewTransformationController(roleService service.RoleService, buildService service.BuildService, versionService service.VersionService, transformationService service.TransformationService, operationGroupService service.OperationGroupService, responder responder.Responder) TransformationController {
+	return transformationControllerImpl{roleService: roleService, buildService: buildService, versionService: versionService, transformationService: transformationService, operationGroupService: operationGroupService, responder: responder}
+}
+
+type transformationControllerImpl struct {
+	roleService           service.RoleService
+	buildService          service.BuildService
+	versionService        service.VersionService
+	transformationService service.TransformationService
+	operationGroupService service.OperationGroupService
+	responder             responder.Responder
+}
+
+func (t transformationControllerImpl) TransformDocuments_deprecated_2(w http.ResponseWriter, r *http.Request) {
+	packageId := getStringParam(r, "packageId")
+	ctx := secctx.MakeUserContext(r)
+	sufficientPrivileges, err := t.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+	if err != nil {
+		t.responder.RespondWithError(w, r, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	versionName, err := getUnescapedStringParam(r, "version")
+	if err != nil {
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "version"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	apiType, err := getUnescapedStringParam(r, "apiType")
+	if err != nil {
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "apiType"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	_, err = view.ParseApiType(apiType)
+	if err != nil {
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidParameterValueMsg,
+			Params:  map[string]interface{}{"param": "apiType", "value": apiType},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	groupName, err := getUnescapedStringParam(r, "groupName")
+	if err != nil {
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "groupName"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	buildType, err := getUnescapedStringParam(r, "buildType")
+	if err != nil {
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "buildType"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	format := r.URL.Query().Get("format")
+	if format == "" {
+		format = string(view.JsonDocumentFormat)
+	}
+
+	err = view.ValidateFormatForBuildType(buildType, format)
+	if err != nil {
+		t.responder.RespondWithError(w, r, "buildType format validation failed", err)
+		return
+	}
+
+	exists, err := t.operationGroupService.CheckOperationGroupExists(ctx, packageId, versionName, apiType, groupName)
+	if err != nil {
+		t.responder.RespondWithError(w, r, "Failed to check if operation group exists", err)
+		return
+	}
+	if !exists {
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusNotFound,
+			Code:    exception.OperationGroupNotFound,
+			Message: exception.OperationGroupNotFoundMsg,
+			Params:  map[string]interface{}{"groupName": groupName},
+		})
+		return
+	}
+
+	builderId, err := url.QueryUnescape(r.URL.Query().Get("builderId"))
+	if err != nil {
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "builderId"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	clientBuild := false
+	if r.URL.Query().Get("clientBuild") != "" {
+		clientBuild, err = strconv.ParseBool(r.URL.Query().Get("clientBuild"))
+		if err != nil {
+			t.responder.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.IncorrectParamType,
+				Message: exception.IncorrectParamTypeMsg,
+				Params:  map[string]interface{}{"param": "clientBuild", "type": "boolean"},
+				Debug:   err.Error(),
+			})
+			return
+		}
+	}
+	if clientBuild && builderId == "" {
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.RequiredParamsMissing,
+			Message: exception.RequiredParamsMissingMsg,
+			Params:  map[string]interface{}{"params": "builderId"},
+		})
+		return
+	}
+
+	reCalculate := false
+	if r.URL.Query().Get("reCalculate") != "" {
+		reCalculate, err = strconv.ParseBool(r.URL.Query().Get("reCalculate"))
+		if err != nil {
+			t.responder.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.IncorrectParamType,
+				Message: exception.IncorrectParamTypeMsg,
+				Params:  map[string]interface{}{"param": "reCalculate", "type": "boolean"},
+				Debug:   err.Error(),
+			})
+			return
+		}
+	}
+
+	_, revision, err := service.SplitVersionRevision(versionName)
+	if err != nil {
+		t.responder.RespondWithError(w, r, "Failed to split version revision", err)
+		return
+	}
+	if revision == 0 {
+		latestRevision, err := t.versionService.GetLatestRevision(ctx, packageId, versionName)
+		if err != nil {
+			t.responder.RespondWithError(w, r, "Failed to get version", err)
+			return
+		}
+		versionName = view.MakeVersionRefKey(versionName, latestRevision)
+	}
+	buildConfig := view.BuildConfig{
+		PackageId: packageId,
+		Version:   versionName,
+		BuildType: view.BuildType(buildType),
+		Format:    format,
+		CreatedBy: secctx.GetUserId(ctx),
+		ApiType:   apiType,
+		GroupName: groupName,
+	}
+
+	if reCalculate {
+		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(ctx, buildConfig, clientBuild, builderId)
+		if err != nil {
+			t.responder.RespondWithError(w, r, "Failed to create documentGroup type build", err)
+			return
+		}
+		t.responder.RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
+			PackageId: buildConfig.PackageId,
+			Version:   buildConfig.Version,
+			ApiType:   buildConfig.ApiType,
+			GroupName: buildConfig.GroupName,
+			BuildType: buildConfig.BuildType,
+			Format:    buildConfig.Format,
+			CreatedBy: buildConfig.CreatedBy,
+			BuildId:   buildId,
+		})
+		return
+	}
+
+	content, err := t.versionService.GetTransformedDocuments(ctx, packageId, versionName, apiType, groupName, buildType, format)
+	if err != nil {
+		t.responder.RespondWithError(w, r, "Failed to get transformed documents", err)
+		return
+	}
+	if content != nil {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	searchRequest := view.DocumentGroupBuildSearchRequest{
+		PackageId: packageId,
+		Version:   versionName,
+		BuildType: view.BuildType(buildType),
+		Format:    format,
+		ApiType:   apiType,
+		GroupName: groupName,
+	}
+	var calculationProcessStatus view.CalculationProcessStatus
+	buildView, err := t.buildService.GetBuildViewByDocumentGroupSearchQuery(ctx, searchRequest)
+	if err != nil {
+		if customError, ok := err.(*exception.CustomError); ok {
+			if customError.Status == http.StatusNotFound {
+
+				buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(ctx, buildConfig, clientBuild, builderId)
+				if err != nil {
+					t.responder.RespondWithError(w, r, "Failed to create documentGroup type build", err)
+					return
+				}
+				t.responder.RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
+					PackageId: buildConfig.PackageId,
+					Version:   buildConfig.Version,
+					ApiType:   buildConfig.ApiType,
+					GroupName: buildConfig.GroupName,
+					BuildType: buildConfig.BuildType,
+					Format:    buildConfig.Format,
+					CreatedBy: buildConfig.CreatedBy,
+					BuildId:   buildId,
+				})
+				return
+			}
+		}
+		t.responder.RespondWithError(w, r, "Failed to get buildStatus", err)
+		return
+	}
+	switch buildView.Status {
+	case string(view.StatusError):
+		calculationProcessStatus = view.CalculationProcessStatus{
+			Status:  string(view.StatusError),
+			Message: buildView.Details,
+		}
+		t.responder.RespondWithJson(w, http.StatusAccepted, calculationProcessStatus)
+		return
+	case string(view.StatusComplete):
+		//this case is possible only if we have an old finished build for which we don't have a transformed documents (rebuild required)
+		//or if this build completed during this method execution (rebuild is not requried)
+		content, err := t.versionService.GetTransformedDocuments(ctx, packageId, versionName, apiType, groupName, buildType, format)
+		if err != nil {
+			t.responder.RespondWithError(w, r, "Failed to get transformed documents", err)
+			return
+		}
+		if content != nil {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		buildId, buildConfig, err := t.buildService.CreateBuildWithoutDependencies(ctx, buildConfig, clientBuild, builderId)
+		if err != nil {
+			t.responder.RespondWithError(w, r, "Failed to create documentGroup type build", err)
+			return
+		}
+		t.responder.RespondWithJson(w, http.StatusCreated, view.DocumentTransformConfigView{
+			PackageId: buildConfig.PackageId,
+			Version:   buildConfig.Version,
+			ApiType:   buildConfig.ApiType,
+			GroupName: buildConfig.GroupName,
+			BuildType: buildConfig.BuildType,
+			Format:    buildConfig.Format,
+			CreatedBy: buildConfig.CreatedBy,
+			BuildId:   buildId,
+		})
+		return
+	default:
+		calculationProcessStatus = view.CalculationProcessStatus{
+			Status: string(view.StatusRunning),
+		}
+		t.responder.RespondWithJson(w, http.StatusAccepted, calculationProcessStatus)
+		return
+	}
+}
+
+func (t transformationControllerImpl) GetDataForDocumentsTransformation(w http.ResponseWriter, r *http.Request) {
+	packageId := getStringParam(r, "packageId")
+	ctx := secctx.MakeUserContext(r)
+	sufficientPrivileges, err := t.roleService.HasRequiredPermissions(ctx, packageId, view.ReadPermission)
+	if err != nil {
+		t.responder.RespondWithError(w, r, "Failed to check user privileges", err)
+		return
+	}
+	if !sufficientPrivileges {
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusForbidden,
+			Code:    exception.InsufficientPrivileges,
+			Message: exception.InsufficientPrivilegesMsg,
+		})
+		return
+	}
+	versionName, err := getUnescapedStringParam(r, "version")
+	if err != nil {
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "version"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	limit, customError := getLimitQueryParam(r)
+	if customError != nil {
+		t.responder.RespondWithCustomError(w, customError)
+		return
+	}
+	page := 0
+	if r.URL.Query().Get("page") != "" {
+		page, err = strconv.Atoi(r.URL.Query().Get("page"))
+		if err != nil {
+			t.responder.RespondWithCustomError(w, &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.IncorrectParamType,
+				Message: exception.IncorrectParamTypeMsg,
+				Params:  map[string]interface{}{"param": "page", "type": "int"},
+				Debug:   err.Error(),
+			})
+			return
+		}
+	}
+	apiType, err := getUnescapedStringParam(r, "apiType")
+	if err != nil {
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "apiType"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	_, err = view.ParseApiType(apiType)
+	if err != nil {
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameterValue,
+			Message: exception.InvalidParameterValueMsg,
+			Params:  map[string]interface{}{"param": "apiType", "value": apiType},
+			Debug:   err.Error(),
+		})
+		return
+	}
+	groupName, err := getUnescapedStringParam(r, "groupName")
+	if err != nil {
+		t.responder.RespondWithCustomError(w, &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidURLEscape,
+			Message: exception.InvalidURLEscapeMsg,
+			Params:  map[string]interface{}{"param": "groupName"},
+			Debug:   err.Error(),
+		})
+		return
+	}
+
+	documentsForTransformationFilterReq := view.DocumentsForTransformationFilterReq{
+		Limit:                  limit,
+		Offset:                 limit * page,
+		FilterByOperationGroup: groupName,
+		ApiType:                apiType,
+	}
+
+	data, err := t.transformationService.GetDataForDocumentsTransformation(ctx, packageId, versionName, documentsForTransformationFilterReq)
+	if err != nil {
+		t.responder.RespondWithError(w, r, "Failed to get version documents", err)
+		return
+	}
+	t.responder.RespondWithJson(w, http.StatusOK, data)
+}

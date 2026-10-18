@@ -2,7 +2,7 @@
 
 This document describes how the API registry collects **usage-oriented business metrics**: event counters for API calls and user actions, associated with user identifiers and package identifiers. Data is stored in PostgreSQL and supports reporting and export through the administrative API.
 
-Metric name constants are defined in the `metrics` package (`qubership-apihub-service/metrics/BusinessMetrics.go`). Writes are performed by the monitoring service (`MonitoringService`).
+Metric name constants are defined in the `metrics` package (`metrics/BusinessMetrics.go`). Writes are performed by the monitoring service (`MonitoringService`).
 
 ---
 
@@ -153,8 +153,8 @@ A failed export is logged by the OpenTelemetry SDK and retried on the next inter
 | Need | Location |
 |------|----------|
 | Table DDL | `resources/migrations/1_init.up.sql`, table `business_metric`. |
-| Metric names | `qubership-apihub-service/metrics/BusinessMetrics.go`. |
-| Persistence and flush | `qubership-apihub-service/service/MonitoringService.go`. |
+| Metric names | `metrics/BusinessMetrics.go`. |
+| Persistence and flush | `service/MonitoringService.go`. |
 | Instrumentation call sites | Search for `IncreaseBusinessMetricCounter`. |
 | Report and export | `BusinessMetricRepository`, `BusinessMetricController`. |
 | Prometheus counters | `qubership-apihub-service/metrics/Metrics.go`, incremented in `MCPHandlers.go`, `MCPService.go`, `AiChatController.go`, `AiChatsService.go`. |

@@ -1,6 +1,6 @@
 ---
 description: Self-review APIHub backend changes against project standards.
-globs: "qubership-apihub-service/**/*.go"
+globs: "**/*.go"
 ---
 
 When the user asks for self-review, code review of a diff, or a post-implementation

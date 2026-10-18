@@ -1,6 +1,6 @@
 ---
 description: Backend API error code conventions in ErrorCodes.go
-applyTo: qubership-apihub-service/**/*.go
+applyTo: **/*.go
 ---
 
 # Backend API Errors

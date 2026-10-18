@@ -80,7 +80,7 @@ Applies to **bug fixes and new features**.
 ### New code and refactors
 
 - **Propagate errors** up the stack; return `error` from services/repositories; let controllers map to API error responses via `exception/ErrorCodes.go`.
-- **Fail fast** when state is invalid or required setup failed (`log.Fatalf` in `Service.go` wiring, panic only where the codebase already does for unrecoverable programmer errors).
+- **Fail fast** when state is invalid or required setup failed (`log.Fatalf` in `main.go` wiring, panic only where the codebase already does for unrecoverable programmer errors).
 - **Log errors** at the appropriate layer (see `docs/development_guide.md` — errors to ERROR log); do not log-and-ignore.
 - A **deliberate** fallback or default is allowed only when product requirements define it; document why in code or the ticket, and still log at WARN/ERROR when the primary path failed.
 
@@ -105,7 +105,7 @@ Briefly state: **root cause**, **why the change fixes it**, and confirm you did 
 - Prefer **portable** commands: `bash` scripts with forward slashes, run from the **repository root**.
 - On **Windows without WSL** in the active shell: use **WSL** (`wsl bash .cursor/skills/.../script.sh`), **Git Bash**, or **PowerShell** (`powershell -File .cursor/skills/.../script.ps1`).
 - Do not assume Unix-only tools beyond `git`, `go`, `gh`, and `bash` unless the user confirms they are available.
-- Avoid OS-specific path separators in instructions; use repo-relative paths like `qubership-apihub-service/...`.
+- Avoid OS-specific path separators in instructions; use repo-relative paths like `service/...`.
 
 ## Related repositories (Helm, E2E tests)
 
@@ -117,14 +117,14 @@ Do not silently skip: after REST, config, or env changes, check that doc’s “
 
 | Area | Location |
 |------|----------|
-| Main service entry / DI wiring | `qubership-apihub-service/Service.go` |
-| HTTP controllers | `qubership-apihub-service/controller/` |
-| Business logic | `qubership-apihub-service/service/` |
-| Data access | `qubership-apihub-service/repository/` |
-| DB entities + simple converters | `qubership-apihub-service/entity/` |
-| API DTOs / views | `qubership-apihub-service/view/` |
-| API error codes | `qubership-apihub-service/exception/ErrorCodes.go` |
-| SQL migrations | `qubership-apihub-service/resources/migrations/` |
+| Main service entry / DI wiring | `main.go` |
+| HTTP controllers | `controller/` |
+| Business logic | `service/` |
+| Data access | `repository/` |
+| DB entities + simple converters | `entity/` |
+| API DTOs / views | `view/` |
+| API error codes | `exception/ErrorCodes.go` |
+| SQL migrations | `resources/migrations/` |
 | OpenAPI specs | `docs/api/` (e.g. `APIHUB_API.yaml`, `Admin API.yaml`, `APIHUB_API_internal.yaml`) |
 | Human docs index | `docs/README.md` |
 | Development guide (logging, API-first, deprecation) | `docs/development_guide.md` |
@@ -140,8 +140,8 @@ Detailed rules apply via `.cursor/rules/` and `.claude/rules/` when matching fil
 - **Comments** — only when needed for non-obvious logic; do not comment obvious code.
 - **Do not** add comments that map types/functions to HTTP routes (e.g. `// FooResponse is GET /chats`).
 - **Entity → view converters** without dependencies: place in `entity/` next to the struct, named `Make{Name}View`.
-- **New repositories, services, controllers** — register at the **end** of the corresponding block in `Service.go`.
-- **`Service.go` fail-fast** — use `log.Fatalf` for fatal wiring/startup errors where applicable.
+- **New repositories, services, controllers** — register at the **end** of the corresponding block in `main.go`.
+- **`main.go` fail-fast** — use `log.Fatalf` for fatal wiring/startup errors where applicable.
 - **Errors** — propagate and fix root cause; no swallowing, no silent defaults on failure (see **Error handling** above).
 - **API errors** — error code and message returned to clients must be constants in `exception/ErrorCodes.go`. AI Chat uses `APIHUB-AI-*` code+Msg pairs; variant messages reuse a parent code (legacy pattern).
 
@@ -153,7 +153,7 @@ Detailed rules apply via `.cursor/rules/` and `.claude/rules/` when matching fil
 
 ## Database migrations
 
-- Files live in `qubership-apihub-service/resources/migrations/`.
+- Files live in `resources/migrations/`.
 - Use the next unused numeric prefix; **no duplicate migration numbers**.
 - Provide paired `.up.sql` and `.down.sql` when applicable.
 - After adding migrations, run the migration check script (see `apihub-backend-developer` skill; bash on Linux/WSL/Git Bash, or PowerShell on native Windows).

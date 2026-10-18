@@ -8,7 +8,7 @@ concerns. Wire-level details delegate to:
 
 * [docs/api/APIHUB_API.yaml](../../api/APIHUB_API.yaml) — authoritative OpenAPI contract (tag **AI Chat**).
 * [ai-chat-frontend-contract.md](./ai-chat-frontend-contract.md) — FE integration guide.
-* Migration `qubership-apihub-service/resources/migrations/34_ai_chat.{up,down}.sql` — DDL.
+* Migration `resources/migrations/34_ai_chat.{up,down}.sql` — DDL.
 
 ---
 
@@ -351,5 +351,5 @@ LLM after user message persisted). Driven by `client_message_id` partial unique 
 * OpenAPI: `docs/api/APIHUB_API.yaml`, tag `AI Chat`.
 * FE integration: [ai-chat-frontend-contract.md](./ai-chat-frontend-contract.md).
 * Companion: [IDS generation](./feature-ids-generation-design.md).
-* Code entry points: `Service.go` (wiring), `service/AiChatsService.go`, `service/AiChatTurnService.go`,
+* Code entry points: `main.go` (wiring), `service/AiChatsService.go`, `service/AiChatTurnService.go`,
   `client/LlmClient.go`, `client/OpenAIClient.go`.

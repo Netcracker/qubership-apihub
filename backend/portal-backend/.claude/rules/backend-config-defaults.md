@@ -1,6 +1,6 @@
 ---
 paths:
-  - "qubership-apihub-service/**/*.go"
+  - "**/*.go"
 ---
 
 # Backend Configuration Defaults

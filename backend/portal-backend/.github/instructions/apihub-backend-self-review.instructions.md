@@ -1,6 +1,6 @@
 ---
 description: Self-review APIHub backend changes against project standards.
-applyTo: "qubership-apihub-service/**/*.go"
+applyTo: "**/*.go"
 ---
 
 When the user asks for self-review, code review of a diff, or a post-implementation

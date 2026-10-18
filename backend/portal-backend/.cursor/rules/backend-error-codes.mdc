@@ -1,6 +1,6 @@
 ---
 description: Backend API error code conventions in ErrorCodes.go
-globs: "qubership-apihub-service/**/*.go"
+globs: "**/*.go"
 ---
 
 # Backend API Errors

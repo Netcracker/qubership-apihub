@@ -12,7 +12,7 @@ set -eu
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../../../" && pwd)"
-MIGRATIONS_DIR="${REPO_ROOT}/qubership-apihub-service/resources/migrations"
+MIGRATIONS_DIR="${REPO_ROOT}/resources/migrations"
 
 # Keeps numbers inside 32-bit integers on both the bash and PowerShell side.
 MAX_PREFIX_DIGITS=9

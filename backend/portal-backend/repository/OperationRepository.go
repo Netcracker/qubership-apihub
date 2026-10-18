@@ -1,0 +1,1469 @@
+package repository
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/db"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/entity"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/utils"
+	"github.com/Netcracker/qubership-apihub/backend/portal-backend/view"
+	"github.com/go-pg/pg/v10"
+	"github.com/go-pg/pg/v10/orm"
+)
+
+// globalSearchWorkMem limits lossy GIN bitmap recheck during FTS on fts_operation_search_text when server default work_mem is very low.
+const globalSearchWorkMem = "16MB"
+
+// globalSearchScopeJoinPlaceholder marks where the optional package-scope join is spliced into the
+// global search query. It is a SQL comment so the template stays valid SQL when no scope join is
+// applied (no packages requested).
+const globalSearchScopeJoinPlaceholder = "/*scope_join*/"
+
+type OperationRepository interface {
+	GetOperationsByIds(ctx context.Context, packageId string, version string, revision int, operationIds []string) ([]entity.OperationEntity, error)
+	GetOperations(ctx context.Context, packageId string, version string, revision int, operationType string, skipRefs bool, searchReq view.OperationListReq) ([]entity.OperationRichEntity, error)
+	GetOperationById(ctx context.Context, packageId string, version string, revision int, operationType string, operationId string, includeData bool) (*entity.OperationRichEntity, error)
+	GetOperationsTags(ctx context.Context, searchQuery entity.OperationTagsSearchQueryEntity, skipRefs bool) ([]string, error)
+	GetOperationChanges(ctx context.Context, comparisonId string, operationId string, severities []string) (*entity.OperationComparisonEntity, error)
+	GetOperationChangesSummary(ctx context.Context, comparisonId string, operationId string, refPackageId string) (*entity.OperationComparisonSummaryEntity, error)
+	GetChangelog(ctx context.Context, searchQuery entity.ChangelogSearchQueryEntity) ([]entity.OperationComparisonChangelogEntity, error)
+	GlobalSearchForOperations(ctx context.Context, searchQuery *entity.GlobalOperationSearchQuery) ([]entity.OperationSearchResult, error)
+	GetOperationsTypeCount(ctx context.Context, packageId string, version string, revision int, showOnlyDeleted bool) ([]entity.OperationsTypeCountEntity, error)
+	GetOperationsTypes(ctx context.Context, packageId string, version string, revision int) ([]entity.OperationsTypeEntity, error)
+	GetOperationsInfo(ctx context.Context, packageId string, version string, revision int) (entity.OperationsInfoEntity, error)
+	GetOperationDeprecatedItems(ctx context.Context, packageId string, version string, revision int, operationType string, operationId string) (*entity.OperationRichEntity, error)
+	GetDeprecatedOperationsSummary(ctx context.Context, packageId string, version string, revision int) ([]entity.DeprecatedOperationsSummaryEntity, error)
+	GetDeprecatedOperationsRefsSummary(ctx context.Context, packageId string, version string, revision int) ([]entity.DeprecatedOperationsSummaryEntity, error)
+	GetDeprecatedOperations(ctx context.Context, packageId string, version string, revision int, operationType string, searchReq view.DeprecatedOperationListReq) ([]entity.OperationRichEntity, error)
+
+	AddOperationGroupHistory(ctx context.Context, ent *entity.OperationGroupHistoryEntity) error
+	CreateOperationGroup(ctx context.Context, ent *entity.OperationGroupEntity, templateEntity *entity.OperationGroupTemplateEntity) error
+	DeleteOperationGroup(ctx context.Context, ent *entity.OperationGroupEntity) error
+	UpdateOperationGroup(ctx context.Context, oldGroupEntity *entity.OperationGroupEntity, newGroupEntity *entity.OperationGroupEntity, newTemplateEntity *entity.OperationGroupTemplateEntity, newGroupedOperations *[]entity.GroupedOperationEntity) error
+	GetOperationGroup(ctx context.Context, packageId string, version string, revision int, apiType string, groupName string) (*entity.OperationGroupEntity, error)
+	GetOperationGroupTemplateFile(ctx context.Context, packageId string, version string, revision int, apiType string, groupName string) (*entity.OperationGroupTemplateFileEntity, error)
+	CalculateOperationGroups(ctx context.Context, packageId string, version string, revision int, groupingPrefix string) ([]string, error)
+	GetVersionOperationGroups(ctx context.Context, packageId string, version string, revision int) ([]entity.OperationGroupCountEntity, error)
+	GetGroupedOperations(ctx context.Context, packageId string, version string, revision int, operationType string, groupName string, searchReq view.OperationListReq) ([]entity.OperationRichEntity, error)
+	GetOperationsByModelHash(ctx context.Context, packageId string, version string, revision int, apiType string, modelHash string) ([]entity.OperationModelsEntity, error)
+	GetRESTOperationsByPathAndMethod(ctx context.Context, packageId string, version string, revision int, path string, method string) ([]string, error)
+	GetGQLOperationsByTypeAndMethod(ctx context.Context, packageId string, version string, revision int, operationType string, method string) ([]string, error)
+}
+
+func NewOperationRepository(cp db.ConnectionProvider) OperationRepository {
+	return &operationRepositoryImpl{cp: cp}
+}
+
+type operationRepositoryImpl struct {
+	cp db.ConnectionProvider
+}
+
+func (o operationRepositoryImpl) GetOperationsByIds(ctx context.Context, packageId string, version string, revision int, operationIds []string) ([]entity.OperationEntity, error) {
+	if len(operationIds) == 0 {
+		return nil, nil
+	}
+	var result []entity.OperationEntity
+	err := o.cp.GetConnection().WithContext(ctx).Model(&result).
+		Where("package_id = ?", packageId).
+		Where("version = ?", version).
+		Where("revision = ?", revision).
+		Where("operation_id in (?)", pg.In(operationIds)).
+		Select()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetOperationById(ctx context.Context, packageId string, version string, revision int, operationType string, operationId string, includeData bool) (*entity.OperationRichEntity, error) {
+	result := new(entity.OperationRichEntity)
+	query := o.cp.GetConnection().WithContext(ctx).Model(result).
+		ColumnExpr("operation.*").
+		Where("package_id = ?", packageId).
+		Where("version = ?", version).
+		Where("revision = ?", revision).
+		Where("type = ?", operationType).
+		Where("operation_id = ?", operationId)
+
+	if includeData {
+		query.Join("LEFT JOIN operation_data as op_data").
+			JoinOn("operation.data_hash = op_data.data_hash").
+			ColumnExpr("op_data.data")
+	}
+
+	err := query.First()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetOperationDeprecatedItems(ctx context.Context, packageId string, version string, revision int, operationType string, operationId string) (*entity.OperationRichEntity, error) {
+	result := new(entity.OperationRichEntity)
+	err := o.cp.GetConnection().WithContext(ctx).Model(result).
+		ColumnExpr("operation.deprecated_items").
+		Where("package_id = ?", packageId).
+		Where("version = ?", version).
+		Where("revision = ?", revision).
+		Where("type = ?", operationType).
+		Where("operation_id = ?", operationId).
+		First()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetOperations(ctx context.Context, packageId string, version string, revision int, operationType string, skipRefs bool, searchReq view.OperationListReq) ([]entity.OperationRichEntity, error) {
+	var result []entity.OperationRichEntity
+	query := o.cp.GetConnection().WithContext(ctx).Model(&result).
+		ColumnExpr("operation.*")
+
+	if !skipRefs {
+		query.Join(`inner join
+		(with refs as(
+			select s.reference_id as package_id, s.reference_version as version, s.reference_revision as revision
+			from published_version_reference s
+			inner join published_version pv
+			on pv.package_id = s.reference_id
+			and pv.version = s.reference_version
+			and pv.revision = s.reference_revision
+			and pv.deleted_at is null
+			where s.package_id = ?
+			and s.version = ?
+			and s.revision = ?
+			and s.excluded = false
+		)
+		select package_id, version, revision
+		from refs
+		union
+		select ? as package_id, ? as version, ? as revision
+		) refs`, packageId, version, revision, packageId, version, revision)
+		query.JoinOn("operation.package_id = refs.package_id").
+			JoinOn("operation.version = refs.version").
+			JoinOn("operation.revision = refs.revision")
+
+		if searchReq.RefPackageId != "" {
+			query.JoinOn("refs.package_id = ?", searchReq.RefPackageId)
+		}
+	} else {
+		query.Where("package_id = ?", packageId).
+			Where("version = ?", version).
+			Where("revision = ?", revision)
+	}
+
+	if searchReq.EmptyGroup {
+		//todo try to replace this 'not in' condition with join
+		query.Where(`operation.operation_id not in (
+			select operation_id from grouped_operation go
+			inner join operation_group og
+			on go.group_id = og.group_id
+			and og.package_id = ?
+			and og.version = ?
+			and og.revision = ?
+			and og.api_type = operation.type
+			where go.package_id = operation.package_id
+			and go.version = operation.version
+			and go.revision = operation.revision
+		)`, packageId, version, revision)
+	} else if searchReq.Group != "" {
+		query.Join(`inner join operation_group og`).
+			JoinOn("og.package_id = ?", packageId).
+			JoinOn("og.version = ?", version).
+			JoinOn("og.revision = ?", revision).
+			JoinOn("og.api_type = operation.type").
+			JoinOn("og.group_name = ?", searchReq.Group).
+			Join("inner join grouped_operation go").
+			JoinOn("go.group_id = og.group_id").
+			JoinOn("go.package_id = operation.package_id").
+			JoinOn("go.version = operation.version").
+			JoinOn("go.revision = operation.revision").
+			JoinOn("go.operation_id = operation.operation_id")
+	}
+
+	query.Where("operation.type = ?", operationType)
+
+	if searchReq.IncludeData {
+		query.Join("LEFT JOIN operation_data as op_data").
+			JoinOn("operation.data_hash = op_data.data_hash").
+			ColumnExpr("op_data.data")
+	}
+	query.Order("operation.package_id",
+		"operation.version",
+		"operation.revision",
+		"operation_id ASC").
+		Offset(searchReq.Limit * searchReq.Page).
+		Limit(searchReq.Limit)
+
+	if searchReq.CustomTagKey != "" && searchReq.CustomTagValue != "" {
+		query.Where("exists(select 1 from jsonb_each_text(operation.custom_tags) where key = ? and value = ?)", searchReq.CustomTagKey, searchReq.CustomTagValue)
+	} else if searchReq.CustomTagKey != "" {
+		query.Where("exists(select 1 from jsonb_each_text(operation.custom_tags) where key = ?)", searchReq.CustomTagKey)
+	} else if searchReq.TextFilter != "" {
+		searchReq.TextFilter = "%" + utils.LikeEscaped(searchReq.TextFilter) + "%"
+		if operationType == string(view.AsyncapiApiType) {
+			query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+				q = q.WhereOr("operation.title ilike ?", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "channel", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "action", searchReq.TextFilter)
+				return q, nil
+			})
+		} else {
+			query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+				q = q.WhereOr("operation.title ilike ?", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "path", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "method", searchReq.TextFilter)
+				return q, nil
+			})
+		}
+	}
+
+	if searchReq.Kind != "" {
+		query.Where("kind = ?", searchReq.Kind)
+	}
+	if searchReq.ApiAudience != "" {
+		query.Where("api_audience = ?", searchReq.ApiAudience)
+	}
+
+	if operationType == string(view.AsyncapiApiType) {
+		if searchReq.AsyncapiChannel != "" {
+			query.Where("operation.metadata->>? = ?", "channel", searchReq.AsyncapiChannel)
+		}
+		if searchReq.AsyncapiProtocol != "" {
+			query.Where("operation.metadata->>? = ?", "protocol", searchReq.AsyncapiProtocol)
+		}
+	}
+
+	if searchReq.Tag != "" {
+		searchReq.Tag = utils.LikeEscaped(searchReq.Tag)
+		query.Where(`exists(
+			select 1 from jsonb_array_elements(operation.metadata -> 'tags') a
+			where replace(a.value::text,'"','') like ?)`, searchReq.Tag)
+	}
+
+	if searchReq.EmptyTag {
+		query.Where(`not exists(select 1 from jsonb_array_elements(operation.metadata -> 'tags') a
+			where a.value != '""') `)
+	}
+
+	if searchReq.Deprecated != nil {
+		query.Where("operation.deprecated = ?", *searchReq.Deprecated)
+	}
+
+	if len(searchReq.Ids) > 0 {
+		query.Where("operation.operation_id in (?)", pg.In(searchReq.Ids))
+	}
+
+	if searchReq.DocumentSlug != "" {
+		query.Join("inner join published_version_revision_content as pvrc").
+			JoinOn("operation.operation_id = any(pvrc.operation_ids)").
+			JoinOn("pvrc.slug = ?", searchReq.DocumentSlug).
+			JoinOn("operation.package_id = pvrc.package_id").
+			JoinOn("operation.version = pvrc.version").
+			JoinOn("operation.revision = pvrc.revision")
+	}
+	err := query.Select()
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetDeprecatedOperations(ctx context.Context, packageId string, version string, revision int, operationType string, searchReq view.DeprecatedOperationListReq) ([]entity.OperationRichEntity, error) {
+	var result []entity.OperationRichEntity
+	query := o.cp.GetConnection().WithContext(ctx).Model(&result).
+		ColumnExpr("operation.*")
+
+	query.Join(`inner join
+		(with refs as(
+			select s.reference_id as package_id, s.reference_version as version, s.reference_revision as revision
+			from published_version_reference s
+			inner join published_version pv
+			on pv.package_id = s.reference_id
+			and pv.version = s.reference_version
+			and pv.revision = s.reference_revision
+			and pv.deleted_at is null
+			where s.package_id = ?
+			and s.version = ?
+			and s.revision = ?
+			and s.excluded = false
+		)
+		select package_id, version, revision
+		from refs
+		union
+		select ? as package_id, ? as version, ? as revision
+		) refs`, packageId, version, revision, packageId, version, revision)
+	query.JoinOn("operation.package_id = refs.package_id").
+		JoinOn("operation.version = refs.version").
+		JoinOn("operation.revision = refs.revision")
+
+	if searchReq.RefPackageId != "" {
+		query.JoinOn("refs.package_id = ?", searchReq.RefPackageId)
+	}
+
+	query.Where("operation.type = ?", operationType)
+
+	query.Where(`((operation.deprecated_items is not null and jsonb_typeof(operation.deprecated_items) = 'array' and jsonb_array_length(operation.deprecated_items) != 0)
+		or operation.deprecated = true)`)
+
+	query.Order("operation.package_id",
+		"operation.version",
+		"operation.revision",
+		"operation_id ASC").
+		Offset(searchReq.Limit * searchReq.Page).
+		Limit(searchReq.Limit)
+
+	if searchReq.TextFilter != "" {
+		searchReq.TextFilter = "%" + utils.LikeEscaped(searchReq.TextFilter) + "%"
+		if operationType == string(view.AsyncapiApiType) {
+			query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+				q = q.WhereOr("operation.title ilike ?", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "channel", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "action", searchReq.TextFilter)
+				return q, nil
+			})
+		} else {
+			query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+				q = q.WhereOr("operation.title ilike ?", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "path", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "method", searchReq.TextFilter)
+				return q, nil
+			})
+		}
+	}
+	if searchReq.Kind != "" {
+		query.Where("kind = ?", searchReq.Kind)
+	}
+	if searchReq.ApiAudience != "" {
+		query.Where("api_audience = ?", searchReq.ApiAudience)
+	}
+
+	if operationType == string(view.AsyncapiApiType) {
+		if searchReq.AsyncapiChannel != "" {
+			query.Where("operation.metadata->>? = ?", "channel", searchReq.AsyncapiChannel)
+		}
+		if searchReq.AsyncapiProtocol != "" {
+			query.Where("operation.metadata->>? = ?", "protocol", searchReq.AsyncapiProtocol)
+		}
+	}
+
+	if len(searchReq.Tags) != 0 {
+		query.Where(`exists(
+			select 1 from jsonb_array_elements(operation.metadata -> 'tags') a
+			where replace(a.value::text,'"','') = any(?))`, pg.Array(searchReq.Tags))
+	}
+	if searchReq.EmptyTag {
+		query.Where(`not exists(select 1 from jsonb_array_elements(operation.metadata -> 'tags') a
+			where a.value != '""') `)
+	}
+	if searchReq.EmptyGroup {
+		//todo try to replace this 'not in' condition with join
+		query.Where(`operation.operation_id not in (
+			select operation_id from grouped_operation go
+			inner join operation_group og
+			on go.group_id = og.group_id
+			and og.package_id = ?
+			and og.version = ?
+			and og.revision = ?
+			and og.api_type = operation.type
+			where go.package_id = operation.package_id
+			and go.version = operation.version
+			and go.revision = operation.revision
+		)`, packageId, version, revision)
+	} else if searchReq.Group != "" {
+		query.Join(`inner join operation_group og`).
+			JoinOn("og.package_id = ?", packageId).
+			JoinOn("og.version = ?", version).
+			JoinOn("og.revision = ?", revision).
+			JoinOn("og.api_type = operation.type").
+			JoinOn("og.group_name = ?", searchReq.Group).
+			Join("inner join grouped_operation go").
+			JoinOn("go.group_id = og.group_id").
+			JoinOn("go.package_id = operation.package_id").
+			JoinOn("go.version = operation.version").
+			JoinOn("go.revision = operation.revision").
+			JoinOn("go.operation_id = operation.operation_id")
+	}
+
+	if len(searchReq.Ids) > 0 {
+		query.Where("operation.operation_id in (?)", pg.In(searchReq.Ids))
+	}
+
+	if searchReq.DocumentSlug != "" {
+		query.Join("inner join published_version_revision_content as pvrc").
+			JoinOn("operation.operation_id = any(pvrc.operation_ids)").
+			JoinOn("pvrc.slug = ?", searchReq.DocumentSlug).
+			JoinOn("operation.package_id = pvrc.package_id").
+			JoinOn("operation.version = pvrc.version").
+			JoinOn("operation.revision = pvrc.revision")
+	}
+
+	err := query.Select()
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetOperationsTags(ctx context.Context, searchQuery entity.OperationTagsSearchQueryEntity, skipRefs bool) ([]string, error) {
+	type Tag struct {
+		Tag string `pg:"tag"`
+	}
+	var tags []Tag
+
+	var query string
+	if !skipRefs {
+		query = `
+		with ops as (
+			select operation.* from operation
+			inner join
+			(with refs as(
+				select s.reference_id as package_id, s.reference_version as version, s.reference_revision as revision
+				from published_version_reference s
+				inner join published_version pv
+				on pv.package_id = s.reference_id
+				and pv.version = s.reference_version
+				and pv.revision = s.reference_revision
+				and pv.deleted_at is null
+				where s.package_id = ?package_id
+				and s.version = ?version
+				and s.revision = ?revision
+				and s.excluded = false
+			)
+			select package_id, version, revision
+			from refs
+			union
+			select ?package_id as package_id, ?version as version, ?revision as revision
+			) refs
+			on operation.package_id = refs.package_id
+			and operation.version = refs.version
+			and operation.revision = refs.revision
+			where operation.type = ?type
+			and (?kind = '' or operation.kind = ?kind)
+			and (?api_audience = '' or operation.api_audience = ?api_audience)
+			)
+		select tag from
+		(
+			(select '' as tag
+			from ops o where
+			?text_filter = ''
+			and not exists(select 1 from jsonb_array_elements(o.metadata -> 'tags') a where a.value != '""')
+			limit 1)
+		union
+			select distinct replace(a.value::text,'"','') as tag
+			from ops o, jsonb_array_elements(o.metadata -> 'tags') a
+			where (?text_filter = '' or replace(a.value::text,'"','') ilike ?text_filter)
+		) t
+		order by tag asc
+		limit ?limit
+		offset ?offset;`
+	} else {
+		query = `select tag
+		from
+		(
+			(select '' as tag
+				from operation o
+				where o.package_id = ?package_id
+				and o.version = ?version
+				and o.revision = ?revision
+				and o.type = ?type
+				and (?kind = '' or o.kind = ?kind)
+				and (?api_audience = '' or o.api_audience = ?api_audience)
+				and ?text_filter = ''
+				and not exists(select 1 from jsonb_array_elements(o.metadata -> 'tags') a where a.value != '""')
+				limit 1)
+			union
+			select distinct replace(a.value::text,'"','') as tag
+				from operation o,
+					jsonb_array_elements(o.metadata -> 'tags') a
+				where o.package_id = ?package_id
+				and o.version = ?version
+				and o.revision = ?revision
+				and o.type = ?type
+				and (?kind = '' or o.kind = ?kind)
+				and (?api_audience = '' or o.api_audience = ?api_audience)
+				and (?text_filter = '' or replace(a.value::text,'"','') ilike ?text_filter)
+		) t
+		order by tag asc
+		limit ?limit
+		offset ?offset;`
+	}
+
+	if searchQuery.TextFilter != "" {
+		searchQuery.TextFilter = "%" + utils.LikeEscaped(searchQuery.TextFilter) + "%"
+	}
+
+	_, err := o.cp.GetConnection().WithContext(ctx).Model(&searchQuery).Query(&tags, query)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]string, 0)
+
+	for _, t := range tags {
+		result = append(result, t.Tag)
+	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetOperationChanges(ctx context.Context, comparisonId string, operationId string, severities []string) (*entity.OperationComparisonEntity, error) {
+	result := new(entity.OperationComparisonEntity)
+	err := o.cp.GetConnection().WithContext(ctx).Model(result).
+		Where("comparison_id = ?", comparisonId).
+		Where("operation_id = ?", operationId).
+		OrderExpr("data_hash, previous_data_hash").
+		Limit(1).
+		Select()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetOperationChangesSummary(ctx context.Context, comparisonId string, operationId string, refPackageId string) (*entity.OperationComparisonSummaryEntity, error) {
+	result := new(entity.OperationComparisonSummaryEntity)
+	err := o.cp.GetConnection().WithContext(ctx).Model(result).
+		Where(`comparison_id in (
+			select unnest(array_append(refs, ?)) id from version_comparison where (comparison_id = ?)
+		)`, comparisonId, comparisonId).
+		Where("(? = '' or package_id = ? or previous_package_id = ?)", refPackageId, refPackageId, refPackageId).
+		WhereGroup(func(query *orm.Query) (*orm.Query, error) {
+			return query.Where("operation_id = ?", operationId).WhereOr("previous_operation_id = ?", operationId), nil
+		}).
+		OrderExpr("data_hash, previous_data_hash").
+		Limit(1).
+		Select()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetChangelog(ctx context.Context, searchQuery entity.ChangelogSearchQueryEntity) ([]entity.OperationComparisonChangelogEntity, error) {
+	var result []entity.OperationComparisonChangelogEntity
+
+	// select current or previous operation(based on operation_id presence) as a main source for filtration and data like 'type'
+	comparisonsQuery := o.cp.GetConnection().WithContext(ctx).Model(&entity.OperationComparisonChangelogEntity{}).
+		TableExpr("operation_comparison").
+		ColumnExpr("case when operation_id is null then previous_package_id else package_id end selected_package_id").
+		ColumnExpr("case when operation_id is null then previous_version else version end selected_version").
+		ColumnExpr("case when operation_id is null then previous_revision else revision end selected_revision").
+		ColumnExpr("case when operation_id is null then previous_operation_id else operation_id end selected_operation_id").
+		ColumnExpr("operation_comparison.*").
+		Where(`comparison_id in (
+			select unnest(array_append(refs, ?)) id from version_comparison where (comparison_id = ?)
+			)`, searchQuery.ComparisonId, searchQuery.ComparisonId).
+		Where(`(? = '' or package_id = ? or previous_package_id = ?)`, searchQuery.RefPackageId, searchQuery.RefPackageId, searchQuery.RefPackageId)
+
+	query := o.cp.GetConnection().WithContext(ctx).Model(&result).With("comparisons", comparisonsQuery).
+		TableExpr("comparisons").
+		ColumnExpr("operation_comparison.*").
+		ColumnExpr("curr_op.metadata").
+		ColumnExpr("prev_op.metadata previous_metadata").
+		ColumnExpr("curr_op.title title").
+		ColumnExpr("prev_op.title previous_title").
+		ColumnExpr("o.type").
+		ColumnExpr("curr_op.kind kind").
+		ColumnExpr("prev_op.kind previous_kind").
+		ColumnExpr("curr_op.api_audience api_audience").
+		ColumnExpr("prev_op.api_audience previous_api_audience")
+
+	query.Join("left join operation curr_op").
+		JoinOn("curr_op.package_id = operation_comparison.package_id").
+		JoinOn("curr_op.version = operation_comparison.version").
+		JoinOn("curr_op.revision = operation_comparison.revision").
+		JoinOn("curr_op.operation_id = operation_comparison.operation_id")
+	query.Join("left join operation prev_op").
+		JoinOn("prev_op.package_id = operation_comparison.previous_package_id").
+		JoinOn("prev_op.version = operation_comparison.previous_version").
+		JoinOn("prev_op.revision = operation_comparison.previous_revision").
+		JoinOn("prev_op.operation_id = operation_comparison.previous_operation_id")
+	// current operation or previous if operation_id is null
+	query.Join("inner join operation o").
+		JoinOn("o.package_id = operation_comparison.selected_package_id").
+		JoinOn("o.version = operation_comparison.selected_version").
+		JoinOn("o.revision = operation_comparison.selected_revision").
+		JoinOn("o.operation_id = operation_comparison.selected_operation_id")
+	if searchQuery.TextFilter != "" {
+		searchQuery.TextFilter = "%" + utils.LikeEscaped(searchQuery.TextFilter) + "%"
+		if searchQuery.ApiType == string(view.AsyncapiApiType) {
+			query.JoinOn("o.title ilike ? or o.metadata->>? ilike ? or o.metadata->>? ilike ?", searchQuery.TextFilter, "channel", searchQuery.TextFilter, "action", searchQuery.TextFilter)
+		} else {
+			query.JoinOn("o.title ilike ? or o.metadata->>? ilike ? or o.metadata->>? ilike ?", searchQuery.TextFilter, "path", searchQuery.TextFilter, "method", searchQuery.TextFilter)
+		}
+	}
+	if searchQuery.ApiType != "" {
+		query.JoinOn("o.type = ?", searchQuery.ApiType)
+	}
+	if searchQuery.ApiKind != "" {
+		query.JoinOn("o.kind = ?", searchQuery.ApiKind)
+	}
+	if searchQuery.ApiAudience != "" {
+		query.JoinOn("o.api_audience = ?", searchQuery.ApiAudience)
+	}
+	if searchQuery.ApiType == string(view.AsyncapiApiType) {
+		if searchQuery.AsyncapiChannel != "" {
+			query.Where("o.metadata->>? = ?", "channel", searchQuery.AsyncapiChannel)
+		}
+		if searchQuery.AsyncapiProtocol != "" {
+			query.Where("o.metadata->>? = ?", "protocol", searchQuery.AsyncapiProtocol)
+		}
+	}
+	if len(searchQuery.Tags) != 0 {
+		query.JoinOn(`exists(
+			select 1 from jsonb_array_elements(o.metadata -> 'tags') a
+			where replace(a.value::text,'"','') = any(?))`, pg.Array(searchQuery.Tags))
+	}
+	if searchQuery.EmptyTag {
+		query.JoinOn(`not exists(select 1 from jsonb_array_elements(o.metadata -> 'tags') a
+			where a.value != '""') `)
+	}
+
+	if searchQuery.EmptyGroup {
+		//this filter also excludes all deleted operations
+		query.Where(`operation_comparison.data_hash is not null and o.operation_id not in (
+			select operation_id from grouped_operation go
+			inner join operation_group og
+			on go.group_id = og.group_id
+			and og.package_id = ?
+			and og.version = ?
+			and og.revision = ?
+			and og.api_type = o.type
+			where go.package_id = o.package_id
+			and go.version = o.version
+			and go.revision = o.revision)`,
+			searchQuery.GroupPackageId, searchQuery.GroupVersion, searchQuery.GroupRevision)
+	} else if searchQuery.Group != "" {
+		//this filter also excludes all deleted operations
+		query.Where(`operation_comparison.data_hash is not null and o.operation_id in (
+			select operation_id from grouped_operation go
+			inner join operation_group og
+			on go.group_id = og.group_id
+			and og.package_id = ?
+			and og.version = ?
+			and og.revision = ?
+			and og.group_name = ?
+			and og.api_type = o.type
+			where go.package_id = o.package_id
+			and go.version = o.version
+			and go.revision = o.revision)`,
+			searchQuery.GroupPackageId, searchQuery.GroupVersion, searchQuery.GroupRevision, searchQuery.Group)
+	}
+
+	if len(searchQuery.Severities) > 0 {
+		query.WhereGroup(func(query *orm.Query) (*orm.Query, error) {
+			for _, severity := range searchQuery.Severities {
+				query.WhereOr("(changes_summary->?)::int>0", severity)
+			}
+			return query, nil
+		})
+	}
+
+	if searchQuery.DocumentSlug != "" {
+		query.Join("inner join published_version_revision_content as pvrc").
+			JoinOn("o.operation_id = any(pvrc.operation_ids)").
+			JoinOn("pvrc.slug = ?", searchQuery.DocumentSlug).
+			JoinOn("o.package_id = pvrc.package_id").
+			JoinOn("o.version = pvrc.version").
+			JoinOn("o.revision = pvrc.revision")
+	}
+
+	query.OrderExpr(`(operation_comparison.changes_summary -> 'breaking')::int > 0 DESC,
+((operation_comparison.changes_summary -> 'deprecated')::int > 0 and
+(operation_comparison.changes_summary -> 'breaking')::int = 0) DESC`,
+	)
+	query.Order("o.package_id",
+		"o.version",
+		"o.revision",
+		"o.operation_id",
+		"o.data_hash ASC")
+
+	if searchQuery.Limit > 0 {
+		query.Limit(searchQuery.Limit)
+	}
+	if searchQuery.Offset > 0 {
+		query.Offset(searchQuery.Offset)
+	}
+	err := query.Select()
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetOperationsTypeCount(ctx context.Context, packageId string, version string, revision int, showOnlyDeleted bool) ([]entity.OperationsTypeCountEntity, error) {
+	var result []entity.OperationsTypeCountEntity
+	notCondition := ""
+	if showOnlyDeleted {
+		notCondition = "not"
+	}
+
+	operationsTypeCountQuery := `
+	with versions as(
+		select s.reference_id as package_id, s.reference_version as version, s.reference_revision as revision
+		from published_version_reference s
+		inner join published_version pv
+		on pv.package_id = s.reference_id
+		and pv.version = s.reference_version
+		and pv.revision = s.reference_revision
+	and pv.deleted_at is %s null
+		where s.package_id = ?
+		and s.version = ?
+		and s.revision = ?
+		and s.excluded = false
+		union
+		select ? as package_id, ? as version, ? as revision
+	),
+	depr_count as (
+		select type, count(operation_id) cnt from operation o, versions v
+		where deprecated = true
+		and o.package_id = v.package_id
+		and o.version = v.version
+		and o.revision = v.revision
+		group by type
+	),
+	op_count as (
+		select type, count(operation_id) cnt from operation o, versions v
+		where o.package_id = v.package_id
+		and o.version = v.version
+		and o.revision = v.revision
+		group by type
+	),
+	no_bwc_count as (
+		select type, count(operation_id) cnt from operation o, versions v
+		where o.package_id = v.package_id
+		and o.version = v.version
+		and o.revision = v.revision
+		and o.kind = ?
+		group by type
+	),
+	audience_count as (
+		select type, api_audience, count(operation_id) cnt from operation o, versions v
+		where o.package_id = v.package_id
+		and o.version = v.version
+		and o.revision = v.revision
+		group by type, api_audience
+	)
+	select oc.type as type,
+	coalesce(oc.cnt, 0) as operations_count,
+	coalesce(dc.cnt, 0) as deprecated_count,
+	coalesce(nbc.cnt, 0) as no_bwc_count,
+	coalesce(ioc.cnt, 0) as internal_count,
+	coalesce(uoc.cnt, 0) as unknown_count
+	from op_count oc
+	full outer join depr_count dc
+	on oc.type = dc.type
+	full outer join no_bwc_count nbc
+	on oc.type = nbc.type
+	full outer join audience_count ioc
+	on oc.type = ioc.type
+	and ioc.api_audience = ?
+	full outer join audience_count uoc
+	on oc.type = uoc.type
+	and uoc.api_audience = ?;
+	`
+	_, err := o.cp.GetConnection().WithContext(ctx).Query(&result,
+		fmt.Sprintf(operationsTypeCountQuery, notCondition),
+		packageId, version, revision,
+		packageId, version, revision,
+		view.NoBwcApiKind,
+		view.ApiAudienceInternal,
+		view.ApiAudienceUnknown)
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetOperationsTypes(ctx context.Context, packageId string, version string, revision int) ([]entity.OperationsTypeEntity, error) {
+	var result []entity.OperationsTypeEntity
+	operationsTypesQuery := `
+		select distinct type
+		from operation
+		where package_id = ?
+		and version = ?
+		and revision = ?
+		order by type;
+	`
+	_, err := o.cp.GetConnection().WithContext(ctx).Query(&result,
+		operationsTypesQuery,
+		packageId, version, revision,
+	)
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetOperationsInfo(ctx context.Context, packageId string, version string, revision int) (entity.OperationsInfoEntity, error) {
+	var result entity.OperationsInfoEntity
+	operationsInfoQuery := `
+		select json_object_agg(
+			operation_id,
+			json_build_object('apiType', type, 'dataHash', data_hash)
+		) operations_info
+		from operation
+		where package_id = ?
+		and version = ?
+		and revision = ?;
+	`
+	_, err := o.cp.GetConnection().WithContext(ctx).Query(&result,
+		operationsInfoQuery,
+		packageId, version, revision,
+	)
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return result, nil
+		}
+		return result, err
+	}
+
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetDeprecatedOperationsSummary(ctx context.Context, packageId string, version string, revision int) ([]entity.DeprecatedOperationsSummaryEntity, error) {
+	var result []entity.DeprecatedOperationsSummaryEntity
+	deprecatedOperationsSummaryQuery := `
+	with depr_count as (
+		select type, count(operation_id) cnt from operation
+		where ((operation.deprecated_items is not null and jsonb_typeof(operation.deprecated_items) = 'array' and jsonb_array_length(operation.deprecated_items) != 0)
+			or operation.deprecated = true)
+		and package_id = ? and version = ? and revision = ?
+		group by type
+	),
+	tagss as (
+		select type, array_agg(distinct x.value) as tags from operation
+			cross join lateral jsonb_array_elements_text(metadata->'tags') as x
+		where package_id = ? and version = ? and revision = ?
+		and ((operation.deprecated_items is not null and jsonb_typeof(operation.deprecated_items) = 'array' and jsonb_array_length(operation.deprecated_items) != 0)
+				or operation.deprecated = true)
+		group by type
+	)
+
+	select dc.type as type,
+	coalesce(dc.cnt, 0) as deprecated_count,
+	coalesce(tg.tags, '{}') as tags
+	from depr_count dc
+	full outer join tagss tg
+	on dc.type = tg.type;
+	`
+	_, err := o.cp.GetConnection().WithContext(ctx).Query(&result,
+		deprecatedOperationsSummaryQuery,
+		packageId, version, revision,
+		packageId, version, revision)
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return result, nil
+}
+func (o operationRepositoryImpl) GetDeprecatedOperationsRefsSummary(ctx context.Context, packageId string, version string, revision int) ([]entity.DeprecatedOperationsSummaryEntity, error) {
+	var result []entity.DeprecatedOperationsSummaryEntity
+	deprecatedOperationsSummaryQuery := `
+	with refss as (
+		select operation.type, operation.package_id, operation.version, operation.revision,operation.deprecated,operation.metadata,operation.operation_id, operation.deprecated_items from operation inner join
+		(with refs as(
+			select s.reference_id as package_id, s.reference_version as version, s.reference_revision as revision
+			from published_version_reference s
+			inner join published_version pv
+			on pv.package_id = s.reference_id
+			and pv.version = s.reference_version
+			and pv.revision = s.reference_revision
+			and pv.deleted_at is null
+			where s.package_id = ?
+			and s.version = ?
+			and s.revision = ?
+			and s.excluded = false
+		)
+		select package_id, version, revision
+		from refs
+		) refs on operation.package_id = refs.package_id and operation.version = refs.version and operation.revision = refs.revision
+	),
+	depr_count as (
+		select type, count(operation_id) as cnt, package_id, version, revision from refss as r
+			where ((r.deprecated_items is not null and jsonb_typeof(r.deprecated_items) = 'array' and jsonb_array_length(r.deprecated_items) != 0)
+				or r.deprecated = true)
+		group by package_id, version, revision,type
+	),
+	tagss as (
+		select type, array_agg(distinct x.value) as tags, package_id, version,revision from refss
+			cross join lateral jsonb_array_elements_text(metadata->'tags') as x
+		where ((deprecated_items is not null and jsonb_typeof(deprecated_items) = 'array' and jsonb_array_length(deprecated_items) != 0)
+			or deprecated = true)
+		group by package_id, version, revision, type
+	)
+
+	select dc.type as type, dc.package_id as package_id, dc.version as version, dc.revision as revision,
+	coalesce(dc.cnt, 0) as deprecated_count,
+	coalesce(tg.tags, '{}') as tags
+	from depr_count dc
+	full outer join tagss tg
+	on dc.type = tg.type and dc.package_id = tg.package_id and dc.version = tg.version and dc.revision = tg.revision;
+	`
+	_, err := o.cp.GetConnection().WithContext(ctx).Query(&result,
+		deprecatedOperationsSummaryQuery,
+		packageId, version, revision)
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetOperationGroup(ctx context.Context, packageId string, version string, revision int, apiType string, groupName string) (*entity.OperationGroupEntity, error) {
+	result := new(entity.OperationGroupEntity)
+	err := o.cp.GetConnection().WithContext(ctx).Model(result).
+		Where("package_id = ?", packageId).
+		Where("version = ?", version).
+		Where("revision = ?", revision).
+		Where("api_type = ?", apiType).
+		Where("group_name = ?", groupName).
+		First()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetOperationGroupTemplateFile(ctx context.Context, packageId string, version string, revision int, apiType string, groupName string) (*entity.OperationGroupTemplateFileEntity, error) {
+	result := new(entity.OperationGroupTemplateFileEntity)
+	err := o.cp.GetConnection().WithContext(ctx).Model(result).
+		ColumnExpr("og.template_filename, operation_group_template.template").
+		Join("inner join operation_group og").
+		JoinOn("og.package_id = ?", packageId).
+		JoinOn("og.version = ?", version).
+		JoinOn("og.revision = ?", revision).
+		JoinOn("og.api_type = ?", apiType).
+		JoinOn("og.group_name = ?", groupName).
+		JoinOn("og.template_checksum = operation_group_template.checksum").
+		Select()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) AddOperationGroupHistory(ctx context.Context, ent *entity.OperationGroupHistoryEntity) error {
+	_, err := o.cp.GetConnection().WithContext(ctx).Model(ent).Insert()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (o operationRepositoryImpl) CreateOperationGroup(ctx context.Context, ent *entity.OperationGroupEntity, templateEntity *entity.OperationGroupTemplateEntity) error {
+	return o.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		_, err := tx.Model(ent).Insert()
+		if err != nil {
+			return err
+		}
+		return o.saveOperationGroupTemplate(tx, templateEntity)
+	})
+}
+
+func (o operationRepositoryImpl) DeleteOperationGroup(ctx context.Context, ent *entity.OperationGroupEntity) error {
+	return o.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		_, err := tx.Model(ent).WherePK().Delete()
+		if err != nil {
+			return err
+		}
+		return o.cleanupOperationGroupTemplate(tx, ent.TemplateChecksum)
+	})
+}
+
+func (o operationRepositoryImpl) UpdateOperationGroup(ctx context.Context, oldGroupEntity *entity.OperationGroupEntity, newGroupEntity *entity.OperationGroupEntity, newTemplateEntity *entity.OperationGroupTemplateEntity, newGroupedOperations *[]entity.GroupedOperationEntity) error {
+	return o.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		//update to operation_group.group_id also updates grouped_operation.group_id
+		_, err := tx.Model(newGroupEntity).
+			Where("group_id = ?", oldGroupEntity.GroupId).
+			Set("group_name = ?group_name").
+			Set("group_id = ?group_id").
+			Set("description = ?description").
+			Set("template_checksum = ?template_checksum").
+			Set("template_filename = ?template_filename").
+			Update()
+		if err != nil {
+			return err
+		}
+		err = o.saveOperationGroupTemplate(tx, newTemplateEntity)
+		if err != nil {
+			return err
+		}
+		err = o.cleanupOperationGroupTemplate(tx, oldGroupEntity.TemplateChecksum)
+		if err != nil {
+			return err
+		}
+		if newGroupedOperations == nil {
+			return nil
+		}
+		_, err = tx.Exec(`delete from grouped_operation where group_id = ?`, newGroupEntity.GroupId)
+		if err != nil {
+			return err
+		}
+		if len(*newGroupedOperations) > 0 {
+			_, err = tx.Model(newGroupedOperations).Insert()
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func (o operationRepositoryImpl) saveOperationGroupTemplate(tx *pg.Tx, ent *entity.OperationGroupTemplateEntity) error {
+	if ent == nil {
+		return nil
+	}
+	_, err := tx.Model(ent).OnConflict("(checksum) DO NOTHING").Insert()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (o operationRepositoryImpl) cleanupOperationGroupTemplate(tx *pg.Tx, templateChecksum string) error {
+	if templateChecksum == "" {
+		return nil
+	}
+	_, err := tx.Exec(`
+		delete from operation_group_template t
+		where t.checksum = ? and not exists (select 1 from operation_group where template_checksum = t.checksum);
+		`, templateChecksum)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (o operationRepositoryImpl) CalculateOperationGroups(ctx context.Context, packageId string, version string, revision int, groupingPrefix string) ([]string, error) {
+	if groupingPrefix == "" {
+		return []string{}, nil
+	}
+	type group struct {
+		Group string `pg:"group_name"`
+	}
+	var groups []group
+	operationGroupsQuery := `
+	select distinct coalesce(group_name, '') as group_name from (
+		select
+		case when ? = '' then null else substring(metadata ->> 'path', ?) end group_name
+		from operation
+		where package_id = ?
+		and version = ?
+		and revision = ?
+		and type = 'rest'
+	) groups
+	`
+	_, err := o.cp.GetConnection().WithContext(ctx).Query(&groups,
+		operationGroupsQuery,
+		groupingPrefix, groupingPrefix,
+		packageId,
+		version,
+		revision)
+	if err != nil {
+		return nil, err
+	}
+	operationGroups := []string{}
+	for _, grp := range groups {
+		operationGroups = append(operationGroups, grp.Group)
+	}
+	return operationGroups, nil
+}
+
+func (o operationRepositoryImpl) GetVersionOperationGroups(ctx context.Context, packageId string, version string, revision int) ([]entity.OperationGroupCountEntity, error) {
+	var result []entity.OperationGroupCountEntity
+	operationGroupCountQuery := `
+	select og.package_id, og.version, og.revision, og.api_type, og.group_name, og.autogenerated, og.description,
+	(select count(*) from grouped_operation where group_id = og.group_id) operations_count,
+	og.template_filename export_template_filename
+	from operation_group og
+	where package_id = ?
+	and version = ?
+	and revision = ?`
+	_, err := o.cp.GetConnection().WithContext(ctx).Query(&result, operationGroupCountQuery, packageId, version, revision)
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetGroupedOperations(ctx context.Context, packageId string, version string, revision int, operationType string, groupName string, searchReq view.OperationListReq) ([]entity.OperationRichEntity, error) {
+	var result []entity.OperationRichEntity
+	query := o.cp.GetConnection().WithContext(ctx).Model(&result).
+		ColumnExpr("operation.*")
+
+	query.Join(`inner join
+		(with refs as(
+			select s.reference_id as package_id, s.reference_version as version, s.reference_revision as revision
+			from published_version_reference s
+			inner join published_version pv
+			on pv.package_id = s.reference_id
+			and pv.version = s.reference_version
+			and pv.revision = s.reference_revision
+			and pv.deleted_at is null
+			where s.package_id = ?
+			and s.version = ?
+			and s.revision = ?
+			and s.excluded = false
+		)
+		select package_id, version, revision
+		from refs
+		union
+		select ? as package_id, ? as version, ? as revision
+		) refs`, packageId, version, revision, packageId, version, revision)
+	query.JoinOn("operation.package_id = refs.package_id").
+		JoinOn("operation.version = refs.version").
+		JoinOn("operation.revision = refs.revision")
+
+	if searchReq.RefPackageId != "" {
+		query.JoinOn("refs.package_id = ?", searchReq.RefPackageId)
+	}
+	if searchReq.OnlyAddable {
+		//todo try to replace this 'not in' condition with join
+		query.Where(`operation.operation_id not in (
+			select operation_id from grouped_operation go
+			inner join operation_group og
+			on go.group_id = og.group_id
+			and og.package_id = ?
+			and og.version = ?
+			and og.revision = ?
+			and og.api_type = ?
+			and og.group_name = ?
+			where go.package_id = operation.package_id
+			and go.version = operation.version
+			and go.revision = operation.revision
+		)`, packageId, version, revision, operationType, groupName)
+	} else {
+		query.Join(`inner join operation_group og`).
+			JoinOn("og.package_id = ?", packageId).
+			JoinOn("og.version = ?", version).
+			JoinOn("og.revision = ?", revision).
+			JoinOn("og.api_type = ?", operationType).
+			JoinOn("og.group_name = ?", groupName).
+			Join("inner join grouped_operation go").
+			JoinOn("go.group_id = og.group_id").
+			JoinOn("go.package_id = operation.package_id").
+			JoinOn("go.version = operation.version").
+			JoinOn("go.revision = operation.revision").
+			JoinOn("go.operation_id = operation.operation_id")
+	}
+
+	query.Where("operation.type = ?", operationType)
+
+	query.Order("operation.package_id",
+		"operation.version",
+		"operation.revision",
+		"operation_id ASC").
+		Offset(searchReq.Limit * searchReq.Page).
+		Limit(searchReq.Limit)
+
+	if searchReq.CustomTagKey != "" && searchReq.CustomTagValue != "" {
+		query.Where("exists(select 1 from jsonb_each_text(operation.custom_tags) where key = ? and value = ?)", searchReq.CustomTagKey, searchReq.CustomTagValue)
+	} else if searchReq.CustomTagKey != "" {
+		query.Where("exists(select 1 from jsonb_each_text(operation.custom_tags) where key = ?)", searchReq.CustomTagKey)
+	} else if searchReq.TextFilter != "" {
+		searchReq.TextFilter = "%" + utils.LikeEscaped(searchReq.TextFilter) + "%"
+		if operationType == string(view.AsyncapiApiType) {
+			query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+				q = q.WhereOr("operation.title ilike ?", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "channel", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "action", searchReq.TextFilter)
+				return q, nil
+			})
+		} else {
+			query.WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+				q = q.WhereOr("operation.title ilike ?", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "path", searchReq.TextFilter).
+					WhereOr("operation.metadata->>? ilike ?", "method", searchReq.TextFilter)
+				return q, nil
+			})
+		}
+	}
+
+	if searchReq.Kind != "" {
+		query.Where("kind = ?", searchReq.Kind)
+	}
+	if searchReq.ApiAudience != "" {
+		query.Where("api_audience = ?", searchReq.ApiAudience)
+	}
+
+	if operationType == string(view.AsyncapiApiType) {
+		if searchReq.AsyncapiChannel != "" {
+			query.Where("operation.metadata->>? = ?", "channel", searchReq.AsyncapiChannel)
+		}
+		if searchReq.AsyncapiProtocol != "" {
+			query.Where("operation.metadata->>? = ?", "protocol", searchReq.AsyncapiProtocol)
+		}
+	}
+
+	if searchReq.Tag != "" {
+		searchReq.Tag = utils.LikeEscaped(searchReq.Tag)
+		query.Where(`exists(
+			select 1 from jsonb_array_elements(operation.metadata -> 'tags') a
+			where replace(a.value::text,'"','') like ?)`, searchReq.Tag)
+	}
+
+	if searchReq.EmptyTag {
+		query.Where(`not exists(select 1 from jsonb_array_elements(operation.metadata -> 'tags') a
+			where a.value != '""') `)
+	}
+
+	if searchReq.Deprecated != nil {
+		query.Where("operation.deprecated = ?", *searchReq.Deprecated)
+	}
+
+	if searchReq.DocumentSlug != "" {
+		query.Join("inner join published_version_revision_content as pvrc").
+			JoinOn("operation.operation_id = any(pvrc.operation_ids)").
+			JoinOn("pvrc.slug = ?", searchReq.DocumentSlug).
+			JoinOn("operation.package_id = pvrc.package_id").
+			JoinOn("operation.version = pvrc.version").
+			JoinOn("operation.revision = pvrc.revision")
+	}
+	err := query.Select()
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetOperationsByModelHash(ctx context.Context, packageId string, version string, revision int, apiType string, modelHash string) ([]entity.OperationModelsEntity, error) {
+	var result []entity.OperationModelsEntity
+	operationsByModelHashQuery := `
+	with operation_model as(
+		select o.package_id, o.version, o.revision, o.operation_id, m.key::varchar as key, m.value::varchar as hash
+		from operation o, jsonb_each_text(o.models) m
+		where o.package_id = ?
+		and o.version = ?
+		and o.revision = ?
+		and o.type = ?
+	)
+	select m.operation_id, array_agg(m.key)::varchar[] models
+	from operation_model m
+	where m.hash = ?
+	group by m.operation_id
+	order by m.operation_id;
+	`
+	_, err := o.cp.GetConnection().WithContext(ctx).Query(&result, operationsByModelHashQuery, packageId, version, revision, apiType, modelHash)
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GlobalSearchForOperations(ctx context.Context, searchQuery *entity.GlobalOperationSearchQuery) ([]entity.OperationSearchResult, error) {
+	var result []entity.OperationSearchResult
+	if len(searchQuery.VisibleRoots) == 0 {
+		return nil, nil
+	}
+
+	// Privacy-aware search against global_search.fts_operation_search_text.
+	// Deprecated: public.fts_operation_search_text is dual-written but no longer used for global search reads.
+	operationsSearchQuery := `
+select
+	o.package_id,
+	pg.name,
+	o.version,
+	o.revision,
+	all_ts.status,
+	o.operation_id,
+	o.title,
+	o.data_hash,
+	o.deprecated,
+	o.kind,
+	o.type,
+	o.metadata,
+	o.document_id,
+	parent_package_names(o.package_id) parent_names
+from operation o
+    inner join (
+        SELECT DISTINCT ON (rank, package_id, operation_id)
+            ts_rank(ts.data_vector, search_query) as rank,
+            ts.package_id   as package_id,
+            ts.operation_id as operation_id,
+            ts.version      as version,
+            ts.revision     as revision,
+            pv.status       as status
+        FROM global_search.fts_operation_search_text ts
+            inner join published_version pv
+                on pv.package_id = ts.package_id
+                and pv.version = ts.version
+                and pv.revision = ts.revision
+            cross join websearch_to_tsquery(?original_text_input) search_query
+            /*scope_join*/
+            inner join unnest(?visible_roots::text[]) as vis(parent)
+                on ts.package_id = vis.parent
+                or (ts.package_id ~>=~ (vis.parent || '.') and ts.package_id ~<~ (vis.parent || '/'))
+        WHERE ts.workspace_id = ?workspace_id
+            and ts.status = ?status
+            and ts.api_type = ?api_type
+            and (?versions = '{}' or ts.version like ANY(
+                    select id from unnest(?versions::text[]) id))
+            and pv.deleted_at is null
+            and pv.published_at >= ?start_date
+            and pv.published_at <= ?end_date
+            and search_query @@ ts.data_vector
+        ORDER BY ts_rank(ts.data_vector, search_query) DESC,
+                 package_id,
+                 operation_id desc,
+                 version DESC,
+                 revision DESC
+        LIMIT ?limit OFFSET ?offset
+    ) all_ts
+        on all_ts.package_id = o.package_id
+        and all_ts.version = o.version
+        and all_ts.revision = o.revision
+        and all_ts.operation_id = o.operation_id
+    inner join package_group pg on o.package_id = pg.id
+where all_ts.rank > 0
+order by all_ts.rank desc, o.operation_id
+limit ?limit;
+`
+	packagesSearchScopeJoin := ""
+	if len(searchQuery.Packages) != 0 {
+		//limits the search to the requested packages and their subtrees, written as a join
+		//so the planner is free to drive the fts_operation_search_text scan from the scope btree
+		//('/' is the byte right after '.', so the range covers exactly 'parent.<anything>' and excludes siblings such as 'parentX')
+		//~>=~/~<~ compare byte-wise and match the varchar_pattern_ops index (migration 35) regardless of the database locale;
+		//plain >=/< cannot be used: they compare per the database collation, where this range does not equal
+		//the 'parent.' prefix set on non-C locales, and they cannot use a varchar_pattern_ops index (different operator family);
+		//LIKE 'parent.%' cannot be used either: its prefix-to-range index rewrite requires a plan-time constant pattern,
+		//while these bounds are computed per joined row
+		packagesSearchScopeJoin = `
+			inner join unnest(?packages::text[]) as scope_pkg(parent)
+				on ts.package_id = scope_pkg.parent
+				or (ts.package_id ~>=~ (scope_pkg.parent || '.') and ts.package_id ~<~ (scope_pkg.parent || '/'))`
+	}
+
+	err := o.cp.GetConnection().RunInTransaction(ctx, func(tx *pg.Tx) error {
+		if _, err := tx.Exec("SET LOCAL work_mem = ?", globalSearchWorkMem); err != nil {
+			return err
+		}
+		if _, err := tx.Exec("select websearch_to_tsquery(?)", searchQuery.OriginalTextInput); err != nil {
+			return fmt.Errorf("invalid search string: %v", err.Error())
+		}
+		query := strings.Replace(operationsSearchQuery, globalSearchScopeJoinPlaceholder, packagesSearchScopeJoin, 1)
+		if _, err := tx.Model(searchQuery).Query(&result, query); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetRESTOperationsByPathAndMethod(ctx context.Context, packageId string, version string, revision int, path string, method string) ([]string, error) {
+	type OperationId struct {
+		OperationId string `pg:"operation_id"`
+	}
+	var operationIds []OperationId
+
+	operationsByPathAndMethod := `
+		select operation_id
+		from operation
+		where package_id = ?
+		and version = ?
+		and revision = ?
+		and type = ?
+		and metadata ->> 'path' ilike ?
+		and metadata ->> 'method' ilike ?
+	`
+	_, err := o.cp.GetConnection().WithContext(ctx).Query(&operationIds, operationsByPathAndMethod, packageId, version, revision, string(view.RestApiType), path, method)
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	result := make([]string, 0)
+
+	for _, t := range operationIds {
+		result = append(result, t.OperationId)
+	}
+	return result, nil
+}
+
+func (o operationRepositoryImpl) GetGQLOperationsByTypeAndMethod(ctx context.Context, packageId string, version string, revision int, operationType string, method string) ([]string, error) {
+	type OperationId struct {
+		OperationId string `pg:"operation_id"`
+	}
+	var operationIds []OperationId
+
+	operationsByTypeAndMethod := `
+		select operation_id
+		from operation
+		where package_id = ?
+		and version = ?
+		and revision = ?
+		and type = ?
+		and metadata ->> 'type' = ?
+		and metadata ->> 'method' = ?
+	`
+	_, err := o.cp.GetConnection().WithContext(ctx).Query(&operationIds, operationsByTypeAndMethod, packageId, version, revision, string(view.GraphqlApiType), operationType, method)
+	if err != nil {
+		if err == pg.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	result := make([]string, 0)
+
+	for _, t := range operationIds {
+		result = append(result, t.OperationId)
+	}
+	return result, nil
+}

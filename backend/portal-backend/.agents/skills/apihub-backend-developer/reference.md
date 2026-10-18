@@ -39,7 +39,7 @@ const ExampleNotFoundMsg = "Example with id = $id not found"
 
 Use existing patterns for parameter placeholders (`$id`, `$param`, etc.). Do not inline error code strings in controllers or services.
 
-## Service.go wiring
+## main.go wiring
 
 - Add `repository.New...` with other repository constructors (end of repository block).
 - Add `service.New...` with other services (end of service block).
@@ -50,7 +50,7 @@ Use existing patterns for parameter placeholders (`$id`, `$param`, etc.). Do not
 
 Naming: `{N}_{description}.up.sql` and `{N}_{description}.down.sql` where `N` is the next free integer.
 
-Directory: `qubership-apihub-service/resources/migrations/`
+Directory: `resources/migrations/`
 
 Validate (from repository root):
 
