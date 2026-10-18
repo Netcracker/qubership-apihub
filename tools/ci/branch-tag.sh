@@ -15,4 +15,11 @@ set -euo pipefail
 
 ref="${1:?usage: branch-tag.sh <ref>}"
 
-echo "$ref" | sed 's@refs/tags/@@;s@refs/heads/@@;s@refs/pull/@pull/@;s@^main$@latest@;s@^develop$@dev@;s@^release$@next@;s@/@-@g;'
+# Characters outside [A-Za-z0-9_.-] become `-`, and the tag is cut to the 128 characters a tag may have.
+# A tag may not start with `.` or `-` either, so those are replaced at the start.
+tag="$(printf '%s\n' "$ref" \
+  | sed 's@refs/tags/@@;s@refs/heads/@@;s@refs/pull/@pull/@;s@^main$@latest@;s@^develop$@dev@;s@^release$@next@;s@/@-@g;' \
+  | tr -c 'A-Za-z0-9_.\n-' '-' \
+  | cut -c1-128 \
+  | sed 's@^[.-]@_@')"
+echo "$tag"
