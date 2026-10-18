@@ -1,0 +1,26 @@
+openapi: 3.1.0
+info:
+  title: Swagger Petstore - OpenAPI 3.1
+  version: 1.0.12
+paths:
+  /path1:
+    post:
+      summary: Get an existing pet.
+      description: Get an existing pet by Id.
+      operationId: getPet
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Color'
+                enum:
+                  - black
+                  - white
+components:
+  schemas:
+    Color:
+      type: string
+      enum:
+        - black

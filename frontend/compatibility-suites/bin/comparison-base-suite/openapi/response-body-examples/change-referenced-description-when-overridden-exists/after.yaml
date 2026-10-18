@@ -1,0 +1,27 @@
+openapi: 3.1.0
+info:
+  title: Swagger Petstore - OpenAPI 3.1
+  version: 1.0.12
+paths:
+  /path1:
+    post:
+      summary: Create pet
+      description: Pet creation
+      operationId: createPet
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: string
+              examples:
+                ex1: 
+                  $ref: "#/components/examples/ex1"
+                  description: example description override
+components:
+  examples:
+    ex1:
+      summary: example summary from components 
+      description: some changes in example description from components 
+      value: petpet

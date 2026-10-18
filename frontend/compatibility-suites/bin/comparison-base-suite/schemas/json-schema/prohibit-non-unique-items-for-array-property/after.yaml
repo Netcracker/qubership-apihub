@@ -1,0 +1,7 @@
+properties:
+  option1:
+    type: array
+    uniqueItems: true
+  option2:
+    type: array
+    uniqueItems: true

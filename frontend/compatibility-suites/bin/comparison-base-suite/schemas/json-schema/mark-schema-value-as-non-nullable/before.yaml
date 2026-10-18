@@ -1,0 +1,7 @@
+properties:
+  option1:
+    type: string
+    nullable: true
+  option2:
+    type: string
+    nullable: true

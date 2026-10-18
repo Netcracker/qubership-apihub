@@ -1,0 +1,7 @@
+properties:
+  option1:
+    type: integer
+  option2:
+    type: string
+    xml:
+      attribute: false

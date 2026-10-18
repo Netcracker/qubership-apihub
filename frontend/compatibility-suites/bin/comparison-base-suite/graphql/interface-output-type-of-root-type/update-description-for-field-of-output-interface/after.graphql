@@ -1,0 +1,10 @@
+type Query {
+  fruits: Fruit
+}
+interface Fruit {
+  """ 
+  fruit id
+  """
+  id: ID
+  name: String
+}

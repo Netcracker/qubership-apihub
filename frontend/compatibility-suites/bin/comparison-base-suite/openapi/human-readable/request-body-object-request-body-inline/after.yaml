@@ -1,0 +1,17 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /pets:
+    post:
+      summary: Add a new pet
+      requestBody:
+        description: A JSON object containing pet information
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: OK

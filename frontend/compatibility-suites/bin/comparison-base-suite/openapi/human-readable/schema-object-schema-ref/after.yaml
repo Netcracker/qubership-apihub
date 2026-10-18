@@ -1,0 +1,22 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /pets:
+    post:
+      summary: Add a new pet
+      requestBody:
+        description: Pet information
+        content:
+          application/json:
+            example: abc
+            schema:
+              $ref: '#/components/schemas/offsetSchema'
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    offsetSchema:
+      type: integer

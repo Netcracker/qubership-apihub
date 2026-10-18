@@ -1,0 +1,6 @@
+properties:
+  option1:
+    type: string
+    minLength: 0
+  option2:
+    type: string

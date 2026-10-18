@@ -1,0 +1,11 @@
+type Query {
+  fruits: Fruit
+}
+enum Fruit {
+  """
+  fruit details of apple
+  """
+  apple
+  mango
+  orange
+}

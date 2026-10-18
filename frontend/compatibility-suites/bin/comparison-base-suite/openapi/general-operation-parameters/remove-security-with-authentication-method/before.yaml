@@ -1,0 +1,18 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    post:
+      security:
+        - BasicAuth: [ ]
+      responses:
+        '200':
+          description: OK
+          content: { }
+components:
+  securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic

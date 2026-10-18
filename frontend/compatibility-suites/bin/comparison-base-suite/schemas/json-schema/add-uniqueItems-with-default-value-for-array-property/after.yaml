@@ -1,0 +1,4 @@
+type: array
+uniqueItems: false
+items:
+  type: string

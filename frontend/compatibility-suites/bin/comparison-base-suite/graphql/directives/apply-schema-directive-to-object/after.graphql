@@ -1,0 +1,10 @@
+directive @sort on OBJECT
+
+type Query {
+  fruits: [Fruit]
+}
+
+type Fruit @sort {
+  id: ID
+  name: String
+}

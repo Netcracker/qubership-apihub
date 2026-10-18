@@ -1,0 +1,20 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /path1:
+    get:
+      servers:
+        - url: https://{username}.example.com
+          description: It is a description of server
+          variables:
+            username:
+              default: some-name-1
+              enum:
+                - "some-name-1"
+                - "some-name-2"
+      responses:
+        '200':
+          description: OK
+          content: { }

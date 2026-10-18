@@ -1,0 +1,8 @@
+type Query {
+  fruits: Fruit
+}
+"""Fruit fields"""
+type Fruit {
+  id: ID
+  name: String
+}

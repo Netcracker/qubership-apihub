@@ -1,0 +1,17 @@
+oneOf:
+  - type: object
+    title: simpleObject
+    required:
+      - objectType
+    properties:
+      objectType:
+        type: string
+  - type: object
+    title: complexObject
+    required:
+      - objectType
+    properties:
+      objectType:
+        type: string
+discriminator:
+  propertyName: objectType

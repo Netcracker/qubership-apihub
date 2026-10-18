@@ -1,0 +1,10 @@
+directive @limit on FIELD_DEFINITION
+
+type Query {
+  fruits: [Fruit]
+}
+
+type Fruit {
+  id: ID @limit
+  name: String
+}

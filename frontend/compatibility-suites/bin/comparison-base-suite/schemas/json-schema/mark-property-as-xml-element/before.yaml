@@ -1,0 +1,9 @@
+properties:
+  option1:
+    type: integer
+    xml:
+      attribute: true
+  option2:
+    type: string
+    xml:
+      attribute: true

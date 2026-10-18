@@ -1,0 +1,5 @@
+type: object
+maxProperties: 20
+properties:
+  prop1:
+    type: string

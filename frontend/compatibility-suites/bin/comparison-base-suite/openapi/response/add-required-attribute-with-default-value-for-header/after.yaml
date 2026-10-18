@@ -1,0 +1,15 @@
+openapi: 3.0.0
+info:
+  title: test
+  version: 0.1.0
+paths:
+  /pets:
+    get:
+      responses:
+        '200':
+          description: Successful response
+          headers:
+            X-Example-Header:
+              required: false
+              schema:
+                type: string

@@ -1,0 +1,5 @@
+directive @limit(offset: Int = 0) on FIELD 
+
+type Query {
+  fruits: [String]
+}

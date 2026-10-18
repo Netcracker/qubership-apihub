@@ -1,0 +1,1 @@
+directive @limit (offset: Int = 0) on FRAGMENT_DEFINITION | FIELD

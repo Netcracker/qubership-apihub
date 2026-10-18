@@ -1,0 +1,15 @@
+""" Fruit Interface properties""" 
+interface Fruit {
+  id: ID
+  name: String
+  color: String
+}
+type Apple implements Fruit {
+  id: ID
+  name: String
+  color: String
+  variety: String
+}
+type Query {
+  fruits: [Apple]
+}
