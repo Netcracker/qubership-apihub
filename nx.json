@@ -12,15 +12,156 @@
   ],
   "release": {
     "//": [
-      "Components release together from one branch and keep independent versions.",
-      "The current version is the last <project>/<version> tag, or package.json before the first release.",
-      "The conventionalCommits shorthand is not used: it also sets currentVersionResolver,",
+      "One release group per component, tagged <component>/{version}.",
+      "ui, apispec-view, api-doc-viewer, and java-task-consumer have several projects and are fixed groups.",
+      "Each independent group sets its own releaseTag: Nx gives independent groups {projectName}@{version}",
+      "and ignores the root pattern for them. Projects outside every group (ui-tests, the root Maven project)",
+      "are not released.",
+      "The current version is the last tag. The Go and Java groups have no manifest: their version actions",
+      "write nothing and start a component without a tag from 0.0.0.",
+      "The version.conventionalCommits shorthand is not used: it also sets currentVersionResolver,",
       "and setting both is an error.",
       "preserveLocalDependencyProtocols keeps workspace:^, so pnpm writes the real range at publish time."
     ],
-    "projectsRelationship": "independent",
     "releaseTag": {
-      "pattern": "{projectName}/{version}"
+      "pattern": "{releaseGroupName}/{version}"
+    },
+    "groups": {
+      "api-diff": {
+        "projects": ["api-diff"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "api-diff/{version}" }
+      },
+      "api-processor": {
+        "projects": ["api-processor"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "api-processor/{version}" }
+      },
+      "api-unifier": {
+        "projects": ["api-unifier"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "api-unifier/{version}" }
+      },
+      "api-visitor": {
+        "projects": ["api-visitor"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "api-visitor/{version}" }
+      },
+      "class-view": {
+        "projects": ["class-view"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "class-view/{version}" }
+      },
+      "compatibility-suites": {
+        "projects": ["compatibility-suites"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "compatibility-suites/{version}" }
+      },
+      "ddlapi": {
+        "projects": ["ddlapi"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "ddlapi/{version}" }
+      },
+      "graphapi": {
+        "projects": ["graphapi"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "graphapi/{version}" }
+      },
+      "http-spec": {
+        "projects": ["http-spec"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "http-spec/{version}" }
+      },
+      "json-crawl": {
+        "projects": ["json-crawl"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "json-crawl/{version}" }
+      },
+      "rest-playground": {
+        "projects": ["rest-playground"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "rest-playground/{version}" }
+      },
+      "jest-chrome-in-docker-environment": {
+        "projects": ["jest-chrome-in-docker-environment"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "jest-chrome-in-docker-environment/{version}" }
+      },
+      "apispec-view": {
+        "projects": [
+          "apispec-view-root",
+          "apispec-view",
+          "apispec-view-diff-block",
+          "apispec-view-diff-elements-core",
+          "apispec-view-elements-core",
+          "apispec-view-json-schema-diff-viewer",
+          "apispec-view-json-schema-viewer",
+          "apispec-view-samples"
+        ],
+        "projectsRelationship": "fixed"
+      },
+      "api-doc-viewer": {
+        "projects": [
+          "api-doc-viewer-root",
+          "api-doc-viewer",
+          "api-doc-viewer-api-data-model",
+          "api-doc-viewer-api-state-model",
+          "api-doc-viewer-next-data-model",
+          "api-doc-viewer-samples"
+        ],
+        "projectsRelationship": "fixed"
+      },
+      "ui": { "projects": ["ui-root", "ui-portal", "ui-agents", "ui-shared"], "projectsRelationship": "fixed" },
+      "build-task-consumer": {
+        "projects": ["build-task-consumer"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "build-task-consumer/{version}" }
+      },
+      "portal-backend": {
+        "projects": ["portal-backend"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "portal-backend/{version}" },
+        "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
+      },
+      "api-linter-service": {
+        "projects": ["api-linter-service"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "api-linter-service/{version}" },
+        "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
+      },
+      "agents-backend": {
+        "projects": ["agents-backend"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "agents-backend/{version}" },
+        "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
+      },
+      "agent": {
+        "projects": ["agent"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "agent/{version}" },
+        "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
+      },
+      "test-service": {
+        "projects": ["test-service"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "test-service/{version}" },
+        "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
+      },
+      "commons-go": {
+        "projects": ["commons-go"],
+        "projectsRelationship": "independent",
+        "releaseTag": { "pattern": "commons-go/{version}" },
+        "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
+      },
+      "java-task-consumer": {
+        "projects": [
+          "java-task-consumer",
+          "com.netcracker.qubership.apihub:java-task-consumer",
+          "com.netcracker.qubership.apihub:jdiff-engine"
+        ],
+        "projectsRelationship": "fixed",
+        "version": { "versionActions": "tools/release/version-actions/tag-only.js" }
+      }
     },
     "version": {
       "//preVersionCommand": [
