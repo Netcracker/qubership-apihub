@@ -1,0 +1,11 @@
+"""Override deprecation usage."""
+directive @deprecated( reason: String = "No longer supported" ) on INPUT_OBJECT
+
+input MessageInput @deprecated(reason: "Deprecated input object") {
+  content: String
+  author: String
+}
+
+type Mutation {
+  createMessage(input: MessageInput): String
+}

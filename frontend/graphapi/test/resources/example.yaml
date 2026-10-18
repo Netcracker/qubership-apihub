@@ -1,0 +1,133 @@
+graphapi: 1.0.0
+queries:
+  todo:
+    description: A Query with 1 required argument and 1 optional argument
+    args:
+      id:
+        typeDef:
+          type:
+            kind: ID
+        nullable: false
+      isCompleted:
+        description: A default value of false
+        typeDef:
+          type:
+            kind: boolean
+        default: false
+    output:
+      typeDef:
+        $ref: "#/components/objects/Todo"
+  todos:
+    description: Returns a list (or null) that can contain null values
+    directives:
+      limit:
+        definition:
+          $ref: "#/components/directives/limit"
+    args:
+      ids:
+        description: Required argument that is a list that cannot contain null values
+        typeDef:
+          type:
+            kind: list
+            items:
+              typeDef:
+                type:
+                  kind: string
+              nullable: false
+        nullable: false
+    output:
+      typeDef:
+        type:
+          kind: list
+          items:
+            typeDef:
+              $ref: "#/components/objects/Todo"
+mutations:
+  create_todo:
+    description: A Mutation with 1 required argument
+    args:
+      todo:
+        typeDef:
+          $ref: "#/components/inputObjects/TodoInputType"
+        nullable: false
+    output:
+      typeDef:
+        $ref: "#/components/objects/Todo"
+      nullable: false
+components:
+  objects:
+    Todo:
+      title: Todo
+      type:
+        kind: object
+        methods:
+          id:
+            output:
+              typeDef:
+                type:
+                  kind: ID
+          name:
+            output:
+              typeDef:
+                type:
+                  kind: string
+          completed:
+            output:
+              typeDef:
+                type:
+                  kind: boolean
+          color:
+            output:
+              typeDef:
+                $ref: "#/components/enums/Color"
+          colors:
+            description: A field that requires an argument
+            args:
+              filter:
+                typeDef:
+                  type:
+                    kind: list
+                    items:
+                      typeDef:
+                        $ref: "#/components/enums/Color"
+            output:
+              typeDef:
+                type:
+                  kind: list
+                  items:
+                    typeDef:
+                      $ref: "#/components/enums/Color"
+  enums:
+    Color:
+      title: Color
+      type:
+        kind: enum
+        values:
+          RED:
+            description: Red color
+          GREEN:
+            description: Green color
+  inputObjects:
+    TodoInputType:
+      title: TodoInputType
+      type:
+        kind: input
+        properties:
+          name:
+            typeDef:
+              type:
+                kind: string
+          completed:
+            typeDef:
+              type:
+                kind: boolean
+            directives:
+              deprecated:
+                definition:
+                  $ref: "#/components/directives/deprecated"
+                meta:
+                  reason: not used
+          color:
+            typeDef:
+              $ref: "#/components/enums/Color"
+            default: RED

@@ -1,0 +1,51 @@
+.graph-playground {
+    display: flex;
+    height: calc(100vh - 32px);
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.graph-playground__input {
+    width: 50%;
+    padding-right: 8px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.graph-playground__textarea {
+    height: 100%;
+    width: 100%;
+    resize: none;
+    padding: 8px;
+    font-family: monospace;
+    font-size: 14px;
+    background-color: #ffffff;
+    color: #333333;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.graph-playground__output {
+    height: 100%;
+    width: 50%;
+    padding-left: 8px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.graph-playground__pre {
+    margin: 0;
+    white-space: pre-wrap;
+    font-family: monospace;
+    padding: 8px;
+    background-color: #f5f5f5;
+    color: #333333;
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    height: 100%;
+    overflow: auto;
+    box-sizing: border-box;
+}
