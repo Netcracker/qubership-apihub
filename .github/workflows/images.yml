@@ -4,22 +4,31 @@ name: Build images
 # (tools/ci/image-input-hash.sh computes the hash). ci.yml calls this workflow once per language,
 # so each language's images wait only for that language's tests: `needs` applies to a whole job,
 # not to a matrix leg. Nothing is passed between jobs; a JavaScript leg restores its build from
-# the Nx cache, and a Go leg compiles inside the image.
+# the Nx cache, a Java leg builds its jar with Maven, and a Go leg compiles inside the image.
+#
+# Images go to ghcr.io/<repository owner>/<image>, under the names the product has always used
+# (qubership-apihub-backend, qubership-api-linter-service, and so on).
+#
+# Platforms (release design R3): linux/amd64 and linux/arm64 for `release` and `main`, linux/amd64
+# only for every other ref. A content hash that exists for amd64 only is rebuilt on those two
+# branches, so `:next` and `:latest` never point at a single-architecture image.
 
 on:
   workflow_call:
     inputs:
       images:
         description: >-
-          JSON array of matrix legs. Each is {project, image, dockerfile, build_projects,
-          deploy, context, workspace_build}.
+          JSON array of matrix legs. Each is {project, image, dockerfile, build_projects, deploy,
+          context, dockerignore, workspace_build, outputs}. `outputs` is optional: space-separated
+          paths (globs allowed) that must exist after the Nx build; empty means `<root>/dist` of
+          every build project.
         required: true
         type: string
 
 jobs:
   images:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     permissions:
       contents: read
       packages: write
@@ -38,6 +47,33 @@ jobs:
         with:
           cache-scope: images-${{ matrix.image }}
 
+      # Refs and names reach the scripts through env, never through `${{ }}` inside the script text:
+      # a branch name may contain quotes.
+      - name: Choose the platforms
+        id: platforms
+        shell: bash
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          case "$REF" in
+            refs/heads/release|refs/heads/main)
+              echo "value=linux/amd64,linux/arm64" >> "$GITHUB_OUTPUT"
+              echo "multi=true" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "value=linux/amd64" >> "$GITHUB_OUTPUT"
+              echo "multi=false" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+      # Emulation for the arm64 stages that run commands. The Go stages cross-compile on the build
+      # platform and the JavaScript images copy a prebuilt tree, so the cost is small.
+      - uses: docker/setup-qemu-action@v4
+        if: steps.platforms.outputs.multi == 'true'
+        with:
+          platforms: arm64
+
       - uses: docker/setup-buildx-action@v4
 
       - uses: docker/login-action@v4
@@ -46,45 +82,73 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # develop -> dev, release -> next, main -> latest, feature/x -> feature-x.
+      # develop -> dev, release -> next, main -> latest, feature/x -> feature-x, a pull request ->
+      # pull-N-merge (tools/ci/branch-tag.sh).
       - name: Compute tags
         id: tags
         shell: bash
+        env:
+          REF: ${{ github.ref }}
+          OWNER: ${{ github.repository_owner }}
+          IMAGE: ${{ matrix.image }}
+          BUILD_PROJECTS: ${{ matrix.build_projects }}
+          DOCKERFILE: ${{ matrix.dockerfile }}
+          DOCKERIGNORE: ${{ matrix.dockerignore }}
         run: |
           set -euo pipefail
-          ref='${{ github.ref }}'
-          branch_tag="$(echo "$ref" | sed 's@refs/tags/@@;s@refs/heads/@@;s@refs/pull/@pull/@;s@^main$@latest@;s@^develop$@dev@;s@^release$@next@;s@/@-@g;')"
+          branch_tag="$(bash tools/ci/branch-tag.sh "$REF")"
 
           pnpm exec nx graph --file=graph.json >/dev/null
           # The ignore files decide what reaches the build context, so they are part of the hash.
-          # `dockerignore` is a space-separated list, deliberately unquoted.
-          src_hash="$(bash tools/ci/image-input-hash.sh '${{ matrix.build_projects }}' graph.json '${{ matrix.dockerfile }}' ${{ matrix.dockerignore }})"
+          # `DOCKERIGNORE` is a space-separated list, deliberately unquoted.
+          # shellcheck disable=SC2086
+          src_hash="$(bash tools/ci/image-input-hash.sh "$BUILD_PROJECTS" graph.json "$DOCKERFILE" $DOCKERIGNORE)"
 
-          repo_lc="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
-          base="ghcr.io/${repo_lc}/${{ matrix.image }}"
+          repo_lc="$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')"
+          base="ghcr.io/${repo_lc}/${IMAGE}"
 
           echo "branch_tag=$branch_tag"           >> "$GITHUB_OUTPUT"
           echo "src_tag=src-$src_hash"            >> "$GITHUB_OUTPUT"
           echo "base=$base"                       >> "$GITHUB_OUTPUT"
-          echo "### ${{ matrix.image }}"          >> "$GITHUB_STEP_SUMMARY"
+          echo "### $IMAGE"                       >> "$GITHUB_STEP_SUMMARY"
           echo "- content tag: \`src-$src_hash\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- branch tag:  \`$branch_tag\`"   >> "$GITHUB_STEP_SUMMARY"
+          echo "- platforms:   \`${{ steps.platforms.outputs.value }}\`" >> "$GITHUB_STEP_SUMMARY"
 
+      # A hit needs the platforms this ref publishes: content built on develop for amd64 only is a
+      # miss on release and main.
       - name: Has this content already been built?
         id: exists
         shell: bash
+        env:
+          CONTENT_IMAGE: ${{ steps.tags.outputs.base }}:${{ steps.tags.outputs.src_tag }}
+          MULTI: ${{ steps.platforms.outputs.multi }}
         run: |
           set -euo pipefail
-          if docker manifest inspect '${{ steps.tags.outputs.base }}:${{ steps.tags.outputs.src_tag }}' >/dev/null 2>&1; then
-            echo "hit=true" >> "$GITHUB_OUTPUT"
+          hit=false
+          if raw="$(docker buildx imagetools inspect --raw "$CONTENT_IMAGE" 2>/dev/null)"; then
+            if [ "$MULTI" != 'true' ]; then
+              hit=true
+            elif node -e '
+              const m = JSON.parse(require("fs").readFileSync(0, "utf8"))
+              const archs = (m.manifests || []).map((x) => x.platform && x.platform.architecture)
+              process.exit(archs.includes("arm64") && archs.includes("amd64") ? 0 : 1)
+            ' <<< "$raw"; then
+              hit=true
+            else
+              echo "- this content exists without arm64, so it is rebuilt for this ref" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi
+          echo "hit=$hit" >> "$GITHUB_OUTPUT"
+          if [ "$hit" = true ]; then
             echo "- **cache hit** — this content exists, so no build" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "hit=false" >> "$GITHUB_OUTPUT"
             echo "- cache miss — building this content" >> "$GITHUB_STEP_SUMMARY"
           fi
 
       # ---- miss: build ------------------------------------------------------------------
       # --projects takes a comma-separated list; a space-separated one matches nothing and exits 0.
+      # For a Java leg this runs `mvn verify` through the project's `build` target.
       - name: Build the workspace output
         if: steps.exists.outputs.hit == 'false' && matrix.workspace_build == 'true'
         run: |
@@ -93,6 +157,8 @@ jobs:
 
       # A production node_modules for the image, written on the host. The filter is a path: pnpm
       # filters on package name or path, and the Nx project name matches nothing and exits 0.
+      # `allowUnusedPatches` in pnpm-workspace.yaml lets the legacy deploy ignore the root-only
+      # @nx/maven patch.
       - name: Produce the deploy tree
         if: steps.exists.outputs.hit == 'false' && matrix.deploy != ''
         run: pnpm deploy --filter='./frontend/${{ matrix.deploy }}' --prod '.deploy/${{ matrix.deploy }}'
@@ -101,6 +167,8 @@ jobs:
       - name: Verify the build outputs exist
         if: steps.exists.outputs.hit == 'false' && matrix.workspace_build == 'true'
         shell: bash
+        env:
+          OUTPUTS: ${{ matrix.outputs }}
         run: |
           set -euo pipefail
 
@@ -113,17 +181,23 @@ jobs:
 
           missing=0
           check() {
-            if [ -e "$1" ]; then
-              echo "  OK      $1  ($(find "$1" -type f 2>/dev/null | wc -l) files)"
+            if compgen -G "$1" >/dev/null; then
+              echo "  OK      $1  ($(compgen -G "$1" | wc -l) match(es))"
             else
               echo "  MISSING $1"
               missing=1
             fi
           }
-          for p in $(echo '${{ matrix.build_projects }}' | tr ',' ' '); do
-            root="$(pnpm exec nx show project "$p" --json | node -p 'JSON.parse(require("fs").readFileSync(0,"utf8")).root')"
-            check "$root/dist"
-          done
+          if [ -n "$OUTPUTS" ]; then
+            for p in $OUTPUTS; do
+              check "$p"
+            done
+          else
+            for p in $(echo '${{ matrix.build_projects }}' | tr ',' ' '); do
+              root="$(pnpm exec nx show project "$p" --json | node -p 'JSON.parse(require("fs").readFileSync(0,"utf8")).root')"
+              check "$root/dist"
+            done
+          fi
           if [ -n '${{ matrix.deploy }}' ]; then
             check '.deploy/${{ matrix.deploy }}/package.json'
             check '.deploy/${{ matrix.deploy }}/node_modules'
@@ -136,8 +210,7 @@ jobs:
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
-          # amd64 only; the arm64 leg made the build slow. Multi-arch belongs on release and main.
-          platforms: linux/amd64
+          platforms: ${{ steps.platforms.outputs.value }}
           push: true
           provenance: false
           # Only the content tag. Annotations belong to a manifest and every tag on it shares them,
@@ -154,32 +227,36 @@ jobs:
       # annotations apply to an index or a descriptor, never to a manifest.
       - name: Point the branch tag at this content
         shell: bash
+        env:
+          BASE: ${{ steps.tags.outputs.base }}
+          SRC_TAG: ${{ steps.tags.outputs.src_tag }}
+          BRANCH_TAG: ${{ steps.tags.outputs.branch_tag }}
+          REF_NAME: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
         run: |
           set -euo pipefail
           docker buildx imagetools create \
-            --annotation 'index:org.opencontainers.image.revision=${{ github.sha }}' \
-            --annotation 'index:org.opencontainers.image.version=${{ github.ref_name }}' \
-            --annotation 'index:org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}' \
-            -t '${{ steps.tags.outputs.base }}:${{ steps.tags.outputs.branch_tag }}' \
-            '${{ steps.tags.outputs.base }}:${{ steps.tags.outputs.src_tag }}'
+            --annotation "index:org.opencontainers.image.revision=$SHA" \
+            --annotation "index:org.opencontainers.image.version=$REF_NAME" \
+            --annotation "index:org.opencontainers.image.source=$SOURCE_URL" \
+            -t "$BASE:$BRANCH_TAG" \
+            "$BASE:$SRC_TAG"
 
           # Read the annotation back: an unprefixed or misspelled --annotation level is not an
           # error, and the tag would be published without provenance.
-          raw="$(docker buildx imagetools inspect --raw \
-                 '${{ steps.tags.outputs.base }}:${{ steps.tags.outputs.branch_tag }}')"
+          raw="$(docker buildx imagetools inspect --raw "$BASE:$BRANCH_TAG")"
           got="$(node -e '
             const m = JSON.parse(require("fs").readFileSync(0, "utf8"))
             const a = m.annotations || {}
             process.stdout.write(a["org.opencontainers.image.version"] || "")
           ' <<< "$raw")"
-          want='${{ github.ref_name }}'
-          if [ "$got" != "$want" ]; then
-            echo "::error::branch tag published without its provenance — expected version='$want', read '$got'"
+          if [ "$got" != "$REF_NAME" ]; then
+            echo "::error::branch tag published without its provenance — expected version='$REF_NAME', read '$got'"
             echo "$raw" | head -40
             exit 1
           fi
-          echo "- provenance on \`${{ steps.tags.outputs.branch_tag }}\`: version=\`$got\`, revision=\`${{ github.sha }}\`" \
-            >> "$GITHUB_STEP_SUMMARY"
+          echo "- provenance on \`$BRANCH_TAG\`: version=\`$got\`, revision=\`$SHA\`" >> "$GITHUB_STEP_SUMMARY"
 
       # On a retag no Nx build ran; the script reports the missing log instead of failing.
       - name: cache summary
