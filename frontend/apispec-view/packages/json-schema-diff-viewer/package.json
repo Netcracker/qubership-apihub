@@ -16,6 +16,7 @@
   "devDependencies": {
     "@fortawesome/fontawesome-svg-core": "6.1.1",
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
+    "@netcracker/qubership-apihub-api-diff": "workspace:^",
     "@stoplight/json": "^3.18.1",
     "@stoplight/json-schema-tree": "^2.2.1",
     "@stoplight/markdown-viewer": "^5.4.7",
@@ -29,5 +30,8 @@
     "lodash": "^4.17.21",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
+  },
+  "nx": {
+    "name": "apispec-view-json-schema-diff-viewer"
   }
 }

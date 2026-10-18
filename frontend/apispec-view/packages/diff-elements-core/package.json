@@ -20,6 +20,9 @@
   },
   "devDependencies": {
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
+    "@netcracker/qubership-apihub-api-diff": "workspace:^",
+    "@netcracker/qubership-apihub-api-doc-viewer": "workspace:^",
+    "@netcracker/qubership-apihub-http-spec": "workspace:^",
     "@stoplight/json": "^3.18.1",
     "@stoplight/json-schema-ref-parser": "^9.0.5",
     "@stoplight/json-schema-sampler": "^0.2.2",
@@ -49,5 +52,8 @@
     "react-router-hash-link": "^2.1.0",
     "urijs": "^1.19.11",
     "xml-formatter": "^2.4.0"
+  },
+  "nx": {
+    "name": "apispec-view-diff-elements-core"
   }
 }

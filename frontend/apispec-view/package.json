@@ -3,22 +3,7 @@
   "private": true,
   "type": "commonjs",
   "license": "Apache-2.0",
-  "workspaces": [
-    "packages/*"
-  ],
-  "scripts": {
-    "generate-compatibility-suite": "lerna run generate-stories && lerna run generate-tests",
-    "build": "lerna run build",
-    "build:showcase": "lerna run build:showcase",
-    "development:storybook": "npm run development:storybook -w packages/elements",
-    "screenshot-test": "npm run screenshot-test -w packages/elements",
-    "screenshot-test:ci-legacy": "npm run screenshot-test:ci-legacy -w packages/elements",
-    "regenerate-screenshots": "npm run regenerate-screenshots -w packages/elements",
-    "regenerate-screenshots:ci-legacy": "npm run regenerate-screenshots:ci-legacy -w packages/elements",
-    "screenshot-test-single-suite": "npm run screenshot-test-single-suite -w packages/elements --",
-    "regenerate-screenshots-single-suite": "npm run regenerate-screenshots-single-suite -w packages/elements --",
-    "update-lock-file": "update-lock-file @netcracker"
-  },
+  "scripts": {},
   "devDependencies": {
     "@babel/core": "^7.17.9",
     "@babel/preset-env": "^7.16.11",
@@ -27,13 +12,12 @@
     "@chromatic-com/storybook": "1",
     "@fortawesome/fontawesome-svg-core": "6.1.1",
     "@fortawesome/free-solid-svg-icons": "^6.1.1",
-    "@netcracker/qubership-apihub-api-diff": "dev",
-    "@netcracker/qubership-apihub-api-doc-viewer": "dev",
-    "@netcracker/qubership-apihub-api-unifier": "dev",
-    "@netcracker/qubership-apihub-compatibility-suites": "dev",
-    "@netcracker/qubership-apihub-http-spec": "dev",
-    "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "dev",
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
+    "@netcracker/qubership-apihub-api-diff": "workspace:^",
+    "@netcracker/qubership-apihub-api-doc-viewer": "workspace:^",
+    "@netcracker/qubership-apihub-api-unifier": "workspace:^",
+    "@netcracker/qubership-apihub-compatibility-suites": "workspace:^",
+    "@netcracker/qubership-apihub-http-spec": "workspace:^",
+    "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "workspace:^",
     "@schemastore/package": "0.0.4",
     "@stoplight/eslint-config": "2.1.0",
     "@stoplight/json": "^3.18.1",
@@ -84,6 +68,7 @@
     "@typescript-eslint/parser": "4.28.4",
     "ansis": "3.1.1",
     "babel-loader": "^8.2.2",
+    "buffer": "^6.0.3",
     "classnames": "^2.2.6",
     "concurrently": "6.1.0",
     "css-loader": "6.7.1",
@@ -114,7 +99,6 @@
     "jest-puppeteer": "11.0.0",
     "jotai": "1.6.3",
     "json-schema": "^0.4.0",
-    "lerna": "9.0.7",
     "local-web-server": "5.3.3",
     "lodash": "^4.17.21",
     "mark.js": "^8.11.1",
@@ -173,5 +157,8 @@
       "@types/react": "$@types/react",
       "@types/react-dom": "$@types/react-dom"
     }
+  },
+  "nx": {
+    "name": "apispec-view-root"
   }
 }

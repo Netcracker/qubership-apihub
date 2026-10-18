@@ -7,6 +7,12 @@ module.exports = {
   entry: './src/web-components/index.ts',
   resolve: {
     extensions: ['.tsx', '.ts', '.js', '.jsx'],
+    // Bundled modules require('buffer') without declaring it. The alias takes the buffer this package
+    // declares; otherwise webpack uses pnpm's hidden hoist, whose version changes with unrelated
+    // lockfile edits.
+    alias: {
+      buffer$: require.resolve('buffer/'),
+    },
     plugins: [new TsconfigPathsPlugin()],
     fallback: {
       stream: false,

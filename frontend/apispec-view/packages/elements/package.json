@@ -24,17 +24,17 @@
   "scripts": {
     "generate-stories": "node bin/generate-openapi-compatibility-suite-stories.mjs",
     "generate-tests": "node bin/generate-openapi-compatibility-suite-tests.mjs",
-    "build": "npm run build.webcomponents",
-    "postbuild": "npm run build.styles",
+    "build": "pnpm run build.webcomponents",
+    "postbuild": "pnpm run build.styles",
     "build.styles": "postcss src/styles.css -o dist/index.css",
     "build.webcomponents": "webpack -c ./web-components.config.js",
-    "build:showcase": "npm run generate-stories && storybook build -o ../../dist-showcase --disable-telemetry",
-    "development:storybook": "npm run generate-stories && storybook dev -p 9099",
-    "development:local-server:static": "npm run build:showcase && ws -p 9009 -d ../../dist-showcase --spa index.html --static.maxage 3600",
-    "screenshot-test": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 -c .config/it/it-test-docker.jest.config.js\"",
-    "screenshot-test:ci-legacy": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 -c .config/it/it-test.jest.config.js\"",
-    "regenerate-screenshots": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test-docker.jest.config.js\"",
-    "regenerate-screenshots:ci-legacy": "start-server-and-test development:local-server:static http://localhost:9009 \"npm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test.jest.config.js\"",
+    "build:showcase": "pnpm run generate-stories && storybook build -o ../../dist-showcase --disable-telemetry",
+    "development:storybook": "pnpm run generate-stories && storybook dev -p 9099",
+    "development:local-server:static": "pnpm run build:showcase && ws -p 9009 -d ../../dist-showcase --spa index.html --static.maxage 3600",
+    "screenshot-test": "start-server-and-test development:local-server:static http://localhost:9009 \"pnpm run generate-tests && jest --maxWorkers 4 -c .config/it/it-test-docker.jest.config.js\"",
+    "screenshot-test:ci-legacy": "start-server-and-test development:local-server:static http://localhost:9009 \"pnpm run generate-tests && jest --maxWorkers 4 -c .config/it/it-test.jest.config.js\"",
+    "regenerate-screenshots": "start-server-and-test development:local-server:static http://localhost:9009 \"pnpm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test-docker.jest.config.js\"",
+    "regenerate-screenshots:ci-legacy": "start-server-and-test development:local-server:static http://localhost:9009 \"pnpm run generate-tests && jest --maxWorkers 4 --updateSnapshot -c .config/it/it-test.jest.config.js\"",
     "screenshot-test-single-suite": "node bin/run-screenshot-test-suite.mjs test",
     "regenerate-screenshots-single-suite": "node bin/run-screenshot-test-suite.mjs regenerate",
     "type-check": "tsc --noEmit"
@@ -48,9 +48,15 @@
     "openapi3-ts": "2.0.2"
   },
   "devDependencies": {
+    "@netcracker/qubership-apihub-api-diff": "workspace:^",
+    "@netcracker/qubership-apihub-api-doc-viewer": "workspace:^",
+    "@netcracker/qubership-apihub-api-unifier": "workspace:^",
+    "@netcracker/qubership-apihub-apispec-view-samples": "workspace:*",
+    "@netcracker/qubership-apihub-compatibility-suites": "workspace:^",
+    "@netcracker/qubership-apihub-http-spec": "workspace:^",
+    "@netcracker/qubership-apihub-jest-chrome-in-docker-environment": "workspace:^",
     "@fortawesome/fontawesome-svg-core": "6.1.1",
     "@jest/globals": "30.4.1",
-    "@netcracker/qubership-apihub-apispec-view-samples": "*",
     "@schemastore/package": "0.0.4",
     "@stoplight/json": "^3.18.1",
     "@stoplight/mosaic": "^1.40.0",
@@ -78,5 +84,8 @@
     "typescript": "6.0.3",
     "webpack": "5.76.0",
     "webpack-cli": "4.7.2"
+  },
+  "nx": {
+    "name": "apispec-view"
   }
 }

@@ -10,10 +10,14 @@
     "**/*"
   ],
   "devDependencies": {
+    "@netcracker/qubership-apihub-api-diff": "workspace:^",
     "@stoplight/mosaic": "^1.40.0",
     "jotai": "1.6.3",
     "lodash": "^4.17.21",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
+  },
+  "nx": {
+    "name": "apispec-view-diff-block"
   }
 }
