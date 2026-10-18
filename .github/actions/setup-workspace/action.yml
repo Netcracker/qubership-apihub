@@ -35,8 +35,10 @@ runs:
       shell: bash
       run: |
         set -euo pipefail
-        mvn --version
-        mvn --version | head -1 | grep -q 'Apache Maven 3\.9\.' || {
+        # A file, not a pipe: `head` closing the pipe early would fail the step with 141 under pipefail.
+        mvn --version > "$RUNNER_TEMP/mvn.txt"
+        cat "$RUNNER_TEMP/mvn.txt"
+        head -n 1 "$RUNNER_TEMP/mvn.txt" | grep -q 'Apache Maven 3\.9\.' || {
           echo "::error::Maven 3.9 is required; the runner image provides another version"
           exit 1
         }
