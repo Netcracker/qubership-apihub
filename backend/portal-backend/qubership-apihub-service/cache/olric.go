@@ -1,0 +1,167 @@
+package cache
+
+import (
+	"encoding/gob"
+	"fmt"
+	"math/rand"
+	"net"
+	"strconv"
+	"sync"
+	"time"
+
+	sysconfig "github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/config"
+	"github.com/buraksezer/olric"
+	discovery "github.com/buraksezer/olric-cloud-plugin/lib"
+	"github.com/buraksezer/olric/config"
+	log "github.com/sirupsen/logrus"
+)
+
+type OlricProvider interface {
+	Get() *olric.Olric
+	GetBindAddr() string
+}
+
+const olricBindAddr = "0.0.0.0"
+
+type olricProviderImpl struct {
+	wg     sync.WaitGroup
+	cfg    *config.Config
+	olricC *olric.Olric
+}
+
+func NewOlricProvider(olricConfig sysconfig.OlricConfig) (OlricProvider, error) {
+	prov := &olricProviderImpl{wg: sync.WaitGroup{}}
+
+	var err error
+	gob.Register(map[string]interface{}{})
+	prov.cfg, err = getConfig(olricConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	prov.wg.Add(1)
+
+	prov.cfg.Started = prov.startCallback
+
+	prov.olricC, err = olric.New(prov.cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		err = prov.olricC.Start()
+		if err != nil {
+			log.Panicf("Olric cache node cannot be started. Error: %s", err.Error())
+		}
+	}()
+
+	return prov, nil
+}
+
+func (op *olricProviderImpl) startCallback() {
+	op.wg.Done()
+}
+
+func (op *olricProviderImpl) Get() *olric.Olric {
+	op.wg.Wait()
+	return op.olricC
+}
+
+func (op *olricProviderImpl) GetBindAddr() string {
+	op.wg.Wait()
+	return op.cfg.BindAddr
+}
+
+func getConfig(olricConfig sysconfig.OlricConfig) (*config.Config, error) {
+	mode := olricConfig.DiscoveryMode
+	switch mode {
+	case "lan":
+		log.Info("Olric run in cloud mode")
+		cfg := config.New(mode)
+
+		cfg.LogLevel = "WARN"
+		cfg.LogVerbosity = 2
+
+		namespace := olricConfig.Namespace
+		if namespace == "" {
+			return nil, fmt.Errorf("namespace is not set")
+		}
+
+		cloudDiscovery := &discovery.CloudDiscovery{}
+		cfg.ServiceDiscovery = map[string]interface{}{
+			"plugin":   cloudDiscovery,
+			"provider": "k8s",
+			"args":     fmt.Sprintf("namespace=%s label_selector=\"%s\"", namespace, "olric-cluster=apihub"), // select pods with label "olric-cluster=apihub"
+		}
+
+		// TODO: try to get from replica set via kube client
+		replicaCount := olricConfig.ReplicaCount
+		log.Infof("replicaCount is set to %d", replicaCount)
+
+		cfg.PartitionCount = uint64(replicaCount * 4)
+		cfg.ReplicaCount = replicaCount
+
+		cfg.MemberCountQuorum = int32(replicaCount)
+		cfg.BootstrapTimeout = 60 * time.Second
+		cfg.MaxJoinAttempts = 60
+
+		return cfg, nil
+	case "local":
+		log.Info("Olric run in local mode")
+		cfg := config.New(mode)
+
+		cfg.LogLevel = "WARN"
+		cfg.LogVerbosity = 2
+
+		cfg.BindAddr = olricBindAddr
+		cfg.BindPort = getLocalPort(olricConfig.BindPort)
+		cfg.MemberlistConfig.BindAddr = olricBindAddr
+		cfg.MemberlistConfig.BindPort = getLocalMemberlistPort(olricConfig.MemberlistPort)
+		cfg.PartitionCount = 5
+
+		return cfg, nil
+	default:
+		log.Warnf("Unknown olric discovery mode %s. Will use default \"local\" mode", mode)
+		return config.New("local"), nil
+	}
+}
+
+func getLocalPort(configuredPort int) int {
+	//try configured port first
+	if isPortFree(olricBindAddr, configuredPort) {
+		return configuredPort
+	}
+	//and if fails, then random
+	return getLocalRandomFreePort()
+}
+func getLocalMemberlistPort(configuredPort int) int {
+	//try configured port first
+	if isPortFree(olricBindAddr, configuredPort) {
+		return configuredPort
+	}
+	//and if fails, then random
+	return getLocalRandomFreePort()
+}
+
+func getLocalRandomFreePort() int {
+	for {
+		port := rand.Intn(48127) + 1024
+		if isPortFree(olricBindAddr, port) {
+			return port
+		}
+		if isPortFree(olricBindAddr, port) {
+			return port
+		}
+	}
+}
+
+func isPortFree(address string, port int) bool {
+	ln, err := net.Listen("tcp", address+":"+strconv.Itoa(port))
+
+	if err != nil {
+		return false
+	}
+
+	_ = ln.Close()
+	return true
+}

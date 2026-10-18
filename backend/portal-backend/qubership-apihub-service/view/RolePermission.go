@@ -1,0 +1,88 @@
+package view
+
+import "fmt"
+
+type RolePermission string
+
+const (
+	ReadPermission                   RolePermission = "read"
+	CreateAndUpdatePackagePermission RolePermission = "create_and_update_package"
+	DeletePackagePermission          RolePermission = "delete_package"
+	ManageDraftVersionPermission     RolePermission = "manage_draft_version"
+	ManageReleaseVersionPermission   RolePermission = "manage_release_version"
+	UserAccessManagementPermission   RolePermission = "user_access_management"
+	AccessTokenManagementPermission             RolePermission = "access_token_management"
+	DocumentShareabilityManagementPermission    RolePermission = "document_shareability_management"
+)
+
+func GetAllRolePermissions() []RolePermission {
+	return []RolePermission{
+		ReadPermission,
+		CreateAndUpdatePackagePermission,
+		DeletePackagePermission,
+		ManageDraftVersionPermission,
+		ManageReleaseVersionPermission,
+		UserAccessManagementPermission,
+		AccessTokenManagementPermission,
+		DocumentShareabilityManagementPermission,
+	}
+}
+
+func (r RolePermission) Id() string {
+	return string(r)
+}
+
+func (r RolePermission) Name() string {
+	switch r {
+	case ReadPermission:
+		return "read content of public packages"
+	case CreateAndUpdatePackagePermission:
+		return "create, update group/package"
+	case DeletePackagePermission:
+		return "delete group/package"
+	case ManageDraftVersionPermission:
+		return "manage version in draft status"
+	case ManageReleaseVersionPermission:
+		return "manage version in release status"
+	case UserAccessManagementPermission:
+		return "user access management"
+	case AccessTokenManagementPermission:
+		return "access token management"
+	case DocumentShareabilityManagementPermission:
+		return "document shareability management"
+	default:
+		return ""
+	}
+}
+
+func ParseRolePermission(permissionId string) (RolePermission, error) {
+	switch permissionId {
+	case "read":
+		return ReadPermission, nil
+	case "create_and_update_package":
+		return CreateAndUpdatePackagePermission, nil
+	case "delete_package":
+		return DeletePackagePermission, nil
+	case "manage_draft_version":
+		return ManageDraftVersionPermission, nil
+	case "manage_release_version":
+		return ManageReleaseVersionPermission, nil
+	case "user_access_management":
+		return UserAccessManagementPermission, nil
+	case "access_token_management":
+		return AccessTokenManagementPermission, nil
+	case "document_shareability_management":
+		return DocumentShareabilityManagementPermission, nil
+	default:
+		return "", fmt.Errorf("permission '%v' doesn't exist", permissionId)
+	}
+}
+
+type Permission struct {
+	PermissionId string `json:"permission"`
+	Name         string `json:"name"`
+}
+
+type Permissions struct {
+	Permissions []Permission `json:"permissions"`
+}

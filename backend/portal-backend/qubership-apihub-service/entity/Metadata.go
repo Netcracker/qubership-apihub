@@ -1,0 +1,427 @@
+package entity
+
+import (
+	"fmt"
+	"time"
+)
+
+const COMMIT_ID_KEY = "commit_id"
+const BLOB_ID_KEY = "blob_id"
+const COMMIT_DATE_KEY = "commit_date"
+const BRANCH_NAME_KEY = "branch_name"
+const LABELS_KEY = "labels"
+const REPOSITORY_URL_KEY = "repository_url"
+const TITLE_KEY = "title"
+const PATH_KEY = "path"
+const METHOD_KEY = "method"
+const TAGS_KEY = "tags"
+const CLOUD_NAME_KEY = "cloud_name"
+const CLOUD_URL_KEY = "cloud_url"
+const NAMESPACE_KEY = "namespace"
+const DESCRIPTION_KEY = "description"
+const BUILDER_VERSION_KEY = "builder_version"
+const TYPE_KEY = "type"
+const INFO = "info"
+const EXTERNAL_DOCS = "external_docs"
+const VERSION = "version"
+const DOC_TAGS_KEY = "tags"
+const MIGRATION_ID_KEY = "migration_id"
+const PREVIOUS_VERSION_BUILDER_VERSION_KEY = "previous_version_builder_version"
+const CURRENT_VERSION_BUILDER_VERSION_KEY = "current_version_builder_version"
+const ACTION_KEY = "action"
+const CHANNEL_KEY = "channel"
+const PROTOCOL_KEY = "protocol"
+const ASYNC_OPERATION_ID_KEY = "asyncOperationId"
+const MESSAGE_ID_KEY = "messageId"
+const OPERATION_ID_V1 = "operationIdV1"
+
+type Metadata map[string]interface{}
+
+func (m Metadata) GetStringValue(field string) string {
+	if fieldValue, ok := m[field].(string); ok {
+		return fieldValue
+	}
+	return ""
+}
+
+func (m Metadata) GetIntValue(field string) int {
+	//parse as float64 because unmarshal reads json number as float64
+	if fieldValue, ok := m[field].(float64); ok {
+		return int(fieldValue)
+	}
+	return 0
+}
+
+func (m Metadata) GetObject(field string) interface{} {
+	if field, ok := m[field]; ok {
+		return field
+	}
+	return nil
+}
+
+func (m Metadata) GetStringArray(field string) []string {
+	if values, ok := m[field].([]interface{}); ok {
+		var valuesArr []string
+		for _, l := range values {
+			if strL, ok := l.(string); ok {
+				valuesArr = append(valuesArr, strL)
+			}
+		}
+		return valuesArr
+	}
+	return make([]string, 0)
+}
+
+func (m Metadata) GetObjectArray(field string) ([]interface{}, error) {
+	if val, ok := m[field]; ok {
+		if values, ok := val.([]interface{}); ok {
+			return values, nil
+		} else {
+			return nil, fmt.Errorf("incorrect metadata value type, expecting array of objects, value: %+v", val)
+		}
+	}
+	return make([]interface{}, 0), nil
+}
+
+func (m Metadata) GetMapStringToInterface(field string) (map[string]interface{}, error) {
+	if val, ok := m[field]; ok {
+		if values, ok := val.(map[string]interface{}); ok {
+			return values, nil
+		} else {
+			return nil, fmt.Errorf("incorrect metadata value type, expecting map string to interface, value: %+v", val)
+		}
+	}
+	return make(map[string]interface{}), nil
+}
+
+func (m Metadata) SetCommitId(commitId string) {
+	m[COMMIT_ID_KEY] = commitId
+}
+
+func (m Metadata) GetCommitId() string {
+	if commitId, ok := m[COMMIT_ID_KEY].(string); ok {
+		return commitId
+	}
+	return ""
+}
+
+func (m Metadata) SetBlobId(blobId string) {
+	m[BLOB_ID_KEY] = blobId
+}
+
+func (m Metadata) GetBlobId() string {
+	if blobId, ok := m[BLOB_ID_KEY].(string); ok {
+		return blobId
+	}
+	return ""
+}
+
+func (m Metadata) SetCommitDate(commitDate time.Time) {
+	m[COMMIT_DATE_KEY] = commitDate
+}
+
+func (m Metadata) GetCommitDate() time.Time {
+	if commitDate, ok := m[COMMIT_DATE_KEY].(time.Time); ok {
+		return commitDate
+	}
+	return time.Time{}
+}
+
+func (m Metadata) SetBranchName(branchName string) {
+	m[BRANCH_NAME_KEY] = branchName
+}
+
+func (m Metadata) GetBranchName() string {
+	if branchName, ok := m[BRANCH_NAME_KEY].(string); ok {
+		return branchName
+	}
+	return ""
+}
+
+func (m Metadata) SetLabels(labels []string) {
+	m[LABELS_KEY] = labels
+}
+
+func (m Metadata) GetLabels() []string {
+	if labels, ok := m[LABELS_KEY].([]interface{}); ok {
+		labelsArr := []string{}
+		for _, l := range labels {
+			labelsArr = append(labelsArr, l.(string))
+		}
+		return labelsArr
+	}
+	return make([]string, 0)
+}
+
+func (m Metadata) SetRepositoryUrl(repositoryUrl string) {
+	m[REPOSITORY_URL_KEY] = repositoryUrl
+}
+
+func (m Metadata) GetRepositoryUrl() string {
+	if repositoryUrl, ok := m[REPOSITORY_URL_KEY].(string); ok {
+		return repositoryUrl
+	}
+	return ""
+}
+
+func (m Metadata) SetTitle(title string) {
+	m[TITLE_KEY] = title
+}
+
+func (m Metadata) GetTitle() string {
+	if title, ok := m[TITLE_KEY].(string); ok {
+		return title
+	}
+	return ""
+}
+
+func (m Metadata) SetDescription(description string) {
+	m[DESCRIPTION_KEY] = description
+}
+
+func (m Metadata) GetDescription() string {
+	if description, ok := m[DESCRIPTION_KEY].(string); ok {
+		return description
+	}
+	return ""
+}
+
+func (m Metadata) SetPath(path string) {
+	m[PATH_KEY] = path
+}
+
+func (m Metadata) GetPath() string {
+	if path, ok := m[PATH_KEY].(string); ok {
+		return path
+	}
+	return ""
+}
+
+func (m Metadata) SetMethod(method string) {
+	m[METHOD_KEY] = method
+}
+
+func (m Metadata) GetMethod() string {
+	if method, ok := m[METHOD_KEY].(string); ok {
+		return method
+	}
+	return ""
+}
+
+func (m Metadata) SetTags(tags []string) {
+	m[TAGS_KEY] = tags
+}
+
+func (m Metadata) GetTags() []string {
+	if tags, ok := m[TAGS_KEY].([]interface{}); ok {
+		tagsArr := []string{}
+		for _, l := range tags {
+			tagsArr = append(tagsArr, l.(string))
+		}
+		return tagsArr
+	}
+	return make([]string, 0)
+}
+
+func (m Metadata) SetCloudName(cloudName string) {
+	m[CLOUD_NAME_KEY] = cloudName
+}
+
+func (m Metadata) GetCloudName() string {
+	if cloudName, ok := m[CLOUD_NAME_KEY].(string); ok {
+		return cloudName
+	}
+	return ""
+}
+func (m Metadata) SetCloudUrl(cloudUrl string) {
+	m[CLOUD_URL_KEY] = cloudUrl
+}
+
+func (m Metadata) GetCloudUrl() string {
+	if cloudUrl, ok := m[CLOUD_URL_KEY].(string); ok {
+		return cloudUrl
+	}
+	return ""
+}
+
+func (m Metadata) SetNamespace(namespace string) {
+	m[NAMESPACE_KEY] = namespace
+}
+
+func (m Metadata) GetNamespace() string {
+	if namespace, ok := m[NAMESPACE_KEY].(string); ok {
+		return namespace
+	}
+	return ""
+}
+
+func (m Metadata) SetBuilderVersion(builderVersion string) {
+	m[BUILDER_VERSION_KEY] = builderVersion
+}
+
+func (m Metadata) GetBuilderVersion() string {
+	if builderVersion, ok := m[BUILDER_VERSION_KEY].(string); ok {
+		return builderVersion
+	}
+	return ""
+}
+
+func (m Metadata) SetType(typeValue string) {
+	m[TYPE_KEY] = typeValue
+}
+
+func (m Metadata) GetType() string {
+	if typeValue, ok := m[TYPE_KEY].(string); ok {
+		return typeValue
+	}
+	return ""
+}
+
+func (m Metadata) SetInfo(info interface{}) {
+	m[INFO] = info
+}
+
+func (m Metadata) GetInfo() interface{} {
+	if info, ok := m[INFO]; ok {
+		return info
+	}
+	return nil
+}
+
+func (m Metadata) SetExternalDocs(externalDocs interface{}) {
+	m[EXTERNAL_DOCS] = externalDocs
+}
+
+func (m Metadata) GetExternalDocs() interface{} {
+	if externalDocs, ok := m[EXTERNAL_DOCS]; ok {
+		return externalDocs
+	}
+	return nil
+}
+
+func (m Metadata) SetVersion(version string) {
+	m[VERSION] = version
+}
+
+func (m Metadata) GetVersion() string {
+	if version, ok := m[VERSION].(string); ok {
+		return version
+	}
+	return ""
+}
+
+func (m Metadata) SetDocTags(tags []interface{}) {
+	m[DOC_TAGS_KEY] = tags
+}
+
+func (m Metadata) GetDocTags() []interface{} {
+	if tags, ok := m[DOC_TAGS_KEY].([]interface{}); ok {
+		return tags
+	}
+	return nil
+}
+
+func (m Metadata) SetMigrationId(migrationId string) {
+	m[MIGRATION_ID_KEY] = migrationId
+}
+
+func (m Metadata) GetMigrationId() string {
+	if migrationId, ok := m[MIGRATION_ID_KEY].(string); ok {
+		return migrationId
+	}
+	return ""
+}
+
+func (m Metadata) SetPreviousVersionBuilderVersion(v string) {
+	m[PREVIOUS_VERSION_BUILDER_VERSION_KEY] = v
+}
+
+func (m Metadata) GetPreviousVersionBuilderVersion() string {
+	if v, ok := m[PREVIOUS_VERSION_BUILDER_VERSION_KEY].(string); ok {
+		return v
+	}
+	return ""
+}
+
+func (m Metadata) SetCurrentVersionBuilderVersion(v string) {
+	m[CURRENT_VERSION_BUILDER_VERSION_KEY] = v
+}
+
+func (m Metadata) GetCurrentVersionBuilderVersion() string {
+	if v, ok := m[CURRENT_VERSION_BUILDER_VERSION_KEY].(string); ok {
+		return v
+	}
+	return ""
+}
+
+func (m Metadata) SetAction(action string) {
+	m[ACTION_KEY] = action
+}
+
+func (m Metadata) GetAction() string {
+	if action, ok := m[ACTION_KEY].(string); ok {
+		return action
+	}
+	return ""
+}
+
+func (m Metadata) SetChannel(channel string) {
+	m[CHANNEL_KEY] = channel
+}
+
+func (m Metadata) GetChannel() string {
+	if channel, ok := m[CHANNEL_KEY].(string); ok {
+		return channel
+	}
+	return ""
+}
+
+func (m Metadata) SetProtocol(protocol string) {
+	m[PROTOCOL_KEY] = protocol
+}
+
+func (m Metadata) GetProtocol() string {
+	if protocol, ok := m[PROTOCOL_KEY].(string); ok {
+		return protocol
+	}
+	return ""
+}
+
+func (m Metadata) SetAsyncOperationId(asyncOperationId string) {
+	m[ASYNC_OPERATION_ID_KEY] = asyncOperationId
+}
+
+func (m Metadata) GetAsyncOperationId() string {
+	if asyncOperationId, ok := m[ASYNC_OPERATION_ID_KEY].(string); ok {
+		return asyncOperationId
+	}
+	return ""
+}
+
+func (m Metadata) SetMessageId(messageId string) {
+	m[MESSAGE_ID_KEY] = messageId
+}
+
+func (m Metadata) GetMessageId() string {
+	if messageId, ok := m[MESSAGE_ID_KEY].(string); ok {
+		return messageId
+	}
+	return ""
+}
+
+func (m Metadata) SetOperationIdV1(operationIdV1 string) {
+	m[OPERATION_ID_V1] = operationIdV1
+}
+
+func (m Metadata) GetOperationIdV1() string {
+	if operationIdV1, ok := m[OPERATION_ID_V1].(string); ok {
+		return operationIdV1
+	}
+	return ""
+}
+
+func (m Metadata) MergeMetadata(other Metadata) {
+	for k, v := range other {
+		m[k] = v
+	}
+}

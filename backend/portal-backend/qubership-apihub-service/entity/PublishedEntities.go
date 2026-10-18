@@ -1,0 +1,621 @@
+package entity
+
+import (
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
+)
+
+const KIND_PACKAGE = "package"
+const KIND_GROUP = "group"
+const KIND_WORKSPACE = "workspace"
+
+const KIND_DASHBOARD = "dashboard"
+
+type PackageEntity struct {
+	tableName struct{} `pg:"package_group, alias:package_group"`
+
+	Id                    string     `pg:"id, pk, type:varchar"`
+	Kind                  string     `pg:"kind, type:varchar"`
+	Name                  string     `pg:"name, type:varchar"`
+	ParentId              string     `pg:"parent_id, type:varchar"`
+	Alias                 string     `pg:"alias, type:varchar"`
+	Description           string     `pg:"description, type:varchar"`
+	CreatedAt             time.Time  `pg:"created_at, type:timestamp without time zone"`
+	CreatedBy             string     `pg:"created_by, type:varchar"`
+	DeletedAt             *time.Time `pg:"deleted_at, type:timestamp without time zone"`
+	DeletedBy             string     `pg:"deleted_by, type:varchar"`
+	LastVersion           string     `pg:"-"`
+	DefaultRole           string     `pg:"default_role, type:varchar, use_zero, default:Viewer"`
+	DefaultReleaseVersion string     `pg:"default_released_version, type:varchar"`
+	ServiceName           string     `pg:"service_name, type:varchar"`
+	ReleaseVersionPattern string     `pg:"release_version_pattern, type:varchar"`
+	ExcludeFromSearch     bool       `pg:"exclude_from_search, type:bool, use_zero"`
+	RestGroupingPrefix    string     `pg:"rest_grouping_prefix, type:varchar"`
+}
+
+type ReadablePackageEntity struct {
+	tableName struct{} `pg:"package_group, alias:package_group, discard_unknown_columns"`
+
+	PackageEntity
+	IsFavorite  bool     `pg:"is_favorite, type:bool, use_zero"`
+	Permissions []string `pg:"permissions, type:varchar[], use_zero"`
+}
+
+type PackagesQueryParams struct {
+	UserId      string   `pg:"user_id, type:varchar, use_zero"`
+	SubtreeRoot string   `pg:"subtree_root, type:varchar, use_zero"`
+	ParentId    string   `pg:"parent_id, type:varchar, use_zero"`
+	ServiceName string   `pg:"service_name, type:varchar, use_zero"`
+	TextFilter  string   `pg:"text_filter, type:varchar, use_zero"`
+	Kinds       []string `pg:"kinds, type:varchar[], use_zero"`
+	Ids         []string `pg:"ids, type:varchar[], use_zero"`
+	Limit       int      `pg:"limit, type:integer, use_zero"`
+	Offset      int      `pg:"offset, type:integer, use_zero"`
+}
+
+type PackageVersionRichEntity struct {
+	tableName struct{} `pg:"published_version, alias:published_version"`
+
+	PublishedVersionEntity
+	PackageName       string   `pg:"package_name, type:varchar"`
+	ServiceName       string   `pg:"service_name, type:varchar"`
+	Kind              string   `pg:"kind, type:varchar"`
+	ParentNames       []string `pg:"parent_names, type:varchar[]"`
+	NotLatestRevision bool     `pg:"not_latest_revision, type:bool"`
+}
+
+type PackageVersionRevisionEntity struct {
+	tableName struct{} `pg:"published_version, alias:published_version"`
+
+	PublishedVersionEntity
+	PrincipalEntity
+	NotLatestRevision       bool `pg:"not_latest_revision, type:bool"`
+	PreviousVersionRevision int  `pg:"previous_version_revision, type:integer"`
+}
+
+type PackageVersionHistoryEntity struct {
+	tableName struct{} `pg:"published_version, alias:published_version"`
+
+	PublishedVersionEntity
+	ApiTypes []string `pg:"api_types, type:varchar[]"`
+}
+
+type PublishedVersionEntity struct {
+	tableName struct{} `pg:"published_version"`
+
+	PackageId                string     `pg:"package_id, pk, type:varchar"`
+	Version                  string     `pg:"version, pk, type:varchar"`
+	Revision                 int        `pg:"revision, pk, type:integer"`
+	PreviousVersion          string     `pg:"previous_version, type:varchar"`
+	PreviousVersionPackageId string     `pg:"previous_version_package_id, type:varchar"`
+	Status                   string     `pg:"status, type:varchar"`
+	PublishedAt              time.Time  `pg:"published_at, type:timestamp without time zone"`
+	DeletedAt                *time.Time `pg:"deleted_at, type:timestamp without time zone"`
+	DeletedBy                string     `pg:"deleted_by, type:varchar"`
+	Metadata                 Metadata   `pg:"metadata, type:jsonb"`
+	Labels                   []string   `pg:"labels, type:varchar array, array"`
+	CreatedBy                string     `pg:"created_by, type:varchar"`
+}
+
+type PublishedVersionSearchQueryEntity struct {
+	PackageId  string   `pg:"package_id, type:varchar, use_zero"`
+	Statuses   []string `pg:"statuses, type:varchar[], use_zero"`
+	Label      string   `pg:"label, type:varchar, use_zero"`
+	TextFilter string `pg:"text_filter, type:varchar, use_zero"`
+	SortBy     string `pg:"sort_by, type:varchar, use_zero"`
+	SortOrder  string `pg:"sort_order, type:varchar, use_zero"`
+	Limit      int    `pg:"limit, type:integer, use_zero"`
+	Offset     int    `pg:"offset, type:integer, use_zero"`
+}
+
+func GetVersionSortOrderPG(sortOrder string) string {
+	switch sortOrder {
+	case view.VersionSortOrderAsc:
+		return "asc"
+	case view.VersionSortOrderDesc:
+		return "desc"
+	}
+	return ""
+}
+
+func GetVersionSortByPG(sortBy string) string {
+	switch sortBy {
+	case view.VersionSortByVersion:
+		return "version"
+	case view.VersionSortByCreatedAt:
+		return "published_at"
+	}
+	return ""
+}
+
+type PackageVersionSearchQueryEntity struct {
+	PackageId          string `pg:"package_id, type:varchar, use_zero"`
+	Version            string `pg:"version, type:varchar, use_zero"`
+	Revision           int    `pg:"revision, type:integer, use_zero"`
+	Kind               string `pg:"kind, type:varchar, use_zero"`
+	TextFilter         string `pg:"text_filter, type:varchar, use_zero"`
+	Limit              int    `pg:"limit, type:integer, use_zero"`
+	Offset             int    `pg:"offset, type:integer, use_zero"`
+	ShowAllDescendants bool   `pg:"show_all_descendants, type:bool, use_zero"`
+}
+
+type PublishedVersionKeyEntity struct {
+	tableName struct{} `pg:"published_version,discard_unknown_columns"`
+
+	PackageId string `pg:"package_id, pk, type:varchar" json:"packageId"`
+	Version   string `pg:"version, pk, type:varchar" json:"version"`
+	Revision  int    `pg:"revision, pk, type:integer" json:"revision"`
+}
+
+func (e PublishedVersionKeyEntity) String() string {
+	return fmt.Sprintf("{packageId:%s version:%s revision:%d}", e.PackageId, e.Version, e.Revision)
+}
+
+func FormatVersionKeys(keys []PublishedVersionKeyEntity) string {
+	items := make([]string, 0, len(keys))
+	for _, key := range keys {
+		items = append(items, fmt.Sprintf("%s|%s", key.PackageId, view.MakeVersionRefKey(key.Version, key.Revision)))
+	}
+	return strings.Join(items, ", ")
+}
+
+func FormatVersionKeysWithHidden(accessible []PublishedVersionKeyEntity, hiddenCount int, noun string) string {
+	if hiddenCount == 0 {
+		return FormatVersionKeys(accessible)
+	}
+	if hiddenCount != 1 {
+		noun += "s"
+	}
+	if len(accessible) == 0 {
+		return fmt.Sprintf("%d %s you cannot access (contact system administrator)", hiddenCount, noun)
+	}
+	return fmt.Sprintf("%s, and %d more %s you cannot access (contact system administrator)", FormatVersionKeys(accessible), hiddenCount, noun)
+}
+
+type DashboardReferenceEntity struct {
+	ReferencedPackageId string `pg:"referenced_package_id"`
+	PublishedVersionKeyEntity
+}
+
+func (e DashboardReferenceEntity) String() string {
+	return fmt.Sprintf("{packageId:%s version:%s revision:%d referencedPackageId:%s}",
+		e.PackageId, e.Version, e.Revision, e.ReferencedPackageId)
+}
+
+type PublishedContentEntity struct {
+	tableName struct{} `pg:"published_version_revision_content, alias:published_version_revision_content"`
+	// TODO: not sure about pk
+	PackageId    string   `pg:"package_id, pk, type:varchar"`
+	Version      string   `pg:"version, pk, type:varchar"`
+	Revision     int      `pg:"revision, pk, type:integer"`
+	FileId       string   `pg:"file_id, pk, type:varchar"`
+	Checksum     string   `pg:"checksum, type:varchar"`
+	Index        int      `pg:"index, type:integer, use_zero"`
+	Slug         string   `pg:"slug, type:varchar"`
+	Name         string   `pg:"name, type:varchar"`
+	Path         string   `pg:"path, type:varchar"`
+	DataType     string   `pg:"data_type, type:varchar"`
+	Format       string   `pg:"format, type:varchar"`
+	Title        string   `pg:"title, type:varchar"`
+	Metadata     Metadata `pg:"metadata, type:jsonb"`
+	ReferenceId  string   `pg:"-"`
+	OperationIds []string `pg:"operation_ids, type:varchar[], array"`
+	Filename     string   `pg:"filename, type:varchar"`
+	Shareability string   `pg:"shareability_status, type:varchar"`
+	ApiKind      string   `pg:"api_kind, type:varchar"`
+}
+
+type PublishedContentWithDataEntity struct {
+	tableName struct{} `pg:"published_version_revision_content, alias:published_version_revision_content"`
+	// both PublishedContentEntity and PublishedContentDataEntity have PackageId field, so go-pg mapping works incorrect(randomly). ContentPackageId is required to fix the issue.
+	ContentPackageId string `pg:"content_package_id, type:varchar"`
+	PublishedContentEntity
+	PublishedContentDataEntity
+}
+
+type PublishedContentDataEntity struct {
+	tableName struct{} `pg:"published_data"`
+
+	PackageId string `pg:"package_id, pk, type:varchar"`
+	Checksum  string `pg:"checksum, pk, type:varchar"`
+	MediaType string `pg:"media_type, type:varchar"`
+	Data      []byte `pg:"data, type:bytea"`
+}
+
+type TransformedContentDataEntity struct {
+	tableName struct{} `pg:"transformed_content_data"`
+
+	PackageId     string                 `pg:"package_id, pk, type:varchar"`
+	Version       string                 `pg:"version, pk, type:varchar"`
+	Revision      int                    `pg:"revision, pk, type:integer"`
+	ApiType       string                 `pg:"api_type, pk, type:varchar"`
+	GroupId       string                 `pg:"group_id, pk, type:varchar"`
+	BuildType     view.BuildType         `pg:"build_type, pk, type:varchar"`
+	Format        string                 `pg:"format, pk, type:varchar"`
+	Data          []byte                 `pg:"data, type:bytea"`
+	DocumentsInfo []view.PackageDocument `pg:"documents_info, type:jsonb"`
+}
+
+type PublishedReferenceEntity struct {
+	tableName struct{} `pg:"published_version_reference, alias:published_version_reference"`
+
+	PackageId          string `pg:"package_id, pk, type:varchar"`
+	Version            string `pg:"version, pk, type:varchar"`
+	Revision           int    `pg:"revision, pk, type:integer"`
+	RefPackageId       string `pg:"reference_id, pk, type:varchar"`
+	RefVersion         string `pg:"reference_version, pk, type:varchar"`
+	RefRevision        int    `pg:"reference_revision, pk, type:integer"`
+	ParentRefPackageId string `pg:"parent_reference_id, pk, type:varchar, use_zero"`
+	ParentRefVersion   string `pg:"parent_reference_version, pk, type:varchar, use_zero"`
+	ParentRefRevision  int    `pg:"parent_reference_revision, pk, type:integer, use_zero"`
+	Excluded           bool   `pg:"excluded, type:boolean, use_zero"`
+}
+
+type SharedUrlInfoEntity struct {
+	tableName struct{} `pg:"shared_url_info"`
+
+	PackageId string `pg:"package_id, type:varchar"`
+	Version   string `pg:"version, type:varchar"`
+	FileId    string `pg:"file_id, type:varchar"` // TODO: slug!
+	SharedId  string `pg:"shared_id, pk, type:varchar"`
+}
+
+type PublishedSrcEntity struct {
+	tableName struct{} `pg:"published_sources"`
+
+	PackageId       string `pg:"package_id, pk, type:varchar"`
+	Version         string `pg:"version, pk, type:varchar"`
+	Revision        int    `pg:"revision, pk, type:integer"`
+	Config          []byte `pg:"config, type:bytea"`
+	Metadata        []byte `pg:"metadata, type:bytea"`
+	ArchiveChecksum string `pg:"archive_checksum, type:varchar"`
+}
+
+type PublishedSrcArchiveEntity struct {
+	tableName struct{} `pg:"published_sources_archives"`
+
+	Checksum string `pg:"checksum, pk, type:varchar"` // sha512
+	Data     []byte `pg:"data, type:bytea"`
+}
+
+type PublishedSrcDataConfigEntity struct {
+	PackageId       string `pg:"package_id, pk, type:varchar"`
+	ArchiveChecksum string `pg:"archive_checksum, type:varchar"`
+	Data            []byte `pg:"data, type:bytea"`
+	Config          []byte `pg:"config, type:bytea"`
+}
+
+type PublishedContentSearchQueryEntity struct {
+	TextFilter          string   `pg:"text_filter, type:varchar, use_zero"`
+	Limit               int      `pg:"limit, type:integer, use_zero"`
+	Offset              int      `pg:"offset, type:integer, use_zero"`
+	DocumentTypesFilter []string `pg:"-"`
+	OperationGroup      string   `pg:"operation_group_id, type:varchar, use_zero"`
+}
+
+type ContentForDocumentsTransformationSearchQueryEntity struct {
+	Limit               int      `pg:"limit, type:integer, use_zero"`
+	Offset              int      `pg:"offset, type:integer, use_zero"`
+	DocumentTypesFilter []string `pg:"-"`
+	OperationGroup      string   `pg:"operation_group_id, type:varchar, use_zero"`
+}
+type PackageIdEntity struct {
+	tableName struct{} `pg:"package_group, alias:package_group"`
+
+	Id string `pg:"id, type:varchar"`
+}
+
+type CSVDashboardPublishEntity struct {
+	tableName struct{} `pg:"csv_dashboard_publication, alias:csv_dashboard_publication"`
+
+	PublishId string `pg:"publish_id, pk, type:varchar"`
+	Status    string `pg:"status, type:varchar"`
+	Message   string `pg:"message, type:varchar, use_zero"`
+	Report    []byte `pg:"csv_report, type:bytea"`
+}
+
+func MakePublishedReferenceView(entity PublishedReferenceEntity) view.VersionReferenceV3 {
+	return view.VersionReferenceV3{
+		PackageRef:       view.MakePackageRefKey(entity.RefPackageId, entity.RefVersion, entity.RefRevision),
+		ParentPackageRef: view.MakePackageRefKey(entity.ParentRefPackageId, entity.ParentRefVersion, entity.ParentRefRevision),
+		Excluded:         entity.Excluded,
+	}
+}
+
+func MakeReadonlyPublishedVersionListView2(versionEnt *PackageVersionRevisionEntity) *view.PublishedVersionListView {
+	item := view.PublishedVersionListView{
+		Version:                  view.MakeVersionRefKey(versionEnt.Version, versionEnt.Revision),
+		Status:                   versionEnt.Status,
+		CreatedAt:                versionEnt.PublishedAt,
+		CreatedBy:                *MakePrincipalView(&versionEnt.PrincipalEntity),
+		PreviousVersion:          view.MakeVersionRefKey(versionEnt.PreviousVersion, versionEnt.PreviousVersionRevision),
+		VersionLabels:            versionEnt.Labels,
+		PreviousVersionPackageId: versionEnt.PreviousVersionPackageId,
+		ApiProcessorVersion:      versionEnt.Metadata.GetBuilderVersion(),
+	}
+	return &item
+}
+
+func MakePublishedVersionHistoryView(ent PackageVersionHistoryEntity) view.PublishedVersionHistoryView {
+	return view.PublishedVersionHistoryView{
+		PackageId:                ent.PackageId,
+		Version:                  ent.Version,
+		Revision:                 ent.Revision,
+		Status:                   ent.Status,
+		PublishedAt:              ent.PublishedAt,
+		PreviousVersionPackageId: ent.PreviousVersionPackageId,
+		PreviousVersion:          ent.PreviousVersion,
+		ApiTypes:                 ent.ApiTypes,
+	}
+}
+
+func MakePublishedContentView(ent *PublishedContentEntity) *view.PublishedContent {
+	return &view.PublishedContent{
+		ContentId:    ent.FileId,
+		Type:         view.ParseTypeFromString(ent.DataType),
+		Format:       ent.Format,
+		Path:         ent.Path,
+		Name:         ent.Name,
+		Index:        ent.Index,
+		Slug:         ent.Slug,
+		Labels:       ent.Metadata.GetLabels(),
+		Title:        ent.Title,
+		Version:      ent.Version,
+		Shareability: ent.Shareability,
+		ReferenceId:  ent.ReferenceId,
+	}
+}
+
+func MakePublishedDocumentView(ent *PublishedContentEntity) *view.PublishedDocument {
+	return &view.PublishedDocument{
+		FieldId:      ent.FileId,
+		Type:         ent.DataType,
+		Format:       ent.Format,
+		Slug:         ent.Slug,
+		Labels:       ent.Metadata.GetLabels(),
+		Description:  ent.Metadata.GetDescription(),
+		Version:      ent.Metadata.GetVersion(),
+		Shareability: ent.Shareability,
+		ApiKind:      view.ApiKindOrDefault(ent.ApiKind),
+		Info:         ent.Metadata.GetInfo(),
+		ExternalDocs: ent.Metadata.GetExternalDocs(),
+		Title:        ent.Title,
+		Filename:     ent.Filename,
+		Tags:         ent.Metadata.GetDocTags(),
+	}
+}
+
+func MakeDocumentForTransformationView(ent *PublishedContentWithDataEntity) *view.DocumentForTransformationView {
+	return &view.DocumentForTransformationView{
+		FieldId:              ent.FileId,
+		Type:                 ent.DataType,
+		Format:               ent.Format,
+		Slug:                 ent.Slug,
+		Labels:               ent.Metadata.GetLabels(),
+		Description:          ent.Metadata.GetDescription(),
+		Version:              ent.Metadata.GetVersion(),
+		Shareability:         ent.Shareability,
+		ApiKind:              view.ApiKindOrDefault(ent.ApiKind),
+		Title:                ent.Title,
+		Filename:             ent.Filename,
+		IncludedOperationIds: ent.OperationIds,
+		Data:                 ent.Data,
+		PackageRef:           view.MakePackageRefKey(ent.ContentPackageId, ent.Version, ent.Revision),
+	}
+}
+
+func MakePublishedDocumentRefView2(ent *PublishedContentEntity) *view.PublishedDocumentRefView {
+	return &view.PublishedDocumentRefView{
+		FieldId:      ent.FileId,
+		Type:         ent.DataType,
+		Format:       ent.Format,
+		Slug:         ent.Slug,
+		Labels:       ent.Metadata.GetLabels(),
+		Description:  ent.Metadata.GetDescription(),
+		Version:      ent.Metadata.GetVersion(),
+		Shareability: ent.Shareability,
+		ApiKind:      view.ApiKindOrDefault(ent.ApiKind),
+		Title:        ent.Title,
+		Filename:     ent.Filename,
+		PackageRef:   view.MakePackageRefKey(ent.PackageId, ent.Version, ent.Revision),
+	}
+}
+
+func MakeContentDataViewPub(content *PublishedContentEntity, contentData *PublishedContentDataEntity) *view.ContentData {
+	return &view.ContentData{
+		FileId:   content.FileId,
+		Data:     contentData.Data,
+		DataType: contentData.MediaType,
+	}
+}
+
+func MakeSharedUrlInfoV2(sui *SharedUrlInfoEntity) *view.SharedUrlResult {
+	return &view.SharedUrlResult{
+		SharedFileId: sui.SharedId,
+	}
+}
+
+func MakePackageEntity(packg *view.SimplePackage) *PackageEntity {
+	return &PackageEntity{
+		Id:                    packg.Id,
+		Kind:                  packg.Kind,
+		Name:                  packg.Name,
+		ParentId:              packg.ParentId,
+		Alias:                 packg.Alias,
+		Description:           packg.Description,
+		DefaultRole:           packg.DefaultRole,
+		CreatedAt:             packg.CreatedAt,
+		CreatedBy:             packg.CreatedBy,
+		DeletedAt:             packg.DeletionDate,
+		DeletedBy:             packg.DeletedBy,
+		DefaultReleaseVersion: packg.DefaultReleaseVersion,
+		ServiceName:           packg.ServiceName,
+		ReleaseVersionPattern: packg.ReleaseVersionPattern,
+		ExcludeFromSearch:     *packg.ExcludeFromSearch,
+		RestGroupingPrefix:    packg.RestGroupingPrefix,
+	}
+}
+
+func MakeSimplePackageUpdateEntity(existingPackage *PackageEntity, packg *view.PatchPackageReq) *PackageEntity {
+	var packageEntity = PackageEntity{
+		Id:        existingPackage.Id,
+		Kind:      existingPackage.Kind,
+		ParentId:  existingPackage.ParentId,
+		Alias:     existingPackage.Alias,
+		CreatedAt: existingPackage.CreatedAt,
+		CreatedBy: existingPackage.CreatedBy,
+		DeletedAt: existingPackage.DeletedAt,
+		DeletedBy: existingPackage.DeletedBy,
+	}
+	if packg.Name != nil {
+		packageEntity.Name = *packg.Name
+	} else {
+		packageEntity.Name = existingPackage.Name
+	}
+	if packg.Description != nil {
+		packageEntity.Description = *packg.Description
+	} else {
+		packageEntity.Description = existingPackage.Description
+	}
+	if packg.ServiceName != nil {
+		packageEntity.ServiceName = *packg.ServiceName
+	} else {
+		packageEntity.ServiceName = existingPackage.ServiceName
+	}
+	if packg.DefaultRole != nil {
+		packageEntity.DefaultRole = *packg.DefaultRole
+	} else {
+		packageEntity.DefaultRole = existingPackage.DefaultRole
+	}
+	if packg.DefaultReleaseVersion != nil {
+		packageEntity.DefaultReleaseVersion = *packg.DefaultReleaseVersion
+	} else {
+		packageEntity.DefaultReleaseVersion = existingPackage.DefaultReleaseVersion
+	}
+	if packg.ReleaseVersionPattern != nil {
+		packageEntity.ReleaseVersionPattern = *packg.ReleaseVersionPattern
+	} else {
+		packageEntity.ReleaseVersionPattern = existingPackage.ReleaseVersionPattern
+	}
+	if packg.ExcludeFromSearch != nil {
+		packageEntity.ExcludeFromSearch = *packg.ExcludeFromSearch
+	} else {
+		packageEntity.ExcludeFromSearch = existingPackage.ExcludeFromSearch
+	}
+	if packg.RestGroupingPrefix != nil {
+		packageEntity.RestGroupingPrefix = *packg.RestGroupingPrefix
+	} else {
+		packageEntity.RestGroupingPrefix = existingPackage.RestGroupingPrefix
+	}
+	return &packageEntity
+}
+
+func MakeSimplePackageView(entity *PackageEntity, parents []view.ParentPackageInfo, isFavorite bool, userPermissions []string) *view.SimplePackage {
+	var parentsRes []view.ParentPackageInfo
+	if parents == nil {
+		parentsRes = make([]view.ParentPackageInfo, 0)
+	} else {
+		parentsRes = parents
+	}
+
+	return &view.SimplePackage{
+		Id:                    entity.Id,
+		ParentId:              entity.ParentId,
+		Name:                  entity.Name,
+		Alias:                 entity.Alias,
+		Parents:               parentsRes,
+		IsFavorite:            isFavorite,
+		ServiceName:           entity.ServiceName,
+		Description:           entity.Description,
+		Kind:                  entity.Kind,
+		DefaultRole:           entity.DefaultRole,
+		UserPermissions:       userPermissions,
+		DefaultReleaseVersion: entity.DefaultReleaseVersion,
+		ReleaseVersionPattern: entity.ReleaseVersionPattern,
+		ExcludeFromSearch:     &entity.ExcludeFromSearch,
+		RestGroupingPrefix:    entity.RestGroupingPrefix,
+	}
+}
+
+func MakePackagesInfo(entity *PackageEntity, defaultVersionDetails *view.VersionDetails, parents []view.ParentPackageInfo, isFavorite bool, userPermissions []string, showOnlyDeleted bool) *view.PackagesInfo {
+	var parentsRes []view.ParentPackageInfo
+	if parents == nil {
+		parentsRes = make([]view.ParentPackageInfo, 0)
+	} else {
+		parentsRes = parents
+	}
+
+	packageInfo := view.PackagesInfo{
+		Id:                    entity.Id,
+		ParentId:              entity.ParentId,
+		Name:                  entity.Name,
+		Alias:                 entity.Alias,
+		Parents:               parentsRes,
+		ServiceName:           entity.ServiceName,
+		Description:           entity.Description,
+		Kind:                  entity.Kind,
+		DefaultRole:           entity.DefaultRole,
+		RestGroupingPrefix:    entity.RestGroupingPrefix,
+		ReleaseVersionPattern: entity.ReleaseVersionPattern,
+		CreatedAt:             entity.CreatedAt,
+	}
+
+	if !showOnlyDeleted {
+		packageInfo.IsFavorite = isFavorite
+		packageInfo.UserPermissions = userPermissions
+		packageInfo.LastReleaseVersionDetails = defaultVersionDetails
+		packageInfo.DeletedAt = nil
+	} else {
+		packageInfo.DeletedAt = entity.DeletedAt
+	}
+
+	return &packageInfo
+}
+
+func MakePackageParentView(entity *PackageEntity) *view.ParentPackageInfo {
+	return &view.ParentPackageInfo{
+		Id:       entity.Id,
+		ParentId: entity.ParentId,
+		Name:     entity.Name,
+		Alias:    entity.Alias,
+		Kind:     entity.Kind,
+	}
+}
+
+func MakePackageVersionRef(entity *PackageVersionRichEntity) view.PackageVersionRef {
+	return view.PackageVersionRef{
+		RefPackageId:      entity.PackageId,
+		RefPackageName:    entity.PackageName,
+		RefPackageVersion: view.MakeVersionRefKey(entity.Version, entity.Revision),
+		Kind:              entity.Kind,
+		Status:            entity.Status,
+		DeletedAt:         entity.DeletedAt,
+		DeletedBy:         entity.DeletedBy,
+		ParentNames:       entity.ParentNames,
+		ServiceName:       entity.ServiceName,
+		NotLatestRevision: entity.NotLatestRevision,
+	}
+}
+
+func MakePackageVersionRevisionView(ent *PackageVersionRevisionEntity) *view.PackageVersionRevision {
+	packageVersionRevision := view.PackageVersionRevision{
+		Version:        view.MakeVersionRefKey(ent.Version, ent.Revision),
+		Revision:       ent.Revision,
+		Status:         ent.Status,
+		CreatedAt:      ent.PublishedAt,
+		CreatedBy:      *MakePrincipalView(&ent.PrincipalEntity),
+		RevisionLabels: ent.Labels,
+		PublishMeta: view.BuildConfigMetadata{
+			BranchName:    ent.Metadata.GetBranchName(),
+			RepositoryUrl: ent.Metadata.GetRepositoryUrl(),
+			CloudName:     ent.Metadata.GetCloudName(),
+			CloudUrl:      ent.Metadata.GetCloudUrl(),
+			Namespace:     ent.Metadata.GetNamespace(),
+		},
+		NotLatestRevision: ent.NotLatestRevision,
+	}
+	return &packageVersionRevision
+}

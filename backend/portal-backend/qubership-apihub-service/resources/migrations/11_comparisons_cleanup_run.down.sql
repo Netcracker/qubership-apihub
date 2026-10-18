@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS comparisons_cleanup_run;

@@ -1,0 +1,1 @@
+ALTER TABLE ONLY published_sources ADD CONSTRAINT published_sources_published_sources_archives_checksum_fk FOREIGN KEY (archive_checksum) REFERENCES published_sources_archives(checksum);

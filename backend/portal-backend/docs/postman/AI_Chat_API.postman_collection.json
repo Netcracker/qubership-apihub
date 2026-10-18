@@ -1,0 +1,307 @@
+{
+  "info": {
+    "name": "APIHUB — AI Chat API",
+    "_postman_id": "ai-chat-api-v1",
+    "description": "Productized AI Chat API for APIHUB.\n\nAuth: admin `api-key` header — set the `apiKey` collection variable.\n\nCollection variables (edit in the Variables tab):\n- `baseUrl`  — e.g. `http://localhost:8080`\n- `apiKey`   — admin API key\n- `chatId`   — auto-filled by «Create Chat» test script; or set manually\n- `fileId`   — fill manually from an assistant message that contains a download link\n- `fileToken`— fill manually from the download URL in the assistant message",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",   "value": "http://localhost:8080", "type": "string" },
+    { "key": "apiKey",    "value": "YOUR_ADMIN_API_KEY",    "type": "string" },
+    { "key": "chatId",    "value": "",                      "type": "string" },
+    { "key": "fileId",    "value": "",                      "type": "string" },
+    { "key": "fileToken", "value": "",                      "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "01 — Chat management",
+      "item": [
+        {
+          "name": "List chats",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "api-key", "value": "{{apiKey}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai-chat/chats?limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai-chat", "chats"],
+              "query": [
+                { "key": "limit",  "value": "20",  "description": "Page size (default 100, max 200)" },
+                { "key": "before", "value": "",     "description": "Keyset cursor — RFC3339 timestamp from the previous page", "disabled": true },
+                { "key": "search", "value": "",     "description": "Title search substring", "disabled": true }
+              ]
+            },
+            "description": "Returns the user's chats, newest first (pinned chats float to the top). Keyset-paginated by `lastMessageAt`."
+          },
+          "response": []
+        },
+        {
+          "name": "Create chat",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('chatId', body.chatId);",
+                  "    console.log('chatId set to', body.chatId);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "api-key",      "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test chat\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai-chat/chats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai-chat", "chats"]
+            },
+            "description": "Creates a new chat. The test script auto-saves `chatId` to the collection variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Get chat",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "api-key", "value": "{{apiKey}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai-chat/chats/{{chatId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai-chat", "chats", "{{chatId}}"]
+            },
+            "description": "Returns metadata for a single chat."
+          },
+          "response": []
+        },
+        {
+          "name": "Rename chat",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "api-key",      "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Renamed chat\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai-chat/chats/{{chatId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai-chat", "chats", "{{chatId}}"]
+            },
+            "description": "Rename the chat. You can also send `{\"pinned\": true}` to pin it."
+          },
+          "response": []
+        },
+        {
+          "name": "Pin chat",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "api-key",      "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pinned\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai-chat/chats/{{chatId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai-chat", "chats", "{{chatId}}"]
+            },
+            "description": "Pin the chat. Max 3 pinned chats per user — server returns 400 APIHUB-AI-4003 if exceeded."
+          },
+          "response": []
+        },
+        {
+          "name": "Unpin chat",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "api-key",      "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pinned\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai-chat/chats/{{chatId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai-chat", "chats", "{{chatId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete chat",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "api-key", "value": "{{apiKey}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai-chat/chats/{{chatId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai-chat", "chats", "{{chatId}}"]
+            },
+            "description": "Permanently deletes the chat and all its messages. Returns 204."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 — Messages",
+      "item": [
+        {
+          "name": "List messages (history)",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "api-key", "value": "{{apiKey}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai-chat/chats/{{chatId}}/messages?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai-chat", "chats", "{{chatId}}", "messages"],
+              "query": [
+                { "key": "limit",  "value": "50" },
+                { "key": "before", "value": "", "description": "RFC3339 cursor — pass the oldest `createdAt` from previous page", "disabled": true }
+              ]
+            },
+            "description": "Returns messages newest first. Paginate with `before=<oldest.createdAt>`. Generated-file links in assistant messages are re-signed on each response."
+          },
+          "response": []
+        },
+        {
+          "name": "Send message (non-streaming)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "api-key",      "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"List all REST operations in the package with id QS.QSS.PRG.APIHUB\",\n  \"clientMessageId\": \"{{$guid}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai-chat/chats/{{chatId}}/messages",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai-chat", "chats", "{{chatId}}", "messages"]
+            },
+            "description": "Synchronous variant — waits for the full LLM response. Intended for scripts and automated tests only; use the streaming endpoint for normal UX.\n\nThe `clientMessageId` (`{{$guid}}` generates a fresh UUID per send) enables idempotent retries."
+          },
+          "response": []
+        },
+        {
+          "name": "Send message (streaming SSE)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "api-key",      "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept",       "value": "text/event-stream" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"List all REST operations in the package with id QS.QSS.PRG.APIHUB\",\n  \"clientMessageId\": \"{{$guid}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai-chat/chats/{{chatId}}/messages/stream",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai-chat", "chats", "{{chatId}}", "messages", "stream"]
+            },
+            "description": "Main UX path — returns `text/event-stream`. Postman renders the raw SSE frames in the response body.\n\nEvent sequence (happy path):\n  context.compacted   (optional)\n  message.assistant.start\n  tool.started / tool.completed  (0..N)\n  message.assistant.delta * N\n  message.assistant.completed\n  done\n\nEach frame: `event: <type>\\ndata: <JSON>\\n\\n`"
+          },
+          "response": []
+        },
+        {
+          "name": "Send message — IDS generation (streaming)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "api-key",      "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept",       "value": "text/event-stream" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Create a design based on this text: The scenario should cover sending information to TelCoop Stock (TCS) system in order to reserve SIM card in the stock. The interaction should be synchronous using REST for all methods. The CIP chain should be started from Order Management (OM) system. The OM system will send REST request to the chain with quoteId parameter. CIP should call REST API Retrieve_Quote with path parameter quoteId. CIP should get value from productCharacteristic named MSISDN from response. CIP should call API Reserve_SIM_Profiles from TelCoopStock. Use 2025.2 version for APIs.\",\n  \"clientMessageId\": \"{{$guid}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai-chat/chats/{{chatId}}/messages/stream",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai-chat", "chats", "{{chatId}}", "messages", "stream"]
+            },
+            "description": "Triggers the IDS generation flow. The assistant will call `start_ids_generation`, then search APIHub for each mentioned API, produce the full IDS document, call `save_generated_file`, and embed a download link in its final reply.\n\nThe tool pills visible in the SSE stream:\n  tool.started   {name: start_ids_generation}\n  tool.started   {name: search_rest_api_operations}  (repeated per API lookup)\n  tool.started   {name: get_rest_api_operations_specification}\n  tool.started   {name: save_generated_file}\n  tool.completed {name: save_generated_file}\n\nThe final `message.assistant.completed` contains a markdown link of the form `[IDS_TCS.md](/api/v1/ephemeral-files/<id>?token=<jwt>)`."
+          },
+          "response": []
+        },
+        {
+          "name": "Send message — idempotent retry (same clientMessageId)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "api-key",      "value": "{{apiKey}}" },
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept",       "value": "text/event-stream" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"List all REST operations in the package with id QS.QSS.PRG.APIHUB\",\n  \"clientMessageId\": \"PASTE_SAME_UUID_HERE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ai-chat/chats/{{chatId}}/messages/stream",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ai-chat", "chats", "{{chatId}}", "messages", "stream"]
+            },
+            "description": "Re-sending the same `clientMessageId` returns the cached assistant message instead of billing another LLM call. Replace PASTE_SAME_UUID_HERE with the UUID used in the original request."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 — Ephemeral files",
+      "item": [
+        {
+          "name": "Download ephemeral file",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/ephemeral-files/{{fileId}}?token={{fileToken}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "ephemeral-files", "{{fileId}}"],
+              "query": [
+                { "key": "token", "value": "{{fileToken}}", "description": "Short-lived RS256 JWT from the download URL in the assistant message. No session cookie needed." }
+              ]
+            },
+            "description": "Download a file generated by the assistant (e.g. an IDS Markdown document).\n\nHow to get fileId + token:\n1. Run a streaming send that triggers IDS generation.\n2. Find the `message.assistant.completed` SSE event.\n3. In `message.content` look for a markdown link like `[IDS_TCS.md](/api/v1/ephemeral-files/<fileId>?token=<jwt>)`.\n4. Copy `<fileId>` → collection variable `fileId`, copy `<jwt>` → collection variable `fileToken`.\n\nError codes:\n  401 APIHUB-EF-3002 / APIHUB-EF-3003 — invalid token / missing token\n  410 APIHUB-EF-4101 — token expired\n  404 APIHUB-EF-3001 — file not found or already cleaned up"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

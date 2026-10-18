@@ -1,0 +1,1603 @@
+openapi: 3.0.3
+info:
+  title: APIHUB system administrators API – External
+  description: |
+    External API contract for system administrators. This API covers technical administration operations such as package transitions, role management, administrator management, and selected operational actions. All endpoints require authenticated access and are intended for trusted administrative users.
+
+    Request processing is bounded by a server-side deadline configured per deployment. When the deadline elapses, the request is terminated and the endpoint returns HTTP 500 with error code `8700`. Background work that a request has already handed off, such as a package transition, keeps running. Check the resulting state before you retry a call that is not idempotent. Credential verification is bounded separately and reports the same error code. A request that the server cancels before it completes for any other reason returns HTTP 500 with error code `8701`.
+  contact:
+    name: Netcracker Opensource Group
+    email: opensourcegroup@netcracker.com
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+  version: "2026.1"
+  x-api-kind: BWC
+externalDocs:
+  description: Find out more about this project and repository documentation
+  url: https://github.com/Netcracker/qubership-apihub
+servers:
+  - url: https://{apihub}.qubership.org
+    description: Primary APIHUB server endpoint (use the apihub variable to select production, development, or staging).
+    variables:
+      apihub:
+        description: APIHUB subdomain/environment selector (apihub=production, dev.apihub=development, staging.apihub=staging).
+        enum:
+          - apihub
+          - dev.apihub
+          - staging.apihub
+        default: apihub
+security:
+  - BearerAuth: []
+  - CookieAuth: []
+  - api-key: []
+  - PersonalAccessToken: []
+tags:
+  - name: Transition
+    description: Operations to move packages
+  - name: System
+    description: System operations
+  - name: Admin
+    description: APIs for technical administration.
+  - name: Roles
+    description: APIs for role management.
+
+paths:
+  "/api/v2/admin/transition/move":
+    post:
+      tags:
+        - Transition
+      summary: Move package
+      description: "Change a package ID (rename or move to another parent package). This is an asynchronous operation: the response returns an operation ID, and clients must query /api/v2/admin/transition/move/{id} to track status and completion."
+      operationId: movePackage
+      requestBody:
+        description: Parameters of the source package ID and destination package ID used for the move operation.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from:
+                  type: string
+                  description: Source package ID to move. The package must exist and be accessible to the caller.
+                to:
+                  type: string
+                  description: Destination package ID after the move. The value must be unique and valid for package naming rules.
+                overwriteHistory:
+                  type: boolean
+                  description: If true, force move even when the source package ID is already redirected to another package. The previous transition record is removed and that redirect is no longer available.
+            examples: {}
+        required: true
+
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                description: Move package response
+                type: object
+                properties:
+                  id:
+                    description: Move process id
+                    type: string
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "404":
+          description: Not found or incorrect 'from' ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+
+  /api/v2/admin/transition/move/{id}:
+    get:
+      tags:
+        - Transition
+      summary: Get move status
+      description: |
+        Retrieve the status of an asynchronous move operation by operation ID, including progress, timestamps, and resulting package identifiers.
+      operationId: getMoveStatus
+      parameters:
+        - name: id
+          description: ID of the move operation returned by the move request (string identifier).
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransitionStatus"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "404":
+          description: Not found or incorrect ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+
+  /api/v2/admin/transition/activity:
+    get:
+      tags:
+        - Transition
+      summary: List completed transition activities
+      description: |
+        List completed transition activities. Supports offset/limit pagination for recent completed operations.
+      operationId: listActivities
+      parameters:
+        - name: offset
+          in: query
+          description: Transition activities offset
+          schema:
+            type: number
+            default: 0
+        - name: limit
+          in: query
+          description: Maximun items in response
+          schema:
+            type: number
+            default: 100
+            maximum: 100
+            minimum: 1
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                description: Transition activities list
+                type: object
+                properties:
+                  changes:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TransitionStatus"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  /api/v2/admin/transition:
+    get:
+      tags:
+        - Transition
+      summary: List transitions
+      description: |
+        Retrieve the full mapping of historical package ID transitions (oldPackageId to newPackageId).
+      operationId: listPackageTransitions
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                description: Transition activities list
+                type: object
+                properties:
+                  changes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        oldPackageId:
+                          description: Package id that was before transition
+                          type: string
+                        newPackageId:
+                          description: New package id after transition
+                          type: string
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples: {}
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/v2/roles":
+    post:
+      tags:
+        - Roles
+      summary: Create a new role
+      description: |
+        Create a new role with the set of available permissions for this role.
+
+        The role may be assigned to the user for the specific package.
+
+        The "read content of public packages" permissions is applied for all roles by default (except the private packages with default role = **none**).
+      operationId: postRoles
+      requestBody:
+        description: Role creation parameters
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleCreate"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Role"
+                  - type: object
+                    properties:
+                      permissions:
+                        type: array
+                        description: List of permissions applicable to the role.
+                        items:
+                          $ref: "#/components/schemas/Permission"
+                        example: ["read", "create_and_update_package", "delete_package"]
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/v2/roles/{roleId}":
+    parameters:
+      - name: roleId
+        in: path
+        required: true
+        description: Unique role identifier (slug). Lowercase letters, digits, and hyphens are expected; value is immutable for an existing role.
+        schema:
+          type: string
+          pattern: "^[a-z0-9-]"
+          example: editor
+    patch:
+      tags:
+        - Roles
+      summary: Update role
+      description: |
+        Update role parameters.
+
+        If a parameter is not provided in the request, its value remains unchanged.
+
+        Read-only roles cannot be updated.
+      operationId: patchRolesId
+      requestBody:
+        description: Role update payload. Omitted fields are left unchanged; provided permissions replace the current permission list.
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - permissions
+              properties:
+                permissions:
+                  description: |
+                    List of role permissions.
+                    Current role permissions will be replaced by the transmitted list.
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Permission"
+                  example: ["read", "create_and_update_package", "delete_package"]
+      responses:
+        "204":
+          description: No content
+          content: {}
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+    delete:
+      tags:
+        - Roles
+      summary: Delete role
+      description: |
+        Permanently delete a role and its permission assignment.
+
+        When a role is deleted, users that had this role are removed from package membership lists where it was assigned.
+
+        Roles with **readOnly:true** cannot be deleted.
+      operationId: deleteRolesId
+      responses:
+        "204":
+          description: No content
+          content: {}
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/v2/roles/changeOrder":
+    post:
+      tags:
+        - Roles
+      summary: Update the roles order
+      description: |
+        Replace the global role display/order configuration with the submitted ordered list.
+
+        The request must contain each existing role exactly once; missing or duplicate role IDs cause a 400 error. The change is applied atomically.
+      operationId: postRolesChangeOrder
+      requestBody:
+        description: Ordered list of role IDs representing the complete desired role order.
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Payload containing the complete ordered role list. Order is significant and all existing roles must be present exactly once.
+              required:
+                - roles
+              properties:
+                roles:
+                  type: array
+                  items:
+                    type: string
+                  example: [admin, owner, editor, viewer, none]
+      responses:
+        "204":
+          description: No content
+          content: {}
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/v2/admins":
+    get:
+      x-nc-api-audience: noBWC
+      tags:
+        - Roles
+      summary: Get list of system administrators
+      description: Retrieve all users currently configured as system administrators.
+      operationId: getAdmins
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  admins:
+                    description: List of system administrators.
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+    post:
+      x-nc-api-audience: noBWC
+      tags:
+        - Roles
+      summary: Add a system administrator
+      description: |
+        Add an existing user as a system administrator.
+      operationId: postAdmins
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  description: User login (username), for example user1221.
+                  type: string
+                  example: user1221
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  admins:
+                    description: List of system administrators.
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                IncorrectInputParams:
+                  $ref: "#/components/examples/IncorrectInputParameters"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/v2/admins/{userId}":
+    delete:
+      x-nc-api-audience: noBWC
+      tags:
+        - Roles
+      summary: Delete system administrator
+      description: Delete a user from the system administrators group.
+      operationId: deleteAdminsId
+      parameters:
+        - name: userId
+          description: User login (username), for example user1221.
+          in: path
+          required: true
+          schema:
+            type: string
+            example: user1221
+      responses:
+        "204":
+          description: No content
+          content: {}
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/v1/builds":
+    get:
+      tags:
+        - Admin
+      summary: List builds
+      description: |
+        Return a page of builds with persisted build configuration. If no filter is provided, the latest builds are returned first.
+      operationId: listBuilds
+      parameters:
+        - name: packageId
+          in: query
+          required: false
+          description: Filter builds by package ID.
+          schema:
+            type: string
+        - name: version
+          in: query
+          required: false
+          description: Filter builds by package version.
+          schema:
+            type: string
+        - name: buildIds
+          in: query
+          required: false
+          description: Comma-separated list of build IDs. When combined with other filters, all filters are applied.
+          schema:
+            type: string
+        - name: offset
+          in: query
+          required: false
+          description: Number of items to skip.
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of items to return.
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+            default: 100
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExtendedBuilds"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/v1/builds/{buildId}":
+    get:
+      tags:
+        - Admin
+      summary: Get build
+      description: |
+        Return build data and persisted build configuration by build ID.
+      operationId: getBuild
+      parameters:
+        - name: buildId
+          in: path
+          required: true
+          description: Build identifier string returned by build operations.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExtendedBuild"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Build not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/v2/admin/builds/{buildId}/result":
+    get:
+      tags:
+        - Admin
+      summary: Get build result archive
+      description: |
+        Download the build result archive for a completed build. The response body is a binary stream (application/octet-stream) containing build artifacts.
+      operationId: getBuildResult
+      parameters:
+        - name: buildId
+          in: path
+          required: true
+          description: Build identifier string returned by build operations (internal build ID).
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Build result not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/v2/admin/builds/{buildId}/sources":
+    get:
+      tags:
+        - Admin
+      summary: Get build sources archive
+      description: |
+        Download build sources archive by build ID. The archive includes an apihub_build_config.json file with the build configuration.
+      operationId: getBuildSources
+      parameters:
+        - name: buildId
+          in: path
+          required: true
+          description: Build identifier string returned by build operations (internal build ID).
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Build sources not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/internal/migrate/operations":
+    post:
+      tags:
+        - Admin
+      summary: Start operations migration
+      description: |
+        Start an asynchronous operations migration job. Use the returned migration ID to check status, reports, and diagnostics endpoints.
+      operationId: startOpsMigration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                packageIds:
+                  type: array
+                  items:
+                    type: string
+                  description: Optional list of package IDs to migrate. If omitted, migration scope is determined by server-side defaults.
+                versions:
+                  type: array
+                  items:
+                    type: string
+                  description: Optional list of versions to migrate (for example, 1.0.0 or 1.0.0@2). If omitted, all eligible versions are processed.
+                rebuildChangelogOnly:
+                  type: boolean
+                  description: If true, only changelog data is rebuilt; no full operations migration is performed.
+                  default: false
+                skipValidation:
+                  type: boolean
+                  description: If true, pre-migration validation checks are skipped. Use with caution because invalid data may propagate to reports.
+                  default: false
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Migration ID
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Conflict - migration already running
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/internal/migrate/operations/{migrationId}":
+    get:
+      tags:
+        - Admin
+      summary: Get migration status
+      description: |
+        Retrieve migration status and report data for a migration job identified by migrationId.
+      operationId: getMigrationReport
+      parameters:
+        - name: migrationId
+          in: path
+          required: true
+          description: Migration job identifier returned by the start migration operation.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Migration report
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/internal/migrate/operations/{migrationId}/suspiciousBuilds":
+    get:
+      tags:
+        - Admin
+      summary: Get suspicious builds
+      description: |
+        Retrieve suspicious build records detected during the specified migration. Use query parameters to filter and paginate the result set.
+      operationId: getSuspiciousBuilds
+      parameters:
+        - name: migrationId
+          in: path
+          required: true
+          description: Migration job identifier returned by the start migration operation.
+          schema:
+            type: string
+        - name: changedField
+          in: query
+          required: false
+          description: Optional filter by changed field name; returns only suspicious records where this field changed.
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of items returned per page.
+          schema:
+            type: integer
+        - name: page
+          in: query
+          required: false
+          description: Page number for paginated results (1-based).
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/internal/migrate/operations/{migrationId}/perf":
+    get:
+      tags:
+        - Admin
+      summary: Get migration performance report
+      description: |
+        Retrieve performance metrics for the specified migration, including stage-level timings and counters.
+      operationId: getMigrationPerfReport
+      parameters:
+        - name: migrationId
+          in: path
+          required: true
+          description: Migration job identifier returned by the start migration operation.
+          schema:
+            type: string
+        - name: includeHourPackageData
+          in: query
+          required: false
+          description: If true, include per-hour package-level performance breakdowns (larger payload).
+          schema:
+            type: boolean
+        - name: stageFilter
+          in: query
+          required: false
+          description: Optional stage name filter to return metrics only for matching migration stages.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Performance report
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+  "/api/internal/migrate/operations/cancel":
+    post:
+      tags:
+        - Admin
+      summary: Cancel running migrations
+      description: |
+        Cancel currently running migration jobs. This operation is idempotent and safely returns success when no migration is running.
+      operationId: cancelRunningMigrations
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                InternalServerError:
+                  $ref: "#/components/examples/InternalServerError"
+                RequestTimeout:
+                  $ref: "#/components/examples/RequestTimeout"
+components:
+  schemas:
+    ErrorResponse:
+      description: Standard error response returned for failed requests. Includes HTTP status, internal error code, human-readable message, optional message parameters, and optional debug details (non-production only).
+      type: object
+      properties:
+        status:
+          description: HTTP status code as an integer; expected to match the actual HTTP response status.
+          type: number
+        code:
+          description: Internal string error code. Mandatory in response.
+          type: string
+        message:
+          description: Human-readable error message describing what went wrong; intended for diagnostics and safe client display.
+          type: string
+        params:
+          type: object
+          description: Optional key/value parameters used to format or contextualize the error message (for example, identifiers or field names).
+          example:
+            id: 12345
+            type: string
+        debug:
+          description: Optional debug details (for example, stack traces). Returned only in development/test environments when verbose logging is enabled; do not rely on this field in production because it may contain sensitive data.
+          type: string
+      required:
+        - status
+        - code
+        - message
+    TransitionStatus:
+      type: object
+      properties:
+        id:
+          type: string
+          description: ID of the move operation returned by the move request (string identifier).
+        trType:
+          type: string
+          description: Transition type
+        fromId:
+          type: string
+          description: Source package ID before transition.
+        toId:
+          type: string
+          description: Destination package ID after transition.
+        status:
+          type: string
+          description: "Current operation status (for example: pending, running, completed, failed)."
+        startedBy:
+          type: string
+          description: User who started the operation
+        startedAt:
+          type: string
+          description: Timestamp when the operation started (ISO 8601, UTC).
+        finishedAt:
+          type: string
+          description: Timestamp when the operation finished (ISO 8601, UTC).
+        progressPercent:
+          type: integer
+          format: int32
+          description: Percentage complete (0-100, inclusive).
+        affectedObjects:
+          type: integer
+          format: int32
+          description: Number of affected rows in the database.
+        completedSerialNumber:
+          type: integer
+          format: int32
+          description: Serial number of the completed transition record (internal monotonic identifier).
+    ExtendedBuilds:
+      type: object
+      properties:
+        builds:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExtendedBuild"
+      required:
+        - builds
+    ExtendedBuild:
+      type: object
+      properties:
+        buildId:
+          type: string
+          description: Build identifier.
+        status:
+          type: string
+          description: Build execution status.
+          enum:
+            - none
+            - running
+            - complete
+            - error
+        details:
+          type: string
+          description: Build status details or error text.
+        clientBuild:
+          type: boolean
+          description: Indicates whether the build was created as a client build.
+        packageId:
+          type: string
+          description: Package ID associated with the build.
+        version:
+          type: string
+          description: Package version associated with the build.
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the build was created.
+        lastActive:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the build was last updated.
+        createdBy:
+          type: string
+          description: User who created the build.
+        startedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when the build started.
+        restartCount:
+          type: integer
+          format: int32
+          description: Number of builder restarts for this build.
+        builderId:
+          type: string
+          description: Builder ID that processed or is processing the build.
+        priority:
+          type: integer
+          format: int32
+          description: Build queue priority.
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Build metadata stored in the build table.
+        config:
+          $ref: "#/components/schemas/BuildConfig"
+        dependencies:
+          type: array
+          items:
+            type: string
+          description: Build IDs that this build depends on and must wait to complete before it can run.
+      required:
+        - buildId
+        - status
+        - clientBuild
+        - packageId
+        - version
+        - restartCount
+        - priority
+        - config
+    BuildConfig:
+      type: object
+      description: Build configuration persisted in build_src.config.
+      additionalProperties: true
+      properties:
+        packageId:
+          type: string
+        version:
+          type: string
+        buildType:
+          type: string
+          enum:
+            - changelog
+            - build
+            - reducedSourceSpecifications
+            - mergedSpecification
+            - exportVersion
+            - exportRestDocument
+            - exportRestOperationsGroup
+            - exportGraphqlOperationsGroup
+            - exportAsyncapiOperationsGroup
+        previousVersion:
+          type: string
+        previousVersionPackageId:
+          type: string
+        status:
+          type: string
+        refs:
+          type: array
+          items:
+            $ref: "#/components/schemas/BuildConfigRef"
+        files:
+          type: array
+          items:
+            $ref: "#/components/schemas/BuildConfigFile"
+        publishId:
+          type: string
+        metadata:
+          $ref: "#/components/schemas/BuildConfigMetadata"
+        createdBy:
+          type: string
+        noChangeLog:
+          type: boolean
+        publishedAt:
+          type: string
+          format: date-time
+        migrationBuild:
+          type: boolean
+        migrationId:
+          type: string
+        comparisonRevision:
+          type: integer
+          format: int32
+        comparisonPrevRevision:
+          type: integer
+          format: int32
+        unresolvedRefs:
+          type: boolean
+        resolveRefs:
+          type: boolean
+        resolveConflicts:
+          type: boolean
+        serviceName:
+          type: string
+        apiType:
+          type: string
+        groupName:
+          type: string
+        format:
+          type: string
+        externalMetadata:
+          type: object
+          additionalProperties: true
+        validationRulesSeverity:
+          $ref: "#/components/schemas/ValidationRulesSeverity"
+        allowedOasExtensions:
+          type: array
+          items:
+            type: string
+        documentId:
+          type: string
+        operationsSpecTransformation:
+          type: string
+        allowedShareabilityStatuses:
+          type: array
+          items:
+            type: string
+    BuildConfigMetadata:
+      type: object
+      properties:
+        branchName:
+          type: string
+        repositoryUrl:
+          type: string
+        cloudName:
+          type: string
+        cloudUrl:
+          type: string
+        namespace:
+          type: string
+        versionLabels:
+          type: array
+          items:
+            type: string
+    BuildConfigRef:
+      type: object
+      properties:
+        refId:
+          type: string
+        version:
+          type: string
+        parentRefId:
+          type: string
+        parentVersion:
+          type: string
+        excluded:
+          type: boolean
+    BuildConfigFile:
+      type: object
+      properties:
+        fileId:
+          type: string
+        slug:
+          type: string
+        index:
+          type: integer
+          format: int32
+        publish:
+          type: boolean
+          nullable: true
+        labels:
+          type: array
+          items:
+            type: string
+        blobId:
+          type: string
+        xApiKind:
+          type: string
+    ValidationRulesSeverity:
+      type: object
+      properties:
+        brokenRefs:
+          type: string
+    User:
+      description: Represents an APIHUB user returned by administration endpoints.
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          description: Unique user login (username) used to authenticate the user.
+          type: string
+          example: user1221
+        name:
+          description: Name of the user
+          type: string
+          example: "John Doe"
+        email:
+          description: Email address of the user
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        avatarUrl:
+          description: URL of the user avatar image.
+          type: string
+          format: URL
+    RoleCreate:
+      description: Payload for creating a role, including the role name and the permissions to assign.
+      type: object
+      title: Role
+      required:
+        - role
+        - permissions
+      properties:
+        role:
+          type: string
+          pattern: "^[a-zA-Z0-9- ]"
+          description: Role name.
+          example: Editor
+        permissions:
+          type: array
+          description: List of permissions applicable to the role.
+          items:
+            $ref: "#/components/schemas/Permission"
+          example: ["read", "create_and_update_package", "delete_package"]
+    Role:
+      description: Represents a role with its identifier, display name, and assigned permissions.
+      type: object
+      title: Role
+      required:
+        - roleId
+        - role
+        - permissions
+      properties:
+        roleId:
+          type: string
+          description: Unique role identifier. The value is the slug of role name.
+          example: editor
+        role:
+          type: string
+          description: Role name.
+          example: Editor
+    Permission:
+      description: Permission identifier that grants a specific capability when assigned to a role.
+      type: string
+      enum:
+        - read
+        - create_and_update_package
+        - delete_package
+        - manage_draft_version
+        - manage_release_version
+        - user_access_management
+        - access_token_management
+      example: read
+  examples:
+    IncorrectInputParameters:
+      description: Incorrect input parameters
+      value:
+        status: 400
+        code: "APIHUB-COMMON-4001"
+        message: "Incorrect input parameters"
+    InternalServerError:
+      description: "Example: default internal server error response"
+      value:
+        status: 500
+        code: "APIHUB-8000"
+        reason: "InternalServerError"
+        message: "InternalServerError"
+    RequestTimeout:
+      description: "Example: request terminated by the server processing deadline"
+      value:
+        status: 500
+        code: "8700"
+        message: "The request timed out. Please try again."
+  securitySchemes:
+    BearerAuth:
+      type: http
+      description: "Bearer token authentication (JWT). Default security scheme for API usage. Provide Authorization: Bearer <token>."
+      scheme: bearer
+      bearerFormat: JWT
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: apihub-access-token
+      description: Authentication via the `apihub-access-token` cookie.
+    api-key:
+      type: apiKey
+      description: API key authentication. Send the key in the api-key header.
+      name: api-key
+      in: header
+    PersonalAccessToken:
+      type: apiKey
+      description: Personal access token authentication. Send the token in the X-Personal-Access-Token header; use for user-issued/script access.
+      name: X-Personal-Access-Token
+      in: header
+    RefreshTokenAuth:
+      type: apiKey
+      in: cookie
+      name: apihub-refresh-token
+      description: Authentication via refresh token cookie

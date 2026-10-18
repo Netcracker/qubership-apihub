@@ -1,0 +1,6 @@
+name: backend-conventions
+version: 0.2.0
+description: Backend-specific always-on rules for qubership-apihub-backend
+author: Qubership
+dependencies:
+  apm: []

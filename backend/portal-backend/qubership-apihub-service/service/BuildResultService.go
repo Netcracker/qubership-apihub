@@ -1,0 +1,218 @@
+package service
+
+import (
+	"archive/zip"
+	"bytes"
+	"context"
+	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/archive"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/secctx"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/service/validation"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/utils"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/entity"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/repository"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
+)
+
+const buildResultStoreTimeout = 2 * time.Minute
+
+type BuildResultService interface {
+	StoreBuildResult(ctx context.Context, buildId string, result []byte) error
+	GetBuildResultData(ctx context.Context, buildId string) ([]byte, error)
+
+	SaveBuildResult(ctx context.Context, packageId string, data []byte, fileName string, publishId string, availableVersionStatuses []string) error
+}
+
+func NewBuildResultService(buildResultRepository repository.BuildResultRepository, buildRepository repository.BuildRepository,
+	publishedRepository repository.PublishedRepository, systemInfoService SystemInfoService, minioStorageService MinioStorageService,
+	publishService PublishedService, exportService ExportService) BuildResultService {
+	return &buildResultServiceImpl{
+		buildResultRepository: buildResultRepository,
+		buildRepository:       buildRepository,
+		publishedRepository:   publishedRepository,
+		minioStorageService:   minioStorageService,
+		systemInfoService:     systemInfoService,
+		publishService:        publishService,
+		exportService:         exportService,
+		publishedValidator:    validation.NewPublishedValidator(publishedRepository),
+	}
+}
+
+type buildResultServiceImpl struct {
+	buildResultRepository repository.BuildResultRepository
+	buildRepository       repository.BuildRepository
+	publishedRepository   repository.PublishedRepository
+	minioStorageService   MinioStorageService
+	systemInfoService     SystemInfoService
+	publishService        PublishedService
+	exportService         ExportService
+
+	publishedValidator validation.PublishedValidator
+}
+
+func (b buildResultServiceImpl) GetBuildResultData(ctx context.Context, buildId string) ([]byte, error) {
+	if b.systemInfoService.IsMinioStorageActive() {
+		return b.minioStorageService.GetFile(ctx, view.BUILD_RESULT_TABLE, buildId)
+	}
+	ent, err := b.buildResultRepository.GetBuildResult(ctx, buildId)
+	if err != nil {
+		return nil, err
+	}
+	if ent == nil {
+		return nil, nil
+	}
+	return ent.Data, nil
+}
+
+func (b buildResultServiceImpl) StoreBuildResult(ctx context.Context, buildId string, result []byte) error {
+	if b.systemInfoService.IsMinioStorageActive() {
+		err := b.minioStorageService.UploadFile(ctx, view.BUILD_RESULT_TABLE, buildId, result)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	return b.buildResultRepository.StoreBuildResult(ctx, entity.BuildResultEntity{
+		BuildId: buildId,
+		Data:    result,
+	})
+}
+
+func (p buildResultServiceImpl) SaveBuildResult(ctx context.Context, packageId string, data []byte, fileName string, publishId string, availableVersionStatuses []string) error {
+	// Detach from the request context so the async result save survives the response, but keep a
+	// safety-net bound so a stuck blob write can't leak the goroutine.
+	bgCtx, cancel := context.WithTimeout(secctx.Detach(ctx), buildResultStoreTimeout)
+	utils.SafeAsync(func() {
+		defer cancel()
+		err := utils.WrapContextError(bgCtx, p.StoreBuildResult(bgCtx, publishId, data))
+		if err != nil {
+			log.Errorf("Failed to save build result for %s: %s", publishId, err.Error())
+			return
+		}
+	})
+
+	// Update last active time to make sure that the build won't be restarted. Assuming that publication will take < 30 seconds!
+	// TODO: another option could be different status like "result_processing" for such builds
+	err := p.buildRepository.UpdateBuildStatus(ctx, publishId, view.StatusRunning, "")
+	if err != nil {
+		log.Errorf("Failed refresh last active time before publication for build %s with err: %s", publishId, err)
+	}
+
+	start := time.Now()
+	buildSrcEnt, err := p.buildRepository.GetBuildSrc(ctx, publishId)
+	if err != nil {
+		return fmt.Errorf("failed to get build src with err: %w", err)
+	}
+	if buildSrcEnt == nil {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.BuildSourcesNotFound,
+			Message: exception.BuildSourcesNotFoundMsg,
+			Params:  map[string]interface{}{"publishId": publishId},
+		}
+	}
+
+	buildConfig, err := view.BuildConfigFromMap(buildSrcEnt.Config, publishId)
+	if err != nil {
+		return err
+	}
+	utils.PerfLog(time.Since(start).Milliseconds(), 200, "SaveBuildResult: get build src")
+
+	switch buildConfig.BuildType {
+	case view.ExportVersion, view.ExportRestDocument, view.ExportRestOperationsGroup, view.ExportGraphqlOperationsGroup, view.ExportAsyncapiOperationsGroup:
+		return p.exportService.StoreExportResult(ctx, buildConfig.CreatedBy, publishId, data, fileName, *buildConfig)
+	}
+
+	if !strings.HasSuffix(fileName, ".zip") {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidParameter,
+			Message: exception.InvalidParameterMsg,
+			Params:  map[string]interface{}{"param": "data file name, expecting .zip archive"},
+		}
+	}
+
+	start = time.Now()
+	zipReader, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	if err != nil {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidPackageArchive,
+			Message: exception.InvalidPackageArchiveMsg,
+			Params:  map[string]interface{}{"error": err.Error()},
+		}
+	}
+
+	buildArc := archive.NewBuildResultArchive(zipReader)
+	if err := buildArc.ReadPackageInfo(); err != nil {
+		return err
+	}
+	utils.PerfLog(time.Since(start).Milliseconds(), 50, "SaveBuildResult: archive parsing")
+
+	if buildArc.PackageInfo.PackageId != packageId {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidPackagedFile,
+			Message: exception.InvalidPackagedFileMsg,
+			Params: map[string]interface{}{
+				"file":  "info",
+				"error": fmt.Sprintf("packageId:%v provided by %v doesn't match packageId:%v requested in path", buildArc.PackageInfo.PackageId, archive.InfoFilePath, packageId),
+			},
+		}
+	}
+
+	start = time.Now()
+	err = p.publishedValidator.ValidateBuildResultAgainstConfig(buildArc, buildConfig)
+	if err != nil {
+		return err
+	}
+	utils.PerfLog(time.Since(start).Milliseconds(), 100, "SaveBuildResult: ValidateBuildResultAgainstConfig")
+
+	start = time.Now()
+	existingPackage, err := p.publishedRepository.GetPackage(ctx, buildArc.PackageInfo.PackageId)
+	if err != nil {
+		return err
+	}
+	utils.PerfLog(time.Since(start).Milliseconds(), 100, "SaveBuildResult: get existing package")
+	if existingPackage == nil {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.InvalidPackagedFile,
+			Message: exception.InvalidPackagedFileMsg,
+			Params:  map[string]interface{}{"file": "info", "error": fmt.Sprintf("package with packageId = '%v' doesn't exist", buildArc.PackageInfo.PackageId)},
+		}
+	}
+	buildArc.PackageInfo.Kind = existingPackage.Kind
+	//todo zip check for unknown files
+
+	switch buildArc.PackageInfo.BuildType {
+	case view.PublishType:
+		sufficientPrivileges := utils.SliceContains(availableVersionStatuses, buildArc.PackageInfo.Status)
+		if !sufficientPrivileges && !buildArc.PackageInfo.MigrationBuild {
+			return &exception.CustomError{
+				Status:  http.StatusForbidden,
+				Code:    exception.InsufficientPrivileges,
+				Message: exception.InsufficientPrivilegesMsg,
+			}
+		}
+		return p.publishService.PublishPackage(ctx, buildArc, buildSrcEnt, buildConfig, existingPackage)
+	case view.ChangelogType:
+		return p.publishService.PublishChanges(ctx, buildArc, publishId)
+	case view.ReducedSourceSpecificationsType_deprecated, view.MergedSpecificationType_deprecated:
+		return p.exportService.PublishTransformedDocuments(ctx, buildArc, publishId)
+	default:
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.UnknownBuildType,
+			Message: exception.UnknownBuildTypeMsg,
+			Params:  map[string]interface{}{"type": buildArc.PackageInfo.BuildType},
+		}
+	}
+}

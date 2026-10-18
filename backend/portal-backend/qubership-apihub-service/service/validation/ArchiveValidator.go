@@ -1,0 +1,367 @@
+package validation
+
+import (
+	"archive/zip"
+	"net/http"
+
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/archive"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/exception"
+	"github.com/Netcracker/qubership-apihub-backend/qubership-apihub-service/view"
+)
+
+func ValidatePublishSources(srcArc *archive.SourcesArchive) error {
+	var fileIds []string
+	for _, configFile := range srcArc.BuildCfg.Files {
+		fileIds = append(fileIds, configFile.FileId)
+	}
+
+	duplicates, missing, unknown := validateFiles(srcArc.FileHeaders, fileIds)
+	if len(duplicates) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileDuplicate,
+			Message: exception.FileDuplicateMsg,
+			Params:  map[string]interface{}{"fileIds": duplicates, "configName": "build config"},
+		}
+	}
+
+	if len(missing) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileMissing,
+			Message: exception.FileMissingMsg,
+			Params:  map[string]interface{}{"fileIds": missing, "location": "sources"},
+		}
+	}
+
+	if len(unknown) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileRedundant,
+			Message: exception.FileRedundantMsg,
+			Params:  map[string]interface{}{"files": unknown, "location": "sources"},
+		}
+	}
+
+	return nil
+}
+
+func ValidatePublishBuildResult(buildArc *archive.BuildResultArchive) error {
+	var documentsFileIds, operationsFileIds, comparisonsFileIds, versionInternalDocumentsFileIds, comparisonInternalDocumentsFileIds []string
+	var ddlFileIds, mcpFileIds, ddlComparisonsFileIds []string
+	for _, configFile := range buildArc.PackageDocuments.Documents {
+		documentsFileIds = append(documentsFileIds, configFile.Filename)
+	}
+	searchTextFilePaths := map[string]struct{}{}
+	for _, configFile := range buildArc.PackageOperations.Operations {
+		if configFile.ApiType != string(view.GraphqlApiType) {
+			operationsFileIds = append(operationsFileIds, configFile.OperationId)
+		}
+		if configFile.Search != nil && !configFile.Search.UseOperationDataAsSearchText && configFile.Search.SearchTextFilePath != "" {
+			searchTextFilePaths[configFile.Search.SearchTextFilePath] = struct{}{}
+		}
+	}
+
+	for _, configFile := range buildArc.PackageComparisons.Comparisons {
+		if configFile.ComparisonFileId != "" {
+			comparisonsFileIds = append(comparisonsFileIds, configFile.ComparisonFileId)
+		}
+	}
+	for _, configFile := range buildArc.VersionInternalDocuments.Documents {
+		versionInternalDocumentsFileIds = append(versionInternalDocumentsFileIds, configFile.Filename)
+	}
+	for _, configFile := range buildArc.ComparisonInternalDocuments.Documents {
+		comparisonInternalDocumentsFileIds = append(comparisonInternalDocumentsFileIds, configFile.Filename)
+	}
+
+	for _, table := range buildArc.PackageDdlContracts.Tables {
+		ddlFileIds = append(ddlFileIds, table.DdlEntityId)
+	}
+	mcpContracts := buildArc.PackageMcpContracts
+	allMcpContracts := make([]view.PackageMcpContract, 0, len(mcpContracts.Inits)+len(mcpContracts.Tools)+len(mcpContracts.Resources)+len(mcpContracts.Prompts))
+	allMcpContracts = append(allMcpContracts, mcpContracts.Inits...)
+	allMcpContracts = append(allMcpContracts, mcpContracts.Tools...)
+	allMcpContracts = append(allMcpContracts, mcpContracts.Resources...)
+	allMcpContracts = append(allMcpContracts, mcpContracts.Prompts...)
+	for _, contract := range allMcpContracts {
+		mcpFileIds = append(mcpFileIds, contract.McpEntityId)
+	}
+	for _, comparison := range buildArc.PackageDdlComparisons.Comparisons {
+		if comparison.ComparisonFileId != "" {
+			ddlComparisonsFileIds = append(ddlComparisonsFileIds, comparison.ComparisonFileId)
+		}
+	}
+
+	for path := range searchTextFilePaths {
+		if _, ok := buildArc.UncategorizedFileHeaders[path]; !ok {
+			return &exception.CustomError{
+				Status:  http.StatusBadRequest,
+				Code:    exception.FileMissing,
+				Message: exception.FileMissingMsg,
+				Params:  map[string]interface{}{"fileIds": []string{path}, "location": "build result archive (search text files)"},
+			}
+		}
+	}
+
+	var fullUnknownList []string
+	for f := range buildArc.UncategorizedFileHeaders {
+		if _, isSearchText := searchTextFilePaths[f]; !isSearchText {
+			fullUnknownList = append(fullUnknownList, f)
+		}
+	}
+
+	duplicates, missing, unknown := validateFiles(buildArc.DocumentsHeaders, documentsFileIds)
+	if len(duplicates) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileDuplicate,
+			Message: exception.FileDuplicateMsg,
+			Params:  map[string]interface{}{"fileIds": duplicates, "configName": archive.DocumentsFilePath + " config"},
+		}
+	}
+
+	if len(missing) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileMissing,
+			Message: exception.FileMissingMsg,
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.DocumentsRootFolder + " folder in achive"},
+		}
+	}
+
+	for _, u := range unknown {
+		fullUnknownList = append(fullUnknownList, archive.DocumentsRootFolder+u)
+	}
+
+	duplicates, missing, unknown = validateFiles(buildArc.OperationFileHeaders, operationsFileIds)
+	if len(duplicates) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileDuplicate,
+			Message: exception.FileDuplicateMsg,
+			Params:  map[string]interface{}{"fileIds": duplicates, "configName": archive.OperationsFilePath + " config"},
+		}
+	}
+
+	if len(missing) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileMissing,
+			Message: exception.FileMissingMsg,
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.OperationFilesRootFolder + " folder in achive"},
+		}
+	}
+
+	for _, u := range unknown {
+		fullUnknownList = append(fullUnknownList, archive.OperationFilesRootFolder+u)
+	}
+
+	duplicates, missing, unknown = validateFiles(buildArc.ComparisonsFileHeaders, comparisonsFileIds)
+	if len(duplicates) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileDuplicate,
+			Message: exception.FileDuplicateMsg,
+			Params:  map[string]interface{}{"fileIds": duplicates, "configName": archive.ComparisonsFilePath + " config"},
+		}
+	}
+
+	if len(missing) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileMissing,
+			Message: exception.FileMissingMsg,
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ComparisonsRootFolder + " folder in achive"},
+		}
+	}
+
+	for _, u := range unknown {
+		fullUnknownList = append(fullUnknownList, archive.ComparisonsRootFolder+u)
+	}
+
+	duplicates, missing, unknown = validateFiles(buildArc.VersionInternalDocumentsHeaders, versionInternalDocumentsFileIds)
+	if len(duplicates) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileDuplicate,
+			Message: exception.FileDuplicateMsg,
+			Params:  map[string]interface{}{"fileIds": duplicates, "configName": archive.VersionInternalDocumentsFilePath + " config"},
+		}
+	}
+
+	if len(missing) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileMissing,
+			Message: exception.FileMissingMsg,
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.VersionInternalDocumentsRootFolder + " folder in achive"},
+		}
+	}
+
+	for _, u := range unknown {
+		fullUnknownList = append(fullUnknownList, archive.VersionInternalDocumentsRootFolder+u)
+	}
+
+	duplicates, missing, unknown = validateFiles(buildArc.ComparisonInternalDocumentsHeaders, comparisonInternalDocumentsFileIds)
+	if len(duplicates) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileDuplicate,
+			Message: exception.FileDuplicateMsg,
+			Params:  map[string]interface{}{"fileIds": duplicates, "configName": archive.ComparisonInternalDocumentsFilePath + " config"},
+		}
+	}
+
+	if len(missing) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileMissing,
+			Message: exception.FileMissingMsg,
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ComparisonInternalDocumentsRootFolder + " folder in achive"},
+		}
+	}
+
+	for _, u := range unknown {
+		fullUnknownList = append(fullUnknownList, archive.ComparisonInternalDocumentsRootFolder+u)
+	}
+
+	duplicates, missing, unknown = validateFiles(buildArc.ContractsDdlFileHeaders, ddlFileIds)
+	if len(duplicates) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileDuplicate,
+			Message: exception.FileDuplicateMsg,
+			Params:  map[string]interface{}{"fileIds": duplicates, "configName": archive.ContractsDdlFilePath + " config"},
+		}
+	}
+
+	if len(missing) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileMissing,
+			Message: exception.FileMissingMsg,
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ContractsDdlRootFolder + " folder in achive"},
+		}
+	}
+
+	for _, u := range unknown {
+		fullUnknownList = append(fullUnknownList, archive.ContractsDdlRootFolder+u)
+	}
+
+	duplicates, missing, unknown = validateFiles(buildArc.ContractsMcpFileHeaders, mcpFileIds)
+	if len(duplicates) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileDuplicate,
+			Message: exception.FileDuplicateMsg,
+			Params:  map[string]interface{}{"fileIds": duplicates, "configName": archive.ContractsMcpFilePath + " config"},
+		}
+	}
+
+	if len(missing) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileMissing,
+			Message: exception.FileMissingMsg,
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ContractsMcpRootFolder + " folder in achive"},
+		}
+	}
+
+	for _, u := range unknown {
+		fullUnknownList = append(fullUnknownList, archive.ContractsMcpRootFolder+u)
+	}
+
+	duplicates, missing, unknown = validateFiles(buildArc.ContractsDdlComparisonsFileHeaders, ddlComparisonsFileIds)
+	if len(duplicates) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileDuplicate,
+			Message: exception.FileDuplicateMsg,
+			Params:  map[string]interface{}{"fileIds": duplicates, "configName": archive.ContractsDdlComparisonsFilePath + " config"},
+		}
+	}
+
+	if len(missing) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileMissing,
+			Message: exception.FileMissingMsg,
+			Params:  map[string]interface{}{"fileIds": missing, "location": archive.ContractsDdlComparisonsRootFolder + " folder in achive"},
+		}
+	}
+
+	for _, u := range unknown {
+		fullUnknownList = append(fullUnknownList, archive.ContractsDdlComparisonsRootFolder+u)
+	}
+
+	if len(fullUnknownList) != 0 {
+		return &exception.CustomError{
+			Status:  http.StatusBadRequest,
+			Code:    exception.FileRedundant,
+			Message: exception.FileRedundantMsg,
+			Params:  map[string]interface{}{"files": fullUnknownList, "location": "build result archive"},
+		}
+	}
+	return nil
+}
+
+func validateFiles(zipFileHeaders map[string]*zip.File, configFileIds []string) ([]string, []string, []string) {
+	duplicates, configFileIdsMap := getDuplicateFiles(configFileIds)
+	if len(duplicates) != 0 {
+		return duplicates, nil, nil
+	}
+	missing := getMissingFiles(zipFileHeaders, configFileIdsMap)
+	if len(missing) != 0 {
+		return nil, missing, nil
+	}
+	unknown := getUnknownFiles(zipFileHeaders, configFileIdsMap)
+	if len(unknown) != 0 {
+		return nil, nil, unknown
+	}
+	return nil, nil, nil
+}
+
+func getDuplicateFiles(configFileIds []string) ([]string, map[string]struct{}) {
+	configFileIdsMap := map[string]struct{}{}
+	duplicatesMap := map[string]struct{}{}
+	for _, file := range configFileIds {
+		if _, exists := configFileIdsMap[file]; exists {
+			duplicatesMap[file] = struct{}{}
+		} else {
+			configFileIdsMap[file] = struct{}{}
+		}
+	}
+	duplicates := make([]string, 0, len(duplicatesMap))
+	for f := range duplicatesMap {
+		duplicates = append(duplicates, f)
+	}
+	return duplicates, configFileIdsMap
+}
+
+func getMissingFiles(zipFileHeaders map[string]*zip.File, configFileIds map[string]struct{}) []string {
+	missingMap := map[string]struct{}{}
+	for file := range configFileIds {
+		if _, exists := zipFileHeaders[file]; !exists {
+			missingMap[file] = struct{}{}
+		}
+	}
+	missing := make([]string, 0, len(missingMap))
+	for f := range missingMap {
+		missing = append(missing, f)
+	}
+	return missing
+}
+
+func getUnknownFiles(zipFileHeaders map[string]*zip.File, configFileIds map[string]struct{}) []string {
+	unknownMap := map[string]struct{}{}
+	for filePath := range zipFileHeaders {
+		if _, exists := configFileIds[filePath]; !exists {
+			unknownMap[filePath] = struct{}{}
+		}
+	}
+	unknown := make([]string, 0, len(unknownMap))
+	for f := range unknownMap {
+		unknown = append(unknown, f)
+	}
+	return unknown
+}

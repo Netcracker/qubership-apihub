@@ -1,0 +1,293 @@
+# Section with PostgreSQL database connection parameters
+database:
+  # Mandatory; PostgreSQL database host ; If not set, default value: localhost; Example: postgres.example.com
+  host: 'localhost'
+  # Mandatory; PostgreSQL database port; If not set, default value: 5432; Example: 5432
+  port: 5432
+  # Mandatory; Logical database in PostgreSQL cluster for APIHUB. Manual pre-creation required; If not set, default value: apihub; Example: apihub_backend_prod_db
+  name: 'apihub'
+  # Mandatory; User for APIHUB_POSTGRESQL_DB_NAME database; If not set, default value: apihub; Example: apihub_backend_prod_admin
+  username: 'apihub'
+  # Mandatory; Password for APIHUB_POSTGRESQL_USERNAME user.; If not set, default value: apihub; Example: apihub_backend_prod_password
+  password: 'apihub'
+
+# Section with all security (authentication and authorization) parameters
+security:
+  # Optional; Enables production mode - login under local apihub users is prohibited in this mode. In this mode only external IdP auth is possible; If not set, default value: true; Example: true
+  productionMode: true  # set to false at your own risk
+  # Optional; Enables the 'debug' field with internal error details in API error responses. Should be disabled on prod envs; If not set, default value: false; Example: false
+  showDebugInResponse: false
+  # Section with parameters for configuring JWT tokens issued by APIHUB
+  jwt:
+    # Mandatory; Self generated private PKCS#8 private key, base64 encoded. The RSA key length must be at least 2048 bits and no more than 4096 bits to ensure a balance between security and performance. Used for siging of JWT tokens issued by APIHUB, must be unique fore each APIHUB instance; If not set, default value: ""; Example: LS0tLS1CRUdJTiBQUklWQV...
+    privateKey: ''
+    # Optional; Duration in seconds for access tokens issued by APIHUB; If not set, default value: 1800; Example: 1800
+    accessTokenDurationSec: 1800
+    # Optional; Duration in seconds for refresh tokens issued by APIHUB; If not set, default value: 43200; Example: 43200
+    refreshTokenDurationSec: 43200
+  # Mandatory; Factual APIHUB server URL in your environment.; If not set, default value: ""; Example: https://apihub.example.com
+  apihubExternalUrl: 'https://apihub.example.com'
+  # Optional; Allowed list of hosts that are accepted for proxy(playground) requests.; If not set, default value: []; Example: [example.com]
+  allowedHostsForProxy:
+    - example.com
+    - localhost
+  # Optional; Allows to set extra allowed origins to CORS header. Used for FE debugging. Should be empty on prod envs.; If not set, default value: []; Example: [https://localhost:5137]
+  allowedOrigins:
+    - https://localhost:5137
+  # Optional; Enables automatic login with the configured identity provider instead of showing the APIHUB login page; If not set, default value: false; Example: true
+  autoLogin: false
+  # Optional; To be deleted, WA for smooth upgrade of exisiting deployments; If not set, default value: true; Example: false
+  legacySaml: true
+  # Optional; List of external identity providers to use for authentication; OIDC and SAML types are supported. If not set, default value: ""; Example: external-idp
+  externalIdentityProviders:
+    # Mandatory; ID for external identity provider; If not set, default value: ""; Example: external-saml-idp
+    - id: 'external-saml-idp'
+      # Optional; Display name for external SAML identity provider; If not set, default value: ""; Example: External Identity Provider
+      displayName: 'test'
+      # Optional; SVG image for external SAML identity provider logo; If not set, default value: ""; Example: <svg fill="#000000" width="800px"...
+      imageSvg: ''
+      # Mandatory; Protocol for external identity provider; If not set, default value: ""; Example: SAML
+      protocol: 'SAML'
+      # Optional; SAML configuration for external identity provider, required if protocol is 'SAML'; If not set, default value: ""; Example:
+      samlConfiguration:
+        # Optional; SAML metadata URL. Required for SAML configuration; If not set, default value: ""; Example: https://idp.example.com/FederationMetadata/2007-06/FederationMetadata.xml
+        metadataUrl: ''
+        # Optional; SAML server certificate, base64 encoded. Required for SAML configuration; If not set, default value: ""; Example: LS0tLS1CRUdJTi...
+        certificate: ''
+        # Optional; SAML server private key, base64 encoded. Required for SAML configuration; If not set, default value: ""; Example: LS0tLS1CRUdJTi...
+        privateKey: ''
+    # Mandatory; ID for external identity provider; If not set, default value: ""; Example: external-oidc-idp
+    - id: 'external-oidc-idp'
+      # Optional; Display name for external OIDC identity provider; If not set, default value: ""; Example: External Identity Provider
+      displayName: 'test'
+      # Optional; SVG image for external OIDC identity provider logo; If not set, default value: ""; Example: <svg fill="#000000" width="800px"...
+      imageSvg: ''
+      # Mandatory; Protocol for external identity provider; If not set, default value: ""; Example: OIDC
+      protocol: 'OIDC'
+      # Optional; OIDC configuration for external identity provider, required if protocol is 'OIDC'; If not set, default value: ""; Example:
+      oidcConfiguration:
+        # Optional; OIDC identity provider URL. Required for OIDC configuration; If not set, default value: ""; Example: https://idp.example.com/realms/apihub
+        providerUrl: ''
+        # Optional; OIDC client ID. Required for OIDC configuration; If not set, default value: ""; Example: apihub
+        clientId: ''
+        # Optional; OIDC client secret. Required for OIDC configuration; If not set, default value: ""; Example: l5cKFvwDRSnhBErE9LUGeBk0dqqFB7No
+        clientSecret: ''
+
+  # Section with LDAP integration parameters. LDAP integration is used for User search. Makes sense only if SAML/OIDC integration enabled.
+  ldap:
+    # Optional; LDAP server URL. Required for SAML integration for syncing users information; If not set, default value: ""; Example: ldap://ldap.example.com:389
+    server: 'ldap://ldap.example.com:389'
+    # Optional; LDAP User used for connecting to LDAP server; If not set, default value: ""; Example: x_apihub
+    user: 'x_apihub'
+    # Optional; Password for LDAP User; If not set, default value: ""; Example: x_apihub_password
+    password: 'x_apihub_password'
+    # Optional; Base DN to search users in; If not set, default value: ""; Example: organization
+    baseDN: 'organization'
+    # Optional; Organization unit to search users in; If not set, default value: ""; Example: example
+    organizationUnit: 'example'
+    # Optional; Search base to search users in; If not set, default value: ""; Example: com
+    searchBase: 'com'
+
+# Section with zero-day settings
+zeroDayConfiguration:
+  # Mandatory; Default system access token (any string, minimum 30 characters). The token will be provisioned automatically during startup; If not set, default value: ""; Example: access-token-12345-67890-abcdef-ghijklmnop
+  accessToken: 'access-token-12345-67890-abcdef-ghijklmnop'
+  # Mandatory; Default local admin user login. If set - this admin user will be created automatically.; If not set, default value: ""; Example: admin@example.com
+  adminEmail: 'admin@example.com'
+  # Mandatory; Default local admin user password; If not set, default value: ""; Example: admin-password
+  adminPassword: 'admin-password'
+
+# Section with technical parameters
+technicalParameters:
+  # Optional; Base path for binary and static files, default value: .; Example: /tmp
+  basePath: '.'
+  # Optional; Listen address for APIHUB backend, can be used to avoid port conflicts in case of run on bare metall; If not set, default value: :8080; Example: :8080
+  listenAddress: ':8080'
+  # Optional; Directory containing API specifications for exposure; If not set, defaults to basePath + "/api"; Example: ./docs/api
+  apiSpecDirectory: ''
+  # Optional; Maximum wait time in minutes for lock release during migration restart; If not set, default value: 30; Example: 60
+  migrationLockMaxWaitMinutes: 30
+  # Optional; Safety-net cap in seconds on request processing time; a slow query or downstream call is cancelled once it elapses. Must stay below the nginx generic proxy_read_timeout (600s) so the app returns its own timeout error first; streaming/turn endpoints (MCP, AI chat SSE and non-streaming messages) are always exempt; Set to 0 to disable the cap; If not set, default value: 570; Example: 300
+  requestTimeoutSec: 570
+  # Optional; Maximum execution time in minutes for an asynchronous package move job; If not set, default value: 30; Example: 60
+  transitionMoveTimeoutMinutes: 30
+  # Optional; Base directory for ephemeral (temporary) file storage; If not set, default value: /tmp/apihub-ephemeral-files; Example: /var/apihub/ephemeral
+  ephemeralFileDirectory: '/tmp/apihub-ephemeral-files'
+  # Optional; Cron schedule for refreshing build queue Prometheus gauges; used only when monitoring.enabled is true; If not set, default value: '* * * * *' (every minute); Example: '*/5 * * * *'
+  metricsGetterSchedule: '* * * * *'
+
+# Section with various parameters related to APIHUB business logic
+businessParameters:
+  # Optional; Links to be shown under (i) button in UI; If not set, default value: []; Example: [https://example.com]
+  externalLinks:
+    - https://example.com
+  # Optional; Default workspace ID for Agent UI; If not set, default value: ""; Example: QS
+  defaultWorkspaceId: 'QS'
+  # Optional; Regex pattern for releases names validation.; If not set, default value: .*; Example: ^2023\.1$
+  releaseVersionPattern: '.*'
+  # Optional; Limit for uploaded package size in order to avoid OOM; If not set, default value: 50; Example: 50
+  publishArchiveSizeLimitMb: 50
+  # Optional; Limit for uploaded file (inside package) size in order to avoid OOM; If not set, default value: 15; Example: 20
+  publishFileSizeLimitMb: 15
+  # Optional; Limit for uploaded operation group template file size in MB; If not set, default value: 1; Example: 2
+  templateSizeLimitMb: 1
+  # Optional; Limit for uploaded shareability report xlsx file size in MB; If not set, default value: 10; Example: 10
+  shareabilityReportSizeLimitMb: 10
+  # Optional; If set - footer with this text is shown for all APIHUB users in APIHUB UI. Designed for maintenance windows notifications.; If not set, default value: ""; Example: Maintenance scheduled on 2023-10-15
+  systemNotification: ''
+  # Optional; Set to true to fail build on broken refs; If not set, default value: true; Example: true
+  failBuildOnBrokenRefs: true
+  # Optional; Maximum size in MB for ephemeral (temporary) files; If not set, default value: 50; Example: 100
+  ephemeralFileMaxSizeMb: 50
+  # Optional; Time-to-live in minutes for ephemeral files before they expire; If not set, default value: 30; Example: 60
+  ephemeralFileTTLMinutes: 30
+
+# Section with monitoring configuration for APIHUB
+# APIHUB backend is using Prometheus for monitoring and Grafana for visualization
+monitoring:
+  # Optional; Enables application Prometheus metrics on /metrics (HTTP request counters and durations, build queue gauges, AI chat metrics) and the build metrics collection job. If not set, default value: false; Example: true
+  enabled: false
+  # Section with OpenTelemetry metrics export configuration. Pushes the AI-related application metrics from /metrics to an OTLP/HTTP endpoint.
+  # Requires monitoring.enabled=true
+  otel:
+    # Optional; Enables the periodic OTLP/HTTP push; If not set, default value: false; Example: true
+    enabled: false
+    # Mandatory when otel.enabled=true; OpenTelemetry server URL (scheme, host and port, no path); If not set, default value: ""; Example: https://otel-collector.example.com:4318
+    serverUrl: ''
+    # Optional; Path of the OTLP/HTTP metrics endpoint on the server; If not set, default value: /v1/metrics; Example: /v1/metrics
+    metricsPath: /v1/metrics
+    # Optional; Token sent as "Authorization: Bearer <token>" with every export request; If not set, default value: ""; Example: my-collector-token
+    token: ''
+    # Optional; Kubernetes namespace sent as the k8s.namespace.name resource attribute; If not set, default value: ""; Example: apihub
+    namespace: ''
+    # Optional; Export interval in seconds; If not set, default value: 60; Example: 30
+    exportIntervalSec: 60
+    # Optional; Timeout of one export request in seconds; If not set, default value: 10; Example: 15
+    timeoutSec: 10
+    # Optional; Only metric families whose name starts with one of these prefixes are pushed; If not set, default value: [apihub_ai_, apihub_mcp_, apihub_ephemeral_]; Example: [apihub_]
+    metricPrefixes:
+      - apihub_ai_
+      - apihub_mcp_
+      - apihub_ephemeral_
+
+# Section with S3 storage integration parameters.
+s3Storage:
+  # Optional; Set to true to enable S3 integration. S3 is used for store temporary relatively large files.; If not set, default value: false; Example: true
+  enabled: false
+  # Optional; S3 endpoint for client connection; If not set, default value: ""; Example: s3.example.com
+  url: 'https://s3.example.com'
+  # Optional; Access Key ID from S3 storage; If not set, default value: ""; Example: s3-access-key
+  username: 's3-access-key'
+  # Optional; Secret key for S3 storage access; If not set, default value: ""; Example: s3-secret-key
+  password: 's3-secret-key'
+  # Optional; Certificate for accessing S3 storage; If not set, default value: ""; Example: LS0tLS1CRUdJTiBQUklWQV...
+  crt: ''
+  # Optional; Bucket name in S3 storage; If not set, default value: ""; Example: apihub-bucket
+  bucketName: 'apihub-bucket'
+  # Optional; Set to true to store only build results (less data amout) in S3 storage; If not set, default value: false; Example: true
+  storeOnlyBuildResult: false
+  # Timeouts for the individual steps of the data migration between S3 storage and the database. There is no timeout for a migration run as a whole, because its duration depends on the number of objects to transfer.
+  migrationTimeouts:
+    # Optional; Timeout in seconds for a single S3 call; If not set, default value: 600; Example: 900
+    s3OperationSec: 600
+    # Optional; Timeout in seconds for a single-row database read or insert during the migration; If not set, default value: 120; Example: 300
+    databaseOperationSec: 120
+    # Optional; Timeout in minutes for the bulk delete of migrated rows, including the 'VACUUM FULL' that follows it; If not set, default value: 180; Example: 360
+    bulkDeleteMinutes: 180
+
+# Section with Olric(distributed cache and pub-sub) configuration.
+olric:
+  # Optional; Discovery mode for Olric. If not set, default value: local; Example: local
+  discoveryMode: 'local'
+  # Optional; Replica count for Olric. If not set, default value: 1; Example: 1
+  replicaCount: 1
+  # Optional; Namespace for Olric discovery. If not set, default value: ""; Example: apihub
+  namespace: 'apihub'
+
+# Section with cleanup jobs configuration
+cleanup:
+  revisions:
+    # Optional; Schedule for the revisions cleanup job. If not set, default value: "0 21 * * 0"; Example: "* * * * *"
+    schedule: '0 21 * * 0'
+    # Optional; If set to true, the revisions cleanup job will delete the last revision of the version. Otherwise, such revisions are skipped; If not set, default value: false; Example: true
+    deleteLastRevision: false
+    # Optional; If set to true, the revisions cleanup job will delete revisions with a 'release' status. Otherwise, such revisions are skipped; If not set, default value: false; Example: true
+    deleteReleaseRevisions: false
+    # Optional; Number of days to keep revisions before cleanup; If not set, default value: 365; Example: 180
+    ttlDays: 365
+  comparisons:
+    # Optional; Schedule for the comparisons cleanup job. If not set, default value: "0 5 * * 0"; Example: "* * * * *"
+    schedule: '0 5 * * 0'
+    # Optional; Timeout in minutes for comparisons cleanup. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination; If not set, default value: 360; Example: 60
+    timeoutMinutes: 360
+    # Optional; Number of days to keep ad-hoc comparisons before cleanup; If not set, default value: 30; Example: 180
+    ttlDays: 30
+  softDeletedData:
+    # Optional; Cron schedule for soft deleted data cleanup job; If not set default value: '0 22 * * 5'; Example: '0 4 * * *'
+    schedule: '0 22 * * 5'
+    # Optional; Timeout in minutes for soft deleted data cleanup. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination; If not set, default value: 600; Example: 120
+    timeoutMinutes: 600
+    # Optional; Number of days to keep soft deleted data before cleanup; If not set, default value: 730; Example: 700
+    ttlDays: 730
+  unreferencedData:
+    # Optional; Cron schedule for unreferenced data cleanup job; If not set default value: '0 15 * * 6'; Example: '0 4 * * *'
+    schedule: '0 15 * * 6'
+    # Optional; Timeout in minutes for unreferenced data cleanup. After the timeout, the job will not be terminated immediately. 'VACUUM FULL' will be performed on the affected tables prior to job termination; If not set, default value: 360; Example: 120
+    timeoutMinutes: 360
+  maintenanceVacuum:
+    # Optional; Cron schedule for maintenance vacuum job; If not set default value: '0 2 * * 1'; Example: '0 2 * * 1'
+    schedule: '0 2 * * 1'
+    # Optional; Timeout in minutes for maintenance vacuum phase (VACUUM FULL ANALYZE); If not set, default value: 300; Example: 180
+    timeoutMinutes: 300
+  builds:
+    # Optional; Schedule for the builds cleanup job. If not set, default value: "0 1 * * 0"; Example: "* * * * *"
+    schedule: '0 1 * * 0'
+    # Optional; Timeout in minutes for the builds cleanup job (performs VACUUM FULL on build tables); If not set, default value: 360; Example: 120
+    timeoutMinutes: 360
+    expiredS3Files:
+      # Removal of expired S3 objects runs as a phase of the builds cleanup job and follows cleanup.builds.schedule. Only applies when S3 storage is enabled
+      # Optional; Timeout in minutes for the expired S3 files phase. After the timeout, the sweep stops and resumes on the next run; If not set, default value: 360; Example: 120
+      timeoutMinutes: 360
+  ephemeralFiles:
+    # Optional; Cron schedule for ephemeral files cleanup job; If not set, default value: "*/5 * * * *"; Example: "*/10 * * * *"
+    schedule: '*/5 * * * *'
+
+ai:
+  mcp:
+    # Default workspace for MCP to work with
+    workspace: ''
+  chat:
+    # Master kill-switch for the AI chat feature. When true, /api/v1/ai-chat/chats
+    # routes are registered and the periodic chat retention job is scheduled
+    enabled: false
+    retentionDays: 30
+    pinnedForeverCount: 10
+    compactAtContextPercent: 80
+    cleanupSchedule: "15 3 * * *"
+    # Section with OpenAI configuration for AI-assisted chat
+    openAI:
+      # Mandatory; OpenAI API key for chat functionality; If not set, default value: ""; Example: sk-...
+      apiKey: ''
+      # Optional; OpenAI model to use for chat; If not set, default value: gpt-4o; Example: gpt-4o
+      model: 'gpt-5'
+      # Optional; Proxy server URL for OpenAI API requests; If not set, default value: ""; Example: 'http://proxy.example.com:8080'
+      proxyURL: ''
+      # Optional; Controls randomness of the model's output. Range: 0.0 to 2.0. Lower values (0.0-0.3) = more focused and deterministic, medium values (0.7-1.0) = balanced, higher values (1.5-2.0) = more random and creative; If not set, default value: 1.0; Example: 1.0
+      temperature: 1.0
+      # Optional; Controls depth of reasoning for reasoning models (gpt-5, o-series). Values: "minimal" (fastest), "low" (quick), "medium" (balanced, default), "high" (deep analysis, default for gpt-5-pro); If not set, default value: "medium"; Example: "medium"
+      reasoningEffort: 'medium'
+      # Optional; Controls verbosity and detail level of the model's response. Values: "low" (concise), "medium" (balanced, default), "high" (detailed with examples); If not set, default value: "medium"; Example: "medium"
+      verbosity: 'medium'
+
+# Section with feature flags for controlling feature availability
+featureFlags:
+  # Optional; When true, signals to use v3 search API instead of v4 search API; Default: false; Example: true
+  useV3Search: false
+  # Optional; When false, disables previous version status validation on publish and patch endpoints and restores the legacy check on the publish from CSV endpoint; Default: true; Example: false
+  previousVersionStatusValidation: true
+
+# List of enabled extension services
+#extensions:
+#  - name: linter
+#    baseUrl: http://example.com
+#    pathPrefix: api-linter
