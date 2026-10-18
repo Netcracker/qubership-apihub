@@ -18,15 +18,12 @@
   },
   "scripts": {
     "lint:check": "eslint -c .eslintrc.json . --ext .js,.cjs,.ts,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
-    "lint:fix": "npm run lint:check -- --fix",
+    "lint:fix": "pnpm run lint:check -- --fix",
     "prebuild": "rimraf ./dist",
     "build": "vite build",
     "performance:run-inspect": "vite build --sourcemap=inline -c=vite.performance.config.ts && node --inspect dist/index.es.mjs",
-    "development:link": "npm link && npm link @netcracker/qubership-apihub-json-crawl && npm link @netcracker/qubership-apihub-graphapi && npm link @netcracker/qubership-apihub-ddlapi",
-    "development:unlink": "npm unlink && npm unlink @netcracker/qubership-apihub-json-crawl && npm unlink @netcracker/qubership-apihub-graphapi && npm unlink @netcracker/qubership-apihub-ddlapi",
     "test": "jest --verbose --maxWorkers 3",
-    "test:coverage": "jest --verbose --coverage",
-    "update-lock-file": "update-lock-file @netcracker"
+    "test:coverage": "jest --verbose --coverage"
   },
   "keywords": [
     "json",
@@ -41,9 +38,9 @@
     "simplify"
   ],
   "dependencies": {
-    "@netcracker/qubership-apihub-ddlapi": "dev",
-    "@netcracker/qubership-apihub-graphapi": "dev",
-    "@netcracker/qubership-apihub-json-crawl": "dev",
+    "@netcracker/qubership-apihub-ddlapi": "workspace:^",
+    "@netcracker/qubership-apihub-graphapi": "workspace:^",
+    "@netcracker/qubership-apihub-json-crawl": "workspace:^",
     "fast-equals": "^6.0.2",
     "flatted": "^3.2.9",
     "object-hash": "3.0.0"
@@ -51,7 +48,6 @@
   "devDependencies": {
     "@asyncapi/parser": "3.6.0",
     "@jest/globals": "30.4.1",
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
     "@types/jest": "30.0.0",
     "@types/node": "^24.0.0",
     "@types/object-hash": "3.0.6",
@@ -75,5 +71,8 @@
     "vite-plugin-singlefile": "^2.3.3",
     "vite-plugin-target": "0.1.1",
     "yaml": "2.9.0"
+  },
+  "nx": {
+    "name": "api-unifier"
   }
 }
