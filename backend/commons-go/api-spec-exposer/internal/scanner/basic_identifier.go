@@ -1,7 +1,7 @@
 package scanner
 
 import (
-	"github.com/Netcracker/qubership-apihub-commons-go/api-spec-exposer/config"
+	"github.com/Netcracker/qubership-apihub/backend/commons-go/api-spec-exposer/config"
 )
 
 // BasicIdentifier handles all files that are not identified by other identifiers
