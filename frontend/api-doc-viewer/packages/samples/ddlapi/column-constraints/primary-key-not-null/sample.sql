@@ -1,0 +1,3 @@
+CREATE TABLE t (
+  id integer NOT NULL PRIMARY KEY
+);

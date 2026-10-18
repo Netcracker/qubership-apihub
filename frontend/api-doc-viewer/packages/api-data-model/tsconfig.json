@@ -1,0 +1,34 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@apihub/api-data-model/abstract-model": [
+        "./src/abstract"
+      ],
+      "@apihub/api-data-model/abstract-model/*": [
+        "./src/abstract/*"
+      ],
+      "@apihub/api-data-model/graph-api-model": [
+        "./src/graph-api"
+      ],
+      "@apihub/api-data-model/graph-api-model/*": [
+        "./src/graph-api/*"
+      ],
+      "@apihub/api-data-model/json-schema-model": [
+        "./src/json-schema"
+      ],
+      "@apihub/api-data-model/json-schema-model/*": [
+        "./src/json-schema/*"
+      ],
+      "@apihub/api-data-model": [
+        "./src"
+      ],
+      "@apihub/api-data-model/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "emitDecoratorMetadata": true,
+    "target": "ES2018"
+  },
+  "exclude": [
+    "node_modules",
+    "../src/main",
+    "../src/stories"
+  ],
+  "include": [
+    "src/it/**/*.ts"
+  ]
+}

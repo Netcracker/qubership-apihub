@@ -1,0 +1,16 @@
+.jso-value {
+  font-size: 12px;
+}
+
+.jso-value.text {
+  font-size: 12px;
+  color: rgb(100, 116, 139);
+}
+
+.jso-value.block {
+  padding: 0px 8px;
+  color: rgb(100, 116, 139);
+  background-color: rgb(243, 244, 246);
+  border-radius: 4px;
+  border: 1px solid #D5DCE3;
+}

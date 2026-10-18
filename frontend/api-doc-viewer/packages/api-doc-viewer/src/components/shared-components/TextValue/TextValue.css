@@ -1,0 +1,94 @@
+/* stylelint-disable selector-class-pattern -- BEM modifier classes shared with TSX */
+
+.text-value {
+  font-family: 'Inter Variable', sans-serif;
+  color: black;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+}
+
+.text-value.font-medium {
+  font-weight: 500 !important;
+}
+
+.text-value.font-normal {
+  font-weight: 400 !important;
+}
+
+h1.text-value {
+  font-size: 32px;
+  font-weight: 600;
+}
+
+h2.text-value {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+h3.text-value {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+h4.text-value {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+h5.text-value {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+h6.text-value {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+span.text-value.text-value-body1 {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+span.text-value.text-value-body2 {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.text-value-expander {
+  font-family: 'Inter Variable', sans-serif;
+  line-height: 1;
+}
+
+.text-value-expander--h1 {
+  font-size: 32px;
+}
+
+.text-value-expander--h2 {
+  font-size: 24px;
+}
+
+.text-value-expander--h3 {
+  font-size: 20px;
+}
+
+.text-value-expander--h4 {
+  font-size: 18px;
+}
+
+.text-value-expander--h5 {
+  font-size: 15px;
+}
+
+.text-value-expander--h6 {
+  font-size: 13px;
+}
+
+.text-value-expander--body1 {
+  font-size: 12px;
+}
+
+.text-value-expander--body2 {
+  font-size: 13px;
+}

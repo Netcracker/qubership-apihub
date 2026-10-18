@@ -1,0 +1,48 @@
+type Todo {
+    id: ID!
+    name: String!
+    completed: Boolean
+    color: Color
+
+    "A field that requires an argument"
+    colors(filter: [Color!]!): [Color!]!
+}
+
+enum Color {
+    "Red color"
+    RED
+
+    "Green color"
+    GREEN
+}
+
+input TodoInputType {
+    name: String!
+    completed: Boolean @deprecated(reason: "not used")
+    color: Color = RED
+}
+
+type Query {
+    "A Query with 1 required argument and 1 optional argument"
+    todo(
+        id: ID!
+
+        "A default value of false"
+        isCompleted: Boolean = false
+    ): Todo
+
+    """
+    Returns a list (or null) that can contain null values
+    """
+    todos(
+        "Required argument that is a list that cannot contain null values"
+        ids: [String!]!
+    ): [Todo]
+}
+
+type Mutation {
+    "A Mutation with 1 required argument"
+    create_todo(
+        todo: TodoInputType!
+    ): Todo!
+}

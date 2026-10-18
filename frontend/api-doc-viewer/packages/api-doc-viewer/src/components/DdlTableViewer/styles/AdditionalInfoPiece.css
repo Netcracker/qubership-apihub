@@ -1,0 +1,11 @@
+.additional-info-piece {
+  font-size: 12px;
+}
+
+.additional-info-piece.block {
+  padding: 0 8px;
+  color: rgb(100 116 139);
+  background-color: rgb(243 244 246);
+  border-radius: 4px;
+  border: 1px solid #D5DCE3;
+}

@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@apihub/next-data-model": [
+        "./src"
+      ],
+      "@apihub/next-data-model/*": [
+        "./src/*"
+      ],
+      "@netcracker/qubership-apihub-samples": [
+        "./../samples/src"
+      ],
+      "@netcracker/qubership-apihub-samples/*": [
+        "./../samples/src/*"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ]
+}

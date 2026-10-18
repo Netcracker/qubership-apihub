@@ -1,0 +1,12 @@
+.UxTooltip-shadow {
+    filter: drop-shadow(0px 3px 4px rgb(206, 206, 206))
+}
+
+.UxTooltip-hint {
+    z-index: 1000;
+    display: none;
+}
+
+.UxTooltip-children:hover + .UxTooltip-hint {
+    display: flex;
+}

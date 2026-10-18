@@ -1,0 +1,29 @@
+asyncapi: 3.0.0
+info:
+  title: Sample AsyncAPI
+  version: 1.0.0
+channels:
+  testChannel:
+    address: events.default
+    messages:
+      TestMessage:
+        $ref: '#/components/messages/TestMessage'
+operations:
+  sendOperation:
+    action: send
+    channel:
+      $ref: '#/channels/testChannel'
+    messages:
+      - $ref: '#/components/messages/TestMessage'
+components:
+  messages:
+    TestMessage:
+      name: TestMessage
+      payload:
+        type: object
+        properties:
+          id:
+            type: string
+        required:
+          - id
+      summary: A concise but complete overview of the message purpose, summarising the event semantics, the producing service, the expected delivery guarantees and the recommended consumer handling strategy so that integrators can quickly decide whether subscribing to this message is relevant for their use case. A concise but complete overview of the message purpose, summarising the event semantics, the producing service, the expected delivery guarantees and the recommended consumer handling strategy so that integrators can quickly decide whether subscribing to this message is relevant for their use case. A concise but complete overview of the message purpose, summarising the event semantics, the producing service, the expected delivery guarantees and the recommended consumer handling strategy so that integrators can quickly decide whether subscribing to this message is relevant for their use case. A concise but complete overview of the message purpose, summarising the event semantics, the producing service, the expected delivery guarantees and the recommended consumer handling strategy so that integrators can quickly decide whether subscribing to this message is relevant for their use case. A concise but complete overview of the message purpose, summarising the event semantics, the producing service, the expected delivery guarantees and the recommended consumer handling strategy so that integrators can quickly decide whether subscribing to this message is relevant for their use case. A concise but complete overview of the message purpose, summarising the event semantics, the producing service, the expected delivery guarantees and the recommended consumer handling strategy so that integrators can quickly decide whether subscribing to this message is relevant for their use case. A concise but complete overview of the message purpose, summarising the event semantics, the producing service, the expected delivery guarantees and the recommended consumer handling strategy so that integrators can quickly decide whether subscribing to this message is relevant for their use case. A concise but complete overview of the message purpose, summarising the event semantics, the producing service, the expected delivery guarantees and the recommended consumer handling strategy so that integrators can quickly decide whether subscribing to this message is relevant for their use case. A concise but complete overview of the message purpose, summarising the event semantics, the producing service, the expected delivery guarantees and the recommended consumer handling strategy so that integrators can quickly decide whether subscribing to this message is relevant for their use case. A concise but complete overview of the message purpose, summarising the event semantics, the producing service, the expected delivery guarantees and the recommended consumer handling strategy so that integrators can quickly decide whether subscribing to this message is relevant for their use case. A concise but complete overview of the message purpose, summarising the event semantics, the producing service, the expected delivery guarantees and the recommended consumer handling strategy so that integrators can quickly decide whether subscribing to this message is relevant for their use case. A concise but complete overview of the message purpose, summarising the event semantics, the producing service, the expected delivery guarantees and the recommended consumer handling strategy so that integrators can quickly decide whether subscribing to this message is relevant for their use case. A concise but complete overview of the message purpose, summarising the event semantics, the producing service, the expected delivery guarantees and the recommended consumer handling strategy so that integrators can quickly decide whether subscribing to this message is relevant for their use case. A concise but complete overview of the message purpose, summarising the event semantics, the producing service, the expected delivery guarantees and the recommended consumer handling strategy so that integrators can quickly decide whether subscribing to this message is relevant for their use case. A concise but complete overview of the message purpose, summarising the event semantics, the producing service, the expected delivery guarantees and the recommended consumer handling strategy so that integrators can quickly decide whether subscribing to this message is relevant for their use case. A concise but complete overview of the message purpose, summarising the event semantics, the producing service, the expected delivery guarantees and the recommended consumer handling strategy so that integrators can quickly decide whether subscribing to this message is relevant for their use case.

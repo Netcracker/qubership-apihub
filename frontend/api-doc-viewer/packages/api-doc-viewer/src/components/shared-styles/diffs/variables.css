@@ -1,0 +1,10 @@
+:root {
+  --diffs-background-yellow: rgb(254, 252, 232);
+  --diffs-background-red: rgb(254, 242, 242);
+  --diffs-background-green: rgb(240, 253, 244);
+  --diffs-background-gray: rgb(243, 244, 246);
+
+  --diffs-highlighter-red: #FFD1CD;
+  --diffs-highlighter-green: #D8EEA8;
+  --diffs-highlighter-yellow: #FBF29F;
+}

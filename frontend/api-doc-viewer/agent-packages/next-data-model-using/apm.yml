@@ -1,0 +1,4 @@
+name: next-data-model-using
+version: 1.0.0
+description: Consume next-data-model tree builders and diff node fields inside api-doc-viewer.
+author: Qubership APIHUB
