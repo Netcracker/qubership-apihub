@@ -1,0 +1,44 @@
+[
+  {
+    "component": "api-doc-viewer",
+    "project": "api-doc-viewer",
+    "hash_projects": "api-doc-viewer",
+    "hash_paths": "",
+    "output": "frontend/api-doc-viewer/dist-showcase"
+  },
+  {
+    "component": "apispec-view",
+    "project": "apispec-view",
+    "hash_projects": "apispec-view",
+    "hash_paths": "frontend/apispec-view/.storybook frontend/apispec-view/package.json",
+    "output": "frontend/apispec-view/dist-showcase"
+  },
+  {
+    "component": "class-view",
+    "project": "class-view",
+    "hash_projects": "class-view",
+    "hash_paths": "",
+    "output": "frontend/class-view/dist-showcase"
+  },
+  {
+    "component": "graphapi",
+    "project": "graphapi",
+    "hash_projects": "graphapi",
+    "hash_paths": "",
+    "output": "frontend/graphapi/dist-showcase"
+  },
+  {
+    "component": "rest-playground",
+    "project": "rest-playground",
+    "hash_projects": "rest-playground",
+    "hash_paths": "",
+    "output": "frontend/rest-playground/dist-showcase"
+  },
+  {
+    "component": "ui",
+    "project": "ui-shared",
+    "hash_projects": "ui-shared,ui-portal,ui-agents",
+    "hash_paths": "",
+    "output": "frontend/ui/dist-showcase"
+  }
+]

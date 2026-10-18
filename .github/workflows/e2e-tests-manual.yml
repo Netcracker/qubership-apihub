@@ -1,0 +1,106 @@
+name: Run E2E tests
+
+# A full E2E run against images you name; it builds, publishes, and gates nothing.
+#
+#   runtime: kind            e2e-tests-kind.yml, the Helm charts on Kind with the agent (what CI runs)
+#   runtime: podman-compose  e2e-tests-compose.yml, the compose stack, with no agent
+#
+# Newman skips 1_2_Smoke_Agent under compose, and compose ignores `tag_agent`. Pin a past run with
+# each image's src-<hash> tag: the branch tag moves on the next push. Empty tags fall back to
+# `image_tag`, then to this ref's branch tag. `repoint_images: false` runs upstream's `:dev` images
+# as a baseline. workflow_dispatch allows ten inputs, and this file uses all ten.
+#
+# A push to `e2e-manual/<name>` runs Kind with that ref's own images.
+
+on:
+  workflow_dispatch:
+    inputs:
+      runtime:
+        description: Where to stand the product up. kind is what CI runs.
+        type: choice
+        options:
+          - kind
+          - podman-compose
+        default: kind
+      repoint_images:
+        description: Use our images. Uncheck to run against upstream's :dev, which is the baseline.
+        type: boolean
+        default: true
+      image_owner:
+        description: "ghcr owner (TEMPORARY: only needed while the prototype publishes under a personal account)"
+        type: string
+        default: ''
+      image_tag:
+        description: Tag for all images unless overridden below. Empty means this ref's branch tag.
+        type: string
+        default: ''
+      tag_portal_backend:
+        description: portal-backend tag, e.g. src-0bf458480a88ebc6
+        type: string
+        default: ''
+      tag_build_task_consumer:
+        description: build-task-consumer tag
+        type: string
+        default: ''
+      tag_ui:
+        description: ui tag
+        type: string
+        default: ''
+      tag_api_linter_service:
+        description: api-linter-service tag
+        type: string
+        default: ''
+      tag_agents_backend:
+        description: agents-backend tag
+        type: string
+        default: ''
+      tag_agent:
+        description: agent tag (kind only)
+        type: string
+        default: ''
+  push:
+    branches: ['e2e-manual/**']
+
+permissions:
+  contents: read
+
+jobs:
+  # Exactly one job runs. A push has no inputs, so `inputs.runtime` is empty and means Kind.
+  kind:
+    if: github.event_name != 'workflow_dispatch' || inputs.runtime == 'kind'
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/e2e-tests-kind.yml
+    with:
+      # Always full.
+      tier: full
+      # Chosen by trigger: Actions compares false == null as true, so an expression that tested the
+      # input for null could never yield false.
+      repoint_images: ${{ github.event_name != 'workflow_dispatch' || inputs.repoint_images }}
+      image_owner: ${{ inputs.image_owner || '' }}
+      image_tag: ${{ inputs.image_tag || '' }}
+      tag_portal_backend: ${{ inputs.tag_portal_backend || '' }}
+      tag_build_task_consumer: ${{ inputs.tag_build_task_consumer || '' }}
+      tag_ui: ${{ inputs.tag_ui || '' }}
+      tag_api_linter_service: ${{ inputs.tag_api_linter_service || '' }}
+      tag_agents_backend: ${{ inputs.tag_agents_backend || '' }}
+      tag_agent: ${{ inputs.tag_agent || '' }}
+
+  podman-compose:
+    if: github.event_name == 'workflow_dispatch' && inputs.runtime == 'podman-compose'
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/e2e-tests-compose.yml
+    with:
+      tier: full
+      # Kept identical to the Kind job's expression.
+      repoint_images: ${{ github.event_name != 'workflow_dispatch' || inputs.repoint_images }}
+      image_owner: ${{ inputs.image_owner || '' }}
+      image_tag: ${{ inputs.image_tag || '' }}
+      tag_portal_backend: ${{ inputs.tag_portal_backend || '' }}
+      tag_build_task_consumer: ${{ inputs.tag_build_task_consumer || '' }}
+      tag_ui: ${{ inputs.tag_ui || '' }}
+      tag_api_linter_service: ${{ inputs.tag_api_linter_service || '' }}
+      tag_agents_backend: ${{ inputs.tag_agents_backend || '' }}

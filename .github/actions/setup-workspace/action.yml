@@ -1,0 +1,120 @@
+name: Set up the pnpm workspace
+description: Node, pnpm, the pnpm store cache, and the Nx cache, shared by every job.
+
+inputs:
+  cache-scope:
+    description: >
+      Nx cache key fragment. Defaults to the job id; a matrix job passes its matrix value, because
+      `github.job` is the same for every leg and the legs would overwrite each other's cache.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    # Reads the pnpm version from `packageManager`. v6.1.0 exactly: pnpm 12 support landed there, and
+    # the floating `v6` tag still points at v6.0.10.
+    - uses: pnpm/action-setup@v6.1.0
+      with:
+        run_install: false
+
+    - uses: actions/setup-node@v6
+      with:
+        node-version: '24'
+
+    - name: Locate the pnpm store
+      id: store
+      shell: bash
+      run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+
+    # Caches the store, not node_modules, whose links actions/cache does not restore usefully.
+    # restore-keys lets a lockfile change restore the previous store and download only the difference.
+    - name: Cache the pnpm store
+      id: pnpm-store
+      uses: actions/cache@v6
+      with:
+        path: ${{ steps.store.outputs.path }}
+        key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: |
+          pnpm-store-${{ runner.os }}-
+
+    - name: Resolve the Nx cache scope
+      id: scope
+      shell: bash
+      run: |
+        set -euo pipefail
+        scope='${{ inputs.cache-scope }}'
+        [ -n "$scope" ] || scope='${{ github.job }}'
+        # Cache keys may not contain commas, and matrix values such as `ui-portal,ui-agents` do.
+        scope="$(printf '%s' "$scope" | tr -c 'A-Za-z0-9._-' '-')"
+        echo "value=$scope" >> "$GITHUB_OUTPUT"
+        echo "nx cache scope: $scope"
+
+    # The Nx cache is in ~/.nx; .nx is the fallback Nx uses when it cannot use ~/.nx. Read cache hits
+    # from Nx's `Cache: N/N hit` line: a successful restore does not mean Nx used the cache.
+    - name: Cache the Nx computation cache
+      uses: actions/cache@v6
+      with:
+        path: |
+          .nx
+          ~/.nx
+        # Scoped by job: otherwise `plan`, which builds nothing, saves a near-empty cache first and `js`
+        # restores it. The run id makes each run save a new entry; restore-keys fall back to develop.
+        key: nx-${{ runner.os }}-${{ github.ref_name }}-${{ steps.scope.outputs.value }}-${{ github.run_id }}
+        restore-keys: |
+          nx-${{ runner.os }}-${{ github.ref_name }}-${{ steps.scope.outputs.value }}-
+          nx-${{ runner.os }}-develop-${{ steps.scope.outputs.value }}-
+
+    - name: Install
+      shell: bash
+      run: |
+        # pipefail: tee would otherwise hide a failed install.
+        set -o pipefail
+        pnpm install --frozen-lockfile 2>&1 | tee "$RUNNER_TEMP/pnpm-install.log"
+      env:
+        # The screenshot suites use Chrome in a container, and husky would install git hooks.
+        PUPPETEER_SKIP_DOWNLOAD: '1'
+        HUSKY: '0'
+
+    # Values for tools/ci/cache-summary.sh. `downloaded N` is pnpm's own count of store misses.
+    - name: Record what the caches delivered
+      shell: bash
+      run: |
+        set -uo pipefail
+        downloaded="$(sed 's/\x1b\[[0-9;]*m//g' "$RUNNER_TEMP/pnpm-install.log" 2>/dev/null \
+          | grep -oE 'downloaded [0-9]+' | tail -1 | grep -oE '[0-9]+' || true)"
+        # pnpm 12 verifies the lockfile against its supply-chain policies and reports the time taken;
+        # 11-30 s per job on a runner.
+        policy="$(sed 's/\x1b\[[0-9;]*m//g' "$RUNNER_TEMP/pnpm-install.log" 2>/dev/null \
+          | grep -oE 'supply-chain policies \(([^)]*)\)' | tail -1 | sed 's/.*(//;s/)//' || true)"
+        {
+          echo "CACHE_NX_SCOPE=${{ steps.scope.outputs.value }}"
+          echo "CACHE_PNPM_STORE=${{ steps.pnpm-store.outputs.cache-hit == 'true' && 'exact key hit' || 'restored by prefix' }}"
+          echo "CACHE_PNPM_DOWNLOADED=${downloaded:-?}"
+          echo "CACHE_PNPM_POLICY=${policy:-not reported}"
+        } >> "$GITHUB_ENV"
+
+    # Prunes the store on develop, only on the run that saves a new store key after a lockfile change,
+    # so superseded packages are not carried forward. Delete the step if a major upgrade also frees
+    # next to nothing (a patch bump freed 120 KB of 2 GB).
+    - name: Prune the store on the run that will save it
+      if: github.ref_name == 'develop' && steps.pnpm-store.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        store='${{ steps.store.outputs.path }}'
+        # Kilobytes: a normal prune frees a few hundred KB, which `du -sm` rounds to 0.
+        before="$(du -sk "$store" | cut -f1)"
+        pnpm store prune
+        after="$(du -sk "$store" | cut -f1)"
+        freed=$((before - after))
+        printf 'store prune: %s KB -> %s KB (freed %s KB)\n' "$before" "$after" "$freed"
+        {
+          echo "### pnpm store"
+          printf -- '- pruned before save: **%s KB → %s KB**, freed **%s KB**\n' \
+            "$before" "$after" "$freed"
+          if [ "$freed" -le 0 ]; then
+            echo '- freed nothing. If that repeats on a run that supersedes a dependency,'
+            echo '  this step is theatre and belongs deleted rather than kept for tidiness.'
+          fi
+        } >> "$GITHUB_STEP_SUMMARY"

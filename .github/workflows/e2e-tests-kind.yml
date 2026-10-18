@@ -1,0 +1,590 @@
+name: Run E2E tests using Kind
+
+# E2E on a Kind cluster, with the product installed by its Helm charts: Newman over the REST API,
+# then the Playwright Portal project from tests/ui-tests. Unlike compose, this covers the charts,
+# the ingress, TLS, the custom CA mount, and the agent. The charts, the agent chart, and both suites
+# come from this commit; only the pinned ingress-nginx manifest is downloaded.
+#
+# Keep the inputs shared with e2e-tests-compose.yml identical: e2e-tests-manual.yml passes either
+# the same values.
+
+on:
+  workflow_call:
+    inputs:
+      repoint_images:
+        description: Deploy this run's images instead of upstream ':dev'.
+        required: false
+        type: boolean
+        default: true
+      tier:
+        description: >-
+          full runs everything; smoke runs the Portal smoke collection and the @smoke-tagged
+          Playwright tests. Cluster setup is the same either way and is most of the fixed cost.
+        required: false
+        type: string
+        default: full
+      image_owner:
+        description: >-
+          ghcr owner the six images are pulled from. Defaults to this repository's owner.
+          TEMPORARY, for the same reason as in e2e-tests-compose.yml: the prototype publishes under a
+          personal account instead of the organisation.
+        required: false
+        type: string
+        default: ''
+      image_tag:
+        description: >-
+          Tag for all six images, when the per-image tags below are left empty. Defaults to
+          this ref's branch tag.
+        required: false
+        type: string
+        default: ''
+      tag_portal_backend:
+        description: Overrides image_tag for portal-backend. A src-<hash> tag pins exact content.
+        required: false
+        type: string
+        default: ''
+      tag_build_task_consumer:
+        description: Overrides image_tag for build-task-consumer.
+        required: false
+        type: string
+        default: ''
+      tag_ui:
+        description: Overrides image_tag for ui.
+        required: false
+        type: string
+        default: ''
+      tag_api_linter_service:
+        description: Overrides image_tag for api-linter-service.
+        required: false
+        type: string
+        default: ''
+      tag_agents_backend:
+        description: Overrides image_tag for agents-backend.
+        required: false
+        type: string
+        default: ''
+      tag_agent:
+        description: Overrides image_tag for agent. Kind only; the compose stack runs no agent.
+        required: false
+        type: string
+        default: ''
+
+env:
+  # The host the chart's ingress serves and the TLS certificate names. localtest.me resolves
+  # to 127.0.0.1 in public DNS, and Kind maps the node's 80 and 443 onto the runner, so this
+  # reaches the ingress controller with no /etc/hosts edit.
+  APIHUB_HOST: qubership-apihub.localtest.me
+  NAMESPACE: qubership-apihub
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    # Setup costs more than under compose (90), and a timeout mid-suite leaves no report.
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-scope: e2e-kind
+
+      - name: Install envsubst
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext-base
+
+      # Which images, as a Helm values file for the APIHUB release and as outputs for the agent
+      # release. The chart's `qubershipApihubBackend` is our `apihub-portal-backend`.
+      - name: Resolve the images
+        id: images
+        shell: bash
+        run: |
+          set -euo pipefail
+          values="$RUNNER_TEMP/images-values.yaml"
+          if [ '${{ inputs.repoint_images }}' != 'true' ]; then
+            # The baseline. No override at all, so each chart deploys what its own
+            # local-k8s-values.yaml names: ghcr.io/netcracker/...:dev.
+            echo "repoint=false" >> "$GITHUB_OUTPUT"
+            echo "baseline: the charts' own ghcr.io/netcracker images"
+            exit 0
+          fi
+
+          ref='${{ github.ref }}'
+          branch_tag="$(echo "$ref" | sed 's@refs/tags/@@;s@refs/heads/@@;s@refs/pull/@pull/@;s@^main$@latest@;s@^develop$@dev@;s@^release$@next@;s@/@-@g;')"
+
+          owner='${{ inputs.image_owner }}'
+          [ -n "$owner" ] || owner='${{ github.repository_owner }}'
+          owner="$(echo "$owner" | tr '[:upper:]' '[:lower:]')"
+
+          default_tag='${{ inputs.image_tag }}'
+          [ -n "$default_tag" ] || default_tag="$branch_tag"
+          t_pb='${{ inputs.tag_portal_backend }}';      [ -n "$t_pb" ] || t_pb="$default_tag"
+          t_bc='${{ inputs.tag_build_task_consumer }}';  [ -n "$t_bc" ] || t_bc="$default_tag"
+          t_ui='${{ inputs.tag_ui }}';                   [ -n "$t_ui" ] || t_ui="$default_tag"
+          t_al='${{ inputs.tag_api_linter_service }}';   [ -n "$t_al" ] || t_al="$default_tag"
+          t_ab='${{ inputs.tag_agents_backend }}';       [ -n "$t_ab" ] || t_ab="$default_tag"
+          t_ag='${{ inputs.tag_agent }}';                [ -n "$t_ag" ] || t_ag="$default_tag"
+
+          cat > "$values" <<EOF
+          qubershipApihubBackend:
+            image:
+              repository: 'ghcr.io/$owner/apihub-portal-backend'
+              tag: '$t_pb'
+          qubershipApihubBuildTaskConsumer:
+            image:
+              repository: 'ghcr.io/$owner/apihub-build-task-consumer'
+              tag: '$t_bc'
+          qubershipApihubUi:
+            image:
+              repository: 'ghcr.io/$owner/apihub-ui'
+              tag: '$t_ui'
+          qubershipApiLinterService:
+            image:
+              repository: 'ghcr.io/$owner/apihub-api-linter-service'
+              tag: '$t_al'
+          qubershipApihubAgentsBackend:
+            image:
+              repository: 'ghcr.io/$owner/apihub-agents-backend'
+              tag: '$t_ab'
+          EOF
+          {
+            echo "repoint=true"
+            echo "owner=$owner"
+            echo "values=$values"
+            echo "agent_repository=ghcr.io/$owner/apihub-agent"
+            echo "agent_tag=$t_ag"
+          } >> "$GITHUB_OUTPUT"
+          sed 's/^/  /' "$values"
+          echo "  agent: ghcr.io/$owner/apihub-agent:$t_ag"
+
+      # The images are private, and inside Kind the node pulls them, not the runner. kubelet reads a
+      # docker config at /var/lib/kubelet/config.json, Kind's documented way to use a private registry.
+      # `kind load` does not help `:latest`, whose pull policy is Always, and neither chart exposes
+      # imagePullSecrets.
+      - name: Give the Kind node a ghcr credential
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          auth="$(printf '%s:%s' '${{ github.actor }}' "$GH_TOKEN" | base64 -w0)"
+          echo "::add-mask::$auth"
+          mkdir -p "$RUNNER_TEMP/kind-registry"
+          umask 077
+          printf '{"auths":{"ghcr.io":{"auth":"%s"}}}\n' "$auth" > "$RUNNER_TEMP/kind-registry/config.json"
+          echo "wrote a ghcr.io credential for ${{ github.actor }}"
+
+      - name: Write the Kind configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/kind-config.yaml" <<EOF
+          kind: Cluster
+          apiVersion: kind.x-k8s.io/v1alpha4
+          nodes:
+            - role: control-plane
+              extraMounts:
+                - hostPath: $RUNNER_TEMP/kind-registry/config.json
+                  containerPath: /var/lib/kubelet/config.json
+              extraPortMappings:
+                - containerPort: 80
+                  hostPort: 80
+                  protocol: TCP
+                - containerPort: 443
+                  hostPort: 443
+                  protocol: TCP
+          EOF
+          cat "$RUNNER_TEMP/kind-config.yaml"
+
+      # v1.15.0 installs kind v0.33.0 and kubectl v1.37.0 unless told otherwise.
+      - name: Create the Kind cluster
+        uses: helm/kind-action@v1.15.0
+        with:
+          cluster_name: apihub-e2e
+          config: ${{ runner.temp }}/kind-config.yaml
+          wait: 120s
+
+      # Pinned: an unpinned manifest changes the ingress under an unchanged commit. The APIHUB
+      # release creates Ingress objects, which the API server rejects until the webhook certificate
+      # is patched in, so wait for the certificate. The admission jobs delete themselves on
+      # completion (`ttlSecondsAfterFinished: 0`), so `kubectl wait job` can fail with `not found`.
+      - name: Install the ingress controller
+        shell: bash
+        run: |
+          set -euo pipefail
+          helm version --short
+          kubectl version --client
+          kubectl apply -f \
+            https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.15.1/deploy/static/provider/kind/deploy.yaml
+          end=$((SECONDS + 180))
+          until [ -n "$(kubectl get validatingwebhookconfiguration ingress-nginx-admission \
+                  --output=jsonpath='{.webhooks[0].clientConfig.caBundle}' 2>/dev/null)" ]; do
+            if [ $SECONDS -ge $end ]; then
+              echo "::error::the ingress-nginx admission webhook has no CA bundle after 180s"
+              kubectl get jobs,pods --namespace ingress-nginx || true
+              exit 1
+            fi
+            sleep 2
+          done
+          echo "admission webhook certificate patched in after ${SECONDS}s"
+          kubectl rollout status --namespace ingress-nginx deployment/ingress-nginx-controller --timeout=180s
+
+      # Staged in RUNNER_TEMP: generate-local-tls.sh writes a CA key into the chart directory, and the
+      # secrets file holds generated credentials.
+      - name: Stage the charts
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$RUNNER_TEMP/helm"
+          cp -r deploy/helm-templates "$RUNNER_TEMP/helm"
+          cp -r backend/agent/helm-templates/qubership-apihub-agent "$RUNNER_TEMP/helm/qubership-apihub-agent"
+          ls "$RUNNER_TEMP/helm"
+
+      # Generated per run; none of these values is a secret.
+      - name: Generate the stack's own credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          openssl genpkey -algorithm RSA -out rsakey.pem -pkeyopt rsa_keygen_bits:2048 2>/dev/null
+          key="$(base64 -w0 rsakey.pem)"
+          # openssl, not `tr -dc … </dev/urandom | head -c N`: under pipefail that dies of
+          # SIGPIPE with exit 141 and prints nothing. See e2e-tests-compose.yml.
+          pass="$(openssl rand -hex 12)"
+          token="$(openssl rand -hex 30)"
+          echo "::add-mask::$key"
+          echo "::add-mask::$pass"
+          echo "::add-mask::$token"
+          {
+            echo "JWT_PRIVATE_KEY=$key"
+            # Must differ from the suite's sysadmin address; a collision failed 14 Playwright tests.
+            echo "APIHUB_ADMIN_EMAIL=zero-day-admin@apihub.local"
+            echo "APIHUB_ADMIN_PASSWORD=$pass"
+            echo "APIHUB_ACCESS_TOKEN=$token"
+          } >> "$GITHUB_ENV"
+          rm -f rsakey.pem
+          echo "generated a 2048-bit key, a 24-character password and a 60-character token"
+
+      - name: Generate TLS and template the secrets
+        shell: bash
+        working-directory: ${{ runner.temp }}/helm/local-k8s-quickstart
+        env:
+          # The template names it; the AI linter is disabled in local-k8s-values.yaml.
+          OPENAI_API_KEY: ''
+        run: |
+          set -euo pipefail
+          sh scripts/generate-local-tls.sh
+          APIHUB_TLS_CRT="$(base64 -w0 < qubership-apihub/certs/tls.crt)"
+          APIHUB_TLS_KEY="$(base64 -w0 < qubership-apihub/certs/tls.key)"
+          echo "::add-mask::$APIHUB_TLS_KEY"
+          export APIHUB_TLS_CRT APIHUB_TLS_KEY
+          envsubst < qubership-apihub/local-secrets.yaml.template > qubership-apihub/local-secrets.yaml
+          # envsubst writes an empty string for an unset variable and exits 0.
+          for v in JWT_PRIVATE_KEY APIHUB_ACCESS_TOKEN APIHUB_ADMIN_EMAIL APIHUB_ADMIN_PASSWORD APIHUB_TLS_CRT APIHUB_TLS_KEY; do
+            [ -n "${!v}" ] || { echo "::error::$v is empty"; exit 1; }
+          done
+          ! grep -n "''" qubership-apihub/local-secrets.yaml | grep -v apiKey || {
+            echo "::error::local-secrets.yaml has an empty value other than the OpenAI key"
+            exit 1
+          }
+
+      - name: Deploy PostgreSQL
+        working-directory: ${{ runner.temp }}/helm/local-k8s-quickstart
+        run: |
+          helm upgrade --install postgres-db ./postgres-db \
+            --namespace postgres-db \
+            --create-namespace \
+            --wait \
+            --timeout 5m
+
+      - name: Create the custom CA secret
+        working-directory: ${{ runner.temp }}/helm/local-k8s-quickstart
+        run: sh scripts/create-custom-ca-secrets.sh
+
+      - name: Deploy APIHUB
+        shell: bash
+        working-directory: ${{ runner.temp }}/helm/local-k8s-quickstart
+        run: |
+          set -euo pipefail
+          args=(
+            --namespace "$NAMESPACE"
+            --create-namespace
+            --values qubership-apihub/local-k8s-values.yaml
+            --values qubership-apihub/local-secrets.yaml
+          )
+          # Last, so it overrides the repositories and tags local-k8s-values.yaml names.
+          images='${{ steps.images.outputs.values }}'
+          [ -z "$images" ] || args+=(--values "$images")
+          helm upgrade --install apihub ../qubership-apihub "${args[@]}" --wait --timeout 10m
+
+      # Pods resolve the ingress host to the controller, so the backend's external URLs work inside
+      # the cluster. This restarts every deployment, so the rollout is awaited again.
+      - name: Point the pods at the ingress
+        shell: bash
+        working-directory: ${{ runner.temp }}/helm/local-k8s-quickstart
+        run: |
+          set -euo pipefail
+          sh scripts/6-patch-apihub-hosts.sh
+          for d in $(kubectl get deployments --namespace "$NAMESPACE" --output=name); do
+            kubectl rollout status "$d" --namespace "$NAMESPACE" --timeout=5m
+          done
+
+      # Through the ingress with TLS, as both suites connect: the page, API-key auth, and agents-backend.
+      - name: Wait for APIHUB to answer
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://$APIHUB_HOST"
+          end=$((SECONDS + 300))
+          while [ $SECONDS -lt $end ]; do
+            login="$(curl -ks -o /dev/null -w '%{http_code}' "$url/login" || true)"
+            key="$(curl -ks -o /dev/null -w '%{http_code}' -H "api-key: $APIHUB_ACCESS_TOKEN" "$url/api/v2/auth/apiKey" || true)"
+            agents="$(curl -ks -o /dev/null -w '%{http_code}' -H "api-key: $APIHUB_ACCESS_TOKEN" "$url/agents-backend/api/v2/agents" || true)"
+            if [ "$login" = 200 ] && [ "$key" = 200 ] && [ "$agents" = 200 ]; then
+              echo "up after ${SECONDS}s"
+              exit 0
+            fi
+            echo "  login $login, api key $key, agents-backend $agents; retrying"
+            sleep 5
+          done
+          echo "::error::APIHUB did not answer 200 on all three within 5 minutes"
+          kubectl get pods --all-namespaces
+          exit 1
+
+      # --set-file keeps the token off the command line.
+      - name: Deploy the APIHUB agent
+        shell: bash
+        run: |
+          set -euo pipefail
+          chart="$RUNNER_TEMP/helm/qubership-apihub-agent"
+          token_file="$RUNNER_TEMP/apihub-agent-access-token"
+          printf '%s' "$APIHUB_ACCESS_TOKEN" > "$token_file"
+          args=(
+            --namespace "$NAMESPACE"
+            --values "$chart/local-k8s-values.yaml"
+            --set-string "qubershipApihubAgent.env.technicalParameters.agentHost=qubership-apihub-agent.$NAMESPACE.svc.cluster.local"
+            --set-file "qubershipApihubAgent.env.technicalParameters.apihub.accessToken=$token_file"
+          )
+          if [ '${{ steps.images.outputs.repoint }}' = 'true' ]; then
+            tag='${{ steps.images.outputs.agent_tag }}'
+            args+=(
+              --set-string "qubershipApihubAgent.image.repository=${{ steps.images.outputs.agent_repository }}"
+              --set-string "qubershipApihubAgent.image.tag=$tag"
+              --set-string "qubershipApihubAgent.version=$tag"
+            )
+          fi
+          status=0
+          helm upgrade --install qubership-apihub-agent "$chart" "${args[@]}" --wait --timeout 5m || status=$?
+          rm -f "$token_file"
+          exit "$status"
+
+      - name: Check the agent carries the access token
+        shell: bash
+        run: |
+          set -euo pipefail
+          if kubectl get secret qubership-apihub-agent-config-secret \
+              --namespace "$NAMESPACE" --output=jsonpath='{.data.config\.yaml}' \
+              | base64 --decode | grep --fixed-strings --quiet -- "$APIHUB_ACCESS_TOKEN"; then
+            echo "the agent's configuration holds the generated access token"
+          else
+            echo "::error::the agent's configuration does not hold the generated access token"
+            exit 1
+          fi
+
+      # Reads the images back from the deployments: Helm ignores a values key the chart does not read,
+      # and the release still succeeds with upstream's image.
+      - name: Check which images the stack runs
+        shell: bash
+        run: |
+          set -euo pipefail
+          images="$(kubectl get deployments --namespace "$NAMESPACE" \
+            --output=jsonpath='{range .items[*]}{range .spec.template.spec.containers[*]}{.image}{"\n"}{end}{end}')"
+          echo "$images" | sed 's/^/  /'
+          total="$(echo "$images" | grep -c . || true)"
+          upstream="$(echo "$images" | grep -c '^ghcr.io/netcracker/' || true)"
+          if [ '${{ steps.images.outputs.repoint }}' = 'true' ]; then
+            ours="$(echo "$images" | grep -c "^ghcr.io/${{ steps.images.outputs.owner }}/" || true)"
+            echo "images: $total, ours: $ours, upstream: $upstream"
+            [ "$total" = 6 ] && [ "$ours" = 6 ] && [ "$upstream" = 0 ] || {
+              echo "::error::expected 6 images, all from ghcr.io/${{ steps.images.outputs.owner }}"
+              exit 1
+            }
+          else
+            echo "images: $total, upstream: $upstream"
+            [ "$total" = 6 ] && [ "$upstream" = 6 ] || {
+              echo "::error::expected 6 images, all from ghcr.io/netcracker"
+              exit 1
+            }
+          fi
+          {
+            echo '### Images'
+            echo
+            echo "$images" | sed 's/^/- `/;s/$/`/'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run the postman collections
+        id: newman
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Compose's collections plus 1_2_Smoke_Agent, which needs the agent this stack deploys.
+          if [ '${{ inputs.tier }}' = 'smoke' ]; then
+            collections='1_1_Smoke_Portal'
+          else
+            collections='1_1_Smoke_Portal 1_2_Smoke_Agent 1_3_Linter_Portal 2_1_Negative_Portal 3_1_Stories_Bugs 3_2_Stories_Bugs 4_Access_control'
+          fi
+          # Published before anything can fail, so the results check fails closed. See e2e-tests-compose.yml.
+          echo "collections=$collections" >> "$GITHUB_OUTPUT"
+
+          npm install -g newman newman-reporter-htmlextra
+
+          collection_dir=tests/postman-collections/e2e
+          env_file="$RUNNER_TEMP/ci.postman_environment.json"
+          reports="$RUNNER_TEMP/newman-reports"
+          mkdir -p "$reports"
+          envsubst < tests/postman-collections/environment/local.postman_environment.json > "$env_file"
+
+          # Through the ingress: a port-forward can drop during a long run. --insecure because this job
+          # generated the CA.
+          node -e '
+            const fs = require("node:fs")
+            const [file, host] = process.argv.slice(1)
+            const env = JSON.parse(fs.readFileSync(file, "utf8"))
+            const v = env.values.find((x) => x.key === "SERVER_HOST")
+            if (!v) throw new Error(`no SERVER_HOST in ${file}`)
+            v.value = host
+            fs.writeFileSync(file, JSON.stringify(env, null, 2))
+          ' "$env_file" "https://$APIHUB_HOST"
+
+          # -x is not the verdict; the next step is. See e2e-tests-compose.yml.
+          for c in $collections; do
+            echo "=== $c ==="
+            newman run "$collection_dir/${c}.postman_collection.json" \
+              -e "$env_file" -x --insecure \
+              --timeout-request 120000 \
+              --timeout 1800000 \
+              --reporters cli,htmlextra,json \
+              --reporter-htmlextra-export "$reports/${c}.html" \
+              --reporter-json-export "$reports/${c}.json"
+          done
+
+      - name: Check the postman results
+        id: newman_results
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          node tools/ci/newman-results-check.js \
+            "$RUNNER_TEMP/newman-reports" '${{ steps.newman.outputs.collections }}'
+
+      - name: Install Playwright browsers
+        working-directory: tests/ui-tests
+        run: pnpm exec playwright install --with-deps chromium
+
+      # No PLAYGROUND_BACKEND_HOST: allowedHostsForProxy already admits the ingress host.
+      - name: Run the Playwright suite
+        id: playwright
+        continue-on-error: true
+        working-directory: tests/ui-tests
+        env:
+          BASE_URL: https://${{ env.APIHUB_HOST }}
+          TEST_USER_PASSWORD: ${{ env.APIHUB_ADMIN_PASSWORD }}
+          CLEAR_TD: skip
+        run: |
+          # Same arguments as e2e-tests-compose.yml; playwright.config.ts sets 10 workers under CI.
+          args='--project=Portal --grep-invert=@flaky'
+          [ '${{ inputs.tier }}' = 'smoke' ] && args="$args --grep=@smoke"
+          echo "playwright $args"
+          pnpm exec playwright test $args
+
+      - name: Page snapshots for the failures
+        if: always() && steps.playwright.outcome == 'failure'
+        shell: bash
+        run: |
+          set -euo pipefail
+          found=0
+          while IFS= read -r f; do
+            found=$((found + 1))
+            echo "::group::${f#tests/ui-tests/temp/test-results/}"
+            cat "$f"
+            echo "::endgroup::"
+          done < <(find tests/ui-tests/temp/test-results -name 'error-context.md' 2>/dev/null | sort)
+          echo "printed $found page snapshot(s)"
+
+      # Into RUNNER_TEMP rather than the workspace root, so the upload names exactly these
+      # files and nothing a test left behind.
+      - name: Collect Kubernetes logs
+        if: always()
+        shell: bash
+        run: |
+          out="$RUNNER_TEMP/kubernetes-logs"
+          mkdir -p "$out"
+          kubectl get all --all-namespaces --output=wide > "$out/resources.log" 2>&1 || true
+          kubectl get events --all-namespaces --sort-by='.metadata.creationTimestamp' > "$out/events.log" 2>&1 || true
+          for ns in postgres-db "$NAMESPACE" ingress-nginx; do
+            for pod in $(kubectl get pods --namespace "$ns" --output=name 2>/dev/null); do
+              name="$ns-${pod#pod/}"
+              kubectl logs --namespace "$ns" "$pod" --all-containers --prefix > "$out/$name.log" 2>&1 || true
+              kubectl describe --namespace "$ns" "$pod" > "$out/$name-describe.log" 2>&1 || true
+            done
+          done
+          ls "$out"
+
+      - name: Upload Kubernetes logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: kubernetes-logs
+          path: ${{ runner.temp }}/kubernetes-logs
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload Newman reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: newman-reports
+          path: ${{ runner.temp }}/newman-reports
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload Playwright reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-reports
+          path: |
+            tests/ui-tests/reports
+            tests/ui-tests/temp/test-results
+          if-no-files-found: warn
+          retention-days: 7
+
+      # newman passes -x and always succeeds, so newman_results decides the verdict.
+      - name: Verdict
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          newman='${{ steps.newman.outcome }}'
+          results='${{ steps.newman_results.outcome }}'
+          play='${{ steps.playwright.outcome }}'
+          {
+            echo '### E2E on Kind'
+            echo
+            echo '| | |'
+            echo '|---|---|'
+            echo "| images | \`${{ steps.images.outputs.repoint == 'true' && 'this run''s' || 'upstream :dev' }}\` |"
+            echo "| tier | \`${{ inputs.tier }}\` |"
+            echo "| postman collections | \`${{ steps.newman.outputs.collections }}\` |"
+            echo "| postman collections, run | \`$newman\` |"
+            echo "| postman collections, results | \`$results\` |"
+            echo "| playwright, Portal | \`$play\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          [ "$newman" = 'success' ] && [ "$results" = 'success' ] && [ "$play" = 'success' ] || {
+            echo "::error::newman=$newman newman_results=$results playwright=$play"
+            exit 1
+          }

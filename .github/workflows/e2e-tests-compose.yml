@@ -1,0 +1,363 @@
+name: Run E2E tests using Podman Compose
+
+# Brings the product up under podman compose on one runner, then runs Newman over the REST API and
+# the Playwright Portal project from tests/ui-tests.
+#
+#   repoint_images: true    runs the images this CI run published
+#   repoint_images: false   runs upstream's :dev images, as a baseline; nothing else changes
+#
+# A failure that also fails on the baseline is not caused by this workspace. One that passes on
+# the baseline may also come from upstream :dev having moved on.
+
+on:
+  workflow_call:
+    inputs:
+      repoint_images:
+        description: Point the compose file at this run's images instead of upstream ':dev'.
+        required: false
+        type: boolean
+        default: true
+      tier:
+        description: >-
+          full runs everything; smoke runs the Portal smoke collection and the @smoke-tagged
+          Playwright tests. Setup is the same either way and is most of the fixed cost.
+        required: false
+        type: string
+        default: full
+      image_owner:
+        description: >-
+          ghcr owner the five images are pulled from. Defaults to this repository's owner.
+          TEMPORARY: it exists only because the prototype publishes under a personal account
+          instead of the organisation. Once this is the real monorepo, owner and repository
+          owner are the same thing and this input should be deleted.
+        required: false
+        type: string
+        default: ''
+      image_tag:
+        description: >-
+          Tag for all five images, when the per-image tags below are left empty. Defaults to
+          this ref's branch tag.
+        required: false
+        type: string
+        default: ''
+      tag_portal_backend:
+        description: Overrides image_tag for portal-backend. A src-<hash> tag pins exact content.
+        required: false
+        type: string
+        default: ''
+      tag_build_task_consumer:
+        description: Overrides image_tag for build-task-consumer.
+        required: false
+        type: string
+        default: ''
+      tag_ui:
+        description: Overrides image_tag for ui.
+        required: false
+        type: string
+        default: ''
+      tag_api_linter_service:
+        description: Overrides image_tag for api-linter-service.
+        required: false
+        type: string
+        default: ''
+      tag_agents_backend:
+        description: Overrides image_tag for agents-backend.
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    # The first full run took 57.2 minutes, 49 of them in Playwright.
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-scope: e2e
+
+      - name: Install podman and envsubst
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman podman-compose gettext-base
+
+      # This workspace's images are private; upstream's are not.
+      - name: Log in to ghcr
+        run: |
+          set -euo pipefail
+          echo '${{ secrets.GITHUB_TOKEN }}' \
+            | podman login ghcr.io -u '${{ github.actor }}' --password-stdin
+
+      # Staged in RUNNER_TEMP: the next steps write generated credentials into these files and repoint
+      # the images. Every volume and env_file in docker-compose.yml is relative to this directory.
+      - name: Stage the compose files
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf "$RUNNER_TEMP/compose"
+          cp -r deploy/docker-compose/apihub-generic "$RUNNER_TEMP/compose"
+          # postgres bind-mounts ./data, which exists in the tree only through data/.gitkeep.
+          [ -d "$RUNNER_TEMP/compose/data" ] || {
+            echo "::error::deploy/docker-compose/apihub-generic/data is missing from the checkout"
+            exit 1
+          }
+          ls -A "$RUNNER_TEMP/compose"
+
+      # Exactly what generate_env_and_up_compose.sh does locally, minus the random email.
+      - name: Generate the stack's own credentials
+        id: creds
+        shell: bash
+        run: |
+          set -euo pipefail
+          openssl genpkey -algorithm RSA -out rsakey.pem -pkeyopt rsa_keygen_bits:2048 2>/dev/null
+          key="$(base64 -w0 rsakey.pem)"
+          # openssl, not `tr -dc … </dev/urandom | head -c N`: under pipefail, tr dies of SIGPIPE and the
+          # step exits 141 with no output.
+          pass="$(openssl rand -hex 12)"
+          token="$(openssl rand -hex 30)"
+          # Masked: the password reaches Playwright, which is verbose on failure.
+          echo "::add-mask::$key"
+          echo "::add-mask::$pass"
+          echo "::add-mask::$token"
+          {
+            echo "JWT_PRIVATE_KEY=$key"
+            # Must differ from the suite's sysadmin, x_atui_sysadmin@qa.at. The backend creates this
+            # admin at startup with no name; the suite's createSysadmin then gets "already exists"
+            # and never sets the name, and 14 Playwright assertions on "published by" fail.
+            echo "APIHUB_ADMIN_EMAIL=zero-day-admin@apihub.local"
+            echo "APIHUB_ADMIN_PASSWORD=$pass"
+            echo "APIHUB_ACCESS_TOKEN=$token"
+          } >> "$GITHUB_ENV"
+          rm -f rsakey.pem
+          echo "generated a 2048-bit key, a 24-character password and a 60-character token"
+
+      - name: Template the env and config files
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The stack reads only the env files beside docker-compose.yml.
+          cd "$RUNNER_TEMP/compose"
+          find . \( -name '*.env' -o -name '*config.yaml' \) -print0 | while IFS= read -r -d '' f; do
+            envsubst < "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+          done
+
+      # Points the five upstream images at this run's images. `qubership-apihub-backend` there is
+      # `apihub-portal-backend` here.
+      - name: Point the compose file at this run's images
+        # Skipped for a baseline run, so the images are the only difference.
+        if: ${{ inputs.repoint_images }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ref='${{ github.ref }}'
+          branch_tag="$(echo "$ref" | sed 's@refs/tags/@@;s@refs/heads/@@;s@refs/pull/@pull/@;s@^main$@latest@;s@^develop$@dev@;s@^release$@next@;s@/@-@g;')"
+
+          owner='${{ inputs.image_owner }}'
+          [ -n "$owner" ] || owner='${{ github.repository_owner }}'
+          owner="$(echo "$owner" | tr '[:upper:]' '[:lower:]')"
+
+          # The branch tag moves on every push; each image's src-<hash> tag pins a past run.
+          default_tag='${{ inputs.image_tag }}'
+          [ -n "$default_tag" ] || default_tag="$branch_tag"
+          t_pb='${{ inputs.tag_portal_backend }}';      [ -n "$t_pb" ] || t_pb="$default_tag"
+          t_bc='${{ inputs.tag_build_task_consumer }}';  [ -n "$t_bc" ] || t_bc="$default_tag"
+          t_ui='${{ inputs.tag_ui }}';                   [ -n "$t_ui" ] || t_ui="$default_tag"
+          t_al='${{ inputs.tag_api_linter_service }}';   [ -n "$t_al" ] || t_al="$default_tag"
+          t_ab='${{ inputs.tag_agents_backend }}';       [ -n "$t_ab" ] || t_ab="$default_tag"
+
+          cd "$RUNNER_TEMP/compose"
+
+          repoint() {  # $1 upstream image name, $2 ours, $3 tag
+            sed -i "s|ghcr.io/netcracker/$1:[^ ]*|ghcr.io/$owner/$2:$3|g" docker-compose.yml
+          }
+          repoint qubership-apihub-backend              apihub-portal-backend       "$t_pb"
+          repoint qubership-apihub-build-task-consumer  apihub-build-task-consumer  "$t_bc"
+          repoint qubership-apihub-ui                   apihub-ui                   "$t_ui"
+          repoint qubership-api-linter-service          apihub-api-linter-service   "$t_al"
+          repoint qubership-apihub-agents-backend       apihub-agents-backend       "$t_ab"
+
+          # sed exits 0 whether it matched or not, so check that all five images are ours.
+          mine="$(grep -c "image: ghcr.io/$owner/" docker-compose.yml || true)"
+          theirs="$(grep -c 'image: ghcr.io/netcracker/' docker-compose.yml || true)"
+          echo "images pointing at $owner: $mine, still upstream: $theirs"
+          grep -E '^\s*image:' docker-compose.yml | sed 's/^/  /'
+          [ "$mine" = "5" ] && [ "$theirs" = "0" ] || {
+            echo "::error::expected 5 images repointed and 0 left upstream"
+            exit 1
+          }
+
+      - name: Bring the stack up
+        run: |
+          cd "$RUNNER_TEMP/compose"
+          podman-compose -f docker-compose.yml up -d
+
+      - name: Start collecting container logs
+        run: |
+          for c in qubership-apihub-backend postgres qubership-apihub-ui \
+                   qubership-apihub-build-task-consumer qubership-api-linter-service \
+                   qubership-apihub-agents-backend; do
+            podman logs -f "$c" > "./$c.log" 2>&1 &
+          done
+
+      - name: Wait for APIHUB to answer
+        shell: bash
+        run: |
+          set -euo pipefail
+          end=$((SECONDS + 300))
+          while [ $SECONDS -lt $end ]; do
+            code="$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8081/login || true)"
+            [ "$code" = "200" ] && { echo "up after ${SECONDS}s"; exit 0; }
+            echo "  http $code, retrying"
+            sleep 5
+          done
+          echo "::error::APIHUB did not answer 200 on /login within 5 minutes"
+          podman ps -a
+          exit 1
+
+      - name: Run the postman collections
+        id: newman
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # smoke is 1_1_Smoke_Portal alone. The agent collections are left out: compose runs no agent.
+          if [ '${{ inputs.tier }}' = 'smoke' ]; then
+            collections='1_1_Smoke_Portal'
+          else
+            collections='1_1_Smoke_Portal 1_3_Linter_Portal 2_1_Negative_Portal 3_1_Stories_Bugs 3_2_Stories_Bugs 4_Access_control'
+          fi
+          # Written before anything can fail, so the results check expects every report and fails
+          # closed if this step dies early.
+          echo "collections=$collections" >> "$GITHUB_OUTPUT"
+
+          npm install -g newman newman-reporter-htmlextra
+
+          # The environment goes to RUNNER_TEMP: it holds the generated password and token.
+          collection_dir=tests/postman-collections/e2e
+          env_file="$RUNNER_TEMP/ci.postman_environment.json"
+          reports="$RUNNER_TEMP/newman-reports"
+          mkdir -p "$reports"
+          envsubst < tests/postman-collections/environment/local.postman_environment.json > "$env_file"
+
+          # -x lets every collection run after one fails, so this step always succeeds. The next step
+          # reads the JSON reports and decides.
+          for c in $collections; do
+            echo "=== $c ==="
+            newman run "$collection_dir/${c}.postman_collection.json" \
+              -e "$env_file" -x \
+              --reporters cli,htmlextra,json \
+              --reporter-htmlextra-export "$reports/${c}.html" \
+              --reporter-json-export "$reports/${c}.json"
+          done
+
+      # Every expected collection must leave a JSON report with no failed assertion. A test that fails
+      # for an unrelated reason is skipped in the collection, and this step reports every skip.
+      - name: Check the postman results
+        id: newman_results
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          node tools/ci/newman-results-check.js \
+            "$RUNNER_TEMP/newman-reports" '${{ steps.newman.outputs.collections }}'
+
+      - name: Install Playwright browsers
+        working-directory: tests/ui-tests
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run the Playwright suite
+        id: playwright
+        continue-on-error: true
+        working-directory: tests/ui-tests
+        env:
+          BASE_URL: http://localhost:8081
+          TEST_USER_PASSWORD: ${{ env.APIHUB_ADMIN_PASSWORD }}
+          PLAYGROUND_BACKEND_HOST: http://host.docker.internal:8081
+          CLEAR_TD: skip
+        run: |
+          # --grep does not filter the setup projects, so a smoke run still creates its test data.
+          # Tests that fail for unrelated reasons are skipped in their spec, not excluded here.
+          args='--project=Portal --grep-invert=@flaky'
+          [ '${{ inputs.tier }}' = 'smoke' ] && args="$args --grep=@smoke"
+          echo "playwright $args"
+          pnpm exec playwright test $args
+
+      # Three artifacts, so a reader downloads the 200 KB they need rather than 32 MB. Each runs
+      # always(): the logs matter most on a failed run. retention-days is a sibling of path.
+      # Prints the aria snapshots into the log too: an artifact is no use when the blob host is
+      # unreachable, and a failed locator's log shows only what it waited for.
+      - name: Page snapshots for the failures
+        if: always() && steps.playwright.outcome == 'failure'
+        shell: bash
+        run: |
+          set -euo pipefail
+          found=0
+          while IFS= read -r f; do
+            found=$((found + 1))
+            echo "::group::${f#tests/ui-tests/temp/test-results/}"
+            cat "$f"
+            echo "::endgroup::"
+          done < <(find tests/ui-tests/temp/test-results -name 'error-context.md' 2>/dev/null | sort)
+          echo "printed $found page snapshot(s)"
+
+      - name: Upload container logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: containers-logs
+          path: '*.log'
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload Newman reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: newman-reports
+          path: ${{ runner.temp }}/newman-reports
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Upload Playwright reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-reports
+          # temp/test-results holds the screenshot, trace, and error-context.md of each failure.
+          path: |
+            tests/ui-tests/reports
+            tests/ui-tests/temp/test-results
+          if-no-files-found: warn
+          retention-days: 7
+
+      # Both suites run with continue-on-error, so a Playwright failure still leaves Newman's report
+      # and the container logs. `newman` fails only if the install or newman itself breaks;
+      # `newman_results` is the only step that sees a failed assertion. The job fails unless
+      # `newman`, `newman_results`, and `playwright` all succeeded.
+      - name: Verdict
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          newman='${{ steps.newman.outcome }}'
+          results='${{ steps.newman_results.outcome }}'
+          play='${{ steps.playwright.outcome }}'
+          {
+            echo '### E2E'
+            echo
+            echo '| suite | outcome |'
+            echo '|---|---|'
+            echo "| postman collections, run | \`$newman\` |"
+            echo "| postman collections, results | \`$results\` |"
+            echo "| playwright, Portal | \`$play\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          [ "$newman" = 'success' ] && [ "$results" = 'success' ] && [ "$play" = 'success' ] || {
+            echo "::error::newman=$newman newman_results=$results playwright=$play"
+            exit 1
+          }

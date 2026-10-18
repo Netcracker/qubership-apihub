@@ -1,2 +1,5 @@
 # pnpm applies these patches to LF files; a CRLF checkout on Windows would make them fail to apply.
 patches/*.patch text eol=lf
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf

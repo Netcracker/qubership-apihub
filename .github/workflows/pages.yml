@@ -1,0 +1,125 @@
+'on':
+  # Dispatched by ci.yml, because a GITHUB_TOKEN can start only this event. Dispatched at a ref other
+  # than the default branch, the site is assembled as an artifact but not deployed.
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: What asked for this deploy
+        required: false
+        default: manual
+      budget_mib:
+        description: Size budget for the site in MiB. Branches past it are left off, newest kept first
+        required: false
+        default: '900'
+  # Runs the default branch's copy of this file; tag deletions are ignored.
+  delete:
+  # Every run assembles from `git ls-remote --heads`, so the daily run catches a missed deletion.
+  schedule:
+    - cron: '17 3 * * *'
+
+name: Publish Storybooks
+
+# One queue for all branches, never cancelled: a deploy replaces the whole site. A newer pending run
+# replaces an older one, which is safe because every run assembles from the store.
+concurrency:
+  group: storybook-pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  assemble:
+    if: github.event_name != 'delete' || github.event.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      deployable: ${{ steps.ref.outputs.deployable }}
+    steps:
+      - uses: actions/checkout@v6
+
+      # Only the default branch deploys and cleans the store. Schedule and delete events carry no
+      # repository object, so the default branch is looked up.
+      - name: is this the default branch?
+        id: ref
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          default="$(gh api 'repos/${{ github.repository }}' --jq .default_branch)"
+          [ -n "$default" ] || { echo "::error::could not read the default branch"; exit 1; }
+          if [ '${{ github.ref_name }}' = "$default" ]; then deployable=true; else deployable=false; fi
+          echo "deployable=$deployable" >> "$GITHUB_OUTPUT"
+          echo "ref \`${{ github.ref_name }}\`, default \`$default\`: deploy=$deployable" | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # 1.3.3, not the current 1.3.4: setup-oras verifies against a release table baked into the
+      # action, and v2.0.1's ends at 1.3.3.
+      - uses: oras-project/setup-oras@v2.0.1
+        with:
+          version: 1.3.3
+
+      - name: log in to ghcr
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GH_TOKEN" | oras login ghcr.io -u '${{ github.actor }}' --password-stdin
+
+      - name: assemble the site from every live branch's pointers
+        shell: bash
+        env:
+          OWNER: ${{ github.repository_owner }}
+          SITE_BUDGET_MIB: ${{ inputs.budget_mib || '900' }}
+        run: |
+          echo "reason: ${{ github.event_name }} ${{ inputs.reason }}"
+          node tools/ci/storybook-site.js assemble "$RUNNER_TEMP/site"
+
+      - uses: actions/upload-pages-artifact@v5.0.0
+        with:
+          path: ${{ runner.temp }}/site
+
+  deploy:
+    needs: [assemble]
+    if: needs.assemble.outputs.deployable == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v5.0.1
+
+  # Only after a successful deploy, so the live site never points at removed content.
+  gc:
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oras-project/setup-oras@v2.0.1
+        with:
+          version: 1.3.3
+
+      - name: log in to ghcr
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GH_TOKEN" | oras login ghcr.io -u '${{ github.actor }}' --password-stdin
+
+      - name: delete what no live branch needs
+        shell: bash
+        env:
+          OWNER: ${{ github.repository_owner }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node tools/ci/storybook-site.js gc

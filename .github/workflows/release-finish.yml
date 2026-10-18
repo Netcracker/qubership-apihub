@@ -1,0 +1,188 @@
+'on':
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Read the plan without releasing. Leave checked until you have read it.'
+        type: boolean
+        default: true
+      back_merge:
+        description: 'Merge main back into develop afterwards (step 4).'
+        type: boolean
+        default: true
+
+name: Release finish
+
+# Steps 3 and 4 of the release: promote `release` to `main`, version, tag, create the GitHub
+# Releases, start CI on `main` for the images and npm packages, and merge back into `develop`.
+# Cutting and fixing the candidate on `release` (steps 1 and 2) stays manual.
+#
+# CI runs as a separate, dispatched run: a job builds its run's own sha, which predates the version
+# commit. A push with GITHUB_TOKEN starts no workflow, but workflow_dispatch always does.
+
+concurrency:
+  # Never cancelled: a half-finished release leaves tags and GitHub Releases on the remote.
+  group: release-finish
+  cancel-in-progress: false
+
+permissions:
+  contents: write # push main and develop, create the GitHub Releases
+  actions: write # dispatch the CI workflow afterwards
+
+jobs:
+  finish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      released: ${{ steps.release.outputs.released }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Full history and tags: a shallow clone resolves versions wrongly without failing.
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Promote release to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main release --tags
+
+          git switch -C main origin/main
+          echo "main    $(git rev-parse --short HEAD)"
+          echo "release $(git rev-parse --short origin/release)"
+
+          # If this refuses, `release` and `main` have diverged, and a person decides.
+          if ! git merge --ff-only origin/release; then
+            echo "::error::main cannot fast-forward to release — they have diverged. Resolve by hand."
+            exit 1
+          fi
+
+          if [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ]; then
+            echo "note: main was already at release; nothing was promoted"
+          fi
+          echo "promoted to $(git rev-parse --short HEAD)"
+
+          # Nx pushes with a bare `git push`, which needs an upstream. Set it and test the push now,
+          # because a push failure after the tags exist cannot be retried.
+          git branch --set-upstream-to=origin/main main
+          git push --dry-run origin main
+          echo "push preflight OK"
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-scope: release-finish
+
+      - name: Release
+        id: release
+        shell: bash
+        env:
+          # Nx reads GH_TOKEN to create the GitHub Releases.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # tools/release/guard.js refuses any branch but main.
+          echo "on branch: $(git rev-parse --abbrev-ref HEAD)"
+
+          if [ '${{ inputs.dry_run }}' = 'true' ]; then
+            echo "::notice::dry run — nothing will be versioned, pushed or released"
+            pnpm exec nx release --skip-publish --dry-run 2>&1 | tee "$RUNNER_TEMP/release.log"
+            echo "released=false" >> "$GITHUB_OUTPUT"
+          else
+            pnpm exec nx release --skip-publish 2>&1 | tee "$RUNNER_TEMP/release.log"
+            echo "released=true" >> "$GITHUB_OUTPUT"
+          fi
+
+          # Nx colors its output even without a terminal and repeats some manifest writes, so a script
+          # renders the summary.
+          node tools/ci/release-summary.js \
+            "$RUNNER_TEMP/release.log" \
+            '${{ inputs.dry_run == true && 'dry run' || 'real' }}' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "main is at \`$(git rev-parse --short HEAD)\`" >> "$GITHUB_STEP_SUMMARY"
+
+      # `nx release` exits 0 when there is nothing to release, so check what it produced.
+      - name: Verify the tags reached the remote
+        if: inputs.dry_run == false
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin --tags --force
+          tags="$(git tag --points-at HEAD | tr '\n' ' ')"
+          if [ -z "$tags" ]; then
+            echo "::warning::no component tags at $(git rev-parse --short HEAD) — nx found nothing to release"
+            exit 0
+          fi
+          echo "tags at HEAD: $tags"
+          for t in $tags; do
+            git ls-remote --exit-code --tags origin "refs/tags/$t" >/dev/null \
+              || { echo "::error::tag $t was created locally but is not on the remote"; exit 1; }
+          done
+          echo "all tags confirmed on the remote"
+
+      - name: Build and publish the release
+        if: inputs.dry_run == false
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # GitHub can take a few seconds to register the ci.yml that main just received.
+          for attempt in 1 2 3 4 5; do
+            if gh workflow run ci.yml --ref main; then
+              echo "dispatched CI on main"
+              exit 0
+            fi
+            echo "dispatch attempt $attempt failed, retrying"
+            sleep 10
+          done
+          echo "::error::could not dispatch CI on main. The release is done — tags and GitHub Releases exist — but nothing has built or published it. Start CI on main by hand."
+          exit 1
+
+  back-merge:
+    needs: [finish]
+    if: inputs.dry_run == false && inputs.back_merge == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Merge main into develop
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main develop
+
+          git switch -C develop origin/develop
+          if git merge-base --is-ancestor origin/main HEAD; then
+            echo "develop already contains main; nothing to merge"
+            echo "skip=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          # A merge commit is normal here: develop moves on during a release. A conflict stops the job.
+          if ! git merge --no-edit origin/main; then
+            echo "::error::back-merge conflicted. Resolve by hand: git switch develop && git merge main"
+            exit 1
+          fi
+          git push origin develop
+          echo "develop is now $(git rev-parse --short HEAD)"
+
+      - name: Rebuild develop
+        if: env.skip != 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # The push above used GITHUB_TOKEN and started no CI, so `:dev` would stay on the old content.
+          for attempt in 1 2 3; do
+            gh workflow run ci.yml --ref develop && exit 0
+            sleep 10
+          done
+          echo "::warning::could not dispatch CI on develop; :dev will be stale until the next push"

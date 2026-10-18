@@ -1,0 +1,533 @@
+'on':
+  push:
+    # '**' rather than no filter: a bare `push:` also fires on the tags nx release pushes.
+    branches: ['**']
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths-ignore: ['docs/**', '**/*.md']
+  # release-finish.yml dispatches CI after its version commit: a push with GITHUB_TOKEN starts no run.
+  workflow_dispatch:
+
+name: CI
+
+# One run per ref; a newer push cancels the older run.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  HUSKY: '0'
+
+jobs:
+  # Computes the affected set once and passes it to the other jobs as JSON.
+  plan:
+    runs-on: ubuntu-latest
+    # pull-requests: read, to find an open pull request for the E2E tier.
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      screenshot_projects: ${{ steps.affected.outputs.screenshot_projects }}
+      image_projects: ${{ steps.affected.outputs.image_projects }}
+      go_projects: ${{ steps.affected.outputs.go_projects }}
+      e2e_tier: ${{ steps.e2e_tier.outputs.value }}
+      storybooks: ${{ steps.storybooks.outputs.value }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # nx affected needs history.
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-workspace
+
+      # Base: the merge base for a pull request, the last successful develop run for a push.
+      - uses: nrwl/nx-set-shas@v5
+        with:
+          main-branch-name: develop
+
+      - id: affected
+        shell: bash
+        run: |
+          set -euo pipefail
+          affected="$(pnpm exec nx show projects --affected --json)"
+          echo "affected: $affected"
+
+          # Keeps the candidates that are affected. A matrix over an empty array is skipped.
+          pick() {
+            node -e '
+              const affected = new Set(JSON.parse(process.argv[1]))
+              const candidates = process.argv.slice(2)
+              console.log(JSON.stringify(candidates.filter((c) => affected.has(c))))
+            ' "$affected" "${@}"
+          }
+
+          shots="$(pick api-doc-viewer apispec-view class-view)"
+
+          # The Go set comes from the lang:go tag, never a list. `nx affected` does not accept
+          # --projects: it passes the flag to the task (`malformed import path "--projects=tag:lang:go"`).
+          go_all="$(pnpm exec nx show projects --projects=tag:lang:go --json)"
+          go="$(pick $(node -e 'console.log(JSON.parse(process.argv[1]).join(" "))' "$go_all"))"
+
+          # Images are not selected by `affected`: whether a branch tag points at the right image is a
+          # question about the registry. The images job retags when the content already exists. The diff
+          # below only feeds the summary.
+          images='["ui-portal","build-task-consumer","agent","test-service","agents-backend","api-linter-service","portal-backend"]'
+          image_inputs="$(git diff --name-only "$NX_BASE" "$NX_HEAD" -- \
+            .dockerignore tools/ci .github/workflows/ci.yml .github/actions || true)"
+
+          echo "screenshot_projects=$shots" >> "$GITHUB_OUTPUT"
+          echo "image_projects=$images"     >> "$GITHUB_OUTPUT"
+          echo "go_projects=$go"          >> "$GITHUB_OUTPUT"
+
+          # A Mermaid summary of the affected set: a skipped job looks the same whether the skip was
+          # correct or not.
+          pnpm exec nx graph --file=plan-graph.json >/dev/null
+          node tools/ci/plan-summary.js plan-graph.json \
+            "$affected" "$shots" "$images" "$image_inputs" "$go" >> "$GITHUB_STEP_SUMMARY"
+          rm -f plan-graph.json
+
+      # The Storybooks to publish, from tools/ci/storybooks.json. Not selected by `affected`, for the
+      # images' reason.
+      - name: Storybooks to publish
+        id: storybooks
+        shell: bash
+        run: echo "value=$(jq -c . tools/ci/storybooks.json)" >> "$GITHUB_OUTPUT"
+
+      # The E2E tier, decided once so a push and its pull request do not both run E2E:
+      #   pull_request event          full
+      #   push, an open PR exists     none: the pull_request run covers this commit
+      #   push, no open PR            none; smoke is disabled below
+      - name: Decide the E2E tier
+        id: e2e_tier
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ '${{ github.event_name }}' = 'pull_request' ]; then
+            tier=full
+            why='pull_request event'
+          else
+            open="$(gh api \
+              "repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:${{ github.ref_name }}&state=open" \
+              --jq 'length')"
+            if [ "$open" -gt 0 ]; then
+              tier=none
+              why="push, but $open open pull request(s) — the pull_request run does the full suite"
+            else
+              # Smoke is disabled pending a review of its content: it cost 26 of the 44 minutes of a
+              # full run for half the Playwright tests. Uncommenting the next line re-enables it.
+              # tier=smoke
+              tier=none
+              why='push with no open pull request — E2E runs on pull requests only'
+            fi
+          fi
+          echo "value=$tier" >> "$GITHUB_OUTPUT"
+          echo "e2e tier: $tier ($why)"
+          echo "| e2e | \`$tier\` | $why |" >> "$GITHUB_STEP_SUMMARY"
+
+      # The same cache summary in every job, from tools/ci/cache-summary.sh; always(), because a failed
+      # job needs it most.
+      - name: cache summary
+        if: always()
+        run: bash tools/ci/cache-summary.sh 'plan' >> "$GITHUB_STEP_SUMMARY"
+
+  # Builds and tests the affected JavaScript projects in one job: Nx parallelizes them in
+  # topological order on one runner, with no artifacts passed between jobs.
+  js:
+    needs: [plan]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-workspace
+
+      - uses: nrwl/nx-set-shas@v5
+        with:
+          main-branch-name: develop
+
+      # build and test together: otherwise test-only dependencies are never exercised.
+      - name: build and test what is affected
+        run: |
+          # pipefail: tee alone would return 0.
+          set -o pipefail
+          pnpm exec nx affected -t build test --exclude=tag:lang:go --verbose 2>&1 | tee "$RUNNER_TEMP/nx.log"
+
+      - name: cache summary
+        if: always()
+        run: bash tools/ci/cache-summary.sh 'js' "$RUNNER_TEMP/nx.log" >> "$GITHUB_STEP_SUMMARY"
+
+
+  # Builds and tests the affected Go modules in one job, in parallel with `js`. Skipped when no Go
+  # module is affected: `nx run-many` over an empty list exits 0, which looks like a pass.
+  go:
+    needs: [plan]
+    if: needs.plan.outputs.go_projects != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-workspace
+
+      # The one Go version, from backend/.go-version. The module cache keys on the go.sum files.
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: backend/.go-version
+          cache-dependency-path: |
+            backend/**/go.sum
+            go.work.sum
+
+      # Before the build: with GOTOOLCHAIN=auto, a module that declares another Go version downloads
+      # it and builds green.
+      - name: every Go module on the same version
+        shell: bash
+        run: |
+          printf '### Go version\n\n```text\n' >> "$GITHUB_STEP_SUMMARY"
+          set -o pipefail
+          bash tools/ci/go-version-check.sh 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
+          printf '```\n' >> "$GITHUB_STEP_SUMMARY"
+          exit "${status:-0}"
+
+      # The workspace build cannot see this: images build each module alone with GOWORK=off, so every
+      # go.mod must hold the versions go.work resolves.
+      - name: every go.mod states what the workspace resolves
+        shell: bash
+        run: |
+          printf '### Go workspace sync\n\n```text\n' >> "$GITHUB_STEP_SUMMARY"
+          set -o pipefail
+          bash tools/ci/go-work-sync-check.sh 2>&1 | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
+          printf '```\n' >> "$GITHUB_STEP_SUMMARY"
+          exit "${status:-0}"
+
+      # build and test together, so test-only imports are resolved.
+      - name: build and test what is affected
+        shell: bash
+        run: |
+          # pipefail: tee alone would return 0.
+          set -o pipefail
+          projects="$(node -e 'console.log(JSON.parse(process.argv[1]).join(","))' \
+            '${{ needs.plan.outputs.go_projects }}')"
+          echo "go projects: $projects"
+          pnpm exec nx run-many -t build test --projects="$projects" --verbose 2>&1 \
+            | tee "$RUNNER_TEMP/nx.log"
+
+      # Checks the binaries, not the exit code: the build exits 0 on an empty project list and when
+      # `go build ./...` matches no package. commons-go declares `outputs: []`, so it is exempt.
+      - name: the binaries exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          projects="$(node -e 'console.log(JSON.parse(process.argv[1]).join(","))' \
+            '${{ needs.plan.outputs.go_projects }}')"
+          pnpm exec nx graph --file=go-graph.json >/dev/null
+          printf '### Go binaries\n\n```text\n' >> "$GITHUB_STEP_SUMMARY"
+          node tools/ci/go-artifacts-check.js go-graph.json "$projects" 2>&1 \
+            | tee -a "$GITHUB_STEP_SUMMARY" || status=$?
+          printf '```\n' >> "$GITHUB_STEP_SUMMARY"
+          rm -f go-graph.json
+          exit "${status:-0}"
+      - name: cache summary
+        if: always()
+        run: bash tools/ci/cache-summary.sh 'go' "$RUNNER_TEMP/nx.log" >> "$GITHUB_STEP_SUMMARY"
+
+  # The only real test coverage api-doc-viewer, apispec-view, and class-view have. Each suite builds
+  # its Storybook, serves it, and drives Chrome in a container through jest. It does not wait for
+  # `js`: `screenshot-test` depends on `build` and `^build`, so a broken build fails here.
+  # Gap G24: the library build and the showcase build need opposite externals settings, and both
+  # exit 0 when wrong. Do not unify their configs.
+  screenshot-tests:
+    needs: [plan]
+    if: needs.plan.outputs.screenshot_projects != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJSON(needs.plan.outputs.screenshot_projects) }}
+    steps:
+      - uses: actions/checkout@v6
+
+      # Each leg caches its own closure; a shared key lets one leg's cache overwrite the others.
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-scope: screenshot-${{ matrix.project }}
+
+      - name: build showcase and run the suite
+        run: |
+          set -o pipefail
+          pnpm exec nx run ${{ matrix.project }}:screenshot-test 2>&1 | tee "$RUNNER_TEMP/nx.log"
+
+      - name: cache summary
+        if: always()
+        run: bash tools/ci/cache-summary.sh 'screenshot-tests (${{ matrix.project }})' "$RUNNER_TEMP/nx.log" >> "$GITHUB_STEP_SUMMARY"
+
+      # Uploads the PNG diffs of a failed suite, searched only under this project: another
+      # component's committed __diff_output__ files would look like this suite's failure.
+      - name: collect diffs
+        if: failure()
+        run: |
+          set -euo pipefail
+          root="$(pnpm exec nx show project '${{ matrix.project }}' --json | node -p 'JSON.parse(require("fs").readFileSync(0,"utf8")).root')"
+          echo "collecting under: $root"
+          mkdir -p artifact-staging
+          find "$root" -path '*/__diff_output__/*' -type f -not -path '*/node_modules/*' \
+            -exec cp {} artifact-staging/ \; 2>/dev/null || true
+          echo "collected $(find artifact-staging -type f | wc -l) diff file(s) for ${{ matrix.project }}"
+
+      - name: upload diffs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: screenshot-diffs-${{ matrix.project }}
+          path: artifact-staging
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # Images publish floating tags that others pull, so each language's images wait for its tests.
+  # Both call images.yml.
+  js-images:
+    needs: [plan, js]
+    # `js` never skips, so the implicit check that every need succeeded is enough.
+    if: needs.plan.outputs.image_projects != '[]'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/images.yml
+    with:
+      images: >-
+        [{"project":"ui-portal","image":"apihub-ui","dockerfile":"frontend/ui/Dockerfile",
+          "build_projects":"ui-portal,ui-agents","deploy":"","context":".","dockerignore":".dockerignore",
+          "workspace_build":"true"},
+         {"project":"build-task-consumer","image":"apihub-build-task-consumer",
+          "dockerfile":"frontend/build-task-consumer/Dockerfile",
+          "build_projects":"build-task-consumer","deploy":"build-task-consumer","context":".","dockerignore":".dockerignore",
+          "workspace_build":"true"}]
+
+  go-images:
+    needs: [plan, go]
+    # `go` is skipped when no Go module is affected, and a skipped need fails the implicit check.
+    # Images must still run, so a skipped `go` passes here and a failed or cancelled one does not.
+    if: >-
+      always()
+      && needs.plan.result == 'success'
+      && needs.go.result != 'failure' && needs.go.result != 'cancelled'
+      && needs.plan.outputs.image_projects != '[]'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/images.yml
+    with:
+      images: >-
+        [{"project":"agent","image":"apihub-agent","dockerfile":"backend/agent/Dockerfile",
+          "build_projects":"agent","deploy":"","context":"backend/agent","dockerignore":".dockerignore backend/agent/.dockerignore",
+          "workspace_build":"false"},
+         {"project":"test-service","image":"apihub-test-service",
+          "dockerfile":"backend/test-service/Dockerfile","build_projects":"test-service",
+          "deploy":"","context":"backend/test-service","dockerignore":".dockerignore backend/test-service/.dockerignore",
+          "workspace_build":"false"},
+         {"project":"agents-backend","image":"apihub-agents-backend",
+          "dockerfile":"backend/agents-backend/Dockerfile",
+          "build_projects":"agents-backend,commons-go","deploy":"","context":"backend",
+          "dockerignore":".dockerignore backend/.dockerignore","workspace_build":"false"},
+         {"project":"api-linter-service","image":"apihub-api-linter-service",
+          "dockerfile":"backend/api-linter-service/Dockerfile",
+          "build_projects":"api-linter-service,commons-go","deploy":"","context":"backend",
+          "dockerignore":".dockerignore backend/.dockerignore","workspace_build":"false"},
+         {"project":"portal-backend","image":"apihub-portal-backend",
+          "dockerfile":"backend/portal-backend/Dockerfile",
+          "build_projects":"portal-backend,commons-go","deploy":"","context":"backend",
+          "dockerignore":".dockerignore backend/.dockerignore","workspace_build":"false"}]
+
+
+  # E2E on Kind from the Helm charts, with this run's images. e2e-tests-compose.yml takes the same
+  # inputs, so switching to compose means changing the `uses:` line.
+  e2e:
+    needs: [plan, js-images, go-images]
+    # `go-images` can be skipped, so the result is checked explicitly, as in go-images.
+    if: >-
+      always()
+      && needs.plan.outputs.e2e_tier != 'none'
+      && needs.js-images.result == 'success'
+      && needs.go-images.result != 'failure' && needs.go-images.result != 'cancelled'
+    permissions:
+      contents: read
+      packages: read
+    uses: ./.github/workflows/e2e-tests-kind.yml
+    with:
+      repoint_images: true
+      tier: ${{ needs.plan.outputs.e2e_tier }}
+
+
+  # Stores each Storybook in ghcr as an OCI artifact keyed by content hash and gives this branch a
+  # pointer to it (tools/ci/storybook-store.sh); pages.yml assembles the site from the store. All
+  # six run on every push, for the images' reason, and build only new content. Not run for pull
+  # requests, whose ref is no branch. Not gated on tests: a red branch's Storybook shows what is red.
+  storybooks:
+    needs: [plan]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        # From tools/ci/storybooks.json, which pages.yml also reads.
+        include: ${{ fromJSON(needs.plan.outputs.storybooks) }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-scope: storybook-${{ matrix.component }}
+
+      # 1.3.3, not the current 1.3.4: setup-oras verifies against a release table baked into
+      # the action, and v2.0.1's ends at 1.3.3.
+      - uses: oras-project/setup-oras@v2.0.1
+        with:
+          version: 1.3.3
+
+      - name: log in to ghcr
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GH_TOKEN" | oras login ghcr.io -u '${{ github.actor }}' --password-stdin
+
+      - name: build the Storybook if its content is new, then point this branch at it
+        shell: bash
+        env:
+          COMPONENT: ${{ matrix.component }}
+          PROJECT: ${{ matrix.project }}
+          HASH_PROJECTS: ${{ matrix.hash_projects }}
+          HASH_PATHS: ${{ matrix.hash_paths }}
+          OUTPUT: ${{ matrix.output }}
+          OWNER: ${{ github.repository_owner }}
+        run: bash tools/ci/storybook-store.sh
+
+      - name: cache summary
+        if: always()
+        run: bash tools/ci/cache-summary.sh 'storybooks (${{ matrix.component }})' "$RUNNER_TEMP/nx.log" >> "$GITHUB_STEP_SUMMARY"
+
+  # Dispatches pages.yml at the default branch. A separate workflow, because Pages deploys queue in
+  # one group for all branches, while this workflow's group is per ref and cancels. `always()`, so
+  # one failed Storybook does not keep the others off the site. Warns and skips if pages.yml is not
+  # on the default branch, where workflow_dispatch requires it.
+  storybook-pages:
+    needs: [storybooks]
+    if: always() && github.event_name != 'pull_request' && needs.storybooks.result != 'skipped'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: dispatch pages.yml
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          repo='${{ github.repository }}'
+          default='${{ github.event.repository.default_branch }}'
+          if ! gh api "repos/$repo/contents/.github/workflows/pages.yml?ref=$default" --silent 2>/dev/null; then
+            msg="pages.yml is not on $default yet, so it cannot be dispatched; the store was updated and the site was not"
+            echo "::warning::$msg"
+            echo "$msg" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          gh workflow run pages.yml --repo "$repo" --ref "$default" \
+            -f reason='CI on ${{ github.ref_name }}, run ${{ github.run_id }}'
+          echo "dispatched pages.yml at \`$default\`" | tee -a "$GITHUB_STEP_SUMMARY"
+
+
+  # The only required check. It always runs, so affected-based skipping cannot leave a pull request
+  # waiting for a check that never reports. Fails if any job failed or was cancelled; skipped passes.
+  ci-ok:
+    needs: [plan, js, go, screenshot-tests, js-images, go-images, e2e, storybooks, storybook-pages]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: verdict
+        shell: bash
+        run: |
+          set -euo pipefail
+          results='${{ toJSON(needs) }}'
+          echo "$results"
+          bad="$(node -e '
+            const needs = JSON.parse(process.argv[1])
+            const bad = Object.entries(needs)
+              .filter(([, v]) => v.result === "failure" || v.result === "cancelled")
+              .map(([k, v]) => `${k}=${v.result}`)
+            console.log(bad.join(" "))
+          ' "$results")"
+          if [ -n "$bad" ]; then
+            echo "FAILED: $bad"
+            exit 1
+          fi
+          echo "all needed jobs succeeded or were skipped"
+
+  # Publishes the npm packages on main, after ci-ok passes. `"private": true` in each package.json
+  # decides what is published. Always pnpm: `npm pack` leaves `workspace:^` in the tarball, and
+  # the package cannot be installed.
+  publish:
+    needs: [ci-ok]
+    # always(): without it, a skipped job upstream of ci-ok skips this job too, even on a green run.
+    if: always() && needs.ci-ok.result == 'success' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-scope: publish
+
+      # The token goes in ~/.npmrc, outside the repository and every docker build context.
+      - name: Authenticate to GitHub Packages
+        shell: bash
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          printf '//npm.pkg.github.com/:_authToken=%s\n' "$NODE_AUTH_TOKEN" >> "$HOME/.npmrc"
+          echo "wrote auth for npm.pkg.github.com to ~/.npmrc"
+          echo "repo .npmrc is untouched:"
+          git diff --exit-code --stat .npmrc && echo "  clean"
+
+      # --no-git-checks: CI checks out a detached HEAD, which pnpm otherwise refuses.
+      - name: Publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm publish -r --no-git-checks --access restricted 2>&1 | tee "$RUNNER_TEMP/publish.log"
+
+      - name: What was published
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### npm publish"
+            echo
+            if grep -qE '^\+ @' "$RUNNER_TEMP/publish.log" 2>/dev/null; then
+              echo '| package | version |'
+              echo '|---|---|'
+              grep -oE '^\+ @[^ ]+' "$RUNNER_TEMP/publish.log" \
+                | sed 's/^+ //' \
+                | awk -F'@' '{printf "| `@%s` | %s |\n", $2, $3}'
+            else
+              echo '_Nothing published._ On a re-run of the same commit this is the expected'
+              echo 'result: every version already exists in the registry and pnpm skips it.'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
