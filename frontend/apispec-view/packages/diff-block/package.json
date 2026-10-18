@@ -1,0 +1,12 @@
+{
+  "name": "diff-block",
+  "version": "0.0.0",
+  "private": "true",
+  "keywords": [],
+  "sideEffects": false,
+  "license": "Apache-2.0",
+  "main": "src/index.ts",
+  "files": [
+    "**/*"
+  ]
+}

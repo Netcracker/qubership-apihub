@@ -1,0 +1,20 @@
+{
+  "extends": "@stoplight/scripts/tsconfig.json",
+  // target all ts files
+  "include": [
+    "."
+  ],
+  "exclude": [
+    "dist/"
+  ],
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "webworker",
+      "es2019",
+      "dom.iterable"
+    ],
+    "target": "es2017",
+    "esModuleInterop": true
+  }
+}

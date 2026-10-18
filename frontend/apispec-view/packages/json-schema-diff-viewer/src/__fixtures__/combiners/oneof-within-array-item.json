@@ -1,0 +1,35 @@
+{
+  "type": "array",
+  "items": {
+    "oneOf": [
+      {
+        "type": "object",
+        "title": "A",
+        "properties": {
+          "foo": {
+            "type": "string",
+            "enum": [
+              "test"
+            ]
+          }
+        }
+      },
+      {
+        "$ref": "#/__bundled__/someBundledObj"
+      }
+    ]
+  },
+  "__bundled__": {
+    "someBundledObj": {
+      "type": "object",
+      "properties": {
+        "foo": {
+          "type": "number"
+        },
+        "bar": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

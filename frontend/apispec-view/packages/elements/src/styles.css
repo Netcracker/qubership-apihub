@@ -1,0 +1,23 @@
+@import "../../elements-core/src/styles.css";
+@import "../../diff-elements-core/src/styles.css";
+@import "@netcracker/qubership-apihub-api-doc-viewer/dist/style.css";
+
+:root {
+    --font-ui: Inter;
+    --font-prose: Inter;
+    --font-mono: Inter;
+}
+
+.font-Inter-Medium {
+    font-family: Inter, sans-serif;
+}
+
+.sl-markdown-viewer {
+    overflow-x: hidden !important;
+}
+
+/* TODO 05.09.24 // Because tests fail randomly, possibly due to animations */
+* {
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
+}
