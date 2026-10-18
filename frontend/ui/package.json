@@ -2,22 +2,10 @@
   "name": "@netcracker/qubership-apihub-ui",
   "private": true,
   "license": "Apache-2.0",
-  "workspaces": [
-    "packages/*"
-  ],
   "scripts": {
-    "build": "npx lerna run build",
-    "build:analyze": "npx lerna run build:analyze",
-    "build:showcase": "npm run --workspace=@netcracker/qubership-apihub-ui-shared build:showcase",
-    "test": "npm run test --workspace=@netcracker/qubership-apihub-ui-shared",
-    "development:link": "npm link @netcracker/qubership-apihub-api-processor",
-    "development:unlink": "npm unlink @netcracker/qubership-apihub-api-processor",
-    "dev:agents": "npx lerna run dev:backend,dev:frontend --stream --scope=@netcracker/qubership-apihub-ui-agents",
-    "dev:portal": "npx lerna run dev:backend,dev:frontend --stream --scope=@netcracker/qubership-apihub-ui-portal",
-    "msw:init": "npx msw init packages/portal/public --no-save && npx msw init packages/agents/public --no-save",
+    "msw:init": "pnpm exec msw init packages/portal/public --no-save && pnpm exec msw init packages/agents/public --no-save",
     "lint:check": "eslint . --ext .ts,.tsx,.json --ignore-path .gitignore --max-warnings 0 --report-unused-disable-directives",
-    "lint:fix": "npm run lint:check -- --fix",
-    "update-lock-file": "update-lock-file @netcracker"
+    "lint:fix": "pnpm run lint:check -- --fix"
   },
   "dependencies": {
     "@asyncapi/parser": "3.6.0",
@@ -32,16 +20,16 @@
     "@mui/lab": "5.0.0-alpha.120",
     "@mui/material": "5.11.10",
     "@mui/private-theming": "5.11.9",
-    "@netcracker/qubership-apihub-api-diff": "dev",
-    "@netcracker/qubership-apihub-api-doc-viewer": "dev",
-    "@netcracker/qubership-apihub-api-processor": "dev",
-    "@netcracker/qubership-apihub-api-unifier": "dev",
-    "@netcracker/qubership-apihub-api-visitor": "dev",
-    "@netcracker/qubership-apihub-apispec-view": "dev",
-    "@netcracker/qubership-apihub-class-view": "dev",
-    "@netcracker/qubership-apihub-ddlapi": "dev",
-    "@netcracker/qubership-apihub-graphapi": "dev",
-    "@netcracker/qubership-apihub-rest-playground": "dev",
+    "@netcracker/qubership-apihub-api-diff": "workspace:^",
+    "@netcracker/qubership-apihub-api-doc-viewer": "workspace:^",
+    "@netcracker/qubership-apihub-api-processor": "workspace:^",
+    "@netcracker/qubership-apihub-api-unifier": "workspace:^",
+    "@netcracker/qubership-apihub-api-visitor": "workspace:^",
+    "@netcracker/qubership-apihub-apispec-view": "workspace:^",
+    "@netcracker/qubership-apihub-class-view": "workspace:^",
+    "@netcracker/qubership-apihub-ddlapi": "workspace:^",
+    "@netcracker/qubership-apihub-graphapi": "workspace:^",
+    "@netcracker/qubership-apihub-rest-playground": "workspace:^",
     "@stoplight/json": "3.21.7",
     "@stoplight/json-ref-resolver": "3.1.4",
     "@stoplight/spectral-core": "1.16.1",
@@ -96,7 +84,6 @@
   },
   "devDependencies": {
     "@babel/core": "7.29.7",
-    "@netcracker/qubership-apihub-npm-gitflow": "3.1.1",
     "@rollup/plugin-inject": "5.0.5",
     "@storybook/addon-docs": "10.5.10",
     "@storybook/addon-links": "10.5.10",
@@ -136,7 +123,6 @@
     "express": "5.2.1",
     "jest": "30.4.2",
     "jest-util": "30.4.1",
-    "lerna": "8.2.2",
     "msw": "2.15.0",
     "nodemon": "2.0.20",
     "openapi-types": "^12.1.0",
@@ -158,5 +144,8 @@
   },
   "engines": {
     "node": ">=24.0.0"
+  },
+  "nx": {
+    "name": "ui-root"
   }
 }

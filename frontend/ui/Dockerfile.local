@@ -1,18 +1,52 @@
+# Local image build, from output you have already built.
+#
+# Context is THIS directory, matching the existing convention:
+#
+#     pnpm install                                    # once, at the workspace root
+#     pnpm exec nx run-many -t build --projects=ui-portal,ui-agents
+#     cd frontend/ui && podman build -f Dockerfile.local .
+#
+# The difference from ./Dockerfile is only where the inputs come from, and it is the
+# difference the convention exists for:
+#
+#   Dockerfile        context is the WORKSPACE ROOT. Built by CI, which has just produced
+#                     every dist in one place and wants one context for both images.
+#   Dockerfile.local  context is this directory. Built by a person who ran the build here
+#                     and wants a short command with no workspace-root paths in it.
+#
+# What the monorepo changed for this file: nothing structural. It already copied
+# `packages/*/dist`, which is still where the build puts them. The `.npmrc` with a
+# `read:packages` PAT that the local-development guide used to require is now unnecessary —
+# nothing is fetched from a registry at image-build time, by either Dockerfile.
+
 FROM docker.io/nginx:1.31.3-alpine3.24
 
-COPY nginx/errors                        /var/www/error
-COPY nginx/nginx.conf.template           /app/nginx.conf.template
-COPY nginx/entrypoint.sh                 /tmp
+# GIT_BRANCH / GIT_HASH are not declared here any more, to keep this file honest about being
+# the same image as Dockerfile with different input paths. See the note in that file: the
+# provenance moved to OCI annotations on the branch tag, because a value baked into a layer
+# belongs to the content and a ref does not.
 
-COPY packages/agents/dist                /usr/share/nginx/html/agents
-COPY packages/portal/dist                /usr/share/nginx/html/portal
+COPY nginx/errors              /var/www/error
+COPY nginx/nginx.conf.template /app/nginx.conf.template
+COPY nginx/entrypoint.sh       /app/entrypoint.sh
 
-# giving permissions to nginx
-RUN chmod -R 777 /var/log/nginx /var/cache/nginx/ /var/run/ /usr/share/nginx/html/ && \
-    chmod -R +x /tmp/
+# ui-agents is built with base '/agents/' and ui-portal with '/', which is why they land in
+# sibling directories rather than one tree.
+COPY packages/agents/dist /usr/share/nginx/html/agents
+COPY packages/portal/dist /usr/share/nginx/html/portal
+
+# Sets the correct file creation time.
+# https://github.com/Netcracker/qubership-apihub/issues/238#issuecomment-3019713963
+RUN find /usr/share/nginx/html -type f -exec touch {} +
+
+RUN mkdir -p /app/nginx && \
+    chmod -R 777 /var/log/nginx /var/cache/nginx/ /var/run/ /usr/share/nginx/html/ /app/nginx && \
+    chmod -R +x /app/
+
+WORKDIR /app
 
 EXPOSE 8080
 
 USER 1000
 
-ENTRYPOINT ["/tmp/entrypoint.sh"]
+ENTRYPOINT ["/app/entrypoint.sh"]

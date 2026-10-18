@@ -1,0 +1,7 @@
+# Opt-in, same principle as the workspace-root .dockerignore: exclude everything, re-include
+# only what Dockerfile.local reads. Without it the context is this whole component — its
+# node_modules, three packages' node_modules, sources, and every dist-showcase.
+**
+!nginx/**
+!packages/agents/dist/**
+!packages/portal/dist/**

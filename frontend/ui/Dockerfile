@@ -1,32 +1,26 @@
-FROM docker.io/node:24 AS builder
-
-ARG TAG=dev
-
-WORKDIR /workspace
-
-RUN --mount=type=secret,id=npmrc,target=.npmrc mv "$(npm pack @netcracker/qubership-apihub-ui-agents@"$TAG")" qubership-apihub-ui-agents.tgz
-RUN --mount=type=secret,id=npmrc,target=.npmrc mv "$(npm pack @netcracker/qubership-apihub-ui-portal@"$TAG")" qubership-apihub-ui-portal.tgz
+# APIHUB UI: nginx serving the two built front ends. The build context is the workspace root,
+# and the image copies the dist trees of the workspace build:
+#
+#   docker build -f frontend/ui/Dockerfile .
 
 FROM docker.io/nginx:1.31.3-alpine3.24
 
-WORKDIR /tmp/build
+# No GIT_BRANCH or GIT_HASH build args: the content hash cannot see them, so a retagged image
+# reported the ref that built it first. The commit and branch are OCI annotations on each branch
+# tag instead (`docker buildx imagetools inspect <image>:<tag>`).
 
-COPY nginx/errors                        /var/www/error
-COPY nginx/nginx.conf.template           /app/nginx.conf.template
-COPY nginx/entrypoint.sh                 /app
+COPY frontend/ui/nginx/errors              /var/www/error
+COPY frontend/ui/nginx/nginx.conf.template /app/nginx.conf.template
+COPY frontend/ui/nginx/entrypoint.sh       /app/entrypoint.sh
 
-RUN mkdir /usr/share/nginx/html/agents && mkdir /usr/share/nginx/html/portal
+# ui-agents is built with base '/agents/', ui-portal with '/'.
+COPY frontend/ui/packages/agents/dist/ /usr/share/nginx/html/agents/
+COPY frontend/ui/packages/portal/dist/ /usr/share/nginx/html/portal/
 
-COPY --from=builder /workspace/qubership-apihub-ui-agents.tgz qubership-apihub-ui-agents.tgz
-COPY --from=builder /workspace/qubership-apihub-ui-portal.tgz qubership-apihub-ui-portal.tgz
-
-RUN tar zxvf ./qubership-apihub-ui-agents.tgz && mv ./package/dist/* /usr/share/nginx/html/agents && rm -rf ./package
-RUN tar zxvf ./qubership-apihub-ui-portal.tgz && mv ./package/dist/* /usr/share/nginx/html/portal && rm -rf ./package
-
-# Sets the correct file creation time. For more information, see here https://github.com/Netcracker/qubership-apihub/issues/238#issuecomment-3019713963
+# Sets the correct file creation time.
+# https://github.com/Netcracker/qubership-apihub/issues/238#issuecomment-3019713963
 RUN find /usr/share/nginx/html -type f -exec touch {} +
 
-# giving permissions to nginx
 RUN mkdir -p /app/nginx && \
     chmod -R 777 /var/log/nginx /var/cache/nginx/ /var/run/ /usr/share/nginx/html/ /app/nginx && \
     chmod -R +x /app/
