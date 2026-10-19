@@ -56,6 +56,10 @@ The workflows rely on these repository settings. They are not checkable from cod
 - Squash merging is the only merge method, with "pull request title and description" as the commit message.
 - "Require linear history" is off on `develop`, `release`, and `main`, because the bots push merge commits.
 - The deploy key `apihub-release-bot` has write access and bypasses the rulesets on all three branches.
+- Move `RELEASE_BOT_SSH_KEY` into an environment limited to `develop` and `release`. As a repository secret, any writer
+  can read it from a modified workflow on a branch (planned; the bot jobs do not name the environment yet).
+- `tools/release/guard.js` protects CI only: in a clone, `NX_DRY_RUN=true` passes it on any branch. It is not a barrier
+  against local misuse; the rulesets on `main` are.
 
 ## Branches and merge rules
 
@@ -69,7 +73,8 @@ The workflows rely on these repository settings. They are not checkable from cod
 
 Squash every pull request. Nx reads every commit between a component's last tag and `HEAD`. A squash makes each pull
 request one commit whose message is the linted pull request title, so work-in-progress commits never reach the bump
-calculation. A `BREAKING CHANGE:` footer in the pull request description counts as a major bump.
+calculation. A `BREAKING CHANGE:` footer in the pull request description counts as a major bump when it starts a
+line. The phrase inside a sentence or in quoted release notes, as in Dependabot descriptions, does not count.
 
 **Never squash a sync of `release` into `develop`, or of `main` into `develop`.** A squash drops the link to the
 `release` commits, and the hotfixes would be counted a second time at the next release. The bots always merge with a
@@ -103,6 +108,8 @@ workflow adds the check.
 
 The candidate must be green before you finish. Fix problems with a hotfix pull request into `release`; see
 [Hotfix flow](#hotfix-flow).
+**Release finish** does not check this: confirm that the CI run for the commit `release` points at is green. If a red
+candidate was released, see [CI on main is red](#ci-on-main-is-red).
 
 ### 4. Run Release finish as a dry run
 
@@ -115,9 +122,10 @@ tags, and pushes nothing. You can dispatch a dry run from any branch, for exampl
 ### 5. Run Release finish for real
 
 Run **Release finish** again from `develop`, with `dry_run` unchecked and the `sprint` input set to the Project 9
-sprint name, such as `APIHUB-26.3.5`. The sprint is stored in the annotation of the product tag. A real run refuses:
+sprint name, such as `APIHUB-26.3.5`. The sprint is stored in the annotation of the product tag. Both modes refuse a
+sprint with characters other than letters, digits, `.`, `_`, and `-`. A real run also refuses:
 
-- a sprint that is empty or contains characters other than letters, digits, `.`, `_`, and `-`;
+- an empty sprint;
 - a workflow file from a branch other than the default branch (`develop`);
 - a missing `RELEASE_BOT_SSH_KEY`.
 
@@ -145,12 +153,15 @@ The job summary lists the pushed tags, or says "Nothing to release". Then follow
 8. In a second job, merges `main` into `develop` with a merge commit and makes sure CI runs on `develop`.
 
 When no component and no `deploy/` change has a bump, nothing is tagged or pushed, and the run ends with "Nothing to
-release".
+release". The same happens when `release` is still at the commit the previous run released: the run moves no branch
+and starts no back-merge.
 
 "Makes sure CI runs" means: wait up to two minutes for the CI run that the push started. Dispatch CI on the branch
 only when none appears (`tools/release/ensure-ci.sh`). The same commit is never built twice on purpose.
 
-The workflow never cancels a run in progress. Concurrent runs of the same workflow queue.
+The workflows never cancel a run in progress. Dry runs and real runs of **Release finish** queue apart. A real run
+and **Release start** share one queue, so a cut cannot land between the push of `main` and the fast-forward of
+`release`. GitHub keeps one pending run per queue: a newer dispatch replaces the one that waits, so dispatch once.
 
 ## Read the dry-run summary
 
@@ -186,8 +197,8 @@ Check these points:
   stop and ask a maintainer of `tools/release/`.
 - **Nothing to release.** The run found no bump at all. See [Nothing to release](#nothing-to-release).
 
-A dry run does not check the sprint, the deploy key, or the dispatching branch, and it does not test the push. A real
-run checks all of them before it tags.
+A dry run checks the sprint only when you give one. It does not check the deploy key or the dispatching branch, and it
+does not test the push. A real run checks all of them before it tags.
 
 You can read the same plan on your own machine with `git fetch --tags`, `pnpm install`, and
 `node tools/release/plan.js`, with `release` checked out. `node tools/release/version-plan.js` prints only the
@@ -239,8 +250,10 @@ order:
    reports a problem, such as a `package.json` version that differs from its tag.
 2. Points `<image>:<version>` at the multi-arch image this run built under `:latest`. It first checks that the image
    carries this commit and both architectures. A version tag that already exists for another commit is never moved.
-3. Builds and publishes the released public npm packages to GitHub Packages with `pnpm publish -r`. Versions the
-   registry already has are skipped.
+3. Builds the released public npm packages before it logs in to any registry, then publishes them to GitHub Packages
+   with `pnpm publish -r --ignore-scripts`. A version that the registry already holds from before the release commit
+   stops the job: the tag would name content the registry does not have. A version published after the release commit
+   comes from an earlier attempt of this release and is skipped. The dry run reports the same case as a warning.
 4. **Planned (step 6):** package and publish the Helm charts to `oci://ghcr.io/netcracker/charts`. Today the step is
    guarded by `PUBLISH_CHARTS` and only prints a warning.
 5. Creates the GitHub Releases: modules first (`make_latest=false`), then the product, which becomes the Latest
@@ -378,9 +391,10 @@ can run **Release finish** again.
 
 ### Nothing to release
 
-The run ends with the notice "Nothing to release" and moves no branch. Either no component has a releasing commit since
-its last tag, or every change since then was `docs`, `test`, or `ci`. If you expected a release, check that the
-merged pull requests have Conventional Commits titles and touch the component's directories.
+The run ends with the notice "Nothing to release" and moves no branch. Either `release` is at an already released
+commit, no component has a releasing commit since its last tag, or every change since then was `docs`, `test`, or `ci`.
+If you expected a release, check that the merged pull requests have Conventional Commits titles and touch the
+component's directories.
 
 ### CI on main is red
 
@@ -394,6 +408,8 @@ jobs. If the cause is a defect in the code, the fix ships with the next release.
 - `<image>:latest does not exist` or has another revision: the image job of this CI run did not publish the image for
   this commit. Re-run the whole CI run on `main`, not only the artifacts job.
 - `a version tag is never moved`: the image version already exists for a different commit. Stop and ask a maintainer.
+- `is already in the registry from before this release`: the polyrepo published that npm version. Release the
+  component again with a bump that leads past it; do not unpublish.
 - A partial publish: re-run the failed jobs. Existing image tags, npm versions, and GitHub Releases are skipped.
 
 ### The secret is missing
