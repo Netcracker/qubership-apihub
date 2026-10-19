@@ -27,6 +27,8 @@ on:
 
 jobs:
   images:
+    # The image name only: the default name lists every matrix field of the leg.
+    name: ${{ matrix.image }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     # release-finish.yml leaves main and release at the same commit, and both CI runs build images for
