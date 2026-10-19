@@ -38,6 +38,6 @@ The remaining environment-only settings are:
 
 ## Build
 
-Just run `build_golang_binary.cmd` file.
+Run `pnpm exec nx run agents-backend:build` from the repository root.
 
 For Docker builds, use `build_docker_image.cmd`.

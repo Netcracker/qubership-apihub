@@ -35,8 +35,6 @@ go get github.com/Netcracker/qubership-apihub/backend/commons-go
 │   └── internal/              # Internal implementation
 ├── .github/
 │   └── workflows/             # GitHub Actions workflows
-├── build.sh                   # Build script for Unix systems
-├── build.cmd                  # Build script for Windows
 ├── go.mod                     # Module dependencies
 └── README.md
 ```
@@ -50,25 +48,15 @@ go get github.com/Netcracker/qubership-apihub/backend/commons-go
 
 ### Build All Modules
 
-For local building all modules in the repository, use the provided scripts:
+From the repository root, use the Nx targets of the `commons-go` project:
 
-**On Unix systems (Linux, macOS):**
 ```bash
-chmod +x build.sh
-./build.sh
+pnpm exec nx run commons-go:tidy
+pnpm exec nx run commons-go:lint
+pnpm exec nx run commons-go:test
 ```
 
-**On Windows:**
-```cmd
-build.cmd
-```
-
-The scripts perform the following actions:
-- Go version check
-- Dependency download and verification
-- Building all modules
-- Running tests
-- Code check with `go vet`
+They tidy the dependencies, format and vet the code, and run the tests of the whole module.
 
 ### Build Individual Module
 

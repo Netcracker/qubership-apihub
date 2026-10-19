@@ -22,4 +22,4 @@ Deployment to k8s is possible via Helm Chart. Please refer to [Installation Note
 
 ## Build
 
-Just run build.cmd(sh) file from this repository
+Run `pnpm exec nx run agent:build` from the repository root.

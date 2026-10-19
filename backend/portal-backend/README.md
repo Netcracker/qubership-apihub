@@ -107,15 +107,13 @@ For local development and debugging see the [Debug](#debug) section below.
 
 ## Build
 
-Run the provided build script from the repository root:
+Run the Nx target from the repository root:
 
 ```bash
-# Linux / macOS
-./build.sh
-
-# Windows
-build.cmd
+pnpm exec nx run portal-backend:build
 ```
+
+To build the container image locally, run `build_docker_image.cmd` (Windows, Podman) from this directory.
 
 ## Configuration
 
