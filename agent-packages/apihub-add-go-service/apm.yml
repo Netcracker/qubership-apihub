@@ -1,0 +1,6 @@
+name: apihub-add-go-service
+version: 0.1.0
+description: Checklist for adding a Go backend service to the qubership-apihub monorepo
+author: Qubership
+dependencies:
+  apm: []
