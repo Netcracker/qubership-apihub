@@ -47,7 +47,7 @@ helm uninstall qubership-apihub-agent -n qubership-apihub-agent
 
 ## Dev cases
 
-**Installation to local k8s cluster**
+### Installation to local k8s cluster
 
 File `local-k8s-values.yaml` has predefined deploy parameters for deploy to local k8s cluster on your PC.
 
