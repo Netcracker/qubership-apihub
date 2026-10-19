@@ -8,5 +8,18 @@
 # Learn about CODEOWNERS file format:
 #  https://help.github.com/en/articles/about-code-owners
 #
+# The last matching pattern wins, so the rules go from general to specific.
+# Owners of a path replace the default owner, they do not add to it.
+#
 
+# Default owner for everything: the frontend modules, tests, tools, deploy, and docs.
 * @alagishev
+
+# Backend modules (Go and Java).
+/backend/ @alagishev @viacheslav-lunev @karpov-aleksandr
+
+# Pipeline definitions and the scripts the pipelines run. A pull request that edits a workflow or
+# tools/ci/ci-verdict.js changes what the required checks mean, so the default owner reviews it.
+/.github/ @alagishev
+/tools/ci/ @alagishev
+/tools/release/ @alagishev
