@@ -2,6 +2,7 @@
 ^.*xmlsoap.org
 host.docker.internal
 ^.*localtest.me
+^.*stoplight.io
 
 # APM-deployed agent harness (upstream package markdown)
 ^\.cursor/
