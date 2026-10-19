@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 if [ -f jwt_private_key ]
 then
 	echo "Private key 'jwt_private_key' is already exists, please backup or remove it"

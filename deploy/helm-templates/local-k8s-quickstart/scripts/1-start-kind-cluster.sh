@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 echo "---Start Kind cluster set up---"
 cat <<EOF | kind create cluster --config=-
 kind: Cluster
