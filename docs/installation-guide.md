@@ -71,6 +71,7 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 | [`deploy/docker-compose/with-keycloak/`](../deploy/docker-compose/with-keycloak/) | Same stack + Keycloak pre-configured for SAML and OIDC. |
 
 **Prerequisites:**
+
 - **Podman with compose plugin** (`podman compose up`). Docker Compose also works.
 - On **Windows**: add `127.0.0.1 host.docker.internal` to `hosts` file.
 - `openssl` for JWT key generation (used by `generate_jwt_pkey.sh`).
@@ -135,6 +136,7 @@ extensions:
 ```
 
 > **JWT key generation:**
+>
 > ```bash
 > ./deploy/docker-compose/apihub-generic/generate_jwt_pkey.sh
 > # outputs base64 value to ./jwt_private_key
@@ -407,6 +409,7 @@ All configuration via **`config.yaml`** (path: `AGENTS_BACKEND_CONFIG_FOLDER`). 
 Chart: **[`deploy/helm-templates/qubership-apihub/`](../deploy/helm-templates/qubership-apihub/)**.
 
 **Prerequisites:**
+
 - `kubectl` with namespace admin access
 - Helm 3.x
 - Kubernetes 1.23+
