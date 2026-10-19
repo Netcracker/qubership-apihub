@@ -99,7 +99,7 @@ Since you will run non-production environment you do not have any valid identity
 * add admin role via `POST /api/internal/users/{userId}/systemRole`
 * get local user token via  `POST /api/v2/auth/local`
 
-You can use any of test tools approved by company to send REST API requests. The best request collection can be found in the [`qubership-apihub-postman-collections repository`](https://github.com/Netcracker/qubership-apihub-postman-collections). And the command above, collection and environment for local development are also included.
+You can use any of test tools approved by company to send REST API requests. The best request collection can be found in the [`tests/postman-collections`](../../../../tests/postman-collections). And the command above, collection and environment for local development are also included.
 
 You can use Postman or Bruno app to run REST API requests.
 
