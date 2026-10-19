@@ -2,8 +2,8 @@
 
 APIHUB Portal is centralized repository for storing and managing API specification. Portal allows you to:
 
-- Upload API specifications, markdown files and any other artifacts related to API.
-- View API specifications and markdown files in human-readable format.
+- Upload API specifications, Markdown files and any other artifacts related to API.
+- View API specifications and Markdown files in human-readable format.
 - Compare API
 - Check backward compatibility of API
 - Track deprecated entities from API specifications
@@ -16,7 +16,7 @@ Currently Portal allows working with the following API specifications:
   - You cannot compare OpenAPI 3.0 with 3.1 and vice versa.
 - **GraphQL specifications and introspections** of release October 2021.
 
-You can also upload markdown files and Portal will render content of the files. All other files can be uploaded to Portal (and downloaded after that), but Portal does not allow viewing the content of these files or performing any other operations on them.
+You can also upload Markdown files and Portal will render content of the files. All other files can be uploaded to Portal (and downloaded after that), but Portal does not allow viewing the content of these files or performing any other operations on them.
 
 # Home Page
 
@@ -150,7 +150,7 @@ If package version already have some existing versions, you can create new versi
 To create new package version:
 
 1. Click **Create version**.
-2. In the Configure Package Version page, add required documentation by clicking **browse** or drag and drop documents. If added document is correct OpenAPI specification, GraphQL specification or markdown file you can preview the document by clicking on it.
+2. In the Configure Package Version page, add required documentation by clicking **browse** or drag and drop documents. If added document is correct OpenAPI specification, GraphQL specification or Markdown file you can preview the document by clicking on it.
    To remove some added file from the package, you can hover over that file and click **Remove**.
 
 After all required files are added in the package, you can publish package version:
