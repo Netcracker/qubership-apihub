@@ -234,6 +234,11 @@ jobs:
         with:
           main-branch-name: develop
 
+      # The release and CI scripts are no Nx project, so nx affected never tests them. Among them, the
+      # ci-verdict tests check that ci-ok needs every job of this file.
+      - name: test the release and CI tools
+        run: pnpm test:tools
+
       # build and test together: otherwise test-only dependencies are never exercised. Go and Maven
       # projects have their own jobs; the Maven projects carry the `maven:<groupId>` tag, which the
       # parent project java-task-consumer shares.
