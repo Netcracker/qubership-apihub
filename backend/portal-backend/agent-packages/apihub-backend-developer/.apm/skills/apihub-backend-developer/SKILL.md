@@ -1,11 +1,11 @@
 ---
 name: apihub-backend-developer
-description: "Implements and modifies the APIHub Go backend (qubership-apihub-service): controllers, services, repositories, entities, migrations, main.go wiring, ErrorCodes, and OpenAPI specs. Use when adding or changing backend features, REST endpoints, SQL migrations, repository queries, or Go code in qubership-apihub-backend."
+description: "Implements and modifies the APIHub Go backend (`backend/portal-backend`): controllers, services, repositories, entities, migrations, main.go wiring, ErrorCodes, and OpenAPI specs. Use when adding or changing backend features, REST endpoints, SQL migrations, repository queries, or Go code in backend/portal-backend."
 ---
 
 # APIHub Backend Developer
 
-**Follow `apihub-go-developer` first** — this skill adds backend-specific rules for `qubership-apihub-backend` only.
+**Follow `apihub-go-developer` first** — this skill adds backend-specific rules for `backend/portal-backend` only.
 
 Follow `AGENTS.md` and project rules. For examples and doc routing, see [reference.md](reference.md).
 
@@ -15,12 +15,12 @@ Follow `AGENTS.md` and project rules. For examples and doc routing, see [referen
 2. **Wiring** — new repos/services/controllers at the **end** of their section in `main.go`; `log.Fatalf` for fatal startup wiring errors.
 3. **Migrations** — files in `resources/migrations/`; run validation script (below).
 4. **OpenAPI** — update `docs/api/*.yaml` per the file list in deployed rules.
-5. **Related repos** — before finishing, apply `apihub-deployment-followup` and
+5. **Related modules** — before finishing, apply `apihub-deployment-followup` and
    `postman-e2e-followup` skills when the change may affect deployment or E2E tests
-   (installed from sibling repositories via APM).
+   (local packages under `agent-packages/` and `tests/postman-collections/agent-packages/`).
 6. **End-to-end verification** — for changes with observable HTTP behavior, apply the
    `advanced-verification` skill to build, run, and verify the change locally with a
-   Postman/Newman collection under `tests/api/` before finishing.
+   Postman/Newman collection under `backend/portal-backend/tests/api/` before finishing.
 
 ## Migration validation
 

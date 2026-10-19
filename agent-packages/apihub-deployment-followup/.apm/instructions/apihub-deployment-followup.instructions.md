@@ -1,8 +1,8 @@
 ---
-description: Remind when backend changes require Helm or Compose updates in qubership-apihub.
+description: Check whether a portal-backend change needs Helm, Compose, or configuration reference updates.
 applyTo: "backend/portal-backend/**/*.go,backend/portal-backend/docs/api/**"
 ---
 
 When implementing or modifying backend configuration, env-backed defaults, startup
-wiring, or deployment-facing behaviour in `qubership-apihub-backend`, apply the
+wiring, or deployment-facing behaviour in `backend/portal-backend`, apply the
 `apihub-deployment-followup` skill before finishing the task.

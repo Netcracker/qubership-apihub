@@ -1,6 +1,6 @@
 name: apihub-backend-self-review
 version: 0.2.0
-description: Backend-specific self-review addendum for qubership-apihub-backend
+description: Backend-specific self-review addendum for backend/portal-backend
 author: Qubership
 dependencies:
   apm:

@@ -48,7 +48,8 @@ newman run tests/postman-collections/e2e/1_1_Smoke_Portal.postman_collection.jso
 
 CI runs the collections through `.github/workflows/e2e-tests-compose.yml`, `e2e-tests-kind.yml`, and
 `e2e-tests-manual.yml` (input `postman_collections`, comma-separated paths under `tests/postman-collections`).
-The default run is `e2e/1_1_Smoke_Portal.postman_collection.json`.
+An empty list runs the Portal collections (compose) or the same plus `1_2_Smoke_Agent` (kind); the `smoke` tier runs
+`1_1_Smoke_Portal` alone. `tools/ci/e2e-collections.sh` resolves the list.
 
 ## Traps
 

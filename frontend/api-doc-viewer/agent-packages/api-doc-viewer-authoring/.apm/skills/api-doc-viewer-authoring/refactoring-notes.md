@@ -94,7 +94,7 @@ the base rule already reads.
   strategy file-wide instead of rule-by-rule.
 
 **Related:** `preceded-by.css:173-181` (the base rule and its one existing precedent override);
-`CombinerSelectorRow.tsx` `CombinerSelectorControlsRow` (the call site); this repo's
+`CombinerSelectorRow.tsx` `CombinerSelectorControlsRow` (the call site); this module's
 `next-data-model-authoring` → `json-schema/json-schema-nesting-indicator-row-diffs.md` session-lesson doc (unrelated bug, same viewer family,
 same "verify with computed styles in Storybook, don't assume" verification habit).
 

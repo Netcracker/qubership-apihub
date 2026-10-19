@@ -79,7 +79,7 @@ asserts the slug it gives (`v1-spec1`); do not copy that layout.
 
 ## Publish under a package id of its own
 
-Published versions live in one in-memory tree per test file, and under `npm run test:disk` in one directory per
+Published versions live in one in-memory tree per test file, and under `pnpm run test:disk` in one directory per
 Jest worker, shared by every file that worker runs. Publish under a `packageId` that no other test, in this file or
 another, publishes: a path naming the subject and the case (`annotation/summary-changed`).
 
@@ -87,7 +87,7 @@ another, publishes: a path naming the subject and the case (`annotation/summary-
 - **The folder wrappers in `builders.ts` publish under the folder path they read**, such as `publishVersion`,
   `buildChangelogPackage`, and `prepareChangelogPackage`. The dashboard wrappers also publish the dashboard under
   the fixed id `dashboards/dashboard`: `prepareChangelogDashboard` and `buildChangelogDashboard` take no other, so
-  under `npm run test:disk` two files that call them in one worker share that dashboard. To publish a folder under
+  under `pnpm run test:disk` two files that call them in one worker share that dashboard. To publish a folder under
   another id, call `publish` directly; it takes the folder and the id separately:
 
   ```typescript
@@ -104,8 +104,8 @@ another, publishes: a path naming the subject and the case (`annotation/summary-
   and a release build throws on any `Error` notification, so pass `status: VERSION_STATUS.DRAFT`. `publish` sets the
   release over a `status` in `config.json`, so the status goes in the call.
 
-**Reach published output through the registry helpers.** Under `npm test`, CI included, a build's output never
-touches the disk; only `npm run test:disk` writes it under `test/versions/worker-<id>`. Read and write it with
+**Reach published output through the registry helpers.** Under `pnpm test`, CI included, a build's output never
+touches the disk; only `pnpm run test:disk` writes it under `test/versions/worker-<id>`. Read and write it with
 `loadJsonFromRegistry`, `loadFileAsStringFromRegistry`, `registryFs`, and `VERSIONS_PATH`, never with `fs` or a
 literal `test/versions` path: that works in one mode and fails in the other. Fixtures under `test/projects` are
 always read from disk.
@@ -182,7 +182,7 @@ A new or changed assertion is done when you have seen it fail for the reason it 
 
 1. Break the code path the assertion guards, in `src` or, for a helper test, in the helper: remove a call, invert
    a condition, or return early.
-2. Run the test (`npm test -- test/<file>.test.ts`) and check that it fails **at this assertion's line**, not at an
+2. Run the test (`pnpm test -- test/<file>.test.ts`) and check that it fails **at this assertion's line**, not at an
    earlier one or with a crash.
 3. Undo the edit and rerun the test to see it pass.
 
