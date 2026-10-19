@@ -1,82 +1,3357 @@
 lockfile_version: '1'
-generated_at: '2026-06-03T14:56:17.725219+00:00'
-apm_version: 0.16.0
+generated_at: '2026-10-19T11:51:27.415821+00:00'
+apm_version: 0.27.0
 dependencies:
-- repo_url: Netcracker/qubership-ai-packages
-  host: github.com
-  resolved_commit: 785ac701be71e5f09f8857970c026d5f6bbbbb1a
-  virtual_path: agent-packages/english-developer-style
-  is_virtual: true
+- repo_url: _local/advanced-verification
+  name: advanced-verification
+  version: 0.1.0
   package_type: apm_package
   deployed_files:
-  - .agents/skills/english-developer-style
-  - .claude/rules/english-developer-style.md
-  - .claude/skills/english-developer-style
-  - .cursor/rules/english-developer-style.mdc
-  - .github/instructions/english-developer-style.instructions.md
+  - .claude/skills/advanced-verification
+  - .claude/skills/advanced-verification/SKILL.md
+  - .claude/skills/advanced-verification/reference.md
+  - .cursor/skills/advanced-verification
+  - .cursor/skills/advanced-verification/SKILL.md
+  - .cursor/skills/advanced-verification/reference.md
   deployed_file_hashes:
-    .claude/rules/english-developer-style.md: sha256:71d5921cbb7e91db77b2ad7403714cc4d8471e3af7a974b850e9831df2ca25b9
-    .cursor/rules/english-developer-style.mdc: sha256:981d72b4b97f7b5fb861ea9beb32edef5746c8ed87419abaadc999e14861a6a9
-    .github/instructions/english-developer-style.instructions.md: sha256:9bd3f0ea1da9c84677b4d7e91126208b437bc93b82ea6c684e1d76db9e42abde
-  content_hash: sha256:107dd671a330a3afcb3bcce940afa130f5576c17840cee77d9fcefeb4550c68c
-- repo_url: Netcracker/qubership-ai-packages
-  host: github.com
-  resolved_commit: 785ac701be71e5f09f8857970c026d5f6bbbbb1a
-  virtual_path: agent-packages/markdown-line-length-120
-  is_virtual: true
+    .claude/skills/advanced-verification/SKILL.md: sha256:af9867a31501cc9efed1ccb45e6a95bb75a2d52f6b98c0604f30a97716c6b2d1
+    .claude/skills/advanced-verification/reference.md: sha256:fe48645b85f7747c7f280f2e0b217682ae2a8fbfe86d5f7e755976d1881858b5
+    .cursor/skills/advanced-verification/SKILL.md: sha256:af9867a31501cc9efed1ccb45e6a95bb75a2d52f6b98c0604f30a97716c6b2d1
+    .cursor/skills/advanced-verification/reference.md: sha256:fe48645b85f7747c7f280f2e0b217682ae2a8fbfe86d5f7e755976d1881858b5
+  source: local
+  local_path: ./backend/portal-backend/agent-packages/advanced-verification
+- repo_url: _local/agent-conventions
+  name: agent-conventions
+  version: 0.1.0
   package_type: apm_package
   deployed_files:
-  - .agents/skills/markdown-line-length-120
-  - .claude/rules/markdown-line-length-120.md
-  - .claude/skills/markdown-line-length-120
-  - .cursor/rules/markdown-line-length-120.mdc
-  - .github/instructions/markdown-line-length-120.instructions.md
+  - .claude/rules/agent-config-defaults.md
+  - .claude/rules/agent-no-database.md
+  - .claude/rules/agent-openapi-files.md
+  - .cursor/rules/agent-config-defaults.mdc
+  - .cursor/rules/agent-no-database.mdc
+  - .cursor/rules/agent-openapi-files.mdc
   deployed_file_hashes:
-    .claude/rules/markdown-line-length-120.md: sha256:17478b76774dca2ab2ae0ace590f84fa4efc0c02d39502aca8de7abb8a67c869
-    .cursor/rules/markdown-line-length-120.mdc: sha256:4eeb64d82c3f86bb228cb7d8c4a030c4091750bf87b58e39751257a80b1b6ce5
-    .github/instructions/markdown-line-length-120.instructions.md: sha256:6ba398a796f727912bbeeec70cf4203affa8b1999d715d6f11830e8703dac350
-  content_hash: sha256:a1aefd3975421bee49843021ae90295c61df1e7f9b897d2bbe38d696e40c1583
+    .claude/rules/agent-config-defaults.md: sha256:a10cdb6e302d4082e830889b974144575716e588b22f962ca1ebbfa7406080a3
+    .claude/rules/agent-no-database.md: sha256:4ae0ba2a2e76b845882a5c30f0f1cace7c6fecd8af0d988060712133049a82f8
+    .claude/rules/agent-openapi-files.md: sha256:0fcdbe8a5473ac16dc1b2d81adba04fcf5e2838c6912fe9b3d19cb1f2c81725e
+    .cursor/rules/agent-config-defaults.mdc: sha256:9313f7107715b2197c680bf56a6603940bb32dcb7fba73468de9c92c31fc49ea
+    .cursor/rules/agent-no-database.mdc: sha256:fd40496b4b11b13f6dbbeb1bfa7bc49edd802a4c14a251a47270f0b1c26d2e5f
+    .cursor/rules/agent-openapi-files.mdc: sha256:38a953513a19cbe9c44443a4f121e518342a3fdbddaaf83c0ca419ebb9d0d007
+  source: local
+  local_path: ./backend/agent/agent-packages/agent-conventions
+- repo_url: _local/api-diff-authoring
+  name: api-diff-authoring
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/api-diff-authoring.md
+  - .claude/skills/api-diff-authoring
+  - .claude/skills/api-diff-authoring/SKILL.md
+  - .cursor/rules/api-diff-authoring.mdc
+  - .cursor/skills/api-diff-authoring
+  - .cursor/skills/api-diff-authoring/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/api-diff-authoring.md: sha256:71a9b7d94d23dd62b2d3f0310837dd94089f6dd04aa6f0cad5800408bd49f94e
+    .claude/skills/api-diff-authoring/SKILL.md: sha256:e6484482da003a72361836b396822ca7a179109dff36bb5e60ee572901431fb2
+    .cursor/rules/api-diff-authoring.mdc: sha256:fd2030680d45a8401b187d568233859cc77009556e77a07c1dbf504dd459de6d
+    .cursor/skills/api-diff-authoring/SKILL.md: sha256:e6484482da003a72361836b396822ca7a179109dff36bb5e60ee572901431fb2
+  source: local
+  local_path: ./frontend/api-diff/agent-packages/api-diff-authoring
+- repo_url: _local/api-diff-testing
+  name: api-diff-testing
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/api-diff-testing.md
+  - .claude/skills/api-diff-testing
+  - .claude/skills/api-diff-testing/SKILL.md
+  - .cursor/rules/api-diff-testing.mdc
+  - .cursor/skills/api-diff-testing
+  - .cursor/skills/api-diff-testing/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/api-diff-testing.md: sha256:17ecebc22a02f2ec71488182bfc1f7a6bff20c77afe25b5a87ff27c797194abf
+    .claude/skills/api-diff-testing/SKILL.md: sha256:1a98134897363a5ddd2331c2d42f6c0a55c079c3061e4c45811a8415f31d8ecb
+    .cursor/rules/api-diff-testing.mdc: sha256:adbbfe4dc4d17621a0bc66762ca60f09eb22bd6e965b2060e5aa9ee632aec7ef
+    .cursor/skills/api-diff-testing/SKILL.md: sha256:1a98134897363a5ddd2331c2d42f6c0a55c079c3061e4c45811a8415f31d8ecb
+  source: local
+  local_path: ./frontend/api-diff/agent-packages/api-diff-testing
+- repo_url: _local/api-doc-viewer-authoring
+  name: api-doc-viewer-authoring
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/api-doc-viewer-authoring.md
+  - .claude/skills/api-doc-viewer-authoring
+  - .claude/skills/api-doc-viewer-authoring/SKILL.md
+  - .claude/skills/api-doc-viewer-authoring/refactoring-notes.md
+  - .cursor/rules/api-doc-viewer-authoring.mdc
+  - .cursor/skills/api-doc-viewer-authoring
+  - .cursor/skills/api-doc-viewer-authoring/SKILL.md
+  - .cursor/skills/api-doc-viewer-authoring/refactoring-notes.md
+  deployed_file_hashes:
+    .claude/rules/api-doc-viewer-authoring.md: sha256:77d745d1a570e5e2080795f1721d40dc97a2684c0c6d3f620de96d061086f406
+    .claude/skills/api-doc-viewer-authoring/SKILL.md: sha256:cd10e8f2ba99d23f5cb3a23f97a6f5779e1b55a1f30bb9ecfbc44b05137b29ff
+    .claude/skills/api-doc-viewer-authoring/refactoring-notes.md: sha256:b692bb990013a56f9303581a1ac34c9b8d854ea5602b948851b52dbaeefbe34b
+    .cursor/rules/api-doc-viewer-authoring.mdc: sha256:785e8d3169f5a069d37ce706ce184b0c77a2c1516107af9be805dc0801e646f6
+    .cursor/skills/api-doc-viewer-authoring/SKILL.md: sha256:cd10e8f2ba99d23f5cb3a23f97a6f5779e1b55a1f30bb9ecfbc44b05137b29ff
+    .cursor/skills/api-doc-viewer-authoring/refactoring-notes.md: sha256:b692bb990013a56f9303581a1ac34c9b8d854ea5602b948851b52dbaeefbe34b
+  source: local
+  local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+- repo_url: _local/api-doc-viewer-review-session
+  name: api-doc-viewer-review-session
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/api-doc-viewer-review-session.md
+  - .claude/skills/api-doc-viewer-review-session
+  - .claude/skills/api-doc-viewer-review-session/SKILL.md
+  - .cursor/rules/api-doc-viewer-review-session.mdc
+  - .cursor/skills/api-doc-viewer-review-session
+  - .cursor/skills/api-doc-viewer-review-session/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/api-doc-viewer-review-session.md: sha256:9f6640aede3676088f021a4965d5aea8664842808e3c3a06845d74c466aa51f3
+    .claude/skills/api-doc-viewer-review-session/SKILL.md: sha256:98bcd3ad3d3d29cdd58793406264646b71525a4a89549083707b830a00140f24
+    .cursor/rules/api-doc-viewer-review-session.mdc: sha256:50e1491de4b5a56ffedc373589eb7597929dccfd797609f1f677c1d6dc3fef64
+    .cursor/skills/api-doc-viewer-review-session/SKILL.md: sha256:98bcd3ad3d3d29cdd58793406264646b71525a4a89549083707b830a00140f24
+  source: local
+  local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
+- repo_url: _local/api-doc-viewer-reviewing
+  name: api-doc-viewer-reviewing
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/api-doc-viewer-reviewing.md
+  - .claude/skills/api-doc-viewer-reviewing
+  - .claude/skills/api-doc-viewer-reviewing/SKILL.md
+  - .claude/skills/api-doc-viewer-reviewing/review/async-api.md
+  - .claude/skills/api-doc-viewer-reviewing/review/ddlapi.md
+  - .claude/skills/api-doc-viewer-reviewing/review/jso.md
+  - .claude/skills/api-doc-viewer-reviewing/review/json-schema.md
+  - .cursor/rules/api-doc-viewer-reviewing.mdc
+  - .cursor/skills/api-doc-viewer-reviewing
+  - .cursor/skills/api-doc-viewer-reviewing/SKILL.md
+  - .cursor/skills/api-doc-viewer-reviewing/review/async-api.md
+  - .cursor/skills/api-doc-viewer-reviewing/review/ddlapi.md
+  - .cursor/skills/api-doc-viewer-reviewing/review/jso.md
+  - .cursor/skills/api-doc-viewer-reviewing/review/json-schema.md
+  deployed_file_hashes:
+    .claude/rules/api-doc-viewer-reviewing.md: sha256:e4bee5df2f683bc4d260a3ff42df52007dac7444a50fe04d43351aeddaf1c4e2
+    .claude/skills/api-doc-viewer-reviewing/SKILL.md: sha256:f69dae20eb55dd7972a3c3b33d70cdaf4ac6758b2a3b8238e9af2d0ed6493a27
+    .claude/skills/api-doc-viewer-reviewing/review/async-api.md: sha256:17bb070138bd3f5078407a49e0352c9d994db1dddfffcdf73d13b987017fc51a
+    .claude/skills/api-doc-viewer-reviewing/review/ddlapi.md: sha256:f2a8acf5e6b767db0ff9d27dbe03837c01b01237f5cefe4076705bc6a3f67247
+    .claude/skills/api-doc-viewer-reviewing/review/jso.md: sha256:f9663238234661343d0024f713d1592cb9d94ff4968a21184900bea7794e87a1
+    .claude/skills/api-doc-viewer-reviewing/review/json-schema.md: sha256:8f1c11d311ef9f0023358b1bd407c50acaf9997b6ca12cea65f0cfb7d4e9ec79
+    .cursor/rules/api-doc-viewer-reviewing.mdc: sha256:b1d90ef0338877f122e180661bd40496fb354488938ee980b0049a081dffaf3e
+    .cursor/skills/api-doc-viewer-reviewing/SKILL.md: sha256:f69dae20eb55dd7972a3c3b33d70cdaf4ac6758b2a3b8238e9af2d0ed6493a27
+    .cursor/skills/api-doc-viewer-reviewing/review/async-api.md: sha256:17bb070138bd3f5078407a49e0352c9d994db1dddfffcdf73d13b987017fc51a
+    .cursor/skills/api-doc-viewer-reviewing/review/ddlapi.md: sha256:f2a8acf5e6b767db0ff9d27dbe03837c01b01237f5cefe4076705bc6a3f67247
+    .cursor/skills/api-doc-viewer-reviewing/review/jso.md: sha256:f9663238234661343d0024f713d1592cb9d94ff4968a21184900bea7794e87a1
+    .cursor/skills/api-doc-viewer-reviewing/review/json-schema.md: sha256:8f1c11d311ef9f0023358b1bd407c50acaf9997b6ca12cea65f0cfb7d4e9ec79
+  source: local
+  local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+- repo_url: _local/api-doc-viewer-testing
+  name: api-doc-viewer-testing
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/api-doc-viewer-testing.md
+  - .claude/skills/api-doc-viewer-testing
+  - .claude/skills/api-doc-viewer-testing/SKILL.md
+  - .cursor/rules/api-doc-viewer-testing.mdc
+  - .cursor/skills/api-doc-viewer-testing
+  - .cursor/skills/api-doc-viewer-testing/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/api-doc-viewer-testing.md: sha256:56dbe13ef83743f14c08c8fbb0852e2764d2f8b03a44b8ae0a94951a4ecfa62f
+    .claude/skills/api-doc-viewer-testing/SKILL.md: sha256:34408eec683802dac37c3078a9db0421308492bccdfded826f1367bd5745aa43
+    .cursor/rules/api-doc-viewer-testing.mdc: sha256:9e1d315d07471e7e79a3bd3a62d9ece7e041039e86398dfb6eccab228901be5c
+    .cursor/skills/api-doc-viewer-testing/SKILL.md: sha256:34408eec683802dac37c3078a9db0421308492bccdfded826f1367bd5745aa43
+  source: local
+  local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
+- repo_url: _local/api-doc-viewer-using
+  name: api-doc-viewer-using
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/api-doc-viewer-using.md
+  - .claude/skills/api-doc-viewer-using
+  - .claude/skills/api-doc-viewer-using/SKILL.md
+  - .cursor/rules/api-doc-viewer-using.mdc
+  - .cursor/skills/api-doc-viewer-using
+  - .cursor/skills/api-doc-viewer-using/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/api-doc-viewer-using.md: sha256:973ac261fd82da1a721c8609cb6edeb7e8c6f616f8af1509071d95ace8f6c833
+    .claude/skills/api-doc-viewer-using/SKILL.md: sha256:501e7e5117421d19b862c4cae0aff8c84d2230ed55d8337fce9b7d07a3f9f64a
+    .cursor/rules/api-doc-viewer-using.mdc: sha256:2405b3e9086affbb9c3eef445cdd607524e97c5910a5d7acd3299f9726d37a06
+    .cursor/skills/api-doc-viewer-using/SKILL.md: sha256:501e7e5117421d19b862c4cae0aff8c84d2230ed55d8337fce9b7d07a3f9f64a
+  source: local
+  local_path: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
+- repo_url: _local/api-processor-authoring
+  name: api-processor-authoring
+  version: 1.1.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/api-processor-build-result.md
+  - .claude/rules/api-processor-notifications.md
+  - .claude/skills/api-processor-build-result
+  - .claude/skills/api-processor-build-result/SKILL.md
+  - .claude/skills/api-processor-notifications
+  - .claude/skills/api-processor-notifications/SKILL.md
+  - .cursor/rules/api-processor-build-result.mdc
+  - .cursor/rules/api-processor-notifications.mdc
+  - .cursor/skills/api-processor-build-result
+  - .cursor/skills/api-processor-build-result/SKILL.md
+  - .cursor/skills/api-processor-notifications
+  - .cursor/skills/api-processor-notifications/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/api-processor-build-result.md: sha256:296b1559f212d142d119abf78bbbb76aee1245f03a852827b895588a92ee7559
+    .claude/rules/api-processor-notifications.md: sha256:6a87c2f3f93d90cd1e2bc494ba4c4964bdb934e2b4e197094c49c4f1fa9def3b
+    .claude/skills/api-processor-build-result/SKILL.md: sha256:54f8aba3999ef32b3733d056f1d2e217ac565fd524357004acf410e2d2cadfc5
+    .claude/skills/api-processor-notifications/SKILL.md: sha256:181da70f2248e29e6059731f9c520b7b17fdaf7f3999173ce4367cb095c3aa56
+    .cursor/rules/api-processor-build-result.mdc: sha256:a63d54a5278389f836cc3c6bd9e031b128a142c8d26f3ef0cf75623ea9a7c544
+    .cursor/rules/api-processor-notifications.mdc: sha256:3b5f14b461875b3d68f0320a08bdf68fe5cbc0064f89745c6c765952cdba56ff
+    .cursor/skills/api-processor-build-result/SKILL.md: sha256:54f8aba3999ef32b3733d056f1d2e217ac565fd524357004acf410e2d2cadfc5
+    .cursor/skills/api-processor-notifications/SKILL.md: sha256:181da70f2248e29e6059731f9c520b7b17fdaf7f3999173ce4367cb095c3aa56
+  source: local
+  local_path: ./frontend/api-processor/agent-packages/api-processor-authoring
+- repo_url: _local/api-processor-testing
+  name: api-processor-testing
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/api-processor-testing.md
+  - .claude/skills/api-processor-testing
+  - .claude/skills/api-processor-testing/SKILL.md
+  - .cursor/rules/api-processor-testing.mdc
+  - .cursor/skills/api-processor-testing
+  - .cursor/skills/api-processor-testing/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/api-processor-testing.md: sha256:465e5dba0459e09ebadf06d1f65f7ed445928c9b47b81d7b57b713e9bb4adf30
+    .claude/skills/api-processor-testing/SKILL.md: sha256:0fcd1553ae845668722f6f099c0b3196ff749cc7b8c7788f365f04cc1af0fe92
+    .cursor/rules/api-processor-testing.mdc: sha256:ca583e9d1af184e817c0ba10aac2b31a07c8e98c68492cfed7767fd5ff736a5e
+    .cursor/skills/api-processor-testing/SKILL.md: sha256:0fcd1553ae845668722f6f099c0b3196ff749cc7b8c7788f365f04cc1af0fe92
+  source: local
+  local_path: ./frontend/api-processor/agent-packages/api-processor-testing
+- repo_url: _local/api-processor-using
+  name: api-processor-using
+  version: 1.1.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/api-processor-using.md
+  - .claude/skills/api-processor-using
+  - .claude/skills/api-processor-using/SKILL.md
+  - .cursor/rules/api-processor-using.mdc
+  - .cursor/skills/api-processor-using
+  - .cursor/skills/api-processor-using/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/api-processor-using.md: sha256:93323fa8e9b5fd032e4657d29ea67962d8d2e49db751ce2cec9982c8de516207
+    .claude/skills/api-processor-using/SKILL.md: sha256:fc16a03f0b59833b80c706d4dec1ea56a4714a090c4115ce0a2b1f51401f40b5
+    .cursor/rules/api-processor-using.mdc: sha256:a350bc2f00b824120054a35c4e2bf471e649b38739fa33fc201e30100e9a0d90
+    .cursor/skills/api-processor-using/SKILL.md: sha256:fc16a03f0b59833b80c706d4dec1ea56a4714a090c4115ce0a2b1f51401f40b5
+  source: local
+  local_path: ./frontend/api-processor/agent-packages/api-processor-using
+- repo_url: _local/api-unifier-authoring
+  name: api-unifier-authoring
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/api-unifier-authoring.md
+  - .claude/skills/api-unifier-authoring
+  - .claude/skills/api-unifier-authoring/SKILL.md
+  - .cursor/rules/api-unifier-authoring.mdc
+  - .cursor/skills/api-unifier-authoring
+  - .cursor/skills/api-unifier-authoring/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/api-unifier-authoring.md: sha256:f39677d856e99269eb7c03acd4bcac1bb48ef64f5a59831f5966adad7d24fb23
+    .claude/skills/api-unifier-authoring/SKILL.md: sha256:025fbfd81436cdf1d99a68557869bde8f9da04e5cb457870771a2c6b4497d063
+    .cursor/rules/api-unifier-authoring.mdc: sha256:970610f92fb951505e16e3d0a877c0a819a0232b5e5092f719b8a20c3bcd020c
+    .cursor/skills/api-unifier-authoring/SKILL.md: sha256:025fbfd81436cdf1d99a68557869bde8f9da04e5cb457870771a2c6b4497d063
+  source: local
+  local_path: ./frontend/api-unifier/agent-packages/api-unifier-authoring
+  declared_license: Apache-2.0
+- repo_url: _local/api-unifier-testing
+  name: api-unifier-testing
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/api-unifier-testing.md
+  - .claude/skills/api-unifier-testing
+  - .claude/skills/api-unifier-testing/SKILL.md
+  - .cursor/rules/api-unifier-testing.mdc
+  - .cursor/skills/api-unifier-testing
+  - .cursor/skills/api-unifier-testing/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/api-unifier-testing.md: sha256:05395ef0bec71d02ce1c507d89538fe4ca7c066aa8d11d6ad4642e6dc8a2640b
+    .claude/skills/api-unifier-testing/SKILL.md: sha256:d6e3161f17f950aee397411bbc866b75b1488ad56766b2edc2f42786ea8436fa
+    .cursor/rules/api-unifier-testing.mdc: sha256:7a59eb812777defd6384c39c0bffa6adc5afd8c8ef39455b8d5b712a732db596
+    .cursor/skills/api-unifier-testing/SKILL.md: sha256:d6e3161f17f950aee397411bbc866b75b1488ad56766b2edc2f42786ea8436fa
+  source: local
+  local_path: ./frontend/api-unifier/agent-packages/api-unifier-testing
+  declared_license: Apache-2.0
+- repo_url: _local/apihub-add-go-service
+  name: apihub-add-go-service
+  version: 0.1.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/apihub-add-go-service.md
+  - .claude/skills/apihub-add-go-service
+  - .claude/skills/apihub-add-go-service/SKILL.md
+  - .cursor/rules/apihub-add-go-service.mdc
+  - .cursor/skills/apihub-add-go-service
+  - .cursor/skills/apihub-add-go-service/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/apihub-add-go-service.md: sha256:72440034c1c2be02692006e812c7135640f2c45a2ebe6afd23e3346083bd8975
+    .claude/skills/apihub-add-go-service/SKILL.md: sha256:7a961d6ac3f113ceeb47f3981c5c0700800938a558621ae0650ee32a0d1c2a36
+    .cursor/rules/apihub-add-go-service.mdc: sha256:c45f96ec3b7183248009ae3a12641011c0eec317fe9f15eeb2b22eb411ab515b
+    .cursor/skills/apihub-add-go-service/SKILL.md: sha256:7a961d6ac3f113ceeb47f3981c5c0700800938a558621ae0650ee32a0d1c2a36
+  source: local
+  local_path: ./agent-packages/apihub-add-go-service
+- repo_url: _local/apihub-agent-developer
+  name: apihub-agent-developer
+  version: 0.1.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/apihub-agent-developer.md
+  - .claude/skills/apihub-agent-developer
+  - .claude/skills/apihub-agent-developer/SKILL.md
+  - .cursor/rules/apihub-agent-developer.mdc
+  - .cursor/skills/apihub-agent-developer
+  - .cursor/skills/apihub-agent-developer/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/apihub-agent-developer.md: sha256:a0478a42397a2020c4edcb6a4fef430694fd165376273d1a6e875459c8e8e6b2
+    .claude/skills/apihub-agent-developer/SKILL.md: sha256:868f49e3cfbb27534832c95cd392952dbbe154c51ed4e67f85dc264b938da554
+    .cursor/rules/apihub-agent-developer.mdc: sha256:247be2f830509d861260123f5f5b575dd016c0c96deb7ea56ea062a700f9f14e
+    .cursor/skills/apihub-agent-developer/SKILL.md: sha256:868f49e3cfbb27534832c95cd392952dbbe154c51ed4e67f85dc264b938da554
+  source: local
+  local_path: ./backend/agent/agent-packages/apihub-agent-developer
+- repo_url: _local/apihub-backend-developer
+  name: apihub-backend-developer
+  version: 0.2.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/apihub-backend-developer.md
+  - .claude/skills/apihub-backend-developer
+  - .claude/skills/apihub-backend-developer/SKILL.md
+  - .claude/skills/apihub-backend-developer/reference.md
+  - .claude/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1
+  - .claude/skills/apihub-backend-developer/scripts/check_migration_numbers.sh
+  - .cursor/rules/apihub-backend-developer.mdc
+  - .cursor/skills/apihub-backend-developer
+  - .cursor/skills/apihub-backend-developer/SKILL.md
+  - .cursor/skills/apihub-backend-developer/reference.md
+  - .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1
+  - .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.sh
+  deployed_file_hashes:
+    .claude/rules/apihub-backend-developer.md: sha256:b6ff8126e19f7b0c372ec29e1be3a8a65635ea30a632803bd4535f99d7bcaeb5
+    .claude/skills/apihub-backend-developer/SKILL.md: sha256:a00da78322994eb10da2182528f38a20bc547f9bc0b4cc09bd6ca47e0abf88d4
+    .claude/skills/apihub-backend-developer/reference.md: sha256:8d9e9cfb5a4624324a13cca390b2a4c2e87a5a064b3c660ac4a2267b6bf156bf
+    .claude/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1: sha256:4edd0d19b16a9b9025aecdc8df09045ae92ceda3a619c7f96ab0ca1d0ec3c0ad
+    .claude/skills/apihub-backend-developer/scripts/check_migration_numbers.sh: sha256:e51db198ad16afe9b7ed9e6d88de587d50b79de647856f0cf5d3e8eca89126f6
+    .cursor/rules/apihub-backend-developer.mdc: sha256:4ab7bdff333196bed9eaa64406033859d30d196ff0ee43073d31211b7d13b170
+    .cursor/skills/apihub-backend-developer/SKILL.md: sha256:a00da78322994eb10da2182528f38a20bc547f9bc0b4cc09bd6ca47e0abf88d4
+    .cursor/skills/apihub-backend-developer/reference.md: sha256:8d9e9cfb5a4624324a13cca390b2a4c2e87a5a064b3c660ac4a2267b6bf156bf
+    .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1: sha256:4edd0d19b16a9b9025aecdc8df09045ae92ceda3a619c7f96ab0ca1d0ec3c0ad
+    .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.sh: sha256:e51db198ad16afe9b7ed9e6d88de587d50b79de647856f0cf5d3e8eca89126f6
+  source: local
+  local_path: ./backend/portal-backend/agent-packages/apihub-backend-developer
+- repo_url: _local/apihub-backend-self-review
+  name: apihub-backend-self-review
+  version: 0.2.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/apihub-backend-self-review.md
+  - .claude/skills/apihub-backend-self-review
+  - .claude/skills/apihub-backend-self-review/SKILL.md
+  - .cursor/rules/apihub-backend-self-review.mdc
+  - .cursor/skills/apihub-backend-self-review
+  - .cursor/skills/apihub-backend-self-review/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/apihub-backend-self-review.md: sha256:9dce6e1a81d7ea715e3a774d41690d009836eb271c0857ddf4fe3e37796adb9c
+    .claude/skills/apihub-backend-self-review/SKILL.md: sha256:469341ad3a1bcd37fc61f78c329e7c95a9b826fb4de8d017bdd4e04750993d8f
+    .cursor/rules/apihub-backend-self-review.mdc: sha256:9c5721f938e3fc8f51c2dc64b08ad220fdf5d9de86aee79550bed46c738f95da
+    .cursor/skills/apihub-backend-self-review/SKILL.md: sha256:469341ad3a1bcd37fc61f78c329e7c95a9b826fb4de8d017bdd4e04750993d8f
+  source: local
+  local_path: ./backend/portal-backend/agent-packages/apihub-backend-self-review
 - repo_url: _local/apihub-deployment-authoring
+  name: apihub-deployment-authoring
+  version: 0.1.0
   package_type: apm_package
   deployed_files:
-  - .agents/skills/apihub-deployment-authoring
   - .claude/rules/apihub-deployment-authoring.md
   - .claude/rules/apihub-deployment-compose.md
   - .claude/rules/apihub-deployment-docs.md
   - .claude/skills/apihub-deployment-authoring
+  - .claude/skills/apihub-deployment-authoring/SKILL.md
   - .cursor/rules/apihub-deployment-authoring.mdc
   - .cursor/rules/apihub-deployment-compose.mdc
   - .cursor/rules/apihub-deployment-docs.mdc
-  - .github/instructions/apihub-deployment-authoring.instructions.md
-  - .github/instructions/apihub-deployment-compose.instructions.md
-  - .github/instructions/apihub-deployment-docs.instructions.md
+  - .cursor/skills/apihub-deployment-authoring
+  - .cursor/skills/apihub-deployment-authoring/SKILL.md
   deployed_file_hashes:
-    .claude/rules/apihub-deployment-authoring.md: sha256:7d7689cd3025c0fa4c0c52b52b9dcca3818667a9c00f97e587472ef9a919a8d4
-    .claude/rules/apihub-deployment-compose.md: sha256:fb8eda85642f6e4c612a5839d5212b65d8f7af04e691efdf0c6ce36090197c0d
-    .claude/rules/apihub-deployment-docs.md: sha256:c48df0c775f3928ee2c72bba29648cffdd7c92aa255de26a48e090624721fa51
-    .cursor/rules/apihub-deployment-authoring.mdc: sha256:66831d7cd2ba810fef5c86195feec587222921b3c821ed9d6f84719fca871031
-    .cursor/rules/apihub-deployment-compose.mdc: sha256:bac7257fd06c396b7b2e8355cf591d20c669ae5683c1f34930e517b9cf8324f9
-    .cursor/rules/apihub-deployment-docs.mdc: sha256:b66712261f853511469469f452f907d8556a19347712c97c6d0d609edeecc8b4
-    .github/instructions/apihub-deployment-authoring.instructions.md: sha256:0a803ff052e949379c0d7bde197f8d00775c574d0bd48b35d90082234d2510fc
-    .github/instructions/apihub-deployment-compose.instructions.md: sha256:3ef52907dd1a51863826383cd1a7d80a07c2053ff6f1e4bc8568fe979d3323a0
-    .github/instructions/apihub-deployment-docs.instructions.md: sha256:53ce198c166901a24df323dec3541a6165eb886bd3ff4f5399f4277e1087928c
+    .claude/rules/apihub-deployment-authoring.md: sha256:3822f880ac71bbe92a3b2b7992a792ce7a31fcf8342374b466e72eb403409955
+    .claude/rules/apihub-deployment-compose.md: sha256:b6c3e8c0df80c38d9cfdef2e118eaa950dc16da45328e84d7a7704fddb67c3dd
+    .claude/rules/apihub-deployment-docs.md: sha256:d079e041da06cfa313bdb25e52b650f792e2d438e7c629c066b03aff067c3214
+    .claude/skills/apihub-deployment-authoring/SKILL.md: sha256:325941ece77aa80667ddd97b74d3febbbf89e6bfde41033d113ad972b98af157
+    .cursor/rules/apihub-deployment-authoring.mdc: sha256:2b5b8d84e081516bf88ac825d342729aa65bfa81f7983fc94eb9da0c407cfe31
+    .cursor/rules/apihub-deployment-compose.mdc: sha256:cc571a05830deb005b24cf66d860026a72f86a45d3514d0bb3a386712c4499e4
+    .cursor/rules/apihub-deployment-docs.mdc: sha256:66ec8a67de0a5a9f37386b7a5cfaf8bd7d4147b2be056a9f401a072d2bab1d1d
+    .cursor/skills/apihub-deployment-authoring/SKILL.md: sha256:325941ece77aa80667ddd97b74d3febbbf89e6bfde41033d113ad972b98af157
   source: local
   local_path: ./agent-packages/apihub-deployment-authoring
-- repo_url: _local/development-conventions
+- repo_url: _local/apihub-deployment-followup
+  name: apihub-deployment-followup
+  version: 0.1.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/apihub-deployment-followup.md
+  - .claude/skills/apihub-deployment-followup
+  - .claude/skills/apihub-deployment-followup/SKILL.md
+  - .cursor/rules/apihub-deployment-followup.mdc
+  - .cursor/skills/apihub-deployment-followup
+  - .cursor/skills/apihub-deployment-followup/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/apihub-deployment-followup.md: sha256:dd71ee613043a0808fd3666f486f410c50bc53d0de869e6e3a739dde201cad0d
+    .claude/skills/apihub-deployment-followup/SKILL.md: sha256:4befc548cc0c02e481e8c69236b81c6f2bd6118103a7efd061db30de846a247e
+    .cursor/rules/apihub-deployment-followup.mdc: sha256:aa460255d4d15d4d69a02173d29a27c6f7da6068840548b66b41edbf17b8d74b
+    .cursor/skills/apihub-deployment-followup/SKILL.md: sha256:4befc548cc0c02e481e8c69236b81c6f2bd6118103a7efd061db30de846a247e
+  source: local
+  local_path: ./agent-packages/apihub-deployment-followup
+- repo_url: _local/apihub-ui-authoring
+  name: apihub-ui-authoring
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/apihub-ui-authoring.md
+  - .cursor/rules/apihub-ui-authoring.mdc
+  deployed_file_hashes:
+    .claude/rules/apihub-ui-authoring.md: sha256:18aedc90c1f584b27ea103a0a43cb3f50b03bce7d13e4611e4d1c1c943d8ec0a
+    .cursor/rules/apihub-ui-authoring.mdc: sha256:32e7b72990e1cc67d7944e40a948342e2f86229a6f17164dfddf6c1e98de40a3
+  source: local
+  local_path: ./frontend/ui/agent-packages/apihub-ui-authoring
+- repo_url: _local/backend-conventions
+  name: backend-conventions
+  version: 0.2.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/backend-config-defaults.md
+  - .claude/rules/backend-db-migrations.md
+  - .claude/rules/backend-error-codes.md
+  - .claude/rules/backend-openapi-files.md
+  - .claude/rules/backend-service-wiring.md
+  - .cursor/rules/backend-config-defaults.mdc
+  - .cursor/rules/backend-db-migrations.mdc
+  - .cursor/rules/backend-error-codes.mdc
+  - .cursor/rules/backend-openapi-files.mdc
+  - .cursor/rules/backend-service-wiring.mdc
+  deployed_file_hashes:
+    .claude/rules/backend-config-defaults.md: sha256:e23ebb6c90c4f28f9978554584c7789cff0e7533fb5a05d55299057769060eb4
+    .claude/rules/backend-db-migrations.md: sha256:2bc0ff3f38eebbc5c990b3eee5239515cf065d67e5a0caa691f3d865d4f15353
+    .claude/rules/backend-error-codes.md: sha256:1202e9fc467b127ba1f41423934ab24cebeae79c314bf728296e206bd14e9561
+    .claude/rules/backend-openapi-files.md: sha256:49db29f657dd56dd650f47545038286755d2309839ccda2f6a637db716912a92
+    .claude/rules/backend-service-wiring.md: sha256:fe4110f5ff96587b58f5aaa8e93ed5f7ac80e72de74c7de9c3416a549b6fd03e
+    .cursor/rules/backend-config-defaults.mdc: sha256:7a2cc94367e8c37d4e31ca7f5d728837e590a6b2180b32f12c918223ff3a516f
+    .cursor/rules/backend-db-migrations.mdc: sha256:b9660e26f6610fda5de61606a47b2616d7e4d0bd4de691f20881d233c69f9b53
+    .cursor/rules/backend-error-codes.mdc: sha256:c04d56ae7834a039fc37cebd9fd192d3f0c53b0118b93b911276670a6bd051fb
+    .cursor/rules/backend-openapi-files.mdc: sha256:4e4e89d6516e0e9fecf1722423fbe1329fc4b91337a710a76e8673a95b3d31dd
+    .cursor/rules/backend-service-wiring.mdc: sha256:821d366842e153063939ec6d4264b91ef5de974b6ee5bdbc44b25d3ae9f1d823
+  source: local
+  local_path: ./backend/portal-backend/agent-packages/backend-conventions
+- repo_url: _local/ddlapi-authoring
+  name: ddlapi-authoring
+  version: 1.2.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/ddlapi-authoring.md
+  - .claude/skills/ddlapi-authoring
+  - .claude/skills/ddlapi-authoring/SKILL.md
+  - .cursor/rules/ddlapi-authoring.mdc
+  - .cursor/skills/ddlapi-authoring
+  - .cursor/skills/ddlapi-authoring/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/ddlapi-authoring.md: sha256:942bf94ec7fef5191f9e0f0350829646c59c5475d9c4915151e93bce3ed584c8
+    .claude/skills/ddlapi-authoring/SKILL.md: sha256:63c68201cff68d70e550c83a34770f0559ba8359248190faba7da3b4fa7758bb
+    .cursor/rules/ddlapi-authoring.mdc: sha256:477312d9b29de7d3b7f253dff57be1c95c370f163b94a5159c7a63706d242cc4
+    .cursor/skills/ddlapi-authoring/SKILL.md: sha256:63c68201cff68d70e550c83a34770f0559ba8359248190faba7da3b4fa7758bb
+  source: local
+  local_path: ./frontend/ddlapi/agent-packages/ddlapi-authoring
+- repo_url: _local/ddlapi-testing
+  name: ddlapi-testing
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/ddlapi-testing.md
+  - .claude/skills/ddlapi-testing
+  - .claude/skills/ddlapi-testing/SKILL.md
+  - .cursor/rules/ddlapi-testing.mdc
+  - .cursor/skills/ddlapi-testing
+  - .cursor/skills/ddlapi-testing/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/ddlapi-testing.md: sha256:e2299bc254a1b4bf8b131ec71226a57a0974b3513f56d8fae0083b31ed5c30fc
+    .claude/skills/ddlapi-testing/SKILL.md: sha256:1e309281f974d553b69285d82520e7cfea3c7e0337b586c798e580eacfa8fd8d
+    .cursor/rules/ddlapi-testing.mdc: sha256:2ba5d2960bc5dc7bc7b4d38425c248806211e63a49d4adc29c6505ad1ac9c135
+    .cursor/skills/ddlapi-testing/SKILL.md: sha256:1e309281f974d553b69285d82520e7cfea3c7e0337b586c798e580eacfa8fd8d
+  source: local
+  local_path: ./frontend/ddlapi/agent-packages/ddlapi-testing
+- repo_url: _local/ddlapi-using
+  name: ddlapi-using
+  version: 1.1.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/ddlapi-using.md
+  - .claude/skills/ddlapi-using
+  - .claude/skills/ddlapi-using/SKILL.md
+  - .cursor/rules/ddlapi-using.mdc
+  - .cursor/skills/ddlapi-using
+  - .cursor/skills/ddlapi-using/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/ddlapi-using.md: sha256:43aa7c085fe8351eb1d91085b2280cdbccd53b5d18594564e1e3036c3c641586
+    .claude/skills/ddlapi-using/SKILL.md: sha256:e295636a50925a3ddf626f4ecaea900a647cf6f6dd0637300cfd16ee7cd1effb
+    .cursor/rules/ddlapi-using.mdc: sha256:6aebb48735bc02d7929164dd64b3a46bb55180696e2245620d34cea37ad97bbb
+    .cursor/skills/ddlapi-using/SKILL.md: sha256:e295636a50925a3ddf626f4ecaea900a647cf6f6dd0637300cfd16ee7cd1effb
+  source: local
+  local_path: ./frontend/ddlapi/agent-packages/ddlapi-using
+- repo_url: _local/json-crawl-authoring
+  name: json-crawl-authoring
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/json-crawl-authoring.md
+  - .claude/skills/json-crawl-authoring
+  - .claude/skills/json-crawl-authoring/SKILL.md
+  - .cursor/rules/json-crawl-authoring.mdc
+  - .cursor/skills/json-crawl-authoring
+  - .cursor/skills/json-crawl-authoring/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/json-crawl-authoring.md: sha256:51a31a5b66c57e8d809b30214a45e77987340176e41ee04520aee95e827b82d2
+    .claude/skills/json-crawl-authoring/SKILL.md: sha256:88d2586cecb3be0c2ce6e453f4c442266a30ed68d451cff8b5df64b72e23b904
+    .cursor/rules/json-crawl-authoring.mdc: sha256:b8557763094dcb573c8916319b3b003ea0a5b7cd2ba52fa16fe55d760379864d
+    .cursor/skills/json-crawl-authoring/SKILL.md: sha256:88d2586cecb3be0c2ce6e453f4c442266a30ed68d451cff8b5df64b72e23b904
+  source: local
+  local_path: ./frontend/json-crawl/agent-packages/json-crawl-authoring
+- repo_url: _local/json-crawl-testing
+  name: json-crawl-testing
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/json-crawl-testing.md
+  - .claude/skills/json-crawl-testing
+  - .claude/skills/json-crawl-testing/SKILL.md
+  - .cursor/rules/json-crawl-testing.mdc
+  - .cursor/skills/json-crawl-testing
+  - .cursor/skills/json-crawl-testing/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/json-crawl-testing.md: sha256:dd25e1caa4f9ac6163b1e65ce2a8c22ed1cb8d30a71b952bba48ad7d641f1a60
+    .claude/skills/json-crawl-testing/SKILL.md: sha256:07cb355bfbfc518701e655a5fd976de082b286948ba6c076936a5405f62ca450
+    .cursor/rules/json-crawl-testing.mdc: sha256:1c96c1870a6abc2190d1eaa99e2fb591139e27423ec6b75e20fedd2fd7a520f4
+    .cursor/skills/json-crawl-testing/SKILL.md: sha256:07cb355bfbfc518701e655a5fd976de082b286948ba6c076936a5405f62ca450
+  source: local
+  local_path: ./frontend/json-crawl/agent-packages/json-crawl-testing
+- repo_url: _local/json-crawl-using
+  name: json-crawl-using
+  version: 1.2.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/json-crawl-using.md
+  - .claude/skills/json-crawl-using
+  - .claude/skills/json-crawl-using/SKILL.md
+  - .cursor/rules/json-crawl-using.mdc
+  - .cursor/skills/json-crawl-using
+  - .cursor/skills/json-crawl-using/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/json-crawl-using.md: sha256:b38509593ec3f636461c56ba58b73ddcca147f5fd9c0662a77b405521f86405b
+    .claude/skills/json-crawl-using/SKILL.md: sha256:a6adfa4344f157506d304c886398577fe9b860390c4ba94cfb8405a4c547805e
+    .cursor/rules/json-crawl-using.mdc: sha256:2c581d523849765bda669d6b3ece8e30a71a968bb0778c33734a5cd1f48baff9
+    .cursor/skills/json-crawl-using/SKILL.md: sha256:a6adfa4344f157506d304c886398577fe9b860390c4ba94cfb8405a4c547805e
+  source: local
+  local_path: ./frontend/json-crawl/agent-packages/json-crawl-using
+- repo_url: _local/next-data-model-authoring
+  name: next-data-model-authoring
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/next-data-model-authoring.md
+  - .claude/skills/next-data-model-authoring
+  - .claude/skills/next-data-model-authoring/SKILL.md
+  - .claude/skills/next-data-model-authoring/json-schema/json-schema-meta-flags-and-required.md
+  - .claude/skills/next-data-model-authoring/json-schema/json-schema-nesting-indicator-row-diffs.md
+  - .claude/skills/next-data-model-authoring/json-schema/json-schema-node-key-rename.md
+  - .claude/skills/next-data-model-authoring/json-schema/json-schema-validation-rows.md
+  - .claude/skills/next-data-model-authoring/node-visibility/authoring.md
+  - .claude/skills/next-data-model-authoring/node-visibility/ddlapi.md
+  - .claude/skills/next-data-model-authoring/node-visibility/general-approach.md
+  - .cursor/rules/next-data-model-authoring.mdc
+  - .cursor/skills/next-data-model-authoring
+  - .cursor/skills/next-data-model-authoring/SKILL.md
+  - .cursor/skills/next-data-model-authoring/json-schema/json-schema-meta-flags-and-required.md
+  - .cursor/skills/next-data-model-authoring/json-schema/json-schema-nesting-indicator-row-diffs.md
+  - .cursor/skills/next-data-model-authoring/json-schema/json-schema-node-key-rename.md
+  - .cursor/skills/next-data-model-authoring/json-schema/json-schema-validation-rows.md
+  - .cursor/skills/next-data-model-authoring/node-visibility/authoring.md
+  - .cursor/skills/next-data-model-authoring/node-visibility/ddlapi.md
+  - .cursor/skills/next-data-model-authoring/node-visibility/general-approach.md
+  deployed_file_hashes:
+    .claude/rules/next-data-model-authoring.md: sha256:40c358121f78527037a130522586d164c81519874b26b6c8355ad5a39a3e56ec
+    .claude/skills/next-data-model-authoring/SKILL.md: sha256:1ff1f308a234b03adcb38e9520a3d7af7dd6f8a75cfdee7a3375b0a309555815
+    .claude/skills/next-data-model-authoring/json-schema/json-schema-meta-flags-and-required.md: sha256:8e6d7f9bb652d770446d6afb7a7968bc42af0a2226a175cc819eb72899ad8d87
+    .claude/skills/next-data-model-authoring/json-schema/json-schema-nesting-indicator-row-diffs.md: sha256:678b65fabc6f610ec90e951856e3797ab259022e24e2976b14e3c7f48f776de7
+    .claude/skills/next-data-model-authoring/json-schema/json-schema-node-key-rename.md: sha256:cf508d9732c25e06428ea84eee124afb427c6c0de91735271ecd3f9f20254b22
+    .claude/skills/next-data-model-authoring/json-schema/json-schema-validation-rows.md: sha256:026fe54366c8c6de4350dc17a4eec5553ab5c026b8367c970d86054a39539058
+    .claude/skills/next-data-model-authoring/node-visibility/authoring.md: sha256:715c86a9ea31b91edd7caf625ce82411fdfc88a0175b3f748072d0fde847dad2
+    .claude/skills/next-data-model-authoring/node-visibility/ddlapi.md: sha256:a8945401440060035907c66f79d124520351981a10d19544c951acf174c00400
+    .claude/skills/next-data-model-authoring/node-visibility/general-approach.md: sha256:2b6f93f8797bedaac1cfa590d82de6cdb2497df92b36fe3dd54def464c08a64c
+    .cursor/rules/next-data-model-authoring.mdc: sha256:4f986b36edcfdb8ee8c2b89a04b7cc363fcd436a6e123b3e0d4a4ed3b3708192
+    .cursor/skills/next-data-model-authoring/SKILL.md: sha256:1ff1f308a234b03adcb38e9520a3d7af7dd6f8a75cfdee7a3375b0a309555815
+    .cursor/skills/next-data-model-authoring/json-schema/json-schema-meta-flags-and-required.md: sha256:8e6d7f9bb652d770446d6afb7a7968bc42af0a2226a175cc819eb72899ad8d87
+    .cursor/skills/next-data-model-authoring/json-schema/json-schema-nesting-indicator-row-diffs.md: sha256:678b65fabc6f610ec90e951856e3797ab259022e24e2976b14e3c7f48f776de7
+    .cursor/skills/next-data-model-authoring/json-schema/json-schema-node-key-rename.md: sha256:cf508d9732c25e06428ea84eee124afb427c6c0de91735271ecd3f9f20254b22
+    .cursor/skills/next-data-model-authoring/json-schema/json-schema-validation-rows.md: sha256:026fe54366c8c6de4350dc17a4eec5553ab5c026b8367c970d86054a39539058
+    .cursor/skills/next-data-model-authoring/node-visibility/authoring.md: sha256:715c86a9ea31b91edd7caf625ce82411fdfc88a0175b3f748072d0fde847dad2
+    .cursor/skills/next-data-model-authoring/node-visibility/ddlapi.md: sha256:a8945401440060035907c66f79d124520351981a10d19544c951acf174c00400
+    .cursor/skills/next-data-model-authoring/node-visibility/general-approach.md: sha256:2b6f93f8797bedaac1cfa590d82de6cdb2497df92b36fe3dd54def464c08a64c
+  source: local
+  local_path: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+- repo_url: _local/next-data-model-using
+  name: next-data-model-using
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/next-data-model-using.md
+  - .claude/skills/next-data-model-using
+  - .claude/skills/next-data-model-using/SKILL.md
+  - .cursor/rules/next-data-model-using.mdc
+  - .cursor/skills/next-data-model-using
+  - .cursor/skills/next-data-model-using/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/next-data-model-using.md: sha256:4c9768e14f192d138f7c673a7fbf999390e2009d04af2f0f1a96f3d9c365ed4d
+    .claude/skills/next-data-model-using/SKILL.md: sha256:6ebdb0788d4d2296b7847546199bc6005efdc766a71a40f0cee04a20346001a2
+    .cursor/rules/next-data-model-using.mdc: sha256:71af43c493cfdf2ce3dbd633523be28f54bac16c7d5e8e530f24e6eaa68084b0
+    .cursor/skills/next-data-model-using/SKILL.md: sha256:6ebdb0788d4d2296b7847546199bc6005efdc766a71a40f0cee04a20346001a2
+  source: local
+  local_path: ./frontend/api-doc-viewer/agent-packages/next-data-model-using
+- repo_url: _local/postman-e2e-authoring
+  name: postman-e2e-authoring
+  version: 1.0.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/postman-e2e-authoring.md
+  - .claude/skills/postman-e2e-authoring
+  - .claude/skills/postman-e2e-authoring/SKILL.md
+  - .cursor/rules/postman-e2e-authoring.mdc
+  - .cursor/skills/postman-e2e-authoring
+  - .cursor/skills/postman-e2e-authoring/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/postman-e2e-authoring.md: sha256:785da0c74c2e0b4b7e1a60b4e006b99e156d0c162b6632cd8ee7251eaa7b8595
+    .claude/skills/postman-e2e-authoring/SKILL.md: sha256:cb66c3675054ef4508aecb2bb5740af08f8cf0c2c258c6108080f649b5545c61
+    .cursor/rules/postman-e2e-authoring.mdc: sha256:9d98ee703455ac5135f8bbdc00cb1056824dd3c15fc83cd22bb6b66ac33e1758
+    .cursor/skills/postman-e2e-authoring/SKILL.md: sha256:cb66c3675054ef4508aecb2bb5740af08f8cf0c2c258c6108080f649b5545c61
+  source: local
+  local_path: ./tests/postman-collections/agent-packages/postman-e2e-authoring
+- repo_url: _local/postman-e2e-followup
+  name: postman-e2e-followup
+  version: 0.1.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/postman-e2e-followup.md
+  - .claude/skills/postman-e2e-followup
+  - .claude/skills/postman-e2e-followup/SKILL.md
+  - .cursor/rules/postman-e2e-followup.mdc
+  - .cursor/skills/postman-e2e-followup
+  - .cursor/skills/postman-e2e-followup/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/postman-e2e-followup.md: sha256:122c60d997b5cc042cff41670aee59f04d0b4aafaab49ae34f1febbe35968ff9
+    .claude/skills/postman-e2e-followup/SKILL.md: sha256:9a7af59386be7456b3b8e4967a9be4d615e8b0e93008dc52f69e58dbfc3e9c1f
+    .cursor/rules/postman-e2e-followup.mdc: sha256:41dd2da480f3a8f5592c3a9dd0e0d2c860bfada7735d78e6a7b581820b35f75a
+    .cursor/skills/postman-e2e-followup/SKILL.md: sha256:9a7af59386be7456b3b8e4967a9be4d615e8b0e93008dc52f69e58dbfc3e9c1f
+  source: local
+  local_path: ./tests/postman-collections/agent-packages/postman-e2e-followup
+- repo_url: netcracker/qubership-ai-packages
+  materialization_repo_url: Netcracker/qubership-ai-packages
+  name: english-developer-style
+  host: github.com
+  resolved_commit: 785ac701be71e5f09f8857970c026d5f6bbbbb1a
+  version: 1.0.1
+  virtual_path: agent-packages/english-developer-style
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/english-developer-style.md
+  - .claude/skills/english-developer-style
+  - .claude/skills/english-developer-style/SKILL.md
+  - .cursor/rules/english-developer-style.mdc
+  - .cursor/skills/english-developer-style
+  - .cursor/skills/english-developer-style/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/english-developer-style.md: sha256:1fc236f34cfb8f06e4652f6af298f5610f0e700315dc8edaaa764d27ab7ed041
+    .claude/skills/english-developer-style/SKILL.md: sha256:bd7c115e6bc6b267156f480b692fdc7c6c79cc8b1b1f4b5f000738370450512e
+    .cursor/rules/english-developer-style.mdc: sha256:2e701dc76732725931fc72feb92622b57883a1b9a6295bfc05b06ba2033a5c9b
+    .cursor/skills/english-developer-style/SKILL.md: sha256:bd7c115e6bc6b267156f480b692fdc7c6c79cc8b1b1f4b5f000738370450512e
+  content_hash: sha256:107dd671a330a3afcb3bcce940afa130f5576c17840cee77d9fcefeb4550c68c
+- repo_url: netcracker/qubership-ai-packages
+  materialization_repo_url: Netcracker/qubership-ai-packages
+  name: markdown-line-length-120
+  host: github.com
+  resolved_commit: 785ac701be71e5f09f8857970c026d5f6bbbbb1a
+  version: 1.0.0
+  virtual_path: agent-packages/markdown-line-length-120
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/markdown-line-length-120.md
+  - .claude/skills/markdown-line-length-120
+  - .claude/skills/markdown-line-length-120/SKILL.md
+  - .cursor/rules/markdown-line-length-120.mdc
+  - .cursor/skills/markdown-line-length-120
+  - .cursor/skills/markdown-line-length-120/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/markdown-line-length-120.md: sha256:9b5a7c92d21c087354958fc86010e42be3ee734dc73de768ea5001b03c765af3
+    .claude/skills/markdown-line-length-120/SKILL.md: sha256:be48ab0a931d8dffb78b5e9915e9bf156584bd15fae8dff07a643b243e83d52b
+    .cursor/rules/markdown-line-length-120.mdc: sha256:e7f5f594e2cb538a086b664f4154a45a957f9853584a7e11cabf52dc1a7a039b
+    .cursor/skills/markdown-line-length-120/SKILL.md: sha256:be48ab0a931d8dffb78b5e9915e9bf156584bd15fae8dff07a643b243e83d52b
+  content_hash: sha256:a1aefd3975421bee49843021ae90295c61df1e7f9b897d2bbe38d696e40c1583
+- repo_url: netcracker/qubership-apihub-ci
+  materialization_repo_url: Netcracker/qubership-apihub-ci
+  name: apihub-go-developer
+  host: github.com
+  resolved_commit: d2c1160d9b05ecf8d0190396c6eee3f120c9dd14
+  version: 0.2.0
+  virtual_path: agent-packages/apihub-go-developer
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/apihub-go-developer.md
+  - .claude/skills/apihub-go-developer
+  - .claude/skills/apihub-go-developer/SKILL.md
+  - .claude/skills/apihub-go-developer/reference.md
+  - .cursor/rules/apihub-go-developer.mdc
+  - .cursor/skills/apihub-go-developer
+  - .cursor/skills/apihub-go-developer/SKILL.md
+  - .cursor/skills/apihub-go-developer/reference.md
+  deployed_file_hashes:
+    .claude/rules/apihub-go-developer.md: sha256:e3f68418fd6db0cc4f012a01d639adcd6eb96eeb69dcb64a1afdb1fa8f80fbd4
+    .claude/skills/apihub-go-developer/SKILL.md: sha256:b33cb676a0226642857bf44259ed4569bcc412fd7eef72b168e8a5de19bac3cc
+    .claude/skills/apihub-go-developer/reference.md: sha256:57d60a8f737dc69687dbd21ae2616295e9a37ad90c77455f0d2c443def01542b
+    .cursor/rules/apihub-go-developer.mdc: sha256:c5bffe35280f2408b4ee38aa940815edb1e6146a475984eafec56aedaf73c306
+    .cursor/skills/apihub-go-developer/SKILL.md: sha256:b33cb676a0226642857bf44259ed4569bcc412fd7eef72b168e8a5de19bac3cc
+    .cursor/skills/apihub-go-developer/reference.md: sha256:57d60a8f737dc69687dbd21ae2616295e9a37ad90c77455f0d2c443def01542b
+  content_hash: sha256:b000d454937ac72535ffa7afb313f720615556cc246fc9fac006c04639605151
+- repo_url: netcracker/qubership-apihub-ci
+  materialization_repo_url: Netcracker/qubership-apihub-ci
+  name: apihub-go-self-review
+  host: github.com
+  resolved_commit: d2c1160d9b05ecf8d0190396c6eee3f120c9dd14
+  version: 0.2.0
+  virtual_path: agent-packages/apihub-go-self-review
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/apihub-go-self-review.md
+  - .claude/skills/apihub-go-self-review
+  - .claude/skills/apihub-go-self-review/SKILL.md
+  - .cursor/rules/apihub-go-self-review.mdc
+  - .cursor/skills/apihub-go-self-review
+  - .cursor/skills/apihub-go-self-review/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/apihub-go-self-review.md: sha256:ec7bf6eb48bab91936bba45bebceae11daeeeb066f3a90be018436e7a32cbe28
+    .claude/skills/apihub-go-self-review/SKILL.md: sha256:0a4914ca688a5cadfa0c8d046c1bcf620a4f78835ac3217b1e5c0fdeb31f65f2
+    .cursor/rules/apihub-go-self-review.mdc: sha256:bd14bac37fa4166679ffb43c9ada5d28a9268047d0195a8633fa4d61a85c81aa
+    .cursor/skills/apihub-go-self-review/SKILL.md: sha256:0a4914ca688a5cadfa0c8d046c1bcf620a4f78835ac3217b1e5c0fdeb31f65f2
+  content_hash: sha256:e6619b069dad4658879035923e6d0cc2eab27162852b0ff2bc64a9b9a5efafbd
+- repo_url: netcracker/qubership-apihub-ci
+  materialization_repo_url: Netcracker/qubership-apihub-ci
+  name: development-conventions
+  host: github.com
+  resolved_commit: d2c1160d9b05ecf8d0190396c6eee3f120c9dd14
+  version: 0.3.0
+  virtual_path: agent-packages/development-conventions
+  is_virtual: true
   package_type: apm_package
   deployed_files:
   - .claude/rules/ci-super-linter.md
   - .claude/rules/clarify-before-coding.md
   - .cursor/rules/ci-super-linter.mdc
   - .cursor/rules/clarify-before-coding.mdc
-  - .github/instructions/ci-super-linter.instructions.md
-  - .github/instructions/clarify-before-coding.instructions.md
   deployed_file_hashes:
-    .claude/rules/ci-super-linter.md: sha256:d655a548333e52a748113632665f810e3fb6084339852306aca90f02cfb4f0c7
-    .claude/rules/clarify-before-coding.md: sha256:a3e34e5277a4a3fba12fd6f236e921a59c561e6ee82e240eec247861aa8a398c
-    .cursor/rules/ci-super-linter.mdc: sha256:2f264db238d0d7ffd9d8b830dd383233c57b20e057557d65084fe3f0e7512967
-    .cursor/rules/clarify-before-coding.mdc: sha256:ceb003b39ea330002556d10d3ca52445909bbaf23705ff27f2643705db98c0f4
-    .github/instructions/ci-super-linter.instructions.md: sha256:7e8e2395715e9bd69ec938d4e106ec16d0e9256053c1562cf915a40bf33c7fe5
-    .github/instructions/clarify-before-coding.instructions.md: sha256:f0723cdf5b2cc34bc46992a6c550842f8eb9dcc5b39540c9916835a4ee58d60d
-  source: local
-  local_path: ../qubership-apihub-ci/agent-packages/development-conventions
+    .claude/rules/ci-super-linter.md: sha256:2ee18c08f25c2febad81403779bc7c88daf265b085cab27c7eb03f7ec812d056
+    .claude/rules/clarify-before-coding.md: sha256:3b4bf7e4add2440de4d687bab10d47826ead2083e7d37f48144d8abad137e8bf
+    .cursor/rules/ci-super-linter.mdc: sha256:c9ee666191f58f259e045adf807eec6748a0c5a83c3f7239721b08e3d990564c
+    .cursor/rules/clarify-before-coding.mdc: sha256:d9ed1294278263299a48588d4c4b2bbc689aeedc3edec58d0be15ae630e90b7d
+  content_hash: sha256:9e2fe693a3520efebd5190db25800632d468898a00147aa50899ebe4815d3c50
+- repo_url: netcracker/qubership-apihub-ci
+  materialization_repo_url: Netcracker/qubership-apihub-ci
+  name: github-ticket-implementation-planner
+  host: github.com
+  resolved_commit: d2c1160d9b05ecf8d0190396c6eee3f120c9dd14
+  version: 0.2.0
+  virtual_path: agent-packages/github-ticket-implementation-planner
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/github-ticket-implementation-planner.md
+  - .claude/skills/github-ticket-implementation-planner
+  - .claude/skills/github-ticket-implementation-planner/SKILL.md
+  - .cursor/rules/github-ticket-implementation-planner.mdc
+  - .cursor/skills/github-ticket-implementation-planner
+  - .cursor/skills/github-ticket-implementation-planner/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/github-ticket-implementation-planner.md: sha256:bbfac186585f3dbe958ae351fb13ee6cb9378108128916c47a9efcf215319d78
+    .claude/skills/github-ticket-implementation-planner/SKILL.md: sha256:65bd796eceb5bb9a29949d61651654d7db3e98021d736ef6c06864319f112226
+    .cursor/rules/github-ticket-implementation-planner.mdc: sha256:a560ba8a5e1e0390c3bcdfa76f4431327741e355f753fef832672dec7b7b7053
+    .cursor/skills/github-ticket-implementation-planner/SKILL.md: sha256:65bd796eceb5bb9a29949d61651654d7db3e98021d736ef6c06864319f112226
+  content_hash: sha256:6eb52ca5b3cbe0c80850ed9e571d907978fb28b0f5434b19d3ec1584f8b5567e
+- repo_url: netcracker/qubership-apihub-ci
+  materialization_repo_url: Netcracker/qubership-apihub-ci
+  name: go-conventions
+  host: github.com
+  resolved_commit: d2c1160d9b05ecf8d0190396c6eee3f120c9dd14
+  version: 0.3.0
+  virtual_path: agent-packages/go-conventions
+  is_virtual: true
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/api-first-openapi.md
+  - .claude/rules/go-comments.md
+  - .claude/rules/go-constants-and-http.md
+  - .claude/rules/go-error-handling.md
+  - .claude/rules/go-migrations.md
+  - .claude/rules/sql-performance.md
+  - .cursor/rules/api-first-openapi.mdc
+  - .cursor/rules/go-comments.mdc
+  - .cursor/rules/go-constants-and-http.mdc
+  - .cursor/rules/go-error-handling.mdc
+  - .cursor/rules/go-migrations.mdc
+  - .cursor/rules/sql-performance.mdc
+  deployed_file_hashes:
+    .claude/rules/api-first-openapi.md: sha256:d2a729347fa12ed86883e85a7cd103a99fe8ba7e1c9a990cb799c874afcbd6b9
+    .claude/rules/go-comments.md: sha256:dc64897e83fc652269d2e6dff1b9b6a0f345bad270a190542e7d13431dbfa006
+    .claude/rules/go-constants-and-http.md: sha256:7cbfc97857ced93e4c2d7af336b01668328ed157d7af19fc234437a9071cb357
+    .claude/rules/go-error-handling.md: sha256:3af0a16024e233a3354b8f7e834d512b3efc546b130635a41e6ff3deb185e26d
+    .claude/rules/go-migrations.md: sha256:6d0183ac2b32c559ed49503d582008f6eb91ca3b6c58729565743a6c7665c2a0
+    .claude/rules/sql-performance.md: sha256:6fdc93b24c0b0dee7dcab20124dc494d7eb158c7a3ef430637e74d441fd8f6dc
+    .cursor/rules/api-first-openapi.mdc: sha256:b5578d9c535a60c74ef034c3fa2ddca9fd4b4b1c6f7aa23d50abd9155eb3c474
+    .cursor/rules/go-comments.mdc: sha256:f10bca8d1dbba86f007076fc251ea6c29676652fbc7909281222f07c88d827b5
+    .cursor/rules/go-constants-and-http.mdc: sha256:4b93d4fd5c7bbaa12353a262777c91c93181f4b33456365befc333d5a8528511
+    .cursor/rules/go-error-handling.mdc: sha256:e469ac1a70bed6a6300bf3f3fed45a3b49dfe4f4aab70eda95b2c087efe0889d
+    .cursor/rules/go-migrations.mdc: sha256:918336cbc00f53838de8920f3c7749f5f9339fe3c4b0522e724bc5ea58119c04
+    .cursor/rules/sql-performance.mdc: sha256:bd91f4e9dc7033f376ce95ca9fdfbf2a49088a9dde914d0ec0733e86d1e0f505
+  content_hash: sha256:b5c76fb9fa952cb5aa61e136c922d5291eaac2bbcdf4dea255fa1ada7b6903ce
+deployments:
+- kind: project-relative
+  target: claude
+  value: .claude/rules/agent-config-defaults.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/agent/agent-packages/agent-conventions
+  active_owner: ./backend/agent/agent-packages/agent-conventions
+  content_hash: sha256:a10cdb6e302d4082e830889b974144575716e588b22f962ca1ebbfa7406080a3
+- kind: project-relative
+  target: claude
+  value: .claude/rules/agent-no-database.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/agent/agent-packages/agent-conventions
+  active_owner: ./backend/agent/agent-packages/agent-conventions
+  content_hash: sha256:4ae0ba2a2e76b845882a5c30f0f1cace7c6fecd8af0d988060712133049a82f8
+- kind: project-relative
+  target: claude
+  value: .claude/rules/agent-openapi-files.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/agent/agent-packages/agent-conventions
+  active_owner: ./backend/agent/agent-packages/agent-conventions
+  content_hash: sha256:0fcdbe8a5473ac16dc1b2d81adba04fcf5e2838c6912fe9b3d19cb1f2c81725e
+- kind: project-relative
+  target: claude
+  value: .claude/rules/api-diff-authoring.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-diff/agent-packages/api-diff-authoring
+  active_owner: ./frontend/api-diff/agent-packages/api-diff-authoring
+  content_hash: sha256:71a9b7d94d23dd62b2d3f0310837dd94089f6dd04aa6f0cad5800408bd49f94e
+- kind: project-relative
+  target: claude
+  value: .claude/rules/api-diff-testing.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-diff/agent-packages/api-diff-testing
+  active_owner: ./frontend/api-diff/agent-packages/api-diff-testing
+  content_hash: sha256:17ecebc22a02f2ec71488182bfc1f7a6bff20c77afe25b5a87ff27c797194abf
+- kind: project-relative
+  target: claude
+  value: .claude/rules/api-doc-viewer-authoring.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+  content_hash: sha256:77d745d1a570e5e2080795f1721d40dc97a2684c0c6d3f620de96d061086f406
+- kind: project-relative
+  target: claude
+  value: .claude/rules/api-doc-viewer-review-session.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
+  content_hash: sha256:9f6640aede3676088f021a4965d5aea8664842808e3c3a06845d74c466aa51f3
+- kind: project-relative
+  target: claude
+  value: .claude/rules/api-doc-viewer-reviewing.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  content_hash: sha256:e4bee5df2f683bc4d260a3ff42df52007dac7444a50fe04d43351aeddaf1c4e2
+- kind: project-relative
+  target: claude
+  value: .claude/rules/api-doc-viewer-testing.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
+  content_hash: sha256:56dbe13ef83743f14c08c8fbb0852e2764d2f8b03a44b8ae0a94951a4ecfa62f
+- kind: project-relative
+  target: claude
+  value: .claude/rules/api-doc-viewer-using.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
+  content_hash: sha256:973ac261fd82da1a721c8609cb6edeb7e8c6f616f8af1509071d95ace8f6c833
+- kind: project-relative
+  target: claude
+  value: .claude/rules/api-first-openapi.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  content_hash: sha256:d2a729347fa12ed86883e85a7cd103a99fe8ba7e1c9a990cb799c874afcbd6b9
+- kind: project-relative
+  target: claude
+  value: .claude/rules/api-processor-build-result.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-authoring
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-authoring
+  content_hash: sha256:296b1559f212d142d119abf78bbbb76aee1245f03a852827b895588a92ee7559
+- kind: project-relative
+  target: claude
+  value: .claude/rules/api-processor-notifications.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-authoring
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-authoring
+  content_hash: sha256:6a87c2f3f93d90cd1e2bc494ba4c4964bdb934e2b4e197094c49c4f1fa9def3b
+- kind: project-relative
+  target: claude
+  value: .claude/rules/api-processor-testing.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-testing
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-testing
+  content_hash: sha256:465e5dba0459e09ebadf06d1f65f7ed445928c9b47b81d7b57b713e9bb4adf30
+- kind: project-relative
+  target: claude
+  value: .claude/rules/api-processor-using.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-using
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-using
+  content_hash: sha256:93323fa8e9b5fd032e4657d29ea67962d8d2e49db751ce2cec9982c8de516207
+- kind: project-relative
+  target: claude
+  value: .claude/rules/api-unifier-authoring.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-unifier/agent-packages/api-unifier-authoring
+  active_owner: ./frontend/api-unifier/agent-packages/api-unifier-authoring
+  content_hash: sha256:f39677d856e99269eb7c03acd4bcac1bb48ef64f5a59831f5966adad7d24fb23
+- kind: project-relative
+  target: claude
+  value: .claude/rules/api-unifier-testing.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-unifier/agent-packages/api-unifier-testing
+  active_owner: ./frontend/api-unifier/agent-packages/api-unifier-testing
+  content_hash: sha256:05395ef0bec71d02ce1c507d89538fe4ca7c066aa8d11d6ad4642e6dc8a2640b
+- kind: project-relative
+  target: claude
+  value: .claude/rules/apihub-add-go-service.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-add-go-service
+  active_owner: ./agent-packages/apihub-add-go-service
+  content_hash: sha256:72440034c1c2be02692006e812c7135640f2c45a2ebe6afd23e3346083bd8975
+- kind: project-relative
+  target: claude
+  value: .claude/rules/apihub-agent-developer.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/agent/agent-packages/apihub-agent-developer
+  active_owner: ./backend/agent/agent-packages/apihub-agent-developer
+  content_hash: sha256:a0478a42397a2020c4edcb6a4fef430694fd165376273d1a6e875459c8e8e6b2
+- kind: project-relative
+  target: claude
+  value: .claude/rules/apihub-backend-developer.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/apihub-backend-developer
+  active_owner: ./backend/portal-backend/agent-packages/apihub-backend-developer
+  content_hash: sha256:b6ff8126e19f7b0c372ec29e1be3a8a65635ea30a632803bd4535f99d7bcaeb5
+- kind: project-relative
+  target: claude
+  value: .claude/rules/apihub-backend-self-review.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/apihub-backend-self-review
+  active_owner: ./backend/portal-backend/agent-packages/apihub-backend-self-review
+  content_hash: sha256:9dce6e1a81d7ea715e3a774d41690d009836eb271c0857ddf4fe3e37796adb9c
+- kind: project-relative
+  target: claude
+  value: .claude/rules/apihub-deployment-authoring.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-deployment-authoring
+  active_owner: ./agent-packages/apihub-deployment-authoring
+  content_hash: sha256:3822f880ac71bbe92a3b2b7992a792ce7a31fcf8342374b466e72eb403409955
+- kind: project-relative
+  target: claude
+  value: .claude/rules/apihub-deployment-compose.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-deployment-authoring
+  active_owner: ./agent-packages/apihub-deployment-authoring
+  content_hash: sha256:b6c3e8c0df80c38d9cfdef2e118eaa950dc16da45328e84d7a7704fddb67c3dd
+- kind: project-relative
+  target: claude
+  value: .claude/rules/apihub-deployment-docs.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-deployment-authoring
+  active_owner: ./agent-packages/apihub-deployment-authoring
+  content_hash: sha256:d079e041da06cfa313bdb25e52b650f792e2d438e7c629c066b03aff067c3214
+- kind: project-relative
+  target: claude
+  value: .claude/rules/apihub-deployment-followup.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-deployment-followup
+  active_owner: ./agent-packages/apihub-deployment-followup
+  content_hash: sha256:dd71ee613043a0808fd3666f486f410c50bc53d0de869e6e3a739dde201cad0d
+- kind: project-relative
+  target: claude
+  value: .claude/rules/apihub-go-developer.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+  content_hash: sha256:e3f68418fd6db0cc4f012a01d639adcd6eb96eeb69dcb64a1afdb1fa8f80fbd4
+- kind: project-relative
+  target: claude
+  value: .claude/rules/apihub-go-self-review.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
+  content_hash: sha256:ec7bf6eb48bab91936bba45bebceae11daeeeb066f3a90be018436e7a32cbe28
+- kind: project-relative
+  target: claude
+  value: .claude/rules/apihub-ui-authoring.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ui/agent-packages/apihub-ui-authoring
+  active_owner: ./frontend/ui/agent-packages/apihub-ui-authoring
+  content_hash: sha256:18aedc90c1f584b27ea103a0a43cb3f50b03bce7d13e4611e4d1c1c943d8ec0a
+- kind: project-relative
+  target: claude
+  value: .claude/rules/backend-config-defaults.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/backend-conventions
+  active_owner: ./backend/portal-backend/agent-packages/backend-conventions
+  content_hash: sha256:e23ebb6c90c4f28f9978554584c7789cff0e7533fb5a05d55299057769060eb4
+- kind: project-relative
+  target: claude
+  value: .claude/rules/backend-db-migrations.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/backend-conventions
+  active_owner: ./backend/portal-backend/agent-packages/backend-conventions
+  content_hash: sha256:2bc0ff3f38eebbc5c990b3eee5239515cf065d67e5a0caa691f3d865d4f15353
+- kind: project-relative
+  target: claude
+  value: .claude/rules/backend-error-codes.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/backend-conventions
+  active_owner: ./backend/portal-backend/agent-packages/backend-conventions
+  content_hash: sha256:1202e9fc467b127ba1f41423934ab24cebeae79c314bf728296e206bd14e9561
+- kind: project-relative
+  target: claude
+  value: .claude/rules/backend-openapi-files.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/backend-conventions
+  active_owner: ./backend/portal-backend/agent-packages/backend-conventions
+  content_hash: sha256:49db29f657dd56dd650f47545038286755d2309839ccda2f6a637db716912a92
+- kind: project-relative
+  target: claude
+  value: .claude/rules/backend-service-wiring.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/backend-conventions
+  active_owner: ./backend/portal-backend/agent-packages/backend-conventions
+  content_hash: sha256:fe4110f5ff96587b58f5aaa8e93ed5f7ac80e72de74c7de9c3416a549b6fd03e
+- kind: project-relative
+  target: claude
+  value: .claude/rules/ci-super-linter.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/development-conventions
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/development-conventions
+  content_hash: sha256:2ee18c08f25c2febad81403779bc7c88daf265b085cab27c7eb03f7ec812d056
+- kind: project-relative
+  target: claude
+  value: .claude/rules/clarify-before-coding.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/development-conventions
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/development-conventions
+  content_hash: sha256:3b4bf7e4add2440de4d687bab10d47826ead2083e7d37f48144d8abad137e8bf
+- kind: project-relative
+  target: claude
+  value: .claude/rules/ddlapi-authoring.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ddlapi/agent-packages/ddlapi-authoring
+  active_owner: ./frontend/ddlapi/agent-packages/ddlapi-authoring
+  content_hash: sha256:942bf94ec7fef5191f9e0f0350829646c59c5475d9c4915151e93bce3ed584c8
+- kind: project-relative
+  target: claude
+  value: .claude/rules/ddlapi-testing.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ddlapi/agent-packages/ddlapi-testing
+  active_owner: ./frontend/ddlapi/agent-packages/ddlapi-testing
+  content_hash: sha256:e2299bc254a1b4bf8b131ec71226a57a0974b3513f56d8fae0083b31ed5c30fc
+- kind: project-relative
+  target: claude
+  value: .claude/rules/ddlapi-using.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ddlapi/agent-packages/ddlapi-using
+  active_owner: ./frontend/ddlapi/agent-packages/ddlapi-using
+  content_hash: sha256:43aa7c085fe8351eb1d91085b2280cdbccd53b5d18594564e1e3036c3c641586
+- kind: project-relative
+  target: claude
+  value: .claude/rules/english-developer-style.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-ai-packages/agent-packages/english-developer-style
+  active_owner: netcracker/qubership-ai-packages/agent-packages/english-developer-style
+  content_hash: sha256:1fc236f34cfb8f06e4652f6af298f5610f0e700315dc8edaaa764d27ab7ed041
+- kind: project-relative
+  target: claude
+  value: .claude/rules/github-ticket-implementation-planner.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
+  content_hash: sha256:bbfac186585f3dbe958ae351fb13ee6cb9378108128916c47a9efcf215319d78
+- kind: project-relative
+  target: claude
+  value: .claude/rules/go-comments.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  content_hash: sha256:dc64897e83fc652269d2e6dff1b9b6a0f345bad270a190542e7d13431dbfa006
+- kind: project-relative
+  target: claude
+  value: .claude/rules/go-constants-and-http.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  content_hash: sha256:7cbfc97857ced93e4c2d7af336b01668328ed157d7af19fc234437a9071cb357
+- kind: project-relative
+  target: claude
+  value: .claude/rules/go-error-handling.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  content_hash: sha256:3af0a16024e233a3354b8f7e834d512b3efc546b130635a41e6ff3deb185e26d
+- kind: project-relative
+  target: claude
+  value: .claude/rules/go-migrations.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  content_hash: sha256:6d0183ac2b32c559ed49503d582008f6eb91ca3b6c58729565743a6c7665c2a0
+- kind: project-relative
+  target: claude
+  value: .claude/rules/json-crawl-authoring.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/json-crawl/agent-packages/json-crawl-authoring
+  active_owner: ./frontend/json-crawl/agent-packages/json-crawl-authoring
+  content_hash: sha256:51a31a5b66c57e8d809b30214a45e77987340176e41ee04520aee95e827b82d2
+- kind: project-relative
+  target: claude
+  value: .claude/rules/json-crawl-testing.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/json-crawl/agent-packages/json-crawl-testing
+  active_owner: ./frontend/json-crawl/agent-packages/json-crawl-testing
+  content_hash: sha256:dd25e1caa4f9ac6163b1e65ce2a8c22ed1cb8d30a71b952bba48ad7d641f1a60
+- kind: project-relative
+  target: claude
+  value: .claude/rules/json-crawl-using.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/json-crawl/agent-packages/json-crawl-using
+  active_owner: ./frontend/json-crawl/agent-packages/json-crawl-using
+  content_hash: sha256:b38509593ec3f636461c56ba58b73ddcca147f5fd9c0662a77b405521f86405b
+- kind: project-relative
+  target: claude
+  value: .claude/rules/markdown-line-length-120.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-ai-packages/agent-packages/markdown-line-length-120
+  active_owner: netcracker/qubership-ai-packages/agent-packages/markdown-line-length-120
+  content_hash: sha256:9b5a7c92d21c087354958fc86010e42be3ee734dc73de768ea5001b03c765af3
+- kind: project-relative
+  target: claude
+  value: .claude/rules/next-data-model-authoring.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: sha256:40c358121f78527037a130522586d164c81519874b26b6c8355ad5a39a3e56ec
+- kind: project-relative
+  target: claude
+  value: .claude/rules/next-data-model-using.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-using
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-using
+  content_hash: sha256:4c9768e14f192d138f7c673a7fbf999390e2009d04af2f0f1a96f3d9c365ed4d
+- kind: project-relative
+  target: claude
+  value: .claude/rules/postman-e2e-authoring.md
+  runtime: null
+  scope: project
+  owners:
+  - ./tests/postman-collections/agent-packages/postman-e2e-authoring
+  active_owner: ./tests/postman-collections/agent-packages/postman-e2e-authoring
+  content_hash: sha256:785da0c74c2e0b4b7e1a60b4e006b99e156d0c162b6632cd8ee7251eaa7b8595
+- kind: project-relative
+  target: claude
+  value: .claude/rules/postman-e2e-followup.md
+  runtime: null
+  scope: project
+  owners:
+  - ./tests/postman-collections/agent-packages/postman-e2e-followup
+  active_owner: ./tests/postman-collections/agent-packages/postman-e2e-followup
+  content_hash: sha256:122c60d997b5cc042cff41670aee59f04d0b4aafaab49ae34f1febbe35968ff9
+- kind: project-relative
+  target: claude
+  value: .claude/rules/sql-performance.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  content_hash: sha256:6fdc93b24c0b0dee7dcab20124dc494d7eb158c7a3ef430637e74d441fd8f6dc
+- kind: project-relative
+  target: claude
+  value: .claude/skills/advanced-verification
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/advanced-verification
+  active_owner: ./backend/portal-backend/agent-packages/advanced-verification
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/advanced-verification/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/advanced-verification
+  active_owner: ./backend/portal-backend/agent-packages/advanced-verification
+  content_hash: sha256:af9867a31501cc9efed1ccb45e6a95bb75a2d52f6b98c0604f30a97716c6b2d1
+- kind: project-relative
+  target: claude
+  value: .claude/skills/advanced-verification/reference.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/advanced-verification
+  active_owner: ./backend/portal-backend/agent-packages/advanced-verification
+  content_hash: sha256:fe48645b85f7747c7f280f2e0b217682ae2a8fbfe86d5f7e755976d1881858b5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-diff-authoring
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-diff/agent-packages/api-diff-authoring
+  active_owner: ./frontend/api-diff/agent-packages/api-diff-authoring
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-diff-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-diff/agent-packages/api-diff-authoring
+  active_owner: ./frontend/api-diff/agent-packages/api-diff-authoring
+  content_hash: sha256:e6484482da003a72361836b396822ca7a179109dff36bb5e60ee572901431fb2
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-diff-testing
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-diff/agent-packages/api-diff-testing
+  active_owner: ./frontend/api-diff/agent-packages/api-diff-testing
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-diff-testing/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-diff/agent-packages/api-diff-testing
+  active_owner: ./frontend/api-diff/agent-packages/api-diff-testing
+  content_hash: sha256:1a98134897363a5ddd2331c2d42f6c0a55c079c3061e4c45811a8415f31d8ecb
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-doc-viewer-authoring
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-doc-viewer-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+  content_hash: sha256:cd10e8f2ba99d23f5cb3a23f97a6f5779e1b55a1f30bb9ecfbc44b05137b29ff
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-doc-viewer-authoring/refactoring-notes.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+  content_hash: sha256:b692bb990013a56f9303581a1ac34c9b8d854ea5602b948851b52dbaeefbe34b
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-doc-viewer-review-session
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-doc-viewer-review-session/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
+  content_hash: sha256:98bcd3ad3d3d29cdd58793406264646b71525a4a89549083707b830a00140f24
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-doc-viewer-reviewing
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-doc-viewer-reviewing/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  content_hash: sha256:f69dae20eb55dd7972a3c3b33d70cdaf4ac6758b2a3b8238e9af2d0ed6493a27
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-doc-viewer-reviewing/review/async-api.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  content_hash: sha256:17bb070138bd3f5078407a49e0352c9d994db1dddfffcdf73d13b987017fc51a
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-doc-viewer-reviewing/review/ddlapi.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  content_hash: sha256:f2a8acf5e6b767db0ff9d27dbe03837c01b01237f5cefe4076705bc6a3f67247
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-doc-viewer-reviewing/review/jso.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  content_hash: sha256:f9663238234661343d0024f713d1592cb9d94ff4968a21184900bea7794e87a1
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-doc-viewer-reviewing/review/json-schema.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  content_hash: sha256:8f1c11d311ef9f0023358b1bd407c50acaf9997b6ca12cea65f0cfb7d4e9ec79
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-doc-viewer-testing
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-doc-viewer-testing/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
+  content_hash: sha256:34408eec683802dac37c3078a9db0421308492bccdfded826f1367bd5745aa43
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-doc-viewer-using
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-doc-viewer-using/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
+  content_hash: sha256:501e7e5117421d19b862c4cae0aff8c84d2230ed55d8337fce9b7d07a3f9f64a
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-processor-build-result
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-authoring
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-authoring
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-processor-build-result/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-authoring
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-authoring
+  content_hash: sha256:54f8aba3999ef32b3733d056f1d2e217ac565fd524357004acf410e2d2cadfc5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-processor-notifications
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-authoring
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-authoring
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-processor-notifications/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-authoring
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-authoring
+  content_hash: sha256:181da70f2248e29e6059731f9c520b7b17fdaf7f3999173ce4367cb095c3aa56
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-processor-testing
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-testing
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-testing
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-processor-testing/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-testing
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-testing
+  content_hash: sha256:0fcd1553ae845668722f6f099c0b3196ff749cc7b8c7788f365f04cc1af0fe92
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-processor-using
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-using
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-using
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-processor-using/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-using
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-using
+  content_hash: sha256:fc16a03f0b59833b80c706d4dec1ea56a4714a090c4115ce0a2b1f51401f40b5
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-unifier-authoring
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-unifier/agent-packages/api-unifier-authoring
+  active_owner: ./frontend/api-unifier/agent-packages/api-unifier-authoring
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-unifier-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-unifier/agent-packages/api-unifier-authoring
+  active_owner: ./frontend/api-unifier/agent-packages/api-unifier-authoring
+  content_hash: sha256:025fbfd81436cdf1d99a68557869bde8f9da04e5cb457870771a2c6b4497d063
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-unifier-testing
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-unifier/agent-packages/api-unifier-testing
+  active_owner: ./frontend/api-unifier/agent-packages/api-unifier-testing
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/api-unifier-testing/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-unifier/agent-packages/api-unifier-testing
+  active_owner: ./frontend/api-unifier/agent-packages/api-unifier-testing
+  content_hash: sha256:d6e3161f17f950aee397411bbc866b75b1488ad56766b2edc2f42786ea8436fa
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-add-go-service
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-add-go-service
+  active_owner: ./agent-packages/apihub-add-go-service
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-add-go-service/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-add-go-service
+  active_owner: ./agent-packages/apihub-add-go-service
+  content_hash: sha256:7a961d6ac3f113ceeb47f3981c5c0700800938a558621ae0650ee32a0d1c2a36
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-agent-developer
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/agent/agent-packages/apihub-agent-developer
+  active_owner: ./backend/agent/agent-packages/apihub-agent-developer
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-agent-developer/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/agent/agent-packages/apihub-agent-developer
+  active_owner: ./backend/agent/agent-packages/apihub-agent-developer
+  content_hash: sha256:868f49e3cfbb27534832c95cd392952dbbe154c51ed4e67f85dc264b938da554
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-backend-developer
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/apihub-backend-developer
+  active_owner: ./backend/portal-backend/agent-packages/apihub-backend-developer
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-backend-developer/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/apihub-backend-developer
+  active_owner: ./backend/portal-backend/agent-packages/apihub-backend-developer
+  content_hash: sha256:a00da78322994eb10da2182528f38a20bc547f9bc0b4cc09bd6ca47e0abf88d4
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-backend-developer/reference.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/apihub-backend-developer
+  active_owner: ./backend/portal-backend/agent-packages/apihub-backend-developer
+  content_hash: sha256:8d9e9cfb5a4624324a13cca390b2a4c2e87a5a064b3c660ac4a2267b6bf156bf
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/apihub-backend-developer
+  active_owner: ./backend/portal-backend/agent-packages/apihub-backend-developer
+  content_hash: sha256:4edd0d19b16a9b9025aecdc8df09045ae92ceda3a619c7f96ab0ca1d0ec3c0ad
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-backend-developer/scripts/check_migration_numbers.sh
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/apihub-backend-developer
+  active_owner: ./backend/portal-backend/agent-packages/apihub-backend-developer
+  content_hash: sha256:e51db198ad16afe9b7ed9e6d88de587d50b79de647856f0cf5d3e8eca89126f6
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-backend-self-review
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/apihub-backend-self-review
+  active_owner: ./backend/portal-backend/agent-packages/apihub-backend-self-review
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-backend-self-review/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/apihub-backend-self-review
+  active_owner: ./backend/portal-backend/agent-packages/apihub-backend-self-review
+  content_hash: sha256:469341ad3a1bcd37fc61f78c329e7c95a9b826fb4de8d017bdd4e04750993d8f
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-deployment-authoring
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-deployment-authoring
+  active_owner: ./agent-packages/apihub-deployment-authoring
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-deployment-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-deployment-authoring
+  active_owner: ./agent-packages/apihub-deployment-authoring
+  content_hash: sha256:325941ece77aa80667ddd97b74d3febbbf89e6bfde41033d113ad972b98af157
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-deployment-followup
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-deployment-followup
+  active_owner: ./agent-packages/apihub-deployment-followup
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-deployment-followup/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-deployment-followup
+  active_owner: ./agent-packages/apihub-deployment-followup
+  content_hash: sha256:4befc548cc0c02e481e8c69236b81c6f2bd6118103a7efd061db30de846a247e
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-go-developer
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-go-developer/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+  content_hash: sha256:b33cb676a0226642857bf44259ed4569bcc412fd7eef72b168e8a5de19bac3cc
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-go-developer/reference.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+  content_hash: sha256:57d60a8f737dc69687dbd21ae2616295e9a37ad90c77455f0d2c443def01542b
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-go-self-review
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-go-self-review/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
+  content_hash: sha256:0a4914ca688a5cadfa0c8d046c1bcf620a4f78835ac3217b1e5c0fdeb31f65f2
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ddlapi-authoring
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ddlapi/agent-packages/ddlapi-authoring
+  active_owner: ./frontend/ddlapi/agent-packages/ddlapi-authoring
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ddlapi-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ddlapi/agent-packages/ddlapi-authoring
+  active_owner: ./frontend/ddlapi/agent-packages/ddlapi-authoring
+  content_hash: sha256:63c68201cff68d70e550c83a34770f0559ba8359248190faba7da3b4fa7758bb
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ddlapi-testing
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ddlapi/agent-packages/ddlapi-testing
+  active_owner: ./frontend/ddlapi/agent-packages/ddlapi-testing
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ddlapi-testing/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ddlapi/agent-packages/ddlapi-testing
+  active_owner: ./frontend/ddlapi/agent-packages/ddlapi-testing
+  content_hash: sha256:1e309281f974d553b69285d82520e7cfea3c7e0337b586c798e580eacfa8fd8d
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ddlapi-using
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ddlapi/agent-packages/ddlapi-using
+  active_owner: ./frontend/ddlapi/agent-packages/ddlapi-using
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/ddlapi-using/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ddlapi/agent-packages/ddlapi-using
+  active_owner: ./frontend/ddlapi/agent-packages/ddlapi-using
+  content_hash: sha256:e295636a50925a3ddf626f4ecaea900a647cf6f6dd0637300cfd16ee7cd1effb
+- kind: project-relative
+  target: claude
+  value: .claude/skills/english-developer-style
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-ai-packages/agent-packages/english-developer-style
+  active_owner: netcracker/qubership-ai-packages/agent-packages/english-developer-style
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/english-developer-style/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-ai-packages/agent-packages/english-developer-style
+  active_owner: netcracker/qubership-ai-packages/agent-packages/english-developer-style
+  content_hash: sha256:bd7c115e6bc6b267156f480b692fdc7c6c79cc8b1b1f4b5f000738370450512e
+- kind: project-relative
+  target: claude
+  value: .claude/skills/github-ticket-implementation-planner
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/github-ticket-implementation-planner/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
+  content_hash: sha256:65bd796eceb5bb9a29949d61651654d7db3e98021d736ef6c06864319f112226
+- kind: project-relative
+  target: claude
+  value: .claude/skills/json-crawl-authoring
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/json-crawl/agent-packages/json-crawl-authoring
+  active_owner: ./frontend/json-crawl/agent-packages/json-crawl-authoring
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/json-crawl-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/json-crawl/agent-packages/json-crawl-authoring
+  active_owner: ./frontend/json-crawl/agent-packages/json-crawl-authoring
+  content_hash: sha256:88d2586cecb3be0c2ce6e453f4c442266a30ed68d451cff8b5df64b72e23b904
+- kind: project-relative
+  target: claude
+  value: .claude/skills/json-crawl-testing
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/json-crawl/agent-packages/json-crawl-testing
+  active_owner: ./frontend/json-crawl/agent-packages/json-crawl-testing
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/json-crawl-testing/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/json-crawl/agent-packages/json-crawl-testing
+  active_owner: ./frontend/json-crawl/agent-packages/json-crawl-testing
+  content_hash: sha256:07cb355bfbfc518701e655a5fd976de082b286948ba6c076936a5405f62ca450
+- kind: project-relative
+  target: claude
+  value: .claude/skills/json-crawl-using
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/json-crawl/agent-packages/json-crawl-using
+  active_owner: ./frontend/json-crawl/agent-packages/json-crawl-using
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/json-crawl-using/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/json-crawl/agent-packages/json-crawl-using
+  active_owner: ./frontend/json-crawl/agent-packages/json-crawl-using
+  content_hash: sha256:a6adfa4344f157506d304c886398577fe9b860390c4ba94cfb8405a4c547805e
+- kind: project-relative
+  target: claude
+  value: .claude/skills/markdown-line-length-120
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-ai-packages/agent-packages/markdown-line-length-120
+  active_owner: netcracker/qubership-ai-packages/agent-packages/markdown-line-length-120
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/markdown-line-length-120/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-ai-packages/agent-packages/markdown-line-length-120
+  active_owner: netcracker/qubership-ai-packages/agent-packages/markdown-line-length-120
+  content_hash: sha256:be48ab0a931d8dffb78b5e9915e9bf156584bd15fae8dff07a643b243e83d52b
+- kind: project-relative
+  target: claude
+  value: .claude/skills/next-data-model-authoring
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/next-data-model-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: sha256:1ff1f308a234b03adcb38e9520a3d7af7dd6f8a75cfdee7a3375b0a309555815
+- kind: project-relative
+  target: claude
+  value: .claude/skills/next-data-model-authoring/json-schema/json-schema-meta-flags-and-required.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: sha256:8e6d7f9bb652d770446d6afb7a7968bc42af0a2226a175cc819eb72899ad8d87
+- kind: project-relative
+  target: claude
+  value: .claude/skills/next-data-model-authoring/json-schema/json-schema-nesting-indicator-row-diffs.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: sha256:678b65fabc6f610ec90e951856e3797ab259022e24e2976b14e3c7f48f776de7
+- kind: project-relative
+  target: claude
+  value: .claude/skills/next-data-model-authoring/json-schema/json-schema-node-key-rename.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: sha256:cf508d9732c25e06428ea84eee124afb427c6c0de91735271ecd3f9f20254b22
+- kind: project-relative
+  target: claude
+  value: .claude/skills/next-data-model-authoring/json-schema/json-schema-validation-rows.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: sha256:026fe54366c8c6de4350dc17a4eec5553ab5c026b8367c970d86054a39539058
+- kind: project-relative
+  target: claude
+  value: .claude/skills/next-data-model-authoring/node-visibility/authoring.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: sha256:715c86a9ea31b91edd7caf625ce82411fdfc88a0175b3f748072d0fde847dad2
+- kind: project-relative
+  target: claude
+  value: .claude/skills/next-data-model-authoring/node-visibility/ddlapi.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: sha256:a8945401440060035907c66f79d124520351981a10d19544c951acf174c00400
+- kind: project-relative
+  target: claude
+  value: .claude/skills/next-data-model-authoring/node-visibility/general-approach.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: sha256:2b6f93f8797bedaac1cfa590d82de6cdb2497df92b36fe3dd54def464c08a64c
+- kind: project-relative
+  target: claude
+  value: .claude/skills/next-data-model-using
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-using
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-using
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/next-data-model-using/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-using
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-using
+  content_hash: sha256:6ebdb0788d4d2296b7847546199bc6005efdc766a71a40f0cee04a20346001a2
+- kind: project-relative
+  target: claude
+  value: .claude/skills/postman-e2e-authoring
+  runtime: null
+  scope: project
+  owners:
+  - ./tests/postman-collections/agent-packages/postman-e2e-authoring
+  active_owner: ./tests/postman-collections/agent-packages/postman-e2e-authoring
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/postman-e2e-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./tests/postman-collections/agent-packages/postman-e2e-authoring
+  active_owner: ./tests/postman-collections/agent-packages/postman-e2e-authoring
+  content_hash: sha256:cb66c3675054ef4508aecb2bb5740af08f8cf0c2c258c6108080f649b5545c61
+- kind: project-relative
+  target: claude
+  value: .claude/skills/postman-e2e-followup
+  runtime: null
+  scope: project
+  owners:
+  - ./tests/postman-collections/agent-packages/postman-e2e-followup
+  active_owner: ./tests/postman-collections/agent-packages/postman-e2e-followup
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/postman-e2e-followup/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./tests/postman-collections/agent-packages/postman-e2e-followup
+  active_owner: ./tests/postman-collections/agent-packages/postman-e2e-followup
+  content_hash: sha256:9a7af59386be7456b3b8e4967a9be4d615e8b0e93008dc52f69e58dbfc3e9c1f
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/agent-config-defaults.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/agent/agent-packages/agent-conventions
+  active_owner: ./backend/agent/agent-packages/agent-conventions
+  content_hash: sha256:9313f7107715b2197c680bf56a6603940bb32dcb7fba73468de9c92c31fc49ea
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/agent-no-database.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/agent/agent-packages/agent-conventions
+  active_owner: ./backend/agent/agent-packages/agent-conventions
+  content_hash: sha256:fd40496b4b11b13f6dbbeb1bfa7bc49edd802a4c14a251a47270f0b1c26d2e5f
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/agent-openapi-files.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/agent/agent-packages/agent-conventions
+  active_owner: ./backend/agent/agent-packages/agent-conventions
+  content_hash: sha256:38a953513a19cbe9c44443a4f121e518342a3fdbddaaf83c0ca419ebb9d0d007
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/api-diff-authoring.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-diff/agent-packages/api-diff-authoring
+  active_owner: ./frontend/api-diff/agent-packages/api-diff-authoring
+  content_hash: sha256:fd2030680d45a8401b187d568233859cc77009556e77a07c1dbf504dd459de6d
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/api-diff-testing.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-diff/agent-packages/api-diff-testing
+  active_owner: ./frontend/api-diff/agent-packages/api-diff-testing
+  content_hash: sha256:adbbfe4dc4d17621a0bc66762ca60f09eb22bd6e965b2060e5aa9ee632aec7ef
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/api-doc-viewer-authoring.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+  content_hash: sha256:785e8d3169f5a069d37ce706ce184b0c77a2c1516107af9be805dc0801e646f6
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/api-doc-viewer-review-session.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
+  content_hash: sha256:50e1491de4b5a56ffedc373589eb7597929dccfd797609f1f677c1d6dc3fef64
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/api-doc-viewer-reviewing.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  content_hash: sha256:b1d90ef0338877f122e180661bd40496fb354488938ee980b0049a081dffaf3e
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/api-doc-viewer-testing.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
+  content_hash: sha256:9e1d315d07471e7e79a3bd3a62d9ece7e041039e86398dfb6eccab228901be5c
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/api-doc-viewer-using.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
+  content_hash: sha256:2405b3e9086affbb9c3eef445cdd607524e97c5910a5d7acd3299f9726d37a06
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/api-first-openapi.mdc
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  content_hash: sha256:b5578d9c535a60c74ef034c3fa2ddca9fd4b4b1c6f7aa23d50abd9155eb3c474
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/api-processor-build-result.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-authoring
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-authoring
+  content_hash: sha256:a63d54a5278389f836cc3c6bd9e031b128a142c8d26f3ef0cf75623ea9a7c544
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/api-processor-notifications.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-authoring
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-authoring
+  content_hash: sha256:3b5f14b461875b3d68f0320a08bdf68fe5cbc0064f89745c6c765952cdba56ff
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/api-processor-testing.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-testing
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-testing
+  content_hash: sha256:ca583e9d1af184e817c0ba10aac2b31a07c8e98c68492cfed7767fd5ff736a5e
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/api-processor-using.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-using
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-using
+  content_hash: sha256:a350bc2f00b824120054a35c4e2bf471e649b38739fa33fc201e30100e9a0d90
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/api-unifier-authoring.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-unifier/agent-packages/api-unifier-authoring
+  active_owner: ./frontend/api-unifier/agent-packages/api-unifier-authoring
+  content_hash: sha256:970610f92fb951505e16e3d0a877c0a819a0232b5e5092f719b8a20c3bcd020c
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/api-unifier-testing.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-unifier/agent-packages/api-unifier-testing
+  active_owner: ./frontend/api-unifier/agent-packages/api-unifier-testing
+  content_hash: sha256:7a59eb812777defd6384c39c0bffa6adc5afd8c8ef39455b8d5b712a732db596
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/apihub-add-go-service.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-add-go-service
+  active_owner: ./agent-packages/apihub-add-go-service
+  content_hash: sha256:c45f96ec3b7183248009ae3a12641011c0eec317fe9f15eeb2b22eb411ab515b
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/apihub-agent-developer.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/agent/agent-packages/apihub-agent-developer
+  active_owner: ./backend/agent/agent-packages/apihub-agent-developer
+  content_hash: sha256:247be2f830509d861260123f5f5b575dd016c0c96deb7ea56ea062a700f9f14e
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/apihub-backend-developer.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/apihub-backend-developer
+  active_owner: ./backend/portal-backend/agent-packages/apihub-backend-developer
+  content_hash: sha256:4ab7bdff333196bed9eaa64406033859d30d196ff0ee43073d31211b7d13b170
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/apihub-backend-self-review.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/apihub-backend-self-review
+  active_owner: ./backend/portal-backend/agent-packages/apihub-backend-self-review
+  content_hash: sha256:9c5721f938e3fc8f51c2dc64b08ad220fdf5d9de86aee79550bed46c738f95da
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/apihub-deployment-authoring.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-deployment-authoring
+  active_owner: ./agent-packages/apihub-deployment-authoring
+  content_hash: sha256:2b5b8d84e081516bf88ac825d342729aa65bfa81f7983fc94eb9da0c407cfe31
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/apihub-deployment-compose.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-deployment-authoring
+  active_owner: ./agent-packages/apihub-deployment-authoring
+  content_hash: sha256:cc571a05830deb005b24cf66d860026a72f86a45d3514d0bb3a386712c4499e4
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/apihub-deployment-docs.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-deployment-authoring
+  active_owner: ./agent-packages/apihub-deployment-authoring
+  content_hash: sha256:66ec8a67de0a5a9f37386b7a5cfaf8bd7d4147b2be056a9f401a072d2bab1d1d
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/apihub-deployment-followup.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-deployment-followup
+  active_owner: ./agent-packages/apihub-deployment-followup
+  content_hash: sha256:aa460255d4d15d4d69a02173d29a27c6f7da6068840548b66b41edbf17b8d74b
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/apihub-go-developer.mdc
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+  content_hash: sha256:c5bffe35280f2408b4ee38aa940815edb1e6146a475984eafec56aedaf73c306
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/apihub-go-self-review.mdc
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
+  content_hash: sha256:bd14bac37fa4166679ffb43c9ada5d28a9268047d0195a8633fa4d61a85c81aa
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/apihub-ui-authoring.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ui/agent-packages/apihub-ui-authoring
+  active_owner: ./frontend/ui/agent-packages/apihub-ui-authoring
+  content_hash: sha256:32e7b72990e1cc67d7944e40a948342e2f86229a6f17164dfddf6c1e98de40a3
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/backend-config-defaults.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/backend-conventions
+  active_owner: ./backend/portal-backend/agent-packages/backend-conventions
+  content_hash: sha256:7a2cc94367e8c37d4e31ca7f5d728837e590a6b2180b32f12c918223ff3a516f
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/backend-db-migrations.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/backend-conventions
+  active_owner: ./backend/portal-backend/agent-packages/backend-conventions
+  content_hash: sha256:b9660e26f6610fda5de61606a47b2616d7e4d0bd4de691f20881d233c69f9b53
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/backend-error-codes.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/backend-conventions
+  active_owner: ./backend/portal-backend/agent-packages/backend-conventions
+  content_hash: sha256:c04d56ae7834a039fc37cebd9fd192d3f0c53b0118b93b911276670a6bd051fb
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/backend-openapi-files.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/backend-conventions
+  active_owner: ./backend/portal-backend/agent-packages/backend-conventions
+  content_hash: sha256:4e4e89d6516e0e9fecf1722423fbe1329fc4b91337a710a76e8673a95b3d31dd
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/backend-service-wiring.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/backend-conventions
+  active_owner: ./backend/portal-backend/agent-packages/backend-conventions
+  content_hash: sha256:821d366842e153063939ec6d4264b91ef5de974b6ee5bdbc44b25d3ae9f1d823
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/ci-super-linter.mdc
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/development-conventions
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/development-conventions
+  content_hash: sha256:c9ee666191f58f259e045adf807eec6748a0c5a83c3f7239721b08e3d990564c
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/clarify-before-coding.mdc
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/development-conventions
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/development-conventions
+  content_hash: sha256:d9ed1294278263299a48588d4c4b2bbc689aeedc3edec58d0be15ae630e90b7d
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/ddlapi-authoring.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ddlapi/agent-packages/ddlapi-authoring
+  active_owner: ./frontend/ddlapi/agent-packages/ddlapi-authoring
+  content_hash: sha256:477312d9b29de7d3b7f253dff57be1c95c370f163b94a5159c7a63706d242cc4
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/ddlapi-testing.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ddlapi/agent-packages/ddlapi-testing
+  active_owner: ./frontend/ddlapi/agent-packages/ddlapi-testing
+  content_hash: sha256:2ba5d2960bc5dc7bc7b4d38425c248806211e63a49d4adc29c6505ad1ac9c135
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/ddlapi-using.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ddlapi/agent-packages/ddlapi-using
+  active_owner: ./frontend/ddlapi/agent-packages/ddlapi-using
+  content_hash: sha256:6aebb48735bc02d7929164dd64b3a46bb55180696e2245620d34cea37ad97bbb
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/english-developer-style.mdc
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-ai-packages/agent-packages/english-developer-style
+  active_owner: netcracker/qubership-ai-packages/agent-packages/english-developer-style
+  content_hash: sha256:2e701dc76732725931fc72feb92622b57883a1b9a6295bfc05b06ba2033a5c9b
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/github-ticket-implementation-planner.mdc
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
+  content_hash: sha256:a560ba8a5e1e0390c3bcdfa76f4431327741e355f753fef832672dec7b7b7053
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/go-comments.mdc
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  content_hash: sha256:f10bca8d1dbba86f007076fc251ea6c29676652fbc7909281222f07c88d827b5
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/go-constants-and-http.mdc
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  content_hash: sha256:4b93d4fd5c7bbaa12353a262777c91c93181f4b33456365befc333d5a8528511
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/go-error-handling.mdc
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  content_hash: sha256:e469ac1a70bed6a6300bf3f3fed45a3b49dfe4f4aab70eda95b2c087efe0889d
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/go-migrations.mdc
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  content_hash: sha256:918336cbc00f53838de8920f3c7749f5f9339fe3c4b0522e724bc5ea58119c04
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/json-crawl-authoring.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/json-crawl/agent-packages/json-crawl-authoring
+  active_owner: ./frontend/json-crawl/agent-packages/json-crawl-authoring
+  content_hash: sha256:b8557763094dcb573c8916319b3b003ea0a5b7cd2ba52fa16fe55d760379864d
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/json-crawl-testing.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/json-crawl/agent-packages/json-crawl-testing
+  active_owner: ./frontend/json-crawl/agent-packages/json-crawl-testing
+  content_hash: sha256:1c96c1870a6abc2190d1eaa99e2fb591139e27423ec6b75e20fedd2fd7a520f4
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/json-crawl-using.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/json-crawl/agent-packages/json-crawl-using
+  active_owner: ./frontend/json-crawl/agent-packages/json-crawl-using
+  content_hash: sha256:2c581d523849765bda669d6b3ece8e30a71a968bb0778c33734a5cd1f48baff9
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/markdown-line-length-120.mdc
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-ai-packages/agent-packages/markdown-line-length-120
+  active_owner: netcracker/qubership-ai-packages/agent-packages/markdown-line-length-120
+  content_hash: sha256:e7f5f594e2cb538a086b664f4154a45a957f9853584a7e11cabf52dc1a7a039b
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/next-data-model-authoring.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: sha256:4f986b36edcfdb8ee8c2b89a04b7cc363fcd436a6e123b3e0d4a4ed3b3708192
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/next-data-model-using.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-using
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-using
+  content_hash: sha256:71af43c493cfdf2ce3dbd633523be28f54bac16c7d5e8e530f24e6eaa68084b0
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/postman-e2e-authoring.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./tests/postman-collections/agent-packages/postman-e2e-authoring
+  active_owner: ./tests/postman-collections/agent-packages/postman-e2e-authoring
+  content_hash: sha256:9d98ee703455ac5135f8bbdc00cb1056824dd3c15fc83cd22bb6b66ac33e1758
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/postman-e2e-followup.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./tests/postman-collections/agent-packages/postman-e2e-followup
+  active_owner: ./tests/postman-collections/agent-packages/postman-e2e-followup
+  content_hash: sha256:41dd2da480f3a8f5592c3a9dd0e0d2c860bfada7735d78e6a7b581820b35f75a
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/sql-performance.mdc
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/go-conventions
+  content_hash: sha256:bd91f4e9dc7033f376ce95ca9fdfbf2a49088a9dde914d0ec0733e86d1e0f505
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/advanced-verification
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/advanced-verification
+  active_owner: ./backend/portal-backend/agent-packages/advanced-verification
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/advanced-verification/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/advanced-verification
+  active_owner: ./backend/portal-backend/agent-packages/advanced-verification
+  content_hash: sha256:af9867a31501cc9efed1ccb45e6a95bb75a2d52f6b98c0604f30a97716c6b2d1
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/advanced-verification/reference.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/advanced-verification
+  active_owner: ./backend/portal-backend/agent-packages/advanced-verification
+  content_hash: sha256:fe48645b85f7747c7f280f2e0b217682ae2a8fbfe86d5f7e755976d1881858b5
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-diff-authoring
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-diff/agent-packages/api-diff-authoring
+  active_owner: ./frontend/api-diff/agent-packages/api-diff-authoring
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-diff-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-diff/agent-packages/api-diff-authoring
+  active_owner: ./frontend/api-diff/agent-packages/api-diff-authoring
+  content_hash: sha256:e6484482da003a72361836b396822ca7a179109dff36bb5e60ee572901431fb2
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-diff-testing
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-diff/agent-packages/api-diff-testing
+  active_owner: ./frontend/api-diff/agent-packages/api-diff-testing
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-diff-testing/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-diff/agent-packages/api-diff-testing
+  active_owner: ./frontend/api-diff/agent-packages/api-diff-testing
+  content_hash: sha256:1a98134897363a5ddd2331c2d42f6c0a55c079c3061e4c45811a8415f31d8ecb
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-doc-viewer-authoring
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-doc-viewer-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+  content_hash: sha256:cd10e8f2ba99d23f5cb3a23f97a6f5779e1b55a1f30bb9ecfbc44b05137b29ff
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-doc-viewer-authoring/refactoring-notes.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+  content_hash: sha256:b692bb990013a56f9303581a1ac34c9b8d854ea5602b948851b52dbaeefbe34b
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-doc-viewer-review-session
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-doc-viewer-review-session/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
+  content_hash: sha256:98bcd3ad3d3d29cdd58793406264646b71525a4a89549083707b830a00140f24
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-doc-viewer-reviewing
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-doc-viewer-reviewing/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  content_hash: sha256:f69dae20eb55dd7972a3c3b33d70cdaf4ac6758b2a3b8238e9af2d0ed6493a27
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-doc-viewer-reviewing/review/async-api.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  content_hash: sha256:17bb070138bd3f5078407a49e0352c9d994db1dddfffcdf73d13b987017fc51a
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-doc-viewer-reviewing/review/ddlapi.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  content_hash: sha256:f2a8acf5e6b767db0ff9d27dbe03837c01b01237f5cefe4076705bc6a3f67247
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-doc-viewer-reviewing/review/jso.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  content_hash: sha256:f9663238234661343d0024f713d1592cb9d94ff4968a21184900bea7794e87a1
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-doc-viewer-reviewing/review/json-schema.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+  content_hash: sha256:8f1c11d311ef9f0023358b1bd407c50acaf9997b6ca12cea65f0cfb7d4e9ec79
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-doc-viewer-testing
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-doc-viewer-testing/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
+  content_hash: sha256:34408eec683802dac37c3078a9db0421308492bccdfded826f1367bd5745aa43
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-doc-viewer-using
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-doc-viewer-using/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
+  active_owner: ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
+  content_hash: sha256:501e7e5117421d19b862c4cae0aff8c84d2230ed55d8337fce9b7d07a3f9f64a
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-processor-build-result
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-authoring
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-authoring
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-processor-build-result/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-authoring
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-authoring
+  content_hash: sha256:54f8aba3999ef32b3733d056f1d2e217ac565fd524357004acf410e2d2cadfc5
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-processor-notifications
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-authoring
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-authoring
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-processor-notifications/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-authoring
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-authoring
+  content_hash: sha256:181da70f2248e29e6059731f9c520b7b17fdaf7f3999173ce4367cb095c3aa56
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-processor-testing
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-testing
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-testing
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-processor-testing/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-testing
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-testing
+  content_hash: sha256:0fcd1553ae845668722f6f099c0b3196ff749cc7b8c7788f365f04cc1af0fe92
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-processor-using
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-using
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-using
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-processor-using/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-processor/agent-packages/api-processor-using
+  active_owner: ./frontend/api-processor/agent-packages/api-processor-using
+  content_hash: sha256:fc16a03f0b59833b80c706d4dec1ea56a4714a090c4115ce0a2b1f51401f40b5
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-unifier-authoring
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-unifier/agent-packages/api-unifier-authoring
+  active_owner: ./frontend/api-unifier/agent-packages/api-unifier-authoring
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-unifier-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-unifier/agent-packages/api-unifier-authoring
+  active_owner: ./frontend/api-unifier/agent-packages/api-unifier-authoring
+  content_hash: sha256:025fbfd81436cdf1d99a68557869bde8f9da04e5cb457870771a2c6b4497d063
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-unifier-testing
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-unifier/agent-packages/api-unifier-testing
+  active_owner: ./frontend/api-unifier/agent-packages/api-unifier-testing
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/api-unifier-testing/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-unifier/agent-packages/api-unifier-testing
+  active_owner: ./frontend/api-unifier/agent-packages/api-unifier-testing
+  content_hash: sha256:d6e3161f17f950aee397411bbc866b75b1488ad56766b2edc2f42786ea8436fa
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-add-go-service
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-add-go-service
+  active_owner: ./agent-packages/apihub-add-go-service
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-add-go-service/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-add-go-service
+  active_owner: ./agent-packages/apihub-add-go-service
+  content_hash: sha256:7a961d6ac3f113ceeb47f3981c5c0700800938a558621ae0650ee32a0d1c2a36
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-agent-developer
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/agent/agent-packages/apihub-agent-developer
+  active_owner: ./backend/agent/agent-packages/apihub-agent-developer
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-agent-developer/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/agent/agent-packages/apihub-agent-developer
+  active_owner: ./backend/agent/agent-packages/apihub-agent-developer
+  content_hash: sha256:868f49e3cfbb27534832c95cd392952dbbe154c51ed4e67f85dc264b938da554
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-backend-developer
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/apihub-backend-developer
+  active_owner: ./backend/portal-backend/agent-packages/apihub-backend-developer
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-backend-developer/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/apihub-backend-developer
+  active_owner: ./backend/portal-backend/agent-packages/apihub-backend-developer
+  content_hash: sha256:a00da78322994eb10da2182528f38a20bc547f9bc0b4cc09bd6ca47e0abf88d4
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-backend-developer/reference.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/apihub-backend-developer
+  active_owner: ./backend/portal-backend/agent-packages/apihub-backend-developer
+  content_hash: sha256:8d9e9cfb5a4624324a13cca390b2a4c2e87a5a064b3c660ac4a2267b6bf156bf
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/apihub-backend-developer
+  active_owner: ./backend/portal-backend/agent-packages/apihub-backend-developer
+  content_hash: sha256:4edd0d19b16a9b9025aecdc8df09045ae92ceda3a619c7f96ab0ca1d0ec3c0ad
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.sh
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/apihub-backend-developer
+  active_owner: ./backend/portal-backend/agent-packages/apihub-backend-developer
+  content_hash: sha256:e51db198ad16afe9b7ed9e6d88de587d50b79de647856f0cf5d3e8eca89126f6
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-backend-self-review
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/apihub-backend-self-review
+  active_owner: ./backend/portal-backend/agent-packages/apihub-backend-self-review
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-backend-self-review/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./backend/portal-backend/agent-packages/apihub-backend-self-review
+  active_owner: ./backend/portal-backend/agent-packages/apihub-backend-self-review
+  content_hash: sha256:469341ad3a1bcd37fc61f78c329e7c95a9b826fb4de8d017bdd4e04750993d8f
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-deployment-authoring
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-deployment-authoring
+  active_owner: ./agent-packages/apihub-deployment-authoring
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-deployment-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-deployment-authoring
+  active_owner: ./agent-packages/apihub-deployment-authoring
+  content_hash: sha256:325941ece77aa80667ddd97b74d3febbbf89e6bfde41033d113ad972b98af157
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-deployment-followup
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-deployment-followup
+  active_owner: ./agent-packages/apihub-deployment-followup
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-deployment-followup/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-deployment-followup
+  active_owner: ./agent-packages/apihub-deployment-followup
+  content_hash: sha256:4befc548cc0c02e481e8c69236b81c6f2bd6118103a7efd061db30de846a247e
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-go-developer
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-go-developer/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+  content_hash: sha256:b33cb676a0226642857bf44259ed4569bcc412fd7eef72b168e8a5de19bac3cc
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-go-developer/reference.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+  content_hash: sha256:57d60a8f737dc69687dbd21ae2616295e9a37ad90c77455f0d2c443def01542b
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-go-self-review
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-go-self-review/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
+  content_hash: sha256:0a4914ca688a5cadfa0c8d046c1bcf620a4f78835ac3217b1e5c0fdeb31f65f2
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/ddlapi-authoring
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ddlapi/agent-packages/ddlapi-authoring
+  active_owner: ./frontend/ddlapi/agent-packages/ddlapi-authoring
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/ddlapi-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ddlapi/agent-packages/ddlapi-authoring
+  active_owner: ./frontend/ddlapi/agent-packages/ddlapi-authoring
+  content_hash: sha256:63c68201cff68d70e550c83a34770f0559ba8359248190faba7da3b4fa7758bb
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/ddlapi-testing
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ddlapi/agent-packages/ddlapi-testing
+  active_owner: ./frontend/ddlapi/agent-packages/ddlapi-testing
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/ddlapi-testing/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ddlapi/agent-packages/ddlapi-testing
+  active_owner: ./frontend/ddlapi/agent-packages/ddlapi-testing
+  content_hash: sha256:1e309281f974d553b69285d82520e7cfea3c7e0337b586c798e580eacfa8fd8d
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/ddlapi-using
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ddlapi/agent-packages/ddlapi-using
+  active_owner: ./frontend/ddlapi/agent-packages/ddlapi-using
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/ddlapi-using/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/ddlapi/agent-packages/ddlapi-using
+  active_owner: ./frontend/ddlapi/agent-packages/ddlapi-using
+  content_hash: sha256:e295636a50925a3ddf626f4ecaea900a647cf6f6dd0637300cfd16ee7cd1effb
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/english-developer-style
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-ai-packages/agent-packages/english-developer-style
+  active_owner: netcracker/qubership-ai-packages/agent-packages/english-developer-style
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/english-developer-style/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-ai-packages/agent-packages/english-developer-style
+  active_owner: netcracker/qubership-ai-packages/agent-packages/english-developer-style
+  content_hash: sha256:bd7c115e6bc6b267156f480b692fdc7c6c79cc8b1b1f4b5f000738370450512e
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/github-ticket-implementation-planner
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/github-ticket-implementation-planner/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
+  active_owner: netcracker/qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
+  content_hash: sha256:65bd796eceb5bb9a29949d61651654d7db3e98021d736ef6c06864319f112226
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/json-crawl-authoring
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/json-crawl/agent-packages/json-crawl-authoring
+  active_owner: ./frontend/json-crawl/agent-packages/json-crawl-authoring
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/json-crawl-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/json-crawl/agent-packages/json-crawl-authoring
+  active_owner: ./frontend/json-crawl/agent-packages/json-crawl-authoring
+  content_hash: sha256:88d2586cecb3be0c2ce6e453f4c442266a30ed68d451cff8b5df64b72e23b904
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/json-crawl-testing
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/json-crawl/agent-packages/json-crawl-testing
+  active_owner: ./frontend/json-crawl/agent-packages/json-crawl-testing
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/json-crawl-testing/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/json-crawl/agent-packages/json-crawl-testing
+  active_owner: ./frontend/json-crawl/agent-packages/json-crawl-testing
+  content_hash: sha256:07cb355bfbfc518701e655a5fd976de082b286948ba6c076936a5405f62ca450
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/json-crawl-using
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/json-crawl/agent-packages/json-crawl-using
+  active_owner: ./frontend/json-crawl/agent-packages/json-crawl-using
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/json-crawl-using/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/json-crawl/agent-packages/json-crawl-using
+  active_owner: ./frontend/json-crawl/agent-packages/json-crawl-using
+  content_hash: sha256:a6adfa4344f157506d304c886398577fe9b860390c4ba94cfb8405a4c547805e
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/markdown-line-length-120
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-ai-packages/agent-packages/markdown-line-length-120
+  active_owner: netcracker/qubership-ai-packages/agent-packages/markdown-line-length-120
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/markdown-line-length-120/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - netcracker/qubership-ai-packages/agent-packages/markdown-line-length-120
+  active_owner: netcracker/qubership-ai-packages/agent-packages/markdown-line-length-120
+  content_hash: sha256:be48ab0a931d8dffb78b5e9915e9bf156584bd15fae8dff07a643b243e83d52b
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/next-data-model-authoring
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/next-data-model-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: sha256:1ff1f308a234b03adcb38e9520a3d7af7dd6f8a75cfdee7a3375b0a309555815
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/next-data-model-authoring/json-schema/json-schema-meta-flags-and-required.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: sha256:8e6d7f9bb652d770446d6afb7a7968bc42af0a2226a175cc819eb72899ad8d87
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/next-data-model-authoring/json-schema/json-schema-nesting-indicator-row-diffs.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: sha256:678b65fabc6f610ec90e951856e3797ab259022e24e2976b14e3c7f48f776de7
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/next-data-model-authoring/json-schema/json-schema-node-key-rename.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: sha256:cf508d9732c25e06428ea84eee124afb427c6c0de91735271ecd3f9f20254b22
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/next-data-model-authoring/json-schema/json-schema-validation-rows.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: sha256:026fe54366c8c6de4350dc17a4eec5553ab5c026b8367c970d86054a39539058
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/next-data-model-authoring/node-visibility/authoring.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: sha256:715c86a9ea31b91edd7caf625ce82411fdfc88a0175b3f748072d0fde847dad2
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/next-data-model-authoring/node-visibility/ddlapi.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: sha256:a8945401440060035907c66f79d124520351981a10d19544c951acf174c00400
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/next-data-model-authoring/node-visibility/general-approach.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+  content_hash: sha256:2b6f93f8797bedaac1cfa590d82de6cdb2497df92b36fe3dd54def464c08a64c
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/next-data-model-using
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-using
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-using
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/next-data-model-using/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./frontend/api-doc-viewer/agent-packages/next-data-model-using
+  active_owner: ./frontend/api-doc-viewer/agent-packages/next-data-model-using
+  content_hash: sha256:6ebdb0788d4d2296b7847546199bc6005efdc766a71a40f0cee04a20346001a2
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/postman-e2e-authoring
+  runtime: null
+  scope: project
+  owners:
+  - ./tests/postman-collections/agent-packages/postman-e2e-authoring
+  active_owner: ./tests/postman-collections/agent-packages/postman-e2e-authoring
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/postman-e2e-authoring/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./tests/postman-collections/agent-packages/postman-e2e-authoring
+  active_owner: ./tests/postman-collections/agent-packages/postman-e2e-authoring
+  content_hash: sha256:cb66c3675054ef4508aecb2bb5740af08f8cf0c2c258c6108080f649b5545c61
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/postman-e2e-followup
+  runtime: null
+  scope: project
+  owners:
+  - ./tests/postman-collections/agent-packages/postman-e2e-followup
+  active_owner: ./tests/postman-collections/agent-packages/postman-e2e-followup
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/postman-e2e-followup/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./tests/postman-collections/agent-packages/postman-e2e-followup
+  active_owner: ./tests/postman-collections/agent-packages/postman-e2e-followup
+  content_hash: sha256:9a7af59386be7456b3b8e4967a9be4d615e8b0e93008dc52f69e58dbfc3e9c1f
