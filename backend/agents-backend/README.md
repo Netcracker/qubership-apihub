@@ -4,6 +4,7 @@ A Go-based microservice backend that provides management and orchestration capab
 This service handles agent registration, service discovery, snapshot management, and security checks.
 
 ## High Level architecture
+
 ![APIHUB Architecture](docs/recources/arch_diagram.png)
 
 ## API Documentation
