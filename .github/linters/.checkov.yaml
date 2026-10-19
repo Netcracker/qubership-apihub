@@ -3,6 +3,12 @@
 quiet: true
 
 skip-check:
+# https://www.checkov.io/5.Policy%20Index/openapi.html
+# Kept from the module copies of this file (removed in the monorepo migration)
+- CKV_OPENAPI_3 # Security schemes must not allow cleartext credentials over an unencrypted channel
+- CKV_OPENAPI_4 # The global security field must have rules defined
+- CKV_OPENAPI_5 # Security operations must not be empty
+- CKV_OPENAPI_21 # Ensure that arrays have a maximum number of items
 # https://www.checkov.io/5.Policy%20Index/kubernetes.html
 - CKV_K8S_15 # Image Pull Policy should be Always
 - CKV_K8S_21 # The default namespace should not be used
@@ -26,3 +32,6 @@ skip-path:
 - keycloak
 - postgres-db
 - apache-superset
+# Kept from frontend/ui (mock servers and static resources)
+- frontend/ui/.*mock
+- frontend/ui/.*resources
