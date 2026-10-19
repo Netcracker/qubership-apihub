@@ -19,8 +19,6 @@ apm_modules/
 .claude/
 .cursor/
 .github/instructions/
-AGENTS.md
-CLAUDE.md
 src/AGENTS.md
 src/CLAUDE.md
 test/AGENTS.md
