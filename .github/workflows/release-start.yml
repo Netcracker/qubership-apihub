@@ -9,8 +9,10 @@ name: Release start
 # By hand this is `git switch -C release develop && git push origin release`; the workflow adds the check.
 
 concurrency:
-  # Never cancelled: a cancelled run can stop between the push and the CI dispatch.
-  group: release-start
+  # Shared with the real finish job of release-finish.yml, which moves main and then release: cutting in
+  # between would leave release ahead of main. Never cancelled: a cancelled run can stop between the push
+  # and the CI dispatch.
+  group: release-branches
   cancel-in-progress: false
 
 permissions: {}

@@ -34,8 +34,9 @@ name: Release finish
 # bypass them, and its pushes start workflows, which a GITHUB_TOKEN push does not.
 
 concurrency:
-  # Never cancelled: a run stopped between the push and the back-merge leaves the branches apart.
-  group: release-finish
+  # Never cancelled: a run stopped between the push and the back-merge leaves the branches apart. Dry and
+  # real runs queue apart, because a newer pending run replaces an older pending run of the same group.
+  group: release-finish-${{ inputs.dry_run && 'dry' || 'real' }}
   cancel-in-progress: false
 
 permissions: {}
@@ -47,6 +48,11 @@ jobs:
   finish:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    # A real run moves main and release: release-start.yml takes the same group, so it cannot fast-forward
+    # release between the push of main and the fast-forward of release.
+    concurrency:
+      group: ${{ inputs.dry_run && format('release-finish-dry-{0}', github.run_id) || 'release-branches' }}
+      cancel-in-progress: false
     permissions:
       contents: read # checkout; every push uses the deploy key
       actions: write # find or dispatch the CI run on main
@@ -64,12 +70,17 @@ jobs:
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           set -euo pipefail
+          # The sprint goes into the job summary and the product tag message: the same rule in both modes.
+          if [ -n "$SPRINT" ] && ! [[ "$SPRINT" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+            echo "::error::The sprint input may hold letters, digits, '.', '_', and '-' only, such as APIHUB-26.3.5."
+            exit 1
+          fi
           if [ "$DRY_RUN" = 'true' ]; then
             echo "::notice::Dry run: the plan goes to the job summary; nothing is committed, tagged, or pushed."
             exit 0
           fi
-          if ! [[ "$SPRINT" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
-            echo "::error::A real run needs the sprint input, such as APIHUB-26.3.5 (letters, digits, '.', '_', '-')."
+          if [ -z "$SPRINT" ]; then
+            echo "::error::A real run needs the sprint input, such as APIHUB-26.3.5."
             exit 1
           fi
           if [ "$WORKFLOW_BRANCH" != "$DEFAULT_BRANCH" ]; then
@@ -128,6 +139,14 @@ jobs:
             echo "Sprint: ${SPRINT:-not given}. main and release at \`$(git rev-parse --short HEAD)\`."
             echo ""
           } >> "$GITHUB_STEP_SUMMARY"
+          # After a release, release and main both sit on the tagged version commit: a re-run finds nothing.
+          released="$(git tag --points-at HEAD | grep -E '(^|/)[0-9]+\.[0-9]+\.[0-9]+$' | tr '\n' ' ' || true)"
+          if [ -n "$released" ]; then
+            echo "already_released=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::Nothing to release: $(git rev-parse --short HEAD) is already released ($released)."
+            echo "**Nothing to release.** This commit is already released: ${released% }." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           if [ "$DRY_RUN" = 'true' ]; then
             node tools/release/plan.js --mode 'dry run'
           else
@@ -144,8 +163,14 @@ jobs:
         shell: bash
         env:
           COMPONENTS: ${{ steps.plan.outputs.components }}
+          ALREADY_RELEASED: ${{ steps.plan.outputs.already_released }}
         run: |
           set -euo pipefail
+          if [ "$ALREADY_RELEASED" = 'true' ]; then
+            : > "$RUNNER_TEMP/tags.txt"
+            exit 0
+          fi
+          git tag --points-at HEAD | sort > "$RUNNER_TEMP/tags-before.txt"
           if [ "$COMPONENTS" = 'true' ]; then
             # tools/release/guard.js (preVersionCommand) refuses any branch but main.
             pnpm exec nx release version --git-commit --git-tag --git-commit-message 'chore(release): publish'
@@ -161,7 +186,8 @@ jobs:
             git tag --annotate "$product" --message "APIHUB $product" --message "Sprint: $SPRINT"
           fi
 
-          git tag --points-at HEAD > "$RUNNER_TEMP/tags.txt"
+          # Only the tags this run created; nx release version moves HEAD to its commit when it versions.
+          git tag --points-at HEAD | sort | comm -13 "$RUNNER_TEMP/tags-before.txt" - > "$RUNNER_TEMP/tags.txt"
           echo "tags at $(git rev-parse --short HEAD): $(tr '\n' ' ' < "$RUNNER_TEMP/tags.txt")"
 
       - name: Push main and the tags
@@ -172,8 +198,8 @@ jobs:
           set -euo pipefail
           mapfile -t tags < "$RUNNER_TEMP/tags.txt"
           if [ "${#tags[@]}" -eq 0 ]; then
-            echo "::notice::Nothing to release: no component and no deploy/ change since the last tags."
-            echo "**Nothing to release.** main stays at the release tip; no branch moved." >> "$GITHUB_STEP_SUMMARY"
+            echo "::notice::Nothing to release: no new component or deploy/ change since the last tags."
+            echo "**Nothing to release.** No branch moved; no back-merge." >> "$GITHUB_STEP_SUMMARY"
             echo "pushed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
