@@ -86,11 +86,11 @@ After you edit a package, run from the repository root:
 
 ```bash
 apm install --target cursor,claude --legacy-skill-paths
-apm compile --target cursor,claude --legacy-skill-paths
 ```
 
 Commit the package sources and the deployed `.cursor/` and `.claude/` trees together. Never edit the
-deployed trees by hand. The `AGENTS.md` and `CLAUDE.md` files inside modules are hand-written; keep them.
+deployed trees by hand. Do not run `apm compile`: it does not finish on a repository of this size. The
+`AGENTS.md` and `CLAUDE.md` files in this repository, including those inside modules, are hand-written.
 
 Always-on conventions: `development-conventions`, `english-developer-style`, `markdown-line-length-120`. Adding a
 Go service: use the `apihub-add-go-service` skill. See [`agent-packages/README.md`](agent-packages/README.md).

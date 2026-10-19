@@ -1,7 +1,8 @@
-# Deployment-local agent packages
+# Repository-level agent packages
 
-Repository-specific APM packages for **qubership-apihub** (umbrella Helm / Compose / docs).
-Generic packages come from
+APM packages that are not tied to one module of the **qubership-apihub** monorepo. Module-specific packages live
+next to their module, in `backend/<module>/agent-packages/` and `frontend/<module>/agent-packages/`, and
+`tests/postman-collections/agent-packages/`. Generic packages come from
 [`qubership-apihub-ci/agent-packages`](https://github.com/Netcracker/qubership-apihub-ci/tree/main/agent-packages)
 and [`qubership-ai-packages`](https://github.com/Netcracker/qubership-ai-packages/tree/main/agent-packages).
 
@@ -9,17 +10,24 @@ and [`qubership-ai-packages`](https://github.com/Netcracker/qubership-ai-package
 
 | Package | Path | Scope |
 |---------|------|-------|
-| `apihub-deployment-authoring` | `apihub-deployment-authoring/` | Helm, Compose, `docs/` deployment guides (authors in this repo) |
-| `apihub-deployment-followup` | `apihub-deployment-followup/` | Cross-repo reminders for backend developers when deploy follow-up is needed |
+| `apihub-deployment-authoring` | `apihub-deployment-authoring/` | Helm, Compose, and `docs/` deployment guides |
+| `apihub-deployment-followup` | `apihub-deployment-followup/` | Reminder to update Helm or Compose when a backend change needs it |
+| `apihub-add-go-service` | `apihub-add-go-service/` | Checklist for adding a Go service under `backend/` |
 
-Consumers (e.g. `qubership-apihub-backend`) depend on `apihub-deployment-followup` via APM.
+## One manifest for the whole repository
 
-Root `apm.yml` lists CI/AI store dependencies and local authoring package. After edits, from the
-repository root:
+The root `apm.yml` lists the store packages and every local package, from all modules. There is no module-level
+`apm.yml`, `apm.lock.yaml`, or compiled harness tree. Every module instruction has an `applyTo` glob that starts
+with its module path, so it never applies to another module.
+
+After you edit a package, run from the repository root:
 
 ```bash
-apm install --target cursor,claude --legacy-skill-paths --force
+apm install --target cursor,claude --legacy-skill-paths
 ```
 
-Sources under `agent-packages/` and deployed `.cursor/` / `.claude/` harness trees are
-**committed**. Gitignore: `apm_modules/`, `agent-packages/**/build/`.
+`apm install` deploys the rules and skills. `apm compile` (distributed `AGENTS.md` placement) does not finish
+on a repository of this size, so do not run it; the `AGENTS.md` files in this repository are hand-written.
+
+Package sources under `agent-packages/` and the deployed `.cursor/` and `.claude/` trees are **committed**.
+Gitignore: `apm_modules/`, `agent-packages/**/build/`.
