@@ -43,4 +43,4 @@ For more information about Agent, please see the [user guide](./docs/Agent%20Use
 - **Portal users:** [Portal User Guide](./docs/Portal%20User%20Guide.md)
 - **Agent users:** [Agent User Guide](./docs/Agent%20User%20Guide.md)
 
-[Contributing](./CONTRIBUTING.md)
+[Contributing](../../CONTRIBUTING.md)

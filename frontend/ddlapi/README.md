@@ -258,4 +258,5 @@ and `ddlapi-testing` skills under [`agent-packages`](agent-packages).
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md), [CODE-OF-CONDUCT.md](CODE-OF-CONDUCT.md), and [SECURITY.md](SECURITY.md).
+See [CONTRIBUTING.md](../../CONTRIBUTING.md), [CODE-OF-CONDUCT.md](../../CODE-OF-CONDUCT.md), and
+[SECURITY.md](../../SECURITY.md).
