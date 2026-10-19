@@ -1,0 +1,138 @@
+# Dependabot configuration for the whole monorepo.
+# https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference
+#
+# The commit prefix `chore: deps:` stays (release decision R4): the release tooling gives such a commit a patch bump
+# for its module at the next release.
+#
+# Each package ecosystem has exactly one entry, and the directories of one entry must not overlap with another
+# entry of the same ecosystem.
+
+version: 2
+updates:
+  # Workflows in /.github/workflows and the composite actions in /.github/actions/*.
+  - package-ecosystem: "github-actions"
+    directories:
+      - "/"
+      - "/.github/actions/*"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore: deps:"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # The pnpm workspace: one pnpm-lock.yaml (lockfileVersion 9.0) at the root, one package.json per workspace
+  # project. The directories repeat the packages in pnpm-workspace.yaml. `group-by: dependency-name` makes one pull
+  # request per dependency for all projects, so a version never differs between two projects of one lockfile.
+  - package-ecosystem: "npm"
+    directories:
+      - "/"
+      - "/frontend/*"
+      - "/frontend/*/packages/*"
+      - "/tests/ui-tests"
+      - "/tools/jest-chrome-in-docker-environment"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    versioning-strategy: "increase"
+    commit-message:
+      prefix: "chore: deps:"
+    labels:
+      - "dependencies"
+      - "npm"
+    groups:
+      npm:
+        patterns:
+          - "*"
+        group-by: "dependency-name"
+
+  # The Go modules of the go.work workspace. Same `group-by` reason as for npm: one pull request per dependency
+  # for all modules. The list is explicit because backend/libraries-backend and backend/java-task-consumer have
+  # no go.mod. The backend modules that depend on backend/commons-go use a `replace` to ../commons-go, so
+  # Dependabot does not offer an update for it.
+  - package-ecosystem: "gomod"
+    directories:
+      - "/backend/agent"
+      - "/backend/agents-backend"
+      - "/backend/api-linter-service"
+      - "/backend/commons-go"
+      - "/backend/portal-backend"
+      - "/backend/test-service"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore: deps:"
+    labels:
+      - "dependencies"
+      - "go"
+    groups:
+      go-modules:
+        patterns:
+          - "*"
+        group-by: "dependency-name"
+
+  # The Maven reactor of the Java task consumer; the parent pom lists the modules.
+  - package-ecosystem: "maven"
+    directory: "/backend/java-task-consumer"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore: deps:"
+    labels:
+      - "dependencies"
+      - "java"
+    groups:
+      maven:
+        patterns:
+          - "*"
+
+  # Base images of every Dockerfile in the repository (Dockerfile and Dockerfile.local).
+  - package-ecosystem: "docker"
+    directories:
+      - "/backend/agent"
+      - "/backend/agents-backend"
+      - "/backend/api-linter-service"
+      - "/backend/java-task-consumer"
+      - "/backend/portal-backend"
+      - "/backend/test-service"
+      - "/frontend/api-doc-viewer"
+      - "/frontend/build-task-consumer"
+      - "/frontend/ui"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore: deps:"
+    labels:
+      - "dependencies"
+      - "docker"
+    groups:
+      docker:
+        patterns:
+          - "*"
+
+  # Images in the Docker Compose stacks for users. with-gitlab has no compose file.
+  - package-ecosystem: "docker-compose"
+    directories:
+      - "/deploy/docker-compose/apihub-generic"
+      - "/deploy/docker-compose/with-keycloak"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore: deps:"
+    labels:
+      - "dependencies"
+      - "docker"
+    groups:
+      docker-compose:
+        patterns:
+          - "*"
