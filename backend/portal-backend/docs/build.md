@@ -12,6 +12,7 @@ It allows to scale builders(browser, node services) horizontally without changes
 Biold config is a metadata set for an object that will be created during the build.
 
 Example:
+
 ```JSON
 {
     "files": [
@@ -44,12 +45,12 @@ Example:
 
 "buildType" defines the logic of build process
 options:
+
 * "build" - regular version publish
 * "changelog" - changelog only
 * "documentGroup" - export
 * "reducedSourceSpecifications" - export
 * "mergedSpecification" - export
-
 
 ## Stages for buildType = build (in builder lib)
 
@@ -70,7 +71,6 @@ options:
 * comparison-notifications.json - messages raised while calculating a changelog, grouped by the version pair
   they belong to. Present for a build with a previousVersion and for a changelog build. A comparison reused
   from the backend carries no entry
-
 
 ## notifications of a failed build
 
@@ -175,6 +175,7 @@ error - completed with error
 ## DB
 
 Related tables:
+
 * build - list of build
 * build_src - config and sources archive(zip)
 * build_result or minio (depends on configuration) - result archive(zip)
