@@ -5,6 +5,7 @@ Unify API into a normalized presentation with all reference resolved, allOf comb
 Supports OpenAPI, AsyncAPI, and GraphQL specifications processing.
 
 ## Modifications
+
 Modified version of [udamir/allof-merge](https://github.com/udamir/allof-merge)
 
 - Added cycles support during combiners resolve
@@ -21,6 +22,7 @@ Modified version of [udamir/allof-merge](https://github.com/udamir/allof-merge)
 - Debug tooling for cycled JSO
 
 ## Features
+
 - Safe merging of schemas combined with allOf in whole document
 - Fastest implementation - up to x3 times faster then other popular libraries
 - Merged schema does not validate more or less than the original schema
@@ -44,7 +46,9 @@ Modified version of [udamir/allof-merge](https://github.com/udamir/allof-merge)
 - ~~Swagger 2.x~~ (roadmap)
 
 ## Other libraries
+
 There are some libraries that can merge schemas combined with allOf. One of the most popular is [mokkabonna/json-schema-merge-allof](https://github.com/mokkabonna/json-schema-merge-allof), but it has some limitatons: Does not support circular $refs and no TypeScript syntax out of the box.
 
 ## External $ref
+
 If schema contains an external $ref, you should bundle it via [api-ref-bundler](https://github.com/udamir/api-ref-bundler) first.
