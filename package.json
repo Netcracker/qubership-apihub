@@ -1,6 +1,14 @@
 {
   "name": "@netcracker/apihub-monorepo",
   "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Netcracker/qubership-apihub.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Netcracker/qubership-apihub/issues"
+  },
+  "homepage": "https://github.com/Netcracker/qubership-apihub#readme",
   "private": true,
   "description": "Third monorepo prototype: the 18 JavaScript components of APIHUB in one pnpm workspace. Local only, no remote, nothing published.",
   "packageManager": "pnpm@12.4.2",

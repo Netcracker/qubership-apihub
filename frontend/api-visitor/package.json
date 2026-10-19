@@ -1,6 +1,15 @@
 {
   "name": "@netcracker/qubership-apihub-api-visitor",
   "version": "1.0.23",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Netcracker/qubership-apihub.git",
+    "directory": "frontend/api-visitor"
+  },
+  "bugs": {
+    "url": "https://github.com/Netcracker/qubership-apihub/issues"
+  },
+  "homepage": "https://github.com/Netcracker/qubership-apihub/tree/main/frontend/api-visitor#readme",
   "description": "Takes OpenAPI documents apart",
   "license": "Apache-2.0",
   "main": "./dist/index.cjs.js",

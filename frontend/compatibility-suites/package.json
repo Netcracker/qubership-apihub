@@ -1,6 +1,15 @@
 {
   "name": "@netcracker/qubership-apihub-compatibility-suites",
   "version": "2.6.2",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Netcracker/qubership-apihub.git",
+    "directory": "frontend/compatibility-suites"
+  },
+  "bugs": {
+    "url": "https://github.com/Netcracker/qubership-apihub/issues"
+  },
+  "homepage": "https://github.com/Netcracker/qubership-apihub/tree/main/frontend/compatibility-suites#readme",
   "license": "Apache-2.0",
   "type": "module",
   "module": "./dist/index.es.js",

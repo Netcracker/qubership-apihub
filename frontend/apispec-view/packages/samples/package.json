@@ -1,6 +1,15 @@
 {
   "name": "@netcracker/qubership-apihub-apispec-view-samples",
   "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Netcracker/qubership-apihub.git",
+    "directory": "frontend/apispec-view/packages/samples"
+  },
+  "bugs": {
+    "url": "https://github.com/Netcracker/qubership-apihub/issues"
+  },
+  "homepage": "https://github.com/Netcracker/qubership-apihub/tree/main/frontend/apispec-view/packages/samples#readme",
   "private": true,
   "type": "module",
   "nx": {

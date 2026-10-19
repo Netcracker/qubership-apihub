@@ -1,6 +1,15 @@
 {
   "name": "@netcracker/qubership-apihub-rest-playground",
   "version": "1.3.4",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Netcracker/qubership-apihub.git",
+    "directory": "frontend/rest-playground"
+  },
+  "bugs": {
+    "url": "https://github.com/Netcracker/qubership-apihub/issues"
+  },
+  "homepage": "https://github.com/Netcracker/qubership-apihub/tree/main/frontend/rest-playground#readme",
   "description": "Web Component for Try It",
   "sideEffects": [
     "./dist/index.js",

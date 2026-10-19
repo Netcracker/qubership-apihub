@@ -1,5 +1,14 @@
 {
   "name": "@netcracker/qubership-apihub-api-doc-viewer-workspace",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Netcracker/qubership-apihub.git",
+    "directory": "frontend/api-doc-viewer"
+  },
+  "bugs": {
+    "url": "https://github.com/Netcracker/qubership-apihub/issues"
+  },
+  "homepage": "https://github.com/Netcracker/qubership-apihub/tree/main/frontend/api-doc-viewer#readme",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
