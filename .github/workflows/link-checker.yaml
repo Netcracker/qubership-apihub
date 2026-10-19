@@ -29,6 +29,10 @@ jobs:
             --exclude-path 'AGENTS.md'
             --exclude-path 'GEMINI.md'
             --exclude-path 'CLAUDE.md'
+            --exclude-path 'backend/test-service/static/**'
+            --exclude-path 'frontend/api-processor/test/**'
+            --exclude-path 'frontend/**/__fixtures__/**'
+            --exclude-path 'tests/ui-tests/resources/**'
             --verbose
             --no-progress
             --user-agent 'Mozilla/5.0 (X11; Linux x86_64) Chrome/134.0.0.0'

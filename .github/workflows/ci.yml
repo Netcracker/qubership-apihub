@@ -83,6 +83,7 @@ jobs:
           # The Go set comes from the lang:go tag, never a list. `nx affected` does not accept
           # --projects: it passes the flag to the task (`malformed import path "--projects=tag:lang:go"`).
           go_all="$(pnpm exec nx show projects --projects=tag:lang:go --json)"
+          # shellcheck disable=SC2046 # word splitting turns the project list into arguments
           go="$(pick $(node -e 'console.log(JSON.parse(process.argv[1]).join(" "))' "$go_all"))"
 
           # The Java reactor has a short-named parent project and three inferred Maven projects, which
