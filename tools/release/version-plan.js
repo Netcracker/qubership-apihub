@@ -74,7 +74,10 @@ async function projectRoots() {
   return Object.fromEntries(Object.values(graph.nodes).map((n) => [n.name, n.data.root.replace(/\\/g, '/')]))
 }
 
-/** Computes the bumps, writes or removes the plan file, and returns the bumps. */
+/**
+ * Computes the bumps, writes or removes the plan file, and returns the bumps. Any other plan file in the
+ * directory is removed first: CI caches .nx, and Nx would apply a stale plan restored with it.
+ */
 async function writeVersionPlan(file = PLAN_FILE) {
   const release = readNxRelease()
   const types = commitTypes(release)
@@ -85,11 +88,10 @@ async function writeVersionPlan(file = PLAN_FILE) {
     bumpOf: (lastTag, paths) => bumpFromCommits(lastTag, paths, types),
   })
   const plan = renderVersionPlan(bumps)
+  fs.rmSync(path.dirname(file), { recursive: true, force: true })
   if (plan) {
     fs.mkdirSync(path.dirname(file), { recursive: true })
     fs.writeFileSync(file, plan)
-  } else {
-    fs.rmSync(file, { force: true })
   }
   return bumps
 }

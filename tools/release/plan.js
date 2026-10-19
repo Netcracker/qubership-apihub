@@ -17,6 +17,7 @@
  *   follows; without it the plan file is removed.
  */
 const fs = require('node:fs')
+const path = require('node:path')
 const { bumpBetween, bumpFromCommits, commitTypes, listTags, readNxRelease } = require('./conventional')
 const { PRODUCT_PATHS, latestProductTag, productVersion } = require('./product-version')
 const { PLAN_FILE, writeVersionPlan } = require('./version-plan')
@@ -107,7 +108,7 @@ async function main(argv) {
     else if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, markdown)
     else process.stdout.write('\n' + markdown)
   } finally {
-    if (!argv.includes('--keep-plan')) fs.rmSync(PLAN_FILE, { force: true })
+    if (!argv.includes('--keep-plan')) fs.rmSync(path.dirname(PLAN_FILE), { recursive: true, force: true })
   }
 }
 

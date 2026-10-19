@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 /**
- * Refuses a real `nx release` anywhere but `main`. On `release`, Nx would version, commit, tag, and
- * push `release`, and create GitHub Releases for a commit that is not on `main`.
+ * Refuses a real `nx release version` anywhere but `main`. On `release`, Nx would commit the versions
+ * and create the tags on a commit that release-finish.yml never pushes to `main`.
  *
  * Runs as release.version.preVersionCommand in nx.json, which Nx runs before it changes anything.
- * A pre-push hook would not fire: Nx pushes with `--no-verify`. Dry runs (NX_DRY_RUN=true) pass,
- * and give the same plan on `release` as on `main`.
+ * Dry runs (NX_DRY_RUN=true) pass, and give the same plan on `release` as on `main`.
  */
 const { execFileSync } = require('node:child_process')
 
@@ -46,16 +45,11 @@ if (branch !== RELEASE_BRANCH) {
   refuse([
     `release guard: refusing to release from "${branch}".`,
     '',
-    `A real release must run on ${RELEASE_BRANCH}. From "${branch}" Nx would version, commit, tag`,
-    `and PUSH "${branch}", then create GitHub Releases against a commit that is not on`,
-    `${RELEASE_BRANCH} — and pushing two refs at one commit starts two CI runs that both build.`,
+    `A real release must run on ${RELEASE_BRANCH}. From "${branch}" Nx would commit the versions`,
+    `and create the tags on a commit that is not on ${RELEASE_BRANCH}.`,
     '',
-    'Promote first, then release:',
-    `  git switch ${RELEASE_BRANCH}`,
-    '  git merge --ff-only release',
-    '  pnpm exec nx release --skip-publish',
-    '',
-    'To read the plan from here without releasing, add --dry-run.',
+    'Releases run in the release-finish workflow. To read the plan from here, run:',
+    '  node tools/release/plan.js',
   ])
 }
 
