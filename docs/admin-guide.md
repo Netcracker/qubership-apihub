@@ -19,14 +19,14 @@ Audience: **platform owners and SRE/DevOps** wiring APIHUB into an environment. 
 
 The registry is configured through **`config.yaml`**, whose annotated super-set is [**`config.template.yaml`**](../backend/portal-backend/config.template.yaml) (module: `backend/portal-backend/`).
 
-**Operational routine**
+### Operational routine
 
 1. Maintain a **golden copy** separate from live secrets (Git ignores or sealed secrets), diff against the template when upgrading between product versions.
 2. Keep **`security.apihubExternalUrl`** truthfully matching the hostname users type; mismatches break OAuth/SAML redirects and deep links.
 3. **`extensions`** must list every sidecar the UI should hit (linter, agents-backend); `baseUrl` + `pathPrefix` pair must match what you publish (internal DNS in Kubernetes, `host.docker.internal` patterns in desktop Compose).
 4. **`zeroDayConfiguration.accessToken`** bootstraps privileged automation; pair it with **`APIHUB_API_KEY`** / **`APIHUB_ACCESS_TOKEN`** variables in workers until you adopt service accounts or PAT-based automation from the product.
 
-**Production mode**
+### Production mode
 
 - With **`security.productionMode: true`** local APIHUB accounts cannot authenticate—plan IdP onboarding before flipping the flag.
 
