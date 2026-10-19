@@ -1,0 +1,62 @@
+'on':
+  push:
+    # Only the release branch, and no tags (a branches filter alone ignores tag pushes). The merge this
+    # workflow pushes goes to develop, so it never starts itself again.
+    branches: [release]
+
+name: Release sync
+
+# Hotfix propagation: every push to `release` (a hotfix pull request, release-start, or release-finish
+# fast-forwarding `release` to `main`) is merged into `develop` with a merge commit, so the next cut keeps
+# the hotfix. Never squashed: a squash drops the link to the `release` commits, and Nx would count the
+# hotfixes again at the next release. A conflict fails the run and prints the commands to resolve it.
+
+concurrency:
+  # Not cancelled: a newer push queues behind the running merge. A pending run may be replaced by a newer
+  # one, which merges the newer release tip and so contains the older one.
+  group: release-sync
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  sync:
+    if: github.event.deleted == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read # checkout; the push uses the deploy key
+      actions: write # find or dispatch the CI run on develop
+    steps:
+      - name: Check the deploy key
+        shell: bash
+        env:
+          HAS_KEY: ${{ secrets.RELEASE_BOT_SSH_KEY != '' }}
+        run: |
+          if [ "$HAS_KEY" != 'true' ]; then
+            echo "::error::The secret RELEASE_BOT_SSH_KEY is not set. The bot pushes with the deploy key apihub-release-bot."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v6
+        with:
+          ssh-key: ${{ secrets.RELEASE_BOT_SSH_KEY }}
+          fetch-depth: 0
+
+      - name: Merge release into develop
+        id: merge
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          bash tools/release/merge-into.sh release develop
+
+      - name: Start CI on develop
+        if: steps.merge.outputs.merged == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SHA: ${{ steps.merge.outputs.sha }}
+        run: bash tools/release/ensure-ci.sh develop "$SHA"

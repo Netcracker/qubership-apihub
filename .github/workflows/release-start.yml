@@ -1,0 +1,80 @@
+'on':
+  workflow_dispatch:
+
+name: Release start
+
+# Cuts the next release candidate: fast-forwards `release` to `develop`, which starts CI on `release` and
+# its `:next` images. Refuses when `release` has commits that `develop` lacks: a hotfix sync is unresolved
+# (see release-sync.yml), and cutting would drop the hotfix from the next release.
+# By hand this is `git switch -C release develop && git push origin release`; the workflow adds the check.
+
+concurrency:
+  # Never cancelled: a cancelled run can stop between the push and the CI dispatch.
+  group: release-start
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  start:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read # checkout; the push uses the deploy key
+      actions: write # find or dispatch the CI run on release
+    steps:
+      - name: Check the deploy key
+        shell: bash
+        env:
+          HAS_KEY: ${{ secrets.RELEASE_BOT_SSH_KEY != '' }}
+        run: |
+          if [ "$HAS_KEY" != 'true' ]; then
+            echo "::error::The secret RELEASE_BOT_SSH_KEY is not set. The bot pushes with the deploy key apihub-release-bot."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v6
+        with:
+          ssh-key: ${{ secrets.RELEASE_BOT_SSH_KEY }}
+          fetch-depth: 0
+
+      - name: Fast-forward release to develop
+        id: cut
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            git fetch --no-tags origin '+refs/heads/*:refs/remotes/origin/*' && break
+            [ "$attempt" -lt 3 ] || exit 1
+            sleep $((attempt * 5))
+          done
+
+          develop="$(git rev-parse origin/develop)"
+          if git rev-parse --verify --quiet origin/release >/dev/null; then
+            if ! git merge-base --is-ancestor origin/release origin/develop; then
+              echo "::error::release has commits that develop lacks. Sync them first (release-sync.yml, or merge release into develop by hand):"
+              git log --oneline --no-merges origin/develop..origin/release
+              exit 1
+            fi
+            if [ "$(git rev-parse origin/release)" = "$develop" ]; then
+              echo "release is already at develop (${develop:0:9}); nothing to cut"
+            fi
+          else
+            echo "release does not exist yet; creating it at develop"
+          fi
+
+          git push origin "$develop:refs/heads/release"
+          echo "sha=$develop" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Release candidate"
+            echo ""
+            echo "\`release\` is at \`${develop:0:9}\` (develop)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Start CI on release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          SHA: ${{ steps.cut.outputs.sha }}
+        run: bash tools/release/ensure-ci.sh release "$SHA"
