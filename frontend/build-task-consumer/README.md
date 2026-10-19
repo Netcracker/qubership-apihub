@@ -97,7 +97,7 @@ The branch decides the floating tag; the content decides the immutable one.
 | `release` | `:next` |
 | `main` | `:latest` |
 
-Every build pushes `:src-<hash>`, derived from the git tree hashes of this project and its
+Every build pushes `:src-<hash>`, derived from the Git tree hashes of this project and its
 transitive dependencies plus the Dockerfile, `.dockerignore` and the lockfile. That is the only
 tag a build writes. The floating tag is applied afterwards as an alias of it, on every run,
 whether or not anything was built — so a build whose `src-` tag already exists is skipped and

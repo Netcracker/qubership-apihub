@@ -1,6 +1,6 @@
 # qubership-apihub-json-crawl
 
-This package provides utility functions for crawling/cloning json objects like a tree
+This package provides utility functions for crawling/cloning JSON objects like a tree
 
 ## Modifications
 Modified version of [json-crawl](https://github.com/udamir/json-crawl)

@@ -43,7 +43,7 @@ docs/design/
 ## Conventions
 
 - **Names.** API type folders use the code's spelling (`async-api`, `ddlapi`, `jso`,
-  `json-schema`). Files are kebab-case nouns; the same concept has the same file name in every
+  `json-schema`). Files are kebab-case nouns; the same concept has the same filename in every
   API type.
 - **Headings.** Coverage documents share the top-level headings `Sources`, `Scope`, `Pipeline`,
   `Classification tags`, `Displayed (plain)`, `Displayed (with diffs)`, `Not displayed`,

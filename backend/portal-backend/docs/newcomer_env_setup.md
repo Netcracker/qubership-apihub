@@ -1,7 +1,7 @@
 # Applications to install fo newcomer GO developer 
 
 ## 1) Install Git.
-Then ask access to GIT repositories listed in Backend sources section of the [Onboarding](onboarding.md) document.
+Then ask access to Git repositories listed in Backend sources section of the [Onboarding](onboarding.md) document.
 
 ## 2) Install and setup Podman Desktop or Rancher Desktop (your choice).
 This software you need to run APIHUB locally. For more info please see: [Local development](./local_development/local_development.md).

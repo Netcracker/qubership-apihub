@@ -2,7 +2,7 @@
 
 ## Architecture
 
-- [Backend overview](backend_overview.md)
+- [Backend overview](../README.md)
 
 ## Development documentation
 

@@ -9,10 +9,10 @@ Default Apihub config discovery path is `/v3/api-docs/apihub-swagger-config`
 ## Schema
 Base keys are
 * "configUrl" - URL of the config itself
-* "urls" - array of "url" objects.
+* `urls` - array of `url` objects.
 
-"url" object contains the following fields:
-* "url" - relative path to the file. Apihub agent will request the file by this path.
+`url` object contains the following fields:
+* `url` - relative path to the file. Apihub agent will request the file by this path.
 * "name" - human readable filename (short summary).
 * "type" - one of the supported types.
 
@@ -30,7 +30,7 @@ Supported types:
 ## How to enable
 steps:
 1) add endpoint to the service with path `/v3/api-docs/apihub-swagger-config` or customized one
-2) the endpoint should return the json as specified above
+2) the endpoint should return the JSON as specified above
 3) run discovery in Apihub agent and make sure that all required files are exposed
 
 ## Response example

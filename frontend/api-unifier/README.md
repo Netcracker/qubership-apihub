@@ -38,7 +38,7 @@ Modified version of [udamir/allof-merge](https://github.com/udamir/allof-merge)
 ## Works perfectly with specifications
 
 - [JsonSchema](https://json-schema.org/draft/2020-12/json-schema-core)
-- [OpenApi 3.x](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md)
+- [OpenAPI 3.x](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md)
 - [AsyncApi 3.x](https://www.asyncapi.com/docs/reference/specification/v3.0.0)
 - GraphApi
 - ~~Swagger 2.x~~ (roadmap)

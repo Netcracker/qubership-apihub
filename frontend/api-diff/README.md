@@ -1,6 +1,6 @@
 # qubership-apihub-api-diff
 
-This package provides utils to compute the diff between two Json based API documents.
+This package provides utils to compute the diff between two JSON based API documents.
 
 ## Modifications
 Modified version of [udamir/api-smart-diff](https://github.com/udamir/api-smart-diff)
@@ -29,7 +29,7 @@ Modified version of [udamir/api-smart-diff](https://github.com/udamir/api-smart-
 
 ## Supported API specifications
 
-- [OpenApi 3.0](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md)
+- [OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md)
 - [AsyncApi 2.x](https://v2.asyncapi.com/docs/reference)
 - [JsonSchema](https://json-schema.org/draft/2020-12/json-schema-core.html)
 - GraphQL via GraphApi

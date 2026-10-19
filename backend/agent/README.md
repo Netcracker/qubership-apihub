@@ -13,7 +13,7 @@ Please refer to Qubership-APIHUB Wiki [pages](https://github.com/Netcracker/qube
 
 ## API specification disovery process and contracts
 
-Please refer to [design document](/documentation/discovery_algorithm.md)
+Please refer to [design document](documentation/discovery_algorithm.md)
 
 ## Installation
 

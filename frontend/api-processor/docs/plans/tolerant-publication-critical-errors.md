@@ -907,7 +907,7 @@ would stop republishing if the message stays `Error`, so it is what the severity
 | `ref-has-siblings` | `utils/document.ts:173`, `RICH_REF_NOT_ALLOWED` | Error | fileId → slug | often | **→ Warning.** Not a broken reference: a `$ref` with sibling keys, which OpenAPI 3.0 disallows stylistically and 3.1 permits. Resolution succeeds and operations build. Largest single blast radius in the whole set |
 | `invalid-text-file` | `builder.ts:754` → moves to the document build | Error | *move* — slug of the document whose bundle contains the file; **message names the offending `fileId`** when it is a dependency | often | **→ Warning**, and take severity from the parser rather than the constant — see [Severity must come from the source](#severity-must-come-from-the-source). Usage data shows the volume is entirely REST/AJV metaschema nitpicking, and nearly every affected release version still has operations — the documents work |
 | `ref-not-allowed` | `utils/document.ts:173`, `REF_NOT_ALLOWED` | Error | fileId → slug | often | **→ Warning.** The reference is valid, just not permitted at that position in the schema. Does not prevent the build, and thousands of releases already live with it |
-| `duplicate-operation-id` | `components/operations.ts:29` | Error | slug (already carried) | sometimes | **→ Warning now, Error later.** The problem is real — one operation overwrites another — but the check is recent and hundreds of releases already contain it. Blocking retroactively is not acceptable. Deferred, see [Follow-up — severity tightening](#follow-up--severity-tightening). Detected **per api type** — see [An operation is identified by its api type and its id](#an-operation-is-identified-by-its-api-type-and-its-id) |
+| `duplicate-operation-id` | `components/operations.ts:29` | Error | slug (already carried) | sometimes | **→ Warning now, Error later.** The problem is real — one operation overwrites another — but the check is recent and hundreds of releases already contain it. Blocking retroactively is not acceptable. Deferred, see [Follow-up — severity tightening](#follow-up--severity-tightening). Detected **per API type** — see [An operation is identified by its API type and its id](#an-operation-is-identified-by-its-api-type-and-its-id) |
 | `ref-not-found` | `utils/document.ts:173`, `REF_NOT_FOUND` | Error | fileId → slug | sometimes | **from `validationRulesSeverity.brokenRefs`** — Error under the default configuration, Warning where the installation sets `failBuildOnBrokenRefs: false`. Interim, like the deferred rows: still scheduled to become Error unconditionally once the flag is retired, see [Follow-up — severity tightening](#follow-up--severity-tightening). Nothing that builds today stops building, because today the same input throws. See [Broken references: severity comes from the build config](#broken-references-severity-comes-from-the-build-config). The grade understates the family: the `Unable to resolve the file …` messages counted separately in the analysis are the same error type, raised with api-processor's own text (`utils/document.ts:194/203`) |
 | `double-slash-path` | `rest.operations.ts:134` | Warning | fileId → slug | rare | keep Warning |
 | `file-not-parsed` | `files.ts:46` | Error | fileId → slug | rare | **keep Error.** The file did not parse at all. Last occurrence 2024-07-29 — two years quiet, negligible risk |
@@ -1215,9 +1215,9 @@ the binary path and build failures through `buildErrorDocument` would give the t
 different filename conventions in the same build result. Pick one — `fileId` matches what unknown documents
 already ship today.
 
-#### An operation is identified by its api type and its id
+#### An operation is identified by its API type and its id
 
-Operations are discriminated by api type first: a REST `GET /pets` and an AsyncAPI `pets`/`get` are two
+Operations are discriminated by API type first: a REST `GET /pets` and an AsyncAPI `pets`/`get` are two
 different operations even when both derive the `operationId` `pets-get`. The backend already addresses them
 that way — `/versions/{version}/{apiType}/operations/{operationId}`.
 
@@ -1225,9 +1225,9 @@ The published operation index does not. It is one global map keyed by the `opera
 second operation to arrive evicts the first, and the eviction is then reported as a cross-document duplicate.
 That mixup is introduced by the duplicate-detection mechanism itself, not by the documents.
 
-**The index is keyed by `(apiType, operationId)`, and duplicates are detected within one api type.** A
+**The index is keyed by `(apiType, operationId)`, and duplicates are detected within one API type.** A
 cross-api-type match is not a collision and raises nothing: both operations are published, and each document
-announces the id it derived. Only documents of one api type can contest an id, and the contest is decided the
+announces the id it derived. Only documents of one API type can contest an id, and the contest is decided the
 way it always was — the lexicographically smallest slug keeps the entry, and every claimant is told.
 
 Two consequences follow for anything that reads the index:
@@ -1235,15 +1235,15 @@ Two consequences follow for anything that reads the index:
 - ownership is looked up by the claim a document made, never by a bare id, because a bare id no longer
   identifies an entry. That covers withdrawing a lost id from a document, evicting a document's operations on
   an incremental rebuild, and dropping them when the file leaves `config.files`;
-- any list ordered by `operationId` needs the api type in its sort key, or two rows tie and the archive's row
+- any list ordered by `operationId` needs the API type in its sort key, or two rows tie and the archive's row
   order follows `config.files`.
 
-`calculateHistoryForDeprecatedItems` resolves history for one api type at a time and must therefore filter the
+`calculateHistoryForDeprecatedItems` resolves history for one API type at a time and must therefore filter the
 version's operations to that type before matching them by id; otherwise the history of a REST operation can
 land on an AsyncAPI operation that happens to share its id.
 
-**What this does not change.** Within one api type the diagnostic stands as designed: two documents deriving
-one id still overwrite each other, still get one message each, and still carry the severity of their api type
+**What this does not change.** Within one API type the diagnostic stands as designed: two documents deriving
+one id still overwrite each other, still get one message each, and still carry the severity of their API type
 — `Error` for AsyncAPI, the staged `Warning` for REST and GraphQL.
 
 #### Duplicate resolution
@@ -1591,7 +1591,7 @@ The core promise: one bad document does not cost the version.
 - the per-document loop isolates failures: a document that throws in `processOperationDocument`,
   `processDdlDocument` or `processMcpDocument` does not prevent later documents in the same build from being
   processed.
-- the motivating scenario end to end: a version with valid REST documents and a broken AsyncAPI document
+- the motivating scenario end-to-end: a version with valid REST documents and a broken AsyncAPI document
   publishes as `draft` with every REST operation present and browsable, `hasErrors: true` on the version and on
   the AsyncAPI document only, and the REST documents unflagged.
 - regression: for a build with no errors, documents, operations, entities and comparisons are unchanged from

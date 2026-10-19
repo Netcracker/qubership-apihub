@@ -7,7 +7,7 @@ Migration analysis procedure is required to validate the changes made in `qubers
 
 ## Retrieve and store the results
 1) Download the migration result by `GET /api/internal/migrate/operations/{migrationId}`   
-2) Store the result json to some file storage.
+2) Store the result JSON to some file storage.
 
 ## Compare to previous migration
 Compare migration result to previous one (retrieved from the file storage).  

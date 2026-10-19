@@ -1,7 +1,7 @@
 # qubership-apihub-graphapi
 
 This package provides utils to convert GraphQL schema into GraphAPI document and back.<br/>
-The GraphAPI Specification is GraphQL introspection alternative, but based on JsonSchema - OpenApi for GraphQL
+The GraphAPI Specification is GraphQL introspection alternative, but based on JsonSchema - OpenAPI for GraphQL
 
 ## Modifications
 Modified version of [udamir/graphapi](https://github.com/udamir/graphapi)

@@ -159,7 +159,7 @@ pipeline**: build the `Realm` once, `normalize(realm, { ...DDL_API_NORMALIZE_OPT
 api-processor helper `extractTableStatements(sourceSql, schema, tableName): string` that returns
 stub data (concatenated args) with a `TODO` to move it to `ddlapi`.
 
-### AD5 — New api type surface
+### AD5 — New API type surface
 
 - `DDL_CONTRACT_TYPE = 'ddl'` (in `src/consts.ts`), added to the `BuilderType` union. (Named
 `DDL_CONTRACT_TYPE`, not `DDL_API_TYPE`, to align with the `contractsChangesSummary` DTO naming, where it

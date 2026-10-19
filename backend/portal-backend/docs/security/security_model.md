@@ -1,5 +1,5 @@
 # Authentication
-Apihub provides no anonymous access except some dedicated endpoints like shared document or it's own openapi spec.
+Apihub provides no anonymous access except some dedicated endpoints like shared document or it's own OpenAPI spec.
 User authentication is primarily handled through external Identity Providers (IDPs), making Single Sign-On (SSO) the preferred authentication method.
 The system also supports local authentication (disabled in production mode) for development purposes.
 

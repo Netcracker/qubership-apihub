@@ -53,8 +53,8 @@ options:
 
 ## Stages for buildType = build (in builder lib)
 
-0) detect file type (swagger 2.0, openapi 3.0+, graphql, protobuf)
-0.1) convert swagger 2.0 to openapi 3.0
+0) detect file type (swagger 2.0, OpenAPI 3.0+, graphql, protobuf)
+0.1) convert swagger 2.0 to OpenAPI 3.0
 1) bundling (resolve ext refs)
 2) make operations from specs and make search scopes (set of words in a file excluding specification terms(e.x. description, summery, parameters, etc))
 3) make comparison if previous version is defined
