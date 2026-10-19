@@ -101,7 +101,6 @@ Execute `podman compose down`
 
 Execute `generate_env_and_up_compose.sh` - it will initialize all require ENV VARs, **print them to the output (here you can see user/password for login)** and start the Qubership-APIHUB application
 
-
 ## Usage
 
 <http://host.docker.internal:8081/> - Qubserhip-APIHUB UI URL
@@ -129,12 +128,12 @@ On Windows need to tune WSL:
 
 1. Go to Podman desktop, open Podman machine terminal
 2. Edit file '/etc/wsl.conf' (using sudo)
-Add the following lines to the end:
+   Add the following lines to the end:
 
-```text
-[automount]
-options = "metadata"
-```
+   ```text
+   [automount]
+   options = "metadata"
+   ```
 
 3. Restart Podman machine
 4. Restart your PC
