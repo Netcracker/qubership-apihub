@@ -111,7 +111,7 @@ func ReplaceOrAppend(attrs *[]Attr, v Attr) {
 Dialect-specific changes are wrapped in the base change types and carry the interface values
 as an opaque pipe — the base package never inspects the concrete driver type:
 
-```
+```text
 Driver (diff)           schema package              Driver (SQL gen)
   type-assert attrs  →  ModifyAttr{             →  type-assert From/To
   by reflect type        From: *AutoIncrement,      back to *AutoIncrement
@@ -376,7 +376,7 @@ This is the only place where the model departs from the Atlas shape.
 
 ## Repository Layout
 
-```
+```text
 ddlapi/
 ├── src/
 │   ├── index.ts          ← public API (re-exports everything)
@@ -860,13 +860,15 @@ Index with whatever columns you pass, including none. All JSDoc on factory funct
 carries an explicit `@remarks` noting this contract. Invariant checking (e.g. "primary key
 must have at least one column") belongs in a separate validation layer, not in construction.
 
-**Schema factories**
+#### Schema factories
+
 - `newRealm(schemas?, props?)` → `Realm`
 - `newSchema(name, props?)` → `Schema`
 - `newTable(name, props?)` → `Table`
 - `newView(name, props?)` → `View`
 
-**Column / constraint factories**
+#### Column / constraint factories
+
 - `newColumn(name, props?)` → `Column`
 - `newNullableColumn(name)` → `Column` (shorthand for `columnType` with `null: true`)
 - `columnType(type, opts?)` → `ColumnType`
@@ -880,6 +882,7 @@ must have at least one column") belongs in a separate validation layer, not in c
 - `newCheck(expr, name?)` → `Check`
 
 **Type factories** (mirrors `New*Column` helpers in `dsl.go`)
+
 - `boolType(t)` → `BoolType`
 - `integerType(t, opts?)` → `IntegerType`
 - `decimalType(t, opts?)` → `DecimalType`
@@ -893,14 +896,16 @@ must have at least one column") belongs in a separate validation layer, not in c
 - `unsupportedType(t)` → `UnsupportedType`
 - `enumType(values, opts?)` → `EnumType`
 
-**Attr factories**
+#### Attr factories
+
 - `comment(text)` → `Comment`
 - `charset(v)` → `Charset`
 - `collation(v)` → `Collation`
 - `generatedExpr(expr, type?)` → `GeneratedExpr`
 - `filePos(name, start?, end?)` → `Pos` (mirrors Go's `NewFilePos(name)`; filename is required)
 
-**Expr factories**
+#### Expr factories
+
 - `literal(v)` → `Literal`
 - `rawExpr(x)` → `RawExpr`
 - `namedDefault(name, expr, attrs?)` → `NamedDefault`
@@ -986,12 +991,14 @@ publish-ready for a future npm registry. No `publishConfig` yet (registry TBD), 
 ```
 
 **Acceptance criteria:**
+
 - [ ] `package.json` name is `@netcracker/qubership-apihub-ddlapi`
 - [ ] `npm run build` produces CJS, ESM, and `.d.ts` (even with empty exports initially)
 - [ ] `npm test` runs Jest via ts-jest with zero tests (empty suite is OK)
 - [ ] `src/index.ts` exists as the sole public entry point
 
 **Verification:**
+
 - [ ] `npm run build` exits 0
 - [ ] `npm test` exits 0
 
@@ -1008,11 +1015,13 @@ from Go's marker interfaces and const block. Each const object gets a matching s
 type alias (`typeof X[keyof typeof X]`).
 
 **Acceptance criteria:**
+
 - [ ] All five exports match values documented in PLAN §5
 - [ ] Each const object has a matching type alias
 - [ ] Re-exported from `src/index.ts`
 
 **Verification:**
+
 - [ ] Unit test: `ReferenceOption.Cascade === 'CASCADE'`, `TypeKind.BoolType === 'BoolType'`
 - [ ] `npm run build` succeeds
 
@@ -1023,6 +1032,7 @@ type alias (`typeof X[keyof typeof X]`).
 ---
 
 #### ✓ Checkpoint: Foundation
+
 - [ ] Package builds and tests run cleanly
 - [ ] Constants importable from package root
 
@@ -1039,12 +1049,14 @@ union. `NamedDefault` uses `ObjectKind.NamedDefault` (not an `ExprKind` entry). 
 `exprs.ts`; `schema.ts` imports it from here for the `SchemaObject` union.
 
 **Acceptance criteria:**
+
 - [ ] All interfaces are `readonly`; each variant has correct `kind` constant
 - [ ] `NamedDefault.expr` is typed as `Literal | RawExpr` (not the full `Expr` union)
 - [ ] `UnknownExpr` escape hatch present
 - [ ] No runtime code beyond type definitions in this file
 
 **Verification:**
+
 - [ ] Compile-time test: exhaustive `switch (e.kind)` over sample `Expr` values type-checks
 - [ ] `npm run build` succeeds
 
@@ -1061,11 +1073,13 @@ union. `NamedDefault` uses `ObjectKind.NamedDefault` (not an `ExprKind` entry). 
 `PosPoint`, and `UnknownAttr`.
 
 **Acceptance criteria:**
+
 - [ ] `Check` has optional `name`, required `expr: string`, optional nested `attrs`
 - [ ] `Pos` / `PosPoint` mirror Go's `hcl.Pos` fields (`line`, `column`, `byte`)
 - [ ] `UnknownAttr` escape hatch present
 
 **Verification:**
+
 - [ ] Compile-time narrowing test for `AttrKind.Comment` in a switch
 - [ ] `npm run build` succeeds
 
@@ -1081,12 +1095,14 @@ union. `NamedDefault` uses `ObjectKind.NamedDefault` (not an `ExprKind` entry). 
 references `Schema` and `Attr` via type-only imports to avoid circular dependencies.
 
 **Acceptance criteria:**
+
 - [ ] All variants match PLAN field mapping (Go single-letter fields → descriptive names with `/* Atlas Go: X string */` comment; Go `*int` → `?: number`)
 - [ ] `SchemaType` union is exhaustive including `UnknownType`
 - [ ] `StringType.size` JSDoc notes that 0 is semantically absent (Go plain-`int` convention)
 - [ ] `BinaryType.size` JSDoc notes that `*int` in Go means 0 is a valid explicit size
 
 **Verification:**
+
 - [ ] `tsc --noEmit` clean with `EnumType` referencing `Schema` via `import type`
 - [ ] Exhaustive `switch` over `SchemaType` compiles without `never` leak
 
@@ -1103,6 +1119,7 @@ references `Schema` and `Attr` via type-only imports to avoid circular dependenc
 out per §3 (not deleted). `Index` and `ForeignKey` gain a `kind` field (TS-only, documented).
 
 **Acceptance criteria:**
+
 - [ ] `SchemaObject` includes dual-role members: `EnumType`, `Check`, `NamedDefault`
 - [ ] `NamedDefault` re-exported from `schema.ts` (defined in `exprs.ts`)
 - [ ] Back-ref fields are present as comments, not deleted
@@ -1110,6 +1127,7 @@ out per §3 (not deleted). `Index` and `ForeignKey` gain a `kind` field (TS-only
 - [ ] `Schema.realm` is a commented-out back-ref
 
 **Verification:**
+
 - [ ] Compile a minimal object graph using plain object literals (no factories yet)
 - [ ] `npm run build` succeeds
 
@@ -1120,6 +1138,7 @@ out per §3 (not deleted). `Index` and `ForeignKey` gain a `kind` field (TS-only
 ---
 
 #### ✓ Checkpoint: Type model complete
+
 - [ ] Full type graph compiles with no circular-import errors
 - [ ] All four discriminant groups (`Object`, `Type`, `Expr`, `Attr`) represented
 - [ ] `tsc --noEmit` clean across all source files
@@ -1135,11 +1154,13 @@ fields default to `undefined` (no empty arrays). No runtime validation — pure 
 Each JSDoc carries an `@remarks` noting the no-validation contract.
 
 **Acceptance criteria:**
+
 - [ ] Each factory returns a correctly typed readonly object with `kind` where applicable
 - [ ] Omitting optional collections yields `undefined`, not `[]`
 - [ ] `@remarks` on each factory: "Pure constructor — no runtime validation."
 
 **Verification:**
+
 - [ ] Test: build a `Schema` with one `Table`; assert shape and `undefined` defaults
 - [ ] `npm test` passes
 
@@ -1162,11 +1183,13 @@ Explicitly **not** implementing Go's composite column helpers (`newIntColumn`,
 `newStringColumn`, etc.) — out of Phase 1 scope.
 
 **Acceptance criteria:**
+
 - [ ] `newPrimaryKey(cols)` creates index parts with sequential `seqNo`; no back-refs wired
 - [ ] `newNullableColumn` sets `columnType` with `null: true`
 - [ ] `newIndexPart` / `newColumnPart` / `newExprPart` mirror Go's `NewIndexPart` / `NewColumnPart` / `NewExprPart`
 
 **Verification:**
+
 - [ ] Test: PK index parts name the table columns
 - [ ] Test: FK `columns` and `refColumns` hold column names; `refTable` holds a `TableRef`
 
@@ -1183,12 +1206,14 @@ attr factories (`comment`, `charset`, `collation`, `generatedExpr`, `filePos`), 
 factories (`literal`, `rawExpr`, `namedDefault`).
 
 **Acceptance criteria:**
+
 - [ ] All factories listed in the factories section above are implemented
 - [ ] Type factories pass optional fields through without coercion (pure constructors)
 - [ ] `enumType` accepts a values array plus optional `type`, `schema`, `attrs`
 - [ ] `filePos(name, start?, end?)` mirrors Go's `NewFilePos`; `name` is required
 
 **Verification:**
+
 - [ ] Test: construct column with `integerType('bigint', { unsigned: true })`
 - [ ] Test: `EnumType` usable as both `SchemaType` and `SchemaObject`
 
@@ -1204,12 +1229,14 @@ factories (`literal`, `rawExpr`, `namedDefault`).
 `underlyingExpr`. Document `kind`-string identity contract (diverges from Go's reflect key).
 
 **Acceptance criteria:**
+
 - [ ] All helpers return new arrays; inputs are never mutated
 - [ ] `replaceOrAppendAttr` keeps exactly one attr per `kind` string
 - [ ] Two `UnknownAttr` values with different `kind` strings coexist in the same array
 - [ ] `underlyingExpr` unwraps `NamedDefault` to its inner `Literal | RawExpr`; throws on `UnknownExpr`
 
 **Verification:**
+
 - [ ] Tests cover round-trip: find → replace → remove
 - [ ] Test: `underlyingExpr(namedDefault('n', literal('x')))` returns the inner `Literal`
 - [ ] `npm test` passes
@@ -1221,6 +1248,7 @@ factories (`literal`, `rawExpr`, `namedDefault`).
 ---
 
 #### ✓ Checkpoint: Core API complete
+
 - [ ] Full `Realm` graph buildable via factories only (no plain object literals)
 - [ ] All test coverage goals from the Test Coverage Goals section satisfied
 - [ ] `npm test` and `npm run build` both green
@@ -1235,11 +1263,13 @@ factories (`literal`, `rawExpr`, `namedDefault`).
 symbols are importable from the package root. Validate CJS, ESM, and declaration output.
 
 **Acceptance criteria:**
+
 - [ ] All stable symbols exported from `index.ts` only; no deep-import required
 - [ ] `package.json` `exports` map points to correct CJS/ESM/types paths
 - [ ] No symbol accidentally missing from the public surface
 
 **Verification:**
+
 - [ ] Inspect `dist/` for `.js`, `.cjs`, and `.d.ts` files
 - [ ] `node -e "const s = require('.'); console.log(Object.keys(s))"` lists expected exports
 - [ ] Final `npm test` suite green
@@ -1300,6 +1330,7 @@ The following Go helpers from `schema.go` / `dsl.go` are **not** included in Pha
 They are listed here so they can be found easily when planning later phases.
 
 **Navigation helpers (Go: `schema.go` / `dsl.go` package-level funcs)**
+
 - `findSchema(r *Realm, name string) *Schema`
 - `findTable(s *Schema, name string) *Table`
 - `findColumn(t *Table, name string) *Column`
