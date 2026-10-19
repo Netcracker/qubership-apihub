@@ -1,0 +1,96 @@
+name: Check Go module licenses
+
+# Checks that every dependency of every Go module under backend/ has a licence that the module's wwhrd.yml
+# allows, and that it has a licence at all (wwhrd, https://github.com/frapposelli/wwhrd). It replaces the
+# go-check-license.yaml of each module, which called the shared workflow of qubership-workflow-hub.
+#
+# wwhrd reads the vendor directory, so each module is vendored alone (GOWORK=off, as the images build it) and
+# the directory is removed again. A module without its own wwhrd.yml uses the one of backend/portal-backend;
+# the files of the other modules have the same content.
+#
+# Not part of ci-ok: a licence appearing in a new dependency version must not block an unrelated pull request.
+# It runs when go.mod, go.sum, or a wwhrd.yml changes, on the long-lived branches, and on demand.
+
+'on':
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths:
+      - 'backend/**/go.mod'
+      - 'backend/**/go.sum'
+      - 'backend/**/wwhrd.yml'
+      - '.github/workflows/go-check-license.yaml'
+  push:
+    branches: [main, develop, release]
+    paths:
+      - 'backend/**/go.mod'
+      - 'backend/**/go.sum'
+      - 'backend/**/wwhrd.yml'
+      - '.github/workflows/go-check-license.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: go-check-license-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  WWHRD_VERSION: v0.4.0
+
+jobs:
+  check-license:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      # The one Go version of all modules, as in ci.yml.
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: backend/.go-version
+          cache-dependency-path: |
+            backend/**/go.sum
+            go.work.sum
+
+      - name: Install wwhrd
+        shell: bash
+        run: |
+          GOWORK=off go install "github.com/frapposelli/wwhrd@${WWHRD_VERSION}"
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Check the licences of every Go module
+        shell: bash
+        run: |
+          set -uo pipefail
+          default_config="$PWD/backend/portal-backend/wwhrd.yml"
+          failed=()
+          modules=0
+          while IFS= read -r gomod; do
+            dir="$(dirname "$gomod")"
+            modules=$((modules + 1))
+            config="$PWD/$dir/wwhrd.yml"
+            [ -f "$config" ] || config="$default_config"
+            echo "::group::$dir"
+            if ( cd "$dir" \
+                 && GOWORK=off go mod vendor \
+                 && wwhrd check -f "$config"; ); then
+              echo "$dir: licences allowed"
+            else
+              echo "::error title=Go licence check::$dir has a dependency with a licence that is not allowed, or none."
+              failed+=("$dir")
+            fi
+            rm -rf "$dir/vendor"
+            echo "::endgroup::"
+          done < <(find backend -mindepth 2 -maxdepth 2 -name go.mod | sort)
+
+          {
+            echo '### Go licence check'
+            echo
+            echo "Checked $modules modules, ${#failed[@]} failed."
+            for dir in "${failed[@]}"; do echo "- $dir"; done
+          } >> "$GITHUB_STEP_SUMMARY"
+          [ "$modules" -gt 0 ] || { echo '::error::No Go module found under backend/'; exit 1; }
+          [ "${#failed[@]}" -eq 0 ]

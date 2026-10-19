@@ -1,0 +1,148 @@
+name: Security scan of images
+run-name: >-
+  Security scan #${{ github.run_number }} for ${{ inputs.image != '' && inputs.image || inputs.target == 'source' && 'the source' || 'the images of this repository' }}
+
+# Scans the images that images.yml publishes to ghcr.io/<owner>, or the source tree, with Grype and Trivy (the
+# shared workflow re-security-scan.yml of qubership-workflow-hub, pinned by commit). The findings go to the
+# code scanning alerts and to the run's artifacts. It replaces the security-scan-apihub.yml of the six modules
+# that had one.
+#
+# Manual and weekly, not part of ci-ok: a new CVE in a base image must not block a pull request. The tags are the
+# ones tools/ci/branch-tag.sh gives: develop -> dev, release -> next, main -> latest.
+
+'on':
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'What to scan: the images of this repository, or the source tree.'
+        required: false
+        default: docker
+        type: choice
+        options:
+          - docker
+          - source
+      image:
+        description: 'One image to scan, as a full reference with its tag. Empty: every image of this repository.'
+        required: false
+        default: ''
+        type: string
+      tag:
+        description: 'Tag of the repository images to scan (develop is dev, release is next, main is latest).'
+        required: false
+        default: latest
+        type: string
+      only-high-critical:
+        description: 'Report only HIGH and CRITICAL findings.'
+        required: false
+        default: true
+        type: boolean
+      trivy-scan:
+        description: 'Scan with Trivy.'
+        required: false
+        default: true
+        type: boolean
+      grype-scan:
+        description: 'Scan with Grype.'
+        required: false
+        default: true
+        type: boolean
+      continue-on-error:
+        description: 'Do not fail the run when a scanner reports findings.'
+        required: false
+        default: true
+        type: boolean
+      only-fixed:
+        description: 'Ignore vulnerabilities that have no fix yet.'
+        required: false
+        default: true
+        type: boolean
+  schedule:
+    # Every Sunday at 03:00 UTC, on the default branch.
+    - cron: '0 3 * * 0'
+
+concurrency:
+  group: security-scan-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      target: ${{ steps.plan.outputs.target }}
+      images: ${{ steps.plan.outputs.images }}
+    steps:
+      - name: List the images to scan
+        id: plan
+        shell: bash
+        env:
+          OWNER: ${{ github.repository_owner }}
+          # A scheduled run has no inputs, so every default is set here.
+          TARGET: ${{ inputs.target || 'docker' }}
+          IMAGE: ${{ inputs.image }}
+          TAG: ${{ inputs.tag || 'latest' }}
+        run: |
+          set -euo pipefail
+          owner="$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')"
+          if [ -n "$IMAGE" ]; then
+            images="$(jq -cn --arg image "$IMAGE" '[$image]')"
+          else
+            # The image names of the legs in ci.yml; add a new image here as well.
+            images="$(jq -cn --arg prefix "ghcr.io/$owner/" --arg tag "$TAG" '
+              ["qubership-apihub-ui", "qubership-apihub-build-task-consumer", "qubership-apihub-backend",
+               "qubership-api-linter-service", "qubership-apihub-agents-backend", "qubership-apihub-agent",
+               "qubership-apihub-test-service", "qubership-apihub-java-task-consumer"]
+              | map($prefix + . + ":" + $tag)')"
+          fi
+          echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+          echo "images=$images" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Scan plan"
+            echo
+            echo "Target: \`$TARGET\`"
+            echo "$images" | jq -r '.[] | "- `" + . + "`"'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  scan-images:
+    needs: plan
+    if: needs.plan.outputs.target == 'docker'
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.plan.outputs.images) }}
+    name: Scan ${{ matrix.image }}
+    # The called workflow uploads SARIF (security-events) and pulls from ghcr.io (packages); a caller grants
+    # at most these, so the called workflow cannot ask for more.
+    permissions:
+      contents: read
+      security-events: write
+      packages: read
+    uses: Netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@396774180000abdb825cbf150b56cc59c6913db8 # v2.0.5
+    with:
+      target: docker
+      image: ${{ matrix.image }}
+      # `||` with `true` keeps a scheduled run (no inputs) on the defaults, and a manual choice of false as false.
+      only-high-critical: ${{ github.event_name == 'schedule' || inputs.only-high-critical }}
+      trivy-scan: ${{ github.event_name == 'schedule' || inputs.trivy-scan }}
+      grype-scan: ${{ github.event_name == 'schedule' || inputs.grype-scan }}
+      only-fixed: ${{ github.event_name == 'schedule' || inputs.only-fixed }}
+      continue-on-error: ${{ github.event_name == 'schedule' || inputs.continue-on-error }}
+
+  scan-source:
+    needs: plan
+    if: needs.plan.outputs.target == 'source'
+    name: Scan the source
+    permissions:
+      contents: read
+      security-events: write
+      packages: read
+    uses: Netcracker/qubership-workflow-hub/.github/workflows/re-security-scan.yml@396774180000abdb825cbf150b56cc59c6913db8 # v2.0.5
+    with:
+      target: source
+      only-high-critical: ${{ inputs.only-high-critical }}
+      trivy-scan: ${{ inputs.trivy-scan }}
+      grype-scan: ${{ inputs.grype-scan }}
+      only-fixed: ${{ inputs.only-fixed }}
+      continue-on-error: ${{ inputs.continue-on-error }}
