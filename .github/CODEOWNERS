@@ -18,6 +18,17 @@
 # Backend modules (Go and Java).
 /backend/ @alagishev @viacheslav-lunev @karpov-aleksandr
 
+# Frontend modules.
+/frontend/ @alagishev @iurii-golovinskii @makeev-pavel @JayLim2 @vOrigins
+
+# Tests: the Playwright suites and the Postman collections.
+/tests/ui-tests/ @vOrigins
+/tests/postman-collections/ @alagishev @viacheslav-lunev @karpov-aleksandr
+
+# Deployment assets and documentation, owned explicitly.
+/deploy/ @alagishev
+/docs/ @alagishev
+
 # Pipeline definitions and the scripts the pipelines run. A pull request that edits a workflow or
 # tools/ci/ci-verdict.js changes what the required checks mean, so the default owner reviews it.
 /.github/ @alagishev
