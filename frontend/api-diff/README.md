@@ -3,6 +3,7 @@
 This package provides utils to compute the diff between two JSON based API documents.
 
 ## Modifications
+
 Modified version of [udamir/api-smart-diff](https://github.com/udamir/api-smart-diff)
 
 - changed concept from effective to declarative changes calculation
@@ -23,6 +24,7 @@ Modified version of [udamir/api-smart-diff](https://github.com/udamir/api-smart-
 - supported new graphapi structure
 
 ## Purpose
+
 - Generate API changelog
 - Identify breaking changes
 - Ensure API versioning consistency
@@ -38,6 +40,7 @@ Modified version of [udamir/api-smart-diff](https://github.com/udamir/api-smart-
 - ~~gRPC~~ (Roadmap)
 
 ## Features
+
 - Generate diff for supported specifications
 - Generate merged document with changes in metadata
 - Classify all changes as breaking, non-breaking, deprecated and annotation
@@ -51,6 +54,7 @@ Modified version of [udamir/api-smart-diff](https://github.com/udamir/api-smart-
 - Can be used in Node.js or browser
 
 ## Contributing
+
 When contributing, keep in mind that it is an objective of `api-smart-diff` to have no additional package dependencies. This may change in the future, but for now, no new dependencies.
 
 Please run the unit tests before submitting your PR: `yarn test`. Hopefully your PR includes additional unit tests to illustrate your change/modification!
