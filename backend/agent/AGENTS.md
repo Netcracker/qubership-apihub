@@ -52,17 +52,20 @@ Briefly state: **root cause**, **why the change fixes it**, and confirm you did 
 - Set `STUB_PM` for local runs without a real Kubernetes API.
 - Prefer repo-relative paths like `service/...`.
 
-## Related repositories
+## Related modules
 
-| Repo | Relationship |
-|------|----------------|
-| **qubership-apihub-agents-backend** | Agent registry and management API — `AgentsBackendClient` in `client/agents_backend.go`. Contract changes may require client updates here and in agents-backend. |
-| **qubership-apihub-backend** | Main APIHUB API — `ApihubClient` in `client/apihub.go` (`technicalParameters.apihub.url`, access token). Package/document operations depend on backend REST contracts. |
-| **qubership-apihub** | Helm charts and docker-compose — agent deployment, ingress (`agentUrl`), config secrets, discovery env. |
-| **qubership-apihub-ui** | Portal may surface agent/cloud discovery status; REST contract changes may need UI follow-up. |
-| **qubership-apihub-ci** | Shared super-linter workflows and generic agent packages (`agent-packages/`). |
+This service is a module of the **qubership-apihub** monorepo. The neighbors are in the same tree:
 
-When a change affects REST contracts, Helm values, or integration behaviour, **remind** the developer if follow-up is needed in related repos — this workspace may not contain them.
+| Module | Relationship |
+|--------|----------------|
+| `backend/agents-backend` | Agent registry and management API — `AgentsBackendClient` in `client/agents_backend.go`. Contract changes may require client updates here and in agents-backend. |
+| `backend/portal-backend` | Main APIHUB API — `ApihubClient` in `client/apihub.go` (`technicalParameters.apihub.url`, access token). Package/document operations depend on its REST contract. |
+| `deploy/helm-templates/`, `deploy/docker-compose/` | Product Helm chart and Compose stacks — agent deployment, ingress (`agentUrl`), config secrets, discovery env. |
+| `frontend/ui` | The Agents SPA (`frontend/ui/packages/agents`) surfaces agent and cloud discovery status. |
+| `backend/test-service` | Mock service that follows the discovery contract; use it to try discovery runners. |
+
+When a change affects REST contracts, Helm values, or integration behaviour, update the neighbor in the same change
+(see `docs/configuration-reference.md` for config knobs).
 
 ## Repository layout
 
@@ -80,7 +83,7 @@ When a change affects REST contracts, Helm values, or integration behaviour, **r
 | Config template | `config.template.yaml` |
 | Auth middleware | `security/` |
 | OpenAPI specs (this service) | `documentation/api/` |
-| Helm templates | `helm-templates/qubership-apihub-agent/` |
+| Standalone agent Helm chart | `helm-templates/qubership-apihub-agent/` (the product chart is in `deploy/helm-templates/`) |
 
 ## Domain model (read before changing discovery)
 
@@ -127,7 +130,10 @@ Full checklist: `.cursor/rules/ci-super-linter.mdc` after `apm install`.
 
 ## Testing and verification
 
-- Run targeted tests: `go test ./...` from the component root.
+- Nx project `agent` (tag `lang:go`): `pnpm exec nx run agent:build` and `pnpm exec nx run agent:test` from the
+  repository root. Or `go build ./...` and `go test ./...` from this directory (the module is in `go.work`).
+- `controller/service_proxy_test.go` is skipped (`t.Skip("G38 ...")`): it fails on the old default branch too.
+- The module does not use `commons-go` and builds from its own directory (`Dockerfile`, `GOWORK=off`).
 - For discovery changes, consider unit tests with mocked HTTP; full integration requires K8s or `STUB_PM`.
 - After REST changes, sanity-check OpenAPI parity with registered routes in `main.go`.
 
@@ -136,13 +142,18 @@ Full checklist: `.cursor/rules/ci-super-linter.mdc` after `apm install`.
 - After substantive changes, propose **one** concise conventional-commit message.
 - For an independent review, invoke `apihub-go-self-review` in a **new chat** or with a **different model**.
 
-## Project skills (Cursor / Claude)
+## Agent packages
 
-Generic and repo-specific skills are provisioned by APM from the
-[CI store](https://github.com/Netcracker/qubership-apihub-ci/tree/apm_migration/agent-packages) and local `agent-packages/`:
+One root `apm.yml` covers the repository; deploy with `apm install --target cursor,claude --legacy-skill-paths`
+from the root (never `apm compile`). Sources of the local packages are in `agent-packages/` of this module.
 
-```bash
-apm install --target cursor,claude --legacy-skill-paths
-```
-
-Skills auto-discover from `.cursor/skills/` and `.claude/skills/` (`apihub-go-developer`, `apihub-go-self-review`, `apihub-agent-developer`, `github-ticket-implementation-planner`). See repository `apm.yml` and `agent-packages/README.md`.
+- `apihub-agent-developer` (skill and rule, local): use for any change to discovery runners, `main.go` wiring,
+  clients, config, or OpenAPI of this service.
+- `agent-conventions` (rules, local): config defaults, no database, OpenAPI files; they apply when you edit
+  matching files.
+- `apihub-go-developer` (skill and rule, store): read first for any Go change; the agent skill adds to it.
+- `apihub-go-self-review` (skill, store): independent review of a finished diff, in a new chat.
+- `go-conventions` (rules for `*.go`, store): comments, constants and HTTP codes, error handling. Ignore its
+  migration and SQL rules here (see `agent-conventions`).
+- `apihub-deployment-authoring` (skill, root): use when a change needs Helm, Compose, or config reference updates.
+- `github-ticket-implementation-planner`, `development-conventions`: planning from a ticket; always-on rules.

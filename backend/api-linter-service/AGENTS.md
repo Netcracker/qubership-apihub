@@ -53,15 +53,18 @@ Briefly state: **root cause**, **why the change fixes it**, and confirm you did 
 - Spectral/Vacuum bundled binaries exist under `resources/spectral/` and `resources/vacuum/` per OS — respect platform paths when touching executor code.
 - Prefer repo-relative paths like `controller/...`.
 
-## Related repositories
+## Related modules
 
-| Repo | Relationship |
-|------|----------------|
-| **qubership-apihub-backend** | Runtime dependency — fetches packages, versions, documents, and auth via `client/apihub.go` using `technicalParameters.apihub.url` and `technicalParameters.apihub.accessToken` from `config.yaml`. REST contract changes there may require linter client or behaviour updates. |
-| **qubership-apihub-ui** | Consumes linter REST endpoints for validation summaries and scoring in the portal. |
-| **qubership-apihub-ci** | Shared super-linter workflows and generic agent packages (`agent-packages/`). |
+This service is a module of the **qubership-apihub** monorepo. The neighbors are in the same tree:
 
-When a change affects REST contracts or integration behaviour, **remind** the developer if follow-up is needed in backend or UI — this workspace may not contain those repos.
+| Module | Relationship |
+|--------|----------------|
+| `backend/portal-backend` | Runtime dependency — fetches packages, versions, documents, and auth via `client/apihub.go` using `technicalParameters.apihub.url` and `technicalParameters.apihub.accessToken` from `config.yaml`. REST contract changes there may require linter client or behaviour updates. The portal reaches this service through its `extensions` config. |
+| `frontend/ui` | Consumes linter REST endpoints for validation summaries and scoring in the portal SPA. |
+| `backend/commons-go` | Shared library (`api-spec-exposer`). Keep `go.mod` in step with the workspace (`go work sync`). |
+| `deploy/helm-templates/`, `deploy/docker-compose/` | Deployment of this service; update them and `docs/configuration-reference.md` when config or ports change. |
+
+When a change affects REST contracts or integration behaviour, update the neighbor in the same change.
 
 ## Repository layout
 
@@ -148,7 +151,7 @@ Detailed rules apply via deployed `.cursor/rules/` and `.claude/rules/` (from AP
 
 ## CI linters (super-linter / link checker)
 
-PRs run **super-linter** (see `.github/workflows/super-linter.yaml`) and **lychee** on Markdown. While writing:
+PRs run **super-linter** (see the root `.github/workflows/super-linter.yaml`) and **lychee** on Markdown. While writing:
 
 - **Go:** tabs in `*.go`; tabs inside raw string literals for nested indentation.
 - **Markdown:** prose lines ≤ **400** characters; one H1 per file.
@@ -163,7 +166,9 @@ Full checklist: `.cursor/rules/ci-super-linter.mdc` after `apm install`.
 
 ## Testing and verification
 
-- Run targeted tests: `go test ./...` from the component root.
+- Nx project `api-linter-service` (tag `lang:go`): `pnpm exec nx run api-linter-service:build` and
+  `pnpm exec nx run api-linter-service:test` from the repository root. Or `go build ./...` and `go test ./...` from
+  this directory (the module is in `go.work`; the image builds with `GOWORK=off`).
 - For lint executor changes, consider unit tests with fixture specs; integration tests may require Spectral binary and DB.
 - After REST changes, sanity-check OpenAPI parity with registered routes in `main.go`.
 
@@ -172,15 +177,16 @@ Full checklist: `.cursor/rules/ci-super-linter.mdc` after `apm install`.
 - After substantive changes, propose **one** concise conventional-commit message.
 - For an independent review, invoke `apihub-go-self-review` in a **new chat** or with a **different model**.
 
-## Project skills (Cursor / Claude)
+## Agent packages
 
-Generic skills and rules are provisioned by APM from the
-[CI store](https://github.com/Netcracker/qubership-apihub-ci/tree/main/agent-packages):
+One root `apm.yml` covers the repository; deploy with `apm install --target cursor,claude --legacy-skill-paths`
+from the root (never `apm compile`). This module has no local package; only store packages apply:
 
-```bash
-apm install --target cursor,claude --legacy-skill-paths
-```
+- `apihub-go-developer` (skill and rule): use for any Go change here.
+- `apihub-go-self-review` (skill): independent review of a finished diff, in a new chat.
+- `go-conventions` (rules): comments, constants and HTTP codes, error handling, API-first OpenAPI (`docs/api/`,
+  `controller/`), migrations (`resources/migrations/`), SQL performance (`repository/`).
+- `apihub-deployment-authoring` (skill, root): use when a change needs Helm, Compose, or config reference updates.
+- `github-ticket-implementation-planner`, `development-conventions`: planning from a ticket; always-on rules.
 
-Skills auto-discover from `.cursor/skills/` and `.claude/skills/` (`apihub-go-developer`, `apihub-go-self-review`, `github-ticket-implementation-planner`). See [README — AI agent configuration (APM)](README.md#ai-agent-configuration-apm).
-
-Repo-specific agent packages are **not** used here — only generic CI packages apply.
+The store globs (`**/*.go`) also match the other Go modules; the portal-backend rules do not apply here.

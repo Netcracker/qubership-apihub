@@ -2,43 +2,36 @@
 
 Instructions for AI assistants working on this repository (Cursor, Claude Code, and compatible tools).
 
+## Build and test
+
+Nx project `portal-backend` (tag `lang:go`). From the repository root:
+
+```bash
+pnpm exec nx run portal-backend:build
+pnpm exec nx run portal-backend:test
+```
+
+Or `go build ./...` and `go test ./...` from this directory: the module is in `go.work`, and `go.mod` is at this
+directory, not at the repository root. The image builds with `GOWORK=off`, so keep `go.mod` and `go.sum` in step
+with the workspace (`go work sync`).
+
 ## Traps worth knowing before you start
-
-### Run Go commands from `qubership-apihub-service/`, after generating the lockfile
-
-`go.mod` lives in `qubership-apihub-service/`, not at the repository root. A `go` command run from the root finds
-nothing and says so in a way that reads like an empty result rather than a wrong directory.
-
-`go.sum` is gitignored, so a fresh checkout fails every Go command with `missing go.sum entry` until you run
-`go mod tidy` once. Do that first in any new checkout or worktree; it takes seconds warm and minutes cold.
-
-Two consequences worth carrying: the regenerated `go.sum` is invisible to `git status`, and a dependency scan run on
-two different days can resolve different patch versions — so date any claim that depends on it.
 
 ### Never take a build or test result from the end of a pipe
 
-`go build ./... 2>&1 | tail` reports the exit status of `tail`. This exact shape once reported a green build over a
-page of `missing go.sum entry` errors. Redirect to a file and check the status of the Go command itself.
+`go build ./... 2>&1 | tail` reports the exit status of `tail`. Redirect to a file and check the status of the Go
+command itself.
 
-### The tree is already red, and know what CI actually covers
+### Know what is already red and what CI covers
 
-`go test ./...` and `go vet ./...` both exit non-zero on the default branch. That is the baseline, not damage you
-caused. Capture a baseline run before you change anything and compare against it, rather than attributing a failure
-to your work.
+Capture a baseline run before you change anything and compare against it, rather than attributing a failure to your
+work. `service/cleanup/MaintenanceVacuum_test.go` is skipped (`t.Skip("G38 ...")`): it fails on the old default
+branch too.
 
-What CI does and does not catch:
-
-- **Compilation is covered.** The image build runs `go build`, so a broken build fails the pipeline.
-- **Behaviour is covered end to end.** A pull request runs an API-level suite against a deployed stack of several
-  services. Collections and charts live in other repositories.
-- **The Go unit suite, `go vet`, and Go linting are not run anywhere.** Super-linter has Go validation switched off,
-  and no workflow invokes them. So a stale unit test or a vet finding can sit on the branch indefinitely, and your own
-  passing pipeline is not evidence that the unit tests pass.
-
-Green CI is weaker than it looks in a second way: at least one job reports success while the tool inside it exits
-non-zero, because the reusable workflow sets `continue-on-error`. When a check matters to your conclusion, read the
-step log rather than the badge. Those reusable workflows come from another repository at a moving ref, so what gates
-a pull request can change without a commit here.
+The root CI (`.github/workflows/ci.yml`) runs `nx run-many -t build test` for the affected modules, builds the
+images, and runs the API-level Newman suite against a deployed stack (`tests/postman-collections`, workflows
+`e2e-tests-*.yml`). Read the step log, not the badge, when a check matters to your conclusion. Do not assume `go vet`
+or Go linting runs anywhere; check `.github/workflows/` before you cite it.
 
 ### Registration is not implementation
 
@@ -51,11 +44,11 @@ a comment as evidence that something works, find the code that writes it or read
 The same caution applies in reverse: check `docs/api/` and the nearest correct sibling implementation before patching
 something that looks wrong, because several plausible-looking defects here are deliberate and specified.
 
-### Know which repository owns the answer
+### Know where the answer lives
 
-The OpenAPI documents under `docs/api/` are normative for the HTTP contract. Helm charts, deployment values, and the
-end-to-end suite live in other repositories, so any conclusion about replica counts, resource limits, or E2E coverage
-has to be checked there rather than inferred from this tree.
+The OpenAPI documents under `docs/api/` are normative for the HTTP contract. Helm chart and Compose stacks are in
+`deploy/helm-templates/` and `deploy/docker-compose/`; the E2E collections are in `tests/postman-collections/`. Any
+conclusion about replica counts, resource limits, or E2E coverage has to be checked there.
 
 ## Clarification before coding
 
@@ -107,12 +100,15 @@ Briefly state: **root cause**, **why the change fixes it**, and confirm you did 
 - Do not assume Unix-only tools beyond `git`, `go`, `gh`, and `bash` unless the user confirms they are available.
 - Avoid OS-specific path separators in instructions; use repo-relative paths like `service/...`.
 
-## Related repositories (Helm, E2E tests)
+## Related modules (Helm, E2E tests)
 
-Charts and Postman E2E collections live in **other repos** (not cloned in this workspace by default). When a feature needs them, **remind** the developer with links and concrete follow-ups — see [`docs/agent/related-repositories.md`](docs/agent/related-repositories.md).
+Deployment and E2E assets are in the same monorepo: `deploy/helm-templates/qubership-apihub/` (chart),
+`deploy/docker-compose/`, `docs/configuration-reference.md`, and `tests/postman-collections/`. After REST, config, or
+env changes, update them in the same change; the checklists are in
+[`docs/agent/related-repositories.md`](docs/agent/related-repositories.md) and the root skills
+`apihub-deployment-followup` and `postman-e2e-followup`.
 
-Do not silently skip: after REST, config, or env changes, check that doc’s “remind when” lists and include a short **Related repositories** subsection in your completion summary.
-
+Include a short **Related modules** subsection in your completion summary.
 ## Repository layout (minimal orientation)
 
 | Area | Location |
@@ -185,11 +181,22 @@ Full checklist: deployed CI linter rules (`.cursor/rules/ci-super-linter.mdc` af
 - After substantive changes, propose **one** concise commit message (conventional commits style; see `docs/development_guide.md`).
 - For an independent review of your diff, invoke the `apihub-backend-self-review` skill in a **new chat** or with a **different model**.
 
-## Project skills (Cursor / Claude)
+## Agent packages
 
-Project skills and rules are provisioned by APM
-(`apm install --target cursor,claude --legacy-skill-paths`); the agent discovers them automatically from
-`.cursor/skills/` and `.claude/skills/`. Generic packages come from the
-[CI store](https://github.com/Netcracker/qubership-apihub-ci/tree/apm_migration/agent-packages);
-backend-specific sources live in [`agent-packages/`](agent-packages/). See
-[README — AI agent configuration (APM)](README.md#ai-agent-configuration-apm).
+One root `apm.yml` covers the repository; deploy with `apm install --target cursor,claude --legacy-skill-paths`
+from the root (never `apm compile`). Sources of the local packages are in [`agent-packages/`](agent-packages/).
+
+- `apihub-backend-developer` (skill and rule, local): use for any change to controllers, services, repositories,
+  migrations, `main.go` wiring, error codes, or OpenAPI of this service.
+- `apihub-backend-self-review` (skill, local): independent review of a finished diff, in a new chat.
+- `backend-conventions` (rules, local): config defaults, DB migrations, error codes, OpenAPI files, service wiring;
+  they apply when you edit matching files.
+- `advanced-verification` (skill, local): after a non-trivial change, run the backend locally and check it with a
+  Newman collection.
+- `apihub-go-developer` (skill and rule, store): read first for any Go change.
+- `apihub-go-self-review` (skill, store): the generic review checklist the backend review builds on.
+- `go-conventions` (rules, store): comments, constants and HTTP codes, errors, API-first OpenAPI, migrations, SQL
+  performance.
+- `apihub-deployment-followup` (skill and rule, root): use after a change to config, env, or the REST contract.
+- `postman-e2e-followup` (skill and rule, `tests/`): use after a change to the REST contract.
+- `github-ticket-implementation-planner`, `development-conventions`: planning from a ticket; always-on rules.
