@@ -1,31 +1,36 @@
 # Migration analysis procedure
 
 This doc is for operation migration analysis.  
-See (TODO: link to "operations migration" doc) for more details. 
+See (TODO: link to "operations migration" doc) for more details.
 
 Migration analysis procedure is required to validate the changes made in `qubership-apihub-api-processor` library ([`frontend/api-processor`](../../../frontend/api-processor/)).
 
 ## Retrieve and store the results
-1) Download the migration result by `GET /api/internal/migrate/operations/{migrationId}`   
+
+1) Download the migration result by `GET /api/internal/migrate/operations/{migrationId}`
 2) Store the result JSON to some file storage.
 
 ## Compare to previous migration
+
 Compare migration result to previous one (retrieved from the file storage).  
 The interesting properties are:
+
 * "elapsedTime"
 * "successBuildsCount"
 * "errorBuildsCount"
 * "suspiciousBuildsCount"
 
 ## Analyze "errorBuilds"
+
 Categorize errors into groups by "error" content criteria.  
 Every category need to be analyzed separately.  
 Error description and a couple of samples are required for dev analysis.  
 Each category requires a resolution that translates into a specific action item.  
 Also compare errors/categories list to previous migration.
 
-### Categorization example:
-```
+### Categorization example
+
+```json
     {
       "packageId": "abc.def",
       "version": "15",
@@ -45,9 +50,10 @@ Also compare errors/categories list to previous migration.
       "previousVersion": "a.2"
     },
 ```
+
 are in the same "Cannot parse file" category.
 
-```
+```json
    {
       "packageId": "BFR.YVL",
       "version": "2024.4-Dev",
@@ -57,17 +63,13 @@ are in the same "Cannot parse file" category.
       "buildType": "build"
     },
 ```
+
 Is in different category.
 
-
 ## Analyze "migrationChanges"
+
 "migrationChanges" reflects categories of the changes were detected by the backend in scope of migration.  
 The goal is to split unexpected changes from expected and find the root cause for unexpected changes.  
 Before starting the analysis, need to study `qubership-apihub-api-processor` changelog to identify the expected changes.
 
 Each category in the list should be analyzed separately via `GET /api/internal/migrate/operations/{migrationId}/suspiciousBuilds?changedField={{category}}`
-
-
-
-
-
