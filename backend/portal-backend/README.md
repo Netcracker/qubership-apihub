@@ -168,4 +168,3 @@ apm install --target cursor,claude --legacy-skill-paths
 This reads root `apm.yml` (CI dependencies + local `agent-packages/`), updates
 `apm.lock.yaml`, and deploys into `.cursor/` and `.claude/`. Commit the refreshed harness
 trees together with package or manifest changes.
-
