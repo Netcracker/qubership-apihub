@@ -1,5 +1,5 @@
 ---
-description: Extend api-doc-viewer React viewers — components, layout modes, diff rendering, and Storybook stories.
+description: Extend api-doc-viewer React viewers — components, layout modes, diff rendering, and Storybook stories. Use when adding or changing viewer components, rows, layout modes, or diff rendering in frontend/api-doc-viewer.
 ---
 
 # Authoring api-doc-viewer
@@ -17,7 +17,7 @@ when the implementation is the approved behaviour. Work test-first: fixtures, st
 and ITs (`api-doc-viewer-testing`) come before the viewer change
 (`docs/design/README.md` → Workflow).
 
-**Documentation scope:** skills and agent docs for this repository describe
+**Documentation scope:** skills and agent docs for this module describe
 library behaviour only. Do **not** name or reference consuming applications,
 their repositories, file paths, or UI components — use generic terms such as
 *host application*, *integrator*, or *embedder*.
@@ -151,11 +151,11 @@ Diff-suite stories typically:
    kebab-case story IDs (`metaId--story-name`).
 
 Compatibility-suite stories and tests are **generated** — run
-`npm run generate-stories` / `npm run generate-tests` inside `packages/api-doc-viewer`
+`pnpm run generate-stories` / `pnpm run generate-tests` inside `packages/api-doc-viewer`
 rather than hand-editing `src/stories/compatibility-suite/` or
 `src/it/compatibility-suite/`.
 
-**Do not** add DDL, JSON Schema, or other generators to those npm scripts. Other suites are
+**Do not** add DDL, JSON Schema, or other generators to those package scripts. Other suites are
 **persistent**; run `node bin/generate-<suite>-*.mjs` explicitly when fixtures change and
 commit the result.
 

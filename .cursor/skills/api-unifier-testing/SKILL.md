@@ -5,7 +5,7 @@ description: Write api-unifier tests — exercise normalize/denormalize on OpenA
 
 # Testing api-unifier
 
-Tests run on Jest (`npm test`, or `npm run test:coverage`). They live
+Tests run on Jest (`pnpm test`, or `pnpm run test:coverage`). They live
 under `test/` grouped by spec family — `test/oas/`, `test/asyncapi/`,
 `test/graphql/` — with shared helpers in `test/helpers/index.ts`. Name
 files `*.test.ts` and put new tests in the matching family folder. Import

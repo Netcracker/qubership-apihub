@@ -43,7 +43,7 @@ Copy the shape of `backend/api-linter-service`: `main.go`, `README.md`, `LICENSE
 it downloads tools, `docs/api/` for the OpenAPI file. Keep the Apache 2.0 header on every Go file.
 
 Do not add `AGENTS.md`, `CLAUDE.md`, `apm.yml`, or compiled `.cursor/` or `.claude/` trees to the module: the
-root `apm compile` covers it (see step 11).
+root `apm install` deploys the rules (see step 11).
 
 ### 3. Config template
 
@@ -135,8 +135,8 @@ Check: `docker compose -f <file> config`.
 - `docs/installation-guide.md` and `docs/admin-guide.md` when the install steps or operations change.
 - If the module needs its own agent rules, add a package `backend/<name>/agent-packages/<pkg>/` with every
   instruction `applyTo` prefixed `backend/<name>/`, list it as `./backend/<name>/agent-packages/<pkg>` in the
-  root `apm.yml`, and run `apm install --target cursor,claude --legacy-skill-paths` and
-  `apm compile --target cursor,claude --legacy-skill-paths` at the root.
+  root `apm.yml`, and run `apm install --target cursor,claude --legacy-skill-paths` at the root.
+  Skip `apm compile`; see `agent-packages/README.md`.
 
 ## Final check
 

@@ -1,11 +1,11 @@
 ---
 name: postman-e2e-authoring
-description: "Authors and maintains APIHUB backend Newman/Postman v2.1 collections, test scripts (pm.test/pm.expect), environments, and CI wiring. Use when adding or changing E2E requests, assertions, test data, or environment variables for qubership-apihub-postman-collections."
+description: "Authors and maintains APIHUB backend Newman/Postman v2.1 collections, test scripts (pm.test/pm.expect), environments, and CI wiring. Use when adding or changing E2E requests, assertions, test data, or environment variables under tests/postman-collections."
 ---
 
 # Postman E2E authoring
 
-Follow `AGENTS.md` and project rules. This repository contains **no application code** — only Postman collections and environments executed by Newman in CI.
+Follow `AGENTS.md` and project rules. The `tests/postman-collections` module contains **no application code** — only Postman collections and environments executed by Newman in CI.
 
 ## Collection format
 
@@ -62,25 +62,31 @@ CI runs Newman with `./ci.postman_environment.json` produced from `local.postman
 
 Run create as many times as needed; run cleanup before re-seeding a clean slate.
 
-## CI wiring (`qubership-apihub-ci`)
+## CI wiring (root `.github/workflows/`)
 
-Workflow: [run-e2e-tests.yml](https://github.com/Netcracker/qubership-apihub-ci/blob/main/.github/workflows/run-e2e-tests.yml)
+Workflows: `e2e-tests-compose.yml`, `e2e-tests-kind.yml`, `e2e-tests-manual.yml`. They call `tools/ci/e2e-collections.sh`
+to build the list.
 
-- Input `postman-repository-url` defaults to this repo.
-- Input `postman-collections-list` is a **comma-separated** list of collection paths relative to the repo root (no spaces), e.g. `./e2e/1_1_Smoke_Portal.postman_collection.json`.
-- Default collection in CI is only smoke portal; full regression requires passing a longer list when calling the workflow.
-- Newman command pattern: `newman run "$collection" -e ./ci.postman_environment.json -x --reporters cli,htmlextra`.
-- HTML reports land under `reports/` (gitignored).
+- Input `postman_collections` is a **comma-separated** list. Each entry is a path relative to `tests/postman-collections`
+  (e.g. `./e2e/1_1_Smoke_Portal.postman_collection.json`) or a bare name of an `e2e/` collection (`1_1_Smoke_Portal`).
+  Every file must exist, so a typo fails early.
+- An empty list runs the default of the runtime: Compose runs the Portal collections (`1_1_Smoke_Portal`,
+  `1_3_Linter_Portal`, `2_1_Negative_Portal`, `3_1_Stories_Bugs`, `3_2_Stories_Bugs`, `4_Access_control`); Kind adds
+  `1_2_Smoke_Agent`. The `smoke` tier runs `1_1_Smoke_Portal` alone.
+- The Compose run uses `environment/local.postman_environment.json` (filled with `envsubst`) and
+  `newman run <file> -e <env> -x --reporters cli,htmlextra,json` with `newman@6.2.3`. A results check then reads the
+  JSON reports and fails on any failed assertion.
 
-When adding a new regression collection, update any workflow callers that should run it and document the path in the PR description.
+When adding a new regression collection, add it to the default list in `tools/ci/e2e-collections.sh` if every run
+should execute it, and mention the path in the PR description.
 
 ## Aligning with backend REST changes
 
 Before changing requests or assertions:
 
-1. Read the canonical OpenAPI specs in **qubership-apihub-backend** (`docs/api/APIHUB_API.yaml`, `Admin API.yaml`, `APIHUB_API_internal.yaml` as applicable).
+1. Read the canonical OpenAPI specs in `backend/portal-backend/docs/api/` (`APIHUB_API.yaml`, `Admin API.yaml`, `APIHUB_API_internal.yaml` as applicable).
 2. Match method, path, query, headers, and status codes to the spec; update request bodies when schemas change.
-3. See backend docs: [postman_collections.md](https://github.com/Netcracker/qubership-apihub-backend/blob/main/docs/postman_collections.md) and [related-repositories.md](https://github.com/Netcracker/qubership-apihub-backend/blob/main/docs/agent/related-repositories.md).
+3. See backend docs: `backend/portal-backend/docs/postman_collections.md`.
 
 ## Checklist for a new or updated request
 

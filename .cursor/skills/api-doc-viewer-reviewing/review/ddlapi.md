@@ -10,7 +10,7 @@ Shared rules: [../SKILL.md](../SKILL.md).
 | Viewer utilities | `packages/api-doc-viewer/src/utils/ddlapi/` |
 | Data model | `packages/next-data-model/src/{model,building-service,shared}/ddlapi/` |
 
-Out of scope: `stories/`, `it/`, `samples/`, and the external `qubership-apihub-ddlapi` package.
+Out of scope: `stories/`, `it/`, `samples/`, and the `frontend/ddlapi` module.
 
 ## Design
 

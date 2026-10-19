@@ -1,8 +1,10 @@
 # Advanced Verification — reference
 
+All paths are relative to the repository root unless stated otherwise.
+
 ## Postgres readiness
 
-Probe before building or starting anything:
+Probe before building or starting anything.
 
 **Linux / WSL / Git Bash:**
 
@@ -16,100 +18,99 @@ pg_isready -h localhost -p 5432 -U apihub
 Test-NetConnection -ComputerName localhost -Port 5432
 ```
 
-If Postgres is not reachable, ask the user before starting anything. The repo's local DB stack:
+If Postgres is not reachable, ask the user before starting anything. The module's local DB stack:
 
 ```bash
-docker-compose -f docs/local_development/docker-compose/DB/docker-compose.yml up -d
+docker compose -f backend/portal-backend/docs/local_development/docker-compose/DB/docker-compose.yml up -d
 ```
 
-This provisions Postgres with database/user/password `apihub`/`apihub`/`apihub`, matching
-`local_config/config.yaml`.
+This provisions Postgres with database, user, and password `apihub`.
+
+## Scratch config
+
+There is no committed local config. Copy `backend/portal-backend/config.template.yaml` into a scratch folder and set
+at least the values from `backend/portal-backend/docs/local_development/local_development.md`:
+
+- `database.*` for the local Postgres.
+- `security.productionMode: false` (the default `true` refuses to start without an identity provider).
+- `security.jwt.privateKey`: base64 PKCS#8 RSA key, see `docs/local_development/generate_jwt_pkey.sh`.
+- `zeroDayConfiguration.accessToken`: any random string of at least 30 characters. It is the `api-key` for Newman.
+- `technicalParameters.listenAddress`: for example `:8090`. Pick another port if it is taken.
+- The distributed cache ports: set them explicitly, or a second local instance dies silently (see
+  `backend/portal-backend/docs/running-and-probing.md`).
+
+**Bash:**
+
+```bash
+mkdir -p /tmp/portal-config
+cp backend/portal-backend/config.template.yaml /tmp/portal-config/config.yaml
+```
+
+**PowerShell:**
+
+```powershell
+New-Item -ItemType Directory -Force $env:TEMP\portal-config | Out-Null
+Copy-Item backend\portal-backend\config.template.yaml $env:TEMP\portal-config\config.yaml
+```
+
+Config values are read only from `config.yaml` under `APIHUB_CONFIG_FOLDER`; there is no automatic env binding.
+Discard the scratch folder when done and never commit it.
 
 ## Build and run
 
 ```bash
-cd qubership-apihub-service
+cd backend/portal-backend
 go build .
 ```
 
-Do not pass `GOOS=linux`/`GOARCH=amd64` (used only by `build_golang_binary.cmd` for the
-container image) — build for the host platform for a local run.
-
-Start with the local config, from the component root:
+Do not pass `GOOS=linux` or `GOARCH=amd64` (container builds only). The working directory must stay
+`backend/portal-backend` when starting the binary.
 
 **Bash:**
 
 ```bash
-APIHUB_CONFIG_FOLDER=./local_config ./qubership-apihub-service
+APIHUB_CONFIG_FOLDER=/tmp/portal-config ./portal-backend
 ```
 
 **PowerShell:**
 
 ```powershell
-$env:APIHUB_CONFIG_FOLDER = './local_config'
-.\qubership-apihub-service.exe
+$env:APIHUB_CONFIG_FOLDER = "$env:TEMP\portal-config"
+.\portal-backend.exe
 ```
 
-`local_config/config.yaml` sets `technicalParameters.listenAddress: ':8090'` and a
-zero-day sysadm token (`zeroDayConfiguration.accessToken`) that is auto-provisioned at startup —
-use it directly as the `api-key` header, no login flow required.
-
-## Overriding the listen port temporarily
-
-There is no environment-variable override for config values in this codebase (config is read
-only from the `config.yaml` under `APIHUB_CONFIG_FOLDER`, no automatic env binding). If port
-8090 is already taken, copy the config instead of editing the committed file:
-
-**Bash:**
-
-```bash
-cp -r local_config /tmp/local_config_override
-sed -i "s/listenAddress: ':8090'/listenAddress: ':<free-port>'/" /tmp/local_config_override/config.yaml
-APIHUB_CONFIG_FOLDER=/tmp/local_config_override ./qubership-apihub-service
-```
-
-**PowerShell:**
-
-```powershell
-Copy-Item -Recurse qubership-apihub-service\local_config $env:TEMP\local_config_override
-(Get-Content $env:TEMP\local_config_override\config.yaml) -replace "listenAddress: ':8090'", "listenAddress: ':<free-port>'" |
-    Set-Content $env:TEMP\local_config_override\config.yaml
-$env:APIHUB_CONFIG_FOLDER = "$env:TEMP\local_config_override"
-.\qubership-apihub-service\qubership-apihub-service.exe
-```
-
-Discard the copy when done; never commit changes to `local_config/config.yaml` for a port
-override.
+The binary name follows the directory (`go build .` names it after the module path's last element). If your build
+produced another name, use that. Confirm the listener belongs to your process and check your own log for a fatal line
+before trusting `/live`.
 
 ## Postman collection conventions
 
-Follow the structure already established by `tests/api/build_dependencies.postman_collection.json`:
+Follow the structure of the existing collections in `backend/portal-backend/tests/api/`, for example
+`tolerant_publication.postman_collection.json`:
 
-- `info.description` states purpose, endpoints under test, auth method, and required collection
-  variables.
-- `variable[]` declares `baseUrl` (default `http://localhost:8090`) and `apiKey` (default to the
-  local zero-day token), plus any test-specific IDs.
-- `item[]` is grouped into numbered folders (e.g. `"00 — Setup"`, `"01 — <feature>"`).
-- Each request that needs one carries a `prerequest` and/or `test` script using
-  `pm.test(...)`, `pm.collectionVariables.set(...)`, `pm.response.to.have.status(...)`.
+- `info.description` states purpose, endpoints under test, auth method, and required collection variables.
+- `variable[]` declares `baseUrl` (for example `http://localhost:8090`) and `apiKey` (the zero-day token of your
+  scratch config), plus any test-specific IDs.
+- `item[]` is grouped into numbered folders (for example `"00 — Setup"`, `"01 — <feature>"`).
+- Each request that needs one carries a `prerequest` or `test` script using `pm.test(...)`,
+  `pm.collectionVariables.set(...)`, and `pm.response.to.have.status(...)`.
 - Auth header is `api-key: {{apiKey}}` (sysadm token), not JWT.
 - Throwaway resource IDs get a `Date.now()` suffix for isolation and safe re-runs.
 
 ## Running the collection
 
 ```bash
-npx newman run tests/api/<slug>.postman_collection.json \
+pnpm dlx newman@6.2.3 run backend/portal-backend/tests/api/<slug>.postman_collection.json \
   --env-var baseUrl=http://localhost:8090 \
-  --env-var apiKey=<zero-day token from local_config/config.yaml>
+  --env-var apiKey=<zero-day token from the scratch config>
 ```
 
-There is no existing local Newman wrapper script in this repo — this is the first one; the
-external `qubership-apihub-postman-collections` repo's canonical E2E suite is run by a separate
-reusable CI workflow, not by this command.
+Newman 6.2.3 is the version CI uses for the shared suite (`tools/ci/e2e-collections.sh`). The shared E2E suite in
+`tests/postman-collections` runs through the E2E workflows, not through this command.
 
 ## Reading failures
 
-Newman prints a per-request assertion summary and a final failure table to the console. Match
-each failed `pm.test` name back to the request's endpoint and the Go handler/service/repository
-that implements it, fix the root cause there (do not adjust the test to mask a real bug), rebuild,
-restart the service, and rerun the same Newman command until all assertions pass.
+Newman prints a per-request assertion summary and a final failure table. Match each failed `pm.test` name back to the
+request's endpoint and the Go handler, service, or repository that implements it. Fix the root cause there (do not
+adjust the test to mask a real bug), rebuild, restart the service, and rerun the same Newman command until all
+assertions pass.
