@@ -3,6 +3,7 @@ name: MD Link Checker
 
 on:
   push: null
+  pull_request: null
   repository_dispatch: null
   workflow_dispatch: null
 permissions:

@@ -1,7 +1,6 @@
 ---
 # Path based labels for actions/labeler (see .github/workflows/automatic-pr-labeler.yaml).
-# Only modules that already have a `module:<name>` label in the repository are listed.
-# Add an entry here after creating the label for another module (agent, test-service, commons-go, and so on).
+# One module:<name> label per module directory; the labels exist in the repository.
 
 'module:portal-backend':
   - changed-files:
@@ -22,3 +21,103 @@
 'module:api-diff':
   - changed-files:
       - any-glob-to-any-file: 'frontend/api-diff/**'
+
+'module:agent':
+  - changed-files:
+      - any-glob-to-any-file: 'backend/agent/**'
+
+'module:test-service':
+  - changed-files:
+      - any-glob-to-any-file: 'backend/test-service/**'
+
+'module:commons-go':
+  - changed-files:
+      - any-glob-to-any-file: 'backend/commons-go/**'
+
+'module:java-task-consumer':
+  - changed-files:
+      - any-glob-to-any-file: 'backend/java-task-consumer/**'
+
+'module:libraries-backend':
+  - changed-files:
+      - any-glob-to-any-file: 'backend/libraries-backend/**'
+
+'module:api-doc-viewer':
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/api-doc-viewer/**'
+
+'module:api-processor':
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/api-processor/**'
+
+'module:api-unifier':
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/api-unifier/**'
+
+'module:api-visitor':
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/api-visitor/**'
+
+'module:apispec-view':
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/apispec-view/**'
+
+'module:build-task-consumer':
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/build-task-consumer/**'
+
+'module:class-view':
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/class-view/**'
+
+'module:compatibility-suites':
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/compatibility-suites/**'
+
+'module:ddlapi':
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/ddlapi/**'
+
+'module:graphapi':
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/graphapi/**'
+
+'module:http-spec':
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/http-spec/**'
+
+'module:json-crawl':
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/json-crawl/**'
+
+'module:rest-playground':
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/rest-playground/**'
+
+'module:postman-collections':
+  - changed-files:
+      - any-glob-to-any-file: 'tests/postman-collections/**'
+
+'module:ui-tests':
+  - changed-files:
+      - any-glob-to-any-file: 'tests/ui-tests/**'
+
+'module:jest-chrome-in-docker-environment':
+  - changed-files:
+      - any-glob-to-any-file: 'tools/jest-chrome-in-docker-environment/**'
+
+'module:deploy':
+  - changed-files:
+      - any-glob-to-any-file: 'deploy/**'
+
+'module:docs':
+  - changed-files:
+      - any-glob-to-any-file: 'docs/**'
+
+'module:tools':
+  - changed-files:
+      - any-glob-to-any-file: 'tools/**'
+
+'module:ci':
+  - changed-files:
+      - any-glob-to-any-file: '.github/**'
