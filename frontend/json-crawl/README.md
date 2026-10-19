@@ -3,11 +3,12 @@
 This package provides utility functions for crawling/cloning JSON objects like a tree
 
 ## Modifications
+
 Modified version of [json-crawl](https://github.com/udamir/json-crawl)
 
--	responsibility of dealing with cycled JSO moved back from json-crawl to client code
--	introduced afterHooks hook
--	small fixes in typings
+- responsibility of dealing with cycled JSO moved back from json-crawl to client code
+- introduced afterHooks hook
+- small fixes in typings
 
 ## Purpose
 
