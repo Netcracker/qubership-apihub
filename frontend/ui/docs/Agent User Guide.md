@@ -15,7 +15,7 @@ When the discovery process completed, you will see list of all services and thei
 
 You can open and view found API document by clicking on it.
 
-![](/docs/img/discover_services.png)
+![](img/discover_services.png)
 
 ## Snapshot Creation
 To make the following API contracts validations and comparison, Agent needs to create a snapshot of the found API documents as a draft version in Portal.

@@ -66,7 +66,7 @@ If you open any workspace, you see hierarchical structure of all its groups, pac
 
 **Dashboard** is a virtual package that provides links to already published package versions or other dashboard versions. Dashboards do not have their own API documents, it only accumulates API documents from linked package/dashboard versions. See more about dashboards in [Dashboards](#dashboards) section.
 
-![](/docs/img/home_page.png)
+![](img/home_page.png)
 
 ## Private
 
@@ -682,7 +682,7 @@ You can switch between list and detailed view (by default, list view is selected
 - List view – list of all operations with information
 - Detailed view – allows you to see a preview of the operation content
 
-![](/docs/img/operations_in_package_version.png)
+![](img/operations_in_package_version.png)
 
 **Export operations to Excel file**
 
@@ -775,7 +775,7 @@ Pay attention that this is the comparison of package versions, **not** operation
 
 If you compare R24.1 and R24.2, you will see changes (if any) in `GET /api/v1/users`, `POST /api/v1/users`, `GET /api/v1/users/{userId}`, and you will see that `GET /api/v2/users/{userId}` is a new operation. You **will not** see a comparison between `GET /api/v1/users/{userId}` and `GET /api/v2/users/{userId}`.
 
-![](/docs/img/compare_list_of_operations.png)
+![](img/compare_list_of_operations.png)
 
 1. Navigate to the package version you need to compare.
 2. Click **Compare** and select Versions in the dropdown menu.
@@ -791,7 +791,7 @@ If you compare R24.1 and R24.2, you will see changes (if any) in `GET /api/v1/us
    In the subheader of the page, you can also see a summary of changes for the current operation.
    You can switch the view of comparison to Raw to see a side-by-side comparison in YAML or JSON format.
 
-![](/docs/img/compare_operations.png)
+![](img/compare_operations.png)
 
 ## Compare Package Revisions
 
@@ -1208,7 +1208,7 @@ APIHUB Portal can render content of API operation in different views:
 - Graph view - diagram like view of schemas. The view is available only for REST API.
 - Raw view - operation content in YAML or JSON format for REST operation and in GraphQL format for GraphQL operations.
 
-![](/docs/img/operation_graph_view.png)
+![](img/operation_graph_view.png)
 
 ## Examples for Request and Response Body of REST operations
 
