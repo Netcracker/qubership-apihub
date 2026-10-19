@@ -29,6 +29,18 @@ jobs:
   images:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    # release-finish.yml leaves main and release at the same commit, and both CI runs build images for
+    # it. The content hash does not depend on the ref and both refs require amd64 and arm64, so the
+    # second leg finds the first one's src-<hash> and only retags, but only if it checks after the first
+    # pushed. This group makes the legs of the same image at the same commit on those two refs wait for
+    # each other; not cancelled, so both legs run. Every other ref gets a group of its own run.
+    concurrency:
+      group: >-
+        images-${{ matrix.image }}-${{
+          (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/release')
+          && github.sha
+          || format('{0}-{1}', github.run_id, github.run_attempt) }}
+      cancel-in-progress: false
     permissions:
       contents: read
       packages: write
