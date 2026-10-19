@@ -51,6 +51,40 @@ test('classify gives major for ! and for a BREAKING CHANGE footer', () => {
   assert.equal(classify('docs!: remove a page', '', R6), 'major')
   assert.equal(classify('fix: rename a field', 'BREAKING CHANGE: the field is renamed', R6), 'major')
   assert.equal(classify('Update things', 'BREAKING CHANGE: as Nx does', R6), 'major')
+  assert.equal(classify('fix: rename', 'Rename the field.\n\nBREAKING-CHANGE: the field is renamed', R6), 'major')
+})
+
+test('classify ignores BREAKING CHANGE when it does not start a line', () => {
+  assert.equal(classify('fix: wording', 'This is not a BREAKING CHANGE: only the text moves.', R6), 'patch')
+  assert.equal(classify('feat: new page', 'Lists the BREAKING CHANGE: footers of a commit.', R6), 'minor')
+  assert.equal(classify('fix: wording', '  BREAKING CHANGE: indented, so quoted', R6), 'patch')
+})
+
+test('classify ignores BREAKING CHANGE inside a Dependabot-style body', () => {
+  const body = [
+    'Bumps [axios](https://github.com/axios/axios) from 0.27.2 to 1.6.0.',
+    '<details>',
+    '<summary>Release notes</summary>',
+    '<p><em>Sourced from <a href="https://github.com/axios/axios/releases">axios\'s releases</a>.</em></p>',
+    '<blockquote>',
+    '<h2>v1.0.0</h2>',
+    '<p>BREAKING CHANGE: the default export is now an ES module.</p>',
+    '<ul>',
+    '<li>fix!: drop Node 12 (BREAKING CHANGE: Node 14 is required)</li>',
+    '</ul>',
+    '</blockquote>',
+    '</details>',
+    '',
+    '---',
+    'updated-dependencies:',
+    '- dependency-name: axios',
+    '  dependency-type: direct:production',
+    '  update-type: version-update:semver-major',
+    '...',
+    '',
+    'Signed-off-by: dependabot[bot] <support@github.com>',
+  ].join('\n')
+  assert.equal(classify('chore(deps): bump axios from 0.27.2 to 1.6.0 in /packages/api-diff (#42)', body, R6), 'patch')
 })
 
 test('classify gives none to unknown types and non-conventional subjects', () => {

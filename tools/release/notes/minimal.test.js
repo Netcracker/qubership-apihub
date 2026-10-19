@@ -14,10 +14,12 @@ test('groupCommits puts each commit in one section, breaking first, unknown type
     c('e5', 'perf: faster'),
     c('f6', 'chore: deps: bump x'),
     c('g7', 'Update README'),
+    c('h8', 'feat: notes', 'Explains what a BREAKING CHANGE: footer does.'),
+    c('i9', 'chore(deps): bump x', '<blockquote>\n<p>BREAKING CHANGE: upstream notes</p>\n</blockquote>'),
   ])
   assert.deepEqual(
     Object.fromEntries(Object.entries(groups).map(([k, v]) => [k, v.map((x) => x.hash)])),
-    { breaking: ['b2', 'c3'], feat: ['a1'], fix: ['d4'], perf: ['e5'], other: ['f6', 'g7'] },
+    { breaking: ['b2', 'c3'], feat: ['a1', 'h8'], fix: ['d4'], perf: ['e5'], other: ['f6', 'g7', 'i9'] },
   )
 })
 

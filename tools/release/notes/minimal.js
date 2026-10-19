@@ -9,7 +9,7 @@
  *
  * Pure functions; tools/release/artifacts.js collects the commits and writes the files.
  */
-const { HEADER } = require('../conventional')
+const { HEADER, isBreaking } = require('../conventional')
 
 const MARKER =
   '<!-- Minimal notes from tools/release/notes/minimal.js; replaced by steps 4-5 of the migration plan. -->'
@@ -28,7 +28,7 @@ function groupCommits(commits) {
   for (const c of commits) {
     const header = c.subject.match(HEADER)
     const type = header?.groups.type
-    if (header?.groups.breaking || c.body.includes('BREAKING CHANGE:')) groups.breaking.push(c)
+    if (isBreaking(c.subject, c.body)) groups.breaking.push(c)
     else if (['feat', 'fix', 'perf'].includes(type)) groups[type].push(c)
     else groups.other.push(c)
   }

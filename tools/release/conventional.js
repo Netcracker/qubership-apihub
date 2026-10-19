@@ -3,7 +3,9 @@
  *
  * Commit types and their bumps are read from `release.conventionalCommits.types` in nx.json (decision R6),
  * so these scripts and `nx release` cannot disagree on what a commit is worth. A commit is parsed the way
- * Nx 23 parses it (same header pattern, `BREAKING CHANGE:` anywhere in the body, `This reverts commit`).
+ * Nx 23 parses it (same header pattern, `This reverts commit`), except that a `BREAKING CHANGE:` counts only
+ * as a footer at the start of a line: squash merges carry pull request descriptions, and a Dependabot
+ * description quotes upstream release notes that may contain the phrase.
  */
 const fs = require('node:fs')
 const path = require('node:path')
@@ -12,6 +14,7 @@ const { execFileSync } = require('node:child_process')
 const WORKSPACE_ROOT = path.resolve(__dirname, '..', '..')
 const BUMPS = ['none', 'patch', 'minor', 'major']
 const HEADER = /^(?<type>[^\s():!]+)(?:\s*\((?<scope>.+)\))?(?<breaking>!)?: (?<description>.+)$/u
+const BREAKING_FOOTER = /^BREAKING[ -]CHANGE: /m
 const REVERT = /This reverts commit [\da-f]{40}/
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$/
 
@@ -30,13 +33,18 @@ function commitTypes(release = readNxRelease()) {
   return types
 }
 
+/** `!` after the type or scope, or a `BREAKING CHANGE:` (or `BREAKING-CHANGE:`) footer. */
+function isBreaking(subject, body) {
+  return Boolean(subject.match(HEADER)?.groups.breaking) || BREAKING_FOOTER.test(body)
+}
+
 /**
  * The bump one commit gives its component. Unknown types and non-conventional subjects give none, but a
  * `BREAKING CHANGE:` footer gives major even then, as in Nx.
  */
 function classify(subject, body, types) {
   const header = subject.match(HEADER)
-  if (header?.groups.breaking || body.includes('BREAKING CHANGE:')) return 'major'
+  if (isBreaking(subject, body)) return 'major'
   const type = REVERT.test(body) ? 'revert' : header?.groups.type
   return type && Object.hasOwn(types, type) ? types[type] : 'none'
 }
@@ -126,6 +134,7 @@ module.exports = {
   compareSemver,
   git,
   highest,
+  isBreaking,
   listTags,
   parseSemver,
   readNxRelease,
