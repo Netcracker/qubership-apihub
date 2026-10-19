@@ -37,7 +37,7 @@ services:
                     memory: 500M
 
     ###### 3rd party services
-    
+
     postgres:
         image: docker.io/postgres
         container_name: postgres

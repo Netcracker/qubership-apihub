@@ -26,7 +26,7 @@ paths:
       summary: Build package version
       description: Start package version build process and send result to APIHUB
       operationId: postPublishFiles
-      tags: 
+      tags:
         - Builder
       parameters:
         - name: buildId
@@ -47,7 +47,7 @@ paths:
           schema:
             type: string
           required: false
-      requestBody:  
+      requestBody:
         content:
           multipart/form-data:
             schema:
@@ -93,9 +93,9 @@ paths:
                           - fileId
                           - labels
                         properties:
-                          fileId: 
+                          fileId:
                             type: string
-                          publish: 
+                          publish:
                             type: boolean
                           labels:
                             type: array
@@ -105,9 +105,9 @@ paths:
         "202":
           description: Build process started
         "400":
-          $ref: "#/components/responses/badRequest400"   
+          $ref: "#/components/responses/badRequest400"
         "500":
-          $ref: "#/components/responses/internalServerError500"                 
+          $ref: "#/components/responses/internalServerError500"
 components:
   schemas:
     ErrorResponse:
@@ -131,13 +131,13 @@ components:
             "type": "string"
         debug:
           description: |
-            The attribute contains debug details (e.g. stack-trace). 
+            The attribute contains debug details (e.g. stack-trace).
             Presented in the error response only on Dev/Test environments if corresponding logging level is enabled.
           type: string
       required:
         - status
         - code
-        - message                  
+        - message
   responses:
     badRequest400:
       description: Bad request
