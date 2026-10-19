@@ -19,6 +19,16 @@ of this repository now.
 | Tooling | `tools/` | Release scripts, CI helpers, Nx plugins |
 | CI | `.github/` | Workflows, CODEOWNERS, Dependabot |
 
+Each group and each module has its own `AGENTS.md` (and a `CLAUDE.md` that imports it): start from
+[`backend/AGENTS.md`](backend/AGENTS.md), [`frontend/AGENTS.md`](frontend/AGENTS.md),
+[`tests/AGENTS.md`](tests/AGENTS.md), or [`deploy/AGENTS.md`](deploy/AGENTS.md). They list how to build and test the
+module and which agent packages apply.
+
+Each group and each module has its own `AGENTS.md` (and a `CLAUDE.md` that imports it): start from
+[`backend/AGENTS.md`](backend/AGENTS.md), [`frontend/AGENTS.md`](frontend/AGENTS.md),
+[`tests/AGENTS.md`](tests/AGENTS.md), or [`deploy/AGENTS.md`](deploy/AGENTS.md). They list how to build and test the
+module and which agent packages apply.
+
 Work in the module that owns the behaviour. When you change install shape, environment variables, ports, or
 mounted files, update the deployment assets and `docs/configuration-reference.md` in the same change.
 

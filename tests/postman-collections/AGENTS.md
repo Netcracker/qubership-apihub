@@ -1,51 +1,75 @@
 # APIHUB Postman collections — Agent Instructions
 
-Instructions for AI assistants working on **qubership-apihub-postman-collections** (Cursor, Claude Code, and compatible tools).
+Instructions for AI assistants working on `tests/postman-collections` of the qubership-apihub monorepo (Cursor,
+Claude Code, and compatible tools). Follow the root [`AGENTS.md`](../../AGENTS.md) and
+[`tests/AGENTS.md`](../AGENTS.md).
 
-## What this repository is
+## What this module is
 
-This repo holds **Newman/Postman E2E tests** for the APIHUB backend. There is **no application source code** here — only Postman Collection v2.1 JSON, environment files, fixtures under `working-directory/`, and CI-oriented assets.
+**Newman/Postman E2E tests** for the APIHUB backend. There is **no application source code** here: only Postman
+Collection v2.1 JSON, environment files, fixtures under `working-directory/`, and CI-oriented assets.
 
-When the **qubership-apihub-backend** REST API changes (new endpoints, paths, payloads, status codes, or auth), update the matching requests and `pm.test` / `pm.expect` assertions in this repository.
+When the REST API of `backend/portal-backend` changes (new endpoints, paths, payloads, status codes, or auth),
+update the matching requests and `pm.test` / `pm.expect` assertions here, in the same change.
 
 ## Backend documentation (read before editing collections)
 
 | Topic | Location |
 |-------|----------|
-| Postman collections overview | [qubership-apihub-backend/docs/postman_collections.md](https://github.com/Netcracker/qubership-apihub-backend/blob/main/docs/postman_collections.md) |
-| When to update E2E tests | [qubership-apihub-backend/docs/agent/related-repositories.md](https://github.com/Netcracker/qubership-apihub-backend/blob/main/docs/agent/related-repositories.md) |
-| OpenAPI contracts | [qubership-apihub-backend/docs/api/](https://github.com/Netcracker/qubership-apihub-backend/tree/main/docs/api) |
-| Local setup / Newman | [README.md](README.md) in this repo |
+| Postman collections overview | [`backend/portal-backend/docs/postman_collections.md`](../../backend/portal-backend/docs/postman_collections.md) |
+| When to update E2E tests | [`backend/portal-backend/docs/agent/related-repositories.md`](../../backend/portal-backend/docs/agent/related-repositories.md) |
+| OpenAPI contracts | [`backend/portal-backend/docs/api/`](../../backend/portal-backend/docs/api/) |
+| Local setup / Newman | [README.md](README.md) in this module |
 
 ## Clarification before editing
 
 - Do **not** change collections until requirements are clear (endpoint, expected status, response shape, auth).
 - State assumptions explicitly when the OpenAPI spec or ticket is ambiguous.
 
-## Repository layout (quick reference)
+## Layout (quick reference)
 
 | Path | Purpose |
 |------|---------|
 | `e2e/` | Regression collections (smoke, negative, linter, access control, stories) |
-| `Syntetic_test_data.postman_collection.json` | Seed/cleanup test workspaces and packages |
+| `Syntetic_test_data.postman_collection.json` | Seed and cleanup test workspaces and packages |
 | `environment/` | `Env1.postman_environment.json` (local), `local.postman_environment.json` (CI template) |
 | `use_cases/` | Additional scenario collections |
+| `working-directory/` | Fixtures the collections upload |
 
-## CI execution
+## Build and test
 
-Collections are run by the reusable workflow **run-e2e-tests** in [qubership-apihub-ci](https://github.com/Netcracker/qubership-apihub-ci/blob/main/.github/workflows/run-e2e-tests.yml) via the `postman-collections-list` input (comma-separated paths). Default CI run uses `./e2e/1_1_Smoke_Portal.postman_collection.json`.
-
-## Skills and conventions
-
-- **postman-e2e-authoring** — Newman/Postman v2.1 structure, test scripts, environments, and CI wiring (triggered on `**/*.json` and `e2e/**`).
-- Shared packages from APM: English developer style, markdown line length, common conventions, GitHub ticket planner.
-
-Regenerate installed agent artifacts after changing `apm.yml` or local agent packages:
+This module is not an Nx project and has no build. Run a collection with Newman against a running stack (see
+`README.md` for the user and the `at-api-key` variable). CI installs `newman@6.2.3`:
 
 ```bash
-apm install --target cursor,claude --legacy-skill-paths --force
+newman run tests/postman-collections/e2e/1_1_Smoke_Portal.postman_collection.json \
+  -e tests/postman-collections/environment/Env1.postman_environment.json
 ```
 
-## GitHub CLI
+CI runs the collections through `.github/workflows/e2e-tests-compose.yml`, `e2e-tests-kind.yml`, and
+`e2e-tests-manual.yml` (input `postman_collections`, comma-separated paths under `tests/postman-collections`).
+The default run is `e2e/1_1_Smoke_Portal.postman_collection.json`.
 
-Use **`gh`** for issues, pull requests, checks, and releases when working with this repository on GitHub.
+## Traps
+
+- Collections are JSON with embedded scripts: keep the diff small, do not let an export tool reformat the whole
+  file.
+- `Syntetic_test_data.postman_collection.json` creates and removes the shared workspace and packages; check it
+  before you rename or delete anything the e2e collections read.
+- Never commit real tokens or passwords; the environment files hold placeholders only.
+
+## Agent packages
+
+Local packages (`agent-packages/`):
+
+- `postman-e2e-authoring` (skill and rule for `tests/postman-collections/**/*.json` and `e2e/**`): use when adding
+  or changing requests, assertions, test data, or environment variables.
+- `postman-e2e-followup` (skill and rule for `backend/portal-backend/docs/api/**` and `controller/**`): use after a
+  REST or OpenAPI change in the backend, to decide what the collections need.
+
+Other packages: `advanced-verification` (skill, `backend/portal-backend`) builds a new collection to verify a
+backend change end to end. Store packages: `development-conventions`, `github-ticket-implementation-planner`,
+`english-developer-style`, `markdown-line-length-120`.
+
+Deploy local packages with `apm install --target cursor,claude --legacy-skill-paths` from the repository root
+(never `apm compile`).
