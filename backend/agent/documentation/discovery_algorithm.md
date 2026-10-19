@@ -50,6 +50,7 @@ discovered via `apihub-config`.
 ![documents discovery algorithm](./images/discovery_get_documents.drawio.png)
 
 **Notes:**
+
 - If both configuration files AND default URL contracts are present, only the contents of the configuration files will be discovered.
 - APIHUB requests configured paths during contract discovery. Therefore, there must be no prefix in the base path of the URLs above.
   - Correct path: `https://<service name>.<namespace>:8080/v3/api-docs`
