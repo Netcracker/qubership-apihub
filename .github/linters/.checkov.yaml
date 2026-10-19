@@ -35,3 +35,12 @@ skip-path:
 # Kept from frontend/ui (mock servers and static resources)
 - frontend/ui/.*mock
 - frontend/ui/.*resources
+# Test data and samples (OpenAPI fixtures that carry findings on purpose). Super-linter runs checkov on the
+# directory, so CHECKOV_FILTER_REGEX_EXCLUDE has no effect; skip-path is the working mechanism.
+- frontend/compatibility-suites/bin
+- frontend/api-processor/test
+- frontend/api-diff/test
+- frontend/api-unifier/test
+- backend/portal-backend/tests/api/fixtures
+- tests/ui-tests/resources
+- tests/postman-collections/working-directory
