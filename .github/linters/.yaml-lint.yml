@@ -48,8 +48,9 @@ rules:
     max-spaces-after: 1
   indentation:
     level: warning
-    spaces: 2
-    indent-sequences: true
+    # consistent: deploy and docs Compose files use 4 spaces consistently; style only (warning level)
+    spaces: consistent
+    indent-sequences: consistent
     check-multi-line-strings: false
   key-duplicates: enable
   key-ordering: disable

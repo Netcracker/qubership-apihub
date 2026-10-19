@@ -2,7 +2,7 @@ version: '3.9'
 services:
     qubership-apihub-backend:
         image: ghcr.io/netcracker/qubership-apihub-backend:dev
-        #image: localhost/netcracker/qubership-apihub-backend:latest
+        # image: localhost/netcracker/qubership-apihub-backend:latest
         container_name: qubership-apihub-backend
         ports:
         - "8090:8080"
