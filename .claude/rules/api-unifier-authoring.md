@@ -1,0 +1,9 @@
+---
+paths:
+  - "frontend/api-unifier/src/**/*.ts"
+---
+
+When editing the api-unifier engine under `src/` — adding or changing
+normalization rules, `unify`/`mandatoryUnify` functions, default and
+replace mappings, validators, or hash rules (`hashStrategy`, `hashOwner`,
+`newDataLayer`) — apply the `api-unifier-authoring` skill.

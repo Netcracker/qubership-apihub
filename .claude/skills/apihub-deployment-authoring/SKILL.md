@@ -58,7 +58,7 @@ Do not treat Compose as replacing Helm for production install arguments.
 ## Local Kubernetes quickstart (`deploy/helm-templates/local-k8s-quickstart/`)
 
 - **Not production-ready** — Kind/Rancher guides, overlay values, optional Superset chart.
-- Entry: [`README.md`](../../../deploy/helm-templates/local-k8s-quickstart/README.md) and
+- Entry: [`README.md`](../../../../../deploy/helm-templates/local-k8s-quickstart/README.md) and
   `apihub-quickstart.sh` where present.
 - Values templates: `local-k8s-values.yaml`, `with-keycloak-local-k8s-values.yaml`, secrets
   templates under `qubership-apihub/`.

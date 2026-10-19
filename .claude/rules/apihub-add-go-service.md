@@ -1,0 +1,12 @@
+---
+paths:
+  - "go.work"
+  - "backend/.go-version"
+  - "backend/.dockerignore"
+  - "backend/*/go.mod"
+  - "backend/*/Dockerfile"
+---
+
+When you add a Go module under `backend/`, or change how one is built or released, apply the
+`apihub-add-go-service` skill. A new module touches many files outside its own directory, and CI only
+catches some of them.

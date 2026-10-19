@@ -1,0 +1,13 @@
+---
+paths:
+  - "frontend/json-crawl/**/*.ts"
+  - "frontend/api-diff/**/*.ts"
+  - "frontend/api-doc-viewer/**/*.ts"
+  - "frontend/api-processor/**/*.ts"
+  - "frontend/api-unifier/**/*.ts"
+  - "frontend/ui/**/*.ts"
+---
+
+When writing TypeScript that imports `@netcracker/qubership-apihub-json-crawl` —
+calling `crawl`/`syncCrawl`, wiring hooks or path rules, or using `clone`/
+`syncClone`/`transform` — apply the `json-crawl-using` skill.

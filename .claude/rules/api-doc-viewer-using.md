@@ -1,0 +1,9 @@
+---
+paths:
+  - "frontend/api-doc-viewer/**/*.{ts,tsx}"
+  - "frontend/ui/**/*.{ts,tsx}"
+---
+
+When integrating `@netcracker/qubership-apihub-api-doc-viewer` components into
+a host application — embedding viewers, wiring merged documents, or
+configuring diff display — apply the `api-doc-viewer-using` skill.
