@@ -1,6 +1,6 @@
 ---
 description: Run an end-of-session retrospective and sync durable findings into agent-packages skills.
-applyTo: "**/*"
+applyTo: "frontend/api-doc-viewer/**/*"
 ---
 
 When the user asks to review this session or conversation for unexpected

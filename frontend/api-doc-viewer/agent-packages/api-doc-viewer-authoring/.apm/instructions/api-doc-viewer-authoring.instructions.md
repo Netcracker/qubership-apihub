@@ -1,6 +1,6 @@
 ---
 description: Conventions for extending api-doc-viewer React viewer components.
-applyTo: "packages/api-doc-viewer/src/**/*.{ts,tsx}"
+applyTo: "frontend/api-doc-viewer/packages/api-doc-viewer/src/**/*.{ts,tsx}"
 ---
 
 When editing `packages/api-doc-viewer/src` to add or change viewer

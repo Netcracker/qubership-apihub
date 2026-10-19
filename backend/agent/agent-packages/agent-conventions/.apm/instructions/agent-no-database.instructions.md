@@ -1,6 +1,6 @@
 ---
 description: Agent has no database layer
-applyTo: **
+applyTo: "backend/agent/**"
 ---
 
 # No Database Layer

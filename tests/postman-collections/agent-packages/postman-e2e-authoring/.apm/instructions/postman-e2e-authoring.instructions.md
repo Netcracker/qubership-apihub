@@ -1,6 +1,6 @@
 ---
 description: Skill trigger for editing Postman collection v2.1 JSON, environment files, and e2e regression suites.
-applyTo: "**/*.json,e2e/**"
+applyTo: "tests/postman-collections/**/*.json,tests/postman-collections/e2e/**"
 ---
 
 # Postman E2E authoring

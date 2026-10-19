@@ -1,6 +1,6 @@
 ---
 description: Skill trigger for writing and reviewing diff test specifications in api-diff (any spec type).
-applyTo: "test/**/*.test.ts"
+applyTo: "frontend/api-diff/test/**/*.test.ts"
 ---
 
 When writing or reviewing `test/**/*.test.ts` files that contain api-diff diff tests — AsyncAPI specs or

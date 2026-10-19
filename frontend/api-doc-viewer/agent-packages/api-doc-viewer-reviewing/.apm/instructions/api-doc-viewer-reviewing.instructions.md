@@ -1,6 +1,6 @@
 ---
 description: Run an architecture review or refactoring pass over one api-doc-viewer API type stack.
-applyTo: "**/*"
+applyTo: "frontend/api-doc-viewer/**/*"
 ---
 
 When the user asks for an architecture review, code-quality review, or refactoring pass of an

@@ -1,6 +1,6 @@
 ---
 description: Conventions for consuming the ddlapi schema library.
-applyTo: "**/*.ts"
+applyTo: "frontend/ddlapi/**/*.ts,frontend/api-diff/**/*.ts,frontend/api-doc-viewer/**/*.ts,frontend/api-processor/**/*.ts,frontend/api-unifier/**/*.ts,frontend/ui/**/*.ts"
 ---
 
 When writing TypeScript that imports `@netcracker/qubership-apihub-ddlapi` or

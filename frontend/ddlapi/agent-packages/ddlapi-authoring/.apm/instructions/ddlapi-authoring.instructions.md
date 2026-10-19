@@ -1,6 +1,6 @@
 ---
 description: Authoring conventions for the ddlapi schema model and DDL parser.
-applyTo: "src/**/*.ts"
+applyTo: "frontend/ddlapi/src/**/*.ts"
 ---
 
 When editing the ddlapi library sources under `src/**` — the schema model

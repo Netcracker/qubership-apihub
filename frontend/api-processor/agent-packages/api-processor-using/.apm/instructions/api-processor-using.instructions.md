@@ -1,6 +1,6 @@
 ---
 description: Conventions for consuming the api-processor library.
-applyTo: "**/*.{ts,tsx}"
+applyTo: "frontend/api-processor/**/*.{ts,tsx},frontend/ui/**/*.{ts,tsx}"
 ---
 
 When writing TypeScript that imports `@netcracker/qubership-apihub-api-processor`

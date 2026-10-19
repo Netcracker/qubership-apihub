@@ -1,6 +1,6 @@
 ---
 description: Agent OpenAPI file list and sync requirements
-applyTo: documentation/api/**,controller/**
+applyTo: "backend/agent/documentation/api/**,backend/agent/controller/**"
 ---
 
 # Agent OpenAPI Files

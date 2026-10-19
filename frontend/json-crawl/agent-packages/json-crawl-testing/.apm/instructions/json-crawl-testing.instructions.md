@@ -1,6 +1,6 @@
 ---
 description: Conventions for writing json-crawl unit tests.
-applyTo: "test/**/*.ts"
+applyTo: "frontend/json-crawl/test/**/*.ts"
 ---
 
 When writing or editing tests under `test/` — asserting crawl order, hook

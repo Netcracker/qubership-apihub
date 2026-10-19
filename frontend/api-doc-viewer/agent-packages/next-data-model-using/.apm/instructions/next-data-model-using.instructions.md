@@ -1,6 +1,6 @@
 ---
 description: Conventions for consuming next-data-model inside api-doc-viewer viewer code.
-applyTo: "packages/api-doc-viewer/src/**/*.{ts,tsx}"
+applyTo: "frontend/api-doc-viewer/packages/api-doc-viewer/src/**/*.{ts,tsx}"
 ---
 
 When importing `@netcracker/qubership-apihub-next-data-model` in api-doc-viewer
