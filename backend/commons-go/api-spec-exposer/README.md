@@ -56,6 +56,7 @@ require github.com/Netcracker/qubership-apihub/backend/commons-go v0.0.0 //speci
 ### Local Build
 
 **From the module directory:**
+
 ```bash
 go mod download
 go mod verify
@@ -205,11 +206,13 @@ The default URL paths and configuration structure depend on the number and types
 The library applies the following rules when generating endpoint configurations for OpenAPI specifications:
 
 **Single REST Specification:**
+
 - Path: `/v3/api-docs`
 - Handler: Serves the OpenAPI specification file content
 - Metadata: Includes spec name, type (openapi-2-0, openapi-3-0, or openapi-3-1), and x-api-kind
 
 **Multiple REST Specifications:**
+
 - Path per spec: `/v3/api-docs/{fileId}` (where `{fileId}` is a URL-safe slug derived from the filename)
 - Additional config endpoint: `/v3/api-docs/swagger-config` providing a JSON listing of all REST specifications
 
@@ -218,16 +221,19 @@ The library applies the following rules when generating endpoint configurations 
 The library applies the following rules when generating endpoint configurations for GraphQL specifications:
 
 **Single GraphQL Specification:**
+
 - If the spec is an **introspection result**:
   - Path: `/graphql/introspection`
 - If the spec is a **GraphQL schema**:
   - Path: `/api/graphql-server/schema`
 
 **Two GraphQL Specifications (exactly one schema + one introspection):**
+
 - Schema path: `/api/graphql-server/schema`
 - Introspection path: `/graphql/introspection`
 
 **Multiple GraphQL Specifications (more than 2, or 2 of the same type):**
+
 - Introspection specs: `/graphql/introspection/{fileId}`
 - Schema specs: `/api/graphql-server/schema/{fileId}`
 - Additional config endpoint: `/api/graphql-server/schema/domains` providing a JSON listing of all GraphQL specifications
@@ -237,6 +243,7 @@ The library applies the following rules when generating endpoint configurations 
 When Markdown or other file types are discovered, the library generates additional endpoint configurations:
 
 **Markdown and Binary Files:**
+
 - Path per file: `/v3/api-docs/{fileId}` (each file gets its own endpoint configuration)
 
 **Unified API Hub Configuration:**
@@ -272,6 +279,7 @@ This configuration endpoint provides a complete inventory of all API specificati
 ```
 
 **Field Descriptions:**
+
 - `url` - Relative path to access the specification
 - `name` - Human-readable name derived from the file
 - `type` - Specification type (e.g., `openapi-3-0`, `graphql`, `markdown`, `unknown`)
@@ -385,6 +393,7 @@ identifierChain: &IdentifierChain{
 ### Code Style
 
 The module follows standard Go conventions:
+
 - Use `gofmt` for formatting
 - Run `go vet` before committing
 - Write tests for new functionality
@@ -396,4 +405,3 @@ See the [LICENSE](../LICENSE) file for detailed license information.
 ## Contributing
 
 See the [main repository README](../README.md#contributing) for contribution guidelines.
-
