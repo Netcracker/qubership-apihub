@@ -15,6 +15,7 @@ High-level narratives (architecture roadmap, backlog process) evolve on the [Git
 | [Admin guide](./admin-guide.md) | Platform owners post-install | SSO rotation, Helm operations, Compose caveats (`generate_env_*`), extensions matrix |
 | [Maintenance guide](./maintenance-guide.md) | Operators on-call | Postgres backup tables, TTL links, SSO/token wiki hops |
 | [User guide](./user-guide.md) | Portal/API authors | Everyday vocabulary/workflows + links into UI-repo Markdown UX guides |
+| [Release process](./development/release-process.md) | Maintainers who cut a release | Release start/finish, dry run, hotfixes, bots, version and tag rules |
 
 **Upstream depth:** whenever behaviour is protocol-level (OAuth dance, SAML attributes, MCP API), link to **`qubership-apihub-backend/docs`** on GitHub (`develop`). Do not duplicate long PDFs inside this umbrella repo—the goal is coherent navigation plus accurate deployment facts.
 
