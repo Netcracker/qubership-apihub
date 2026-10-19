@@ -16,9 +16,9 @@ All paths below are relative to the repository root (`../../../../` from this fi
 | Playwright UI tests | [`tests/ui-tests/`](../../../../tests/ui-tests/) | Browser tests |
 | Web UI (Portal and Agents SPAs) | [`frontend/ui/`](../../../../frontend/ui/) | Consumes the REST API |
 | Builder (NestJS) | [`frontend/build-task-consumer/`](../../../../frontend/build-task-consumer/) | Reads build tasks |
-| Linter service | [`backend/api-linter-service/`](../../api-linter-service/) | Called through `extensions` |
-| Agents backend | [`backend/agents-backend/`](../../agents-backend/) | Called through `extensions` |
-| Shared Go library | [`backend/commons-go/`](../../commons-go/) | Used by several services |
+| Linter service | [`backend/api-linter-service/`](../../../api-linter-service/) | Called through `extensions` |
+| Agents backend | [`backend/agents-backend/`](../../../agents-backend/) | Called through `extensions` |
+| Shared Go library | [`backend/commons-go/`](../../../commons-go/) | Used by several services |
 
 ## Helm charts and Docker Compose
 
