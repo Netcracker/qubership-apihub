@@ -38,8 +38,8 @@ Screenshots-only guidance is intentionally kept light here; authoritative step-b
 
 | Area | Canonical doc |
 |------|----------------|
-| Portal ergonomics | [Portal User Guide (GitHub)](https://github.com/Netcracker/qubership-apihub-ui/blob/develop/docs/Portal%20User%20Guide.md) |
-| Agents workflows | [Agent User Guide (GitHub)](https://github.com/Netcracker/qubership-apihub-ui/blob/develop/docs/Agent%20User%20Guide.md) |
+| Portal ergonomics | [Portal User Guide (GitHub)](../frontend/ui/docs/Portal%20User%20Guide.md) |
+| Agents workflows | [Agent User Guide (GitHub)](../frontend/ui/docs/Agent%20User%20Guide.md) |
 | Roles & PATs wiki | Wiki links from [Maintenance guide § Security](./maintenance-guide.md#security) |
 
 ---

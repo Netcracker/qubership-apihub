@@ -11,7 +11,7 @@ no driver-specific types.
 | | |
 |---|---|
 | **Name** | `@netcracker/qubership-apihub-ddlapi` |
-| **Location** | `https://github.com/Netcracker/qubership-apihub-ddlapi` |
+| **Location** | `frontend/ddlapi` in `https://github.com/Netcracker/qubership-apihub` |
 | **Output** | Dual CJS + ESM, TypeScript declarations |
 | **Tooling** | Vite 4 + vite-plugin-dts, ts-jest, TypeScript 5.x |
 

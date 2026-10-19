@@ -5,7 +5,7 @@ qubership-apihub-agent is a golang application (microservice) providing the foll
 - Designed for k8s deployment, requires ClusterView permissions
 - Using k8s API able to execute REST calls to any service
 - Discovers API specificiations (OpenAPI, GQL) exposed by services
-- Integrates with Qubership-APIHUB application via special plug-in - [qubership-apihub-agents-backend](https://github.com/Netcracker/qubership-apihub-agents-backend) which is included into default Qubsership-APIHUB delivery
+- Integrates with Qubership-APIHUB application via special plug-in - [agents-backend](../agents-backend/) which is included into default Qubsership-APIHUB delivery
 
 ## Arch diagramm
 

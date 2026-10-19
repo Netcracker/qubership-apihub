@@ -17,7 +17,7 @@ High-level narratives (architecture roadmap, backlog process) evolve on the [Git
 | [User guide](./user-guide.md) | Portal/API authors | Everyday vocabulary/workflows + links into UI-repo Markdown UX guides |
 | [Release process](./development/release-process.md) | Maintainers who cut a release | Release start/finish, dry run, hotfixes, bots, version and tag rules |
 
-**Upstream depth:** whenever behaviour is protocol-level (OAuth dance, SAML attributes, MCP API), link to **`qubership-apihub-backend/docs`** on GitHub (`develop`). Do not duplicate long PDFs inside this umbrella repo—the goal is coherent navigation plus accurate deployment facts.
+**Upstream depth:** whenever behaviour is protocol-level (OAuth dance, SAML attributes, MCP API), link to **`backend/portal-backend/docs`** in this repository. Do not duplicate long PDFs inside this umbrella repo—the goal is coherent navigation plus accurate deployment facts.
 
 ---
 
@@ -50,10 +50,10 @@ Use these as **copy/paste starting points** (comments describe every knob):
 
 | Component | Remote template |
 |-----------|----------------|
-| Backend / Registry | [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/qubership-apihub-service/config.template.yaml) |
-| Kubernetes discovery Agent | [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-agent/blob/develop/qubership-apihub-agent/config.template.yaml) |
+| Backend / Registry | [`config.template.yaml`](../backend/portal-backend/config.template.yaml) |
+| Kubernetes discovery Agent | [`config.template.yaml`](../backend/agent/config.template.yaml) |
 
-When working from the **APIHUB-ALL** workspace layouts, mirrored paths (`../qubership-apihub-backend/...`) match those templates one-to-one.
+The service configuration templates live next to each module, for example `backend/portal-backend/config.template.yaml`.
 
 ---
 
@@ -67,8 +67,8 @@ Static HTML under [`./pages/erd/`](./pages/erd/index.html) — open in a browser
 
 | Area | Link |
 |------|------|
-| Backend security & data maintenance | [`qubership-apihub-backend/docs`](https://github.com/Netcracker/qubership-apihub-backend/tree/develop/docs) |
-| Portal & Agents UX Markdown | [`qubership-apihub-ui/docs`](https://github.com/Netcracker/qubership-apihub-ui/tree/develop/docs) |
+| Backend security & data maintenance | [`backend/portal-backend/docs`](../backend/portal-backend/docs) |
+| Portal & Agents UX Markdown | [`frontend/ui/docs`](../frontend/ui/docs) |
 | Reusable CI | [`qubership-apihub-ci`](https://github.com/Netcracker/qubership-apihub-ci) |
 
 ---

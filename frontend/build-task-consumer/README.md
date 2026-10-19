@@ -2,7 +2,7 @@
 
 Node.js microservice for APIHUB Package versions builds.
 
-This microservice is REST API and task management wrapper for [qubership-apihub-api-processor](https://github.com/Netcracker/qubership-apihub-api-processor) library.
+This microservice is REST API and task management wrapper for [api-processor](../api-processor/) library.
 
 Delievered as a Docker image and included into Qubership-APIHUB delivery as a mandatory part.
 

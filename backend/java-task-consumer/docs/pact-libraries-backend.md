@@ -1,9 +1,9 @@
 # Pact contract: java-task-consumer → libraries-backend
 
 This is the executable HTTP contract between
-[qubership-apihub-java-task-consumer](https://github.com/Netcracker/qubership-apihub-java-task-consumer)
+[java-task-consumer](../)
 (consumer) and
-[qubership-apihub-libraries-backend](https://github.com/Netcracker/qubership-apihub-libraries-backend)
+[libraries-backend](../../libraries-backend/)
 (provider).
 
 Human-readable request/response notes and `config.json` shapes live in [backend-api.md](backend-api.md).

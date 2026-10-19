@@ -16,10 +16,10 @@ Annotated **YAML schemas** used by file-backed binaries live only where the load
 
 | Component | Boot-time YAML template | Loader / pointers |
 |-----------|--------------------------|-------------------|
-| API Registry | [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/qubership-apihub-service/config.template.yaml) (`../qubership-apihub-backend/qubership-apihub-service/` locally) | `APIHUB_CONFIG_FOLDER` → `config.yaml`; see backend service bootstrap. |
-| Kubernetes Agent | [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-agent/blob/develop/qubership-apihub-agent/config.template.yaml) | Agent image (file-based like backend). |
+| API Registry | [`config.template.yaml`](../backend/portal-backend/config.template.yaml) (module `backend/portal-backend/`) | `APIHUB_CONFIG_FOLDER` → `config.yaml`; see backend service bootstrap. |
+| Kubernetes Agent | [`config.template.yaml`](../backend/agent/config.template.yaml) | Agent image (file-based like backend). |
 | **API Linter** | [`config.template.yaml`](https://github.com/Netcracker/qubership-api-linter-service/blob/develop/qubership-api-linter-service/config.template.yaml) | **`LINTER_CONFIG_FOLDER`** → `config.yaml`. Spectral rulesets stay **data** managed through the linter API/database, separate from this boot config. |
-| **Agents-backend** | [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-agents-backend/blob/develop/qubership-apihub-agents-backend/config.template.yaml) | **`AGENTS_BACKEND_CONFIG_FOLDER`** → `config.yaml`. |
+| **Agents-backend** | [`config.template.yaml`](../backend/agents-backend/config.template.yaml) | **`AGENTS_BACKEND_CONFIG_FOLDER`** → `config.yaml`. |
 | Builders / UI | *(none)* | Env only (builder env / UI nginx wrapper). |
 
 **Golden path for admins:** derive intent from Helm values → rendered manifests → confirm against the Go/TS loaders above when in doubt.
@@ -36,7 +36,7 @@ Annotated **YAML schemas** used by file-backed binaries live only where the load
 | **qubership-api-linter-service** | **`config.yaml` on disk** | **`LINTER_CONFIG_FOLDER`**; optional **`LOG_LEVEL`**, **`GOMEMLIMIT`**. File-backed: DB, `technicalParameters.apihub.*`, `linters.*`, `olric.*`. Helm: **`qubershipApiLinterService.env`** → `qubership-api-linter-service-config-secret.yaml`. |
 | **qubership-apihub-agents-backend** | **`config.yaml` on disk** | **`AGENTS_BACKEND_CONFIG_FOLDER`**; optional **`LOG_LEVEL`**, **`GOMEMLIMIT`**. File-backed: DB, `technicalParameters.apihub.*`, `businessParameters.*`, `security.*`, `cleanup.snapshots.*`. Helm: **`qubershipApihubAgentsBackend.env`** → `qubership-apihub-agents-backend-config-secret.yaml`. |
 
-**Kubernetes agent** (optional extension, not started by default Compose bundle): configured like the backend pattern — **`config.yaml`** from [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-agent/blob/develop/qubership-apihub-agent/config.template.yaml), plus Ingress for **`agentUrl`**.
+**Kubernetes agent** (optional extension, not started by default Compose bundle): configured like the backend pattern — **`config.yaml`** from [`config.template.yaml`](../backend/agent/config.template.yaml), plus Ingress for **`agentUrl`**.
 
 ---
 
@@ -135,6 +135,6 @@ These must stay **aligned across files/env**:
 
 | Topic | Prefer |
 |-------|--------|
-| Auth / SAML / OIDC model | Backend [security_model.md](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/security/security_model.md), **`security.externalIdentityProviders`** in **`config.template.yaml`** |
-| Data retention / cleanup jobs | Backend **`cleanup`** section + [data_maintenance](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/data_maintenance.md) |
-| End user workflows | Portal & Agents Markdown guides ([Portal User Guide](https://github.com/Netcracker/qubership-apihub-ui/blob/develop/docs/Portal%20User%20Guide.md), [Agent User Guide](https://github.com/Netcracker/qubership-apihub-ui/blob/develop/docs/Agent%20User%20Guide.md)) + [Wiki](https://github.com/Netcracker/qubership-apihub/wiki) |
+| Auth / SAML / OIDC model | Backend [security_model.md](../backend/portal-backend/docs/security/security_model.md), **`security.externalIdentityProviders`** in **`config.template.yaml`** |
+| Data retention / cleanup jobs | Backend **`cleanup`** section + [data_maintenance](../backend/portal-backend/docs/data_maintenance.md) |
+| End user workflows | Portal & Agents Markdown guides ([Portal User Guide](../frontend/ui/docs/Portal%20User%20Guide.md), [Agent User Guide](../frontend/ui/docs/Agent%20User%20Guide.md)) + [Wiki](https://github.com/Netcracker/qubership-apihub/wiki) |

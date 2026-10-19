@@ -50,12 +50,12 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 
 | Service | Boot configuration | Key env var(s) |
 |---------|-------------------|----------------|
-| **qubership-apihub-backend** | **`config.yaml`** (path set by `APIHUB_CONFIG_FOLDER`, default `./`), same schema as [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/qubership-apihub-service/config.template.yaml) | `APIHUB_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
+| **qubership-apihub-backend** | **`config.yaml`** (path set by `APIHUB_CONFIG_FOLDER`, default `./`), same schema as [`config.template.yaml`](../backend/portal-backend/config.template.yaml) | `APIHUB_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
 | **qubership-apihub-ui** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_NC_SERVICE_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, `APIHUB_AGENTS_BACKEND_ADDRESS` |
 | **qubership-apihub-build-task-consumer** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_API_KEY`, `LOG_LEVEL`, `FOLDER_STORE`, `OPERATIONS_BUILD_BATCH` |
 | **qubership-api-linter-service** | **`config.yaml`** (path set by `LINTER_CONFIG_FOLDER`), same schema as [`config.template.yaml`](https://github.com/Netcracker/qubership-api-linter-service/blob/develop/qubership-api-linter-service/config.template.yaml) | `LINTER_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
-| **qubership-apihub-agents-backend** | **`config.yaml`** (path set by `AGENTS_BACKEND_CONFIG_FOLDER`), same schema as [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-agents-backend/blob/develop/qubership-apihub-agents-backend/config.template.yaml) | `AGENTS_BACKEND_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
-| **qubership-apihub-agent** *(K8s, optional)* | **`config.yaml`** (path set by `AGENT_CONFIG_FOLDER`), same schema as [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-agent/blob/develop/qubership-apihub-agent/config.template.yaml) | `APIHUB_CONFIG_FOLDER` |
+| **qubership-apihub-agents-backend** | **`config.yaml`** (path set by `AGENTS_BACKEND_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/agents-backend/config.template.yaml) | `AGENTS_BACKEND_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
+| **qubership-apihub-agent** *(K8s, optional)* | **`config.yaml`** (path set by `AGENT_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/agent/config.template.yaml) | `APIHUB_CONFIG_FOLDER` |
 
 **Helm:** `qubershipApihubBackend.env`, `qubershipApiLinterService.env`, and `qubershipApihubAgentsBackend.env` in `values.yaml` are each serialised as YAML into a per-service Secret `config.yaml`, mounted under `/app/<service>/etc/`. The UI and builder receive env vars injected directly by Deployment templates.
 
@@ -199,7 +199,7 @@ APIHUB_AGENTS_BACKEND_ADDRESS=qubership-apihub-agents-backend:8080
 
 #### qubership-apihub-backend
 
-Configuration is via **`config.yaml`** (path: `APIHUB_CONFIG_FOLDER`). The annotated full template: [`config.template.yaml`](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/qubership-apihub-service/config.template.yaml).
+Configuration is via **`config.yaml`** (path: `APIHUB_CONFIG_FOLDER`). The annotated full template: [`config.template.yaml`](../backend/portal-backend/config.template.yaml).
 
 Process-level env vars (the only ones the backend binary reads directly):
 

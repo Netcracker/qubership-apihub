@@ -87,9 +87,9 @@ This package generates `generated/suite-data.ts` from `bin/comparison-base-suite
 
 ## Used by (clients)
 
-- [`Netcracker/qubership-apihub-api-diff`](https://github.com/Netcracker/qubership-apihub-api-diff): runs compatibility suite tests and uses CS cases as inputs for diff classification.
-- [`Netcracker/qubership-apihub-apispec-view`](https://github.com/Netcracker/qubership-apihub-apispec-view): generates Storybook stories and screenshot tests to visualize compatibility suite cases (OpenAPI).
-- [`Netcracker/qubership-apihub-api-doc-viewer`](https://github.com/Netcracker/qubership-apihub-api-doc-viewer): generates Storybook stories and screenshot tests to visualize compatibility suite cases (GraphQL).
+- [`frontend/api-diff`](../api-diff/): runs compatibility suite tests and uses CS cases as inputs for diff classification.
+- [`frontend/apispec-view`](../apispec-view/): generates Storybook stories and screenshot tests to visualize compatibility suite cases (OpenAPI).
+- [`frontend/api-doc-viewer`](../api-doc-viewer/): generates Storybook stories and screenshot tests to visualize compatibility suite cases (GraphQL).
 
 When writing tests, it is necessary to follow the structure of the compatibility suite:
 

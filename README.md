@@ -69,19 +69,19 @@ For a **full feature list**, see **[Features list](https://github.com/Netcracker
 
 The central **Go** service: REST API, authentication (SAML / OIDC / LDAP), RBAC, package and version lifecycle, build task orchestration, and integrations (e.g. MCP server, AI chat). It persists state in PostgreSQL and coordinates asynchronous builds and notifications.
 
-**Repository:** [qubership-apihub-backend](https://github.com/Netcracker/qubership-apihub-backend)
+**Module:** [`backend/portal-backend`](./backend/portal-backend/)
 
 ### Builder service
 
 Stateless **NestJS** workers pull build tasks, run the **api-processor** pipeline (parse → operations → normalize → diff → changelog / export), and return artifacts to the registry. Supports REST, GraphQL, AsyncAPI, Markdown, and unknown/generic documents.
 
-**Repository:** [qubership-apihub-build-task-consumer](https://github.com/Netcracker/qubership-apihub-build-task-consumer)
+**Module:** [`frontend/build-task-consumer`](./frontend/build-task-consumer/)
 
 ### Web portal
 
 **React** + **MUI** + **Vite**: the main Dev Portal for browsing the catalog, comparing versions, viewing API quality, managing settings, and (separately) the **Agents** app for cluster discovery workflows.
 
-**Repository:** [qubership-apihub-ui](https://github.com/Netcracker/qubership-apihub-ui)
+**Module:** [`frontend/ui`](./frontend/ui/)
 
 ---
 
@@ -91,14 +91,14 @@ Stateless **NestJS** workers pull build tasks, run the **api-processor** pipelin
 
 Pluggable quality gate: **Spectral** for OpenAPI and AsyncAPI, optional **OpenAI**-based review for OpenAPI, plus **aggregated version scoring** exposed via the linter API. Subscribes to publish events so new versions are validated automatically.
 
-**Repository:** [qubership-api-linter-service](https://github.com/Netcracker/qubership-api-linter-service)
+**Module:** [`backend/api-linter-service`](./backend/api-linter-service/)
 
 ### APIHUB Agents
 
 **Agents backend** registers and manages **APIHUB agents** deployed in customer clusters. Agents perform **service discovery** (OpenAPI, GraphQL, AsyncAPI, Markdown, JSON Schema, and more) and support snapshots and promotion flows.
 
-- [qubership-apihub-agents-backend](https://github.com/Netcracker/qubership-apihub-agents-backend)  
-- [qubership-apihub-agent](https://github.com/Netcracker/qubership-apihub-agent)
+- [`backend/agents-backend`](./backend/agents-backend/)
+- [`backend/agent`](./backend/agent/)
 
 More context: [Supplementary applications](https://github.com/Netcracker/qubership-apihub/wiki#supplementary-applications) on the wiki.
 
@@ -149,7 +149,7 @@ See [`AGENTS.md`](AGENTS.md) and [`agent-packages/README.md`](agent-packages/REA
 
 ## Repository role
 
-This repository (**qubership-apihub**) is the **umbrella deployment project**: Helm charts, Compose stacks, and product-level documentation. Application source code lives in the component repositories linked above; reusable CI is in [qubership-apihub-ci](https://github.com/Netcracker/qubership-apihub-ci).
+This repository (**qubership-apihub**) is the monorepo of the product: the source code of every component (see the modules linked above), the Helm charts and Compose stacks, and the product-level documentation. Reusable CI is in [qubership-apihub-ci](https://github.com/Netcracker/qubership-apihub-ci).
 
 ---
 

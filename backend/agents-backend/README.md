@@ -1,6 +1,6 @@
 # qubership-apihub-agents-backend
 
-A Go-based microservice backend that provides management and orchestration capabilities for [Qubership APIHUB agent](https://github.com/Netcracker/qubership-apihub-agent) instances.
+A Go-based microservice backend that provides management and orchestration capabilities for [Qubership APIHUB agent](../agent/) instances.
 This service handles agent registration, service discovery, snapshot management, and security checks.
 
 ## High Level architecture

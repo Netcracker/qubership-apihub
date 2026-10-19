@@ -55,7 +55,7 @@ here
   |----------|---------|
   | headless | true    |
 
-  Also, you should not specify all Chrome arguments in section `args` but only those that you want to add in addition to default values: [default](https://github.com/Netcracker/qubership-apihub-jest-chrome-in-docker-environment/blob/main/src/lib/core/defaults.ts).
+  Also, you should not specify all Chrome arguments in section `args` but only those that you want to add in addition to default values: [default](./src/lib/core/defaults.ts).
   Example:
   ```js
   module.exports = {

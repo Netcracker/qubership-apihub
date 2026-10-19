@@ -45,11 +45,11 @@ Older copies of dumps lived in **`admin-guide`**; authoritative commands now liv
 
 ### Data TTL & automated cleanup
 
-Backend schedules (revisions/comparisons/soft-delete/unreferenced/builds) are declared in **`config.yaml`** **`cleanup`** block (see **`config.template.yaml`**). Behaviour + operational interpretation: **[`data_maintenance.md`](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/data_maintenance.md)**.
+Backend schedules (revisions/comparisons/soft-delete/unreferenced/builds) are declared in **`config.yaml`** **`cleanup`** block (see **`config.template.yaml`**). Behaviour + operational interpretation: **[`data_maintenance.md`](../backend/portal-backend/docs/data_maintenance.md)**.
 
 ### Schema/internal migration analysis
 
-When migrating stored specs between APIHUB versions, follow **[migration analysis procedure](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/ops_migration_analysis_guide.md)** to read job logs responsibly.
+When migrating stored specs between APIHUB versions, follow **[migration analysis procedure](../backend/portal-backend/docs/ops_migration_analysis_guide.md)** to read job logs responsibly.
 
 ---
 
@@ -57,7 +57,7 @@ When migrating stored specs between APIHUB versions, follow **[migration analysi
 
 ### OIDC / SAML integration
 
-Detailed protocol behaviours: **[`security/security_model.md`](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/security/security_model.md)**.
+Detailed protocol behaviours: **[`security/security_model.md`](../backend/portal-backend/docs/security/security_model.md)**.
 
 ### Access tokens lifecycle
 
