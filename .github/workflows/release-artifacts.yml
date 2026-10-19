@@ -1,0 +1,99 @@
+name: Release artifacts
+
+# Publishes a release that release-finish.yml pushed to main: the tags at the commit say what was released
+# (tools/release/artifacts.js). In this order, so every link in the notes exists when a release appears:
+#   1. point <image>:<version> at the multi-arch image this CI run published under the branch tag;
+#   2. build and `pnpm publish -r` the released npm packages (pnpm skips versions the registry has);
+#   3. publish the Helm charts: step 6 of the migration plan, a placeholder until then;
+#   4. create the GitHub Releases, modules with make_latest=false, then the product as Latest.
+# The notes are the minimal ones of tools/release/notes/minimal.js until steps 4-5 replace it.
+#
+# ci.yml calls it twice: from release-artifacts on main (dry_run false, write permissions) and from
+# release-artifacts-dry-run on a dispatch with release_dry_run (read permissions). A dry run publishes
+# nothing; it reads the registries and GitHub and writes what it would do to the job summary. On a commit
+# without release tags it previews the nearest ancestor with a product tag.
+#
+# The caller sets the permissions; this workflow asks for none of its own.
+
+on:
+  workflow_call:
+    inputs:
+      dry_run:
+        description: 'Publish nothing; report what would be published.'
+        type: boolean
+        required: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      DRY_RUN: ${{ inputs.dry_run }}
+      REF: ${{ github.ref }}
+      SHA: ${{ github.sha }}
+      SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # The tags and their history: the notes list the commits since each previous tag.
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-workspace
+        with:
+          cache-scope: release-artifacts
+
+      - name: Plan the release artifacts
+        shell: bash
+        env:
+          OWNER: ${{ github.repository_owner }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          set -euo pipefail
+          # Outside the checkout, so nothing of the plan can reach a package or a build context.
+          echo "PLAN=$RUNNER_TEMP/release/plan.json" >> "$GITHUB_ENV"
+          nearest=()
+          if [ "$DRY_RUN" = 'true' ]; then nearest=(--nearest); fi
+          node tools/release/artifacts.js --out "$RUNNER_TEMP/release" "${nearest[@]}" >> "$GITHUB_STEP_SUMMARY"
+          PLAN="$RUNNER_TEMP/release/plan.json" bash tools/release/publish-artifacts.sh check
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Point the image version tags at this run's images
+        shell: bash
+        run: bash tools/release/publish-artifacts.sh images
+
+      # The token goes in ~/.npmrc, outside the repository and every docker build context.
+      - name: Authenticate to GitHub Packages
+        shell: bash
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          printf '//npm.pkg.github.com/:_authToken=%s\n' "$NODE_AUTH_TOKEN" >> "$HOME/.npmrc"
+          git diff --exit-code --stat .npmrc
+
+      - name: Publish the npm packages
+        shell: bash
+        run: bash tools/release/publish-artifacts.sh npm
+
+      # Step 6 of the migration plan (Helm chart releases) goes here: package the product chart with
+      # version and appVersion set to the product version and the image tags pinned, push it to
+      # oci://ghcr.io/netcracker/charts, and the same for the agent chart when the agent is released.
+      # Nothing runs until the repository variable PUBLISH_CHARTS is true.
+      - name: Publish the Helm charts (step 6)
+        if: vars.PUBLISH_CHARTS == 'true'
+        shell: bash
+        run: echo "::warning::PUBLISH_CHARTS is true, but chart publishing is not implemented yet (step 6)."
+
+      - name: Create the GitHub Releases
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: bash tools/release/publish-artifacts.sh releases

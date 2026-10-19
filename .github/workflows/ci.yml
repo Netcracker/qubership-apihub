@@ -1,20 +1,26 @@
 'on':
   push:
-    # '**' rather than no filter: a bare `push:` also fires on the tags nx release pushes.
+    # '**' rather than no filter: a bare `push:` also fires on the tags release-finish.yml pushes.
     branches: ['**']
   pull_request:
     # No paths-ignore: `ci-ok` is the required check, and a skipped workflow never reports it, so a
     # documentation-only pull request would wait for it forever. The `plan` job gives such a pull
     # request no E2E tier instead.
     types: [opened, reopened, synchronize]
-  # release-finish.yml dispatches CI after its version commit: a push with GITHUB_TOKEN starts no run.
+  # The release bots push with a deploy key, and those pushes start CI by themselves;
+  # tools/release/ensure-ci.sh dispatches it only when a push started no run. release_dry_run previews
+  # the release-artifacts job of the commit (or of its nearest release) without publishing anything.
   workflow_dispatch:
+    inputs:
+      release_dry_run:
+        description: 'Preview the release artifacts (image version tags, npm packages, GitHub Releases); publish nothing.'
+        type: boolean
+        default: false
 
 name: CI
 
-# One run per ref; a newer push cancels the older run, except on main and release: a publish or image
-# run there is never cancelled (release-finish.yml dispatches CI right after a push that already
-# started a run, and one of the two would otherwise be cancelled). Those runs queue instead.
+# One run per ref; a newer push cancels the older run, except on main and release: a run there publishes
+# images, and on main the release artifacts, so it is never cancelled half-way. Those runs queue instead.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' && github.ref != 'refs/heads/release' }}
@@ -42,6 +48,7 @@ jobs:
       e2e_tier: ${{ steps.e2e_tier.outputs.value }}
       storybooks: ${{ steps.storybooks.outputs.value }}
       can_publish: ${{ steps.can_publish.outputs.value }}
+      release_tags: ${{ steps.release_tags.outputs.value }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -121,6 +128,18 @@ jobs:
         env:
           REF: ${{ github.ref }}
         run: echo "branch_tag=$(bash tools/ci/branch-tag.sh "$REF")" >> "$GITHUB_OUTPUT"
+
+      # Does this commit carry release tags (`<component>/X.Y.Z` or the bare product `X.Y.Z`, pushed by
+      # release-finish.yml)? Decides whether release-artifacts runs on main.
+      - name: Release tags at this commit
+        id: release_tags
+        shell: bash
+        run: |
+          set -euo pipefail
+          tags="$(git tag --points-at HEAD | grep -E '(^|/)[0-9]+\.[0-9]+\.[0-9]+$' || true)"
+          if [ -n "$tags" ]; then value=true; else value=false; fi
+          echo "value=$value" >> "$GITHUB_OUTPUT"
+          echo "release tags at HEAD: ${tags:-none}" | tr '\n' ' '
 
       # Can this run write to ghcr? A pull request from a fork and every Dependabot run get a read-only
       # token and no secrets, so the image, E2E and Storybook jobs are skipped there, and
@@ -647,59 +666,39 @@ jobs:
           PAGES_DEPLOY: ${{ vars.PAGES_DEPLOY }}
         run: node tools/ci/ci-verdict.js | tee -a "$GITHUB_STEP_SUMMARY"
 
-  # Publishes the npm packages on main, after ci-ok passes. `"private": true` in each package.json
-  # decides what is published. Always pnpm: `npm pack` leaves `workspace:^` in the tarball, and
-  # the package cannot be installed.
-  publish:
-    needs: [ci-ok]
-    # always(): without it, a skipped job upstream of ci-ok skips this job too, even on a green run.
-    if: always() && needs.ci-ok.result == 'success' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+  # Publishes a release on main after ci-ok passes, when the commit carries the tags release-finish.yml
+  # pushed: image version tags from this run's images, npm packages, GitHub Releases
+  # (.github/workflows/release-artifacts.yml). Both jobs run after the verdict and are not in its needs,
+  # so they never decide ci-ok, on main or anywhere else. `always()`: a skipped job upstream of ci-ok
+  # would otherwise skip these too, even on a green run.
+  release-artifacts:
+    needs: [plan, ci-ok]
+    if: >-
+      always()
+      && needs.ci-ok.result == 'success'
+      && github.ref == 'refs/heads/main'
+      && github.event_name != 'pull_request'
+      && needs.plan.outputs.release_tags == 'true'
+      && inputs.release_dry_run != true
+    permissions:
+      contents: write # create the GitHub Releases
+      packages: write # image version tags and npm packages in ghcr
+    uses: ./.github/workflows/release-artifacts.yml
+    with:
+      dry_run: false
+
+  # The same, publishing nothing, on any branch: dispatch CI with release_dry_run. After ci-ok, so the
+  # images of the run exist, but not gated on it: a preview is useful on a red run too.
+  release-artifacts-dry-run:
+    needs: [plan, ci-ok]
+    if: >-
+      always()
+      && needs.plan.result == 'success'
+      && github.event_name == 'workflow_dispatch'
+      && inputs.release_dry_run == true
     permissions:
       contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: ./.github/actions/setup-workspace
-        with:
-          cache-scope: publish
-
-      # The token goes in ~/.npmrc, outside the repository and every docker build context.
-      - name: Authenticate to GitHub Packages
-        shell: bash
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          printf '//npm.pkg.github.com/:_authToken=%s\n' "$NODE_AUTH_TOKEN" >> "$HOME/.npmrc"
-          echo "wrote auth for npm.pkg.github.com to ~/.npmrc"
-          echo "repo .npmrc is untouched:"
-          git diff --exit-code --stat .npmrc && echo "  clean"
-
-      # --no-git-checks: CI checks out a detached HEAD, which pnpm otherwise refuses.
-      - name: Publish
-        shell: bash
-        run: |
-          set -euo pipefail
-          pnpm publish -r --no-git-checks --access restricted 2>&1 | tee "$RUNNER_TEMP/publish.log"
-
-      - name: What was published
-        if: always()
-        shell: bash
-        run: |
-          {
-            echo "### npm publish"
-            echo
-            if grep -qE '^\+ @' "$RUNNER_TEMP/publish.log" 2>/dev/null; then
-              echo '| package | version |'
-              echo '|---|---|'
-              grep -oE '^\+ @[^ ]+' "$RUNNER_TEMP/publish.log" \
-                | sed 's/^+ //' \
-                | awk -F'@' '{printf "| `@%s` | %s |\n", $2, $3}'
-            else
-              echo '_Nothing published._ On a re-run of the same commit this is the expected'
-              echo 'result: every version already exists in the registry and pnpm skips it.'
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
+      packages: read
+    uses: ./.github/workflows/release-artifacts.yml
+    with:
+      dry_run: true

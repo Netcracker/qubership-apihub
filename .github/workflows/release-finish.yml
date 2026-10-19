@@ -25,6 +25,11 @@ name: Release finish
 # A dry run (the default) does steps 1 and 2 locally in the runner and prints the plan to the job summary;
 # it cannot push, because the job then checks out without the deploy key.
 #
+# Dispatch it from `develop`, the default branch (Actions → Release finish → Run workflow, branch
+# develop): a real run refuses the workflow file of any other branch. It always releases `release`,
+# whatever branch it is dispatched from. The images, npm packages, and GitHub Releases follow in the
+# release-artifacts job of the CI run on main.
+#
 # The bot pushes with the deploy key apihub-release-bot (secret RELEASE_BOT_SSH_KEY): the rulesets let it
 # bypass them, and its pushes start workflows, which a GITHUB_TOKEN push does not.
 
@@ -68,7 +73,7 @@ jobs:
             exit 1
           fi
           if [ "$WORKFLOW_BRANCH" != "$DEFAULT_BRANCH" ]; then
-            echo "::error::Run a real release from the workflow on $DEFAULT_BRANCH, not on $WORKFLOW_BRANCH."
+            echo "::error::Dispatch a real release from $DEFAULT_BRANCH (the default branch), not from $WORKFLOW_BRANCH."
             exit 1
           fi
           if [ "$HAS_KEY" != 'true' ]; then
