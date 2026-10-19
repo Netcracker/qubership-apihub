@@ -1,16 +1,18 @@
 ---
 
 # The workflow template for automatic PR labeler.
-# It requires to have a configuration file with labels and conditions to apply them.
-# The configuration file should be placed in the .github folder and named auto-labeler-config.yaml.
-# Example file can be found there:
+# It applies two kinds of labels:
+#   - conventional-commit labels (fix, feature, docs, and so on) from .github/auto-labeler-config.yaml;
+#   - module labels (`module:<name>`) from the changed paths, from .github/labeler.yml.
+# Example of the conventional-commits file can be found there:
 # https://github.com/Netcracker/.github/blob/main/config/examples/auto-labeler-config.yaml
 
 name: Automatic PR Labeler
 
 on:
   pull_request:
-    branches: [main]
+    # develop is the default branch, release and main are the other long-lived branches (see release-process.md).
+    branches: [main, develop, release]
     types:
       [opened, reopened, synchronize]
 
@@ -26,6 +28,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: "Assign module labels by changed paths"
+        # A token of a pull request from a fork is read-only, so labels are not applied there.
+        if: ${{ github.event.pull_request.base.repo.id == github.event.pull_request.head.repo.id }}
+        uses: actions/labeler@v5
+        with:
+          repo-token: ${{ github.token }}
+          configuration-path: .github/labeler.yml
+          # Labels set by hand or by the step below stay as they are.
+          sync-labels: false
+
       - name: "Execute assign labels"
         id: action-assign-labels
         uses: mauroalderete/action-assign-labels@v1
@@ -39,7 +51,7 @@ jobs:
         if: ${{ github.event.pull_request.base.repo.id != github.event.pull_request.head.repo.id }}
         run: |
           {
-            echo "⚠️ Pull request from fork! ⚠️";
+            echo "Warning: pull request from a fork.";
             echo "Labels will not be applied to PR. Assign them manually please.";
             echo "Labels to assign: ${{ steps.action-assign-labels.outputs.labels-next }}";
           } >> "$GITHUB_STEP_SUMMARY"

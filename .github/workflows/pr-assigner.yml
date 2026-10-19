@@ -5,6 +5,8 @@ on:
     types: [opened, reopened, synchronize]
     branches:
       - main
+      - develop
+      - release
 
 permissions:
   contents: read
@@ -20,7 +22,7 @@ jobs:
       - name: "Check if PR is from a fork"
         run: |
           if [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.event.pull_request.base.repo.full_name }}" ]; then
-            echo "⚠️ Pull request is from a fork — skipping assignee assignment (no write permissions)."
+            echo "Warning: pull request is from a fork, skipping assignee assignment (no write permissions)."
             exit 0
           fi
 

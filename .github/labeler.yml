@@ -1,0 +1,24 @@
+---
+# Path based labels for actions/labeler (see .github/workflows/automatic-pr-labeler.yaml).
+# Only modules that already have a `module:<name>` label in the repository are listed.
+# Add an entry here after creating the label for another module (agent, test-service, commons-go, and so on).
+
+'module:portal-backend':
+  - changed-files:
+      - any-glob-to-any-file: 'backend/portal-backend/**'
+
+'module:api-linter-service':
+  - changed-files:
+      - any-glob-to-any-file: 'backend/api-linter-service/**'
+
+'module:agents-backend':
+  - changed-files:
+      - any-glob-to-any-file: 'backend/agents-backend/**'
+
+'module:ui':
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/ui/**'
+
+'module:api-diff':
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/api-diff/**'
