@@ -5,9 +5,53 @@ targets:
   - claude
 dependencies:
   apm:
+    # Store packages
     - Netcracker/qubership-ai-packages/agent-packages/english-developer-style
     - Netcracker/qubership-ai-packages/agent-packages/markdown-line-length-120
     - Netcracker/qubership-apihub-ci/agent-packages/development-conventions
+    - Netcracker/qubership-apihub-ci/agent-packages/go-conventions
+    - Netcracker/qubership-apihub-ci/agent-packages/github-ticket-implementation-planner
+    - Netcracker/qubership-apihub-ci/agent-packages/apihub-go-developer
+    - Netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
+    # Repository-level packages
     - ./agent-packages/apihub-deployment-authoring
-
-
+    - ./agent-packages/apihub-deployment-followup
+    # backend/agent
+    - ./backend/agent/agent-packages/agent-conventions
+    - ./backend/agent/agent-packages/apihub-agent-developer
+    # backend/portal-backend
+    - ./backend/portal-backend/agent-packages/advanced-verification
+    - ./backend/portal-backend/agent-packages/apihub-backend-developer
+    - ./backend/portal-backend/agent-packages/apihub-backend-self-review
+    - ./backend/portal-backend/agent-packages/backend-conventions
+    # frontend/api-diff
+    - ./frontend/api-diff/agent-packages/api-diff-authoring
+    - ./frontend/api-diff/agent-packages/api-diff-testing
+    # frontend/api-doc-viewer
+    - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-authoring
+    - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-review-session
+    - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-reviewing
+    - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-testing
+    - ./frontend/api-doc-viewer/agent-packages/api-doc-viewer-using
+    - ./frontend/api-doc-viewer/agent-packages/next-data-model-authoring
+    - ./frontend/api-doc-viewer/agent-packages/next-data-model-using
+    # frontend/api-processor
+    - ./frontend/api-processor/agent-packages/api-processor-authoring
+    - ./frontend/api-processor/agent-packages/api-processor-testing
+    - ./frontend/api-processor/agent-packages/api-processor-using
+    # frontend/api-unifier
+    - ./frontend/api-unifier/agent-packages/api-unifier-authoring
+    - ./frontend/api-unifier/agent-packages/api-unifier-testing
+    # frontend/ddlapi
+    - ./frontend/ddlapi/agent-packages/ddlapi-authoring
+    - ./frontend/ddlapi/agent-packages/ddlapi-testing
+    - ./frontend/ddlapi/agent-packages/ddlapi-using
+    # frontend/json-crawl
+    - ./frontend/json-crawl/agent-packages/json-crawl-authoring
+    - ./frontend/json-crawl/agent-packages/json-crawl-testing
+    - ./frontend/json-crawl/agent-packages/json-crawl-using
+    # frontend/ui
+    - ./frontend/ui/agent-packages/apihub-ui-authoring
+    # tests/postman-collections
+    - ./tests/postman-collections/agent-packages/postman-e2e-authoring
+    - ./tests/postman-collections/agent-packages/postman-e2e-followup
