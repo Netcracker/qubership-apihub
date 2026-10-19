@@ -3,7 +3,8 @@ name: Release artifacts
 # Publishes a release that release-finish.yml pushed to main: the tags at the commit say what was released
 # (tools/release/artifacts.js). In this order, so every link in the notes exists when a release appears:
 #   1. point <image>:<version> at the multi-arch image this CI run published under the branch tag;
-#   2. build and `pnpm publish -r` the released npm packages (pnpm skips versions the registry has);
+#   2. build the released npm packages (before any login) and `pnpm publish -r` them; a version that the
+#      registry already holds from before the release stops a real run;
 #   3. publish the Helm charts: step 6 of the migration plan, a placeholder until then;
 #   4. create the GitHub Releases, modules with make_latest=false, then the product as Latest.
 # The notes are the minimal ones of tools/release/notes/minimal.js until steps 4-5 replace it.
@@ -37,6 +38,8 @@ jobs:
         with:
           # The tags and their history: the notes list the commits since each previous tag.
           fetch-depth: 0
+          # The job token can create releases; nothing here fetches or pushes, and gh reads GH_TOKEN.
+          persist-credentials: false
 
       - uses: ./.github/actions/setup-workspace
         with:
@@ -55,6 +58,11 @@ jobs:
           if [ "$DRY_RUN" = 'true' ]; then nearest=(--nearest); fi
           node tools/release/artifacts.js --out "$RUNNER_TEMP/release" "${nearest[@]}" >> "$GITHUB_STEP_SUMMARY"
           PLAN="$RUNNER_TEMP/release/plan.json" bash tools/release/publish-artifacts.sh check
+
+      # Before any registry login: the build runs repository code, which must not find a token on disk.
+      - name: Build the npm packages
+        shell: bash
+        run: bash tools/release/publish-artifacts.sh build
 
       - uses: docker/setup-buildx-action@v4
 
