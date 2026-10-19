@@ -13,6 +13,7 @@ Collection of Go modules and libraries for the Qubership API Hub ecosystem.
 A library for automatic discovery and exposure of API specifications.
 
 **Key Features:**
+
 - Automatic discovery of API specifications in the file system
 - Multiple format support: OpenAPI 2.0/3.0/3.1, GraphQL, Markdown
 - HTTP endpoint generation for accessing specifications
@@ -21,6 +22,7 @@ A library for automatic discovery and exposure of API specifications.
 **[📖 View full documentation →](./api-spec-exposer/README.md)**
 
 **Installation:**
+
 ```bash
 go get github.com/Netcracker/qubership-apihub/backend/commons-go
 ```
@@ -105,6 +107,7 @@ go test ./... -v
 ### Code Style
 
 The project follows standard Go conventions:
+
 - Use `gofmt` for formatting
 - Run `go vet` before committing
 - Write tests for new functionality
