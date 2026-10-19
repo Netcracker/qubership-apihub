@@ -12,6 +12,7 @@ RUN mkdir -p /opt/jdiff /tmp/java-task-consumer \
  && chown -R 10001:0 /opt/jdiff /tmp/java-task-consumer
 
 # japicmp is invoked as external process (same as PoC)
+# checkov:skip=CKV_DOCKER_4: ADD downloads a pinned release from a URL on purpose
 ADD --chown=10001:0 \
     https://repo1.maven.org/maven2/com/github/siom79/japicmp/japicmp/${JAPICMP_VERSION}/japicmp-${JAPICMP_VERSION}-jar-with-dependencies.jar \
     /opt/jdiff/japicmp.jar
