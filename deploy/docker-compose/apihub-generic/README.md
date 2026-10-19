@@ -87,13 +87,13 @@ On Windows need to tune WSL:
 
 1. Go to Podman desktop, open Podman machine terminal
 2. Edit file '/etc/wsl.conf' (using sudo)
-Add the following lines to the end:
+   Add the following lines to the end:
 
-```text
-[automount]
-options = "metadata"
-```
+   ```text
+   [automount]
+   options = "metadata"
+   ```
 
-One-liner to do it: `echo -e "\n[automount]\noptions = "metadata"" | sudo tee -a /etc/wsl.conf`
+   One-liner to do it: `echo -e "\n[automount]\noptions = "metadata"" | sudo tee -a /etc/wsl.conf`
 
 3. Restart your PC (restart of WSL only is not enough)
