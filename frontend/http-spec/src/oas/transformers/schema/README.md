@@ -7,6 +7,7 @@ the above converter is the only one we actually used, while [https://github.com/
 ## Differences
 
 ### Removed options
+
 * strictMode (this was actually introduced for Stoplight, it's enabled by default now)
 * dateToDateTime (was unused)
 * cloneSchema (true by default now, we never want to alter schema)
@@ -16,4 +17,5 @@ the above converter is the only one we actually used, while [https://github.com/
 * keepNotSupported
 
 ### Changed behavior
+
 * empty properties are not removed
