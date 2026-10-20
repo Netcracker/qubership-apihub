@@ -13,8 +13,9 @@ This page is for the people who run a release. It describes what the workflows a
 1. Release start   develop --fast-forward--> release        (CI runs on release, :next images)
 2. Wait            CI on release is green; hotfixes go into release by pull request
 3. Release finish  dry_run = true, read the plan in the job summary
-4. Release finish  dry_run = false, sprint = APIHUB-26.3.5   (main, tags, back-merge, CI on main)
-5. Wait            CI on main publishes images, npm packages, and GitHub Releases
+4. Landing card    pull request into release with the landing release card
+5. Release finish  dry_run = false, sprint = APIHUB-26.3.5   (main, tags, back-merge, CI on main)
+6. Wait            CI on main publishes images, npm packages, and GitHub Releases
 ```
 
 With the GitHub CLI, from any clone:
@@ -120,7 +121,19 @@ Read the plan; see [Read the dry-run summary](#read-the-dry-run-summary).
 A dry run does steps 1 and 2 of [What Release finish does](#what-release-finish-does) locally on the runner. It commits,
 tags, and pushes nothing. You can dispatch a dry run from any branch, for example to test a change to the workflow.
 
-### 5. Run Release finish for real
+### 5. Add the landing release card
+
+The product landing shows one card per product version. Take the version from the dry-run summary, the line
+`Product: <previous> → <next>`. Open a pull request into `release` that adds
+`sites/landing/src/content/releases/v<X>-<Y>-<Z>.md` for that version, for example `v2-15-1.md` for 2.15.1. Copy the
+frontmatter of the newest card, set `latest: true` on the new one and remove it from the previous one. The
+`apihub-landing-refresh` agent skill drafts the card from the product release notes.
+
+The dry run warns when the card is missing: a `::warning::` annotation and a line in the job summary. The warning
+does not fail the run. Run the dry run again after the pull request is merged to see it clear. When the product stays
+at its version, no card is needed.
+
+### 6. Run Release finish for real
 
 Run **Release finish** again from `develop`, with `dry_run` unchecked and the `sprint` input set to the Project 9
 sprint name, such as `APIHUB-26.3.5`. The sprint is stored in the annotation of the product tag. Both modes refuse a
@@ -132,7 +145,7 @@ sprint with characters other than letters, digits, `.`, `_`, and `-`. A real run
 
 It always releases `release`, whichever branch you dispatch from.
 
-### 6. Watch the result
+### 7. Watch the result
 
 The job summary lists the pushed tags, or says "Nothing to release". Then follow the CI run on `main`; see
 [What CI does on main](#what-ci-does-on-main).
@@ -196,6 +209,8 @@ Check these points:
 - **Not released.** These components keep their last tag and their last image.
 - **Warning.** A "Nx bumps these components differently" warning is a self-check that should never appear. If it does,
   stop and ask a maintainer of `tools/release/`.
+- **Landing card.** A "landing release card is missing" warning means `sites/landing/src/content/releases/` has no card
+  for the product version; see [Add the landing release card](#5-add-the-landing-release-card).
 - **Nothing to release.** The run found no bump at all. See [Nothing to release](#nothing-to-release).
 
 A dry run checks the sprint only when you give one. It does not check the deploy key or the dispatching branch, and it
@@ -527,6 +542,29 @@ jobs. If the cause is a defect in the code, the fix ships with the next release.
 
 `The secret RELEASE_BOT_SSH_KEY is not set` means a repository admin has to add the private key of the deploy key
 `apihub-release-bot` as an Actions secret, and the public half as a deploy key with write access.
+
+## Tips and tricks
+
+### You forgot the landing release card
+
+You released without the card, so the landing does not list the version. Do not commit it to `main`. The next
+**Release finish** would fail with "Stale main", because `main` would hold a commit that `release` lacks. CI on `main`
+would also rebuild every image and move `:latest`.
+
+1. Open a pull request into `develop` that adds `sites/landing/src/content/releases/v<X>-<Y>-<Z>.md`.
+2. To publish the card before the next release, point the Pages workflow at `develop` and dispatch it. The Pages
+   workflow honors the repository variable `LANDING_REF` as the ref it builds the landing from:
+
+   ```bash
+   gh variable set LANDING_REF --body develop --repo Netcracker/qubership-apihub
+   gh workflow run pages.yml --repo Netcracker/qubership-apihub --ref develop
+   ```
+
+3. After the next release, remove the variable, so the landing is built from `main` again:
+
+   ```bash
+   gh variable delete LANDING_REF --repo Netcracker/qubership-apihub
+   ```
 
 ## Related files
 
