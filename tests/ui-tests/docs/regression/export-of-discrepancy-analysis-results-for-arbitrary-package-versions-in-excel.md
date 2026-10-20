@@ -1,7 +1,6 @@
 # Export of discrepancy analysis results for arbitrary package versions in Excel
 
-[TC-1] Export All Changes for Package Version
--------------
+## [TC-1] Export All Changes for Package Version
 
 | Step | ER |
 | --- | --- |
@@ -10,9 +9,7 @@
 |3. Select the "All changes" option|System initiates export and downloads an Excel file with all changed operations|
 |4. Open the Excel file|File contains full list of changed REST/GraphQL operations with no filters applied|
 
-
-[TC-2] Export Filtered Changes for Package Version
--------------
+## [TC-2] Export Filtered Changes for Package Version
 
 | Step | ER |
 | --- | --- |
@@ -22,9 +19,7 @@
 |4. Select the "Filtered changes" option|System downloads an Excel file containing only filtered changed operations|
 |5. Open the Excel file|File contains only filtered REST/GraphQL operations|
 
-
-[TC-3] Export All Changes from Group Navigation
--------------
+## [TC-3] Export All Changes from Group Navigation
 
 | Step | ER |
 | --- | --- |
@@ -33,9 +28,7 @@
 |3. Select the "All changes" option|System downloads an Excel file with all changed operations|
 |4. Open the Excel file|File contains full list of changed REST/GraphQL operations|
 
-
-[TC-4] Export Filtered Changes from Group Navigation
--------------
+## [TC-4] Export Filtered Changes from Group Navigation
 
 | Step | ER |
 | --- | --- |
@@ -45,9 +38,7 @@
 |4. Select the "Filtered changes" option|System downloads an Excel file containing filtered changed operations|
 |5. Open the Excel file|File contains only filtered REST/GraphQL operations|
 
-
-[TC-5] Security Check – Export with Editor Role
--------------
+## [TC-5] Security Check – Export with Editor Role
 
 | Step | ER |
 | --- | --- |
@@ -56,9 +47,7 @@
 |3. Select "All changes"|Excel with all changed operations is downloaded|
 |4. Open the Excel file|File confirms Editor has read permission|
 
-
-[TC-6] Security Check – Export with Viewer Role
--------------
+## [TC-6] Security Check – Export with Viewer Role
 
 | Step | ER |
 | --- | --- |
@@ -67,9 +56,7 @@
 |3. Select "All changes"|Excel with all changed operations is downloaded|
 |4. Open the Excel file|File confirms Viewer has read permission|
 
-
-[TC-7] Security Check – Export with No Read Permission
--------------
+## [TC-7] Security Check – Export with No Read Permission
 
 | Step | ER |
 | --- | --- |
