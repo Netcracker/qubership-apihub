@@ -10,12 +10,11 @@ For PostgreSQL access install PGADmin or any other similar tool.
 
 Review *.env files in this folder and fill values for the following ones:
 
-```
+```text
 APIHUB_API_KEY
 ```
 
 For database access connect to localhost:5432 postgres/postgres
-
 
 ## Start sub-parts
 
@@ -25,7 +24,7 @@ Execute `podman compose up`
 
 VSC launch.json example:
 
-```
+```json
 {
     "version": "0.2.0",
     "configurations": [
@@ -59,4 +58,4 @@ Execute `podman compose down`
 
 ## Usage
 
-http://localhost:8080/login
+<http://localhost:8080/login>
