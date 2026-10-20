@@ -66,7 +66,7 @@ If you open any workspace, you see hierarchical structure of all its groups, pac
 
 **Dashboard** is a virtual package that provides links to already published package versions or other dashboard versions. Dashboards do not have their own API documents, it only accumulates API documents from linked package/dashboard versions. See more about dashboards in [Dashboards](#dashboards) section.
 
-![](img/home_page.png)
+![Home page](img/home_page.png)
 
 ## Private
 
@@ -253,20 +253,22 @@ The following information is displayed on the revision history page:
 - Publication date
 - Published by
 
-If you click on any revision (except latest), the system opens this revision. The functionality is completely the same as for latest revision, the only difference is that revision number is displayed near version as `<version@revision>`. If you hover over such version revision, the system shows message "You are viewing the old revision <revision> of the version".
+If you click on any revision (except latest), the system opens this revision. The functionality is completely the same as for latest revision, the only difference is that revision number is displayed near version as `<version@revision>`. If you hover over such version revision, the system shows message "You are viewing the old revision `<revision>` of the version".
 
 ### Operation Groups
 
 The system allows grouping operations from package version into groups. There are two type of groups - manual and REST path prefix groups.
 
 - Manual groups: This type of group allows you to create group by any criteria that you needed. For example, for product API it can be useful to divide operations by consumers of this API. See more in _Manual Groups_ section.
-- REST path prefix groups: This type of group is applicable to REST operations only. Groups are created automatically based on a specified pattern applied to the paths of operations from the current package version. For example, in one package version, you may have APIs with different versions like `/api/v1/...`, `/api/v2/...`, etc., and you want to have a separate group for each API version. REST path prefix groups can be used for this purpose.
+- REST path prefix groups: This type of group is applicable to REST operations only. Groups are created automatically based on a specified pattern applied to the paths of operations from the current package version. For example, in one package version, you may have APIs with different versions like
+  `/api/v1/...`, `/api/v2/...`, etc., and you want to have a separate group for each API version. REST path prefix groups can be used for this purpose.
 
 All existing groups are listed in Groups menu.
 
 #### Download operations group
 
-You can download group which contains REST API operations as OpenAPI specification(s). The resulted specification will contain only operations from the selected operations group. There are two options of downloading operations group - reduced source specifications and combined specifications. To understand the difference let's take a look at the following example: package version contains two OpenAPI specifications:
+You can download group which contains REST API operations as OpenAPI specification(s). The resulted specification will contain only operations from the selected operations group. There are two options of downloading operations group - reduced source specifications and combined specifications. To
+understand the difference let's take a look at the following example: package version contains two OpenAPI specifications:
 
 - specification A contains 3 operations: `GET /pets`, `POST /pet`, `Delete /pet/{Id}`
 - specification B contains 2 operations: `GET /users`, `GET /users/{username}`
@@ -648,7 +650,7 @@ type Pet {
 scalar ID
 ```
 
-**API Operations page**
+### API Operations page
 
 API Operations page collects all operations from all OpenAPI/GraphQL specifications published in the current package version. If a package version contains both REST and GraphQL operations, then the API Operations page displays an API type selector. Otherwise, the API type selector is not visible.
 
@@ -682,9 +684,9 @@ You can switch between list and detailed view (by default, list view is selected
 - List view – list of all operations with information
 - Detailed view – allows you to see a preview of the operation content
 
-![](img/operations_in_package_version.png)
+![Operations in package version](img/operations_in_package_version.png)
 
-**Export operations to Excel file**
+### Export operations to Excel file
 
 You can export a list of API operations to an Excel file:
 
@@ -707,7 +709,7 @@ If during package version publication, you specified a previous release version,
   For example, adding/changing/deleting descriptions or examples is an annotation change.
 - Unclassified – An unclassified change is a change that cannot be classified as any of the other types.
 
-**API changes page**
+### API changes page
 
 API changes page shows the list of all operations that were changed between previous release and current versions. If the package version includes multiple API types, the system will provide a selector to choose the desired API type. If there is only one API type, the selector will not be shown.
 
@@ -727,7 +729,7 @@ The system also displays the total number of operations affected by each severit
 
 You can also filter operations by other criteria using the left filtering panel or search. These functionalities are the same as in the _API Operations_ page.
 
-**Export API Changes to Excel file**
+### Export API Changes to Excel file
 
 You can export a list of changes to an Excel file:
 
@@ -742,7 +744,9 @@ This functionality allows you to view a list of all deprecated operations or dep
 
 If the current package version has multiple API types, the system will provide a selector of API type. If there is only one API type in the package version, the system will not display an API type selector.
 
-For each deprecated operation or deprecated item, the system can calculate the release version from which this operation or item was deprecated. The system can calculate release version from which operation/item was deprecated only if package has a continuous chain of release versions and previous release versions. I.e. if operation is deprecated in 2024.4, the system checks if 2024.4 has specified previous release version (e.g. 2024.3) and if so, then checks if this previous release version has the same operation in deprecated status. And if operation is also deprecated in 2024.3, then again, the system checks if 2024.3 has specified previous release version and so on.
+For each deprecated operation or deprecated item, the system can calculate the release version from which this operation or item was deprecated. The system can calculate release version from which operation/item was deprecated only if package has a continuous chain of release versions and previous
+release versions. I.e. if operation is deprecated in 2024.4, the system checks if 2024.4 has specified previous release version (e.g. 2024.3) and if so, then checks if this previous release version has the same operation in deprecated status. And if operation is also deprecated in 2024.3, then
+again, the system checks if 2024.3 has specified previous release version and so on.
 
 For each deprecated item, the system shows a description of what was deprecated in the operation. To see this description, expand the row with the operation.
 
@@ -775,7 +779,7 @@ Pay attention that this is the comparison of package versions, **not** operation
 
 If you compare R24.1 and R24.2, you will see changes (if any) in `GET /api/v1/users`, `POST /api/v1/users`, `GET /api/v1/users/{userId}`, and you will see that `GET /api/v2/users/{userId}` is a new operation. You **will not** see a comparison between `GET /api/v1/users/{userId}` and `GET /api/v2/users/{userId}`.
 
-![](img/compare_list_of_operations.png)
+![Compare list of operations](img/compare_list_of_operations.png)
 
 1. Navigate to the package version you need to compare.
 2. Click **Compare** and select Versions in the dropdown menu.
@@ -791,7 +795,7 @@ If you compare R24.1 and R24.2, you will see changes (if any) in `GET /api/v1/us
    In the subheader of the page, you can also see a summary of changes for the current operation.
    You can switch the view of comparison to Raw to see a side-by-side comparison in YAML or JSON format.
 
-![](img/compare_operations.png)
+![Compare operations](img/compare_operations.png)
 
 ## Compare Package Revisions
 
@@ -918,7 +922,9 @@ components:
 
 ### Declarative approach in calculation of changes
 
-APIHUB calculates the number of changes using the declarative approach. If an OAS has a shared object (schema/parameters/header in the `components` object), and this shared object is used in one operation multiple times (via $ref), then one change in this object will be counted only one time for this operation. However, when comparing in the system there is such a concept as scope. Scope for REST operations is request and response. If a shared object has one change, but this object is used both in the request and in the response, then this change will be considered twice. This was done because the same change made in the request and in the response can be classified differently. For example, deleting a property in a request is a change that breaks backward compatibility, but deleting a property in a response does not break backward compatibility.
+APIHUB calculates the number of changes using the declarative approach. If an OAS has a shared object (schema/parameters/header in the `components` object), and this shared object is used in one operation multiple times (via $ref), then one change in this object will be counted only one time for
+this operation. However, when comparing in the system there is such a concept as scope. Scope for REST operations is request and response. If a shared object has one change, but this object is used both in the request and in the response, then this change will be considered twice. This was done
+because the same change made in the request and in the response can be classified differently. For example, deleting a property in a request is a change that breaks backward compatibility, but deleting a property in a response does not break backward compatibility.
 
 In the example below, shared `Order` schema is used twice in the "Place an order for a pet" operation (in request and in response). In `v2`, the `petId` parameter in the `Order` schema gets a new `format`. Thus, comparing versions `v1` and `v2`, the number of changes will be two.
 
@@ -1025,7 +1031,8 @@ components:
 
 ### Circular references
 
-If a change occurs in the schema with circular reference, APIHUB counts such change only one time. In the example below, ChangeOfferingCommonPart schema has parameter that references to ChangeOfferingCommonPart. If some parameter in ChangeOfferingCommonPart changes, e.g. if "format: NCID" is removed from ChangeOfferingCommonPart schema, then APIHUB counts only one change, although in reality this causes an infinite number of changes.
+If a change occurs in the schema with circular reference, APIHUB counts such change only one time. In the example below, ChangeOfferingCommonPart schema has parameter that references to ChangeOfferingCommonPart. If some parameter in ChangeOfferingCommonPart changes, e.g. if "format: NCID" is removed
+from ChangeOfferingCommonPart schema, then APIHUB counts only one change, although in reality this causes an infinite number of changes.
 
 v1:
 
@@ -1066,7 +1073,8 @@ components:
 
 ### No changes in unsupported entities
 
-When comparing two versions of an operation, APIHUB checks that the operation is written according to the OpenAPI specification. If there are some entities that are not supported in OAS and these entities contain changes when comparing two versions, APIHUB does **not** calculate such changes. For example, OAS3.0 does not support the `"additionalItems"` keyword. If we compare two versions of an operation where one version has no `additionalItems` in its schema and the other version does, APIHUB will not calculate such changes.
+When comparing two versions of an operation, APIHUB checks that the operation is written according to the OpenAPI specification. If there are some entities that are not supported in OAS and these entities contain changes when comparing two versions, APIHUB does **not** calculate such changes. For
+example, OAS3.0 does not support the `"additionalItems"` keyword. If we compare two versions of an operation where one version has no `additionalItems` in its schema and the other version does, APIHUB will not calculate such changes.
 
 ### No changes in explicitly specified default values
 
@@ -1172,9 +1180,12 @@ A dashboard as a package is a versioned entity. The difference is that version o
 3. Click **Add**. The system displays list of all included packages/dashboards in hierarchical view.
    Repeat step 2 if you need to add another package/dashboard version.
 
-You cannot add the same package more than one time, i.e. as soon as you add any package/dashboard version to the dashboard, this package/dashboard will not be available for the selection. However, there can be situation, when you can indirectly add the same packages/dashboard more than one time. For example, there is some dashboard D1 with version v1. The v1 version of dashboard D1 contains link to package P1 with version v1. Also you have another dashboard D2 and you configure version v1 of this dashboard: you add package P1 (with any version) and then you add D1 with version v1 to your dashboard D2. Thus, you Dashboard 2 version v1 contains links to the the same package Package P1 twice (if does not matter whether the same version of P1 is included into dashboard several time or different versions of the same package).
+You cannot add the same package more than one time, i.e. as soon as you add any package/dashboard version to the dashboard, this package/dashboard will not be available for the selection. However, there can be situation, when you can indirectly add the same packages/dashboard more than one time. For
+example, there is some dashboard D1 with version v1. The v1 version of dashboard D1 contains link to package P1 with version v1. Also you have another dashboard D2 and you configure version v1 of this dashboard: you add package P1 (with any version) and then you add D1 with version v1 to your
+dashboard D2. Thus, you Dashboard 2 version v1 contains links to the the same package Package P1 twice (if does not matter whether the same version of P1 is included into dashboard several time or different versions of the same package).
 
-If such situation occurs during configuration of dashboard version, the system highlights all conflicted packages. If you do not resolve conflicts manually and publish such dashboard version, the system will automatically resolve conflicts and will skip some link(s) to the conflicted package. After publication of dashboard version, you can see in Packages menu if some link(s) to package version(s) were automatically skipped.
+If such situation occurs during configuration of dashboard version, the system highlights all conflicted packages. If you do not resolve conflicts manually and publish such dashboard version, the system will automatically resolve conflicts and will skip some link(s) to the conflicted package. After
+publication of dashboard version, you can see in Packages menu if some link(s) to package version(s) were automatically skipped.
 
 ## Publish Dashboard Version
 
@@ -1195,9 +1206,13 @@ You can copy content of dashboard version (i.e. links to package/dashboard versi
 
 All the features for dashboard are almost the same as for package version. This section only covers those features that are different or missing in the package version.
 
-**Package menu**. Dashboard version has page with its configuration, i.e. page with the list of all package/dashboard versions included into current dashboard version. There situation may occur when your dashboard version has reference to the package/dashboard version which was deleted after you published you dashboard version. In this case the system will warn you with a special icon. On the current page you can also see if some of the package/dashboard version was not included in the dashboard version due to conflict. This case was described in details in Create Dashboard Version section.
+**Package menu**. Dashboard version has page with its configuration, i.e. page with the list of all package/dashboard versions included into current dashboard version. There situation may occur when your dashboard version has reference to the package/dashboard version which was deleted after you
+published you dashboard version. In this case the system will warn you with a special icon. On the current page you can also see if some of the package/dashboard version was not included in the dashboard version due to conflict. This case was described in details in Create Dashboard Version section.
 
-**Compare dashboard versions**. When you compare package versions, initially you see list of all changed operation compared side-by-side. In dashboard versions comparison, before mapping of operations between versions and comparing them, there is one more step - mapping of packages included into compared dashboard versions. So initially the system takes all packages included into compared dashboard versions and maps them by package identifier. If any package was missing from the previous version of the dashboard but was added to the current one, then that package is considered an added package and all operations from that package version are also considered as added operations. The same thing if package was present in the previous dashboard version but was removed from the current one, then that package is considered an deleted package and all operations from that package version are also considered as deleted operations. If package exists in both compared dashboard versions, the system compares operation between these package versions.
+**Compare dashboard versions**. When you compare package versions, initially you see list of all changed operation compared side-by-side. In dashboard versions comparison, before mapping of operations between versions and comparing them, there is one more step - mapping of packages included into
+compared dashboard versions. So initially the system takes all packages included into compared dashboard versions and maps them by package identifier. If any package was missing from the previous version of the dashboard but was added to the current one, then that package is considered an added
+package and all operations from that package version are also considered as added operations. The same thing if package was present in the previous dashboard version but was removed from the current one, then that package is considered an deleted package and all operations from that package version
+are also considered as deleted operations. If package exists in both compared dashboard versions, the system compares operation between these package versions.
 
 # Operation Content View
 
@@ -1208,11 +1223,13 @@ APIHUB Portal can render content of API operation in different views:
 - Graph view - diagram like view of schemas. The view is available only for REST API.
 - Raw view - operation content in YAML or JSON format for REST operation and in GraphQL format for GraphQL operations.
 
-![](img/operation_graph_view.png)
+![Operation graph view](img/operation_graph_view.png)
 
 ## Examples for Request and Response Body of REST operations
 
-Portal can automatically generate an example for the request and response body. The examples are generated in JSON format based on the request/response schema specified in the API specification. The values for example generation are also taken from the specification. E.g. if your property has an example parameter, it will be taken as the value; if there is no example, the default value will be taken; if there is no default value, one of the enumeration values ​​will be taken; and if you do not have any additional information for the property except the type, its type will be used as the value for the example.
+Portal can automatically generate an example for the request and response body. The examples are generated in JSON format based on the request/response schema specified in the API specification. The values for example generation are also taken from the specification. E.g. if your property has an
+example parameter, it will be taken as the value; if there is no example, the default value will be taken; if there is no default value, one of the enumeration values ​​will be taken; and if you do not have any additional information for the property except the type, its type will be used as the
+value for the example.
 
 If your request/response schema specifies an "examples" object, you will see those example(s) from the specification.
 
@@ -1222,7 +1239,8 @@ If your request/response schema specifies an "examples" object, you will see tho
 
 ## REST API Playground
 
-Playground is a tool that allows you send a REST request to a server, so you can easily test APIs on your real data. To send a request, you do not need to configure the parameters manually, all the request parameters will be taken directly from the API specification. Therefore, you only need to specify the parameter values. The server URL will also be automatically selected from the specification, if any. However, if the specification does not contain any server information, then you can manually specify any URL in the playground.
+Playground is a tool that allows you send a REST request to a server, so you can easily test APIs on your real data. To send a request, you do not need to configure the parameters manually, all the request parameters will be taken directly from the API specification. Therefore, you only need to
+specify the parameter values. The server URL will also be automatically selected from the specification, if any. However, if the specification does not contain any server information, then you can manually specify any URL in the playground.
 
 Pay attention, that since request parameters are taken from specification, you cannot add or remove parameters in the playground itself.
 
@@ -1248,7 +1266,8 @@ The below tabs are available in the group, package and dashboard settings:
 The General tab contains general information about group/package/dashboard. You can edit some information by clicking **Edit** button:
 
 - Name - short name of the package.
-- Service Name - this parameter is required if you want to publish version to APIHUB via Agent. The specified service name in the package shall be equal to the service name in k8s. APIHUB Agent uses this service name to map the microservices, discovered in the environment, and baselines (reference data) packages, configured in Portal. Once a service name has been added, it can only be changed directly through the database.
+- Service Name - this parameter is required if you want to publish version to APIHUB via Agent. The specified service name in the package shall be equal to the service name in k8s. APIHUB Agent uses this service name to map the microservices, discovered in the environment, and baselines (reference
+  data) packages, configured in Portal. Once a service name has been added, it can only be changed directly through the database.
 - Visibility - you can make group/package/dashboard public or private.
   - Public - any APIHUB user has read access to the package/dashboard content by default.
   - Private - by default only the package/dashboard creator has access to the entity.
@@ -1262,7 +1281,8 @@ The API Specific Configuration tab allows you to configure some features related
 
 **REST Path Prefix for Grouping by Version**. This parameter will allow you to automatically group operations into operations groups; see more about operation groups in _Operation Groups_ section.
 
-The parameter allows you to define custom regular expression, which will be applied to the paths of REST operations. This expression must begin and end with a slash (/) character and contain the {group} keyword. For example: /api/{group}/. The system will look for the {group} entry in the REST operation paths during the publication of the package version. All found matches will form a list of groups that will include the corresponding operations.
+The parameter allows you to define custom regular expression, which will be applied to the paths of REST operations. This expression must begin and end with a slash (/) character and contain the {group} keyword. For example: /api/{group}/. The system will look for the {group} entry in the REST
+operation paths during the publication of the package version. All found matches will form a list of groups that will include the corresponding operations.
 
 For example, you have 3 operations - GET /api/v1/packages, GET /api/v1/package/{packageId} and POST /api/v2/packages. If you specify REST Path Prefix for Grouping by Version as /api/{group}/, then the system creates two groups v1 and v2:
 
@@ -1279,7 +1299,7 @@ On the current page you can also delete version (with all its revisions). To do 
 
 ## Access Tokens
 
-API key allows you to authenticate to APIHUB when using APIHUB API. Unlike a Bearer token or [personal access token](#personal-access-token), an API key does not identify the principal (user). Instead, it is primarily used to identify the calling project—such as an application or website—making the APIHUB API call.
+API key allows you to authenticate to APIHUB when using APIHUB API. Unlike a Bearer token or [personal access token](#personal-access-tokens), an API key does not identify the principal (user). Instead, it is primarily used to identify the calling project—such as an application or website—making the APIHUB API call.
 API key is associated with a specific workspace, group, package, or dashboard, limiting its scope. API key does not have a period of life and it must be stored on a client side because it shows only once after generation.
 
 To generate an API key, fill the following fields:
