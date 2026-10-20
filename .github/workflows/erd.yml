@@ -136,12 +136,6 @@ jobs:
         with:
           version: 1.3.3
 
-      - name: log in to ghcr
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: echo "$GH_TOKEN" | oras login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
-
       # psql is on the runner image; SchemaSpy runs in a container on the host network.
       - name: apply the migrations and run SchemaSpy
         id: render
@@ -153,6 +147,14 @@ jobs:
           PGPASSWORD: erd
           BACKEND: ${{ matrix.backend }}
         run: node tools/ci/erd.js render "$BACKEND" "$RUNNER_TEMP/erd"
+
+      # After the render, so the packages: write credential is not on disk while the migrations
+      # and SchemaSpy run.
+      - name: log in to ghcr
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GH_TOKEN" | oras login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
       - name: store the render
         shell: bash
