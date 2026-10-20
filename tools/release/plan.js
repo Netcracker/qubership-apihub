@@ -15,10 +15,14 @@
  *   is printed to stdout after the Nx log. <label> goes into the heading (default "dry run").
  *   --keep-plan leaves .nx/version-plans/release.md behind for the `nx release version` run that
  *   follows; without it the plan file is removed.
+ *
+ * When the product moves, it also checks the landing release card (landing-card.js) and warns, with a
+ * `::warning::` line and a line in the summary, when the card is missing. The check never fails the run.
  */
 const fs = require('node:fs')
 const path = require('node:path')
 const { bumpBetween, bumpFromCommits, commitTypes, listTags, readNxRelease } = require('./conventional')
+const { landingCardCheck } = require('./landing-card')
 const { PRODUCT_PATHS, latestProductTag, productVersion } = require('./product-version')
 const { PLAN_FILE, writeVersionPlan } = require('./version-plan')
 
@@ -103,7 +107,16 @@ async function main(argv) {
   const option = (name) => (argv.includes(name) ? argv[argv.indexOf(name) + 1] : undefined)
   const outFile = option('--out')
   try {
-    const markdown = renderPlan({ mode: option('--mode') ?? 'dry run', ...(await collectPlan()) })
+    const plan = await collectPlan()
+    let markdown = renderPlan({ mode: option('--mode') ?? 'dry run', ...plan })
+    const card = plan.product.next ? landingCardCheck(plan.product.next) : null
+    if (card && !card.exists) {
+      markdown += `
+${card.summary}
+`
+      process.stdout.write(`::warning::${card.warning}
+`)
+    }
     if (outFile) fs.writeFileSync(outFile, markdown)
     else if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, markdown)
     else process.stdout.write('\n' + markdown)
