@@ -9,7 +9,7 @@ relevant to that table — reproduced **as close to the input as possible, chara
 
 Only statement types that `buildFromDdl` itself supports are eligible for extraction. The output is
 itself valid, build-able DDL for that table (with the deliberate exceptions noted under
-[Relevance rules](#relevance-rules)).
+[Relevance rules](#5-relevance-rules)).
 
 ### Primary use case → design constraint
 
@@ -73,7 +73,7 @@ no way to accidentally swap the schema and table arguments. The return shape is 
 minimal — `sql` + `warnings` only; consumers that need structure re-parse the slice (e.g. via
 `buildFromDdl`).
 
-#### Identifier semantics (precise contract)
+### Identifier semantics (precise contract)
 
 `extractTable` accepts **normalized model identifiers exactly as returned by `tables()` / the
 `Realm`** — i.e. already case-folded by the parser (unquoted → lowercase; quoted → preserved). The
@@ -202,6 +202,7 @@ Anything not in that set (including `AlterTableStmt`, `CreateSeqStmt`, `CreateFu
 `ViewStmt`, …) is **never** selected, matching `buildFromDdl`'s scope.
 
 Also built during prepare:
+
 - **Type-definition registry**: `typeKey → StatementDescriptor` for every CREATE TYPE/DOMAIN.
 - **Index-of-table map**: `targetTable key → IndexStmt descriptors`.
 - **Trigger-of-table map**: `targetTable key → CreateTrigStmt descriptors`.
@@ -250,6 +251,7 @@ which deliberately goes *beyond* `buildFromDdl`'s declared-position-only resolut
 A statement "depends on" a user type when a `TypeName` node referencing that type appears **anywhere
 in the statement's AST**. A single uniform AST walk over each statement collects every `TypeName`
 node and resolves it, which subsumes all of:
+
 - Declared positions: column `typeName` (incl. array element types, e.g. `mood[]`), composite field
   types, domain `AS <baseType>`, range `subtype`.
 - Expression positions: `TypeCast` nodes inside `CHECK` / `DEFAULT` / generated-column expressions,
@@ -283,6 +285,7 @@ trivial and doubles as the de-duplication mechanism for the final statement set.
 To emit the `OutOfScopeStatementDropped` warning, prepare also **light-scans unsupported
 statements** for their target relation, so a dropped statement that names T can be attributed to T.
 Scope of the scan (best-effort relation extraction, no full handling):
+
 - `AlterTableStmt` → `relation` (covers `ALTER TABLE T ADD CONSTRAINT/COLUMN/…`).
 - Other statements that carry an obvious target relation where cheaply available (e.g.
   `TruncateStmt`, `RuleStmt`, `CreateTrigStmt` for an out-of-scope trigger variant). Statements with
@@ -298,6 +301,7 @@ only reported.
 The `UnresolvedTypeReference` warning fires only for a `TypeName` that (a) did not resolve to a
 defined type in the DDL **and** (b) is not a recognized builtin/extension type. A **denylist of
 known names that never warn** is seeded from:
+
 - Every name `typeMapper` recognizes (all `pg_catalog` builtins, serial aliases, spatial, etc.).
 - A curated set of common extension types: `citext`, `hstore`, `ltree`, `lquery`, `ltxtquery`,
   `vector`, `geometry`, `geography`, `cube`, `earth`, `isn`-family, etc.
@@ -366,6 +370,7 @@ Selected statements are emitted in **original source order** (by statement index
 
 The only things that change runnability are the intentional exclusions, each of which is reported via
 a `warning`:
+
 - an **FK to an omitted target table** (output references an absent table → `OmittedForeignKeyTarget`);
 - an **out-of-scope backing object** such as a `CREATE SEQUENCE` behind `DEFAULT nextval(...)` or a
   trigger's `CREATE FUNCTION` (`OutOfScopeStatementDropped`).
@@ -393,6 +398,7 @@ Findings from probing `pgsql-parser` (libpg_query) that drive this design:
 ### Span resolution
 
 For statement *i* compute a `ResolvedSpan`:
+
 - `start = stmt_location_i` (start of its leading-trivia region).
 - `bodyEnd = stmt_location_i + stmt_len_i`, or buffer end for the last statement.
 - `semiEnd` = `bodyEnd` advanced over whitespace to include a single trailing `;` if present.
@@ -469,7 +475,8 @@ Pure, no relevance logic. Buffer-based span resolution (`start`/`bodyEnd`/`semiE
 trivia/comment lexer, dominant-newline detection, contiguous-run assembler, run-head comment trimming,
 trailing-`;` re-attachment.
 
-**Acceptance criteria**
+#### Acceptance criteria
+
 - Single-statement slice equals the input byte-for-byte, including leading comments, odd whitespace,
   and multibyte identifiers/strings.
 - Last statement without a trailing `;` is sliced correctly and gets a `;` re-attached.
@@ -488,7 +495,8 @@ Export `TableRef`, `TableDdlSlice`, `DdlExtractorWarning`, `DdlExtractor`, `prep
 `CREATE TABLE` slice** (no indexes/types/comments/warnings yet). Gives every later task a stable
 integration target.
 
-**Acceptance criteria**
+#### Acceptance criteria
+
 - `prepareDdlExtractor` throws `DdlParseError` on invalid SQL; resolves otherwise.
 - `tables()` lists only `CREATE TABLE`d tables, in source order, as `TableRef`s.
 - `extractTable(extractor.tables()[i])` returns that table's verbatim `CREATE TABLE` slice.
@@ -502,7 +510,8 @@ Add `supportedStatements.ts` (`SUPPORTED_STMT_TYPES` / `SupportedStmtType` / `SU
 §4a) and refactor `buildFromDdl` to consume it (replacing `OUT_OF_SCOPE_STMTS`), with the `assertNever`
 exhaustive `switch`. Isolated because it **touches existing `buildFromDdl` behavior**.
 
-**Acceptance criteria**
+#### Acceptance criteria
+
 - Existing `buildFromDdl` tests stay green (no behavior change for current inputs).
 - `_exhaustiveSupportedStmt` compile-time check present (mirrors `test/types.test.ts`); removing a
   handler `case` fails to compile.
@@ -517,7 +526,8 @@ Build the `StatementDescriptor` index for all supported statements via shared `s
 derivation: tables, indexes (+ target), triggers (+ target), comments (+ resolved target), types.
 Lookup maps (index-of-table, trigger-of-table, comment-by-target, type registry). No closure yet.
 
-**Acceptance criteria**
+#### Acceptance criteria
+
 - Each descriptor kind is asserted independently from a fixture (correct key, target, source range).
 - `stmtTargets.ts` key derivation matches `buildFromDdl`'s keys (parity test).
 
@@ -526,7 +536,8 @@ Lookup maps (index-of-table, trigger-of-table, comment-by-target, type registry)
 Worklist + `selected` set seeded from the table; include indexes, triggers, and table-owned comments
 (table/column/constraint/index). Assemble via the Task 1 engine.
 
-**Acceptance criteria**
+#### Acceptance criteria
+
 - Table + its indexes + triggers + owned comments are included; unrelated statements omitted.
 - Output preserves source order; runs are byte-verbatim, seams normalized.
 - Reuse: one `prepareDdlExtractor` drives many `extractTable` calls correctly.
@@ -539,7 +550,8 @@ Worklist + `selected` set seeded from the table; include indexes, triggers, and 
 Whole-AST `TypeName` walk (§4 — declared positions *and* expression casts), transitive type inclusion
 with the `selected`-set cycle guard, and `COMMENT ON TYPE` for each included type.
 
-**Acceptance criteria**
+#### Acceptance criteria
+
 - Included: column → enum; column → composite → enum; column → domain → base domain; column → `type[]`
   array; qualified `otherschema.type`; expression-cast-only reference (`CHECK (x::mood = …)`).
 - `COMMENT ON TYPE` for an included type is emitted; for an unused type is not.
@@ -550,7 +562,8 @@ with the `selected`-set cycle guard, and `COMMENT ON TYPE` for each included typ
 Full recursive inclusion: a `LIKE` source `U` is fed back through the relevance closure (Tasks 5–6)
 as if requested.
 
-**Acceptance criteria**
+#### Acceptance criteria
+
 - `T (LIKE U …)` pulls in `U`'s `CREATE TABLE` *and* `U`'s indexes/comments/types.
 - A `LIKE` chain `A→B→C` includes all; a self-referential `A LIKE B`, `B LIKE A` terminates.
 
@@ -559,7 +572,8 @@ as if requested.
 Add the four `DdlExtractorWarning` kinds with structured payloads (§1a), including the dropped-statement
 relation scan (§4b) and the extension-type denylist (§4c).
 
-**Acceptance criteria**
+#### Acceptance criteria
+
 - `OmittedForeignKeyTarget` (structured `refTable: TableRef`) on an FK to an absent table.
 - `DuplicateTable` on a doubly-defined table; first definition is the one emitted.
 - `OutOfScopeStatementDropped` for an `ALTER TABLE T …` present in the source.
@@ -573,7 +587,8 @@ Update `index.ts` exports/JSDoc; update the `ddlapi-using` skill if the consumer
 Add cross-cutting end-to-end fixtures (multi-table file, extractor reuse across all tables) and run the
 full `ddlapi` suite.
 
-**Acceptance criteria**
+#### Acceptance criteria
+
 - A realistic multi-table DDL: iterating `tables()` and extracting each yields the expected per-table
   subsets; full suite green.
 
