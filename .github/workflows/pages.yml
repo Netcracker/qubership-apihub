@@ -292,7 +292,10 @@ jobs:
       contents: read
       packages: write
     steps:
+      # The repository is public: gc's fetches of main and develop need no credentials.
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - uses: oras-project/setup-oras@v2.0.1
         with:

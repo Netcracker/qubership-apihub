@@ -49,6 +49,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          persist-credentials: false
           sparse-checkout: |
             tools/ci
             .github/workflows
