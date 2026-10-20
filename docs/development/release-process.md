@@ -324,7 +324,7 @@ Two charts are released, each as its own artifact:
 | `qubership-apihub` | `deploy/helm-templates/qubership-apihub` | the product tag `X.Y.Z` | `oci://ghcr.io/netcracker/charts/qubership-apihub` |
 | `qubership-apihub-agent` | `backend/agent/helm-templates/qubership-apihub-agent` | the agent tag `agent/X.Y.Z` | `oci://ghcr.io/netcracker/charts/qubership-apihub-agent` |
 
-The chart sources in git keep their development defaults: `version: 0.0.1`, `appVersion: "1.0"`, and the image tag
+The chart sources in Git keep their development defaults: `version: 0.0.1`, `appVersion: "1.0"`, and the image tag
 `dev`. Nothing is committed at a release. `release-artifacts` stages a copy of each released chart
 (`tools/release/charts.js`) and writes into it:
 
@@ -367,11 +367,11 @@ chart packages.
 ## Image cleanup
 
 The **Clean up images** workflow ([`images-gc.yml`](../../.github/workflows/images-gc.yml)) deletes image versions in
-ghcr that no branch or git tag needs. It runs when a branch is deleted and twice a day. Most image packages are shared
+ghcr that no branch or Git tag needs. It runs when a branch is deleted and twice a day. Most image packages are shared
 with a legacy component repository that still pushes to them, so the workflow checks every tag against the refs of
 the monorepo and of that repository.
 
-- A release image stays while its git tag exists: `<image>:<version>` for `<component>/<version>`, and the legacy
+- A release image stays while its Git tag exists: `<image>:<version>` for `<component>/<version>`, and the legacy
   `X.Y.Z` tags.
 - `latest`, `next`, `dev`, and `pull-N-merge` always stay. Closing a pull request deletes nothing.
 - A deleted branch's tag goes on the next run. Superseded indexes and `src-<hash>` content that no kept tag uses go a
