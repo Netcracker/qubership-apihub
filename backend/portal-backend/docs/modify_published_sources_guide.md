@@ -11,9 +11,6 @@ the **user** who discovers the problem and prepares the fix, and the **system ad
   - [Step 2 — Replace sources](#step-2--replace-sources)
   - [Step 3 — Trigger operations migration](#step-3--trigger-operations-migration)
   - [Step 4 — Monitor migration progress](#step-4--monitor-migration-progress)
-- [Archive Size Limits](#archive-size-limits)
-- [Error Codes Reference](#error-codes-reference)
-- [Audit Trail](#audit-trail)
 
 ## When is this needed
 
