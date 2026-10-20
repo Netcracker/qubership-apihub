@@ -47,11 +47,6 @@ export const docsNav: DocsSection[] = [
       },
     ],
   },
-  {
-    label: 'User documentation',
-    upcoming: true,
-    pages: [],
-  },
 ];
 
 /** Flat page order, used for previous/next navigation. */

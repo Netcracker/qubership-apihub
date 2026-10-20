@@ -72,7 +72,7 @@ const RAW: Omit<RadarBlip, 'id'>[] = [
     quadrant: 'techniques',
     ring: 'adopt',
     domain: 'engineering',
-    why: 'qubership-apihub-ci publishes workflow_call pipelines (Docker, frontend, E2E, linters, reports) consumed by the other repos.',
+    why: 'qubership-apihub-ci publishes workflow_call pipelines (Docker, frontend, E2E, linters, reports) consumed by this repository and other Netcracker repositories.',
   },
   {
     name: 'API-type registry pattern',
@@ -142,7 +142,7 @@ const RAW: Omit<RadarBlip, 'id'>[] = [
     quadrant: 'techniques',
     ring: 'trial',
     domain: 'engineering',
-    why: 'APM packages in qubership-apihub-ci install into Cursor and Claude via apm.yml in a dozen repos (Go developer, self-review, conventions).',
+    why: 'APM packages in qubership-apihub-ci install into Cursor and Claude via the root apm.yml of this repository (Go developer, self-review, conventions).',
   },
   {
     name: 'MCP for AI catalog clients',
@@ -240,14 +240,14 @@ const RAW: Omit<RadarBlip, 'id'>[] = [
     quadrant: 'tools',
     ring: 'adopt',
     domain: 'engineering',
-    why: 'qubership-apihub-ui-tests is the Portal and Agents E2E suite, with page objects.',
+    why: 'tests/ui-tests is the Portal and Agents E2E suite, with page objects.',
   },
   {
     name: 'Newman / Postman',
     quadrant: 'tools',
     ring: 'adopt',
     domain: 'engineering',
-    why: 'qubership-apihub-postman-collections is the backend API E2E suite, run from reusable CI.',
+    why: 'tests/postman-collections is the backend API E2E suite, run from reusable CI.',
   },
   {
     name: 'Spectral',
@@ -334,11 +334,11 @@ const RAW: Omit<RadarBlip, 'id'>[] = [
     why: 'In-product AI assistant that calls backend MCP tools for catalog-backed conversation.',
   },
   {
-    name: 'Lerna',
+    name: 'pnpm workspace + Nx',
     quadrant: 'tools',
     ring: 'trial',
     domain: 'engineering',
-    why: 'apihub-ui is a Lerna monorepo (Portal, Agents, shared). It works; do not start a second JS workspace tool without a migration plan.',
+    why: 'One pnpm workspace under frontend/, tests/, and sites/, with one Nx graph for Go, Maven, and TypeScript projects. Do not start a second workspace tool without a migration plan.',
   },
   {
     name: 'Renovate automerge',

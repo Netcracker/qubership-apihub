@@ -3,6 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import { docsNav, externalGuides } from '../../data/docs';
 import { subCapabilityCount } from '../../data/architecture';
 import { withBase } from '../../lib/paths';
+import { DOCS_URL } from '../../data/content';
 
 const home = import.meta.env.BASE_URL;
 const architecture = docsNav.find((s) => s.label === 'Architecture')!;
@@ -107,22 +108,15 @@ const architecture = docsNav.find((s) => s.label === 'Architecture')!;
     </div>
   </section>
 
-  <!-- ══ WHAT COMES NEXT ════════════════════════════════════════════════════ -->
+  <!-- ══ USER DOCUMENTATION ═════════════════════════════════════════════════ -->
   <section class="pb-20 px-6">
     <div class="max-w-6xl mx-auto rounded-2xl border border-slate-800 border-dashed p-7">
-      <div class="flex items-start gap-4">
-        <span class="mt-0.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-slate-800 text-slate-400 flex-shrink-0">
-          Planned
-        </span>
-        <div>
-          <h2 class="text-base font-bold text-white mb-2">User documentation on this site</h2>
-          <p class="text-sm text-slate-500 leading-relaxed max-w-3xl">
-            This section is built to grow. End-user documentation — publishing walkthroughs, comparison and
-            governance workflows, CI recipes — is intended to move here from the repository guides, so that
-            readers get search, cross-linking and the same navigation as the architecture pages.
-          </p>
-        </div>
-      </div>
+      <h2 class="text-base font-bold text-white mb-2">User documentation</h2>
+      <p class="text-sm text-slate-500 leading-relaxed max-w-3xl">
+        Installation, administration, and user guides live on the
+        <a href={DOCS_URL} target="_blank" rel="noopener" class="text-blue-400 hover:text-blue-300">documentation site</a>,
+        which is built from the <code>docs/</code> folder of the repository.
+      </p>
     </div>
   </section>
 
