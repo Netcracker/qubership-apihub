@@ -1,6 +1,7 @@
 'on':
-  # Dispatched by ci.yml, because a GITHUB_TOKEN can start only this event. Dispatched at a ref other
-  # than the default branch, the site is assembled as an artifact but not deployed.
+  # Dispatched by ci.yml after the Storybooks and by erd.yml after a render, because a GITHUB_TOKEN
+  # can start only this event. Dispatched at a ref other than the default branch, the site is
+  # assembled as an artifact but not deployed.
   workflow_dispatch:
     inputs:
       reason:
@@ -8,7 +9,9 @@
         required: false
         default: manual
       budget_mib:
-        description: Size budget for the site in MiB. Branches past it are left off, newest kept first
+        description: >-
+          Size budget for the whole site in MiB. The Storybooks get what the other sections leave;
+          branches past it are left off, newest kept first
         required: false
         default: '900'
   # Runs the default branch's copy of this file; tag deletions are ignored.
@@ -16,32 +19,40 @@
   # Every run assembles from `git ls-remote --heads`, so the daily run catches a missed deletion.
   schedule:
     - cron: '17 3 * * *'
+  # TEMPORARY: step 9 test, removed before merge
+  push:
+    branches: [wiring/9]
 
-name: Publish Storybooks
+name: Publish Pages
 
 # One queue for all branches, never cancelled: a deploy replaces the whole site. A newer pending run
-# replaces an older one, which is safe because every run assembles from the store.
+# replaces an older one, which is safe because every run assembles from the stores and the refs.
 concurrency:
-  group: storybook-pages
+  group: pages
   cancel-in-progress: false
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
+  # The site (D15): the navigation page, the landing, the docs site, and the ERDs of one ref (D16),
+  # and the Storybooks of every live branch. tools/ci/pages-site.js lays it out.
   assemble:
     if: github.event_name != 'delete' || github.event.ref_type == 'branch'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     permissions:
       contents: read
       packages: read
     outputs:
       deployable: ${{ steps.ref.outputs.deployable }}
+    env:
+      # TEMPORARY: step 9 test, removed before merge. No ERD is rendered before erd.yml runs on
+      # develop, so on the test push a missing render gives a placeholder erd/ page and a warning.
+      ERD_OPTIONAL: ${{ github.event_name == 'push' }}
     steps:
       - uses: actions/checkout@v6
 
-      # Only the default branch deploys and cleans the store. Schedule and delete events carry no
+      # Only the default branch deploys and cleans the stores. Schedule and delete events carry no
       # repository object, so the default branch is looked up.
       - name: is this the default branch?
         id: ref
@@ -57,6 +68,161 @@ jobs:
           echo "deployable=$deployable" >> "$GITHUB_OUTPUT"
           echo "ref \`$REF_NAME\`, default \`$default\`: deploy=$deployable" | tee -a "$GITHUB_STEP_SUMMARY"
 
+      # D16: the site shows main once main has the sites (the first product release from the
+      # monorepo), develop before. The repository variable SITE_REF overrides the ref of the whole
+      # site, LANDING_REF that of the landing only (release-process.md, "Tips and tricks").
+      - name: resolve the refs
+        id: refs
+        shell: bash
+        env:
+          SITE_REF: ${{ vars.SITE_REF }}
+          LANDING_REF: ${{ vars.LANDING_REF }}
+          # TEMPORARY: step 9 test, removed before merge. The test push shows its own commit,
+          # because neither main nor develop has the sites yet.
+          PUSH_SHA: ${{ github.event_name == 'push' && github.sha || '' }}
+          PUSH_REF: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          # The commit of a branch, tag, or commit SHA on origin.
+          commit_of() { git fetch --no-tags --depth=1 --quiet origin "$1" && git rev-parse FETCH_HEAD; }
+
+          if [ -n "$SITE_REF" ]; then
+            site_ref="$SITE_REF"; site_sha="$(commit_of "$SITE_REF")"; why='the repository variable SITE_REF'
+          elif [ -n "$PUSH_SHA" ]; then
+            site_ref="$PUSH_REF"; site_sha="$PUSH_SHA"; why='the pushed commit (temporary step 9 trigger)'
+          else
+            # Exit code 2 means "no such branch"; anything else is a failed read, not an answer.
+            rc=0; git ls-remote --exit-code --heads origin refs/heads/main > /dev/null || rc=$?
+            case "$rc" in
+              0) git fetch --no-tags --depth=1 --quiet origin +refs/heads/main:refs/remotes/origin/main ;;
+              2) ;;
+              *) echo "::error::could not list the main branch of origin (git ls-remote exited with $rc)"; exit 1 ;;
+            esac
+            if [ "$rc" = 0 ] && git cat-file -e origin/main:sites/landing/package.json 2> /dev/null; then
+              site_ref=main; why='main has sites/landing'
+            else
+              site_ref=develop; why='main has no sites/landing yet'
+            fi
+            site_sha="$(commit_of "$site_ref")"
+          fi
+
+          if [ -n "$LANDING_REF" ]; then
+            landing_ref="$LANDING_REF"; landing_sha="$(commit_of "$LANDING_REF")"
+          else
+            landing_ref="$site_ref"; landing_sha="$site_sha"
+          fi
+          git cat-file -e "$landing_sha:sites/landing/package.json" 2> /dev/null || {
+            echo "::error::$landing_ref ($landing_sha) has no sites/landing/package.json, so there is no landing to build"
+            exit 1
+          }
+          # The docs site arrives with step 10; until the ref has it, docs/ gets a placeholder page.
+          if git cat-file -e "$site_sha:sites/docs/package.json" 2> /dev/null; then docs=true; else docs=false; fi
+
+          {
+            echo "site_ref=$site_ref"
+            echo "site_sha=$site_sha"
+            echo "landing_ref=$landing_ref"
+            echo "landing_sha=$landing_sha"
+            echo "docs=$docs"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo "### Refs"
+            echo ""
+            echo "- site: \`$site_ref\` at \`$site_sha\` ($why)"
+            echo "- landing: \`$landing_ref\` at \`$landing_sha\`${LANDING_REF:+ (the repository variable LANDING_REF)}"
+            echo "- docs site at the ref: $docs"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # A commit's build does not change, so the frequent Storybook dispatches reuse it. Bump the
+      # version in the key when the build recipe below changes.
+      - name: restore the landing build
+        id: landing-cache
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/pages-dist/landing
+          key: pages-landing-v1-${{ steps.refs.outputs.landing_sha }}
+
+      - name: restore the docs build
+        id: docs-cache
+        if: steps.refs.outputs.docs == 'true'
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/pages-dist/docs
+          key: pages-docs-v1-${{ steps.refs.outputs.site_sha }}
+
+      - name: what to build
+        id: need
+        shell: bash
+        env:
+          LANDING_HIT: ${{ steps.landing-cache.outputs.cache-hit }}
+          DOCS: ${{ steps.refs.outputs.docs }}
+          DOCS_HIT: ${{ steps.docs-cache.outputs.cache-hit }}
+        run: |
+          set -euo pipefail
+          landing=false; docs=false
+          [ "$LANDING_HIT" = true ] || landing=true
+          [ "$DOCS" != true ] || [ "$DOCS_HIT" = true ] || docs=true
+          if [ "$landing" = true ] || [ "$docs" = true ]; then any=true; else any=false; fi
+          printf 'landing=%s\ndocs=%s\nany=%s\n' "$landing" "$docs" "$any" | tee -a "$GITHUB_OUTPUT"
+
+      # The toolchain of setup-workspace without its full install: the sites need only their own
+      # dependencies. Nx loads the @nx/maven plugin for every command, so Java 21 and Maven are
+      # needed even here (Maven comes with the runner image).
+      - if: steps.need.outputs.any == 'true'
+        uses: pnpm/action-setup@v6.1.0
+        with:
+          run_install: false
+
+      - if: steps.need.outputs.any == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - if: steps.need.outputs.any == 'true'
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      # A worktree per commit: the landing may come from another ref than the docs (LANDING_REF).
+      - name: build the landing and the docs site
+        if: steps.need.outputs.any == 'true'
+        shell: bash
+        env:
+          SITE_SHA: ${{ steps.refs.outputs.site_sha }}
+          LANDING_SHA: ${{ steps.refs.outputs.landing_sha }}
+          NEED_LANDING: ${{ steps.need.outputs.landing }}
+          NEED_DOCS: ${{ steps.need.outputs.docs }}
+          # The analysis of a cold Maven cache exceeds the plugin's 120 s default.
+          NX_MAVEN_ANALYSIS_TIMEOUT: '400'
+          PUPPETEER_SKIP_DOWNLOAD: '1'
+          HUSKY: '0'
+        run: |
+          set -euo pipefail
+          worktree() { echo "$RUNNER_TEMP/src-$1"; }
+          build() { # <commit> <project,...>
+            local wt; wt="$(worktree "$1")"
+            git worktree add --detach "$wt" "$1"
+            (
+              cd "$wt"
+              pnpm install --frozen-lockfile --filter "./sites/**..."
+              pnpm exec nx run-many -t build -p "$2"
+            )
+          }
+          if [ "$LANDING_SHA" = "$SITE_SHA" ]; then
+            projects=""
+            [ "$NEED_LANDING" != true ] || projects="landing"
+            [ "$NEED_DOCS" != true ] || projects="${projects:+$projects,}docs-site"
+            build "$SITE_SHA" "$projects"
+          else
+            [ "$NEED_LANDING" != true ] || build "$LANDING_SHA" landing
+            [ "$NEED_DOCS" != true ] || build "$SITE_SHA" docs-site
+          fi
+          dist="$RUNNER_TEMP/pages-dist"
+          mkdir -p "$dist"
+          [ "$NEED_LANDING" != true ] || cp -R "$(worktree "$LANDING_SHA")/sites/landing/dist" "$dist/landing"
+          [ "$NEED_DOCS" != true ] || cp -R "$(worktree "$SITE_SHA")/sites/docs/dist" "$dist/docs"
+
       # 1.3.3, not the current 1.3.4: setup-oras verifies against a release table baked into the
       # action, and v2.0.1's ends at 1.3.3.
       - uses: oras-project/setup-oras@v2.0.1
@@ -69,25 +235,37 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: echo "$GH_TOKEN" | oras login ghcr.io -u '${{ github.actor }}' --password-stdin
 
-      - name: assemble the site from every live branch's pointers
+      - name: assemble the site
         shell: bash
         env:
           OWNER: ${{ github.repository_owner }}
-          SITE_BUDGET_MIB: ${{ inputs.budget_mib || '900' }}
           EVENT: ${{ github.event_name }}
           REASON: ${{ inputs.reason }}
+          BUDGET_MIB: ${{ inputs.budget_mib || '900' }}
+          SITE_REF: ${{ steps.refs.outputs.site_ref }}
+          SITE_SHA: ${{ steps.refs.outputs.site_sha }}
+          LANDING_REF: ${{ steps.refs.outputs.landing_ref }}
+          LANDING_SHA: ${{ steps.refs.outputs.landing_sha }}
+          DOCS: ${{ steps.refs.outputs.docs }}
         run: |
+          set -euo pipefail
           echo "reason: $EVENT $REASON"
-          node tools/ci/storybook-site.js assemble "$RUNNER_TEMP/site"
+          docs=()
+          [ "$DOCS" != true ] || docs=(--docs "$RUNNER_TEMP/pages-dist/docs")
+          node tools/ci/pages-site.js "$RUNNER_TEMP/site" \
+            --landing "$RUNNER_TEMP/pages-dist/landing" "${docs[@]}" \
+            --ref "$SITE_REF" --commit "$SITE_SHA" \
+            --landing-ref "$LANDING_REF" --landing-commit "$LANDING_SHA" \
+            --budget-mib "$BUDGET_MIB"
 
       - uses: actions/upload-pages-artifact@v5.0.0
         with:
           path: ${{ runner.temp }}/site
 
-  # Off until step 9 switches the Pages source of this repository to GitHub Actions: the site built here
-  # holds the Storybooks only, and a deployment would replace the documentation site and the ERD that
-  # Pages serves now. Step 9 sets the repository variable PAGES_DEPLOY to `true` together with the
-  # source switch. Until then this workflow assembles the site and stops.
+  # Off until step 9 switches the Pages source of this repository to GitHub Actions: a deployment
+  # before the switch would replace the legacy site that Pages serves from main:/docs. The switch
+  # sets the repository variable PAGES_DEPLOY to `true`. Until then this workflow assembles the
+  # site and stops.
   deploy:
     needs: [assemble]
     if: vars.PAGES_DEPLOY == 'true' && needs.assemble.outputs.deployable == 'true'
@@ -131,3 +309,10 @@ jobs:
           OWNER: ${{ github.repository_owner }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node tools/ci/storybook-site.js gc
+
+      - name: delete stale ERD renders
+        shell: bash
+        env:
+          OWNER: ${{ github.repository_owner }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node tools/ci/erd.js gc
