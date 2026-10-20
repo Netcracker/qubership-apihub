@@ -234,7 +234,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: echo "$GH_TOKEN" | oras login ghcr.io -u '${{ github.actor }}' --password-stdin
+        run: echo "$GH_TOKEN" | oras login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
       - name: assemble the site
         shell: bash
@@ -302,7 +302,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: echo "$GH_TOKEN" | oras login ghcr.io -u '${{ github.actor }}' --password-stdin
+        run: echo "$GH_TOKEN" | oras login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
       - name: delete what no live branch needs
         shell: bash
