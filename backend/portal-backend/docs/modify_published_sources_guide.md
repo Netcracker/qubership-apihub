@@ -1,23 +1,23 @@
 # How to modify published revision sources
 
-This guide describes the end-to-end workflow for replacing API specification source files in an already-published revision. It covers two perspectives: 
+This guide describes the end-to-end workflow for replacing API specification source files in an already-published revision. It covers two perspectives:
 the **user** who discovers the problem and prepares the fix, and the **system administrator** who performs the replacement.
 
 - [When is this needed](#when-is-this-needed)
 - [For Users — Preparing the Fixed Archive](#for-users--preparing-the-fixed-archive)
 - [For System Administrators — Performing the Replacement](#for-system-administrators--performing-the-replacement)
-    - [Prerequisites](#prerequisites)
-    - [Step 1 — Download current sources](#step-1--download-current-sources)
-    - [Step 2 — Replace sources](#step-2--replace-sources)
-    - [Step 3 — Trigger operations migration](#step-3--trigger-operations-migration)
-    - [Step 4 — Monitor migration progress](#step-4--monitor-migration-progress)
+  - [Prerequisites](#prerequisites)
+  - [Step 1 — Download current sources](#step-1--download-current-sources)
+  - [Step 2 — Replace sources](#step-2--replace-sources)
+  - [Step 3 — Trigger operations migration](#step-3--trigger-operations-migration)
+  - [Step 4 — Monitor migration progress](#step-4--monitor-migration-progress)
 - [Archive Size Limits](#archive-size-limits)
 - [Error Codes Reference](#error-codes-reference)
 - [Audit Trail](#audit-trail)
 
 ## When is this needed
 
-The most common scenario is a **failed migration build** — an operations migration fails for a specific revision because the originally published source files are considered as broken 
+The most common scenario is a **failed migration build** — an operations migration fails for a specific revision because the originally published source files are considered as broken
 or invalid by the new api-processor version. Rather than deleting and re-publishing the entire version, the admin can surgically replace just the source archive while preserving all version metadata.
 
 ## For Users — Preparing the Fixed Archive
@@ -43,7 +43,7 @@ If you have discovered a problem with a published version (e.g. warning on the U
 
 Download the current sources archive to provide to the user for fixing, or to inspect yourself:
 
-```
+```http
 GET /api/v2/packages/{packageId}/versions/{version}/sources
 ```
 
@@ -56,7 +56,7 @@ GET /api/v2/packages/{packageId}/versions/{version}/sources
 
 Upload the fixed ZIP archive:
 
-```
+```http
 PUT /api/v2/admin/packages/{packageId}/versions/{version}/sources
 ```
 
@@ -66,6 +66,7 @@ PUT /api/v2/admin/packages/{packageId}/versions/{version}/sources
 | `version`   | Version string. Supports two formats: `version` or `version@revision`   |
 
 Request headers:
+
 - `Content-Type: application/zip`
 
 Request body: raw binary ZIP archive data.
@@ -73,6 +74,7 @@ Request body: raw binary ZIP archive data.
 On success the endpoint returns **204 No Content**.
 
 The endpoint performs the following validations before accepting the archive:
+
 - The version must exist
 - Published source data must exist for the version
 - The archive must be a valid ZIP file
@@ -84,7 +86,7 @@ Every successful source replacement is recorded in the `sources_update_tracking`
 
 After replacing sources, trigger an operations migration to recalculate all derived data (documents, operations, comparisons, search indices):
 
-```
+```http
 POST /api/internal/migrate/operations
 ```
 
@@ -100,7 +102,7 @@ Request body:
 
 Check migration status:
 
-```
+```http
 GET /api/internal/migrate/operations/{migrationId}
 ```
 
