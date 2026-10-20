@@ -42,7 +42,8 @@ The architecture diagrams are SVG files in `docs/images/architecture/`, shared w
 Each product release has a card, `src/content/releases/v<X>-<Y>-<Z>.md`. Add it during the release, as a pull request
 into `release`; see the step "Add the landing release card" in
 [the release process](../../docs/development/release-process.md). The Release finish dry run warns when the card is
-missing. The `apihub-landing-refresh` agent skill drafts a card from the product release notes.
+missing. The "Latest Release" stat and the hero badge take the highest version among the cards
+(`src/lib/latest-release.ts`). The `apihub-landing-refresh` agent skill drafts a card from the product release notes.
 
 ## Capability model
 

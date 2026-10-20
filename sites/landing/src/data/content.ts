@@ -33,12 +33,14 @@ export const NAV_LINKS = [
 ];
 
 // ─── Stats ───────────────────────────────────────────────────────────────────
-export const stats = [
-  { value: '1', label: 'Repository, All Components' },
-  { value: 'v2.15.0', label: 'Latest Release' },
-  { value: 'Contracts', label: 'API Types + DDLAPI + MCP' },
-  { value: 'MCP', label: 'Server + Catalog Contracts' },
-];
+export function buildStats(latestVersion: string) {
+  return [
+    { value: '1', label: 'Repository, All Components' },
+    { value: latestVersion, label: 'Latest Release' },
+    { value: 'Contracts', label: 'API Types + DDLAPI + MCP' },
+    { value: 'MCP', label: 'Server + Catalog Contracts' },
+  ];
+}
 
 // ─── Pillars ─────────────────────────────────────────────────────────────────
 export const pillars = [
@@ -335,7 +337,7 @@ export const sectionCards = [
     href: withBase('releases/'),
     icon: '🚀',
     title: 'Releases',
-    description: 'Actively developed with releases every 4–6 weeks. See the full changelog from v2.5.x to v2.15.0.',
+    description: 'Actively developed with releases every 4–6 weeks. See the full changelog from v2.5.x to the latest release.',
     color: 'emerald',
   },
   {
@@ -537,87 +539,6 @@ export const scenarios = [
   },
 ];
 
-// ─── Releases (legacy fallback; Releases page uses content/releases/*.md) ─────
-export const releases = [
-  {
-    version: 'v2.15.0',
-    date: 'September 24, 2026',
-    latest: true,
-    highlights: [
-      'Global search authorization; MCP/DDL in MCP tools',
-      'Archived version status removed; AI linter optional',
-      'OpenTelemetry metrics; migration UX counters',
-    ],
-  },
-  {
-    version: 'v2.14.0',
-    date: 'August 28, 2026',
-    latest: false,
-    highlights: [
-      'MCP and DDL advanced Portal scenarios',
-      'DDL table schema Diff View',
-      'Multi-status version filter; scoped agent discovery',
-    ],
-  },
-  {
-    version: 'v2.13.0',
-    date: 'July 30, 2026',
-    latest: false,
-    highlights: [
-      'GraphQL no-BWC / experimental API Kind',
-      'PAT authentication for Kubernetes agents',
-      'Admin Builds API; config.yaml for linter and agents-backend',
-    ],
-  },
-  {
-    version: 'v2.12.0',
-    date: 'July 15, 2026',
-    latest: false,
-    highlights: [
-      'MCP & DDL catalog contracts in UI',
-      'DDL table viewer and AsyncAPI Diff View',
-      'Mermaid in Markdown docs; custom CA mounts',
-    ],
-  },
-  {
-    version: 'v2.11.0',
-    date: 'June 1, 2026',
-    latest: false,
-    highlights: [
-      'Honey AI Assistant productized',
-      'AsyncAPI Quality Check in Portal',
-      'Node.js 24 LTS for frontend libraries',
-    ],
-  },
-  {
-    version: 'v2.10.0',
-    date: 'May 12, 2026',
-    latest: false,
-    highlights: [
-      'AsyncAPI Operation Groups end-to-end',
-      'Hardened nginx timeouts',
-    ],
-  },
-  {
-    version: 'v2.9.0',
-    date: 'April 26, 2026',
-    latest: false,
-    highlights: [
-      'Document shareability & AsyncAPI change classification',
-      'MCP tools / AI chat metrics',
-    ],
-  },
-  {
-    version: 'v2.8.0',
-    date: 'April 9, 2026',
-    latest: false,
-    highlights: [
-      'AsyncAPI Phase 2/3 — full support across the stack',
-      'REST & GraphQL Quality Gates',
-    ],
-  },
-];
-
 // ─── Formats ─────────────────────────────────────────────────────────────────
 export const formats = [
   { name: 'OpenAPI 3.x', color: '#85E89D' },
@@ -636,7 +557,7 @@ export const deployOptions = [
   {
     icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 17.25v-.228a4.5 4.5 0 0 0-.12-1.03l-2.268-9.64a3.375 3.375 0 0 0-3.285-2.602H7.923a3.375 3.375 0 0 0-3.285 2.602l-2.268 9.64a4.5 4.5 0 0 0-.12 1.03v.228m19.5 0a3 3 0 0 1-3 3H5.25a3 3 0 0 1-3-3m19.5 0a3 3 0 0 0-3-3H5.25a3 3 0 0 0-3 3m16.5 0h.008v.008h-.008v-.008Zm-3 0h.008v.008h-.008v-.008Z" /></svg>`,
     title: 'Docker Compose',
-    description: 'Get up and running in minutes. Every release ships a production-ready docker-compose configuration with all six services pre-configured.',
+    description: 'A ready-to-run Compose stack for local development and demos: Portal, backend, builder, linter, agents backend, and PostgreSQL. Use Helm for production.',
     badge: 'Recommended for dev',
     cta: 'View docker-compose',
     href: `${REPO_URL}/tree/main/deploy/docker-compose`,

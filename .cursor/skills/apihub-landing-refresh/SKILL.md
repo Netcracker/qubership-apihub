@@ -26,7 +26,7 @@ leave the value unchanged or mark it as needing a manual check.
 
 | Area | File |
 |------|------|
-| Outbound URLs (`SITE_ROOT`, `DOCS_URL`, `INSTALL_URL`, `ADMIN_URL`, `USER_GUIDE_URL`, `REPO_URL`, and the rest), the "Latest Release" stat, pillars, deploy and section cards | `sites/landing/src/data/content.ts` |
+| Outbound URLs (`SITE_ROOT`, `DOCS_URL`, `INSTALL_URL`, `ADMIN_URL`, `USER_GUIDE_URL`, `REPO_URL`, and the rest), pillars, deploy and section cards | `sites/landing/src/data/content.ts` |
 | Hero badge and version text that a page repeats | `sites/landing/src/pages/*.astro` |
 | Release card | `sites/landing/src/content/releases/v<X>-<Y>-<Z>.md` |
 | Use-case cards | `sites/landing/src/content/use-cases/*.md` |
@@ -47,7 +47,8 @@ A card is one Markdown file per product version, named `v<X>-<Y>-<Z>.md`. Copy t
 1. Take the version, the date, and the sprint work items from the release of the product tag.
 2. Write three to five highlights, in the voice of the existing cards: what a user can now do.
 3. Set `latest: true` on the new card and remove it from the previous one.
-4. Update the "Latest Release" value in `stats` in `content.ts`, and any hero badge that repeats the version.
+4. Check that the "Latest Release" stat and the hero badge show the new version. Both derive from the highest
+   release card through `src/lib/latest-release.ts`; do not type the version in a page or in `content.ts`.
 
 A release card goes into the repository through a pull request into `release`, as part of the release; see the step
 "Add the landing release card" in the release process.

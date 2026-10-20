@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-10-20T18:47:38.800048+00:00'
+generated_at: '2026-10-20T19:12:49.885442+00:00'
 apm_version: 0.27.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -429,9 +429,9 @@ dependencies:
   - .cursor/skills/apihub-landing-refresh/SKILL.md
   deployed_file_hashes:
     .claude/rules/apihub-landing-refresh.md: sha256:ad2428617463404ff12a67d1d38530fbcc9e957d77c99369425f41db32556def
-    .claude/skills/apihub-landing-refresh/SKILL.md: sha256:0316e9df1a1bee8aeda2a8b27e8ecfbd80220e263a9ddbf2d962e15c5c15d501
+    .claude/skills/apihub-landing-refresh/SKILL.md: sha256:4652b932a8baee821757e5c4cff7f493e94c4156a873aeba34845f1966854b0b
     .cursor/rules/apihub-landing-refresh.mdc: sha256:ce841f441b97a480fe66ac48c659e331611892c0713987ec6a644a6fd4432168
-    .cursor/skills/apihub-landing-refresh/SKILL.md: sha256:0316e9df1a1bee8aeda2a8b27e8ecfbd80220e263a9ddbf2d962e15c5c15d501
+    .cursor/skills/apihub-landing-refresh/SKILL.md: sha256:4652b932a8baee821757e5c4cff7f493e94c4156a873aeba34845f1966854b0b
   source: local
   local_path: ./agent-packages/apihub-landing-refresh
 - repo_url: _local/apihub-ui-authoring
@@ -1842,7 +1842,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-landing-refresh
   active_owner: ./agent-packages/apihub-landing-refresh
-  content_hash: sha256:0316e9df1a1bee8aeda2a8b27e8ecfbd80220e263a9ddbf2d962e15c5c15d501
+  content_hash: sha256:4652b932a8baee821757e5c4cff7f493e94c4156a873aeba34845f1966854b0b
 - kind: project-relative
   target: claude
   value: .claude/skills/ddlapi-authoring
@@ -3129,7 +3129,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-landing-refresh
   active_owner: ./agent-packages/apihub-landing-refresh
-  content_hash: sha256:0316e9df1a1bee8aeda2a8b27e8ecfbd80220e263a9ddbf2d962e15c5c15d501
+  content_hash: sha256:4652b932a8baee821757e5c4cff7f493e94c4156a873aeba34845f1966854b0b
 - kind: project-relative
   target: cursor
   value: .cursor/skills/ddlapi-authoring

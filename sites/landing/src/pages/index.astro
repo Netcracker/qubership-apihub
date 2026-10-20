@@ -1,7 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { stats, pillars, sectionCards, formats, REPO_URL, INSTALL_URL, RELEASES_URL } from '../data/content';
+import { buildStats, pillars, sectionCards, formats, REPO_URL, INSTALL_URL, RELEASES_URL } from '../data/content';
 import { withBase } from '../lib/paths';
+import { getLatestRelease } from '../lib/latest-release';
+
+const latest = await getLatestRelease();
+const stats = buildStats(latest.version);
 ---
 
 <Layout>
@@ -16,7 +20,7 @@ import { withBase } from '../lib/paths';
     <div class="relative max-w-5xl mx-auto px-6 text-center">
       <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 mb-8">
         <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
-        <span class="text-xs font-medium text-blue-300">v2.15.0 Released — Search Privacy + MCP/DDL Tools + Status Cleanup</span>
+        <span class="text-xs font-medium text-blue-300">{latest.version} released, {latest.date}</span>
         <a href={RELEASES_URL} target="_blank" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-0.5">
           See what's new
           <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>

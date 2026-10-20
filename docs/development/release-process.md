@@ -127,7 +127,8 @@ The product landing shows one card per product version. Take the version from th
 `Product: <previous> → <next>`. Open a pull request into `release` that adds
 `sites/landing/src/content/releases/v<X>-<Y>-<Z>.md` for that version, for example `v2-15-1.md` for 2.15.1. Copy the
 frontmatter of the newest card, set `latest: true` on the new one and remove it from the previous one. The
-`apihub-landing-refresh` agent skill drafts the card from the product release notes.
+`apihub-landing-refresh` agent skill drafts the card from the product release notes. The "Latest Release" stat and
+the hero badge take the highest version among the cards, so nothing else needs an edit.
 
 The dry run warns when the card is missing: a `::warning::` annotation and a line in the job summary. The warning
 does not fail the run. Run the dry run again after the pull request is merged to see it clear. When the product stays
