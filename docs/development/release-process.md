@@ -553,8 +553,8 @@ You released without the card, so the landing does not list the version. Do not 
 would also rebuild every image and move `:latest`.
 
 1. Open a pull request into `develop` that adds `sites/landing/src/content/releases/v<X>-<Y>-<Z>.md`.
-2. To publish the card before the next release, point the Pages workflow at `develop` and dispatch it. The Pages
-   workflow honors the repository variable `LANDING_REF` as the ref it builds the landing from:
+2. To publish the card before the next release, point the landing at `develop` and dispatch the Pages workflow.
+   The repository variable `LANDING_REF` overrides the ref of the landing in the Pages assembly and nothing else:
 
    ```bash
    gh variable set LANDING_REF --body develop --repo Netcracker/qubership-apihub

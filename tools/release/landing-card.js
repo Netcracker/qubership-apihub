@@ -23,7 +23,7 @@ function landingCardCheck(version, root = process.cwd()) {
     file,
     warning:
       `The landing release card ${file} is missing for product version ${version}. ` +
-      'Add it with a pull request into release before Release finish runs for real.',
+      'Add it with a pull request into release; the release goes ahead without it.',
     summary: `**Warning:** the landing release card \`${file}\` is missing. Add it with a pull request into \`release\`.`,
   }
 }
