@@ -141,11 +141,11 @@ function renderIndex({ ref, cards }) {
     .map((c) => {
       const commit = c.revision ? `commit <code>${escapeHtml(c.revision.slice(0, 9))}</code>` : 'an unknown commit'
       return [
-        `      <a class="card" href="${escapeHtml(c.backend)}/">`,
-        `        <h2>${escapeHtml(c.backend)}</h2>`,
-        `        <p>Last migration: <code>${escapeHtml(c.lastMigration)}</code></p>`,
-        `        <p>Rendered from ${commit} on ${escapeHtml(formatDate(c.created))}</p>`,
-        '      </a>',
+        `        <a class="card" href="${escapeHtml(c.backend)}/">`,
+        `          <h2>${escapeHtml(c.backend)}</h2>`,
+        `          <p>Last migration: <code>${escapeHtml(c.lastMigration)}</code></p>`,
+        `          <p>Rendered from ${commit} on ${escapeHtml(formatDate(c.created))}</p>`,
+        '        </a>',
       ].join('\n')
     })
     .join('\n')
