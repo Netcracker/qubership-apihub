@@ -6,7 +6,7 @@ with **plain Java** (no application framework), **japicmp**, and **jdeps**.
 
 ## Architecture
 
-```
+```text
 libraries-backend  ←── HTTP poll + status ──→  java-task-consumer
                                                       └── jdiff-engine
 ```
