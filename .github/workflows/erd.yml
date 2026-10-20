@@ -1,0 +1,220 @@
+'on':
+  # Only the branches the site can show (D16), and only when a render input changed. A release
+  # finish moves main to a tree develop had, so its plan finds every key rendered and stops.
+  push:
+    branches:
+      - develop
+      - main
+      - wiring/9  # TEMPORARY: step 9 test, removed before merge
+    paths:
+      - 'backend/*/resources/migrations/**'
+      - 'tools/ci/erd*'
+      - '.github/workflows/erd.yml'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Render every backend, even those whose key is in the store already.'
+        type: boolean
+        default: false
+
+name: Render database ERDs
+
+# Renders the ERD of every backend that owns a database (tools/ci/erd.js): its SQL migrations on an
+# empty PostgreSQL, then SchemaSpy. Each render goes to ghcr as `erd-<backend>:mig-<key>`, where the
+# key hashes the migrations tree and the generator, so a key is rendered once. pages.yml pulls the
+# renders of the site's ref; its gc job deletes old keys.
+
+# One run at a time, never cancelled: a render cut off half-way would only be repeated.
+concurrency:
+  group: erd
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  # The backends whose key has no render in the store, or all of them with `force`.
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      registry: ${{ steps.plan.outputs.registry }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            tools/ci
+            .github/workflows
+
+      # 1.3.3, not the current 1.3.4: setup-oras verifies against a release table baked into the
+      # action, and v2.0.1's ends at 1.3.3.
+      - uses: oras-project/setup-oras@v2.0.1
+        with:
+          version: 1.3.3
+
+      - name: log in to ghcr
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GH_TOKEN" | oras login ghcr.io -u '${{ github.actor }}' --password-stdin
+
+      - name: find the backends without a render
+        id: plan
+        shell: bash
+        env:
+          OWNER: ${{ github.repository_owner }}
+          FORCE: ${{ inputs.force == true }}
+        run: |
+          set -euo pipefail
+          registry="ghcr.io/$(echo "$OWNER" | tr '[:upper:]' '[:lower:]')"
+          {
+            echo "### ERD plan at \`${GITHUB_SHA:0:9}\`"
+            echo
+            echo "| backend | key | render |"
+            echo "|---|---|---|"
+          } >> "$GITHUB_STEP_SUMMARY"
+          matrix='[]'
+          backends="$(node tools/ci/erd.js backends HEAD)"
+          [ -n "$backends" ] || { echo "::error::no backend has resources/migrations/*.up.sql at HEAD"; exit 1; }
+          for backend in $backends; do
+            key="$(node tools/ci/erd.js key "$backend" HEAD)"
+            # A failed lookup reads as a miss: it costs a render and never skips one.
+            if [ "$FORCE" = true ]; then
+              why='forced'
+            elif oras manifest fetch "$registry/erd-$backend:mig-$key" >/dev/null 2>&1; then
+              echo "| $backend | \`mig-$key\` | in the store |" >> "$GITHUB_STEP_SUMMARY"
+              continue
+            else
+              why='new key'
+            fi
+            echo "| $backend | \`mig-$key\` | **render**: $why |" >> "$GITHUB_STEP_SUMMARY"
+            matrix="$(jq -c --arg b "$backend" --arg k "$key" '. + [{backend: $b, key: $k}]' <<< "$matrix")"
+          done
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "registry=$registry" >> "$GITHUB_OUTPUT"
+
+  render:
+    needs: [plan]
+    if: needs.plan.outputs.matrix != '[]'
+    name: render (${{ matrix.backend }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    services:
+      postgres:
+        # The major version is part of the key: POSTGRES_MAJOR in tools/ci/erd.js, which checks the
+        # server it renders on.
+        image: postgres:16
+        env:
+          POSTGRES_USER: erd
+          POSTGRES_PASSWORD: erd
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U erd" --health-interval 5s --health-timeout 5s --health-retries 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            tools/ci
+            backend/${{ matrix.backend }}/resources/migrations
+
+      - uses: oras-project/setup-oras@v2.0.1
+        with:
+          version: 1.3.3
+
+      - name: log in to ghcr
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "$GH_TOKEN" | oras login ghcr.io -u '${{ github.actor }}' --password-stdin
+
+      # psql is on the runner image; SchemaSpy runs in a container on the host network.
+      - name: apply the migrations and run SchemaSpy
+        id: render
+        shell: bash
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: erd
+          PGPASSWORD: erd
+          BACKEND: ${{ matrix.backend }}
+        run: node tools/ci/erd.js render "$BACKEND" "$RUNNER_TEMP/erd"
+
+      - name: store the render
+        shell: bash
+        env:
+          BACKEND: ${{ matrix.backend }}
+          KEY: ${{ matrix.key }}
+          REGISTRY: ${{ needs.plan.outputs.registry }}
+          LAST_MIGRATION: ${{ steps.render.outputs.last_migration }}
+          TABLES: ${{ steps.render.outputs.tables }}
+        run: |
+          set -euo pipefail
+          ref="$REGISTRY/erd-$BACKEND:mig-$KEY"
+          tar czf "$RUNNER_TEMP/erd.tar.gz" -C "$RUNNER_TEMP/erd" .
+          # Pushed from inside RUNNER_TEMP: oras refuses absolute file paths, and the name it records
+          # is the name erd.js assemble pulls back out.
+          (
+            cd "$RUNNER_TEMP"
+            oras push "$ref" \
+              --artifact-type application/vnd.netcracker.apihub.erd.v1 \
+              --annotation "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+              --annotation "org.opencontainers.image.revision=$GITHUB_SHA" \
+              --annotation "org.opencontainers.image.created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              --annotation "org.netcracker.apihub.erd.backend=$BACKEND" \
+              --annotation "org.netcracker.apihub.erd.key=$KEY" \
+              --annotation "org.netcracker.apihub.erd.last-migration=$LAST_MIGRATION" \
+              --annotation "org.netcracker.apihub.erd.tables=$TABLES" \
+              erd.tar.gz:application/vnd.netcracker.apihub.erd.layer.v1.tar+gzip
+          )
+          # Read the key back: a push exiting 0 says a manifest was written, not what it says.
+          got="$(oras manifest fetch "$ref" | jq -r '.annotations["org.netcracker.apihub.erd.key"] // ""')"
+          [ "$got" = "$KEY" ] || { echo "::error::$ref reads key '$got', expected '$KEY'"; exit 1; }
+          echo "stored \`$ref\`: $TABLES tables, last migration \`$LAST_MIGRATION\`" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  # Dispatches pages.yml at the default branch, as ci.yml's storybook-pages job does, so the site
+  # picks up the new renders. Only from the branches the site shows, and, like ci.yml, only once
+  # PAGES_DEPLOY is true. `always()`, so one failed backend does not keep the others off the site.
+  # Warns and skips if pages.yml is not on the default branch, where workflow_dispatch requires it.
+  pages:
+    needs: [render]
+    if: >-
+      always() && needs.render.result != 'skipped' && needs.render.result != 'cancelled'
+      && (github.ref == 'refs/heads/main' || github.ref_name == github.event.repository.default_branch)
+      && vars.PAGES_DEPLOY == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: dispatch pages.yml
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF_NAME: ${{ github.ref_name }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          repo='${{ github.repository }}'
+          default='${{ github.event.repository.default_branch }}'
+          if ! gh api "repos/$repo/contents/.github/workflows/pages.yml?ref=$default" --silent 2>/dev/null; then
+            msg="pages.yml is not on $default yet, so it cannot be dispatched; the ERD store was updated and the site was not"
+            echo "::warning::$msg"
+            echo "$msg" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          gh workflow run pages.yml --repo "$repo" --ref "$default" \
+            -f reason="ERD renders on $REF_NAME, run $RUN_ID"
+          echo "dispatched pages.yml at \`$default\`" | tee -a "$GITHUB_STEP_SUMMARY"
