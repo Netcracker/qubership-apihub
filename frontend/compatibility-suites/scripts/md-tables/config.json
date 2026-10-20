@@ -1,0 +1,45 @@
+{
+    "_comment": "Configuration file for CSV/MD conversion scripts",
+    "_author": {
+      "name": "Felipe Rocha Tanabe",
+      "email": "felipe.tanabe@netcracker.com",
+      "ai_assistant": "Cursor AI (Claude Sonnet 4.5)",
+      "development_date": "2026-01-22"
+    },
+    "_instructions": [
+      "This file controls which files should be processed by the conversion scripts.",
+      "",
+      "OPTIONS:",
+      "  - Set 'files_to_process' to ['all'] to process all .md or .csv files in the directory",
+      "  - Or specify individual file names (without extension) in the array",
+      "  - File names are case-sensitive and should match exactly (without .md or .csv extension)",
+      "",
+      "  - Set 'table_format' to 'max_width' for tables with column widths matching content (original format)",
+      "  - Or set 'table_format' to 'compact' for minimal-width tables",
+      "",
+      "EXAMPLES:",
+      "  To process all files:",
+      "    \"files_to_process\": [\"all\"]",
+      "",
+      "  To process only specific files:",
+      "    \"files_to_process\": [\"Schema-Changes\", \"General-Operation-Parameters\"]",
+      "",
+      "  To use compact table format:",
+      "    \"table_format\": \"compact\"",
+      "",
+      "  To use maximum width table format (default):",
+      "    \"table_format\": \"max_width\""
+    ],
+    "table_format": "max_width",
+    "files_to_process": [
+      "General-Operation-Parameters",
+      "Operation-Parameters",
+      "Parameters.-Examples",
+      "Request",
+      "RequestBody.-Examples",
+      "Response",
+      "ResponseBody.-Examples",
+      "Schema-Changes"
+    ]
+  }
+  
