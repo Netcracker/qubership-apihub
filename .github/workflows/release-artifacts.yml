@@ -7,7 +7,9 @@ name: Release artifacts
 #      registry already holds from before the release stops a real run;
 #   3. publish the Helm charts: step 6 of the migration plan, a placeholder until then;
 #   4. create the GitHub Releases, modules with make_latest=false, then the product as Latest.
-# The notes are the minimal ones of tools/release/notes/minimal.js until steps 4-5 replace it.
+# The notes (tools/release/notes/) are written in the plan step: the job token reads the pull requests and
+# issues of the changes, PROJECT_READ_TOKEN the sprint's work items on Project 9. Without that secret the
+# plan reports a problem: a real run stops at the check, a dry run warns.
 #
 # ci.yml calls it twice: from release-artifacts on main (dry_run false, write permissions) and from
 # release-artifacts-dry-run on a dispatch with release_dry_run (read permissions). A dry run publishes
@@ -23,6 +25,10 @@ on:
         description: 'Publish nothing; report what would be published.'
         type: boolean
         required: true
+    secrets:
+      PROJECT_READ_TOKEN:
+        description: 'Token with read:project for the Project 9 work items of the product notes.'
+        required: false
 
 jobs:
   publish:
@@ -50,6 +56,8 @@ jobs:
         env:
           OWNER: ${{ github.repository_owner }}
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          PROJECT_READ_TOKEN: ${{ secrets.PROJECT_READ_TOKEN }}
         run: |
           set -euo pipefail
           # Outside the checkout, so nothing of the plan can reach a package or a build context.

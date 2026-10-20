@@ -689,9 +689,13 @@ jobs:
     permissions:
       contents: write # create the GitHub Releases
       packages: write # image version tags and npm packages in ghcr
+      pull-requests: read # release notes: the pull requests of the changes
+      issues: read # release notes: the issues those pull requests close
     uses: ./.github/workflows/release-artifacts.yml
     with:
       dry_run: false
+    secrets:
+      PROJECT_READ_TOKEN: ${{ secrets.PROJECT_READ_TOKEN }}
 
   # The same, publishing nothing, on any branch: dispatch CI with release_dry_run. After ci-ok, so the
   # images of the run exist, but not gated on it: a preview is useful on a red run too.
@@ -705,6 +709,10 @@ jobs:
     permissions:
       contents: read
       packages: read
+      pull-requests: read
+      issues: read
     uses: ./.github/workflows/release-artifacts.yml
     with:
       dry_run: true
+    secrets:
+      PROJECT_READ_TOKEN: ${{ secrets.PROJECT_READ_TOKEN }}
