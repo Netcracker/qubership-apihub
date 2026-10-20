@@ -286,6 +286,46 @@ exists.
 
 See [Release notes](#release-notes) for what each GitHub Release says.
 
+## GitHub Pages
+
+The Pages workflow (`pages.yml`) publishes one site at <https://netcracker.github.io/qubership-apihub/>. The site
+has five parts:
+
+- the navigation page at the root, which links to the other four;
+- the product landing at `landing/`;
+- the documentation site at `docs/` (a placeholder until the docs site exists at the ref);
+- the Storybooks at `storybook/<component>/<branch>/`;
+- the database ERDs at `erd/<backend>/` for `portal-backend`, `api-linter-service`, and `agents-backend`.
+
+Old URLs keep working: the root `404.html` redirects `pages/erd/...` to `erd/portal-backend/...` and legacy
+documentation paths to `docs/`.
+
+Everything except the Storybooks comes from one ref. The workflow picks it in this order:
+
+1. The repository variable `SITE_REF`, if set. It can be a branch, a tag, or a commit SHA.
+2. `main`, once `main` has `sites/landing/package.json`.
+3. `develop` otherwise.
+
+The variable `LANDING_REF` overrides the ref of the landing only. The landing and the docs are built from that ref
+and cached by commit. The ERDs are not built by Pages: it pulls the renders for the site's commit from `ghcr.io`.
+The Storybooks are pulled from the Storybook store and get the part of the 1 GiB site limit that the rest leaves free.
+
+The workflows involved:
+
+- `pages.yml` assembles the site with `tools/ci/pages-site.js` and deploys it. It deploys only from the default
+  branch and only when the repository variable `PAGES_DEPLOY` is `true`.
+- `erd.yml` renders the ERD of a backend whenever its SQL migrations (or the ERD tooling) have no render yet, pushes
+  it to `ghcr.io/netcracker/erd-<backend>` under the tag `mig-<key>`, and dispatches `pages.yml`. The key is a hash
+  of the migrations folder, the ERD tooling, and the tool versions, so an unchanged schema is never rendered twice.
+- The `storybook-pages` job of [`ci.yml`](../../.github/workflows/ci.yml) dispatches `pages.yml` after a Storybook
+  changes.
+
+Dispatch the workflow by hand with:
+
+```bash
+gh workflow run pages.yml --repo Netcracker/qubership-apihub --ref develop
+```
+
 ## Release notes
 
 `tools/release/artifacts.js` writes the notes in the plan step of `release-artifacts`, with the generators in
@@ -567,12 +607,25 @@ would also rebuild every image and move `:latest`.
    gh variable delete LANDING_REF --repo Netcracker/qubership-apihub
    ```
 
+### A hotfix migration and the ERD
+
+A hotfix that adds an SQL migration reaches `main` through `release`. `erd.yml` renders on `main` by itself, because
+the migrations folder has a new key there, and then dispatches `pages.yml`. The site keeps showing `main`.
+
+To render an ERD that `erd.yml` considers done, or to re-render after you change the render tooling by hand, force a
+render of every backend on a branch:
+
+```bash
+gh workflow run erd.yml --repo Netcracker/qubership-apihub --ref <branch> -f force=true
+```
+
 ## Related files
 
 - Workflows: [`release-start.yml`](../../.github/workflows/release-start.yml),
   [`release-sync.yml`](../../.github/workflows/release-sync.yml),
   [`release-finish.yml`](../../.github/workflows/release-finish.yml),
   [`release-artifacts.yml`](../../.github/workflows/release-artifacts.yml), the `release-artifacts` job of
-  [`ci.yml`](../../.github/workflows/ci.yml), and [`images-gc.yml`](../../.github/workflows/images-gc.yml).
+  [`ci.yml`](../../.github/workflows/ci.yml), [`images-gc.yml`](../../.github/workflows/images-gc.yml),
+  [`pages.yml`](../../.github/workflows/pages.yml), and [`erd.yml`](../../.github/workflows/erd.yml).
 - Scripts: [`tools/release/`](../../tools/release/).
 - Release configuration: the `release` block of [`nx.json`](../../nx.json).
