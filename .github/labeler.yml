@@ -110,6 +110,10 @@
   - changed-files:
       - any-glob-to-any-file: 'deploy/**'
 
+'module:landing':
+  - changed-files:
+      - any-glob-to-any-file: 'sites/landing/**'
+
 'module:docs':
   - changed-files:
       - any-glob-to-any-file: 'docs/**'
