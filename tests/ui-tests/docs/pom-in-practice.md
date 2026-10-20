@@ -227,6 +227,7 @@ await portalPage.header.userAvatar.hover()
   await editOperationGroupDialog.leftList.getOperationListItem(toAdd![0].operations[0]).checkbox.click()
   // ...
   ```
+
 - **`Switch`**: For switch/toggle controls.
 
 - **`DatePicker`**: For date selection with additional elements and methods.
