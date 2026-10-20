@@ -314,6 +314,22 @@ GitHub accepts release bodies up to 125,000 characters. Longer notes keep the fi
 five, and say how many were left out; the full changelog link lists all of them. A pull request lists at most ten
 closing issues, and a card at most ten pull requests, as in the old scripts.
 
+## Image cleanup
+
+The **Clean up images** workflow ([`images-gc.yml`](../../.github/workflows/images-gc.yml)) deletes image versions in
+ghcr that no branch or git tag needs. It runs when a branch is deleted and twice a day. Most image packages are shared
+with a legacy component repository that still pushes to them, so the workflow checks every tag against the refs of
+the monorepo and of that repository.
+
+- A release image stays while its git tag exists: `<image>:<version>` for `<component>/<version>`, and the legacy
+  `X.Y.Z` tags.
+- `latest`, `next`, `dev`, and `pull-N-merge` always stay. Closing a pull request deletes nothing.
+- A deleted branch's tag goes on the next run. Superseded indexes and `src-<hash>` content that no kept tag uses go a
+  day after their last change.
+- A run never takes the API rate limit below half, so CI keeps its share. The legacy backlog takes several weeks.
+- A delete needs this repository to have the **Admin** role under Manage Actions access in the package settings.
+  Dispatch the workflow with `dry_run` to see what a run would delete.
+
 ## Version rules
 
 ### Bump per commit type
@@ -462,7 +478,7 @@ jobs. If the cause is a defect in the code, the fix ships with the next release.
 - Workflows: [`release-start.yml`](../../.github/workflows/release-start.yml),
   [`release-sync.yml`](../../.github/workflows/release-sync.yml),
   [`release-finish.yml`](../../.github/workflows/release-finish.yml),
-  [`release-artifacts.yml`](../../.github/workflows/release-artifacts.yml), and the `release-artifacts` job of
-  [`ci.yml`](../../.github/workflows/ci.yml).
+  [`release-artifacts.yml`](../../.github/workflows/release-artifacts.yml), the `release-artifacts` job of
+  [`ci.yml`](../../.github/workflows/ci.yml), and [`images-gc.yml`](../../.github/workflows/images-gc.yml).
 - Scripts: [`tools/release/`](../../tools/release/).
 - Release configuration: the `release` block of [`nx.json`](../../nx.json).
