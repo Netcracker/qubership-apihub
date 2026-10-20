@@ -49,9 +49,9 @@ const graphApiSchema: GraphApiSchema = buildFromSchema(
 | Property      | Required | Type                     | Description                                                                                                                                                                                |
 |---------------|----------|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | schema        | yes      | GraphApiSchema           | Schema of GraphAPI operation, its dependent definitions and custom directives                                                                                                              |
-| operationPath | no       | string                   | Path to operation in GraphAPI schema, e.g. `#/queries/getEntity`.<br/><br/>**Default:** `first operation path`                                                                             |
-| expandedDepth | no       | number                   | Amount of levels will be expanded by default. <br/><br/>**Default:** `2`                                                                                                                   |
-| displayMode   | no       | `"simple" or "detailed"` | Which mode will be used during rendering.<p/>**Simple** means that there will be only node titles and types<p/>**Detailed** means there will be all information<p/>**Default:** `detailed` |
+| operationPath | no       | string                   | Path to operation in GraphAPI schema, e.g. `#/queries/getEntity`. **Default:** `first operation path`                                                                             |
+| expandedDepth | no       | number                   | Amount of levels will be expanded by default. **Default:** `2`                                                                                                                   |
+| displayMode   | no       | `"simple" or "detailed"` | Which mode will be used during rendering. **Simple** means that there will be only node titles and types **Detailed** means there will be all information **Default:** `detailed` |
 
 *Example 1:* Without specifying operation.
 
@@ -99,11 +99,11 @@ const SomeComponent: FC = () => {
 | Property             | Required | Type                     | Description |
 |----------------------|----------|--------------------------|-------------|
 | schema               | yes      | unknown                  | JSON schema (references are resolved by the viewer) |
-| expandedDepth        | no       | number                   | Amount of levels will be expanded by default. <br/><br/>**Default:** `2` |
-| displayMode          | no       | `"simple" or "detailed"` | Which mode will be used during rendering.<p/>**Simple** means that there will be only node titles and types<p/>**Detailed** means there will be all information<p/>**Default:** `detailed` |
-| initialLevel         | no       | number                   | Nesting level of the root row when the viewer is embedded into another viewer. <br/><br/>**Default:** `0` |
+| expandedDepth        | no       | number                   | Amount of levels will be expanded by default. **Default:** `2` |
+| displayMode          | no       | `"simple" or "detailed"` | Which mode will be used during rendering. **Simple** means that there will be only node titles and types **Detailed** means there will be all information **Default:** `detailed` |
+| initialLevel         | no       | number                   | Nesting level of the root row when the viewer is embedded into another viewer. **Default:** `0` |
 | customizationOptions | no       | CustomizationOptions     | `headerRowTitle` replaces the root title; `suppressRootNestingIndicator` renders a wrapper object's properties as a flat top-level list |
-| devMode              | no       | boolean                  | Enables tree building diagnostics in the console. <br/><br/>**Default:** `false` |
+| devMode              | no       | boolean                  | Enables tree building diagnostics in the console. **Default:** `false` |
 
 `JsonSchemaDiffsViewer` accepts the same properties, where `schema` is a merged `apiDiff` document, plus
 `diffMetaKeys` (required), optional `diffTypes`, and `hideUnchangedNodes` (**Default:** `true`).
