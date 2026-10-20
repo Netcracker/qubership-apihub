@@ -314,7 +314,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node tools/ci/storybook-site.js gc
 
+      # Independent of the Storybook cleanup, so it runs when that step fails.
       - name: delete stale ERD renders
+        if: ${{ !cancelled() }}
         shell: bash
         env:
           OWNER: ${{ github.repository_owner }}
