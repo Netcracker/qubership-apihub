@@ -57,6 +57,7 @@ hierarchy with no `$ref` / `allOf`, a rules tree mirroring its structure, per-no
 (`typeDefinitionRules` switches on `type.kind`). ddlapi rules will follow this shape.
 
 The **dialect/version mechanism** to mirror is JSON Schema:
+
 - `jsonSchemaRules(version)` is a **parameterized core factory** (`src/rules/jsonschema.ts`)
   with `versionSpecific[version]` overlays and per-version default/replace maps
   (`JSON_SCHEMA_DEFAULTS[version]`).
@@ -71,7 +72,7 @@ composes onto it.
 
 `Realm` (stamped `ddlapi: "1.0.0"`, the type discriminator — like `openapi`/`graphapi`):
 
-```
+```text
 Realm{ ddlapi, schemas[], attrs?[], objects?[] }
  └ Schema{ name, tables?[], attrs?[], objects?[] }
     └ Table{ kind:'Table', name, columns?[], indexes?[], primaryKey?:Index,
@@ -264,9 +265,11 @@ routing ddlapi through it, add a dedicated **`defineDdlApiOrigins`** stage and d
 by spec family.
 
 **Pipeline seam.** Generalize the one line in `src/normalize.ts`:
+
 ```js
 if (resolveRef || (!originsAlreadyDefined && originsFlag)) { spec = defineOriginsAndResolveRef(spec, opts) }
 ```
+
 into a per-family strategy — JSON/OpenAPI/AsyncAPI/GraphAPI keep `defineOriginsAndResolveRef`;
 ddlapi uses `defineDdlApiOrigins`. The JSON `$ref` path is untouched. `merge`/`mergeTraits`
 stay off for ddlapi; `validate`/`unify`/`hash` already carry the cycle hook and consume the
@@ -312,7 +315,7 @@ composite index, and an enum-typed column.
 
 Mirror the JSON-Schema-dialect composition:
 
-```
+```text
 src/rules/ddlapi.ts            core, driver-neutral factory: ddlApiRules(version, dialect)
 src/rules/ddlapi.const.ts      property-name + kind constants (no bare string literals)
 src/rules/ddlapi.postgres.ts   PostgreSQL overlay: rules + defaults for escape-hatch kinds
@@ -444,11 +447,13 @@ are repo-relative; the ddlapi checkout is assumed at `../ddlapi` (adjust to your
 
 **Task 0a — Link ddlapi & smoke test · S · deps: none**
 Files: `package.json`, `test/ddlapi/smoke.test.ts`
+
 - [ ] In `../ddlapi`: `npm run build && npm link`; in this repo: `npm link @netcracker/qubership-apihub-ddlapi`; add it to `package.json` `dependencies`.
 - [ ] `buildFromDdl('CREATE TABLE t(id int)')` imported from the package root returns a `Realm`.
 - Verify: `npm run build && npm test -- test/ddlapi/smoke.test.ts`
 
-**Task 0b — CI / dependency strategy · S · deps: 0a**
+#### Task 0b — CI / dependency strategy · S · deps: 0a
+
 - [ ] CI obtains ddlapi without `npm link` — a workspace entry or a published/packed tarball, documented in CI config.
 - [ ] On ddlapi publish, `package.json` pins a caret range with the **minimum version** shipping the `ddlapi` stamp + targeted escape-hatch kinds.
 - [ ] api-unifier does **not** re-export ddlapi types (boundary check); consumers import `Realm`/`kind` constants straight from ddlapi.
@@ -457,6 +462,7 @@ Files: `package.json`, `test/ddlapi/smoke.test.ts`
 
 **Task 1a — Spec detection · S · deps: 0a**
 Files: `src/spec-type.ts`, `test/ddlapi/detect.test.ts`
+
 - [ ] `SPEC_TYPE_DDL_API_TYPE_FAMILY`, `SPEC_TYPE_DDL_API_1='ddlapi-1.0'`; `SpecType`/`SpecTypeFamily` extended.
 - [ ] `isDdlApi` + `resolveSpec` branch placed **before** the JSON-Schema fallthrough.
 - [ ] `resolveSpec` throws on an unsupported `ddlapi` version (`'2.0.0'`), mirroring OpenAPI/AsyncAPI.
@@ -465,6 +471,7 @@ Files: `src/spec-type.ts`, `test/ddlapi/detect.test.ts`
 
 **Task 1b — Constants, dialect contract, options, registration · M · deps: 1a**
 Files: `src/rules/ddlapi.const.ts`, `src/rules/ddlapi.dialect.ts`, `src/rules/ddlapi.ts` (stub), `src/rules/index.ts`, `src/index.ts`
+
 - [ ] Property-name + kind constants (no bare literals).
 - [ ] `DdlApiDialect` interface (D6 signature) + `DIALECT_POSTGRES` stub.
 - [ ] `export const DDL_API_NORMALIZE_OPTIONS` (D7) defined and re-exported from `src/index.ts` (its contract test lands in Task 3a, once unify makes flags observable).
@@ -473,6 +480,7 @@ Files: `src/rules/ddlapi.const.ts`, `src/rules/ddlapi.dialect.ts`, `src/rules/dd
 
 **Task 1c — Containment validate tree + test helper · M · deps: 1b**
 Files: `src/rules/ddlapi.ts`, `src/rules/ddlapi.const.ts`, `test/helpers/ddlapi.ts`, `test/ddlapi/validate.test.ts`
+
 - [ ] `ddlApiRules` covers Realm→Schema→Table→Column/Index/PK/FK→type/parts/attrs with `checkType`/`checkContains` (on `kind`, `ReferenceOption`); union `kind`-dispatchers route to per-kind rules; `Unknown*` is a validate-only `{kind:string}` passthrough (no PG specifics — those are Phase 4).
 - [ ] `test/helpers/ddlapi.ts` exports `buildRealmAndAssertValid(ddl)` (async, `{strict:true}`, asserts no issues).
 - [ ] `normalize(realm, {validate:true, unify:false, mergeAllOf:false, mergeTraits:false})` returns the structure unchanged and clean for a representative realm.
@@ -483,6 +491,7 @@ Files: `src/rules/ddlapi.ts`, `src/rules/ddlapi.const.ts`, `test/helpers/ddlapi.
 
 **Task 2 — `defineDdlApiOrigins` + pipeline dispatch · M · deps: 1c**
 Files: `src/define-ddlapi-origins.ts`, `src/normalize.ts`, `test/ddlapi/origins.test.ts`, `test/ddlapi/references.test.ts`, `test/ddlapi/partial-realm.test.ts`
+
 - [ ] Definition-first walk over the typed `Realm` (D5 order); interns one `ChainItem` per instance; reference edges reuse home origins; reuses `createCycledJsoHandlerHook`; emits an identity-preserving clone.
 - [ ] `normalize.ts` dispatches the origins stage by spec family (JSON `$ref` path untouched).
 - [ ] FK (incl. forward/cyclic) + enum-typed column + composite index: no infinite recursion; shared instances stay `===`; reference-edge origins point at the definition site; `commonOriginsCheck(result)` passes.
@@ -493,6 +502,7 @@ Files: `src/define-ddlapi-origins.ts`, `src/normalize.ts`, `test/ddlapi/origins.
 
 **Task 3a — Empty collections (D3) + options contract test · M · deps: 2**
 Files: `src/rules/ddlapi.ts`, `src/rules/ddlapi.const.ts`, `test/ddlapi/empties.test.ts`, `test/ddlapi/deunify.test.ts`, `test/ddlapi/normalize.options.test.ts`
+
 - [ ] `valueDefaults`/`valueReplaces` per the D3 table (`TO_EMPTY_ARRAY_MAPPING`); `primaryKey`/`type`/`default` **not** defaulted.
 - [ ] `empties.test.ts` green; round-trip for empties in `deunify.test.ts`.
 - [ ] `DDL_API_NORMALIZE_OPTIONS` contract test (pattern: `test/oas/normalize.options.test.ts`).
@@ -500,12 +510,14 @@ Files: `src/rules/ddlapi.ts`, `src/rules/ddlapi.const.ts`, `test/ddlapi/empties.
 
 **Task 3b — Simple primitive defaults (D4 core) · S · deps: 3a**
 Files: `src/rules/ddlapi.ts`, `test/ddlapi/defaults.test.ts`
+
 - [ ] `Index.unique:false`, `IndexPart.desc:false`, FK `onUpdate`/`onDelete` `'NO ACTION'` — all reversible.
 - [ ] `defaults.test.ts` (non-nullability) green incl. round-trip.
 - Verify: `npm test -- test/ddlapi/defaults.test.ts`
 
 **Task 3c — PK-aware nullability (hard gate) · M · deps: 3b**
 Files: `src/unifies/ddlapi.ts`, `src/rules/ddlapi.ts`, `test/ddlapi/defaults.test.ts`, `test/ddlapi/deunify.test.ts`
+
 - [ ] `ddlApiNullabilityDefault` table-level forward/backward unify; PK members by reference identity → `null:false`, others → `null:true`; in-place shared `ColumnType` mutation with SYNTHETIC/PURE marking + origins.
 - [ ] **Documented exception:** in-place child mutation is the sanctioned `pathItemsUnification` pattern — leave a comment on the unify and in the ddlapi rules notes: *"documented exception to the immutable-forward-pass rule; do not generalize."*
 - [ ] **Hard gate:** PK column with no clause → `null:false`; non-PK → `null:true`; full round-trip.
@@ -515,12 +527,14 @@ Files: `src/unifies/ddlapi.ts`, `src/rules/ddlapi.ts`, `test/ddlapi/defaults.tes
 
 **Task 4a — PG object/attr kinds · M · deps: 3c**
 Files: `src/rules/ddlapi.postgres.ts`, `src/rules/ddlapi.const.ts`, `test/ddlapi/postgres.test.ts`
+
 - [ ] Rules + defaults/replaces for Identity, Partition, Inherits, StorageParams, ExcludeConstraint, CompositeType, RangeType, `pg:domain`, Trigger; composed onto core via the dialect registry.
 - [ ] Each normalizes, round-trips, and carries origins.
 - Verify: `npm test -- test/ddlapi/postgres.test.ts`
 
 **Task 4b — PG index attrs + dialect primitives · M · deps: 4a**
 Files: `src/rules/ddlapi.postgres.ts`, `test/ddlapi/postgres.test.ts`
+
 - [ ] IndexInclude, IndexNullsDistinct, IndexType, IndexPredicate, Concurrently, IndexColumnProp, IndexOpClass; dialect primitive defaults `unsigned` and `GeneratedExpr.type:'STORED'`.
 - [ ] normalize + round-trip + origins for each.
 - Verify: `npm test -- test/ddlapi/postgres.test.ts`
@@ -529,6 +543,7 @@ Files: `src/rules/ddlapi.postgres.ts`, `test/ddlapi/postgres.test.ts`
 
 **Task 5 — Hashing + e2e · M · deps: 4b**
 Files: `src/rules/ddlapi.ts`, `test/ddlapi/hash.test.ts`, `test/ddlapi/e2e.test.ts`
+
 - [ ] `hashOwner:true` / `hashStrategy:CURRENT_DATA_LEVEL` / `newDataLayer` on entity nodes (JSON-Schema analogue); no whole-realm hash; `ddlapi` stamp not hashed.
 - [ ] equal-modulo-defaults realms hash equal; a semantic change (incl. `raw`/comment) differs; **deterministic re-hash of a cyclic FK graph** (Q4).
 - [ ] `e2e.test.ts`: full normalize on a realistic multi-table DDL — `toMatchObject` + origins + per-element hashes.
@@ -626,7 +641,7 @@ These refine, not reverse, the decisions above. Marked **[UPDATE]** for traceabi
 Tests use Jest under `test/`, grouped by family. Add `test/ddlapi/` with `*.test.ts` files.
 Import the engine from the package root (`from '../../src'`). Build fixtures with
 `buildFromDdl(ddl)` from `@netcracker/qubership-apihub-ddlapi` (the ddlapi analogue of the
-` graphapi`...` ` template tag) — this guarantees fixtures are *real* ddlapi documents.
+`` graphapi`...` `` template tag) — this guarantees fixtures are *real* ddlapi documents.
 
 Each file below is authored **within the task that introduces its behavior** (see the
 verification commands in the task list) — the matrix is the catalogue, not a final-phase batch.
@@ -639,6 +654,7 @@ test depends on it): an async `buildRealmAndAssertValid(ddl)` that calls `buildF
 `commonOriginsCheck` / `checkHashesEqualByPath` / `resolveValueByPath` helpers.
 
 `baseOptions` bundle for the suite:
+
 ```typescript
 const baseOptions = {
   validate: true,
@@ -653,6 +669,7 @@ const baseOptions = {
   createOriginsForDefaults: () => TEST_ORIGINS_FOR_DEFAULTS,
 }
 ```
+
 Enable only the stages a given test asserts on.
 
 | Test file | Covers | Key assertions |
@@ -678,6 +695,7 @@ in which case note it with a comment.
 ## Open questions / decisions needed
 
 **Resolved:**
+
 - **Q1 — origins stage output:** `defineDdlApiOrigins` emits an **identity-preserving clone**;
   the caller's Realm is never mutated.
 - **Q3 — dialect discriminator:** keep a **single `SpecType` with PostgreSQL hardcoded**;
