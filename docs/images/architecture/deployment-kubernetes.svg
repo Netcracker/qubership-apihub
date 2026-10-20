@@ -72,7 +72,7 @@
     <rect x="728" y="362" width="304" height="94" rx="11" fill="#fbbf24" fill-opacity="0.10" stroke="#fbbf24" stroke-opacity="0.45" stroke-dasharray="6 4"/>
     <text x="750" y="392" class="nm" fill="#fcd34d">Java Task Consumer</text>
     <text x="750" y="416" class="scale" fill="#d97706">Separate chart</text>
-    <text x="750" y="439" class="tech">Not part of the umbrella release yet</text>
+    <text x="750" y="439" class="tech">Own chart, not in the product chart</text>
   </g>
 
   <!-- Data -->

@@ -57,12 +57,12 @@
     <rect x="88" y="398" width="232" height="92" rx="11" fill="#818cf8" fill-opacity="0.14" stroke="#818cf8" stroke-opacity="0.55"/>
     <text x="108" y="425" class="nm" fill="#a5b4fc" font-size="14">Build Task Consumer</text>
     <text x="108" y="446" class="sub">Polls for build tasks</text>
-    <text x="108" y="475" font-size="10.5" font-weight="600" fill="#6366f1">NestJS 10 &#183; 3&#8211;6 replicas</text>
+    <text x="108" y="475" font-size="10.5" font-weight="600" fill="#6366f1">NestJS 11 &#183; 3&#8211;6 replicas</text>
   </g>
   <g>
     <rect x="341" y="398" width="232" height="92" rx="11" fill="#fbbf24" fill-opacity="0.10" stroke="#fbbf24" stroke-opacity="0.45" stroke-dasharray="6 4"/>
     <text x="361" y="425" class="nm" fill="#fcd34d" font-size="14">Java Task Consumer</text>
-    <text x="361" y="446" class="sub">Java builds &#8212; queue pending</text>
+    <text x="361" y="446" class="sub">Polls libraries-backend</text>
     <text x="361" y="475" font-size="10.5" font-weight="600" fill="#d97706">Java 21 &#183; separate chart</text>
   </g>
   <g>
