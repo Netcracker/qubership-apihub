@@ -1,6 +1,6 @@
-# DI-Portal-PKGVER-013 Export Document from Package Version
+# DI-Portal-PKGVER-023 Export Document from Package Version
 
-**Design Item ID**: DI-Portal-PKGVER-013  
+**Design Item ID**: DI-Portal-PKGVER-023  
 **Design Item Name**: Export Document from Package Version  
 **Related Design Items**:
   - [DI‐Portal‐PS‐007: Configure List of OAS Extensions Preserved on Export](https://github.com/Netcracker/qubership-apihub/wiki/Configure-List-of-OAS-Extensions-Preserved-on-Export)
