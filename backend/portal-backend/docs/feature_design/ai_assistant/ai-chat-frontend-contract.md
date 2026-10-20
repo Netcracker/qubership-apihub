@@ -219,27 +219,27 @@ Non-streaming endpoints return the error in the response body. The streaming end
 
 Minimum viable integration:
 
-- [ ] Define two shared constants in the client codebase, identical to the server values:
-  - [ ] `MAX_PINNED_PER_USER = 3` — used to disable the "Pin" action in the UI;
-  - [ ] `MAX_USER_MESSAGE_LENGTH = 32000` — used to validate the compose input before sending.
-  - There is **no** `/config` endpoint; any change of these constants has to be a coordinated FE+BE rollout.
-- [ ] Implement chat sidebar with `GET /chats`, keyset pagination. Sorting comes from the server — do not re-sort client-side.
-- [ ] Implement chat view with `GET /chats/{id}` + `GET /chats/{id}/messages` (newest first, paginated on scroll up). Use this endpoint **only** for historical display; the streaming endpoint is not usable for history replay.
-- [ ] Implement compose → send via `POST /chats/{id}/messages/stream`:
-  - [ ] generate a `clientMessageId` (UUID) per send;
-  - [ ] append the user message optimistically — no server event needs to be waited for before rendering it;
-  - [ ] parse SSE frames manually (fetch + `ReadableStream`); do **not** use `EventSource`;
-  - [ ] concatenate `message.assistant.delta.delta` values in order;
-  - [ ] replace the rendered content with `message.assistant.completed.message.content` on completion;
-  - [ ] (optional) render live tool pills from `tool.started` / `tool.completed`; after a reload the same pills reappear from `toolInvocations` on the persisted message;
-  - [ ] (optional) show the compaction indicator when `context.compacted` arrives.
-- [ ] Handle the standard chat actions (create, rename, pin/unpin, delete). Surface the `APIHUB-AI-4003` error as a toast.
-- [ ] Let the Markdown renderer handle file links — they are regular `<a>` elements pointing at `/api/v1/ephemeral-files/...`.
+* [ ] Define two shared constants in the client codebase, identical to the server values:
+  * [ ] `MAX_PINNED_PER_USER = 3` — used to disable the "Pin" action in the UI;
+  * [ ] `MAX_USER_MESSAGE_LENGTH = 32000` — used to validate the compose input before sending.
+  * There is **no** `/config` endpoint; any change of these constants has to be a coordinated FE+BE rollout.
+* [ ] Implement chat sidebar with `GET /chats`, keyset pagination. Sorting comes from the server — do not re-sort client-side.
+* [ ] Implement chat view with `GET /chats/{id}` + `GET /chats/{id}/messages` (newest first, paginated on scroll up). Use this endpoint **only** for historical display; the streaming endpoint is not usable for history replay.
+* [ ] Implement compose → send via `POST /chats/{id}/messages/stream`:
+  * [ ] generate a `clientMessageId` (UUID) per send;
+  * [ ] append the user message optimistically — no server event needs to be waited for before rendering it;
+  * [ ] parse SSE frames manually (fetch + `ReadableStream`); do **not** use `EventSource`;
+  * [ ] concatenate `message.assistant.delta.delta` values in order;
+  * [ ] replace the rendered content with `message.assistant.completed.message.content` on completion;
+  * [ ] (optional) render live tool pills from `tool.started` / `tool.completed`; after a reload the same pills reappear from `toolInvocations` on the persisted message;
+  * [ ] (optional) show the compaction indicator when `context.compacted` arrives.
+* [ ] Handle the standard chat actions (create, rename, pin/unpin, delete). Surface the `APIHUB-AI-4003` error as a toast.
+* [ ] Let the Markdown renderer handle file links — they are regular `<a>` elements pointing at `/api/v1/ephemeral-files/...`.
 
 Non-essential but recommended:
 
-- [ ] Graceful retry with the same `clientMessageId` on transient network errors.
-- [ ] Abort the in-flight `fetch()` when the user navigates away, to free backend resources.
+* [ ] Graceful retry with the same `clientMessageId` on transient network errors.
+* [ ] Abort the in-flight `fetch()` when the user navigates away, to free backend resources.
 
 ## 9. Versioning and compatibility
 
