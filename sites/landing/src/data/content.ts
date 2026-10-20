@@ -15,10 +15,9 @@ export const ERD_URL = `${SITE_ROOT}erd/`;
 export const REPO_URL = 'https://github.com/Netcracker/qubership-apihub';
 export const RELEASES_URL = `${REPO_URL}/releases`;
 
-/** Raw files from the GitHub wiki repo (same paths as in the wiki clone, e.g. images/…). */
-export const WIKI_RAW_BASE = 'https://raw.githubusercontent.com/wiki/Netcracker/qubership-apihub';
-export const WIKI_IMG_APPLICATIONS_ARCH = `${WIKI_RAW_BASE}/images/APIHUB_applications.png`;
-export const WIKI_IMG_VS_API_MANAGEMENT = `${WIKI_RAW_BASE}/images/APIHUB_vs_API_Management_domain.png`;
+/** Images that the pages show beyond the feature cards. */
+export const IMG_APPLICATIONS_ARCH = withBase('images/platform-applications-architecture.png');
+export const IMG_VS_API_MANAGEMENT = withBase('images/apihub-vs-api-management-domain.png');
 
 // ─── Navigation ──────────────────────────────────────────────────────────────
 export const NAV_LINKS = [
@@ -387,7 +386,7 @@ export const features = [
       'Export REST, GraphQL, AsyncAPI, DDL, and MCP change lists to Excel',
     ],
     image: withBase('images/feature-breaking-changes.png'),
-    image2: 'https://github.com/user-attachments/assets/34f7d6f6-ccd7-4e28-a88a-6cc5effc9f83',
+    image2: withBase('images/feature-breaking-changes-detail.svg'),
     alt: 'API Changes comparison view showing breaking change classification',
     mockup: null,
   },
@@ -404,7 +403,7 @@ export const features = [
       'Per-ruleset activation history and downloadable reports',
     ],
     image: withBase('images/feature-quality.png'),
-    image2: 'https://github.com/user-attachments/assets/023db369-8f0f-4d77-b886-01a1fe4bfbde',
+    image2: withBase('images/feature-quality-detail.svg'),
     alt: 'API Quality tab showing multi-linter results with inline spec highlighting',
     mockup: null,
   },
@@ -437,7 +436,7 @@ export const features = [
       'Agent Proxy for in-cluster testing via the K8s agent network',
       'Server selection and custom URLs persisted in local storage',
     ],
-    image: 'https://github.com/user-attachments/assets/35e9c1dd-75bc-4dcf-95ee-a9b5b7f5ee65',
+    image: withBase('images/feature-playground.png'),
     image2: null,
     alt: 'REST Playground sidebar showing request builder and response viewer',
     mockup: null,
@@ -454,7 +453,7 @@ export const features = [
       'Breaking change detection, classification, and Diff View in Doc Viewer',
       'Agent-based discovery of AsyncAPI services in Kubernetes clusters',
     ],
-    image: 'https://github.com/user-attachments/assets/475d3256-8da5-4420-981d-65dcecccd579',
+    image: withBase('images/feature-asyncapi.svg'),
     image2: null,
     alt: 'AsyncAPI DocView showing SEND/RECEIVE operations with channel and binding details',
     mockup: null,

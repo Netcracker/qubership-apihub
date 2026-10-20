@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { REPO_URL, DOCS_URL, WIKI_IMG_VS_API_MANAGEMENT } from '../data/content';
+import { REPO_URL, DOCS_URL, IMG_VS_API_MANAGEMENT } from '../data/content';
 import { withBase } from '../lib/paths';
 const home = import.meta.env.BASE_URL;
 
@@ -201,7 +201,7 @@ const colorBg: Record<string, string> = {
         <span class="text-xs text-slate-500">Qubership &amp; APIHUB applications map for API Management sub-domains</span>
       </div>
       <img
-        src={WIKI_IMG_VS_API_MANAGEMENT}
+        src={IMG_VS_API_MANAGEMENT}
           alt="APIHUB API Management landscape"
           class="w-full h-auto block"
           loading="lazy"
