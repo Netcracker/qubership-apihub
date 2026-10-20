@@ -24,9 +24,12 @@ name: Render database ERDs
 # key hashes the migrations tree and the generator, so a key is rendered once. pages.yml pulls the
 # renders of the site's ref; its gc job deletes old keys.
 
-# One run at a time, never cancelled: a render cut off half-way would only be repeated.
+# One run at a time per ref, never cancelled in progress. GitHub still cancels a pending run when a
+# newer one joins its group, so develop and main get a group each: a push to main must not drop the
+# render of a new develop key. Two refs rendering at once are harmless, since equal keys give equal
+# output.
 concurrency:
-  group: erd
+  group: erd-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
