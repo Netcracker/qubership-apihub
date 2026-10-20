@@ -13,7 +13,7 @@
     "versionBadgeText": "Released — DDL Schema Diff + MCP Advanced Catalog"
   },
   "stats": [
-    { "value": "27+", "label": "Open Source Repositories" },
+    { "value": "1", "label": "Repository, All Components" },
     { "value": "v2.14.0", "label": "Latest Release" },
     { "value": "Contracts", "label": "API Types + DDLAPI + MCP" },
     { "value": "MCP", "label": "Server + Catalog Contracts" }

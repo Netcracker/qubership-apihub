@@ -34,7 +34,7 @@ export const NAV_LINKS = [
 
 // ─── Stats ───────────────────────────────────────────────────────────────────
 export const stats = [
-  { value: '27+', label: 'Open Source Repositories' },
+  { value: '1', label: 'Repository, All Components' },
   { value: 'v2.15.0', label: 'Latest Release' },
   { value: 'Contracts', label: 'API Types + DDLAPI + MCP' },
   { value: 'MCP', label: 'Server + Catalog Contracts' },
@@ -659,7 +659,7 @@ export const deployOptions = [
   {
     icon: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5" /></svg>`,
     title: 'Build from Source',
-    description: 'All 27+ repositories are open source under Apache 2.0. Build any component, run the full test suite, and contribute back to the project.',
+    description: 'The whole repository is open source under Apache 2.0. Build any component, run the full test suite, and contribute back to the project.',
     badge: 'Open source',
     cta: 'View on GitHub',
     href: REPO_URL,
