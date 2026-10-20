@@ -4,7 +4,7 @@
 **Design Item Name**: Create Workspace  
 **Related Design Items**: -  
 **Related API**: 
-  * Create a new package ([POST /api/v2/packages](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/api/Public%20Registry%20API.yaml#L1010))
+  * Create a new package ([POST /api/v2/packages](../../../backend/portal-backend/docs/api/APIHUB_API.yaml))
 
 **Revision History:**  
 
@@ -29,7 +29,7 @@ Workspace is first level grouping entity for groups, packages and dashboards. Wo
    * Private - if checked, then package will be private and by default, will be visible to the current user only. 
 3. User clicks **Create** button. 
 4. The system creates new workspace.
-   - API to create workspace - [POST /api/v2/packages](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/api/Public%20Registry%20API.yaml#L1010):  
+   - API to create workspace - [POST /api/v2/packages](../../../backend/portal-backend/docs/api/APIHUB_API.yaml):  
      - kind = workspace
      - name = \<user input from Name field\>
      - alias = \<user input from Alias field\>

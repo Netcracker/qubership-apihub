@@ -2,8 +2,8 @@
 
   * [Relationships tables](#relationships-tables)
   * [Orphans tables](#orphans-tables)
-  * [Appendix: how to generate dynamic document](#appendix--how-to-generate-dynamic-document)
-    + [Run SchemaSpy from `jar` distribution (on Windows)](#run-schemaspy-from--jar--distribution--on-windows-)
+  * [Appendix: how to generate dynamic document](#appendix-how-to-generate-dynamic-document)
+    + [Run SchemaSpy from `jar` distribution (on Windows)](#run-schemaspy-from-jar-distribution-on-windows)
 
 This article depicts tables and relationships in APIHUB Backend database.
 

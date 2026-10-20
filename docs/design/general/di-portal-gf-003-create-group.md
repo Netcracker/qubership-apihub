@@ -4,8 +4,8 @@
 **Design Item Name**: Create Group  
 **Related Design Items**: -  
 **Related API**: 
-- Create a new package ([POST /api/v2/packages](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/api/Public%20Registry%20API.yaml#L1010))
-- Get packages list ([GET /api/v2/packages](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/api/Public%20Registry%20API.yaml#L1073))
+- Create a new package ([POST /api/v2/packages](../../../backend/portal-backend/docs/api/APIHUB_API.yaml))
+- Get packages list ([GET /api/v2/packages](../../../backend/portal-backend/docs/api/APIHUB_API.yaml))
 
 **Revision History:**  
 
@@ -27,7 +27,7 @@ Group is grouping entity for packages, dashboards and another groups. Group can 
 2. The system opens Create Group popup with the following fields:
    - Name - required field.
    - Workspace/Parent Group - required field. By default, the value equals to the current group/workspace. It is possible to select group only under current workspace.
-     - API to select group - [GET /api/v2/packages](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/api/Public%20Registry%20API.yaml#L1073):
+     - API to select group - [GET /api/v2/packages](../../../backend/portal-backend/docs/api/APIHUB_API.yaml):
        - kind = group
        - showAllDescendants = true
        - textFilter = <user input in Workspace/Parent Group field>.
@@ -36,7 +36,7 @@ Group is grouping entity for packages, dashboards and another groups. Group can 
    - Private - if checked, then group will be private and by default will be visible to current user only. If parent group/workspace is public, then current group will also be public even if private checkbox 
 3. User clicks **Create**.
 4. The system creates new package
-   - API to create group - [POST /api/v2/packages](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/api/Public%20Registry%20API.yaml#L1010):
+   - API to create group - [POST /api/v2/packages](../../../backend/portal-backend/docs/api/APIHUB_API.yaml):
    - parentId = <Id of workspace/group under which current group is created>
    - kind = group
    - name = \<user input from Name field\>

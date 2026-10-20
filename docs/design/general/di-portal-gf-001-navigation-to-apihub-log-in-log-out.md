@@ -4,8 +4,8 @@
 **Design Item Name**: Navigation to APIHUB (log in / log out)  
 **Related Design Items**: -  
 **Related API**: 
-  * SSO integration status ([GET /api/v1/system/configuration](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/api/Public%20Registry%20API.yaml#L62))  
-  * SAML authentication ([POST /api/v2/auth/saml](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/api/Public%20Registry%20API.yaml#L98))  
+  * SSO integration status ([GET /api/v1/system/configuration](../../../backend/portal-backend/docs/api/APIHUB_API.yaml))  
+  * SAML authentication ([POST /api/v2/auth/saml](../../../backend/portal-backend/docs/api/APIHUB_API.yaml))  
 
 **Revision History:**  
 
@@ -24,7 +24,7 @@ The functionality is available when user follows the APIHUB link.
 **Execution**  
 1. The user navigates to APIHUB.
 2. The system automatically authenticate user via SAML SSO and opens the home page of APIHUB Portal. 
-   * API for SAML authentication: [POST /api/v2/auth/saml](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/api/Public%20Registry%20API.yaml#L98).
+   * API for SAML authentication: [POST /api/v2/auth/saml](../../../backend/portal-backend/docs/api/APIHUB_API.yaml).
 
 # Workflow 2  
 **Start Point**  
@@ -34,7 +34,7 @@ The functionality is available when user clicks **Logout** in APIHUB.
 1. The system opens 'Log in to APIHUB Portal' page.  
 2. User clicks **SSO Log In**.  
 3. The system authenticate user via SAML SSO.  
-   * API for SAML authentication: [POST /api/v2/auth/saml](https://github.com/Netcracker/qubership-apihub-backend/blob/develop/docs/api/Public%20Registry%20API.yaml#L98).  
+   * API for SAML authentication: [POST /api/v2/auth/saml](../../../backend/portal-backend/docs/api/APIHUB_API.yaml).  
 
 # Workflow 3 (for non-production env only)
 **Start Point**  
