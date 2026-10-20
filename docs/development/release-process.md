@@ -37,7 +37,6 @@ gh workflow run release-finish.yml --ref develop -f dry_run=false -f sprint=APIH
 | `RELEASE_BOT_SSH_KEY` | Actions secret: private half of deploy key `apihub-release-bot` | Every bot push | In use |
 | `GITHUB_TOKEN` | Token GitHub creates for each run | CI, `release-artifacts` | In use |
 | `PROJECT_READ_TOKEN` | Actions secret with `read:project`, for Project 9 | Product notes (sprint items) | In use |
-| `PUBLISH_CHARTS` | Repository variable, `true` to publish charts | Chart step of `release-artifacts` | Planned |
 
 The bots push with the deploy key, not with `GITHUB_TOKEN`, for two reasons:
 
@@ -256,10 +255,10 @@ order:
    with `pnpm publish -r --ignore-scripts`. A version that the registry already holds from before the release commit
    stops the job: the tag would name content the registry does not have. A version published after the release commit
    comes from an earlier attempt of this release and is skipped. The dry run reports the same case as a warning.
-4. **Planned (step 6):** package and publish the Helm charts to `oci://ghcr.io/netcracker/charts`. Today the step is
-   guarded by `PUBLISH_CHARTS` and only prints a warning.
+4. Packages the released Helm charts with every image tag pinned and pushes them to `oci://ghcr.io/netcracker/charts`;
+   see [Helm charts](#helm-charts).
 5. Creates the GitHub Releases: modules first (`make_latest=false`), then the product, which becomes the Latest
-   release.
+   release. The product release and the agent release carry their chart `.tgz`.
 
 Images exist for these components: `ui`, `build-task-consumer`, `portal-backend`, `api-linter-service`,
 `agents-backend`, `agent`, `test-service`, and `java-task-consumer`. Libraries publish to npm. `commons-go` publishes
@@ -295,7 +294,8 @@ dependency says so in one line.
 Product notes list:
 
 - the images of the product at their current versions, linked to their module releases;
-- the Helm chart, documentation, and installation links at the product tag;
+- the product chart in the registry, a `helm install` command, and the documentation and installation links at the
+  product tag;
 - the breaking changes of the components released with it;
 - the work items of the sprint: Project 9 cards whose Sprint is the sprint of the product tag and whose Status is
   Done or In Test, grouped by issue type;
@@ -313,6 +313,47 @@ listing its pull requests as bare commits.
 GitHub accepts release bodies up to 125,000 characters. Longer notes keep the first entries of each list, down to
 five, and say how many were left out; the full changelog link lists all of them. A pull request lists at most ten
 closing issues, and a card at most ten pull requests, as in the old scripts.
+
+## Helm charts
+
+Two charts are released, each as its own artifact:
+
+| Chart | Sources | Released with | Published as |
+|-------|---------|---------------|--------------|
+| `qubership-apihub` | `deploy/helm-templates/qubership-apihub` | the product tag `X.Y.Z` | `oci://ghcr.io/netcracker/charts/qubership-apihub` |
+| `qubership-apihub-agent` | `backend/agent/helm-templates/qubership-apihub-agent` | the agent tag `agent/X.Y.Z` | `oci://ghcr.io/netcracker/charts/qubership-apihub-agent` |
+
+The chart sources in git keep their development defaults: `version: 0.0.1`, `appVersion: "1.0"`, and the image tag
+`dev`. Nothing is committed at a release. `release-artifacts` stages a copy of each released chart
+(`tools/release/charts.js`) and writes into it:
+
+- `version` and `appVersion`: the release version;
+- the annotation `org.opencontainers.image.revision`: the release commit;
+- in `values.yaml`, every image tag at its component's current version, the highest stable tag merged into the release
+  commit. The product chart pins `portal-backend`, `build-task-consumer`, `ui`, `api-linter-service`, and
+  `agents-backend`, including `qubershipApihubAgentsBackend.version`. The agent chart pins the agent. The values are
+  replaced in place, so comments and the rest of the file stay as they are.
+
+Then the job checks that every pinned image exists in ghcr, runs `helm lint --strict` and validates the rendered
+manifests with kubeconform (`tools/ci/chart-check.sh`), packages the chart, and pushes it. The `charts` job of CI runs
+the same check on the chart sources in every run.
+
+To see what a released chart pins:
+
+```bash
+helm show values oci://ghcr.io/netcracker/charts/qubership-apihub --version 2.16.0
+```
+
+A chart version is never replaced. The job reads the revision annotation of a version that already exists: the release
+commit means an earlier attempt of this release, and the job pulls that package to attach it instead of pushing again.
+Another commit stops the job.
+
+The product notes name the agent chart at the agent's current version. When the product is released without the
+agent, the job checks that this agent chart version is already in the registry and stops otherwise.
+
+The pin table is `CHARTS` in `tools/release/artifacts.js`. A pin path that is missing from `values.yaml` fails the
+release, so rename a values section and its pin together. The image cleanup (`images-gc.yml`) does not touch the
+chart packages.
 
 ## Image cleanup
 
@@ -401,8 +442,6 @@ Tags that are not plain `X.Y.Z` versions are ignored when Nx looks for a last ta
 
 - **No maintenance branches.** Once the next candidate is cut into `release`, a fix for the previous release can only
   ship with the next one. A separate maintenance branch is not planned.
-- **Planned: charts (step 6).** The chart step of `release-artifacts` is an empty placeholder behind `PUBLISH_CHARTS`.
-  Until step 6 lands, no chart is published and none is attached to the product release.
 - **One release at a time.** The workflows queue instead of cancelling, but do not dispatch another CI run on `main` or
   `release` during a release. An extra run at the same commit can cancel a pending image build.
 - **A real release starts only by hand,** from `develop`, with the deploy key present.
@@ -466,7 +505,14 @@ jobs. If the cause is a defect in the code, the fix ships with the next release.
 - `a version tag is never moved`: the image version already exists for a different commit. Stop and ask a maintainer.
 - `is already in the registry from before this release`: the polyrepo published that npm version. Release the
   component again with a bump that leads past it; do not unpublish.
-- A partial publish: re-run the failed jobs. Existing image tags, npm versions, and GitHub Releases are skipped.
+- `pins <image>:<version>, which is not in the registry`: a chart names an image version that ghcr lacks. For a
+  component released in this run, the images step did not tag it; re-run the whole CI run on `main`. For an older
+  version, the image was deleted from ghcr; stop and ask a maintainer.
+- `a chart version is never replaced`: the chart version exists for another commit. Stop and ask a maintainer.
+- `The notes name oci://.../qubership-apihub-agent:<version>, which is not in the registry`: the product release links
+  an agent chart that no release has pushed. Release the agent with the next product release.
+- A partial publish: re-run the failed jobs. Existing image tags, npm versions, charts, and GitHub Releases are skipped;
+  a release that misses its chart gets it attached.
 
 ### The secret is missing
 

@@ -22,7 +22,8 @@ helm template apihub deploy/helm-templates/qubership-apihub -f <values-file>
 ```
 
 `helm` may not be installed on a developer machine; say so in your report instead of claiming a clean render. The
-Kind end-to-end workflow (`.github/workflows/e2e-tests-kind.yml`) installs the chart and takes about 45 minutes.
+`charts` job of CI runs `tools/ci/chart-check.sh` (lint and kubeconform) on this chart and the agent chart. The Kind
+end-to-end workflow (`.github/workflows/e2e-tests-kind.yml`) installs the chart and takes about 45 minutes.
 
 ## Traps
 
@@ -33,6 +34,9 @@ Kind end-to-end workflow (`.github/workflows/e2e-tests-kind.yml`) installs the c
   (cluster DNS here; `host.docker.internal` in Compose).
 - `local-k8s-quickstart` is for developers only and is not production-ready.
 - The agent has its own standalone chart in `backend/agent/helm-templates/`; that is not this chart.
+- Keep `Chart.yaml` at `0.0.1` and every image tag at `dev`. A release pins them on a packaged copy
+  (`docs/development/release-process.md`, "Helm charts"). Renaming an image section of `values.yaml` breaks the
+  release until `CHARTS` in `tools/release/artifacts.js` names the new path; a new product image needs a pin there.
 
 ## Agent packages
 

@@ -2,7 +2,10 @@
 
 This folder contains `qubership-apihub-agent` Helm chart for Qubership APIHUB Agent deployment to k8s cluster.
 
-It is ready for usage Helm chart.
+Each agent release publishes the chart as `oci://ghcr.io/netcracker/charts/qubership-apihub-agent`, with the chart
+version and the image tag equal to the agent version, and attaches the `.tgz` to the
+[agent release](https://github.com/Netcracker/qubership-apihub/releases). The sources in this folder use the `dev`
+image tag: install from them only for development.
 
 ## Third-party dependencies
 
@@ -20,13 +23,14 @@ It is ready for usage Helm chart.
 ## Prerequisites
 
 1. kubectl installed and configured for k8s cluster access. Cluster admin permissions required because Qubership APIHUB Agent Helm chart brings ClusterRoleBinding for ClusterView role.
-1. Helm installed
+1. Helm 3.8 or later (OCI registry support)
 
 ## Set up values.yml
 
-1. Download Qubership APIHUB Agent helm chart
+1. Print the values of the agent version you install:
+   `helm show values oci://ghcr.io/netcracker/charts/qubership-apihub-agent --version <X.Y.Z>`
 2. Review [`config.template.yaml`](../config.template.yaml) for the full list of configuration parameters and their descriptions
-3. Fill `values.yaml` with your deploy parameters:
+3. Write a `values.yaml` with your deploy parameters; leave `image.tag` out to keep the pinned agent version:
    - Helm-specific settings (image, resources, `goMemLimit`) are at the top level under `qubershipApihubAgent`
    - Application configuration is under `qubershipApihubAgent.env` and follows the same structure as `config.template.yaml`
    - Keep `goMemLimit` below `resource.memory.limit` (~80% of the limit in chart defaults)
@@ -34,6 +38,13 @@ It is ready for usage Helm chart.
 ## Execute helm install
 
 In order to deploy Qubership APIHUB Agent to your k8s cluster execute the following command:
+
+```bash
+helm install qubership-apihub-agent -n qubership-apihub-agent --create-namespace -f values.yaml \
+  oci://ghcr.io/netcracker/charts/qubership-apihub-agent --version <X.Y.Z>
+```
+
+From the chart sources, for development:
 
 ```bash
 helm install qubership-apihub-agent -n qubership-apihub-agent --create-namespace -f ./qubership-apihub-agent/values.yaml ./qubership-apihub-agent

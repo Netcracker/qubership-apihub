@@ -406,17 +406,30 @@ All configuration via **`config.yaml`** (path: `AGENTS_BACKEND_CONFIG_FOLDER`). 
 
 ## Helm (Kubernetes)
 
-Chart: **[`deploy/helm-templates/qubership-apihub/`](../deploy/helm-templates/qubership-apihub/)**.
+Chart: `oci://ghcr.io/netcracker/charts/qubership-apihub`, one version per product release. A released chart pins
+every image tag to the component versions of that release, so `--version` selects the whole product. The versions are
+listed on the [releases page](https://github.com/Netcracker/qubership-apihub/releases); the Latest release is the
+newest product version, and its `.tgz` is attached to it.
+
+The chart sources are in [`deploy/helm-templates/qubership-apihub/`](../deploy/helm-templates/qubership-apihub/).
+Their image tags are `dev`, the state of `develop`: install from the sources only for development.
 
 **Prerequisites:**
 
 - `kubectl` with namespace admin access
-- Helm 3.x
+- Helm 3.8 or later (OCI registry support)
 - Kubernetes 1.23+
 
 ### Minimal values.yaml to fill
 
-Copy `values.yaml`, fill mandatory fields. Everything else has sensible defaults.
+Write a `values.yaml` with the mandatory fields below; the chart defaults cover the rest. To see every value of a
+version, with its defaults and comments:
+
+```bash
+helm show values oci://ghcr.io/netcracker/charts/qubership-apihub --version <X.Y.Z>
+```
+
+Leave `image.tag` out of your file: a tag there overrides the pinned one and stays behind on the next upgrade.
 
 ```yaml
 qubershipApihubBackend:
@@ -477,19 +490,30 @@ qubershipApihubAgentsBackend:
 
 ```bash
 helm install apihub -n qubership-apihub --create-namespace \
-  -f ./deploy/helm-templates/qubership-apihub/values.yaml \
-  ./deploy/helm-templates/qubership-apihub
+  -f values.yaml \
+  oci://ghcr.io/netcracker/charts/qubership-apihub --version <X.Y.Z>
 ```
 
 ```bash
 helm upgrade apihub -n qubership-apihub \
-  -f ./deploy/helm-templates/qubership-apihub/values.yaml \
-  ./deploy/helm-templates/qubership-apihub
+  -f values.yaml \
+  oci://ghcr.io/netcracker/charts/qubership-apihub --version <X.Y.Z>
 ```
 
 ```bash
 helm uninstall apihub -n qubership-apihub
 ```
+
+From the chart sources, for development:
+
+```bash
+helm install apihub -n qubership-apihub --create-namespace \
+  -f values.yaml \
+  ./deploy/helm-templates/qubership-apihub
+```
+
+The APIHUB Agent has its own chart, `oci://ghcr.io/netcracker/charts/qubership-apihub-agent`, versioned with the agent;
+see the [agent chart guide](../backend/agent/helm-templates/README.md).
 
 ### Full Helm parameter reference
 

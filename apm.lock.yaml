@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-10-19T14:57:27.619947+00:00'
+generated_at: '2026-10-20T15:34:50.575952+00:00'
 apm_version: 0.27.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -301,9 +301,9 @@ dependencies:
   - .cursor/skills/apihub-add-go-service/SKILL.md
   deployed_file_hashes:
     .claude/rules/apihub-add-go-service.md: sha256:72440034c1c2be02692006e812c7135640f2c45a2ebe6afd23e3346083bd8975
-    .claude/skills/apihub-add-go-service/SKILL.md: sha256:ae8db452b02f24fe8ee2527170a3ae21f1d085770b0eb4fe3c053e2549544d19
+    .claude/skills/apihub-add-go-service/SKILL.md: sha256:65cae6eb171bf6422552902dac4e06fc7545d08f6975fe512797432d32d08bab
     .cursor/rules/apihub-add-go-service.mdc: sha256:c45f96ec3b7183248009ae3a12641011c0eec317fe9f15eeb2b22eb411ab515b
-    .cursor/skills/apihub-add-go-service/SKILL.md: sha256:ae8db452b02f24fe8ee2527170a3ae21f1d085770b0eb4fe3c053e2549544d19
+    .cursor/skills/apihub-add-go-service/SKILL.md: sha256:65cae6eb171bf6422552902dac4e06fc7545d08f6975fe512797432d32d08bab
   source: local
   local_path: ./agent-packages/apihub-add-go-service
 - repo_url: _local/apihub-agent-developer
@@ -1635,7 +1635,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-add-go-service
   active_owner: ./agent-packages/apihub-add-go-service
-  content_hash: sha256:ae8db452b02f24fe8ee2527170a3ae21f1d085770b0eb4fe3c053e2549544d19
+  content_hash: sha256:65cae6eb171bf6422552902dac4e06fc7545d08f6975fe512797432d32d08bab
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-agent-developer
@@ -2895,7 +2895,7 @@ deployments:
   owners:
   - ./agent-packages/apihub-add-go-service
   active_owner: ./agent-packages/apihub-add-go-service
-  content_hash: sha256:ae8db452b02f24fe8ee2527170a3ae21f1d085770b0eb4fe3c053e2549544d19
+  content_hash: sha256:65cae6eb171bf6422552902dac4e06fc7545d08f6975fe512797432d32d08bab
 - kind: project-relative
   target: cursor
   value: .cursor/skills/apihub-agent-developer
