@@ -19,9 +19,6 @@
   # Every run assembles from `git ls-remote --heads`, so the daily run catches a missed deletion.
   schedule:
     - cron: '17 3 * * *'
-  # TEMPORARY: step 9 test, removed before merge
-  push:
-    branches: [wiring/9]
 
 name: Publish Pages
 
@@ -45,10 +42,6 @@ jobs:
       packages: read
     outputs:
       deployable: ${{ steps.ref.outputs.deployable }}
-    env:
-      # TEMPORARY: step 9 test, removed before merge. No ERD is rendered before erd.yml runs on
-      # develop, so on the test push a missing render gives a placeholder erd/ page and a warning.
-      ERD_OPTIONAL: ${{ github.event_name == 'push' }}
     steps:
       - uses: actions/checkout@v6
 
@@ -78,10 +71,6 @@ jobs:
         env:
           SITE_REF: ${{ vars.SITE_REF }}
           LANDING_REF: ${{ vars.LANDING_REF }}
-          # TEMPORARY: step 9 test, removed before merge. The test push shows its own commit,
-          # because neither main nor develop has the sites yet.
-          PUSH_SHA: ${{ github.event_name == 'push' && github.sha || '' }}
-          PUSH_REF: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           # The commit of a branch, tag, or commit SHA on origin.
@@ -89,8 +78,6 @@ jobs:
 
           if [ -n "$SITE_REF" ]; then
             site_ref="$SITE_REF"; site_sha="$(commit_of "$SITE_REF")"; why='the repository variable SITE_REF'
-          elif [ -n "$PUSH_SHA" ]; then
-            site_ref="$PUSH_REF"; site_sha="$PUSH_SHA"; why='the pushed commit (temporary step 9 trigger)'
           else
             # Exit code 2 means "no such branch"; anything else is a failed read, not an answer.
             rc=0; git ls-remote --exit-code --heads origin refs/heads/main > /dev/null || rc=$?

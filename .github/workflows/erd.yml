@@ -5,7 +5,6 @@
     branches:
       - develop
       - main
-      - wiring/9  # TEMPORARY: step 9 test, removed before merge
     paths:
       - 'backend/*/resources/migrations/**'
       - 'tools/ci/erd*'
