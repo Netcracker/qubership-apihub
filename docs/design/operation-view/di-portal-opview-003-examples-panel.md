@@ -1,4 +1,4 @@
-**Design Item ID**: DI-Portal-COMP-00X   
+**Design Item ID**: DI-Portal-OPVIEW-003   
 **Design Item Name**: Examples panel   
 **Related Design Items**:   
 **Related API**: -   

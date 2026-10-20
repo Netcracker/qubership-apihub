@@ -1,4 +1,4 @@
-**Design Item ID**: DI-Portal-GF-003   
+**Design Item ID**: DI-Portal-GF-010   
 **Design Item Name**: Global Search   
 **Related Design Items**:   
 **Related API**:   

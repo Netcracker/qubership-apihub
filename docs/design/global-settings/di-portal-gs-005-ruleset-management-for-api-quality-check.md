@@ -1,4 +1,4 @@
-**Design Item ID**: DI-Portal-GS-004   
+**Design Item ID**: DI-Portal-GS-005   
 **Design Item Name**: Ruleset Management for API Quality Check  
 **Related Design Items**: 
   - [API Quality Validation Result](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90019-API-Quality-Validation-Result)

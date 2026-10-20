@@ -15,7 +15,7 @@
 | Step | ER |
 | --- | --- |
 |1. Log in to APIHUB as Admin and navigate to workspace1 → Package1 → Version1 → Compare Versions/Revisions|Comparison view with changed REST/GraphQL operations is shown|
-|2. Apply a filter to the changes list|System updates the list to show only filtered changes|
+|2. Apply a filter to the changes list (for example, by operation type or change type)|System updates the list to show only filtered changes|
 |3. Click the Export button|Two options are shown: All changes, Filtered changes|
 |4. Select the "Filtered changes" option|System downloads an Excel file containing only filtered changed operations|
 |5. Open the Excel file|File contains only filtered REST/GraphQL operations|
@@ -38,7 +38,7 @@
 | Step | ER |
 | --- | --- |
 |1. Log in to APIHUB as Admin and navigate to workspace1 → Group1 → Package1 → Version1 → Compare Versions/Revisions|Comparison view is shown|
-|2. Apply a filter to the changes list|System updates the list to show filtered changes|
+|2. Apply a filter to the changes list (for example, by operation type or change type)|System updates the list to show filtered changes|
 |3. Click the Export button|Two options appear: All changes, Filtered changes|
 |4. Select the "Filtered changes" option|System downloads an Excel file containing filtered changed operations|
 |5. Open the Excel file|File contains only filtered REST/GraphQL operations|

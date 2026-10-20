@@ -336,22 +336,3 @@ The following roadmap describes adding another first-class specification type (f
 
 ### Layer 10: Build Consumer (`build-task-consumer`)
 1. Add the operation API type to the build-consumer schema where applicable
-
-## 10. CI/CD Architecture
-
-All repositories share standardized CI/CD via reusable GitHub Actions workflows in `qubership-apihub-ci`:
-
-| Pipeline | Tool | Purpose |
-|----------|------|---------|
-| Docker CI | Buildx + QEMU | Multi-platform Docker image builds → ghcr.io |
-| Frontend CI | npm + Lerna | Build, test, publish NPM packages → GitHub NPM Registry |
-| E2E Tests | Podman-compose + Newman + Playwright | Full-stack E2E testing |
-| Screenshot Tests | Puppeteer + jest-image-snapshot | Visual regression testing |
-| Storybook | Storybook 7/8 | Component showcase → GitHub Pages |
-| PR Quality | Conventional Commits, Title Lint, CLA | Pull request gates |
-
-### Branching Strategy
-- `develop` → `dev` tag
-- `release` → `next` tag
-- Git tags → `latest` tag
-- Feature branches → slugified branch name

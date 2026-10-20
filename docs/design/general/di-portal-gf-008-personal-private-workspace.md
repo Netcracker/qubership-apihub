@@ -3,6 +3,7 @@
 **Related Design Items**:
 
 **Related API**: 
+  - Create personal private package (POST /api/v2/users/{userId}/space)
 
 **Revision History:**  
 
@@ -28,7 +29,7 @@ Each user in Portal can create personal workspace that will be available only fo
      - userId = Login of the current user
 
 Only one private workspace can exist per user and the user who created personal workspace has Admin role for this space.  
-"User" table in db has column "PrivateWorkspaceId". In case if there is integration with e.g. ADFS, PrivateWorkspaceId is automatically generated for the user by userId. During local user creation, there is an ability to specify PrivateWorkspaceId, but if it is not specified, then it will be generated automatically.
+"User" table in db has required column "PrivateWorkspaceId". In case if there is integration with e.g. ADFS, PrivateWorkspaceId is automatically generated for the user by userId. During local user creation, there is an ability to specify PrivateWorkspaceId, but if it is not specified, then it will be generated automatically.
 
 # Screen View
 tbd

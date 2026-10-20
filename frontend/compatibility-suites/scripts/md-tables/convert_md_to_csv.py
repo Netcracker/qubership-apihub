@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Convert all Markdown table files in the current directory to CSV format.
+Convert the Markdown table files under docs/reference/api-changes/ to CSV format.
 Each .md file will be converted to a .csv file with the same name.
 If the MD file contains content beyond just the table, a template file
 will be created with the table replaced by a placeholder.
@@ -19,7 +19,7 @@ from pathlib import Path
 
 # Placeholder to replace tables in templates
 TABLE_PLACEHOLDER = "{{TABLE_PLACEHOLDER}}"
-CONFIG_FILE = "__Script_config.json"
+CONFIG_FILE = "config.json"
 TEMP_FOLDER = "__script_temp"
 
 
@@ -133,7 +133,7 @@ def create_template(md_lines, start_line, end_line):
 
 def load_config(script_dir):
     """
-    Load configuration from __Script_config.json file.
+    Load configuration from config.json file.
     
     Returns:
         list: List of file names (without extension) to process, or ['all'] for all files
@@ -151,6 +151,26 @@ def load_config(script_dir):
     except Exception as e:
         print(f"[WARNING] Error reading config file: {e}. Processing all files.")
         return ['all']
+
+
+def find_docs_md_files(script_dir):
+    """
+    Return the docs directory and {file name without extension: path} for the Markdown files under it.
+
+    `docs_dir` in the config is relative to the config file and points at docs/reference/api-changes/. The index
+    README.md and the generated *_template.md files are skipped.
+    """
+    docs_dir = "../../../../docs/reference/api-changes"
+    try:
+        with open(script_dir / CONFIG_FILE, 'r', encoding='utf-8') as f:
+            docs_dir = json.load(f).get('docs_dir', docs_dir)
+    except Exception:
+        pass
+    root = (script_dir / docs_dir).resolve()
+    return root, {
+        p.stem: p for p in sorted(root.rglob("*.md"))
+        if p.name != "README.md" and not p.name.endswith("_template.md")
+    }
 
 
 def should_process_file(file_path, files_to_process):
@@ -174,7 +194,7 @@ def should_process_file(file_path, files_to_process):
 def convert_all_md_files():
     """
     Find all Markdown files in the current directory and convert them to CSV.
-    Files are filtered based on __Script_config.json configuration.
+    Files are filtered based on config.json configuration.
     """
     # Get the directory where this script is located
     script_dir = Path(__file__).parent
@@ -186,17 +206,15 @@ def convert_all_md_files():
     temp_dir = script_dir / TEMP_FOLDER
     temp_dir.mkdir(exist_ok=True)
     
-    # Find all .md files in the script directory
-    md_files = list(script_dir.glob("*.md"))
-    
-    # Exclude template files
-    md_files = [f for f in md_files if not f.name.endswith("_template.md")]
+    # Find all .md files under the docs directory set in the config
+    docs_root, md_by_stem = find_docs_md_files(script_dir)
+    md_files = list(md_by_stem.values())
     
     # Filter files based on configuration
     md_files = [f for f in md_files if should_process_file(f, files_to_process)]
     
     if not md_files:
-        print(f"No Markdown files found to process in {script_dir}")
+        print(f"No Markdown files found to process in {docs_root}")
         return
     
     print(f"Found {len(md_files)} Markdown file(s) to convert:")

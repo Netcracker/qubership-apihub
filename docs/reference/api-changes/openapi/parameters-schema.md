@@ -1,3 +1,29 @@
+## Schema
+
+For Parameter schemas, changes are classified according to **Schema Changes** with **Scope Request**.
+
+See: [Schema Changes - Scope Request](Schema-Changes#scope-request)
+
+### Example
+
+To get specific examples for Parameter schemas, take the schema examples from the [Schema Changes](Schema-Changes) section and insert them into the `parameters[*].schema` location of an OpenAPI specification.
+
+Example OpenAPI structure:
+
+```yaml
+paths:
+  /pets:
+    get:
+      parameters:
+        - name: petId
+          in: query
+          schema:
+            # Insert schema from Schema Changes examples here
+            type: string
+```
+
+## Changes
+
 |     | Path                             | Change id                                                   | Comment                                                                                                                                                                                                                                                                                                                                                                                                                               | Example                                                                                                                                                                                                                                                                                                                                                                                                                                     | ER                                                                                                               | Link                                                        |
 | ----- | ---------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- |
 | 1   | title. value                     | add-schema-title                                            |                                                                                                                                                                                                                                                                                                                                                                                                                                       | [before](https://github.com/Netcracker/qubership-apihub-compatibility-suites/blob/develop/bin/comparison-base-suite/openapi/parameters-schema/add-schema-title/before.yaml) [after](https://github.com/Netcracker/qubership-apihub-compatibility-suites/blob/develop/bin/comparison-base-suite/openapi/parameters-schema/add-schema-title/after.yaml)                                                                                       | annotation                                                                                                       | add-schema-title                                            |

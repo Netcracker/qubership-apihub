@@ -1,4 +1,4 @@
-**Design Item ID**: DI-Portal-PKGVER-014  
+**Design Item ID**: DI-Portal-COMP-003  
 **Design Item Name**: Compare API Changes  
 **Related Design Items**:
 

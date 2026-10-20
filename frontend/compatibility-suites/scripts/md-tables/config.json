@@ -10,7 +10,7 @@
       "This file controls which files should be processed by the conversion scripts.",
       "",
       "OPTIONS:",
-      "  - Set 'files_to_process' to ['all'] to process all .md or .csv files in the directory",
+      "  - Set 'files_to_process' to ['all'] to process all .md or .csv files under docs_dir",
       "  - Or specify individual file names (without extension) in the array",
       "  - File names are case-sensitive and should match exactly (without .md or .csv extension)",
       "",
@@ -22,7 +22,7 @@
       "    \"files_to_process\": [\"all\"]",
       "",
       "  To process only specific files:",
-      "    \"files_to_process\": [\"Schema-Changes\", \"General-Operation-Parameters\"]",
+      "    \"files_to_process\": [\"schema-changes\", \"general-operation-parameters\"]",
       "",
       "  To use compact table format:",
       "    \"table_format\": \"compact\"",
@@ -30,16 +30,17 @@
       "  To use maximum width table format (default):",
       "    \"table_format\": \"max_width\""
     ],
+    "docs_dir": "../../../../docs/reference/api-changes",
     "table_format": "max_width",
     "files_to_process": [
-      "General-Operation-Parameters",
-      "Operation-Parameters",
-      "Parameters.-Examples",
-      "Request",
-      "RequestBody.-Examples",
-      "Response",
-      "ResponseBody.-Examples",
-      "Schema-Changes"
+      "general-operation-parameters",
+      "operation-parameters",
+      "parameters-examples",
+      "request",
+      "request-body-examples",
+      "response",
+      "response-body-examples",
+      "schema-changes"
     ]
   }
   

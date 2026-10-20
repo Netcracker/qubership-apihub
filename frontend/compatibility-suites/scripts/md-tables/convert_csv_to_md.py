@@ -19,7 +19,7 @@ from pathlib import Path
 
 # Placeholder that was used in templates
 TABLE_PLACEHOLDER = "{{TABLE_PLACEHOLDER}}"
-CONFIG_FILE = "__Script_config.json"
+CONFIG_FILE = "config.json"
 TEMP_FOLDER = "__script_temp"
 
 
@@ -164,7 +164,7 @@ def csv_to_markdown_table(csv_file_path, table_format='max_width'):
 
 def load_config(script_dir):
     """
-    Load configuration from __Script_config.json file.
+    Load configuration from config.json file.
     
     Returns:
         tuple: (files_to_process, table_format)
@@ -191,6 +191,26 @@ def load_config(script_dir):
         return (['all'], 'max_width')
 
 
+def find_docs_md_files(script_dir):
+    """
+    Return the docs directory and {file name without extension: path} for the Markdown files under it.
+
+    `docs_dir` in the config is relative to the config file and points at docs/reference/api-changes/. The index
+    README.md and the generated *_template.md files are skipped.
+    """
+    docs_dir = "../../../../docs/reference/api-changes"
+    try:
+        with open(script_dir / CONFIG_FILE, 'r', encoding='utf-8') as f:
+            docs_dir = json.load(f).get('docs_dir', docs_dir)
+    except Exception:
+        pass
+    root = (script_dir / docs_dir).resolve()
+    return root, {
+        p.stem: p for p in sorted(root.rglob("*.md"))
+        if p.name != "README.md" and not p.name.endswith("_template.md")
+    }
+
+
 def should_process_file(file_path, files_to_process):
     """
     Check if a file should be processed based on configuration.
@@ -212,7 +232,7 @@ def should_process_file(file_path, files_to_process):
 def convert_all_csv_files():
     """
     Find all CSV files in the current directory and convert them to Markdown.
-    Files are filtered based on __Script_config.json configuration.
+    Files are filtered based on config.json configuration.
     """
     # Get the directory where this script is located
     script_dir = Path(__file__).parent
@@ -223,6 +243,8 @@ def convert_all_csv_files():
     # Use temp folder for CSV and template files (create if not exists)
     temp_dir = script_dir / TEMP_FOLDER
     temp_dir.mkdir(exist_ok=True)
+    
+    docs_root, md_by_stem = find_docs_md_files(script_dir)
     
     # Find all CSV files in the temp folder
     csv_files = list(temp_dir.glob("*.csv"))
@@ -239,8 +261,8 @@ def convert_all_csv_files():
     for csv_file in csv_files:
         print(f"  - {csv_file.name}")
         
-        # Output .md file stays in script directory (wiki root)
-        md_file = script_dir / f"{csv_file.stem}.md"
+        # The generated .md file replaces the file with the same name under the docs directory
+        md_file = md_by_stem.get(csv_file.stem, docs_root / f"{csv_file.stem}.md")
         
         # Check if template exists in temp folder
         template_file = temp_dir / f"{csv_file.stem}_template.md"

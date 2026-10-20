@@ -1,3 +1,28 @@
+## Schema
+
+For RequestBody schemas, changes are classified according to **Schema Changes** with **Scope Request**.
+
+See: [Schema Changes - Scope Request](Schema-Changes#scope-request)
+
+### Example
+
+To get specific examples for RequestBody schemas, take the schema examples from the [Schema Changes](Schema-Changes) section and insert them into the `requestBody.content.application/json.schema` location of an OpenAPI specification.
+
+Example OpenAPI structure:
+
+```yaml
+paths:
+  /pets:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              # Insert schema from Schema Changes examples here
+```
+
+## Changes
+
 |     | Path                                   | Change id                                                   | Comment                                                                                                                                                                                     | Example                                                                                                                                                                                                                                                                                                                                                                                                                                         | ER                                                                                                               | Approved                           | Link                                                        |
 | ----- | ---------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------ | ------------------------------------------------------------- |
 | 1   | title. value                           | add-schema-title                                            |                                                                                                                                                                                             | [before](https://github.com/Netcracker/qubership-apihub-compatibility-suites/blob/develop/bin/comparison-base-suite/openapi/request-body-schema/add-schema-title/before.yaml) [after](https://github.com/Netcracker/qubership-apihub-compatibility-suites/blob/develop/bin/comparison-base-suite/openapi/request-body-schema/add-schema-title/after.yaml)                                                                                       | annotation                                                                                                       |                                    | add-schema-title                                            |

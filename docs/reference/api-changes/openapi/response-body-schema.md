@@ -1,3 +1,30 @@
+## Schema
+
+For ResponseBody schemas, changes are classified according to **Schema Changes** with **Scope Response**.
+
+See: [Schema Changes - Scope Response](Schema-Changes#scope-response)
+
+### Example
+
+To get specific examples for ResponseBody schemas, take the schema examples from the [Schema Changes](Schema-Changes) section and insert them into the `responses[*].content.application/json.schema` location of an OpenAPI specification.
+
+Example OpenAPI structure:
+
+```yaml
+paths:
+  /pets:
+    get:
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                # Insert schema from Schema Changes examples here
+```
+
+## Changes
+
 | #   | Path                                                                                                 | Change id                                                   | Comment                                                                                                                                                                                                                                                                                                                               | Example                                                                                                                                                                                                                                                                                                                                                                                                                                           | ER                                                                                                               | Approved                 | Link                                                        |
 | ----- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------- | ------------------------------------------------------------- |
 | 1   | title. value                                                                                         | add-schema-title                                            |                                                                                                                                                                                                                                                                                                                                       | [before](https://github.com/Netcracker/qubership-apihub-compatibility-suites/blob/develop/bin/comparison-base-suite/openapi/response-body-schema/add-schema-title/before.yaml) [after](https://github.com/Netcracker/qubership-apihub-compatibility-suites/blob/develop/bin/comparison-base-suite/openapi/response-body-schema/add-schema-title/after.yaml)                                                                                       | annotation                                                                                                       |                          | add-schema-title                                            |

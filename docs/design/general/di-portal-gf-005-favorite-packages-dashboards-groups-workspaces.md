@@ -1,4 +1,4 @@
-**Design Item ID**: DI-Portal-GF-006  
+**Design Item ID**: DI-Portal-GF-005  
 **Design Item Name**: Favorite packages, dashboards, groups, workspaces  
 **Related Design Items**: -   
 **Related API**:  
