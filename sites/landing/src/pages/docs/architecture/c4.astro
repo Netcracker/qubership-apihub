@@ -1,0 +1,630 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import DocFigure from '../../../components/DocFigure.astro';
+import {
+  containers,
+  containerCatalogue,
+  contextActors,
+  contextDependencies,
+  backendGroups,
+  uiApps,
+  webComponents,
+  workerLanes,
+  linterChain,
+  linterEngines,
+  agentsBackendParts,
+  agentParts,
+  discoveryRunners,
+  requestPipeline,
+  authStrategies,
+  cronJobs,
+  specTypes,
+  specTypeRegistries,
+  newTypeChecklist,
+  apiBuilders,
+  buildStrategies,
+  deployments,
+  deploymentStores,
+  chartExtras,
+} from '../../../data/architecture';
+
+const toc = [
+  { id: 'level-1', label: 'Level 1 · System context' },
+  { id: 'level-2', label: 'Level 2 · Containers' },
+  { id: 'level-3', label: 'Level 3 · Components' },
+  { id: 'level-4', label: 'Level 4 · Code' },
+  { id: 'deployment', label: 'Deployment' },
+];
+
+const pipelineTone: Record<string, string> = {
+  edge: '#60a5fa',
+  core: '#818cf8',
+  data: '#94a3b8',
+};
+
+/**
+ * Dot colour per build-strategy group. The keys are quoted because the Astro compiler hoists
+ * frontmatter lines that begin with the `export` keyword.
+ */
+const strategyTone: Record<string, string> = {
+  'build': '#a78bfa',
+  'export': '#2dd4bf',
+  'deprecated': '#64748b',
+};
+---
+
+<DocsLayout
+  title="The C4 model — Qubership APIHUB architecture"
+  description="Qubership APIHUB in C4 notation: system context, the seven deployable containers, the components inside each one, the code-level registries, and the Kubernetes deployment."
+  eyebrow="Architecture"
+  heading="The C4 model"
+  lead="From one box on a context diagram down to the registries that make the processing stack extensible — and then out again to what actually runs in Kubernetes."
+  toc={toc}
+>
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- LEVEL 1                                                                -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <section id="level-1" class="doc-section mb-20">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-400 text-[#050813]">L1</span>
+      <h2 class="text-2xl font-bold text-white">System context</h2>
+    </div>
+    <p class="text-slate-400 leading-relaxed mb-2 max-w-3xl">
+      At this level APIHUB is a single box. What matters is who talks to it and what it cannot run without.
+      Only PostgreSQL and the image registries are mandatory; every other dependency is opt-in, which is
+      what makes an air-gapped installation practical.
+    </p>
+
+    <DocFigure
+      src="images/architecture/system-context.svg"
+      alt="APIHUB system context: five kinds of user on the left, the platform in the centre, and six external dependencies on the right"
+      caption="C4 · level 1 — five kinds of user, six external dependencies"
+    />
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div>
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Who uses it</h3>
+        <ul class="space-y-2">
+          {contextActors.map((actor) => (
+            <li class="flex items-baseline gap-3 rounded-lg border border-slate-800 bg-slate-900/30 px-4 py-3">
+              <span class="text-sm font-semibold text-slate-200">{actor.name}</span>
+              <span class="ml-auto text-xs text-slate-500 text-right">{actor.does}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">What it depends on</h3>
+        <ul class="space-y-2">
+          {contextDependencies.map((dep) => (
+            <li class="flex items-baseline gap-3 rounded-lg border border-slate-800 bg-slate-900/30 px-4 py-3">
+              <span class="text-sm font-semibold text-slate-200">{dep.name}</span>
+              <span
+                class={`ml-auto text-[10px] font-bold uppercase tracking-wider flex-shrink-0 ${
+                  dep.required ? 'text-emerald-400' : 'text-slate-600'
+                }`}
+              >
+                {dep.required ? 'Required' : 'Optional'}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- LEVEL 2                                                                -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <section id="level-2" class="doc-section mb-20">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-teal-400 text-[#050813]">L2</span>
+      <h2 class="text-2xl font-bold text-white">Containers</h2>
+    </div>
+    <p class="text-slate-400 leading-relaxed mb-2 max-w-3xl">
+      Everything that gets deployed, arranged by tier. Traffic runs top to bottom: nginx is the only entry
+      point, and the backend is the only writer to the catalogue database. The backend never pushes work to
+      a worker — workers poll, so a worker that dies simply stops polling and its task returns to the queue.
+    </p>
+
+    <DocFigure
+      src="images/architecture/container-tiers.svg"
+      alt="APIHUB container diagram: nginx and the two single-page apps on top, the backend beneath, then the four satellite services, the data stores, and the agent in a remote cluster"
+      caption="C4 · level 2 — the APIHUB namespace, plus an agent in each inspected cluster"
+    />
+
+    <h3 class="text-lg font-bold text-white mt-10 mb-5">The seven containers in detail</h3>
+    <div class="space-y-3">
+      {containerCatalogue.map(({ key, port, state, owns }) => {
+        const c = containers[key];
+        return (
+          <div class="rounded-xl border border-slate-800 bg-slate-900/30 p-5">
+            <div class="flex items-center gap-3 mb-4 flex-wrap">
+              <span class="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={`background:${c.color}`}></span>
+              <h4 class="text-sm font-bold text-white">{c.name}</h4>
+              <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">{port}</span>
+              <a
+                href={`https://github.com/Netcracker/${c.repo}`}
+                target="_blank"
+                rel="noopener"
+                class="ml-auto font-mono text-[10px] text-slate-600 hover:text-slate-400 transition-colors"
+              >
+                {c.repo}
+              </a>
+            </div>
+            <dl class="grid sm:grid-cols-3 gap-4 text-xs">
+              <div>
+                <dt class="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-1.5">Technology</dt>
+                <dd class="text-slate-400">{c.tech}</dd>
+              </div>
+              <div>
+                <dt class="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-1.5">State</dt>
+                <dd class="text-slate-400">{state}</dd>
+              </div>
+              <div>
+                <dt class="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-1.5">Owns</dt>
+                <dd class="text-slate-400">{owns}</dd>
+              </div>
+            </dl>
+          </div>
+        );
+      })}
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- LEVEL 3                                                                -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <section id="level-3" class="doc-section mb-20">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-amber-400 text-[#050813]">L3</span>
+      <h2 class="text-2xl font-bold text-white">Components</h2>
+    </div>
+    <p class="text-slate-400 leading-relaxed mb-12 max-w-3xl">
+      One level down, inside the containers that are worth opening up: the backend, the web interface, the
+      two pull-based workers, the linter, and the discovery pair.
+    </p>
+
+    <!-- ── Backend ──────────────────────────────────────────────────────── -->
+    <h3 class="text-lg font-bold text-white mb-2">Inside the backend</h3>
+    <p class="text-sm text-slate-500 leading-relaxed mb-6 max-w-3xl">
+      One Go process with six clearly separated concerns. This is the busiest container in the system, and
+      the reason it is fair to call APIHUB a micro-monolith.
+    </p>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-14">
+      {backendGroups.map((group) => (
+        <div
+          class="rounded-xl border p-5"
+          style={`border-color:${group.color}40; background:${group.color}0d;`}
+        >
+          <p class="text-[11px] font-bold uppercase tracking-widest mb-4" style={`color:${group.color}`}>
+            {group.name}
+          </p>
+          <ul class="space-y-2.5">
+            {group.items.map((item) => (
+              <li>
+                <p class="text-xs font-semibold text-slate-200">{item.name}</p>
+                <p class="text-[11px] text-slate-500">{item.note}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+
+    <!-- ── Web interface ────────────────────────────────────────────────── -->
+    <h3 class="text-lg font-bold text-white mb-2">Inside the web interface</h3>
+    <p class="text-sm text-slate-500 leading-relaxed mb-6 max-w-3xl">
+      One nginx container serves two applications and routes everything else onward. Buffering is disabled
+      on the MCP and chat routes so that streams reach the client as they are produced.
+    </p>
+    <div class="rounded-xl border border-sky-500/30 bg-sky-500/[0.06] p-5 mb-4">
+      <p class="text-sm font-bold text-sky-300 mb-1.5">nginx · the single entry point</p>
+      <p class="text-xs text-slate-400 font-mono leading-relaxed">
+        /portal and /agents → static · /api → backend · /api-linter → linter · /agents-backend → agents backend
+      </p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-4 mb-6">
+      {uiApps.map((app) => (
+        <div class="rounded-xl border border-slate-800 bg-slate-900/30 p-5">
+          <p class="text-sm font-bold mb-1" style={`color:${app.color}`}>{app.name}</p>
+          <p class="font-mono text-[10px] text-slate-600 mb-4">{app.path}</p>
+          <ul class="space-y-2">
+            {app.items.map((item) => (
+              <li class="text-xs text-slate-400 leading-relaxed flex gap-2">
+                <span class="text-slate-700 flex-shrink-0">·</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+    <div class="mb-14">
+      <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
+        Rendering is delegated to shared web components
+      </p>
+      <div class="flex flex-wrap gap-2">
+        {webComponents.map((wc) => (
+          <span
+            class="font-mono text-[11px] px-2.5 py-1 rounded-md border"
+            style={`color:${wc.color}; border-color:${wc.color}40; background:${wc.color}12;`}
+          >
+            {wc.name}
+          </span>
+        ))}
+      </div>
+    </div>
+
+    <!-- ── Workers ──────────────────────────────────────────────────────── -->
+    <h3 class="text-lg font-bold text-white mb-2">The two workers</h3>
+    <p class="text-sm text-slate-500 leading-relaxed mb-6 max-w-3xl">
+      Both follow the same pull pattern: ask the backend for a task, do the work, post the result back. One
+      of them is in production; the other is waiting for its backend endpoints.
+    </p>
+    <div class="grid md:grid-cols-2 gap-5 mb-14">
+      {workerLanes.map((lane) => {
+        const c = containers[lane.key];
+        return (
+          <div
+            class="rounded-xl border p-5"
+            style={`border-color:${c.color}${lane.live ? '40' : '26'}; background:${c.color}0a;`}
+          >
+            <div class="flex items-center gap-2 mb-1">
+              <p class="text-sm font-bold" style={`color:${c.color}`}>{c.name}</p>
+              {!lane.live && (
+                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/25">
+                  Pending
+                </span>
+              )}
+            </div>
+            <p class="font-mono text-[10px] text-slate-600 mb-5">{c.repo}</p>
+            <ol class="space-y-3 mb-5">
+              {lane.steps.map((step, i) => (
+                <li class="flex gap-3">
+                  <span
+                    class="flex-shrink-0 w-5 h-5 rounded-full grid place-items-center text-[10px] font-extrabold text-[#050813]"
+                    style={`background:${c.color}`}
+                  >
+                    {i + 1}
+                  </span>
+                  <div class="min-w-0">
+                    <p class="text-xs font-semibold text-slate-200">{step.name}</p>
+                    <p class="text-[11px] text-slate-500">{step.note}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <p class="text-[11px] font-semibold pt-3 border-t border-slate-800" style={`color:${c.color}`}>
+              {lane.status}
+            </p>
+          </div>
+        );
+      })}
+    </div>
+
+    <!-- ── Linter ───────────────────────────────────────────────────────── -->
+    <h3 class="text-lg font-bold text-white mb-2">Inside the linter</h3>
+    <p class="text-sm text-slate-500 leading-relaxed mb-6 max-w-3xl">
+      Event-driven: a publish on the bus starts the whole chain, with no pipeline wiring anywhere. The
+      service also exposes an MCP endpoint of its own, so an agent can ask what is wrong with a version.
+    </p>
+    <ol class="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+      {linterChain.map((link, i) => (
+        <li
+          class="rounded-xl border p-4"
+          style={`border-color:${link.color}40; background:${link.color}12;`}
+        >
+          <p class="font-mono text-[10px] mb-2" style={`color:${link.color}`}>{String(i + 1).padStart(2, '0')}</p>
+          <p class="text-xs font-bold text-white mb-1.5">{link.name}</p>
+          <p class="text-[11px] text-slate-400 leading-relaxed">{link.note}</p>
+        </li>
+      ))}
+    </ol>
+    <div class="grid md:grid-cols-3 gap-4 mb-14">
+      {linterEngines.map((engine) => (
+        <div
+          class={`rounded-xl border p-5 ${engine.active ? '' : 'border-dashed'}`}
+          style={`border-color:${engine.color}${engine.active ? '40' : '30'}; background:${engine.color}0a;`}
+        >
+          <div class="flex items-center gap-2 mb-4">
+            <p class="text-sm font-bold" style={`color:${engine.color}`}>{engine.name}</p>
+            {!engine.active && (
+              <span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-800 text-slate-500">
+                Not wired
+              </span>
+            )}
+          </div>
+          <ul class="space-y-2">
+            {engine.items.map((item) => (
+              <li class="text-xs text-slate-400 leading-relaxed flex gap-2">
+                <span class="text-slate-700 flex-shrink-0">·</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+
+    <!-- ── Discovery pair ───────────────────────────────────────────────── -->
+    <h3 class="text-lg font-bold text-white mb-2">The discovery pair</h3>
+    <p class="text-sm text-slate-500 leading-relaxed mb-6 max-w-3xl">
+      Agents Backend stays in the APIHUB cluster. The Agent is deployed into the cluster being inspected,
+      which is why these two are documented together.
+    </p>
+    <div class="grid md:grid-cols-2 gap-5">
+      <div class="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.06] p-5">
+        <p class="text-sm font-bold text-emerald-400 mb-1">Agents Backend</p>
+        <p class="text-[11px] text-slate-500 mb-5">In the APIHUB namespace</p>
+        <ul class="space-y-3">
+          {agentsBackendParts.map((part) => (
+            <li>
+              <p class="text-xs font-semibold text-slate-200">{part.name}</p>
+              <p class="text-[11px] text-slate-500">{part.note}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div class="rounded-xl border border-orange-500/30 bg-orange-500/[0.06] p-5">
+        <p class="text-sm font-bold text-orange-400 mb-1">APIHUB Agent</p>
+        <p class="text-[11px] text-slate-500 mb-5">In the target cluster</p>
+        <ul class="space-y-3 mb-5">
+          {agentParts.map((part) => (
+            <li>
+              <p class="text-xs font-semibold text-slate-200">{part.name}</p>
+              <p class="text-[11px] text-slate-500">{part.note}</p>
+            </li>
+          ))}
+        </ul>
+        <p class="text-[10px] font-bold text-orange-400 uppercase tracking-widest mb-3">
+          Six discovery runners — a plug-in point
+        </p>
+        <div class="flex flex-wrap gap-2 mb-4">
+          {discoveryRunners.map((runner) => (
+            <span class="text-[11px] font-semibold px-2.5 py-1 rounded-md bg-orange-500/15 text-orange-300 border border-orange-500/25">
+              {runner}
+            </span>
+          ))}
+        </div>
+        <p class="text-[11px] text-slate-500 leading-relaxed">
+          Adding a seventh means one file implementing the runner interface, plus one line registering it.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- LEVEL 4                                                                -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <section id="level-4" class="doc-section mb-20">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-orange-400 text-[#050813]">L4</span>
+      <h2 class="text-2xl font-bold text-white">Code</h2>
+    </div>
+    <p class="text-slate-400 leading-relaxed mb-12 max-w-3xl">
+      Only the parts of the code you need to know to change something safely: the request pipeline, the two
+      registries that the whole processing stack branches on, and the build orchestrator.
+    </p>
+
+    <!-- ── Request pipeline ─────────────────────────────────────────────── -->
+    <h3 class="text-lg font-bold text-white mb-2">The backend request pipeline</h3>
+    <p class="text-sm text-slate-500 leading-relaxed mb-6 max-w-3xl">
+      Every request walks the same seven stages. Two side systems hang off it: the authentication
+      strategies, tried in order, and the scheduled jobs.
+    </p>
+    <ol class="flex flex-wrap gap-2 mb-8">
+      {requestPipeline.map((stage, i) => (
+        <li class="flex items-center gap-2">
+          <div
+            class="rounded-lg border px-3.5 py-2.5"
+            style={`border-color:${pipelineTone[stage.tone]}40; background:${pipelineTone[stage.tone]}12;`}
+          >
+            <p class="text-xs font-bold" style={`color:${pipelineTone[stage.tone]}`}>{stage.name}</p>
+            <p class="text-[10px] text-slate-500">{stage.note}</p>
+          </div>
+          {i < requestPipeline.length - 1 && <span class="text-slate-700 text-xs">›</span>}
+        </li>
+      ))}
+    </ol>
+    <div class="grid md:grid-cols-2 gap-5 mb-14">
+      <div class="rounded-xl border border-orange-500/25 bg-orange-500/[0.05] p-5">
+        <p class="text-[11px] font-bold text-orange-400 uppercase tracking-widest mb-4">
+          Authentication strategies · tried in order
+        </p>
+        <ol class="space-y-2 mb-4">
+          {authStrategies.map((strategy, i) => (
+            <li class="flex items-center gap-3 text-xs text-slate-300">
+              <span class="font-mono text-[10px] text-slate-600 tabular-nums">{i + 1}</span>
+              {strategy}
+            </li>
+          ))}
+        </ol>
+        <p class="text-[11px] text-slate-500 leading-relaxed pt-3 border-t border-slate-800">
+          All of them end in one security context, which the role service then reads.
+        </p>
+      </div>
+      <div class="rounded-xl border border-slate-800 bg-slate-900/30 p-5">
+        <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-4">
+          Scheduled jobs · robfig/cron
+        </p>
+        <ul class="space-y-2">
+          {cronJobs.map((job) => (
+            <li class="flex items-baseline gap-3 text-xs">
+              <span class="text-slate-300">{job.name}</span>
+              <span class="ml-auto font-mono text-[10px] text-slate-600 flex-shrink-0">{job.schedule}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+
+    <!-- ── SpecType ─────────────────────────────────────────────────────── -->
+    <h3 class="text-lg font-bold text-white mb-2">One type, two registries</h3>
+    <p class="text-sm text-slate-500 leading-relaxed mb-6 max-w-3xl">
+      Everything the processing stack does branches on a single union type. This is the extension point: add
+      a member and the two registries tell you what still needs an implementation.
+    </p>
+    <div class="rounded-2xl border border-slate-700 bg-slate-900/60 p-6 mb-4">
+      <div class="flex items-baseline gap-3 mb-4 flex-wrap">
+        <p class="font-mono text-lg font-bold text-white">SpecType</p>
+        <p class="font-mono text-[10px] text-slate-600">api-unifier/src/spec-type.ts</p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        {specTypes.map((type) => (
+          <span class="font-mono text-[11px] px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
+            {type}
+          </span>
+        ))}
+      </div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-4 mb-6">
+      {specTypeRegistries.map((registry) => (
+        <div
+          class="rounded-xl border p-5"
+          style={`border-color:${registry.color}40; background:${registry.color}0d;`}
+        >
+          <div class="flex items-baseline gap-2 mb-3 flex-wrap">
+            <p class="font-mono text-sm font-bold" style={`color:${registry.color}`}>{registry.name}</p>
+            <p class="font-mono text-[10px] text-slate-600">{registry.lib}</p>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">{registry.desc}</p>
+        </div>
+      ))}
+    </div>
+    <div class="rounded-xl border border-slate-800 bg-slate-900/30 p-5 mb-14">
+      <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-4">
+        Adding a type touches eight places
+      </p>
+      <ol class="grid sm:grid-cols-2 lg:grid-cols-4 gap-2.5 mb-4">
+        {newTypeChecklist.map((step, i) => (
+          <li class="flex items-center gap-2.5 rounded-lg border border-slate-800 px-3 py-2">
+            <span class="font-mono text-[10px] text-indigo-400 tabular-nums">{i + 1}</span>
+            <span class="text-xs text-slate-300">{step}</span>
+          </li>
+        ))}
+      </ol>
+      <p class="text-[11px] text-slate-500 leading-relaxed">
+        DDLAPI went through this entire path during 2026, which is the best available worked example.
+      </p>
+    </div>
+
+    <!-- ── Build orchestrator ───────────────────────────────────────────── -->
+    <h3 class="text-lg font-bold text-white mb-2">The build orchestrator</h3>
+    <p class="text-sm text-slate-500 leading-relaxed mb-6 max-w-3xl">
+      <span class="font-mono text-slate-400">PackageVersionBuilder</span> picks one strategy for the
+      requested build type, and one builder per document. A third registry, keyed on the API type rather
+      than the spec type, holds the builders.
+    </p>
+    <div class="grid md:grid-cols-2 gap-5 mb-6">
+      <div class="rounded-xl border border-slate-800 bg-slate-900/30 p-5">
+        <p class="text-[11px] font-bold text-blue-400 uppercase tracking-widest mb-4">
+          Seven API builders · one per document kind
+        </p>
+        <div class="flex flex-wrap gap-2 mb-4">
+          {apiBuilders.map((builder) => (
+            <span
+              class="font-mono text-[11px] px-2.5 py-1 rounded-md border"
+              style={`color:${builder.color}; border-color:${builder.color}40; background:${builder.color}12;`}
+            >
+              {builder.name}
+            </span>
+          ))}
+        </div>
+        <p class="font-mono text-[10px] text-slate-600">
+          parse › build document › build operations › compare › dump
+        </p>
+      </div>
+      <div class="rounded-xl border border-slate-800 bg-slate-900/30 p-5">
+        <p class="text-[11px] font-bold text-violet-400 uppercase tracking-widest mb-4">
+          Ten strategies · one per build type
+        </p>
+        <ul class="space-y-1.5">
+          {buildStrategies.map((strategy) => (
+            <li class="flex items-center gap-2.5">
+              <span
+                class="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                style={`background:${strategyTone[strategy.group]}`}
+              ></span>
+              <span
+                class={`font-mono text-[11px] ${
+                  strategy.group === 'deprecated' ? 'text-slate-600 line-through' : 'text-slate-300'
+                }`}
+              >
+                {strategy.name}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+    <div class="rounded-xl border border-blue-500/25 bg-blue-500/[0.06] p-5">
+      <p class="text-sm font-bold text-white mb-2">What a build actually produces</p>
+      <p class="text-xs text-slate-400 leading-relaxed">
+        Documents, operations, classified changes, backward-compatibility findings and a result index —
+        packed into one ZIP that the backend unpacks and stores.
+      </p>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- DEPLOYMENT                                                             -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <section id="deployment" class="doc-section mb-12">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-slate-400 text-[#050813]">DEPLOY</span>
+      <h2 class="text-2xl font-bold text-white">What runs where</h2>
+    </div>
+    <p class="text-slate-400 leading-relaxed mb-2 max-w-3xl">
+      One umbrella Helm chart, one ingress, three databases — and a separate chart for the Java worker. Only
+      the build consumer is designed to scale out, which keeps the Olric cluster and the migration framework
+      simple.
+    </p>
+
+    <DocFigure
+      src="images/architecture/deployment-kubernetes.svg"
+      alt="APIHUB Kubernetes deployment: the ingress, six deployments, the data stores, remote-cluster agents, and the extras shipped in the Helm chart"
+      caption="Deployment view — helm-templates/qubership-apihub"
+    />
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      {deployments.map(({ key, scale, separate }) => {
+        const c = containers[key];
+        return (
+          <div
+            class={`rounded-xl border p-5 ${separate ? 'border-dashed' : ''}`}
+            style={`border-color:${c.color}${separate ? '26' : '40'}; background:${c.color}0a;`}
+          >
+            <p class="text-sm font-bold mb-2" style={`color:${c.color}`}>{c.name}</p>
+            <p class="text-xs font-semibold text-slate-300">{scale}</p>
+          </div>
+        );
+      })}
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-5">
+      <div>
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Data and caching</h3>
+        <ul class="space-y-2">
+          {deploymentStores.map((store) => (
+            <li class="rounded-lg border border-slate-800 bg-slate-900/30 px-4 py-3">
+              <p class="text-xs font-semibold text-slate-200">{store.name}</p>
+              <p class="text-[11px] text-slate-500">{store.note}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Also in the chart</h3>
+        <ul class="space-y-2">
+          {chartExtras.map((extra) => (
+            <li class="flex items-start gap-2.5 text-xs text-slate-400 px-1 py-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+              <span>{extra}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </section>
+</DocsLayout>

@@ -1,0 +1,248 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { GITHUB_URL, DOCS_URL, WIKI_IMG_VS_API_MANAGEMENT } from '../data/content';
+import { withBase } from '../lib/paths';
+const home = import.meta.env.BASE_URL;
+
+const domains = [
+  {
+    name: 'API Catalog & Discovery',
+    icon: '📚',
+    color: 'blue',
+    items: [
+      'Multi-level hierarchy: workspace → group → package → version',
+      'Draft → Release version lifecycle',
+      'API types: OpenAPI 2.0/3.x, GraphQL SDL, AsyncAPI 3.0, JSON Schema',
+      'Contract types: DDLAPI (database schemas) and MCP (tools/resources/prompts)',
+      'Full-text global search across operations, docs, packages, DDL tables, and MCP tools',
+      'Tags, audiences, labels, custom metadata per package',
+      'Filter package versions by multiple statuses',
+      'Previous-version status validated on publish',
+      'Package dashboard with stats, latest changes, and linter results',
+      'Integrated REST, GraphQL, AsyncAPI, and DDL schema documentation rendering',
+      'Deep-link to any operation, schema, channel, or contract document',
+    ],
+  },
+  {
+    name: 'API Comparison & Diffs',
+    icon: '⚖️',
+    color: 'violet',
+    items: [
+      'Version-to-version diff for REST, GraphQL, AsyncAPI, and DDLAPI',
+      'DDL table schema side-by-side Diff View in the Doc Viewer',
+      'Operation-level comparison: request/response/parameter / messages',
+      'Severity classification: Breaking / Semi-Breaking / Deprecated / Non-Breaking',
+      'GraphQL no-BWC and experimental apiKind (same change rules as REST)',
+      'Path-prefix group comparison for domain scope',
+      'GraphQL bulk-mode with CSV import of operation lists',
+      'Breaking changes dashboard (unified view across all packages)',
+      'Excel export for REST, GraphQL, AsyncAPI, DDL, and MCP (audit workflows)',
+      'AsyncAPI Diff View in the Doc Viewer',
+    ],
+  },
+  {
+    name: 'API Quality & Governance',
+    icon: '✅',
+    color: 'emerald',
+    items: [
+      'Spectral linting engine with configurable rulesets',
+      'AI-powered quality recommendations (OpenAI integration)',
+      'Multiple linters per API type (REST, GraphQL, AsyncAPI)',
+      'Inline problem highlighting in the spec viewer',
+      'Per-ruleset activation and deactivation history',
+      'Quality score tracking per package version',
+      'Downloadable lint reports per version',
+      'Built-in ruleset library + custom ruleset upload',
+    ],
+  },
+  {
+    name: 'Kubernetes & Discovery',
+    icon: '☸️',
+    color: 'cyan',
+    items: [
+      'Lightweight K8s agent deployment (per cluster or namespace)',
+      'Auto-discovery of REST, GraphQL, AsyncAPI, JSON Schema services',
+      'Optional discovery limited to specified services',
+      'PAT authentication for agents',
+      'Heartbeat-based health monitoring with TTL cleanup',
+      'One-click promotion from agent snapshot to portal catalog',
+      'Namespace-scoped security boundary enforcement',
+      'Service mesh and ingress route detection',
+      'Pluggable discovery runners with custom configuration',
+      'Multi-cluster support from a single APIHUB instance',
+    ],
+  },
+  {
+    name: 'Contract Types (DDL & MCP)',
+    icon: '📦',
+    color: 'indigo',
+    items: [
+      'Catalog model broadened from API-operation types to versioned contracts',
+      'DDLAPI: table viewer, changelog, dashboards, Excel export, side-by-side schema Diff View',
+      'DDLAPI normalization and diff in the TS processing stack (ddlapi-1.0)',
+      'MCP contracts: store init / tools / resources / prompts as package documents',
+      'MCP configure/publish gates (endpoint uniqueness, artifact kind, capability warnings)',
+      'Portal Contracts tab, global search, and dashboards for MCP and DDL',
+      'Document apiKind persisted on publish',
+      'Shared package/version lifecycle for APIs and non-API contracts',
+    ],
+  },
+  {
+    name: 'MCP Server & AI Integration',
+    icon: '🤖',
+    color: 'pink',
+    items: [
+      'Built-in MCP server for agents and IDEs (separate from MCP catalog contracts)',
+      'Tools: search operations, fetch specs, operation diffs, linter results',
+      'Compatible with Claude Desktop, VS Code Copilot, Cursor, and any MCP client',
+      'Honey AI Assistant in the Portal (optional; ai.chat.enabled)',
+      'Optional AI-powered linting with OpenAI quality recommendations',
+      'Rate-limiting and configurable API key management',
+      'Streaming MCP response modes',
+      'LLM onboarding guide included',
+    ],
+  },
+  {
+    name: 'Security & Auth',
+    icon: '🔐',
+    color: 'orange',
+    items: [
+      'SSO via OAuth2 / OIDC (Keycloak, Azure AD, etc.)',
+      'Role-based access control: Admin / Manager / Viewer',
+      'Per-workspace and per-package ACL',
+      'API key management for CI/CD and programmatic access',
+      'Personal Access Tokens (PAT) for Kubernetes agents',
+      'Authorization on activity history and global search',
+      'Audit logging for all content changes',
+      'Service account support for automation pipelines',
+      'Secure agent communication (token-based auth)',
+      'HTTPS termination, configurable CORS, optional custom CA mounts',
+    ],
+  },
+  {
+    name: 'Developer Experience',
+    icon: '🧑‍💻',
+    color: 'indigo',
+    items: [
+      'Spec-driven REST Playground (try APIs in-portal)',
+      'Multiple server support with custom URL override',
+      'Agent Proxy for in-cluster API testing',
+      'Mermaid diagrams in Markdown documents',
+      'CI/CD publish integration (curl, npm client, GitHub Actions)',
+      'Developer portal with role-based visibility',
+      'Export portal as static snapshot (self-contained HTML)',
+      'Standalone API Diff CLI with local MCP support',
+    ],
+  },
+  {
+    name: 'Ops & Deployment',
+    icon: '⚙️',
+    color: 'slate',
+    items: [
+      'Docker Compose for local and dev deployments',
+      'Production Helm chart for Kubernetes (values.yaml configurable)',
+      'Build-task-consumer API key mounted as a file (container hardening)',
+      'Agents-backend and API Linter configured via config.yaml',
+      'Admin Builds API for operators',
+      'S3 / MinIO storage for attachments and snapshots, with a cleanup job',
+      'PostgreSQL database (schema migrations included)',
+      'Horizontal scaling of backend and agent services',
+      'Runtime log level management (no restart needed)',
+      'Health check endpoints on all services',
+      'Prometheus metrics and distributed tracing support',
+    ],
+  },
+];
+
+const colorBg: Record<string, string> = {
+  blue:   'bg-blue-500/8 border-blue-500/20',
+  violet: 'bg-violet-500/8 border-violet-500/20',
+  emerald:'bg-emerald-500/8 border-emerald-500/20',
+  cyan:   'bg-cyan-500/8 border-cyan-500/20',
+  pink:   'bg-pink-500/8 border-pink-500/20',
+  orange: 'bg-orange-500/8 border-orange-500/20',
+  indigo: 'bg-indigo-500/8 border-indigo-500/20',
+  slate:  'bg-slate-500/8 border-slate-700',
+};
+---
+
+<Layout
+  title="Capabilities — Qubership APIHUB"
+  description="Complete feature matrix for Qubership APIHUB — contract catalog (API types + DDLAPI + MCP), quality gates, Kubernetes discovery, AI integration, security, and deployment."
+>
+  <!-- Page Hero -->
+  <section class="relative pt-16 pb-12 px-6 overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full opacity-15"
+        style="background: radial-gradient(ellipse at center, rgba(52,211,153,0.6) 0%, transparent 70%); filter: blur(50px);"></div>
+    </div>
+    <div class="relative max-w-3xl mx-auto text-center">
+      <nav class="flex items-center justify-center gap-2 mb-6 text-sm text-slate-500">
+        <a href={home} class="hover:text-white transition-colors">Home</a>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+        <span class="text-slate-300">Capabilities</span>
+      </nav>
+      <p class="text-sm font-semibold text-emerald-400 uppercase tracking-widest mb-3">Full Feature Matrix</p>
+      <h1 class="text-4xl md:text-5xl font-black text-white mb-5">
+        All capabilities,<br />
+        <span style="background: linear-gradient(135deg, #34d399 0%, #60a5fa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">organized by domain</span>
+      </h1>
+      <p class="text-lg text-slate-400 max-w-2xl mx-auto">
+        {domains.reduce((acc, d) => acc + d.items.length, 0)}+ capabilities across {domains.length} domains. Open source, self-hosted, Apache 2.0.
+      </p>
+    </div>
+  </section>
+
+  <!-- Architecture landscape -->
+  <section class="pb-10 px-6">
+    <div class="max-w-5xl mx-auto rounded-2xl overflow-hidden border border-slate-800">
+      <div class="px-4 py-2 bg-slate-900 border-b border-slate-800 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+        <span class="text-xs text-slate-500">Qubership &amp; APIHUB applications map for API Management sub-domains</span>
+      </div>
+      <img
+        src={WIKI_IMG_VS_API_MANAGEMENT}
+          alt="APIHUB API Management landscape"
+          class="w-full h-auto block"
+          loading="lazy"
+          data-lightbox
+      />
+    </div>
+  </section>
+
+  <!-- Capability domains grid -->
+  <section class="pb-20 px-6">
+    <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-6">
+      {domains.map((d) => (
+        <div class={`rounded-2xl border ${colorBg[d.color]} p-7`}>
+          <div class="flex items-center gap-3 mb-5">
+            <span class="text-2xl">{d.icon}</span>
+            <h2 class="text-lg font-bold text-white">{d.name}</h2>
+          </div>
+          <ul class="space-y-2">
+            {d.items.map((item) => (
+              <li class="flex items-start gap-2.5 text-sm text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- Page nav -->
+  <nav class="py-10 px-6 border-t border-slate-800/40">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <a href={withBase('features/')} class="flex items-center gap-2 text-sm text-slate-500 hover:text-white transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
+        Features
+      </a>
+      <a href={withBase('radar/')} class="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium">
+        Radar
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+      </a>
+    </div>
+  </nav>
+</Layout>

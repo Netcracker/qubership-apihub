@@ -1,0 +1,21 @@
+---
+import Layout from '../layouts/Layout.astro';
+const home = import.meta.env.BASE_URL;
+---
+
+<Layout title="404 — Page Not Found | Qubership APIHUB">
+  <div class="min-h-screen flex items-center justify-center px-6">
+    <div class="text-center">
+      <div class="text-8xl font-black gradient-text mb-4">404</div>
+      <h1 class="text-2xl font-bold text-white mb-3">Page not found</h1>
+      <p class="text-slate-400 mb-8">The page you're looking for doesn't exist or has been moved.</p>
+      <a href={home}
+        class="btn-primary inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+        </svg>
+        Back to Home
+      </a>
+    </div>
+  </div>
+</Layout>

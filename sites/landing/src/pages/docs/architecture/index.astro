@@ -1,0 +1,165 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import DocFigure from '../../../components/DocFigure.astro';
+import { c4Levels, containers, subCapabilityCount, capabilities, containerCatalogue } from '../../../data/architecture';
+import { docsNav } from '../../../data/docs';
+import { GITHUB_URL } from '../../../data/content';
+
+const architecture = docsNav.find((s) => s.label === 'Architecture')!;
+const onward = architecture.pages.slice(1);
+
+const toc = [
+  { id: 'two-models', label: 'Two models, one source' },
+  { id: 'four-levels', label: 'The four levels of C4' },
+  { id: 'in-one-glance', label: 'The platform in one glance' },
+  { id: 'read-next', label: 'What to read next' },
+];
+---
+
+<DocsLayout
+  title="Architecture overview — Qubership APIHUB"
+  description="How the Qubership APIHUB architecture documentation is organized: the C4 model answers how the platform is built, the capability map answers what it does."
+  eyebrow="Architecture"
+  heading="Overview"
+  lead="APIHUB is described by two models that meet in the middle. The C4 model answers how the platform is built. The capability map answers what it does. Every sub-capability names the container that implements it, and every container appears in the C4 diagrams."
+  toc={toc}
+>
+  <!-- ══ TWO MODELS ═════════════════════════════════════════════════════════ -->
+  <section id="two-models" class="doc-section mb-16">
+    <h2 class="text-2xl font-bold text-white mb-4">Two models, one source</h2>
+    <p class="text-slate-400 leading-relaxed mb-8 max-w-3xl">
+      Architecture documentation usually fails in one of two ways: it describes boxes nobody can map to a
+      repository, or it lists features nobody can map to a runtime. APIHUB is documented from both ends, and
+      the two descriptions are kept consistent by sharing one model file.
+    </p>
+
+    <div class="grid md:grid-cols-2 gap-5 mb-8">
+      <div class="rounded-2xl border border-blue-500/25 bg-blue-500/[0.06] p-7">
+        <p class="text-xs font-bold text-blue-400 uppercase tracking-widest mb-3">Model one · C4</p>
+        <h3 class="text-xl font-bold text-white mb-3">“How is it built?”</h3>
+        <p class="text-sm text-slate-400 leading-relaxed mb-5">
+          Four levels of zoom, from a single box on a context diagram down to the registries and pipelines
+          that matter in the code. Plus a deployment view and three dynamic views.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-blue-500/10 text-blue-300 border border-blue-500/20">4 levels</span>
+          <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-blue-500/10 text-blue-300 border border-blue-500/20">{containerCatalogue.length} containers</span>
+          <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-blue-500/10 text-blue-300 border border-blue-500/20">3 flows</span>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-violet-500/25 bg-violet-500/[0.06] p-7">
+        <p class="text-xs font-bold text-violet-400 uppercase tracking-widest mb-3">Model two · capability map</p>
+        <h3 class="text-xl font-bold text-white mb-3">“What does it do?”</h3>
+        <p class="text-sm text-slate-400 leading-relaxed mb-5">
+          A capability is a stable statement of what the platform does, so it survives refactoring. Nine of
+          them, broken down into {subCapabilityCount} sub-capabilities with technology and maturity overlays.
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-violet-500/10 text-violet-300 border border-violet-500/20">{capabilities.length} capabilities</span>
+          <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-violet-500/10 text-violet-300 border border-violet-500/20">{subCapabilityCount} sub-capabilities</span>
+          <span class="px-2.5 py-1 rounded-md text-xs font-medium bg-violet-500/10 text-violet-300 border border-violet-500/20">2 overlays</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-slate-800 bg-slate-900/40 p-6">
+      <p class="text-sm text-slate-400 leading-relaxed">
+        <span class="font-semibold text-white">Where they meet.</span> The technology overlay on the
+        capability map colours each sub-capability by the container that owns it. Change the model once and
+        both descriptions follow — which is why the capability data on this site is imported from the same
+        file that generates the architecture slide deck.
+      </p>
+    </div>
+  </section>
+
+  <!-- ══ FOUR LEVELS ════════════════════════════════════════════════════════ -->
+  <section id="four-levels" class="doc-section mb-16">
+    <h2 class="text-2xl font-bold text-white mb-4">The four levels of C4</h2>
+    <p class="text-slate-400 leading-relaxed mb-2 max-w-3xl">
+      Each level answers exactly one question and deliberately hides the detail of the next. If a diagram
+      makes you ask “but what is inside that box?”, the answer is on the level below.
+    </p>
+
+    <DocFigure
+      src="images/architecture/c4-levels.svg"
+      alt="The four levels of the C4 model: context, containers, components and code, each one nested inside the previous"
+      caption="C4 · four levels of zoom, each hiding the detail of the next"
+    />
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {c4Levels.map((level) => (
+        <div class="rounded-xl border border-slate-800 bg-slate-900/30 p-5">
+          <span
+            class="inline-block px-2 py-0.5 rounded text-[11px] font-extrabold mb-3"
+            style={`background:${level.color}; color:#050813;`}
+          >
+            {level.id}
+          </span>
+          <h3 class="text-base font-bold text-white mb-2">{level.name}</h3>
+          <p class="text-xs text-slate-500 leading-relaxed mb-3">{level.question}</p>
+          <p class="text-xs font-semibold" style={`color:${level.color}`}>{level.answer}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- ══ IN ONE GLANCE ══════════════════════════════════════════════════════ -->
+  <section id="in-one-glance" class="doc-section mb-16">
+    <h2 class="text-2xl font-bold text-white mb-4">The platform in one glance</h2>
+    <p class="text-slate-400 leading-relaxed mb-6 max-w-3xl">
+      Seven containers get deployed. A further twelve TypeScript libraries are not deployed on their own,
+      but they are where parsing, diffing and rendering actually happen.
+    </p>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {containerCatalogue.map(({ key, port }) => {
+        const c = containers[key];
+        return (
+          <div class="rounded-xl border border-slate-800 bg-slate-900/30 p-5">
+            <div class="flex items-center gap-2.5 mb-2">
+              <span class="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={`background:${c.color}`}></span>
+              <h3 class="text-sm font-bold text-white truncate">{c.name}</h3>
+              <span class="ml-auto font-mono text-[10px] text-slate-600 flex-shrink-0">{port}</span>
+            </div>
+            <p class="text-xs text-slate-500 mb-3">{c.tech}</p>
+            <a
+              href={`https://github.com/Netcracker/${c.repo}`}
+              target="_blank"
+              rel="noopener"
+              class="font-mono text-[10px] text-slate-600 hover:text-slate-400 transition-colors break-all"
+            >
+              {c.repo}
+            </a>
+          </div>
+        );
+      })}
+    </div>
+  </section>
+
+  <!-- ══ READ NEXT ══════════════════════════════════════════════════════════ -->
+  <section id="read-next" class="doc-section mb-12">
+    <h2 class="text-2xl font-bold text-white mb-6">What to read next</h2>
+    <div class="space-y-3">
+      {onward.map((page, i) => (
+        <a
+          href={page.href}
+          class="group flex items-start gap-5 rounded-xl border border-slate-800 bg-slate-900/30 p-6 hover:border-blue-500/40 transition-colors"
+        >
+          <span class="font-mono text-xs text-slate-700 pt-1 tabular-nums flex-shrink-0">{String(i + 1).padStart(2, '0')}</span>
+          <div class="min-w-0">
+            <h3 class="text-base font-bold text-white mb-1.5 group-hover:text-blue-400 transition-colors">{page.label}</h3>
+            <p class="text-sm text-slate-500 leading-relaxed">{page.summary}</p>
+          </div>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-700 group-hover:text-blue-400 transition-colors flex-shrink-0 mt-1.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+        </a>
+      ))}
+    </div>
+
+    <p class="mt-8 text-xs text-slate-600 leading-relaxed">
+      These pages are derived from the APIHUB architecture deck (September 2026). The capability data is
+      imported from the deck's model file, so the two stay in step. Source code for every container lives
+      under <a href={GITHUB_URL} target="_blank" rel="noopener" class="text-slate-500 hover:text-slate-300 transition-colors">Netcracker on GitHub</a>.
+    </p>
+  </section>
+</DocsLayout>

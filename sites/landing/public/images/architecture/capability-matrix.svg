@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="710" viewBox="0 0 1600 710" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <linearGradient id="mxTitle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#818cf8"/>
+      <stop offset="1" stop-color="#60a5fa"/>
+    </linearGradient>
+    <style>
+      .rowA  { fill: #0b1020; }
+      .rowB  { fill: #070c1a; }
+      .row   { stroke: #131b2e; stroke-width: 1; }
+      .cid   { font-size: 11.5px; font-weight: 800; }
+      .cnm   { font-size: 12.5px; fill: #cbd5e1; }
+      .hdr   { font-size: 10.5px; font-weight: 700; }
+      .cnt   { font-size: 10.5px; font-weight: 800; fill: #050813; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="710" fill="#050813"/>
+
+  <text x="60" y="54" font-size="15" font-weight="600" fill="#818cf8" letter-spacing="3">CROSS-CHECK</text>
+  <text x="60" y="96" font-size="30" font-weight="800" fill="#f1f5f9">Capability &#215; container. <tspan fill="url(#mxTitle)">Where the weight sits.</tspan></text>
+  <text x="60" y="128" font-size="13" fill="#64748b">Bubble size is the number of sub-capabilities of that capability the container contributes to.</text>
+
+  <!-- ===== COLUMN HEADERS ===== -->
+  <g class="hdr" text-anchor="middle">
+    <text x="501" y="170" fill="#60a5fa">APIHUB</text><text x="501" y="184" fill="#60a5fa">Backend</text>
+    <text x="623" y="177" fill="#38bdf8">APIHUB UI</text>
+    <text x="745" y="170" fill="#818cf8">Build Task</text><text x="745" y="184" fill="#818cf8">Consumer</text>
+    <text x="867" y="170" fill="#2dd4bf">TypeScript</text><text x="867" y="184" fill="#2dd4bf">libraries</text>
+    <text x="989" y="170" fill="#34d399">API Linter</text><text x="989" y="184" fill="#34d399">Service</text>
+    <text x="1111" y="170" fill="#10b981">Agents</text><text x="1111" y="184" fill="#10b981">Backend</text>
+    <text x="1233" y="177" fill="#fb923c">Agent</text>
+    <text x="1355" y="170" fill="#fbbf24">Java Task</text><text x="1355" y="184" fill="#fbbf24">Consumer</text>
+    <text x="1477" y="170" fill="#94a3b8">Platform /</text><text x="1477" y="184" fill="#94a3b8">Helm</text>
+  </g>
+
+  <!-- ===== C1: API Catalog Management ===== -->
+  <rect x="60" y="196" width="1480" height="42" rx="7" class="rowA row"/>
+  <text x="80" y="222" class="cid" fill="#60a5fa">C1</text>
+  <text x="110" y="222" class="cnm">API Catalog Management</text>
+  <circle cx="501" cy="217" r="19" fill="#60a5fa" fill-opacity="0.85"/><text x="501" y="221" class="cnt" text-anchor="middle">6</text>
+  <circle cx="623" cy="217" r="17" fill="#38bdf8" fill-opacity="0.85"/><text x="623" y="221" class="cnt" text-anchor="middle">5</text>
+
+  <!-- ===== C2: API Publishing and Build ===== -->
+  <rect x="60" y="240" width="1480" height="42" rx="7" class="rowB row"/>
+  <text x="80" y="266" class="cid" fill="#60a5fa">C2</text>
+  <text x="110" y="266" class="cnm">API Publishing &amp; Build</text>
+  <circle cx="501" cy="261" r="15" fill="#60a5fa" fill-opacity="0.85"/><text x="501" y="265" class="cnt" text-anchor="middle">4</text>
+  <circle cx="623" cy="261" r="9" fill="#38bdf8" fill-opacity="0.8"/>
+  <circle cx="745" cy="261" r="17" fill="#818cf8" fill-opacity="0.85"/><text x="745" y="265" class="cnt" text-anchor="middle">5</text>
+  <circle cx="867" cy="261" r="11" fill="#2dd4bf" fill-opacity="0.8"/>
+  <circle cx="1355" cy="261" r="9" fill="#fbbf24" fill-opacity="0.8"/>
+
+  <!-- ===== C3: API Change Management ===== -->
+  <rect x="60" y="284" width="1480" height="42" rx="7" class="rowA row"/>
+  <text x="80" y="310" class="cid" fill="#60a5fa">C3</text>
+  <text x="110" y="310" class="cnm">API Change Management</text>
+  <circle cx="501" cy="305" r="13" fill="#60a5fa" fill-opacity="0.85"/>
+  <circle cx="623" cy="305" r="11" fill="#38bdf8" fill-opacity="0.8"/>
+  <circle cx="745" cy="305" r="13" fill="#818cf8" fill-opacity="0.85"/>
+  <circle cx="867" cy="305" r="17" fill="#2dd4bf" fill-opacity="0.85"/><text x="867" y="309" class="cnt" text-anchor="middle">5</text>
+  <circle cx="1355" cy="305" r="9" fill="#fbbf24" fill-opacity="0.8"/>
+
+  <!-- ===== C4: API Documentation and Consumption ===== -->
+  <rect x="60" y="328" width="1480" height="42" rx="7" class="rowB row"/>
+  <text x="80" y="354" class="cid" fill="#60a5fa">C4</text>
+  <text x="110" y="354" class="cnm">API Documentation &amp; Consumption</text>
+  <circle cx="501" cy="349" r="13" fill="#60a5fa" fill-opacity="0.85"/>
+  <circle cx="623" cy="349" r="19" fill="#38bdf8" fill-opacity="0.85"/><text x="623" y="353" class="cnt" text-anchor="middle">6</text>
+  <circle cx="745" cy="349" r="11" fill="#818cf8" fill-opacity="0.8"/>
+  <circle cx="867" cy="349" r="15" fill="#2dd4bf" fill-opacity="0.85"/><text x="867" y="353" class="cnt" text-anchor="middle">4</text>
+
+  <!-- ===== C5: API Quality and Governance ===== -->
+  <rect x="60" y="372" width="1480" height="42" rx="7" class="rowA row"/>
+  <text x="80" y="398" class="cid" fill="#60a5fa">C5</text>
+  <text x="110" y="398" class="cnm">API Quality &amp; Governance</text>
+  <circle cx="501" cy="393" r="11" fill="#60a5fa" fill-opacity="0.8"/>
+  <circle cx="623" cy="393" r="15" fill="#38bdf8" fill-opacity="0.85"/><text x="623" y="397" class="cnt" text-anchor="middle">4</text>
+  <circle cx="989" cy="393" r="17" fill="#34d399" fill-opacity="0.85"/><text x="989" y="397" class="cnt" text-anchor="middle">5</text>
+
+  <!-- ===== C6: API Discovery (runtime) ===== -->
+  <rect x="60" y="416" width="1480" height="42" rx="7" class="rowB row"/>
+  <text x="80" y="442" class="cid" fill="#60a5fa">C6</text>
+  <text x="110" y="442" class="cnm">API Discovery (runtime)</text>
+  <circle cx="501" cy="437" r="9" fill="#60a5fa" fill-opacity="0.8"/>
+  <circle cx="1111" cy="437" r="15" fill="#10b981" fill-opacity="0.85"/><text x="1111" y="441" class="cnt" text-anchor="middle">4</text>
+  <circle cx="1233" cy="437" r="17" fill="#fb923c" fill-opacity="0.85"/><text x="1233" y="441" class="cnt" text-anchor="middle">5</text>
+
+  <!-- ===== C7: AI and Ecosystem Integration ===== -->
+  <rect x="60" y="460" width="1480" height="42" rx="7" class="rowA row"/>
+  <text x="80" y="486" class="cid" fill="#a78bfa">C7</text>
+  <text x="110" y="486" class="cnm">AI &amp; Ecosystem Integration</text>
+  <circle cx="501" cy="481" r="17" fill="#60a5fa" fill-opacity="0.85"/><text x="501" y="485" class="cnt" text-anchor="middle">5</text>
+  <circle cx="623" cy="481" r="13" fill="#38bdf8" fill-opacity="0.85"/>
+  <circle cx="745" cy="481" r="11" fill="#818cf8" fill-opacity="0.8"/>
+  <circle cx="867" cy="481" r="11" fill="#2dd4bf" fill-opacity="0.8"/>
+  <circle cx="989" cy="481" r="9" fill="#34d399" fill-opacity="0.8"/>
+
+  <!-- ===== C8: Identity and Access ===== -->
+  <rect x="60" y="504" width="1480" height="42" rx="7" class="rowB row"/>
+  <text x="80" y="530" class="cid" fill="#94a3b8">C8</text>
+  <text x="110" y="530" class="cnm">Identity &amp; Access</text>
+  <circle cx="501" cy="525" r="17" fill="#60a5fa" fill-opacity="0.85"/><text x="501" y="529" class="cnt" text-anchor="middle">5</text>
+  <circle cx="623" cy="525" r="13" fill="#38bdf8" fill-opacity="0.85"/>
+  <circle cx="989" cy="525" r="9" fill="#34d399" fill-opacity="0.8"/>
+  <circle cx="1111" cy="525" r="9" fill="#10b981" fill-opacity="0.8"/>
+  <circle cx="1233" cy="525" r="9" fill="#fb923c" fill-opacity="0.8"/>
+
+  <!-- ===== C9: Platform Operations ===== -->
+  <rect x="60" y="548" width="1480" height="42" rx="7" class="rowA row"/>
+  <text x="80" y="574" class="cid" fill="#94a3b8">C9</text>
+  <text x="110" y="574" class="cnm">Platform Operations</text>
+  <circle cx="501" cy="569" r="17" fill="#60a5fa" fill-opacity="0.85"/><text x="501" y="573" class="cnt" text-anchor="middle">5</text>
+  <circle cx="989" cy="569" r="15" fill="#34d399" fill-opacity="0.85"/><text x="989" y="573" class="cnt" text-anchor="middle">4</text>
+  <circle cx="1111" cy="569" r="13" fill="#10b981" fill-opacity="0.85"/>
+  <circle cx="1477" cy="569" r="13" fill="#94a3b8" fill-opacity="0.85"/>
+
+  <!-- ===== TOTALS ===== -->
+  <line x1="60" y1="604" x2="1540" y2="604" stroke="#1E293B"/>
+  <text x="80" y="630" font-size="10.5" font-weight="700" letter-spacing="2" fill="#475569">TOTAL OF 60</text>
+  <g font-size="14" font-weight="800" text-anchor="middle">
+    <text x="501" y="632" fill="#60a5fa">34</text>
+    <text x="623" y="632" fill="#38bdf8">24</text>
+    <text x="745" y="632" fill="#818cf8">12</text>
+    <text x="867" y="632" fill="#2dd4bf">13</text>
+    <text x="989" y="632" fill="#34d399">11</text>
+    <text x="1111" y="632" fill="#10b981">8</text>
+    <text x="1233" y="632" fill="#fb923c">6</text>
+    <text x="1355" y="632" fill="#fbbf24">2</text>
+    <text x="1477" y="632" fill="#94a3b8">3</text>
+  </g>
+
+  <rect x="60" y="652" width="1480" height="44" rx="10" fill="#0F172A" stroke="#1E293B"/>
+  <circle cx="86" cy="674" r="3.5" fill="#818cf8"/>
+  <text x="102" y="679" font-size="13" fill="#94a3b8">The backend appears in <tspan fill="#e2e8f0" font-weight="600">34 of the 60 sub-capabilities</tspan> and the UI in 24. The micro-monolith shape is visible here, and it is the main argument for any future split.</text>
+</svg>

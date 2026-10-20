@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1760" height="660" viewBox="0 0 1760 660" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <linearGradient id="pubTitle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#60a5fa"/>
+      <stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+    <marker id="pubArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+    </marker>
+    <style>
+      .laneA { fill: #0b1020; }
+      .laneB { fill: #070c1a; }
+      .lane  { stroke: #151d31; stroke-width: 1; }
+      .lnm   { font-size: 13px; font-weight: 700; fill: #e2e8f0; }
+      .snm   { font-size: 12px; font-weight: 700; }
+      .snote { font-size: 10px; fill: #94a3b8; }
+      .num   { font-size: 10.5px; font-weight: 800; fill: #050813; }
+      .link  { fill: none; stroke: #64748b; stroke-width: 1.75; }
+    </style>
+  </defs>
+
+  <rect width="1760" height="660" fill="#050813"/>
+
+  <text x="60" y="54" font-size="15" font-weight="600" fill="#fb923c" letter-spacing="3">DYNAMIC VIEW &#183; 01</text>
+  <text x="60" y="96" font-size="30" font-weight="800" fill="#f1f5f9">Publishing a version. <tspan fill="url(#pubTitle)">The worker does the heavy lifting.</tspan></text>
+  <text x="60" y="132" font-size="13.5" fill="#64748b">Four participants. Nothing is pushed: the build consumer asks for work, and holds no state between tasks.</text>
+
+  <!-- ===== LANES ===== -->
+  <rect x="60" y="160" width="1640" height="96" rx="10" class="laneA lane"/>
+  <rect x="60" y="264" width="1640" height="96" rx="10" class="laneB lane"/>
+  <rect x="60" y="368" width="1640" height="96" rx="10" class="laneA lane"/>
+  <rect x="60" y="472" width="1640" height="96" rx="10" class="laneB lane"/>
+
+  <rect x="60" y="184" width="4" height="48" rx="2" fill="#38bdf8"/>
+  <text x="84" y="213" class="lnm">UI / CI</text>
+  <rect x="60" y="288" width="4" height="48" rx="2" fill="#60a5fa"/>
+  <text x="84" y="317" class="lnm">Backend</text>
+  <rect x="60" y="392" width="4" height="48" rx="2" fill="#818cf8"/>
+  <text x="84" y="421" class="lnm">Build Consumer</text>
+  <rect x="60" y="496" width="4" height="48" rx="2" fill="#34d399"/>
+  <text x="84" y="525" class="lnm">Linter</text>
+
+  <!-- ===== CONNECTORS (drawn under the boxes) ===== -->
+  <path d="M 456 208 H 468 V 312 H 474" class="link" marker-end="url(#pubArrow)"/>
+  <path d="M 656 312 H 668 V 416 H 674" class="link" marker-end="url(#pubArrow)"/>
+  <path d="M 856 416 H 874" class="link" marker-end="url(#pubArrow)"/>
+  <path d="M 1056 416 H 1068 V 312 H 1074" class="link" marker-end="url(#pubArrow)"/>
+  <path d="M 1256 312 H 1274" class="link" marker-end="url(#pubArrow)"/>
+  <path d="M 1456 312 H 1468 V 520 H 1474" class="link" marker-end="url(#pubArrow)"/>
+
+  <!-- ===== STEPS ===== -->
+  <!-- 1: UI / CI -->
+  <rect x="280" y="170" width="176" height="76" rx="10" fill="#38bdf8" fill-opacity="0.16" stroke="#38bdf8" stroke-opacity="0.6"/>
+  <circle cx="296" cy="186" r="10" fill="#38bdf8"/>
+  <text x="296" y="190" class="num" text-anchor="middle">1</text>
+  <text x="314" y="191" class="snm" fill="#7dd3fc">Upload sources</text>
+  <text x="294" y="218" class="snote">Multipart or ZIP, from the</text>
+  <text x="294" y="232" class="snote">Portal or a CI pipeline</text>
+
+  <!-- 2: Backend -->
+  <rect x="480" y="274" width="176" height="76" rx="10" fill="#60a5fa" fill-opacity="0.16" stroke="#60a5fa" stroke-opacity="0.6"/>
+  <circle cx="496" cy="290" r="10" fill="#60a5fa"/>
+  <text x="496" y="294" class="num" text-anchor="middle">2</text>
+  <text x="514" y="295" class="snm" fill="#93c5fd">Create build task</text>
+  <text x="494" y="322" class="snote">Queued in PostgreSQL</text>
+  <text x="494" y="336" class="snote">with the build config</text>
+
+  <!-- 3: Build Consumer -->
+  <rect x="680" y="378" width="176" height="76" rx="10" fill="#818cf8" fill-opacity="0.16" stroke="#818cf8" stroke-opacity="0.6"/>
+  <circle cx="696" cy="394" r="10" fill="#818cf8"/>
+  <text x="696" y="398" class="num" text-anchor="middle">3</text>
+  <text x="714" y="399" class="snm" fill="#a5b4fc">Poll and receive</text>
+  <text x="694" y="426" class="snote">Takes ownership of the</text>
+  <text x="694" y="440" class="snote">task and downloads it</text>
+
+  <!-- 4: Build Consumer -->
+  <rect x="880" y="378" width="176" height="76" rx="10" fill="#818cf8" fill-opacity="0.16" stroke="#818cf8" stroke-opacity="0.6"/>
+  <circle cx="896" cy="394" r="10" fill="#818cf8"/>
+  <text x="896" y="398" class="num" text-anchor="middle">4</text>
+  <text x="914" y="399" class="snm" fill="#a5b4fc">Build the version</text>
+  <text x="894" y="426" class="snote">Parse &#183; normalize &#183; diff</text>
+  <text x="894" y="440" class="snote">via api-processor</text>
+
+  <!-- 5: Backend -->
+  <rect x="1080" y="274" width="176" height="76" rx="10" fill="#60a5fa" fill-opacity="0.16" stroke="#60a5fa" stroke-opacity="0.6"/>
+  <circle cx="1096" cy="290" r="10" fill="#60a5fa"/>
+  <text x="1096" y="294" class="num" text-anchor="middle">5</text>
+  <text x="1114" y="295" class="snm" fill="#93c5fd">Store results</text>
+  <text x="1094" y="322" class="snote">Documents, operations,</text>
+  <text x="1094" y="336" class="snote">classified changes</text>
+
+  <!-- 6: Backend -->
+  <rect x="1280" y="274" width="176" height="76" rx="10" fill="#60a5fa" fill-opacity="0.16" stroke="#60a5fa" stroke-opacity="0.6"/>
+  <circle cx="1296" cy="290" r="10" fill="#60a5fa"/>
+  <text x="1296" y="294" class="num" text-anchor="middle">6</text>
+  <text x="1314" y="295" class="snm" fill="#93c5fd">Publish event</text>
+  <text x="1294" y="322" class="snote">Broadcast on the Olric</text>
+  <text x="1294" y="336" class="snote">version-published topic</text>
+
+  <!-- 7: Linter -->
+  <rect x="1480" y="482" width="176" height="76" rx="10" fill="#34d399" fill-opacity="0.16" stroke="#34d399" stroke-opacity="0.6"/>
+  <circle cx="1496" cy="498" r="10" fill="#34d399"/>
+  <text x="1496" y="502" class="num" text-anchor="middle">7</text>
+  <text x="1514" y="503" class="snm" fill="#6ee7b7">Lint and score</text>
+  <text x="1494" y="530" class="snote">Spectral, optionally AI;</text>
+  <text x="1494" y="544" class="snote">writes a quality score</text>
+
+  <!-- ===== FOOTNOTE ===== -->
+  <rect x="60" y="592" width="1640" height="44" rx="10" fill="#0F172A" stroke="#1E293B"/>
+  <circle cx="86" cy="614" r="3.5" fill="#fb923c"/>
+  <text x="102" y="619" font-size="13" fill="#94a3b8">Steps <tspan fill="#e2e8f0" font-weight="600">3 and 4 repeat for every document</tspan> in the package. Step 7 runs asynchronously off the event bus, so publishing never waits for linting to finish.</text>
+</svg>

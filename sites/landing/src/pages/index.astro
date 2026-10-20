@@ -1,0 +1,252 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { stats, pillars, sectionCards, formats, GITHUB_URL, INSTALL_URL, RELEASES_URL } from '../data/content';
+import { withBase } from '../lib/paths';
+---
+
+<Layout>
+  <!-- ── Hero ──────────────────────────────────────────────────────────── -->
+  <section class="relative overflow-hidden pt-20 pb-16 md:pt-28 md:pb-20">
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full opacity-20"
+        style="background: radial-gradient(ellipse at center, rgba(59,130,246,0.5) 0%, rgba(124,58,237,0.3) 40%, transparent 70%); filter: blur(60px);"></div>
+      <div class="absolute inset-0 opacity-[0.025]" style="background-image: linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px); background-size: 64px 64px;"></div>
+    </div>
+
+    <div class="relative max-w-5xl mx-auto px-6 text-center">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 mb-8">
+        <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+        <span class="text-xs font-medium text-blue-300">v2.15.0 Released — Search Privacy + MCP/DDL Tools + Status Cleanup</span>
+        <a href={RELEASES_URL} target="_blank" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-0.5">
+          See what's new
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+        </a>
+      </div>
+
+      <h1 class="text-5xl md:text-7xl font-black tracking-tight text-white leading-[1.08] mb-6">
+        The Open Source<br />
+        <span class="gradient-text">API Hub</span> for<br />
+        Modern Engineering
+      </h1>
+
+      <p class="text-xl md:text-2xl text-slate-400 max-w-2xl mx-auto leading-relaxed mb-10">
+        A single point of truth for versioned <strong class="text-slate-300">API and non-API contracts</strong>.
+        Discover, compare, validate, and govern
+        <strong class="text-slate-300">OpenAPI</strong>, <strong class="text-slate-300">GraphQL</strong>, <strong class="text-slate-300">AsyncAPI</strong>,
+        <strong class="text-slate-300">DDLAPI</strong>, and <strong class="text-slate-300">MCP</strong> in one catalog.
+      </p>
+
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+        <a href={INSTALL_URL} target="_blank" rel="noopener"
+          class="btn-primary flex items-center gap-2 px-8 py-3.5 rounded-xl text-base font-semibold text-white w-full sm:w-auto justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+          Deploy Now
+        </a>
+        <a href={GITHUB_URL} target="_blank" rel="noopener"
+          class="btn-secondary flex items-center gap-2 px-8 py-3.5 rounded-xl text-base font-semibold text-white w-full sm:w-auto justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12Z"/></svg>
+          View on GitHub
+        </a>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-center gap-2.5">
+        {formats.map((f) => (
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-slate-800 bg-slate-900 text-xs font-medium text-slate-400">
+            <span class="w-1.5 h-1.5 rounded-full" style={`background-color: ${f.color}`}></span>
+            {f.name}
+          </span>
+        ))}
+      </div>
+    </div>
+
+    <!-- Hero image -->
+    <div class="relative mt-12 max-w-4xl mx-auto px-6">
+      <div class="rounded-2xl overflow-hidden border border-slate-800/50">
+        <img src={withBase('images/hero-network.png')} alt="APIHUB — unified API management hub" class="w-full h-auto block" loading="eager" />
+        <div class="absolute inset-x-0 bottom-0 h-32" style="background: linear-gradient(to bottom, transparent, #050813);"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Stats ──────────────────────────────────────────────────────────── -->
+  <section class="border-y border-slate-800/60 py-10" style="background: rgba(15,23,42,0.5);">
+    <div class="max-w-5xl mx-auto px-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+        {stats.map((s) => (
+          <div class="text-center">
+            <div class="text-3xl md:text-4xl font-black gradient-text mb-1">{s.value}</div>
+            <div class="text-xs text-slate-500">{s.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── What you get ───────────────────────────────────────────────────── -->
+  <section class="py-24 px-6">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-14">
+        <p class="text-sm font-semibold text-blue-400 uppercase tracking-widest mb-3">What you get</p>
+        <h2 class="text-4xl md:text-5xl font-black text-white mb-5">
+          The only unified platform<br />
+          <span class="gradient-text">for all your API needs</span>
+        </h2>
+        <p class="text-xl text-slate-400 max-w-2xl mx-auto">
+          Get complete API context unified across discovery, governance, and quality — built for teams that care about API reliability at scale.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        {pillars.map((p) => (
+          <a
+            href={p.href}
+            class={`card-glow${p.color === 'violet' ? '-violet' : ''} group relative rounded-2xl border border-slate-800 bg-slate-900 p-8 transition-all duration-300 hover:border-opacity-60 block`}
+          >
+            <div class={`w-14 h-14 rounded-xl flex items-center justify-center mb-6 ${
+              p.color === 'blue' ? 'bg-blue-500/15 text-blue-400' :
+              p.color === 'violet' ? 'bg-violet-500/15 text-violet-400' :
+              'bg-indigo-500/15 text-indigo-400'
+            }`} set:html={p.icon} />
+            <h3 class="text-xl font-bold text-white mb-3">{p.title}</h3>
+            <p class="text-slate-400 leading-relaxed text-sm mb-4">{p.description}</p>
+            <span class="text-xs font-medium text-blue-400 group-hover:text-blue-300 flex items-center gap-1 transition-colors">
+              Learn more
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Why APIHUB teaser ──────────────────────────────────────────────── -->
+  <section class="pb-24 px-6">
+    <div class="max-w-6xl mx-auto">
+      <a
+        href={withBase('why/')}
+        class="group block rounded-3xl border border-slate-800 hover:border-blue-500/50 transition-all duration-300 overflow-hidden"
+        style="background: linear-gradient(135deg, rgba(59,130,246,0.10) 0%, rgba(15,23,42,0.6) 45%, rgba(124,58,237,0.10) 100%);"
+      >
+        <div class="grid lg:grid-cols-[1.15fr_1fr] gap-8 items-center p-8 md:p-10">
+          <div>
+            <p class="text-sm font-semibold text-blue-400 uppercase tracking-widest mb-3">Why APIHUB?</p>
+            <h2 class="text-3xl md:text-4xl font-black text-white mb-4 leading-tight">
+              Your business runs on APIs.<br />
+              <span class="gradient-text">Who is keeping them in order?</span>
+            </h2>
+            <p class="text-slate-400 leading-relaxed mb-6">
+              What ungoverned APIs cost you in incidents, delivery speed, and documentation overhead — explained for
+              decision makers, not only engineers. Plus an honest map of where APIHUB fits next to Kong, Apigee,
+              SwaggerHub, Backstage, and friends.
+            </p>
+            <div class="flex flex-wrap gap-2 mb-6">
+              {['Business case', 'Without / with', 'Positioning map', 'Comparison by category'].map((t) => (
+                <span class="px-3 py-1 rounded-full border border-slate-700 bg-slate-900/70 text-xs text-slate-400">{t}</span>
+              ))}
+            </div>
+            <span class="inline-flex items-center gap-1.5 text-sm font-semibold text-blue-400 group-hover:text-blue-300 transition-colors">
+              Read the business case and comparison
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+            </span>
+          </div>
+          <div class="rounded-2xl overflow-hidden border border-slate-800/80 shadow-2xl shadow-blue-500/10">
+            <img
+              src={withBase('images/why/positioning-quadrant.svg')}
+              alt="Positioning map: Qubership APIHUB is deep on contract governance and deliberately narrow on runtime"
+              class="w-full h-auto block bg-[#050813]"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── Technology radar teaser ────────────────────────────────────────── -->
+  <section class="pb-24 px-6">
+    <div class="max-w-6xl mx-auto">
+      <a
+        href={withBase('radar/')}
+        class="group block rounded-3xl border border-slate-800 hover:border-emerald-500/50 transition-all duration-300 overflow-hidden"
+        style="background: linear-gradient(135deg, rgba(52,211,153,0.10) 0%, rgba(15,23,42,0.6) 45%, rgba(59,130,246,0.10) 100%);"
+      >
+        <div class="grid lg:grid-cols-[1.15fr_1fr] gap-8 items-center p-8 md:p-10">
+          <div>
+            <p class="text-sm font-semibold text-emerald-400 uppercase tracking-widest mb-3">Technology radar</p>
+            <h2 class="text-3xl md:text-4xl font-black text-white mb-4 leading-tight">
+              What we run.<br />
+              <span class="gradient-text-warm">How we build it.</span>
+            </h2>
+            <p class="text-slate-400 leading-relaxed mb-6">
+              A ThoughtWorks-style radar of the APIHUB stack: Go and TypeScript runtimes, OpenAPI through MCP,
+              Kubernetes and Helm, plus the CI, E2E, and agent-native practices the team uses. Adopt, Trial, Assess,
+              and Hold — product and engineering in one map.
+            </p>
+            <div class="flex flex-wrap gap-2 mb-6">
+              {['Techniques', 'Tools', 'Platforms', 'Languages'].map((t) => (
+                <span class="px-3 py-1 rounded-full border border-slate-700 bg-slate-900/70 text-xs text-slate-400">{t}</span>
+              ))}
+            </div>
+            <span class="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-400 group-hover:text-emerald-300 transition-colors">
+              Open the interactive radar
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+            </span>
+          </div>
+          <div class="rounded-2xl overflow-hidden border border-slate-800/80">
+            <img
+              src={withBase('images/radar/preview.svg')}
+              alt="Technology radar: four quadrants, Adopt in the center, Hold on the rim"
+              class="w-full h-auto block bg-[#050813]"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ── Section nav cards ──────────────────────────────────────────────── -->
+  <section class="py-16 px-6" style="background: rgba(15,23,42,0.3);">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-10">
+        <h2 class="text-2xl md:text-3xl font-bold text-white mb-3">Explore the full platform</h2>
+        <p class="text-slate-400">Each section covers a different dimension of what APIHUB offers.</p>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {sectionCards.map((card) => (
+          <a
+            href={card.href}
+            class="group rounded-xl border border-slate-800 bg-slate-900 p-5 hover:border-slate-700 hover:bg-slate-800/60 transition-all duration-200 block"
+          >
+            <div class="text-2xl mb-3">{card.icon}</div>
+            <h3 class="font-semibold text-white text-sm mb-1.5 group-hover:text-blue-300 transition-colors">{card.title}</h3>
+            <p class="text-xs text-slate-500 leading-relaxed">{card.description}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CTA ────────────────────────────────────────────────────────────── -->
+  <section class="py-20 px-6">
+    <div class="max-w-4xl mx-auto text-center">
+      <div class="relative rounded-3xl overflow-hidden p-px" style="background: linear-gradient(135deg, #3b82f6, #7c3aed);">
+        <div class="rounded-[calc(1.5rem-1px)] py-14 px-10" style="background: radial-gradient(ellipse at center top, rgba(59,130,246,0.2) 0%, #0a0f1e 60%);">
+          <h2 class="text-3xl md:text-4xl font-black text-white mb-5">Start governing your APIs today</h2>
+          <p class="text-lg text-slate-300 mb-8 max-w-xl mx-auto">Open source, self-hosted, Apache 2.0. Deploy in minutes.</p>
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a href={INSTALL_URL} target="_blank" rel="noopener"
+              class="btn-primary flex items-center gap-2 px-7 py-3 rounded-xl text-sm font-bold text-white w-full sm:w-auto justify-center">
+              Deploy Now
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+            </a>
+            <a href={GITHUB_URL} target="_blank" rel="noopener"
+              class="flex items-center gap-2 px-7 py-3 rounded-xl text-sm font-semibold text-white border border-white/25 hover:border-white/40 hover:bg-white/5 transition-all w-full sm:w-auto justify-center">
+              Star on GitHub
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</Layout>

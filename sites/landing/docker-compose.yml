@@ -1,0 +1,46 @@
+services:
+
+  # ── Production: serve pre-built static site ───────────────────────────────
+  landing:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: qubership-apihub-landing:latest
+    container_name: apihub-landing
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8090}:80"
+    environment:
+      - TZ=UTC
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "com.netcracker.app=qubership-apihub-landing"
+      - "com.netcracker.version=${VERSION:-dev}"
+
+  # ── Dev server: Astro with HMR (alternative to the nginx container) ────────
+  # Use this instead of `landing` when you want live reload during development.
+  #
+  # Usage:
+  #   podman compose --podman-run-args='--userns=keep-id' up dev-server
+  #   (or simply: podman compose up dev-server)
+  #
+  dev-server:
+    profiles: [dev]
+    image: node:20-alpine
+    container_name: apihub-dev-server
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules  # anonymous volume to avoid host node_modules conflict
+    command: >
+      sh -c "npm install --silent 2>/dev/null;
+             npm run dev"
+    ports:
+      - "${DEV_PORT:-4321}:4321"
+    restart: unless-stopped

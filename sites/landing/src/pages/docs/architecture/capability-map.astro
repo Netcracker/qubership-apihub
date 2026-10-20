@@ -1,0 +1,329 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import DocFigure from '../../../components/DocFigure.astro';
+import {
+  capabilities,
+  containers,
+  maturity,
+  maturityTheme,
+  tierTheme,
+  subCapabilityCount,
+  containerWeights,
+  maturityCounts,
+  type ContainerKey,
+  type MaturityKey,
+  type TierKey,
+} from '../../../data/architecture';
+
+const toc = [
+  { id: 'nine-capabilities', label: 'Nine capabilities, three tiers' },
+  { id: 'sixty', label: `All ${subCapabilityCount} sub-capabilities` },
+  { id: 'weight', label: 'Where the weight sits' },
+  { id: 'archimate', label: 'The same model in ArchiMate' },
+];
+
+/** Inline `rgba()` so overlay colours can live in CSS custom properties. */
+const rgba = (hex: string, alpha: number) => {
+  const h = hex.replace('#', '');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+};
+
+const NEUTRAL = '#94a3b8';
+
+const tierOrder: TierKey[] = ['core', 'differentiating', 'supporting'];
+const maxWeight = containerWeights[0].count;
+const usedContainers = containerWeights.filter((w) => w.count > 0);
+---
+
+<DocsLayout
+  title="Capability map — Qubership APIHUB architecture"
+  description="The Qubership APIHUB functional-technical map: nine capabilities, sixty sub-capabilities, and overlays showing which container implements what and how settled each area is."
+  eyebrow="Architecture"
+  heading="Capability map"
+  lead={`A capability is a stable statement of what the platform does, so it survives refactoring. Nine of them cover APIHUB, broken down into ${subCapabilityCount} sub-capabilities. Switch on the technology overlay and the map becomes a functional-technical view: every entry names the service that implements it.`}
+  toc={toc}
+>
+  <!-- ══ NINE CAPABILITIES ══════════════════════════════════════════════════ -->
+  <section id="nine-capabilities" class="doc-section mb-20">
+    <h2 class="text-2xl font-bold text-white mb-6">Nine capabilities, three tiers</h2>
+
+    {tierOrder.map((tier) => {
+      const theme = tierTheme[tier];
+      const caps = capabilities.filter((c) => c.tier === tier);
+      return (
+        <div class="mb-8">
+          <div class="flex items-baseline gap-3 mb-4">
+            <span class="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={`background:${theme.color}`}></span>
+            <h3 class="text-sm font-bold" style={`color:${theme.color}`}>{theme.label}</h3>
+            <span class="text-xs text-slate-600">{theme.note}</span>
+          </div>
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {caps.map((cap) => (
+              <div
+                class="rounded-xl border p-5"
+                style={`border-color:${rgba(theme.color, 0.28)}; background:${rgba(theme.color, 0.05)};`}
+              >
+                <div class="flex items-baseline gap-2.5 mb-2">
+                  <span class="font-mono text-xs font-bold" style={`color:${theme.color}`}>{cap.id}</span>
+                  <h4 class="text-sm font-bold text-white leading-snug">{cap.name}</h4>
+                </div>
+                <p class="text-xs text-slate-500 leading-relaxed mb-3">{cap.desc}</p>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-slate-600">
+                  {cap.l2.length} sub-capabilities
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    })}
+  </section>
+
+  <!-- ══ ALL SIXTY ══════════════════════════════════════════════════════════ -->
+  <section id="sixty" class="doc-section mb-20">
+    <h2 class="text-2xl font-bold text-white mb-3">All {subCapabilityCount} sub-capabilities</h2>
+    <p class="text-slate-400 leading-relaxed mb-6 max-w-3xl">
+      The full functional picture. The two overlays are the point of this map: one tells you which container
+      to open when you need to change something, the other tells you how much production history that area
+      has.
+    </p>
+
+    <!-- Overlay switch -->
+    <div class="flex flex-wrap gap-2 mb-6" role="group" aria-label="Overlay">
+      <button type="button" class="overlay-tab is-active" data-mode="tech">Technology overlay</button>
+      <button type="button" class="overlay-tab" data-mode="mat">Maturity overlay</button>
+      <button type="button" class="overlay-tab" data-mode="plain">No overlay</button>
+    </div>
+
+    <!-- Legends -->
+    <div id="legend-tech" class="overlay-legend flex flex-wrap gap-x-5 gap-y-2 mb-6">
+      {usedContainers.map(({ key }) => (
+        <span class="flex items-center gap-2 text-[11px] text-slate-500">
+          <span class="w-2.5 h-2.5 rounded-sm" style={`background:${containers[key as ContainerKey].color}`}></span>
+          {containers[key as ContainerKey].name}
+        </span>
+      ))}
+      <span class="flex items-center gap-2 text-[11px] text-slate-500">
+        <span class="w-2.5 h-2.5 rounded-sm" style={`background:${NEUTRAL}`}></span>
+        Design only
+      </span>
+    </div>
+
+    <div id="legend-mat" class="overlay-legend hidden flex-wrap gap-x-5 gap-y-2 mb-6">
+      {(Object.keys(maturity) as MaturityKey[]).map((key) => (
+        <span class="flex items-center gap-2 text-[11px] text-slate-500">
+          <span class="w-2.5 h-2.5 rounded-sm" style={`background:${maturityTheme[key].color}`}></span>
+          {maturity[key].label} — {maturity[key].text}
+        </span>
+      ))}
+    </div>
+
+    <!-- The map -->
+    <div id="cap-map" class="grid lg:grid-cols-2 gap-4" data-overlay="tech">
+      {capabilities.map((cap) => {
+        const theme = tierTheme[cap.tier];
+        return (
+          <div class="rounded-xl border border-slate-800 bg-slate-900/20 p-5">
+            <div class="flex items-baseline gap-2.5 mb-4 pb-3 border-b border-slate-800">
+              <span class="font-mono text-xs font-bold" style={`color:${theme.color}`}>{cap.id}</span>
+              <h3 class="text-sm font-bold text-white">{cap.name}</h3>
+              <span class="ml-auto text-[10px] text-slate-600 flex-shrink-0">{cap.l2.length}</span>
+            </div>
+            <ul class="space-y-1.5">
+              {cap.l2.map(([id, name, owners, tech, mat]) => {
+                const techColor = owners.length > 0 ? containers[owners[0]].color : NEUTRAL;
+                const matColor = maturityTheme[mat].color;
+                const ownerLabel = owners.length > 0 ? owners.join(' + ') : 'design only';
+                return (
+                  <li
+                    class="cap-cell rounded-lg border px-3 py-2"
+                    style={`
+                      --tech-fg:${techColor};
+                      --tech-b:${rgba(techColor, 0.35)};
+                      --tech-bg:${rgba(techColor, 0.08)};
+                      --mat-fg:${matColor};
+                      --mat-b:${rgba(matColor, 0.35)};
+                      --mat-bg:${rgba(matColor, 0.08)};
+                    `}
+                  >
+                    <div class="flex items-baseline gap-2">
+                      <span class="cap-id font-mono text-[10px] tabular-nums flex-shrink-0">{id}</span>
+                      <span class="text-[12px] text-slate-200 leading-snug">{name}</span>
+                    </div>
+                    <p class="cap-badge text-[10px] font-semibold mt-1">
+                      <span class="cap-badge-tech">{ownerLabel}</span>
+                      <span class="cap-badge-mat">{maturity[mat].label}</span>
+                    </p>
+                    <p class="cap-note text-[10px] text-slate-600 mt-1 leading-relaxed font-mono">{tech}</p>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
+    </div>
+  </section>
+
+  <!-- ══ WHERE THE WEIGHT SITS ══════════════════════════════════════════════ -->
+  <section id="weight" class="doc-section mb-20">
+    <h2 class="text-2xl font-bold text-white mb-6">Where the weight sits</h2>
+
+    <div class="grid lg:grid-cols-2 gap-8 mb-10">
+      <div>
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-5">
+          Sub-capabilities per container
+        </h3>
+        <ul class="space-y-3">
+          {containerWeights.map(({ key, count }) => {
+            const c = containers[key];
+            return (
+              <li>
+                <div class="flex items-baseline gap-2 mb-1.5">
+                  <span class="text-xs text-slate-300">{c.name}</span>
+                  <span class="ml-auto text-xs font-bold tabular-nums" style={`color:${c.color}`}>{count}</span>
+                </div>
+                <div class="h-1.5 rounded-full bg-slate-800/70 overflow-hidden">
+                  <div
+                    class="h-full rounded-full"
+                    style={`width:${Math.max((count / maxWeight) * 100, 1.5)}%; background:${c.color};`}
+                  ></div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-5">Maturity across all sixty</h3>
+        <div class="flex h-3 rounded-full overflow-hidden mb-6">
+          {maturityCounts.map(({ key, count }) => (
+            <div
+              style={`width:${(count / subCapabilityCount) * 100}%; background:${maturityTheme[key].color};`}
+              title={`${maturity[key].label}: ${count}`}
+            ></div>
+          ))}
+        </div>
+        <ul class="space-y-3">
+          {maturityCounts.map(({ key, count }) => (
+            <li
+              class="rounded-lg border px-4 py-3"
+              style={`border-color:${maturityTheme[key].border}; background:${maturityTheme[key].bg};`}
+            >
+              <div class="flex items-baseline gap-2 mb-1">
+                <span class="text-xs font-bold" style={`color:${maturityTheme[key].color}`}>
+                  {maturity[key].label}
+                </span>
+                <span class="ml-auto text-sm font-extrabold tabular-nums" style={`color:${maturityTheme[key].color}`}>
+                  {count}
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-500 leading-relaxed">{maturity[key].text}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+
+    <DocFigure
+      src="images/architecture/capability-matrix.svg"
+      alt="Bubble matrix of the nine APIHUB capabilities against the nine containers, sized by the number of contributing sub-capabilities"
+      caption="Cross-check — capability × container, bubble size is the number of sub-capabilities"
+    />
+
+    <div class="rounded-xl border border-indigo-500/25 bg-indigo-500/[0.06] p-5">
+      <p class="text-sm text-slate-300 leading-relaxed">
+        The backend appears in <span class="font-semibold text-white">34 of the {subCapabilityCount}</span>
+        sub-capabilities and the UI in 24. The micro-monolith shape is visible here, and it is the main
+        argument for any future split.
+      </p>
+    </div>
+  </section>
+
+  <!-- ══ ARCHIMATE ══════════════════════════════════════════════════════════ -->
+  <section id="archimate" class="doc-section mb-12">
+    <h2 class="text-2xl font-bold text-white mb-3">The same model in ArchiMate</h2>
+    <p class="text-slate-400 leading-relaxed mb-2 max-w-3xl">
+      For readers who need to import this into an enterprise-architecture repository: business services on
+      top, application services and components in the middle, technology underneath. Realization runs
+      upward.
+    </p>
+
+    <DocFigure
+      src="images/architecture/archimate-layers.svg"
+      alt="The APIHUB model expressed as four ArchiMate layers: business, application services, application components and technology"
+      caption="ArchiMate view — four layers, realization running upward"
+    />
+  </section>
+</DocsLayout>
+
+<style>
+  .overlay-tab {
+    padding: 0.5rem 0.875rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgb(30 41 59);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgb(148 163 184);
+    transition: all 0.15s ease;
+  }
+  .overlay-tab:hover { color: #fff; border-color: rgb(51 65 85); }
+  .overlay-tab.is-active {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.5);
+    color: #60a5fa;
+  }
+
+  /* ── Overlay states ───────────────────────────────────────────────────── */
+  .cap-cell { border-color: rgb(30 41 59); background: rgba(15, 23, 42, 0.4); }
+  .cap-id { color: rgb(71 85 105); }
+  .cap-badge, .cap-badge-tech, .cap-badge-mat { display: none; }
+
+  #cap-map[data-overlay='tech'] .cap-cell {
+    border-color: var(--tech-b);
+    background: var(--tech-bg);
+  }
+  #cap-map[data-overlay='tech'] .cap-id { color: var(--tech-fg); }
+  #cap-map[data-overlay='tech'] .cap-badge,
+  #cap-map[data-overlay='tech'] .cap-badge-tech { display: block; color: var(--tech-fg); }
+
+  #cap-map[data-overlay='mat'] .cap-cell {
+    border-color: var(--mat-b);
+    background: var(--mat-bg);
+  }
+  #cap-map[data-overlay='mat'] .cap-id { color: var(--mat-fg); }
+  #cap-map[data-overlay='mat'] .cap-badge,
+  #cap-map[data-overlay='mat'] .cap-badge-mat { display: block; color: var(--mat-fg); }
+</style>
+
+<script>
+  function initCapabilityMap() {
+    const map = document.getElementById('cap-map');
+    if (!map) return;
+
+    const tabs = document.querySelectorAll<HTMLButtonElement>('.overlay-tab');
+    const legends: Record<string, HTMLElement | null> = {
+      tech: document.getElementById('legend-tech'),
+      mat: document.getElementById('legend-mat'),
+    };
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const mode = tab.dataset.mode ?? 'plain';
+        map.dataset.overlay = mode;
+
+        tabs.forEach((t) => t.classList.toggle('is-active', t === tab));
+        Object.entries(legends).forEach(([key, el]) => {
+          el?.classList.toggle('hidden', key !== mode);
+          el?.classList.toggle('flex', key === mode);
+        });
+      });
+    });
+  }
+
+  document.addEventListener('astro:page-load', initCapabilityMap);
+</script>

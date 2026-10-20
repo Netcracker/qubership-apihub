@@ -1,0 +1,399 @@
+---
+import Layout from '../layouts/Layout.astro';
+import {
+  GITHUB_URL,
+  INSTALL_URL,
+  whyRows,
+  whyOutcomes,
+  domainCoverage,
+  comparisonColumns,
+  comparisonRows,
+  fitFor,
+  notFitFor,
+} from '../data/content';
+import { withBase } from '../lib/paths';
+const home = import.meta.env.BASE_URL;
+
+const outcomeColor: Record<string, string> = {
+  blue: 'bg-blue-500/10 border-blue-500/25 text-blue-300',
+  violet: 'bg-violet-500/10 border-violet-500/25 text-violet-300',
+  emerald: 'bg-emerald-500/10 border-emerald-500/25 text-emerald-300',
+  cyan: 'bg-cyan-500/10 border-cyan-500/25 text-cyan-300',
+  orange: 'bg-orange-500/10 border-orange-500/25 text-orange-300',
+  pink: 'bg-pink-500/10 border-pink-500/25 text-pink-300',
+};
+
+const levelBadge: Record<string, { label: string; cls: string }> = {
+  full: { label: 'Full', cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' },
+  strong: { label: 'Strong', cls: 'bg-blue-500/15 text-blue-300 border-blue-500/30' },
+  none: { label: 'Not covered', cls: 'bg-slate-800 text-slate-500 border-slate-700' },
+};
+---
+
+<Layout
+  title="Why APIHUB — business case and honest comparison | Qubership APIHUB"
+  description="What ungoverned APIs cost a business, what changes with a contract registry, and where Qubership APIHUB fits next to API gateways, design platforms, and open-source catalogs."
+>
+  <!-- ── Page hero ──────────────────────────────────────────────────────── -->
+  <section class="relative pt-16 pb-12 px-6 overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[450px] rounded-full opacity-20"
+        style="background: radial-gradient(ellipse at center, rgba(59,130,246,0.5) 0%, rgba(124,58,237,0.3) 40%, transparent 70%); filter: blur(60px);"></div>
+    </div>
+    <div class="relative max-w-3xl mx-auto text-center">
+      <nav class="flex items-center justify-center gap-2 mb-6 text-sm text-slate-500">
+        <a href={home} class="hover:text-white transition-colors">Home</a>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+        <span class="text-slate-300">Why APIHUB</span>
+      </nav>
+      <p class="text-sm font-semibold text-blue-400 uppercase tracking-widest mb-3">Why APIHUB?</p>
+      <h1 class="text-4xl md:text-5xl font-black text-white mb-6 leading-tight">
+        Your business runs on APIs.<br />
+        <span class="gradient-text">Who is keeping them in order?</span>
+      </h1>
+      <p class="text-lg text-slate-400 leading-relaxed mb-5">
+        Every time your mobile app shows a balance, a partner places an order, or an AI assistant answers a customer,
+        software systems talk to each other through APIs. An API is a <strong class="text-slate-200">contract</strong>:
+        one team promises what a system will accept and return, and other teams, partners, and products build on that
+        promise. A mid-size company runs hundreds of such contracts; a large one runs thousands. Most are written once
+        and then live for years, changed by people who did not write them, consumed by people nobody keeps track of.
+      </p>
+      <p class="text-lg text-slate-400 leading-relaxed">
+        APIHUB is the registry, the compliance office, and the change-notification service for those contracts. It does
+        not replace your teams' judgment. It makes sure nobody has to rely on memory, chat messages, or luck to know
+        what a system does, what changed, and who it affects.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Analogy callout ────────────────────────────────────────────────── -->
+  <section class="pb-16 px-6">
+    <div class="max-w-3xl mx-auto rounded-2xl border border-blue-500/25 p-7 md:p-8"
+      style="background: linear-gradient(135deg, rgba(59,130,246,0.10), rgba(124,58,237,0.08));">
+      <div class="flex items-start gap-4">
+        <div class="w-11 h-11 rounded-xl bg-blue-500/15 text-blue-400 flex items-center justify-center flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-white mb-2">Think of it as a contract registry for your software</h2>
+          <p class="text-slate-300 leading-relaxed text-[15px]">
+            A company would not sign hundreds of supplier contracts, store them in personal inboxes, amend them
+            verbally, and hope nobody notices when terms change. Yet that is how most organizations treat their APIs.
+            APIHUB gives every API contract a place of record, a version history, an automatic review against your
+            standards, and a clear notice to every consumer when the terms change.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Without / With ─────────────────────────────────────────────────── -->
+  <section class="pb-20 px-6">
+    <div class="max-w-6xl mx-auto">
+      <div class="hidden md:grid md:grid-cols-2 gap-6 mb-4 px-1">
+        <div class="flex items-center gap-2 text-xs font-bold tracking-[0.2em] uppercase text-rose-300">
+          <span class="w-2 h-2 rounded-full bg-rose-400"></span> Without governance
+        </div>
+        <div class="flex items-center gap-2 text-xs font-bold tracking-[0.2em] uppercase text-emerald-300">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span> With APIHUB
+        </div>
+      </div>
+
+      <div class="space-y-10">
+        {whyRows.map((row) => (
+          <article id={row.id}>
+            <h3 class="text-xs font-bold tracking-[0.2em] uppercase text-slate-500 mb-3">
+              <span class="text-slate-600 mr-2">{row.number}</span>{row.title}
+            </h3>
+            <div class="grid md:grid-cols-2 gap-6">
+              <div class="relative rounded-2xl border border-slate-800 bg-slate-900/70 p-6 pl-7 overflow-hidden">
+                <span class="absolute inset-y-0 left-0 w-1 bg-rose-400/80"></span>
+                <p class="md:hidden text-[11px] font-bold tracking-[0.2em] uppercase text-rose-300 mb-2">Without governance</p>
+                <p class="text-slate-300 text-[15px] leading-relaxed">{row.without}</p>
+              </div>
+              <div class="relative rounded-2xl border border-slate-800 bg-slate-900/70 p-6 pl-7 overflow-hidden">
+                <span class="absolute inset-y-0 left-0 w-1 bg-emerald-400/80"></span>
+                <p class="md:hidden text-[11px] font-bold tracking-[0.2em] uppercase text-emerald-300 mb-2">With APIHUB</p>
+                <p class="text-slate-300 text-[15px] leading-relaxed">{row.with}</p>
+              </div>
+            </div>
+            <p class="mt-3 text-sm leading-relaxed">
+              <span class="font-bold tracking-widest uppercase text-[11px] text-slate-500 mr-2">Outcome</span>
+              <span class="text-emerald-300">{row.outcome}</span>
+            </p>
+          </article>
+        ))}
+      </div>
+
+      <p class="mt-10 text-center text-sm text-slate-500">
+        Need this for a slide?
+        <a href={withBase('images/why/before-after.svg')} target="_blank" rel="noopener" class="text-blue-400 hover:text-blue-300 font-medium">
+          Download the one-page infographic (SVG)
+        </a>
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Business outcomes ──────────────────────────────────────────────── -->
+  <section class="py-20 px-6 border-y border-slate-800/60" style="background: rgba(15,23,42,0.4);">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-12">
+        <p class="text-sm font-semibold text-emerald-400 uppercase tracking-widest mb-3">What it adds up to</p>
+        <h2 class="text-3xl md:text-4xl font-black text-white">Six outcomes a founder can measure</h2>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {whyOutcomes.map((o) => (
+          <div class={`rounded-2xl border p-6 ${outcomeColor[o.color]}`}>
+            <h3 class="text-base font-bold text-white mb-2">{o.title}</h3>
+            <p class="text-sm text-slate-400 leading-relaxed">{o.text}</p>
+          </div>
+        ))}
+      </div>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mt-12">
+        <a href="#where-it-fits" class="btn-secondary flex items-center gap-2 px-7 py-3 rounded-xl text-sm font-semibold text-white">
+          See how APIHUB compares
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+        </a>
+        <a href={withBase('deploy/')} class="btn-primary flex items-center gap-2 px-7 py-3 rounded-xl text-sm font-bold text-white">
+          Deploy in minutes
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Where it fits ──────────────────────────────────────────────────── -->
+  <section id="where-it-fits" class="pt-24 pb-12 px-6 scroll-mt-20">
+    <div class="max-w-3xl mx-auto text-center">
+      <p class="text-sm font-semibold text-violet-400 uppercase tracking-widest mb-3">Where APIHUB fits</p>
+      <h2 class="text-3xl md:text-5xl font-black text-white mb-6 leading-tight">
+        Not another API gateway —<br />
+        <span class="gradient-text">and honest about it</span>
+      </h2>
+      <p class="text-lg text-slate-400 leading-relaxed mb-5">
+        APIHUB is <strong class="text-slate-200">not</strong> an API gateway and does not try to become one. Full API
+        management suites — Kong, Apigee, Azure API Management, WSO2, Gravitee — manage <em>traffic</em>: routing,
+        authentication, rate limiting, analytics, monetization. They are large platforms with correspondingly large
+        price tags and operating footprints.
+      </p>
+      <p class="text-lg text-slate-400 leading-relaxed mb-5">
+        APIHUB works one layer up, at <strong class="text-slate-200">design time</strong>, on the contracts themselves:
+        what the API promises, how it changes, whether it meets your standards, and who can find it. That layer is where
+        breaking changes, stale documentation, and inconsistent design originate — and it is the layer most gateways
+        cover only superficially.
+      </p>
+      <p class="text-lg text-slate-300 leading-relaxed">
+        The honest summary: APIHUB is smaller and more focused than the enterprise suites, and it is free. In its niche
+        — multi-protocol contract governance for organizations that already run Kubernetes — it goes deeper than the
+        suites and much deeper than the open-source catalogs.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Domain map ─────────────────────────────────────────────────────── -->
+  <section class="pb-16 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div class="rounded-2xl overflow-hidden border border-slate-800 mb-6">
+        <div class="px-4 py-2 bg-slate-900 border-b border-slate-800 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+          <span class="text-xs text-slate-500">APIHUB coverage of API Management sub-domains</span>
+        </div>
+        <img
+          src={withBase('images/why/apim-domain-map.svg')}
+          alt="API Management sub-domains: APIHUB covers portal, lifecycle, and policy; gateway, analytics, monetization, and integration are left to runtime tools"
+          class="w-full h-auto block bg-[#050813]"
+          loading="lazy"
+          data-lightbox
+        />
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {domainCoverage.map((d) => (
+          <div class="rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-3 flex items-start justify-between gap-3">
+            <div>
+              <div class="text-sm font-semibold text-slate-200">{d.domain}</div>
+              {d.detail && <div class="text-xs text-slate-500 mt-0.5">{d.detail}</div>}
+            </div>
+            <span class={`text-[10px] font-bold tracking-widest uppercase px-2 py-1 rounded-full border whitespace-nowrap ${levelBadge[d.level].cls}`}>
+              {levelBadge[d.level].label}
+            </span>
+          </div>
+        ))}
+      </div>
+      <p class="text-center text-sm text-slate-500 mt-6">
+        APIHUB deliberately covers the design-time half of API Management. Pair it with any gateway for the runtime half.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Positioning quadrant ───────────────────────────────────────────── -->
+  <section class="pb-20 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-8">
+        <h2 class="text-2xl md:text-3xl font-bold text-white mb-3">Deep on contracts, deliberately narrow on runtime</h2>
+        <p class="text-slate-400 max-w-2xl mx-auto">
+          Lifecycle breadth against contract-governance depth. Marker color shows the commercial model.
+        </p>
+      </div>
+      <div class="rounded-2xl overflow-hidden border border-slate-800">
+        <img
+          src={withBase('images/why/positioning-quadrant.svg')}
+          alt="Positioning map: Qubership APIHUB in the deep-governance, focused-scope quadrant; Kong Konnect, Apigee, and Azure APIM in full suites; Backstage and Apicurio in catalog and rendering; Kong OSS, Tyk, Gravitee, WSO2 in runtime-first"
+          class="w-full h-auto block bg-[#050813]"
+          loading="lazy"
+          data-lightbox
+        />
+      </div>
+      <p class="text-xs text-slate-600 mt-4 text-center max-w-3xl mx-auto">
+        Qualitative positioning by the APIHUB team based on public product documentation and pricing as of September
+        2026. Not a benchmark; vendors evolve quickly —
+        <a href={GITHUB_URL + '/issues'} target="_blank" rel="noopener" class="text-slate-500 hover:text-slate-300 underline underline-offset-2">corrections welcome via GitHub issues</a>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Comparison by category ─────────────────────────────────────────── -->
+  <section class="pb-20 px-6">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-8">
+        <h2 class="text-2xl md:text-3xl font-bold text-white mb-3">How APIHUB compares, by category</h2>
+        <p class="text-slate-400 max-w-2xl mx-auto">
+          Categories rather than a vendor-by-vendor matrix: fairer to each product and easier to keep current.
+        </p>
+      </div>
+      <div class="rounded-2xl border border-slate-800 overflow-x-auto">
+        <table class="w-full text-sm min-w-[960px]">
+          <thead>
+            <tr class="bg-slate-900">
+              <th class="text-left font-semibold text-slate-400 px-4 py-4 w-[16%] align-bottom">Capability</th>
+              {comparisonColumns.map((c) => (
+                <th class={`text-left px-4 py-4 align-bottom ${c.highlight ? 'bg-blue-500/10' : ''}`}>
+                  <div class={`font-bold ${c.highlight ? 'text-blue-300' : 'text-white'}`}>{c.label}</div>
+                  {c.sub && <div class="text-[11px] font-normal text-slate-500 mt-1 leading-snug">{c.sub}</div>}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {comparisonRows.map((r, i) => (
+              <tr class={`border-t border-slate-800/80 ${i % 2 ? 'bg-slate-900/30' : ''}`}>
+                <th scope="row" class="text-left font-semibold text-slate-200 px-4 py-3.5 align-top">{r.capability}</th>
+                {comparisonColumns.map((c) => (
+                  <td class={`px-4 py-3.5 align-top leading-relaxed ${c.highlight ? 'bg-blue-500/5 text-slate-200' : 'text-slate-400'}`}>
+                    {r.cells[c.key]}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Fit / not fit ──────────────────────────────────────────────────── -->
+  <section class="pb-20 px-6">
+    <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-6">
+      <div class="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-7">
+        <h3 class="text-lg font-bold text-white mb-5 flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Choose APIHUB when
+        </h3>
+        <ul class="space-y-3">
+          {fitFor.map((item) => (
+            <li class="flex items-start gap-3 text-sm text-slate-300 leading-relaxed">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div class="rounded-2xl border border-slate-700 bg-slate-900/60 p-7">
+        <h3 class="text-lg font-bold text-white mb-5 flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-slate-500"></span> Look elsewhere when
+        </h3>
+        <ul class="space-y-3">
+          {notFitFor.map((item) => (
+            <li class="flex items-start gap-3 text-sm text-slate-400 leading-relaxed">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Alongside your gateway ─────────────────────────────────────────── -->
+  <section class="pb-20 px-6">
+    <div class="max-w-5xl mx-auto">
+      <div class="text-center mb-10">
+        <h2 class="text-2xl md:text-3xl font-bold text-white mb-3">APIHUB alongside your gateway</h2>
+        <p class="text-slate-400 max-w-2xl mx-auto">Neither replaces the other. Together they cover the API lifecycle end to end.</p>
+      </div>
+      <div class="grid md:grid-cols-[1fr_auto_1fr_auto_1fr] items-stretch gap-4 md:gap-3">
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+          <div class="text-[11px] font-bold tracking-widest uppercase text-slate-500 mb-2">Source</div>
+          <h3 class="text-base font-bold text-white mb-2">Repositories, CI, clusters</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Contracts are authored in code, published from pipelines, or discovered by agents in Kubernetes.</p>
+        </div>
+        <div class="hidden md:flex items-center text-slate-600">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+        </div>
+        <div class="rounded-2xl border border-blue-500/40 p-6 card-glow" style="background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(124,58,237,0.10));">
+          <div class="text-[11px] font-bold tracking-widest uppercase text-blue-300 mb-2">Design time</div>
+          <h3 class="text-base font-bold text-white mb-2">Qubership APIHUB</h3>
+          <p class="text-sm text-slate-300 leading-relaxed">Governs <em>what the API promises and how it changes</em>: catalog, versions, breaking-change analysis, standards, quality score, documentation.</p>
+        </div>
+        <div class="hidden md:flex items-center text-slate-600">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+        </div>
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-6">
+          <div class="text-[11px] font-bold tracking-widest uppercase text-slate-500 mb-2">Runtime</div>
+          <h3 class="text-base font-bold text-white mb-2">Your gateway</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">Kong, Apigee, Tyk, or any other — enforces <em>who may call what and how often</em>, publishes the approved version.</p>
+        </div>
+      </div>
+      <p class="text-slate-400 leading-relaxed text-center max-w-3xl mx-auto mt-8">
+        Most organizations that adopt APIHUB keep their gateway. Contracts flow from repositories and clusters into
+        APIHUB, are checked and versioned there, and the approved version is what the gateway publishes — without
+        paying enterprise-suite prices for the half you can run yourself.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── CTA ────────────────────────────────────────────────────────────── -->
+  <section class="pb-20 px-6">
+    <div class="max-w-4xl mx-auto text-center">
+      <div class="relative rounded-3xl overflow-hidden p-px" style="background: linear-gradient(135deg, #3b82f6, #7c3aed);">
+        <div class="rounded-[calc(1.5rem-1px)] py-14 px-10" style="background: radial-gradient(ellipse at center top, rgba(59,130,246,0.2) 0%, #0a0f1e 60%);">
+          <h2 class="text-3xl md:text-4xl font-black text-white mb-5">Put your contracts on record</h2>
+          <p class="text-lg text-slate-300 mb-8 max-w-xl mx-auto">Open source, self-hosted, Apache 2.0. Docker Compose in minutes, Helm for production.</p>
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a href={INSTALL_URL} target="_blank" rel="noopener"
+              class="btn-primary flex items-center gap-2 px-7 py-3 rounded-xl text-sm font-bold text-white w-full sm:w-auto justify-center">
+              Deploy Now
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+            </a>
+            <a href={withBase('capabilities/')}
+              class="flex items-center gap-2 px-7 py-3 rounded-xl text-sm font-semibold text-white border border-white/25 hover:border-white/40 hover:bg-white/5 transition-all w-full sm:w-auto justify-center">
+              Compare features in detail
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Page nav -->
+  <nav class="py-10 px-6 border-t border-slate-800/40">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <a href={home} class="flex items-center gap-2 text-sm text-slate-500 hover:text-white transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
+        Home
+      </a>
+      <a href={withBase('use-cases/')} class="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium">
+        Use Cases
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+      </a>
+    </div>
+  </nav>
+</Layout>

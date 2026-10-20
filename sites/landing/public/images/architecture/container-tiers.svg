@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="790" viewBox="0 0 1600 790" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <linearGradient id="tierTitle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#60a5fa"/>
+      <stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+    <marker id="tierArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+    <marker id="tierArrowWarm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#fb923c"/>
+    </marker>
+    <style>
+      .panel  { fill: #070c1a; stroke-width: 1; stroke-dasharray: 5 4; }
+      .plabel { font-size: 11px; font-weight: 800; letter-spacing: 2.2px; }
+      .nm     { font-size: 15px; font-weight: 700; }
+      .sub    { font-size: 11.5px; fill: #94a3b8; }
+      .store  { fill: #0F172A; stroke: #1E293B; stroke-width: 1; }
+      .snm    { font-size: 13.5px; font-weight: 700; fill: #e2e8f0; }
+      .lbl    { font-size: 10.5px; font-weight: 700; letter-spacing: 2px; fill: #475569; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="790" fill="#050813"/>
+
+  <text x="60" y="54" font-size="15" font-weight="600" fill="#2dd4bf" letter-spacing="3">C4 &#183; LEVEL 2</text>
+  <text x="60" y="96" font-size="30" font-weight="800" fill="#f1f5f9">Containers. <tspan fill="url(#tierTitle)">Everything that gets deployed, by tier.</tspan></text>
+
+  <!-- ===== APIHUB NAMESPACE ===== -->
+  <rect x="60" y="140" width="1060" height="560" rx="18" class="panel" stroke="#3b82f6" stroke-opacity="0.45"/>
+  <text x="86" y="168" class="plabel" fill="#60a5fa">APIHUB NAMESPACE &#183; ONE HELM CHART</text>
+
+  <!-- UI -->
+  <rect x="88" y="184" width="1004" height="70" rx="11" fill="#38bdf8" fill-opacity="0.14" stroke="#38bdf8" stroke-opacity="0.55"/>
+  <text x="110" y="213" class="nm" fill="#7dd3fc">APIHUB UI &#183; nginx + Portal SPA + Agents SPA</text>
+  <text x="110" y="235" class="sub">Single ingress. Serves both single-page apps and proxies /api, /api-linter and /agents-backend onward</text>
+
+  <line x1="590" y1="256" x2="590" y2="284" stroke="#475569" stroke-width="2" marker-end="url(#tierArrow)"/>
+
+  <!-- Backend -->
+  <rect x="88" y="286" width="1004" height="86" rx="11" fill="#60a5fa" fill-opacity="0.16" stroke="#60a5fa" stroke-opacity="0.6"/>
+  <text x="110" y="317" class="nm" fill="#93c5fd">APIHUB Backend &#183; the micro-monolith</text>
+  <text x="110" y="339" class="sub">REST v1&#8211;v4 &#183; authentication and RBAC &#183; catalogue &#183; build queue &#183; search &#183; export</text>
+  <text x="110" y="359" class="sub">MCP server &#183; AI chat &#183; scheduled cleanup &#183; database migrations</text>
+  <text x="1070" y="317" font-size="11.5" font-weight="700" fill="#60a5fa" text-anchor="end">Go 1.26</text>
+
+  <g stroke="#475569" stroke-width="2">
+    <line x1="204" y1="374" x2="204" y2="396" marker-end="url(#tierArrow)"/>
+    <line x1="457" y1="374" x2="457" y2="396" marker-end="url(#tierArrow)"/>
+    <line x1="710" y1="374" x2="710" y2="396" marker-end="url(#tierArrow)"/>
+    <line x1="963" y1="374" x2="963" y2="396" marker-end="url(#tierArrow)"/>
+  </g>
+
+  <!-- Tier 3: workers and satellites -->
+  <g>
+    <rect x="88" y="398" width="232" height="92" rx="11" fill="#818cf8" fill-opacity="0.14" stroke="#818cf8" stroke-opacity="0.55"/>
+    <text x="108" y="425" class="nm" fill="#a5b4fc" font-size="14">Build Task Consumer</text>
+    <text x="108" y="446" class="sub">Polls for build tasks</text>
+    <text x="108" y="475" font-size="10.5" font-weight="600" fill="#6366f1">NestJS 10 &#183; 3&#8211;6 replicas</text>
+  </g>
+  <g>
+    <rect x="341" y="398" width="232" height="92" rx="11" fill="#fbbf24" fill-opacity="0.10" stroke="#fbbf24" stroke-opacity="0.45" stroke-dasharray="6 4"/>
+    <text x="361" y="425" class="nm" fill="#fcd34d" font-size="14">Java Task Consumer</text>
+    <text x="361" y="446" class="sub">Java builds &#8212; queue pending</text>
+    <text x="361" y="475" font-size="10.5" font-weight="600" fill="#d97706">Java 21 &#183; separate chart</text>
+  </g>
+  <g>
+    <rect x="594" y="398" width="232" height="92" rx="11" fill="#34d399" fill-opacity="0.14" stroke="#34d399" stroke-opacity="0.55"/>
+    <text x="614" y="425" class="nm" fill="#6ee7b7" font-size="14">API Linter Service</text>
+    <text x="614" y="446" class="sub">Lints and scores versions</text>
+    <text x="614" y="475" font-size="10.5" font-weight="600" fill="#10b981">Go 1.26 &#183; Spectral</text>
+  </g>
+  <g>
+    <rect x="847" y="398" width="232" height="92" rx="11" fill="#10b981" fill-opacity="0.14" stroke="#10b981" stroke-opacity="0.55"/>
+    <text x="867" y="425" class="nm" fill="#6ee7b7" font-size="14">Agents Backend</text>
+    <text x="867" y="446" class="sub">Orchestrates the agents</text>
+    <text x="867" y="475" font-size="10.5" font-weight="600" fill="#059669">Go 1.26</text>
+  </g>
+
+  <!-- Stores -->
+  <text x="88" y="522" class="lbl">STATE</text>
+  <g>
+    <rect x="88" y="534" width="328" height="66" rx="10" class="store"/>
+    <text x="110" y="562" class="snm">PostgreSQL 14+</text>
+    <text x="110" y="583" class="sub">Three databases: apihub, apihub_linter, agents</text>
+  </g>
+  <g>
+    <rect x="425" y="534" width="328" height="66" rx="10" class="store"/>
+    <text x="447" y="562" class="snm">Olric</text>
+    <text x="447" y="583" class="sub">Embedded cache, locks and events</text>
+  </g>
+  <g>
+    <rect x="762" y="534" width="328" height="66" rx="10" class="store"/>
+    <text x="784" y="562" class="snm">S3 / MinIO</text>
+    <text x="784" y="583" class="sub">Optional cold storage</text>
+  </g>
+
+  <text x="88" y="638" font-size="13" fill="#64748b">Traffic runs top to bottom: nginx is the only entry point, and the backend is the only writer to the catalogue database.</text>
+  <text x="88" y="662" font-size="13" fill="#64748b">Workers never receive pushed work &#8212; they poll, so a worker that dies simply stops polling and its task returns to the queue.</text>
+
+  <!-- ===== REMOTE CLUSTER ===== -->
+  <rect x="1160" y="140" width="380" height="300" rx="18" class="panel" stroke="#fb923c" stroke-opacity="0.45"/>
+  <text x="1186" y="168" class="plabel" fill="#fb923c">REMOTE CLUSTER</text>
+
+  <rect x="1186" y="184" width="328" height="72" rx="11" fill="#fb923c" fill-opacity="0.14" stroke="#fb923c" stroke-opacity="0.55"/>
+  <text x="1208" y="213" class="nm" fill="#fdba74">APIHUB Agent</text>
+  <text x="1208" y="235" class="sub">Probes services for specifications</text>
+
+  <line x1="1350" y1="258" x2="1350" y2="286" stroke="#475569" stroke-width="2" marker-end="url(#tierArrow)"/>
+
+  <rect x="1186" y="288" width="328" height="88" rx="11" fill="none" stroke="#fb923c" stroke-opacity="0.35" stroke-dasharray="6 4"/>
+  <text x="1208" y="314" font-size="13" font-weight="700" fill="#fdba74">Workload services</text>
+  <g fill="#fb923c" fill-opacity="0.35">
+    <circle cx="1220" cy="345" r="12"/>
+    <circle cx="1252" cy="345" r="12"/>
+    <circle cx="1284" cy="345" r="12"/>
+    <circle cx="1316" cy="345" r="12"/>
+    <circle cx="1348" cy="345" r="12"/>
+  </g>
+  <text x="1375" y="350" font-size="11.5" fill="#94a3b8">&#8230; and the rest</text>
+
+  <text x="1186" y="406" font-size="12" fill="#94a3b8">Needs a service account that can list</text>
+  <text x="1186" y="425" font-size="12" fill="#94a3b8">namespaces, services and routes.</text>
+
+  <!-- Agent to Agents Backend -->
+  <path d="M 1079 444 C 1120 444, 1120 300, 1160 300" fill="none" stroke="#fb923c" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#tierArrowWarm)" marker-start="url(#tierArrowWarm)"/>
+  <text x="1120" y="382" font-size="10.5" font-weight="700" fill="#fb923c" text-anchor="middle" letter-spacing="0.5">&#8593; register</text>
+  <text x="1120" y="398" font-size="10.5" font-weight="700" fill="#fb923c" text-anchor="middle" letter-spacing="0.5">&#8595; discover</text>
+
+  <!-- ===== OUTSIDE ===== -->
+  <rect x="1160" y="462" width="380" height="238" rx="18" class="panel" stroke="#334155" stroke-opacity="0.8"/>
+  <text x="1186" y="490" class="plabel" fill="#64748b">OUTSIDE THE PLATFORM</text>
+
+  <rect x="1186" y="506" width="328" height="54" rx="9" class="store"/>
+  <text x="1514" y="538" class="sub" text-anchor="end">optional</text>
+  <text x="1208" y="538" class="snm" font-size="13">Identity provider</text>
+
+  <rect x="1186" y="570" width="328" height="54" rx="9" class="store"/>
+  <text x="1514" y="602" class="sub" text-anchor="end">optional</text>
+  <text x="1208" y="602" class="snm" font-size="13">LLM API</text>
+
+  <rect x="1186" y="634" width="328" height="54" rx="9" class="store"/>
+  <text x="1514" y="666" class="sub" text-anchor="end">required</text>
+  <text x="1208" y="666" class="snm" font-size="13">Maven / OCI registries</text>
+
+  <text x="60" y="752" font-size="13.5" fill="#64748b">Seven deployable containers plus twelve shared TypeScript libraries. The libraries are not deployed on their own, but they are where parsing, diffing and rendering actually happen.</text>
+</svg>

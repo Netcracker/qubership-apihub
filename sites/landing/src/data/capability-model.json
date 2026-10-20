@@ -1,0 +1,1055 @@
+{
+ "CONTAINERS": {
+  "BE": {
+   "name": "APIHUB Backend",
+   "color": "2563EB",
+   "tech": "Go 1.26 \u00b7 gorilla/mux \u00b7 go-pg"
+  },
+  "UI": {
+   "name": "APIHUB UI",
+   "color": "0EA5E9",
+   "tech": "React 18 \u00b7 MUI 5 \u00b7 nginx 1.28"
+  },
+  "BTC": {
+   "name": "Build Task Consumer",
+   "color": "1D4ED8",
+   "tech": "NestJS 10 \u00b7 api-processor (TS)"
+  },
+  "LNT": {
+   "name": "API Linter Service",
+   "color": "16A34A",
+   "tech": "Go 1.26 \u00b7 Spectral \u00b7 OpenAI"
+  },
+  "ABE": {
+   "name": "Agents Backend",
+   "color": "15803D",
+   "tech": "Go 1.26"
+  },
+  "AGT": {
+   "name": "APIHUB Agent",
+   "color": "F97316",
+   "tech": "Go 1.26 \u00b7 client-go"
+  },
+  "JTC": {
+   "name": "Java Task Consumer",
+   "color": "D97706",
+   "tech": "Java 21 \u00b7 japicmp \u00b7 jdeps"
+  },
+  "LIB": {
+   "name": "TS libraries (shared)",
+   "color": "0D9488",
+   "tech": "json-crawl \u00b7 unifier \u00b7 diff \u00b7 data-model \u00b7 viewers"
+  },
+  "OPS": {
+   "name": "Platform / Helm",
+   "color": "64748B",
+   "tech": "Helm \u00b7 Kubernetes \u00b7 docker-compose"
+  }
+ },
+ "MATURITY": {
+  "core": {
+   "label": "Core / mature",
+   "color": "166534",
+   "fill": "BBF7D0",
+   "text": "Stable for several releases, full test coverage (E2E, Newman / Playwright)"
+  },
+  "evolving": {
+   "label": "Evolving",
+   "color": "854D0E",
+   "fill": "FEF08A",
+   "text": "Actively changed in 2026 (new endpoints, renamed tools, partial coverage)"
+  },
+  "new": {
+   "label": "New (2026)",
+   "color": "9A3412",
+   "fill": "FED7AA",
+   "text": "Landed in the last release cycle; limited production history"
+  },
+  "planned": {
+   "label": "Planned / partial",
+   "color": "7F1D1D",
+   "fill": "FECACA",
+   "text": "Specified or partially implemented; not usable end-to-end yet"
+  }
+ },
+ "CAPABILITIES": [
+  {
+   "id": "C1",
+   "name": "API Catalog Management",
+   "tier": "core",
+   "desc": "Own the registry of workspaces, packages and versions",
+   "l2": [
+    [
+     "C1.1",
+     "Workspace / group / package hierarchy",
+     [
+      "BE",
+      "UI"
+     ],
+     "PackageService, go-pg, Portal catalog pages",
+     "core"
+    ],
+    [
+     "C1.2",
+     "Version & revision lifecycle",
+     [
+      "BE",
+      "UI"
+     ],
+     "VersionService / PublishedService, status promotion, revisions",
+     "core"
+    ],
+    [
+     "C1.3",
+     "Dashboards & references",
+     [
+      "BE",
+      "UI"
+     ],
+     "Dashboard packages, version references, recursive resolution",
+     "core"
+    ],
+    [
+     "C1.4",
+     "Search & navigation",
+     [
+      "BE",
+      "UI"
+     ],
+     "SearchController v3/v4, PostgreSQL full-text",
+     "core"
+    ],
+    [
+     "C1.5",
+     "Favorites & activity history",
+     [
+      "BE",
+      "UI"
+     ],
+     "ActivityTracking, favorites, publish history",
+     "core"
+    ],
+    [
+     "C1.6",
+     "Soft delete & transitions",
+     [
+      "BE"
+     ],
+     "TransitionService, soft-deleted cleanup, package move",
+     "core"
+    ]
+   ]
+  },
+  {
+   "id": "C2",
+   "name": "API Publishing & Build",
+   "tier": "core",
+   "desc": "Turn uploaded sources into normalized, indexed API versions",
+   "l2": [
+    [
+     "C2.1",
+     "Publish via UI / REST / CI",
+     [
+      "BE",
+      "UI"
+     ],
+     "PublishController, api-key / PAT auth, ZIP or multipart sources",
+     "core"
+    ],
+    [
+     "C2.2",
+     "Build task queue & workers",
+     [
+      "BE",
+      "BTC"
+     ],
+     "BuildService DB queue, RegistryService polling, N stateless replicas",
+     "core"
+    ],
+    [
+     "C2.3",
+     "Parsing & type detection",
+     [
+      "BTC",
+      "LIB"
+     ],
+     "PackageVersionBuilder, 7 ApiBuilders, resolveSpec()",
+     "core"
+    ],
+    [
+     "C2.4",
+     "Normalization",
+     [
+      "BTC",
+      "LIB"
+     ],
+     "api-unifier RULES per SpecType, $ref resolution, allOf merge",
+     "core"
+    ],
+    [
+     "C2.5",
+     "Operation extraction & indexing",
+     [
+      "BTC",
+      "BE"
+     ],
+     "buildOperations, build-result-index, BuildResultService",
+     "core"
+    ],
+    [
+     "C2.6",
+     "Document groups & transformations",
+     [
+      "BE",
+      "BTC"
+     ],
+     "TransformationService, merged / reduced specs, prefix groups",
+     "evolving"
+    ],
+    [
+     "C2.7",
+     "Java API builds",
+     [
+      "JTC"
+     ],
+     "jdiff-engine, japicmp, jdeps; backend java-builders queue pending",
+     "planned"
+    ]
+   ]
+  },
+  {
+   "id": "C3",
+   "name": "API Change Management",
+   "tier": "core",
+   "desc": "Understand what changed between versions and how risky it is",
+   "l2": [
+    [
+     "C3.1",
+     "Version & operation comparison",
+     [
+      "BTC",
+      "LIB",
+      "BE"
+     ],
+     "api-diff COMPARE_ENGINES_MAP, ComparisonService, compare pages",
+     "core"
+    ],
+    [
+     "C3.2",
+     "Change classification",
+     [
+      "LIB"
+     ],
+     "breaking / risky / non-breaking / semi-breaking / annotation / deprecated",
+     "core"
+    ],
+    [
+     "C3.3",
+     "Changelog & summaries",
+     [
+      "BTC",
+      "BE",
+      "UI"
+     ],
+     "ChangelogStrategy, changes/summary endpoints, export of changes",
+     "core"
+    ],
+    [
+     "C3.4",
+     "Backward-compatibility validation",
+     [
+      "BTC",
+      "LIB"
+     ],
+     "components/compare/*.bwc.validation (rest, graphql, async, ddl)",
+     "evolving"
+    ],
+    [
+     "C3.5",
+     "Deprecation tracking",
+     [
+      "BE",
+      "UI",
+      "LIB"
+     ],
+     "deprecated items per operation, deprecated summaries",
+     "core"
+    ],
+    [
+     "C3.6",
+     "Contract diff (DDL, Java)",
+     [
+      "LIB",
+      "JTC"
+     ],
+     "compareDdlApi (ddlapi-1.0); ApiDiffPipeline for jars (planned)",
+     "new"
+    ]
+   ]
+  },
+  {
+   "id": "C4",
+   "name": "API Documentation & Consumption",
+   "tier": "core",
+   "desc": "Let consumers read, try and export APIs",
+   "l2": [
+    [
+     "C4.1",
+     "Operation documentation rendering",
+     [
+      "UI",
+      "LIB"
+     ],
+     "<apispec-view>, <operation-view>, api-doc-viewer",
+     "core"
+    ],
+    [
+     "C4.2",
+     "Schema & model views",
+     [
+      "UI",
+      "LIB"
+     ],
+     "JsonSchemaViewer, GraphQLOperationViewer, api-data-model trees",
+     "core"
+    ],
+    [
+     "C4.3",
+     "Class / UML diagrams",
+     [
+      "UI",
+      "LIB"
+     ],
+     "<class-view-component> (D3 + ELK)",
+     "core"
+    ],
+    [
+     "C4.4",
+     "Interactive playground",
+     [
+      "UI",
+      "BE",
+      "LIB"
+     ],
+     "<rest-playground>, PlaygroundProxyController, allowed hosts",
+     "core"
+    ],
+    [
+     "C4.5",
+     "Markdown & text documents",
+     [
+      "UI",
+      "BTC"
+     ],
+     "textApiBuilder, MarkdownViewer with Mermaid",
+     "core"
+    ],
+    [
+     "C4.6",
+     "Export (HTML, xlsx, ZIP)",
+     [
+      "BE",
+      "BTC"
+     ],
+     "ExportService / ExcelService (excelize), export strategies, templates",
+     "evolving"
+    ],
+    [
+     "C4.7",
+     "Document shareability",
+     [
+      "BE",
+      "UI"
+     ],
+     "shareability flags, bulk update, shareability report xlsx",
+     "new"
+    ]
+   ]
+  },
+  {
+   "id": "C5",
+   "name": "API Quality & Governance",
+   "tier": "core",
+   "desc": "Enforce standards and measure API quality",
+   "l2": [
+    [
+     "C5.1",
+     "Specification linting",
+     [
+      "LNT"
+     ],
+     "SpectralExecutor (bundled CLI), Olric event trigger",
+     "core"
+    ],
+    [
+     "C5.2",
+     "AI-assisted linting",
+     [
+      "LNT"
+     ],
+     "AIOasExecutor, OpenAI-compatible LLM, rate limits",
+     "evolving"
+    ],
+    [
+     "C5.3",
+     "Ruleset management",
+     [
+      "LNT",
+      "UI"
+     ],
+     "RulesetService CRUD / activation, Portal settings",
+     "core"
+    ],
+    [
+     "C5.4",
+     "Version quality scoring",
+     [
+      "LNT",
+      "UI"
+     ],
+     "ScoringService, api-quality page",
+     "new"
+    ],
+    [
+     "C5.5",
+     "Bulk validation",
+     [
+      "LNT"
+     ],
+     "bulkValidation jobs",
+     "evolving"
+    ],
+    [
+     "C5.6",
+     "Operation groups & tagging",
+     [
+      "BE",
+      "UI"
+     ],
+     "OperationGroupService, groups per apiType, templates",
+     "core"
+    ],
+    [
+     "C5.7",
+     "Release readiness & statuses",
+     [
+      "BE",
+      "UI"
+     ],
+     "version statuses (draft/release/archived), promote permissions",
+     "core"
+    ]
+   ]
+  },
+  {
+   "id": "C6",
+   "name": "API Discovery (runtime)",
+   "tier": "core",
+   "desc": "Find APIs running in Kubernetes and bring them into the catalog",
+   "l2": [
+    [
+     "C6.1",
+     "Agent registration & health",
+     [
+      "AGT",
+      "ABE"
+     ],
+     "RegistrationService heartbeat ~30 s, AgentService registry",
+     "core"
+    ],
+    [
+     "C6.2",
+     "Namespace & service discovery",
+     [
+      "AGT"
+     ],
+     "CloudService (client-go), caches, workspace-scoped v2/v3 APIs",
+     "core"
+    ],
+    [
+     "C6.3",
+     "Specification probing",
+     [
+      "AGT"
+     ],
+     "DiscoveryRunners: REST, GraphQL, AsyncAPI, Markdown, JSON Schema, generic",
+     "core"
+    ],
+    [
+     "C6.4",
+     "Snapshots & promotion to Portal",
+     [
+      "ABE",
+      "BE"
+     ],
+     "SnapshotService \u2192 publish dashboard versions",
+     "core"
+    ],
+    [
+     "C6.5",
+     "Namespace security checks",
+     [
+      "ABE",
+      "AGT"
+     ],
+     "NamespaceSecurityService auth-check, Excel report",
+     "evolving"
+    ],
+    [
+     "C6.6",
+     "Service proxy",
+     [
+      "ABE",
+      "AGT"
+     ],
+     "proxy controllers, ServiceProxy to in-cluster services",
+     "core"
+    ]
+   ]
+  },
+  {
+   "id": "C7",
+   "name": "AI & Ecosystem Integration",
+   "tier": "differentiating",
+   "desc": "Expose the catalog to AI tools and manage non-API contracts",
+   "l2": [
+    [
+     "C7.1",
+     "MCP server (catalog tools)",
+     [
+      "BE"
+     ],
+     "mcp-go Streamable HTTP, search / spec / diff / document tools, resources, prompts",
+     "evolving"
+    ],
+    [
+     "C7.2",
+     "AI chat assistant",
+     [
+      "BE",
+      "UI"
+     ],
+     "AiChatTurnService, openai-go, SSE, tool loop, ephemeral files",
+     "new"
+    ],
+    [
+     "C7.3",
+     "IDS document authoring",
+     [
+      "BE"
+     ],
+     "IDS authoring kit prompt + chat tools (MCP assets)",
+     "new"
+    ],
+    [
+     "C7.4",
+     "MCP catalog contracts",
+     [
+      "BE",
+      "BTC",
+      "UI"
+     ],
+     "mcpBuilder, MCPContractController, Contracts tab",
+     "new"
+    ],
+    [
+     "C7.5",
+     "DDL (database) contracts",
+     [
+      "BE",
+      "BTC",
+      "LIB",
+      "UI"
+     ],
+     "ddlBuilder, ddlapi-1.0 SpecType, DDLContractController",
+     "new"
+    ],
+    [
+     "C7.6",
+     "Linter MCP endpoint",
+     [
+      "LNT"
+     ],
+     "list_linter_issues_for_package_version",
+     "new"
+    ],
+    [
+     "C7.7",
+     "CLI & local MCP tooling",
+     [
+      "LIB"
+     ],
+     "aux-tools/apihub-api-diff CLI + MCP subcommand",
+     "evolving"
+    ],
+    [
+     "C7.8",
+     "API gateway sync (Tyk)",
+     [],
+     "qubership-apihub-tyk-adapter \u2014 design only",
+     "planned"
+    ]
+   ]
+  },
+  {
+   "id": "C8",
+   "name": "Identity & Access",
+   "tier": "supporting",
+   "desc": "Authenticate users, machines and agents; authorize actions",
+   "l2": [
+    [
+     "C8.1",
+     "SSO authentication",
+     [
+      "BE"
+     ],
+     "SAML 2.0 (crewjam), OIDC (go-oidc), IDPManager, LDAP lookup",
+     "core"
+    ],
+    [
+     "C8.2",
+     "Local accounts & sessions",
+     [
+      "BE"
+     ],
+     "local auth (non-prod), JWT access + refresh, cookie / bearer",
+     "core"
+    ],
+    [
+     "C8.3",
+     "API keys & personal access tokens",
+     [
+      "BE",
+      "UI"
+     ],
+     "ApihubApiKeyService, PersonalAccessTokenService, scopes",
+     "core"
+    ],
+    [
+     "C8.4",
+     "Role-based access control",
+     [
+      "BE",
+      "UI"
+     ],
+     "RoleService: system, package, custom roles; permissions API",
+     "core"
+    ],
+    [
+     "C8.5",
+     "Token propagation to satellites",
+     [
+      "LNT",
+      "ABE",
+      "AGT"
+     ],
+     "JWT public key validation, api-key / PAT strategies in each service",
+     "core"
+    ],
+    [
+     "C8.6",
+     "User & admin management",
+     [
+      "BE",
+      "UI"
+     ],
+     "UserController, SysAdminController, avatars, zero-day admin",
+     "core"
+    ]
+   ]
+  },
+  {
+   "id": "C9",
+   "name": "Platform Operations",
+   "tier": "supporting",
+   "desc": "Run, scale, observe and maintain the platform",
+   "l2": [
+    [
+     "C9.1",
+     "Deployment & configuration",
+     [
+      "OPS"
+     ],
+     "Helm chart, values.yaml, config.yaml per service, docker-compose variants",
+     "core"
+    ],
+    [
+     "C9.2",
+     "Data storage",
+     [
+      "BE",
+      "LNT",
+      "ABE"
+     ],
+     "PostgreSQL per service, optional S3 / MinIO cold storage",
+     "core"
+    ],
+    [
+     "C9.3",
+     "Distributed cache & events",
+     [
+      "BE",
+      "LNT"
+     ],
+     "Olric embedded (cache, locks, DTopic version-published)",
+     "core"
+    ],
+    [
+     "C9.4",
+     "Scheduled maintenance",
+     [
+      "BE",
+      "LNT",
+      "ABE"
+     ],
+     "robfig/cron cleanup jobs, VACUUM, ephemeral files, chat retention",
+     "core"
+    ],
+    [
+     "C9.5",
+     "Schema & data migrations",
+     [
+      "BE",
+      "LNT",
+      "ABE"
+     ],
+     "migration framework, operations migration FSM",
+     "core"
+    ],
+    [
+     "C9.6",
+     "Observability",
+     [
+      "BE",
+      "OPS"
+     ],
+     "Prometheus metrics, ServiceMonitor, Grafana dashboards, business metrics",
+     "evolving"
+    ],
+    [
+     "C9.7",
+     "CI/CD & E2E testing",
+     [
+      "OPS"
+     ],
+     "qubership-apihub-ci workflows, Newman, Playwright, screenshot tests",
+     "core"
+    ]
+   ]
+  }
+ ],
+ "TIERS": {
+  "core": "Core capabilities",
+  "differentiating": "Differentiating capabilities",
+  "supporting": "Supporting capabilities"
+ },
+ "ACTORS": [
+  [
+   "A1",
+   "API Developer"
+  ],
+  [
+   "A2",
+   "API Consumer"
+  ],
+  [
+   "A3",
+   "System Administrator"
+  ],
+  [
+   "A4",
+   "CI/CD Pipeline"
+  ],
+  [
+   "A5",
+   "AI Assistant / MCP client"
+  ]
+ ],
+ "BUSINESS_SERVICES": [
+  [
+   "BS1",
+   "API Publishing"
+  ],
+  [
+   "BS2",
+   "API Catalog Browsing"
+  ],
+  [
+   "BS3",
+   "API Change Review"
+  ],
+  [
+   "BS4",
+   "API Quality Assessment"
+  ],
+  [
+   "BS5",
+   "Runtime API Discovery"
+  ],
+  [
+   "BS6",
+   "AI-assisted API Access"
+  ],
+  [
+   "BS7",
+   "Platform Administration"
+  ]
+ ],
+ "APP_SERVICES": [
+  [
+   "AS1",
+   "Package & Version Management API",
+   [
+    "BE"
+   ]
+  ],
+  [
+   "AS2",
+   "Build & Publish API",
+   [
+    "BE",
+    "BTC"
+   ]
+  ],
+  [
+   "AS3",
+   "Comparison & Changelog API",
+   [
+    "BE",
+    "BTC"
+   ]
+  ],
+  [
+   "AS4",
+   "Documentation & Playground UI",
+   [
+    "UI"
+   ]
+  ],
+  [
+   "AS5",
+   "Linting & Scoring API",
+   [
+    "LNT"
+   ]
+  ],
+  [
+   "AS6",
+   "Agent Discovery API",
+   [
+    "ABE",
+    "AGT"
+   ]
+  ],
+  [
+   "AS7",
+   "MCP Tool Service",
+   [
+    "BE",
+    "LNT"
+   ]
+  ],
+  [
+   "AS8",
+   "AI Chat Service",
+   [
+    "BE"
+   ]
+  ],
+  [
+   "AS9",
+   "Identity & Access Service",
+   [
+    "BE"
+   ]
+  ],
+  [
+   "AS10",
+   "Java API Analysis Service",
+   [
+    "JTC"
+   ]
+  ]
+ ],
+ "NODES": [
+  [
+   "N1",
+   "Kubernetes cluster (APIHUB namespace)",
+   "node"
+  ],
+  [
+   "N2",
+   "Remote Kubernetes cluster",
+   "node"
+  ],
+  [
+   "N3",
+   "PostgreSQL 14+",
+   "sysSw"
+  ],
+  [
+   "N4",
+   "S3 / MinIO",
+   "sysSw"
+  ],
+  [
+   "N5",
+   "Olric (embedded)",
+   "sysSw"
+  ],
+  [
+   "N6",
+   "nginx 1.28",
+   "sysSw"
+  ],
+  [
+   "N7",
+   "Identity Provider (SAML / OIDC / LDAP)",
+   "node"
+  ],
+  [
+   "N8",
+   "LLM API (OpenAI-compatible)",
+   "node"
+  ],
+  [
+   "N9",
+   "Helm / GitHub Actions",
+   "artifact"
+  ]
+ ],
+ "CAP_TO_SERVICE": {
+  "C1": [
+   "AS1",
+   "AS4"
+  ],
+  "C2": [
+   "AS2",
+   "AS10"
+  ],
+  "C3": [
+   "AS3"
+  ],
+  "C4": [
+   "AS4"
+  ],
+  "C5": [
+   "AS5"
+  ],
+  "C6": [
+   "AS6"
+  ],
+  "C7": [
+   "AS7",
+   "AS8"
+  ],
+  "C8": [
+   "AS9"
+  ],
+  "C9": []
+ },
+ "COMPONENT_TO_NODE": [
+  [
+   "BE",
+   "N1"
+  ],
+  [
+   "UI",
+   "N1"
+  ],
+  [
+   "BTC",
+   "N1"
+  ],
+  [
+   "LNT",
+   "N1"
+  ],
+  [
+   "ABE",
+   "N1"
+  ],
+  [
+   "JTC",
+   "N1"
+  ],
+  [
+   "AGT",
+   "N2"
+  ],
+  [
+   "BE",
+   "N3"
+  ],
+  [
+   "LNT",
+   "N3"
+  ],
+  [
+   "ABE",
+   "N3"
+  ],
+  [
+   "BE",
+   "N4"
+  ],
+  [
+   "BE",
+   "N5"
+  ],
+  [
+   "LNT",
+   "N5"
+  ],
+  [
+   "UI",
+   "N6"
+  ],
+  [
+   "BE",
+   "N7"
+  ],
+  [
+   "BE",
+   "N8"
+  ],
+  [
+   "LNT",
+   "N8"
+  ]
+ ],
+ "ACTOR_SERVICE": [
+  [
+   "A1",
+   "BS1"
+  ],
+  [
+   "A1",
+   "BS3"
+  ],
+  [
+   "A2",
+   "BS2"
+  ],
+  [
+   "A2",
+   "BS3"
+  ],
+  [
+   "A3",
+   "BS7"
+  ],
+  [
+   "A3",
+   "BS4"
+  ],
+  [
+   "A4",
+   "BS1"
+  ],
+  [
+   "A5",
+   "BS6"
+  ]
+ ]
+}

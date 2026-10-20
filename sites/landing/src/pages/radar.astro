@@ -1,0 +1,454 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { withBase } from '../lib/paths';
+import {
+  PLACED_BLIPS,
+  QUADRANT_HELP,
+  QUADRANT_LABEL,
+  RADAR_BLIPS,
+  RADAR_SIZE,
+  RADAR_SNAPSHOT,
+  RING_COLOR,
+  RING_HELP,
+  RING_LABEL,
+  RING_ORDER,
+  countByRing,
+  type RadarQuadrant,
+  type RadarRing,
+} from '../data/radar';
+
+const home = import.meta.env.BASE_URL;
+const cx = RADAR_SIZE / 2;
+const cy = RADAR_SIZE / 2;
+const maxR = RADAR_SIZE * 0.42;
+const RING_R: Record<RadarRing, number> = {
+  adopt: 0.3,
+  trial: 0.49,
+  assess: 0.67,
+  hold: 0.85,
+};
+const ringBand: RadarRing[] = ['hold', 'assess', 'trial', 'adopt'];
+const quadrants = Object.keys(QUADRANT_LABEL) as RadarQuadrant[];
+const blipJson = JSON.stringify(
+  RADAR_BLIPS.map((b) => ({
+    id: b.id,
+    name: b.name,
+    quadrant: b.quadrant,
+    ring: b.ring,
+    domain: b.domain,
+    why: b.why,
+  })),
+);
+---
+
+<Layout
+  title="Technology Radar — Qubership APIHUB"
+  description="ThoughtWorks-style technology radar for Qubership APIHUB: product runtime, API formats, and the practices and tools the engineering team uses."
+>
+  <section class="relative pt-16 pb-10 px-6 overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[420px] rounded-full opacity-20"
+        style="background: radial-gradient(ellipse at center, rgba(52,211,153,0.35) 0%, rgba(59,130,246,0.25) 45%, transparent 70%); filter: blur(60px);"></div>
+    </div>
+    <div class="relative max-w-3xl mx-auto text-center">
+      <nav class="flex items-center justify-center gap-2 mb-6 text-sm text-slate-500">
+        <a href={home} class="hover:text-white transition-colors">Home</a>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+        <span class="text-slate-300">Radar</span>
+      </nav>
+      <p class="text-sm font-semibold text-emerald-400 uppercase tracking-widest mb-3">Technology radar</p>
+      <h1 class="text-4xl md:text-5xl font-black text-white mb-5 leading-tight">
+        What we run,<br />
+        <span class="gradient-text-warm">and how we build it</span>
+      </h1>
+      <p class="text-lg text-slate-400 leading-relaxed">
+        A ThoughtWorks-style snapshot of the APIHUB stack: product runtime, API formats, delivery platforms,
+        and the practices the team actually uses. Rings are recommendations, not a feature checklist.
+      </p>
+      <p class="mt-3 text-sm text-slate-500">Snapshot {RADAR_SNAPSHOT} · {RADAR_BLIPS.length} blips</p>
+    </div>
+  </section>
+
+  <section class="pb-12 px-6">
+    <div class="max-w-6xl mx-auto grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {RING_ORDER.map((ring) => (
+        <div class="rounded-2xl border border-slate-800 bg-slate-900/70 p-5">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-bold" style={`color: ${RING_COLOR[ring]}`}>{RING_LABEL[ring]}</span>
+            <span class="text-xs text-slate-500">{countByRing(ring)}</span>
+          </div>
+          <p class="text-sm text-slate-400 leading-relaxed">{RING_HELP[ring]}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="pb-20 px-6">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex flex-wrap gap-2 mb-3" id="radar-domain-filters">
+        <button type="button" class="radar-chip radar-chip-active" data-domain="all">All domains</button>
+        <button type="button" class="radar-chip" data-domain="product">Product</button>
+        <button type="button" class="radar-chip" data-domain="engineering">Engineering</button>
+        <button type="button" class="radar-chip" data-domain="both">Both</button>
+      </div>
+      <div class="flex flex-wrap gap-2 mb-3" id="radar-ring-filters">
+        <button type="button" class="radar-chip radar-chip-active" data-ring="all">All rings</button>
+        {RING_ORDER.map((ring) => (
+          <button type="button" class="radar-chip" data-ring={ring}>{RING_LABEL[ring]}</button>
+        ))}
+      </div>
+      <div class="flex flex-wrap gap-2 mb-8" id="radar-quadrant-filters">
+        <button type="button" class="radar-chip radar-chip-active" data-quadrant="all">All quadrants</button>
+        {quadrants.map((q) => (
+          <button type="button" class="radar-chip" data-quadrant={q}>{QUADRANT_LABEL[q]}</button>
+        ))}
+      </div>
+
+      <div class="grid lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.75fr)] gap-8 items-start">
+        <div>
+          <h2 class="text-xl font-bold text-white mb-2">Radar</h2>
+          <p class="text-sm text-slate-500 mb-4">Inner ring is Adopt. Outer ring is Hold. Click a numbered blip.</p>
+          <div class="rounded-2xl border border-slate-800 bg-[#070b16] p-2 sm:p-4">
+            <svg
+              id="radar-svg"
+              viewBox={`0 0 ${RADAR_SIZE} ${RADAR_SIZE}`}
+              class="w-full h-auto block"
+              role="img"
+              aria-label="APIHUB technology radar, four quadrants, rings Adopt through Hold"
+            >
+              {ringBand.map((ring) => (
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r={maxR * (RING_R[ring] + 0.09)}
+                  fill="rgba(15,23,42,0.35)"
+                  stroke="#1e293b"
+                  stroke-width="1"
+                />
+              ))}
+              <line x1={cx} y1={cy - maxR * 0.96} x2={cx} y2={cy + maxR * 0.96} stroke="#334155" stroke-width="1" />
+              <line x1={cx - maxR * 0.96} y1={cy} x2={cx + maxR * 0.96} y2={cy} stroke="#334155" stroke-width="1" />
+              <text x={cx + 14} y={22} fill="#94a3b8" font-size="13" font-weight="600">Techniques</text>
+              <text x={RADAR_SIZE - 14} y={cy + 18} fill="#94a3b8" font-size="13" font-weight="600" text-anchor="end">Tools</text>
+              <text x={14} y={cy + 18} fill="#94a3b8" font-size="13" font-weight="600">Platforms</text>
+              <text x={cx - 14} y={22} fill="#94a3b8" font-size="13" font-weight="600" text-anchor="end">Languages</text>
+              {RING_ORDER.map((ring) => (
+                <text
+                  x={cx + 8}
+                  y={cy - maxR * RING_R[ring] + 4}
+                  fill={RING_COLOR[ring]}
+                  font-size="11"
+                  font-weight="600"
+                >{RING_LABEL[ring]}</text>
+              ))}
+              {PLACED_BLIPS.map((b) => (
+                <g
+                  class="radar-blip"
+                  data-id={b.id}
+                  data-ring={b.ring}
+                  data-domain={b.domain}
+                  data-quadrant={b.quadrant}
+                  style="cursor: pointer;"
+                >
+                  <title>{b.id}. {b.name}</title>
+                  <circle
+                    class="radar-blip-circle"
+                    cx={b.x}
+                    cy={b.y}
+                    r="11"
+                    fill="#0f172a"
+                    stroke={RING_COLOR[b.ring]}
+                    stroke-width="1.6"
+                  />
+                  <text
+                    x={b.x}
+                    y={b.y + 4}
+                    text-anchor="middle"
+                    fill="#e2e8f0"
+                    font-size="9"
+                    font-weight="700"
+                    style="pointer-events: none;"
+                  >{b.id}</text>
+                </g>
+              ))}
+            </svg>
+          </div>
+          <div class="flex flex-wrap gap-4 mt-4">
+            {RING_ORDER.map((ring) => (
+              <div class="flex items-center gap-2 text-xs text-slate-400">
+                <span class="inline-block w-2.5 h-2.5 rounded-full border-2" style={`border-color: ${RING_COLOR[ring]}`}></span>
+                {RING_LABEL[ring]}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h2 class="text-xl font-bold text-white mb-2">Selected blip</h2>
+          <div id="radar-detail" class="rounded-2xl border border-slate-800 bg-slate-900/80 p-6 min-h-[220px]">
+            <p class="text-sm text-slate-500">Click a blip on the radar, or a number in the index, to see why it sits on that ring.</p>
+          </div>
+          <div class="mt-6 space-y-3">
+            <h3 class="text-sm font-semibold text-white">Quadrant intent</h3>
+            {quadrants.map((q) => (
+              <p class="text-sm text-slate-400 leading-relaxed">
+                <span class="text-slate-200 font-medium">{QUADRANT_LABEL[q]}.</span>
+                {' '}{QUADRANT_HELP[q]}
+              </p>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pb-16 px-6" style="background: rgba(15,23,42,0.35);">
+    <div class="max-w-6xl mx-auto py-12">
+      <h2 class="text-xl font-bold text-white mb-2">Blip index</h2>
+      <p class="text-sm text-slate-500 mb-6">Same filters as the radar. Number opens the detail card.</p>
+      <div class="rounded-2xl border border-slate-800 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border-collapse min-w-[720px]">
+            <thead>
+              <tr class="bg-slate-900">
+                <th class="text-right px-4 py-3 font-semibold text-slate-300 border-b border-slate-800 w-16">#</th>
+                <th class="text-left px-4 py-3 font-semibold text-slate-300 border-b border-slate-800">Name</th>
+                <th class="text-left px-4 py-3 font-semibold text-slate-300 border-b border-slate-800">Ring</th>
+                <th class="text-left px-4 py-3 font-semibold text-slate-300 border-b border-slate-800">Quadrant</th>
+                <th class="text-left px-4 py-3 font-semibold text-slate-300 border-b border-slate-800">Domain</th>
+              </tr>
+            </thead>
+            <tbody>
+              {RADAR_BLIPS.map((b) => (
+                <tr
+                  class="radar-row border-b border-slate-800/80 hover:bg-slate-800/40"
+                  data-id={b.id}
+                  data-ring={b.ring}
+                  data-domain={b.domain}
+                  data-quadrant={b.quadrant}
+                >
+                  <td class="px-4 py-2.5 text-right">
+                    <button type="button" class="radar-index-btn text-blue-400 hover:text-blue-300 font-semibold" data-id={b.id}>
+                      {b.id}
+                    </button>
+                  </td>
+                  <td class="px-4 py-2.5 text-slate-200">{b.name}</td>
+                  <td class="px-4 py-2.5 font-medium" style={`color: ${RING_COLOR[b.ring]}`}>{RING_LABEL[b.ring]}</td>
+                  <td class="px-4 py-2.5 text-slate-400">{QUADRANT_LABEL[b.quadrant]}</td>
+                  <td class="px-4 py-2.5 text-slate-500">{b.domain === 'both' ? 'Product + engineering' : b.domain === 'product' ? 'Product' : 'Engineering'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <nav class="py-10 px-6 border-t border-slate-800/40">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <a href={withBase('capabilities/')} class="flex items-center gap-2 text-sm text-slate-500 hover:text-white transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
+        Capabilities
+      </a>
+      <a href={withBase('releases/')} class="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium">
+        Releases
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+      </a>
+    </div>
+  </nav>
+</Layout>
+
+<script is:inline type="application/json" id="radar-data" set:html={blipJson}></script>
+
+<style>
+  .radar-chip {
+    border-radius: 9999px;
+    border: 1px solid rgb(30 41 59);
+    background: rgb(15 23 42);
+    color: rgb(148 163 184);
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.35rem 0.75rem;
+    transition: all 0.15s ease;
+  }
+  .radar-chip:hover { color: white; border-color: rgb(51 65 85); }
+  .radar-chip-active {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.5);
+    color: #93c5fd;
+  }
+</style>
+
+<script>
+  type Blip = {
+    id: number;
+    name: string;
+    quadrant: string;
+    ring: string;
+    domain: string;
+    why: string;
+  };
+
+  const RING_LABEL: Record<string, string> = {
+    adopt: 'Adopt',
+    trial: 'Trial',
+    assess: 'Assess',
+    hold: 'Hold',
+  };
+  const QUADRANT_LABEL: Record<string, string> = {
+    techniques: 'Techniques',
+    tools: 'Tools',
+    platforms: 'Platforms',
+    languages: 'Languages & frameworks',
+  };
+  const DOMAIN_LABEL: Record<string, string> = {
+    product: 'Product',
+    engineering: 'Engineering',
+    both: 'Product + engineering',
+  };
+  const RING_COLOR: Record<string, string> = {
+    adopt: '#34d399',
+    trial: '#60a5fa',
+    assess: '#fbbf24',
+    hold: '#fb7185',
+  };
+
+    function esc(s: string): string {
+      return s.replace(/[&<>"']/g, (ch) => {
+        switch (ch) {
+          case '&': return '&amp;';
+          case '<': return '&lt;';
+          case '>': return '&gt;';
+          case '"': return '&quot;';
+          default: return '&#39;';
+        }
+      });
+    }
+
+    function initRadar() {
+    const svg = document.getElementById('radar-svg');
+    if (!svg || svg.getAttribute('data-bound') === '1') return;
+    svg.setAttribute('data-bound', '1');
+    const dataEl = document.getElementById('radar-data');
+    if (!dataEl) return;
+    let blips: Blip[] = [];
+    try {
+      blips = JSON.parse(dataEl.textContent || '[]');
+    } catch {
+      return;
+    }
+
+    let domain = 'all';
+    let ring = 'all';
+    let quadrant = 'all';
+    let selectedId: number | null = null;
+
+    const detail = document.getElementById('radar-detail');
+
+    function visible(b: Blip): boolean {
+      if (domain !== 'all' && b.domain !== domain && b.domain !== 'both') return false;
+      if (ring !== 'all' && b.ring !== ring) return false;
+      if (quadrant !== 'all' && b.quadrant !== quadrant) return false;
+      return true;
+    }
+
+    function setChipGroup(rootId: string, attr: string, value: string) {
+      document.querySelectorAll(`#${rootId} .radar-chip`).forEach((btn) => {
+        const on = btn.getAttribute(attr) === value;
+        btn.classList.toggle('radar-chip-active', on);
+      });
+    }
+
+    function renderDetail(b: Blip | undefined) {
+      if (!detail) return;
+      if (!b) {
+        detail.innerHTML =
+          '<p class="text-sm text-slate-500">Click a blip on the radar, or a number in the index, to see why it sits on that ring.</p>';
+        return;
+      }
+      const q = QUADRANT_LABEL[b.quadrant] ?? b.quadrant;
+      const r = RING_LABEL[b.ring] ?? b.ring;
+      const d = DOMAIN_LABEL[b.domain] ?? b.domain;
+      const color = RING_COLOR[b.ring] ?? '#94a3b8';
+      detail.innerHTML = `
+        <div class="flex items-start justify-between gap-3 mb-3">
+          <h3 class="text-lg font-bold text-white leading-snug">${esc(b.name)}</h3>
+          <span class="text-xs text-slate-500 font-mono">#${b.id}</span>
+        </div>
+        <div class="flex flex-wrap gap-2 mb-4">
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold border" style="color:${color};border-color:${color}55;background:${color}18">${esc(r)}</span>
+          <span class="px-2.5 py-0.5 rounded-full text-xs text-slate-300 border border-slate-700">${esc(q)}</span>
+          <span class="px-2.5 py-0.5 rounded-full text-xs text-slate-400 border border-slate-800">${esc(d)}</span>
+        </div>
+        <p class="text-sm text-slate-300 leading-relaxed">${esc(b.why)}</p>
+      `;
+    }
+
+    function apply() {
+      const byId = new Map(blips.map((b) => [b.id, b]));
+      document.querySelectorAll<SVGGElement>('.radar-blip').forEach((g) => {
+        const id = Number(g.dataset.id);
+        const b = byId.get(id);
+        const on = b ? visible(b) : false;
+        g.style.opacity = on ? '1' : '0.16';
+        g.style.pointerEvents = on ? 'auto' : 'none';
+        const circle = g.querySelector<SVGCircleElement>('.radar-blip-circle');
+        const selected = selectedId === id;
+        if (circle && b) {
+          circle.setAttribute('r', selected ? '13' : '11');
+          circle.setAttribute('fill', selected ? RING_COLOR[b.ring] : '#0f172a');
+          circle.setAttribute('stroke-width', selected ? '2.4' : '1.6');
+        }
+        const text = g.querySelector('text');
+        if (text) text.setAttribute('fill', selected ? '#050813' : '#e2e8f0');
+      });
+      document.querySelectorAll<HTMLTableRowElement>('.radar-row').forEach((row) => {
+        const id = Number(row.dataset.id);
+        const b = byId.get(id);
+        const on = b ? visible(b) : false;
+        row.style.display = on ? '' : 'none';
+        row.classList.toggle('bg-slate-800/60', selectedId === id);
+      });
+      renderDetail(selectedId ? byId.get(selectedId) : undefined);
+    }
+
+    function select(id: number) {
+      selectedId = id;
+      apply();
+      detail?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    document.querySelectorAll('#radar-domain-filters .radar-chip').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        domain = btn.getAttribute('data-domain') || 'all';
+        setChipGroup('radar-domain-filters', 'data-domain', domain);
+        apply();
+      });
+    });
+    document.querySelectorAll('#radar-ring-filters .radar-chip').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        ring = btn.getAttribute('data-ring') || 'all';
+        setChipGroup('radar-ring-filters', 'data-ring', ring);
+        apply();
+      });
+    });
+    document.querySelectorAll('#radar-quadrant-filters .radar-chip').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        quadrant = btn.getAttribute('data-quadrant') || 'all';
+        setChipGroup('radar-quadrant-filters', 'data-quadrant', quadrant);
+        apply();
+      });
+    });
+    document.querySelectorAll<SVGGElement>('.radar-blip').forEach((g) => {
+      g.addEventListener('click', () => select(Number(g.dataset.id)));
+    });
+    document.querySelectorAll<HTMLButtonElement>('.radar-index-btn').forEach((btn) => {
+      btn.addEventListener('click', () => select(Number(btn.dataset.id)));
+    });
+
+    apply();
+  }
+
+  document.addEventListener('astro:page-load', initRadar);
+</script>

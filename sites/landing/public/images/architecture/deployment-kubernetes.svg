@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="740" viewBox="0 0 1600 740" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <linearGradient id="depTitle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#60a5fa"/>
+      <stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+    <marker id="depArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+    <style>
+      .panel  { fill: #070c1a; stroke-width: 1; stroke-dasharray: 5 4; }
+      .plabel { font-size: 11px; font-weight: 800; letter-spacing: 2.2px; }
+      .nm     { font-size: 15px; font-weight: 700; }
+      .scale  { font-size: 11.5px; font-weight: 600; }
+      .tech   { font-size: 10.5px; fill: #64748b; }
+      .bar    { fill: #0F172A; stroke: #1E293B; stroke-width: 1; }
+      .btxt   { font-size: 12.5px; fill: #cbd5e1; }
+      .bullet { font-size: 13px; fill: #94a3b8; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="740" fill="#050813"/>
+
+  <text x="60" y="54" font-size="15" font-weight="600" fill="#94a3b8" letter-spacing="3">DEPLOYMENT VIEW</text>
+  <text x="60" y="96" font-size="30" font-weight="800" fill="#f1f5f9">What runs where. <tspan fill="url(#depTitle)">One umbrella chart, one ingress, three databases.</tspan></text>
+
+  <!-- ===== KUBERNETES ===== -->
+  <rect x="60" y="140" width="1000" height="520" rx="18" class="panel" stroke="#3b82f6" stroke-opacity="0.45"/>
+  <text x="88" y="168" class="plabel" fill="#60a5fa">KUBERNETES &#183; helm-templates/qubership-apihub</text>
+
+  <!-- Ingress -->
+  <rect x="88" y="186" width="944" height="48" rx="10" fill="#334155" fill-opacity="0.35" stroke="#475569"/>
+  <text x="560" y="216" font-size="13.5" font-weight="700" fill="#cbd5e1" text-anchor="middle">Ingress &#183; HTTP and HTTPS with a TLS secret</text>
+
+  <line x1="560" y1="236" x2="560" y2="252" stroke="#475569" stroke-width="2" marker-end="url(#depArrow)"/>
+
+  <!-- Deployments, row 1 -->
+  <g>
+    <rect x="88" y="254" width="304" height="94" rx="11" fill="#38bdf8" fill-opacity="0.14" stroke="#38bdf8" stroke-opacity="0.55"/>
+    <text x="110" y="284" class="nm" fill="#7dd3fc">APIHUB UI</text>
+    <text x="110" y="308" class="scale" fill="#38bdf8">1 replica</text>
+    <text x="110" y="331" class="tech">nginx 1.28 &#183; static assets + reverse proxy</text>
+  </g>
+  <g>
+    <rect x="408" y="254" width="304" height="94" rx="11" fill="#60a5fa" fill-opacity="0.16" stroke="#60a5fa" stroke-opacity="0.6"/>
+    <text x="430" y="284" class="nm" fill="#93c5fd">APIHUB Backend</text>
+    <text x="430" y="308" class="scale" fill="#60a5fa">1 replica &#183; 3 CPU / 3 Gi</text>
+    <text x="430" y="331" class="tech">The largest pod in the chart</text>
+  </g>
+  <g>
+    <rect x="728" y="254" width="304" height="94" rx="11" fill="#818cf8" fill-opacity="0.14" stroke="#818cf8" stroke-opacity="0.55"/>
+    <text x="750" y="284" class="nm" fill="#a5b4fc">Build Task Consumer</text>
+    <text x="750" y="308" class="scale" fill="#818cf8">3&#8211;6 replicas</text>
+    <text x="750" y="331" class="tech">The only tier you scale horizontally</text>
+  </g>
+
+  <!-- Deployments, row 2 -->
+  <g>
+    <rect x="88" y="362" width="304" height="94" rx="11" fill="#34d399" fill-opacity="0.14" stroke="#34d399" stroke-opacity="0.55"/>
+    <text x="110" y="392" class="nm" fill="#6ee7b7">API Linter Service</text>
+    <text x="110" y="416" class="scale" fill="#34d399">1 replica &#183; 1 Gi</text>
+    <text x="110" y="439" class="tech">Bundles the Spectral CLI binary</text>
+  </g>
+  <g>
+    <rect x="408" y="362" width="304" height="94" rx="11" fill="#10b981" fill-opacity="0.14" stroke="#10b981" stroke-opacity="0.55"/>
+    <text x="430" y="392" class="nm" fill="#6ee7b7">Agents Backend</text>
+    <text x="430" y="416" class="scale" fill="#10b981">1 replica &#183; 256 Mi</text>
+    <text x="430" y="439" class="tech">Smallest pod; mostly bookkeeping</text>
+  </g>
+  <g>
+    <rect x="728" y="362" width="304" height="94" rx="11" fill="#fbbf24" fill-opacity="0.10" stroke="#fbbf24" stroke-opacity="0.45" stroke-dasharray="6 4"/>
+    <text x="750" y="392" class="nm" fill="#fcd34d">Java Task Consumer</text>
+    <text x="750" y="416" class="scale" fill="#d97706">Separate chart</text>
+    <text x="750" y="439" class="tech">Not part of the umbrella release yet</text>
+  </g>
+
+  <!-- Data -->
+  <text x="88" y="486" font-size="10.5" font-weight="700" letter-spacing="2" fill="#475569">DATA AND CACHING</text>
+  <g>
+    <rect x="88" y="496" width="944" height="34" rx="8" class="bar"/>
+    <text x="110" y="518" class="btxt"><tspan font-weight="700" fill="#e2e8f0">PostgreSQL 14+</tspan> &#8212; three databases: apihub, apihub_linter, agents</text>
+  </g>
+  <g>
+    <rect x="88" y="536" width="944" height="34" rx="8" class="bar"/>
+    <text x="110" y="558" class="btxt"><tspan font-weight="700" fill="#e2e8f0">Olric</tspan> &#8212; embedded in the backend and linter pods, no separate deployment</text>
+  </g>
+  <g>
+    <rect x="88" y="576" width="944" height="34" rx="8" class="bar"/>
+    <text x="110" y="598" class="btxt"><tspan font-weight="700" fill="#e2e8f0">S3 / MinIO</tspan> &#8212; optional, for cold storage of build results and attachments</text>
+  </g>
+
+  <text x="88" y="640" font-size="13" fill="#64748b">Every service reads its own configuration and secrets; nothing is shared through the filesystem.</text>
+
+  <!-- ===== REMOTE CLUSTERS ===== -->
+  <rect x="1100" y="140" width="440" height="210" rx="18" class="panel" stroke="#fb923c" stroke-opacity="0.45"/>
+  <text x="1126" y="168" class="plabel" fill="#fb923c">REMOTE CLUSTERS</text>
+
+  <rect x="1126" y="186" width="388" height="76" rx="11" fill="#fb923c" fill-opacity="0.14" stroke="#fb923c" stroke-opacity="0.55"/>
+  <text x="1148" y="215" class="nm" fill="#fdba74">APIHUB Agent</text>
+  <text x="1148" y="239" class="scale" fill="#fb923c">One per cluster</text>
+
+  <text x="1126" y="292" font-size="12.5" fill="#94a3b8">Deployed into the cluster being inspected,</text>
+  <text x="1126" y="312" font-size="12.5" fill="#94a3b8">with a service account permitted to list</text>
+  <text x="1126" y="332" font-size="12.5" fill="#94a3b8">namespaces and services.</text>
+
+  <!-- ===== ALSO IN THE CHART ===== -->
+  <rect x="1100" y="372" width="440" height="288" rx="18" class="panel" stroke="#334155" stroke-opacity="0.8"/>
+  <text x="1126" y="400" class="plabel" fill="#64748b">ALSO IN THE CHART</text>
+
+  <g>
+    <circle cx="1132" cy="429" r="3" fill="#60a5fa"/>
+    <text x="1148" y="434" class="bullet">Prometheus ServiceMonitor</text>
+    <circle cx="1132" cy="465" r="3" fill="#60a5fa"/>
+    <text x="1148" y="470" class="bullet">Two Grafana dashboards</text>
+    <circle cx="1132" cy="501" r="3" fill="#60a5fa"/>
+    <text x="1148" y="506" class="bullet">Configuration and secrets per service</text>
+    <circle cx="1132" cy="537" r="3" fill="#60a5fa"/>
+    <text x="1148" y="542" class="bullet">Quickstart: PostgreSQL, Keycloak, Superset</text>
+    <circle cx="1132" cy="573" r="3" fill="#60a5fa"/>
+    <text x="1148" y="578" class="bullet">Compose variants for local runs</text>
+  </g>
+
+  <line x1="1126" y1="604" x2="1514" y2="604" stroke="#1E293B"/>
+  <text x="1126" y="630" font-size="12" fill="#64748b">Docker Compose covers the same topology</text>
+  <text x="1126" y="648" font-size="12" fill="#64748b">for local development.</text>
+
+  <text x="60" y="706" font-size="13.5" fill="#64748b">Only the build consumer is designed to scale out. Everything else runs as a single replica, which keeps the Olric cluster and the migration framework simple.</text>
+</svg>

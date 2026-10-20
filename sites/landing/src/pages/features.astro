@@ -1,0 +1,341 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { features, GITHUB_URL, DOCS_URL } from '../data/content';
+import { withBase } from '../lib/paths';
+const home = import.meta.env.BASE_URL;
+---
+
+<Layout
+  title="Features — Qubership APIHUB"
+  description="Interactive feature showcase: contract catalog, breaking change detection, quality gates, Kubernetes discovery, DDLAPI and MCP support, and more."
+>
+  <!-- Page Hero -->
+  <section class="relative pt-16 pb-12 px-6 overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full opacity-15"
+        style="background: radial-gradient(ellipse at center, rgba(124,58,237,0.6) 0%, transparent 70%); filter: blur(50px);"></div>
+    </div>
+    <div class="relative max-w-3xl mx-auto text-center">
+      <nav class="flex items-center justify-center gap-2 mb-6 text-sm text-slate-500">
+        <a href={home} class="hover:text-white transition-colors">Home</a>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+        <span class="text-slate-300">Features</span>
+      </nav>
+      <p class="text-sm font-semibold text-violet-400 uppercase tracking-widest mb-3">Capabilities deep-dive</p>
+      <h1 class="text-4xl md:text-5xl font-black text-white mb-5">
+        Everything you need<br />
+        <span style="background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">to master your contracts</span>
+      </h1>
+      <p class="text-lg text-slate-400 max-w-2xl mx-auto">
+        APIHUB catalogs machine-readable <strong class="text-slate-300">contracts</strong> — REST and GraphQL APIs, event APIs, database schemas (DDLAPI), and MCP tool surfaces — with shared versioning, diff, and governance.
+      </p>
+    </div>
+  </section>
+
+  <!-- Contracts & API Types Support Matrix -->
+  <section class="py-20 px-6 border-t border-slate-800/50" style="background: rgba(15,23,42,0.4);">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-10">
+        <p class="text-sm font-semibold text-violet-400 uppercase tracking-widest mb-3">Contract catalog</p>
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
+          Supported Contracts &amp; API Types
+        </h2>
+        <p class="text-slate-400 max-w-2xl mx-auto">
+          Classic <strong class="text-slate-300">API types</strong> (REST, GraphQL, AsyncAPI) remain first-class for operations.
+        Newer <strong class="text-slate-300">contract types</strong> — <strong class="text-slate-300">DDLAPI</strong> and <strong class="text-slate-300">MCP</strong> — publish, version, search, compare, and export alongside them in the same package model.
+        </p>
+      </div>
+
+      <!-- Scrollable table wrapper -->
+      <div class="rounded-2xl border border-slate-800 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border-collapse min-w-[860px]">
+            <thead>
+              <tr style="background: linear-gradient(90deg, rgba(59,130,246,0.15), rgba(124,58,237,0.15));">
+                <th class="text-left px-5 py-3.5 font-semibold text-white border-b border-slate-700 whitespace-nowrap">Contract / API Type</th>
+                <th class="text-center px-3 py-3.5 font-semibold text-slate-300 border-b border-slate-700 whitespace-nowrap">Backend</th>
+                <th class="text-center px-3 py-3.5 font-semibold text-slate-300 border-b border-slate-700 whitespace-nowrap">Build</th>
+                <th class="text-center px-3 py-3.5 font-semibold text-slate-300 border-b border-slate-700 whitespace-nowrap">K8s Discovery</th>
+                <th class="text-center px-3 py-3.5 font-semibold text-slate-300 border-b border-slate-700 whitespace-nowrap">UI / Portal</th>
+                <th class="text-center px-3 py-3.5 font-semibold text-slate-300 border-b border-slate-700 whitespace-nowrap">Diff</th>
+                <th class="text-center px-3 py-3.5 font-semibold text-slate-300 border-b border-slate-700 whitespace-nowrap">Doc Viewer</th>
+                <th class="text-center px-3 py-3.5 font-semibold text-slate-300 border-b border-slate-700 whitespace-nowrap">Linter</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                {
+                  type: 'OpenAPI 3.0 / 3.1',
+                  badge: { label: 'API', color: 'bg-green-500/15 text-green-400' },
+                  backend: { v: 'yes' },
+                  build:   { v: 'yes' },
+                  disco:   { v: 'yes' },
+                  ui:      { v: 'yes' },
+                  diff:    { v: 'yes' },
+                  viewer:  { v: 'yes' },
+                  linter:  { v: 'yes', note: 'Spectral + AI' },
+                },
+                {
+                  type: 'Swagger 2.0',
+                  badge: { label: 'API', color: 'bg-green-500/15 text-green-400' },
+                  backend: { v: 'yes', note: 'via conv.' },
+                  build:   { v: 'yes', note: '→ OAS3' },
+                  disco:   { v: 'yes' },
+                  ui:      { v: 'yes' },
+                  diff:    { v: 'yes', note: '→ OAS3' },
+                  viewer:  { v: 'yes' },
+                  linter:  { v: 'yes', note: 'Spectral + AI' },
+                },
+                {
+                  type: 'GraphQL',
+                  badge: { label: 'API', color: 'bg-pink-500/15 text-pink-400' },
+                  backend: { v: 'yes' },
+                  build:   { v: 'yes' },
+                  disco:   { v: 'yes', note: 'introspect' },
+                  ui:      { v: 'yes' },
+                  diff:    { v: 'yes', note: 'apiKind' },
+                  viewer:  { v: 'yes' },
+                  linter:  { v: 'yes', note: 'Spectral' },
+                },
+                {
+                  type: 'AsyncAPI 3.0',
+                  badge: { label: 'API', color: 'bg-orange-500/15 text-orange-400' },
+                  backend: { v: 'yes' },
+                  build:   { v: 'yes' },
+                  disco:   { v: 'yes' },
+                  ui:      { v: 'yes' },
+                  diff:    { v: 'yes' },
+                  viewer:  { v: 'yes' },
+                  linter:  { v: 'yes', note: 'Spectral' },
+                },
+                {
+                  type: 'DDLAPI (DB schemas)',
+                  badge: { label: 'Contract', color: 'bg-cyan-500/15 text-cyan-400' },
+                  backend: { v: 'yes', note: 'contracts' },
+                  build:   { v: 'yes', note: 'ddlBuilder' },
+                  disco:   { v: 'no' },
+                  ui:      { v: 'yes', note: 'search + dashboards' },
+                  diff:    { v: 'yes', note: 'table Diff View' },
+                  viewer:  { v: 'yes', note: 'tables' },
+                  linter:  { v: 'no' },
+                },
+                {
+                  type: 'MCP contracts',
+                  badge: { label: 'Contract', color: 'bg-emerald-500/15 text-emerald-400' },
+                  backend: { v: 'yes', note: 'contracts' },
+                  build:   { v: 'yes', note: 'mcpBuilder' },
+                  disco:   { v: 'no' },
+                  ui:      { v: 'yes', note: 'search + dashboards' },
+                  diff:    { v: 'no' },
+                  viewer:  { v: 'yes', note: 'tools / raw' },
+                  linter:  { v: 'no' },
+                },
+                {
+                  type: 'Protobuf / gRPC',
+                  badge: { label: 'Stub', color: 'bg-slate-500/15 text-slate-400' },
+                  backend: { v: 'yes' },
+                  build:   { v: 'yes' },
+                  disco:   { v: 'no' },
+                  ui:      { v: 'no' },
+                  diff:    { v: 'no' },
+                  viewer:  { v: 'no' },
+                  linter:  { v: 'no' },
+                },
+                {
+                  type: 'Markdown Docs',
+                  badge: { label: 'Docs', color: 'bg-slate-500/15 text-slate-400' },
+                  backend: { v: 'partial', note: 'storage' },
+                  build:   { v: 'yes' },
+                  disco:   { v: 'yes' },
+                  ui:      { v: 'yes', note: '+ Mermaid' },
+                  diff:    { v: 'no' },
+                  viewer:  { v: 'yes' },
+                  linter:  { v: 'no' },
+                },
+              ].map((row, i) => (
+                <tr class={i % 2 === 0 ? 'bg-slate-900/30' : 'bg-slate-900/60'}>
+                  <td class="px-5 py-3.5 border-b border-slate-800/60">
+                    <div class="flex items-center gap-2.5">
+                      <span class={`text-xs font-semibold px-2 py-0.5 rounded-full ${row.badge.color}`}>
+                        {row.badge.label}
+                      </span>
+                      <span class="text-white font-medium whitespace-nowrap">{row.type}</span>
+                    </div>
+                  </td>
+                  {[row.backend, row.build, row.disco, row.ui, row.diff, row.viewer, row.linter].map((cell) => (
+                    <td class="px-3 py-3.5 text-center border-b border-slate-800/60">
+                      {cell.v === 'yes' ? (
+                        <div class="flex flex-col items-center gap-0.5">
+                          <span class="text-emerald-400 text-base leading-none">✓</span>
+                          {cell.note && <span class="text-xs text-slate-500 whitespace-nowrap">{cell.note}</span>}
+                        </div>
+                      ) : cell.v === 'no' ? (
+                        <span class="text-slate-700 text-base">—</span>
+                      ) : cell.v === 'partial' ? (
+                        <div class="flex flex-col items-center gap-0.5">
+                          <span class="text-yellow-400 text-base leading-none">◑</span>
+                          {cell.note && <span class="text-xs text-slate-500 whitespace-nowrap">{cell.note}</span>}
+                        </div>
+                      ) : (
+                        <span class="text-slate-600 text-xs italic whitespace-nowrap">planned</span>
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <!-- Legend -->
+        <div class="px-5 py-3 border-t border-slate-800 flex flex-wrap items-center gap-4 text-xs text-slate-500"
+          style="background: rgba(15,23,42,0.6);">
+          <span class="font-medium text-slate-400">Legend:</span>
+          <span><span class="text-emerald-400">✓</span> Supported</span>
+          <span><span class="text-yellow-400">◑</span> Partial</span>
+          <span><span class="text-slate-600">—</span> Not applicable</span>
+          <span class="text-slate-400">Badges: <span class="text-slate-300">API</span> = operation API type · <span class="text-slate-300">Contract</span> = catalog contract type</span>
+        </div>
+      </div>
+      <p class="mt-6 text-sm text-slate-500 max-w-3xl mx-auto text-center">
+        <strong class="text-slate-400">MCP server</strong> (tools for agents/IDEs at <code class="text-slate-400">/api/v1/mcp/</code>) is separate from
+        <strong class="text-slate-400">MCP contracts</strong> stored in the catalog. Both ship in current releases.
+      </p>
+    </div>
+  </section>
+
+  <!-- Feature tabs (capability carousel) -->
+  <section class="pb-20 pt-20 px-6 border-t border-slate-800/50">
+    <div class="max-w-6xl mx-auto">
+      <!-- Tab bar -->
+      <div class="flex flex-wrap gap-2 mb-10 p-1 rounded-2xl border border-slate-800 bg-slate-900/50">
+        {features.map((f, i) => (
+          <button
+            data-tab={f.id}
+            class={`feature-tab flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 flex-1 justify-center ${
+              i === 0
+                ? 'active border-blue-500/50 bg-blue-500/12 text-blue-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5'
+            }`}
+          >
+            <span class="flex-shrink-0" set:html={f.icon} />
+            <span class="hidden sm:inline">{f.tab}</span>
+          </button>
+        ))}
+      </div>
+
+      <!-- Panels -->
+      {features.map((f, i) => (
+        <div
+          id={`panel-${f.id}`}
+          class={`feature-panel flex-col lg:flex-row gap-12 items-start ${i === 0 ? 'active' : ''}`}
+        >
+          <!-- Left: text -->
+          <div class="lg:w-[400px] flex-shrink-0">
+            <h2 class="text-2xl md:text-3xl font-bold text-white mb-4">{f.title}</h2>
+            <p class="text-slate-400 leading-relaxed mb-6">{f.description}</p>
+            <ul class="space-y-3">
+              {f.bullets.map((b) => (
+                <li class="flex items-start gap-3">
+                  <div class="w-5 h-5 rounded-full bg-blue-500/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-blue-400" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                  </div>
+                  <span class="text-sm text-slate-300">{b}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <!-- Right: image or mockup -->
+          <div class="flex-1 w-full">
+            {f.image ? (
+              <div class="space-y-3">
+                <div class="rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
+                  <img src={f.image} alt={f.alt} loading="lazy" class="w-full h-auto" data-lightbox />
+                </div>
+                {f.image2 && (
+                  <div class="rounded-xl overflow-hidden border border-slate-800/60">
+                    <div class="px-3 py-1.5 bg-slate-900 border-b border-slate-800/60 flex items-center gap-2">
+                      <span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                      <span class="text-xs text-slate-500">Product screenshot — click to enlarge</span>
+                    </div>
+                    <img src={f.image2} alt={f.alt} loading="lazy" class="w-full h-auto" data-lightbox />
+                  </div>
+                )}
+              </div>
+            ) : f.mockup === 'search' ? (
+              <div class="rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden shadow-2xl">
+                <div class="px-4 py-3 border-b border-slate-800 flex items-center gap-2">
+                  <div class="flex gap-1.5">
+                    <div class="w-3 h-3 rounded-full bg-red-500/60"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-500/60"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-500/60"></div>
+                  </div>
+                  <div class="flex-1 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-slate-500">apihub.example.com/portal/search</div>
+                </div>
+                <div class="p-6">
+                  <div class="relative mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" /></svg>
+                    <div class="w-full border border-blue-500/50 bg-blue-500/5 rounded-xl pl-10 pr-4 py-3 text-sm text-blue-300">GET /users/{'{'}id{'}'} — user profile</div>
+                  </div>
+                  <div class="space-y-2">
+                    {[
+                      { method: 'GET', path: '/api/v1/users/{id}', pkg: 'User Service', badge: 'REST', badgeColor: 'text-green-400 bg-green-500/10' },
+                      { method: 'GET', path: '/api/v1/users/{id}/profile', pkg: 'Profile Service', badge: 'REST', badgeColor: 'text-green-400 bg-green-500/10' },
+                      { method: 'query', path: 'getUserById(id: ID!): User', pkg: 'GraphQL Gateway', badge: 'GraphQL', badgeColor: 'text-pink-400 bg-pink-500/10' },
+                      { method: 'GET', path: '/v2/customers/{customerId}', pkg: 'CRM Service', badge: 'REST', badgeColor: 'text-green-400 bg-green-500/10' },
+                    ].map((r) => (
+                      <div class="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-800/50 px-4 py-3 hover:border-slate-700 transition-colors cursor-pointer">
+                        <span class="font-mono text-xs font-bold text-blue-400 w-12 flex-shrink-0">{r.method}</span>
+                        <span class="font-mono text-xs text-slate-300 flex-1 truncate">{r.path}</span>
+                        <span class="text-xs text-slate-500">{r.pkg}</span>
+                        <span class={`text-xs px-1.5 py-0.5 rounded ${r.badgeColor}`}>{r.badge}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- Page nav -->
+  <nav class="py-10 px-6 border-t border-slate-800/40">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <a href={withBase('use-cases/')} class="flex items-center gap-2 text-sm text-slate-500 hover:text-white transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
+        Use Cases
+      </a>
+      <a href={withBase('capabilities/')} class="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium">
+        All Capabilities
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+      </a>
+    </div>
+  </nav>
+</Layout>
+
+<script>
+  function initTabs() {
+    const tabs = document.querySelectorAll<HTMLElement>('.feature-tab');
+    const panels = document.querySelectorAll<HTMLElement>('.feature-panel');
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const id = tab.dataset.tab;
+        tabs.forEach((t) => {
+          t.classList.remove('active', 'border-blue-500/50', 'bg-blue-500/12', 'text-blue-400');
+          t.classList.add('border-transparent', 'text-slate-400');
+        });
+        tab.classList.add('active', 'border-blue-500/50', 'bg-blue-500/12', 'text-blue-400');
+        tab.classList.remove('border-transparent', 'text-slate-400');
+        panels.forEach((p) => p.classList.remove('active'));
+        const panel = document.getElementById(`panel-${id}`);
+        panel?.classList.add('active');
+      });
+    });
+  }
+
+  document.addEventListener('astro:page-load', initTabs);
+</script>

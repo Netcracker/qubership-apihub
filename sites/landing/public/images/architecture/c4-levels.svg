@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="560" viewBox="0 0 1600 560" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <linearGradient id="lvlTitle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#60a5fa"/>
+      <stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+    <style>
+      .card  { fill: #0F172A; stroke: #1E293B; stroke-width: 1; }
+      .badge { font-size: 13px; font-weight: 800; fill: #050813; letter-spacing: 0.5px; }
+      .name  { font-size: 22px; font-weight: 800; fill: #f1f5f9; }
+      .lbl   { font-size: 10px; font-weight: 700; letter-spacing: 2px; fill: #475569; }
+      .q     { font-size: 14px; fill: #cbd5e1; }
+      .a     { font-size: 13.5px; font-weight: 600; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="560" fill="#050813"/>
+
+  <text x="60" y="54" font-size="15" font-weight="600" fill="#60a5fa" letter-spacing="3">THE METHOD</text>
+  <text x="60" y="96" font-size="30" font-weight="800" fill="#f1f5f9">Four levels of zoom. <tspan fill="url(#lvlTitle)">Each one hides the detail of the next.</tspan></text>
+
+  <!-- L1 - Context -->
+  <g>
+    <rect x="60" y="150" width="340" height="330" rx="16" class="card"/>
+    <rect x="60" y="150" width="340" height="3" rx="1.5" fill="#34d399"/>
+    <rect x="84" y="178" width="50" height="26" rx="7" fill="#34d399"/>
+    <text x="109" y="196" class="badge" text-anchor="middle">L1</text>
+    <text x="84" y="248" class="name">Context</text>
+    <text x="84" y="280" class="lbl">ANSWERS</text>
+    <text x="84" y="302" class="q">Who uses the system and what</text>
+    <text x="84" y="324" class="q">does it depend on?</text>
+    <text x="84" y="360" class="lbl">WHAT YOU SEE</text>
+    <text x="84" y="382" class="a" fill="#34d399">One box for all of APIHUB</text>
+    <rect x="84" y="410" width="150" height="48" rx="8" fill="#34d399" fill-opacity="0.14" stroke="#34d399" stroke-opacity="0.85"/>
+  </g>
+  <path d="M 414 315 l 12 0 M 420 309 l 8 6 l -8 6" stroke="#334155" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- L2 - Containers -->
+  <g>
+    <rect x="440" y="150" width="340" height="330" rx="16" class="card"/>
+    <rect x="440" y="150" width="340" height="3" rx="1.5" fill="#2dd4bf"/>
+    <rect x="464" y="178" width="50" height="26" rx="7" fill="#2dd4bf"/>
+    <text x="489" y="196" class="badge" text-anchor="middle">L2</text>
+    <text x="464" y="248" class="name">Containers</text>
+    <text x="464" y="280" class="lbl">ANSWERS</text>
+    <text x="464" y="302" class="q">Which deployable things exist</text>
+    <text x="464" y="324" class="q">and how do they talk?</text>
+    <text x="464" y="360" class="lbl">WHAT YOU SEE</text>
+    <text x="464" y="382" class="a" fill="#2dd4bf">Seven services, three stores</text>
+    <rect x="464" y="410" width="150" height="48" rx="8" fill="none" stroke="#2dd4bf" stroke-opacity="0.4"/>
+    <rect x="474" y="417" width="130" height="34" rx="6" fill="#2dd4bf" fill-opacity="0.14" stroke="#2dd4bf" stroke-opacity="0.9"/>
+  </g>
+  <path d="M 794 315 l 12 0 M 800 309 l 8 6 l -8 6" stroke="#334155" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- L3 - Components -->
+  <g>
+    <rect x="820" y="150" width="340" height="330" rx="16" class="card"/>
+    <rect x="820" y="150" width="340" height="3" rx="1.5" fill="#fbbf24"/>
+    <rect x="844" y="178" width="50" height="26" rx="7" fill="#fbbf24"/>
+    <text x="869" y="196" class="badge" text-anchor="middle">L3</text>
+    <text x="844" y="248" class="name">Components</text>
+    <text x="844" y="280" class="lbl">ANSWERS</text>
+    <text x="844" y="302" class="q">What lives inside one</text>
+    <text x="844" y="324" class="q">container?</text>
+    <text x="844" y="360" class="lbl">WHAT YOU SEE</text>
+    <text x="844" y="382" class="a" fill="#fbbf24">Controllers, services, runners</text>
+    <rect x="844" y="410" width="150" height="48" rx="8" fill="none" stroke="#fbbf24" stroke-opacity="0.28"/>
+    <rect x="854" y="417" width="130" height="34" rx="6" fill="none" stroke="#fbbf24" stroke-opacity="0.5"/>
+    <rect x="864" y="424" width="110" height="20" rx="5" fill="#fbbf24" fill-opacity="0.16" stroke="#fbbf24" stroke-opacity="0.95"/>
+  </g>
+  <path d="M 1174 315 l 12 0 M 1180 309 l 8 6 l -8 6" stroke="#334155" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- L4 - Code -->
+  <g>
+    <rect x="1200" y="150" width="340" height="330" rx="16" class="card"/>
+    <rect x="1200" y="150" width="340" height="3" rx="1.5" fill="#fb923c"/>
+    <rect x="1224" y="178" width="50" height="26" rx="7" fill="#fb923c"/>
+    <text x="1249" y="196" class="badge" text-anchor="middle">L4</text>
+    <text x="1224" y="248" class="name">Code</text>
+    <text x="1224" y="280" class="lbl">ANSWERS</text>
+    <text x="1224" y="302" class="q">Which classes and registries</text>
+    <text x="1224" y="324" class="q">actually matter?</text>
+    <text x="1224" y="360" class="lbl">WHAT YOU SEE</text>
+    <text x="1224" y="382" class="a" fill="#fb923c">Pipelines, maps, plug-ins</text>
+    <rect x="1224" y="410" width="150" height="48" rx="8" fill="none" stroke="#fb923c" stroke-opacity="0.22"/>
+    <rect x="1234" y="417" width="130" height="34" rx="6" fill="none" stroke="#fb923c" stroke-opacity="0.38"/>
+    <rect x="1244" y="424" width="110" height="20" rx="5" fill="none" stroke="#fb923c" stroke-opacity="0.6"/>
+    <rect x="1254" y="429" width="90" height="10" rx="4" fill="#fb923c" fill-opacity="0.22" stroke="#fb923c"/>
+  </g>
+
+  <text x="60" y="524" font-size="13.5" fill="#64748b">Beyond the four levels, this section adds a <tspan fill="#94a3b8">deployment view</tspan> (what runs where) and three <tspan fill="#94a3b8">dynamic views</tspan> (what happens over time when you publish, discover, or ask an AI agent).</text>
+</svg>

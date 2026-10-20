@@ -1,0 +1,146 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import { GITHUB_URL, RELEASES_URL } from '../data/content';
+import { withBase } from '../lib/paths';
+const home = import.meta.env.BASE_URL;
+
+const rawReleases = await getCollection('releases');
+
+/** Newest first. Date is the timeline key; numeric semver breaks ties. Plain string
+ *  compare is wrong: "v2.9.0" sorts above "v2.12.0". */
+function releaseTime(date: string): number {
+  const t = Date.parse(date);
+  return Number.isFinite(t) ? t : 0;
+}
+
+const releases = rawReleases
+  .sort((a, b) => {
+    const byDate = releaseTime(b.data.date) - releaseTime(a.data.date);
+    if (byDate !== 0) return byDate;
+    return b.data.version.localeCompare(a.data.version, undefined, { numeric: true });
+  })
+  .map((r) => ({ ...r.data, slug: r.slug }));
+---
+
+<Layout
+  title="Releases — Qubership APIHUB"
+  description="Qubership APIHUB release history. Actively developed with releases every 4–6 weeks."
+>
+  <!-- Page Hero -->
+  <section class="relative pt-16 pb-12 px-6 overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full opacity-15"
+        style="background: radial-gradient(ellipse at center, rgba(52,211,153,0.5) 0%, transparent 70%); filter: blur(50px);"></div>
+    </div>
+    <div class="relative max-w-3xl mx-auto text-center">
+      <nav class="flex items-center justify-center gap-2 mb-6 text-sm text-slate-500">
+        <a href={home} class="hover:text-white transition-colors">Home</a>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+        <span class="text-slate-300">Releases</span>
+      </nav>
+      <p class="text-sm font-semibold text-emerald-400 uppercase tracking-widest mb-3">Actively developed</p>
+      <h1 class="text-4xl md:text-5xl font-black text-white mb-5">
+        New releases<br />
+        <span style="background: linear-gradient(135deg, #34d399 0%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">every 4–6 weeks</span>
+      </h1>
+      <p class="text-lg text-slate-400 max-w-2xl mx-auto">
+        Qubership APIHUB is under active development. Below are highlights from recent releases.
+      </p>
+      <a href={RELEASES_URL} target="_blank" rel="noopener"
+        class="inline-flex items-center gap-2 mt-6 px-5 py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-sm font-medium text-emerald-300 hover:bg-emerald-500/15 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12Z"/></svg>
+        Full Changelog on GitHub
+      </a>
+    </div>
+  </section>
+
+  <!-- Timeline -->
+  <section class="pb-20 px-6">
+    <div class="max-w-3xl mx-auto">
+      <div class="relative">
+        <!-- Vertical line -->
+        <div class="absolute left-6 top-0 bottom-0 w-px bg-slate-800"></div>
+
+        <div class="space-y-8">
+          {releases.map((r) => (
+            <div class="relative flex gap-6">
+              <!-- Dot -->
+              <div class={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center z-10 ${
+                r.latest
+                  ? 'bg-emerald-500/20 border-2 border-emerald-500/60'
+                  : 'bg-slate-800 border border-slate-700'
+              }`}>
+                <svg xmlns="http://www.w3.org/2000/svg" class={`w-5 h-5 ${r.latest ? 'text-emerald-400' : 'text-slate-500'}`} fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09Z" /></svg>
+              </div>
+
+              <!-- Card -->
+              <div class={`flex-1 rounded-2xl border p-6 ${
+                r.latest
+                  ? 'border-emerald-500/30 bg-emerald-500/5'
+                  : 'border-slate-800 bg-slate-900/50'
+              }`}>
+                <div class="flex items-center gap-3 mb-4">
+                  <h2 class="text-xl font-black text-white font-mono">{r.version}</h2>
+                  {r.latest && (
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Latest</span>
+                  )}
+                  <span class="text-sm text-slate-500 ml-auto">{r.date}</span>
+                </div>
+                <ul class="space-y-2.5">
+                  {r.highlights.map((h) => (
+                    <li class="flex items-start gap-2.5 text-sm">
+                      <div class={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                        r.latest ? 'bg-emerald-500/15' : 'bg-slate-800'
+                      }`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" class={`w-2.5 h-2.5 ${r.latest ? 'text-emerald-400' : 'text-slate-500'}`} fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                      </div>
+                      <span class="text-slate-300">{h}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div class="mt-4 pt-4 border-t border-slate-800/60">
+                  <a
+                    href={`${RELEASES_URL}/tag/${r.version.replace(/^v/, '')}`}
+                    target="_blank" rel="noopener"
+                    class="text-xs text-slate-500 hover:text-white transition-colors flex items-center gap-1"
+                  >
+                    View full release notes
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          <!-- More -->
+          <div class="relative flex gap-6">
+            <div class="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center z-10 bg-slate-900 border border-slate-800">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" /></svg>
+            </div>
+            <div class="flex-1 py-3">
+              <a href={RELEASES_URL} target="_blank" rel="noopener" class="text-sm text-slate-500 hover:text-white transition-colors flex items-center gap-1.5">
+                See all releases on GitHub
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Page nav -->
+  <nav class="py-10 px-6 border-t border-slate-800/40">
+    <div class="max-w-5xl mx-auto flex items-center justify-between">
+      <a href={withBase('radar/')} class="flex items-center gap-2 text-sm text-slate-500 hover:text-white transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
+        Radar
+      </a>
+      <a href={withBase('deploy/')} class="flex items-center gap-2 text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium">
+        Deploy
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+      </a>
+    </div>
+  </nav>
+</Layout>

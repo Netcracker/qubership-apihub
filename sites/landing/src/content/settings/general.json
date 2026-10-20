@@ -1,0 +1,21 @@
+{
+  "siteTitle": "Qubership APIHUB",
+  "siteDescription": "A single point of truth for versioned API and non-API contracts. Discover, compare, validate, and govern OpenAPI, GraphQL, AsyncAPI, DDLAPI, and MCP in one catalog.",
+  "githubUrl": "https://github.com/Netcracker/qubership-apihub",
+  "docsUrl": "https://github.com/Netcracker/qubership-apihub/blob/main/docs/user-guide.md",
+  "installUrl": "https://github.com/Netcracker/qubership-apihub/blob/main/docs/installation-guide.md",
+  "hero": {
+    "line1": "The Open Source",
+    "line2": "API Hub",
+    "line3": "for Modern Engineering",
+    "subtitle": "A single point of truth for versioned API and non-API contracts. Discover, compare, validate, and govern OpenAPI, GraphQL, AsyncAPI, DDLAPI, and MCP in one catalog.",
+    "versionBadge": "v2.14.0",
+    "versionBadgeText": "Released — DDL Schema Diff + MCP Advanced Catalog"
+  },
+  "stats": [
+    { "value": "27+", "label": "Open Source Repositories" },
+    { "value": "v2.14.0", "label": "Latest Release" },
+    { "value": "Contracts", "label": "API Types + DDLAPI + MCP" },
+    { "value": "MCP", "label": "Server + Catalog Contracts" }
+  ]
+}
