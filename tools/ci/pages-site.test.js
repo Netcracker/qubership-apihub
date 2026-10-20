@@ -12,7 +12,6 @@ const {
   erdBackends,
   buildRef,
   docsPlaceholder,
-  erdPlaceholder,
   legacyErdStub,
   parseArgs,
   REST_LIMIT,
@@ -134,13 +133,6 @@ test('docsPlaceholder() says the site is coming and links the docs folder', () =
   assert.match(page, /href="\.\.\/style\.css"/)
 })
 
-test('erdPlaceholder() names the failure and links what was rendered from erd/', () => {
-  const page = erdPlaceholder({ backends: ['a', 'b'], rendered: ['a'], reason: 'no render for b' })
-  assert.match(page, /no render for b/)
-  assert.match(page, /<a href="a\/">a<\/a>/)
-  assert.match(page, /b \(not rendered yet\)/)
-})
-
 test('legacyErdStub() redirects to erd/portal-backend/ with and without JavaScript', () => {
   const page = legacyErdStub()
   assert.match(page, /location\.replace\("\.\.\/\.\.\/erd\/portal-backend\/" \+ location\.search \+ location\.hash\)/)
@@ -148,10 +140,10 @@ test('legacyErdStub() redirects to erd/portal-backend/ with and without JavaScri
 })
 
 test('parseArgs() requires the site, the landing, the ref, and the commit', () => {
-  const o = parseArgs(['out', '--landing', 'l', '--ref', 'develop', '--commit', 'abc', '--erd-optional'])
+  const o = parseArgs(['out', '--landing', 'l', '--ref', 'develop', '--commit', 'abc'])
   assert.equal(o.site, 'out')
   assert.equal(o.landing, 'l')
-  assert.ok(o.flags.has('erd-optional'))
+  assert.throws(() => parseArgs(['out', '--landing', 'l', '--ref', 'r', '--commit', 'c', '--erd-optional']), /unknown option/)
   assert.throws(() => parseArgs(['out', '--ref', 'r', '--commit', 'c']), /--landing is required/)
   assert.throws(() => parseArgs(['--landing', 'l', '--ref', 'r', '--commit', 'c']), /exactly one/)
   assert.throws(() => parseArgs(['out', '--landing']), /needs a value/)
@@ -165,11 +157,11 @@ const [mode, dir] = process.argv.slice(2)
 const backends = ['portal-backend', 'agents-backend']
 if (mode === 'backends') { console.log(backends.join('\\n')); process.exit(0) }
 if (mode !== 'assemble') process.exit(2)
-for (const b of process.env.STUB_ERD_FAIL ? backends.slice(0, 1) : backends) {
+for (const b of process.env.STUB_ERD_FAIL || process.env.STUB_ERD_MISSING ? backends.slice(0, 1) : backends) {
   fs.mkdirSync(path.join(dir, b), { recursive: true })
   fs.writeFileSync(path.join(dir, b, 'index.html'), 'erd ' + b)
 }
-if (process.env.STUB_ERD_FAIL) { console.error('no render for agents-backend'); process.exit(1) }
+if (process.env.STUB_ERD_FAIL) { console.error('registry unreachable'); process.exit(1) }
 fs.writeFileSync(path.join(dir, 'index.html'), 'erd index')
 `
 
@@ -214,7 +206,7 @@ function runPagesSite(f, extra = [], env = {}) {
       '--repo-url', REPO,
       ...extra,
     ],
-    { encoding: 'utf8', env: { ...process.env, GITHUB_STEP_SUMMARY: '', ERD_OPTIONAL: '', ...env } },
+    { encoding: 'utf8', env: { ...process.env, GITHUB_STEP_SUMMARY: '', ...env } },
   )
 }
 
@@ -267,33 +259,32 @@ test('pages-site.js copies the docs build when there is one', () => {
   }
 })
 
-test('pages-site.js fails on a missing ERD render unless ERD_OPTIONAL is set', () => {
+test('pages-site.js lists a backend that erd.js left without a render as not rendered yet', () => {
   const f = fixture()
   try {
-    const failed = runPagesSite(f, [], { STUB_ERD_FAIL: '1' })
-    assert.equal(failed.status, 1)
-    assert.match(failed.stdout, /::error::the ERD assembly failed: erd\.js assemble exited with 1/)
-
-    const optional = runPagesSite(f, [], { STUB_ERD_FAIL: '1', ERD_OPTIONAL: 'true' })
-    assert.equal(optional.status, 0, optional.stdout + optional.stderr)
-    assert.match(optional.stdout, /::warning::the ERD assembly failed/)
-    const erd = fs.readFileSync(path.join(f.site, 'erd', 'index.html'), 'utf8')
-    assert.match(erd, /<a href="portal-backend\/">portal-backend<\/a>/)
-    assert.match(erd, /agents-backend \(not rendered yet\)/)
-    assert.match(fs.readFileSync(path.join(f.site, 'index.html'), 'utf8'), /agents-backend \(not rendered yet\)/)
+    const r = runPagesSite(f, [], { STUB_ERD_MISSING: '1' })
+    assert.equal(r.status, 0, r.stdout + r.stderr)
+    const index = fs.readFileSync(path.join(f.site, 'index.html'), 'utf8')
+    assert.match(index, /<a href="erd\/portal-backend\/">portal-backend<\/a>/)
+    assert.match(index, /agents-backend \(not rendered yet\)/)
+    assert.match(r.stdout, /1 of 2 ERDs/)
   } finally {
     fs.rmSync(f.root, { recursive: true, force: true })
   }
 })
 
-test('pages-site.js treats a missing erd.js as a missing render', () => {
+test('pages-site.js fails when erd.js assemble fails or erd.js is missing', () => {
   const f = fixture()
   try {
+    const failed = runPagesSite(f, [], { STUB_ERD_FAIL: '1' })
+    assert.equal(failed.status, 1)
+    assert.match(failed.stdout, /::error::the ERD assembly failed: erd\.js assemble exited with 1/)
+    assert.equal(runPagesSite(f, [], { STUB_ERD_FAIL: '1', ERD_OPTIONAL: 'true' }).status, 1, 'ERD_OPTIONAL no longer exists')
+
     fs.rmSync(path.join(f.root, 'erd.js'))
-    assert.equal(runPagesSite(f).status, 1)
-    const r = runPagesSite(f, ['--erd-optional'])
-    assert.equal(r.status, 0, r.stdout + r.stderr)
-    assert.match(fs.readFileSync(path.join(f.site, 'erd', 'index.html'), 'utf8'), /No ERD is rendered yet/)
+    const missing = runPagesSite(f)
+    assert.equal(missing.status, 1)
+    assert.match(missing.stdout, /erd\.js does not exist/)
   } finally {
     fs.rmSync(f.root, { recursive: true, force: true })
   }

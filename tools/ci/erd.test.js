@@ -3,8 +3,8 @@ const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
 const path = require('node:path')
 const {
-  detectBackends, orderMigrations, generatorFiles, computeKey, keyFormatOf, keyAt, databaseName, renderIndex, formatDate,
-  selectGc, KEY_FORMAT,
+  detectBackends, orderMigrations, generatorFiles, computeKey, keyFormatOf, keyAt, databaseName, newestRender, renderIndex,
+  formatDate, selectGc, KEY_FORMAT,
 } = require('./erd')
 
 const TREE = 'cdc6312e2'.padEnd(40, '0')
@@ -220,11 +220,48 @@ test('selectGc() deletes old renders that are not the key of a kept branch', () 
   assert.match(remove.find((v) => v.id === 3).why, /not the key of main or develop/)
 })
 
-test('selectGc() keeps the newest when every version would go', () => {
-  const versions = [ver(1, [K('a')], '2026-08-01T00:00:00Z'), ver(2, [K('b')], '2026-09-01T00:00:00Z'), ver(3, [], '2026-07-01T00:00:00Z')]
-  const { remove, last } = selectGc(versions, new Set(), NOW)
+test('selectGc() never deletes the newest mig-* render, kept or not', () => {
+  const versions = [
+    ver(1, [K('a')], '2026-08-01T00:00:00Z'),
+    ver(2, [K('b')], '2026-09-01T00:00:00Z'), // the newest render, over 30 days old, no kept key
+    ver(3, [], '2026-09-10T00:00:00Z'), // newer, but untagged
+    ver(4, ['latest'], '2026-09-15T00:00:00Z'), // newer, but not this tool's tag
+  ]
+  const { remove, last } = selectGc(versions, new Set([K('z')]), NOW)
   assert.deepEqual(remove.map((v) => v.id).sort(), [1, 3])
+  assert.equal(last, null)
+})
+
+test('selectGc() keeps the newest when every version would go', () => {
+  const versions = [ver(1, [], '2026-08-01T00:00:00Z'), ver(2, [], '2026-09-01T00:00:00Z')]
+  const { remove, last } = selectGc(versions, new Set(), NOW)
+  assert.deepEqual(remove.map((v) => v.id), [1])
   assert.equal(last.id, 2)
+})
+
+test('newestRender() picks the latest created mig-* render', () => {
+  const r = (tag, created) => ({ tag, created })
+  assert.equal(newestRender([r(K('a'), '2026-10-01T00:00:00Z'), r(K('b'), '2026-10-03T00:00:00Z'), r(K('c'), '2026-10-02T00:00:00Z')]).tag, K('b'))
+  assert.equal(newestRender([r('latest', '2026-12-01T00:00:00Z'), r(K('a'), '2026-10-01T00:00:00Z')]).tag, K('a'), 'only mig-* tags')
+  assert.equal(newestRender([r(K('b'), ''), r(K('a'), '2026-10-01T00:00:00Z')]).tag, K('a'), 'a dated render wins')
+  assert.equal(newestRender([r(K('b'), ''), r(K('a'), 'garbage')]).tag, K('a'), 'undated: the first tag')
+  assert.equal(newestRender([]), null)
+  assert.equal(newestRender([r('latest', '2026-10-01T00:00:00Z')]), null)
+})
+
+test('renderIndex() marks an older render and a backend without one', () => {
+  const html = renderIndex({
+    ref: 'develop',
+    cards: [
+      { backend: 'portal-backend', tag: K('a'), fallback: true, lastMigration: '43_x.up.sql', revision: 'abc', created: '' },
+      { backend: 'agents-backend', missing: true, lastMigration: '2_x.up.sql', revision: '', created: '' },
+      { backend: 'api-linter-service', tag: K('b'), lastMigration: '9_x.up.sql', revision: 'def', created: '' },
+    ],
+  })
+  assert.match(html, /<a class="card" href="portal-backend\/">[\s\S]*<strong>Older render:<\/strong> <code>develop<\/code>[\s\S]*<code>mig-a{16}<\/code>/)
+  assert.match(html, /<article class="card">\s*<h2>agents-backend<\/h2>\s*<p>Not rendered yet\./)
+  assert.doesNotMatch(html, /href="agents-backend\/"/)
+  assert.equal(html.match(/Older render/g).length, 1)
 })
 
 test('selectGc() keeps a version whose date it cannot read', () => {

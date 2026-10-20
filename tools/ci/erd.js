@@ -4,7 +4,8 @@
 //   erd.js backends <ref>              the backends that own a database at <ref>, one per line
 //   erd.js key <backend> <ref>         the store key of that backend's ERD at <ref>
 //   erd.js render <backend> <out>      apply the migrations of the checkout, run SchemaSpy into <out>
-//   erd.js assemble <site-erd> <ref>   pull every backend's render for <ref>, write the index page
+//   erd.js assemble <site-erd> <ref>   pull every backend's render for <ref>, or its newest render
+//                                      when <ref>'s key has none, and write the index page
 //   erd.js gc [--dry-run]              delete renders no one needs any more
 //
 // WHY MIGRATIONS AND NOT A RUNNING SERVICE. A backend's `public` schema comes only from its
@@ -36,7 +37,8 @@
 //   GITHUB_OUTPUT, GITHUB_STEP_SUMMARY
 //                           optional; render writes last_migration, tables, and columns to the first
 //
-// Exit codes: 0 done, 1 failed (the message says why), 2 usage.
+// Exit codes: 0 done, 1 failed (the message says why), 2 usage. A missing render is not a failure
+// of assemble: it shows an older render or says there is none, and warns.
 'use strict'
 
 const { execFileSync, spawnSync } = require('child_process')
@@ -141,14 +143,42 @@ function formatDate(iso) {
   return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`
 }
 
+// The render to show when the ref's own key has none: the newest `mig-*` render of the backend by
+// its `created` annotation. renders: [{ tag, created }]. Renders without a readable date count only
+// when no render has one. Null when there is no `mig-*` render at all.
+function newestRender(renders) {
+  const ours = renders.filter((r) => TAG.test(r.tag))
+  const time = (r) => Date.parse(r.created || '')
+  const dated = ours.filter((r) => !Number.isNaN(time(r)))
+  const pool = dated.length ? dated : ours
+  const sorted = [...pool].sort((a, b) => (dated.length ? time(b) - time(a) : 0) || (a.tag < b.tag ? -1 : a.tag > b.tag ? 1 : 0))
+  return sorted[0] || null
+}
+
 // `/erd/index.html`: one card per backend. The stylesheet is the navigation page's, at the site root.
+// A card with `fallback` shows a render of another key; one with `missing` has no render to link.
 function renderIndex({ ref, cards }) {
   const items = cards
     .map((c) => {
+      if (c.missing) {
+        return [
+          '        <article class="card">',
+          `          <h2>${escapeHtml(c.backend)}</h2>`,
+          '          <p>Not rendered yet. erd.yml renders it after the migrations change on <code>develop</code>',
+          '            or <code>main</code>.</p>',
+          '        </article>',
+        ].join('\n')
+      }
       const commit = c.revision ? `commit <code>${escapeHtml(c.revision.slice(0, 9))}</code>` : 'an unknown commit'
       return [
         `        <a class="card" href="${escapeHtml(c.backend)}/">`,
         `          <h2>${escapeHtml(c.backend)}</h2>`,
+        ...(c.fallback
+          ? [
+            `          <p><strong>Older render:</strong> <code>${escapeHtml(ref)}</code> has no render yet, so this is the newest`,
+            `            one, <code>${escapeHtml(c.tag)}</code>. It can lag behind the migrations at the ref.</p>`,
+          ]
+          : []),
         `          <p>Last migration: <code>${escapeHtml(c.lastMigration)}</code></p>`,
         `          <p>Rendered from ${commit} on ${escapeHtml(formatDate(c.created))}</p>`,
         '        </a>',
@@ -181,12 +211,18 @@ ${items}
 // gc's choice for one package. versions: [{ id, updated_at, tags }]; keep: the tags of the kept
 // branches' keys. A version goes when all its tags are `mig-*`, none is kept, and it is over
 // 30 days old; an untagged version (a render replaced by a forced one) goes at the same age. Any
-// other tag is not this tool's and keeps the version. ghcr refuses to delete a package's last
-// version, so when everything would go, the newest stays.
+// other tag is not this tool's and keeps the version. The newest `mig-*` version always stays: it
+// is what assemble shows when a kept branch's key has no render. ghcr refuses to delete a
+// package's last version, so when everything would go, the newest stays.
 function selectGc(versions, keep, now) {
   const remove = []
+  const time = (v) => Date.parse(v.updated_at)
+  const newest = versions
+    .filter((v) => v.tags.some((t) => TAG.test(t)) && !Number.isNaN(time(v)))
+    .reduce((a, v) => (!a || time(v) > time(a) ? v : a), null)
   for (const v of versions) {
-    const age = now - Date.parse(v.updated_at)
+    if (v === newest) continue
+    const age = now - time(v)
     if (!(age > GC_MIN_AGE_MS)) continue
     if (v.tags.length === 0) remove.push({ ...v, why: 'untagged, over 30 days old' })
     else if (v.tags.every((t) => TAG.test(t) && !keep.has(t))) {
@@ -412,46 +448,96 @@ function pull(backend, tag, dir) {
   if (!fs.existsSync(index) || fs.statSync(index).size === 0) throw new Error(`${repoOf(backend)}:${tag}: index.html missing or empty`)
 }
 
+// The annotations of a render, or undefined when the store has no such tag.
+function manifestOf(backend, tag) {
+  try {
+    return JSON.parse(registry('oras', ['manifest', 'fetch', `${repoOf(backend)}:${tag}`])).annotations || {}
+  } catch (e) {
+    if (e.notFound) return undefined
+    throw e
+  }
+}
+
+// Every `mig-*` render of a backend with its annotations; empty when the package does not exist.
+function rendersOf(backend) {
+  let tags
+  try {
+    tags = registry('oras', ['repo', 'tags', repoOf(backend)]).split('\n').map((t) => t.trim()).filter((t) => TAG.test(t))
+  } catch (e) {
+    if (e.notFound) return []
+    throw e
+  }
+  const renders = []
+  for (const tag of tags) {
+    const annotations = manifestOf(backend, tag)
+    if (annotations) renders.push({ tag, annotations, created: annotations['org.opencontainers.image.created'] || '' })
+  }
+  return renders
+}
+
+// The ERD never stops the site. A backend whose key at the ref has no render (erd.yml is still
+// running, or it failed) shows its newest render with a note; one with no render at all gets a card
+// that says so. Both print a warning. Only a real failure, such as a registry that does not answer,
+// exits non-zero.
 function assemble(siteErdArg, ref) {
   const siteErd = path.resolve(siteErdArg)
   const backends = backendsAt(ref)
   if (backends.length === 0) throw new Error(`no backend has resources/migrations/*.up.sql at ${ref}`)
+  const refName = ref.replace(/^origin\//, '')
 
   const plans = backends.map((backend) => {
-    const tag = `mig-${keyAt(backend, ref)}`
     const migrations = migrationsAt(backend, ref)
-    return { backend, tag, lastMigration: migrations[migrations.length - 1] }
+    const p = { backend, lastMigration: migrations[migrations.length - 1] }
+    try {
+      p.tag = `mig-${keyAt(backend, ref)}`
+    } catch (e) {
+      if (!e.noGenerator && !e.otherFormat) throw e
+      p.why = e.message
+    }
+    if (p.tag) {
+      p.annotations = manifestOf(backend, p.tag)
+      if (!p.annotations) p.why = `${repoOf(backend)}:${p.tag} does not exist`
+    }
+    if (!p.annotations) {
+      const newest = newestRender(rendersOf(backend))
+      if (newest) {
+        p.fallback = true
+        p.tag = newest.tag
+        p.annotations = newest.annotations
+        p.lastMigration = p.annotations['org.netcracker.apihub.erd.last-migration'] || p.lastMigration
+        console.log(
+          `::warning::erd.js assemble: ${backend} has no render for ${refName} (${p.why}); erd/${backend}/ shows the` +
+            ` older render ${p.tag} of ${formatDate(newest.created)}, which can lag behind the migrations at ${refName}`,
+        )
+      } else {
+        p.missing = true
+        console.log(`::warning::erd.js assemble: ${backend} has no render at all (${p.why}); erd/ says it is not rendered yet`)
+      }
+    }
+    return p
   })
 
-  // Every manifest first, so one run names every missing render.
-  const missing = []
-  for (const p of plans) {
-    try {
-      p.annotations = JSON.parse(registry('oras', ['manifest', 'fetch', `${repoOf(p.backend)}:${p.tag}`])).annotations || {}
-    } catch (e) {
-      if (!e.notFound) throw e
-      missing.push(`${p.backend} (${repoOf(p.backend)}:${p.tag})`)
-    }
-  }
-  if (missing.length) throw new Error(`no ERD render at ${ref} for ${missing.join(', ')}; run erd.yml on ${ref}`)
-
   fs.mkdirSync(siteErd, { recursive: true })
-  for (const p of plans) pull(p.backend, p.tag, path.join(siteErd, p.backend))
+  for (const p of plans) if (!p.missing) pull(p.backend, p.tag, path.join(siteErd, p.backend))
 
   const cards = plans.map((p) => ({
     backend: p.backend,
+    tag: p.tag,
+    fallback: Boolean(p.fallback),
+    missing: Boolean(p.missing),
     lastMigration: p.lastMigration,
-    revision: p.annotations['org.opencontainers.image.revision'] || '',
-    created: p.annotations['org.opencontainers.image.created'] || '',
+    revision: (p.annotations && p.annotations['org.opencontainers.image.revision']) || '',
+    created: (p.annotations && p.annotations['org.opencontainers.image.created']) || '',
   }))
-  fs.writeFileSync(path.join(siteErd, 'index.html'), renderIndex({ ref: ref.replace(/^origin\//, ''), cards }))
+  fs.writeFileSync(path.join(siteErd, 'index.html'), renderIndex({ ref: refName, cards }))
 
+  const shown = (c) => (c.missing ? 'not rendered yet' : c.fallback ? 'older render' : 'the ref\'s key')
   write([
     `### ERD at \`${ref}\``,
     '',
-    '| backend | render | last migration | commit |',
-    '|---|---|---|---|',
-    ...cards.map((c, i) => `| ${c.backend} | \`${plans[i].tag}\` | \`${c.lastMigration}\` | ${c.revision.slice(0, 9)} |`),
+    '| backend | render | shown | last migration | commit |',
+    '|---|---|---|---|---|',
+    ...cards.map((c) => `| ${c.backend} | ${c.tag ? `\`${c.tag}\`` : ''} | ${shown(c)} | \`${c.lastMigration}\` | ${c.revision.slice(0, 9)} |`),
   ])
 }
 
@@ -485,15 +571,18 @@ function gc(dry) {
   const refs = KEPT_BRANCHES.map(keptRef).filter(Boolean)
   if (refs.length === 0) throw new Error(`none of ${KEPT_BRANCHES.join(', ')} exists on origin; refusing to treat that as nothing to keep`)
 
-  // backend -> the tags its kept branches' keys name.
+  // backend -> the tags its kept branches' keys name. A kept branch whose erd.js uses another key
+  // formula has a key this script cannot compute, so that backend keeps every version (`why`).
   const keep = new Map()
+  const keepAll = new Map()
   for (const ref of refs) {
     for (const backend of backendsAt(ref)) {
       if (!keep.has(backend)) keep.set(backend, new Set())
       try {
         keep.get(backend).add(`mig-${keyAt(backend, ref)}`)
       } catch (e) {
-        if (!e.noGenerator) throw e
+        if (e.otherFormat) keepAll.set(backend, e.message)
+        else if (!e.noGenerator) throw e
       }
     }
   }
@@ -507,6 +596,10 @@ function gc(dry) {
   let failures = 0
   for (const [backend, kept] of keep) {
     const pkg = `erd-${backend}`
+    if (keepAll.has(backend)) {
+      lines.push(`| ${pkg} | | | kept every version: ${keepAll.get(backend)} |`)
+      continue
+    }
     const api = `users/${owner()}/packages/container/${pkg}/versions`
     let versions
     try {
@@ -543,8 +636,8 @@ function gc(dry) {
 // ---- main -------------------------------------------------------------------------------------
 
 module.exports = {
-  detectBackends, orderMigrations, generatorFiles, computeKey, keyFormatOf, keyAt, databaseName, renderIndex, formatDate,
-  selectGc, KEY_FORMAT,
+  detectBackends, orderMigrations, generatorFiles, computeKey, keyFormatOf, keyAt, databaseName, newestRender, renderIndex,
+  formatDate, selectGc, KEY_FORMAT,
 }
 
 const USAGE = 'usage: erd.js backends <ref> | key <backend> <ref> | render <backend> <out> | assemble <site-erd-dir> <ref> | gc [--dry-run]'

@@ -15,8 +15,6 @@
 //   --index <dir>              the navigation page's templates (default sites/index)
 //   --repo-url <url>           for the footer and the docs placeholder (default from GITHUB_*)
 //   --budget-mib <n>           the whole site's budget (default 900)
-//   --erd-optional             a failed ERD assembly gives a placeholder erd/index.html and a
-//                              warning instead of a failure; also ERD_OPTIONAL=true
 //   --erd-script <js>, --storybook-script <js>
 //                              the scripts to run for those sections (default tools/ci/erd.js and
 //                              tools/ci/storybook-site.js); tests and local runs pass stubs
@@ -27,7 +25,8 @@
 //   /404.html          the template with the Storybook text; /404-map.js routes the legacy URLs
 //   /landing/          the landing
 //   /docs/             the docs site
-//   /erd/              tools/ci/erd.js assemble
+//   /erd/              tools/ci/erd.js assemble, which handles a missing render itself (an older
+//                      render or a "not rendered yet" card), so its failure fails the run
 //   /pages/erd/        a redirect to /erd/portal-backend/, the legacy ERD
 //   /storybook/        tools/ci/storybook-site.js assemble, with the budget the rest leaves
 //
@@ -181,17 +180,6 @@ function docsPlaceholder({ repoUrl, commit }) {
   })
 }
 
-// erd/index.html when the ERD assembly failed and ERD_OPTIONAL allowed it.
-function erdPlaceholder({ backends, rendered, reason }) {
-  return page({
-    title: 'Database ERD',
-    depth: 1,
-    body: `    <p id="message">Not every ERD is rendered yet (${html(reason)}). The ERD workflow renders them
-      when the migrations change on <code>develop</code> or <code>main</code>.</p>
-    ${erdBackends(backends, rendered, '')}`,
-  })
-}
-
 // pages/erd/index.html: the legacy ERD's entry point. The 404 page redirects the other legacy
 // ERD paths; this one has a file, so it also works without JavaScript.
 function legacyErdStub() {
@@ -215,7 +203,7 @@ function parseArgs(argv) {
     '--landing', '--docs', '--ref', '--commit', '--landing-ref', '--landing-commit', '--index', '--repo-url',
     '--budget-mib', '--erd-script', '--storybook-script',
   ])
-  const boolean = new Set(['--erd-optional'])
+  const boolean = new Set()
   const positional = []
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
@@ -259,26 +247,17 @@ function node(script, args, { capture = false } = {}) {
   return r.status
 }
 
-function erdSection({ site, commit, script, optional }) {
+// erd.js assemble shows an older render, or a "not rendered yet" card, for a backend without a
+// render of its own, so a non-zero exit is a real failure (such as a registry that does not
+// answer) and fails the run.
+function erdSection({ site, commit, script }) {
   const dir = path.join(site, 'erd')
-  let backends = []
-  let failure = null
-  try {
-    if (!fs.existsSync(script)) throw new Error(`${path.relative(REPO_ROOT, script) || script} does not exist`)
-    backends = node(script, ['backends', commit], { capture: true }).split('\n').map((l) => l.trim()).filter(Boolean)
-    const status = node(script, ['assemble', dir, commit])
-    if (status !== 0) failure = `erd.js assemble exited with ${status}`
-  } catch (e) {
-    failure = String(e.message).split('\n')[0]
-  }
+  if (!fs.existsSync(script)) throw new Error(`${path.relative(REPO_ROOT, script) || script} does not exist`)
+  const backends = node(script, ['backends', commit], { capture: true }).split('\n').map((l) => l.trim()).filter(Boolean)
+  const status = node(script, ['assemble', dir, commit])
+  if (status !== 0) throw new Error(`the ERD assembly failed: erd.js assemble exited with ${status}`)
   const rendered = backends.filter((b) => fs.existsSync(path.join(dir, b, 'index.html')))
-  if (failure) {
-    if (!optional) throw new Error(`the ERD assembly failed: ${failure}`)
-    console.log(`::warning::the ERD assembly failed (${failure}); ERD_OPTIONAL is set, so erd/ gets a placeholder page`)
-    fs.mkdirSync(dir, { recursive: true })
-    fs.writeFileSync(path.join(dir, 'index.html'), erdPlaceholder({ backends, rendered, reason: failure }))
-  }
-  return { backends, rendered, failure }
+  return { backends, rendered }
 }
 
 function main(argv) {
@@ -295,7 +274,6 @@ function main(argv) {
   const budgetMib = Number(opts['budget-mib'] || DEFAULT_BUDGET_MIB)
   if (!Number.isFinite(budgetMib) || budgetMib <= 0) throw new Error(`--budget-mib must be a positive number, got '${opts['budget-mib']}'`)
   const budgetBytes = Math.min(Math.floor(budgetMib * MIB), SITE_LIMIT)
-  const erdOptional = opts.flags.has('erd-optional') || process.env.ERD_OPTIONAL === 'true'
   const erdScript = path.resolve(opts['erd-script'] || path.join(__dirname, 'erd.js'))
   const storybookScript = path.resolve(opts['storybook-script'] || path.join(__dirname, 'storybook-site.js'))
 
@@ -320,7 +298,7 @@ function main(argv) {
   fs.mkdirSync(path.join(site, 'pages', 'erd'), { recursive: true })
   fs.writeFileSync(path.join(site, 'pages', 'erd', 'index.html'), legacyErdStub())
 
-  const erd = erdSection({ site, commit: opts.commit, script: erdScript, optional: erdOptional })
+  const erd = erdSection({ site, commit: opts.commit, script: erdScript })
 
   const read = (f) => fs.readFileSync(path.join(indexDir, f), 'utf8')
   fs.writeFileSync(path.join(site, '404.html'), fillPlaceholders(read('404.html'), { STORYBOOK_404_TEXT: NOT_PUBLISHED_HTML }))
@@ -372,7 +350,7 @@ function summarize({ sizes, total, budgetBytes, storybookBytes, opts, docs, erd,
     ['/', 'the navigation page, the 404 page, and the legacy ERD redirect', sizes.root],
     ['landing/', `the landing, from ${landingFrom}`, sizes.landing],
     ['docs/', docs === 'site' ? 'the docs site' : 'a placeholder: no docs site at the ref', sizes.docs],
-    ['erd/', erd.failure ? `a placeholder: ${erd.failure}` : `${erd.rendered.length} ERDs`, sizes.erd],
+    ['erd/', `${erd.rendered.length} of ${erd.backends.length} ERDs`, sizes.erd],
     [`${STORYBOOK}/`, `${published.length} components, within ${mib(storybookBytes)}`, sizes[STORYBOOK]],
   ]
   const lines = [
@@ -400,7 +378,6 @@ module.exports = {
   erdBackends,
   buildRef,
   docsPlaceholder,
-  erdPlaceholder,
   legacyErdStub,
   parseArgs,
   TEMPLATES,
