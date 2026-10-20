@@ -1,3 +1,5 @@
+# ResponseBody. Schema
+
 ## Schema
 
 For ResponseBody schemas, changes are classified according to **Schema Changes** with **Scope Response**.

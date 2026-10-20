@@ -1,3 +1,4 @@
+# Object Output Type of Root Type that Implements Interface
 
 | # | Change id | Example | ER | Storybook |
 |---|-----------|---------|----|-----------|

@@ -1,3 +1,4 @@
+# Root Type General
 
 | # | Change id | Example | ER | Storybook |
 |---|-----------|---------|----|-----------|

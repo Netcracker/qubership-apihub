@@ -1,3 +1,5 @@
+# ResponseBody. Examples
+
 | | Path | Change id | Comment | Example | Severity | Approved | Version Combination | Link |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | paths.[\*].[\*].responseBody.content.[\*].[\*].examples | add-examples-object-for-response-body | | [before](https://github.com/Netcracker/qubership-apihub-compatibility-suites/blob/develop/bin/comparison-base-suite/openapi/response-body-examples/add-examples-object-for-response-body/before.yaml) [after](https://github.com/Netcracker/qubership-apihub-compatibility-suites/blob/develop/bin/comparison-base-suite/openapi/response-body-examples/add-examples-object-for-response-body/after.yaml) | annotation | | | add-examples-object-for-response-body |

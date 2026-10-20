@@ -1,3 +1,5 @@
+# Headers
+
 | | Path | Change id | Comment | Example | Severity | Approved | Version Combination | Link |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | components.headers.[\*].$ref with sibling | add-overriden-description | add description that overrides $ref (sibling) | [before](https://github.com/Netcracker/qubership-apihub-compatibility-suites/blob/develop/bin/comparison-base-suite/openapi/headers/add-overriden-description/before.yaml) [after](https://github.com/Netcracker/qubership-apihub-compatibility-suites/blob/develop/bin/comparison-base-suite/openapi/headers/add-overriden-description/after.yaml) | annotation | | [3.1.0, 3.1.0], [3.0.0, 3.1.0] | add-overriden-description |

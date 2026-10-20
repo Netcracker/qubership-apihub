@@ -1,3 +1,5 @@
+# Search Scope for REST API
+
 **Design Item ID**: DI-Portal-GS-001   
 **Design Item Name**: Search Scope for REST Operations   
 **Related Design Items**: [Global Search](https://github.com/Netcracker/qubership-apihub/wiki/Global-Search)   

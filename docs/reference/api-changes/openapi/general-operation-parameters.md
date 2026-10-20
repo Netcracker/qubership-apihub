@@ -1,3 +1,5 @@
+# General Operation Parameters
+
 | | Path | Change id | Comment | Example | Severity | Approved | Version Combination | Link |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | paths.[&lt;path&gt;] | add-new-path | add new path with any method | [before](https://github.com/Netcracker/qubership-apihub-compatibility-suites/blob/develop/bin/comparison-base-suite/openapi/general-operation-parameters/add-new-path/before.yaml) [after](https://github.com/Netcracker/qubership-apihub-compatibility-suites/blob/develop/bin/comparison-base-suite/openapi/general-operation-parameters/add-new-path/after.yaml) | non-breaking | Approved | | add-new-path |

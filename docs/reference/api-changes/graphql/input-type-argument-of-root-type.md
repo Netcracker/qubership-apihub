@@ -1,3 +1,4 @@
+# Input Type Argument of Root Type
 
 | # | Change id | Example | ER | Storybook |
 |---|-----------|---------|----|-----------|

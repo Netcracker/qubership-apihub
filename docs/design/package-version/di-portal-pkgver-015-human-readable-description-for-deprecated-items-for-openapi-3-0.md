@@ -1,3 +1,5 @@
+# DI-Portal-PKGVER-015 Human-readable description for deprecated items for OpenAPI 3.0
+
 **Design Item ID**: DI-Portal-PKGVER-015  
 **Design Item Name**: Human-readable description for deprecated items for OpenAPI 3.0  
 **Related Design Items**: 

@@ -1,3 +1,5 @@
+# Response
+
 | | Path | Change id | Comment | Example | Severity | Approved | Version Combination | Link |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | paths.[\*].[\*].responses.[<responseCode>] | add-new-response | add any response code | [before](https://github.com/Netcracker/qubership-apihub-compatibility-suites/blob/develop/bin/comparison-base-suite/openapi/response/add-new-response/before.yaml) [after](https://github.com/Netcracker/qubership-apihub-compatibility-suites/blob/develop/bin/comparison-base-suite/openapi/response/add-new-response/after.yaml) | non-breaking | | | add-new-response |

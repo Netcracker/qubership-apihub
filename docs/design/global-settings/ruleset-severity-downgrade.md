@@ -1,3 +1,5 @@
+# Ruleset Severity Downgrade
+
 ## Summary
 
 All Spectral linter rulesets (OpenAPI 2.0, OpenAPI 3.0, OpenAPI 3.1, AsyncAPI 3.0) have been updated to downgrade every rule's severity by one level: `error` → `warn`, `warn` → `info`, `info` → `hint`. This ensures that no ruleset produces `error`-level findings from linter rules, which is a prerequisite for the safe rollout of Quality Gate v4 on production. The recommended Spectral rules remain active — only their severity has been lowered, not their logic.

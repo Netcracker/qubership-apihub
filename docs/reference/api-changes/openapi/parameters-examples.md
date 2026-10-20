@@ -1,3 +1,5 @@
+# Parameters. Examples
+
 | | Path | Change id | Comment | Example | Severity | Approved | Version Combination | Link |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | paths.[\*].[\*].parameters.[\*].examples | add-examples-object-for-parameter | | [before](https://github.com/Netcracker/qubership-apihub-compatibility-suites/blob/develop/bin/comparison-base-suite/openapi/parameters-examples/add-examples-object-for-parameter/before.yaml) [after](https://github.com/Netcracker/qubership-apihub-compatibility-suites/blob/develop/bin/comparison-base-suite/openapi/parameters-examples/add-examples-object-for-parameter/after.yaml) | annotation | | | add-examples-object-for-parameter |
