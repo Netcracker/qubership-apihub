@@ -137,4 +137,4 @@ These must stay **aligned across files/env**:
 |-------|--------|
 | Auth / SAML / OIDC model | Backend [security_model.md](../backend/portal-backend/docs/security/security_model.md), **`security.externalIdentityProviders`** in **`config.template.yaml`** |
 | Data retention / cleanup jobs | Backend **`cleanup`** section + [data_maintenance](../backend/portal-backend/docs/data_maintenance.md) |
-| End user workflows | Portal & Agents Markdown guides ([Portal User Guide](../frontend/ui/docs/Portal%20User%20Guide.md), [Agent User Guide](../frontend/ui/docs/Agent%20User%20Guide.md)) + [Wiki](https://github.com/Netcracker/qubership-apihub/wiki) |
+| End user workflows | Portal & Agents Markdown guides ([Portal User Guide](../frontend/ui/docs/Portal%20User%20Guide.md), [Agent User Guide](../frontend/ui/docs/Agent%20User%20Guide.md)) + [design items](design/) |

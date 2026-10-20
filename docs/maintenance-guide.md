@@ -61,19 +61,19 @@ Detailed protocol behaviours: **[`security/security_model.md`](../backend/portal
 
 ### Access tokens lifecycle
 
-Operational playbook (system vs personal tokens): **[Access Tokens Management (Wiki)](https://github.com/Netcracker/qubership-apihub/wiki/Access-Tokens-Management)**.
+Operational playbook (system vs personal tokens): **[Access Tokens Management](design/package-settings/di-portal-ps-003-access-tokens-management.md)**.
 
 ### Personal access tokens
 
-Wiki: **[Manage Personal Access Tokens](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90US%E2%80%90001-Manage-Personal-Access-Tokens)**.
+Design item: **[Manage Personal Access Tokens](design/user-settings/di-portal-us-001-manage-personal-access-tokens.md)**.
 
 ### Package roles
 
-Wiki: **[Manage Roles](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90GS%E2%80%90001-Manage-Roles)**.
+Design item: **[Manage Roles](design/global-settings/di-portal-gs-001-manage-roles.md)**.
 
 ### Global settings surface
 
-Wiki: **[Configuration Parameters](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90GS%E2%80%90006-Configuration-Parameters)** (UI-side toggles complementing backend YAML).
+Design item: **[Version Validation](design/global-settings/di-portal-gs-006-version-validation.md)** (UI-side toggles complementing backend YAML).
 
 ---
 

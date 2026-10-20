@@ -58,8 +58,8 @@ The **Portal** UI: catalog, version comparison, interactive documentation, and o
 | **Builder** | NestJS workers consume the TypeScript processing stack (normalize → diff → changelog → export). |
 | **Extensions** | API Linter (Spectral / AI / scoring), Agents Backend for remote discovery agents. |
 
-For a **detailed** diagram, API-type matrix, and extension roadmap, see the **[Architecture landscape](https://github.com/Netcracker/qubership-apihub/wiki/Architecture-landscape)** on the wiki.  
-For a **full feature list**, see **[Features list](https://github.com/Netcracker/qubership-apihub/wiki/Features-list)**.
+For a **detailed** diagram, API-type matrix, and extension roadmap, see the **[Architecture landscape](docs/architecture/overview.md)** in the docs.  
+For a **full feature list**, see **[Features list](docs/architecture/features.md)**.
 
 ---
 
@@ -100,7 +100,7 @@ Pluggable quality gate: **Spectral** for OpenAPI and AsyncAPI, optional **OpenAI
 - [`backend/agents-backend`](./backend/agents-backend/)
 - [`backend/agent`](./backend/agent/)
 
-More context: [Supplementary applications](https://github.com/Netcracker/qubership-apihub/wiki#supplementary-applications) on the wiki.
+More context: the [documentation index](docs/README.md).
 
 ---
 
@@ -108,14 +108,14 @@ More context: [Supplementary applications](https://github.com/Netcracker/qubersh
 
 | | |
 |--|--|
-| **Hub (start here)** | [docs/README.md](./docs/README.md) — layered guides, Helm/Compose anchors, wiki links |
+| **Hub (start here)** | [docs/README.md](./docs/README.md) — layered guides, Helm/Compose anchors, design item links |
 | **Configuration map** | [docs/configuration-reference.md](./docs/configuration-reference.md) — files vs env vars vs Helm; template repos |
 | **Installation** | [docs/installation-guide.md](./docs/installation-guide.md) |
 | **Administration** | [docs/admin-guide.md](./docs/admin-guide.md) |
 | **User guide** | [docs/user-guide.md](./docs/user-guide.md) |
 | **Maintenance** | [docs/maintenance-guide.md](./docs/maintenance-guide.md) |
 | **Project history** | [docs/apihub-history.md](./docs/apihub-history.md) |
-| **Wiki** | [Qubership APIHUB Wiki](https://github.com/Netcracker/qubership-apihub/wiki) |
+| **Documentation** | [docs/README.md](./docs/README.md) — design items, architecture, API change rules |
 
 ---
 

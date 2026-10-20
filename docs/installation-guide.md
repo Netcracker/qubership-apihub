@@ -584,4 +584,4 @@ For secrets management on production clusters use Kubernetes **ExternalSecrets**
 - [Maintenance guide](./maintenance-guide.md) — backups, data TTL, auth links
 - [User guide](./user-guide.md) — Portal workflows
 
-Wiki (architecture, features): **[Qubership APIHUB Wiki](https://github.com/Netcracker/qubership-apihub/wiki)**
+Architecture and features: **[Architecture overview](architecture/overview.md)**

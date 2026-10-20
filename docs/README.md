@@ -2,7 +2,7 @@
 
 Shipped beside Helm charts and Compose stacks inside repository [**qubership-apihub**](https://github.com/Netcracker/qubership-apihub). This hub is deliberately **installation- and operator-centric** so a single checkout answers “how do I run it reproducibly?”
 
-High-level narratives (architecture roadmap, backlog process) evolve on the [GitHub Wiki](https://github.com/Netcracker/qubership-apihub/wiki).
+High-level narratives (architecture roadmap, backlog process) live in [architecture](architecture/overview.md) and [design items](design/).
 
 ---
 
@@ -13,7 +13,7 @@ High-level narratives (architecture roadmap, backlog process) evolve on the [Git
 | [Configuration reference](./configuration-reference.md) | DevOps / platform | **Helm-first K8s contract**, then compose; **runtime truth per service source** (`config.yaml` for backend, agent, linter, and agents-backend; UI and builder env-only) |
 | [Installation guide](./installation-guide.md) | Same | Prerequisites, Compose/Podman walkthrough (ports, JWT, substitutions), Helm install/upgrade, quickstart pointers |
 | [Admin guide](./admin-guide.md) | Platform owners post-install | SSO rotation, Helm operations, Compose caveats (`generate_env_*`), extensions matrix |
-| [Maintenance guide](./maintenance-guide.md) | Operators on-call | Postgres backup tables, TTL links, SSO/token wiki hops |
+| [Maintenance guide](./maintenance-guide.md) | Operators on-call | Postgres backup tables, TTL links, SSO/token design item links |
 | [User guide](./user-guide.md) | Portal/API authors | Everyday vocabulary/workflows + links into UI-repo Markdown UX guides |
 | [Release process](./development/release-process.md) | Maintainers who cut a release | Release start/finish, dry run, hotfixes, bots, version and tag rules |
 
@@ -21,13 +21,13 @@ High-level narratives (architecture roadmap, backlog process) evolve on the [Git
 
 ---
 
-## Wiki vs this folder
+## Architecture and design pages vs deployment pages
 
 | Topic | Where it lives |
 |-------|----------------|
-| Landscape diagram, TS processing stack matrix | Wiki — [Architecture landscape](https://github.com/Netcracker/qubership-apihub/wiki/Architecture-landscape) |
-| Feature inventory (`asyncapi`, AI scoring…) | Wiki — [Features list](https://github.com/Netcracker/qubership-apihub/wiki/Features-list) |
-| Process / ticketing / branching | Wiki — [Development Management Guide](https://github.com/Netcracker/qubership-apihub/wiki/Development-Management-Guide) |
+| Landscape diagram, TS processing stack matrix | [Architecture landscape](architecture/overview.md) |
+| Feature inventory (`asyncapi`, AI scoring…) | [Features list](architecture/features.md) |
+| Process / ticketing / branching | [Development Management Guide](internal/process.md) |
 | **Exact chart values, Compose env keys, JWT scripts** | This repository — `docs/` + `deploy/helm-templates/` + `deploy/docker-compose/` |
 
 ---

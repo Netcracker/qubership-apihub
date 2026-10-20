@@ -11,7 +11,7 @@ Audience: **platform owners and SRE/DevOps** wiring APIHUB into an environment. 
 | Who reads YAML vs env at runtime (+ Helm precedence) | [Configuration reference](./configuration-reference.md) — **Source of truth hierarchy** |
 | Install paths, ports | [Installation guide](./installation-guide.md) |
 | Backups, TTL, auth deep links | [Maintenance guide](./maintenance-guide.md) |
-| Architecture/features product context | [Wiki](https://github.com/Netcracker/qubership-apihub/wiki), [root readme](../README.md) |
+| Architecture/features product context | [Architecture overview](architecture/overview.md), [root readme](../README.md) |
 
 ---
 

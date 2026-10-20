@@ -9,7 +9,7 @@ qubership-apihub-agent is a golang application (microservice) providing the foll
 
 ## Arch diagramm
 
-Please refer to Qubership-APIHUB Wiki [pages](https://github.com/Netcracker/qubership-apihub/wiki).
+Please refer to the [documentation](../../docs/README.md).
 
 ## API specification disovery process and contracts
 

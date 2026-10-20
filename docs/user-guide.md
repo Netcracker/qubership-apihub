@@ -40,7 +40,7 @@ Screenshots-only guidance is intentionally kept light here; authoritative step-b
 |------|----------------|
 | Portal ergonomics | [Portal User Guide (GitHub)](../frontend/ui/docs/Portal%20User%20Guide.md) |
 | Agents workflows | [Agent User Guide (GitHub)](../frontend/ui/docs/Agent%20User%20Guide.md) |
-| Roles & PATs wiki | Wiki links from [Maintenance guide § Security](./maintenance-guide.md#security) |
+| Roles & PATs design items | Design item links from [Maintenance guide § Security](./maintenance-guide.md#security) |
 
 ---
 
@@ -48,7 +48,7 @@ Screenshots-only guidance is intentionally kept light here; authoritative step-b
 
 The Builder resolves external refs (Swagger/OpenAPI/AsyncAPI chains), derives normalized operations, classifies deltas (breaking, safe, annotations), emits human-readable changelog text, persists artifacts inside the Registry. Knowing this explains why malformed references or gigantic archives fail fast—ask administrators to review limits and logs when publishes stall.
 
-Supported input families include **Swagger 2**, **OpenAPI 3.x**, **GraphQL schema & introspection**, **AsyncAPI** (per current product matrix — see Wiki feature list).
+Supported input families include **Swagger 2**, **OpenAPI 3.x**, **GraphQL schema & introspection**, **AsyncAPI** (per current product matrix — see the [features list](architecture/features.md)).
 
 ---
 
@@ -66,5 +66,5 @@ End-user settings (language, PATs where allowed, favorites, notifications) persi
 
 ## Further reading
 
-- [Features list (Wiki)](https://github.com/Netcracker/qubership-apihub/wiki/Features-list) — capability checklist including AsyncAI, MCP, scoring.  
-- [Architecture landscape (Wiki)](https://github.com/Netcracker/qubership-apihub/wiki/Architecture-landscape) — optional background for champions training teams.  
+- [Features list](architecture/features.md) — capability checklist including AsyncAI, MCP, scoring.  
+- [Architecture landscape](architecture/overview.md) — optional background for champions training teams.  
