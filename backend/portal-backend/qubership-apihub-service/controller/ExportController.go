@@ -1445,6 +1445,7 @@ func (e exportControllerImpl) StartAsyncExport(w http.ResponseWriter, r *http.Re
 	err = e.validatePackageAndVersion(ctx, discriminator)
 	if err != nil {
 		e.responder.RespondWithError(w, r, "request validation failed", err)
+		return
 	}
 
 	sufficientPrivileges, err := e.roleService.HasRequiredPermissions(ctx, discriminator.PackageId, view.ReadPermission)
