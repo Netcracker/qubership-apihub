@@ -11,12 +11,12 @@ import { withBase } from '../lib/paths';
 const home = import.meta.env.BASE_URL;
 
 const services = [
-  { name: 'apihub-backend', desc: 'Core REST API server (Go)', color: 'blue' },
-  { name: 'apihub-ui', desc: 'React frontend SPA', color: 'violet' },
-  { name: 'postgresql', desc: 'Relational database', color: 'indigo' },
-  { name: 'minio', desc: 'S3-compatible object storage', color: 'cyan' },
-  { name: 'keycloak', desc: 'Identity & SSO (optional)', color: 'orange' },
-  { name: 'k8s-agent', desc: 'Kubernetes discovery agent', color: 'emerald' },
+  { name: 'qubership-apihub-ui', desc: 'Portal, browser entry point (port 8081)', color: 'violet' },
+  { name: 'qubership-apihub-backend', desc: 'Core REST API server (port 8090)', color: 'blue' },
+  { name: 'qubership-apihub-build-task-consumer', desc: 'Builder that processes package version builds', color: 'cyan' },
+  { name: 'qubership-api-linter-service', desc: 'API linter (port 8091)', color: 'orange' },
+  { name: 'qubership-apihub-agents-backend', desc: 'Agents backend API (port 8092)', color: 'emerald' },
+  { name: 'postgres', desc: 'Bundled PostgreSQL database (port 5432)', color: 'indigo' },
 ];
 
 const colorMap: Record<string, string> = {
@@ -93,7 +93,7 @@ const colorMap: Record<string, string> = {
     <div class="max-w-5xl mx-auto">
       <div class="text-center mb-10">
         <h2 class="text-2xl md:text-3xl font-bold text-white mb-3">Architecture overview</h2>
-        <p class="text-slate-400">Six services, cleanly separated. Deploy only what you need.</p>
+        <p class="text-slate-400">Six containers in the Compose stack, cleanly separated. In Kubernetes, deploy only what you need.</p>
       </div>
       <div class="rounded-2xl overflow-hidden border border-slate-800">
         <div class="px-4 py-2 bg-slate-900 border-b border-slate-800 flex items-center gap-2">
@@ -116,7 +116,7 @@ const colorMap: Record<string, string> = {
     <div class="max-w-5xl mx-auto">
       <div class="text-center mb-10">
         <h2 class="text-2xl md:text-3xl font-bold text-white mb-3">Service components</h2>
-        <p class="text-slate-400">Each service is independently deployable and horizontally scalable.</p>
+        <p class="text-slate-400">The generic Docker Compose stack for local development and demos runs these containers.</p>
       </div>
       <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
         {services.map((s) => (
@@ -152,16 +152,16 @@ const colorMap: Record<string, string> = {
             <div class="mt-1"><span class="text-blue-400">$</span> <span class="text-slate-200">git clone https://github.com/Netcracker/qubership-apihub.git</span></div>
           </div>
           <div>
-            <span class="text-slate-500"># Navigate to docker-compose directory</span>
-            <div class="mt-1"><span class="text-blue-400">$</span> <span class="text-slate-200">cd qubership-apihub/docker-compose</span></div>
+            <span class="text-slate-500"># Go to the repository root</span>
+            <div class="mt-1"><span class="text-blue-400">$</span> <span class="text-slate-200">cd qubership-apihub</span></div>
           </div>
           <div>
-            <span class="text-slate-500"># Start all services</span>
-            <div class="mt-1"><span class="text-blue-400">$</span> <span class="text-slate-200">docker compose up -d</span></div>
+            <span class="text-slate-500"># Generate keys and config, then start all containers</span>
+            <div class="mt-1"><span class="text-blue-400">$</span> <span class="text-slate-200">./deploy/docker-compose/apihub-generic/generate_env_and_up_compose.sh</span></div>
           </div>
           <div class="pt-2 border-t border-slate-800">
             <span class="text-slate-500"># Open in browser</span>
-            <div class="mt-1"><span class="text-emerald-400">→</span> <span class="text-slate-200">http://localhost:8080</span></div>
+            <div class="mt-1"><span class="text-emerald-400">→</span> <span class="text-slate-200">http://localhost:8081/login</span></div>
           </div>
         </div>
       </div>
