@@ -12,6 +12,7 @@ the schema; version *B* rolls out; they need to know **which schema changes requ
 adapt the dashboard, and which are safe to ignore.**
 
 **The classification contract — "query still runs" (executional compatibility).** A change is:
+
 - **`breaking`** iff there exists a query that was valid against the old schema and now **fails
   to execute** against the new schema (relation/column gone, or an operation that was type-valid
   is no longer type-valid).
@@ -33,6 +34,7 @@ the same dialect-split mechanism. The two libraries are linked via `npm link` fo
 ## 2. Current state (verified in this branch)
 
 **api-unifier — ddlapi normalization already landed:**
+
 - `src/spec-type.ts` — `SPEC_TYPE_DDL_API_1 = 'ddlapi-1.0'`, `SPEC_TYPE_DDL_API_TYPE_FAMILY`,
   `isDdlApi`, and a `resolveSpec` branch that recognises a Realm by its `ddlapi` version
   string (deliberately placed before the JSON-Schema fallthrough).
@@ -50,6 +52,7 @@ a different session/branch — see memory `project-ddl-prototype` — but it is 
 `feature/ddl`**. Its architectural findings are reused below but the code must be re-created.)
 
 **api-diff — the two prerequisite core changes are also not yet done here:**
+
 - `createPropertyMappingResolver` still lives in `src/asyncapi/asyncapi3.mapping.ts` (imported
   by `asyncapi3.rules.ts`); it has **not** been extracted to `src/core/mapping.ts`.
 - There is **no** rule-level mechanism to suppress a diff for a specific property.
@@ -57,15 +60,19 @@ a different session/branch — see memory `project-ddl-prototype` — but it is 
 ## 3. How api-diff registers a spec type (the integration contract)
 
 A new spec type is added by:
+
 1. Resolving it in api-unifier `resolveSpec` → already done (`SPEC_TYPE_DDL_API_1`).
 2. Adding an engine to `COMPARE_ENGINES_MAP` in `src/api.ts`:
+
    ```ts
    [SPEC_TYPE_DDL_API_1]: compareDdlApi(SPEC_TYPE_DDL_API_1),
    ```
+
 3. Teaching `areSpecTypesCompatible` / `selectEngineSpecType` in `src/api.ts` about ddlapi
    (ddlapi only compares against ddlapi; no cross-version coercion in v1 since there is one
    version).
 4. An engine module mirroring `src/asyncapi/asyncapi3.compare.ts`:
+
    ```ts
    export const compareDdlApi = (version: typeof SPEC_TYPE_DDL_API_1) =>
      (before, after, options: StrictCompareOptions): CompareResult =>
@@ -249,6 +256,7 @@ function consumptionFamily(t: SchemaType, dialect): TypeConsumptionFamily
 ```
 
 Classification of `old → new` on `column.type.type`, under the "query still runs" contract (§1):
+
 - **Same family** → `non-breaking`: every operation that was type-valid on the old type is still
   type-valid on the new one (smallint→integer→bigint, varchar(50)→varchar(200), float→decimal all
   keep `numeric`/`textual` operations valid). **Within-family precision/size changes — including
@@ -330,6 +338,7 @@ the engine normalizes), but any hand-built fixtures must include the empty array
 single tree that embeds diff metadata, and a hard contract holds: **when one logical entity is
 referenced from several places, the change to it is represented by the *same* `Diff` instance
 at every reference site.** Examples that matter for ddlapi:
+
 - an `EnumType` used to type several columns → adding a value yields **one** diff, shared at
   every column that uses that enum;
 - a `Column` instance that is also part of an index (`indexPart.column`) and/or a foreign key
@@ -338,6 +347,7 @@ at every reference site.** Examples that matter for ddlapi:
 
 **This is already provided by the core engine** — no new mechanism needed — via two cooperating
 caches in `src/core/compare.ts`:
+
 - `createdMergedJso: Set<JsonNode>` — when the crawl reaches a merged node it has already
   produced (a shared or cyclic instance reached by a second parent), it returns `{ done: true }`
   and reuses the existing merged node *together with its attached diff meta*. So the merged tree
@@ -353,6 +363,7 @@ columns reference table column instances, and the lazy `fk.refTable` edge points
 table object. The engine's shared-instance handling then "just works" on that graph.
 
 **Constraints this puts on ddlapi rules (must-follow):**
+
 - **Never clone or structurally replace a shared node in an `adapter`.** An adapter that returns
   a new object for `column.type`/`column`/enum would split one instance into many and break the
   shared-diff contract. This is the decisive reason to use **suppress-diff (§9b) instead of the
@@ -425,6 +436,7 @@ decided by the parent mapping (`exitHook`), not intercepted here — fine for `/
 `column.type.raw`, which are always present on both sides (see T0.2).
 
 Wired into ddlapi rules at:
+
 - `'/kind': { ignoreDifference: true }` on **every** node that carries a `kind` discriminant
   (technical, no domain meaning).
 - `column.type` → `'/raw': { ignoreDifference: true }` — `raw` is redundant with `type` (§7);
@@ -455,6 +467,7 @@ schema by omitting the `schemaName` param).
 
 Proposed template families (suitability picks the variant; the `in schema` variant wins only
 when a non-default `schemaName` param is supplied):
+
 ```text
 "{{action}} table {{tableName}}"
 "{{action}} table {{tableName}} in schema {{schemaName}}"
@@ -467,6 +480,7 @@ when a non-default `schemaName` param is supplied):
 "{{action}} value {{enumValue}} {{preposition}} enum {{enumTypeName}}"
 "{{action}} value {{enumValue}} {{preposition}} enum {{enumTypeName}} in schema {{schemaName}}"
 ```
+
 Phase-2 description-at-object-level (cases 11s–13s) reuses the `table`/`schema` families above
 with `facet=description`. **Phase 3 (tasks T5.1–T5.3) adds three more "`<entity> <name> on table
 <t>`" families** (each with an optional `in schema` variant) for index, primary key, foreign key,
@@ -587,6 +601,7 @@ Verification uses the project's real scripts (`package.json`): lint `npm run lin
 ### M0 — core prerequisites (shared-core; no ddl code; independently reviewable)
 
 #### T0.1 — Move `createPropertyMappingResolver` to core  ·  S  ·  (§9a)
+
 - **Depends:** — · **Files:** `src/core/mapping.ts`, `src/core/index.ts`,
   `src/asyncapi/asyncapi3.mapping.ts`, `src/asyncapi/asyncapi3.rules.ts`, `test/core.mapping.test.ts`
 - **Do:** move the function into core; **delete** it from `asyncapi3.mapping.ts` (no re-export);
@@ -596,6 +611,7 @@ Verification uses the project's real scripts (`package.json`): lint `npm run lin
 - **Verify:** `npx jest test/asyncapi` · `npx jest test/core.mapping.test.ts`
 
 #### T0.2 — `ignoreDifference` rule: resolve design + implement  ·  M  ·  (§9b; Finding 5)
+
 - **Depends:** — · **Files:** `src/types/rules.ts`, `src/core/compare.ts`, `src/core/index.ts`,
   `test/core.ignoreDifference.test.ts`
 - **Resolved design (closes the "skip at hook entry vs filter at `addDiff`" question):** implement
@@ -616,6 +632,7 @@ Verification uses the project's real scripts (`package.json`): lint `npm run lin
 ### M1 — wiring + skeleton
 
 #### T1.1 — Engine registration in `api.ts`  ·  S
+
 - **Depends:** T-SETUP · **Files:** `src/api.ts`, `src/ddl/ddl.compare.ts`, `src/ddl/index.ts`,
   `src/index.ts`
 - **Do:** `compareDdlApi(version)` → `compare(...)` binding `DIALECT_DIFF_POSTGRES`; add to
@@ -625,6 +642,7 @@ Verification uses the project's real scripts (`package.json`): lint `npm run lin
 - **Verify:** `npx jest test/ddl.diff.test.ts -t "identical"`
 
 #### T1.2 — Core rule-tree skeleton + dialect seam  ·  M
+
 - **Depends:** T1.1, T0.2 · **Files:** `src/ddl/ddl.rules.ts`, `ddl.dialect.ts`, `ddl.postgres.ts`,
   `ddl.const.ts`
 - **Do:** rule tree realm→schema→table→column/columnType/index/fk/attr mirroring api-unifier
@@ -638,12 +656,14 @@ Verification uses the project's real scripts (`package.json`): lint `npm run lin
 ### M2 — phase-1 classification + mapping  (**`action` + classification only; descriptions in M3 — Finding-1 fix**)
 
 #### T2.1 — Name-keyed mapping resolvers (schemas, tables, columns)  ·  M
+
 - **Depends:** T0.1, T1.2 · **Files:** `src/ddl/ddl.mapping.ts`, `ddl.rules.ts`
 - **Acceptance:** reorder tables/columns ⇒ no spurious add/remove; add/remove one ⇒ exactly one
   element-level diff.
 - **Verify:** `npx jest test/ddl.mapping.test.ts`
 
 #### T2.2 — Bespoke resolvers: `attrs[]` composite key + enum `values[]` set  ·  M  ·  (Finding 4)
+
 - **Depends:** T1.2 · **Files:** `ddl.mapping.ts`
 - **Do:** `attrsMappingResolver` — composite `kind` for singletons, `kind:name` for named attrs
   (Check, NamedDefault); enum `values[]` via `deepEqualsUniqueItemsArrayMappingResolver` +
@@ -654,12 +674,14 @@ Verification uses the project's real scripts (`package.json`): lint `npm run lin
 - **Verify:** `npx jest test/ddl.mapping.test.ts` (own `describe` block)
 
 #### T2.3 — Table/column add-remove classifiers (cases 1–4)  ·  S
+
 - **Depends:** T2.1 · **Files:** `ddl.classify.ts`, `ddl.rules.ts`
 - **Acceptance:** 1 nonBreaking, 2 breaking, 3 nonBreaking, 4 breaking (assert `diffs[].type` +
   `action`; **no** description assertion yet).
 - **Verify:** `npx jest test/ddl.diff.test.ts -t "table|column"`
 
 #### T2.4 — SQL type-compatibility fn + columnType classifier (case 5)  ·  M
+
 - **Depends:** T1.2 · **Files:** `ddl.classify.ts`, `ddl.dialect.ts` (`typeFamilyFor`),
   `test/ddl.type-compat.test.ts`
 - **Acceptance:** same-family nonBreaking (smallint→int→bigint, varchar(50)→(200), timestamp→date);
@@ -668,12 +690,14 @@ Verification uses the project's real scripts (`package.json`): lint `npm run lin
 - **Verify:** `npx jest test/ddl.type-compat.test.ts`
 
 #### T2.5 — Nullability + enum-value classifiers (cases 6, 7, E1, E2)  ·  S
+
 - **Depends:** T2.2 · **Files:** `ddl.classify.ts`
 - **Acceptance:** nullability both directions nonBreaking; enum value add/remove nonBreaking; each
   still **emits** a diff (report-everything, §8B).
 - **Verify:** `npx jest test/ddl.diff.test.ts -t "nullability|enum value"`
 
 #### T2.6 — Shared-instance / merged-document contract (test area 9, §8A)  ·  M
+
 - **Depends:** T2.4, T2.2 · **Files:** `test/ddl.merged.test.ts`
 - **Acceptance:** enum used by N columns + value change ⇒ **same `Diff` object reference** at all N
   sites in `merged`, **once** in `diffs`; a column in an index **and** FK whose type changes ⇒ same
@@ -684,6 +708,7 @@ Verification uses the project's real scripts (`package.json`): lint `npm run lin
 ### M3 — phase-1 descriptions
 
 #### T3.1 — Description engine wiring + templates + param calculators  ·  M  ·  (Finding-1 fix)
+
 - **Depends:** M2 (T2.3–T2.6) · **Files:** `src/ddl/ddl.description.ts`, `ddl.rules.ts`,
   `ddl.const.ts`, `test/ddl.description.test.ts`
 - **Do:** templates (§10) + `descriptionParamCalculator`s using `matchPaths` over ddlapi
@@ -704,6 +729,7 @@ one task. Every phase-2 case still ends with `action` + classification + descrip
 assertions — just possibly across a classify task and its paired describe task.
 
 #### T4.1 — Default add/remove/change classifiers (cases 8–10)  ·  S
+
 - **Depends:** T1.2, T2.1 · **Files:** `src/ddl/ddl.classify.ts`, `ddl.rules.ts`
 - **Do:** `column.default` is an `Expr` (`Literal | RawExpr | NamedDefault`); api-unifier does
   **not** auto-default it, so an added default is a genuine add. Classify add/remove/replace of the
@@ -714,6 +740,7 @@ assertions — just possibly across a classify task and its paired describe task
 - **Verify:** `npx jest test/ddl.diff.test.ts -t "default"`
 
 #### T4.2 — Default descriptions incl. the Expr-leaf → column-default rollup (case 10)  ·  M
+
 - **Depends:** T4.1, T3.1 · **Files:** `src/ddl/ddl.description.ts`, `ddl.rules.ts`,
   `test/ddl.description.test.ts`
 - **Do:** add a `descriptionParamCalculator` branch matching the default path
@@ -727,6 +754,7 @@ assertions — just possibly across a classify task and its paired describe task
 - **Verify:** `npx jest test/ddl.description.test.ts -t "default"`
 
 #### T4.3 — Descriptions at schema / table / column levels (cases 11–13, 11s–13s)  ·  M
+
 - **Depends:** T2.2 (attrs composite-key resolver), T3.1 · **Files:** `ddl.classify.ts`,
   `ddl.rules.ts`, `ddl.description.ts`, `test/ddl.description.test.ts`
 - **Do:** a description is a `Comment` attr (`{ kind:'Comment', text }`) in `attrs[]` at the
@@ -743,6 +771,7 @@ assertions — just possibly across a classify task and its paired describe task
 New fixtures live in `test/ddl.constraints.test.ts`. Each task classifies + describes together.
 
 #### T5.1 — Indexes + primary key + unique: mapping, classify, describe  ·  M
+
 - **Depends:** T2.1, T3.1 · **Files:** `ddl.mapping.ts`, `ddl.classify.ts`, `ddl.rules.ts`,
   `ddl.description.ts`, `test/ddl.constraints.test.ts`
 - **Do:** `table.indexes[]` keyed by `name`, falling back to the covered columns for an index
@@ -763,6 +792,7 @@ New fixtures live in `test/ddl.constraints.test.ts`. Each task classifies + desc
 - **Verify:** `npx jest test/ddl.constraints.test.ts -t "index|primary key|unique"`
 
 #### T5.2 — Foreign keys: mapping, classify, describe (+ refTable shared edge)  ·  M
+
 - **Depends:** T2.1, T3.1, T2.6 · **Files:** `ddl.mapping.ts`, `ddl.classify.ts`, `ddl.rules.ts`,
   `ddl.description.ts`, `test/ddl.constraints.test.ts`
 - **Do:** `table.foreignKeys[]` keyed by `symbol`/name; classify fk add/remove and
@@ -776,6 +806,7 @@ New fixtures live in `test/ddl.constraints.test.ts`. Each task classifies + desc
 - **Verify:** `npx jest test/ddl.constraints.test.ts -t "foreign key"`
 
 #### T5.3 — Check constraints: classify, describe  ·  S
+
 - **Depends:** T2.2 (attrs/objects composite-key resolver), T3.1 · **Files:** `ddl.classify.ts`,
   `ddl.rules.ts`, `ddl.description.ts`, `test/ddl.constraints.test.ts`
 - **Do:** `Check` is **dual-role** — an `Attr` (`AttrKind.Check`) in `attrs[]` **and** a
