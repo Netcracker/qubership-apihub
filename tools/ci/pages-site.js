@@ -250,11 +250,11 @@ function node(script, args, { capture = false } = {}) {
 // erd.js assemble shows an older render, or a "not rendered yet" card, for a backend without a
 // render of its own, so a non-zero exit is a real failure (such as a registry that does not
 // answer) and fails the run.
-function erdSection({ site, commit, script }) {
+function erdSection({ site, ref, commit, script }) {
   const dir = path.join(site, 'erd')
   if (!fs.existsSync(script)) throw new Error(`${path.relative(REPO_ROOT, script) || script} does not exist`)
   const backends = node(script, ['backends', commit], { capture: true }).split('\n').map((l) => l.trim()).filter(Boolean)
-  const status = node(script, ['assemble', dir, commit])
+  const status = node(script, ['assemble', dir, commit, ref])
   if (status !== 0) throw new Error(`the ERD assembly failed: erd.js assemble exited with ${status}`)
   const rendered = backends.filter((b) => fs.existsSync(path.join(dir, b, 'index.html')))
   return { backends, rendered }
@@ -298,7 +298,7 @@ function main(argv) {
   fs.mkdirSync(path.join(site, 'pages', 'erd'), { recursive: true })
   fs.writeFileSync(path.join(site, 'pages', 'erd', 'index.html'), legacyErdStub())
 
-  const erd = erdSection({ site, commit: opts.commit, script: erdScript })
+  const erd = erdSection({ site, ref: opts.ref, commit: opts.commit, script: erdScript })
 
   const read = (f) => fs.readFileSync(path.join(indexDir, f), 'utf8')
   fs.writeFileSync(path.join(site, '404.html'), fillPlaceholders(read('404.html'), { STORYBOOK_404_TEXT: NOT_PUBLISHED_HTML }))

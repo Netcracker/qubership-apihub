@@ -162,7 +162,7 @@ for (const b of process.env.STUB_ERD_FAIL || process.env.STUB_ERD_MISSING ? back
   fs.writeFileSync(path.join(dir, b, 'index.html'), 'erd ' + b)
 }
 if (process.env.STUB_ERD_FAIL) { console.error('registry unreachable'); process.exit(1) }
-fs.writeFileSync(path.join(dir, 'index.html'), 'erd index')
+fs.writeFileSync(path.join(dir, 'index.html'), 'erd index of ' + process.argv.slice(4).join(' at '))
 `
 
 const STUB_STORYBOOK = `const fs = require('fs'), path = require('path')
@@ -232,6 +232,7 @@ test('pages-site.js lays out every section, the docs placeholder, and the root 4
     assert.doesNotMatch(index, /storybook\/graphapi\//)
     assert.match(index, /<a href="erd\/agents-backend\/">agents-backend<\/a>/)
     assert.match(index, /<code>develop<\/code> at <code>0123456<\/code>/)
+    assert.equal(fs.readFileSync(path.join(f.site, 'erd', 'index.html'), 'utf8'), 'erd index of 0123456789abcdef at develop')
     assert.ok(fs.readFileSync(path.join(f.site, '404.html'), 'utf8').includes(NOT_PUBLISHED_HTML))
     assert.match(fs.readFileSync(path.join(f.site, 'docs', 'index.html'), 'utf8'), /coming/)
     // The Storybooks got the budget minus everything else that was laid out before them.

@@ -4,8 +4,10 @@
 //   erd.js backends <ref>              the backends that own a database at <ref>, one per line
 //   erd.js key <backend> <ref>         the store key of that backend's ERD at <ref>
 //   erd.js render <backend> <out>      apply the migrations of the checkout, run SchemaSpy into <out>
-//   erd.js assemble <site-erd> <ref>   pull every backend's render for <ref>, or its newest render
-//                                      when <ref>'s key has none, and write the index page
+//   erd.js assemble <site-erd> <ref> [<name>]
+//                                      pull every backend's render for <ref>, or its newest render
+//                                      when <ref>'s key has none, and write the index page, which
+//                                      names the ref <name> (default <ref>)
 //   erd.js gc [--dry-run]              delete renders no one needs any more
 //
 // WHY MIGRATIONS AND NOT A RUNNING SERVICE. A backend's `public` schema comes only from its
@@ -482,11 +484,11 @@ function rendersOf(backend) {
 // running, or it failed) shows its newest render with a note; one with no render at all gets a card
 // that says so. Both print a warning. Only a real failure, such as a registry that does not answer,
 // exits non-zero.
-function assemble(siteErdArg, ref) {
+function assemble(siteErdArg, ref, name) {
   const siteErd = path.resolve(siteErdArg)
   const backends = backendsAt(ref)
   if (backends.length === 0) throw new Error(`no backend has resources/migrations/*.up.sql at ${ref}`)
-  const refName = ref.replace(/^origin\//, '')
+  const refName = name || ref.replace(/^origin\//, '')
 
   const plans = backends.map((backend) => {
     const migrations = migrationsAt(backend, ref)
@@ -643,7 +645,7 @@ module.exports = {
   formatDate, selectGc, KEY_FORMAT,
 }
 
-const USAGE = 'usage: erd.js backends <ref> | key <backend> <ref> | render <backend> <out> | assemble <site-erd-dir> <ref> | gc [--dry-run]'
+const USAGE = 'usage: erd.js backends <ref> | key <backend> <ref> | render <backend> <out> | assemble <site-erd-dir> <ref> [<name>] | gc [--dry-run]'
 
 if (require.main === module) {
   const [mode, a, b, ...rest] = process.argv.slice(2)
@@ -651,7 +653,7 @@ if (require.main === module) {
     if (mode === 'backends' && a && !b) for (const backend of backendsAt(a)) console.log(backend)
     else if (mode === 'key' && a && b && !rest.length) console.log(keyAt(a, b))
     else if (mode === 'render' && a && b && !rest.length) render(a, b)
-    else if (mode === 'assemble' && a && b && !rest.length) assemble(a, b)
+    else if (mode === 'assemble' && a && b && rest.length <= 1) assemble(a, b, rest[0])
     else if (mode === 'gc' && (!a || a === '--dry-run') && !b) gc(a === '--dry-run' || process.env.DRY_RUN === 'true')
     else {
       console.error(USAGE)
