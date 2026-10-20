@@ -59,7 +59,9 @@ The service configuration templates live next to each module, for example `backe
 
 ## Generated database ERD
 
-Static HTML under [`./pages/erd/`](./pages/erd/index.html) — open in a browser for schema-only reference. Regeneration happens through backend/CI automation; this tree is read-only for most readers.
+The database ERDs are generated per backend (portal-backend, api-linter-service, agents-backend) from the SQL
+migrations and published at <https://netcracker.github.io/qubership-apihub/erd/>. The Portal backend ERD is at
+<https://netcracker.github.io/qubership-apihub/erd/portal-backend/>. Open them in a browser for a schema-only reference.
 
 ---
 
