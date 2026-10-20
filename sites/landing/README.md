@@ -2,7 +2,7 @@
 
 Static landing site for [Qubership APIHUB](https://github.com/Netcracker/qubership-apihub) — the open source API management platform.
 
-**Stack:** [Astro](https://astro.build/) (static output) + [Tailwind CSS](https://tailwindcss.com/) + [nginx](https://nginx.org/) (production container)
+**Stack:** [Astro](https://astro.build/) (static output) + [Tailwind CSS](https://tailwindcss.com/)
 
 ---
 
@@ -21,28 +21,6 @@ npm run dev
 ```bash
 npm run build
 # Output: ./dist/
-```
-
-### Docker (single container)
-
-```bash
-# Build and run
-docker compose up --build
-
-# Or just run (pulls pre-built image)
-docker compose up -d
-
-# Custom port (default: 8090)
-PORT=8080 docker compose up -d
-```
-
-The site will be available at `http://localhost:8090`.
-
-### Docker: Astro dev server (live reload)
-
-```bash
-docker compose --profile dev up dev-server
-# → http://localhost:4321
 ```
 
 ---
@@ -70,13 +48,10 @@ qubership-apihub-landing/
 │       ├── config.ts
 │       ├── releases/            ← Release notes for /releases
 │       └── use-cases/           ← Persona cards for /use-cases
-├── public/
-│   ├── images/                  ← Static images (favicon, hero, feature screenshots, …)
-│   │   └── architecture/        ← Hand-authored dark-theme architecture diagrams (SVG)
-│   └── favicon.svg
-├── Dockerfile
-├── docker-compose.yml
-└── nginx.conf
+└── public/
+    ├── images/                  ← Static images (favicon, hero, feature screenshots, …)
+    │   └── architecture/        ← Hand-authored dark-theme architecture diagrams (SVG)
+    └── favicon.svg
 ```
 
 ---
@@ -98,7 +73,7 @@ Everything is in the repository — no CMS. Typical locations:
 | Architecture diagrams | `public/images/architecture/*.svg` |
 | New static assets | `public/images/` (reference as `/images/...` in pages) |
 
-After changes: `npm run build` (or rebuild the Docker image).
+After changes: `npm run build`.
 
 ---
 
@@ -140,16 +115,6 @@ needs changing.
 
 > **Astro gotcha:** the compiler hoists frontmatter lines that begin with the `export` keyword. If you
 > need `export` as an object key in a component's frontmatter, quote it (`'export': …`).
-
----
-
-## Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `8090` | Host port mapped to the nginx container |
-| `VERSION` | `dev` | Docker label for the image |
-| `DEV_PORT` | `4321` | Port for the `dev-server` service (`--profile dev`) |
 
 ---
 
