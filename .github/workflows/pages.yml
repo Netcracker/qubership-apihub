@@ -52,21 +52,22 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # Only the default branch deploys and cleans the stores. Schedule and delete events carry no
-      # repository object, so the default branch is looked up.
+      # Only the default branch deploys and cleans the stores. Schedule events carry no repository
+      # object, so the default branch is looked up. The full ref is compared, so a tag that shares
+      # the default branch's name does not deploy. The real gate is the branch policy of the
+      # github-pages environment; this check keeps other refs from even trying.
       - name: is this the default branch?
         id: ref
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REF_NAME: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          default="$(gh api 'repos/${{ github.repository }}' --jq .default_branch)"
+          default="$(gh api "repos/$GITHUB_REPOSITORY" --jq .default_branch)"
           [ -n "$default" ] || { echo "::error::could not read the default branch"; exit 1; }
-          if [ "$REF_NAME" = "$default" ]; then deployable=true; else deployable=false; fi
+          if [ "$GITHUB_REF" = "refs/heads/$default" ]; then deployable=true; else deployable=false; fi
           echo "deployable=$deployable" >> "$GITHUB_OUTPUT"
-          echo "ref \`$REF_NAME\`, default \`$default\`: deploy=$deployable" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "ref \`$GITHUB_REF\`, default \`$default\`: deploy=$deployable" | tee -a "$GITHUB_STEP_SUMMARY"
 
       # D16: the site shows main once main has the sites (the first product release from the
       # monorepo), develop before. The repository variable SITE_REF overrides the ref of the whole
