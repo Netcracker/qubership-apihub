@@ -294,6 +294,26 @@ jobs:
           printf '```\n' >> "$GITHUB_STEP_SUMMARY"
           exit "${status:-0}"
 
+  # Lints the product chart and the agent chart and validates what they render against the Kubernetes
+  # schemas: the check release-artifacts runs on the pinned copies before it publishes them. On every
+  # run, as it takes under a minute.
+  charts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: azure/setup-helm@v5
+        with:
+          version: v3.22.0
+
+      - name: lint and validate the Helm charts
+        shell: bash
+        run: |
+          bash tools/ci/chart-check.sh \
+            deploy/helm-templates/qubership-apihub \
+            backend/agent/helm-templates/qubership-apihub-agent
+
   # Builds and tests the affected Go modules in one job, in parallel with `js`. Skipped when no Go
   # module is affected: `nx run-many` over an empty list exits 0, which looks like a pass.
   go:
@@ -648,6 +668,7 @@ jobs:
       - plan
       - js
       - go-checks
+      - charts
       - go
       - java
       - screenshot-tests
