@@ -5,8 +5,8 @@
 //   pages-site.js <site-dir> --landing <dist> --ref <name> --commit <sha> [options]
 //
 //   --landing <dist>           the landing's build (sites/landing/dist); required
-//   --docs <dist>              the docs site's build; without it, or when the folder does not
-//                              exist, docs/ gets a page saying the documentation site is coming
+//   --docs <dist>              the docs site's build, which must exist; without it, docs/ gets a
+//                              page saying the documentation site is coming
 //   --ref <name>, --commit <sha>
 //                              the ref the site shows (D16) and its commit; the ERDs are read at
 //                              the commit, and the footer of the navigation page names both
@@ -265,7 +265,7 @@ function main(argv) {
   const site = path.resolve(opts.site)
   const indexDir = path.resolve(opts.index || path.join(REPO_ROOT, 'sites', 'index'))
   const landingDist = path.resolve(opts.landing)
-  const docsDist = opts.docs && fs.existsSync(path.resolve(opts.docs)) ? path.resolve(opts.docs) : null
+  const docsDist = opts.docs ? path.resolve(opts.docs) : null
   const repoUrl =
     opts['repo-url'] ||
     (process.env.GITHUB_REPOSITORY
@@ -278,7 +278,7 @@ function main(argv) {
   const storybookScript = path.resolve(opts['storybook-script'] || path.join(__dirname, 'storybook-site.js'))
 
   if (!fs.existsSync(path.join(landingDist, 'index.html'))) throw new Error(`the landing build ${landingDist} has no index.html`)
-  if (opts.docs && !docsDist) console.log(`the docs build ${opts.docs} does not exist; docs/ gets the placeholder page`)
+  if (docsDist && !fs.existsSync(docsDist)) throw new Error(`the docs build ${docsDist} does not exist`)
 
   const plan = layoutPlan({ indexFiles: fs.readdirSync(indexDir), landingDist, docsDist })
   const sources = { index: indexDir, landing: landingDist, docs: docsDist }

@@ -255,6 +255,10 @@ test('pages-site.js copies the docs build when there is one', () => {
     assert.equal(r.status, 0, r.stdout + r.stderr)
     assert.equal(fs.readFileSync(path.join(f.site, 'docs', 'index.html'), 'utf8'), 'docs site')
     assert.ok(fs.existsSync(path.join(f.site, 'docs', 'installation-guide', 'index.html')))
+
+    const missing = runPagesSite(f, ['--docs', path.join(f.root, 'no-such-dist')])
+    assert.equal(missing.status, 1)
+    assert.match(missing.stdout, /::error::the docs build .*no-such-dist does not exist/)
   } finally {
     fs.rmSync(f.root, { recursive: true, force: true })
   }
