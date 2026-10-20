@@ -8,7 +8,9 @@ See: [Schema Changes - Scope Response](../schema-changes.md#scope-definitions)
 
 ### Example
 
-To get specific examples for ResponseHeader schemas, take the schema examples from the [Schema Changes](../schema-changes.md) section and insert them into the `responses[*].headers[*].schema` location of an OpenAPI specification.
+To get specific examples for ResponseHeader schemas, take the schema examples from the
+[Schema Changes](../schema-changes.md) section and insert them into the `responses[*].headers[*].schema` location of an
+OpenAPI specification.
 
 Example OpenAPI structure:
 

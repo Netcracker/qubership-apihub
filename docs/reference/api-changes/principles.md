@@ -1,17 +1,22 @@
 # Compare operations, not specifications
-APIHUB Portal provides the ability to compare two package versions. During comparison, Portal compares not OpenAPI specifications from these versions, but separate operation document from these specifications. In APIHUB, one operation document is a self-contained specification containing information only about the current operation and obtained from the source specification as follows:
 
-* openapi field value is propagated from source specification
+APIHUB Portal provides the ability to compare two package versions. During comparison, Portal compares not OpenAPI
+specifications from these versions, but separate operation document from these specifications. In APIHUB, one operation
+document is a self-contained specification containing information only about the current operation and obtained from the
+source specification as follows:
+
+* OpenAPI field value is propagated from source specification
 * servers object is propagated from source specification
 * security object is propagated from source specification
 * path and method of current operation from source specification
-* components object is propagated from source specification but only those objects inside components that are used in current operation
-   - except components.securitySchemes - this object propagated from source specification as is.
+* components object is propagated from source specification but only those objects inside components that are used in
+  current operation
+  * except components.securitySchemes - this object propagated from source specification as is.
 * (info object from source specification is ignored and not propagated)
 
 For example, there is OpenAPI specification in package version v1:
-<details>
-<summary>Specification 1</summary>
+
+**Specification 1:**
 
 ```yaml
 openapi: 3.0.3
@@ -98,10 +103,11 @@ components:
           format: int32
           example: 7
 ```
-</details>
-In this case, when user will compare version v1 with some other version, the comparison will not be performed for initial specification, but for the following two operation documents:
-<details>
-<summary>Operation 1</summary>
+
+In this case, when user will compare version v1 with some other version, the comparison will not be performed for
+initial specification, but for the following two operation documents:
+
+**Operation 1:**
 
 ```yaml
 openapi: 3.0.3
@@ -146,10 +152,8 @@ components:
           type: string
           example: doggie
 ```
-</details>
 
-<details>
-<summary>Operation 2</summary>
+**Operation 2:**
 
 ```yaml
 openapi: 3.0.3
@@ -195,18 +199,19 @@ components:
           format: int32
           example: 7
 ```
-</details>
 
-# Resolved references in comparison
-## External references
-If you have OpenAPI file that contains references to other files, which contains appropriate resources, then APIHUB will resolve such reference during publication. For example, in case below, there are:
+## Resolved references in comparison
+
+### External references
+
+If you have OpenAPI file that contains references to other files, which contains appropriate resources, then APIHUB will
+resolve such reference during publication. For example, in case below, there are:
 
 * 2 files (getAddressUnitsByName_createAddressUnit.yml, getAddressUnitById.yml) that contain paths objects
 * 2 files (AddressUnit.yml, CreateAddressUnitRequest.yml) that contain schemas.
 * 1 file common-openapi.yml that contains security shemes.
 
-<details>
-<summary>Specification 1</summary>
+**Specification 1:**
 
 ```yaml
 openapi: '3.0.1'
@@ -240,19 +245,26 @@ components:
 security:
   - openId: []
 ```
-</details>
 
-When user publishes these 6 files, APIHUB will resolve all external references and in the result there will be published one file* in the Portal where all content from external links are inserted in this published file. Due to this, if user changes names of external file (to which there is external link) and external link appropriately, then from APIHUB point if view no changes were made.
+When user publishes these 6 files, APIHUB will resolve all external references and in the result there will be published
+one file* in the Portal where all content from external links are inserted in this published file. Due to this, if user
+changes names of external file (to which there is external link) and external link appropriately, then from APIHUB point
+if view no changes were made.
 
-* When publishing via Editor, you can mark your resource files as unpublishable. This allows you to have only one file in Portal package version instead of 6 as in example above. 
+* When publishing via Editor, you can mark your resource files as unpublishable. This allows you to have only one file
+  in Portal package version instead of 6 as in example above.
 
-## Internal reference
-Internal reference are resolved in the same way as external references, the difference is that external references are resolved during publication, and after publication user does not these external references. And internal references are resolved during comparison. 
+### Internal reference
 
-So, if user has OpenAPI file with internal reference as v1 in example below and in another version v2 user changes schema name from Pet to Pet1 and changes ref in request and response body schema appropriately to '#/components/schemas/Pet1', then comparing initial v1 and v2, not changes will be calculated.
+Internal reference are resolved in the same way as external references, the difference is that external references are
+resolved during publication, and after publication user does not these external references. And internal references are
+resolved during comparison.
 
-<details>
-<summary>v1</summary>
+So, if user has OpenAPI file with internal reference as v1 in example below and in another version v2 user changes
+schema name from Pet to Pet1 and changes ref in request and response body schema appropriately to
+'#/components/schemas/Pet1', then comparing initial v1 and v2, not changes will be calculated.
+
+**v1:**
 
 ```yaml
 openapi: 3.0.3
@@ -298,10 +310,8 @@ components:
           type: string
           example: doggie
 ```
-</details>
 
-<details>
-<summary>v2</summary>
+**v2:**
 
 ```yaml
 openapi: 3.0.3
@@ -347,20 +357,33 @@ components:
           type: string
           example: doggie
 ```
-</details>
 
-# Declarative approach in calculation of changes
-Before release 2024.4, APIHUB calculated total number of changes according to effective approach. For example, OAS has shared object (e.g. schema/parameters/header in "components" object) and this shared object is used in one operation multiple times (via ref); if one change is made in this object, then number of changes in the operation was equal to the number of uses of this object. And total number of changes in the version, was calculated just as sum of number of changes from all operations in the package version. So, if the same shared object is used in N operations, and each operation uses this object T times, then total number of changes in the package version is equal to C * N * T (where C is number of changes in shared object). The problem of effective approach is that even one change in shared object can cause dozens of reported changes in APIHUB, which can be not clear for the user why so many changes were made and how much will be required to support them. 
+## Declarative approach in calculation of changes
 
-Starting from release 2024.4, APIHUB calculates changes according to declarative changes - calculate only number of unique changes (~ number of "changed lines" in specification). In this approach, it does not matter how many times shared object was used in the operation or how many operations use this object, number of changes in operation/in package version is always equal to number of changes made in the shared object.
+Before release 2024.4, APIHUB calculated total number of changes according to effective approach. For example, OAS has
+shared object (e.g. schema/parameters/header in "components" object) and this shared object is used in one operation
+multiple times (via ref); if one change is made in this object, then number of changes in the operation was equal to the
+number of uses of this object. And total number of changes in the version, was calculated just as sum of number of
+changes from all operations in the package version. So, if the same shared object is used in N operations, and each
+operation uses this object T times, then total number of changes in the package version is equal to C *N* T (where C is
+number of changes in shared object). The problem of effective approach is that even one change in shared object can
+cause dozens of reported changes in APIHUB, which can be not clear for the user why so many changes were made and how
+much will be required to support them.
 
->  
-> If some change was made in components object (schema, parameters, headers, and so on), but this object is not used in any operation, then APIHUB does not calculate such change.
+Starting from release 2024.4, APIHUB calculates changes according to declarative changes - calculate only number of
+unique changes (~ number of "changed lines" in specification). In this approach, it does not matter how many times
+shared object was used in the operation or how many operations use this object, number of changes in operation/in
+package version is always equal to number of changes made in the shared object.
 
-In the example below, shared "Order" schema is used two times in "Place an order for a pet" operation - in request and response. In v2, a format for the petId parameter was added to the Order scheme. So, when comparing versions v1 and v2, in the old effective approach, number of changes is two, and in the new declarative approach - number of changes is one.
+>
+> If some change was made in components object (schema, parameters, headers, and so on), but this object is not used in
+> any operation, then APIHUB does not calculate such change.
 
-<details>
-<summary>v1</summary>
+In the example below, shared "Order" schema is used two times in "Place an order for a pet" operation - in request and
+response. In v2, a format for the petId parameter was added to the Order scheme. So, when comparing versions v1 and v2,
+in the old effective approach, number of changes is two, and in the new declarative approach - number of changes is one.
+
+**v1:**
 
 ```yaml
 openapi: 3.0.3
@@ -405,10 +428,8 @@ components:
           format: int32
           example: 7
 ```
-</details>
 
-<details>
-<summary>v2</summary>
+**v2:**
 
 ```yaml
 openapi: 3.0.3
@@ -454,28 +475,33 @@ components:
           format: int32
           example: 7
 ```
-</details>
 
 See more examples with number of changes in declarative approach in Number of declarative changes
 
->  
+>
 > Count Effective vs Declarative API Changes:
->  1. Declarative changes counting does not change classification (compared to current effective approach), only rescales the numbers.
->  Effective changes counting closer to worst case scenario (essentially provide an upper bound for the impact if all operations from the package are used     by consumer)
->  2. Effective changes counting closer to worst case scenario (essentially provide an upper bound for the impact if all operations from the package are used by consumer)
->  3. Results in inflated number
->       - Large number of essentially the same changes could complicate the impact analysis
->  4. Actual impact of change on API consumer is influenced more by consumer code structure and actual API usage
->       - Impossible to assess on API provider side
->       - Could be easier to assess on API consumer side if declarative changes are reported
+>
+> 1. Declarative changes counting does not change classification (compared to current effective approach), only rescales
+>    the numbers.
+> Effective changes counting closer to worst case scenario (essentially provide an upper bound for the impact if all
+> operations from the package are used by consumer)
+> 2. Effective changes counting closer to worst case scenario (essentially provide an upper bound for the impact if all
+>    operations from the package are used by consumer)
+> 3. Results in inflated number
+>       * Large number of essentially the same changes could complicate the impact analysis
+> 4. Actual impact of change on API consumer is influenced more by consumer code structure and actual API usage
+>       * Impossible to assess on API provider side
+>       * Could be easier to assess on API consumer side if declarative changes are reported
 
+## Circular references
 
-# Circular references
-If a change occurs in the schema with circular reference, APIHUB counts such change only one time. In the example below, ChangeOfferingCommonPart schema has parameter that references to ChangeOfferingCommonPart. If some parameter in ChangeOfferingCommonPart changes, e.g. if "format: NCID" is removed from 
-ChangeOfferingCommonPart schema, then APIHUB counts only one change, although in reality this causes an infinite number of changes.
+If a change occurs in the schema with circular reference, APIHUB counts such change only one time. In the example below,
+ChangeOfferingCommonPart schema has parameter that references to ChangeOfferingCommonPart. If some parameter in
+ChangeOfferingCommonPart changes, e.g. if "format: NCID" is removed from
+ChangeOfferingCommonPart schema, then APIHUB counts only one change, although in reality this causes an infinite number
+of changes.
 
-<details>
-<summary>v1</summary>
+**v1:**
 
 ```yaml
 openapi: 3.0.1
@@ -510,27 +536,32 @@ components:
         offering:
           $ref: '#/components/schemas/ChangeOfferingCommonPart'
 ```
-</details>
 
-# No changes in unsupported entities
-When comparing two versions of operation, APIHUB checks that operation is written according to OpenAPI specification. If there are some entities that are not supported in OAS and these entities contain changes when comparing two versions, then APIHUB does not calculate such changes. For example, OAS3.0 does not support "additionalItems" keyword and if we compare two versions of operation where, for example, in one version there is no 'additionalItems' in schema and on another version it was added, then APIHUB will not calculate such changes.
+## No changes in unsupported entities
 
-# No changes in explicitly specified default values
-Some OpenAPI properties have default values and in general they are not written in specification. For example, "deprecated" property by default equals to "false" and "additionalProperties" property has "true" default value.
+When comparing two versions of operation, APIHUB checks that operation is written according to OpenAPI specification. If
+there are some entities that are not supported in OAS and these entities contain changes when comparing two versions,
+then APIHUB does not calculate such changes. For example, OAS3.0 does not support "additionalItems" keyword and if we
+compare two versions of operation where, for example, in one version there is no 'additionalItems' in schema and on
+another version it was added, then APIHUB will not calculate such changes.
 
-If user makes changes in specification, where he/she explicitly specifies default value of the property, then APIHUB does not count such change. In the example below, comparison of v1 and v2 will not show any changes. 
+## No changes in explicitly specified default values
 
-<details>
-<summary>v1</summary>
+Some OpenAPI properties have default values and in general they are not written in specification. For example,
+"deprecated" property by default equals to "false" and "additionalProperties" property has "true" default value.
+
+If user makes changes in specification, where he/she explicitly specifies default value of the property, then APIHUB
+does not count such change. In the example below, comparison of v1 and v2 will not show any changes.
+
+**v1:**
 
 ```yaml
 
 ```
-</details>
 
+**v2:**
 
-<details>
-<summary>v2</summary>
+```yaml
 openapi: 3.0.1
 paths:
   /api/v1/orderManagement/salesOrder/bulkOperation:
@@ -560,7 +591,4 @@ components:
           type: string
           format: NCID
         offering:
-```yaml
-
 ```
-</details>
