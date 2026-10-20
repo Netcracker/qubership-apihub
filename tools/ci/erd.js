@@ -560,7 +560,7 @@ function keptRef(branch) {
     }
   }
   if (has()) return ref
-  if (!git('ls-remote', '--heads', 'origin', branch).trim()) return undefined
+  if (!git('ls-remote', '--heads', 'origin', `refs/heads/${branch}`).trim()) return undefined
   const shallow = git('rev-parse', '--is-shallow-repository').trim() === 'true'
   git('fetch', '--no-tags', '--filter=blob:none', ...(shallow ? ['--depth=1'] : []), 'origin', `+refs/heads/${branch}:refs/remotes/${ref}`)
   if (!has()) throw new Error(`fetched ${branch} and still cannot resolve ${ref}`)
