@@ -1,0 +1,52 @@
+'on':
+  # Runs the default branch's copy of this file; tag deletions are ignored.
+  delete:
+  # Twice a day: superseded indexes and unused content go a day after their last change, and the
+  # first runs work off the legacy backlog within the rate-limit budget (tools/ci/images-gc.js).
+  schedule:
+    - cron: '41 3,15 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Report what would be deleted; delete nothing.'
+        type: boolean
+        default: false
+
+name: Clean up images
+
+# Deletes the versions of the ci.yml images in ghcr that no branch or git tag of the monorepo, or of
+# the legacy repository the package links to, needs any more. Storybook packages have their own
+# cleanup in pages.yml. A delete in a package needs this repository to hold the Admin role under
+# Manage Actions access in the package settings; the summary names a package where it does not.
+
+# One run at a time, never cancelled: a later run starts from what the earlier one left.
+concurrency:
+  group: images-gc
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  gc:
+    if: github.event_name != 'delete' || github.event.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            tools/ci
+            .github/workflows
+
+      - name: delete what no live ref needs
+        shell: bash
+        env:
+          OWNER: ${{ github.repository_owner }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_USER: ${{ github.actor }}
+          DRY_RUN: ${{ inputs.dry_run == true }}
+        run: node tools/ci/images-gc.js
