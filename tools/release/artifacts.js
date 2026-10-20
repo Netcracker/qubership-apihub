@@ -7,6 +7,11 @@
  * The release is read from the tags at the commit that release-finish.yml pushed: `<component>/<version>`
  * per released component and the bare product `X.Y.Z`, whose annotation carries the sprint.
  *
+ * The notes (tools/release/notes/) read GitHub: GH_TOKEN for the pull requests and issues of the
+ * component changes, PROJECT_READ_TOKEN for the sprint's work items on Project 9. Without
+ * PROJECT_READ_TOKEN, or when the sprint has no work item, the plan reports a problem, which stops a real
+ * run in `publish-artifacts.sh check` before anything is published.
+ *
  * Usage: node tools/release/artifacts.js --out <dir> [--ref <commit>] [--nearest]
  *   Writes <dir>/plan.json and <dir>/notes/*.md, and prints the plan as Markdown. --nearest (dry runs):
  *   when <commit> carries no release tag, use the nearest ancestor that carries a product tag instead.
@@ -16,7 +21,14 @@ const path = require('node:path')
 const { WORKSPACE_ROOT, commitsTouching, compareSemver, git, parseSemver, readNxRelease } =
   require('./conventional')
 const { componentPaths } = require('./version-plan')
-const { moduleNotes, productNotes } = require('./notes/minimal')
+const { PRODUCT_COMPONENTS } = require('./product-version')
+const { groupChanges } = require('./notes/changes')
+const { dependencyChanges } = require('./notes/dependencies')
+const { createClient, parseRepoUrl } = require('./notes/github')
+const { moduleNotes } = require('./notes/module')
+const { productNotes } = require('./notes/product')
+const { fetchItems, workItemRows } = require('./notes/project')
+const { createResolver } = require('./notes/pull-requests')
 
 /** Component -> image name under ghcr.io/<owner>/, as built by the image jobs of ci.yml. */
 const IMAGES = {
@@ -29,6 +41,9 @@ const IMAGES = {
   'test-service': 'qubership-apihub-test-service',
   'java-task-consumer': 'qubership-apihub-java-task-consumer',
 }
+
+/** Component -> its Helm chart directory, linked from its notes. */
+const CHARTS = { agent: 'backend/agent/helm-templates/qubership-apihub-agent' }
 
 const isProductTag = (tag) => parseSemver(tag)?.pre === ''
 
@@ -53,29 +68,74 @@ function releaseTags(tags, groups) {
   return { modules, product }
 }
 
-/** The highest stable tag of the same component (or bare product tag) below `version`, or null. */
-function previousTag(prefix, version, tags) {
-  const below = tags
+const stableVersions = (prefix, tags) =>
+  tags
     .filter((t) => t.startsWith(prefix))
     .map((t) => t.slice(prefix.length))
-    .filter((v) => parseSemver(v)?.pre === '' && compareSemver(v, version) < 0)
+    .filter((v) => parseSemver(v)?.pre === '')
     .sort(compareSemver)
+
+/** The highest stable tag of the same component (or bare product tag) below `version`, or null. */
+function previousTag(prefix, version, tags) {
+  const below = stableVersions(prefix, tags).filter((v) => compareSemver(v, version) < 0)
   return below.length ? `${prefix}${below.at(-1)}` : null
+}
+
+/** The highest stable version of a component among `tags`, or null. */
+const latestVersion = (component, tags) => stableVersions(`${component}/`, tags).at(-1) ?? null
+
+/** `{ component: [components it depends on] }` from the project graph's dependencies between projects. */
+function componentDependencies(groups, graphDependencies) {
+  const groupOf = {}
+  for (const [component, group] of Object.entries(groups)) for (const p of group.projects) groupOf[p] = component
+  const out = {}
+  for (const [component, group] of Object.entries(groups)) {
+    const deps = new Set()
+    for (const p of group.projects) {
+      for (const d of graphDependencies[p] ?? []) {
+        const target = groupOf[d.target]
+        if (target && target !== component) deps.add(target)
+      }
+    }
+    out[component] = [...deps]
+  }
+  return out
 }
 
 /**
  * The plan. `packages[project]` is `{ name, version, private }` from the project's package.json, absent
- * for projects without one. `commitsFor(previousTag, paths)` lists the commits for the notes.
+ * for projects without one. The notes come from injected readers, so tests need neither git nor GitHub:
+ *   commitsFor(previousTag, paths)          the commits of a component since its previous tag
+ *   resolveChanges(commits)                 pull-requests.js `resolve()`
+ *   dependencyChangesFor({ from, roots })   dependencies.js `dependencyChanges()` up to the commit
+ *   tagsMergedInto(ref)                     the tags merged into a ref, for the product's components table
+ *   workItemsFor(sprint)                    project.js `workItemRows()`, or null when it cannot be read
  */
-function buildPlan({ release, roots, packages, tagsAtCommit, mergedTags, commitsFor, sprint, owner, repoUrl }) {
+async function buildPlan({
+  release,
+  roots,
+  packages,
+  dependsOn,
+  tagsAtCommit,
+  mergedTags,
+  commitsFor,
+  resolveChanges,
+  dependencyChangesFor,
+  tagsMergedInto,
+  workItemsFor,
+  sprint,
+  owner,
+  repoUrl,
+}) {
   const { modules, product } = releaseTags(tagsAtCommit, release.groups)
   const registry = `ghcr.io/${owner.toLowerCase()}`
   const plan = { images: [], npm: [], releases: [], problems: [] }
+  const breaking = []
 
   for (const m of modules) {
     const projects = release.groups[m.component].projects
     m.previousTag = previousTag(`${m.component}/`, m.version, mergedTags)
-    const artifacts = { packages: [] }
+    const artifacts = { packages: [], chart: CHARTS[m.component] }
     if (IMAGES[m.component]) {
       artifacts.image = `${registry}/${IMAGES[m.component]}:${m.version}`
       plan.images.push({ component: m.component, version: m.version, image: `${registry}/${IMAGES[m.component]}` })
@@ -89,22 +149,80 @@ function buildPlan({ release, roots, packages, tagsAtCommit, mergedTags, commits
       plan.npm.push({ component: m.component, project, root: roots[project], name: pkg.name, version: pkg.version })
       artifacts.packages.push(`${pkg.name}@${pkg.version}`)
     }
-    const commits = commitsFor(m.previousTag, componentPaths(projects, roots))
+    const paths = componentPaths(projects, roots)
+    const changes = groupChanges(await resolveChanges(commitsFor(m.previousTag, paths)), repoUrl)
+    breaking.push({ component: m.component, version: m.version, lines: changes.breaking })
+    const released = modules
+      .filter((d) => (dependsOn[m.component] ?? []).includes(d.component))
+      .map((d) => ({
+        component: d.component,
+        from: previousTag(`${d.component}/`, d.version, mergedTags)?.slice(d.component.length + 1) ?? null,
+        to: d.version,
+      }))
+    const projectRoots = [...new Set(projects.map((p) => roots[p]))]
     plan.releases.push({
       tag: m.tag,
       title: `${m.component} ${m.version}`,
       latest: false,
-      notes: moduleNotes({ ...m, commits, artifacts, repoUrl }),
+      notes: moduleNotes({
+        ...m,
+        root: paths[0],
+        artifacts,
+        changes,
+        dependencies: dependencyChangesFor({ from: m.previousTag, roots: projectRoots }),
+        released,
+        repoUrl,
+      }),
     })
   }
 
   if (product) {
     const previous = previousTag('', product.version, mergedTags.filter(isProductTag))
+    const before = previous ? tagsMergedInto(previous) : []
+    const releasedNow = new Set(modules.map((m) => m.component))
+    const components = Object.keys(release.groups).map((component) => ({
+      component,
+      version: latestVersion(component, mergedTags),
+      previous: latestVersion(component, before),
+      released: releasedNow.has(component),
+    }))
+    const image = (component) => ({
+      component,
+      image: `${registry}/${IMAGES[component]}`,
+      version: latestVersion(component, mergedTags),
+    })
+
+    let workItems = null
+    let workItemsNote
+    if (!sprint) {
+      workItemsNote = `The product tag ${product.tag} names no sprint, so its work items are not listed.`
+      plan.problems.push(workItemsNote)
+    } else {
+      workItems = await workItemsFor(sprint)
+      if (!workItems) {
+        workItemsNote = `PROJECT_READ_TOKEN is not set, so the work items of sprint ${sprint} are not listed.`
+        plan.problems.push(workItemsNote)
+      } else if (!Object.values(workItems).some((rows) => rows.length)) {
+        plan.problems.push(`No Project 9 card of sprint ${sprint} is Done or In Test; check the sprint name.`)
+      }
+    }
+
     plan.releases.push({
       tag: product.tag,
       title: `APIHUB ${product.version}`,
       latest: true,
-      notes: productNotes({ ...product, previousTag: previous, sprint, components: modules, repoUrl }),
+      notes: productNotes({
+        ...product,
+        previousTag: previous,
+        sprint,
+        images: PRODUCT_COMPONENTS.map(image),
+        components,
+        agent: { ...image('agent'), chart: CHARTS.agent },
+        workItems,
+        workItemsNote,
+        breaking,
+        repoUrl,
+      }),
     })
   }
   return plan
@@ -141,6 +259,7 @@ async function main(argv) {
   if (!outDir) throw new Error('usage: artifacts.js --out <dir> [--ref <commit>] [--nearest]')
   let commit = git(['rev-parse', option('--ref') ?? 'HEAD']).trim()
   const tagsAt = (c) => git(['tag', '--points-at', c]).split(/\r?\n/).filter(Boolean)
+  const tagsMergedInto = (ref) => git(['tag', '--merged', ref]).split(/\r?\n/).filter(Boolean)
   const release = readNxRelease()
   const found = releaseTags(tagsAt(commit), release.groups)
   if (argv.includes('--nearest') && !found.modules.length && !found.product) {
@@ -155,22 +274,42 @@ async function main(argv) {
     const file = path.join(WORKSPACE_ROOT, root, 'package.json')
     if (root !== '.' && fs.existsSync(file)) packages[project] = JSON.parse(fs.readFileSync(file, 'utf8'))
   }
+  const inRepo = new Set(Object.values(packages).map((p) => p.name))
 
+  const repoUrl = process.env.REPO_URL || 'https://github.com/Netcracker/qubership-apihub'
   const tagsAtCommit = tagsAt(commit)
   const product = tagsAtCommit.find(isProductTag)
   const sprint = product
     ? git(['tag', '-l', '--format=%(contents)', product]).match(/^Sprint: (.+)$/m)?.[1]?.trim()
     : undefined
-  const plan = buildPlan({
+  // Clients are created on first use: a commit without release tags needs no token.
+  let resolver
+  const resolveChanges = async (commits) => {
+    if (!commits.length) return []
+    resolver ??= createResolver(createClient({ token: process.env.GH_TOKEN }), parseRepoUrl(repoUrl))
+    return resolver.resolve(commits)
+  }
+  const workItemsFor = async (name) => {
+    if (!process.env.PROJECT_READ_TOKEN) return null
+    return workItemRows(await fetchItems(createClient({ token: process.env.PROJECT_READ_TOKEN })), name)
+  }
+
+  const plan = await buildPlan({
     release,
     roots,
     packages,
+    dependsOn: componentDependencies(release.groups, graph.dependencies),
     tagsAtCommit,
-    mergedTags: git(['tag', '--merged', commit]).split(/\r?\n/).filter(Boolean),
+    mergedTags: tagsMergedInto(commit),
     commitsFor: (from, paths) => commitsTouching(from, paths, WORKSPACE_ROOT, commit),
+    resolveChanges,
+    dependencyChangesFor: ({ from, roots: projectRoots }) =>
+      dependencyChanges({ git: (args) => git(args), from, to: commit, roots: projectRoots, inRepo: (n) => inRepo.has(n) }),
+    tagsMergedInto,
+    workItemsFor,
     sprint,
     owner: process.env.OWNER || 'netcracker',
-    repoUrl: process.env.REPO_URL || 'https://github.com/Netcracker/qubership-apihub',
+    repoUrl,
   })
 
   fs.mkdirSync(path.join(outDir, 'notes'), { recursive: true })
@@ -190,4 +329,4 @@ if (require.main === module) {
   })
 }
 
-module.exports = { IMAGES, buildPlan, previousTag, releaseTags, renderSummary }
+module.exports = { CHARTS, IMAGES, buildPlan, componentDependencies, latestVersion, previousTag, releaseTags, renderSummary }

@@ -94,19 +94,20 @@ function git(args, cwd = WORKSPACE_ROOT) {
 }
 
 /**
- * Non-merge commits in `from..to` that touch `paths`; all history of `paths` up to `to` when `from` is
- * null. Merge commits are skipped as in Nx, which sees no files in them.
+ * Non-merge commits in `from..to` that touch `paths`, as `{ hash, sha, author, subject, body }`; all
+ * history of `paths` up to `to` when `from` is null. Merge commits are skipped as in Nx, which sees no
+ * files in them.
  */
 function commitsTouching(from, paths, cwd = WORKSPACE_ROOT, to = 'HEAD') {
   const sep = '\u001e'
   const range = from ? [`${from}..${to}`] : [to]
-  const out = git(['log', '--no-merges', `--format=${sep}%h%x00%s%x00%b`, ...range, '--', ...paths], cwd)
+  const out = git(['log', '--no-merges', `--format=${sep}%h%x00%H%x00%an%x00%s%x00%b`, ...range, '--', ...paths], cwd)
   return out
     .split(sep)
     .slice(1)
     .map((chunk) => {
-      const [hash, subject, body = ''] = chunk.split('\u0000')
-      return { hash, subject, body: body.trim() }
+      const [hash, sha, author, subject, body = ''] = chunk.split('\u0000')
+      return { hash, sha, author, subject, body: body.trim() }
     })
 }
 

@@ -2,7 +2,9 @@ const { test } = require('node:test')
 const assert = require('node:assert/strict')
 const fs = require('node:fs')
 const path = require('node:path')
-const { IMAGES, buildPlan, previousTag, releaseTags } = require('./artifacts')
+const { IMAGES, buildPlan, componentDependencies, previousTag, releaseTags } = require('./artifacts')
+
+const REPO = 'https://github.com/Netcracker/qubership-apihub'
 
 const release = {
   groups: {
@@ -49,17 +51,25 @@ const plan = (tagsAtCommit, extra = {}) =>
     release,
     roots,
     packages,
+    dependsOn: { ui: ['api-diff'] },
     tagsAtCommit,
-    mergedTags: ['api-diff/4.0.0', 'ui/3.10.1', 'portal-backend/1.21.0', '2.15.0', ...tagsAtCommit],
-    commitsFor: (from) => (from === 'portal-backend/1.21.0' ? [{ hash: 'a1', subject: 'feat: x', body: '' }] : []),
+    mergedTags: ['api-diff/4.0.0', 'ui/3.10.1', 'portal-backend/1.21.0', 'agent/2.1.5', '2.15.0', ...tagsAtCommit],
+    commitsFor: (from) =>
+      from === 'portal-backend/1.21.0'
+        ? [{ hash: 'a1', sha: 'a1', author: 'Dev', subject: 'feat!: x', body: '' }]
+        : [],
+    resolveChanges: async (commits) => commits.map((commit) => ({ commit, login: 'dev', pull: null })),
+    dependencyChangesFor: ({ from }) => (from === 'ui/3.10.1' ? [{ name: 'react', from: '18', to: '19' }] : []),
+    tagsMergedInto: (ref) => (ref === '2.15.0' ? ['ui/3.10.1', 'portal-backend/1.21.0', '2.15.0'] : []),
+    workItemsFor: async () => ({ features: ['| Issue: <u> | Name | @a | |'], bugfixes: [], other: [] }),
     sprint: 'APIHUB-26.3.5',
     owner: 'Netcracker',
-    repoUrl: 'https://github.com/Netcracker/qubership-apihub',
+    repoUrl: REPO,
     ...extra,
   })
 
-test('buildPlan: images and public packages of the released components, modules first, product last and Latest', () => {
-  const p = plan(['2.16.0', 'ui/3.11.0', 'portal-backend/1.22.0', 'api-diff/5.0.0'])
+test('buildPlan: images and public packages of the released components, modules first, product last and Latest', async () => {
+  const p = await plan(['2.16.0', 'ui/3.11.0', 'portal-backend/1.22.0', 'api-diff/5.0.0'])
   assert.deepEqual(p.images, [
     { component: 'ui', version: '3.11.0', image: 'ghcr.io/netcracker/qubership-apihub-ui' },
     { component: 'portal-backend', version: '1.22.0', image: 'ghcr.io/netcracker/qubership-apihub-backend' },
@@ -77,24 +87,60 @@ test('buildPlan: images and public packages of the released components, modules 
     p.releases.map((r) => [r.tag, r.latest]),
     [['api-diff/5.0.0', false], ['ui/3.11.0', false], ['portal-backend/1.22.0', false], ['2.16.0', true]],
   )
-  assert.match(p.releases[2].notes, /compare\/portal-backend\/1\.21\.0\.\.\.portal-backend\/1\.22\.0/)
-  assert.match(p.releases[2].notes, /- feat: x/)
-  assert.match(p.releases[3].notes, /Sprint: APIHUB-26\.3\.5/)
-  assert.match(p.releases[3].notes, /compare\/2\.15\.0\.\.\.2\.16\.0/)
+  const [apiDiff, ui, backend, product] = p.releases.map((r) => r.notes)
+  assert.match(apiDiff, /## 📦 Package\n\n- `@netcracker\/qubership-apihub-api-diff@5\.0\.0`/)
+  assert.match(ui, /- api-diff 4\.0\.0 → \[5\.0\.0\]/)
+  assert.match(ui, /\| react \| 18 \| 19 \|/)
+  assert.match(ui, /tree\/ui\/3\.11\.0\/frontend\/ui\)/)
+  assert.match(backend, /compare\/portal-backend\/1\.21\.0\.\.\.portal-backend\/1\.22\.0/)
+  assert.match(backend, /## ⚠️ Breaking changes\n\n- feat!: x by @dev/)
+  assert.match(product, /Sprint: APIHUB-26\.3\.5/)
+  assert.match(product, /- \*\*portal-backend 1\.22\.0\*\*: feat!: x/)
+  assert.match(product, /\| Issue: <u> \| Name \| @a \| \|/)
+  assert.match(product, /\| ui \| \[3\.11\.0\]\(.*\) \| 3\.10\.1 \|/)
+  assert.match(product, /\| agent \| 2\.1\.5 \| none \|/)
+  assert.match(product, /qubership-apihub-agent:2\.1\.5\]/)
+  assert.match(product, /compare\/2\.15\.0\.\.\.2\.16\.0/)
   assert.deepEqual(p.problems, [])
 })
 
-test('buildPlan: an agent-only release has no Latest release; a package.json behind its tag is a problem', () => {
-  const p = plan(['agent/2.1.6', 'api-diff/5.0.1'])
+test('buildPlan: an agent-only release has no Latest release; a package.json behind its tag is a problem', async () => {
+  const p = await plan(['agent/2.1.6', 'api-diff/5.0.1'])
   assert.ok(p.releases.every((r) => !r.latest))
+  assert.match(p.releases.find((r) => r.tag === 'agent/2.1.6').notes, /Helm chart:\*\* .*qubership-apihub-agent/)
   assert.deepEqual(p.problems, [
     '@netcracker/qubership-apihub-api-diff is at 5.0.0 in package.json, but the tag api-diff/5.0.1 says 5.0.1',
   ])
 })
 
-test('buildPlan: no release tag means nothing to publish', () => {
-  const p = plan(['some-other-tag'])
+test('buildPlan: missing work items are a problem, which stops a real run', async () => {
+  const noToken = await plan(['2.16.0'], { workItemsFor: async () => null })
+  assert.deepEqual(noToken.problems, [
+    'PROJECT_READ_TOKEN is not set, so the work items of sprint APIHUB-26.3.5 are not listed.',
+  ])
+  assert.match(noToken.releases[0].notes, /## ✨ Work items\n\nPROJECT_READ_TOKEN is not set/)
+  const none = await plan(['2.16.0'], { workItemsFor: async () => ({ features: [], bugfixes: [], other: [] }) })
+  assert.deepEqual(none.problems, ['No Project 9 card of sprint APIHUB-26.3.5 is Done or In Test; check the sprint name.'])
+  const noSprint = await plan(['2.16.0'], { sprint: undefined })
+  assert.deepEqual(noSprint.problems, ['The product tag 2.16.0 names no sprint, so its work items are not listed.'])
+})
+
+test('buildPlan: no release tag means nothing to publish', async () => {
+  const p = await plan(['some-other-tag'])
   assert.deepEqual([p.images, p.npm, p.releases], [[], [], []])
+})
+
+test('componentDependencies maps project dependencies to components', () => {
+  const graphDeps = {
+    'ui-portal': [{ target: 'api-diff' }, { target: 'ui-shared' }, { target: 'npm:react' }],
+    'portal-backend': [],
+  }
+  assert.deepEqual(componentDependencies(release.groups, graphDeps), {
+    'api-diff': [],
+    ui: ['api-diff'],
+    'portal-backend': [],
+    agent: [],
+  })
 })
 
 test('IMAGES matches the image legs of ci.yml', () => {
