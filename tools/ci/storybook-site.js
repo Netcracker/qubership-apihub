@@ -1,10 +1,16 @@
 #!/usr/bin/env node
-// The published Storybook site, assembled from the store in ghcr, and the store's cleanup.
+// The published Storybooks, assembled from the store in ghcr, and the store's cleanup.
 //
 //   storybook-site.js slug <branch>        the folder and pointer name for a branch
 //   storybook-site.js outhash <dir>        the identity of a built Storybook, from its files
-//   storybook-site.js assemble <out-dir>   lay out the whole site from the live branches' pointers
+//   storybook-site.js assemble <site-dir> [--budget-bytes <n> | --budget-mib <n>]
+//                                          lay out <site-dir>/storybook/ from the live branches'
+//                                          pointers, within the budget (900 MiB without a flag)
 //   storybook-site.js gc                   delete what no live branch needs any more
+//
+// The Storybooks are one section of the Pages site. tools/ci/pages-site.js lays out the other
+// sections first and passes the budget they leave. The root 404.html belongs to the whole site, so
+// this script only exports the Storybook text for it (NOT_PUBLISHED_HTML).
 //
 // A GitHub Pages deploy REPLACES THE WHOLE SITE. So a deploy never works from the files of the
 // run that triggered it: it reads every live branch's pointer and rebuilds the full layout, which
@@ -17,8 +23,7 @@
 //   branch-<slug>  a pointer, naming the content a branch publishes
 //   src-<hash>     a built Storybook keyed by its inputs: the layout before out-/in-, still read
 //
-// Environment: OWNER (the ghcr namespace), SITE_BUDGET_MIB (default 900), GITHUB_STEP_SUMMARY
-// (optional), DRY_RUN=true for gc.
+// Environment: OWNER (the ghcr namespace), GITHUB_STEP_SUMMARY (optional), DRY_RUN=true for gc.
 'use strict'
 
 const { execFileSync } = require('child_process')
@@ -41,6 +46,9 @@ const PREFERRED = ['develop', 'main', 'release']
 // so the index pages, and the protected branches growing between two deploys, have room.
 const SITE_LIMIT = 1024 ** 3
 const DEFAULT_BUDGET_MIB = 900
+
+// The section's folder in the Pages site.
+const SECTION = 'storybook'
 
 // Content, indexes and untagged versions are only collected once they are this old. A CI leg
 // pushes content, then an index, then a pointer, so there is a window in which fresh content is
@@ -306,20 +314,46 @@ ${body}
 `
 }
 
-function budgetBytes() {
-  const raw = process.env.SITE_BUDGET_MIB || String(DEFAULT_BUDGET_MIB)
+// The budget from the command line: `--budget-bytes <n>` (what pages-site.js passes) or
+// `--budget-mib <n>`; 900 MiB without either. Never above the Pages limit.
+function budgetFromArgs(args) {
+  const flag = (name) => {
+    const i = args.indexOf(name)
+    if (i === -1) return undefined
+    if (i + 1 >= args.length) throw new Error(`${name} needs a value`)
+    return args[i + 1]
+  }
+  const bytes = flag('--budget-bytes')
+  const mibs = flag('--budget-mib')
+  if (bytes !== undefined && mibs !== undefined) throw new Error('pass --budget-bytes or --budget-mib, not both')
+  const [name, raw, unit] =
+    bytes !== undefined ? ['--budget-bytes', bytes, 1] : ['--budget-mib', mibs ?? String(DEFAULT_BUDGET_MIB), 1024 ** 2]
   const n = Number(raw)
-  if (!Number.isFinite(n) || n <= 0) throw new Error(`SITE_BUDGET_MIB must be a positive number of MiB, got '${raw}'`)
-  return Math.min(n * 1024 ** 2, SITE_LIMIT)
+  if (raw === '' || !Number.isFinite(n) || n <= 0) throw new Error(`${name} must be a positive number, got '${raw}'`)
+  return Math.min(Math.floor(n * unit), SITE_LIMIT)
 }
 
-function assemble(outDir) {
-  const budget = budgetBytes()
+// What the root 404.html says about a missing path under storybook/: a branch that was deleted or
+// left off by the budget. pages-site.js puts it into the page, and the page's script
+// (sites/index/404-map.js) shows it and points the `storybook-home` link at storybookHome() of the
+// failing path. The href here is the fallback for a browser without JavaScript.
+const NOT_PUBLISHED_HTML = `<p>This branch or component is not published. Branches leave the site when they are deleted, and a branch
+can be left off while the site is over its size budget.</p>
+<p><a id="storybook-home" href="/qubership-apihub/${SECTION}/">See every published Storybook</a></p>`
+
+// The Storybook index for a path of the site. The first path segment is the repository, which a
+// project site always has, and the section's folder follows it. 404-map.js computes the same.
+function storybookHome(pathname) {
+  return `/${String(pathname).split('/')[1]}/${SECTION}/`
+}
+
+function assemble(siteDir, budget) {
+  const outDir = path.join(siteDir, SECTION)
   fs.rmSync(outDir, { recursive: true, force: true })
   fs.mkdirSync(outDir, { recursive: true })
-  // Next to the output, not in the OS temp directory: a build is renamed into place from here, and
-  // a rename across filesystems fails.
-  const cache = path.join(path.dirname(outDir), `${path.basename(outDir)}-cache`)
+  // Next to the site, not in the OS temp directory: a build is renamed into place from here, and a
+  // rename across filesystems fails. Not inside the site, which pages-site.js measures.
+  const cache = path.join(path.dirname(siteDir), `${path.basename(siteDir)}-${SECTION}-cache`)
   fs.rmSync(cache, { recursive: true, force: true })
 
   const branches = liveBranches()
@@ -442,31 +476,20 @@ branches are published first; these did not fit, and are published again when th
     : ''
   fs.writeFileSync(path.join(outDir, 'index.html'), page('Storybooks', index + overBudget + clash))
 
-  // Pages serves 404.html for any path without a file. A link to the folder of a branch that has
-  // since been deleted then lands on a page naming what happened, instead of GitHub's generic 404.
-  // The site root is not known here, so the link back is computed from the failing path: the
-  // first path segment is the repository, which a project site always has.
-  fs.writeFileSync(
-    path.join(outDir, '404.html'),
-    page(
-      'No Storybook here',
-      `<p>This branch or component is not published. Branches leave the site when they are deleted, and a branch
-can be left off while the site is over its size budget.</p>
-<p><a id="home" href="/">See every published Storybook</a></p>
-<script>document.getElementById('home').href = '/' + location.pathname.split('/')[1] + '/'</script>`,
-    ),
-  )
+  // No 404.html here: Pages serves only the one at the site root. pages-site.js writes it with
+  // NOT_PUBLISHED_HTML, so a link to a deleted branch's folder still says what happened.
 
   const total = measure(outDir)
   summarize({ branches, collisions, rows, total, budget, plan, live })
 
-  // Only the protected branches can put the site over its budget, because they are published
-  // whatever they cost. Over the hard limit that is a problem nothing here can solve.
+  // Only the protected branches can put the Storybooks over their budget, because they are
+  // published whatever they cost. Over the hard limit that is a problem nothing here can solve.
+  // pages-site.js checks the whole site against the limit again.
   if (total.bytes > SITE_LIMIT) {
-    console.log(`::error::the assembled site is ${mib(total.bytes)}, over GitHub Pages' 1 GB limit even with every feature branch left off; not deploying it`)
+    console.log(`::error::the Storybooks are ${mib(total.bytes)}, over GitHub Pages' 1 GB limit even with every feature branch left off; not deploying them`)
     process.exit(1)
   }
-  if (total.bytes > budget) console.log(`::warning::the protected branches alone put the site at ${mib(total.bytes)}, over its ${mib(budget)} budget`)
+  if (total.bytes > budget) console.log(`::warning::the protected branches alone put the Storybooks at ${mib(total.bytes)}, over their ${mib(budget)} budget`)
   if (plan.excluded.length) console.log(`::warning::${plan.excluded.length} branch(es) left off the site to keep it within ${mib(budget)}`)
 }
 
@@ -611,16 +634,18 @@ function gc() {
 
 // ---- main -------------------------------------------------------------------------------------
 
-module.exports = { slug, bySlug, outHash, planSite }
+module.exports = { slug, bySlug, outHash, planSite, budgetFromArgs, storybookHome, NOT_PUBLISHED_HTML, SECTION, SITE_LIMIT }
 
 if (require.main === module) {
-  const [mode, arg] = process.argv.slice(2)
+  const [mode, arg, ...flags] = process.argv.slice(2)
   if (mode === 'slug' && arg) console.log(slug(arg))
   else if (mode === 'outhash' && arg) console.log(outHash(path.resolve(arg)))
-  else if (mode === 'assemble' && arg) assemble(path.resolve(arg))
+  else if (mode === 'assemble' && arg) assemble(path.resolve(arg), budgetFromArgs(flags))
   else if (mode === 'gc') gc()
   else {
-    console.error('usage: storybook-site.js slug <branch> | outhash <dir> | assemble <out-dir> | gc')
+    console.error(
+      'usage: storybook-site.js slug <branch> | outhash <dir> | assemble <site-dir> [--budget-bytes <n> | --budget-mib <n>] | gc',
+    )
     process.exit(2)
   }
 }
