@@ -1,5 +1,6 @@
 :root {
   color-scheme: dark;
+
   --bg: #050813;
   --surface: #0f172a;
   --surface-hover: #162032;
@@ -20,7 +21,7 @@ body {
   display: flex;
   flex-direction: column;
   background-color: var(--bg);
-  background-image: radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.18) 0%, transparent 65%);
+  background-image: radial-gradient(ellipse at 50% 0%, rgb(59 130 246 / 18%) 0%, transparent 65%);
   background-repeat: no-repeat;
   color: var(--text);
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -63,7 +64,6 @@ h1 {
   font-weight: 800;
   letter-spacing: -0.02em;
   background: linear-gradient(135deg, var(--blue), var(--violet));
-  -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: var(--blue);
@@ -95,7 +95,7 @@ article.card {
 a.card:hover,
 a.card:focus-visible {
   background: var(--surface-hover);
-  border-color: rgba(59, 130, 246, 0.5);
+  border-color: rgb(59 130 246 / 50%);
   text-decoration: none;
   color: var(--text);
 }
@@ -111,6 +111,12 @@ article.card p {
   margin: 0;
   color: var(--muted);
   font-size: 0.95rem;
+}
+
+footer.site-footer a,
+footer.site-footer span {
+  margin: 0 0.5rem;
+  display: inline-block;
 }
 
 article.card h2 a {
@@ -154,12 +160,6 @@ footer.site-footer {
   text-align: center;
   color: var(--muted);
   font-size: 0.875rem;
-}
-
-footer.site-footer a,
-footer.site-footer span {
-  margin: 0 0.5rem;
-  display: inline-block;
 }
 
 code {
