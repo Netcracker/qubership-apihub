@@ -248,7 +248,8 @@ After `ci-ok` passes on `main`, the job `release-artifacts` runs when `HEAD` car
 order:
 
 1. Plans the artifacts from the tags at the commit (`tools/release/artifacts.js`) and refuses to publish when the plan
-   reports a problem, such as a `package.json` version that differs from its tag.
+   reports a problem, such as a `package.json` version that differs from its tag. Before anything is published, it
+   also packages and checks the Helm charts; a chart that could not be pushed stops the job here.
 2. Points `<image>:<version>` at the multi-arch image this run built under `:latest`. It first checks that the image
    carries this commit and both architectures. A version tag that already exists for another commit is never moved.
 3. Builds the released public npm packages before it logs in to any registry, then publishes them to GitHub Packages
@@ -335,8 +336,10 @@ The chart sources in git keep their development defaults: `version: 0.0.1`, `app
   replaced in place, so comments and the rest of the file stay as they are.
 
 Then the job checks that every pinned image exists in ghcr, runs `helm lint --strict` and validates the rendered
-manifests with kubeconform (`tools/ci/chart-check.sh`), packages the chart, and pushes it. The `charts` job of CI runs
-the same check on the chart sources in every run.
+manifests with kubeconform (`tools/ci/chart-check.sh`), packages the chart, and reads the registry. It does this twice:
+before the image step, when the version tags of this release are still to be created, and again after npm, with every
+pinned image required. Only then does it push. The `charts` job of CI runs the same lint and kubeconform check on the
+chart sources in every run.
 
 To see what a released chart pins:
 
@@ -349,7 +352,13 @@ commit means an earlier attempt of this release, and the job pulls that package 
 Another commit stops the job.
 
 The product notes name the agent chart at the agent's current version. When the product is released without the
-agent, the job checks that this agent chart version is already in the registry and stops otherwise.
+agent, the job checks that this agent chart version is already in the registry and stops otherwise, before anything is
+published. The agent tags from before the migration have no chart in the registry, so the first product release must
+release the agent too; the wiring of the migration touched the agent, so its first plan does.
+
+The first push creates the packages `charts/qubership-apihub` and `charts/qubership-apihub-agent` in ghcr, private.
+The `sources` entry of each `Chart.yaml` links them to this repository. A repository admin makes both public once, so
+that `helm install` works without a login.
 
 The pin table is `CHARTS` in `tools/release/artifacts.js`. A pin path that is missing from `values.yaml` fails the
 release, so rename a values section and its pin together. The image cleanup (`images-gc.yml`) does not touch the

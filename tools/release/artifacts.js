@@ -225,7 +225,7 @@ async function buildPlan({
     m.previousTag = previousTag(`${m.component}/`, m.version, mergedTags)
     const artifacts = { packages: [] }
     let chart
-    if (m.component !== 'product' && CHARTS[m.component]) {
+    if (m.component !== 'product' && Object.hasOwn(CHARTS, m.component)) {
       chart = chartPlan(m.component, m.version, m.tag, registry, mergedTags, plan.problems)
       plan.charts.push(chart)
       artifacts.chart = chartLink(m.component, m.version, registry)

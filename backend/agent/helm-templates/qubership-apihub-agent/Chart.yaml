@@ -5,4 +5,8 @@ name: qubership-apihub-agent
 # Development defaults. A release packages the chart with version and appVersion set to the release
 # version and every image tag pinned: see docs/development/release-process.md, "Helm charts".
 version: 0.0.1
-
+home: https://github.com/Netcracker/qubership-apihub
+# The first entry becomes the OCI annotation org.opencontainers.image.source, which links the package in
+# ghcr to this repository.
+sources:
+  - https://github.com/Netcracker/qubership-apihub

@@ -2,6 +2,8 @@ name: Release artifacts
 
 # Publishes a release that release-finish.yml pushed to main: the tags at the commit say what was released
 # (tools/release/artifacts.js). In this order, so every link in the notes exists when a release appears:
+#   0. check the plan, build the npm packages, and check the Helm charts, so a release that cannot be
+#      completed publishes nothing;
 #   1. point <image>:<version> at the multi-arch image this CI run published under the branch tag;
 #   2. build the released npm packages (before any login) and `pnpm publish -r` them; a version that the
 #      registry already holds from before the release stops a real run;
@@ -86,6 +88,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - uses: azure/setup-helm@v5
+        with:
+          version: v3.22.0
+
+      # The token goes in Helm's registry config under ~/.config, outside the repository.
+      - name: Log in to the chart registry
+        shell: bash
+        env:
+          HELM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: printf '%s' "$HELM_TOKEN" | helm registry login ghcr.io --username "$ACTOR" --password-stdin
+
+      # Before anything is published: a chart that could not be pushed, or notes that name a chart the
+      # registry lacks, stop the release here.
+      - name: Check the Helm charts
+        shell: bash
+        run: bash tools/release/publish-artifacts.sh charts-check
+
       - name: Point the image version tags at this run's images
         shell: bash
         run: bash tools/release/publish-artifacts.sh images
@@ -103,18 +123,6 @@ jobs:
       - name: Publish the npm packages
         shell: bash
         run: bash tools/release/publish-artifacts.sh npm
-
-      - uses: azure/setup-helm@v5
-        with:
-          version: v3.22.0
-
-      # The token goes in Helm's registry config under ~/.config, outside the repository.
-      - name: Log in to the chart registry
-        shell: bash
-        env:
-          HELM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ACTOR: ${{ github.actor }}
-        run: printf '%s' "$HELM_TOKEN" | helm registry login ghcr.io --username "$ACTOR" --password-stdin
 
       # Version and appVersion from the release, every image tag pinned (tools/release/charts.js); the
       # chart sources in git keep their defaults.
