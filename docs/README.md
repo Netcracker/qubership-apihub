@@ -1,8 +1,11 @@
 # Qubership APIHUB documentation hub
 
-Shipped beside Helm charts and Compose stacks inside repository [**qubership-apihub**](https://github.com/Netcracker/qubership-apihub). This hub is deliberately **installation- and operator-centric** so a single checkout answers “how do I run it reproducibly?”
+Shipped beside Helm charts and Compose stacks inside repository
+[**qubership-apihub**](https://github.com/Netcracker/qubership-apihub). This hub is deliberately **installation- and
+operator-centric** so a single checkout answers “how do I run it reproducibly?”
 
-High-level narratives (architecture roadmap, backlog process) live in [architecture](architecture/overview.md) and [design items](design/).
+High-level narratives (architecture roadmap, backlog process) live in [architecture](architecture/overview.md) and
+[design items](design/).
 
 ---
 
@@ -17,7 +20,9 @@ High-level narratives (architecture roadmap, backlog process) live in [architect
 | [User guide](./user-guide.md) | Portal/API authors | Everyday vocabulary/workflows + links into UI-repo Markdown UX guides |
 | [Release process](./development/release-process.md) | Maintainers who cut a release | Release start/finish, dry run, hotfixes, bots, version and tag rules |
 
-**Upstream depth:** whenever behaviour is protocol-level (OAuth dance, SAML attributes, MCP API), link to **`backend/portal-backend/docs`** in this repository. Do not duplicate long PDFs inside this umbrella repo—the goal is coherent navigation plus accurate deployment facts.
+**Upstream depth:** whenever behaviour is protocol-level (OAuth dance, SAML attributes, MCP API), link to
+**`backend/portal-backend/docs`** in this repository. Do not duplicate long PDFs inside this umbrella repo—the goal is
+coherent navigation plus accurate deployment facts.
 
 ---
 
@@ -86,4 +91,5 @@ migrations and published at <https://netcracker.github.io/qubership-apihub/erd/>
 
 ---
 
-**Next step:** open [Configuration reference](./configuration-reference.md) if you are editing manifests, or [Installation guide](./installation-guide.md) if you are bringing an environment up for the first time.
+**Next step:** open [Configuration reference](./configuration-reference.md) if you are editing manifests, or
+[Installation guide](./installation-guide.md) if you are bringing an environment up for the first time.

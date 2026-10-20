@@ -1,6 +1,7 @@
 # Qubership APIHUB — maintenance guide
 
-Operators use this memo for backups, housekeeping, federated authentication references, **and** pointers to granular backend runbooks.
+Operators use this memo for backups, housekeeping, federated authentication references, **and** pointers to granular
+backend runbooks.
 
 ---
 
@@ -10,7 +11,10 @@ Operators use this memo for backups, housekeeping, federated authentication refe
 
 Use stock PostgreSQL tools. Skip heavy/ephemeral Builder tables similar to backend recommendations.
 
-Substitute **`APIHUB_DB_SERVER`** (hostname), **`APIHUB_DB_USER`**, **`APIHUB_DB_PASSWORD`**, **`APIHUB_DB_NAME`** with your Registry database (Compose sample: **`apihub_backend`** / **`apihub_backend_user`**, see **`scripts/init-db/init.sql`**). Perform **parallel dumps** for `api_linter` and `agents_backend` schemas if you operate those extensions.
+Substitute **`APIHUB_DB_SERVER`** (hostname), **`APIHUB_DB_USER`**, **`APIHUB_DB_PASSWORD`**, **`APIHUB_DB_NAME`** with
+your Registry database (Compose sample: **`apihub_backend`** / **`apihub_backend_user`**, see
+**`scripts/init-db/init.sql`**). Perform **parallel dumps** for `api_linter` and `agents_backend` schemas if you operate
+those extensions.
 
 ```bash
 pg_dump --no-owner --format=tar \
@@ -41,15 +45,19 @@ psql "postgresql://${APIHUB_DB_USER}:${APIHUB_DB_PASSWORD}@${APIHUB_DB_SERVER}:5
 
 ### Historical admin guide overlap
 
-Older copies of dumps lived in **`admin-guide`**; authoritative commands now live solely here — follow one source to reduce drift.
+Older copies of dumps lived in **`admin-guide`**; authoritative commands now live solely here — follow one source to
+reduce drift.
 
 ### Data TTL & automated cleanup
 
-Backend schedules (revisions/comparisons/soft-delete/unreferenced/builds) are declared in **`config.yaml`** **`cleanup`** block (see **`config.template.yaml`**). Behaviour + operational interpretation: **[`data_maintenance.md`](../backend/portal-backend/docs/data_maintenance.md)**.
+Backend schedules (revisions/comparisons/soft-delete/unreferenced/builds) are declared in **`config.yaml`**
+**`cleanup`** block (see **`config.template.yaml`**). Behaviour + operational interpretation:
+**[`data_maintenance.md`](../backend/portal-backend/docs/data_maintenance.md)**.
 
 ### Schema/internal migration analysis
 
-When migrating stored specs between APIHUB versions, follow **[migration analysis procedure](../backend/portal-backend/docs/ops_migration_analysis_guide.md)** to read job logs responsibly.
+When migrating stored specs between APIHUB versions, follow **[migration analysis
+procedure](../backend/portal-backend/docs/ops_migration_analysis_guide.md)** to read job logs responsibly.
 
 ---
 
@@ -57,15 +65,18 @@ When migrating stored specs between APIHUB versions, follow **[migration analysi
 
 ### OIDC / SAML integration
 
-Detailed protocol behaviours: **[`security/security_model.md`](../backend/portal-backend/docs/security/security_model.md)**.
+Detailed protocol behaviours:
+**[`security/security_model.md`](../backend/portal-backend/docs/security/security_model.md)**.
 
 ### Access tokens lifecycle
 
-Operational playbook (system vs personal tokens): **[Access Tokens Management](design/package-settings/di-portal-ps-003-access-tokens-management.md)**.
+Operational playbook (system vs personal tokens): **[Access Tokens
+Management](design/package-settings/di-portal-ps-003-access-tokens-management.md)**.
 
 ### Personal access tokens
 
-Design item: **[Manage Personal Access Tokens](design/user-settings/di-portal-us-001-manage-personal-access-tokens.md)**.
+Design item: **[Manage Personal Access
+Tokens](design/user-settings/di-portal-us-001-manage-personal-access-tokens.md)**.
 
 ### Package roles
 
@@ -73,7 +84,8 @@ Design item: **[Manage Roles](design/global-settings/di-portal-gs-001-manage-rol
 
 ### Global settings surface
 
-Design item: **[Version Validation](design/global-settings/di-portal-gs-006-version-validation.md)** (UI-side toggles complementing backend YAML).
+Design item: **[Version Validation](design/global-settings/di-portal-gs-006-version-validation.md)** (UI-side toggles
+complementing backend YAML).
 
 ---
 

@@ -1,6 +1,8 @@
 # Qubership APIHUB — installation and deployment
 
-This guide covers **Docker Compose** (local/bare-metal), **Helm on Kubernetes**, and the **local-k8s quickstart**. For the source-of-truth hierarchy (which service reads a YAML file, which reads env vars, and how Helm is the canonical K8s contract), see [Configuration reference](./configuration-reference.md).
+This guide covers **Docker Compose** (local/bare-metal), **Helm on Kubernetes**, and the **local-k8s quickstart**. For
+the source-of-truth hierarchy (which service reads a YAML file, which reads env vars, and how Helm is the canonical K8s
+contract), see [Configuration reference](./configuration-reference.md).
 
 ---
 
@@ -57,7 +59,9 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 | **qubership-apihub-agents-backend** | **`config.yaml`** (path set by `AGENTS_BACKEND_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/agents-backend/config.template.yaml) | `AGENTS_BACKEND_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
 | **qubership-apihub-agent** *(K8s, optional)* | **`config.yaml`** (path set by `AGENT_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/agent/config.template.yaml) | `APIHUB_CONFIG_FOLDER` |
 
-**Helm:** `qubershipApihubBackend.env`, `qubershipApiLinterService.env`, and `qubershipApihubAgentsBackend.env` in `values.yaml` are each serialised as YAML into a per-service Secret `config.yaml`, mounted under `/app/<service>/etc/`. The UI and builder receive env vars injected directly by Deployment templates.
+**Helm:** `qubershipApihubBackend.env`, `qubershipApiLinterService.env`, and `qubershipApihubAgentsBackend.env` in
+`values.yaml` are each serialised as YAML into a per-service Secret `config.yaml`, mounted under `/app/<service>/etc/`.
+The UI and builder receive env vars injected directly by Deployment templates.
 
 ---
 
@@ -84,7 +88,8 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 ./deploy/docker-compose/apihub-generic/generate_env_and_up_compose.sh
 ```
 
-⚠️ This script **overwrites** template files in-place (`.env` files + every `*-config.yaml`). Stash or branch before running if you want reproducibility.
+⚠️ This script **overwrites** template files in-place (`.env` files + every `*-config.yaml`). Stash or branch before
+running if you want reproducibility.
 
 After start: <http://localhost:8081/login> — Portal UI.
 
@@ -193,7 +198,8 @@ API_LINTER_SERVICE_ADDRESS=qubership-api-linter-service:8080
 APIHUB_AGENTS_BACKEND_ADDRESS=qubership-apihub-agents-backend:8080
 ```
 
-> There is **no `APIHUB_URL` in the UI env file** — the public URL is `security.apihubExternalUrl` in the backend config.
+> There is **no `APIHUB_URL` in the UI env file** — the public URL is `security.apihubExternalUrl` in the backend
+> config.
 
 ---
 
@@ -201,7 +207,8 @@ APIHUB_AGENTS_BACKEND_ADDRESS=qubership-apihub-agents-backend:8080
 
 #### qubership-apihub-backend
 
-Configuration is via **`config.yaml`** (path: `APIHUB_CONFIG_FOLDER`). The annotated full template: [`config.template.yaml`](../backend/portal-backend/config.template.yaml).
+Configuration is via **`config.yaml`** (path: `APIHUB_CONFIG_FOLDER`). The annotated full template:
+[`config.template.yaml`](../backend/portal-backend/config.template.yaml).
 
 Process-level env vars (the only ones the backend binary reads directly):
 
@@ -318,7 +325,8 @@ All configuration via **environment variables** (nginx config template is popula
 | `API_LINTER_SERVICE_ADDRESS` | No | `apihub-backend:8080` | Internal address of the linter service |
 | `APIHUB_AGENTS_BACKEND_ADDRESS` | No | `apihub-backend:8080` | Internal address of the agents backend service |
 
-> The **browser-facing public URL** is **not** configured here. It is `security.apihubExternalUrl` in the backend `config.yaml`.
+> The **browser-facing public URL** is **not** configured here. It is `security.apihubExternalUrl` in the backend
+> `config.yaml`.
 
 ---
 
@@ -343,7 +351,11 @@ All configuration via **`config.yaml`** (path: `LINTER_CONFIG_FOLDER`). Helm ren
 `LOG_LEVEL` and `GOMEMLIMIT` stay container environment variables (`GOMEMLIMIT` default `800MiB` Helm /
 `1600MiB` Compose; Helm key `qubershipApiLinterService.goMemLimit`).
 
-**Custom CA certificates (HTTPS outbound):** with the [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) runtime image, mount PEM files at **`/tmp/cert`** (Compose: uncomment the linter **`./certs:/tmp/cert:ro`** volume; Helm: **`qubershipApiLinterService.customCa`**). Required for corporate HTTPS to APIHUB or OpenAI when public CAs are insufficient.
+**Custom CA certificates (HTTPS outbound):** with the
+[qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) runtime image, mount PEM files at
+**`/tmp/cert`** (Compose: uncomment the linter **`./certs:/tmp/cert:ro`** volume; Helm:
+**`qubershipApiLinterService.customCa`**). Required for corporate HTTPS to APIHUB or OpenAI when public CAs are
+insufficient.
 
 | Config key | Mandatory | Default | Description |
 |------------|-----------|---------|-------------|
@@ -400,7 +412,11 @@ All configuration via **`config.yaml`** (path: `AGENTS_BACKEND_CONFIG_FOLDER`). 
 | `cleanup.snapshots.schedule` | No | `0 22 * * 0` | Cron schedule for the snapshots cleanup job |
 | `cleanup.snapshots.ttlDays` | No | `30` | Retention period in days for snapshots (`0` removes all) |
 
-**Custom CA certificates (HTTPS outbound):** with the [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) runtime image, mount PEM files at **`/tmp/cert`** (Compose: uncomment the agents-backend **`./certs:/tmp/cert:ro`** volume; Helm: **`qubershipApihubAgentsBackend.customCa`**). Required for corporate HTTPS to APIHUB or remote agents when public CAs are insufficient.
+**Custom CA certificates (HTTPS outbound):** with the
+[qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) runtime image, mount PEM files at
+**`/tmp/cert`** (Compose: uncomment the agents-backend **`./certs:/tmp/cert:ro`** volume; Helm:
+**`qubershipApihubAgentsBackend.customCa`**). Required for corporate HTTPS to APIHUB or remote agents when public CAs
+are insufficient.
 
 ---
 
@@ -517,7 +533,9 @@ see the [agent chart guide](../backend/agent/helm-templates/README.md).
 
 ### Full Helm parameter reference
 
-`qubershipApihubBackend.env` in `values.yaml` maps 1:1 to `config.yaml` keys — same table as [qubership-apihub-backend above](#qubership-apihub-backend). Helm additionally auto-patches `olric.namespace` and `olric.replicaCount` from the release namespace and `replicas` value.
+`qubershipApihubBackend.env` in `values.yaml` maps 1:1 to `config.yaml` keys — same table as
+[qubership-apihub-backend above](#qubership-apihub-backend). Helm additionally auto-patches `olric.namespace` and
+`olric.replicaCount` from the release namespace and `replicas` value.
 
 | `values.yaml` section | Mandatory to fill | Maps to |
 |----------------------|-------------------|---------|
@@ -561,13 +579,17 @@ see the [agent chart guide](../backend/agent/helm-templates/README.md).
 | `qubershipApihubAgentsBackend.env.cleanup.snapshots.ttlDays` | No | Snapshots retention in days (default `30`) |
 | `qubershipApihubAgentsBackend.customCa` | No | Optional Secret mounted at `/tmp/cert` for corporate HTTPS outbound |
 
-For secrets management on production clusters use Kubernetes **ExternalSecrets**, CSI driver, or sealed-secrets — do not commit plaintext credentials in `values.yaml`.
+For secrets management on production clusters use Kubernetes **ExternalSecrets**, CSI driver, or sealed-secrets — do not
+commit plaintext credentials in `values.yaml`.
 
 ---
 
 ## Local Kubernetes quickstart
 
-**Not for production.** [`deploy/helm-templates/local-k8s-quickstart/`](../deploy/helm-templates/local-k8s-quickstart/README.md) contains scripts for Kind or Rancher Desktop with an ingress controller and PostgreSQL. Optional Apache Superset can be deployed for analytics.
+**Not for production.**
+[`deploy/helm-templates/local-k8s-quickstart/`](../deploy/helm-templates/local-k8s-quickstart/README.md) contains
+scripts for Kind or Rancher Desktop with an ingress controller and PostgreSQL. Optional Apache Superset can be deployed
+for analytics.
 
 ```bash
 # One-liner: creates Kind cluster + installs APIHUB

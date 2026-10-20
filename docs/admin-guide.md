@@ -1,6 +1,7 @@
 # Qubership APIHUB — administrator guide
 
-Audience: **platform owners and SRE/DevOps** wiring APIHUB into an environment. Portal end users should start with the [User guide](./user-guide.md) and the [Portal User Guide upstream](../frontend/ui/docs/Portal%20User%20Guide.md).
+Audience: **platform owners and SRE/DevOps** wiring APIHUB into an environment. Portal end users should start with the
+[User guide](./user-guide.md) and the [Portal User Guide upstream](../frontend/ui/docs/Portal%20User%20Guide.md).
 
 ---
 
@@ -17,18 +18,25 @@ Audience: **platform owners and SRE/DevOps** wiring APIHUB into an environment. 
 
 ## Backend configuration file
 
-The registry is configured through **`config.yaml`**, whose annotated super-set is [**`config.template.yaml`**](../backend/portal-backend/config.template.yaml) (module: `backend/portal-backend/`).
+The registry is configured through **`config.yaml`**, whose annotated super-set is
+[**`config.template.yaml`**](../backend/portal-backend/config.template.yaml) (module: `backend/portal-backend/`).
 
 ### Operational routine
 
-1. Maintain a **golden copy** separate from live secrets (Git ignores or sealed secrets), diff against the template when upgrading between product versions.
-2. Keep **`security.apihubExternalUrl`** truthfully matching the hostname users type; mismatches break OAuth/SAML redirects and deep links.
-3. **`extensions`** must list every sidecar the UI should hit (linter, agents-backend); `baseUrl` + `pathPrefix` pair must match what you publish (internal DNS in Kubernetes, `host.docker.internal` patterns in desktop Compose).
-4. **`zeroDayConfiguration.accessToken`** bootstraps privileged automation; pair it with **`APIHUB_API_KEY`** / **`APIHUB_ACCESS_TOKEN`** variables in workers until you adopt service accounts or PAT-based automation from the product.
+1. Maintain a **golden copy** separate from live secrets (Git ignores or sealed secrets), diff against the template when
+   upgrading between product versions.
+2. Keep **`security.apihubExternalUrl`** truthfully matching the hostname users type; mismatches break OAuth/SAML
+   redirects and deep links.
+3. **`extensions`** must list every sidecar the UI should hit (linter, agents-backend); `baseUrl` + `pathPrefix` pair
+   must match what you publish (internal DNS in Kubernetes, `host.docker.internal` patterns in desktop Compose).
+4. **`zeroDayConfiguration.accessToken`** bootstraps privileged automation; pair it with **`APIHUB_API_KEY`** /
+   **`APIHUB_ACCESS_TOKEN`** variables in workers until you adopt service accounts or PAT-based automation from the
+   product.
 
 ### Production mode
 
-- With **`security.productionMode: true`** local APIHUB accounts cannot authenticate—plan IdP onboarding before flipping the flag.
+- With **`security.productionMode: true`** local APIHUB accounts cannot authenticate—plan IdP onboarding before flipping
+  the flag.
 
 ---
 
@@ -36,10 +44,13 @@ The registry is configured through **`config.yaml`**, whose annotated super-set 
 
 Chart: **`deploy/helm-templates/qubership-apihub/`**. Values file is self-commented.
 
-- **Rolling configuration changes**: prefer `helm upgrade` with declarative **`values.yaml`** revision control; pods pick up regenerated Secrets/ConfigMaps.
-- **Ingress/TLS**: `qubershipApihubUi.tlsIngress` bundles cert material; ACM/Let's Encrypt integrations are customer-specific — wire them into the secret Helm consumes.
+- **Rolling configuration changes**: prefer `helm upgrade` with declarative **`values.yaml`** revision control; pods
+  pick up regenerated Secrets/ConfigMaps.
+- **Ingress/TLS**: `qubershipApihubUi.tlsIngress` bundles cert material; ACM/Let's Encrypt integrations are
+  customer-specific — wire them into the secret Helm consumes.
 - **Scaling builders**: adjust `qubershipApihubBuildTaskConsumer.replicas` alongside PostgreSQL saturation monitoring.
-- **Prometheus**: `qubershipApihubBackend.env.monitoring.enabled` toggles `ServiceMonitor` creation when your Prometheus operator/stack expects that CRD.
+- **Prometheus**: `qubershipApihubBackend.env.monitoring.enabled` toggles `ServiceMonitor` creation when your Prometheus
+  operator/stack expects that CRD.
 
 ---
 
@@ -47,9 +58,11 @@ Chart: **`deploy/helm-templates/qubership-apihub/`**. Values file is self-commen
 
 Scripts under **`deploy/docker-compose/apihub-generic/`**:
 
-- **`generate_env_and_up_compose.sh`** randomizes JWT, admin bootstrap, token, substitutes env files, launches Podman Compose. Assume **files mutate** unless you checkpoint them first.
+- **`generate_env_and_up_compose.sh`** randomizes JWT, admin bootstrap, token, substitutes env files, launches Podman
+  Compose. Assume **files mutate** unless you checkpoint them first.
 - **Persistence**: follow readme guidance on **`PGDATA=/pgdata`**, `./data`, and Podman/WSL metadata for Windows mounts.
-- **`host.docker.internal`**: unify browser URL, **`APIHUB_URL`**, **`extensions[].baseUrl`**, and SSO IdP redirects when mixing published ports vs internal DNS names.
+- **`host.docker.internal`**: unify browser URL, **`APIHUB_URL`**, **`extensions[].baseUrl`**, and SSO IdP redirects
+  when mixing published ports vs internal DNS names.
 
 ---
 
@@ -76,8 +89,11 @@ Scripts under **`deploy/docker-compose/apihub-generic/`**:
 
 ## Support data pack (when opening issues)
 
-Gather **chart version/tag**, sanitized **`values.yaml`**, **`kubectl describe`** for failing workloads, **`config.yaml`** with secrets stripped, Compose file set if reproducible desktop case, PostgreSQL logs for migration failures.
+Gather **chart version/tag**, sanitized **`values.yaml`**, **`kubectl describe`** for failing workloads,
+**`config.yaml`** with secrets stripped, Compose file set if reproducible desktop case, PostgreSQL logs for migration
+failures.
 
 ---
 
-See also **[Maintenance guide](./maintenance-guide.md)** for scripted backup tables and housekeeping links into backend documentation.
+See also **[Maintenance guide](./maintenance-guide.md)** for scripted backup tables and housekeeping links into backend
+documentation.

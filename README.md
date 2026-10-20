@@ -1,8 +1,12 @@
 # Qubership APIHUB
 
-**Product site:** [Qubership APIHUB on GitHub Pages](https://netcracker.github.io/apihub/) — use cases, feature tour, capabilities matrix, releases, and deployment entry points.
+**Product site:** [Qubership APIHUB on GitHub Pages](https://netcracker.github.io/apihub/) — use cases, feature tour,
+capabilities matrix, releases, and deployment entry points.
 
-**One place for your organization’s API specifications** — browse, compare, lint, and evolve APIs with confidence. Qubership APIHUB is Netcracker’s API **registry and Dev Portal**: a Kubernetes-native platform that turns scattered OpenAPI, GraphQL, AsyncAPI, and related specs into a **single source of truth**, with rich UI, automation, and optional cluster-side discovery.
+**One place for your organization’s API specifications** — browse, compare, lint, and evolve APIs with confidence.
+Qubership APIHUB is Netcracker’s API **registry and Dev Portal**: a Kubernetes-native platform that turns scattered
+OpenAPI, GraphQL, AsyncAPI, and related specs into a **single source of truth**, with rich UI, automation, and optional
+cluster-side discovery.
 
 ---
 
@@ -15,19 +19,25 @@
 | **Integration** | Publish from CI/CD, lint on publish, export reports; MCP and AI-assisted workflows where configured. |
 | **Scale** | Microservice architecture, horizontal workers, and pluggable extensions (linter, agents). |
 
-**Outcomes you can expect:** higher documentation completeness, faster onboarding for consumers, and safer API evolution backed by structured diffs and optional quality scoring.
+**Outcomes you can expect:** higher documentation completeness, faster onboarding for consumers, and safer API evolution
+backed by structured diffs and optional quality scoring.
 
 ---
 
 ## What you get
 
 - **Catalog & versioning** — Workspaces, groups, packages, versions, revisions; favorites and dashboards.
-- **Multi-format specs** — OpenAPI 3.x (and Swagger 2 via conversion), **GraphQL**, **AsyncAPI**, Markdown documents, JSON Schema; gRPC/protobuf stubs where applicable.
+- **Multi-format specs** — OpenAPI 3.x (and Swagger 2 via conversion), **GraphQL**, **AsyncAPI**, Markdown documents,
+  JSON Schema; gRPC/protobuf stubs where applicable.
 - **Deep analysis** — Changelog between versions, deprecated tracking, backward-compatibility signals, global search.
-- **Quality pipeline** — **Spectral** (OpenAPI & AsyncAPI) plus optional **AI-assisted** review for OpenAPI; **version-level scoring** in the linter service.
-- **Rich Portal** — Interactive docs (including AsyncAPI), comparison views, API quality views, export with **document shareability** options.
-- **Kubernetes agent (optional)** — Discover **OpenAPI, GraphQL, AsyncAPI**, Markdown, and JSON Schema in-cluster; snapshots and promotion into the catalog.
-- **Enterprise-ready** — SAML, OIDC, LDAP, RBAC, API keys and PATs; Helm charts and Docker Compose for different lifecycles.
+- **Quality pipeline** — **Spectral** (OpenAPI & AsyncAPI) plus optional **AI-assisted** review for OpenAPI;
+  **version-level scoring** in the linter service.
+- **Rich Portal** — Interactive docs (including AsyncAPI), comparison views, API quality views, export with **document
+  shareability** options.
+- **Kubernetes agent (optional)** — Discover **OpenAPI, GraphQL, AsyncAPI**, Markdown, and JSON Schema in-cluster;
+  snapshots and promotion into the catalog.
+- **Enterprise-ready** — SAML, OIDC, LDAP, RBAC, API keys and PATs; Helm charts and Docker Compose for different
+  lifecycles.
 
 ---
 
@@ -58,7 +68,8 @@ The **Portal** UI: catalog, version comparison, interactive documentation, and o
 | **Builder** | NestJS workers consume the TypeScript processing stack (normalize → diff → changelog → export). |
 | **Extensions** | API Linter (Spectral / AI / scoring), Agents Backend for remote discovery agents. |
 
-For a **detailed** diagram, API-type matrix, and extension roadmap, see the **[Architecture landscape](docs/architecture/overview.md)** in the docs.  
+For a **detailed** diagram, API-type matrix, and extension roadmap, see the **[Architecture
+landscape](docs/architecture/overview.md)** in the docs.  
 For a **full feature list**, see **[Features list](docs/architecture/features.md)**.
 
 ---
@@ -67,19 +78,24 @@ For a **full feature list**, see **[Features list](docs/architecture/features.md
 
 ### API Registry (backend)
 
-The central **Go** service: REST API, authentication (SAML / OIDC / LDAP), RBAC, package and version lifecycle, build task orchestration, and integrations (e.g. MCP server, AI chat). It persists state in PostgreSQL and coordinates asynchronous builds and notifications.
+The central **Go** service: REST API, authentication (SAML / OIDC / LDAP), RBAC, package and version lifecycle, build
+task orchestration, and integrations (e.g. MCP server, AI chat). It persists state in PostgreSQL and coordinates
+asynchronous builds and notifications.
 
 **Module:** [`backend/portal-backend`](./backend/portal-backend/)
 
 ### Builder service
 
-Stateless **NestJS** workers pull build tasks, run the **api-processor** pipeline (parse → operations → normalize → diff → changelog / export), and return artifacts to the registry. Supports REST, GraphQL, AsyncAPI, Markdown, and unknown/generic documents.
+Stateless **NestJS** workers pull build tasks, run the **api-processor** pipeline (parse → operations → normalize → diff
+→ changelog / export), and return artifacts to the registry. Supports REST, GraphQL, AsyncAPI, Markdown, and
+unknown/generic documents.
 
 **Module:** [`frontend/build-task-consumer`](./frontend/build-task-consumer/)
 
 ### Web portal
 
-**React** + **MUI** + **Vite**: the main Dev Portal for browsing the catalog, comparing versions, viewing API quality, managing settings, and (separately) the **Agents** app for cluster discovery workflows.
+**React** + **MUI** + **Vite**: the main Dev Portal for browsing the catalog, comparing versions, viewing API quality,
+managing settings, and (separately) the **Agents** app for cluster discovery workflows.
 
 **Module:** [`frontend/ui`](./frontend/ui/)
 
@@ -89,13 +105,16 @@ Stateless **NestJS** workers pull build tasks, run the **api-processor** pipelin
 
 ### API Linter service
 
-Pluggable quality gate: **Spectral** for OpenAPI and AsyncAPI, optional **OpenAI**-based review for OpenAPI, plus **aggregated version scoring** exposed via the linter API. Subscribes to publish events so new versions are validated automatically.
+Pluggable quality gate: **Spectral** for OpenAPI and AsyncAPI, optional **OpenAI**-based review for OpenAPI, plus
+**aggregated version scoring** exposed via the linter API. Subscribes to publish events so new versions are validated
+automatically.
 
 **Module:** [`backend/api-linter-service`](./backend/api-linter-service/)
 
 ### APIHUB Agents
 
-**Agents backend** registers and manages **APIHUB agents** deployed in customer clusters. Agents perform **service discovery** (OpenAPI, GraphQL, AsyncAPI, Markdown, JSON Schema, and more) and support snapshots and promotion flows.
+**Agents backend** registers and manages **APIHUB agents** deployed in customer clusters. Agents perform **service
+discovery** (OpenAPI, GraphQL, AsyncAPI, Markdown, JSON Schema, and more) and support snapshots and promotion flows.
 
 - [`backend/agents-backend`](./backend/agents-backend/)
 - [`backend/agent`](./backend/agent/)
@@ -121,9 +140,11 @@ More context: the [documentation index](docs/README.md).
 
 ## Deploy
 
-- **Helm** (production-oriented): see [deploy/helm-templates/README.md](./deploy/helm-templates/README.md) and [docs/installation-guide.md](./docs/installation-guide.md).
+- **Helm** (production-oriented): see [deploy/helm-templates/README.md](./deploy/helm-templates/README.md) and
+  [docs/installation-guide.md](./docs/installation-guide.md).
 - **Docker Compose** (dev/test): [deploy/docker-compose/apihub-generic/](./deploy/docker-compose/apihub-generic/).
-- **Local Kubernetes quickstart** (developers / R&D, not production): [deploy/helm-templates/local-k8s-quickstart/README.md](./deploy/helm-templates/local-k8s-quickstart/README.md).
+- **Local Kubernetes quickstart** (developers / R&D, not production):
+  [deploy/helm-templates/local-k8s-quickstart/README.md](./deploy/helm-templates/local-k8s-quickstart/README.md).
 
 ---
 
@@ -149,7 +170,9 @@ See [`AGENTS.md`](AGENTS.md) and [`agent-packages/README.md`](agent-packages/REA
 
 ## Repository role
 
-This repository (**qubership-apihub**) is the monorepo of the product: the source code of every component (see the modules linked above), the Helm charts and Compose stacks, and the product-level documentation. Reusable CI is in [qubership-apihub-ci](https://github.com/Netcracker/qubership-apihub-ci).
+This repository (**qubership-apihub**) is the monorepo of the product: the source code of every component (see the
+modules linked above), the Helm charts and Compose stacks, and the product-level documentation. Reusable CI is in
+[qubership-apihub-ci](https://github.com/Netcracker/qubership-apihub-ci).
 
 ---
 
