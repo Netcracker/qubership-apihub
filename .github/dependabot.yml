@@ -35,6 +35,7 @@ updates:
       - "/"
       - "/frontend/*"
       - "/frontend/*/packages/*"
+      - "/sites/*"
       - "/tests/ui-tests"
       - "/tools/jest-chrome-in-docker-environment"
     schedule:
