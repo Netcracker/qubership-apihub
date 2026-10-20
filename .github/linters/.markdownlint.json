@@ -8,7 +8,7 @@
   },
   "MD025": false,
   "MD033": {
-    "allowed_elements": ["picture", "source", "img"]
+    "allowed_elements": ["picture", "source", "img", "br"]
   },
   "MD041": false
 }
