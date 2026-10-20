@@ -1,16 +1,16 @@
 # AsyncAPI Publishing
 
-## Summary:
+## Summary
 
 This design document describes the implementation of AsyncAPI 3.0 specification support and rendering in APIHUB Portal.
 
 ### Assumptions
 
-- **API Operation (AsyncAPI).** For AsyncAPI, the term *API Operation* denotes the combination of three entities: **channels**, **messages**, and **operations**.
+- **API Operation (AsyncAPI).** For AsyncAPI, the term *API Operation* denotes the combination of three entities:
+  **channels**, **messages**, and **operations**.
 - **API Changes tab** and **API Quality tab** are out of scope for this document (handled by separate stories).
 
 ## Scope
-
 
 | Page / Functionality | Scope                                                                                                                    | Out of Scope                                                                              |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
@@ -25,7 +25,6 @@ This design document describes the implementation of AsyncAPI 3.0 specification 
 
 ## Overview Tab
 
-
 | Description                                                                                                                                                                                                                           | Mockups | API |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ----- |
 | **Summary.** If the user opens the Summary page, the system shall display a summary of the AsyncAPI package version, including: (1) total number of operations, (2) number of deprecated operations, (3) number of no-BWC operations. |         |     |
@@ -35,7 +34,6 @@ This design document describes the implementation of AsyncAPI 3.0 specification 
 ---
 
 ## API Operation (Messages) Tab
-
 
 | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Mockups | API |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ----- |
@@ -48,7 +46,6 @@ This design document describes the implementation of AsyncAPI 3.0 specification 
 
 ## Deprecated Tab
 
-
 | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Mockups | API |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ----- |
 | **Filters.**<br><br>The system shall behave the same as described for the API Operation (Messages) tab: filters on the left sidebar (Filter by Audience, Filter by Protocol, Filter by API Kind, Filter by Channel), with the ability to collapse or expand the filters sidebar via the filter button.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |         |     |
@@ -60,7 +57,6 @@ This design document describes the implementation of AsyncAPI 3.0 specification 
 
 ## Documents Tab
 
-
 | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | Mockups | API |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ----- |
 | **List of documents.**<br><br>If the user selects the Documents tab, the system shall display a page consisting of a left sidebar and a main content area.<br><br>The system shall display in the left sidebar a list of all documents in the current package version. AsyncAPI documents shall be shown with a specific purple icon.<br><br>Above the list of documents, the system shall display a "Search" field. If the user enters text in Search, the system shall allow the user to search by name for documents in the current package version.                                                             |         |     |
@@ -71,7 +67,6 @@ This design document describes the implementation of AsyncAPI 3.0 specification 
 ---
 
 ## Custom Properties (Extensions)
-
 
 | Custom Property                                                  | Format                                                                                                   | Mandatory | Description                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

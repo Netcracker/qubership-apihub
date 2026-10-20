@@ -3,10 +3,12 @@
 **Design Item ID**: DI-Portal-PKGVER-008  
 **Design Item Name**: Export List of Operations in Excel  
 **Related Design Items**:
-  - [DI‐Portal‐PKGVER‐011: List of Operations](di-portal-pkgver-011-list-of-operations.md)
 
-**Related API**: 
-  - Export operations to xlsx file (GET /api/v2/packages/{packageId}/versions/{version}/{apiType}/export/operations)
+- [DI-Portal-PKGVER-011: List of Operations](di-portal-pkgver-011-list-of-operations.md)
+
+**Related API**:
+
+- Export operations to xlsx file (GET /api/v2/packages/{packageId}/versions/{version}/{apiType}/export/operations)
 
 **Revision History:**  
 
@@ -15,23 +17,30 @@
 |||
 
 ***
-# Description
-The functionality provides a user with the ability to export a list of REST/GraphQL operations from the selected package version to an Excel file.
 
-# Start Point
+## Description
+
+The functionality provides a user with the ability to export a list of REST/GraphQL operations from the selected package
+version to an Excel file.
+
+## Start Point
+
 1. User navigates to APIHUB Portal → workspace → group → package version → API Operations tab
 
-# Execution
+## Execution
+
 1. User clicks **Export** button.  
 2. The system displays two options to export operations to Excel:  
    - All operations - all operations of the current API type from the package version will be exported.  
    - Filtered operations - only currently displayed operations will be exported.  
 3. User selects the required option.  
 4. The system exports operations to Excel.
-   - API to export operations to xlsx file - GET /api/v2/packages/{packageId}/versions/{version}/{apiType}/export/operations  
+   - API to export operations to xlsx file - GET
+     /api/v2/packages/{packageId}/versions/{version}/{apiType}/export/operations  
      - No query params are required if all operations will be exported.  
-     - If it is needed to export filtered operations, the query params and their usage are the same as in operations filtering.  
-   - Excel file name is 'APIOperations_<package.id>_<version>.xlsx'.  
+     - If it is needed to export filtered operations, the query params and their usage are the same as in operations
+       filtering.  
+   - Excel filename is 'APIOperations_\<package.id>_\<version>.xlsx'.  
    - The following information is present in the Excel file:  
      - Tab 1: Cover Page  
        - Package Name: The name of the package for which the API operations are exported.  
@@ -51,16 +60,18 @@ The functionality provides a user with the ability to export a list of REST/Grap
          - Tag: OAS tag(s) of operations.  
          - Kind: Indicates if the API follows backward compatibility policies or not (BWC or no-BWC).  
          - Deprecated: Whether the operation is deprecated (true/false).  
-        - Columns in GraphQL Tab:  
+       - Columns in GraphQL Tab:  
           - Package ID: Unique identifier for the package.  
           - Package Name: Name of the package.  
           - Service Name: The associated service name for the package.  
           - Version: Version of the package.  
           - Operation Title: Descriptive name of the API operation.  
-          - Operation Method: The specific method used for the operation (e.g., AVAILABILITYCHECK, CHANGEQUOTESTATE, etc.).  
+          - Operation Method: The specific method used for the operation (e.g., AVAILABILITYCHECK, CHANGEQUOTESTATE,
+            etc.).  
           - Operation Type: The type of operation (e.g., query, mutation).  
           - Kind: Indicates if the API is committed to follow backward compatibility policies or not (BWC or no-BWC).  
           - Deprecated: Whether the operation is deprecated (true/false).
 
-# Screen View
+## Screen View
+
 tbd

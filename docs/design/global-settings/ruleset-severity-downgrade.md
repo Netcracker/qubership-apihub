@@ -2,11 +2,15 @@
 
 ## Summary
 
-All Spectral linter rulesets (OpenAPI 2.0, OpenAPI 3.0, OpenAPI 3.1, AsyncAPI 3.0) have been updated to downgrade every rule's severity by one level: `error` → `warn`, `warn` → `info`, `info` → `hint`. This ensures that no ruleset produces `error`-level findings from linter rules, which is a prerequisite for the safe rollout of Quality Gate v4 on production. The recommended Spectral rules remain active — only their severity has been lowered, not their logic.
+All Spectral linter rulesets (OpenAPI 2.0, OpenAPI 3.0, OpenAPI 3.1, AsyncAPI 3.0) have been updated to downgrade every
+rule's severity by one level: `error` → `warn`, `warn` → `info`, `info` → `hint`. This ensures that no ruleset produces
+`error`-level findings from linter rules, which is a prerequisite for the safe rollout of Quality Gate v4 on production.
+The recommended Spectral rules remain active — only their severity has been lowered, not their logic.
 
 ## Spectral Version Compatibility
 
-These rulesets are designed for **Spectral CLI 6.15.0** (`@stoplight/spectral-rulesets` 1.22.0). Key version-dependent rules:
+These rulesets are designed for **Spectral CLI 6.15.0** (`@stoplight/spectral-rulesets` 1.22.0). Key version-dependent
+rules:
 
 | Rule | Minimum rulesets version |
 |------|------------------------|
@@ -16,11 +20,17 @@ These rulesets are designed for **Spectral CLI 6.15.0** (`@stoplight/spectral-ru
 | `oas3_1-callbacks-in-webhook` | 1.19.0 |
 | `asyncapi-3-*` (all v3 rules) | 1.21.0 |
 
-**Important:** If a ruleset contains a rule that does not exist in the deployed Spectral version, Spectral will crash with `Cannot extend non-existing rule` and the entire API Quality Check will fail. Always verify the Spectral version before deploying rulesets.
+**Important:** If a ruleset contains a rule that does not exist in the deployed Spectral version, Spectral will crash
+with `Cannot extend non-existing rule` and the entire API Quality Check will fail. Always verify the Spectral version
+before deploying rulesets.
 
 ## Assumptions
 
-`parser` errors (OpenAPI) and invalid-ref errors (AsyncAPI and OpenAPI) are considered infrastructure-level errors produced by the YAML parser and `$ref` resolver respectively. These errors are **not** part of Spectral rules and therefore **cannot** be configured, controlled, or suppressed via rulesets. They occur only when a specification is structurally invalid (e.g., incorrect YAML syntax or unresolved references), and not as a result of quality or style rule violations.
+`parser` errors (OpenAPI) and invalid-ref errors (AsyncAPI and OpenAPI) are considered infrastructure-level errors
+produced by the YAML parser and `$ref` resolver respectively. These errors are **not** part of Spectral rules and
+therefore **cannot** be configured, controlled, or suppressed via rulesets. They occur only when a specification is
+structurally invalid (e.g., incorrect YAML syntax or unresolved references), and not as a result of quality or style
+rule violations.
 
 ## Rules List
 

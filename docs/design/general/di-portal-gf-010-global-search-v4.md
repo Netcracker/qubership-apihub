@@ -2,7 +2,8 @@
 
 ## **Summary**
 
-Global Search allows users to find API operations, documents, and packages across the entire APIHUB portal by entering a text query.
+Global Search allows users to find API operations, documents, and packages across the entire APIHUB portal by entering a
+text query.
 
 ### **Search Levels**
 
@@ -18,19 +19,26 @@ Global Search supports three search levels:
 
 Global Search works in two stages:
 
-**At build/publish time:** the builder (API Processor) generates a **search text** for each operation. There are two options: either a plain text summary of the operation's key data (name, description, parameters, types, etc.), or the full operation data (e.g., the complete OpenAPI spec for REST). When the build result is published, the backend extracts this search text and indexes it using PostgreSQL full-text search. The operation title is always appended to the search text to ensure operations are findable by name.
+**At build/publish time:** the builder (API Processor) generates a **search text** for each operation. There are two
+options: either a plain text summary of the operation's key data (name, description, parameters, types, etc.), or the
+full operation data (e.g., the complete OpenAPI spec for REST). When the build result is published, the backend extracts
+this search text and indexes it using PostgreSQL full-text search. The operation title is always appended to the search
+text to ensure operations are findable by name.
 
-**At search time:** the user enters a query in the UI. The backend matches this query against the indexed search texts and returns results ranked by relevance \- operations with more and better matches appear first.
+**At search time:** the user enters a query in the UI. The backend matches this query against the indexed search texts
+and returns results ranked by relevance \- operations with more and better matches appear first.
 
 ## **API v4 Search Endpoint**
 
 * POST /api/v4/search/{searchLevel} \- where searchLevel is operations, packages, or documents  
 * The previous POST /api/v3/search/{searchLevel} is **deprecated**  
-* Feature flag useLegacySearch is returned in GET /api/v1/system/info → featureFlags.useLegacySearch (same endpoint as today). When false (default), the UI uses v4 search.
+* Feature flag useLegacySearch is returned in GET /api/v1/system/info → featureFlags.useLegacySearch (same endpoint as
+  today). When false (default), the UI uses v4 search.
 
 ### **UI Form → API Parameters**
 
-The search form has filters: workspace, group, package, version, status, publication date, and (for operations) API type with optional scope/methods/operation types.
+The search form has filters: workspace, group, package, version, status, publication date, and (for operations) API type
+with optional scope/methods/operation types.
 
 **v3** (operationParams present):
 
@@ -47,8 +55,11 @@ The search form has filters: workspace, group, package, version, status, publica
 
 **v4** (simplified):
 
-* workspace \- required; top-level workspace ID only. **Default value:** configurable in backend; returned in GET /api/v2/system/configuration as defaultWorkspaceId. The frontend already fetches this config at app load, so no additional request is needed.  
-* packageIds \- optional; from Group or Package selection (to narrow search within workspace). Empty \= search whole workspace  
+* workspace \- required; top-level workspace ID only. **Default value:** configurable in backend; returned in GET
+  /api/v2/system/configuration as defaultWorkspaceId. The frontend already fetches this config at app load, so no
+  additional request is needed.  
+* packageIds \- optional; from Group or Package selection (to narrow search within workspace). Empty \= search whole
+  workspace  
 * versions \- from version filter  
 * status \- single value (e.g. "release")  
 * creationDateInterval \- from publication date range  
@@ -57,7 +68,8 @@ The search form has filters: workspace, group, package, version, status, publica
 
 ## **The search Object in Build Result**
 
-Each operation in the build result (operations.json) contains a search object that tells the backend where to get the search text:
+Each operation in the build result (operations.json) contains a search object that tells the backend where to get the
+search text:
 
 {  
   "operationId": "query-getUser",  
@@ -74,17 +86,22 @@ Each operation in the build result (operations.json) contains a search object th
 | useOperationDataAsSearchText | true | When true or omitted, the operation's existing data file is used as search text |
 | searchTextFilePath | \- | Path to a custom search text file in the archive. Required when useOperationDataAsSearchText is false |
 
-**The backend is API-type agnostic** \- it does not know or care whether the operation is REST, GraphQL, or AsyncAPI. It only reads the search flags and gets the text from the appropriate source. The builder is responsible for setting the correct flags per API type.
+**The backend is API-type agnostic** \- it does not know or care whether the operation is REST, GraphQL, or AsyncAPI. It
+only reads the search flags and gets the text from the appropriate source. The builder is responsible for setting the
+correct flags per API type.
 
 ## **Search Text by API Type**
 
 ### **REST**
 
-**Search text source:** the operation's existing data file (operationData) \- a single-operation OpenAPI spec in JSON format.
+**Search text source:** the operation's existing data file (operationData) \- a single-operation OpenAPI spec in JSON
+format.
 
 search: { useOperationDataAsSearchText: true }
 
-The builder already generates a mini-OpenAPI document per REST operation containing paths, parameters, schemas, descriptions, examples, etc. This full JSON is used as search text. **Everything in the spec is searchable** \- path names, parameter names, schema properties, descriptions, enum values, response codes, and more.
+The builder already generates a mini-OpenAPI document per REST operation containing paths, parameters, schemas,
+descriptions, examples, etc. This full JSON is used as search text. **Everything in the spec is searchable** \- path
+names, parameter names, schema properties, descriptions, enum values, response codes, and more.
 
 ### **AsyncAPI**
 
@@ -105,7 +122,9 @@ search: {
 
 #### **Why GraphQL is different**
 
-GraphQL operations don't have operationData like REST/AsyncAPI. A single-operation GraphQL spec includes all referenced types (inlined), which makes it nearly as large as the full schema. Storing and indexing the full spec per operation would be:
+GraphQL operations don't have operationData like REST/AsyncAPI. A single-operation GraphQL spec includes all referenced
+types (inlined), which makes it nearly as large as the full schema. Storing and indexing the full spec per operation
+would be:
 
 * **Expensive** \- the schema can be hundreds of KB per operation  
 * **Redundant** \- most types are shared across operations, so search results would all look the same  
@@ -163,15 +182,17 @@ getPaymentMethodCore The operation allows get a Payment Method id String include
 | Content indexed | Full single-operation spec | Full single-operation spec | Operation name, description, args, return type |
 | Builder changes | Add search object | Add search object | Add search object \+ generate text files |
 
-**Migration from v3**
+**Migration from v3:**
 
 The migration to v4 search includes the following changes:
 
 1. **New search index** \- a unified full-text search index replaces the old per-scope tables  
-2. **Backfill** \- existing REST and AsyncAPI operations are automatically migrated to the new index; GraphQL operations will be indexed when they are next published with the updated builder  
-3. **Scope cleanup** \- the old multi-scope search system (request, response, annotation, etc.) is removed; only the all scope is preserved for backward compatibility  
+2. **Backfill** \- existing REST and AsyncAPI operations are automatically migrated to the new index; GraphQL operations
+   will be indexed when they are next published with the updated builder  
+3. **Scope cleanup** \- the old multi-scope search system (request, response, annotation, etc.) is removed; only the all
+   scope is preserved for backward compatibility  
 4. **Deprecation** \- the v3 endpoint remains available but is marked as deprecated
 
 ## Mockups
-<img alt="1 0 Global Search" src="../../images/design/di-portal-gf-010-global-search-v4/1.svg" />
 
+<img alt="1 0 Global Search" src="../../images/design/di-portal-gf-010-global-search-v4/1.svg" />

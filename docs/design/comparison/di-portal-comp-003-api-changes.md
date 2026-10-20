@@ -18,13 +18,15 @@
 
 ---
 
-# Assumptions
+## Assumptions
 
-- The API Changes tab is only available for package versions that have a previous release version. If no previous release version exists, the API Changes tab is disabled.
+- The API Changes tab is only available for package versions that have a previous release version. If no previous
+  release version exists, the API Changes tab is disabled.
 - Compare Revisions is only available if the package version has multiple revisions.
-- Compare REST Groups is only available if REST Path Prefix for Grouping by Version has been configured for the package (see DI-Portal-PKGVER-010).
+- Compare REST Groups is only available if REST Path Prefix for Grouping by Version has been configured for the package
+  (see DI-Portal-PKGVER-010).
 
-# Description
+## Description
 
 The functionality allows users to view and analyze changes in REST/GraphQL operations using different comparison modes:
 
@@ -33,13 +35,13 @@ The functionality allows users to view and analyze changes in REST/GraphQL opera
 - **Compare Revisions**: Compare any two revisions within a single package version
 - **Compare REST Groups**: Compare operations between two REST Path Prefix groups
 
-# Start Point
+## Start Point
 
 1. User navigates to APIHUB Portal → specific workspace → specific group → specific package version → API Changes tab.
 
-# Execution
+## Execution
 
-## View API Changes (Previous vs Current Version)
+### View API Changes (Previous vs Current Version)
 
 This is the default view when user opens the API Changes tab.
 
@@ -79,7 +81,8 @@ This is the default view when user opens the API Changes tab.
 
 3. The system displays the main content area with a list of changed operations in table format:
 
-   - **Name / Path** column: Shows operation title and HTTP method badge (e.g., POST, GET), followed by the operation path
+   - **Name / Path** column: Shows operation title and HTTP method badge (e.g., POST, GET), followed by the operation
+     path
      - Operations are expandable to show detailed changes
      - For each operation, change details are displayed:
        - [Updated] Path - indicates path was modified
@@ -90,15 +93,18 @@ This is the default view when user opens the API Changes tab.
    - **Kind** column: Shows API kind (bwc, no-bwc, bwc no-bwc)
    - **Changes summary** column: Shows color-coded counters of changes by severity for each operation
 
-   **Note**: When displaying changed values in any column, the system shows the old value with strikethrough text and displays the new value next to it. This applies to all fields that have been modified (e.g., operation title, path, tag, audience, kind).
+   **Note**: When displaying changed values in any column, the system shows the old value with strikethrough text and
+   displays the new value next to it. This applies to all fields that have been modified (e.g., operation title, path,
+   tag, audience, kind).
 
-   **Note**: Version numbers displayed in the comparison header are hyperlinks. When clicked, they navigate to the Summary page of the corresponding package version.
+   **Note**: Version numbers displayed in the comparison header are hyperlinks. When clicked, they navigate to the
+   Summary page of the corresponding package version.
 
-## Compare Versions
+### Compare Versions
 
 This mode allows comparing any two arbitrary package versions.
 
-### Select Versions to Compare
+#### Select Versions to Compare
 
 1. User clicks the **Compare** button in the first header.
 2. The system displays a dropdown menu with three options:
@@ -118,7 +124,7 @@ This mode allows comparing any two arbitrary package versions.
 5. User selects two versions from the dropdowns.
 6. User clicks **Compare** button.
 
-### View Version Comparison
+#### View Version Comparison
 
 1. The system opens a new comparison page with a single header containing:
 
@@ -139,13 +145,14 @@ This mode allows comparing any two arbitrary package versions.
 
 3. The system displays the main content area with the same table structure as in Previous vs Current view.
 
-   **Note**: Version numbers in the header are hyperlinks. When clicked, they navigate to the Summary page of the corresponding package version.
+   **Note**: Version numbers in the header are hyperlinks. When clicked, they navigate to the Summary page of the
+   corresponding package version.
 
-## Compare Revisions
+### Compare Revisions
 
 This mode allows comparing any two revisions within a single package version.
 
-### Select Revisions to Compare
+#### Select Revisions to Compare
 
 1. User clicks the **Compare** button in the first header.
 2. The system displays a dropdown menu with three options.
@@ -162,7 +169,7 @@ This mode allows comparing any two revisions within a single package version.
 5. User selects two revisions from the dropdowns.
 6. User clicks **Compare** button.
 
-### View Revision Comparison
+#### View Revision Comparison
 
 1. The system opens a new comparison page with a single header containing:
 
@@ -183,13 +190,15 @@ This mode allows comparing any two revisions within a single package version.
 
 3. The system displays the main content area with the same table structure as in Previous vs Current view.
 
-   **Note**: Revision identifiers in the header are hyperlinks. When clicked, they navigate to the Summary page of the corresponding package revision.
+   **Note**: Revision identifiers in the header are hyperlinks. When clicked, they navigate to the Summary page of the
+   corresponding package revision.
 
-## Compare REST Groups
+### Compare REST Groups
 
-This mode allows comparing operations between two REST Path Prefix groups. This option is only available if REST Path Prefix for Grouping by Version has been configured for the package.
+This mode allows comparing operations between two REST Path Prefix groups. This option is only available if REST Path
+Prefix for Grouping by Version has been configured for the package.
 
-### Select REST Groups to Compare
+#### Select REST Groups to Compare
 
 1. User clicks the **Compare** button in the first header.
 2. The system displays a dropdown menu with three options.
@@ -205,7 +214,7 @@ This mode allows comparing operations between two REST Path Prefix groups. This 
 5. User selects two REST groups from the dropdowns.
 6. User clicks **Compare** button.
 
-### View REST Groups Comparison
+#### View REST Groups Comparison
 
 1. The system opens a new comparison page with a single header containing:
 
@@ -229,9 +238,9 @@ This mode allows comparing operations between two REST Path Prefix groups. This 
 
    **Note**: REST group names in the header are NOT hyperlinks, as they do not have separate package pages.
 
-## Common Operations (Available in All Comparison Modes)
+### Common Operations (Available in All Comparison Modes)
 
-### Expand Operation Details
+#### Expand Operation Details
 
 1. User clicks on an operation row to expand it.
 2. The system expands the row and displays detailed changes for that operation:
@@ -242,7 +251,7 @@ This mode allows comparing operations between two REST Path Prefix groups. This 
    - Change type is indicated (e.g., Path, Request Body, Response, Parameter)
 3. User can collapse the operation by clicking on it again.
 
-### Filter Operations
+#### Filter Operations
 
 1. User applies filters using the left sidebar options:
    - Selects group from the "Filter by Group" dropdown
@@ -253,13 +262,14 @@ This mode allows comparing operations between two REST Path Prefix groups. This 
 3. The changes summary counters in the header update to reflect the filtered results.
 4. User can clear individual filters by deselecting them or clear all filters at once.
 
-### Search Operations
+#### Search Operations
 
 1. User enters a search term in the "Search operations" field.
-2. The system filters the operations list in real-time to show only operations whose name or path contains the search term.
+2. The system filters the operations list in real-time to show only operations whose name or path contains the search
+   term.
 3. The changes summary counters update to reflect the search results.
 
-### Switch API Type
+#### Switch API Type
 
 1. User clicks on the API Type dropdown (REST API / GraphQL).
 2. The system displays available API types.
@@ -269,13 +279,13 @@ This mode allows comparing operations between two REST Path Prefix groups. This 
    - For REST API: Method, Path
    - For GraphQL: Method (operation name), Type (query/mutation/subscription)
 
-### Swap Compared Items
+#### Swap Compared Items
 
 1. User clicks the swap icon (⇄) in the header.
 2. The system swaps the positions of the two compared items (versions/revisions/groups).
 3. The comparison results are recalculated and displayed with reversed perspective.
 
-### Edit Compared Items
+#### Edit Compared Items
 
 1. User clicks the edit icon (pencil) in the header.
 2. The system opens the corresponding selection popup (Versions/Revisions/REST Groups).
@@ -283,5 +293,6 @@ This mode allows comparing operations between two REST Path Prefix groups. This 
 4. User clicks **Compare** button.
 5. The system updates the comparison page with the newly selected items.
 
-# Mockups
+## Mockups
+
 ![Standardized UI layout for API comparison pages](../../images/design/di-portal-comp-003-api-changes/1.svg)

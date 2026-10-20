@@ -1,10 +1,10 @@
 # Search Scope for REST API
 
-**Design Item ID**: DI-Portal-GS-001   
-**Design Item Name**: Search Scope for REST Operations   
-**Related Design Items**: [Global Search](di-portal-gf-010-global-search.md)   
-**Related API**:   
-**Revision History:**   
+**Design Item ID**: DI-Portal-GS-001  
+**Design Item Name**: Search Scope for REST Operations  
+**Related Design Items**: [Global Search](di-portal-gf-010-global-search.md)  
+**Related API**:  
+**Revision History:**
 
 | Date | Description |
 | ---- | ----------- |
@@ -12,8 +12,11 @@
 
 ---
 
-# Description
-The functionality calculates search scope for REST operations to define by which content the system will perform search. The system provides the following search scopes for REST operations:
+## Description
+
+The functionality calculates search scope for REST operations to define by which content the system will perform search.
+The system provides the following search scopes for REST operations:
+
 - all - union of all other search scopes
 - property - all kind of properties, parameters.
 - annotation - descriptions, summary, operationId, title.
@@ -21,8 +24,7 @@ The functionality calculates search scope for REST operations to define by which
 - response - search only in response body, headers.
 - example - all kind of examples in several layers.
 
-
-## Search scopes
+### Search scopes
 
 | Path                                                        | property | annotation | request | response | example |
 |-------------------------------------------------------------|:--------:|:----------:|:-------:|:--------:|:-------:|
@@ -79,7 +81,8 @@ The functionality calculates search scope for REST operations to define by which
 | `$.paths.[*].[*].responses.[*].headers.[*].example.<value>` |          |            |         | ✅        | ✅       |
 | `$.paths.[*].[*].responses.[*].headers.[*].examples.[*].value.<value>`| |            |         | ✅        | ✅       |
 
-## Schema
+### Schema
+
 | Path                                    | property | annotation | request | response | example |
 |-----------------------------------------|:--------:|:----------:|:-------:|:--------:|:-------:|
 | **Schema**                              |          |            |         |          |         |
@@ -98,4 +101,3 @@ The functionality calculates search scope for REST operations to define by which
 | `/anyOf.[*].[<schema>]`                 |          |            |         |          |         |
 | `/oneOf.[*].[<schema>]`                 |          |            |         |          |         |
 | `/items.[*].[<schema>]`                 |          |            |         |          |         |
-
