@@ -1,15 +1,16 @@
 # APIHUB Backend database structure (ERD)
 
-  * [Relationships tables](#relationships-tables)
-  * [Orphans tables](#orphans-tables)
-  * [Appendix: how to generate dynamic document](#appendix-how-to-generate-dynamic-document)
-    + [Run SchemaSpy from `jar` distribution (on Windows)](#run-schemaspy-from-jar-distribution-on-windows)
+* [Relationships tables](#relationships-tables)
+* [Orphans tables](#orphans-tables)
+* [Appendix: how to generate dynamic document](#appendix-how-to-generate-dynamic-document)
+  * [Run SchemaSpy from `jar` distribution (on Windows)](#run-schemaspy-from-jar-distribution-on-windows)
 
 This article depicts tables and relationships in APIHUB Backend database.
 
 This article contains static pictures for reference.
 
-Interactive document can be found here: [ERD on GitHub pages](https://netcracker.github.io/qubership-apihub/pages/erd/index.html)
+Interactive document can be found here:
+[ERD on GitHub pages](https://netcracker.github.io/qubership-apihub/pages/erd/index.html)
 
 ## Relationships tables
 
@@ -25,8 +26,9 @@ The following tool is used: [SchemaSpy](https://schemaspy.org/), [GitHub](https:
 
 ### Run SchemaSpy from `jar` distribution (on Windows)
 
-Software prerequisites: 
-- JRE
+Software prerequisites:
+
+* JRE
 
 Steps:
 
@@ -34,7 +36,8 @@ Steps:
 2. Download PG JDBC driver from [Release 42.7.7](https://jdbc.postgresql.org/download/postgresql-42.7.7.jar)
 3. Put both jars to same folder
 
-You need PG with APIHUB Backend database up and running. For example you could set up APIHUB via docker-compose or in local k8s cluster and make port-forward.
+You need PG with APIHUB Backend database up and running. For example you could set up APIHUB via docker-compose or in
+local k8s cluster and make port-forward.
 
 Let's imagine PG is available on localhost:5432
 

@@ -1,16 +1,25 @@
 # Qubership APIHUB Core Libraries — Architecture Guide
 
-Qubership APIHUB is a platform for managing the full lifecycle of API specifications. It provides a centralized repository where development teams store, browse, compare, validate, and publish API contracts. The platform enforces backward compatibility, tracks deprecations, generates changelogs, and serves as the single source of truth for API documentation across an organization.
+Qubership APIHUB is a platform for managing the full lifecycle of API specifications. It provides a centralized
+repository where development teams store, browse, compare, validate, and publish API contracts. The platform enforces
+backward compatibility, tracks deprecations, generates changelogs, and serves as the single source of truth for API
+documentation across an organization.
 
-The platform is built from 14 npm library repositories organized into six architectural layers. Together they cover the entire pipeline: parsing raw specification files (OpenAPI 2/3, AsyncAPI 2.x, GraphQL, JSON Schema), normalizing them into a unified representation, computing structural diffs between versions, transforming specs into renderable data models, and finally presenting interactive documentation with diff visualization and live API testing.
+The platform is built from 14 npm library repositories organized into six architectural layers. Together they cover the
+entire pipeline: parsing raw specification files (OpenAPI 2/3, AsyncAPI 2.x, GraphQL, JSON Schema), normalizing them
+into a unified representation, computing structural diffs between versions, transforming specs into renderable data
+models, and finally presenting interactive documentation with diff visualization and live API testing.
 
-This document is intended for newcomers onboarding onto these repositories as well as senior engineers already working with the codebase. It captures dependency relationships, data flow pipelines, key design decisions, and a detailed catalog of every repository.
+This document is intended for newcomers onboarding onto these repositories as well as senior engineers already working
+with the codebase. It captures dependency relationships, data flow pipelines, key design decisions, and a detailed
+catalog of every repository.
 
 ---
 
 ## 1. System Overview
 
-The 14 repositories are organized into six layers. Each layer builds on the ones below it, enforcing a clear dependency direction from foundation to application.
+The 14 repositories are organized into six layers. Each layer builds on the ones below it, enforcing a clear dependency
+direction from foundation to application.
 
 | Layer | Purpose | Repositories |
 |---|---|---|
@@ -108,7 +117,8 @@ flowchart TB
 
 ## 2. Dependency Graph
 
-The following diagram shows only actual runtime dependencies between internal `@netcracker/qubership-apihub-*` packages, extracted from each repository's description. Arrows point from the dependent package to its dependency.
+The following diagram shows only actual runtime dependencies between internal `@netcracker/qubership-apihub-*` packages,
+extracted from each repository's description. Arrows point from the dependent package to its dependency.
 
 ```mermaid
 flowchart TD
@@ -193,7 +203,9 @@ flowchart TD
   style L6 fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#7f1d1d
 ```
 
-> **Reading the graph:** Four packages have zero internal runtime dependencies and sit at the foundation: `json-crawl`, `graphapi`, `http-spec`, and `class-view`. The most depended-upon package is `json-crawl` (used by 8 other repos), followed by `api-unifier` (used by 7). The `ui` application sits at the top, consuming 8 internal packages.
+> **Reading the graph:** Four packages have zero internal runtime dependencies and sit at the foundation: `json-crawl`,
+> `graphapi`, `http-spec`, and `class-view`. The most depended-upon package is `json-crawl` (used by 8 other repos),
+> followed by `api-unifier` (used by 7). The `ui` application sits at the top, consuming 8 internal packages.
 
 ---
 
@@ -207,9 +219,12 @@ Repositories are listed from foundation to application layer (bottom-up).
 
 **Package:** `@netcracker/qubership-apihub-json-crawl`
 
-A modified fork of [json-crawl](https://github.com/udamir/json-crawl) that provides synchronous and asynchronous utilities for traversing, cloning, comparing, and transforming JSON objects as tree structures. It is the foundational tree-walking engine used by nearly every other library in the system.
+A modified fork of [json-crawl](https://github.com/udamir/json-crawl) that provides synchronous and asynchronous
+utilities for traversing, cloning, comparing, and transforming JSON objects as tree structures. It is the foundational
+tree-walking engine used by nearly every other library in the system.
 
 **Key responsibilities:**
+
 - Depth-first traversal (`crawl`, `syncCrawl`) with customizable hook pipeline and flow control (skip/terminate)
 - Breadth-first traversal (`breadthFirstTraverse`) with the same hook interface
 - Deep cloning (`clone`, `syncClone`) with optional hook-based transformation
@@ -228,9 +243,12 @@ A modified fork of [json-crawl](https://github.com/udamir/json-crawl) that provi
 
 **Package:** `@netcracker/qubership-apihub-graphapi`
 
-Defines and implements the **GraphAPI Specification** — a JSON Schema-based representation of GraphQL APIs, analogous to what OpenAPI is for REST. Converts between `GraphQLSchema` objects, introspection query results, and the GraphAPI JSON format.
+Defines and implements the **GraphAPI Specification** — a JSON Schema-based representation of GraphQL APIs, analogous to
+what OpenAPI is for REST. Converts between `GraphQLSchema` objects, introspection query results, and the GraphAPI JSON
+format.
 
 **Key responsibilities:**
+
 - Convert `GraphQLSchema` to `GraphApiSchema` JSON document (`buildFromSchema`)
 - Convert GraphQL introspection results to `GraphApiSchema` (`buildFromIntrospection`)
 - Print `GraphApiSchema` back to GraphQL SDL text (`printGraphApi`)
@@ -248,9 +266,12 @@ Defines and implements the **GraphAPI Specification** — a JSON Schema-based re
 
 **Package:** `@netcracker/qubership-apihub-http-spec`
 
-A fork of [@stoplightio/http-spec](https://github.com/stoplightio/http-spec) that converts multiple API specification formats into a unified intermediate AST based on `@stoplight/types` (`IHttpService` / `IHttpOperation`). Extended with an `oas3WithMeta` variant that preserves diff metadata through the transformation pipeline.
+A fork of [@stoplightio/http-spec](https://github.com/stoplightio/http-spec) that converts multiple API specification
+formats into a unified intermediate AST based on `@stoplight/types` (`IHttpService` / `IHttpOperation`). Extended with
+an `oas3WithMeta` variant that preserves diff metadata through the transformation pipeline.
 
 **Key responsibilities:**
+
 - OAS2 (Swagger), OAS3, Postman Collections, AsyncAPI to `IHttpService`/`IHttpOperation` conversion
 - `oas3WithMeta` variant preserving diff metadata via symbol-keyed `keepProperties`
 - Operation merging by path+method (`mergeOperations`)
@@ -268,9 +289,11 @@ A fork of [@stoplightio/http-spec](https://github.com/stoplightio/http-spec) tha
 
 **Package:** `@netcracker/qubership-apihub-api-unifier`
 
-The normalization engine. Takes API specifications (OpenAPI 3.0/3.1, JSON Schema drafts 04/06/07, GraphAPI, AsyncAPI 2) and produces a fully resolved, self-contained representation suitable for diffing, hashing, and programmatic comparison.
+The normalization engine. Takes API specifications (OpenAPI 3.0/3.1, JSON Schema drafts 04/06/07, GraphAPI, AsyncAPI 2)
+and produces a fully resolved, self-contained representation suitable for diffing, hashing, and programmatic comparison.
 
 **Key responsibilities:**
+
 - `$ref` resolution with cycle handling and origin tracking
 - `allOf` merging with type-aware merge resolvers
 - Type inference and default value unification
@@ -291,9 +314,11 @@ The normalization engine. Takes API specifications (OpenAPI 3.0/3.1, JSON Schema
 
 **Package:** `@netcracker/qubership-apihub-api-diff`
 
-The structural diff engine. Computes differences between two versions of any supported API specification and produces a merged document annotated with change metadata. Every change is classified by severity.
+The structural diff engine. Computes differences between two versions of any supported API specification and produces a
+merged document annotated with change metadata. Every change is classified by severity.
 
 **Key responsibilities:**
+
 - `apiDiff(before, after, options)` — main entry point for all spec types
 - Merged document generation with diff metadata stored under Symbol keys
 - Change classification: `breaking`, `non-breaking`, `risky`, `annotation`, `deprecated`, `unclassified`
@@ -314,11 +339,14 @@ The structural diff engine. Computes differences between two versions of any sup
 
 **Package:** `@netcracker/qubership-apihub-api-visitor`
 
-A type-safe Visitor-pattern walker for traversing normalized OpenAPI 3.0 specifications. Recursively walks the document tree and invokes user-supplied `start`/`end` callback pairs at each structural node.
+A type-safe Visitor-pattern walker for traversing normalized OpenAPI 3.0 specifications. Recursively walks the document
+tree and invokes user-supplied `start`/`end` callback pairs at each structural node.
 
 **Key responsibilities:**
+
 - `OpenApiWalker` class with `walkPaths` and `walkPathsOnNormalizedSource`
-- Start/end callback pairs for paths, HTTP methods, parameters, request bodies, responses, media types, schemas, combiners, headers
+- Start/end callback pairs for paths, HTTP methods, parameters, request bodies, responses, media types, schemas,
+  combiners, headers
 - Circular reference detection via visited-objects tracking
 - Integrated normalization pipeline (can accept raw or pre-normalized specs)
 - Origins metadata propagation through callbacks
@@ -334,9 +362,11 @@ A type-safe Visitor-pattern walker for traversing normalized OpenAPI 3.0 specifi
 
 **Package:** `@netcracker/qubership-apihub-api-processor`
 
-The core build pipeline engine. Processes raw API specification files into structured package-version build results with operation extraction, version-to-version changelogs, deprecation tracking, and export artifacts.
+The core build pipeline engine. Processes raw API specification files into structured package-version build results with
+operation extraction, version-to-version changelogs, deprecation tracking, and export artifacts.
 
 **Key responsibilities:**
+
 - `PackageVersionBuilder` — main orchestrator with `run()` and incremental `update()`
 - Multi-format parsing: OpenAPI 2/3, GraphQL, Markdown, unknown file types
 - Operation extraction (REST endpoints, GraphQL queries/mutations/subscriptions)
@@ -358,9 +388,12 @@ The core build pipeline engine. Processes raw API specification files into struc
 
 **Package:** `@netcracker/qubership-apihub-api-data-model`
 
-A modified fork of [api-model-tree](https://github.com/udamir/api-model-tree) that converts JSON Schema and GraphAPI specifications into structured, navigable tree data models for rendering. Also supports building diff trees that carry change metadata.
+A modified fork of [api-model-tree](https://github.com/udamir/api-model-tree) that converts JSON Schema and GraphAPI
+specifications into structured, navigable tree data models for rendering. Also supports building diff trees that carry
+change metadata.
 
 **Key responsibilities:**
+
 - `createJsonSchemaTree` / `createJsonSchemaDiffTree` — build model trees from JSON Schema
 - `createGraphApiTree` / `createGraphApiDiffTree` — build model trees from GraphAPI
 - `ModelTree` / `IModelTreeNode` generic tree structure with typed nodes
@@ -379,9 +412,11 @@ A modified fork of [api-model-tree](https://github.com/udamir/api-model-tree) th
 
 **Package:** `@netcracker/qubership-apihub-class-view`
 
-An interactive UML-style class diagram visualization library. Renders API schema structures as navigable, zoomable graph diagrams with automatic layout.
+An interactive UML-style class diagram visualization library. Renders API schema structures as navigable, zoomable graph
+diagrams with automatic layout.
 
 **Key responsibilities:**
+
 - `<class-view-component>` Web Component (Custom Element)
 - Automatic graph layout via ELK.js (Eclipse Layout Kernel) running in a Web Worker
 - SVG rendering via D3.js with animated transitions on content changes
@@ -406,9 +441,11 @@ An interactive UML-style class diagram visualization library. Renders API schema
 | `packages/api-data-model` | `@netcracker/qubership-apihub-api-data-model` | No (private) | Converts raw schemas into structured model trees for rendering |
 | `packages/api-state-model` | `@netcracker/qubership-apihub-api-state-model` | No (private) | Manages UI state (expand/collapse, combiner selection, sorting) over model trees |
 
-The rendering pipeline is: raw schema --> model tree (`api-data-model`) --> UI state (`api-state-model`) --> React components (`api-doc-viewer`).
+The rendering pipeline is: raw schema --> model tree (`api-data-model`) --> UI state (`api-state-model`) --> React
+components (`api-doc-viewer`).
 
 **Key responsibilities:**
+
 - `JsonSchemaViewer` / `JsonSchemaDiffViewer` — JSON Schema rendering with diff support
 - `GraphQLOperationViewer` / `GraphQLOperationDiffViewer` — GraphQL operation rendering
 - Display modes: `simple` (titles + types) and `detailed` (full annotations)
@@ -437,9 +474,11 @@ The rendering pipeline is: raw schema --> model tree (`api-data-model`) --> UI s
 | `packages/json-schema-diff-viewer` | `@stoplight/json-schema-diff-viewer` | No (private) | Diff-aware JSON Schema viewer using `api-diff` |
 | `packages/samples` | `@netcracker/qubership-apihub-apispec-view-samples` | No (private) | Sample API descriptions for Storybook and tests |
 
-This is a heavily customized fork of [@stoplightio/elements](https://github.com/stoplightio/elements), extended with side-by-side API diff visualization.
+This is a heavily customized fork of [@stoplightio/elements](https://github.com/stoplightio/elements), extended with
+side-by-side API diff visualization.
 
 **Key responsibilities:**
+
 - Web Components: `<apispec-view>`, `<operation-view>`, `<diff-operation-view>`
 - OpenAPI 2/3/3.1 and AsyncAPI rendering with sidebar, stacked, and partial layouts
 - Color-coded diff severity indicators (breaking, non-breaking, deprecated, risky, annotation)
@@ -457,9 +496,11 @@ This is a heavily customized fork of [@stoplightio/elements](https://github.com/
 
 **Package:** `@netcracker/qubership-apihub-rest-playground`
 
-A fork of [@stoplightio/elements](https://github.com/stoplightio/elements) with the TryIt and Examples panels extracted as standalone Web Components for interactive REST API testing.
+A fork of [@stoplightio/elements](https://github.com/stoplightio/elements) with the TryIt and Examples panels extracted
+as standalone Web Components for interactive REST API testing.
 
 **Key responsibilities:**
+
 - `<rest-playground>` Web Component — full interactive "Try It" panel
 - `<rest-examples>` Web Component — request/response examples viewer
 - OpenAPI 2/3 parsing via `http-spec` into `IHttpOperation` models
@@ -480,9 +521,11 @@ A fork of [@stoplightio/elements](https://github.com/stoplightio/elements) with 
 
 **Package:** `@netcracker/qubership-apihub-build-task-consumer`
 
-A NestJS-based microservice deployed as a Docker container. Acts as a build worker that polls the APIHUB backend for tasks, processes API packages using `api-processor`, and reports results.
+A NestJS-based microservice deployed as a Docker container. Acts as a build worker that polls the APIHUB backend for
+tasks, processes API packages using `api-processor`, and reports results.
 
 **Key responsibilities:**
+
 - Task polling on a configurable interval via RxJS reactive loop
 - Delegates to `PackageVersionBuilder` from `api-processor` for all build work
 - Reports build status (running/complete/error) with periodic heartbeat
@@ -509,11 +552,17 @@ A NestJS-based microservice deployed as a Docker container. Acts as a build work
 | `packages/agents` | `@netcracker/qubership-apihub-ui-agents` | Agent SPA — Kubernetes service discovery, API promotion |
 
 **Key responsibilities:**
-- **Portal:** Package/workspace/group management, API spec viewing, operation browsing, version diff comparison, backward compatibility checking, deprecation tracking, API quality linting (Spectral), REST Playground integration, document management, version publishing, system administration
-- **Agent:** Agent/namespace selection, Kubernetes service discovery, snapshot management, API validation, version promotion, security reports
-- **Shared:** 80+ reusable React components, domain entity types, custom hooks, MUI theme, specification viewers, changelog widget, login page
 
-**Depends on:** `api-diff`, `api-doc-viewer`, `api-processor`, `api-unifier`, `api-visitor`, `apispec-view`, `class-view`, `rest-playground`
+- **Portal:** Package/workspace/group management, API spec viewing, operation browsing, version diff comparison,
+  backward compatibility checking, deprecation tracking, API quality linting (Spectral), REST Playground integration,
+  document management, version publishing, system administration
+- **Agent:** Agent/namespace selection, Kubernetes service discovery, snapshot management, API validation, version
+  promotion, security reports
+- **Shared:** 80+ reusable React components, domain entity types, custom hooks, MUI theme, specification viewers,
+  changelog widget, login page
+
+**Depends on:** `api-diff`, `api-doc-viewer`, `api-processor`, `api-unifier`, `api-visitor`, `apispec-view`,
+`class-view`, `rest-playground`
 
 **Used by:** None (end-user deployment artifact)
 
@@ -540,9 +589,12 @@ flowchart LR
 ```
 
 **Steps:**
+
 1. `api-processor` receives source files and detects their format (OpenAPI 2/3, GraphQL, Markdown, unknown)
-2. OpenAPI 2 specs are converted to 3.x via `swagger2openapi`; GraphQL SDL is converted to GraphAPI format via `graphapi`
-3. `api-unifier` normalizes the spec: resolves `$ref` references (handling cycles), validates structure, merges `allOf`, infers types, attaches structural hashes and origin metadata
+2. OpenAPI 2 specs are converted to 3.x via `swagger2openapi`; GraphQL SDL is converted to GraphAPI format via
+   `graphapi`
+3. `api-unifier` normalizes the spec: resolves `$ref` references (handling cycles), validates structure, merges `allOf`,
+   infers types, attaches structural hashes and origin metadata
 4. `api-processor` extracts individual API operations from the normalized document
 5. The `BuildResult` (documents map, operations map, metadata) is packaged into a ZIP archive
 
@@ -579,6 +631,7 @@ sequenceDiagram
 ```
 
 **Key points:**
+
 - Both specs are normalized independently before comparison to ensure structural alignment
 - The crawl walks both trees simultaneously, using `CrawlRules` to match the spec structure
 - Each diff is classified as `breaking`, `non-breaking`, `risky`, `annotation`, `deprecated`, or `unclassified`
@@ -605,10 +658,14 @@ flowchart LR
 ```
 
 **Two parallel paths converge in the Portal UI:**
-1. **Full operation/service view:** `http-spec` transforms the OAS document into `IHttpService`/`IHttpOperation` models, which `apispec-view` renders as complete API documentation (parameters, request body, responses, examples)
-2. **Schema detail view:** `api-unifier` normalizes the schema, `api-data-model` builds a navigable tree, `api-state-model` manages UI state, and `api-doc-viewer` renders it as an interactive, collapsible property tree
 
-For diff views, the same pipeline runs with diff-aware variants: `createJsonSchemaDiffTree`, `JsonSchemaDiffViewer`, `diff-elements-core`, and `DiffBlock` components that render side-by-side panels with color-coded change severity.
+1. **Full operation/service view:** `http-spec` transforms the OAS document into `IHttpService`/`IHttpOperation` models,
+   which `apispec-view` renders as complete API documentation (parameters, request body, responses, examples)
+2. **Schema detail view:** `api-unifier` normalizes the schema, `api-data-model` builds a navigable tree,
+   `api-state-model` manages UI state, and `api-doc-viewer` renders it as an interactive, collapsible property tree
+
+For diff views, the same pipeline runs with diff-aware variants: `createJsonSchemaDiffTree`, `JsonSchemaDiffViewer`,
+`diff-elements-core`, and `DiffBlock` components that render side-by-side panels with color-coded change severity.
 
 ### 4.4 Build Task Pipeline
 
@@ -650,8 +707,10 @@ sequenceDiagram
 ```
 
 **Key details:**
+
 - `build-task-consumer` is a stateless worker; it receives all data from the backend and writes all results back
-- The `PackageVersionBuilder` uses resolver callbacks (provided by the consumer) to fetch external data on demand — it never performs I/O directly
+- The `PackageVersionBuilder` uses resolver callbacks (provided by the consumer) to fetch external data on demand — it
+  never performs I/O directly
 - Build types include: full package builds, changelog-only computations, and various export formats
 - Results are packaged as ZIP archives using `adm-zip` (Node.js environment)
 
@@ -661,7 +720,10 @@ sequenceDiagram
 
 ### Crawl-based traversal
 
-`json-crawl` is the universal tree-walking engine. Nearly every library that needs to traverse, clone, or transform a JSON-like structure delegates to `syncCrawl` or `syncClone` with a hook pipeline. This provides a single, well-tested implementation for:
+`json-crawl` is the universal tree-walking engine. Nearly every library that needs to traverse, clone, or transform a
+JSON-like structure delegates to `syncCrawl` or `syncClone` with a hook pipeline. This provides a single, well-tested
+implementation for:
+
 - Iterative (stack-based) traversal that avoids call-stack overflow
 - Composable hooks executed in sequence per node
 - Declarative `CrawlRules` that match paths in the JSON tree to control which branches to visit
@@ -670,11 +732,18 @@ sequenceDiagram
 
 ### Normalization before comparison
 
-`api-unifier` always runs before `api-diff`. The normalization pipeline resolves all `$ref` references, merges `allOf` combiners, infers default types, and attaches origin metadata. This ensures that the diff engine compares semantic content rather than syntactic representation. Without this step, equivalent specs written differently (e.g., using `$ref` vs inline, or `allOf` composition vs flat) would produce false positives.
+`api-unifier` always runs before `api-diff`. The normalization pipeline resolves all `$ref` references, merges `allOf`
+combiners, infers default types, and attaches origin metadata. This ensures that the diff engine compares semantic
+content rather than syntactic representation. Without this step, equivalent specs written differently (e.g., using
+`$ref` vs inline, or `allOf` composition vs flat) would produce false positives.
 
 ### Web Components for embedding
 
-Three visualization libraries expose Web Components as their primary interface: `apispec-view` (`<apispec-view>`, `<operation-view>`, `<diff-operation-view>`), `class-view` (`<class-view-component>`), and `rest-playground` (`<rest-playground>`, `<rest-examples>`). The `createElementClass` factory wraps React components as Custom Elements with Shadow DOM, property/attribute bridging, and scoped style injection. This enables framework-agnostic embedding in any web application.
+Three visualization libraries expose Web Components as their primary interface: `apispec-view` (`<apispec-view>`,
+`<operation-view>`, `<diff-operation-view>`), `class-view` (`<class-view-component>`), and `rest-playground`
+(`<rest-playground>`, `<rest-examples>`). The `createElementClass` factory wraps React components as Custom Elements
+with Shadow DOM, property/attribute bridging, and scoped style injection. This enables framework-agnostic embedding in
+any web application.
 
 ### Monorepo structure
 
@@ -696,11 +765,15 @@ Three repositories are forks of open-source Stoplight libraries:
 | `apispec-view` | `@stoplightio/elements` | Added full diff visualization system (diff-elements-core, diff-block, json-schema-diff-viewer) |
 | `rest-playground` | `@stoplightio/elements` | Extracted TryIt and Examples panels as standalone Web Components |
 
-Internal forked packages retain their original `@stoplight/*` names but are private workspace-only packages. Only the `@netcracker/*` wrapper packages are published.
+Internal forked packages retain their original `@stoplight/*` names but are private workspace-only packages. Only the
+`@netcracker/*` wrapper packages are published.
 
 ### GraphAPI specification
 
-`graphapi` defines a custom JSON Schema-based format for describing GraphQL APIs. This allows GraphQL schemas to be processed by the same JSON-based tooling pipeline (json-crawl, api-unifier, api-diff) as OpenAPI specs. Key design choices:
+`graphapi` defines a custom JSON Schema-based format for describing GraphQL APIs. This allows GraphQL schemas to be
+processed by the same JSON-based tooling pipeline (json-crawl, api-unifier, api-diff) as OpenAPI specs. Key design
+choices:
+
 - Kind-based discriminated unions (`type.kind` field) for polymorphism
 - `$ref` references for component types (like OpenAPI's `#/components/schemas/...`)
 - `nullable` boolean flag instead of GraphQL's `NonNull` wrapper — closer to JSON Schema semantics
@@ -734,6 +807,7 @@ Internal forked packages retain their original `@stoplight/*` names but are priv
 ### Conceptual prerequisites
 
 Before diving into the code, ensure familiarity with:
+
 - **JSON Schema** — `$ref` references, `allOf`/`oneOf`/`anyOf` combiners, type inference
 - **OpenAPI 3.x** — paths, operations, parameters, request bodies, responses, components, security schemes
 - **GraphQL** — schema definition language (SDL), types (objects, interfaces, enums, unions, input types), introspection
@@ -743,21 +817,31 @@ Before diving into the code, ensure familiarity with:
 
 Start at the foundation and work upward:
 
-1. **`json-crawl`** — Small codebase (~6 source files). Understand `syncCrawl`, the hook interface, and `CrawlRules`. Everything else builds on this.
+1. **`json-crawl`** — Small codebase (~6 source files). Understand `syncCrawl`, the hook interface, and `CrawlRules`.
+   Everything else builds on this.
 2. **`graphapi`** — Learn the GraphAPI document format and how it bridges GraphQL into JSON-based tooling.
-3. **`api-unifier`** — The normalization pipeline is the most complex single library. Focus on `normalize()` and the origins system. Understanding this is essential for working on diff or visualization.
-4. **`api-diff`** — Study `apiDiff()` and the comparison pipeline. Pay attention to how `CrawlRules` drive the spec-type-specific comparison logic.
-5. **`api-data-model`** — See how normalized specs become `ModelTree` / `IModelTreeNode` structures. The `createJsonSchemaTree` function is a good starting point.
-6. **`http-spec`** — Understand how OAS documents are transformed into `IHttpOperation` models. Start with `transformOas3Operation`.
-7. **`api-doc-viewer`** → **`apispec-view`** → **`class-view`** → **`rest-playground`** — The visualization layer. Each can be studied independently.
-8. **`api-processor`** → **`build-task-consumer`** — The build pipeline. `PackageVersionBuilder` ties together most of the libraries above.
+3. **`api-unifier`** — The normalization pipeline is the most complex single library. Focus on `normalize()` and the
+   origins system. Understanding this is essential for working on diff or visualization.
+4. **`api-diff`** — Study `apiDiff()` and the comparison pipeline. Pay attention to how `CrawlRules` drive the
+   spec-type-specific comparison logic.
+5. **`api-data-model`** — See how normalized specs become `ModelTree` / `IModelTreeNode` structures. The
+   `createJsonSchemaTree` function is a good starting point.
+6. **`http-spec`** — Understand how OAS documents are transformed into `IHttpOperation` models. Start with
+   `transformOas3Operation`.
+7. **`api-doc-viewer`** → **`apispec-view`** → **`class-view`** → **`rest-playground`** — The visualization layer. Each
+   can be studied independently.
+8. **`api-processor`** → **`build-task-consumer`** — The build pipeline. `PackageVersionBuilder` ties together most of
+   the libraries above.
 9. **`ui`** — The end-user applications. Start from the `shared` package, then explore `portal` routes.
 
-> **Tip:** The `json-crawl` and `api-unifier` libraries are foundational to understanding the entire system. Time spent understanding `CrawlRules`, the hook pipeline, and the normalization/origins system pays dividends when reading any downstream library.
+> **Tip:** The `json-crawl` and `api-unifier` libraries are foundational to understanding the entire system. Time spent
+> understanding `CrawlRules`, the hook pipeline, and the normalization/origins system pays dividends when reading any
+> downstream library.
 
 ### Suggested first tasks
 
 - Run Storybook in `api-doc-viewer` or `apispec-view` to see the visualization components in isolation
 - Write a small script that calls `apiDiff()` on two OpenAPI specs and inspect the `CompareResult`
 - Trace how a single `$ref` is resolved through `api-unifier`'s normalization pipeline
-- Read the `restApiBuilder` in `api-processor` to see how an OpenAPI file flows through parsing, operation extraction, and comparison
+- Read the `restApiBuilder` in `api-processor` to see how an OpenAPI file flows through parsing, operation extraction,
+  and comparison

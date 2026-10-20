@@ -2,13 +2,17 @@
 
 ## 1. System Overview
 
-APIHUB is an **API Management and Registry platform** — a centralized system for storing, analyzing, comparing, and documenting API specifications and contracts. It supports OpenAPI/Swagger, GraphQL, AsyncAPI, **DDLAPI** database-schema contracts, Markdown, Protobuf/gRPC stubs, and **MCP catalog contracts**. The backend also exposes a separate MCP server for API-catalog tools and AI integrations.
+APIHUB is an **API Management and Registry platform** — a centralized system for storing, analyzing, comparing, and
+documenting API specifications and contracts. It supports OpenAPI/Swagger, GraphQL, AsyncAPI, **DDLAPI** database-schema
+contracts, Markdown, Protobuf/gRPC stubs, and **MCP catalog contracts**. The backend also exposes a separate MCP server
+for API-catalog tools and AI integrations.
 
-The system is deployed on Kubernetes and consists of core services, 12 TypeScript libraries, CI/CD infrastructure, E2E test suites, and auxiliary repositories — **27+ repositories** in the current workspace.
+The system is deployed on Kubernetes and consists of core services, 12 TypeScript libraries, CI/CD infrastructure, E2E
+test suites, and auxiliary repositories — **27+ repositories** in the current workspace.
 
 ## 2. High-Level Architecture Diagram
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                              APIHUB CLUSTER                                 │
 │                                                                             │
@@ -92,7 +96,7 @@ The system is deployed on Kubernetes and consists of core services, 12 TypeScrip
 
 ### 4.1 Publish Flow (User uploads API spec)
 
-```
+```text
 User → UI → Backend (POST /api/v2/packages/{id}/publish)
                 ↓
         Backend creates build task in DB
@@ -121,7 +125,7 @@ User → UI → Backend (POST /api/v2/packages/{id}/publish)
 
 ### 4.2 Agent Discovery Flow
 
-```
+```text
 Agent (in remote K8s cluster):
   1. Registers with Agents Backend on startup (heartbeat every ~30s)
   2. User triggers discovery via Agents UI
@@ -138,7 +142,7 @@ Agent (in remote K8s cluster):
 
 ### 4.3 View/Compare Flow (User views API in UI)
 
-```
+```text
 User → UI → Backend (GET /api/v2/packages/{id}/versions/{v}/{apiType}/operations)
                 ↓
         Backend returns operations/documents from PostgreSQL
@@ -156,7 +160,7 @@ User → UI → Backend (GET /api/v2/packages/{id}/versions/{v}/{apiType}/operat
 
 The processing pipeline is a layered stack of TypeScript libraries:
 
-```
+```text
 Layer 0 (Foundation):
   json-crawl ─── Zero-dependency JSON tree traversal engine
                  Provides: crawl, syncCrawl, clone, transform, equal
@@ -198,7 +202,7 @@ Layer 6 (UI Rendering):
 
 ### Library Dependency Graph
 
-```
+```text
 json-crawl (zero deps)
   ├── api-unifier (+ object-hash, fast-equals, flatted)
   │     ├── api-diff (+ fast-equals)
@@ -229,11 +233,13 @@ class-view (zero APIHUB deps; uses D3, ELK)
 | **DDLAPI** | ✅ contracts | ✅ `ddlBuilder` | ❌ | ⚠️ contracts | ✅ `ddlapi-1.0` | ✅ | — | ✅ | ❌ |
 | **MCP contracts** | ✅ contracts | ✅ `mcpBuilder` | ❌ | ✅ Contracts tab | ❌ (not a SpecType) | ❌ (not a SpecType) | — | raw/contract views | ❌ |
 
-> MCP catalog contracts are distinct from the backend's MCP server. The server exposes APIHUB catalog tools to MCP clients; it is not a catalog document type.
+> MCP catalog contracts are distinct from the backend's MCP server. The server exposes APIHUB catalog tools to MCP
+> clients; it is not a catalog document type.
 
 ## 7. Authentication & Authorization
 
 ### Authentication Methods
+
 - **Local Auth** (non-production): username/password → JWT
 - **SAML 2.0**: Enterprise SSO via SAML identity providers
 - **OIDC (OpenID Connect)**: OAuth2-based SSO
@@ -243,6 +249,7 @@ class-view (zero APIHUB deps; uses D3, ELK)
 - **Cookie-based JWT**: Browser session management
 
 ### Authorization Model (RBAC)
+
 - **System Admins**: Full system access
 - **Package-level roles**: Viewer, Editor, Owner (per workspace/group/package)
 - **Custom roles**: Configurable role definitions with granular permissions
@@ -251,6 +258,7 @@ class-view (zero APIHUB deps; uses D3, ELK)
 ## 8. Deployment Architecture
 
 ### Kubernetes (Production)
+
 - Helm chart in `qubership-apihub` repository
 - All services deployed as Kubernetes Deployments with Services
 - nginx-based UI serves as the single ingress point
@@ -259,14 +267,18 @@ class-view (zero APIHUB deps; uses D3, ELK)
 - Prometheus + Grafana dashboards included
 
 ### Docker Compose (Development)
+
 - `docker-compose.yml` in `qubership-apihub/docker-compose/apihub-generic/`
 - Includes all services + PostgreSQL
 - Keycloak variant available for SSO testing
 
 ### Local Kubernetes quickstart (optional analytics)
-- `qubership-apihub/helm-templates/local-k8s-quickstart/` may include an **Apache Superset** subchart for BI/analytics alongside the stack (see chart `README` in that folder)
+
+- `qubership-apihub/helm-templates/local-k8s-quickstart/` may include an **Apache Superset** subchart for BI/analytics
+  alongside the stack (see chart `README` in that folder)
 
 ### Infrastructure Dependencies
+
 | Component | Required | Purpose |
 |-----------|----------|---------|
 | PostgreSQL 14+ | **Yes** | Primary data store (separate DBs per service) |
@@ -276,63 +288,81 @@ class-view (zero APIHUB deps; uses D3, ELK)
 
 ## 9. Extension Points for API and Contract Types
 
-An API type represented by `SpecType` is normalized and usually diffed as a specification. **DDLAPI is such a type**: its canonical value is `ddlapi-1.0`. MCP catalog data is deliberately different: it is a processor **contract type** handled by `mcpBuilder`, not a classic `ApiType` or `SpecType`. The backend MCP server is a separate integration endpoint.
+An API type represented by `SpecType` is normalized and usually diffed as a specification. **DDLAPI is such a type**:
+its canonical value is `ddlapi-1.0`. MCP catalog data is deliberately different: it is a processor **contract type**
+handled by `mcpBuilder`, not a classic `ApiType` or `SpecType`. The backend MCP server is a separate integration
+endpoint.
 
 ### Contract types: MCP and DDL
 
-`mcpBuilder` and `ddlBuilder` are registered through processor contract constants (`MCP_CONTRACT_TYPE` and `DDL_CONTRACT_TYPE`). Their document types are persisted by backend document/contract models and rendered in the Portal Contracts tab via `contract-types.ts`. DDL additionally has a DDLAPI processing and comparison pipeline; MCP catalog contracts organize endpoint initialization, tools, resources, and prompts without becoming operation APIs.
+`mcpBuilder` and `ddlBuilder` are registered through processor contract constants (`MCP_CONTRACT_TYPE` and
+`DDL_CONTRACT_TYPE`). Their document types are persisted by backend document/contract models and rendered in the Portal
+Contracts tab via `contract-types.ts`. DDL additionally has a DDLAPI processing and comparison pipeline; MCP catalog
+contracts organize endpoint initialization, tools, resources, and prompts without becoming operation APIs.
 
 ### Adding another `SpecType`
 
-The following roadmap describes adding another first-class specification type (for example, the earlier AsyncAPI integration), rather than adding MCP as a `SpecType`.
+The following roadmap describes adding another first-class specification type (for example, the earlier AsyncAPI
+integration), rather than adding MCP as a `SpecType`.
 
 ### Layer 1: Format Definition
+
 - Define the canonical source or intermediate format when required (for example, `graphapi` for GraphQL).
 
 ### Layer 2: Normalization (`api-unifier`)
+
 1. Add the new value to `SpecType` in `src/spec-type.ts`
 2. Add detection in `resolveSpec()` function
 3. Create a dedicated normalization-rules module
 4. Register in `RULES` map
 
 ### Layer 3: Diffing (`api-diff`)
+
 1. Create a comparison module with rules, classification, and descriptions
 2. Implement `CompareEngine` function
 3. Register in `COMPARE_ENGINES_MAP`
 
 ### Layer 3b: Visitor (`api-visitor`)
+
 1. Create an API-type walker and visitor
 2. Define CrawlRules for MCP structure
 
 ### Layer 4: Data Model (`api-data-model` / `api-doc-viewer`)
+
 1. Create a type-specific module with node kinds, types, and tree builders
 2. Add normal and diff tree builders
 3. Create React viewer components
 
 ### Layer 5: Processing (`api-processor`)
+
 1. Create `src/apitypes/<type>/` with an `ApiBuilder`
 2. Implement parser, document builder, operations builder, dumper
 3. Register in `PackageVersionBuilder` constructor
 4. Update `BuilderType` and `OperationsApiType` unions
 
 ### Layer 6: Backend (`apihub-backend`)
+
 1. Add the operation API type constant in `view/CommonOperation.go`
 2. Update switch statements in `entity/OperationEntity.go`
 3. Update search entity mappings
 4. Update build result processing
 
 ### Layer 7: UI (`apihub-ui`)
+
 1. Add the UI API-type constant in `shared/src/entities/api-types.ts`
 2. Create MCP operation viewer component
 3. Update `DocSpecView.tsx` for MCP rendering
 
 ### Layer 8: Agent Discovery (`apihub-agent`)
+
 1. Create `api_type/<type>/discovery.go` implementing `DiscoveryRunner`
 2. Register runner in `document_discovery.go`
 
 ### Layer 9: Linting (`api-linter-service`)
+
 1. Add the document/API type to the linter enum and configuration
 2. Create/configure linter rules for MCP
 
 ### Layer 10: Build Consumer (`build-task-consumer`)
+
 1. Add the operation API type to the build-consumer schema where applicable
