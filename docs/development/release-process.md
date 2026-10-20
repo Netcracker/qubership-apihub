@@ -308,7 +308,13 @@ Everything except the Storybooks comes from one ref. The workflow picks it in th
 
 The variable `LANDING_REF` overrides the ref of the landing only. The landing and the docs are built from that ref
 and cached by commit. The ERDs are not built by Pages: it pulls the renders for the site's commit from `ghcr.io`.
-The Storybooks are pulled from the Storybook store and get the part of the 1 GiB site limit that the rest leaves free.
+The Storybooks are pulled from the Storybook store and get what the rest of the site leaves of the 900 MiB budget
+(the `budget_mib` input of `pages.yml`).
+
+A missing ERD render never stops the site. When the store has no render for a backend at the site's commit (for
+example, `erd.yml` is still running or failed), `erd/` shows the newest render of that backend instead. Its card on
+`erd/index.html` says "Older render", and the run prints a warning. A backend with no render at all gets a card that
+says "Not rendered yet". To bring the ERD up to date, wait for `erd.yml` or run it on the branch.
 
 The workflows involved:
 
@@ -316,7 +322,8 @@ The workflows involved:
   branch and only when the repository variable `PAGES_DEPLOY` is `true`.
 - `erd.yml` renders the ERD of a backend whenever its SQL migrations (or the ERD tooling) have no render yet, pushes
   it to `ghcr.io/netcracker/erd-<backend>` under the tag `mig-<key>`, and dispatches `pages.yml`. The key is a hash
-  of the migrations folder, the ERD tooling, and the tool versions, so an unchanged schema is never rendered twice.
+  of the migrations folder and the ERD tooling at the ref, which pins the tool versions, so an unchanged schema is
+  never rendered twice.
 - The `storybook-pages` job of [`ci.yml`](../../.github/workflows/ci.yml) dispatches `pages.yml` after a Storybook
   changes.
 
