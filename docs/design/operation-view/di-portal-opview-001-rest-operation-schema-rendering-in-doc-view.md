@@ -33,7 +33,7 @@ If the referenced schema has title it is displayed in angle brackets.
         name:
           type: string
   ```
-   <img width="625" alt="image-2025-1-28_16-43-30" src="https://github.com/user-attachments/assets/916e96c4-4439-4880-98a8-326e3e06500f" />
+   <img width="625" alt="image-2025-1-28_16-43-30" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/1.png" />
 
 - If the referenced schema does not have title, then referenced schema key is displayed in angle brackets.
   ```yaml
@@ -45,7 +45,7 @@ If the referenced schema has title it is displayed in angle brackets.
       Price:
         type: number
   ```
-  <img width="625" alt="image-2025-1-28_16-43-58" src="https://github.com/user-attachments/assets/9a7d6e44-5762-4029-932b-21004f9aecdf" />
+  <img width="625" alt="image-2025-1-28_16-43-58" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/2.png" />
 
 - If a scalar property has defined format, it is displayed in angle brackets next to the type. In this case neither schema title nor schema key is displayed if property is reference to components.schemas
   ```yaml
@@ -58,7 +58,7 @@ If the referenced schema has title it is displayed in angle brackets.
         type: number
       format: float
   ```
-  <img width="625" alt="image-2025-1-28_16-43-2" src="https://github.com/user-attachments/assets/dd5c327a-e8d9-46e2-b819-165e6a87e4aa" />  
+  <img width="625" alt="image-2025-1-28_16-43-2" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/3.png" />  
 
   ===
 
@@ -68,7 +68,7 @@ If the referenced schema has title it is displayed in angle brackets.
       type: number
       format: float
   ```
-  <img width="625" alt="image-2025-1-28_16-43-2" src="https://github.com/user-attachments/assets/d2f020b3-87c5-4a4a-bf76-f50ecf995d83" />
+  <img width="625" alt="image-2025-1-28_16-43-2" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/4.png" />
 
 ---
 
@@ -87,7 +87,7 @@ properties:
       name:
         type: string
 ```
-<img width="625" alt="object1" src="https://github.com/user-attachments/assets/da663059-40eb-4e7f-a552-b407ee33dc26" />
+<img width="625" alt="object1" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/5.png" />
 
 
 If property is reference to components.schemas, it will be displayed in the same way as if it were inline. If the referenced schema has title it will be displayed in angle brackets.
@@ -112,7 +112,7 @@ components:
               type: string
 ```
 
-<img width="625" alt="object2" src="https://github.com/user-attachments/assets/7d105487-e4fe-460b-8247-dbd684d27a55" />
+<img width="625" alt="object2" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/6.png" />
 
 However, If the referenced schema does not have title, then referenced schema key will be displayed in angle brackets.
 
@@ -134,7 +134,7 @@ components:
               type: string
 ```
 
-<img width="625" alt="object3" src="https://github.com/user-attachments/assets/11c1e1b9-8ce5-43b6-8b2c-73b62f2df96c" />
+<img width="625" alt="object3" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/7.png" />
 
 ---
 
@@ -150,7 +150,7 @@ properties:
       type: string
 ```
 
-<img width="625" alt="array1" src="https://github.com/user-attachments/assets/69167ad4-ddd1-40ea-b9d7-e01460b45c3e" />
+<img width="625" alt="array1" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/8.png" />
 
 ---
 
@@ -171,7 +171,7 @@ properties:
     exclusiveMaximum: true
 ```
 
-<img width="625" alt="minmax" src="https://github.com/user-attachments/assets/050bdded-05ba-4007-8ef6-5ea967a42999" />
+<img width="625" alt="minmax" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/9.png" />
 
 If exclusiveMinimum/exclusiveMaximum is true, appropriate chips with minimum/maximum values will show "<" or ">" signs.
 
@@ -188,7 +188,7 @@ properties:
     exclusiveMaximum: true
 ```
 
-<img width="625" alt="exclusiveminmax" src="https://github.com/user-attachments/assets/5df0d78e-9b3c-43b3-97f9-fbb5a5c8ef65" />
+<img width="625" alt="exclusiveminmax" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/10.png" />
 
 ---
 
@@ -203,7 +203,7 @@ properties:
     multipleOf: 2
 ```
 
-<img width="625" alt="multipleof" src="https://github.com/user-attachments/assets/cb4917fe-edcd-4a45-83f0-6982b905636b" />
+<img width="625" alt="multipleof" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/11.png" />
 
 ---
 
@@ -218,7 +218,7 @@ properties:
     pattern: ^[A-Za-z0-9_]+$
 ```
 
-<img width="625" alt="pattern" src="https://github.com/user-attachments/assets/b76719a7-5b40-44b3-944a-6cb97e4be330" />
+<img width="625" alt="pattern" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/12.png" />
 
 ---
 
@@ -234,7 +234,7 @@ properties:
     maxLength: 20
 ```
 
-<img width="625" alt="minlength" src="https://github.com/user-attachments/assets/a3627df4-c819-4389-9c36-4b0eb30bd667" />
+<img width="625" alt="minlength" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/13.png" />
 
 ---
 
@@ -256,7 +256,7 @@ properties:
         nullable: true
 ```
 
-<img width="625" alt="nullable" src="https://github.com/user-attachments/assets/4a9d36b8-cc0d-4458-ac54-ce16041ffb92" />
+<img width="625" alt="nullable" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/14.png" />
 
 If there is oneOf/anyOf combiner and one of the subschema is nullable, then only when selecting such subschema "or null will be displayed"
 
@@ -282,8 +282,8 @@ schemas:
         type: string
 ```
 
-<img width="625" alt="oneof1" src="https://github.com/user-attachments/assets/7ac9a009-42c8-4069-b728-b962b56952bf" />
-<img width="625" alt="oneof2" src="https://github.com/user-attachments/assets/ac678f2e-5658-4bf8-8e76-c02c55899954" />
+<img width="625" alt="oneof1" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/15.png" />
+<img width="625" alt="oneof2" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/16.png" />
 
 
 ---
@@ -300,7 +300,7 @@ properties:
     description: The unique identifier of the user.
 ```
 
-<img width="625" alt="description" src="https://github.com/user-attachments/assets/d0ab7452-e8a5-4089-83bf-3e71c81a1023" />
+<img width="625" alt="description" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/17.png" />
 
 ---
 
@@ -320,7 +320,7 @@ properties:
       - red
 ```
 
-<img width="625" alt="enum" src="https://github.com/user-attachments/assets/caffc186-5025-4070-801c-70e8074df581" />
+<img width="625" alt="enum" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/18.png" />
 
 ---
 
@@ -338,7 +338,7 @@ properties:
       - red
 ```
 
-<img width="625" alt="default" src="https://github.com/user-attachments/assets/19ebd8b1-6700-4db1-bb8f-b9a7502468c6" />
+<img width="625" alt="default" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/19.png" />
 
 # example
 
@@ -353,7 +353,7 @@ properties:
     example: abc123
 ```
 
-<img width="625" alt="example1" src="https://github.com/user-attachments/assets/ae82e49e-301e-4b4d-9c0c-74481d2f69e0" />
+<img width="625" alt="example1" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/20.png" />
 
 **Example 2:**
 
@@ -366,7 +366,7 @@ properties:
       example: ["tag1", "tag2", "tag3"]
 ```
 
-<img width="625" alt="example2" src="https://github.com/user-attachments/assets/c2450e3b-5fdb-4bcb-a38d-0f4bd30c3842" />
+<img width="625" alt="example2" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/21.png" />
 
 ---
 
@@ -387,7 +387,7 @@ properties:
       - id
 ```
 
-<img width="625" alt="required" src="https://github.com/user-attachments/assets/8935b661-b336-4a9e-b5d7-4d078db6cb8e" />
+<img width="625" alt="required" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/22.png" />
 
 ---
 
@@ -413,7 +413,7 @@ properties:
       - id
 ```
 
-<img width="625" alt="deprecated1" src="https://github.com/user-attachments/assets/0fe48ae1-247f-454c-b52c-0a2645faa9d2" />
+<img width="625" alt="deprecated1" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/23.png" />
 
 **Example 2:**
 
@@ -426,7 +426,7 @@ properties:
       type: string
 ```
 
-<img width="625" alt="deprecated2" src="https://github.com/user-attachments/assets/1105d0c9-0a0e-438f-9839-5fa429477173" />
+<img width="625" alt="deprecated2" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/24.png" />
 
 ---
 
@@ -453,8 +453,8 @@ components:
           description: Subcategory under this category
 ```
 
-<img width="625" alt="circularref1" src="https://github.com/user-attachments/assets/9911d57b-dee3-4e71-b56f-7eca0a5f0d2a" />
-<img width="625" alt="circularref2" src="https://github.com/user-attachments/assets/102f0037-cecb-4063-84f9-136e315caf6d" />
+<img width="625" alt="circularref1" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/25.png" />
+<img width="625" alt="circularref2" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/26.png" />
 
 
 ---
@@ -505,7 +505,7 @@ properties:
       type: string
 ```
 
-<img width="625" alt="arrayattr1" src="https://github.com/user-attachments/assets/f866c39a-a44c-442c-956b-7002de965eac" />
+<img width="625" alt="arrayattr1" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/27.png" />
 
 **Example 2:**
 
@@ -525,7 +525,7 @@ components:
         type: string
 ```
 
-<img width="625" alt="arrayattr2" src="https://github.com/user-attachments/assets/a87c17b4-13a7-4a4e-9464-cac8c92da70e" />
+<img width="625" alt="arrayattr2" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/28.png" />
 
 ===
 
@@ -545,7 +545,7 @@ properties:
     maxItems: 5
 ```
 
-<img width="625" alt="minitems" src="https://github.com/user-attachments/assets/9cbaca1c-4bb3-4e40-83bb-0803d39131d8" />
+<img width="625" alt="minitems" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/29.png" />
 
 ---
 
@@ -564,7 +564,7 @@ properties:
     uniqueItems: true
 ```
 
-<img width="625" alt="uniqueitems" src="https://github.com/user-attachments/assets/8c7b92e7-5bed-4646-9f0c-557b4594cb4a" />
+<img width="625" alt="uniqueitems" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/30.png" />
 
 ---
 
@@ -597,7 +597,7 @@ properties:
         rootCause:
           type: string
 ```
-<img width="625" alt="objectallof1" src="https://github.com/user-attachments/assets/c927746a-defc-4a37-ba05-b445f63d7f42" />
+<img width="625" alt="objectallof1" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/31.png" />
 
 If subschemas contain the same attributes with different values, the resulting (combined) schema will contain the attribute with the value of the schema specified last. In the example below 1st subschema has description with value "descr1" and 2nd subschema - with value "descr2", so the result schema will contain description with value "descr2".
 
@@ -625,7 +625,7 @@ properties:
         rootCause:
           type: string
 ```
-<img width="625" alt="objectallof2" src="https://github.com/user-attachments/assets/d6bd65d2-c7a6-4fc5-8c53-e69948a46739" />
+<img width="625" alt="objectallof2" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/32.png" />
 
 ---
 
@@ -695,7 +695,7 @@ properties:
     maxProperties: 5
 ```
 
-<img width="625" alt="minproperties" src="https://github.com/user-attachments/assets/562b20cf-6778-4887-87f8-f4879a2bb4f3" />
+<img width="625" alt="minproperties" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/33.png" />
 
 ---
 
@@ -718,7 +718,7 @@ properties:
     type: object
     additionalProperties: {}
 ```
-<img width="625" alt="additionalproperties1" src="https://github.com/user-attachments/assets/d3d5c747-c507-4e1d-8a44-d63b12e6cc97" />
+<img width="625" alt="additionalproperties1" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/34.png" />
 
 If additionalProperty is false, then "no additional properties" badge will be displayed after all properties of current object.
 
@@ -731,7 +731,7 @@ properties:
     additionalProperties: false
 ```
 
-<img width="625" alt="additionalproperties2" src="https://github.com/user-attachments/assets/932b9790-9911-4f9f-ab08-5e7631459ad3" />
+<img width="625" alt="additionalproperties2" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/35.png" />
 
 If additionalProperty is non-boolean schema, then it will be displayed as all other schemas with addition badge "additionalProperty" in the beginning.
 
@@ -750,7 +750,7 @@ properties:
       type: string
 ```
 
-<img width="625" alt="additionalproperties3" src="https://github.com/user-attachments/assets/67ba0307-006d-48b6-8a37-3c4ae2e703e0" />
+<img width="625" alt="additionalproperties3" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/36.png" />
 
 **Example 4:**
 
@@ -771,4 +771,4 @@ properties:
         type: string
 ```
 
-<img width="625" alt="additionalproperties4" src="https://github.com/user-attachments/assets/bc7b8184-5433-4cbb-bd20-3dbb30de1711" />
+<img width="625" alt="additionalproperties4" src="../../images/design/di-portal-opview-001-rest-operation-schema-rendering-in-doc-view/37.png" />

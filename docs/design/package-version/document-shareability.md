@@ -224,4 +224,4 @@ Permissions
 | Change shareability status of a document | Package Owner or Admin |
 
 ## Mockups
-<img src="https://github.com/user-attachments/assets/0a993454-aa5c-4d6d-b7cb-80a0a410b8c9" width="100%">
+<img alt="Mockups" src="../../images/design/document-shareability/1.svg" width="100%">

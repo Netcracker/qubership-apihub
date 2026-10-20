@@ -49,4 +49,4 @@ The functionality is available when user clicks **Logout** in APIHUB.
 6. The system authenticate user via basic authentication.  If user specifies incorrect login and/or password, the system shows the message 'Invalid credentials, please try again'
 
 # Screen View
-<img width="1725" alt="image2024-2-12_19-47-22" src="https://github.com/user-attachments/assets/759a4528-687d-4bd0-b4e0-fdf36f0b979a" />
+<img width="1725" alt="image2024-2-12_19-47-22" src="../../images/design/di-portal-gf-001-navigation-to-apihub-log-in-log-out/1.png" />

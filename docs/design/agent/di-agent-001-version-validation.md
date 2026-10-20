@@ -78,19 +78,19 @@ User must have "manage" permission for the package to promote version in respect
 # Mockups
 **For Draft Status**
 
-<img width="500" height="250" alt="Version Field Not filled During 'Promote Version' Step for Draft Status" src="https://github.com/user-attachments/assets/b6447b69-9399-4d3a-94d6-55e7531fca85" />
-<img width="500" height="250" alt="Version Input Provided and 'Promote Version' Clicked for Draft status" src="https://github.com/user-attachments/assets/b8cdeddb-89ed-42da-86f7-d818ab71c7d8" />
-<img width="500" height="250" alt="Validating Version Field Before Promotion for Draft status" src="https://github.com/user-attachments/assets/645903ab-1ac6-404f-a7fd-829927306ff1" />
-<img width="500" height="250" alt="Version Input Fails Global Pattern Validation" src="https://github.com/user-attachments/assets/1c94c77b-3112-4f3c-9536-470ab8c35045" />
+<img width="500" height="250" alt="Version Field Not filled During 'Promote Version' Step for Draft Status" src="../../images/design/di-agent-001-version-validation/1.png" />
+<img width="500" height="250" alt="Version Input Provided and 'Promote Version' Clicked for Draft status" src="../../images/design/di-agent-001-version-validation/2.png" />
+<img width="500" height="250" alt="Validating Version Field Before Promotion for Draft status" src="../../images/design/di-agent-001-version-validation/3.png" />
+<img width="500" height="250" alt="Version Input Fails Global Pattern Validation" src="../../images/design/di-agent-001-version-validation/4.png" />
 
 
 
 **For Release status**
 
-<img width="500" height="250" alt="Version Field Not filled During 'Promote Version' Step for Release Status" src="https://github.com/user-attachments/assets/305ec32f-8537-48f8-86a1-dae0a9d2f37e" />
-<img width="500" height="250" alt="Version Input Provided and 'Promote Version' Clicked for Release status" src="https://github.com/user-attachments/assets/34cb8792-7219-4090-8d77-7661d52a721a" />
-<img width="500" height="250" alt="Validating Version Field Before Promotion for Release status" src="https://github.com/user-attachments/assets/ba1473ad-5efb-489b-b07b-d0e3eb1a878b" />
-<img width="500" height="250" alt="Version Input Fails Global Pattern Validation" src="https://github.com/user-attachments/assets/132d6f7f-2d18-475e-a741-bbcbcd450ea4" />
-<img width="500" height="250" alt="Release Version Pattern Validation Fails When All Packages Have the Same Pattern" src="https://github.com/user-attachments/assets/d82b4241-7ae5-4ac2-9758-2f38cc0e1c55" />
-<img width="500" height="250" alt="Release Version Pattern Validation Fails When All Packages Have Different Patterns" src="https://github.com/user-attachments/assets/d9bdb847-8588-4151-a80c-4ed4a4f7cbee" />
+<img width="500" height="250" alt="Version Field Not filled During 'Promote Version' Step for Release Status" src="../../images/design/di-agent-001-version-validation/5.png" />
+<img width="500" height="250" alt="Version Input Provided and 'Promote Version' Clicked for Release status" src="../../images/design/di-agent-001-version-validation/6.png" />
+<img width="500" height="250" alt="Validating Version Field Before Promotion for Release status" src="../../images/design/di-agent-001-version-validation/7.png" />
+<img width="500" height="250" alt="Version Input Fails Global Pattern Validation" src="../../images/design/di-agent-001-version-validation/8.png" />
+<img width="500" height="250" alt="Release Version Pattern Validation Fails When All Packages Have the Same Pattern" src="../../images/design/di-agent-001-version-validation/9.png" />
+<img width="500" height="250" alt="Release Version Pattern Validation Fails When All Packages Have Different Patterns" src="../../images/design/di-agent-001-version-validation/10.png" />
 

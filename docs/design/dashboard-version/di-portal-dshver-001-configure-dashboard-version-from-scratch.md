@@ -53,7 +53,7 @@ Portal supports virtual packages named as dashboard. Unlike regular packages, da
 
 The system prohibits adding the same package/dashboard twice to the dashboard directly, but there are cases when a user can add a package/dashboard twice indirectly. For example, there is a dashboard D1 containing links to packages P1 and P2. The user configures dashboard D2 and adds package P2 and dashboard D1 to dashboard D2. Since D1 contains references to P2, this causes D2 to reference P2's package twice.
 
-![mdmdmd](https://github.com/user-attachments/assets/56e53197-096f-461d-addd-b89fceb0d4f9)
+![mdmdmd](../../images/design/di-portal-dshver-001-configure-dashboard-version-from-scratch/1.png)
 
 If such situation occurs, then:
 

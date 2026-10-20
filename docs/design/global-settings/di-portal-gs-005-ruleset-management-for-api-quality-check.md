@@ -123,4 +123,4 @@ qubership-api-linter-service provides OOB rulesets which are active by default f
 3. API to download ruleset / get public link to ruleset is public API without any authorization.
 
 # Mockups
-![RM](https://github.com/user-attachments/assets/a2d6b93b-2c8d-4752-9e41-63935c35d596)
+![RM](../../images/design/di-portal-gs-005-ruleset-management-for-api-quality-check/1.svg)

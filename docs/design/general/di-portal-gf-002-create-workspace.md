@@ -37,4 +37,4 @@ Workspace is first level grouping entity for groups, packages and dashboards. Wo
      - defaultRole. If Private checkbox is selected, then defaultRole = none, otherwise defaultRole = viewer.
 
 # Screen View
-<img width="446" alt="Снимок экрана 2025-02-21 в 16 24 31" src="https://github.com/user-attachments/assets/0f08bf1b-7f92-4f5f-be7e-57bc53839f73" />
+<img width="446" alt="Снимок экрана 2025-02-21 в 16 24 31" src="../../images/design/di-portal-gf-002-create-workspace/1.png" />

@@ -122,14 +122,14 @@ Only users with the System Administrator role are authorized to configure and up
 
 # Mockups
 
-<img src="https://github.com/user-attachments/assets/90308906-7397-413f-95f2-29661538daa4" width="250" />
-<img src="https://github.com/user-attachments/assets/689b3dbe-c438-4da4-9343-5eaef72f7081" width="250" />
-<img src="https://github.com/user-attachments/assets/8697cf30-3ad7-4a1b-aaa8-6716cf91202f" width="250" />
-<img src="https://github.com/user-attachments/assets/4adf0224-2683-452e-9c47-def92a506b61" width="250" />
-<img src="https://github.com/user-attachments/assets/292e70cb-3cba-40bb-982b-a5ff96adc6db" width="250" />
-<img src="https://github.com/user-attachments/assets/e0c3f8d9-8f98-4f4f-a754-02afb39d012e" width="250" />
-<img src="https://github.com/user-attachments/assets/69b85903-15ac-4f90-ad7c-dad2e3ca601f" width="250" />
-<img width="200" height="140" alt="global pattern" src="https://github.com/user-attachments/assets/47ebe46a-f661-42f0-8693-eab3aaff3bc5" />
-<img width="200" height="140" alt="release version" src="https://github.com/user-attachments/assets/f96db6e9-df98-4b5b-a6f5-603d47df87e3" />
+<img alt="Mockups" src="../../images/design/di-portal-gs-006-version-validation/1.png" width="250" />
+<img alt="Mockups" src="../../images/design/di-portal-gs-006-version-validation/2.png" width="250" />
+<img alt="Mockups" src="../../images/design/di-portal-gs-006-version-validation/3.png" width="250" />
+<img alt="Mockups" src="../../images/design/di-portal-gs-006-version-validation/4.png" width="250" />
+<img alt="Mockups" src="../../images/design/di-portal-gs-006-version-validation/5.png" width="250" />
+<img alt="Mockups" src="../../images/design/di-portal-gs-006-version-validation/6.png" width="250" />
+<img alt="Mockups" src="../../images/design/di-portal-gs-006-version-validation/7.png" width="250" />
+<img width="200" height="140" alt="global pattern" src="../../images/design/di-portal-gs-006-version-validation/8.png" />
+<img width="200" height="140" alt="release version" src="../../images/design/di-portal-gs-006-version-validation/9.png" />
 
 

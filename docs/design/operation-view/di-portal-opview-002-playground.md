@@ -194,4 +194,4 @@ The Playground functionality allows users to send REST requests to a server, mak
 10. The system deletes the server.
 
 # Screen View
-![Playground impovements](https://github.com/user-attachments/assets/35e9c1dd-75bc-4dcf-95ee-a9b5b7f5ee65)
+![Playground impovements](../../images/design/di-portal-opview-002-playground/1.png)

@@ -47,4 +47,4 @@ Package is package with kind = package. Package is versioning entity that can co
 4. The system opens newly create package.
 
 # Screen View
-<img width="447" alt="package" src="https://github.com/user-attachments/assets/41528b41-d06e-4b50-b805-54c160637355" />
+<img width="447" alt="package" src="../../images/design/di-portal-gf-004-create-package/1.png" />

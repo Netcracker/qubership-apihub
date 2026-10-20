@@ -29,7 +29,7 @@ The functionality provides a user with the ability to view aggregated informatio
      - includeSummary = true
 3. User hovers over any change type in Number of changes field.
 4. The system shows tooltip with description of the change type.  
-<img width="1046" alt="Frame 1321315445" src="https://github.com/user-attachments/assets/269ff4a5-a6c8-4594-bf94-145440b9bbec" />  
+<img width="1046" alt="Frame 1321315445" src="../../images/design/di-portal-pkgver-001-version-summary/1.png" />  
 
 5. User hovers over any change type in Number of affected operations field.
 6. The system shows tooltip with description of the change type.
@@ -56,4 +56,4 @@ Version summary:
 
 
 # Mockups
-![Version Summary for Package Version](https://github.com/user-attachments/assets/5b606db5-3401-42d3-9ffc-b560964d9415)
+![Version Summary for Package Version](../../images/design/di-portal-pkgver-001-version-summary/2.png)

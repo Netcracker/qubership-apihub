@@ -46,4 +46,4 @@ Group is grouping entity for packages, dashboards and another groups. Group can 
 5. The system opens newly create group.
 
 # Screen View
-<img width="446" alt="group" src="https://github.com/user-attachments/assets/ae5711d2-3814-4cf0-91fa-1eeea6974a1f" />
+<img width="446" alt="group" src="../../images/design/di-portal-gf-003-create-group/1.png" />

@@ -355,4 +355,4 @@ externalDocs:
 The user must have read permission for the package to export operations group.
 
 # Mockups
-![export_combined_spec](https://github.com/user-attachments/assets/1f8a7450-7a54-4686-94bb-637403efb43b)
+![export_combined_spec](../../images/design/di-portal-pkgver-006-export-operations-group-combined-specification/1.png)

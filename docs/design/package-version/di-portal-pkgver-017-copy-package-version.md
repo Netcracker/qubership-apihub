@@ -72,4 +72,4 @@ Note: There is no case when Copy button is disabled. Whether a user has permissi
 8. The system opens newly published target package version.
 
 # Mockup
-![Copy Package Version](https://github.com/user-attachments/assets/defa64fa-9db4-4e4a-99fb-ec6b9d2f84c8)
+![Copy Package Version](../../images/design/di-portal-pkgver-017-copy-package-version/1.png)

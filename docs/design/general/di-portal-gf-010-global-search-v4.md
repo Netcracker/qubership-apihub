@@ -173,5 +173,5 @@ The migration to v4 search includes the following changes:
 4. **Deprecation** \- the v3 endpoint remains available but is marked as deprecated
 
 ## Mockups
-<img alt="1 0 Global Search" src="https://github.com/user-attachments/assets/f715f248-faaa-4ffb-9b3c-2eb77f78c210" />
+<img alt="1 0 Global Search" src="../../images/design/di-portal-gf-010-global-search-v4/1.svg" />
 

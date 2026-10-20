@@ -41,4 +41,4 @@ This feature allows the user to define a regular expression (regex) pattern that
 
 # Mockups
 
-<img width="700" height="350" alt="Settings (1)" src="https://github.com/user-attachments/assets/26582997-2157-47ea-b0d5-6f65fda28d05" />
+<img width="700" height="350" alt="Settings (1)" src="../../images/design/di-portal-ps-006-define-release-version-pattern/1.png" />

@@ -120,10 +120,10 @@ files:
 # Mockups
 
 
-<img width="415" alt="Frame 1" src="https://github.com/user-attachments/assets/ee62e08c-4458-44b4-88fc-59dcd0643915" />
+<img width="415" alt="Frame 1" src="../../images/design/di-portal-vce-001-publish-to-portal-from-vs-code/1.png" />
 
-<img width="415" alt="Frame 2" src="https://github.com/user-attachments/assets/8b41d9d3-dc40-4b41-b04f-1606a17d9e80" />
+<img width="415" alt="Frame 2" src="../../images/design/di-portal-vce-001-publish-to-portal-from-vs-code/2.png" />
 
-<img width="415" alt="Frame 3" src="https://github.com/user-attachments/assets/9fe9f656-7856-4197-8fb7-a7fff88b4e7d" /> 
+<img width="415" alt="Frame 3" src="../../images/design/di-portal-vce-001-publish-to-portal-from-vs-code/3.png" /> 
 
-<img width="415" alt="Frame 5" src="https://github.com/user-attachments/assets/80d88b94-01c7-461e-8d48-f1aeb0978e3b" />
+<img width="415" alt="Frame 5" src="../../images/design/di-portal-vce-001-publish-to-portal-from-vs-code/4.png" />

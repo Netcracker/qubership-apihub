@@ -149,4 +149,4 @@ This functionality provides users with the ability to view the results of API qu
    - The system displays the document content in the selected format.
 
 # Mockups
-![API Quality Tab (1)](https://github.com/user-attachments/assets/023db369-8f0f-4d77-b886-01a1fe4bfbde)
+![API Quality Tab (1)](../../images/design/di-portal-pkgver-019-api-quality-validation-result/1.svg)

@@ -67,4 +67,4 @@ The resulting file is ZIP file:
 User must have "read" permission for the package to export package version.
 
 # Mockups
-![export_version](https://github.com/user-attachments/assets/768ee98c-6869-4a45-b88e-421494d942e2)
+![export_version](../../images/design/di-portal-pkgver-018-export-package-version/1.png)

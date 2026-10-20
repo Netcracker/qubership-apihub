@@ -165,4 +165,4 @@ This design item defines the functionality of the APIHUB Agent Cloud Services pa
 7. If the user needs to promote another version, the user clicks the **Re-promote Version** button (the button label changes from "Promote Version" to "Re-promote Version" after a successful promotion) and repeats steps 4.1–4.5 above.
 
 # Mockups
-![Cloud Services](https://github.com/user-attachments/assets/090a73dd-adfe-4967-9aab-ecf4f675c68e)
+![Cloud Services](../../images/design/di-agent-002-cloud-services/1.svg)

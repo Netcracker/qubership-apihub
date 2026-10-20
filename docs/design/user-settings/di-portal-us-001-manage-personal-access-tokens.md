@@ -128,4 +128,4 @@ After successful generation, the form is replaced by a read-only **Access token*
   - API: `DELETE /api/v1/personalAccessToken/{id}` — HTTP 204 on success.
 
 # Mockups
-<img alt="Personal access tokens" src="https://github.com/user-attachments/assets/c5c5fba1-306f-436e-a140-84bb132696e7" />
+<img alt="Personal access tokens" src="../../images/design/di-portal-us-001-manage-personal-access-tokens/1.svg" />

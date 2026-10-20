@@ -65,4 +65,4 @@ In the example above, the overall API is defined as internal
    - the system shows tooltip when user hovers over warning icon: "API audience changed from external/internal to unknown for N operations"
 
 # Mockups
-![audience_summary](https://github.com/user-attachments/assets/ac0db4fc-9892-40fa-bb3f-07fa22d29ad2)
+![audience_summary](../../images/design/di-portal-coe-001-api-audience-x-api-audience/1.png)

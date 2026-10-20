@@ -74,4 +74,4 @@ The result of export:
 The user must have read permission for the package to export operations group.
 
 # Mockup
-![export_group_reduced](https://github.com/user-attachments/assets/c77933f9-9c6d-4fa9-ba85-c69051940376)
+![export_group_reduced](../../images/design/di-portal-pkgver-005-export-operations-group-reduced-source-specifications/1.png)

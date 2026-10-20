@@ -284,4 +284,4 @@ This mode allows comparing operations between two REST Path Prefix groups. This 
 5. The system updates the comparison page with the newly selected items.
 
 # Mockups
-![Standardized UI layout for API comparison pages](https://github.com/user-attachments/assets/34f7d6f6-ccd7-4e28-a88a-6cc5effc9f83)
+![Standardized UI layout for API comparison pages](../../images/design/di-portal-comp-003-api-changes/1.svg)

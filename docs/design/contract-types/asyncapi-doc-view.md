@@ -30,4 +30,4 @@
 | `components.<?>.messages.<?>.bindings.amqp.x-routing-key-source` | `String` | `no` | Document what is used as routing-key when message is published.<br><br>**Example:** `quote.state` |
 
 # Mockups
-![AsyncAPI - DocView](https://github.com/user-attachments/assets/475d3256-8da5-4420-981d-65dcecccd579)
+![AsyncAPI - DocView](../../images/design/asyncapi-doc-view/1.svg)

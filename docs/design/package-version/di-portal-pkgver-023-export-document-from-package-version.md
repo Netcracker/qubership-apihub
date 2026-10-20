@@ -62,4 +62,4 @@ The functionality provides a user to export any document from package version.
 User must have "read" permission for the package to export document from the package version.
 
 # Mockups
-![export_document](https://github.com/user-attachments/assets/d0624095-2ef9-4feb-ab36-e34897c9b30a)
+![export_document](../../images/design/di-portal-pkgver-023-export-document-from-package-version/1.png)

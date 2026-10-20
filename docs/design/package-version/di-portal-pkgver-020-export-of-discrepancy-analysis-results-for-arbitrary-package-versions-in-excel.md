@@ -36,5 +36,5 @@ This functionality allows users to export a list of all REST/GraphQL operations 
 User must have "read" permission for the package to export the list of changed operations to an Excel file.
 
 # Mockups
-<img src="https://github.com/user-attachments/assets/f4ab3c7b-2472-4577-b3ab-c6de9f60f7ad" alt="Package revisions" width="400"/>
-<img src="https://github.com/user-attachments/assets/8f60f595-b850-4fc5-8fc3-c4b720b1834e" alt="Frame 1321315187" width="200"/>
+<img src="../../images/design/di-portal-pkgver-020-export-of-discrepancy-analysis-results-for-arbitrary-package-versions-in-excel/1.png" alt="Package revisions" width="400"/>
+<img src="../../images/design/di-portal-pkgver-020-export-of-discrepancy-analysis-results-for-arbitrary-package-versions-in-excel/2.png" alt="Frame 1321315187" width="200"/>

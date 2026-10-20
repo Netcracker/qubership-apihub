@@ -53,7 +53,7 @@
      - Every time when the system requests GET api/v1/system/info, the system shall check if there is problem from case 3 from the section "Cases with api-processor versions".
          - If client api-processor version is not up-to-date, the system shall show popup on the currently opened page with the message specified in case 3 in "Cases with api-processor versions".
 
-     ![API HUB_All projects (tree view)](https://github.com/user-attachments/assets/c8cc2736-b947-483a-90e5-6e8323351206)
+     ![API HUB_All projects (tree view)](../../images/design/di-portal-gf-009-relevance-of-api-processor-versions/1.png)
 
 
 2. Package version page including all tabs (overview, operations, etc.) and menu items (summary, activity history, etc.)
@@ -61,14 +61,14 @@
          - Appropriate tooltip messages for case 1 or case 2 see in "Cases with api-processor versions".
              - in warning messages, \<version> = current version.
 
-     ![Version Summary for Package Version](https://github.com/user-attachments/assets/75541fdb-41ba-4494-a70c-39ac041e2881)
+     ![Version Summary for Package Version](../../images/design/di-portal-gf-009-relevance-of-api-processor-versions/2.png)
 
 2. Operation's document view (for all available views - doc, simple, etc.)
      - If current package version (revision) has problem from case 1 or case 2 from the section "Cases with api-processor versions", the system shall show warning icon with tooltip on hover.
          - Appropriate tooltip messages for case 1 or case 2 see in "Cases with api-processor versions".
              - in warning messages, \<version> = current version.
 
-     ![Doc View for Document](https://github.com/user-attachments/assets/edf16d46-f13e-4a63-a4e7-7e8f84a7f54d)
+     ![Doc View for Document](../../images/design/di-portal-gf-009-relevance-of-api-processor-versions/3.png)
 
 3. "Select Versions to Compare" and "Select Revisions to Compare" popups:
      - If one of the selected version/revision has problem from case 1 or case 2 from the section "Cases with api-processor versions", the system shall show warning message and disable "Compare" button.
@@ -76,7 +76,7 @@
      - Appropriate tooltip messages for case 1 or case 2 see in "Cases with api-processor versions".
          - in warning messages, \<version> = appropriate version selected in the popup.
  
-     ![Frame 1321315407](https://github.com/user-attachments/assets/47cf7ddd-d5fb-4b27-b28e-f4b0e0965373)
+     ![Frame 1321315407](../../images/design/di-portal-gf-009-relevance-of-api-processor-versions/4.png)
 
 4. "Compare Packages" (available in case of dashboards comparison only), "Compare Package API", "Compare <apiType> API" (with comparison of operations content) pages:
      - If one of the compared version/revision has problem from case 1 or case 2 from the section "Cases with api-processor versions", the system shall show warning icon with tooltip on hover.
@@ -84,18 +84,18 @@
      - Appropriate tooltip messages for case 1 or case 2 see in "Cases with api-processor versions".
          - in warning messages, \<version> = appropriate compared version.
 
-     ![Frame 1321315456](https://github.com/user-attachments/assets/bcdc171c-a58f-45b0-9d21-6dd4355083dd)
+     ![Frame 1321315456](../../images/design/di-portal-gf-009-relevance-of-api-processor-versions/5.png)
 
 5. "Publish", "Copy Package Version", "Publish <group name> as Package Version" popups: 
      - If selected previous release version has problem from case 1 or case 2 from the section "Cases with api-processor versions", the system shall show warning message and disable "Publish"/"Copy" button.
          - Appropriate tooltip messages for case 1 or case 2 see in "Cases with api-processor versions".
              - in warning messages, \<version> = previous release version selected in the popup.
      
-     ![Frame 1321315455](https://github.com/user-attachments/assets/3fb41de4-92f1-4c8b-bd81-e91fd415fea7)
+     ![Frame 1321315455](../../images/design/di-portal-gf-009-relevance-of-api-processor-versions/6.png)
 
 6. "Add package popup" popup (available for dashboards only)
      - If selected package version has problem from from case 1 or case 2 from the section "Cases with api-processor versions", the system shall show warning message and disable "Add" button:
          - Appropriate tooltip messages for case 1 or case 2 see in "Cases with api-processor versions".
              - in warning messages, \<version> = version selected in the popup.
 
-     ![Group 57246](https://github.com/user-attachments/assets/abcea3d9-ffcc-44cb-b2f2-6fdaf767c95f)
+     ![Group 57246](../../images/design/di-portal-gf-009-relevance-of-api-processor-versions/7.png)

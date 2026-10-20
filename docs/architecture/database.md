@@ -13,11 +13,11 @@ Interactive document can be found here: [ERD on GitHub pages](https://netcracker
 
 ## Relationships tables
 
-![](./images/database.relationships.png)
+![Relationships tables](../images/architecture/database/1.png)
 
 ## Orphans tables
 
-![](./images/database.orphans.png)
+![Orphans tables](../images/architecture/database/2.png)
 
 ## Appendix: how to generate dynamic document
 
