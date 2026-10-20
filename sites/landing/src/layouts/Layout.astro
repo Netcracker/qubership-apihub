@@ -1,6 +1,18 @@
 ---
 import { ViewTransitions } from 'astro:transitions';
-import { NAV_LINKS, GITHUB_URL, INSTALL_URL, DOCS_URL, WIKI_URL, RELEASES_URL } from '../data/content';
+import {
+  NAV_LINKS,
+  REPO_URL,
+  INSTALL_URL,
+  ADMIN_URL,
+  USER_GUIDE_URL,
+  DOCS_URL,
+  DESIGN_URL,
+  HOME_URL,
+  STORYBOOK_URL,
+  ERD_URL,
+  RELEASES_URL,
+} from '../data/content';
 import { withBase, NETCRACKER_PAGES_ROOT } from '../lib/paths';
 
 export interface Props {
@@ -189,7 +201,7 @@ const currentPath = norm(Astro.url.pathname);
             );
           })}
           <a
-            href={GITHUB_URL}
+            href={REPO_URL}
             target="_blank" rel="noopener"
             class="px-2 py-2 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all duration-150 flex items-center gap-1.5"
           >
@@ -229,7 +241,7 @@ const currentPath = norm(Astro.url.pathname);
             {link.label}
           </a>
         ))}
-        <a href={GITHUB_URL} target="_blank" rel="noopener" class="block px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-white/5">GitHub</a>
+        <a href={REPO_URL} target="_blank" rel="noopener" class="block px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-white/5">GitHub</a>
       </div>
     </header>
 
@@ -258,7 +270,7 @@ const currentPath = norm(Astro.url.pathname);
             <p class="text-sm text-slate-500 leading-relaxed mb-5">
               Open source API management platform. Built by Netcracker.
             </p>
-            <a href={GITHUB_URL} target="_blank" rel="noopener" class="text-slate-500 hover:text-white transition-colors inline-block">
+            <a href={REPO_URL} target="_blank" rel="noopener" class="text-slate-500 hover:text-white transition-colors inline-block">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12Z"/></svg>
             </a>
           </div>
@@ -285,9 +297,10 @@ const currentPath = norm(Astro.url.pathname);
             <ul class="space-y-2.5">
               {[
                 { label: 'Installation Guide', href: INSTALL_URL },
-                { label: 'User Guide', href: DOCS_URL },
-                { label: 'Admin Guide', href: 'https://github.com/Netcracker/qubership-apihub/blob/main/docs/admin-guide.md' },
-                { label: 'Wiki', href: WIKI_URL },
+                { label: 'User Guide', href: USER_GUIDE_URL },
+                { label: 'Admin Guide', href: ADMIN_URL },
+                { label: 'Documentation', href: DOCS_URL },
+                { label: 'Design items', href: DESIGN_URL },
                 { label: 'Releases', href: RELEASES_URL },
               ].map((l) => (
                 <li><a href={l.href} target="_blank" rel="noopener" class="text-sm text-slate-500 hover:text-white transition-colors">{l.label}</a></li>
@@ -298,10 +311,13 @@ const currentPath = norm(Astro.url.pathname);
             <h4 class="text-xs font-semibold text-white uppercase tracking-wider mb-4">Community</h4>
             <ul class="space-y-2.5">
               {[
-                { label: 'GitHub Issues', href: GITHUB_URL + '/issues' },
-                { label: 'Pull Requests', href: GITHUB_URL + '/pulls' },
-                { label: 'Discussions', href: GITHUB_URL + '/discussions' },
+                { label: 'GitHub Issues', href: REPO_URL + '/issues' },
+                { label: 'Pull Requests', href: REPO_URL + '/pulls' },
+                { label: 'Discussions', href: REPO_URL + '/discussions' },
                 { label: 'Product hub', href: NETCRACKER_PAGES_ROOT },
+                { label: 'All sites', href: HOME_URL },
+                { label: 'Storybooks', href: STORYBOOK_URL },
+                { label: 'Database ERD', href: ERD_URL },
                 { label: 'Netcracker on GitHub', href: 'https://github.com/Netcracker' },
               ].map((l) => (
                 <li><a href={l.href} target="_blank" rel="noopener" class="text-sm text-slate-500 hover:text-white transition-colors">{l.label}</a></li>

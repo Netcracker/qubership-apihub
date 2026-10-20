@@ -2,8 +2,8 @@
   "siteTitle": "Qubership APIHUB",
   "siteDescription": "A single point of truth for versioned API and non-API contracts. Discover, compare, validate, and govern OpenAPI, GraphQL, AsyncAPI, DDLAPI, and MCP in one catalog.",
   "githubUrl": "https://github.com/Netcracker/qubership-apihub",
-  "docsUrl": "https://github.com/Netcracker/qubership-apihub/blob/main/docs/user-guide.md",
-  "installUrl": "https://github.com/Netcracker/qubership-apihub/blob/main/docs/installation-guide.md",
+  "docsUrl": "https://netcracker.github.io/qubership-apihub/docs/",
+  "installUrl": "https://netcracker.github.io/qubership-apihub/docs/installation-guide/",
   "hero": {
     "line1": "The Open Source",
     "line2": "API Hub",

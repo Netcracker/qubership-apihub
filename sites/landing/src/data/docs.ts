@@ -6,7 +6,7 @@
  * matching `.astro` file — nothing else needs to change.
  */
 import { withBase } from '../lib/paths';
-import { DOCS_URL, INSTALL_URL, ADMIN_URL, WIKI_URL } from './content';
+import { DOCS_URL, DESIGN_URL, INSTALL_URL, ADMIN_URL, USER_GUIDE_URL } from './content';
 
 export interface DocsPage {
   href: string;
@@ -57,7 +57,7 @@ export const docsNav: DocsSection[] = [
 /** Flat page order, used for previous/next navigation. */
 export const docsPageOrder: DocsPage[] = docsNav.flatMap((s) => s.pages);
 
-/** Guides that still live in the product repository rather than on this site. */
+/** Guides and reference pages on the documentation site, which this site links to. */
 export const externalGuides = [
   {
     label: 'Installation Guide',
@@ -66,7 +66,7 @@ export const externalGuides = [
   },
   {
     label: 'User Guide',
-    href: DOCS_URL,
+    href: USER_GUIDE_URL,
     summary: 'Working with packages, versions, publishing, comparison, and the Portal interface.',
   },
   {
@@ -75,8 +75,13 @@ export const externalGuides = [
     summary: 'Identity providers, roles, API keys, system settings, and maintenance tasks.',
   },
   {
-    label: 'Wiki',
-    href: WIKI_URL,
-    summary: 'Background articles, design notes, and the wider APIHUB knowledge base.',
+    label: 'Documentation',
+    href: DOCS_URL,
+    summary: 'The documentation home: guides, reference, architecture, and development.',
+  },
+  {
+    label: 'Design items',
+    href: DESIGN_URL,
+    summary: 'Feature designs and the design items behind them.',
   },
 ];

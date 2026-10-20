@@ -3,7 +3,7 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
 import DocFigure from '../../../components/DocFigure.astro';
 import { c4Levels, containers, subCapabilityCount, capabilities, containerCatalogue } from '../../../data/architecture';
 import { docsNav } from '../../../data/docs';
-import { GITHUB_URL } from '../../../data/content';
+import { REPO_URL } from '../../../data/content';
 
 const architecture = docsNav.find((s) => s.label === 'Architecture')!;
 const onward = architecture.pages.slice(1);
@@ -159,7 +159,7 @@ const toc = [
     <p class="mt-8 text-xs text-slate-600 leading-relaxed">
       These pages are derived from the APIHUB architecture deck (September 2026). The capability data is
       imported from the deck's model file, so the two stay in step. Source code for every container lives
-      under <a href={GITHUB_URL} target="_blank" rel="noopener" class="text-slate-500 hover:text-slate-300 transition-colors">Netcracker on GitHub</a>.
+      under <a href={REPO_URL} target="_blank" rel="noopener" class="text-slate-500 hover:text-slate-300 transition-colors">Netcracker on GitHub</a>.
     </p>
   </section>
 </DocsLayout>

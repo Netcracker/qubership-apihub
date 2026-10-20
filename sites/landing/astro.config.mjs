@@ -3,7 +3,7 @@ import tailwind from '@astrojs/tailwind';
 
 export default defineConfig({
   site: 'https://netcracker.github.io',
-  base: '/apihub',
+  base: '/qubership-apihub/landing',
   trailingSlash: 'always',
   integrations: [tailwind()],
   output: 'static',

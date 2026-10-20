@@ -1,4 +1,4 @@
-/** Prefix asset/link paths with Astro `base` (GitHub Pages: /apihub/). */
+/** Prefix asset/link paths with Astro `base` (GitHub Pages: /qubership-apihub/landing/). */
 export function withBase(path: string): string {
   const b = import.meta.env.BASE_URL;
   if (!path) return b;

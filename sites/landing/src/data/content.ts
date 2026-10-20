@@ -1,12 +1,19 @@
 import { withBase } from '../lib/paths';
 
-// ─── Site URLs ───────────────────────────────────────────────────────────────
-export const GITHUB_URL = 'https://github.com/Netcracker/qubership-apihub';
-export const DOCS_URL = 'https://github.com/Netcracker/qubership-apihub/blob/main/docs/user-guide.md';
-export const INSTALL_URL = 'https://github.com/Netcracker/qubership-apihub/blob/main/docs/installation-guide.md';
-export const ADMIN_URL = 'https://github.com/Netcracker/qubership-apihub/blob/main/docs/admin-guide.md';
-export const RELEASES_URL = 'https://github.com/Netcracker/qubership-apihub/releases';
-export const WIKI_URL = 'https://github.com/Netcracker/qubership-apihub/wiki';
+// ─── Outbound URLs ───────────────────────────────────────────────────────────
+// The one place for links to other sites and to the repository. Pages import these constants.
+export const SITE_ROOT = 'https://netcracker.github.io/qubership-apihub/';
+/** The navigation page that lists every APIHUB site. */
+export const HOME_URL = SITE_ROOT;
+export const DOCS_URL = `${SITE_ROOT}docs/`;
+export const DESIGN_URL = `${DOCS_URL}design/`;
+export const INSTALL_URL = `${SITE_ROOT}docs/installation-guide/`;
+export const ADMIN_URL = `${SITE_ROOT}docs/admin-guide/`;
+export const USER_GUIDE_URL = `${SITE_ROOT}docs/user-guide/`;
+export const STORYBOOK_URL = `${SITE_ROOT}storybook/`;
+export const ERD_URL = `${SITE_ROOT}erd/`;
+export const REPO_URL = 'https://github.com/Netcracker/qubership-apihub';
+export const RELEASES_URL = `${REPO_URL}/releases`;
 
 /** Raw files from the GitHub wiki repo (same paths as in the wiki clone, e.g. images/…). */
 export const WIKI_RAW_BASE = 'https://raw.githubusercontent.com/wiki/Netcracker/qubership-apihub';
@@ -23,7 +30,7 @@ export const NAV_LINKS = [
   { label: 'Releases', href: withBase('releases/') },
   { label: 'Deploy', href: withBase('deploy/') },
   { label: 'Docs', href: withBase('docs/') },
-  { label: 'Guides', href: DOCS_URL, external: true },
+  { label: 'Guides', href: USER_GUIDE_URL, external: true },
 ];
 
 // ─── Stats ───────────────────────────────────────────────────────────────────
@@ -633,7 +640,7 @@ export const deployOptions = [
     description: 'Get up and running in minutes. Every release ships a production-ready docker-compose configuration with all six services pre-configured.',
     badge: 'Recommended for dev',
     cta: 'View docker-compose',
-    href: 'https://github.com/Netcracker/qubership-apihub/tree/main/docker-compose',
+    href: `${REPO_URL}/tree/main/deploy/docker-compose`,
     color: 'blue',
   },
   {
@@ -642,7 +649,12 @@ export const deployOptions = [
     description: 'Production-grade Kubernetes deployment with Helm charts. Full configurability via values.yaml — RBAC, resource limits, S3, SSO, monitoring, and API keys mounted as files.',
     badge: 'Production ready',
     cta: 'View Helm chart',
-    href: 'https://github.com/Netcracker/qubership-apihub/tree/main/helm-templates',
+    href: `${REPO_URL}/tree/main/deploy/helm-templates`,
+    command: [
+      'helm install apihub -n qubership-apihub --create-namespace \\',
+      '  -f values.yaml \\',
+      '  oci://ghcr.io/netcracker/charts/qubership-apihub --version <X.Y.Z>',
+    ].join('\n'),
     color: 'violet',
   },
   {
@@ -651,7 +663,7 @@ export const deployOptions = [
     description: 'All 27+ repositories are open source under Apache 2.0. Build any component, run the full test suite, and contribute back to the project.',
     badge: 'Open source',
     cta: 'View on GitHub',
-    href: GITHUB_URL,
+    href: REPO_URL,
     color: 'indigo',
   },
 ];

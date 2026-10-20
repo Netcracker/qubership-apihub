@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import {
   deployOptions,
-  GITHUB_URL,
+  REPO_URL,
   INSTALL_URL,
   ADMIN_URL,
   WIKI_IMG_APPLICATIONS_ARCH,
@@ -75,6 +75,9 @@ const colorMap: Record<string, string> = {
             }`}>{opt.badge}</span>
           </div>
           <p class="text-sm text-slate-400 leading-relaxed mb-6 flex-1">{opt.description}</p>
+          {opt.command && (
+            <pre class="mb-6 overflow-x-auto rounded-lg border border-slate-800 bg-slate-950 p-3 text-xs leading-relaxed text-slate-300"><code>{opt.command}</code></pre>
+          )}
           <a href={opt.href} target="_blank" rel="noopener"
             class="flex items-center gap-2 text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors group">
             {opt.cta}
