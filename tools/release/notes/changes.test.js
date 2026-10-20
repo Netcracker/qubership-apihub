@@ -70,3 +70,9 @@ test('groupChanges: a BREAKING CHANGE footer in any commit of a pull request mak
   assert.equal(groups.breaking.length, 1)
   assert.equal(groups.bugfixes.length, 0)
 })
+
+test('groupChanges: a breaking pull request that closes several issues is one line', () => {
+  const issues = [1, 2].map((n) => ({ title: `I${n}`, url: `u${n}`, type: 'Feature', labels: [] }))
+  const groups = groupChanges([{ commit: commit('a', 'feat!: x'), login: null, pull: pull(30, 'feat!: x', issues) }], REPO)
+  assert.deepEqual(groups.breaking, [`- feat!: x by @dev in ${REPO}/pull/30 for issues ([I1](u1), [I2](u2))`])
+})

@@ -1,6 +1,6 @@
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
-const { NO_CHANGES, moduleNotes } = require('./module')
+const { NO_CHANGES, NO_OWN_CHANGES, moduleNotes } = require('./module')
 
 const REPO = 'https://github.com/Netcracker/qubership-apihub'
 const empty = { breaking: [], features: [], bugfixes: [], other: [] }
@@ -89,4 +89,21 @@ test('library notes: commons-go publishes no package', () => {
   assert.match(notes, /## ⚙️ Other\n\n- chore: z/)
   assert.match(notes, /\| github\.com\/x \| added \| v1 \|/)
   assert.doesNotMatch(notes, /Released because/)
+})
+
+test('a release without changes or released dependencies does not blame a dependency', () => {
+  const notes = moduleNotes({
+    component: 'api-visitor',
+    version: '1.0.24',
+    tag: 'api-visitor/1.0.24',
+    previousTag: 'api-visitor/1.0.23',
+    root: 'frontend/api-visitor',
+    artifacts: { packages: ['p@1.0.24'] },
+    changes: empty,
+    dependencies: [],
+    released: [],
+    repoUrl: REPO,
+  })
+  assert.ok(notes.includes(NO_OWN_CHANGES))
+  assert.ok(!notes.includes(NO_CHANGES))
 })

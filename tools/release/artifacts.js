@@ -27,7 +27,7 @@ const { dependencyChanges } = require('./notes/dependencies')
 const { createClient, parseRepoUrl } = require('./notes/github')
 const { moduleNotes } = require('./notes/module')
 const { productNotes } = require('./notes/product')
-const { fetchItems, workItemRows } = require('./notes/project')
+const { WORK_SECTIONS, fetchItems, workItemRows } = require('./notes/project')
 const { createResolver } = require('./notes/pull-requests')
 
 /** Component -> image name under ghcr.io/<owner>/, as built by the image jobs of ci.yml. */
@@ -46,6 +46,44 @@ const IMAGES = {
 const CHARTS = { agent: 'backend/agent/helm-templates/qubership-apihub-agent' }
 
 const isProductTag = (tag) => parseSemver(tag)?.pre === ''
+
+// GitHub refuses a release body over 125,000 characters; the releases step runs after images and npm.
+const MAX_BODY = 120000
+
+function cut(lines, keep, marker) {
+  return lines.length > keep ? [...lines.slice(0, keep), marker(lines.length - keep)] : lines
+}
+
+/** The render data with every list cut to `keep` entries and a line that says how many were left out. */
+function shorten(data, keep) {
+  const more = (n) => `- … and ${n} more; see the full changelog.`
+  const out = { ...data }
+  if (data.changes) {
+    out.changes = Object.fromEntries(Object.entries(data.changes).map(([k, lines]) => [k, cut(lines, keep, more)]))
+  }
+  if (data.dependencies?.length > keep) {
+    out.dependencies = [...data.dependencies.slice(0, keep), { more: data.dependencies.length - keep }]
+  }
+  if (data.breaking) out.breaking = data.breaking.map((b) => ({ ...b, lines: cut(b.lines, keep, more) }))
+  if (data.workItems) {
+    out.workItems = { ...data.workItems }
+    for (const s of WORK_SECTIONS) {
+      if (data.workItems[s]) out.workItems[s] = cut(data.workItems[s], keep, (n) => `| … and ${n} more | | | |`)
+    }
+  }
+  return out
+}
+
+/** Renders the notes, shortening the lists until the body fits; a body that never fits is a plan problem. */
+function fitNotes(render, problems, tag, data) {
+  let notes = render(data)
+  for (const keep of [200, 100, 50, 20, 5]) {
+    if (notes.length <= MAX_BODY) return notes
+    notes = render(shorten(data, keep))
+  }
+  if (notes.length > MAX_BODY) problems.push(`The notes of ${tag} have ${notes.length} characters, over ${MAX_BODY}.`)
+  return notes
+}
 
 /** The release tags at a commit: `{ modules: [{ component, version, tag }], product: { version, tag } | null }`. */
 function releaseTags(tags, groups) {
@@ -164,7 +202,7 @@ async function buildPlan({
       tag: m.tag,
       title: `${m.component} ${m.version}`,
       latest: false,
-      notes: moduleNotes({
+      notes: fitNotes(moduleNotes, plan.problems, m.tag, {
         ...m,
         root: paths[0],
         artifacts,
@@ -202,7 +240,12 @@ async function buildPlan({
       if (!workItems) {
         workItemsNote = `PROJECT_READ_TOKEN is not set, so the work items of sprint ${sprint} are not listed.`
         plan.problems.push(workItemsNote)
-      } else if (!Object.values(workItems).some((rows) => rows.length)) {
+      } else if (workItems.hidden) {
+        plan.problems.push(
+          `PROJECT_READ_TOKEN cannot read ${workItems.hidden} Project 9 card(s) of sprint ${sprint}; ` +
+            'give it access to their repositories.',
+        )
+      } else if (!WORK_SECTIONS.some((s) => workItems[s].length)) {
         plan.problems.push(`No Project 9 card of sprint ${sprint} is Done or In Test; check the sprint name.`)
       }
     }
@@ -211,7 +254,7 @@ async function buildPlan({
       tag: product.tag,
       title: `APIHUB ${product.version}`,
       latest: true,
-      notes: productNotes({
+      notes: fitNotes(productNotes, plan.problems, product.tag, {
         ...product,
         previousTag: previous,
         sprint,
@@ -329,4 +372,4 @@ if (require.main === module) {
   })
 }
 
-module.exports = { CHARTS, IMAGES, buildPlan, componentDependencies, latestVersion, previousTag, releaseTags, renderSummary }
+module.exports = { CHARTS, IMAGES, MAX_BODY, buildPlan, componentDependencies, latestVersion, previousTag, releaseTags, renderSummary }

@@ -56,6 +56,7 @@ jobs:
         env:
           OWNER: ${{ github.repository_owner }}
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+          # Only this step sees the tokens of the notes.
           GH_TOKEN: ${{ github.token }}
           PROJECT_READ_TOKEN: ${{ secrets.PROJECT_READ_TOKEN }}
         run: |
@@ -65,7 +66,10 @@ jobs:
           nearest=()
           if [ "$DRY_RUN" = 'true' ]; then nearest=(--nearest); fi
           node tools/release/artifacts.js --out "$RUNNER_TEMP/release" "${nearest[@]}" >> "$GITHUB_STEP_SUMMARY"
-          PLAN="$RUNNER_TEMP/release/plan.json" bash tools/release/publish-artifacts.sh check
+
+      - name: Check the plan
+        shell: bash
+        run: bash tools/release/publish-artifacts.sh check
 
       # Before any registry login: the build runs repository code, which must not find a token on disk.
       - name: Build the npm packages

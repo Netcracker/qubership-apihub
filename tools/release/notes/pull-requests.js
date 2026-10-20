@@ -77,6 +77,7 @@ function createResolver(client, { owner, repo }) {
   async function readCommits(shas) {
     for (const batch of chunks(shas, COMMIT_BATCH)) {
       const { data } = await client.graphql(commitQuery(owner, repo, batch))
+      if (!data?.repository) throw new Error(`cannot read the repository ${owner}/${repo}`)
       batch.forEach((sha, i) => {
         const node = data.repository?.[`c${i}`]
         const merged = (node?.associatedPullRequests?.nodes ?? [])
@@ -93,10 +94,13 @@ function createResolver(client, { owner, repo }) {
   async function readPulls(refs) {
     for (const batch of chunks(refs, PULL_BATCH)) {
       const { query, aliases } = pullQuery(batch)
-      const { data, notFound } = await client.graphql(query)
+      // Only a single pull request may be missing (the number is an issue); an unreadable repository
+      // would turn every reference into a bare commit line, so it fails the query.
+      const { data, notFound } = await client.graphql(query, {}, { tolerateNotFound: (path) => path.includes('.') })
       for (const { ref, path } of aliases) {
         const [r, p] = path.split('.')
-        const node = notFound.includes(path) ? null : data?.[r]?.[p]
+        if (!data?.[r]) throw new Error(`cannot read the repository ${ref.owner}/${ref.repo}`)
+        const node = notFound.includes(path) ? null : data[r][p]
         pullCache.set(pullKey(ref), node ? toPull(node) : null)
       }
     }

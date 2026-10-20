@@ -6,6 +6,7 @@
  */
 const PROJECT = { org: 'Netcracker', number: 9 }
 const STATUSES = ['Done', 'In Test']
+const WORK_SECTIONS = ['features', 'bugfixes', 'other']
 const PAGE = 100
 
 const PULL_FIELDS = 'url title author { login }'
@@ -49,14 +50,21 @@ async function fetchItems(client, project = PROJECT) {
 }
 
 const cell = (lines) => lines.join('<br/><br/>')
-const escapeCell = (text) => String(text).replace(/\|/g, '\\|')
+const escapeCell = (text) => String(text).replace(/\r?\n/g, ' ').replace(/\|/g, '\\|')
 
-/** `{ features: [rows], bugfixes: [...], other: [...] }`: rows of the `| Work item | Name | Author | Epic |` table. */
+/**
+ * `{ features: [rows], bugfixes: [...], other: [...], hidden }`: rows of the `| Work item | Name | Author | Epic |`
+ * table, and the number of the sprint's cards whose content the token cannot read (GitHub returns it as null).
+ */
 function workItemRows(items, sprint, statuses = STATUSES) {
-  const rows = { features: [], bugfixes: [], other: [] }
+  const rows = { features: [], bugfixes: [], other: [], hidden: 0 }
   for (const item of items) {
     const content = item.content
-    if (!content || item.sprint?.title !== sprint || !statuses.includes(item.status?.name)) continue
+    if (item.sprint?.title !== sprint || !statuses.includes(item.status?.name)) continue
+    if (!content) {
+      rows.hidden++
+      continue
+    }
     if (content.__typename === 'PullRequest') {
       const author = content.author?.login ? `@${content.author.login}` : ''
       rows.other.push(
@@ -80,4 +88,4 @@ function workItemRows(items, sprint, statuses = STATUSES) {
   return rows
 }
 
-module.exports = { PROJECT, STATUSES, fetchItems, workItemRows }
+module.exports = { PROJECT, STATUSES, WORK_SECTIONS, fetchItems, workItemRows }

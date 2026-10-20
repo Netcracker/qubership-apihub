@@ -58,6 +58,8 @@ The workflows rely on these repository settings. They are not checkable from cod
 - The deploy key `apihub-release-bot` has write access and bypasses the rulesets on all three branches.
 - Move `RELEASE_BOT_SSH_KEY` into an environment limited to `develop` and `release`. As a repository secret, any writer
   can read it from a modified workflow on a branch (planned; the bot jobs do not name the environment yet).
+  `PROJECT_READ_TOKEN` has the same exposure, and the dry run hands it to the plan step on any branch; make it a
+  fine-grained token that can only read the organization's projects.
 - `tools/release/guard.js` protects CI only: in a clone, `NX_DRY_RUN=true` passes it on any branch. It is not a barrier
   against local misuse; the rulesets on `main` are.
 
@@ -299,9 +301,18 @@ Product notes list:
   Done or In Test, grouped by issue type;
 - every component's version next to its version in the previous product release, and the agent.
 
-The plan reports a problem, which stops a real run before anything is published, when `PROJECT_READ_TOKEN` is not
-set, when the product tag names no sprint, or when no card of the sprint is Done or In Test. The last case usually
-means a misspelled sprint name. A dry run reports the same cases as warnings.
+The plan reports a problem, which stops a real run before anything is published, in these cases:
+
+- `PROJECT_READ_TOKEN` is not set, or cannot read some cards of the sprint;
+- the product tag names no sprint;
+- no card of the sprint is Done or In Test, which usually means a misspelled sprint name.
+
+A dry run reports the same cases as warnings. A repository the job token cannot read fails the plan step, instead of
+listing its pull requests as bare commits.
+
+GitHub accepts release bodies up to 125,000 characters. Longer notes keep the first entries of each list, down to
+five, and say how many were left out; the full changelog link lists all of them. A pull request lists at most ten
+closing issues, and a card at most ten pull requests, as in the old scripts.
 
 ## Version rules
 

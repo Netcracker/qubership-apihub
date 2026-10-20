@@ -95,3 +95,25 @@ test('resolve: the earliest merged pull request of this repository, else the sub
   await resolver.resolve(commits)
   assert.equal(client.queries.length, before, 'a second call is answered from the cache')
 })
+
+test('resolve fails when a repository cannot be read, instead of listing bare commits', async () => {
+  const noRepo = { graphql: async () => ({ data: { repository: null }, notFound: [] }) }
+  await assert.rejects(
+    createResolver(noRepo, { owner: OWNER, repo: REPO }).resolve([commit('aaa1', 'fix: a')]),
+    /cannot read the repository Netcracker\/qubership-apihub/,
+  )
+  let tolerated
+  const oldRepo = {
+    graphql: async (query, variables, options) => {
+      tolerated = options?.tolerateNotFound
+      return { data: { r0: null }, notFound: [] }
+    },
+  }
+  const resolver = createResolver(oldRepo, { owner: OWNER, repo: REPO })
+  await assert.rejects(
+    resolver.resolve([commit('ccc3', 'feat: c (Netcracker/gone#1)')]),
+    /cannot read the repository Netcracker\/gone/,
+  )
+  assert.equal(tolerated('r0.p0'), true)
+  assert.equal(tolerated('r0'), false, 'a missing repository is never tolerated')
+})

@@ -40,10 +40,13 @@ test('graphql gives up after the retries and fails on other HTTP errors', async 
   await assert.rejects(client([answer(401, 'Bad credentials')]).client.graphql('q'), /answered 401: Bad credentials/)
 })
 
-test('graphql reports NOT_FOUND fields and fails on other GraphQL errors', async () => {
+test('graphql reports tolerated NOT_FOUND fields and fails on every other GraphQL error', async () => {
   const notFound = { type: 'NOT_FOUND', path: ['r0', 'p1'], message: 'no pull request' }
-  const { client: c } = client([answer(200, { data: { r0: { p0: {}, p1: null } }, errors: [notFound] })])
-  assert.deepEqual((await c.graphql('q')).notFound, ['r0.p1'])
+  const body = { data: { r0: { p0: {}, p1: null } }, errors: [notFound] }
+  const { client: c } = client([answer(200, body), answer(200, body)])
+  const tolerateNotFound = (path) => path.includes('.')
+  assert.deepEqual((await c.graphql('q', {}, { tolerateNotFound })).notFound, ['r0.p1'])
+  await assert.rejects(c.graphql('q'), /no pull request/, 'NOT_FOUND is an error unless tolerated')
   const failing = client([answer(200, { data: null, errors: [{ type: 'FORBIDDEN', message: 'no access' }] })])
   await assert.rejects(failing.client.graphql('q'), /no access/)
 })

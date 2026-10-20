@@ -57,10 +57,13 @@ function groupChanges(resolved, repoUrl) {
       groups[breaking ? 'breaking' : titleCategory(pull.title)].push(head)
       continue
     }
-    for (const issue of pull.issues) {
-      const section = breaking ? 'breaking' : issueCategory(issue.type, issue.labels)
-      groups[section].push(`${head} for issue ([${issue.title}](${issue.url}))`)
+    const link = (issue) => `[${issue.title}](${issue.url})`
+    if (breaking) {
+      const noun = pull.issues.length > 1 ? 'issues' : 'issue'
+      groups.breaking.push(`${head} for ${noun} (${pull.issues.map(link).join(', ')})`)
+      continue
     }
+    for (const issue of pull.issues) groups[issueCategory(issue.type, issue.labels)].push(`${head} for issue (${link(issue)})`)
   }
   return groups
 }

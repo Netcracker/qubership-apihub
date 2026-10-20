@@ -1,9 +1,11 @@
 /**
  * A minimal GitHub GraphQL client for the release notes: retries network failures, 5xx answers, and
- * secondary rate limits; anything else is an error for the caller. `NOT_FOUND` errors of single fields
- * (a `#N` that names an issue, not a pull request) come back in `notFound` instead of failing the query.
+ * secondary rate limits; anything else is an error for the caller. With `tolerateNotFound`, `NOT_FOUND`
+ * errors of the given field paths (a `#N` that names an issue, not a pull request) come back in
+ * `notFound` instead of failing the query.
  */
 const ENDPOINT = 'https://api.github.com/graphql'
+const TIMEOUT_MS = 60000
 
 class GraphqlError extends Error {}
 
@@ -11,8 +13,11 @@ function createClient({ token, fetch = globalThis.fetch, retries = 4, delayMs = 
   if (!token) throw new GraphqlError('a GitHub token is required')
   const wait = sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)))
 
-  /** `{ data, notFound }`: `notFound` lists the top-level aliases that GitHub could not resolve. */
-  async function graphql(query, variables = {}) {
+  /**
+   * `{ data, notFound }`. `tolerateNotFound(path)` decides which NOT_FOUND paths (`a.b`) are not errors;
+   * by default none is.
+   */
+  async function graphql(query, variables = {}, { tolerateNotFound = () => false } = {}) {
     for (let attempt = 0; ; attempt++) {
       let response
       try {
@@ -20,6 +25,7 @@ function createClient({ token, fetch = globalThis.fetch, retries = 4, delayMs = 
           method: 'POST',
           headers: { authorization: `bearer ${token}`, 'content-type': 'application/json' },
           body: JSON.stringify({ query, variables }),
+          signal: AbortSignal.timeout(TIMEOUT_MS),
         })
       } catch (e) {
         if (attempt < retries) {
@@ -38,8 +44,9 @@ function createClient({ token, fetch = globalThis.fetch, retries = 4, delayMs = 
       if (!response.ok) throw new GraphqlError(`GitHub GraphQL answered ${response.status}: ${text.slice(0, 500)}`)
       const body = JSON.parse(text)
       const errors = body.errors ?? []
-      const notFound = errors.filter((e) => e.type === 'NOT_FOUND' && e.path?.length).map((e) => e.path.join('.'))
-      const fatal = errors.filter((e) => !(e.type === 'NOT_FOUND' && e.path?.length))
+      const tolerated = (e) => e.type === 'NOT_FOUND' && e.path?.length && tolerateNotFound(e.path.join('.'))
+      const notFound = errors.filter(tolerated).map((e) => e.path.join('.'))
+      const fatal = errors.filter((e) => !tolerated(e))
       if (fatal.length) {
         throw new GraphqlError(`GitHub GraphQL errors: ${fatal.map((e) => e.message).join('; ')}`)
       }

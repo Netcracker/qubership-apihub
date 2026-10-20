@@ -2,7 +2,7 @@ const { test } = require('node:test')
 const assert = require('node:assert/strict')
 const fs = require('node:fs')
 const path = require('node:path')
-const { IMAGES, buildPlan, componentDependencies, previousTag, releaseTags } = require('./artifacts')
+const { IMAGES, MAX_BODY, buildPlan, componentDependencies, previousTag, releaseTags } = require('./artifacts')
 
 const REPO = 'https://github.com/Netcracker/qubership-apihub'
 
@@ -123,6 +123,32 @@ test('buildPlan: missing work items are a problem, which stops a real run', asyn
   assert.deepEqual(none.problems, ['No Project 9 card of sprint APIHUB-26.3.5 is Done or In Test; check the sprint name.'])
   const noSprint = await plan(['2.16.0'], { sprint: undefined })
   assert.deepEqual(noSprint.problems, ['The product tag 2.16.0 names no sprint, so its work items are not listed.'])
+})
+
+test('buildPlan: product cards the token cannot read are a problem', async () => {
+  const p = await plan(['2.16.0'], {
+    workItemsFor: async () => ({ features: ['| x | y | | |'], bugfixes: [], other: [], hidden: 2 }),
+  })
+  assert.deepEqual(p.problems, [
+    'PROJECT_READ_TOKEN cannot read 2 Project 9 card(s) of sprint APIHUB-26.3.5; give it access to their repositories.',
+  ])
+})
+
+test('buildPlan: notes over the GitHub body limit are shortened, with the number left out', async () => {
+  const many = Array.from({ length: 3000 }, (_, i) => ({
+    hash: `h${i}`,
+    sha: `s${i}`,
+    author: 'Dev',
+    subject: `chore: change number ${i} ${'x'.repeat(60)}`,
+    body: '',
+  }))
+  const p = await plan(['portal-backend/1.22.0'], {
+    commitsFor: () => many,
+  })
+  const notes = p.releases[0].notes
+  assert.ok(notes.length <= MAX_BODY, `${notes.length} characters`)
+  assert.match(notes, /- … and \d+ more; see the full changelog\./)
+  assert.deepEqual(p.problems, [])
 })
 
 test('buildPlan: no release tag means nothing to publish', async () => {

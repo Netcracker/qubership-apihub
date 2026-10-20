@@ -30,16 +30,18 @@ test('workItemRows filters by sprint and status and groups by issue type', () =>
         status: 'In Test',
         pulls: [pr(10)],
       }),
-      card(issue(3, 'Task')),
+      card(issue(3, 'Task', { title: 'Issue 3\nwrapped' })),
       card({ __typename: 'PullRequest', ...pr(12) }),
       card(issue(4, 'Feature'), { status: 'In Progress' }),
       card(issue(5, 'Feature'), { sprint: 'APIHUB-26.3.4' }),
       card(null),
+      card(null, { status: 'Todo' }),
       { status: null, sprint: null, pulls: null, content: issue(6, 'Bug') },
     ],
     SPRINT,
   )
   assert.deepEqual(rows, {
+    hidden: 1,
     features: [
       '| Issue: <https://github.com/o/r/issues/1><br/><br/>PR: <https://github.com/o/r/pull/10> ' +
         '| Issue 1<br/><br/>PR 10 | @dev10 | [Epic \\| A](https://e/1) |',
@@ -49,7 +51,7 @@ test('workItemRows filters by sprint and status and groups by issue type', () =>
         'PR: <https://github.com/o/r/pull/11> | Issue 2<br/><br/>PR 10<br/><br/>PR 11 | @dev10 |  |',
     ],
     other: [
-      '| Issue: <https://github.com/o/r/issues/3> | Issue 3 |  |  |',
+      '| Issue: <https://github.com/o/r/issues/3> | Issue 3 wrapped |  |  |',
       '| No issue<br/><br/>PR: <https://github.com/o/r/pull/12> | No issue<br/><br/>PR 12 | @dev12 | |',
     ],
   })
