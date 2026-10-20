@@ -1,123 +1,50 @@
-# Qubership APIHUB Landing Page
+# Qubership APIHUB landing
 
-Static landing site for [Qubership APIHUB](https://github.com/Netcracker/qubership-apihub) — the open source API management platform.
+The product landing of [Qubership APIHUB](https://github.com/Netcracker/qubership-apihub): a static
+[Astro](https://astro.build/) site with [Tailwind CSS](https://tailwindcss.com/). It is the Nx project `landing`
+and a package of the pnpm workspace. It is in no release group, so a landing commit bumps no version.
 
-**Stack:** [Astro](https://astro.build/) (static output) + [Tailwind CSS](https://tailwindcss.com/)
+## Run it
 
----
-
-## Quick Start
-
-### Local Development
+Run these from the repository root, after `pnpm install`:
 
 ```bash
-npm install
-npm run dev
-# → http://localhost:4321
+pnpm exec nx run landing:dev      # dev server on http://localhost:4321/qubership-apihub/landing/
+pnpm exec nx run landing:build    # static site in sites/landing/dist/
+pnpm exec nx run landing:preview  # serve dist/ after a build
 ```
 
-### Build for Production
+Nx caches the build. `dev` and `build` first copy the architecture diagrams, see [Diagrams](#diagrams).
 
-```bash
-npm run build
-# Output: ./dist/
-```
+## Where it is published
 
----
+The site is served at <https://netcracker.github.io/qubership-apihub/landing/>. The Pages workflow builds it and
+publishes it together with the docs site. `base` in `astro.config.mjs` is `/qubership-apihub/landing`, so link to
+landing pages with `withBase(...)` from `src/lib/paths.ts`, never with a root-absolute path.
 
-## Project Structure
+## Where content lives
 
-```
-qubership-apihub-landing/
-├── src/
-│   ├── data/
-│   │   ├── content.ts           ← Site URLs, nav, shared copy (stats, features list, etc.)
-│   │   ├── radar.ts             ← Technology radar blips and ring copy
-│   │   ├── docs.ts              ← /docs sub-site structure (sidebar, hub cards, prev/next)
-│   │   ├── architecture.ts      ← C4 narrative data + typed view of the capability model
-│   │   └── capability-model.json ← Copy of the architecture deck's model (see below)
-│   ├── layouts/
-│   │   ├── Layout.astro         ← Base layout, header, footer, lightbox, global styles
-│   │   └── DocsLayout.astro     ← /docs shell: sidebar, breadcrumbs, page ToC, prev/next
-│   ├── components/DocFigure.astro ← Captioned, click-to-zoom diagram
-│   ├── pages/                   ← One `.astro` file per route (static HTML)
-│   │   └── docs/                ← Documentation sub-site
-│   │       ├── index.astro      ← Hub: architecture pages + links to the repository guides
-│   │       └── architecture/    ← Overview, C4 model, runtime flows, capability map
-│   └── content/                 ← Astro content collections (Markdown)
-│       ├── config.ts
-│       ├── releases/            ← Release notes for /releases
-│       └── use-cases/           ← Persona cards for /use-cases
-└── public/
-    ├── images/                  ← Static images (favicon, hero, feature screenshots, …)
-    │   └── architecture/        ← Hand-authored dark-theme architecture diagrams (SVG)
-    └── favicon.svg
-```
+- `src/data/*.ts`: shared copy, navigation, and the radar. `src/data/content.ts` is the one place for outbound URLs
+  (`SITE_ROOT`, `DOCS_URL`, `REPO_URL`, and so on); pages import these constants.
+- `src/content/`: Markdown collections. `releases/` feeds `/releases/` and `use-cases/` feeds `/use-cases/`. The schemas
+  are in `src/content/config.ts`.
+- `src/pages/`: one `.astro` file per route, including the `/docs/architecture/` pages.
+- `public/images/`: static images. The architecture diagrams there are generated.
 
----
+## Diagrams
 
-## Editing Content
+The architecture diagrams are SVG files in `docs/images/architecture/`, shared with the root README and the docs.
+`scripts/copy-diagrams.mjs` copies them into `public/images/architecture/`, which is git-ignored. Edit the files in
+`docs/images/architecture/`, not the copies.
 
-Everything is in the repository — no CMS. Typical locations:
+## Release cards
 
-| What | Where |
-|------|--------|
-| Links, stats, feature carousel data, wiki image URLs | `src/data/content.ts` |
-| Page copy and layout | `src/pages/*.astro` |
-| "Why APIHUB" business case, positioning, and comparison-by-category data | `src/data/content.ts` (`whyRows`, `whyOutcomes`, `comparisonRows`, …) and `public/images/why/*.svg` |
-| Technology radar blips and ring copy | `src/data/radar.ts`, page `src/pages/radar.astro`, preview `public/images/radar/preview.svg` |
-| Release timeline | `src/content/releases/*.md` |
-| Use-case personas | `src/content/use-cases/*.md` |
-| Documentation sidebar, hub cards, page order | `src/data/docs.ts` |
-| Architecture narrative (C4 levels, components, flows, deployment, ArchiMate) | `src/data/architecture.ts` |
-| Architecture diagrams | `public/images/architecture/*.svg` |
-| New static assets | `public/images/` (reference as `/images/...` in pages) |
+Each product release has a card, `src/content/releases/v<X>-<Y>-<Z>.md`. Add it during the release, as a pull request
+into `release`; see the step "Add the landing release card" in
+[the release process](../../docs/development/release-process.md). The Release finish dry run warns when the card is
+missing. The `apihub-landing-refresh` agent skill drafts a card from the product release notes.
 
-After changes: `npm run build`.
+## Capability model
 
----
-
-## Documentation Sub-Site (`/docs`)
-
-`/docs` is a small documentation sub-site with its own sidebar layout, intended to grow into the home for
-user documentation. It currently publishes the platform architecture:
-
-| Page | Contents |
-|------|----------|
-| [`/docs/`](src/pages/docs/index.astro) | Hub — architecture pages plus links to the installation, user and administrator guides |
-| [`/docs/architecture/`](src/pages/docs/architecture/index.astro) | Overview — the two models, the four levels of C4, the container roster |
-| [`/docs/architecture/c4/`](src/pages/docs/architecture/c4.astro) | Context, containers, components, code, and the Kubernetes deployment view |
-| [`/docs/architecture/flows/`](src/pages/docs/architecture/flows.astro) | Three dynamic views: publishing, runtime discovery, AI access over MCP |
-| [`/docs/architecture/capability-map/`](src/pages/docs/architecture/capability-map.astro) | Nine capabilities, sixty sub-capabilities, technology and maturity overlays, ArchiMate layers |
-
-### Refreshing the capability data
-
-`src/data/capability-model.json` is a verbatim copy of `diagrams/arch-deck-2026-09/model.json` in the
-APIHUB workspace, which is itself exported from `diagrams/capability-2026-09/model.py`. The capability
-map on this site, the slide deck, and the ArchiMate model therefore share one source. To refresh, copy the
-JSON over and rebuild — do not hand-edit it:
-
-```bash
-cp ../../../diagrams/arch-deck-2026-09/model.json src/data/capability-model.json
-npm run build
-```
-
-Counts shown on the page (nine capabilities, sixty sub-capabilities, per-container weights, maturity
-totals) are derived at build time in `src/data/architecture.ts`, so they update automatically.
-
-### Adding a documentation page
-
-1. Add an entry to the relevant section of `docsNav` in `src/data/docs.ts`.
-2. Create the matching page under `src/pages/docs/…` using `DocsLayout`.
-
-The sidebar, the hub card grid, and the previous/next links all read from `docsNav`, so nothing else
-needs changing.
-
-> **Astro gotcha:** the compiler hoists frontmatter lines that begin with the `export` keyword. If you
-> need `export` as an object key in a component's frontmatter, quote it (`'export': …`).
-
----
-
-## License
-
-Apache 2.0 — same as Qubership APIHUB.
+`src/data/capability-model.json` is a copy of a file that is maintained outside this repository. Update it by hand
+when the source changes.
