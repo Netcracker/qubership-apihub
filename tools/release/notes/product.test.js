@@ -17,7 +17,12 @@ const base = {
     { component: 'api-visitor', version: '1.0.4', previous: '1.0.4', released: false },
     { component: 'test-service', version: null, previous: null, released: false },
   ],
-  agent: { image: 'ghcr.io/netcracker/qubership-apihub-agent', version: '2.1.5', chart: 'backend/agent/helm' },
+  chart: { ref: 'oci://ghcr.io/netcracker/charts/qubership-apihub', version: '2.16.0', dir: 'deploy/helm-templates/qubership-apihub' },
+  agent: {
+    image: 'ghcr.io/netcracker/qubership-apihub-agent',
+    version: '2.1.5',
+    chart: { ref: 'oci://ghcr.io/netcracker/charts/qubership-apihub-agent', version: '2.1.5', dir: 'backend/agent/helm' },
+  },
   workItems: { features: ['| Issue: <u> | Name | @a | |'], bugfixes: [], other: [] },
   breaking: [
     { component: 'portal-backend', version: '1.22.0', lines: ['- feat!: drop v1 by @a in u'] },
@@ -33,7 +38,8 @@ test('product notes: artifacts, installation, breaking changes, work items, comp
     'Sprint: APIHUB-26.3.5',
     `[ghcr.io/netcracker/qubership-apihub-backend:1.22.0](${REPO}/releases/tag/portal-backend/1.22.0)`,
     'ghcr.io/netcracker/qubership-apihub-java-task-consumer: not released yet',
-    `🔹 ${REPO}/tree/2.16.0/deploy/helm-templates/qubership-apihub`,
+    `🔹 \`oci://ghcr.io/netcracker/charts/qubership-apihub\` version \`2.16.0\` ([sources](${REPO}/tree/2.16.0/deploy/helm-templates/qubership-apihub)), also attached to this release`,
+    '🔹 **Helm chart:** `helm install apihub oci://ghcr.io/netcracker/charts/qubership-apihub --version 2.16.0`',
     `### 📖 [Documentation](${REPO}/tree/2.16.0/docs)`,
     `🔹 **docker-compose:** ${REPO}/tree/2.16.0/deploy/docker-compose/apihub-generic`,
     '## ⚠️ Breaking changes\n\n- **portal-backend 1.22.0**: feat!: drop v1 by @a in u\n',
@@ -44,7 +50,7 @@ test('product notes: artifacts, installation, breaking changes, work items, comp
     '| api-visitor | 1.0.4 | unchanged |',
     '| test-service | none | none |',
     `[ghcr.io/netcracker/qubership-apihub-agent:2.1.5](${REPO}/releases/tag/agent/2.1.5)`,
-    `🔹 **Helm chart:** ${REPO}/tree/agent/2.1.5/backend/agent/helm`,
+    `🔹 **Helm chart:** \`oci://ghcr.io/netcracker/charts/qubership-apihub-agent\` version \`2.1.5\` ([sources](${REPO}/tree/agent/2.1.5/backend/agent/helm))`,
     `**Full Changelog**: ${REPO}/compare/2.15.0...2.16.0`,
   ]) {
     assert.ok(notes.includes(expected), `missing: ${expected}\n---\n${notes}`)

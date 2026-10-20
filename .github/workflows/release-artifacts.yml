@@ -5,8 +5,10 @@ name: Release artifacts
 #   1. point <image>:<version> at the multi-arch image this CI run published under the branch tag;
 #   2. build the released npm packages (before any login) and `pnpm publish -r` them; a version that the
 #      registry already holds from before the release stops a real run;
-#   3. publish the Helm charts: step 6 of the migration plan, a placeholder until then;
-#   4. create the GitHub Releases, modules with make_latest=false, then the product as Latest.
+#   3. package the released Helm charts with every image tag pinned and push them to
+#      oci://ghcr.io/<owner>/charts: the product chart with the product tag, the agent chart with the agent;
+#   4. create the GitHub Releases, modules with make_latest=false, then the product as Latest; a release
+#      with a chart carries its .tgz.
 # The notes (tools/release/notes/) are written in the plan step: the job token reads the pull requests and
 # issues of the changes, PROJECT_READ_TOKEN the sprint's work items on Project 9. Without that secret the
 # plan reports a problem: a real run stops at the check, a dry run warns.
@@ -102,14 +104,23 @@ jobs:
         shell: bash
         run: bash tools/release/publish-artifacts.sh npm
 
-      # Step 6 of the migration plan (Helm chart releases) goes here: package the product chart with
-      # version and appVersion set to the product version and the image tags pinned, push it to
-      # oci://ghcr.io/netcracker/charts, and the same for the agent chart when the agent is released.
-      # Nothing runs until the repository variable PUBLISH_CHARTS is true.
-      - name: Publish the Helm charts (step 6)
-        if: vars.PUBLISH_CHARTS == 'true'
+      - uses: azure/setup-helm@v5
+        with:
+          version: v3.22.0
+
+      # The token goes in Helm's registry config under ~/.config, outside the repository.
+      - name: Log in to the chart registry
         shell: bash
-        run: echo "::warning::PUBLISH_CHARTS is true, but chart publishing is not implemented yet (step 6)."
+        env:
+          HELM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTOR: ${{ github.actor }}
+        run: printf '%s' "$HELM_TOKEN" | helm registry login ghcr.io --username "$ACTOR" --password-stdin
+
+      # Version and appVersion from the release, every image tag pinned (tools/release/charts.js); the
+      # chart sources in git keep their defaults.
+      - name: Publish the Helm charts
+        shell: bash
+        run: bash tools/release/publish-artifacts.sh charts
 
       - name: Create the GitHub Releases
         shell: bash

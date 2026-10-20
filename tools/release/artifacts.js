@@ -42,8 +42,58 @@ const IMAGES = {
   'java-task-consumer': 'qubership-apihub-java-task-consumer',
 }
 
-/** Component -> its Helm chart directory, linked from its notes. */
-const CHARTS = { agent: 'backend/agent/helm-templates/qubership-apihub-agent' }
+/**
+ * The Helm charts, pushed to oci://ghcr.io/<owner>/charts/<name>: `product` with the product tag, the
+ * others with the tag of the component they are keyed by. `pins` maps a component to the values.yaml
+ * paths that get its current version when the chart is packaged (charts.js); git keeps the defaults.
+ */
+const CHARTS = {
+  product: {
+    name: 'qubership-apihub',
+    dir: 'deploy/helm-templates/qubership-apihub',
+    pins: {
+      'portal-backend': ['qubershipApihubBackend.image.tag'],
+      'build-task-consumer': ['qubershipApihubBuildTaskConsumer.image.tag'],
+      ui: ['qubershipApihubUi.image.tag'],
+      'api-linter-service': ['qubershipApiLinterService.image.tag'],
+      'agents-backend': ['qubershipApihubAgentsBackend.image.tag', 'qubershipApihubAgentsBackend.version'],
+    },
+  },
+  agent: {
+    name: 'qubership-apihub-agent',
+    dir: 'backend/agent/helm-templates/qubership-apihub-agent',
+    pins: { agent: ['qubershipApihubAgent.image.tag'] },
+  },
+}
+
+/**
+ * One chart of the plan: `{ name, dir, ref, version, tag, pins: [{ path, component, version, image? }] }`.
+ * A pin takes the component's highest stable tag merged into the release commit; an `image.tag` pin
+ * also names its image, which must exist before the chart is pushed. A component without a release is
+ * a problem: the chart would name an image tag that does not exist.
+ */
+function chartPlan(key, version, tag, registry, mergedTags, problems) {
+  const chart = CHARTS[key]
+  const pins = []
+  for (const [component, paths] of Object.entries(chart.pins)) {
+    const pinned = latestVersion(component, mergedTags)
+    if (!pinned) {
+      problems.push(`The chart ${chart.name} ${version} cannot pin ${component}: it has no release.`)
+      continue
+    }
+    for (const p of paths) {
+      const image = p.endsWith('.image.tag') ? { image: `${registry}/${IMAGES[component]}` } : {}
+      pins.push({ path: p, component, version: pinned, ...image })
+    }
+  }
+  return { ...chartLink(key, version, registry), name: chart.name, tag, pins }
+}
+
+/** What the notes say about a chart: `{ ref, version, dir }`. */
+function chartLink(key, version, registry) {
+  const { name, dir } = CHARTS[key]
+  return { ref: `oci://${registry}/charts/${name}`, version, dir }
+}
 
 const isProductTag = (tag) => parseSemver(tag)?.pre === ''
 
@@ -167,13 +217,19 @@ async function buildPlan({
 }) {
   const { modules, product } = releaseTags(tagsAtCommit, release.groups)
   const registry = `ghcr.io/${owner.toLowerCase()}`
-  const plan = { images: [], npm: [], releases: [], problems: [] }
+  const plan = { images: [], npm: [], charts: [], chartLinks: [], releases: [], problems: [] }
   const breaking = []
 
   for (const m of modules) {
     const projects = release.groups[m.component].projects
     m.previousTag = previousTag(`${m.component}/`, m.version, mergedTags)
-    const artifacts = { packages: [], chart: CHARTS[m.component] }
+    const artifacts = { packages: [] }
+    let chart
+    if (m.component !== 'product' && CHARTS[m.component]) {
+      chart = chartPlan(m.component, m.version, m.tag, registry, mergedTags, plan.problems)
+      plan.charts.push(chart)
+      artifacts.chart = chartLink(m.component, m.version, registry)
+    }
     if (IMAGES[m.component]) {
       artifacts.image = `${registry}/${IMAGES[m.component]}:${m.version}`
       plan.images.push({ component: m.component, version: m.version, image: `${registry}/${IMAGES[m.component]}` })
@@ -202,6 +258,7 @@ async function buildPlan({
       tag: m.tag,
       title: `${m.component} ${m.version}`,
       latest: false,
+      chart: chart ? { name: chart.name, version: chart.version } : null,
       notes: fitNotes(moduleNotes, plan.problems, m.tag, {
         ...m,
         root: paths[0],
@@ -250,17 +307,29 @@ async function buildPlan({
       }
     }
 
+    const chart = chartPlan('product', product.version, product.tag, registry, mergedTags, plan.problems)
+    plan.charts.push(chart)
+    // The notes name the agent chart at the agent's current version; when this release does not push
+    // it, publish-artifacts.sh checks that an earlier release did.
+    const agentVersion = latestVersion('agent', mergedTags)
+    const agentChart = agentVersion ? chartLink('agent', agentVersion, registry) : null
+    if (agentChart && !releasedNow.has('agent')) {
+      plan.chartLinks.push({ name: CHARTS.agent.name, ref: agentChart.ref, version: agentVersion })
+    }
+
     plan.releases.push({
       tag: product.tag,
       title: `APIHUB ${product.version}`,
       latest: true,
+      chart: { name: chart.name, version: chart.version },
       notes: fitNotes(productNotes, plan.problems, product.tag, {
         ...product,
         previousTag: previous,
         sprint,
         images: PRODUCT_COMPONENTS.map(image),
         components,
-        agent: { ...image('agent'), chart: CHARTS.agent },
+        chart: chartLink('product', product.version, registry),
+        agent: { ...image('agent'), chart: agentChart },
         workItems,
         workItemsNote,
         breaking,
@@ -274,15 +343,21 @@ async function buildPlan({
 function renderSummary(plan, commit) {
   const out = [`### Release artifacts of \`${commit.slice(0, 9)}\``, '']
   if (!plan.releases.length) return [...out, 'No release tag at this commit; nothing to publish.', ''].join('\n')
-  out.push('| Release | Latest | Image | npm |', '|---|---|---|---|')
+  out.push('| Release | Latest | Image | npm | Helm chart |', '|---|---|---|---|---|')
   for (const r of plan.releases) {
     const component = r.tag.includes('/') ? r.tag.slice(0, r.tag.lastIndexOf('/')) : null
     const image = plan.images.find((i) => i.component === component)
     const npm = plan.npm.filter((n) => n.component === component).map((n) => `\`${n.name}\``)
     const imageRef = image ? `\`${image.image}:${image.version}\`` : ''
-    out.push(`| ${r.title} | ${r.latest ? 'yes' : 'no'} | ${imageRef} | ${npm.join(', ')} |`)
+    const chartRef = r.chart ? `\`${r.chart.name}:${r.chart.version}\`` : ''
+    out.push(`| ${r.title} | ${r.latest ? 'yes' : 'no'} | ${imageRef} | ${npm.join(', ')} | ${chartRef} |`)
   }
   out.push('')
+  for (const c of plan.charts) {
+    out.push(`**${c.name} ${c.version}** pins:`, '', '| Values path | Component | Version |', '|---|---|---|')
+    for (const p of c.pins) out.push(`| \`${p.path}\` | ${p.component} | ${p.version} |`)
+    out.push('')
+  }
   for (const p of plan.problems) out.push(`- **Problem:** ${p}`)
   return out.join('\n')
 }
