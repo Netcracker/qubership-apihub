@@ -1,0 +1,42 @@
+{
+  "name": "@netcracker/qubership-apihub-docs-site",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "nx": {
+    "name": "docs-site",
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist"
+        ],
+        "inputs": [
+          "default",
+          "^default",
+          "{workspaceRoot}/docs/**/*",
+          "{workspaceRoot}/sites/landing/public/favicon.svg"
+        ]
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Netcracker/qubership-apihub.git",
+    "directory": "sites/docs"
+  },
+  "scripts": {
+    "sync": "node scripts/sync-docs.mjs",
+    "dev": "node scripts/sync-docs.mjs && astro dev --host",
+    "build": "node scripts/sync-docs.mjs && astro build",
+    "preview": "astro preview --host",
+    "test": "node --test \"scripts/*.test.mjs\""
+  },
+  "dependencies": {
+    "@astrojs/starlight": "0.42.6",
+    "astro": "7.4.1",
+    "astro-mermaid": "2.1.0",
+    "github-slugger": "2.0.0",
+    "mermaid": "11.17.2",
+    "starlight-links-validator": "0.27.0"
+  }
+}

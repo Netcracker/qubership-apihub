@@ -23,6 +23,9 @@ dist/
 .astro/
 # The landing copies these from docs/images/architecture/ before each build
 sites/landing/public/images/architecture/
+# The docs site copies these from docs/ before each build (sites/docs/scripts/sync-docs.mjs)
+sites/docs/src/content/docs/
+sites/docs/public/
 build/
 out/
 .nx/
