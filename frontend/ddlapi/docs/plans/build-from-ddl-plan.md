@@ -399,7 +399,7 @@ The following invariants hold on the returned `Realm` regardless of which errors
 
 ### 6.4 Module Layout
 
-```
+```text
 src/
   parser/
     positions.ts                  ← SOURCE_RANGE, SourceRange, getSourceRange (public exports)
@@ -441,7 +441,7 @@ This means `CREATE TABLE Users` and `CREATE TABLE users` map to the same registr
 
 ### 8.1 Pass-1 Registries (built during statement handling)
 
-```
+```text
 tableRegistry:  Map<string, Table>      key: "schemaName.tableName" (normalised)
 columnRegistry: Map<string, Column>     key: "schemaName.tableName.columnName"
 typeRegistry:   Map<string, SchemaType> key: "schemaName.typeName"
@@ -647,6 +647,7 @@ shape of the attr body is deferred to implementation once the pgsql-parser AST f
 `CreateTrigStmt` is examined.
 
 Special cases:
+
 - `INSTEAD OF` trigger where the target view is not defined in the same DDL →
   `unresolved-reference` error; trigger discarded.
 
@@ -692,7 +693,7 @@ Based on Atlas Go driver (`atlas/sql/postgres/inspect.go`).
 
 ### 11.1 File Organisation
 
-```
+```text
 test/
   helpers/
     assertValidSql.ts             ← wraps pgsql-parser; throws on invalid SQL
@@ -756,7 +757,7 @@ export function loadSql(relativePath: string): string {
 
 ## 12. SQL Resource File Inventory
 
-All valid PostgreSQL. Source: https://www.postgresql.org/docs/current/sql-commands.html
+All valid PostgreSQL. Source: <https://www.postgresql.org/docs/current/sql-commands.html>
 
 ### 12.1 `create-table/`
 
