@@ -21,6 +21,8 @@ agent-packages/**/build/
 node_modules/
 dist/
 .astro/
+# The landing copies these from docs/images/architecture/ before each build
+sites/landing/public/images/architecture/
 build/
 out/
 .nx/

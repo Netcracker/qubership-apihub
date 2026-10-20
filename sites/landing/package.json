@@ -4,7 +4,16 @@
   "version": "0.0.0",
   "type": "module",
   "nx": {
-    "name": "landing"
+    "name": "landing",
+    "targets": {
+      "build": {
+        "inputs": [
+          "default",
+          "^default",
+          "{workspaceRoot}/docs/images/architecture/*.svg"
+        ]
+      }
+    }
   },
   "repository": {
     "type": "git",
@@ -12,8 +21,9 @@
     "directory": "sites/landing"
   },
   "scripts": {
-    "dev": "astro dev --host",
-    "build": "astro build",
+    "copy-diagrams": "node scripts/copy-diagrams.mjs",
+    "dev": "node scripts/copy-diagrams.mjs && astro dev --host",
+    "build": "node scripts/copy-diagrams.mjs && astro build",
     "preview": "astro preview --host"
   },
   "dependencies": {
