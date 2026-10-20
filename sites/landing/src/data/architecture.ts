@@ -41,17 +41,18 @@ export const containers: Record<ContainerKey, {
   short: string;
   tech: string;
   color: string;
-  repo: string;
+  /** Directory in the monorepo. */
+  path: string;
 }> = {
-  BE:  { name: 'APIHUB Backend',      short: 'Backend',        tech: 'Go 1.26 · gorilla/mux · go-pg',  color: '#60a5fa', repo: 'qubership-apihub-backend' },
-  UI:  { name: 'APIHUB UI',           short: 'UI',             tech: 'React 18 · MUI 5 · nginx 1.31',  color: '#38bdf8', repo: 'qubership-apihub-ui' },
-  BTC: { name: 'Build Task Consumer', short: 'Build Consumer', tech: 'Node 24 · NestJS 11',            color: '#818cf8', repo: 'qubership-apihub-build-task-consumer' },
-  LNT: { name: 'API Linter Service',  short: 'Linter',         tech: 'Go 1.26 · Spectral · OpenAI',    color: '#34d399', repo: 'qubership-api-linter-service' },
-  ABE: { name: 'Agents Backend',      short: 'Agents Backend', tech: 'Go 1.26',                        color: '#10b981', repo: 'qubership-apihub-agents-backend' },
-  AGT: { name: 'APIHUB Agent',        short: 'Agent',          tech: 'Go 1.26 · client-go',            color: '#fb923c', repo: 'qubership-apihub-agent' },
-  JTC: { name: 'Java Task Consumer',  short: 'Java Consumer',  tech: 'Java 21 · japicmp · jdeps',      color: '#fbbf24', repo: 'qubership-apihub-java-task-consumer' },
-  LIB: { name: 'TypeScript libraries', short: 'TS libraries',  tech: '12 npm packages',                color: '#2dd4bf', repo: 'qubership-apihub-json-crawl' },
-  OPS: { name: 'Platform / Helm',     short: 'Platform',       tech: 'Helm · Kubernetes',              color: '#94a3b8', repo: 'qubership-apihub' },
+  BE:  { name: 'APIHUB Backend',      short: 'Backend',        tech: 'Go 1.26 · gorilla/mux · go-pg',  color: '#60a5fa', path: 'backend/portal-backend' },
+  UI:  { name: 'APIHUB UI',           short: 'UI',             tech: 'React 18 · MUI 5 · nginx 1.31',  color: '#38bdf8', path: 'frontend/ui' },
+  BTC: { name: 'Build Task Consumer', short: 'Build Consumer', tech: 'Node 24 · NestJS 11',            color: '#818cf8', path: 'frontend/build-task-consumer' },
+  LNT: { name: 'API Linter Service',  short: 'Linter',         tech: 'Go 1.26 · Spectral · OpenAI',    color: '#34d399', path: 'backend/api-linter-service' },
+  ABE: { name: 'Agents Backend',      short: 'Agents Backend', tech: 'Go 1.26',                        color: '#10b981', path: 'backend/agents-backend' },
+  AGT: { name: 'APIHUB Agent',        short: 'Agent',          tech: 'Go 1.26 · client-go',            color: '#fb923c', path: 'backend/agent' },
+  JTC: { name: 'Java Task Consumer',  short: 'Java Consumer',  tech: 'Java 21 · japicmp · jdeps',      color: '#fbbf24', path: 'backend/java-task-consumer' },
+  LIB: { name: 'TypeScript libraries', short: 'TS libraries',  tech: '12 npm packages',                color: '#2dd4bf', path: 'frontend' },
+  OPS: { name: 'Platform / Helm',     short: 'Platform',       tech: 'Helm · Kubernetes',              color: '#94a3b8', path: 'deploy' },
 };
 
 /** Maturity colours for a dark surface, keyed the same way as the model. */
@@ -245,7 +246,7 @@ export const backendGroups = [
     items: [
       { name: 'Cleanup jobs', note: '8 cron schedules' },
       { name: 'Migrations', note: 'Schema + operations' },
-      { name: 'Repositories', note: '~26, go-pg' },
+      { name: 'Repository classes', note: '~26, go-pg' },
       { name: 'Object storage', note: 'minio-go' },
     ],
   },

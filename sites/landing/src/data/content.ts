@@ -13,6 +13,8 @@ export const USER_GUIDE_URL = `${SITE_ROOT}docs/user-guide/`;
 export const STORYBOOK_URL = `${SITE_ROOT}storybook/`;
 export const ERD_URL = `${SITE_ROOT}erd/`;
 export const REPO_URL = 'https://github.com/Netcracker/qubership-apihub';
+/** Source tree links point at `develop`: `main` gets the monorepo tree at the first release from it. */
+export const REPO_TREE_URL = `${REPO_URL}/tree/develop`;
 export const RELEASES_URL = `${REPO_URL}/releases`;
 
 /** Images that the pages show beyond the feature cards. */
@@ -279,7 +281,7 @@ export const comparisonRows: { capability: string; cells: Record<string, string>
   {
     capability: 'Community and vendor scale',
     cells: {
-      apihub: 'Netcracker-backed, 27+ repos, releases every 4–6 weeks; smaller community',
+      apihub: 'Netcracker-backed, one monorepo, releases every 4–6 weeks; smaller community',
       suites: 'Large vendors, large ecosystems',
       design: 'Established vendors',
       catalogs: 'Large (Backstage is CNCF) / Red Hat',
@@ -560,7 +562,7 @@ export const deployOptions = [
     description: 'A ready-to-run Compose stack for local development and demos: Portal, backend, builder, linter, agents backend, and PostgreSQL. Use Helm for production.',
     badge: 'Recommended for dev',
     cta: 'View docker-compose',
-    href: `${REPO_URL}/tree/main/deploy/docker-compose`,
+    href: `${REPO_TREE_URL}/deploy/docker-compose`,
     color: 'blue',
   },
   {
@@ -569,7 +571,7 @@ export const deployOptions = [
     description: 'Production-grade Kubernetes deployment with Helm charts. Full configurability via values.yaml — RBAC, resource limits, S3, SSO, monitoring, and API keys mounted as files.',
     badge: 'Production ready',
     cta: 'View Helm chart',
-    href: `${REPO_URL}/tree/main/deploy/helm-templates`,
+    href: `${REPO_TREE_URL}/deploy/helm-templates`,
     command: [
       'helm install apihub -n qubership-apihub --create-namespace \\',
       '  -f values.yaml \\',

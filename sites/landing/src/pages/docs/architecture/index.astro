@@ -3,7 +3,7 @@ import DocsLayout from '../../../layouts/DocsLayout.astro';
 import DocFigure from '../../../components/DocFigure.astro';
 import { c4Levels, containers, subCapabilityCount, capabilities, containerCatalogue } from '../../../data/architecture';
 import { docsNav } from '../../../data/docs';
-import { REPO_URL } from '../../../data/content';
+import { REPO_URL, REPO_TREE_URL } from '../../../data/content';
 
 const architecture = docsNav.find((s) => s.label === 'Architecture')!;
 const onward = architecture.pages.slice(1);
@@ -124,12 +124,12 @@ const toc = [
             </div>
             <p class="text-xs text-slate-500 mb-3">{c.tech}</p>
             <a
-              href={`https://github.com/Netcracker/${c.repo}`}
+              href={`${REPO_TREE_URL}/${c.path}`}
               target="_blank"
               rel="noopener"
               class="font-mono text-[10px] text-slate-600 hover:text-slate-400 transition-colors break-all"
             >
-              {c.repo}
+              {c.path}
             </a>
           </div>
         );
@@ -159,7 +159,7 @@ const toc = [
     <p class="mt-8 text-xs text-slate-600 leading-relaxed">
       These pages are derived from the APIHUB architecture deck (September 2026). The capability data is
       imported from the deck's model file, so the two stay in step. Source code for every container lives
-      under <a href={REPO_URL} target="_blank" rel="noopener" class="text-slate-500 hover:text-slate-300 transition-colors">Netcracker on GitHub</a>.
+      in the <a href={REPO_URL} target="_blank" rel="noopener" class="text-slate-500 hover:text-slate-300 transition-colors">qubership-apihub monorepo</a>.
     </p>
   </section>
 </DocsLayout>

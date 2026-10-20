@@ -1,6 +1,7 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import DocFigure from '../../../components/DocFigure.astro';
+import { REPO_TREE_URL } from '../../../data/content';
 import {
   containers,
   containerCatalogue,
@@ -144,12 +145,12 @@ const strategyTone: Record<string, string> = {
               <h4 class="text-sm font-bold text-white">{c.name}</h4>
               <span class="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">{port}</span>
               <a
-                href={`https://github.com/Netcracker/${c.repo}`}
+                href={`${REPO_TREE_URL}/${c.path}`}
                 target="_blank"
                 rel="noopener"
                 class="ml-auto font-mono text-[10px] text-slate-600 hover:text-slate-400 transition-colors"
               >
-                {c.repo}
+                {c.path}
               </a>
             </div>
             <dl class="grid sm:grid-cols-3 gap-4 text-xs">
@@ -278,7 +279,7 @@ const strategyTone: Record<string, string> = {
                 </span>
               )}
             </div>
-            <p class="font-mono text-[10px] text-slate-600 mb-5">{c.repo}</p>
+            <p class="font-mono text-[10px] text-slate-600 mb-5">{c.path}</p>
             <ol class="space-y-3 mb-5">
               {lane.steps.map((step, i) => (
                 <li class="flex gap-3">
