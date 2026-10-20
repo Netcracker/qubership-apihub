@@ -33,7 +33,7 @@ This document provides a complete technical specification for generating Playwri
 
 | Step                                            | ER                                                                                                                                                          |
 | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1. Navigate to the Package Version Summary tab. | 1. REST API section is visible.<br>2. "Quality Validation" section is visible within the REST section.<br>3. Section title "Quality Validation" is visible. |
+| 1. Navigate to the Package Version Summary tab. | 1. REST API section is visible. 2. "Quality Validation" section is visible within the REST section. 3. Section title "Quality Validation" is visible. |
 
 #### **P-AQ-SM-UI-2 Verify Mixed API Types display - REST with GraphQL**
 
@@ -43,7 +43,7 @@ This document provides a complete technical specification for generating Playwri
 
 | Step                                            | ER                                                                                                                                                   |
 | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1. Navigate to the Package Version Summary tab. | 1. REST API section is visible **with** "Quality Validation" section.<br>2. GraphQL API section is visible **without** "Quality Validation" section. |
+| 1. Navigate to the Package Version Summary tab. | 1. REST API section is visible **with** "Quality Validation" section. 2. GraphQL API section is visible **without** "Quality Validation" section. |
 
 #### **P-AQ-SM-UI-3-M Verify Quality Validation section is hidden when linter is disabled**
 
@@ -70,7 +70,7 @@ This document provides a complete technical specification for generating Playwri
 | Step                                                           | ER                                                                                                                                                    |
 | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Navigate to the Summary tab.                                |                                                                                                                                                       |
-| 2. Inspect the Ruleset list in the Quality Validation section. | 1. One ruleset is listed.<br>2. Ruleset name is displayed as a clickable link.<br>3. API Type chip shows "OAS 3.0".<br>4. Status chip shows "Active". |
+| 2. Inspect the Ruleset list in the Quality Validation section. | 1. One ruleset is listed. 2. Ruleset name is displayed as a clickable link. 3. API Type chip shows "OAS 3.0". 4. Status chip shows "Active". |
 
 #### **P-AQ-SM-CONTENT-2 Verify Ruleset list items for multi-document version**
 
@@ -82,7 +82,7 @@ This document provides a complete technical specification for generating Playwri
 | Step                                                           | ER                                                                                                                                                                                                                      |
 | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Navigate to the Summary tab.                                |                                                                                                                                                                                                                         |
-| 2. Inspect the Ruleset list in the Quality Validation section. | 1. Two rulesets are listed (one per spec type).<br>2. Ruleset #1: name link visible, API Type chip "OAS 3.0", Status chip "Active".<br>3. Ruleset #2: name link visible, API Type chip "OAS 3.1", Status chip "Active". |
+| 2. Inspect the Ruleset list in the Quality Validation section. | 1. Two rulesets are listed (one per spec type). 2. Ruleset #1: name link visible, API Type chip "OAS 3.0", Status chip "Active". 3. Ruleset #2: name link visible, API Type chip "OAS 3.1", Status chip "Active". |
 
 #### **P-AQ-SM-CONTENT-3 Verify Issue Counts tooltip content**
 
@@ -93,7 +93,7 @@ This document provides a complete technical specification for generating Playwri
 | Step                                 | ER                                                                                                                 |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
 | 1. Navigate to the Summary tab.      |                                                                                                                    |
-| 2. Hover over the Issue Counts area. | 1. Tooltip is displayed.<br>2. Tooltip contains descriptions for each severity level (Error, Warning, Info, Hint). |
+| 2. Hover over the Issue Counts area. | 1. Tooltip is displayed. 2. Tooltip contains descriptions for each severity level (Error, Warning, Info, Hint). |
 
 #### **P-AQ-SM-CONTENT-4-M Verify Validation Failed state**
 
@@ -104,7 +104,7 @@ This document provides a complete technical specification for generating Playwri
 | Step                                                                              | ER                                                                                                                                                                                                                                                                                                                    |
 | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Mock validation summary API to return `status: 'error'` with failed documents. |                                                                                                                                                                                                                                                                                                                       |
-| 2. Navigate to the Summary tab.                                                   | 1. Red warning icon is visible.<br>2. Hovering the warning icon shows tooltip text about failure.<br>3. Failed documents count is displayed.<br>4. Info icon tooltip lists failed document names.<br>5. "API Quality" tab is disabled.<br>6. Hovering "API Quality" tab shows tooltip: "API quality check is failed". |
+| 2. Navigate to the Summary tab.                                                   | 1. Red warning icon is visible. 2. Hovering the warning icon shows tooltip text about failure. 3. Failed documents count is displayed. 4. Info icon tooltip lists failed document names. 5. "API Quality" tab is disabled. 6. Hovering "API Quality" tab shows tooltip: "API quality check is failed". |
 | 3. Navigate directly to the API Quality tab URL.                                  | 1. No results placeholder is displayed (ApiQualityNoResultsPlaceholder).                                                                                                                                                                                                                                              |
 
 ### **Test Suite: Ruleset Info Popup Interactions**
@@ -117,7 +117,7 @@ This document provides a complete technical specification for generating Playwri
 | Step                             | ER                                                                                                                                                           |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1. Navigate to the Summary tab.  |                                                                                                                                                              |
-| 2. Click on a Ruleset name link. | 1. Ruleset Info dialog opens.<br>2. Dialog title matches ruleset name.<br>3. API Type chip and Status chip are visible.<br>4. Ruleset filename is displayed. |
+| 2. Click on a Ruleset name link. | 1. Ruleset Info dialog opens. 2. Dialog title matches ruleset name. 3. API Type chip and Status chip are visible. 4. Ruleset filename is displayed. |
 
 #### **P-AQ-SM-POPUP-2 Verify multiple Rulesets can be opened in multi-spec version**
 
@@ -127,9 +127,9 @@ This document provides a complete technical specification for generating Playwri
 | Step                                        | ER                                                                       |
 | ------------------------------------------- | ------------------------------------------------------------------------ |
 | 1. Navigate to the Summary tab.             |                                                                          |
-| 2. Click the first ruleset name (OAS 3.0).  | 1. Popup opens.<br>2. Shows correct ruleset name and API type (OAS 3.0). |
+| 2. Click the first ruleset name (OAS 3.0).  | 1. Popup opens. 2. Shows correct ruleset name and API type (OAS 3.0). |
 | 3. Close the popup.                         | 1. Popup is closed.                                                      |
-| 4. Click the second ruleset name (OAS 3.1). | 1. Popup opens.<br>2. Shows correct ruleset name and API type (OAS 3.1). |
+| 4. Click the second ruleset name (OAS 3.1). | 1. Popup opens. 2. Shows correct ruleset name and API type (OAS 3.1). |
 
 #### **P-AQ-SM-POPUP-3 Verify Download ruleset file**
 
@@ -158,7 +158,7 @@ This document provides a complete technical specification for generating Playwri
 
 | Step                                     | ER                                                                                                                                                                         |
 | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1. Inspect the Activation History table. | 1. Table contains at least two rows with valid date ranges.<br>2. Active period format: "DD MMM, YYYY - ...".<br>3. Inactive period format: "DD MMM, YYYY - DD MMM, YYYY". |
+| 1. Inspect the Activation History table. | 1. Table contains at least two rows with valid date ranges. 2. Active period format: "DD MMM, YYYY - ...". 3. Inactive period format: "DD MMM, YYYY - DD MMM, YYYY". |
 
 ### **Test Suite: Manual Validation**
 
@@ -172,9 +172,9 @@ This document provides a complete technical specification for generating Playwri
 
 | Step                                                  | ER                                                                |
 | ----------------------------------------------------- | ----------------------------------------------------------------- |
-| 1. Navigate to Summary tab for the version.           | 1. Status is "Inactive".<br>2. Issue counts are 1/1/1/1.          |
+| 1. Navigate to Summary tab for the version.           | 1. Status is "Inactive". 2. Issue counts are 1/1/1/1.          |
 | 2. Click "Run Validation" link.                       |                                                                   |
-| 3. Wait for validation to complete and UI to refresh. | 1. Status becomes "Active".<br>2. Issue counts change to 0/1/0/0. |
+| 3. Wait for validation to complete and UI to refresh. | 1. Status becomes "Active". 2. Issue counts change to 0/1/0/0. |
 
 #### **P-AQ-SM-RUN-2 Verify re-validation updates aggregated issue counts for multi-document version**
 
@@ -187,9 +187,9 @@ This document provides a complete technical specification for generating Playwri
 
 | Step                                                  | ER                                                                                                                    |
 | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| 1. Navigate to Summary tab for the multi-doc version. | 1. OAS 3.0 ruleset shows "Inactive".<br>2. OAS 3.1 ruleset shows "Active".<br>3. Aggregated issue counts are 2/2/2/2. |
+| 1. Navigate to Summary tab for the multi-doc version. | 1. OAS 3.0 ruleset shows "Inactive". 2. OAS 3.1 ruleset shows "Active". 3. Aggregated issue counts are 2/2/2/2. |
 | 2. Click "Run Validation" link.                       |                                                                                                                       |
-| 3. Wait for validation to complete and UI to refresh. | 1. Both rulesets show "Active".<br>2. Aggregated issue counts update to 1/2/1/1 (0/1/0/0 + 1/1/1/1).                  |
+| 3. Wait for validation to complete and UI to refresh. | 1. Both rulesets show "Active". 2. Aggregated issue counts update to 1/2/1/1 (0/1/0/0 + 1/1/1/1).                  |
 
 ### **Test Suite: Status Transitions**
 
@@ -201,7 +201,7 @@ This document provides a complete technical specification for generating Playwri
 | Step                                               | ER                                                                                                   |
 | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | 1. Mock validation summary endpoint to return 404. |                                                                                                      |
-| 2. Navigate to Summary tab.                        | 1. Placeholder shows "No validation results."<br>2. "Run Validation" link is visible in placeholder. |
+| 2. Navigate to Summary tab.                        | 1. Placeholder shows "No validation results." 2. "Run Validation" link is visible in placeholder. |
 
 **Note:** Do NOT click "Run Validation" (mocked state would cause unexpected behavior).
 
@@ -223,7 +223,7 @@ This document provides a complete technical specification for generating Playwri
 | Step                                                      | ER                                                                                                                                                                               |
 | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Mock validation summary endpoint to return inProgress. |                                                                                                                                                                                  |
-| 2. Navigate to Summary tab.                               | 1. Placeholder shows "Validation is in progress, please wait...".<br>2. "API Quality" tab is disabled.<br>3. Hovering the tab shows tooltip: "API quality check is in progress". |
+| 2. Navigate to Summary tab.                               | 1. Placeholder shows "Validation is in progress, please wait...". 2. "API Quality" tab is disabled. 3. Hovering the tab shows tooltip: "API quality check is in progress". |
 
 ---
 

@@ -32,7 +32,7 @@ This document provides a complete technical specification for generating Playwri
 
 | Step                                       | ER                                                                                                                                                                                |
 | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1. Navigate to the Ruleset Management tab. | 1. Main header is visible.<br>2. API type selector is visible and defaults to OAS 3.0.<br>3. Add Ruleset button is enabled.<br>4. Ruleset table is visible with expected columns. |
+| 1. Navigate to the Ruleset Management tab. | 1. Main header is visible. 2. API type selector is visible and defaults to OAS 3.0. 3. Add Ruleset button is enabled. 4. Ruleset table is visible with expected columns. |
 
 #### **P-AQ-RM-UI-2 Verify Ruleset Management tab is hidden when linter is disabled**
 
@@ -64,7 +64,7 @@ This document provides a complete technical specification for generating Playwri
 | Step                                                 | ER                                                                                                                         |
 | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | 1. Mock system configuration API to disable linter.  |                                                                                                                            |
-| 2. Navigate directly to `/portal/settings/rulesets`. | 1. User is redirected to User Roles tab.<br>2. Create Role button is visible.<br>3. Ruleset Management tab is not visible. |
+| 2. Navigate directly to `/portal/settings/rulesets`. | 1. User is redirected to User Roles tab. 2. Create Role button is visible. 3. Ruleset Management tab is not visible. |
 
 ### **Test Suite: Ruleset Creation**
 
@@ -89,7 +89,7 @@ This document provides a complete technical specification for generating Playwri
 | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Open Create Ruleset dialog.                          |                                                                                                                                                                                                   |
 | 2. Fill unique ruleset name and upload valid YAML file. |                                                                                                                                                                                                   |
-| 3. Click Create.                                        | 1. Success notification appears.<br>2. New ruleset appears in table with Status "Inactive".<br>3. Created At shows current date in `DD MMM, YYYY`.<br>4. Activation History cell is empty/hidden. |
+| 3. Click Create.                                        | 1. Success notification appears. 2. New ruleset appears in table with Status "Inactive". 3. Created At shows current date in `DD MMM, YYYY`. 4. Activation History cell is empty/hidden. |
 
 #### **P-AQ-RM-CREATE-3 Attempt to create a ruleset with a duplicate name**
 
@@ -131,7 +131,7 @@ This document provides a complete technical specification for generating Playwri
 | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
 | 1. Open Create Ruleset dialog.             |                                                                                                             |
 | 2. Fill unique ruleset name.               |                                                                                                             |
-| 3. Upload a `*.txt` file and click Create. | 1. Error message is displayed within the dialog indicating file type is invalid.<br>2. Dialog remains open. |
+| 3. Upload a `*.txt` file and click Create. | 1. Error message is displayed within the dialog indicating file type is invalid. 2. Dialog remains open. |
 
 ### **Test Suite: Ruleset Activation**
 
@@ -145,7 +145,7 @@ This document provides a complete technical specification for generating Playwri
 | Step                                        | ER                                                                                                                                                                                                                            |
 | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Click Activate for the inactive ruleset. |                                                                                                                                                                                                                               |
-| 2. Confirm activation.                      | 1. Target ruleset status becomes Active.<br>2. Activation History shows `DD MMM, YYYY - ...` (date matches current date).<br>3. No history icon (single activation record).<br>4. Previously active ruleset becomes Inactive. |
+| 2. Confirm activation.                      | 1. Target ruleset status becomes Active. 2. Activation History shows `DD MMM, YYYY - ...` (date matches current date). 3. No history icon (single activation record). 4. Previously active ruleset becomes Inactive. |
 
 #### **P-AQ-RM-ACTIVATE-2 Verify Activate button is disabled for an already active ruleset**
 
@@ -163,7 +163,7 @@ This document provides a complete technical specification for generating Playwri
 
 | Step                                                                | ER                                                                                                                                         |
 | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1. Hover over info icon in Activation History cell for the ruleset. | 1. Tooltip appears with at least two activation records.<br>2. Records use `DD MMM, YYYY` date format and match expected activation dates. |
+| 1. Hover over info icon in Activation History cell for the ruleset. | 1. Tooltip appears with at least two activation records. 2. Records use `DD MMM, YYYY` date format and match expected activation dates. |
 
 ### **Test Suite: Ruleset Deletion**
 
@@ -185,7 +185,7 @@ This document provides a complete technical specification for generating Playwri
 | Step                                                 | ER                                                                                                                                                                                             |
 | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Hover over the inactive ruleset row with history. |                                                                                                                                                                                                |
-| 2. Hover over disabled Delete button.                | 1. Tooltip reads "The ruleset cannot be deleted due to existing versions that have been validated against this ruleset".<br>2. Activation History cell displays `DD MMM, YYYY - DD MMM, YYYY`. |
+| 2. Hover over disabled Delete button.                | 1. Tooltip reads "The ruleset cannot be deleted due to existing versions that have been validated against this ruleset". 2. Activation History cell displays `DD MMM, YYYY - DD MMM, YYYY`. |
 
 #### **P-AQ-RM-DEL-3 Delete a never-activated inactive ruleset**
 
@@ -195,7 +195,7 @@ This document provides a complete technical specification for generating Playwri
 | Step                                             | ER                                                                    |
 | ------------------------------------------------ | --------------------------------------------------------------------- |
 | 1. Click Delete for the never-activated ruleset. |                                                                       |
-| 2. Confirm deletion.                             | 1. Success notification appears.<br>2. Ruleset is removed from table. |
+| 2. Confirm deletion.                             | 1. Success notification appears. 2. Ruleset is removed from table. |
 
 ### **Test Suite: Ruleset Export and Sharing**
 
@@ -234,7 +234,7 @@ This document provides a complete technical specification for generating Playwri
 
 ### **2.1. Overview and Terminology**
 
-**Ruleset naming & lifecycle**
+#### Ruleset naming & lifecycle
 
 - Names must start with alias prefix `QS-` (`qubership-apihub-ui-tests/src/test-data/prefixes.ts`) and end with `-${process.env.TEST_ID_N}` so cleanup can match and delete them.
 - **Cleanup location:** Ruleset cleanup must be performed in `afterAll` of the root describe ("API Quality Validation"), not in `apihub-teardown.ts`.
