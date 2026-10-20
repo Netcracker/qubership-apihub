@@ -3,9 +3,9 @@
 **Design Item ID**: DI-Portal-GF-007  
 **Design Item Name**: Activity History in Main Page  
 **Related Design Items**:
-  - [Shared Packages](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90GF%E2%80%90006-Shared-Packages)
-  - [Favorite packages, dashboards, groups, workspaces](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90GF%E2%80%90005-Favorite-packages,-dashboards,-groups,-workspaces)
-  - [Activity History](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90012-Activity-History)
+  - [Shared Packages](di-portal-gf-006-shared-packages.md)
+  - [Favorite packages, dashboards, groups, workspaces](di-portal-gf-005-favorite-packages-dashboards-groups-workspaces.md)
+  - [Activity History](../package-version/di-portal-pkgver-012-activity-history.md)
 
 **Related API**: 
   - Get activity history (GET /api/v4/activity)
@@ -50,8 +50,8 @@ The panel contains the list of events for all packages/dashboards/groups present
 5. User clicks left chevron button.
 6. The system expands activity history panel and saves state of the panel in local storage (expandActivityHistoryPanel: true).
 
-The system allows searching events by user name or package name. See details about search in [Activity History](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90012-Activity-History).  
-The system allows filtering events by event groups: See details about filters in [Activity History](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90012-Activity-History).
+The system allows searching events by user name or package name. See details about search in [Activity History](../package-version/di-portal-pkgver-012-activity-history.md).  
+The system allows filtering events by event groups: See details about filters in [Activity History](../package-version/di-portal-pkgver-012-activity-history.md).
 
 ## Screen View
 tbd

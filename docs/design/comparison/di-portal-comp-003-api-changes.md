@@ -4,7 +4,7 @@
 **Design Item Name**: Compare API Changes  
 **Related Design Items**:
 
-- [DI-Portal-PKGVER-010 Manage REST Path Prefix Group](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90010-Manage-REST-Path-Prefix-Group)
+- [DI-Portal-PKGVER-010 Manage REST Path Prefix Group](../package-version/di-portal-pkgver-010-manage-rest-path-prefix-group.md)
 
 **Related API**:
 

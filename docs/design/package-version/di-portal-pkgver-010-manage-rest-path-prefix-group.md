@@ -3,7 +3,7 @@
 **Design Item ID**: DI-Portal-PKGVER-010  
 **Design Item Name**: Manage REST Path Prefix Group  
 **Related Design Items**: 
-  - [DI-Portal-PKGVER-009: List Operations Groups](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90009-Operations-Group)
+  - [DI-Portal-PKGVER-009: List Operations Groups](di-portal-pkgver-009-list-of-operations-groups.md)
   
 **Related API**: 
   - Get package by Id (GET /api/v2/packages/{packageId})

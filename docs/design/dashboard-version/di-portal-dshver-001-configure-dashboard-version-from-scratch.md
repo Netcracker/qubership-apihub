@@ -4,7 +4,7 @@
 **Design Item Name**: Configure dashboard version from scratch   
 **Related Design Items**:   
 
-- [DI-Portal-DSHVER-002: Edit dashboard version](https://github.com/Netcracker/qubership-apihub/wiki/Edit-dashboard-version)
+- [DI-Portal-DSHVER-002: Edit dashboard version](di-portal-dshver-002-edit-dashboard-version.md)
 
 **Related API**:   
 

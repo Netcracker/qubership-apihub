@@ -3,7 +3,7 @@
 **Design Item ID**: DI-Agent-002  
 **Design Item Name**: Cloud Services  
 **Related Design Items**:
-- [DI-Agent-001 Version Validation](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Agent%E2%80%90001-Version-Validation)
+- [DI-Agent-001 Version Validation](di-agent-001-version-validation.md)
 
 **Related API:**
 - Get agents (GET /api/v2/agents)
@@ -156,7 +156,7 @@ This design item defines the functionality of the APIHUB Agent Cloud Services pa
    1. The user selects the required service(s). The user cannot select a service if they do not have appropriate grants for the baseline package of the service.
    2. The user specifies the **Version** field — this will be the new version of the reference data in APIHUB.
       - For Release status, the version must match the format **YYYY.Q** (where YYYY is the year and Q is the quarter). If the format is invalid, the system displays an error message: "The release version must have the format: YYYY.Q, where YYYY is the year, Q is the quarter of the year".
-      - See [DI-Agent-001 Version Validation](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Agent%E2%80%90001-Version-Validation) for detailed validation rules.
+      - See [DI-Agent-001 Version Validation](di-agent-001-version-validation.md) for detailed validation rules.
    3. The **Previous Version** field is pre-filled with the value of the baseline version specified during the snapshot creation step. This field is read-only.
    4. The user selects the **Status** field (Draft or Release) — this will be the status of the promoted (published) version in APIHUB.
    5. The user clicks the **Promote Version** button.

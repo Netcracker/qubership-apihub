@@ -4,11 +4,11 @@
 
 For ResponseHeader schemas, changes are classified according to **Schema Changes** with **Scope Response**.
 
-See: [Schema Changes - Scope Response](Schema-Changes#scope-response)
+See: [Schema Changes - Scope Response](../schema-changes.md#scope-definitions)
 
 ### Example
 
-To get specific examples for ResponseHeader schemas, take the schema examples from the [Schema Changes](Schema-Changes) section and insert them into the `responses[*].headers[*].schema` location of an OpenAPI specification.
+To get specific examples for ResponseHeader schemas, take the schema examples from the [Schema Changes](../schema-changes.md) section and insert them into the `responses[*].headers[*].schema` location of an OpenAPI specification.
 
 Example OpenAPI structure:
 

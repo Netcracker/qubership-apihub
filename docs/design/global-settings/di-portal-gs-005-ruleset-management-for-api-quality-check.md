@@ -3,8 +3,8 @@
 **Design Item ID**: DI-Portal-GS-005   
 **Design Item Name**: Ruleset Management for API Quality Check  
 **Related Design Items**: 
-  - [API Quality Validation Result](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90019-API-Quality-Validation-Result)
-  - [Version Summary](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90001-Version-summary)   
+  - [API Quality Validation Result](../package-version/di-portal-pkgver-019-api-quality-validation-result.md)
+  - [Version Summary](../package-version/di-portal-pkgver-001-version-summary.md)   
 
 **Related API**:   
   - Get a list of rulesets (GET api/v1/rulesets)
@@ -25,7 +25,7 @@
 ---
 
 # Description
-This functionality enables system administrators to manage quality rulesets used to lint API specifications and show the result (for more information see [API Quality Validation Result](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90019-API-Quality-Validation-Result)) in APIHUB. Linting is performed by the [qubership-api-linter-service](https://github.com/Netcracker/qubership-api-linter-service). The system supports multiple linters per API type. Currently supported linters are **Spectral** and **AI Linter**. The system administrator can manage rulesets for each combination of API type and linter. Rulesets are organized by API type (GraphQL, OAS 3.0, OAS 3.1, AsyncAPI 3.0) and by linter (Spectral, AI Linter). When the Linter Service is enabled, a new system user visiting the Ruleset Management tab for the first time will see default out-of-the-box (OOB) rulesets for each supported combination of API type and linter, with one active ruleset per API type per linter. These default rulesets are used automatically to validate all newly published API documents unless the administrator activates different ones.
+This functionality enables system administrators to manage quality rulesets used to lint API specifications and show the result (for more information see [API Quality Validation Result](../package-version/di-portal-pkgver-019-api-quality-validation-result.md)) in APIHUB. Linting is performed by the [qubership-api-linter-service](https://github.com/Netcracker/qubership-api-linter-service). The system supports multiple linters per API type. Currently supported linters are **Spectral** and **AI Linter**. The system administrator can manage rulesets for each combination of API type and linter. Rulesets are organized by API type (GraphQL, OAS 3.0, OAS 3.1, AsyncAPI 3.0) and by linter (Spectral, AI Linter). When the Linter Service is enabled, a new system user visiting the Ruleset Management tab for the first time will see default out-of-the-box (OOB) rulesets for each supported combination of API type and linter, with one active ruleset per API type per linter. These default rulesets are used automatically to validate all newly published API documents unless the administrator activates different ones.
 
 # Assumption
 1. The public ruleset URL for Spectral rulesets must end with the .yaml extension to be correctly recognized by Spectral CLI and VSCode extension. If the URL does not end with .yaml, users may encounter an error.

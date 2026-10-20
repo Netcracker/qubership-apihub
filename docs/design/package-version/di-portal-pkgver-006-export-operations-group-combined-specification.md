@@ -3,7 +3,7 @@
 **Design Item ID**: DI-Portal-PKGVER-006  
 **Design Item Name**: Export Operations Group (combined specification)  
 **Related Design Items**:
-  - [DI‐Portal‐PKGVER‐009: Operations Group](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90009-Operations-Group)
+  - [DI‐Portal‐PKGVER‐009: Operations Group](di-portal-pkgver-009-list-of-operations-groups.md)
 
 **Related API**: 
   - Async export of version, document or operations group (POST /api/v1/export)
@@ -17,7 +17,7 @@
 ***
 
 # Description
-User can download operations included into operations group (with API type = REST) and in the result receive OpenAPI specification with these operations. There are two options of downloading operations group - reduced source specifications (see info about reduced source specification in [DI‐Portal‐PKGVER‐005: Export Operations Group (reduced source specifications)](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90005-Export-Operations-Group-(reduced-source-specifications)) and combined specification.  
+User can download operations included into operations group (with API type = REST) and in the result receive OpenAPI specification with these operations. There are two options of downloading operations group - reduced source specifications (see info about reduced source specification in [DI‐Portal‐PKGVER‐005: Export Operations Group (reduced source specifications)](di-portal-pkgver-005-export-operations-group-reduced-source-specifications.md) and combined specification.  
 The combined specifications option allows the user to obtain a single OpenAPI specification that merges all operations from the selected operations group into one OpenAPI specification, including all relevant paths, components, and reusable elements from the source specifications.  
 For example, suppose you have a package version that contains two OpenAPI specifications:  
 - Specification A contains three operations:

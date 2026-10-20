@@ -3,7 +3,7 @@
 **Design Item ID**: DI-Portal-PKGVER-022  
 **Design Item Name**: OpenAPI Document Overview  
 **Related Design Items**:
-  - [List of Documents](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90016-List-of-Documents)
+  - [List of Documents](di-portal-pkgver-016-list-of-documents.md)
 
 **Related API**: 
   - Get document details (GET /api/v3/packages/{packageId}/versions/{version}/documents/{slug})

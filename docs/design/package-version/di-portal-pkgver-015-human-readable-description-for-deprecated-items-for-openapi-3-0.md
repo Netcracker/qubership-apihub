@@ -3,7 +3,7 @@
 **Design Item ID**: DI-Portal-PKGVER-015  
 **Design Item Name**: Human-readable description for deprecated items for OpenAPI 3.0  
 **Related Design Items**: 
-  - [List of Deprecated Operations](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90014-List-of-Deprecated-Operations)   
+  - [List of Deprecated Operations](di-portal-pkgver-014-list-of-deprecated-operations.md)   
 
 **Related API**: 
   - Get list of deprecated operations (GET /api/v2/packages/{packageId}/versions/{version}/{apiType}/deprecated)
@@ -17,7 +17,7 @@
 ***
 
 # Description
-The functionality allows the user to see the description of deprecated operations and deprecated items. See more about deprecated operations and items in [List of Deprecated Operations](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90014-List-of-Deprecated-Operations).
+The functionality allows the user to see the description of deprecated operations and deprecated items. See more about deprecated operations and items in [List of Deprecated Operations](di-portal-pkgver-014-list-of-deprecated-operations.md).
 
 - [Operation object](#operation_object) 
 - [Parameters object](#parameters_object)

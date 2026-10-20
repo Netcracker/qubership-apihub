@@ -3,7 +3,7 @@
 **Design Item ID**: DI-Portal-PKGVER-019  
 **Design Item Name**: API Quality Validation Result  
 **Related Design Items**:
-  - [Ruleset Management for API Quality Check](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90GS%E2%80%90005-Ruleset-Management-for-API-Quality-Check)
+  - [Ruleset Management for API Quality Check](../global-settings/di-portal-gs-005-ruleset-management-for-api-quality-check.md)
 
 **Related API**:    
   - Get validation summary for a package version (GET /api/v2/packages/{packageId}/versions/{version}/validation/summary)

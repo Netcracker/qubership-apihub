@@ -3,7 +3,7 @@
 **Design Item ID**: DI-Portal-PKGVER-014  
 **Design Item Name**: List of Deprecated Operations  
 **Related Design Items**:
-  - [Human‐readable description for deprecated items for OpenAPI 3.0](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90015-Human%E2%80%90readable-description-for-deprecated-items-for-OpenAPI-3.0)
+  - [Human‐readable description for deprecated items for OpenAPI 3.0](di-portal-pkgver-015-human-readable-description-for-deprecated-items-for-openapi-3-0.md)
 
 **Related API**: 
   - Get list of deprecated operations (GET /api/v2/packages/{packageId}/versions/{version}/{apiType}/deprecated)
@@ -39,12 +39,12 @@ The functionality provides a user with the ability to view the list of all depre
    - By default, all operations are collapsed. 
    - If operation itself is deprecated, but does not have any deprecated item, then neither chevron nor human-readable description are shown.
    - Human-readable descriptions are generated based on the following rules:
-     - for REST API: [Human-readable description for deprecated items for OpenAPI 3.0](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90015-Human%E2%80%90readable-description-for-deprecated-items-for-OpenAPI-3.0)
+     - for REST API: [Human-readable description for deprecated items for OpenAPI 3.0](di-portal-pkgver-015-human-readable-description-for-deprecated-items-for-openapi-3-0.md)
      - for GraphQL API: _not supported_
 
-User can switch between list and detailed view in the same way as it described in [List of Operations](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90011:-List-of-Operations)
+User can switch between list and detailed view in the same way as it described in [List of Operations](di-portal-pkgver-011-list-of-operations.md)
 
 User can filter and search operations, see [DI‐Portal‐PKGVER‐007: Search and Filter Operations
-](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90007-Search-and-Filter-Operations)
+](di-portal-pkgver-007-search-and-filter-operations.md)
 
 # Screen View

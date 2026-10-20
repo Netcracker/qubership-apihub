@@ -4,8 +4,8 @@
 **Design Item Name**: Search and Filter Operations  
 **Related Design Items**:
   - [DI‐Portal‐PKGVER‐011: List of Operations
-](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90011-List-of-Operations)
-  - [DI‐Portal‐PKGVER‐014: List of Deprecated Operations](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90014-List-of-Deprecated-Operations)
+](di-portal-pkgver-011-list-of-operations.md)
+  - [DI‐Portal‐PKGVER‐014: List of Deprecated Operations](di-portal-pkgver-014-list-of-deprecated-operations.md)
 
 **Related API**: 
   - Get list of operations (GET /api/v2/packages/{packageId}/versions/{version}/{apiType}/operations)
@@ -32,7 +32,7 @@ User can filter operations using the left filtering panel. If at least one filte
 3. The system hides filter panel.  
 4. User clicks **Show/hide filter panel**.  
 5. The system shows filter panel with the following filters:
-   - Filter by Group - field is disabled if package version does not have any [operations group](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90009-Operations-Group). If at least one (manual or REST path prefix) group exists, the system shows the following options:
+   - Filter by Group - field is disabled if package version does not have any [operations group](di-portal-pkgver-009-list-of-operations-groups.md). If at least one (manual or REST path prefix) group exists, the system shows the following options:
      - All - selected by default, shows all operations.  
      - Ungrouped - of selected, shows operations, which are not included in any group.  
      - \<list of groups> - after the first two options, the system shows list of all groups from current package version.  

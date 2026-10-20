@@ -174,7 +174,7 @@ When a message's payload or headers contain a Schema Object with deprecated: tru
 
 **Deprecated item message format:**
 
-The system shall generate a human-readable description for each deprecated schema found in the operation's message payload or headers, following the same approach as REST \[DI‐Portal‐PKGVER‐015\]([https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90015-Human%E2%80%90readable-description-for-deprecated-items-for-OpenAPI-3.0](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90015-Human%E2%80%90readable-description-for-deprecated-items-for-OpenAPI-3.0)).
+The system shall generate a human-readable description for each deprecated schema found in the operation's message payload or headers, following the same approach as REST [DI‐Portal‐PKGVER‐015](../package-version/di-portal-pkgver-015-human-readable-description-for-deprecated-items-for-openapi-3-0.md).
 
 Variables:
 

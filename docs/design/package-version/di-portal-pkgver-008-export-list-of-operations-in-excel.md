@@ -3,7 +3,7 @@
 **Design Item ID**: DI-Portal-PKGVER-008  
 **Design Item Name**: Export List of Operations in Excel  
 **Related Design Items**:
-  - [DI‐Portal‐PKGVER‐011: List of Operations](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90011-List-of-Operations)
+  - [DI‐Portal‐PKGVER‐011: List of Operations](di-portal-pkgver-011-list-of-operations.md)
 
 **Related API**: 
   - Export operations to xlsx file (GET /api/v2/packages/{packageId}/versions/{version}/{apiType}/export/operations)

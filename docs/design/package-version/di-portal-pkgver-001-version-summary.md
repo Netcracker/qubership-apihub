@@ -47,7 +47,7 @@ Version summary:
 - Total number of operations
 - Number of deprecated operations
 - Number of no-BWC operations
-- Number of operations for internal audience / Number of operations for unknown audience - see info about these parameters in [DI‐Portal‐COE‐001: API Audience (x‐api‐audience)](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90COE%E2%80%90001-API-Audience-(x%E2%80%90api%E2%80%90audience))
+- Number of operations for internal audience / Number of operations for unknown audience - see info about these parameters in [DI‐Portal‐COE‐001: API Audience (x‐api‐audience)](../custom-openapi-extensions/di-portal-coe-001-api-audience-x-api-audience.md)
 
 <API Type> API Validation (section is shown for each API type available in the version):
 - Number of BWC errors - number of breaking changes compared to specified previous version

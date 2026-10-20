@@ -4,11 +4,11 @@
 
 For RequestBody schemas, changes are classified according to **Schema Changes** with **Scope Request**.
 
-See: [Schema Changes - Scope Request](Schema-Changes#scope-request)
+See: [Schema Changes - Scope Request](../schema-changes.md#scope-definitions)
 
 ### Example
 
-To get specific examples for RequestBody schemas, take the schema examples from the [Schema Changes](Schema-Changes) section and insert them into the `requestBody.content.application/json.schema` location of an OpenAPI specification.
+To get specific examples for RequestBody schemas, take the schema examples from the [Schema Changes](../schema-changes.md) section and insert them into the `requestBody.content.application/json.schema` location of an OpenAPI specification.
 
 Example OpenAPI structure:
 

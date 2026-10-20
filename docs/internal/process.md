@@ -311,4 +311,4 @@ Sprint start and end happen automatically accroding to start/finish dates
 
 ## Userful Links
 
-- [Frontend Development Guide](https://github.com/Netcracker/qubership-apihub-ui/wiki/APIHUB-Frontend-Development-Guide)
+- Frontend Development Guide

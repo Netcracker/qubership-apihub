@@ -3,7 +3,7 @@
 **Design Item ID**: DI-Portal-PKGVER-004  
 **Design Item Name**: Manage Manual Operations Group  
 **Related Design Items**:
-  - [DI-Portal-PKGVER-009: List Operations Groups](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90009-List-of-Operations-Groups)
+  - [DI-Portal-PKGVER-009: List Operations Groups](di-portal-pkgver-009-list-of-operations-groups.md)
   -   
 **Related API**: 
   - Create manual operation group (POST /api/v3/packages/{packageId}/versions/{version}/{apiType}/groups)
@@ -19,7 +19,7 @@
 ***
 # Description
 Manual groups are user-created groups that allow the grouping of operations within a specific package version. These groups enable users to categorize operations based on their specific needs and criteria, such as grouping by consumer of the API. One operation can be included in multiple groups.  
-After manual groups are created, it is possible to filter operation by these groups (see [Search and Filter Operations]()). It is also possible to export operations from the groups with REST API type as OpenAPI specification (see [Download Operations Group (reduced source specifications)](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90005-Download-Operations-Group-(reduced-source-specifications)) and [Download Operations Group (combined specification)](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90006-Download-Operations-Group-(combined-specification)))
+After manual groups are created, it is possible to filter operation by these groups (see [Search and Filter Operations]()). It is also possible to export operations from the groups with REST API type as OpenAPI specification (see [Download Operations Group (reduced source specifications)](di-portal-pkgver-005-export-operations-group-reduced-source-specifications.md) and [Download Operations Group (combined specification)](di-portal-pkgver-006-export-operations-group-combined-specification.md))
 
 # Start Point
 1. User navigates to APIHUB Portal → workspace → group → package version → Overview tab → Groups menu
@@ -32,7 +32,7 @@ To create manual group:
    - Group Name - required field. Group name must be unique within one API type.
    - API Type - required field. The system provides the ability to select those API types which are available in current package version.
    - Description
-   - OpenAPI Specification Template - field is available only if REST API is selected in API Type field. Otherwise, entire Additional Options section is disabled. See more information about this field in [(Download Operations Group (combined specification))](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90006-Download-Operations-Group-(combined-specification)).
+   - OpenAPI Specification Template - field is available only if REST API is selected in API Type field. Otherwise, entire Additional Options section is disabled. See more information about this field in [(Download Operations Group (combined specification))](di-portal-pkgver-006-export-operations-group-combined-specification.md).
 3. User fills required fields and clicks **Create**.
    - API to create manual operation group - POST /api/v3/packages/{packageId}/versions/{version}/{apiType}/groups
    - apiType = \<type of the API\> (REST/GraphQL)

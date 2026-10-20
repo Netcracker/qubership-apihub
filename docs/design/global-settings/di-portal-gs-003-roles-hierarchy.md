@@ -3,7 +3,7 @@
 **Design Item ID**: DI-Portal-GS-003  
 **Design Item Name**: Roles Hierarchy  
 **Related Design Items**:
-  - [Manage Roles](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90GS%E2%80%90001-Manage-Roles)  
+  - [Manage Roles](di-portal-gs-001-manage-roles.md)  
 
 **Related API**: 
   - Get list of existing roles (GET /api/v2/roles)

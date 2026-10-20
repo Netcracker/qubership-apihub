@@ -3,7 +3,7 @@
 **Design Item ID**: DI-Portal-PKGVER-005  
 **Design Item Name**: Export Operations Group (reduced source specifications)  
 **Related Design Items**:
-  - [DI‐Portal‐PKGVER‐009: Operations Group](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90009-Operations-Group)
+  - [DI‐Portal‐PKGVER‐009: Operations Group](di-portal-pkgver-009-list-of-operations-groups.md)
 
 **Related API**: 
   - Async export of version, document or operations group (POST /api/v1/export)

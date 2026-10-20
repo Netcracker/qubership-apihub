@@ -3,8 +3,8 @@
 **Design Item ID**: DI-Portal-PKGVER-011  
 **Design Item Name**: List of Operations  
 **Related Design Items**:  
-  - [DI-Portal-PKGVER-007: Search and Filter Operations](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90007-Search-and-Filter-Operations)  
-  - [DI-Portal-PKGVER-008: Export List of Operation in Excel](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90008-Export-List-of-Operations-in-Excel) 
+  - [DI-Portal-PKGVER-007: Search and Filter Operations](di-portal-pkgver-007-search-and-filter-operations.md)  
+  - [DI-Portal-PKGVER-008: Export List of Operation in Excel](di-portal-pkgver-008-export-list-of-operations-in-excel.md) 
 
 **Related API**:  
   - Get list of operations (GET /api/v2/packages/{packageId}/versions/{version}/{apiType}/operations)  
@@ -314,7 +314,7 @@ User can switch between list and detailed view. List view shows list of all oper
 Current list/detailed view state is persisted in current session. By default, list view is selected.
 
 User can filter and search operations, see [DI‐Portal‐PKGVER‐007: Search and Filter Operations
-](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90PKGVER%E2%80%90007-Search-and-Filter-Operations)
+](di-portal-pkgver-007-search-and-filter-operations.md)
 
 # Screen View
 tbd

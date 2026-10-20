@@ -43,7 +43,7 @@ update_document_shareability | \<User name> changed shareability status of "\<do
 The system allows the users to search events by user name or package name.
 1. User enters value in search field.
 2. The system searches event by user name and package name.
-   - API for search - GET /api/v2/activity ([for Activity History in Main Page](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90GF%E2%80%90007-Activity-History-in-Main-Page)) or GET /api/v2/packages/{packageId}/activity (for [Package Activity History]()):
+   - API for search - GET /api/v2/activity ([for Activity History in Main Page](../general/di-portal-gf-007-activity-history-in-main-page.md)) or GET /api/v2/packages/{packageId}/activity (for [Package Activity History]()):
      - textFilter = \<user input\>  
 
 The system allows the use to filter events by event group. Available filter options:
@@ -56,7 +56,7 @@ The system allows the use to filter events by event group. Available filter opti
    - Package members: Events related to role assignments, updates, and deletions.
 3. The user selects one or multiple filtering options.
 4. The system filters events by the selected options: 
-   - API for filtering - GET /api/v2/activity (for [Activity History in Main Page](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90GF%E2%80%90007-Activity-History-in-Main-Page)) or GET /api/v2/packages/{packageId}/activity (for [Package Activity History]())
+   - API for filtering - GET /api/v2/activity (for [Activity History in Main Page](../general/di-portal-gf-007-activity-history-in-main-page.md)) or GET /api/v2/packages/{packageId}/activity (for [Package Activity History]())
      - types = \<filtering option(s) selected by the user\>  
 
-User can see activity history for the specific package in package version page (see more in [Package Activity History]()) or for some set of packages on main page (see more in [Activity History in Main Page](https://github.com/Netcracker/qubership-apihub/wiki/DI%E2%80%90Portal%E2%80%90GF%E2%80%90007-Activity-History-in-Main-Page))
+User can see activity history for the specific package in package version page (see more in [Package Activity History]()) or for some set of packages on main page (see more in [Activity History in Main Page](../general/di-portal-gf-007-activity-history-in-main-page.md))
