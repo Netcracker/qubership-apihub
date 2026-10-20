@@ -20,6 +20,7 @@ agent-packages/**/build/
 # Workspace build output
 node_modules/
 dist/
+.astro/
 build/
 out/
 .nx/

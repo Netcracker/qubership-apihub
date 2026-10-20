@@ -3,6 +3,7 @@ packages:
   - 'frontend/*/packages/*'
   - 'tests/ui-tests'
   - 'tools/jest-chrome-in-docker-environment'
+  - 'sites/*'
 
 # Settings other than auth and registry live here, not in .npmrc: pnpm 12 ignores them there without a
 # warning. An unknown key here fails with ERR_PNPM_UNRECOGNIZED_WORKSPACE_SETTINGS.
@@ -33,6 +34,8 @@ allowBuilds:
   '@scarf/scarf': false
   # Refreshes the mock service worker file in the workerDirectory; `pnpm run msw:init` does that on demand.
   msw: false
+  # Native binaries ship as optional platform packages; the script only falls back to a local build.
+  sharp: false
 
 # Lets `pnpm deploy` build build-task-consumer's production tree without injectWorkspacePackages,
 # which would change how every internal dependency resolves.
