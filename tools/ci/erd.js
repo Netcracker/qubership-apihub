@@ -102,12 +102,15 @@ function orderMigrations(names) {
   return ups.sort((a, b) => a.n - b.n).map((u) => u.name)
 }
 
-// The generator's own files from `git ls-tree <ref> -- tools/ci/ .github/workflows/erd.yml`.
+// The generator's own files from `git ls-tree <ref> -- tools/ci/ .github/workflows/erd.yml`. Tests
+// do not change a render, so `*.test.js` is left out.
 function generatorFiles(listing) {
   const files = []
   for (const line of listing.split('\n')) {
     const m = line.match(/^\d+ blob ([0-9a-f]+)\t(.+)$/)
-    if (m && (/^tools\/ci\/erd[^/]*$/.test(m[2]) || m[2] === '.github/workflows/erd.yml')) files.push({ path: m[2], blob: m[1] })
+    if (!m) continue
+    const ours = /^tools\/ci\/erd[^/]*$/.test(m[2]) && !/\.test\.js$/.test(m[2])
+    if (ours || m[2] === '.github/workflows/erd.yml') files.push({ path: m[2], blob: m[1] })
   }
   return files.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
 }

@@ -48,7 +48,7 @@ test('orderMigrations() refuses a name without a number and a number used twice'
   assert.throws(() => orderMigrations(['3_a.up.sql', '03_b.up.sql']), /share the number 3/)
 })
 
-test('generatorFiles() keeps tools/ci/erd* and erd.yml, sorted by path', () => {
+test('generatorFiles() keeps tools/ci/erd* and erd.yml without the tests, sorted by path', () => {
   const listing = [
     `100644 blob ${'1'.repeat(40)}\ttools/ci/erd.test.js`,
     `100644 blob ${'2'.repeat(40)}\ttools/ci/erd.js`,
@@ -60,7 +60,6 @@ test('generatorFiles() keeps tools/ci/erd* and erd.yml, sorted by path', () => {
   assert.deepEqual(generatorFiles(listing), [
     { path: '.github/workflows/erd.yml', blob: '4'.repeat(40) },
     { path: 'tools/ci/erd.js', blob: '2'.repeat(40) },
-    { path: 'tools/ci/erd.test.js', blob: '1'.repeat(40) },
   ])
 })
 
