@@ -8,12 +8,12 @@
   "UI": {
    "name": "APIHUB UI",
    "color": "0EA5E9",
-   "tech": "React 18 \u00b7 MUI 5 \u00b7 nginx 1.28"
+   "tech": "React 18 \u00b7 MUI 5 \u00b7 nginx 1.31"
   },
   "BTC": {
    "name": "Build Task Consumer",
    "color": "1D4ED8",
-   "tech": "NestJS 10 \u00b7 api-processor (TS)"
+   "tech": "NestJS 11 \u00b7 api-processor (TS)"
   },
   "LNT": {
    "name": "API Linter Service",
@@ -899,7 +899,7 @@
   ],
   [
    "N6",
-   "nginx 1.28",
+   "nginx 1.31",
    "sysSw"
   ],
   [

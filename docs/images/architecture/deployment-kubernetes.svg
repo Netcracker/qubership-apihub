@@ -40,7 +40,7 @@
     <rect x="88" y="254" width="304" height="94" rx="11" fill="#38bdf8" fill-opacity="0.14" stroke="#38bdf8" stroke-opacity="0.55"/>
     <text x="110" y="284" class="nm" fill="#7dd3fc">APIHUB UI</text>
     <text x="110" y="308" class="scale" fill="#38bdf8">1 replica</text>
-    <text x="110" y="331" class="tech">nginx 1.28 &#183; static assets + reverse proxy</text>
+    <text x="110" y="331" class="tech">nginx 1.31 &#183; static assets + reverse proxy</text>
   </g>
   <g>
     <rect x="408" y="254" width="304" height="94" rx="11" fill="#60a5fa" fill-opacity="0.16" stroke="#60a5fa" stroke-opacity="0.6"/>

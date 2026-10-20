@@ -44,8 +44,8 @@ export const containers: Record<ContainerKey, {
   repo: string;
 }> = {
   BE:  { name: 'APIHUB Backend',      short: 'Backend',        tech: 'Go 1.26 · gorilla/mux · go-pg',  color: '#60a5fa', repo: 'qubership-apihub-backend' },
-  UI:  { name: 'APIHUB UI',           short: 'UI',             tech: 'React 18 · MUI 5 · nginx 1.28',  color: '#38bdf8', repo: 'qubership-apihub-ui' },
-  BTC: { name: 'Build Task Consumer', short: 'Build Consumer', tech: 'Node 24 · NestJS 10',            color: '#818cf8', repo: 'qubership-apihub-build-task-consumer' },
+  UI:  { name: 'APIHUB UI',           short: 'UI',             tech: 'React 18 · MUI 5 · nginx 1.31',  color: '#38bdf8', repo: 'qubership-apihub-ui' },
+  BTC: { name: 'Build Task Consumer', short: 'Build Consumer', tech: 'Node 24 · NestJS 11',            color: '#818cf8', repo: 'qubership-apihub-build-task-consumer' },
   LNT: { name: 'API Linter Service',  short: 'Linter',         tech: 'Go 1.26 · Spectral · OpenAI',    color: '#34d399', repo: 'qubership-api-linter-service' },
   ABE: { name: 'Agents Backend',      short: 'Agents Backend', tech: 'Go 1.26',                        color: '#10b981', repo: 'qubership-apihub-agents-backend' },
   AGT: { name: 'APIHUB Agent',        short: 'Agent',          tech: 'Go 1.26 · client-go',            color: '#fb923c', repo: 'qubership-apihub-agent' },

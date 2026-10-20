@@ -502,7 +502,7 @@ const RAW: Omit<RadarBlip, 'id'>[] = [
     why: 'Portal and Agents SPAs. Server state is TanStack Query; layout and controls are MUI.',
   },
   {
-    name: 'NestJS 10',
+    name: 'NestJS 11',
     quadrant: 'languages',
     ring: 'adopt',
     domain: 'product',
