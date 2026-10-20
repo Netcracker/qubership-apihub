@@ -32,6 +32,17 @@ High-level narratives (architecture roadmap, backlog process) live in [architect
 
 ---
 
+## Reference, architecture, design items, and internal docs
+
+| Section | What it holds |
+|---------|---------------|
+| [Reference](./reference/api-changes/README.md) | The rules that classify an API change as breaking, deprecating, non-breaking, or annotation |
+| [Architecture](./architecture/README.md) | System overview, feature list, processing libraries, database structure |
+| [Design items](./design/README.md) | How each feature behaves, by area; the ID scheme and a template for new items |
+| [Internal](./internal/README.md) | Team process and project records; published on GitHub only, not on the documentation site |
+
+---
+
 ## Deployment artifacts (outside `docs/`)
 
 | Path | Role |

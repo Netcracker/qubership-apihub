@@ -1,4 +1,4 @@
-# Compatibility suite
+# OAS extensions
 
 | №   | OAS Object                    | Extension Classification | Обоснование                                    |
 | --- | ----------------------------- | ------------------------ | ---------------------------------------------- |
