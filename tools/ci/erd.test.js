@@ -3,7 +3,8 @@ const assert = require('node:assert/strict')
 const { execFileSync } = require('node:child_process')
 const path = require('node:path')
 const {
-  detectBackends, orderMigrations, generatorFiles, computeKey, databaseName, renderIndex, formatDate, selectGc,
+  detectBackends, orderMigrations, generatorFiles, computeKey, keyFormatOf, keyAt, databaseName, renderIndex, formatDate,
+  selectGc, KEY_FORMAT,
 } = require('./erd')
 
 const TREE = 'cdc6312e2'.padEnd(40, '0')
@@ -11,7 +12,7 @@ const GENERATOR = [
   { path: 'tools/ci/erd.js', blob: 'a'.repeat(40) },
   { path: '.github/workflows/erd.yml', blob: 'b'.repeat(40) },
 ]
-const key = (over = {}) => computeKey({ migrationsTree: TREE, generator: GENERATOR, schemaspy: '7.0.2', postgresMajor: 16, ...over })
+const key = (over = {}) => computeKey({ migrationsTree: TREE, generator: GENERATOR, ...over })
 
 test('detectBackends() takes the backends with an up migration directly in resources/migrations', () => {
   const listing = [
@@ -75,10 +76,80 @@ test('computeKey() changes with every input', () => {
     key({ migrationsTree: 'f'.repeat(40) }),
     key({ generator: [GENERATOR[0], { ...GENERATOR[1], blob: 'c'.repeat(40) }] }),
     key({ generator: [GENERATOR[0]] }),
-    key({ schemaspy: '7.0.3' }),
-    key({ postgresMajor: 17 }),
   ]
   assert.equal(new Set(keys).size, keys.length)
+})
+
+test('computeKey() hashes only what it is given, so the tool versions count through the erd.js blob', () => {
+  assert.equal(key({ schemaspy: '9.9.9', postgresMajor: 99 }), key())
+})
+
+// A git that answers for two refs: `main` and `develop` differ only in the SchemaSpy constant of
+// erd.js. Each ref's key must come from that ref's blobs, whatever the running script holds.
+function fakeGit(refs) {
+  return (...args) => {
+    if (args[0] === 'rev-parse') {
+      const [ref, dir] = args[3].split(':')
+      if (!refs[ref] || !dir.endsWith('/resources/migrations')) throw new Error('not found')
+      return `${refs[ref].tree}\n`
+    }
+    if (args[0] === 'ls-tree') {
+      return Object.entries(refs[args[1]].files).map(([p, f]) => `100644 blob ${f.blob}\t${p}`).join('\n') + '\n'
+    }
+    if (args[0] === 'cat-file') {
+      for (const r of Object.values(refs)) for (const f of Object.values(r.files)) if (f.blob === args[2]) return f.content
+    }
+    throw new Error(`unexpected git ${args.join(' ')}`)
+  }
+}
+
+const erdSource = (version, format = KEY_FORMAT) =>
+  `'use strict'\r\nconst SCHEMASPY_VERSION = '${version}'\r\n${format ? `const KEY_FORMAT = '${format}'\r\n` : ''}`
+
+function twoRefs(developFormat = KEY_FORMAT) {
+  return {
+    main: {
+      tree: TREE,
+      files: {
+        'tools/ci/erd.js': { blob: '1'.repeat(40), content: erdSource('7.0.2') },
+        '.github/workflows/erd.yml': { blob: '2'.repeat(40), content: 'on: push' },
+        'tools/ci/images-gc.js': { blob: '3'.repeat(40), content: '' },
+      },
+    },
+    develop: {
+      tree: TREE,
+      files: {
+        'tools/ci/erd.js': { blob: '4'.repeat(40), content: erdSource('7.0.3', developFormat) },
+        '.github/workflows/erd.yml': { blob: '2'.repeat(40), content: 'on: push' },
+      },
+    },
+  }
+}
+
+test('keyAt() computes a ref\'s key from the blobs at that ref only', () => {
+  const g = fakeGit(twoRefs())
+  const main = keyAt('portal-backend', 'main', g)
+  assert.equal(main, computeKey({
+    migrationsTree: TREE,
+    generator: [{ path: 'tools/ci/erd.js', blob: '1'.repeat(40) }, { path: '.github/workflows/erd.yml', blob: '2'.repeat(40) }],
+  }))
+  assert.notEqual(keyAt('portal-backend', 'develop', g), main, 'the SchemaSpy bump on develop changes develop\'s key only')
+  assert.equal(keyAt('portal-backend', 'main', g), main)
+})
+
+test('keyAt() refuses a ref whose erd.js uses another key formula or has none', () => {
+  assert.throws(() => keyAt('portal-backend', 'develop', fakeGit(twoRefs('v9'))), (e) => e.otherFormat && /format v9/.test(e.message))
+  assert.throws(() => keyAt('portal-backend', 'develop', fakeGit(twoRefs(''))), (e) => e.otherFormat && /format v1/.test(e.message))
+  const refs = twoRefs()
+  delete refs.main.files['tools/ci/erd.js']
+  assert.throws(() => keyAt('portal-backend', 'main', fakeGit(refs)), (e) => e.noGenerator)
+  assert.throws(() => keyAt('portal-backend', 'nope', fakeGit(refs)), /does not exist at nope/)
+})
+
+test('keyFormatOf() reads the KEY_FORMAT line of this erd.js', () => {
+  const source = require('node:fs').readFileSync(path.join(__dirname, 'erd.js'), 'utf8')
+  assert.equal(keyFormatOf(source), KEY_FORMAT)
+  assert.equal(keyFormatOf('const X = 1'), 'v1')
 })
 
 test('computeKey() refuses something that is not a tree hash', () => {

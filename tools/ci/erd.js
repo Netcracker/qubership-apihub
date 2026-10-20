@@ -52,6 +52,10 @@ const POSTGRES_MAJOR = 16
 const DEFAULT_REGISTRY = 'ghcr.io/netcracker'
 const TARBALL = 'erd.tar.gz'
 const TAG = /^mig-[0-9a-f]{16}$/
+// The version of the key formula, hashed as its first line. Bump it with any change to what
+// `computeKey` hashes or to what `keyAt` feeds it, so two formulas never share a key. keyAt reads
+// this line from the erd.js at the ref and refuses a ref whose formula differs.
+const KEY_FORMAT = 'v2'
 const GC_MIN_AGE_MS = 30 * 24 * 60 * 60 * 1000
 // The branches whose renders gc never deletes: the site shows one of them (D16).
 const KEPT_BRANCHES = ['main', 'develop']
@@ -106,16 +110,18 @@ function generatorFiles(listing) {
   return files.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
 }
 
-// The store key: everything that decides what a render produces. The migrations tree hash changes
-// with any migration; the generator's blobs with any change to how it renders; the two versions
-// with the tools. First 16 hex characters of a sha256.
-function computeKey({ migrationsTree, generator, schemaspy, postgresMajor }) {
+// The store key: everything that decides what a render produces, all of it read at the ref. The
+// migrations tree hash changes with any migration; the generator's blobs with any change to how it
+// renders. The SchemaSpy version and the PostgreSQL major are not inputs of their own: they are
+// constants in the erd.js blob (and `postgres:16` in the erd.yml blob), so a bump changes a blob.
+// Nothing comes from the running script, which pages.yml takes from the default branch even for
+// main's commit. First 16 hex characters of a sha256.
+function computeKey({ migrationsTree, generator }) {
   if (!/^[0-9a-f]{40,64}$/.test(migrationsTree || '')) throw new Error(`not a tree hash: '${migrationsTree}'`)
   const lines = [
+    `format ${KEY_FORMAT}`,
     `migrations ${migrationsTree}`,
     ...[...generator].sort((a, b) => (a.path < b.path ? -1 : 1)).map((g) => `generator ${g.path} ${g.blob}`),
-    `schemaspy ${schemaspy}`,
-    `postgres ${postgresMajor}`,
   ]
   return crypto.createHash('sha256').update(lines.join('\n') + '\n').digest('hex').slice(0, 16)
 }
@@ -250,22 +256,38 @@ function migrationsAt(backend, ref) {
   return orderMigrations(git('ls-tree', '--name-only', ref, '--', dir).split('\n').filter(Boolean).map((p) => path.posix.basename(p)))
 }
 
-function keyAt(backend, ref) {
+// The key formula of an erd.js source: its KEY_FORMAT line, or v1 for the erd.js before it had one.
+function keyFormatOf(source) {
+  const m = String(source).match(/^const KEY_FORMAT = '([^']+)'\r?$/m)
+  return m ? m[1] : 'v1'
+}
+
+// The key of <backend> at <ref>, from the ref's bytes only. `g` runs git and returns stdout; tests
+// pass a fake. Throws with `noGenerator` when the ref has no erd.js, and with `otherFormat` when
+// its erd.js uses another key formula: only that erd.js can compute the key its erd.yml stored.
+function keyAt(backend, ref, g = git) {
   checkBackendName(backend)
   const dir = `backend/${backend}/resources/migrations`
   let migrationsTree
   try {
-    migrationsTree = git('rev-parse', '--verify', '--quiet', `${ref}:${dir}`).trim()
+    migrationsTree = g('rev-parse', '--verify', '--quiet', `${ref}:${dir}`).trim()
   } catch {
     throw new Error(`${dir} does not exist at ${ref}`)
   }
-  const generator = generatorFiles(git('ls-tree', ref, '--', 'tools/ci/', '.github/workflows/erd.yml'))
-  if (!generator.some((g) => g.path === 'tools/ci/erd.js')) {
+  const generator = generatorFiles(g('ls-tree', ref, '--', 'tools/ci/', '.github/workflows/erd.yml'))
+  const script = generator.find((f) => f.path === 'tools/ci/erd.js')
+  if (!script) {
     const err = new Error(`tools/ci/erd.js is not at ${ref}, so no ERD can have been rendered for it`)
     err.noGenerator = true
     throw err
   }
-  return computeKey({ migrationsTree, generator, schemaspy: SCHEMASPY_VERSION, postgresMajor: POSTGRES_MAJOR })
+  const format = keyFormatOf(g('cat-file', 'blob', script.blob))
+  if (format !== KEY_FORMAT) {
+    const err = new Error(`the erd.js at ${ref} computes keys with format ${format}, this one with ${KEY_FORMAT}`)
+    err.otherFormat = true
+    throw err
+  }
+  return computeKey({ migrationsTree, generator })
 }
 
 // ---- render -----------------------------------------------------------------------------------
@@ -520,7 +542,10 @@ function gc(dry) {
 
 // ---- main -------------------------------------------------------------------------------------
 
-module.exports = { detectBackends, orderMigrations, generatorFiles, computeKey, databaseName, renderIndex, formatDate, selectGc }
+module.exports = {
+  detectBackends, orderMigrations, generatorFiles, computeKey, keyFormatOf, keyAt, databaseName, renderIndex, formatDate,
+  selectGc, KEY_FORMAT,
+}
 
 const USAGE = 'usage: erd.js backends <ref> | key <backend> <ref> | render <backend> <out> | assemble <site-erd-dir> <ref> | gc [--dry-run]'
 
