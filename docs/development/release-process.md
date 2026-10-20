@@ -36,7 +36,7 @@ gh workflow run release-finish.yml --ref develop -f dry_run=false -f sprint=APIH
 |------|------------|---------|-------|
 | `RELEASE_BOT_SSH_KEY` | Actions secret: private half of deploy key `apihub-release-bot` | Every bot push | In use |
 | `GITHUB_TOKEN` | Token GitHub creates for each run | CI, `release-artifacts` | In use |
-| `PROJECT_READ_TOKEN` | Actions secret with `read:project`, for Project 9 | Product notes (sprint items) | Planned |
+| `PROJECT_READ_TOKEN` | Actions secret with `read:project`, for Project 9 | Product notes (sprint items) | In use |
 | `PUBLISH_CHARTS` | Repository variable, `true` to publish charts | Chart step of `release-artifacts` | Planned |
 
 The bots push with the deploy key, not with `GITHUB_TOKEN`, for two reasons:
@@ -48,8 +48,8 @@ The bots push with the deploy key, not with `GITHUB_TOKEN`, for two reasons:
 `release-start`, `release-sync`, and `release-finish` fail at once, with a message, when `RELEASE_BOT_SSH_KEY` is not
 set. A dry run of `release-finish` checks out without the key, so it cannot push anything.
 
-`PROJECT_READ_TOKEN` is not read by any workflow yet. The product notes need it once the generators of steps 4 and 5
-of the migration land.
+`release-artifacts` reads `PROJECT_READ_TOKEN` for the product notes. Without it, a real release stops before anything
+is published, and a dry run warns. `GITHUB_TOKEN` cannot read an organization project.
 
 The workflows rely on these repository settings. They are not checkable from code, so an admin keeps them:
 
@@ -266,7 +266,42 @@ nothing.
 Every step is idempotent. After a failure, re-run the failed jobs of the CI run on `main`. Steps skip what already
 exists.
 
-Release notes are minimal today; see [Limits and planned work](#limits-and-planned-work).
+See [Release notes](#release-notes) for what each GitHub Release says.
+
+## Release notes
+
+`tools/release/artifacts.js` writes the notes in the plan step of `release-artifacts`, with the generators in
+[`tools/release/notes/`](../../tools/release/notes). A dry run shows every note in the job summary.
+
+Module notes cover the commits since the component's previous tag that touch its directories:
+
+- Each commit maps to its pull request. A commit of this repository maps to the merged pull request it came from. An
+  imported commit maps through the `(Netcracker/<repo>#N)` reference at the end of its title to the pull request in
+  the old repository. A commit with neither is listed on its own.
+- A pull request's closing issues decide the section: issue type `Feature` or `Bug`, then a `feature` or `bug` label.
+  Without closing issues, the type of the title decides: `feat` or `fix`. Everything else goes to the tech section.
+- A commit with `!` or a `BREAKING CHANGE:` footer goes to **Breaking changes**, at the top, and nowhere else.
+- Dependency changes compare the `require` lines of `go.mod`, the `dependencies` and `peerDependencies` of
+  `package.json`, and the versions in `pom.xml` at the two tags. In-repo packages are listed separately, as the
+  in-repo dependencies released in the same run.
+
+Components with an image get the full layout: image, documentation, the agent's Helm chart, all sections, the
+dependency table, and the full changelog. Libraries and `commons-go` get a short one: the package, the sections that
+have entries, the updated in-repo dependencies, and the full changelog. A component released only because of a
+dependency says so in one line.
+
+Product notes list:
+
+- the images of the product at their current versions, linked to their module releases;
+- the Helm chart, documentation, and installation links at the product tag;
+- the breaking changes of the components released with it;
+- the work items of the sprint: Project 9 cards whose Sprint is the sprint of the product tag and whose Status is
+  Done or In Test, grouped by issue type;
+- every component's version next to its version in the previous product release, and the agent.
+
+The plan reports a problem, which stops a real run before anything is published, when `PROJECT_READ_TOKEN` is not
+set, when the product tag names no sprint, or when no card of the sprint is Done or In Test. The last case usually
+means a misspelled sprint name. A dry run reports the same cases as warnings.
 
 ## Version rules
 
@@ -339,12 +374,6 @@ Tags that are not plain `X.Y.Z` versions are ignored when Nx looks for a last ta
 
 - **No maintenance branches.** Once the next candidate is cut into `release`, a fix for the previous release can only
   ship with the next one. A separate maintenance branch is not planned.
-- **Minimal release notes.** Until steps 4 and 5 of the migration, the notes come from `tools/release/notes/minimal.js`.
-  Module notes list the artifacts, the commit titles since the previous tag grouped by type, and a compare link. Product
-  notes list the sprint, the components released with it, and a compare link. They have no pull request links, no
-  linked issues, and no Project 9 work items. Every note carries a comment that marks it as minimal.
-- **Planned: release notes generators (steps 4 and 5).** They will replace `minimal.js` and read Project 9 with
-  `PROJECT_READ_TOKEN`.
 - **Planned: charts (step 6).** The chart step of `release-artifacts` is an empty placeholder behind `PUBLISH_CHARTS`.
   Until step 6 lands, no chart is published and none is attached to the product release.
 - **One release at a time.** The workflows queue instead of cancelling, but do not dispatch another CI run on `main` or
