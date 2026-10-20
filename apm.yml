@@ -17,6 +17,7 @@ dependencies:
     - ./agent-packages/apihub-deployment-authoring
     - ./agent-packages/apihub-deployment-followup
     - ./agent-packages/apihub-add-go-service
+    - ./agent-packages/apihub-landing-refresh
     # backend/agent
     - ./backend/agent/agent-packages/agent-conventions
     - ./backend/agent/agent-packages/apihub-agent-developer

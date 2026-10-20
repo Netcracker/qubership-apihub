@@ -13,6 +13,7 @@ of this repository now.
 | Go services | `backend/` | `portal-backend` (API Registry), `api-linter-service`, `agents-backend`, `agent`, `test-service`, shared `commons-go`; one `go.work` and one `backend/.go-version` |
 | Java | `backend/java-task-consumer`, `backend/libraries-backend` | Maven build under Nx |
 | TypeScript | `frontend/` | `ui` (Portal and Agents SPAs), `build-task-consumer` (NestJS builder), and the libraries `api-processor`, `api-diff`, `api-unifier`, `api-doc-viewer`, `ddlapi`, `json-crawl`, and others; one pnpm workspace |
+| Sites | `sites/landing/` | Astro product landing, published at `/qubership-apihub/landing/`; see its `README.md` |
 | Tests | `tests/` | `postman-collections` (Newman E2E), `ui-tests` (Playwright) |
 | Deployment | `deploy/helm-templates/`, `deploy/docker-compose/` | Helm chart, local Kubernetes quickstart, Compose stacks |
 | Documentation | `docs/` | Installation, admin, configuration map, release process |
@@ -82,7 +83,7 @@ packages live next to the code they describe:
 
 | Location | Packages |
 |----------|----------|
-| `agent-packages/` | `apihub-deployment-authoring`, `apihub-deployment-followup`, `apihub-add-go-service` |
+| `agent-packages/` | `apihub-deployment-authoring`, `apihub-deployment-followup`, `apihub-add-go-service`, `apihub-landing-refresh` |
 | `backend/portal-backend/agent-packages/` | `apihub-backend-developer`, `apihub-backend-self-review`, `backend-conventions`, `advanced-verification` |
 | `backend/agent/agent-packages/` | `apihub-agent-developer`, `agent-conventions` |
 | `frontend/<library>/agent-packages/` | `api-diff-*`, `api-doc-viewer-*`, `next-data-model-*`, `api-processor-*`, `api-unifier-*`, `ddlapi-*`, `json-crawl-*` |

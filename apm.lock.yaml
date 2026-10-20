@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-10-20T15:34:50.575952+00:00'
+generated_at: '2026-10-20T18:47:38.800048+00:00'
 apm_version: 0.27.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -416,6 +416,24 @@ dependencies:
     .cursor/skills/apihub-deployment-followup/SKILL.md: sha256:bb5db3de0cfeff67c83ab8a35f9f229a88603aace307b408e6a7a382e33ebf27
   source: local
   local_path: ./agent-packages/apihub-deployment-followup
+- repo_url: _local/apihub-landing-refresh
+  name: apihub-landing-refresh
+  version: 0.1.0
+  package_type: apm_package
+  deployed_files:
+  - .claude/rules/apihub-landing-refresh.md
+  - .claude/skills/apihub-landing-refresh
+  - .claude/skills/apihub-landing-refresh/SKILL.md
+  - .cursor/rules/apihub-landing-refresh.mdc
+  - .cursor/skills/apihub-landing-refresh
+  - .cursor/skills/apihub-landing-refresh/SKILL.md
+  deployed_file_hashes:
+    .claude/rules/apihub-landing-refresh.md: sha256:ad2428617463404ff12a67d1d38530fbcc9e957d77c99369425f41db32556def
+    .claude/skills/apihub-landing-refresh/SKILL.md: sha256:0316e9df1a1bee8aeda2a8b27e8ecfbd80220e263a9ddbf2d962e15c5c15d501
+    .cursor/rules/apihub-landing-refresh.mdc: sha256:ce841f441b97a480fe66ac48c659e331611892c0713987ec6a644a6fd4432168
+    .cursor/skills/apihub-landing-refresh/SKILL.md: sha256:0316e9df1a1bee8aeda2a8b27e8ecfbd80220e263a9ddbf2d962e15c5c15d501
+  source: local
+  local_path: ./agent-packages/apihub-landing-refresh
 - repo_url: _local/apihub-ui-authoring
   name: apihub-ui-authoring
   version: 1.0.0
@@ -1078,6 +1096,15 @@ deployments:
   - netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
   active_owner: netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
   content_hash: sha256:ec7bf6eb48bab91936bba45bebceae11daeeeb066f3a90be018436e7a32cbe28
+- kind: project-relative
+  target: claude
+  value: .claude/rules/apihub-landing-refresh.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-landing-refresh
+  active_owner: ./agent-packages/apihub-landing-refresh
+  content_hash: sha256:ad2428617463404ff12a67d1d38530fbcc9e957d77c99369425f41db32556def
 - kind: project-relative
   target: claude
   value: .claude/rules/apihub-ui-authoring.md
@@ -1800,6 +1827,24 @@ deployments:
   content_hash: sha256:0a4914ca688a5cadfa0c8d046c1bcf620a4f78835ac3217b1e5c0fdeb31f65f2
 - kind: project-relative
   target: claude
+  value: .claude/skills/apihub-landing-refresh
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-landing-refresh
+  active_owner: ./agent-packages/apihub-landing-refresh
+  content_hash: null
+- kind: project-relative
+  target: claude
+  value: .claude/skills/apihub-landing-refresh/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-landing-refresh
+  active_owner: ./agent-packages/apihub-landing-refresh
+  content_hash: sha256:0316e9df1a1bee8aeda2a8b27e8ecfbd80220e263a9ddbf2d962e15c5c15d501
+- kind: project-relative
+  target: claude
   value: .claude/skills/ddlapi-authoring
   runtime: null
   scope: project
@@ -2338,6 +2383,15 @@ deployments:
   - netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
   active_owner: netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
   content_hash: sha256:bd14bac37fa4166679ffb43c9ada5d28a9268047d0195a8633fa4d61a85c81aa
+- kind: project-relative
+  target: cursor
+  value: .cursor/rules/apihub-landing-refresh.mdc
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-landing-refresh
+  active_owner: ./agent-packages/apihub-landing-refresh
+  content_hash: sha256:ce841f441b97a480fe66ac48c659e331611892c0713987ec6a644a6fd4432168
 - kind: project-relative
   target: cursor
   value: .cursor/rules/apihub-ui-authoring.mdc
@@ -3058,6 +3112,24 @@ deployments:
   - netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
   active_owner: netcracker/qubership-apihub-ci/agent-packages/apihub-go-self-review
   content_hash: sha256:0a4914ca688a5cadfa0c8d046c1bcf620a4f78835ac3217b1e5c0fdeb31f65f2
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-landing-refresh
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-landing-refresh
+  active_owner: ./agent-packages/apihub-landing-refresh
+  content_hash: null
+- kind: project-relative
+  target: cursor
+  value: .cursor/skills/apihub-landing-refresh/SKILL.md
+  runtime: null
+  scope: project
+  owners:
+  - ./agent-packages/apihub-landing-refresh
+  active_owner: ./agent-packages/apihub-landing-refresh
+  content_hash: sha256:0316e9df1a1bee8aeda2a8b27e8ecfbd80220e263a9ddbf2d962e15c5c15d501
 - kind: project-relative
   target: cursor
   value: .cursor/skills/ddlapi-authoring

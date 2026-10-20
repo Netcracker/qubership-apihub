@@ -1,0 +1,7 @@
+---
+description: Refresh the content of the APIHUB product landing.
+applyTo: "sites/landing/src/**,sites/landing/astro.config.mjs"
+---
+
+When you update the versions, release cards, stats, or outbound links of the landing under `sites/landing/`, apply
+the `apihub-landing-refresh` skill.
