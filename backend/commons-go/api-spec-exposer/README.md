@@ -252,7 +252,7 @@ Whenever non-REST/non-GraphQL files are present (Markdown, binary, or unknown ty
 
 - Path: `/v3/api-docs/apihub-swagger-config`
 - Handler: Returns JSON with **all** discovered specifications (REST, GraphQL, Markdown, and other types)
-- Format: Follows the [API Hub config format](../../../backend/agent/documentation/dev_docs/apihub-config.md)
+- Format: Follows the [APIHUB config format](../../../docs/user-guide/agent-discovery.md#apihub-config-format)
 
 This configuration endpoint provides a complete inventory of all API specifications and documentation files that have been exposed.
 

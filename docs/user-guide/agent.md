@@ -16,7 +16,7 @@ When the discovery process completed, you will see list of all services and thei
 
 You can open and view found API document by clicking on it.
 
-![Discovery services](img/discover_services.png)
+![Discovery services](../images/user-guide/discover_services.png)
 
 ## Snapshot Creation
 

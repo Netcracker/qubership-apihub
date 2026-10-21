@@ -27,20 +27,20 @@ APIHUB consists of two main components:
 
 Currently, Portal allows working with OpenAPI specification with versions 2.0 and 3.0, and GraphQL specifications and introspections of release October 2021.
 
-![Compare API operations](./docs/img/compare_operations.png)
+![Compare API operations](../../docs/images/user-guide/compare_operations.png)
 
-For more information about Portal, please see the [user guide](./docs/Portal%20User%20Guide.md).
+For more information about Portal, please see the [user guide](../../docs/user-guide/portal.md).
 
 **Agent** is web-based interface to work with a runtime agent. Runtime agent is an application that runs within the Kubernetes environment. It allows you to discover exposed API documentation endpoints from services running on Kubernetes. Additionally, Agent provides the ability to make snapshots of discovered API specifications, validate API changes and promote API to Portal.
 
-![Discover services in Agent](./docs/img/discover_services.png)
+![Discover services in Agent](../../docs/images/user-guide/discover_services.png)
 
-For more information about Agent, please see the [user guide](./docs/Agent%20User%20Guide.md).
+For more information about Agent, please see the [user guide](../../docs/user-guide/agent.md).
 
 ## Documentation
 
 - **Developers:** [Developer guides](./docs/dev/index.md)
-- **Portal users:** [Portal User Guide](./docs/Portal%20User%20Guide.md)
-- **Agent users:** [Agent User Guide](./docs/Agent%20User%20Guide.md)
+- **Portal users:** [Portal User Guide](../../docs/user-guide/portal.md)
+- **Agent users:** [Agent User Guide](../../docs/user-guide/agent.md)
 
 [Contributing](../../CONTRIBUTING.md)

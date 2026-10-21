@@ -172,8 +172,8 @@ describe('link rewriting', () => {
     assert.equal(url('../../../backend/agent/README.md'), `${GH}/blob/develop/backend/agent/README.md`);
     assert.equal(url('../../../backend/agent'), `${GH}/tree/develop/backend/agent`);
     assert.equal(
-      url('../../../frontend/ui/docs/Portal%20User%20Guide.md'),
-      `${GH}/blob/develop/frontend/ui/docs/Portal%20User%20Guide.md`,
+      url('../../../frontend/ui/docs/Some%20Guide.md'),
+      `${GH}/blob/develop/frontend/ui/docs/Some%20Guide.md`,
     );
     assert.equal(url('../../../nx.json'), `${GH}/blob/develop/nx.json`);
     assert.equal(url('/backend/agent/'), `${GH}/tree/develop/backend/agent`);

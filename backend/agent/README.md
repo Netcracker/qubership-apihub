@@ -14,7 +14,7 @@ Please refer to the [documentation](../../docs/README.md).
 
 ## API specification disovery process and contracts
 
-Please refer to [design document](documentation/discovery_algorithm.md)
+Please refer to [discovery guide](../../docs/user-guide/agent-discovery.md)
 
 ## Installation
 

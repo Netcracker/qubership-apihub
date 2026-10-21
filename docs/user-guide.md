@@ -48,8 +48,8 @@ UI sources:
 
 | Area | Canonical doc |
 |------|----------------|
-| Portal ergonomics | [Portal User Guide (GitHub)](../frontend/ui/docs/Portal%20User%20Guide.md) |
-| Agents workflows | [Agent User Guide (GitHub)](../frontend/ui/docs/Agent%20User%20Guide.md) |
+| Portal ergonomics | [Portal user guide](user-guide/portal.md) |
+| Agents workflows | [Agent user guide](user-guide/agent.md) |
 | Roles & PATs design items | Design item links from [Maintenance guide § Security](./maintenance-guide.md#security) |
 
 ---
