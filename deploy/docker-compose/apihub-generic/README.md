@@ -1,8 +1,11 @@
 # APIHUB docker-compose local deployment
 
-Follow this guide in order to run APIHUB on a local machine/bare-metal server using Docker (or compatible) container runtime
+Follow this guide to run APIHUB on a local machine or bare-metal server with Docker or a compatible container runtime.
 
-`docker-compose` file in this folder runs all qubership-apihub containers and their only mandatory startup dependency - PostgreSQL database
+The `docker-compose.yml` file in this folder runs all APIHUB containers and their only mandatory dependency, the
+PostgreSQL database. The [installation guide](../../../docs/installation-guide.md#docker-compose) covers ports, the
+JWT key, and the placeholder substitution, and the [configuration reference](../../../docs/configuration-reference.md)
+lists every setting. The Keycloak variant is in [`../with-keycloak`](../with-keycloak/README.md).
 
 ## Prerequisites
 
@@ -60,19 +63,20 @@ Execute `podman compose down`
 
 ## Run via single command
 
-Execute `generate_env_and_up_compose.sh` - it will initialize all require ENV VARs, print them to the output and start the Qubership-APIHUB application
+Run `sh generate_env_and_up_compose.sh` from this folder. It generates the required values, prints them, writes them
+into the `.env` and `config.yaml` files in place, and starts APIHUB. Run `git restore .` in this folder before you
+commit.
 
 ## Usage
 
-<http://localhost:8081/login> - Qubserhip-APIHUB UI URL
+<http://localhost:8081/login> - the APIHUB UI
 
 ## Startup with locally built images
 
-If you want to start APIHUB via compose with locally build docker image of any module you need to do the following:
-
-1. Build module repository (ex: qubership-apihub-backend) by executing its build.cmd/sh
-2. Change `image` URI in `docker-compose.yml` from `ghcr.io/netcracker/qubership-apihub-backend:latest` to `localhost/netcracker/qubership-apihub-backend:latest`
-3. Run `podman compose up` as usual
+To start the stack with an image you built from this repository, build the image, change its `image` URI in
+`docker-compose.yml` to the local tag (for example `localhost/qubership-apihub-backend:local`), and run
+`podman compose up`. The build commands for each module are in the
+[local run guide](../../../docs/development/local-run.md#compose-with-locally-built-images).
 
 ## How to make Postgres data be persistent
 
