@@ -1,6 +1,10 @@
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
-const { expectedBump, planRows, renderPlan } = require('./plan')
+const fs = require('node:fs')
+const os = require('node:os')
+const path = require('node:path')
+const { landingCardPath } = require('./landing-card')
+const { expectedBump, planRows, renderPlan, withLandingCard } = require('./plan')
 
 test('planRows marks the plan bumps as own changes and the other Nx bumps as dependencies', () => {
   const groups = {
@@ -75,4 +79,43 @@ test('renderPlan says when there is nothing to release', () => {
   assert.match(md, /\*\*Nothing to release\.\*\*/)
   assert.match(md, /^\*\*Product:\*\* stays at 2\.15\.0/m)
   assert.doesNotMatch(md, /\| Component \|/)
+})
+
+// withLandingCard against a scratch root that has the card of `withCard`, if any. Returns the
+// Markdown and the lines it printed.
+function runWithLandingCard(markdown, plannedProduct, withCard) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'plan-landing-'))
+  try {
+    if (withCard) {
+      const file = path.join(root, landingCardPath(withCard))
+      fs.mkdirSync(path.dirname(file), { recursive: true })
+      fs.writeFileSync(file, `---\nversion: "v${withCard}"\n---\n`)
+    }
+    const printed = []
+    const out = withLandingCard(markdown, plannedProduct, { root, write: (line) => printed.push(line) })
+    return { out, printed }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
+}
+
+test('withLandingCard warns and adds a summary line when the card of the next version is missing', () => {
+  const { out, printed } = runWithLandingCard('## Release plan (dry run)\n', product, null)
+  assert.equal(printed.length, 1)
+  assert.match(printed[0], /^::warning::The landing release card \S+\/v2-16-0\.md is missing for product version 2\.16\.0\./)
+  assert.match(printed[0], /\n$/)
+  assert.ok(out.startsWith('## Release plan (dry run)\n'))
+  assert.match(out, /^\*\*Warning:\*\* the landing release card `sites\/landing\/src\/content\/releases\/v2-16-0\.md` is missing/m)
+})
+
+test('withLandingCard changes nothing when the card exists', () => {
+  const { out, printed } = runWithLandingCard('plan\n', product, '2.16.0')
+  assert.equal(out, 'plan\n')
+  assert.deepEqual(printed, [])
+})
+
+test('withLandingCard checks no card when the product does not move', () => {
+  const { out, printed } = runWithLandingCard('plan\n', { ...product, next: null, bump: 'none', reasons: [] }, null)
+  assert.equal(out, 'plan\n')
+  assert.deepEqual(printed, [])
 })

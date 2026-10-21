@@ -6,11 +6,11 @@ site.
 ## What is here
 
 - [Team process](./process.md): work items, workflows, pull request review, and the release cadence of the team.
-- Architecture decision records (ADRs): decisions that shape several modules or the repository. Planned in `adr/`.
-- Project history: how APIHUB came to be. It is now in [`../apihub-history.md`](../apihub-history.md) and moves here
-  later.
-- The migration record: the final account of the move from separate repositories to this monorepo. Planned in
-  `monorepo-migration/`.
+- [Architecture decision records](./adr/README.md): decisions that shape several modules or the repository.
+- [Project history](./history.md): how APIHUB came to be.
+- [Monorepo migration record](./monorepo-migration/README.md): the final account of the move from separate
+  repositories to this monorepo, with the [plan](./monorepo-migration/plan.md) and the
+  [decisions](./monorepo-migration/decisions.md).
 
 ## Why it is not on the site
 

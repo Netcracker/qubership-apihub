@@ -7,7 +7,7 @@
 .github
 .qubership
 agent-packages
-documentation
+docs
 helm-templates
 dist
 static

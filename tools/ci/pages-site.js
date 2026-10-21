@@ -181,9 +181,10 @@ function docsPlaceholder({ repoUrl, commit }) {
 }
 
 // pages/erd/index.html: the legacy ERD's entry point. The 404 page redirects the other legacy
-// ERD paths; this one has a file, so it also works without JavaScript.
-function legacyErdStub() {
-  const target = '../../erd/portal-backend/'
+// ERD paths; this one has a file, so it also works without JavaScript. Without a portal-backend
+// render it points at the ERD index, so the link check of the site never sees a dead target.
+function legacyErdStub(hasPortalBackend = true) {
+  const target = hasPortalBackend ? '../../erd/portal-backend/' : '../../erd/'
   return `<!doctype html>
 <meta charset="utf-8">
 <meta name="robots" content="noindex">
@@ -191,7 +192,7 @@ function legacyErdStub() {
 <link rel="canonical" href="${target}">
 <script>location.replace(${JSON.stringify(target)} + location.search + location.hash)</script>
 <noscript><meta http-equiv="refresh" content="0; url=${target}"></noscript>
-<p>The ERD moved to <a href="${target}">erd/portal-backend/</a>.</p>
+<p>The ERD moved to <a href="${target}">${target.slice(6)}</a>.</p>
 `
 }
 
@@ -295,10 +296,9 @@ function main(argv) {
     fs.mkdirSync(path.join(site, 'docs'), { recursive: true })
     fs.writeFileSync(path.join(site, 'docs', 'index.html'), docsPlaceholder({ repoUrl, commit: opts.commit }))
   }
-  fs.mkdirSync(path.join(site, 'pages', 'erd'), { recursive: true })
-  fs.writeFileSync(path.join(site, 'pages', 'erd', 'index.html'), legacyErdStub())
-
   const erd = erdSection({ site, ref: opts.ref, commit: opts.commit, script: erdScript })
+  fs.mkdirSync(path.join(site, 'pages', 'erd'), { recursive: true })
+  fs.writeFileSync(path.join(site, 'pages', 'erd', 'index.html'), legacyErdStub(erd.rendered.includes('portal-backend')))
 
   const read = (f) => fs.readFileSync(path.join(indexDir, f), 'utf8')
   fs.writeFileSync(path.join(site, '404.html'), fillPlaceholders(read('404.html'), { STORYBOOK_404_TEXT: NOT_PUBLISHED_HTML }))

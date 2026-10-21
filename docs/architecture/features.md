@@ -168,7 +168,7 @@
 
 ### 4.4 UI Architecture
 
-- **Monorepo**: Portal + Agents + Shared library in npm workspaces with Lerna
+- **Monorepo**: Portal + Agents + Shared library in one pnpm workspace under Nx
 - **Technology**: React 18, TypeScript 5, MUI 5, Vite, @tanstack/react-query
 - **Web Components**: Shadow DOM isolation for reusable spec viewers
 - **Monaco Editor**: Code editing for API specs and request bodies
@@ -192,8 +192,8 @@
 - **AsyncAPI discovery**: AsyncAPI document URL probing
 - **Markdown discovery**: Markdown file URL probing
 - **JSON Schema discovery**: JSON Schema URL probing
-- **apihub-config**: Explicit spec declaration via service-level config (see agent
-  `documentation/dev_docs/apihub-config.md`)
+- **apihub-config**: Explicit spec declaration via service-level config (see
+  [the APIHUB config format](../user-guide/agent-discovery.md#apihub-config-format))
 
 ### 5.3 Agent Management
 

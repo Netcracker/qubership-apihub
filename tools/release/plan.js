@@ -103,20 +103,24 @@ async function collectPlan() {
   return { rows, unchanged, product }
 }
 
+/**
+ * When the product moves and its landing release card is missing, prints a `::warning::` line through
+ * `write` and appends the card's summary line to the plan. Returns the plan's Markdown.
+ */
+function withLandingCard(markdown, product, { root = process.cwd(), write = (line) => process.stdout.write(line) } = {}) {
+  if (!product.next) return markdown
+  const card = landingCardCheck(product.next, root)
+  if (card.exists) return markdown
+  write(`::warning::${card.warning}\n`)
+  return `${markdown}\n${card.summary}\n`
+}
+
 async function main(argv) {
   const option = (name) => (argv.includes(name) ? argv[argv.indexOf(name) + 1] : undefined)
   const outFile = option('--out')
   try {
     const plan = await collectPlan()
-    let markdown = renderPlan({ mode: option('--mode') ?? 'dry run', ...plan })
-    const card = plan.product.next ? landingCardCheck(plan.product.next) : null
-    if (card && !card.exists) {
-      markdown += `
-${card.summary}
-`
-      process.stdout.write(`::warning::${card.warning}
-`)
-    }
+    const markdown = withLandingCard(renderPlan({ mode: option('--mode') ?? 'dry run', ...plan }), plan.product)
     if (outFile) fs.writeFileSync(outFile, markdown)
     else if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, markdown)
     else process.stdout.write('\n' + markdown)
@@ -132,4 +136,4 @@ if (require.main === module) {
   })
 }
 
-module.exports = { expectedBump, planRows, renderPlan }
+module.exports = { expectedBump, planRows, renderPlan, withLandingCard }

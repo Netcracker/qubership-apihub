@@ -1,7 +1,7 @@
 # API change rules
 
 During comparison of API specifications, APIHUB
-([qubership-apihub-api-diff](https://github.com/Netcracker/qubership-apihub-api-diff)) classifies each change by
+([qubership-apihub-api-diff](../../../frontend/api-diff/README.md)) classifies each change by
 severity.
 
 ## Severity of changes

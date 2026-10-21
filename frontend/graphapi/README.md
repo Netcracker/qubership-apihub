@@ -1,8 +1,12 @@
-# qubership-apihub-graphapi
+# APIHUB GraphAPI
 
-This package provides utils to convert GraphQL schema into GraphAPI document and back.
+The GraphAPI library converts a GraphQL schema into a GraphAPI document and back. The GraphAPI specification is an
+alternative to GraphQL introspection that is based on JSON Schema: OpenAPI for GraphQL. The library is published as the
+npm package `@netcracker/qubership-apihub-graphapi` and has no package dependencies.
 
-The GraphAPI Specification is GraphQL introspection alternative, but based on JsonSchema - OpenAPI for GraphQL
+It is a foundation library: `api-unifier`, `api-diff`, `api-processor`, and `api-doc-viewer` consume GraphAPI
+documents. See the [processing libraries guide](../../docs/architecture/processing-libraries.md) and the
+[architecture overview](../../docs/architecture/overview.md).
 
 ## Modifications
 
@@ -22,11 +26,35 @@ Modified version of [udamir/graphapi](https://github.com/udamir/graphapi)
 - Typescript syntax support out of the box
 - No dependencies, can be used in nodejs or browser
 
-## Installation
+## Build, test, and lint
 
-```SH
-npm install @netcracker/qubership-apihub-graphapi --save
+The Nx project is `graphapi`. Run from the repository root:
+
+```bash
+pnpm exec nx run graphapi:build
+pnpm exec nx run graphapi:test
+pnpm exec nx run graphapi:lint:check
 ```
+
+See [Build and test](../../docs/development/build-and-test.md).
+
+## Run and debug locally
+
+A library has nothing to run: the tests are the feedback loop. Run one file from the library folder with
+`cd frontend/graphapi && pnpm exec jest <file> -t "<test name>"`. Breakpoints and the dependency build order:
+[Debugging: TypeScript library](../../docs/development/debugging.md#typescript-library). Setup:
+[Getting started](../../docs/development/getting-started.md).
+
+The library has a Storybook: `pnpm exec nx run graphapi:storybook`. CI publishes the
+[Storybooks](https://netcracker.github.io/qubership-apihub/storybook/) of every branch.
+
+## Configuration
+
+The library reads no configuration file.
+
+## API specifications
+
+GraphQL schemas and introspection results are the input; the GraphAPI document is the output.
 
 ## Usage
 
@@ -58,8 +86,7 @@ console.log(schema)
 
 ```
 
-## Contributing
+## Further reading
 
-When contributing, keep in mind that it is an objective of `graphapi` to have no package dependencies. This may change in the future, but for now, no-dependencies.
-
-Please run the unit tests before submitting your PR: `npm test`. Hopefully your PR includes additional unit tests to illustrate your change/modification!
+- [`api-doc-viewer`](../api-doc-viewer/README.md), which renders GraphAPI documents
+- Contributing: keep the library free of package dependencies, and add unit tests with every change.

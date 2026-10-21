@@ -105,10 +105,11 @@ Briefly state: **root cause**, **why the change fixes it**, and confirm you did 
 Deployment and E2E assets are in the same monorepo: `deploy/helm-templates/qubership-apihub/` (chart),
 `deploy/docker-compose/`, `docs/configuration-reference.md`, and `tests/postman-collections/`. After REST, config, or
 env changes, update them in the same change; the checklists are in
-[`docs/agent/related-repositories.md`](docs/agent/related-repositories.md) and the root skills
+[`backend/README.md`](../README.md#follow-up-in-other-modules) and the root skills
 `apihub-deployment-followup` and `postman-e2e-followup`.
 
 Include a short **Related modules** subsection in your completion summary.
+
 ## Repository layout (minimal orientation)
 
 | Area | Location |
@@ -158,7 +159,7 @@ Detailed rules apply via `.cursor/rules/` and `.claude/rules/` when matching fil
 
 - When adding a feature, update the appropriate **existing** doc — use `docs/README.md` to choose the right file.
 - Do **not** add minor feature notes to the repository root `README.md`.
-- Feature design docs belong under `docs/feature_design/` when warranted.
+- Feature design docs belong under `docs/design/<area>/` in the repository root when warranted.
 
 ## CI linters (super-linter / link checker)
 

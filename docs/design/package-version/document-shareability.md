@@ -270,4 +270,4 @@ Permissions
 
 ## Mockups
 
-<img alt="Mockups" src="../../images/design/document-shareability/1.svg" width="100%">
+<img alt="Mockups" src="../../images/design/document-shareability/1.webp" width="100%">

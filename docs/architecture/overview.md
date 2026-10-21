@@ -1,107 +1,56 @@
-# APIHUB System Architecture
+# APIHUB system architecture
 
-## 1. System Overview
+## 1. System overview
 
-APIHUB is an **API Management and Registry platform** — a centralized system for storing, analyzing, comparing, and
-documenting API specifications and contracts. It supports OpenAPI/Swagger, GraphQL, AsyncAPI, **DDLAPI** database-schema
-contracts, Markdown, Protobuf/gRPC stubs, and **MCP catalog contracts**. The backend also exposes a separate MCP server
-for API-catalog tools and AI integrations.
+APIHUB is an API management and registry platform. It stores, analyzes, compares, and documents API specifications and
+contracts in one catalog. It supports OpenAPI and Swagger, GraphQL, AsyncAPI, DDLAPI database-schema contracts,
+Markdown, Protobuf and gRPC stubs, and MCP catalog contracts. The backend also exposes a separate MCP server with
+API-catalog tools for AI integrations.
 
-The system is deployed on Kubernetes and consists of core services, 12 TypeScript libraries, CI/CD infrastructure, E2E
-test suites, and auxiliary repositories — **27+ repositories** in the current workspace.
+APIHUB runs on Kubernetes. The repository holds the source of every component, so each component below maps to a
+folder of the monorepo. The [landing site](https://netcracker.github.io/qubership-apihub/landing/) shows the same
+system from other angles:
 
-## 2. High-Level Architecture Diagram
+- [C4 diagrams](https://netcracker.github.io/qubership-apihub/landing/docs/architecture/c4/): context, containers, and
+  deployment.
+- [Flows](https://netcracker.github.io/qubership-apihub/landing/docs/architecture/flows/): publish, discovery, and AI
+  review.
+- [Capability map](https://netcracker.github.io/qubership-apihub/landing/docs/architecture/capability-map/): what each
+  component contributes to each capability.
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              APIHUB CLUSTER                                 │
-│                                                                             │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │                     qubership-apihub-ui (nginx)                     │    │
-│  │  ┌──────────┐  ┌──────────┐   Reverse Proxy:                      │    │
-│  │  │ Portal   │  │ Agents   │   /api/* → backend                    │    │
-│  │  │  SPA     │  │  SPA     │   /api-linter/* → linter-service      │    │
-│  │  │ (React)  │  │ (React)  │   /agents-backend/* → agents-backend  │    │
-│  │  └──────────┘  └──────────┘                                        │    │
-│  └────────────────────────────────┬───────────────────────────────────┘    │
-│                                   │                                         │
-│  ┌────────────────────────────────▼───────────────────────────────────┐    │
-│  │                  qubership-apihub-backend (Go)                      │    │
-│  │  REST API · Auth (SAML/OIDC/LDAP) · RBAC · MCP Server · AI Chat  │    │
-│  │  Build Orchestration · Cleanup Jobs · Package/Version Management   │    │
-│  └──────┬────────────────────────────────────────────┬────────────────┘    │
-│         │ Build tasks (poll)                          │ Extensions          │
-│  ┌──────▼──────────────────────┐    ┌────────────────▼──────────────┐     │
-│  │ qubership-apihub-build-     │    │  qubership-api-linter-service │     │
-│  │ task-consumer (NestJS)      │    │  (Go)                         │     │
-│  │                             │    │  Spectral + AI/OpenAI linting │     │
-│  │  Uses: api-processor,       │    │  Olric pub-sub for events     │     │
-│  │  api-diff, api-unifier      │    └───────────────────────────────┘     │
-│  └─────────────────────────────┘                                          │
-│                                     ┌───────────────────────────────┐     │
-│                                     │ qubership-apihub-agents-      │     │
-│                                     │ backend (Go)                  │     │
-│                                     │ Agent management, snapshots,  │     │
-│                                     │ namespace security            │     │
-│                                     └──────────────┬────────────────┘     │
-│                                                    │                       │
-│  ┌─────────────────┐                               │                       │
-│  │  PostgreSQL 14+  │  Shared (separate DBs per    │                       │
-│  │                  │  service)                     │                       │
-│  └─────────────────┘                               │                       │
-│  ┌─────────────────┐                               │                       │
-│  │  S3 / MinIO     │  Optional cold storage        │                       │
-│  └─────────────────┘                               │                       │
-│  ┌─────────────────┐                               │                       │
-│  │  Olric          │  Distributed cache + pub/sub  │                       │
-│  └─────────────────┘                               │                       │
-└─────────────────────────────────────────────────────┼───────────────────────┘
-                                                      │
-                    ┌─────────────────────────────────▼───────────────────┐
-                    │          REMOTE KUBERNETES CLUSTERS                  │
-                    │                                                      │
-                    │  ┌───────────────────────────────────┐              │
-                    │  │  qubership-apihub-agent (Go)       │              │
-                    │  │  K8s service discovery             │              │
-                    │  │  Pluggable runners per API type    │              │
-                    │  │  REST/GraphQL/AsyncAPI/Markdown/JSON │              │
-                    │  └───────────────────────────────────┘              │
-                    └─────────────────────────────────────────────────────┘
-```
+## 2. Containers
 
-## 3. Microservice Architecture
+![APIHUB containers in four tiers](../images/architecture/container-tiers.svg)
 
-### 3.1 Core Services
+The Portal UI is the single entry point. Its nginx proxy routes `/api/*` to the API Registry, `/api-linter/*` to the
+API Linter service, and `/agents-backend/*` to the Agents backend. Workers poll the API Registry for build tasks, and
+the registry stores their results in PostgreSQL.
 
-| Service | Language | Repository | Port | Purpose |
-|---------|----------|-----------|------|---------|
-| **Backend** | Go 1.26 | `qubership-apihub-backend` | 8080 | Central micro-monolith: REST API, auth, RBAC, build orchestration, MCP server, AI chat, cleanup jobs |
-| **UI** | TypeScript/React + nginx | `qubership-apihub-ui` | 8080 | Two SPAs (Portal + Agents) served via nginx reverse proxy |
-| **Build Task Consumer** | TypeScript/NestJS | `qubership-apihub-build-task-consumer` | 3000 | Stateless worker that processes API specs (parse, diff, changelog) |
+### 2.1 Layers
 
-### 3.2 Extension Services
+| Layer | Module | Language | Port | Role |
+|-------|--------|----------|------|------|
+| **Portal UI** | [`frontend/ui`](../../frontend/ui/) | TypeScript, React, nginx | 8080 | Two SPAs (Portal and Agents) behind an nginx reverse proxy: the entry point for users and operators. |
+| **API Registry** | [`backend/portal-backend`](../../backend/portal-backend/) | Go | 8080 | Central micro-monolith: REST API, authentication, RBAC, packages and versions, build orchestration, MCP server, AI chat, cleanup jobs. |
+| **Builder** | [`frontend/build-task-consumer`](../../frontend/build-task-consumer/) | TypeScript, NestJS | 3000 | Stateless workers that run the TypeScript processing stack: normalize, diff, changelog, export. |
+| **Java task consumer** | [`backend/java-task-consumer`](../../backend/java-task-consumer/) | Java | none | Stateless workers that take the Java build tasks (jar-to-jar API diff and dependency-upgrade impact analysis) that `backend/libraries-backend` queues. |
+| **Extension: API Linter** | [`backend/api-linter-service`](../../backend/api-linter-service/) | Go | 8080 | Lints API specifications with Spectral and AI engines; optional version quality scoring after a lint run. |
+| **Extension: Agents backend** | [`backend/agents-backend`](../../backend/agents-backend/) | Go | 8080 | Manages agent instances, snapshots, and namespace security. |
+| **Agent** | [`backend/agent`](../../backend/agent/) | Go | 8080 | Runs in a customer cluster, discovers APIs through pluggable runners, and reports them to the Agents backend. |
 
-| Service | Language | Repository | Port | Purpose |
-|---------|----------|-----------|------|---------|
-| **API Linter Service** | Go 1.26 | `qubership-api-linter-service` | 8080 | Lints API specs via Spectral and AI/OpenAI engines; optional **version quality scoring** after lint completion |
-| **Agents Backend** | Go 1.26 | `qubership-apihub-agents-backend` | 8080 | Manages agent instances, snapshots, namespace security |
+The shared infrastructure is PostgreSQL (separate databases per service), optional S3 or MinIO cold storage, and Olric
+for the distributed cache and publish-subscribe events.
 
-### 3.3 Separately Deployed
+## 3. Data flow
 
-| Service | Language | Repository | Port | Purpose |
-|---------|----------|-----------|------|---------|
-| **Agent** | Go 1.26 | `qubership-apihub-agent` | 8080 | Discovers API specs in K8s clusters via pluggable runners |
-
-## 4. Data Flow
-
-### 4.1 Publish Flow (User uploads API spec)
+### 3.1 Publish Flow (User uploads API spec)
 
 ```text
 User → UI → Backend (POST /api/v2/packages/{id}/publish)
                 ↓
         Backend creates build task in DB
                 ↓
-        Build-Task-Consumer polls (POST /api/v2/builders/{builderId}/tasks)
+        Builder polls (POST /api/v2/builders/{builderId}/tasks)
                 ↓
         Consumer receives ZIP (config + source files)
                 ↓
@@ -120,10 +69,10 @@ User → UI → Backend (POST /api/v2/packages/{id}/publish)
                 ↓
         Backend publishes "version-published" event via Olric DTopic
                 ↓
-        Linter Service receives event → fetches docs → runs Spectral/AI lint → stores results
+        API Linter receives event → fetches docs → runs Spectral/AI lint → stores results
 ```
 
-### 4.2 Agent Discovery Flow
+### 3.2 Agent Discovery Flow
 
 ```text
 Agent (in remote K8s cluster):
@@ -140,7 +89,7 @@ Agent (in remote K8s cluster):
   6. User can create "snapshot" → Agents Backend packages specs → publishes to Backend
 ```
 
-### 4.3 View/Compare Flow (User views API in UI)
+### 3.3 View/Compare Flow (User views API in UI)
 
 ```text
 User → UI → Backend (GET /api/v2/packages/{id}/versions/{v}/{apiType}/operations)
@@ -156,73 +105,22 @@ User → UI → Backend (GET /api/v2/packages/{id}/versions/{v}/{apiType}/operat
           - JsonSchemaViewer / GraphQLOperationViewer for schema rendering
 ```
 
-## 5. TypeScript Library Stack (API Processing Pipeline)
+## 4. TypeScript library stack
 
-The processing pipeline is a layered stack of TypeScript libraries:
+The processing pipeline behind the builder and the UI is a layered stack of 13 TypeScript libraries in
+[`frontend/`](../../frontend/README.md). `json-crawl` is the foundation. `api-unifier` normalizes specifications and
+defines the `SpecType` union (`openapi-3.0`, `openapi-3.1`, `json-schema-04/06/07`, `asyncapi-3`, `graphapi`,
+`ddlapi-1.0`). `api-diff` compares two normalized specifications and classifies each change. `api-processor`
+orchestrates builds through `PackageVersionBuilder`, which registers one `ApiBuilder` per API type (REST, GraphQL,
+AsyncAPI, DDL, MCP, text, unknown). `api-doc-viewer`, `apispec-view`, `rest-playground`, and `class-view` render the
+results.
 
-```text
-Layer 0 (Foundation):
-  json-crawl ─── Zero-dependency JSON tree traversal engine
-                 Provides: crawl, syncCrawl, clone, transform, equal
-                 Used by: ALL other TS libraries
+[Processing libraries](./processing-libraries.md) has the layer diagram, the dependency graph, and a catalog of every
+library.
 
-Layer 1 (Format Conversion):
-  graphapi ────── GraphQL ↔ GraphAPI JSON format bidirectional conversion
-  http-spec ───── OpenAPI/Postman/AsyncAPI → Stoplight IHttpService AST
+## 5. Supported API types
 
-Layer 2 (Normalization):
-  api-unifier ─── Normalizes API specs (resolve $ref, merge allOf, unify defaults, hash)
-                  Defines the CRITICAL SpecType union:
-                    'openapi-3.0' | 'openapi-3.1' | 'json-schema-04/06/07' |
-                    'asyncapi-3' | 'graphapi' | 'ddlapi-1.0'
-                  Contains resolveSpec() for auto-detection (AsyncAPI 2.x inputs are handled on the path to AsyncAPI 3 rules where applicable)
-
-Layer 3 (Analysis):
-  api-diff ────── Structural diff between two API specs
-                  Produces classified changes: breaking | non-breaking | risky | annotation | deprecated
-                  Contains COMPARE_ENGINES_MAP: SpecType → CompareEngine (AsyncAPI 3 compare rules under `src/asyncapi/`)
-  api-visitor ─── Visitor pattern for structured OpenAPI traversal
-
-Layer 4 (UI Data Model):
-  api-data-model ── Converts normalized specs → IModelTree for UI rendering
-                    Supports JSON Schema trees + GraphApi trees + diff trees
-
-Layer 5 (Orchestration):
-  api-processor ── Main orchestrator (PackageVersionBuilder)
-                   Registers ApiBuilder instances per API type:
-                     restApiBuilder, graphqlApiBuilder, asyncApiBuilder, ddlBuilder, mcpBuilder, textApiBuilder, unknownApiBuilder
-                   Implements build strategies: build, changelog, export, document-group (including shareability-aware export)
-
-Layer 6 (UI Rendering):
-  api-doc-viewer ── React components: JsonSchemaViewer, GraphQLOperationViewer + diff variants
-  apispec-view ──── Web Components: <apispec-view>, <operation-view>, <diff-operation-view>
-  rest-playground ─ Web Components: <rest-playground>, <rest-examples>
-  class-view ────── Web Component: <class-view-component> (UML diagrams via D3/ELK)
-```
-
-### Library Dependency Graph
-
-```text
-json-crawl (zero deps)
-  ├── api-unifier (+ object-hash, fast-equals, flatted)
-  │     ├── api-diff (+ fast-equals)
-  │     │     ├── api-data-model (+ graphapi)
-  │     │     └── api-processor (+ graphapi, swagger2openapi, ajv, jszip)
-  │     └── api-visitor
-  └── (used by all above)
-
-graphapi (zero APIHUB deps; peer: graphql)
-  └── used by api-data-model, api-diff, api-processor
-
-http-spec (zero APIHUB deps; uses @stoplight/*)
-  └── used by apispec-view, rest-playground
-
-class-view (zero APIHUB deps; uses D3, ELK)
-```
-
-## 6. Supported API Types Matrix
-
-| API Type | Backend | Build Consumer | Agent Discovery | UI | Unifier | Diff | Data Model | Doc Viewer | Linter |
+| API Type | Backend | Build Consumer | Agent Discovery | UI | Unifier | Diff | Model trees | Doc Viewer | Linter |
 |----------|:-------:|:--------------:|:---------------:|:--:|:-------:|:----:|:----------:|:----------:|:------:|
 | OpenAPI 3.0/3.1 | ✅ `rest` | ✅ `Rest` | ✅ REST runner | ✅ | ✅ | ✅ | ✅ (JSON Schema) | ✅ | ✅ Spectral+AI |
 | Swagger 2.0 | ✅ (via conversion) | ✅ (→ OAS3) | ✅ | ✅ | (→ OAS3) | (→ OAS3) | ✅ | ✅ | ✅ Spectral+AI |
@@ -236,7 +134,7 @@ class-view (zero APIHUB deps; uses D3, ELK)
 > MCP catalog contracts are distinct from the backend's MCP server. The server exposes APIHUB catalog tools to MCP
 > clients; it is not a catalog document type.
 
-## 7. Authentication & Authorization
+## 6. Authentication and authorization
 
 ### Authentication Methods
 
@@ -255,38 +153,41 @@ class-view (zero APIHUB deps; uses D3, ELK)
 - **Custom roles**: Configurable role definitions with granular permissions
 - **API Key scopes**: Per-key permission grants
 
-## 8. Deployment Architecture
+## 7. Deployment architecture
 
-### Kubernetes (Production)
+### Kubernetes (production)
 
-- Helm chart in `qubership-apihub` repository
-- All services deployed as Kubernetes Deployments with Services
-- nginx-based UI serves as the single ingress point
-- Health checks: `/ready`, `/live` endpoints on each service
-- Resource requirements: 2-11 CPU, 3-9 Gi RAM (production)
-- Prometheus + Grafana dashboards included
+- The Helm chart lives in [`deploy/helm-templates`](../../deploy/helm-templates/README.md).
+- Every service runs as a Kubernetes Deployment with a Service.
+- The nginx-based UI is the single ingress point.
+- Each service exposes `/ready` and `/live` health endpoints.
+- Production needs 2-11 CPU and 3-9 Gi RAM.
+- Prometheus and Grafana dashboards are included.
 
-### Docker Compose (Development)
+### Docker Compose (development)
 
-- `docker-compose.yml` in `qubership-apihub/docker-compose/apihub-generic/`
-- Includes all services + PostgreSQL
-- Keycloak variant available for SSO testing
+- The stacks live in [`deploy/docker-compose`](../../deploy/docker-compose/README.md). `apihub-generic` runs all
+  services and PostgreSQL.
+- `with-keycloak` adds a Keycloak server for SSO testing.
 
 ### Local Kubernetes quickstart (optional analytics)
 
-- `qubership-apihub/helm-templates/local-k8s-quickstart/` may include an **Apache Superset** subchart for BI/analytics
-  alongside the stack (see chart `README` in that folder)
+- [`deploy/helm-templates/local-k8s-quickstart`](../../deploy/helm-templates/local-k8s-quickstart/README.md) can add an
+  Apache Superset subchart for BI and analytics next to the stack.
 
-### Infrastructure Dependencies
+For install steps see the [installation guide](../installation-guide.md); for every setting see the
+[configuration reference](../configuration-reference.md).
+
+### Infrastructure dependencies
 
 | Component | Required | Purpose |
 |-----------|----------|---------|
-| PostgreSQL 14+ | **Yes** | Primary data store (separate DBs per service) |
+| PostgreSQL 14+ | **Yes** | Primary data store (separate databases per service) |
 | S3 / MinIO | Optional | Cold storage for build results |
-| Olric | Built-in | Distributed cache + pub/sub (LAN discovery in K8s) |
+| Olric | Built-in | Distributed cache and publish-subscribe (LAN discovery in Kubernetes) |
 | OpenAI API | Optional | AI-powered linting and chat |
 
-## 9. Extension Points for API and Contract Types
+## 8. Extension points for API and contract types
 
 An API type represented by `SpecType` is normalized and usually diffed as a specification. **DDLAPI is such a type**:
 its canonical value is `ddlapi-1.0`. MCP catalog data is deliberately different: it is a processor **contract type**
@@ -309,60 +210,60 @@ integration), rather than adding MCP as a `SpecType`.
 
 - Define the canonical source or intermediate format when required (for example, `graphapi` for GraphQL).
 
-### Layer 2: Normalization (`api-unifier`)
+### Layer 2: Normalization (`frontend/api-unifier`)
 
 1. Add the new value to `SpecType` in `src/spec-type.ts`
 2. Add detection in `resolveSpec()` function
 3. Create a dedicated normalization-rules module
 4. Register in `RULES` map
 
-### Layer 3: Diffing (`api-diff`)
+### Layer 3: Diffing (`frontend/api-diff`)
 
 1. Create a comparison module with rules, classification, and descriptions
 2. Implement `CompareEngine` function
 3. Register in `COMPARE_ENGINES_MAP`
 
-### Layer 3b: Visitor (`api-visitor`)
+### Layer 3b: Visitor (`frontend/api-visitor`)
 
 1. Create an API-type walker and visitor
-2. Define CrawlRules for MCP structure
+2. Define `CrawlRules` for the structure of the new type
 
-### Layer 4: Data Model (`api-data-model` / `api-doc-viewer`)
+### Layer 4: Model trees and viewers (`frontend/api-doc-viewer`)
 
-1. Create a type-specific module with node kinds, types, and tree builders
+1. Create a type-specific module in `next-data-model` with node kinds, types, and tree builders
 2. Add normal and diff tree builders
 3. Create React viewer components
 
-### Layer 5: Processing (`api-processor`)
+### Layer 5: Processing (`frontend/api-processor`)
 
 1. Create `src/apitypes/<type>/` with an `ApiBuilder`
 2. Implement parser, document builder, operations builder, dumper
 3. Register in `PackageVersionBuilder` constructor
 4. Update `BuilderType` and `OperationsApiType` unions
 
-### Layer 6: Backend (`apihub-backend`)
+### Layer 6: API Registry (`backend/portal-backend`)
 
 1. Add the operation API type constant in `view/CommonOperation.go`
 2. Update switch statements in `entity/OperationEntity.go`
 3. Update search entity mappings
 4. Update build result processing
 
-### Layer 7: UI (`apihub-ui`)
+### Layer 7: UI (`frontend/ui`)
 
 1. Add the UI API-type constant in `shared/src/entities/api-types.ts`
-2. Create MCP operation viewer component
-3. Update `DocSpecView.tsx` for MCP rendering
+2. Create an operation viewer component for the new type
+3. Update `DocSpecView.tsx` to render it
 
-### Layer 8: Agent Discovery (`apihub-agent`)
+### Layer 8: Agent discovery (`backend/agent`)
 
 1. Create `api_type/<type>/discovery.go` implementing `DiscoveryRunner`
 2. Register runner in `document_discovery.go`
 
-### Layer 9: Linting (`api-linter-service`)
+### Layer 9: Linting (`backend/api-linter-service`)
 
 1. Add the document/API type to the linter enum and configuration
-2. Create/configure linter rules for MCP
+2. Create or configure linter rules for the new type
 
-### Layer 10: Build Consumer (`build-task-consumer`)
+### Layer 10: Builder (`frontend/build-task-consumer`)
 
 1. Add the operation API type to the build-consumer schema where applicable

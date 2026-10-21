@@ -6,7 +6,8 @@ Each item is one Markdown file in the folder of its area. Files change together 
 
 ## Areas
 
-Each area has a folder. The links below open the folder; the lists after the ID scheme name every item.
+Each area has a folder. On the docs site the links below open the first item of each area; the lists after the ID
+scheme name every item.
 
 - [General features](./general/): Navigation, workspaces, groups, packages, favorites, shared packages, activity
   history, search.
@@ -26,6 +27,8 @@ Each area has a folder. The links below open the folder; the lists after the ID 
 - [VS Code extension](./vscode-extension/): Publishing to the Portal from VS Code.
 - [Agent](./agent/): Behavior of the APIHUB agent: version validation and cloud services.
 - [Contract types](./contract-types/): Design pages for contract types, such as AsyncAPI.
+- [AI assistant](./ai-assistant/): The AI chat in the Portal: feature design, frontend contract, IDS document
+  generation.
 
 ## ID scheme
 
@@ -52,6 +55,7 @@ The next free number is computed from every ID that appears in a title or in a b
 | VS Code extension | VCE | `vscode-extension/` | 1 | `DI-Portal-VCE-002` |
 | Agent | - | `agent/` | 2 | `DI-Agent-003` |
 | Contract types | - | `contract-types/` | 3 | no IDs |
+| AI assistant | - | `ai-assistant/` | 3 | no IDs |
 
 `PKGVER-021` is reserved: the "AI Recommendations Tab" item has an ID but its page is not in the repository yet.
 `GS-008` is reserved for the planned "Search Scope for GraphQL Operations" item, which has no page yet. Items can be
@@ -190,6 +194,7 @@ Use `-` after `Related Design Items:` and `Related API:` when there is nothing t
 - Semi-breaking severity of changes ([COMP-001](./comparison/di-portal-comp-001-semi-breaking-severity-of-changes.md))
 - Severity of Changes ([COMP-002](./comparison/di-portal-comp-002-severity-of-changes.md))
 - API Changes ([COMP-003](./comparison/di-portal-comp-003-api-changes.md))
+- Semi-breaking reclassification: sequence diagram ([source](./comparison/semi-breaking-reclassification-sequence.md))
 
 ### Dashboard version
 
@@ -220,3 +225,9 @@ Use `-` after `Related Design Items:` and `Related API:` when there is nothing t
 - [AsyncAPI 3.0 - DocView](./contract-types/asyncapi-doc-view.md)
 - [AsyncAPI Publishing](./contract-types/asyncapi-publishing.md)
 - [AsyncAPI](./contract-types/asyncapi.md)
+
+### AI assistant
+
+- [AI Chat Assistant: Feature Design](./ai-assistant/feature-ai-chat-design.md)
+- [AI Chat: Frontend Contract](./ai-assistant/ai-chat-frontend-contract.md)
+- [IDS Generation: Feature Design](./ai-assistant/feature-ids-generation-design.md)

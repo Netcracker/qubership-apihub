@@ -37,6 +37,7 @@ const SECTIONS = [
 
 // The order inside a folder, by file or folder name; the others follow by name.
 const ORDER = {
+  'user-guide': ['portal', 'agent', 'agent-discovery'],
   architecture: ['overview', 'features', 'processing-libraries', 'build-process', 'database'],
   development: [
     'getting-started',
@@ -87,6 +88,7 @@ const LABELS = {
   'design/custom-openapi-extensions': 'Custom OpenAPI extensions',
   'design/vscode-extension': 'VS Code extension',
   'design/contract-types': 'Contract types',
+  'design/ai-assistant': 'AI assistant',
 };
 
 const LINKS = [

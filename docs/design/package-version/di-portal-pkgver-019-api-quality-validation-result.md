@@ -199,4 +199,4 @@ severity.
 
 ## Mockups
 
-![API Quality Tab (1)](../../images/design/di-portal-pkgver-019-api-quality-validation-result/1.svg)
+![API Quality Tab (1)](../../images/design/di-portal-pkgver-019-api-quality-validation-result/1.webp)

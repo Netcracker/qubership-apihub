@@ -1,7 +1,10 @@
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
+const fs = require('node:fs')
+const os = require('node:os')
 const path = require('node:path')
 const {
+  assemble,
   slug,
   bySlug,
   planSite,
@@ -9,6 +12,7 @@ const {
   storybookHome,
   NOT_PUBLISHED_HTML,
   SITE_LIMIT,
+  withRunner,
 } = require('./storybook-site')
 const { route } = require('../../sites/index/404-map.js')
 
@@ -121,7 +125,59 @@ test('the 404 script routes a missing Storybook to the text and storybookHome()'
   }
 })
 
-test('assemble no longer writes a root 404.html', () => {
-  const src = require('node:fs').readFileSync(path.join(__dirname, 'storybook-site.js'), 'utf8')
-  assert.doesNotMatch(src, /'404\.html'/)
+// A store with one live branch, develop, and one Storybook build of `ui`; no other component has a
+// package. Answers the git, oras, and tar calls of assemble() and fails on any other.
+function stubStore() {
+  const content = 'out-0123456789abcdef'
+  const fail = (message) => Object.assign(new Error(message), { stderr: message })
+  return (cmd, args) => {
+    const call = `${cmd} ${args.join(' ')}`
+    if (call === 'git ls-remote --heads origin') return `${'a'.repeat(40)}\trefs/heads/develop\n`
+    if (call === 'git rev-parse --is-shallow-repository') return 'false\n'
+    if (cmd === 'git' && args[0] === 'fetch') return ''
+    if (cmd === 'git' && args[0] === 'for-each-ref') return '1700000000 refs/storybook-dates/develop\n'
+    if (call === 'oras repo tags ghcr.io/o/storybook-ui') return `branch-develop\n${content}\n`
+    if (cmd === 'oras' && args[0] === 'repo' && args[1] === 'tags') throw fail('name unknown: repository not found')
+    if (call === 'oras manifest fetch ghcr.io/o/storybook-ui:branch-develop') {
+      return JSON.stringify({ annotations: { 'org.netcracker.apihub.storybook.content': content } })
+    }
+    if (call.startsWith(`oras pull ghcr.io/o/storybook-ui:${content} -o `)) {
+      fs.mkdirSync(args[3], { recursive: true })
+      fs.writeFileSync(path.join(args[3], 'storybook.tar.gz'), 'stub')
+      return ''
+    }
+    if (cmd === 'tar' && args[0] === 'xzf') {
+      for (const f of ['index.html', 'iframe.html', 'index.json']) fs.writeFileSync(path.join(args[3], f), `ui ${f}`)
+      return ''
+    }
+    throw fail(`unexpected call: ${call}`)
+  }
+}
+
+test('assemble() lays out storybook/ only, with no root 404.html', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'storybook-site-'))
+  const env = { OWNER: process.env.OWNER, GITHUB_STEP_SUMMARY: process.env.GITHUB_STEP_SUMMARY }
+  const log = console.log
+  try {
+    process.env.OWNER = 'o'
+    process.env.GITHUB_STEP_SUMMARY = ''
+    console.log = () => {}
+    const site = path.join(root, 'site')
+    withRunner(stubStore(), () => assemble(site, 900 * MIB))
+    // Pages serves only the root 404.html, which pages-site.js writes.
+    assert.deepEqual(fs.readdirSync(site), ['storybook'])
+    assert.equal(fs.readFileSync(path.join(site, 'storybook', 'ui', 'develop', 'iframe.html'), 'utf8'), 'ui iframe.html')
+    assert.ok(fs.existsSync(path.join(site, 'storybook', 'ui', 'index.html')))
+    assert.ok(fs.existsSync(path.join(site, 'storybook', 'index.html')))
+    assert.ok(!fs.existsSync(path.join(site, 'storybook', '404.html')))
+    // The pull cache next to the site is gone.
+    assert.deepEqual(fs.readdirSync(root), ['site'])
+  } finally {
+    console.log = log
+    for (const [k, v] of Object.entries(env)) {
+      if (v === undefined) delete process.env[k]
+      else process.env[k] = v
+    }
+    fs.rmSync(root, { recursive: true, force: true })
+  }
 })

@@ -14,8 +14,8 @@ This page ties together **what you edit in GitOps** versus **what the processes 
    via values/overlays).
 
 2. **Component source code** is the **authority on runtime behaviour**: which knobs are read from **`config.yaml`**,
-   which from **environment**, and exact variable names. The umbrella Markdown is a map; disagreeing forks should be
-   settled against code on `develop`.
+   which from **environment**, and exact variable names. This page is a map; where it disagrees with the code, the code
+   wins.
 
 3. **`deploy/docker-compose/` stacks** reproduce the **same split** for local rigs; they are **downstream helpers**, not
    replacements for Helm when you argue about cluster installs.
@@ -26,7 +26,7 @@ Annotated **YAML schemas** used by file-backed binaries live only where the load
 |-----------|--------------------------|-------------------|
 | API Registry | [`config.template.yaml`](../backend/portal-backend/config.template.yaml) (module `backend/portal-backend/`) | `APIHUB_CONFIG_FOLDER` → `config.yaml`; see backend service bootstrap. |
 | Kubernetes Agent | [`config.template.yaml`](../backend/agent/config.template.yaml) | Agent image (file-based like backend). |
-| **API Linter** | [`config.template.yaml`](https://github.com/Netcracker/qubership-api-linter-service/blob/develop/qubership-api-linter-service/config.template.yaml) | **`LINTER_CONFIG_FOLDER`** → `config.yaml`. Spectral rulesets stay **data** managed through the linter API/database, separate from this boot config. |
+| **API Linter** | [`config.template.yaml`](../backend/api-linter-service/config.template.yaml) | **`LINTER_CONFIG_FOLDER`** → `config.yaml`. Spectral rulesets stay **data** managed through the linter API/database, separate from this boot config. |
 | **Agents-backend** | [`config.template.yaml`](../backend/agents-backend/config.template.yaml) | **`AGENTS_BACKEND_CONFIG_FOLDER`** → `config.yaml`. |
 | Builders / UI | *(none)* | Env only (builder env / UI nginx wrapper). |
 
@@ -123,7 +123,9 @@ MinIO/S3 endpoint CA stays in **`s3Storage.crt`** inside the backend config Secr
 ## 3. Compose — which file to edit
 
 Repository path: **[`deploy/docker-compose/apihub-generic/`](../deploy/docker-compose/apihub-generic/)** (standalone)
-and **`deploy/docker-compose/with-keycloak/`** (Keycloak SSO example).
+and **`deploy/docker-compose/with-keycloak/`** (Keycloak SSO example). The stack in
+**[`deploy/docker-compose/backend-debug/`](../deploy/docker-compose/backend-debug/)**
+runs everything except the backend, so that you can debug the backend from an IDE.
 
 | File | Service | Role |
 |------|---------|------|
@@ -159,12 +161,23 @@ These must stay **aligned across files/env**:
    **`deploy.resources.limits.memory`**. When you raise memory limits, update **`goMemLimit`** (Helm) or
    **`GOMEMLIMIT`** (Compose) in the same change.
 
+### MinIO (S3 storage)
+
+The backend can keep relatively large binary files, such as build results, in MinIO or any other S3-compatible
+storage. Enable it with **`s3Storage.enabled`** in the backend `config.yaml`, and set **`s3Storage.url`**,
+**`s3Storage.username`**, **`s3Storage.password`**, and **`s3Storage.bucketName`**. Set **`s3Storage.crt`** when the
+endpoint uses a private CA. **`s3Storage.storeOnlyBuildResult`** limits the storage to build results. The
+[`config.template.yaml`](../backend/portal-backend/config.template.yaml) describes every option.
+
+The backend reaches MinIO through the S3 API. You can also browse the buckets in the MinIO web console. Take the
+console credentials from the backend's Kubernetes secret if you have access to the cluster.
+
 ---
 
 ## 5. Where to drill deeper by topic
 
 | Topic | Prefer |
 |-------|--------|
-| Auth / SAML / OIDC model | Backend [security_model.md](../backend/portal-backend/docs/security/security_model.md), **`security.externalIdentityProviders`** in **`config.template.yaml`** |
-| Data retention / cleanup jobs | Backend **`cleanup`** section + [data_maintenance](../backend/portal-backend/docs/data_maintenance.md) |
-| End user workflows | Portal & Agents Markdown guides ([Portal User Guide](../frontend/ui/docs/Portal%20User%20Guide.md), [Agent User Guide](../frontend/ui/docs/Agent%20User%20Guide.md)) + [design items](design/) |
+| Auth / SAML / OIDC model | Backend [security-model.md](administration/security-model.md), **`security.externalIdentityProviders`** in **`config.template.yaml`** |
+| Data retention / cleanup jobs | Backend **`cleanup`** section + [data-maintenance](administration/data-maintenance.md) |
+| End user workflows | Portal & Agents Markdown guides ([Portal User Guide](user-guide/portal.md), [Agent User Guide](user-guide/agent.md)) + [design items](design/) |

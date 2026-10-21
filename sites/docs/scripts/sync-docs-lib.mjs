@@ -5,8 +5,17 @@ import { slug as githubSlug } from 'github-slugger';
 import { posix } from 'node:path';
 
 export const REPO_URL = 'https://github.com/Netcracker/qubership-apihub';
-// GitHub links (edit links, files outside docs/, docs/internal/) point at this branch.
-export const GITHUB_REF = 'develop';
+// Edit links always open develop, where changes land. The other GitHub links (files outside docs/,
+// docs/internal/) show the ref the site is built from: DOCS_GITHUB_REF, which pages.yml sets to the
+// site's ref (main or develop, or SITE_REF), and develop when it is unset.
+export const EDIT_REF = 'develop';
+export const DEFAULT_GITHUB_REF = 'develop';
+
+// The ref of the GitHub links from the environment of the build.
+export function githubRefFrom(env) {
+  const ref = (env.DOCS_GITHUB_REF || '').trim();
+  return ref || DEFAULT_GITHUB_REF;
+}
 export const BASE = '/qubership-apihub/docs';
 
 // Folders of docs/ that are not published (D18): docs/internal/ is for the team, docs/pages/ was the
@@ -90,12 +99,12 @@ function encodePath(repoRel) {
 }
 
 export function editUrl(docsRel) {
-  return `${REPO_URL}/edit/${GITHUB_REF}/docs/${encodePath(docsRel)}`;
+  return `${REPO_URL}/edit/${EDIT_REF}/docs/${encodePath(docsRel)}`;
 }
 
-export function githubUrl(repoRel, isDir) {
-  if (repoRel === '') return `${REPO_URL}/tree/${GITHUB_REF}`;
-  return `${REPO_URL}/${isDir ? 'tree' : 'blob'}/${GITHUB_REF}/${encodePath(repoRel)}`;
+export function githubUrl(repoRel, isDir, ref = DEFAULT_GITHUB_REF) {
+  if (repoRel === '') return `${REPO_URL}/tree/${encodePath(ref)}`;
+  return `${REPO_URL}/${isDir ? 'tree' : 'blob'}/${encodePath(ref)}/${encodePath(repoRel)}`;
 }
 
 // The public/ path of an asset: files of docs/ keep their path relative to docs/ (so
@@ -121,8 +130,15 @@ function safeDecode(text) {
 // fromRepoRel: the repository path of the page that holds the link (docs/admin-guide.md).
 // tree.isDir(repoRel): whether the path is a folder in the repository.
 // tree.hasPage(docsRel): whether docs/<docsRel> is a page source that the sync publishes.
+// tree.pagesUnder(docsRel): the page sources in the folder docs/<docsRel>/ and its subfolders.
+// tree.ref: the branch, tag, or commit that GitHub links show (DEFAULT_GITHUB_REF when unset).
 //
 // Returns { url } and, for an asset, { asset: { from, to } } (repository path, public/ path).
+//
+// A published folder of docs/ links to its README.md or index.md. A folder without one, such as a
+// design area, is a sidebar group with no page of its own, so the link opens the group's first page:
+// a file of the folder itself before its subfolders, each by name. Only a folder without any page
+// links to GitHub.
 export function rewriteUrl(raw, fromRepoRel, tree) {
   const url = raw.trim();
   if (url === '' || url.startsWith('#') || url.startsWith('//') || /^[a-z][a-z0-9+.-]*:/i.test(url)) {
@@ -159,9 +175,22 @@ export function rewriteUrl(raw, fromRepoRel, tree) {
         .map((name) => (docsRel === '' ? name : `${docsRel}/${name}`))
         .find((candidate) => tree.hasPage(candidate));
       if (index) return { url: pageUrl(slugOf(index)) + hash };
+      const first = firstPageOf(docsRel, tree.pagesUnder(docsRel));
+      // The anchor belonged to the folder, not to the page that stands in for it.
+      if (first) return { url: pageUrl(slugOf(first)) };
     }
   }
-  return { url: githubUrl(repoRel, looksLikeDir) + query + hash };
+  return { url: githubUrl(repoRel, looksLikeDir, tree.ref) + query + hash };
+}
+
+// The page that stands in for a folder without an index page: a page of the folder itself before
+// the pages of its subfolders, each group by slug. Undefined when the folder has no page.
+function firstPageOf(docsRel, sources) {
+  const prefix = docsRel === '' ? '' : `${docsRel}/`;
+  const depth = (rel) => rel.slice(prefix.length).split('/').length;
+  return [...sources]
+    .filter((rel) => rel.startsWith(prefix))
+    .sort((a, b) => depth(a) - depth(b) || slugOf(a).localeCompare(slugOf(b)))[0];
 }
 
 // Reads a link destination that starts at text[start] (just after "(" of "](").
@@ -193,9 +222,9 @@ function destinationRange(text, start) {
   return { from: i, to: j, inner: text.slice(i, j) };
 }
 
-// Rewrites the inline link and image destinations, the reference definitions, and the href and src
-// attributes of HTML a, img, and source tags in one stretch of Markdown that holds no code.
-function rewriteSegment(text, rewrite) {
+// Rewrites the inline link and image destinations and the reference definitions in one stretch of
+// Markdown that holds no code.
+function rewriteMarkdownSegment(text, rewrite) {
   let out = '';
   let last = 0;
   const marker = /\]\(/g;
@@ -208,12 +237,17 @@ function rewriteSegment(text, rewrite) {
     marker.lastIndex = range.to;
   }
   out += text.slice(last);
-  out = out.replace(
+  return out.replace(
     /^(\s{0,3}\[[^\]]+\]:[ \t]*)(<[^>]*>|\S+)/,
     (all, head, dest) => head + rewrite(dest.startsWith('<') ? dest.slice(1, -1) : dest),
   );
-  return out.replace(
-    /(<(?:a|img|source)\b[^>]*?\s(?:href|src|srcset)\s*=\s*)(["'])(.*?)\2/gi,
+}
+
+// Rewrites the href, src, and srcset attributes of HTML a, img, and source tags. A tag may span
+// lines (`<img alt="..."` on one line, `src="..." />` on the next), so this runs on a whole block.
+function rewriteHtml(text, rewrite) {
+  return text.replace(
+    /(<(?:a|img|source)\b[^>]*?\s(?:href|src|srcset)\s*=\s*)(["'])(.*?)\2/gis,
     (all, head, quote, value) => head + quote + rewrite(value) + quote,
   );
 }
@@ -247,7 +281,8 @@ function* blocks(lines) {
 }
 
 // Applies rewrite(destination) to every link outside code: fenced blocks and inline code spans
-// keep their text.
+// keep their text. Markdown links are rewritten line by line; HTML tags over the whole block, with
+// the code spans held out by a placeholder that holds no quote and no ">".
 export function rewriteLinks(markdown, rewrite) {
   const lines = markdown.split('\n');
   const out = [];
@@ -256,11 +291,15 @@ export function rewriteLinks(markdown, rewrite) {
       out.push(...block.lines);
       continue;
     }
-    for (const line of block.lines) {
+    const spans = [];
+    const held = block.lines.map((line) =>
       // Odd parts are inline code spans (`code`, ``code``).
-      const parts = line.split(/(`+[^`]*?`+)/);
-      out.push(parts.map((part, i) => (i % 2 ? part : rewriteSegment(part, rewrite))).join(''));
-    }
+      line
+        .split(/(`+[^`]*?`+)/)
+        .map((part, i) => (i % 2 ? `\u0000${spans.push(part) - 1}\u0000` : rewriteMarkdownSegment(part, rewrite)))
+        .join(''),
+    );
+    out.push(rewriteHtml(held.join('\n'), rewrite).replace(/\u0000(\d+)\u0000/g, (all, n) => spans[Number(n)]));
   }
   return out.join('\n');
 }
