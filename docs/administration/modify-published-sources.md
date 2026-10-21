@@ -103,5 +103,5 @@ Check migration status:
 GET /api/internal/migrate/operations/{migrationId}
 ```
 
-Refer to the [Operations migration analysis guide](ops_migration_analysis_guide.md) for detailed instructions on analyzing migration results, interpreting error categories, and handling suspicious builds.
+Refer to the [Operations migration analysis guide](operations-migration-analysis.md) for detailed instructions on analyzing migration results, interpreting error categories, and handling suspicious builds.
 All builds should be successfully completed.x

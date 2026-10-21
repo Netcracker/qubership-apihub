@@ -97,7 +97,7 @@ Rules worth knowing:
   error status is applied, the part is dropped with a WARN log line, and `hasNotifications` stays `false`. A builder
   does not retry a 400, so rejecting the request would lose the status itself.
 * The messages live as long as the failed build's sources: the builds cleanup job removes them after 30 days and
-  clears the flag (see [Data maintenance](data_maintenance.md#builds-cleanup)).
+  clears the flag (see [Data maintenance](../administration/data-maintenance.md#builds-cleanup)).
 
 ## build sequences
 

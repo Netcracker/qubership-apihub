@@ -3,7 +3,7 @@
 This doc is for operation migration analysis.  
 See (TODO: link to "operations migration" doc) for more details.
 
-Migration analysis procedure is required to validate the changes made in `qubership-apihub-api-processor` library ([`frontend/api-processor`](../../../frontend/api-processor/)).
+Migration analysis procedure is required to validate the changes made in `qubership-apihub-api-processor` library ([`frontend/api-processor`](../../frontend/api-processor/)).
 
 ## Retrieve and store the results
 

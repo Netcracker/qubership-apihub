@@ -1,7 +1,7 @@
 # Qubership APIHUB — administrator guide
 
 Audience: **platform owners and SRE/DevOps** wiring APIHUB into an environment. Portal end users should start with the
-[User guide](./user-guide.md) and the [Portal User Guide upstream](../frontend/ui/docs/Portal%20User%20Guide.md).
+[User guide](./user-guide.md) and the [Portal user guide](user-guide/portal.md).
 
 ---
 
@@ -80,7 +80,7 @@ Scripts under **`deploy/docker-compose/apihub-generic/`**:
 
 | Task | Guidance |
 |------|----------|
-| IdP onboarding | SAML metadata / OIDC client credentials live under **`externalIdentityProviders`**. Detailed flows: [**security_model.md**](../backend/portal-backend/docs/security/security_model.md). Keycloak Compose recipe: **`deploy/docker-compose/with-keycloak/`**. |
+| IdP onboarding | SAML metadata / OIDC client credentials live under **`externalIdentityProviders`**. Detailed flows: [**security-model.md**](administration/security-model.md). Keycloak Compose recipe: **`deploy/docker-compose/with-keycloak/`**. |
 | Rotate JWT signing key | Plan user re-login sessions; coordinate with SSO session lifetime. Replace **`jwt.privateKey`**, bounce backend pods/deployments. |
 | Rotate system token | Change backend **`accessToken`**, the builder **`APIHUB_API_KEY`**, and linter / agents-backend **`technicalParameters.apihub.accessToken`** concurrently; regenerate the Helm config Secrets (`build-task-consumer`, linter, agents-backend). |
 | Playground proxy hardening | Keep **`security.insecureProxy`** / **`allowedHostsForProxy`** tight; never expose unsafe proxy settings on untrusted networks. |

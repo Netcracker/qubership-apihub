@@ -52,12 +52,12 @@ reduce drift.
 
 Backend schedules (revisions/comparisons/soft-delete/unreferenced/builds) are declared in **`config.yaml`**
 **`cleanup`** block (see **`config.template.yaml`**). Behaviour + operational interpretation:
-**[`data_maintenance.md`](../backend/portal-backend/docs/data_maintenance.md)**.
+**[`data-maintenance.md`](administration/data-maintenance.md)**.
 
 ### Schema/internal migration analysis
 
 When migrating stored specs between APIHUB versions, follow **[migration analysis
-procedure](../backend/portal-backend/docs/ops_migration_analysis_guide.md)** to read job logs responsibly.
+procedure](administration/operations-migration-analysis.md)** to read job logs responsibly.
 
 ---
 
@@ -66,7 +66,7 @@ procedure](../backend/portal-backend/docs/ops_migration_analysis_guide.md)** to 
 ### OIDC / SAML integration
 
 Detailed protocol behaviours:
-**[`security/security_model.md`](../backend/portal-backend/docs/security/security_model.md)**.
+**[`security-model.md`](administration/security-model.md)**.
 
 ### Access tokens lifecycle
 

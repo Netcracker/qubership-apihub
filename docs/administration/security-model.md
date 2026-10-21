@@ -75,7 +75,7 @@ Library <https://github.com/shaj13/go-guardian> is used on the backend to issue 
 
 ### SSO via SAML
 
-![SSO auth flow](./sso_saml_flow.png)
+![SSO auth flow](../images/administration/sso_saml_flow.png)
 
 **Notes**:
 
@@ -85,7 +85,7 @@ Library <https://github.com/shaj13/go-guardian> is used on the backend to issue 
 
 ### SSO via OIDC
 
-![SSO auth flow](./sso_oidc_flow.png)
+![SSO auth flow](../images/administration/sso_oidc_flow.png)
 
 **Notes**:
 
@@ -200,20 +200,20 @@ Built-in roles:
 It's possible to create a new custom role with any set of permissions(but read permission is mandatory).
 
 Example:  
-![create role](create_role.png)
+![create role](../images/administration/create_role.png)
 
 It's possible to edit or delete roles other than "Admin" and "Viewer":
 
-![edit and delete controls](edit_and_delete_controls.png)
+![edit and delete controls](../images/administration/edit_and_delete_controls.png)
 
-![edit role](edit_role.png)
+![edit role](../images/administration/edit_role.png)
 
-![delete role](delete_role.png)
+![delete role](../images/administration/delete_role.png)
 
 ### Permissions configuration
 
 Default permissions configuration:
-![default permissions](roles.png)
+![default permissions](../images/administration/roles.png)
 
 The roles configuration provides flexibility to create required roles with required set of permissions.
 
@@ -233,16 +233,16 @@ Package tree contains the following hierarchy:
 In workspace "g1" user "x_APIHUB" have no role assigned, so default role "Viewer" is used.  
 "x_APIHUB" is added to the "top group" as editor.
 
-![inheritance example 1](inheritance_example_1.png)
+![inheritance example 1](../images/administration/inheritance_example_1.png)
 
 The user access is inherited in the "bottom group" and "package 1":
 
-![inheritance example 2](inheritance_example_2.png)
-![inheritance example 3](inheritance_example_3.png)
+![inheritance example 2](../images/administration/inheritance_example_2.png)
+![inheritance example 3](../images/administration/inheritance_example_3.png)
 
 Add role "Owner" for the specific package:
 
-![inheritance example 4](inheritance_example_4.png)
+![inheritance example 4](../images/administration/inheritance_example_4.png)
 
 ### Roles hierarchy
 
@@ -250,14 +250,14 @@ The roles have an hierarchy which is used in access management.
 User may not assign a role higher than his own. (It's not used in default hierarchy)
 
 Default roles Hierarchy:
-![roles hierarchy](roles_hierarchy.png)
+![roles hierarchy](../images/administration/roles_hierarchy.png)
 
 #### Example
 
 - Create a role "Gatekeeper" with permission to manage user access only. Move it to the top of hierarchy.
 - Add permission to manage roles to role "Editor".
 
-![roles hierarchy example](roles_hierarchy_example.png)
+![roles hierarchy example](../images/administration/roles_hierarchy_example.png)
 
 In this case only "Admin" can add users with "Gatekeeper" role.  
 "Gatekeeper" user is able to set to users any roles other than "Admin".  
@@ -281,7 +281,7 @@ System have built-in role "none" which have no permissions at all.
 So if the workspace/group/package/dashboard need to be private - the default role should be "none"
 
 In UI it's managed by a "Private" checkbox:  
-![alt text](private_checkbox.png)
+![alt text](../images/administration/private_checkbox.png)
 
 In this case any user which have no granted roles for the entity, will not be able to see/retrieve it. It's managed on the API level.
 

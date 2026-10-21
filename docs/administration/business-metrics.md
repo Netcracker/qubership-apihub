@@ -85,7 +85,7 @@ Authoritative constant definitions remain in `metrics/BusinessMetrics.go`.
 
 ## Administrative API
 
-- Endpoint: `GET /api/v2/businessMetrics` — see [`docs/api/Admin_API_internal.yaml`](api/Admin_API_internal.yaml), operation `getBusinessMetrics`.
+- Endpoint: `GET /api/v2/businessMetrics` — see [`docs/api/Admin_API_internal.yaml`](../../backend/portal-backend/docs/api/Admin_API_internal.yaml), operation `getBusinessMetrics`.
 - Restricted to **system administrators** (others receive `Forbidden`).
 - Query parameters: `parentPackageId`, `hierarchyLevel` (depth for grouping package identifiers), `format` — `json` (default) or `xlsx` for Excel export.
 
