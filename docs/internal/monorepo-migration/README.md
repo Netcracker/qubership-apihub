@@ -11,7 +11,7 @@ The durable architectural decisions that came out of the migration are also writ
 
 ## What the migration was
 
-Before the migration, APIHUB lived in about 25 repositories: the umbrella repository (`qubership-apihub`, with the Helm
+Before the migration, APIHUB lived in 27 repositories: the umbrella repository (`qubership-apihub`, with the Helm
 chart, the Compose files, and the wiki), the Go and Java services, the UI, the builder, 13 TypeScript libraries, two
 test suites, a Docker image for Jest, the product landing, and three wikis. Each repository had its own CI, release
 flow, and documentation.
