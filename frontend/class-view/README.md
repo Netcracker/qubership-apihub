@@ -546,7 +546,7 @@ function ClassDiagram({ data, onSelectionChange }) {
 export default ClassDiagram;
 ```
 
-For more examples, check out the [Storybook](https://netcracker.github.io/qubership-apihub-class-view/main/).
+For more examples, check out the [Storybook](https://netcracker.github.io/qubership-apihub/storybook/class-view/).
 
 ## Available Scripts
 
@@ -561,4 +561,4 @@ The project provides several npm scripts for development, building, and testing:
 
 ## Contributing
 
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests to us.
+Please read [CONTRIBUTING.md](../../CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests to us.

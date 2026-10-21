@@ -27,7 +27,7 @@ This document provides a complete technical specification for generating Playwri
 | Step                                     | ER                                                                                                                                                                                          |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Navigate to the Package Version page. |                                                                                                                                                                                             |
-| 2. Click on the "API Quality" tab.       | 1. The "API Quality" tab is active.<br>2. The Document Selector is visible with the default document selected.<br>3. The Issue List table is visible.<br>4. The Document Viewer is visible. |
+| 2. Click on the "API Quality" tab.       | 1. The "API Quality" tab is active. 2. The Document Selector is visible with the default document selected. 3. The Issue List table is visible. 4. The Document Viewer is visible. |
 
 #### **P-AQ-TAB-UI-2-M Verify direct URL navigation shows placeholder when linter is disabled**
 
@@ -59,7 +59,7 @@ This document provides a complete technical specification for generating Playwri
 | Step                                    | ER                                                                                                                                                                                                                                |
 | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Navigate to the API Quality tab.     |                                                                                                                                                                                                                                   |
-| 2. Open the Document Selector dropdown. | 1. List contains all validated OAS documents.<br>2. Each document item displays the correct API Type icon.<br>3. Each document item displays the correct document name.<br>4. The list **DOES NOT** contain the GraphQL document. |
+| 2. Open the Document Selector dropdown. | 1. List contains all validated OAS documents. 2. Each document item displays the correct API Type icon. 3. Each document item displays the correct document name. 4. The list **DOES NOT** contain the GraphQL document. |
 
 #### **P-AQ-TAB-DOC-2 Verify Document Selector Search**
 
@@ -83,7 +83,7 @@ This document provides a complete technical specification for generating Playwri
 | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Navigate to the API Quality tab.         |                                                                                                                                                                                                    |
 | 2. Verify Doc A is selected by default.     |                                                                                                                                                                                                    |
-| 3. Open Document Selector and select Doc B. | 1. Document Selector shows Doc B.<br>2. Issue List updates to show issues for Doc B.<br>3. Document Viewer updates to show content of Doc B.<br>4. Ruleset link updates to show ruleset for Doc B. |
+| 3. Open Document Selector and select Doc B. | 1. Document Selector shows Doc B. 2. Issue List updates to show issues for Doc B. 3. Document Viewer updates to show content of Doc B. 4. Ruleset link updates to show ruleset for Doc B. |
 
 ### **Test Suite: Ruleset and Dialog Interactions**
 
@@ -95,7 +95,7 @@ This document provides a complete technical specification for generating Playwri
 | Step                                | ER                                                                                                                                                           |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1. Navigate to the API Quality tab. |                                                                                                                                                              |
-| 2. Click on the Ruleset link.       | 1. Ruleset Info Dialog opens.<br>2. Dialog title matches the ruleset name.<br>3. Ruleset filename is displayed.<br>4. API Type and Status chips are visible. |
+| 2. Click on the Ruleset link.       | 1. Ruleset Info Dialog opens. 2. Dialog title matches the ruleset name. 3. Ruleset filename is displayed. 4. API Type and Status chips are visible. |
 
 #### **P-AQ-TAB-RULE-2 Verify Ruleset Dialog Download**
 
@@ -130,7 +130,7 @@ This document provides a complete technical specification for generating Playwri
 | Step                                | ER                                                                                    |
 | ----------------------------------- | ------------------------------------------------------------------------------------- |
 | 1. Navigate to the API Quality tab. |                                                                                       |
-| 2. Inspect the Issue List table.    | 1. Table is not empty.<br>2. First row displays a severity icon and an issue message. |
+| 2. Inspect the Issue List table.    | 1. Table is not empty. 2. First row displays a severity icon and an issue message. |
 
 #### **P-AQ-TAB-CONTENT-2 Verify Format Toggler switches between YAML and JSON**
 
@@ -141,8 +141,8 @@ This document provides a complete technical specification for generating Playwri
 | ----------------------------------- | ---------------------------------------------------------------------- |
 | 1. Navigate to the API Quality tab. |                                                                        |
 | 2. Verify default format is YAML.   |                                                                        |
-| 3. Click "JSON" in the toggler.     | 1. Verify Editor content is JSON.<br>2. Active toggler button updates. |
-| 4. Click "YAML" in the toggler.     | 1. Verify Editor content is YAML.<br>2. Active toggler button updates. |
+| 3. Click "JSON" in the toggler.     | 1. Verify Editor content is JSON. 2. Active toggler button updates. |
+| 4. Click "YAML" in the toggler.     | 1. Verify Editor content is YAML. 2. Active toggler button updates. |
 
 #### **P-AQ-TAB-CONTENT-3-YAML Verify Validation Issues Sorting in YAML**
 
@@ -153,7 +153,7 @@ This document provides a complete technical specification for generating Playwri
 | Step                                | ER                                                                                                                                                                                    |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Navigate to the API Quality tab. |                                                                                                                                                                                       |
-| 2. Inspect the Issue List table.    | 1. Issues are sorted by severity order: **Error -> Warning -> Info -> Hint**.<br>2. Within the same severity, issues are sorted by document position (line/column) from start to end. |
+| 2. Inspect the Issue List table.    | 1. Issues are sorted by severity order: **Error -> Warning -> Info -> Hint**. 2. Within the same severity, issues are sorted by document position (line/column) from start to end. |
 
 #### **P-AQ-TAB-CONTENT-3-JSON Verify Validation Issues Sorting in JSON**
 
@@ -166,7 +166,7 @@ This document provides a complete technical specification for generating Playwri
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Navigate to the API Quality tab. |                                                                                                                                                                                       |
 | 2. Switch to JSON format.           |                                                                                                                                                                                       |
-| 3. Inspect the Issue List table.    | 1. Issues are sorted by severity order: **Error -> Warning -> Info -> Hint**.<br>2. Within the same severity, issues are sorted by document position (line/column) from start to end. |
+| 3. Inspect the Issue List table.    | 1. Issues are sorted by severity order: **Error -> Warning -> Info -> Hint**. 2. Within the same severity, issues are sorted by document position (line/column) from start to end. |
 
 #### **P-AQ-TAB-CONTENT-4-YAML Verify Issue Navigation highlights selected line in YAML**
 
@@ -207,8 +207,8 @@ This document provides a complete technical specification for generating Playwri
 | 1. Navigate to the API Quality tab.                               |                                                                                                   |
 | 2. Ensure YAML format is selected.                                |                                                                                                   |
 | 3. Locate an issue marker (squiggly line) in the Document Viewer. |                                                                                                   |
-| 4. Hover over the issue marker text for each issue.               | 1. Problem Tooltip appears.<br>2. Tooltip contains the issue message.                             |
-|                                                                   | 3. Tooltip displays Linter version.<br>4. Tooltip displays Rule name (matches rule from ruleset). |
+| 4. Hover over the issue marker text for each issue.               | 1. Problem Tooltip appears. 2. Tooltip contains the issue message.                             |
+|                                                                   | 3. Tooltip displays Linter version. 4. Tooltip displays Rule name (matches rule from ruleset). |
 |                                                                   | 5. For Error/Warning/Info: Tooltip displays "View Problem" button.                                |
 |                                                                   | 6. For Hint: Tooltip does NOT display "View Problem" button (hints are informational only).       |
 |                                                                   | 7. For Hint: Tooltip appears on whitespace before text (not directly on the marked text).         |
@@ -226,8 +226,8 @@ This document provides a complete technical specification for generating Playwri
 | 1. Navigate to the API Quality tab.                               |                                                                                                   |
 | 2. Switch to JSON format.                                         |                                                                                                   |
 | 3. Locate an issue marker (squiggly line) in the Document Viewer. |                                                                                                   |
-| 4. Hover over the issue marker text for each issue.               | 1. Problem Tooltip appears.<br>2. Tooltip contains the issue message.                             |
-|                                                                   | 3. Tooltip displays Linter version.<br>4. Tooltip displays Rule name (matches rule from ruleset). |
+| 4. Hover over the issue marker text for each issue.               | 1. Problem Tooltip appears. 2. Tooltip contains the issue message.                             |
+|                                                                   | 3. Tooltip displays Linter version. 4. Tooltip displays Rule name (matches rule from ruleset). |
 |                                                                   | 5. For Error/Warning/Info: Tooltip displays "View Problem" button.                                |
 |                                                                   | 6. For Hint: Tooltip does NOT display "View Problem" button (hints are informational only).       |
 |                                                                   | 7. For Hint: Tooltip appears on whitespace before text (not directly on the marked text).         |
@@ -243,7 +243,7 @@ This document provides a complete technical specification for generating Playwri
 | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Navigate to the API Quality tab.                                                |                                                                                                                                                                                                                                                                                                |
 | 2. Locate a marker with multiple issues of different types in the Document Viewer. |                                                                                                                                                                                                                                                                                                |
-| 3. Hover over the issue marker.                                                    | 1. Problem Tooltip appears.<br>2. Tooltip message area contains **all** issues for that location (Error, Warning, Info, Hint messages combined).<br>3. **Note:** Tooltip does NOT separate issues by type; it displays them as a combined list.<br>4. Only one "View Problem" button is shown. |
+| 3. Hover over the issue marker.                                                    | 1. Problem Tooltip appears. 2. Tooltip message area contains **all** issues for that location (Error, Warning, Info, Hint messages combined). 3. **Note:** Tooltip does NOT separate issues by type; it displays them as a combined list. 4. Only one "View Problem" button is shown. |
 
 #### **P-AQ-TAB-TIP-2-JSON Verify Tooltip displays multiple issues of different types in JSON**
 
@@ -258,7 +258,7 @@ This document provides a complete technical specification for generating Playwri
 | 1. Navigate to the API Quality tab.                                                |                                                                                                                                                                                                                                                                                                |
 | 2. Switch to JSON format.                                                          |                                                                                                                                                                                                                                                                                                |
 | 3. Locate a marker with multiple issues of different types in the Document Viewer. |                                                                                                                                                                                                                                                                                                |
-| 4. Hover over the issue marker.                                                    | 1. Problem Tooltip appears.<br>2. Tooltip message area contains **all** issues for that location (Error, Warning, Info, Hint messages combined).<br>3. **Note:** Tooltip does NOT separate issues by type; it displays them as a combined list.<br>4. Only one "View Problem" button is shown. |
+| 4. Hover over the issue marker.                                                    | 1. Problem Tooltip appears. 2. Tooltip message area contains **all** issues for that location (Error, Warning, Info, Hint messages combined). 3. **Note:** Tooltip does NOT separate issues by type; it displays them as a combined list. 4. Only one "View Problem" button is shown. |
 
 #### **P-AQ-TAB-TIP-3-YAML Verify Tooltip displays multiple issues of same type in YAML**
 
@@ -273,7 +273,7 @@ This document provides a complete technical specification for generating Playwri
 | 1. Navigate to the API Quality tab.                                            |                                                                                                                                                              |
 | 2. Ensure YAML format is selected.                                             |                                                                                                                                                              |
 | 3. Locate a marker where one element triggers multiple rules of the same type. |                                                                                                                                                              |
-| 4. Hover over the issue marker.                                                | 1. Problem Tooltip appears.<br>2. Tooltip message area contains **both** error messages from different rules.<br>3. Only one "View Problem" button is shown. |
+| 4. Hover over the issue marker.                                                | 1. Problem Tooltip appears. 2. Tooltip message area contains **both** error messages from different rules. 3. Only one "View Problem" button is shown. |
 
 #### **P-AQ-TAB-TIP-3-JSON Verify Tooltip displays multiple issues of same type in JSON**
 
@@ -288,7 +288,7 @@ This document provides a complete technical specification for generating Playwri
 | 1. Navigate to the API Quality tab.                                            |                                                                                                                                                              |
 | 2. Switch to JSON format.                                                      |                                                                                                                                                              |
 | 3. Locate a marker where one element triggers multiple rules of the same type. |                                                                                                                                                              |
-| 4. Hover over the issue marker.                                                | 1. Problem Tooltip appears.<br>2. Tooltip message area contains **both** error messages from different rules.<br>3. Only one "View Problem" button is shown. |
+| 4. Hover over the issue marker.                                                | 1. Problem Tooltip appears. 2. Tooltip message area contains **both** error messages from different rules. 3. Only one "View Problem" button is shown. |
 
 #### **P-AQ-TAB-TIP-4-YAML Verify Tooltip disappears when cursor leaves in YAML**
 
@@ -328,7 +328,7 @@ This document provides a complete technical specification for generating Playwri
 | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Navigate to the API Quality tab.                |                                                                                                                                                     |
 | 2. Hover over an issue marker to show the Tooltip. |                                                                                                                                                     |
-| 3. Click the "View Problem" button in the Tooltip. | 1. Problem Popup appears.<br>2. Popup displays the correct issue message.<br>3. Popup shows problem type icon, navigation arrows, and Close button. |
+| 3. Click the "View Problem" button in the Tooltip. | 1. Problem Popup appears. 2. Popup displays the correct issue message. 3. Popup shows problem type icon, navigation arrows, and Close button. |
 
 #### **P-AQ-TAB-POPUP-1-JSON Verify Popup opens via View Problem button in JSON**
 
@@ -342,7 +342,7 @@ This document provides a complete technical specification for generating Playwri
 | 1. Navigate to the API Quality tab.                |                                                                                                                                                     |
 | 2. Switch to JSON format.                          |                                                                                                                                                     |
 | 3. Hover over an issue marker to show the Tooltip. |                                                                                                                                                     |
-| 4. Click the "View Problem" button in the Tooltip. | 1. Problem Popup appears.<br>2. Popup displays the correct issue message.<br>3. Popup shows problem type icon, navigation arrows, and Close button. |
+| 4. Click the "View Problem" button in the Tooltip. | 1. Problem Popup appears. 2. Popup displays the correct issue message. 3. Popup shows problem type icon, navigation arrows, and Close button. |
 
 #### **P-AQ-TAB-POPUP-2-YAML Verify Popup opens via Alt+F8 for specific problem in YAML**
 
@@ -354,7 +354,7 @@ This document provides a complete technical specification for generating Playwri
 | Step                                                                                        | ER                                                                                                                                     |
 | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Click on a specific issue marker (text with squiggly line) to position the cursor there. |                                                                                                                                        |
-| 2. Press `Alt+F8`.                                                                          | 1. Problem Popup appears for **that specific issue** (the one where cursor was placed).<br>2. Popup message matches the clicked issue. |
+| 2. Press `Alt+F8`.                                                                          | 1. Problem Popup appears for **that specific issue** (the one where cursor was placed). 2. Popup message matches the clicked issue. |
 
 #### **P-AQ-TAB-POPUP-2-JSON Verify Popup opens via Alt+F8 for specific problem in JSON**
 
@@ -368,7 +368,7 @@ This document provides a complete technical specification for generating Playwri
 | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Switch to JSON format.                                                                   |                                                                                                                                        |
 | 2. Click on a specific issue marker (text with squiggly line) to position the cursor there. |                                                                                                                                        |
-| 3. Press `Alt+F8`.                                                                          | 1. Problem Popup appears for **that specific issue** (the one where cursor was placed).<br>2. Popup message matches the clicked issue. |
+| 3. Press `Alt+F8`.                                                                          | 1. Problem Popup appears for **that specific issue** (the one where cursor was placed). 2. Popup message matches the clicked issue. |
 
 #### **P-AQ-TAB-POPUP-3-YAML Verify Popup closes via Close button in YAML**
 
@@ -412,7 +412,7 @@ This document provides a complete technical specification for generating Playwri
 | 2. Open Problem Popup for the first issue.    |                                                                                                                                                                                                                             |
 | 3. Note the current issue message and type.   |                                                                                                                                                                                                                             |
 | 4. Click the "Next Problem" arrow button.     | 1. Verify the Popup updates to show the next issue.                                                                                                                                                                         |
-| 5. Click the "Previous Problem" arrow button. | 1. Popup message updates to the next/previous issue following severity order (Error → Warning → Info → Hint).<br>2. Problem type icon updates if the severity changes.<br>3. Editor scrolls to show the new issue location. |
+| 5. Click the "Previous Problem" arrow button. | 1. Popup message updates to the next/previous issue following severity order (Error → Warning → Info → Hint). 2. Problem type icon updates if the severity changes. 3. Editor scrolls to show the new issue location. |
 
 #### **P-AQ-TAB-NAV-1-JSON Verify Next and Previous Problem navigation via buttons in JSON**
 
@@ -428,7 +428,7 @@ This document provides a complete technical specification for generating Playwri
 | 2. Open Problem Popup for the first issue.    |                                                                                                                                                                                                                             |
 | 3. Note the current issue message and type.   |                                                                                                                                                                                                                             |
 | 4. Click the "Next Problem" arrow button.     | 1. Verify the Popup updates to show the next issue.                                                                                                                                                                         |
-| 5. Click the "Previous Problem" arrow button. | 1. Popup message updates to the next/previous issue following severity order (Error → Warning → Info → Hint).<br>2. Problem type icon updates if the severity changes.<br>3. Editor scrolls to show the new issue location. |
+| 5. Click the "Previous Problem" arrow button. | 1. Popup message updates to the next/previous issue following severity order (Error → Warning → Info → Hint). 2. Problem type icon updates if the severity changes. 3. Editor scrolls to show the new issue location. |
 
 #### **P-AQ-TAB-NAV-2-YAML Verify Next and Previous Problem navigation via F8 and Shift+F8 in YAML**
 
@@ -439,8 +439,8 @@ This document provides a complete technical specification for generating Playwri
 
 | Step                                                          | ER                                                                                                                                                                    |
 | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1. With Popup open, press `F8` (Go to Next Problem in Files). | 1. Verify navigation to the next issue.<br>2. `F8` moves to the next problem, Popup updates with new message.<br>3. Editor scrolls/highlights the new issue location. |
-| 2. Press `Shift+F8` (Go to Previous Problem in Files).        | 1. Verify navigation to the previous issue.<br>2. `Shift+F8` moves to the previous problem, Popup updates.<br>3. Editor scrolls/highlights the new issue location.    |
+| 1. With Popup open, press `F8` (Go to Next Problem in Files). | 1. Verify navigation to the next issue. 2. `F8` moves to the next problem, Popup updates with new message. 3. Editor scrolls/highlights the new issue location. |
+| 2. Press `Shift+F8` (Go to Previous Problem in Files).        | 1. Verify navigation to the previous issue. 2. `Shift+F8` moves to the previous problem, Popup updates. 3. Editor scrolls/highlights the new issue location.    |
 
 #### **P-AQ-TAB-NAV-2-JSON Verify Next and Previous Problem navigation via F8 and Shift+F8 in JSON**
 
@@ -453,8 +453,8 @@ This document provides a complete technical specification for generating Playwri
 | Step                                                          | ER                                                                                                                                                                    |
 | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. Switch to JSON format.                                     |                                                                                                                                                                       |
-| 2. With Popup open, press `F8` (Go to Next Problem in Files). | 1. Verify navigation to the next issue.<br>2. `F8` moves to the next problem, Popup updates with new message.<br>3. Editor scrolls/highlights the new issue location. |
-| 3. Press `Shift+F8` (Go to Previous Problem in Files).        | 1. Verify navigation to the previous issue.<br>2. `Shift+F8` moves to the previous problem, Popup updates.<br>3. Editor scrolls/highlights the new issue location.    |
+| 2. With Popup open, press `F8` (Go to Next Problem in Files). | 1. Verify navigation to the next issue. 2. `F8` moves to the next problem, Popup updates with new message. 3. Editor scrolls/highlights the new issue location. |
+| 3. Press `Shift+F8` (Go to Previous Problem in Files).        | 1. Verify navigation to the previous issue. 2. `Shift+F8` moves to the previous problem, Popup updates. 3. Editor scrolls/highlights the new issue location.    |
 
 #### **P-AQ-TAB-NAV-3-YAML Verify navigation follows severity order in YAML**
 
@@ -468,7 +468,7 @@ This document provides a complete technical specification for generating Playwri
 | 1. Ensure YAML format is selected.                      |                                                                                                                                                                                                 |
 | 2. Open Popup for the first issue (should be an Error). |                                                                                                                                                                                                 |
 | 3. Navigate through all issues using Next Problem.      |                                                                                                                                                                                                 |
-| 4. Observe the order of issues and type icon changes.   | 1. Navigation goes through **all Errors first**, then **all Warnings**, then **all Info**, then **all Hints**.<br>2. Type icon correctly reflects the severity of each issue during navigation. |
+| 4. Observe the order of issues and type icon changes.   | 1. Navigation goes through **all Errors first**, then **all Warnings**, then **all Info**, then **all Hints**. 2. Type icon correctly reflects the severity of each issue during navigation. |
 
 #### **P-AQ-TAB-NAV-3-JSON Verify navigation follows severity order in JSON**
 
@@ -482,7 +482,7 @@ This document provides a complete technical specification for generating Playwri
 | 1. Switch to JSON format.                               |                                                                                                                                                                                                 |
 | 2. Open Popup for the first issue (should be an Error). |                                                                                                                                                                                                 |
 | 3. Navigate through all issues using Next Problem.      |                                                                                                                                                                                                 |
-| 4. Observe the order of issues and type icon changes.   | 1. Navigation goes through **all Errors first**, then **all Warnings**, then **all Info**, then **all Hints**.<br>2. Type icon correctly reflects the severity of each issue during navigation. |
+| 4. Observe the order of issues and type icon changes.   | 1. Navigation goes through **all Errors first**, then **all Warnings**, then **all Info**, then **all Hints**. 2. Type icon correctly reflects the severity of each issue during navigation. |
 
 #### **P-AQ-TAB-NAV-4-YAML Verify navigation behavior with overlapping issues in YAML**
 

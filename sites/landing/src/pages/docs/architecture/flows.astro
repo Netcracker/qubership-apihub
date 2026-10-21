@@ -1,0 +1,197 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import DocFigure from '../../../components/DocFigure.astro';
+import { flows, aiPaths, mcpTools } from '../../../data/architecture';
+
+const toc = [
+  { id: 'publish', label: 'Publishing a version' },
+  { id: 'discovery', label: 'Finding APIs already running' },
+  { id: 'ai-agents', label: 'How an AI agent reads the catalogue' },
+];
+
+const [publish, discovery] = flows;
+---
+
+<DocsLayout
+  title="Runtime flows — Qubership APIHUB architecture"
+  description="Three dynamic views of Qubership APIHUB: publishing a version, discovering APIs running in a Kubernetes cluster, and how an AI agent reads the catalogue over MCP."
+  eyebrow="Architecture"
+  heading="Runtime flows"
+  lead="The C4 diagrams show structure. These three views show behaviour — what actually happens over time, and which service is waiting on which."
+  toc={toc}
+>
+  <!-- ══ PUBLISH ════════════════════════════════════════════════════════════ -->
+  <section id="publish" class="doc-section mb-20">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="font-mono text-xs text-slate-600">01</span>
+      <h2 class="text-2xl font-bold text-white">{publish.title}</h2>
+    </div>
+    <p class="text-slate-400 leading-relaxed mb-2 max-w-3xl">{publish.lead}</p>
+
+    <DocFigure
+      src={publish.image}
+      alt="Swimlane diagram of the APIHUB publish flow across the UI, backend, build consumer and linter"
+      caption="Dynamic view 01 — publishing a version, seven steps across four participants"
+    />
+
+    <div class="flex flex-wrap gap-3 mb-6">
+      {publish.lanes.map((lane) => (
+        <span class="flex items-center gap-2 text-xs text-slate-400">
+          <span class="w-2.5 h-2.5 rounded-sm" style={`background:${lane.color}`}></span>
+          {lane.name}
+        </span>
+      ))}
+    </div>
+
+    <ol class="space-y-2.5 mb-6">
+      {publish.steps.map((step, i) => {
+        const lane = publish.lanes[step.lane];
+        return (
+          <li
+            class="flex items-start gap-4 rounded-xl border p-4"
+            style={`border-color:${lane.color}33; background:${lane.color}0a;`}
+          >
+            <span
+              class="flex-shrink-0 w-6 h-6 rounded-full grid place-items-center text-[11px] font-extrabold text-[#050813]"
+              style={`background:${lane.color}`}
+            >
+              {i + 1}
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-semibold text-white mb-0.5">{step.name}</p>
+              <p class="text-xs text-slate-500">{step.note}</p>
+            </div>
+            <span class="text-[10px] font-bold uppercase tracking-wider flex-shrink-0 mt-1" style={`color:${lane.color}`}>
+              {lane.name}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+
+    <div class="rounded-xl border border-orange-500/25 bg-orange-500/[0.06] p-5">
+      <p class="text-xs text-slate-300 leading-relaxed">{publish.footnote}</p>
+    </div>
+  </section>
+
+  <!-- ══ DISCOVERY ══════════════════════════════════════════════════════════ -->
+  <section id="discovery" class="doc-section mb-20">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="font-mono text-xs text-slate-600">02</span>
+      <h2 class="text-2xl font-bold text-white">{discovery.title}</h2>
+    </div>
+    <p class="text-slate-400 leading-relaxed mb-2 max-w-3xl">{discovery.lead}</p>
+
+    <DocFigure
+      src={discovery.image}
+      alt="Swimlane diagram of the APIHUB discovery flow across the Agents SPA, agents backend, agent and cluster services"
+      caption="Dynamic view 02 — discovery starts with the agent registering itself"
+    />
+
+    <div class="flex flex-wrap gap-3 mb-6">
+      {discovery.lanes.map((lane) => (
+        <span class="flex items-center gap-2 text-xs text-slate-400">
+          <span class="w-2.5 h-2.5 rounded-sm" style={`background:${lane.color}`}></span>
+          {lane.name}
+        </span>
+      ))}
+    </div>
+
+    <ol class="space-y-2.5 mb-6">
+      {discovery.steps.map((step, i) => {
+        const lane = discovery.lanes[step.lane];
+        return (
+          <li
+            class="flex items-start gap-4 rounded-xl border p-4"
+            style={`border-color:${lane.color}33; background:${lane.color}0a;`}
+          >
+            <span
+              class="flex-shrink-0 w-6 h-6 rounded-full grid place-items-center text-[11px] font-extrabold text-[#050813]"
+              style={`background:${lane.color}`}
+            >
+              {i + 1}
+            </span>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-semibold text-white mb-0.5">{step.name}</p>
+              <p class="text-xs text-slate-500">{step.note}</p>
+            </div>
+            <span class="text-[10px] font-bold uppercase tracking-wider flex-shrink-0 mt-1" style={`color:${lane.color}`}>
+              {lane.name}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+
+    <div class="rounded-xl border border-orange-500/25 bg-orange-500/[0.06] p-5">
+      <p class="text-xs text-slate-300 leading-relaxed">{discovery.footnote}</p>
+    </div>
+  </section>
+
+  <!-- ══ AI AGENTS ══════════════════════════════════════════════════════════ -->
+  <section id="ai-agents" class="doc-section mb-12">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="font-mono text-xs text-slate-600">03</span>
+      <h2 class="text-2xl font-bold text-white">How an AI agent reads the catalogue</h2>
+    </div>
+    <p class="text-slate-400 leading-relaxed mb-2 max-w-3xl">
+      Two paths lead into the same tools: an external client speaking the Model Context Protocol, or the
+      chat built into the Portal. Access control is applied per user on every call, on both paths.
+    </p>
+
+    <DocFigure
+      src="images/architecture/flow-ai.svg"
+      alt="Two paths into the APIHUB catalogue tools: an external MCP client and the built-in Portal chat, both converging on the same four tools"
+      caption="Dynamic view 03 — two doors, one room"
+    />
+
+    <div class="grid md:grid-cols-2 gap-5 mb-8">
+      {aiPaths.map((path) => (
+        <div
+          class="rounded-xl border p-5"
+          style={`border-color:${path.color}40; background:${path.color}0a;`}
+        >
+          <p class="text-[11px] font-bold uppercase tracking-widest mb-5" style={`color:${path.color}`}>
+            {path.name}
+          </p>
+          <ol class="space-y-4">
+            {path.steps.map((step, i) => (
+              <li class="flex gap-3">
+                <span
+                  class="flex-shrink-0 w-5 h-5 rounded-full grid place-items-center text-[10px] font-extrabold text-[#050813]"
+                  style={`background:${path.color}`}
+                >
+                  {i + 1}
+                </span>
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold text-slate-100">{step.name}</p>
+                  <p class="text-[11px] text-slate-500 leading-relaxed">{step.note}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ))}
+    </div>
+
+    <div class="rounded-xl border border-teal-500/25 bg-teal-500/[0.05] p-5 mb-6">
+      <p class="text-[11px] font-bold text-teal-400 uppercase tracking-widest mb-4">Shared catalogue tools</p>
+      <div class="grid sm:grid-cols-2 gap-2.5">
+        {mcpTools.map((tool) => (
+          <code class="font-mono text-[11px] text-teal-300 bg-[#050813] border border-slate-800 rounded-lg px-3 py-2.5 block truncate">
+            {tool}
+          </code>
+        ))}
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-slate-800 bg-slate-900/30 p-5">
+      <p class="text-xs text-slate-400 leading-relaxed">
+        The linter exposes a further MCP endpoint of its own —
+        <code class="font-mono text-[11px] text-slate-300">list_linter_issues_for_package_version</code> —
+        so an agent can ask what is wrong with a version and receive the issue list directly, without going
+        through the catalogue tools at all.
+      </p>
+    </div>
+  </section>
+</DocsLayout>

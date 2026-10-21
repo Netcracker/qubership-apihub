@@ -1,18 +1,20 @@
 ---
 name: apihub-deployment-authoring
-description: "Authors and updates APIHUB deployment assets in qubership-apihub: Helm values/templates, Docker Compose env wiring, docs/configuration-reference.md parity, local-k8s-quickstart, and optional extensions (linter, agents-backend). Use when changing deploy/helm-templates/, deploy/docker-compose/, or deployment docs under docs/."
+description: "Authors and updates APIHUB deployment assets in the qubership-apihub monorepo: Helm values and templates, Docker Compose env wiring, docs/configuration-reference.md parity, local-k8s-quickstart, and optional extensions (linter, agents-backend). Use when changing deploy/helm-templates/, deploy/docker-compose/, or deployment docs under docs/."
 ---
 
 # APIHub Deployment Authoring
 
-Follow `AGENTS.md`. This repository is the **umbrella deployment project** — application
-source code lives in sibling component repositories; do not implement Go/TS/UI features here.
+Follow `AGENTS.md`, `deploy/AGENTS.md`, and the module file of the delivery surface you change. The deployment
+assets and the application source live in this one repository: when a service changes its config, env, ports, or
+mounted files, update the assets in the same change. Application features themselves belong in the module that owns
+them (`backend/`, `frontend/`).
 
 ## Workflow
 
 1. **Identify the delivery surface** — Helm (production-oriented), Compose (local dev/test),
    or local-k8s-quickstart (developer/R&D only, not production).
-2. **Read the configuration map** — [`docs/configuration-reference.md`](../../../../docs/configuration-reference.md)
+2. **Read the configuration map** — [`docs/configuration-reference.md`](../../../../../docs/configuration-reference.md)
    defines the hierarchy: Helm `values.yaml` → rendered Secrets/env → component loaders.
 3. **Keep cross-file consistency** — tokens, URLs, and extension base URLs must align (see
    configuration reference § Cross-cutting token and URL consistency).
@@ -33,7 +35,8 @@ source code lives in sibling component repositories; do not implement Go/TS/UI f
 - **Images** — `repository` + `tag` under each component; match published `ghcr.io/netcracker/`
   images unless the task specifies overrides.
 
-After chart edits, sanity-check against `docs/configuration-reference.md` § Helm table.
+After chart edits, sanity-check against `docs/configuration-reference.md` § Helm table, and run `helm lint` and
+`helm template` when Helm is installed (say so when it is not).
 
 ## Docker Compose (`deploy/docker-compose/`)
 
@@ -41,6 +44,7 @@ After chart edits, sanity-check against `docs/configuration-reference.md` § Hel
 |-------|------|-------|
 | Generic | `apihub-generic/` | Default local rig |
 | Keycloak SSO | `with-keycloak/` | SSO example; parallel env/YAML layout |
+| GitLab | `with-gitlab/` | Backend config example only |
 
 - **Config-file services** — `qubership-apihub-backend-config.yaml`,
   `qubership-api-linter-service-config.yaml`, and `qubership-apihub-agents-backend-config.yaml`
@@ -53,23 +57,23 @@ After chart edits, sanity-check against `docs/configuration-reference.md` § Hel
 - **`extensions[].baseUrl`** in backend YAML must be reachable from users' browsers **and** from
   the backend process.
 
-Do not treat Compose as replacing Helm for production install arguments.
+Do not treat Compose as replacing Helm for production install arguments. Check a file with
+`docker compose -f <file> config` when Docker is available.
 
 ## Local Kubernetes quickstart (`deploy/helm-templates/local-k8s-quickstart/`)
 
 - **Not production-ready** — Kind/Rancher guides, overlay values, optional Superset chart.
 - Entry: [`README.md`](../../../../../deploy/helm-templates/local-k8s-quickstart/README.md) and
-  `apihub-quickstart.sh` where present.
-- Values templates: `local-k8s-values.yaml`, `with-keycloak-local-k8s-values.yaml`, secrets
-  templates under `qubership-apihub/`.
+  `apihub-quickstart.sh`, `apihub-with-keycloak-quickstart.sh`.
+- Values templates and secrets templates sit under `qubership-apihub/` and the other folders there.
 - When changing quickstart assets, verify install/uninstall steps still match the README.
 
 ## Extensions (optional components)
 
-| Extension | Helm values key | Compose config file | Component repo |
-|-----------|-----------------|---------------------|----------------|
-| API Linter | `qubershipApiLinterService` | `qubership-api-linter-service-config.yaml` | qubership-api-linter-service |
-| Agents backend | `qubershipApihubAgentsBackend` | `qubership-apihub-agents-backend-config.yaml` | qubership-apihub-agents-backend |
+| Extension | Helm values key | Compose config file | Module |
+|-----------|-----------------|---------------------|--------|
+| API Linter | `qubershipApiLinterService` | `qubership-api-linter-service-config.yaml` | `backend/api-linter-service` |
+| Agents backend | `qubershipApihubAgentsBackend` | `qubership-apihub-agents-backend-config.yaml` | `backend/agents-backend` |
 
 - Both extensions load a `config.yaml` (the `*.env` value block rendered into a config Secret on
   Helm; a mounted file on Compose) and read only `LOG_LEVEL`, `GOMEMLIMIT`, and `*_CONFIG_FOLDER`
@@ -83,7 +87,7 @@ Do not treat Compose as replacing Helm for production install arguments.
 
 When adding or renaming a configuration knob:
 
-1. Confirm the **authoritative loader** in the component repo (`config.template.yaml` for backend, agent,
+1. Confirm the **authoritative loader** in the owning module (`config.template.yaml` for backend, agent,
    linter, and agents-backend; env-only for UI/builder).
 2. Update **`docs/configuration-reference.md`** tables (Helm mapping, Compose file list,
    cross-cutting consistency).
@@ -94,19 +98,19 @@ When adding or renaming a configuration knob:
 
 | Change type | Where to work |
 |-------------|---------------|
-| REST API, backend logic | qubership-apihub-backend |
-| UI / Portal | qubership-apihub-ui |
-| Build worker | qubership-apihub-build-task-consumer |
-| Linter rules/engine code | qubership-api-linter-service |
-| Cluster agent discovery | qubership-apihub-agent |
-| Shared CI workflows / generic agent packages | qubership-apihub-ci |
+| REST API, backend logic | `backend/portal-backend` |
+| UI / Portal | `frontend/ui` |
+| Build worker | `frontend/build-task-consumer` |
+| Linter rules/engine code | `backend/api-linter-service` |
+| Cluster agent discovery | `backend/agent` |
+| Adding a whole Go service | `apihub-add-go-service` skill |
 
-Remind the developer when a deployment change implies a follow-up PR in a component repository.
+Do the deployment edit in the same change as the module edit that causes it.
 
 ## Completion checklist
 
 - [ ] Helm values, templates, and/or Compose files updated consistently.
 - [ ] Token/URL/extension URLs aligned across affected files.
 - [ ] `docs/configuration-reference.md` (and guides if needed) updated.
-- [ ] No application source code added under this umbrella repo.
+- [ ] No application source code added under `deploy/`.
 - [ ] For GitHub tickets, `github-ticket-implementation-planner` was used before coding when applicable.

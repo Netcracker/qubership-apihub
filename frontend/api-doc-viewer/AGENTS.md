@@ -1,11 +1,13 @@
 # api-doc-viewer monorepo — Agent Instructions
 
-Instructions for AI assistants working on **qubership-apihub-api-doc-viewer** (Cursor, Claude
-Code, and compatible tools).
+Instructions for AI assistants working on the `frontend/api-doc-viewer` module of the qubership-apihub monorepo
+(Cursor, Claude Code, and compatible tools). Follow the root [`AGENTS.md`](../../AGENTS.md) and
+[`frontend/AGENTS.md`](../AGENTS.md).
 
-## Repository role
+## Module role
 
-This monorepo ships two npm packages consumed by integrators:
+This module is a pnpm workspace of its own (`api-doc-viewer-root`) with the packages below. The published ones are
+consumed by integrators:
 
 | Package | Path | Role |
 | --- | --- | --- |
@@ -15,7 +17,7 @@ This monorepo ships two npm packages consumed by integrators:
 **View / data split:** React components render precomputed tree nodes. Diff aggregation,
 transformers, and crawl logic belong in **next-data-model** — not in the view layer.
 
-GraphQL viewers are **legacy** (external `api-data-model` / `api-state-model`). JSON Schema,
+GraphQL viewers are **legacy** (`packages/api-data-model` and `packages/api-state-model`). JSON Schema,
 AsyncAPI, DDL API, and JSO are the active API types.
 
 ## Source of truth and workflow
@@ -42,9 +44,27 @@ AsyncAPI, DDL API, and JSO are the active API types.
 - If you must assume something, state assumptions explicitly and keep changes minimal until
   confirmed.
 
+## Build and test
+
+Nx projects: `api-doc-viewer` (`packages/api-doc-viewer`), `api-doc-viewer-next-data-model`,
+`api-doc-viewer-api-data-model`, `api-doc-viewer-api-state-model`, `api-doc-viewer-samples`, and
+`api-doc-viewer-root`. From the repository root:
+
+```bash
+pnpm exec nx run api-doc-viewer:build
+pnpm exec nx run api-doc-viewer:test
+pnpm exec nx run api-doc-viewer-next-data-model:test
+pnpm exec nx run api-doc-viewer:screenshot-test
+```
+
+`screenshot-test` builds Storybook, serves it on port 9009, generates the compatibility-suite tests, and runs Jest
+with `jest-puppeteer`; it needs Chrome in a container (`jest-chrome-in-docker-environment`). Update snapshots with
+`pnpm --filter @netcracker/qubership-apihub-api-doc-viewer run regenerate-screenshots`, only with the containerized
+config. Install once at the workspace root with `pnpm install`; do not run `npm install` here.
+
 ## Primary skills (APM)
 
-Install or refresh agent packages from the repository root:
+Install or refresh agent packages from the repository root (never `apm compile`):
 
 ```bash
 apm install --target cursor,claude --legacy-skill-paths
@@ -59,11 +79,13 @@ apm install --target cursor,claude --legacy-skill-paths
 | `api-doc-viewer-reviewing` | Architecture review / refactoring of one API type stack (shared rules + `review/<api-type>.md` briefs) |
 | `api-doc-viewer-using` | Integrator-facing consumption patterns (host apps) |
 | `next-data-model-using` | Consuming tree builders from another TypeScript project |
-| `ddlapi-using` | ddlapi Realm / merged diff documents (external package) |
-| `json-crawl-using` | json-crawl rules (external package) |
+| `ddlapi-using` | ddlapi Realm / merged diff documents (`frontend/ddlapi`) |
+| `json-crawl-using` | json-crawl rules (`frontend/json-crawl`) |
 
-Canonical skill sources live under `agent-packages/`. After editing skills there, run
-`apm install` so `.cursor/`, `.claude/`, and `.agents/` stay in sync.
+Canonical skill sources live under `agent-packages/` of this module. After editing skills there, run
+`apm install --target cursor,claude --legacy-skill-paths` from the repository root so `.cursor/` and `.claude/`
+stay in sync. Store packages (`development-conventions`, `github-ticket-implementation-planner`,
+`english-developer-style`, `markdown-line-length-120`) also apply.
 
 ## Always-on conventions
 
@@ -92,10 +114,8 @@ Canonical skill sources live under `agent-packages/`. After editing skills there
 
 `.gitignore` excludes `*.generated.*`.
 
-**Use the `.generated` suffix only** for artifacts driven by the **external**
-[`qubership-apihub-compatibility-suites`](https://github.com/Netcracker/qubership-apihub-compatibility-suites)
-repository (compatibility-suite `*.generated.stories.tsx` /
-`*.generated.it-test.ts`).
+**Use the `.generated` suffix only** for artifacts driven by the `frontend/compatibility-suites` module
+(compatibility-suite `*.generated.stories.tsx` / `*.generated.it-test.ts`).
 
 **Do not** use `.generated.ts`, `.generated.stories.tsx`, or `.generated.it-test.ts` for output
 from **in-repo** bin scripts or utilities. Those files are internal (not from an external
@@ -186,7 +206,7 @@ DDL table diffs touch both packages and fixtures:
 4. **Fixtures** — SQL pairs under `packages/samples/ddlapi-diffs/`; hand-written stories and
    ITs under `src/stories/ddlapi-diffs-suite/` and `src/it/ddlapi-diffs-suite/`.
 5. **Tests** — unit tests in `packages/next-data-model/tests/` for aggregation and
-   transformer logic; screenshot ITs after visual changes (`npm run regenerate-screenshots` in
+   transformer logic; screenshot ITs after visual changes (`pnpm run regenerate-screenshots` in
    `packages/api-doc-viewer/`).
 
 **Non-obvious DDL diff traps (keep in data layer):**
@@ -294,14 +314,16 @@ Hand-written diff sample suites follow the AsyncAPI / JSO pattern:
 When adding a case: YAML pair → story export → matching `it(...)` with Storybook slug from
 **9009** `index.json` (not guessed from folder name alone).
 
-## Related repositories
+## Related modules
 
-| Repository | Relationship |
+| Module | Relationship |
 | --- | --- |
-| [qubership-apihub-ddlapi](https://github.com/Netcracker/qubership-apihub-ddlapi) | PostgreSQL DDL schema model and merged diff documents |
-| [qubership-apihub-json-crawl](https://github.com/Netcracker/qubership-apihub-json-crawl) | Document crawl engine used by tree builders |
-| [qubership-apihub-api-diff](https://github.com/Netcracker/qubership-apihub-api-diff) | Diff types consumed by with-diffs builders |
-| [qubership-apihub-compatibility-suites](https://github.com/Netcracker/qubership-apihub-compatibility-suites) | **Only** external source for `*.generated.*` stories/tests |
+| `frontend/ddlapi` | PostgreSQL DDL schema model and merged diff documents |
+| `frontend/json-crawl` | Document crawl engine used by tree builders |
+| `frontend/api-diff` | Diff types consumed by with-diffs builders |
+| `frontend/api-unifier`, `frontend/graphapi` | Normalization and GraphAPI conversion used by the data layer |
+| `frontend/compatibility-suites` | **Only** source for `*.generated.*` stories and tests |
+| `frontend/apispec-view`, `frontend/ui` | Consumers of the viewers |
 
 ## Cross-platform development
 
@@ -319,6 +341,6 @@ zero-padded renames that treat `08`/`09` as octal in shell arithmetic.
   diffs): `agent-packages/next-data-model-authoring/.apm/skills/next-data-model-authoring/json-schema/`.
 - Refactoring candidates (viewer CSS, hiding-unchanged toggle):
   `agent-packages/api-doc-viewer-authoring/.apm/skills/api-doc-viewer-authoring/refactoring-notes.md`.
-- This file is **hand-written and committed**. Do not run `apm compile` at the repository root —
-  it overwrites `AGENTS.md`.
+- This file is **hand-written and committed**. Never run `apm compile` in the repository: it overwrites
+  `AGENTS.md`. Only `apm install --target cursor,claude --legacy-skill-paths` is used.
 - Do **not** add minor feature notes to the repository root `README.md` unless asked.

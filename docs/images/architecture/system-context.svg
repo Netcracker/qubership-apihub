@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="680" viewBox="0 0 1600 680" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <linearGradient id="ctxTitle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#60a5fa"/>
+      <stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+    <linearGradient id="hubBox" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e3a8a"/>
+      <stop offset="1" stop-color="#3730a3"/>
+    </linearGradient>
+    <radialGradient id="hubGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#3b82f6" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#3b82f6" stop-opacity="0"/>
+    </radialGradient>
+    <marker id="ctxArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+    <style>
+      .card { fill: #0F172A; stroke: #1E293B; stroke-width: 1; }
+      .nm   { font-size: 14px; font-weight: 700; fill: #e2e8f0; }
+      .sub  { font-size: 11.5px; fill: #64748b; }
+      .lbl  { font-size: 11px; font-weight: 700; letter-spacing: 2.2px; fill: #475569; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="680" fill="#050813"/>
+  <ellipse cx="800" cy="360" rx="420" ry="260" fill="url(#hubGlow)"/>
+
+  <text x="60" y="54" font-size="15" font-weight="600" fill="#34d399" letter-spacing="3">C4 &#183; LEVEL 1</text>
+  <text x="60" y="96" font-size="30" font-weight="800" fill="#f1f5f9">System context. <tspan fill="url(#ctxTitle)">APIHUB as one box.</tspan></text>
+
+  <!-- ===== ACTORS ===== -->
+  <text x="60" y="136" class="lbl">WHO USES IT</text>
+
+  <g>
+    <rect x="60" y="150" width="330" height="72" rx="12" class="card"/>
+    <circle cx="96" cy="186" r="16" fill="#818cf8" fill-opacity="0.2" stroke="#818cf8"/>
+    <text x="126" y="182" class="nm">API Developer</text>
+    <text x="126" y="202" class="sub">Publishes and reviews</text>
+  </g>
+  <g>
+    <rect x="60" y="236" width="330" height="72" rx="12" class="card"/>
+    <circle cx="96" cy="272" r="16" fill="#818cf8" fill-opacity="0.2" stroke="#818cf8"/>
+    <text x="126" y="268" class="nm">API Consumer</text>
+    <text x="126" y="288" class="sub">Reads and tries</text>
+  </g>
+  <g>
+    <rect x="60" y="322" width="330" height="72" rx="12" class="card"/>
+    <circle cx="96" cy="358" r="16" fill="#818cf8" fill-opacity="0.2" stroke="#818cf8"/>
+    <text x="126" y="354" class="nm">Administrator</text>
+    <text x="126" y="374" class="sub">Roles, identity, rules</text>
+  </g>
+  <g>
+    <rect x="60" y="408" width="330" height="72" rx="12" class="card"/>
+    <circle cx="96" cy="444" r="16" fill="#2dd4bf" fill-opacity="0.2" stroke="#2dd4bf"/>
+    <text x="126" y="440" class="nm">CI/CD pipeline</text>
+    <text x="126" y="460" class="sub">Publishes with a key</text>
+  </g>
+  <g>
+    <rect x="60" y="494" width="330" height="72" rx="12" class="card"/>
+    <circle cx="96" cy="530" r="16" fill="#a78bfa" fill-opacity="0.2" stroke="#a78bfa"/>
+    <text x="126" y="526" class="nm">AI assistant</text>
+    <text x="126" y="546" class="sub">Queries over MCP</text>
+  </g>
+
+  <!-- ===== INBOUND ===== -->
+  <line x1="400" y1="360" x2="488" y2="360" stroke="#475569" stroke-width="2" marker-end="url(#ctxArrow)"/>
+  <text x="444" y="348" font-size="11" fill="#64748b" text-anchor="middle">HTTPS &#183; REST &#183; MCP</text>
+
+  <!-- ===== THE SYSTEM ===== -->
+  <rect x="500" y="240" width="600" height="240" rx="20" fill="url(#hubBox)" stroke="#60a5fa" stroke-opacity="0.45"/>
+  <text x="800" y="300" font-size="26" font-weight="800" fill="#ffffff" text-anchor="middle">Qubership APIHUB</text>
+  <text x="800" y="328" font-size="13.5" fill="#bfd3f7" text-anchor="middle">API registry and management platform</text>
+  <line x1="580" y1="352" x2="1020" y2="352" stroke="#ffffff" stroke-opacity="0.14"/>
+  <text x="800" y="382" font-size="14" fill="#e0eaff" text-anchor="middle">store &#183; build &#183; compare</text>
+  <text x="800" y="410" font-size="14" fill="#e0eaff" text-anchor="middle">document &#183; lint &#183; score</text>
+  <text x="800" y="438" font-size="14" fill="#e0eaff" text-anchor="middle">discover &#183; expose to AI</text>
+
+  <!-- ===== OUTBOUND ===== -->
+  <line x1="1112" y1="360" x2="1200" y2="360" stroke="#475569" stroke-width="2" marker-end="url(#ctxArrow)"/>
+  <text x="1156" y="348" font-size="11" fill="#64748b" text-anchor="middle">depends on</text>
+
+  <!-- ===== DEPENDENCIES ===== -->
+  <text x="1210" y="136" class="lbl">WHAT IT NEEDS</text>
+
+  <g>
+    <rect x="1210" y="150" width="330" height="62" rx="10" class="card"/>
+    <rect x="1210" y="150" width="3.5" height="62" rx="2" fill="#2dd4bf"/>
+    <text x="1234" y="178" class="nm">PostgreSQL 14+</text>
+    <text x="1234" y="197" class="sub">One database per service</text>
+    <text x="1516" y="178" font-size="10" font-weight="700" fill="#2dd4bf" text-anchor="end">REQUIRED</text>
+  </g>
+  <g>
+    <rect x="1210" y="220" width="330" height="62" rx="10" class="card"/>
+    <rect x="1210" y="220" width="3.5" height="62" rx="2" fill="#334155"/>
+    <text x="1234" y="248" class="nm">S3 / MinIO</text>
+    <text x="1234" y="267" class="sub">Cold storage</text>
+    <text x="1516" y="248" font-size="10" font-weight="700" fill="#475569" text-anchor="end">OPTIONAL</text>
+  </g>
+  <g>
+    <rect x="1210" y="290" width="330" height="62" rx="10" class="card"/>
+    <rect x="1210" y="290" width="3.5" height="62" rx="2" fill="#334155"/>
+    <text x="1234" y="318" class="nm">Identity provider</text>
+    <text x="1234" y="337" class="sub">SAML &#183; OIDC &#183; LDAP</text>
+    <text x="1516" y="318" font-size="10" font-weight="700" fill="#475569" text-anchor="end">OPTIONAL</text>
+  </g>
+  <g>
+    <rect x="1210" y="360" width="330" height="62" rx="10" class="card"/>
+    <rect x="1210" y="360" width="3.5" height="62" rx="2" fill="#334155"/>
+    <text x="1234" y="388" class="nm">LLM API</text>
+    <text x="1234" y="407" class="sub">AI linting and chat</text>
+    <text x="1516" y="388" font-size="10" font-weight="700" fill="#475569" text-anchor="end">OPTIONAL</text>
+  </g>
+  <g>
+    <rect x="1210" y="430" width="330" height="62" rx="10" class="card"/>
+    <rect x="1210" y="430" width="3.5" height="62" rx="2" fill="#fb923c"/>
+    <text x="1234" y="458" class="nm">Kubernetes clusters</text>
+    <text x="1234" y="477" class="sub">Where agents discover APIs</text>
+    <text x="1516" y="458" font-size="10" font-weight="700" fill="#fb923c" text-anchor="end">OPTIONAL</text>
+  </g>
+  <g>
+    <rect x="1210" y="500" width="330" height="62" rx="10" class="card"/>
+    <rect x="1210" y="500" width="3.5" height="62" rx="2" fill="#2dd4bf"/>
+    <text x="1234" y="528" class="nm">GitHub &#183; ghcr.io &#183; npm</text>
+    <text x="1234" y="547" class="sub">Images and packages</text>
+    <text x="1516" y="528" font-size="10" font-weight="700" fill="#2dd4bf" text-anchor="end">REQUIRED</text>
+  </g>
+
+  <text x="60" y="632" font-size="13.5" fill="#64748b">Five kinds of user on the left, everything APIHUB depends on to the right. Only PostgreSQL and the image registries are mandatory &#8212; every other dependency is opt-in.</text>
+</svg>

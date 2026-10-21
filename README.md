@@ -1,39 +1,30 @@
 # Qubership APIHUB
 
-**Product site:** [Qubership APIHUB on GitHub Pages](https://netcracker.github.io/apihub/) — use cases, feature tour, capabilities matrix, releases, and deployment entry points.
+[![CI](https://github.com/Netcracker/qubership-apihub/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/Netcracker/qubership-apihub/actions/workflows/ci.yml?query=branch%3Adevelop)
+[![Latest release](https://img.shields.io/github/v/release/Netcracker/qubership-apihub)](https://github.com/Netcracker/qubership-apihub/releases/latest)
 
-**One place for your organization’s API specifications** — browse, compare, lint, and evolve APIs with confidence. Qubership APIHUB is Netcracker’s API **registry and Dev Portal**: a Kubernetes-native platform that turns scattered OpenAPI, GraphQL, AsyncAPI, and related specs into a **single source of truth**, with rich UI, automation, and optional cluster-side discovery.
+Qubership APIHUB is Netcracker's API registry and Dev Portal. It turns scattered OpenAPI, GraphQL, AsyncAPI, and
+related specifications into one catalog, with versioning, comparison, linting, and optional discovery in Kubernetes
+clusters.
 
----
-
-## Why APIHUB?
+This repository holds the source of every component, its deployment assets, and its documentation.
 
 | | |
 |--|--|
-| **Quality** | Normalize, diff, and classify changes (breaking vs safe) so teams ship compatible APIs. |
-| **Visibility** | Search, dashboards, and versioning across workspaces — no more specs lost in repos or tickets. |
-| **Integration** | Publish from CI/CD, lint on publish, export reports; MCP and AI-assisted workflows where configured. |
-| **Scale** | Microservice architecture, horizontal workers, and pluggable extensions (linter, agents). |
+| All sites | [netcracker.github.io/qubership-apihub](https://netcracker.github.io/qubership-apihub/) |
+| Landing | [Use cases, feature tour, and releases](https://netcracker.github.io/qubership-apihub/landing/) |
+| Documentation | [Guides, architecture, and reference](https://netcracker.github.io/qubership-apihub/docs/) |
+| Releases | [GitHub releases](https://github.com/Netcracker/qubership-apihub/releases) |
+| Storybooks | [Component stories](https://netcracker.github.io/qubership-apihub/storybook/) |
+| ERD | [Database diagram](https://netcracker.github.io/qubership-apihub/erd/) |
 
-**Outcomes you can expect:** higher documentation completeness, faster onboarding for consumers, and safer API evolution backed by structured diffs and optional quality scoring.
-
----
-
-## What you get
-
-- **Catalog & versioning** — Workspaces, groups, packages, versions, revisions; favorites and dashboards.
-- **Multi-format specs** — OpenAPI 3.x (and Swagger 2 via conversion), **GraphQL**, **AsyncAPI**, Markdown documents, JSON Schema; gRPC/protobuf stubs where applicable.
-- **Deep analysis** — Changelog between versions, deprecated tracking, backward-compatibility signals, global search.
-- **Quality pipeline** — **Spectral** (OpenAPI & AsyncAPI) plus optional **AI-assisted** review for OpenAPI; **version-level scoring** in the linter service.
-- **Rich Portal** — Interactive docs (including AsyncAPI), comparison views, API quality views, export with **document shareability** options.
-- **Kubernetes agent (optional)** — Discover **OpenAPI, GraphQL, AsyncAPI**, Markdown, and JSON Schema in-cluster; snapshots and promotion into the catalog.
-- **Enterprise-ready** — SAML, OIDC, LDAP, RBAC, API keys and PATs; Helm charts and Docker Compose for different lifecycles.
-
----
+APIHUB normalizes, diffs, and classifies API changes (breaking or safe), publishes from CI/CD, lints on publish, and
+supports SAML, OIDC, LDAP, RBAC, and API keys. The [landing](https://netcracker.github.io/qubership-apihub/landing/)
+has the full feature tour.
 
 ## Screenshots
 
-The **Portal** UI: catalog, version comparison, interactive documentation, and operation lists.
+The Portal UI: catalog, version comparison, interactive documentation, and operation lists.
 
 | Workspace & governance | Compare package versions |
 |:-:|:-:|
@@ -45,112 +36,96 @@ The **Portal** UI: catalog, version comparison, interactive documentation, and o
 | ![Package API operations: filters, tags, methods, paths, audience, and kind](./docs/images/screenshot-api-operations.png) | ![Interactive OpenAPI doc: method, path, security, parameters, and response models](./docs/images/screenshot-endpoint-documentation.png) |
 | *Per-version operation index with filters and export/compare actions.* | *Rich **Doc** view for a single operation, with parameters and schemas.* |
 
----
-
 ## Architecture at a glance
 
-![APIHUB architecture](./docs/images/arch.png)
+![APIHUB containers in four tiers: UI, API Registry, builders, and extensions](./docs/images/architecture/container-tiers.svg)
 
 | Layer | Role |
 |-------|------|
-| **Portal UI** | React SPAs (Portal + Agents) behind nginx — unified entry for users and operators. |
-| **API Registry** | Go backend: REST API, auth, packages/versions, build orchestration, MCP & AI chat hooks. |
-| **Builder** | NestJS workers consume the TypeScript processing stack (normalize → diff → changelog → export). |
-| **Extensions** | API Linter (Spectral / AI / scoring), Agents Backend for remote discovery agents. |
+| **Portal UI** | React SPAs (Portal and Agents) behind nginx: the entry point for users and operators. |
+| **API Registry** | Go backend: REST API, auth, packages and versions, build orchestration, MCP and AI chat hooks. |
+| **Builder** | NestJS workers run the TypeScript processing stack (normalize, diff, changelog, export). |
+| **Java task consumer** | Java workers that take the build tasks the NestJS builder does not handle. |
+| **Extensions** | API Linter (Spectral, AI review, scoring) and the Agents backend for remote discovery agents. |
+| **Agent** | Go service in a customer cluster that discovers APIs and reports them to the Agents backend. |
 
-For a **detailed** diagram, API-type matrix, and extension roadmap, see the **[Architecture landscape](https://github.com/Netcracker/qubership-apihub/wiki/Architecture-landscape)** on the wiki.  
-For a **full feature list**, see **[Features list](https://github.com/Netcracker/qubership-apihub/wiki/Features-list)**.
+Read the [architecture overview](docs/architecture/overview.md) for the full picture, or the
+[C4 diagrams](https://netcracker.github.io/qubership-apihub/landing/docs/architecture/c4/) on the landing.
 
----
+## Repository layout
 
-## Core components
+| Folder | Content |
+|--------|---------|
+| [`backend/`](backend/README.md) | Go services (`portal-backend`, `api-linter-service`, `agents-backend`, `agent`, `test-service`, `commons-go`), the Java task consumer, and `libraries-backend` |
+| [`frontend/`](frontend/README.md) | The UI (Portal and Agents SPAs), the builder (`build-task-consumer`), and the TypeScript libraries |
+| [`tests/`](tests/README.md) | End-to-end suites: Newman collections (`postman-collections`) and Playwright tests (`ui-tests`) |
+| [`deploy/`](deploy/README.md) | The Helm chart, the local Kubernetes quickstart, and the Docker Compose stacks |
+| [`docs/`](docs/README.md) | Installation, administration, user guide, architecture, design items, and the developer guide |
+| [`tools/`](tools/README.md) | Release scripts, CI helpers, and Nx plugins |
+| `sites/` | Sources of the landing, the documentation site, and the navigation page (`sites/index/`) |
+| `.github/` | Workflows, CODEOWNERS, and Dependabot configuration |
 
-### API Registry (backend)
+## Where the repositories went
 
-The central **Go** service: REST API, authentication (SAML / OIDC / LDAP), RBAC, package and version lifecycle, build task orchestration, and integrations (e.g. MCP server, AI chat). It persists state in PostgreSQL and coordinates asynchronous builds and notifications.
+APIHUB used to live in separate repositories. Each one is now a folder of this repository. Imported tags keep
+the old prefix, and a module with a release group is released as `<prefix>/X.Y.Z`; `tests/ui-tests`,
+`tests/postman-collections`, and `backend/libraries-backend` have no release group. The product release uses a bare
+`X.Y.Z` tag.
 
-**Repository:** [qubership-apihub-backend](https://github.com/Netcracker/qubership-apihub-backend)
+| Old repository | Monorepo path | Tag prefix |
+|----------------|---------------|------------|
+| `qubership-apihub` | `/`, with `deploy/helm-templates` and `deploy/docker-compose` | none (`X.Y.Z`) |
+| `qubership-apihub-backend` | [`backend/portal-backend`](backend/portal-backend/) | `portal-backend/` |
+| `qubership-api-linter-service` | [`backend/api-linter-service`](backend/api-linter-service/) | `api-linter-service/` |
+| `qubership-apihub-agent` | [`backend/agent`](backend/agent/) | `agent/` |
+| `qubership-apihub-agents-backend` | [`backend/agents-backend`](backend/agents-backend/) | `agents-backend/` |
+| `qubership-apihub-test-service` | [`backend/test-service`](backend/test-service/) | `test-service/` |
+| `qubership-apihub-commons-go` | [`backend/commons-go`](backend/commons-go/) | `commons-go/` |
+| `qubership-apihub-libraries-backend` | [`backend/libraries-backend`](backend/libraries-backend/) | `libraries-backend/` |
+| `qubership-apihub-java-task-consumer` | [`backend/java-task-consumer`](backend/java-task-consumer/) | `java-task-consumer/` |
+| `qubership-apihub-ui` | [`frontend/ui`](frontend/ui/) | `ui/` |
+| `qubership-apihub-build-task-consumer` | [`frontend/build-task-consumer`](frontend/build-task-consumer/) | `build-task-consumer/` |
+| 13 TypeScript libraries (`api-diff`, `api-doc-viewer`, `api-processor`, `api-unifier`, `api-visitor`, `apispec-view`, `class-view`, `compatibility-suites`, `ddlapi`, `graphapi`, `http-spec`, `json-crawl`, `rest-playground`) | `frontend/<name>` | `<name>/` |
+| `qubership-apihub-ui-tests` | [`tests/ui-tests`](tests/ui-tests/) | `ui-tests/` |
+| `qubership-apihub-postman-collections` | [`tests/postman-collections`](tests/postman-collections/) | `postman-collections/` |
+| `qubership-apihub-jest-chrome-in-docker-environment` | [`tools/jest-chrome-in-docker-environment`](tools/jest-chrome-in-docker-environment/) | `jest-chrome-in-docker-environment/` |
+| The landing site (`netcracker.github.io`, `sites/apihub`) | [`sites/landing`](sites/landing/) | none |
+| The three wikis | [`docs/`](docs/README.md) | none |
 
-### Builder service
+## Run it
 
-Stateless **NestJS** workers pull build tasks, run the **api-processor** pipeline (parse → operations → normalize → diff → changelog / export), and return artifacts to the registry. Supports REST, GraphQL, AsyncAPI, Markdown, and unknown/generic documents.
-
-**Repository:** [qubership-apihub-build-task-consumer](https://github.com/Netcracker/qubership-apihub-build-task-consumer)
-
-### Web portal
-
-**React** + **MUI** + **Vite**: the main Dev Portal for browsing the catalog, comparing versions, viewing API quality, managing settings, and (separately) the **Agents** app for cluster discovery workflows.
-
-**Repository:** [qubership-apihub-ui](https://github.com/Netcracker/qubership-apihub-ui)
-
----
-
-## Extensions (typical delivery)
-
-### API Linter service
-
-Pluggable quality gate: **Spectral** for OpenAPI and AsyncAPI, optional **OpenAI**-based review for OpenAPI, plus **aggregated version scoring** exposed via the linter API. Subscribes to publish events so new versions are validated automatically.
-
-**Repository:** [qubership-api-linter-service](https://github.com/Netcracker/qubership-api-linter-service)
-
-### APIHUB Agents
-
-**Agents backend** registers and manages **APIHUB agents** deployed in customer clusters. Agents perform **service discovery** (OpenAPI, GraphQL, AsyncAPI, Markdown, JSON Schema, and more) and support snapshots and promotion flows.
-
-- [qubership-apihub-agents-backend](https://github.com/Netcracker/qubership-apihub-agents-backend)  
-- [qubership-apihub-agent](https://github.com/Netcracker/qubership-apihub-agent)
-
-More context: [Supplementary applications](https://github.com/Netcracker/qubership-apihub/wiki#supplementary-applications) on the wiki.
-
----
-
-## Documentation
-
-| | |
-|--|--|
-| **Hub (start here)** | [docs/README.md](./docs/README.md) — layered guides, Helm/Compose anchors, wiki links |
-| **Configuration map** | [docs/configuration-reference.md](./docs/configuration-reference.md) — files vs env vars vs Helm; template repos |
-| **Installation** | [docs/installation-guide.md](./docs/installation-guide.md) |
-| **Administration** | [docs/admin-guide.md](./docs/admin-guide.md) |
-| **User guide** | [docs/user-guide.md](./docs/user-guide.md) |
-| **Maintenance** | [docs/maintenance-guide.md](./docs/maintenance-guide.md) |
-| **Project history** | [docs/apihub-history.md](./docs/apihub-history.md) |
-| **Wiki** | [Qubership APIHUB Wiki](https://github.com/Netcracker/qubership-apihub/wiki) |
-
----
-
-## Deploy
-
-- **Helm** (production-oriented): see [deploy/helm-templates/README.md](./deploy/helm-templates/README.md) and [docs/installation-guide.md](./docs/installation-guide.md).
-- **Docker Compose** (dev/test): [deploy/docker-compose/apihub-generic/](./deploy/docker-compose/apihub-generic/).
-- **Local Kubernetes quickstart** (developers / R&D, not production): [deploy/helm-templates/local-k8s-quickstart/README.md](./deploy/helm-templates/local-k8s-quickstart/README.md).
-
----
-
-## AI agent configuration (APM)
-
-Agent context for deployment work is split between a **central store** and **this repository**:
-
-| Scope | Location |
-|-------|----------|
-| Generic skills/rules (planner, conventions, doc style) | [`qubership-apihub-ci/agent-packages`](https://github.com/Netcracker/qubership-apihub-ci/tree/main/agent-packages), [`qubership-ai-packages`](https://github.com/Netcracker/qubership-ai-packages/tree/main/agent-packages) |
-| Deployment-specific package | [`agent-packages/`](agent-packages/) |
-| Deployed harness output | `.cursor/` and `.claude/` (committed; refresh with APM) |
-
-From the repository root:
+You need Podman with the compose plugin (Docker Compose works too). From the repository root:
 
 ```bash
-apm install --target cursor,claude --legacy-skill-paths
+cd deploy/docker-compose/apihub-generic
+sed -i 's/:dev$/:latest/' docker-compose.yml
+sh generate_env_and_up_compose.sh
 ```
 
-See [`AGENTS.md`](AGENTS.md) and [`agent-packages/README.md`](agent-packages/README.md).
+The script prints a generated admin login and password and starts the stack with the released images. Open
+<http://localhost:8081/login> and sign in. The script rewrites the config files in place, so run `git restore .` in the
+folder before you commit. See the [installation guide](docs/installation-guide.md) for Helm and production settings.
 
----
+## Build it
 
-## Repository role
+Install Node 24, pnpm, Go, Java 21, and Maven 3.9 or newer. Every Nx command needs Java and Maven, even for
+TypeScript work. The [getting started guide](docs/development/getting-started.md) lists the versions and the Windows
+notes.
 
-This repository (**qubership-apihub**) is the **umbrella deployment project**: Helm charts, Compose stacks, and product-level documentation. Application source code lives in the component repositories linked above; reusable CI is in [qubership-apihub-ci](https://github.com/Netcracker/qubership-apihub-ci).
+```bash
+pnpm install
+pnpm exec nx run-many -t build
+```
 
----
+The [local run guide](docs/development/local-run.md) shows how to build the container images and start the stack
+with them.
 
-> **Qubership APIHUB** — align teams on APIs, ship changes with clarity.
+## Contribute
+
+Read [`CONTRIBUTING.md`](CONTRIBUTING.md), then start with the [developer guide](docs/development/README.md). It
+covers the workstation setup, the workflow, building and testing, debugging, CI, and AI assistants.
+
+## License and security
+
+APIHUB is licensed under the [Apache License 2.0](LICENSE). Report vulnerabilities as described in
+[`SECURITY.md`](SECURITY.md). Participation is governed by the [Code of Conduct](CODE-OF-CONDUCT.md).
