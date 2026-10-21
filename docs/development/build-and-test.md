@@ -141,13 +141,15 @@ Six components have a Storybook, which CI publishes to GitHub Pages. Start one l
 |---|---|---|
 | `api-doc-viewer` | `pnpm exec nx run api-doc-viewer:development:storybook` | `frontend/api-doc-viewer/dist-showcase` |
 | `apispec-view` | `pnpm exec nx run apispec-view:development:storybook` | `frontend/apispec-view/dist-showcase` |
-| `class-view` | `pnpm --filter @netcracker/qubership-apihub-class-view exec storybook dev -p 6006` | `frontend/class-view/dist-showcase` |
+| `class-view` | `pnpm --filter @netcracker/qubership-apihub-class-view run development:local-server` | `frontend/class-view/dist-showcase` |
 | `graphapi` | `pnpm exec nx run graphapi:storybook` | `frontend/graphapi/dist-showcase` |
 | `rest-playground` | `pnpm exec nx run rest-playground:storybook` | `frontend/rest-playground/dist-showcase` |
 | `ui` | `pnpm exec nx run ui-shared:storybook` | `frontend/ui/dist-showcase` |
 
-`pnpm exec nx run <project>:build:showcase` builds the static Storybook into the folder in the last column. The list
-of published Storybooks is [`tools/ci/storybooks.json`](../../tools/ci/storybooks.json).
+`pnpm exec nx run-many -t build:showcase -p <project>` builds the static Storybook into the folder in the last column.
+Use `run-many`: CI does the same, because Nx can read `nx run <project>:build:showcase` as the target `build` with the
+configuration `showcase`. The list of published Storybooks is
+[`tools/ci/storybooks.json`](../../tools/ci/storybooks.json).
 
 ## Screenshot tests
 
