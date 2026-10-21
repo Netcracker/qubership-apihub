@@ -123,7 +123,9 @@ MinIO/S3 endpoint CA stays in **`s3Storage.crt`** inside the backend config Secr
 ## 3. Compose — which file to edit
 
 Repository path: **[`deploy/docker-compose/apihub-generic/`](../deploy/docker-compose/apihub-generic/)** (standalone)
-and **`deploy/docker-compose/with-keycloak/`** (Keycloak SSO example).
+and **`deploy/docker-compose/with-keycloak/`** (Keycloak SSO example). The stack in
+**[`deploy/docker-compose/backend-debug/`](../deploy/docker-compose/backend-debug/)**
+runs everything except the backend, so that you can debug the backend from an IDE.
 
 | File | Service | Role |
 |------|---------|------|
@@ -159,12 +161,23 @@ These must stay **aligned across files/env**:
    **`deploy.resources.limits.memory`**. When you raise memory limits, update **`goMemLimit`** (Helm) or
    **`GOMEMLIMIT`** (Compose) in the same change.
 
+### MinIO (S3 storage)
+
+The backend can keep relatively large binary files, such as build results, in MinIO or any other S3-compatible
+storage. Enable it with **`s3Storage.enabled`** in the backend `config.yaml`, and set **`s3Storage.url`**,
+**`s3Storage.username`**, **`s3Storage.password`**, and **`s3Storage.bucketName`**. Set **`s3Storage.crt`** when the
+endpoint uses a private CA. **`s3Storage.storeOnlyBuildResult`** limits the storage to build results. The
+[`config.template.yaml`](../backend/portal-backend/config.template.yaml) describes every option.
+
+The backend reaches MinIO through the S3 API. You can also browse the buckets in the MinIO web console. Take the
+console credentials from the backend's Kubernetes secret if you have access to the cluster.
+
 ---
 
 ## 5. Where to drill deeper by topic
 
 | Topic | Prefer |
 |-------|--------|
-| Auth / SAML / OIDC model | Backend [security_model.md](../backend/portal-backend/docs/security/security_model.md), **`security.externalIdentityProviders`** in **`config.template.yaml`** |
-| Data retention / cleanup jobs | Backend **`cleanup`** section + [data_maintenance](../backend/portal-backend/docs/data_maintenance.md) |
-| End user workflows | Portal & Agents Markdown guides ([Portal User Guide](../frontend/ui/docs/Portal%20User%20Guide.md), [Agent User Guide](../frontend/ui/docs/Agent%20User%20Guide.md)) + [design items](design/) |
+| Auth / SAML / OIDC model | Backend [security-model.md](administration/security-model.md), **`security.externalIdentityProviders`** in **`config.template.yaml`** |
+| Data retention / cleanup jobs | Backend **`cleanup`** section + [data-maintenance](administration/data-maintenance.md) |
+| End user workflows | Portal & Agents Markdown guides ([Portal User Guide](user-guide/portal.md), [Agent User Guide](user-guide/agent.md)) + [design items](design/) |
