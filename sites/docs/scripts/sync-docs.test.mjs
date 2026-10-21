@@ -4,6 +4,7 @@ import {
   buildSidebar,
   contentPathOf,
   extractTitle,
+  githubRefFrom,
   isPageSource,
   plainTitle,
   rewriteLinks,
@@ -177,6 +178,24 @@ describe('link rewriting', () => {
     );
     assert.equal(url('../../../nx.json'), `${GH}/blob/develop/nx.json`);
     assert.equal(url('/backend/agent/'), `${GH}/tree/develop/backend/agent`);
+  });
+
+  it('points GitHub links at the ref of the tree, and edit links at develop', () => {
+    const onMain = { ...tree, ref: 'main' };
+    assert.equal(url('../../../backend/agent/README.md', from, onMain), `${GH}/blob/main/backend/agent/README.md`);
+    assert.equal(url('../../internal/', from, onMain), `${GH}/tree/main/docs/internal`);
+    assert.equal(url('/', from, onMain), `${GH}/tree/main`);
+    assert.equal(url('/nx.json', from, { ...tree, ref: 'release/2.x' }), `${GH}/blob/release/2.x/nx.json`);
+    const page = transformPage('a.md', '# A\n\n[agent](../backend/agent/README.md)\n', onMain);
+    assert.match(page.content, /^editUrl: ".*\/edit\/develop\/docs\/a\.md"$/m);
+    assert.match(page.content, /\[agent\]\(https:\/\/github\.com\/Netcracker\/qubership-apihub\/blob\/main\/backend\/agent\/README\.md\)/);
+  });
+
+  it('reads the ref of the GitHub links from DOCS_GITHUB_REF, develop when unset', () => {
+    assert.equal(githubRefFrom({ DOCS_GITHUB_REF: 'main' }), 'main');
+    assert.equal(githubRefFrom({ DOCS_GITHUB_REF: ' v2.16.0 ' }), 'v2.16.0');
+    assert.equal(githubRefFrom({ DOCS_GITHUB_REF: '' }), 'develop');
+    assert.equal(githubRefFrom({}), 'develop');
   });
 
   it('sends a non-image file of docs/ to GitHub', () => {

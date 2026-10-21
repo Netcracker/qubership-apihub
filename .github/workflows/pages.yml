@@ -121,8 +121,9 @@ jobs:
             echo "- docs site at the ref: $docs"
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
-      # A commit's build does not change, so the frequent Storybook dispatches reuse it. Bump the
-      # version in the key when the build recipe below changes.
+      # A commit's build does not change, so the frequent Storybook dispatches reuse it. The docs
+      # build also depends on the ref name, which its GitHub links show. Bump the version in the key
+      # when the build recipe below changes.
       - name: restore the landing build
         id: landing-cache
         uses: actions/cache@v6
@@ -136,7 +137,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ runner.temp }}/pages-dist/docs
-          key: pages-docs-v1-${{ steps.refs.outputs.site_sha }}
+          key: pages-docs-v2-${{ steps.refs.outputs.site_ref }}-${{ steps.refs.outputs.site_sha }}
 
       - name: what to build
         id: need
@@ -181,6 +182,8 @@ jobs:
           LANDING_SHA: ${{ steps.refs.outputs.landing_sha }}
           NEED_LANDING: ${{ steps.need.outputs.landing }}
           NEED_DOCS: ${{ steps.need.outputs.docs }}
+          # The docs site's links to GitHub files show the site's ref (sites/docs/README.md).
+          DOCS_GITHUB_REF: ${{ steps.refs.outputs.site_ref }}
           # The analysis of a cold Maven cache exceeds the plugin's 120 s default.
           NX_MAVEN_ANALYSIS_TIMEOUT: '400'
           PUPPETEER_SKIP_DOWNLOAD: '1'

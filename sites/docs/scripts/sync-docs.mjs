@@ -9,6 +9,7 @@ import { dirname, join, relative, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   contentPathOf,
+  githubRefFrom,
   isIndexSource,
   isPageSource,
   isPublished,
@@ -54,6 +55,7 @@ function makeTree(sources) {
       }
     },
     hasPage: (docsRel) => pages.has(docsRel),
+    ref: githubRefFrom(process.env),
   };
 }
 

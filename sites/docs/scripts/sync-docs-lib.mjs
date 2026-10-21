@@ -5,8 +5,17 @@ import { slug as githubSlug } from 'github-slugger';
 import { posix } from 'node:path';
 
 export const REPO_URL = 'https://github.com/Netcracker/qubership-apihub';
-// GitHub links (edit links, files outside docs/, docs/internal/) point at this branch.
-export const GITHUB_REF = 'develop';
+// Edit links always open develop, where changes land. The other GitHub links (files outside docs/,
+// docs/internal/) show the ref the site is built from: DOCS_GITHUB_REF, which pages.yml sets to the
+// site's ref (main or develop, or SITE_REF), and develop when it is unset.
+export const EDIT_REF = 'develop';
+export const DEFAULT_GITHUB_REF = 'develop';
+
+// The ref of the GitHub links from the environment of the build.
+export function githubRefFrom(env) {
+  const ref = (env.DOCS_GITHUB_REF || '').trim();
+  return ref || DEFAULT_GITHUB_REF;
+}
 export const BASE = '/qubership-apihub/docs';
 
 // Folders of docs/ that are not published (D18): docs/internal/ is for the team, docs/pages/ was the
@@ -90,12 +99,12 @@ function encodePath(repoRel) {
 }
 
 export function editUrl(docsRel) {
-  return `${REPO_URL}/edit/${GITHUB_REF}/docs/${encodePath(docsRel)}`;
+  return `${REPO_URL}/edit/${EDIT_REF}/docs/${encodePath(docsRel)}`;
 }
 
-export function githubUrl(repoRel, isDir) {
-  if (repoRel === '') return `${REPO_URL}/tree/${GITHUB_REF}`;
-  return `${REPO_URL}/${isDir ? 'tree' : 'blob'}/${GITHUB_REF}/${encodePath(repoRel)}`;
+export function githubUrl(repoRel, isDir, ref = DEFAULT_GITHUB_REF) {
+  if (repoRel === '') return `${REPO_URL}/tree/${encodePath(ref)}`;
+  return `${REPO_URL}/${isDir ? 'tree' : 'blob'}/${encodePath(ref)}/${encodePath(repoRel)}`;
 }
 
 // The public/ path of an asset: files of docs/ keep their path relative to docs/ (so
@@ -121,6 +130,7 @@ function safeDecode(text) {
 // fromRepoRel: the repository path of the page that holds the link (docs/admin-guide.md).
 // tree.isDir(repoRel): whether the path is a folder in the repository.
 // tree.hasPage(docsRel): whether docs/<docsRel> is a page source that the sync publishes.
+// tree.ref: the branch, tag, or commit that GitHub links show (DEFAULT_GITHUB_REF when unset).
 //
 // Returns { url } and, for an asset, { asset: { from, to } } (repository path, public/ path).
 export function rewriteUrl(raw, fromRepoRel, tree) {
@@ -161,7 +171,7 @@ export function rewriteUrl(raw, fromRepoRel, tree) {
       if (index) return { url: pageUrl(slugOf(index)) + hash };
     }
   }
-  return { url: githubUrl(repoRel, looksLikeDir) + query + hash };
+  return { url: githubUrl(repoRel, looksLikeDir, tree.ref) + query + hash };
 }
 
 // Reads a link destination that starts at text[start] (just after "(" of "](").
