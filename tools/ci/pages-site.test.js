@@ -139,6 +139,12 @@ test('legacyErdStub() redirects to erd/portal-backend/ with and without JavaScri
   assert.match(page, /http-equiv="refresh" content="0; url=\.\.\/\.\.\/erd\/portal-backend\/"/)
 })
 
+test('legacyErdStub(false) points at the ERD index when portal-backend has no render', () => {
+  const page = legacyErdStub(false)
+  assert.match(page, /location\.replace\("\.\.\/\.\.\/erd\/" \+ location\.search/)
+  assert.doesNotMatch(page, /portal-backend/)
+})
+
 test('parseArgs() requires the site, the landing, the ref, and the commit', () => {
   const o = parseArgs(['out', '--landing', 'l', '--ref', 'develop', '--commit', 'abc'])
   assert.equal(o.site, 'out')
