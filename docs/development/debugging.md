@@ -165,17 +165,24 @@ java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 \
 
 ## Storybook
 
-Six components publish a Storybook. Start one in dev mode from its folder, after `pnpm exec nx build <project>` has
-built the libraries it imports:
+Six components publish a Storybook. Build it once the way CI does; this also builds the workspace libraries it
+imports:
 
-| Component | Folder | Command | Port |
+```bash
+pnpm exec nx run-many -t build:showcase -p <project>
+```
+
+Use `run-many` here: Nx can read `nx run <project>:build:showcase` as the target `build` with the configuration
+`showcase`. Then start the Storybook in dev mode from its folder:
+
+| Project | Folder | Command | Port |
 |---|---|---|---|
 | `api-doc-viewer` | `frontend/api-doc-viewer/packages/api-doc-viewer` | `pnpm development:storybook` | 9099 |
 | `apispec-view` | `frontend/apispec-view/packages/elements` | `pnpm development:storybook` | 9099 |
 | `class-view` | `frontend/class-view` | `pnpm development:local-server` | 6006 |
 | `graphapi` | `frontend/graphapi` | `pnpm storybook` | 6006 |
 | `rest-playground` | `frontend/rest-playground` | `pnpm storybook` | 9001 |
-| `ui` | `frontend/ui/packages/shared` | `pnpm storybook` | 6006 |
+| `ui-shared` | `frontend/ui/packages/shared` | `pnpm storybook` | 6006 |
 
 Debug a story in the browser developer tools. The Storybook of every branch that CI ran on is published on GitHub
 Pages under `storybook/<component>/<branch>/`, so you can compare with `develop` without building it.
