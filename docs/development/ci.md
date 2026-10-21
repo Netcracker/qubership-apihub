@@ -165,7 +165,8 @@ suites from the branch that changes them. `tools/ci/e2e-image-tags.js` rejects a
 
 `pages.yml` publishes one site with the navigation page, the landing, the documentation, the Storybooks of every
 live branch, and the database ERDs. It deploys only from the default branch and only when the repository variable
-`PAGES_DEPLOY` is `true`. `erd.yml` renders the ERD of `portal-backend`, `api-linter-service`, and `agents-backend`
+`PAGES_DEPLOY` is `true`. Before the upload, lychee checks the internal links of the assembled site offline, and a
+broken one fails the run. `erd.yml` renders the ERD of `portal-backend`, `api-linter-service`, and `agents-backend`
 when their migrations change, stores the render in `ghcr.io`, and dispatches `pages.yml`. Run `erd.yml` by hand
 with `force` to render every backend again.
 

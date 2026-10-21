@@ -249,6 +249,39 @@ jobs:
             --landing-ref "$LANDING_REF" --landing-commit "$LANDING_SHA" \
             --budget-mib "$BUDGET_MIB"
 
+      # The link check resolves root-relative links (/qubership-apihub/...) under this folder, whose
+      # one entry is the site. The base is the repository name, as in the sites' configs.
+      - name: prepare the link check
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/pages-link-root"
+          ln -sfn "$RUNNER_TEMP/site" "$RUNNER_TEMP/pages-link-root/qubership-apihub"
+
+      # Fails the run on a broken internal link, so a broken site is never uploaded. Offline: only
+      # links to files of the site are checked. These are relative links, root-relative links, and
+      # the site's own https://netcracker.github.io/qubership-apihub/ URLs, remapped to the same
+      # files. A folder link needs its index.html, as on Pages. Not read: the Storybook builds and
+      # the SchemaSpy renders (generated; the index pages that link them are read), and the docs
+      # site's 404 page, whose canonical URL names a /docs/404/ page that does not exist.
+      - name: check the internal links of the site
+        uses: lycheeverse/lychee-action@v2.9.0
+        with:
+          lycheeVersion: v0.24.2
+          workingDirectory: ${{ runner.temp }}
+          token: ''
+          fail: true
+          args: >-
+            --offline
+            --no-progress
+            --index-files index.html
+            --root-dir '${{ runner.temp }}/pages-link-root'
+            --remap '^https://netcracker\.github\.io/qubership-apihub/(.*)$ file://${{ runner.temp }}/pages-link-root/qubership-apihub/$1'
+            --exclude-path '^site/storybook/[^/]+/[^/]+/'
+            --exclude-path '^site/erd/[^/]+/'
+            --exclude-path '^site/docs/404\.html$'
+            site
+
       - uses: actions/upload-pages-artifact@v5.0.0
         with:
           path: ${{ runner.temp }}/site
