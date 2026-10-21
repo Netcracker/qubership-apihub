@@ -4,7 +4,7 @@ const { execFileSync } = require('node:child_process')
 const path = require('node:path')
 const {
   detectBackends, orderMigrations, generatorFiles, computeKey, keyFormatOf, keyAt, databaseName, newestRender, renderIndex,
-  formatDate, selectGc, KEY_FORMAT,
+  formatDate, selectGc, hasHead, KEY_FORMAT,
 } = require('./erd')
 
 const TREE = 'cdc6312e2'.padEnd(40, '0')
@@ -266,4 +266,13 @@ test('renderIndex() marks an older render and a backend without one', () => {
 test('selectGc() keeps a version whose date it cannot read', () => {
   const { remove } = selectGc([ver(1, [K('a')], 'never'), ver(2, [K('b')], NEW)], new Set(), NOW)
   assert.deepEqual(remove, [])
+})
+
+test('hasHead() takes only the exact branch, not one whose name ends like it', () => {
+  const sha = 'f'.repeat(40)
+  assert.equal(hasHead(`${sha}\trefs/heads/main\n`, 'main'), true)
+  assert.equal(hasHead(`${sha}\trefs/heads/main\r\n`, 'main'), true)
+  assert.equal(hasHead(`${sha}\trefs/heads/feature/refs/heads/main\n`, 'main'), false)
+  assert.equal(hasHead(`${sha}\trefs/heads/x/refs/heads/main\n${sha}\trefs/heads/main\n`, 'main'), true)
+  assert.equal(hasHead('', 'develop'), false)
 })

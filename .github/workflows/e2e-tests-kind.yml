@@ -1,4 +1,4 @@
-name: Run E2E tests using Kind
+name: 'E2E: Kind'
 
 # E2E on a Kind cluster, with the product installed by its Helm charts: Newman over the REST API
 # (tests/postman-collections), then the Playwright Portal project (tests/ui-tests). Unlike compose,

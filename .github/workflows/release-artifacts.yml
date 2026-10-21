@@ -1,4 +1,4 @@
-name: Release artifacts
+name: 'Release: Artifacts'
 
 # Publishes a release that release-finish.yml pushed to main: the tags at the commit say what was released
 # (tools/release/artifacts.js). In this order, so every link in the notes exists when a release appears:

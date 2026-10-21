@@ -35,5 +35,5 @@ requirements.
 When contributing, keep in mind that it is an objective of `json-crawl` to have no package dependencies. This may change
 in the future, but for now, no-dependencies.
 
-Please run the unit tests before submitting your PR: `npm test`. Hopefully your PR includes additional unit tests to
+Please run the unit tests before submitting your PR: `pnpm exec nx run json-crawl:test`. Hopefully your PR includes additional unit tests to
 illustrate your change/modification!

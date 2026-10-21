@@ -552,6 +552,13 @@ function owner() {
   return (process.env.OWNER || registryBase().split('/').pop()).toLowerCase()
 }
 
+// Whether `git ls-remote --heads origin refs/heads/<branch>` output names exactly that branch.
+// ls-remote matches its pattern against the tail of each ref, so refs/heads/main also lists
+// refs/heads/x/refs/heads/main; only a line whose ref is the full name counts.
+function hasHead(listing, branch) {
+  return listing.split('\n').some((line) => line.replace(/\r$/, '').split('\t')[1] === `refs/heads/${branch}`)
+}
+
 // origin/<branch>, fetched when the checkout lacks it: trees only, and shallow only where the
 // checkout already is. Undefined when the remote has no such branch.
 function keptRef(branch) {
@@ -565,7 +572,7 @@ function keptRef(branch) {
     }
   }
   if (has()) return ref
-  if (!git('ls-remote', '--heads', 'origin', `refs/heads/${branch}`).trim()) return undefined
+  if (!hasHead(git('ls-remote', '--heads', 'origin', `refs/heads/${branch}`), branch)) return undefined
   const shallow = git('rev-parse', '--is-shallow-repository').trim() === 'true'
   git('fetch', '--no-tags', '--filter=blob:none', ...(shallow ? ['--depth=1'] : []), 'origin', `+refs/heads/${branch}:refs/remotes/${ref}`)
   if (!has()) throw new Error(`fetched ${branch} and still cannot resolve ${ref}`)
@@ -642,7 +649,7 @@ function gc(dry) {
 
 module.exports = {
   detectBackends, orderMigrations, generatorFiles, computeKey, keyFormatOf, keyAt, databaseName, newestRender, renderIndex,
-  formatDate, selectGc, KEY_FORMAT,
+  formatDate, selectGc, hasHead, KEY_FORMAT,
 }
 
 const USAGE = 'usage: erd.js backends <ref> | key <backend> <ref> | render <backend> <out> | assemble <site-erd-dir> <ref> [<name>] | gc [--dry-run]'

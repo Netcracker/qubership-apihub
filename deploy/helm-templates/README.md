@@ -1,11 +1,16 @@
 # Qubership APIHUB Helm Charts
 
-This folder contains `qubership-apihub` Helm chart for Qubership APIHUB deployment to k8s cluster.
+This folder contains the `qubership-apihub` Helm chart for deploying Qubership APIHUB to a Kubernetes cluster. The
+chart is ready for use. See the [installation guide](../../docs/installation-guide.md) and the
+[configuration reference](../../docs/configuration-reference.md), which shows which values become environment
+variables and which become `config.yaml` keys.
 
-It is ready for usage Helm chart. See [Qubership APIHUB Installation Notes](../../docs/installation-guide.md) and the [**configuration map**](../../docs/configuration-reference.md) (which values become env vs `config.yaml`).
+The APIHUB Agent has its own chart in
+[`backend/agent/helm-templates`](../../backend/agent/helm-templates/README.md).
 
 ## Dev cases
 
-Folder `local-k8s-quickstart` contains a set of scripts, guides and third-party charts which are intended for "single command" set up of lightweight k8s cluster on your PC with APIHUB and its dependecies (PG) in it. Helpful for Qubsership APIHUB developers and for RnD activities.
-
-Please refer to [Qubership APIHUB quickstart Installation on local k8s cluster](./local-k8s-quickstart)
+The `local-k8s-quickstart` folder contains scripts, guides, and third-party charts that set up a lightweight Kubernetes
+cluster on your PC with APIHUB and its dependencies (PostgreSQL) in a single command. It is meant for APIHUB developers
+and R&D work, not for production. See the [quickstart guide](./local-k8s-quickstart/README.md) and, for testing your own
+images, the [local run guide](../../docs/development/local-run.md#kind-quickstart).

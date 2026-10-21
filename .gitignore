@@ -1,6 +1,7 @@
 deploy/docker-compose/apihub-generic/data/**
 deploy/docker-compose/apihub-generic/jwt_private_key
 deploy/docker-compose/with-keycloak/data/**
+deploy/docker-compose/backend-debug/data/**
 deploy/docker-compose/with-keycloak/jwt_private_key
 deploy/docker-compose/with-gitlab/gitlab/**
 deploy/helm-templates/qubership-apihub/jwt_private_key
@@ -23,6 +24,9 @@ dist/
 .astro/
 # The landing copies these from docs/images/architecture/ before each build
 sites/landing/public/images/architecture/
+# The docs site copies these from docs/ before each build (sites/docs/scripts/sync-docs.mjs)
+sites/docs/src/content/docs/
+sites/docs/public/
 build/
 out/
 .nx/

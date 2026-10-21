@@ -10,7 +10,7 @@
   },
   "homepage": "https://github.com/Netcracker/qubership-apihub#readme",
   "private": true,
-  "description": "Third monorepo prototype: the 18 JavaScript components of APIHUB in one pnpm workspace. Local only, no remote, nothing published.",
+  "description": "Qubership APIHUB monorepo: every component, its deployment, and its docs.",
   "packageManager": "pnpm@12.4.2",
   "devDependencies": {
     "@nx-go/nx-go": "4.1.1",

@@ -1,25 +1,53 @@
-# qubership-apihub-agent
+# APIHUB agent
 
-qubership-apihub-agent is a golang application (microservice) providing the following features:
+The agent is a Go service that runs in a Kubernetes cluster and discovers the API specifications that the cluster's
+services expose: OpenAPI, GraphQL, AsyncAPI, JSON Schema, and Markdown documents. It calls the services through the
+Kubernetes API, so it needs the `ClusterView` permission. The `agents-backend` service of the product talks to the
+agent, and the Agents UI shows what it finds. The module ships the image `qubership-apihub-agent` and the
+`qubership-apihub-agent` Helm chart.
 
-- Designed for k8s deployment, requires ClusterView permissions
-- Using k8s API able to execute REST calls to any service
-- Discovers API specificiations (OpenAPI, GQL) exposed by services
-- Integrates with Qubership-APIHUB application via special plug-in - [agents-backend](../agents-backend/) which is included into default Qubsership-APIHUB delivery
+The agent is the Kubernetes side of the product; see the [architecture overview](../../docs/architecture/overview.md)
+and [`agents-backend`](../agents-backend/README.md), the plug-in that manages agents.
 
-## Arch diagramm
+## Build, test, and lint
 
-Please refer to Qubership-APIHUB Wiki [pages](https://github.com/Netcracker/qubership-apihub/wiki).
+The Nx project is `agent` (tag `lang:go`). Run from the repository root:
 
-## API specification disovery process and contracts
+```bash
+pnpm exec nx run agent:build
+pnpm exec nx run agent:test
+pnpm exec nx run agent:lint
+```
 
-Please refer to [design document](documentation/discovery_algorithm.md)
+`build` writes the binary to `dist/backend/agent`. `tidy` and `generate` are the other Go targets. How to set up the
+tools and what the targets do: [Getting started](../../docs/development/getting-started.md) and
+[Build and test](../../docs/development/build-and-test.md).
 
-## Installation
+## Run and debug locally
 
-Qubership APIHUB Agent is designed to work in k8s cluster only.
-Deployment to k8s is possible via Helm Chart. Please refer to [Installation Notes](./helm-templates/README.md)
+The agent needs a Kubernetes API, so it does not run in the Compose stacks. To run it outside a cluster, copy
+[`config.template.yaml`](config.template.yaml) to `config.yaml`, point it at a cluster and an APIHUB, and start
+`main.go` from this folder; `AGENT_CONFIG_FOLDER` names another folder for `config.yaml`. To run it in a local
+cluster, follow [Kind quickstart](../../docs/development/local-run.md#kind-quickstart) and
+[`local-k8s-values.yaml`](helm-templates/README.md#installation-to-local-k8s-cluster). Breakpoints in the IDE:
+[Debugging: Go service](../../docs/development/debugging.md#go-service).
 
-## Build
+## Configuration
 
-Run `pnpm exec nx run agent:build` from the repository root.
+The agent reads `config.yaml` from the working directory or from `AGENT_CONFIG_FOLDER`.
+[`config.template.yaml`](config.template.yaml) lists every parameter with its default. The product-wide view is in the
+[configuration reference](../../docs/configuration-reference.md). Helm values are in
+[`helm-templates/`](helm-templates/README.md).
+
+## API specifications
+
+The OpenAPI files of the agent are in [`docs/api/`](docs/README.md#api-specification): the admin API and two
+internal APIs.
+
+## Further reading
+
+- [Module documentation index](docs/README.md)
+- [Make a service discoverable by the agent](../../docs/user-guide/agent-discovery.md): discovery process, default
+  URLs, and the contract for service owners
+- [Agent user guide](../../docs/user-guide/agent.md)
+- [Helm chart installation](helm-templates/README.md)
