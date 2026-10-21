@@ -313,7 +313,10 @@ The Storybooks are pulled from the Storybook store and get what the rest of the 
 A missing ERD render never stops the site. When the store has no render for a backend at the site's commit (for
 example, `erd.yml` is still running or failed), `erd/` shows the newest render of that backend instead. Its card on
 `erd/index.html` says "Older render", and the run prints a warning. A backend with no render at all gets a card that
-says "Not rendered yet". To bring the ERD up to date, wait for `erd.yml` or run it on the branch.
+says "Not rendered yet". To bring the ERD up to date, wait for `erd.yml` or run it on `develop` or `main`; a run on
+another branch does not store its render. After a deploy, the `gc` job deletes the renders older than 30 days that are
+neither the key of `main` or `develop` nor the newest of their backend. A site pinned by `SITE_REF` to another ref
+then shows the newest render instead of its own.
 
 The workflows involved:
 
