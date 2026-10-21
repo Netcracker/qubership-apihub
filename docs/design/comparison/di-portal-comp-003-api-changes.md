@@ -295,4 +295,4 @@ Prefix for Grouping by Version has been configured for the package.
 
 ## Mockups
 
-![Standardized UI layout for API comparison pages](../../images/design/di-portal-comp-003-api-changes/1.svg)
+![Standardized UI layout for API comparison pages](../../images/design/di-portal-comp-003-api-changes/1.webp)

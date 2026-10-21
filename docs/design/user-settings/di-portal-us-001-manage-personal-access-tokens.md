@@ -159,4 +159,4 @@ After successful generation, the form is replaced by a read-only **Access token*
 
 ## Mockups
 
-<img alt="Personal access tokens" src="../../images/design/di-portal-us-001-manage-personal-access-tokens/1.svg" />
+<img alt="Personal access tokens" src="../../images/design/di-portal-us-001-manage-personal-access-tokens/1.webp" />
