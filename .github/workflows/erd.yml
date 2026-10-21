@@ -16,7 +16,7 @@
         type: boolean
         default: false
 
-name: Render database ERDs
+name: 'Pages: Database ERDs'
 
 # Renders the ERD of every backend that owns a database (tools/ci/erd.js): its SQL migrations on an
 # empty PostgreSQL, then SchemaSpy. Each render goes to ghcr as `erd-<backend>:mig-<key>`, where the

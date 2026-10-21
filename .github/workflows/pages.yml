@@ -20,7 +20,7 @@
   schedule:
     - cron: '17 3 * * *'
 
-name: Publish Pages
+name: 'Pages: Publish'
 
 # One queue for all branches, never cancelled: a deploy replaces the whole site. A newer pending run
 # replaces an older one, which is safe because every run assembles from the stores and the refs.

@@ -12,7 +12,7 @@
         type: boolean
         default: false
 
-name: Clean up images
+name: 'Images: Clean up'
 
 # Deletes the versions of the ci.yml images in ghcr that no branch or git tag of the monorepo, or of
 # the legacy repository the package links to, needs any more. Storybook packages have their own
