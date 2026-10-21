@@ -1,4 +1,4 @@
-name: Run E2E tests
+name: 'E2E: Run tests (manual)'
 
 # A full E2E run against images you name; it builds, publishes, and gates nothing. It replaces the two
 # umbrella workflows that called qubership-apihub-ci, and keeps their launch contract in nine inputs.

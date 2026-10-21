@@ -1,5 +1,5 @@
 ---
-name: MD Link Checker
+name: 'Lint: Markdown links'
 
 on:
   push: null

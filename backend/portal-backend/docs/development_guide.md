@@ -8,45 +8,17 @@ When using Cursor, Claude Code, or other coding agents on this repository:
 
 - Read [`AGENTS.md`](../AGENTS.md) at the repository root for agent-specific conventions (clarify before coding, **fail fast / root-cause bug fixes**, OpenAPI sync, migrations, documentation placement).
 - Claude Code loads the same instructions via [`CLAUDE.md`](../CLAUDE.md).
-- Generic packages come from `qubership-apihub-ci/agent-packages`; backend-specific sources live in this repo under `agent-packages/`. After changing packages or `apm.yml`, run `apm install --target cursor,claude --legacy-skill-paths` and commit refreshed `.cursor/` / `.claude/` trees (see root `README.md`).
+- Generic packages come from `qubership-apihub-ci/agent-packages`; backend-specific sources live in this repo under `agent-packages/`. After changing packages or `apm.yml`, run `apm install --target cursor,claude --legacy-skill-paths` and commit refreshed `.cursor/` / `.claude/` trees (see [AI assistants](../../../docs/development/ai-assistants.md)).
 - Helm charts and Postman E2E tests live in **other modules of this monorepo** — agents should remind you using
-  [`docs/agent/related-repositories.md`](agent/related-repositories.md).
+  [`backend/README.md`](../../README.md#follow-up-in-other-modules).
 
-This guide remains the source of truth for API-first design, logging, deprecation, and pull request conventions below.
+This guide remains the source of truth for logging and pull request conventions below. API-first design and
+deprecation are in the [API guidelines](../../../docs/development/api-guidelines.md).
 
 # API
 
-## Design
-
-Backend API development follows API-first approach.
-It means that we need to design and approve API before the implementation.
-REST API is an OpenAPI v3.0 document (see the `docs/api/` folder in this repository).
-
-## Changes
-
-We have an agreement that we should not introduce any breaking changes to public API.
-There's one small exception: if we know that the the only user is frontend and we can submit changes simultaneously with FE team.
-
-In case of breaking changes we need to create new version of endpoint
-
-e.x. "/api/v2/packages/{packageId}/versions/{version}/references" -> "/api/v3/packages/{packageId}/versions/{version}/references"
-
-Then, old endpoint should be marked as deprecated in specification and code.
-See "Code Deprecation policy" chapter for details
-
-Non-breaking(additive) changes could be made without any synchronization with frontend.
-
-## API review
-
-API changes should be made is a separate branch.
-
-API should be published to Apihub for review and linked to the BA, BE and FE ticket's description.
-
-Since we treat API as a code we should apply the same review procedure. I.e. create merge request(which contains ticket name) and ask(BA, BE and FE teams) for review. MR with API changes should contain gitlab label 'API'.
-
-Need to make sure that the API was reviewed(confirm with BE, FE teams) and all comments resolved, then add label api_approved to the ticket.
-
-BA ticket branch should be merged to BE ticket branch before merging to develop.
+The API rules (design, changes, deprecation, review) moved to
+[`docs/development/api-guidelines.md`](../../../docs/development/api-guidelines.md).
 
 # Code
 
@@ -71,13 +43,6 @@ e.x. `getOperation(packageId string, version string, operationId string, searchR
 ## Constants naming convention
 
 TODO
-
-## Deprecation policy
-
-deprecated methods/functions should be appended with '\_deprecated' postfix.
-Use case:
-New version of endpoint is required to avoid API breaking changes(e.x. payload fields was updated).
-Need to rename existing controller/service/view to \*\_deprecated and add new one with proper name.
 
 ## Logging
 
@@ -180,7 +145,7 @@ TODO: append
 
 ## Logs to file
 
-After [PR #132](https://github.com/Netcracker/qubership-apihub-backend/pull/132/files) backend doesn;t write logs if run from IDE.
+After [PR #132](https://github.com/Netcracker/qubership-apihub-backend/pull/132/files) backend doesn't write logs if run from IDE.
 
 You must set `LOG_FILE_PATH=/logs/apihub.log` or any other path to log file. Root directory must be `rwx` for owner of the process.
 
