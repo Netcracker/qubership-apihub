@@ -66,7 +66,7 @@ git clone https://github.com/Netcracker/qubership-apihub.git
 cd qubership-apihub
 ```
 
-The working tree has about 16,600 files. The default branch is `develop`.
+The default branch is `develop`.
 
 ## Install
 
@@ -80,8 +80,8 @@ This installs the dependencies of all 35 workspace projects into one `node_modul
 [`patches/`](../../patches/). Never run `npm install` inside a module: there is one lockfile, `pnpm-lock.yaml` at the
 root, and pnpm always installs the whole workspace.
 
-On a machine whose pnpm store already holds the packages, the install takes about 10 minutes on Windows and copies
-nothing from the network. The first install on a new machine also downloads about 5,300 packages.
+The install takes minutes, not seconds, on a cold clone. If the pnpm store already holds the packages, nothing
+comes from the network.
 
 `pnpm install` does not run dependency build scripts. Each one is listed and denied under `allowBuilds` in
 [`pnpm-workspace.yaml`](../../pnpm-workspace.yaml), so Puppeteer downloads no Chrome and husky installs no Git hooks.
@@ -91,9 +91,8 @@ there.
 ## First build and test
 
 Nx runs every build and test, whatever the language. Before it runs anything, Nx builds the project graph, and the
-Maven plugin analyzes the `pom.xml` files for it. On a fresh clone on a Windows laptop the first command took about
-ten minutes before it printed anything, and later ones one to three minutes. The Nx daemon keeps the graph between
-commands.
+Maven plugin analyzes the `pom.xml` files for it. On a cold clone the first command takes minutes before it prints
+anything. The Nx daemon keeps the graph between commands, so later ones start faster.
 
 List the projects:
 
@@ -115,8 +114,8 @@ pnpm exec nx run java-task-consumer:build
 ```
 
 A green run ends with `Successfully ran targets build, test for 2 projects` and a summary of the run. The TypeScript
-line also builds `ddlapi` and `graphapi`, which `api-unifier` depends on; its tests take the longest, about ten minutes
-on a laptop. TypeScript output lands in each project's `dist/`, Go binaries in `dist/backend/<name>`.
+line also builds `ddlapi` and `graphapi`, which `api-unifier` depends on; its tests take the longest. TypeScript
+output lands in each project's `dist/`, Go binaries in `dist/backend/<name>`.
 [Build and test](./build-and-test.md) covers the other targets.
 
 If the first command fails with a Maven analysis timeout, set `NX_MAVEN_ANALYSIS_TIMEOUT=400` (seconds) and run it
@@ -151,6 +150,19 @@ Nx caches the result of every cacheable target. A second run of the same command
 - **Containers.** The screenshot tests start Chrome in a container through the `podman` command. Install Podman
   Desktop with its WSL machine; set `DOCKER_BINARY=docker` to use Docker instead. [Build and test](./build-and-test.md)
   has the details.
+
+## Nx hangs or times out
+
+Symptoms: a command prints nothing for many minutes, or fails with a timeout from the daemon or from a plugin worker.
+It happens when many Nx processes run at once, for example several worktrees or agents, and on Windows under load.
+
+1. Run `pnpm exec nx reset` to stop the daemon and clear its state.
+2. Run the command again with the daemon off: `NX_DAEMON=false pnpm exec nx show projects`.
+3. If a plugin worker still times out, also turn off plugin isolation:
+   `NX_DAEMON=false NX_ISOLATE_PLUGINS=false pnpm exec nx show projects`.
+
+In PowerShell, set the variables with `$env:NX_DAEMON = 'false'` and `$env:NX_ISOLATE_PLUGINS = 'false'`. Both
+settings trade speed for stability: without the daemon, every command rebuilds the project graph.
 
 ## IDE hints
 
