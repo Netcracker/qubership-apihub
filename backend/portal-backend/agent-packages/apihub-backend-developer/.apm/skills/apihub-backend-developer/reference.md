@@ -26,7 +26,6 @@ See `backend/README.md`, section "Follow-up in other modules". Agents cannot edi
 | New/changed REST API | Postman collection repo + `docs/api/*.yaml` |
 | New auth or error contract | Postman assertions |
 
-
 ## Error codes (`exception/ErrorCodes.go`)
 
 **Good:**

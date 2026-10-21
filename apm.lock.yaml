@@ -1,5 +1,5 @@
 lockfile_version: '1'
-generated_at: '2026-10-21T10:36:51.973665+00:00'
+generated_at: '2026-10-21T11:34:03.940901+00:00'
 apm_version: 0.27.0
 dependencies:
 - repo_url: _local/advanced-verification
@@ -344,12 +344,12 @@ dependencies:
   deployed_file_hashes:
     .claude/rules/apihub-backend-developer.md: sha256:fd800c06671a67cb56036468ff33769fb3bf6d5707d96e0fecbd3cabd799fd65
     .claude/skills/apihub-backend-developer/SKILL.md: sha256:591e46b9b2f9a53fa6dd99831439d1438a57f7c576001ef047cd3897b2c2c084
-    .claude/skills/apihub-backend-developer/reference.md: sha256:90ea33bdbb88ea1a3de1ac5524647ec2d9ec2ba007c4ac18e407a10582733176
+    .claude/skills/apihub-backend-developer/reference.md: sha256:7d8af2f2baf8958646ece341e3c6de87aceadf4cf8fe9398bad8569ea3468edb
     .claude/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1: sha256:4edd0d19b16a9b9025aecdc8df09045ae92ceda3a619c7f96ab0ca1d0ec3c0ad
     .claude/skills/apihub-backend-developer/scripts/check_migration_numbers.sh: sha256:e51db198ad16afe9b7ed9e6d88de587d50b79de647856f0cf5d3e8eca89126f6
     .cursor/rules/apihub-backend-developer.mdc: sha256:42205a3c357ed01a4d145439f83e4b21a5894ef5f5b0b179ffac044eb80564ad
     .cursor/skills/apihub-backend-developer/SKILL.md: sha256:591e46b9b2f9a53fa6dd99831439d1438a57f7c576001ef047cd3897b2c2c084
-    .cursor/skills/apihub-backend-developer/reference.md: sha256:90ea33bdbb88ea1a3de1ac5524647ec2d9ec2ba007c4ac18e407a10582733176
+    .cursor/skills/apihub-backend-developer/reference.md: sha256:7d8af2f2baf8958646ece341e3c6de87aceadf4cf8fe9398bad8569ea3468edb
     .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1: sha256:4edd0d19b16a9b9025aecdc8df09045ae92ceda3a619c7f96ab0ca1d0ec3c0ad
     .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.sh: sha256:e51db198ad16afe9b7ed9e6d88de587d50b79de647856f0cf5d3e8eca89126f6
   source: local
@@ -1707,7 +1707,7 @@ deployments:
   owners:
   - ./backend/portal-backend/agent-packages/apihub-backend-developer
   active_owner: ./backend/portal-backend/agent-packages/apihub-backend-developer
-  content_hash: sha256:90ea33bdbb88ea1a3de1ac5524647ec2d9ec2ba007c4ac18e407a10582733176
+  content_hash: sha256:7d8af2f2baf8958646ece341e3c6de87aceadf4cf8fe9398bad8569ea3468edb
 - kind: project-relative
   target: claude
   value: .claude/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1
@@ -2994,7 +2994,7 @@ deployments:
   owners:
   - ./backend/portal-backend/agent-packages/apihub-backend-developer
   active_owner: ./backend/portal-backend/agent-packages/apihub-backend-developer
-  content_hash: sha256:90ea33bdbb88ea1a3de1ac5524647ec2d9ec2ba007c4ac18e407a10582733176
+  content_hash: sha256:7d8af2f2baf8958646ece341e3c6de87aceadf4cf8fe9398bad8569ea3468edb
 - kind: project-relative
   target: cursor
   value: .cursor/skills/apihub-backend-developer/scripts/check_migration_numbers.ps1

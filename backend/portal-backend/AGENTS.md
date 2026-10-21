@@ -109,6 +109,7 @@ env changes, update them in the same change; the checklists are in
 `apihub-deployment-followup` and `postman-e2e-followup`.
 
 Include a short **Related modules** subsection in your completion summary.
+
 ## Repository layout (minimal orientation)
 
 | Area | Location |
