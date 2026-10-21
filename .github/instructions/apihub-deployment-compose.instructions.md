@@ -1,7 +1,0 @@
----
-description: Docker Compose deployment stacks for qubership-apihub.
-applyTo: "deploy/docker-compose/**"
----
-
-When editing Compose stacks, env files, backend YAML mounts, or helper scripts under
-`deploy/docker-compose/`, apply the `apihub-deployment-authoring` skill.

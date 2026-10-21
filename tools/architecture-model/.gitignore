@@ -1,0 +1,9 @@
+# Generated output; regenerate with the scripts described in README.md
+*.pptx
+*.drawio
+*.archimate
+png/
+png_slides/
+model.json
+capability/APIHUB_capability_architecture.md
+__pycache__/

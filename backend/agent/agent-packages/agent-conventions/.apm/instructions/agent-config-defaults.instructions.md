@@ -1,6 +1,6 @@
 ---
 description: Agent config defaults and validation conventions
-applyTo: **/*.go
+applyTo: "backend/agent/**/*.go"
 ---
 
 # Agent Configuration Defaults

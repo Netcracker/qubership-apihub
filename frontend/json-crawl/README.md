@@ -1,13 +1,14 @@
 # qubership-apihub-json-crawl
 
-This package provides utility functions for crawling/cloning json objects like a tree
+This package provides utility functions for crawling/cloning JSON objects like a tree
 
 ## Modifications
+
 Modified version of [json-crawl](https://github.com/udamir/json-crawl)
 
--	responsibility of dealing with cycled JSO moved back from json-crawl to client code
--	introduced afterHooks hook
--	small fixes in typings
+- responsibility of dealing with cycled JSO moved back from json-crawl to client code
+- introduced afterHooks hook
+- small fixes in typings
 
 ## Purpose
 
@@ -34,5 +35,5 @@ requirements.
 When contributing, keep in mind that it is an objective of `json-crawl` to have no package dependencies. This may change
 in the future, but for now, no-dependencies.
 
-Please run the unit tests before submitting your PR: `npm test`. Hopefully your PR includes additional unit tests to
+Please run the unit tests before submitting your PR: `pnpm exec nx run json-crawl:test`. Hopefully your PR includes additional unit tests to
 illustrate your change/modification!

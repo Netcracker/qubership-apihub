@@ -1,6 +1,6 @@
 ---
 description: Conventions for integrating api-doc-viewer in application UI.
-applyTo: "**/*.{ts,tsx}"
+applyTo: "frontend/api-doc-viewer/**/*.{ts,tsx},frontend/ui/**/*.{ts,tsx}"
 ---
 
 When integrating `@netcracker/qubership-apihub-api-doc-viewer` components into

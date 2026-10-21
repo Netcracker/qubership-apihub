@@ -24,7 +24,7 @@ import (
 // the same place because the Dockerfile copies the static tree verbatim.
 //
 // Downstream images that need to customise templates can COPY their own files over this path;
-// see docs/static_resources_customization.md for the full customisation contract.
+// see docs/administration/static-resources-customization.md for the full customisation contract.
 const mcpAssetsRootDir = "./static/templates/resources/mcp"
 
 const (

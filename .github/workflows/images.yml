@@ -1,4 +1,4 @@
-name: Build images
+name: 'Images: Build'
 
 # Builds an image only when its content hash is new, and otherwise retags the existing one
 # (tools/ci/image-input-hash.sh computes the hash). ci.yml calls this workflow once per language,

@@ -1,6 +1,6 @@
 ---
 description: main.go wiring conventions for qubership-apihub-backend
-applyTo: **/*.go
+applyTo: "backend/portal-backend/**/*.go"
 ---
 
 # main.go Wiring

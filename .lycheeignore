@@ -2,6 +2,7 @@
 ^.*xmlsoap.org
 host.docker.internal
 ^.*localtest.me
+^.*stoplight.io
 
 # APM-deployed agent harness (upstream package markdown)
 ^\.cursor/
@@ -10,3 +11,11 @@ host.docker.internal
 ^\.github/instructions/
 ^\.github/skills/
 ^\.github/prompts/
+# Reject the CI runner: npm answers 403 (bot protection), the Ubuntu wiki answered 404 in PR 876 although it opens in a browser
+^https://www\.npmjs\.com/package/libpg-query
+^https://help\.ubuntu\.com/community/EnvironmentVariables
+# The Pages site of this repository goes live at the Pages switch, after the stack merge (step 9). Remove this
+# line after the switch.
+^https://netcracker\.github\.io/qubership-apihub/
+# Internal APIHUB instance cited in a design page; it is not reachable from the CI runner.
+^https://apihub\.netcracker\.com/

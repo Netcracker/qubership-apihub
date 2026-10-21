@@ -1,0 +1,21 @@
+---
+/** A captioned, click-to-zoom diagram. The lightbox handler lives in `Layout.astro`. */
+import { withBase } from '../lib/paths';
+
+export interface Props {
+  src: string;
+  alt: string;
+  caption: string;
+}
+
+const { src, alt, caption } = Astro.props;
+---
+
+<figure class="my-8 rounded-2xl overflow-hidden border border-slate-800">
+  <figcaption class="px-4 py-2.5 bg-slate-900/70 border-b border-slate-800 flex items-center gap-2.5">
+    <span class="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"></span>
+    <span class="text-xs text-slate-500">{caption}</span>
+    <span class="ml-auto text-[10px] text-slate-700 uppercase tracking-widest hidden sm:inline">Click to zoom</span>
+  </figcaption>
+  <img src={withBase(src)} alt={alt} class="w-full h-auto block bg-[#050813]" loading="lazy" data-lightbox />
+</figure>

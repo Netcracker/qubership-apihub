@@ -115,7 +115,7 @@ application role and database are still running against a Unix socket. Poll with
 user instead. Do not use the compose file under the local-development documentation as written — it mounts the
 current directory as the data directory and writes a database into the working tree.
 
-## Do not guess a file name from a type name
+## Do not guess a filename from a type name
 
 Several implementations share one file, and the file is named after the domain rather than after any one type. Locate
 a handler or a service by grepping for its receiver or method name across the layer directory. Guessing a path from

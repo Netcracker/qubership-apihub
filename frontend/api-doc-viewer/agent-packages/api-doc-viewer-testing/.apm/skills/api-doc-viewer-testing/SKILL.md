@@ -1,5 +1,5 @@
 ---
-description: Write api-doc-viewer screenshot integration tests against Storybook stories and sample fixtures.
+description: Write api-doc-viewer screenshot integration tests against Storybook stories and sample fixtures. Use when adding or changing stories, samples, IT test files, or screenshot baselines in frontend/api-doc-viewer.
 ---
 
 # Testing api-doc-viewer
@@ -32,16 +32,16 @@ From `packages/api-doc-viewer/`:
 
 | Script | Purpose |
 | --- | --- |
-| `npm test` | Unit tests only |
-| `npm run generate-stories` | Regenerate **compatibility-suite only** (`*.generated.stories.tsx`) |
-| `npm run generate-tests` | Regenerate **compatibility-suite only** (`*.generated.it-test.ts`) |
-| `npm run screenshot-test` | Build showcase, start static server, run IT config |
-| `npm run regenerate-screenshots` | Same as above with `--updateSnapshot` |
+| `pnpm test` | Unit tests only |
+| `pnpm run generate-stories` | Regenerate **compatibility-suite only** (`*.generated.stories.tsx`) |
+| `pnpm run generate-tests` | Regenerate **compatibility-suite only** (`*.generated.it-test.ts`) |
+| `pnpm run screenshot-test` | Build showcase, start static server, run IT config |
+| `pnpm run regenerate-screenshots` | Same as above with `--updateSnapshot` |
 
-Root monorepo: `npm run screenshot-test` runs via Lerna.
+From the repository root use `pnpm exec nx run api-doc-viewer:screenshot-test`.
 
 **`generate-stories` / `generate-tests` (mandatory):** in `packages/api-doc-viewer/package.json`
-these npm scripts must call **only** `generate-compatibility-suite-stories.mjs` and
+these package scripts must call **only** `generate-compatibility-suite-stories.mjs` and
 `generate-compatibility-suite-tests.mjs`. Never add other `bin/generate-*.mjs` there. All
 other suites are **persistent** committed sources; run their generators explicitly when
 fixtures change, then commit the output.
@@ -56,9 +56,9 @@ Chrome). Setup and snapshot tuning are in `.jest/setup.tests.ts`
 `prepareJestConfig` from `@netcracker/qubership-apihub-jest-chrome-in-docker-environment` —
 **"legacy" does not mean "no Docker required"**; there is no non-Docker IT config in this repo.
 When Docker isn't available in the current environment, you cannot run the real screenshot
-suite or generate baseline PNGs. Fall back to: `npm run build:showcase` (or
+suite or generate baseline PNGs. Fall back to: `pnpm run build:showcase` (or
 `node bin/generate-json-schema-…` + `storybook build`), serve `dist-showcase/` on port 9009
-(`npx ws -p 9009 -d ../../dist-showcase --spa index.html`), and visually check the new/changed
+(`pnpm exec ws -p 9009 -d ../../dist-showcase --spa index.html`), and visually check the new/changed
 story ids in a browser — this verifies the story renders and the fixture content displays
 correctly, but it is **not** a substitute for the real IT run; say so explicitly and leave
 actual snapshot generation for an environment with Docker.
@@ -67,11 +67,11 @@ actual snapshot generation for an environment with Docker.
 [test-run] [suite]` (e.g. `regenerate json-schema-diffs-suite description-changes`) wraps the
 build-showcase → start-static-server → jest pipeline for one suite, so you don't have to
 hand-build a `--testPathPatterns`/file-path Jest target. Prefer it over constructing the
-`npx jest … src/it/…` invocation by hand for a single suite; drop to raw Jest only when you
+`pnpm exec jest … src/it/…` invocation by hand for a single suite; drop to raw Jest only when you
 need flags it doesn't expose (e.g. `--maxWorkers 1 --verbose` against a suite already running).
 The `ddlapi-compatibility-suite` test run (`regenerate ddlapi-compatibility-suite [column|column-type|constraints|table]`)
 targets the gitignored `src/it/compatibility-suite/ddlapi-compatibility-suite-*.generated.it-test.ts`;
-the runner calls `npm run generate-tests` before Jest for it in both modes (and generates the
+the runner calls `pnpm run generate-tests` before Jest for it in both modes (and generates the
 files up front when they are missing). Add further spec types to `COMPATIBILITY_TEST_RUN_IDS`.
 
 ## Screenshot test troubleshooting (read first)
@@ -83,8 +83,8 @@ before changing timeouts, workers, or snapshot thresholds.
 
 | Host | Port | Used by |
 | --- | --- | --- |
-| Static showcase | **9009** | `npm run screenshot-test` / ITs (`storybook-functions.ts` `host()`) |
-| Dev Storybook | **9099** | `npm run development:storybook` (manual inspection) |
+| Static showcase | **9009** | `pnpm run screenshot-test` / ITs (`storybook-functions.ts` `host()`) |
+| Dev Storybook | **9099** | `pnpm run development:storybook` (manual inspection) |
 
 ITs open **`iframe.html?id={storyId}&viewMode=story`** on port 9009 (Docker Chrome uses
 `host.docker.internal:9009`). Dev manager URLs use `?path=/story/...` on 9099 — a story
@@ -175,12 +175,12 @@ while the suite runs. `column-type-changes.it-test.ts` (127 cases) can take
 
 ```bash
 cd packages/api-doc-viewer
-npx jest --maxWorkers 1 --verbose -c .config/it/it-test-docker.jest.config.cjs \
+pnpm exec jest --maxWorkers 1 --verbose -c .config/it/it-test-docker.jest.config.cjs \
   src/it/ddlapi-diffs-suite/column-type-changes.it-test.ts
 ```
 
-(Requires static showcase on 9009 — e.g. run `npm run development:local-server:static`
-in another terminal, or use full `npm run screenshot-test` which starts it automatically.)
+(Requires static showcase on 9009 — e.g. run `pnpm run development:local-server:static`
+in another terminal, or use full `pnpm run screenshot-test` which starts it automatically.)
 
 ### Viewer mount waits (`src/it/service/viewer-waits.ts`)
 
@@ -237,16 +237,16 @@ Helpers in `src/it/service/`:
 ## Generated vs hand-written suites
 
 **Filename rule:** `.gitignore` excludes `*.generated.*`. Use that suffix **only**
-when stories or tests are driven by samples from the **external**
-[`Netcracker/qubership-apihub-compatibility-suites`](https://github.com/Netcracker/qubership-apihub-compatibility-suites)
-repo (compatibility-suite `*.generated.stories.tsx` /
+when stories or tests are driven by samples from the sibling
+`frontend/compatibility-suites` module
+(compatibility-suite `*.generated.stories.tsx` /
 `*.generated.it-test.ts`).
 
 **In-repo** bin scripts and utilities must **not** emit `.generated.ts`,
 `.generated.stories.tsx`, or `.generated.it-test.ts` — those names are gitignored and
 the output is internal, not external. Write normal committed filenames instead (e.g.
 `value-range-diff-case-definitions.ts`, `number-validation-value-range.stories.tsx`).
-See root `AGENTS.md` — **Generated filenames**.
+See `frontend/api-doc-viewer/AGENTS.md` — **Generated filenames**.
 
 Local fixture suites (JSO, AsyncAPI, DDL, JSON Schema diffs under `packages/samples/`)
 use plain `*.it-test.ts` / `*.stories.tsx` / `*.ts` even when a bin script regenerates them.
@@ -259,7 +259,7 @@ use plain `*.it-test.ts` / `*.stories.tsx` / `*.ts` even when a bin script regen
   `src/it/compatibility-suite/*.generated.it-test.ts`.
 
 **Regenerated from local samples** (persistent committed output — run generators **explicitly**,
-not via `npm run generate-stories` / `generate-tests`; do not edit output by hand except when
+not via `pnpm run generate-stories` / `generate-tests`; do not edit output by hand except when
 the generator is wrong):
 
 - DDL API suites — `node bin/generate-ddl-suite-stories.mjs` and
@@ -280,7 +280,7 @@ the generator is wrong):
 
 **Runner:** generators that import `src/stories/**/*.ts` (combiner, value-range, validation
 suites) fail under plain `node` with `ERR_MODULE_NOT_FOUND` on extensionless TS imports such as
-`../shared/value-range-schema-builder`. Run them with `npx jiti bin/<generator>.mjs` (jiti is a
+`../shared/value-range-schema-builder`. Run them with `pnpm exec jiti bin/<generator>.mjs` (jiti is a
 root dev dependency).
 
 **Shared story helpers — reuse, do not copy:**
@@ -349,7 +349,7 @@ rather than assuming the literal list is the complete requirement.
   `packages/samples/`, export a story, and append a matching `it(...)` with
   the correct story ID.
 
-Run `npm run generate-stories` / `npm run generate-tests` before screenshot runs **only when
+Run `pnpm run generate-stories` / `pnpm run generate-tests` before screenshot runs **only when
 compatibility-suite fixtures changed**. For DDL, JSON Schema, or other local sample changes,
 run the relevant `node bin/generate-*.mjs` explicitly and commit the updated stories/ITs.
 
@@ -447,7 +447,7 @@ After adding a case, update:
 2. Story export in `column-changes-except-types.stories.tsx`.
 3. Matching `it(...)` in `column-changes-except-types.it-test.ts`.
 4. Group case count in `packages/samples/ddlapi-diffs/README.md` if the total changed.
-5. Screenshot snapshots via `npm run regenerate-screenshots`.
+5. Screenshot snapshots via `pnpm run regenerate-screenshots`.
 
 For other diff groups that still use sequential ids, inserting mid-group requires
 renumbering every downstream case (+1 or +2), then updating stories, IT files, and snapshots.
@@ -484,7 +484,7 @@ Stories glob fixtures, merge with `prepareJsonDiffSchema()`, and render through
 1. YAML pair under the appropriate suite subdirectory.
 2. Story export in the matching `*.stories.tsx`.
 3. Matching `it(...)` in the paired `src/it/json-schema-diffs-hiding-unchanged-nodes-suite.*.it-test.ts`.
-4. Screenshot snapshots via `npm run regenerate-screenshots`.
+4. Screenshot snapshots via `pnpm run regenerate-screenshots`.
 
 ## Flaky rendering
 
@@ -498,7 +498,7 @@ when new stories show timing-related snapshot drift.
 **A screenshot test can pass cleanly against a correct baseline while the code
 it captured is visibly broken.** This is not a staleness or environment issue —
 it is a property of `pixelmatch`'s perceptual color-distance threshold versus
-this repo's diff row-background colors, which are deliberately very pale:
+this module's diff row-background colors, which are deliberately very pale:
 
 ```
 --diffs-background-yellow: rgb(254, 252, 232)
@@ -573,7 +573,7 @@ and data test boundaries separate.
 
 ## Viewer-side unit tests and CSS imports (session lesson)
 
-`packages/api-doc-viewer/tests/*.test.ts` runs plain Jest (`npm test`), not the IT/Puppeteer
+`packages/api-doc-viewer/tests/*.test.ts` runs plain Jest (`pnpm test`), not the IT/Puppeteer
 config — and Jest's default transform does not parse `.css`. Many viewer `.tsx` components
 transitively import CSS several hops away from the file you're testing (e.g.
 `SchemaNodePlainContent.tsx` → `AdditionalInfoRow` → `DiffFloatingBadgeWrapper` →

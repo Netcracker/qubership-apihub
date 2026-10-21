@@ -1,6 +1,15 @@
 {
   "name": "@netcracker/qubership-apihub-api-diff",
   "version": "4.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Netcracker/qubership-apihub.git",
+    "directory": "frontend/api-diff"
+  },
+  "bugs": {
+    "url": "https://github.com/Netcracker/qubership-apihub/issues"
+  },
+  "homepage": "https://github.com/Netcracker/qubership-apihub/tree/main/frontend/api-diff#readme",
   "module": "./dist/index.es.js",
   "main": "./dist/index.cjs.js",
   "types": "./dist/index.d.ts",

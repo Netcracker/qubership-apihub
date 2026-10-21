@@ -1,10 +1,10 @@
 ---
-description: Review a just-finished api-doc-viewer session for unexpected behavior, ambiguous requirements, or doc/reality drift, then update the canonical agent-packages skill docs.
+description: Review a just-finished api-doc-viewer session for unexpected behavior, ambiguous requirements, or doc/reality drift, then update the canonical agent-packages skill docs. Use at the end of a non-trivial api-doc-viewer task, on request.
 ---
 
 # Reviewing an api-doc-viewer session
 
-Use this after finishing a non-trivial task in this repository — on request,
+Use this after finishing a non-trivial task in this module — on request,
 or proactively before ending a session that involved real exploration,
 debugging, or back-and-forth with the user.
 

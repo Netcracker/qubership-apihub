@@ -1,7 +1,7 @@
 ---
 description: Skill trigger for writing or changing api-processor tests or test helpers.
-applyTo: "test/**/*.ts"
+applyTo: "frontend/api-processor/test/**/*.ts"
 ---
 
-When writing or changing a test or a test helper under `test/**/*.ts` in this repository, apply the
+When writing or changing a test or a test helper under `test/**/*.ts` in this module, apply the
 `api-processor-testing` skill.

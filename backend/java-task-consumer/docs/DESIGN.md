@@ -20,7 +20,7 @@ Smaller baseline memory than a framework; consistent with PoC `jdiff-core`.
 
 ## Components
 
-```
+```text
 java-task-consumer/
   WorkerMain          — bootstrap, shutdown hook
   TaskPoller          — scheduled poll (one build at a time per instance)

@@ -1,6 +1,6 @@
 ---
 description: Self-review APIHub backend changes against project standards.
-applyTo: "**/*.go"
+applyTo: "backend/portal-backend/**/*.go"
 ---
 
 When the user asks for self-review, code review of a diff, or a post-implementation
