@@ -6,7 +6,7 @@ Frontend engineers extending the UI, SREs onboarding the feature, backend engine
 Scope: high-level architecture, end-to-end flows, data model, FE↔BE and BE↔LLM contracts, operational
 concerns. Wire-level details delegate to:
 
-* [docs/api/APIHUB_API.yaml](../../api/APIHUB_API.yaml) — authoritative OpenAPI contract (tag **AI Chat**).
+* [docs/api/APIHUB_API.yaml](../../../backend/portal-backend/docs/api/APIHUB_API.yaml) — authoritative OpenAPI contract (tag **AI Chat**).
 * [ai-chat-frontend-contract.md](./ai-chat-frontend-contract.md) — FE integration guide.
 * Migration `resources/migrations/34_ai_chat.{up,down}.sql` — DDL.
 

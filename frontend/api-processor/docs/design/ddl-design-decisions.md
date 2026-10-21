@@ -1,7 +1,7 @@
 # DDL Support — Design Decisions (Interview Spec)
 
-Status: **Decided 2026-06-12** · Companion to [`ddl-contract-support.md`](./ddl-contract-support.md)
-and [`ddl-build-result-contract.md`](./ddl-build-result-contract.md)
+Status: **Decided 2026-06-12** · Companion to [`ddl-contract-support.md`](../archive/ddl-contract-support.md)
+and [`ddl-build-result-contract.md`](../contracts/ddl-build-result-contract.md)
 
 This records the non-obvious decisions taken in the design interview. Each is **Decision → Rationale
 → Implications** (which plan task / contract aspect it touches). These override the corresponding

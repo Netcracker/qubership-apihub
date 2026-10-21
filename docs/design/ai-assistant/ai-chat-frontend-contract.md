@@ -4,7 +4,7 @@ Audience: the frontend engineer integrating the new full-featured AI chat into t
 
 Scope: REST/SSE contract, data model, request/response flow, error handling. UI design is **out of scope** — this document does not prescribe layout, components or interaction design beyond what is needed to implement the contract correctly.
 
-The authoritative machine-readable contract lives in [`docs/api/APIHUB_API.yaml`](../../api/APIHUB_API.yaml), tag **AI Chat**. This document explains the *intent* behind the contract and how to use it end-to-end.
+The authoritative machine-readable contract lives in [`docs/api/APIHUB_API.yaml`](../../../backend/portal-backend/docs/api/APIHUB_API.yaml), tag **AI Chat**. This document explains the *intent* behind the contract and how to use it end-to-end.
 
 ---
 

@@ -1,3 +1,7 @@
+# Semi-breaking reclassification sequence
+
+How the Portal reclassifies breaking changes as semi-breaking after a comparison.
+
 ```mermaid
 sequenceDiagram
     participant apihub-ui
