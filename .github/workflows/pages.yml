@@ -43,7 +43,11 @@ jobs:
     outputs:
       deployable: ${{ steps.ref.outputs.deployable }}
     steps:
+      # No credentials on disk: the worktree builds below run the pnpm installs and builds of the
+      # site's ref. The repository is public, so the fetches and ls-remotes of this job need none.
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       # Only the default branch deploys and cleans the stores. Schedule events carry no repository
       # object, so the default branch is looked up. The full ref is compared, so a tag that shares
