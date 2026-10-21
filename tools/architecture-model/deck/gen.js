@@ -13,9 +13,9 @@ const W = 'FFFFFF';
 
 /* container colours reused across every diagram */
 const C = {
-  UI:  { c: '0EA5E9', t: SKY,    name: 'APIHUB UI',          tech: 'React 18 · MUI 5 · nginx 1.28', port: ':8080' },
+  UI:  { c: '0EA5E9', t: SKY,    name: 'APIHUB UI',          tech: 'React 18 · MUI 5 · nginx 1.31', port: ':8080' },
   BE:  { c: BLUE,     t: SKY,    name: 'APIHUB Backend',     tech: 'Go 1.26 · gorilla/mux · go-pg', port: ':8080' },
-  BTC: { c: NAVYC,    t: SKY,    name: 'Build Task Consumer', tech: 'Node 24 · NestJS 10',         port: ':3000' },
+  BTC: { c: NAVYC,    t: SKY,    name: 'Build Task Consumer', tech: 'Node 24 · NestJS 11',         port: ':3000' },
   LNT: { c: TEAL,     t: MINT,   name: 'API Linter Service', tech: 'Go 1.26 · Spectral · OpenAI',  port: ':8080' },
   ABE: { c: LEAF,     t: MINT,   name: 'Agents Backend',     tech: 'Go 1.26',                      port: ':8080' },
   AGT: { c: CORAL,    t: BLUSH,  name: 'APIHUB Agent',       tech: 'Go 1.26 · client-go',          port: ':8080' },
@@ -175,16 +175,16 @@ const C = {
 /* ============================================================ 5 container catalogue */
 {
   const s = U.slide();
-  U.head(s, 'Level 2 · catalogue', 'Seven containers in detail', 'Repository, technology, port and the state each one owns.', TEAL);
+  U.head(s, 'Level 2 · catalogue', 'Seven containers in detail', 'Module, technology, port and the state each one owns.', TEAL);
   const rows = ['BE', 'UI', 'BTC', 'LNT', 'ABE', 'AGT', 'JTC'].map(k => [k, C[k]]);
   const info = {
-    BE:  ['qubership-apihub-backend', 'apihub database, optional S3', '39 REST controllers, MCP server, AI chat, cron cleanup, DB migrations'],
-    UI:  ['qubership-apihub-ui', 'stateless', 'Portal and Agents single-page apps plus the reverse proxy in front of everything'],
-    BTC: ['qubership-apihub-build-task-consumer', 'stateless — scale to 3–6', 'Runs PackageVersionBuilder: parse, normalize, diff, changelog, export'],
-    LNT: ['qubership-api-linter-service', 'apihub_linter database', 'Spectral and AI engines, rulesets, bulk validation, version scoring, MCP endpoint'],
-    ABE: ['qubership-apihub-agents-backend', 'agents database', 'Agent registry and heartbeats, discovery orchestration, snapshot promotion'],
-    AGT: ['qubership-apihub-agent', 'stateless', 'Six discovery runners in parallel per service, plus a proxy into the cluster'],
-    JTC: ['qubership-apihub-java-task-consumer', 'stateless', 'japicmp and jdeps pipelines; the backend java-builders queue is specified only'],
+    BE:  ['backend/portal-backend', 'apihub database, optional S3', '39 REST controllers, MCP server, AI chat, cron cleanup, DB migrations'],
+    UI:  ['frontend/ui', 'stateless', 'Portal and Agents single-page apps plus the reverse proxy in front of everything'],
+    BTC: ['frontend/build-task-consumer', 'stateless — scale to 3–6', 'Runs PackageVersionBuilder: parse, normalize, diff, changelog, export'],
+    LNT: ['backend/api-linter-service', 'apihub_linter database', 'Spectral and AI engines, rulesets, bulk validation, version scoring, MCP endpoint'],
+    ABE: ['backend/agents-backend', 'agents database', 'Agent registry and heartbeats, discovery orchestration, snapshot promotion'],
+    AGT: ['backend/agent', 'stateless', 'Six discovery runners in parallel per service, plus a proxy into the cluster'],
+    JTC: ['backend/java-task-consumer', 'stateless', 'japicmp and jdeps pipelines; the backend java-builders queue is specified only'],
   };
   rows.forEach(([k, c], i) => {
     const y = 2.26 + i * 0.61;
@@ -197,7 +197,7 @@ const C = {
     U.T(s, info[k][1], 8.1, y + 0.17, 1.75, 0.26, { fontSize: 9, color: '5B5346' });
     U.T(s, info[k][2], 9.95, y + 0.07, 2.75, 0.42, { fontSize: 8, color: '5B5346' });
   });
-  const hdr = [['Container', 1.0], ['Technology', 3.05], ['Repository', 5.5], ['State', 8.1], ['Owns', 9.95]];
+  const hdr = [['Container', 1.0], ['Technology', 3.05], ['Module', 5.5], ['State', 8.1], ['Owns', 9.95]];
   hdr.forEach(([t, x]) => U.T(s, t.toUpperCase(), x, 2.02, 2.4, 0.22, { fontSize: 8, bold: true, color: SOFT, charSpacing: 1 }));
   U.box(s, 0.55, 6.95, 12.27, 0.0, W, { r: 0 });
   U.T(s, 'Plus 12 shared TypeScript libraries — not deployed on their own, but they are where parsing, diffing and rendering actually happen.',
@@ -263,14 +263,14 @@ const C = {
   const s = U.slide();
   U.head(s, 'Level 3', 'The two workers', 'Both follow the same pull pattern: ask the backend for a task, do the work, post the result back.', NAVYC);
   const lanes = [
-    [C.BTC, 'qubership-apihub-build-task-consumer', SKY, [
+    [C.BTC, 'frontend/build-task-consumer', SKY, [
       ['Task poller', 'RxJS interval asks /api/v2/builders/{id}/tasks'],
       ['Schema validation', 'ajv over the build config'],
       ['PackageVersionBuilder', 'api-processor: 7 builders, 10 strategies'],
       ['Resolvers', 'fetch previous versions from the backend'],
       ['Result sender', 'ZIP to /api/v3/…/publish/{id}/status'],
     ], 'Live and scaled in production'],
-    [C.JTC, 'qubership-apihub-java-task-consumer', BUTTER, [
+    [C.JTC, 'backend/java-task-consumer', BUTTER, [
       ['Task poller', 'asks /api/v2/java-builders/{id}/tasks'],
       ['Build executor', 'maps build type to a pipeline'],
       ['jdiff-engine', 'ApiReport · ApiDiff · UpgradeImpact'],
@@ -475,7 +475,7 @@ const C = {
 {
   const s = U.slide();
   U.head(s, 'Deployment', 'What runs where', 'One umbrella Helm chart, one ingress, three databases — and a separate chart for the Java worker.', SOFT);
-  U.panel(s, 0.55, 2.25, 8.9, 4.35, 'F7FAFF', BLUE, 'KUBERNETES  ·  helm-templates/qubership-apihub', BLUE, true);
+  U.panel(s, 0.55, 2.25, 8.9, 4.35, 'F7FAFF', BLUE, 'KUBERNETES  ·  deploy/helm-templates/qubership-apihub', BLUE, true);
   U.node(s, 0.8, 2.62, 8.4, 0.5, SOFT, 'Ingress  ·  http and https with a TLS secret', null, { fs: 10, align: 'center' });
   const deps = [
     ['UI', C.UI.c, '1 replica'], ['Backend', C.BE.c, '1 · 3 CPU / 3 Gi'], ['Build Consumer', C.BTC.c, '3–6 replicas'],
@@ -786,7 +786,7 @@ function capGrid(s, mode) {
     { fontSize: 32, bold: true, color: W, lineSpacingMultiple: 1.06 });
   U.T(s, 'They meet in the technology overlay: every sub-capability names the container that implements it, and every container appears in the C4 diagrams. Change one, regenerate both.',
     0.85, 4.3, 7.9, 1.0, { fontSize: 14, color: 'D7E2F8' });
-  const files = ['diagrams/c4-2026-09  —  full C4 model, draw.io, deck', 'diagrams/capability-2026-09  —  map, heatmaps, ArchiMate, Archi model', 'diagrams/summary-2026-09  —  the narrative overview'];
+  const files = ['tools/architecture-model/c4  —  full C4 model, draw.io, deck', 'tools/architecture-model/capability  —  map, heatmaps, ArchiMate, Archi model', 'tools/architecture-model/summary  —  the narrative overview'];
   files.forEach((t, i) => U.T(s, '·  ' + t, 0.85, 5.45 + i * 0.34, 9, 0.3, { fontSize: 11.5, color: '9FB4E8' }));
   U.foot(s, true);
 }

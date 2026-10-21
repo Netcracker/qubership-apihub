@@ -1,6 +1,6 @@
 # Qubership APIHUB — C4 Architecture Model
 
-Generated: 2026-09-11 · Source of truth: `APIHUB-ALL` workspace (code, Helm chart, nginx config, per-repo cards)
+Generated: 2026-09-11 · Source of truth: the monorepo (code, Helm chart, nginx config, module cards)
 · Notation: [C4 model](https://c4model.com) (Levels 1–4 + deployment + dynamic views) rendered with Mermaid.
 
 > This document supersedes `diagrams/APIHUB_C4_mermaid.md` (April 2026). See
@@ -13,13 +13,13 @@ Generated: 2026-09-11 · Source of truth: `APIHUB-ALL` workspace (code, Helm cha
 2. [Level 1 — System Context](#2-level-1--system-context)
 3. [Level 2 — Containers](#3-level-2--containers)
 4. [Level 3 — Components](#4-level-3--components)
-   - 4.1 [APIHUB Backend](#41-apihub-backend-qubership-apihub-backend)
-   - 4.2 [APIHUB UI](#42-apihub-ui-qubership-apihub-ui)
-   - 4.3 [Build Task Consumer](#43-build-task-consumer-qubership-apihub-build-task-consumer)
-   - 4.4 [API Linter Service](#44-api-linter-service-qubership-api-linter-service)
-   - 4.5 [Agents Backend](#45-agents-backend-qubership-apihub-agents-backend)
-   - 4.6 [APIHUB Agent](#46-apihub-agent-qubership-apihub-agent)
-   - 4.7 [Java Task Consumer](#47-java-task-consumer-qubership-apihub-java-task-consumer--new-integration-pending)
+   - 4.1 [APIHUB Backend](#41-apihub-backend-backendportal-backend)
+   - 4.2 [APIHUB UI](#42-apihub-ui-frontendui)
+   - 4.3 [Build Task Consumer](#43-build-task-consumer-frontendbuild-task-consumer)
+   - 4.4 [API Linter Service](#44-api-linter-service-backendapi-linter-service)
+   - 4.5 [Agents Backend](#45-agents-backend-backendagents-backend)
+   - 4.6 [APIHUB Agent](#46-apihub-agent-backendagent)
+   - 4.7 [Java Task Consumer](#47-java-task-consumer-backendjava-task-consumer--new-integration-pending)
 5. [Level 4 — Code](#5-level-4--code)
    - 5.1 [Backend: layers, security strategies, cleanup jobs](#51-backend--request-pipeline-security-strategies-and-scheduled-jobs)
    - 5.2 [TypeScript processing stack: SpecType registries](#52-typescript-processing-stack--registries-keyed-by-spectype)
@@ -33,7 +33,7 @@ Generated: 2026-09-11 · Source of truth: `APIHUB-ALL` workspace (code, Helm cha
 6. [Deployment views](#6-deployment-views)
 7. [Dynamic views](#7-dynamic-views)
 8. [Cross-cutting: API/contract type support matrix](#8-cross-cutting--apicontract-type-support-matrix)
-- [Appendix A — Repository → container map](#appendix-a--repository--container-map)
+- [Appendix A — Module → container map](#appendix-a--module--container-map)
 - [Appendix B — What changed since the April 2026 diagrams](#appendix-b--what-changed-since-the-april-2026-diagrams)
 - [Appendix C — Verification sources](#appendix-c--verification-sources)
 
@@ -47,7 +47,7 @@ Protobuf stubs) and contracts (DDLAPI database contracts, MCP server catalogs), 
 an MCP server and an AI chat, and discovers running APIs in Kubernetes clusters through agents.
 
 **Out of scope:** workspace add-ons that are not deployable services (`specs-samples/`, `generation_plans/`,
-`netcracker.github.io/`, `qubership-apihub.wiki/`), and the design-only `qubership-apihub-tyk-adapter`.
+`netcracker.github.io/`, `qubership-apihub.wiki/`), and the design-only `qubership-apihub-tyk-adapter` repository.
 
 ### Legend (all diagrams)
 
@@ -137,11 +137,11 @@ flowchart TB
     subgraph cluster ["Qubership APIHUB — Kubernetes namespace (Helm chart qubership-apihub)"]
         direction TB
 
-        ui["<b>APIHUB UI</b><br/>[Container: nginx 1.28 + React 18 / MUI 5 / Vite]<br/>Portal SPA + Agents SPA;<br/>reverse proxy /api → backend, /api-linter, /agents-backend"]:::core
+        ui["<b>APIHUB UI</b><br/>[Container: nginx 1.31 + React 18 / MUI 5 / Vite]<br/>Portal SPA + Agents SPA;<br/>reverse proxy /api → backend, /api-linter, /agents-backend"]:::core
 
         backend["<b>APIHUB Backend</b><br/>[Container: Go 1.26, gorilla/mux, go-pg] :8080<br/>REST API v1–v4 · auth &amp; RBAC · packages/versions ·<br/>build orchestration · search · export · MCP server ·<br/>AI chat · cleanup jobs · DB migrations"]:::core
 
-        btc["<b>Build Task Consumer</b><br/>[Container: Node 24 / NestJS 10 / TypeScript] :3000<br/>Stateless worker: polls build tasks, runs api-processor<br/>(parse · normalize · diff · changelog · export)"]:::core
+        btc["<b>Build Task Consumer</b><br/>[Container: Node 24 / NestJS 11 / TypeScript] :3000<br/>Stateless worker: polls build tasks, runs api-processor<br/>(parse · normalize · diff · changelog · export)"]:::core
 
         linter["<b>API Linter Service</b><br/>[Container: Go 1.26] :8080<br/>Spectral + AI (OpenAI) linting, rulesets,<br/>bulk validation, version quality scoring, MCP endpoint"]:::extension
 
@@ -207,22 +207,22 @@ flowchart TB
 
 ### Container catalogue
 
-| Container | Repository | Technology | Port | Persistent state | Responsibilities |
+| Container | Module | Technology | Port | Persistent state | Responsibilities |
 |---|---|---|---|---|---|
-| **APIHUB Backend** | `qubership-apihub-backend` | Go 1.26.5, gorilla/mux, go-pg v10, go-guardian, robfig/cron, mcp-go 0.56, openai-go v3, excelize, minio-go | 8080 | `apihub` DB, optional S3 | REST API (39 controllers), auth/RBAC, packages/versions/operations, build task queue, search, Excel/ZIP export, DDL & MCP contracts, MCP server, AI chat, cleanup jobs, operations migration, Prometheus metrics |
-| **APIHUB UI** | `qubership-apihub-ui` | React 18.2, MUI 5.11, Vite 4, Lerna 8 monorepo, nginx 1.28 | 8080 | — | Portal SPA (`/portal`), Agents SPA (`/agents`), nginx reverse proxy to Backend / Linter / Agents Backend / optional `apihub-nc` |
-| **Build Task Consumer** | `qubership-apihub-build-task-consumer` | Node 24, NestJS 10, TypeScript; `@netcracker/qubership-apihub-api-processor` | 3000 | — (stateless) | Polls Backend for build tasks, runs `PackageVersionBuilder`, uploads result ZIP; scalable to N replicas |
-| **API Linter Service** | `qubership-api-linter-service` | Go 1.26.5, Spectral CLI (bundled), Vacuum (bundled, inactive), OpenAI client, Olric | 8080 | `apihub_linter` DB | Document/version lint tasks, rulesets, bulk validation, version scoring, MCP endpoint |
-| **Agents Backend** | `qubership-apihub-agents-backend` | Go 1.26.5 | 8080 | agents DB | Agent registration/heartbeat registry, discovery orchestration, snapshot publishing to Portal, namespace security auth-check reports, service proxy |
-| **APIHUB Agent** | `qubership-apihub-agent` | Go 1.26.5, client-go | 8080 | — | Deployed per remote cluster/namespace; lists K8s services, probes spec endpoints with `DiscoveryRunner`s, proxies to services |
-| **Java Task Consumer** *(new)* | `qubership-apihub-java-task-consumer` | Java 21 (Corretto), plain JVM, japicmp 0.26, jdeps, Maven resolver, OCI registry client | 3000 (`/live`) | — | Java API report / diff / upgrade-impact builds; backend endpoints `java-builders` are specified but not yet implemented |
+| **APIHUB Backend** | `backend/portal-backend` | Go 1.26.6, gorilla/mux, go-pg v10, go-guardian, robfig/cron, mcp-go 0.56, openai-go v3, excelize, minio-go | 8080 | `apihub` DB, optional S3 | REST API (39 controllers), auth/RBAC, packages/versions/operations, build task queue, search, Excel/ZIP export, DDL & MCP contracts, MCP server, AI chat, cleanup jobs, operations migration, Prometheus metrics |
+| **APIHUB UI** | `frontend/ui` | React 18.3, MUI 5.11, Vite 8, pnpm workspace under Nx, nginx 1.31 | 8080 | — | Portal SPA (`/portal`), Agents SPA (`/agents`), nginx reverse proxy to Backend / Linter / Agents Backend / optional `apihub-nc` |
+| **Build Task Consumer** | `frontend/build-task-consumer` | Node 24, NestJS 11, TypeScript; `@netcracker/qubership-apihub-api-processor` | 3000 | — (stateless) | Polls Backend for build tasks, runs `PackageVersionBuilder`, uploads result ZIP; scalable to N replicas |
+| **API Linter Service** | `backend/api-linter-service` | Go 1.26.6, Spectral CLI (bundled), Vacuum (bundled, inactive), OpenAI client, Olric | 8080 | `apihub_linter` DB | Document/version lint tasks, rulesets, bulk validation, version scoring, MCP endpoint |
+| **Agents Backend** | `backend/agents-backend` | Go 1.26.6 | 8080 | agents DB | Agent registration/heartbeat registry, discovery orchestration, snapshot publishing to Portal, namespace security auth-check reports, service proxy |
+| **APIHUB Agent** | `backend/agent` | Go 1.26.6, client-go | 8080 | — | Deployed per remote cluster/namespace; lists K8s services, probes spec endpoints with `DiscoveryRunner`s, proxies to services |
+| **Java Task Consumer** *(new)* | `backend/java-task-consumer` | Java 21 (Corretto), plain JVM, japicmp 0.26, jdeps, Maven resolver, OCI registry client | 3000 (`/live`) | — | Java API report / diff / upgrade-impact builds; backend endpoints `java-builders` are specified but not yet implemented |
 | **Olric** | embedded (`buraksezer/olric`) | in-process, K8s LAN discovery via `olric-cloud-plugin` | — | in-memory | Distributed cache, locks, `version-published` DTopic from Backend to Linter |
 
 ---
 
 ## 4. Level 3 — Components
 
-### 4.1 APIHUB Backend (`qubership-apihub-backend`)
+### 4.1 APIHUB Backend (`backend/portal-backend`)
 
 ```mermaid
 flowchart TB
@@ -328,13 +328,13 @@ export, search, roles, users, API keys, PATs, activity, DDL and MCP contracts, e
 (worker queue), `/api/v1/mcp/`, `/api/v1/saml/*`, `/api/v1/oidc/*`, `/api/v1/login/sso/{idpId}`, `/playground/proxy`,
 `/api/internal/*` (migrations, MinIO, test cleanup), `/live`, `/ready`, `/debug/`.
 
-### 4.2 APIHUB UI (`qubership-apihub-ui`)
+### 4.2 APIHUB UI (`frontend/ui`)
 
 ```mermaid
 flowchart TB
     browser["👤 Browser"]:::ext
 
-    subgraph uic ["APIHUB UI — nginx 1.28 container serving two Vite-built SPAs"]
+    subgraph uic ["APIHUB UI — nginx 1.31 container serving two Vite-built SPAs"]
         direction TB
         nginx["<b>nginx reverse proxy</b><br/>[nginx.conf.template, envsubst]<br/>/portal, /agents static · /api → backend ·<br/>/api-linter → linter · /agents-backend → agents-backend ·<br/>/apihub-nc → optional NC extension · SSE/MCP no-buffering"]:::comp
 
@@ -391,13 +391,13 @@ flowchart TB
     style libs fill:#f0fdfa,stroke:#5eead4
 ```
 
-### 4.3 Build Task Consumer (`qubership-apihub-build-task-consumer`)
+### 4.3 Build Task Consumer (`frontend/build-task-consumer`)
 
 ```mermaid
 flowchart LR
     be["APIHUB Backend<br/>build task queue"]:::core
 
-    subgraph btc ["Build Task Consumer — NestJS 10 · stateless · N replicas"]
+    subgraph btc ["Build Task Consumer — NestJS 11 · stateless · N replicas"]
         direction TB
         app["<b>AppModule / AppController</b><br/>bootstrap, /live"]:::comp
         registry["<b>RegistryModule → RegistryService</b><br/>HTTP client to Backend (api-key):<br/>findTask, postBuildStatus, getVersionConfig,<br/>getVersionOperations, getVersionDocuments,<br/>getVersionComparison, getGroupExportTemplate…"]:::comp
@@ -422,7 +422,7 @@ Supported `buildType` values (from `api-processor/src/consts.ts`): `build`, `cha
 `exportVersion`, `exportRestDocument`, `exportRestOperationsGroup`, `exportGraphqlOperationsGroup`,
 `exportAsyncapiOperationsGroup`; deprecated: `documentGroup`, `reducedSourceSpecifications`, `mergedSpecification`.
 
-### 4.4 API Linter Service (`qubership-api-linter-service`)
+### 4.4 API Linter Service (`backend/api-linter-service`)
 
 ```mermaid
 flowchart TB
@@ -476,7 +476,7 @@ flowchart TB
     style api fill:#dcfce7,stroke:#86efac
 ```
 
-### 4.5 Agents Backend (`qubership-apihub-agents-backend`)
+### 4.5 Agents Backend (`backend/agents-backend`)
 
 ```mermaid
 flowchart TB
@@ -516,7 +516,7 @@ flowchart TB
     style abe fill:#f0fdf4,stroke:#16a34a,stroke-width:2px,color:#14532d
 ```
 
-### 4.6 APIHUB Agent (`qubership-apihub-agent`)
+### 4.6 APIHUB Agent (`backend/agent`)
 
 ```mermaid
 flowchart TB
@@ -565,7 +565,7 @@ flowchart TB
     style runners fill:#ffedd5,stroke:#fdba74,stroke-dasharray:4
 ```
 
-### 4.7 Java Task Consumer (`qubership-apihub-java-task-consumer`) — new, integration pending
+### 4.7 Java Task Consumer (`backend/java-task-consumer`) — new, integration pending
 
 ```mermaid
 flowchart LR
@@ -666,7 +666,7 @@ flowchart TB
     style jobs fill:#f1f5f9,stroke:#94a3b8
 ```
 
-Package layout of `qubership-apihub-service/`: `controller/` (HTTP), `service/` (+ `cleanup/`, `validation/`),
+Package layout of `backend/portal-backend/`: `controller/` (HTTP), `service/` (+ `cleanup/`, `validation/`),
 `repository/`, `entity/`, `view/`, `security/` (+ `idp/providers/`), `migration/` (schema + operations migration FSM
 with `stages/`), `cache/` (Olric provider), `client/` (OpenAI LLM client), `archive/`, `crypto/`, `metrics/`,
 `middleware/`, `db/`, `config/`, `utils/`.
@@ -1125,7 +1125,7 @@ merge docs / failed calls / errors
 
 ```mermaid
 flowchart TB
-    subgraph mono ["qubership-apihub-ui — npm workspaces + Lerna"]
+    subgraph mono ["frontend/ui — pnpm workspace + Nx"]
         direction LR
         portal["packages/portal<br/>App.tsx · routes.ts · routes/ · components/ ·<br/>api-hooks/ (react-query) · entities/ · utils/"]:::comp
         agents["packages/agents<br/>App.tsx · routes/ · components/ · widgets/"]:::comp
@@ -1225,7 +1225,7 @@ classDiagram
 
 ## 6. Deployment views
 
-### 6.1 Kubernetes (Helm chart `qubership-apihub/helm-templates/qubership-apihub`)
+### 6.1 Kubernetes (Helm chart `deploy/helm-templates/qubership-apihub`)
 
 ```mermaid
 flowchart TB
@@ -1301,7 +1301,7 @@ Sizing guidance from `values.yaml`: Backend CPU 3 / 3 Gi in production (`GOMEMLI
 Build Task Consumer 3–6 replicas, Linter 1000 Mi default, Agents Backend 256 Mi default. Health probes: `/live`,
 `/ready` on Go services; `/live` on consumers; nginx `/probes/live`, `/probes/ready`.
 
-### 6.2 Docker Compose (`qubership-apihub/docker-compose/apihub-generic`)
+### 6.2 Docker Compose (`deploy/docker-compose/apihub-generic`)
 
 ```mermaid
 flowchart LR
@@ -1497,31 +1497,31 @@ flowchart LR
 
 ---
 
-## Appendix A — Repository → container map
+## Appendix A — Module → container map
 
-| Repository | C4 element | Notes |
+| Module | C4 element | Notes |
 |---|---|---|
-| `qubership-apihub` | Deployment (Helm chart, docker-compose, docs) | umbrella chart, `local-k8s-quickstart` (Postgres, Keycloak, Superset) |
-| `qubership-apihub-backend` | Container: Backend | Go micro-monolith |
-| `qubership-apihub-ui` | Container: UI | Portal + Agents SPAs, nginx |
-| `qubership-apihub-build-task-consumer` | Container: Build Task Consumer | NestJS worker |
-| `qubership-api-linter-service` | Container: API Linter Service | Go |
-| `qubership-apihub-agents-backend` | Container: Agents Backend | Go |
-| `qubership-apihub-agent` | Container: Agent (remote) | Go |
-| `qubership-apihub-java-task-consumer` | Container: Java Task Consumer (new) | Java 21, `jdiff-engine` module |
-| `qubership-apihub-json-crawl`, `-api-unifier`, `-api-diff`, `-api-visitor`, `-api-data-model`, `-api-processor`, `-graphapi`, `-http-spec` | Code: TypeScript processing libraries | published to GitHub npm registry |
-| `qubership-apihub-api-doc-viewer`, `-apispec-view`, `-rest-playground`, `-class-view` | Code: UI rendering libraries / web components | |
-| `qubership-apihub-commons-go` | Code: shared Go module (`api-spec-exposer`) | used by Go services |
-| `qubership-apihub-aux-tools` | Satellite tools: `apihub-api-diff` CLI + local MCP, `apihub-portal-package-copy` | outside runtime boundary |
-| `qubership-apihub-ci` | CI/CD: reusable GitHub Actions workflows, `agent-packages/` (APM) | |
-| `qubership-apihub-postman-collections`, `qubership-apihub-ui-tests` | E2E tests (Newman, Playwright) | |
-| `qubership-apihub-tyk-adapter` | Design only (APIHUB → Tyk GitOps bridge) | no code |
+| `deploy/helm-templates`, `deploy/docker-compose`, `docs/` | Deployment (Helm chart, docker-compose, docs) | umbrella chart, `local-k8s-quickstart` (Postgres, Keycloak, Superset) |
+| `backend/portal-backend` | Container: Backend | Go micro-monolith |
+| `frontend/ui` | Container: UI | Portal + Agents SPAs, nginx |
+| `frontend/build-task-consumer` | Container: Build Task Consumer | NestJS worker |
+| `backend/api-linter-service` | Container: API Linter Service | Go |
+| `backend/agents-backend` | Container: Agents Backend | Go |
+| `backend/agent` | Container: Agent (remote) | Go |
+| `backend/java-task-consumer` | Container: Java Task Consumer (new) | Java 21, `jdiff-engine` module |
+| `frontend/json-crawl`, `api-unifier`, `api-diff`, `api-visitor`, `api-processor`, `graphapi`, `http-spec`, `ddlapi` | Code: TypeScript processing libraries | published to the GitHub npm registry |
+| `frontend/api-doc-viewer` (with its data model), `apispec-view`, `rest-playground`, `class-view` | Code: UI rendering libraries / web components | |
+| `backend/commons-go` | Code: shared Go module (`api-spec-exposer`) | used by Go services |
+| `tests/postman-collections`, `tests/ui-tests` | E2E tests (Newman, Playwright) | |
+| `tools/`, `.github/` | CI/CD: release scripts, Nx plugins, workflows; `agent-packages/` (APM) | |
+| `qubership-apihub-aux-tools` (separate repository) | Satellite tools: `apihub-api-diff` CLI + local MCP, `apihub-portal-package-copy` | outside runtime boundary |
+| `qubership-apihub-tyk-adapter` (separate repository) | Design only (APIHUB → Tyk GitOps bridge) | no code |
 
 ## Appendix B — What changed since the April 2026 diagrams
 
 | Area | April 2026 diagrams (`diagrams/APIHUB_C4_mermaid.md`) | Current code (September 2026) |
 |---|---|---|
-| Go toolchain | Go 1.25 | Go 1.26.5 in all Go services |
+| Go toolchain | Go 1.25 | Go 1.26.6 in all Go services |
 | MCP transport | "SSE transport" | **Streamable HTTP** (`mcpserver.NewStreamableHTTPServer`, session idle TTL 15 min); tools renamed to `search_api_operations`, `get_api_operation_specification`, `get_api_operation_diff`, new `get_document`; legacy `*_rest_*` names kept; `mcp://api-packages-list` resource; IDS authoring prompt |
 | AI chat | single `/api/v1/ai-chat` + `/stream` | chat sessions `/api/v1/ai-chat/chats/{chatId}` with `/messages` and `/messages/stream`, tool loop over MCP tools + `ask_clarification`, ephemeral files, chat retention cleanup |
 | Linter MCP | not shown | Linter exposes `/api/v1/mcp/` with `list_linter_issues_for_package_version`; Vacuum binaries bundled but inactive |
@@ -1530,7 +1530,7 @@ flowchart LR
 | Build types | build · changelog · export · document-group | + `prefix-groups-changelog`, `exportVersion`, `exportRestDocument`, `exportRest/Graphql/AsyncapiOperationsGroup`; `documentGroup`, `reducedSourceSpecifications`, `mergedSpecification` deprecated |
 | UI proxy | `/api`, `/api-linter`, `/agents-backend` | + `/apihub-nc` optional extension upstream, `/playground`, `/saml`, `/login/sso`, dedicated no-buffering location for MCP and chat SSE |
 | Agent API | v1 only | v1–v3 endpoints, workspace-scoped discovery (`/api/v2/workspaces/{id}/discover`) |
-| Java analysis | absent | new `qubership-apihub-java-task-consumer` (jdiff-engine, japicmp, jdeps, OCI image jar extraction); backend `java-builders` queue is specified in `docs/backend-api.md` but not implemented in `Service.go` |
+| Java analysis | absent | new `backend/java-task-consumer` (jdiff-engine, japicmp, jdeps, OCI image jar extraction); backend `java-builders` queue is specified in `docs/backend-api.md` but not implemented in `Service.go` |
 | Auth | SAML/OIDC/LDAP/local | + refresh tokens (`/api/v3/auth/local/refresh`), ephemeral-file tokens, `legacySaml` flag |
 | Observability | Prometheus mentioned | ServiceMonitor + two Grafana dashboards shipped in chart; business metrics counters (MCP sessions, etc.) |
 
@@ -1538,16 +1538,16 @@ flowchart LR
 
 Facts in this document were checked against these files on 2026-09-11:
 
-- `qubership-apihub-backend/qubership-apihub-service/Service.go` (routes, DI wiring), `go.mod`, `config.template.yaml`,
+- `backend/portal-backend/Service.go` (routes, DI wiring), `go.mod`, `config.template.yaml`,
   `controller/MCPController.go`, `service/MCPService.go`, `service/AiChatTurnService.go`, `service/BuildService.go`,
   `service/PublishNotificationService.go`, `service/cleanup/*`, `security/*`
-- `qubership-apihub-ui/nginx/nginx.conf.template`, `package.json`
-- `qubership-apihub-build-task-consumer/src/modules/**`, `package.json`
-- `qubership-api-linter-service/qubership-api-linter-service/service.go`, `service/*`, `config.template.yaml`
-- `qubership-apihub-agents-backend/qubership-apihub-agents-backend/service.go`, `service/*`
-- `qubership-apihub-agent/qubership-apihub-agent/service.go`, `service/document_discovery.go`, `api_type/*`
-- `qubership-apihub-api-processor/src/{builder.ts,consts.ts,apitypes,strategies}`, `package.json`
-- `qubership-apihub-api-unifier/src/spec-type.ts`, `qubership-apihub-api-diff/src/api.ts`
-- `qubership-apihub-java-task-consumer/{README.md,docs/DESIGN.md,docs/backend-api.md,src}`
-- `qubership-apihub/helm-templates/qubership-apihub/{values.yaml,templates}`, `docker-compose/apihub-generic/docker-compose.yml`
+- `frontend/ui/nginx/nginx.conf.template`, `package.json`
+- `frontend/build-task-consumer/src/modules/**`, `package.json`
+- `backend/api-linter-service/service.go`, `service/*`, `config.template.yaml`
+- `backend/agents-backend/service.go`, `service/*`
+- `backend/agent/service.go`, `service/document_discovery.go`, `api_type/*`
+- `frontend/api-processor/src/{builder.ts,consts.ts,apitypes,strategies}`, `package.json`
+- `frontend/api-unifier/src/spec-type.ts`, `frontend/api-diff/src/api.ts`
+- `backend/java-task-consumer/{README.md,docs/DESIGN.md,docs/backend-api.md,src}`
+- `deploy/helm-templates/qubership-apihub/{values.yaml,templates}`, `deploy/docker-compose/apihub-generic/docker-compose.yml`
 - Workspace cards: `documents/overall/*.md`, `LLM/*.md`

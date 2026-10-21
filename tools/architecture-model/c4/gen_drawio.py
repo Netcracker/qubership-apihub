@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Generate APIHUB C4 draw.io file (multi-page) with a simple grid layout engine."""
+from pathlib import Path
 from xml.sax.saxutils import escape
 import uuid
 
@@ -203,9 +204,9 @@ p.node('user', 80, 50, 'Users', 'Person', 'Developer · Consumer · Admin', kind
 p.node('cicd', 1160, 50, 'CI/CD', 'Person', 'api-key / PAT', kind='person', shape='person', w=160, h=120)
 p.node('mcpc', 1360, 50, 'MCP clients', 'Person', 'Cursor, Claude, bots', kind='person', shape='person', w=160, h=120)
 p.group(40, 200, 1520, 760, 'Qubership APIHUB — Kubernetes namespace (Helm chart qubership-apihub)', 'blue')
-p.node('ui', 80, 250, 'APIHUB UI', 'Container: nginx 1.28 + React 18 / MUI 5 / Vite', 'Portal SPA + Agents SPA; reverse proxy /api → backend, /api-linter, /agents-backend, /apihub-nc', kind='core', w=260, h=120)
+p.node('ui', 80, 250, 'APIHUB UI', 'Container: nginx 1.31 + React 18 / MUI 5 / Vite', 'Portal SPA + Agents SPA; reverse proxy /api → backend, /api-linter, /agents-backend, /apihub-nc', kind='core', w=260, h=120)
 p.node('be', 560, 420, 'APIHUB Backend', 'Container: Go 1.26, gorilla/mux, go-pg · :8080', 'REST API v1–v4 · auth & RBAC · packages/versions · build orchestration · search · export · MCP server · AI chat · cleanup jobs · migrations', kind='core', w=320, h=150)
-p.node('btc', 1160, 250, 'Build Task Consumer', 'Container: Node 24 / NestJS 10 · :3000', 'Stateless worker: polls build tasks, runs api-processor (parse · normalize · diff · changelog · export)', kind='core', w=300, h=120)
+p.node('btc', 1160, 250, 'Build Task Consumer', 'Container: Node 24 / NestJS 11 · :3000', 'Stateless worker: polls build tasks, runs api-processor (parse · normalize · diff · changelog · export)', kind='core', w=300, h=120)
 p.node('jtc', 1160, 420, 'Java Task Consumer', 'Container: Java 21, plain JVM + jdiff-engine · :3000', 'Java API report / jar diff / upgrade impact (japicmp, jdeps). Backend queue pending', kind='planned', w=300, h=120, dashed=True)
 p.node('linter', 560, 700, 'API Linter Service', 'Container: Go 1.26 · :8080', 'Spectral + AI linting, rulesets, bulk validation, version scoring, MCP endpoint', kind='ext_svc', w=280, h=120)
 p.node('abe', 80, 700, 'Agents Backend', 'Container: Go 1.26 · :8080', 'Agent registry, discovery orchestration, snapshots → Portal, namespace security checks', kind='ext_svc', w=280, h=120)
@@ -231,7 +232,7 @@ legend(p, 800, 1240)
 
 # ======================= 3. BACKEND COMPONENTS =======================
 p = Page('L3 Backend'); pages.append(p)
-p.text(20, 10, 1300, 30, 'C4 Level 3: APIHUB Backend components (qubership-apihub-backend, Go 1.26, gorilla/mux)', 18, True)
+p.text(20, 10, 1300, 30, 'C4 Level 3: APIHUB Backend components (backend/portal-backend, Go 1.26, gorilla/mux)', 18, True)
 p.node('ui', 60, 60, 'APIHUB UI / CI / MCP clients', 'Containers & actors', None, kind='external', w=260, h=70)
 p.group(40, 160, 1560, 1120, 'APIHUB Backend — one process, layered micro-monolith', 'blue')
 x0 = 70
@@ -281,9 +282,9 @@ p.edge('chat', 'mcp', 'MCP tools'); p.edge('mcp', 'ops', ''); p.edge('mcp', 'sea
 
 # ======================= 4. UI COMPONENTS =======================
 p = Page('L3 UI'); pages.append(p)
-p.text(20, 10, 1300, 30, 'C4 Level 3: APIHUB UI components (qubership-apihub-ui — nginx + Portal / Agents SPAs)', 18, True)
+p.text(20, 10, 1300, 30, 'C4 Level 3: APIHUB UI components (frontend/ui — nginx + Portal / Agents SPAs)', 18, True)
 p.node('browser', 60, 60, 'Browser', 'Person', None, kind='person', shape='person', w=160, h=110)
-p.group(40, 200, 1500, 900, 'APIHUB UI container — nginx 1.28 serving two Vite-built SPAs', 'blue')
+p.group(40, 200, 1500, 900, 'APIHUB UI container — nginx 1.31 serving two Vite-built SPAs', 'blue')
 p.node('nginx', 70, 240, 'nginx reverse proxy', 'nginx.conf.template, envsubst', '/portal, /agents static · /api → backend · /api-linter → linter · /agents-backend → agents-backend · /apihub-nc → optional NC extension · no-buffering for MCP / chat SSE', kind='comp', w=1440, h=80)
 p.boxed(70, 350, 'Portal SPA (packages/portal) — React Router 6, react-query', 3, [
     ('p_nav', 'Workspaces / Groups / Packages', 'pages', 'catalog navigation, favorites, settings'),
@@ -311,7 +312,7 @@ p.edge('p_nav', 'shared', ''); p.edge('a_disc', 'shared', '')
 
 # ======================= 5. BUILD TASK CONSUMER =======================
 p = Page('L3 Build Task Consumer'); pages.append(p)
-p.text(20, 10, 1300, 30, 'C4 Level 3: Build Task Consumer (NestJS 10, stateless worker, N replicas)', 18, True)
+p.text(20, 10, 1300, 30, 'C4 Level 3: Build Task Consumer (NestJS 11, stateless worker, N replicas)', 18, True)
 p.node('be', 60, 300, 'APIHUB Backend', 'Container', 'build task queue (DB)', kind='core', w=220, h=100)
 p.group(340, 60, 1000, 640, 'Build Task Consumer', 'blue')
 p.node('app', 380, 100, 'AppModule / AppController', 'NestJS', 'bootstrap, /live', kind='comp', w=280, h=80)
@@ -627,5 +628,5 @@ p.edge('dev', 'chat', '1. POST message (stream)', 'primary'); p.edge('chat', 'll
 # ======================= WRITE =======================
 xml = ('<mxfile host="app.diagrams.net" modified="2026-09-11T00:00:00.000Z" agent="claude-c4-generator" version="26.0.0" type="device">'
        + ''.join(pg.xml() for pg in pages) + '</mxfile>')
-open('/home/claude/c4/APIHUB_C4_architecture.drawio', 'w', encoding='utf-8').write(xml)
+(Path(__file__).resolve().parent / 'APIHUB_C4_architecture.drawio').write_text(xml, encoding='utf-8')
 print('pages:', len(pages), 'bytes:', len(xml))

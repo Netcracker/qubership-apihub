@@ -58,7 +58,7 @@ function fullDiagramSlide(t, sub, png) {
   const s = pres.addSlide(); n++; base(s, true);
   s.addText('Qubership APIHUB', { x: 0.8, y: 2.0, w: 11.5, h: 1.0, fontFace: HFONT, fontSize: 48, bold: true, color: WHITE, isTextBox: true, margin: 0 });
   s.addText('Architecture in C4 notation — Context · Containers · Components · Code · Deployment · Dynamics', { x: 0.8, y: 3.05, w: 11.5, h: 0.6, fontFace: FONT, fontSize: 20, color: ICE, isTextBox: true, margin: 0 });
-  s.addText('Generated from the APIHUB-ALL workspace on 2026-09-11 · verified against current code (Go 1.26, React 18, NestJS 10, Java 21)', { x: 0.8, y: 3.75, w: 11.5, h: 0.4, fontFace: FONT, fontSize: 13, color: 'A5B4FC', isTextBox: true, margin: 0 });
+  s.addText('Generated 2026-09-11 · verified against the monorepo code (Go 1.26, React 18, NestJS 11, Java 21)', { x: 0.8, y: 3.75, w: 11.5, h: 0.4, fontFace: FONT, fontSize: 13, color: 'A5B4FC', isTextBox: true, margin: 0 });
   const chips = [['Backend', BLUE], ['UI', BLUE], ['Build Task Consumer', BLUE], ['Linter', GREEN], ['Agents Backend', GREEN], ['Agent', ORANGE], ['Java Task Consumer', AMBER]];
   let x = 0.8; chips.forEach(([t, c]) => { const w = 0.35 + t.length * 0.085; chip(s, x, 4.6, w, t, c); x += w + 0.15; });
   footer(s, n, true);
@@ -143,14 +143,14 @@ fullDiagramSlide('Container diagram', 'Kubernetes namespace with core services, 
 {
   const s = pres.addSlide(); n++; base(s); title(s, 'Container catalogue', 'Technology, port and responsibility per container'); footer(s, n);
   const rows = [
-    ['Container', 'Repository', 'Technology', 'Port', 'State', 'Responsibilities'],
-    ['APIHUB Backend', 'qubership-apihub-backend', 'Go 1.26.5 · gorilla/mux · go-pg · go-guardian · mcp-go 0.56 · openai-go v3', '8080', 'apihub DB, S3 (opt.)', 'REST API v1–v4 (39 controllers), auth/RBAC, packages/versions, build queue, search, export, DDL/MCP contracts, MCP server, AI chat, cleanup, migrations'],
-    ['APIHUB UI', 'qubership-apihub-ui', 'React 18.2 · MUI 5.11 · Vite 4 · Lerna 8 · nginx 1.28', '8080', '—', 'Portal SPA, Agents SPA, reverse proxy to Backend / Linter / Agents Backend / apihub-nc'],
-    ['Build Task Consumer', 'qubership-apihub-build-task-consumer', 'Node 24 · NestJS 10 · api-processor 5.6', '3000', 'stateless', 'Polls build tasks, runs PackageVersionBuilder, posts result ZIP; scale to 3–6 replicas'],
-    ['API Linter Service', 'qubership-api-linter-service', 'Go 1.26.5 · Spectral CLI · OpenAI client · Olric', '8080', 'apihub_linter DB', 'Lint tasks, rulesets, bulk validation, version scoring, MCP endpoint'],
-    ['Agents Backend', 'qubership-apihub-agents-backend', 'Go 1.26.5', '8080', 'agents DB', 'Agent registry & heartbeat, discovery orchestration, snapshots → Portal, namespace security reports'],
-    ['APIHUB Agent', 'qubership-apihub-agent', 'Go 1.26.5 · client-go', '8080', '—', 'Per-cluster discovery via DiscoveryRunners, service proxy'],
-    ['Java Task Consumer (new)', 'qubership-apihub-java-task-consumer', 'Java 21 · japicmp · jdeps · Maven resolver', '3000', 'stateless', 'Java API report / diff / upgrade impact; backend java-builders queue specified, not yet implemented'],
+    ['Container', 'Module', 'Technology', 'Port', 'State', 'Responsibilities'],
+    ['APIHUB Backend', 'backend/portal-backend', 'Go 1.26.6 · gorilla/mux · go-pg · go-guardian · mcp-go 0.56 · openai-go v3', '8080', 'apihub DB, S3 (opt.)', 'REST API v1–v4 (39 controllers), auth/RBAC, packages/versions, build queue, search, export, DDL/MCP contracts, MCP server, AI chat, cleanup, migrations'],
+    ['APIHUB UI', 'frontend/ui', 'React 18.3 · MUI 5.11 · Vite 8 · pnpm + Nx · nginx 1.31', '8080', '—', 'Portal SPA, Agents SPA, reverse proxy to Backend / Linter / Agents Backend / apihub-nc'],
+    ['Build Task Consumer', 'frontend/build-task-consumer', 'Node 24 · NestJS 11 · api-processor 5.6', '3000', 'stateless', 'Polls build tasks, runs PackageVersionBuilder, posts result ZIP; scale to 3–6 replicas'],
+    ['API Linter Service', 'backend/api-linter-service', 'Go 1.26.6 · Spectral CLI · OpenAI client · Olric', '8080', 'apihub_linter DB', 'Lint tasks, rulesets, bulk validation, version scoring, MCP endpoint'],
+    ['Agents Backend', 'backend/agents-backend', 'Go 1.26.6', '8080', 'agents DB', 'Agent registry & heartbeat, discovery orchestration, snapshots → Portal, namespace security reports'],
+    ['APIHUB Agent', 'backend/agent', 'Go 1.26.6 · client-go', '8080', '—', 'Per-cluster discovery via DiscoveryRunners, service proxy'],
+    ['Java Task Consumer (new)', 'backend/java-task-consumer', 'Java 21 · japicmp · jdeps · Maven resolver', '3000', 'stateless', 'Java API report / diff / upgrade impact; backend java-builders queue specified, not yet implemented'],
   ];
   const tbl = rows.map((r, i) => r.map((c) => ({ text: c, options: { bold: i === 0, color: i === 0 ? WHITE : INK, fill: { color: i === 0 ? NAVY : (i % 2 ? WHITE : LIGHT) }, fontSize: 9.5, fontFace: FONT, valign: 'middle' } })));
   s.addTable(tbl, { x: 0.4, y: 1.45, w: 12.5, colW: [1.6, 2.2, 2.6, 0.5, 1.1, 4.5], border: { type: 'solid', color: 'E2E8F0', pt: 0.5 }, autoPage: false });
@@ -162,7 +162,7 @@ fullDiagramSlide('Container diagram', 'Kubernetes namespace with core services, 
   s.addText('Components', { x: 0.8, y: 3.1, w: 11, h: 1, fontFace: HFONT, fontSize: 44, bold: true, color: WHITE, isTextBox: true, margin: 0 });
   footer(s, n, true);
 }
-fullDiagramSlide('APIHUB Backend — components', 'qubership-apihub-backend · Go 1.26 · layered micro-monolith: edge → security → domain services → repositories', 'L3_backend');
+fullDiagramSlide('APIHUB Backend — components', 'backend/portal-backend · Go 1.26 · layered micro-monolith: edge → security → domain services → repositories', 'L3_backend');
 {
   const s = pres.addSlide(); n++; base(s); title(s, 'APIHUB Backend — component groups', 'What each group owns and which external parties it talks to'); footer(s, n);
   const groups = [
@@ -187,7 +187,7 @@ diagramSlide('APIHUB UI — components', 'nginx reverse proxy + Portal SPA + Age
   'Agents SPA: discovery, snapshots & promotion, namespace security checks.',
   'Shared package holds entities (api-types, contract-types), hooks, MUI theme, widgets and Storybook.',
   'Rendering is delegated to web components (apispec-view, rest-playground, class-view) and React viewers (api-doc-viewer); client-side builds use api-processor / api-diff / api-unifier.']);
-diagramSlide('Build Task Consumer — components', 'NestJS 10 stateless worker; the heavy lifting is the api-processor library', 'L3_build_task_consumer', [
+diagramSlide('Build Task Consumer — components', 'NestJS 11 stateless worker; the heavy lifting is the api-processor library', 'L3_build_task_consumer', [
   'RegistryService polls POST /api/v2/builders/{builderId}/tasks with an api-key; 204 means no work, 200 returns a task ZIP (config.json + sources).',
   'BuilderService validates the config with ajv, sends running heartbeats every statusInterval, and runs PackageVersionBuilder for the requested buildType.',
   'Resolvers inside api-processor call back to the Backend for previous versions, operations, documents and export templates.',
@@ -224,7 +224,7 @@ diagramSlide('Java Task Consumer — components (new)', 'Plain-JVM worker mirror
   s.addText('Code', { x: 0.8, y: 3.1, w: 11, h: 1, fontFace: HFONT, fontSize: 44, bold: true, color: WHITE, isTextBox: true, margin: 0 });
   footer(s, n, true);
 }
-diagramSlide('Backend — request pipeline, security strategies, cron jobs', 'qubership-apihub-service/ package layering', 'L4_backend_code', [
+diagramSlide('Backend — request pipeline, security strategies, cron jobs', 'backend/portal-backend package layering', 'L4_backend_code', [
   'Every request: mux.Router → Prometheus / write-deadline middleware → security.Middleware (go-guardian union) → controller → service → repository → entity.',
   'Strategies: CookieToken, BearerToken (BaseJWTStrategy), RefreshToken, ApihubApiKey, ApihubPAT, CustomJWT, EphemeralFileTokens; JWTValidator uses the RSA public key.',
   'IDPManager instantiates SAMLProvider (crewjam/saml) and OIDCProvider (coreos/go-oidc) from externalIdentityProviders[].',
@@ -258,7 +258,7 @@ fullDiagramSlide('APIHUB UI — monorepo packages and rendering libraries', 'pac
   s.addText('Deployment and dynamic views', { x: 0.8, y: 3.1, w: 11, h: 1, fontFace: HFONT, fontSize: 44, bold: true, color: WHITE, isTextBox: true, margin: 0 });
   footer(s, n, true);
 }
-diagramSlide('Kubernetes deployment', 'Helm chart qubership-apihub/helm-templates/qubership-apihub', 'D1_kubernetes', [
+diagramSlide('Kubernetes deployment', 'Helm chart deploy/helm-templates/qubership-apihub', 'D1_kubernetes', [
   'One Deployment + Service per container; nginx UI is the single Ingress target (http and https with TLS secret).',
   'Backend and Linter have ServiceAccounts / RoleBindings for Olric cluster discovery (olric-cloud-plugin); ServiceMonitor and two Grafana dashboards ship with the chart.',
   'Sizing: Backend 3 CPU / 3 Gi in production with GOMEMLIMIT ≈ 80 % of the limit; Build Task Consumer 3–6 replicas; Linter 1000 Mi; Agents Backend 256 Mi.',
@@ -311,9 +311,9 @@ diagramSlide('Authentication paths', 'Browser SSO / local login, CI and MCP clie
     ['MCP transport', 'SSE → Streamable HTTP (mcp-go 0.56), 15-min session TTL; tools renamed (search_api_operations …), new get_document, api-packages resource, IDS prompt', '7C3AED'],
     ['AI chat', 'Chat sessions with /messages/stream, tool loop over MCP tools + ask_clarification, ephemeral files, retention cleanup', '7C3AED'],
     ['Contract types', 'DDLAPI (ddlapi-1.0 SpecType, ddl contract) and MCP catalog contracts (mcp, schemas up to 2025-11-25) with dedicated controllers', BLUE],
-    ['Java analysis', 'New qubership-apihub-java-task-consumer (jdiff-engine, japicmp, jdeps, OCI jar extraction); backend java-builders queue specified, not implemented', AMBER],
+    ['Java analysis', 'New backend/java-task-consumer (jdiff-engine, japicmp, jdeps, OCI jar extraction); backend java-builders queue specified, not implemented', AMBER],
     ['Build types', '+ prefix-groups-changelog, exportVersion, exportRestDocument, export*OperationsGroup; documentGroup / reducedSourceSpecifications / mergedSpecification deprecated', BLUE],
-    ['Toolchain', 'Go 1.26.5 everywhere, Node 24 consumer, nginx 1.28; robfig/cron cleanup jobs incl. VACUUM and AI-chat cleanup; Linter MCP endpoint; /apihub-nc proxy; agent v1–v3 APIs', GREEN],
+    ['Toolchain', 'Go 1.26.6 everywhere, Node 24 consumer, nginx 1.31; robfig/cron cleanup jobs incl. VACUUM and AI-chat cleanup; Linter MCP endpoint; /apihub-nc proxy; agent v1–v3 APIs', GREEN],
   ];
   items.forEach(([h, d, c], i) => {
     const col = i % 2, row = Math.floor(i / 2), x = 0.5 + col * 6.3, y = 1.55 + row * 1.8;
@@ -330,7 +330,7 @@ diagramSlide('Authentication paths', 'Browser SSO / local login, CI and MCP clie
   bullets(s, ['APIHUB_C4_architecture.md — full C4 model with 26 Mermaid diagrams, tables, appendices (renders on GitHub / Cursor)',
     'APIHUB_C4_architecture.drawio — 17 editable draw.io pages (context, containers, components, code, deployment, dynamic flows)',
     'APIHUB_C4_architecture.pptx — this deck',
-    'All three live in diagrams/c4-2026-09/ of the APIHUB-ALL workspace; the older April 2026 set stays in diagrams/ for reference'], 0.8, 2.6, 11.5, 3.2, 16, ICE);
+    'All three are generated from tools/architecture-model/c4 in the APIHUB monorepo; the April 2026 set is superseded'], 0.8, 2.6, 11.5, 3.2, 16, ICE);
   footer(s, n, true);
 }
 

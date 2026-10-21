@@ -59,7 +59,7 @@ function capGrid(s, mode) {
 { const s = pres.addSlide(); base(s, true);
   txt(s, 'Qubership APIHUB', 0.8, 1.9, 11.5, 1, { fontFace: HFONT, fontSize: 46, bold: true, color: WHITE });
   txt(s, 'Business Capability Map · Capability Heatmaps · ArchiMate views', 0.8, 2.95, 11.5, 0.6, { fontSize: 20, color: ICE });
-  txt(s, 'Enterprise-architecture companion to the C4 set (diagrams/c4-2026-09) · generated 2026-09-11 from the APIHUB-ALL workspace', 0.8, 3.65, 11.5, 0.5, { fontSize: 13, color: 'A5B4FC' });
+  txt(s, 'Enterprise-architecture companion to the C4 set (tools/architecture-model/c4) · generated 2026-09-11 from the APIHUB monorepo', 0.8, 3.65, 11.5, 0.5, { fontSize: 13, color: 'A5B4FC' });
   footer(s, true); }
 // ---------- what & why
 { const s = pres.addSlide(); base(s); title(s, 'Three views, one model', 'Same 9 capabilities and 60 sub-capabilities feed every diagram in this deck'); footer(s);
@@ -154,7 +154,7 @@ section('ArchiMate 3.2 views', '3');
     'APIHUB_capability_architecture.drawio — 7 editable pages, ArchiMate pages use the native ArchiMate 3 shape library',
     'APIHUB_capability_model.archimate — Archi model: 111 elements, 221 relationships, 5 views (layered, realization, capability map, two heatmaps)',
     'APIHUB_capability_architecture.pptx — this deck; model.py / model.json is the single source of truth for regeneration',
-    'Folder: diagrams/capability-2026-09/ in APIHUB-ALL; C4 set in diagrams/c4-2026-09/'].map((t, i, a) => ({ text: t, options: { bullet: true, breakLine: i < a.length - 1, paraSpaceAfter: 8 } })),
+    'Folder: tools/architecture-model/capability/; C4 set in tools/architecture-model/c4/'].map((t, i, a) => ({ text: t, options: { bullet: true, breakLine: i < a.length - 1, paraSpaceAfter: 8 } })),
     { x: 0.8, y: 2.6, w: 11.5, h: 3.5, fontFace: FONT, fontSize: 15, color: ICE, isTextBox: true, margin: 0, valign: 'top' });
   footer(s, true); }
 

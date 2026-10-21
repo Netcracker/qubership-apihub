@@ -4,8 +4,8 @@ Every generator (md / drawio / pptx / archimate) imports this module."""
 # ---------------------------------------------------------------- containers (application components)
 CONTAINERS = {
     'BE':  dict(name='APIHUB Backend',        color='2563EB', tech='Go 1.26 · gorilla/mux · go-pg'),
-    'UI':  dict(name='APIHUB UI',             color='0EA5E9', tech='React 18 · MUI 5 · nginx 1.28'),
-    'BTC': dict(name='Build Task Consumer',   color='1D4ED8', tech='NestJS 10 · api-processor (TS)'),
+    'UI':  dict(name='APIHUB UI',             color='0EA5E9', tech='React 18 · MUI 5 · nginx 1.31'),
+    'BTC': dict(name='Build Task Consumer',   color='1D4ED8', tech='NestJS 11 · api-processor (TS)'),
     'LNT': dict(name='API Linter Service',    color='16A34A', tech='Go 1.26 · Spectral · OpenAI'),
     'ABE': dict(name='Agents Backend',        color='15803D', tech='Go 1.26'),
     'AGT': dict(name='APIHUB Agent',          color='F97316', tech='Go 1.26 · client-go'),
@@ -100,7 +100,7 @@ CAPABILITIES = [
         ('C9.4', 'Scheduled maintenance', ['BE', 'LNT', 'ABE'], 'robfig/cron cleanup jobs, VACUUM, ephemeral files, chat retention', 'core'),
         ('C9.5', 'Schema & data migrations', ['BE', 'LNT', 'ABE'], 'migration framework, operations migration FSM', 'core'),
         ('C9.6', 'Observability', ['BE', 'OPS'], 'Prometheus metrics, ServiceMonitor, Grafana dashboards, business metrics', 'evolving'),
-        ('C9.7', 'CI/CD & E2E testing', ['OPS'], 'qubership-apihub-ci workflows, Newman, Playwright, screenshot tests', 'core'),
+        ('C9.7', 'CI/CD & E2E testing', ['OPS'], 'GitHub Actions workflows (.github, tools/ci), Newman, Playwright, screenshot tests', 'core'),
     ]),
 ]
 
@@ -131,7 +131,7 @@ SERVICE_TO_BUSINESS = [('AS1', 'BS2'), ('AS2', 'BS1'), ('AS3', 'BS3'), ('AS4', '
 NODES = [
     ('N1', 'Kubernetes cluster (APIHUB namespace)', 'node'), ('N2', 'Remote Kubernetes cluster', 'node'),
     ('N3', 'PostgreSQL 14+', 'sysSw'), ('N4', 'S3 / MinIO', 'sysSw'), ('N5', 'Olric (embedded)', 'sysSw'),
-    ('N6', 'nginx 1.28', 'sysSw'), ('N7', 'Identity Provider (SAML / OIDC / LDAP)', 'node'), ('N8', 'LLM API (OpenAI-compatible)', 'node'),
+    ('N6', 'nginx 1.31', 'sysSw'), ('N7', 'Identity Provider (SAML / OIDC / LDAP)', 'node'), ('N8', 'LLM API (OpenAI-compatible)', 'node'),
     ('N9', 'Helm / GitHub Actions', 'artifact'),
 ]
 COMPONENT_TO_NODE = [('BE', 'N1'), ('UI', 'N1'), ('BTC', 'N1'), ('LNT', 'N1'), ('ABE', 'N1'), ('JTC', 'N1'), ('AGT', 'N2'),

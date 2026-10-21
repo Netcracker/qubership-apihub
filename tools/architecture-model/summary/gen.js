@@ -264,7 +264,7 @@ divider('02', 'How it works', 'Seven services, one pipeline and a stack of libra
   const svc = [
     ['UI', 'React 18 · nginx', 'Two apps: the Portal catalogue and the Agents console', BLUE, SKY],
     ['Backend', 'Go 1.26', 'The heart: catalogue, auth, build queue, MCP server, chat', BLUE, SKY],
-    ['Build Consumer', 'NestJS 10', 'Stateless worker that turns uploads into indexed versions', BLUE, SKY],
+    ['Build Consumer', 'NestJS 11', 'Stateless worker that turns uploads into indexed versions', BLUE, SKY],
     ['Linter', 'Go · Spectral', 'Lints and scores every published version', TEAL, MINT],
     ['Agents Backend', 'Go 1.26', 'Registry and orchestrator for remote discovery agents', TEAL, MINT],
     ['Agent', 'Go · client-go', 'Lives in your cluster, probes services for specs', CORAL, BLUSH],
@@ -536,9 +536,9 @@ divider('03', 'Where it stands', 'Maturity, what landed this year, and what stil
   const s = S();
   head(s, 'What you now have', 'Three sets of living documentation', 'All generated from the repositories, all regenerable from scripts in the same folders.', BLUE);
   const sets = [
-    ['C4 model', 'diagrams/c4-2026-09', ['Context, containers, components, code', '26 Mermaid diagrams', '17 draw.io pages', '36-slide deck'], BLUE, SKY],
-    ['Capability model', 'diagrams/capability-2026-09', ['Capability map and two heatmaps', 'Application-to-capability matrix', 'ArchiMate views + Archi model', '17-slide deck'], PLUM, 'F6DCE9'],
-    ['This summary', 'diagrams/', ['The story in one pass', 'For any audience', 'Built from the same verified facts', '21 slides'], CORAL, BLUSH],
+    ['C4 model', 'tools/architecture-model/c4', ['Context, containers, components, code', '26 Mermaid diagrams', '17 draw.io pages', '36-slide deck'], BLUE, SKY],
+    ['Capability model', 'tools/architecture-model/capability', ['Capability map and two heatmaps', 'Application-to-capability matrix', 'ArchiMate views + Archi model', '17-slide deck'], PLUM, 'F6DCE9'],
+    ['This summary', 'tools/architecture-model/summary', ['The story in one pass', 'For any audience', 'Built from the same verified facts', '21 slides'], CORAL, BLUSH],
   ];
   sets.forEach(([t, path, lines, c, tint], i) => {
     const x = 0.7 + i * 4.05;

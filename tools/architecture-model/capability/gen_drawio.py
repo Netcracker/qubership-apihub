@@ -184,7 +184,7 @@ for sid, sn, comps in APP_SERVICES:
         rel(p, k, sid, 'realization')
 for k, nid in COMPONENT_TO_NODE:
     rel(p, nid, k, 'serving')
-p.text(40, 920, 1600, 60, 'Relationships: solid arrow with open head = serving; dashed arrow with hollow head = realization. Application components correspond to C4 containers (diagrams/c4-2026-09). TS libraries and Helm are not shown as components: libraries are packaged inside the components, Helm is an artifact in the technology layer.', 9)
+p.text(40, 920, 1600, 60, 'Relationships: solid arrow with open head = serving; dashed arrow with hollow head = realization. Application components correspond to C4 containers (tools/architecture-model/c4). TS libraries and Helm are not shown as components: libraries are packaged inside the components, Helm is an artifact in the technology layer.', 9)
 
 # ---------------- 7. ArchiMate capability realization view
 p = Page('7 ArchiMate Capability Realization'); pages.append(p)
