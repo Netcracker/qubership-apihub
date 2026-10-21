@@ -546,7 +546,7 @@ function ClassDiagram({ data, onSelectionChange }) {
 export default ClassDiagram;
 ```
 
-For more examples, check out the [Storybook](https://netcracker.github.io/qubership-apihub-class-view/main/).
+For more examples, check out the [Storybook](https://netcracker.github.io/qubership-apihub/storybook/class-view/).
 
 ## Available Scripts
 

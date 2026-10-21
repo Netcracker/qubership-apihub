@@ -38,10 +38,12 @@ The choice between `TransformFunction` and a forward/backward pair depends on th
 **De-unification** exists for end user consumption. Normalized form is often less readable than the original: for example, a schema with all specification-mandated defaults filled in is correct for diffing but overwhelming to read. De-unification strips synthetic additions so the output is as concise and comprehensible as the original.
 
 **Use `TransformFunction` (forward-only) when:**
+
 - The transformation produces a strictly better or more correct normalized form — one where reversing it would reintroduce noise rather than restore meaningful information. Example: removing a redundant `minimum` when `exclusiveMinimum` is already stricter. The result is cleaner; there is nothing useful to restore.
 - The change is permanent normalization: deduplication, constraint simplification, structural cleanup.
 
 **Use forward/backward (`{ forward, backward }`) when:**
+
 - The forward pass adds or replaces something that is absent from the original specification (e.g., synthetic defaults, sentinel-value replacements). These additions are required for correct diffing but would clutter the output shown to a user, so the backward pass removes them.
 - A user reading the de-unified output would be confused or misled if the synthetic change were left in place.
 
@@ -62,6 +64,7 @@ interface NormalizationRule {
 ### Common Patterns in OpenAPI
 
 #### 1. **Default Value Application**
+
 Used extensively for optional properties with specification-defined defaults:
 
 ```typescript
@@ -79,6 +82,7 @@ unify: [
 ```
 
 #### 2. **Value Replacement**
+
 Used to replace sentinel values or primitives with complex objects:
 
 ```typescript
@@ -89,6 +93,7 @@ const OPEN_API_OPERATION_REPLACES: Record<string, ReplaceMapping> = {
 ```
 
 #### 3. **Contextual Defaults**
+
 Dynamic defaults based on parent or current object state:
 
 ```typescript
@@ -111,6 +116,7 @@ const OPEN_API_PARAMETER_DEFAULTS: DefaultValueMapping = {
 ```
 
 #### 4. **Combining Base Defaults**
+
 Reusing and extending default mappings:
 
 ```typescript
@@ -125,6 +131,7 @@ delete OPEN_API_30_JSON_SCHEMA_DEFAULTS[JSON_SCHEMA_PROPERTY_PATTERN_PROPERTIES]
 ```
 
 #### 5. **Replacing in Composed Rules**
+
 Using `insertIntoArrayByInstruction` and `replaceValue` to modify inherited unify arrays:
 
 ```typescript
@@ -144,6 +151,7 @@ unify: insertIntoArrayByInstruction(
 ### Common Patterns in JSON Schema
 
 #### 1. **Standard Default Application**
+
 Core defaults for JSON Schema properties:
 
 ```typescript
@@ -160,6 +168,7 @@ const JSON_SCHEMA_DEFAULTS_COMMON: DefaultValueMapping = {
 ```
 
 #### 2. **Complex Value Replacement**
+
 Replacing boolean/primitive values with schema objects:
 
 ```typescript
@@ -178,6 +187,7 @@ Replacing boolean/primitive values with schema objects:
 ```
 
 #### 3. **Comprehensive Unify Pipeline**
+
 JSON Schema uses a complete pipeline of transformations:
 
 ```typescript
@@ -194,6 +204,7 @@ unify: [
 ```
 
 #### 4. **Version-Specific Rules**
+
 Different defaults for different schema versions:
 
 ```typescript
@@ -215,6 +226,7 @@ export const JSON_SCHEMA_DEFAULTS: Record<JsonSchemaSpecVersion, DefaultValueMap
 ## Common Unify Function Patterns
 
 ### Pattern 1: Simple Transform
+
 Direct transformation without backward operation:
 
 ```typescript
@@ -227,11 +239,13 @@ export const unifyEnum: UnifyFunction = (jso, ctx) => {
 ```
 
 **When to use**:
+
 - The result is a strictly better normalized form — reversing it would reintroduce noise rather than restore meaningful information (e.g., removing a redundant constraint when a stricter one is already present, deduplicating arrays).
 - The transformation is a permanent normalization: structural cleanup, constraint simplification, removal of logically redundant data.
 - The de-unified output shown to users is not made less readable by keeping this change in place.
 
 ### Pattern 2: Reversible Transform (Forward/Backward)
+
 Transformation that can be undone for de-unification:
 
 ```typescript
@@ -251,10 +265,12 @@ export const valueDefaults: (map: DefaultValueMapping) => UnifyFunction = (map) 
 ```
 
 **When to use**:
+
 - The forward pass adds or replaces something absent from the original (synthetic defaults, sentinel-value replacements). These additions are necessary for correct api-diff comparison but would clutter or confuse the output a user reads.
 - A user looking at the de-unified result would be misled or overwhelmed if the synthetic change were left in place (e.g., a schema with every specification-mandated default filled in is correct for diffing but significantly harder to read than the original).
 
 ### Pattern 3: Guard Pattern
+
 Always start with type and state checks:
 
 ```typescript
@@ -286,6 +302,7 @@ export const myUnifyFunction: UnifyFunction = (jso, ctx) => {
 **Why**: Prevents errors and unnecessary processing
 
 ### Pattern 4: Lazy Shallow Copy
+
 Only copy when modifications are needed:
 
 ```typescript
@@ -309,6 +326,7 @@ return shallowJso
 **Why**: Performance optimization - avoid copying when not needed
 
 ### Pattern 5: Custom Business Logic
+
 Complex domain-specific transformations:
 
 ```typescript
@@ -343,6 +361,7 @@ export const pathItemsUnification: UnifyFunction = (value, { options }) => {
 ### 1. **Structure and Organization**
 
 #### Define Constants at Module Level
+
 ```typescript
 // Good: Reusable constants
 const EMPTY_MARKER = Symbol('empty-items')
@@ -359,6 +378,7 @@ const COMPONENT_REPLACES: Record<string, ReplaceMapping> = {
 ```
 
 #### Group Related Rules
+
 ```typescript
 // Good: Related defaults and replaces together
 const OPERATION_DEFAULTS: DefaultValueMapping = { /* ... */ }
@@ -388,6 +408,7 @@ const <purpose><Entity>: UnifyFunction = (jso, ctx) => { /* ... */ }
 ### 3. **Safety and Validation**
 
 #### Always Use Guard Pattern
+
 ```typescript
 // Required guards in order:
 export const myUnify: UnifyFunction = (jso, ctx) => {
@@ -415,6 +436,7 @@ export const myUnify: UnifyFunction = (jso, ctx) => {
 ```
 
 #### Preserve Immutability
+
 ```typescript
 // Bad: Direct mutation
 jso.newProperty = value
@@ -461,6 +483,7 @@ setOriginsForArray(newArray, options.originsFlag, itemOrigins)
 ### 5. **Performance Considerations**
 
 #### Use Lazy Evaluation
+
 ```typescript
 // Don't create unless needed
 let shallowCopy = PLACE_HOLDER_JSO
@@ -472,6 +495,7 @@ if (needsChange && shallowCopy === PLACE_HOLDER_JSO) {
 ```
 
 #### Cache Expensive Operations
+
 ```typescript
 // Bad: Multiple lookups
 if (options.originsFlag && jso[options.originsFlag]) {
@@ -488,6 +512,7 @@ if (originsFlag) {
 ```
 
 #### Early Return
+
 ```typescript
 // Good: Exit early when no work needed
 if (!pathParameters && !pathServers && !pathSummary) {
@@ -500,6 +525,7 @@ if (!pathParameters && !pathServers && !pathSummary) {
 ### 6. **Composition Patterns**
 
 #### Reuse Existing Unify Functions
+
 ```typescript
 // Don't reimplement - compose!
 const HEADER_DEFAULTS = {
@@ -514,6 +540,7 @@ const HEADER_REPLACES = {
 ```
 
 #### Build Unify Arrays
+
 ```typescript
 // Simple array
 unify: [
@@ -565,7 +592,9 @@ export const pathItemsUnification: UnifyFunction = (value, { options }) => {
 ## ValueDefaults Pattern Deep Dive
 
 ### Purpose
+
 Applies default values according to specification rules. Properties with default values can be:
+
 1. **Missing** → Added with default value (marked as SYNTHETIC)
 2. **Present with default value** → Marked as PURE (can be removed during de-unification)
 3. **Present with non-default value** → Left unchanged
@@ -592,6 +621,7 @@ const MY_DEFAULTS: DefaultValueMapping = {
 ```
 
 **Key Points**:
+
 - Use primitive values for simple defaults
 - Use `EMPTY_MARKER` symbol when the default needs later replacement to complex object
 - Undefined values are skipped
@@ -616,6 +646,7 @@ const PARAMETER_DEFAULTS: DefaultValueMapping = {
 ```
 
 **Key Points**:
+
 - Function receives current object and context
 - Return `undefined` when no default should apply
 - Can access `ctx.parentValue` for parent-based defaults
@@ -680,6 +711,7 @@ backward: (jso, ctx) => {
 ### Best Practices
 
 #### 1. Group Related Defaults
+
 ```typescript
 // Good
 const PARAMETER_DEFAULTS: DefaultValueMapping = {
@@ -692,6 +724,7 @@ const PARAMETER_DEFAULTS: DefaultValueMapping = {
 ```
 
 #### 2. Use Type-Safe Constants
+
 ```typescript
 // Good: Use property name constants
 const DEFAULTS = {
@@ -707,6 +740,7 @@ const DEFAULTS = {
 ```
 
 #### 3. Return Undefined for Conditional Defaults
+
 ```typescript
 // Good: Clear when default doesn't apply
 const getDefault = (jso: Record<string, any>): string | undefined => {
@@ -726,6 +760,7 @@ const getDefault = (jso: Record<string, any>): string => {
 ```
 
 #### 4. Extend Base Defaults
+
 ```typescript
 // Good: Reuse and extend
 const BASE_DEFAULTS = {
@@ -742,7 +777,9 @@ const EXTENDED_DEFAULTS = {
 ## ValueReplaces Pattern Deep Dive
 
 ### Role
+
 Replaces specific values (usually primitives or markers) with more complex objects. Common uses:
+
 1. Replace marker symbols with actual empty arrays/objects
 2. Replace boolean values with schema objects
 3. Replace sentinel values with generated structures
@@ -774,6 +811,7 @@ type ReverseMatcherFunction = (
 ### Simple Replacements
 
 #### Empty Object Replacement
+
 ```typescript
 const EMPTY_MARKER = Symbol('empty-items')
 
@@ -791,11 +829,13 @@ const MY_REPLACES = {
 ```
 
 **Usage Pattern**:
+
 1. Default sets property to `EMPTY_MARKER`
 2. Replace converts `EMPTY_MARKER` → `{}`
 3. Backward converts `{}` → `EMPTY_MARKER` (then default removes it)
 
 #### Empty Array Replacement
+
 ```typescript
 const TO_EMPTY_ARRAY_MAPPING: ReplaceMapping = {
   mapping: new Map([[EMPTY_MARKER, {
@@ -813,6 +853,7 @@ const OPERATION_REPLACES = {
 ### Complex Replacements
 
 #### Schema Object Replacements
+
 ```typescript
 const ADDITIONAL_PROPERTIES_REPLACES: ReplaceMapping = {
   mapping: new Map([
@@ -833,6 +874,7 @@ const ADDITIONAL_PROPERTIES_REPLACES: ReplaceMapping = {
 ```
 
 **Key Points**:
+
 - Can create synthetic metadata objects
 - Preserves origins for change tracking
 - Uses custom matchers for deep equality
@@ -842,6 +884,7 @@ const ADDITIONAL_PROPERTIES_REPLACES: ReplaceMapping = {
 Reverse matchers determine if a value should be replaced back during de-unification:
 
 #### Simple Matcher
+
 ```typescript
 // Uses deep equality
 export const deepEqualsMatcher: (one: unknown) => ReverseMatcherFunction =
@@ -849,6 +892,7 @@ export const deepEqualsMatcher: (one: unknown) => ReverseMatcherFunction =
 ```
 
 #### Complex Matcher
+
 ```typescript
 // Matches empty schemas considering synthetic properties
 export const deepEqualsWithEmptySchema: ReverseMatcherFunction =
@@ -954,6 +998,7 @@ backward: (jso, { path, options }) => {
 ### Typical Workflow
 
 #### Default + Replace Pattern
+
 Most common workflow combines defaults and replaces:
 
 ```typescript
@@ -983,6 +1028,7 @@ unify: [
 ```
 
 **Why this pattern?**
+
 1. Defaults work with primitives/symbols (fast comparison)
 2. Replaces handle complex object creation
 3. Clean separation of concerns
@@ -991,6 +1037,7 @@ unify: [
 ### Best Practices for ValueReplaces
 
 #### 1. Use Symbols for Markers
+
 ```typescript
 // Good: Symbol - unique and clear intent
 const EMPTY_MARKER = Symbol('empty-items')
@@ -1000,6 +1047,7 @@ const EMPTY_MARKER = '__EMPTY__'
 ```
 
 #### 2. Reuse Common Mappings
+
 ```typescript
 // Define once
 const TO_EMPTY_OBJECT_MAPPING: ReplaceMapping = { /* ... */ }
@@ -1017,6 +1065,7 @@ const REPLACES_B = {
 ```
 
 #### 3. Match Replacement Complexity to Need
+
 ```typescript
 // Simple case: Static value
 value: () => ({})
@@ -1027,6 +1076,7 @@ value: (origins, opts) =>
 ```
 
 #### 4. Pair Forward and Backward
+
 ```typescript
 // Always provide matching reverse matcher
 {
@@ -1036,6 +1086,7 @@ value: (origins, opts) =>
 ```
 
 #### 5. Test Reversibility
+
 ```typescript
 // Ensure round-trip works
 const original = { prop: EMPTY_MARKER }
@@ -1047,6 +1098,7 @@ const restored = deUnify(unified)       // [] → EMPTY_MARKER (then removed)
 ## Common Pitfalls and Solutions
 
 ### Pitfall 1: Mutating Input
+
 ```typescript
 // Bad: Mutates input
 const badUnify: UnifyFunction = (jso) => {
@@ -1064,6 +1116,7 @@ const goodUnify: UnifyFunction = (jso) => {
 ```
 
 ### Pitfall 2: Forgetting Guards
+
 ```typescript
 // Bad: Will crash on non-objects
 const badUnify: UnifyFunction = (jso) => {
@@ -1080,6 +1133,7 @@ const goodUnify: UnifyFunction = (jso) => {
 ```
 
 ### Pitfall 3: Ignoring Origins
+
 ```typescript
 // Bad: Origins metadata lost
 const badUnify: UnifyFunction = (jso) => {
@@ -1101,6 +1155,7 @@ const goodUnify: UnifyFunction = (jso, ctx) => {
 ```
 
 ### Pitfall 4: Inefficient Copying
+
 ```typescript
 // Bad: Always copies even when no changes
 const badUnify: UnifyFunction = (jso) => {
@@ -1121,6 +1176,7 @@ const goodUnify: UnifyFunction = (jso) => {
 ```
 
 ### Pitfall 5: Not Handling Dynamic Defaults
+
 ```typescript
 // Bad: Static default doesn't account for context
 const DEFAULTS = {
@@ -1208,4 +1264,3 @@ const myComponentRules: NormalizationRules = {
 ```
 
 This guideline should serve as a comprehensive reference for writing and understanding unification rules in the api-unifier system.
-

@@ -1,29 +1,58 @@
-# Qubership APIHUB REST Playground
+# APIHUB REST playground
 
-REST Playground is a UI component for REST API testing, which allows you to send requests to the server using real data. 
-It automatically extracts request parameters from the API specification, simplifying the testing process for users.
+The REST playground is a UI component for testing REST APIs: it sends requests to a server with real data and
+extracts the request parameters from the API specification, so the user does not configure them by hand. It is
+published as the npm package `@netcracker/qubership-apihub-rest-playground` and ships as web components. It is a fork
+of [@stoplightio/elements](https://github.com/stoplightio/elements) with TryIt and Examples extracted as separate
+web components.
+
+The UI embeds it to try operations; see the [architecture overview](../../docs/architecture/overview.md).
 
 ## Features
-- **Automatic Request configuration:** Request parameters are automatically determined based on the API specification, which saves the user from having to manually configure.
-- **Support for custom URLs:** If the server URL is not specified in the specification, the user can manually enter their own URL.
-- **Limitations:** Playground is intended exclusively for REST operations.
-- **Manually configuration:** It's impossible to change set of allowed path and/or query parameters and request headers. You can combine them as it is prescribed by specification, but not modify their names and schemas.
-- **CORS:** Helps to circumvent problems with CORS by using requests from the backend.
+
+- **Automatic request configuration:** The request parameters come from the API specification.
+- **Custom URLs:** If the specification names no server URL, the user enters one.
+- **REST only:** The playground is intended exclusively for REST operations.
+- **Fixed parameters:** You cannot change the set of allowed path and query parameters or request headers. You can
+  combine them as the specification prescribes, but not modify their names and schemas.
+- **CORS:** Requests go through the backend, which avoids CORS problems.
 
 ## Components
-Separate web-components:
-- **TryIt:** Allows users to send REST requests to the server using data from the API specification. All query parameters are automatically extracted from the specification, which simplifies the testing process.
-- **Examples:** Provides examples of requests and responses based on the API specification, which helps users better understand the API structure and usage.
 
-## Storybook
-The project uses Storybook to develop and demonstrate interface components in isolation.
+- **TryIt:** Sends REST requests to the server using data from the API specification.
+- **Examples:** Shows examples of requests and responses based on the API specification.
 
-### Run Storybook:
+## Build, test, and lint
+
+The Nx project is `rest-playground`. Run from the repository root:
+
 ```bash
-npm run storybook
+pnpm exec nx run rest-playground:build
+pnpm exec nx run rest-playground:test
+pnpm exec nx run rest-playground:lint
 ```
 
-## Modifications
-Fork of the [@stoplightio/elements](https://github.com/stoplightio/elements).
+See [Build and test](../../docs/development/build-and-test.md).
 
-TryIt and Examples are extracted as separate web-components
+## Run and debug locally
+
+The component runs in Storybook, which develops and demonstrates it in isolation:
+
+```bash
+pnpm exec nx run rest-playground:storybook
+```
+
+The dev server listens on port 9001. CI publishes the
+[Storybook of every branch](https://netcracker.github.io/qubership-apihub/storybook/) on GitHub Pages, and
+`pnpm exec nx run-many -t build:showcase -p rest-playground` builds the static version. Details:
+[Debugging: Storybook](../../docs/development/debugging.md#storybook).
+
+## Configuration
+
+The component reads no configuration file. The host application passes the specification and the request settings as
+properties.
+
+## Further reading
+
+- [Architecture of the processing libraries](../../docs/architecture/processing-libraries.md)
+- [Portal user guide](../../docs/user-guide/portal.md), where users try operations

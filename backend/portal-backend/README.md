@@ -1,11 +1,11 @@
-# qubership-apihub-backend
+# APIHUB backend
 
-**qubership-apihub-backend** is the main backend microservice of the
-[qubership-apihub](https://github.com/Netcracker/qubership-apihub) platform
-(also known as API Registry / APIHub).
-It implements all core business logic, exposes a REST API consumed by
-`qubership-apihub-ui` and external integrations, and hosts the optional
-AI assistant feature.
+The backend (API Registry) is the main Go service of APIHUB. It implements the core business logic, exposes the REST
+API that the UI and external integrations use, and hosts the optional AI assistant and the MCP endpoint. It stores data
+in PostgreSQL and, optionally, in S3 or MinIO. The module ships the image `qubership-apihub-backend`.
+
+It is the center of the product: the UI, the builder, the extension services, and the agents all talk to it. See the
+[architecture overview](../../docs/architecture/overview.md) for the whole picture.
 
 ## Architecture overview
 
@@ -87,7 +87,7 @@ graph TB
 
 | Area | Description |
 |---|---|
-| **API catalogue** | Publish, version, and browse OpenAPI / AsyncAPI / GraphQL specifications |
+| **API catalogue** | Publish, version, and browse OpenAPI, AsyncAPI, GraphQL, JSON Schema, and DDLAPI specifications and Markdown files |
 | **Change detection** | Compare any two versions; generate detailed breaking-change reports |
 | **Search** | Full-text and structured search across operations and schemas (v3 / v4 API) |
 | **Access control** | Role-based permissions; local users + external IdP (SAML / OIDC) + API tokens |
@@ -95,31 +95,37 @@ graph TB
 | **MCP endpoint** | Model Context Protocol server exposing APIHub data to AI agents and IDEs |
 | **Observability** | Prometheus metrics, structured logging, per-turn correlation IDs |
 
-## Installation
+## Build, test, and lint
 
-This service is part of the larger **qubership-apihub** application and should be
-deployed together with its dependencies (PostgreSQL, optionally S3/MinIO).
-
-Full installation guides (docker-compose and Helm) are at:
-[qubership-apihub](https://github.com/Netcracker/qubership-apihub).
-
-For local development and debugging see the [Debug](#debug) section below.
-
-## Build
-
-Run the Nx target from the repository root:
+The Nx project is `portal-backend` (tag `lang:go`). Run from the repository root:
 
 ```bash
 pnpm exec nx run portal-backend:build
+pnpm exec nx run portal-backend:test
+pnpm exec nx run portal-backend:lint
 ```
 
-To build the container image locally, run `build_docker_image.cmd` (Windows, Podman) from this directory.
+`build` writes the binary to `dist/backend/portal-backend`. To build the image, see
+[Build and test: Images](../../docs/development/build-and-test.md#images); on Windows with Podman,
+`build_docker_image.cmd` in this folder does the same. Set up the tools first:
+[Getting started](../../docs/development/getting-started.md).
+
+## Run and debug locally
+
+The shortest path is the generic Compose stack, which runs the backend with the UI, the builder, the linter, and
+PostgreSQL: [Run APIHUB locally](../../docs/development/local-run.md#compose-with-published-images). To run the backend
+from the IDE with the rest in Compose, follow
+[Backend from the IDE](../../docs/development/local-run.md#backend-from-the-ide-the-rest-in-compose). Start `main.go`
+with this folder as the working directory, because the migrations and the static assets are found relative to it.
+Breakpoints, Delve, and the traps of a local run:
+[Debugging: Go service](../../docs/development/debugging.md#go-service) and
+[Running and probing](docs/running-and-probing.md).
 
 ## Configuration
 
-Configuration is provided via `config.yaml` (loaded from `basePath` at startup).
-For a full reference with descriptions and defaults see
-[config.template.yaml](config.template.yaml).
+The backend reads `config.yaml` from the folder that `APIHUB_CONFIG_FOLDER` names (default: the working directory).
+[`config.template.yaml`](config.template.yaml) lists every key with its description and default; the deployment view is
+in the [configuration reference](../../docs/configuration-reference.md).
 
 Notable sections:
 
@@ -133,39 +139,14 @@ Notable sections:
 | `monitoring` | Prometheus application metrics (HTTP, build queue, AI chat) |
 | `cleanup` | Cron schedules for revision, comparison, and soft-deleted data GC |
 
-## Debug
+## API specifications
 
-[Local development principles](./docs/local_development/local_development.md)
+The OpenAPI files are in [`docs/api/`](docs/api/): [`APIHUB_API.yaml`](docs/api/APIHUB_API.yaml), the
+[admin API](<docs/api/Admin API.yaml>), and two internal variants. The Postman collections that test them are in
+[`tests/postman-collections`](../../tests/postman-collections/README.md); the AI chat collection is
+[`docs/postman/AI_Chat_API.postman_collection.json`](docs/postman/AI_Chat_API.postman_collection.json).
 
-## Developer Tools
+## Further reading
 
-[Development tools setup](./docs/newcomer_env_setup.md)
-
-## Documentation
-
-Full developer and operator documentation lives in [docs/](./docs/README.md).
-
-## AI agent configuration (APM)
-
-Agent context is split between a **central store** and **this repository**:
-
-| Scope | Location |
-|-------|----------|
-| Generic skills/rules (Go conventions, planner, …) | [`qubership-apihub-ci/agent-packages`](https://github.com/Netcracker/qubership-apihub-ci/tree/main/agent-packages) |
-| Backend-specific packages | [`agent-packages/`](agent-packages/) in this repo |
-| Deployed harness output | `.cursor/` and `.claude/` (committed; refresh with APM) |
-
-After changing package sources or `apm.yml`, refresh deployed harness files:
-
-```bash
-# one-time: install APM (see https://microsoft.github.io/apm/)
-brew install microsoft/apm/apm   # or: pip install apm-cli
-
-# from the repository root:
-apm install --target cursor,claude --legacy-skill-paths
-```
-
-This reads root `apm.yml` (CI dependencies + local `agent-packages/`), updates
-`apm.lock.yaml`, and deploys into `.cursor/` and `.claude/`. Commit the refreshed harness
-trees together with package or manifest changes.
-
+The [module documentation index](docs/README.md) lists the development guide, the API files, and links to the
+administration guides, the design documents, and the security model.

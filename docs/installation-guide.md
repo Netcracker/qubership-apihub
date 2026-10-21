@@ -1,6 +1,8 @@
 # Qubership APIHUB — installation and deployment
 
-This guide covers **Docker Compose** (local/bare-metal), **Helm on Kubernetes**, and the **local-k8s quickstart**. For the source-of-truth hierarchy (which service reads a YAML file, which reads env vars, and how Helm is the canonical K8s contract), see [Configuration reference](./configuration-reference.md).
+This guide covers **Docker Compose** (local/bare-metal), **Helm on Kubernetes**, and the **local-k8s quickstart**. For
+the source-of-truth hierarchy (which service reads a YAML file, which reads env vars, and how Helm is the canonical K8s
+contract), see [Configuration reference](./configuration-reference.md).
 
 ---
 
@@ -53,11 +55,13 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 | **qubership-apihub-backend** | **`config.yaml`** (path set by `APIHUB_CONFIG_FOLDER`, default `./`), same schema as [`config.template.yaml`](../backend/portal-backend/config.template.yaml) | `APIHUB_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
 | **qubership-apihub-ui** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_NC_SERVICE_ADDRESS`, `API_LINTER_SERVICE_ADDRESS`, `APIHUB_AGENTS_BACKEND_ADDRESS` |
 | **qubership-apihub-build-task-consumer** | Env vars only | `APIHUB_BACKEND_ADDRESS`, `APIHUB_API_KEY`, `LOG_LEVEL`, `FOLDER_STORE`, `OPERATIONS_BUILD_BATCH` |
-| **qubership-api-linter-service** | **`config.yaml`** (path set by `LINTER_CONFIG_FOLDER`), same schema as [`config.template.yaml`](https://github.com/Netcracker/qubership-api-linter-service/blob/develop/qubership-api-linter-service/config.template.yaml) | `LINTER_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
+| **qubership-api-linter-service** | **`config.yaml`** (path set by `LINTER_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/api-linter-service/config.template.yaml) | `LINTER_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
 | **qubership-apihub-agents-backend** | **`config.yaml`** (path set by `AGENTS_BACKEND_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/agents-backend/config.template.yaml) | `AGENTS_BACKEND_CONFIG_FOLDER`, `LOG_LEVEL`, `GOMEMLIMIT` |
 | **qubership-apihub-agent** *(K8s, optional)* | **`config.yaml`** (path set by `AGENT_CONFIG_FOLDER`), same schema as [`config.template.yaml`](../backend/agent/config.template.yaml) | `APIHUB_CONFIG_FOLDER` |
 
-**Helm:** `qubershipApihubBackend.env`, `qubershipApiLinterService.env`, and `qubershipApihubAgentsBackend.env` in `values.yaml` are each serialised as YAML into a per-service Secret `config.yaml`, mounted under `/app/<service>/etc/`. The UI and builder receive env vars injected directly by Deployment templates.
+**Helm:** `qubershipApihubBackend.env`, `qubershipApiLinterService.env`, and `qubershipApihubAgentsBackend.env` in
+`values.yaml` are each serialised as YAML into a per-service Secret `config.yaml`, mounted under `/app/<service>/etc/`.
+The UI and builder receive env vars injected directly by Deployment templates.
 
 ---
 
@@ -71,6 +75,7 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 | [`deploy/docker-compose/with-keycloak/`](../deploy/docker-compose/with-keycloak/) | Same stack + Keycloak pre-configured for SAML and OIDC. |
 
 **Prerequisites:**
+
 - **Podman with compose plugin** (`podman compose up`). Docker Compose also works.
 - On **Windows**: add `127.0.0.1 host.docker.internal` to `hosts` file.
 - `openssl` for JWT key generation (used by `generate_jwt_pkey.sh`).
@@ -79,11 +84,17 @@ Defaults in `values.yaml` and `docker-compose.yml` are enough for sandboxes. For
 ### Quick start — one command
 
 ```bash
+cd deploy/docker-compose/apihub-generic
+# The images in docker-compose.yml use the `dev` tag; switch to the released `latest` images
+sed -i 's/:dev$/:latest/' docker-compose.yml
 # Generates JWT key, random admin/token, substitutes placeholders, starts all containers
-./deploy/docker-compose/apihub-generic/generate_env_and_up_compose.sh
+sh generate_env_and_up_compose.sh
 ```
 
-⚠️ This script **overwrites** template files in-place (`.env` files + every `*-config.yaml`). Stash or branch before running if you want reproducibility.
+Run the script from its own folder: it reads and rewrites the `*.env` and `*config.yaml` files of the current directory.
+
+⚠️ This script **overwrites** template files in-place (`.env` files + every `*-config.yaml`). Stash or branch before
+running if you want reproducibility.
 
 After start: <http://localhost:8081/login> — Portal UI.
 
@@ -135,8 +146,10 @@ extensions:
 ```
 
 > **JWT key generation:**
+>
 > ```bash
-> ./deploy/docker-compose/apihub-generic/generate_jwt_pkey.sh
+> cd deploy/docker-compose/apihub-generic
+> ./generate_jwt_pkey.sh
 > # outputs base64 value to ./jwt_private_key
 > ```
 
@@ -191,7 +204,8 @@ API_LINTER_SERVICE_ADDRESS=qubership-api-linter-service:8080
 APIHUB_AGENTS_BACKEND_ADDRESS=qubership-apihub-agents-backend:8080
 ```
 
-> There is **no `APIHUB_URL` in the UI env file** — the public URL is `security.apihubExternalUrl` in the backend config.
+> There is **no `APIHUB_URL` in the UI env file** — the public URL is `security.apihubExternalUrl` in the backend
+> config.
 
 ---
 
@@ -199,7 +213,8 @@ APIHUB_AGENTS_BACKEND_ADDRESS=qubership-apihub-agents-backend:8080
 
 #### qubership-apihub-backend
 
-Configuration is via **`config.yaml`** (path: `APIHUB_CONFIG_FOLDER`). The annotated full template: [`config.template.yaml`](../backend/portal-backend/config.template.yaml).
+Configuration is via **`config.yaml`** (path: `APIHUB_CONFIG_FOLDER`). The annotated full template:
+[`config.template.yaml`](../backend/portal-backend/config.template.yaml).
 
 Process-level env vars (the only ones the backend binary reads directly):
 
@@ -316,7 +331,8 @@ All configuration via **environment variables** (nginx config template is popula
 | `API_LINTER_SERVICE_ADDRESS` | No | `apihub-backend:8080` | Internal address of the linter service |
 | `APIHUB_AGENTS_BACKEND_ADDRESS` | No | `apihub-backend:8080` | Internal address of the agents backend service |
 
-> The **browser-facing public URL** is **not** configured here. It is `security.apihubExternalUrl` in the backend `config.yaml`.
+> The **browser-facing public URL** is **not** configured here. It is `security.apihubExternalUrl` in the backend
+> `config.yaml`.
 
 ---
 
@@ -341,7 +357,11 @@ All configuration via **`config.yaml`** (path: `LINTER_CONFIG_FOLDER`). Helm ren
 `LOG_LEVEL` and `GOMEMLIMIT` stay container environment variables (`GOMEMLIMIT` default `800MiB` Helm /
 `1600MiB` Compose; Helm key `qubershipApiLinterService.goMemLimit`).
 
-**Custom CA certificates (HTTPS outbound):** with the [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) runtime image, mount PEM files at **`/tmp/cert`** (Compose: uncomment the linter **`./certs:/tmp/cert:ro`** volume; Helm: **`qubershipApiLinterService.customCa`**). Required for corporate HTTPS to APIHUB or OpenAI when public CAs are insufficient.
+**Custom CA certificates (HTTPS outbound):** with the
+[qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) runtime image, mount PEM files at
+**`/tmp/cert`** (Compose: uncomment the linter **`./certs:/tmp/cert:ro`** volume; Helm:
+**`qubershipApiLinterService.customCa`**). Required for corporate HTTPS to APIHUB or OpenAI when public CAs are
+insufficient.
 
 | Config key | Mandatory | Default | Description |
 |------------|-----------|---------|-------------|
@@ -398,22 +418,40 @@ All configuration via **`config.yaml`** (path: `AGENTS_BACKEND_CONFIG_FOLDER`). 
 | `cleanup.snapshots.schedule` | No | `0 22 * * 0` | Cron schedule for the snapshots cleanup job |
 | `cleanup.snapshots.ttlDays` | No | `30` | Retention period in days for snapshots (`0` removes all) |
 
-**Custom CA certificates (HTTPS outbound):** with the [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) runtime image, mount PEM files at **`/tmp/cert`** (Compose: uncomment the agents-backend **`./certs:/tmp/cert:ro`** volume; Helm: **`qubershipApihubAgentsBackend.customCa`**). Required for corporate HTTPS to APIHUB or remote agents when public CAs are insufficient.
+**Custom CA certificates (HTTPS outbound):** with the
+[qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) runtime image, mount PEM files at
+**`/tmp/cert`** (Compose: uncomment the agents-backend **`./certs:/tmp/cert:ro`** volume; Helm:
+**`qubershipApihubAgentsBackend.customCa`**). Required for corporate HTTPS to APIHUB or remote agents when public CAs
+are insufficient.
 
 ---
 
 ## Helm (Kubernetes)
 
-Chart: **[`deploy/helm-templates/qubership-apihub/`](../deploy/helm-templates/qubership-apihub/)**.
+Chart: `oci://ghcr.io/netcracker/charts/qubership-apihub`, one version per product release. A released chart pins
+every image tag to the component versions of that release, so `--version` selects the whole product. The versions are
+listed on the [releases page](https://github.com/Netcracker/qubership-apihub/releases); the Latest release is the
+newest product version, and its `.tgz` is attached to it.
+
+The chart sources are in [`deploy/helm-templates/qubership-apihub/`](../deploy/helm-templates/qubership-apihub/).
+Their image tags are `dev`, the state of `develop`: install from the sources only for development.
 
 **Prerequisites:**
+
 - `kubectl` with namespace admin access
-- Helm 3.x
+- Helm 3.8 or later (OCI registry support)
 - Kubernetes 1.23+
 
 ### Minimal values.yaml to fill
 
-Copy `values.yaml`, fill mandatory fields. Everything else has sensible defaults.
+Write a `values.yaml` with the mandatory fields below; the chart defaults cover the rest. To see every value of a
+version, with its defaults and comments:
+
+```bash
+helm show values oci://ghcr.io/netcracker/charts/qubership-apihub --version <X.Y.Z>
+```
+
+Leave `image.tag` out of your file: a tag there overrides the pinned one and stays behind on the next upgrade.
 
 ```yaml
 qubershipApihubBackend:
@@ -474,23 +512,36 @@ qubershipApihubAgentsBackend:
 
 ```bash
 helm install apihub -n qubership-apihub --create-namespace \
-  -f ./deploy/helm-templates/qubership-apihub/values.yaml \
-  ./deploy/helm-templates/qubership-apihub
+  -f values.yaml \
+  oci://ghcr.io/netcracker/charts/qubership-apihub --version <X.Y.Z>
 ```
 
 ```bash
 helm upgrade apihub -n qubership-apihub \
-  -f ./deploy/helm-templates/qubership-apihub/values.yaml \
-  ./deploy/helm-templates/qubership-apihub
+  -f values.yaml \
+  oci://ghcr.io/netcracker/charts/qubership-apihub --version <X.Y.Z>
 ```
 
 ```bash
 helm uninstall apihub -n qubership-apihub
 ```
 
+From the chart sources, for development:
+
+```bash
+helm install apihub -n qubership-apihub --create-namespace \
+  -f values.yaml \
+  ./deploy/helm-templates/qubership-apihub
+```
+
+The APIHUB Agent has its own chart, `oci://ghcr.io/netcracker/charts/qubership-apihub-agent`, versioned with the agent;
+see the [agent chart guide](../backend/agent/helm-templates/README.md).
+
 ### Full Helm parameter reference
 
-`qubershipApihubBackend.env` in `values.yaml` maps 1:1 to `config.yaml` keys — same table as [qubership-apihub-backend above](#qubership-apihub-backend). Helm additionally auto-patches `olric.namespace` and `olric.replicaCount` from the release namespace and `replicas` value.
+`qubershipApihubBackend.env` in `values.yaml` maps 1:1 to `config.yaml` keys — same table as
+[qubership-apihub-backend above](#qubership-apihub-backend). Helm additionally auto-patches `olric.namespace` and
+`olric.replicaCount` from the release namespace and `replicas` value.
 
 | `values.yaml` section | Mandatory to fill | Maps to |
 |----------------------|-------------------|---------|
@@ -534,17 +585,23 @@ helm uninstall apihub -n qubership-apihub
 | `qubershipApihubAgentsBackend.env.cleanup.snapshots.ttlDays` | No | Snapshots retention in days (default `30`) |
 | `qubershipApihubAgentsBackend.customCa` | No | Optional Secret mounted at `/tmp/cert` for corporate HTTPS outbound |
 
-For secrets management on production clusters use Kubernetes **ExternalSecrets**, CSI driver, or sealed-secrets — do not commit plaintext credentials in `values.yaml`.
+For secrets management on production clusters use Kubernetes **ExternalSecrets**, CSI driver, or sealed-secrets — do not
+commit plaintext credentials in `values.yaml`.
 
 ---
 
 ## Local Kubernetes quickstart
 
-**Not for production.** [`deploy/helm-templates/local-k8s-quickstart/`](../deploy/helm-templates/local-k8s-quickstart/README.md) contains scripts for Kind or Rancher Desktop with an ingress controller and PostgreSQL. Optional Apache Superset can be deployed for analytics.
+**Not for production.**
+[`deploy/helm-templates/local-k8s-quickstart/`](../deploy/helm-templates/local-k8s-quickstart/README.md) contains
+scripts for Kind or Rancher Desktop with an ingress controller and PostgreSQL. Optional Apache Superset can be deployed
+for analytics.
 
 ```bash
 # One-liner: creates Kind cluster + installs APIHUB
-./deploy/helm-templates/local-k8s-quickstart/apihub-quickstart.sh
+# Run it from its own folder: the script changes into ./scripts
+cd deploy/helm-templates/local-k8s-quickstart
+./apihub-quickstart.sh
 # Portal at: https://qubership-apihub.localtest.me/login
 ```
 
@@ -557,4 +614,4 @@ For secrets management on production clusters use Kubernetes **ExternalSecrets**
 - [Maintenance guide](./maintenance-guide.md) — backups, data TTL, auth links
 - [User guide](./user-guide.md) — Portal workflows
 
-Wiki (architecture, features): **[Qubership APIHUB Wiki](https://github.com/Netcracker/qubership-apihub/wiki)**
+Architecture and features: **[Architecture overview](architecture/overview.md)**

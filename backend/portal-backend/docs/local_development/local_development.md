@@ -19,12 +19,14 @@ Run corresponding docker-compose file from /docker-compose/DB folder.
 It will start Postgres DB in docker container with predefined credentials and database. So it's ready to connect from APIHUB BE.
 User `apihub` with password `apihub` and database `apihub` will be created automatically.
 If you use DBeaver you need to connect to PostgreSQL DB first using parameters:
+
 ```TEXT
 Host=localhost
 Username=postgres
 Password=postgres
 Port=5432
 ```
+
 Don't forget to check 'Show all databases' to see all DBs.
 
 * To create a corresponding docker image you need to issue a command:
@@ -128,7 +130,6 @@ APIHUB_ACCESS_TOKEN={use generated token value here};
 
 ## UI
 
-
 ### Run UI service
 
 Run corresponding docker-compose file from `/docker-compose/UI` folder.
@@ -153,6 +154,7 @@ Of course, you can perform the actions above with your favorite IDE.
 ### How to open web view
 
 #### Create user
+
 First you need to create a local user.
 Open NC-newman-desktop or Bruno app and run `POST /api/internal/users` at APIHUB_HOST=localhost:8090 with body:
 
@@ -162,10 +164,13 @@ Open NC-newman-desktop or Bruno app and run `POST /api/internal/users` at APIHUB
 }`
 
 #### Open web view
+
 Go to [http://localhost:8081](http://localhost:8081) (use other port if you change it) and enter created above credentials.
 
 #### Fill DB with data if needed
+
 You can fill DB with data:
+
 * download appropriate backup archive from FTP
 * extract downloaded archive
-* use Restore tool of you favorite application, dBeaver for example with next parameters: format: Directory, Backup file: <path to folder with extracted DB>, Discard object owner = true.
+* use Restore tool of you favorite application, dBeaver for example with next parameters: format: Directory, Backup file: `<path to folder with extracted DB>`, Discard object owner = true.

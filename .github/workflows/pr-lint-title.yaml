@@ -1,6 +1,6 @@
 ---
 
-name: "Lint PR Title"
+name: 'PR: Title'
 
 on:
   pull_request:

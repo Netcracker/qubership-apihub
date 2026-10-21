@@ -2,7 +2,7 @@
 
 This document provides a comprehensive guide to the coding standards and best practices used in this project.
 
-**Quick Navigation**
+## Quick Navigation
 
 - [Naming Conventions](#naming-conventions)
 - [Code Organization](#code-organization)
@@ -474,6 +474,7 @@ const requiredField = page.getByRole('textbox').and(page.getByTestId('Required')
   This prevents false positives where the entire page fails to load. Check for a stable, always-present element, like a page title or another tab.
   When verifying that a dialog is closed, also verify that you remain on the correct page with the expected content visible.
 - **Minimal Assertions:** Avoid redundant assertions. Assert on the **most specific element** that proves the expected state. Do not add extra assertions that duplicate information already verified by a parent element's visibility.
+
   ```typescript
   // ❌ Incorrect: redundant assertions
   await expect(restApi.operations).toBeVisible() // unnecessary if restApi is checked
@@ -483,19 +484,24 @@ const requiredField = page.getByRole('textbox').and(page.getByTestId('Required')
   await expect(restApi).toBeVisible()
   await expect(qualityValidation.title).toBeVisible()
   ```
+
 - **Tooltips:** Surface every tooltip through the shared `portalPage.tooltip` (or the equivalent page-level component). Hover the interactive element to trigger the tooltip, then assert the text via `portalPage.tooltip` instead of introducing ad-hoc tooltip locators.
 - **Icon Verification:** When verifying icons in tables or lists, always use `toHaveIcon()` assertion on the element containing the icon (e.g., `typeCell`, `statusCell`). The method searches for the first SVG element within the component and checks its `data-testid` attribute. Do not skip icon verification - icons are important visual indicators of state/type.
+
   ```typescript
   // ✅ Correct: verify icon in table cell
   const firstRow = apiQualityTab.getProblemRow(1)
   await expect(firstRow.typeCell).toHaveIcon(ERROR_ICON)
   ```
+
 - **Icon Class Verification:** For Monaco Editor icons (codicons) and other icons that use CSS classes instead of `data-testid`, use `toHaveIconClass()` assertion. This checks if the element itself has the specified class.
+
   ```typescript
   // ✅ Correct: verify Monaco Editor problem icon by class
   await expect(problemPopUp.iconContainer).toHaveIconClass(CODICON_ERROR_CLASS)
   await expect(problemPopUp.iconContainer).toHaveIconClass('codicon-warning')
   ```
+
 - **Scrolling and Viewport Visibility:** When testing navigation or clicking elements that might require scrolling, always verify that:
   1. The element is scrolled into view (Playwright's `click()` handles this automatically, no need for explicit `scrollIntoViewIfNeeded()` before click)
   2. After interaction, verify the element is visible in the viewport using `toBeInViewport()`

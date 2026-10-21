@@ -1,8 +1,11 @@
 # APIHUB docker-compose local deployment with SAML integration via Keycloak
 
-Follow this guide in order to run APIHUB on a local machine/bare-metal server using Docker (or compatible) container runtime
+This stack is the [generic stack](../apihub-generic/README.md) plus Keycloak with SAML and OIDC sign-in. This page
+describes the Keycloak delta; the prerequisites, ports, and persistence are the same as in the generic README and in the
+[installation guide](../../../docs/installation-guide.md#docker-compose).
 
-`docker-compose` file in this folder runs all qubership-apihub containers and their mandatory startup dependency - PostgreSQL database. At the same time it set up Keycloak and SAML integration for Auth for Qubserhip-APIHUB
+The `docker-compose.yml` file in this folder runs all APIHUB containers, PostgreSQL, and a Keycloak server that is
+configured for SAML and OIDC.
 
 ## Prerequisites
 
@@ -99,22 +102,22 @@ Execute `podman compose down`
 
 ## Run via single command
 
-Execute `generate_env_and_up_compose.sh` - it will initialize all require ENV VARs, **print them to the output (here you can see user/password for login)** and start the Qubership-APIHUB application
-
+Run `sh generate_env_and_up_compose.sh` from this folder. It generates the required values,
+**prints them (here you can see the user and password for login)**, writes them into the files in place, and
+starts APIHUB.
 
 ## Usage
 
-<http://host.docker.internal:8081/> - Qubserhip-APIHUB UI URL
+<http://host.docker.internal:8081/> - the APIHUB UI
 
 You will be able to login under user/user credential (set in ./keycloak/realm.json)
 
 ## Startup with locally built images
 
-If you want to start APIHUB via compose with locally build docker image of any module you need to do the following:
-
-1. Build module repository (ex: qubership-apihub-backend) by executing its build.cmd/sh
-2. Change `image` URI in docker-compose.yml from `ghcr.io/netcarcker/qubership-apihub-backend:latest` to `localhost/netcracker/qubership-apihub-backend:latest`
-3. Run `podman compose up` as usual
+To start the stack with an image you built from this repository, build the image, change its `image` URI in
+`docker-compose.yml` to the local tag (for example `localhost/qubership-apihub-backend:local`), and run
+`podman compose up`. The build commands for each module are in the
+[local run guide](../../../docs/development/local-run.md#compose-with-locally-built-images).
 
 ## How to make Postgres data be persistent
 
@@ -129,12 +132,12 @@ On Windows need to tune WSL:
 
 1. Go to Podman desktop, open Podman machine terminal
 2. Edit file '/etc/wsl.conf' (using sudo)
-Add the following lines to the end:
+   Add the following lines to the end:
 
-```text
-[automount]
-options = "metadata"
-```
+   ```text
+   [automount]
+   options = "metadata"
+   ```
 
 3. Restart Podman machine
 4. Restart your PC
