@@ -1,4 +1,4 @@
-name: Security scan of images
+name: 'Images: Security scan'
 run-name: >-
   Security scan #${{ github.run_number }} for ${{ inputs.image != '' && inputs.image || inputs.target == 'source' && 'the source' || 'the images of this repository' }}
 

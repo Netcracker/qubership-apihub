@@ -13,8 +13,9 @@ This page is for the people who run a release. It describes what the workflows a
 1. Release start   develop --fast-forward--> release        (CI runs on release, :next images)
 2. Wait            CI on release is green; hotfixes go into release by pull request
 3. Release finish  dry_run = true, read the plan in the job summary
-4. Release finish  dry_run = false, sprint = APIHUB-26.3.5   (main, tags, back-merge, CI on main)
-5. Wait            CI on main publishes images, npm packages, and GitHub Releases
+4. Landing card    pull request into release with the landing release card
+5. Release finish  dry_run = false, sprint = APIHUB-26.3.5   (main, tags, back-merge, CI on main)
+6. Wait            CI on main publishes images, npm packages, and GitHub Releases
 ```
 
 With the GitHub CLI, from any clone:
@@ -36,8 +37,7 @@ gh workflow run release-finish.yml --ref develop -f dry_run=false -f sprint=APIH
 |------|------------|---------|-------|
 | `RELEASE_BOT_SSH_KEY` | Actions secret: private half of deploy key `apihub-release-bot` | Every bot push | In use |
 | `GITHUB_TOKEN` | Token GitHub creates for each run | CI, `release-artifacts` | In use |
-| `PROJECT_READ_TOKEN` | Actions secret with `read:project`, for Project 9 | Product notes (sprint items) | Planned |
-| `PUBLISH_CHARTS` | Repository variable, `true` to publish charts | Chart step of `release-artifacts` | Planned |
+| `PROJECT_READ_TOKEN` | Actions secret with `read:project`, for Project 9 | Product notes (sprint items) | In use |
 
 The bots push with the deploy key, not with `GITHUB_TOKEN`, for two reasons:
 
@@ -48,8 +48,8 @@ The bots push with the deploy key, not with `GITHUB_TOKEN`, for two reasons:
 `release-start`, `release-sync`, and `release-finish` fail at once, with a message, when `RELEASE_BOT_SSH_KEY` is not
 set. A dry run of `release-finish` checks out without the key, so it cannot push anything.
 
-`PROJECT_READ_TOKEN` is not read by any workflow yet. The product notes need it once the generators of steps 4 and 5
-of the migration land.
+`release-artifacts` reads `PROJECT_READ_TOKEN` for the product notes. Without it, a real release stops before anything
+is published, and a dry run warns. `GITHUB_TOKEN` cannot read an organization project.
 
 The workflows rely on these repository settings. They are not checkable from code, so an admin keeps them:
 
@@ -58,6 +58,8 @@ The workflows rely on these repository settings. They are not checkable from cod
 - The deploy key `apihub-release-bot` has write access and bypasses the rulesets on all three branches.
 - Move `RELEASE_BOT_SSH_KEY` into an environment limited to `develop` and `release`. As a repository secret, any writer
   can read it from a modified workflow on a branch (planned; the bot jobs do not name the environment yet).
+  `PROJECT_READ_TOKEN` has the same exposure, and the dry run hands it to the plan step on any branch; make it a
+  fine-grained token that can only read the organization's projects.
 - `tools/release/guard.js` protects CI only: in a clone, `NX_DRY_RUN=true` passes it on any branch. It is not a barrier
   against local misuse; the rulesets on `main` are.
 
@@ -91,7 +93,7 @@ Open the CI run on `develop` and confirm it is green. The release candidate is w
 
 ### 2. Run Release start
 
-Run **Release start** on `develop` (Actions, Release start, Run workflow). The workflow:
+Run **Release: 1. Start** on `develop` (Actions, Release: 1. Start (manual), Run workflow). The workflow:
 
 1. Fetches `develop` and `release`.
 2. Stops with an error when `release` has commits that `develop` lacks. A hotfix sync is unresolved, and cutting
@@ -106,22 +108,34 @@ workflow adds the check.
 
 ### 3. Wait for CI on release
 
-The candidate must be green before you finish. Fix problems with a hotfix pull request into `release`; see
-[Hotfix flow](#hotfix-flow).
-**Release finish** does not check this: confirm that the CI run for the commit `release` points at is green. If a red
-candidate was released, see [CI on main is red](#ci-on-main-is-red).
+The candidate must be green before you finish. Fix problems with a hotfix pull request into `release`; see [Hotfix
+flow](#hotfix-flow). **Release: 2. Finish** does not check this: confirm that the CI run for the commit `release` points
+at is green. If a red candidate was released, see [CI on main is red](#ci-on-main-is-red).
 
 ### 4. Run Release finish as a dry run
 
-Run **Release finish** from `develop` with `dry_run` checked, which is the default. The `sprint` input can stay empty.
-Read the plan; see [Read the dry-run summary](#read-the-dry-run-summary).
+Run **Release: 2. Finish** from `develop` with `dry_run` checked, which is the default. The `sprint` input can stay
+empty. Read the plan; see [Read the dry-run summary](#read-the-dry-run-summary).
 
 A dry run does steps 1 and 2 of [What Release finish does](#what-release-finish-does) locally on the runner. It commits,
 tags, and pushes nothing. You can dispatch a dry run from any branch, for example to test a change to the workflow.
 
-### 5. Run Release finish for real
+### 5. Add the landing release card
 
-Run **Release finish** again from `develop`, with `dry_run` unchecked and the `sprint` input set to the Project 9
+The product landing shows one card per product version. Take the version from the dry-run summary, the line
+`Product: <previous> → <next>`. Open a pull request into `release` that adds
+`sites/landing/src/content/releases/v<X>-<Y>-<Z>.md` for that version, for example `v2-15-1.md` for 2.15.1. Copy the
+frontmatter of the newest card, set `latest: true` on the new one and remove it from the previous one. The
+`apihub-landing-refresh` agent skill drafts the card from the product release notes. The "Latest Release" stat and
+the hero badge take the highest version among the cards, so nothing else needs an edit.
+
+The dry run warns when the card is missing: a `::warning::` annotation and a line in the job summary. The warning
+does not fail the run. Run the dry run again after the pull request is merged to see it clear. When the product stays
+at its version, no card is needed.
+
+### 6. Run Release finish for real
+
+Run **Release: 2. Finish** again from `develop`, with `dry_run` unchecked and the `sprint` input set to the Project 9
 sprint name, such as `APIHUB-26.3.5`. The sprint is stored in the annotation of the product tag. Both modes refuse a
 sprint with characters other than letters, digits, `.`, `_`, and `-`. A real run also refuses:
 
@@ -131,7 +145,7 @@ sprint with characters other than letters, digits, `.`, `_`, and `-`. A real run
 
 It always releases `release`, whichever branch you dispatch from.
 
-### 6. Watch the result
+### 7. Watch the result
 
 The job summary lists the pushed tags, or says "Nothing to release". Then follow the CI run on `main`; see
 [What CI does on main](#what-ci-does-on-main).
@@ -159,8 +173,8 @@ and starts no back-merge.
 "Makes sure CI runs" means: wait up to two minutes for the CI run that the push started. Dispatch CI on the branch
 only when none appears (`tools/release/ensure-ci.sh`). The same commit is never built twice on purpose.
 
-The workflows never cancel a run in progress. Dry runs and real runs of **Release finish** queue apart. A real run
-and **Release start** share one queue, so a cut cannot land between the push of `main` and the fast-forward of
+The workflows never cancel a run in progress. Dry runs and real runs of **Release: 2. Finish** queue apart. A real run
+and **Release: 1. Start** share one queue, so a cut cannot land between the push of `main` and the fast-forward of
 `release`. GitHub keeps one pending run per queue: a newer dispatch replaces the one that waits, so dispatch once.
 
 ## Read the dry-run summary
@@ -195,6 +209,8 @@ Check these points:
 - **Not released.** These components keep their last tag and their last image.
 - **Warning.** A "Nx bumps these components differently" warning is a self-check that should never appear. If it does,
   stop and ask a maintainer of `tools/release/`.
+- **Landing card.** A "landing release card is missing" warning means `sites/landing/src/content/releases/` has no card
+  for the product version; see [Add the landing release card](#5-add-the-landing-release-card).
 - **Nothing to release.** The run found no bump at all. See [Nothing to release](#nothing-to-release).
 
 A dry run checks the sprint only when you give one. It does not check the deploy key or the dispatching branch, and it
@@ -213,27 +229,27 @@ publishes nothing. When the commit has no release tags, it previews the nearest 
 A hotfix is a fix that must ship with the candidate in `release` and must also reach `develop`.
 
 1. Open a pull request into `release` with a Conventional Commits title, for example `fix(portal-backend): ...`.
-   `release` must exist; run **Release start** first when it does not.
+   `release` must exist; run **Release: 1. Start** first when it does not.
 2. Squash-merge it. Do not open a second pull request for `develop`.
-3. The push to `release` starts **Release sync**, which merges `release` into `develop` with a merge commit and makes
+3. The push to `release` starts **Release: Sync**, which merges `release` into `develop` with a merge commit and makes
    sure CI runs on `develop`. It also starts the full CI suite on `release`.
-4. Wait for CI on `release`, then run **Release finish** as usual.
+4. Wait for CI on `release`, then run **Release: 2. Finish** as usual.
 
-**Release sync** runs on every push to `release`, so it also runs after **Release start** and after **Release finish**
-fast-forwards `release`. In those cases `develop` already holds the commits, and the run changes nothing. Its own push
-goes to `develop`, so it cannot start itself again.
+**Release: Sync** runs on every push to `release`, so it also runs after **Release: 1. Start** and after **Release: 2.
+Finish** fast-forwards `release`. In those cases `develop` already holds the commits, and the run changes nothing. Its
+own push goes to `develop`, so it cannot start itself again.
 
-Until the sync succeeds, **Release start** refuses to cut. If two syncs queue, the newer one merges the newer tip of
+Until the sync succeeds, **Release: 1. Start** refuses to cut. If two syncs queue, the newer one merges the newer tip of
 `release`, which contains the older one.
 
 ## What the bots do after a release
 
-After a real run of **Release finish** pushes `main` and the tags:
+After a real run of **Release: 2. Finish** pushes `main` and the tags:
 
 1. `release` is fast-forwarded to `main`.
 2. CI runs on `main`; see [What CI does on main](#what-ci-does-on-main).
 3. `main` is merged into `develop` with a merge commit, and CI runs on `develop`.
-4. **Release sync** sees the push to `release` and finds nothing to merge, or merges what the back-merge has not.
+4. **Release: Sync** sees the push to `release` and finds nothing to merge, or merges what the back-merge has not.
 
 The merge commits are authored as `github-actions[bot]`, and the pushes use the deploy key.
 
@@ -247,17 +263,18 @@ After `ci-ok` passes on `main`, the job `release-artifacts` runs when `HEAD` car
 order:
 
 1. Plans the artifacts from the tags at the commit (`tools/release/artifacts.js`) and refuses to publish when the plan
-   reports a problem, such as a `package.json` version that differs from its tag.
+   reports a problem, such as a `package.json` version that differs from its tag. Before anything is published, it
+   also packages and checks the Helm charts; a chart that could not be pushed stops the job here.
 2. Points `<image>:<version>` at the multi-arch image this run built under `:latest`. It first checks that the image
    carries this commit and both architectures. A version tag that already exists for another commit is never moved.
 3. Builds the released public npm packages before it logs in to any registry, then publishes them to GitHub Packages
    with `pnpm publish -r --ignore-scripts`. A version that the registry already holds from before the release commit
    stops the job: the tag would name content the registry does not have. A version published after the release commit
    comes from an earlier attempt of this release and is skipped. The dry run reports the same case as a warning.
-4. **Planned (step 6):** package and publish the Helm charts to `oci://ghcr.io/netcracker/charts`. Today the step is
-   guarded by `PUBLISH_CHARTS` and only prints a warning.
+4. Packages the released Helm charts with every image tag pinned and pushes them to `oci://ghcr.io/netcracker/charts`;
+   see [Helm charts](#helm-charts).
 5. Creates the GitHub Releases: modules first (`make_latest=false`), then the product, which becomes the Latest
-   release.
+   release. The product release and the agent release carry their chart `.tgz`.
 
 Images exist for these components: `ui`, `build-task-consumer`, `portal-backend`, `api-linter-service`,
 `agents-backend`, `agent`, `test-service`, and `java-task-consumer`. Libraries publish to npm. `commons-go` publishes
@@ -266,7 +283,167 @@ nothing.
 Every step is idempotent. After a failure, re-run the failed jobs of the CI run on `main`. Steps skip what already
 exists.
 
-Release notes are minimal today; see [Limits and planned work](#limits-and-planned-work).
+See [Release notes](#release-notes) for what each GitHub Release says.
+
+## GitHub Pages
+
+The Pages workflow (`pages.yml`) publishes one site at <https://netcracker.github.io/qubership-apihub/>. The site
+has five parts:
+
+- the navigation page at the root, which links to the other four;
+- the product landing at `landing/`;
+- the documentation site at `docs/` (a placeholder until the docs site exists at the ref);
+- the Storybooks at `storybook/<component>/<branch>/`;
+- the database ERDs at `erd/<backend>/` for `portal-backend`, `api-linter-service`, and `agents-backend`.
+
+Old URLs keep working: the root `404.html` redirects `pages/erd/...` to `erd/portal-backend/...` and legacy
+documentation paths to `docs/`.
+
+Everything except the Storybooks comes from one ref. The workflow picks it in this order:
+
+1. The repository variable `SITE_REF`, if set. It can be a branch, a tag, or a commit SHA.
+2. `main`, once `main` has `sites/landing/package.json`.
+3. `develop` otherwise.
+
+The variable `LANDING_REF` overrides the ref of the landing only. The landing and the docs are built from that ref
+and cached by commit. The ERDs are not built by Pages: it pulls the renders for the site's commit from `ghcr.io`.
+The Storybooks are pulled from the Storybook store and get what the rest of the site leaves of the 900 MiB budget
+(the `budget_mib` input of `pages.yml`).
+
+A missing ERD render never stops the site. When the store has no render for a backend at the site's commit (for
+example, `erd.yml` is still running or failed), `erd/` shows the newest render of that backend instead. Its card on
+`erd/index.html` says "Older render", and the run prints a warning. A backend with no render at all gets a card that
+says "Not rendered yet". To bring the ERD up to date, wait for `erd.yml` or run it on `develop` or `main`; a run on
+another branch does not store its render. After a deploy, the `gc` job deletes the renders older than 30 days that are
+neither the key of `main` or `develop` nor the newest of their backend. A site pinned by `SITE_REF` to another ref
+then shows the newest render instead of its own.
+
+The workflows involved:
+
+- `pages.yml` assembles the site with `tools/ci/pages-site.js` and deploys it. It deploys only from the default
+  branch and only when the repository variable `PAGES_DEPLOY` is `true`.
+- `erd.yml` renders the ERD of a backend whenever its SQL migrations (or the ERD tooling) have no render yet, pushes
+  it to `ghcr.io/netcracker/erd-<backend>` under the tag `mig-<key>`, and dispatches `pages.yml`. The key is a hash
+  of the migrations folder and the ERD tooling at the ref, which pins the tool versions, so an unchanged schema is
+  never rendered twice.
+- The `storybook-pages` job of [`ci.yml`](../../.github/workflows/ci.yml) dispatches `pages.yml` after a Storybook
+  changes.
+
+Dispatch the workflow by hand with:
+
+```bash
+gh workflow run pages.yml --repo Netcracker/qubership-apihub --ref develop
+```
+
+## Release notes
+
+`tools/release/artifacts.js` writes the notes in the plan step of `release-artifacts`, with the generators in
+[`tools/release/notes/`](../../tools/release/notes). A dry run shows every note in the job summary.
+
+Module notes cover the commits since the component's previous tag that touch its directories:
+
+- Each commit maps to its pull request. A commit of this repository maps to the merged pull request it came from. An
+  imported commit maps through the `(Netcracker/<repo>#N)` reference at the end of its title to the pull request in
+  the old repository. A commit with neither is listed on its own.
+- A pull request's closing issues decide the section: issue type `Feature` or `Bug`, then a `feature` or `bug` label.
+  Without closing issues, the type of the title decides: `feat` or `fix`. Everything else goes to the tech section.
+- A commit with `!` or a `BREAKING CHANGE:` footer goes to **Breaking changes**, at the top, and nowhere else.
+- Dependency changes compare the `require` lines of `go.mod`, the `dependencies` and `peerDependencies` of
+  `package.json`, and the versions in `pom.xml` at the two tags. In-repo packages are listed separately, as the
+  in-repo dependencies released in the same run.
+
+Components with an image get the full layout: image, documentation, the agent's Helm chart, all sections, the
+dependency table, and the full changelog. Libraries and `commons-go` get a short one: the package, the sections that
+have entries, the updated in-repo dependencies, and the full changelog. A component released only because of a
+dependency says so in one line.
+
+Product notes list:
+
+- the images of the product at their current versions, linked to their module releases;
+- the product chart in the registry, a `helm install` command, and the documentation and installation links at the
+  product tag;
+- the breaking changes of the components released with it;
+- the work items of the sprint: Project 9 cards whose Sprint is the sprint of the product tag and whose Status is
+  Done or In Test, grouped by issue type;
+- every component's version next to its version in the previous product release, and the agent.
+
+The plan reports a problem, which stops a real run before anything is published, in these cases:
+
+- `PROJECT_READ_TOKEN` is not set, or cannot read some cards of the sprint;
+- the product tag names no sprint;
+- no card of the sprint is Done or In Test, which usually means a misspelled sprint name.
+
+A dry run reports the same cases as warnings. A repository the job token cannot read fails the plan step, instead of
+listing its pull requests as bare commits.
+
+GitHub accepts release bodies up to 125,000 characters. Longer notes keep the first entries of each list, down to
+five, and say how many were left out; the full changelog link lists all of them. A pull request lists at most ten
+closing issues, and a card at most ten pull requests, as in the old scripts.
+
+## Helm charts
+
+Two charts are released, each as its own artifact:
+
+| Chart | Sources | Released with | Published as |
+|-------|---------|---------------|--------------|
+| `qubership-apihub` | `deploy/helm-templates/qubership-apihub` | the product tag `X.Y.Z` | `oci://ghcr.io/netcracker/charts/qubership-apihub` |
+| `qubership-apihub-agent` | `backend/agent/helm-templates/qubership-apihub-agent` | the agent tag `agent/X.Y.Z` | `oci://ghcr.io/netcracker/charts/qubership-apihub-agent` |
+
+The chart sources in Git keep their development defaults: `version: 0.0.1`, `appVersion: "1.0"`, and the image tag
+`dev`. Nothing is committed at a release. `release-artifacts` stages a copy of each released chart
+(`tools/release/charts.js`) and writes into it:
+
+- `version` and `appVersion`: the release version;
+- the annotation `org.opencontainers.image.revision`: the release commit;
+- in `values.yaml`, every image tag at its component's current version, the highest stable tag merged into the release
+  commit. The product chart pins `portal-backend`, `build-task-consumer`, `ui`, `api-linter-service`, and
+  `agents-backend`, including `qubershipApihubAgentsBackend.version`. The agent chart pins the agent. The values are
+  replaced in place, so comments and the rest of the file stay as they are.
+
+Then the job checks that every pinned image exists in ghcr, runs `helm lint --strict` and validates the rendered
+manifests with kubeconform (`tools/ci/chart-check.sh`), packages the chart, and reads the registry. It does this twice:
+before the image step, when the version tags of this release are still to be created, and again after npm, with every
+pinned image required. Only then does it push. The `charts` job of CI runs the same lint and kubeconform check on the
+chart sources in every run.
+
+To see what a released chart pins:
+
+```bash
+helm show values oci://ghcr.io/netcracker/charts/qubership-apihub --version 2.16.0
+```
+
+A chart version is never replaced. The job reads the revision annotation of a version that already exists: the release
+commit means an earlier attempt of this release, and the job pulls that package to attach it instead of pushing again.
+Another commit stops the job.
+
+The product notes name the agent chart at the agent's current version. When the product is released without the
+agent, the job checks that this agent chart version is already in the registry and stops otherwise, before anything is
+published. The agent tags from before the migration have no chart in the registry, so the first product release must
+release the agent too; the wiring of the migration touched the agent, so its first plan does.
+
+The first push creates the packages `charts/qubership-apihub` and `charts/qubership-apihub-agent` in ghcr, private.
+The `sources` entry of each `Chart.yaml` links them to this repository. A repository admin makes both public once, so
+that `helm install` works without a login.
+
+The pin table is `CHARTS` in `tools/release/artifacts.js`. A pin path that is missing from `values.yaml` fails the
+release, so rename a values section and its pin together. The image cleanup (`images-gc.yml`) does not touch the
+chart packages.
+
+## Image cleanup
+
+The **Images: Clean up** workflow ([`images-gc.yml`](../../.github/workflows/images-gc.yml)) deletes image versions in
+ghcr that no branch or Git tag needs. It runs when a branch is deleted and twice a day. Most image packages are shared
+with a legacy component repository that still pushes to them, so the workflow checks every tag against the refs of
+the monorepo and of that repository.
+
+- A release image stays while its Git tag exists: `<image>:<version>` for `<component>/<version>`, and the legacy
+  `X.Y.Z` tags.
+- `latest`, `next`, `dev`, and `pull-N-merge` always stay. Closing a pull request deletes nothing.
+- A deleted branch's tag goes on the next run. Superseded indexes and `src-<hash>` content that no kept tag uses go a
+  day after their last change.
+- A run never takes the API rate limit below half, so CI keeps its share. The legacy backlog takes several weeks.
+- A delete needs this repository to have the **Admin** role under Manage Actions access in the package settings.
+  Dispatch the workflow with `dry_run` to see what a run would delete.
 
 ## Version rules
 
@@ -339,14 +516,6 @@ Tags that are not plain `X.Y.Z` versions are ignored when Nx looks for a last ta
 
 - **No maintenance branches.** Once the next candidate is cut into `release`, a fix for the previous release can only
   ship with the next one. A separate maintenance branch is not planned.
-- **Minimal release notes.** Until steps 4 and 5 of the migration, the notes come from `tools/release/notes/minimal.js`.
-  Module notes list the artifacts, the commit titles since the previous tag grouped by type, and a compare link. Product
-  notes list the sprint, the components released with it, and a compare link. They have no pull request links, no
-  linked issues, and no Project 9 work items. Every note carries a comment that marks it as minimal.
-- **Planned: release notes generators (steps 4 and 5).** They will replace `minimal.js` and read Project 9 with
-  `PROJECT_READ_TOKEN`.
-- **Planned: charts (step 6).** The chart step of `release-artifacts` is an empty placeholder behind `PUBLISH_CHARTS`.
-  Until step 6 lands, no chart is published and none is attached to the product release.
 - **One release at a time.** The workflows queue instead of cancelling, but do not dispatch another CI run on `main` or
   `release` during a release. An extra run at the same commit can cancel a pending image build.
 - **A real release starts only by hand,** from `develop`, with the deploy key present.
@@ -355,8 +524,8 @@ Tags that are not plain `X.Y.Z` versions are ignored when Nx looks for a last ta
 
 ### Conflict in release-sync
 
-**Release sync** or the back-merge job of **Release finish** fails with "Merging release into develop conflicts" (or
-`main`). The log prints the commands. In a clone with the deploy key, or with admin rights:
+**Release: Sync** or the back-merge job of **Release: 2. Finish** fails with "Merging release into develop conflicts"
+(or `main`). The log prints the commands. In a clone with the deploy key, or with admin rights:
 
 ```bash
 git fetch origin
@@ -367,22 +536,22 @@ git push origin develop:refs/heads/develop
 
 Use `origin/main` for a failed back-merge. Do not squash and do not rebase. The rulesets block a direct push to
 `develop` for most people, so an admin usually pushes the merge. CI starts on `develop` by itself after the push. Then
-run **Release start** again if it refused to cut.
+run **Release: 1. Start** again if it refused to cut.
 
 ### Release start refuses to cut
 
 `release has commits that develop lacks` means a hotfix is not in `develop` yet. The log lists the commits. Fix the
-failed **Release sync** run as described above, then start again.
+failed **Release: Sync** run as described above, then start again.
 
 ### Stale main
 
 `main cannot fast-forward to release: they have diverged` means `main` holds a commit that `release` lacks. The usual
 cause is that the back-merge of the previous release never reached `develop`, and `release-start` then cut from a
-`develop` without the version commit. Merge `main` into `develop` with a merge commit, run **Release start** again,
-then rerun **Release finish**. A person decides how to reconcile the branches. The workflow never forces anything.
+`develop` without the version commit. Merge `main` into `develop` with a merge commit, run **Release: 1. Start** again,
+then rerun **Release: 2. Finish**. A person decides how to reconcile the branches. The workflow never forces anything.
 
 `git push` rejected in the atomic push means `main` moved during the run. Nothing landed, no tag was pushed, and you
-can run **Release finish** again.
+can run **Release: 2. Finish** again.
 
 ### Release moved during the run
 
@@ -410,19 +579,62 @@ jobs. If the cause is a defect in the code, the fix ships with the next release.
 - `a version tag is never moved`: the image version already exists for a different commit. Stop and ask a maintainer.
 - `is already in the registry from before this release`: the polyrepo published that npm version. Release the
   component again with a bump that leads past it; do not unpublish.
-- A partial publish: re-run the failed jobs. Existing image tags, npm versions, and GitHub Releases are skipped.
+- `pins <image>:<version>, which is not in the registry`: a chart names an image version that ghcr lacks. For a
+  component released in this run, the images step did not tag it; re-run the whole CI run on `main`. For an older
+  version, the image was deleted from ghcr; stop and ask a maintainer.
+- `a chart version is never replaced`: the chart version exists for another commit. Stop and ask a maintainer.
+- `The notes name oci://.../qubership-apihub-agent:<version>, which is not in the registry`: the product release links
+  an agent chart that no release has pushed. Release the agent with the next product release.
+- A partial publish: re-run the failed jobs. Existing image tags, npm versions, charts, and GitHub Releases are skipped;
+  a release that misses its chart gets it attached.
 
 ### The secret is missing
 
 `The secret RELEASE_BOT_SSH_KEY is not set` means a repository admin has to add the private key of the deploy key
 `apihub-release-bot` as an Actions secret, and the public half as a deploy key with write access.
 
+## Tips and tricks
+
+### You forgot the landing release card
+
+You released without the card, so the landing does not list the version. Do not commit it to `main`. The next **Release:
+2. Finish** would fail with "Stale main", because `main` would hold a commit that `release` lacks. CI on `main` would
+also rebuild every image and move `:latest`.
+
+1. Open a pull request into `develop` that adds `sites/landing/src/content/releases/v<X>-<Y>-<Z>.md`.
+2. To publish the card before the next release, point the landing at `develop` and dispatch the Pages workflow.
+   The repository variable `LANDING_REF` overrides the ref of the landing in the Pages assembly and nothing else:
+
+   ```bash
+   gh variable set LANDING_REF --body develop --repo Netcracker/qubership-apihub
+   gh workflow run pages.yml --repo Netcracker/qubership-apihub --ref develop
+   ```
+
+3. After the next release, remove the variable, so the landing is built from `main` again:
+
+   ```bash
+   gh variable delete LANDING_REF --repo Netcracker/qubership-apihub
+   ```
+
+### A hotfix migration and the ERD
+
+A hotfix that adds an SQL migration reaches `main` through `release`. `erd.yml` renders on `main` by itself, because
+the migrations folder has a new key there, and then dispatches `pages.yml`. The site keeps showing `main`.
+
+To render an ERD that `erd.yml` considers done, or to re-render after you change the render tooling by hand, force a
+render of every backend on a branch:
+
+```bash
+gh workflow run erd.yml --repo Netcracker/qubership-apihub --ref <branch> -f force=true
+```
+
 ## Related files
 
 - Workflows: [`release-start.yml`](../../.github/workflows/release-start.yml),
   [`release-sync.yml`](../../.github/workflows/release-sync.yml),
   [`release-finish.yml`](../../.github/workflows/release-finish.yml),
-  [`release-artifacts.yml`](../../.github/workflows/release-artifacts.yml), and the `release-artifacts` job of
-  [`ci.yml`](../../.github/workflows/ci.yml).
+  [`release-artifacts.yml`](../../.github/workflows/release-artifacts.yml), the `release-artifacts` job of
+  [`ci.yml`](../../.github/workflows/ci.yml), [`images-gc.yml`](../../.github/workflows/images-gc.yml),
+  [`pages.yml`](../../.github/workflows/pages.yml), and [`erd.yml`](../../.github/workflows/erd.yml).
 - Scripts: [`tools/release/`](../../tools/release/).
 - Release configuration: the `release` block of [`nx.json`](../../nx.json).

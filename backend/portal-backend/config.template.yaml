@@ -287,7 +287,7 @@ featureFlags:
   previousVersionStatusValidation: true
 
 # List of enabled extension services
-#extensions:
+# extensions:
 #  - name: linter
 #    baseUrl: http://example.com
 #    pathPrefix: api-linter

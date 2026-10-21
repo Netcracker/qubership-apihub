@@ -10,8 +10,6 @@ Follow the root [`AGENTS.md`](../../AGENTS.md) and [`backend/AGENTS.md`](../AGEN
 | Area | Location |
 |------|----------|
 | API specification exposer | `api-spec-exposer/` (`exposer.go`, `exposer_test.go`, `README.md`) |
-| Local build scripts | `build.sh`, `build.cmd` |
-
 ## Build and test
 
 Nx project `commons-go` (library, tag `lang:go`):
@@ -20,7 +18,8 @@ Nx project `commons-go` (library, tag `lang:go`):
 pnpm exec nx run commons-go:test
 ```
 
-Or `go test ./...` from this directory. `build.sh` and `build.cmd` are the old per-repository scripts; prefer Nx.
+Or `go test ./...` from this directory. The old per-repository build scripts are removed; use the Nx targets
+`commons-go:tidy`, `commons-go:lint`, and `commons-go:test`.
 
 ## Traps
 

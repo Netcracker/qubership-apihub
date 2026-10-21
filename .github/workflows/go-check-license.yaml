@@ -1,4 +1,4 @@
-name: Check Go module licenses
+name: 'Lint: Go module licenses'
 
 # Checks that every dependency of every Go module under backend/ has a licence that the module's wwhrd.yml
 # allows, and that it has a licence at all (wwhrd, https://github.com/frapposelli/wwhrd). It replaces the

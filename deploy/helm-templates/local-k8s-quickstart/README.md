@@ -7,26 +7,30 @@ This can be helpful for development and RnD use cases.
 It is not a production ready deployment schema.
 
 - [How to set up k8s cluster on your PC](#how-to-set-up-k8s-cluster-on-your-pc)
-  * [Kind](#kind)
-    + [Prerequisites](#prerequisites)
-    + [Kind installation](#kind-installation)
-    + [Kind uninstall](#kind-uninstall)
-  * [Rancher Desktop](#rancher-desktop)
-    + [Rancher Desktop installation](#rancher-desktop-installation)
-    + [Ingress Controller](#ingress-controller)
+  - [Kind](#kind)
+    - [Prerequisites](#prerequisites)
+    - [Kind installation](#kind-installation)
+    - [Kind uninstall](#kind-uninstall)
+  - [Rancher Desktop](#rancher-desktop)
+    - [Rancher Desktop installation](#rancher-desktop-installation)
+    - [Ingress Controller](#ingress-controller)
 - [APIHUB installation via Helm](#apihub-installation-via-helm)
-  * [Helm prerequisites](#helm-prerequisites)
-  * [Deployment](#deployment)
-  * [Verify Installation](#verify-installation)
-  * [Uninstallation](#uninstallation)
-  * [Apache Superset (optional)](#apache-superset-optional)
-  * [Deploy several APIHUBs simultaneously](#deploy-several-apihubs-simultaneously)
+  - [Helm prerequisites](#helm-prerequisites)
+  - [Deployment](#deployment)
+  - [Verify Installation](#verify-installation)
+  - [Uninstallation](#uninstallation)
+  - [Apache Superset (optional)](#apache-superset-optional)
+  - [Deploy several APIHUBs simultaneously](#deploy-several-apihubs-simultaneously)
 - [Tips & tricks](#tips--tricks)
+
 ## Quickstart
 
 1. Install the following tools: podman, kind, kubectl, helm
-2. Run `apihub-quickstart.sh`
+2. Change into this folder and run `./apihub-quickstart.sh`. The script uses relative paths, so it must start here.
 3. APIHUB is on <https://qubership-apihub.localtest.me/login>
+
+To test an image you built from this repository, load it into the Kind cluster and upgrade the release. The steps are in
+the [local run guide](../../../docs/development/local-run.md#kind-quickstart).
 
 ## How to set up k8s cluster on your PC
 
@@ -110,13 +114,14 @@ Nginx Ingress Controller may work unstable on WSL/Podman. Solution taken from
 ### Ingress Controller
 
 Default ports used:
+
 - 80 (HTTP)
 - 443 (HTTPS)
 
 If ports are busy:
+
 - Change ports in Rancher Desktop settings, OR
 - Use port forwarding
-
 
 ## APIHUB installation via Helm
 
@@ -130,7 +135,6 @@ This folder contains `postgresql` and `keycloak` Helm charts for Qubserhip APIHU
 
 1. Helm
 2. Bash (GitBash, Cygwin, etc)
-
 
 ## Deployment
 
@@ -149,8 +153,8 @@ One-liners:
 1. `apihub-quickstart.sh` - PostgreSQL + Pure APIHUB. Basic option
 1. `apihub-with-keycloak-quickstart.sh` - APIHUB with SAML and OIDC integration via Keycloak
 
-
 ## Verify Installation
+
 Check running pods: `kubectl get pods -n qubership-apihub`
 
 Expected output:
@@ -200,7 +204,6 @@ Then restart backend / linter / agents-backend pods so the base image reloads `/
 
 MinIO/S3 custom CA remains in **`s3Storage.crt`** inside the backend config Secret, not in `/tmp/cert`.
 
-
 ## Uninstallation
 
 ```bash
@@ -216,6 +219,7 @@ MinIO/S3 custom CA remains in **`s3Storage.crt`** inside the backend config Secr
 **Prerequisites:** Postgres-db and APIHUB must be deployed first.
 
 **Deploy manually:**
+
 ```bash
 helm repo add superset https://apache.github.io/superset
 cd apache-superset && helm dependency update
@@ -241,7 +245,7 @@ Basically there are to options:
 
 Option 2 simpler from execution perspective and cheaper from HW perspective so the following steps is for option 2
 
-**Step 1 - Create new logical database in Postgres cluster**
+### Step 1 - Create new logical database in Postgres cluster
 
 Option 1:
 
@@ -269,7 +273,7 @@ Or you can do the same (create user, create db) via pgAdmin UI.
 
 *Note:* do the same for each backend microservice (api-linter, agents-backend, etc)
 
-**Step 2 - prepare helm chart**
+### Step 2 - prepare helm chart
 
 Copy directory `qubership-apihub` with name `qubership-apihub-2`.
 
@@ -289,9 +293,10 @@ apihubUrl: 'qubership-apihub-2.localtest.me'
     apiLinterServiceAddress: 'qubership-api-linter-service.qubership-apihub-2.svc.cluster.local.:8080'
     apihubAgentsBackendAddress: 'qubership-apihub-agents-backend.qubership-apihub-2.svc.cluster.local.:8080'
 ```
+
 In order to change APIHUB release modify `tag: 'dev'` for services to desired docker images tags.
 
-**Step 3 - execute deploy**
+### Step 3 - execute deploy
 
 Run the following command:
 
@@ -299,7 +304,7 @@ Run the following command:
 helm install apihub -n qubership-apihub-2 --create-namespace -f ../qubership-apihub-2/local-k8s-values.yaml -f ../qubership-apihub-2/local-secrets.yaml ../../qubership-apihub
 ```
 
-**Done**
+### Done
 
 New APIHUB is acessible via `https://qubership-apihub-2.localtest.me`
 

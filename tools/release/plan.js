@@ -15,10 +15,14 @@
  *   is printed to stdout after the Nx log. <label> goes into the heading (default "dry run").
  *   --keep-plan leaves .nx/version-plans/release.md behind for the `nx release version` run that
  *   follows; without it the plan file is removed.
+ *
+ * When the product moves, it also checks the landing release card (landing-card.js) and warns, with a
+ * `::warning::` line and a line in the summary, when the card is missing. The check never fails the run.
  */
 const fs = require('node:fs')
 const path = require('node:path')
 const { bumpBetween, bumpFromCommits, commitTypes, listTags, readNxRelease } = require('./conventional')
+const { landingCardCheck } = require('./landing-card')
 const { PRODUCT_PATHS, latestProductTag, productVersion } = require('./product-version')
 const { PLAN_FILE, writeVersionPlan } = require('./version-plan')
 
@@ -99,11 +103,24 @@ async function collectPlan() {
   return { rows, unchanged, product }
 }
 
+/**
+ * When the product moves and its landing release card is missing, prints a `::warning::` line through
+ * `write` and appends the card's summary line to the plan. Returns the plan's Markdown.
+ */
+function withLandingCard(markdown, product, { root = process.cwd(), write = (line) => process.stdout.write(line) } = {}) {
+  if (!product.next) return markdown
+  const card = landingCardCheck(product.next, root)
+  if (card.exists) return markdown
+  write(`::warning::${card.warning}\n`)
+  return `${markdown}\n${card.summary}\n`
+}
+
 async function main(argv) {
   const option = (name) => (argv.includes(name) ? argv[argv.indexOf(name) + 1] : undefined)
   const outFile = option('--out')
   try {
-    const markdown = renderPlan({ mode: option('--mode') ?? 'dry run', ...(await collectPlan()) })
+    const plan = await collectPlan()
+    const markdown = withLandingCard(renderPlan({ mode: option('--mode') ?? 'dry run', ...plan }), plan.product)
     if (outFile) fs.writeFileSync(outFile, markdown)
     else if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, markdown)
     else process.stdout.write('\n' + markdown)
@@ -119,4 +136,4 @@ if (require.main === module) {
   })
 }
 
-module.exports = { expectedBump, planRows, renderPlan }
+module.exports = { expectedBump, planRows, renderPlan, withLandingCard }

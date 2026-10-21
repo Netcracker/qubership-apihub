@@ -1,22 +1,26 @@
 # Local debug harness
 
-Run the real worker poll loop from Cursor with breakpoints, without Docker and without
+Run the real worker poll loop from the IDE with breakpoints, without a container and without
 libraries-backend. An in-process HTTP queue plays the backend contract. A driver then enqueues
 the four build types one after another and waits for each terminal status.
 
-Docker/compose still starts `WorkerMain` only. The harness lives in `src/test` and is not shaded
+The image and Compose file still start `WorkerMain` only. The harness lives in `src/test` and is not shaded
 into the production JAR.
 
-## Start from Cursor
+## Start from the IDE
 
-1. Import or wait for the Maven project `java-task-consumer`.
-2. Run **Debug JTC scenarios** (`.vscode/launch.json`), or debug
-   `com.netcracker.qubership.apihub.javataskconsumer.debug.DebugHarnessMain`.
+1. Import the Maven project `java-task-consumer`, or wait until the IDE has imported it.
+2. In VS Code, open the folder `backend/java-task-consumer` and run **Debug JTC scenarios**
+   (`.vscode/launch.json`). In IntelliJ IDEA, debug
+   `com.netcracker.qubership.apihub.javataskconsumer.debug.DebugHarnessMain` and set its working directory to
+   `backend/java-task-consumer`.
 3. Set breakpoints in `BuildExecutor`, `JdiffBuildService`, or the pipelines.
 
-If this workspace is the APIHUB-ALL monorepo, the launch `cwd` must be the
-`qubership-apihub-java-task-consumer` clone (or open that folder). `DebugHarnessMain` also walks
-up from `user.dir` to find the repo root.
+The working directory must be `backend/java-task-consumer` or a folder below it. `DebugHarnessMain` walks up
+from `user.dir` to find the Maven project, so it fails when it starts from the repository root, where the
+`pom.xml` belongs to the monorepo. For the other ways to run the worker, see
+[Run APIHUB locally](../../../docs/development/local-run.md#builder-and-java-worker) and
+[Debugging: Java worker](../../../docs/development/debugging.md#java-worker).
 
 The process stays alive after the scenario so you can inspect reports. Stop the debug session when
 finished.
