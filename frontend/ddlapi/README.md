@@ -247,9 +247,9 @@ still typed via the root.
 ## Development
 
 ```bash
-npm run build       # bundle dual ESM/CJS + type declarations (vite)
-npm test            # run the Jest suite
-npm run typecheck   # tsc --noEmit
+pnpm exec nx run ddlapi:build   # bundle dual ESM/CJS + type declarations (vite)
+pnpm exec nx run ddlapi:test    # run the Jest suite
+pnpm --filter @netcracker/qubership-apihub-ddlapi run typecheck   # tsc --noEmit
 ```
 
 Implementation plans and design notes for the model, the DDL builder, and the table slicer live in
