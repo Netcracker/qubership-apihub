@@ -1,10 +1,10 @@
 /**
  * Architecture documentation data.
  *
- * The capability model is imported verbatim from `capability-model.json`, which is a copy of
- * `diagrams/arch-deck-2026-09/model.json` in the APIHUB workspace. That file is itself exported
- * from `diagrams/capability-2026-09/model.py`, so capability edits flow from one source into the
- * slide deck and into this site. Re-copy the JSON to refresh; do not hand-edit it here.
+ * The capability model is imported verbatim from `capability-model.json`. That file is generated from
+ * `tools/architecture-model/capability/model.py`, the same source as the architecture deck. To refresh it,
+ * edit `model.py` and run `python -I tools/architecture-model/capability/export_json.py`; do not
+ * hand-edit the JSON.
  *
  * The C4 narrative below is authored for the web from the same deck.
  */

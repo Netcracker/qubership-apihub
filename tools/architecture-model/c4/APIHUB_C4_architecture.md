@@ -33,6 +33,7 @@ Generated: 2026-09-11 · Source of truth: the monorepo (code, Helm chart, nginx 
 6. [Deployment views](#6-deployment-views)
 7. [Dynamic views](#7-dynamic-views)
 8. [Cross-cutting: API/contract type support matrix](#8-cross-cutting--apicontract-type-support-matrix)
+
 - [Appendix A — Module → container map](#appendix-a--module--container-map)
 - [Appendix B — What changed since the April 2026 diagrams](#appendix-b--what-changed-since-the-april-2026-diagrams)
 - [Appendix C — Verification sources](#appendix-c--verification-sources)
