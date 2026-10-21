@@ -11,7 +11,7 @@
         required: false
         default: ''
 
-name: 'Release: 2. Finish'
+name: 'Release: 2. Finish (manual)'
 
 # Releases the candidate on `release`:
 #   1. fast-forward `main` to `release`;
@@ -25,7 +25,7 @@ name: 'Release: 2. Finish'
 # A dry run (the default) does steps 1 and 2 locally in the runner and prints the plan to the job summary;
 # it cannot push, because the job then checks out without the deploy key.
 #
-# Dispatch it from `develop`, the default branch (Actions → Release: 2. Finish → Run workflow, branch
+# Dispatch it from `develop`, the default branch (Actions → Release: 2. Finish (manual) → Run workflow, branch
 # develop): a real run refuses the workflow file of any other branch. It always releases `release`,
 # whatever branch it is dispatched from. The images, npm packages, and GitHub Releases follow in the
 # release-artifacts job of the CI run on main.

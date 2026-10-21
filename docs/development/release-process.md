@@ -93,7 +93,7 @@ Open the CI run on `develop` and confirm it is green. The release candidate is w
 
 ### 2. Run Release start
 
-Run **Release: 1. Start** on `develop` (Actions, Release: 1. Start, Run workflow). The workflow:
+Run **Release: 1. Start** on `develop` (Actions, Release: 1. Start (manual), Run workflow). The workflow:
 
 1. Fetches `develop` and `release`.
 2. Stops with an error when `release` has commits that `develop` lacks. A hotfix sync is unresolved, and cutting

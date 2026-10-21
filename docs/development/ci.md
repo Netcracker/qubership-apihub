@@ -11,14 +11,15 @@ CI runs, see [Build and test](./build-and-test.md).
 
 Each workflow name except `CI` starts with a group prefix: `E2E:`, `Images:`, `Lint:`, `Pages:`, `PR:`, or
 `Release:`. The Actions sidebar sorts workflows by name, so each group stays together there. Give a new workflow the
-prefix of its group, and number the release workflows that a person runs in the order they run.
+prefix of its group. A workflow that a person starts ends with `(manual)`, and the manual release workflows are
+numbered in the order they run.
 
 | Workflow | File | Triggers | What it does |
 |---|---|---|---|
 | CI | `ci.yml` | push to any branch, pull request, manual | builds and tests what changed, publishes images and Storybooks, runs E2E, gives the verdict `ci-ok` |
 | E2E: Kind | `e2e-tests-kind.yml` | called by `ci.yml` and `e2e-tests-manual.yml` | installs the Helm charts on Kind, runs Newman and Playwright |
 | E2E: Podman Compose | `e2e-tests-compose.yml` | called by `e2e-tests-manual.yml` | the same suites against a Compose stack, without the agent |
-| E2E: Run tests | `e2e-tests-manual.yml` | manual, nightly at 00:00 UTC | E2E against images you name; see [Manual E2E](#manual-e2e) |
+| E2E: Run tests (manual) | `e2e-tests-manual.yml` | manual, nightly at 00:00 UTC | E2E against images you name; see [Manual E2E](#manual-e2e) |
 | Images: Build | `images.yml` | called by `ci.yml` | builds an image when its content is new, otherwise retags the existing one |
 | Images: Clean up | `images-gc.yml` | branch deletion, twice a day, manual | deletes image versions that no branch or tag needs |
 | Images: Security scan | `security-scan-apihub.yml` | weekly (Sunday 03:00 UTC), manual | Grype and Trivy over the published images or the source tree |
@@ -32,7 +33,7 @@ prefix of its group, and number the release workflows that a person runs in the 
 | PR: Labels | `automatic-pr-labeler.yaml` | pull request into `develop`, `release`, or `main` | adds type labels and `module:<name>` labels by path |
 | PR: Reviewers | `pr-assigner.yml` | pull request into `develop`, `release`, or `main` | assigns reviewers |
 | PR: Title | `pr-lint-title.yaml` | pull request opened, edited, or updated | checks that the title is a Conventional Commit |
-| Release: 1. Start, Release: 2. Finish, Release: Sync | `release-*.yml` | manual; `release-sync.yml` on push to `release` | the release flow, see [Release process](./release-process.md) |
+| Release: 1. Start (manual), Release: 2. Finish (manual), Release: Sync | `release-*.yml` | manual; `release-sync.yml` on push to `release` | the release flow, see [Release process](./release-process.md) |
 | Release: Artifacts | `release-artifacts.yml` | called by `ci.yml` on `main` | publishes image version tags, npm packages, Helm charts, GitHub Releases |
 
 Only `ci-ok` is a required check. The linters, the link checker, the license check, and the title checks report
@@ -146,7 +147,7 @@ from `develop`. It has nine inputs:
 | `playwright-args` | empty | arguments of `playwright test`; empty means `--project=Portal --grep-invert=@flaky` |
 | `agent` | `true` | deploy the agent and run its collection (Kind only) |
 
-Run it from **Actions > E2E: Run tests > Run workflow**, or with `gh`:
+Run it from **Actions > E2E: Run tests (manual) > Run workflow**, or with `gh`:
 
 ```bash
 gh workflow run e2e-tests-manual.yml --repo Netcracker/qubership-apihub \
