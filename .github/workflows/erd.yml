@@ -8,6 +8,8 @@
     paths:
       - 'backend/*/resources/migrations/**'
       - 'tools/ci/erd*'
+      # Tests are not key inputs (generatorFiles in tools/ci/erd.js), so they start no run.
+      - '!tools/ci/erd*.test.js'
       - '.github/workflows/erd.yml'
   # Any branch can be dispatched, but only develop and main write to the store (the render job's
   # STORE): another branch plans and renders, which tests its migrations and the generator, and
