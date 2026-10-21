@@ -264,6 +264,25 @@ describe('link rewriting', () => {
     );
   });
 
+  it('rewrites an HTML tag that spans lines, and leaves one in inline code alone', () => {
+    const md = [
+      '<img width="500" alt="Step 1"',
+      '  src="../../images/a.png" />',
+      'Write `<img src="x.png">` as <a',
+      '  href="../../admin-guide.md">a link</a>.',
+    ].join('\n');
+    const out = rewriteLinks(md, (link) => rewriteUrl(link, from, tree).url);
+    assert.equal(
+      out,
+      [
+        '<img width="500" alt="Step 1"',
+        '  src="/qubership-apihub/docs/images/a.png" />',
+        'Write `<img src="x.png">` as <a',
+        '  href="/qubership-apihub/docs/admin-guide/">a link</a>.',
+      ].join('\n'),
+    );
+  });
+
   it('leaves links in code blocks and inline code alone', () => {
     const md =
       '`[x](../a.md)` and [y](../../admin-guide.md)\n\n```md\n[z](../../admin-guide.md)\n```\n~~~\n[w](a.md)\n~~~\n';

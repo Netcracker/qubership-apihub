@@ -222,9 +222,9 @@ function destinationRange(text, start) {
   return { from: i, to: j, inner: text.slice(i, j) };
 }
 
-// Rewrites the inline link and image destinations, the reference definitions, and the href and src
-// attributes of HTML a, img, and source tags in one stretch of Markdown that holds no code.
-function rewriteSegment(text, rewrite) {
+// Rewrites the inline link and image destinations and the reference definitions in one stretch of
+// Markdown that holds no code.
+function rewriteMarkdownSegment(text, rewrite) {
   let out = '';
   let last = 0;
   const marker = /\]\(/g;
@@ -237,12 +237,17 @@ function rewriteSegment(text, rewrite) {
     marker.lastIndex = range.to;
   }
   out += text.slice(last);
-  out = out.replace(
+  return out.replace(
     /^(\s{0,3}\[[^\]]+\]:[ \t]*)(<[^>]*>|\S+)/,
     (all, head, dest) => head + rewrite(dest.startsWith('<') ? dest.slice(1, -1) : dest),
   );
-  return out.replace(
-    /(<(?:a|img|source)\b[^>]*?\s(?:href|src|srcset)\s*=\s*)(["'])(.*?)\2/gi,
+}
+
+// Rewrites the href, src, and srcset attributes of HTML a, img, and source tags. A tag may span
+// lines (`<img alt="..."` on one line, `src="..." />` on the next), so this runs on a whole block.
+function rewriteHtml(text, rewrite) {
+  return text.replace(
+    /(<(?:a|img|source)\b[^>]*?\s(?:href|src|srcset)\s*=\s*)(["'])(.*?)\2/gis,
     (all, head, quote, value) => head + quote + rewrite(value) + quote,
   );
 }
@@ -276,7 +281,8 @@ function* blocks(lines) {
 }
 
 // Applies rewrite(destination) to every link outside code: fenced blocks and inline code spans
-// keep their text.
+// keep their text. Markdown links are rewritten line by line; HTML tags over the whole block, with
+// the code spans held out by a placeholder that holds no quote and no ">".
 export function rewriteLinks(markdown, rewrite) {
   const lines = markdown.split('\n');
   const out = [];
@@ -285,11 +291,15 @@ export function rewriteLinks(markdown, rewrite) {
       out.push(...block.lines);
       continue;
     }
-    for (const line of block.lines) {
+    const spans = [];
+    const held = block.lines.map((line) =>
       // Odd parts are inline code spans (`code`, ``code``).
-      const parts = line.split(/(`+[^`]*?`+)/);
-      out.push(parts.map((part, i) => (i % 2 ? part : rewriteSegment(part, rewrite))).join(''));
-    }
+      line
+        .split(/(`+[^`]*?`+)/)
+        .map((part, i) => (i % 2 ? `\u0000${spans.push(part) - 1}\u0000` : rewriteMarkdownSegment(part, rewrite)))
+        .join(''),
+    );
+    out.push(rewriteHtml(held.join('\n'), rewrite).replace(/\u0000(\d+)\u0000/g, (all, n) => spans[Number(n)]));
   }
   return out.join('\n');
 }
