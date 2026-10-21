@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="780" viewBox="0 0 1600 780" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <linearGradient id="amTitle" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#34d399"/>
+      <stop offset="1" stop-color="#60a5fa"/>
+    </linearGradient>
+    <style>
+      .band   { fill: #070c1a; stroke-width: 1; }
+      .blabel { font-size: 11px; font-weight: 800; letter-spacing: 2.2px; }
+      .item   { font-size: 11.5px; fill: #cbd5e1; }
+      .up     { fill: none; stroke: #475569; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="780" fill="#050813"/>
+
+  <text x="60" y="54" font-size="15" font-weight="600" fill="#34d399" letter-spacing="3">FOR THE ENTERPRISE-ARCHITECTURE CROWD</text>
+  <text x="60" y="96" font-size="30" font-weight="800" fill="#f1f5f9">The same model <tspan fill="url(#amTitle)">in ArchiMate layers.</tspan></text>
+  <text x="60" y="132" font-size="13.5" fill="#64748b">Realization runs upward: components realize application services, and services realize business services and capabilities.</text>
+
+  <!-- ===== BUSINESS LAYER ===== -->
+  <rect x="60" y="150" width="1480" height="122" rx="14" class="band" stroke="#fbbf24" stroke-opacity="0.4"/>
+  <text x="80" y="176" class="blabel" fill="#fbbf24">BUSINESS LAYER &#183; WHAT THE ORGANIZATION GETS</text>
+  <g>
+    <rect x="80" y="188" width="230" height="34" rx="7" fill="#fbbf24" fill-opacity="0.10" stroke="#fbbf24" stroke-opacity="0.35"/>
+    <text x="195" y="210" class="item" text-anchor="middle">API Publishing</text>
+    <rect x="322" y="188" width="230" height="34" rx="7" fill="#fbbf24" fill-opacity="0.10" stroke="#fbbf24" stroke-opacity="0.35"/>
+    <text x="437" y="210" class="item" text-anchor="middle">API Catalog Browsing</text>
+    <rect x="564" y="188" width="230" height="34" rx="7" fill="#fbbf24" fill-opacity="0.10" stroke="#fbbf24" stroke-opacity="0.35"/>
+    <text x="679" y="210" class="item" text-anchor="middle">API Change Review</text>
+    <rect x="806" y="188" width="230" height="34" rx="7" fill="#fbbf24" fill-opacity="0.10" stroke="#fbbf24" stroke-opacity="0.35"/>
+    <text x="921" y="210" class="item" text-anchor="middle">API Quality Assessment</text>
+    <rect x="1048" y="188" width="230" height="34" rx="7" fill="#fbbf24" fill-opacity="0.10" stroke="#fbbf24" stroke-opacity="0.35"/>
+    <text x="1163" y="210" class="item" text-anchor="middle">Runtime API Discovery</text>
+    <rect x="1290" y="188" width="230" height="34" rx="7" fill="#fbbf24" fill-opacity="0.10" stroke="#fbbf24" stroke-opacity="0.35"/>
+    <text x="1405" y="210" class="item" text-anchor="middle">AI-assisted API Access</text>
+    <rect x="80" y="228" width="230" height="34" rx="7" fill="#fbbf24" fill-opacity="0.10" stroke="#fbbf24" stroke-opacity="0.35"/>
+    <text x="195" y="250" class="item" text-anchor="middle">Platform Administration</text>
+  </g>
+
+  <path d="M 794 287 l 6 -7 l 6 7" class="up"/>
+
+  <!-- ===== APPLICATION SERVICES ===== -->
+  <rect x="60" y="294" width="1480" height="122" rx="14" class="band" stroke="#2dd4bf" stroke-opacity="0.4"/>
+  <text x="80" y="320" class="blabel" fill="#2dd4bf">APPLICATION LAYER &#183; SERVICES</text>
+  <g>
+    <rect x="80" y="332" width="230" height="34" rx="7" fill="#2dd4bf" fill-opacity="0.10" stroke="#2dd4bf" stroke-opacity="0.35"/>
+    <text x="195" y="354" class="item" text-anchor="middle">Package &amp; Version Mgmt</text>
+    <rect x="322" y="332" width="230" height="34" rx="7" fill="#2dd4bf" fill-opacity="0.10" stroke="#2dd4bf" stroke-opacity="0.35"/>
+    <text x="437" y="354" class="item" text-anchor="middle">Build &amp; Publish</text>
+    <rect x="564" y="332" width="230" height="34" rx="7" fill="#2dd4bf" fill-opacity="0.10" stroke="#2dd4bf" stroke-opacity="0.35"/>
+    <text x="679" y="354" class="item" text-anchor="middle">Comparison &amp; Changelog</text>
+    <rect x="806" y="332" width="230" height="34" rx="7" fill="#2dd4bf" fill-opacity="0.10" stroke="#2dd4bf" stroke-opacity="0.35"/>
+    <text x="921" y="354" class="item" text-anchor="middle">Documentation &amp; Playground</text>
+    <rect x="1048" y="332" width="230" height="34" rx="7" fill="#2dd4bf" fill-opacity="0.10" stroke="#2dd4bf" stroke-opacity="0.35"/>
+    <text x="1163" y="354" class="item" text-anchor="middle">Linting &amp; Scoring</text>
+    <rect x="1290" y="332" width="230" height="34" rx="7" fill="#2dd4bf" fill-opacity="0.10" stroke="#2dd4bf" stroke-opacity="0.35"/>
+    <text x="1405" y="354" class="item" text-anchor="middle">Agent Discovery</text>
+    <rect x="80" y="372" width="230" height="34" rx="7" fill="#2dd4bf" fill-opacity="0.10" stroke="#2dd4bf" stroke-opacity="0.35"/>
+    <text x="195" y="394" class="item" text-anchor="middle">MCP Tool Service</text>
+    <rect x="322" y="372" width="230" height="34" rx="7" fill="#2dd4bf" fill-opacity="0.10" stroke="#2dd4bf" stroke-opacity="0.35"/>
+    <text x="437" y="394" class="item" text-anchor="middle">AI Chat</text>
+    <rect x="564" y="372" width="230" height="34" rx="7" fill="#2dd4bf" fill-opacity="0.10" stroke="#2dd4bf" stroke-opacity="0.35"/>
+    <text x="679" y="394" class="item" text-anchor="middle">Identity &amp; Access</text>
+    <rect x="806" y="372" width="230" height="34" rx="7" fill="#2dd4bf" fill-opacity="0.10" stroke="#2dd4bf" stroke-opacity="0.35"/>
+    <text x="921" y="394" class="item" text-anchor="middle">Java API Analysis</text>
+  </g>
+
+  <path d="M 794 431 l 6 -7 l 6 7" class="up"/>
+
+  <!-- ===== APPLICATION COMPONENTS ===== -->
+  <rect x="60" y="438" width="1480" height="122" rx="14" class="band" stroke="#60a5fa" stroke-opacity="0.4"/>
+  <text x="80" y="464" class="blabel" fill="#60a5fa">APPLICATION LAYER &#183; COMPONENTS</text>
+  <g>
+    <rect x="80" y="476" width="230" height="34" rx="7" fill="#60a5fa" fill-opacity="0.12" stroke="#60a5fa" stroke-opacity="0.4"/>
+    <text x="195" y="498" class="item" text-anchor="middle">APIHUB Backend</text>
+    <rect x="322" y="476" width="230" height="34" rx="7" fill="#38bdf8" fill-opacity="0.12" stroke="#38bdf8" stroke-opacity="0.4"/>
+    <text x="437" y="498" class="item" text-anchor="middle">APIHUB UI</text>
+    <rect x="564" y="476" width="230" height="34" rx="7" fill="#818cf8" fill-opacity="0.12" stroke="#818cf8" stroke-opacity="0.4"/>
+    <text x="679" y="498" class="item" text-anchor="middle">Build Task Consumer</text>
+    <rect x="806" y="476" width="230" height="34" rx="7" fill="#34d399" fill-opacity="0.12" stroke="#34d399" stroke-opacity="0.4"/>
+    <text x="921" y="498" class="item" text-anchor="middle">API Linter Service</text>
+    <rect x="1048" y="476" width="230" height="34" rx="7" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-opacity="0.4"/>
+    <text x="1163" y="498" class="item" text-anchor="middle">Agents Backend</text>
+    <rect x="1290" y="476" width="230" height="34" rx="7" fill="#fb923c" fill-opacity="0.12" stroke="#fb923c" stroke-opacity="0.4"/>
+    <text x="1405" y="498" class="item" text-anchor="middle">APIHUB Agent</text>
+    <rect x="80" y="516" width="230" height="34" rx="7" fill="#fbbf24" fill-opacity="0.10" stroke="#fbbf24" stroke-opacity="0.3" stroke-dasharray="5 3"/>
+    <text x="195" y="538" class="item" text-anchor="middle">Java Task Consumer</text>
+  </g>
+
+  <path d="M 794 575 l 6 -7 l 6 7" class="up"/>
+
+  <!-- ===== TECHNOLOGY LAYER ===== -->
+  <rect x="60" y="582" width="1480" height="122" rx="14" class="band" stroke="#34d399" stroke-opacity="0.4"/>
+  <text x="80" y="608" class="blabel" fill="#34d399">TECHNOLOGY LAYER &#183; WHAT IT RUNS ON</text>
+  <g>
+    <rect x="80" y="620" width="230" height="34" rx="7" fill="#34d399" fill-opacity="0.10" stroke="#34d399" stroke-opacity="0.35"/>
+    <text x="195" y="642" class="item" text-anchor="middle">Kubernetes cluster</text>
+    <rect x="322" y="620" width="230" height="34" rx="7" fill="#34d399" fill-opacity="0.10" stroke="#34d399" stroke-opacity="0.35"/>
+    <text x="437" y="642" class="item" text-anchor="middle">Remote cluster</text>
+    <rect x="564" y="620" width="230" height="34" rx="7" fill="#34d399" fill-opacity="0.10" stroke="#34d399" stroke-opacity="0.35"/>
+    <text x="679" y="642" class="item" text-anchor="middle">PostgreSQL</text>
+    <rect x="806" y="620" width="230" height="34" rx="7" fill="#34d399" fill-opacity="0.10" stroke="#34d399" stroke-opacity="0.35"/>
+    <text x="921" y="642" class="item" text-anchor="middle">S3 / MinIO</text>
+    <rect x="1048" y="620" width="230" height="34" rx="7" fill="#34d399" fill-opacity="0.10" stroke="#34d399" stroke-opacity="0.35"/>
+    <text x="1163" y="642" class="item" text-anchor="middle">Olric</text>
+    <rect x="1290" y="620" width="230" height="34" rx="7" fill="#34d399" fill-opacity="0.10" stroke="#34d399" stroke-opacity="0.35"/>
+    <text x="1405" y="642" class="item" text-anchor="middle">nginx</text>
+    <rect x="80" y="660" width="230" height="34" rx="7" fill="#34d399" fill-opacity="0.10" stroke="#34d399" stroke-opacity="0.35"/>
+    <text x="195" y="682" class="item" text-anchor="middle">Identity provider</text>
+    <rect x="322" y="660" width="230" height="34" rx="7" fill="#34d399" fill-opacity="0.10" stroke="#34d399" stroke-opacity="0.35"/>
+    <text x="437" y="682" class="item" text-anchor="middle">LLM API</text>
+    <rect x="564" y="660" width="230" height="34" rx="7" fill="#34d399" fill-opacity="0.10" stroke="#34d399" stroke-opacity="0.35"/>
+    <text x="679" y="682" class="item" text-anchor="middle">Helm / GitHub Actions</text>
+  </g>
+
+  <text x="60" y="750" font-size="13" fill="#64748b">The editable model ships alongside the deck as a draw.io file and an Archi model, so it can be imported into an enterprise-architecture repository.</text>
+</svg>

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="600" viewBox="0 0 1400 600" font-family="Inter, 'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <linearGradient id="bar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+    <linearGradient id="portal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#4F46E5"/>
+    </linearGradient>
+    <linearGradient id="agent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#059669"/>
+      <stop offset="1" stop-color="#0d9488"/>
+    </linearGradient>
+    <filter id="sh" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#000" flood-opacity="0.55"/>
+    </filter>
+    <style>
+      .col { fill: #0A0F1E; stroke: #1E293B; }
+      .colOff { fill: #070b16; stroke: #131c2e; }
+      .colTitle { font-size: 14px; font-weight: 700; fill: #e2e8f0; text-anchor: middle; }
+      .colTitleOff { font-size: 14px; font-weight: 700; fill: #475569; text-anchor: middle; }
+      .colSub { font-size: 11.5px; fill: #64748b; text-anchor: middle; }
+      .comp { font-size: 13.5px; font-weight: 700; fill: #f8fafc; text-anchor: middle; }
+      .badge { font-size: 11px; font-weight: 800; letter-spacing: 1.8px; text-anchor: middle; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="600" fill="#050813"/>
+
+  <!-- domain bar -->
+  <rect x="41" y="34" width="1318" height="48" rx="12" fill="url(#bar)" opacity="0.9"/>
+  <text x="700" y="64" font-size="16" font-weight="800" fill="#ffffff" text-anchor="middle" letter-spacing="2">API MANAGEMENT — SUB-DOMAINS</text>
+
+  <!-- columns: x = 41 + i*190, w = 178, y = 104, h = 380 -->
+  <!-- 0 API Portal -->
+  <rect x="41" y="104" width="178" height="380" rx="14" class="col"/>
+  <text x="130" y="134" class="colTitle">API Portal</text>
+  <text x="130" y="152" class="colSub">dev portal · doc portal</text>
+  <!-- 1 Lifecycle -->
+  <rect x="231" y="104" width="178" height="380" rx="14" class="col"/>
+  <text x="320" y="134" class="colTitle">API Lifecycle</text>
+  <text x="320" y="152" class="colSub">versioning · changelog · design</text>
+  <!-- 2 Policy -->
+  <rect x="421" y="104" width="178" height="380" rx="14" class="col"/>
+  <text x="510" y="134" class="colTitle">API Policy</text>
+  <text x="510" y="152" class="colSub">standards · linting · quality</text>
+  <!-- 3 Analytics -->
+  <rect x="611" y="104" width="178" height="380" rx="14" class="colOff"/>
+  <text x="700" y="134" class="colTitleOff">Analytics &amp;</text>
+  <text x="700" y="152" class="colTitleOff">Monitoring</text>
+  <!-- 4 Gateway -->
+  <rect x="801" y="104" width="178" height="380" rx="14" class="colOff"/>
+  <text x="890" y="134" class="colTitleOff">API Gateway</text>
+  <text x="890" y="152" class="colSub">runtime traffic</text>
+  <!-- 5 Monetization -->
+  <rect x="991" y="104" width="178" height="380" rx="14" class="colOff"/>
+  <text x="1080" y="134" class="colTitleOff">Monetization</text>
+  <!-- 6 Integration -->
+  <rect x="1181" y="104" width="178" height="380" rx="14" class="colOff"/>
+  <text x="1270" y="134" class="colTitleOff">Integration</text>
+  <text x="1270" y="152" class="colTitleOff">engine / low-code</text>
+
+  <!-- APIHUB overlays -->
+  <g filter="url(#sh)">
+    <rect x="53" y="184" width="534" height="46" rx="10" fill="url(#portal)"/>
+    <text x="320" y="213" class="comp">Qubership APIHUB Portal — catalog · docs · diff · playground · search</text>
+
+    <rect x="243" y="246" width="344" height="46" rx="10" fill="url(#agent)"/>
+    <text x="415" y="275" class="comp">APIHUB Agent — K8s discovery · snapshots</text>
+
+    <rect x="53" y="308" width="166" height="46" rx="10" fill="#1e3a8a" stroke="#3B82F6"/>
+    <text x="136" y="328" class="comp" font-size="12.5">MCP server</text>
+    <text x="136" y="345" class="comp" font-size="11.5" fill="#bfdbfe">AI assistant</text>
+
+    <rect x="243" y="308" width="154" height="46" rx="10" fill="#312e81" stroke="#7C3AED"/>
+    <text x="320" y="328" class="comp" font-size="12.5">API Diff CLI</text>
+    <text x="320" y="345" class="comp" font-size="11.5" fill="#ddd6fe">CI · local MCP</text>
+
+    <rect x="433" y="308" width="154" height="46" rx="10" fill="#312e81" stroke="#7C3AED"/>
+    <text x="510" y="328" class="comp" font-size="12.5">API Linter Service</text>
+    <text x="510" y="345" class="comp" font-size="11.5" fill="#ddd6fe">Spectral · AI · score</text>
+  </g>
+
+  <!-- coverage badges -->
+  <g>
+    <rect x="86" y="432" width="88" height="24" rx="12" fill="#064e3b"/>
+    <text x="130" y="448" class="badge" fill="#6ee7b7">FULL</text>
+    <rect x="276" y="432" width="88" height="24" rx="12" fill="#064e3b"/>
+    <text x="320" y="448" class="badge" fill="#6ee7b7">FULL</text>
+    <rect x="462" y="432" width="96" height="24" rx="12" fill="#1e3a8a"/>
+    <text x="510" y="448" class="badge" fill="#93c5fd">STRONG</text>
+    <rect x="636" y="432" width="128" height="24" rx="12" fill="#111827"/>
+    <text x="700" y="448" class="badge" fill="#475569">NOT COVERED</text>
+    <rect x="826" y="432" width="128" height="24" rx="12" fill="#111827"/>
+    <text x="890" y="448" class="badge" fill="#475569">NOT COVERED</text>
+    <rect x="1016" y="432" width="128" height="24" rx="12" fill="#111827"/>
+    <text x="1080" y="448" class="badge" fill="#475569">NOT COVERED</text>
+    <rect x="1206" y="432" width="128" height="24" rx="12" fill="#111827"/>
+    <text x="1270" y="448" class="badge" fill="#475569">NOT COVERED</text>
+  </g>
+
+  <!-- bracket labels -->
+  <path d="M 45 500 L 45 512 L 595 512 L 595 500" fill="none" stroke="#3B82F6" stroke-width="1.5"/>
+  <text x="320" y="536" font-size="13" font-weight="700" fill="#93c5fd" text-anchor="middle">DESIGN TIME — what the API promises and how it changes (APIHUB)</text>
+  <path d="M 615 500 L 615 512 L 1355 512 L 1355 500" fill="none" stroke="#475569" stroke-width="1.5"/>
+  <text x="985" y="536" font-size="13" font-weight="700" fill="#64748b" text-anchor="middle">RUNTIME — who may call it, how often, at what price (your gateway: Kong, Apigee, Tyk, …)</text>
+
+  <text x="41" y="580" font-size="12" fill="#475569">APIHUB deliberately covers the design-time half of API Management. Pair it with any gateway for the runtime half.</text>
+</svg>

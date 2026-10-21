@@ -1,8 +1,8 @@
 # Agent-local agent packages
 
-Repository-specific APM packages for `qubership-apihub-agent`. Generic packages come from
+Repository-specific APM packages for `backend/agent`. Generic packages come from
 [`qubership-apihub-ci/agent-packages`](https://github.com/Netcracker/qubership-apihub-ci/tree/apm_migration/agent-packages);
-this folder holds content that applies **only** to this service.
+this folder holds content that applies **only** to this module.
 
 Packages follow the [apm-authoring](https://github.com/Netcracker/qubership-ai-packages/tree/main/agent-packages/apm-authoring)
 layout (`agent-packages/<name>/.apm/...`).
@@ -14,7 +14,7 @@ layout (`agent-packages/<name>/.apm/...`).
 | `apihub-agent-developer` | `apihub-agent-developer/` | `apihub-go-developer` |
 | `agent-conventions` | `agent-conventions/` | — |
 
-Root `apm.yml` lists both CI store dependencies and these local paths. After edits, run from
+The root `apm.yml` lists the store dependencies and these local paths. After edits, run from
 repository root:
 
 ```bash

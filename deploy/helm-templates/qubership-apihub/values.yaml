@@ -3,7 +3,7 @@ qubershipApihubBackend:
   image:
     repository: 'ghcr.io/netcracker/qubership-apihub-backend'
     # Pin tags from the latest product release: https://github.com/Netcracker/qubership-apihub/releases/latest
-    tag: 'latest'
+    tag: 'dev'
   replicas: 1
 
   # Section with resource limits

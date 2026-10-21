@@ -1,8 +1,16 @@
-# qubership-apihub-api-diff
+# APIHUB API diff
 
-This package provides utils to compute the diff between two Json based API documents.
+The API diff library computes the difference between two JSON-based API documents and classifies each change as
+breaking, non-breaking, deprecated, or annotation. It is published as the npm package
+`@netcracker/qubership-apihub-api-diff` and works in Node.js and in the browser. Use it to generate an API changelog,
+to find breaking changes, and to keep API versioning consistent.
+
+It sits in the processing layer: `api-processor` calls it, and it unifies its input with `api-unifier`. See the
+[processing libraries guide](../../docs/architecture/processing-libraries.md) and the
+[architecture overview](../../docs/architecture/overview.md).
 
 ## Modifications
+
 Modified version of [udamir/api-smart-diff](https://github.com/udamir/api-smart-diff)
 
 - changed concept from effective to declarative changes calculation
@@ -22,22 +30,19 @@ Modified version of [udamir/api-smart-diff](https://github.com/udamir/api-smart-
 - debug tooling for cycled JSO extended with diffs support
 - supported new graphapi structure
 
-## Purpose
-- Generate API changelog
-- Identify breaking changes
-- Ensure API versioning consistency
-
 ## Supported API specifications
 
-- [OpenApi 3.0](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.3.md)
-- [AsyncApi 2.x](https://v2.asyncapi.com/docs/reference)
-- [JsonSchema](https://json-schema.org/draft/2020-12/json-schema-core.html)
-- GraphQL via GraphApi
-- ~~Swagger 2.0~~
-- ~~[AsyncApi 3.x](https://www.asyncapi.com/docs/reference/specification/v3.0.0-explorer)~~ (Roadmap)
-- ~~gRPC~~ (Roadmap)
+- OpenAPI 3.0 and 3.1
+- AsyncAPI 3.x
+- JSON Schema (drafts 04, 06, and 07)
+- GraphQL, through GraphAPI
+- DDLAPI 1.0
+
+The version is detected from the document (`openapi`, `asyncapi`, `graphapi`, `ddlapi`). AsyncAPI 2.x and gRPC are
+not supported. `api-processor` converts Swagger 2.0 to OpenAPI before it compares.
 
 ## Features
+
 - Generate diff for supported specifications
 - Generate merged document with changes in metadata
 - Classify all changes as breaking, non-breaking, deprecated and annotation
@@ -50,7 +55,34 @@ Modified version of [udamir/api-smart-diff](https://github.com/udamir/api-smart-
 - TypeScript syntax support out of the box
 - Can be used in Node.js or browser
 
-## Contributing
-When contributing, keep in mind that it is an objective of `api-smart-diff` to have no additional package dependencies. This may change in the future, but for now, no new dependencies.
+## Build, test, and lint
 
-Please run the unit tests before submitting your PR: `yarn test`. Hopefully your PR includes additional unit tests to illustrate your change/modification!
+The Nx project is `api-diff`. Run from the repository root:
+
+```bash
+pnpm exec nx run api-diff:build
+pnpm exec nx run api-diff:test
+pnpm exec nx run api-diff:lint:check
+```
+
+`pnpm --filter @netcracker/qubership-apihub-api-diff run test:compatibility-suites` runs the cases of
+[`compatibility-suites`](../compatibility-suites/README.md), and `test:human-readable` checks the change descriptions.
+See [Build and test](../../docs/development/build-and-test.md).
+
+## Run and debug locally
+
+A library has nothing to run: the tests are the feedback loop. Run one file from the library folder with
+`cd frontend/api-diff && pnpm exec jest <file> -t "<test name>"`. Breakpoints and the dependency build order:
+[Debugging: TypeScript library](../../docs/development/debugging.md#typescript-library). Setup:
+[Getting started](../../docs/development/getting-started.md).
+
+## Configuration
+
+The library reads no configuration file. The caller passes the options and the custom rules to the compare function.
+
+## Further reading
+
+- [Archived plans](docs/archive/)
+- [API changes reference](../../docs/reference/api-changes/README.md): the rules the diff classifies by
+- [`api-unifier`](../api-unifier/README.md), which normalizes the documents before the comparison
+- Contributing: keep the library free of new package dependencies, and add unit tests with every change.

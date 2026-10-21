@@ -1,6 +1,15 @@
 {
   "name": "@netcracker/qubership-apihub-apispec-view-diff-block",
   "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Netcracker/qubership-apihub.git",
+    "directory": "frontend/apispec-view/packages/diff-block"
+  },
+  "bugs": {
+    "url": "https://github.com/Netcracker/qubership-apihub/issues"
+  },
+  "homepage": "https://github.com/Netcracker/qubership-apihub/tree/main/frontend/apispec-view/packages/diff-block#readme",
   "private": true,
   "keywords": [],
   "sideEffects": false,
