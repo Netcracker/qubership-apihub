@@ -203,12 +203,10 @@ the linter, and the agents backend.
 
 `security.productionMode` stays `false` in this config, which enables local login and the internal user endpoints.
 
-[The older recipe](../../backend/portal-backend/docs/local_development/local_development.md) in
-`backend/portal-backend/docs/local_development/` and its `all-but-BE` stack predate the monorepo. That stack uses
-`network_mode: host`. On Windows and macOS, the host network of a container is the network of the Podman machine,
-not of your computer, so the containers cannot reach a backend that runs in your IDE. Its `launch.json` also passes
-settings as environment variables, which the backend no longer reads: it reads `config.yaml` only. Prefer the steps
-above.
+The [`backend-debug` stack](../../deploy/docker-compose/backend-debug/README.md) is the older variant of this recipe.
+It uses `network_mode: host`. On Windows and macOS, the host network of a container is the network of the Podman
+machine, not of your computer, so the containers cannot reach a backend that runs in your IDE. On Linux it works, and
+its README shows the `config.yaml` and the launch configuration. Prefer the steps above elsewhere.
 
 ## UI proxy mode
 
