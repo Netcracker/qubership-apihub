@@ -133,7 +133,7 @@ More context: the [documentation index](docs/README.md).
 | **Administration** | [docs/admin-guide.md](./docs/admin-guide.md) |
 | **User guide** | [docs/user-guide.md](./docs/user-guide.md) |
 | **Maintenance** | [docs/maintenance-guide.md](./docs/maintenance-guide.md) |
-| **Project history** | [docs/apihub-history.md](./docs/apihub-history.md) |
+| **Project history** | [docs/internal/history.md](./docs/internal/history.md) |
 | **Documentation** | [docs/README.md](./docs/README.md) — design items, architecture, API change rules |
 
 ---
