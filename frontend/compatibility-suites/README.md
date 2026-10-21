@@ -1,10 +1,38 @@
-# qubership-apihub-compatibility-suites
+# APIHUB compatibility suites
 
-## What is it
+The compatibility suites are a collection of the most important cases of API changes, written to test how a change is
+classified. They contain cases for OpenAPI, GraphQL, AsyncAPI, and DDLAPI. The package is
+`@netcracker/qubership-apihub-compatibility-suites`; it holds test data and a small JavaScript API that serves it, and
+the libraries that classify changes consume it in their tests.
 
-It is a collection of most important cases of changes in API for the purposes of changes classification.
+It sits next to the processing libraries, below `api-diff`: see the
+[processing libraries guide](../../docs/architecture/processing-libraries.md) and the
+[architecture overview](../../docs/architecture/overview.md).
 
-Contains cases for OpenAPI, GraphQL and AsyncAPI.
+## Build, test, and lint
+
+The Nx project is `compatibility-suites`. It has no tests of its own: the clients run the cases. Run from the
+repository root:
+
+```bash
+pnpm exec nx run compatibility-suites:build
+pnpm exec nx run compatibility-suites:type-check
+```
+
+`build` generates `generated/suite-data.ts` from `bin/comparison-base-suite/**` and bundles the package;
+`generate` alone refreshes the generated file. See [Build and test](../../docs/development/build-and-test.md).
+
+## Run and debug locally
+
+Nothing runs by itself. Add a case under `bin/comparison-base-suite/`, run `pnpm exec nx run
+compatibility-suites:generate`, then run the suite of a client:
+`pnpm --filter @netcracker/qubership-apihub-api-diff run test:compatibility-suites`. Debugging a client test:
+[Debugging: TypeScript library](../../docs/development/debugging.md#typescript-library).
+
+## Configuration
+
+The package reads no configuration file. The version matrix of an OpenAPI case is in its `metadata.yaml`; see
+[Structure](#structure).
 
 ## Structure
 
@@ -32,11 +60,13 @@ Schema suites use templates rendered at runtime:
 
 - `bin/comparison-base-suite/<apitype>/<suiteId>/template.yaml.tpl`
 - The template must include a **single** line-only `__SCHEMA__` placeholder.
-- If a full sample exists (`before/after`), it takes precedence over rendering (used for exceptions like `$ref` with `components:`).
+- If a full sample exists (`before/after`), it takes precedence over rendering (used for exceptions like `$ref` with
+  `components:`).
 
 ## Usages
 
-When used as a dependency, it exposes a JavaScript map of cases (prebuilt in `dist/`), which can be accessed using the public API methods below.
+When used as a dependency, it exposes a JavaScript map of cases (prebuilt in `dist/`), which can be accessed using the
+public API methods below.
 
 ```ts
 export type SpecificationVersion = string
@@ -58,10 +88,12 @@ export function getCompatibilitySuiteSpecificationVersionPairs(
 ): SpecificationVersionPair[]
 ```
 
-`getCompatibilitySuite` accepts specification type (`openapi`, `graphql`), suite name and case name.
+`getCompatibilitySuite` accepts specification type (`openapi`, `graphql`, `asyncapi`, `ddlapi`), suite name and case
+name.
 It returns a pair of strings: `[before, after]`.
 
-`getCompatibilitySuites` enumerates suite cases and returns a map: `suiteId -> testIds[]` (optionally filtered by `specType`).
+`getCompatibilitySuites` enumerates suite cases and returns a map: `suiteId -> testIds[]` (optionally filtered by
+`specType`).
 When `specType` is omitted, `suiteId` must be unique across suite types or later entries overwrite earlier ones.
 
 `getCompatibilitySuiteSpecificationVersionPairs` returns supported specification version pairs for a given case:
@@ -83,13 +115,21 @@ When `specType` is omitted, `suiteId` must be unique across suite types or later
 
 This package generates `generated/suite-data.ts` from `bin/comparison-base-suite/**` during development.
 
-- After changing compatibility suite cases or OpenAPI metadata in this repository, run `npm run generate` (or `npm run build`) to refresh `generated/suite-data.ts`.
+- After changing compatibility suite cases or OpenAPI metadata in this repository, run
+  `pnpm exec nx run compatibility-suites:generate` (or `build`) to refresh `generated/suite-data.ts`.
+
+## Further reading
+
+The scripts in [`scripts/md-tables/`](scripts/md-tables/README.md) convert Markdown tables to CSV and back.
 
 ## Used by (clients)
 
-- [`frontend/api-diff`](../api-diff/): runs compatibility suite tests and uses CS cases as inputs for diff classification.
-- [`frontend/apispec-view`](../apispec-view/): generates Storybook stories and screenshot tests to visualize compatibility suite cases (OpenAPI).
-- [`frontend/api-doc-viewer`](../api-doc-viewer/): generates Storybook stories and screenshot tests to visualize compatibility suite cases (GraphQL).
+- [`frontend/api-diff`](../api-diff/): runs compatibility suite tests and uses CS cases as inputs for diff
+  classification.
+- [`frontend/apispec-view`](../apispec-view/): generates Storybook stories and screenshot tests to visualize
+  compatibility suite cases (OpenAPI).
+- [`frontend/api-doc-viewer`](../api-doc-viewer/): generates Storybook stories and screenshot tests to visualize
+  compatibility suite cases (GraphQL).
 
 When writing tests, it is necessary to follow the structure of the compatibility suite:
 
