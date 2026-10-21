@@ -83,6 +83,9 @@ infers the dependency from `go.work`; confirm with `pnpm exec nx graph --file=gr
 - `tools/release/artifacts.js`: add `'<name>': '<image name>'` to `IMAGES`.
 - `tools/release/product-version.js`: add `'<name>'` to `PRODUCT_COMPONENTS` only if the service ships in the
   product Helm chart; internal tools do not move the product version.
+- `tools/release/artifacts.js`: when the service ships in the product Helm chart, add
+  `'<name>': ['<valuesKey>.image.tag']` to `CHARTS.product.pins`, so a release packages the chart with the image
+  pinned. `tools/release/charts.test.js` fails when the path is not in `values.yaml`.
 - `docs/development/release-process.md`: add the component to the lists of tagged components.
 - Check: `node --test tools/release` and a dry run of `node tools/release/version-plan.js` if the plan script is
   runnable on your branch.

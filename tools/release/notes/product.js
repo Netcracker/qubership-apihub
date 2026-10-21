@@ -6,6 +6,8 @@
  * The "Autotests tags" section of the old notes is gone: the E2E suites are in the same tag.
  */
 
+const { chartLine } = require('./module')
+
 const TABLE_HEAD = ['| Work item | Name | Author | Epic |', '|---|---|---|---|']
 
 const releaseLink = (repoUrl, component, version) => `${repoUrl}/releases/tag/${component}/${version}`
@@ -16,7 +18,8 @@ function workItemSection(title, rows, empty) {
 
 /**
  * images: `[{ component, image, version }]`, version null when the component has no tag yet;
- * components: `[{ component, version, previous, released }]`; agent: `{ image, version, chart }` or null;
+ * components: `[{ component, version, previous, released }]`; chart: `{ ref, version, dir }` of the product
+ * chart; agent: `{ image, version, chart }` or null, its chart `{ ref, version, dir }` or null;
  * workItems: project.js `workItemRows()`, or null with `workItemsNote` saying why they are missing;
  * breaking: `[{ component, version, lines }]` from the module notes of this release.
  */
@@ -27,6 +30,7 @@ function productNotes({
   sprint,
   images,
   components,
+  chart,
   agent,
   workItems,
   workItemsNote,
@@ -40,12 +44,12 @@ function productNotes({
   for (const i of images) {
     out.push(i.version ? `[${i.image}:${i.version}](${releaseLink(repoUrl, i.component, i.version)})  ` : `${i.image}: not released yet  `)
   }
-  out.push('', '#### ⎈ Helm chart', '', `🔹 ${tree}/deploy/helm-templates/qubership-apihub`, '')
+  out.push('', '#### ⎈ Helm chart', '', `🔹 ${chartLine(chart, repoUrl, tag)}, also attached to this release`, '')
   out.push('---', '', `### 📖 [Documentation](${tree}/docs)`, '', '---', '', '### ⚙️ Installation', '')
   out.push(
     `🔹 [Installation Notes](${repoUrl}/blob/${tag}/docs/installation-guide.md)  `,
     `🔹 **docker-compose:** ${tree}/deploy/docker-compose/apihub-generic  `,
-    `🔹 **Helm chart:** ${tree}/deploy/helm-templates/qubership-apihub`,
+    `🔹 **Helm chart:** \`helm install apihub ${chart.ref} --version ${chart.version}\``,
     '',
     '---',
     '',
@@ -86,7 +90,7 @@ function productNotes({
         ? `🔹 **Docker image:** [${agent.image}:${agent.version}](${releaseLink(repoUrl, 'agent', agent.version)})  `
         : `🔹 **Docker image:** ${agent.image}: not released yet  `,
     )
-    if (agent.version) out.push(`🔹 **Helm chart:** ${repoUrl}/tree/agent/${agent.version}/${agent.chart}`)
+    if (agent.chart) out.push(`🔹 **Helm chart:** ${chartLine(agent.chart, repoUrl, `agent/${agent.chart.version}`)}`)
     out.push('')
   }
 

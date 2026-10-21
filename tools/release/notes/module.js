@@ -39,6 +39,11 @@ function releasedList(released, repoUrl) {
   )
 }
 
+/** `chart` is `{ ref, version, dir }`: the OCI reference, its version, and the sources at `tag`. */
+function chartLine(chart, repoUrl, tag) {
+  return `\`${chart.ref}\` version \`${chart.version}\` ([sources](${repoUrl}/tree/${tag}/${chart.dir}))`
+}
+
 function section(title, lines, empty) {
   if (!lines.length && empty === undefined) return []
   return [`## ${title}`, '', ...(lines.length ? lines : [empty]), '']
@@ -49,7 +54,7 @@ function serviceNotes({ component, version, tag, previousTag, root, artifacts, c
   out.push(artifacts.image, '')
   for (const p of artifacts.packages ?? []) out.push(`npm package: \`${p}\``, '')
   out.push('---', '', `# 📚 [Documentation](${repoUrl}/tree/${tag}/${root})`, '')
-  if (artifacts.chart) out.push(`🔹 **Helm chart:** ${repoUrl}/tree/${tag}/${artifacts.chart}`, '')
+  if (artifacts.chart) out.push(`🔹 **Helm chart:** ${chartLine(artifacts.chart, repoUrl, tag)}`, '')
   out.push('---', '', '# 📝 Release Notes', '')
   if (!hasChanges(changes)) out.push(released.length ? NO_CHANGES : NO_OWN_CHANGES, '')
   out.push(
@@ -88,4 +93,4 @@ function libraryNotes({ component, version, tag, previousTag, root, artifacts, c
 /** The notes of a component: the service layout when it ships an image, the library layout otherwise. */
 const moduleNotes = (data) => (data.artifacts.image ? serviceNotes(data) : libraryNotes(data))
 
-module.exports = { NO_CHANGES, NO_OWN_CHANGES, libraryNotes, moduleNotes, serviceNotes }
+module.exports = { NO_CHANGES, NO_OWN_CHANGES, chartLine, libraryNotes, moduleNotes, serviceNotes }

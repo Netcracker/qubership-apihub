@@ -29,7 +29,7 @@ This provisions Postgres with database, user, and password `apihub`.
 ## Scratch config
 
 There is no committed local config. Copy `backend/portal-backend/config.template.yaml` into a scratch folder and set
-at least the values from `backend/portal-backend/docs/local_development/local_development.md`:
+at least the values from the config step of `docs/development/local-run.md` ("Backend from the IDE"):
 
 - `database.*` for the local Postgres.
 - `security.productionMode: false` (the default `true` refuses to start without an identity provider).

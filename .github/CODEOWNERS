@@ -21,6 +21,9 @@
 # Frontend modules.
 /frontend/ @alagishev @iurii-golovinskii @makeev-pavel @JayLim2 @vOrigins
 
+# Sites: the product landing, owned like the frontend.
+/sites/ @alagishev @iurii-golovinskii @makeev-pavel @JayLim2 @vOrigins
+
 # Tests: the Playwright suites and the Postman collections.
 /tests/ui-tests/ @vOrigins
 /tests/postman-collections/ @alagishev @viacheslav-lunev @karpov-aleksandr

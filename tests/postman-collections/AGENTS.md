@@ -16,8 +16,8 @@ update the matching requests and `pm.test` / `pm.expect` assertions here, in the
 
 | Topic | Location |
 |-------|----------|
-| Postman collections overview | [`backend/portal-backend/docs/postman_collections.md`](../../backend/portal-backend/docs/postman_collections.md) |
-| When to update E2E tests | [`backend/portal-backend/docs/agent/related-repositories.md`](../../backend/portal-backend/docs/agent/related-repositories.md) |
+| Postman collections overview | [`tests/README.md`](../README.md) |
+| When to update E2E tests | [`backend/README.md`](../../backend/README.md#follow-up-in-other-modules) |
 | OpenAPI contracts | [`backend/portal-backend/docs/api/`](../../backend/portal-backend/docs/api/) |
 | Local setup / Newman | [README.md](README.md) in this module |
 
@@ -69,7 +69,7 @@ Local packages (`agent-packages/`):
   REST or OpenAPI change in the backend, to decide what the collections need.
 
 Other packages: `advanced-verification` (skill, `backend/portal-backend`) builds a new collection to verify a
-backend change end to end. Store packages: `development-conventions`, `github-ticket-implementation-planner`,
+backend change end-to-end. Store packages: `development-conventions`, `github-ticket-implementation-planner`,
 `english-developer-style`, `markdown-line-length-120`.
 
 Deploy local packages with `apm install --target cursor,claude --legacy-skill-paths` from the repository root
