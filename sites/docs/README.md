@@ -21,7 +21,7 @@ git-ignored). `dev` does not watch `docs/`: restart it, or run `pnpm --dir sites
 ## What the sync does
 
 - Every `docs/**/*.md` outside `internal/` and `pages/` becomes a page. `README.md` and `index.md` are the page of
-  their folder; every folder and file name goes through github-slugger, as in Astro (`Portal User Guide.md` gives
+  their folder; every folder name and filename goes through github-slugger, as in Astro (`Portal User Guide.md` gives
   `portal-user-guide/`).
 - The first H1 becomes the page title and is removed from the body. Front matter in the source is kept.
 - Each page gets an edit link to its source on GitHub.
@@ -41,5 +41,5 @@ page or an anchor that does not exist.
 `SECTIONS` in [`astro.config.mjs`](astro.config.mjs) lists the groups in order. A group shows its listed pages, then
 every page under its folder, so a new file in `docs/<folder>/` joins its group by itself; subfolders become collapsed
 groups named after the title of their `README.md`. A group without pages is left out. Inside a folder, pages follow
-`sidebar.order` from their front matter or their place in `ORDER`, then the file name. The build log names the pages
+`sidebar.order` from their front matter or their place in `ORDER`, then the filename. The build log names the pages
 in no group.
