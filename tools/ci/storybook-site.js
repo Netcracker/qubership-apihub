@@ -146,8 +146,22 @@ function planSite({ order, protectedSlugs, costs, budget }) {
 
 // ---- processes --------------------------------------------------------------------------------
 
+// Every git, oras, and tar call goes through `runner`; tests swap it for a stub store (withRunner).
+let runner = (cmd, args) =>
+  execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 256 * 1024 * 1024 })
+
 function run(cmd, args) {
-  return execFileSync(cmd, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], maxBuffer: 256 * 1024 * 1024 })
+  return runner(cmd, args)
+}
+
+function withRunner(stub, fn) {
+  const saved = runner
+  runner = stub
+  try {
+    return fn()
+  } finally {
+    runner = saved
+  }
 }
 
 function sleep(ms) {
@@ -634,7 +648,9 @@ function gc() {
 
 // ---- main -------------------------------------------------------------------------------------
 
-module.exports = { slug, bySlug, outHash, planSite, budgetFromArgs, storybookHome, NOT_PUBLISHED_HTML, SECTION, SITE_LIMIT }
+module.exports = {
+  slug, bySlug, outHash, planSite, budgetFromArgs, storybookHome, assemble, withRunner, NOT_PUBLISHED_HTML, SECTION, SITE_LIMIT,
+}
 
 if (require.main === module) {
   const [mode, arg, ...flags] = process.argv.slice(2)
