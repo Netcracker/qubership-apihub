@@ -1,7 +1,9 @@
 # qubership-apihub-http-spec
 
 ## Modifications
+
 Fork of the [@stoplightio/http-spec](https://github.com/stoplightio/http-spec)
+
 - Diff data stored in the model
 
 ## What is it?
@@ -35,6 +37,7 @@ If you would like to add support for another API description format, like RAML, 
 `src/merge.ts` contains a utility that reduces the list of `IHttpOperation`'s into a minimal set. This tool particularly handy if you have a recorded list of request/response pairs, and you want to infer a specification out of it.
 
 The strategy is the following:
+
 1. group operations by paths
 2. for each group:
     1. merge request definitions, headers, query parameters, body schemas

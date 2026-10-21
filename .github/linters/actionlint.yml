@@ -3,6 +3,14 @@ paths:
     ignore:
       - 'shellcheck reported issue in this script: SC2086:info.+'
       - 'shellcheck reported issue in this script: SC2002:style.+'
+      # Style and info findings that are false positives or deliberate in this repository:
+      # SC2129 (several redirects to $GITHUB_OUTPUT or $GITHUB_STEP_SUMMARY, one per line for readability),
+      # SC2153 (OWNER comes from the step env block, so shellcheck does not see the assignment),
+      # SC2001 and SC2016 (sed and single-quoted node or jq programs that must not expand).
+      - 'shellcheck reported issue in this script: SC2129:style.+'
+      - 'shellcheck reported issue in this script: SC2153:info.+'
+      - 'shellcheck reported issue in this script: SC2001:style.+'
+      - 'shellcheck reported issue in this script: SC2016:info.+'
   workflows-templates/**/*.{yml,yaml}:
     ignore:
       - 'shellcheck reported issue in this script: SC2086:info.+'

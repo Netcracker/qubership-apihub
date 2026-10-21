@@ -40,7 +40,7 @@ helm install superset . -n superset --create-namespace -f values.yaml
 
 ### 3. Access Superset
 
-- **URL:** http://superset.localtest.me
+- **URL:** <http://superset.localtest.me>
 - **Login:** admin / admin (change after first login)
 
 ### 4. Verify datasources

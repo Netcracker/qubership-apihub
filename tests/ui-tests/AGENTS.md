@@ -32,7 +32,7 @@ Failure to follow IAP voids the run; missing evidence is treated as non-complian
 
 ## 4. Workflow Summary
 
-1. **Detect Workspace**: If the user didn’t explicitly say whether we’re in the monorepo root or inside `qubership-apihub-ui-tests`, the agent must detect `PROJECT_ROOT` automatically (Section 9).
+1. **Detect Workspace**: the module root is `tests/ui-tests` in the qubership-apihub monorepo (Section 9).
 2. **Access Instructions**: Execute the IAP (Section 2).
 3. **Select Playbook**: Load `docs/ai-instructions/task-playbooks.md` and the relevant guide.
 4. **Implement**: Follow the playbook's guidance.
@@ -69,24 +69,31 @@ Coding conventions are defined globally:
 
 ## 9. Workspace Detection
 
-Always resolve `PROJECT_ROOT` before executing other commands.
+This module is `tests/ui-tests` of the qubership-apihub monorepo. Set `PROJECT_ROOT` to that directory (it holds
+`package.json`, `playwright.config.ts`, and `src/`) and run the module commands from there. Repository-level
+commands (`pnpm install`, `pnpm exec nx ...`) run from the repository root. If the current directory is neither,
+stop and ask the user where the project root is.
 
-If the user did **not** explicitly say whether we’re working:
+Print `Detected project root: <abs path>` in the first response.
 
-- inside the test project root (`qubership-apihub-ui-tests`), or
-- in a monorepo root that contains the `qubership-apihub-ui-tests` folder,
+## Build, test, and environment
 
-then the agent must detect it automatically.
+- Nx project `ui-tests`. Install once at the repository root with `pnpm install` (the module is a pnpm workspace
+  member; do not run `npm ci` here). Install the browsers with `pnpm exec playwright install`.
+- Lint and type check: `pnpm exec nx run ui-tests:lint:check` and `pnpm exec nx run ui-tests:typecheck`.
+- Run suites from this directory: `pnpm run test-e2e-portal`, `pnpm run test-component`, `pnpm run test-unit`,
+  `pnpm run cleanup`. The `Agent` and `ADV-*` projects run with `pnpm exec playwright test --project=<name>`.
+- Environment: `BASE_URL` and the variables in `README.md`. A running APIHUB stack (Compose or Kind) is required;
+  CI runs the Portal project through `.github/workflows/e2e-tests-compose.yml`.
+- Replace `npx` with `pnpm exec` in the commands of the sections above (`eslint`, `tsc`, `dprint`, `playwright`).
 
-**Detection rules (must succeed before running any commands):**
+## Agent packages
 
-- If the current directory contains a `qubership-apihub-ui-tests` folder → set `PROJECT_ROOT` to that folder.
-- Else, if the current directory itself looks like the test project root (contains `package.json`, `playwright.config.ts`, `src/`) → set `PROJECT_ROOT` to the current directory.
-- Else, search upward (parent directories) using the same rules.
-- If still not found → stop and ask the user where the project root is.
+Local packages: none. The playbooks in `docs/ai-instructions/` are the main instructions for this module and take
+precedence for test work. These packages reach this path:
 
-Print `Detected project root: <abs path>` in the first response, and execute every command from `PROJECT_ROOT`.
-
+- `development-conventions`, `github-ticket-implementation-planner`, `english-developer-style`,
+  `markdown-line-length-120` (always-on conventions and planning from a ticket).
 ## 10. Documentation Upkeep
 
 - Every time you change behavior, config, or workflows, review the relevant documentation (readme, guides, onboarding notes) and update them in the same PR.

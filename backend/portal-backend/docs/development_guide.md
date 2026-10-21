@@ -8,49 +8,29 @@ When using Cursor, Claude Code, or other coding agents on this repository:
 
 - Read [`AGENTS.md`](../AGENTS.md) at the repository root for agent-specific conventions (clarify before coding, **fail fast / root-cause bug fixes**, OpenAPI sync, migrations, documentation placement).
 - Claude Code loads the same instructions via [`CLAUDE.md`](../CLAUDE.md).
-- Generic packages come from `qubership-apihub-ci/agent-packages`; backend-specific sources live in this repo under `agent-packages/`. After changing packages or `apm.yml`, run `apm install --target cursor,claude --legacy-skill-paths` and commit refreshed `.cursor/` / `.claude/` trees (see root `README.md`).
-- Helm charts and Postman E2E tests live in **separate repositories** — agents should remind you using [`docs/agent/related-repositories.md`](agent/related-repositories.md) (update Helm URL there when known).
+- Generic packages come from `qubership-apihub-ci/agent-packages`; backend-specific sources live in this repo under `agent-packages/`. After changing packages or `apm.yml`, run `apm install --target cursor,claude --legacy-skill-paths` and commit refreshed `.cursor/` / `.claude/` trees (see [AI assistants](../../../docs/development/ai-assistants.md)).
+- Helm charts and Postman E2E tests live in **other modules of this monorepo** — agents should remind you using
+  [`backend/README.md`](../../README.md#follow-up-in-other-modules).
 
-This guide remains the source of truth for API-first design, logging, deprecation, and pull request conventions below.
+This guide remains the source of truth for logging and pull request conventions below. API-first design and
+deprecation are in the [API guidelines](../../../docs/development/api-guidelines.md).
 
 # API
-## Design
-Backend API development follows API-first approach.
-It means that we need to design and approve API before the implementation.
-REST API is an OpenAPI v3.0 document (see the `docs/api/` folder in this repository).
 
-## Changes
-We have an agreement that we should not introduce any breaking changes to public API.
-There's one small exception: if we know that the the only user is frontend and we can submit changes simultaneously with FE team.
-
-In case of breaking changes we need to create new version of endpoint
-
-e.x. "/api/v2/packages/{packageId}/versions/{version}/references" -> "/api/v3/packages/{packageId}/versions/{version}/references"
-
-Then, old endpoint should be marked as deprecated in specification and code.
-See "Code Deprecation policy" chapter for details
-
-Non-breaking(additive) changes could be made without any synchronization with frontend.
-
-## API review
-API changes should be made is a separate branch.
-
-API should be published to Apihub for review and linked to the BA, BE and FE ticket's description.
-
-Since we treat API as a code we should apply the same review procedure. I.e. create merge request(which contains ticket name) and ask(BA, BE and FE teams) for review. MR with API changes should contain gitlab label 'API'.
-
-Need to make sure that the API was reviewed(confirm with BE, FE teams) and all comments resolved, then add label api_approved to the ticket.
-
-BA ticket branch should be merged to BE ticket branch before merging to develop.
+The API rules (design, changes, deprecation, review) moved to
+[`docs/development/api-guidelines.md`](../../../docs/development/api-guidelines.md).
 
 # Code
+
 ## Projects structure
+
 Most the feature code is separated into structural folders - controllers, services, repositories, views, entities.
 But some outstanding/common functionality like DB migration is placed in functional folders.
 
 TODO: need an example how the code is distributed for some business entity.
 
 ## Parameters in function
+
 Required parameters should be passed as as separate params, optional params could be passed via struct.
 
 e.x. `getOperation(packageId string, version string, operationId string, searchReq view.SearchRequest)`
@@ -61,73 +41,84 @@ e.x. `getOperation(packageId string, version string, operationId string, searchR
 `searchReq` is a struct with optional params like paging, etc  
 
 ## Constants naming convention
+
 TODO
 
-## Deprecation policy
-deprecated methods/functions should be appended with '\_deprecated' postfix.
-Use case:
-New version of endpoint is required to avoid API breaking changes(e.x. payload fields was updated).
-Need to rename existing controller/service/view to \*\_deprecated and add new one with proper name.
-
 ## Logging
+
 The code should contains logs for troubleshooting.  
 INFO System log shouldn't be flooded with repeated/useless data, but should contain major operations and event.  
 So the INFO log should reflect what is going on, but without much details.  
 We don't need INFO log for each read(GET) request, but all write(POST, PUT) operations should be logged.
 
 ### Errors
+
 All errors should be logged to ERROR log.
 
 ### Async operations
+
 Async operation start should be logged with info log containing request data and generated id.
 Example:
-* log.Infof("Starting Quality Gate validation v3 with params %+v, id = %s", req, id)
+
+- log.Infof("Starting Quality Gate validation v3 with params %+v, id = %s", req, id)
 
 All async operation logs should include operation id as a prefix.
 Example:
-* log.Errorf("Quality Gate %s: Failed to search package %s versions by textFilter: %s", report.Id, packageId, err.Error())
+
+- log.Errorf("Quality Gate %s: Failed to search package %s versions by textFilter: %s", report.Id, packageId, err.Error())
 
 It's recommended to log all major steps in INFO and some minor with DEBUG.
 
 Async operation end should be logged with INFO log.
 Example:
-* log.Infof("Operations migration process %s complete", id)
+
+- log.Infof("Operations migration process %s complete", id)
 
 # Pull requests
+
 ## Title
+
 Should follow [conventional commits naming](https://www.conventionalcommits.org/en/v1.0.0/#summary)
 
 ## Merge options
+
 It's recommended to delete dev branch after merge and squash commits to get clean develop/main branches history.
 
 ## Code review
+
 Everyone is welcome to the code reviews.
 
 ### Reviewer's checklist
-* Changes cover all requirements of the story.
-* Changes are syntaxically and logically correct.
-* Changes in code mathes changes in API if applicable.
-* No commented code with some rare and justified exceptions.
-* Error handling should be implemented.
-* New code should contain necessary logs(see Logging chapter).
+
+- Changes cover all requirements of the story.
+- Changes are syntaxically and logically correct.
+- Changes in code mathes changes in API if applicable.
+- No commented code with some rare and justified exceptions.
+- Error handling should be implemented.
+- New code should contain necessary logs(see Logging chapter).
 
 # Demo
+
 At this moment we run demo every week. Every developer should prepare ready and in-progress(if's suitable and makes sense) stories for demonstration.
 The goal of demonstration is to collect the whole team's feedback.
 
 ## Introduction
+
 Demo listeners need to understand the context of presented story.
 What is the business goal(epic) and how it's transformed into implemented changes.
 Or answer the question: "why the change is required, which purpose it serves?".
 It's going to be great if you'll describe the background of the problem. You may ask dev lead or BA team for details if required.
 
 ## Demonstration
+
 Live process demonstration is preferred. But if it's not possible, you can show the final result or a set of screenshots/presentation.
 
 ## Questions
+
 Try to answer all questions.
 
 # Business logic
+
 ## Business terms glossary
 
 specification - file which contains openapi/graphql/etc content
@@ -154,7 +145,7 @@ TODO: append
 
 ## Logs to file
 
-After [PR #132](https://github.com/Netcracker/qubership-apihub-backend/pull/132/files) backend doesn;t write logs if run from IDE.
+After [PR #132](https://github.com/Netcracker/qubership-apihub-backend/pull/132/files) backend doesn't write logs if run from IDE.
 
 You must set `LOG_FILE_PATH=/logs/apihub.log` or any other path to log file. Root directory must be `rwx` for owner of the process.
 

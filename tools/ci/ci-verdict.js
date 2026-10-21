@@ -37,6 +37,7 @@ function dueJobs(out, event, pagesDeploy) {
     plan: true,
     js: true,
     'go-checks': true,
+    charts: true,
     go: out.go_projects !== '[]',
     java: out.java_projects !== '[]',
     'screenshot-tests': out.screenshot_projects !== '[]',

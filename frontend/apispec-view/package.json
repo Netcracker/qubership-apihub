@@ -1,5 +1,14 @@
 {
   "name": "@netcracker/qubership-apihub-apispec-view-workspace",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Netcracker/qubership-apihub.git",
+    "directory": "frontend/apispec-view"
+  },
+  "bugs": {
+    "url": "https://github.com/Netcracker/qubership-apihub/issues"
+  },
+  "homepage": "https://github.com/Netcracker/qubership-apihub/tree/main/frontend/apispec-view#readme",
   "private": true,
   "type": "commonjs",
   "license": "Apache-2.0",

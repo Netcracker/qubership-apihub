@@ -1,6 +1,6 @@
 ---
 description: Conventions for extending the next-data-model tree and diff aggregation layer.
-applyTo: "packages/next-data-model/src/**/*.ts"
+applyTo: "frontend/api-doc-viewer/packages/next-data-model/src/**/*.ts"
 ---
 
 When editing `packages/next-data-model/src` to add or change tree builders,

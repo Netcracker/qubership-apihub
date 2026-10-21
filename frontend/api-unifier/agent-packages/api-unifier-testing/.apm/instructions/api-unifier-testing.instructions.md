@@ -1,6 +1,6 @@
 ---
 description: Conventions for writing api-unifier tests across OpenAPI, AsyncAPI, JSON Schema, and GraphAPI.
-applyTo: "test/**/*.ts"
+applyTo: "frontend/api-unifier/test/**/*.ts"
 ---
 
 When writing or editing tests under `test/` — exercising `normalize` /

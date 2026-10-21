@@ -1,5 +1,5 @@
 ---
-description: Integrate api-doc-viewer React components in a host application — imports, styles, merged documents, and diff configuration.
+description: Integrate api-doc-viewer React components in a host application — imports, styles, merged documents, and diff configuration. Use when importing @netcracker/qubership-apihub-api-doc-viewer in a React app such as frontend/ui or frontend/apispec-view.
 ---
 
 # Using api-doc-viewer

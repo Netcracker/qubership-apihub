@@ -1,5 +1,14 @@
 {
   "name": "@netcracker/qubership-apihub-ui",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Netcracker/qubership-apihub.git",
+    "directory": "frontend/ui"
+  },
+  "bugs": {
+    "url": "https://github.com/Netcracker/qubership-apihub/issues"
+  },
+  "homepage": "https://github.com/Netcracker/qubership-apihub/tree/main/frontend/ui#readme",
   "private": true,
   "license": "Apache-2.0",
   "scripts": {

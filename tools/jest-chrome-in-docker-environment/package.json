@@ -1,6 +1,15 @@
 {
   "name": "@netcracker/qubership-apihub-jest-chrome-in-docker-environment",
   "version": "2.0.2",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Netcracker/qubership-apihub.git",
+    "directory": "tools/jest-chrome-in-docker-environment"
+  },
+  "bugs": {
+    "url": "https://github.com/Netcracker/qubership-apihub/issues"
+  },
+  "homepage": "https://github.com/Netcracker/qubership-apihub/tree/main/tools/jest-chrome-in-docker-environment#readme",
   "description": "",
   "main": "dist/lib/index.js",
   "type": "commonjs",

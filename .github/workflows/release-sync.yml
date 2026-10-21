@@ -4,7 +4,7 @@
     # workflow pushes goes to develop, so it never starts itself again.
     branches: [release]
 
-name: Release sync
+name: 'Release: Sync'
 
 # Hotfix propagation: every push to `release` (a hotfix pull request, release-start, or release-finish
 # fast-forwarding `release` to `main`) is merged into `develop` with a merge commit, so the next cut keeps

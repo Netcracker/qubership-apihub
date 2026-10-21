@@ -1,6 +1,6 @@
 ---
 description: Backend SQL migration path and validation script
-applyTo: "**/resources/migrations/**"
+applyTo: "backend/portal-backend/**/resources/migrations/**"
 ---
 
 # Backend Database Migrations

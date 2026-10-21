@@ -41,14 +41,16 @@ rules:
     max-start: 0
     max-end: 2
   empty-values:
-    forbid-in-block-mappings: true
+    # false: GitHub workflows use an empty `on:` key (kept from the module copies of this file)
+    forbid-in-block-mappings: false
     forbid-in-flow-mappings: true
   hyphens:
     max-spaces-after: 1
   indentation:
     level: warning
-    spaces: 2
-    indent-sequences: true
+    # consistent: deploy and docs Compose files use 4 spaces consistently; style only (warning level)
+    spaces: consistent
+    indent-sequences: consistent
     check-multi-line-strings: false
   key-duplicates: enable
   key-ordering: disable

@@ -8,7 +8,7 @@ info:
     email: opensourcegroup@netcracker.com
   license:
     name: Apache 2.0
-    url: https://github.com/Netcracker/qubership-apihub-backend/raw/refs/heads/main/LICENSE
+    url: https://github.com/Netcracker/qubership-apihub/raw/refs/heads/main/LICENSE
   version: "2026.1"
   x-nc-api-audience: BWC
 externalDocs:
