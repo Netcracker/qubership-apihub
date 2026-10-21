@@ -17,7 +17,7 @@ libraries-backend  ←── HTTP poll + status ──→  java-task-consumer
 | `java-api-diff` | `ApiDiffPipeline` | japicmp |
 | `java-upgrade-impact` | `UpgradeImpactPipeline` | japicmp + jdeps |
 
-See [docs/DESIGN.md](docs/DESIGN.md), [docs/IMPLEMENTATION-PLAN.md](docs/IMPLEMENTATION-PLAN.md),
+See [docs/DESIGN.md](docs/DESIGN.md), [docs/IMPLEMENTATION-PLAN.md](docs/archive/IMPLEMENTATION-PLAN.md),
 [docs/backend-api.md](docs/backend-api.md) (HTTP contract),
 [docs/pact-libraries-backend.md](docs/pact-libraries-backend.md) (Pact provider handoff),
 and [docs/local-debug.md](docs/local-debug.md) (Cursor debug harness).

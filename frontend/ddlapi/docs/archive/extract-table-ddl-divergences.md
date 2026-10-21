@@ -1,5 +1,7 @@
 # Extract-Table-DDL — Divergences from Plan
 
+> Archived on 2026-10-21: the work is done; kept for the record.
+
 Running log of deviations from [extract-table-ddl-plan.md](extract-table-ddl-plan.md) made during
 implementation, with rationale. Newest entries appended under each task.
 

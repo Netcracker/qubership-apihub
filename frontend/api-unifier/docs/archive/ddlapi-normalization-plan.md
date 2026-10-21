@@ -1,5 +1,7 @@
 # ddlapi Normalization — Implementation & Testing Plan
 
+> Archived on 2026-10-21: the work is done; kept for the record.
+
 ## Goal
 
 Teach **api-unifier** to normalize (and denormalize) **ddlapi** specifications — the

@@ -1,5 +1,7 @@
 # Tolerant Publication: Per-Document Errors
 
+> Archived on 2026-10-21: the work is done; kept for the record.
+
 Status: **Draft for review** · 2026-08-12
 
 Today a `build` (publication) in api-processor fails entirely when processing of a single document throws.

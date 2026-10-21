@@ -1,5 +1,7 @@
 # Extract-Table-DDL Implementation Plan
 
+> Archived on 2026-10-21: the work is done; kept for the record.
+
 ## Goal
 
 Add an API to `@netcracker/qubership-apihub-ddlapi` that, given a PostgreSQL DDL string, a schema

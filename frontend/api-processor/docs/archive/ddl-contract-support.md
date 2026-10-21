@@ -1,5 +1,7 @@
 # Implementation Plan: DDL Contract Support in api-processor
 
+> Archived on 2026-10-21: the work is done; kept for the record.
+
 Status: **Draft for review** · Author: planning session 2026-06-12 · Branch: `feature/ddl`
 
 ## Overview
@@ -17,7 +19,7 @@ REST/async/graphql/MCP content, and dashboards may aggregate DDL-bearing refs (s
 
 > Non-obvious design decisions (renames, orphan types, parsing granularity, apiKind source, bwc mode,
 > id collisions, export, incremental) are recorded in
-> `[ddl-design-decisions.md](./ddl-design-decisions.md)` (D1–D15). **Non-goals for v1:** rename
+> `[ddl-design-decisions.md](../design/ddl-design-decisions.md)` (D1–D15). **Non-goals for v1:** rename
 > detection (D1), orphan-type changelog entries (D2), DDL export (D13), incremental rebuild (D14).
 
 ## Architecture Decisions
@@ -261,7 +263,7 @@ prev/curr version params
 
 > The consumer-facing **output package layout** (build-result zip shape) for `build` and `changelog`,
 > with a consistency review against REST/MCP, lives in
-> `[ddl-build-result-contract.md](./ddl-build-result-contract.md)`. **C3 is resolved**: `ddlEntityIds`
+> `[ddl-build-result-contract.md](../contracts/ddl-build-result-contract.md)`. **C3 is resolved**: `ddlEntityIds`
 > are **not** serialized to `documents.json` (DDL follows MCP; reverse link is `ddl.json[*].documentId`)
 > — see Task 6. **C2** (per-pair wrapper key `entities` vs `operations`) still needs backend confirmation.
 

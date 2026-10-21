@@ -1,5 +1,7 @@
 # `buildFromDdl` Implementation Plan
 
+> Archived on 2026-10-21: the work is done; kept for the record.
+
 ## Goal
 
 Two changes to `@netcracker/qubership-apihub-ddlapi`:

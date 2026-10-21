@@ -1,5 +1,7 @@
 # TypeScript Port of Atlas Schema Model — Implementation Plan
 
+> Archived on 2026-10-21: the work is done; kept for the record.
+
 ## Goal
 
 Port the core Atlas Go schema model (`atlas/sql/schema/schema.go`) to an idiomatic TypeScript

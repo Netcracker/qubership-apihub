@@ -1,5 +1,7 @@
 # Persist Notifications of a Failed Build
 
+> Archived on 2026-10-21: the work is done; kept for the record.
+
 Status: **Draft for review** · 2026-09-24
 
 A failed build publishes nothing, so the notifications it collected are lost and its publish status keeps one

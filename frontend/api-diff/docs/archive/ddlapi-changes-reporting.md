@@ -1,5 +1,7 @@
 # Plan: ddlapi change reporting in api-diff
 
+> Archived on 2026-10-21: the work is done; kept for the record.
+
 ## 1. Goal & guiding use case
 
 Add **ddlapi** (`ddlapi-1.0`) as a first-class specification type that api-diff can
