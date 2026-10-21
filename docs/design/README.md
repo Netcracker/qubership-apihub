@@ -6,7 +6,7 @@ Each item is one Markdown file in the folder of its area. Files change together 
 
 ## Areas
 
-Each area has a folder. The links below open the folder; the lists after the ID scheme name every item.
+Each area has a folder. The links below open the first item of each area; the lists after the ID scheme name every item.
 
 - [General features](./general/): Navigation, workspaces, groups, packages, favorites, shared packages, activity
   history, search.
