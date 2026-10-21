@@ -216,4 +216,4 @@ APIHUB Portal.
 
 ## Mockups
 
-![Cloud Services](../../images/design/di-agent-002-cloud-services/1.webp)
+![Cloud Services](../../images/design/di-agent-002-cloud-services/1.svg)
