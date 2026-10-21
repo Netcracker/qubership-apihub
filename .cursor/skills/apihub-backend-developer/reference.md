@@ -17,7 +17,7 @@ Full index: `docs/README.md`.
 
 ## Related repositories (Helm, E2E)
 
-See [`docs/agent/related-repositories.md`](../../../docs/agent/related-repositories.md). Agents cannot edit those repos unless they are in the workspace; **remind** the developer with links when:
+See `backend/README.md`, section "Follow-up in other modules". Agents cannot edit those repos unless they are in the workspace; **remind** the developer with links when:
 
 | Backend change | Likely follow-up |
 |----------------|------------------|
@@ -26,7 +26,6 @@ See [`docs/agent/related-repositories.md`](../../../docs/agent/related-repositor
 | New/changed REST API | Postman collection repo + `docs/api/*.yaml` |
 | New auth or error contract | Postman assertions |
 
-Update placeholder Helm URL in `related-repositories.md` when your team's chart repo is known.
 
 ## Error codes (`exception/ErrorCodes.go`)
 

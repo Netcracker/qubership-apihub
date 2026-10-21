@@ -105,7 +105,7 @@ Briefly state: **root cause**, **why the change fixes it**, and confirm you did 
 Deployment and E2E assets are in the same monorepo: `deploy/helm-templates/qubership-apihub/` (chart),
 `deploy/docker-compose/`, `docs/configuration-reference.md`, and `tests/postman-collections/`. After REST, config, or
 env changes, update them in the same change; the checklists are in
-[`docs/agent/related-repositories.md`](docs/agent/related-repositories.md) and the root skills
+[`backend/README.md`](../README.md#follow-up-in-other-modules) and the root skills
 `apihub-deployment-followup` and `postman-e2e-followup`.
 
 Include a short **Related modules** subsection in your completion summary.
