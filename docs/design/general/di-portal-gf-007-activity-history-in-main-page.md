@@ -42,8 +42,7 @@ system show the following information:
    - user who generated event
    - event message
    -
-   - API to display activity history for Favorite / Shared tab -
-     [GET /api/v4/activity](https://apihub.netcracker.com/portal/packages/NC.CP.AH.RS/develop%40102/operations/rest/api-v4-activity-get#/):
+   - API to display activity history for Favorite / Shared tab - `GET /api/v4/activity:`
      - if user is on Favorite tab:
        - onlyFavorite = true
        - kind = package,group,dashboard

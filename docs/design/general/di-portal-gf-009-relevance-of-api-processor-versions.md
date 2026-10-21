@@ -32,7 +32,7 @@
      1. The system shall perform these checks only if migration is not in progress.
           - API to check if migration is in progress - GET /api/v1/system/info:
               - if migrationInProgress = false, then migration is not currently in progress.
-     2. Сases of api-processor versions mismatch see in "Cases with api-processor versions mismatch" section.
+     2. Cases of api-processor versions mismatch see in "Cases with api-processor versions mismatch" section.
      3. API to get api-processor version with which package version was builded:
           - in specific version - GET /api/v3/packages/{packageId}/versions/{version}.
           - in package versions list - GET /api/v3/packages/{packageId}/versions.

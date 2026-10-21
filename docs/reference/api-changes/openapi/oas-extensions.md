@@ -1,6 +1,6 @@
 # OAS extensions
 
-| №   | OAS Object                    | Extension Classification | Обоснование                                    |
+| №   | OAS Object                    | Extension Classification | Justification                                    |
 | --- | ----------------------------- | ------------------------ | ---------------------------------------------- |
 | 1   | Info Object                   | annotation               | Purely documentation information about the API |
 | 2   | Contact Object                | annotation               | Contact information - documentation            |

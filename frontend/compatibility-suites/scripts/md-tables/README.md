@@ -3,14 +3,6 @@
 This folder contains Python scripts for converting between Markdown table format and CSV format, with support for
 preserving document structure and filtering columns.
 
-## Author Information
-
-**Author:** Felipe Rocha Tanabe  
-**Email:** <felipe.tanabe@netcracker.com>
-
-**AI Assistant:** Cursor AI (Claude Sonnet 4.5)  
-**Development Date:** 2026-01-22
-
 ## Overview
 
 The conversion scripts provide bidirectional conversion between Markdown tables and CSV files, with the following

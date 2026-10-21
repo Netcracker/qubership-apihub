@@ -1,16 +1,4 @@
 #!/usr/bin/env python3
-"""
-Convert all CSV files in the current directory to Markdown table format.
-Each CSV file will be converted to a .md file with the same name.
-If a template file exists (with _template suffix), it will be used as base
-and the table will be inserted at the placeholder location.
-
-Author: Felipe Rocha Tanabe
-Email: felipe.tanabe@netcracker.com
-
-AI Assistant: Cursor AI (Claude Sonnet 4.5)
-Development Date: 2026-01-22
-"""
 
 import csv
 import io

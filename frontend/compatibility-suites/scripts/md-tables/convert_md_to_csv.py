@@ -1,16 +1,4 @@
 #!/usr/bin/env python3
-"""
-Convert the Markdown table files under docs/reference/api-changes/ to CSV format.
-Each .md file will be converted to a .csv file with the same name.
-If the MD file contains content beyond just the table, a template file
-will be created with the table replaced by a placeholder.
-
-Author: Felipe Rocha Tanabe
-Email: felipe.tanabe@netcracker.com
-
-AI Assistant: Cursor AI (Claude Sonnet 4.5)
-Development Date: 2026-01-22
-"""
 
 import csv
 import json

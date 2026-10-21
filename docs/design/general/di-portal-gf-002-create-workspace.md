@@ -47,5 +47,5 @@ and provide a hierarchical structure for better organization and management.
 
 ## Screen View
 
-<img width="446" alt="Снимок экрана 2025-02-21 в 16 24 31"
+<img width="446" alt="Screenshot"
   src="../../images/design/di-portal-gf-002-create-workspace/1.png" />
