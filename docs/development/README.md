@@ -27,6 +27,9 @@ Then, when you need them:
 - [Release process](./release-process.md): cutting a product release, hotfixes, version rules, release notes, the
   Helm charts, and the GitHub Pages site. Release managers read all of it; everyone else reads
   [Version rules](./release-process.md#version-rules) to see what a pull request title does.
+- [API guidelines](./api-guidelines.md): designing, changing, deprecating, and reviewing the REST APIs.
+- [Documentation](./documentation.md): where each kind of document lives, the documentation site, and the linters.
+- [AI assistants](./ai-assistants.md): the agent packages, `apm install`, and the `AGENTS.md` files.
 
 ## By role
 
