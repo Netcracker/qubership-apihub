@@ -22,7 +22,7 @@ modules sit in one pnpm workspace with one `pnpm-lock.yaml`. For the architectur
 | [`ddlapi`](ddlapi/README.md) | PostgreSQL DDL model and parser | npm package |
 | [`graphapi`](graphapi/README.md) | GraphQL to GraphAPI conversion | npm package |
 | [`json-crawl`](json-crawl/README.md) | JSON crawl, clone, and transform engine | npm package |
-| [`compatibility-suites`](compatibility-suites/README.md) | Test data: the catalogue of API change cases | Nothing; tests consume it |
+| [`compatibility-suites`](compatibility-suites/README.md) | Test data: the catalog of API change cases | Nothing; tests consume it |
 
 [The processing libraries guide](../docs/architecture/processing-libraries.md) explains how the libraries fit
 together. The dependency order, from low to high, is `json-crawl`, `ddlapi`, `graphapi`, and `compatibility-suites`,

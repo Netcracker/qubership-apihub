@@ -196,4 +196,4 @@ const SomeComponent: FC = () => {
 
 - [Design documents](docs/design/README.md): the source of truth per API type, with display coverage, architecture,
   entities, and features
-- [Fixture catalogue](packages/samples/README.md)
+- [Fixture catalog](packages/samples/README.md)

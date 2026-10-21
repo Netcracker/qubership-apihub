@@ -26,7 +26,7 @@ APIHUB maintainers (@alagishev, @viacheslav-lunev, @karpov-aleksandr)
 
 ## Context
 
-Pages of the old repository was a legacy build of `docs/`: no index, raw Markdown guides, and an ERD committed by hand
+The Pages site of the old repository was a legacy build of `docs/`: no index, raw Markdown guides, and an ERD committed by hand
 that was months old. Six components published Storybooks from `gh-pages`, and the landing lived in another
 organization repository. The product now needs one deployment that serves a navigation page, the landing, the docs,
 the Storybooks of live branches, and the database diagrams, without breaking URLs that people already use.

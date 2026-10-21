@@ -13,7 +13,7 @@ the [overview](../docs/architecture/overview.md).
 | [`agents-backend`](agents-backend/README.md) | Image: manages the discovery agents | `qubership-apihub-agents-backend` |
 | [`agent`](agent/README.md) | Image and the `qubership-apihub-agent` Helm chart: the Kubernetes discovery sidecar | `qubership-apihub-agent` |
 | [`test-service`](test-service/README.md) | Image: a mock service that exposes sample specifications | `qubership-apihub-test-service` |
-| [`commons-go`](commons-go/README.md) | Go library `api-spec-exposer`; no image, nothing is published | `qubership-apihub-commons-go` |
+| [`commons-go`](commons-go/README.md) | Go library `api-spec-exposer`; no image or package; releases are tags only | `qubership-apihub-commons-go` |
 | [`java-task-consumer`](java-task-consumer/README.md) | Image: the Maven reactor with the Java API build worker and `jdiff-engine` | `qubership-apihub-java-task-consumer` |
 | [`libraries-backend`](libraries-backend/README.md) | Nothing yet: a placeholder for the Go service that serves Java library builds to the worker | `qubership-apihub-libraries-backend` |
 
