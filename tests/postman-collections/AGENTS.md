@@ -69,7 +69,7 @@ Local packages (`agent-packages/`):
   REST or OpenAPI change in the backend, to decide what the collections need.
 
 Other packages: `advanced-verification` (skill, `backend/portal-backend`) builds a new collection to verify a
-backend change end to end. Store packages: `development-conventions`, `github-ticket-implementation-planner`,
+backend change end-to-end. Store packages: `development-conventions`, `github-ticket-implementation-planner`,
 `english-developer-style`, `markdown-line-length-120`.
 
 Deploy local packages with `apm install --target cursor,claude --legacy-skill-paths` from the repository root

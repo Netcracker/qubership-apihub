@@ -79,7 +79,7 @@ The config has two keys:
 A `url` object has these fields:
 
 - `url`: the relative path to the file. The agent requests the file by this path.
-- `name`: a human-readable file name (a short summary).
+- `name`: a human-readable filename (a short summary).
 - `type`: one of the supported types.
 
 Supported types:
