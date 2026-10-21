@@ -1,18 +1,18 @@
 # Contribution Guide
 
 We'd love to accept patches and contributions to this project.
-Please, follow these guidelines to make the contribution process easy and effective for everyone involved.
+Follow these guidelines to make the contribution process easy and effective for everyone involved.
 
 Start with the [developer guide](docs/development/README.md). It covers the workstation setup, building, testing,
 and the workflow in detail.
 
 ## Contributor License Agreement
 
-You must sign the [Contributor License Agreement](https://pages.netcracker.com/cla-main.html) in order to contribute.
+You must sign the [Contributor License Agreement](https://pages.netcracker.com/cla-main.html) to contribute.
 
 ## Code of Conduct
 
-Please make sure to read and follow the [Code of Conduct](CODE-OF-CONDUCT.md).
+Read and follow the [Code of Conduct](CODE-OF-CONDUCT.md).
 
 ## Issues first
 

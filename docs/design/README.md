@@ -26,7 +26,8 @@ Each area has a folder. The links below open the folder; the lists after the ID 
 - [VS Code extension](./vscode-extension/): Publishing to the Portal from VS Code.
 - [Agent](./agent/): Behavior of the APIHUB agent: version validation and cloud services.
 - [Contract types](./contract-types/): Design pages for contract types, such as AsyncAPI.
-- [AI assistant](./ai-assistant/): The AI chat in the Portal: feature design, frontend contract, IDS document generation.
+- [AI assistant](./ai-assistant/): The AI chat in the Portal: feature design, frontend contract, IDS document
+  generation.
 
 ## ID scheme
 

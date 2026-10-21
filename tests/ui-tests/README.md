@@ -68,12 +68,12 @@ pnpm exec playwright test --project=Agent
 
 ### Engineering guidelines
 
-- [docs/CODING_GUIDELINES.md](docs/CODING_GUIDELINES.md) — canonical conventions (test structure, assertions, TDM, POM,
-  locator strategy)
+- [docs/CODING_GUIDELINES.md](docs/CODING_GUIDELINES.md) — canonical conventions (test structure, assertions, TDM,
+  POM, locator strategy)
 - [docs/pom-in-practice.md](docs/pom-in-practice.md) — real POM patterns + examples
 - [docs/localhost-run.md](docs/localhost-run.md) — localhost/proxy specifics
-- [docs/custom-reporter.md](docs/custom-reporter.md) — custom Playwright reporter (summary HTML, GitHub Step Summary, CI
-  status)
+- [docs/custom-reporter.md](docs/custom-reporter.md) — custom Playwright reporter (summary HTML, GitHub Step
+  Summary, CI status)
 
 The project uses **ESLint** for code quality and style.
 

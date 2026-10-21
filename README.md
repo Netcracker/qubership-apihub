@@ -62,13 +62,15 @@ Read the [architecture overview](docs/architecture/overview.md) for the full pic
 | [`deploy/`](deploy/README.md) | The Helm chart, the local Kubernetes quickstart, and the Docker Compose stacks |
 | [`docs/`](docs/README.md) | Installation, administration, user guide, architecture, design items, and the developer guide |
 | [`tools/`](tools/README.md) | Release scripts, CI helpers, and Nx plugins |
-| `sites/` | Sources of the landing and of the documentation site |
+| `sites/` | Sources of the landing, the documentation site, and the navigation page (`sites/index/`) |
 | `.github/` | Workflows, CODEOWNERS, and Dependabot configuration |
 
 ## Where the repositories went
 
-APIHUB used to live in separate repositories. Each one is now a folder of this repository, and its releases keep a
-tag prefix. The product release uses a bare `X.Y.Z` tag.
+APIHUB used to live in separate repositories. Each one is now a folder of this repository. Imported tags keep
+the old prefix, and a module with a release group is released as `<prefix>/X.Y.Z`; `tests/ui-tests`,
+`tests/postman-collections`, and `backend/libraries-backend` have no release group. The product release uses a bare
+`X.Y.Z` tag.
 
 | Old repository | Monorepo path | Tag prefix |
 |----------------|---------------|------------|
