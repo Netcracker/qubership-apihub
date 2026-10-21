@@ -348,4 +348,16 @@ describe('buildSidebar', () => {
     });
     assert.deepEqual(ordered[0].items, [{ label: 'See', slug: 'dev/c' }, { slug: 'dev/a' }, { slug: 'dev/b' }]);
   });
+
+  it('labels a folder without a README from the labels map', () => {
+    const { sidebar: labeled } = buildSidebar({
+      pages: [page('ref/openapi/a', 'A'), page('ref/graphql/b', 'B')],
+      sections: [{ label: 'Reference', directory: 'ref' }],
+      labels: { 'ref/openapi': 'OpenAPI' },
+    });
+    assert.deepEqual(
+      labeled[0].items.map((item) => item.label),
+      ['Graphql', 'OpenAPI'],
+    );
+  });
 });
