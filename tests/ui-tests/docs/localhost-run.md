@@ -6,7 +6,7 @@ environment variable. Tests use it to create a custom server for sending request
 In Docker Compose, use `http://host.docker.internal:8081`:
 
 - protocol + value of the `apihubExternalUrl` field from the
-  [`qubership-apihub-backend-config.yaml`](https://github.com/Netcracker/qubership-apihub/blob/main/docker-compose/apihub-generic/qubership-apihub-backend-config.yaml)
+  [`qubership-apihub-backend-config.yaml`](../../../deploy/docker-compose/apihub-generic/qubership-apihub-backend-config.yaml)
 - add the field `allowedHostsForProxy` with value `host.docker.internal` to the same config file.
 
 In Docker Compose + dev proxy, in addition to the settings above, set `DEV_PROXY_MODE=true` in tests

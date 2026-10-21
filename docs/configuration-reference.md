@@ -1,16 +1,24 @@
 # Configuration reference — files, environment variables, and Helm values
 
-This page ties together **what you edit in GitOps** versus **what the processes actually load**. Pair it with [Installation guide](./installation-guide.md).
+This page ties together **what you edit in GitOps** versus **what the processes actually load**. Pair it with
+[Installation guide](./installation-guide.md).
 
 ---
 
 ## Source of truth hierarchy
 
-1. **`qubership-apihub` Helm chart** ([`deploy/helm-templates/qubership-apihub/`](../deploy/helm-templates/qubership-apihub/) — **`values.yaml` + templates**) is the **canonical delivery contract for Kubernetes**: it defines Secrets, mounts, injected env vars, images, probes. Supported production shapes should be expressible **without bypassing** the chart (operators extend via values/overlays).
+1. **`qubership-apihub` Helm chart**
+   ([`deploy/helm-templates/qubership-apihub/`](../deploy/helm-templates/qubership-apihub/) — **`values.yaml` +
+   templates**) is the **canonical delivery contract for Kubernetes**: it defines Secrets, mounts, injected env vars,
+   images, probes. Supported production shapes should be expressible **without bypassing** the chart (operators extend
+   via values/overlays).
 
-2. **Component source code** is the **authority on runtime behaviour**: which knobs are read from **`config.yaml`**, which from **environment**, and exact variable names. The umbrella Markdown is a map; disagreeing forks should be settled against code on `develop`.
+2. **Component source code** is the **authority on runtime behaviour**: which knobs are read from **`config.yaml`**,
+   which from **environment**, and exact variable names. This page is a map; where it disagrees with the code, the code
+   wins.
 
-3. **`deploy/docker-compose/` stacks** reproduce the **same split** for local rigs; they are **downstream helpers**, not replacements for Helm when you argue about cluster installs.
+3. **`deploy/docker-compose/` stacks** reproduce the **same split** for local rigs; they are **downstream helpers**, not
+   replacements for Helm when you argue about cluster installs.
 
 Annotated **YAML schemas** used by file-backed binaries live only where the loader exists today:
 
@@ -18,11 +26,12 @@ Annotated **YAML schemas** used by file-backed binaries live only where the load
 |-----------|--------------------------|-------------------|
 | API Registry | [`config.template.yaml`](../backend/portal-backend/config.template.yaml) (module `backend/portal-backend/`) | `APIHUB_CONFIG_FOLDER` → `config.yaml`; see backend service bootstrap. |
 | Kubernetes Agent | [`config.template.yaml`](../backend/agent/config.template.yaml) | Agent image (file-based like backend). |
-| **API Linter** | [`config.template.yaml`](https://github.com/Netcracker/qubership-api-linter-service/blob/develop/qubership-api-linter-service/config.template.yaml) | **`LINTER_CONFIG_FOLDER`** → `config.yaml`. Spectral rulesets stay **data** managed through the linter API/database, separate from this boot config. |
+| **API Linter** | [`config.template.yaml`](../backend/api-linter-service/config.template.yaml) | **`LINTER_CONFIG_FOLDER`** → `config.yaml`. Spectral rulesets stay **data** managed through the linter API/database, separate from this boot config. |
 | **Agents-backend** | [`config.template.yaml`](../backend/agents-backend/config.template.yaml) | **`AGENTS_BACKEND_CONFIG_FOLDER`** → `config.yaml`. |
 | Builders / UI | *(none)* | Env only (builder env / UI nginx wrapper). |
 
-**Golden path for admins:** derive intent from Helm values → rendered manifests → confirm against the Go/TS loaders above when in doubt.
+**Golden path for admins:** derive intent from Helm values → rendered manifests → confirm against the Go/TS loaders
+above when in doubt.
 
 ---
 
@@ -31,18 +40,20 @@ Annotated **YAML schemas** used by file-backed binaries live only where the load
 | Service | Primary runtime configuration | Remarks |
 |---------|-------------------------------|---------|
 | **qubership-apihub-backend** | **`config.yaml` on disk** | **`APIHUB_CONFIG_FOLDER`**; optional **`LOG_LEVEL`**, **`GOMEMLIMIT`**. File-backed: DB, security, SSO, S3, Olric, cleanup, AI, `extensions`. Helm: **`qubershipApihubBackend.env`** → `qubership-apihub-backend-config-secret.yaml`. |
-| **qubership-apihub-ui** | Environment variables only | Internal upstream DNS (`*_ADDRESS`). Public URL in backend **`security.apihubExternalUrl`**. See [Installation guide § UI](./installation-guide.md#portal-ui-internal-addresses). |
+| **qubership-apihub-ui** | Environment variables only | Internal upstream DNS (`*_ADDRESS`). Public URL in backend **`security.apihubExternalUrl`**. See [Installation guide § UI](./installation-guide.md#qubership-apihub-uienv-portal-ui). |
 | **qubership-apihub-build-task-consumer** | Environment variables only | **`APIHUB_BACKEND_ADDRESS`** + **`APIHUB_API_KEY`** (aligned with backend **`zeroDayConfiguration.accessToken`** on bootstrap). |
 | **qubership-api-linter-service** | **`config.yaml` on disk** | **`LINTER_CONFIG_FOLDER`**; optional **`LOG_LEVEL`**, **`GOMEMLIMIT`**. File-backed: DB, `technicalParameters.apihub.*`, `linters.*`, `olric.*`. Helm: **`qubershipApiLinterService.env`** → `qubership-api-linter-service-config-secret.yaml`. |
 | **qubership-apihub-agents-backend** | **`config.yaml` on disk** | **`AGENTS_BACKEND_CONFIG_FOLDER`**; optional **`LOG_LEVEL`**, **`GOMEMLIMIT`**. File-backed: DB, `technicalParameters.apihub.*`, `businessParameters.*`, `security.*`, `cleanup.snapshots.*`. Helm: **`qubershipApihubAgentsBackend.env`** → `qubership-apihub-agents-backend-config-secret.yaml`. |
 
-**Kubernetes agent** (optional extension, not started by default Compose bundle): configured like the backend pattern — **`config.yaml`** from [`config.template.yaml`](../backend/agent/config.template.yaml), plus Ingress for **`agentUrl`**.
+**Kubernetes agent** (optional extension, not started by default Compose bundle): configured like the backend pattern —
+**`config.yaml`** from [`config.template.yaml`](../backend/agent/config.template.yaml), plus Ingress for **`agentUrl`**.
 
 ---
 
 ## 2. Helm — mapping `values.yaml` → runtime (integration first)
 
-Chart: **[`deploy/helm-templates/qubership-apihub/`](../deploy/helm-templates/qubership-apihub/)**. File: **`values.yaml`** with inline semantics.
+Chart: **[`deploy/helm-templates/qubership-apihub/`](../deploy/helm-templates/qubership-apihub/)**. File:
+**`values.yaml`** with inline semantics.
 
 | `values.yaml` root key | Produced runtime configuration |
 |------------------------|-------------------------------|
@@ -58,15 +69,20 @@ Chart: **[`deploy/helm-templates/qubership-apihub/`](../deploy/helm-templates/qu
 | `qubershipApihubAgentsBackend.customCa` | Optional Kubernetes Secret mounted at **`/tmp/cert`** on the agents-backend pod. Same [qubership-core-base](https://github.com/Netcracker/qubership-core-base-images) contract for HTTPS outbound calls to APIHUB and remote agents. Set **`enabled: true`** and **`secretName`**. |
 | `qubershipApihubAgentsBackend.goMemLimit` | Pod env **`GOMEMLIMIT`**. Default **`205MiB`** (~80% of default **`resource.memory.limit`** `256Mi`). |
 
-Default **`extensions`** URLs use cluster DNS (`http://qubership-api-linter-service:8080`, …); Compose substitutes **`host.docker.internal`** — keep both sides coherent.
+Default **`extensions`** URLs use cluster DNS (`http://qubership-api-linter-service:8080`, …); Compose substitutes
+**`host.docker.internal`** — keep both sides coherent.
 
-Commands: [Installation guide — Helm](./installation-guide.md#helm-kubernetes). Template reference: **`templates/qubership-*-deployment.yaml`** in the chart.
+Commands: [Installation guide — Helm](./installation-guide.md#helm-kubernetes). Template reference:
+**`templates/qubership-*-deployment.yaml`** in the chart.
 
 ### Custom CA Kubernetes Secret (Helm)
 
-When **`customCa.enabled: true`**, create the Secret **before** `helm install` / `helm upgrade`. Each key under **`data`** or **`stringData`** becomes a filename under **`/tmp/cert`** (use **`.crt`**, **`.cer`**, or **`.pem`** suffixes). One Secret per service is typical; PEM contents may be identical across backend, linter, and agents-backend.
+When **`customCa.enabled: true`**, create the Secret **before** `helm install` / `helm upgrade`. Each key under
+**`data`** or **`stringData`** becomes a filename under **`/tmp/cert`** (use **`.crt`**, **`.cer`**, or **`.pem`**
+suffixes). One Secret per service is typical; PEM contents may be identical across backend, linter, and agents-backend.
 
-**Backend** — save as `apihub-backend-custom-ca-secret.yaml`, set **`namespace`** to your APIHUB release namespace, then `kubectl apply -f apihub-backend-custom-ca-secret.yaml`:
+**Backend** — save as `apihub-backend-custom-ca-secret.yaml`, set **`namespace`** to your APIHUB release namespace, then
+`kubectl apply -f apihub-backend-custom-ca-secret.yaml`:
 
 ```yaml
 apiVersion: v1
@@ -82,9 +98,11 @@ stringData:
     -----END CERTIFICATE-----
 ```
 
-**Linter** — same shape; change **`metadata.name`** to match **`qubershipApiLinterService.customCa.secretName`** (for example `apihub-linter-custom-ca`).
+**Linter** — same shape; change **`metadata.name`** to match **`qubershipApiLinterService.customCa.secretName`** (for
+example `apihub-linter-custom-ca`).
 
-**Agents-backend** — same shape; change **`metadata.name`** to match **`qubershipApihubAgentsBackend.customCa.secretName`** (for example `apihub-agents-backend-custom-ca`).
+**Agents-backend** — same shape; change **`metadata.name`** to match
+**`qubershipApihubAgentsBackend.customCa.secretName`** (for example `apihub-agents-backend-custom-ca`).
 
 Enable the mount in **`values.yaml`** (defaults keep **`enabled: false`**):
 
@@ -95,7 +113,8 @@ qubershipApihubBackend:
     secretName: apihub-backend-custom-ca
 ```
 
-Alternative: `kubectl create secret generic apihub-backend-custom-ca --from-file=company-root-ca.pem=./company-root-ca.pem -n qubership-apihub`.
+Alternative:
+`kubectl create secret generic apihub-backend-custom-ca --from-file=company-root-ca.pem=./company-root-ca.pem -n qubership-apihub`.
 
 MinIO/S3 endpoint CA stays in **`s3Storage.crt`** inside the backend config Secret — not in **`/tmp/cert`**.
 
@@ -103,7 +122,10 @@ MinIO/S3 endpoint CA stays in **`s3Storage.crt`** inside the backend config Secr
 
 ## 3. Compose — which file to edit
 
-Repository path: **[`deploy/docker-compose/apihub-generic/`](../deploy/docker-compose/apihub-generic/)** (standalone) and **`deploy/docker-compose/with-keycloak/`** (Keycloak SSO example).
+Repository path: **[`deploy/docker-compose/apihub-generic/`](../deploy/docker-compose/apihub-generic/)** (standalone)
+and **`deploy/docker-compose/with-keycloak/`** (Keycloak SSO example). The stack in
+**[`deploy/docker-compose/backend-debug/`](../deploy/docker-compose/backend-debug/)**
+runs everything except the backend, so that you can debug the backend from an IDE.
 
 | File | Service | Role |
 |------|---------|------|
@@ -116,7 +138,10 @@ Repository path: **[`deploy/docker-compose/apihub-generic/`](../deploy/docker-co
 | `qubership-apihub-agents-backend-config.yaml` | Agents backend | Mounted as `config.yaml`: DB, **`technicalParameters.apihub.{url,accessToken}`**, **`businessParameters.defaultWorkspaceId`**, **`security.*`**, **`cleanup.snapshots.*`**. Compose sets **`AGENTS_BACKEND_CONFIG_FOLDER`**, **`GOMEMLIMIT`** (default **`205MiB`** for **`memory: 256M`**). |
 | `scripts/init-db/init.sql` | PostgreSQL init | Creates users/DBs: `apihub_backend`, `api_linter`, `agents_backend`. |
 
-Secrets helper: **`generate_jwt_pkey.sh`** (JWT private key PEM → base64 for YAML), **`generate_env_and_up_compose.sh`** (random token/admin + `envsubst`). **Important:** running `generate_env_and_up_compose.sh` **overwrites** the processed `.env` files and every `*-config.yaml` with substituted values — use version control if you care about reproducible templates.
+Secrets helper: **`generate_jwt_pkey.sh`** (JWT private key PEM → base64 for YAML), **`generate_env_and_up_compose.sh`**
+(random token/admin + `envsubst`). **Important:** running `generate_env_and_up_compose.sh` **overwrites** the processed
+`.env` files and every `*-config.yaml` with substituted values — use version control if you care about reproducible
+templates.
 
 ---
 
@@ -124,10 +149,28 @@ Secrets helper: **`generate_jwt_pkey.sh`** (JWT private key PEM → base64 for Y
 
 These must stay **aligned across files/env**:
 
-1. **`zeroDayConfiguration.accessToken`** (backend YAML) = **`APIHUB_API_KEY`** (builder env) = **`technicalParameters.apihub.accessToken`** (linter and agents-backend `config.yaml`) on greenfield Compose/Helm.
-2. **`security.apihubExternalUrl`** (backend) = public HTTPS/HTTP origin users open = **`apihubUrl`** (Helm UI) ≈ Compose example **`http://host.docker.internal:8081`** (only for local desktops).
-3. **`technicalParameters.apihub.url`** for linter and agents backend is **the Portal base URL reachable from inside their containers** (`http://qubership-apihub-ui:8080` in-cluster; `http://host.docker.internal:8081`-style patterns on Compose with published UI port).
-4. **`GOMEMLIMIT`** on Go backends (backend, linter, agents-backend) should stay **below the container memory limit** — chart and Compose defaults use ~80% of the paired **`resource.memory.limit`** / Compose **`deploy.resources.limits.memory`**. When you raise memory limits, update **`goMemLimit`** (Helm) or **`GOMEMLIMIT`** (Compose) in the same change.
+1. **`zeroDayConfiguration.accessToken`** (backend YAML) = **`APIHUB_API_KEY`** (builder env) =
+   **`technicalParameters.apihub.accessToken`** (linter and agents-backend `config.yaml`) on greenfield Compose/Helm.
+2. **`security.apihubExternalUrl`** (backend) = public HTTPS/HTTP origin users open = **`apihubUrl`** (Helm UI) ≈
+   Compose example **`http://host.docker.internal:8081`** (only for local desktops).
+3. **`technicalParameters.apihub.url`** for linter and agents backend is **the Portal base URL reachable from inside
+   their containers** (`http://qubership-apihub-ui:8080` in-cluster; `http://host.docker.internal:8081`-style patterns
+   on Compose with published UI port).
+4. **`GOMEMLIMIT`** on Go backends (backend, linter, agents-backend) should stay **below the container memory limit** —
+   chart and Compose defaults use ~80% of the paired **`resource.memory.limit`** / Compose
+   **`deploy.resources.limits.memory`**. When you raise memory limits, update **`goMemLimit`** (Helm) or
+   **`GOMEMLIMIT`** (Compose) in the same change.
+
+### MinIO (S3 storage)
+
+The backend can keep relatively large binary files, such as build results, in MinIO or any other S3-compatible
+storage. Enable it with **`s3Storage.enabled`** in the backend `config.yaml`, and set **`s3Storage.url`**,
+**`s3Storage.username`**, **`s3Storage.password`**, and **`s3Storage.bucketName`**. Set **`s3Storage.crt`** when the
+endpoint uses a private CA. **`s3Storage.storeOnlyBuildResult`** limits the storage to build results. The
+[`config.template.yaml`](../backend/portal-backend/config.template.yaml) describes every option.
+
+The backend reaches MinIO through the S3 API. You can also browse the buckets in the MinIO web console. Take the
+console credentials from the backend's Kubernetes secret if you have access to the cluster.
 
 ---
 
@@ -135,6 +178,6 @@ These must stay **aligned across files/env**:
 
 | Topic | Prefer |
 |-------|--------|
-| Auth / SAML / OIDC model | Backend [security_model.md](../backend/portal-backend/docs/security/security_model.md), **`security.externalIdentityProviders`** in **`config.template.yaml`** |
-| Data retention / cleanup jobs | Backend **`cleanup`** section + [data_maintenance](../backend/portal-backend/docs/data_maintenance.md) |
-| End user workflows | Portal & Agents Markdown guides ([Portal User Guide](../frontend/ui/docs/Portal%20User%20Guide.md), [Agent User Guide](../frontend/ui/docs/Agent%20User%20Guide.md)) + [Wiki](https://github.com/Netcracker/qubership-apihub/wiki) |
+| Auth / SAML / OIDC model | Backend [security-model.md](administration/security-model.md), **`security.externalIdentityProviders`** in **`config.template.yaml`** |
+| Data retention / cleanup jobs | Backend **`cleanup`** section + [data-maintenance](administration/data-maintenance.md) |
+| End user workflows | Portal & Agents Markdown guides ([Portal User Guide](user-guide/portal.md), [Agent User Guide](user-guide/agent.md)) + [design items](design/) |

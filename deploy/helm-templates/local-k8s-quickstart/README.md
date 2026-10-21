@@ -26,8 +26,11 @@ It is not a production ready deployment schema.
 ## Quickstart
 
 1. Install the following tools: podman, kind, kubectl, helm
-2. Run `apihub-quickstart.sh`
+2. Change into this folder and run `./apihub-quickstart.sh`. The script uses relative paths, so it must start here.
 3. APIHUB is on <https://qubership-apihub.localtest.me/login>
+
+To test an image you built from this repository, load it into the Kind cluster and upgrade the release. The steps are in
+the [local run guide](../../../docs/development/local-run.md#kind-quickstart).
 
 ## How to set up k8s cluster on your PC
 

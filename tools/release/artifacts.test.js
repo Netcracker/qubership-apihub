@@ -2,7 +2,7 @@ const { test } = require('node:test')
 const assert = require('node:assert/strict')
 const fs = require('node:fs')
 const path = require('node:path')
-const { IMAGES, MAX_BODY, buildPlan, componentDependencies, previousTag, releaseTags } = require('./artifacts')
+const { CHARTS, IMAGES, MAX_BODY, buildPlan, componentDependencies, previousTag, releaseTags } = require('./artifacts')
 
 const REPO = 'https://github.com/Netcracker/qubership-apihub'
 
@@ -46,6 +46,20 @@ test('previousTag takes the highest stable version below the new one', () => {
   assert.equal(previousTag('', '2.16.0', tags.filter((t) => !t.includes('/'))), '2.15.0')
 })
 
+// Released before the commit under test; build-task-consumer, api-linter-service, and agents-backend are
+// not release groups of this fixture, but the product chart pins them by their tags.
+const MERGED = [
+  'api-diff/4.0.0',
+  'ui/3.10.1',
+  'portal-backend/1.21.0',
+  'agent/2.1.5',
+  'build-task-consumer/1.4.0',
+  'api-linter-service/1.3.0',
+  'agents-backend/0.9.0',
+  'agents-backend/0.10.0',
+  '2.15.0',
+]
+
 const plan = (tagsAtCommit, extra = {}) =>
   buildPlan({
     release,
@@ -53,7 +67,7 @@ const plan = (tagsAtCommit, extra = {}) =>
     packages,
     dependsOn: { ui: ['api-diff'] },
     tagsAtCommit,
-    mergedTags: ['api-diff/4.0.0', 'ui/3.10.1', 'portal-backend/1.21.0', 'agent/2.1.5', '2.15.0', ...tagsAtCommit],
+    mergedTags: [...MERGED, ...tagsAtCommit],
     commitsFor: (from) =>
       from === 'portal-backend/1.21.0'
         ? [{ hash: 'a1', sha: 'a1', author: 'Dev', subject: 'feat!: x', body: '' }]
@@ -111,6 +125,100 @@ test('buildPlan: an agent-only release has no Latest release; a package.json beh
   assert.deepEqual(p.problems, [
     '@netcracker/qubership-apihub-api-diff is at 5.0.0 in package.json, but the tag api-diff/5.0.1 says 5.0.1',
   ])
+})
+
+test('buildPlan: the product chart pins every product image at its current version', async () => {
+  const p = await plan(['2.16.0', 'portal-backend/1.22.0'])
+  assert.deepEqual(p.charts, [
+    {
+      ref: 'oci://ghcr.io/netcracker/charts/qubership-apihub',
+      version: '2.16.0',
+      dir: 'deploy/helm-templates/qubership-apihub',
+      name: 'qubership-apihub',
+      tag: '2.16.0',
+      pins: [
+        {
+          path: 'qubershipApihubBackend.image.tag',
+          component: 'portal-backend',
+          version: '1.22.0',
+          image: 'ghcr.io/netcracker/qubership-apihub-backend',
+        },
+        {
+          path: 'qubershipApihubBuildTaskConsumer.image.tag',
+          component: 'build-task-consumer',
+          version: '1.4.0',
+          image: 'ghcr.io/netcracker/qubership-apihub-build-task-consumer',
+        },
+        {
+          path: 'qubershipApihubUi.image.tag',
+          component: 'ui',
+          version: '3.10.1',
+          image: 'ghcr.io/netcracker/qubership-apihub-ui',
+        },
+        {
+          path: 'qubershipApiLinterService.image.tag',
+          component: 'api-linter-service',
+          version: '1.3.0',
+          image: 'ghcr.io/netcracker/qubership-api-linter-service',
+        },
+        {
+          path: 'qubershipApihubAgentsBackend.image.tag',
+          component: 'agents-backend',
+          version: '0.10.0',
+          image: 'ghcr.io/netcracker/qubership-apihub-agents-backend',
+        },
+        { path: 'qubershipApihubAgentsBackend.version', component: 'agents-backend', version: '0.10.0' },
+      ],
+    },
+  ])
+  const product = p.releases.find((r) => r.latest)
+  assert.deepEqual(product.chart, { name: 'qubership-apihub', version: '2.16.0' })
+  assert.match(product.notes, /`helm install apihub oci:\/\/ghcr\.io\/netcracker\/charts\/qubership-apihub --version 2\.16\.0`/)
+  // The agent is not released here: its notes link the chart of agent/2.1.5, which must already exist.
+  assert.deepEqual(p.chartLinks, [
+    { name: 'qubership-apihub-agent', ref: 'oci://ghcr.io/netcracker/charts/qubership-apihub-agent', version: '2.1.5' },
+  ])
+  assert.match(product.notes, /charts\/qubership-apihub-agent` version `2\.1\.5`/)
+  assert.deepEqual(p.problems, [])
+})
+
+test('buildPlan: the agent chart goes with the agent release; the product then links the chart it pushes', async () => {
+  const p = await plan(['2.16.0', 'agent/2.1.6'])
+  assert.deepEqual(
+    p.charts.map((c) => [c.name, c.version, c.tag]),
+    [
+      ['qubership-apihub-agent', '2.1.6', 'agent/2.1.6'],
+      ['qubership-apihub', '2.16.0', '2.16.0'],
+    ],
+  )
+  assert.deepEqual(p.charts[0].pins, [
+    {
+      path: 'qubershipApihubAgent.image.tag',
+      component: 'agent',
+      version: '2.1.6',
+      image: 'ghcr.io/netcracker/qubership-apihub-agent',
+    },
+  ])
+  assert.deepEqual(p.chartLinks, [])
+  const agent = p.releases.find((r) => r.tag === 'agent/2.1.6')
+  assert.deepEqual(agent.chart, { name: 'qubership-apihub-agent', version: '2.1.6' })
+  assert.match(agent.notes, /`oci:\/\/ghcr\.io\/netcracker\/charts\/qubership-apihub-agent` version `2\.1\.6`/)
+  assert.match(p.releases.find((r) => r.latest).notes, /charts\/qubership-apihub-agent` version `2\.1\.6`/)
+})
+
+test('buildPlan: a chart that cannot pin a component is a problem', async () => {
+  const p = await plan(['2.16.0'], { mergedTags: ['2.15.0', 'agent/2.1.5', '2.16.0'] })
+  assert.ok(p.problems.includes('The chart qubership-apihub 2.16.0 cannot pin portal-backend: it has no release.'))
+  assert.equal(p.problems.filter((x) => x.startsWith('The chart qubership-apihub')).length, 5)
+})
+
+test('CHARTS: every pinned component has an image, and the chart directories exist', () => {
+  for (const chart of Object.values(CHARTS)) {
+    assert.ok(fs.existsSync(path.join(__dirname, '..', '..', chart.dir, 'Chart.yaml')), chart.dir)
+    for (const [component, paths] of Object.entries(chart.pins)) {
+      if (paths.some((p) => p.endsWith('.image.tag'))) assert.ok(IMAGES[component], component)
+    }
+  }
 })
 
 test('buildPlan: missing work items are a problem, which stops a real run', async () => {

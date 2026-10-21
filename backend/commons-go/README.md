@@ -1,56 +1,35 @@
-# qubership-apihub-commons-go
+# APIHUB commons-go
 
-Collection of Go modules and libraries for the Qubership API Hub ecosystem.
+A shared Go library for the APIHUB services. Nothing is published from this module and it has no image: the Go
+services use it through the workspace. It holds one package today, [`api-spec-exposer`](api-spec-exposer/README.md),
+which discovers API specifications in a file system and builds the HTTP endpoint configurations that expose them
+at the URLs of the [agent discovery contract](../../docs/user-guide/agent-discovery.md).
+`portal-backend`, `api-linter-service`, and `agents-backend` import the module with a `replace` directive in their
+`go.mod`; see the [backend README](../README.md#go-workspace).
 
-## Description
+It is a library inside the backend, not a deployed component; see the
+[architecture overview](../../docs/architecture/overview.md).
 
-`qubership-apihub-commons-go` is a collection of Go modules for the Qubership API Hub ecosystem. Each module is independent and can be used separately in your projects.
+## Packages
 
-## Available Modules
-
-### 📦 [api-spec-exposer](./api-spec-exposer)
-
-A library for automatic discovery and exposure of API specifications.
-
-**Key Features:**
-
-- Automatic discovery of API specifications in the file system
-- Multiple format support: OpenAPI 2.0/3.0/3.1, GraphQL, Markdown
-- HTTP endpoint generation for accessing specifications
-- Directory scanning with configurable exclusion rules
-
-**[📖 View full documentation →](./api-spec-exposer/README.md)**
-
-**Installation:**
-
-```bash
-go get github.com/Netcracker/qubership-apihub/backend/commons-go
-```
-
-## Project Structure
+| Package | Purpose |
+|---------|---------|
+| [`api-spec-exposer`](api-spec-exposer/README.md) | Finds and identifies API specifications (OpenAPI, GraphQL, Markdown) and returns handlers and default URL paths |
 
 ```text
 .
-├── api-spec-exposer/          # API specification discovery and exposure
-│   ├── README.md              # Module documentation
-│   ├── config/                # Configuration and data types
-│   └── internal/              # Internal implementation
-├── .github/
-│   └── workflows/             # GitHub Actions workflows
-├── go.mod                     # Module dependencies
+├── api-spec-exposer/    # discovery and exposure of API specifications
+│   ├── config/          # configuration and data types
+│   └── internal/        # implementation
+├── build.sh             # download, tidy, build, test, and vet in one run
+├── go.mod
 └── README.md
 ```
 
-## Requirements
+## Build, test, and lint
 
-- **Go 1.23** or higher
-- Git for cloning the repository
-
-## Build
-
-### Build All Modules
-
-From the repository root, use the Nx targets of the `commons-go` project:
+The Nx project is `commons-go` (tag `lang:go`). It has no `build` target, because a library has no binary. Run from the
+repository root:
 
 ```bash
 pnpm exec nx run commons-go:tidy
@@ -58,76 +37,23 @@ pnpm exec nx run commons-go:lint
 pnpm exec nx run commons-go:test
 ```
 
-They tidy the dependencies, format and vet the code, and run the tests of the whole module.
+They tidy the dependencies, format and vet the code, and run the tests of the whole module. From this folder,
+`go test ./... -v` runs the tests directly, and `./build.sh` does the whole cycle. The Go version is in
+[`backend/.go-version`](../.go-version). CI runs the same Nx targets; see
+[Build and test](../../docs/development/build-and-test.md).
 
-### Build Individual Module
+## Run and debug locally
 
-To build a specific package (module part):
+There is nothing to run. A service that uses the library picks up your change at once, because the workspace in
+`go.work` resolves the module from this folder. Debug a test with `dlv test ./api-spec-exposer`; see
+[Debugging: Go service](../../docs/development/debugging.md#debug-a-go-test).
 
-```bash
-cd <package-directory>
-go build ./...
-go test ./... -v
-```
+## Configuration
 
-For module-specific build instructions, see the module's README file.
+The library reads no configuration file. The caller passes the options of `api-spec-exposer` in code; they are
+described in its [README](api-spec-exposer/README.md).
 
-## CI/CD
+## Further reading
 
-The project uses GitHub Actions for automation:
-
-- **CI Workflow** (`.github/workflows/ci.yml`): Runs on Pull Request creation
-  - Dependency verification
-  - Module building
-  - Test execution
-  - Code checks
-
-- **Release Workflow** (`.github/workflows/release.yml`): Runs on version tag creation
-  - Full build and testing
-  - Release artifact creation
-  - GitHub Release publication
-
-## Testing
-
-To run tests for all modules:
-
-```bash
-./build.sh
-```
-
-To run tests for a specific module:
-
-```bash
-cd <module-directory>
-go test ./... -v
-```
-
-## Development
-
-### Code Style
-
-The project follows standard Go conventions:
-
-- Use `gofmt` for formatting
-- Run `go vet` before committing
-- Write tests for new functionality
-
-For module-specific development guidelines, refer to the module's README file.
-
-## License
-
-See the [LICENSE](LICENSE) file for detailed license information.
-
-## Contributing
-
-We welcome contributions to the project! Please:
-
-1. Fork the repository
-2. Create a branch for your feature (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## Support
-
-If you encounter any issues or have questions, please create an Issue in the repository.
+- [`api-spec-exposer` documentation](api-spec-exposer/README.md)
+- [Development workflow](../../docs/development/workflow.md) and the [license](LICENSE)

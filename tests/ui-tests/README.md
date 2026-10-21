@@ -7,22 +7,33 @@ Playwright-based test project for APIHUB UI:
 - ADV smoke-style checks (`ADV-operations`, `ADV-comparisons`)
 - Cleanup project (`--project=Cleanup`)
 
+The Nx project is `ui-tests`. It has the targets `test-e2e-portal`, `test-component`, `test-unit`, `typecheck`, and
+`lint:check`; run them with `pnpm exec nx run ui-tests:<target>` from the repository root. How CI runs the suite is in
+[Tests](../README.md#how-ci-runs-them), and the local stack is described in
+[Run APIHUB locally](../../docs/development/local-run.md).
+
 ## Quick start
 
 ### Prerequisites
 
 - Playwright system deps: see [Playwright system requirements](https://playwright.dev/docs/intro#system-requirements)
-- Node.js + npm
+- Node.js 24 and pnpm; see [Getting started](../../docs/development/getting-started.md)
 
 ### Install
 
+The project is a member of the pnpm workspace. Install the dependencies once at the repository root, then install the
+browser from this folder:
+
 ```Shell
-npm ci
+pnpm install
 ```
 
 ```Shell
-npx playwright install
+cd tests/ui-tests
+pnpm exec playwright install
 ```
+
+Do not run `npm ci` or `npm install` here: there is one lock file, `pnpm-lock.yaml` at the root.
 
 ### Configure environment
 
@@ -41,25 +52,28 @@ See [Environment variables](#environment-variables) for the full list.
 ### Run Portal end-to-end tests
 
 ```Shell
-npx playwright test --project=Portal
+pnpm exec playwright test --project=Portal
 ```
 
 ### Run Agent end-to-end tests
 
-Requires a running Agent and a Kubernetes cloud the Agent can discover. Set `AGENT_TEST_CLOUD` (see [Environment variables](#environment-variables)).
+Requires a running Agent and a Kubernetes cloud the Agent can discover. Set `AGENT_TEST_CLOUD` (see
+[Environment variables](#environment-variables)).
 
 ```Shell
-npx playwright test --project=Agent
+pnpm exec playwright test --project=Agent
 ```
 
 ## Documentation map (project-local)
 
 ### Engineering guidelines
 
-- [docs/CODING_GUIDELINES.md](docs/CODING_GUIDELINES.md) — canonical conventions (test structure, assertions, TDM, POM, locator strategy)
+- [docs/CODING_GUIDELINES.md](docs/CODING_GUIDELINES.md) — canonical conventions (test structure, assertions, TDM,
+  POM, locator strategy)
 - [docs/pom-in-practice.md](docs/pom-in-practice.md) — real POM patterns + examples
 - [docs/localhost-run.md](docs/localhost-run.md) — localhost/proxy specifics
-- [docs/custom-reporter.md](docs/custom-reporter.md) — custom Playwright reporter (summary HTML, GitHub Step Summary, CI status)
+- [docs/custom-reporter.md](docs/custom-reporter.md) — custom Playwright reporter (summary HTML, GitHub Step
+  Summary, CI status)
 
 The project uses **ESLint** for code quality and style.
 
@@ -81,7 +95,8 @@ Example (API Quality suite folder):
 
 ## Environment variables
 
-`.env` is loaded via `dotenv` in `playwright.config.ts`. Global setup prints a subset of variables at run start (`src/tests/apihub-setup.ts`).
+`.env` is loaded via `dotenv` in `playwright.config.ts`. Global setup prints a subset of variables at run start
+(`src/tests/apihub-setup.ts`).
 
 ### Required
 
@@ -176,26 +191,27 @@ Tests are skipped when the corresponding variable is unset.
 ### Common commands
 
 ```Shell
-npx playwright test --project=Portal --project=Agent
+pnpm exec playwright test --project=Portal --project=Agent
 ```
 
 ```Shell
-npx playwright test --project=Portal --project=Agent --last-failed
+pnpm exec playwright test --project=Portal --project=Agent --last-failed
 ```
 
 ```Shell
-npx playwright test --project=Portal --project=Agent --headed --trace=on
+pnpm exec playwright test --project=Portal --project=Agent --headed --trace=on
 ```
 
 ### HTML report
 
 ```Shell
-npx playwright show-report reports/playwright
+pnpm exec playwright show-report reports/playwright
 ```
 
 ### Custom summary report
 
-`CustomReporter` writes `reports/summary/status` (CI gate) and, for non-unit runs, `reports/summary/summary-report.html`. In GitHub Actions it also appends a Markdown summary to the job page.
+`CustomReporter` writes `reports/summary/status` (CI gate) and, for non-unit runs,
+`reports/summary/summary-report.html`. In GitHub Actions it also appends a Markdown summary to the job page.
 
 See [docs/custom-reporter.md](docs/custom-reporter.md) for configuration and behavior.
 
@@ -218,7 +234,9 @@ More options:
 When the pattern contains alternation (`|`), pass `--grep` with **single quotes**:
 
 ```shell
-npx playwright test --project=Portal --grep='P-GEN-1.2\]|P-GEN-1.1\]|P-ODPPG-1\]'
+pnpm exec playwright test --project=Portal --grep='P-GEN-1.2\]|P-GEN-1.1\]|P-ODPPG-1\]'
 ```
 
-In bash scripts (including GitHub Actions steps that `echo` CLI arguments into `$GITHUB_STEP_SUMMARY`), do not place `--grep="..."` inside an outer double-quoted string. The inner `"` closes the string early and bash treats `|` as a pipe (`command not found`, exit code 127) even when Playwright would run the tests correctly.
+In bash scripts (including GitHub Actions steps that `echo` CLI arguments into `$GITHUB_STEP_SUMMARY`), do not place
+`--grep="..."` inside an outer double-quoted string. The inner `"` closes the string early and bash treats `|` as a pipe
+(`command not found`, exit code 127) even when Playwright would run the tests correctly.
