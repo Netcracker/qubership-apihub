@@ -82,7 +82,7 @@ When a change affects REST contracts or integration behaviour, update the neighb
 | SQL migrations | `resources/migrations/` |
 | Default Spectral/Vacuum rules | `resources/spectral/`, `.../vacuum/` |
 | OpenAPI specs (this service) | `docs/api/linter_service_api.yaml`, `docs/api/admin_api.yaml` |
-| Architecture notes | `docs/arch_proposal/`, `docs/validation_sequence/` |
+| Architecture notes | `docs/arch_proposal/` |
 
 ## Domain model (read before changing lint flow)
 
