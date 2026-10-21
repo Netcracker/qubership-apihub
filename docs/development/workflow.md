@@ -5,7 +5,7 @@ and the merge. The release itself is in [Release process](./release-process.md).
 
 ## Start with an issue
 
-Every change starts from an issue in
+Every change except a typo or a one-line docs fix starts from an issue in
 [Netcracker/qubership-apihub](https://github.com/Netcracker/qubership-apihub/issues), the one repository of the product.
 
 1. Open the issue, or pick an existing one.
