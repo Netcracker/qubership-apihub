@@ -13,6 +13,7 @@ and [`qubership-ai-packages`](https://github.com/Netcracker/qubership-ai-package
 | `apihub-deployment-authoring` | `apihub-deployment-authoring/` | Helm, Compose, and `docs/` deployment guides |
 | `apihub-deployment-followup` | `apihub-deployment-followup/` | Reminder to update Helm or Compose when a backend change needs it |
 | `apihub-add-go-service` | `apihub-add-go-service/` | Checklist for adding a Go service under `backend/` |
+| `apihub-landing-refresh` | `apihub-landing-refresh/` | Refresh versions, release cards, and links of the landing in `sites/landing/` |
 
 ## One manifest for the whole repository
 

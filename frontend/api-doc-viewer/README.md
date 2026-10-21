@@ -1,31 +1,67 @@
-# qubership-apihub-api-doc-viewer
+# APIHUB API doc viewer
 
-Library which can render JSON schemas, GraphQL schemas and
-GraphAPI specifications in human-readable way.
+The API doc viewer is a pnpm workspace of React libraries that render API documents in a human-readable way, with or
+without the differences between two versions. The active API types are JSON Schema, AsyncAPI, DDLAPI, and JSO (a
+JavaScript object with cycles); the GraphQL viewers are legacy. The module is published as the npm packages
+`@netcracker/qubership-apihub-api-doc-viewer` (the React viewers) and `@netcracker/qubership-apihub-next-data-model`
+(the tree builders and diff aggregators that feed them).
 
-## Installation
+| Package | Path | Role |
+|---------|------|------|
+| `api-doc-viewer` | `packages/api-doc-viewer/` | React viewers |
+| `next-data-model` | `packages/next-data-model/` | Tree builders, crawl rules, diff aggregators |
+| `api-data-model`, `api-state-model` | `packages/` | Legacy GraphQL data model and state |
+| `samples` | `packages/samples/` | Fixtures for stories and screenshot tests |
 
-``
-npm add @netcracker/qubership-apihub-api-doc-viewer
-``
+The UI and `apispec-view` use the viewers. See the
+[processing libraries guide](../../docs/architecture/processing-libraries.md) and the
+[architecture overview](../../docs/architecture/overview.md).
+
+## Build, test, and lint
+
+The Nx projects are `api-doc-viewer`, `api-doc-viewer-next-data-model`, `api-doc-viewer-samples`,
+`api-doc-viewer-api-data-model`, `api-doc-viewer-api-state-model`, and `api-doc-viewer-root`. Run from the
+repository root:
+
+```bash
+pnpm exec nx run api-doc-viewer:build
+pnpm exec nx run api-doc-viewer:test
+pnpm exec nx run api-doc-viewer-next-data-model:test
+pnpm exec nx run api-doc-viewer-root:lint:check
+pnpm exec nx run api-doc-viewer:screenshot-test
+```
+
+The screenshot tests start Chrome in a container and need Podman; see
+[Build and test: Screenshot tests](../../docs/development/build-and-test.md#screenshot-tests).
+
+## Run and debug locally
+
+The viewers run in Storybook. From `packages/api-doc-viewer`, `pnpm development:storybook` starts it on port 9099.
+Build the static Storybook the way CI does with `pnpm exec nx run-many -t build:showcase -p api-doc-viewer`. CI
+publishes the [Storybook of every branch](https://netcracker.github.io/qubership-apihub/storybook/) on GitHub Pages.
+Details: [Debugging: Storybook](../../docs/development/debugging.md#storybook).
+
+## Configuration
+
+The libraries read no configuration file. The viewer components take their settings as properties; see
+[Usage and API](#usage-and-api).
 
 ## Components
 
-There is a high-level description of provided components.
-
-For more details, see section "Usage & API" below.
+The two entry-point components for JSON Schema and GraphQL are below; for details, see
+[Usage and API](#usage-and-api).
 
 ### GraphQLOperationViewer overview
 
-* **Accepts:** GraphAPI schema object, operation path and view configuration parameters
-* **Returns:** Rendered GraphQL operation
+- **Accepts:** GraphAPI schema object, operation path and view configuration parameters
+- **Returns:** Rendered GraphQL operation
 
 ### JsonSchemaViewer overview
 
-* **Accepts:** JSON schema object and view configuration parameters
-* **Returns:** Rendered JSON schema
+- **Accepts:** JSON schema object and view configuration parameters
+- **Returns:** Rendered JSON schema
 
-## Usage & API
+## Usage and API
 
 ### GraphQLOperationViewer usage
 
@@ -156,18 +192,8 @@ const SomeComponent: FC = () => {
 }
 ```
 
-## AI agent configuration (APM)
+## Further reading
 
-Agent instructions and skills for this monorepo:
-
-* **`AGENTS.md`** — repository orientation at the repo root (hand-written and committed,
-  including **`*.generated.*` naming rules** — compatibility-suites only). Do not run
-  `apm compile` at the root; it would overwrite this file.
-* **`agent-packages/`** — canonical skill sources deployed by APM.
-* **`apm.yml`** — APM dependency list; local packages under `agent-packages/`.
-
-Refresh deployed skills and rules after editing agent packages:
-
-```bash
-apm install --target cursor,claude --legacy-skill-paths
-```
+- [Design documents](docs/design/README.md): the source of truth per API type, with display coverage, architecture,
+  entities, and features
+- [Fixture catalog](packages/samples/README.md)

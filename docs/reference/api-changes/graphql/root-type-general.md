@@ -1,0 +1,9 @@
+# Root Type General
+
+| # | Change id | Example | ER | Storybook |
+|---|-----------|---------|----|-----------|
+| 1 | add-new-root-type | [before](../../../../frontend/compatibility-suites/bin/comparison-base-suite/graphql/root-type-general/add-new-root-type/before.graphql) [after](../../../../frontend/compatibility-suites/bin/comparison-base-suite/graphql/root-type-general/add-new-root-type/after.graphql) | non-breaking | add-new-root-type |
+| 2 | delete-root-type | [before](../../../../frontend/compatibility-suites/bin/comparison-base-suite/graphql/root-type-general/delete-root-type/before.graphql) [after](../../../../frontend/compatibility-suites/bin/comparison-base-suite/graphql/root-type-general/delete-root-type/after.graphql) | breaking | delete-root-type |
+| 3 | add-description-for-root-type | [before](../../../../frontend/compatibility-suites/bin/comparison-base-suite/graphql/root-type-general/add-description-for-root-type/before.graphql) [after](../../../../frontend/compatibility-suites/bin/comparison-base-suite/graphql/root-type-general/add-description-for-root-type/after.graphql) | annotation | add-description-for-root-type |
+| 4 | change-description-for-root-type | [before](../../../../frontend/compatibility-suites/bin/comparison-base-suite/graphql/root-type-general/change-description-for-root-type/before.graphql) [after](../../../../frontend/compatibility-suites/bin/comparison-base-suite/graphql/root-type-general/change-description-for-root-type/after.graphql) | annotation | change-description-for-root-type |
+| 5 | delete-description-for-root-type | [before](../../../../frontend/compatibility-suites/bin/comparison-base-suite/graphql/root-type-general/delete-description-for-root-type/before.graphql) [after](../../../../frontend/compatibility-suites/bin/comparison-base-suite/graphql/root-type-general/delete-description-for-root-type/after.graphql) | annotation | delete-description-for-root-type |

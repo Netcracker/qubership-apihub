@@ -2,7 +2,7 @@
 
 ## 1) Install Git
 
-Then ask access to Git repositories listed in Backend sources section of the [Onboarding](onboarding.md) document.
+Then ask your team for access to the Git repositories of the backend modules.
 
 ## 2) Install and setup Podman Desktop or Rancher Desktop (your choice)
 

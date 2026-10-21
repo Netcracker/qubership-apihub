@@ -90,5 +90,13 @@ test('ci.yml: release-artifacts publishes on main only, and the dry run only whe
   assert.match(ci.jobs['release-artifacts-dry-run'].if, /inputs\.release_dry_run == true/)
   assert.equal(ci.jobs['release-artifacts-dry-run'].with.dry_run, true)
   assert.equal(ci.jobs['release-artifacts'].with.dry_run, false)
-  assert.deepEqual(ci.jobs['release-artifacts-dry-run'].permissions, { contents: 'read', packages: 'read' })
+  assert.deepEqual(ci.jobs['release-artifacts-dry-run'].permissions, {
+    contents: 'read',
+    packages: 'read',
+    'pull-requests': 'read',
+    issues: 'read',
+  })
+  for (const job of ['release-artifacts', 'release-artifacts-dry-run']) {
+    assert.deepEqual(ci.jobs[job].secrets, { PROJECT_READ_TOKEN: '${{ secrets.PROJECT_READ_TOKEN }}' })
+  }
 })

@@ -1,0 +1,6 @@
+name: apihub-landing-refresh
+version: 0.1.0
+description: Refresh the APIHUB product landing in sites/landing from the monorepo's releases and docs
+author: Qubership
+dependencies:
+  apm: []
