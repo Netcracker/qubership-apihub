@@ -1,6 +1,7 @@
 # Plan: ddlapi change reporting in api-diff
 
-> Archived on 2026-10-21: the work is done; kept for the record.
+> Archived on 2026-10-21: the checklists below were not kept up to date, so they do not show what shipped. Check the
+> code. Kept for the record.
 
 ## 1. Goal & guiding use case
 

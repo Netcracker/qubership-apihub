@@ -1,8 +1,9 @@
 # Implementation Plan: DDL Contract Support in api-processor
 
-> Archived on 2026-10-21: the work is done; kept for the record.
+> Archived on 2026-10-21: the checklists below were not kept up to date, so they do not show what shipped. Check the
+> code. Kept for the record.
 
-Status: **Draft for review** · Author: planning session 2026-06-12 · Branch: `feature/ddl`
+Status: **Archived** · Author: planning session 2026-06-12 · Branch: `feature/ddl`
 
 ## Overview
 

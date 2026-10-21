@@ -1,6 +1,6 @@
 # External Contract: DDL Build Result Shape
 
-Status: **Draft for review** · 2026-06-12 · Companion to [`ddl-contract-support.md`](../archive/ddl-contract-support.md)
+Status: **Current** · 2026-06-12 · Companion to [`ddl-contract-support.md`](../archive/ddl-contract-support.md)
 
 This describes the **output package (zip) layout** api-processor produces for DDL content, for the
 `build` and `changelog` build types, and reviews it for consistency with the existing REST and MCP

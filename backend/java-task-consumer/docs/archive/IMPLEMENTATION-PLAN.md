@@ -1,6 +1,7 @@
 # Java Task Consumer — Implementation Plan
 
-> Archived on 2026-10-21: the work is done; kept for the record.
+> Archived on 2026-10-21: the checklists below were not kept up to date, so they do not show what shipped. Check the
+> code. Kept for the record.
 >
 > **Goal:** Deliver a production-ready APIHUB worker for Java API builds, vendoring PoC engine code and
 > integrating with a new backend Java-build API (backend implemented separately).

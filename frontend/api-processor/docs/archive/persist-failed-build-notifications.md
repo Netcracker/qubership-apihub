@@ -2,7 +2,7 @@
 
 > Archived on 2026-10-21: the work is done; kept for the record.
 
-Status: **Draft for review** · 2026-09-24
+Status: **Implemented** · 2026-09-24
 
 A failed build publishes nothing, so the notifications it collected are lost and its publish status keeps one
 summary sentence. This design stores the notifications of a failed package build against the build, and serves them
