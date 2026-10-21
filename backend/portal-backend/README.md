@@ -118,7 +118,8 @@ from the IDE with the rest in Compose, follow
 [Backend from the IDE](../../docs/development/local-run.md#backend-from-the-ide-the-rest-in-compose). Start `main.go`
 with this folder as the working directory, because the migrations and the static assets are found relative to it.
 Breakpoints, Delve, and the traps of a local run:
-[Debugging: Go service](../../docs/development/debugging.md#go-service) and [Running and probing](docs/running-and-probing.md).
+[Debugging: Go service](../../docs/development/debugging.md#go-service) and
+[Running and probing](docs/running-and-probing.md).
 
 ## Configuration
 

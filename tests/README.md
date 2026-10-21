@@ -57,9 +57,9 @@ artifact. The Kind run takes about 45 minutes. The workflows and the artifacts a
 
 ## Manual runs
 
-`e2e-tests-manual.yml` ("Run E2E tests") runs the suites against images you name. It builds and publishes nothing and
-gates nothing. A schedule starts it every night at 00:00 UTC with the defaults. Start it from **Actions > Run E2E
-tests > Run workflow** or with `gh workflow run`.
+`e2e-tests-manual.yml` ("E2E: Run tests (manual)") runs the suites against images you name. It builds and publishes
+nothing and gates nothing. A schedule starts it every night at 00:00 UTC with the defaults. Start it from **Actions >
+E2E: Run tests (manual) > Run workflow** or with `gh workflow run`.
 
 | Input | Default | Meaning |
 |-------|---------|---------|

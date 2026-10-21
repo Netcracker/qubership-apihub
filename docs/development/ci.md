@@ -9,27 +9,32 @@ CI runs, see [Build and test](./build-and-test.md).
 
 ## The workflows
 
+Each workflow name except `CI` starts with a group prefix: `E2E:`, `Images:`, `Lint:`, `Pages:`, `PR:`, or
+`Release:`. The Actions sidebar sorts workflows by name, so each group stays together there. Give a new workflow the
+prefix of its group. A workflow that a person starts ends with `(manual)`, and the manual release workflows are
+numbered in the order they run.
+
 | Workflow | File | Triggers | What it does |
 |---|---|---|---|
 | CI | `ci.yml` | push to any branch, pull request, manual | builds and tests what changed, publishes images and Storybooks, runs E2E, gives the verdict `ci-ok` |
-| Build images | `images.yml` | called by `ci.yml` | builds an image when its content is new, otherwise retags the existing one |
-| Run E2E tests using Kind | `e2e-tests-kind.yml` | called by `ci.yml` and `e2e-tests-manual.yml` | installs the Helm charts on Kind, runs Newman and Playwright |
-| Run E2E tests using Podman Compose | `e2e-tests-compose.yml` | called by `e2e-tests-manual.yml` | the same suites against a Compose stack, without the agent |
-| Run E2E tests | `e2e-tests-manual.yml` | manual, nightly at 00:00 UTC | E2E against images you name; see [Manual E2E](#manual-e2e) |
-| Publish Pages | `pages.yml` | dispatched by `ci.yml` and `erd.yml`, branch deletion, daily, manual | assembles and deploys the GitHub Pages site |
-| Render database ERDs | `erd.yml` | push to `develop` or `main` that changes SQL migrations, manual | renders the ERD of each backend that owns a database |
-| Lint Code Base | `super-linter.yaml` | push to any branch, pull request, manual | super-linter on the changed files; `full_scan` lints everything |
-| MD Link Checker | `link-checker.yaml` | push, pull request, manual | lychee over every Markdown file |
-| Lint PR Title | `pr-lint-title.yaml` | pull request opened, edited, or updated | checks that the title is a Conventional Commit |
-| Conventional Commits PR Check | `pr-conventional-commits.yaml` | pull request opened, edited, or updated | checks the commit messages of the pull request |
-| Automatic PR Labeler | `automatic-pr-labeler.yaml` | pull request into `develop`, `release`, or `main` | adds type labels and `module:<name>` labels by path |
-| PR Auto-Assignment | `pr-assigner.yml` | pull request into `develop`, `release`, or `main` | assigns reviewers |
-| CLA Assistant | `cla.yaml` | pull request, comment | asks first-time contributors to sign the CLA |
-| Check Go module licenses | `go-check-license.yaml` | changes to `go.mod`, `go.sum`, or `wwhrd.yml`; manual | checks dependency licenses of every Go module |
-| Security scan of images | `security-scan-apihub.yml` | weekly (Sunday 03:00 UTC), manual | Grype and Trivy over the published images or the source tree |
-| Clean up images | `images-gc.yml` | branch deletion, twice a day, manual | deletes image versions that no branch or tag needs |
-| Release start, Release finish, Release sync | `release-*.yml` | manual; `release-sync.yml` on push to `release` | the release flow, see [Release process](./release-process.md) |
-| Release artifacts | `release-artifacts.yml` | called by `ci.yml` on `main` | publishes image version tags, npm packages, Helm charts, GitHub Releases |
+| E2E: Kind | `e2e-tests-kind.yml` | called by `ci.yml` and `e2e-tests-manual.yml` | installs the Helm charts on Kind, runs Newman and Playwright |
+| E2E: Podman Compose | `e2e-tests-compose.yml` | called by `e2e-tests-manual.yml` | the same suites against a Compose stack, without the agent |
+| E2E: Run tests (manual) | `e2e-tests-manual.yml` | manual, nightly at 00:00 UTC | E2E against images you name; see [Manual E2E](#manual-e2e) |
+| Images: Build | `images.yml` | called by `ci.yml` | builds an image when its content is new, otherwise retags the existing one |
+| Images: Clean up | `images-gc.yml` | branch deletion, twice a day, manual | deletes image versions that no branch or tag needs |
+| Images: Security scan | `security-scan-apihub.yml` | weekly (Sunday 03:00 UTC), manual | Grype and Trivy over the published images or the source tree |
+| Lint: Code base | `super-linter.yaml` | push to any branch, pull request, manual | super-linter on the changed files; `full_scan` lints everything |
+| Lint: Go module licenses | `go-check-license.yaml` | changes to `go.mod`, `go.sum`, or `wwhrd.yml`; manual | checks dependency licenses of every Go module |
+| Lint: Markdown links | `link-checker.yaml` | push, pull request, manual | lychee over every Markdown file |
+| Pages: Database ERDs | `erd.yml` | push to `develop` or `main` that changes SQL migrations, manual | renders the ERD of each backend that owns a database |
+| Pages: Publish | `pages.yml` | dispatched by `ci.yml` and `erd.yml`, branch deletion, daily, manual | assembles and deploys the GitHub Pages site |
+| PR: CLA | `cla.yaml` | pull request, comment | asks first-time contributors to sign the CLA |
+| PR: Commit messages | `pr-conventional-commits.yaml` | pull request opened, edited, or updated | checks the commit messages of the pull request |
+| PR: Labels | `automatic-pr-labeler.yaml` | pull request into `develop`, `release`, or `main` | adds type labels and `module:<name>` labels by path |
+| PR: Reviewers | `pr-assigner.yml` | pull request into `develop`, `release`, or `main` | assigns reviewers |
+| PR: Title | `pr-lint-title.yaml` | pull request opened, edited, or updated | checks that the title is a Conventional Commit |
+| Release: 1. Start (manual), Release: 2. Finish (manual), Release: Sync | `release-*.yml` | manual; `release-sync.yml` on push to `release` | the release flow, see [Release process](./release-process.md) |
+| Release: Artifacts | `release-artifacts.yml` | called by `ci.yml` on `main` | publishes image version tags, npm packages, Helm charts, GitHub Releases |
 
 Only `ci-ok` is a required check. The linters, the link checker, the license check, and the title checks report
 on the pull request, and reviewers expect them green, but they do not block the merge by themselves.
@@ -142,7 +147,7 @@ from `develop`. It has nine inputs:
 | `playwright-args` | empty | arguments of `playwright test`; empty means `--project=Portal --grep-invert=@flaky` |
 | `agent` | `true` | deploy the agent and run its collection (Kind only) |
 
-Run it from **Actions > Run E2E tests > Run workflow**, or with `gh`:
+Run it from **Actions > E2E: Run tests (manual) > Run workflow**, or with `gh`:
 
 ```bash
 gh workflow run e2e-tests-manual.yml --repo Netcracker/qubership-apihub \
@@ -160,9 +165,11 @@ suites from the branch that changes them. `tools/ci/e2e-image-tags.js` rejects a
 
 `pages.yml` publishes one site with the navigation page, the landing, the documentation, the Storybooks of every
 live branch, and the database ERDs. It deploys only from the default branch and only when the repository variable
-`PAGES_DEPLOY` is `true`. `erd.yml` renders the ERD of `portal-backend`, `api-linter-service`, and `agents-backend`
+`PAGES_DEPLOY` is `true`. Before the upload, lychee checks the internal links of the assembled site offline, and a
+broken one fails the run. `erd.yml` renders the ERD of `portal-backend`, `api-linter-service`, and `agents-backend`
 when their migrations change, stores the render in `ghcr.io`, and dispatches `pages.yml`. Run `erd.yml` by hand
-with `force` to render every backend again.
+with `force` to render every backend again. A run on a branch other than `develop` or `main` renders the ERDs
+but does not store them.
 
 How the site picks its ref, the size budget, and the fallbacks for a missing render are in
 [Release process: GitHub Pages](./release-process.md#github-pages).

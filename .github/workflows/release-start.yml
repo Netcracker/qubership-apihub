@@ -1,7 +1,7 @@
 'on':
   workflow_dispatch:
 
-name: Release start
+name: 'Release: 1. Start (manual)'
 
 # Cuts the next release candidate: fast-forwards `release` to `develop`, which starts CI on `release` and
 # its `:next` images. Refuses when `release` has commits that `develop` lacks: a hotfix sync is unresolved

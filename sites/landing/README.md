@@ -47,5 +47,13 @@ missing. The "Latest Release" stat and the hero badge take the highest version a
 
 ## Capability model
 
-`src/data/capability-model.json` is a copy of a file that is maintained outside this repository. Update it by hand
-when the source changes.
+`src/data/capability-model.json` is generated. Its source is
+[`tools/architecture-model/capability/model.py`](../../tools/architecture-model/capability/model.py). To change the
+capability map, edit `model.py`, then regenerate the file from the repository root and commit both:
+
+```bash
+python -I tools/architecture-model/capability/export_json.py
+```
+
+Do not edit the JSON by hand. [The architecture model README](../../tools/architecture-model/README.md) describes the
+other outputs of the same source.

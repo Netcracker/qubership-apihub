@@ -284,7 +284,7 @@ def convert_all_md_files():
 
                 print(f"    [OK] Created template: {template_file.name}")
             else:
-                print(f"    [INFO] File contains only table, no template needed")
+                print("    [INFO] File contains only table, no template needed")
 
         except Exception as e:
             print(f"    [ERROR] Error converting {md_file.name}: {e}")

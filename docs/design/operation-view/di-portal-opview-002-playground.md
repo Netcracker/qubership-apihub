@@ -235,4 +235,4 @@ parameters directly within the Playground.
 
 ## Screen View
 
-![Playground impovements](../../images/design/di-portal-opview-002-playground/1.png)
+![Playground impovements](../../images/design/di-portal-opview-002-playground/1.webp)

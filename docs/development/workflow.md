@@ -5,7 +5,7 @@ and the merge. The release itself is in [Release process](./release-process.md).
 
 ## Start with an issue
 
-Every change starts from an issue in
+Every change except a typo or a one-line docs fix starts from an issue in
 [Netcracker/qubership-apihub](https://github.com/Netcracker/qubership-apihub/issues), the one repository of the product.
 
 1. Open the issue, or pick an existing one.
@@ -67,7 +67,7 @@ A breaking change gets `!` after the type (`feat(portal-backend)!: ...`) or a fo
 description that starts with `BREAKING CHANGE:` and says what consumers must do. The footer must start a line; the
 phrase inside a sentence does not count.
 
-The commits inside the branch never reach `develop`, but the **Conventional Commits PR Check** workflow checks them
+The commits inside the branch never reach `develop`, but the **PR: Commit messages** workflow checks them
 too. Give them Conventional Commit messages as well, or squash them before you open the pull request.
 
 ## Pull requests
@@ -106,7 +106,7 @@ shared feature branch gets them by hand.
 | `ci-ok` | the required check: the verdict over every job of the CI workflow |
 | Validate PR title | the title is a Conventional Commit |
 | Conventional Commits | every commit message of the branch is a Conventional Commit |
-| Lint Code Base | super-linter over the changed files (Markdown, YAML, Go, shell, and more) |
+| Lint: Code base | super-linter over the changed files (Markdown, YAML, Go, shell, and more) |
 | Link checker | the links in the repository's Markdown |
 
 CI builds and tests what the change affects, builds the images, and runs the full E2E suite on Kind against them. A
@@ -139,7 +139,7 @@ When one feature needs a backend change and a frontend change from different peo
 ### Without a shared branch
 
 Each push publishes all images under the branch tag, for example `feature-123-x-be` and `feature-123-x-fe`. To test the
-two halves together before either is merged, run the **Run E2E tests** workflow (`e2e-tests-manual.yml`) with:
+two halves together before either is merged, run the **E2E: Run tests** workflow (`e2e-tests-manual.yml`) with:
 
 | Input | Value |
 |---|---|

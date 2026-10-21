@@ -14,7 +14,10 @@
           "default",
           "^default",
           "{workspaceRoot}/docs/**/*",
-          "{workspaceRoot}/sites/landing/public/favicon.svg"
+          "{workspaceRoot}/sites/landing/public/favicon.svg",
+          {
+            "env": "DOCS_GITHUB_REF"
+          }
         ]
       }
     }

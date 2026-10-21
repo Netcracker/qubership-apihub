@@ -93,7 +93,7 @@ Open the CI run on `develop` and confirm it is green. The release candidate is w
 
 ### 2. Run Release start
 
-Run **Release start** on `develop` (Actions, Release start, Run workflow). The workflow:
+Run **Release: 1. Start** on `develop` (Actions, Release: 1. Start (manual), Run workflow). The workflow:
 
 1. Fetches `develop` and `release`.
 2. Stops with an error when `release` has commits that `develop` lacks. A hotfix sync is unresolved, and cutting
@@ -108,15 +108,14 @@ workflow adds the check.
 
 ### 3. Wait for CI on release
 
-The candidate must be green before you finish. Fix problems with a hotfix pull request into `release`; see
-[Hotfix flow](#hotfix-flow).
-**Release finish** does not check this: confirm that the CI run for the commit `release` points at is green. If a red
-candidate was released, see [CI on main is red](#ci-on-main-is-red).
+The candidate must be green before you finish. Fix problems with a hotfix pull request into `release`; see [Hotfix
+flow](#hotfix-flow). **Release: 2. Finish** does not check this: confirm that the CI run for the commit `release` points
+at is green. If a red candidate was released, see [CI on main is red](#ci-on-main-is-red).
 
 ### 4. Run Release finish as a dry run
 
-Run **Release finish** from `develop` with `dry_run` checked, which is the default. The `sprint` input can stay empty.
-Read the plan; see [Read the dry-run summary](#read-the-dry-run-summary).
+Run **Release: 2. Finish** from `develop` with `dry_run` checked, which is the default. The `sprint` input can stay
+empty. Read the plan; see [Read the dry-run summary](#read-the-dry-run-summary).
 
 A dry run does steps 1 and 2 of [What Release finish does](#what-release-finish-does) locally on the runner. It commits,
 tags, and pushes nothing. You can dispatch a dry run from any branch, for example to test a change to the workflow.
@@ -136,7 +135,7 @@ at its version, no card is needed.
 
 ### 6. Run Release finish for real
 
-Run **Release finish** again from `develop`, with `dry_run` unchecked and the `sprint` input set to the Project 9
+Run **Release: 2. Finish** again from `develop`, with `dry_run` unchecked and the `sprint` input set to the Project 9
 sprint name, such as `APIHUB-26.3.5`. The sprint is stored in the annotation of the product tag. Both modes refuse a
 sprint with characters other than letters, digits, `.`, `_`, and `-`. A real run also refuses:
 
@@ -174,8 +173,8 @@ and starts no back-merge.
 "Makes sure CI runs" means: wait up to two minutes for the CI run that the push started. Dispatch CI on the branch
 only when none appears (`tools/release/ensure-ci.sh`). The same commit is never built twice on purpose.
 
-The workflows never cancel a run in progress. Dry runs and real runs of **Release finish** queue apart. A real run
-and **Release start** share one queue, so a cut cannot land between the push of `main` and the fast-forward of
+The workflows never cancel a run in progress. Dry runs and real runs of **Release: 2. Finish** queue apart. A real run
+and **Release: 1. Start** share one queue, so a cut cannot land between the push of `main` and the fast-forward of
 `release`. GitHub keeps one pending run per queue: a newer dispatch replaces the one that waits, so dispatch once.
 
 ## Read the dry-run summary
@@ -230,27 +229,27 @@ publishes nothing. When the commit has no release tags, it previews the nearest 
 A hotfix is a fix that must ship with the candidate in `release` and must also reach `develop`.
 
 1. Open a pull request into `release` with a Conventional Commits title, for example `fix(portal-backend): ...`.
-   `release` must exist; run **Release start** first when it does not.
+   `release` must exist; run **Release: 1. Start** first when it does not.
 2. Squash-merge it. Do not open a second pull request for `develop`.
-3. The push to `release` starts **Release sync**, which merges `release` into `develop` with a merge commit and makes
+3. The push to `release` starts **Release: Sync**, which merges `release` into `develop` with a merge commit and makes
    sure CI runs on `develop`. It also starts the full CI suite on `release`.
-4. Wait for CI on `release`, then run **Release finish** as usual.
+4. Wait for CI on `release`, then run **Release: 2. Finish** as usual.
 
-**Release sync** runs on every push to `release`, so it also runs after **Release start** and after **Release finish**
-fast-forwards `release`. In those cases `develop` already holds the commits, and the run changes nothing. Its own push
-goes to `develop`, so it cannot start itself again.
+**Release: Sync** runs on every push to `release`, so it also runs after **Release: 1. Start** and after **Release: 2.
+Finish** fast-forwards `release`. In those cases `develop` already holds the commits, and the run changes nothing. Its
+own push goes to `develop`, so it cannot start itself again.
 
-Until the sync succeeds, **Release start** refuses to cut. If two syncs queue, the newer one merges the newer tip of
+Until the sync succeeds, **Release: 1. Start** refuses to cut. If two syncs queue, the newer one merges the newer tip of
 `release`, which contains the older one.
 
 ## What the bots do after a release
 
-After a real run of **Release finish** pushes `main` and the tags:
+After a real run of **Release: 2. Finish** pushes `main` and the tags:
 
 1. `release` is fast-forwarded to `main`.
 2. CI runs on `main`; see [What CI does on main](#what-ci-does-on-main).
 3. `main` is merged into `develop` with a merge commit, and CI runs on `develop`.
-4. **Release sync** sees the push to `release` and finds nothing to merge, or merges what the back-merge has not.
+4. **Release: Sync** sees the push to `release` and finds nothing to merge, or merges what the back-merge has not.
 
 The merge commits are authored as `github-actions[bot]`, and the pushes use the deploy key.
 
@@ -314,7 +313,10 @@ The Storybooks are pulled from the Storybook store and get what the rest of the 
 A missing ERD render never stops the site. When the store has no render for a backend at the site's commit (for
 example, `erd.yml` is still running or failed), `erd/` shows the newest render of that backend instead. Its card on
 `erd/index.html` says "Older render", and the run prints a warning. A backend with no render at all gets a card that
-says "Not rendered yet". To bring the ERD up to date, wait for `erd.yml` or run it on the branch.
+says "Not rendered yet". To bring the ERD up to date, wait for `erd.yml` or run it on `develop` or `main`; a run on
+another branch does not store its render. After a deploy, the `gc` job deletes the renders older than 30 days that are
+neither the key of `main` or `develop` nor the newest of their backend. A site pinned by `SITE_REF` to another ref
+then shows the newest render instead of its own.
 
 The workflows involved:
 
@@ -429,7 +431,7 @@ chart packages.
 
 ## Image cleanup
 
-The **Clean up images** workflow ([`images-gc.yml`](../../.github/workflows/images-gc.yml)) deletes image versions in
+The **Images: Clean up** workflow ([`images-gc.yml`](../../.github/workflows/images-gc.yml)) deletes image versions in
 ghcr that no branch or Git tag needs. It runs when a branch is deleted and twice a day. Most image packages are shared
 with a legacy component repository that still pushes to them, so the workflow checks every tag against the refs of
 the monorepo and of that repository.
@@ -522,8 +524,8 @@ Tags that are not plain `X.Y.Z` versions are ignored when Nx looks for a last ta
 
 ### Conflict in release-sync
 
-**Release sync** or the back-merge job of **Release finish** fails with "Merging release into develop conflicts" (or
-`main`). The log prints the commands. In a clone with the deploy key, or with admin rights:
+**Release: Sync** or the back-merge job of **Release: 2. Finish** fails with "Merging release into develop conflicts"
+(or `main`). The log prints the commands. In a clone with the deploy key, or with admin rights:
 
 ```bash
 git fetch origin
@@ -534,22 +536,22 @@ git push origin develop:refs/heads/develop
 
 Use `origin/main` for a failed back-merge. Do not squash and do not rebase. The rulesets block a direct push to
 `develop` for most people, so an admin usually pushes the merge. CI starts on `develop` by itself after the push. Then
-run **Release start** again if it refused to cut.
+run **Release: 1. Start** again if it refused to cut.
 
 ### Release start refuses to cut
 
 `release has commits that develop lacks` means a hotfix is not in `develop` yet. The log lists the commits. Fix the
-failed **Release sync** run as described above, then start again.
+failed **Release: Sync** run as described above, then start again.
 
 ### Stale main
 
 `main cannot fast-forward to release: they have diverged` means `main` holds a commit that `release` lacks. The usual
 cause is that the back-merge of the previous release never reached `develop`, and `release-start` then cut from a
-`develop` without the version commit. Merge `main` into `develop` with a merge commit, run **Release start** again,
-then rerun **Release finish**. A person decides how to reconcile the branches. The workflow never forces anything.
+`develop` without the version commit. Merge `main` into `develop` with a merge commit, run **Release: 1. Start** again,
+then rerun **Release: 2. Finish**. A person decides how to reconcile the branches. The workflow never forces anything.
 
 `git push` rejected in the atomic push means `main` moved during the run. Nothing landed, no tag was pushed, and you
-can run **Release finish** again.
+can run **Release: 2. Finish** again.
 
 ### Release moved during the run
 
@@ -595,9 +597,9 @@ jobs. If the cause is a defect in the code, the fix ships with the next release.
 
 ### You forgot the landing release card
 
-You released without the card, so the landing does not list the version. Do not commit it to `main`. The next
-**Release finish** would fail with "Stale main", because `main` would hold a commit that `release` lacks. CI on `main`
-would also rebuild every image and move `:latest`.
+You released without the card, so the landing does not list the version. Do not commit it to `main`. The next **Release:
+2. Finish** would fail with "Stale main", because `main` would hold a commit that `release` lacks. CI on `main` would
+also rebuild every image and move `:latest`.
 
 1. Open a pull request into `develop` that adds `sites/landing/src/content/releases/v<X>-<Y>-<Z>.md`.
 2. To publish the card before the next release, point the landing at `develop` and dispatch the Pages workflow.

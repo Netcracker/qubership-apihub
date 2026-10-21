@@ -288,7 +288,7 @@ def convert_all_csv_files():
                 else:
                     # Placeholder not found, append table at the end
                     final_content = template_content.rstrip() + "\n\n" + markdown_table
-                    print(f"    [WARNING] Placeholder not found in template, appending table")
+                    print("    [WARNING] Placeholder not found in template, appending table")
             else:
                 # No template, just use the table and add a blank line after it
                 final_content = markdown_table + "\n"

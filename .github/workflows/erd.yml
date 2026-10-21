@@ -8,7 +8,13 @@
     paths:
       - 'backend/*/resources/migrations/**'
       - 'tools/ci/erd*'
+      # Tests are not key inputs (generatorFiles in tools/ci/erd.js), so they start no run.
+      - '!tools/ci/erd*.test.js'
       - '.github/workflows/erd.yml'
+  # Any branch can be dispatched, but only develop and main write to the store (the render job's
+  # STORE): another branch plans and renders, which tests its migrations and the generator, and
+  # pushes nothing, so a test run cannot replace a tag the site reads. This is not a security
+  # boundary, since a branch can change this file; the write access to the repository is.
   workflow_dispatch:
     inputs:
       force:
@@ -16,7 +22,7 @@
         type: boolean
         default: false
 
-name: Render database ERDs
+name: 'Pages: Database ERDs'
 
 # Renders the ERD of every backend that owns a database (tools/ci/erd.js): its SQL migrations on an
 # empty PostgreSQL, then SchemaSpy. Each render goes to ghcr as `erd-<backend>:mig-<key>`, where the
@@ -109,6 +115,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      STORE: ${{ github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main' }}
     strategy:
       fail-fast: false
       matrix:
@@ -126,8 +134,10 @@ jobs:
         options: >-
           --health-cmd "pg_isready -U erd" --health-interval 5s --health-timeout 5s --health-retries 20
     steps:
+      # No credentials on disk while the migrations and SchemaSpy run; render reads the checkout only.
       - uses: actions/checkout@v6
         with:
+          persist-credentials: false
           sparse-checkout: |
             tools/ci
             backend/${{ matrix.backend }}/resources/migrations
@@ -151,12 +161,24 @@ jobs:
       # After the render, so the packages: write credential is not on disk while the migrations
       # and SchemaSpy run.
       - name: log in to ghcr
+        if: env.STORE == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: echo "$GH_TOKEN" | oras login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
+      - name: skip the store on this branch
+        if: env.STORE != 'true'
+        shell: bash
+        env:
+          BACKEND: ${{ matrix.backend }}
+          KEY: ${{ matrix.key }}
+        run: |
+          msg="rendered \`$BACKEND\` (\`mig-$KEY\`) on \`$GITHUB_REF\` and did not store it: only develop and main write to the store"
+          echo "$msg" | tee -a "$GITHUB_STEP_SUMMARY"
+
       - name: store the render
+        if: env.STORE == 'true'
         shell: bash
         env:
           BACKEND: ${{ matrix.backend }}

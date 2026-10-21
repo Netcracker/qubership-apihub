@@ -1,6 +1,7 @@
 # Tools
 
-Scripts that CI and the release use, and one library for the screenshot tests. Run them from the repository root.
+Scripts that CI and the release use, the sources of the architecture model, and one library for the screenshot
+tests. Run them from the repository root.
 
 ## `ci/`
 
@@ -57,3 +58,9 @@ Without a ref, it compares `HEAD` with the working tree.
 A Jest environment that runs Chrome in a container, so screenshot tests give the same pixels on every machine and on
 CI. `api-doc-viewer`, `apispec-view`, and `class-view` use it. It needs Podman or Docker. The API is in its
 [README](jest-chrome-in-docker-environment/README.md).
+
+## `architecture-model/`
+
+The sources of the architecture model: the capability map, the C4 set, the ArchiMate model, and the decks.
+`capability/export_json.py` writes the data file of the landing site. See its
+[README](architecture-model/README.md) for the generators and how to run them.

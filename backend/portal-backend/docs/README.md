@@ -8,6 +8,8 @@ For the module itself, start with the [backend README](../README.md).
 
 - [Development guide](development_guide.md): logging, pull requests, and the project structure of the Go code
 - [Running and probing](running-and-probing.md): the traps of a local backend, with the commands that probe it
+- [Newcomer environment setup](newcomer_env_setup.md): the tools a backend developer installs
+- [Local development](local_development/local_development.md): the backend against a database and UI in Compose
 - [Getting started](../../../docs/development/getting-started.md): tools, clone, install, first build
 - [Run APIHUB locally](../../../docs/development/local-run.md): Compose, kind, and the backend from the IDE
 - [Debugging](../../../docs/development/debugging.md): Delve and IDE launch configurations

@@ -4,6 +4,7 @@ import {
   buildSidebar,
   contentPathOf,
   extractTitle,
+  githubRefFrom,
   isPageSource,
   plainTitle,
   rewriteLinks,
@@ -22,7 +23,11 @@ const GH = 'https://github.com/Netcracker/qubership-apihub';
 function fakeTree({ dirs = [], pages = [] } = {}) {
   const dirSet = new Set(dirs);
   const pageSet = new Set(pages);
-  return { isDir: (p) => dirSet.has(p), hasPage: (p) => pageSet.has(p) };
+  return {
+    isDir: (p) => dirSet.has(p),
+    hasPage: (p) => pageSet.has(p),
+    pagesUnder: (p) => pages.filter((rel) => rel.startsWith(`${p}/`)),
+  };
 }
 
 const tree = fakeTree({
@@ -163,6 +168,28 @@ describe('link rewriting', () => {
     assert.equal(url('../../user-guide/'), `${GH}/tree/develop/docs/user-guide`);
   });
 
+  it('maps a folder without an index page to its first page', () => {
+    const areas = fakeTree({
+      dirs: ['docs', 'docs/design', 'docs/design/general', 'docs/design/comparison', 'docs/design/comparison/old'],
+      pages: [
+        'design/README.md',
+        'design/general/di-portal-gf-010-search.md',
+        'design/general/di-portal-gf-001-navigation.md',
+        'design/general/Di Portal GF 002.md',
+        'design/comparison/old/a-first-by-name.md',
+        'design/comparison/z-last-by-name.md',
+      ],
+    });
+    const design = (link) => url(link, 'docs/design/README.md', areas);
+    const first = '/qubership-apihub/docs/design/general/di-portal-gf-001-navigation/';
+    assert.equal(design('./general/'), first);
+    assert.equal(design('general'), first);
+    assert.equal(design('./general/#area'), first);
+    // A file of the folder comes before the pages of its subfolders.
+    assert.equal(design('./comparison/'), '/qubership-apihub/docs/design/comparison/z-last-by-name/');
+    assert.equal(design('./comparison/old/'), '/qubership-apihub/docs/design/comparison/old/a-first-by-name/');
+  });
+
   it('sends docs/internal/ to GitHub', () => {
     assert.equal(url('../../internal/README.md#adr'), `${GH}/blob/develop/docs/internal/README.md#adr`);
     assert.equal(url('../../internal/'), `${GH}/tree/develop/docs/internal`);
@@ -177,6 +204,24 @@ describe('link rewriting', () => {
     );
     assert.equal(url('../../../nx.json'), `${GH}/blob/develop/nx.json`);
     assert.equal(url('/backend/agent/'), `${GH}/tree/develop/backend/agent`);
+  });
+
+  it('points GitHub links at the ref of the tree, and edit links at develop', () => {
+    const onMain = { ...tree, ref: 'main' };
+    assert.equal(url('../../../backend/agent/README.md', from, onMain), `${GH}/blob/main/backend/agent/README.md`);
+    assert.equal(url('../../internal/', from, onMain), `${GH}/tree/main/docs/internal`);
+    assert.equal(url('/', from, onMain), `${GH}/tree/main`);
+    assert.equal(url('/nx.json', from, { ...tree, ref: 'release/2.x' }), `${GH}/blob/release/2.x/nx.json`);
+    const page = transformPage('a.md', '# A\n\n[agent](../backend/agent/README.md)\n', onMain);
+    assert.match(page.content, /^editUrl: ".*\/edit\/develop\/docs\/a\.md"$/m);
+    assert.match(page.content, /\[agent\]\(https:\/\/github\.com\/Netcracker\/qubership-apihub\/blob\/main\/backend\/agent\/README\.md\)/);
+  });
+
+  it('reads the ref of the GitHub links from DOCS_GITHUB_REF, develop when unset', () => {
+    assert.equal(githubRefFrom({ DOCS_GITHUB_REF: 'main' }), 'main');
+    assert.equal(githubRefFrom({ DOCS_GITHUB_REF: ' v2.16.0 ' }), 'v2.16.0');
+    assert.equal(githubRefFrom({ DOCS_GITHUB_REF: '' }), 'develop');
+    assert.equal(githubRefFrom({}), 'develop');
   });
 
   it('sends a non-image file of docs/ to GitHub', () => {
@@ -215,6 +260,25 @@ describe('link rewriting', () => {
         '[ref]: /qubership-apihub/docs/admin-guide/',
         '[angle](/qubership-apihub/docs/user-guide/portal-user-guide/)',
         '[parens](/qubership-apihub/docs/design/a_b/)',
+      ].join('\n'),
+    );
+  });
+
+  it('rewrites an HTML tag that spans lines, and leaves one in inline code alone', () => {
+    const md = [
+      '<img width="500" alt="Step 1"',
+      '  src="../../images/a.png" />',
+      'Write `<img src="x.png">` as <a',
+      '  href="../../admin-guide.md">a link</a>.',
+    ].join('\n');
+    const out = rewriteLinks(md, (link) => rewriteUrl(link, from, tree).url);
+    assert.equal(
+      out,
+      [
+        '<img width="500" alt="Step 1"',
+        '  src="/qubership-apihub/docs/images/a.png" />',
+        'Write `<img src="x.png">` as <a',
+        '  href="/qubership-apihub/docs/admin-guide/">a link</a>.',
       ].join('\n'),
     );
   });

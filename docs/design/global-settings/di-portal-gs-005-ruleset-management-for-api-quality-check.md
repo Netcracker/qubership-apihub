@@ -163,4 +163,4 @@ qubership-api-linter-service provides OOB rulesets which are active by default f
 
 ## Mockups
 
-![RM](../../images/design/di-portal-gs-005-ruleset-management-for-api-quality-check/1.svg)
+![RM](../../images/design/di-portal-gs-005-ruleset-management-for-api-quality-check/1.webp)

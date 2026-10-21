@@ -1,4 +1,4 @@
-name: Run E2E tests using Podman Compose
+name: 'E2E: Podman Compose'
 
 # Brings the product up under podman compose on one runner, then runs Newman over the REST API
 # (tests/postman-collections) and the Playwright Portal project (tests/ui-tests). The stack is one of
