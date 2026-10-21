@@ -23,7 +23,11 @@ const GH = 'https://github.com/Netcracker/qubership-apihub';
 function fakeTree({ dirs = [], pages = [] } = {}) {
   const dirSet = new Set(dirs);
   const pageSet = new Set(pages);
-  return { isDir: (p) => dirSet.has(p), hasPage: (p) => pageSet.has(p) };
+  return {
+    isDir: (p) => dirSet.has(p),
+    hasPage: (p) => pageSet.has(p),
+    pagesUnder: (p) => pages.filter((rel) => rel.startsWith(`${p}/`)),
+  };
 }
 
 const tree = fakeTree({
@@ -162,6 +166,28 @@ describe('link rewriting', () => {
     assert.equal(url('..'), '/qubership-apihub/docs/design/');
     assert.equal(url('../../'), '/qubership-apihub/docs/');
     assert.equal(url('../../user-guide/'), `${GH}/tree/develop/docs/user-guide`);
+  });
+
+  it('maps a folder without an index page to its first page', () => {
+    const areas = fakeTree({
+      dirs: ['docs', 'docs/design', 'docs/design/general', 'docs/design/comparison', 'docs/design/comparison/old'],
+      pages: [
+        'design/README.md',
+        'design/general/di-portal-gf-010-search.md',
+        'design/general/di-portal-gf-001-navigation.md',
+        'design/general/Di Portal GF 002.md',
+        'design/comparison/old/a-first-by-name.md',
+        'design/comparison/z-last-by-name.md',
+      ],
+    });
+    const design = (link) => url(link, 'docs/design/README.md', areas);
+    const first = '/qubership-apihub/docs/design/general/di-portal-gf-001-navigation/';
+    assert.equal(design('./general/'), first);
+    assert.equal(design('general'), first);
+    assert.equal(design('./general/#area'), first);
+    // A file of the folder comes before the pages of its subfolders.
+    assert.equal(design('./comparison/'), '/qubership-apihub/docs/design/comparison/z-last-by-name/');
+    assert.equal(design('./comparison/old/'), '/qubership-apihub/docs/design/comparison/old/a-first-by-name/');
   });
 
   it('sends docs/internal/ to GitHub', () => {

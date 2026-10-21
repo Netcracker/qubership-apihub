@@ -55,6 +55,7 @@ function makeTree(sources) {
       }
     },
     hasPage: (docsRel) => pages.has(docsRel),
+    pagesUnder: (docsRel) => sources.filter((rel) => rel.startsWith(`${docsRel}/`)),
     ref: githubRefFrom(process.env),
   };
 }

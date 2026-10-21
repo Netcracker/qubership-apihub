@@ -26,7 +26,8 @@ git-ignored). `dev` does not watch `docs/`: restart it, or run `pnpm --dir sites
 - The first H1 becomes the page title and is removed from the body. Front matter in the source is kept.
 - Each page gets an edit link to its source on GitHub, on `develop`.
 - Links to Markdown files in `docs/` become page links (`/qubership-apihub/docs/<slug>/#anchor`). Links to a folder
-  with a `README.md` become its page.
+  with a `README.md` become its page. A folder without one (a design area) is a sidebar group with no page, so a link
+  to it opens its first page: a file of the folder before its subfolders, each by name.
 - Links to `docs/internal/`, to files outside `docs/`, and to non-image files become GitHub links (`blob/` for files,
   `tree/` for folders) on the ref in `DOCS_GITHUB_REF`, or on `develop` when it is unset. `pages.yml` sets it to the
   ref the site shows.

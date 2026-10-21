@@ -130,9 +130,15 @@ function safeDecode(text) {
 // fromRepoRel: the repository path of the page that holds the link (docs/admin-guide.md).
 // tree.isDir(repoRel): whether the path is a folder in the repository.
 // tree.hasPage(docsRel): whether docs/<docsRel> is a page source that the sync publishes.
+// tree.pagesUnder(docsRel): the page sources in the folder docs/<docsRel>/ and its subfolders.
 // tree.ref: the branch, tag, or commit that GitHub links show (DEFAULT_GITHUB_REF when unset).
 //
 // Returns { url } and, for an asset, { asset: { from, to } } (repository path, public/ path).
+//
+// A published folder of docs/ links to its README.md or index.md. A folder without one, such as a
+// design area, is a sidebar group with no page of its own, so the link opens the group's first page:
+// a file of the folder itself before its subfolders, each by name. Only a folder without any page
+// links to GitHub.
 export function rewriteUrl(raw, fromRepoRel, tree) {
   const url = raw.trim();
   if (url === '' || url.startsWith('#') || url.startsWith('//') || /^[a-z][a-z0-9+.-]*:/i.test(url)) {
@@ -169,9 +175,22 @@ export function rewriteUrl(raw, fromRepoRel, tree) {
         .map((name) => (docsRel === '' ? name : `${docsRel}/${name}`))
         .find((candidate) => tree.hasPage(candidate));
       if (index) return { url: pageUrl(slugOf(index)) + hash };
+      const first = firstPageOf(docsRel, tree.pagesUnder(docsRel));
+      // The anchor belonged to the folder, not to the page that stands in for it.
+      if (first) return { url: pageUrl(slugOf(first)) };
     }
   }
   return { url: githubUrl(repoRel, looksLikeDir, tree.ref) + query + hash };
+}
+
+// The page that stands in for a folder without an index page: a page of the folder itself before
+// the pages of its subfolders, each group by slug. Undefined when the folder has no page.
+function firstPageOf(docsRel, sources) {
+  const prefix = docsRel === '' ? '' : `${docsRel}/`;
+  const depth = (rel) => rel.slice(prefix.length).split('/').length;
+  return [...sources]
+    .filter((rel) => rel.startsWith(prefix))
+    .sort((a, b) => depth(a) - depth(b) || slugOf(a).localeCompare(slugOf(b)))[0];
 }
 
 // Reads a link destination that starts at text[start] (just after "(" of "](").
