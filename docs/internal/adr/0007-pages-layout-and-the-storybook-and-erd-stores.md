@@ -51,10 +51,11 @@ We will deploy one Pages site from `pages.yml` (pull request #883) under
   budget after the other sites; the build fails when the other sites exceed 300 MiB.
 - ERDs are rendered in CI by `erd.yml`: it applies the SQL migrations to an empty PostgreSQL 16 service, runs
   SchemaSpy, and stores the result as `ghcr.io/netcracker/erd-<backend>:mig-<key>`, where the key hashes the tree of
-  `resources/migrations/` and the tool versions. A render happens only when that key is new. The committed ERD left Git.
+  `resources/migrations/` and the generator files (`tools/ci/erd*`, `erd.yml`). A render happens only when that key
+  is new. The committed ERD left Git.
 - Legacy URLs redirect from the root `404.html`: `/pages/erd/*` to `/erd/portal-backend/*`, and
-  `/<guide>.md` to the docs page. The old landing address `/apihub/*` redirects to `/landing/*` through a pull request
-  to the organization Pages repository.
+  `/<guide>.md` to the docs page. The old landing address `/apihub/*` gets redirects to `/landing/*` from the
+  organization Pages repository (Netcracker/netcracker.github.io#10, merged after the Pages switch).
 - The Pages source is GitHub Actions.
 
 ### Justification
