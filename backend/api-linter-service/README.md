@@ -1,62 +1,54 @@
-# qubership-api-linter-service
+# API linter service
 
-The qubership-api-linter-service is a Golang-based microservice that provides a REST API endpoint for linting and validating OpenAPI Specification (OAS) files. It serves as a quality control tool for API definitions, helping developers maintain consistency and adhere to best practices in their API documentation.
+The API linter service is a Go service that lints and validates API specifications (OpenAPI and AsyncAPI) for APIHUB.
+It reacts to version-publication events from the backend through the Olric cache, runs Spectral (and an optional
+AI-based linter) over the documents, stores the results in PostgreSQL, and exposes REST endpoints for validation
+summaries and scoring. The module ships the image `qubership-api-linter-service`. Its status is a development preview:
+the service is not yet recommended for production.
 
-## Key Features
+It is an extension service of the backend; see the [architecture overview](../../docs/architecture/overview.md).
 
-Dual-engine support (Spectral and Vacuum) for comprehensive OAS validation
+## Build, test, and lint
 
-RESTful interface for easy integration into CI/CD pipelines
+The Nx project is `api-linter-service` (tag `lang:go`). Run from the repository root:
 
-Lightweight container-friendly design
+```bash
+pnpm exec nx run api-linter-service:build
+pnpm exec nx run api-linter-service:test
+pnpm exec nx run api-linter-service:lint
+```
 
-## Current Status
+The service needs the Spectral binary. The image build downloads it with `tools/download-linter-tools`; the versions
+are in [`third-party-tools.env`](third-party-tools.env). For a local run, `build_golang_binary.cmd` (Windows) runs the
+download tool and builds a Linux binary. For the image, see
+[Build and test: Images](../../docs/development/build-and-test.md#images).
 
-⚠️ Development Preview
-This service is currently under active development and not yet recommended for production use. The team is working on additional features and stability improvements.
+## Run and debug locally
 
-## Installation
-
-Installation instructions will be provided in future releases (TODO).
-
-## Build Instructions
-
-To compile the service, simply execute the appropriate build script:
-
-Windows: build.cmd
-
-Linux/macOS: build.sh
-
-The build process generates a standalone binary with all required dependencies. Future versions will include containerization support and package management options.
+The generic Compose stack starts the service with the rest of the product; see
+[Run APIHUB locally](../../docs/development/local-run.md). To run it from the IDE, copy
+[`config.template.yaml`](config.template.yaml) to a folder as `config.yaml`, set the database, the Olric settings, and
+`linters.spectral.binPath`, and start `main.go` from this folder. Breakpoints and the config folder variable:
+[Debugging: Go service](../../docs/development/debugging.md#go-service).
 
 ## Configuration
 
-Application parameters are loaded from `config.yaml`. The configuration format,
-defaults, and examples are documented in [the template file](config.template.yaml). For local development,
-use that template as a reference and create `config.yaml`.
-
-By default, the service looks for `config.yaml` in the current working directory. Set
-`LINTER_CONFIG_FOLDER` to point to a different directory that contains the file.
+The service loads parameters from `config.yaml`. The format, the defaults, and examples are in
+[`config.template.yaml`](config.template.yaml). By default it looks for `config.yaml` in the working directory; set
+`LINTER_CONFIG_FOLDER` to use another directory. The
+[configuration reference](../../docs/configuration-reference.md) describes the deployment settings.
 
 The remaining environment-only settings are:
 
-- `LINTER_CONFIG_FOLDER` - directory containing `config.yaml`; defaults to `.`.
-- `LOG_LEVEL` - initial log level; defaults to `info` when empty or invalid and can be changed at runtime via `/api/v1/debug/logs/setLevel` by a system administrator.
+- `LINTER_CONFIG_FOLDER`: the directory that contains `config.yaml`; defaults to `.`.
+- `LOG_LEVEL`: the initial log level; defaults to `info` when empty or invalid. A system administrator can change it at
+  runtime with `/api/v1/debug/logs/setLevel`.
 
-## AI agent configuration (APM)
+## API specifications
 
-Generic agent packages come from [`qubership-apihub-ci/agent-packages`](https://github.com/Netcracker/qubership-apihub-ci/tree/main/agent-packages)
-via [APM](https://microsoft.github.io/apm/). Deployed `.cursor/` and `.claude/` harness trees are
-**committed**; refresh them after changing `apm.yml` or upstream packages:
+The OpenAPI files and a Postman collection are in [`docs/api/`](docs/api/):
+[`linter_service_api.yaml`](docs/api/linter_service_api.yaml) and [`admin_api.yaml`](docs/api/admin_api.yaml).
 
-```bash
-# one-time: install APM (see https://microsoft.github.io/apm/)
-brew install microsoft/apm/apm   # or: pip install apm-cli
+## Further reading
 
-# from the repository root:
-apm install --target cursor,claude --legacy-skill-paths
-```
-
-This reads `apm.yml`, updates `apm.lock.yaml`, and deploys skills/rules into `.cursor/` and
-`.claude/`. Commit the refreshed harness trees with manifest or lockfile changes. Only
-`apm_modules/` is gitignored.
+The early design diagrams of the validation flow, as draw.io files, are in [`docs/arch_proposal/`](docs/arch_proposal/).
