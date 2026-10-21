@@ -404,4 +404,4 @@ See the [LICENSE](../LICENSE) file for detailed license information.
 
 ## Contributing
 
-See the [main repository README](../README.md#contributing) for contribution guidelines.
+See [`CONTRIBUTING.md`](../../../CONTRIBUTING.md) and the [developer guide](../../../docs/development/README.md).
