@@ -7,10 +7,10 @@ Read this file when you need backend-specific examples or doc-routing detail. Ke
 | Change type | Update |
 |-------------|--------|
 | New or changed REST contract | `docs/api/APIHUB_API.yaml` (+ Admin/Internal specs if applicable) |
-| New feature with design notes | `docs/feature_design/<area>/` (see `docs/README.md`) |
-| Operational / migration analysis | `docs/ops_migration_analysis_guide.md` |
+| New feature with design notes | `docs/design/<area>/` in the repository root (see `docs/design/README.md`) |
+| Operational / migration analysis | `docs/administration/operations-migration-analysis.md` (repository root `docs/`) |
 | Local dev setup change | `docs/local_development/` |
-| AI assistant behavior | `docs/feature_design/ai_assistant/` or `docs/static_resources_customization.md` |
+| AI assistant behavior | `docs/design/ai-assistant/` (repository root) or `docs/administration/static-resources-customization.md` (repository root `docs/`) |
 | Minor implementation detail | Relevant existing guide only — **not** root `README.md` |
 
 Full index: `docs/README.md`.

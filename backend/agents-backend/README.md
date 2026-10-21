@@ -5,7 +5,7 @@ This service handles agent registration, service discovery, snapshot management,
 
 ## High Level architecture
 
-![APIHUB Architecture](docs/recources/arch_diagram.png)
+![APIHUB Architecture](docs/images/arch_diagram.png)
 
 ## API Documentation
 

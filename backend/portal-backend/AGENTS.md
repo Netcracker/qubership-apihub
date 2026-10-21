@@ -158,7 +158,7 @@ Detailed rules apply via `.cursor/rules/` and `.claude/rules/` when matching fil
 
 - When adding a feature, update the appropriate **existing** doc — use `docs/README.md` to choose the right file.
 - Do **not** add minor feature notes to the repository root `README.md`.
-- Feature design docs belong under `docs/feature_design/` when warranted.
+- Feature design docs belong under `docs/design/<area>/` in the repository root when warranted.
 
 ## CI linters (super-linter / link checker)
 
