@@ -10,7 +10,7 @@ This article depicts tables and relationships in APIHUB Backend database.
 This article contains static pictures for reference.
 
 Interactive document can be found here:
-[ERD on GitHub pages](https://netcracker.github.io/qubership-apihub/pages/erd/index.html)
+[ERD on GitHub pages](https://netcracker.github.io/qubership-apihub/erd/portal-backend/)
 
 ## Relationships tables
 

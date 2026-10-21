@@ -25,7 +25,7 @@ Each area has a folder. The links below open the folder; the lists after the ID 
   `x-api-audience`.
 - [VS Code extension](./vscode-extension/): Publishing to the Portal from VS Code.
 - [Agent](./agent/): Behavior of the APIHUB agent: version validation and cloud services.
-- [Contract types](./contract-types/): Design pages for contract types. Today: AsyncAPI.
+- [Contract types](./contract-types/): Design pages for contract types, such as AsyncAPI.
 
 ## ID scheme
 

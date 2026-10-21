@@ -103,8 +103,8 @@
 
 | Step | ER |
 |------|----|
-| 1. Log in to APIHUB and add a custom server (e.g., "<https://test.com>") via TC-P1-01. | The server is added successfully. |
-| 2. Select the custom server from the dropdown. | The server field shows the full URL with operation path (e.g., "<https://test.com/v1/resource>"). |
+| 1. Log in to APIHUB and add a custom server (e.g., "`https://test.com`") via TC-P1-01. | The server is added successfully. |
+| 2. Select the custom server from the dropdown. | The server field shows the full URL with operation path (e.g., "`https://test.com/v1/resource`"). |
 
 ## [TC-P4-03] Skip Relative URLs from Spec
 

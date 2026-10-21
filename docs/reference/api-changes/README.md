@@ -32,7 +32,7 @@ specifications. Each change has an identifier and a severity, and the example fi
 
 ### OpenAPI
 
-The pages follow the order of the former wiki sidebar.
+The pages follow the order of the old wiki sidebar.
 
 - [General operation parameters](./openapi/general-operation-parameters.md)
 - [Headers](./openapi/headers.md)
