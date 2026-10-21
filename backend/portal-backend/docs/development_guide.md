@@ -8,7 +8,7 @@ When using Cursor, Claude Code, or other coding agents on this repository:
 
 - Read [`AGENTS.md`](../AGENTS.md) at the repository root for agent-specific conventions (clarify before coding, **fail fast / root-cause bug fixes**, OpenAPI sync, migrations, documentation placement).
 - Claude Code loads the same instructions via [`CLAUDE.md`](../CLAUDE.md).
-- Generic packages come from `qubership-apihub-ci/agent-packages`; backend-specific sources live in this repo under `agent-packages/`. After changing packages or `apm.yml`, run `apm install --target cursor,claude --legacy-skill-paths` and commit refreshed `.cursor/` / `.claude/` trees (see root `README.md`).
+- Generic packages come from `qubership-apihub-ci/agent-packages`; backend-specific sources live in this repo under `agent-packages/`. After changing packages or `apm.yml`, run `apm install --target cursor,claude --legacy-skill-paths` and commit refreshed `.cursor/` / `.claude/` trees (see [AI assistants](../../../docs/development/ai-assistants.md)).
 - Helm charts and Postman E2E tests live in **other modules of this monorepo** — agents should remind you using
   [`backend/README.md`](../../README.md#follow-up-in-other-modules).
 
@@ -145,7 +145,7 @@ TODO: append
 
 ## Logs to file
 
-After [PR #132](https://github.com/Netcracker/qubership-apihub-backend/pull/132/files) backend doesn;t write logs if run from IDE.
+After [PR #132](https://github.com/Netcracker/qubership-apihub-backend/pull/132/files) backend doesn't write logs if run from IDE.
 
 You must set `LOG_FILE_PATH=/logs/apihub.log` or any other path to log file. Root directory must be `rwx` for owner of the process.
 

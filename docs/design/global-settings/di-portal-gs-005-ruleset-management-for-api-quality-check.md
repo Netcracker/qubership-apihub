@@ -31,7 +31,7 @@
 This functionality enables system administrators to manage quality rulesets used to lint API specifications and show the
 result (for more information see
 [API Quality Validation Result](../package-version/di-portal-pkgver-019-api-quality-validation-result.md)) in APIHUB.
-Linting is performed by the [qubership-api-linter-service](https://github.com/Netcracker/qubership-api-linter-service).
+Linting is performed by the [qubership-api-linter-service](../../../backend/api-linter-service/README.md).
 The system supports multiple linters per API type. Currently supported linters are **Spectral** and **AI Linter**. The
 system administrator can manage rulesets for each combination of API type and linter. Rulesets are organized by API type
 (GraphQL, OAS 3.0, OAS 3.1, AsyncAPI 3.0) and by linter (Spectral, AI Linter). When the Linter Service is enabled, a new
@@ -55,7 +55,7 @@ different ones.
 ## Execution
 
 **Precondition**: qubership-api-linter-service must be enabled.
-The system verifies if the [qubership-api-linter-service](https://github.com/Netcracker/qubership-api-linter-service) is
+The system verifies if the [qubership-api-linter-service](../../../backend/api-linter-service/README.md) is
 enabled:
 
 1. API to check of linter service is enabled - GET /system/info:
