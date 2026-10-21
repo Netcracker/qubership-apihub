@@ -35,8 +35,9 @@ Treat the API as code and review it the same way.
 1. Make API changes in a separate branch.
 2. Publish the API to APIHUB for review and link it in the descriptions of the business analysis, backend, and
    frontend issues.
-3. Open a pull request whose title follows [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#summary)
-   and links the issue. Add the `API` label and ask the business analysis, backend, and frontend teams for review.
+3. Open a pull request whose title follows
+   [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/#summary) and links the issue.
+   Add the `API` label and ask the business analysis, backend, and frontend teams for review.
 4. Confirm with the backend and frontend teams that the API was reviewed and every comment is resolved. Then add the
    `api_approved` label to the issue.
 5. Merge the API branch into the backend branch of the issue before the backend branch goes to `develop`.
