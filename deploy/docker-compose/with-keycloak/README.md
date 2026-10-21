@@ -102,8 +102,9 @@ Execute `podman compose down`
 
 ## Run via single command
 
-Run `sh generate_env_and_up_compose.sh` from this folder. It generates the required values, **prints them (here you can see the user and password for login)**,
-writes them into the files in place, and starts APIHUB.
+Run `sh generate_env_and_up_compose.sh` from this folder. It generates the required values,
+**prints them (here you can see the user and password for login)**, writes them into the files in place, and
+starts APIHUB.
 
 ## Usage
 
