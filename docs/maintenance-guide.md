@@ -1,7 +1,7 @@
 # Qubership APIHUB — maintenance guide
 
-Operators use this memo for backups, housekeeping, federated authentication references, **and** pointers to granular
-backend runbooks.
+Operators use this guide for backups, housekeeping, and pointers to the detailed administration pages. For the
+installation-time settings and the system token rotation, see the [admin guide](./admin-guide.md).
 
 ---
 
@@ -43,16 +43,12 @@ psql "postgresql://${APIHUB_DB_USER}:${APIHUB_DB_PASSWORD}@${APIHUB_DB_SERVER}:5
   | psql "postgresql://${APIHUB_DB_USER}:${APIHUB_DB_PASSWORD}@${APIHUB_DB_SERVER}:5432/${APIHUB_DB_NAME}"
 ```
 
-### Historical admin guide overlap
-
-Older copies of dumps lived in **`admin-guide`**; authoritative commands now live solely here — follow one source to
-reduce drift.
-
 ### Data TTL & automated cleanup
 
 Backend schedules (revisions/comparisons/soft-delete/unreferenced/builds) are declared in **`config.yaml`**
 **`cleanup`** block (see **`config.template.yaml`**). Behaviour + operational interpretation:
-**[`data-maintenance.md`](administration/data-maintenance.md)**.
+**[`data-maintenance.md`](administration/data-maintenance.md)**. Snapshot retention for the Agents backend is in the
+[admin guide](./admin-guide.md#extension-services).
 
 ### Schema/internal migration analysis
 
@@ -70,7 +66,9 @@ Detailed protocol behaviours:
 
 ### Access tokens lifecycle
 
-Operational playbook (system vs personal tokens): **[Access Tokens
+This guide holds the backup procedure. Token handling has one operational home, the
+[security checklist in the admin guide](./admin-guide.md#security-operations-checklist), which covers rotating the
+system token and the JWT signing key. The behavior of system and personal tokens is in the design item **[Access Tokens
 Management](design/package-settings/di-portal-ps-003-access-tokens-management.md)**.
 
 ### Personal access tokens
@@ -91,6 +89,7 @@ complementing backend YAML).
 
 ## Related operator docs in this repo
 
-- [Installation guide](./installation-guide.md)  
-- [Configuration reference](./configuration-reference.md)  
-- [Admin guide](./admin-guide.md)  
+- [Installation guide](./installation-guide.md)
+- [Configuration reference](./configuration-reference.md)
+- [Admin guide](./admin-guide.md)
+- [Administration topics](./administration/security-model.md) and [design items](./design/README.md)  

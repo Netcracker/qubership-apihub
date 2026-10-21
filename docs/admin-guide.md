@@ -11,7 +11,8 @@ Audience: **platform owners and SRE/DevOps** wiring APIHUB into an environment. 
 |------|------------|
 | Who reads YAML vs env at runtime (+ Helm precedence) | [Configuration reference](./configuration-reference.md) — **Source of truth hierarchy** |
 | Install paths, ports | [Installation guide](./installation-guide.md) |
-| Backups, TTL, auth deep links | [Maintenance guide](./maintenance-guide.md) |
+| Database backup and restore, TTL cleanup, migration analysis | [Maintenance guide](./maintenance-guide.md) |
+| Security model, data maintenance, business metrics, static resource templates | [Administration topics](#administration-topics) |
 | Architecture/features product context | [Architecture overview](architecture/overview.md), [root readme](../README.md) |
 
 ---
@@ -82,7 +83,7 @@ Scripts under **`deploy/docker-compose/apihub-generic/`**:
 |------|----------|
 | IdP onboarding | SAML metadata / OIDC client credentials live under **`externalIdentityProviders`**. Detailed flows: [**security-model.md**](administration/security-model.md). Keycloak Compose recipe: **`deploy/docker-compose/with-keycloak/`**. |
 | Rotate JWT signing key | Plan user re-login sessions; coordinate with SSO session lifetime. Replace **`jwt.privateKey`**, bounce backend pods/deployments. |
-| Rotate system token | Change backend **`accessToken`**, the builder **`APIHUB_API_KEY`**, and linter / agents-backend **`technicalParameters.apihub.accessToken`** concurrently; regenerate the Helm config Secrets (`build-task-consumer`, linter, agents-backend). |
+| Rotate system token (the home for token handling; behavior is in [Access Tokens Management](design/package-settings/di-portal-ps-003-access-tokens-management.md)) | Change backend **`accessToken`**, the builder **`APIHUB_API_KEY`**, and linter / agents-backend **`technicalParameters.apihub.accessToken`** concurrently; regenerate the Helm config Secrets (`build-task-consumer`, linter, agents-backend). |
 | Playground proxy hardening | Keep **`security.insecureProxy`** / **`allowedHostsForProxy`** tight; never expose unsafe proxy settings on untrusted networks. |
 
 ---
@@ -95,5 +96,19 @@ failures.
 
 ---
 
-See also **[Maintenance guide](./maintenance-guide.md)** for scripted backup tables and housekeeping links into backend
-documentation.
+## Administration topics
+
+| Topic | Page |
+|-------|------|
+| Authentication, authorization, and roles | [Security model](administration/security-model.md) |
+| Cleanup jobs and data retention | [Data maintenance](administration/data-maintenance.md) |
+| Usage-oriented business metrics | [Business metrics](administration/business-metrics.md) |
+| AI prompt and document templates bundled in the image | [Static resources customization](administration/static-resources-customization.md) |
+| Fixing published sources after the fact | [Modify published sources](administration/modify-published-sources.md) |
+| Stored-spec migration jobs | [Operations migration analysis](administration/operations-migration-analysis.md) |
+| Feature behavior behind the settings | [Design items](design/README.md) |
+
+---
+
+See also the **[Maintenance guide](./maintenance-guide.md)** for database backup and restore, cleanup, and migration
+analysis.
