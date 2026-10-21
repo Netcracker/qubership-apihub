@@ -16,8 +16,8 @@ update the matching requests and `pm.test` / `pm.expect` assertions here, in the
 
 | Topic | Location |
 |-------|----------|
-| Postman collections overview | [`backend/portal-backend/docs/postman_collections.md`](../../backend/portal-backend/docs/postman_collections.md) |
-| When to update E2E tests | [`backend/portal-backend/docs/agent/related-repositories.md`](../../backend/portal-backend/docs/agent/related-repositories.md) |
+| Postman collections overview | [`tests/README.md`](../README.md) |
+| When to update E2E tests | [`backend/README.md`](../../backend/README.md#follow-up-in-other-modules) |
 | OpenAPI contracts | [`backend/portal-backend/docs/api/`](../../backend/portal-backend/docs/api/) |
 | Local setup / Newman | [README.md](README.md) in this module |
 

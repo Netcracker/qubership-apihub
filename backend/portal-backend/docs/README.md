@@ -41,7 +41,7 @@
 
 ### Postman collections
 
-- [All collections](postman_collections.md)
+- [All collections](../../../tests/README.md#newman-collections)
 - [AI Chat API](postman/AI_Chat_API.postman_collection.json) — chat lifecycle,
   streaming SSE, generated file download
 
