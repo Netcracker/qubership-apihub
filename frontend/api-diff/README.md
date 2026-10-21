@@ -83,5 +83,6 @@ The library reads no configuration file. The caller passes the options and the c
 ## Further reading
 
 - [Archived plans](docs/archive/)
+- [API changes reference](../../docs/reference/api-changes/README.md): the rules the diff classifies by
 - [`api-unifier`](../api-unifier/README.md), which normalizes the documents before the comparison
 - Contributing: keep the library free of new package dependencies, and add unit tests with every change.

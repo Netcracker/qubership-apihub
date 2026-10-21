@@ -120,7 +120,8 @@ This package generates `generated/suite-data.ts` from `bin/comparison-base-suite
 
 ## Further reading
 
-The scripts in [`scripts/md-tables/`](scripts/md-tables/README.md) convert Markdown tables to CSV and back.
+- [API changes reference](../../docs/reference/api-changes/README.md): the rules the cases verify.
+- [`scripts/md-tables/`](scripts/md-tables/README.md): scripts that convert Markdown tables to CSV and back.
 
 ## Used by (clients)
 
