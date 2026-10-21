@@ -13,7 +13,7 @@ as the backend edit. Decide whether the backend change touches them and name the
 | Field | Value |
 |-------|-------|
 | **Collections** | `tests/postman-collections/e2e/`, `Syntetic_test_data.postman_collection.json`, `use_cases/` |
-| **Backend docs** | `backend/portal-backend/docs/postman_collections.md`, `backend/portal-backend/docs/postman/` (examples) |
+| **Backend docs** | `tests/README.md`, `backend/portal-backend/docs/postman/` (examples) |
 | **OpenAPI contract** | `backend/portal-backend/docs/api/` |
 | **CI wiring** | `.github/workflows/e2e-tests-*.yml` and `tools/ci/e2e-collections.sh` |
 

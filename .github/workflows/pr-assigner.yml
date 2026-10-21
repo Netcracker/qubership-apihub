@@ -1,4 +1,4 @@
-name: PR Auto-Assignment
+name: 'PR: Reviewers'
 run-name: "Assigning reviewers for PR #${{ github.event.pull_request.number }}"
 on:
   pull_request_target:

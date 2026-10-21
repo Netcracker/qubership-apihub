@@ -732,7 +732,7 @@
      [
       "OPS"
      ],
-     "qubership-apihub-ci workflows, Newman, Playwright, screenshot tests",
+     "GitHub Actions workflows (.github, tools/ci), Newman, Playwright, screenshot tests",
      "core"
     ]
    ]

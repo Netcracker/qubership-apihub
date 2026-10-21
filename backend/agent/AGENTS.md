@@ -82,7 +82,7 @@ When a change affects REST contracts, Helm values, or integration behaviour, upd
 | Config struct | `config/` |
 | Config template | `config.template.yaml` |
 | Auth middleware | `security/` |
-| OpenAPI specs (this service) | `documentation/api/` |
+| OpenAPI specs (this service) | `docs/api/` |
 | Standalone agent Helm chart | `helm-templates/qubership-apihub-agent/` (the product chart is in `deploy/helm-templates/`) |
 
 ## Domain model (read before changing discovery)
@@ -99,7 +99,7 @@ When a change affects REST contracts, Helm values, or integration behaviour, upd
 1. Implement `generic.DiscoveryRunner` in `api_type/<name>/discovery.go`.
 2. Register in `service/document_discovery.go` `runners` slice (before `unknown` fallback).
 3. Add `view.ApiType` if needed; extend `discovery.urls` defaults in `system_info.go` and `config.template.yaml`.
-4. Update OpenAPI under `documentation/api/` if REST behaviour changes.
+4. Update OpenAPI under `docs/api/` if REST behaviour changes.
 
 ## Go coding conventions (summary)
 
@@ -114,7 +114,7 @@ Detailed rules apply via deployed `.cursor/rules/` and `.claude/rules/` (from AP
 
 ## REST API and OpenAPI
 
-- Follow **API-first**: update `documentation/api/*.yaml` when REST contract changes.
+- Follow **API-first**: update `docs/api/*.yaml` when REST contract changes.
 - Avoid breaking public API changes without explicit product approval.
 
 ## CI linters (super-linter / link checker)

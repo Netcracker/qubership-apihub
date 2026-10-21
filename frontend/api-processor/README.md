@@ -233,21 +233,22 @@ This repo builds two sets of outputs (see `package.json` and Vite config):
 
 ## How to build (repo)
 
+Install once at the repository root (`pnpm install`); the pnpm workspace links the sibling packages. Then run:
+
 ```bash
-npm ci
-npm run build
+pnpm exec nx run api-processor:build
 ```
 
 ## How to run tests
 
 ```bash
-npm test
+pnpm exec nx run api-processor:test
 ```
 
 Coverage:
 
 ```bash
-npm run test:coverage
+pnpm --filter @netcracker/qubership-apihub-api-processor run test:coverage
 ```
 
 ## How to run & debug (repo)
@@ -258,33 +259,26 @@ performance harness entrypoint at `test/performance.ts` and a dedicated Vite con
 - Build the performance bundle:
 
 ```bash
-npm run performance:build
+pnpm --filter @netcracker/qubership-apihub-api-processor run performance:build
 ```
 
 - Run it with Node inspector:
 
 ```bash
-npm run performance:run-inspect
+pnpm --filter @netcracker/qubership-apihub-api-processor run performance:run-inspect
 ```
 
 Notes:
 
-- `npm run performance:run-inspect` executes `node --inspect dist/index.es.js` (the file produced by the
+- `performance:run-inspect` executes `node --inspect dist/index.es.js` (the file produced by the
   performance Vite build).
 - `profile:*` and `operation:test` scripts in `package.json` reference `./test/profile.js` and
   `./test/operation.js`, but those files are not present in this repository snapshot.
 
 ## Local development tips
 
-The repo includes helper scripts to link/unlink related ApiHub packages (useful when developing multiple packages together):
-
-```bash
-npm run development:link
-```
-
-```bash
-npm run development:unlink
-```
+The pnpm workspace links the sibling ApiHub packages (`workspace:` ranges), so no manual link step exists. Rebuild a
+dependency with `pnpm exec nx run <project>:build`; Nx builds the upstream projects first.
 
 ## Repository layout (quick map)
 

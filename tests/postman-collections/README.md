@@ -1,28 +1,75 @@
-# apihub-postman-collections
+# APIHUB Postman collections
 
-To start using you need to:
+The Postman collections are the REST end-to-end suite of APIHUB. They call the API of the portal backend and the agent
+on a running stack and check the answers with `pm.test` assertions. Newman runs them in CI. The module holds
+collections, environments, and fixture files; it ships nothing and is not an Nx project.
 
-- Create test internal user on server and replace credentials in  in "Env1.postman_environment.json";
-- Create api-key with sysadmin grants and put api-key value to "at-api-key" env variable.
+The suite tests the product from outside, through the backend API; see the
+[architecture overview](../../docs/architecture/overview.md) and [Tests](../README.md) for the whole E2E picture.
 
-NOTE: internal user and admin access key can be automatically created during APIHUB deployment, see `APIHUB_ADMIN_EMAIL` `APIHUB_ADMIN_PASSWORD` `APIHUB_ACCESS_TOKEN` deploy parameters in [Installation Notes](https://github.com/Netcracker/qubership-apihub/blob/main/docs/installation-guide.md).
+## Layout
 
-## Root folder
+| Path | Content |
+|------|---------|
+| `e2e/` | The regression collections, numbered by purpose (`1_1_Smoke_Portal`, `1_2_Smoke_Agent`, ..., `4_Access_control`) |
+| `use_cases/` | Scenario collections, such as `shareability` |
+| `Syntetic_test_data.postman_collection.json` | Fast creation of sample data |
+| `environment/` | `local`, `local_k8s`, and `Env1` Postman environments |
+| `working-directory/` | Fixture files that the requests upload |
 
-### "Syntetic_test_data" collection
+The table of collections and their order in CI is in [Tests](../README.md#newman-collections).
 
-This is collection for fast creation test data samples.
+### The synthetic test data collection
 
-During run "Create Test Data" folder test will create:
+The collection `Syntetic_test_data` creates sample data quickly. Its "Create Test Data" folder makes one workspace
+`001 Test Workspace`, one package with two versions that have every kind of change, and one dashboard with two package
+versions. Run it as often as you need more data. Its "Cleanup Test Data" folder removes the workspace and everything in
+it.
 
-- 1 workspace "001 Test Workspace".
-- 1 package with 2 versions. Versions have all types of changes.
-- 1 dashboard with 2 package versions.
+## Build, test, and lint
 
-To have more test data you can run "Create test data" folder as many times as needed.
+There is nothing to build, and the module has no Nx targets. Newman 6.2.3 is the runner:
 
-During run "Cleanup Test Data" folder test will remove all entities with workspace.
+```bash
+npm install -g newman@6.2.3
+```
 
-## e2e folder
+CI runs the collections in the order `1_1`, `1_2` (agent only), `1_3`, `2_1`, `3_1`, `3_2`, `4`. The commands for a
+single collection are in [Debugging: One Newman collection](../../docs/development/debugging.md#one-newman-collection)
+and [Build and test: E2E tests](../../docs/development/build-and-test.md#e2e-tests).
 
-Collections for regression testing.
+## Run and debug locally
+
+1. Start a stack: [Run APIHUB locally](../../docs/development/local-run.md).
+2. Use a test internal user and an API key with system administrator rights. The deployment can create both:
+   `APIHUB_ADMIN_EMAIL`, `APIHUB_ADMIN_PASSWORD`, and `APIHUB_ACCESS_TOKEN` in the
+   [installation guide](../../docs/installation-guide.md).
+3. Put the user in the environment file and the key in the `at-api-key` variable, then run:
+
+   ```bash
+   newman run e2e/1_1_Smoke_Portal.postman_collection.json -e environment/local.postman_environment.json \
+     --env-var "Username=<admin email>" --env-var "User_email=<admin email>" \
+     --env-var "Password=<admin password>" --env-var "at-api-key=<access token>"
+   ```
+
+To step through a request, import the collection and the environment into Postman. A manual CI run takes the
+collections as an input; see [CI](../../docs/development/ci.md#manual-e2e).
+
+## Configuration
+
+`environment/local.postman_environment.json` points at `localhost:8081` (`SERVER_HOST`) and reads the credentials from
+the variables `Username`, `User_email`, `Password`, and `at-api-key`. `local_k8s.postman_environment.json` is the
+variant for the Kind cluster.
+
+## API specifications
+
+The collections test the OpenAPI specifications in
+[`backend/portal-backend/docs/api/`](../../backend/portal-backend/docs/api/)
+and [`backend/agent/docs/api/`](../../backend/agent/docs/api/). Update the collections in the same pull request as a
+change to the REST contract; the `postman-e2e-followup` and `postman-e2e-authoring` skills list the steps.
+
+## Further reading
+
+- [Tests](../README.md): both suites, CI tiers, and manual runs
+- [`backend/portal-backend/docs/postman/`](../../backend/portal-backend/docs/postman/): the AI chat collection of the
+  backend

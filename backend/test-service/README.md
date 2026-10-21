@@ -1,17 +1,39 @@
-# qubership-apihub-test-service
+# APIHUB test service
 
-This repository contains a mock microservice specifically designed for testing purposes within the Qubership APIHUB ecosystem. The service doesn't perform any business logic but serves as a comprehensive API specification demonstrator, exposing multiple interface types including REST, GraphQL, and Async APIs through dedicated endpoints.
+The test service is a mock Go microservice for tests. It has no business logic: it exposes REST, GraphQL, and AsyncAPI
+specifications on endpoints that follow the [agent discovery contract](../../docs/user-guide/agent-discovery.md), so
+the [agent](../agent/README.md) and the E2E suites have something to discover. The module ships the image
+`qubership-apihub-test-service`.
 
-The endpoint structure strictly follows the Qubership APIHUB Agent discovery contract requirements, enabling seamless integration with the APIHUB ecosystem. This contract defines how services should expose their API specifications for automatic discovery and registration. (Note: The complete contract specification is documented in the Qubership APIHUB Agent repository - see (TODO) in [`backend/agent`](../agent/)).
+Use it to check the discovery of the agent, specification parsing, endpoint registration, and the exposure of several
+API types at once. It sits outside the product: see the [architecture overview](../../docs/architecture/overview.md)
+for the services it stands in for.
 
-Primary use cases include:
+## Build, test, and lint
 
-Validating APIHUB Agent's discovery capabilities
+The Nx project is `test-service` (tag `lang:go`). Run from the repository root:
 
-Testing specification parsing and processing
+```bash
+pnpm exec nx run test-service:build
+pnpm exec nx run test-service:test
+```
 
-Verifying endpoint registration workflows
+The service does not use `commons-go`, so it builds from its own folder. For the image, see
+[Build and test: Images](../../docs/development/build-and-test.md#images).
 
-Simulating multi-protocol API exposure scenarios
+## Run and debug locally
 
-The service serves as an essential testing utility for Qubership APIHUB Agent development, providing a controlled environment for verifying agent functionality across different API paradigms and ensuring compliance with the discovery contract requirements.
+Run `go run .` in this folder. The service listens on `:8080`; set `LISTEN_ADDRESS` to change the address. The
+specifications it serves are in [`static/`](static/). To debug it, see
+[Debugging: Go service](../../docs/development/debugging.md#go-service).
+
+## Configuration
+
+The only setting is the environment variable `LISTEN_ADDRESS`. The chart that deploys the service is in
+[`helm-template/`](helm-template/README.md).
+
+## Further reading
+
+- [Make a service discoverable by the agent](../../docs/user-guide/agent-discovery.md)
+- Changing a path or a document under `static/` can break the Postman collections in
+  [`tests/postman-collections`](../../tests/postman-collections/README.md) and the agent runners.

@@ -14,7 +14,7 @@ Follow `AGENTS.md` and project rules.
 1. **No database** — this service has no PostgreSQL, migrations, or repository layer. Do not add DB wiring or SQL.
 2. **Config** — defaults in `service/system_info.go` (`setDefaults`); struct in `config/Config.go`; template in `config.template.yaml`. Keep template comments in sync with new keys.
 3. **Wiring** — extend `main.go` in existing order: `SystemInfoService` → PaaS client → `ApihubClient` / `AgentsBackendClient` → caches → discovery/registration services → controllers → routes.
-4. **OpenAPI** — REST changes must update specs under `documentation/api/` (see deployed `agent-conventions` rules).
+4. **OpenAPI** — REST changes must update specs under `docs/api/` (see deployed `agent-conventions` rules).
 5. **Related modules** — if deploy config, env vars, or integration contracts change, remind the developer about `backend/agents-backend`, `backend/portal-backend`, and the Helm chart in `deploy/helm-templates` as applicable.
 
 ## K8s discovery sidecar
@@ -48,7 +48,7 @@ New API types use the `generic.DiscoveryRunner` interface in `api_type/generic/d
 2. Create `api_type/<name>/discovery.go` implementing `DiscoveryRunner`.
 3. Add default discovery URLs in `setDefaults()` and `config.template.yaml` under `discovery.urls`.
 4. Register runner in `DocumentsDiscoveryService` constructor.
-5. Update OpenAPI under `documentation/api/` if REST surface changes.
+5. Update OpenAPI under `docs/api/` if REST surface changes.
 
 ## Clients
 
@@ -66,7 +66,7 @@ In addition to the `apihub-go-developer` checklist:
 - [ ] No DB/migration code introduced.
 - [ ] Config defaults, template, and validation aligned.
 - [ ] New discovery runner registered in `document_discovery.go`.
-- [ ] REST changes reflected in `documentation/api/*.yaml`.
+- [ ] REST changes reflected in `docs/api/*.yaml`.
 - [ ] **Related repositories** reminded when Helm, agents-backend, or backend contracts are affected.
 
 Suggest invoking `apihub-go-self-review` in a **new chat** or with a **different model** for an independent pass over the diff.
