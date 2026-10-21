@@ -251,6 +251,7 @@ npm run build       # bundle dual ESM/CJS + type declarations (vite)
 npm test            # run the Jest suite
 npm run typecheck   # tsc --noEmit
 ```
+
 Implementation plans and design notes for the model, the DDL builder, and the table slicer live in
 [`docs/archive`](docs/archive) (finished plans) and [`docs/design`](docs/design). Contributor-facing conventions for
 changing the library live in the `ddlapi-authoring`
